@@ -1,7 +1,7 @@
 # Airbitz Javascript core
 
 Run `npm install` to get the dependencies you need,
-then run 'npm test' to run the tests.
+then run `npm test` to run the tests.
 
 To build for the web, run `npm run webpack`
 
@@ -10,6 +10,7 @@ running the live unit tests requires:
 
     export NODE_TLS_REJECT_UNAUTHORIZED=0
 
-The live unit tests are disabled for now.
+To avoid these issues, and to keep things independent of the network,
+the live unit tests are disabled for now.
 
-All sources are in the [JavaScript Standard Style](http://standardjs.com/) style.
+All sources are in the [JavaScript Standard Style](http://standardjs.com/).
