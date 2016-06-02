@@ -1,4 +1,4 @@
-var userMap = require('./userMap.js')
+var loginCreate = require('./login/create.js')
 var loginPassword = require('./login/password.js')
 var loginPin = require('./login/pin.js')
 
@@ -37,17 +37,7 @@ function Context (authRequest, localStorage) {
 }
 
 Context.prototype.usernameAvailable = function (username, callback) {
-  var ctx = this
-  username = userMap.normalize(username)
-
-  var authId = userMap.getAuthId(ctx.localStorage, username)
-  var request = {
-    'l1': authId
-  }
-  ctx.authRequest('POST', '/v1/account/available', request, function (err, reply) {
-    if (err) return callback(err)
-    return callback(null)
-  })
+  loginCreate.usernameAvailable(this, username, callback)
 }
 
 Context.prototype.accountCreate = function (username, pin, callback) {

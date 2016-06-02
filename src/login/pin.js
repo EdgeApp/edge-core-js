@@ -1,7 +1,7 @@
-var crypto = require('./../crypto.js')
-var userMap = require('./../userMap.js')
-var UserStorage = require('./../userStorage.js').UserStorage
-var account = require('./../account.js')
+var crypto = require('../crypto.js')
+var userMap = require('../userMap.js')
+var UserStorage = require('../userStorage.js').UserStorage
+var account = require('../account.js')
 
 function login (ctx, username, pin, callback) {
   username = userMap.normalize(username)
