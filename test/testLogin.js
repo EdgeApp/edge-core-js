@@ -48,6 +48,18 @@ describe('creation', function () {
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
     ctx.usernameAvailable('js test dontcreate', done)
   })
+
+  it('create account', function (done) {
+    var fakeStorage = new FakeStorage()
+    var fakeServer = new FakeServer()
+
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+      if (err) return done(err)
+      // Try logging in:
+      ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
+    })
+  })
 })
 
 describe('password', function () {

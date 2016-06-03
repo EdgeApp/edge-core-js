@@ -22,6 +22,16 @@ function scrypt (data, snrp) {
 }
 exports.scrypt = scrypt
 
+function makeSnrp () {
+  return {
+    'salt_hex': random(32).toString('hex'),
+    'n': 16384,
+    'r': 2,
+    'p': 1
+  }
+}
+exports.makeSnrp = makeSnrp
+
 function random (bytes) {
   bytes |= 0
   try {
@@ -92,3 +102,5 @@ function encrypt (data, key) {
   return out
 }
 exports.encrypt = encrypt
+
+exports.hmac_sha256 = asmcrypto.HMAC_SHA256.bytes

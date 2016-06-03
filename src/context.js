@@ -40,8 +40,8 @@ Context.prototype.usernameAvailable = function (username, callback) {
   loginCreate.usernameAvailable(this, username, callback)
 }
 
-Context.prototype.accountCreate = function (username, pin, callback) {
-  callback(Error())
+Context.prototype.accountCreate = function (username, password, callback) {
+  loginCreate.create(this, username, password, callback)
 }
 
 Context.prototype.passwordLogin = function (username, password, callback) {

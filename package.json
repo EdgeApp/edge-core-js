@@ -6,7 +6,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "main": "index.js",
   "dependencies": {
-    "asmcrypto-lite": "^1.1.0",
+    "bip39": "^2.2.0",
     "scryptsy": "^1.2.1",
     "xmlhttprequest": "^1.4.0"
   },

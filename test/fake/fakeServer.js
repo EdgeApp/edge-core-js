@@ -29,6 +29,21 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
+  if (uri.search('account/create') > 0) {
+    this.db.carePackage = JSON.parse(body['care_package'])
+    this.db.loginPackage = JSON.parse(body['login_package'])
+    return callback(null, 200, makeReply(results))
+  }
+
+  if (uri.search('account/upgrade') > 0) {
+    this.db.rootKeyBox = body['rootKeyBox']
+    return callback(null, 200, makeReply(results))
+  }
+
+  if (uri.search('account/activate') > 0) {
+    return callback(null, 200, makeReply(results))
+  }
+
   if (uri.search('carepackage/get') > 0) {
     if (!this.db.carePackage) {
       return callback(null, 500, '{"status_code":3}')
