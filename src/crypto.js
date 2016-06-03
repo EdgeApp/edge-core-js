@@ -29,7 +29,7 @@ function random (bytes) {
     window.crypto.getRandomValues(out)
   } catch (e) {
     // Alternative using node.js crypto:
-    return require('crypto').randomBytes(16)
+    return require('crypto').randomBytes(bytes)
   }
   return out
 }
