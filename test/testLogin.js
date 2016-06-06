@@ -90,6 +90,21 @@ describe('password', function () {
 })
 
 describe('pin', function () {
+  it('exists', function () {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+
+    var ctx = new abc.Context(null, fakeStorage)
+    assert.equal(ctx.pinExists('js test 0'), true)
+  })
+
+  it('does not exist', function () {
+    var fakeStorage = new FakeStorage()
+
+    var ctx = new abc.Context(null, fakeStorage)
+    assert.equal(ctx.pinExists('js test 0'), false)
+  })
+
   it('login', function (done) {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()

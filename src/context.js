@@ -37,19 +37,23 @@ function Context (authRequest, localStorage) {
 }
 
 Context.prototype.usernameAvailable = function (username, callback) {
-  loginCreate.usernameAvailable(this, username, callback)
+  return loginCreate.usernameAvailable(this, username, callback)
 }
 
 Context.prototype.accountCreate = function (username, password, callback) {
-  loginCreate.create(this, username, password, callback)
+  return loginCreate.create(this, username, password, callback)
 }
 
 Context.prototype.passwordLogin = function (username, password, callback) {
-  loginPassword.login(this, username, password, callback)
+  return loginPassword.login(this, username, password, callback)
+}
+
+Context.prototype.pinExists = function (username) {
+  return loginPin.exists(this, username)
 }
 
 Context.prototype.pinLogin = function (username, pin, callback) {
-  loginPin.login(this, username, pin, callback)
+  return loginPin.login(this, username, pin, callback)
 }
 
 exports.Context = Context

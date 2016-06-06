@@ -3,6 +3,21 @@ var userMap = require('../userMap.js')
 var UserStorage = require('../userStorage.js').UserStorage
 var account = require('../account.js')
 
+function exists (ctx, username) {
+  username = userMap.normalize(username)
+
+  // Extract stuff from storage:
+  var userStorage = new UserStorage(ctx.localStorage, username)
+  var pinAuthId = userStorage.getItem('pinAuthId')
+  var pinBox = userStorage.getJson('pinBox')
+  if (!pinAuthId || !pinBox) {
+    return false
+  }
+
+  return true
+}
+exports.exists = exists
+
 function login (ctx, username, pin, callback) {
   username = userMap.normalize(username)
 

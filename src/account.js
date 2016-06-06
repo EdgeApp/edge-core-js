@@ -32,7 +32,7 @@ Account.prototype.logout = function () {
 }
 
 Account.prototype.pinSetup = function (pin, callback) {
-  loginPin.setup(this.ctx, this, pin, callback)
+  return loginPin.setup(this.ctx, this, pin, callback)
 }
 
 exports.Account = Account
