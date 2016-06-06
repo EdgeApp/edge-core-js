@@ -24,6 +24,13 @@ function Account (ctx, username, dataKey) {
   this.rootKey = crypto.decrypt(rootKeyBox, dataKey)
 }
 
+Account.prototype.logout = function () {
+  this.dataKey = null
+  this.authKey = null
+  this.syncKey = null
+  this.rootKey = null
+}
+
 Account.prototype.pinSetup = function (pin, callback) {
   loginPin.setup(this.ctx, this, pin, callback)
 }
