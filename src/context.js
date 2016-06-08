@@ -1,6 +1,7 @@
 var loginCreate = require('./login/create.js')
 var loginPassword = require('./login/password.js')
 var loginPin = require('./login/pin.js')
+var userMap = require('./userMap.js')
 
 var serverRoot = 'https://auth.airbitz.co/api'
 
@@ -34,6 +35,17 @@ function Context (authRequest, localStorage) {
   }
 
   this.localStorage = localStorage
+}
+
+Context.prototype.usernameList = function () {
+  var map = userMap.load(this.localStorage)
+  var out = []
+  for (var username in map) {
+    if (map.hasOwnProperty(username)) {
+      out.push(username)
+    }
+  }
+  return out
 }
 
 Context.prototype.usernameAvailable = function (username, callback) {

@@ -9,8 +9,17 @@ describe('username', function () {
   it('normalize spaces and capitalization', function () {
     assert.equal('test test', abc.usernameFix('  TEST TEST  '))
   })
+
   it('reject invalid characters', function () {
     assert.throws(function () { abc.usernameFix('テスト') })
+  })
+
+  it('list usernames in local storage', function () {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populateUsers()
+
+    var ctx = new abc.Context(null, fakeStorage)
+    assert.deepEqual(ctx.usernameList(), ['js test 0'])
   })
 })
 
