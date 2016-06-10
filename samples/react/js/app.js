@@ -1,12 +1,278 @@
 'use strict';
 
-function listLogins() {
-  var users = [];
-  for (var k in JSON.parse(localStorage.getItem('airbitz.users'))) {
-    users.push(k);
+var AbcUserList = React.createClass({
+  getInitialState: function() {
+    return { showInput: false };
+  },
+  render: function() {
+    var block = null;
+    var that = this;
+    var context = this.props.context;
+    var userList = context.usernameList().sort();
+    var toggleInput = null;
+    if (this.props.allowInput) {
+      toggleInput = (
+        <span className="input-group-btn">
+          <button type="button" onClick={this.toggleInput}  className="btn btn-primary">X</button>
+        </span>);
+    }
+    if (this.props.allowInput && (userList.length == 0 || this.state.showInput)) {
+        block = (
+            <div className="input-group">
+              <input autoFocus ref="username" type="text" placeholder="username" className="form-control" />
+              <span className="input-group-btn">
+                <button type="button" onClick={this.toggleInput}  className="btn btn-primary">X</button>
+              </span>
+            </div>
+        )
+    } else {
+        var selectElement = (
+              <select ref="selected_user"
+                    className="form-control"
+                    onChange={this.handleSelection}
+                    defaultValue={this.props.username}>
+                {userList.map(function(username) {
+                    return (<option value={username} key={username}>{username}</option>);
+                })}
+              </select>
+        );
+        if (this.props.allowInput) {
+            return (
+              <div className="input-group">
+                {selectElement}
+                {toggleInput}
+              </div>
+            );
+        } else {
+            return selectElement;
+        }
+    }
+    return (block);
+  },
+  toggleInput: function() {
+    this.setState({'showInput': !this.state.showInput});
+    if (this.state.showInput) {
+        this.setState({username: ''});
+        this.refs.username.focus();
+    }
+  },
+  handleSelection: function() {
+    this.props.onUserChange(this.refs.selected_user.value);
+  },
+  getValue: function() {
+    if (this.state.showInput) {
+        return this.refs.username.value;
+    } else {
+        return this.refs.selected_user.value;
+    }
   }
-  return users;
-}
+});
+
+var AbcPasswordLoginForm = React.createClass({
+  render: function() {
+    return (
+      <form className="form">
+        <div className="row">
+          <div className="col-sm-12">
+            <div className="form-group">
+              <AbcUserList
+                ref="username" 
+                context={this.props.context}
+                allowInput={true}
+                username={this.props.username}
+                onUserChange={this.props.onUserChange} />
+            </div>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-sm-12">
+            <div className="form-group">
+              <input ref="password" type="password" placeholder="Password" className="form-control" />
+            </div>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-sm-12 text-center">
+            <button type="button" onClick={this.handleSubmit}  className="btn btn-primary">Sign In</button>
+          </div>
+        </div>
+      </form>
+    );
+  },
+  handleSubmit: function() {
+    var that = this;
+    this.props.context.passwordLogin(this.refs.username.getValue(), this.refs.password.value, function(err, result) {
+        if (err) {
+          that.props.onError(err);
+        } else {
+          that.props.onSuccess(result);
+        }
+    });
+    return false;
+  }
+});
+
+var AbcPinLoginForm = React.createClass({
+  render: function() {
+    return (
+        <form className="form">
+          <div className="row">
+            <div className="col-sm-12 text-center">
+              <div className="form-group">
+                <AbcUserList ref="username"
+                    allowInput={false}
+                    context={this.props.context}
+                    username={this.props.username}
+                    onUserChange={this.props.onUserChange} />
+              </div>
+            </div>
+            <div className="col-sm-12 text-center">
+              <div className="form-group">
+                  <input ref="pin" type="password" placeholder="PIN" className="form-control" maxLength="4" />
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-sm-12 text-center">
+              <div className="form-group">
+                <button type="button" onClick={this.handleSubmit} className="btn btn-primary">Sign In</button>
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-sm-12 text-center">
+              <div className="form-group">
+                <button type="button" onClick={this.handleExit} className="btn">Exit Pin Login</button>
+              </div>
+            </div>
+          </div>
+        </form>
+    );
+  },
+  handleExit: function() {
+    this.props.onExit();
+    return false;
+  },
+  handleSubmit: function() {
+    var that = this;
+    this.props.context.pinLogin(this.refs.username.getValue(), this.refs.pin.value, function(err, result) {
+      if (err) {
+        that.props.onError(err);
+      } else {
+        that.props.onSuccess(result);
+      }
+    });
+    return false;
+  }
+});
+
+var AbcLoginForm = React.createClass({
+  getInitialState: function() {
+    return { forcePasswordLogin: false };
+  },
+  statics: {
+    currentUser() {
+        return localStorage.getItem('airbitz.current_user');
+    },
+    updateCurrentUser(username) {
+        localStorage.setItem('airbitz.current_user', username);
+    }
+  },
+  render: function() {
+    var block = null;
+    var context = this.props.context;
+    var currentUser = AbcLoginForm.currentUser();
+    var showPinLogin = context && currentUser && context.pinExists(currentUser) ? true : false;
+    if (this.state.forcePasswordLogin) {
+      showPinLogin = false;
+    }
+    if (showPinLogin) {
+      block = (<AbcPinLoginForm ref="pinForm"
+                username={currentUser}
+                context={context}
+                onSuccess={this.handleSuccess}
+                onError={this.handleError}
+                onUserChange={this.handleUserChange}
+                onExit={this.handlePinExit} />);
+    } else {
+      block = (<AbcPasswordLoginForm ref="passwordForm"
+                username={currentUser}
+                context={context}
+                onSuccess={this.handleSuccess}
+                onError={this.handleError}
+                onUserChange={this.handleUserChange} />);
+    }
+    return (<div>{block}</div>);
+  },
+  handleSuccess: function(account) {
+    this.props.onSuccess(account);
+    this.setState({'forcePasswordLogin': false});
+    AbcLoginForm.updateCurrentUser(account.username);
+  },
+  handleError: function(err) {
+    this.props.onError(err);
+  }, 
+  handlePinExit: function() {
+    this.setState({'forcePasswordLogin': true});
+  },
+  handleUserChange: function(newUsername) {
+    var context = this.props.context;
+    AbcLoginForm.updateCurrentUser(newUsername);
+    this.setState({'forcePasswordLogin': false});
+  }
+});
+
+var AbcRegistrationForm = React.createClass({
+  render: function() {
+    return (
+        <form>
+          <div className="row">
+            <div className="col-sm-12">
+              <div className="form-group">
+                <input type="text" ref="username" placeholder="username" className="form-control" />
+              </div>
+            </div>
+            <div className="col-sm-12">
+              <div className="form-group">
+                <div className="input-group">
+                  <input type="password" ref="password" placeholder="password" className="form-control" />
+                </div>
+              </div>
+            </div>
+            <div className="col-sm-12">
+              <div className="form-group">
+                <div className="input-group">
+                  <input type="password" ref="pin" placeholder="pin" className="form-control" />
+                </div>
+              </div>
+            </div>
+            <div className="col-sm-12">
+              <div className="form-group">
+                <span className="input-group-btn">
+                  <button type="button" onClick={this.handleSubmit} className="btn btn-primary">Register</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </form>
+    );
+  },
+  handleSubmit: function() {
+    var that = this;
+    this.props.context.accountCreate(this.refs.username.value, this.refs.password.value, function(err, result) {
+        if (err) {
+          that.props.onError(err);
+        } else {
+          var account = result;
+          AbcLoginForm.updateCurrentUser(account.username);
+          that.props.onSuccess(account);
+          account.pinSetup(that.refs.pin.value, function(err, result) {
+          });
+        }
+    });
+    return false;
+  }
+});
 
 var MenuItem = React.createClass({
   render: function() {
@@ -18,18 +284,10 @@ var MenuItem = React.createClass({
   }
 });
 
-var Button = React.createClass({
-  render: function() {
-    return (
-      <a {...this.props}
-        href="javascript:;"
-        role="button"
-        className={(this.props.className || '') + ' btn'} />
-    );
-  }
-});
-
 var BootstrapModal = React.createClass({
+  getInitialState: function() {
+    return {'title': this.props.title}
+  },
   componentDidMount: function() {
     $(this.refs.root).modal({backdrop: 'static', keyboard: false, show: false});
     $(this.refs.root).on('hidden.bs.modal', this.handleHidden);
@@ -55,7 +313,7 @@ var BootstrapModal = React.createClass({
                 onClick={this.handleCancel}>
                 &times;
               </button>
-              <h4>{this.props.title}</h4>
+              <h4>{this.state.title}</h4>
             </div>
             <div className="modal-body">
               {this.props.children}
@@ -77,188 +335,6 @@ var BootstrapModal = React.createClass({
   }
 });
 
-var LoginForm = React.createClass({
-  close: function() {
-    this.refs.modal.close();
-  },
-  open: function(username) {
-    this.refs.username.value = username;
-    this.refs.password.value = '';
-    this.refs.modal.open();
-  },
-  render: function() {
-    return (
-      <BootstrapModal
-        ref="modal"
-        cancel="Cancel"
-        onCancel={this.props.onCancel}
-        onHidden={this.props.onHidden}
-        title="Sign In">
-        <form>
-          <div className="row">
-            <div className="col-sm-12">
-              <div className="form-group">
-                <input ref="username" type="text" name="handle" placeholder="username" className="form-control" />
-              </div>
-            </div>
-            <div className="col-sm-12">
-              <div className="form-group">
-                <div className="input-group">
-                  <input ref="password" type="password" name="password" placeholder="password" className="form-control" />
-                  <span className="input-group-btn">
-                    <button type="button" onClick={this.handleSubmit}  className="btn btn-primary">Sign In</button>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
-      </BootstrapModal>
-    );
-  },
-  handleSubmit: function() {
-    var that = this;
-    this.props.context.passwordLogin(this.refs.username.value, this.refs.password.value, function(err, result) {
-        if (err) {
-          alert("login Failed: " + err);
-        } else {
-          console.log(result);
-          that.props.parentState.setState({isLoggedIn:true, account: result});
-          that.close();
-        }
-    });
-    return false;
-  }
-});
-
-var PinLoginForm = React.createClass({
-  getInitialState: function() {
-    return { username: null };
-  },
-  close: function() {
-    this.refs.modal.close();
-  },
-  open: function(username) {
-    this.setState({username: username});
-    this.refs.pin.value = null;
-    this.refs.modal.open();
-  },
-  render: function() {
-    return (
-      <BootstrapModal
-        ref="modal"
-        cancel="Cancel"
-        onCancel={this.props.onCancel}
-        onHidden={this.props.onHidden}
-        title="Pin Sign In">
-          <form onSubmit={this.handleSubmit}>
-            <div className="row">
-              <div className="col-sm-12">
-                <div className="form-group">
-                  <span className="form-control">{this.state.username}</span>
-                </div>
-              </div>
-              <div className="col-sm-12">
-                <div className="form-group">
-                  <div className="input-group">
-                    <input ref="pin" type="password" name="password" placeholder="PIN" className="form-control" />
-                  </div>
-                </div>
-              </div>
-              <div className="col-sm-12">
-                <div className="form-group">
-                  <div className="input-group">
-                    <span className="input-group-btn">
-                      <button type="button" onClick={this.handleSubmit} className="btn btn-primary">Sign In</button>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </form>
-      </BootstrapModal>
-    );
-  },
-  handleSubmit: function() {
-    var that = this;
-    this.props.context.pinLogin(this.state.username, this.refs.pin.value, function(err, result) {
-        if (err) {
-            alert("pin login Failed: " + err);
-        } else {
-            console.log(result);
-            that.props.parentState.setState({account: result});
-            that.close();
-        }
-    });
-    return false;
-  }
-});
-
-var RegistrationForm = React.createClass({
-  close: function() {
-    this.refs.modal.close();
-  },
-  open: function() {
-    this.refs.modal.open();
-  },
-  render: function() {
-    return (
-      <BootstrapModal
-        ref="modal"
-        onCancel={this.props.onCancel}
-        onHidden={this.props.onHidden}
-        cancel="Cancel"
-        title="Register">
-          <form>
-            <div className="row">
-              <div className="col-sm-12">
-                <div className="form-group">
-                  <input type="text" ref="username" placeholder="username" className="form-control" />
-                </div>
-              </div>
-              <div className="col-sm-12">
-                <div className="form-group">
-                  <div className="input-group">
-                    <input type="password" ref="password" placeholder="password" className="form-control" />
-                  </div>
-                </div>
-              </div>
-              <div className="col-sm-12">
-                <div className="form-group">
-                  <div className="input-group">
-                    <input type="password" ref="pin" placeholder="pin" className="form-control" />
-                  </div>
-                </div>
-              </div>
-              <div className="col-sm-12">
-                <div className="form-group">
-                  <span className="input-group-btn">
-                    <button type="button" onClick={this.handleSubmit} className="btn btn-primary">Register</button>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </form>
-      </BootstrapModal>
-    );
-  },
-  handleSubmit: function() {
-    var that = this;
-    this.props.context.accountCreate(this.refs.username.value, this.refs.password.value, function(err, result) {
-        if (err) {
-            alert("Registration Failed: " + err);
-        } else {
-            console.log(result);
-            var account = result;
-            that.props.parentState.setState({account: account});
-            that.close();
-
-            account.pinSetup(that.refs.pin.value, function(err, result) {});
-        }
-    });
-    return false;
-  }
-});
 
 var AccountView = React.createClass({
     render: function() {
@@ -308,56 +384,36 @@ var AccountView = React.createClass({
     }
 });
 
-var AbcApp = React.createClass({
-  getInitialState: function() {
-    return { account: null };
+var ApiKeyView = React.createClass({
+  statics: {
+    getApiKey: function() {
+      return localStorage.getItem('airbitz.sample');
+    },
+    setApiKey: function(apiKey) {
+      localStorage.setItem('airbitz.sample', apiKey);
+    },
+    clearApiKey: function() {
+      localStorage.removeItem('airbitz.sample');
+    }
   },
   render: function() {
-    var keyBlock = null, loginBlock = null, registrationBlock = null, logoutBlock = null;
-    if (this.state.context) {
-      if (this.state.account) {
-          logoutBlock = (<MenuItem onClick={this.handleLogout}>Logout</MenuItem>);
-      } else {
-          registrationBlock = (<MenuItem onClick={this.openSignupModal}>Register</MenuItem>);
-          var logins = listLogins();
-          var that = this;
-          if (logins.length) {
-            loginBlock = (
-              <li className="dropdown">
-                <a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Login <span className="caret"></span></a>
-                <ul className="dropdown-menu">
-                  <MenuItem onClick={function() { that.openLoginModal('') }}>New Login with Password</MenuItem>
-
-                  <li role="separator" className="divider"></li>
-                  <li className="dropdown-header">Login with PIN</li>
-                  { logins.filter(this.state.context.pinExists).map(function(userName, i) {
-                    return (<MenuItem onClick={function() {that.openPinModal(userName)}} key={userName}>{userName}</MenuItem>)
-                  })}
-
-                  <li role="separator" className="divider"></li>
-                  <li className="dropdown-header">Login with Password</li>
-                  { logins.map(function(userName, i) {
-                    return (<MenuItem onClick={function() {that.openLoginModal(userName)}} key={userName}>{userName}</MenuItem>)
-                  })}
-                </ul>
-              </li>
-            );
-          } else {
-            loginBlock = <MenuItem onClick={function() { that.openLoginModal('') }}>Login</MenuItem>;
-          }
-      }
+    var keyBlock = null;
+    if (this.props.apiKey) {
       keyBlock = ([
-        <MenuItem>{this.state.apiKey}</MenuItem>,
-        <MenuItem onClick={this.resetApiKey}>Reset</MenuItem>
+        <MenuItem key="key">{this.props.apiKey}</MenuItem>,
+        <MenuItem key="reset" onClick={this.handleReset}>Reset</MenuItem>
       ]);
     } else {
+      var keyStyle = {
+        'width': '400px'
+      };
       keyBlock = (
         <form className="navbar-form">
           <div className="form-group">
             <div className="input-group">
-              <input ref="password" ref="apiKey" placeholder="apiKey" className="form-control" />
+              <input ref="password" ref="apiKey" style={keyStyle} placeholder="API key" className="form-control" />
               <span className="input-group-btn">
-                <button type="button" onClick={this.handleApiKey}  className="btn btn-primary">Start</button>
+                <button type="button" onClick={this.handleSubmit}  className="btn btn-primary">Start</button>
               </span>
             </div>
           </div>
@@ -365,10 +421,65 @@ var AbcApp = React.createClass({
       );
     }
     return (
+      <ul className="nav navbar-nav">
+        {keyBlock}
+      </ul>);
+  },
+  handleSubmit: function() {
+    var apiKey = this.refs.apiKey.value;
+    ApiKeyView.setApiKey(apiKey);
+    this.props.onKeySet(this.refs.apiKey.value);
+  },
+  handleReset: function() {
+    ApiKeyView.clearApiKey();
+    this.props.onKeyReset();
+  }
+});
+
+var AbcApp = React.createClass({
+  getInitialState: function() {
+    return { account: null };
+  },
+  componentDidMount: function() {
+    this.handleApiKey(ApiKeyView.getApiKey());
+  },
+  render: function() {
+    var formBlock = null, loginBlock = null, registrationBlock = null, logoutBlock = null;
+    if (this.state.context) {
+      if (this.state.account) {
+          logoutBlock = (<MenuItem onClick={this.handleLogout}>Logout</MenuItem>);
+      } else {
+          registrationBlock = (<MenuItem onClick={this.openSignupModal}>Register</MenuItem>);
+          loginBlock = <MenuItem onClick={this.openLoginModal}>Login</MenuItem>;
+      }
+      formBlock = [
+        <BootstrapModal
+            ref="loginModal"
+            key="loginModal"
+            onCancel={this.closeLoginModal}
+            cancel="Cancel"
+            title="Login">
+            <AbcLoginForm
+                context={this.state.context}
+                onSuccess={this.handleLoginSuccess}
+                onError={this.handleLoginError} />
+        </BootstrapModal>,
+        <BootstrapModal
+            ref="signupModal"
+            key="signupModal"
+            onCancel={this.closeSignupModal}
+            cancel="Cancel"
+            title="Sign Up">
+            <AbcRegistrationForm
+              context={this.state.context}
+              onSuccess={this.handleRegistrationSuccess}
+              onError={this.handleRegistrationError} />
+        </BootstrapModal>
+      ];
+    }
+    return (
     <div>
-      <LoginForm ref='loginModal' context={this.state.context} parentState={this} onCancel={this.closeLoginModal} onHidden={this.closeLoginModal} />
-      <PinLoginForm ref='pinModal' context={this.state.context} parentState={this} onCancel={this.closePinModal} onHidden={this.closePinModal} />
-      <RegistrationForm ref='signupModal' context={this.state.context} parentState={this} onCancel={this.closeSignupModal} onHidden={this.closeSignupModal} />
+      {formBlock}
       <nav className="navbar navbar-default">
         <div className="container">
           <div className="navbar-header">
@@ -381,9 +492,7 @@ var AbcApp = React.createClass({
             <a className="navbar-brand" href="#">AirbitzCore Sample</a>
           </div>
           <div id="navbar" className="navbar-collapse collapse">
-            <ul className="nav navbar-nav">
-            {keyBlock}
-            </ul>
+            <ApiKeyView apiKey={this.state.apiKey} onKeySet={this.handleApiKey} onKeyReset={this.resetApiKey} />
             <ul className="nav navbar-nav navbar-right">
               {loginBlock}
               {registrationBlock}
@@ -398,11 +507,13 @@ var AbcApp = React.createClass({
     </div>
     );
   },
-  handleApiKey: function() {
-    this.setState({
-        'apiKey': this.refs.apiKey.value,
-        'context': abc.Context(this.refs.apiKey.value)
-    });
+  handleApiKey: function(apiKey) {
+    if (apiKey) {
+        this.setState({
+            'apiKey': apiKey,
+            'context': abc.Context(apiKey)
+        });
+    }
   },
   resetApiKey: function() {
     this.setState({
@@ -410,23 +521,31 @@ var AbcApp = React.createClass({
         'context': null
     });
   },
-  openLoginModal: function(username) {
-    this.refs.loginModal.open(username);
+  openLoginModal: function() {
+    this.refs.loginModal.open();
   },
   closeLoginModal: function() {
     this.refs.loginModal.close();
   },
-  openPinModal: function(username) {
-    this.refs.pinModal.open(username);
+  handleLoginError: function(err) {
+    alert("Bummer: " + err);
   },
-  closePinModal: function() {
-    this.refs.pinModal.close();
+  handleLoginSuccess: function(account) {
+    this.setState({account: account});
+    this.closeLoginModal();
   },
   openSignupModal: function() {
     this.refs.signupModal.open();
   },
   closeSignupModal: function() {
     this.refs.signupModal.close();
+  },
+  handleRegistrationError: function(err) {
+    alert("Bummer: " + err);
+  },
+  handleRegistrationSuccess: function(account) {
+    this.setState({account: account});
+    this.closeSignupModal();
   },
   handleLogout: function() {
     this.setState({account: null});
