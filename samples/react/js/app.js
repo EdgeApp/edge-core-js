@@ -27,7 +27,7 @@ var AbcUserList = React.createClass({
         )
     } else {
         var selectElement = (
-              <select ref="selected_user"
+              <select ref="username"
                     className="form-control"
                     onChange={this.handleSelection}
                     defaultValue={this.props.username}>
@@ -57,14 +57,10 @@ var AbcUserList = React.createClass({
     }
   },
   handleSelection: function() {
-    this.props.onUserChange(this.refs.selected_user.value);
+    this.props.onUserChange(this.refs.username.value);
   },
   getValue: function() {
-    if (this.state.showInput) {
-        return this.refs.username.value;
-    } else {
-        return this.refs.selected_user.value;
-    }
+    return this.refs.username.value;
   }
 });
 
