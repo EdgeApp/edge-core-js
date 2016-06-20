@@ -1,5 +1,23 @@
 'use strict';
 
+var BootstrapButton = React.createClass({
+  getInitialState: function() {
+    return {'loading': false}
+  },
+  render: function() {
+    if (this.state.loading) {
+      return (<button type="button" className="btn btn-primary" disabled="disabled">
+                <span className="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> {this.props.loadingMessage}
+              </button>);
+    } else {
+      return (<button type="button" {...this.props} className="btn btn-primary">{this.props.children}</button>)
+    }
+  },
+  setLoading: function(isLoading, callback) {
+    this.setState({'loading': isLoading});
+  }
+});
+
 var AbcUserList = React.createClass({
   getInitialState: function() {
     return { showInput: false };
@@ -89,7 +107,7 @@ var AbcPasswordLoginForm = React.createClass({
         </div>
         <div className="row">
           <div className="col-sm-12 text-center">
-            <button type="button" onClick={this.handleSubmit}  className="btn btn-primary">Sign In</button>
+            <BootstrapButton ref="signin" onClick={this.handleSubmit} loadingMessage="Signing In...">Sign In</BootstrapButton>
           </div>
         </div>
       </form>
@@ -97,12 +115,14 @@ var AbcPasswordLoginForm = React.createClass({
   },
   handleSubmit: function() {
     var that = this;
+    this.refs.signin.setLoading(true);
     this.props.context.passwordLogin(this.refs.username.getValue(), this.refs.password.value, function(err, result) {
         if (err) {
           that.props.onError(err);
         } else {
           that.props.onSuccess(result);
         }
+        that.refs.signin.setLoading(false);
     });
     return false;
   }
@@ -131,7 +151,7 @@ var AbcPinLoginForm = React.createClass({
           <div className="row">
             <div className="col-sm-12 text-center">
               <div className="form-group">
-                <button type="button" onClick={this.handleSubmit} className="btn btn-primary">Sign In</button>
+                <BootstrapButton ref="signin" onClick={this.handleSubmit} loadingMessage="Signing In...">Sign In</BootstrapButton>
               </div>
             </div>
           </div>
@@ -151,12 +171,14 @@ var AbcPinLoginForm = React.createClass({
   },
   handleSubmit: function() {
     var that = this;
+    this.refs.signin.setLoading(true);
     this.props.context.pinLogin(this.refs.username.getValue(), this.refs.pin.value, function(err, result) {
       if (err) {
         that.props.onError(err);
       } else {
         that.props.onSuccess(result);
       }
+      that.refs.signin.setLoading(false);
     });
     return false;
   }
@@ -245,7 +267,7 @@ var AbcRegistrationForm = React.createClass({
             <div className="col-sm-12">
               <div className="form-group">
                 <span className="input-group-btn">
-                  <button type="button" onClick={this.handleSubmit} className="btn btn-primary">Register</button>
+                  <BootstrapButton ref="register" onClick={this.handleSubmit} loadingMessage="Registering...">Register</BootstrapButton>
                 </span>
               </div>
             </div>
@@ -255,6 +277,7 @@ var AbcRegistrationForm = React.createClass({
   },
   handleSubmit: function() {
     var that = this;
+    this.refs.register.setLoading(true);
     this.props.context.accountCreate(this.refs.username.value, this.refs.password.value, function(err, result) {
         if (err) {
           that.props.onError(err);
@@ -265,6 +288,7 @@ var AbcRegistrationForm = React.createClass({
           account.pinSetup(that.refs.pin.value, function(err, result) {
           });
         }
+        this.refs.register.setLoading(false);
     });
     return false;
   }
