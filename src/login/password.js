@@ -3,7 +3,7 @@ var userMap = require('../userMap.js')
 var UserStorage = require('../userStorage.js').UserStorage
 var account = require('../account.js')
 
-function loginOffline (ctx, username, authId, password, callback) {
+function loginOffline (ctx, username, userId, password, callback) {
   // Extract stuff from storage:
   var userStorage = new UserStorage(ctx.localStorage, username)
   var passwordKeySnrp = userStorage.getJson('passwordKeySnrp')
@@ -22,10 +22,10 @@ function loginOffline (ctx, username, authId, password, callback) {
   return callback(null, new account.Account(ctx, username, dataKey))
 }
 
-function loginOnline (ctx, username, authId, password, callback) {
+function loginOnline (ctx, username, userId, password, callback) {
   // Encode the username:
   var request = {
-    'l1': authId
+    'l1': userId
     // "otp": null
   }
   ctx.authRequest('POST', '/v1/account/carepackage/get', request, function (err, reply) {
@@ -35,7 +35,7 @@ function loginOnline (ctx, username, authId, password, callback) {
     var passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
 
     var request = {
-      'l1': authId,
+      'l1': userId,
       'lp1': passwordAuth.toString('base64')
       // "otp": null
     }
@@ -61,7 +61,7 @@ function loginOnline (ctx, username, authId, password, callback) {
         var dataKey = crypto.decrypt(passwordBox, passwordKey)
 
         // Cache everything for future logins:
-        userMap.insert(ctx.localStorage, username, authId)
+        userMap.insert(ctx.localStorage, username, userId)
         var userStorage = new UserStorage(ctx.localStorage, username)
         userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
         userStorage.setJson('passwordBox', passwordBox)
@@ -84,11 +84,11 @@ function loginOnline (ctx, username, authId, password, callback) {
  */
 function login (ctx, username, password, callback) {
   username = userMap.normalize(username)
-  var authId = userMap.getAuthId(ctx.localStorage, username)
+  var userId = userMap.getUserId(ctx.localStorage, username)
 
-  loginOffline(ctx, username, authId, password, function (err, account) {
+  loginOffline(ctx, username, userId, password, function (err, account) {
     if (!err) return callback(null, account)
-    return loginOnline(ctx, username, authId, password, callback)
+    return loginOnline(ctx, username, userId, password, callback)
   })
 }
 exports.login = login

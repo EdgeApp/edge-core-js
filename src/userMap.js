@@ -1,7 +1,7 @@
 var crypto = require('./crypto.js')
 
 /**
- * Returns the user map, which goes from usernames to authId's
+ * Returns the user map, which goes from usernames to userId's
  */
 function load (localStorage) {
   try {
@@ -16,22 +16,22 @@ exports.load = load
 /**
  * Ensures that the userMap contains the given user. Adds the user if not.
  */
-function insert (localStorage, username, authId) {
+function insert (localStorage, username, userId) {
   var userMap = load(localStorage)
-  userMap[username] = authId
+  userMap[username] = userId
   localStorage.setItem('airbitz.users', JSON.stringify(userMap))
 }
 exports.insert = insert
 
 /**
- * Computes the authId (L1) for the given username.
+ * Computes the userId (L1) for the given username.
  */
-function getAuthId (localStorage, username) {
+function getUserId (localStorage, username) {
   var userMap = load(localStorage)
   return userMap[username] ||
-    crypto.scrypt(username, crypto.userAuthSnrp).toString('base64')
+    crypto.scrypt(username, crypto.userIdSnrp).toString('base64')
 }
-exports.getAuthId = getAuthId
+exports.getUserId = getUserId
 
 /**
  * Normalizes a username, and checks for invalid characters.

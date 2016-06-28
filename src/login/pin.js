@@ -30,7 +30,7 @@ function login (ctx, username, pin, callback) {
     return callback(Error('Missing data for PIN login'))
   }
 
-  var pinAuth = crypto.scrypt(username + pin, crypto.userAuthSnrp)
+  var pinAuth = crypto.scrypt(username + pin, crypto.userIdSnrp)
   var request = {
     'did': pinAuthId,
     'lpin1': pinAuth.toString('base64')
@@ -63,14 +63,14 @@ function setup (ctx, account, pin, callback) {
   var passwordKeySnrp = account.userStorage.getJson('passwordKeySnrp')
   var pinKey = crypto.random(32)
   var pinKeyKey = crypto.scrypt(account.username + pin, passwordKeySnrp)
-  var pinAuth = crypto.scrypt(account.username + pin, crypto.userAuthSnrp)
+  var pinAuth = crypto.scrypt(account.username + pin, crypto.userIdSnrp)
 
   // Encrypt:
   var pinBox = crypto.encrypt(account.dataKey, pinKey)
   var pinKeyBox = crypto.encrypt(pinKey, pinKeyKey)
 
   var request = {
-    'l1': account.authId,
+    'l1': account.userId,
     'lp1': account.authKey.toString('base64'),
     'lpin1': pinAuth.toString('base64'),
     'did': pinAuthId.toString('base64'),

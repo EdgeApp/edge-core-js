@@ -373,8 +373,8 @@ var AccountView = React.createClass({
                           <td>{ this.props.account.username }</td>
                         </tr>
                         <tr>
-                          <th>Auth Id: </th>
-                          <td>{ this.props.account.authId }</td>
+                          <th>User Id: </th>
+                          <td>{ this.props.account.userId }</td>
                         </tr>
                       </tbody>
                     </table>

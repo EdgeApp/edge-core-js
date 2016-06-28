@@ -1,14 +1,14 @@
 var scryptsy = require('scryptsy')
 var asmcrypto = require('./asmcrypto/asmcrypto.js')
 
-var userAuthSnrp = {
+var userIdSnrp = {
   'salt_hex': 'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b',
   'n': 16384,
   'r': 1,
   'p': 1
 }
-exports.userAuthSnrp = userAuthSnrp
-exports.passwordAuthSnrp = userAuthSnrp
+exports.userIdSnrp = userIdSnrp
+exports.passwordAuthSnrp = userIdSnrp
 
 /**
  * @param data A `Buffer` or byte-array object.

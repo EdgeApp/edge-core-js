@@ -3,10 +3,10 @@ var assert = require('assert')
 var crypto = require('../src/crypto.js')
 
 describe('scrypt', function () {
-  it('match a known authId', function () {
+  it('match a known userId', function () {
     var password = 'william test'
     var result = 'TGnly9w3Fch7tyJVO+0MWLpvlbMGgWODf/tFlNkV6js='
-    var snrp = crypto.userAuthSnrp
+    var snrp = crypto.userIdSnrp
 
     assert.equal(result, crypto.scrypt(password, snrp).toString('base64'))
   })

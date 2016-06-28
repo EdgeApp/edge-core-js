@@ -7,7 +7,7 @@ function Account (ctx, username, dataKey) {
   this.ctx = ctx
   this.username = username
   this.userStorage = new UserStorage(ctx.localStorage, username)
-  this.authId = userMap.getAuthId(ctx.localStorage, username)
+  this.userId = userMap.getUserId(ctx.localStorage, username)
 
   // Grab all the boxes:
   var authKeyBox = this.userStorage.getJson('authKeyBox')

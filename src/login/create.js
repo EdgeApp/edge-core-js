@@ -10,9 +10,9 @@ var account = require('../account.js')
 function usernameAvailable (ctx, username, callback) {
   username = userMap.normalize(username)
 
-  var authId = userMap.getAuthId(ctx.localStorage, username)
+  var userId = userMap.getUserId(ctx.localStorage, username)
   var request = {
-    'l1': authId
+    'l1': userId
   }
   ctx.authRequest('POST', '/v1/account/available', request, function (err, reply) {
     if (err) return callback(err)
@@ -26,7 +26,7 @@ exports.usernameAvailable = usernameAvailable
  */
 function create (ctx, username, password, callback) {
   username = userMap.normalize(username)
-  var authId = userMap.getAuthId(ctx.localStorage, username)
+  var userId = userMap.getUserId(ctx.localStorage, username)
 
   // Create random key material:
   var passwordKeySnrp = crypto.makeSnrp()
@@ -52,7 +52,7 @@ function create (ctx, username, password, callback) {
     'ELP1': authKeyBox
   }
   var request = {
-    'l1': authId,
+    'l1': userId,
     'lp1': passwordAuth.toString('base64'),
     'care_package': JSON.stringify(carePackage),
     'login_package': JSON.stringify(loginPackage),
@@ -63,7 +63,7 @@ function create (ctx, username, password, callback) {
     if (err) return callback(err)
 
     // Cache everything for future logins:
-    userMap.insert(ctx.localStorage, username, authId)
+    userMap.insert(ctx.localStorage, username, userId)
     var userStorage = new UserStorage(ctx.localStorage, username)
     userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
     userStorage.setJson('passwordBox', passwordBox)
@@ -71,12 +71,12 @@ function create (ctx, username, password, callback) {
     userStorage.setJson('syncKeyBox', syncKeyBox)
 
     // Now upgrade:
-    upgrade(ctx, userStorage, authId, passwordAuth, dataKey, function (err) {
+    upgrade(ctx, userStorage, userId, passwordAuth, dataKey, function (err) {
       if (err) return callback(err)
 
       // Now activate:
       var request = {
-        'l1': authId,
+        'l1': userId,
         'lp1': passwordAuth.toString('base64')
       }
       ctx.authRequest('POST', '/v1/account/activate', request, function (err, reply) {
@@ -88,7 +88,7 @@ function create (ctx, username, password, callback) {
 }
 exports.create = create
 
-function upgrade (ctx, userStorage, authId, authKey, dataKey, callback) {
+function upgrade (ctx, userStorage, userId, authKey, dataKey, callback) {
   // Create a BIP39 mnemonic, and use it to derive the rootKey:
   var entropy = crypto.random(256 / 8)
   var mnemonic = bip39.entropyToMnemonic(entropy.toString('hex'))
@@ -101,7 +101,7 @@ function upgrade (ctx, userStorage, authId, authKey, dataKey, callback) {
   var dataKeyBox = crypto.encrypt(dataKey, infoKey)
 
   var request = {
-    'l1': authId,
+    'l1': userId,
     'lp1': authKey.toString('base64'),
     'rootKeyBox': rootKeyBox,
     'mnemonicBox': mnemonicBox,
