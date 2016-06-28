@@ -85,3 +85,42 @@ function login (ctx, username, password, callback) {
   })
 }
 exports.login = login
+
+/**
+ * Sets up a password for the account.
+ */
+function setup (ctx, account, password, callback) {
+  var up = account.username + password
+
+  // Create new keys:
+  var passwordAuth = crypto.scrypt(up, crypto.passwordAuthSnrp)
+  var passwordKeySnrp = crypto.makeSnrp()
+  var passwordKey = crypto.scrypt(up, passwordKeySnrp)
+
+  // Encrypt:
+  var passwordBox = crypto.encrypt(account.dataKey, passwordKey)
+  var passwordAuthBox = crypto.encrypt(passwordAuth, account.dataKey)
+
+  var request = {
+    'userId': account.userId,
+    'passwordAuth': account.passwordAuth.toString('base64'),
+    'password': {
+      'passwordAuth': passwordAuth.toString('base64'),
+      'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
+      'passwordKeySnrp': passwordKeySnrp,
+      'passwordBox': passwordBox,
+      'passwordAuthBox': passwordAuthBox
+    }
+  }
+  ctx.authRequest2('PUT', '/v2/login/password', request, function (err, reply) {
+    if (err) return callback(err)
+
+    account.userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
+    account.userStorage.setJson('passwordBox', passwordBox)
+    account.userStorage.setJson('passwordAuthBox', passwordAuthBox)
+    account.passwordAuth = passwordAuth
+
+    return callback(null)
+  })
+}
+exports.setup = setup

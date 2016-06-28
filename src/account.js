@@ -1,6 +1,7 @@
 var crypto = require('./crypto.js')
 var UserStorage = require('./userStorage.js').UserStorage
 var userMap = require('./userMap.js')
+var loginPassword = require('./login/password.js')
 var loginPin = require('./login/pin.js')
 
 function Account (ctx, username, dataKey) {
@@ -29,6 +30,10 @@ Account.prototype.logout = function () {
   this.passwordAuth = null
   this.syncKey = null
   this.rootKey = null
+}
+
+Account.prototype.passwordSetup = function (password, callback) {
+  return loginPassword.setup(this.ctx, this, password, callback)
 }
 
 Account.prototype.pinSetup = function (pin, callback) {

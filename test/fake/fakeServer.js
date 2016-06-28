@@ -128,6 +128,26 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
+  if (uri.search('/v2/login/password') > 0) {
+    if (body['passwordAuth'] !== packages.passwordAuth) {
+      return callback(null, 500, '{"status_code":3}')
+    }
+    if (method === 'PUT') {
+      var data = body['password']
+      if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
+          !data['passwordBox'] || !data['passwordAuthBox']) {
+        return callback(null, 500, '{"status_code":3}')
+      }
+
+      this.db.passwordAuth = data['passwordAuth']
+      this.db.passwordKeySnrp = data['passwordKeySnrp']
+      this.db.passwordBox = data['passwordBox']
+      this.db.passwordAuthBox = data['passwordAuthBox']
+
+      return callback(null, 200, makeReply(results))
+    }
+  }
+
   callback(null, 400, '')
 }
 
