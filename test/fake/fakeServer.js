@@ -22,29 +22,29 @@ FakeServer.prototype.populate = function () {
 FakeServer.prototype.request = function (method, uri, body, callback) {
   var results = {}
 
-  if (uri.search('account/available') > 0) {
+  if (uri.search('/v1/account/available') > 0) {
     if (body['l1'] === packages.users['js test 0']) {
       return callback(null, 500, '{"status_code":3}')
     }
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('account/create') > 0) {
+  if (uri.search('/v1/account/create') > 0) {
     this.db.carePackage = JSON.parse(body['care_package'])
     this.db.loginPackage = JSON.parse(body['login_package'])
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('account/upgrade') > 0) {
+  if (uri.search('/v1/account/upgrade') > 0) {
     this.db.rootKeyBox = body['rootKeyBox']
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('account/activate') > 0) {
+  if (uri.search('/v1/account/activate') > 0) {
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('carepackage/get') > 0) {
+  if (uri.search('/v1/account/carepackage/get') > 0) {
     if (!this.db.carePackage) {
       return callback(null, 500, '{"status_code":3}')
     }
@@ -53,7 +53,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('loginpackage/get') > 0) {
+  if (uri.search('/v1/account/loginpackage/get') > 0) {
     if (!this.db.loginPackage) {
       return callback(null, 500, '{"status_code":3}')
     }
@@ -65,12 +65,12 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('pinpackage/update') > 0) {
+  if (uri.search('/v1/account/pinpackage/update') > 0) {
     this.db.pinKeyBox = JSON.parse(body['pin_package'])
     return callback(null, 200, makeReply({}))
   }
 
-  if (uri.search('pinpackage/get') > 0) {
+  if (uri.search('/v1/account/pinpackage/get') > 0) {
     if (!this.db.pinKeyBox) {
       return callback(null, 500, '{"status_code":3}')
     }
