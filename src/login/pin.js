@@ -71,7 +71,7 @@ function setup (ctx, account, pin, callback) {
 
   var request = {
     'l1': account.userId,
-    'lp1': account.authKey.toString('base64'),
+    'lp1': account.passwordAuth.toString('base64'),
     'lpin1': pinAuth.toString('base64'),
     'did': pinAuthId.toString('base64'),
     'pin_package': JSON.stringify(pinKeyBox),

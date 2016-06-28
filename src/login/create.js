@@ -39,7 +39,7 @@ function create (ctx, username, password, callback) {
 
   // Encrypt:
   var passwordBox = crypto.encrypt(dataKey, passwordKey)
-  var authKeyBox = crypto.encrypt(passwordAuth, dataKey)
+  var passwordAuthBox = crypto.encrypt(passwordAuth, dataKey)
   var syncKeyBox = crypto.encrypt(syncKey, dataKey)
 
   // Package:
@@ -49,7 +49,7 @@ function create (ctx, username, password, callback) {
   var loginPackage = {
     'EMK_LP2': passwordBox,
     'ESyncKey': syncKeyBox,
-    'ELP1': authKeyBox
+    'ELP1': passwordAuthBox
   }
   var request = {
     'l1': userId,
@@ -67,7 +67,7 @@ function create (ctx, username, password, callback) {
     var userStorage = new UserStorage(ctx.localStorage, username)
     userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
     userStorage.setJson('passwordBox', passwordBox)
-    userStorage.setJson('authKeyBox', authKeyBox)
+    userStorage.setJson('passwordAuthBox', passwordAuthBox)
     userStorage.setJson('syncKeyBox', syncKeyBox)
 
     // Now upgrade:
@@ -88,7 +88,7 @@ function create (ctx, username, password, callback) {
 }
 exports.create = create
 
-function upgrade (ctx, userStorage, userId, authKey, dataKey, callback) {
+function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
   // Create a BIP39 mnemonic, and use it to derive the rootKey:
   var entropy = crypto.random(256 / 8)
   var mnemonic = bip39.entropyToMnemonic(entropy.toString('hex'))
@@ -102,7 +102,7 @@ function upgrade (ctx, userStorage, userId, authKey, dataKey, callback) {
 
   var request = {
     'l1': userId,
-    'lp1': authKey.toString('base64'),
+    'lp1': passwordAuth.toString('base64'),
     'rootKeyBox': rootKeyBox,
     'mnemonicBox': mnemonicBox,
     'syncDataKeyBox': dataKeyBox

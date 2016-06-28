@@ -46,10 +46,10 @@ function loginOnline (ctx, username, userId, password, callback) {
         var loginPackage = JSON.parse(reply['login_package'])
         var passwordBox = loginPackage['EMK_LP2']
         var syncKeyBox = loginPackage['ESyncKey']
-        var authKeyBox = loginPackage['ELP1']
+        var passwordAuthBox = loginPackage['ELP1']
         var rootKeyBox = reply['rootKeyBox']
         var passwordKeySnrp = carePackage['SNRP2']
-        if (!passwordKeySnrp || !authKeyBox || !passwordBox || !syncKeyBox) {
+        if (!passwordKeySnrp || !passwordAuthBox || !passwordBox || !syncKeyBox) {
           return callback(Error('Missing data for login'))
         }
         if (!rootKeyBox) {
@@ -65,7 +65,7 @@ function loginOnline (ctx, username, userId, password, callback) {
         var userStorage = new UserStorage(ctx.localStorage, username)
         userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
         userStorage.setJson('passwordBox', passwordBox)
-        userStorage.setJson('authKeyBox', authKeyBox)
+        userStorage.setJson('passwordAuthBox', passwordAuthBox)
         userStorage.setJson('rootKeyBox', rootKeyBox)
         userStorage.setJson('syncKeyBox', syncKeyBox)
       } catch (e) {
