@@ -1,7 +1,7 @@
 var XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest
-var apiKey = {}
+var apiKey = null
 try {
-  apiKey = require('./apiKey.js')
+  apiKey = require('./apiKey.js').apiKey
 } catch (e) { }
 
 /**
@@ -9,9 +9,9 @@ try {
  */
 function authRequest (method, uri, body, callback) {
   // Ensure we have an API key:
-  if (!apiKey.apiKey) {
+  if (!apiKey) {
     var message = "Please create a file called 'test/fake/apiKey.js' with the line: " +
-      "module.exports.apiKey = '<your key here>'"
+      "exports.apiKey = '<your key here>'"
     throw Error(message)
   }
 
