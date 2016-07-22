@@ -25,6 +25,8 @@ FakeServer.prototype.populate = function () {
 FakeServer.prototype.request = function (method, uri, body, callback) {
   var results = {}
 
+  // Account lifetime v1: ----------------------------------------------------
+
   if (uri.search('/v1/account/available') > 0) {
     if (body['l1'] === packages.users['js test 0']) {
       return callback(null, 500, '{"status_code":3}')
@@ -53,6 +55,8 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
+  // Login v1: ---------------------------------------------------------------
+
   if (uri.search('/v1/account/carepackage/get') > 0) {
     if (body['l1'] !== packages.users['js test 0']) {
       return callback(null, 500, '{"status_code":3}')
@@ -80,6 +84,8 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
+  // PIN login v1: -----------------------------------------------------------
+
   if (uri.search('/v1/account/pinpackage/update') > 0) {
     this.db.pinKeyBox = JSON.parse(body['pin_package'])
     return callback(null, 200, makeReply({}))
@@ -91,6 +97,34 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     }
 
     results['pin_package'] = JSON.stringify(this.db.pinKeyBox)
+    return callback(null, 200, makeReply(results))
+  }
+
+  // login v2: ---------------------------------------------------------------
+
+  if (uri.search('/v2/login') > 0) {
+    if (body['userId'] !== packages.users['js test 0']) {
+      return callback(null, 500, '{"status_code":3}')
+    }
+
+    // If this is authenticated, populate goodies:
+    if (body['passwordAuth'] === packages.passwordAuth) {
+      if (this.db.passwordAuthBox) {
+        results['passwordAuthBox'] = this.db.passwordAuthBox
+      }
+      if (this.db.passwordBox) {
+        results['passwordBox'] = this.db.passwordBox
+      }
+      if (this.db.passwordKeySnrp) {
+        results['passwordKeySnrp'] = this.db.passwordKeySnrp
+      }
+      if (this.db.rootKeyBox) {
+        results['rootKeyBox'] = this.db.rootKeyBox
+      }
+      if (this.db.syncKeyBox) {
+        results['syncKeyBox'] = this.db.syncKeyBox
+      }
+    }
     return callback(null, 200, makeReply(results))
   }
 
