@@ -26,6 +26,6 @@ function authRequest (method, uri, body, callback) {
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.setRequestHeader('Authorization', 'Token ' + apiKey)
   xhr.send(JSON.stringify(body))
-  console.log('Visit ' + uri)
+  console.log(method + ' ' + uri)
 }
 exports.authRequest = authRequest
