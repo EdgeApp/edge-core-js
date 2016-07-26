@@ -4,6 +4,7 @@ var loginPin = require('./login/pin.js')
 var userMap = require('./userMap.js')
 
 var serverRoot = 'https://auth.airbitz.co/api'
+var serverRootTest = 'https://test-auth.airbitz.co/api'
 
 /**
  * @param authRequest function (method, uri, body, callback (err, status, body))
@@ -17,6 +18,25 @@ function Context (authRequest, localStorage) {
    */
   this.authRequest = function (method, uri, body, callback) {
     authRequest(method, serverRoot + uri, body, function (err, status, body) {
+      if (err) return callback(err)
+      try {
+        var reply = JSON.parse(body)
+      } catch (e) {
+        return callback(Error('Non-JSON reply, HTTP status ' + status))
+      }
+
+      // Look at the Airbitz status code:
+      switch (reply['status_code']) {
+        case 0:
+          return callback(null, reply.results)
+        default:
+          return callback(Error(body))
+      }
+    })
+  }
+
+  this.authRequest2 = function (method, uri, body, callback) {
+    authRequest(method, serverRootTest + uri, body, function (err, status, body) {
       if (err) return callback(err)
       try {
         var reply = JSON.parse(body)
