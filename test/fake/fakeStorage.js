@@ -30,11 +30,11 @@ FakeStorage.prototype.populateUsers = function () {
 FakeStorage.prototype.populate = function () {
   this.populateUsers()
   var userStorage = new UserStorage(this, 'js test 0')
-  userStorage.setJson('passwordKeySnrp', packages.carePackage['SNRP2'])
-  userStorage.setJson('passwordBox', packages.loginPackage['EMK_LP2'])
-  userStorage.setJson('passwordAuthBox', packages.loginPackage['ELP1'])
+  userStorage.setJson('passwordKeySnrp', packages.passwordKeySnrp)
+  userStorage.setJson('passwordBox', packages.passwordBox)
+  userStorage.setJson('passwordAuthBox', packages.passwordAuthBox)
   userStorage.setJson('rootKeyBox', packages.rootKeyBox)
-  userStorage.setJson('syncKeyBox', packages.loginPackage['ESyncKey'])
+  userStorage.setJson('syncKeyBox', packages.syncKeyBox)
   userStorage.setItem('pinAuthId', packages.pinPackage['DID'])
   userStorage.setJson('pinBox', packages.pinPackage['EMK_PINK'])
 }
