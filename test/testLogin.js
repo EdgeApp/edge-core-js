@@ -72,6 +72,22 @@ describe('creation', function () {
 })
 
 describe('password', function () {
+  it('setup', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var fakeServer = new FakeServer()
+
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+      if (err) done(err)
+      account.passwordSetup('Test1234', function (err) {
+        fakeStorage = new FakeStorage() // Force server login
+        if (err) done(err)
+        ctx.passwordLogin('js test 0', 'Test1234', done)
+      })
+    })
+  })
+
   it('login offline', function (done) {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()

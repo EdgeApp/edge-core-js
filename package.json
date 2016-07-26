@@ -5,6 +5,7 @@
   "author": "Airbitz, Inc.",
   "license": "SEE LICENSE IN LICENSE",
   "main": "index.js",
+  "bin": "cli.js",
   "dependencies": {
     "bip39": "^2.2.0",
     "scryptsy": "^1.2.1",
@@ -13,7 +14,8 @@
   "devDependencies": {
     "mocha": "^2.4.0",
     "webpack": "^2.0.0beta",
-    "standard": "^3.0.0"
+    "standard": "^3.0.0",
+    "node-getopt": "^0.2.3"
   },
   "scripts": {
     "pretest": "standard src/*.js src/login/*.js test/*.js test/fake/*.js",

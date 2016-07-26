@@ -23,56 +23,49 @@ function loginOffline (ctx, username, userId, password, callback) {
 }
 
 function loginOnline (ctx, username, userId, password, callback) {
+  var passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
+
   // Encode the username:
   var request = {
-    'l1': userId
+    'userId': userId,
+    'passwordAuth': passwordAuth.toString('base64')
     // "otp": null
   }
-  ctx.authRequest('POST', '/v1/account/carepackage/get', request, function (err, reply) {
+  ctx.authRequest2('GET', '/v2/login', request, function (err, reply) {
     if (err) return callback(err)
 
-    var carePackage = JSON.parse(reply['care_package'])
-    var passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
+    try {
+      // Password login:
+      var passwordKeySnrp = reply['passwordKeySnrp']
+      var passwordBox = reply['passwordBox']
+      // Key boxes:
+      var passwordAuthBox = reply['passwordAuthBox']
+      var rootKeyBox = reply['rootKeyBox']
+      var syncKeyBox = reply['syncKeyBox']
 
-    var request = {
-      'l1': userId,
-      'lp1': passwordAuth.toString('base64')
-      // "otp": null
-    }
-    ctx.authRequest('POST', '/v1/account/loginpackage/get', request, function (err, reply) {
-      if (err) return callback(err)
-      try {
-        // Extract the login package components:
-        var loginPackage = JSON.parse(reply['login_package'])
-        var passwordBox = loginPackage['EMK_LP2']
-        var syncKeyBox = loginPackage['ESyncKey']
-        var passwordAuthBox = loginPackage['ELP1']
-        var rootKeyBox = reply['rootKeyBox']
-        var passwordKeySnrp = carePackage['SNRP2']
-        if (!passwordKeySnrp || !passwordAuthBox || !passwordBox || !syncKeyBox) {
-          return callback(Error('Missing data for login'))
-        }
-        if (!rootKeyBox) {
-          return callback(Error('Non-upgraded account'))
-        }
-
-        // Decrypt the dataKey:
-        var passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
-        var dataKey = crypto.decrypt(passwordBox, passwordKey)
-
-        // Cache everything for future logins:
-        userMap.insert(ctx.localStorage, username, userId)
-        var userStorage = new UserStorage(ctx.localStorage, username)
-        userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
-        userStorage.setJson('passwordBox', passwordBox)
-        userStorage.setJson('passwordAuthBox', passwordAuthBox)
-        userStorage.setJson('rootKeyBox', rootKeyBox)
-        userStorage.setJson('syncKeyBox', syncKeyBox)
-      } catch (e) {
-        return callback(e)
+      if (!passwordKeySnrp || !passwordBox || !passwordAuthBox || !syncKeyBox) {
+        return callback(Error('Missing data for login'))
       }
-      return callback(null, new account.Account(ctx, username, dataKey))
-    })
+      if (!rootKeyBox) {
+        return callback(Error('Non-upgraded account'))
+      }
+
+      // Decrypt the dataKey:
+      var passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
+      var dataKey = crypto.decrypt(passwordBox, passwordKey)
+
+      // Cache everything for future logins:
+      userMap.insert(ctx.localStorage, username, userId)
+      var userStorage = new UserStorage(ctx.localStorage, username)
+      userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
+      userStorage.setJson('passwordBox', passwordBox)
+      userStorage.setJson('passwordAuthBox', passwordAuthBox)
+      userStorage.setJson('rootKeyBox', rootKeyBox)
+      userStorage.setJson('syncKeyBox', syncKeyBox)
+    } catch (e) {
+      return callback(e)
+    }
+    return callback(null, new account.Account(ctx, username, dataKey))
   })
 }
 
@@ -92,3 +85,42 @@ function login (ctx, username, password, callback) {
   })
 }
 exports.login = login
+
+/**
+ * Sets up a password for the account.
+ */
+function setup (ctx, account, password, callback) {
+  var up = account.username + password
+
+  // Create new keys:
+  var passwordAuth = crypto.scrypt(up, crypto.passwordAuthSnrp)
+  var passwordKeySnrp = crypto.makeSnrp()
+  var passwordKey = crypto.scrypt(up, passwordKeySnrp)
+
+  // Encrypt:
+  var passwordBox = crypto.encrypt(account.dataKey, passwordKey)
+  var passwordAuthBox = crypto.encrypt(passwordAuth, account.dataKey)
+
+  var request = {
+    'userId': account.userId,
+    'passwordAuth': account.passwordAuth.toString('base64'),
+    'password': {
+      'passwordAuth': passwordAuth.toString('base64'),
+      'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
+      'passwordKeySnrp': passwordKeySnrp,
+      'passwordBox': passwordBox,
+      'passwordAuthBox': passwordAuthBox
+    }
+  }
+  ctx.authRequest2('PUT', '/v2/login/password', request, function (err, reply) {
+    if (err) return callback(err)
+
+    account.userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
+    account.userStorage.setJson('passwordBox', passwordBox)
+    account.userStorage.setJson('passwordAuthBox', passwordAuthBox)
+    account.passwordAuth = passwordAuth
+
+    return callback(null)
+  })
+}
+exports.setup = setup
