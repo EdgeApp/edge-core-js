@@ -87,6 +87,29 @@ function login (ctx, username, password, callback) {
 exports.login = login
 
 /**
+ * Returns true if the given password is correct.
+ */
+function check (ctx, account, password) {
+  // Extract stuff from storage:
+  var userStorage = new UserStorage(ctx.localStorage, account.username)
+  var passwordKeySnrp = userStorage.getJson('passwordKeySnrp')
+  var passwordBox = userStorage.getJson('passwordBox')
+  if (!passwordKeySnrp || !passwordBox) {
+    throw new Error('Keys missing from local storage')
+  }
+
+  try {
+    // Decrypt the dataKey:
+    var passwordKey = crypto.scrypt(account.username + password, passwordKeySnrp)
+    crypto.decrypt(passwordBox, passwordKey)
+  } catch (e) {
+    return false
+  }
+  return true
+}
+exports.check = check
+
+/**
  * Sets up a password for the account.
  */
 function setup (ctx, account, password, callback) {

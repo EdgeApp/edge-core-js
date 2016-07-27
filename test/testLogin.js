@@ -88,6 +88,30 @@ describe('password', function () {
     })
   })
 
+  it('check good', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+
+    var ctx = new abc.Context(null, fakeStorage)
+    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+      if (err) done(err)
+      assert(account.passwordOk('y768Mv4PLFupQjMu'))
+      done()
+    })
+  })
+
+  it('check bad', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+
+    var ctx = new abc.Context(null, fakeStorage)
+    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+      if (err) done(err)
+      assert(!account.passwordOk('wrong one'))
+      done()
+    })
+  })
+
   it('login offline', function (done) {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()

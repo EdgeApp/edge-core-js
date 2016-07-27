@@ -32,6 +32,10 @@ Account.prototype.logout = function () {
   this.rootKey = null
 }
 
+Account.prototype.passwordOk = function (password) {
+  return loginPassword.check(this.ctx, this, password)
+}
+
 Account.prototype.passwordSetup = function (password, callback) {
   return loginPassword.setup(this.ctx, this, password, callback)
 }
