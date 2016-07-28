@@ -1,3 +1,10 @@
+/**
+ * Complete information for the 'js test 0' user,
+ * used by the unit tests.
+ */
+
+exports.dataKey = new Buffer('19f91d7899b86f859460d850a96708e5ed09fdeeb0adaf905319a2721b1a09f0', 'hex')
+
 exports.users = {
   'js test 0': 'm3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI='
 }

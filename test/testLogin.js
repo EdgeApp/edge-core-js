@@ -1,6 +1,8 @@
 /* global describe, it */
 var abc = require('../src/abc.js')
+var Account = require('../src/account.js').Account
 var assert = require('assert')
+var dataKey = require('./fake/packages.js').dataKey
 var FakeStorage = require('./fake/fakeStorage.js').FakeStorage
 var FakeServer = require('./fake/fakeServer.js').FakeServer
 var realServer = require('./fake/realServer.js')
@@ -79,15 +81,13 @@ describe('password', function () {
     fakeStorage.populate()
     var fakeServer = new FakeServer()
     fakeServer.populate()
-
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
-    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+    var account = new Account(ctx, 'js test 0', dataKey)
+
+    account.passwordSetup('Test1234', function (err) {
+      fakeStorage = new FakeStorage() // Force server-based login
       if (err) return done(err)
-      account.passwordSetup('Test1234', function (err) {
-        fakeStorage = new FakeStorage() // Force server login
-        if (err) return done(err)
-        ctx.passwordLogin('js test 0', 'Test1234', done)
-      })
+      ctx.passwordLogin('js test 0', 'Test1234', done)
     })
   })
 
@@ -171,14 +171,12 @@ describe('pin', function () {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
     var fakeServer = new FakeServer()
-
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
-    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+    var account = new Account(ctx, 'js test 0', dataKey)
+
+    account.pinSetup('1234', function (err) {
       if (err) return done(err)
-      account.pinSetup('1234', function (err) {
-        if (err) return done(err)
-        ctx.pinLogin('js test 0', '1234', done)
-      })
+      ctx.pinLogin('js test 0', '1234', done)
     })
   })
 
@@ -201,12 +199,11 @@ describe('pin', function () {
     fakeStorage.removeItem('airbitz.user.js test 0.pinAuthId')
 
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+    var account = new Account(ctx, 'js test 0', dataKey)
+
+    account.pinSetup('1234', function (err) {
       if (err) return done(err)
-      account.pinSetup('1234', function (err) {
-        if (err) return done(err)
-        ctx.pinLogin('js test 0', '1234', done)
-      })
+      ctx.pinLogin('js test 0', '1234', done)
     })
   })
 })
