@@ -82,10 +82,10 @@ describe('password', function () {
 
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
-      if (err) done(err)
+      if (err) return done(err)
       account.passwordSetup('Test1234', function (err) {
         fakeStorage = new FakeStorage() // Force server login
-        if (err) done(err)
+        if (err) return done(err)
         ctx.passwordLogin('js test 0', 'Test1234', done)
       })
     })
@@ -97,7 +97,7 @@ describe('password', function () {
 
     var ctx = new abc.Context(null, fakeStorage)
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
-      if (err) done(err)
+      if (err) return done(err)
       assert(account.passwordOk('y768Mv4PLFupQjMu'))
       done()
     })
@@ -109,7 +109,7 @@ describe('password', function () {
 
     var ctx = new abc.Context(null, fakeStorage)
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
-      if (err) done(err)
+      if (err) return done(err)
       assert(!account.passwordOk('wrong one'))
       done()
     })
@@ -174,9 +174,9 @@ describe('pin', function () {
 
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
-      if (err) done(err)
+      if (err) return done(err)
       account.pinSetup('1234', function (err) {
-        if (err) done(err)
+        if (err) return done(err)
         ctx.pinLogin('js test 0', '1234', done)
       })
     })
