@@ -13,6 +13,7 @@ function FakeServer () {
 }
 
 FakeServer.prototype.populate = function () {
+  this.db.userId = packages.users['js test 0']
   this.db.passwordAuth = packages.passwordAuth
   this.db.passwordAuthBox = packages.passwordAuthBox
   this.db.passwordBox = packages.passwordBox
@@ -22,13 +23,22 @@ FakeServer.prototype.populate = function () {
   this.db.pinKeyBox = packages.pinKeyBox
 }
 
+FakeServer.prototype.authCheck = function (body) {
+  if (this.db.userId && this.db.userId === body['userId'] &&
+      this.db.passwordAuth && this.db.passwordAuth === body['passwordAuth']) {
+    return true
+  }
+
+  return false
+}
+
 FakeServer.prototype.request = function (method, uri, body, callback) {
   var results = {}
 
   // Account lifetime v1: ----------------------------------------------------
 
   if (uri.search('/v1/account/available') > 0) {
-    if (body['l1'] === packages.users['js test 0']) {
+    if (this.db.userId && this.db.userId === body['l1']) {
       return callback(null, 500, '{"status_code":3}')
     }
     return callback(null, 200, makeReply(results))
@@ -58,7 +68,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
   // Login v1: ---------------------------------------------------------------
 
   if (uri.search('/v1/account/carepackage/get') > 0) {
-    if (body['l1'] !== packages.users['js test 0']) {
+    if (!this.db.userId || this.db.userId !== body['l1']) {
       return callback(null, 500, '{"status_code":3}')
     }
 
@@ -69,7 +79,9 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
   }
 
   if (uri.search('/v1/account/loginpackage/get') > 0) {
-    if (body['lp1'] !== packages.passwordAuth) {
+    body['userId'] = body['l1']
+    body['passwordAuth'] = body['lp1']
+    if (!this.authCheck(body)) {
       return callback(null, 500, '{"status_code":3}')
     }
 
@@ -103,48 +115,47 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
   // login v2: ---------------------------------------------------------------
 
   if (uri.search('/v2/login') > 0) {
-    if (body['userId'] !== packages.users['js test 0']) {
+    if (!this.authCheck(body)) {
       return callback(null, 500, '{"status_code":3}')
     }
 
-    // If this is authenticated, populate goodies:
-    if (body['passwordAuth'] === packages.passwordAuth) {
-      if (this.db.passwordAuthBox) {
-        results['passwordAuthBox'] = this.db.passwordAuthBox
-      }
-      if (this.db.passwordBox) {
-        results['passwordBox'] = this.db.passwordBox
-      }
-      if (this.db.passwordKeySnrp) {
-        results['passwordKeySnrp'] = this.db.passwordKeySnrp
-      }
-      if (this.db.rootKeyBox) {
-        results['rootKeyBox'] = this.db.rootKeyBox
-      }
-      if (this.db.syncKeyBox) {
-        results['syncKeyBox'] = this.db.syncKeyBox
-      }
+    if (this.db.passwordAuthBox) {
+      results['passwordAuthBox'] = this.db.passwordAuthBox
+    }
+    if (this.db.passwordBox) {
+      results['passwordBox'] = this.db.passwordBox
+    }
+    if (this.db.passwordKeySnrp) {
+      results['passwordKeySnrp'] = this.db.passwordKeySnrp
+    }
+    if (this.db.rootKeyBox) {
+      results['rootKeyBox'] = this.db.rootKeyBox
+    }
+    if (this.db.syncKeyBox) {
+      results['syncKeyBox'] = this.db.syncKeyBox
     }
     return callback(null, 200, makeReply(results))
   }
 
   if (uri.search('/v2/login/password') > 0) {
-    if (body['passwordAuth'] !== packages.passwordAuth) {
+    if (!this.authCheck(body)) {
       return callback(null, 500, '{"status_code":3}')
     }
-    if (method === 'PUT') {
-      var data = body['password']
-      if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
-          !data['passwordBox'] || !data['passwordAuthBox']) {
-        return callback(null, 500, '{"status_code":3}')
-      }
 
-      this.db.passwordAuth = data['passwordAuth']
-      this.db.passwordKeySnrp = data['passwordKeySnrp']
-      this.db.passwordBox = data['passwordBox']
-      this.db.passwordAuthBox = data['passwordAuthBox']
+    switch (method) {
+      case 'PUT':
+        var data = body['password']
+        if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
+            !data['passwordBox'] || !data['passwordAuthBox']) {
+          return callback(null, 500, '{"status_code":3}')
+        }
 
-      return callback(null, 200, makeReply(results))
+        this.db.passwordAuth = data['passwordAuth']
+        this.db.passwordKeySnrp = data['passwordKeySnrp']
+        this.db.passwordBox = data['passwordBox']
+        this.db.passwordAuthBox = data['passwordAuthBox']
+
+        return callback(null, 200, makeReply(results))
     }
   }
 

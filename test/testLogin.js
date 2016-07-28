@@ -27,6 +27,7 @@ describe('creation', function () {
   it('username available', function (done) {
     var fakeStorage = new FakeStorage()
     var fakeServer = new FakeServer()
+    fakeServer.populate()
 
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
     ctx.usernameAvailable('js test 1', done)
@@ -36,6 +37,7 @@ describe('creation', function () {
     var fakeStorage = new FakeStorage()
     fakeStorage.populateUsers()
     var fakeServer = new FakeServer()
+    fakeServer.populate()
 
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
     ctx.usernameAvailable('js test 0', function (err) { done(!err) })
@@ -76,6 +78,7 @@ describe('password', function () {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
     var fakeServer = new FakeServer()
+    fakeServer.populate()
 
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
