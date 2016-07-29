@@ -30,6 +30,50 @@ exports.passwordKeySnrp = {
   'salt_hex': 'ed6396d127b60d6ffc469634b9a53bdcfb4ee381e9b9df5e66a0f97895871981'
 }
 
+// Recovery2:
+
+exports.recovery2Answers = [
+  'Sir Lancelot of Camelot',
+  'To seek the Holy Grail',
+  'Blue'
+]
+
+exports.recovery2Auth = [
+  '3HLK5/t/b423IHXRU+Y3QpchDs7vYBTRcmVSDCSxtrM=',
+  'NB//m53r5qqz8CvJTU+oX6MUrnRGsXkyiQLvLmBkOpU=',
+  'RY5FHVy9P2NU/m57AtJcNepLMEJbSF/nH9kYVUNNLrQ='
+]
+
+exports.recovery2Box = {
+  encryptionType: 0,
+  iv_hex: '8413f1eadf981f199e06f90bef1b6f45',
+  data_base64: 'bSHUW6sKgDkqaiwsvxWeCNj4KSE3FSKsQ12EAv0iUe9Ym/l6nMrt/Vamwe5Rw7gpRlKaLSklFCXD1TL5EytfwfSrWYz4ijR1NG9FZThW4B8='
+}
+
+exports.recovery2Id = 'DeovL5jZTjnVjj+W/a7mTFKn0evQw0a3RxaAEwBC1+8='
+
+exports.recovery2Key = 'BYEJSOxFj983EUeAfj57W-dFYm-pdUfIP-jCmYtutOc'
+
+exports.recovery2KeyBox = {
+  encryptionType: 0,
+  iv_hex: 'a1d70b50758a8b4adee8b1f56b310f6c',
+  data_base64: 'Z7lrDhvJC3t/TMwFXVX+iA1RP7erSeLrESbdOGbs0Kl1jeaYDNZMIovo5bX01DB7myS4ozbGu1NKhNk4sxTa3eraTe+dz4khLqm+5cNwuIA='
+}
+
+exports.recovery2Questions = [
+  'What is your name?',
+  'What is your quest?',
+  'What is your favorite color?'
+]
+
+exports.question2Box = {
+  encryptionType: 0,
+  iv_hex: '9e9e326f3290798710db411479a4492f',
+  data_base64: 'U4exiu8ycykdZUL/+urQxbVcpyugCJJKtPZ48jvkrMawJhUnolv9g2oCs5IPkUpXx3V7atgpIZHi71tadC0zaIgJfoyXBw0V4ZVNZtiFIljJxYsuI60sGHIrYmyNj3ZDHevpRWoHtEIYNtg8S57ZLIWUO1eQmuEkfpj8VAasGbk='
+}
+
+// Long-term key storage:
+
 exports.rootKeyBox = {
   'data_base64': 'pR+yQsnkynA03Xqa8AYHzRzunxsBoFM39huz09DL+20RZxAAid4iWkkBNei+Z6Mp0sdhDNfilPQmU5rOuABo70NIO+E3GNZ66RmG6SkN0Jo0Fgp28Qfyg/aD6BlMNw++oXS8yGuDvPotDpM/rgYd6l7/OuLLfg5cZw85Qe1D9UM9dqP8EVpKPQTqSsAnTE0RsHG3HFVIFVRQAsIqqsynAC+h8QiKdAFaqzdFVbB75iu4KV27wdjfRnZrTVPqGA9fnC96vhRRUNRmQnWbJRvdyhIXRHYXJbu/ip1eFts054yfjhyxHffOXfcSpm3xwL0itf3Y4rEUG0dEQO5IwfpuRxspFFn3S/Fi4wGkw+PJNNtF3r5djryeYOFE854n3YOkBayhyhnNAJuaaHeOnrP7QaD3V4hDuFezHqTWCU8lA7W0u7SmFZ1IXXXxvjITvglkmTrnx8CbWkmjRXqIbMl8tg==',
   'encryptionType': 0,

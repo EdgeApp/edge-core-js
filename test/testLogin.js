@@ -2,7 +2,7 @@
 var abc = require('../src/abc.js')
 var Account = require('../src/account.js').Account
 var assert = require('assert')
-var dataKey = require('./fake/packages.js').dataKey
+var packages = require('./fake/packages.js')
 var FakeStorage = require('./fake/fakeStorage.js').FakeStorage
 var FakeServer = require('./fake/fakeServer.js').FakeServer
 var realServer = require('./fake/realServer.js')
@@ -82,7 +82,7 @@ describe('password', function () {
     var fakeServer = new FakeServer()
     fakeServer.populate()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
-    var account = new Account(ctx, 'js test 0', dataKey)
+    var account = new Account(ctx, 'js test 0', packages.dataKey)
 
     account.passwordSetup('Test1234', function (err) {
       fakeStorage = new FakeStorage() // Force server-based login
@@ -172,7 +172,7 @@ describe('pin', function () {
     fakeStorage.populate()
     var fakeServer = new FakeServer()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
-    var account = new Account(ctx, 'js test 0', dataKey)
+    var account = new Account(ctx, 'js test 0', packages.dataKey)
 
     account.pinSetup('1234', function (err) {
       if (err) return done(err)
@@ -199,11 +199,93 @@ describe('pin', function () {
     fakeStorage.removeItem('airbitz.user.js test 0.pinAuthId')
 
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-    var account = new Account(ctx, 'js test 0', dataKey)
+    var account = new Account(ctx, 'js test 0', packages.dataKey)
 
     account.pinSetup('1234', function (err) {
       if (err) return done(err)
       ctx.pinLogin('js test 0', '1234', done)
     })
+  })
+})
+
+describe('recovery2', function () {
+  it('get local key', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var ctx = new abc.Context(null, fakeStorage)
+
+    ctx.getRecovery2Key('js test 0', function (err, key) {
+      if (err) return done(err)
+      assert.equal(key, packages.recovery2Key)
+      done()
+    })
+  })
+
+  it('get questions', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var fakeServer = new FakeServer()
+    fakeServer.populate()
+
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    ctx.fetchRecovery2Questions(packages.recovery2Key, 'js test 0', function (err, questions) {
+      if (err) return done(err)
+      assert.equal(questions.length, packages.recovery2Questions.length)
+      for (var i = 0; i < questions.length; ++i) {
+        assert.equal(questions[i], packages.recovery2Questions[i])
+      }
+      done()
+    })
+  })
+
+  it('login', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var fakeServer = new FakeServer()
+    fakeServer.populate()
+
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    ctx.loginWithRecovery2(packages.recovery2Key, 'js test 0', packages.recovery2Answers, null, null, done)
+  })
+
+  it('set', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var fakeServer = new FakeServer()
+    fakeServer.populate()
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    var account = new Account(ctx, 'js test 0', packages.dataKey)
+
+    account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {
+      if (err) return done(err)
+      ctx.fetchRecovery2Questions(key, 'js test 0', function (err, questions) {
+        if (err) return done(err)
+        ctx.loginWithRecovery2(key, 'js test 0', packages.recovery2Answers, null, null, done)
+      })
+    })
+  })
+
+  it.skip('set on live server', function (done) {
+    this.timeout(10000)
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
+    var account = new Account(ctx, 'js test 0', packages.dataKey)
+
+    account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {
+      if (err) return done(err)
+      ctx.fetchRecovery2Questions(key, 'js test 0', function (err, questions) {
+        if (err) return done(err)
+        ctx.loginWithRecovery2(key, 'js test 0', packages.recovery2Answers, null, null, done)
+      })
+    })
+  })
+
+  it.skip('login to live server', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+
+    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
+    ctx.loginWithRecovery2(packages.recovery2Key, 'js test 0', packages.recovery2Answers, null, null, done)
   })
 })

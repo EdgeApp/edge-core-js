@@ -49,7 +49,7 @@ function loginOnline (ctx, username, userId, password, callback) {
       // Cache everything for future logins:
       userMap.insert(ctx.localStorage, username, userId)
       var userStorage = new UserStorage(ctx.localStorage, username)
-      account.saveLoginReply(userStorage, reply)
+      account.saveLoginReply(userStorage, reply, dataKey)
     } catch (e) {
       return callback(e)
     }

@@ -1,7 +1,9 @@
 var loginCreate = require('./login/create.js')
 var loginPassword = require('./login/password.js')
 var loginPin = require('./login/pin.js')
+var loginRecovery2 = require('./login/recovery2.js')
 var userMap = require('./userMap.js')
+var UserStorage = require('./userStorage.js').UserStorage
 
 var serverRoot = 'https://auth.airbitz.co/api'
 var serverRootTest = 'https://test-auth.airbitz.co/api'
@@ -86,6 +88,24 @@ Context.prototype.pinExists = function (username) {
 
 Context.prototype.pinLogin = function (username, pin, callback) {
   return loginPin.login(this, username, pin, callback)
+}
+
+Context.prototype.getRecovery2Key = function (username, callback) {
+  var userStorage = new UserStorage(this.localStorage, username)
+  var recovery2Key = userStorage.getItem('recovery2Key')
+  if (recovery2Key) {
+    callback(null, recovery2Key)
+  } else {
+    callback(new Error('No recovery key stored locally.'))
+  }
+}
+
+Context.prototype.loginWithRecovery2 = function (recovery2Key, username, answers, otp, options, callback) {
+  return loginRecovery2.login(this, recovery2Key, username, answers, callback)
+}
+
+Context.prototype.fetchRecovery2Questions = function (recovery2Key, username, callback) {
+  return loginRecovery2.questions(this, recovery2Key, username, callback)
 }
 
 exports.Context = Context
