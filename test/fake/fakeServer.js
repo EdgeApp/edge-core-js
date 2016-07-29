@@ -1,4 +1,5 @@
 var packages = require('./packages.js')
+var url = require('url')
 
 function makeReply (results) {
   var reply = {
@@ -33,18 +34,19 @@ FakeServer.prototype.authCheck = function (body) {
 }
 
 FakeServer.prototype.request = function (method, uri, body, callback) {
+  var path = url.parse(uri).pathname
   var results = {}
 
   // Account lifetime v1: ----------------------------------------------------
 
-  if (uri.search('/v1/account/available') > 0) {
+  if (path === '/api/v1/account/available') {
     if (this.db.userId && this.db.userId === body['l1']) {
       return callback(null, 500, '{"status_code":3}')
     }
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('/v1/account/create') > 0) {
+  if (path === '/api/v1/account/create') {
     var carePackage = JSON.parse(body['care_package'])
     this.db.passwordKeySnrp = carePackage['SNRP2']
 
@@ -56,18 +58,18 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('/v1/account/upgrade') > 0) {
+  if (path === '/api/v1/account/upgrade') {
     this.db.rootKeyBox = body['rootKeyBox']
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('/v1/account/activate') > 0) {
+  if (path === '/api/v1/account/activate') {
     return callback(null, 200, makeReply(results))
   }
 
   // Login v1: ---------------------------------------------------------------
 
-  if (uri.search('/v1/account/carepackage/get') > 0) {
+  if (path === '/api/v1/account/carepackage/get') {
     if (!this.db.userId || this.db.userId !== body['l1']) {
       return callback(null, 500, '{"status_code":3}')
     }
@@ -78,7 +80,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('/v1/account/loginpackage/get') > 0) {
+  if (path === '/api/v1/account/loginpackage/get') {
     body['userId'] = body['l1']
     body['passwordAuth'] = body['lp1']
     if (!this.authCheck(body)) {
@@ -98,12 +100,12 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
 
   // PIN login v1: -----------------------------------------------------------
 
-  if (uri.search('/v1/account/pinpackage/update') > 0) {
+  if (path === '/api/v1/account/pinpackage/update') {
     this.db.pinKeyBox = JSON.parse(body['pin_package'])
     return callback(null, 200, makeReply({}))
   }
 
-  if (uri.search('/v1/account/pinpackage/get') > 0) {
+  if (path === '/api/v1/account/pinpackage/get') {
     if (!this.db.pinKeyBox) {
       return callback(null, 500, '{"status_code":3}')
     }
@@ -114,7 +116,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
 
   // login v2: ---------------------------------------------------------------
 
-  if (uri.search('/v2/login') > 0) {
+  if (path === '/api/v2/login') {
     if (!this.authCheck(body)) {
       return callback(null, 500, '{"status_code":3}')
     }
@@ -137,7 +139,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
-  if (uri.search('/v2/login/password') > 0) {
+  if (path === '/api/v2/login/password') {
     if (!this.authCheck(body)) {
       return callback(null, 500, '{"status_code":3}')
     }
