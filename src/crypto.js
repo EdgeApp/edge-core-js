@@ -51,7 +51,7 @@ exports.random = random
  */
 function decrypt (box, key) {
   if (box['encryptionType'] !== 0) {
-    throw Error('Unknown encryption type')
+    throw new Error('Unknown encryption type')
   }
 
   var iv = new Buffer(box['iv_hex'], 'hex')

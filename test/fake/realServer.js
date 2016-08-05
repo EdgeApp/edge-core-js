@@ -12,7 +12,7 @@ function authRequest (method, uri, body, callback) {
   if (!apiKey) {
     var message = "Please create a file called 'test/fake/apiKey.js' with the line: " +
       "exports.apiKey = '<your key here>'"
-    throw Error(message)
+    throw new Error(message)
   }
 
   var xhr = new XMLHttpRequest()

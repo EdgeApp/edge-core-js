@@ -46,7 +46,7 @@ function normalize (username) {
   for (var i = 0; i < out.length; ++i) {
     var c = out.charCodeAt(i)
     if (c < 0x20 || c > 0x7e) {
-      throw Error('Bad characters in username')
+      throw new Error('Bad characters in username')
     }
   }
   return out

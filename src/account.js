@@ -14,9 +14,9 @@ function Account (ctx, username, dataKey) {
   var passwordAuthBox = this.userStorage.getJson('passwordAuthBox')
   var rootKeyBox = this.userStorage.getJson('rootKeyBox')
   var syncKeyBox = this.userStorage.getJson('syncKeyBox')
-  if (!passwordAuthBox) throw Error('Missing passwordAuthBox')
-  if (!rootKeyBox) throw Error('Missing rootKeyBox')
-  if (!syncKeyBox) throw Error('Missing syncKeyBox')
+  if (!passwordAuthBox) throw new Error('Missing passwordAuthBox')
+  if (!rootKeyBox) throw new Error('Missing rootKeyBox')
+  if (!syncKeyBox) throw new Error('Missing syncKeyBox')
 
   // Set up the keys:
   this.dataKey = dataKey
