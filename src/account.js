@@ -45,4 +45,24 @@ Account.prototype.pinSetup = function (pin, callback) {
 }
 
 exports.Account = Account
-exports.UserStorage = 'fun'
+
+/**
+ * Unpacks a login v2 reply package, and stores the contents locally.
+ */
+function saveLoginReply (userStorage, reply) {
+  var keys = [
+    // Password login:
+    'passwordKeySnrp', 'passwordBox',
+    // Key boxes:
+    'passwordAuthBox', 'rootKeyBox', 'syncKeyBox'
+  ]
+
+  // Store any keys the reply may contain:
+  for (var i = 0; i < keys.length; ++i) {
+    var key = keys[i]
+    if (reply[key]) {
+      userStorage.setJson(key, reply[key])
+    }
+  }
+}
+exports.saveLoginReply = saveLoginReply
