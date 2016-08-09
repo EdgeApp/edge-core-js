@@ -9,6 +9,12 @@ function makeReply (results) {
   return JSON.stringify(reply)
 }
 
+var authLevel = {
+  none: 'none',
+  recovery2Id: 'recovery2Id',
+  full: 'full'
+}
+
 function FakeServer () {
   this.db = {}
 }
@@ -19,18 +25,40 @@ FakeServer.prototype.populate = function () {
   this.db.passwordAuthBox = packages.passwordAuthBox
   this.db.passwordBox = packages.passwordBox
   this.db.passwordKeySnrp = packages.passwordKeySnrp
+  this.db.recovery2Id = packages.recovery2Id
+  this.db.recovery2Auth = packages.recovery2Auth
+  this.db.recovery2Box = packages.recovery2Box
+  this.db.recovery2KeyBox = packages.recovery2KeyBox
+  this.db.question2Box = packages.question2Box
   this.db.syncKeyBox = packages.syncKeyBox
   this.db.rootKeyBox = packages.rootKeyBox
   this.db.pinKeyBox = packages.pinKeyBox
 }
 
 FakeServer.prototype.authCheck = function (body) {
+  // Password login:
   if (this.db.userId && this.db.userId === body['userId'] &&
       this.db.passwordAuth && this.db.passwordAuth === body['passwordAuth']) {
-    return true
+    return authLevel.full
   }
 
-  return false
+  // Recovery2 login:
+  if (this.db.recovery2Id && this.db.recovery2Id === body['recovery2Id']) {
+    // Check answers:
+    var recovery2Auth = body['recovery2Auth']
+    if (recovery2Auth instanceof Array &&
+        recovery2Auth.length === this.db.recovery2Auth.length) {
+      for (var i = 0; i < recovery2Auth.length; ++i) {
+        if (recovery2Auth[i] !== this.db.recovery2Auth[i]) {
+          return authLevel.recovery2Id
+        }
+      }
+      return authLevel.full
+    }
+    return authLevel.recovery2Id
+  }
+
+  return authLevel.none
 }
 
 FakeServer.prototype.request = function (method, uri, body, callback) {
@@ -117,26 +145,31 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
   // login v2: ---------------------------------------------------------------
 
   if (path === '/api/v2/login') {
-    if (!this.authCheck(body)) {
-      return callback(null, 500, '{"status_code":3}')
-    }
+    switch (this.authCheck(body)) {
+      default:
+        return callback(null, 500, '{"status_code":3}')
 
-    if (this.db.passwordAuthBox) {
-      results['passwordAuthBox'] = this.db.passwordAuthBox
+      case authLevel.recovery2Id:
+        results['question2Box'] = this.db.question2Box
+        return callback(null, 200, makeReply(results))
+
+      case authLevel.full:
+        var keys = [
+          'passwordAuthBox',
+          'passwordBox',
+          'passwordKeySnrp',
+          'recovery2Box',
+          'recovery2KeyBox',
+          'rootKeyBox',
+          'syncKeyBox'
+        ]
+        for (var i = 0; i < keys.length; ++i) {
+          if (this.db[keys[i]]) {
+            results[keys[i]] = this.db[keys[i]]
+          }
+        }
+        return callback(null, 200, makeReply(results))
     }
-    if (this.db.passwordBox) {
-      results['passwordBox'] = this.db.passwordBox
-    }
-    if (this.db.passwordKeySnrp) {
-      results['passwordKeySnrp'] = this.db.passwordKeySnrp
-    }
-    if (this.db.rootKeyBox) {
-      results['rootKeyBox'] = this.db.rootKeyBox
-    }
-    if (this.db.syncKeyBox) {
-      results['syncKeyBox'] = this.db.syncKeyBox
-    }
-    return callback(null, 200, makeReply(results))
   }
 
   if (path === '/api/v2/login/password') {
@@ -156,6 +189,30 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         this.db.passwordKeySnrp = data['passwordKeySnrp']
         this.db.passwordBox = data['passwordBox']
         this.db.passwordAuthBox = data['passwordAuthBox']
+
+        return callback(null, 200, makeReply(results))
+    }
+  }
+
+  if (path === '/api/v2/login/recovery2') {
+    if (!this.authCheck(body)) {
+      return callback(null, 500, '{"status_code":3}')
+    }
+
+    switch (method) {
+      case 'PUT':
+        data = body['recovery2']
+        if (!data['recovery2Id'] || !data['recovery2Auth'] ||
+            !data['question2Box'] || !data['recovery2Box'] ||
+            !data['recovery2KeyBox']) {
+          return callback(null, 500, '{"status_code":5}')
+        }
+
+        this.db.recovery2Id = data['recovery2Id']
+        this.db.recovery2Auth = data['recovery2Auth']
+        this.db.question2Box = data['question2Box']
+        this.db.recovery2Box = data['recovery2Box']
+        this.db.recovery2KeyBox = data['recovery2KeyBox']
 
         return callback(null, 200, makeReply(results))
     }

@@ -38,16 +38,8 @@ function loginOnline (ctx, username, userId, password, callback) {
       // Password login:
       var passwordKeySnrp = reply['passwordKeySnrp']
       var passwordBox = reply['passwordBox']
-      // Key boxes:
-      var passwordAuthBox = reply['passwordAuthBox']
-      var rootKeyBox = reply['rootKeyBox']
-      var syncKeyBox = reply['syncKeyBox']
-
-      if (!passwordKeySnrp || !passwordBox || !passwordAuthBox || !syncKeyBox) {
-        return callback(Error('Missing data for login'))
-      }
-      if (!rootKeyBox) {
-        return callback(Error('Non-upgraded account'))
+      if (!passwordKeySnrp || !passwordBox) {
+        return callback(Error('Missing data for password login'))
       }
 
       // Decrypt the dataKey:
@@ -57,11 +49,7 @@ function loginOnline (ctx, username, userId, password, callback) {
       // Cache everything for future logins:
       userMap.insert(ctx.localStorage, username, userId)
       var userStorage = new UserStorage(ctx.localStorage, username)
-      userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
-      userStorage.setJson('passwordBox', passwordBox)
-      userStorage.setJson('passwordAuthBox', passwordAuthBox)
-      userStorage.setJson('rootKeyBox', rootKeyBox)
-      userStorage.setJson('syncKeyBox', syncKeyBox)
+      account.saveLoginReply(userStorage, reply, dataKey)
     } catch (e) {
       return callback(e)
     }
