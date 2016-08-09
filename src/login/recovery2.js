@@ -1,22 +1,17 @@
+var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+
 var crypto = require('../crypto.js')
+var base58 = require('base-x')(BASE58)
 var userMap = require('../userMap.js')
 var UserStorage = require('../userStorage.js').UserStorage
 var account = require('../account.js')
 
 function parseKey (key) {
-  var base64 = key.replace(/-/g, '+').replace(/_/g, '/')
-
-  switch (base64.length % 4) {
-    case 0: return new Buffer(base64, 'base64')
-    case 1: throw new Error('Invalid base64url length')
-    case 2: return new Buffer(base64 + '==', 'base64')
-    case 3: return new Buffer(base64 + '=', 'base64')
-  }
+  return new Buffer(base58.decode(key))
 }
 
 function encodeKey (key) {
-  return key.toString('base64')
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=*$/, '')
+  return base58.encode(key)
 }
 exports.encodeKey = encodeKey
 

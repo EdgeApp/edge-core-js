@@ -52,7 +52,7 @@ exports.recovery2Box = {
 
 exports.recovery2Id = 'DeovL5jZTjnVjj+W/a7mTFKn0evQw0a3RxaAEwBC1+8='
 
-exports.recovery2Key = 'BYEJSOxFj983EUeAfj57W-dFYm-pdUfIP-jCmYtutOc'
+exports.recovery2Key = 'NVADGXzb5Zc55PYXVVT7GRcXPnY9NZJUjiZK8aQnidc'
 
 exports.recovery2KeyBox = {
   encryptionType: 0,
