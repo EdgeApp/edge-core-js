@@ -4,7 +4,7 @@
   "description": "Airbitz core Javascript implementation",
   "author": "Airbitz, Inc.",
   "license": "SEE LICENSE IN LICENSE",
-  "main": "index.js",
+  "main": "src/abc.js",
   "bin": "cli.js",
   "dependencies": {
     "base-x": "^1.0.4",
