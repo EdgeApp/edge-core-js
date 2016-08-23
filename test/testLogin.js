@@ -19,8 +19,8 @@ describe('username', function () {
   it('list usernames in local storage', function () {
     var fakeStorage = new FakeStorage()
     fakeStorage.populateUsers()
-
     var ctx = new abc.Context(null, fakeStorage)
+
     assert.deepEqual(ctx.usernameList(), ['js test 0'])
   })
 })
@@ -30,8 +30,8 @@ describe('creation', function () {
     var fakeStorage = new FakeStorage()
     var fakeServer = new FakeServer()
     fakeServer.populate()
-
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+
     ctx.usernameAvailable('js test 1', done)
   })
 
@@ -40,33 +40,45 @@ describe('creation', function () {
     fakeStorage.populateUsers()
     var fakeServer = new FakeServer()
     fakeServer.populate()
-
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+
     ctx.usernameAvailable('js test 0', function (err) { done(!err) })
+  })
+
+  it('create account', function (done) {
+    var fakeStorage = new FakeStorage()
+    var fakeServer = new FakeServer()
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+
+    ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+      if (err) return done(err)
+      // Try logging in:
+      ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
+    })
   })
 
   it.skip('username not available on live server', function (done) {
     this.timeout(10000)
     var fakeStorage = new FakeStorage()
     fakeStorage.populateUsers()
-
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
+
     ctx.usernameAvailable('js test 0', function (err) { done(!err) })
   })
 
   it.skip('username available on live server', function (done) {
     this.timeout(10000)
     var fakeStorage = new FakeStorage()
-
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
+
     ctx.usernameAvailable('js test dontcreate', done)
   })
 
-  it('create account', function (done) {
+  it.skip('create account on live server', function (done) {
+    this.timeout(10000)
     var fakeStorage = new FakeStorage()
-    var fakeServer = new FakeServer()
+    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
 
-    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
     ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
       if (err) return done(err)
       // Try logging in:
@@ -94,8 +106,8 @@ describe('password', function () {
   it('check good', function (done) {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
-
     var ctx = new abc.Context(null, fakeStorage)
+
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
       if (err) return done(err)
       assert(account.passwordOk('y768Mv4PLFupQjMu'))
@@ -106,8 +118,8 @@ describe('password', function () {
   it('check bad', function (done) {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
-
     var ctx = new abc.Context(null, fakeStorage)
+
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
       if (err) return done(err)
       assert(!account.passwordOk('wrong one'))
@@ -118,8 +130,8 @@ describe('password', function () {
   it('login offline', function (done) {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
-
     var ctx = new abc.Context(null, fakeStorage)
+
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
   })
 
@@ -127,16 +139,16 @@ describe('password', function () {
     var fakeStorage = new FakeStorage()
     var fakeServer = new FakeServer()
     fakeServer.populate()
-
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
   })
 
   it.skip('login to live server', function (done) {
     this.timeout(10000)
     var fakeStorage = new FakeStorage()
-
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
+
     ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
   })
 })
@@ -162,8 +174,8 @@ describe('pin', function () {
     fakeStorage.populate()
     var fakeServer = new FakeServer()
     fakeServer.populate()
-
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+
     ctx.pinLogin('js test 0', '1234', done)
   })
 
@@ -178,15 +190,6 @@ describe('pin', function () {
       if (err) return done(err)
       ctx.pinLogin('js test 0', '1234', done)
     })
-  })
-
-  it.skip('login to live server', function (done) {
-    this.timeout(10000)
-    var fakeStorage = new FakeStorage()
-    fakeStorage.populate()
-
-    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-    ctx.pinLogin('js test 0', '1234', done)
   })
 
   it.skip('setup on live server', function (done) {
@@ -205,6 +208,15 @@ describe('pin', function () {
       if (err) return done(err)
       ctx.pinLogin('js test 0', '1234', done)
     })
+  })
+
+  it.skip('login to live server', function (done) {
+    this.timeout(10000)
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
+
+    ctx.pinLogin('js test 0', '1234', done)
   })
 })
 
@@ -226,8 +238,8 @@ describe('recovery2', function () {
     fakeStorage.populate()
     var fakeServer = new FakeServer()
     fakeServer.populate()
-
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+
     ctx.fetchRecovery2Questions(packages.recovery2Key, 'js test 0', function (err, questions) {
       if (err) return done(err)
       assert.equal(questions.length, packages.recovery2Questions.length)
@@ -243,8 +255,8 @@ describe('recovery2', function () {
     fakeStorage.populate()
     var fakeServer = new FakeServer()
     fakeServer.populate()
-
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+
     ctx.loginWithRecovery2(packages.recovery2Key, 'js test 0', packages.recovery2Answers, null, null, done)
   })
 
@@ -282,10 +294,11 @@ describe('recovery2', function () {
   })
 
   it.skip('login to live server', function (done) {
+    this.timeout(10000)
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
-
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
+
     ctx.loginWithRecovery2(packages.recovery2Key, 'js test 0', packages.recovery2Answers, null, null, done)
   })
 })
