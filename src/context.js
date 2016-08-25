@@ -108,4 +108,19 @@ Context.prototype.fetchRecovery2Questions = function (recovery2Key, username, ca
   return loginRecovery2.questions(this, recovery2Key, username, callback)
 }
 
+Context.prototype.checkPasswordRules = function (password) {
+  var tooShort = password.length < 10
+  var noNumber = password.match(/\d/) == null
+  var noUpperCase = password.match(/[A-Z]/) == null
+  var noLowerCase = password.match(/[a-z]/) == null
+
+  return {
+    "tooShort": tooShort,
+    "noNumber": noNumber,
+    "noUpperCase" : noUpperCase,
+    "noLowerCase" : noLowerCase,
+    "passed" : !(tooShort || noNumber || noUpperCase || noLowerCase)
+  }
+}
+
 exports.Context = Context
