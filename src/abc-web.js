@@ -27,7 +27,7 @@ abc.Context = Context
 /**
  * Creates a context object.
  */
-abc.makeABCContext = function makeContext(opts) {
+abc.makeABCContext = function makeContext (opts) {
   return new abc.Context(opts.apiKey)
 }
 

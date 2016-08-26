@@ -115,11 +115,11 @@ Context.prototype.checkPasswordRules = function (password) {
   var noLowerCase = password.match(/[a-z]/) == null
 
   return {
-    "tooShort": tooShort,
-    "noNumber": noNumber,
-    "noUpperCase" : noUpperCase,
-    "noLowerCase" : noLowerCase,
-    "passed" : !(tooShort || noNumber || noUpperCase || noLowerCase)
+    'tooShort': tooShort,
+    'noNumber': noNumber,
+    'noUpperCase': noUpperCase,
+    'noLowerCase': noLowerCase,
+    'passed': !(tooShort || noNumber || noUpperCase || noLowerCase)
   }
 }
 
