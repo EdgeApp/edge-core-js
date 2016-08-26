@@ -3,14 +3,7 @@
 Run `npm install` to get the dependencies you need,
 then run `npm test` to run the tests.
 
-To build for the web, run `npm run webpack`
-
-Until Airbitz makes the auth server available without special certificates,
-running the live unit tests requires:
-
-    export NODE_TLS_REJECT_UNAUTHORIZED=0
-
-To avoid these issues, and to keep things independent of the network,
-the live unit tests are disabled for now.
+To build for the web, run `npm run webpack`.
+This will produce a file, `./abc.js`, which can be used in a `<script>` tag.
 
 All sources are in the [JavaScript Standard Style](http://standardjs.com/).

@@ -23,4 +23,12 @@ function Context (apiKey) {
   return new InnerContext(authRequest, window.localStorage)
 }
 abc.Context = Context
+
+/**
+ * Creates a context object.
+ */
+abc.makeABCContext = function makeContext(opts) {
+  return new abc.Context(opts.apiKey)
+}
+
 module.exports = abc
