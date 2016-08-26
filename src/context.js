@@ -69,6 +69,9 @@ Context.prototype.usernameList = function () {
   }
   return out
 }
+Context.prototype.listUsernames = Context.prototype.usernameList;
+
+Context.prototype.fixUsername = userMap.normalize
 
 Context.prototype.usernameAvailable = function (username, callback) {
   return loginCreate.usernameAvailable(this, username, callback)
@@ -77,16 +80,31 @@ Context.prototype.usernameAvailable = function (username, callback) {
 Context.prototype.accountCreate = function (username, password, callback) {
   return loginCreate.create(this, username, password, callback)
 }
+Context.prototype.createAccount = function (username, password, pin, opts, callback) {
+  return loginCreate.create(this, username, password, function (err, account) {
+    if (err) return callback(err)
+    loginPin.setup(this, account, pin, callback)
+  })
+}
 
 Context.prototype.passwordLogin = function (username, password, callback) {
+  return loginPassword.login(this, username, password, callback)
+}
+Context.prototype.loginWithPassword = function (username, password, otp, opts, callback) {
   return loginPassword.login(this, username, password, callback)
 }
 
 Context.prototype.pinExists = function (username) {
   return loginPin.exists(this, username)
 }
+Context.prototype.pinLoginEnabled = function (username) {
+  return loginPin.exists(this, username)
+}
 
 Context.prototype.pinLogin = function (username, pin, callback) {
+  return loginPin.login(this, username, pin, callback)
+}
+Context.prototype.loginWithPIN = function (username, pin, opts, callback) {
   return loginPin.login(this, username, pin, callback)
 }
 

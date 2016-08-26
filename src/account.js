@@ -36,14 +36,17 @@ Account.prototype.logout = function () {
 Account.prototype.passwordOk = function (password) {
   return loginPassword.check(this.ctx, this, password)
 }
+Account.prototype.checkPassword = Account.prototype.passwordOk
 
 Account.prototype.passwordSetup = function (password, callback) {
   return loginPassword.setup(this.ctx, this, password, callback)
 }
+Account.prototype.changePassword = Account.prototype.passwordSetup;
 
 Account.prototype.pinSetup = function (pin, callback) {
   return loginPin.setup(this.ctx, this, pin, callback)
 }
+Account.prototype.changePIN = Account.prototype.pinSetup
 
 Account.prototype.recovery2Set = function (questions, answers, callback) {
   return loginRecovery2.setup(this.ctx, this, questions, answers, callback)
