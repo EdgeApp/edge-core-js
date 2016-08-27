@@ -69,7 +69,7 @@ Context.prototype.usernameList = function () {
   }
   return out
 }
-Context.prototype.listUsernames = Context.prototype.usernameList;
+Context.prototype.listUsernames = Context.prototype.usernameList
 
 Context.prototype.fixUsername = userMap.normalize
 

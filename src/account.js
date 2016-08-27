@@ -41,7 +41,7 @@ Account.prototype.checkPassword = Account.prototype.passwordOk
 Account.prototype.passwordSetup = function (password, callback) {
   return loginPassword.setup(this.ctx, this, password, callback)
 }
-Account.prototype.changePassword = Account.prototype.passwordSetup;
+Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = function (pin, callback) {
   return loginPin.setup(this.ctx, this, pin, callback)
