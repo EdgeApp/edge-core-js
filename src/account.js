@@ -24,6 +24,7 @@ function Account (ctx, username, dataKey) {
   this.passwordAuth = crypto.decrypt(passwordAuthBox, dataKey)
   this.syncKey = crypto.decrypt(syncKeyBox, dataKey)
   this.rootKey = crypto.decrypt(rootKeyBox, dataKey)
+  this.loggedIn = true
 }
 
 Account.prototype.logout = function () {
@@ -31,6 +32,7 @@ Account.prototype.logout = function () {
   this.passwordAuth = null
   this.syncKey = null
   this.rootKey = null
+  this.loggedIn = false
 }
 
 Account.prototype.passwordOk = function (password) {
@@ -50,6 +52,10 @@ Account.prototype.changePIN = Account.prototype.pinSetup
 
 Account.prototype.recovery2Set = function (questions, answers, callback) {
   return loginRecovery2.setup(this.ctx, this, questions, answers, callback)
+}
+
+Account.prototype.isLoggedIn = function () {
+  return this.loggedIn
 }
 
 exports.Account = Account
