@@ -9,10 +9,12 @@
   "dependencies": {
     "base-x": "^1.0.4",
     "bip39": "^2.2.0",
+    "elliptic": "^6.3.1",
     "scryptsy": "^1.2.1",
     "xmlhttprequest": "^1.4.0"
   },
   "devDependencies": {
+    "json-loader": "^0.5.4",
     "mocha": "^2.4.0",
     "node-getopt": "^0.2.3",
     "standard": "^3.0.0",

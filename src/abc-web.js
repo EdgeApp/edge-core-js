@@ -4,7 +4,7 @@ var InnerContext = abc.Context
 /**
  * Injects HTTP and web-storage powers into the Context object
  */
-function Context (apiKey) {
+function Context (apiKey, accountType) {
   function authRequest (method, uri, body, callback) {
     var xhr = new window.XMLHttpRequest()
     xhr.addEventListener('load', function () {
@@ -20,7 +20,7 @@ function Context (apiKey) {
     console.log('Visit ' + uri)
   }
 
-  return new InnerContext(authRequest, window.localStorage)
+  return new InnerContext(authRequest, window.localStorage, accountType)
 }
 abc.Context = Context
 
@@ -28,7 +28,7 @@ abc.Context = Context
  * Creates a context object.
  */
 abc.makeABCContext = function makeContext (opts) {
-  return new abc.Context(opts.apiKey)
+  return new abc.Context(opts.apiKey, opts.type)
 }
 
 module.exports = abc

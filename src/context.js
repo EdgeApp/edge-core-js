@@ -1,3 +1,4 @@
+var loginEdge = require('./login/edge.js')
 var loginCreate = require('./login/create.js')
 var loginPassword = require('./login/password.js')
 var loginPin = require('./login/pin.js')
@@ -11,7 +12,9 @@ var serverRoot = 'https://auth.airbitz.co/api'
  * @param authRequest function (method, uri, body, callback (err, status, body))
  * @param localStorage an object compatible with the Web Storage API.
  */
-function Context (authRequest, localStorage) {
+function Context (authRequest, localStorage, accountType) {
+  this.accountType = accountType || 'account:repo:co.airbitz.wallet'
+
   /**
    * Wraps the raw authRequest function in something more friendly.
    * @param body JSON object
@@ -122,18 +125,7 @@ Context.prototype.checkPasswordRules = function (password) {
 }
 
 Context.prototype.requestEdgeLogin = function (opts, callback) {
-  // Stub
-  callback (null, {id: 'IMEDGELOGIN'})
-
-  console.log('Edge Login Request from: ' + opts.displayName)
-
-  var that = this
-  // Add delay to make it feel real. Then do a fake / real login with hard coded password :)
-  // setTimeout(function () {
-  //   that.loginWithPassword('jtest1', 'Test123456', '', null, function (error, account) {
-  //     opts.onLogin(account)
-  //   })
-  // }, 5000)
+  loginEdge.create(this, opts, callback)
 }
 
 exports.Context = Context

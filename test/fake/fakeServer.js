@@ -218,6 +218,24 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     }
   }
 
+  // lobby: ------------------------------------------------------------------
+
+  if (path === '/api/v2/lobby') {
+    results['id'] = 'IMEDGELOGIN'
+    this.db.lobby = body['data']
+    return callback(null, 200, makeReply(results))
+  }
+
+  if (path === '/api/v2/lobby/IMEDGELOGIN') {
+    switch (method) {
+      case 'GET':
+        return callback(null, 200, makeReply(this.db.lobby))
+      case 'PUT':
+        this.db.lobby = body['data']
+        return callback(null, 200, makeReply(results))
+    }
+  }
+
   callback(null, 400, '')
 }
 
