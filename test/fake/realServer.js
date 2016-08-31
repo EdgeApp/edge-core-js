@@ -22,7 +22,7 @@ function authRequest (method, uri, body, callback) {
   xhr.addEventListener('error', function () {
     callback(Error('Cannot reach auth server'))
   })
-  xhr.open('POST', uri)
+  xhr.open(method, uri)
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.setRequestHeader('Authorization', 'Token ' + apiKey)
   xhr.send(JSON.stringify(body))
