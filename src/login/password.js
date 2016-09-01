@@ -31,7 +31,7 @@ function loginOnline (ctx, username, userId, password, callback) {
     'passwordAuth': passwordAuth.toString('base64')
     // "otp": null
   }
-  ctx.authRequest2('GET', '/v2/login', request, function (err, reply) {
+  ctx.authRequest('GET', '/v2/login', request, function (err, reply) {
     if (err) return callback(err)
 
     try {
@@ -123,7 +123,7 @@ function setup (ctx, account, password, callback) {
       'passwordAuthBox': passwordAuthBox
     }
   }
-  ctx.authRequest2('PUT', '/v2/login/password', request, function (err, reply) {
+  ctx.authRequest('PUT', '/v2/login/password', request, function (err, reply) {
     if (err) return callback(err)
 
     account.userStorage.setJson('passwordKeySnrp', passwordKeySnrp)

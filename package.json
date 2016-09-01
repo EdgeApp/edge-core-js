@@ -14,9 +14,13 @@
   },
   "devDependencies": {
     "mocha": "^2.4.0",
-    "webpack": "^2.0.0beta",
+    "node-getopt": "^0.2.3",
     "standard": "^3.0.0",
-    "node-getopt": "^0.2.3"
+    "webpack": "^2.1.0-beta"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
     "pretest": "standard src/*.js src/login/*.js test/*.js test/fake/*.js",

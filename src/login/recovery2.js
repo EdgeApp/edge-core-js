@@ -49,7 +49,7 @@ function login (ctx, recovery2Key, username, answers, callback) {
     'recovery2Auth': recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
-  ctx.authRequest2('GET', '/v2/login', request, function (err, reply) {
+  ctx.authRequest('GET', '/v2/login', request, function (err, reply) {
     if (err) return callback(err)
 
     try {
@@ -89,7 +89,7 @@ function questions (ctx, recovery2Key, username, callback) {
     'recovery2Id': recovery2Id(recovery2Key, username).toString('base64')
     // "otp": null
   }
-  ctx.authRequest2('GET', '/v2/login', request, function (err, reply) {
+  ctx.authRequest('GET', '/v2/login', request, function (err, reply) {
     if (err) return callback(err)
 
     try {
@@ -143,7 +143,7 @@ function setup (ctx, account, questions, answers, callback) {
       'question2Box': question2Box
     }
   }
-  ctx.authRequest2('PUT', '/v2/login/recovery2', request, function (err, reply) {
+  ctx.authRequest('PUT', '/v2/login/recovery2', request, function (err, reply) {
     if (err) return callback(err)
 
     recovery2Key = encodeKey(recovery2Key)
