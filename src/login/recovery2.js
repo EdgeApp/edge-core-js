@@ -135,7 +135,7 @@ function setup (ctx, account, questions, answers, callback) {
   var request = {
     'userId': account.userId,
     'passwordAuth': account.passwordAuth.toString('base64'),
-    'recovery2': {
+    'data': {
       'recovery2Id': recovery2Id(recovery2Key, account.username).toString('base64'),
       'recovery2Auth': recovery2Auth(recovery2Key, answers),
       'recovery2Box': recovery2Box,

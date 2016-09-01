@@ -179,7 +179,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
 
     switch (method) {
       case 'PUT':
-        var data = body['password']
+        var data = body['data']
         if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
             !data['passwordBox'] || !data['passwordAuthBox']) {
           return callback(null, 500, '{"status_code":3}')
@@ -201,7 +201,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
 
     switch (method) {
       case 'PUT':
-        data = body['recovery2']
+        data = body['data']
         if (!data['recovery2Id'] || !data['recovery2Auth'] ||
             !data['question2Box'] || !data['recovery2Box'] ||
             !data['recovery2KeyBox']) {

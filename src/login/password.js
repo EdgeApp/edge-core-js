@@ -115,7 +115,7 @@ function setup (ctx, account, password, callback) {
   var request = {
     'userId': account.userId,
     'passwordAuth': account.passwordAuth.toString('base64'),
-    'password': {
+    'data': {
       'passwordAuth': passwordAuth.toString('base64'),
       'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
       'passwordKeySnrp': passwordKeySnrp,
