@@ -2,6 +2,16 @@ var FakeStorage = require('./test/fake/fakeStorage.js').FakeStorage
 var realServer = require('./test/fake/realServer.js')
 var abc = require('./src/abc.js')
 
+function passwordLogin (opt) {
+  var fakeStorage = new FakeStorage()
+
+  var ctx = new abc.Context(realServer.authRequest, fakeStorage)
+  ctx.passwordLogin(opt.options.username, opt.options.password, function (err, account) {
+    if (err) return console.log(err)
+    console.log('done')
+  })
+}
+
 function passwordSetup (opt) {
   var fakeStorage = new FakeStorage()
 
@@ -21,5 +31,6 @@ function passwordSetup (opt) {
 }
 
 module.exports = {
+  'password-login': passwordLogin,
   'password-setup': passwordSetup
 }
