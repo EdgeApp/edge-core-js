@@ -54,6 +54,8 @@ Account.prototype.recovery2Set = function (questions, answers, callback) {
   return loginRecovery2.setup(this.ctx, this, questions, answers, callback)
 }
 
+Account.prototype.setupRecovery2Questions = Account.prototype.recovery2Set
+
 Account.prototype.isLoggedIn = function () {
   return this.loggedIn
 }
