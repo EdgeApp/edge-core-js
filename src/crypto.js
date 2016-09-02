@@ -39,7 +39,8 @@ function random (bytes) {
     window.crypto.getRandomValues(out)
   } catch (e) {
     // Alternative using node.js crypto:
-    return require('crypto').randomBytes(bytes)
+    var hiddenRequire = require
+    return hiddenRequire('crypto').randomBytes(bytes)
   }
   return out
 }
