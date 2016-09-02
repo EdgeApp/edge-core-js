@@ -31,7 +31,7 @@ function Context (authRequest, localStorage) {
         case 0:
           return callback(null, reply.results)
         default:
-          return callback(Error(body))
+          return callback(Error(status + ' ' + body))
       }
     })
   }
