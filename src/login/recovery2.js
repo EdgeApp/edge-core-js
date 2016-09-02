@@ -49,7 +49,7 @@ function login (ctx, recovery2Key, username, answers, callback) {
     'recovery2Auth': recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
-  ctx.authRequest('GET', '/v2/login', request, function (err, reply) {
+  ctx.authRequest('POST', '/v2/login', request, function (err, reply) {
     if (err) return callback(err)
 
     try {
@@ -89,7 +89,7 @@ function questions (ctx, recovery2Key, username, callback) {
     'recovery2Id': recovery2Id(recovery2Key, username).toString('base64')
     // "otp": null
   }
-  ctx.authRequest('GET', '/v2/login', request, function (err, reply) {
+  ctx.authRequest('POST', '/v2/login', request, function (err, reply) {
     if (err) return callback(err)
 
     try {

@@ -31,7 +31,7 @@ function loginOnline (ctx, username, userId, password, callback) {
     'passwordAuth': passwordAuth.toString('base64')
     // "otp": null
   }
-  ctx.authRequest('GET', '/v2/login', request, function (err, reply) {
+  ctx.authRequest('POST', '/v2/login', request, function (err, reply) {
     if (err) return callback(err)
 
     try {
