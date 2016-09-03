@@ -127,10 +127,10 @@ Context.prototype.requestEdgeLogin = function (opts, callback) {
 
   console.log('Edge Login Request from: ' + opts.displayName)
 
-  var login = this.loginWithPassword
+  var that = this
   // Add delay to make it feel real. Then do a fake / real login with hard coded password :)
   setTimeout(function () {
-    login('jtest1', 'Test123456', '', null, function (error, account) {
+    that.loginWithPassword('jtest1', 'Test123456', '', null, function (error, account) {
       opts.onLogin(account)
     })
   }, 5000)
