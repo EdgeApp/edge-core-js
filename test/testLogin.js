@@ -335,18 +335,3 @@ describe('recovery2', function () {
     ctx.loginWithRecovery2(packages.recovery2Key, 'js test 0', packages.recovery2Answers, null, null, done)
   })
 })
-
-describe('edge login', function () {
-  it('request', function (done) {
-    var fakeStorage = new FakeStorage()
-    var fakeServer = new FakeServer()
-    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
-
-    var opts = {
-      onLogin: done,
-      displayName: 'test suite'
-    }
-
-    ctx.requestEdgeLogin(opts, done)
-  })
-})

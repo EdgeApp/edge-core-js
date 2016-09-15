@@ -1,8 +1,34 @@
 /* global describe, it */
+var abc = require('../src/abc.js')
 var assert = require('assert')
+var crypto = require('../src/crypto.js')
+var FakeStorage = require('./fake/fakeStorage.js').FakeStorage
+var FakeServer = require('./fake/fakeServer.js').FakeServer
 var loginEdge = require('../src/login/edge.js')
 var Elliptic = require('elliptic').ec
 var secp256k1 = new Elliptic('secp256k1')
+
+var fakeRepoInfo = {
+  dataKey: 'fa57',
+  syncKey: 'f00d'
+}
+
+/**
+ * Modifies the lobby object with a fake reply to an account request.
+ */
+function craftFakeReply (lobby) {
+  var accountRequest = lobby['accountRequest']
+  var requestKey = accountRequest['requestKey']
+
+  var keys = secp256k1.genKeyPair()
+  var requestPubkey = secp256k1.keyFromPublic(requestKey, 'hex').getPublic()
+  var secret = keys.derive(requestPubkey).toArray('be')
+  var infoKey = Buffer(crypto.hmac_sha256('infoKey', new Uint8Array(secret)))
+
+  var infoBlob = Buffer(JSON.stringify(fakeRepoInfo), 'utf-8')
+  accountRequest['replyKey'] = keys.getPublic().encodeCompressed('hex')
+  accountRequest['infoBox'] = crypto.encrypt(infoBlob, infoKey)
+}
 
 describe('edge login', function () {
   it('decode reply', function () {
@@ -28,5 +54,24 @@ describe('edge login', function () {
       }
     })
   })
-})
 
+  it('request', function (done) {
+    this.timeout(1500)
+    var fakeStorage = new FakeStorage()
+    var fakeServer = new FakeServer()
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+
+    var opts = {
+      onLogin: function (type, info) {
+        assert.deepEqual(info, fakeRepoInfo)
+        done()
+      },
+      displayName: 'test suite'
+    }
+
+    ctx.requestEdgeLogin(opts, function (err, id) {
+      if (err) return done(err)
+      craftFakeReply(fakeServer.db.lobby)
+    })
+  })
+})
