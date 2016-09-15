@@ -95,4 +95,27 @@ Login.prototype.authJson = function () {
   }
 }
 
+/**
+ * Searches for the given account type in the provided login object.
+ */
+Login.prototype.accountFind = function (type) {
+  // Search the repos array:
+  for (var i = 0; i < this.repos.length; ++i) {
+    if (this.repos[i]['type'] === type) {
+      var infoBox = this.repos[i]['info']
+      return JSON.parse(crypto.decrypt(infoBox, this.dataKey).toString('utf-8'))
+    }
+  }
+
+  // Handle the legacy Airbitz repo:
+  if (type === 'account:repo:co.airbitz.wallet') {
+    return {
+      'syncKey': this.syncKey.toString('hex'),
+      'dataKey': this.dataKey.toString('hex')
+    }
+  }
+
+  throw new Error('Cannot find a \'' + type + '\' repo')
+}
+
 module.exports = Login

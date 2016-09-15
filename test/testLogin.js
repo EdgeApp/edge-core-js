@@ -13,6 +13,20 @@ function testAccount (ctx) {
   return new Account(ctx, login)
 }
 
+describe('login', function () {
+  it('find repo', function () {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var ctx = new abc.Context(null, fakeStorage)
+    var login = Login.offline(ctx.localStorage, 'js test 0', packages.dataKey)
+
+    assert.ok(login.accountFind('account:repo:co.airbitz.wallet'))
+    assert.throws(function () {
+      login.accountFind('account:repo:blah')
+    })
+  })
+})
+
 describe('username', function () {
   it('normalize spaces and capitalization', function () {
     assert.equal('test test', abc.usernameFix('  TEST TEST  '))
