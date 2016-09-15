@@ -161,6 +161,12 @@ Context.prototype.checkPasswordRules = function (password) {
 }
 
 Context.prototype.requestEdgeLogin = function (opts, callback) {
+  var ctx = this
+  var onLogin = opts.onLogin
+  opts.onLogin = function (err, login) {
+    if (err) return onLogin(err)
+    onLogin(null, new Account(ctx, login))
+  }
   loginEdge.create(this, opts, callback)
 }
 

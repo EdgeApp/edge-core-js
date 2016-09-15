@@ -62,9 +62,9 @@ describe('edge login', function () {
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')
 
     var opts = {
-      onLogin: function (err, login) {
+      onLogin: function (err, account) {
         if (err) return done(err)
-        assert.deepEqual(login.accountFind(ctx.accountType), fakeRepoInfo)
+        assert.deepEqual(account.repoInfo, fakeRepoInfo)
         done()
       },
       displayName: 'test suite'
