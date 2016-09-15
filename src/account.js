@@ -9,6 +9,7 @@ var loginRecovery2 = require('./login/recovery2.js')
 function Account (ctx, login) {
   this.ctx = ctx
   this.login = login
+  this.repoInfo = login.accountFind(ctx.accountType)
   this.loggedIn = true
 }
 
