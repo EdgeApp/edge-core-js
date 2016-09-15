@@ -87,7 +87,7 @@ describe('creation', function () {
   it('create account', function (done) {
     var fakeStorage = new FakeStorage()
     var fakeServer = new FakeServer()
-    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')
 
     ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
       if (err) return done(err)

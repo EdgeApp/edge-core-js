@@ -142,6 +142,16 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
+  // Repo server v1: ---------------------------------------------------------
+
+  if (path === '/api/v1/wallet/create') {
+    return callback(null, 200, makeReply({}))
+  }
+
+  if (path === '/api/v1/wallet/activate') {
+    return callback(null, 200, makeReply({}))
+  }
+
   // login v2: ---------------------------------------------------------------
 
   if (path === '/api/v2/login') {

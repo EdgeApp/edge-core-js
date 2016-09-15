@@ -119,6 +119,36 @@ Login.prototype.accountFind = function (type) {
 }
 
 /**
+ * Creates and attaches new account repo.
+ */
+Login.prototype.accountCreate = function (ctx, type, callback) {
+  var login = this
+
+  var dataKey = crypto.random(32)
+  var syncKey = crypto.random(32)
+  var repoInfo = {
+    'dataKey': dataKey.toString('hex'),
+    'syncKey': syncKey.toString('hex')
+  }
+
+  var request = {
+    'l1': login.userId,
+    'lp1': login.passwordAuth.toString('base64'),
+    'repo_wallet_key': syncKey.toString('hex')
+  }
+  ctx.authRequest('POST', '/v1/wallet/create', request, function (err, reply) {
+    if (err) return callback(err)
+    login.accountAttach(ctx, type, repoInfo, function (err) {
+      if (err) return callback(err)
+      ctx.authRequest('POST', '/v1/wallet/activate', request, function (err, reply) {
+        if (err) return callback(err)
+        callback(null)
+      })
+    })
+  })
+}
+
+/**
  * Attaches an account repo to the login.
  */
 Login.prototype.accountAttach = function (ctx, type, info, callback) {
