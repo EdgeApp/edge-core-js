@@ -6,7 +6,8 @@ var loginRecovery2 = require('./login/recovery2.js')
 var userMap = require('./userMap.js')
 var UserStorage = require('./userStorage.js').UserStorage
 
-var serverRoot = 'https://auth.airbitz.co/api'
+// var serverRoot = 'https://auth.airbitz.co/api'
+var serverRoot = 'https://test-auth.airbitz.co/api'
 
 /**
  * @param authRequest function (method, uri, body, callback (err, status, body))
