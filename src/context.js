@@ -167,6 +167,7 @@ Context.prototype.requestEdgeLogin = function (opts, callback) {
     if (err) return onLogin(err)
     onLogin(null, new Account(ctx, login))
   }
+  opts.type = opts.type || ctx.accountType
   loginEdge.create(this, opts, callback)
 }
 

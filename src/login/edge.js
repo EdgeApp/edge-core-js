@@ -80,7 +80,7 @@ function create (ctx, opts, callback) {
     'accountRequest': {
       'displayName': opts['displayName'] || '',
       'requestKey': keys.getPublic().encodeCompressed('hex'),
-      'type': ctx.accountType
+      'type': opts.type
     }
   }
 
