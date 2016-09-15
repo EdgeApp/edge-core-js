@@ -56,14 +56,15 @@ describe('edge login', function () {
   })
 
   it('request', function (done) {
-    this.timeout(1500)
+    this.timeout(3000)
     var fakeStorage = new FakeStorage()
     var fakeServer = new FakeServer()
-    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')
 
     var opts = {
-      onLogin: function (type, info) {
-        assert.deepEqual(info, fakeRepoInfo)
+      onLogin: function (err, login) {
+        if (err) return done(err)
+        assert.deepEqual(login.accountFind(ctx.accountType), fakeRepoInfo)
         done()
       },
       displayName: 'test suite'

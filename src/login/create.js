@@ -24,14 +24,14 @@ exports.usernameAvailable = usernameAvailable
 /**
  * Creates a new login on the auth server.
  */
-function create (ctx, username, password, callback) {
+function create (ctx, username, password, opts, callback) {
   username = userMap.normalize(username)
   var userId = userMap.getUserId(ctx.localStorage, username)
 
   // Create random key material:
   var passwordKeySnrp = crypto.makeSnrp()
   var dataKey = crypto.random(32)
-  var syncKey = crypto.random(32)
+  var syncKey = opts.syncKey || crypto.random(32)
 
   // Derive keys from password:
   var passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
@@ -113,4 +113,4 @@ function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
     return callback(null)
   })
 }
-exports.upgrade = create
+exports.upgrade = upgrade
