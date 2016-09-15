@@ -118,4 +118,28 @@ Login.prototype.accountFind = function (type) {
   throw new Error('Cannot find a \'' + type + '\' repo')
 }
 
+/**
+ * Attaches an account repo to the login.
+ */
+Login.prototype.accountAttach = function (ctx, type, info, callback) {
+  var login = this
+
+  var infoBlob = new Buffer(JSON.stringify(info), 'utf-8')
+  var data = {
+    'type': type,
+    'info': crypto.encrypt(infoBlob, login.dataKey)
+  }
+
+  var request = login.authJson()
+  request['data'] = data
+  ctx.authRequest('POST', '/v2/login/repos', request, function (err, reply) {
+    if (err) return callback(err)
+
+    login.repos.push(data)
+    login.userStorage.setJson('repos', login.repos)
+
+    callback(null)
+  })
+}
+
 module.exports = Login

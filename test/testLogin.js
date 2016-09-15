@@ -25,6 +25,25 @@ describe('login', function () {
       login.accountFind('account:repo:blah')
     })
   })
+
+  it('attach repo', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var fakeServer = new FakeServer()
+    fakeServer.populate()
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    var login = Login.offline(ctx.localStorage, 'js test 0', packages.dataKey)
+
+    var info = {
+      dataKey: 'fa57',
+      syncKey: 'f00d'
+    }
+    login.accountAttach(ctx, 'account:repo:test', info, function (err) {
+      if (err) return done(err)
+      assert.deepEqual(login.accountFind('account:repo:test'), info)
+      done()
+    })
+  })
 })
 
 describe('username', function () {
