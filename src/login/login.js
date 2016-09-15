@@ -85,4 +85,14 @@ Login.offline = function (localStorage, username, dataKey) {
   return new Login(localStorage, username, dataKey)
 }
 
+/**
+ * Sets up a login v2 server authorization JSON.
+ */
+Login.prototype.authJson = function () {
+  return {
+    'userId': this.userId,
+    'passwordAuth': this.passwordAuth.toString('base64')
+  }
+}
+
 module.exports = Login

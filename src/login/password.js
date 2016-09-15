@@ -109,16 +109,13 @@ function setup (ctx, login, password, callback) {
   var passwordBox = crypto.encrypt(login.dataKey, passwordKey)
   var passwordAuthBox = crypto.encrypt(passwordAuth, login.dataKey)
 
-  var request = {
-    'userId': login.userId,
-    'passwordAuth': login.passwordAuth.toString('base64'),
-    'data': {
-      'passwordAuth': passwordAuth.toString('base64'),
-      'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
-      'passwordKeySnrp': passwordKeySnrp,
-      'passwordBox': passwordBox,
-      'passwordAuthBox': passwordAuthBox
-    }
+  var request = login.authJson()
+  request['data'] = {
+    'passwordAuth': passwordAuth.toString('base64'),
+    'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
+    'passwordKeySnrp': passwordKeySnrp,
+    'passwordBox': passwordBox,
+    'passwordAuthBox': passwordAuthBox
   }
   ctx.authRequest('PUT', '/v2/login/password', request, function (err, reply) {
     if (err) return callback(err)

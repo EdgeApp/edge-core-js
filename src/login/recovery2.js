@@ -129,16 +129,13 @@ function setup (ctx, login, questions, answers, callback) {
   var recovery2Box = crypto.encrypt(login.dataKey, recovery2Key)
   var recovery2KeyBox = crypto.encrypt(recovery2Key, login.dataKey)
 
-  var request = {
-    'userId': login.userId,
-    'passwordAuth': login.passwordAuth.toString('base64'),
-    'data': {
-      'recovery2Id': recovery2Id(recovery2Key, login.username).toString('base64'),
-      'recovery2Auth': recovery2Auth(recovery2Key, answers),
-      'recovery2Box': recovery2Box,
-      'recovery2KeyBox': recovery2KeyBox,
-      'question2Box': question2Box
-    }
+  var request = login.authJson()
+  request['data'] = {
+    'recovery2Id': recovery2Id(recovery2Key, login.username).toString('base64'),
+    'recovery2Auth': recovery2Auth(recovery2Key, answers),
+    'recovery2Box': recovery2Box,
+    'recovery2KeyBox': recovery2KeyBox,
+    'question2Box': question2Box
   }
   ctx.authRequest('PUT', '/v2/login/recovery2', request, function (err, reply) {
     if (err) return callback(err)
