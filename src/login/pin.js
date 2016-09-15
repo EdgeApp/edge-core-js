@@ -1,8 +1,11 @@
 var crypto = require('../crypto.js')
 var userMap = require('../userMap.js')
 var UserStorage = require('../userStorage.js').UserStorage
-var account = require('../account.js')
+var Login = require('./login.js')
 
+/**
+ * Returns true if the local device has what is needed for a PIN login.
+ */
 function exists (ctx, username) {
   username = userMap.normalize(username)
 
@@ -18,6 +21,9 @@ function exists (ctx, username) {
 }
 exports.exists = exists
 
+/**
+ * Logs the user in using a PIN number.
+ */
 function login (ctx, username, pin, callback) {
   username = userMap.normalize(username)
 
@@ -47,31 +53,34 @@ function login (ctx, username, pin, callback) {
     } catch (e) {
       return callback(e)
     }
-    return callback(null, new account.Account(ctx, username, dataKey))
+    return callback(null, Login.offline(ctx.localStorage, username, dataKey))
   })
 }
 exports.login = login
 
-function setup (ctx, account, pin, callback) {
+/**
+ * Sets up a device-local PIN login.
+ */
+function setup (ctx, login, pin, callback) {
   // Set up a device ID:
-  var pinAuthId = account.userStorage.getItem('pinAuthId')
+  var pinAuthId = login.userStorage.getItem('pinAuthId')
   if (!pinAuthId) {
     pinAuthId = crypto.random(32)
   }
 
   // Derive keys:
-  var passwordKeySnrp = account.userStorage.getJson('passwordKeySnrp')
+  var passwordKeySnrp = login.userStorage.getJson('passwordKeySnrp')
   var pinKey = crypto.random(32)
-  var pinKeyKey = crypto.scrypt(account.username + pin, passwordKeySnrp)
-  var pinAuth = crypto.scrypt(account.username + pin, crypto.userIdSnrp)
+  var pinKeyKey = crypto.scrypt(login.username + pin, passwordKeySnrp)
+  var pinAuth = crypto.scrypt(login.username + pin, crypto.userIdSnrp)
 
   // Encrypt:
-  var pinBox = crypto.encrypt(account.dataKey, pinKey)
+  var pinBox = crypto.encrypt(login.dataKey, pinKey)
   var pinKeyBox = crypto.encrypt(pinKey, pinKeyKey)
 
   var request = {
-    'l1': account.userId,
-    'lp1': account.passwordAuth.toString('base64'),
+    'l1': login.userId,
+    'lp1': login.passwordAuth.toString('base64'),
     'lpin1': pinAuth.toString('base64'),
     'did': pinAuthId.toString('base64'),
     'pin_package': JSON.stringify(pinKeyBox),
@@ -80,8 +89,8 @@ function setup (ctx, account, pin, callback) {
   ctx.authRequest('POST', '/v1/account/pinpackage/update', request, function (err, reply) {
     if (err) return callback(err)
 
-    account.userStorage.setItem('pinAuthId', pinAuthId.toString('base64'))
-    account.userStorage.setJson('pinBox', pinBox)
+    login.userStorage.setItem('pinAuthId', pinAuthId.toString('base64'))
+    login.userStorage.setJson('pinBox', pinBox)
 
     return callback(null)
   })

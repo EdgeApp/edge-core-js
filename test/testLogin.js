@@ -2,13 +2,15 @@
 var abc = require('../src/abc.js')
 var Account = require('../src/account.js').Account
 var assert = require('assert')
+var Login = require('../src/login/login.js')
 var packages = require('./fake/packages.js')
 var FakeStorage = require('./fake/fakeStorage.js').FakeStorage
 var FakeServer = require('./fake/fakeServer.js').FakeServer
 var realServer = require('./fake/realServer.js')
 
 function testAccount (ctx) {
-  return new Account(ctx, 'js test 0', packages.dataKey)
+  var login = Login.offline(ctx.localStorage, 'js test 0', packages.dataKey)
+  return new Account(ctx, login)
 }
 
 describe('username', function () {
