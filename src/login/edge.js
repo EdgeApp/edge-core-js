@@ -2,13 +2,15 @@ var loginCreate = require('./create.js')
 var crypto = require('../crypto.js')
 var Elliptic = require('elliptic').ec
 var secp256k1 = new Elliptic('secp256k1')
+var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+var base58 = require('base-x')(BASE58)
 
 /**
  * Creates a new login object, and attaches the account repo info to it.
  */
 function createLogin (ctx, account, callback) {
-  var username = crypto.random(24).toString('base64')
-  var password = crypto.random(24).toString('base64')
+  var username = base58.encode(crypto.random(24))
+  var password = base58.encode(crypto.random(24))
 
   var opts = {}
   if (account.type === 'account:repo:co.airbitz.wallet') {
