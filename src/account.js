@@ -12,6 +12,10 @@ function Account (ctx, login) {
   this.repoInfo = login.accountFind(ctx.accountType)
   this.loggedIn = true
   this.edgeLogin = false
+  this.pinLogin = false
+  this.passwordLogin = false
+  this.newAccount = false
+  this.recoveryLogin = false
   this.username = login.username
 }
 

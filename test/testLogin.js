@@ -92,7 +92,7 @@ describe('creation', function () {
     ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
       if (err) return done(err)
       // Try logging in:
-      ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
+      ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
     })
   })
 
@@ -121,7 +121,7 @@ describe('creation', function () {
     ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
       if (err) return done(err)
       // Try logging in:
-      ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
+      ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
     })
   })
 })
@@ -138,7 +138,7 @@ describe('password', function () {
     account.passwordSetup('Test1234', function (err) {
       fakeStorage = new FakeStorage() // Force server-based login
       if (err) return done(err)
-      ctx.passwordLogin('js test 0', 'Test1234', done)
+      ctx.loginWithPassword('js test 0', 'Test1234', done)
     })
   })
 
@@ -165,7 +165,7 @@ describe('password', function () {
     fakeStorage.populate()
     var ctx = new abc.Context(null, fakeStorage)
 
-    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
+    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
   })
 
   it('login online', function (done) {
@@ -174,7 +174,7 @@ describe('password', function () {
     fakeServer.populate()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
 
-    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
+    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
   })
 
   it.skip('login to live server', function (done) {
@@ -182,7 +182,7 @@ describe('password', function () {
     var fakeStorage = new FakeStorage()
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
 
-    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', done)
+    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
   })
 })
 
@@ -209,7 +209,7 @@ describe('pin', function () {
     fakeServer.populate()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
 
-    ctx.pinLogin('js test 0', '1234', done)
+    ctx.loginWithPIN('js test 0', '1234', done)
   })
 
   it('setup', function (done) {
@@ -221,7 +221,7 @@ describe('pin', function () {
 
     account.pinSetup('1234', function (err) {
       if (err) return done(err)
-      ctx.pinLogin('js test 0', '1234', done)
+      ctx.loginWithPIN('js test 0', '1234', done)
     })
   })
 
@@ -239,7 +239,7 @@ describe('pin', function () {
 
     account.pinSetup('1234', function (err) {
       if (err) return done(err)
-      ctx.pinLogin('js test 0', '1234', done)
+      ctx.loginWithPIN('js test 0', '1234', done)
     })
   })
 
@@ -249,7 +249,7 @@ describe('pin', function () {
     fakeStorage.populate()
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
 
-    ctx.pinLogin('js test 0', '1234', done)
+    ctx.loginWithPIN('js test 0', '1234', done)
   })
 })
 
