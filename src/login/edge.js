@@ -1,6 +1,28 @@
+var loginCreate = require('./create.js')
 var crypto = require('../crypto.js')
 var Elliptic = require('elliptic').ec
 var secp256k1 = new Elliptic('secp256k1')
+
+/**
+ * Creates a new login object, and attaches the account repo info to it.
+ */
+function createLogin (ctx, account, callback) {
+  var username = crypto.random(24).toString('base64')
+  var password = crypto.random(24).toString('base64')
+
+  var opts = {}
+  if (account.type === 'account:repo:co.airbitz.wallet') {
+    opts.syncKey = Buffer(account.info['syncKey'], 'hex')
+  }
+
+  loginCreate.create(ctx, username, password, opts, function (err, login) {
+    if (err) return callback(err)
+    login.accountAttach(ctx, account.type, account.info, function (err) {
+      if (err) return callback(err)
+      callback(null, login)
+    })
+  })
+}
 
 /**
  * Opens a lobby object to determine if it contains a resolved account request.
@@ -33,19 +55,17 @@ exports.decodeAccountReply = decodeAccountReply
 function pollServer (ctx, id, keys, onLogin) {
   setTimeout(function () {
     ctx.authRequest('GET', '/v2/lobby/' + id, '', function (err, reply) {
-      if (err) return pollServer(ctx, id, keys, onLogin)
+      if (err) return onLogin(err)
 
       try {
         var account = decodeAccountReply(keys, reply)
-        if (account) {
-          // TODO: We need to create a device-local login,
-          // and attach the repo info to that.
-          return onLogin(account.type, account.info)
+        if (!account) {
+          return pollServer(ctx, id, keys, onLogin)
         }
+        createLogin(ctx, account, onLogin)
       } catch (e) {
-        console.log(e)
+        return onLogin(e)
       }
-      return pollServer(ctx, id, keys, onLogin)
     })
   }, 1000)
 }
@@ -60,7 +80,7 @@ function create (ctx, opts, callback) {
     'accountRequest': {
       'displayName': opts['displayName'] || '',
       'requestKey': keys.getPublic().encodeCompressed('hex'),
-      'type': ctx.accountType
+      'type': opts.type
     }
   }
 

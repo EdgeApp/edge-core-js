@@ -67,7 +67,7 @@ Context.prototype.usernameAvailable = function (username, callback) {
  */
 Context.prototype.accountCreate = function (username, password, callback) {
   var ctx = this
-  return loginCreate.create(ctx, username, password, function (err, login) {
+  return loginCreate.create(ctx, username, password, {}, function (err, login) {
     if (err) return callback(err)
     try {
       login.accountFind(ctx.accountType)
@@ -161,6 +161,13 @@ Context.prototype.checkPasswordRules = function (password) {
 }
 
 Context.prototype.requestEdgeLogin = function (opts, callback) {
+  var ctx = this
+  var onLogin = opts.onLogin
+  opts.onLogin = function (err, login) {
+    if (err) return onLogin(err)
+    onLogin(null, new Account(ctx, login))
+  }
+  opts.type = opts.type || ctx.accountType
   loginEdge.create(this, opts, callback)
 }
 
