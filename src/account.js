@@ -11,6 +11,8 @@ function Account (ctx, login) {
   this.login = login
   this.repoInfo = login.accountFind(ctx.accountType)
   this.loggedIn = true
+  this.edgeLogin = false
+  this.username = login.username
 }
 
 Account.prototype.logout = function () {
