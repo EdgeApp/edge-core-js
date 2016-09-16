@@ -3,8 +3,7 @@ var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 var crypto = require('../crypto.js')
 var base58 = require('base-x')(BASE58)
 var userMap = require('../userMap.js')
-var UserStorage = require('../userStorage.js').UserStorage
-var account = require('../account.js')
+var Login = require('./login.js')
 
 function parseKey (key) {
   return new Buffer(base58.decode(key))
@@ -38,7 +37,7 @@ function recovery2Auth (recovery2Key, answers) {
  * @param username string
  * @param recovery2Key an ArrayBuffer recovery key
  * @param array of answer strings
- * @param callback function (err, account)
+ * @param callback function (err, login)
  */
 function login (ctx, recovery2Key, username, answers, callback) {
   recovery2Key = parseKey(recovery2Key)
@@ -65,18 +64,16 @@ function login (ctx, recovery2Key, username, answers, callback) {
       // Cache everything for future logins:
       var userId = userMap.getUserId(ctx.localStorage, username)
       userMap.insert(ctx.localStorage, username, userId)
-      var userStorage = new UserStorage(ctx.localStorage, username)
-      account.saveLoginReply(userStorage, reply, dataKey)
     } catch (e) {
       return callback(e)
     }
-    return callback(null, new account.Account(ctx, username, dataKey))
+    return callback(null, Login.online(ctx.localStorage, username, dataKey, reply))
   })
 }
 exports.login = login
 
 /**
- * Fetches the questions for an account
+ * Fetches the questions for a login
  * @param username string
  * @param recovery2Key an ArrayBuffer recovery key
  * @param callback function (err, question array)
@@ -96,7 +93,7 @@ function questions (ctx, recovery2Key, username, callback) {
       // Recovery login:
       var question2Box = reply['question2Box']
       if (!question2Box) {
-        return callback(Error('Account has no recovery questions'))
+        return callback(Error('Login has no recovery questions'))
       }
 
       // Decrypt the dataKey:
@@ -111,9 +108,9 @@ function questions (ctx, recovery2Key, username, callback) {
 exports.questions = questions
 
 /**
- * Sets up a password for the account.
+ * Sets up recovery questions for the login.
  */
-function setup (ctx, account, questions, answers, callback) {
+function setup (ctx, login, questions, answers, callback) {
   if (!(Object.prototype.toString.call(questions) === '[object Array]')) {
     throw new TypeError('Questions must be an array of strings')
   }
@@ -121,7 +118,7 @@ function setup (ctx, account, questions, answers, callback) {
     throw new TypeError('Answers must be an array of strings')
   }
 
-  var recovery2Key = account.userStorage.getItem('recovery2Key')
+  var recovery2Key = login.userStorage.getItem('recovery2Key')
   if (recovery2Key) {
     recovery2Key = parseKey(recovery2Key)
   } else {
@@ -129,25 +126,22 @@ function setup (ctx, account, questions, answers, callback) {
   }
 
   var question2Box = crypto.encrypt(new Buffer(JSON.stringify(questions), 'utf8'), recovery2Key)
-  var recovery2Box = crypto.encrypt(account.dataKey, recovery2Key)
-  var recovery2KeyBox = crypto.encrypt(recovery2Key, account.dataKey)
+  var recovery2Box = crypto.encrypt(login.dataKey, recovery2Key)
+  var recovery2KeyBox = crypto.encrypt(recovery2Key, login.dataKey)
 
-  var request = {
-    'userId': account.userId,
-    'passwordAuth': account.passwordAuth.toString('base64'),
-    'data': {
-      'recovery2Id': recovery2Id(recovery2Key, account.username).toString('base64'),
-      'recovery2Auth': recovery2Auth(recovery2Key, answers),
-      'recovery2Box': recovery2Box,
-      'recovery2KeyBox': recovery2KeyBox,
-      'question2Box': question2Box
-    }
+  var request = login.authJson()
+  request['data'] = {
+    'recovery2Id': recovery2Id(recovery2Key, login.username).toString('base64'),
+    'recovery2Auth': recovery2Auth(recovery2Key, answers),
+    'recovery2Box': recovery2Box,
+    'recovery2KeyBox': recovery2KeyBox,
+    'question2Box': question2Box
   }
   ctx.authRequest('PUT', '/v2/login/recovery2', request, function (err, reply) {
     if (err) return callback(err)
 
     recovery2Key = encodeKey(recovery2Key)
-    account.userStorage.setItem('recovery2Key', recovery2Key)
+    login.userStorage.setItem('recovery2Key', recovery2Key)
     return callback(null, recovery2Key)
   })
 }

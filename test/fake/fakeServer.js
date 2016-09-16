@@ -142,6 +142,16 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     return callback(null, 200, makeReply(results))
   }
 
+  // Repo server v1: ---------------------------------------------------------
+
+  if (path === '/api/v1/wallet/create') {
+    return callback(null, 200, makeReply({}))
+  }
+
+  if (path === '/api/v1/wallet/activate') {
+    return callback(null, 200, makeReply({}))
+  }
+
   // login v2: ---------------------------------------------------------------
 
   if (path === '/api/v2/login') {
@@ -161,7 +171,8 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
           'recovery2Box',
           'recovery2KeyBox',
           'rootKeyBox',
-          'syncKeyBox'
+          'syncKeyBox',
+          'repos'
         ]
         for (var i = 0; i < keys.length; ++i) {
           if (this.db[keys[i]]) {
@@ -213,6 +224,28 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         this.db.question2Box = data['question2Box']
         this.db.recovery2Box = data['recovery2Box']
         this.db.recovery2KeyBox = data['recovery2KeyBox']
+
+        return callback(null, 200, makeReply(results))
+    }
+  }
+
+  if (path === '/api/v2/login/repos') {
+    if (!this.authCheck(body)) {
+      return callback(null, 500, '{"status_code":3}')
+    }
+
+    switch (method) {
+      case 'POST':
+        data = body['data']
+        if (!data['type'] || !data['info']) {
+          return callback(null, 500, '{"status_code":5}')
+        }
+
+        if (this.db.repos) {
+          this.db.repos.push(data)
+        } else {
+          this.db.repos = [data]
+        }
 
         return callback(null, 200, makeReply(results))
     }

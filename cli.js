@@ -12,6 +12,7 @@ function commandList () {
 
 // Set up the command-line options parser:
 var getopt = require('node-getopt').create([
+  ['a', 'account-type=ARG', 'Account type'],
   ['u', 'username=ARG', 'Username'],
   ['p', 'password=ARG', 'Password'],
   ['w', 'wallet=ARG', 'Wallet ID']

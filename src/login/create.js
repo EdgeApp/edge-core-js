@@ -2,7 +2,7 @@ var bip39 = require('bip39')
 var crypto = require('../crypto.js')
 var userMap = require('../userMap.js')
 var UserStorage = require('../userStorage.js').UserStorage
-var account = require('../account.js')
+var Login = require('./login.js')
 
 /**
  * Determines whether or not a username is available.
@@ -22,7 +22,7 @@ function usernameAvailable (ctx, username, callback) {
 exports.usernameAvailable = usernameAvailable
 
 /**
- * Creates a new account on the auth server.
+ * Creates a new login on the auth server.
  */
 function create (ctx, username, password, callback) {
   username = userMap.normalize(username)
@@ -81,7 +81,7 @@ function create (ctx, username, password, callback) {
       }
       ctx.authRequest('POST', '/v1/account/activate', request, function (err, reply) {
         if (err) return callback(err)
-        return callback(null, new account.Account(ctx, username, dataKey))
+        return callback(null, Login.offline(ctx.localStorage, username, dataKey))
       })
     })
   })

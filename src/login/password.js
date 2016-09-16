@@ -1,7 +1,7 @@
 var crypto = require('../crypto.js')
 var userMap = require('../userMap.js')
 var UserStorage = require('../userStorage.js').UserStorage
-var account = require('../account.js')
+var Login = require('./login.js')
 
 function loginOffline (ctx, username, userId, password, callback) {
   // Extract stuff from storage:
@@ -19,7 +19,7 @@ function loginOffline (ctx, username, userId, password, callback) {
   } catch (e) {
     return callback(e)
   }
-  return callback(null, new account.Account(ctx, username, dataKey))
+  return callback(null, Login.offline(ctx.localStorage, username, dataKey))
 }
 
 function loginOnline (ctx, username, userId, password, callback) {
@@ -48,12 +48,10 @@ function loginOnline (ctx, username, userId, password, callback) {
 
       // Cache everything for future logins:
       userMap.insert(ctx.localStorage, username, userId)
-      var userStorage = new UserStorage(ctx.localStorage, username)
-      account.saveLoginReply(userStorage, reply, dataKey)
     } catch (e) {
       return callback(e)
     }
-    return callback(null, new account.Account(ctx, username, dataKey))
+    return callback(null, Login.online(ctx.localStorage, username, dataKey, reply))
   })
 }
 
@@ -77,18 +75,17 @@ exports.login = login
 /**
  * Returns true if the given password is correct.
  */
-function check (ctx, account, password) {
+function check (ctx, login, password) {
   // Extract stuff from storage:
-  var userStorage = new UserStorage(ctx.localStorage, account.username)
-  var passwordKeySnrp = userStorage.getJson('passwordKeySnrp')
-  var passwordBox = userStorage.getJson('passwordBox')
+  var passwordKeySnrp = login.userStorage.getJson('passwordKeySnrp')
+  var passwordBox = login.userStorage.getJson('passwordBox')
   if (!passwordKeySnrp || !passwordBox) {
     throw new Error('Keys missing from local storage')
   }
 
   try {
     // Decrypt the dataKey:
-    var passwordKey = crypto.scrypt(account.username + password, passwordKeySnrp)
+    var passwordKey = crypto.scrypt(login.username + password, passwordKeySnrp)
     crypto.decrypt(passwordBox, passwordKey)
   } catch (e) {
     return false
@@ -98,10 +95,10 @@ function check (ctx, account, password) {
 exports.check = check
 
 /**
- * Sets up a password for the account.
+ * Sets up a password for the login.
  */
-function setup (ctx, account, password, callback) {
-  var up = account.username + password
+function setup (ctx, login, password, callback) {
+  var up = login.username + password
 
   // Create new keys:
   var passwordAuth = crypto.scrypt(up, crypto.passwordAuthSnrp)
@@ -109,27 +106,24 @@ function setup (ctx, account, password, callback) {
   var passwordKey = crypto.scrypt(up, passwordKeySnrp)
 
   // Encrypt:
-  var passwordBox = crypto.encrypt(account.dataKey, passwordKey)
-  var passwordAuthBox = crypto.encrypt(passwordAuth, account.dataKey)
+  var passwordBox = crypto.encrypt(login.dataKey, passwordKey)
+  var passwordAuthBox = crypto.encrypt(passwordAuth, login.dataKey)
 
-  var request = {
-    'userId': account.userId,
-    'passwordAuth': account.passwordAuth.toString('base64'),
-    'data': {
-      'passwordAuth': passwordAuth.toString('base64'),
-      'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
-      'passwordKeySnrp': passwordKeySnrp,
-      'passwordBox': passwordBox,
-      'passwordAuthBox': passwordAuthBox
-    }
+  var request = login.authJson()
+  request['data'] = {
+    'passwordAuth': passwordAuth.toString('base64'),
+    'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
+    'passwordKeySnrp': passwordKeySnrp,
+    'passwordBox': passwordBox,
+    'passwordAuthBox': passwordAuthBox
   }
   ctx.authRequest('PUT', '/v2/login/password', request, function (err, reply) {
     if (err) return callback(err)
 
-    account.userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
-    account.userStorage.setJson('passwordBox', passwordBox)
-    account.userStorage.setJson('passwordAuthBox', passwordAuthBox)
-    account.passwordAuth = passwordAuth
+    login.userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
+    login.userStorage.setJson('passwordBox', passwordBox)
+    login.userStorage.setJson('passwordAuthBox', passwordAuthBox)
+    login.passwordAuth = passwordAuth
 
     return callback(null)
   })

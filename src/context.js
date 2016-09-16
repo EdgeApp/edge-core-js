@@ -1,3 +1,4 @@
+var Account = require('./account').Account
 var loginEdge = require('./login/edge.js')
 var loginCreate = require('./login/create.js')
 var loginPassword = require('./login/password.js')
@@ -61,18 +62,44 @@ Context.prototype.usernameAvailable = function (username, callback) {
   return loginCreate.usernameAvailable(this, username, callback)
 }
 
+/**
+ * Creates a login, then creates and attaches an account to it.
+ */
 Context.prototype.accountCreate = function (username, password, callback) {
-  return loginCreate.create(this, username, password, callback)
+  var ctx = this
+  return loginCreate.create(ctx, username, password, function (err, login) {
+    if (err) return callback(err)
+    try {
+      login.accountFind(ctx.accountType)
+    } catch(e) {
+      // If the login doesn't have the correct account type, add it first:
+      return login.accountCreate(ctx, ctx.accountType, function (err) {
+        if (err) return callback(err)
+        callback(null, new Account(ctx, login))
+      })
+    }
+
+    // Otherwise, we have the correct account type, and can simply return:
+    callback(null, new Account(ctx, login))
+  })
 }
 Context.prototype.createAccount = function (username, password, pin, opts, callback) {
-  return loginCreate.create(this, username, password, function (err, account) {
+  var ctx = this
+  return loginCreate.create(ctx, username, password, function (err, login) {
     if (err) return callback(err)
-    loginPin.setup(this, account, pin, callback)
+    loginPin.setup(ctx, login, pin, function (err) {
+      if (err) return callback(err)
+      callback(null, new Account(ctx, login))
+    })
   })
 }
 
 Context.prototype.passwordLogin = function (username, password, callback) {
-  return loginPassword.login(this, username, password, callback)
+  var ctx = this
+  return loginPassword.login(ctx, username, password, function (err, login) {
+    if (err) return callback(err)
+    callback(null, new Account(ctx, login))
+  })
 }
 Context.prototype.loginWithPassword = function (username, password, otp, opts, callback) {
   return loginPassword.login(this, username, password, callback)
@@ -86,7 +113,11 @@ Context.prototype.pinLoginEnabled = function (username) {
 }
 
 Context.prototype.pinLogin = function (username, pin, callback) {
-  return loginPin.login(this, username, pin, callback)
+  var ctx = this
+  return loginPin.login(ctx, username, pin, function (err, login) {
+    if (err) return callback(err)
+    callback(null, new Account(ctx, login))
+  })
 }
 Context.prototype.loginWithPIN = function (username, pin, opts, callback) {
   return loginPin.login(this, username, pin, callback)
@@ -103,7 +134,11 @@ Context.prototype.getRecovery2Key = function (username, callback) {
 }
 
 Context.prototype.loginWithRecovery2 = function (recovery2Key, username, answers, otp, options, callback) {
-  return loginRecovery2.login(this, recovery2Key, username, answers, callback)
+  var ctx = this
+  return loginRecovery2.login(ctx, recovery2Key, username, answers, function (err, login) {
+    if (err) return callback(err)
+    callback(null, new Account(ctx, login))
+  })
 }
 
 Context.prototype.fetchRecovery2Questions = function (recovery2Key, username, callback) {

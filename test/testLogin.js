@@ -2,10 +2,49 @@
 var abc = require('../src/abc.js')
 var Account = require('../src/account.js').Account
 var assert = require('assert')
+var Login = require('../src/login/login.js')
 var packages = require('./fake/packages.js')
 var FakeStorage = require('./fake/fakeStorage.js').FakeStorage
 var FakeServer = require('./fake/fakeServer.js').FakeServer
 var realServer = require('./fake/realServer.js')
+
+function testAccount (ctx) {
+  var login = Login.offline(ctx.localStorage, 'js test 0', packages.dataKey)
+  return new Account(ctx, login)
+}
+
+describe('login', function () {
+  it('find repo', function () {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var ctx = new abc.Context(null, fakeStorage)
+    var login = Login.offline(ctx.localStorage, 'js test 0', packages.dataKey)
+
+    assert.ok(login.accountFind('account:repo:co.airbitz.wallet'))
+    assert.throws(function () {
+      login.accountFind('account:repo:blah')
+    })
+  })
+
+  it('attach repo', function (done) {
+    var fakeStorage = new FakeStorage()
+    fakeStorage.populate()
+    var fakeServer = new FakeServer()
+    fakeServer.populate()
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    var login = Login.offline(ctx.localStorage, 'js test 0', packages.dataKey)
+
+    var info = {
+      dataKey: 'fa57',
+      syncKey: 'f00d'
+    }
+    login.accountAttach(ctx, 'account:repo:test', info, function (err) {
+      if (err) return done(err)
+      assert.deepEqual(login.accountFind('account:repo:test'), info)
+      done()
+    })
+  })
+})
 
 describe('username', function () {
   it('normalize spaces and capitalization', function () {
@@ -48,7 +87,7 @@ describe('creation', function () {
   it('create account', function (done) {
     var fakeStorage = new FakeStorage()
     var fakeServer = new FakeServer()
-    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')
 
     ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
       if (err) return done(err)
@@ -94,7 +133,7 @@ describe('password', function () {
     var fakeServer = new FakeServer()
     fakeServer.populate()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
-    var account = new Account(ctx, 'js test 0', packages.dataKey)
+    var account = testAccount(ctx)
 
     account.passwordSetup('Test1234', function (err) {
       fakeStorage = new FakeStorage() // Force server-based login
@@ -103,28 +142,22 @@ describe('password', function () {
     })
   })
 
-  it('check good', function (done) {
+  it('check good', function () {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
     var ctx = new abc.Context(null, fakeStorage)
+    var account = testAccount(ctx)
 
-    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
-      if (err) return done(err)
-      assert(account.passwordOk('y768Mv4PLFupQjMu'))
-      done()
-    })
+    assert(account.passwordOk('y768Mv4PLFupQjMu'))
   })
 
-  it('check bad', function (done) {
+  it('check bad', function () {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
     var ctx = new abc.Context(null, fakeStorage)
+    var account = testAccount(ctx)
 
-    ctx.passwordLogin('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
-      if (err) return done(err)
-      assert(!account.passwordOk('wrong one'))
-      done()
-    })
+    assert(!account.passwordOk('wrong one'))
   })
 
   it('login offline', function (done) {
@@ -184,7 +217,7 @@ describe('pin', function () {
     fakeStorage.populate()
     var fakeServer = new FakeServer()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
-    var account = new Account(ctx, 'js test 0', packages.dataKey)
+    var account = testAccount(ctx)
 
     account.pinSetup('1234', function (err) {
       if (err) return done(err)
@@ -202,7 +235,7 @@ describe('pin', function () {
     fakeStorage.removeItem('airbitz.user.js test 0.pinAuthId')
 
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-    var account = new Account(ctx, 'js test 0', packages.dataKey)
+    var account = testAccount(ctx)
 
     account.pinSetup('1234', function (err) {
       if (err) return done(err)
@@ -266,7 +299,7 @@ describe('recovery2', function () {
     var fakeServer = new FakeServer()
     fakeServer.populate()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
-    var account = new Account(ctx, 'js test 0', packages.dataKey)
+    var account = testAccount(ctx)
 
     account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {
       if (err) return done(err)
@@ -282,7 +315,7 @@ describe('recovery2', function () {
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-    var account = new Account(ctx, 'js test 0', packages.dataKey)
+    var account = testAccount(ctx)
 
     account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {
       if (err) return done(err)
