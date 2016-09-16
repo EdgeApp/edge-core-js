@@ -65,7 +65,7 @@ Context.prototype.usernameAvailable = function (username, callback) {
 /**
  * Creates a login, then creates and attaches an account to it.
  */
-Context.prototype.accountCreate = function (username, password, callback) {
+Context.prototype.createAccount = function (username, password, pin, callback) {
   var ctx = this
   return loginCreate.create(ctx, username, password, {}, function (err, login) {
     if (err) return callback(err)
@@ -75,20 +75,14 @@ Context.prototype.accountCreate = function (username, password, callback) {
       // If the login doesn't have the correct account type, add it first:
       return login.accountCreate(ctx, ctx.accountType, function (err) {
         if (err) return callback(err)
-        callback(null, new Account(ctx, login))
+        loginPin.setup(ctx, login, pin, function (err) {
+          callback(null, new Account(ctx, login))
+        })
       })
     }
 
     // Otherwise, we have the correct account type, and can simply return:
-    callback(null, new Account(ctx, login))
-  })
-}
-Context.prototype.createAccount = function (username, password, pin, opts, callback) {
-  var ctx = this
-  return loginCreate.create(ctx, username, password, function (err, login) {
-    if (err) return callback(err)
     loginPin.setup(ctx, login, pin, function (err) {
-      if (err) return callback(err)
       callback(null, new Account(ctx, login))
     })
   })
