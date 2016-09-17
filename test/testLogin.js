@@ -92,7 +92,7 @@ describe('creation', function () {
     ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
       if (err) return done(err)
       // Try logging in:
-      ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
+      ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
     })
   })
 
@@ -121,7 +121,7 @@ describe('creation', function () {
     ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
       if (err) return done(err)
       // Try logging in:
-      ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
+      ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
     })
   })
 })
@@ -138,7 +138,7 @@ describe('password', function () {
     account.passwordSetup('Test1234', function (err) {
       fakeStorage = new FakeStorage() // Force server-based login
       if (err) return done(err)
-      ctx.loginWithPassword('js test 0', 'Test1234', done)
+      ctx.loginWithPassword('js test 0', 'Test1234', null, null, done)
     })
   })
 
@@ -165,7 +165,7 @@ describe('password', function () {
     fakeStorage.populate()
     var ctx = new abc.Context(null, fakeStorage)
 
-    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
+    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
 
   it('login online', function (done) {
@@ -174,7 +174,7 @@ describe('password', function () {
     fakeServer.populate()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage)
 
-    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
+    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
 
   it.skip('login to live server', function (done) {
@@ -182,7 +182,7 @@ describe('password', function () {
     var fakeStorage = new FakeStorage()
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
 
-    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', done)
+    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
 })
 

@@ -92,9 +92,10 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
   })
 }
 
-Context.prototype.loginWithPassword = function (username, password, callback) {
+Context.prototype.loginWithPassword = function (username, password, otp, opts, callback) {
   var ctx = this
   return loginPassword.login(ctx, username, password, function (err, login) {
+    if (err) return callback(err)
     var account = new Account(ctx, login)
     account.passwordLogin = true
     callback(null, account)
