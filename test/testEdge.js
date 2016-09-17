@@ -75,4 +75,22 @@ describe('edge login', function () {
       craftFakeReply(fakeServer.db.lobby)
     })
   })
+
+  it('cancel', function (done) {
+    var fakeStorage = new FakeStorage()
+    var fakeServer = new FakeServer()
+    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')
+
+    var opts = {
+      onLogin: function () {},
+      displayName: 'test suite'
+    }
+
+    ctx.requestEdgeLogin(opts, function (err, pendingLogin) {
+      if (err) return done(err)
+      // All we can verify here is that cancel is a callable method:
+      pendingLogin.cancel()
+      done()
+    })
+  })
 })

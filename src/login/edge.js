@@ -54,15 +54,20 @@ exports.decodeAccountReply = decodeAccountReply
  * Polls the lobby every second or so,
  * looking for a reply to our account request.
  */
-function pollServer (ctx, id, keys, onLogin) {
+function pollServer (ctx, edgeLogin, keys, onLogin) {
+  // Don't do anything if the user has cancelled this request:
+  if (edgeLogin.done_) {
+    return
+  }
+
   setTimeout(function () {
-    ctx.authRequest('GET', '/v2/lobby/' + id, '', function (err, reply) {
+    ctx.authRequest('GET', '/v2/lobby/' + edgeLogin.id, '', function (err, reply) {
       if (err) return onLogin(err)
 
       try {
         var account = decodeAccountReply(keys, reply)
         if (!account) {
-          return pollServer(ctx, id, keys, onLogin)
+          return pollServer(ctx, edgeLogin, keys, onLogin)
         }
         createLogin(ctx, account, onLogin)
       } catch (e) {
@@ -96,11 +101,15 @@ function create (ctx, opts, callback) {
 
     try {
       var id = reply['id']
-      pollServer(ctx, id, keys, opts.onLogin)
+      var edgeLogin = {
+        id: id,
+        cancel: function () { this.done_ = true }
+      }
+      pollServer(ctx, edgeLogin, keys, opts.onLogin)
     } catch (e) {
       return callback(e)
     }
-    return callback(null, {'id': id})
+    return callback(null, edgeLogin)
   })
 }
 exports.create = create
