@@ -5,6 +5,15 @@ var secp256k1 = new Elliptic('secp256k1')
 var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 var base58 = require('base-x')(BASE58)
 
+function ABCEdgeLoginRequest (id) {
+  this.id  = id
+  this.done_ = false
+}
+
+ABCEdgeLoginRequest.prototype.cancelRequest = function () {
+  this.done_ = true
+}
+
 /**
  * Creates a new login object, and attaches the account repo info to it.
  */
@@ -100,11 +109,7 @@ function create (ctx, opts, callback) {
     if (err) return callback(err)
 
     try {
-      var id = reply['id']
-      var edgeLogin = {
-        id: id,
-        cancel: function () { this.done_ = true }
-      }
+      var edgeLogin = new ABCEdgeLoginRequest(reply.id)
       pollServer(ctx, edgeLogin, keys, opts.onLogin)
     } catch (e) {
       return callback(e)
