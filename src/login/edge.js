@@ -6,7 +6,7 @@ var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 var base58 = require('base-x')(BASE58)
 
 function ABCEdgeLoginRequest (id) {
-  this.id  = id
+  this.id = id
   this.done_ = false
 }
 
@@ -17,18 +17,18 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
 /**
  * Creates a new login object, and attaches the account repo info to it.
  */
-function createLogin (ctx, account, callback) {
-  var username = base58.encode(crypto.random(24))
+function createLogin (ctx, accountReply, callback) {
+  var username = accountReply.username + '-' + base58.encode(crypto.random(24))
   var password = base58.encode(crypto.random(24))
 
   var opts = {}
-  if (account.type === 'account:repo:co.airbitz.wallet') {
-    opts.syncKey = Buffer(account.info['syncKey'], 'hex')
+  if (accountReply.type === 'account:repo:co.airbitz.wallet') {
+    opts.syncKey = Buffer(accountReply.info['syncKey'], 'hex')
   }
 
   loginCreate.create(ctx, username, password, opts, function (err, login) {
     if (err) return callback(err)
-    login.accountAttach(ctx, account.type, account.info, function (err) {
+    login.accountAttach(ctx, accountReply.type, accountReply.info, function (err) {
       if (err) return callback(err)
       callback(null, login)
     })
@@ -39,23 +39,26 @@ function createLogin (ctx, account, callback) {
  * Opens a lobby object to determine if it contains a resolved account request.
  * Returns the account info if so, or null otherwise.
  */
-function decodeAccountReply (keys, reply) {
-  var accountRequest = reply['accountRequest']
+function decodeAccountReply (keys, lobby) {
+  var accountRequest = lobby['accountRequest']
+  var replyBox = accountRequest['replyBox']
   var replyKey = accountRequest['replyKey']
-  var infoBox = accountRequest['infoBox']
   var type = accountRequest['type']
 
   // If the reply is missing, just return false:
-  if (!replyKey || !infoBox) {
+  if (!replyBox || !replyKey) {
     return null
   }
 
   var replyPubkey = secp256k1.keyFromPublic(replyKey, 'hex').getPublic()
   var secret = keys.derive(replyPubkey).toArray('be')
-  var infoKey = Buffer(crypto.hmac_sha256('infoKey', new Uint8Array(secret)))
-  var info = JSON.parse(crypto.decrypt(infoBox, infoKey).toString('utf-8'))
+  var dataKey = Buffer(crypto.hmac_sha256('dataKey', new Uint8Array(secret)))
+  var reply = JSON.parse(crypto.decrypt(replyBox, dataKey).toString('utf-8'))
 
-  return {type: type, info: info}
+  var info = reply['info']
+  var username = reply['username']
+
+  return {type: type, info: info, username: username}
 }
 exports.decodeAccountReply = decodeAccountReply
 
@@ -74,11 +77,11 @@ function pollServer (ctx, edgeLogin, keys, onLogin) {
       if (err) return onLogin(err)
 
       try {
-        var account = decodeAccountReply(keys, reply)
-        if (!account) {
+        var accountReply = decodeAccountReply(keys, reply)
+        if (!accountReply) {
           return pollServer(ctx, edgeLogin, keys, onLogin)
         }
-        createLogin(ctx, account, onLogin)
+        createLogin(ctx, accountReply, onLogin)
       } catch (e) {
         return onLogin(e)
       }

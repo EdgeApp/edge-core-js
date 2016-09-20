@@ -8,9 +8,12 @@ var loginEdge = require('../src/login/edge.js')
 var Elliptic = require('elliptic').ec
 var secp256k1 = new Elliptic('secp256k1')
 
-var fakeRepoInfo = {
-  dataKey: 'fa57',
-  syncKey: 'f00d'
+var fakeReply = {
+  username: 'test',
+  info: {
+    dataKey: 'fa57',
+    syncKey: 'f00d'
+  }
 }
 
 /**
@@ -23,11 +26,11 @@ function craftFakeReply (lobby) {
   var keys = secp256k1.genKeyPair()
   var requestPubkey = secp256k1.keyFromPublic(requestKey, 'hex').getPublic()
   var secret = keys.derive(requestPubkey).toArray('be')
-  var infoKey = Buffer(crypto.hmac_sha256('infoKey', new Uint8Array(secret)))
+  var dataKey = Buffer(crypto.hmac_sha256('dataKey', new Uint8Array(secret)))
 
-  var infoBlob = Buffer(JSON.stringify(fakeRepoInfo), 'utf-8')
+  var replyBlob = Buffer(JSON.stringify(fakeReply), 'utf-8')
+  accountRequest['replyBox'] = crypto.encrypt(replyBlob, dataKey)
   accountRequest['replyKey'] = keys.getPublic().encodeCompressed('hex')
-  accountRequest['infoBox'] = crypto.encrypt(infoBlob, infoKey)
 }
 
 describe('edge login', function () {
@@ -36,12 +39,12 @@ describe('edge login', function () {
     var lobby = {
       'accountRequest': {
         'displayName': 'test',
-        'infoBox': {
-          'data_base64': 'U0/LXPWun5eGGsswqlfuc9pi+qTt+WWz+Q/EVBdBbZQ7fZp4QCwYrMvGjZNUGJE/r7SQx0+wDG6gFwG+SH+Bv1HcbkM8cNWsjQ12Ib+PauX7lWPkCUBnhDIUYlglNVTB',
+        'replyBox': {
+          'data_base64': 'uMhgQkfFJT9G8jTov/3uF0ntPlv50Gp6U5cqu7kBgrvJ3tt22gQ0iJDFWWIAiB1aQ3VoZQLo+uJzbfBUXByc5UjhHGaZNudW77YOQL4egoTBFPDz2UybcPq9feClGCbKbJw1ayTyfl7oQxIa8p8oOHCs+3UQbpHRTAjGaVPId7g=',
           'encryptionType': 0,
-          'iv_hex': '015ba17658ddb4e06560c796e2b8ab4a'
+          'iv_hex': 'ba70845459c593e63bab244b00cc5a69'
         },
-        'replyKey': '021d0311430a72a192b4a519a20278e75f91f098af6cadfe07b67c9606c2abaec6',
+        'replyKey': '022484c4e59a4a7638045fcb232f7ead696510127276feb37441e3e071117d9cdd',
         'requestKey': '033affa1149e4263db9a7e8320a7f612ffb76dd3099d8786eca8e70a27e48e0ece',
         'type': 'account:repo:co.airbitz.wallet'
       }
@@ -49,6 +52,7 @@ describe('edge login', function () {
 
     assert.deepEqual(loginEdge.decodeAccountReply(key, lobby), {
       'type': 'account:repo:co.airbitz.wallet',
+      'username': 'test',
       'info': {
         'test': 'test'
       }
@@ -64,7 +68,7 @@ describe('edge login', function () {
     var opts = {
       onLogin: function (err, account) {
         if (err) return done(err)
-        assert.deepEqual(account.repoInfo, fakeRepoInfo)
+        assert.deepEqual(account.repoInfo, fakeReply.info)
         done()
       },
       displayName: 'test suite'
@@ -89,7 +93,7 @@ describe('edge login', function () {
     ctx.requestEdgeLogin(opts, function (err, pendingLogin) {
       if (err) return done(err)
       // All we can verify here is that cancel is a callable method:
-      pendingLogin.cancel()
+      pendingLogin.cancelRequest()
       done()
     })
   })

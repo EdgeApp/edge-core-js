@@ -76,6 +76,7 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
       return login.accountCreate(ctx, ctx.accountType, function (err) {
         if (err) return callback(err)
         loginPin.setup(ctx, login, pin, function (err) {
+          if (err) return callback(err)
           var account = new Account(ctx, login)
           account.newAccount = true
           callback(null, account)
@@ -85,6 +86,7 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
 
     // Otherwise, we have the correct account type, and can simply return:
     loginPin.setup(ctx, login, pin, function (err) {
+      if (err) return callback(err)
       var account = new Account(ctx, login)
       account.newAccount = true
       callback(null, account)
@@ -164,7 +166,7 @@ Context.prototype.requestEdgeLogin = function (opts, callback) {
   opts.onLogin = function (err, login) {
     if (err) return onLogin(err)
     var account = new Account(ctx, login)
-    account.edgeLogin = true;
+    account.edgeLogin = true
     onLogin(null, account)
   }
   opts.type = opts.type || ctx.accountType
