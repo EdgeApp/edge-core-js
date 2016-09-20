@@ -6,7 +6,7 @@ var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 var base58 = require('base-x')(BASE58)
 
 function ABCEdgeLoginRequest (id) {
-  this.id  = id
+  this.id = id
   this.done_ = false
 }
 

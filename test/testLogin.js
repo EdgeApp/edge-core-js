@@ -89,7 +89,7 @@ describe('creation', function () {
     var fakeServer = new FakeServer()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')
 
-    ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+    ctx.createAccount('js test 0', 'y768Mv4PLFupQjMu', '1234', function (err, account) {
       if (err) return done(err)
       // Try logging in:
       ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
@@ -118,7 +118,7 @@ describe('creation', function () {
     var fakeStorage = new FakeStorage()
     var ctx = new abc.Context(realServer.authRequest, fakeStorage)
 
-    ctx.accountCreate('js test 0', 'y768Mv4PLFupQjMu', function (err, account) {
+    ctx.createAccount('js test 0', 'y768Mv4PLFupQjMu', '1234', function (err, account) {
       if (err) return done(err)
       // Try logging in:
       ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)

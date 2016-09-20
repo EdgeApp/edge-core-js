@@ -89,7 +89,7 @@ describe('edge login', function () {
     ctx.requestEdgeLogin(opts, function (err, pendingLogin) {
       if (err) return done(err)
       // All we can verify here is that cancel is a callable method:
-      pendingLogin.cancel()
+      pendingLogin.cancelRequest()
       done()
     })
   })
