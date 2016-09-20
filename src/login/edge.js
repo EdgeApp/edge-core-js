@@ -17,18 +17,18 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
 /**
  * Creates a new login object, and attaches the account repo info to it.
  */
-function createLogin (ctx, account, callback) {
-  var username = base58.encode(crypto.random(24))
+function createLogin (ctx, accountReply, callback) {
+  var username = accountReply.username + '-' + base58.encode(crypto.random(24))
   var password = base58.encode(crypto.random(24))
 
   var opts = {}
-  if (account.type === 'account:repo:co.airbitz.wallet') {
-    opts.syncKey = Buffer(account.info['syncKey'], 'hex')
+  if (accountReply.type === 'account:repo:co.airbitz.wallet') {
+    opts.syncKey = Buffer(accountReply.info['syncKey'], 'hex')
   }
 
   loginCreate.create(ctx, username, password, opts, function (err, login) {
     if (err) return callback(err)
-    login.accountAttach(ctx, account.type, account.info, function (err) {
+    login.accountAttach(ctx, accountReply.type, accountReply.info, function (err) {
       if (err) return callback(err)
       callback(null, login)
     })
@@ -77,11 +77,11 @@ function pollServer (ctx, edgeLogin, keys, onLogin) {
       if (err) return onLogin(err)
 
       try {
-        var account = decodeAccountReply(keys, reply)
-        if (!account) {
+        var accountReply = decodeAccountReply(keys, reply)
+        if (!accountReply) {
           return pollServer(ctx, edgeLogin, keys, onLogin)
         }
-        createLogin(ctx, account, onLogin)
+        createLogin(ctx, accountReply, onLogin)
       } catch (e) {
         return onLogin(e)
       }
