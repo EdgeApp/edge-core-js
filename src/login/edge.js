@@ -39,23 +39,26 @@ function createLogin (ctx, account, callback) {
  * Opens a lobby object to determine if it contains a resolved account request.
  * Returns the account info if so, or null otherwise.
  */
-function decodeAccountReply (keys, reply) {
-  var accountRequest = reply['accountRequest']
+function decodeAccountReply (keys, lobby) {
+  var accountRequest = lobby['accountRequest']
+  var replyBox = accountRequest['replyBox']
   var replyKey = accountRequest['replyKey']
-  var infoBox = accountRequest['infoBox']
   var type = accountRequest['type']
 
   // If the reply is missing, just return false:
-  if (!replyKey || !infoBox) {
+  if (!replyBox || !replyKey) {
     return null
   }
 
   var replyPubkey = secp256k1.keyFromPublic(replyKey, 'hex').getPublic()
   var secret = keys.derive(replyPubkey).toArray('be')
-  var infoKey = Buffer(crypto.hmac_sha256('infoKey', new Uint8Array(secret)))
-  var info = JSON.parse(crypto.decrypt(infoBox, infoKey).toString('utf-8'))
+  var dataKey = Buffer(crypto.hmac_sha256('dataKey', new Uint8Array(secret)))
+  var reply = JSON.parse(crypto.decrypt(replyBox, dataKey).toString('utf-8'))
 
-  return {type: type, info: info}
+  var info = reply['info']
+  var username = reply['username']
+
+  return {type: type, info: info, username: username}
 }
 exports.decodeAccountReply = decodeAccountReply
 
