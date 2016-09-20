@@ -68,11 +68,19 @@ function ABCError (code, message) {
   if (code === null) {
     return null
   } else if (typeof code.message === 'string') {
-    json = JSON.parse(code.message)
-    conditionCode = json.status_code
-    msg = json.message
-  } else {
+    try {
+      json = JSON.parse(code.message)
+      conditionCode = json.status_code
+      msg = json.message
+    } catch (e) {
+      conditionCode = 1
+      msg = message
+    }
+  } else if (typeof code === 'number') {
     conditionCode = code
+  } else {
+    conditionCode = 1
+    msg = message
   }
 
   if (msg === null) {
