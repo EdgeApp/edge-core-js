@@ -108,8 +108,8 @@ describe('password', function () {
     var account = testAccount(ctx)
 
     account.passwordSetup('Test1234', function (err) {
-      fakeStorage = new FakeStorage() // Force server-based login
       if (err) return done(err)
+      ctx.localStorage.clear() // Force server-based login
       ctx.loginWithPassword('js test 0', 'Test1234', null, null, done)
     })
   })

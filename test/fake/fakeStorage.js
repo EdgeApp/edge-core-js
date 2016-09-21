@@ -40,4 +40,11 @@ FakeStorage.prototype.populate = function () {
   userStorage.setItem('recovery2Key', packages.recovery2Key)
 }
 
+/**
+ * Empties the `FakeStorage` instance.
+ */
+FakeStorage.prototype.clear = function () {
+  this.items = {}
+}
+
 exports.FakeStorage = FakeStorage
