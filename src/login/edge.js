@@ -18,7 +18,7 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
  * Creates a new login object, and attaches the account repo info to it.
  */
 function createLogin (ctx, accountReply, callback) {
-  var username = accountReply.username + '-' + base58.encode(crypto.random(24))
+  var username = accountReply.username + '-' + base58.encode(crypto.random(4))
   var password = base58.encode(crypto.random(24))
 
   var opts = {}
