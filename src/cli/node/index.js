@@ -15,6 +15,7 @@ import '../commands/all.js'
 const getopt = new Getopt([
   ['k', 'api-key=ARG', 'Auth server API key'],
   ['a', 'account-type=ARG', 'Account type'],
+  ['d', 'directory=ARG', 'Working directory'],
   ['u', 'username=ARG', 'Username'],
   ['p', 'password=ARG', 'Password'],
   ['w', 'wallet=ARG', 'Wallet ID'],
@@ -61,7 +62,7 @@ function makeSession (options, cmd) {
         throw cmd.usageError('No API key')
       }
     }
-    const fakeStorage = new LocalStorage('./.cli')
+    const fakeStorage = new LocalStorage(options['directory'] || './.cli')
     session.context = new abc.Context({
       accountType: options['account-type'],
       apiKey: apiKey,
