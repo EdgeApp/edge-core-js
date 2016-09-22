@@ -38,6 +38,9 @@ export function command (name, opts, body) {
 
   // Set up the help options:
   let usage = name
+  if (cmd.needsContext) {
+    usage += ' [-k <api-key>]'
+  }
   if (cmd.needsLogin) {
     usage += ' -u <username> -p <password>'
   }

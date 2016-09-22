@@ -13,6 +13,7 @@ import '../commands/all.js'
 
 // Program options:
 const getopt = new Getopt([
+  ['k', 'api-key=ARG', 'Auth server API key'],
   ['a', 'account-type=ARG', 'Account type'],
   ['u', 'username=ARG', 'Username'],
   ['p', 'password=ARG', 'Password'],
@@ -51,10 +52,20 @@ function makeSession (options, cmd) {
 
   // Create a context if we need one:
   if (cmd.needsContext) {
+    // API key:
+    let apiKey = options['api-key']
+    if (!apiKey) {
+      try {
+        apiKey = require('./apiKey.js').apiKey
+      } catch (e) {
+        throw cmd.usageError('No API key')
+      }
+    }
     const fakeStorage = new LocalStorage('./.cli')
     session.context = new abc.Context({
       accountType: options['account-type'],
-      authRequest: realServer.authRequest,
+      apiKey: apiKey,
+      authRequest: realServer.makeAuthRequest(apiKey),
       localStorage: fakeStorage
     })
   }
