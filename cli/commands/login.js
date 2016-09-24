@@ -1,5 +1,21 @@
 const command = require('../command.js')
 
+command('account-available', {
+  usage: '<username>',
+  help: 'Determines whether or not a username is available',
+  needsContext: true
+}, function (session, argv) {
+  if (argv.length !== 1) throw this.usageError()
+  const username = argv[0]
+
+  return new Promise((resolve, reject) => {
+    session.context.usernameAvailable(username, (err, account) => {
+      console.log(err ? 'Not available' : 'Available')
+      resolve()
+    })
+  })
+})
+
 command('account-create', {
   usage: '<username> <password> <pin>',
   help: 'Create a login on the auth server',

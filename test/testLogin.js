@@ -6,7 +6,6 @@ var Login = require('../src/login/login.js')
 var packages = require('./fake/packages.js')
 var FakeStorage = require('./fake/fakeStorage.js').FakeStorage
 var FakeServer = require('./fake/fakeServer.js').FakeServer
-var realServer = require('./fake/realServer.js')
 
 function testAccount (ctx) {
   var login = Login.offline(ctx.localStorage, 'js test 0', packages.dataKey)
@@ -96,35 +95,6 @@ describe('creation', function () {
       ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
     })
   })
-
-  it.skip('username not available on live server', function (done) {
-    this.timeout(10000)
-    var fakeStorage = new FakeStorage()
-    fakeStorage.populateUsers()
-    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-
-    ctx.usernameAvailable('js test 0', function (err) { done(!err) })
-  })
-
-  it.skip('username available on live server', function (done) {
-    this.timeout(10000)
-    var fakeStorage = new FakeStorage()
-    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-
-    ctx.usernameAvailable('js test dontcreate', done)
-  })
-
-  it.skip('create account on live server', function (done) {
-    this.timeout(10000)
-    var fakeStorage = new FakeStorage()
-    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-
-    ctx.createAccount('js test 0', 'y768Mv4PLFupQjMu', '1234', function (err, account) {
-      if (err) return done(err)
-      // Try logging in:
-      ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
-    })
-  })
 })
 
 describe('password', function () {
@@ -178,14 +148,6 @@ describe('password', function () {
 
     ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
-
-  it.skip('login to live server', function (done) {
-    this.timeout(10000)
-    var fakeStorage = new FakeStorage()
-    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-
-    ctx.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
-  })
 })
 
 describe('pin', function () {
@@ -225,33 +187,6 @@ describe('pin', function () {
       if (err) return done(err)
       ctx.loginWithPIN('js test 0', '1234', done)
     })
-  })
-
-  it.skip('setup on live server', function (done) {
-    this.timeout(10000)
-    var fakeStorage = new FakeStorage()
-    fakeStorage.populate()
-
-    // If we don't remove this, `pinAuthId` will be reused,
-    // breaking the package used by the "login to live server" test:
-    fakeStorage.removeItem('airbitz.user.js test 0.pinAuthId')
-
-    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-    var account = testAccount(ctx)
-
-    account.pinSetup('1234', function (err) {
-      if (err) return done(err)
-      ctx.loginWithPIN('js test 0', '1234', done)
-    })
-  })
-
-  it.skip('login to live server', function (done) {
-    this.timeout(10000)
-    var fakeStorage = new FakeStorage()
-    fakeStorage.populate()
-    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-
-    ctx.loginWithPIN('js test 0', '1234', done)
   })
 })
 
@@ -310,30 +245,5 @@ describe('recovery2', function () {
         ctx.loginWithRecovery2(key, 'js test 0', packages.recovery2Answers, null, null, done)
       })
     })
-  })
-
-  it.skip('set on live server', function (done) {
-    this.timeout(10000)
-    var fakeStorage = new FakeStorage()
-    fakeStorage.populate()
-    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-    var account = testAccount(ctx)
-
-    account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {
-      if (err) return done(err)
-      ctx.fetchRecovery2Questions(key, 'js test 0', function (err, questions) {
-        if (err) return done(err)
-        ctx.loginWithRecovery2(key, 'js test 0', packages.recovery2Answers, null, null, done)
-      })
-    })
-  })
-
-  it.skip('login to live server', function (done) {
-    this.timeout(10000)
-    var fakeStorage = new FakeStorage()
-    fakeStorage.populate()
-    var ctx = new abc.Context(realServer.authRequest, fakeStorage)
-
-    ctx.loginWithRecovery2(packages.recovery2Key, 'js test 0', packages.recovery2Answers, null, null, done)
   })
 })

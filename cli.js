@@ -1,6 +1,6 @@
 // Airbitz context stuff:
 const abc = require('./src/abc.js')
-var realServer = require('./test/fake/realServer.js')
+var realServer = require('./cli/realServer.js')
 
 // Command-line tools:
 const chalk = require('chalk')
@@ -11,6 +11,8 @@ const LocalStorage = require('node-localstorage').LocalStorage
 const command = require('./cli/command.js')
 require('./cli/commands/login.js')
 require('./cli/commands/password.js')
+require('./cli/commands/pin.js')
+require('./cli/commands/recovery2.js')
 
 // Program options:
 const getopt = new Getopt([

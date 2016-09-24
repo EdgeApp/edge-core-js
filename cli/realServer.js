@@ -10,7 +10,7 @@ try {
 function authRequest (method, uri, body, callback) {
   // Ensure we have an API key:
   if (!apiKey) {
-    var message = "Please create a file called 'test/fake/apiKey.js' with the line: " +
+    var message = "Please create a file called 'cli/apiKey.js' with the line: " +
       "exports.apiKey = '<your key here>'"
     throw new Error(message)
   }
