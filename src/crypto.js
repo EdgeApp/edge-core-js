@@ -10,6 +10,8 @@ var userIdSnrp = {
 exports.userIdSnrp = userIdSnrp
 exports.passwordAuthSnrp = userIdSnrp
 
+var timedSnrp = null
+
 /**
  * @param data A `Buffer` or byte-array object.
  * @param snrp A JSON SNRP structure.
@@ -22,13 +24,86 @@ function scrypt (data, snrp) {
 }
 exports.scrypt = scrypt
 
-function makeSnrp () {
-  return {
-    'salt_hex': random(32).toString('hex'),
-    'n': 16384,
-    'r': 2,
-    'p': 1
+function timeSnrp (snrp) {
+  var startTime = 0;
+  var endTime = 0;
+  var useDate = false
+  try {
+    startTime = window.performance.now()
+  } catch (e) {
+    startTime = Date.now()
+    useDate = true
   }
+
+  scrypt('random string', snrp)
+
+  if (!useDate) {
+    endTime = window.performance.now()
+  } else {
+    endTime = Date.now()
+  }
+
+  var timeElapsed = endTime - startTime;
+  return timeElapsed
+}
+
+function calcSnrpOnTimeElapsed (timeElapsed, targetHashTimeMilliseconds) {
+  var nUnPowered = 0
+  var estTargetTimeElapsed = timeElapsed
+  var snrp = {
+    'salt_hex': random(32).toString('hex'),
+    n: 16384, r:1, p:1}
+  var r = (targetHashTimeMilliseconds / estTargetTimeElapsed)
+  if (r > 8) {
+    snrp.r = 8
+
+    estTargetTimeElapsed *= 8
+    var n = (targetHashTimeMilliseconds / estTargetTimeElapsed)
+
+    if (n > 4) {
+      nUnPowered = 4
+
+      estTargetTimeElapsed *= 4
+      var p = (targetHashTimeMilliseconds / estTargetTimeElapsed)
+      snrp.p = Math.floor(p)
+
+    } else {
+      nUnPowered = Math.floor(n)
+    }
+  } else {
+    snrp.r = r > 4 ? Math.floor(r) : 4
+  }
+  nUnPowered = nUnPowered >= 1 ? nUnPowered : 1
+  snrp.n = Math.pow(2, nUnPowered + 13)
+
+  return snrp
+}
+
+function makeSnrp () {
+  if (null == timedSnrp)
+  {
+    var snrp = {
+      'salt_hex': random(32).toString('hex'),
+      'n': 16384,
+      'r': 1,
+      'p': 1
+    }
+
+    var timeElapsed = timeSnrp(snrp)
+
+    // Shoot for a 2s hash time
+    snrp = calcSnrpOnTimeElapsed(timeElapsed, 2000)
+
+    // Actually time the new snrp
+    // var newTimeElapsed = timeSnrp(snrp)
+
+    timedSnrp = snrp
+    // console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed + ' newTime:' + newTimeElapsed)
+    console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed)
+
+  }
+  return timedSnrp
+
 }
 exports.makeSnrp = makeSnrp
 

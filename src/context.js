@@ -6,6 +6,7 @@ var loginPin = require('./login/pin.js')
 var loginRecovery2 = require('./login/recovery2.js')
 var userMap = require('./userMap.js')
 var UserStorage = require('./userStorage.js').UserStorage
+var crypto = require('./crypto.js')
 
 // var serverRoot = 'https://auth.airbitz.co/api'
 var serverRoot = 'https://test-auth.airbitz.co/api'
@@ -143,6 +144,29 @@ Context.prototype.loginWithRecovery2 = function (recovery2Key, username, answers
 
 Context.prototype.fetchRecovery2Questions = function (recovery2Key, username, callback) {
   return loginRecovery2.questions(this, recovery2Key, username, callback)
+}
+
+Context.prototype.runScryptTimingWithParameters = function (n, r, p) {
+  var snrp = crypto.makeSnrp()
+  // var snrp = {
+  //   'salt_hex': crypto.random(32).toString('hex'),
+  //   'n': 16384,
+  //   'r': 1,
+  //   'p': 1
+  // }
+  var randText = crypto.random(32).toString('hex')
+  snrp.n = Math.pow(2, n)
+  snrp.r = r
+  snrp.p = p
+  var startTime = window.performance.now()
+  var hash = crypto.scrypt(randText, snrp)
+  var endTime = window.performance.now()
+
+  return {
+    time: endTime - startTime,
+    data: randText,
+    hash: hash
+  }
 }
 
 Context.prototype.checkPasswordRules = function (password) {
