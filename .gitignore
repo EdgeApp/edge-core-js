@@ -1,3 +1,4 @@
+/.cli
 /abc.js
-/test/fake/apiKey.js
+/cli/apiKey.js
 node_modules
