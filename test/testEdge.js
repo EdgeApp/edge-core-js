@@ -60,7 +60,7 @@ describe('edge login', function () {
   })
 
   it('request', function (done) {
-    this.timeout(3000)
+    this.timeout(9000)
     var fakeStorage = new FakeStorage()
     var fakeServer = new FakeServer()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')

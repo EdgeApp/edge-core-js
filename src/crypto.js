@@ -25,8 +25,8 @@ function scrypt (data, snrp) {
 exports.scrypt = scrypt
 
 function timeSnrp (snrp) {
-  var startTime = 0;
-  var endTime = 0;
+  var startTime = 0
+  var endTime = 0
   var useDate = false
   try {
     startTime = window.performance.now()
@@ -43,16 +43,21 @@ function timeSnrp (snrp) {
     endTime = Date.now()
   }
 
-  var timeElapsed = endTime - startTime;
+  var timeElapsed = endTime - startTime
   return timeElapsed
 }
 
-function calcSnrpOnTimeElapsed (timeElapsed, targetHashTimeMilliseconds) {
-  var nUnPowered = 0
-  var estTargetTimeElapsed = timeElapsed
+function calcSnrpForTarget (targetHashTimeMilliseconds) {
   var snrp = {
     'salt_hex': random(32).toString('hex'),
-    n: 16384, r:1, p:1}
+    n: 16384,
+    r: 1,
+    p: 1
+  }
+  var timeElapsed = timeSnrp(snrp)
+
+  var estTargetTimeElapsed = timeElapsed
+  var nUnPowered = 0
   var r = (targetHashTimeMilliseconds / estTargetTimeElapsed)
   if (r > 8) {
     snrp.r = 8
@@ -76,34 +81,27 @@ function calcSnrpOnTimeElapsed (timeElapsed, targetHashTimeMilliseconds) {
   nUnPowered = nUnPowered >= 1 ? nUnPowered : 1
   snrp.n = Math.pow(2, nUnPowered + 13)
 
+  // Actually time the new snrp:
+  // var newTimeElapsed = timeSnrp(snrp)
+  // console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed + ' newTime:' + newTimeElapsed)
+  console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed)
+
   return snrp
 }
 
 function makeSnrp () {
-  if (null == timedSnrp)
-  {
-    var snrp = {
-      'salt_hex': random(32).toString('hex'),
-      'n': 16384,
-      'r': 1,
-      'p': 1
-    }
-
-    var timeElapsed = timeSnrp(snrp)
-
-    // Shoot for a 2s hash time
-    snrp = calcSnrpOnTimeElapsed(timeElapsed, 2000)
-
-    // Actually time the new snrp
-    // var newTimeElapsed = timeSnrp(snrp)
-
-    timedSnrp = snrp
-    // console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed + ' newTime:' + newTimeElapsed)
-    console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed)
-
+  if (!timedSnrp) {
+    // Shoot for a 2s hash time:
+    timedSnrp = calcSnrpForTarget(2000)
   }
-  return timedSnrp
 
+  // Return a copy of the timed version with a fresh salt:
+  return {
+    'salt_hex': random(32).toString('hex'),
+    'n': timedSnrp.n,
+    'r': timedSnrp.r,
+    'p': timedSnrp.p
+  }
 }
 exports.makeSnrp = makeSnrp
 

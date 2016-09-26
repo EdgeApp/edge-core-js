@@ -85,6 +85,7 @@ describe('creation', function () {
   })
 
   it('create account', function (done) {
+    this.timeout(9000)
     var fakeStorage = new FakeStorage()
     var fakeServer = new FakeServer()
     var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')
@@ -128,6 +129,7 @@ describe('creation', function () {
 
 describe('password', function () {
   it('setup', function (done) {
+    this.timeout(9000)
     var fakeStorage = new FakeStorage()
     fakeStorage.populate()
     var fakeServer = new FakeServer()
