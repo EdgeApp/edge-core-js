@@ -2,6 +2,27 @@ import url from 'url'
 
 import * as packages from './packages.js'
 
+class FakeResponse {
+  constructor (body = '', opts = {}) {
+    this.body = body
+    this.status = opts.status || 200
+    this.statusText = opts.statusText || 'OK'
+    this.ok = this.status >= 200 && this.status < 300
+  }
+
+  json () {
+    try {
+      return Promise.resolve(JSON.parse(this.body))
+    } catch (e) {
+      return Promise.reject(e)
+    }
+  }
+
+  text () {
+    return Promise.resolve(this.body)
+  }
+}
+
 function makeResponse (results) {
   const reply = {
     'status_code': 0
@@ -9,11 +30,11 @@ function makeResponse (results) {
   if (results) {
     reply['results'] = results
   }
-  return {body: JSON.stringify(reply), status: 200}
+  return new FakeResponse(JSON.stringify(reply))
 }
 
 function makeErrorResponse (code) {
-  return {body: `{"status_code": ${code}}`, status: 500}
+  return new FakeResponse(`{"status_code": ${code}}`, {status: 500})
 }
 
 const authLevel = {
@@ -84,7 +105,9 @@ FakeServer.prototype.authCheck = function (body) {
   return authLevel.none
 }
 
-FakeServer.prototype.request = function (method, uri, body) {
+FakeServer.prototype.request = function (uri, opts) {
+  const method = opts.method || 'GET'
+  const body = opts.body ? JSON.parse(opts.body) : null
   const path = url.parse(uri).pathname
 
   // Account lifetime v1: ----------------------------------------------------
@@ -332,7 +355,7 @@ FakeServer.prototype.request = function (method, uri, body) {
 
     const repo = this.repos[syncKey]
     if (!repo) {
-      return {body: 'Cannot find repo ' + syncKey, status: 404}
+      return new FakeResponse('Cannot find repo ' + syncKey, {status: 404})
     }
 
     switch (method) {
@@ -343,32 +366,28 @@ FakeServer.prototype.request = function (method, uri, body) {
             repo[change] = changes[change]
           }
         }
-        return {
-          body: JSON.stringify({
-            'changes': changes,
-            'hash': '1111111111111111111111111111111111111111'
-          }),
-          status: 200
-        }
+        return new FakeResponse(JSON.stringify({
+          'changes': changes,
+          'hash': '1111111111111111111111111111111111111111'
+        }))
 
       case 'GET':
-        return {body: JSON.stringify({'changes': repo}), status: 200}
+        return new FakeResponse(JSON.stringify({'changes': repo}))
     }
   }
 
-  return {body: 'Unknown API endpoint', status: 404}
+  return new FakeResponse('Unknown API endpoint', {status: 404})
 }
 
 /**
- * Makes a stand-alone request function that is bound to `this`.
+ * Makes a stand-alone fetch function that is bound to `this`.
  */
-FakeServer.prototype.bindRequest = function () {
-  return (method, uri, body, callback) => {
+FakeServer.prototype.bindFetch = function () {
+  return (uri, opts) => {
     try {
-      const response = this.request(method, uri, body)
-      return callback(null, response.status, response.body)
+      return Promise.resolve(this.request(uri, opts))
     } catch (e) {
-      return callback(e)
+      return Promise.reject(e)
     }
   }
 }

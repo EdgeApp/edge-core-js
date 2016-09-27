@@ -36,29 +36,7 @@ export function Context (opts) {
   opts = opts || {}
   this.accountType = opts.accountType || 'account:repo:co.airbitz.wallet'
   this.localStorage = opts.localStorage || DomWindow.localStorage
-
-  function webFetch (method, uri, body, callback) {
-    const xhr = new DomWindow.XMLHttpRequest()
-    xhr.addEventListener('load', function () {
-      callback(null, this.status, this.responseText)
-    })
-    xhr.addEventListener('error', function () {
-      callback(Error('Cannot reach auth server'))
-    })
-    xhr.open(method, uri)
-    xhr.setRequestHeader('Authorization', 'Token ' + opts.apiKey)
-    xhr.setRequestHeader('Content-Type', 'application/json')
-    xhr.setRequestHeader('Accept', 'application/json')
-    // DELETE, POST, and PUT can all have request bodies
-    // But GET cannot, otherwise it becomes non-standard
-    if (method !== 'GET') {
-      xhr.send(JSON.stringify(body))
-    } else {
-      xhr.send()
-    }
-    console.log('Visit ' + uri)
-  }
-  this.authFetch = opts.authRequest || webFetch
+  this.fetch = opts.fetch || DomWindow.fetch
 
   /**
    * Wraps the raw authRequest function in something more friendly.
@@ -66,23 +44,29 @@ export function Context (opts) {
    * @return a promise of the server's JSON reply
    */
   this.authRequest = function (method, uri, body) {
-    return new Promise((resolve, reject) => {
-      this.authFetch(method, serverRoot + uri, body, function (err, status, body) {
-        if (err) return reject(err)
-        try {
-          var reply = JSON.parse(body)
-        } catch (e) {
-          return reject(new Error('Non-JSON reply, HTTP status ' + status))
-        }
+    const headers = {
+      method: method,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Token ' + opts.apiKey
+      }
+    }
+    if (method !== 'GET') {
+      headers.body = JSON.stringify(body)
+    }
 
-        // Look at the Airbitz status code:
-        switch (reply['status_code']) {
-          case 0:
-            return resolve(reply.results)
-          default:
-            return reject(new Error(body))
+    return this.fetch(serverRoot + uri, headers).then(response => {
+      return response.json().then(json => {
+        if (json['status_code'] !== 0) {
+          throw new Error('Server error ' + JSON.stringify(json))
         }
+        return json['results']
+      }, jsonError => {
+        throw new Error('Non-JSON reply, HTTP status ' + response.status)
       })
+    }, networkError => {
+      throw new Error('NetworkError: Could not connect to auth server')
     })
   }
 }

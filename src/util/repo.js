@@ -10,38 +10,29 @@ const syncServers = [
 /**
  * Fetches some resource from a sync server.
  */
-function syncRequest (authFetch, method, uri, body, callback) {
-  return new Promise((resolve, reject) => {
-    syncRequestInner(authFetch, method, uri, body, (err, reply) => {
-      if (err) return reject(err)
-      return resolve(reply)
-    }, 0)
-  })
+function syncRequest (fetch, method, uri, body, callback) {
+  return syncRequestInner(fetch, method, uri, body, 0)
 }
 
-function syncRequestInner (authFetch, method, uri, body, callback, serverIndex) {
+function syncRequestInner (fetch, method, uri, body, serverIndex) {
   console.log('syncRequestInner: Connecting to ' + syncServers[serverIndex])
-  authFetch(method, syncServers[serverIndex] + uri, body, function (err, status, result) {
-    if (err) {
-      console.log('syncRequestInner: Failed connecting to ' + syncServers[serverIndex])
-      if (serverIndex < syncServers.length - 1) {
-        return syncRequestInner(authFetch, method, uri, body, callback, (serverIndex + 1))
-      } else {
-        return callback(err)
-      }
+  const headers = {
+    method: method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     }
-    try {
-      var reply = JSON.parse(result)
-    } catch (e) {
-      console.log('syncRequestInner: Failed parsing response from ' + syncServers[serverIndex])
-      if (serverIndex < syncServers.length - 1) {
-        return syncRequestInner(authFetch, method, uri, body, callback, (serverIndex + 1))
-      } else {
-        return callback(Error('Non-JSON reply HTTP status ' + status))
-      }
-    }
+  }
+  if (method !== 'GET') {
+    headers.body = JSON.stringify(body)
+  }
 
-    return callback(null, reply)
+  return fetch(syncServers[serverIndex] + uri, headers).then(response => {
+    return response.json().catch(jsonError => {
+      throw new Error('Non-JSON reply, HTTP status ' + response.status)
+    })
+  }, networkError => {
+    throw new Error('NetworkError: Could not connect to sync server')
   })
 }
 
@@ -92,7 +83,7 @@ export function repoId (dataKey) {
  * The data inside the repo is encrypted with `dataKey`.
  */
 export function Repo (ctx, dataKey, syncKey) {
-  this.authFetch = ctx.authFetch
+  this.fetch = ctx.fetch
   this.dataKey = dataKey
   this.syncKey = syncKey
 
@@ -233,7 +224,7 @@ Repo.prototype.sync = function () {
   }
 
   // Make the request:
-  return syncRequest(this.authFetch, request.changes ? 'POST' : 'GET', uri, request).then(reply => {
+  return syncRequest(this.fetch, request.changes ? 'POST' : 'GET', uri, request).then(reply => {
     let changed = false
 
     // Delete any changed keys (since the upload is done):

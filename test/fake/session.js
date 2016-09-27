@@ -18,7 +18,7 @@ export function makeSession (opts) {
     session.server = new FakeServer()
     session.context = new abc.Context({
       localStorage: session.storage,
-      authRequest: session.server.bindRequest(),
+      fetch: session.server.bindFetch(),
       accountType: opts.accountType
     })
   }

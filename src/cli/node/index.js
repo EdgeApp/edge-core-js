@@ -2,13 +2,13 @@
 import chalk from 'chalk'
 import fs from 'fs'
 import Getopt from 'node-getopt'
+import fetch from 'node-fetch'
 import {LocalStorage} from 'node-localstorage'
 import xdgBasedir from 'xdg-basedir'
 import sourceMapSupport from 'source-map-support'
 
 // Airbitz context stuff:
 import * as abc from '../../abc.js'
-import * as realServer from './realServer.js'
 
 // Commands:
 import {command} from '../command.js'
@@ -100,7 +100,7 @@ function makeSession (config, cmd) {
     session.context = new abc.Context({
       accountType: config.accountType,
       apiKey: config.apiKey,
-      authRequest: realServer.makeAuthRequest(config.apiKey),
+      fetch: fetch,
       localStorage: fakeStorage
     })
   }
