@@ -71,7 +71,6 @@ function calcSnrpForTarget (targetHashTimeMilliseconds) {
       estTargetTimeElapsed *= 4
       var p = (targetHashTimeMilliseconds / estTargetTimeElapsed)
       snrp.p = Math.floor(p)
-
     } else {
       nUnPowered = Math.floor(n)
     }

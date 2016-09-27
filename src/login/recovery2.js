@@ -146,3 +146,14 @@ function setup (ctx, login, questions, answers, callback) {
   })
 }
 exports.setup = setup
+
+function listRecoveryQuestionChoices (ctx, callback) {
+  ctx.authRequest('POST', '/v1/questions', '', function (err, reply) {
+    if (err) {
+      return callback(21)
+    } else {
+      callback(null, reply)
+    }
+  })
+}
+exports.listRecoveryQuestionChoices = listRecoveryQuestionChoices

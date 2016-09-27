@@ -88,7 +88,7 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
     if (err) return callback(err)
     try {
       login.accountFind(ctx.accountType)
-    } catch(e) {
+    } catch (e) {
       // If the login doesn't have the correct account type, add it first:
       return login.accountCreate(ctx, ctx.accountType, function (err) {
         if (err) return callback(err)
@@ -213,4 +213,9 @@ Context.prototype.requestEdgeLogin = function (opts, callback) {
   loginEdge.create(this, opts, callback)
 }
 
+Context.prototype.listRecoveryQuestionChoices = function (callback) {
+  loginRecovery2.listRecoveryQuestionChoices(this, (error, questions) => {
+    callback(error, questions)
+  })
+}
 exports.Context = Context
