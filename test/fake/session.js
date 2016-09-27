@@ -16,7 +16,11 @@ function makeSession (opts) {
   if (opts.needsContext) {
     session.storage = new FakeStorage()
     session.server = new FakeServer()
-    session.context = new abc.Context(session.server.bindRequest(), session.storage, opts.accountType)
+    session.context = new abc.Context({
+      localStorage: session.storage,
+      authRequest: session.server.bindRequest(),
+      accountType: opts.accountType
+    })
   }
 
   if (opts.needsLogin) {

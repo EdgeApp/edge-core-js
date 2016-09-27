@@ -15,8 +15,26 @@ var serverRoot = 'https://test-auth.airbitz.co/api'
  * @param authRequest function (method, uri, body, callback (err, status, body))
  * @param localStorage an object compatible with the Web Storage API.
  */
-function Context (authRequest, localStorage, accountType) {
-  this.accountType = accountType || 'account:repo:co.airbitz.wallet'
+function Context (opts) {
+  opts = opts || {}
+  this.accountType = opts.accountType || 'account:repo:co.airbitz.wallet'
+  this.localStorage = opts.localStorage || window.localStorage
+
+  function webFetch (method, uri, body, callback) {
+    var xhr = new window.XMLHttpRequest()
+    xhr.addEventListener('load', function () {
+      callback(null, this.status, this.responseText)
+    })
+    xhr.addEventListener('error', function () {
+      callback(Error('Cannot reach auth server'))
+    })
+    xhr.open(method, uri)
+    xhr.setRequestHeader('Authorization', 'Token ' + opts.apiKey)
+    xhr.setRequestHeader('Content-Type', 'application/json')
+    xhr.send(JSON.stringify(body))
+    console.log('Visit ' + uri)
+  }
+  var authFetch = opts.authRequest || webFetch
 
   /**
    * Wraps the raw authRequest function in something more friendly.
@@ -24,7 +42,7 @@ function Context (authRequest, localStorage, accountType) {
    * @param callback function (err, reply JSON object)
    */
   this.authRequest = function (method, uri, body, callback) {
-    authRequest(method, serverRoot + uri, body, function (err, status, body) {
+    authFetch(method, serverRoot + uri, body, function (err, status, body) {
       if (err) return callback(err)
       try {
         var reply = JSON.parse(body)
@@ -41,8 +59,6 @@ function Context (authRequest, localStorage, accountType) {
       }
     })
   }
-
-  this.localStorage = localStorage
 }
 
 Context.prototype.usernameList = function () {

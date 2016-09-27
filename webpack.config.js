@@ -1,5 +1,5 @@
 module.exports = {
-  entry: './src/abc-web.js',
+  entry: './src/abc.js',
   module: {
     loaders: [
       { test: /\.json$/, loader: 'json' }
