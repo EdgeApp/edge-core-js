@@ -1,12 +1,10 @@
 /* global describe, it */
-var abc = require('../src/abc.js')
 var assert = require('assert')
 var crypto = require('../src/crypto.js')
-var FakeStorage = require('./fake/fakeStorage.js').FakeStorage
-var FakeServer = require('./fake/fakeServer.js').FakeServer
 var loginEdge = require('../src/login/edge.js')
 var Elliptic = require('elliptic').ec
 var secp256k1 = new Elliptic('secp256k1')
+var makeSession = require('./fake/session.js').makeSession
 
 var fakeReply = {
   username: 'test',
@@ -61,9 +59,7 @@ describe('edge login', function () {
 
   it('request', function (done) {
     this.timeout(9000)
-    var fakeStorage = new FakeStorage()
-    var fakeServer = new FakeServer()
-    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')
+    var session = makeSession({needsContext: true, accountType: 'account:repo:test'})
 
     var opts = {
       onLogin: function (err, account) {
@@ -74,23 +70,21 @@ describe('edge login', function () {
       displayName: 'test suite'
     }
 
-    ctx.requestEdgeLogin(opts, function (err, id) {
+    session.context.requestEdgeLogin(opts, function (err, id) {
       if (err) return done(err)
-      craftFakeReply(fakeServer.db.lobby)
+      craftFakeReply(session.server.db.lobby)
     })
   })
 
   it('cancel', function (done) {
-    var fakeStorage = new FakeStorage()
-    var fakeServer = new FakeServer()
-    var ctx = new abc.Context(fakeServer.bindRequest(), fakeStorage, 'account:repo:test')
+    var session = makeSession({needsContext: true, accountType: 'account:repo:test'})
 
     var opts = {
       onLogin: function () {},
       displayName: 'test suite'
     }
 
-    ctx.requestEdgeLogin(opts, function (err, pendingLogin) {
+    session.context.requestEdgeLogin(opts, function (err, pendingLogin) {
       if (err) return done(err)
       // All we can verify here is that cancel is a callable method:
       pendingLogin.cancelRequest()
