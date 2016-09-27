@@ -55,7 +55,11 @@ function makeSession (options, cmd) {
   // Create a context if we need one:
   if (cmd.needsContext) {
     const fakeStorage = new LocalStorage('./.cli')
-    session.context = new abc.Context(realServer.authRequest, fakeStorage, options['account-type'])
+    session.context = new abc.Context({
+      accountType: options['account-type'],
+      authRequest: realServer.authRequest,
+      localStorage: fakeStorage
+    })
   }
 
   // Create a login if we need one:
