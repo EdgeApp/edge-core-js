@@ -1,16 +1,17 @@
-var AesCbc = require('aes-js').ModeOfOperation.cbc
-var scryptsy = require('scryptsy')
-var hashjs = require('hash.js')
-var Hmac = require('hmac')
+import aesjs from 'aes-js'
+import hashjs from 'hash.js'
+import Hmac from 'hmac'
+import scryptsy from 'scryptsy'
 
-var userIdSnrp = {
+const AesCbc = aesjs.ModeOfOperation.cbc
+
+export const userIdSnrp = {
   'salt_hex': 'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b',
   'n': 16384,
   'r': 1,
   'p': 1
 }
-exports.userIdSnrp = userIdSnrp
-exports.passwordAuthSnrp = userIdSnrp
+export const passwordAuthSnrp = userIdSnrp
 
 var timedSnrp = null
 
@@ -30,14 +31,13 @@ if (typeof window === 'undefined') {
  * @param snrp A JSON SNRP structure.
  * @return A Buffer with the hash.
  */
-function scrypt (data, snrp) {
+export function scrypt (data, snrp) {
   var dklen = 32
   var salt = new Buffer(snrp.salt_hex, 'hex')
   return scryptsy(data, salt, snrp.n, snrp.r, snrp.p, dklen)
 }
-exports.scrypt = scrypt
 
-function timeSnrp (snrp) {
+export function timeSnrp (snrp) {
   var startTime = 0
   var endTime = 0
   startTime = timerNow()
@@ -49,8 +49,6 @@ function timeSnrp (snrp) {
   var timeElapsed = endTime - startTime
   return timeElapsed
 }
-
-exports.timeSnrp = timeSnrp
 
 function calcSnrpForTarget (targetHashTimeMilliseconds) {
   var snrp = {
@@ -93,7 +91,7 @@ function calcSnrpForTarget (targetHashTimeMilliseconds) {
   return snrp
 }
 
-function makeSnrp () {
+export function makeSnrp () {
   if (!timedSnrp) {
     // Shoot for a 2s hash time:
     timedSnrp = calcSnrpForTarget(2000)
@@ -107,9 +105,8 @@ function makeSnrp () {
     'p': timedSnrp.p
   }
 }
-exports.makeSnrp = makeSnrp
 
-function random (bytes) {
+export function random (bytes) {
   bytes |= 0
   try {
     var out = new Buffer(bytes)
@@ -121,13 +118,12 @@ function random (bytes) {
   }
   return out
 }
-exports.random = random
 
 /**
  * @param box an Airbitz JSON encryption box
  * @param key a key, as an ArrayBuffer
  */
-function decrypt (box, key) {
+export function decrypt (box, key) {
   // Check JSON:
   if (box['encryptionType'] !== 0) {
     throw new Error('Unknown encryption type')
@@ -176,13 +172,12 @@ function decrypt (box, key) {
   // Return the payload:
   return raw.slice(dataStart, dataStart + dataSize)
 }
-exports.decrypt = decrypt
 
 /**
  * @param payload an ArrayBuffer of data
  * @param key a key, as an ArrayBuffer
  */
-function encrypt (data, key) {
+export function encrypt (data, key) {
   // Calculate sizes and locations:
   var headerSize = random(1)[0] & 0x1f
   var dataStart = 1 + headerSize + 4
@@ -238,10 +233,8 @@ function encrypt (data, key) {
     'data_base64': new Buffer(cypher.encrypt(raw)).toString('base64')
   }
 }
-exports.encrypt = encrypt
 
-function hmacSha256 (data, key) {
+export function hmacSha256 (data, key) {
   var hmac = new Hmac(hashjs.sha256, 64, key)
   return hmac.update(data).digest()
 }
-exports.hmacSha256 = hmacSha256

@@ -1,6 +1,6 @@
-require('./login.js')
-require('./password.js')
-require('./pin.js')
-require('./recovery2.js')
-require('./repo.js')
-require('./wallet.js')
+import './login.js'
+import './password.js'
+import './pin.js'
+import './recovery2.js'
+import './repo.js'
+import './wallet.js'

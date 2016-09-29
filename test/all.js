@@ -1,0 +1,6 @@
+import './testCrypto.js'
+import './testEdge.js'
+import './testLogin.js'
+import './testRepo.js'
+import './testStorage.js'
+import './testWalletList.js'

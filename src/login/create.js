@@ -1,13 +1,14 @@
-var bip39 = require('bip39')
-var crypto = require('../crypto.js')
-var userMap = require('../userMap.js')
-var UserStorage = require('../userStorage.js').UserStorage
-var Login = require('./login.js')
+import bip39 from 'bip39'
+
+import * as crypto from '../crypto.js'
+import {Login} from './login.js'
+import * as userMap from '../userMap.js'
+import {UserStorage} from '../userStorage.js'
 
 /**
  * Determines whether or not a username is available.
  */
-function usernameAvailable (ctx, username, callback) {
+export function usernameAvailable (ctx, username, callback) {
   username = userMap.normalize(username)
 
   var userId = userMap.getUserId(ctx.localStorage, username)
@@ -19,12 +20,11 @@ function usernameAvailable (ctx, username, callback) {
     return callback(null)
   })
 }
-exports.usernameAvailable = usernameAvailable
 
 /**
  * Creates a new login on the auth server.
  */
-function create (ctx, username, password, opts, callback) {
+export function create (ctx, username, password, opts, callback) {
   username = userMap.normalize(username)
   var userId = userMap.getUserId(ctx.localStorage, username)
 
@@ -86,9 +86,8 @@ function create (ctx, username, password, opts, callback) {
     })
   })
 }
-exports.create = create
 
-function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
+export function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
   // Create a BIP39 mnemonic, and use it to derive the rootKey:
   var entropy = crypto.random(256 / 8)
   var mnemonic = bip39.entropyToMnemonic(entropy.toString('hex'))
@@ -113,4 +112,3 @@ function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
     return callback(null)
   })
 }
-exports.upgrade = upgrade

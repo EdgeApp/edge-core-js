@@ -1,10 +1,12 @@
-var loginCreate = require('./create.js')
-var base58 = require('../util/encoding.js').base58
-var crypto = require('../crypto.js')
-var loginPin2 = require('./pin2.js')
+import elliptic from 'elliptic'
 
-var Elliptic = require('elliptic').ec
-var secp256k1 = new Elliptic('secp256k1')
+import * as crypto from '../crypto.js'
+import * as loginCreate from './create.js'
+import * as loginPin2 from './pin2.js'
+import {base58} from '../util/encoding.js'
+
+const EllipticCurve = elliptic.ec
+const secp256k1 = new EllipticCurve('secp256k1')
 
 function ABCEdgeLoginRequest (id) {
   this.id = id
@@ -53,7 +55,7 @@ function createLogin (ctx, accountReply, callback) {
  * Opens a lobby object to determine if it contains a resolved account request.
  * Returns the account info if so, or null otherwise.
  */
-function decodeAccountReply (keys, lobby) {
+export function decodeAccountReply (keys, lobby) {
   var accountRequest = lobby['accountRequest']
   var replyBox = accountRequest['replyBox']
   var replyKey = accountRequest['replyKey']
@@ -79,7 +81,6 @@ function decodeAccountReply (keys, lobby) {
 
   return returnObj
 }
-exports.decodeAccountReply = decodeAccountReply
 
 /**
  * Polls the lobby every second or so,
@@ -114,7 +115,7 @@ function pollServer (ctx, edgeLogin, keys, onLogin, onProcessLogin) {
 /**
  * Creates a new account request lobby on the server.
  */
-function create (ctx, opts, callback) {
+export function create (ctx, opts, callback) {
   var keys = secp256k1.genKeyPair()
 
   var data = {
@@ -152,4 +153,3 @@ function create (ctx, opts, callback) {
     return callback(null, edgeLogin)
   })
 }
-exports.create = create

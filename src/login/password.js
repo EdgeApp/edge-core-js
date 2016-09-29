@@ -1,7 +1,7 @@
-var crypto = require('../crypto.js')
-var userMap = require('../userMap.js')
-var UserStorage = require('../userStorage.js').UserStorage
-var Login = require('./login.js')
+import * as crypto from '../crypto.js'
+import {Login} from './login.js'
+import * as userMap from '../userMap.js'
+import {UserStorage} from '../userStorage.js'
 
 function loginOffline (ctx, username, userId, password, callback) {
   // Extract stuff from storage:
@@ -61,7 +61,7 @@ function loginOnline (ctx, username, userId, password, callback) {
  * @param password string
  * @param callback function (err, keys)
  */
-function login (ctx, username, password, callback) {
+export function login (ctx, username, password, callback) {
   username = userMap.normalize(username)
   var userId = userMap.getUserId(ctx.localStorage, username)
 
@@ -70,12 +70,11 @@ function login (ctx, username, password, callback) {
     return loginOnline(ctx, username, userId, password, callback)
   })
 }
-exports.login = login
 
 /**
  * Returns true if the given password is correct.
  */
-function check (ctx, login, password) {
+export function check (ctx, login, password) {
   // Extract stuff from storage:
   var passwordKeySnrp = login.userStorage.getJson('passwordKeySnrp')
   var passwordBox = login.userStorage.getJson('passwordBox')
@@ -92,12 +91,11 @@ function check (ctx, login, password) {
   }
   return true
 }
-exports.check = check
 
 /**
  * Sets up a password for the login.
  */
-function setup (ctx, login, password, callback) {
+export function setup (ctx, login, password, callback) {
   var up = login.username + password
 
   // Create new keys:
@@ -128,4 +126,3 @@ function setup (ctx, login, password, callback) {
     return callback(null)
   })
 }
-exports.setup = setup

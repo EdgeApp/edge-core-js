@@ -1,6 +1,5 @@
-var Repo = require('../../src/util/repo.js').Repo
-
-const command = require('../command.js')
+import {command} from '../command.js'
+import {Repo} from '../../src/util/repo.js'
 
 command('repo-sync', {
   usage: '<sync-key> <data-key>',

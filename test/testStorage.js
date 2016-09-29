@@ -1,7 +1,8 @@
 /* global describe, it */
-var assert = require('assert')
-var FakeStorage = require('./fake/fakeStorage.js').FakeStorage
-var ScopedStorage = require('../src/util/scopedStorage.js').ScopedStorage
+import assert from 'assert'
+
+import {FakeStorage} from './fake/fakeStorage.js'
+import {ScopedStorage} from '../src/util/scopedStorage.js'
 
 describe('storage', function () {
   it('enumerate keys', function () {

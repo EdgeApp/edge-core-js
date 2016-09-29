@@ -1,8 +1,8 @@
-var base58 = require('../util/encoding.js').base58
-var crypto = require('../crypto.js')
-var userMap = require('../userMap.js')
-var UserStorage = require('../userStorage.js').UserStorage
-var Login = require('./login.js')
+import {base58} from '../util/encoding.js'
+import * as crypto from '../crypto.js'
+import {Login} from './login.js'
+import * as userMap from '../userMap.js'
+import {UserStorage} from '../userStorage.js'
 
 function pin2Id (pin2Key, username) {
   return new Buffer(crypto.hmacSha256(username, pin2Key))
@@ -15,14 +15,13 @@ function pin2Auth (pin2Key, pin) {
 /**
  * Returns true if the local device has a copy of the PIN login key.
  */
-function getKey (ctx, username) {
+export function getKey (ctx, username) {
   username = userMap.normalize(username)
 
   // Extract stuff from storage:
   var userStorage = new UserStorage(ctx.localStorage, username)
   return userStorage.getItem('pin2Key')
 }
-exports.getKey = getKey
 
 /**
  * Logs a user in using their PIN.
@@ -31,7 +30,7 @@ exports.getKey = getKey
  * @param pin the PIN, as a string.
  * @param callback function (err, login)
  */
-function login (ctx, pin2Key, username, pin, callback) {
+export function login (ctx, pin2Key, username, pin, callback) {
   pin2Key = base58.decode(pin2Key)
   username = userMap.normalize(username)
 
@@ -62,12 +61,11 @@ function login (ctx, pin2Key, username, pin, callback) {
     return callback(null, Login.online(ctx.localStorage, username, dataKey, reply))
   })
 }
-exports.login = login
 
 /**
  * Sets up PIN login v2.
  */
-function setup (ctx, login, pin, callback) {
+export function setup (ctx, login, pin, callback) {
   var pin2Key = login.userStorage.getItem('pin2Key')
   if (pin2Key) {
     pin2Key = base58.decode(pin2Key)
@@ -93,4 +91,3 @@ function setup (ctx, login, pin, callback) {
     return callback(null, pin2Key)
   })
 }
-exports.setup = setup

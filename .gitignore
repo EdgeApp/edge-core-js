@@ -1,4 +1,5 @@
-/cli/apiKey.js
+/bin
+/dist
 /node_modules
 .cli
 .idea

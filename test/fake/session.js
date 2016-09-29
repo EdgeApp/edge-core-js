@@ -1,12 +1,12 @@
-var FakeServer = require('./fakeServer.js').FakeServer
-var FakeStorage = require('./fakeStorage.js').FakeStorage
-var packages = require('./packages.js')
+import {FakeServer} from './fakeServer.js'
+import {FakeStorage} from './fakeStorage.js'
+import * as packages from './packages.js'
 
-var abc = require('../../src/abc.js')
-var Account = require('../../src/account.js').Account
-var Login = require('../../src/login/login.js')
+import * as abc from '../../src/abc.js'
+import {Account} from '../../src/account.js'
+import {Login} from '../../src/login/login.js'
 
-function makeSession (opts) {
+export function makeSession (opts) {
   var session = {}
 
   // Expand needs flags:
@@ -34,4 +34,3 @@ function makeSession (opts) {
 
   return session
 }
-exports.makeSession = makeSession

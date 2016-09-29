@@ -1,16 +1,16 @@
-var loginPassword = require('./login/password.js')
-var loginPin2 = require('./login/pin2.js')
-var loginRecovery2 = require('./login/recovery2.js')
-var Repo = require('./util/repo').Repo
-var server = require('./login/server.js')
-var Wallet = require('./wallet.js').Wallet
-var WalletList = require('./util/walletList.js').WalletList
+import * as loginPassword from './login/password.js'
+import * as loginPin2 from './login/pin2.js'
+import * as loginRecovery2 from './login/recovery2.js'
+import {Repo} from './util/repo.js'
+import * as server from './login/server.js'
+import {Wallet} from './wallet.js'
+import {WalletList} from './util/walletList.js'
 
 /**
  * This is a thin shim object,
  * which wraps the core implementation in a more OOP-style API.
  */
-function Account (ctx, login) {
+export function Account (ctx, login) {
   this.ctx = ctx
   this.login = login
   this.keys = login.accountFind(ctx.accountType)
@@ -112,5 +112,3 @@ Account.prototype.createWallet = function (type, keysJson, callback) {
     })
   })
 }
-
-exports.Account = Account

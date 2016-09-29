@@ -1,4 +1,5 @@
-var XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest
+import {XMLHttpRequest} from 'xmlhttprequest'
+
 var apiKey = null
 try {
   apiKey = require('./apiKey.js').apiKey
@@ -7,10 +8,10 @@ try {
 /**
  * Makes an HTTP request to the real auth server.
  */
-function authRequest (method, uri, body, callback) {
+export function authRequest (method, uri, body, callback) {
   // Ensure we have an API key:
   if (!apiKey) {
-    var message = "Please create a file called 'cli/apiKey.js' with the line: " +
+    var message = "Please create a file called 'bin/apiKey.js' with the line: " +
       "exports.apiKey = '<your key here>'"
     throw new Error(message)
   }
@@ -28,4 +29,3 @@ function authRequest (method, uri, body, callback) {
   xhr.send(JSON.stringify(body))
   console.log(method + ' ' + uri)
 }
-exports.authRequest = authRequest

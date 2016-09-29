@@ -1,12 +1,12 @@
-var Account = require('./account').Account
-var loginEdge = require('./login/edge.js')
-var loginCreate = require('./login/create.js')
-var loginPassword = require('./login/password.js')
-var loginPin2 = require('./login/pin2.js')
-var loginRecovery2 = require('./login/recovery2.js')
-var userMap = require('./userMap.js')
-var UserStorage = require('./userStorage.js').UserStorage
-var crypto = require('./crypto.js')
+import {Account} from './account.js'
+import * as crypto from './crypto.js'
+import * as loginCreate from './login/create.js'
+import * as loginEdge from './login/edge.js'
+import * as loginPassword from './login/password.js'
+import * as loginPin2 from './login/pin2.js'
+import * as loginRecovery2 from './login/recovery2.js'
+import * as userMap from './userMap.js'
+import {UserStorage} from './userStorage.js'
 
 var serverRoot = 'https://auth.airbitz.co/api'
 // var serverRoot = 'https://test-auth.airbitz.co/api'
@@ -32,7 +32,7 @@ if (typeof (window) === 'undefined') {
  * @param authRequest function (method, uri, body, callback (err, status, body))
  * @param localStorage an object compatible with the Web Storage API.
  */
-function Context (opts) {
+export function Context (opts) {
   opts = opts || {}
   this.accountType = opts.accountType || 'account:repo:co.airbitz.wallet'
   this.localStorage = opts.localStorage || DomWindow.localStorage
@@ -252,4 +252,3 @@ Context.prototype.listRecoveryQuestionChoices = function (callback) {
     callback(error, questions)
   })
 }
-exports.Context = Context

@@ -1,6 +1,6 @@
-var base58 = require('./encoding.js').base58
-var crypto = require('../crypto.js')
-var ScopedStorage = require('./scopedStorage').ScopedStorage
+import * as crypto from '../crypto.js'
+import {base58} from './encoding.js'
+import {ScopedStorage} from './scopedStorage.js'
 
 var syncServers = [
   'https://git-js.airbitz.co',
@@ -53,7 +53,7 @@ function pathSplit (path) {
  * This function ignores folder-level deletes and overwrites,
  * but those can't happen under the current rules anyhow.
  */
-function mergeChanges (store, changes) {
+export function mergeChanges (store, changes) {
   for (var key in changes) {
     if (changes.hasOwnProperty(key)) {
       // Normalize the path:
@@ -74,21 +74,19 @@ function mergeChanges (store, changes) {
     }
   }
 }
-exports.mergeChanges = mergeChanges
 
 /**
  * Creates an ID string from a repo's dataKey.
  */
-function repoId (dataKey) {
+export function repoId (dataKey) {
   return base58.encode(crypto.hmacSha256(dataKey, dataKey))
 }
-exports.repoId = repoId
 
 /**
  * Creates a data storage and syncing object.
  * The data inside the repo is encrypted with `dataKey`.
  */
-function Repo (ctx, dataKey, syncKey) {
+export function Repo (ctx, dataKey, syncKey) {
   this.authFetch = ctx.authFetch
   this.dataKey = dataKey
   this.syncKey = syncKey
@@ -98,7 +96,6 @@ function Repo (ctx, dataKey, syncKey) {
   this.changeStore = this.store.subStore('changes')
   this.dataStore = this.store.subStore('data')
 }
-exports.Repo = Repo
 
 /**
  * Creates a secure file name by hashing

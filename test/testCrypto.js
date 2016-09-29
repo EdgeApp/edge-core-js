@@ -1,7 +1,8 @@
 /* global describe, it */
-var assert = require('assert')
-var crypto = require('../src/crypto.js')
-var encoding = require('../src/util/encoding.js')
+import assert from 'assert'
+
+import * as crypto from '../src/crypto.js'
+import * as encoding from '../src/util/encoding.js'
 
 describe('scrypt', function () {
   it('match a known userId', function () {

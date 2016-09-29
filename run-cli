@@ -1,0 +1,6 @@
+#!/bin/sh
+# Compiles and run the CLI.
+set -e
+./node_modules/.bin/rollup -c rollup.config.cli.js
+chmod +x ./bin/airbitz-cli
+./bin/airbitz-cli "$@"

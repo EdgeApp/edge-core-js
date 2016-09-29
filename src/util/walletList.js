@@ -1,4 +1,4 @@
-var repoId = require('./repo.js').repoId
+import {repoId} from './repo.js'
 
 function walletType (walletJson) {
   return walletJson['type'] || 'wallet:repo:bitcoin:bip32'
@@ -20,14 +20,13 @@ function walletId (walletJson) {
  * An list of wallets stored in a repo.
  * Uses a write-through cache to avoid repeated encryption and decryption.
  */
-function WalletList (repo, folder) {
+export function WalletList (repo, folder) {
   this.folder = folder || 'Wallets'
   this.repo = repo
 
   this.wallets = {}
   this.load()
 }
-exports.WalletList = WalletList
 
 /**
  * Loads the list of wallets into the cache.

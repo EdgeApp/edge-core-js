@@ -3,49 +3,47 @@
  * Error codes for ABCError object
  */
 
-var abcc = {}
-
-abcc.ABCConditionCodeOk = 0
-abcc.ABCConditionCodeError = 1
-abcc.ABCConditionCodeNULLPtr = 2
-abcc.ABCConditionCodeNoAvailAccountSpace = 3
-abcc.ABCConditionCodeDirReadError = 4
-abcc.ABCConditionCodeFileOpenError = 5
-abcc.ABCConditionCodeFileReadError = 6
-abcc.ABCConditionCodeFileWriteError = 7
-abcc.ABCConditionCodeFileDoesNotExist = 8
-abcc.ABCConditionCodeUnknownCryptoType = 9
-abcc.ABCConditionCodeInvalidCryptoType = 10
-abcc.ABCConditionCodeDecryptError = 11
-abcc.ABCConditionCodeDecryptFailure = 12
-abcc.ABCConditionCodeEncryptError = 13
-abcc.ABCConditionCodeScryptError = 14
-abcc.ABCConditionCodeAccountAlreadyExists = 15
-abcc.ABCConditionCodeAccountDoesNotExist = 16
-abcc.ABCConditionCodeJSONError = 17
-abcc.ABCConditionCodeBadPassword = 18
-abcc.ABCConditionCodeWalletAlreadyExists = 19
-abcc.ABCConditionCodeURLError = 20
-abcc.ABCConditionCodeSysError = 21
-abcc.ABCConditionCodeNotInitialized = 22
-abcc.ABCConditionCodeReinitialization = 23
-abcc.ABCConditionCodeServerError = 24
-abcc.ABCConditionCodeNoRecoveryQuestions = 25
-abcc.ABCConditionCodeNotSupported = 26
-abcc.ABCConditionCodeMutexError = 27
-abcc.ABCConditionCodeNoTransaction = 28
-abcc.ABCConditionCodeEmpty_Wallet = 28
-abcc.ABCConditionCodeParseError = 29
-abcc.ABCConditionCodeInvalidWalletID = 30
-abcc.ABCConditionCodeNoRequest = 31
-abcc.ABCConditionCodeInsufficientFunds = 32
-abcc.ABCConditionCodeSynchronizing = 33
-abcc.ABCConditionCodeNonNumericPin = 34
-abcc.ABCConditionCodeNoAvailableAddress = 35
-abcc.ABCConditionCodeInvalidPinWait = 36
-abcc.ABCConditionCodePinExpired = 36
-abcc.ABCConditionCodeInvalidOTP = 37
-abcc.ABCConditionCodeSpendDust = 38
-abcc.ABCConditionCodeObsolete = 1000
-
-exports = abcc
+export const abcc = {
+  ABCConditionCodeOk: 0,
+  ABCConditionCodeError: 1,
+  ABCConditionCodeNULLPtr: 2,
+  ABCConditionCodeNoAvailAccountSpace: 3,
+  ABCConditionCodeDirReadError: 4,
+  ABCConditionCodeFileOpenError: 5,
+  ABCConditionCodeFileReadError: 6,
+  ABCConditionCodeFileWriteError: 7,
+  ABCConditionCodeFileDoesNotExist: 8,
+  ABCConditionCodeUnknownCryptoType: 9,
+  ABCConditionCodeInvalidCryptoType: 10,
+  ABCConditionCodeDecryptError: 11,
+  ABCConditionCodeDecryptFailure: 12,
+  ABCConditionCodeEncryptError: 13,
+  ABCConditionCodeScryptError: 14,
+  ABCConditionCodeAccountAlreadyExists: 15,
+  ABCConditionCodeAccountDoesNotExist: 16,
+  ABCConditionCodeJSONError: 17,
+  ABCConditionCodeBadPassword: 18,
+  ABCConditionCodeWalletAlreadyExists: 19,
+  ABCConditionCodeURLError: 20,
+  ABCConditionCodeSysError: 21,
+  ABCConditionCodeNotInitialized: 22,
+  ABCConditionCodeReinitialization: 23,
+  ABCConditionCodeServerError: 24,
+  ABCConditionCodeNoRecoveryQuestions: 25,
+  ABCConditionCodeNotSupported: 26,
+  ABCConditionCodeMutexError: 27,
+  ABCConditionCodeNoTransaction: 28,
+  ABCConditionCodeEmpty_Wallet: 28,
+  ABCConditionCodeParseError: 29,
+  ABCConditionCodeInvalidWalletID: 30,
+  ABCConditionCodeNoRequest: 31,
+  ABCConditionCodeInsufficientFunds: 32,
+  ABCConditionCodeSynchronizing: 33,
+  ABCConditionCodeNonNumericPin: 34,
+  ABCConditionCodeNoAvailableAddress: 35,
+  ABCConditionCodeInvalidPinWait: 36,
+  ABCConditionCodePinExpired: 36,
+  ABCConditionCodeInvalidOTP: 37,
+  ABCConditionCodeSpendDust: 38,
+  ABCConditionCodeObsolete: 1000
+}

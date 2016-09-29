@@ -1,4 +1,4 @@
-const command = require('../command.js')
+import {command} from '../command.js'
 
 command('pin-login', {
   usage: '<username> <pin>',

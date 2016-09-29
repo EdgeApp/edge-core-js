@@ -1,8 +1,9 @@
 /* global describe, it */
-var abc = require('../src/abc.js')
-var assert = require('assert')
-var packages = require('./fake/packages.js')
-var makeSession = require('./fake/session.js').makeSession
+import assert from 'assert'
+
+import * as abc from '../src/abc.js'
+import * as packages from './fake/packages.js'
+import {makeSession} from './fake/session.js'
 
 describe('login', function () {
   it('find repo', function () {

@@ -1,8 +1,8 @@
-var base58 = require('../util/encoding.js').base58
-var crypto = require('../crypto.js')
-var server = require('./server.js')
-var UserStorage = require('../userStorage.js').UserStorage
-var userMap = require('../userMap.js')
+import * as crypto from '../crypto.js'
+import {base58} from '../util/encoding.js'
+import * as server from './server.js'
+import * as userMap from '../userMap.js'
+import {UserStorage} from '../userStorage.js'
 
 /**
  * Unpacks a login v2 reply package, and stores the contents locally.
@@ -47,7 +47,7 @@ function loginReplyStore (localStorage, username, dataKey, loginReply) {
  * - A list of account repos
  * - The legacy BitID rootKey
  */
-function Login (localStorage, username, dataKey) {
+export function Login (localStorage, username, dataKey) {
   // Identity:
   this.username = username
   this.userId = userMap.getUserId(localStorage, username)
@@ -167,5 +167,3 @@ Login.prototype.accountAttach = function (ctx, type, info, callback) {
     callback(null)
   })
 }
-
-module.exports = Login

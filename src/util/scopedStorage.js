@@ -1,11 +1,10 @@
 /**
  * Wraps `LocalStorage` with a namespace and other extra goodies.
  */
-function ScopedStorage (localStorage, prefix) {
+export function ScopedStorage (localStorage, prefix) {
   this.localStorage = localStorage
   this.prefix = prefix + '.'
 }
-exports.ScopedStorage = ScopedStorage
 
 ScopedStorage.prototype.getItem = function (key) {
   return this.localStorage.getItem(this.prefix + key)

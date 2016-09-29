@@ -1,10 +1,13 @@
 /* global describe, it */
-var assert = require('assert')
-var crypto = require('../src/crypto.js')
-var loginEdge = require('../src/login/edge.js')
-var Elliptic = require('elliptic').ec
-var secp256k1 = new Elliptic('secp256k1')
-var makeSession = require('./fake/session.js').makeSession
+import assert from 'assert'
+import elliptic from 'elliptic'
+
+import * as crypto from '../src/crypto.js'
+import * as loginEdge from '../src/login/edge.js'
+import {makeSession} from './fake/session.js'
+
+const EllipticCurve = elliptic.ec
+const secp256k1 = new EllipticCurve('secp256k1')
 
 var fakeReply = {
   username: 'test',

@@ -1,5 +1,6 @@
-var packages = require('./packages.js')
-var url = require('url')
+import url from 'url'
+
+import * as packages from './packages.js'
 
 function makeReply (results) {
   var reply = {
@@ -15,7 +16,7 @@ var authLevel = {
   full: 'full'
 }
 
-function FakeServer () {
+export function FakeServer () {
   this.db = {}
   this.repos = {}
 }
@@ -353,5 +354,3 @@ FakeServer.prototype.bindRequest = function () {
     FakeServer.prototype.request.apply(server, arguments)
   }
 }
-
-exports.FakeServer = FakeServer

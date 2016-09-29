@@ -1,4 +1,4 @@
-const command = require('../command.js')
+import {command} from '../command.js'
 
 command('wallet-list', {
   help: 'Lists the wallets in an account',

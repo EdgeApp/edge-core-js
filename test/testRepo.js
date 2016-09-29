@@ -1,8 +1,9 @@
 /* global describe, it */
-var assert = require('assert')
-var makeSession = require('./fake/session.js').makeSession
-var packages = require('./fake/packages.js')
-var Repo = require('../src/util/repo.js').Repo
+import assert from 'assert'
+
+import * as packages from './fake/packages.js'
+import {Repo} from '../src/util/repo.js'
+import {makeSession} from './fake/session.js'
 
 describe('repo', function () {
   it('local get', function () {
