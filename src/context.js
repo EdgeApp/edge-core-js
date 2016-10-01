@@ -214,7 +214,7 @@ Context.prototype.requestEdgeLogin = function (opts, callback) {
 }
 
 Context.prototype.listRecoveryQuestionChoices = function (callback) {
-  loginRecovery2.listRecoveryQuestionChoices(this, (error, questions) => {
+  loginRecovery2.listRecoveryQuestionChoices(this, function (error, questions) {
     callback(error, questions)
   })
 }
