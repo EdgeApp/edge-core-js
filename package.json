@@ -2,7 +2,14 @@
   "name": "airbitz-core-js",
   "version": "0.0.1",
   "description": "Airbitz core Javascript implementation",
+  "keywords": "bitcoin, blockchain, ethereum, key management, security",
+  "url": "https://airbitz.co",
   "author": "Airbitz, Inc.",
+  "contributors": [
+    "Paul Puey <paul@airbitz.co>",
+    "William Swanson <william@airbitz.co>",
+    "Tim Horton <tim@airbitz.co>"
+  ],
   "license": "SEE LICENSE IN LICENSE",
   "main": "src/abc.js",
   "bin": "cli.js",
