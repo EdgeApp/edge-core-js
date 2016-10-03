@@ -9,7 +9,7 @@ var UserStorage = require('./userStorage.js').UserStorage
 var crypto = require('./crypto.js')
 
 var serverRoot = 'https://auth.airbitz.co/api'
-//var serverRoot = 'https://test-auth.airbitz.co/api'
+// var serverRoot = 'https://test-auth.airbitz.co/api'
 
 /**
  * @param authRequest function (method, uri, body, callback (err, status, body))

@@ -1,5 +1,7 @@
 var loginCreate = require('./create.js')
 var crypto = require('../crypto.js')
+var loginPin = require('./pin.js')
+
 var Elliptic = require('elliptic').ec
 var secp256k1 = new Elliptic('secp256k1')
 var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
@@ -20,6 +22,7 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
 function createLogin (ctx, accountReply, callback) {
   var username = accountReply.username + '-' + base58.encode(crypto.random(4))
   var password = base58.encode(crypto.random(24))
+  var pin = accountReply.pin
 
   var opts = {}
   if (accountReply.type === 'account:repo:co.airbitz.wallet') {
@@ -30,6 +33,18 @@ function createLogin (ctx, accountReply, callback) {
     if (err) return callback(err)
     login.accountAttach(ctx, accountReply.type, accountReply.info, function (err) {
       if (err) return callback(err)
+
+      if (typeof pin === 'string' && pin.length === 4) {
+        if (!loginPin.exists(ctx, username)) {
+          loginPin.setup(ctx, login, pin, function (err) {
+            if (err) {
+              // Do nothing
+            }
+            callback(null, login)
+          })
+          return
+        }
+      }
       callback(null, login)
     })
   })
@@ -57,8 +72,12 @@ function decodeAccountReply (keys, lobby) {
 
   var info = reply['info']
   var username = reply['username']
+  var pin = null
+  if (typeof reply.pinString === 'string') {
+    pin = reply.pinString
+  }
 
-  return {type: type, info: info, username: username}
+  return {type, info, username, pin}
 }
 exports.decodeAccountReply = decodeAccountReply
 
