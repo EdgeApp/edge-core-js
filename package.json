@@ -2,7 +2,7 @@
   "name": "airbitz-core-js",
   "version": "0.0.1",
   "description": "Airbitz core Javascript implementation",
-  "keywords": "bitcoin, blockchain, ethereum, key management, security",
+  "keywords": ["bitcoin", "blockchain", "ethereum", "key management", "security"],
   "url": "https://airbitz.co",
   "author": "Airbitz, Inc.",
   "contributors": [
