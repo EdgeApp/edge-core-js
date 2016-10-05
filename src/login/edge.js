@@ -122,6 +122,12 @@ function create (ctx, opts, callback) {
     }
   }
 
+  if (typeof opts.displayImageUrl === 'string') {
+    data.accountRequest.displayImageUrl = opts.displayImageUrl
+  } else {
+    data.accountRequest.displayImageUrl = ''
+  }
+
   var request = {
     'expires': 300,
     'data': data
