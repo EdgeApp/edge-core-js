@@ -22,7 +22,7 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
 function createLogin (ctx, accountReply, callback) {
   var username = accountReply.username + '-' + base58.encode(crypto.random(4))
   var password = base58.encode(crypto.random(24))
-  var pin = accountReply.pin
+  var pin = accountReply.pinString
 
   var opts = {}
   if (accountReply.type === 'account:repo:co.airbitz.wallet') {
@@ -72,12 +72,13 @@ function decodeAccountReply (keys, lobby) {
 
   var info = reply['info']
   var username = reply['username']
-  var pin = null
   if (typeof reply.pinString === 'string') {
-    pin = reply.pinString
+    var pinString = reply.pinString
+    return {type, info, username, pinString}
+  } else {
+    return {type, info, username}
   }
 
-  return {type, info, username, pin}
 }
 exports.decodeAccountReply = decodeAccountReply
 

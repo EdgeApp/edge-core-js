@@ -8,6 +8,7 @@ var makeSession = require('./fake/session.js').makeSession
 
 var fakeReply = {
   username: 'test',
+  pinString: '1234',
   info: {
     dataKey: 'fa57',
     syncKey: 'f00d'

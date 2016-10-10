@@ -11,6 +11,23 @@ var crypto = require('./crypto.js')
 var serverRoot = 'https://auth.airbitz.co/api'
 // var serverRoot = 'https://test-auth.airbitz.co/api'
 
+var DomWindow
+if (typeof (window) === 'undefined') {
+  DomWindow = {
+    localStorage: null,
+    XMLHttpRequest: function () {
+      console.log('XMLHttpRequest: Error browser routine used in non-browser environment')
+    },
+    performance: {
+      now: function () {
+        console.log('performance: Error browser routine used in non-browser environment')
+      }
+    }
+  }
+} else {
+  DomWindow = window
+}
+
 /**
  * @param authRequest function (method, uri, body, callback (err, status, body))
  * @param localStorage an object compatible with the Web Storage API.
@@ -18,10 +35,10 @@ var serverRoot = 'https://auth.airbitz.co/api'
 function Context (opts) {
   opts = opts || {}
   this.accountType = opts.accountType || 'account:repo:co.airbitz.wallet'
-  this.localStorage = opts.localStorage || window.localStorage
+  this.localStorage = opts.localStorage || DomWindow.localStorage
 
   function webFetch (method, uri, body, callback) {
-    var xhr = new window.XMLHttpRequest()
+    var xhr = new DomWindow.XMLHttpRequest()
     xhr.addEventListener('load', function () {
       callback(null, this.status, this.responseText)
     })
@@ -170,18 +187,14 @@ Context.prototype.runScryptTimingWithParameters = function (n, r, p) {
   //   'r': 1,
   //   'p': 1
   // }
-  var randText = crypto.random(32).toString('hex')
   snrp.n = Math.pow(2, n)
   snrp.r = r
   snrp.p = p
-  var startTime = window.performance.now()
-  var hash = crypto.scrypt(randText, snrp)
-  var endTime = window.performance.now()
+
+  var hashTime = crypto.timeSnrp(snrp)
 
   return {
-    time: endTime - startTime,
-    data: randText,
-    hash: hash
+    time: hashTime
   }
 }
 
@@ -190,7 +203,7 @@ Context.prototype.checkPasswordRules = function (password) {
   var noNumber = password.match(/\d/) == null
   var noUpperCase = password.match(/[A-Z]/) == null
   var noLowerCase = password.match(/[a-z]/) == null
-  var extraLong   = password.length >= 16
+  var extraLong = password.length >= 16
 
   return {
     'tooShort': tooShort,

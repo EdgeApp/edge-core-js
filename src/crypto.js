@@ -12,6 +12,17 @@ exports.passwordAuthSnrp = userIdSnrp
 
 var timedSnrp = null
 
+var timerNow
+if (typeof window === 'undefined') {
+  timerNow = function () {
+    return Date.now()
+  }
+} else {
+  timerNow = function () {
+    return window.performance.now()
+  }
+}
+
 /**
  * @param data A `Buffer` or byte-array object.
  * @param snrp A JSON SNRP structure.
@@ -27,25 +38,17 @@ exports.scrypt = scrypt
 function timeSnrp (snrp) {
   var startTime = 0
   var endTime = 0
-  var useDate = false
-  try {
-    startTime = window.performance.now()
-  } catch (e) {
-    startTime = Date.now()
-    useDate = true
-  }
+  startTime = timerNow()
 
   scrypt('random string', snrp)
 
-  if (!useDate) {
-    endTime = window.performance.now()
-  } else {
-    endTime = Date.now()
-  }
+  endTime = timerNow()
 
   var timeElapsed = endTime - startTime
   return timeElapsed
 }
+
+exports.timeSnrp = timeSnrp
 
 function calcSnrpForTarget (targetHashTimeMilliseconds) {
   var snrp = {
