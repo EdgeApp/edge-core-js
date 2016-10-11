@@ -86,7 +86,7 @@ exports.decodeAccountReply = decodeAccountReply
  * Polls the lobby every second or so,
  * looking for a reply to our account request.
  */
-function pollServer (ctx, edgeLogin, keys, onLogin) {
+function pollServer (ctx, edgeLogin, keys, onLogin, onProcessLogin) {
   // Don't do anything if the user has cancelled this request:
   if (edgeLogin.done_) {
     return
@@ -99,7 +99,10 @@ function pollServer (ctx, edgeLogin, keys, onLogin) {
       try {
         var accountReply = decodeAccountReply(keys, reply)
         if (!accountReply) {
-          return pollServer(ctx, edgeLogin, keys, onLogin)
+          return pollServer(ctx, edgeLogin, keys, onLogin, onProcessLogin)
+        }
+        if (onProcessLogin !== null) {
+          onProcessLogin(accountReply.username)
         }
         createLogin(ctx, accountReply, onLogin)
       } catch (e) {
@@ -139,7 +142,11 @@ function create (ctx, opts, callback) {
 
     try {
       var edgeLogin = new ABCEdgeLoginRequest(reply.id)
-      pollServer(ctx, edgeLogin, keys, opts.onLogin)
+      var onProcessLogin = null
+      if (opts.hasOwnProperty('onProcessLogin')) {
+        onProcessLogin = opts.onProcessLogin
+      }
+      pollServer(ctx, edgeLogin, keys, opts.onLogin, onProcessLogin)
     } catch (e) {
       return callback(e)
     }
