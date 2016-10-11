@@ -58,7 +58,6 @@ function decodeAccountReply (keys, lobby) {
   var accountRequest = lobby['accountRequest']
   var replyBox = accountRequest['replyBox']
   var replyKey = accountRequest['replyKey']
-  var type = accountRequest['type']
 
   // If the reply is missing, just return false:
   if (!replyBox || !replyKey) {
@@ -70,15 +69,16 @@ function decodeAccountReply (keys, lobby) {
   var dataKey = Buffer(crypto.hmac_sha256('dataKey', new Uint8Array(secret)))
   var reply = JSON.parse(crypto.decrypt(replyBox, dataKey).toString('utf-8'))
 
-  var info = reply['info']
-  var username = reply['username']
+  var returnObj = {
+    type: accountRequest['type'],
+    info: reply['info'],
+    username: reply['username'],
+  }
   if (typeof reply.pinString === 'string') {
-    var pinString = reply.pinString
-    return {type, info, username, pinString}
-  } else {
-    return {type, info, username}
+    returnObj.pinString = reply['pinString']
   }
 
+  return returnObj
 }
 exports.decodeAccountReply = decodeAccountReply
 
