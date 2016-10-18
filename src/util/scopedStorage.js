@@ -31,3 +31,15 @@ ScopedStorage.prototype.setJson = function (key, value) {
 ScopedStorage.prototype.subStore = function (prefix) {
   return new ScopedStorage(this.localStorage, this.prefix + prefix)
 }
+
+ScopedStorage.prototype.keys = function () {
+  var keys = []
+  var search = new RegExp('^' + this.prefix)
+  for (var i = 0; i < this.localStorage.length; ++i) {
+    var key = this.localStorage.key(i)
+    if (search.test(key)) {
+      keys.push(key.replace(search, ''))
+    }
+  }
+  return keys
+}

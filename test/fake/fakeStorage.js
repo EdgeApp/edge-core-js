@@ -16,6 +16,14 @@ FakeStorage.prototype.setItem = function (key, value) {
 FakeStorage.prototype.removeItem = function (key) {
   delete this.items[key]
 }
+FakeStorage.prototype.key = function (n) {
+  return Object.keys(this.items)[n]
+}
+Object.defineProperty(FakeStorage.prototype, 'length', {
+  get: function () {
+    return Object.keys(this.items).length
+  }
+})
 
 /**
  * Fills the `FakeStorage` instance with just the user list.
