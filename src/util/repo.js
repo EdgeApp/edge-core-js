@@ -81,6 +81,14 @@ function Repo (ctx, dataKey, syncKey) {
 exports.Repo = Repo
 
 /**
+ * Creates a secure file name by hashing
+ * the provided binary data with the repo's dataKey.
+ */
+Repo.prototype.secureFilename = function (data) {
+  return base58.encode(crypto.hmacSha256(data, this.dataKey))
+}
+
+/**
  * Decrypts and returns the file at the given path.
  * The return value will either be a byte buffer or null.
  */

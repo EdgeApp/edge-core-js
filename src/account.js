@@ -2,6 +2,9 @@ var loginPassword = require('./login/password.js')
 var loginPin = require('./login/pin.js')
 var loginRecovery2 = require('./login/recovery2.js')
 var Repo = require('./util/repo').Repo
+var server = require('./login/server.js')
+var Wallet = require('./wallet.js').Wallet
+var WalletList = require('./util/walletList.js').WalletList
 
 /**
  * This is a thin shim object,
@@ -21,6 +24,7 @@ function Account (ctx, login) {
   this.username = login.username
 
   this.repo = new Repo(ctx, new Buffer(this.keys.dataKey, 'hex'), new Buffer(this.keys.syncKey, 'hex'))
+  this.walletList = new WalletList(this.repo)
 }
 
 Account.prototype.logout = function () {
@@ -54,7 +58,43 @@ Account.prototype.isLoggedIn = function () {
 }
 
 Account.prototype.sync = function (callback) {
-  this.repo.sync(callback)
+  var account = this
+  this.repo.sync(function (err, changed) {
+    if (err) return callback(err)
+    if (changed) {
+      account.walletList.load()
+    }
+    callback(null, changed)
+  })
+}
+
+Account.prototype.listWalletIds = function () {
+  return this.walletList.listIds()
+}
+
+Account.prototype.getWallet = function (id) {
+  return new Wallet(this.walletList.getType(id), this.walletList.getKeys(id))
+}
+
+/**
+ * Creates a new wallet repo, and attaches it to the account.
+ * @param keysJson An object with any user-provided keys
+ * that should be stored along with the wallet. For example,
+ * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
+ */
+Account.prototype.createWallet = function (type, keysJson, callback) {
+  var account = this
+  server.repoCreate(account.ctx, account.login, keysJson, function (err, keysJson) {
+    if (err) return callback(err)
+    var id = account.walletList.addWallet(type, keysJson)
+    account.sync(function (err, dirty) {
+      if (err) return callback(err)
+      server.repoActivate(account.ctx, account.login, keysJson, function (err) {
+        if (err) return callback(err)
+        callback(null, id)
+      })
+    })
+  })
 }
 
 exports.Account = Account
