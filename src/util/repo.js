@@ -1,6 +1,5 @@
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
-import {base16, base58, utf8} from './encoding.js'
-import {ScopedStorage} from './scopedStorage.js'
+import { base16, base58, utf8 } from './encoding.js'
 
 const syncServers = [
   'https://git-js.airbitz.co',
@@ -41,21 +40,29 @@ function syncRequestInner (io, method, uri, body, serverIndex) {
 }
 
 /**
- * Normalizes a path, returning its components as an array.
+ * Navigates down to the sub-folder indicated by the path.
+ * Returns the folder object and the filename in an object.
  */
-function pathSplit (path) {
-  // TODO: Handle dots (escapes, `.`, and `..`).
-  return path.split('/')
+function navigate (folder, path) {
+  const parts = path.split('/')
+  const filename = parts.pop()
+  return {
+    filename,
+    folder: parts.reduce((folder, name) => folder.getFolder(name), folder)
+  }
 }
 
 /**
- * Converts a server-format path to our internal format.
+ * Builds an object containing the folder's complete contents.
  */
-function pathFix (path) {
-  if (path.slice(-5) !== '.json') {
-    return null
-  }
-  return pathSplit(path.slice(0, -5)).join('.')
+function bundleChanges (folder, changes = {}, prefix = '') {
+  folder.listFiles().forEach(name => {
+    changes[prefix + name] = folder.getFileJson(name)
+  })
+  folder.listFolders().forEach(name => {
+    bundleChanges(folder.getFolder(name), changes, name + '/')
+  })
+  return changes
 }
 
 /**
@@ -64,10 +71,12 @@ function pathFix (path) {
  * but those can't happen under the current rules anyhow.
  */
 export function mergeChanges (store, changes) {
-  Object.keys(changes).forEach(key => {
-    const path = pathFix(key)
-    if (path != null) {
-      store.setJson(path, changes[key])
+  Object.keys(changes).forEach(path => {
+    const { filename, folder } = navigate(store, path)
+    if (changes[path] == null) {
+      folder.removeFile(filename)
+    } else {
+      folder.setFileJson(filename, changes[path])
     }
   })
 }
@@ -88,10 +97,9 @@ export function Repo (io, dataKey, syncKey) {
   this.dataKey = dataKey
   this.syncKey = syncKey
 
-  const prefix = 'airbitz.repo.' + repoId(dataKey)
-  this.store = new ScopedStorage(io.localStorage, prefix)
-  this.changeStore = this.store.subStore('changes')
-  this.dataStore = this.store.subStore('data')
+  this.store = io.folder.getFolder('repos').getFolder(repoId(dataKey))
+  this.changeStore = this.store.getFolder('changes')
+  this.dataStore = this.store.getFolder('data')
 }
 
 /**
@@ -99,7 +107,7 @@ export function Repo (io, dataKey, syncKey) {
  * the provided binary data with the repo's dataKey.
  */
 Repo.prototype.secureFilename = function (data) {
-  return base58.stringify(hmacSha256(data, this.dataKey))
+  return base58.stringify(hmacSha256(data, this.dataKey)) + '.json'
 }
 
 /**
@@ -107,11 +115,12 @@ Repo.prototype.secureFilename = function (data) {
  * The return value will either be a byte buffer or null.
  */
 Repo.prototype.getData = function (path) {
-  path = pathSplit(path).join('.')
-
-  const box =
-    this.changeStore.getJson(path) ||
-    this.dataStore.getJson(path)
+  const { filename, folder } = navigate(this.changeStore, path)
+  let box = folder.getFileJson(filename)
+  if (box == null) {
+    const { filename, folder } = navigate(this.dataStore, path)
+    box = folder.getFileJson(filename)
+  }
   return box ? decrypt(box, this.dataKey) : null
 }
 
@@ -144,21 +153,13 @@ Repo.prototype.getJson = function (path) {
  * Lists the files (not folders) contained in the given path.
  */
 Repo.prototype.keys = function (path) {
-  path = path ? pathSplit(path).join('.') + '.' : ''
-  const search = new RegExp('^' + path + '([^\\.]+)$')
-  function filter (key) {
-    return search.test(key)
-  }
-  function strip (key) {
-    return key.replace(search, '$1')
-  }
-
-  const changeKeys = this.changeStore.keys().filter(filter).map(strip)
-  const dataKeys = this.dataStore.keys().filter(filter).map(strip)
-  const keys = changeKeys.concat(dataKeys)
+  path = path + '/'
+  const changeFiles = navigate(this.changeStore, path).folder.listFiles()
+  const dataFiles = navigate(this.dataStore, path).folder.listFiles()
+  const files = [...changeFiles, ...dataFiles]
 
   // Remove duplicates:
-  return keys.sort().filter(function (item, i, array) {
+  return files.sort().filter(function (item, i, array) {
     return !i || item !== array[i - 1]
   })
 }
@@ -167,7 +168,8 @@ Repo.prototype.keys = function (path) {
  * Deletes a particular file path.
  */
 Repo.prototype.removeItem = function (path) {
-  this.set(path, null)
+  const { filename, folder } = navigate(this.changeStore, path)
+  folder.setFileJson(filename, null)
 }
 
 /**
@@ -175,14 +177,8 @@ Repo.prototype.removeItem = function (path) {
  * The value must be either a byte buffer or null.
  */
 Repo.prototype.setData = function (path, value) {
-  if (/\./.test(path)) {
-    throw new Error('Dots are not allowed in paths')
-  }
-  path += '.json'
-
-  const changes = {}
-  changes[path] = value ? encrypt(this.io, value, this.dataKey) : null
-  mergeChanges(this.changeStore, changes)
+  const { filename, folder } = navigate(this.changeStore, path)
+  folder.setFileJson(filename, encrypt(this.io, value, this.dataKey))
 }
 
 /**
@@ -207,18 +203,15 @@ Repo.prototype.sync = function () {
 
   // If we have local changes, we need to bundle those:
   const request = {}
-  const changeKeys = this.changeStore.keys()
+  const changes = bundleChanges(this.changeStore)
+  const changeKeys = Object.keys(changes)
   if (changeKeys.length > 0) {
-    request.changes = {}
-    changeKeys.forEach(key => {
-      const path = key.replace(/\./g, '/') + '.json'
-      request.changes[path] = this.changeStore.getJson(key)
-    })
+    request.changes = changes
   }
 
   // Calculate the URI:
   let uri = '/api/v2/store/' + base16.stringify(this.syncKey)
-  const lastHash = this.store.getItem('lastHash')
+  const lastHash = this.store.getFileText('lastHash')
   if (lastHash != null) {
     uri = uri + '/' + lastHash
   }
@@ -228,8 +221,9 @@ Repo.prototype.sync = function () {
     let changed = false
 
     // Delete any changed keys (since the upload is done):
-    changeKeys.forEach(key => {
-      self.changeStore.removeItem(key)
+    changeKeys.forEach(path => {
+      const { filename, folder } = navigate(this.changeStore, path)
+      folder.removeFile(filename)
     })
 
     // Process the change list:
@@ -244,7 +238,7 @@ Repo.prototype.sync = function () {
     // Save the current hash:
     const hash = reply['hash']
     if (hash != null) {
-      self.store.setItem('lastHash', hash)
+      self.store.setFileText('lastHash', hash)
     }
 
     return changed

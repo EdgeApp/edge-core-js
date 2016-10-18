@@ -1,7 +1,6 @@
 import { scrypt, userIdSnrp } from '../crypto/scrypt.js'
 import { updateLoginStash } from '../login/login.js'
 import { base58, base64 } from '../util/encoding.js'
-import { ScopedStorage } from '../util/scopedStorage.js'
 
 /**
  * Handles login data storage.
@@ -9,15 +8,15 @@ import { ScopedStorage } from '../util/scopedStorage.js'
  */
 export class LoginStore {
   constructor (io) {
-    this.storage = new ScopedStorage(io.localStorage, 'airbitz.login')
+    this.storage = io.folder.getFolder('logins')
   }
 
   /**
    * Lists the usernames that have data in the store.
    */
   listUsernames () {
-    return this.storage.keys().map(filename => {
-      return this.storage.getJson(filename).username
+    return this.storage.listFiles().map(filename => {
+      return this.storage.getFileJson(filename).username
     })
   }
 
@@ -34,7 +33,7 @@ export class LoginStore {
   loadSync (username) {
     const filename = this._findFilename(username)
     return filename != null
-      ? this.storage.getJson(filename)
+      ? this.storage.getFileJson(filename)
       : { username: fixUsername(username), appId: '' }
   }
 
@@ -44,7 +43,7 @@ export class LoginStore {
   remove (username) {
     const filename = this._findFilename(username)
     if (filename != null) {
-      this.storage.removeItem(filename)
+      this.storage.removeFile(filename)
     }
   }
 
@@ -59,8 +58,8 @@ export class LoginStore {
     if (loginId.length !== 32) {
       throw new Error('Invalid loginId')
     }
-    const filename = base58.stringify(loginId)
-    this.storage.setJson(filename, loginStash)
+    const filename = base58.stringify(loginId) + '.json'
+    this.storage.setFileJson(filename, loginStash)
   }
 
   /**
@@ -84,8 +83,8 @@ export class LoginStore {
 
   _findFilename (username) {
     const fixedName = fixUsername(username)
-    return this.storage.keys().find(filename => {
-      const loginStash = this.storage.getJson(filename)
+    return this.storage.listFiles().find(filename => {
+      const loginStash = this.storage.getFileJson(filename)
       return loginStash && loginStash.username === fixedName
     })
   }

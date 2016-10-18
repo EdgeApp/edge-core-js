@@ -1,3 +1,4 @@
+import { LocalStorageFolder } from './localStorageFolder.js'
 import {AuthServer} from './authServer.js'
 import {LoginStore} from './loginStore.js'
 
@@ -21,6 +22,7 @@ export class IoContext {
 
     // Set up wrapper objects:
     this.authServer = new AuthServer(this, opts.apiKey)
+    this.folder = new LocalStorageFolder(this.localStorage, 'airbitz')
     this.log = this.console
     this.loginStore = new LoginStore(this)
   }

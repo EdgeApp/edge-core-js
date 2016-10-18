@@ -11,7 +11,7 @@ describe('repo', function () {
 
     const payload = {'message': 'Hello'}
     context.io.localStorage.setItem(
-      'airbitz.repo.2XYHMLLi8CapUQJDwxfeosLkfEwRABDgARM4B3Egqhn1.changes.a.b',
+      'airbitz/repos/2XYHMLLi8CapUQJDwxfeosLkfEwRABDgARM4B3Egqhn1/changes/a/b',
       '{"encryptionType":0,"iv_hex":"82454458a5eaa6bc7dc4b4081b9f36d1","data_base64":"lykLWi2MUBbcrdbbo2cZ9Q97aVohe6LZUihp7xfr1neAMj8mr0l9MP1ElteAzG4GG1FmjSsptajr6I2sNc5Kmw=="}'
     )
     assert.deepEqual(repo.getJson('a/b'), payload)
