@@ -1,5 +1,4 @@
-var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-var base58 = require('base-x')(BASE58)
+var base58 = require('../util/encoding.js').base58
 var crypto = require('../crypto.js')
 var UserStorage = require('../userStorage.js').UserStorage
 var userMap = require('../userMap.js')

@@ -1,11 +1,10 @@
 var loginCreate = require('./create.js')
+var base58 = require('../util/encoding.js').base58
 var crypto = require('../crypto.js')
 var loginPin = require('./pin.js')
 
 var Elliptic = require('elliptic').ec
 var secp256k1 = new Elliptic('secp256k1')
-var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-var base58 = require('base-x')(BASE58)
 
 function ABCEdgeLoginRequest (id) {
   this.id = id

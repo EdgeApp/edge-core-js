@@ -1,18 +1,7 @@
-var BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-
+var base58 = require('../util/encoding.js').base58
 var crypto = require('../crypto.js')
-var base58 = require('base-x')(BASE58)
 var userMap = require('../userMap.js')
 var Login = require('./login.js')
-
-function parseKey (key) {
-  return new Buffer(base58.decode(key))
-}
-
-function encodeKey (key) {
-  return base58.encode(key)
-}
-exports.encodeKey = encodeKey
 
 function recovery2Id (recovery2Key, username) {
   return new Buffer(crypto.hmac_sha256(username, recovery2Key))
@@ -40,7 +29,7 @@ function recovery2Auth (recovery2Key, answers) {
  * @param callback function (err, login)
  */
 function login (ctx, recovery2Key, username, answers, callback) {
-  recovery2Key = parseKey(recovery2Key)
+  recovery2Key = base58.decode(recovery2Key)
   username = userMap.normalize(username)
 
   var request = {
@@ -79,7 +68,7 @@ exports.login = login
  * @param callback function (err, question array)
  */
 function questions (ctx, recovery2Key, username, callback) {
-  recovery2Key = parseKey(recovery2Key)
+  recovery2Key = base58.decode(recovery2Key)
   username = userMap.normalize(username)
 
   var request = {
@@ -120,7 +109,7 @@ function setup (ctx, login, questions, answers, callback) {
 
   var recovery2Key = login.userStorage.getItem('recovery2Key')
   if (recovery2Key) {
-    recovery2Key = parseKey(recovery2Key)
+    recovery2Key = base58.decode(recovery2Key)
   } else {
     recovery2Key = crypto.random(32)
   }
@@ -140,7 +129,7 @@ function setup (ctx, login, questions, answers, callback) {
   ctx.authRequest('PUT', '/v2/login/recovery2', request, function (err, reply) {
     if (err) return callback(err)
 
-    recovery2Key = encodeKey(recovery2Key)
+    recovery2Key = base58.encode(recovery2Key)
     login.userStorage.setItem('recovery2Key', recovery2Key)
     return callback(null, recovery2Key)
   })
