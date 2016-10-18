@@ -51,7 +51,7 @@ function Context (opts) {
     xhr.send(JSON.stringify(body))
     console.log('Visit ' + uri)
   }
-  var authFetch = opts.authRequest || webFetch
+  this.authFetch = opts.authRequest || webFetch
 
   /**
    * Wraps the raw authRequest function in something more friendly.
@@ -59,7 +59,7 @@ function Context (opts) {
    * @param callback function (err, reply JSON object)
    */
   this.authRequest = function (method, uri, body, callback) {
-    authFetch(method, serverRoot + uri, body, function (err, status, body) {
+    this.authFetch(method, serverRoot + uri, body, function (err, status, body) {
       if (err) return callback(err)
       try {
         var reply = JSON.parse(body)
