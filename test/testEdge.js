@@ -61,6 +61,7 @@ describe('edge login', function () {
   it('request', function (done) {
     this.timeout(9000)
     var session = makeSession({needsContext: true, accountType: 'account:repo:test'})
+    session.server.repos['f00d'] = {}
 
     var opts = {
       onLogin: function (err, account) {

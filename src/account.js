@@ -1,6 +1,7 @@
 var loginPassword = require('./login/password.js')
 var loginPin = require('./login/pin.js')
 var loginRecovery2 = require('./login/recovery2.js')
+var Repo = require('./util/repo').Repo
 
 /**
  * This is a thin shim object,
@@ -18,6 +19,8 @@ function Account (ctx, login) {
   this.newAccount = false
   this.recoveryLogin = false
   this.username = login.username
+
+  this.repo = new Repo(ctx, new Buffer(this.keys.dataKey, 'hex'), new Buffer(this.keys.syncKey, 'hex'))
 }
 
 Account.prototype.logout = function () {
@@ -48,6 +51,10 @@ Account.prototype.setupRecovery2Questions = Account.prototype.recovery2Set
 
 Account.prototype.isLoggedIn = function () {
   return this.loggedIn
+}
+
+Account.prototype.sync = function (callback) {
+  this.repo.sync(callback)
 }
 
 exports.Account = Account

@@ -102,6 +102,7 @@ describe('password', function () {
   it('login offline', function (done) {
     var session = makeSession({needsContext: true})
     session.storage.populate()
+    session.server.populateRepos()
 
     session.context.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
@@ -138,6 +139,7 @@ describe('pin', function () {
 
   it('setup', function (done) {
     var session = makeSession({needsAccount: true})
+    session.server.populateRepos()
 
     session.account.pinSetup('1234', function (err) {
       if (err) return done(err)

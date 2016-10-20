@@ -1,4 +1,5 @@
 var packages = require('./packages.js')
+const repoModule = require('../../src/util/repo.js')
 var UserStorage = require('../../src/userStorage.js').UserStorage
 
 /**
@@ -33,10 +34,27 @@ FakeStorage.prototype.populateUsers = function () {
 }
 
 /**
+ * Fills the `FakeStorage` instance with repo data.
+ */
+FakeStorage.prototype.populateRepos = function () {
+  for (let syncKey in packages.repos) {
+    if (packages.repos.hasOwnProperty(syncKey)) {
+      const repo = new repoModule.Repo(
+        {localStorage: this},
+        packages.dataKey,
+        new Buffer(syncKey, 'hex')
+      )
+      repoModule.mergeChanges(repo.dataStore, packages.repos[syncKey])
+    }
+  }
+}
+
+/**
  * Fills the `FakeStorage` instance with account data.
  */
 FakeStorage.prototype.populate = function () {
   this.populateUsers()
+  this.populateRepos()
   var userStorage = new UserStorage(this, 'js test 0')
   userStorage.setJson('passwordKeySnrp', packages.passwordKeySnrp)
   userStorage.setJson('passwordBox', packages.passwordBox)
