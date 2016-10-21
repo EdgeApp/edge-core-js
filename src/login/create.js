@@ -31,7 +31,7 @@ function create (ctx, username, password, opts, callback) {
   // Create random key material:
   var passwordKeySnrp = crypto.makeSnrp()
   var dataKey = crypto.random(32)
-  var syncKey = opts.syncKey || crypto.random(32)
+  var syncKey = opts.syncKey || crypto.random(20)
 
   // Derive keys from password:
   var passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
