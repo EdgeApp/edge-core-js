@@ -14,7 +14,7 @@ function recovery2Auth (recovery2Key, answers) {
 
   var recovery2Auth = []
   for (var i = 0; i < answers.length; ++i) {
-    var data = Buffer(answers[i], 'utf-8')
+    var data = new Buffer(answers[i], 'utf-8')
     var auth = crypto.hmac_sha256(data, recovery2Key)
     recovery2Auth[i] = new Buffer(auth).toString('base64')
   }

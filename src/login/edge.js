@@ -25,7 +25,7 @@ function createLogin (ctx, accountReply, callback) {
 
   var opts = {}
   if (accountReply.type === 'account:repo:co.airbitz.wallet') {
-    opts.syncKey = Buffer(accountReply.info['syncKey'], 'hex')
+    opts.syncKey = new Buffer(accountReply.info['syncKey'], 'hex')
   }
 
   loginCreate.create(ctx, username, password, opts, function (err, login) {
@@ -65,7 +65,7 @@ function decodeAccountReply (keys, lobby) {
 
   var replyPubkey = secp256k1.keyFromPublic(replyKey, 'hex').getPublic()
   var secret = keys.derive(replyPubkey).toArray('be')
-  var dataKey = Buffer(crypto.hmac_sha256('dataKey', new Uint8Array(secret)))
+  var dataKey = new Buffer(crypto.hmac_sha256('dataKey', new Uint8Array(secret)))
   var reply = JSON.parse(crypto.decrypt(replyBox, dataKey).toString('utf-8'))
 
   var returnObj = {
