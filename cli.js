@@ -9,10 +9,7 @@ const LocalStorage = require('node-localstorage').LocalStorage
 
 // Commands:
 const command = require('./cli/command.js')
-require('./cli/commands/login.js')
-require('./cli/commands/password.js')
-require('./cli/commands/pin.js')
-require('./cli/commands/recovery2.js')
+require('./cli/commands/all.js')
 
 // Program options:
 const getopt = new Getopt([
