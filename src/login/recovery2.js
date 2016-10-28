@@ -4,7 +4,7 @@ var userMap = require('../userMap.js')
 var Login = require('./login.js')
 
 function recovery2Id (recovery2Key, username) {
-  return new Buffer(crypto.hmac_sha256(username, recovery2Key))
+  return new Buffer(crypto.hmacSha256(username, recovery2Key))
 }
 
 function recovery2Auth (recovery2Key, answers) {
@@ -15,7 +15,7 @@ function recovery2Auth (recovery2Key, answers) {
   var recovery2Auth = []
   for (var i = 0; i < answers.length; ++i) {
     var data = new Buffer(answers[i], 'utf-8')
-    var auth = crypto.hmac_sha256(data, recovery2Key)
+    var auth = crypto.hmacSha256(data, recovery2Key)
     recovery2Auth[i] = new Buffer(auth).toString('base64')
   }
   return recovery2Auth

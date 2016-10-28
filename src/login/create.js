@@ -93,7 +93,7 @@ function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
   var entropy = crypto.random(256 / 8)
   var mnemonic = bip39.entropyToMnemonic(entropy.toString('hex'))
   var rootKey = bip39.mnemonicToSeed(mnemonic)
-  var infoKey = crypto.hmac_sha256(rootKey, 'infoKey')
+  var infoKey = crypto.hmacSha256(rootKey, 'infoKey')
 
   // Pack the keys into various boxes:
   var rootKeyBox = crypto.encrypt(rootKey, dataKey)

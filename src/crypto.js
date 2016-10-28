@@ -179,4 +179,7 @@ function encrypt (data, key) {
 }
 exports.encrypt = encrypt
 
-exports.hmac_sha256 = asmcrypto.HMAC_SHA256.bytes
+function hmacSha256 (data, key) {
+  return asmcrypto.HMAC_SHA256.bytes(data, key)
+}
+exports.hmacSha256 = hmacSha256

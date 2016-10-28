@@ -65,7 +65,7 @@ function decodeAccountReply (keys, lobby) {
 
   var replyPubkey = secp256k1.keyFromPublic(replyKey, 'hex').getPublic()
   var secret = keys.derive(replyPubkey).toArray('be')
-  var dataKey = new Buffer(crypto.hmac_sha256('dataKey', new Uint8Array(secret)))
+  var dataKey = new Buffer(crypto.hmacSha256('dataKey', new Uint8Array(secret)))
   var reply = JSON.parse(crypto.decrypt(replyBox, dataKey).toString('utf-8'))
 
   var returnObj = {

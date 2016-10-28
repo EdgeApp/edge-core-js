@@ -25,7 +25,7 @@ function craftFakeReply (lobby) {
   var keys = secp256k1.genKeyPair()
   var requestPubkey = secp256k1.keyFromPublic(requestKey, 'hex').getPublic()
   var secret = keys.derive(requestPubkey).toArray('be')
-  var dataKey = new Buffer(crypto.hmac_sha256('dataKey', new Uint8Array(secret)))
+  var dataKey = new Buffer(crypto.hmacSha256('dataKey', new Uint8Array(secret)))
 
   var replyBlob = new Buffer(JSON.stringify(fakeReply), 'utf-8')
   accountRequest['replyBox'] = crypto.encrypt(replyBlob, dataKey)
