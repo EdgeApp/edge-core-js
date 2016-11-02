@@ -9,7 +9,8 @@ var loginRecovery2 = require('./login/recovery2.js')
 function Account (ctx, login) {
   this.ctx = ctx
   this.login = login
-  this.repoInfo = login.accountFind(ctx.accountType)
+  this.keys = login.accountFind(ctx.accountType)
+  this.repoInfo = this.keys // Deprecated name
   this.loggedIn = true
   this.edgeLogin = false
   this.pinLogin = false

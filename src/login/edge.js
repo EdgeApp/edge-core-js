@@ -70,7 +70,7 @@ function decodeAccountReply (keys, lobby) {
 
   var returnObj = {
     type: accountRequest['type'],
-    info: reply['info'],
+    info: reply['keys'] || reply['info'],
     username: reply['username']
   }
   if (typeof reply.pinString === 'string') {

@@ -97,13 +97,14 @@ Login.prototype.authJson = function () {
 
 /**
  * Searches for the given account type in the provided login object.
+ * Returns the repo keys in the JSON bundle format.
  */
 Login.prototype.accountFind = function (type) {
   // Search the repos array:
   for (var i = 0; i < this.repos.length; ++i) {
     if (this.repos[i]['type'] === type) {
-      var infoBox = this.repos[i]['info']
-      return JSON.parse(crypto.decrypt(infoBox, this.dataKey).toString('utf-8'))
+      var keysBox = this.repos[i]['keysBox'] || this.repos[i]['info']
+      return JSON.parse(crypto.decrypt(keysBox, this.dataKey).toString('utf-8'))
     }
   }
 
@@ -124,11 +125,11 @@ Login.prototype.accountFind = function (type) {
 Login.prototype.accountCreate = function (ctx, type, callback) {
   var login = this
 
-  server.repoCreate(ctx, login, {}, function (err, repoInfo) {
+  server.repoCreate(ctx, login, {}, function (err, keysJson) {
     if (err) return callback(err)
-    login.accountAttach(ctx, type, repoInfo, function (err) {
+    login.accountAttach(ctx, type, keysJson, function (err) {
       if (err) return callback(err)
-      server.repoActivate(ctx, login, repoInfo, function (err) {
+      server.repoActivate(ctx, login, keysJson, function (err) {
         if (err) return callback(err)
         callback(null)
       })

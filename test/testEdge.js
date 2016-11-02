@@ -9,7 +9,7 @@ var makeSession = require('./fake/session.js').makeSession
 var fakeReply = {
   username: 'test',
   pinString: '1234',
-  info: {
+  keys: {
     dataKey: 'fa57',
     syncKey: 'f00d'
   }
@@ -65,7 +65,7 @@ describe('edge login', function () {
     var opts = {
       onLogin: function (err, account) {
         if (err) return done(err)
-        assert.deepEqual(account.repoInfo, fakeReply.info)
+        assert.deepEqual(account.keys, fakeReply.keys)
         done()
       },
       displayName: 'test suite'

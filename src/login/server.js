@@ -3,19 +3,18 @@ var crypto = require('../crypto.js')
 /**
  * Creates a blank repo on the sync server.
  */
-function repoCreate (ctx, login, repoInfo, callback) {
-  repoInfo.dataKey = repoInfo.dataKey || crypto.random(32).toString('hex')
-  repoInfo.syncKey = repoInfo.syncKey || crypto.random(20).toString('hex')
+function repoCreate (ctx, login, keysJson, callback) {
+  keysJson.dataKey = keysJson.dataKey || crypto.random(32).toString('hex')
+  keysJson.syncKey = keysJson.syncKey || crypto.random(20).toString('hex')
 
   var request = {
     'l1': login.userId,
     'lp1': login.passwordAuth.toString('base64'),
-    'repo_wallet_key': repoInfo.syncKey
+    'repo_wallet_key': keysJson.syncKey
   }
-
   ctx.authRequest('POST', '/v1/wallet/create', request, function (err, reply) {
     if (err) return callback(err)
-    callback(null, repoInfo)
+    callback(null, keysJson)
   })
 }
 exports.repoCreate = repoCreate
@@ -25,11 +24,11 @@ exports.repoCreate = repoCreate
  * This should be called after the repo is securely attached
  * to the login or account.
  */
-function repoActivate (ctx, login, repoInfo, callback) {
+function repoActivate (ctx, login, keysJson, callback) {
   var request = {
     'l1': login.userId,
     'lp1': login.passwordAuth.toString('base64'),
-    'repo_wallet_key': repoInfo.syncKey
+    'repo_wallet_key': keysJson.syncKey
   }
   ctx.authRequest('POST', '/v1/wallet/activate', request, function (err, reply) {
     if (err) return callback(err)
