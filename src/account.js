@@ -77,6 +77,22 @@ Account.prototype.getWallet = function (id) {
 }
 
 /**
+ * Gets the first wallet in an account (the first by sort order).
+ * If type is a string, finds the first wallet with the same type.
+ * Might return null if there are no wallets.
+ */
+Account.prototype.getFirstWallet = function (type) {
+  var ids = this.walletList.listIds()
+
+  for (var i = 0; i < ids.length; ++i) {
+    if (type == null || this.walletList.getType(ids[i]) === type) {
+      return this.getWallet(ids[i])
+    }
+  }
+  return null
+}
+
+/**
  * Creates a new wallet repo, and attaches it to the account.
  * @param keysJson An object with any user-provided keys
  * that should be stored along with the wallet. For example,

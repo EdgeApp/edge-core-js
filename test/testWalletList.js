@@ -29,12 +29,14 @@ describe('wallet list', function () {
     const keysJson = {
       magicKey: 'poof'
     }
+    assert.equal(session.account.getFirstWallet(type), null)
     session.account.createWallet(type, keysJson, function (err, id) {
       if (err) return done(err)
       const wallet = session.account.getWallet(id)
       assert.equal(wallet.type, type)
       assert.equal(wallet.keys['magicKey'], keysJson.magicKey)
       assert.equal(session.account.listWalletIds().length, 2)
+      assert.deepEqual(session.account.getFirstWallet(type), wallet)
       done()
     })
   })
