@@ -80,6 +80,8 @@ exports.rootKeyBox = {
   'iv_hex': '96cc1ebc2d11a0b38c9259c056d3ca23'
 }
 
+exports.syncKey = new Buffer('e254eb85285f96574a33bfe97b13f533fe245b42', 'hex')
+
 exports.syncKeyBox = {
   'data_base64': 'ruf9v3eWUg2GZJf+94boCPyui4nQ9HnJCWx07kmRg+nKns+1MlqSFQQNINgHXLWDrQvho69AnQrP9Ep+PcXOnG+m0kiqlmzm8UdhQoQJOKP/O5S2TFwMuLpLrGN+I4F5HbdGVMA20WJjhfQ7Kzc3H2hHwm1BUo0xItbV/audT6KySR+ugeW+jF5glzB0/8eAYFKloYd0YC6TZg1gmZU7jqBatpylk7a9znrZG6zKVyPQxnkKr6TnF3xQihSw2H7g1Gd4AI4Pttye/RYsVbwqFFnD2OZwgp7kqeyLwVRsU6OboRtkBYuaa4adYhXHda94',
   'encryptionType': 0,
@@ -100,4 +102,15 @@ exports.pinPackage = {
     'iv_hex': '33dbb4188630d572cd4a474f780e2799'
   },
   'Expires': 1464782126
+}
+
+// Repositories:
+exports.repos = {
+  'e254eb85285f96574a33bfe97b13f533fe245b42': {
+    'Wallets/8568EAC0-62D0-405E-95A1-B457AE372F09.json': {
+      'iv_hex': '2902014ac691c90f8183140ba74c921c',
+      'data_base64': 'gmTTFYpxEJKM+ibmvwDi/uvdL0mq0Pzy1vziTKXRSL49ekHuE2o7HtYJENztg9dLJd1nNXpZD1Y9xsrLrPDzV8r3LDcm6yOLBbBBHle9UwsaSaPLE4KNgh8QzCnm3eeDJMaNHRoxyr/hyUsDo2KwV7FYrmf2gLdnG0yXu/W0im5YgUmAMvG+7u/OQpCuQQyJvBpFVR+7UpP2MNVUnaTacXPPNjfktegHQ8mWwgomRLtVZQbgYcZZFivSvWuUoWbr61/qosF5qGzqRQ9slI3w4J6veN5xpzRMkP9B6pFQRn+tk1jWk8v3GnKACI8+SOzQt+ZcBt/XVR3vExrHgVF7j+OrBy+jyhg9KaiaxoCTVDd0zaqkN+kCh9KgqOLZn2s0SXl2O0IzpdbtKZUyVxoh6Pjkli/t2FqEs5WdZrbwI2k=',
+      'encryptionType': 0
+    }
+  }
 }

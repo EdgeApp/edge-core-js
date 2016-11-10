@@ -51,7 +51,7 @@ function Context (opts) {
     xhr.send(JSON.stringify(body))
     console.log('Visit ' + uri)
   }
-  var authFetch = opts.authRequest || webFetch
+  this.authFetch = opts.authRequest || webFetch
 
   /**
    * Wraps the raw authRequest function in something more friendly.
@@ -59,7 +59,7 @@ function Context (opts) {
    * @param callback function (err, reply JSON object)
    */
   this.authRequest = function (method, uri, body, callback) {
-    authFetch(method, serverRoot + uri, body, function (err, status, body) {
+    this.authFetch(method, serverRoot + uri, body, function (err, status, body) {
       if (err) return callback(err)
       try {
         var reply = JSON.parse(body)
@@ -113,7 +113,10 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
           if (err) return callback(err)
           var account = new Account(ctx, login)
           account.newAccount = true
-          callback(null, account)
+          account.sync(function (err, dirty) {
+            if (err) return callback(err)
+            callback(null, account)
+          })
         })
       })
     }
@@ -123,7 +126,10 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
       if (err) return callback(err)
       var account = new Account(ctx, login)
       account.newAccount = true
-      callback(null, account)
+      account.sync(function (err, dirty) {
+        if (err) return callback(err)
+        callback(null, account)
+      })
     })
   })
 }
@@ -134,7 +140,10 @@ Context.prototype.loginWithPassword = function (username, password, otp, opts, c
     if (err) return callback(err)
     var account = new Account(ctx, login)
     account.passwordLogin = true
-    callback(null, account)
+    account.sync(function (err, dirty) {
+      if (err) return callback(err)
+      callback(null, account)
+    })
   })
 }
 
@@ -151,7 +160,10 @@ Context.prototype.loginWithPIN = function (username, pin, callback) {
     if (err) return callback(err)
     var account = new Account(ctx, login)
     account.pinLogin = true
-    callback(null, account)
+    account.sync(function (err, dirty) {
+      if (err) return callback(err)
+      callback(null, account)
+    })
   })
 }
 
@@ -171,7 +183,10 @@ Context.prototype.loginWithRecovery2 = function (recovery2Key, username, answers
     if (err) return callback(err)
     var account = new Account(ctx, login)
     account.recoveryLogin = true
-    callback(null, account)
+    account.sync(function (err, dirty) {
+      if (err) return callback(err)
+      callback(null, account)
+    })
   })
 }
 
@@ -221,7 +236,10 @@ Context.prototype.requestEdgeLogin = function (opts, callback) {
     if (err) return onLogin(err)
     var account = new Account(ctx, login)
     account.edgeLogin = true
-    onLogin(null, account)
+    account.sync(function (err, dirty) {
+      if (err) return onLogin(err)
+      onLogin(null, account)
+    })
   }
   opts.type = opts.type || ctx.accountType
   loginEdge.create(this, opts, callback)

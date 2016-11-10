@@ -17,9 +17,15 @@ var authLevel = {
 
 function FakeServer () {
   this.db = {}
+  this.repos = {}
+}
+
+FakeServer.prototype.populateRepos = function () {
+  this.repos = packages.repos
 }
 
 FakeServer.prototype.populate = function () {
+  this.populateRepos()
   this.db.userId = packages.users['js test 0']
   this.db.passwordAuth = packages.passwordAuth
   this.db.passwordAuthBox = packages.passwordAuthBox
@@ -82,6 +88,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     this.db.passwordAuthBox = loginPackage['ELP1']
     this.db.passwordBox = loginPackage['EMK_LP2']
     this.db.syncKeyBox = loginPackage['ESyncKey']
+    this.repos[body['repo_account_key']] = {}
 
     return callback(null, 200, makeReply(results))
   }
@@ -145,6 +152,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
   // Repo server v1: ---------------------------------------------------------
 
   if (path === '/api/v1/wallet/create') {
+    this.repos[body['repo_wallet_key']] = {}
     return callback(null, 200, makeReply({}))
   }
 
@@ -266,6 +274,36 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
       case 'PUT':
         this.db.lobby = body['data']
         return callback(null, 200, makeReply(results))
+    }
+  }
+
+  // sync: -------------------------------------------------------------------
+
+  if (path.search('^/api/v2/store/') !== -1) {
+    const elements = path.split('/')
+    const syncKey = elements[4]
+    // const hash = elements[5]
+
+    const repo = this.repos[syncKey]
+    if (!repo) {
+      return callback(null, 404, 'Cannot find repo ' + syncKey)
+    }
+
+    switch (method) {
+      case 'POST':
+        const changes = body['changes']
+        for (var change in changes) {
+          if (changes.hasOwnProperty(change)) {
+            repo[change] = changes[change]
+          }
+        }
+        results.changes = changes
+        results.hash = '1111111111111111111111111111111111111111'
+        return callback(null, 200, JSON.stringify(results))
+
+      case 'GET':
+        results.changes = repo
+        return callback(null, 200, JSON.stringify(results))
     }
   }
 
