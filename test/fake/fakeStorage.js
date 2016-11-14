@@ -63,6 +63,7 @@ FakeStorage.prototype.populate = function () {
   userStorage.setJson('syncKeyBox', packages.syncKeyBox)
   userStorage.setItem('pinAuthId', packages.pinPackage['DID'])
   userStorage.setJson('pinBox', packages.pinPackage['EMK_PINK'])
+  userStorage.setItem('pin2Key', packages.pin2Key)
   userStorage.setItem('recovery2Key', packages.recovery2Key)
 }
 

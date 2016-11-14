@@ -30,6 +30,26 @@ exports.passwordKeySnrp = {
   'salt_hex': 'ed6396d127b60d6ffc469634b9a53bdcfb4ee381e9b9df5e66a0f97895871981'
 }
 
+// PIN2:
+
+exports.pin2Auth = 'shzN/UzE4byBpHWlFka9fkZ9n+NWRiESqJ6hnso8CQI='
+
+exports.pin2Box = {
+  encryptionType: 0,
+  iv_hex: 'e46f6fa3ffbefcdb549f2a350655c51f',
+  data_base64: 'TYNoHvzlC/7r/2mR26bvXI0OBPEuY8lBs3DZi4NephEFjs5za+5RRyilG35piSHhgLzn3u1scpLt0fuvwjT+ZhLsMvsZug8RXzIEqSZFijI='
+}
+
+exports.pin2Id = 'X8iNgUh49p8B5FZNAsaTk0nXTtbOzWI5Eo91zUvJgd0='
+
+exports.pin2Key = '22b6wM3F6bd3LpT1UHLhb7pDr5BxzAuVNhuU5HGudZHq'
+
+exports.pin2KeyBox = {
+  encryptionType: 0,
+  iv_hex: '84e0026a5826e614a0228c68b2161e9c',
+  data_base64: '1hN3W2nl1ALVMiJW4Gg4uIUFJdQ3Q/lQpwgCYHycn1nJlxwO7lcjNUG47tYFTdmhsrSmmRixQE+siM7X6II0bDqyyp7ynE9hL6+2ahJvsvA='
+}
+
 // Recovery2:
 
 exports.recovery2Answers = [

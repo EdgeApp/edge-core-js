@@ -24,6 +24,13 @@ function loginReplyStore (localStorage, username, dataKey, loginReply) {
     }
   }
 
+  // Store the pin key unencrypted:
+  var pin2KeyBox = loginReply['pin2KeyBox']
+  if (pin2KeyBox) {
+    var pin2Key = crypto.decrypt(pin2KeyBox, dataKey)
+    userStorage.setItem('pin2Key', base58.encode(pin2Key))
+  }
+
   // Store the recovery key unencrypted:
   var recovery2KeyBox = loginReply['recovery2KeyBox']
   if (recovery2KeyBox) {

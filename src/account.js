@@ -1,5 +1,5 @@
 var loginPassword = require('./login/password.js')
-var loginPin = require('./login/pin.js')
+var loginPin2 = require('./login/pin2.js')
 var loginRecovery2 = require('./login/recovery2.js')
 var Repo = require('./util/repo').Repo
 var server = require('./login/server.js')
@@ -43,7 +43,7 @@ Account.prototype.passwordSetup = function (password, callback) {
 Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = function (pin, callback) {
-  return loginPin.setup(this.ctx, this.login, pin, callback)
+  return loginPin2.setup(this.ctx, this.login, pin, callback)
 }
 Account.prototype.changePIN = Account.prototype.pinSetup
 

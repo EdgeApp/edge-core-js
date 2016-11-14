@@ -2,7 +2,7 @@ var Account = require('./account').Account
 var loginEdge = require('./login/edge.js')
 var loginCreate = require('./login/create.js')
 var loginPassword = require('./login/password.js')
-var loginPin = require('./login/pin.js')
+var loginPin2 = require('./login/pin2.js')
 var loginRecovery2 = require('./login/recovery2.js')
 var userMap = require('./userMap.js')
 var UserStorage = require('./userStorage.js').UserStorage
@@ -109,7 +109,7 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
       // If the login doesn't have the correct account type, add it first:
       return login.accountCreate(ctx, ctx.accountType, function (err) {
         if (err) return callback(err)
-        loginPin.setup(ctx, login, pin, function (err) {
+        loginPin2.setup(ctx, login, pin, function (err) {
           if (err) return callback(err)
           var account = new Account(ctx, login)
           account.newAccount = true
@@ -122,7 +122,7 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
     }
 
     // Otherwise, we have the correct account type, and can simply return:
-    loginPin.setup(ctx, login, pin, function (err) {
+    loginPin2.setup(ctx, login, pin, function (err) {
       if (err) return callback(err)
       var account = new Account(ctx, login)
       account.newAccount = true
@@ -148,15 +148,16 @@ Context.prototype.loginWithPassword = function (username, password, otp, opts, c
 }
 
 Context.prototype.pinExists = function (username) {
-  return loginPin.exists(this, username)
+  return loginPin2.getKey(this, username) != null
 }
 Context.prototype.pinLoginEnabled = function (username) {
-  return loginPin.exists(this, username)
+  return loginPin2.getKey(this, username) != null
 }
 
 Context.prototype.loginWithPIN = function (username, pin, callback) {
   var ctx = this
-  return loginPin.login(ctx, username, pin, function (err, login) {
+  var pin2Key = loginPin2.getKey(this, username)
+  return loginPin2.login(ctx, pin2Key, username, pin, function (err, login) {
     if (err) return callback(err)
     var account = new Account(ctx, login)
     account.pinLogin = true

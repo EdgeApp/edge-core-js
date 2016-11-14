@@ -31,6 +31,10 @@ FakeServer.prototype.populate = function () {
   this.db.passwordAuthBox = packages.passwordAuthBox
   this.db.passwordBox = packages.passwordBox
   this.db.passwordKeySnrp = packages.passwordKeySnrp
+  this.db.pin2Id = packages.pin2Id
+  this.db.pin2Auth = packages.pin2Auth
+  this.db.pin2Box = packages.pin2Box
+  this.db.pin2KeyBox = packages.pin2KeyBox
   this.db.recovery2Id = packages.recovery2Id
   this.db.recovery2Auth = packages.recovery2Auth
   this.db.recovery2Box = packages.recovery2Box
@@ -45,6 +49,12 @@ FakeServer.prototype.authCheck = function (body) {
   // Password login:
   if (this.db.userId && this.db.userId === body['userId'] &&
       this.db.passwordAuth && this.db.passwordAuth === body['passwordAuth']) {
+    return authLevel.full
+  }
+
+  // PIN2 login:
+  if (this.db.pin2Id && this.db.pin2Id === body['pin2Id'] &&
+      this.db.pin2Auth && this.db.pin2Auth === body['pin2Auth']) {
     return authLevel.full
   }
 
@@ -176,6 +186,8 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
           'passwordAuthBox',
           'passwordBox',
           'passwordKeySnrp',
+          'pin2Box',
+          'pin2KeyBox',
           'recovery2Box',
           'recovery2KeyBox',
           'rootKeyBox',
@@ -208,6 +220,28 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         this.db.passwordKeySnrp = data['passwordKeySnrp']
         this.db.passwordBox = data['passwordBox']
         this.db.passwordAuthBox = data['passwordAuthBox']
+
+        return callback(null, 200, makeReply(results))
+    }
+  }
+
+  if (path === '/api/v2/login/pin2') {
+    if (!this.authCheck(body)) {
+      return callback(null, 500, '{"status_code":3}')
+    }
+
+    switch (method) {
+      case 'PUT':
+        data = body['data']
+        if (!data['pin2Id'] || !data['pin2Auth'] ||
+            !data['pin2Box'] || !data['pin2KeyBox']) {
+          return callback(null, 500, '{"status_code":5}')
+        }
+
+        this.db.pin2Id = data['pin2Id']
+        this.db.pin2Auth = data['pin2Auth']
+        this.db.pin2Box = data['pin2Box']
+        this.db.pin2KeyBox = data['pin2KeyBox']
 
         return callback(null, 200, makeReply(results))
     }

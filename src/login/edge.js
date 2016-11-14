@@ -1,7 +1,7 @@
 var loginCreate = require('./create.js')
 var base58 = require('../util/encoding.js').base58
 var crypto = require('../crypto.js')
-var loginPin = require('./pin.js')
+var loginPin2 = require('./pin2.js')
 
 var Elliptic = require('elliptic').ec
 var secp256k1 = new Elliptic('secp256k1')
@@ -34,8 +34,8 @@ function createLogin (ctx, accountReply, callback) {
       if (err) return callback(err)
 
       if (typeof pin === 'string' && pin.length === 4) {
-        if (!loginPin.exists(ctx, username)) {
-          loginPin.setup(ctx, login, pin, function (err) {
+        if (loginPin2.getKey(ctx, username) == null) {
+          loginPin2.setup(ctx, login, pin, function (err) {
             if (err) {
               // Do nothing
             }
