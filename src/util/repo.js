@@ -2,7 +2,7 @@ var base58 = require('./encoding.js').base58
 var crypto = require('../crypto.js')
 var ScopedStorage = require('./scopedStorage').ScopedStorage
 
-var syncServer = 'http://git1.sync.airbitz.co'
+var syncServer = 'https://git1.sync.airbitz.co'
 
 /**
  * Fetches some resource from a sync server.
