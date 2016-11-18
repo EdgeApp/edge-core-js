@@ -48,6 +48,7 @@ function Context (opts) {
     xhr.open(method, uri)
     xhr.setRequestHeader('Authorization', 'Token ' + opts.apiKey)
     xhr.setRequestHeader('Content-Type', 'application/json')
+    xhr.setRequestHeader('Accept', 'application/json')
     xhr.send(JSON.stringify(body))
     console.log('Visit ' + uri)
   }
