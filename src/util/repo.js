@@ -16,7 +16,7 @@ function syncRequest (authFetch, method, uri, body, callback) {
 
 function syncRequestInner (authFetch, method, uri, body, callback, serverIndex) {
   console.log('syncRequestInner: Connecting to ' + syncServers[serverIndex])
-  authFetch(method, syncServers[serverIndex] + uri, body, function (err, status, body) {
+  authFetch(method, syncServers[serverIndex] + uri, body, function (err, status, result) {
     if (err) {
       console.log('syncRequestInner: Failed connecting to ' + syncServers[serverIndex])
       if (serverIndex < syncServers.length - 1) {
@@ -26,9 +26,14 @@ function syncRequestInner (authFetch, method, uri, body, callback, serverIndex) 
       }
     }
     try {
-      var reply = JSON.parse(body)
+      var reply = JSON.parse(result)
     } catch (e) {
-      return callback(Error('Non-JSON reply HTTP status ' + status))
+      console.log('syncRequestInner: Failed parsing response from ' + syncServers[serverIndex])
+      if (serverIndex < syncServers.length - 1) {
+        return syncRequestInner(authFetch, method, uri, body, callback, (serverIndex + 1))
+      } else {
+        return callback(Error('Non-JSON reply HTTP status ' + status))
+      }
     }
 
     return callback(null, reply)
