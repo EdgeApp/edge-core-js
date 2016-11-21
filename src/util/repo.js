@@ -15,8 +15,10 @@ function syncRequest (authFetch, method, uri, body, callback) {
 }
 
 function syncRequestInner (authFetch, method, uri, body, callback, serverIndex) {
+  console.log('syncRequestInner: Connecting to ' + syncServers[serverIndex])
   authFetch(method, syncServers[serverIndex] + uri, body, function (err, status, body) {
     if (err) {
+      console.log('syncRequestInner: Failed connecting to ' + syncServers[serverIndex])
       if (serverIndex < syncServers.length - 1) {
         return syncRequestInner(authFetch, method, uri, body, callback, (serverIndex + 1))
       } else {
