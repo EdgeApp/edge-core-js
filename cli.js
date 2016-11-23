@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Airbitz context stuff:
 const abc = require('./src/abc.js')
 var realServer = require('./cli/realServer.js')
