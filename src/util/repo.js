@@ -5,7 +5,7 @@ var ScopedStorage = require('./scopedStorage').ScopedStorage
 var syncServers = [
   'https://git-js.airbitz.co',
   'https://git4-js.airbitz.co'
-  ]
+]
 
 /**
  * Fetches some resource from a sync server.
