@@ -1,3 +1,4 @@
+var AesCbc = require('aes-js').ModeOfOperation.cbc
 var scryptsy = require('scryptsy')
 var asmcrypto = require('./asmcrypto/asmcrypto.js')
 
@@ -126,56 +127,115 @@ exports.random = random
  * @param key a key, as an ArrayBuffer
  */
 function decrypt (box, key) {
+  // Check JSON:
   if (box['encryptionType'] !== 0) {
     throw new Error('Unknown encryption type')
   }
-
   var iv = new Buffer(box['iv_hex'], 'hex')
-
-  // Step 1: Decrypt
   var cyphertext = new Buffer(box['data_base64'], 'base64')
-  var data = new Buffer(asmcrypto.AES_CBC.decrypt(cyphertext, key, true, iv))
 
+  // Decrypt:
+  var cypher = new AesCbc(key, iv)
+  var raw = cypher.decrypt(cyphertext)
   // Alternative using node.js crypto:
   // var decipher = crypto.createDecipheriv('AES-256-CBC', key, iv);
   // var x = decipher.update(box.data_base64, 'base64', 'hex')
   // x += decipher.final('hex')
   // var data = new Buffer(x, 'hex')
 
-  // Step 2: Skip initial padding, then read in size.
-  var preSize = data.readUInt8(0)
-  var dataSize = data.readUInt32BE(preSize + 1)
+  // Calculate field locations:
+  var headerSize = raw[0]
+  var dataSize =
+    raw[1 + headerSize] << 24 |
+    raw[2 + headerSize] << 16 |
+    raw[3 + headerSize] << 8 |
+    raw[4 + headerSize]
+  var dataStart = 1 + headerSize + 4
+  var footerSize = raw[dataStart + dataSize]
+  var hashStart = dataStart + dataSize + 1 + footerSize
 
-  // Step 3: read sha256 and verify?
+  // Verify SHA-256 checksum:
+  var hash = asmcrypto.SHA256.bytes(raw.slice(0, hashStart))
+  var hashSize = hash.length
+  for (let i = 0; i < hashSize; ++i) {
+    if (raw[hashStart + i] !== hash[i]) {
+      throw new Error('Invalid checksum')
+    }
+  }
 
-  var dataStart = preSize + 1 + 4
-  return data.slice(dataStart, dataStart + dataSize)
+  // Verify pkcs7 padding (if any):
+  var paddingStart = hashStart + hashSize
+  var paddingSize = raw.length - paddingStart
+  for (let i = paddingStart; i < raw.length; ++i) {
+    if (raw[i] !== paddingSize) {
+      throw new Error('Invalid PKCS7 padding')
+    }
+  }
+
+  // Return the payload:
+  return raw.slice(dataStart, dataStart + dataSize)
 }
 exports.decrypt = decrypt
 
 /**
- * @param data an ArrayBuffer of data
+ * @param payload an ArrayBuffer of data
  * @param key a key, as an ArrayBuffer
  */
 function encrypt (data, key) {
-  var out = { 'encryptionType': 0 }
+  // Calculate sizes and locations:
+  var headerSize = random(1)[0] & 0x1f
+  var dataStart = 1 + headerSize + 4
+  var dataSize = data.length
+  var footerStart = dataStart + dataSize + 1
+  var footerSize = random(1)[0] & 0x1f
+  var hashStart = footerStart + footerSize
+  var hashSize = 32
+  var paddingStart = hashStart + hashSize
+  var paddingSize = 16 - (paddingStart & 0xf)
+  var raw = new Buffer(paddingStart + paddingSize)
 
+  // Random header:
+  var header = random(headerSize)
+  raw[0] = headerSize
+  for (let i = 0; i < headerSize; ++i) {
+    raw[1 + i] = header[i]
+  }
+
+  // Payload data:
+  raw[1 + headerSize] = (dataSize >> 24) & 0xff
+  raw[2 + headerSize] = (dataSize >> 16) & 0xff
+  raw[3 + headerSize] = (dataSize >> 8) & 0xff
+  raw[4 + headerSize] = dataSize & 0xff
+  for (let i = 0; i < dataSize; ++i) {
+    raw[dataStart + i] = data[i]
+  }
+
+  // Random footer:
+  var footer = random(footerSize)
+  raw[dataStart + dataSize] = footerSize
+  for (let i = 0; i < footerSize; ++i) {
+    raw[footerStart + i] = footer[i]
+  }
+
+  // SHA-256 checksum:
+  var hash = asmcrypto.SHA256.bytes(raw.slice(0, hashStart))
+  for (let i = 0; i < hashSize; ++i) {
+    raw[hashStart + i] = hash[i]
+  }
+
+  // Add PKCS7 padding:
+  for (let i = 0; i < paddingSize; ++i) {
+    raw[paddingStart + i] = paddingSize
+  }
+
+  // Encrypt to JSON:
   var iv = random(16)
-  out['iv_hex'] = iv.toString('hex')
-
-  var plaintext = new Buffer(data.length + 6 + 32)
-  plaintext.writeUInt8(0, 0)
-  plaintext.writeUInt32BE(data.length, 1)
-  data.copy(plaintext, 5)
-  plaintext.writeUInt8(0, data.length + 5)
-
-  var hashData = plaintext.slice(0, data.length + 6)
-  var hash = new Buffer(asmcrypto.SHA256.bytes(hashData))
-  hash.copy(plaintext, data.length + 6)
-
-  out['data_base64'] = new Buffer(asmcrypto.AES_CBC.encrypt(plaintext, key, true, iv)).toString('base64')
-
-  return out
+  var cypher = new AesCbc(key, iv)
+  return {
+    'encryptionType': 0,
+    'iv_hex': iv.toString('hex'),
+    'data_base64': new Buffer(cypher.encrypt(raw)).toString('base64')
+  }
 }
 exports.encrypt = encrypt
 
