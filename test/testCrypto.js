@@ -1,6 +1,7 @@
 /* global describe, it */
 var assert = require('assert')
 var crypto = require('../src/crypto.js')
+var encoding = require('../src/util/encoding.js')
 
 describe('scrypt', function () {
   it('match a known userId', function () {
@@ -29,5 +30,15 @@ describe('encryption', function () {
     var data = Buffer.from('payload', 'utf8')
     var box = crypto.encrypt(data, key)
     assert.equal('payload', crypto.decrypt(box, key).toString('utf8'))
+  })
+})
+
+describe('hmac-sha256', function () {
+  it('match a known hash', function () {
+    var key = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+    var data = new Uint8Array([0, 1, 2])
+    var expected = 'DqkzMDMbhngmVUPhX3QL1n1zKmagPZcxWeBKvTSojYdH'
+
+    assert.equal(expected, encoding.base58.encode(crypto.hmacSha256(data, key)))
   })
 })

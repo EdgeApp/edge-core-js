@@ -1,6 +1,7 @@
 var AesCbc = require('aes-js').ModeOfOperation.cbc
 var scryptsy = require('scryptsy')
-var asmcrypto = require('./asmcrypto/asmcrypto.js')
+var hashjs = require('hash.js')
+var Hmac = require('hmac')
 
 var userIdSnrp = {
   'salt_hex': 'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b',
@@ -155,7 +156,7 @@ function decrypt (box, key) {
   var hashStart = dataStart + dataSize + 1 + footerSize
 
   // Verify SHA-256 checksum:
-  var hash = asmcrypto.SHA256.bytes(raw.slice(0, hashStart))
+  var hash = hashjs.sha256().update(raw.slice(0, hashStart)).digest()
   var hashSize = hash.length
   for (let i = 0; i < hashSize; ++i) {
     if (raw[hashStart + i] !== hash[i]) {
@@ -218,7 +219,7 @@ function encrypt (data, key) {
   }
 
   // SHA-256 checksum:
-  var hash = asmcrypto.SHA256.bytes(raw.slice(0, hashStart))
+  var hash = hashjs.sha256().update(raw.slice(0, hashStart)).digest()
   for (let i = 0; i < hashSize; ++i) {
     raw[hashStart + i] = hash[i]
   }
@@ -240,6 +241,7 @@ function encrypt (data, key) {
 exports.encrypt = encrypt
 
 function hmacSha256 (data, key) {
-  return asmcrypto.HMAC_SHA256.bytes(data, key)
+  var hmac = new Hmac(hashjs.sha256, 64, key)
+  return hmac.update(data).digest()
 }
 exports.hmacSha256 = hmacSha256
