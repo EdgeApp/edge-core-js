@@ -9,25 +9,6 @@ This will produce a file, `./abc.js`, which can be used in a `<script>` tag.
 All sources are in the [JavaScript Standard Style](http://standardjs.com/).
 
 
-## REACT NATIVE
-change webpack.config.js
-```
-module.exports = {
-  entry: './src/abc.js',
-  module: {
-    loaders: [
-    // note the change from json to json-loader here, it might be something you need to do for anything to actually build
-      { test: /\.json$/, loader: 'json-loader' }
-    ]
-  },
-  output: {
-    filename: 'abc.js',
-    // Export the library as a global var:
-    // libraryTarget: "var",
-    // NO Don't do that for REACT NATIVE. set it as commonjs
+## REACT NATIVE webpack.config.js optional configuration
+    //  REACT NATIVE. set the libraryTarget as commonjs, in case just requiring it directly as a global does not jibe with your app's configuration.
     libraryTarget: "commonjs",
-    // Name of the global var:
-    library: "abc"
-  }
-}
-```
