@@ -41,7 +41,6 @@
   },
   "scripts": {
     "pretest": "standard src/*.js src/login/*.js src/util/*.js test/*.js test/fake/*.js cli.js cli/*.js cli/commands/*.js",
-    "test": "mocha",
-    "webpack": "webpack"
+    "test": "mocha"
   }
 }
