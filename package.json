@@ -35,6 +35,11 @@
     "standard": "^8.5.0",
     "webpack": "^2.1.0-beta"
   },
+  "files": [
+    "cli",
+    "cli.js",
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
