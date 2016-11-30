@@ -158,6 +158,9 @@ Context.prototype.pinLoginEnabled = function (username) {
 Context.prototype.loginWithPIN = function (username, pin, callback) {
   const ctx = this
   const pin2Key = loginPin2.getKey(this, username)
+  if (!pin2Key) {
+    throw new Error('No PIN set locally for this account')
+  }
   return loginPin2.login(ctx, pin2Key, username, pin, function (err, login) {
     if (err) return callback(err)
     const account = new Account(ctx, login)
