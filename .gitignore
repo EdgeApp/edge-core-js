@@ -1,5 +1,4 @@
-/.cli
-/abc.js
 /cli/apiKey.js
-node_modules
-.idea/
+/node_modules
+.cli
+.idea
