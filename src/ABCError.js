@@ -62,9 +62,9 @@ function ABCErrorObject (code, message) {
 }
 
 export function ABCError (code, message) {
-  var conditionCode = 1
-  var msg = null
-  var json = null
+  let conditionCode = 1
+  let msg = null
+  let json = null
   if (code === null) {
     return null
   } else if (typeof code.message === 'string') {

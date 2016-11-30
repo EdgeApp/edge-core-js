@@ -7,7 +7,7 @@ import {Account} from '../../src/account.js'
 import {Login} from '../../src/login/login.js'
 
 export function makeSession (opts) {
-  var session = {}
+  const session = {}
 
   // Expand needs flags:
   opts.needsLogin |= opts.needsAccount

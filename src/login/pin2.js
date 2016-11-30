@@ -19,7 +19,7 @@ export function getKey (ctx, username) {
   username = userMap.normalize(username)
 
   // Extract stuff from storage:
-  var userStorage = new UserStorage(ctx.localStorage, username)
+  const userStorage = new UserStorage(ctx.localStorage, username)
   return userStorage.getItem('pin2Key')
 }
 
@@ -34,7 +34,7 @@ export function login (ctx, pin2Key, username, pin, callback) {
   pin2Key = base58.decode(pin2Key)
   username = userMap.normalize(username)
 
-  var request = {
+  const request = {
     'pin2Id': pin2Id(pin2Key, username).toString('base64'),
     'pin2Auth': pin2Auth(pin2Key, pin).toString('base64')
     // "otp": null
@@ -44,7 +44,7 @@ export function login (ctx, pin2Key, username, pin, callback) {
 
     try {
       // PIN login:
-      var pin2Box = reply['pin2Box']
+      const pin2Box = reply['pin2Box']
       if (!pin2Box) {
         return callback(Error('Missing data for PIN v2 login'))
       }
@@ -53,7 +53,7 @@ export function login (ctx, pin2Key, username, pin, callback) {
       var dataKey = crypto.decrypt(pin2Box, pin2Key)
 
       // Cache everything for future logins:
-      var userId = userMap.getUserId(ctx.localStorage, username)
+      const userId = userMap.getUserId(ctx.localStorage, username)
       userMap.insert(ctx.localStorage, username, userId)
     } catch (e) {
       return callback(e)
@@ -66,17 +66,17 @@ export function login (ctx, pin2Key, username, pin, callback) {
  * Sets up PIN login v2.
  */
 export function setup (ctx, login, pin, callback) {
-  var pin2Key = login.userStorage.getItem('pin2Key')
+  let pin2Key = login.userStorage.getItem('pin2Key')
   if (pin2Key) {
     pin2Key = base58.decode(pin2Key)
   } else {
     pin2Key = crypto.random(32)
   }
 
-  var pin2Box = crypto.encrypt(login.dataKey, pin2Key)
-  var pin2KeyBox = crypto.encrypt(pin2Key, login.dataKey)
+  const pin2Box = crypto.encrypt(login.dataKey, pin2Key)
+  const pin2KeyBox = crypto.encrypt(pin2Key, login.dataKey)
 
-  var request = login.authJson()
+  const request = login.authJson()
   request['data'] = {
     'pin2Id': pin2Id(pin2Key, login.username).toString('base64'),
     'pin2Auth': pin2Auth(pin2Key, pin).toString('base64'),

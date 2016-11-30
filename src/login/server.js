@@ -7,7 +7,7 @@ export function repoCreate (ctx, login, keysJson, callback) {
   keysJson.dataKey = keysJson.dataKey || crypto.random(32).toString('hex')
   keysJson.syncKey = keysJson.syncKey || crypto.random(20).toString('hex')
 
-  var request = {
+  const request = {
     'l1': login.userId,
     'lp1': login.passwordAuth.toString('base64'),
     'repo_wallet_key': keysJson.syncKey
@@ -24,7 +24,7 @@ export function repoCreate (ctx, login, keysJson, callback) {
  * to the login or account.
  */
 export function repoActivate (ctx, login, keysJson, callback) {
-  var request = {
+  const request = {
     'l1': login.userId,
     'lp1': login.passwordAuth.toString('base64'),
     'repo_wallet_key': keysJson.syncKey

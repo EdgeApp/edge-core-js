@@ -1,6 +1,6 @@
 import {XMLHttpRequest} from 'xmlhttprequest'
 
-var apiKey = null
+let apiKey = null
 try {
   apiKey = require('./apiKey.js').apiKey
 } catch (e) { }
@@ -11,12 +11,12 @@ try {
 export function authRequest (method, uri, body, callback) {
   // Ensure we have an API key:
   if (!apiKey) {
-    var message = "Please create a file called 'bin/apiKey.js' with the line: " +
+    const message = "Please create a file called 'bin/apiKey.js' with the line: " +
       "exports.apiKey = '<your key here>'"
     throw new Error(message)
   }
 
-  var xhr = new XMLHttpRequest()
+  const xhr = new XMLHttpRequest()
   xhr.addEventListener('load', function () {
     callback(null, this.status, this.responseText)
   })

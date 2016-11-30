@@ -1,4 +1,4 @@
-var commands = []
+const commands = []
 
 /**
  * Creates a new `Error` object with a true `quiet` property.

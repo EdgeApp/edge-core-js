@@ -58,7 +58,7 @@ Account.prototype.isLoggedIn = function () {
 }
 
 Account.prototype.sync = function (callback) {
-  var account = this
+  const account = this
   this.repo.sync(function (err, changed) {
     if (err) return callback(err)
     if (changed) {
@@ -82,9 +82,9 @@ Account.prototype.getWallet = function (id) {
  * Might return null if there are no wallets.
  */
 Account.prototype.getFirstWallet = function (type) {
-  var ids = this.walletList.listIds()
+  const ids = this.walletList.listIds()
 
-  for (var i = 0; i < ids.length; ++i) {
+  for (let i = 0; i < ids.length; ++i) {
     if (type == null || this.walletList.getType(ids[i]) === type) {
       return this.getWallet(ids[i])
     }
@@ -99,10 +99,10 @@ Account.prototype.getFirstWallet = function (type) {
  * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
  */
 Account.prototype.createWallet = function (type, keysJson, callback) {
-  var account = this
+  const account = this
   server.repoCreate(account.ctx, account.login, keysJson, function (err, keysJson) {
     if (err) return callback(err)
-    var id = account.walletList.addWallet(type, keysJson)
+    const id = account.walletList.addWallet(type, keysJson)
     account.sync(function (err, dirty) {
       if (err) return callback(err)
       server.repoActivate(account.ctx, account.login, keysJson, function (err) {

@@ -9,7 +9,7 @@ import {makeSession} from './fake/session.js'
 const EllipticCurve = elliptic.ec
 const secp256k1 = new EllipticCurve('secp256k1')
 
-var fakeReply = {
+const fakeReply = {
   username: 'test',
   pinString: '1234',
   keys: {
@@ -22,23 +22,23 @@ var fakeReply = {
  * Modifies the lobby object with a fake reply to an account request.
  */
 function craftFakeReply (lobby) {
-  var accountRequest = lobby['accountRequest']
-  var requestKey = accountRequest['requestKey']
+  const accountRequest = lobby['accountRequest']
+  const requestKey = accountRequest['requestKey']
 
-  var keys = secp256k1.genKeyPair()
-  var requestPubkey = secp256k1.keyFromPublic(requestKey, 'hex').getPublic()
-  var secret = keys.derive(requestPubkey).toArray('be')
-  var dataKey = new Buffer(crypto.hmacSha256('dataKey', new Uint8Array(secret)))
+  const keys = secp256k1.genKeyPair()
+  const requestPubkey = secp256k1.keyFromPublic(requestKey, 'hex').getPublic()
+  const secret = keys.derive(requestPubkey).toArray('be')
+  const dataKey = new Buffer(crypto.hmacSha256('dataKey', new Uint8Array(secret)))
 
-  var replyBlob = new Buffer(JSON.stringify(fakeReply), 'utf-8')
+  const replyBlob = new Buffer(JSON.stringify(fakeReply), 'utf-8')
   accountRequest['replyBox'] = crypto.encrypt(replyBlob, dataKey)
   accountRequest['replyKey'] = keys.getPublic().encodeCompressed('hex')
 }
 
 describe('edge login', function () {
   it('decode reply', function () {
-    var key = secp256k1.keyFromPrivate('ab989c9ac164effe74d89c0ab0e7dc2345f8e091f43bba2c02d99ed4aa107af1')
-    var lobby = {
+    const key = secp256k1.keyFromPrivate('ab989c9ac164effe74d89c0ab0e7dc2345f8e091f43bba2c02d99ed4aa107af1')
+    const lobby = {
       'accountRequest': {
         'displayName': 'test',
         'replyBox': {
@@ -63,10 +63,10 @@ describe('edge login', function () {
 
   it('request', function (done) {
     this.timeout(9000)
-    var session = makeSession({needsContext: true, accountType: 'account:repo:test'})
+    const session = makeSession({needsContext: true, accountType: 'account:repo:test'})
     session.server.repos['f00d'] = {}
 
-    var opts = {
+    const opts = {
       onLogin: function (err, account) {
         if (err) return done(err)
         assert.deepEqual(account.keys, fakeReply.keys)
@@ -82,9 +82,9 @@ describe('edge login', function () {
   })
 
   it('cancel', function (done) {
-    var session = makeSession({needsContext: true, accountType: 'account:repo:test'})
+    const session = makeSession({needsContext: true, accountType: 'account:repo:test'})
 
-    var opts = {
+    const opts = {
       onLogin: function () {},
       displayName: 'test suite'
     }

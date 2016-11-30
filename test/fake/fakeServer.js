@@ -3,14 +3,14 @@ import url from 'url'
 import * as packages from './packages.js'
 
 function makeReply (results) {
-  var reply = {
+  const reply = {
     'status_code': 0,
     'results': results
   }
   return JSON.stringify(reply)
 }
 
-var authLevel = {
+const authLevel = {
   none: 'none',
   recovery2Id: 'recovery2Id',
   full: 'full'
@@ -62,10 +62,10 @@ FakeServer.prototype.authCheck = function (body) {
   // Recovery2 login:
   if (this.db.recovery2Id && this.db.recovery2Id === body['recovery2Id']) {
     // Check answers:
-    var recovery2Auth = body['recovery2Auth']
+    const recovery2Auth = body['recovery2Auth']
     if (recovery2Auth instanceof Array &&
         recovery2Auth.length === this.db.recovery2Auth.length) {
-      for (var i = 0; i < recovery2Auth.length; ++i) {
+      for (let i = 0; i < recovery2Auth.length; ++i) {
         if (recovery2Auth[i] !== this.db.recovery2Auth[i]) {
           return authLevel.recovery2Id
         }
@@ -79,8 +79,8 @@ FakeServer.prototype.authCheck = function (body) {
 }
 
 FakeServer.prototype.request = function (method, uri, body, callback) {
-  var path = url.parse(uri).pathname
-  var results = {}
+  const path = url.parse(uri).pathname
+  const results = {}
 
   // Account lifetime v1: ----------------------------------------------------
 
@@ -92,10 +92,10 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
   }
 
   if (path === '/api/v1/account/create') {
-    var carePackage = JSON.parse(body['care_package'])
+    const carePackage = JSON.parse(body['care_package'])
     this.db.passwordKeySnrp = carePackage['SNRP2']
 
-    var loginPackage = JSON.parse(body['login_package'])
+    const loginPackage = JSON.parse(body['login_package'])
     this.db.passwordAuthBox = loginPackage['ELP1']
     this.db.passwordBox = loginPackage['EMK_LP2']
     this.db.syncKeyBox = loginPackage['ESyncKey']
@@ -183,7 +183,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         return callback(null, 200, makeReply(results))
 
       case authLevel.full:
-        var keys = [
+        const keys = [
           'passwordAuthBox',
           'passwordBox',
           'passwordKeySnrp',
@@ -195,7 +195,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
           'syncKeyBox',
           'repos'
         ]
-        for (var i = 0; i < keys.length; ++i) {
+        for (let i = 0; i < keys.length; ++i) {
           if (this.db[keys[i]]) {
             results[keys[i]] = this.db[keys[i]]
           }
@@ -211,7 +211,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
 
     switch (method) {
       case 'PUT':
-        var data = body['data']
+        const data = body['data']
         if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
             !data['passwordBox'] || !data['passwordAuthBox']) {
           return callback(null, 500, '{"status_code":3}')
@@ -233,7 +233,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
 
     switch (method) {
       case 'PUT':
-        data = body['data']
+        const data = body['data']
         if (!data['pin2Id'] || !data['pin2Auth'] ||
             !data['pin2Box'] || !data['pin2KeyBox']) {
           return callback(null, 500, '{"status_code":5}')
@@ -255,7 +255,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
 
     switch (method) {
       case 'PUT':
-        data = body['data']
+        const data = body['data']
         if (!data['recovery2Id'] || !data['recovery2Auth'] ||
             !data['question2Box'] || !data['recovery2Box'] ||
             !data['recovery2KeyBox']) {
@@ -279,7 +279,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
 
     switch (method) {
       case 'POST':
-        data = body['data']
+        const data = body['data']
         if (!data['type'] || !data['info']) {
           return callback(null, 500, '{"status_code":5}')
         }
@@ -327,7 +327,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     switch (method) {
       case 'POST':
         const changes = body['changes']
-        for (var change in changes) {
+        for (let change in changes) {
           if (changes.hasOwnProperty(change)) {
             repo[change] = changes[change]
           }
@@ -349,7 +349,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
  * Makes a stand-alone request function that is bound to `this`.
  */
 FakeServer.prototype.bindRequest = function () {
-  var server = this
+  const server = this
   return function () {
     FakeServer.prototype.request.apply(server, arguments)
   }

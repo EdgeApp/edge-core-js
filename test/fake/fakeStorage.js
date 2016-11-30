@@ -55,7 +55,7 @@ FakeStorage.prototype.populateRepos = function () {
 FakeStorage.prototype.populate = function () {
   this.populateUsers()
   this.populateRepos()
-  var userStorage = new UserStorage(this, 'js test 0')
+  const userStorage = new UserStorage(this, 'js test 0')
   userStorage.setJson('passwordKeySnrp', packages.passwordKeySnrp)
   userStorage.setJson('passwordBox', packages.passwordBox)
   userStorage.setJson('passwordAuthBox', packages.passwordAuthBox)

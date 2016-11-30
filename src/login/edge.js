@@ -21,11 +21,11 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
  * Creates a new login object, and attaches the account repo info to it.
  */
 function createLogin (ctx, accountReply, callback) {
-  var username = accountReply.username + '-' + base58.encode(crypto.random(4))
-  var password = base58.encode(crypto.random(24))
-  var pin = accountReply.pinString
+  const username = accountReply.username + '-' + base58.encode(crypto.random(4))
+  const password = base58.encode(crypto.random(24))
+  const pin = accountReply.pinString
 
-  var opts = {}
+  const opts = {}
   if (accountReply.type === 'account:repo:co.airbitz.wallet') {
     opts.syncKey = new Buffer(accountReply.info['syncKey'], 'hex')
   }
@@ -56,21 +56,21 @@ function createLogin (ctx, accountReply, callback) {
  * Returns the account info if so, or null otherwise.
  */
 export function decodeAccountReply (keys, lobby) {
-  var accountRequest = lobby['accountRequest']
-  var replyBox = accountRequest['replyBox']
-  var replyKey = accountRequest['replyKey']
+  const accountRequest = lobby['accountRequest']
+  const replyBox = accountRequest['replyBox']
+  const replyKey = accountRequest['replyKey']
 
   // If the reply is missing, just return false:
   if (!replyBox || !replyKey) {
     return null
   }
 
-  var replyPubkey = secp256k1.keyFromPublic(replyKey, 'hex').getPublic()
-  var secret = keys.derive(replyPubkey).toArray('be')
-  var dataKey = new Buffer(crypto.hmacSha256('dataKey', new Uint8Array(secret)))
-  var reply = JSON.parse(crypto.decrypt(replyBox, dataKey).toString('utf-8'))
+  const replyPubkey = secp256k1.keyFromPublic(replyKey, 'hex').getPublic()
+  const secret = keys.derive(replyPubkey).toArray('be')
+  const dataKey = new Buffer(crypto.hmacSha256('dataKey', new Uint8Array(secret)))
+  const reply = JSON.parse(crypto.decrypt(replyBox, dataKey).toString('utf-8'))
 
-  var returnObj = {
+  const returnObj = {
     type: accountRequest['type'],
     info: reply['keys'] || reply['info'],
     username: reply['username']
@@ -97,7 +97,7 @@ function pollServer (ctx, edgeLogin, keys, onLogin, onProcessLogin) {
       if (err) return onLogin(err)
 
       try {
-        var accountReply = decodeAccountReply(keys, reply)
+        const accountReply = decodeAccountReply(keys, reply)
         if (!accountReply) {
           return pollServer(ctx, edgeLogin, keys, onLogin, onProcessLogin)
         }
@@ -116,9 +116,9 @@ function pollServer (ctx, edgeLogin, keys, onLogin, onProcessLogin) {
  * Creates a new account request lobby on the server.
  */
 export function create (ctx, opts, callback) {
-  var keys = secp256k1.genKeyPair()
+  const keys = secp256k1.genKeyPair()
 
-  var data = {
+  const data = {
     'accountRequest': {
       'displayName': opts['displayName'] || '',
       'requestKey': keys.getPublic().encodeCompressed('hex'),
@@ -132,7 +132,7 @@ export function create (ctx, opts, callback) {
     data.accountRequest.displayImageUrl = ''
   }
 
-  var request = {
+  const request = {
     'expires': 300,
     'data': data
   }
@@ -142,7 +142,7 @@ export function create (ctx, opts, callback) {
 
     try {
       var edgeLogin = new ABCEdgeLoginRequest(reply.id)
-      var onProcessLogin = null
+      let onProcessLogin = null
       if (opts.hasOwnProperty('onProcessLogin')) {
         onProcessLogin = opts.onProcessLogin
       }

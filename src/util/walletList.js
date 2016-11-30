@@ -32,9 +32,9 @@ export function WalletList (repo, folder) {
  * Loads the list of wallets into the cache.
  */
 WalletList.prototype.load = function () {
-  var keys = this.repo.keys(this.folder)
-  for (var i = 0; i < keys.length; ++i) {
-    var walletJson = this.repo.getJson(this.folder + '/' + keys[i])
+  const keys = this.repo.keys(this.folder)
+  for (let i = 0; i < keys.length; ++i) {
+    const walletJson = this.repo.getJson(this.folder + '/' + keys[i])
     this.wallets[walletId(walletJson)] = walletJson
   }
 }
@@ -44,9 +44,9 @@ WalletList.prototype.load = function () {
  */
 WalletList.prototype.listIds = function () {
   // Load the ids and their sort indices:
-  var ids = []
-  var indices = {}
-  for (var id in this.wallets) {
+  const ids = []
+  const indices = {}
+  for (let id in this.wallets) {
     if (this.wallets.hasOwnProperty(id)) {
       ids.push(id)
       indices[id] = this.wallets[id]['SortIndex']
@@ -63,7 +63,7 @@ WalletList.prototype.listIds = function () {
  * Returns the type of a particular wallet.
  */
 WalletList.prototype.getType = function (id) {
-  var walletJson = this.wallets[id]
+  const walletJson = this.wallets[id]
   if (!walletJson) throw new Error('No such wallet ' + id)
 
   return walletType(walletJson)
@@ -73,7 +73,7 @@ WalletList.prototype.getType = function (id) {
  * Obtains the keys JSON for a particular wallet.
  */
 WalletList.prototype.getKeys = function (id) {
-  var walletJson = this.wallets[id]
+  const walletJson = this.wallets[id]
   if (!walletJson) throw new Error('No such wallet ' + id)
 
   return walletKeys(walletJson)
@@ -87,18 +87,18 @@ WalletList.prototype.getKeys = function (id) {
  * and some type of crytpocurrency key.
  */
 WalletList.prototype.addWallet = function (type, keysJson) {
-  var walletJson = {
+  const walletJson = {
     'type': type,
     'keys': keysJson,
     'Archived': false,
     'SortIndex': 0
   }
 
-  var dataKey = new Buffer(keysJson['dataKey'], 'hex')
-  var filename = this.repo.secureFilename(dataKey)
+  const dataKey = new Buffer(keysJson['dataKey'], 'hex')
+  const filename = this.repo.secureFilename(dataKey)
   this.repo.setJson(this.folder + '/' + filename, walletJson)
 
-  var id = walletId(walletJson)
+  const id = walletId(walletJson)
   this.wallets[id] = walletJson
   return id
 }
