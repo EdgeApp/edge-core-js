@@ -32,9 +32,8 @@ export function WalletList (repo, folder) {
  * Loads the list of wallets into the cache.
  */
 WalletList.prototype.load = function () {
-  const keys = this.repo.keys(this.folder)
-  for (let i = 0; i < keys.length; ++i) {
-    const walletJson = this.repo.getJson(this.folder + '/' + keys[i])
+  for (let key of this.repo.keys(this.folder)) {
+    const walletJson = this.repo.getJson(this.folder + '/' + key)
     this.wallets[walletId(walletJson)] = walletJson
   }
 }

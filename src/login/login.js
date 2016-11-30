@@ -17,8 +17,7 @@ function loginReplyStore (localStorage, username, dataKey, loginReply) {
   ]
 
   // Store any keys the reply may contain:
-  for (let i = 0; i < keys.length; ++i) {
-    const key = keys[i]
+  for (let key of keys) {
     if (loginReply[key]) {
       userStorage.setJson(key, loginReply[key])
     }
@@ -108,9 +107,9 @@ Login.prototype.authJson = function () {
  */
 Login.prototype.accountFind = function (type) {
   // Search the repos array:
-  for (let i = 0; i < this.repos.length; ++i) {
-    if (this.repos[i]['type'] === type) {
-      const keysBox = this.repos[i]['keysBox'] || this.repos[i]['info']
+  for (let repo of this.repos) {
+    if (repo['type'] === type) {
+      const keysBox = repo['keysBox'] || repo['info']
       return JSON.parse(crypto.decrypt(keysBox, this.dataKey).toString('utf-8'))
     }
   }

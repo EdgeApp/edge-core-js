@@ -213,8 +213,7 @@ Repo.prototype.sync = function (callback) {
   const changeKeys = this.changeStore.keys()
   if (changeKeys.length) {
     request.changes = {}
-    for (let i = 0; i < changeKeys.length; ++i) {
-      const key = changeKeys[i]
+    for (let key of changeKeys) {
       const path = key.replace(/\./g, '/') + '.json'
 
       request.changes[path] = this.changeStore.getJson(key)
@@ -235,8 +234,8 @@ Repo.prototype.sync = function (callback) {
     let changed = false
     try {
       // Delete any changed keys (since the upload is done):
-      for (let i = 0; i < changeKeys.length; ++i) {
-        self.changeStore.removeItem(changeKeys[i])
+      for (let key of changeKeys) {
+        self.changeStore.removeItem(key)
       }
 
       // Process the change list:

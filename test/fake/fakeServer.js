@@ -195,9 +195,9 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
           'syncKeyBox',
           'repos'
         ]
-        for (let i = 0; i < keys.length; ++i) {
-          if (this.db[keys[i]]) {
-            results[keys[i]] = this.db[keys[i]]
+        for (let key of keys) {
+          if (this.db[key]) {
+            results[key] = this.db[key]
           }
         }
         return callback(null, 200, makeReply(results))
