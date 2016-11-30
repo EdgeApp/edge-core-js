@@ -1,5 +1,5 @@
 import {command} from '../command.js'
-import {Repo} from '../../src/util/repo.js'
+import {Repo} from '../../util/repo.js'
 
 command('repo-sync', {
   usage: '<sync-key> <data-key>',

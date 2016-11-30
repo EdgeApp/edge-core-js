@@ -4,12 +4,12 @@ import Getopt from 'node-getopt'
 import {LocalStorage} from 'node-localstorage'
 
 // Airbitz context stuff:
-import * as abc from '../src/abc.js'
+import * as abc from '../../abc.js'
 import * as realServer from './realServer.js'
 
 // Commands:
-import {command} from './command.js'
-import './commands/all.js'
+import {command} from '../command.js'
+import '../commands/all.js'
 
 // Program options:
 const getopt = new Getopt([
