@@ -1,11 +1,10 @@
 /**
  * Wraps `LocalStorage` with a namespace and other extra goodies.
  */
-function ScopedStorage (localStorage, prefix) {
+export function ScopedStorage (localStorage, prefix) {
   this.localStorage = localStorage
   this.prefix = prefix + '.'
 }
-exports.ScopedStorage = ScopedStorage
 
 ScopedStorage.prototype.getItem = function (key) {
   return this.localStorage.getItem(this.prefix + key)
@@ -20,7 +19,7 @@ ScopedStorage.prototype.removeItem = function (key) {
 }
 
 ScopedStorage.prototype.getJson = function (key) {
-  var text = this.getItem(key)
+  const text = this.getItem(key)
   return text == null ? null : JSON.parse(text)
 }
 
@@ -33,10 +32,10 @@ ScopedStorage.prototype.subStore = function (prefix) {
 }
 
 ScopedStorage.prototype.keys = function () {
-  var keys = []
-  var search = new RegExp('^' + this.prefix)
-  for (var i = 0; i < this.localStorage.length; ++i) {
-    var key = this.localStorage.key(i)
+  const keys = []
+  const search = new RegExp('^' + this.prefix)
+  for (let i = 0; i < this.localStorage.length; ++i) {
+    const key = this.localStorage.key(i)
     if (search.test(key)) {
       keys.push(key.replace(search, ''))
     }

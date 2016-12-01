@@ -1,17 +1,17 @@
-var Account = require('./account').Account
-var loginEdge = require('./login/edge.js')
-var loginCreate = require('./login/create.js')
-var loginPassword = require('./login/password.js')
-var loginPin2 = require('./login/pin2.js')
-var loginRecovery2 = require('./login/recovery2.js')
-var userMap = require('./userMap.js')
-var UserStorage = require('./userStorage.js').UserStorage
-var crypto = require('./crypto.js')
+import {Account} from './account.js'
+import * as crypto from './crypto.js'
+import * as loginCreate from './login/create.js'
+import * as loginEdge from './login/edge.js'
+import * as loginPassword from './login/password.js'
+import * as loginPin2 from './login/pin2.js'
+import * as loginRecovery2 from './login/recovery2.js'
+import * as userMap from './userMap.js'
+import {UserStorage} from './userStorage.js'
 
-var serverRoot = 'https://auth.airbitz.co/api'
-// var serverRoot = 'https://test-auth.airbitz.co/api'
+const serverRoot = 'https://auth.airbitz.co/api'
+// const serverRoot = 'https://test-auth.airbitz.co/api'
 
-var DomWindow
+let DomWindow = null
 if (typeof (window) === 'undefined') {
   DomWindow = {
     localStorage: null,
@@ -32,13 +32,13 @@ if (typeof (window) === 'undefined') {
  * @param authRequest function (method, uri, body, callback (err, status, body))
  * @param localStorage an object compatible with the Web Storage API.
  */
-function Context (opts) {
+export function Context (opts) {
   opts = opts || {}
   this.accountType = opts.accountType || 'account:repo:co.airbitz.wallet'
   this.localStorage = opts.localStorage || DomWindow.localStorage
 
   function webFetch (method, uri, body, callback) {
-    var xhr = new DomWindow.XMLHttpRequest()
+    const xhr = new DomWindow.XMLHttpRequest()
     xhr.addEventListener('load', function () {
       callback(null, this.status, this.responseText)
     })
@@ -80,9 +80,9 @@ function Context (opts) {
 }
 
 Context.prototype.usernameList = function () {
-  var map = userMap.load(this.localStorage)
-  var out = []
-  for (var username in map) {
+  const map = userMap.load(this.localStorage)
+  const out = []
+  for (let username in map) {
     if (map.hasOwnProperty(username)) {
       out.push(username)
     }
@@ -101,7 +101,7 @@ Context.prototype.usernameAvailable = function (username, callback) {
  * Creates a login, then creates and attaches an account to it.
  */
 Context.prototype.createAccount = function (username, password, pin, callback) {
-  var ctx = this
+  const ctx = this
   return loginCreate.create(ctx, username, password, {}, function (err, login) {
     if (err) return callback(err)
     try {
@@ -112,7 +112,7 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
         if (err) return callback(err)
         loginPin2.setup(ctx, login, pin, function (err) {
           if (err) return callback(err)
-          var account = new Account(ctx, login)
+          const account = new Account(ctx, login)
           account.newAccount = true
           account.sync(function (err, dirty) {
             if (err) return callback(err)
@@ -125,7 +125,7 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
     // Otherwise, we have the correct account type, and can simply return:
     loginPin2.setup(ctx, login, pin, function (err) {
       if (err) return callback(err)
-      var account = new Account(ctx, login)
+      const account = new Account(ctx, login)
       account.newAccount = true
       account.sync(function (err, dirty) {
         if (err) return callback(err)
@@ -136,10 +136,10 @@ Context.prototype.createAccount = function (username, password, pin, callback) {
 }
 
 Context.prototype.loginWithPassword = function (username, password, otp, opts, callback) {
-  var ctx = this
+  const ctx = this
   return loginPassword.login(ctx, username, password, function (err, login) {
     if (err) return callback(err)
-    var account = new Account(ctx, login)
+    const account = new Account(ctx, login)
     account.passwordLogin = true
     account.sync(function (err, dirty) {
       if (err) return callback(err)
@@ -156,11 +156,11 @@ Context.prototype.pinLoginEnabled = function (username) {
 }
 
 Context.prototype.loginWithPIN = function (username, pin, callback) {
-  var ctx = this
-  var pin2Key = loginPin2.getKey(this, username)
+  const ctx = this
+  const pin2Key = loginPin2.getKey(this, username)
   return loginPin2.login(ctx, pin2Key, username, pin, function (err, login) {
     if (err) return callback(err)
-    var account = new Account(ctx, login)
+    const account = new Account(ctx, login)
     account.pinLogin = true
     account.sync(function (err, dirty) {
       if (err) return callback(err)
@@ -170,8 +170,8 @@ Context.prototype.loginWithPIN = function (username, pin, callback) {
 }
 
 Context.prototype.getRecovery2Key = function (username, callback) {
-  var userStorage = new UserStorage(this.localStorage, username)
-  var recovery2Key = userStorage.getItem('recovery2Key')
+  const userStorage = new UserStorage(this.localStorage, username)
+  const recovery2Key = userStorage.getItem('recovery2Key')
   if (recovery2Key) {
     callback(null, recovery2Key)
   } else {
@@ -180,10 +180,10 @@ Context.prototype.getRecovery2Key = function (username, callback) {
 }
 
 Context.prototype.loginWithRecovery2 = function (recovery2Key, username, answers, otp, options, callback) {
-  var ctx = this
+  const ctx = this
   return loginRecovery2.login(ctx, recovery2Key, username, answers, function (err, login) {
     if (err) return callback(err)
-    var account = new Account(ctx, login)
+    const account = new Account(ctx, login)
     account.recoveryLogin = true
     account.sync(function (err, dirty) {
       if (err) return callback(err)
@@ -197,8 +197,8 @@ Context.prototype.fetchRecovery2Questions = function (recovery2Key, username, ca
 }
 
 Context.prototype.runScryptTimingWithParameters = function (n, r, p) {
-  var snrp = crypto.makeSnrp()
-  // var snrp = {
+  const snrp = crypto.makeSnrp()
+  // const snrp = {
   //   'salt_hex': crypto.random(32).toString('hex'),
   //   'n': 16384,
   //   'r': 1,
@@ -208,7 +208,7 @@ Context.prototype.runScryptTimingWithParameters = function (n, r, p) {
   snrp.r = r
   snrp.p = p
 
-  var hashTime = crypto.timeSnrp(snrp)
+  const hashTime = crypto.timeSnrp(snrp)
 
   return {
     time: hashTime
@@ -216,11 +216,11 @@ Context.prototype.runScryptTimingWithParameters = function (n, r, p) {
 }
 
 Context.prototype.checkPasswordRules = function (password) {
-  var tooShort = password.length < 10
-  var noNumber = password.match(/\d/) == null
-  var noUpperCase = password.match(/[A-Z]/) == null
-  var noLowerCase = password.match(/[a-z]/) == null
-  var extraLong = password.length >= 16
+  const tooShort = password.length < 10
+  const noNumber = password.match(/\d/) == null
+  const noUpperCase = password.match(/[A-Z]/) == null
+  const noLowerCase = password.match(/[a-z]/) == null
+  const extraLong = password.length >= 16
 
   return {
     'tooShort': tooShort,
@@ -232,11 +232,11 @@ Context.prototype.checkPasswordRules = function (password) {
 }
 
 Context.prototype.requestEdgeLogin = function (opts, callback) {
-  var ctx = this
-  var onLogin = opts.onLogin
+  const ctx = this
+  const onLogin = opts.onLogin
   opts.onLogin = function (err, login) {
     if (err) return onLogin(err)
-    var account = new Account(ctx, login)
+    const account = new Account(ctx, login)
     account.edgeLogin = true
     account.sync(function (err, dirty) {
       if (err) return onLogin(err)
@@ -252,4 +252,3 @@ Context.prototype.listRecoveryQuestionChoices = function (callback) {
     callback(error, questions)
   })
 }
-exports.Context = Context

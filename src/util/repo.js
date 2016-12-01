@@ -1,8 +1,8 @@
-var base58 = require('./encoding.js').base58
-var crypto = require('../crypto.js')
-var ScopedStorage = require('./scopedStorage').ScopedStorage
+import * as crypto from '../crypto.js'
+import {base58} from './encoding.js'
+import {ScopedStorage} from './scopedStorage.js'
 
-var syncServers = [
+const syncServers = [
   'https://git-js.airbitz.co',
   'https://git4-js.airbitz.co'
 ]
@@ -53,17 +53,17 @@ function pathSplit (path) {
  * This function ignores folder-level deletes and overwrites,
  * but those can't happen under the current rules anyhow.
  */
-function mergeChanges (store, changes) {
-  for (var key in changes) {
+export function mergeChanges (store, changes) {
+  for (let key in changes) {
     if (changes.hasOwnProperty(key)) {
       // Normalize the path:
-      var path = pathSplit(key)
+      const path = pathSplit(key)
       if (!path.length) {
         continue
       }
 
       // Remove the `.json` extension from the filename:
-      var filename = path[path.length - 1]
+      const filename = path[path.length - 1]
       if (filename.slice(-5) !== '.json') {
         continue
       }
@@ -74,31 +74,28 @@ function mergeChanges (store, changes) {
     }
   }
 }
-exports.mergeChanges = mergeChanges
 
 /**
  * Creates an ID string from a repo's dataKey.
  */
-function repoId (dataKey) {
+export function repoId (dataKey) {
   return base58.encode(crypto.hmacSha256(dataKey, dataKey))
 }
-exports.repoId = repoId
 
 /**
  * Creates a data storage and syncing object.
  * The data inside the repo is encrypted with `dataKey`.
  */
-function Repo (ctx, dataKey, syncKey) {
+export function Repo (ctx, dataKey, syncKey) {
   this.authFetch = ctx.authFetch
   this.dataKey = dataKey
   this.syncKey = syncKey
 
-  var prefix = 'airbitz.repo.' + repoId(dataKey)
+  const prefix = 'airbitz.repo.' + repoId(dataKey)
   this.store = new ScopedStorage(ctx.localStorage, prefix)
   this.changeStore = this.store.subStore('changes')
   this.dataStore = this.store.subStore('data')
 }
-exports.Repo = Repo
 
 /**
  * Creates a secure file name by hashing
@@ -115,7 +112,7 @@ Repo.prototype.secureFilename = function (data) {
 Repo.prototype.getData = function (path) {
   path = pathSplit(path).join('.')
 
-  var box =
+  const box =
     this.changeStore.getJson(path) ||
     this.dataStore.getJson(path)
   return box ? crypto.decrypt(box, this.dataKey) : null
@@ -126,7 +123,7 @@ Repo.prototype.getData = function (path) {
  * treating the contents as text.
  */
 Repo.prototype.getText = function (path) {
-  var data = this.getData(path)
+  let data = this.getData(path)
   if (data == null) {
     return null
   }
@@ -142,7 +139,7 @@ Repo.prototype.getText = function (path) {
  * treating the contents as JSON.
  */
 Repo.prototype.getJson = function (path) {
-  var text = this.getText(path)
+  const text = this.getText(path)
   return text == null ? null : JSON.parse(text)
 }
 
@@ -151,7 +148,7 @@ Repo.prototype.getJson = function (path) {
  */
 Repo.prototype.keys = function (path) {
   path = path ? pathSplit(path).join('.') + '.' : ''
-  var search = new RegExp('^' + path + '([^\\.]+)$')
+  const search = new RegExp('^' + path + '([^\\.]+)$')
   function filter (key) {
     return search.test(key)
   }
@@ -159,9 +156,9 @@ Repo.prototype.keys = function (path) {
     return key.replace(search, '$1')
   }
 
-  var changeKeys = this.changeStore.keys().filter(filter).map(strip)
-  var dataKeys = this.dataStore.keys().filter(filter).map(strip)
-  var keys = changeKeys.concat(dataKeys)
+  const changeKeys = this.changeStore.keys().filter(filter).map(strip)
+  const dataKeys = this.dataStore.keys().filter(filter).map(strip)
+  const keys = changeKeys.concat(dataKeys)
 
   // Remove duplicates:
   return keys.sort().filter(function (item, i, array) {
@@ -186,7 +183,7 @@ Repo.prototype.setData = function (path, value) {
   }
   path += '.json'
 
-  var changes = {}
+  const changes = {}
   changes[path] = value ? crypto.encrypt(value, this.dataKey) : null
   mergeChanges(this.changeStore, changes)
 }
@@ -209,24 +206,23 @@ Repo.prototype.setJson = function (path, value) {
  * Synchronizes the local store with the remote server.
  */
 Repo.prototype.sync = function (callback) {
-  var self = this
+  const self = this
 
   // If we have local changes, we need to bundle those:
-  var request = {}
-  var changeKeys = this.changeStore.keys()
+  const request = {}
+  const changeKeys = this.changeStore.keys()
   if (changeKeys.length) {
     request.changes = {}
-    for (var i = 0; i < changeKeys.length; ++i) {
-      var key = changeKeys[i]
-      var path = key.replace(/\./g, '/') + '.json'
+    for (let key of changeKeys) {
+      const path = key.replace(/\./g, '/') + '.json'
 
       request.changes[path] = this.changeStore.getJson(key)
     }
   }
 
   // Calculate the URI:
-  var uri = '/api/v2/store/' + this.syncKey.toString('hex')
-  var lastHash = this.store.getItem('lastHash')
+  let uri = '/api/v2/store/' + this.syncKey.toString('hex')
+  const lastHash = this.store.getItem('lastHash')
   if (lastHash) {
     uri = uri + '/' + lastHash
   }
@@ -235,18 +231,17 @@ Repo.prototype.sync = function (callback) {
   syncRequest(this.authFetch, request.changes ? 'POST' : 'GET', uri, request, function (err, reply) {
     if (err) return callback(err)
 
+    let changed = false
     try {
-      var changed = false
-
       // Delete any changed keys (since the upload is done):
-      for (var i = 0; i < changeKeys.length; ++i) {
-        self.changeStore.removeItem(changeKeys[i])
+      for (let key of changeKeys) {
+        self.changeStore.removeItem(key)
       }
 
       // Process the change list:
-      var changes = reply['changes']
+      const changes = reply['changes']
       if (changes) {
-        for (var change in changes) {
+        for (let change in changes) {
           if (changes.hasOwnProperty(change)) {
             changed = true
             break
@@ -256,7 +251,7 @@ Repo.prototype.sync = function (callback) {
       }
 
       // Save the current hash:
-      var hash = reply['hash']
+      const hash = reply['hash']
       if (hash) {
         self.store.setItem('lastHash', hash)
       }

@@ -1,17 +1,15 @@
-#!/usr/bin/env node
+// Command-line tools:
+import chalk from 'chalk'
+import Getopt from 'node-getopt'
+import {LocalStorage} from 'node-localstorage'
 
 // Airbitz context stuff:
-const abc = require('./src/abc.js')
-var realServer = require('./cli/realServer.js')
-
-// Command-line tools:
-const chalk = require('chalk')
-const Getopt = require('node-getopt')
-const LocalStorage = require('node-localstorage').LocalStorage
+import * as abc from '../src/abc.js'
+import * as realServer from './realServer.js'
 
 // Commands:
-const command = require('./cli/command.js')
-require('./cli/commands/all.js')
+import {command} from './command.js'
+import './commands/all.js'
 
 // Program options:
 const getopt = new Getopt([

@@ -1,20 +1,20 @@
-var crypto = require('../crypto.js')
-var userMap = require('../userMap.js')
-var UserStorage = require('../userStorage.js').UserStorage
-var Login = require('./login.js')
+import * as crypto from '../crypto.js'
+import {Login} from './login.js'
+import * as userMap from '../userMap.js'
+import {UserStorage} from '../userStorage.js'
 
 function loginOffline (ctx, username, userId, password, callback) {
   // Extract stuff from storage:
-  var userStorage = new UserStorage(ctx.localStorage, username)
-  var passwordKeySnrp = userStorage.getJson('passwordKeySnrp')
-  var passwordBox = userStorage.getJson('passwordBox')
+  const userStorage = new UserStorage(ctx.localStorage, username)
+  const passwordKeySnrp = userStorage.getJson('passwordKeySnrp')
+  const passwordBox = userStorage.getJson('passwordBox')
   if (!passwordKeySnrp || !passwordBox) {
     return callback(Error('Missing data for offline login'))
   }
 
   try {
     // Decrypt the dataKey:
-    var passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
+    const passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
     var dataKey = crypto.decrypt(passwordBox, passwordKey)
   } catch (e) {
     return callback(e)
@@ -23,10 +23,10 @@ function loginOffline (ctx, username, userId, password, callback) {
 }
 
 function loginOnline (ctx, username, userId, password, callback) {
-  var passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
+  const passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
 
   // Encode the username:
-  var request = {
+  const request = {
     'userId': userId,
     'passwordAuth': passwordAuth.toString('base64')
     // "otp": null
@@ -36,14 +36,14 @@ function loginOnline (ctx, username, userId, password, callback) {
 
     try {
       // Password login:
-      var passwordKeySnrp = reply['passwordKeySnrp']
-      var passwordBox = reply['passwordBox']
+      const passwordKeySnrp = reply['passwordKeySnrp']
+      const passwordBox = reply['passwordBox']
       if (!passwordKeySnrp || !passwordBox) {
         return callback(Error('Missing data for password login'))
       }
 
       // Decrypt the dataKey:
-      var passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
+      const passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
       var dataKey = crypto.decrypt(passwordBox, passwordKey)
 
       // Cache everything for future logins:
@@ -61,55 +61,53 @@ function loginOnline (ctx, username, userId, password, callback) {
  * @param password string
  * @param callback function (err, keys)
  */
-function login (ctx, username, password, callback) {
+export function login (ctx, username, password, callback) {
   username = userMap.normalize(username)
-  var userId = userMap.getUserId(ctx.localStorage, username)
+  const userId = userMap.getUserId(ctx.localStorage, username)
 
   loginOffline(ctx, username, userId, password, function (err, account) {
     if (!err) return callback(null, account)
     return loginOnline(ctx, username, userId, password, callback)
   })
 }
-exports.login = login
 
 /**
  * Returns true if the given password is correct.
  */
-function check (ctx, login, password) {
+export function check (ctx, login, password) {
   // Extract stuff from storage:
-  var passwordKeySnrp = login.userStorage.getJson('passwordKeySnrp')
-  var passwordBox = login.userStorage.getJson('passwordBox')
+  const passwordKeySnrp = login.userStorage.getJson('passwordKeySnrp')
+  const passwordBox = login.userStorage.getJson('passwordBox')
   if (!passwordKeySnrp || !passwordBox) {
     throw new Error('Keys missing from local storage')
   }
 
   try {
     // Decrypt the dataKey:
-    var passwordKey = crypto.scrypt(login.username + password, passwordKeySnrp)
+    const passwordKey = crypto.scrypt(login.username + password, passwordKeySnrp)
     crypto.decrypt(passwordBox, passwordKey)
   } catch (e) {
     return false
   }
   return true
 }
-exports.check = check
 
 /**
  * Sets up a password for the login.
  */
-function setup (ctx, login, password, callback) {
-  var up = login.username + password
+export function setup (ctx, login, password, callback) {
+  const up = login.username + password
 
   // Create new keys:
-  var passwordAuth = crypto.scrypt(up, crypto.passwordAuthSnrp)
-  var passwordKeySnrp = crypto.makeSnrp()
-  var passwordKey = crypto.scrypt(up, passwordKeySnrp)
+  const passwordAuth = crypto.scrypt(up, crypto.passwordAuthSnrp)
+  const passwordKeySnrp = crypto.makeSnrp()
+  const passwordKey = crypto.scrypt(up, passwordKeySnrp)
 
   // Encrypt:
-  var passwordBox = crypto.encrypt(login.dataKey, passwordKey)
-  var passwordAuthBox = crypto.encrypt(passwordAuth, login.dataKey)
+  const passwordBox = crypto.encrypt(login.dataKey, passwordKey)
+  const passwordAuthBox = crypto.encrypt(passwordAuth, login.dataKey)
 
-  var request = login.authJson()
+  const request = login.authJson()
   request['data'] = {
     'passwordAuth': passwordAuth.toString('base64'),
     'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
@@ -128,4 +126,3 @@ function setup (ctx, login, password, callback) {
     return callback(null)
   })
 }
-exports.setup = setup

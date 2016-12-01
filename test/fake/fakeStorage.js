@@ -1,11 +1,11 @@
-var packages = require('./packages.js')
-const repoModule = require('../../src/util/repo.js')
-var UserStorage = require('../../src/userStorage.js').UserStorage
+import * as packages from './packages.js'
+import * as repoModule from '../../src/util/repo.js'
+import {UserStorage} from '../../src/userStorage.js'
 
 /**
  * Emulates the `localStorage` browser API.
  */
-function FakeStorage () {
+export function FakeStorage () {
   this.items = {}
 }
 FakeStorage.prototype.getItem = function (key) {
@@ -55,7 +55,7 @@ FakeStorage.prototype.populateRepos = function () {
 FakeStorage.prototype.populate = function () {
   this.populateUsers()
   this.populateRepos()
-  var userStorage = new UserStorage(this, 'js test 0')
+  const userStorage = new UserStorage(this, 'js test 0')
   userStorage.setJson('passwordKeySnrp', packages.passwordKeySnrp)
   userStorage.setJson('passwordBox', packages.passwordBox)
   userStorage.setJson('passwordAuthBox', packages.passwordAuthBox)
@@ -73,5 +73,3 @@ FakeStorage.prototype.populate = function () {
 FakeStorage.prototype.clear = function () {
   this.items = {}
 }
-
-exports.FakeStorage = FakeStorage

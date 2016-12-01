@@ -1,6 +1,5 @@
-var Repo = require('../../src/util/repo.js').Repo
-
-const command = require('../command.js')
+import {command} from '../command.js'
+import {Repo} from '../../src/util/repo.js'
 
 command('repo-sync', {
   usage: '<sync-key> <data-key>',
@@ -12,7 +11,7 @@ command('repo-sync', {
   const dataKey = new Buffer(argv[1], 'hex')
 
   return new Promise((resolve, reject) => {
-    var store = new Repo(session.context, dataKey, syncKey)
+    const store = new Repo(session.context, dataKey, syncKey)
     store.sync(function (err, changed) {
       if (err) return reject(err)
       console.log(changed ? 'changed' : 'unchanged')
@@ -31,7 +30,7 @@ command('repo-list', {
   const dataKey = new Buffer(argv[1], 'hex')
   const path = argv.length === 3 ? argv[2] : ''
 
-  var store = new Repo(session.context, dataKey, syncKey)
+  const store = new Repo(session.context, dataKey, syncKey)
   console.log(store.keys(path))
 })
 
@@ -46,7 +45,7 @@ command('repo-set', {
   const path = argv[2]
   const value = new Buffer(argv[3], 'utf-8')
 
-  var store = new Repo(session.context, dataKey, syncKey)
+  const store = new Repo(session.context, dataKey, syncKey)
   store.setData(path, value)
 })
 
@@ -60,7 +59,7 @@ command('repo-get', {
   const dataKey = new Buffer(argv[1], 'hex')
   const path = argv[2]
 
-  var store = new Repo(session.context, dataKey, syncKey)
-  var value = store.getData(path)
+  const store = new Repo(session.context, dataKey, syncKey)
+  const value = store.getData(path)
   console.log(value ? value.toString('utf-8') : value)
 })

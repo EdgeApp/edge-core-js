@@ -1,7 +1,7 @@
-var base58 = require('../util/encoding.js').base58
-var crypto = require('../crypto.js')
-var userMap = require('../userMap.js')
-var Login = require('./login.js')
+import * as crypto from '../crypto.js'
+import {base58} from '../util/encoding.js'
+import {Login} from './login.js'
+import * as userMap from '../userMap.js'
 
 function recovery2Id (recovery2Key, username) {
   return new Buffer(crypto.hmacSha256(username, recovery2Key))
@@ -12,11 +12,11 @@ function recovery2Auth (recovery2Key, answers) {
     throw new TypeError('Answers must be an array of strings')
   }
 
-  var recovery2Auth = []
-  for (var i = 0; i < answers.length; ++i) {
-    var data = new Buffer(answers[i], 'utf-8')
-    var auth = crypto.hmacSha256(data, recovery2Key)
-    recovery2Auth[i] = new Buffer(auth).toString('base64')
+  const recovery2Auth = []
+  for (let answer of answers) {
+    const data = new Buffer(answer, 'utf-8')
+    const auth = crypto.hmacSha256(data, recovery2Key)
+    recovery2Auth.push(new Buffer(auth).toString('base64'))
   }
   return recovery2Auth
 }
@@ -28,11 +28,11 @@ function recovery2Auth (recovery2Key, answers) {
  * @param array of answer strings
  * @param callback function (err, login)
  */
-function login (ctx, recovery2Key, username, answers, callback) {
+export function login (ctx, recovery2Key, username, answers, callback) {
   recovery2Key = base58.decode(recovery2Key)
   username = userMap.normalize(username)
 
-  var request = {
+  const request = {
     'recovery2Id': recovery2Id(recovery2Key, username).toString('base64'),
     'recovery2Auth': recovery2Auth(recovery2Key, answers)
     // "otp": null
@@ -42,7 +42,7 @@ function login (ctx, recovery2Key, username, answers, callback) {
 
     try {
       // Recovery login:
-      var recovery2Box = reply['recovery2Box']
+      const recovery2Box = reply['recovery2Box']
       if (!recovery2Box) {
         return callback(Error('Missing data for recovery v2 login'))
       }
@@ -51,7 +51,7 @@ function login (ctx, recovery2Key, username, answers, callback) {
       var dataKey = crypto.decrypt(recovery2Box, recovery2Key)
 
       // Cache everything for future logins:
-      var userId = userMap.getUserId(ctx.localStorage, username)
+      const userId = userMap.getUserId(ctx.localStorage, username)
       userMap.insert(ctx.localStorage, username, userId)
     } catch (e) {
       return callback(e)
@@ -59,7 +59,6 @@ function login (ctx, recovery2Key, username, answers, callback) {
     return callback(null, Login.online(ctx.localStorage, username, dataKey, reply))
   })
 }
-exports.login = login
 
 /**
  * Fetches the questions for a login
@@ -67,11 +66,11 @@ exports.login = login
  * @param recovery2Key an ArrayBuffer recovery key
  * @param callback function (err, question array)
  */
-function questions (ctx, recovery2Key, username, callback) {
+export function questions (ctx, recovery2Key, username, callback) {
   recovery2Key = base58.decode(recovery2Key)
   username = userMap.normalize(username)
 
-  var request = {
+  const request = {
     'recovery2Id': recovery2Id(recovery2Key, username).toString('base64')
     // "otp": null
   }
@@ -80,7 +79,7 @@ function questions (ctx, recovery2Key, username, callback) {
 
     try {
       // Recovery login:
-      var question2Box = reply['question2Box']
+      const question2Box = reply['question2Box']
       if (!question2Box) {
         return callback(Error('Login has no recovery questions'))
       }
@@ -94,12 +93,11 @@ function questions (ctx, recovery2Key, username, callback) {
     return callback(null, questions)
   })
 }
-exports.questions = questions
 
 /**
  * Sets up recovery questions for the login.
  */
-function setup (ctx, login, questions, answers, callback) {
+export function setup (ctx, login, questions, answers, callback) {
   if (!(Object.prototype.toString.call(questions) === '[object Array]')) {
     throw new TypeError('Questions must be an array of strings')
   }
@@ -107,18 +105,18 @@ function setup (ctx, login, questions, answers, callback) {
     throw new TypeError('Answers must be an array of strings')
   }
 
-  var recovery2Key = login.userStorage.getItem('recovery2Key')
+  let recovery2Key = login.userStorage.getItem('recovery2Key')
   if (recovery2Key) {
     recovery2Key = base58.decode(recovery2Key)
   } else {
     recovery2Key = crypto.random(32)
   }
 
-  var question2Box = crypto.encrypt(new Buffer(JSON.stringify(questions), 'utf8'), recovery2Key)
-  var recovery2Box = crypto.encrypt(login.dataKey, recovery2Key)
-  var recovery2KeyBox = crypto.encrypt(recovery2Key, login.dataKey)
+  const question2Box = crypto.encrypt(new Buffer(JSON.stringify(questions), 'utf8'), recovery2Key)
+  const recovery2Box = crypto.encrypt(login.dataKey, recovery2Key)
+  const recovery2KeyBox = crypto.encrypt(recovery2Key, login.dataKey)
 
-  var request = login.authJson()
+  const request = login.authJson()
   request['data'] = {
     'recovery2Id': recovery2Id(recovery2Key, login.username).toString('base64'),
     'recovery2Auth': recovery2Auth(recovery2Key, answers),
@@ -134,9 +132,8 @@ function setup (ctx, login, questions, answers, callback) {
     return callback(null, recovery2Key)
   })
 }
-exports.setup = setup
 
-function listRecoveryQuestionChoices (ctx, callback) {
+export function listRecoveryQuestionChoices (ctx, callback) {
   ctx.authRequest('POST', '/v1/questions', '', function (err, reply) {
     if (err) {
       return callback(21)
@@ -145,4 +142,3 @@ function listRecoveryQuestionChoices (ctx, callback) {
     }
   })
 }
-exports.listRecoveryQuestionChoices = listRecoveryQuestionChoices

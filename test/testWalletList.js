@@ -1,9 +1,10 @@
 /* global describe, it */
-var assert = require('assert')
-var makeSession = require('./fake/session.js').makeSession
-var packages = require('./fake/packages.js')
-var Repo = require('../src/util/repo.js').Repo
-var WalletList = require('../src/util/walletList.js').WalletList
+import assert from 'assert'
+
+import * as packages from './fake/packages.js'
+import {Repo} from '../src/util/repo.js'
+import {makeSession} from './fake/session.js'
+import {WalletList} from '../src/util/walletList.js'
 
 describe('wallet list', function () {
   it('raw id list', function () {

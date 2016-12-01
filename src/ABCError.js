@@ -1,4 +1,4 @@
-var abcc = require('./ABCConditionCode.js')
+import {abcc} from './ABCConditionCode.js'
 
 /**
  * ABCError
@@ -61,10 +61,10 @@ function ABCErrorObject (code, message) {
   this.message = message
 }
 
-function ABCError (code, message) {
-  var conditionCode = 1
-  var msg = null
-  var json = null
+export function ABCError (code, message) {
+  let conditionCode = 1
+  let msg = null
+  let json = null
   if (code === null) {
     return null
   } else if (typeof code.message === 'string') {
@@ -93,5 +93,3 @@ function ABCError (code, message) {
   return new ABCErrorObject(conditionCode, msg)
   // return {'code': conditionCode, 'message': msg}
 }
-
-exports.ABCError = ABCError

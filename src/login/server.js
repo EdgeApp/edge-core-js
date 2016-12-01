@@ -1,13 +1,13 @@
-var crypto = require('../crypto.js')
+import * as crypto from '../crypto.js'
 
 /**
  * Creates a blank repo on the sync server.
  */
-function repoCreate (ctx, login, keysJson, callback) {
+export function repoCreate (ctx, login, keysJson, callback) {
   keysJson.dataKey = keysJson.dataKey || crypto.random(32).toString('hex')
   keysJson.syncKey = keysJson.syncKey || crypto.random(20).toString('hex')
 
-  var request = {
+  const request = {
     'l1': login.userId,
     'lp1': login.passwordAuth.toString('base64'),
     'repo_wallet_key': keysJson.syncKey
@@ -17,15 +17,14 @@ function repoCreate (ctx, login, keysJson, callback) {
     callback(null, keysJson)
   })
 }
-exports.repoCreate = repoCreate
 
 /**
  * Marks a repo as being used.
  * This should be called after the repo is securely attached
  * to the login or account.
  */
-function repoActivate (ctx, login, keysJson, callback) {
-  var request = {
+export function repoActivate (ctx, login, keysJson, callback) {
+  const request = {
     'l1': login.userId,
     'lp1': login.passwordAuth.toString('base64'),
     'repo_wallet_key': keysJson.syncKey
@@ -35,4 +34,3 @@ function repoActivate (ctx, login, keysJson, callback) {
     callback(null)
   })
 }
-exports.repoActivate = repoActivate

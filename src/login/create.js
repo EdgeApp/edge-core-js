@@ -1,17 +1,18 @@
-var bip39 = require('bip39')
-var crypto = require('../crypto.js')
-var userMap = require('../userMap.js')
-var UserStorage = require('../userStorage.js').UserStorage
-var Login = require('./login.js')
+import bip39 from 'bip39'
+
+import * as crypto from '../crypto.js'
+import {Login} from './login.js'
+import * as userMap from '../userMap.js'
+import {UserStorage} from '../userStorage.js'
 
 /**
  * Determines whether or not a username is available.
  */
-function usernameAvailable (ctx, username, callback) {
+export function usernameAvailable (ctx, username, callback) {
   username = userMap.normalize(username)
 
-  var userId = userMap.getUserId(ctx.localStorage, username)
-  var request = {
+  const userId = userMap.getUserId(ctx.localStorage, username)
+  const request = {
     'l1': userId
   }
   ctx.authRequest('POST', '/v1/account/available', request, function (err, reply) {
@@ -19,39 +20,38 @@ function usernameAvailable (ctx, username, callback) {
     return callback(null)
   })
 }
-exports.usernameAvailable = usernameAvailable
 
 /**
  * Creates a new login on the auth server.
  */
-function create (ctx, username, password, opts, callback) {
+export function create (ctx, username, password, opts, callback) {
   username = userMap.normalize(username)
-  var userId = userMap.getUserId(ctx.localStorage, username)
+  const userId = userMap.getUserId(ctx.localStorage, username)
 
   // Create random key material:
-  var passwordKeySnrp = crypto.makeSnrp()
-  var dataKey = crypto.random(32)
-  var syncKey = opts.syncKey || crypto.random(20)
+  const passwordKeySnrp = crypto.makeSnrp()
+  const dataKey = crypto.random(32)
+  const syncKey = opts.syncKey || crypto.random(20)
 
   // Derive keys from password:
-  var passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
-  var passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
+  const passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
+  const passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
 
   // Encrypt:
-  var passwordBox = crypto.encrypt(dataKey, passwordKey)
-  var passwordAuthBox = crypto.encrypt(passwordAuth, dataKey)
-  var syncKeyBox = crypto.encrypt(syncKey, dataKey)
+  const passwordBox = crypto.encrypt(dataKey, passwordKey)
+  const passwordAuthBox = crypto.encrypt(passwordAuth, dataKey)
+  const syncKeyBox = crypto.encrypt(syncKey, dataKey)
 
   // Package:
-  var carePackage = {
+  const carePackage = {
     'SNRP2': passwordKeySnrp
   }
-  var loginPackage = {
+  const loginPackage = {
     'EMK_LP2': passwordBox,
     'ESyncKey': syncKeyBox,
     'ELP1': passwordAuthBox
   }
-  var request = {
+  const request = {
     'l1': userId,
     'lp1': passwordAuth.toString('base64'),
     'care_package': JSON.stringify(carePackage),
@@ -64,7 +64,7 @@ function create (ctx, username, password, opts, callback) {
 
     // Cache everything for future logins:
     userMap.insert(ctx.localStorage, username, userId)
-    var userStorage = new UserStorage(ctx.localStorage, username)
+    const userStorage = new UserStorage(ctx.localStorage, username)
     userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
     userStorage.setJson('passwordBox', passwordBox)
     userStorage.setJson('passwordAuthBox', passwordAuthBox)
@@ -75,7 +75,7 @@ function create (ctx, username, password, opts, callback) {
       if (err) return callback(err)
 
       // Now activate:
-      var request = {
+      const request = {
         'l1': userId,
         'lp1': passwordAuth.toString('base64')
       }
@@ -86,21 +86,20 @@ function create (ctx, username, password, opts, callback) {
     })
   })
 }
-exports.create = create
 
-function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
+export function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
   // Create a BIP39 mnemonic, and use it to derive the rootKey:
-  var entropy = crypto.random(256 / 8)
-  var mnemonic = bip39.entropyToMnemonic(entropy.toString('hex'))
-  var rootKey = bip39.mnemonicToSeed(mnemonic)
-  var infoKey = crypto.hmacSha256(rootKey, 'infoKey')
+  const entropy = crypto.random(256 / 8)
+  const mnemonic = bip39.entropyToMnemonic(entropy.toString('hex'))
+  const rootKey = bip39.mnemonicToSeed(mnemonic)
+  const infoKey = crypto.hmacSha256(rootKey, 'infoKey')
 
   // Pack the keys into various boxes:
-  var rootKeyBox = crypto.encrypt(rootKey, dataKey)
-  var mnemonicBox = crypto.encrypt(new Buffer(mnemonic, 'utf-8'), infoKey)
-  var dataKeyBox = crypto.encrypt(dataKey, infoKey)
+  const rootKeyBox = crypto.encrypt(rootKey, dataKey)
+  const mnemonicBox = crypto.encrypt(new Buffer(mnemonic, 'utf-8'), infoKey)
+  const dataKeyBox = crypto.encrypt(dataKey, infoKey)
 
-  var request = {
+  const request = {
     'l1': userId,
     'lp1': passwordAuth.toString('base64'),
     'rootKeyBox': rootKeyBox,
@@ -113,4 +112,3 @@ function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
     return callback(null)
   })
 }
-exports.upgrade = upgrade

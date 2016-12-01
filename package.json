@@ -17,8 +17,9 @@
     "Tim Horton <tim@airbitz.co>"
   ],
   "license": "SEE LICENSE IN LICENSE",
-  "main": "src/abc.js",
-  "bin": "cli.js",
+  "bin": "bin/airbitz-cli",
+  "main": "dist/abc.cjs.js",
+  "module": "dist/abc.es6.js",
   "dependencies": {
     "aes-js": "^2.1.0",
     "base-x": "^1.0.4",
@@ -33,22 +34,26 @@
     "xmlhttprequest": "^1.4.0"
   },
   "devDependencies": {
-    "json-loader": "^0.5.4",
     "mocha": "^3.1.2",
-    "standard": "^8.5.0",
-    "webpack": "^2.1.0-beta"
+    "rollup": "^0.36.1",
+    "rollup-plugin-buble": "^0.14.0",
+    "rollup-watch": "^2.5.0",
+    "source-map-support": "^0.4.6",
+    "standard": "^8.5.0"
   },
   "files": [
-    "cli",
-    "cli.js",
-    "src"
+    "bin/airbitz-cli*",
+    "dist/abc.*.js*"
   ],
   "repository": {
     "type": "git",
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
-    "pretest": "standard src/*.js src/login/*.js src/util/*.js test/*.js test/fake/*.js cli.js cli/*.js cli/commands/*.js",
-    "test": "mocha"
+    "build": "rollup -c && rollup -c rollup.config.cli.js",
+    "lint": "standard 'src/**/*.js' 'test/**/*.js' cli.js 'cli/**/*.js'",
+    "prepublish": "npm run lint && npm run build",
+    "pretest": "npm run lint && rollup -c rollup.config.test.js",
+    "test": "mocha --require source-map-support/register dist/tests.cjs.js"
   }
 }

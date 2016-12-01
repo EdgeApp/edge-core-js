@@ -1,4 +1,4 @@
-const command = require('../command.js')
+import {command} from '../command.js'
 
 command('recovery2-login', {
   usage: '<key> <username> <answers>...',

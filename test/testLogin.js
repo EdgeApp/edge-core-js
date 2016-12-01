@@ -1,12 +1,13 @@
 /* global describe, it */
-var abc = require('../src/abc.js')
-var assert = require('assert')
-var packages = require('./fake/packages.js')
-var makeSession = require('./fake/session.js').makeSession
+import assert from 'assert'
+
+import * as abc from '../src/abc.js'
+import * as packages from './fake/packages.js'
+import {makeSession} from './fake/session.js'
 
 describe('login', function () {
   it('find repo', function () {
-    var session = makeSession({needsLogin: true})
+    const session = makeSession({needsLogin: true})
 
     assert.ok(session.login.accountFind('account:repo:co.airbitz.wallet'))
     assert.throws(function () {
@@ -15,10 +16,10 @@ describe('login', function () {
   })
 
   it('attach repo', function (done) {
-    var session = makeSession({needsLogin: true})
+    const session = makeSession({needsLogin: true})
     session.server.populate()
 
-    var info = {
+    const info = {
       dataKey: 'fa57',
       syncKey: 'f00d'
     }
@@ -40,7 +41,7 @@ describe('username', function () {
   })
 
   it('list usernames in local storage', function () {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.storage.populateUsers()
 
     assert.deepEqual(session.context.usernameList(), ['js test 0'])
@@ -49,14 +50,14 @@ describe('username', function () {
 
 describe('creation', function () {
   it('username available', function (done) {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.server.populate()
 
     session.context.usernameAvailable('js test 1', done)
   })
 
   it('username not available', function (done) {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.server.populate()
 
     session.context.usernameAvailable('js test 0', function (err) { done(!err) })
@@ -64,7 +65,7 @@ describe('creation', function () {
 
   it('create account', function (done) {
     this.timeout(9000)
-    var session = makeSession({needsContext: true, accountType: 'account:repo:test'})
+    const session = makeSession({needsContext: true, accountType: 'account:repo:test'})
 
     session.context.createAccount('js test 0', 'y768Mv4PLFupQjMu', '1234', function (err, account) {
       if (err) return done(err)
@@ -77,7 +78,7 @@ describe('creation', function () {
 describe('password', function () {
   it('setup', function (done) {
     this.timeout(9000)
-    var session = makeSession({needsAccount: true})
+    const session = makeSession({needsAccount: true})
     session.server.populate()
 
     session.account.passwordSetup('Test1234', function (err) {
@@ -88,19 +89,19 @@ describe('password', function () {
   })
 
   it('check good', function () {
-    var session = makeSession({needsAccount: true})
+    const session = makeSession({needsAccount: true})
 
     assert(session.account.passwordOk('y768Mv4PLFupQjMu'))
   })
 
   it('check bad', function () {
-    var session = makeSession({needsAccount: true})
+    const session = makeSession({needsAccount: true})
 
     assert(!session.account.passwordOk('wrong one'))
   })
 
   it('login offline', function (done) {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.storage.populate()
     session.server.populateRepos()
 
@@ -108,7 +109,7 @@ describe('password', function () {
   })
 
   it('login online', function (done) {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.server.populate()
 
     session.context.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
@@ -117,20 +118,20 @@ describe('password', function () {
 
 describe('pin', function () {
   it('exists', function () {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.storage.populate()
 
     assert.equal(session.context.pinExists('js test 0'), true)
   })
 
   it('does not exist', function () {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
 
     assert.equal(session.context.pinExists('js test 0'), false)
   })
 
   it('login', function (done) {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.server.populate()
     session.storage.populate()
 
@@ -138,7 +139,7 @@ describe('pin', function () {
   })
 
   it('setup', function (done) {
-    var session = makeSession({needsAccount: true})
+    const session = makeSession({needsAccount: true})
     session.server.populateRepos()
 
     session.account.pinSetup('1234', function (err) {
@@ -150,7 +151,7 @@ describe('pin', function () {
 
 describe('recovery2', function () {
   it('get local key', function (done) {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.storage.populate()
 
     session.context.getRecovery2Key('js test 0', function (err, key) {
@@ -161,13 +162,13 @@ describe('recovery2', function () {
   })
 
   it('get questions', function (done) {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.server.populate()
 
     session.context.fetchRecovery2Questions(packages.recovery2Key, 'js test 0', function (err, questions) {
       if (err) return done(err)
       assert.equal(questions.length, packages.recovery2Questions.length)
-      for (var i = 0; i < questions.length; ++i) {
+      for (let i = 0; i < questions.length; ++i) {
         assert.equal(questions[i], packages.recovery2Questions[i])
       }
       done()
@@ -175,14 +176,14 @@ describe('recovery2', function () {
   })
 
   it('login', function (done) {
-    var session = makeSession({needsContext: true})
+    const session = makeSession({needsContext: true})
     session.server.populate()
 
     session.context.loginWithRecovery2(packages.recovery2Key, 'js test 0', packages.recovery2Answers, null, null, done)
   })
 
   it('set', function (done) {
-    var session = makeSession({needsAccount: true})
+    const session = makeSession({needsAccount: true})
     session.server.populate()
 
     session.account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {

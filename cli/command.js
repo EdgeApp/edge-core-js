@@ -1,4 +1,4 @@
-var commands = []
+const commands = []
 
 /**
  * Creates a new `Error` object with a true `quiet` property.
@@ -23,7 +23,7 @@ function usageError (message) {
 /**
  * Creates a new command, and adds it to the global command registry.
  */
-function command (name, opts, body) {
+export function command (name, opts, body) {
   const cmd = {
     name: name,
     invoke: body,
@@ -76,5 +76,3 @@ command.showList = function () {
     }
   }
 }
-
-module.exports = command

@@ -1,15 +1,15 @@
-var base58 = require('../util/encoding.js').base58
-var crypto = require('../crypto.js')
-var server = require('./server.js')
-var UserStorage = require('../userStorage.js').UserStorage
-var userMap = require('../userMap.js')
+import * as crypto from '../crypto.js'
+import {base58} from '../util/encoding.js'
+import * as server from './server.js'
+import * as userMap from '../userMap.js'
+import {UserStorage} from '../userStorage.js'
 
 /**
  * Unpacks a login v2 reply package, and stores the contents locally.
  */
 function loginReplyStore (localStorage, username, dataKey, loginReply) {
-  var userStorage = new UserStorage(localStorage, username)
-  var keys = [
+  const userStorage = new UserStorage(localStorage, username)
+  const keys = [
     // Password login:
     'passwordKeySnrp', 'passwordBox',
     // Key boxes:
@@ -17,24 +17,23 @@ function loginReplyStore (localStorage, username, dataKey, loginReply) {
   ]
 
   // Store any keys the reply may contain:
-  for (var i = 0; i < keys.length; ++i) {
-    var key = keys[i]
+  for (let key of keys) {
     if (loginReply[key]) {
       userStorage.setJson(key, loginReply[key])
     }
   }
 
   // Store the pin key unencrypted:
-  var pin2KeyBox = loginReply['pin2KeyBox']
+  const pin2KeyBox = loginReply['pin2KeyBox']
   if (pin2KeyBox) {
-    var pin2Key = crypto.decrypt(pin2KeyBox, dataKey)
+    const pin2Key = crypto.decrypt(pin2KeyBox, dataKey)
     userStorage.setItem('pin2Key', base58.encode(pin2Key))
   }
 
   // Store the recovery key unencrypted:
-  var recovery2KeyBox = loginReply['recovery2KeyBox']
+  const recovery2KeyBox = loginReply['recovery2KeyBox']
   if (recovery2KeyBox) {
-    var recovery2Key = crypto.decrypt(recovery2KeyBox, dataKey)
+    const recovery2Key = crypto.decrypt(recovery2KeyBox, dataKey)
     userStorage.setItem('recovery2Key', base58.encode(recovery2Key))
   }
 }
@@ -47,7 +46,7 @@ function loginReplyStore (localStorage, username, dataKey, loginReply) {
  * - A list of account repos
  * - The legacy BitID rootKey
  */
-function Login (localStorage, username, dataKey) {
+export function Login (localStorage, username, dataKey) {
   // Identity:
   this.username = username
   this.userId = userMap.getUserId(localStorage, username)
@@ -57,7 +56,7 @@ function Login (localStorage, username, dataKey) {
   this.userStorage = new UserStorage(localStorage, username)
 
   // Return access to the server:
-  var passwordAuthBox = this.userStorage.getJson('passwordAuthBox')
+  const passwordAuthBox = this.userStorage.getJson('passwordAuthBox')
   if (!passwordAuthBox) {
     throw new Error('Missing passwordAuthBox')
   }
@@ -65,13 +64,13 @@ function Login (localStorage, username, dataKey) {
 
   // Account repo:
   this.repos = this.userStorage.getJson('repos') || []
-  var syncKeyBox = this.userStorage.getJson('syncKeyBox')
+  const syncKeyBox = this.userStorage.getJson('syncKeyBox')
   if (syncKeyBox) {
     this.syncKey = crypto.decrypt(syncKeyBox, dataKey)
   }
 
   // Legacy BitID key:
-  var rootKeyBox = this.userStorage.getJson('rootKeyBox')
+  const rootKeyBox = this.userStorage.getJson('rootKeyBox')
   if (rootKeyBox) {
     this.rootKey = crypto.decrypt(rootKeyBox, dataKey)
   }
@@ -108,9 +107,9 @@ Login.prototype.authJson = function () {
  */
 Login.prototype.accountFind = function (type) {
   // Search the repos array:
-  for (var i = 0; i < this.repos.length; ++i) {
-    if (this.repos[i]['type'] === type) {
-      var keysBox = this.repos[i]['keysBox'] || this.repos[i]['info']
+  for (let repo of this.repos) {
+    if (repo['type'] === type) {
+      const keysBox = repo['keysBox'] || repo['info']
       return JSON.parse(crypto.decrypt(keysBox, this.dataKey).toString('utf-8'))
     }
   }
@@ -130,7 +129,7 @@ Login.prototype.accountFind = function (type) {
  * Creates and attaches new account repo.
  */
 Login.prototype.accountCreate = function (ctx, type, callback) {
-  var login = this
+  const login = this
 
   server.repoCreate(ctx, login, {}, function (err, keysJson) {
     if (err) return callback(err)
@@ -148,15 +147,15 @@ Login.prototype.accountCreate = function (ctx, type, callback) {
  * Attaches an account repo to the login.
  */
 Login.prototype.accountAttach = function (ctx, type, info, callback) {
-  var login = this
+  const login = this
 
-  var infoBlob = new Buffer(JSON.stringify(info), 'utf-8')
-  var data = {
+  const infoBlob = new Buffer(JSON.stringify(info), 'utf-8')
+  const data = {
     'type': type,
     'info': crypto.encrypt(infoBlob, login.dataKey)
   }
 
-  var request = login.authJson()
+  const request = login.authJson()
   request['data'] = data
   ctx.authRequest('POST', '/v2/login/repos', request, function (err, reply) {
     if (err) return callback(err)
@@ -167,5 +166,3 @@ Login.prototype.accountAttach = function (ctx, type, info, callback) {
     callback(null)
   })
 }
-
-module.exports = Login

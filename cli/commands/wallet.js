@@ -1,4 +1,4 @@
-const command = require('../command.js')
+import {command} from '../command.js'
 
 command('wallet-list', {
   help: 'Lists the wallets in an account',
@@ -7,8 +7,8 @@ command('wallet-list', {
   if (argv.length !== 0) throw this.usageError()
 
   const ids = session.account.listWalletIds()
-  for (var i of ids) {
-    var wallet = session.account.getWallet(i)
-    console.log(i + ' (' + wallet.type + ') = ' + JSON.stringify(wallet.repoKeys, null, 2))
+  for (let id of ids) {
+    const wallet = session.account.getWallet(id)
+    console.log(id + ' (' + wallet.type + ') = ' + JSON.stringify(wallet.repoKeys, null, 2))
   }
 })

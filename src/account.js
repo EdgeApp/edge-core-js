@@ -1,16 +1,16 @@
-var loginPassword = require('./login/password.js')
-var loginPin2 = require('./login/pin2.js')
-var loginRecovery2 = require('./login/recovery2.js')
-var Repo = require('./util/repo').Repo
-var server = require('./login/server.js')
-var Wallet = require('./wallet.js').Wallet
-var WalletList = require('./util/walletList.js').WalletList
+import * as loginPassword from './login/password.js'
+import * as loginPin2 from './login/pin2.js'
+import * as loginRecovery2 from './login/recovery2.js'
+import {Repo} from './util/repo.js'
+import * as server from './login/server.js'
+import {Wallet} from './wallet.js'
+import {WalletList} from './util/walletList.js'
 
 /**
  * This is a thin shim object,
  * which wraps the core implementation in a more OOP-style API.
  */
-function Account (ctx, login) {
+export function Account (ctx, login) {
   this.ctx = ctx
   this.login = login
   this.keys = login.accountFind(ctx.accountType)
@@ -58,7 +58,7 @@ Account.prototype.isLoggedIn = function () {
 }
 
 Account.prototype.sync = function (callback) {
-  var account = this
+  const account = this
   this.repo.sync(function (err, changed) {
     if (err) return callback(err)
     if (changed) {
@@ -82,11 +82,11 @@ Account.prototype.getWallet = function (id) {
  * Might return null if there are no wallets.
  */
 Account.prototype.getFirstWallet = function (type) {
-  var ids = this.walletList.listIds()
+  const ids = this.walletList.listIds()
 
-  for (var i = 0; i < ids.length; ++i) {
-    if (type == null || this.walletList.getType(ids[i]) === type) {
-      return this.getWallet(ids[i])
+  for (let id of ids) {
+    if (type == null || this.walletList.getType(id) === type) {
+      return this.getWallet(id)
     }
   }
   return null
@@ -99,10 +99,10 @@ Account.prototype.getFirstWallet = function (type) {
  * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
  */
 Account.prototype.createWallet = function (type, keysJson, callback) {
-  var account = this
+  const account = this
   server.repoCreate(account.ctx, account.login, keysJson, function (err, keysJson) {
     if (err) return callback(err)
-    var id = account.walletList.addWallet(type, keysJson)
+    const id = account.walletList.addWallet(type, keysJson)
     account.sync(function (err, dirty) {
       if (err) return callback(err)
       server.repoActivate(account.ctx, account.login, keysJson, function (err) {
@@ -112,5 +112,3 @@ Account.prototype.createWallet = function (type, keysJson, callback) {
     })
   })
 }
-
-exports.Account = Account

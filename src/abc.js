@@ -1,16 +1,13 @@
-var Context = require('./context.js').Context
-var userMap = require('./userMap.js')
-var abcc = require('./ABCConditionCode.js')
-var abce = require('./ABCError.js')
+import {Context} from './context.js'
 
-exports.Context = Context
-exports.usernameFix = userMap.normalize
-exports.ABCConditionCode = abcc
-exports.ABCError = abce.ABCError
+export {Context}
+export {abcc as ABCConditionCode} from './ABCConditionCode.js'
+export {ABCError} from './ABCError.js'
+export {normalize as usernameFix} from './userMap.js'
 
 /**
  * Creates a context object.
  */
-exports.makeABCContext = function makeContext (opts) {
+export function makeContext (opts) {
   return new Context(opts)
 }
