@@ -5,6 +5,7 @@ export default {
   entry: 'src/abc.js',
   external: [
     'assert',
+    'fs',
     'url'
   ].concat(Object.keys(packageJson.dependencies)),
   plugins: [

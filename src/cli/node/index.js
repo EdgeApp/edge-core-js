@@ -1,7 +1,9 @@
 // Command-line tools:
 import chalk from 'chalk'
+import fs from 'fs'
 import Getopt from 'node-getopt'
 import {LocalStorage} from 'node-localstorage'
+import xdgBasedir from 'xdg-basedir'
 
 // Airbitz context stuff:
 import * as abc from '../../abc.js'
@@ -15,6 +17,7 @@ import '../commands/all.js'
 const getopt = new Getopt([
   ['k', 'api-key=ARG', 'Auth server API key'],
   ['a', 'account-type=ARG', 'Account type'],
+  ['c', 'config=ARG', 'Configuration file'],
   ['d', 'directory=ARG', 'Working directory'],
   ['u', 'username=ARG', 'Username'],
   ['p', 'password=ARG', 'Password'],
@@ -43,30 +46,57 @@ const helpCommand = command('help', {
 })
 
 /**
+ * Loads the config file,
+ * and returns its contents merged with the command-line options.
+ */
+function loadConfig (options) {
+  let config = {}
+
+  // Load the config file (if possible):
+  if (options['config'] || xdgBasedir.config) {
+    const path = options['config'] ||
+      xdgBasedir.config + '/airbitz/airbitz.conf'
+    try {
+      config = JSON.parse(fs.readFileSync(path, 'utf8'))
+    } catch (e) {
+      if (options['config']) {
+        const e = new Error(`Cannot load config file '${path}'`)
+        e.quiet = true
+        throw e
+      }
+    }
+  }
+
+  // Calculate the active settings:
+  return {
+    accountType: options['account-type'],
+    apiKey: options['api-key'] || config['apiKey'],
+    directory: options['directory'] || config['workingDir'],
+    username: options['username'] || config['username'],
+    password: options['password'] || config['password']
+  }
+}
+
+/**
  * Sets up a session object with the Airbitz objects
  * needed by the command.
  * @return a promise
  */
-function makeSession (options, cmd) {
+function makeSession (config, cmd) {
   const session = {}
   let out = Promise.resolve(session)
 
   // Create a context if we need one:
   if (cmd.needsContext) {
     // API key:
-    let apiKey = options['api-key']
-    if (!apiKey) {
-      try {
-        apiKey = require('./apiKey.js').apiKey
-      } catch (e) {
-        throw cmd.usageError('No API key')
-      }
+    if (!config.apiKey) {
+      throw cmd.usageError('No API key')
     }
-    const fakeStorage = new LocalStorage(options['directory'] || './.cli')
+    const fakeStorage = new LocalStorage(config.directory || './.cli')
     session.context = new abc.Context({
-      accountType: options['account-type'],
-      apiKey: apiKey,
-      authRequest: realServer.makeAuthRequest(apiKey),
+      accountType: config.accountType,
+      apiKey: config.apiKey,
+      authRequest: realServer.makeAuthRequest(config.apiKey),
       localStorage: fakeStorage
     })
   }
@@ -74,18 +104,18 @@ function makeSession (options, cmd) {
   // Create a login if we need one:
   if (cmd.needsLogin) {
     out = out.then(session => {
-      if (options['username'] && options['password']) {
-        return new Promise((resolve, reject) => {
-          session.context.loginWithPassword(options['username'], options['password'], null, {}, (err, account) => {
-            if (err) return reject(err)
-            session.account = account
-            session.login = account.login
-            resolve(session)
-          })
-        })
-      } else {
+      if (!config.username || !config.password) {
         throw cmd.usageError('No login credentials')
       }
+
+      return new Promise((resolve, reject) => {
+        session.context.loginWithPassword(config.username, config.password, null, {}, (err, account) => {
+          if (err) return reject(err)
+          session.account = account
+          session.login = account.login
+          resolve(session)
+        })
+      })
     })
   }
 
@@ -118,11 +148,12 @@ function main () {
     ? helpCommand
     : command.find(opt.argv.shift())
 
-  // Set up the session:
-  const session = makeSession(opt.options, cmd)
+  // Load the config file:
+  const config = loadConfig(opt.options)
 
-  // Invoke the command:
-  session.then(session => {
+  // Set up the session:
+  makeSession(config, cmd).then(session => {
+    // Invoke the command:
     return cmd.invoke(session, opt.argv)
   }).catch(e => {
     reportError(e)
