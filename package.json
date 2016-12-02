@@ -37,7 +37,6 @@
     "mocha": "^3.1.2",
     "rollup": "^0.36.1",
     "rollup-plugin-buble": "^0.14.0",
-    "rollup-watch": "^2.5.0",
     "source-map-support": "^0.4.6",
     "standard": "^8.5.0"
   },
@@ -51,7 +50,7 @@
   },
   "scripts": {
     "build": "rollup -c && rollup -c rollup.config.cli.js",
-    "lint": "standard 'src/**/*.js' 'test/**/*.js' cli.js 'cli/**/*.js'",
+    "lint": "standard *.js 'src/**/*.js' 'test/**/*.js' 'cli/**/*.js'",
     "prepublish": "npm run lint && npm run build",
     "pretest": "npm run lint && rollup -c rollup.config.test.js",
     "test": "mocha --require source-map-support/register dist/tests.cjs.js"
