@@ -11,3 +11,6 @@ export {normalize as usernameFix} from './userMap.js'
 export function makeContext (opts) {
   return new Context(opts)
 }
+
+// Another name for the same thing:
+export {makeContext as makeABCContext}
