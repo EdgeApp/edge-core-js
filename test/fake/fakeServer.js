@@ -131,11 +131,6 @@ FakeServer.prototype.request = function (uri, opts) {
     return makeResponse()
   }
 
-  if (path === '/api/v1/account/upgrade') {
-    this.db.rootKeyBox = body['rootKeyBox']
-    return makeResponse()
-  }
-
   if (path === '/api/v1/account/activate') {
     return makeResponse()
   }
