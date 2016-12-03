@@ -27,23 +27,20 @@ describe('repo', function () {
     assert.deepEqual(repo.getJson('a/b'), payload)
   })
 
-  it('repo-to-repo sync', function (done) {
+  it('repo-to-repo sync', function () {
     const session = makeSession({needsContext: true})
     session.server.populateRepos()
     const repo1 = new Repo(session.context, packages.dataKey, packages.syncKey)
 
     const payload = {'message': 'Hello'}
     repo1.setJson('a/b', payload)
-    repo1.sync(function (err, changed) {
-      if (err) return done(err)
+    return repo1.sync().then(changed => {
       assert(changed)
       session.storage.clear()
       const repo2 = new Repo(session.context, packages.dataKey, packages.syncKey)
-      repo2.sync(function (err, changed) {
-        if (err) return done(err)
+      repo2.sync().then(changed => {
         assert(changed)
         assert.deepEqual(repo2.getJson('a/b'), payload)
-        done()
       })
     })
   })

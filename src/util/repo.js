@@ -11,7 +11,12 @@ const syncServers = [
  * Fetches some resource from a sync server.
  */
 function syncRequest (authFetch, method, uri, body, callback) {
-  syncRequestInner(authFetch, method, uri, body, callback, 0)
+  return new Promise((resolve, reject) => {
+    syncRequestInner(authFetch, method, uri, body, (err, reply) => {
+      if (err) return reject(err)
+      return resolve(reply)
+    }, 0)
+  })
 }
 
 function syncRequestInner (authFetch, method, uri, body, callback, serverIndex) {
@@ -205,7 +210,7 @@ Repo.prototype.setJson = function (path, value) {
 /**
  * Synchronizes the local store with the remote server.
  */
-Repo.prototype.sync = function (callback) {
+Repo.prototype.sync = function () {
   const self = this
 
   // If we have local changes, we need to bundle those:
@@ -228,36 +233,32 @@ Repo.prototype.sync = function (callback) {
   }
 
   // Make the request:
-  syncRequest(this.authFetch, request.changes ? 'POST' : 'GET', uri, request, function (err, reply) {
-    if (err) return callback(err)
-
+  return syncRequest(this.authFetch, request.changes ? 'POST' : 'GET', uri, request).then(reply => {
     let changed = false
-    try {
-      // Delete any changed keys (since the upload is done):
-      for (let key of changeKeys) {
-        self.changeStore.removeItem(key)
-      }
 
-      // Process the change list:
-      const changes = reply['changes']
-      if (changes) {
-        for (let change in changes) {
-          if (changes.hasOwnProperty(change)) {
-            changed = true
-            break
-          }
-        }
-        mergeChanges(self.dataStore, changes)
-      }
-
-      // Save the current hash:
-      const hash = reply['hash']
-      if (hash) {
-        self.store.setItem('lastHash', hash)
-      }
-    } catch (e) {
-      return callback(e)
+    // Delete any changed keys (since the upload is done):
+    for (let key of changeKeys) {
+      self.changeStore.removeItem(key)
     }
-    callback(null, changed)
+
+    // Process the change list:
+    const changes = reply['changes']
+    if (changes) {
+      for (let change in changes) {
+        if (changes.hasOwnProperty(change)) {
+          changed = true
+          break
+        }
+      }
+      mergeChanges(self.dataStore, changes)
+    }
+
+    // Save the current hash:
+    const hash = reply['hash']
+    if (hash) {
+      self.store.setItem('lastHash', hash)
+    }
+
+    return changed
   })
 }

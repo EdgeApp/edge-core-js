@@ -28,9 +28,9 @@ export function getKey (ctx, username) {
  * @param username string
  * @param pin2Key the recovery key, as a base58 string.
  * @param pin the PIN, as a string.
- * @param callback function (err, login)
+ * @param `Login` object promise
  */
-export function login (ctx, pin2Key, username, pin, callback) {
+export function login (ctx, pin2Key, username, pin) {
   pin2Key = base58.decode(pin2Key)
   username = userMap.normalize(username)
 
@@ -39,33 +39,28 @@ export function login (ctx, pin2Key, username, pin, callback) {
     'pin2Auth': pin2Auth(pin2Key, pin).toString('base64')
     // "otp": null
   }
-  ctx.authRequest('POST', '/v2/login', request, function (err, reply) {
-    if (err) return callback(err)
-
-    try {
-      // PIN login:
-      const pin2Box = reply['pin2Box']
-      if (!pin2Box) {
-        return callback(Error('Missing data for PIN v2 login'))
-      }
-
-      // Decrypt the dataKey:
-      var dataKey = crypto.decrypt(pin2Box, pin2Key)
-
-      // Cache everything for future logins:
-      const userId = userMap.getUserId(ctx.localStorage, username)
-      userMap.insert(ctx.localStorage, username, userId)
-    } catch (e) {
-      return callback(e)
+  return ctx.authRequest('POST', '/v2/login', request).then(reply => {
+    // PIN login:
+    const pin2Box = reply['pin2Box']
+    if (!pin2Box) {
+      throw new Error('Missing data for PIN v2 login')
     }
-    return callback(null, Login.online(ctx.localStorage, username, dataKey, reply))
+
+    // Decrypt the dataKey:
+    var dataKey = crypto.decrypt(pin2Box, pin2Key)
+
+    // Cache everything for future logins:
+    const userId = userMap.getUserId(ctx.localStorage, username)
+    userMap.insert(ctx.localStorage, username, userId)
+
+    return Login.online(ctx.localStorage, username, dataKey, reply)
   })
 }
 
 /**
  * Sets up PIN login v2.
  */
-export function setup (ctx, login, pin, callback) {
+export function setup (ctx, login, pin) {
   let pin2Key = login.userStorage.getItem('pin2Key')
   if (pin2Key) {
     pin2Key = base58.decode(pin2Key)
@@ -83,11 +78,9 @@ export function setup (ctx, login, pin, callback) {
     'pin2Box': pin2Box,
     'pin2KeyBox': pin2KeyBox
   }
-  ctx.authRequest('PUT', '/v2/login/pin2', request, function (err, reply) {
-    if (err) return callback(err)
-
+  return ctx.authRequest('PUT', '/v2/login/pin2', request).then(reply => {
     pin2Key = base58.encode(pin2Key)
     login.userStorage.setItem('pin2Key', pin2Key)
-    return callback(null, pin2Key)
+    return pin2Key
   })
 }
