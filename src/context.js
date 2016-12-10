@@ -49,7 +49,13 @@ export function Context (opts) {
     xhr.setRequestHeader('Authorization', 'Token ' + opts.apiKey)
     xhr.setRequestHeader('Content-Type', 'application/json')
     xhr.setRequestHeader('Accept', 'application/json')
-    xhr.send(JSON.stringify(body))
+    // DELETE, POST, and PUT can all have request bodies
+    // But GET cannot, otherwise it becomes non-standard
+    if (method !== 'GET') {
+      xhr.send(JSON.stringify(body))
+    } else {
+      xhr.send()
+    }
     console.log('Visit ' + uri)
   }
   this.authFetch = opts.authRequest || webFetch
