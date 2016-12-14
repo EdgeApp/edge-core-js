@@ -2,12 +2,18 @@ import url from 'url'
 
 import * as packages from './packages.js'
 
-function makeReply (results) {
+function makeResponse (results) {
   const reply = {
-    'status_code': 0,
-    'results': results
+    'status_code': 0
   }
-  return JSON.stringify(reply)
+  if (results) {
+    reply['results'] = results
+  }
+  return {body: JSON.stringify(reply), status: 200}
+}
+
+function makeErrorResponse (code) {
+  return {body: `{"status_code": ${code}}`, status: 500}
 }
 
 const authLevel = {
@@ -78,17 +84,16 @@ FakeServer.prototype.authCheck = function (body) {
   return authLevel.none
 }
 
-FakeServer.prototype.request = function (method, uri, body, callback) {
+FakeServer.prototype.request = function (method, uri, body) {
   const path = url.parse(uri).pathname
-  const results = {}
 
   // Account lifetime v1: ----------------------------------------------------
 
   if (path === '/api/v1/account/available') {
     if (this.db.userId && this.db.userId === body['l1']) {
-      return callback(null, 500, '{"status_code":3}')
+      return makeErrorResponse(3)
     }
-    return callback(null, 200, makeReply(results))
+    return makeResponse()
   }
 
   if (path === '/api/v1/account/create') {
@@ -101,74 +106,77 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
     this.db.syncKeyBox = loginPackage['ESyncKey']
     this.repos[body['repo_account_key']] = {}
 
-    return callback(null, 200, makeReply(results))
+    return makeResponse()
   }
 
   if (path === '/api/v1/account/upgrade') {
     this.db.rootKeyBox = body['rootKeyBox']
-    return callback(null, 200, makeReply(results))
+    return makeResponse()
   }
 
   if (path === '/api/v1/account/activate') {
-    return callback(null, 200, makeReply(results))
+    return makeResponse()
   }
 
   // Login v1: ---------------------------------------------------------------
 
   if (path === '/api/v1/account/carepackage/get') {
     if (!this.db.userId || this.db.userId !== body['l1']) {
-      return callback(null, 500, '{"status_code":3}')
+      return makeErrorResponse(3)
     }
 
-    results['care_package'] = JSON.stringify({
-      'SNRP2': this.db.passwordKeySnrp
+    return makeResponse({
+      'care_package': JSON.stringify({
+        'SNRP2': this.db.passwordKeySnrp
+      })
     })
-    return callback(null, 200, makeReply(results))
   }
 
   if (path === '/api/v1/account/loginpackage/get') {
     body['userId'] = body['l1']
     body['passwordAuth'] = body['lp1']
     if (!this.authCheck(body)) {
-      return callback(null, 500, '{"status_code":3}')
+      return makeErrorResponse(3)
     }
 
-    results['login_package'] = JSON.stringify({
-      'ELP1': this.db.passwordAuthBox,
-      'EMK_LP2': this.db.passwordBox,
-      'ESyncKey': this.db.syncKeyBox
-    })
+    const results = {
+      'login_package': JSON.stringify({
+        'ELP1': this.db.passwordAuthBox,
+        'EMK_LP2': this.db.passwordBox,
+        'ESyncKey': this.db.syncKeyBox
+      })
+    }
     if (this.db.rootKeyBox) {
       results['rootKeyBox'] = this.db.rootKeyBox
     }
-    return callback(null, 200, makeReply(results))
+    return makeResponse(results)
   }
 
   // PIN login v1: -----------------------------------------------------------
 
   if (path === '/api/v1/account/pinpackage/update') {
     this.db.pinKeyBox = JSON.parse(body['pin_package'])
-    return callback(null, 200, makeReply({}))
+    return makeResponse()
   }
 
   if (path === '/api/v1/account/pinpackage/get') {
     if (!this.db.pinKeyBox) {
-      return callback(null, 500, '{"status_code":3}')
+      return makeErrorResponse(3)
     }
-
-    results['pin_package'] = JSON.stringify(this.db.pinKeyBox)
-    return callback(null, 200, makeReply(results))
+    return makeResponse({
+      'pin_package': JSON.stringify(this.db.pinKeyBox)
+    })
   }
 
   // Repo server v1: ---------------------------------------------------------
 
   if (path === '/api/v1/wallet/create') {
     this.repos[body['repo_wallet_key']] = {}
-    return callback(null, 200, makeReply({}))
+    return makeResponse()
   }
 
   if (path === '/api/v1/wallet/activate') {
-    return callback(null, 200, makeReply({}))
+    return makeResponse()
   }
 
   // login v2: ---------------------------------------------------------------
@@ -176,13 +184,15 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
   if (path === '/api/v2/login') {
     switch (this.authCheck(body)) {
       default:
-        return callback(null, 500, '{"status_code":3}')
+        return makeErrorResponse(3)
 
       case authLevel.recovery2Id:
-        results['question2Box'] = this.db.question2Box
-        return callback(null, 200, makeReply(results))
+        return makeResponse({
+          'question2Box': this.db.question2Box
+        })
 
       case authLevel.full:
+        const results = {}
         const keys = [
           'passwordAuthBox',
           'passwordBox',
@@ -200,13 +210,13 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
             results[key] = this.db[key]
           }
         }
-        return callback(null, 200, makeReply(results))
+        return makeResponse(results)
     }
   }
 
   if (path === '/api/v2/login/password') {
     if (!this.authCheck(body)) {
-      return callback(null, 500, '{"status_code":3}')
+      return makeErrorResponse(3)
     }
 
     switch (method) {
@@ -214,7 +224,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         const data = body['data']
         if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
             !data['passwordBox'] || !data['passwordAuthBox']) {
-          return callback(null, 500, '{"status_code":3}')
+          return makeErrorResponse(3)
         }
 
         this.db.passwordAuth = data['passwordAuth']
@@ -222,13 +232,13 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         this.db.passwordBox = data['passwordBox']
         this.db.passwordAuthBox = data['passwordAuthBox']
 
-        return callback(null, 200, makeReply(results))
+        return makeResponse()
     }
   }
 
   if (path === '/api/v2/login/pin2') {
     if (!this.authCheck(body)) {
-      return callback(null, 500, '{"status_code":3}')
+      return makeErrorResponse(3)
     }
 
     switch (method) {
@@ -236,7 +246,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         const data = body['data']
         if (!data['pin2Id'] || !data['pin2Auth'] ||
             !data['pin2Box'] || !data['pin2KeyBox']) {
-          return callback(null, 500, '{"status_code":5}')
+          return makeErrorResponse(5)
         }
 
         this.db.pin2Id = data['pin2Id']
@@ -244,13 +254,13 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         this.db.pin2Box = data['pin2Box']
         this.db.pin2KeyBox = data['pin2KeyBox']
 
-        return callback(null, 200, makeReply(results))
+        return makeResponse()
     }
   }
 
   if (path === '/api/v2/login/recovery2') {
     if (!this.authCheck(body)) {
-      return callback(null, 500, '{"status_code":3}')
+      return makeErrorResponse(3)
     }
 
     switch (method) {
@@ -259,7 +269,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         if (!data['recovery2Id'] || !data['recovery2Auth'] ||
             !data['question2Box'] || !data['recovery2Box'] ||
             !data['recovery2KeyBox']) {
-          return callback(null, 500, '{"status_code":5}')
+          return makeErrorResponse(5)
         }
 
         this.db.recovery2Id = data['recovery2Id']
@@ -268,20 +278,20 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
         this.db.recovery2Box = data['recovery2Box']
         this.db.recovery2KeyBox = data['recovery2KeyBox']
 
-        return callback(null, 200, makeReply(results))
+        return makeResponse()
     }
   }
 
   if (path === '/api/v2/login/repos') {
     if (!this.authCheck(body)) {
-      return callback(null, 500, '{"status_code":3}')
+      return makeErrorResponse(3)
     }
 
     switch (method) {
       case 'POST':
         const data = body['data']
         if (!data['type'] || !data['info']) {
-          return callback(null, 500, '{"status_code":5}')
+          return makeErrorResponse(5)
         }
 
         if (this.db.repos) {
@@ -290,25 +300,26 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
           this.db.repos = [data]
         }
 
-        return callback(null, 200, makeReply(results))
+        return makeResponse()
     }
   }
 
   // lobby: ------------------------------------------------------------------
 
   if (path === '/api/v2/lobby') {
-    results['id'] = 'IMEDGELOGIN'
     this.db.lobby = body['data']
-    return callback(null, 200, makeReply(results))
+    return makeResponse({
+      'id': 'IMEDGELOGIN'
+    })
   }
 
   if (path === '/api/v2/lobby/IMEDGELOGIN') {
     switch (method) {
       case 'GET':
-        return callback(null, 200, makeReply(this.db.lobby))
+        return makeResponse(this.db.lobby)
       case 'PUT':
         this.db.lobby = body['data']
-        return callback(null, 200, makeReply(results))
+        return makeResponse()
     }
   }
 
@@ -321,7 +332,7 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
 
     const repo = this.repos[syncKey]
     if (!repo) {
-      return callback(null, 404, 'Cannot find repo ' + syncKey)
+      return {body: 'Cannot find repo ' + syncKey, status: 404}
     }
 
     switch (method) {
@@ -332,25 +343,32 @@ FakeServer.prototype.request = function (method, uri, body, callback) {
             repo[change] = changes[change]
           }
         }
-        results.changes = changes
-        results.hash = '1111111111111111111111111111111111111111'
-        return callback(null, 200, JSON.stringify(results))
+        return {
+          body: JSON.stringify({
+            'changes': changes,
+            'hash': '1111111111111111111111111111111111111111'
+          }),
+          status: 200
+        }
 
       case 'GET':
-        results.changes = repo
-        return callback(null, 200, JSON.stringify(results))
+        return {body: JSON.stringify({'changes': repo}), status: 200}
     }
   }
 
-  callback(null, 400, '')
+  return {body: 'Unknown API endpoint', status: 404}
 }
 
 /**
  * Makes a stand-alone request function that is bound to `this`.
  */
 FakeServer.prototype.bindRequest = function () {
-  const server = this
-  return function () {
-    FakeServer.prototype.request.apply(server, arguments)
+  return (method, uri, body, callback) => {
+    try {
+      const response = this.request(method, uri, body)
+      return callback(null, response.status, response.body)
+    } catch (e) {
+      return callback(e)
+    }
   }
 }
