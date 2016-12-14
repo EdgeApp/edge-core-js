@@ -85,6 +85,13 @@ Context.prototype.listUsernames = Context.prototype.usernameList
 
 Context.prototype.fixUsername = userMap.normalize
 
+Context.prototype.removeUsername = function (username) {
+  username = userMap.normalize(username)
+  userMap.remove(this.localStorage, username)
+  const store = new UserStorage(this.localStorage, username)
+  store.removeAll()
+}
+
 Context.prototype.usernameAvailable = nodeify(function (username) {
   return loginCreate.usernameAvailable(this, username)
 })

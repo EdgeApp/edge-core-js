@@ -22,6 +22,15 @@ export function insert (localStorage, username, userId) {
 }
 
 /**
+ * Removes a username from the map.
+ */
+export function remove (localStorage, username) {
+  const userMap = load(localStorage)
+  delete userMap[username]
+  localStorage.setItem('airbitz.users', JSON.stringify(userMap))
+}
+
+/**
  * Computes the userId (L1) for the given username.
  */
 export function getUserId (localStorage, username) {

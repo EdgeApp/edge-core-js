@@ -44,6 +44,14 @@ describe('username', function () {
 
     assert.deepEqual(session.context.usernameList(), ['js test 0'])
   })
+
+  it('remove username from local storage', function () {
+    const session = makeSession({needsContext: true})
+    session.storage.populate()
+
+    session.context.removeUsername('js test 0')
+    assert.equal(session.context.usernameList().length, 0)
+  })
 })
 
 describe('creation', function () {

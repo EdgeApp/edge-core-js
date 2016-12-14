@@ -1,5 +1,16 @@
 import {command} from '../command.js'
 
+command('account-remove', {
+  usage: '<username>',
+  help: 'Removes any locally-stored data for the given username',
+  needsContext: true
+}, function (session, argv) {
+  if (argv.length !== 1) throw this.usageError()
+  const username = argv[0]
+
+  return session.context.removeUsername(username)
+})
+
 command('account-available', {
   usage: '<username>',
   help: 'Determines whether or not a username is available',
