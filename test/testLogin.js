@@ -15,7 +15,7 @@ describe('login', function () {
     })
   })
 
-  it('attach repo', function (done) {
+  it('attach repo', function () {
     const session = makeSession({needsLogin: true})
     session.server.populate()
 
@@ -23,10 +23,8 @@ describe('login', function () {
       dataKey: 'fa57',
       syncKey: 'f00d'
     }
-    session.login.accountAttach(session.context, 'account:repo:test', info, function (err) {
-      if (err) return done(err)
+    return session.login.accountAttach(session.context, 'account:repo:test', info).then(() => {
       assert.deepEqual(session.login.accountFind('account:repo:test'), info)
-      done()
     })
   })
 })

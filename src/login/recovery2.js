@@ -26,9 +26,9 @@ function recovery2Auth (recovery2Key, answers) {
  * @param username string
  * @param recovery2Key an ArrayBuffer recovery key
  * @param array of answer strings
- * @param callback function (err, login)
+ * @param `Login` object promise
  */
-export function login (ctx, recovery2Key, username, answers, callback) {
+export function login (ctx, recovery2Key, username, answers) {
   recovery2Key = base58.decode(recovery2Key)
   username = userMap.normalize(username)
 
@@ -37,26 +37,21 @@ export function login (ctx, recovery2Key, username, answers, callback) {
     'recovery2Auth': recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
-  ctx.authRequest('POST', '/v2/login', request, function (err, reply) {
-    if (err) return callback(err)
-
-    try {
-      // Recovery login:
-      const recovery2Box = reply['recovery2Box']
-      if (!recovery2Box) {
-        return callback(Error('Missing data for recovery v2 login'))
-      }
-
-      // Decrypt the dataKey:
-      var dataKey = crypto.decrypt(recovery2Box, recovery2Key)
-
-      // Cache everything for future logins:
-      const userId = userMap.getUserId(ctx.localStorage, username)
-      userMap.insert(ctx.localStorage, username, userId)
-    } catch (e) {
-      return callback(e)
+  return ctx.authRequest('POST', '/v2/login', request).then(reply => {
+    // Recovery login:
+    const recovery2Box = reply['recovery2Box']
+    if (!recovery2Box) {
+      throw new Error('Missing data for recovery v2 login')
     }
-    return callback(null, Login.online(ctx.localStorage, username, dataKey, reply))
+
+    // Decrypt the dataKey:
+    var dataKey = crypto.decrypt(recovery2Box, recovery2Key)
+
+    // Cache everything for future logins:
+    const userId = userMap.getUserId(ctx.localStorage, username)
+    userMap.insert(ctx.localStorage, username, userId)
+
+    return Login.online(ctx.localStorage, username, dataKey, reply)
   })
 }
 
@@ -64,9 +59,9 @@ export function login (ctx, recovery2Key, username, answers, callback) {
  * Fetches the questions for a login
  * @param username string
  * @param recovery2Key an ArrayBuffer recovery key
- * @param callback function (err, question array)
+ * @param Question array promise
  */
-export function questions (ctx, recovery2Key, username, callback) {
+export function questions (ctx, recovery2Key, username) {
   recovery2Key = base58.decode(recovery2Key)
   username = userMap.normalize(username)
 
@@ -74,30 +69,23 @@ export function questions (ctx, recovery2Key, username, callback) {
     'recovery2Id': recovery2Id(recovery2Key, username).toString('base64')
     // "otp": null
   }
-  ctx.authRequest('POST', '/v2/login', request, function (err, reply) {
-    if (err) return callback(err)
-
-    try {
-      // Recovery login:
-      const question2Box = reply['question2Box']
-      if (!question2Box) {
-        return callback(Error('Login has no recovery questions'))
-      }
-
-      // Decrypt the dataKey:
-      var questions = crypto.decrypt(question2Box, recovery2Key)
-      questions = JSON.parse(questions.toString('utf8'))
-    } catch (e) {
-      return callback(e)
+  return ctx.authRequest('POST', '/v2/login', request).then(reply => {
+    // Recovery login:
+    const question2Box = reply['question2Box']
+    if (!question2Box) {
+      throw new Error('Login has no recovery questions')
     }
-    return callback(null, questions)
+
+    // Decrypt the questions:
+    var questions = crypto.decrypt(question2Box, recovery2Key)
+    return JSON.parse(questions.toString('utf8'))
   })
 }
 
 /**
  * Sets up recovery questions for the login.
  */
-export function setup (ctx, login, questions, answers, callback) {
+export function setup (ctx, login, questions, answers) {
   if (!(Object.prototype.toString.call(questions) === '[object Array]')) {
     throw new TypeError('Questions must be an array of strings')
   }
@@ -124,21 +112,13 @@ export function setup (ctx, login, questions, answers, callback) {
     'recovery2KeyBox': recovery2KeyBox,
     'question2Box': question2Box
   }
-  ctx.authRequest('PUT', '/v2/login/recovery2', request, function (err, reply) {
-    if (err) return callback(err)
-
+  return ctx.authRequest('PUT', '/v2/login/recovery2', request).then(reply => {
     recovery2Key = base58.encode(recovery2Key)
     login.userStorage.setItem('recovery2Key', recovery2Key)
-    return callback(null, recovery2Key)
+    return recovery2Key
   })
 }
 
-export function listRecoveryQuestionChoices (ctx, callback) {
-  ctx.authRequest('POST', '/v1/questions', '', function (err, reply) {
-    if (err) {
-      return callback(21)
-    } else {
-      callback(null, reply)
-    }
-  })
+export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (ctx) {
+  return ctx.authRequest('POST', '/v1/questions', '')
 }

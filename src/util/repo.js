@@ -10,33 +10,29 @@ const syncServers = [
 /**
  * Fetches some resource from a sync server.
  */
-function syncRequest (authFetch, method, uri, body, callback) {
-  syncRequestInner(authFetch, method, uri, body, callback, 0)
+function syncRequest (fetch, method, uri, body, callback) {
+  return syncRequestInner(fetch, method, uri, body, 0)
 }
 
-function syncRequestInner (authFetch, method, uri, body, callback, serverIndex) {
+function syncRequestInner (fetch, method, uri, body, serverIndex) {
   console.log('syncRequestInner: Connecting to ' + syncServers[serverIndex])
-  authFetch(method, syncServers[serverIndex] + uri, body, function (err, status, result) {
-    if (err) {
-      console.log('syncRequestInner: Failed connecting to ' + syncServers[serverIndex])
-      if (serverIndex < syncServers.length - 1) {
-        return syncRequestInner(authFetch, method, uri, body, callback, (serverIndex + 1))
-      } else {
-        return callback(err)
-      }
+  const headers = {
+    method: method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     }
-    try {
-      var reply = JSON.parse(result)
-    } catch (e) {
-      console.log('syncRequestInner: Failed parsing response from ' + syncServers[serverIndex])
-      if (serverIndex < syncServers.length - 1) {
-        return syncRequestInner(authFetch, method, uri, body, callback, (serverIndex + 1))
-      } else {
-        return callback(Error('Non-JSON reply HTTP status ' + status))
-      }
-    }
+  }
+  if (method !== 'GET') {
+    headers.body = JSON.stringify(body)
+  }
 
-    return callback(null, reply)
+  return fetch(syncServers[serverIndex] + uri, headers).then(response => {
+    return response.json().catch(jsonError => {
+      throw new Error('Non-JSON reply, HTTP status ' + response.status)
+    })
+  }, networkError => {
+    throw new Error('NetworkError: Could not connect to sync server')
   })
 }
 
@@ -87,7 +83,7 @@ export function repoId (dataKey) {
  * The data inside the repo is encrypted with `dataKey`.
  */
 export function Repo (ctx, dataKey, syncKey) {
-  this.authFetch = ctx.authFetch
+  this.fetch = ctx.fetch
   this.dataKey = dataKey
   this.syncKey = syncKey
 
@@ -205,7 +201,7 @@ Repo.prototype.setJson = function (path, value) {
 /**
  * Synchronizes the local store with the remote server.
  */
-Repo.prototype.sync = function (callback) {
+Repo.prototype.sync = function () {
   const self = this
 
   // If we have local changes, we need to bundle those:
@@ -228,36 +224,32 @@ Repo.prototype.sync = function (callback) {
   }
 
   // Make the request:
-  syncRequest(this.authFetch, request.changes ? 'POST' : 'GET', uri, request, function (err, reply) {
-    if (err) return callback(err)
-
+  return syncRequest(this.fetch, request.changes ? 'POST' : 'GET', uri, request).then(reply => {
     let changed = false
-    try {
-      // Delete any changed keys (since the upload is done):
-      for (let key of changeKeys) {
-        self.changeStore.removeItem(key)
-      }
 
-      // Process the change list:
-      const changes = reply['changes']
-      if (changes) {
-        for (let change in changes) {
-          if (changes.hasOwnProperty(change)) {
-            changed = true
-            break
-          }
-        }
-        mergeChanges(self.dataStore, changes)
-      }
-
-      // Save the current hash:
-      const hash = reply['hash']
-      if (hash) {
-        self.store.setItem('lastHash', hash)
-      }
-    } catch (e) {
-      return callback(e)
+    // Delete any changed keys (since the upload is done):
+    for (let key of changeKeys) {
+      self.changeStore.removeItem(key)
     }
-    callback(null, changed)
+
+    // Process the change list:
+    const changes = reply['changes']
+    if (changes) {
+      for (let change in changes) {
+        if (changes.hasOwnProperty(change)) {
+          changed = true
+          break
+        }
+      }
+      mergeChanges(self.dataStore, changes)
+    }
+
+    // Save the current hash:
+    const hash = reply['hash']
+    if (hash) {
+      self.store.setItem('lastHash', hash)
+    }
+
+    return changed
   })
 }

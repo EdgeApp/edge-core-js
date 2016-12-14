@@ -8,23 +8,20 @@ import {UserStorage} from '../userStorage.js'
 /**
  * Determines whether or not a username is available.
  */
-export function usernameAvailable (ctx, username, callback) {
+export function usernameAvailable (ctx, username) {
   username = userMap.normalize(username)
 
   const userId = userMap.getUserId(ctx.localStorage, username)
   const request = {
     'l1': userId
   }
-  ctx.authRequest('POST', '/v1/account/available', request, function (err, reply) {
-    if (err) return callback(err)
-    return callback(null)
-  })
+  return ctx.authRequest('POST', '/v1/account/available', request)
 }
 
 /**
  * Creates a new login on the auth server.
  */
-export function create (ctx, username, password, opts, callback) {
+export function create (ctx, username, password, opts) {
   username = userMap.normalize(username)
   const userId = userMap.getUserId(ctx.localStorage, username)
 
@@ -59,9 +56,7 @@ export function create (ctx, username, password, opts, callback) {
     'repo_account_key': syncKey.toString('hex')
   }
 
-  ctx.authRequest('POST', '/v1/account/create', request, function (err, reply) {
-    if (err) return callback(err)
-
+  return ctx.authRequest('POST', '/v1/account/create', request).then(reply => {
     // Cache everything for future logins:
     userMap.insert(ctx.localStorage, username, userId)
     const userStorage = new UserStorage(ctx.localStorage, username)
@@ -71,23 +66,20 @@ export function create (ctx, username, password, opts, callback) {
     userStorage.setJson('syncKeyBox', syncKeyBox)
 
     // Now upgrade:
-    upgrade(ctx, userStorage, userId, passwordAuth, dataKey, function (err) {
-      if (err) return callback(err)
-
+    return upgrade(ctx, userStorage, userId, passwordAuth, dataKey).then(() => {
       // Now activate:
       const request = {
         'l1': userId,
         'lp1': passwordAuth.toString('base64')
       }
-      ctx.authRequest('POST', '/v1/account/activate', request, function (err, reply) {
-        if (err) return callback(err)
-        return callback(null, Login.offline(ctx.localStorage, username, dataKey))
+      return ctx.authRequest('POST', '/v1/account/activate', request).then(reply => {
+        return Login.offline(ctx.localStorage, username, dataKey)
       })
     })
   })
 }
 
-export function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callback) {
+export function upgrade (ctx, userStorage, userId, passwordAuth, dataKey) {
   // Create a BIP39 mnemonic, and use it to derive the rootKey:
   const entropy = crypto.random(256 / 8)
   const mnemonic = bip39.entropyToMnemonic(entropy.toString('hex'))
@@ -106,9 +98,8 @@ export function upgrade (ctx, userStorage, userId, passwordAuth, dataKey, callba
     'mnemonicBox': mnemonicBox,
     'syncDataKeyBox': dataKeyBox
   }
-  ctx.authRequest('POST', '/v1/account/upgrade', request, function (err, reply) {
-    if (err) return callback(err)
+  return ctx.authRequest('POST', '/v1/account/upgrade', request).then(reply => {
     userStorage.setJson('rootKeyBox', rootKeyBox)
-    return callback(null)
+    return null
   })
 }

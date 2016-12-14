@@ -128,17 +128,10 @@ Login.prototype.accountFind = function (type) {
 /**
  * Creates and attaches new account repo.
  */
-Login.prototype.accountCreate = function (ctx, type, callback) {
-  const login = this
-
-  server.repoCreate(ctx, login, {}, function (err, keysJson) {
-    if (err) return callback(err)
-    login.accountAttach(ctx, type, keysJson, function (err) {
-      if (err) return callback(err)
-      server.repoActivate(ctx, login, keysJson, function (err) {
-        if (err) return callback(err)
-        callback(null)
-      })
+Login.prototype.accountCreate = function (ctx, type) {
+  return server.repoCreate(ctx, this, {}).then(keysJson => {
+    return this.accountAttach(ctx, type, keysJson).then(() => {
+      return server.repoActivate(ctx, this, keysJson)
     })
   })
 }
@@ -146,23 +139,18 @@ Login.prototype.accountCreate = function (ctx, type, callback) {
 /**
  * Attaches an account repo to the login.
  */
-Login.prototype.accountAttach = function (ctx, type, info, callback) {
-  const login = this
-
+Login.prototype.accountAttach = function (ctx, type, info) {
   const infoBlob = new Buffer(JSON.stringify(info), 'utf-8')
   const data = {
     'type': type,
-    'info': crypto.encrypt(infoBlob, login.dataKey)
+    'info': crypto.encrypt(infoBlob, this.dataKey)
   }
 
-  const request = login.authJson()
+  const request = this.authJson()
   request['data'] = data
-  ctx.authRequest('POST', '/v2/login/repos', request, function (err, reply) {
-    if (err) return callback(err)
-
-    login.repos.push(data)
-    login.userStorage.setJson('repos', login.repos)
-
-    callback(null)
+  return ctx.authRequest('POST', '/v2/login/repos', request).then(reply => {
+    this.repos.push(data)
+    this.userStorage.setJson('repos', this.repos)
+    return null
   })
 }

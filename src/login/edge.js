@@ -20,7 +20,7 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
 /**
  * Creates a new login object, and attaches the account repo info to it.
  */
-function createLogin (ctx, accountReply, callback) {
+function createLogin (ctx, accountReply) {
   const username = accountReply.username + '-' + base58.encode(crypto.random(4))
   const password = base58.encode(crypto.random(24))
   const pin = accountReply.pinString
@@ -30,23 +30,14 @@ function createLogin (ctx, accountReply, callback) {
     opts.syncKey = new Buffer(accountReply.info['syncKey'], 'hex')
   }
 
-  loginCreate.create(ctx, username, password, opts, function (err, login) {
-    if (err) return callback(err)
-    login.accountAttach(ctx, accountReply.type, accountReply.info, function (err) {
-      if (err) return callback(err)
-
+  return loginCreate.create(ctx, username, password, opts).then(login => {
+    return login.accountAttach(ctx, accountReply.type, accountReply.info).then(() => {
       if (typeof pin === 'string' && pin.length === 4) {
         if (loginPin2.getKey(ctx, username) == null) {
-          loginPin2.setup(ctx, login, pin, function (err) {
-            if (err) {
-              // Do nothing
-            }
-            callback(null, login)
-          })
-          return
+          return loginPin2.setup(ctx, login, pin).then(() => login, () => login)
         }
       }
-      callback(null, login)
+      return login
     })
   })
 }
@@ -93,21 +84,19 @@ function pollServer (ctx, edgeLogin, keys, onLogin, onProcessLogin) {
   }
 
   setTimeout(function () {
-    ctx.authRequest('GET', '/v2/lobby/' + edgeLogin.id, '', function (err, reply) {
-      if (err) return onLogin(err)
-
-      try {
-        const accountReply = decodeAccountReply(keys, reply)
-        if (!accountReply) {
-          return pollServer(ctx, edgeLogin, keys, onLogin, onProcessLogin)
-        }
-        if (onProcessLogin !== null) {
-          onProcessLogin(accountReply.username)
-        }
-        createLogin(ctx, accountReply, onLogin)
-      } catch (e) {
-        return onLogin(e)
+    ctx.authRequest('GET', '/v2/lobby/' + edgeLogin.id, '').then(reply => {
+      const accountReply = decodeAccountReply(keys, reply)
+      if (!accountReply) {
+        return pollServer(ctx, edgeLogin, keys, onLogin, onProcessLogin)
       }
+      if (onProcessLogin !== null) {
+        onProcessLogin(accountReply.username)
+      }
+      return createLogin(ctx, accountReply).then(
+        login => onLogin(null, login), e => onLogin(e)
+      )
+    }).catch(e => {
+      return onLogin(e)
     })
   }, 1000)
 }
@@ -115,7 +104,7 @@ function pollServer (ctx, edgeLogin, keys, onLogin, onProcessLogin) {
 /**
  * Creates a new account request lobby on the server.
  */
-export function create (ctx, opts, callback) {
+export function create (ctx, opts) {
   const keys = secp256k1.genKeyPair()
 
   const data = {
@@ -137,19 +126,13 @@ export function create (ctx, opts, callback) {
     'data': data
   }
 
-  ctx.authRequest('POST', '/v2/lobby', request, function (err, reply) {
-    if (err) return callback(err)
-
-    try {
-      var edgeLogin = new ABCEdgeLoginRequest(reply.id)
-      let onProcessLogin = null
-      if (opts.hasOwnProperty('onProcessLogin')) {
-        onProcessLogin = opts.onProcessLogin
-      }
-      pollServer(ctx, edgeLogin, keys, opts.onLogin, onProcessLogin)
-    } catch (e) {
-      return callback(e)
+  return ctx.authRequest('POST', '/v2/lobby', request).then(reply => {
+    var edgeLogin = new ABCEdgeLoginRequest(reply.id)
+    let onProcessLogin = null
+    if (opts.hasOwnProperty('onProcessLogin')) {
+      onProcessLogin = opts.onProcessLogin
     }
-    return callback(null, edgeLogin)
+    pollServer(ctx, edgeLogin, keys, opts.onLogin, onProcessLogin)
+    return edgeLogin
   })
 }

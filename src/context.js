@@ -5,6 +5,7 @@ import * as loginEdge from './login/edge.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
+import {nodeify} from './util/nodeify.js'
 import * as userMap from './userMap.js'
 import {UserStorage} from './userStorage.js'
 
@@ -29,58 +30,43 @@ if (typeof (window) === 'undefined') {
 }
 
 /**
- * @param authRequest function (method, uri, body, callback (err, status, body))
- * @param localStorage an object compatible with the Web Storage API.
+ * @param opts An object containing optional arguments.
  */
 export function Context (opts) {
   opts = opts || {}
   this.accountType = opts.accountType || 'account:repo:co.airbitz.wallet'
   this.localStorage = opts.localStorage || DomWindow.localStorage
-
-  function webFetch (method, uri, body, callback) {
-    const xhr = new DomWindow.XMLHttpRequest()
-    xhr.addEventListener('load', function () {
-      callback(null, this.status, this.responseText)
-    })
-    xhr.addEventListener('error', function () {
-      callback(Error('Cannot reach auth server'))
-    })
-    xhr.open(method, uri)
-    xhr.setRequestHeader('Authorization', 'Token ' + opts.apiKey)
-    xhr.setRequestHeader('Content-Type', 'application/json')
-    xhr.setRequestHeader('Accept', 'application/json')
-    // DELETE, POST, and PUT can all have request bodies
-    // But GET cannot, otherwise it becomes non-standard
-    if (method !== 'GET') {
-      xhr.send(JSON.stringify(body))
-    } else {
-      xhr.send()
-    }
-    console.log('Visit ' + uri)
-  }
-  this.authFetch = opts.authRequest || webFetch
+  this.fetch = opts.fetch || DomWindow.fetch
 
   /**
    * Wraps the raw authRequest function in something more friendly.
-   * @param body JSON object
-   * @param callback function (err, reply JSON object)
+   * @param body JSON object to send
+   * @return a promise of the server's JSON reply
    */
-  this.authRequest = function (method, uri, body, callback) {
-    this.authFetch(method, serverRoot + uri, body, function (err, status, body) {
-      if (err) return callback(err)
-      try {
-        var reply = JSON.parse(body)
-      } catch (e) {
-        return callback(Error('Non-JSON reply, HTTP status ' + status))
+  this.authRequest = function (method, uri, body) {
+    const headers = {
+      method: method,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Token ' + opts.apiKey
       }
+    }
+    if (method !== 'GET') {
+      headers.body = JSON.stringify(body)
+    }
 
-      // Look at the Airbitz status code:
-      switch (reply['status_code']) {
-        case 0:
-          return callback(null, reply.results)
-        default:
-          return callback(Error(body))
-      }
+    return this.fetch(serverRoot + uri, headers).then(response => {
+      return response.json().then(json => {
+        if (json['status_code'] !== 0) {
+          throw new Error('Server error ' + JSON.stringify(json))
+        }
+        return json['results']
+      }, jsonError => {
+        throw new Error('Non-JSON reply, HTTP status ' + response.status)
+      })
+    }, networkError => {
+      throw new Error('NetworkError: Could not connect to auth server')
     })
   }
 }
@@ -99,60 +85,44 @@ Context.prototype.listUsernames = Context.prototype.usernameList
 
 Context.prototype.fixUsername = userMap.normalize
 
-Context.prototype.usernameAvailable = function (username, callback) {
-  return loginCreate.usernameAvailable(this, username, callback)
-}
+Context.prototype.usernameAvailable = nodeify(function (username) {
+  return loginCreate.usernameAvailable(this, username)
+})
 
 /**
  * Creates a login, then creates and attaches an account to it.
  */
-Context.prototype.createAccount = function (username, password, pin, callback) {
-  const ctx = this
-  return loginCreate.create(ctx, username, password, {}, function (err, login) {
-    if (err) return callback(err)
+Context.prototype.createAccount = nodeify(function (username, password, pin) {
+  return loginCreate.create(this, username, password, {}).then(login => {
     try {
-      login.accountFind(ctx.accountType)
+      login.accountFind(this.accountType)
     } catch (e) {
       // If the login doesn't have the correct account type, add it first:
-      return login.accountCreate(ctx, ctx.accountType, function (err) {
-        if (err) return callback(err)
-        loginPin2.setup(ctx, login, pin, function (err) {
-          if (err) return callback(err)
-          const account = new Account(ctx, login)
+      return login.accountCreate(this, this.accountType).then(() => {
+        loginPin2.setup(this, login, pin).then(() => {
+          const account = new Account(this, login)
           account.newAccount = true
-          account.sync(function (err, dirty) {
-            if (err) return callback(err)
-            callback(null, account)
-          })
+          return account.sync().then(() => account)
         })
       })
     }
 
     // Otherwise, we have the correct account type, and can simply return:
-    loginPin2.setup(ctx, login, pin, function (err) {
-      if (err) return callback(err)
-      const account = new Account(ctx, login)
+    return loginPin2.setup(this, login, pin).then(() => {
+      const account = new Account(this, login)
       account.newAccount = true
-      account.sync(function (err, dirty) {
-        if (err) return callback(err)
-        callback(null, account)
-      })
+      return account.sync().then(() => account)
     })
   })
-}
+})
 
-Context.prototype.loginWithPassword = function (username, password, otp, opts, callback) {
-  const ctx = this
-  return loginPassword.login(ctx, username, password, function (err, login) {
-    if (err) return callback(err)
-    const account = new Account(ctx, login)
+Context.prototype.loginWithPassword = nodeify(function (username, password, otp, opts) {
+  return loginPassword.login(this, username, password).then(login => {
+    const account = new Account(this, login)
     account.passwordLogin = true
-    account.sync(function (err, dirty) {
-      if (err) return callback(err)
-      callback(null, account)
-    })
+    return account.sync().then(() => account)
   })
-}
+})
 
 Context.prototype.pinExists = function (username) {
   return loginPin2.getKey(this, username) != null
@@ -161,49 +131,39 @@ Context.prototype.pinLoginEnabled = function (username) {
   return loginPin2.getKey(this, username) != null
 }
 
-Context.prototype.loginWithPIN = function (username, pin, callback) {
-  const ctx = this
+Context.prototype.loginWithPIN = nodeify(function (username, pin) {
   const pin2Key = loginPin2.getKey(this, username)
   if (!pin2Key) {
     throw new Error('No PIN set locally for this account')
   }
-  return loginPin2.login(ctx, pin2Key, username, pin, function (err, login) {
-    if (err) return callback(err)
-    const account = new Account(ctx, login)
+  return loginPin2.login(this, pin2Key, username, pin).then(login => {
+    const account = new Account(this, login)
     account.pinLogin = true
-    account.sync(function (err, dirty) {
-      if (err) return callback(err)
-      callback(null, account)
-    })
+    return account.sync().then(() => account)
   })
-}
+})
 
-Context.prototype.getRecovery2Key = function (username, callback) {
+Context.prototype.getRecovery2Key = nodeify(function (username) {
   const userStorage = new UserStorage(this.localStorage, username)
   const recovery2Key = userStorage.getItem('recovery2Key')
   if (recovery2Key) {
-    callback(null, recovery2Key)
+    return Promise.resolve(recovery2Key)
   } else {
-    callback(new Error('No recovery key stored locally.'))
+    return Promise.reject(new Error('No recovery key stored locally.'))
   }
-}
+})
 
-Context.prototype.loginWithRecovery2 = function (recovery2Key, username, answers, otp, options, callback) {
-  const ctx = this
-  return loginRecovery2.login(ctx, recovery2Key, username, answers, function (err, login) {
-    if (err) return callback(err)
-    const account = new Account(ctx, login)
+Context.prototype.loginWithRecovery2 = nodeify(function (recovery2Key, username, answers, otp, options) {
+  return loginRecovery2.login(this, recovery2Key, username, answers).then(login => {
+    const account = new Account(this, login)
     account.recoveryLogin = true
-    account.sync(function (err, dirty) {
-      if (err) return callback(err)
-      callback(null, account)
-    })
+    return account.sync().then(() => account)
   })
-}
+})
 
-Context.prototype.fetchRecovery2Questions = function (recovery2Key, username, callback) {
-  return loginRecovery2.questions(this, recovery2Key, username, callback)
-}
+Context.prototype.fetchRecovery2Questions = nodeify(function (recovery2Key, username) {
+  return loginRecovery2.questions(this, recovery2Key, username)
+})
 
 Context.prototype.runScryptTimingWithParameters = function (n, r, p) {
   const snrp = crypto.makeSnrp()
@@ -240,24 +200,18 @@ Context.prototype.checkPasswordRules = function (password) {
   }
 }
 
-Context.prototype.requestEdgeLogin = function (opts, callback) {
-  const ctx = this
+Context.prototype.requestEdgeLogin = nodeify(function (opts) {
   const onLogin = opts.onLogin
-  opts.onLogin = function (err, login) {
+  opts.onLogin = (err, login) => {
     if (err) return onLogin(err)
-    const account = new Account(ctx, login)
+    const account = new Account(this, login)
     account.edgeLogin = true
-    account.sync(function (err, dirty) {
-      if (err) return onLogin(err)
-      onLogin(null, account)
-    })
+    account.sync().then(dirty => onLogin(null, account), err => onLogin(err))
   }
-  opts.type = opts.type || ctx.accountType
-  loginEdge.create(this, opts, callback)
-}
+  opts.type = opts.type || this.accountType
+  return loginEdge.create(this, opts)
+})
 
-Context.prototype.listRecoveryQuestionChoices = function (callback) {
-  loginRecovery2.listRecoveryQuestionChoices(this, function (error, questions) {
-    callback(error, questions)
-  })
-}
+Context.prototype.listRecoveryQuestionChoices = nodeify(function () {
+  return loginRecovery2.listRecoveryQuestionChoices(this)
+})
