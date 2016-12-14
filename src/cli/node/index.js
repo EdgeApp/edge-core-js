@@ -4,6 +4,7 @@ import fs from 'fs'
 import Getopt from 'node-getopt'
 import {LocalStorage} from 'node-localstorage'
 import xdgBasedir from 'xdg-basedir'
+import sourceMapSupport from 'source-map-support'
 
 // Airbitz context stuff:
 import * as abc from '../../abc.js'
@@ -12,6 +13,9 @@ import * as realServer from './realServer.js'
 // Commands:
 import {command} from '../command.js'
 import '../commands/all.js'
+
+// Display the original source location for errors:
+sourceMapSupport.install()
 
 // Program options:
 const getopt = new Getopt([
