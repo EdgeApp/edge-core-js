@@ -1,6 +1,5 @@
 import aesjs from 'aes-js'
 import hashjs from 'hash.js'
-import Hmac from 'hmac'
 import scryptsy from 'scryptsy'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
@@ -230,6 +229,6 @@ export function encrypt (data, key) {
 }
 
 export function hmacSha256 (data, key) {
-  const hmac = new Hmac(hashjs.sha256, 64, key)
+  const hmac = hashjs.hmac(hashjs.sha256, key)
   return hmac.update(data).digest()
 }
