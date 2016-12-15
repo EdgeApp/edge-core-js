@@ -9,13 +9,10 @@ command('password-login', {
   const username = argv[0]
   const password = argv[1]
 
-  return new Promise((resolve, reject) => {
-    session.context.loginWithPassword(username, password, null, {}, (err, account) => {
-      if (err) return reject(err)
-      session.account = account
-      session.login = account.login
-      resolve()
-    })
+  return session.context.loginWithPassword(username, password, null, {}).then(account => {
+    session.account = account
+    session.login = account.login
+    return account
   })
 })
 
@@ -27,10 +24,5 @@ command('password-setup', {
   if (argv.length !== 1) throw this.usageError()
   const password = argv[0]
 
-  return new Promise((resolve, reject) => {
-    session.account.changePassword(password, (err) => {
-      if (err) return reject(err)
-      resolve()
-    })
-  })
+  return session.account.changePassword(password)
 })

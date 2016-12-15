@@ -19,12 +19,10 @@ command('account-available', {
   if (argv.length !== 1) throw this.usageError()
   const username = argv[0]
 
-  return new Promise((resolve, reject) => {
-    session.context.usernameAvailable(username, (err, account) => {
-      console.log(err ? 'Not available' : 'Available')
-      resolve()
-    })
-  })
+  return session.context.usernameAvailable(username).then(
+    ok => console.log('Available'),
+    bad => console.log('Not available')
+  )
 })
 
 command('account-create', {
@@ -37,12 +35,9 @@ command('account-create', {
   const password = argv[1]
   const pin = argv[2]
 
-  return new Promise((resolve, reject) => {
-    session.context.createAccount(username, password, pin, (err, account) => {
-      if (err) return reject(err)
-      session.account = account
-      session.login = account.login
-      resolve()
-    })
+  return session.context.createAccount(username, password, pin).then(account => {
+    session.account = account
+    session.login = account.login
+    return account
   })
 })

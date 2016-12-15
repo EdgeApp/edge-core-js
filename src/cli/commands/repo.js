@@ -10,13 +10,10 @@ command('repo-sync', {
   const syncKey = new Buffer(argv[0], 'hex')
   const dataKey = new Buffer(argv[1], 'hex')
 
-  return new Promise((resolve, reject) => {
-    const store = new Repo(session.context, dataKey, syncKey)
-    store.sync(function (err, changed) {
-      if (err) return reject(err)
-      console.log(changed ? 'changed' : 'unchanged')
-      resolve(changed)
-    })
+  const store = new Repo(session.context, dataKey, syncKey)
+  return store.sync().then(changed => {
+    console.log(changed ? 'changed' : 'unchanged')
+    return changed
   })
 })
 

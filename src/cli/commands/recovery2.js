@@ -14,13 +14,10 @@ command('recovery2-login', {
     answers.push(argv[i])
   }
 
-  return new Promise((resolve, reject) => {
-    session.context.loginWithRecovery2(key, username, answers, null, {}, (err, account) => {
-      if (err) return reject(err)
-      session.account = account
-      session.login = account.login
-      resolve()
-    })
+  return session.context.loginWithRecovery2(key, username, answers, null, {}).then(account => {
+    session.account = account
+    session.login = account.login
+    return account
   })
 })
 
@@ -38,11 +35,8 @@ command('recovery2-setup', {
     answers.push(argv[i + 1])
   }
 
-  return new Promise((resolve, reject) => {
-    session.account.recovery2Set(questions, answers, function (err, key) {
-      if (err) return reject(err)
-      console.log('Recovery key: ' + key)
-      resolve()
-    })
+  return session.account.recovery2Set(questions, answers).then(key => {
+    console.log('Recovery key: ' + key)
+    return key
   })
 })

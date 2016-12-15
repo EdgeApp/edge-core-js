@@ -112,13 +112,10 @@ function makeSession (config, cmd) {
         throw cmd.usageError('No login credentials')
       }
 
-      return new Promise((resolve, reject) => {
-        session.context.loginWithPassword(config.username, config.password, null, {}, (err, account) => {
-          if (err) return reject(err)
-          session.account = account
-          session.login = account.login
-          resolve(session)
-        })
+      return session.context.loginWithPassword(config.username, config.password, null, {}).then(account => {
+        session.account = account
+        session.login = account.login
+        return session
       })
     })
   }
