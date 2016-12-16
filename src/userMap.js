@@ -1,4 +1,4 @@
-import * as crypto from './crypto/crypto.js'
+import * as scrypt from './crypto/scrypt.js'
 
 /**
  * Returns the user map, which goes from usernames to userId's
@@ -36,7 +36,7 @@ export function remove (localStorage, username) {
 export function getUserId (localStorage, username) {
   const userMap = load(localStorage)
   return userMap[username] ||
-    crypto.scrypt(username, crypto.userIdSnrp).toString('base64')
+    scrypt.scrypt(username, scrypt.userIdSnrp).toString('base64')
 }
 
 /**

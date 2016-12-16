@@ -1,5 +1,5 @@
 import {Account} from './account.js'
-import * as crypto from './crypto/crypto.js'
+import * as scrypt from './crypto/scrypt.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
 import * as loginPassword from './login/password.js'
@@ -173,7 +173,7 @@ Context.prototype.fetchRecovery2Questions = nodeify(function (recovery2Key, user
 })
 
 Context.prototype.runScryptTimingWithParameters = function (n, r, p) {
-  const snrp = crypto.makeSnrp()
+  const snrp = scrypt.makeSnrp()
   // const snrp = {
   //   'salt_hex': crypto.random(32).toString('hex'),
   //   'n': 16384,
@@ -184,7 +184,7 @@ Context.prototype.runScryptTimingWithParameters = function (n, r, p) {
   snrp.r = r
   snrp.p = p
 
-  const hashTime = crypto.timeSnrp(snrp)
+  const hashTime = scrypt.timeSnrp(snrp)
 
   return {
     time: hashTime

@@ -1,5 +1,6 @@
 /* global describe, it */
 import * as crypto from '../src/crypto/crypto.js'
+import * as scrypt from '../src/crypto/scrypt.js'
 import * as encoding from '../src/util/encoding.js'
 import assert from 'assert'
 
@@ -7,9 +8,9 @@ describe('scrypt', function () {
   it('match a known userId', function () {
     const password = 'william test'
     const result = 'TGnly9w3Fch7tyJVO+0MWLpvlbMGgWODf/tFlNkV6js='
-    const snrp = crypto.userIdSnrp
+    const snrp = scrypt.userIdSnrp
 
-    assert.equal(result, crypto.scrypt(password, snrp).toString('base64'))
+    assert.equal(result, scrypt.scrypt(password, snrp).toString('base64'))
   })
 })
 

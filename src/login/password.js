@@ -1,4 +1,5 @@
 import * as crypto from '../crypto/crypto.js'
+import * as scrypt from '../crypto/scrypt.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
 import {Login} from './login.js'
@@ -13,14 +14,14 @@ function loginOffline (ctx, username, userId, password) {
   }
 
   // Decrypt the dataKey:
-  const passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
+  const passwordKey = scrypt.scrypt(username + password, passwordKeySnrp)
   const dataKey = crypto.decrypt(passwordBox, passwordKey)
 
   return Login.offline(ctx.localStorage, username, userId, dataKey)
 }
 
 function loginOnline (ctx, username, userId, password) {
-  const passwordAuth = crypto.scrypt(username + password, crypto.passwordAuthSnrp)
+  const passwordAuth = scrypt.scrypt(username + password, scrypt.passwordAuthSnrp)
 
   // Encode the username:
   const request = {
@@ -37,7 +38,7 @@ function loginOnline (ctx, username, userId, password) {
     }
 
     // Decrypt the dataKey:
-    const passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
+    const passwordKey = scrypt.scrypt(username + password, passwordKeySnrp)
     const dataKey = crypto.decrypt(passwordBox, passwordKey)
 
     // Build the login object:
@@ -67,7 +68,7 @@ export function login (ctx, username, password) {
  */
 export function check (ctx, login, password) {
   // Derive passwordAuth:
-  const passwordAuth = crypto.scrypt(login.username + password, crypto.passwordAuthSnrp)
+  const passwordAuth = scrypt.scrypt(login.username + password, scrypt.passwordAuthSnrp)
 
   // Compare what we derived with what we have:
   for (let i = 0; i < passwordAuth.length; ++i) {
@@ -85,18 +86,18 @@ export function makeSetup (ctx, dataKey, username, password) {
   const up = username + password
 
   // dataKey chain:
-  const passwordKeySnrp = crypto.makeSnrp()
-  const passwordKey = crypto.scrypt(up, passwordKeySnrp)
+  const passwordKeySnrp = scrypt.makeSnrp()
+  const passwordKey = scrypt.scrypt(up, passwordKeySnrp)
   const passwordBox = crypto.encrypt(dataKey, passwordKey)
 
   // authKey chain:
-  const passwordAuth = crypto.scrypt(up, crypto.passwordAuthSnrp)
+  const passwordAuth = scrypt.scrypt(up, scrypt.passwordAuthSnrp)
   const passwordAuthBox = crypto.encrypt(passwordAuth, dataKey)
 
   return {
     server: {
       'passwordAuth': passwordAuth.toString('base64'),
-      'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
+      'passwordAuthSnrp': scrypt.passwordAuthSnrp, // TODO: Not needed
       'passwordKeySnrp': passwordKeySnrp,
       'passwordBox': passwordBox,
       'passwordAuthBox': passwordAuthBox
