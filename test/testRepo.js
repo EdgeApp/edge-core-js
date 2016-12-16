@@ -38,9 +38,10 @@ describe('repo', function () {
       assert(changed)
       session.storage.clear()
       const repo2 = new Repo(session.context, packages.dataKey, packages.syncKey)
-      repo2.sync().then(changed => {
+      return repo2.sync().then(changed => {
         assert(changed)
         assert.deepEqual(repo2.getJson('a/b'), payload)
+        return null
       })
     })
   })
