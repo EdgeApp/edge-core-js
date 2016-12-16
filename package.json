@@ -35,11 +35,14 @@
     "xdg-basedir": "^2.0.0"
   },
   "devDependencies": {
+    "eslint": "^3.12.2",
+    "eslint-config-standard": "^6.2.1",
+    "eslint-plugin-promise": "^3.4.0",
+    "eslint-plugin-standard": "^2.0.1",
     "json-loader": "^0.5.4",
     "mocha": "^3.1.2",
     "rollup": "^0.36.1",
     "rollup-plugin-buble": "^0.14.0",
-    "standard": "^8.5.0",
     "webpack": "^1.14.0"
   },
   "files": [
@@ -52,7 +55,7 @@
   },
   "scripts": {
     "build": "rollup -c && rollup -c rollup.config.cli.js",
-    "lint": "standard *.js 'src/**/*.js' 'test/**/*.js'",
+    "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
     "prepublish": "npm run lint && npm run build",
     "pretest": "npm run lint && rollup -c rollup.config.test.js",
     "test": "mocha --require source-map-support/register dist/tests.cjs.js"
