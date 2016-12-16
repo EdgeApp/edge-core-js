@@ -10,7 +10,7 @@ const syncServers = [
 /**
  * Fetches some resource from a sync server.
  */
-function syncRequest (fetch, method, uri, body, callback) {
+function syncRequest (fetch, method, uri, body) {
   return syncRequestInner(fetch, method, uri, body, 0)
 }
 
@@ -32,6 +32,9 @@ function syncRequestInner (fetch, method, uri, body, serverIndex) {
       throw new Error('Non-JSON reply, HTTP status ' + response.status)
     })
   }, networkError => {
+    if (serverIndex + 1 < syncServers.length) {
+      return syncRequestInner(fetch, method, uri, body, serverIndex + 1)
+    }
     throw new Error('NetworkError: Could not connect to sync server')
   })
 }
