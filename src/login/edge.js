@@ -1,9 +1,8 @@
-import elliptic from 'elliptic'
-
 import * as crypto from '../crypto.js'
+import {base58} from '../util/encoding.js'
 import * as loginCreate from './create.js'
 import * as loginPin2 from './pin2.js'
-import {base58} from '../util/encoding.js'
+import elliptic from 'elliptic'
 
 const EllipticCurve = elliptic.ec
 const secp256k1 = new EllipticCurve('secp256k1')

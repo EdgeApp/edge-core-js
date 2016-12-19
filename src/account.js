@@ -1,10 +1,10 @@
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
-import {Repo} from './util/repo.js'
 import * as server from './login/server.js'
-import {Wallet} from './wallet.js'
 import {nodeify} from './util/nodeify.js'
+import {Repo} from './util/repo.js'
+import {Wallet} from './wallet.js'
 import {WalletList} from './util/walletList.js'
 
 /**

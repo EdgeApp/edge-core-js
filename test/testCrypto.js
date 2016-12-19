@@ -1,8 +1,7 @@
 /* global describe, it */
-import assert from 'assert'
-
 import * as crypto from '../src/crypto.js'
 import * as encoding from '../src/util/encoding.js'
+import assert from 'assert'
 
 describe('scrypt', function () {
   it('match a known userId', function () {

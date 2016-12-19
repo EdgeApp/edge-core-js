@@ -1,10 +1,9 @@
 /* global describe, it */
-import assert from 'assert'
-
-import * as packages from './fake/packages.js'
 import {Repo} from '../src/util/repo.js'
-import {makeSession} from './fake/session.js'
 import {WalletList} from '../src/util/walletList.js'
+import * as packages from './fake/packages.js'
+import {makeSession} from './fake/session.js'
+import assert from 'assert'
 
 describe('wallet list', function () {
   it('raw id list', function () {

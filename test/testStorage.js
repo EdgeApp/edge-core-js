@@ -1,8 +1,7 @@
 /* global describe, it */
-import assert from 'assert'
-
-import {FakeStorage} from './fake/fakeStorage.js'
 import {ScopedStorage} from '../src/util/scopedStorage.js'
+import {FakeStorage} from './fake/fakeStorage.js'
+import assert from 'assert'
 
 describe('storage', function () {
   it('enumerate keys', function () {

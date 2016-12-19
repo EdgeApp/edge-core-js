@@ -1,18 +1,18 @@
-// Command-line tools:
-import chalk from 'chalk'
-import fs from 'fs'
-import Getopt from 'node-getopt'
-import fetch from 'node-fetch'
-import {LocalStorage} from 'node-localstorage'
-import xdgBasedir from 'xdg-basedir'
-import sourceMapSupport from 'source-map-support'
-
 // Airbitz context stuff:
 import * as abc from '../../abc.js'
 
 // Commands:
 import {command} from '../command.js'
 import '../commands/all.js'
+
+// Command-line tools:
+import chalk from 'chalk'
+import fs from 'fs'
+import Getopt from 'node-getopt'
+import fetch from 'node-fetch'
+import {LocalStorage} from 'node-localstorage'
+import sourceMapSupport from 'source-map-support'
+import xdgBasedir from 'xdg-basedir'
 
 // Display the original source location for errors:
 sourceMapSupport.install()

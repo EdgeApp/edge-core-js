@@ -1,8 +1,8 @@
 import * as crypto from '../crypto.js'
-import {base58} from '../util/encoding.js'
-import * as server from './server.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
+import {base58} from '../util/encoding.js'
+import * as server from './server.js'
 
 /**
  * Unpacks a login v2 reply package, and stores the contents locally.

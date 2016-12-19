@@ -1,9 +1,9 @@
 import bip39 from 'bip39'
 
 import * as crypto from '../crypto.js'
-import {Login} from './login.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
+import {Login} from './login.js'
 
 /**
  * Determines whether or not a username is available.

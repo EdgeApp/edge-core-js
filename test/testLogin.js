@@ -1,9 +1,8 @@
 /* global describe, it */
-import assert from 'assert'
-
 import * as abc from '../src/abc.js'
 import * as packages from './fake/packages.js'
 import {makeSession} from './fake/session.js'
+import assert from 'assert'
 
 describe('login', function () {
   it('find repo', function () {

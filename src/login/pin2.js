@@ -1,8 +1,8 @@
-import {base58} from '../util/encoding.js'
 import * as crypto from '../crypto.js'
-import {Login} from './login.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
+import {base58} from '../util/encoding.js'
+import {Login} from './login.js'
 
 function pin2Id (pin2Key, username) {
   return new Buffer(crypto.hmacSha256(username, pin2Key))

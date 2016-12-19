@@ -1,10 +1,9 @@
 /* global describe, it */
-import assert from 'assert'
-import elliptic from 'elliptic'
-
 import * as crypto from '../src/crypto.js'
 import * as loginEdge from '../src/login/edge.js'
 import {makeSession} from './fake/session.js'
+import assert from 'assert'
+import elliptic from 'elliptic'
 
 const EllipticCurve = elliptic.ec
 const secp256k1 = new EllipticCurve('secp256k1')

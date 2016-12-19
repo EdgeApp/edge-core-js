@@ -1,6 +1,5 @@
-import url from 'url'
-
 import * as packages from './packages.js'
+import url from 'url'
 
 class FakeResponse {
   constructor (body = '', opts = {}) {

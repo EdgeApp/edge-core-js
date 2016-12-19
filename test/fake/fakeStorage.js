@@ -1,6 +1,6 @@
-import * as packages from './packages.js'
-import * as repoModule from '../../src/util/repo.js'
 import {UserStorage} from '../../src/userStorage.js'
+import * as repoModule from '../../src/util/repo.js'
+import * as packages from './packages.js'
 
 /**
  * Emulates the `localStorage` browser API.

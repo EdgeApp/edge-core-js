@@ -1,7 +1,7 @@
 import * as crypto from '../crypto.js'
-import {Login} from './login.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
+import {Login} from './login.js'
 
 function loginOffline (ctx, username, userId, password) {
   // Extract stuff from storage:

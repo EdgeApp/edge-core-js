@@ -1,7 +1,7 @@
 import * as crypto from '../crypto.js'
+import * as userMap from '../userMap.js'
 import {base58} from '../util/encoding.js'
 import {Login} from './login.js'
-import * as userMap from '../userMap.js'
 
 function recovery2Id (recovery2Key, username) {
   return new Buffer(crypto.hmacSha256(username, recovery2Key))
