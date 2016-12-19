@@ -1,5 +1,5 @@
 import {Account} from './account.js'
-import * as crypto from './crypto.js'
+import * as crypto from './crypto/crypto.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
 import * as loginPassword from './login/password.js'

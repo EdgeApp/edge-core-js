@@ -1,4 +1,4 @@
-import * as crypto from '../crypto.js'
+import * as crypto from '../crypto/crypto.js'
 import {base58} from './encoding.js'
 import {ScopedStorage} from './scopedStorage.js'
 

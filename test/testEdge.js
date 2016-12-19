@@ -1,5 +1,5 @@
 /* global describe, it */
-import * as crypto from '../src/crypto.js'
+import * as crypto from '../src/crypto/crypto.js'
 import * as loginEdge from '../src/login/edge.js'
 import {makeSession} from './fake/session.js'
 import assert from 'assert'

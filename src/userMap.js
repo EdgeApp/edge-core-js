@@ -1,4 +1,4 @@
-import * as crypto from './crypto.js'
+import * as crypto from './crypto/crypto.js'
 
 /**
  * Returns the user map, which goes from usernames to userId's

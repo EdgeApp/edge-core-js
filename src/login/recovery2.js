@@ -1,4 +1,4 @@
-import * as crypto from '../crypto.js'
+import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
 import {base58} from '../util/encoding.js'
 import {Login} from './login.js'

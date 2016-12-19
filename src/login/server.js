@@ -1,4 +1,4 @@
-import * as crypto from '../crypto.js'
+import * as crypto from '../crypto/crypto.js'
 
 /**
  * Creates a blank repo on the sync server.

@@ -1,5 +1,5 @@
 /* global describe, it */
-import * as crypto from '../src/crypto.js'
+import * as crypto from '../src/crypto/crypto.js'
 import * as encoding from '../src/util/encoding.js'
 import assert from 'assert'
 
