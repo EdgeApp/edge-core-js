@@ -14,7 +14,7 @@ function loginOffline (ctx, username, userId, password) {
 
   // Decrypt the dataKey:
   const passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
-  var dataKey = crypto.decrypt(passwordBox, passwordKey)
+  const dataKey = crypto.decrypt(passwordBox, passwordKey)
 
   return Login.offline(ctx.localStorage, username, dataKey)
 }
@@ -38,7 +38,7 @@ function loginOnline (ctx, username, userId, password) {
 
     // Decrypt the dataKey:
     const passwordKey = crypto.scrypt(username + password, passwordKeySnrp)
-    var dataKey = crypto.decrypt(passwordBox, passwordKey)
+    const dataKey = crypto.decrypt(passwordBox, passwordKey)
 
     // Cache everything for future logins:
     userMap.insert(ctx.localStorage, username, userId)

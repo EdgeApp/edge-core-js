@@ -5,6 +5,7 @@
     "promise"
   ],
   "rules": {
+    "no-var": "error",
     "promise/always-return": "error",
     "promise/no-return-wrap": "error"
   }

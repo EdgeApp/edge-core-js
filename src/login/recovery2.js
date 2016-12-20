@@ -45,7 +45,7 @@ export function login (ctx, recovery2Key, username, answers) {
     }
 
     // Decrypt the dataKey:
-    var dataKey = crypto.decrypt(recovery2Box, recovery2Key)
+    const dataKey = crypto.decrypt(recovery2Box, recovery2Key)
 
     // Cache everything for future logins:
     const userId = userMap.getUserId(ctx.localStorage, username)
@@ -77,7 +77,7 @@ export function questions (ctx, recovery2Key, username) {
     }
 
     // Decrypt the questions:
-    var questions = crypto.decrypt(question2Box, recovery2Key)
+    const questions = crypto.decrypt(question2Box, recovery2Key)
     return JSON.parse(questions.toString('utf8'))
   })
 }
