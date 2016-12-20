@@ -9,6 +9,6 @@ command('wallet-list', {
   const ids = session.account.listWalletIds()
   for (const id of ids) {
     const wallet = session.account.getWallet(id)
-    console.log(id + ' (' + wallet.type + ') = ' + JSON.stringify(wallet.repoKeys, null, 2))
+    console.log(`id (${wallet.type}) = ${JSON.stringify(wallet.repoKeys, null, 2)}`)
   }
 })

@@ -59,7 +59,7 @@ export function command (name, opts, body) {
  */
 command.find = function (name) {
   const cmd = commands[name]
-  if (!cmd) throw quietError('No command named "' + name + '"')
+  if (!cmd) throw quietError(`No command named "${name}"`)
   return cmd
 }
 

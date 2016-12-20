@@ -122,7 +122,7 @@ Login.prototype.accountFind = function (type) {
     }
   }
 
-  throw new Error('Cannot find a \'' + type + '\' repo')
+  throw new Error(`Cannot find a "${type}" repo`)
 }
 
 /**
