@@ -1,4 +1,5 @@
 import * as error from '../error.js'
+import {timeout} from '../util/promise.js'
 
 const serverRoot = 'https://auth.airbitz.co/api'
 // const serverRoot = 'https://test-auth.airbitz.co/api'
@@ -59,12 +60,12 @@ export class AuthServer {
       headers.body = JSON.stringify(body)
     }
 
-    return this.io.fetch(serverRoot + uri, headers).then(response => {
+    return timeout(this.io.fetch(serverRoot + uri, headers).then(response => {
       return response.json().then(parseReply, jsonError => {
         throw new Error('Non-JSON reply, HTTP status ' + response.status)
       })
     }, networkError => {
       throw new error.NetworkError('Could not reach the auth server')
-    })
+    }), 10000, new error.NetworkError('Could not reach the auth server: timeout'))
   }
 }
