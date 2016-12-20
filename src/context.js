@@ -74,7 +74,7 @@ export function Context (opts) {
 Context.prototype.usernameList = function () {
   const map = userMap.load(this.localStorage)
   const out = []
-  for (let username in map) {
+  for (const username in map) {
     if (map.hasOwnProperty(username)) {
       out.push(username)
     }
@@ -106,7 +106,7 @@ Context.prototype.createAccount = nodeify(function (username, password, pin) {
     } catch (e) {
       // If the login doesn't have the correct account type, add it first:
       return login.accountCreate(this, this.accountType).then(() => {
-        loginPin2.setup(this, login, pin).then(() => {
+        return loginPin2.setup(this, login, pin).then(() => {
           const account = new Account(this, login)
           account.newAccount = true
           return account.sync().then(() => account)

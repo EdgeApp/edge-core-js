@@ -103,14 +103,14 @@ export function makeSnrp () {
 export function random (bytes) {
   bytes |= 0
   try {
-    var out = new Buffer(bytes)
+    const out = new Buffer(bytes)
     window.crypto.getRandomValues(out)
+    return out
   } catch (e) {
     // Alternative using node.js crypto:
     const hiddenRequire = require
     return hiddenRequire('crypto').randomBytes(bytes)
   }
-  return out
 }
 
 /**

@@ -17,7 +17,7 @@ function loginReplyStore (localStorage, username, dataKey, loginReply) {
   ]
 
   // Store any keys the reply may contain:
-  for (let key of keys) {
+  for (const key of keys) {
     if (loginReply[key]) {
       userStorage.setJson(key, loginReply[key])
     }
@@ -107,7 +107,7 @@ Login.prototype.authJson = function () {
  */
 Login.prototype.accountFind = function (type) {
   // Search the repos array:
-  for (let repo of this.repos) {
+  for (const repo of this.repos) {
     if (repo['type'] === type) {
       const keysBox = repo['keysBox'] || repo['info']
       return JSON.parse(crypto.decrypt(keysBox, this.dataKey).toString('utf-8'))

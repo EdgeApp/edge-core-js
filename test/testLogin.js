@@ -25,6 +25,7 @@ describe('login', function () {
     }
     return session.login.accountAttach(session.context, 'account:repo:test', info).then(() => {
       assert.deepEqual(session.login.accountFind('account:repo:test'), info)
+      return null
     })
   })
 })

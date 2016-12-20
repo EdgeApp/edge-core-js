@@ -53,7 +53,7 @@ function pathSplit (path) {
  * but those can't happen under the current rules anyhow.
  */
 export function mergeChanges (store, changes) {
-  for (let key in changes) {
+  for (const key in changes) {
     if (changes.hasOwnProperty(key)) {
       // Normalize the path:
       const path = pathSplit(key)
@@ -212,7 +212,7 @@ Repo.prototype.sync = function () {
   const changeKeys = this.changeStore.keys()
   if (changeKeys.length) {
     request.changes = {}
-    for (let key of changeKeys) {
+    for (const key of changeKeys) {
       const path = key.replace(/\./g, '/') + '.json'
 
       request.changes[path] = this.changeStore.getJson(key)
@@ -231,14 +231,14 @@ Repo.prototype.sync = function () {
     let changed = false
 
     // Delete any changed keys (since the upload is done):
-    for (let key of changeKeys) {
+    for (const key of changeKeys) {
       self.changeStore.removeItem(key)
     }
 
     // Process the change list:
     const changes = reply['changes']
     if (changes) {
-      for (let change in changes) {
+      for (const change in changes) {
         if (changes.hasOwnProperty(change)) {
           changed = true
           break

@@ -47,7 +47,7 @@ export function login (ctx, pin2Key, username, pin) {
     }
 
     // Decrypt the dataKey:
-    var dataKey = crypto.decrypt(pin2Box, pin2Key)
+    const dataKey = crypto.decrypt(pin2Box, pin2Key)
 
     // Cache everything for future logins:
     const userId = userMap.getUserId(ctx.localStorage, username)

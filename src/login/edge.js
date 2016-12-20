@@ -127,7 +127,7 @@ export function create (ctx, opts) {
   }
 
   return ctx.authRequest('POST', '/v2/lobby', request).then(reply => {
-    var edgeLogin = new ABCEdgeLoginRequest(reply.id)
+    const edgeLogin = new ABCEdgeLoginRequest(reply.id)
     let onProcessLogin = null
     if (opts.hasOwnProperty('onProcessLogin')) {
       onProcessLogin = opts.onProcessLogin

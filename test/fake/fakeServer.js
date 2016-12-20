@@ -228,7 +228,7 @@ FakeServer.prototype.request = function (uri, opts) {
           'syncKeyBox',
           'repos'
         ]
-        for (let key of keys) {
+        for (const key of keys) {
           if (this.db[key]) {
             results[key] = this.db[key]
           }
@@ -361,7 +361,7 @@ FakeServer.prototype.request = function (uri, opts) {
     switch (method) {
       case 'POST':
         const changes = body['changes']
-        for (let change in changes) {
+        for (const change in changes) {
           if (changes.hasOwnProperty(change)) {
             repo[change] = changes[change]
           }

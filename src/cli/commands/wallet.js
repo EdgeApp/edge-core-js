@@ -7,7 +7,7 @@ command('wallet-list', {
   if (argv.length !== 0) throw this.usageError()
 
   const ids = session.account.listWalletIds()
-  for (let id of ids) {
+  for (const id of ids) {
     const wallet = session.account.getWallet(id)
     console.log(id + ' (' + wallet.type + ') = ' + JSON.stringify(wallet.repoKeys, null, 2))
   }
