@@ -7,7 +7,7 @@ import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
 import * as userMap from './userMap.js'
 import {UserStorage} from './userStorage.js'
-import {nodeify} from './util/nodeify.js'
+import {nodeify} from './util/decorators.js'
 
 const serverRoot = 'https://auth.airbitz.co/api'
 // const serverRoot = 'https://test-auth.airbitz.co/api'

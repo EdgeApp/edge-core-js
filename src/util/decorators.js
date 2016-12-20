@@ -15,3 +15,16 @@ export function nodeify (f) {
     }
   }
 }
+
+/**
+ * If the function f throws an error, return that as a rejected promise.
+ */
+export function rejectify (f) {
+  return function () {
+    try {
+      return f.apply(this, arguments)
+    } catch (e) {
+      return Promise.reject(e)
+    }
+  }
+}

@@ -2,6 +2,8 @@ import * as crypto from '../crypto/crypto.js'
 import * as scrypt from '../crypto/scrypt.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
+import {rejectify} from '../util/decorators.js'
+import * as promise from '../util/promise.js'
 import {Login} from './login.js'
 
 function loginOffline (ctx, username, userId, password) {
@@ -17,7 +19,7 @@ function loginOffline (ctx, username, userId, password) {
   const passwordKey = scrypt.scrypt(username + password, passwordKeySnrp)
   const dataKey = crypto.decrypt(passwordBox, passwordKey)
 
-  return Login.offline(ctx.localStorage, username, userId, dataKey)
+  return Promise.resolve(Login.offline(ctx.localStorage, username, userId, dataKey))
 }
 
 function loginOnline (ctx, username, userId, password) {
@@ -56,11 +58,11 @@ export function login (ctx, username, password) {
   username = userMap.normalize(username)
   const userId = userMap.getUserId(ctx.localStorage, username)
 
-  try {
-    return Promise.resolve(loginOffline(ctx, username, userId, password))
-  } catch (e) {
-    return loginOnline(ctx, username, userId, password)
-  }
+  // Race the two login methods, and let the fastest one win:
+  return promise.any([
+    rejectify(loginOffline)(ctx, username, userId, password),
+    rejectify(loginOnline)(ctx, username, userId, password)
+  ])
 }
 
 /**
