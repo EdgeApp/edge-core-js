@@ -1,5 +1,3 @@
-import bip39 from 'bip39'
-
 import * as crypto from '../crypto.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
@@ -65,41 +63,13 @@ export function create (ctx, username, password, opts) {
     userStorage.setJson('passwordAuthBox', passwordAuthBox)
     userStorage.setJson('syncKeyBox', syncKeyBox)
 
-    // Now upgrade:
-    return upgrade(ctx, userStorage, userId, passwordAuth, dataKey).then(() => {
-      // Now activate:
-      const request = {
-        'l1': userId,
-        'lp1': passwordAuth.toString('base64')
-      }
-      return ctx.authRequest('POST', '/v1/account/activate', request).then(reply => {
-        return Login.offline(ctx.localStorage, username, dataKey)
-      })
+    // Now activate:
+    const request = {
+      'l1': userId,
+      'lp1': passwordAuth.toString('base64')
+    }
+    return ctx.authRequest('POST', '/v1/account/activate', request).then(reply => {
+      return Login.offline(ctx.localStorage, username, dataKey)
     })
-  })
-}
-
-export function upgrade (ctx, userStorage, userId, passwordAuth, dataKey) {
-  // Create a BIP39 mnemonic, and use it to derive the rootKey:
-  const entropy = crypto.random(256 / 8)
-  const mnemonic = bip39.entropyToMnemonic(entropy.toString('hex'))
-  const rootKey = bip39.mnemonicToSeed(mnemonic)
-  const infoKey = crypto.hmacSha256(rootKey, 'infoKey')
-
-  // Pack the keys into various boxes:
-  const rootKeyBox = crypto.encrypt(rootKey, dataKey)
-  const mnemonicBox = crypto.encrypt(new Buffer(mnemonic, 'utf-8'), infoKey)
-  const dataKeyBox = crypto.encrypt(dataKey, infoKey)
-
-  const request = {
-    'l1': userId,
-    'lp1': passwordAuth.toString('base64'),
-    'rootKeyBox': rootKeyBox,
-    'mnemonicBox': mnemonicBox,
-    'syncDataKeyBox': dataKeyBox
-  }
-  return ctx.authRequest('POST', '/v1/account/upgrade', request).then(reply => {
-    userStorage.setJson('rootKeyBox', rootKeyBox)
-    return null
   })
 }
