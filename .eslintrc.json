@@ -5,6 +5,7 @@
     "promise"
   ],
   "rules": {
+    "camelcase": "error",
     "no-var": "error",
     "prefer-const": "error",
     "promise/always-return": "error",
