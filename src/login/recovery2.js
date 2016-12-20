@@ -13,7 +13,7 @@ function recovery2Auth (recovery2Key, answers) {
   }
 
   const recovery2Auth = []
-  for (let answer of answers) {
+  for (const answer of answers) {
     const data = new Buffer(answer, 'utf-8')
     const auth = crypto.hmacSha256(data, recovery2Key)
     recovery2Auth.push(new Buffer(auth).toString('base64'))

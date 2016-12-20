@@ -83,7 +83,7 @@ Account.prototype.getWallet = function (id) {
 Account.prototype.getFirstWallet = function (type) {
   const ids = this.walletList.listIds()
 
-  for (let id of ids) {
+  for (const id of ids) {
     if (type == null || this.walletList.getType(id) === type) {
       return this.getWallet(id)
     }

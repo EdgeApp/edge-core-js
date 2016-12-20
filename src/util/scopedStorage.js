@@ -45,7 +45,7 @@ ScopedStorage.prototype.keys = function () {
 
 ScopedStorage.prototype.removeAll = function () {
   const keys = this.keys()
-  for (let key of keys) {
+  for (const key of keys) {
     this.removeItem(key)
   }
 }

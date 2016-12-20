@@ -74,7 +74,7 @@ export function Context (opts) {
 Context.prototype.usernameList = function () {
   const map = userMap.load(this.localStorage)
   const out = []
-  for (let username in map) {
+  for (const username in map) {
     if (map.hasOwnProperty(username)) {
       out.push(username)
     }

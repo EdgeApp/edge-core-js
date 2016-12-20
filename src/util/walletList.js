@@ -32,7 +32,7 @@ export function WalletList (repo, folder) {
  * Loads the list of wallets into the cache.
  */
 WalletList.prototype.load = function () {
-  for (let key of this.repo.keys(this.folder)) {
+  for (const key of this.repo.keys(this.folder)) {
     const walletJson = this.repo.getJson(this.folder + '/' + key)
     this.wallets[walletId(walletJson)] = walletJson
   }
@@ -45,7 +45,7 @@ WalletList.prototype.listIds = function () {
   // Load the ids and their sort indices:
   const ids = []
   const indices = {}
-  for (let id in this.wallets) {
+  for (const id in this.wallets) {
     if (this.wallets.hasOwnProperty(id)) {
       ids.push(id)
       indices[id] = this.wallets[id]['SortIndex']

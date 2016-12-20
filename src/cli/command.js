@@ -68,7 +68,7 @@ command.find = function (name) {
  */
 command.showList = function () {
   console.log('Available commands:')
-  for (let name in commands) {
+  for (const name in commands) {
     if (commands.hasOwnProperty(name)) {
       const cmd = commands[name]
       let line = '  ' + name

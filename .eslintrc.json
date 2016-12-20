@@ -6,6 +6,7 @@
   ],
   "rules": {
     "no-var": "error",
+    "prefer-const": "error",
     "promise/always-return": "error",
     "promise/no-return-wrap": "error"
   }
