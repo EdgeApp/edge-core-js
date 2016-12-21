@@ -83,9 +83,9 @@ export function questions (ctx, recovery2Key, username) {
 }
 
 /**
- * Sets up recovery questions for the login.
+ * Creates the data needed to set up recovery questions on the account.
  */
-export function setup (ctx, login, questions, answers) {
+export function makeSetup (ctx, login, questions, answers) {
   if (!(Object.prototype.toString.call(questions) === '[object Array]')) {
     throw new TypeError('Questions must be an array of strings')
   }
@@ -104,18 +104,32 @@ export function setup (ctx, login, questions, answers) {
   const recovery2Box = crypto.encrypt(login.dataKey, recovery2Key)
   const recovery2KeyBox = crypto.encrypt(recovery2Key, login.dataKey)
 
-  const request = login.authJson()
-  request['data'] = {
-    'recovery2Id': recovery2Id(recovery2Key, login.username).toString('base64'),
-    'recovery2Auth': recovery2Auth(recovery2Key, answers),
-    'recovery2Box': recovery2Box,
-    'recovery2KeyBox': recovery2KeyBox,
-    'question2Box': question2Box
+  return {
+    server: {
+      'recovery2Id': recovery2Id(recovery2Key, login.username).toString('base64'),
+      'recovery2Auth': recovery2Auth(recovery2Key, answers),
+      'recovery2Box': recovery2Box,
+      'recovery2KeyBox': recovery2KeyBox,
+      'question2Box': question2Box
+    },
+    storage: {
+      'recovery2Key': base58.encode(recovery2Key)
+    },
+    recovery2Key
   }
+}
+
+/**
+ * Sets up recovery questions for the login.
+ */
+export function setup (ctx, login, questions, answers) {
+  const setup = makeSetup(ctx, login, questions, answers)
+
+  const request = login.authJson()
+  request['data'] = setup.server
   return ctx.authRequest('PUT', '/v2/login/recovery2', request).then(reply => {
-    recovery2Key = base58.encode(recovery2Key)
-    login.userStorage.setItem('recovery2Key', recovery2Key)
-    return recovery2Key
+    login.userStorage.setItems(setup.storage)
+    return base58.encode(setup.recovery2Key)
   })
 }
 

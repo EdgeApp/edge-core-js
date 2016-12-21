@@ -49,3 +49,16 @@ ScopedStorage.prototype.removeAll = function () {
     this.removeItem(key)
   }
 }
+
+ScopedStorage.prototype.setItems = function (items) {
+  for (const key in items) {
+    if (items.hasOwnProperty(key)) {
+      const item = items[key]
+      if (typeof item === 'string') {
+        this.setItem(key, item)
+      } else {
+        this.setJson(key, item)
+      }
+    }
+  }
+}

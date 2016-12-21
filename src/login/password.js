@@ -86,33 +86,48 @@ export function check (ctx, login, password) {
 }
 
 /**
+ * Creates the data needed to set up the password on the server.
+ */
+export function makeSetup (ctx, dataKey, username, password) {
+  const up = username + password
+
+  // dataKey chain:
+  const passwordKeySnrp = crypto.makeSnrp()
+  const passwordKey = crypto.scrypt(up, passwordKeySnrp)
+  const passwordBox = crypto.encrypt(dataKey, passwordKey)
+
+  // authKey chain:
+  const passwordAuth = crypto.scrypt(up, crypto.passwordAuthSnrp)
+  const passwordAuthBox = crypto.encrypt(passwordAuth, dataKey)
+
+  return {
+    server: {
+      'passwordAuth': passwordAuth.toString('base64'),
+      'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
+      'passwordKeySnrp': passwordKeySnrp,
+      'passwordBox': passwordBox,
+      'passwordAuthBox': passwordAuthBox
+    },
+    storage: {
+      'passwordKeySnrp': passwordKeySnrp,
+      'passwordBox': passwordBox,
+      'passwordAuthBox': passwordAuthBox
+    },
+    passwordAuth
+  }
+}
+
+/**
  * Sets up a password for the login.
  */
 export function setup (ctx, login, password) {
-  const up = login.username + password
-
-  // Create new keys:
-  const passwordAuth = crypto.scrypt(up, crypto.passwordAuthSnrp)
-  const passwordKeySnrp = crypto.makeSnrp()
-  const passwordKey = crypto.scrypt(up, passwordKeySnrp)
-
-  // Encrypt:
-  const passwordBox = crypto.encrypt(login.dataKey, passwordKey)
-  const passwordAuthBox = crypto.encrypt(passwordAuth, login.dataKey)
+  const setup = makeSetup(ctx, login.dataKey, login.username, password)
 
   const request = login.authJson()
-  request['data'] = {
-    'passwordAuth': passwordAuth.toString('base64'),
-    'passwordAuthSnrp': crypto.passwordAuthSnrp, // TODO: Not needed
-    'passwordKeySnrp': passwordKeySnrp,
-    'passwordBox': passwordBox,
-    'passwordAuthBox': passwordAuthBox
-  }
+  request['data'] = setup.server
   return ctx.authRequest('PUT', '/v2/login/password', request).then(reply => {
-    login.userStorage.setJson('passwordKeySnrp', passwordKeySnrp)
-    login.userStorage.setJson('passwordBox', passwordBox)
-    login.userStorage.setJson('passwordAuthBox', passwordAuthBox)
-    login.passwordAuth = passwordAuth
+    login.userStorage.setItems(setup.storage)
+    login.passwordAuth = setup.passwordAuth
     return null
   })
 }
