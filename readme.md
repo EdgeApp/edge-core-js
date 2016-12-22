@@ -25,5 +25,5 @@ and node.js `Buffer` types, so polyfills may be necessary.
 
 Since React Native doesn't support several nodeisms like `Buffer`,
 our stopgap measure is to bundle things with Webpack.
-To do this, just run `webpack`. This will produce `dist/abc.bundle.js`.
-Then adjust `package.json` to point `main` at that file.
+To do this, just run `npm run webpack`. This will produce `dist/abc.bundle.js`,
+so you'll need to adjust `package.json` to point `main` at that file.
