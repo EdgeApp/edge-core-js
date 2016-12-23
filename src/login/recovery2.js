@@ -47,11 +47,9 @@ export function login (ctx, recovery2Key, username, answers) {
     // Decrypt the dataKey:
     const dataKey = crypto.decrypt(recovery2Box, recovery2Key)
 
-    // Cache everything for future logins:
+    // Build the login object:
     const userId = userMap.getUserId(ctx.localStorage, username)
-    userMap.insert(ctx.localStorage, username, userId)
-
-    return Login.online(ctx.localStorage, username, dataKey, reply)
+    return Login.online(ctx.localStorage, username, userId, dataKey, reply)
   })
 }
 

@@ -46,10 +46,10 @@ function loginReplyStore (localStorage, username, dataKey, loginReply) {
  * - A list of account repos
  * - The legacy BitID rootKey
  */
-export function Login (localStorage, username, dataKey) {
+export function Login (localStorage, username, userId, dataKey) {
   // Identity:
   this.username = username
-  this.userId = userMap.getUserId(localStorage, username)
+  this.userId = userId
 
   // Access to the login data:
   this.dataKey = dataKey
@@ -79,16 +79,17 @@ export function Login (localStorage, username, dataKey) {
 /**
  * Returns a new login object, populated with data from the server.
  */
-Login.online = function (localStorage, username, dataKey, loginReply) {
+Login.online = function (localStorage, username, userId, dataKey, loginReply) {
+  userMap.insert(localStorage, username, userId)
   loginReplyStore(localStorage, username, dataKey, loginReply)
-  return new Login(localStorage, username, dataKey)
+  return new Login(localStorage, username, userId, dataKey)
 }
 
 /**
  * Returns a new login object, populated with data from the local storage.
  */
-Login.offline = function (localStorage, username, dataKey) {
-  return new Login(localStorage, username, dataKey)
+Login.offline = function (localStorage, username, userId, dataKey) {
+  return new Login(localStorage, username, userId, dataKey)
 }
 
 /**

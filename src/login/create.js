@@ -56,7 +56,7 @@ export function create (ctx, username, password, opts) {
     userStorage.setItems(passwordSetup.storage)
     userStorage.setJson('syncKeyBox', syncKeyBox)
 
-    const login = Login.offline(ctx.localStorage, username, dataKey)
+    const login = Login.offline(ctx.localStorage, username, userId, dataKey)
 
     // Now activate:
     const request = login.authJson()
