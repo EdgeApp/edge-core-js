@@ -68,19 +68,14 @@ export function login (ctx, username, password) {
  * Returns true if the given password is correct.
  */
 export function check (ctx, login, password) {
-  // Extract stuff from storage:
-  const passwordKeySnrp = login.userStorage.getJson('passwordKeySnrp')
-  const passwordBox = login.userStorage.getJson('passwordBox')
-  if (!passwordKeySnrp || !passwordBox) {
-    throw new Error('Keys missing from local storage')
-  }
+  // Derive passwordAuth:
+  const passwordAuth = crypto.scrypt(login.username + password, crypto.passwordAuthSnrp)
 
-  try {
-    // Decrypt the dataKey:
-    const passwordKey = crypto.scrypt(login.username + password, passwordKeySnrp)
-    crypto.decrypt(passwordBox, passwordKey)
-  } catch (e) {
-    return false
+  // Compare what we derived with what we have:
+  for (let i = 0; i < passwordAuth.length; ++i) {
+    if (passwordAuth[i] !== login.passwordAuth[i]) {
+      return false
+    }
   }
   return true
 }
