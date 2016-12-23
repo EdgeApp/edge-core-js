@@ -1,6 +1,6 @@
 import {serialize} from '../util/decorators.js'
 import {random} from './crypto.js'
-import scryptsy from 'scryptsy'
+import scryptJs from 'scrypt-js'
 
 export const userIdSnrp = {
   'salt_hex': 'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b',
@@ -32,10 +32,20 @@ if (typeof window === 'undefined') {
 const timeScrypt = serialize(function timeScrypt (data, snrp) {
   const dklen = 32
   const salt = new Buffer(snrp.salt_hex, 'hex')
-  const startTime = timerNow()
-  return Promise.resolve({
-    hash: scryptsy(data, salt, snrp.n, snrp.r, snrp.p, dklen),
-    time: timerNow() - startTime
+  if (typeof data === 'string') {
+    data = new Buffer(data, 'utf-8')
+  }
+  return new Promise((resolve, reject) => {
+    const startTime = timerNow()
+    scryptJs(data, salt, snrp.n, snrp.r, snrp.p, dklen, (error, progress, key) => {
+      if (error) return reject(error)
+      if (key) {
+        return resolve({
+          hash: new Buffer(key),
+          time: timerNow() - startTime
+        })
+      }
+    })
   })
 })
 
