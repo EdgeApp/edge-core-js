@@ -33,9 +33,9 @@ Account.prototype.logout = function () {
   this.loggedIn = false
 }
 
-Account.prototype.passwordOk = function (password) {
+Account.prototype.passwordOk = nodeify(function (password) {
   return loginPassword.check(this.ctx, this.login, password)
-}
+})
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
 Account.prototype.passwordSetup = nodeify(function (password) {

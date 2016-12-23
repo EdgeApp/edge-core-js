@@ -75,10 +75,10 @@ export function check (ctx, login, password) {
   // Compare what we derived with what we have:
   for (let i = 0; i < passwordAuth.length; ++i) {
     if (passwordAuth[i] !== login.passwordAuth[i]) {
-      return false
+      return Promise.resolve(false)
     }
   }
-  return true
+  return Promise.resolve(true)
 }
 
 /**
