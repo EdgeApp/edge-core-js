@@ -9,7 +9,8 @@ export const userIdSnrp = {
 }
 export const passwordAuthSnrp = userIdSnrp
 
-let timedSnrp = null
+// Holds a `Promise` of an SRNP:
+let snrpCache = null
 
 let timerNow = null
 if (typeof window === 'undefined') {
@@ -30,69 +31,69 @@ if (typeof window === 'undefined') {
 export function scrypt (data, snrp) {
   const dklen = 32
   const salt = new Buffer(snrp.salt_hex, 'hex')
-  return scryptsy(data, salt, snrp.n, snrp.r, snrp.p, dklen)
+  return Promise.resolve(scryptsy(data, salt, snrp.n, snrp.r, snrp.p, dklen))
 }
 
 export function timeSnrp (snrp) {
   const startTime = timerNow()
-  scrypt('random string', snrp)
-  const endTime = timerNow()
-
-  return endTime - startTime
+  return scrypt('random string', snrp).then(result => {
+    return timerNow() - startTime
+  })
 }
 
 function calcSnrpForTarget (targetHashTimeMilliseconds) {
   const snrp = {
-    'salt_hex': random(32).toString('hex'),
-    n: 16384,
-    r: 1,
-    p: 1
+    'salt_hex': userIdSnrp.salt_hex,
+    'n': 16384,
+    'r': 1,
+    'p': 1
   }
-  const timeElapsed = timeSnrp(snrp)
 
-  let estTargetTimeElapsed = timeElapsed
-  let nUnPowered = 0
-  const r = (targetHashTimeMilliseconds / estTargetTimeElapsed)
-  if (r > 8) {
-    snrp.r = 8
+  return timeSnrp(snrp).then(timeElapsed => {
+    let estTargetTimeElapsed = timeElapsed
+    let nUnPowered = 0
+    const r = (targetHashTimeMilliseconds / estTargetTimeElapsed)
+    if (r > 8) {
+      snrp.r = 8
 
-    estTargetTimeElapsed *= 8
-    const n = (targetHashTimeMilliseconds / estTargetTimeElapsed)
+      estTargetTimeElapsed *= 8
+      const n = (targetHashTimeMilliseconds / estTargetTimeElapsed)
 
-    if (n > 4) {
-      nUnPowered = 4
+      if (n > 4) {
+        nUnPowered = 4
 
-      estTargetTimeElapsed *= 4
-      const p = (targetHashTimeMilliseconds / estTargetTimeElapsed)
-      snrp.p = Math.floor(p)
+        estTargetTimeElapsed *= 4
+        const p = (targetHashTimeMilliseconds / estTargetTimeElapsed)
+        snrp.p = Math.floor(p)
+      } else {
+        nUnPowered = Math.floor(n)
+      }
     } else {
-      nUnPowered = Math.floor(n)
+      snrp.r = r > 4 ? Math.floor(r) : 4
     }
-  } else {
-    snrp.r = r > 4 ? Math.floor(r) : 4
-  }
-  nUnPowered = nUnPowered >= 1 ? nUnPowered : 1
-  snrp.n = Math.pow(2, nUnPowered + 13)
+    nUnPowered = nUnPowered >= 1 ? nUnPowered : 1
+    snrp.n = Math.pow(2, nUnPowered + 13)
 
-  // Actually time the new snrp:
-  // const newTimeElapsed = timeSnrp(snrp)
-  // console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed + ' newTime:' + newTimeElapsed)
-  console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed)
+    // Actually time the new snrp:
+    // const newTimeElapsed = timeSnrp(snrp)
+    // console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed + ' newTime:' + newTimeElapsed)
+    console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed)
 
-  return snrp
+    return snrp
+  })
 }
 
 export function makeSnrp () {
-  if (!timedSnrp) {
-    // Shoot for a 2s hash time:
-    timedSnrp = calcSnrpForTarget(2000)
+  // Put the calculation in the cache if it isn't already started:
+  if (!snrpCache) {
+    snrpCache = calcSnrpForTarget(2000)
   }
 
   // Return a copy of the timed version with a fresh salt:
-  return {
+  return snrpCache.then(snrp => ({
     'salt_hex': random(32).toString('hex'),
-    'n': timedSnrp.n,
-    'r': timedSnrp.r,
-    'p': timedSnrp.p
-  }
+    'n': snrp.n,
+    'r': snrp.r,
+    'p': snrp.p
+  }))
 }
