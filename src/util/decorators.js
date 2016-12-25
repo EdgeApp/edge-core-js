@@ -28,3 +28,18 @@ export function rejectify (f) {
     }
   }
 }
+
+/**
+ * Prevents a function from running in parallel.
+ * The currently-running operation must finish before the new one starts.
+ */
+export function serialize (f) {
+  let nextTask = Promise.resolve()
+  return function () {
+    nextTask = nextTask.then(
+      win => f.apply(this, arguments),
+      fail => f.apply(this, arguments)
+    )
+    return nextTask
+  }
+}

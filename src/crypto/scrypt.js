@@ -1,3 +1,4 @@
+import {serialize} from '../util/decorators.js'
 import {random} from './crypto.js'
 import scryptsy from 'scryptsy'
 
@@ -26,19 +27,20 @@ if (typeof window === 'undefined') {
 /**
  * @param data A `Buffer` or byte-array object.
  * @param snrp A JSON SNRP structure.
- * @return A Buffer with the hash.
+ * @return A promise for an object with the hash and elapsed time.
  */
-export function scrypt (data, snrp) {
+const timeScrypt = serialize(function timeScrypt (data, snrp) {
   const dklen = 32
   const salt = new Buffer(snrp.salt_hex, 'hex')
-  return Promise.resolve(scryptsy(data, salt, snrp.n, snrp.r, snrp.p, dklen))
-}
-
-export function timeSnrp (snrp) {
   const startTime = timerNow()
-  return scrypt('random string', snrp).then(result => {
-    return timerNow() - startTime
+  return Promise.resolve({
+    hash: scryptsy(data, salt, snrp.n, snrp.r, snrp.p, dklen),
+    time: timerNow() - startTime
   })
+})
+
+export function scrypt (data, snrp) {
+  return timeScrypt(data, snrp).then(value => value.hash)
 }
 
 function calcSnrpForTarget (targetHashTimeMilliseconds) {
@@ -49,7 +51,8 @@ function calcSnrpForTarget (targetHashTimeMilliseconds) {
     'p': 1
   }
 
-  return timeSnrp(snrp).then(timeElapsed => {
+  return timeScrypt('', snrp).then(value => {
+    const timeElapsed = value.time
     let estTargetTimeElapsed = timeElapsed
     let nUnPowered = 0
     const r = (targetHashTimeMilliseconds / estTargetTimeElapsed)
