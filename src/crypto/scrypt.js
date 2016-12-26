@@ -14,13 +14,13 @@ export const passwordAuthSnrp = userIdSnrp
 let snrpCache = null
 
 let timerNow = null
-if (typeof window === 'undefined') {
+if (typeof window !== 'undefined' && window.performance) {
   timerNow = function () {
-    return Date.now()
+    return window.performance.now()
   }
 } else {
   timerNow = function () {
-    return window.performance.now()
+    return Date.now()
   }
 }
 
