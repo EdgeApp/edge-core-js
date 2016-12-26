@@ -12,7 +12,7 @@ import {WalletList} from './util/walletList.js'
  * which wraps the core implementation in a more OOP-style API.
  */
 export function Account (ctx, login) {
-  this.ctx = ctx
+  this.io = ctx.io
   this.login = login
   this.keys = login.accountFind(ctx.accountType)
   this.repoInfo = this.keys // Deprecated name
@@ -24,7 +24,7 @@ export function Account (ctx, login) {
   this.recoveryLogin = false
   this.username = login.username
 
-  this.repo = new Repo(ctx, new Buffer(this.keys.dataKey, 'hex'), new Buffer(this.keys.syncKey, 'hex'))
+  this.repo = new Repo(this.io, new Buffer(this.keys.dataKey, 'hex'), new Buffer(this.keys.syncKey, 'hex'))
   this.walletList = new WalletList(this.repo)
 }
 
@@ -34,22 +34,22 @@ Account.prototype.logout = function () {
 }
 
 Account.prototype.passwordOk = nodeify(function (password) {
-  return loginPassword.check(this.ctx, this.login, password)
+  return loginPassword.check(this.io, this.login, password)
 })
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
 Account.prototype.passwordSetup = nodeify(function (password) {
-  return loginPassword.setup(this.ctx, this.login, password)
+  return loginPassword.setup(this.io, this.login, password)
 })
 Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = nodeify(function (pin) {
-  return loginPin2.setup(this.ctx, this.login, pin)
+  return loginPin2.setup(this.io, this.login, pin)
 })
 Account.prototype.changePIN = Account.prototype.pinSetup
 
 Account.prototype.recovery2Set = nodeify(function (questions, answers) {
-  return loginRecovery2.setup(this.ctx, this.login, questions, answers)
+  return loginRecovery2.setup(this.io, this.login, questions, answers)
 })
 
 Account.prototype.setupRecovery2Questions = Account.prototype.recovery2Set
@@ -98,10 +98,10 @@ Account.prototype.getFirstWallet = function (type) {
  * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
  */
 Account.prototype.createWallet = nodeify(function (type, keysJson) {
-  return server.repoCreate(this.ctx, this.login, keysJson).then(keysJson => {
+  return server.repoCreate(this.io, this.login, keysJson).then(keysJson => {
     const id = this.walletList.addWallet(type, keysJson)
     return this.sync().then(dirty => {
-      return server.repoActivate(this.ctx, this.login, keysJson).then(() => id)
+      return server.repoActivate(this.io, this.login, keysJson).then(() => id)
     })
   })
 })

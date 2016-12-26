@@ -3,7 +3,7 @@ import * as crypto from '../crypto/crypto.js'
 /**
  * Creates a blank repo on the sync server.
  */
-export function repoCreate (ctx, login, keysJson) {
+export function repoCreate (io, login, keysJson) {
   keysJson.dataKey = keysJson.dataKey || crypto.random(32).toString('hex')
   keysJson.syncKey = keysJson.syncKey || crypto.random(20).toString('hex')
 
@@ -12,7 +12,7 @@ export function repoCreate (ctx, login, keysJson) {
     'lp1': login.passwordAuth.toString('base64'),
     'repo_wallet_key': keysJson.syncKey
   }
-  return ctx.authRequest('POST', '/v1/wallet/create', request).then(reply => keysJson)
+  return io.authRequest('POST', '/v1/wallet/create', request).then(reply => keysJson)
 }
 
 /**
@@ -20,11 +20,11 @@ export function repoCreate (ctx, login, keysJson) {
  * This should be called after the repo is securely attached
  * to the login or account.
  */
-export function repoActivate (ctx, login, keysJson) {
+export function repoActivate (io, login, keysJson) {
   const request = {
     'l1': login.userId,
     'lp1': login.passwordAuth.toString('base64'),
     'repo_wallet_key': keysJson.syncKey
   }
-  return ctx.authRequest('POST', '/v1/wallet/activate', request).then(reply => null)
+  return io.authRequest('POST', '/v1/wallet/activate', request).then(reply => null)
 }

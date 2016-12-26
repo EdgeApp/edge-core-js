@@ -85,13 +85,13 @@ export function repoId (dataKey) {
  * Creates a data storage and syncing object.
  * The data inside the repo is encrypted with `dataKey`.
  */
-export function Repo (ctx, dataKey, syncKey) {
-  this.fetch = ctx.fetch
+export function Repo (io, dataKey, syncKey) {
+  this.fetch = io.fetch
   this.dataKey = dataKey
   this.syncKey = syncKey
 
   const prefix = 'airbitz.repo.' + repoId(dataKey)
-  this.store = new ScopedStorage(ctx.localStorage, prefix)
+  this.store = new ScopedStorage(io.localStorage, prefix)
   this.changeStore = this.store.subStore('changes')
   this.dataStore = this.store.subStore('data')
 }

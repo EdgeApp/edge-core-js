@@ -7,21 +7,21 @@ import * as passwordLogin from './password.js'
 /**
  * Determines whether or not a username is available.
  */
-export function usernameAvailable (ctx, username) {
+export function usernameAvailable (io, username) {
   username = userMap.normalize(username)
 
-  return userMap.getUserId(ctx.localStorage, username).then(userId => {
+  return userMap.getUserId(io.localStorage, username).then(userId => {
     const request = {
       'l1': userId
     }
-    return ctx.authRequest('POST', '/v1/account/available', request)
+    return io.authRequest('POST', '/v1/account/available', request)
   })
 }
 
 /**
  * Creates a new login on the auth server.
  */
-export function create (ctx, username, password, opts) {
+export function create (io, username, password, opts) {
   username = userMap.normalize(username)
 
   // Create account repo info:
@@ -30,8 +30,8 @@ export function create (ctx, username, password, opts) {
   const syncKeyBox = crypto.encrypt(syncKey, dataKey)
 
   return Promise.all([
-    userMap.getUserId(ctx.localStorage, username),
-    passwordLogin.makeSetup(ctx, dataKey, username, password)
+    userMap.getUserId(io.localStorage, username),
+    passwordLogin.makeSetup(io, dataKey, username, password)
   ]).then(values => {
     const [userId, passwordSetup] = values
 
@@ -52,14 +52,14 @@ export function create (ctx, username, password, opts) {
       'repo_account_key': syncKey.toString('hex')
     }
 
-    return ctx.authRequest('POST', '/v1/account/create', request).then(reply => {
+    return io.authRequest('POST', '/v1/account/create', request).then(reply => {
       // Cache everything for future logins:
-      userMap.insert(ctx.localStorage, username, userId)
-      const userStorage = new UserStorage(ctx.localStorage, username)
+      userMap.insert(io.localStorage, username, userId)
+      const userStorage = new UserStorage(io.localStorage, username)
       userStorage.setItems(passwordSetup.storage)
       userStorage.setJson('syncKeyBox', syncKeyBox)
 
-      const login = Login.offline(ctx.localStorage, username, userId, dataKey)
+      const login = Login.offline(io.localStorage, username, userId, dataKey)
 
       // Now activate:
       const auth = login.authJson()
@@ -67,7 +67,7 @@ export function create (ctx, username, password, opts) {
         l1: auth.userId,
         lp1: auth.passwordAuth
       }
-      return ctx.authRequest('POST', '/v1/account/activate', request).then(reply => login)
+      return io.authRequest('POST', '/v1/account/activate', request).then(reply => login)
     })
   })
 }

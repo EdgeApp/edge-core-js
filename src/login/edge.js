@@ -19,7 +19,7 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
 /**
  * Creates a new login object, and attaches the account repo info to it.
  */
-function createLogin (ctx, accountReply) {
+function createLogin (io, accountReply) {
   const username = accountReply.username + '-' + base58.encode(crypto.random(4))
   const password = base58.encode(crypto.random(24))
   const pin = accountReply.pinString
@@ -29,11 +29,11 @@ function createLogin (ctx, accountReply) {
     opts.syncKey = new Buffer(accountReply.info['syncKey'], 'hex')
   }
 
-  return loginCreate.create(ctx, username, password, opts).then(login => {
-    return login.accountAttach(ctx, accountReply.type, accountReply.info).then(() => {
+  return loginCreate.create(io, username, password, opts).then(login => {
+    return login.accountAttach(io, accountReply.type, accountReply.info).then(() => {
       if (typeof pin === 'string' && pin.length === 4) {
-        if (loginPin2.getKey(ctx, username) == null) {
-          return loginPin2.setup(ctx, login, pin).then(() => login, () => login)
+        if (loginPin2.getKey(io, username) == null) {
+          return loginPin2.setup(io, login, pin).then(() => login, () => login)
         }
       }
       return login
@@ -76,22 +76,22 @@ export function decodeAccountReply (keys, lobby) {
  * Polls the lobby every second or so,
  * looking for a reply to our account request.
  */
-function pollServer (ctx, edgeLogin, keys, onLogin, onProcessLogin) {
+function pollServer (io, edgeLogin, keys, onLogin, onProcessLogin) {
   // Don't do anything if the user has cancelled this request:
   if (edgeLogin.done_) {
     return
   }
 
   setTimeout(function () {
-    ctx.authRequest('GET', '/v2/lobby/' + edgeLogin.id, '').then(reply => {
+    io.authRequest('GET', '/v2/lobby/' + edgeLogin.id, '').then(reply => {
       const accountReply = decodeAccountReply(keys, reply)
       if (!accountReply) {
-        return pollServer(ctx, edgeLogin, keys, onLogin, onProcessLogin)
+        return pollServer(io, edgeLogin, keys, onLogin, onProcessLogin)
       }
       if (onProcessLogin !== null) {
         onProcessLogin(accountReply.username)
       }
-      return createLogin(ctx, accountReply).then(
+      return createLogin(io, accountReply).then(
         login => onLogin(null, login), e => onLogin(e)
       )
     }).catch(e => {
@@ -103,7 +103,7 @@ function pollServer (ctx, edgeLogin, keys, onLogin, onProcessLogin) {
 /**
  * Creates a new account request lobby on the server.
  */
-export function create (ctx, opts) {
+export function create (io, opts) {
   const keys = secp256k1.genKeyPair()
 
   const data = {
@@ -125,13 +125,13 @@ export function create (ctx, opts) {
     'data': data
   }
 
-  return ctx.authRequest('POST', '/v2/lobby', request).then(reply => {
+  return io.authRequest('POST', '/v2/lobby', request).then(reply => {
     const edgeLogin = new ABCEdgeLoginRequest(reply.id)
     let onProcessLogin = null
     if (opts.hasOwnProperty('onProcessLogin')) {
       onProcessLogin = opts.onProcessLogin
     }
-    pollServer(ctx, edgeLogin, keys, opts.onLogin, onProcessLogin)
+    pollServer(io, edgeLogin, keys, opts.onLogin, onProcessLogin)
     return edgeLogin
   })
 }

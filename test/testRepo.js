@@ -7,7 +7,7 @@ import assert from 'assert'
 describe('repo', function () {
   it('local get', function () {
     const session = makeSession({needsContext: true})
-    const repo = new Repo(session.context, packages.dataKey, packages.syncKey)
+    const repo = new Repo(session.context.io, packages.dataKey, packages.syncKey)
 
     const payload = {'message': 'Hello'}
     session.storage.setItem(
@@ -19,7 +19,7 @@ describe('repo', function () {
 
   it('offline set/get', function () {
     const session = makeSession({needsContext: true})
-    const repo = new Repo(session.context, packages.dataKey, packages.syncKey)
+    const repo = new Repo(session.context.io, packages.dataKey, packages.syncKey)
 
     const payload = {'message': 'Hello'}
     repo.setJson('a/b', payload)
@@ -29,14 +29,14 @@ describe('repo', function () {
   it('repo-to-repo sync', function () {
     const session = makeSession({needsContext: true})
     session.server.populateRepos()
-    const repo1 = new Repo(session.context, packages.dataKey, packages.syncKey)
+    const repo1 = new Repo(session.context.io, packages.dataKey, packages.syncKey)
 
     const payload = {'message': 'Hello'}
     repo1.setJson('a/b', payload)
     return repo1.sync().then(changed => {
       assert(changed)
       session.storage.clear()
-      const repo2 = new Repo(session.context, packages.dataKey, packages.syncKey)
+      const repo2 = new Repo(session.context.io, packages.dataKey, packages.syncKey)
       return repo2.sync().then(changed => {
         assert(changed)
         assert.deepEqual(repo2.getJson('a/b'), payload)
@@ -47,7 +47,7 @@ describe('repo', function () {
 
   it('list', function () {
     const session = makeSession({needsContext: true})
-    const repo = new Repo(session.context, packages.dataKey, packages.syncKey)
+    const repo = new Repo(session.context.io, packages.dataKey, packages.syncKey)
 
     repo.setText('a', 'x')
     repo.setText('a/b', 'x')
