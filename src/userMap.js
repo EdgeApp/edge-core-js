@@ -35,8 +35,10 @@ export function remove (localStorage, username) {
  */
 export function getUserId (localStorage, username) {
   const userMap = load(localStorage)
-  return userMap[username] ||
-    scrypt.scrypt(username, scrypt.userIdSnrp).toString('base64')
+  if (userMap[username]) {
+    return Promise.resolve(userMap[username])
+  }
+  return scrypt.scrypt(username, scrypt.userIdSnrp).then(userId => userId.toString('base64'))
 }
 
 /**

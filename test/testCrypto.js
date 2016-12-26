@@ -10,7 +10,9 @@ describe('scrypt', function () {
     const result = 'TGnly9w3Fch7tyJVO+0MWLpvlbMGgWODf/tFlNkV6js='
     const snrp = scrypt.userIdSnrp
 
-    assert.equal(result, scrypt.scrypt(password, snrp).toString('base64'))
+    return scrypt.scrypt(password, snrp).then(userId => {
+      return assert.equal(userId.toString('base64'), result)
+    })
   })
 })
 

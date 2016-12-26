@@ -2,7 +2,7 @@ import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
 import * as server from './login/server.js'
-import {nodeify} from './util/nodeify.js'
+import {nodeify} from './util/decorators.js'
 import {Repo} from './util/repo.js'
 import {Wallet} from './wallet.js'
 import {WalletList} from './util/walletList.js'
@@ -33,9 +33,9 @@ Account.prototype.logout = function () {
   this.loggedIn = false
 }
 
-Account.prototype.passwordOk = function (password) {
+Account.prototype.passwordOk = nodeify(function (password) {
   return loginPassword.check(this.ctx, this.login, password)
-}
+})
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
 Account.prototype.passwordSetup = nodeify(function (password) {

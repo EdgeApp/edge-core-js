@@ -1,5 +1,4 @@
 import {Account} from './account.js'
-import * as scrypt from './crypto/scrypt.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
 import * as loginPassword from './login/password.js'
@@ -7,7 +6,7 @@ import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
 import * as userMap from './userMap.js'
 import {UserStorage} from './userStorage.js'
-import {nodeify} from './util/nodeify.js'
+import {nodeify} from './util/decorators.js'
 
 const serverRoot = 'https://auth.airbitz.co/api'
 // const serverRoot = 'https://test-auth.airbitz.co/api'
@@ -171,25 +170,6 @@ Context.prototype.loginWithRecovery2 = nodeify(function (recovery2Key, username,
 Context.prototype.fetchRecovery2Questions = nodeify(function (recovery2Key, username) {
   return loginRecovery2.questions(this, recovery2Key, username)
 })
-
-Context.prototype.runScryptTimingWithParameters = function (n, r, p) {
-  const snrp = scrypt.makeSnrp()
-  // const snrp = {
-  //   'salt_hex': crypto.random(32).toString('hex'),
-  //   'n': 16384,
-  //   'r': 1,
-  //   'p': 1
-  // }
-  snrp.n = Math.pow(2, n)
-  snrp.r = r
-  snrp.p = p
-
-  const hashTime = scrypt.timeSnrp(snrp)
-
-  return {
-    time: hashTime
-  }
-}
 
 Context.prototype.checkPasswordRules = function (password) {
   const tooShort = password.length < 10

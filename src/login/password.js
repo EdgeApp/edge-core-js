@@ -2,6 +2,8 @@ import * as crypto from '../crypto/crypto.js'
 import * as scrypt from '../crypto/scrypt.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
+import {rejectify} from '../util/decorators.js'
+import * as promise from '../util/promise.js'
 import {Login} from './login.js'
 
 function loginOffline (ctx, username, userId, password) {
@@ -14,35 +16,36 @@ function loginOffline (ctx, username, userId, password) {
   }
 
   // Decrypt the dataKey:
-  const passwordKey = scrypt.scrypt(username + password, passwordKeySnrp)
-  const dataKey = crypto.decrypt(passwordBox, passwordKey)
-
-  return Login.offline(ctx.localStorage, username, userId, dataKey)
+  return scrypt.scrypt(username + password, passwordKeySnrp).then(passwordKey => {
+    const dataKey = crypto.decrypt(passwordBox, passwordKey)
+    return Login.offline(ctx.localStorage, username, userId, dataKey)
+  })
 }
 
 function loginOnline (ctx, username, userId, password) {
-  const passwordAuth = scrypt.scrypt(username + password, scrypt.passwordAuthSnrp)
-
-  // Encode the username:
-  const request = {
-    'userId': userId,
-    'passwordAuth': passwordAuth.toString('base64')
-    // "otp": null
-  }
-  return ctx.authRequest('POST', '/v2/login', request).then(reply => {
-    // Password login:
-    const passwordKeySnrp = reply['passwordKeySnrp']
-    const passwordBox = reply['passwordBox']
-    if (!passwordKeySnrp || !passwordBox) {
-      throw new Error('Missing data for password login')
+  return scrypt.scrypt(username + password, scrypt.passwordAuthSnrp).then(passwordAuth => {
+    // Encode the username:
+    const request = {
+      'userId': userId,
+      'passwordAuth': passwordAuth.toString('base64')
+      // "otp": null
     }
+    return ctx.authRequest('POST', '/v2/login', request).then(reply => {
+      // Password login:
+      const passwordKeySnrp = reply['passwordKeySnrp']
+      const passwordBox = reply['passwordBox']
+      if (!passwordKeySnrp || !passwordBox) {
+        throw new Error('Missing data for password login')
+      }
 
-    // Decrypt the dataKey:
-    const passwordKey = scrypt.scrypt(username + password, passwordKeySnrp)
-    const dataKey = crypto.decrypt(passwordBox, passwordKey)
+      // Decrypt the dataKey:
+      return scrypt.scrypt(username + password, passwordKeySnrp).then(passwordKey => {
+        const dataKey = crypto.decrypt(passwordBox, passwordKey)
 
-    // Build the login object:
-    return Login.online(ctx.localStorage, username, userId, dataKey, reply)
+        // Build the login object:
+        return Login.online(ctx.localStorage, username, userId, dataKey, reply)
+      })
+    })
   })
 }
 
@@ -54,13 +57,13 @@ function loginOnline (ctx, username, userId, password) {
  */
 export function login (ctx, username, password) {
   username = userMap.normalize(username)
-  const userId = userMap.getUserId(ctx.localStorage, username)
-
-  try {
-    return Promise.resolve(loginOffline(ctx, username, userId, password))
-  } catch (e) {
-    return loginOnline(ctx, username, userId, password)
-  }
+  return userMap.getUserId(ctx.localStorage, username).then(userId => {
+    // Race the two login methods, and let the fastest one win:
+    return promise.any([
+      rejectify(loginOffline)(ctx, username, userId, password),
+      rejectify(loginOnline)(ctx, username, userId, password)
+    ])
+  })
 }
 
 /**
@@ -68,15 +71,15 @@ export function login (ctx, username, password) {
  */
 export function check (ctx, login, password) {
   // Derive passwordAuth:
-  const passwordAuth = scrypt.scrypt(login.username + password, scrypt.passwordAuthSnrp)
-
-  // Compare what we derived with what we have:
-  for (let i = 0; i < passwordAuth.length; ++i) {
-    if (passwordAuth[i] !== login.passwordAuth[i]) {
-      return false
+  return scrypt.scrypt(login.username + password, scrypt.passwordAuthSnrp).then(passwordAuth => {
+    // Compare what we derived with what we have:
+    for (let i = 0; i < passwordAuth.length; ++i) {
+      if (passwordAuth[i] !== login.passwordAuth[i]) {
+        return false
+      }
     }
-  }
-  return true
+    return true
+  })
 }
 
 /**
@@ -86,42 +89,53 @@ export function makeSetup (ctx, dataKey, username, password) {
   const up = username + password
 
   // dataKey chain:
-  const passwordKeySnrp = scrypt.makeSnrp()
-  const passwordKey = scrypt.scrypt(up, passwordKeySnrp)
-  const passwordBox = crypto.encrypt(dataKey, passwordKey)
+  const boxPromise = scrypt.makeSnrp().then(passwordKeySnrp => {
+    return scrypt.scrypt(up, passwordKeySnrp).then(passwordKey => {
+      const passwordBox = crypto.encrypt(dataKey, passwordKey)
+      return {passwordKeySnrp, passwordBox}
+    })
+  })
 
   // authKey chain:
-  const passwordAuth = scrypt.scrypt(up, scrypt.passwordAuthSnrp)
-  const passwordAuthBox = crypto.encrypt(passwordAuth, dataKey)
+  const authPromise = scrypt.scrypt(up, scrypt.passwordAuthSnrp).then(passwordAuth => {
+    const passwordAuthBox = crypto.encrypt(passwordAuth, dataKey)
+    return {passwordAuth, passwordAuthBox}
+  })
 
-  return {
-    server: {
-      'passwordAuth': passwordAuth.toString('base64'),
-      'passwordAuthSnrp': scrypt.passwordAuthSnrp, // TODO: Not needed
-      'passwordKeySnrp': passwordKeySnrp,
-      'passwordBox': passwordBox,
-      'passwordAuthBox': passwordAuthBox
-    },
-    storage: {
-      'passwordKeySnrp': passwordKeySnrp,
-      'passwordBox': passwordBox,
-      'passwordAuthBox': passwordAuthBox
-    },
-    passwordAuth
-  }
+  return Promise.all([boxPromise, authPromise]).then(values => {
+    const [
+      {passwordKeySnrp, passwordBox},
+      {passwordAuth, passwordAuthBox}
+    ] = values
+    return {
+      server: {
+        'passwordAuth': passwordAuth.toString('base64'),
+        'passwordAuthSnrp': scrypt.passwordAuthSnrp, // TODO: Not needed
+        'passwordKeySnrp': passwordKeySnrp,
+        'passwordBox': passwordBox,
+        'passwordAuthBox': passwordAuthBox
+      },
+      storage: {
+        'passwordKeySnrp': passwordKeySnrp,
+        'passwordBox': passwordBox,
+        'passwordAuthBox': passwordAuthBox
+      },
+      passwordAuth
+    }
+  })
 }
 
 /**
  * Sets up a password for the login.
  */
 export function setup (ctx, login, password) {
-  const setup = makeSetup(ctx, login.dataKey, login.username, password)
-
-  const request = login.authJson()
-  request['data'] = setup.server
-  return ctx.authRequest('PUT', '/v2/login/password', request).then(reply => {
-    login.userStorage.setItems(setup.storage)
-    login.passwordAuth = setup.passwordAuth
-    return null
+  return makeSetup(ctx, login.dataKey, login.username, password).then(setup => {
+    const request = login.authJson()
+    request['data'] = setup.server
+    return ctx.authRequest('PUT', '/v2/login/password', request).then(reply => {
+      login.userStorage.setItems(setup.storage)
+      login.passwordAuth = setup.passwordAuth
+      return null
+    })
   })
 }

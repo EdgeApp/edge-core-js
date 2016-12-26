@@ -10,11 +10,12 @@ import * as passwordLogin from './password.js'
 export function usernameAvailable (ctx, username) {
   username = userMap.normalize(username)
 
-  const userId = userMap.getUserId(ctx.localStorage, username)
-  const request = {
-    'l1': userId
-  }
-  return ctx.authRequest('POST', '/v1/account/available', request)
+  return userMap.getUserId(ctx.localStorage, username).then(userId => {
+    const request = {
+      'l1': userId
+    }
+    return ctx.authRequest('POST', '/v1/account/available', request)
+  })
 }
 
 /**
@@ -22,44 +23,47 @@ export function usernameAvailable (ctx, username) {
  */
 export function create (ctx, username, password, opts) {
   username = userMap.normalize(username)
-  const userId = userMap.getUserId(ctx.localStorage, username)
 
   // Create account repo info:
   const dataKey = crypto.random(32)
   const syncKey = opts.syncKey || crypto.random(20)
   const syncKeyBox = crypto.encrypt(syncKey, dataKey)
 
-  // Create password login info:
-  const passwordSetup = passwordLogin.makeSetup(ctx, dataKey, username, password)
+  return Promise.all([
+    userMap.getUserId(ctx.localStorage, username),
+    passwordLogin.makeSetup(ctx, dataKey, username, password)
+  ]).then(values => {
+    const [userId, passwordSetup] = values
 
-  // Package:
-  const carePackage = {
-    'SNRP2': passwordSetup.server.passwordKeySnrp
-  }
-  const loginPackage = {
-    'EMK_LP2': passwordSetup.server.passwordBox,
-    'ESyncKey': syncKeyBox,
-    'ELP1': passwordSetup.server.passwordAuthBox
-  }
-  const request = {
-    'l1': userId,
-    'lp1': passwordSetup.server.passwordAuth,
-    'care_package': JSON.stringify(carePackage),
-    'login_package': JSON.stringify(loginPackage),
-    'repo_account_key': syncKey.toString('hex')
-  }
+    // Package:
+    const carePackage = {
+      'SNRP2': passwordSetup.server.passwordKeySnrp
+    }
+    const loginPackage = {
+      'EMK_LP2': passwordSetup.server.passwordBox,
+      'ESyncKey': syncKeyBox,
+      'ELP1': passwordSetup.server.passwordAuthBox
+    }
+    const request = {
+      'l1': userId,
+      'lp1': passwordSetup.server.passwordAuth,
+      'care_package': JSON.stringify(carePackage),
+      'login_package': JSON.stringify(loginPackage),
+      'repo_account_key': syncKey.toString('hex')
+    }
 
-  return ctx.authRequest('POST', '/v1/account/create', request).then(reply => {
-    // Cache everything for future logins:
-    userMap.insert(ctx.localStorage, username, userId)
-    const userStorage = new UserStorage(ctx.localStorage, username)
-    userStorage.setItems(passwordSetup.storage)
-    userStorage.setJson('syncKeyBox', syncKeyBox)
+    return ctx.authRequest('POST', '/v1/account/create', request).then(reply => {
+      // Cache everything for future logins:
+      userMap.insert(ctx.localStorage, username, userId)
+      const userStorage = new UserStorage(ctx.localStorage, username)
+      userStorage.setItems(passwordSetup.storage)
+      userStorage.setJson('syncKeyBox', syncKeyBox)
 
-    const login = Login.offline(ctx.localStorage, username, userId, dataKey)
+      const login = Login.offline(ctx.localStorage, username, userId, dataKey)
 
-    // Now activate:
-    const request = login.authJson()
-    return ctx.authRequest('POST', '/v1/account/activate', request).then(reply => login)
+      // Now activate:
+      const request = login.authJson()
+      return ctx.authRequest('POST', '/v1/account/activate', request).then(reply => login)
+    })
   })
 }

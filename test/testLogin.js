@@ -97,13 +97,13 @@ describe('password', function () {
   it('check good', function () {
     const session = makeSession({needsAccount: true})
 
-    assert(session.account.passwordOk('y768Mv4PLFupQjMu'))
+    return session.account.passwordOk('y768Mv4PLFupQjMu').then(result => assert(result))
   })
 
   it('check bad', function () {
     const session = makeSession({needsAccount: true})
 
-    assert(!session.account.passwordOk('wrong one'))
+    return session.account.passwordOk('wrong one').then(result => assert(!result))
   })
 
   it('login offline', function (done) {
