@@ -15,7 +15,8 @@ function syncRequest (io, method, uri, body) {
 }
 
 function syncRequestInner (io, method, uri, body, serverIndex) {
-  console.log('syncRequestInner: Connecting to ' + syncServers[serverIndex])
+  uri = syncServers[serverIndex] + uri
+  io.log.info(`sync: ${method} ${uri}`)
   const headers = {
     method: method,
     headers: {
@@ -27,7 +28,7 @@ function syncRequestInner (io, method, uri, body, serverIndex) {
     headers.body = JSON.stringify(body)
   }
 
-  return io.fetch(syncServers[serverIndex] + uri, headers).then(response => {
+  return io.fetch(uri, headers).then(response => {
     return response.json().catch(jsonError => {
       throw new Error('Non-JSON reply, HTTP status ' + response.status)
     })

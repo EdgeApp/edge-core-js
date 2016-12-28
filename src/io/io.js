@@ -1,10 +1,15 @@
 import {AuthServer} from './authServer.js'
+import {Log} from './log.js'
 
 /**
  * Extracts the io functions we need from the browser.
  */
 export function makeBrowserIo () {
   const out = {}
+
+  if (typeof console !== 'undefined') {
+    out.console = console
+  }
 
   if (typeof window !== 'undefined') {
     out.fetch = window.fetch
@@ -21,7 +26,7 @@ export function makeBrowserIo () {
 export class IoContext {
   constructor (nativeIo, opts = {}) {
     // Copy native io resources:
-    const keys = ['fetch', 'localStorage']
+    const keys = ['console', 'fetch', 'localStorage']
     for (const key of keys) {
       if (key in opts) {
         this[key] = opts[key]
@@ -34,6 +39,7 @@ export class IoContext {
 
     // Set up wrapper objects:
     this.authServer = new AuthServer(this, opts.apiKey)
+    this.log = new Log(this)
   }
 
   authRequest () {

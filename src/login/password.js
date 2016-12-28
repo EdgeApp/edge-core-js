@@ -89,7 +89,7 @@ export function makeSetup (io, dataKey, username, password) {
   const up = username + password
 
   // dataKey chain:
-  const boxPromise = scrypt.makeSnrp().then(passwordKeySnrp => {
+  const boxPromise = scrypt.makeSnrp(io).then(passwordKeySnrp => {
     return scrypt.scrypt(up, passwordKeySnrp).then(passwordKey => {
       const passwordBox = crypto.encrypt(dataKey, passwordKey)
       return {passwordKeySnrp, passwordBox}

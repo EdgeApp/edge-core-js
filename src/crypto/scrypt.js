@@ -53,7 +53,7 @@ export function scrypt (data, snrp) {
   return timeScrypt(data, snrp).then(value => value.hash)
 }
 
-function calcSnrpForTarget (targetHashTimeMilliseconds) {
+function calcSnrpForTarget (io, targetHashTimeMilliseconds) {
   const snrp = {
     'salt_hex': userIdSnrp.salt_hex,
     'n': 16384,
@@ -87,19 +87,15 @@ function calcSnrpForTarget (targetHashTimeMilliseconds) {
     nUnPowered = nUnPowered >= 1 ? nUnPowered : 1
     snrp.n = Math.pow(2, nUnPowered + 13)
 
-    // Actually time the new snrp:
-    // const newTimeElapsed = timeSnrp(snrp)
-    // console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed + ' newTime:' + newTimeElapsed)
-    console.log('timedSnrp: ' + snrp.n + ' ' + snrp.r + ' ' + snrp.p + ' oldTime:' + timeElapsed)
-
+    io.log.info(`snrp: ${snrp.n} ${snrp.r} ${snrp.p} based on ${timeElapsed}ms benchmark`)
     return snrp
   })
 }
 
-export function makeSnrp () {
+export function makeSnrp (io) {
   // Put the calculation in the cache if it isn't already started:
   if (!snrpCache) {
-    snrpCache = calcSnrpForTarget(2000)
+    snrpCache = calcSnrpForTarget(io, 2000)
   }
 
   // Return a copy of the timed version with a fresh salt:
