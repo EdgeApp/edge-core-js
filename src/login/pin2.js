@@ -50,8 +50,8 @@ export function login (io, pin2Key, username, pin) {
     const dataKey = crypto.decrypt(pin2Box, pin2Key)
 
     // Build the login object:
-    return userMap.getUserId(io.localStorage, username).then(userId => {
-      return Login.online(io.localStorage, username, userId, dataKey, reply)
+    return userMap.getUserId(io, username).then(userId => {
+      return Login.online(io, username, userId, dataKey, reply)
     })
   })
 }

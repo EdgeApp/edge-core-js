@@ -18,7 +18,7 @@ function loginOffline (io, username, userId, password) {
   // Decrypt the dataKey:
   return scrypt.scrypt(username + password, passwordKeySnrp).then(passwordKey => {
     const dataKey = crypto.decrypt(passwordBox, passwordKey)
-    return Login.offline(io.localStorage, username, userId, dataKey)
+    return Login.offline(io, username, userId, dataKey)
   })
 }
 
@@ -43,7 +43,7 @@ function loginOnline (io, username, userId, password) {
         const dataKey = crypto.decrypt(passwordBox, passwordKey)
 
         // Build the login object:
-        return Login.online(io.localStorage, username, userId, dataKey, reply)
+        return Login.online(io, username, userId, dataKey, reply)
       })
     })
   })
@@ -57,7 +57,7 @@ function loginOnline (io, username, userId, password) {
  */
 export function login (io, username, password) {
   username = userMap.normalize(username)
-  return userMap.getUserId(io.localStorage, username).then(userId => {
+  return userMap.getUserId(io, username).then(userId => {
     // Race the two login methods, and let the fastest one win:
     return promise.any([
       rejectify(loginOffline)(io, username, userId, password),

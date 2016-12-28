@@ -17,7 +17,7 @@ export function Context (io, opts) {
 }
 
 Context.prototype.usernameList = function () {
-  const map = userMap.load(this.io.localStorage)
+  const map = userMap.load(this.io)
   const out = []
   for (const username in map) {
     if (map.hasOwnProperty(username)) {
@@ -32,7 +32,7 @@ Context.prototype.fixUsername = userMap.normalize
 
 Context.prototype.removeUsername = function (username) {
   username = userMap.normalize(username)
-  userMap.remove(this.io.localStorage, username)
+  userMap.remove(this.io, username)
   const store = new UserStorage(this.io.localStorage, username)
   store.removeAll()
 }

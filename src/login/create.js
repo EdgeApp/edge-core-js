@@ -10,7 +10,7 @@ import * as passwordLogin from './password.js'
 export function usernameAvailable (io, username) {
   username = userMap.normalize(username)
 
-  return userMap.getUserId(io.localStorage, username).then(userId => {
+  return userMap.getUserId(io, username).then(userId => {
     const request = {
       'l1': userId
     }
@@ -30,7 +30,7 @@ export function create (io, username, password, opts) {
   const syncKeyBox = crypto.encrypt(syncKey, dataKey)
 
   return Promise.all([
-    userMap.getUserId(io.localStorage, username),
+    userMap.getUserId(io, username),
     passwordLogin.makeSetup(io, dataKey, username, password)
   ]).then(values => {
     const [userId, passwordSetup] = values
@@ -54,12 +54,12 @@ export function create (io, username, password, opts) {
 
     return io.authRequest('POST', '/v1/account/create', request).then(reply => {
       // Cache everything for future logins:
-      userMap.insert(io.localStorage, username, userId)
+      userMap.insert(io, username, userId)
       const userStorage = new UserStorage(io.localStorage, username)
       userStorage.setItems(passwordSetup.storage)
       userStorage.setJson('syncKeyBox', syncKeyBox)
 
-      const login = Login.offline(io.localStorage, username, userId, dataKey)
+      const login = Login.offline(io, username, userId, dataKey)
 
       // Now activate:
       const auth = login.authJson()

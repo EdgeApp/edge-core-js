@@ -10,11 +10,11 @@ const syncServers = [
 /**
  * Fetches some resource from a sync server.
  */
-function syncRequest (fetch, method, uri, body) {
-  return syncRequestInner(fetch, method, uri, body, 0)
+function syncRequest (io, method, uri, body) {
+  return syncRequestInner(io, method, uri, body, 0)
 }
 
-function syncRequestInner (fetch, method, uri, body, serverIndex) {
+function syncRequestInner (io, method, uri, body, serverIndex) {
   console.log('syncRequestInner: Connecting to ' + syncServers[serverIndex])
   const headers = {
     method: method,
@@ -27,13 +27,13 @@ function syncRequestInner (fetch, method, uri, body, serverIndex) {
     headers.body = JSON.stringify(body)
   }
 
-  return fetch(syncServers[serverIndex] + uri, headers).then(response => {
+  return io.fetch(syncServers[serverIndex] + uri, headers).then(response => {
     return response.json().catch(jsonError => {
       throw new Error('Non-JSON reply, HTTP status ' + response.status)
     })
   }, networkError => {
     if (serverIndex + 1 < syncServers.length) {
-      return syncRequestInner(fetch, method, uri, body, serverIndex + 1)
+      return syncRequestInner(io, method, uri, body, serverIndex + 1)
     }
     throw new Error('NetworkError: Could not connect to sync server')
   })
@@ -86,7 +86,7 @@ export function repoId (dataKey) {
  * The data inside the repo is encrypted with `dataKey`.
  */
 export function Repo (io, dataKey, syncKey) {
-  this.fetch = io.fetch
+  this.io = io
   this.dataKey = dataKey
   this.syncKey = syncKey
 
@@ -227,7 +227,7 @@ Repo.prototype.sync = function () {
   }
 
   // Make the request:
-  return syncRequest(this.fetch, request.changes ? 'POST' : 'GET', uri, request).then(reply => {
+  return syncRequest(this.io, request.changes ? 'POST' : 'GET', uri, request).then(reply => {
     let changed = false
 
     // Delete any changed keys (since the upload is done):

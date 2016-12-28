@@ -7,8 +7,8 @@ import * as server from './server.js'
 /**
  * Unpacks a login v2 reply package, and stores the contents locally.
  */
-function loginReplyStore (localStorage, username, dataKey, loginReply) {
-  const userStorage = new UserStorage(localStorage, username)
+function loginReplyStore (io, username, dataKey, loginReply) {
+  const userStorage = new UserStorage(io.localStorage, username)
   const keys = [
     // Password login:
     'passwordKeySnrp', 'passwordBox',
@@ -46,14 +46,14 @@ function loginReplyStore (localStorage, username, dataKey, loginReply) {
  * - A list of account repos
  * - The legacy BitID rootKey
  */
-export function Login (localStorage, username, userId, dataKey) {
+export function Login (io, username, userId, dataKey) {
   // Identity:
   this.username = username
   this.userId = userId
 
   // Access to the login data:
   this.dataKey = dataKey
-  this.userStorage = new UserStorage(localStorage, username)
+  this.userStorage = new UserStorage(io.localStorage, username)
 
   // Return access to the server:
   const passwordAuthBox = this.userStorage.getJson('passwordAuthBox')
@@ -79,17 +79,17 @@ export function Login (localStorage, username, userId, dataKey) {
 /**
  * Returns a new login object, populated with data from the server.
  */
-Login.online = function (localStorage, username, userId, dataKey, loginReply) {
-  userMap.insert(localStorage, username, userId)
-  loginReplyStore(localStorage, username, dataKey, loginReply)
-  return new Login(localStorage, username, userId, dataKey)
+Login.online = function (io, username, userId, dataKey, loginReply) {
+  userMap.insert(io, username, userId)
+  loginReplyStore(io, username, dataKey, loginReply)
+  return new Login(io, username, userId, dataKey)
 }
 
 /**
  * Returns a new login object, populated with data from the local storage.
  */
-Login.offline = function (localStorage, username, userId, dataKey) {
-  return new Login(localStorage, username, userId, dataKey)
+Login.offline = function (io, username, userId, dataKey) {
+  return new Login(io, username, userId, dataKey)
 }
 
 /**
