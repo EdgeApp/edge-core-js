@@ -1,5 +1,36 @@
+import * as error from '../error.js'
+
 const serverRoot = 'https://auth.airbitz.co/api'
 // const serverRoot = 'https://test-auth.airbitz.co/api'
+
+function parseReply (json) {
+  switch (json['status_code']) {
+    case 0: // Success
+      return json['results']
+
+    case 2: // Account exists
+      throw new error.UsernameError('Account already exists on server')
+
+    case 3: // Account does not exist
+      throw new error.UsernameError('Account does not exist on server')
+
+    case 4: // Invalid password
+    case 5: // Invalid answers
+      throw new error.PasswordError(json['results'])
+
+    case 8: // Invalid OTP
+      throw new error.OtpError(json['results'])
+
+    case 1000: // Endpoint obsolete
+      throw new error.ObsoleteApiError()
+
+    case 1: // Error
+    case 6: // Invalid API key
+    case 7: // Pin expired
+    default:
+      throw new Error(json['message'] || 'Unknown server error')
+  }
+}
 
 export class AuthServer {
   constructor (io, apiKey) {
@@ -29,16 +60,11 @@ export class AuthServer {
     }
 
     return this.io.fetch(serverRoot + uri, headers).then(response => {
-      return response.json().then(json => {
-        if (json['status_code'] !== 0) {
-          throw new Error('Server error ' + JSON.stringify(json))
-        }
-        return json['results']
-      }, jsonError => {
+      return response.json().then(parseReply, jsonError => {
         throw new Error('Non-JSON reply, HTTP status ' + response.status)
       })
     }, networkError => {
-      throw new Error('NetworkError: Could not connect to auth server')
+      throw new error.NetworkError('Could not reach the auth server')
     })
   }
 }
