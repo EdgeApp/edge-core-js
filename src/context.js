@@ -1,4 +1,5 @@
 import {Account} from './account.js'
+import {AuthServer} from './io/authServer.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
 import * as loginPassword from './login/password.js'
@@ -7,9 +8,6 @@ import * as loginRecovery2 from './login/recovery2.js'
 import * as userMap from './userMap.js'
 import {UserStorage} from './userStorage.js'
 import {nodeify} from './util/decorators.js'
-
-const serverRoot = 'https://auth.airbitz.co/api'
-// const serverRoot = 'https://test-auth.airbitz.co/api'
 
 let DomWindow = null
 if (typeof (window) === 'undefined') {
@@ -37,36 +35,10 @@ export function Context (opts) {
   this.localStorage = opts.localStorage || DomWindow.localStorage
   this.fetch = opts.fetch || DomWindow.fetch
 
-  /**
-   * Wraps the raw authRequest function in something more friendly.
-   * @param body JSON object to send
-   * @return a promise of the server's JSON reply
-   */
-  this.authRequest = function (method, uri, body) {
-    const headers = {
-      method: method,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Token ' + opts.apiKey
-      }
-    }
-    if (method !== 'GET') {
-      headers.body = JSON.stringify(body)
-    }
-
-    return this.fetch(serverRoot + uri, headers).then(response => {
-      return response.json().then(json => {
-        if (json['status_code'] !== 0) {
-          throw new Error('Server error ' + JSON.stringify(json))
-        }
-        return json['results']
-      }, jsonError => {
-        throw new Error('Non-JSON reply, HTTP status ' + response.status)
-      })
-    }, networkError => {
-      throw new Error('NetworkError: Could not connect to auth server')
-    })
+  // Set up io wrappers:
+  this.authServer = new AuthServer(this, opts.apiKey)
+  this.authRequest = function () {
+    return this.authServer.request.apply(this.authServer, arguments)
   }
 }
 
