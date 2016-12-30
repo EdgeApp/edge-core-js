@@ -1,11 +1,11 @@
-import {command} from '../command.js'
+import {command, UsageError} from '../command.js'
 
 command('recovery2-login', {
   usage: '<key> <username> <answers>...',
   help: 'Logs the user in with a recovery key and answers',
   needsContext: true
 }, function (session, argv) {
-  if (argv.length < 2) throw this.usageError()
+  if (argv.length < 2) throw new UsageError(this)
   const key = argv[0]
   const username = argv[1]
 
@@ -26,7 +26,7 @@ command('recovery2-setup', {
   help: 'Creates or changes the recovery questions for a login',
   needsLogin: true
 }, function (session, argv) {
-  if (argv.length % 2) throw this.usageError()
+  if (argv.length % 2) throw new UsageError(this)
 
   const questions = []
   const answers = []

@@ -1,8 +1,9 @@
 // Airbitz context stuff:
 import * as abc from '../../abc.js'
+import {rejectify} from '../../util/decorators.js'
 
 // Commands:
-import {command} from '../command.js'
+import {command, UsageError} from '../command.js'
 import '../commands/all.js'
 
 // Command-line tools:
@@ -33,7 +34,7 @@ const helpCommand = command('help', {
   usage: '[command]',
   help: 'Displays help for any command'
 }, function (session, argv) {
-  if (argv.length > 1) throw this.usageError('Too many parameters')
+  if (argv.length > 1) throw new UsageError(this, 'Too many parameters')
 
   if (argv.length) {
     // Command help:
@@ -94,7 +95,7 @@ function makeSession (config, cmd) {
   if (cmd.needsContext) {
     // API key:
     if (!config.apiKey) {
-      throw cmd.usageError('No API key')
+      throw new UsageError(cmd, 'No API key')
     }
     const fakeStorage = new LocalStorage(config.directory || './.cli')
     session.context = new abc.Context({
@@ -109,7 +110,7 @@ function makeSession (config, cmd) {
   if (cmd.needsLogin) {
     out = out.then(session => {
       if (!config.username || !config.password) {
-        throw cmd.usageError('No login credentials')
+        throw new UsageError(cmd, 'No login credentials')
       }
 
       return session.context.loginWithPassword(config.username, config.password, null, {}).then(account => {
@@ -121,21 +122,6 @@ function makeSession (config, cmd) {
   }
 
   return out
-}
-
-/**
- * Sends an error object to stderr.
- */
-function reportError (e) {
-  if (e.quiet) {
-    console.error(chalk.red(e.message))
-    if (e.hint) {
-      console.error(e.hint)
-    }
-  } else {
-    console.error(chalk.red('Unhandled exception'))
-    console.error(e)
-  }
 }
 
 /**
@@ -153,17 +139,30 @@ function main () {
   const config = loadConfig(opt.options)
 
   // Set up the session:
-  makeSession(config, cmd).then(session => {
+  return makeSession(config, cmd).then(session => {
     // Invoke the command:
     return cmd.invoke(session, opt.argv)
-  }).catch(e => {
-    reportError(e)
   })
 }
 
-// Invoke the main function, with error reporting:
-try {
-  main()
-} catch (e) {
-  reportError(e)
-}
+// Invoke the main function with error reporting:
+rejectify(main)().catch(e => {
+  if (e.type) {
+    // This is a known error, so just show the message:
+    console.error(chalk.red(e.message))
+
+    // Special handling for particular error types:
+    switch (e.type) {
+      case UsageError.type:
+        if (e.command) {
+          console.error(`Usage: ${e.command.usage}`)
+        }
+        break
+    }
+  } else {
+    // This is an unexpected crash error, so show a stack trace:
+    console.error(chalk.red('Unexpected error'))
+    console.error(e)
+  }
+  process.exit(1)
+})

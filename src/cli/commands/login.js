@@ -1,11 +1,11 @@
-import {command} from '../command.js'
+import {command, UsageError} from '../command.js'
 
 command('account-remove', {
   usage: '<username>',
   help: 'Removes any locally-stored data for the given username',
   needsContext: true
 }, function (session, argv) {
-  if (argv.length !== 1) throw this.usageError()
+  if (argv.length !== 1) throw new UsageError(this)
   const username = argv[0]
 
   return session.context.removeUsername(username)
@@ -16,7 +16,7 @@ command('account-available', {
   help: 'Determines whether or not a username is available',
   needsContext: true
 }, function (session, argv) {
-  if (argv.length !== 1) throw this.usageError()
+  if (argv.length !== 1) throw new UsageError(this)
   const username = argv[0]
 
   return session.context.usernameAvailable(username).then(
@@ -30,7 +30,7 @@ command('account-create', {
   help: 'Create a login on the auth server',
   needsContext: true
 }, function (session, argv) {
-  if (argv.length !== 3) throw this.usageError()
+  if (argv.length !== 3) throw new UsageError(this)
   const username = argv[0]
   const password = argv[1]
   const pin = argv[2]

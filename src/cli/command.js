@@ -1,24 +1,16 @@
 const commands = []
 
 /**
- * Creates a new `Error` object with a true `quiet` property.
- * The main loop can avoid showing stack traces for errors like these.
+ * Creates an error indicating a problem with the command-line arguments.
+ * @param command The command that was invoked. Can be null.
  */
-function quietError (message) {
-  const out = new Error(message)
-  out.quiet = true
-  return out
+export function UsageError (command, message) {
+  const e = new Error(message || 'Incorrect arguments')
+  e.type = UsageError.name
+  e.command = command
+  return e
 }
-
-/**
- * Creates an error indicating a problem
- */
-function usageError (message) {
-  const out = new Error(message || 'Incorrect arguments')
-  out.quiet = true
-  out.hint = 'Usage: ' + this.usage
-  return out
-}
+UsageError.type = UsageError.name
 
 /**
  * Creates a new command, and adds it to the global command registry.
@@ -26,8 +18,7 @@ function usageError (message) {
 export function command (name, opts, body) {
   const cmd = {
     name: name,
-    invoke: body,
-    usageError: usageError
+    invoke: body
   }
 
   // Expand the needs flags:
@@ -59,7 +50,7 @@ export function command (name, opts, body) {
  */
 command.find = function (name) {
   const cmd = commands[name]
-  if (!cmd) throw quietError(`No command named "${name}"`)
+  if (!cmd) throw new UsageError(null, `No command named "${name}"`)
   return cmd
 }
 

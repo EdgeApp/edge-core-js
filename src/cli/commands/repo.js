@@ -1,12 +1,12 @@
 import {Repo} from '../../util/repo.js'
-import {command} from '../command.js'
+import {command, UsageError} from '../command.js'
 
 command('repo-sync', {
   usage: '<sync-key> <data-key>',
   help: 'Fetches the contents of a sync repo',
   needsContext: true
 }, function (session, argv) {
-  if (argv.length !== 2) throw this.usageError()
+  if (argv.length !== 2) throw new UsageError(this)
   const syncKey = new Buffer(argv[0], 'hex')
   const dataKey = new Buffer(argv[1], 'hex')
 
@@ -22,7 +22,7 @@ command('repo-list', {
   help: 'Shows the contents of a sync repo folder',
   needsContext: true
 }, function (session, argv) {
-  if (argv.length < 2 || argv.length > 3) throw this.usageError()
+  if (argv.length < 2 || argv.length > 3) throw new UsageError(this)
   const syncKey = new Buffer(argv[0], 'hex')
   const dataKey = new Buffer(argv[1], 'hex')
   const path = argv.length === 3 ? argv[2] : ''
@@ -36,7 +36,7 @@ command('repo-set', {
   help: 'Writes a file to the sync repo',
   needsContext: true
 }, function (session, argv) {
-  if (argv.length !== 4) throw this.usageError()
+  if (argv.length !== 4) throw new UsageError(this)
   const syncKey = new Buffer(argv[0], 'hex')
   const dataKey = new Buffer(argv[1], 'hex')
   const path = argv[2]
@@ -51,7 +51,7 @@ command('repo-get', {
   help: 'Reads a file from the sync repo',
   needsContext: true
 }, function (session, argv) {
-  if (argv.length !== 3) throw this.usageError()
+  if (argv.length !== 3) throw new UsageError(this)
   const syncKey = new Buffer(argv[0], 'hex')
   const dataKey = new Buffer(argv[1], 'hex')
   const path = argv[2]
