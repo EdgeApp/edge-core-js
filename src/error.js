@@ -13,33 +13,24 @@
  */
 
 /**
- * Creates an error constructor with the given type and default message.
- */
-function defineError (type, defaultMessage) {
-  const f = function ConstructError (message) {
-    const e = new Error(message || defaultMessage)
-    e.type = type
-    return e
-  }
-  f.type = type
-  return f
-}
-
-/**
  * Could not reach the server at all.
  */
-export const NetworkError = defineError(
-  'NetworkError',
-  'Cannot reach the network'
-)
+export function NetworkError (message) {
+  const e = new Error(message || 'Cannot reach the network')
+  e.type = NetworkError.name
+  return e
+}
+NetworkError.type = NetworkError.name
 
 /**
  * The endpoint on the server is obsolete, and the app needs to be upgraded.
  */
-export const ObsoleteApiError = defineError(
-  'ObsoleteApiError',
-  'The application is too old. Please upgrade.'
-)
+export function ObsoleteApiError (message) {
+  const e = new Error(message || 'The application is too old. Please upgrade.')
+  e.type = ObsoleteApiError.name
+  return e
+}
+ObsoleteApiError.type = ObsoleteApiError.name
 
 /**
  * Cannot find a login with that id.
@@ -49,7 +40,12 @@ export const ObsoleteApiError = defineError(
  * - PIN login: wrong PIN key
  * - Recovery login: wrong username, or wrong recovery key
  */
-export const UsernameError = defineError('UsernameError', 'Invaid username')
+export function UsernameError (message) {
+  const e = new Error(message || 'Invalid username')
+  e.type = UsernameError.name
+  return e
+}
+UsernameError.type = UsernameError.name
 
 /**
  * The provided authentication is incorrect.
