@@ -19,6 +19,9 @@ function parseReply (json) {
     case 5: // Invalid answers
       throw new error.PasswordError(json['results'])
 
+    case 6: // Invalid API key
+      throw new Error('Invalid API key')
+
     case 8: // Invalid OTP
       throw new error.OtpError(json['results'])
 
@@ -26,10 +29,10 @@ function parseReply (json) {
       throw new error.ObsoleteApiError()
 
     case 1: // Error
-    case 6: // Invalid API key
     case 7: // Pin expired
     default:
-      throw new Error(json['message'] || 'Unknown server error')
+      const message = json['message'] || json['detail'] || JSON.stringify(json)
+      throw new Error(`Server error: ${message}`)
   }
 }
 
