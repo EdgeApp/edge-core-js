@@ -62,7 +62,11 @@ export function create (ctx, username, password, opts) {
       const login = Login.offline(ctx.localStorage, username, userId, dataKey)
 
       // Now activate:
-      const request = login.authJson()
+      const auth = login.authJson()
+      const request = {
+        l1: auth.userId,
+        lp1: auth.passwordAuth
+      }
       return ctx.authRequest('POST', '/v1/account/activate', request).then(reply => login)
     })
   })
