@@ -10,12 +10,13 @@ const syncServers = [
 /**
  * Fetches some resource from a sync server.
  */
-function syncRequest (fetch, method, uri, body) {
-  return syncRequestInner(fetch, method, uri, body, 0)
+function syncRequest (io, method, uri, body) {
+  return syncRequestInner(io, method, uri, body, 0)
 }
 
-function syncRequestInner (fetch, method, uri, body, serverIndex) {
-  console.log('syncRequestInner: Connecting to ' + syncServers[serverIndex])
+function syncRequestInner (io, method, uri, body, serverIndex) {
+  uri = syncServers[serverIndex] + uri
+  io.log.info(`sync: ${method} ${uri}`)
   const headers = {
     method: method,
     headers: {
@@ -27,13 +28,13 @@ function syncRequestInner (fetch, method, uri, body, serverIndex) {
     headers.body = JSON.stringify(body)
   }
 
-  return fetch(syncServers[serverIndex] + uri, headers).then(response => {
+  return io.fetch(uri, headers).then(response => {
     return response.json().catch(jsonError => {
       throw new Error('Non-JSON reply, HTTP status ' + response.status)
     })
   }, networkError => {
     if (serverIndex + 1 < syncServers.length) {
-      return syncRequestInner(fetch, method, uri, body, serverIndex + 1)
+      return syncRequestInner(io, method, uri, body, serverIndex + 1)
     }
     throw new Error('NetworkError: Could not connect to sync server')
   })
@@ -85,13 +86,13 @@ export function repoId (dataKey) {
  * Creates a data storage and syncing object.
  * The data inside the repo is encrypted with `dataKey`.
  */
-export function Repo (ctx, dataKey, syncKey) {
-  this.fetch = ctx.fetch
+export function Repo (io, dataKey, syncKey) {
+  this.io = io
   this.dataKey = dataKey
   this.syncKey = syncKey
 
   const prefix = 'airbitz.repo.' + repoId(dataKey)
-  this.store = new ScopedStorage(ctx.localStorage, prefix)
+  this.store = new ScopedStorage(io.localStorage, prefix)
   this.changeStore = this.store.subStore('changes')
   this.dataStore = this.store.subStore('data')
 }
@@ -227,7 +228,7 @@ Repo.prototype.sync = function () {
   }
 
   // Make the request:
-  return syncRequest(this.fetch, request.changes ? 'POST' : 'GET', uri, request).then(reply => {
+  return syncRequest(this.io, request.changes ? 'POST' : 'GET', uri, request).then(reply => {
     let changed = false
 
     // Delete any changed keys (since the upload is done):

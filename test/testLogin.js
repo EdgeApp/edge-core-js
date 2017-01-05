@@ -22,7 +22,7 @@ describe('login', function () {
       dataKey: 'fa57',
       syncKey: 'f00d'
     }
-    return session.login.accountAttach(session.context, 'account:repo:test', info).then(() => {
+    return session.login.accountAttach(session.context.io, 'account:repo:test', info).then(() => {
       assert.deepEqual(session.login.accountFind('account:repo:test'), info)
       return null
     })

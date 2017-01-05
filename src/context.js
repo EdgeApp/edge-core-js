@@ -1,5 +1,4 @@
 import {Account} from './account.js'
-import {AuthServer} from './io/authServer.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
 import * as loginPassword from './login/password.js'
@@ -9,41 +8,16 @@ import * as userMap from './userMap.js'
 import {UserStorage} from './userStorage.js'
 import {nodeify} from './util/decorators.js'
 
-let DomWindow = null
-if (typeof (window) === 'undefined') {
-  DomWindow = {
-    localStorage: null,
-    XMLHttpRequest: function () {
-      console.log('XMLHttpRequest: Error browser routine used in non-browser environment')
-    },
-    performance: {
-      now: function () {
-        console.log('performance: Error browser routine used in non-browser environment')
-      }
-    }
-  }
-} else {
-  DomWindow = window
-}
-
 /**
  * @param opts An object containing optional arguments.
  */
-export function Context (opts) {
-  opts = opts || {}
+export function Context (io, opts) {
+  this.io = io
   this.accountType = opts.accountType || 'account:repo:co.airbitz.wallet'
-  this.localStorage = opts.localStorage || DomWindow.localStorage
-  this.fetch = opts.fetch || DomWindow.fetch
-
-  // Set up io wrappers:
-  this.authServer = new AuthServer(this, opts.apiKey)
-  this.authRequest = function () {
-    return this.authServer.request.apply(this.authServer, arguments)
-  }
 }
 
 Context.prototype.usernameList = function () {
-  const map = userMap.load(this.localStorage)
+  const map = userMap.load(this.io)
   const out = []
   for (const username in map) {
     if (map.hasOwnProperty(username)) {
@@ -58,26 +32,26 @@ Context.prototype.fixUsername = userMap.normalize
 
 Context.prototype.removeUsername = function (username) {
   username = userMap.normalize(username)
-  userMap.remove(this.localStorage, username)
-  const store = new UserStorage(this.localStorage, username)
+  userMap.remove(this.io, username)
+  const store = new UserStorage(this.io.localStorage, username)
   store.removeAll()
 }
 
 Context.prototype.usernameAvailable = nodeify(function (username) {
-  return loginCreate.usernameAvailable(this, username)
+  return loginCreate.usernameAvailable(this.io, username)
 })
 
 /**
  * Creates a login, then creates and attaches an account to it.
  */
 Context.prototype.createAccount = nodeify(function (username, password, pin) {
-  return loginCreate.create(this, username, password, {}).then(login => {
+  return loginCreate.create(this.io, username, password, {}).then(login => {
     try {
       login.accountFind(this.accountType)
     } catch (e) {
       // If the login doesn't have the correct account type, add it first:
-      return login.accountCreate(this, this.accountType).then(() => {
-        return loginPin2.setup(this, login, pin).then(() => {
+      return login.accountCreate(this.io, this.accountType).then(() => {
+        return loginPin2.setup(this.io, login, pin).then(() => {
           const account = new Account(this, login)
           account.newAccount = true
           return account.sync().then(() => account)
@@ -86,7 +60,7 @@ Context.prototype.createAccount = nodeify(function (username, password, pin) {
     }
 
     // Otherwise, we have the correct account type, and can simply return:
-    return loginPin2.setup(this, login, pin).then(() => {
+    return loginPin2.setup(this.io, login, pin).then(() => {
       const account = new Account(this, login)
       account.newAccount = true
       return account.sync().then(() => account)
@@ -95,7 +69,7 @@ Context.prototype.createAccount = nodeify(function (username, password, pin) {
 })
 
 Context.prototype.loginWithPassword = nodeify(function (username, password, otp, opts) {
-  return loginPassword.login(this, username, password).then(login => {
+  return loginPassword.login(this.io, username, password).then(login => {
     const account = new Account(this, login)
     account.passwordLogin = true
     return account.sync().then(() => account)
@@ -103,18 +77,18 @@ Context.prototype.loginWithPassword = nodeify(function (username, password, otp,
 })
 
 Context.prototype.pinExists = function (username) {
-  return loginPin2.getKey(this, username) != null
+  return loginPin2.getKey(this.io, username) != null
 }
 Context.prototype.pinLoginEnabled = function (username) {
-  return loginPin2.getKey(this, username) != null
+  return loginPin2.getKey(this.io, username) != null
 }
 
 Context.prototype.loginWithPIN = nodeify(function (username, pin) {
-  const pin2Key = loginPin2.getKey(this, username)
+  const pin2Key = loginPin2.getKey(this.io, username)
   if (!pin2Key) {
     throw new Error('No PIN set locally for this account')
   }
-  return loginPin2.login(this, pin2Key, username, pin).then(login => {
+  return loginPin2.login(this.io, pin2Key, username, pin).then(login => {
     const account = new Account(this, login)
     account.pinLogin = true
     return account.sync().then(() => account)
@@ -122,7 +96,7 @@ Context.prototype.loginWithPIN = nodeify(function (username, pin) {
 })
 
 Context.prototype.getRecovery2Key = nodeify(function (username) {
-  const userStorage = new UserStorage(this.localStorage, username)
+  const userStorage = new UserStorage(this.io.localStorage, username)
   const recovery2Key = userStorage.getItem('recovery2Key')
   if (recovery2Key) {
     return Promise.resolve(recovery2Key)
@@ -132,7 +106,7 @@ Context.prototype.getRecovery2Key = nodeify(function (username) {
 })
 
 Context.prototype.loginWithRecovery2 = nodeify(function (recovery2Key, username, answers, otp, options) {
-  return loginRecovery2.login(this, recovery2Key, username, answers).then(login => {
+  return loginRecovery2.login(this.io, recovery2Key, username, answers).then(login => {
     const account = new Account(this, login)
     account.recoveryLogin = true
     return account.sync().then(() => account)
@@ -140,7 +114,7 @@ Context.prototype.loginWithRecovery2 = nodeify(function (recovery2Key, username,
 })
 
 Context.prototype.fetchRecovery2Questions = nodeify(function (recovery2Key, username) {
-  return loginRecovery2.questions(this, recovery2Key, username)
+  return loginRecovery2.questions(this.io, recovery2Key, username)
 })
 
 Context.prototype.checkPasswordRules = function (password) {
@@ -168,7 +142,7 @@ Context.prototype.requestEdgeLogin = nodeify(function (opts) {
     account.sync().then(dirty => onLogin(null, account), err => onLogin(err))
   }
   opts.type = opts.type || this.accountType
-  return loginEdge.create(this, opts)
+  return loginEdge.create(this.io, opts)
 })
 
 Context.prototype.listRecoveryQuestionChoices = nodeify(function () {

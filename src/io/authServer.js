@@ -63,6 +63,7 @@ export class AuthServer {
       headers.body = JSON.stringify(body)
     }
 
+    this.io.log.info(`auth: ${method} ${uri}`)
     return timeout(this.io.fetch(serverRoot + uri, headers).then(response => {
       return response.json().then(parseReply, jsonError => {
         throw new Error('Non-JSON reply, HTTP status ' + response.status)

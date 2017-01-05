@@ -16,7 +16,8 @@ export function makeSession (opts) {
   if (opts.needsContext) {
     session.storage = new FakeStorage()
     session.server = new FakeServer()
-    session.context = new abc.Context({
+    session.context = abc.makeContext({
+      console: null,
       localStorage: session.storage,
       fetch: session.server.bindFetch(),
       accountType: opts.accountType
@@ -26,7 +27,7 @@ export function makeSession (opts) {
   if (opts.needsLogin) {
     session.storage.populate()
     const userId = new Buffer(packages.users['js test 0'], 'base64')
-    session.login = Login.offline(session.storage, 'js test 0', userId, packages.dataKey)
+    session.login = Login.offline(session.context.io, 'js test 0', userId, packages.dataKey)
   }
 
   if (opts.needsAccount) {

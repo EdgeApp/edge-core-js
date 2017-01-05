@@ -9,7 +9,7 @@ describe('wallet list', function () {
   it('raw id list', function () {
     const session = makeSession({needsContext: true})
     session.storage.populateRepos()
-    const repo = new Repo(session.context, packages.dataKey, packages.syncKey)
+    const repo = new Repo(session.context.io, packages.dataKey, packages.syncKey)
     const list = new WalletList(repo)
 
     assert.deepEqual(list.listIds(), ['7QjUtdhLqh6F84yPRi5D2MmubsYBtyai6YY3WqyPfK64'])

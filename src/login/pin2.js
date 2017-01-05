@@ -15,11 +15,11 @@ function pin2Auth (pin2Key, pin) {
 /**
  * Returns true if the local device has a copy of the PIN login key.
  */
-export function getKey (ctx, username) {
+export function getKey (io, username) {
   username = userMap.normalize(username)
 
   // Extract stuff from storage:
-  const userStorage = new UserStorage(ctx.localStorage, username)
+  const userStorage = new UserStorage(io.localStorage, username)
   return userStorage.getItem('pin2Key')
 }
 
@@ -30,7 +30,7 @@ export function getKey (ctx, username) {
  * @param pin the PIN, as a string.
  * @param `Login` object promise
  */
-export function login (ctx, pin2Key, username, pin) {
+export function login (io, pin2Key, username, pin) {
   pin2Key = base58.decode(pin2Key)
   username = userMap.normalize(username)
 
@@ -39,7 +39,7 @@ export function login (ctx, pin2Key, username, pin) {
     'pin2Auth': pin2Auth(pin2Key, pin).toString('base64')
     // "otp": null
   }
-  return ctx.authRequest('POST', '/v2/login', request).then(reply => {
+  return io.authRequest('POST', '/v2/login', request).then(reply => {
     // PIN login:
     const pin2Box = reply['pin2Box']
     if (!pin2Box) {
@@ -50,8 +50,8 @@ export function login (ctx, pin2Key, username, pin) {
     const dataKey = crypto.decrypt(pin2Box, pin2Key)
 
     // Build the login object:
-    return userMap.getUserId(ctx.localStorage, username).then(userId => {
-      return Login.online(ctx.localStorage, username, userId, dataKey, reply)
+    return userMap.getUserId(io, username).then(userId => {
+      return Login.online(io, username, userId, dataKey, reply)
     })
   })
 }
@@ -59,7 +59,7 @@ export function login (ctx, pin2Key, username, pin) {
 /**
  * Creates the data needed to set up a PIN on the account.
  */
-export function makeSetup (ctx, login, pin) {
+export function makeSetup (io, login, pin) {
   let pin2Key = login.userStorage.getItem('pin2Key')
   if (pin2Key) {
     pin2Key = base58.decode(pin2Key)
@@ -87,12 +87,12 @@ export function makeSetup (ctx, login, pin) {
 /**
  * Sets up PIN login v2.
  */
-export function setup (ctx, login, pin) {
-  const setup = makeSetup(ctx, login, pin)
+export function setup (io, login, pin) {
+  const setup = makeSetup(io, login, pin)
 
   const request = login.authJson()
   request['data'] = setup.server
-  return ctx.authRequest('PUT', '/v2/login/pin2', request).then(reply => {
+  return io.authRequest('PUT', '/v2/login/pin2', request).then(reply => {
     login.userStorage.setItems(setup.storage)
     return base58.encode(setup.pin2Key)
   })

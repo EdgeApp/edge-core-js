@@ -98,7 +98,7 @@ function makeSession (config, cmd) {
       throw new UsageError(cmd, 'No API key')
     }
     const fakeStorage = new LocalStorage(config.directory || './.cli')
-    session.context = new abc.Context({
+    session.context = abc.makeContext({
       accountType: config.accountType,
       apiKey: config.apiKey,
       fetch: fetch,

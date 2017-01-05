@@ -28,7 +28,7 @@ function recovery2Auth (recovery2Key, answers) {
  * @param array of answer strings
  * @param `Login` object promise
  */
-export function login (ctx, recovery2Key, username, answers) {
+export function login (io, recovery2Key, username, answers) {
   recovery2Key = base58.decode(recovery2Key)
   username = userMap.normalize(username)
 
@@ -37,7 +37,7 @@ export function login (ctx, recovery2Key, username, answers) {
     'recovery2Auth': recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
-  return ctx.authRequest('POST', '/v2/login', request).then(reply => {
+  return io.authRequest('POST', '/v2/login', request).then(reply => {
     // Recovery login:
     const recovery2Box = reply['recovery2Box']
     if (!recovery2Box) {
@@ -48,8 +48,8 @@ export function login (ctx, recovery2Key, username, answers) {
     const dataKey = crypto.decrypt(recovery2Box, recovery2Key)
 
     // Build the login object:
-    return userMap.getUserId(ctx.localStorage, username).then(userId => {
-      return Login.online(ctx.localStorage, username, userId, dataKey, reply)
+    return userMap.getUserId(io, username).then(userId => {
+      return Login.online(io, username, userId, dataKey, reply)
     })
   })
 }
@@ -60,7 +60,7 @@ export function login (ctx, recovery2Key, username, answers) {
  * @param recovery2Key an ArrayBuffer recovery key
  * @param Question array promise
  */
-export function questions (ctx, recovery2Key, username) {
+export function questions (io, recovery2Key, username) {
   recovery2Key = base58.decode(recovery2Key)
   username = userMap.normalize(username)
 
@@ -68,7 +68,7 @@ export function questions (ctx, recovery2Key, username) {
     'recovery2Id': recovery2Id(recovery2Key, username).toString('base64')
     // "otp": null
   }
-  return ctx.authRequest('POST', '/v2/login', request).then(reply => {
+  return io.authRequest('POST', '/v2/login', request).then(reply => {
     // Recovery login:
     const question2Box = reply['question2Box']
     if (!question2Box) {
@@ -84,7 +84,7 @@ export function questions (ctx, recovery2Key, username) {
 /**
  * Creates the data needed to set up recovery questions on the account.
  */
-export function makeSetup (ctx, login, questions, answers) {
+export function makeSetup (io, login, questions, answers) {
   if (!(Object.prototype.toString.call(questions) === '[object Array]')) {
     throw new TypeError('Questions must be an array of strings')
   }
@@ -121,17 +121,17 @@ export function makeSetup (ctx, login, questions, answers) {
 /**
  * Sets up recovery questions for the login.
  */
-export function setup (ctx, login, questions, answers) {
-  const setup = makeSetup(ctx, login, questions, answers)
+export function setup (io, login, questions, answers) {
+  const setup = makeSetup(io, login, questions, answers)
 
   const request = login.authJson()
   request['data'] = setup.server
-  return ctx.authRequest('PUT', '/v2/login/recovery2', request).then(reply => {
+  return io.authRequest('PUT', '/v2/login/recovery2', request).then(reply => {
     login.userStorage.setItems(setup.storage)
     return base58.encode(setup.recovery2Key)
   })
 }
 
-export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (ctx) {
-  return ctx.authRequest('POST', '/v1/questions', '')
+export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (io) {
+  return io.authRequest('POST', '/v1/questions', '')
 }

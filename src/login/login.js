@@ -7,8 +7,8 @@ import * as server from './server.js'
 /**
  * Unpacks a login v2 reply package, and stores the contents locally.
  */
-function loginReplyStore (localStorage, username, dataKey, loginReply) {
-  const userStorage = new UserStorage(localStorage, username)
+function loginReplyStore (io, username, dataKey, loginReply) {
+  const userStorage = new UserStorage(io.localStorage, username)
   const keys = [
     // Password login:
     'passwordKeySnrp', 'passwordBox',
@@ -46,14 +46,14 @@ function loginReplyStore (localStorage, username, dataKey, loginReply) {
  * - A list of account repos
  * - The legacy BitID rootKey
  */
-export function Login (localStorage, username, userId, dataKey) {
+export function Login (io, username, userId, dataKey) {
   // Identity:
   this.username = username
   this.userId = userId
 
   // Access to the login data:
   this.dataKey = dataKey
-  this.userStorage = new UserStorage(localStorage, username)
+  this.userStorage = new UserStorage(io.localStorage, username)
 
   // Return access to the server:
   const passwordAuthBox = this.userStorage.getJson('passwordAuthBox')
@@ -79,17 +79,17 @@ export function Login (localStorage, username, userId, dataKey) {
 /**
  * Returns a new login object, populated with data from the server.
  */
-Login.online = function (localStorage, username, userId, dataKey, loginReply) {
-  userMap.insert(localStorage, username, userId)
-  loginReplyStore(localStorage, username, dataKey, loginReply)
-  return new Login(localStorage, username, userId, dataKey)
+Login.online = function (io, username, userId, dataKey, loginReply) {
+  userMap.insert(io, username, userId)
+  loginReplyStore(io, username, dataKey, loginReply)
+  return new Login(io, username, userId, dataKey)
 }
 
 /**
  * Returns a new login object, populated with data from the local storage.
  */
-Login.offline = function (localStorage, username, userId, dataKey) {
-  return new Login(localStorage, username, userId, dataKey)
+Login.offline = function (io, username, userId, dataKey) {
+  return new Login(io, username, userId, dataKey)
 }
 
 /**
@@ -129,10 +129,10 @@ Login.prototype.accountFind = function (type) {
 /**
  * Creates and attaches new account repo.
  */
-Login.prototype.accountCreate = function (ctx, type) {
-  return server.repoCreate(ctx, this, {}).then(keysJson => {
-    return this.accountAttach(ctx, type, keysJson).then(() => {
-      return server.repoActivate(ctx, this, keysJson)
+Login.prototype.accountCreate = function (io, type) {
+  return server.repoCreate(io, this, {}).then(keysJson => {
+    return this.accountAttach(io, type, keysJson).then(() => {
+      return server.repoActivate(io, this, keysJson)
     })
   })
 }
@@ -140,7 +140,7 @@ Login.prototype.accountCreate = function (ctx, type) {
 /**
  * Attaches an account repo to the login.
  */
-Login.prototype.accountAttach = function (ctx, type, info) {
+Login.prototype.accountAttach = function (io, type, info) {
   const infoBlob = new Buffer(JSON.stringify(info), 'utf-8')
   const data = {
     'type': type,
@@ -149,7 +149,7 @@ Login.prototype.accountAttach = function (ctx, type, info) {
 
   const request = this.authJson()
   request['data'] = data
-  return ctx.authRequest('POST', '/v2/login/repos', request).then(reply => {
+  return io.authRequest('POST', '/v2/login/repos', request).then(reply => {
     this.repos.push(data)
     this.userStorage.setJson('repos', this.repos)
     return null

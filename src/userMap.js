@@ -3,9 +3,9 @@ import * as scrypt from './crypto/scrypt.js'
 /**
  * Returns the user map, which goes from usernames to userId's
  */
-export function load (localStorage) {
+export function load (io) {
   try {
-    const userMap = JSON.parse(localStorage.getItem('airbitz.users'))
+    const userMap = JSON.parse(io.localStorage.getItem('airbitz.users'))
     return userMap || {}
   } catch (e) {
     return {}
@@ -15,26 +15,26 @@ export function load (localStorage) {
 /**
  * Ensures that the userMap contains the given user. Adds the user if not.
  */
-export function insert (localStorage, username, userId) {
-  const userMap = load(localStorage)
+export function insert (io, username, userId) {
+  const userMap = load(io)
   userMap[username] = userId
-  localStorage.setItem('airbitz.users', JSON.stringify(userMap))
+  io.localStorage.setItem('airbitz.users', JSON.stringify(userMap))
 }
 
 /**
  * Removes a username from the map.
  */
-export function remove (localStorage, username) {
-  const userMap = load(localStorage)
+export function remove (io, username) {
+  const userMap = load(io)
   delete userMap[username]
-  localStorage.setItem('airbitz.users', JSON.stringify(userMap))
+  io.localStorage.setItem('airbitz.users', JSON.stringify(userMap))
 }
 
 /**
  * Computes the userId (L1) for the given username.
  */
-export function getUserId (localStorage, username) {
-  const userMap = load(localStorage)
+export function getUserId (io, username) {
+  const userMap = load(io)
   if (userMap[username]) {
     return Promise.resolve(userMap[username])
   }
