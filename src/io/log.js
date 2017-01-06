@@ -3,15 +3,15 @@ export class Log {
     this.console = io.console
   }
 
-  info () {
-    if (this.console) this.console.info.apply(this.console, arguments)
+  info (...rest) {
+    if (this.console) this.console.info(...rest)
   }
 
-  warn () {
-    if (this.console) this.console.warn.apply(this.console, arguments)
+  warn (...rest) {
+    if (this.console) this.console.warn(...rest)
   }
 
-  error () {
-    if (this.console) this.console.error.apply(this.console, arguments)
+  error (...rest) {
+    if (this.console) this.console.error(...rest)
   }
 }

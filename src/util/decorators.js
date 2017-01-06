@@ -3,12 +3,12 @@
  * but only an extra callback argument is actually passed in.
  */
 export function nodeify (f) {
-  return function () {
-    const promise = f.apply(this, arguments)
+  return function (...rest) {
+    const promise = f.apply(this, rest)
 
     // Figure out what to do with the promise:
-    const callback = arguments[arguments.length - 1]
-    if (f.length < arguments.length && typeof callback === 'function') {
+    const callback = rest[rest.length - 1]
+    if (f.length < rest.length && typeof callback === 'function') {
       promise.then(reply => callback(null, reply)).catch(e => callback(e))
     } else {
       return promise
@@ -20,9 +20,9 @@ export function nodeify (f) {
  * If the function f throws an error, return that as a rejected promise.
  */
 export function rejectify (f) {
-  return function () {
+  return function (...rest) {
     try {
-      return f.apply(this, arguments)
+      return f.apply(this, rest)
     } catch (e) {
       return Promise.reject(e)
     }
@@ -35,10 +35,10 @@ export function rejectify (f) {
  */
 export function serialize (f) {
   let nextTask = Promise.resolve()
-  return function () {
+  return function (...rest) {
     nextTask = nextTask.then(
-      win => f.apply(this, arguments),
-      fail => f.apply(this, arguments)
+      win => f.apply(this, rest),
+      fail => f.apply(this, rest)
     )
     return nextTask
   }

@@ -42,7 +42,7 @@ export class IoContext {
     this.log = new Log(this)
   }
 
-  authRequest () {
-    return this.authServer.request.apply(this.authServer, arguments)
+  authRequest (...rest) {
+    return this.authServer.request(...rest)
   }
 }
