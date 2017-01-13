@@ -12,7 +12,9 @@ export function makeBrowserIo () {
   }
 
   if (typeof window !== 'undefined') {
-    out.fetch = window.fetch
+    out.fetch = (...rest) => {
+      window.fetch(...rest)
+    }
     out.localStorage = window.localStorage
   }
 

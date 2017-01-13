@@ -51,7 +51,7 @@ export class AuthServer {
    * @return a promise of the server's JSON reply
    */
   request (method, uri, body) {
-    const headers = {
+    const opts = {
       method: method,
       headers: {
         'Accept': 'application/json',
@@ -60,11 +60,11 @@ export class AuthServer {
       }
     }
     if (method !== 'GET') {
-      headers.body = JSON.stringify(body)
+      opts.body = JSON.stringify(body)
     }
 
     this.io.log.info(`auth: ${method} ${uri}`)
-    return timeout(this.io.fetch(serverRoot + uri, headers).then(response => {
+    return timeout(this.io.fetch(serverRoot + uri, opts).then(response => {
       return response.json().then(parseReply, jsonError => {
         throw new Error('Non-JSON reply, HTTP status ' + response.status)
       })
