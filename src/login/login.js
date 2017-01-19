@@ -1,7 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
-import {base58} from '../util/encoding.js'
+import {base16, base58, base64, utf8} from '../util/encoding.js'
 import * as server from './server.js'
 
 /**
@@ -98,7 +98,7 @@ Login.offline = function (io, username, userId, dataKey) {
 Login.prototype.authJson = function () {
   return {
     'userId': this.userId,
-    'passwordAuth': this.passwordAuth.toString('base64')
+    'passwordAuth': base64.encode(this.passwordAuth)
   }
 }
 
@@ -111,15 +111,15 @@ Login.prototype.accountFind = function (type) {
   for (const repo of this.repos) {
     if (repo['type'] === type) {
       const keysBox = repo['keysBox'] || repo['info']
-      return JSON.parse(crypto.decrypt(keysBox, this.dataKey).toString('utf-8'))
+      return JSON.parse(utf8.decode(crypto.decrypt(keysBox, this.dataKey)))
     }
   }
 
   // Handle the legacy Airbitz repo:
   if (type === 'account:repo:co.airbitz.wallet') {
     return {
-      'syncKey': this.syncKey.toString('hex'),
-      'dataKey': this.dataKey.toString('hex')
+      'syncKey': base16.encode(this.syncKey),
+      'dataKey': base16.encode(this.dataKey)
     }
   }
 
@@ -141,7 +141,7 @@ Login.prototype.accountCreate = function (io, type) {
  * Attaches an account repo to the login.
  */
 Login.prototype.accountAttach = function (io, type, info) {
-  const infoBlob = new Buffer(JSON.stringify(info), 'utf-8')
+  const infoBlob = utf8.encode(JSON.stringify(info))
   const data = {
     'type': type,
     'info': crypto.encrypt(infoBlob, this.dataKey)

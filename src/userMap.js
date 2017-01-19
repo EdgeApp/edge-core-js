@@ -1,4 +1,5 @@
 import * as scrypt from './crypto/scrypt.js'
+import {base64} from './util/encoding.js'
 
 /**
  * Returns the user map, which goes from usernames to userId's
@@ -38,7 +39,7 @@ export function getUserId (io, username) {
   if (userMap[username]) {
     return Promise.resolve(userMap[username])
   }
-  return scrypt.scrypt(username, scrypt.userIdSnrp).then(userId => userId.toString('base64'))
+  return scrypt.scrypt(username, scrypt.userIdSnrp).then(userId => base64.encode(userId))
 }
 
 /**

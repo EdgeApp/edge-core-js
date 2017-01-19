@@ -2,8 +2,9 @@
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
+import {base16} from '../../src/util/encoding.js'
 
-export const dataKey = new Buffer('19f91d7899b86f859460d850a96708e5ed09fdeeb0adaf905319a2721b1a09f0', 'hex')
+export const dataKey = base16.decode('19f91d7899b86f859460d850a96708e5ed09fdeeb0adaf905319a2721b1a09f0')
 
 export const users = {
   'js test 0': 'm3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI='
@@ -100,7 +101,7 @@ export const rootKeyBox = {
   'iv_hex': '96cc1ebc2d11a0b38c9259c056d3ca23'
 }
 
-export const syncKey = new Buffer('e254eb85285f96574a33bfe97b13f533fe245b42', 'hex')
+export const syncKey = base16.decode('e254eb85285f96574a33bfe97b13f533fe245b42')
 
 export const syncKeyBox = {
   'data_base64': 'ruf9v3eWUg2GZJf+94boCPyui4nQ9HnJCWx07kmRg+nKns+1MlqSFQQNINgHXLWDrQvho69AnQrP9Ep+PcXOnG+m0kiqlmzm8UdhQoQJOKP/O5S2TFwMuLpLrGN+I4F5HbdGVMA20WJjhfQ7Kzc3H2hHwm1BUo0xItbV/audT6KySR+ugeW+jF5glzB0/8eAYFKloYd0YC6TZg1gmZU7jqBatpylk7a9znrZG6zKVyPQxnkKr6TnF3xQihSw2H7g1Gd4AI4Pttye/RYsVbwqFFnD2OZwgp7kqeyLwVRsU6OboRtkBYuaa4adYhXHda94',

@@ -1,4 +1,5 @@
 import {repoId} from './repo.js'
+import {base16} from './encoding.js'
 
 function walletType (walletJson) {
   return walletJson['type'] || 'wallet:repo:bitcoin:bip32'
@@ -13,7 +14,7 @@ function walletKeys (walletJson) {
 }
 
 function walletId (walletJson) {
-  return repoId(new Buffer(walletKeys(walletJson)['dataKey'], 'hex'))
+  return repoId(base16.decode(walletKeys(walletJson)['dataKey']))
 }
 
 /**
@@ -93,7 +94,7 @@ WalletList.prototype.addWallet = function (type, keysJson) {
     'SortIndex': 0
   }
 
-  const dataKey = new Buffer(keysJson['dataKey'], 'hex')
+  const dataKey = base16.decode(keysJson['dataKey'])
   const filename = this.repo.secureFilename(dataKey)
   this.repo.setJson(this.folder + '/' + filename, walletJson)
 

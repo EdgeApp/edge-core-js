@@ -1,4 +1,5 @@
 import {UserStorage} from '../../src/userStorage.js'
+import {base16} from '../../src/util/encoding.js'
 import * as repoModule from '../../src/util/repo.js'
 import * as packages from './packages.js'
 
@@ -42,7 +43,7 @@ FakeStorage.prototype.populateRepos = function () {
       const repo = new repoModule.Repo(
         {localStorage: this},
         packages.dataKey,
-        new Buffer(syncKey, 'hex')
+        base16.decode(syncKey)
       )
       repoModule.mergeChanges(repo.dataStore, packages.repos[syncKey])
     }

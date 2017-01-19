@@ -5,6 +5,7 @@ import * as packages from './packages.js'
 import * as abc from '../../src/abc.js'
 import {Account} from '../../src/account.js'
 import {Login} from '../../src/login/login.js'
+import {base64} from '../../src/util/encoding.js'
 
 export function makeSession (opts) {
   const session = {}
@@ -26,7 +27,7 @@ export function makeSession (opts) {
 
   if (opts.needsLogin) {
     session.storage.populate()
-    const userId = new Buffer(packages.users['js test 0'], 'base64')
+    const userId = base64.decode(packages.users['js test 0'])
     session.login = Login.offline(session.context.io, 'js test 0', userId, packages.dataKey)
   }
 

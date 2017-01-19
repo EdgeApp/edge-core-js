@@ -1,5 +1,5 @@
 import * as crypto from '../crypto/crypto.js'
-import {base58} from '../util/encoding.js'
+import {base16, base58, utf8} from '../util/encoding.js'
 import * as loginCreate from './create.js'
 import * as loginPin2 from './pin2.js'
 import elliptic from 'elliptic'
@@ -26,7 +26,7 @@ function createLogin (io, accountReply) {
 
   const opts = {}
   if (accountReply.type === 'account:repo:co.airbitz.wallet') {
-    opts.syncKey = new Buffer(accountReply.info['syncKey'], 'hex')
+    opts.syncKey = base16.decode(accountReply.info['syncKey'])
   }
 
   return loginCreate.create(io, username, password, opts).then(login => {
@@ -57,8 +57,8 @@ export function decodeAccountReply (keys, lobby) {
 
   const replyPubkey = secp256k1.keyFromPublic(replyKey, 'hex').getPublic()
   const secret = keys.derive(replyPubkey).toArray('be')
-  const dataKey = new Buffer(crypto.hmacSha256('dataKey', new Uint8Array(secret)))
-  const reply = JSON.parse(crypto.decrypt(replyBox, dataKey).toString('utf-8'))
+  const dataKey = crypto.hmacSha256('dataKey', new Uint8Array(secret))
+  const reply = JSON.parse(utf8.decode(crypto.decrypt(replyBox, dataKey)))
 
   const returnObj = {
     type: accountRequest['type'],

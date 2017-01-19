@@ -1,10 +1,10 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
-import {base58} from '../util/encoding.js'
+import {base58, base64, utf8} from '../util/encoding.js'
 import {Login} from './login.js'
 
 function recovery2Id (recovery2Key, username) {
-  return new Buffer(crypto.hmacSha256(username, recovery2Key))
+  return crypto.hmacSha256(username, recovery2Key)
 }
 
 function recovery2Auth (recovery2Key, answers) {
@@ -14,9 +14,9 @@ function recovery2Auth (recovery2Key, answers) {
 
   const recovery2Auth = []
   for (const answer of answers) {
-    const data = new Buffer(answer, 'utf-8')
+    const data = utf8.encode(answer)
     const auth = crypto.hmacSha256(data, recovery2Key)
-    recovery2Auth.push(new Buffer(auth).toString('base64'))
+    recovery2Auth.push(base64.encode(auth))
   }
   return recovery2Auth
 }
@@ -33,7 +33,7 @@ export function login (io, recovery2Key, username, answers) {
   username = userMap.normalize(username)
 
   const request = {
-    'recovery2Id': recovery2Id(recovery2Key, username).toString('base64'),
+    'recovery2Id': base64.encode(recovery2Id(recovery2Key, username)),
     'recovery2Auth': recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
@@ -65,7 +65,7 @@ export function questions (io, recovery2Key, username) {
   username = userMap.normalize(username)
 
   const request = {
-    'recovery2Id': recovery2Id(recovery2Key, username).toString('base64')
+    'recovery2Id': base64.encode(recovery2Id(recovery2Key, username))
     // "otp": null
   }
   return io.authRequest('POST', '/v2/login', request).then(reply => {
@@ -77,7 +77,7 @@ export function questions (io, recovery2Key, username) {
 
     // Decrypt the questions:
     const questions = crypto.decrypt(question2Box, recovery2Key)
-    return JSON.parse(questions.toString('utf8'))
+    return JSON.parse(utf8.decode(questions))
   })
 }
 
@@ -99,13 +99,13 @@ export function makeSetup (io, login, questions, answers) {
     recovery2Key = crypto.random(32)
   }
 
-  const question2Box = crypto.encrypt(new Buffer(JSON.stringify(questions), 'utf8'), recovery2Key)
+  const question2Box = crypto.encrypt(utf8.encode(JSON.stringify(questions), 'utf8'), recovery2Key)
   const recovery2Box = crypto.encrypt(login.dataKey, recovery2Key)
   const recovery2KeyBox = crypto.encrypt(recovery2Key, login.dataKey)
 
   return {
     server: {
-      'recovery2Id': recovery2Id(recovery2Key, login.username).toString('base64'),
+      'recovery2Id': base64.encode(recovery2Id(recovery2Key, login.username)),
       'recovery2Auth': recovery2Auth(recovery2Key, answers),
       'recovery2Box': recovery2Box,
       'recovery2KeyBox': recovery2KeyBox,

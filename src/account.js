@@ -3,6 +3,7 @@ import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
 import * as server from './login/server.js'
 import {nodeify} from './util/decorators.js'
+import {base16} from './util/encoding.js'
 import {Repo} from './util/repo.js'
 import {Wallet} from './wallet.js'
 import {WalletList} from './util/walletList.js'
@@ -24,7 +25,7 @@ export function Account (ctx, login) {
   this.recoveryLogin = false
   this.username = login.username
 
-  this.repo = new Repo(this.io, new Buffer(this.keys.dataKey, 'hex'), new Buffer(this.keys.syncKey, 'hex'))
+  this.repo = new Repo(this.io, base16.decode(this.keys.dataKey), base16.decode(this.keys.syncKey))
   this.walletList = new WalletList(this.repo)
 }
 

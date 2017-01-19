@@ -1,4 +1,5 @@
 import {serialize} from '../util/decorators.js'
+import {base16, utf8} from '../util/encoding.js'
 import {random} from './crypto.js'
 import scryptJs from 'scrypt-js'
 
@@ -25,15 +26,15 @@ if (typeof window !== 'undefined' && window.performance) {
 }
 
 /**
- * @param data A `Buffer` or byte-array object.
+ * @param data A string to hash.
  * @param snrp A JSON SNRP structure.
  * @return A promise for an object with the hash and elapsed time.
  */
 const timeScrypt = serialize(function timeScrypt (data, snrp) {
   const dklen = 32
-  const salt = new Buffer(snrp.salt_hex, 'hex')
+  const salt = base16.decode(snrp.salt_hex)
   if (typeof data === 'string') {
-    data = new Buffer(data, 'utf-8')
+    data = utf8.encode(data)
   }
   return new Promise((resolve, reject) => {
     const startTime = timerNow()
@@ -41,7 +42,7 @@ const timeScrypt = serialize(function timeScrypt (data, snrp) {
       if (error) return reject(error)
       if (key) {
         return resolve({
-          hash: new Buffer(key),
+          hash: key,
           time: timerNow() - startTime
         })
       }
@@ -100,7 +101,7 @@ export function makeSnrp (io) {
 
   // Return a copy of the timed version with a fresh salt:
   return snrpCache.then(snrp => ({
-    'salt_hex': random(32).toString('hex'),
+    'salt_hex': base16.encode(random(32)),
     'n': snrp.n,
     'r': snrp.r,
     'p': snrp.p

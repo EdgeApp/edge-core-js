@@ -3,6 +3,7 @@ import * as scrypt from '../crypto/scrypt.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
 import {rejectify} from '../util/decorators.js'
+import {base64} from '../util/encoding.js'
 import * as promise from '../util/promise.js'
 import {Login} from './login.js'
 
@@ -27,7 +28,7 @@ function loginOnline (io, username, userId, password) {
     // Encode the username:
     const request = {
       'userId': userId,
-      'passwordAuth': passwordAuth.toString('base64')
+      'passwordAuth': base64.encode(passwordAuth)
       // "otp": null
     }
     return io.authRequest('POST', '/v2/login', request).then(reply => {
@@ -109,7 +110,7 @@ export function makeSetup (io, dataKey, username, password) {
     ] = values
     return {
       server: {
-        'passwordAuth': passwordAuth.toString('base64'),
+        'passwordAuth': base64.encode(passwordAuth),
         'passwordAuthSnrp': scrypt.passwordAuthSnrp, // TODO: Not needed
         'passwordKeySnrp': passwordKeySnrp,
         'passwordBox': passwordBox,

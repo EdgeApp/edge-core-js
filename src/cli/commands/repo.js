@@ -1,3 +1,4 @@
+import {base16} from '../../util/encoding.js'
 import {Repo} from '../../util/repo.js'
 import {command, UsageError} from '../command.js'
 
@@ -7,8 +8,8 @@ command('repo-sync', {
   needsContext: true
 }, function (session, argv) {
   if (argv.length !== 2) throw new UsageError(this)
-  const syncKey = new Buffer(argv[0], 'hex')
-  const dataKey = new Buffer(argv[1], 'hex')
+  const syncKey = base16.decode(argv[0])
+  const dataKey = base16.decode(argv[1])
 
   const store = new Repo(session.context, dataKey, syncKey)
   return store.sync().then(changed => {
@@ -23,8 +24,8 @@ command('repo-list', {
   needsContext: true
 }, function (session, argv) {
   if (argv.length < 2 || argv.length > 3) throw new UsageError(this)
-  const syncKey = new Buffer(argv[0], 'hex')
-  const dataKey = new Buffer(argv[1], 'hex')
+  const syncKey = base16.decode(argv[0])
+  const dataKey = base16.decode(argv[1])
   const path = argv.length === 3 ? argv[2] : ''
 
   const store = new Repo(session.context, dataKey, syncKey)
@@ -37,13 +38,13 @@ command('repo-set', {
   needsContext: true
 }, function (session, argv) {
   if (argv.length !== 4) throw new UsageError(this)
-  const syncKey = new Buffer(argv[0], 'hex')
-  const dataKey = new Buffer(argv[1], 'hex')
+  const syncKey = base16.decode(argv[0])
+  const dataKey = base16.decode(argv[1])
   const path = argv[2]
-  const value = new Buffer(argv[3], 'utf-8')
+  const value = argv[3]
 
   const store = new Repo(session.context, dataKey, syncKey)
-  store.setData(path, value)
+  store.setText(path, value)
 })
 
 command('repo-get', {
@@ -52,11 +53,11 @@ command('repo-get', {
   needsContext: true
 }, function (session, argv) {
   if (argv.length !== 3) throw new UsageError(this)
-  const syncKey = new Buffer(argv[0], 'hex')
-  const dataKey = new Buffer(argv[1], 'hex')
+  const syncKey = base16.decode(argv[0])
+  const dataKey = base16.decode(argv[1])
   const path = argv[2]
 
   const store = new Repo(session.context, dataKey, syncKey)
-  const value = store.getData(path)
-  console.log(value ? value.toString('utf-8') : value)
+  const value = store.getText(path)
+  console.log(value)
 })

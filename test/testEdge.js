@@ -1,6 +1,7 @@
 /* global describe, it */
 import * as crypto from '../src/crypto/crypto.js'
 import * as loginEdge from '../src/login/edge.js'
+import {utf8} from '../src/util/encoding.js'
 import {makeSession} from './fake/session.js'
 import assert from 'assert'
 import elliptic from 'elliptic'
@@ -27,9 +28,9 @@ function craftFakeReply (lobby) {
   const keys = secp256k1.genKeyPair()
   const requestPubkey = secp256k1.keyFromPublic(requestKey, 'hex').getPublic()
   const secret = keys.derive(requestPubkey).toArray('be')
-  const dataKey = new Buffer(crypto.hmacSha256('dataKey', new Uint8Array(secret)))
+  const dataKey = crypto.hmacSha256('dataKey', new Uint8Array(secret))
 
-  const replyBlob = new Buffer(JSON.stringify(fakeReply), 'utf-8')
+  const replyBlob = utf8.encode(JSON.stringify(fakeReply))
   accountRequest['replyBox'] = crypto.encrypt(replyBlob, dataKey)
   accountRequest['replyKey'] = keys.getPublic().encodeCompressed('hex')
 }

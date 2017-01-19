@@ -1,5 +1,5 @@
 import * as crypto from '../crypto/crypto.js'
-import {base58} from './encoding.js'
+import {base16, base58, utf8} from './encoding.js'
 import {ScopedStorage} from './scopedStorage.js'
 
 const syncServers = [
@@ -131,7 +131,7 @@ Repo.prototype.getText = function (path) {
   if (data.length && data[data.length - 1] === 0) {
     data = data.slice(0, data.length - 1)
   }
-  return data.toString('utf-8')
+  return utf8.decode(data)
 }
 
 /**
@@ -192,7 +192,7 @@ Repo.prototype.setData = function (path, value) {
  * Encrypts a text string and saves it as the provided file path.
  */
 Repo.prototype.setText = function (path, value) {
-  return this.setData(path, new Buffer(value, 'utf-8'))
+  return this.setData(path, utf8.encode(value))
 }
 
 /**
@@ -221,7 +221,7 @@ Repo.prototype.sync = function () {
   }
 
   // Calculate the URI:
-  let uri = '/api/v2/store/' + this.syncKey.toString('hex')
+  let uri = '/api/v2/store/' + base16.encode(this.syncKey)
   const lastHash = this.store.getItem('lastHash')
   if (lastHash) {
     uri = uri + '/' + lastHash

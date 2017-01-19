@@ -1,6 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
+import {base16} from '../util/encoding.js'
 import {Login} from './login.js'
 import * as passwordLogin from './password.js'
 
@@ -49,7 +50,7 @@ export function create (io, username, password, opts) {
       'lp1': passwordSetup.server.passwordAuth,
       'care_package': JSON.stringify(carePackage),
       'login_package': JSON.stringify(loginPackage),
-      'repo_account_key': syncKey.toString('hex')
+      'repo_account_key': base16.encode(syncKey)
     }
 
     return io.authRequest('POST', '/v1/account/create', request).then(reply => {

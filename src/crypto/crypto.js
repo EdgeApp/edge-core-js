@@ -1,3 +1,4 @@
+import {base16, base64} from '../util/encoding.js'
 import aesjs from 'aes-js'
 import hashjs from 'hash.js'
 
@@ -6,7 +7,7 @@ const AesCbc = aesjs.ModeOfOperation.cbc
 export function random (bytes) {
   bytes |= 0
   try {
-    const out = new Buffer(bytes)
+    const out = new Uint8Array(bytes)
     window.crypto.getRandomValues(out)
     return out
   } catch (e) {
@@ -25,8 +26,8 @@ export function decrypt (box, key) {
   if (box['encryptionType'] !== 0) {
     throw new Error('Unknown encryption type')
   }
-  const iv = new Buffer(box['iv_hex'], 'hex')
-  const ciphertext = new Buffer(box['data_base64'], 'base64')
+  const iv = base16.decode(box['iv_hex'])
+  const ciphertext = base64.decode(box['data_base64'])
 
   // Decrypt:
   const cipher = new AesCbc(key, iv)
@@ -35,7 +36,7 @@ export function decrypt (box, key) {
   // const decipher = crypto.createDecipheriv('AES-256-CBC', key, iv);
   // let x = decipher.update(box.data_base64, 'base64', 'hex')
   // x += decipher.final('hex')
-  // const data = new Buffer(x, 'hex')
+  // const data = base16.decode(x)
 
   // Calculate field locations:
   const headerSize = raw[0]
@@ -124,11 +125,11 @@ export function encrypt (data, key) {
   // Encrypt to JSON:
   const iv = random(16)
   const cipher = new AesCbc(key, iv)
-  const ciphertext = cipher.encrypt(raw)
+  const ciphertext = cipher.encrypt(raw) // BUG: requires a `Buffer`
   return {
     'encryptionType': 0,
-    'iv_hex': iv.toString('hex'),
-    'data_base64': new Buffer(ciphertext).toString('base64')
+    'iv_hex': base16.encode(iv),
+    'data_base64': base64.encode(ciphertext)
   }
 }
 

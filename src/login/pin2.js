@@ -1,15 +1,15 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
-import {base58} from '../util/encoding.js'
+import {base58, base64} from '../util/encoding.js'
 import {Login} from './login.js'
 
 function pin2Id (pin2Key, username) {
-  return new Buffer(crypto.hmacSha256(username, pin2Key))
+  return crypto.hmacSha256(username, pin2Key)
 }
 
 function pin2Auth (pin2Key, pin) {
-  return new Buffer(crypto.hmacSha256(pin, pin2Key))
+  return crypto.hmacSha256(pin, pin2Key)
 }
 
 /**
@@ -35,8 +35,8 @@ export function login (io, pin2Key, username, pin) {
   username = userMap.normalize(username)
 
   const request = {
-    'pin2Id': pin2Id(pin2Key, username).toString('base64'),
-    'pin2Auth': pin2Auth(pin2Key, pin).toString('base64')
+    'pin2Id': base64.encode(pin2Id(pin2Key, username)),
+    'pin2Auth': base64.encode(pin2Auth(pin2Key, pin))
     // "otp": null
   }
   return io.authRequest('POST', '/v2/login', request).then(reply => {
@@ -72,8 +72,8 @@ export function makeSetup (io, login, pin) {
 
   return {
     server: {
-      'pin2Id': pin2Id(pin2Key, login.username).toString('base64'),
-      'pin2Auth': pin2Auth(pin2Key, pin).toString('base64'),
+      'pin2Id': base64.encode(pin2Id(pin2Key, login.username)),
+      'pin2Auth': base64.encode(pin2Auth(pin2Key, pin)),
       'pin2Box': pin2Box,
       'pin2KeyBox': pin2KeyBox
     },
