@@ -21,9 +21,19 @@ We use a limited subset of ES6 syntax feature,
 as supported by [Bublé](https://buble.surge.sh). We also use the `Promise`
 and node.js `Buffer` types, so polyfills may be necessary.
 
+## Account Management UI
+
+To quickly get up and running with the UI for account creation, login, and 
+management (change PIN/password), use [airbitz-core-js-ui](https://github.com/Airbitz/airbitz-core-js-ui/).
+
+
 ## React Native
 
 Since React Native doesn't support several nodeisms like `Buffer`,
 our stopgap measure is to bundle things with Webpack.
 To do this, just run `npm run webpack`. This will produce `dist/abc.bundle.js`,
 so you'll need to adjust `package.json` to point `main` at that file.
+
+## Documentation
+
+See https://developer.airbitz.co/javascript/
