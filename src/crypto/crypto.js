@@ -26,11 +26,11 @@ export function decrypt (box, key) {
     throw new Error('Unknown encryption type')
   }
   const iv = new Buffer(box['iv_hex'], 'hex')
-  const cyphertext = new Buffer(box['data_base64'], 'base64')
+  const ciphertext = new Buffer(box['data_base64'], 'base64')
 
   // Decrypt:
-  const cypher = new AesCbc(key, iv)
-  const raw = cypher.decrypt(cyphertext)
+  const cipher = new AesCbc(key, iv)
+  const raw = cipher.decrypt(ciphertext)
   // Alternative using node.js crypto:
   // const decipher = crypto.createDecipheriv('AES-256-CBC', key, iv);
   // let x = decipher.update(box.data_base64, 'base64', 'hex')
@@ -123,11 +123,12 @@ export function encrypt (data, key) {
 
   // Encrypt to JSON:
   const iv = random(16)
-  const cypher = new AesCbc(key, iv)
+  const cipher = new AesCbc(key, iv)
+  const ciphertext = cipher.encrypt(raw)
   return {
     'encryptionType': 0,
     'iv_hex': iv.toString('hex'),
-    'data_base64': new Buffer(cypher.encrypt(raw)).toString('base64')
+    'data_base64': new Buffer(ciphertext).toString('base64')
   }
 }
 
