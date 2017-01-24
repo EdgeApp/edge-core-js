@@ -11,7 +11,7 @@ command('repo-sync', {
   const syncKey = base16.decode(argv[0])
   const dataKey = base16.decode(argv[1])
 
-  const store = new Repo(session.context, dataKey, syncKey)
+  const store = new Repo(session.context.io, dataKey, syncKey)
   return store.sync().then(changed => {
     console.log(changed ? 'changed' : 'unchanged')
     return changed
@@ -28,7 +28,7 @@ command('repo-list', {
   const dataKey = base16.decode(argv[1])
   const path = argv.length === 3 ? argv[2] : ''
 
-  const store = new Repo(session.context, dataKey, syncKey)
+  const store = new Repo(session.context.io, dataKey, syncKey)
   console.log(store.keys(path))
 })
 
@@ -43,7 +43,7 @@ command('repo-set', {
   const path = argv[2]
   const value = argv[3]
 
-  const store = new Repo(session.context, dataKey, syncKey)
+  const store = new Repo(session.context.io, dataKey, syncKey)
   store.setText(path, value)
 })
 
@@ -57,7 +57,7 @@ command('repo-get', {
   const dataKey = base16.decode(argv[1])
   const path = argv[2]
 
-  const store = new Repo(session.context, dataKey, syncKey)
+  const store = new Repo(session.context.io, dataKey, syncKey)
   const value = store.getText(path)
   console.log(value)
 })
