@@ -1,12 +1,12 @@
 import {Context} from './context.js'
-import {IoContext, makeBrowserIo} from './io/io.js'
+import {makeBrowserIo} from './io/browser'
 
 /**
- * Creates a context object.
+ * Initializes the Airbitz core library for use in a browser.
+ * @return An Airbitz core library instance.
  */
-export function makeContext (opts = {}) {
-  const io = new IoContext(makeBrowserIo(), opts)
-  return new Context(io, opts)
+export function makeBrowserContext (opts = {}) {
+  return new Context(makeBrowserIo(opts), opts)
 }
 
 // Ancillary exports:
@@ -18,4 +18,5 @@ export {abcc as ABCConditionCode} from './ABCConditionCode.js'
 export {ABCError} from './ABCError.js'
 export {Context}
 export {fixUsername as usernameFix} from './io/loginStore.js'
-export {makeContext as makeABCContext}
+export {makeBrowserContext as makeABCContext}
+export {makeBrowserContext as makeContext}

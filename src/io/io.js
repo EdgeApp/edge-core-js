@@ -2,32 +2,6 @@ import {AuthServer} from './authServer.js'
 import {LoginStore} from './loginStore.js'
 
 /**
- * Extracts the io functions we need from the browser.
- */
-export function makeBrowserIo () {
-  const out = {}
-
-  if (typeof console !== 'undefined') {
-    out.console = console
-  }
-
-  if (typeof window !== 'undefined') {
-    out.fetch = (...rest) => window.fetch(...rest)
-    out.localStorage = window.localStorage
-
-    if ('crypto' in window && 'getRandomValues' in window.crypto) {
-      out.random = (size) => {
-        const out = new Uint8Array(size)
-        window.crypto.getRandomValues(out)
-        return out
-      }
-    }
-  }
-
-  return out
-}
-
-/**
  * Constructs an object containing the io resources used in this library,
  * along with the wrappers and caches needed to make use of them.
  */
