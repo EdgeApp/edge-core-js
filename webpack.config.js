@@ -1,13 +1,13 @@
 module.exports = {
-  entry: './dist/abc.cjs.js',
+  entry: './src/crypto/bundle.js',
+  externals: ['buffer'],
   module: {
     loaders: [
       { test: /\.json$/, loader: 'json-loader' }
     ]
   },
   output: {
-    filename: './dist/abc.webpack.js',
-    libraryTarget: 'commonjs',
-    library: 'abc'
+    filename: './dist/crypto-bundle.js',
+    libraryTarget: 'commonjs'
   }
 }

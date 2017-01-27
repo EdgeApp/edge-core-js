@@ -1,4 +1,5 @@
 import baseX from 'base-x'
+import {Buffer} from 'buffer'
 const base58Codec = baseX('123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz')
 
 export const base16 = {

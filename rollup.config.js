@@ -1,10 +1,12 @@
 import buble from 'rollup-plugin-buble'
+import commonjs from 'rollup-plugin-commonjs'
 const packageJson = require('./package.json')
 
 export default {
   entry: 'src/abc.js',
   external: [
     'assert',
+    'buffer',
     'fs',
     'url'
   ].concat(Object.keys(packageJson.dependencies)),
@@ -13,6 +15,9 @@ export default {
       transforms: {
         dangerousForOf: true
       }
+    }),
+    commonjs({
+      include: 'dist/crypto-bundle.js'
     })
   ],
   targets: [

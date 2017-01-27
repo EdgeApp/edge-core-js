@@ -1,6 +1,7 @@
 import {base16, base64} from '../util/encoding.js'
+import {hashjs} from './external.js'
 import aesjs from 'aes-js'
-import hashjs from 'hash.js'
+import {Buffer} from 'buffer'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 
