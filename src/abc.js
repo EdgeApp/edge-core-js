@@ -1,10 +1,26 @@
 import {Context} from './context.js'
+import {elliptic, hashjs} from './crypto/external.js'
 import {IoContext, makeBrowserIo} from './io/io.js'
 
 export {Context}
 export {abcc as ABCConditionCode} from './ABCConditionCode.js'
 export {ABCError} from './ABCError.js'
 export {normalize as usernameFix} from './userMap.js'
+
+/**
+ * Creates a pseudo-random number generator based on the provided entropy.
+ * This can be used to turn an async random number generator into
+ * a synchronous one.
+ */
+export function makeRandomGenerator (entropy) {
+  const HmacDRBG = elliptic.hmacDRBG
+  const rng = new HmacDRBG({
+    hash: hashjs.sha256,
+    entropy: entropy
+  })
+
+  return bytes => rng.generate(bytes)
+}
 
 /**
  * Creates a context object.

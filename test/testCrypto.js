@@ -1,4 +1,5 @@
 /* global describe, it */
+import {makeRandomGenerator} from '../src/abc.js'
 import * as crypto from '../src/crypto/crypto.js'
 import * as scrypt from '../src/crypto/scrypt.js'
 import {base16, base58, base64, utf8} from '../src/util/encoding.js'
@@ -44,5 +45,15 @@ describe('hmac-sha256', function () {
     const expected = 'DqkzMDMbhngmVUPhX3QL1n1zKmagPZcxWeBKvTSojYdH'
 
     assert.equal(expected, base58.encode(crypto.hmacSha256(data, key)))
+  })
+})
+
+describe('hmac-drbg', function () {
+  it('generate known output', function () {
+    const io = makeFakeIo()
+    const f = makeRandomGenerator(io.random(32))
+
+    const expected = 'd62447f86f81284e09441569489821f0'
+    assert.equal(base16.encode(f(16)), expected)
   })
 })
