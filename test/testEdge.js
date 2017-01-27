@@ -21,7 +21,7 @@ const fakeReply = {
 /**
  * Modifies the lobby object with a fake reply to an account request.
  */
-function craftFakeReply (lobby) {
+function craftFakeReply (io, lobby) {
   const accountRequest = lobby['accountRequest']
   const requestKey = accountRequest['requestKey']
 
@@ -31,7 +31,7 @@ function craftFakeReply (lobby) {
   const dataKey = crypto.hmacSha256('dataKey', new Uint8Array(secret))
 
   const replyBlob = utf8.encode(JSON.stringify(fakeReply))
-  accountRequest['replyBox'] = crypto.encrypt(replyBlob, dataKey)
+  accountRequest['replyBox'] = crypto.encrypt(io, replyBlob, dataKey)
   accountRequest['replyKey'] = keys.getPublic().encodeCompressed('hex')
 }
 
@@ -77,7 +77,7 @@ describe('edge login', function () {
 
     session.context.requestEdgeLogin(opts, function (err, id) {
       if (err) return done(err)
-      craftFakeReply(session.server.db.lobby)
+      craftFakeReply(session.context.io, session.server.db.lobby)
     })
   })
 

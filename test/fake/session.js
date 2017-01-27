@@ -7,6 +7,33 @@ import {Account} from '../../src/account.js'
 import {Login} from '../../src/login/login.js'
 import {base64} from '../../src/util/encoding.js'
 
+/**
+ * Generates deterministic "random" data for unit-testing.
+ */
+function fakeRandom (bytes) {
+  const out = []
+  let x = 0
+  for (let i = 0; i < bytes; ++i) {
+    // Simplest numbers that give a full-period generator with
+    // a good mix of high & low values in the first few bytes:
+    x = (5 * x + 3) & 0xff
+    out[i] = x
+  }
+  return out
+}
+
+export function makeFakeIo () {
+  const server = new FakeServer()
+  const storage = new FakeStorage()
+
+  return {
+    console: null,
+    fetch: server.bindFetch(),
+    localStorage: storage,
+    random: fakeRandom
+  }
+}
+
 export function makeSession (opts) {
   const session = {}
 
@@ -21,6 +48,7 @@ export function makeSession (opts) {
       console: null,
       localStorage: session.storage,
       fetch: session.server.bindFetch(),
+      random: fakeRandom,
       accountType: opts.accountType
     })
   }

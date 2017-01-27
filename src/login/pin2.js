@@ -64,11 +64,11 @@ export function makeSetup (io, login, pin) {
   if (pin2Key) {
     pin2Key = base58.decode(pin2Key)
   } else {
-    pin2Key = crypto.random(32)
+    pin2Key = io.random(32)
   }
 
-  const pin2Box = crypto.encrypt(login.dataKey, pin2Key)
-  const pin2KeyBox = crypto.encrypt(pin2Key, login.dataKey)
+  const pin2Box = crypto.encrypt(io, login.dataKey, pin2Key)
+  const pin2KeyBox = crypto.encrypt(io, pin2Key, login.dataKey)
 
   return {
     server: {

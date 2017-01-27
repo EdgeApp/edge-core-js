@@ -8,6 +8,7 @@ import '../commands/all.js'
 
 // Command-line tools:
 import chalk from 'chalk'
+import crypto from 'crypto'
 import fs from 'fs'
 import Getopt from 'node-getopt'
 import fetch from 'node-fetch'
@@ -102,7 +103,8 @@ function makeSession (config, cmd) {
       accountType: config.accountType,
       apiKey: config.apiKey,
       fetch: fetch,
-      localStorage: fakeStorage
+      localStorage: fakeStorage,
+      random: bytes => crypto.randomBytes(bytes)
     })
   }
 

@@ -1,6 +1,5 @@
 import {serialize} from '../util/decorators.js'
 import {base16, utf8} from '../util/encoding.js'
-import {random} from './crypto.js'
 import scryptJs from 'scrypt-js'
 
 export const userIdSnrp = {
@@ -101,7 +100,7 @@ export function makeSnrp (io) {
 
   // Return a copy of the timed version with a fresh salt:
   return snrpCache.then(snrp => ({
-    'salt_hex': base16.encode(random(32)),
+    'salt_hex': base16.encode(io.random(32)),
     'n': snrp.n,
     'r': snrp.r,
     'p': snrp.p

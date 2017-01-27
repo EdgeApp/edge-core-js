@@ -59,8 +59,5 @@
     "prepublish": "npm run lint && npm run build",
     "pretest": "npm run lint && webpack && rollup -c rollup.config.test.js",
     "test": "mocha --require source-map-support/register dist/tests.cjs.js"
-  },
-  "browser": {
-    "crypto": false
   }
 }

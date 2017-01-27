@@ -96,12 +96,12 @@ export function makeSetup (io, login, questions, answers) {
   if (recovery2Key) {
     recovery2Key = base58.decode(recovery2Key)
   } else {
-    recovery2Key = crypto.random(32)
+    recovery2Key = io.random(32)
   }
 
-  const question2Box = crypto.encrypt(utf8.encode(JSON.stringify(questions), 'utf8'), recovery2Key)
-  const recovery2Box = crypto.encrypt(login.dataKey, recovery2Key)
-  const recovery2KeyBox = crypto.encrypt(recovery2Key, login.dataKey)
+  const question2Box = crypto.encrypt(io, utf8.encode(JSON.stringify(questions), 'utf8'), recovery2Key)
+  const recovery2Box = crypto.encrypt(io, login.dataKey, recovery2Key)
+  const recovery2KeyBox = crypto.encrypt(io, recovery2Key, login.dataKey)
 
   return {
     server: {

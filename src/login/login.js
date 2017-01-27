@@ -144,7 +144,7 @@ Login.prototype.accountAttach = function (io, type, info) {
   const infoBlob = utf8.encode(JSON.stringify(info))
   const data = {
     'type': type,
-    'info': crypto.encrypt(infoBlob, this.dataKey)
+    'info': crypto.encrypt(io, infoBlob, this.dataKey)
   }
 
   const request = this.authJson()

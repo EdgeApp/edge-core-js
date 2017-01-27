@@ -20,8 +20,8 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
  * Creates a new login object, and attaches the account repo info to it.
  */
 function createLogin (io, accountReply) {
-  const username = accountReply.username + '-' + base58.encode(crypto.random(4))
-  const password = base58.encode(crypto.random(24))
+  const username = accountReply.username + '-' + base58.encode(io.random(4))
+  const password = base58.encode(io.random(24))
   const pin = accountReply.pinString
 
   const opts = {}
@@ -104,7 +104,7 @@ function pollServer (io, edgeLogin, keys, onLogin, onProcessLogin) {
  * Creates a new account request lobby on the server.
  */
 export function create (io, opts) {
-  const keys = secp256k1.genKeyPair({entropy: crypto.random(32)})
+  const keys = secp256k1.genKeyPair({entropy: io.random(32)})
 
   const data = {
     'accountRequest': {

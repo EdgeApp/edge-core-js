@@ -26,9 +26,9 @@ export function create (io, username, password, opts) {
   username = userMap.normalize(username)
 
   // Create account repo info:
-  const dataKey = crypto.random(32)
-  const syncKey = opts.syncKey || crypto.random(20)
-  const syncKeyBox = crypto.encrypt(syncKey, dataKey)
+  const dataKey = io.random(32)
+  const syncKey = opts.syncKey || io.random(20)
+  const syncKeyBox = crypto.encrypt(io, syncKey, dataKey)
 
   return Promise.all([
     userMap.getUserId(io, username),

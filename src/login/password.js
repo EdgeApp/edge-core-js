@@ -92,14 +92,14 @@ export function makeSetup (io, dataKey, username, password) {
   // dataKey chain:
   const boxPromise = scrypt.makeSnrp(io).then(passwordKeySnrp => {
     return scrypt.scrypt(up, passwordKeySnrp).then(passwordKey => {
-      const passwordBox = crypto.encrypt(dataKey, passwordKey)
+      const passwordBox = crypto.encrypt(io, dataKey, passwordKey)
       return {passwordKeySnrp, passwordBox}
     })
   })
 
   // authKey chain:
   const authPromise = scrypt.scrypt(up, scrypt.passwordAuthSnrp).then(passwordAuth => {
-    const passwordAuthBox = crypto.encrypt(passwordAuth, dataKey)
+    const passwordAuthBox = crypto.encrypt(io, passwordAuth, dataKey)
     return {passwordAuth, passwordAuthBox}
   })
 

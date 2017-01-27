@@ -5,19 +5,6 @@ import {Buffer} from 'buffer'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 
-export function random (bytes) {
-  bytes |= 0
-  try {
-    const out = new Uint8Array(bytes)
-    window.crypto.getRandomValues(out)
-    return out
-  } catch (e) {
-    // Alternative using node.js crypto:
-    const hiddenRequire = require
-    return hiddenRequire('crypto').randomBytes(bytes)
-  }
-}
-
 /**
  * @param box an Airbitz JSON encryption box
  * @param key a key, as an ArrayBuffer
@@ -76,13 +63,13 @@ export function decrypt (box, key) {
  * @param payload an ArrayBuffer of data
  * @param key a key, as an ArrayBuffer
  */
-export function encrypt (data, key) {
+export function encrypt (io, data, key) {
   // Calculate sizes and locations:
-  const headerSize = random(1)[0] & 0x1f
+  const headerSize = io.random(1)[0] & 0x1f
   const dataStart = 1 + headerSize + 4
   const dataSize = data.length
   const footerStart = dataStart + dataSize + 1
-  const footerSize = random(1)[0] & 0x1f
+  const footerSize = io.random(1)[0] & 0x1f
   const hashStart = footerStart + footerSize
   const hashSize = 32
   const paddingStart = hashStart + hashSize
@@ -90,7 +77,7 @@ export function encrypt (data, key) {
   const raw = new Buffer(paddingStart + paddingSize)
 
   // Random header:
-  const header = random(headerSize)
+  const header = io.random(headerSize)
   raw[0] = headerSize
   for (let i = 0; i < headerSize; ++i) {
     raw[1 + i] = header[i]
@@ -106,7 +93,7 @@ export function encrypt (data, key) {
   }
 
   // Random footer:
-  const footer = random(footerSize)
+  const footer = io.random(footerSize)
   raw[dataStart + dataSize] = footerSize
   for (let i = 0; i < footerSize; ++i) {
     raw[footerStart + i] = footer[i]
@@ -124,7 +111,7 @@ export function encrypt (data, key) {
   }
 
   // Encrypt to JSON:
-  const iv = random(16)
+  const iv = io.random(16)
   const cipher = new AesCbc(key, iv)
   const ciphertext = cipher.encrypt(raw) // BUG: requires a `Buffer`
   return {

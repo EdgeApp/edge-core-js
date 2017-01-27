@@ -184,7 +184,7 @@ Repo.prototype.setData = function (path, value) {
   path += '.json'
 
   const changes = {}
-  changes[path] = value ? crypto.encrypt(value, this.dataKey) : null
+  changes[path] = value ? crypto.encrypt(this.io, value, this.dataKey) : null
   mergeChanges(this.changeStore, changes)
 }
 

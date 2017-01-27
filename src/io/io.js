@@ -14,6 +14,14 @@ export function makeBrowserIo () {
   if (typeof window !== 'undefined') {
     out.fetch = (...rest) => window.fetch(...rest)
     out.localStorage = window.localStorage
+
+    if (window.crypto && window.crypto.getRandomValues) {
+      out.random = (size) => {
+        const out = new Uint8Array(size)
+        window.crypto.getRandomValues(out)
+        return out
+      }
+    }
   }
 
   return out
@@ -26,7 +34,7 @@ export function makeBrowserIo () {
 export class IoContext {
   constructor (nativeIo, opts = {}) {
     // Copy native io resources:
-    const keys = ['console', 'fetch', 'localStorage']
+    const keys = ['console', 'fetch', 'localStorage', 'random']
     for (const key of keys) {
       if (key in opts) {
         this[key] = opts[key]

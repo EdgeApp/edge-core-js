@@ -1,12 +1,11 @@
-import * as crypto from '../crypto/crypto.js'
 import {base16, base64} from '../util/encoding.js'
 
 /**
  * Creates a blank repo on the sync server.
  */
 export function repoCreate (io, login, keysJson) {
-  keysJson.dataKey = keysJson.dataKey || base16.encode(crypto.random(32))
-  keysJson.syncKey = keysJson.syncKey || base16.encode(crypto.random(20))
+  keysJson.dataKey = keysJson.dataKey || base16.encode(io.random(32))
+  keysJson.syncKey = keysJson.syncKey || base16.encode(io.random(20))
 
   const request = {
     'l1': login.userId,

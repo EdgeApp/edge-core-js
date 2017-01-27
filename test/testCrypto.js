@@ -2,6 +2,7 @@
 import * as crypto from '../src/crypto/crypto.js'
 import * as scrypt from '../src/crypto/scrypt.js'
 import {base16, base58, base64, utf8} from '../src/util/encoding.js'
+import {makeFakeIo} from './fake/session.js'
 import assert from 'assert'
 
 describe('scrypt', function () {
@@ -31,7 +32,7 @@ describe('encryption', function () {
   it('round-trip data', function () {
     const key = base16.decode('002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393')
     const data = utf8.encode('payload')
-    const box = crypto.encrypt(data, key)
+    const box = crypto.encrypt(makeFakeIo(), data, key)
     assert.equal('payload', crypto.decrypt(box, key).toString('utf8'))
   })
 })
