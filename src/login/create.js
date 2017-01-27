@@ -50,7 +50,7 @@ export function create (io, username, password, opts) {
       'lp1': passwordSetup.server.passwordAuth,
       'care_package': JSON.stringify(carePackage),
       'login_package': JSON.stringify(loginPackage),
-      'repo_account_key': base16.encode(syncKey)
+      'repo_account_key': base16.stringify(syncKey)
     }
 
     return io.authRequest('POST', '/v1/account/create', request).then(reply => {

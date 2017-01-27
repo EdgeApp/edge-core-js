@@ -20,13 +20,13 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
  * Creates a new login object, and attaches the account repo info to it.
  */
 function createLogin (io, accountReply) {
-  const username = accountReply.username + '-' + base58.encode(io.random(4))
-  const password = base58.encode(io.random(24))
+  const username = accountReply.username + '-' + base58.stringify(io.random(4))
+  const password = base58.stringify(io.random(24))
   const pin = accountReply.pinString
 
   const opts = {}
   if (accountReply.type === 'account:repo:co.airbitz.wallet') {
-    opts.syncKey = base16.decode(accountReply.info['syncKey'])
+    opts.syncKey = base16.parse(accountReply.info['syncKey'])
   }
 
   return loginCreate.create(io, username, password, opts).then(login => {
@@ -58,7 +58,7 @@ export function decodeAccountReply (keys, lobby) {
   const replyPubkey = secp256k1.keyFromPublic(replyKey, 'hex').getPublic()
   const secret = keys.derive(replyPubkey).toArray('be')
   const dataKey = crypto.hmacSha256('dataKey', new Uint8Array(secret))
-  const reply = JSON.parse(utf8.decode(crypto.decrypt(replyBox, dataKey)))
+  const reply = JSON.parse(utf8.stringify(crypto.decrypt(replyBox, dataKey)))
 
   const returnObj = {
     type: accountRequest['type'],

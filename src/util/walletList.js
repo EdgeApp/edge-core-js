@@ -14,7 +14,7 @@ function walletKeys (walletJson) {
 }
 
 function walletId (walletJson) {
-  return repoId(base16.decode(walletKeys(walletJson)['dataKey']))
+  return repoId(base16.parse(walletKeys(walletJson)['dataKey']))
 }
 
 /**
@@ -94,7 +94,7 @@ WalletList.prototype.addWallet = function (type, keysJson) {
     'SortIndex': 0
   }
 
-  const dataKey = base16.decode(keysJson['dataKey'])
+  const dataKey = base16.parse(keysJson['dataKey'])
   const filename = this.repo.secureFilename(dataKey)
   this.repo.setJson(this.folder + '/' + filename, walletJson)
 

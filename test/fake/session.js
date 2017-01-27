@@ -55,7 +55,7 @@ export function makeSession (opts) {
 
   if (opts.needsLogin) {
     session.storage.populate()
-    const userId = base64.decode(packages.users['js test 0'])
+    const userId = base64.parse(packages.users['js test 0'])
     session.login = Login.offline(session.context.io, 'js test 0', userId, packages.dataKey)
   }
 

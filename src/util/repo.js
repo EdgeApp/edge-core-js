@@ -79,7 +79,7 @@ export function mergeChanges (store, changes) {
  * Creates an ID string from a repo's dataKey.
  */
 export function repoId (dataKey) {
-  return base58.encode(crypto.hmacSha256(dataKey, dataKey))
+  return base58.stringify(crypto.hmacSha256(dataKey, dataKey))
 }
 
 /**
@@ -102,7 +102,7 @@ export function Repo (io, dataKey, syncKey) {
  * the provided binary data with the repo's dataKey.
  */
 Repo.prototype.secureFilename = function (data) {
-  return base58.encode(crypto.hmacSha256(data, this.dataKey))
+  return base58.stringify(crypto.hmacSha256(data, this.dataKey))
 }
 
 /**
@@ -131,7 +131,7 @@ Repo.prototype.getText = function (path) {
   if (data.length && data[data.length - 1] === 0) {
     data = data.slice(0, data.length - 1)
   }
-  return utf8.decode(data)
+  return utf8.stringify(data)
 }
 
 /**
@@ -192,7 +192,7 @@ Repo.prototype.setData = function (path, value) {
  * Encrypts a text string and saves it as the provided file path.
  */
 Repo.prototype.setText = function (path, value) {
-  return this.setData(path, utf8.encode(value))
+  return this.setData(path, utf8.parse(value))
 }
 
 /**
@@ -221,7 +221,7 @@ Repo.prototype.sync = function () {
   }
 
   // Calculate the URI:
-  let uri = '/api/v2/store/' + base16.encode(this.syncKey)
+  let uri = '/api/v2/store/' + base16.stringify(this.syncKey)
   const lastHash = this.store.getItem('lastHash')
   if (lastHash) {
     uri = uri + '/' + lastHash

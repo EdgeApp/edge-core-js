@@ -43,7 +43,7 @@ FakeStorage.prototype.populateRepos = function () {
       const repo = new repoModule.Repo(
         {localStorage: this},
         packages.dataKey,
-        base16.decode(syncKey)
+        base16.parse(syncKey)
       )
       repoModule.mergeChanges(repo.dataStore, packages.repos[syncKey])
     }

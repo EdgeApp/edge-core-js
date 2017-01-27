@@ -28,7 +28,7 @@ function loginOnline (io, username, userId, password) {
     // Encode the username:
     const request = {
       'userId': userId,
-      'passwordAuth': base64.encode(passwordAuth)
+      'passwordAuth': base64.stringify(passwordAuth)
       // "otp": null
     }
     return io.authRequest('POST', '/v2/login', request).then(reply => {
@@ -110,7 +110,7 @@ export function makeSetup (io, dataKey, username, password) {
     ] = values
     return {
       server: {
-        'passwordAuth': base64.encode(passwordAuth),
+        'passwordAuth': base64.stringify(passwordAuth),
         'passwordAuthSnrp': scrypt.passwordAuthSnrp, // TODO: Not needed
         'passwordKeySnrp': passwordKeySnrp,
         'passwordBox': passwordBox,

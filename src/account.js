@@ -25,7 +25,7 @@ export function Account (ctx, login) {
   this.recoveryLogin = false
   this.username = login.username
 
-  this.repo = new Repo(this.io, base16.decode(this.keys.dataKey), base16.decode(this.keys.syncKey))
+  this.repo = new Repo(this.io, base16.parse(this.keys.dataKey), base16.parse(this.keys.syncKey))
   this.walletList = new WalletList(this.repo)
 }
 

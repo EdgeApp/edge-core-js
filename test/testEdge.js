@@ -30,7 +30,7 @@ function craftFakeReply (io, lobby) {
   const secret = keys.derive(requestPubkey).toArray('be')
   const dataKey = crypto.hmacSha256('dataKey', new Uint8Array(secret))
 
-  const replyBlob = utf8.encode(JSON.stringify(fakeReply))
+  const replyBlob = utf8.parse(JSON.stringify(fakeReply))
   accountRequest['replyBox'] = crypto.encrypt(io, replyBlob, dataKey)
   accountRequest['replyKey'] = keys.getPublic().encodeCompressed('hex')
 }

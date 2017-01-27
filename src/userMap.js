@@ -39,7 +39,7 @@ export function getUserId (io, username) {
   if (userMap[username]) {
     return Promise.resolve(userMap[username])
   }
-  return scrypt.scrypt(username, scrypt.userIdSnrp).then(userId => base64.encode(userId))
+  return scrypt.scrypt(username, scrypt.userIdSnrp).then(userId => base64.stringify(userId))
 }
 
 /**

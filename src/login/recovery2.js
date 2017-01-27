@@ -14,9 +14,9 @@ function recovery2Auth (recovery2Key, answers) {
 
   const recovery2Auth = []
   for (const answer of answers) {
-    const data = utf8.encode(answer)
+    const data = utf8.parse(answer)
     const auth = crypto.hmacSha256(data, recovery2Key)
-    recovery2Auth.push(base64.encode(auth))
+    recovery2Auth.push(base64.stringify(auth))
   }
   return recovery2Auth
 }
@@ -29,11 +29,11 @@ function recovery2Auth (recovery2Key, answers) {
  * @param `Login` object promise
  */
 export function login (io, recovery2Key, username, answers) {
-  recovery2Key = base58.decode(recovery2Key)
+  recovery2Key = base58.parse(recovery2Key)
   username = userMap.normalize(username)
 
   const request = {
-    'recovery2Id': base64.encode(recovery2Id(recovery2Key, username)),
+    'recovery2Id': base64.stringify(recovery2Id(recovery2Key, username)),
     'recovery2Auth': recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
@@ -61,11 +61,11 @@ export function login (io, recovery2Key, username, answers) {
  * @param Question array promise
  */
 export function questions (io, recovery2Key, username) {
-  recovery2Key = base58.decode(recovery2Key)
+  recovery2Key = base58.parse(recovery2Key)
   username = userMap.normalize(username)
 
   const request = {
-    'recovery2Id': base64.encode(recovery2Id(recovery2Key, username))
+    'recovery2Id': base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null
   }
   return io.authRequest('POST', '/v2/login', request).then(reply => {
@@ -77,7 +77,7 @@ export function questions (io, recovery2Key, username) {
 
     // Decrypt the questions:
     const questions = crypto.decrypt(question2Box, recovery2Key)
-    return JSON.parse(utf8.decode(questions))
+    return JSON.parse(utf8.stringify(questions))
   })
 }
 
@@ -94,25 +94,25 @@ export function makeSetup (io, login, questions, answers) {
 
   let recovery2Key = login.userStorage.getItem('recovery2Key')
   if (recovery2Key) {
-    recovery2Key = base58.decode(recovery2Key)
+    recovery2Key = base58.parse(recovery2Key)
   } else {
     recovery2Key = io.random(32)
   }
 
-  const question2Box = crypto.encrypt(io, utf8.encode(JSON.stringify(questions), 'utf8'), recovery2Key)
+  const question2Box = crypto.encrypt(io, utf8.parse(JSON.stringify(questions), 'utf8'), recovery2Key)
   const recovery2Box = crypto.encrypt(io, login.dataKey, recovery2Key)
   const recovery2KeyBox = crypto.encrypt(io, recovery2Key, login.dataKey)
 
   return {
     server: {
-      'recovery2Id': base64.encode(recovery2Id(recovery2Key, login.username)),
+      'recovery2Id': base64.stringify(recovery2Id(recovery2Key, login.username)),
       'recovery2Auth': recovery2Auth(recovery2Key, answers),
       'recovery2Box': recovery2Box,
       'recovery2KeyBox': recovery2KeyBox,
       'question2Box': question2Box
     },
     storage: {
-      'recovery2Key': base58.encode(recovery2Key)
+      'recovery2Key': base58.stringify(recovery2Key)
     },
     recovery2Key
   }
@@ -128,7 +128,7 @@ export function setup (io, login, questions, answers) {
   request['data'] = setup.server
   return io.authRequest('PUT', '/v2/login/recovery2', request).then(reply => {
     login.userStorage.setItems(setup.storage)
-    return base58.encode(setup.recovery2Key)
+    return base58.stringify(setup.recovery2Key)
   })
 }
 

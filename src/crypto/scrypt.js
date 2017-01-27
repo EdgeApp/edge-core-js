@@ -31,9 +31,9 @@ if (typeof window !== 'undefined' && window.performance) {
  */
 const timeScrypt = serialize(function timeScrypt (data, snrp) {
   const dklen = 32
-  const salt = base16.decode(snrp.salt_hex)
+  const salt = base16.parse(snrp.salt_hex)
   if (typeof data === 'string') {
-    data = utf8.encode(data)
+    data = utf8.parse(data)
   }
   return new Promise((resolve, reject) => {
     const startTime = timerNow()
@@ -100,7 +100,7 @@ export function makeSnrp (io) {
 
   // Return a copy of the timed version with a fresh salt:
   return snrpCache.then(snrp => ({
-    'salt_hex': base16.encode(io.random(32)),
+    'salt_hex': base16.stringify(io.random(32)),
     'n': snrp.n,
     'r': snrp.r,
     'p': snrp.p

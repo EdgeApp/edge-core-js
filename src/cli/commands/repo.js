@@ -8,8 +8,8 @@ command('repo-sync', {
   needsContext: true
 }, function (session, argv) {
   if (argv.length !== 2) throw new UsageError(this)
-  const syncKey = base16.decode(argv[0])
-  const dataKey = base16.decode(argv[1])
+  const syncKey = base16.parse(argv[0])
+  const dataKey = base16.parse(argv[1])
 
   const store = new Repo(session.context.io, dataKey, syncKey)
   return store.sync().then(changed => {
@@ -24,8 +24,8 @@ command('repo-list', {
   needsContext: true
 }, function (session, argv) {
   if (argv.length < 2 || argv.length > 3) throw new UsageError(this)
-  const syncKey = base16.decode(argv[0])
-  const dataKey = base16.decode(argv[1])
+  const syncKey = base16.parse(argv[0])
+  const dataKey = base16.parse(argv[1])
   const path = argv.length === 3 ? argv[2] : ''
 
   const store = new Repo(session.context.io, dataKey, syncKey)
@@ -38,8 +38,8 @@ command('repo-set', {
   needsContext: true
 }, function (session, argv) {
   if (argv.length !== 4) throw new UsageError(this)
-  const syncKey = base16.decode(argv[0])
-  const dataKey = base16.decode(argv[1])
+  const syncKey = base16.parse(argv[0])
+  const dataKey = base16.parse(argv[1])
   const path = argv[2]
   const value = argv[3]
 
@@ -53,8 +53,8 @@ command('repo-get', {
   needsContext: true
 }, function (session, argv) {
   if (argv.length !== 3) throw new UsageError(this)
-  const syncKey = base16.decode(argv[0])
-  const dataKey = base16.decode(argv[1])
+  const syncKey = base16.parse(argv[0])
+  const dataKey = base16.parse(argv[1])
   const path = argv[2]
 
   const store = new Repo(session.context.io, dataKey, syncKey)

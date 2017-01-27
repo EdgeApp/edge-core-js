@@ -27,14 +27,14 @@ function loginReplyStore (io, username, dataKey, loginReply) {
   const pin2KeyBox = loginReply['pin2KeyBox']
   if (pin2KeyBox) {
     const pin2Key = crypto.decrypt(pin2KeyBox, dataKey)
-    userStorage.setItem('pin2Key', base58.encode(pin2Key))
+    userStorage.setItem('pin2Key', base58.stringify(pin2Key))
   }
 
   // Store the recovery key unencrypted:
   const recovery2KeyBox = loginReply['recovery2KeyBox']
   if (recovery2KeyBox) {
     const recovery2Key = crypto.decrypt(recovery2KeyBox, dataKey)
-    userStorage.setItem('recovery2Key', base58.encode(recovery2Key))
+    userStorage.setItem('recovery2Key', base58.stringify(recovery2Key))
   }
 }
 
@@ -98,7 +98,7 @@ Login.offline = function (io, username, userId, dataKey) {
 Login.prototype.authJson = function () {
   return {
     'userId': this.userId,
-    'passwordAuth': base64.encode(this.passwordAuth)
+    'passwordAuth': base64.stringify(this.passwordAuth)
   }
 }
 
@@ -111,15 +111,15 @@ Login.prototype.accountFind = function (type) {
   for (const repo of this.repos) {
     if (repo['type'] === type) {
       const keysBox = repo['keysBox'] || repo['info']
-      return JSON.parse(utf8.decode(crypto.decrypt(keysBox, this.dataKey)))
+      return JSON.parse(utf8.stringify(crypto.decrypt(keysBox, this.dataKey)))
     }
   }
 
   // Handle the legacy Airbitz repo:
   if (type === 'account:repo:co.airbitz.wallet') {
     return {
-      'syncKey': base16.encode(this.syncKey),
-      'dataKey': base16.encode(this.dataKey)
+      'syncKey': base16.stringify(this.syncKey),
+      'dataKey': base16.stringify(this.dataKey)
     }
   }
 
@@ -141,7 +141,7 @@ Login.prototype.accountCreate = function (io, type) {
  * Attaches an account repo to the login.
  */
 Login.prototype.accountAttach = function (io, type, info) {
-  const infoBlob = utf8.encode(JSON.stringify(info))
+  const infoBlob = utf8.parse(JSON.stringify(info))
   const data = {
     'type': type,
     'info': crypto.encrypt(io, infoBlob, this.dataKey)

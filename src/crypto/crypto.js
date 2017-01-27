@@ -14,8 +14,8 @@ export function decrypt (box, key) {
   if (box['encryptionType'] !== 0) {
     throw new Error('Unknown encryption type')
   }
-  const iv = base16.decode(box['iv_hex'])
-  const ciphertext = base64.decode(box['data_base64'])
+  const iv = base16.parse(box['iv_hex'])
+  const ciphertext = base64.parse(box['data_base64'])
 
   // Decrypt:
   const cipher = new AesCbc(key, iv)
@@ -24,7 +24,7 @@ export function decrypt (box, key) {
   // const decipher = crypto.createDecipheriv('AES-256-CBC', key, iv);
   // let x = decipher.update(box.data_base64, 'base64', 'hex')
   // x += decipher.final('hex')
-  // const data = base16.decode(x)
+  // const data = base16.parse(x)
 
   // Calculate field locations:
   const headerSize = raw[0]
@@ -116,8 +116,8 @@ export function encrypt (io, data, key) {
   const ciphertext = cipher.encrypt(raw) // BUG: requires a `Buffer`
   return {
     'encryptionType': 0,
-    'iv_hex': base16.encode(iv),
-    'data_base64': base64.encode(ciphertext)
+    'iv_hex': base16.stringify(iv),
+    'data_base64': base64.stringify(ciphertext)
   }
 }
 

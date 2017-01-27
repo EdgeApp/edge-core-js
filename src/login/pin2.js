@@ -31,12 +31,12 @@ export function getKey (io, username) {
  * @param `Login` object promise
  */
 export function login (io, pin2Key, username, pin) {
-  pin2Key = base58.decode(pin2Key)
+  pin2Key = base58.parse(pin2Key)
   username = userMap.normalize(username)
 
   const request = {
-    'pin2Id': base64.encode(pin2Id(pin2Key, username)),
-    'pin2Auth': base64.encode(pin2Auth(pin2Key, pin))
+    'pin2Id': base64.stringify(pin2Id(pin2Key, username)),
+    'pin2Auth': base64.stringify(pin2Auth(pin2Key, pin))
     // "otp": null
   }
   return io.authRequest('POST', '/v2/login', request).then(reply => {
@@ -62,7 +62,7 @@ export function login (io, pin2Key, username, pin) {
 export function makeSetup (io, login, pin) {
   let pin2Key = login.userStorage.getItem('pin2Key')
   if (pin2Key) {
-    pin2Key = base58.decode(pin2Key)
+    pin2Key = base58.parse(pin2Key)
   } else {
     pin2Key = io.random(32)
   }
@@ -72,13 +72,13 @@ export function makeSetup (io, login, pin) {
 
   return {
     server: {
-      'pin2Id': base64.encode(pin2Id(pin2Key, login.username)),
-      'pin2Auth': base64.encode(pin2Auth(pin2Key, pin)),
+      'pin2Id': base64.stringify(pin2Id(pin2Key, login.username)),
+      'pin2Auth': base64.stringify(pin2Auth(pin2Key, pin)),
       'pin2Box': pin2Box,
       'pin2KeyBox': pin2KeyBox
     },
     storage: {
-      'pin2Key': base58.encode(pin2Key)
+      'pin2Key': base58.stringify(pin2Key)
     },
     pin2Key
   }
@@ -94,6 +94,6 @@ export function setup (io, login, pin) {
   request['data'] = setup.server
   return io.authRequest('PUT', '/v2/login/pin2', request).then(reply => {
     login.userStorage.setItems(setup.storage)
-    return base58.encode(setup.pin2Key)
+    return base58.stringify(setup.pin2Key)
   })
 }
