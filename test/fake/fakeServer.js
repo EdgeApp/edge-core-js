@@ -222,11 +222,11 @@ FakeServer.prototype.request = function (uri, opts) {
           'syncKeyBox',
           'repos'
         ]
-        for (const key of keys) {
+        keys.forEach(key => {
           if (this.db[key]) {
             results[key] = this.db[key]
           }
-        }
+        })
         return makeResponse(results)
     }
   }

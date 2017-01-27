@@ -35,7 +35,7 @@ export class IoContext {
   constructor (nativeIo, opts = {}) {
     // Copy native io resources:
     const keys = ['console', 'fetch', 'localStorage', 'random']
-    for (const key of keys) {
+    keys.forEach(key => {
       if (key in opts) {
         this[key] = opts[key]
       } else if (nativeIo[key] != null) {
@@ -43,7 +43,7 @@ export class IoContext {
       } else {
         throw new Error(`Could not find "${key}" in the environment`)
       }
-    }
+    })
 
     // Set up wrapper objects:
     this.authServer = new AuthServer(this, opts.apiKey)

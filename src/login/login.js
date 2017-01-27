@@ -17,11 +17,11 @@ function loginReplyStore (io, username, dataKey, loginReply) {
   ]
 
   // Store any keys the reply may contain:
-  for (const key of keys) {
+  keys.forEach(key => {
     if (loginReply[key]) {
       userStorage.setJson(key, loginReply[key])
     }
-  }
+  })
 
   // Store the pin key unencrypted:
   const pin2KeyBox = loginReply['pin2KeyBox']
