@@ -104,7 +104,7 @@ function pollServer (io, edgeLogin, keys, onLogin, onProcessLogin) {
  * Creates a new account request lobby on the server.
  */
 export function create (io, opts) {
-  const keys = secp256k1.genKeyPair()
+  const keys = secp256k1.genKeyPair({entropy: crypto.random(32)})
 
   const data = {
     'accountRequest': {
