@@ -15,7 +15,7 @@ export function makeBrowserIo () {
     out.fetch = (...rest) => window.fetch(...rest)
     out.localStorage = window.localStorage
 
-    if (window.crypto && window.crypto.getRandomValues) {
+    if ('crypto' in window && 'getRandomValues' in window.crypto) {
       out.random = (size) => {
         const out = new Uint8Array(size)
         window.crypto.getRandomValues(out)
@@ -38,7 +38,7 @@ export class IoContext {
     for (const key of keys) {
       if (key in opts) {
         this[key] = opts[key]
-      } else if (nativeIo[key]) {
+      } else if (nativeIo[key] != null) {
         this[key] = nativeIo[key]
       } else {
         throw new Error(`Could not find "${key}" in the environment`)
