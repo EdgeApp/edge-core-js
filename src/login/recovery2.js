@@ -8,17 +8,10 @@ function recovery2Id (recovery2Key, username) {
 }
 
 function recovery2Auth (recovery2Key, answers) {
-  if (!(Object.prototype.toString.call(answers) === '[object Array]')) {
-    throw new TypeError('Answers must be an array of strings')
-  }
-
-  const recovery2Auth = []
-  for (const answer of answers) {
+  return answers.map(answer => {
     const data = utf8.parse(answer)
-    const auth = crypto.hmacSha256(data, recovery2Key)
-    recovery2Auth.push(base64.stringify(auth))
-  }
-  return recovery2Auth
+    return base64.stringify(crypto.hmacSha256(data, recovery2Key))
+  })
 }
 
 /**

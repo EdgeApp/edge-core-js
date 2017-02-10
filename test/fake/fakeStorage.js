@@ -38,16 +38,14 @@ FakeStorage.prototype.populateUsers = function () {
  * Fills the `FakeStorage` instance with repo data.
  */
 FakeStorage.prototype.populateRepos = function () {
-  for (const syncKey in packages.repos) {
-    if (packages.repos.hasOwnProperty(syncKey)) {
-      const repo = new repoModule.Repo(
-        {localStorage: this},
-        packages.dataKey,
-        base16.parse(syncKey)
-      )
-      repoModule.mergeChanges(repo.dataStore, packages.repos[syncKey])
-    }
-  }
+  Object.keys(packages.repos).forEach(syncKey => {
+    const repo = new repoModule.Repo(
+      {localStorage: this}, // Fake io object
+      packages.dataKey,
+      base16.parse(syncKey)
+    )
+    repoModule.mergeChanges(repo.dataStore, packages.repos[syncKey])
+  })
 }
 
 /**

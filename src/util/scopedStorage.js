@@ -44,21 +44,18 @@ ScopedStorage.prototype.keys = function () {
 }
 
 ScopedStorage.prototype.removeAll = function () {
-  const keys = this.keys()
-  for (const key of keys) {
+  this.keys().forEach(key => {
     this.removeItem(key)
-  }
+  })
 }
 
 ScopedStorage.prototype.setItems = function (items) {
-  for (const key in items) {
-    if (items.hasOwnProperty(key)) {
-      const item = items[key]
-      if (typeof item === 'string') {
-        this.setItem(key, item)
-      } else {
-        this.setJson(key, item)
-      }
+  Object.keys(items).forEach(key => {
+    const item = items[key]
+    if (typeof item === 'string') {
+      this.setItem(key, item)
+    } else {
+      this.setJson(key, item)
     }
-  }
+  })
 }

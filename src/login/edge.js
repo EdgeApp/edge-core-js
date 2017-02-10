@@ -128,7 +128,7 @@ export function create (io, opts) {
   return io.authRequest('POST', '/v2/lobby', request).then(reply => {
     const edgeLogin = new ABCEdgeLoginRequest(reply.id)
     let onProcessLogin = null
-    if (opts.hasOwnProperty('onProcessLogin')) {
+    if ('onProcessLogin' in opts) {
       onProcessLogin = opts.onProcessLogin
     }
     pollServer(io, edgeLogin, keys, opts.onLogin, onProcessLogin)

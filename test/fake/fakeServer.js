@@ -355,11 +355,9 @@ FakeServer.prototype.request = function (uri, opts) {
     switch (method) {
       case 'POST':
         const changes = body['changes']
-        for (const change in changes) {
-          if (changes.hasOwnProperty(change)) {
-            repo[change] = changes[change]
-          }
-        }
+        Object.keys(changes).forEach(change => {
+          repo[change] = changes[change]
+        })
         return new FakeResponse(JSON.stringify({
           'changes': changes,
           'hash': '1111111111111111111111111111111111111111'

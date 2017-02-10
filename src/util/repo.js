@@ -49,30 +49,27 @@ function pathSplit (path) {
 }
 
 /**
+ * Converts a server-format path to our internal format.
+ */
+function pathFix (path) {
+  if (path.slice(-5) !== '.json') {
+    return null
+  }
+  return pathSplit(path.slice(0, -5)).join('.')
+}
+
+/**
  * This will merge a changeset into the local storage.
  * This function ignores folder-level deletes and overwrites,
  * but those can't happen under the current rules anyhow.
  */
 export function mergeChanges (store, changes) {
-  for (const key in changes) {
-    if (changes.hasOwnProperty(key)) {
-      // Normalize the path:
-      const path = pathSplit(key)
-      if (!path.length) {
-        continue
-      }
-
-      // Remove the `.json` extension from the filename:
-      const filename = path[path.length - 1]
-      if (filename.slice(-5) !== '.json') {
-        continue
-      }
-      path[path.length - 1] = filename.slice(0, -5)
-
-      // Write the value to storage:
-      store.setJson(path.join('.'), changes[key])
+  Object.keys(changes).forEach(key => {
+    const path = pathFix(key)
+    if (path != null) {
+      store.setJson(path, changes[key])
     }
-  }
+  })
 }
 
 /**
@@ -213,11 +210,10 @@ Repo.prototype.sync = function () {
   const changeKeys = this.changeStore.keys()
   if (changeKeys.length) {
     request.changes = {}
-    for (const key of changeKeys) {
+    changeKeys.forEach(key => {
       const path = key.replace(/\./g, '/') + '.json'
-
       request.changes[path] = this.changeStore.getJson(key)
-    }
+    })
   }
 
   // Calculate the URI:
@@ -232,18 +228,15 @@ Repo.prototype.sync = function () {
     let changed = false
 
     // Delete any changed keys (since the upload is done):
-    for (const key of changeKeys) {
+    changeKeys.forEach(key => {
       self.changeStore.removeItem(key)
-    }
+    })
 
     // Process the change list:
     const changes = reply['changes']
     if (changes) {
-      for (const change in changes) {
-        if (changes.hasOwnProperty(change)) {
-          changed = true
-          break
-        }
+      if (Object.keys(changes).length) {
+        changed = true
       }
       mergeChanges(self.dataStore, changes)
     }

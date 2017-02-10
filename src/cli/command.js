@@ -59,14 +59,12 @@ command.find = function (name) {
  */
 command.showList = function () {
   console.log('Available commands:')
-  for (const name in commands) {
-    if (commands.hasOwnProperty(name)) {
-      const cmd = commands[name]
-      let line = '  ' + name
-      if (cmd.help) {
-        line += '\t- ' + cmd.help
-      }
-      console.log(line)
+  Object.keys(commands).forEach(name => {
+    const cmd = commands[name]
+    let line = '  ' + name
+    if (cmd.help) {
+      line += '\t- ' + cmd.help
     }
-  }
+    console.log(line)
+  })
 }

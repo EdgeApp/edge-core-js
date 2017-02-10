@@ -82,14 +82,10 @@ Account.prototype.getWallet = function (id) {
  * Might return null if there are no wallets.
  */
 Account.prototype.getFirstWallet = function (type) {
-  const ids = this.walletList.listIds()
-
-  for (const id of ids) {
-    if (type == null || this.walletList.getType(id) === type) {
-      return this.getWallet(id)
-    }
-  }
-  return null
+  const id = this.walletList.listIds().find(
+    id => type == null || this.walletList.getType(id) === type
+  )
+  return id ? this.getWallet(id) : null
 }
 
 /**

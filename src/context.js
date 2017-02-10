@@ -18,13 +18,7 @@ export function Context (io, opts) {
 
 Context.prototype.usernameList = function () {
   const map = userMap.load(this.io)
-  const out = []
-  for (const username in map) {
-    if (map.hasOwnProperty(username)) {
-      out.push(username)
-    }
-  }
-  return out
+  return Object.keys(map)
 }
 Context.prototype.listUsernames = Context.prototype.usernameList
 
