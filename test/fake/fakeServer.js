@@ -1,6 +1,30 @@
 import * as packages from './packages.js'
 import url from 'url'
 
+const routes = []
+
+/**
+ * Wires one or more handlers into the routing table.
+ */
+function addRoute (method, path, ...handlers) {
+  handlers.forEach(handler => {
+    routes.push({
+      method,
+      path: new RegExp(`^${path}$`),
+      handler
+    })
+  })
+}
+
+/**
+ * Finds all matching handlers in the routing table.
+ */
+function findRoute (method, path) {
+  return routes.filter(route => {
+    return route.method === method && route.path.test(path)
+  }).map(route => route.handler)
+}
+
 class FakeResponse {
   constructor (body = '', opts = {}) {
     this.body = body
@@ -107,274 +131,271 @@ FakeServer.prototype.authCheck = function (body) {
 FakeServer.prototype.request = function (uri, opts) {
   const req = {
     method: opts.method || 'GET',
-    body: opts.body ? JSON.parse(opts.body) : null
-  }
-  const path = url.parse(uri).pathname
-
-  // Account lifetime v1: ----------------------------------------------------
-
-  if (path === '/api/v1/account/available') {
-    if (this.db.userId && this.db.userId === req.body['l1']) {
-      return makeErrorResponse(3)
-    }
-    return makeResponse()
+    body: opts.body ? JSON.parse(opts.body) : null,
+    path: url.parse(uri).pathname
   }
 
-  if (path === '/api/v1/account/create') {
-    this.db.userId = req.body['l1']
-    this.db.passwordAuth = req.body['lp1']
-
-    const carePackage = JSON.parse(req.body['care_package'])
-    this.db.passwordKeySnrp = carePackage['SNRP2']
-
-    const loginPackage = JSON.parse(req.body['login_package'])
-    this.db.passwordAuthBox = loginPackage['ELP1']
-    this.db.passwordBox = loginPackage['EMK_LP2']
-    this.db.syncKeyBox = loginPackage['ESyncKey']
-    this.repos[req.body['repo_account_key']] = {}
-
-    return makeResponse()
-  }
-
-  if (path === '/api/v1/account/activate') {
-    return makeResponse()
-  }
-
-  // Login v1: ---------------------------------------------------------------
-
-  if (path === '/api/v1/account/carepackage/get') {
-    if (!this.db.userId || this.db.userId !== req.body['l1']) {
-      return makeErrorResponse(3)
-    }
-
-    return makeResponse({
-      'care_package': JSON.stringify({
-        'SNRP2': this.db.passwordKeySnrp
-      })
-    })
-  }
-
-  if (path === '/api/v1/account/loginpackage/get') {
-    req.body['userId'] = req.body['l1']
-    req.body['passwordAuth'] = req.body['lp1']
-    if (!this.authCheck(req.body)) {
-      return makeErrorResponse(3)
-    }
-
-    const results = {
-      'login_package': JSON.stringify({
-        'ELP1': this.db.passwordAuthBox,
-        'EMK_LP2': this.db.passwordBox,
-        'ESyncKey': this.db.syncKeyBox
-      })
-    }
-    if (this.db.rootKeyBox) {
-      results['rootKeyBox'] = this.db.rootKeyBox
-    }
-    return makeResponse(results)
-  }
-
-  // PIN login v1: -----------------------------------------------------------
-
-  if (path === '/api/v1/account/pinpackage/update') {
-    this.db.pinKeyBox = JSON.parse(req.body['pin_package'])
-    return makeResponse()
-  }
-
-  if (path === '/api/v1/account/pinpackage/get') {
-    if (!this.db.pinKeyBox) {
-      return makeErrorResponse(3)
-    }
-    return makeResponse({
-      'pin_package': JSON.stringify(this.db.pinKeyBox)
-    })
-  }
-
-  // Repo server v1: ---------------------------------------------------------
-
-  if (path === '/api/v1/wallet/create') {
-    this.repos[req.body['repo_wallet_key']] = {}
-    return makeResponse()
-  }
-
-  if (path === '/api/v1/wallet/activate') {
-    return makeResponse()
-  }
-
-  // login v2: ---------------------------------------------------------------
-
-  if (path === '/api/v2/login') {
-    switch (this.authCheck(req.body)) {
-      default:
-        return makeErrorResponse(3)
-
-      case authLevel.recovery2Id:
-        return makeResponse({
-          'question2Box': this.db.question2Box
-        })
-
-      case authLevel.full:
-        const results = {}
-        const keys = [
-          'passwordAuthBox',
-          'passwordBox',
-          'passwordKeySnrp',
-          'pin2Box',
-          'pin2KeyBox',
-          'recovery2Box',
-          'recovery2KeyBox',
-          'rootKeyBox',
-          'syncKeyBox',
-          'repos'
-        ]
-        keys.forEach(key => {
-          if (this.db[key]) {
-            results[key] = this.db[key]
-          }
-        })
-        return makeResponse(results)
+  const handlers = findRoute(req.method, req.path)
+  for (const handler of handlers) {
+    const out = handler.call(this, req)
+    if (out != null) {
+      return out
     }
   }
-
-  if (path === '/api/v2/login/password') {
-    if (!this.authCheck(req.body)) {
-      return makeErrorResponse(3)
-    }
-
-    switch (req.method) {
-      case 'PUT':
-        const data = req.body['data']
-        if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
-            !data['passwordBox'] || !data['passwordAuthBox']) {
-          return makeErrorResponse(3)
-        }
-
-        this.db.passwordAuth = data['passwordAuth']
-        this.db.passwordKeySnrp = data['passwordKeySnrp']
-        this.db.passwordBox = data['passwordBox']
-        this.db.passwordAuthBox = data['passwordAuthBox']
-
-        return makeResponse()
-    }
-  }
-
-  if (path === '/api/v2/login/pin2') {
-    if (!this.authCheck(req.body)) {
-      return makeErrorResponse(3)
-    }
-
-    switch (req.method) {
-      case 'PUT':
-        const data = req.body['data']
-        if (!data['pin2Id'] || !data['pin2Auth'] ||
-            !data['pin2Box'] || !data['pin2KeyBox']) {
-          return makeErrorResponse(5)
-        }
-
-        this.db.pin2Id = data['pin2Id']
-        this.db.pin2Auth = data['pin2Auth']
-        this.db.pin2Box = data['pin2Box']
-        this.db.pin2KeyBox = data['pin2KeyBox']
-
-        return makeResponse()
-    }
-  }
-
-  if (path === '/api/v2/login/recovery2') {
-    if (!this.authCheck(req.body)) {
-      return makeErrorResponse(3)
-    }
-
-    switch (req.method) {
-      case 'PUT':
-        const data = req.body['data']
-        if (!data['recovery2Id'] || !data['recovery2Auth'] ||
-            !data['question2Box'] || !data['recovery2Box'] ||
-            !data['recovery2KeyBox']) {
-          return makeErrorResponse(5)
-        }
-
-        this.db.recovery2Id = data['recovery2Id']
-        this.db.recovery2Auth = data['recovery2Auth']
-        this.db.question2Box = data['question2Box']
-        this.db.recovery2Box = data['recovery2Box']
-        this.db.recovery2KeyBox = data['recovery2KeyBox']
-
-        return makeResponse()
-    }
-  }
-
-  if (path === '/api/v2/login/repos') {
-    if (!this.authCheck(req.body)) {
-      return makeErrorResponse(3)
-    }
-
-    switch (req.method) {
-      case 'POST':
-        const data = req.body['data']
-        if (!data['type'] || !data['info']) {
-          return makeErrorResponse(5)
-        }
-
-        if (this.db.repos) {
-          this.db.repos.push(data)
-        } else {
-          this.db.repos = [data]
-        }
-
-        return makeResponse()
-    }
-  }
-
-  // lobby: ------------------------------------------------------------------
-
-  if (path === '/api/v2/lobby') {
-    this.db.lobby = req.body['data']
-    return makeResponse({
-      'id': 'IMEDGELOGIN'
-    })
-  }
-
-  if (path === '/api/v2/lobby/IMEDGELOGIN') {
-    switch (req.method) {
-      case 'GET':
-        return makeResponse(this.db.lobby)
-      case 'PUT':
-        this.db.lobby = req.body['data']
-        return makeResponse()
-    }
-  }
-
-  // sync: -------------------------------------------------------------------
-
-  if (path.search('^/api/v2/store/') !== -1) {
-    const elements = path.split('/')
-    const syncKey = elements[4]
-    // const hash = elements[5]
-
-    const repo = this.repos[syncKey]
-    if (!repo) {
-      return new FakeResponse('Cannot find repo ' + syncKey, {status: 404})
-    }
-
-    switch (req.method) {
-      case 'POST':
-        const changes = req.body['changes']
-        Object.keys(changes).forEach(change => {
-          repo[change] = changes[change]
-        })
-        return new FakeResponse(JSON.stringify({
-          'changes': changes,
-          'hash': '1111111111111111111111111111111111111111'
-        }))
-
-      case 'GET':
-        return new FakeResponse(JSON.stringify({'changes': repo}))
-    }
-  }
-
   return new FakeResponse('Unknown API endpoint', {status: 404})
 }
+
+// Account lifetime v1: ----------------------------------------------------
+
+addRoute('POST', '/api/v1/account/available', function (req) {
+  if (this.db.userId && this.db.userId === req.body['l1']) {
+    return makeErrorResponse(3)
+  }
+  return makeResponse()
+})
+
+addRoute('POST', '/api/v1/account/create', function (req) {
+  this.db.userId = req.body['l1']
+  this.db.passwordAuth = req.body['lp1']
+
+  const carePackage = JSON.parse(req.body['care_package'])
+  this.db.passwordKeySnrp = carePackage['SNRP2']
+
+  const loginPackage = JSON.parse(req.body['login_package'])
+  this.db.passwordAuthBox = loginPackage['ELP1']
+  this.db.passwordBox = loginPackage['EMK_LP2']
+  this.db.syncKeyBox = loginPackage['ESyncKey']
+  this.repos[req.body['repo_account_key']] = {}
+
+  return makeResponse()
+})
+
+addRoute('POST', '/api/v1/account/activate', function (req) {
+  return makeResponse()
+})
+
+// Login v1: ---------------------------------------------------------------
+
+addRoute('POST', '/api/v1/account/carepackage/get', function (req) {
+  if (!this.db.userId || this.db.userId !== req.body['l1']) {
+    return makeErrorResponse(3)
+  }
+
+  return makeResponse({
+    'care_package': JSON.stringify({
+      'SNRP2': this.db.passwordKeySnrp
+    })
+  })
+})
+
+addRoute('POST', '/api/v1/account/loginpackage/get', function (req) {
+  req.body['userId'] = req.body['l1']
+  req.body['passwordAuth'] = req.body['lp1']
+  if (!this.authCheck(req.body)) {
+    return makeErrorResponse(3)
+  }
+
+  const results = {
+    'login_package': JSON.stringify({
+      'ELP1': this.db.passwordAuthBox,
+      'EMK_LP2': this.db.passwordBox,
+      'ESyncKey': this.db.syncKeyBox
+    })
+  }
+  if (this.db.rootKeyBox) {
+    results['rootKeyBox'] = this.db.rootKeyBox
+  }
+  return makeResponse(results)
+})
+
+// PIN login v1: -----------------------------------------------------------
+
+addRoute('POST', '/api/v1/account/pinpackage/update', function (req) {
+  this.db.pinKeyBox = JSON.parse(req.body['pin_package'])
+  return makeResponse()
+})
+
+addRoute('POST', '/api/v1/account/pinpackage/get', function (req) {
+  if (!this.db.pinKeyBox) {
+    return makeErrorResponse(3)
+  }
+  return makeResponse({
+    'pin_package': JSON.stringify(this.db.pinKeyBox)
+  })
+})
+
+// Repo server v1: ---------------------------------------------------------
+
+addRoute('POST', '/api/v1/wallet/create', function (req) {
+  this.repos[req.body['repo_wallet_key']] = {}
+  return makeResponse()
+})
+
+addRoute('POST', '/api/v1/wallet/activate', function (req) {
+  return makeResponse()
+})
+
+// login v2: ---------------------------------------------------------------
+
+addRoute('POST', '/api/v2/login', function (req) {
+  switch (this.authCheck(req.body)) {
+    default:
+      return makeErrorResponse(3)
+
+    case authLevel.recovery2Id:
+      return makeResponse({
+        'question2Box': this.db.question2Box
+      })
+
+    case authLevel.full:
+      const results = {}
+      const keys = [
+        'passwordAuthBox',
+        'passwordBox',
+        'passwordKeySnrp',
+        'pin2Box',
+        'pin2KeyBox',
+        'recovery2Box',
+        'recovery2KeyBox',
+        'rootKeyBox',
+        'syncKeyBox',
+        'repos'
+      ]
+      keys.forEach(key => {
+        if (this.db[key]) {
+          results[key] = this.db[key]
+        }
+      })
+      return makeResponse(results)
+  }
+})
+
+addRoute('POST', '/api/v2/login/password', function (req) {
+  if (!this.authCheck(req.body)) {
+    return makeErrorResponse(3)
+  }
+
+  const data = req.body['data']
+  if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
+      !data['passwordBox'] || !data['passwordAuthBox']) {
+    return makeErrorResponse(3)
+  }
+
+  this.db.passwordAuth = data['passwordAuth']
+  this.db.passwordKeySnrp = data['passwordKeySnrp']
+  this.db.passwordBox = data['passwordBox']
+  this.db.passwordAuthBox = data['passwordAuthBox']
+
+  return makeResponse()
+})
+
+addRoute('POST', '/api/v2/login/pin2', function (req) {
+  if (!this.authCheck(req.body)) {
+    return makeErrorResponse(3)
+  }
+
+  const data = req.body['data']
+  if (!data['pin2Id'] || !data['pin2Auth'] ||
+      !data['pin2Box'] || !data['pin2KeyBox']) {
+    return makeErrorResponse(5)
+  }
+
+  this.db.pin2Id = data['pin2Id']
+  this.db.pin2Auth = data['pin2Auth']
+  this.db.pin2Box = data['pin2Box']
+  this.db.pin2KeyBox = data['pin2KeyBox']
+
+  return makeResponse()
+})
+
+addRoute('POST', '/api/v2/login/recovery2', function (req) {
+  if (!this.authCheck(req.body)) {
+    return makeErrorResponse(3)
+  }
+
+  const data = req.body['data']
+  if (!data['recovery2Id'] || !data['recovery2Auth'] ||
+      !data['question2Box'] || !data['recovery2Box'] ||
+      !data['recovery2KeyBox']) {
+    return makeErrorResponse(5)
+  }
+
+  this.db.recovery2Id = data['recovery2Id']
+  this.db.recovery2Auth = data['recovery2Auth']
+  this.db.question2Box = data['question2Box']
+  this.db.recovery2Box = data['recovery2Box']
+  this.db.recovery2KeyBox = data['recovery2KeyBox']
+
+  return makeResponse()
+})
+
+addRoute('POST', '/api/v2/login/repos', function (req) {
+  if (!this.authCheck(req.body)) {
+    return makeErrorResponse(3)
+  }
+
+  const data = req.body['data']
+  if (!data['type'] || !data['info']) {
+    return makeErrorResponse(5)
+  }
+
+  if (this.db.repos) {
+    this.db.repos.push(data)
+  } else {
+    this.db.repos = [data]
+  }
+
+  return makeResponse()
+})
+
+// lobby: ------------------------------------------------------------------
+
+addRoute('POST', '/api/v2/lobby', function (req) {
+  this.db.lobby = req.body['data']
+  return makeResponse({
+    'id': 'IMEDGELOGIN'
+  })
+})
+
+addRoute('GET', '/api/v2/lobby/IMEDGELOGIN', function (req) {
+  return makeResponse(this.db.lobby)
+})
+
+addRoute('PUT', '/api/v2/lobby/IMEDGELOGIN', function (req) {
+  this.db.lobby = req.body['data']
+  return makeResponse()
+})
+
+// sync: -------------------------------------------------------------------
+
+function storeRoute (req) {
+  const elements = req.path.split('/')
+  const syncKey = elements[4]
+  // const hash = elements[5]
+
+  const repo = this.repos[syncKey]
+  if (!repo) {
+    return new FakeResponse('Cannot find repo ' + syncKey, {status: 404})
+  }
+
+  switch (req.method) {
+    case 'POST':
+      const changes = req.body['changes']
+      Object.keys(changes).forEach(change => {
+        repo[change] = changes[change]
+      })
+      return new FakeResponse(JSON.stringify({
+        'changes': changes,
+        'hash': '1111111111111111111111111111111111111111'
+      }))
+
+    case 'GET':
+      return new FakeResponse(JSON.stringify({'changes': repo}))
+  }
+}
+
+addRoute('GET', '/api/v2/store/.*', storeRoute)
+addRoute('POST', '/api/v2/store/.*', storeRoute)
 
 /**
  * Makes a stand-alone fetch function that is bound to `this`.
