@@ -27,7 +27,7 @@ function loginOnline (io, username, userId, password) {
   return scrypt.scrypt(username + password, scrypt.passwordAuthSnrp).then(passwordAuth => {
     // Encode the username:
     const request = {
-      'userId': userId,
+      'userId': base64.stringify(userId),
       'passwordAuth': base64.stringify(passwordAuth)
       // "otp": null
     }

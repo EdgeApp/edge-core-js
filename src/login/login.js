@@ -47,6 +47,10 @@ function loginReplyStore (io, username, dataKey, loginReply) {
  * - The legacy BitID rootKey
  */
 export function Login (io, username, userId, dataKey) {
+  if (userId.length !== 32) {
+    throw new Error('userId must be a hash')
+  }
+
   // Identity:
   this.username = username
   this.userId = userId
@@ -97,7 +101,7 @@ Login.offline = function (io, username, userId, dataKey) {
  */
 Login.prototype.authJson = function () {
   return {
-    'userId': this.userId,
+    'userId': base64.stringify(this.userId),
     'passwordAuth': base64.stringify(this.passwordAuth)
   }
 }

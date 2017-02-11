@@ -8,7 +8,7 @@ export function repoCreate (io, login, keysJson) {
   keysJson.syncKey = keysJson.syncKey || base16.stringify(io.random(20))
 
   const request = {
-    'l1': login.userId,
+    'l1': base64.stringify(login.userId),
     'lp1': base64.stringify(login.passwordAuth),
     'repo_wallet_key': keysJson.syncKey
   }
@@ -22,7 +22,7 @@ export function repoCreate (io, login, keysJson) {
  */
 export function repoActivate (io, login, keysJson) {
   const request = {
-    'l1': login.userId,
+    'l1': base64.stringify(login.userId),
     'lp1': base64.stringify(login.passwordAuth),
     'repo_wallet_key': keysJson.syncKey
   }

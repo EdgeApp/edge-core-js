@@ -1,7 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
-import {base16} from '../util/encoding.js'
+import {base16, base64} from '../util/encoding.js'
 import {Login} from './login.js'
 import * as passwordLogin from './password.js'
 
@@ -13,7 +13,7 @@ export function usernameAvailable (io, username) {
 
   return userMap.getUserId(io, username).then(userId => {
     const request = {
-      'l1': userId
+      'l1': base64.stringify(userId)
     }
     return io.authRequest('POST', '/v1/account/available', request)
   })
@@ -46,7 +46,7 @@ export function create (io, username, password, opts) {
       'ELP1': passwordSetup.server.passwordAuthBox
     }
     const request = {
-      'l1': userId,
+      'l1': base64.stringify(userId),
       'lp1': passwordSetup.server.passwordAuth,
       'care_package': JSON.stringify(carePackage),
       'login_package': JSON.stringify(loginPackage),

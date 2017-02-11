@@ -18,7 +18,7 @@ export function load (io) {
  */
 export function insert (io, username, userId) {
   const userMap = load(io)
-  userMap[username] = userId
+  userMap[username] = base64.stringify(userId)
   io.localStorage.setItem('airbitz.users', JSON.stringify(userMap))
 }
 
@@ -37,9 +37,9 @@ export function remove (io, username) {
 export function getUserId (io, username) {
   const userMap = load(io)
   if (userMap[username]) {
-    return Promise.resolve(userMap[username])
+    return Promise.resolve(base64.parse(userMap[username]))
   }
-  return scrypt.scrypt(username, scrypt.userIdSnrp).then(userId => base64.stringify(userId))
+  return scrypt.scrypt(username, scrypt.userIdSnrp)
 }
 
 /**
