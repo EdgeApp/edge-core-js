@@ -105,31 +105,33 @@ FakeServer.prototype.authCheck = function (body) {
 }
 
 FakeServer.prototype.request = function (uri, opts) {
-  const method = opts.method || 'GET'
-  const body = opts.body ? JSON.parse(opts.body) : null
+  const req = {
+    method: opts.method || 'GET',
+    body: opts.body ? JSON.parse(opts.body) : null
+  }
   const path = url.parse(uri).pathname
 
   // Account lifetime v1: ----------------------------------------------------
 
   if (path === '/api/v1/account/available') {
-    if (this.db.userId && this.db.userId === body['l1']) {
+    if (this.db.userId && this.db.userId === req.body['l1']) {
       return makeErrorResponse(3)
     }
     return makeResponse()
   }
 
   if (path === '/api/v1/account/create') {
-    this.db.userId = body['l1']
-    this.db.passwordAuth = body['lp1']
+    this.db.userId = req.body['l1']
+    this.db.passwordAuth = req.body['lp1']
 
-    const carePackage = JSON.parse(body['care_package'])
+    const carePackage = JSON.parse(req.body['care_package'])
     this.db.passwordKeySnrp = carePackage['SNRP2']
 
-    const loginPackage = JSON.parse(body['login_package'])
+    const loginPackage = JSON.parse(req.body['login_package'])
     this.db.passwordAuthBox = loginPackage['ELP1']
     this.db.passwordBox = loginPackage['EMK_LP2']
     this.db.syncKeyBox = loginPackage['ESyncKey']
-    this.repos[body['repo_account_key']] = {}
+    this.repos[req.body['repo_account_key']] = {}
 
     return makeResponse()
   }
@@ -141,7 +143,7 @@ FakeServer.prototype.request = function (uri, opts) {
   // Login v1: ---------------------------------------------------------------
 
   if (path === '/api/v1/account/carepackage/get') {
-    if (!this.db.userId || this.db.userId !== body['l1']) {
+    if (!this.db.userId || this.db.userId !== req.body['l1']) {
       return makeErrorResponse(3)
     }
 
@@ -153,9 +155,9 @@ FakeServer.prototype.request = function (uri, opts) {
   }
 
   if (path === '/api/v1/account/loginpackage/get') {
-    body['userId'] = body['l1']
-    body['passwordAuth'] = body['lp1']
-    if (!this.authCheck(body)) {
+    req.body['userId'] = req.body['l1']
+    req.body['passwordAuth'] = req.body['lp1']
+    if (!this.authCheck(req.body)) {
       return makeErrorResponse(3)
     }
 
@@ -175,7 +177,7 @@ FakeServer.prototype.request = function (uri, opts) {
   // PIN login v1: -----------------------------------------------------------
 
   if (path === '/api/v1/account/pinpackage/update') {
-    this.db.pinKeyBox = JSON.parse(body['pin_package'])
+    this.db.pinKeyBox = JSON.parse(req.body['pin_package'])
     return makeResponse()
   }
 
@@ -191,7 +193,7 @@ FakeServer.prototype.request = function (uri, opts) {
   // Repo server v1: ---------------------------------------------------------
 
   if (path === '/api/v1/wallet/create') {
-    this.repos[body['repo_wallet_key']] = {}
+    this.repos[req.body['repo_wallet_key']] = {}
     return makeResponse()
   }
 
@@ -202,7 +204,7 @@ FakeServer.prototype.request = function (uri, opts) {
   // login v2: ---------------------------------------------------------------
 
   if (path === '/api/v2/login') {
-    switch (this.authCheck(body)) {
+    switch (this.authCheck(req.body)) {
       default:
         return makeErrorResponse(3)
 
@@ -235,13 +237,13 @@ FakeServer.prototype.request = function (uri, opts) {
   }
 
   if (path === '/api/v2/login/password') {
-    if (!this.authCheck(body)) {
+    if (!this.authCheck(req.body)) {
       return makeErrorResponse(3)
     }
 
-    switch (method) {
+    switch (req.method) {
       case 'PUT':
-        const data = body['data']
+        const data = req.body['data']
         if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
             !data['passwordBox'] || !data['passwordAuthBox']) {
           return makeErrorResponse(3)
@@ -257,13 +259,13 @@ FakeServer.prototype.request = function (uri, opts) {
   }
 
   if (path === '/api/v2/login/pin2') {
-    if (!this.authCheck(body)) {
+    if (!this.authCheck(req.body)) {
       return makeErrorResponse(3)
     }
 
-    switch (method) {
+    switch (req.method) {
       case 'PUT':
-        const data = body['data']
+        const data = req.body['data']
         if (!data['pin2Id'] || !data['pin2Auth'] ||
             !data['pin2Box'] || !data['pin2KeyBox']) {
           return makeErrorResponse(5)
@@ -279,13 +281,13 @@ FakeServer.prototype.request = function (uri, opts) {
   }
 
   if (path === '/api/v2/login/recovery2') {
-    if (!this.authCheck(body)) {
+    if (!this.authCheck(req.body)) {
       return makeErrorResponse(3)
     }
 
-    switch (method) {
+    switch (req.method) {
       case 'PUT':
-        const data = body['data']
+        const data = req.body['data']
         if (!data['recovery2Id'] || !data['recovery2Auth'] ||
             !data['question2Box'] || !data['recovery2Box'] ||
             !data['recovery2KeyBox']) {
@@ -303,13 +305,13 @@ FakeServer.prototype.request = function (uri, opts) {
   }
 
   if (path === '/api/v2/login/repos') {
-    if (!this.authCheck(body)) {
+    if (!this.authCheck(req.body)) {
       return makeErrorResponse(3)
     }
 
-    switch (method) {
+    switch (req.method) {
       case 'POST':
-        const data = body['data']
+        const data = req.body['data']
         if (!data['type'] || !data['info']) {
           return makeErrorResponse(5)
         }
@@ -327,18 +329,18 @@ FakeServer.prototype.request = function (uri, opts) {
   // lobby: ------------------------------------------------------------------
 
   if (path === '/api/v2/lobby') {
-    this.db.lobby = body['data']
+    this.db.lobby = req.body['data']
     return makeResponse({
       'id': 'IMEDGELOGIN'
     })
   }
 
   if (path === '/api/v2/lobby/IMEDGELOGIN') {
-    switch (method) {
+    switch (req.method) {
       case 'GET':
         return makeResponse(this.db.lobby)
       case 'PUT':
-        this.db.lobby = body['data']
+        this.db.lobby = req.body['data']
         return makeResponse()
     }
   }
@@ -355,9 +357,9 @@ FakeServer.prototype.request = function (uri, opts) {
       return new FakeResponse('Cannot find repo ' + syncKey, {status: 404})
     }
 
-    switch (method) {
+    switch (req.method) {
       case 'POST':
-        const changes = body['changes']
+        const changes = req.body['changes']
         Object.keys(changes).forEach(change => {
           repo[change] = changes[change]
         })
