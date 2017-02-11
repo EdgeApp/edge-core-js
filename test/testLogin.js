@@ -178,13 +178,13 @@ describe('pin', function () {
     const [context] = makeFakeContexts(1)
     makeFakeAccount(context, fakeUser)
 
-    assert.equal(context.pinExists(fakeUser.username), true)
+    return context.pinExists(fakeUser.username).then(result => assert(result))
   })
 
   it('does not exist', function () {
     const [context] = makeFakeContexts(1)
 
-    assert.equal(context.pinExists(fakeUser.username), false)
+    return context.pinExists(fakeUser.username).then(result => assert(!result))
   })
 
   it('login', function () {

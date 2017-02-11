@@ -64,9 +64,10 @@ Context.prototype.loginWithPassword = asyncApi(function (username, password, otp
   })
 })
 
-Context.prototype.pinExists = syncApi(function (username) {
-  const loginStash = this.io.loginStore.loadSync(username)
-  return getPin2Key(loginStash, this.appId).pin2Key != null
+Context.prototype.pinExists = asyncApi(function (username) {
+  return this.io.loginStore.load(username).then(loginStash =>
+    getPin2Key(loginStash, this.appId).pin2Key != null
+  )
 })
 Context.prototype.pinLoginEnabled = Context.prototype.pinExists
 
