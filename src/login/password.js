@@ -133,7 +133,7 @@ export function setup (io, login, password) {
   return makeSetup(io, login.dataKey, login.username, password).then(setup => {
     const request = login.authJson()
     request['data'] = setup.server
-    return io.authRequest('PUT', '/v2/login/password', request).then(reply => {
+    return io.authRequest('POST', '/v2/login/password', request).then(reply => {
       login.userStorage.setItems(setup.storage)
       login.passwordAuth = setup.passwordAuth
       return null

@@ -119,7 +119,7 @@ export function setup (io, login, questions, answers) {
 
   const request = login.authJson()
   request['data'] = setup.server
-  return io.authRequest('PUT', '/v2/login/recovery2', request).then(reply => {
+  return io.authRequest('POST', '/v2/login/recovery2', request).then(reply => {
     login.userStorage.setItems(setup.storage)
     return base58.stringify(setup.recovery2Key)
   })

@@ -92,7 +92,7 @@ export function setup (io, login, pin) {
 
   const request = login.authJson()
   request['data'] = setup.server
-  return io.authRequest('PUT', '/v2/login/pin2', request).then(reply => {
+  return io.authRequest('POST', '/v2/login/pin2', request).then(reply => {
     login.userStorage.setItems(setup.storage)
     return base58.stringify(setup.pin2Key)
   })
