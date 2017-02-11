@@ -25,6 +25,19 @@ function findRoute (method, path) {
   }).map(route => route.handler)
 }
 
+const errorCodes = {
+  success: 0,
+  error: 1,
+  accountExists: 2,
+  noAccount: 3,
+  invalidPassword: 4,
+  invalidAnswers: 5,
+  invalidApiKey: 6,
+  invalidOtp: 8,
+  conflict: 10,
+  obsolete: 1000
+}
+
 class FakeResponse {
   constructor (body = '', opts = {}) {
     this.body = body
@@ -56,8 +69,12 @@ function makeResponse (results) {
   return new FakeResponse(JSON.stringify(reply))
 }
 
-function makeErrorResponse (code) {
-  return new FakeResponse(`{"status_code": ${code}}`, {status: 500})
+function makeErrorResponse (code, message = '', status = 500) {
+  const body = {
+    status_code: code,
+    message: message || 'Server error'
+  }
+  return new FakeResponse(JSON.stringify(body), {status})
 }
 
 const authLevel = {
@@ -142,14 +159,14 @@ FakeServer.prototype.request = function (uri, opts) {
       return out
     }
   }
-  return new FakeResponse('Unknown API endpoint', {status: 404})
+  return makeErrorResponse(errorCodes.error, `Unknown API endpoint ${req.path}`, 404)
 }
 
 // Account lifetime v1: ----------------------------------------------------
 
 addRoute('POST', '/api/v1/account/available', function (req) {
   if (this.db.userId && this.db.userId === req.body['l1']) {
-    return makeErrorResponse(3)
+    return makeErrorResponse(errorCodes.accountExists)
   }
   return makeResponse()
 })
@@ -178,7 +195,7 @@ addRoute('POST', '/api/v1/account/activate', function (req) {
 
 addRoute('POST', '/api/v1/account/carepackage/get', function (req) {
   if (!this.db.userId || this.db.userId !== req.body['l1']) {
-    return makeErrorResponse(3)
+    return makeErrorResponse(errorCodes.noAccount)
   }
 
   return makeResponse({
@@ -192,7 +209,7 @@ addRoute('POST', '/api/v1/account/loginpackage/get', function (req) {
   req.body['userId'] = req.body['l1']
   req.body['passwordAuth'] = req.body['lp1']
   if (!this.authCheck(req.body)) {
-    return makeErrorResponse(3)
+    return makeErrorResponse(errorCodes.noAccount)
   }
 
   const results = {
@@ -217,7 +234,7 @@ addRoute('POST', '/api/v1/account/pinpackage/update', function (req) {
 
 addRoute('POST', '/api/v1/account/pinpackage/get', function (req) {
   if (!this.db.pinKeyBox) {
-    return makeErrorResponse(3)
+    return makeErrorResponse(errorCodes.noAccount)
   }
   return makeResponse({
     'pin_package': JSON.stringify(this.db.pinKeyBox)
@@ -240,7 +257,7 @@ addRoute('POST', '/api/v1/wallet/activate', function (req) {
 addRoute('POST', '/api/v2/login', function (req) {
   switch (this.authCheck(req.body)) {
     default:
-      return makeErrorResponse(3)
+      return makeErrorResponse(errorCodes.noAccount)
 
     case authLevel.recovery2Id:
       return makeResponse({
@@ -272,13 +289,13 @@ addRoute('POST', '/api/v2/login', function (req) {
 
 addRoute('POST', '/api/v2/login/password', function (req) {
   if (!this.authCheck(req.body)) {
-    return makeErrorResponse(3)
+    return makeErrorResponse(errorCodes.noAccount)
   }
 
   const data = req.body['data']
   if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
       !data['passwordBox'] || !data['passwordAuthBox']) {
-    return makeErrorResponse(3)
+    return makeErrorResponse(errorCodes.error)
   }
 
   this.db.passwordAuth = data['passwordAuth']
@@ -291,13 +308,13 @@ addRoute('POST', '/api/v2/login/password', function (req) {
 
 addRoute('POST', '/api/v2/login/pin2', function (req) {
   if (!this.authCheck(req.body)) {
-    return makeErrorResponse(3)
+    return makeErrorResponse(errorCodes.noAccount)
   }
 
   const data = req.body['data']
   if (!data['pin2Id'] || !data['pin2Auth'] ||
       !data['pin2Box'] || !data['pin2KeyBox']) {
-    return makeErrorResponse(5)
+    return makeErrorResponse(errorCodes.error)
   }
 
   this.db.pin2Id = data['pin2Id']
@@ -310,14 +327,14 @@ addRoute('POST', '/api/v2/login/pin2', function (req) {
 
 addRoute('POST', '/api/v2/login/recovery2', function (req) {
   if (!this.authCheck(req.body)) {
-    return makeErrorResponse(3)
+    return makeErrorResponse(errorCodes.noAccount)
   }
 
   const data = req.body['data']
   if (!data['recovery2Id'] || !data['recovery2Auth'] ||
       !data['question2Box'] || !data['recovery2Box'] ||
       !data['recovery2KeyBox']) {
-    return makeErrorResponse(5)
+    return makeErrorResponse(errorCodes.error)
   }
 
   this.db.recovery2Id = data['recovery2Id']
@@ -331,12 +348,12 @@ addRoute('POST', '/api/v2/login/recovery2', function (req) {
 
 addRoute('POST', '/api/v2/login/repos', function (req) {
   if (!this.authCheck(req.body)) {
-    return makeErrorResponse(3)
+    return makeErrorResponse(errorCodes.noAccount)
   }
 
   const data = req.body['data']
   if (!data['type'] || !data['info']) {
-    return makeErrorResponse(5)
+    return makeErrorResponse(errorCodes.error)
   }
 
   if (this.db.repos) {
