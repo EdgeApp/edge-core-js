@@ -119,6 +119,9 @@ FakeServer.prototype.request = function (uri, opts) {
   }
 
   if (path === '/api/v1/account/create') {
+    this.db.userId = body['l1']
+    this.db.passwordAuth = body['lp1']
+
     const carePackage = JSON.parse(body['care_package'])
     this.db.passwordKeySnrp = carePackage['SNRP2']
 
