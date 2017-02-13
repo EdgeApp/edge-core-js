@@ -28,7 +28,7 @@ export function makeFakeIo () {
 
   return {
     console: null,
-    fetch: server.bindFetch(),
+    fetch: server.fetch,
     localStorage: storage,
     random: fakeRandom
   }
@@ -47,7 +47,7 @@ export function makeSession (opts) {
     session.context = abc.makeContext({
       console: null,
       localStorage: session.storage,
-      fetch: session.server.bindFetch(),
+      fetch: session.server.fetch,
       random: fakeRandom,
       accountType: opts.accountType
     })

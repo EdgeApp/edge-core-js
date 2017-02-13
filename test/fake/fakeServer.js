@@ -77,53 +77,6 @@ function makeErrorResponse (code, message = '', status = 500) {
   return new FakeResponse(JSON.stringify(body), {status})
 }
 
-export function FakeServer () {
-  this.db = {}
-  this.repos = {}
-}
-
-FakeServer.prototype.populateRepos = function () {
-  this.repos = packages.repos
-}
-
-FakeServer.prototype.populate = function () {
-  this.populateRepos()
-  this.db.userId = packages.users['js test 0']
-  this.db.passwordAuth = packages.passwordAuth
-  this.db.passwordAuthBox = packages.passwordAuthBox
-  this.db.passwordBox = packages.passwordBox
-  this.db.passwordKeySnrp = packages.passwordKeySnrp
-  this.db.pin2Id = packages.pin2Id
-  this.db.pin2Auth = packages.pin2Auth
-  this.db.pin2Box = packages.pin2Box
-  this.db.pin2KeyBox = packages.pin2KeyBox
-  this.db.recovery2Id = packages.recovery2Id
-  this.db.recovery2Auth = packages.recovery2Auth
-  this.db.recovery2Box = packages.recovery2Box
-  this.db.recovery2KeyBox = packages.recovery2KeyBox
-  this.db.question2Box = packages.question2Box
-  this.db.syncKeyBox = packages.syncKeyBox
-  this.db.rootKeyBox = packages.rootKeyBox
-  this.db.pinKeyBox = packages.pinKeyBox
-}
-
-FakeServer.prototype.request = function (uri, opts) {
-  const req = {
-    method: opts.method || 'GET',
-    body: opts.body ? JSON.parse(opts.body) : null,
-    path: url.parse(uri).pathname
-  }
-
-  const handlers = findRoute(req.method, req.path)
-  for (const handler of handlers) {
-    const out = handler.call(this, req)
-    if (out != null) {
-      return out
-    }
-  }
-  return makeErrorResponse(errorCodes.error, `Unknown API endpoint ${req.path}`, 404)
-}
-
 // Authentication middleware: ----------------------------------------------
 
 /**
@@ -420,14 +373,60 @@ addRoute('GET', '/api/v2/store/.*', storeRoute)
 addRoute('POST', '/api/v2/store/.*', storeRoute)
 
 /**
- * Makes a stand-alone fetch function that is bound to `this`.
+ * Emulates the Airbitz login server.
  */
-FakeServer.prototype.bindFetch = function () {
-  return (uri, opts) => {
-    try {
-      return Promise.resolve(this.request(uri, opts))
-    } catch (e) {
-      return Promise.reject(e)
+export class FakeServer {
+  constructor () {
+    this.db = {}
+    this.repos = {}
+    this.fetch = (uri, opts) => {
+      try {
+        return Promise.resolve(this.request(uri, opts))
+      } catch (e) {
+        return Promise.reject(e)
+      }
     }
+  }
+
+  populateRepos () {
+    this.repos = packages.repos
+  }
+
+  populate () {
+    this.populateRepos()
+    this.db.userId = packages.users['js test 0']
+    this.db.passwordAuth = packages.passwordAuth
+    this.db.passwordAuthBox = packages.passwordAuthBox
+    this.db.passwordBox = packages.passwordBox
+    this.db.passwordKeySnrp = packages.passwordKeySnrp
+    this.db.pin2Id = packages.pin2Id
+    this.db.pin2Auth = packages.pin2Auth
+    this.db.pin2Box = packages.pin2Box
+    this.db.pin2KeyBox = packages.pin2KeyBox
+    this.db.recovery2Id = packages.recovery2Id
+    this.db.recovery2Auth = packages.recovery2Auth
+    this.db.recovery2Box = packages.recovery2Box
+    this.db.recovery2KeyBox = packages.recovery2KeyBox
+    this.db.question2Box = packages.question2Box
+    this.db.syncKeyBox = packages.syncKeyBox
+    this.db.rootKeyBox = packages.rootKeyBox
+    this.db.pinKeyBox = packages.pinKeyBox
+  }
+
+  request (uri, opts) {
+    const req = {
+      method: opts.method || 'GET',
+      body: opts.body ? JSON.parse(opts.body) : null,
+      path: url.parse(uri).pathname
+    }
+
+    const handlers = findRoute(req.method, req.path)
+    for (const handler of handlers) {
+      const out = handler.call(this, req)
+      if (out != null) {
+        return out
+      }
+    }
+    return makeErrorResponse(errorCodes.error, `Unknown API endpoint ${req.path}`, 404)
   }
 }
