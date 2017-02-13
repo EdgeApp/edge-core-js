@@ -1,6 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
 import {base16, base64} from '../util/encoding.js'
+import {mergeObjects} from '../util/util.js'
 import {Login} from './login.js'
 import * as passwordLogin from './password.js'
 
@@ -51,13 +52,13 @@ export function create (io, username, password, opts) {
       'login_package': JSON.stringify(loginPackage),
       'repo_account_key': base16.stringify(syncKey)
     }
+    const loginData = mergeObjects({
+      username, syncKeyBox
+    }, passwordSetup.storage)
 
     return io.authRequest('POST', '/v1/account/create', request).then(reply => {
       // Cache everything for future logins:
-      userMap.insert(io, username, userId)
-      const userStorage = io.loginStore.findUsername(username)
-      userStorage.setItems(passwordSetup.storage)
-      userStorage.setJson('syncKeyBox', syncKeyBox)
+      io.loginStore.update(userId, loginData)
 
       const login = Login.offline(io, username, userId, dataKey)
 

@@ -1,4 +1,5 @@
 import * as userMap from '../userMap.js'
+import {base64} from '../util/encoding.js'
 import {ScopedStorage} from '../util/scopedStorage.js'
 
 /**
@@ -37,5 +38,26 @@ export class LoginStore {
       syncKeyBox: store.getJson('syncKeyBox'),
       repos: store.getJson('repos') || []
     }
+  }
+
+  update (userId, loginData) {
+    // Find the username:
+    let username
+    if ('username' in loginData) {
+      username = loginData.username
+      userMap.insert(this.io, username, userId)
+    } else {
+      const users = userMap.load(this.io)
+      username = Object.keys(users).find(username => {
+        return users[username] === base64.stringify(userId)
+      })
+      if (!username) {
+        throw new Error('Cannot find userId')
+      }
+    }
+
+    // Actually save:
+    const store = this.findUsername(username)
+    return store.setItems(loginData)
   }
 }

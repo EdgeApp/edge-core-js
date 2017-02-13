@@ -131,7 +131,7 @@ export function setup (io, login, password) {
     const request = login.authJson()
     request['data'] = setup.server
     return io.authRequest('POST', '/v2/login/password', request).then(reply => {
-      login.userStorage.setItems(setup.storage)
+      io.loginStore.update(login.userId, setup.storage)
       login.passwordAuth = setup.passwordAuth
       return null
     })
