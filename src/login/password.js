@@ -7,9 +7,9 @@ import {Login} from './login.js'
 
 function loginOffline (io, username, userId, password) {
   // Extract stuff from storage:
-  const userStorage = io.loginStore.findUsername(username)
-  const passwordKeySnrp = userStorage.getJson('passwordKeySnrp')
-  const passwordBox = userStorage.getJson('passwordBox')
+  const loginData = io.loginStore.find({username})
+  const passwordKeySnrp = loginData.passwordKeySnrp
+  const passwordBox = loginData.passwordBox
   if (!passwordKeySnrp || !passwordBox) {
     throw new Error('Missing data for offline login')
   }
