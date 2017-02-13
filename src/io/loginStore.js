@@ -40,6 +40,15 @@ export class LoginStore {
     }
   }
 
+  /**
+   * Removes any loginData matching the given query.
+   * For now, the query only supports the `username` property.
+   */
+  remove (query) {
+    const fixedName = userMap.normalize(query.username)
+    this.findUsername(fixedName).removeAll()
+  }
+
   update (userId, loginData) {
     // Find the username:
     let username

@@ -25,7 +25,7 @@ Context.prototype.fixUsername = userMap.normalize
 
 Context.prototype.removeUsername = function (username) {
   userMap.remove(this.io, userMap.normalize(username))
-  this.io.loginStore.findUsername(username).removeAll()
+  this.io.loginStore.remove({username})
 }
 
 Context.prototype.usernameAvailable = nodeify(function (username) {

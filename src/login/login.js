@@ -102,7 +102,7 @@ Login.offline = function (io, username, userId, dataKey) {
     .authRequest('POST', '/v2/login', out.authJson())
     .then(loginReply => {
       const loginData = makeLoginData(username, loginReply, dataKey)
-      io.loginStore.update(userId, loginData)
+      return io.loginStore.update(userId, loginData)
     })
     .catch(e => io.log.error(e))
 
