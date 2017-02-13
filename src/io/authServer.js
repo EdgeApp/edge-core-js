@@ -69,7 +69,6 @@ export class AuthServer {
         throw new Error('Non-JSON reply, HTTP status ' + response.status)
       })
     }, networkError => {
-      console.log(networkError)
       throw new error.NetworkError('Could not reach the auth server')
     }), 10000, new error.NetworkError('Could not reach the auth server: timeout'))
   }
