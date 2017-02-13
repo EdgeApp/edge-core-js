@@ -188,7 +188,7 @@ export function makeAccount (context) {
     syncKeyBox,
     keyBoxes: []
   }
-  context.io.loginStore.update(userId, loginStash)
+  context.io.loginStore.save(loginStash)
 
   // Populate the repos on the server:
   Object.keys(repos)

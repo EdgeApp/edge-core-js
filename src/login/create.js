@@ -61,7 +61,7 @@ export function create (io, username, password, opts) {
 
     return io.authRequest('POST', '/v1/account/create', request).then(reply => {
       // Cache everything for future logins:
-      io.loginStore.update(userId, loginStash)
+      io.loginStore.save(loginStash)
 
       const login = makeLogin(loginStash, loginKey)
 
