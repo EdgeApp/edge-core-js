@@ -13,13 +13,11 @@ function pin2Auth (pin2Key, pin) {
 }
 
 /**
- * Returns true if the local device has a copy of the PIN login key.
+ * Returns a copy of the PIN login key if one exists on the local device.
  */
 export function getKey (io, username) {
-  username = userMap.normalize(username)
-
-  // Extract stuff from storage:
-  const userStorage = new UserStorage(io.localStorage, username)
+  const fixedName = userMap.normalize(username)
+  const userStorage = new UserStorage(io.localStorage, fixedName)
   return userStorage.getItem('pin2Key')
 }
 

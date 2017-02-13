@@ -90,8 +90,7 @@ Context.prototype.loginWithPIN = nodeify(function (username, pin) {
 })
 
 Context.prototype.getRecovery2Key = nodeify(function (username) {
-  const userStorage = new UserStorage(this.io.localStorage, username)
-  const recovery2Key = userStorage.getItem('recovery2Key')
+  const recovery2Key = loginRecovery2.getKey(this.io, username)
   if (recovery2Key) {
     return Promise.resolve(recovery2Key)
   } else {

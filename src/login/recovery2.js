@@ -1,5 +1,6 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
+import {UserStorage} from '../userStorage.js'
 import {base58, base64, utf8} from '../util/encoding.js'
 import {Login} from './login.js'
 
@@ -12,6 +13,15 @@ function recovery2Auth (recovery2Key, answers) {
     const data = utf8.parse(answer)
     return base64.stringify(crypto.hmacSha256(data, recovery2Key))
   })
+}
+
+/**
+ * Returns a copy of the recovery key if one exists on the local device.
+ */
+export function getKey (io, username) {
+  const fixedName = userMap.normalize(username)
+  const userStorage = new UserStorage(io.localStorage, fixedName)
+  return userStorage.getItem('recovery2Key')
 }
 
 /**
