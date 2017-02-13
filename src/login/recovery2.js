@@ -95,12 +95,7 @@ export function makeSetup (io, login, questions, answers) {
     throw new TypeError('Answers must be an array of strings')
   }
 
-  let recovery2Key = login.userStorage.getItem('recovery2Key')
-  if (recovery2Key) {
-    recovery2Key = base58.parse(recovery2Key)
-  } else {
-    recovery2Key = io.random(32)
-  }
+  const recovery2Key = login.recovery2Key || io.random(32)
 
   const question2Box = crypto.encrypt(io, utf8.parse(JSON.stringify(questions), 'utf8'), recovery2Key)
   const recovery2Box = crypto.encrypt(io, login.dataKey, recovery2Key)

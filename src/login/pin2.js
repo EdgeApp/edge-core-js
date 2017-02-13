@@ -58,12 +58,7 @@ export function login (io, pin2Key, username, pin) {
  * Creates the data needed to set up a PIN on the account.
  */
 export function makeSetup (io, login, pin) {
-  let pin2Key = login.userStorage.getItem('pin2Key')
-  if (pin2Key) {
-    pin2Key = base58.parse(pin2Key)
-  } else {
-    pin2Key = io.random(32)
-  }
+  const pin2Key = login.pin2Key || io.random(32)
 
   const pin2Box = crypto.encrypt(io, login.dataKey, pin2Key)
   const pin2KeyBox = crypto.encrypt(io, pin2Key, login.dataKey)

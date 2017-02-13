@@ -78,6 +78,16 @@ export function Login (io, username, userId, dataKey) {
   if (rootKeyBox) {
     this.rootKey = crypto.decrypt(rootKeyBox, dataKey)
   }
+
+  // Local keys:
+  const pin2Key = this.userStorage.getItem('pin2Key')
+  if (pin2Key) {
+    this.pin2Key = base58.parse(pin2Key)
+  }
+  const recovery2Key = this.userStorage.getItem('recovery2Key')
+  if (recovery2Key) {
+    this.recovery2Key = base58.parse(recovery2Key)
+  }
 }
 
 /**
