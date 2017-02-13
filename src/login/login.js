@@ -1,6 +1,5 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
-import {UserStorage} from '../userStorage.js'
 import {base16, base58, base64, utf8} from '../util/encoding.js'
 import * as server from './server.js'
 
@@ -8,7 +7,7 @@ import * as server from './server.js'
  * Unpacks a login v2 reply package, and stores the contents locally.
  */
 function loginReplyStore (io, username, dataKey, loginReply) {
-  const userStorage = new UserStorage(io.localStorage, username)
+  const userStorage = io.loginStore.findUsername(username)
   const keys = [
     // Password login:
     'passwordKeySnrp', 'passwordBox',
@@ -57,7 +56,7 @@ export function Login (io, username, userId, dataKey) {
 
   // Access to the login data:
   this.dataKey = dataKey
-  this.userStorage = new UserStorage(io.localStorage, username)
+  this.userStorage = io.loginStore.findUsername(username)
 
   // Return access to the server:
   const passwordAuthBox = this.userStorage.getJson('passwordAuthBox')

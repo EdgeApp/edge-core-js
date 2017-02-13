@@ -1,14 +1,13 @@
 import * as crypto from '../crypto/crypto.js'
 import * as scrypt from '../crypto/scrypt.js'
 import * as userMap from '../userMap.js'
-import {UserStorage} from '../userStorage.js'
 import {rejectify} from '../util/decorators.js'
 import {base64} from '../util/encoding.js'
 import {Login} from './login.js'
 
 function loginOffline (io, username, userId, password) {
   // Extract stuff from storage:
-  const userStorage = new UserStorage(io.localStorage, username)
+  const userStorage = io.loginStore.findUsername(username)
   const passwordKeySnrp = userStorage.getJson('passwordKeySnrp')
   const passwordBox = userStorage.getJson('passwordBox')
   if (!passwordKeySnrp || !passwordBox) {

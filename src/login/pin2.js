@@ -1,6 +1,5 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
-import {UserStorage} from '../userStorage.js'
 import {base58, base64} from '../util/encoding.js'
 import {Login} from './login.js'
 
@@ -17,7 +16,7 @@ function pin2Auth (pin2Key, pin) {
  */
 export function getKey (io, username) {
   const fixedName = userMap.normalize(username)
-  const userStorage = new UserStorage(io.localStorage, fixedName)
+  const userStorage = io.loginStore.findUsername(fixedName)
   return userStorage.getItem('pin2Key')
 }
 

@@ -1,6 +1,5 @@
 import * as crypto from '../crypto/crypto.js'
 import * as userMap from '../userMap.js'
-import {UserStorage} from '../userStorage.js'
 import {base16, base64} from '../util/encoding.js'
 import {Login} from './login.js'
 import * as passwordLogin from './password.js'
@@ -56,7 +55,7 @@ export function create (io, username, password, opts) {
     return io.authRequest('POST', '/v1/account/create', request).then(reply => {
       // Cache everything for future logins:
       userMap.insert(io, username, userId)
-      const userStorage = new UserStorage(io.localStorage, username)
+      const userStorage = io.loginStore.findUsername(username)
       userStorage.setItems(passwordSetup.storage)
       userStorage.setJson('syncKeyBox', syncKeyBox)
 
