@@ -146,7 +146,7 @@ describe('pin', function () {
 
   it('setup', function (done) {
     const session = makeSession({needsAccount: true})
-    session.server.populateRepos()
+    session.server.populate()
 
     session.account.pinSetup('1234', function (err) {
       if (err) return done(err)
