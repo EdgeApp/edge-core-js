@@ -1,9 +1,13 @@
 import * as crypto from '../crypto/crypto.js'
 import * as scrypt from '../crypto/scrypt.js'
-import * as userMap from '../userMap.js'
+import {fixUsername} from '../io/loginStore.js'
 import {rejectify} from '../util/decorators.js'
 import {base64} from '../util/encoding.js'
 import {Login} from './login.js'
+
+function makeHashInput (username, password) {
+  return fixUsername(username) + password
+}
 
 function loginOffline (io, username, userId, password) {
   // Extract stuff from storage:
@@ -15,14 +19,16 @@ function loginOffline (io, username, userId, password) {
   }
 
   // Decrypt the dataKey:
-  return scrypt.scrypt(username + password, passwordKeySnrp).then(passwordKey => {
+  const up = makeHashInput(username, password)
+  return scrypt.scrypt(up, passwordKeySnrp).then(passwordKey => {
     const dataKey = crypto.decrypt(passwordBox, passwordKey)
     return Login.offline(io, username, userId, dataKey)
   })
 }
 
 function loginOnline (io, username, userId, password) {
-  return scrypt.scrypt(username + password, scrypt.passwordAuthSnrp).then(passwordAuth => {
+  const up = makeHashInput(username, password)
+  return scrypt.scrypt(up, scrypt.passwordAuthSnrp).then(passwordAuth => {
     // Encode the username:
     const request = {
       'userId': base64.stringify(userId),
@@ -38,7 +44,7 @@ function loginOnline (io, username, userId, password) {
       }
 
       // Decrypt the dataKey:
-      return scrypt.scrypt(username + password, passwordKeySnrp).then(passwordKey => {
+      return scrypt.scrypt(up, passwordKeySnrp).then(passwordKey => {
         const dataKey = crypto.decrypt(passwordBox, passwordKey)
 
         // Build the login object:
@@ -55,8 +61,7 @@ function loginOnline (io, username, userId, password) {
  * @return `Login` object promise
  */
 export function login (io, username, password) {
-  username = userMap.normalize(username)
-  return userMap.getUserId(io, username).then(userId => {
+  return io.loginStore.getUserId(username).then(userId => {
     // Race the two login methods, and let the fastest one win:
     return rejectify(loginOffline)(io, username, userId, password).catch(e =>
       rejectify(loginOnline)(io, username, userId, password)
@@ -84,7 +89,7 @@ export function check (io, login, password) {
  * Creates the data needed to set up the password on the server.
  */
 export function makeSetup (io, dataKey, username, password) {
-  const up = username + password
+  const up = makeHashInput(username, password)
 
   // dataKey chain:
   const boxPromise = scrypt.makeSnrp(io).then(passwordKeySnrp => {

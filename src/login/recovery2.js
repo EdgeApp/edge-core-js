@@ -1,10 +1,10 @@
 import * as crypto from '../crypto/crypto.js'
-import * as userMap from '../userMap.js'
+import {fixUsername} from '../io/loginStore.js'
 import {base58, base64, utf8} from '../util/encoding.js'
 import {Login} from './login.js'
 
 function recovery2Id (recovery2Key, username) {
-  return crypto.hmacSha256(username, recovery2Key)
+  return crypto.hmacSha256(fixUsername(username), recovery2Key)
 }
 
 function recovery2Auth (recovery2Key, answers) {
@@ -31,7 +31,6 @@ export function getKey (io, username) {
  */
 export function login (io, recovery2Key, username, answers) {
   recovery2Key = base58.parse(recovery2Key)
-  username = userMap.normalize(username)
 
   const request = {
     'recovery2Id': base64.stringify(recovery2Id(recovery2Key, username)),
@@ -49,7 +48,7 @@ export function login (io, recovery2Key, username, answers) {
     const dataKey = crypto.decrypt(recovery2Box, recovery2Key)
 
     // Build the login object:
-    return userMap.getUserId(io, username).then(userId => {
+    return io.loginStore.getUserId(username).then(userId => {
       return Login.online(io, username, userId, dataKey, reply)
     })
   })
@@ -63,7 +62,6 @@ export function login (io, recovery2Key, username, answers) {
  */
 export function questions (io, recovery2Key, username) {
   recovery2Key = base58.parse(recovery2Key)
-  username = userMap.normalize(username)
 
   const request = {
     'recovery2Id': base64.stringify(recovery2Id(recovery2Key, username))

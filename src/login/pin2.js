@@ -1,10 +1,10 @@
 import * as crypto from '../crypto/crypto.js'
-import * as userMap from '../userMap.js'
+import {fixUsername} from '../io/loginStore.js'
 import {base58, base64} from '../util/encoding.js'
 import {Login} from './login.js'
 
 function pin2Id (pin2Key, username) {
-  return crypto.hmacSha256(username, pin2Key)
+  return crypto.hmacSha256(fixUsername(username), pin2Key)
 }
 
 function pin2Auth (pin2Key, pin) {
@@ -28,7 +28,6 @@ export function getKey (io, username) {
  */
 export function login (io, pin2Key, username, pin) {
   pin2Key = base58.parse(pin2Key)
-  username = userMap.normalize(username)
 
   const request = {
     'pin2Id': base64.stringify(pin2Id(pin2Key, username)),
@@ -46,7 +45,7 @@ export function login (io, pin2Key, username, pin) {
     const dataKey = crypto.decrypt(pin2Box, pin2Key)
 
     // Build the login object:
-    return userMap.getUserId(io, username).then(userId => {
+    return io.loginStore.getUserId(username).then(userId => {
       return Login.online(io, username, userId, dataKey, reply)
     })
   })

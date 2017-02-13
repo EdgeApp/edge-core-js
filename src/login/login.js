@@ -1,4 +1,5 @@
 import * as crypto from '../crypto/crypto.js'
+import {fixUsername} from '../io/loginStore.js'
 import {base16, base58, base64, utf8} from '../util/encoding.js'
 import * as server from './server.js'
 
@@ -6,7 +7,9 @@ import * as server from './server.js'
  * Converts a login reply from the server into the local storage format.
  */
 function makeLoginData (username, loginReply, dataKey) {
-  const out = {username}
+  const out = {
+    username: fixUsername(username)
+  }
 
   // Copy common items:
   const keys = [
