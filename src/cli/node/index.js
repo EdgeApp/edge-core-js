@@ -1,5 +1,5 @@
 // Airbitz context stuff:
-import * as abc from '../..'
+import {makeNodeContext} from '../..'
 import {rejectify} from '../../util/decorators.js'
 import {mergeObjects} from '../../util/util.js'
 
@@ -9,11 +9,8 @@ import '../commands/all.js'
 
 // Command-line tools:
 import chalk from 'chalk'
-import crypto from 'crypto'
 import fs from 'fs'
 import Getopt from 'node-getopt'
-import fetch from 'node-fetch'
-import {LocalStorage} from 'node-localstorage'
 import path from 'path'
 import sourceMapSupport from 'source-map-support'
 import xdgBasedir from 'xdg-basedir'
@@ -112,13 +109,8 @@ function makeSession (config, cmd) {
     if (config.apiKey == null) {
       throw new UsageError(cmd, 'No API key')
     }
-    const fakeStorage = new LocalStorage(config.directory || './.cli')
-    session.context = abc.makeContext({
-      accountType: config.accountType,
-      apiKey: config.apiKey,
-      fetch: fetch,
-      localStorage: fakeStorage,
-      random: bytes => crypto.randomBytes(bytes)
+    session.context = makeNodeContext(config.directory || './.cli', {
+      apiKey: config.apiKey
     })
   }
 
