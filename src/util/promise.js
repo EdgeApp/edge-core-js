@@ -17,12 +17,10 @@ export function any (promises) {
  */
 export function timeout (promise, ms, error) {
   error = error || new Error(`Timeout of ${ms}ms exceeded`)
-  return Promise.race([
-    promise,
-    new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(error), ms)
-      const onDone = () => clearTimeout(timer)
-      promise.then(onDone, onDone)
-    })
-  ])
+  const timeout = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(error), ms)
+    const onDone = () => clearTimeout(timer)
+    promise.then(onDone, onDone)
+  })
+  return Promise.race([promise, timeout])
 }

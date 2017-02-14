@@ -18,10 +18,8 @@ export function rejectify (f) {
 export function serialize (f) {
   let nextTask = Promise.resolve()
   return function serialize (...rest) {
-    nextTask = nextTask.then(
-      win => f.apply(this, rest),
-      fail => f.apply(this, rest)
-    )
+    const onDone = () => f.apply(this, rest)
+    nextTask = nextTask.then(onDone, onDone)
     return nextTask
   }
 }
