@@ -49,7 +49,7 @@ describe('username', function () {
     const session = makeSession({needsContext: true})
     session.storage.populate()
 
-    session.context.removeUsername('js test 0')
+    session.context.removeUsername('js Test 0')
     assert.equal(session.context.usernameList().length, 0)
   })
 })
@@ -66,17 +66,17 @@ describe('creation', function () {
     const session = makeSession({needsContext: true})
     session.server.populate()
 
-    session.context.usernameAvailable('js test 0', function (err) { done(!err) })
+    session.context.usernameAvailable('js Test 0', function (err) { done(!err) })
   })
 
   it('create account', function (done) {
     this.timeout(9000)
     const session = makeSession({needsContext: true, accountType: 'account:repo:test'})
 
-    session.context.createAccount('js test 0', 'y768Mv4PLFupQjMu', '1234', function (err, account) {
+    session.context.createAccount('js Test 0', 'y768Mv4PLFupQjMu', '1234', function (err, account) {
       if (err) return done(err)
       // Try logging in:
-      session.context.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
+      session.context.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
     })
   })
 })
@@ -90,7 +90,7 @@ describe('password', function () {
     session.account.passwordSetup('Test1234', function (err) {
       if (err) return done(err)
       session.storage.clear() // Force server-based login
-      session.context.loginWithPassword('js test 0', 'Test1234', null, null, done)
+      session.context.loginWithPassword('js Test 0', 'Test1234', null, null, done)
     })
   })
 
@@ -111,14 +111,14 @@ describe('password', function () {
     session.storage.populate()
     session.server.populateRepos()
 
-    session.context.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
+    session.context.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
 
   it('login online', function (done) {
     const session = makeSession({needsContext: true})
     session.server.populate()
 
-    session.context.loginWithPassword('js test 0', 'y768Mv4PLFupQjMu', null, null, done)
+    session.context.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
 })
 
@@ -127,13 +127,13 @@ describe('pin', function () {
     const session = makeSession({needsContext: true})
     session.storage.populate()
 
-    assert.equal(session.context.pinExists('js test 0'), true)
+    assert.equal(session.context.pinExists('js Test 0'), true)
   })
 
   it('does not exist', function () {
     const session = makeSession({needsContext: true})
 
-    assert.equal(session.context.pinExists('js test 0'), false)
+    assert.equal(session.context.pinExists('js Test 0'), false)
   })
 
   it('login', function (done) {
@@ -141,7 +141,7 @@ describe('pin', function () {
     session.server.populate()
     session.storage.populate()
 
-    session.context.loginWithPIN('js test 0', '1234', done)
+    session.context.loginWithPIN('js Test 0', '1234', done)
   })
 
   it('setup', function (done) {
@@ -150,7 +150,7 @@ describe('pin', function () {
 
     session.account.pinSetup('1234', function (err) {
       if (err) return done(err)
-      session.context.loginWithPIN('js test 0', '1234', done)
+      session.context.loginWithPIN('js Test 0', '1234', done)
     })
   })
 })
@@ -160,7 +160,7 @@ describe('recovery2', function () {
     const session = makeSession({needsContext: true})
     session.storage.populate()
 
-    session.context.getRecovery2Key('js test 0', function (err, key) {
+    session.context.getRecovery2Key('js Test 0', function (err, key) {
       if (err) return done(err)
       assert.equal(key, packages.recovery2Key)
       done()
@@ -171,7 +171,7 @@ describe('recovery2', function () {
     const session = makeSession({needsContext: true})
     session.server.populate()
 
-    session.context.fetchRecovery2Questions(packages.recovery2Key, 'js test 0', function (err, questions) {
+    session.context.fetchRecovery2Questions(packages.recovery2Key, 'js Test 0', function (err, questions) {
       if (err) return done(err)
       assert.equal(questions.length, packages.recovery2Questions.length)
       for (let i = 0; i < questions.length; ++i) {
@@ -185,7 +185,7 @@ describe('recovery2', function () {
     const session = makeSession({needsContext: true})
     session.server.populate()
 
-    session.context.loginWithRecovery2(packages.recovery2Key, 'js test 0', packages.recovery2Answers, null, null, done)
+    session.context.loginWithRecovery2(packages.recovery2Key, 'js Test 0', packages.recovery2Answers, null, null, done)
   })
 
   it('set', function (done) {
@@ -194,9 +194,9 @@ describe('recovery2', function () {
 
     session.account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {
       if (err) return done(err)
-      session.context.fetchRecovery2Questions(key, 'js test 0', function (err, questions) {
+      session.context.fetchRecovery2Questions(key, 'js Test 0', function (err, questions) {
         if (err) return done(err)
-        session.context.loginWithRecovery2(key, 'js test 0', packages.recovery2Answers, null, null, done)
+        session.context.loginWithRecovery2(key, 'js Test 0', packages.recovery2Answers, null, null, done)
       })
     })
   })
