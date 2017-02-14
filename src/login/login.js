@@ -93,7 +93,15 @@ Login.online = function (io, username, userId, dataKey, loginReply) {
  * Returns a new login object, populated with data from the local storage.
  */
 Login.offline = function (io, username, userId, dataKey) {
-  return new Login(io, username, userId, dataKey)
+  const out = new Login(io, username, userId, dataKey)
+
+  // Try updating our locally-stored login data (failure is ok):
+  io
+    .authRequest('POST', '/v2/login', out.authJson())
+    .then(reply => loginReplyStore(io, username, dataKey, reply))
+    .catch(e => io.log.error(e))
+
+  return out
 }
 
 /**

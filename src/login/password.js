@@ -4,7 +4,6 @@ import * as userMap from '../userMap.js'
 import {UserStorage} from '../userStorage.js'
 import {rejectify} from '../util/decorators.js'
 import {base64} from '../util/encoding.js'
-import * as promise from '../util/promise.js'
 import {Login} from './login.js'
 
 function loginOffline (io, username, userId, password) {
@@ -60,10 +59,9 @@ export function login (io, username, password) {
   username = userMap.normalize(username)
   return userMap.getUserId(io, username).then(userId => {
     // Race the two login methods, and let the fastest one win:
-    return promise.any([
-      rejectify(loginOffline)(io, username, userId, password),
+    return rejectify(loginOffline)(io, username, userId, password).catch(e =>
       rejectify(loginOnline)(io, username, userId, password)
-    ])
+    )
   })
 }
 
