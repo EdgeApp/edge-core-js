@@ -19,10 +19,13 @@ export function any (promises) {
  * reject it with the provided error, or a generic error if none is provided.
  */
 export function timeout (promise, ms, error) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      reject(error || new Error(`Timeout of ${ms}ms exceeded`))
-    }, ms)
-    promise.then(value => resolve(value), error => reject(error))
-  })
+  error = error || new Error(`Timeout of ${ms}ms exceeded`)
+  return Promise.race([
+    promise,
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(error), ms)
+      const onDone = () => clearTimeout(timer)
+      promise.then(onDone, onDone)
+    })
+  ])
 }
