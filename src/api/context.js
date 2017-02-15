@@ -1,4 +1,3 @@
-import { UsernameError } from '../error.js'
 import { makeBrowserIo } from '../io/browser'
 import { IoContext } from '../io/io.js'
 import { fixUsername } from '../io/loginStore.js'
@@ -40,13 +39,7 @@ Context.prototype.removeUsername = syncApi(function (username) {
 })
 
 Context.prototype.usernameAvailable = asyncApi(function (username) {
-  // TODO: We should change the API to expect a bool, rather than throwing:
-  return usernameAvailable(this.io, username).then(bool => {
-    if (!bool) {
-      throw new UsernameError()
-    }
-    return bool
-  })
+  return usernameAvailable(this.io, username)
 })
 
 /**

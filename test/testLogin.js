@@ -75,20 +75,18 @@ describe('username', function () {
 })
 
 describe('creation', function () {
-  it('username available', function (done) {
+  it('username available', function () {
     const [context, remote] = makeFakeContexts(2)
     makeFakeAccount(remote, fakeUser)
 
-    context.usernameAvailable('js test 1', done)
+    context.usernameAvailable('js test 1').then(result => assert(result))
   })
 
-  it('username not available', function (done) {
+  it('username not available', function () {
     const [context, remote] = makeFakeContexts(2)
     makeFakeAccount(remote, fakeUser)
 
-    context.usernameAvailable(fakeUser.username, function (err) {
-      done(!err)
-    })
+    context.usernameAvailable(fakeUser.username).then(result => assert(!result))
   })
 
   it('create account', function () {
