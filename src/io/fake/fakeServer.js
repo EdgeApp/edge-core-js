@@ -1,3 +1,4 @@
+import { filterObject, objectAssign } from '../../util/util.js'
 import url from 'url'
 
 const routes = []
@@ -238,8 +239,7 @@ addRoute('POST', '/api/v2/login', function (req) {
   }
   return null
 }, authHandler, function (req) {
-  const results = {}
-  const keys = [
+  return makeResponse(filterObject(this.db, [
     'passwordAuthBox',
     'passwordBox',
     'passwordKeySnrp',
@@ -250,13 +250,7 @@ addRoute('POST', '/api/v2/login', function (req) {
     'rootKeyBox',
     'syncKeyBox',
     'repos'
-  ]
-  keys.forEach(key => {
-    if (key in this.db) {
-      results[key] = this.db[key]
-    }
-  })
-  return makeResponse(results)
+  ]))
 })
 
 addRoute('POST', '/api/v2/login/create', function (req) {
@@ -270,7 +264,7 @@ addRoute('POST', '/api/v2/login/create', function (req) {
   }
 
   // Set up login object:
-  const keys = [
+  objectAssign(this.db, filterObject(data, [
     'userId',
     'passwordAuth',
     'passwordAuthBox',
@@ -288,12 +282,7 @@ addRoute('POST', '/api/v2/login/create', function (req) {
     'rootKeyBox',
     'syncKeyBox',
     'repos'
-  ]
-  keys.forEach(key => {
-    if (key in data) {
-      this.db[key] = data[key]
-    }
-  })
+  ]))
 
   return makeResponse()
 })

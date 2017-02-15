@@ -1,26 +1,25 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
 import {base16, base58, base64, utf8} from '../util/encoding.js'
+import { filterObject } from '../util/util.js'
 import * as server from './server.js'
 
 /**
  * Converts a login reply from the server into the local storage format.
  */
 function makeLoginData (username, loginReply, dataKey) {
-  const out = {
-    username: fixUsername(username)
-  }
-
   // Copy common items:
-  const keys = [
-    'passwordAuthBox', 'passwordBox', 'passwordKeySnrp',
-    'rootKeyBox', 'syncKeyBox', 'repos'
-  ]
-  keys.forEach(key => {
-    if (key in loginReply) {
-      out[key] = loginReply[key]
-    }
-  })
+  const out = filterObject(loginReply, [
+    'passwordAuthBox',
+    'passwordBox',
+    'passwordKeySnrp',
+    'rootKeyBox',
+    'syncKeyBox',
+    'repos'
+  ])
+
+  // Store the normalized username:
+  out.username = fixUsername(username)
 
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
