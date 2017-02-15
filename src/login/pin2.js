@@ -1,11 +1,10 @@
 import * as crypto from '../crypto/crypto.js'
-import * as userMap from '../userMap.js'
-import {UserStorage} from '../userStorage.js'
+import {fixUsername} from '../io/loginStore.js'
 import {base58, base64} from '../util/encoding.js'
 import {Login} from './login.js'
 
 function pin2Id (pin2Key, username) {
-  return crypto.hmacSha256(username, pin2Key)
+  return crypto.hmacSha256(fixUsername(username), pin2Key)
 }
 
 function pin2Auth (pin2Key, pin) {
@@ -16,9 +15,8 @@ function pin2Auth (pin2Key, pin) {
  * Returns a copy of the PIN login key if one exists on the local device.
  */
 export function getKey (io, username) {
-  const fixedName = userMap.normalize(username)
-  const userStorage = new UserStorage(io.localStorage, fixedName)
-  return userStorage.getItem('pin2Key')
+  const loginData = io.loginStore.find({username})
+  return loginData.pin2Key
 }
 
 /**
@@ -30,7 +28,6 @@ export function getKey (io, username) {
  */
 export function login (io, pin2Key, username, pin) {
   pin2Key = base58.parse(pin2Key)
-  username = userMap.normalize(username)
 
   const request = {
     'pin2Id': base64.stringify(pin2Id(pin2Key, username)),
@@ -48,7 +45,7 @@ export function login (io, pin2Key, username, pin) {
     const dataKey = crypto.decrypt(pin2Box, pin2Key)
 
     // Build the login object:
-    return userMap.getUserId(io, username).then(userId => {
+    return io.loginStore.getUserId(username).then(userId => {
       return Login.online(io, username, userId, dataKey, reply)
     })
   })
@@ -86,7 +83,7 @@ export function setup (io, login, pin) {
   const request = login.authJson()
   request['data'] = setup.server
   return io.authRequest('POST', '/v2/login/pin2', request).then(reply => {
-    login.userStorage.setItems(setup.storage)
+    io.loginStore.update(login.userId, setup.storage)
     return base58.stringify(setup.pin2Key)
   })
 }

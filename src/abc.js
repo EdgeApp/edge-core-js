@@ -5,7 +5,7 @@ import {IoContext, makeBrowserIo} from './io/io.js'
 export {Context}
 export {abcc as ABCConditionCode} from './ABCConditionCode.js'
 export {ABCError} from './ABCError.js'
-export {normalize as usernameFix} from './userMap.js'
+export {fixUsername as usernameFix} from './io/loginStore.js'
 
 /**
  * Creates a pseudo-random number generator based on the provided entropy.

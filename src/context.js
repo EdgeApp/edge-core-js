@@ -1,11 +1,10 @@
 import {Account} from './account.js'
+import {fixUsername} from './io/loginStore.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
-import * as userMap from './userMap.js'
-import {UserStorage} from './userStorage.js'
 import {nodeify} from './util/decorators.js'
 
 /**
@@ -17,18 +16,14 @@ export function Context (io, opts) {
 }
 
 Context.prototype.usernameList = function () {
-  const map = userMap.load(this.io)
-  return Object.keys(map)
+  return this.io.loginStore.listUsernames()
 }
 Context.prototype.listUsernames = Context.prototype.usernameList
 
-Context.prototype.fixUsername = userMap.normalize
+Context.prototype.fixUsername = fixUsername
 
 Context.prototype.removeUsername = function (username) {
-  username = userMap.normalize(username)
-  userMap.remove(this.io, username)
-  const store = new UserStorage(this.io.localStorage, username)
-  store.removeAll()
+  this.io.loginStore.remove({username})
 }
 
 Context.prototype.usernameAvailable = nodeify(function (username) {

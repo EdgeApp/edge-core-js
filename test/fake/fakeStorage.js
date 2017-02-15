@@ -1,5 +1,5 @@
-import {UserStorage} from '../../src/userStorage.js'
 import {base16} from '../../src/util/encoding.js'
+import {ScopedStorage} from '../../src/util/scopedStorage.js'
 import * as repoModule from '../../src/util/repo.js'
 import * as packages from './packages.js'
 
@@ -54,16 +54,18 @@ FakeStorage.prototype.populateRepos = function () {
 FakeStorage.prototype.populate = function () {
   this.populateUsers()
   this.populateRepos()
-  const userStorage = new UserStorage(this, 'js test 0')
-  userStorage.setJson('passwordKeySnrp', packages.passwordKeySnrp)
-  userStorage.setJson('passwordBox', packages.passwordBox)
-  userStorage.setJson('passwordAuthBox', packages.passwordAuthBox)
-  userStorage.setJson('rootKeyBox', packages.rootKeyBox)
-  userStorage.setJson('syncKeyBox', packages.syncKeyBox)
-  userStorage.setItem('pinAuthId', packages.pinPackage['DID'])
-  userStorage.setJson('pinBox', packages.pinPackage['EMK_PINK'])
-  userStorage.setItem('pin2Key', packages.pin2Key)
-  userStorage.setItem('recovery2Key', packages.recovery2Key)
+  const userStorage = new ScopedStorage(this, 'airbitz.user.js test 0')
+  userStorage.setItems({
+    passwordKeySnrp: packages.passwordKeySnrp,
+    passwordBox: packages.passwordBox,
+    passwordAuthBox: packages.passwordAuthBox,
+    rootKeyBox: packages.rootKeyBox,
+    syncKeyBox: packages.syncKeyBox,
+    pinAuthId: packages.pinPackage['DID'],
+    pinBox: packages.pinPackage['EMK_PINK'],
+    pin2Key: packages.pin2Key,
+    recovery2Key: packages.recovery2Key
+  })
 }
 
 /**

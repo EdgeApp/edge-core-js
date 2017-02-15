@@ -1,7 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
-import * as userMap from '../userMap.js'
-import {UserStorage} from '../userStorage.js'
+import {fixUsername} from '../io/loginStore.js'
 import {base16, base64} from '../util/encoding.js'
+import {mergeObjects} from '../util/util.js'
 import {Login} from './login.js'
 import * as passwordLogin from './password.js'
 
@@ -9,9 +9,7 @@ import * as passwordLogin from './password.js'
  * Determines whether or not a username is available.
  */
 export function usernameAvailable (io, username) {
-  username = userMap.normalize(username)
-
-  return userMap.getUserId(io, username).then(userId => {
+  return io.loginStore.getUserId(username).then(userId => {
     const request = {
       'l1': base64.stringify(userId)
     }
@@ -23,15 +21,13 @@ export function usernameAvailable (io, username) {
  * Creates a new login on the auth server.
  */
 export function create (io, username, password, opts) {
-  username = userMap.normalize(username)
-
   // Create account repo info:
   const dataKey = io.random(32)
   const syncKey = opts.syncKey || io.random(20)
   const syncKeyBox = crypto.encrypt(io, syncKey, dataKey)
 
   return Promise.all([
-    userMap.getUserId(io, username),
+    io.loginStore.getUserId(username),
     passwordLogin.makeSetup(io, dataKey, username, password)
   ]).then(values => {
     const [userId, passwordSetup] = values
@@ -52,13 +48,13 @@ export function create (io, username, password, opts) {
       'login_package': JSON.stringify(loginPackage),
       'repo_account_key': base16.stringify(syncKey)
     }
+    const loginData = mergeObjects({
+      username: fixUsername(username), syncKeyBox
+    }, passwordSetup.storage)
 
     return io.authRequest('POST', '/v1/account/create', request).then(reply => {
       // Cache everything for future logins:
-      userMap.insert(io, username, userId)
-      const userStorage = new UserStorage(io.localStorage, username)
-      userStorage.setItems(passwordSetup.storage)
-      userStorage.setJson('syncKeyBox', syncKeyBox)
+      io.loginStore.update(userId, loginData)
 
       const login = Login.offline(io, username, userId, dataKey)
 

@@ -1,5 +1,6 @@
 import {AuthServer} from './authServer.js'
 import {Log} from './log.js'
+import {LoginStore} from './loginStore.js'
 
 /**
  * Extracts the io functions we need from the browser.
@@ -48,6 +49,7 @@ export class IoContext {
     // Set up wrapper objects:
     this.authServer = new AuthServer(this, opts.apiKey)
     this.log = new Log(this)
+    this.loginStore = new LoginStore(this)
   }
 
   authRequest (...rest) {
