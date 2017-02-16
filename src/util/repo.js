@@ -208,7 +208,7 @@ Repo.prototype.sync = function () {
   // If we have local changes, we need to bundle those:
   const request = {}
   const changeKeys = this.changeStore.keys()
-  if (changeKeys.length) {
+  if (changeKeys.length > 0) {
     request.changes = {}
     changeKeys.forEach(key => {
       const path = key.replace(/\./g, '/') + '.json'
@@ -219,7 +219,7 @@ Repo.prototype.sync = function () {
   // Calculate the URI:
   let uri = '/api/v2/store/' + base16.stringify(this.syncKey)
   const lastHash = this.store.getItem('lastHash')
-  if (lastHash) {
+  if (lastHash != null) {
     uri = uri + '/' + lastHash
   }
 
@@ -234,8 +234,8 @@ Repo.prototype.sync = function () {
 
     // Process the change list:
     const changes = reply['changes']
-    if (changes) {
-      if (Object.keys(changes).length) {
+    if (changes != null) {
+      if (Object.keys(changes).length > 0) {
         changed = true
       }
       mergeChanges(self.dataStore, changes)
@@ -243,7 +243,7 @@ Repo.prototype.sync = function () {
 
     // Save the current hash:
     const hash = reply['hash']
-    if (hash) {
+    if (hash != null) {
       self.store.setItem('lastHash', hash)
     }
 

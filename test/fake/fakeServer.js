@@ -63,7 +63,7 @@ function makeResponse (results) {
   const reply = {
     'status_code': 0
   }
-  if (results) {
+  if (results != null) {
     reply['results'] = results
   }
   return new FakeResponse(JSON.stringify(reply))
@@ -84,7 +84,7 @@ function makeErrorResponse (code, message = '', status = 500) {
  */
 function authHandler1 (req) {
   // Password login:
-  if ('l1' in req.body && 'lp1' in req.body) {
+  if (req.body.l1 != null && req.body.lp1 != null) {
     if (req.body.l1 !== this.db.userId) {
       return makeErrorResponse(errorCodes.noAccount)
     }
@@ -101,7 +101,7 @@ function authHandler1 (req) {
  */
 function authHandler (req) {
   // Password login:
-  if ('userId' in req.body && 'passwordAuth' in req.body) {
+  if (req.body.userId != null && req.body.passwordAuth != null) {
     if (req.body.userId !== this.db.userId) {
       return makeErrorResponse(errorCodes.noAccount)
     }
@@ -112,7 +112,7 @@ function authHandler (req) {
   }
 
   // PIN2 login:
-  if ('pin2Id' in req.body && 'pin2Auth' in req.body) {
+  if (req.body.pin2Id != null && req.body.pin2Auth != null) {
     if (req.body.pin2Id !== this.db.pin2Id) {
       return makeErrorResponse(errorCodes.noAccount)
     }
@@ -123,14 +123,13 @@ function authHandler (req) {
   }
 
   // Recovery2 login:
-  if ('recovery2Id' in req.body && 'recovery2Auth' in req.body) {
+  if (req.body.recovery2Id != null && req.body.recovery2Auth != null) {
     if (req.body.recovery2Id !== this.db.recovery2Id) {
       return makeErrorResponse(errorCodes.noAccount)
     }
     const serverAuth = this.db.recovery2Auth
     const clientAuth = req.body.recovery2Auth
-    if (!('length' in clientAuth) ||
-        clientAuth.length !== serverAuth.length) {
+    if (clientAuth.length !== serverAuth.length) {
       return makeErrorResponse(errorCodes.invalidAnswers)
     }
     for (let i = 0; i < clientAuth.length; ++i) {
@@ -146,7 +145,7 @@ function authHandler (req) {
 // Account lifetime v1: ----------------------------------------------------
 
 addRoute('POST', '/api/v1/account/available', function (req) {
-  if (this.db.userId && this.db.userId === req.body['l1']) {
+  if (req.body.l1 != null && req.body.l1 === this.db.userId) {
     return makeErrorResponse(errorCodes.accountExists)
   }
   return makeResponse()
@@ -175,7 +174,7 @@ addRoute('POST', '/api/v1/account/activate', authHandler1, function (req) {
 // Login v1: ---------------------------------------------------------------
 
 addRoute('POST', '/api/v1/account/carepackage/get', function (req) {
-  if (!this.db.userId || this.db.userId !== req.body['l1']) {
+  if (req.body.l1 == null || req.body.l1 !== this.db.userId) {
     return makeErrorResponse(errorCodes.noAccount)
   }
 
@@ -194,7 +193,7 @@ addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function (req
       'ESyncKey': this.db.syncKeyBox
     })
   }
-  if (this.db.rootKeyBox) {
+  if (this.db.rootKeyBox != null) {
     results['rootKeyBox'] = this.db.rootKeyBox
   }
   return makeResponse(results)
@@ -208,7 +207,7 @@ addRoute('POST', '/api/v1/account/pinpackage/update', authHandler1, function (re
 })
 
 addRoute('POST', '/api/v1/account/pinpackage/get', function (req) {
-  if (!this.db.pinKeyBox) {
+  if (this.db.pinKeyBox == null) {
     return makeErrorResponse(errorCodes.noAccount)
   }
   return makeResponse({
@@ -230,7 +229,7 @@ addRoute('POST', '/api/v1/wallet/activate', authHandler1, function (req) {
 // login v2: ---------------------------------------------------------------
 
 addRoute('POST', '/api/v2/login', function (req) {
-  if ('recovery2Id' in req.body && !('recovery2Auth' in req.body)) {
+  if (req.body.recovery2Id != null && req.body.recovery2Auth == null) {
     if (req.body.recovery2Id !== this.db.recovery2Id) {
       return makeErrorResponse(errorCodes.noAccount)
     }
@@ -254,7 +253,7 @@ addRoute('POST', '/api/v2/login', function (req) {
     'repos'
   ]
   keys.forEach(key => {
-    if (this.db[key]) {
+    if (key in this.db) {
       results[key] = this.db[key]
     }
   })
@@ -263,8 +262,8 @@ addRoute('POST', '/api/v2/login', function (req) {
 
 addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   const data = req.body['data']
-  if (!data['passwordAuth'] || !data['passwordKeySnrp'] ||
-      !data['passwordBox'] || !data['passwordAuthBox']) {
+  if (data.passwordAuth == null || data.passwordKeySnrp == null ||
+      data.passwordBox == null || data.passwordAuthBox == null) {
     return makeErrorResponse(errorCodes.error)
   }
 
@@ -278,8 +277,8 @@ addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
 
 addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
   const data = req.body['data']
-  if (!data['pin2Id'] || !data['pin2Auth'] ||
-      !data['pin2Box'] || !data['pin2KeyBox']) {
+  if (data.pin2Id == null || data.pin2Auth == null ||
+      data.pin2Box == null || data.pin2KeyBox == null) {
     return makeErrorResponse(errorCodes.error)
   }
 
@@ -293,9 +292,9 @@ addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
 
 addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
   const data = req.body['data']
-  if (!data['recovery2Id'] || !data['recovery2Auth'] ||
-      !data['question2Box'] || !data['recovery2Box'] ||
-      !data['recovery2KeyBox']) {
+  if (data.recovery2Id == null || data.recovery2Auth == null ||
+      data.question2Box == null || data.recovery2Box == null ||
+      data.recovery2KeyBox == null) {
     return makeErrorResponse(errorCodes.error)
   }
 
@@ -310,11 +309,11 @@ addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
 
 addRoute('POST', '/api/v2/login/repos', authHandler, function (req) {
   const data = req.body['data']
-  if (!data['type'] || !data['info']) {
+  if (data.type == null || data.info == null) {
     return makeErrorResponse(errorCodes.error)
   }
 
-  if (this.db.repos) {
+  if (this.db.repos != null) {
     this.db.repos.push(data)
   } else {
     this.db.repos = [data]
@@ -349,7 +348,7 @@ function storeRoute (req) {
   // const hash = elements[5]
 
   const repo = this.repos[syncKey]
-  if (!repo) {
+  if (repo == null) {
     return new FakeResponse('Cannot find repo ' + syncKey, {status: 404})
   }
 

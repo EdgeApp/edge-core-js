@@ -74,7 +74,7 @@ Context.prototype.pinLoginEnabled = function (username) {
 
 Context.prototype.loginWithPIN = nodeify(function (username, pin) {
   const pin2Key = loginPin2.getKey(this.io, username)
-  if (!pin2Key) {
+  if (pin2Key == null) {
     throw new Error('No PIN set locally for this account')
   }
   return loginPin2.login(this.io, pin2Key, username, pin).then(login => {
@@ -86,11 +86,10 @@ Context.prototype.loginWithPIN = nodeify(function (username, pin) {
 
 Context.prototype.getRecovery2Key = nodeify(function (username) {
   const recovery2Key = loginRecovery2.getKey(this.io, username)
-  if (recovery2Key) {
-    return Promise.resolve(recovery2Key)
-  } else {
+  if (recovery2Key == null) {
     return Promise.reject(new Error('No recovery key stored locally.'))
   }
+  return Promise.resolve(recovery2Key)
 })
 
 Context.prototype.loginWithRecovery2 = nodeify(function (recovery2Key, username, answers, otp, options) {

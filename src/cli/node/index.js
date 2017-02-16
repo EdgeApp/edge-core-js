@@ -37,11 +37,11 @@ const helpCommand = command('help', {
 }, function (session, argv) {
   if (argv.length > 1) throw new UsageError(this, 'Too many parameters')
 
-  if (argv.length) {
+  if (argv.length === 1) {
     // Command help:
     const cmd = command.find(argv[0])
     console.log('Usage: ' + cmd.usage)
-    if (cmd.help) {
+    if (cmd.help != null) {
       console.log(cmd.help)
     }
   } else {
@@ -59,15 +59,15 @@ function loadConfig (options) {
   let config = {}
 
   // Load the config file (if possible):
-  if (options['config'] || xdgBasedir.config) {
-    const path = options['config'] ||
+  if (options.config != null || xdgBasedir.config != null) {
+    const path = options.config ||
       xdgBasedir.config + '/airbitz/airbitz.conf'
     try {
       config = JSON.parse(fs.readFileSync(path, 'utf8'))
     } catch (e) {
-      if (options['config']) {
-        const e = new Error(`Cannot load config file '${path}'`)
-        e.quiet = true
+      if (options.config != null) {
+        const e = new Error(`Cannot load config file "${options.config}"`)
+        e.type = 'FileNotFoud'
         throw e
       }
     }
@@ -95,7 +95,7 @@ function makeSession (config, cmd) {
   // Create a context if we need one:
   if (cmd.needsContext) {
     // API key:
-    if (!config.apiKey) {
+    if (config.apiKey == null) {
       throw new UsageError(cmd, 'No API key')
     }
     const fakeStorage = new LocalStorage(config.directory || './.cli')
@@ -111,7 +111,7 @@ function makeSession (config, cmd) {
   // Create a login if we need one:
   if (cmd.needsLogin) {
     out = out.then(session => {
-      if (!config.username || !config.password) {
+      if (config.username == null || config.password == null) {
         throw new UsageError(cmd, 'No login credentials')
       }
 
@@ -149,14 +149,14 @@ function main () {
 
 // Invoke the main function with error reporting:
 rejectify(main)().catch(e => {
-  if (e.type) {
+  if (e.type != null) {
     // This is a known error, so just show the message:
     console.error(chalk.red(e.message))
 
     // Special handling for particular error types:
     switch (e.type) {
       case UsageError.type:
-        if (e.command) {
+        if (e.command != null) {
           console.error(`Usage: ${e.command.usage}`)
         }
         break

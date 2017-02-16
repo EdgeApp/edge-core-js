@@ -40,7 +40,7 @@ export function login (io, recovery2Key, username, answers) {
   return io.authRequest('POST', '/v2/login', request).then(reply => {
     // Recovery login:
     const recovery2Box = reply['recovery2Box']
-    if (!recovery2Box) {
+    if (recovery2Box == null) {
       throw new Error('Missing data for recovery v2 login')
     }
 
@@ -70,7 +70,7 @@ export function questions (io, recovery2Key, username) {
   return io.authRequest('POST', '/v2/login', request).then(reply => {
     // Recovery login:
     const question2Box = reply['question2Box']
-    if (!question2Box) {
+    if (question2Box == null) {
       throw new Error('Login has no recovery questions')
     }
 

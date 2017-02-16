@@ -51,7 +51,7 @@ export function decodeAccountReply (keys, lobby) {
   const replyKey = accountRequest['replyKey']
 
   // If the reply is missing, just return false:
-  if (!replyBox || !replyKey) {
+  if (replyBox == null || replyKey == null) {
     return null
   }
 
@@ -85,10 +85,10 @@ function pollServer (io, edgeLogin, keys, onLogin, onProcessLogin) {
   setTimeout(function () {
     io.authRequest('GET', '/v2/lobby/' + edgeLogin.id, '').then(reply => {
       const accountReply = decodeAccountReply(keys, reply)
-      if (!accountReply) {
+      if (accountReply == null) {
         return pollServer(io, edgeLogin, keys, onLogin, onProcessLogin)
       }
-      if (onProcessLogin !== null) {
+      if (onProcessLogin != null) {
         onProcessLogin(accountReply.username)
       }
       return createLogin(io, accountReply).then(
@@ -128,7 +128,7 @@ export function create (io, opts) {
   return io.authRequest('POST', '/v2/lobby', request).then(reply => {
     const edgeLogin = new ABCEdgeLoginRequest(reply.id)
     let onProcessLogin = null
-    if ('onProcessLogin' in opts) {
+    if (opts.onProcessLogin != null) {
       onProcessLogin = opts.onProcessLogin
     }
     pollServer(io, edgeLogin, keys, opts.onLogin, onProcessLogin)

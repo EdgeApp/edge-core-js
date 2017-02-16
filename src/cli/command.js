@@ -35,7 +35,7 @@ export function command (name, opts, body) {
   if (cmd.needsLogin) {
     usage += ' -u <username> -p <password>'
   }
-  if (opts.usage) {
+  if (opts.usage != null) {
     usage += ' ' + opts.usage
   }
   cmd.usage = usage
@@ -50,7 +50,7 @@ export function command (name, opts, body) {
  */
 command.find = function (name) {
   const cmd = commands[name]
-  if (!cmd) throw new UsageError(null, `No command named "${name}"`)
+  if (cmd == null) throw new UsageError(null, `No command named "${name}"`)
   return cmd
 }
 
@@ -62,7 +62,7 @@ command.showList = function () {
   Object.keys(commands).forEach(name => {
     const cmd = commands[name]
     let line = '  ' + name
-    if (cmd.help) {
+    if (cmd.help != null) {
       line += '\t- ' + cmd.help
     }
     console.log(line)

@@ -23,13 +23,13 @@ function makeLoginData (username, loginReply, dataKey) {
   })
 
   // Store the pin key unencrypted:
-  if ('pin2KeyBox' in loginReply) {
+  if (loginReply.pin2KeyBox != null) {
     const pin2Key = crypto.decrypt(loginReply.pin2KeyBox, dataKey)
     out.pin2Key = base58.stringify(pin2Key)
   }
 
   // Store the recovery key unencrypted:
-  if ('recovery2KeyBox' in loginReply) {
+  if (loginReply.recovery2KeyBox != null) {
     const recovery2Key = crypto.decrypt(loginReply.recovery2KeyBox, dataKey)
     out.recovery2Key = base58.stringify(recovery2Key)
   }
@@ -56,18 +56,18 @@ export function Login (io, userId, dataKey, loginData) {
   this.dataKey = dataKey
 
   // Return access to the server:
-  if (!loginData.passwordAuthBox) {
+  if (loginData.passwordAuthBox == null) {
     throw new Error('Missing passwordAuthBox')
   }
   this.passwordAuth = crypto.decrypt(loginData.passwordAuthBox, dataKey)
 
   // Legacy account repo:
-  if (loginData.syncKeyBox) {
+  if (loginData.syncKeyBox != null) {
     this.syncKey = crypto.decrypt(loginData.syncKeyBox, dataKey)
   }
 
   // Legacy BitID key:
-  if (loginData.rootKeyBox) {
+  if (loginData.rootKeyBox != null) {
     this.rootKey = crypto.decrypt(loginData.rootKeyBox, dataKey)
   }
 
@@ -75,10 +75,10 @@ export function Login (io, userId, dataKey, loginData) {
   this.repos = loginData.repos || []
 
   // Local keys:
-  if (loginData.pin2Key) {
+  if (loginData.pin2Key != null) {
     this.pin2Key = base58.parse(loginData.pin2Key)
   }
-  if (loginData.recovery2Key) {
+  if (loginData.recovery2Key != null) {
     this.recovery2Key = base58.parse(loginData.recovery2Key)
   }
 }
