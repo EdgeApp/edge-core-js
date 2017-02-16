@@ -1,5 +1,23 @@
 import {command, UsageError} from '../command.js'
 
+command(
+  'recovery2-questions',
+  {
+    usage: '<key> <username>',
+    help: 'Logs the user in with a recovery key and answers',
+    needsContext: true
+  },
+  function (session, argv) {
+    if (argv.length !== 2) throw new UsageError(this)
+    const key = argv[0]
+    const username = argv[1]
+
+    return session.context
+      .fetchRecovery2Questions(key, username)
+      .then(questions => questions.forEach(question => console.log(question)))
+  }
+)
+
 command('recovery2-login', {
   usage: '<key> <username> <answers>...',
   help: 'Logs the user in with a recovery key and answers',
