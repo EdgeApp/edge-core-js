@@ -7,6 +7,12 @@ import {Account} from '../../src/account.js'
 import {Login} from '../../src/login/login.js'
 import {base64} from '../../src/util/encoding.js'
 
+const fakeConsole = {
+  info: () => {},
+  warn: () => {},
+  error: () => {}
+}
+
 /**
  * Generates deterministic "random" data for unit-testing.
  */
@@ -27,7 +33,7 @@ export function makeFakeIo () {
   const storage = new FakeStorage()
 
   return {
-    console: null,
+    console: fakeConsole,
     fetch: server.fetch,
     localStorage: storage,
     random: fakeRandom
@@ -45,7 +51,7 @@ export function makeSession (opts) {
     session.storage = new FakeStorage()
     session.server = new FakeServer()
     session.context = abc.makeContext({
-      console: null,
+      console: fakeConsole,
       localStorage: session.storage,
       fetch: session.server.fetch,
       random: fakeRandom,

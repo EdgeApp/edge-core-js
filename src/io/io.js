@@ -1,5 +1,4 @@
 import {AuthServer} from './authServer.js'
-import {Log} from './log.js'
 import {LoginStore} from './loginStore.js'
 
 /**
@@ -37,7 +36,7 @@ export class IoContext {
     // Copy native io resources:
     const keys = ['console', 'fetch', 'localStorage', 'random']
     keys.forEach(key => {
-      if (key in opts) {
+      if (opts[key] != null) {
         this[key] = opts[key]
       } else if (nativeIo[key] != null) {
         this[key] = nativeIo[key]
@@ -48,7 +47,7 @@ export class IoContext {
 
     // Set up wrapper objects:
     this.authServer = new AuthServer(this, opts.apiKey)
-    this.log = new Log(this)
+    this.log = this.console
     this.loginStore = new LoginStore(this)
   }
 
