@@ -55,16 +55,8 @@ command.find = function (name) {
 }
 
 /**
- * Returns a list of all available commands.
+ * Returns the list of all commands, in sorted order.
  */
-command.showList = function () {
-  console.log('Available commands:')
-  Object.keys(commands).forEach(name => {
-    const cmd = commands[name]
-    let line = '  ' + name
-    if (cmd.help != null) {
-      line += '\t- ' + cmd.help
-    }
-    console.log(line)
-  })
+command.list = function () {
+  return Object.keys(commands).sort()
 }

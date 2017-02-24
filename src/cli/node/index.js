@@ -47,7 +47,15 @@ const helpCommand = command('help', {
   } else {
     // Program help:
     getopt.showHelp()
-    command.showList()
+    console.log('Available commands:')
+    command.list().forEach(name => {
+      const cmd = command.find(name)
+      let line = '  ' + name
+      if (cmd.help != null) {
+        line += '\t- ' + cmd.help
+      }
+      console.log(line)
+    })
   }
 })
 

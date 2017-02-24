@@ -4,7 +4,7 @@ command(
   'recovery2-questions',
   {
     usage: '<key> <username>',
-    help: 'Logs the user in with a recovery key and answers',
+    help: 'Shows a user\'s recovery questions',
     needsContext: true
   },
   function (session, argv) {
