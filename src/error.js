@@ -81,7 +81,9 @@ export function OtpError (resultsJson = {}, message) {
   const e = new Error(message || 'Invalid OTP token')
   e.type = OtpError.name
   e.resetToken = resultsJson['otp_reset_auth']
-  e.resetDate = resultsJson['otp_timee_date']
+  if (resultsJson.otp_timeout_date != null) {
+    e.resetDate = new Date(resultsJson.otp_timeout_date)
+  }
   return e
 }
 OtpError.type = OtpError.name
