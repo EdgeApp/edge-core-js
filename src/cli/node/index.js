@@ -1,5 +1,5 @@
 // Airbitz context stuff:
-import * as abc from '../../abc.js'
+import * as abc from '../..'
 import {rejectify} from '../../util/decorators.js'
 import {mergeObjects} from '../../util/util.js'
 

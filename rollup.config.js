@@ -3,7 +3,7 @@ import commonjs from 'rollup-plugin-commonjs'
 const packageJson = require('./package.json')
 
 export default {
-  entry: 'src/abc.js',
+  entry: 'src/index.js',
   external: [
     'assert',
     'path',
