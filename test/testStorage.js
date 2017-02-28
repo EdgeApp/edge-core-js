@@ -1,11 +1,11 @@
 /* global describe, it */
+import {makeFakeContexts} from '../src'
 import {ScopedStorage} from '../src/util/scopedStorage.js'
-import {FakeStorage} from './fake/fakeStorage.js'
 import assert from 'assert'
 
 describe('storage', function () {
   it('enumerate keys', function () {
-    const localStorage = new FakeStorage()
+    const localStorage = makeFakeContexts(1)[0].io.localStorage
     localStorage.setItem('scope.a', 'a')
     localStorage.setItem('scope.b', 'b')
     localStorage.setItem('scope.a.c', 'a.c')

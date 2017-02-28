@@ -1,5 +1,6 @@
 import {Context} from './context.js'
 import {makeBrowserIo} from './io/browser'
+import {makeFakeIos} from './io/fake'
 import {makeNodeIo} from './io/node'
 
 /**
@@ -8,6 +9,17 @@ import {makeNodeIo} from './io/node'
  */
 export function makeBrowserContext (opts = {}) {
   return new Context(makeBrowserIo(opts), opts)
+}
+
+/**
+ * Creates mock Airbitz contexts for use in unit tests.
+ * All the contexts share a fake in-memory server,
+ * so accounts created on one context can be loaded from another context.
+ * This makes it possible to unit-test various peer-to-peer scenarios.
+ * @return An Airbitz core library instance.
+ */
+export function makeFakeContexts (count, opts = {}) {
+  return makeFakeIos(count, opts).map(io => new Context(io, opts))
 }
 
 /**

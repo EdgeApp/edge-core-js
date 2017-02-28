@@ -1,6 +1,6 @@
 /* global describe, it */
+import {makeFakeContexts} from '../src'
 import * as fakeUser from './fake/fakeUser.js'
-import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
 
 describe('login', function () {

@@ -1,9 +1,8 @@
 /* global describe, it */
-import {makeRandomGenerator} from '../src'
+import {makeFakeContexts, makeRandomGenerator} from '../src'
 import * as crypto from '../src/crypto/crypto.js'
 import * as scrypt from '../src/crypto/scrypt.js'
 import {base16, base58, base64, utf8} from '../src/util/encoding.js'
-import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
 
 describe('scrypt', function () {

@@ -1,8 +1,10 @@
-import {Context} from '../../src/context.js'
-import {IoContext} from '../../src/io/io.js'
+import {IoContext} from '../io.js'
 import {FakeServer} from './fakeServer.js'
 import {FakeStorage} from './fakeStorage.js'
 
+/**
+ * Silences all logging.
+ */
 const fakeConsole = {
   info: () => {},
   warn: () => {},
@@ -25,26 +27,24 @@ function fakeRandom (bytes) {
 }
 
 /**
- * Creates an array of context objects.
+ * Creates an array of io context objects.
  * Each object has its own storage, but all contexts share a server.
- * @param {number} count number of contexts to create
+ * @param {number} count number of io contexts to create
  */
-export function makeFakeContexts (count, opts = {}) {
+export function makeFakeIos (count, opts = {}) {
   // The common server used by all contexts:
   const server = new FakeServer()
 
-  // Make the context array:
+  // Make the io objects:
   const out = []
   for (let i = 0; i < count; ++i) {
-    const io = new IoContext({
+    const native = {
       console: fakeConsole,
       fetch: server.fetch,
       localStorage: new FakeStorage(),
       random: fakeRandom
-    })
-    out[i] = new Context(io, {
-      accountType: opts.accountType
-    })
+    }
+    out[i] = new IoContext(native, opts)
   }
 
   return out

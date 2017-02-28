@@ -1,9 +1,9 @@
 /* global describe, it */
+import {makeFakeContexts} from '../src'
 import * as crypto from '../src/crypto/crypto.js'
 import * as loginEdge from '../src/login/edge.js'
 import {utf8} from '../src/util/encoding.js'
 import * as fakeUser from './fake/fakeUser.js'
-import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
 import elliptic from 'elliptic'
 
