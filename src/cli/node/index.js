@@ -1,6 +1,7 @@
 // Airbitz context stuff:
 import * as abc from '../../abc.js'
 import {rejectify} from '../../util/decorators.js'
+import {mergeObjects} from '../../util/util.js'
 
 // Commands:
 import {command, UsageError} from '../command.js'
@@ -13,6 +14,7 @@ import fs from 'fs'
 import Getopt from 'node-getopt'
 import fetch from 'node-fetch'
 import {LocalStorage} from 'node-localstorage'
+import path from 'path'
 import sourceMapSupport from 'source-map-support'
 import xdgBasedir from 'xdg-basedir'
 
@@ -64,22 +66,26 @@ const helpCommand = command('help', {
  * and returns its contents merged with the command-line options.
  */
 function loadConfig (options) {
-  let config = {}
-
-  // Load the config file (if possible):
-  if (options.config != null || xdgBasedir.config != null) {
-    const path = options.config ||
-      xdgBasedir.config + '/airbitz/airbitz.conf'
-    try {
-      config = JSON.parse(fs.readFileSync(path, 'utf8'))
-    } catch (e) {
-      if (options.config != null) {
-        const e = new Error(`Cannot load config file "${options.config}"`)
-        e.type = 'FileNotFoud'
-        throw e
-      }
-    }
+  // Locate all config files:
+  const configPaths = xdgBasedir.configDirs
+    .reverse()
+    .map(dir => path.join(dir, '/airbitz/airbitz.conf'))
+    .filter(path => fs.existsSync(path))
+  if (options.config != null) {
+    configPaths.push(options.config)
   }
+
+  // Load and merge the config files:
+  const configFiles = configPaths.map(path => {
+    try {
+      return JSON.parse(fs.readFileSync(path, 'utf8'))
+    } catch (e) {
+      const e = new Error(`Cannot load config file "${options.config}"`)
+      e.type = 'ConfigError'
+      throw e
+    }
+  })
+  const config = mergeObjects(...configFiles)
 
   // Calculate the active settings:
   return {

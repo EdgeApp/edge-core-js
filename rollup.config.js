@@ -6,6 +6,7 @@ export default {
   entry: 'src/abc.js',
   external: [
     'assert',
+    'path',
     'crypto',
     'buffer',
     'fs',
