@@ -260,6 +260,45 @@ addRoute('POST', '/api/v2/login', function (req) {
   return makeResponse(results)
 })
 
+addRoute('POST', '/api/v2/login/create', function (req) {
+  const data = req.body['data']
+
+  // Set up repos:
+  if (data.newSyncKeys != null) {
+    data.newSyncKeys.forEach(syncKey => {
+      this.repos[syncKey] = {}
+    })
+  }
+
+  // Set up login object:
+  const keys = [
+    'userId',
+    'passwordAuth',
+    'passwordAuthBox',
+    'passwordBox',
+    'passwordKeySnrp',
+    'pin2Auth',
+    'pin2Box',
+    'pin2Id',
+    'pin2KeyBox',
+    'question2Box',
+    'recovery2Auth',
+    'recovery2Box',
+    'recovery2Id',
+    'recovery2KeyBox',
+    'rootKeyBox',
+    'syncKeyBox',
+    'repos'
+  ]
+  keys.forEach(key => {
+    if (key in data) {
+      this.db[key] = data[key]
+    }
+  })
+
+  return makeResponse()
+})
+
 addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   const data = req.body['data']
   if (data.passwordAuth == null || data.passwordKeySnrp == null ||
