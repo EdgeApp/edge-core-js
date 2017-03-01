@@ -9,8 +9,7 @@ export default {
     'path',
     'crypto',
     'buffer',
-    'fs',
-    'url'
+    'fs'
   ].concat(Object.keys(packageJson.dependencies)),
   plugins: [
     buble({

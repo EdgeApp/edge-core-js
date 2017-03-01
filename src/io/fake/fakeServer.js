@@ -1,5 +1,4 @@
 import { filterObject, objectAssign } from '../../util/util.js'
-import url from 'url'
 
 const routes = []
 
@@ -421,7 +420,7 @@ export class FakeServer {
     const req = {
       method: opts.method || 'GET',
       body: opts.body ? JSON.parse(opts.body) : null,
-      path: url.parse(uri).pathname
+      path: uri.replace(new RegExp('https?://[^/]*'), '')
     }
 
     const handlers = findRoute(req.method, req.path)
