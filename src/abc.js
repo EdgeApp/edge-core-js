@@ -1,6 +1,7 @@
 import {Context} from './context.js'
-import {elliptic, hashjs} from './crypto/external.js'
+import {hashjs} from './crypto/external.js'
 import {IoContext, makeBrowserIo} from './io/io.js'
+import HmacDRBG from 'hmac-drbg'
 
 export {Context}
 export {abcc as ABCConditionCode} from './ABCConditionCode.js'
@@ -13,7 +14,6 @@ export {fixUsername as usernameFix} from './io/loginStore.js'
  * a synchronous one.
  */
 export function makeRandomGenerator (entropy) {
-  const HmacDRBG = elliptic.hmacDRBG
   const rng = new HmacDRBG({
     hash: hashjs.sha256,
     entropy: entropy
