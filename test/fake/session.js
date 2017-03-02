@@ -21,8 +21,8 @@ function fakeRandom (bytes) {
   let x = 0
   for (let i = 0; i < bytes; ++i) {
     // Simplest numbers that give a full-period generator with
-    // a good mix of high & low values in the first few bytes:
-    x = (5 * x + 3) & 0xff
+    // a good mix of high & low values within the first few bytes:
+    x = ((5 * x) + 3) & 0xff
     out[i] = x
   }
   return out
