@@ -1,5 +1,4 @@
 /* global describe, it */
-import * as abc from '../src/abc.js'
 import * as fakeUser from './fake/fakeUser.js'
 import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
@@ -32,11 +31,15 @@ describe('login', function () {
 
 describe('username', function () {
   it('normalize spaces and capitalization', function () {
-    assert.equal('test test', abc.usernameFix('  TEST TEST  '))
+    const [context] = makeFakeContexts(1)
+
+    assert.equal('test test', context.fixUsername('  TEST TEST  '))
   })
 
   it('reject invalid characters', function () {
-    assert.throws(function () { abc.usernameFix('テスト') })
+    const [context] = makeFakeContexts(1)
+
+    assert.throws(function () { context.fixUsername('テスト') })
   })
 
   it('list usernames in local storage', function () {
