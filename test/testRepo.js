@@ -1,13 +1,13 @@
 /* global describe, it */
 import {Repo} from '../src/util/repo.js'
-import * as packages from './fake/packages.js'
+import * as fakeUser from './fake/fakeUser.js'
 import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
 
 describe('repo', function () {
   it('local get', function () {
     const [context] = makeFakeContexts(1)
-    const repo = new Repo(context.io, packages.dataKey, packages.syncKey)
+    const repo = new Repo(context.io, fakeUser.dataKey, fakeUser.syncKey)
 
     const payload = {'message': 'Hello'}
     context.io.localStorage.setItem(
@@ -19,7 +19,7 @@ describe('repo', function () {
 
   it('offline set/get', function () {
     const [context] = makeFakeContexts(1)
-    const repo = new Repo(context.io, packages.dataKey, packages.syncKey)
+    const repo = new Repo(context.io, fakeUser.dataKey, fakeUser.syncKey)
 
     const payload = {'message': 'Hello'}
     repo.setJson('a/b', payload)
@@ -28,14 +28,14 @@ describe('repo', function () {
 
   it('repo-to-repo sync', function () {
     const [context1, context2, context3] = makeFakeContexts(3)
-    packages.makeAccount(context3)
-    const repo1 = new Repo(context1.io, packages.dataKey, packages.syncKey)
+    fakeUser.makeAccount(context3)
+    const repo1 = new Repo(context1.io, fakeUser.dataKey, fakeUser.syncKey)
 
     const payload = {'message': 'Hello'}
     repo1.setJson('a/b', payload)
     return repo1.sync().then(changed => {
       assert(changed)
-      const repo2 = new Repo(context2.io, packages.dataKey, packages.syncKey)
+      const repo2 = new Repo(context2.io, fakeUser.dataKey, fakeUser.syncKey)
       return repo2.sync().then(changed => {
         assert(changed)
         assert.deepEqual(repo2.getJson('a/b'), payload)
@@ -46,7 +46,7 @@ describe('repo', function () {
 
   it('list', function () {
     const [context] = makeFakeContexts(1)
-    const repo = new Repo(context.io, packages.dataKey, packages.syncKey)
+    const repo = new Repo(context.io, fakeUser.dataKey, fakeUser.syncKey)
 
     repo.setText('a', 'x')
     repo.setText('a/b', 'x')

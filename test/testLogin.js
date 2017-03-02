@@ -1,13 +1,13 @@
 /* global describe, it */
 import * as abc from '../src/abc.js'
-import * as packages from './fake/packages.js'
+import * as fakeUser from './fake/fakeUser.js'
 import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
 
 describe('login', function () {
   it('find repo', function () {
     const [context] = makeFakeContexts(1)
-    const login = packages.makeAccount(context).login
+    const login = fakeUser.makeAccount(context).login
 
     assert.ok(login.accountFind('account:repo:co.airbitz.wallet'))
     assert.throws(function () {
@@ -17,7 +17,7 @@ describe('login', function () {
 
   it('attach repo', function () {
     const [context] = makeFakeContexts(1)
-    const login = packages.makeAccount(context).login
+    const login = fakeUser.makeAccount(context).login
 
     const info = {
       dataKey: 'fa57',
@@ -41,14 +41,14 @@ describe('username', function () {
 
   it('list usernames in local storage', function () {
     const [context] = makeFakeContexts(1)
-    packages.makeAccount(context)
+    fakeUser.makeAccount(context)
 
     assert.deepEqual(context.usernameList(), ['js test 0'])
   })
 
   it('remove username from local storage', function () {
     const [context] = makeFakeContexts(1)
-    packages.makeAccount(context)
+    fakeUser.makeAccount(context)
 
     context.removeUsername('js Test 0')
     assert.equal(context.usernameList().length, 0)
@@ -58,14 +58,14 @@ describe('username', function () {
 describe('creation', function () {
   it('username available', function (done) {
     const [context, remote] = makeFakeContexts(2)
-    packages.makeAccount(remote)
+    fakeUser.makeAccount(remote)
 
     context.usernameAvailable('js test 1', done)
   })
 
   it('username not available', function (done) {
     const [context, remote] = makeFakeContexts(2)
-    packages.makeAccount(remote)
+    fakeUser.makeAccount(remote)
 
     context.usernameAvailable('js Test 0', function (err) { done(!err) })
   })
@@ -86,7 +86,7 @@ describe('password', function () {
   it('setup', function (done) {
     this.timeout(9000)
     const [context, remote] = makeFakeContexts(2)
-    const account = packages.makeAccount(context)
+    const account = fakeUser.makeAccount(context)
 
     account.passwordSetup('Test1234', function (err) {
       if (err) return done(err)
@@ -96,21 +96,21 @@ describe('password', function () {
 
   it('check good', function () {
     const [context] = makeFakeContexts(1)
-    const account = packages.makeAccount(context)
+    const account = fakeUser.makeAccount(context)
 
     return account.passwordOk('y768Mv4PLFupQjMu').then(result => assert(result))
   })
 
   it('check bad', function () {
     const [context] = makeFakeContexts(1)
-    const account = packages.makeAccount(context)
+    const account = fakeUser.makeAccount(context)
 
     return account.passwordOk('wrong one').then(result => assert(!result))
   })
 
   it('login offline', function (done) {
     const [context] = makeFakeContexts(1)
-    packages.makeAccount(context)
+    fakeUser.makeAccount(context)
 
     // Disable network access (but leave the sync server up):
     const oldFetch = context.io.fetch
@@ -124,7 +124,7 @@ describe('password', function () {
 
   it('login online', function (done) {
     const [context, remote] = makeFakeContexts(2)
-    packages.makeAccount(remote)
+    fakeUser.makeAccount(remote)
 
     context.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
@@ -133,7 +133,7 @@ describe('password', function () {
 describe('pin', function () {
   it('exists', function () {
     const [context] = makeFakeContexts(1)
-    packages.makeAccount(context)
+    fakeUser.makeAccount(context)
 
     assert.equal(context.pinExists('js Test 0'), true)
   })
@@ -146,14 +146,14 @@ describe('pin', function () {
 
   it('login', function (done) {
     const [context] = makeFakeContexts(1)
-    packages.makeAccount(context)
+    fakeUser.makeAccount(context)
 
     context.loginWithPIN('js Test 0', '1234', done)
   })
 
   it('setup', function (done) {
     const [context] = makeFakeContexts(1)
-    const account = packages.makeAccount(context)
+    const account = fakeUser.makeAccount(context)
 
     account.pinSetup('4321', function (err) {
       if (err) return done(err)
@@ -165,24 +165,24 @@ describe('pin', function () {
 describe('recovery2', function () {
   it('get local key', function (done) {
     const [context] = makeFakeContexts(1)
-    packages.makeAccount(context)
+    fakeUser.makeAccount(context)
 
     context.getRecovery2Key('js Test 0', function (err, key) {
       if (err) return done(err)
-      assert.equal(key, packages.recovery2Key)
+      assert.equal(key, fakeUser.recovery2Key)
       done()
     })
   })
 
   it('get questions', function (done) {
     const [context] = makeFakeContexts(1)
-    packages.makeAccount(context)
+    fakeUser.makeAccount(context)
 
-    context.fetchRecovery2Questions(packages.recovery2Key, 'js Test 0', function (err, questions) {
+    context.fetchRecovery2Questions(fakeUser.recovery2Key, 'js Test 0', function (err, questions) {
       if (err) return done(err)
-      assert.equal(questions.length, packages.recovery2Questions.length)
+      assert.equal(questions.length, fakeUser.recovery2Questions.length)
       for (let i = 0; i < questions.length; ++i) {
-        assert.equal(questions[i], packages.recovery2Questions[i])
+        assert.equal(questions[i], fakeUser.recovery2Questions[i])
       }
       done()
     })
@@ -190,20 +190,20 @@ describe('recovery2', function () {
 
   it('login', function (done) {
     const [context, remote] = makeFakeContexts(2)
-    packages.makeAccount(remote)
+    fakeUser.makeAccount(remote)
 
-    context.loginWithRecovery2(packages.recovery2Key, 'js Test 0', packages.recovery2Answers, null, null, done)
+    context.loginWithRecovery2(fakeUser.recovery2Key, 'js Test 0', fakeUser.recovery2Answers, null, null, done)
   })
 
   it('set', function (done) {
     const [context, remote] = makeFakeContexts(2)
-    const account = packages.makeAccount(context)
+    const account = fakeUser.makeAccount(context)
 
-    account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {
+    account.recovery2Set(fakeUser.recovery2Questions, fakeUser.recovery2Answers, function (err, key) {
       if (err) return done(err)
       remote.fetchRecovery2Questions(key, 'js Test 0', function (err, questions) {
         if (err) return done(err)
-        remote.loginWithRecovery2(key, 'js Test 0', packages.recovery2Answers, null, null, done)
+        remote.loginWithRecovery2(key, 'js Test 0', fakeUser.recovery2Answers, null, null, done)
       })
     })
   })

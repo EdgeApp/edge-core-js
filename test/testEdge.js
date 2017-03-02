@@ -2,7 +2,7 @@
 import * as crypto from '../src/crypto/crypto.js'
 import * as loginEdge from '../src/login/edge.js'
 import {utf8} from '../src/util/encoding.js'
-import * as packages from './fake/packages.js'
+import * as fakeUser from './fake/fakeUser.js'
 import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
 import elliptic from 'elliptic'
@@ -66,7 +66,7 @@ describe('edge login', function () {
   it('request', function (done) {
     this.timeout(9000)
     const [context, remote] = makeFakeContexts(2)
-    const remoteAccount = packages.makeAccount(remote)
+    const remoteAccount = fakeUser.makeAccount(remote)
     remoteAccount.createWallet('account:repo:test', fakeReply.keys)
     context.accountType = 'account:repo:test'
 
