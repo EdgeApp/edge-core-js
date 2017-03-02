@@ -1,11 +1,7 @@
+import {Context} from '../../src/context.js'
+import {IoContext} from '../../src/io/io.js'
 import {FakeServer} from './fakeServer.js'
 import {FakeStorage} from './fakeStorage.js'
-import * as packages from './packages.js'
-
-import * as abc from '../../src/abc.js'
-import {Account} from '../../src/account.js'
-import {Login} from '../../src/login/login.js'
-import {base64} from '../../src/util/encoding.js'
 
 const fakeConsole = {
   info: () => {},
@@ -28,46 +24,28 @@ function fakeRandom (bytes) {
   return out
 }
 
-export function makeFakeIo () {
+/**
+ * Creates an array of context objects.
+ * Each object has its own storage, but all contexts share a server.
+ * @param {number} count number of contexts to create
+ */
+export function makeFakeContexts (count, opts = {}) {
+  // The common server used by all contexts:
   const server = new FakeServer()
-  const storage = new FakeStorage()
 
-  return {
-    console: fakeConsole,
-    fetch: server.fetch,
-    localStorage: storage,
-    random: fakeRandom
-  }
-}
-
-export function makeSession (opts) {
-  const session = {}
-
-  // Expand needs flags:
-  opts.needsLogin |= opts.needsAccount
-  opts.needsContext |= opts.needsLogin
-
-  if (opts.needsContext) {
-    session.storage = new FakeStorage()
-    session.server = new FakeServer()
-    session.context = abc.makeContext({
+  // Make the context array:
+  const out = []
+  for (let i = 0; i < count; ++i) {
+    const io = new IoContext({
       console: fakeConsole,
-      localStorage: session.storage,
-      fetch: session.server.fetch,
-      random: fakeRandom,
+      fetch: server.fetch,
+      localStorage: new FakeStorage(),
+      random: fakeRandom
+    })
+    out[i] = new Context(io, {
       accountType: opts.accountType
     })
   }
 
-  if (opts.needsLogin) {
-    session.storage.populate()
-    const userId = base64.parse(packages.users['js test 0'])
-    session.login = Login.offline(session.context.io, 'js test 0', userId, packages.dataKey)
-  }
-
-  if (opts.needsAccount) {
-    session.account = new Account(session.context, session.login)
-  }
-
-  return session
+  return out
 }

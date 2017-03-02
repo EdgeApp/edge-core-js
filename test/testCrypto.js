@@ -3,7 +3,7 @@ import {makeRandomGenerator} from '../src/abc.js'
 import * as crypto from '../src/crypto/crypto.js'
 import * as scrypt from '../src/crypto/scrypt.js'
 import {base16, base58, base64, utf8} from '../src/util/encoding.js'
-import {makeFakeIo} from './fake/session.js'
+import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
 
 describe('scrypt', function () {
@@ -31,9 +31,10 @@ describe('encryption', function () {
   })
 
   it('round-trip data', function () {
+    const [context] = makeFakeContexts(1)
     const key = base16.parse('002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393')
     const data = utf8.parse('payload')
-    const box = crypto.encrypt(makeFakeIo(), data, key)
+    const box = crypto.encrypt(context.io, data, key)
     assert.equal('payload', crypto.decrypt(box, key).toString('utf8'))
   })
 })
@@ -50,8 +51,8 @@ describe('hmac-sha256', function () {
 
 describe('hmac-drbg', function () {
   it('generate known output', function () {
-    const io = makeFakeIo()
-    const f = makeRandomGenerator(io.random(32))
+    const [context] = makeFakeContexts(1)
+    const f = makeRandomGenerator(context.io.random(32))
 
     const expected = 'd62447f86f81284e09441569489821f0'
     assert.equal(base16.stringify(f(16)), expected)

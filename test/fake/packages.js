@@ -2,13 +2,20 @@
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
-import {base16} from '../../src/util/encoding.js'
+import {Account} from '../../src/account.js'
+import {Login} from '../../src/login/login.js'
+import {base16, base64} from '../../src/util/encoding.js'
+import * as repoModule from '../../src/util/repo.js'
+
+export const userId = base64.parse('m3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=')
 
 export const dataKey = base16.parse('19f91d7899b86f859460d850a96708e5ed09fdeeb0adaf905319a2721b1a09f0')
 
-export const users = {
-  'js test 0': 'm3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI='
-}
+export const username = 'JS test 0'
+
+// Password:
+
+export const password = 'y768Mv4PLFupQjMu'
 
 export const passwordAuth = '5dd0xXRq1tN7JF0aGwmXf9kaExbZyMyIKBWGc0hIACc='
 
@@ -31,7 +38,25 @@ export const passwordKeySnrp = {
   'salt_hex': 'ed6396d127b60d6ffc469634b9a53bdcfb4ee381e9b9df5e66a0f97895871981'
 }
 
-// PIN2:
+// PIN v1:
+
+export const pin = '1234'
+
+export const pinId = 'ykRUVmIqaGNx3wlp3myep+dDUCHjiRCQ/u30o/0I1tc='
+
+export const pinBox = {
+  'data_base64': 'sAofSizrgvQKyYTJh9+MN0TZPa5G02sPxwen+/l/89Wy6dX0PFW8s0NM/gyPhodjrkTrAU6DhWdtlT4ylswWRK6a8DxK/udovFwLy6gtCV2mxgwtqmP/+CHMULrXa1TuffyDSOivPG+Ygu5Hb6JKUpFRVNkeLyHaRgLUgSPp8mtTY8r7yHyIGf8lAk2l4KOJoQTPoqgipbkzx7P3r4Iv8pOecHseVS01VGTGCthST99h10skgOBPNB2hkCO/Ao922WAuotPvK0a339t4AQxGNSfnKL1Jqf4mKcvLLoEY9I0P/a/EaJIrTD0HELc0sw+uxPL56gtkhFyP7WVaxSQk4iEa1FwOV6r0T3G9t6wrzv8vPEDbZr0n/mjWPf+ZuxZVZ4x4OxtaDkBvg6oa/Y8kI2E3E3j72Y5/1Z8xOrYz4ZcwtUGKHtUlwAWdX4Z9DR+Bab7fxQjCeqEg+iMMUyu1qBH7aeqgKkx3AfwT+pwOUiEGM+1cTaxP7ibzW1zYZNbWSzt0PyAlFXF3Q97Rfn2LcMGl4sbx1K5GvjUlOCvigE5ltXgseqLk7/8bpVaj03EThRjN0vT4Hg5BWQyX6m6vWQ==',
+  'encryptionType': 0,
+  'iv_hex': '33dbb4188630d572cd4a474f780e2799'
+}
+
+export const pinKeyBox = {
+  'data_base64': 'gW1L57CIJ0sCJa8mDUiqGWpI9dUrV/OQzS+BvIFUtAlBqO6ZxwssTVkos5C1sBDnxlV25eNdrkV4NY24r89wW0k6tGoR6LeKrT0PQggw882vRT4zavAPZNj39sNZ0+Ls1PCdZIU+Ez6a0ZzimAnkofgB1PcS17gmb8mKZOpFyfoKgdg/EBfipUmPn80FWwxvOwM+HTotV3BL3wRLC58UuZzLAFV6cGPCHyYQphWLVk307VaajAAEp7+XHXi6gxp4',
+  'encryptionType': 0,
+  'iv_hex': 'd882620a197f11c244457ccf5ae804da'
+}
+
+// PIN v2:
 
 export const pin2Auth = 'shzN/UzE4byBpHWlFka9fkZ9n+NWRiESqJ6hnso8CQI='
 
@@ -51,7 +76,7 @@ export const pin2KeyBox = {
   data_base64: '1hN3W2nl1ALVMiJW4Gg4uIUFJdQ3Q/lQpwgCYHycn1nJlxwO7lcjNUG47tYFTdmhsrSmmRixQE+siM7X6II0bDqyyp7ynE9hL6+2ahJvsvA='
 }
 
-// Recovery2:
+// Recovery v2:
 
 export const recovery2Answers = [
   'Sir Lancelot of Camelot',
@@ -109,22 +134,6 @@ export const syncKeyBox = {
   'iv_hex': '59309614b12c169af977681e01d6ad8b'
 }
 
-export const pinKeyBox = {
-  'data_base64': 'gW1L57CIJ0sCJa8mDUiqGWpI9dUrV/OQzS+BvIFUtAlBqO6ZxwssTVkos5C1sBDnxlV25eNdrkV4NY24r89wW0k6tGoR6LeKrT0PQggw882vRT4zavAPZNj39sNZ0+Ls1PCdZIU+Ez6a0ZzimAnkofgB1PcS17gmb8mKZOpFyfoKgdg/EBfipUmPn80FWwxvOwM+HTotV3BL3wRLC58UuZzLAFV6cGPCHyYQphWLVk307VaajAAEp7+XHXi6gxp4',
-  'encryptionType': 0,
-  'iv_hex': 'd882620a197f11c244457ccf5ae804da'
-}
-
-export const pinPackage = {
-  'DID': 'ykRUVmIqaGNx3wlp3myep+dDUCHjiRCQ/u30o/0I1tc=',
-  'EMK_PINK': {
-    'data_base64': 'sAofSizrgvQKyYTJh9+MN0TZPa5G02sPxwen+/l/89Wy6dX0PFW8s0NM/gyPhodjrkTrAU6DhWdtlT4ylswWRK6a8DxK/udovFwLy6gtCV2mxgwtqmP/+CHMULrXa1TuffyDSOivPG+Ygu5Hb6JKUpFRVNkeLyHaRgLUgSPp8mtTY8r7yHyIGf8lAk2l4KOJoQTPoqgipbkzx7P3r4Iv8pOecHseVS01VGTGCthST99h10skgOBPNB2hkCO/Ao922WAuotPvK0a339t4AQxGNSfnKL1Jqf4mKcvLLoEY9I0P/a/EaJIrTD0HELc0sw+uxPL56gtkhFyP7WVaxSQk4iEa1FwOV6r0T3G9t6wrzv8vPEDbZr0n/mjWPf+ZuxZVZ4x4OxtaDkBvg6oa/Y8kI2E3E3j72Y5/1Z8xOrYz4ZcwtUGKHtUlwAWdX4Z9DR+Bab7fxQjCeqEg+iMMUyu1qBH7aeqgKkx3AfwT+pwOUiEGM+1cTaxP7ibzW1zYZNbWSzt0PyAlFXF3Q97Rfn2LcMGl4sbx1K5GvjUlOCvigE5ltXgseqLk7/8bpVaj03EThRjN0vT4Hg5BWQyX6m6vWQ==',
-    'encryptionType': 0,
-    'iv_hex': '33dbb4188630d572cd4a474f780e2799'
-  },
-  'Expires': 1464782126
-}
-
 // Repositories:
 export const repos = {
   'e254eb85285f96574a33bfe97b13f533fe245b42': {
@@ -134,4 +143,71 @@ export const repos = {
       'encryptionType': 0
     }
   }
+}
+
+export function makeAccount (context) {
+  const fixedName = context.fixUsername(username)
+
+  // Create the login on the server:
+  const data = {
+    userId: base64.stringify(userId),
+    passwordAuth,
+    passwordAuthBox,
+    passwordBox,
+    passwordKeySnrp,
+    pin2Auth,
+    pin2Box,
+    pin2Id,
+    pin2KeyBox,
+    question2Box,
+    recovery2Auth,
+    recovery2Box,
+    recovery2Id,
+    recovery2KeyBox,
+    rootKeyBox,
+    syncKeyBox,
+    newSyncKeys: Object.keys(repos)
+  }
+  context.io.fetch('https://hostname/api/v2/login/create', {
+    method: 'POST',
+    body: JSON.stringify({ data })
+  })
+
+  // Store the login on the client:
+  context.io.loginStore.update(userId, {
+    username: fixedName,
+    passwordAuthBox,
+    passwordBox,
+    passwordKeySnrp,
+    pinAuthId: pinId,
+    pinBox,
+    pin2Key,
+    recovery2Key,
+    rootKeyBox,
+    syncKeyBox
+  })
+
+  // Populate the repos on the server:
+  Object.keys(repos)
+    .forEach(syncKey => context.io.fetch(
+      'https://hostname/api/v2/store/' + syncKey,
+      {
+        method: 'POST',
+        body: JSON.stringify({ changes: repos[syncKey] })
+      }
+    ))
+
+  // Populate the repos on the client:
+  Object.keys(repos).forEach(syncKey => {
+    const repo = new repoModule.Repo(
+      context.io,
+      dataKey,
+      base16.parse(syncKey)
+    )
+    repoModule.mergeChanges(repo.dataStore, repos[syncKey])
+  })
+
+  // Return the account object:
+  const login = Login.offline(context.io, fixedName, userId, dataKey)
+  return new Account(context, login)
 }

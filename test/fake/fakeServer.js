@@ -1,4 +1,3 @@
-import * as packages from './packages.js'
 import url from 'url'
 
 const routes = []
@@ -417,38 +416,13 @@ export class FakeServer {
   constructor () {
     this.db = {}
     this.repos = {}
-    this.fetch = (uri, opts) => {
+    this.fetch = (uri, opts = {}) => {
       try {
         return Promise.resolve(this.request(uri, opts))
       } catch (e) {
         return Promise.reject(e)
       }
     }
-  }
-
-  populateRepos () {
-    this.repos = packages.repos
-  }
-
-  populate () {
-    this.populateRepos()
-    this.db.userId = packages.users['js test 0']
-    this.db.passwordAuth = packages.passwordAuth
-    this.db.passwordAuthBox = packages.passwordAuthBox
-    this.db.passwordBox = packages.passwordBox
-    this.db.passwordKeySnrp = packages.passwordKeySnrp
-    this.db.pin2Id = packages.pin2Id
-    this.db.pin2Auth = packages.pin2Auth
-    this.db.pin2Box = packages.pin2Box
-    this.db.pin2KeyBox = packages.pin2KeyBox
-    this.db.recovery2Id = packages.recovery2Id
-    this.db.recovery2Auth = packages.recovery2Auth
-    this.db.recovery2Box = packages.recovery2Box
-    this.db.recovery2KeyBox = packages.recovery2KeyBox
-    this.db.question2Box = packages.question2Box
-    this.db.syncKeyBox = packages.syncKeyBox
-    this.db.rootKeyBox = packages.rootKeyBox
-    this.db.pinKeyBox = packages.pinKeyBox
   }
 
   request (uri, opts) {

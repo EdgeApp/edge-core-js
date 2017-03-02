@@ -2,7 +2,8 @@
 import * as crypto from '../src/crypto/crypto.js'
 import * as loginEdge from '../src/login/edge.js'
 import {utf8} from '../src/util/encoding.js'
-import {makeSession} from './fake/session.js'
+import * as packages from './fake/packages.js'
+import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
 import elliptic from 'elliptic'
 
@@ -33,6 +34,7 @@ function craftFakeReply (io, lobby) {
   const replyBlob = utf8.parse(JSON.stringify(fakeReply))
   accountRequest['replyBox'] = crypto.encrypt(io, replyBlob, dataKey)
   accountRequest['replyKey'] = keys.getPublic().encodeCompressed('hex')
+  return lobby
 }
 
 describe('edge login', function () {
@@ -63,8 +65,10 @@ describe('edge login', function () {
 
   it('request', function (done) {
     this.timeout(9000)
-    const session = makeSession({needsContext: true, accountType: 'account:repo:test'})
-    session.server.repos['f00d'] = {}
+    const [context, remote] = makeFakeContexts(2)
+    const remoteAccount = packages.makeAccount(remote)
+    remoteAccount.createWallet('account:repo:test', fakeReply.keys)
+    context.accountType = 'account:repo:test'
 
     const opts = {
       onLogin: function (err, account) {
@@ -75,21 +79,32 @@ describe('edge login', function () {
       displayName: 'test suite'
     }
 
-    session.context.requestEdgeLogin(opts, function (err, id) {
+    context.requestEdgeLogin(opts, function (err, pendingLogin) {
       if (err) return done(err)
-      craftFakeReply(session.context.io, session.server.db.lobby)
+      const lobbyUri = 'https://hostmane/api/v2/lobby/' + pendingLogin.id
+      remote.io
+        .fetch(lobbyUri)
+        .then(reply => reply.json())
+        .then(json => {
+          const data = craftFakeReply(remote.io, json.results)
+          return remote.io.fetch(lobbyUri, {
+            method: 'PUT',
+            body: JSON.stringify({ data })
+          })
+        })
+        .catch(e => done(e))
     })
   })
 
   it('cancel', function (done) {
-    const session = makeSession({needsContext: true, accountType: 'account:repo:test'})
+    const [context] = makeFakeContexts(1)
 
     const opts = {
       onLogin: function () {},
       displayName: 'test suite'
     }
 
-    session.context.requestEdgeLogin(opts, function (err, pendingLogin) {
+    context.requestEdgeLogin(opts, function (err, pendingLogin) {
       if (err) return done(err)
       // All we can verify here is that cancel is a callable method:
       pendingLogin.cancelRequest()

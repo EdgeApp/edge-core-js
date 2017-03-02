@@ -1,29 +1,30 @@
 /* global describe, it */
 import * as abc from '../src/abc.js'
 import * as packages from './fake/packages.js'
-import {makeSession} from './fake/session.js'
+import {makeFakeContexts} from './fake/session.js'
 import assert from 'assert'
 
 describe('login', function () {
   it('find repo', function () {
-    const session = makeSession({needsLogin: true})
+    const [context] = makeFakeContexts(1)
+    const login = packages.makeAccount(context).login
 
-    assert.ok(session.login.accountFind('account:repo:co.airbitz.wallet'))
+    assert.ok(login.accountFind('account:repo:co.airbitz.wallet'))
     assert.throws(function () {
-      session.login.accountFind('account:repo:blah')
+      login.accountFind('account:repo:blah')
     })
   })
 
   it('attach repo', function () {
-    const session = makeSession({needsLogin: true})
-    session.server.populate()
+    const [context] = makeFakeContexts(1)
+    const login = packages.makeAccount(context).login
 
     const info = {
       dataKey: 'fa57',
       syncKey: 'f00d'
     }
-    return session.login.accountAttach(session.context.io, 'account:repo:test', info).then(() => {
-      assert.deepEqual(session.login.accountFind('account:repo:test'), info)
+    return login.accountAttach(context.io, 'account:repo:test', info).then(() => {
+      assert.deepEqual(login.accountFind('account:repo:test'), info)
       return null
     })
   })
@@ -39,44 +40,44 @@ describe('username', function () {
   })
 
   it('list usernames in local storage', function () {
-    const session = makeSession({needsContext: true})
-    session.storage.populateUsers()
+    const [context] = makeFakeContexts(1)
+    packages.makeAccount(context)
 
-    assert.deepEqual(session.context.usernameList(), ['js test 0'])
+    assert.deepEqual(context.usernameList(), ['js test 0'])
   })
 
   it('remove username from local storage', function () {
-    const session = makeSession({needsContext: true})
-    session.storage.populate()
+    const [context] = makeFakeContexts(1)
+    packages.makeAccount(context)
 
-    session.context.removeUsername('js Test 0')
-    assert.equal(session.context.usernameList().length, 0)
+    context.removeUsername('js Test 0')
+    assert.equal(context.usernameList().length, 0)
   })
 })
 
 describe('creation', function () {
   it('username available', function (done) {
-    const session = makeSession({needsContext: true})
-    session.server.populate()
+    const [context, remote] = makeFakeContexts(2)
+    packages.makeAccount(remote)
 
-    session.context.usernameAvailable('js test 1', done)
+    context.usernameAvailable('js test 1', done)
   })
 
   it('username not available', function (done) {
-    const session = makeSession({needsContext: true})
-    session.server.populate()
+    const [context, remote] = makeFakeContexts(2)
+    packages.makeAccount(remote)
 
-    session.context.usernameAvailable('js Test 0', function (err) { done(!err) })
+    context.usernameAvailable('js Test 0', function (err) { done(!err) })
   })
 
   it('create account', function (done) {
     this.timeout(9000)
-    const session = makeSession({needsContext: true, accountType: 'account:repo:test'})
+    const [context, remote] = makeFakeContexts(2, {accountType: 'account:repo:test'})
 
-    session.context.createAccount('js Test 0', 'y768Mv4PLFupQjMu', '1234', function (err, account) {
+    context.createAccount('js Test 0', 'y768Mv4PLFupQjMu', '1234', function (err, account) {
       if (err) return done(err)
       // Try logging in:
-      session.context.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
+      remote.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
     })
   })
 })
@@ -84,83 +85,89 @@ describe('creation', function () {
 describe('password', function () {
   it('setup', function (done) {
     this.timeout(9000)
-    const session = makeSession({needsAccount: true})
-    session.server.populate()
+    const [context, remote] = makeFakeContexts(2)
+    const account = packages.makeAccount(context)
 
-    session.account.passwordSetup('Test1234', function (err) {
+    account.passwordSetup('Test1234', function (err) {
       if (err) return done(err)
-      session.storage.clear() // Force server-based login
-      session.context.loginWithPassword('js Test 0', 'Test1234', null, null, done)
+      remote.loginWithPassword('js Test 0', 'Test1234', null, null, done)
     })
   })
 
   it('check good', function () {
-    const session = makeSession({needsAccount: true})
+    const [context] = makeFakeContexts(1)
+    const account = packages.makeAccount(context)
 
-    return session.account.passwordOk('y768Mv4PLFupQjMu').then(result => assert(result))
+    return account.passwordOk('y768Mv4PLFupQjMu').then(result => assert(result))
   })
 
   it('check bad', function () {
-    const session = makeSession({needsAccount: true})
+    const [context] = makeFakeContexts(1)
+    const account = packages.makeAccount(context)
 
-    return session.account.passwordOk('wrong one').then(result => assert(!result))
+    return account.passwordOk('wrong one').then(result => assert(!result))
   })
 
   it('login offline', function (done) {
-    const session = makeSession({needsContext: true})
-    session.storage.populate()
-    session.server.populateRepos()
+    const [context] = makeFakeContexts(1)
+    packages.makeAccount(context)
 
-    session.context.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
+    // Disable network access (but leave the sync server up):
+    const oldFetch = context.io.fetch
+    context.io.fetch = (url, opts) =>
+      /store/.test(url)
+        ? oldFetch(url, opts)
+        : Promise.reject(new Error('Network error'))
+
+    context.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
 
   it('login online', function (done) {
-    const session = makeSession({needsContext: true})
-    session.server.populate()
+    const [context, remote] = makeFakeContexts(2)
+    packages.makeAccount(remote)
 
-    session.context.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
+    context.loginWithPassword('js Test 0', 'y768Mv4PLFupQjMu', null, null, done)
   })
 })
 
 describe('pin', function () {
   it('exists', function () {
-    const session = makeSession({needsContext: true})
-    session.storage.populate()
+    const [context] = makeFakeContexts(1)
+    packages.makeAccount(context)
 
-    assert.equal(session.context.pinExists('js Test 0'), true)
+    assert.equal(context.pinExists('js Test 0'), true)
   })
 
   it('does not exist', function () {
-    const session = makeSession({needsContext: true})
+    const [context] = makeFakeContexts(1)
 
-    assert.equal(session.context.pinExists('js Test 0'), false)
+    assert.equal(context.pinExists('js Test 0'), false)
   })
 
   it('login', function (done) {
-    const session = makeSession({needsContext: true})
-    session.server.populate()
-    session.storage.populate()
+    const [context] = makeFakeContexts(1)
+    packages.makeAccount(context)
 
-    session.context.loginWithPIN('js Test 0', '1234', done)
+    context.loginWithPIN('js Test 0', '1234', done)
   })
 
   it('setup', function (done) {
-    const session = makeSession({needsAccount: true})
-    session.server.populate()
+    const [context] = makeFakeContexts(1)
+    const account = packages.makeAccount(context)
 
-    session.account.pinSetup('1234', function (err) {
+    account.pinSetup('4321', function (err) {
       if (err) return done(err)
-      session.context.loginWithPIN('js Test 0', '1234', done)
+      context.loginWithPIN('js Test 0', '4321', done)
     })
   })
 })
 
 describe('recovery2', function () {
   it('get local key', function (done) {
-    const session = makeSession({needsContext: true})
-    session.storage.populate()
+    const [context] = makeFakeContexts(1)
+    packages.makeAccount(context)
 
-    session.context.getRecovery2Key('js Test 0', function (err, key) {
+    context.getRecovery2Key('js Test 0', function (err, key) {
       if (err) return done(err)
       assert.equal(key, packages.recovery2Key)
       done()
@@ -168,10 +175,10 @@ describe('recovery2', function () {
   })
 
   it('get questions', function (done) {
-    const session = makeSession({needsContext: true})
-    session.server.populate()
+    const [context] = makeFakeContexts(1)
+    packages.makeAccount(context)
 
-    session.context.fetchRecovery2Questions(packages.recovery2Key, 'js Test 0', function (err, questions) {
+    context.fetchRecovery2Questions(packages.recovery2Key, 'js Test 0', function (err, questions) {
       if (err) return done(err)
       assert.equal(questions.length, packages.recovery2Questions.length)
       for (let i = 0; i < questions.length; ++i) {
@@ -182,21 +189,21 @@ describe('recovery2', function () {
   })
 
   it('login', function (done) {
-    const session = makeSession({needsContext: true})
-    session.server.populate()
+    const [context, remote] = makeFakeContexts(2)
+    packages.makeAccount(remote)
 
-    session.context.loginWithRecovery2(packages.recovery2Key, 'js Test 0', packages.recovery2Answers, null, null, done)
+    context.loginWithRecovery2(packages.recovery2Key, 'js Test 0', packages.recovery2Answers, null, null, done)
   })
 
   it('set', function (done) {
-    const session = makeSession({needsAccount: true})
-    session.server.populate()
+    const [context, remote] = makeFakeContexts(2)
+    const account = packages.makeAccount(context)
 
-    session.account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {
+    account.recovery2Set(packages.recovery2Questions, packages.recovery2Answers, function (err, key) {
       if (err) return done(err)
-      session.context.fetchRecovery2Questions(key, 'js Test 0', function (err, questions) {
+      remote.fetchRecovery2Questions(key, 'js Test 0', function (err, questions) {
         if (err) return done(err)
-        session.context.loginWithRecovery2(key, 'js Test 0', packages.recovery2Answers, null, null, done)
+        remote.loginWithRecovery2(key, 'js Test 0', packages.recovery2Answers, null, null, done)
       })
     })
   })
