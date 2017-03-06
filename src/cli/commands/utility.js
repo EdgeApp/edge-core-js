@@ -3,20 +3,26 @@ import { command, UsageError } from '../command.js'
 command(
   'auth-fetch',
   {
-    usage: '<path> [<post-body>]',
+    usage: '[<method>] <path> [<post-body>]',
     help: 'Visits the selected URI on the auth server',
     needsContext: true
   },
   function (session, argv) {
-    if (argv.length < 1 || argv.length > 2) throw new UsageError(this)
-    const path = argv[0]
-    const body = argv[1]
-
-    const method = body == null ? 'GET' : 'POST'
-    const request = body == null ? {} : JSON.parse(body)
+    function parseArgs (argv) {
+      switch (argv.length) {
+        case 1:
+          return ['GET', argv[0], {}]
+        case 2:
+          return ['POST', argv[0], JSON.parse(argv[1])]
+        case 3:
+          return [argv[0], argv[1], JSON.parse(argv[2])]
+        default:
+          throw new UsageError(this)
+      }
+    }
 
     return session.context.io
-      .authRequest(method, path, request)
+      .authRequest(...parseArgs(argv))
       .then(reply => console.log(JSON.stringify(reply, null, 2)))
   }
 )
