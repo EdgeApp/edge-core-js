@@ -140,3 +140,7 @@ export function hmacSha256 (data, key) {
   const hmac = hashjs.hmac(hashjs.sha256, key)
   return hmac.update(data).digest()
 }
+
+export function sha256 (data) {
+  return hashjs.sha256().update(data).digest()
+}

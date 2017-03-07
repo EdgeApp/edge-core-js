@@ -46,6 +46,13 @@ describe('hashes', function () {
 
     assert.equal(expected, base16.stringify(crypto.hmacSha256(data, key)))
   })
+
+  it('sha256', function () {
+    const data = utf8.parse('This is a test')
+    const expected = 'c7be1ed902fb8dd4d48997c6452f5d7e509fbcdbe2808b16bcf4edce4c07d14e'
+
+    assert.equal(expected, base16.stringify(crypto.sha256(data)))
+  })
 })
 
 describe('hmac-drbg', function () {
