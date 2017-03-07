@@ -2,7 +2,7 @@
 import {makeFakeContexts, makeRandomGenerator} from '../src'
 import * as crypto from '../src/crypto/crypto.js'
 import * as scrypt from '../src/crypto/scrypt.js'
-import {base16, base58, base64, utf8} from '../src/util/encoding.js'
+import {base16, base64, utf8} from '../src/util/encoding.js'
 import assert from 'assert'
 
 describe('scrypt', function () {
@@ -38,13 +38,13 @@ describe('encryption', function () {
   })
 })
 
-describe('hmac-sha256', function () {
-  it('match a known hash', function () {
-    const key = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
-    const data = new Uint8Array([0, 1, 2])
-    const expected = 'DqkzMDMbhngmVUPhX3QL1n1zKmagPZcxWeBKvTSojYdH'
+describe('hashes', function () {
+  it('hmac-sha256', function () {
+    const data = utf8.parse('The quick brown fox jumps over the lazy dog')
+    const key = utf8.parse('key')
+    const expected = 'f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8'
 
-    assert.equal(expected, base58.stringify(crypto.hmacSha256(data, key)))
+    assert.equal(expected, base16.stringify(crypto.hmacSha256(data, key)))
   })
 })
 
