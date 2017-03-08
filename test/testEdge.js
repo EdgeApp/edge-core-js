@@ -64,7 +64,7 @@ describe('edge login', function () {
     })
   })
 
-  it('request', function (done) {
+  it.skip('request', function (done) {
     this.timeout(9000)
     const [context, remote] = makeFakeContexts(2)
     const remoteAccount = fakeUser.makeAccount(remote)
@@ -105,7 +105,7 @@ describe('edge login', function () {
     })
   })
 
-  it('cancel', function (done) {
+  it.skip('cancel', function (done) {
     const [context] = makeFakeContexts(1)
 
     const opts = {

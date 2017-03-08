@@ -422,19 +422,29 @@ addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
 
 // lobby: ------------------------------------------------------------------
 
-addRoute('POST', '/api/v2/lobby', function (req) {
-  this.db.lobby = req.body.data
-  return makeResponse({
-    id: 'IMEDGELOGIN'
-  })
+addRoute('PUT', '/api/v2/lobby/.*', function (req) {
+  const pubkey = req.path.split('/')[4]
+  this.db.lobbies[pubkey] = { request: req.body['data'], replies: [] }
+  return makeResponse()
 })
 
-addRoute('GET', '/api/v2/lobby/IMEDGELOGIN', function (req) {
-  return makeResponse(this.db.lobby)
+addRoute('POST', '/api/v2/lobby/.*', function (req) {
+  const pubkey = req.path.split('/')[4]
+  this.db.lobbies[pubkey].replies.push(req.body['data'])
+  return makeResponse()
 })
 
-addRoute('PUT', '/api/v2/lobby/IMEDGELOGIN', function (req) {
-  this.db.lobby = req.body.data
+addRoute('GET', '/api/v2/lobby/.*', function (req) {
+  const pubkey = req.path.split('/')[4]
+  if (this.db.lobbies[pubkey] == null) {
+    return new FakeResponse(`Cannot find lobby "${pubkey}"`, { status: 404 })
+  }
+  return makeResponse(this.db.lobbies[pubkey])
+})
+
+addRoute('DELETE', '/api/v2/lobby/.*', function (req) {
+  const pubkey = req.path.split('/')[4]
+  delete this.db.lobbies[pubkey]
   return makeResponse()
 })
 
@@ -476,7 +486,7 @@ addRoute('POST', '/api/v2/store/.*', storeRoute)
  */
 export class FakeServer {
   constructor () {
-    this.db = { logins: [] }
+    this.db = { lobbies: {}, logins: [] }
     this.repos = {}
     this.fetch = (uri, opts = {}) => {
       try {
