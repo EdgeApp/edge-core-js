@@ -1,8 +1,8 @@
-import { makeAccount, makeAccountType } from './account.js'
+import { makeAccount } from './account.js'
 import { UsernameError } from './error.js'
 import {fixUsername} from './io/loginStore.js'
 import { createLogin, usernameAvailable } from './login/create.js'
-import * as loginEdge from './login/edge.js'
+import { requestEdgeLogin } from './login/edge.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
@@ -115,8 +115,7 @@ Context.prototype.requestEdgeLogin = nodeify(function (opts) {
       err => onLogin(err)
     )
   }
-  opts.type = opts.type || makeAccountType(this.appId)
-  return loginEdge.create(this.io, opts)
+  return requestEdgeLogin(this.io, this.appId, opts)
 })
 
 Context.prototype.listRecoveryQuestionChoices = nodeify(function () {
