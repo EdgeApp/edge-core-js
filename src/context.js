@@ -1,8 +1,7 @@
-import {Account} from './account.js'
+import { makeAccount } from './account.js'
 import {fixUsername} from './io/loginStore.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
-import { createAccount, findAccount } from './login/login.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
@@ -37,33 +36,15 @@ Context.prototype.usernameAvailable = nodeify(function (username) {
  */
 Context.prototype.createAccount = nodeify(function (username, password, pin) {
   return loginCreate.create(this.io, username, password, {}).then(login => {
-    try {
-      findAccount(login, this.accountType)
-    } catch (e) {
-      // If the login doesn't have the correct account type, add it first:
-      return createAccount(this.io, login, this.accountType).then(() => {
-        return loginPin2.setup(this.io, login, pin).then(login => {
-          const account = new Account(this, login)
-          account.newAccount = true
-          return account.sync().then(() => account)
-        })
-      })
-    }
-
-    // Otherwise, we have the correct account type, and can simply return:
     return loginPin2.setup(this.io, login, pin).then(login => {
-      const account = new Account(this, login)
-      account.newAccount = true
-      return account.sync().then(() => account)
+      return makeAccount(this, login, 'newAccount')
     })
   })
 })
 
 Context.prototype.loginWithPassword = nodeify(function (username, password, otp, opts) {
   return loginPassword.login(this.io, username, password).then(login => {
-    const account = new Account(this, login)
-    account.passwordLogin = true
-    return account.sync().then(() => account)
+    return makeAccount(this, login, 'passwordLogin')
   })
 })
 
@@ -80,9 +61,7 @@ Context.prototype.loginWithPIN = nodeify(function (username, pin) {
     throw new Error('No PIN set locally for this account')
   }
   return loginPin2.login(this.io, pin2Key, username, pin).then(login => {
-    const account = new Account(this, login)
-    account.pinLogin = true
-    return account.sync().then(() => account)
+    return makeAccount(this, login, 'pinLogin')
   })
 })
 
@@ -97,9 +76,7 @@ Context.prototype.getRecovery2Key = nodeify(function (username) {
 Context.prototype.loginWithRecovery2 = nodeify(function (recovery2Key, username, answers, otp, options) {
   recovery2Key = base58.parse(recovery2Key)
   return loginRecovery2.login(this.io, recovery2Key, username, answers).then(login => {
-    const account = new Account(this, login)
-    account.recoveryLogin = true
-    return account.sync().then(() => account)
+    return makeAccount(this, login, 'recoveryLogin')
   })
 })
 
@@ -128,9 +105,10 @@ Context.prototype.requestEdgeLogin = nodeify(function (opts) {
   const onLogin = opts.onLogin
   opts.onLogin = (err, login) => {
     if (err) return onLogin(err)
-    const account = new Account(this, login)
-    account.edgeLogin = true
-    account.sync().then(dirty => onLogin(null, account), err => onLogin(err))
+    makeAccount(this, login, 'edgeLogin').then(
+      account => onLogin(null, account),
+      err => onLogin(err)
+    )
   }
   opts.type = opts.type || this.accountType
   return loginEdge.create(this.io, opts)

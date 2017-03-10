@@ -1,4 +1,4 @@
-import { findAccount } from './login/login.js'
+import { createAccount, findAccount } from './login/login.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
@@ -8,6 +8,23 @@ import { base16, base58 } from './util/encoding.js'
 import {Repo} from './util/repo.js'
 import {Wallet} from './wallet.js'
 import {WalletList} from './util/walletList.js'
+
+export function makeAccount (ctx, login, loginType) {
+  const accountType = ctx.accountType
+  try {
+    findAccount(login, accountType)
+  } catch (e) {
+    return createAccount(ctx.io, login, accountType).then(() => {
+      const account = new Account(ctx, login)
+      account[loginType] = true
+      return account.sync().then(dirty => account)
+    })
+  }
+
+  const account = new Account(ctx, login)
+  account[loginType] = true
+  return account.sync().then(dirty => account)
+}
 
 /**
  * This is a thin shim object,
