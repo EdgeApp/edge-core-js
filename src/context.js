@@ -1,4 +1,4 @@
-import { makeAccount } from './account.js'
+import { makeAccount, makeAccountType } from './account.js'
 import {fixUsername} from './io/loginStore.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
@@ -13,7 +13,11 @@ import { base58 } from './util/encoding.js'
  */
 export function Context (io, opts) {
   this.io = io
-  this.accountType = opts.accountType || 'account:repo:co.airbitz.wallet'
+  this.appId = opts.appId != null
+    ? opts.appId
+    : opts.accountType != null
+      ? opts.accountType.replace(/^account:repo:/, '')
+      : ''
 }
 
 Context.prototype.usernameList = function () {
@@ -106,7 +110,7 @@ Context.prototype.requestEdgeLogin = nodeify(function (opts) {
       err => onLogin(err)
     )
   }
-  opts.type = opts.type || this.accountType
+  opts.type = opts.type || makeAccountType(this.appId)
   return loginEdge.create(this.io, opts)
 })
 

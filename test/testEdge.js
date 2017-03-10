@@ -68,7 +68,7 @@ describe('edge login', function () {
     const [context, remote] = makeFakeContexts(2)
     const remoteAccount = fakeUser.makeAccount(remote)
     remoteAccount.createWallet('account:repo:test', fakeReply.keys)
-    context.accountType = 'account:repo:test'
+    context.appId = 'test'
 
     const opts = {
       onLogin: function (err, account) {

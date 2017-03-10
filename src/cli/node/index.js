@@ -21,7 +21,7 @@ sourceMapSupport.install()
 // Program options:
 const getopt = new Getopt([
   ['k', 'api-key=ARG', 'Auth server API key'],
-  ['a', 'account-type=ARG', 'Account type'],
+  ['a', 'app-id=ARG', 'appId'],
   ['c', 'config=ARG', 'Configuration file'],
   ['d', 'directory=ARG', 'Working directory'],
   ['u', 'username=ARG', 'Username'],
@@ -86,7 +86,7 @@ function loadConfig (options) {
 
   // Calculate the active settings:
   return {
-    accountType: options['account-type'],
+    appId: options['app-id'] || config['appId'],
     apiKey: options['api-key'] || config['apiKey'],
     directory: options['directory'] || config['workingDir'],
     username: options['username'] || config['username'],
@@ -110,6 +110,7 @@ function makeSession (config, cmd) {
       throw new UsageError(cmd, 'No API key')
     }
     session.context = makeNodeContext(config.directory || './.cli', {
+      appId: config.appId,
       apiKey: config.apiKey
     })
   }

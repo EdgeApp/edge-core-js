@@ -9,8 +9,14 @@ import {Repo} from './util/repo.js'
 import {Wallet} from './wallet.js'
 import {WalletList} from './util/walletList.js'
 
+export function makeAccountType (appId) {
+  return appId === ''
+    ? 'account:repo:co.airbitz.wallet'
+    : `account:repo:${appId}`
+}
+
 export function makeAccount (ctx, login, loginType) {
-  const accountType = ctx.accountType
+  const accountType = makeAccountType(ctx.appId)
   try {
     findAccount(login, accountType)
   } catch (e) {
@@ -32,16 +38,23 @@ export function makeAccount (ctx, login, loginType) {
  */
 export function Account (ctx, login) {
   this.io = ctx.io
+
+  // Login:
+  this.username = login.username
   this.login = login
-  this.keys = findAccount(login, ctx.accountType)
+
+  // Repo:
+  this.type = makeAccountType(ctx.appId)
+  this.keys = findAccount(login, this.type)
   this.repoInfo = this.keys // Deprecated name
+
+  // Flags:
   this.loggedIn = true
   this.edgeLogin = false
   this.pinLogin = false
   this.passwordLogin = false
   this.newAccount = false
   this.recoveryLogin = false
-  this.username = login.username
 
   this.repo = new Repo(this.io, base16.parse(this.keys.dataKey), base16.parse(this.keys.syncKey))
   this.walletList = new WalletList(this.repo)

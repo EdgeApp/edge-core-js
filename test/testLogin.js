@@ -80,9 +80,7 @@ describe('creation', function () {
 
   it('create account', function () {
     this.timeout(9000)
-    const [context, remote] = makeFakeContexts(2, {
-      accountType: 'account:repo:test'
-    })
+    const [context, remote] = makeFakeContexts(2, { appId: 'test' })
 
     return context
       .createAccount(fakeUser.username, fakeUser.password, fakeUser.pin)
