@@ -9,7 +9,7 @@ import * as repoModule from '../../src/util/repo.js'
 
 export const userId = base64.parse('m3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=')
 
-export const dataKey = base16.parse('19f91d7899b86f859460d850a96708e5ed09fdeeb0adaf905319a2721b1a09f0')
+export const loginKey = base64.parse('GfkdeJm4b4WUYNhQqWcI5e0J/e6wra+QUxmichsaCfA=')
 
 export const username = 'JS test 0'
 
@@ -201,13 +201,13 @@ export function makeAccount (context) {
   Object.keys(repos).forEach(syncKey => {
     const repo = new repoModule.Repo(
       context.io,
-      dataKey,
+      loginKey,
       base16.parse(syncKey)
     )
     repoModule.mergeChanges(repo.dataStore, repos[syncKey])
   })
 
   // Return the account object:
-  const login = Login.offline(context.io, fixedName, userId, dataKey)
+  const login = Login.offline(context.io, fixedName, userId, loginKey)
   return new Account(context, login)
 }

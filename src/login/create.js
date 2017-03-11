@@ -22,13 +22,13 @@ export function usernameAvailable (io, username) {
  */
 export function create (io, username, password, opts) {
   // Create account repo info:
-  const dataKey = io.random(32)
+  const loginKey = io.random(32)
   const syncKey = opts.syncKey || io.random(20)
-  const syncKeyBox = crypto.encrypt(io, syncKey, dataKey)
+  const syncKeyBox = crypto.encrypt(io, syncKey, loginKey)
 
   return Promise.all([
     io.loginStore.getUserId(username),
-    passwordLogin.makeSetup(io, dataKey, username, password)
+    passwordLogin.makeSetup(io, loginKey, username, password)
   ]).then(values => {
     const [userId, passwordSetup] = values
 
@@ -60,7 +60,7 @@ export function create (io, username, password, opts) {
       // Cache everything for future logins:
       io.loginStore.update(userId, loginData)
 
-      const login = Login.offline(io, username, userId, dataKey)
+      const login = Login.offline(io, username, userId, loginKey)
 
       // Now activate:
       const auth = login.authJson()

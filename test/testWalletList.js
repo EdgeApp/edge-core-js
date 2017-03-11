@@ -9,7 +9,7 @@ describe('wallet list', function () {
   it('raw id list', function () {
     const [context] = makeFakeContexts(1)
     fakeUser.makeAccount(context)
-    const repo = new Repo(context.io, fakeUser.dataKey, fakeUser.syncKey)
+    const repo = new Repo(context.io, fakeUser.loginKey, fakeUser.syncKey)
     const list = new WalletList(repo)
 
     assert.deepEqual(list.listIds(), ['7QjUtdhLqh6F84yPRi5D2MmubsYBtyai6YY3WqyPfK64'])

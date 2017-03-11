@@ -18,11 +18,11 @@ function loginOffline (io, username, userId, password) {
     throw new Error('Missing data for offline login')
   }
 
-  // Decrypt the dataKey:
+  // Decrypt the loginKey:
   const up = makeHashInput(username, password)
   return scrypt.scrypt(up, passwordKeySnrp).then(passwordKey => {
-    const dataKey = crypto.decrypt(passwordBox, passwordKey)
-    return Login.offline(io, username, userId, dataKey)
+    const loginKey = crypto.decrypt(passwordBox, passwordKey)
+    return Login.offline(io, username, userId, loginKey)
   })
 }
 
@@ -43,12 +43,12 @@ function loginOnline (io, username, userId, password) {
         throw new Error('Missing data for password login')
       }
 
-      // Decrypt the dataKey:
+      // Decrypt the loginKey:
       return scrypt.scrypt(up, passwordKeySnrp).then(passwordKey => {
-        const dataKey = crypto.decrypt(passwordBox, passwordKey)
+        const loginKey = crypto.decrypt(passwordBox, passwordKey)
 
         // Build the login object:
-        return Login.online(io, username, userId, dataKey, reply)
+        return Login.online(io, username, userId, loginKey, reply)
       })
     })
   })
@@ -88,20 +88,20 @@ export function check (io, login, password) {
 /**
  * Creates the data needed to set up the password on the server.
  */
-export function makeSetup (io, dataKey, username, password) {
+export function makeSetup (io, loginKey, username, password) {
   const up = makeHashInput(username, password)
 
-  // dataKey chain:
+  // loginKey chain:
   const boxPromise = scrypt.makeSnrp(io).then(passwordKeySnrp => {
     return scrypt.scrypt(up, passwordKeySnrp).then(passwordKey => {
-      const passwordBox = crypto.encrypt(io, dataKey, passwordKey)
+      const passwordBox = crypto.encrypt(io, loginKey, passwordKey)
       return {passwordKeySnrp, passwordBox}
     })
   })
 
   // authKey chain:
   const authPromise = scrypt.scrypt(up, scrypt.passwordAuthSnrp).then(passwordAuth => {
-    const passwordAuthBox = crypto.encrypt(io, passwordAuth, dataKey)
+    const passwordAuthBox = crypto.encrypt(io, passwordAuth, loginKey)
     return {passwordAuth, passwordAuthBox}
   })
 
@@ -132,7 +132,7 @@ export function makeSetup (io, dataKey, username, password) {
  * Sets up a password for the login.
  */
 export function setup (io, login, password) {
-  return makeSetup(io, login.dataKey, login.username, password).then(setup => {
+  return makeSetup(io, login.loginKey, login.username, password).then(setup => {
     const request = login.authJson()
     request['data'] = setup.server
     return io.authRequest('POST', '/v2/login/password', request).then(reply => {

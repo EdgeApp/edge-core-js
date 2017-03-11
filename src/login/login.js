@@ -7,7 +7,7 @@ import * as server from './server.js'
 /**
  * Converts a login reply from the server into the local storage format.
  */
-function makeLoginData (username, loginReply, dataKey) {
+function makeLoginData (username, loginReply, loginKey) {
   // Copy common items:
   const out = filterObject(loginReply, [
     'passwordAuthBox',
@@ -23,13 +23,13 @@ function makeLoginData (username, loginReply, dataKey) {
 
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
-    const pin2Key = crypto.decrypt(loginReply.pin2KeyBox, dataKey)
+    const pin2Key = crypto.decrypt(loginReply.pin2KeyBox, loginKey)
     out.pin2Key = base58.stringify(pin2Key)
   }
 
   // Store the recovery key unencrypted:
   if (loginReply.recovery2KeyBox != null) {
-    const recovery2Key = crypto.decrypt(loginReply.recovery2KeyBox, dataKey)
+    const recovery2Key = crypto.decrypt(loginReply.recovery2KeyBox, loginKey)
     out.recovery2Key = base58.stringify(recovery2Key)
   }
 
@@ -44,7 +44,7 @@ function makeLoginData (username, loginReply, dataKey) {
  * - A list of account repos
  * - The legacy BitID rootKey
  */
-export function Login (io, userId, dataKey, loginData) {
+export function Login (io, userId, loginKey, loginData) {
   if (userId.length !== 32) {
     throw new Error('userId must be a hash')
   }
@@ -52,22 +52,22 @@ export function Login (io, userId, dataKey, loginData) {
   // Identity:
   this.username = loginData.username
   this.userId = userId
-  this.dataKey = dataKey
+  this.loginKey = loginKey
 
   // Return access to the server:
   if (loginData.passwordAuthBox == null) {
     throw new Error('Missing passwordAuthBox')
   }
-  this.passwordAuth = crypto.decrypt(loginData.passwordAuthBox, dataKey)
+  this.passwordAuth = crypto.decrypt(loginData.passwordAuthBox, loginKey)
 
   // Legacy account repo:
   if (loginData.syncKeyBox != null) {
-    this.syncKey = crypto.decrypt(loginData.syncKeyBox, dataKey)
+    this.syncKey = crypto.decrypt(loginData.syncKeyBox, loginKey)
   }
 
   // Legacy BitID key:
   if (loginData.rootKeyBox != null) {
-    this.rootKey = crypto.decrypt(loginData.rootKeyBox, dataKey)
+    this.rootKey = crypto.decrypt(loginData.rootKeyBox, loginKey)
   }
 
   // TODO: Decrypt these:
@@ -85,25 +85,25 @@ export function Login (io, userId, dataKey, loginData) {
 /**
  * Returns a new login object, populated with data from the server.
  */
-Login.online = function (io, username, userId, dataKey, loginReply) {
-  const loginData = makeLoginData(username, loginReply, dataKey)
+Login.online = function (io, username, userId, loginKey, loginReply) {
+  const loginData = makeLoginData(username, loginReply, loginKey)
   io.loginStore.update(userId, loginData)
 
-  return new Login(io, userId, dataKey, loginData)
+  return new Login(io, userId, loginKey, loginData)
 }
 
 /**
  * Returns a new login object, populated with data from the local storage.
  */
-Login.offline = function (io, username, userId, dataKey) {
+Login.offline = function (io, username, userId, loginKey) {
   const loginData = io.loginStore.find({username})
-  const out = new Login(io, userId, dataKey, loginData)
+  const out = new Login(io, userId, loginKey, loginData)
 
   // Try updating our locally-stored login data (failure is ok):
   io
     .authRequest('POST', '/v2/login', out.authJson())
     .then(loginReply => {
-      const loginData = makeLoginData(username, loginReply, dataKey)
+      const loginData = makeLoginData(username, loginReply, loginKey)
       return io.loginStore.update(userId, loginData)
     })
     .catch(e => io.log.error(e))
@@ -130,7 +130,7 @@ Login.prototype.accountFind = function (type) {
   for (const repo of this.repos) {
     if (repo['type'] === type) {
       const keysBox = repo['keysBox'] || repo['info']
-      return JSON.parse(utf8.stringify(crypto.decrypt(keysBox, this.dataKey)))
+      return JSON.parse(utf8.stringify(crypto.decrypt(keysBox, this.loginKey)))
     }
   }
 
@@ -138,7 +138,7 @@ Login.prototype.accountFind = function (type) {
   if (type === 'account:repo:co.airbitz.wallet') {
     return {
       'syncKey': base16.stringify(this.syncKey),
-      'dataKey': base16.stringify(this.dataKey)
+      'dataKey': base16.stringify(this.loginKey)
     }
   }
 
@@ -163,7 +163,7 @@ Login.prototype.accountAttach = function (io, type, info) {
   const infoBlob = utf8.parse(JSON.stringify(info))
   const data = {
     'type': type,
-    'info': crypto.encrypt(io, infoBlob, this.dataKey)
+    'info': crypto.encrypt(io, infoBlob, this.loginKey)
   }
 
   const request = this.authJson()

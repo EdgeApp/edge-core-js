@@ -44,12 +44,12 @@ export function login (io, recovery2Key, username, answers) {
       throw new Error('Missing data for recovery v2 login')
     }
 
-    // Decrypt the dataKey:
-    const dataKey = crypto.decrypt(recovery2Box, recovery2Key)
+    // Decrypt the loginKey:
+    const loginKey = crypto.decrypt(recovery2Box, recovery2Key)
 
     // Build the login object:
     return io.loginStore.getUserId(username).then(userId => {
-      return Login.online(io, username, userId, dataKey, reply)
+      return Login.online(io, username, userId, loginKey, reply)
     })
   })
 }
@@ -94,8 +94,8 @@ export function makeSetup (io, login, questions, answers) {
   const recovery2Key = login.recovery2Key || io.random(32)
 
   const question2Box = crypto.encrypt(io, utf8.parse(JSON.stringify(questions), 'utf8'), recovery2Key)
-  const recovery2Box = crypto.encrypt(io, login.dataKey, recovery2Key)
-  const recovery2KeyBox = crypto.encrypt(io, recovery2Key, login.dataKey)
+  const recovery2Box = crypto.encrypt(io, login.loginKey, recovery2Key)
+  const recovery2KeyBox = crypto.encrypt(io, recovery2Key, login.loginKey)
 
   return {
     server: {

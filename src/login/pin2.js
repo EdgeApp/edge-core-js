@@ -41,12 +41,12 @@ export function login (io, pin2Key, username, pin) {
       throw new Error('Missing data for PIN v2 login')
     }
 
-    // Decrypt the dataKey:
-    const dataKey = crypto.decrypt(pin2Box, pin2Key)
+    // Decrypt the loginKey:
+    const loginKey = crypto.decrypt(pin2Box, pin2Key)
 
     // Build the login object:
     return io.loginStore.getUserId(username).then(userId => {
-      return Login.online(io, username, userId, dataKey, reply)
+      return Login.online(io, username, userId, loginKey, reply)
     })
   })
 }
@@ -57,8 +57,8 @@ export function login (io, pin2Key, username, pin) {
 export function makeSetup (io, login, pin) {
   const pin2Key = login.pin2Key || io.random(32)
 
-  const pin2Box = crypto.encrypt(io, login.dataKey, pin2Key)
-  const pin2KeyBox = crypto.encrypt(io, pin2Key, login.dataKey)
+  const pin2Box = crypto.encrypt(io, login.loginKey, pin2Key)
+  const pin2KeyBox = crypto.encrypt(io, pin2Key, login.loginKey)
 
   return {
     server: {
