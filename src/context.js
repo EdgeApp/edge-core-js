@@ -1,4 +1,5 @@
 import { makeAccount, makeAccountType } from './account.js'
+import { UsernameError } from './error.js'
 import {fixUsername} from './io/loginStore.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
@@ -32,18 +33,24 @@ Context.prototype.removeUsername = function (username) {
 }
 
 Context.prototype.usernameAvailable = nodeify(function (username) {
-  return loginCreate.usernameAvailable(this.io, username)
+  // TODO: We should change the API to expect a bool, rather than throwing:
+  return loginCreate.usernameAvailable(this.io, username).then(bool => {
+    if (!bool) {
+      throw new UsernameError()
+    }
+    return bool
+  })
 })
 
 /**
  * Creates a login, then creates and attaches an account to it.
  */
 Context.prototype.createAccount = nodeify(function (username, password, pin) {
-  return loginCreate.create(this.io, username, password, {}).then(login => {
-    return loginPin2.setup(this.io, login, pin).then(login => {
+  return loginCreate
+    .create(this.io, username, { password, pin })
+    .then(login => {
       return makeAccount(this, login, 'newAccount')
     })
-  })
 })
 
 Context.prototype.loginWithPassword = nodeify(function (username, password, otp, opts) {

@@ -3,7 +3,6 @@ import {elliptic} from '../crypto/external.js'
 import { base58, base64, utf8 } from '../util/encoding.js'
 import * as loginCreate from './create.js'
 import { attachKeys, makeKeyInfo } from './login.js'
-import * as loginPin2 from './pin2.js'
 
 const EllipticCurve = elliptic.ec
 const secp256k1 = new EllipticCurve('secp256k1')
@@ -22,20 +21,17 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
  */
 function createLogin (io, accountReply) {
   const username = accountReply.username + '-' + base58.stringify(io.random(4))
-  const password = base58.stringify(io.random(24))
-  const pin = accountReply.pinString
 
-  return loginCreate.create(io, username, password, {}).then(login => {
+  const opts = {
+    password: base58.stringify(io.random(24))
+  }
+  if (accountReply.pinString != null) {
+    opts.pin = accountReply.pinString
+  }
+  return loginCreate.create(io, username, opts).then(login => {
     const dataKey = base64.parse(accountReply.info.dataKey)
     const keyInfo = makeKeyInfo(accountReply.info, accountReply.type, dataKey)
-    return attachKeys(io, login, [keyInfo]).then(() => {
-      if (typeof pin === 'string' && pin.length === 4) {
-        if (loginPin2.getKey(io, username) == null) {
-          return loginPin2.setup(io, login, pin).catch(e => login)
-        }
-      }
-      return login
-    })
+    return attachKeys(io, login, [keyInfo]).then(() => login)
   })
 }
 

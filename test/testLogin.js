@@ -89,12 +89,15 @@ describe('creation', function () {
     return context
       .createAccount(fakeUser.username, fakeUser.password, fakeUser.pin)
       .then(account => {
-        return remote.loginWithPassword(
-          fakeUser.username,
-          fakeUser.password,
-          null,
-          null
-        )
+        return Promise.all([
+          context.loginWithPIN(fakeUser.username, fakeUser.pin, null, null),
+          remote.loginWithPassword(
+            fakeUser.username,
+            fakeUser.password,
+            null,
+            null
+          )
+        ])
       })
   })
 })
