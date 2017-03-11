@@ -18,8 +18,8 @@ function recovery2Auth (recovery2Key, answers) {
  * Returns a copy of the recovery key if one exists on the local device.
  */
 export function getKey (io, username) {
-  const loginData = io.loginStore.find({username})
-  return loginData.recovery2Key
+  const loginStash = io.loginStore.find({username})
+  return loginStash.recovery2Key
 }
 
 /**

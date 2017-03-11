@@ -48,7 +48,7 @@ export function create (io, username, password, opts) {
       'login_package': JSON.stringify(loginPackage),
       'repo_account_key': base16.stringify(syncKey)
     }
-    const loginData = objectAssign(
+    const loginStash = objectAssign(
       {
         username: fixUsername(username),
         syncKeyBox
@@ -58,7 +58,7 @@ export function create (io, username, password, opts) {
 
     return io.authRequest('POST', '/v1/account/create', request).then(reply => {
       // Cache everything for future logins:
-      io.loginStore.update(userId, loginData)
+      io.loginStore.update(userId, loginStash)
 
       const login = Login.offline(io, username, userId, loginKey)
 

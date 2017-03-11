@@ -25,7 +25,7 @@ export class LoginStore {
   }
 
   /**
-   * Loads the loginData matching the given query.
+   * Loads the loginStash matching the given query.
    * For now, the query only supports the `username` property.
    */
   find (query) {
@@ -57,7 +57,7 @@ export class LoginStore {
   }
 
   /**
-   * Removes any loginData matching the given query.
+   * Removes any loginStash matching the given query.
    * For now, the query only supports the `username` property.
    */
   remove (query) {
@@ -69,12 +69,12 @@ export class LoginStore {
     this.io.localStorage.setItem('airbitz.users', JSON.stringify(users))
   }
 
-  update (userId, loginData) {
+  update (userId, loginStash) {
     // Find the username:
     let username
     const users = this._loadUsers()
-    if ('username' in loginData) {
-      username = loginData.username
+    if ('username' in loginStash) {
+      username = loginStash.username
 
       // Add the userId to the table, in case it's new:
       users[username] = base64.stringify(userId)
@@ -90,7 +90,7 @@ export class LoginStore {
 
     // Actually save:
     const store = this._findUsername(username)
-    return store.setItems(loginData)
+    return store.setItems(loginStash)
   }
 
   _findUsername (username) {

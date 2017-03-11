@@ -11,9 +11,9 @@ function makeHashInput (username, password) {
 
 function loginOffline (io, username, userId, password) {
   // Extract stuff from storage:
-  const loginData = io.loginStore.find({username})
-  const passwordKeySnrp = loginData.passwordKeySnrp
-  const passwordBox = loginData.passwordBox
+  const loginStash = io.loginStore.find({username})
+  const passwordKeySnrp = loginStash.passwordKeySnrp
+  const passwordBox = loginStash.passwordBox
   if (!passwordKeySnrp || !passwordBox) {
     throw new Error('Missing data for offline login')
   }

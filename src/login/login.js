@@ -7,7 +7,7 @@ import * as server from './server.js'
 /**
  * Converts a login reply from the server into the local storage format.
  */
-function makeLoginData (username, loginReply, loginKey) {
+function makeLoginStash (username, loginReply, loginKey) {
   // Copy common items:
   const out = filterObject(loginReply, [
     'passwordAuthBox',
@@ -44,41 +44,41 @@ function makeLoginData (username, loginReply, loginKey) {
  * - A list of account repos
  * - The legacy BitID rootKey
  */
-export function Login (io, userId, loginKey, loginData) {
+export function Login (io, userId, loginKey, loginStash) {
   if (userId.length !== 32) {
     throw new Error('userId must be a hash')
   }
 
   // Identity:
-  this.username = loginData.username
+  this.username = loginStash.username
   this.userId = userId
   this.loginKey = loginKey
 
   // Return access to the server:
-  if (loginData.passwordAuthBox == null) {
+  if (loginStash.passwordAuthBox == null) {
     throw new Error('Missing passwordAuthBox')
   }
-  this.passwordAuth = crypto.decrypt(loginData.passwordAuthBox, loginKey)
+  this.passwordAuth = crypto.decrypt(loginStash.passwordAuthBox, loginKey)
 
   // Legacy account repo:
-  if (loginData.syncKeyBox != null) {
-    this.syncKey = crypto.decrypt(loginData.syncKeyBox, loginKey)
+  if (loginStash.syncKeyBox != null) {
+    this.syncKey = crypto.decrypt(loginStash.syncKeyBox, loginKey)
   }
 
   // Legacy BitID key:
-  if (loginData.rootKeyBox != null) {
-    this.rootKey = crypto.decrypt(loginData.rootKeyBox, loginKey)
+  if (loginStash.rootKeyBox != null) {
+    this.rootKey = crypto.decrypt(loginStash.rootKeyBox, loginKey)
   }
 
   // TODO: Decrypt these:
-  this.repos = loginData.repos || []
+  this.repos = loginStash.repos || []
 
   // Local keys:
-  if (loginData.pin2Key != null) {
-    this.pin2Key = base58.parse(loginData.pin2Key)
+  if (loginStash.pin2Key != null) {
+    this.pin2Key = base58.parse(loginStash.pin2Key)
   }
-  if (loginData.recovery2Key != null) {
-    this.recovery2Key = base58.parse(loginData.recovery2Key)
+  if (loginStash.recovery2Key != null) {
+    this.recovery2Key = base58.parse(loginStash.recovery2Key)
   }
 }
 
@@ -86,25 +86,25 @@ export function Login (io, userId, loginKey, loginData) {
  * Returns a new login object, populated with data from the server.
  */
 Login.online = function (io, username, userId, loginKey, loginReply) {
-  const loginData = makeLoginData(username, loginReply, loginKey)
-  io.loginStore.update(userId, loginData)
+  const loginStash = makeLoginStash(username, loginReply, loginKey)
+  io.loginStore.update(userId, loginStash)
 
-  return new Login(io, userId, loginKey, loginData)
+  return new Login(io, userId, loginKey, loginStash)
 }
 
 /**
  * Returns a new login object, populated with data from the local storage.
  */
 Login.offline = function (io, username, userId, loginKey) {
-  const loginData = io.loginStore.find({username})
-  const out = new Login(io, userId, loginKey, loginData)
+  const loginStash = io.loginStore.find({username})
+  const out = new Login(io, userId, loginKey, loginStash)
 
   // Try updating our locally-stored login data (failure is ok):
   io
     .authRequest('POST', '/v2/login', out.authJson())
     .then(loginReply => {
-      const loginData = makeLoginData(username, loginReply, loginKey)
-      return io.loginStore.update(userId, loginData)
+      const loginStash = makeLoginStash(username, loginReply, loginKey)
+      return io.loginStore.update(userId, loginStash)
     })
     .catch(e => io.log.error(e))
 
