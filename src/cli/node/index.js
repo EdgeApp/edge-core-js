@@ -1,7 +1,7 @@
 // Airbitz context stuff:
 import {makeNodeContext} from '../..'
 import {rejectify} from '../../util/decorators.js'
-import {mergeObjects} from '../../util/util.js'
+import { objectAssign } from '../../util/util.js'
 
 // Commands:
 import {command, UsageError} from '../command.js'
@@ -82,7 +82,7 @@ function loadConfig (options) {
       throw e
     }
   })
-  const config = mergeObjects(...configFiles)
+  const config = objectAssign({}, ...configFiles)
 
   // Calculate the active settings:
   return {

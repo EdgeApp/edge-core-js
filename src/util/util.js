@@ -1,15 +1,12 @@
 /**
- * Merges the keys from several objects into one.
- * Can also be used to copy a single object.
+ * Ponyfill for `Object.assign`.
  */
-export function mergeObjects (...args) {
-  const out = {}
-
+export function objectAssign (target, ...args) {
   args.forEach(arg => {
-    Object.keys(arg).forEach(key => {
-      out[key] = arg[key]
+    const from = Object(arg)
+    Object.keys(from).forEach(key => {
+      target[key] = from[key]
     })
   })
-
-  return out
+  return target
 }
