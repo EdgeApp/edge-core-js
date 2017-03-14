@@ -81,34 +81,39 @@ export function questions (io, recovery2Key, username) {
 }
 
 /**
- * Creates the data needed to set up recovery questions on the account.
+ * Creates the data needed to attach recovery questions to a login.
  */
-export function makeSetup (io, login, questions, answers) {
-  if (!(Object.prototype.toString.call(questions) === '[object Array]')) {
+export function makeRecovery2Kit (io, login, username, questions, answers) {
+  if (!Array.isArray(questions)) {
     throw new TypeError('Questions must be an array of strings')
   }
-  if (!(Object.prototype.toString.call(answers) === '[object Array]')) {
+  if (!Array.isArray(answers)) {
     throw new TypeError('Answers must be an array of strings')
   }
 
   const recovery2Key = login.recovery2Key || io.random(32)
-
-  const question2Box = crypto.encrypt(io, utf8.parse(JSON.stringify(questions), 'utf8'), recovery2Key)
+  const question2Box = crypto.encrypt(
+    io,
+    utf8.parse(JSON.stringify(questions)),
+    recovery2Key
+  )
   const recovery2Box = crypto.encrypt(io, login.loginKey, recovery2Key)
   const recovery2KeyBox = crypto.encrypt(io, recovery2Key, login.loginKey)
 
   return {
     server: {
-      'recovery2Id': base64.stringify(recovery2Id(recovery2Key, login.username)),
-      'recovery2Auth': recovery2Auth(recovery2Key, answers),
-      'recovery2Box': recovery2Box,
-      'recovery2KeyBox': recovery2KeyBox,
-      'question2Box': question2Box
+      recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
+      recovery2Auth: recovery2Auth(recovery2Key, answers),
+      recovery2Box,
+      recovery2KeyBox,
+      question2Box
     },
-    storage: {
-      'recovery2Key': base58.stringify(recovery2Key)
+    stash: {
+      recovery2Key: base58.stringify(recovery2Key)
     },
-    recovery2Key
+    login: {
+      recovery2Key
+    }
   }
 }
 
@@ -116,13 +121,14 @@ export function makeSetup (io, login, questions, answers) {
  * Sets up recovery questions for the login.
  */
 export function setup (io, login, questions, answers) {
-  const setup = makeSetup(io, login, questions, answers)
+  const kit = makeRecovery2Kit(io, login, login.username, questions, answers)
 
   const request = login.authJson()
-  request['data'] = setup.server
+  request.data = kit.server
   return io.authRequest('POST', '/v2/login/recovery2', request).then(reply => {
-    io.loginStore.update(login.userId, setup.storage)
-    return base58.stringify(setup.recovery2Key)
+    io.loginStore.update(login.userId, kit.stash)
+    login.recovery2Key = kit.login.recovery2Key
+    return login
   })
 }
 

@@ -3,7 +3,7 @@ import {fixUsername} from '../io/loginStore.js'
 import {base16, base64} from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
 import {Login} from './login.js'
-import * as passwordLogin from './password.js'
+import { makePasswordKit } from './password.js'
 
 /**
  * Determines whether or not a username is available.
@@ -28,22 +28,22 @@ export function create (io, username, password, opts) {
 
   return Promise.all([
     io.loginStore.getUserId(username),
-    passwordLogin.makeSetup(io, loginKey, username, password)
+    makePasswordKit(io, { loginKey }, username, password)
   ]).then(values => {
-    const [userId, passwordSetup] = values
+    const [userId, passwordKit] = values
 
     // Package:
     const carePackage = {
-      'SNRP2': passwordSetup.server.passwordKeySnrp
+      'SNRP2': passwordKit.server.passwordKeySnrp
     }
     const loginPackage = {
-      'EMK_LP2': passwordSetup.server.passwordBox,
+      'EMK_LP2': passwordKit.server.passwordBox,
       'ESyncKey': syncKeyBox,
-      'ELP1': passwordSetup.server.passwordAuthBox
+      'ELP1': passwordKit.server.passwordAuthBox
     }
     const request = {
       'l1': base64.stringify(userId),
-      'lp1': passwordSetup.server.passwordAuth,
+      'lp1': passwordKit.server.passwordAuth,
       'care_package': JSON.stringify(carePackage),
       'login_package': JSON.stringify(loginPackage),
       'repo_account_key': base16.stringify(syncKey)
@@ -53,7 +53,7 @@ export function create (io, username, password, opts) {
         username: fixUsername(username),
         syncKeyBox
       },
-      passwordSetup.storage
+      passwordKit.stash
     )
 
     return io.authRequest('POST', '/v1/account/create', request).then(reply => {

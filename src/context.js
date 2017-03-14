@@ -40,7 +40,7 @@ Context.prototype.createAccount = nodeify(function (username, password, pin) {
     } catch (e) {
       // If the login doesn't have the correct account type, add it first:
       return login.accountCreate(this.io, this.accountType).then(() => {
-        return loginPin2.setup(this.io, login, pin).then(() => {
+        return loginPin2.setup(this.io, login, pin).then(login => {
           const account = new Account(this, login)
           account.newAccount = true
           return account.sync().then(() => account)
@@ -49,7 +49,7 @@ Context.prototype.createAccount = nodeify(function (username, password, pin) {
     }
 
     // Otherwise, we have the correct account type, and can simply return:
-    return loginPin2.setup(this.io, login, pin).then(() => {
+    return loginPin2.setup(this.io, login, pin).then(login => {
       const account = new Account(this, login)
       account.newAccount = true
       return account.sync().then(() => account)

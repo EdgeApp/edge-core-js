@@ -52,25 +52,26 @@ export function login (io, pin2Key, username, pin) {
 }
 
 /**
- * Creates the data needed to set up a PIN on the account.
+ * Creates the data needed to attach a PIN to a login.
  */
-export function makeSetup (io, login, pin) {
+export function makePin2Kit (io, login, username, pin) {
   const pin2Key = login.pin2Key || io.random(32)
-
   const pin2Box = crypto.encrypt(io, login.loginKey, pin2Key)
   const pin2KeyBox = crypto.encrypt(io, pin2Key, login.loginKey)
 
   return {
     server: {
-      'pin2Id': base64.stringify(pin2Id(pin2Key, login.username)),
-      'pin2Auth': base64.stringify(pin2Auth(pin2Key, pin)),
-      'pin2Box': pin2Box,
-      'pin2KeyBox': pin2KeyBox
+      pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+      pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
+      pin2Box,
+      pin2KeyBox
     },
-    storage: {
-      'pin2Key': base58.stringify(pin2Key)
+    stash: {
+      pin2Key: base58.stringify(pin2Key)
     },
-    pin2Key
+    login: {
+      pin2Key
+    }
   }
 }
 
@@ -78,12 +79,13 @@ export function makeSetup (io, login, pin) {
  * Sets up PIN login v2.
  */
 export function setup (io, login, pin) {
-  const setup = makeSetup(io, login, pin)
+  const kit = makePin2Kit(io, login, login.username, pin)
 
   const request = login.authJson()
-  request['data'] = setup.server
+  request.data = kit.server
   return io.authRequest('POST', '/v2/login/pin2', request).then(reply => {
-    io.loginStore.update(login.userId, setup.storage)
-    return base58.stringify(setup.pin2Key)
+    io.loginStore.update(login.userId, kit.stash)
+    login.pin2Key = kit.login.pin2Key
+    return login
   })
 }

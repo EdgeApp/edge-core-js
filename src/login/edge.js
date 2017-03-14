@@ -33,7 +33,7 @@ function createLogin (io, accountReply) {
     return login.accountAttach(io, accountReply.type, accountReply.info).then(() => {
       if (typeof pin === 'string' && pin.length === 4) {
         if (loginPin2.getKey(io, username) == null) {
-          return loginPin2.setup(io, login, pin).then(() => login, () => login)
+          return loginPin2.setup(io, login, pin).catch(e => login)
         }
       }
       return login

@@ -3,7 +3,7 @@ import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
 import * as server from './login/server.js'
 import {nodeify} from './util/decorators.js'
-import {base16} from './util/encoding.js'
+import { base16, base58 } from './util/encoding.js'
 import {Repo} from './util/repo.js'
 import {Wallet} from './wallet.js'
 import {WalletList} from './util/walletList.js'
@@ -45,12 +45,16 @@ Account.prototype.passwordSetup = nodeify(function (password) {
 Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = nodeify(function (pin) {
-  return loginPin2.setup(this.io, this.login, pin)
+  return loginPin2
+    .setup(this.io, this.login, pin)
+    .then(login => base58.stringify(login.pin2Key))
 })
 Account.prototype.changePIN = Account.prototype.pinSetup
 
 Account.prototype.recovery2Set = nodeify(function (questions, answers) {
-  return loginRecovery2.setup(this.io, this.login, questions, answers)
+  return loginRecovery2
+    .setup(this.io, this.login, questions, answers)
+    .then(login => base58.stringify(login.recovery2Key))
 })
 
 Account.prototype.setupRecovery2Questions = Account.prototype.recovery2Set
