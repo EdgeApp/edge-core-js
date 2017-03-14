@@ -149,7 +149,7 @@ export function makeAccount (context) {
   // Create the login on the server:
   const data = {
     appId: '',
-    userId: base64.stringify(userId),
+    loginId: base64.stringify(userId),
     passwordAuth,
     passwordAuthBox,
     passwordBox,
