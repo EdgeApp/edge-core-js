@@ -5,7 +5,7 @@
 import {Account} from '../../src/account.js'
 import { makeLogin } from '../../src/login/login.js'
 import { base16, base64 } from '../../src/util/encoding.js'
-import * as repoModule from '../../src/util/repo.js'
+import { mergeChanges, Repo } from '../../src/util/repo.js'
 
 export const userId = base64.parse('m3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=')
 
@@ -236,12 +236,12 @@ export function makeAccount (context) {
 
   // Populate the repos on the client:
   Object.keys(repos).forEach(syncKey => {
-    const repo = new repoModule.Repo(
+    const repo = new Repo(
       context.io,
       loginKey,
       base16.parse(syncKey)
     )
-    repoModule.mergeChanges(repo.dataStore, repos[syncKey])
+    mergeChanges(repo.dataStore, repos[syncKey])
   })
 
   // Return the account object:

@@ -1,7 +1,7 @@
 /* global describe, it */
 import {makeFakeContexts, makeRandomGenerator} from '../src'
-import * as crypto from '../src/crypto/crypto.js'
-import * as scrypt from '../src/crypto/scrypt.js'
+import { decrypt, encrypt, hmacSha256, sha256 } from '../src/crypto/crypto.js'
+import { scrypt, userIdSnrp } from '../src/crypto/scrypt.js'
 import {base16, base64, utf8} from '../src/util/encoding.js'
 import assert from 'assert'
 
@@ -9,9 +9,9 @@ describe('scrypt', function () {
   it('match a known userId', function () {
     const password = 'william test'
     const result = 'TGnly9w3Fch7tyJVO+0MWLpvlbMGgWODf/tFlNkV6js='
-    const snrp = scrypt.userIdSnrp
+    const snrp = userIdSnrp
 
-    return scrypt.scrypt(password, snrp).then(userId => {
+    return scrypt(password, snrp).then(userId => {
       return assert.equal(base64.stringify(userId), result)
     })
   })
@@ -26,15 +26,15 @@ describe('encryption', function () {
       'iv_hex': '96a4cd52670c13df9712fdc1b564d44b'
     }
 
-    assert.equal('payload', crypto.decrypt(box, key).toString('utf8'))
+    assert.equal('payload', decrypt(box, key).toString('utf8'))
   })
 
   it('round-trip data', function () {
     const [context] = makeFakeContexts(1)
     const key = base16.parse('002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393')
     const data = utf8.parse('payload')
-    const box = crypto.encrypt(context.io, data, key)
-    assert.equal('payload', crypto.decrypt(box, key).toString('utf8'))
+    const box = encrypt(context.io, data, key)
+    assert.equal('payload', decrypt(box, key).toString('utf8'))
   })
 })
 
@@ -44,14 +44,14 @@ describe('hashes', function () {
     const key = utf8.parse('key')
     const expected = 'f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8'
 
-    assert.equal(expected, base16.stringify(crypto.hmacSha256(data, key)))
+    assert.equal(expected, base16.stringify(hmacSha256(data, key)))
   })
 
   it('sha256', function () {
     const data = utf8.parse('This is a test')
     const expected = 'c7be1ed902fb8dd4d48997c6452f5d7e509fbcdbe2808b16bcf4edce4c07d14e'
 
-    assert.equal(expected, base16.stringify(crypto.sha256(data)))
+    assert.equal(expected, base16.stringify(sha256(data)))
   })
 })
 

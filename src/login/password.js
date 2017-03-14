@@ -1,4 +1,4 @@
-import * as crypto from '../crypto/crypto.js'
+import { decrypt, encrypt } from '../crypto/crypto.js'
 import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import {rejectify} from '../util/decorators.js'
@@ -19,7 +19,7 @@ function extractLoginKey (loginStash, username, password) {
   }
   const up = makeHashInput(username, password)
   return scrypt(up, loginStash.passwordKeySnrp).then(passwordKey => {
-    return crypto.decrypt(loginStash.passwordBox, passwordKey)
+    return decrypt(loginStash.passwordBox, passwordKey)
   })
 }
 
@@ -44,7 +44,7 @@ function fetchLoginKey (io, username, password) {
       }
       return scrypt(up, reply.passwordKeySnrp).then(passwordKey => {
         return {
-          loginKey: crypto.decrypt(reply.passwordBox, passwordKey),
+          loginKey: decrypt(reply.passwordBox, passwordKey),
           loginReply: reply
         }
       })
@@ -58,7 +58,7 @@ function fetchLoginKey (io, username, password) {
  * @param password string
  * @return A `Promise` for the new root login.
  */
-export function login (io, username, password) {
+export function loginPassword (io, username, password) {
   return io.loginStore.load(username).then(loginStash => {
     return rejectify(extractLoginKey)(loginStash, username, password)
       .then(loginKey => {
@@ -90,7 +90,7 @@ export function login (io, username, password) {
 /**
  * Returns true if the given password is correct.
  */
-export function check (io, login, password) {
+export function checkPassword (io, login, password) {
   // Derive passwordAuth:
   const up = makeHashInput(login.username, password)
   return scrypt(up, passwordAuthSnrp).then(passwordAuth => {
@@ -113,14 +113,14 @@ export function makePasswordKit (io, login, username, password) {
   // loginKey chain:
   const boxPromise = makeSnrp(io).then(passwordKeySnrp => {
     return scrypt(up, passwordKeySnrp).then(passwordKey => {
-      const passwordBox = crypto.encrypt(io, login.loginKey, passwordKey)
+      const passwordBox = encrypt(io, login.loginKey, passwordKey)
       return { passwordKeySnrp, passwordBox }
     })
   })
 
   // authKey chain:
   const authPromise = scrypt(up, passwordAuthSnrp).then(passwordAuth => {
-    const passwordAuthBox = crypto.encrypt(io, passwordAuth, login.loginKey)
+    const passwordAuthBox = encrypt(io, passwordAuth, login.loginKey)
     return { passwordAuth, passwordAuthBox }
   })
 
@@ -152,7 +152,7 @@ export function makePasswordKit (io, login, username, password) {
 /**
  * Sets up a password for the login.
  */
-export function setup (io, rootLogin, login, password) {
+export function setupPassword (io, rootLogin, login, password) {
   return makePasswordKit(io, login, rootLogin.username, password).then(kit => {
     const request = makeAuthJson(login)
     request.data = kit.server

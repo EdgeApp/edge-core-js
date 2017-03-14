@@ -3,9 +3,14 @@ import { UsernameError } from './error.js'
 import {fixUsername} from './io/loginStore.js'
 import { createLogin, usernameAvailable } from './login/create.js'
 import { requestEdgeLogin } from './login/edge.js'
-import * as loginPassword from './login/password.js'
-import * as loginPin2 from './login/pin2.js'
-import * as loginRecovery2 from './login/recovery2.js'
+import { loginPassword } from './login/password.js'
+import { loginPin2, getPin2Key } from './login/pin2.js'
+import {
+  getQuestions2,
+  getRecovery2Key,
+  loginRecovery2,
+  listRecoveryQuestionChoices
+} from './login/recovery2.js'
 import { asyncApi, syncApi } from './util/decorators.js'
 import { base58 } from './util/encoding.js'
 
@@ -52,26 +57,26 @@ Context.prototype.createAccount = asyncApi(function (username, password, pin) {
 })
 
 Context.prototype.loginWithPassword = asyncApi(function (username, password, otp, opts) {
-  return loginPassword.login(this.io, username, password).then(login => {
+  return loginPassword(this.io, username, password).then(login => {
     return makeAccount(this, login, 'passwordLogin')
   })
 })
 
 Context.prototype.pinExists = syncApi(function (username) {
   const loginStash = this.io.loginStore.loadSync(username)
-  return loginPin2.getKey(loginStash, this.appId) != null
+  return getPin2Key(loginStash, this.appId) != null
 })
 Context.prototype.pinLoginEnabled = Context.prototype.pinExists
 
 Context.prototype.loginWithPIN = asyncApi(function (username, pin) {
-  return loginPin2.login(this.io, this.appId, username, pin).then(login => {
+  return loginPin2(this.io, this.appId, username, pin).then(login => {
     return makeAccount(this, login, 'pinLogin')
   })
 })
 
 Context.prototype.getRecovery2Key = asyncApi(function (username) {
   const loginStash = this.io.loginStore.loadSync(username)
-  const recovery2Key = loginRecovery2.getKey(loginStash)
+  const recovery2Key = getRecovery2Key(loginStash)
   if (recovery2Key == null) {
     return Promise.reject(new Error('No recovery key stored locally.'))
   }
@@ -80,14 +85,14 @@ Context.prototype.getRecovery2Key = asyncApi(function (username) {
 
 Context.prototype.loginWithRecovery2 = asyncApi(function (recovery2Key, username, answers, otp, options) {
   recovery2Key = base58.parse(recovery2Key)
-  return loginRecovery2.login(this.io, recovery2Key, username, answers).then(login => {
+  return loginRecovery2(this.io, recovery2Key, username, answers).then(login => {
     return makeAccount(this, login, 'recoveryLogin')
   })
 })
 
 Context.prototype.fetchRecovery2Questions = asyncApi(function (recovery2Key, username) {
   recovery2Key = base58.parse(recovery2Key)
-  return loginRecovery2.questions(this.io, recovery2Key, username)
+  return getQuestions2(this.io, recovery2Key, username)
 })
 
 Context.prototype.checkPasswordRules = syncApi(function (password) {
@@ -119,5 +124,5 @@ Context.prototype.requestEdgeLogin = asyncApi(function (opts) {
 })
 
 Context.prototype.listRecoveryQuestionChoices = asyncApi(function () {
-  return loginRecovery2.listRecoveryQuestionChoices(this.io)
+  return listRecoveryQuestionChoices(this.io)
 })

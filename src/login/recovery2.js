@@ -1,17 +1,17 @@
-import * as crypto from '../crypto/crypto.js'
+import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
 import { base64, utf8 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 
 function recovery2Id (recovery2Key, username) {
-  return crypto.hmacSha256(fixUsername(username), recovery2Key)
+  return hmacSha256(fixUsername(username), recovery2Key)
 }
 
 function recovery2Auth (recovery2Key, answers) {
   return answers.map(answer => {
     const data = utf8.parse(answer)
-    return base64.stringify(crypto.hmacSha256(data, recovery2Key))
+    return base64.stringify(hmacSha256(data, recovery2Key))
   })
 }
 
@@ -30,7 +30,7 @@ function fetchLoginKey (io, recovery2Key, username, answers) {
       throw new Error('Missing data for recovery v2 login')
     }
     return {
-      loginKey: crypto.decrypt(reply.recovery2Box, recovery2Key),
+      loginKey: decrypt(reply.recovery2Box, recovery2Key),
       loginReply: reply
     }
   })
@@ -39,7 +39,7 @@ function fetchLoginKey (io, recovery2Key, username, answers) {
 /**
  * Returns a copy of the recovery key if one exists on the local device.
  */
-export function getKey (loginStash) {
+export function getRecovery2Key (loginStash) {
   if (loginStash.recovery2Key != null) {
     return base64.parse(loginStash.recovery2Key)
   }
@@ -49,7 +49,7 @@ export function getKey (loginStash) {
  * Logs a user in using recovery answers.
  * @return A `Promise` for the new root login.
  */
-export function login (io, recovery2Key, username, answers) {
+export function loginRecovery2 (io, recovery2Key, username, answers) {
   return io.loginStore.load(username).then(loginStash => {
     return fetchLoginKey(io, recovery2Key, username, answers).then(values => {
       const { loginKey, loginReply } = values
@@ -66,7 +66,7 @@ export function login (io, recovery2Key, username, answers) {
  * @param recovery2Key an ArrayBuffer recovery key
  * @param Question array promise
  */
-export function questions (io, recovery2Key, username) {
+export function getQuestions2 (io, recovery2Key, username) {
   const request = {
     'recovery2Id': base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null
@@ -79,7 +79,7 @@ export function questions (io, recovery2Key, username) {
     }
 
     // Decrypt the questions:
-    const questions = crypto.decrypt(question2Box, recovery2Key)
+    const questions = decrypt(question2Box, recovery2Key)
     return JSON.parse(utf8.stringify(questions))
   })
 }
@@ -96,13 +96,13 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
   }
 
   const recovery2Key = login.recovery2Key || io.random(32)
-  const question2Box = crypto.encrypt(
+  const question2Box = encrypt(
     io,
     utf8.parse(JSON.stringify(questions)),
     recovery2Key
   )
-  const recovery2Box = crypto.encrypt(io, login.loginKey, recovery2Key)
-  const recovery2KeyBox = crypto.encrypt(io, recovery2Key, login.loginKey)
+  const recovery2Box = encrypt(io, login.loginKey, recovery2Key)
+  const recovery2KeyBox = encrypt(io, recovery2Key, login.loginKey)
 
   return {
     server: {
@@ -124,7 +124,7 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
 /**
  * Sets up recovery questions for the login.
  */
-export function setup (io, rootLogin, login, questions, answers) {
+export function setupRecovery2 (io, rootLogin, login, questions, answers) {
   const kit = makeRecovery2Kit(io, login, rootLogin.username, questions, answers)
 
   const request = makeAuthJson(login)

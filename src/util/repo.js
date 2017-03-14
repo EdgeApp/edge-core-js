@@ -1,4 +1,4 @@
-import * as crypto from '../crypto/crypto.js'
+import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import {base16, base58, utf8} from './encoding.js'
 import {ScopedStorage} from './scopedStorage.js'
 
@@ -76,7 +76,7 @@ export function mergeChanges (store, changes) {
  * Creates an ID string from a repo's dataKey.
  */
 export function repoId (dataKey) {
-  return base58.stringify(crypto.hmacSha256(dataKey, dataKey))
+  return base58.stringify(hmacSha256(dataKey, dataKey))
 }
 
 /**
@@ -99,7 +99,7 @@ export function Repo (io, dataKey, syncKey) {
  * the provided binary data with the repo's dataKey.
  */
 Repo.prototype.secureFilename = function (data) {
-  return base58.stringify(crypto.hmacSha256(data, this.dataKey))
+  return base58.stringify(hmacSha256(data, this.dataKey))
 }
 
 /**
@@ -112,7 +112,7 @@ Repo.prototype.getData = function (path) {
   const box =
     this.changeStore.getJson(path) ||
     this.dataStore.getJson(path)
-  return box ? crypto.decrypt(box, this.dataKey) : null
+  return box ? decrypt(box, this.dataKey) : null
 }
 
 /**
@@ -181,7 +181,7 @@ Repo.prototype.setData = function (path, value) {
   path += '.json'
 
   const changes = {}
-  changes[path] = value ? crypto.encrypt(this.io, value, this.dataKey) : null
+  changes[path] = value ? encrypt(this.io, value, this.dataKey) : null
   mergeChanges(this.changeStore, changes)
 }
 

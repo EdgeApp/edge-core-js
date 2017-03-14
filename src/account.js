@@ -1,8 +1,8 @@
 import { createChildLogin } from './login/create.js'
 import { attachKeys, makeKeyInfo, searchTree } from './login/login.js'
-import * as loginPassword from './login/password.js'
-import * as loginPin2 from './login/pin2.js'
-import * as loginRecovery2 from './login/recovery2.js'
+import { checkPassword, setupPassword } from './login/password.js'
+import { setupPin2 } from './login/pin2.js'
+import { setupRecovery2 } from './login/recovery2.js'
 import { asyncApi, syncApi } from './util/decorators.js'
 import { base58, base64 } from './util/encoding.js'
 import {Repo} from './util/repo.js'
@@ -111,7 +111,7 @@ Account.prototype.logout = syncApi(function () {
 })
 
 Account.prototype.passwordOk = asyncApi(function (password) {
-  return loginPassword.check(this.io, this.rootLogin, password)
+  return checkPassword(this.io, this.rootLogin, password)
 })
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
@@ -119,14 +119,13 @@ Account.prototype.passwordSetup = asyncApi(function (password) {
   if (this.rootLogin.loginKey == null) {
     return Promise.reject(new Error('Edge logged-in account'))
   }
-  return loginPassword.setup(this.io, this.rootLogin, this.rootLogin, password)
+  return setupPassword(this.io, this.rootLogin, this.rootLogin, password)
 })
 Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = asyncApi(function (pin) {
-  return loginPin2
-    .setup(this.io, this.rootLogin, this.login, pin)
-    .then(login => base58.stringify(login.pin2Key))
+  return setupPin2(this.io, this.rootLogin, this.login, pin).then(login =>
+    base58.stringify(login.pin2Key))
 })
 Account.prototype.changePIN = Account.prototype.pinSetup
 
@@ -134,9 +133,13 @@ Account.prototype.recovery2Set = asyncApi(function (questions, answers) {
   if (this.rootLogin.loginKey == null) {
     return Promise.reject(new Error('Edge logged-in account'))
   }
-  return loginRecovery2
-    .setup(this.io, this.rootLogin, this.rootLogin, questions, answers)
-    .then(login => base58.stringify(login.recovery2Key))
+  return setupRecovery2(
+    this.io,
+    this.rootLogin,
+    this.rootLogin,
+    questions,
+    answers
+  ).then(login => base58.stringify(login.recovery2Key))
 })
 
 Account.prototype.setupRecovery2Questions = Account.prototype.recovery2Set
