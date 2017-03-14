@@ -6,6 +6,7 @@ import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
 import {nodeify} from './util/decorators.js'
+import { base58 } from './util/encoding.js'
 
 /**
  * @param opts An object containing optional arguments.
@@ -89,10 +90,11 @@ Context.prototype.getRecovery2Key = nodeify(function (username) {
   if (recovery2Key == null) {
     return Promise.reject(new Error('No recovery key stored locally.'))
   }
-  return Promise.resolve(recovery2Key)
+  return Promise.resolve(base58.stringify(recovery2Key))
 })
 
 Context.prototype.loginWithRecovery2 = nodeify(function (recovery2Key, username, answers, otp, options) {
+  recovery2Key = base58.parse(recovery2Key)
   return loginRecovery2.login(this.io, recovery2Key, username, answers).then(login => {
     const account = new Account(this, login)
     account.recoveryLogin = true
@@ -101,6 +103,7 @@ Context.prototype.loginWithRecovery2 = nodeify(function (recovery2Key, username,
 })
 
 Context.prototype.fetchRecovery2Questions = nodeify(function (recovery2Key, username) {
+  recovery2Key = base58.parse(recovery2Key)
   return loginRecovery2.questions(this.io, recovery2Key, username)
 })
 

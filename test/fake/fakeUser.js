@@ -4,7 +4,7 @@
  */
 import {Account} from '../../src/account.js'
 import {Login} from '../../src/login/login.js'
-import {base16, base64} from '../../src/util/encoding.js'
+import { base16, base58, base64 } from '../../src/util/encoding.js'
 import * as repoModule from '../../src/util/repo.js'
 
 export const userId = base64.parse('m3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=')
@@ -68,7 +68,7 @@ export const pin2Box = {
 
 export const pin2Id = 'X8iNgUh49p8B5FZNAsaTk0nXTtbOzWI5Eo91zUvJgd0='
 
-export const pin2Key = '22b6wM3F6bd3LpT1UHLhb7pDr5BxzAuVNhuU5HGudZHq'
+export const pin2Key = base64.parse('D0PT0Gtj0S9vxlcaktwdk3iMlH6osgTgUUNtoTmE2pA=')
 
 export const pin2KeyBox = {
   encryptionType: 0,
@@ -98,7 +98,7 @@ export const recovery2Box = {
 
 export const recovery2Id = 'DeovL5jZTjnVjj+W/a7mTFKn0evQw0a3RxaAEwBC1+8='
 
-export const recovery2Key = 'NVADGXzb5Zc55PYXVVT7GRcXPnY9NZJUjiZK8aQnidc'
+export const recovery2Key = base64.parse('BYEJSOxFj983EUeAfj57W+dFYm+pdUfIP+jCmYtutOc=')
 
 export const recovery2KeyBox = {
   encryptionType: 0,
@@ -181,8 +181,8 @@ export function makeAccount (context) {
     passwordKeySnrp,
     pinAuthId: pinId,
     pinBox,
-    pin2Key,
-    recovery2Key,
+    pin2Key: base58.stringify(pin2Key),
+    recovery2Key: base58.stringify(recovery2Key),
     rootKeyBox,
     syncKeyBox
   })

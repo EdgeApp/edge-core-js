@@ -19,7 +19,9 @@ function recovery2Auth (recovery2Key, answers) {
  */
 export function getKey (io, username) {
   const loginStash = io.loginStore.find({username})
-  return loginStash.recovery2Key
+  if (loginStash.recovery2Key != null) {
+    return base58.parse(loginStash.recovery2Key)
+  }
 }
 
 /**
@@ -30,8 +32,6 @@ export function getKey (io, username) {
  * @param `Login` object promise
  */
 export function login (io, recovery2Key, username, answers) {
-  recovery2Key = base58.parse(recovery2Key)
-
   const request = {
     'recovery2Id': base64.stringify(recovery2Id(recovery2Key, username)),
     'recovery2Auth': recovery2Auth(recovery2Key, answers)
@@ -61,8 +61,6 @@ export function login (io, recovery2Key, username, answers) {
  * @param Question array promise
  */
 export function questions (io, recovery2Key, username) {
-  recovery2Key = base58.parse(recovery2Key)
-
   const request = {
     'recovery2Id': base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null

@@ -1,5 +1,6 @@
 /* global describe, it */
 import { makeFakeContexts } from '../src'
+import { base58 } from '../src/util/encoding.js'
 import * as fakeUser from './fake/fakeUser.js'
 import assert from 'assert'
 
@@ -199,7 +200,7 @@ describe('recovery2', function () {
     fakeUser.makeAccount(context)
 
     return context.getRecovery2Key(fakeUser.username).then(key => {
-      return assert.equal(key, fakeUser.recovery2Key)
+      return assert.equal(key, base58.stringify(fakeUser.recovery2Key))
     })
   })
 
@@ -208,7 +209,10 @@ describe('recovery2', function () {
     fakeUser.makeAccount(context)
 
     return context
-      .fetchRecovery2Questions(fakeUser.recovery2Key, fakeUser.username)
+      .fetchRecovery2Questions(
+        base58.stringify(fakeUser.recovery2Key),
+        fakeUser.username
+      )
       .then(questions => {
         assert.equal(questions.length, fakeUser.recovery2Questions.length)
         for (let i = 0; i < questions.length; ++i) {
@@ -223,7 +227,7 @@ describe('recovery2', function () {
     fakeUser.makeAccount(remote)
 
     return context.loginWithRecovery2(
-      fakeUser.recovery2Key,
+      base58.stringify(fakeUser.recovery2Key),
       fakeUser.username,
       fakeUser.recovery2Answers,
       null,

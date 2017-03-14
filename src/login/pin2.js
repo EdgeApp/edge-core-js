@@ -16,7 +16,9 @@ function pin2Auth (pin2Key, pin) {
  */
 export function getKey (io, username) {
   const loginStash = io.loginStore.find({username})
-  return loginStash.pin2Key
+  if (loginStash.pin2Key != null) {
+    return base58.parse(loginStash.pin2Key)
+  }
 }
 
 /**
@@ -27,8 +29,6 @@ export function getKey (io, username) {
  * @param `Login` object promise
  */
 export function login (io, pin2Key, username, pin) {
-  pin2Key = base58.parse(pin2Key)
-
   const request = {
     'pin2Id': base64.stringify(pin2Id(pin2Key, username)),
     'pin2Auth': base64.stringify(pin2Auth(pin2Key, pin))
