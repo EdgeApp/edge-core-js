@@ -24,7 +24,7 @@ Context.prototype.listUsernames = Context.prototype.usernameList
 Context.prototype.fixUsername = fixUsername
 
 Context.prototype.removeUsername = function (username) {
-  this.io.loginStore.remove({username})
+  this.io.loginStore.remove(username)
 }
 
 Context.prototype.usernameAvailable = nodeify(function (username) {
@@ -49,14 +49,14 @@ Context.prototype.loginWithPassword = nodeify(function (username, password, otp,
 })
 
 Context.prototype.pinExists = function (username) {
-  return loginPin2.getKey(this.io, username) != null
+  const loginStash = this.io.loginStore.loadSync(username)
+  return loginPin2.getKey(loginStash) != null
 }
-Context.prototype.pinLoginEnabled = function (username) {
-  return loginPin2.getKey(this.io, username) != null
-}
+Context.prototype.pinLoginEnabled = Context.prototype.pinExists
 
 Context.prototype.loginWithPIN = nodeify(function (username, pin) {
-  const pin2Key = loginPin2.getKey(this.io, username)
+  const loginStash = this.io.loginStore.loadSync(username)
+  const pin2Key = loginPin2.getKey(loginStash)
   if (pin2Key == null) {
     throw new Error('No PIN set locally for this account')
   }
@@ -66,7 +66,8 @@ Context.prototype.loginWithPIN = nodeify(function (username, pin) {
 })
 
 Context.prototype.getRecovery2Key = nodeify(function (username) {
-  const recovery2Key = loginRecovery2.getKey(this.io, username)
+  const loginStash = this.io.loginStore.loadSync(username)
+  const recovery2Key = loginRecovery2.getKey(loginStash)
   if (recovery2Key == null) {
     return Promise.reject(new Error('No recovery key stored locally.'))
   }

@@ -14,8 +14,7 @@ function pin2Auth (pin2Key, pin) {
 /**
  * Returns a copy of the PIN login key if one exists on the local device.
  */
-export function getKey (io, username) {
-  const loginStash = io.loginStore.find({username})
+export function getKey (loginStash) {
   if (loginStash.pin2Key != null) {
     return base58.parse(loginStash.pin2Key)
   }

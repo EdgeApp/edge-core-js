@@ -1,5 +1,5 @@
 import * as crypto from '../crypto/crypto.js'
-import {fixUsername} from '../io/loginStore.js'
+import { fixUsername, hashUsername } from '../io/loginStore.js'
 import {base16, base64} from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
 import { loginOffline, makeAuthJson } from './login.js'
@@ -9,7 +9,7 @@ import { makePasswordKit } from './password.js'
  * Determines whether or not a username is available.
  */
 export function usernameAvailable (io, username) {
-  return io.loginStore.getUserId(username).then(userId => {
+  return hashUsername(username).then(userId => {
     const request = {
       'l1': base64.stringify(userId)
     }
@@ -27,7 +27,7 @@ export function create (io, username, password, opts) {
   const syncKeyBox = crypto.encrypt(io, syncKey, loginKey)
 
   return Promise.all([
-    io.loginStore.getUserId(username),
+    hashUsername(username),
     makePasswordKit(io, { loginKey }, username, password)
   ]).then(values => {
     const [userId, passwordKit] = values
@@ -51,6 +51,7 @@ export function create (io, username, password, opts) {
     const loginStash = objectAssign(
       {
         username: fixUsername(username),
+        userId: base64.stringify(userId),
         syncKeyBox
       },
       passwordKit.stash
@@ -60,7 +61,7 @@ export function create (io, username, password, opts) {
       // Cache everything for future logins:
       io.loginStore.update(userId, loginStash)
 
-      const login = loginOffline(io, username, userId, loginKey)
+      const login = loginOffline(io, loginKey, loginStash)
 
       // Now activate:
       const auth = makeAuthJson(login)

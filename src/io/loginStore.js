@@ -1,4 +1,4 @@
-import * as scrypt from '../crypto/scrypt.js'
+import { scrypt, userIdSnrp } from '../crypto/scrypt.js'
 import {base64} from '../util/encoding.js'
 import {ScopedStorage} from '../util/scopedStorage.js'
 
@@ -13,27 +13,36 @@ export class LoginStore {
 
   /**
    * Finds the userId for a particular username.
-   * TODO: Memoize this method.
    */
   getUserId (username) {
-    const fixedName = fixUsername(username)
-    const users = this._loadUsers(this.io)
-    if (users[fixedName]) {
-      return Promise.resolve(base64.parse(users[fixedName]))
-    }
-    return scrypt.scrypt(fixedName, scrypt.userIdSnrp)
+    return this.load(username).then(stash => base64.parse(stash.userId))
   }
 
   /**
-   * Loads the loginStash matching the given query.
-   * For now, the query only supports the `username` property.
+   * Finds the loginStash for the given username.
    */
-  find (query) {
-    const fixedName = fixUsername(query.username)
+  load (username) {
+    const loginStash = this.loadSync(username)
+    if (loginStash.userId != null) {
+      return Promise.resolve(loginStash)
+    }
+
+    return hashUsername(username).then(userId => {
+      loginStash.userId = base64.stringify(userId)
+      return loginStash
+    })
+  }
+
+  /**
+   * Same thing as `load`, but doesn't block on the `userId`.
+   */
+  loadSync (username) {
+    const fixedName = fixUsername(username)
     const store = this._findUsername(fixedName)
 
     return {
       username: fixedName,
+      userId: this._loadUsers(this.io)[fixedName],
 
       passwordAuthBox: store.getJson('passwordAuthBox'),
       passwordBox: store.getJson('passwordBox'),
@@ -57,11 +66,10 @@ export class LoginStore {
   }
 
   /**
-   * Removes any loginStash matching the given query.
-   * For now, the query only supports the `username` property.
+   * Removes any loginStash that may be stored for the given username.
    */
-  remove (query) {
-    const fixedName = fixUsername(query.username)
+  remove (username) {
+    const fixedName = fixUsername(username)
     this._findUsername(fixedName).removeAll()
 
     const users = this._loadUsers()
@@ -70,6 +78,10 @@ export class LoginStore {
   }
 
   update (userId, loginStash) {
+    if (userId.length !== 32) {
+      throw new Error('Invalid userId')
+    }
+
     // Find the username:
     let username
     const users = this._loadUsers()
@@ -126,4 +138,18 @@ export function fixUsername (username) {
     }
   }
   return out
+}
+
+// Hashed username cache:
+const userIdCache = {}
+
+/**
+ * Hashes a username into a userId.
+ */
+export function hashUsername (username) {
+  const fixedName = fixUsername(username)
+  if (userIdCache[fixedName] == null) {
+    userIdCache[fixedName] = scrypt(fixedName, userIdSnrp)
+  }
+  return userIdCache[fixedName]
 }

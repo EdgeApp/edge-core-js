@@ -146,8 +146,6 @@ export const repos = {
 }
 
 export function makeAccount (context) {
-  const fixedName = context.fixUsername(username)
-
   // Create the login on the server:
   const data = {
     userId: base64.stringify(userId),
@@ -174,8 +172,9 @@ export function makeAccount (context) {
   })
 
   // Store the login on the client:
-  context.io.loginStore.update(userId, {
-    username: fixedName,
+  const loginStash = {
+    username: context.fixUsername(username),
+    userId: base64.stringify(userId),
     passwordAuthBox,
     passwordBox,
     passwordKeySnrp,
@@ -185,7 +184,8 @@ export function makeAccount (context) {
     recovery2Key: base58.stringify(recovery2Key),
     rootKeyBox,
     syncKeyBox
-  })
+  }
+  context.io.loginStore.update(userId, loginStash)
 
   // Populate the repos on the server:
   Object.keys(repos)
@@ -208,6 +208,6 @@ export function makeAccount (context) {
   })
 
   // Return the account object:
-  const login = loginOffline(context.io, fixedName, userId, loginKey)
+  const login = loginOffline(context.io, loginKey, loginStash)
   return new Account(context, login)
 }

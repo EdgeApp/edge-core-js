@@ -99,16 +99,15 @@ export function loginOnline (io, username, userId, loginKey, loginReply) {
 /**
  * Returns a new login object, populated with data from the local storage.
  */
-export function loginOffline (io, username, userId, loginKey) {
-  const loginStash = io.loginStore.find({username})
-  const login = makeLogin(io, userId, loginKey, loginStash)
+export function loginOffline (io, loginKey, loginStash) {
+  const login = makeLogin(io, base64.parse(loginStash.userId), loginKey, loginStash)
 
   // Try updating our locally-stored login data (failure is ok):
   io
     .authRequest('POST', '/v2/login', makeAuthJson(login))
     .then(loginReply => {
-      const loginStash = makeLoginStash(username, loginReply, loginKey)
-      return io.loginStore.update(userId, loginStash)
+      loginStash = makeLoginStash(login.username, loginReply, loginKey)
+      return io.loginStore.update(login.userId, loginStash)
     })
     .catch(e => io.log.error(e))
 

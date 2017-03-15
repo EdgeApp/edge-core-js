@@ -13,9 +13,8 @@ function makeHashInput (username, password) {
   return fixUsername(username) + password
 }
 
-function loginOffline (io, username, userId, password) {
+function loginOffline (io, loginStash, username, password) {
   // Extract stuff from storage:
-  const loginStash = io.loginStore.find({username})
   const passwordKeySnrp = loginStash.passwordKeySnrp
   const passwordBox = loginStash.passwordBox
   if (!passwordKeySnrp || !passwordBox) {
@@ -26,7 +25,7 @@ function loginOffline (io, username, userId, password) {
   const up = makeHashInput(username, password)
   return scrypt(up, passwordKeySnrp).then(passwordKey => {
     const loginKey = crypto.decrypt(passwordBox, passwordKey)
-    return makeLoginOffline(io, username, userId, loginKey)
+    return makeLoginOffline(io, loginKey, loginStash)
   })
 }
 
@@ -65,10 +64,9 @@ function loginOnline (io, username, userId, password) {
  * @return `Login` object promise
  */
 export function login (io, username, password) {
-  return io.loginStore.getUserId(username).then(userId => {
-    // Race the two login methods, and let the fastest one win:
-    return rejectify(loginOffline)(io, username, userId, password).catch(e =>
-      rejectify(loginOnline)(io, username, userId, password)
+  return io.loginStore.load(username).then(loginStash => {
+    return rejectify(loginOffline)(io, loginStash, username, password).catch(e =>
+      loginOnline(io, username, base64.parse(loginStash.userId), password)
     )
   })
 }
@@ -78,7 +76,8 @@ export function login (io, username, password) {
  */
 export function check (io, login, password) {
   // Derive passwordAuth:
-  return scrypt(login.username + password, passwordAuthSnrp).then(passwordAuth => {
+  const up = makeHashInput(login.username, password)
+  return scrypt(up, passwordAuthSnrp).then(passwordAuth => {
     // Compare what we derived with what we have:
     for (let i = 0; i < passwordAuth.length; ++i) {
       if (passwordAuth[i] !== login.passwordAuth[i]) {
