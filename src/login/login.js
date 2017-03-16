@@ -8,10 +8,22 @@ import { filterObject, objectAssign } from '../util/util.js'
 import { makeAccountType } from '../account.js'
 
 /**
- * Updates the given loginStash object with fields from the auth server.
- * TODO: We don't trust the auth server 100%, so be picky about what we copy.
+ * Replaces a node within a tree.
+ * The `clone` callback is called for each unmodified node.
+ * The `predicate` callback is used to find the target node.
+ * The `update` callback is called on the target.
  */
-export function applyLoginReply (loginStash, loginKey, loginReply) {
+function updateTree (node, clone, predicate, update) {
+  const children = node.children != null ? node.children : []
+  return predicate(node)
+    ? update(node)
+    : clone(
+        node,
+        children.map(child => updateTree(child, clone, predicate, update))
+      )
+}
+
+function applyLoginReplyInner (loginStash, loginKey, loginReply) {
   // Copy common items:
   const out = filterObject(loginReply, [
     'appId',
@@ -46,13 +58,38 @@ export function applyLoginReply (loginStash, loginKey, loginReply) {
   // Keys (we could be more picky about this):
   out.keyBoxes = loginReply.keyBoxes != null ? loginReply.keyBoxes : []
 
+  // Recurse into children:
+  const stashChildren = loginStash.children != null ? loginStash.children : []
+  const replyChildren = loginReply.children != null ? loginReply.children : []
+  if (stashChildren.length > replyChildren.length) {
+    throw new Error('The server has lost children!')
+  }
+  out.children = replyChildren.map((child, index) => {
+    const childStash = stashChildren[index] != null ? stashChildren[index] : {}
+    const childKey = decrypt(child.parentBox, loginKey)
+    return applyLoginReplyInner(childStash, childKey, child)
+  })
+
   return out
 }
 
 /**
- * Converts a loginStash into an in-memory login object.
+ * Updates the given loginStash object with fields from the auth server.
+ * TODO: We don't trust the auth server 100%, so be picky about what we copy.
  */
-export function makeLogin (loginStash, loginKey) {
+export function applyLoginReply (loginStash, loginKey, loginReply) {
+  return updateTree(
+    loginStash,
+    (stash, newChildren) => {
+      stash.children = newChildren
+      return stash
+    },
+    stash => stash.appId === loginReply.appId,
+    stash => applyLoginReplyInner(stash, loginKey, loginReply)
+  )
+}
+
+function makeLoginInner (loginStash, loginKey) {
   const login = {}
 
   if (loginStash.username != null) {
@@ -123,6 +160,12 @@ export function makeLogin (loginStash, loginKey) {
 
   login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos])
 
+  // Recurse into children:
+  login.children = loginStash.children.map(child => {
+    const childKey = decrypt(child.parentBox, loginKey)
+    return makeLoginInner(child, childKey)
+  })
+
   // Integrity check:
   if (login.loginAuth == null && login.passwordAuth == null) {
     throw new Error('No server authentication methods on login')
@@ -131,6 +174,22 @@ export function makeLogin (loginStash, loginKey) {
   return login
 }
 
+/**
+ * Converts a loginStash into an in-memory login object.
+ */
+export function makeLogin (loginStash, loginKey, appId = '') {
+  return updateTree(
+    loginStash,
+    (stash, newChildren) => {
+      const login = filterObject(stash, ['username', 'appId', 'loginId'])
+      login.keyInfos = []
+      login.children = newChildren
+      return login
+    },
+    stash => stash.appId === appId,
+    stash => makeLoginInner(stash, loginKey)
+  )
+}
 /**
  * Sets up a login v2 server authorization JSON.
  */

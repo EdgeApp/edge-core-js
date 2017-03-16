@@ -68,7 +68,8 @@ export function makeNewKit (io, appId, username, opts) {
           appId,
           loginId: base64.stringify(loginId),
           loginAuthBox,
-          keyBoxes: []
+          keyBoxes: [],
+          children: []
         },
         passwordKit.stash,
         pin2Kit.stash,
@@ -80,7 +81,8 @@ export function makeNewKit (io, appId, username, opts) {
           appId,
           loginId,
           loginAuth,
-          keyInfos: []
+          keyInfos: [],
+          children: []
         },
         passwordKit.login,
         pin2Kit.login,
