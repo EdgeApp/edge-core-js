@@ -1,7 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
 import {base58, base64} from '../util/encoding.js'
-import { loginOnline, makeAuthJson } from './login.js'
+import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 
 function pin2Id (pin2Key, username) {
   return crypto.hmacSha256(fixUsername(username), pin2Key)
@@ -9,6 +9,27 @@ function pin2Id (pin2Key, username) {
 
 function pin2Auth (pin2Key, pin) {
   return crypto.hmacSha256(pin, pin2Key)
+}
+
+/**
+ * Fetches and decrypts the loginKey from the server.
+ * @return Promise<{loginKey, loginReply}>
+ */
+function fetchLoginKey (io, pin2Key, username, pin) {
+  const request = {
+    pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+    pin2Auth: base64.stringify(pin2Auth(pin2Key, pin))
+    // "otp": null
+  }
+  return io.authRequest('POST', '/v2/login', request).then(reply => {
+    if (reply.pin2Box == null) {
+      throw new Error('Missing data for PIN v2 login')
+    }
+    return {
+      loginKey: crypto.decrypt(reply.pin2Box, pin2Key),
+      loginReply: reply
+    }
+  })
 }
 
 /**
@@ -22,30 +43,18 @@ export function getKey (loginStash) {
 
 /**
  * Logs a user in using their PIN.
- * @param username string
- * @param pin2Key the recovery key, as a base58 string.
- * @param pin the PIN, as a string.
- * @param `Login` object promise
  */
-export function login (io, pin2Key, username, pin) {
-  const request = {
-    'pin2Id': base64.stringify(pin2Id(pin2Key, username)),
-    'pin2Auth': base64.stringify(pin2Auth(pin2Key, pin))
-    // "otp": null
-  }
-  return io.authRequest('POST', '/v2/login', request).then(reply => {
-    // PIN login:
-    const pin2Box = reply['pin2Box']
-    if (!pin2Box) {
-      throw new Error('Missing data for PIN v2 login')
+export function login (io, username, pin) {
+  return io.loginStore.load(username).then(loginStash => {
+    const pin2Key = getKey(loginStash)
+    if (pin2Key == null) {
+      throw new Error('No PIN set locally for this account')
     }
-
-    // Decrypt the loginKey:
-    const loginKey = crypto.decrypt(pin2Box, pin2Key)
-
-    // Build the login object:
-    return io.loginStore.getUserId(username).then(userId => {
-      return loginOnline(io, username, userId, loginKey, reply)
+    return fetchLoginKey(io, pin2Key, username, pin).then(values => {
+      const { loginKey, loginReply } = values
+      loginStash = applyLoginReply(loginStash, loginKey, loginReply)
+      io.loginStore.save(loginStash)
+      return makeLogin(loginStash, loginKey)
     })
   })
 }

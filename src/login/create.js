@@ -2,7 +2,7 @@ import * as crypto from '../crypto/crypto.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import {base16, base64} from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
-import { loginOffline, makeAuthJson } from './login.js'
+import { makeAuthJson, makeLogin } from './login.js'
 import { makePasswordKit } from './password.js'
 
 /**
@@ -61,7 +61,7 @@ export function create (io, username, password, opts) {
       // Cache everything for future logins:
       io.loginStore.update(userId, loginStash)
 
-      const login = loginOffline(io, loginKey, loginStash)
+      const login = makeLogin(loginStash, loginKey)
 
       // Now activate:
       const auth = makeAuthJson(login)

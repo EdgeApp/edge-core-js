@@ -1,13 +1,17 @@
+/**
+ * Functions for working with login data in its on-disk format.
+ */
+
 import * as crypto from '../crypto/crypto.js'
-import {fixUsername} from '../io/loginStore.js'
 import {base16, base58, base64, utf8} from '../util/encoding.js'
 import { filterObject } from '../util/util.js'
 import * as server from './server.js'
 
 /**
- * Converts a login reply from the server into the local storage format.
+ * Updates the given loginStash object with fields from the auth server.
+ * TODO: We don't trust the auth server 100%, so be picky about what we copy.
  */
-function makeLoginStash (username, loginReply, loginKey) {
+export function applyLoginReply (loginStash, loginKey, loginReply) {
   // Copy common items:
   const out = filterObject(loginReply, [
     'passwordAuthBox',
@@ -18,8 +22,8 @@ function makeLoginStash (username, loginReply, loginKey) {
     'repos'
   ])
 
-  // Store the normalized username:
-  out.username = fixUsername(username)
+  out.username = loginStash.username
+  out.userId = loginStash.userId
 
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
@@ -37,23 +41,14 @@ function makeLoginStash (username, loginReply, loginKey) {
 }
 
 /**
- * Access to the logged-in user data.
- *
- * This type has following powers:
- * - Access to the auth server
- * - A list of account repos
- * - The legacy BitID rootKey
+ * Converts a loginStash into an in-memory login object.
  */
-function makeLogin (io, userId, loginKey, loginStash) {
+export function makeLogin (loginStash, loginKey) {
   const login = {}
-
-  if (userId.length !== 32) {
-    throw new Error('userId must be a hash')
-  }
 
   // Identity:
   login.username = loginStash.username
-  login.userId = userId
+  login.userId = base64.parse(loginStash.userId)
   login.loginKey = loginKey
 
   // Return access to the server:
@@ -82,34 +77,6 @@ function makeLogin (io, userId, loginKey, loginStash) {
   if (loginStash.recovery2Key != null) {
     login.recovery2Key = base58.parse(loginStash.recovery2Key)
   }
-
-  return login
-}
-
-/**
- * Returns a new login object, populated with data from the server.
- */
-export function loginOnline (io, username, userId, loginKey, loginReply) {
-  const loginStash = makeLoginStash(username, loginReply, loginKey)
-  io.loginStore.update(userId, loginStash)
-
-  return makeLogin(io, userId, loginKey, loginStash)
-}
-
-/**
- * Returns a new login object, populated with data from the local storage.
- */
-export function loginOffline (io, loginKey, loginStash) {
-  const login = makeLogin(io, base64.parse(loginStash.userId), loginKey, loginStash)
-
-  // Try updating our locally-stored login data (failure is ok):
-  io
-    .authRequest('POST', '/v2/login', makeAuthJson(login))
-    .then(loginReply => {
-      loginStash = makeLoginStash(login.username, loginReply, loginKey)
-      return io.loginStore.update(login.userId, loginStash)
-    })
-    .catch(e => io.log.error(e))
 
   return login
 }

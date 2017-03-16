@@ -1,7 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
 import {base58, base64, utf8} from '../util/encoding.js'
-import { loginOnline, makeAuthJson } from './login.js'
+import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 
 function recovery2Id (recovery2Key, username) {
   return crypto.hmacSha256(fixUsername(username), recovery2Key)
@@ -11,6 +11,27 @@ function recovery2Auth (recovery2Key, answers) {
   return answers.map(answer => {
     const data = utf8.parse(answer)
     return base64.stringify(crypto.hmacSha256(data, recovery2Key))
+  })
+}
+
+/**
+ * Fetches and decrypts the loginKey from the server.
+ * @return Promise<{loginKey, loginReply}>
+ */
+function fetchLoginKey (io, recovery2Key, username, answers) {
+  const request = {
+    recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
+    recovery2Auth: recovery2Auth(recovery2Key, answers)
+    // "otp": null
+  }
+  return io.authRequest('POST', '/v2/login', request).then(reply => {
+    if (reply.recovery2Box == null) {
+      throw new Error('Missing data for recovery v2 login')
+    }
+    return {
+      loginKey: crypto.decrypt(reply.recovery2Box, recovery2Key),
+      loginReply: reply
+    }
   })
 }
 
@@ -25,30 +46,14 @@ export function getKey (loginStash) {
 
 /**
  * Logs a user in using recovery answers.
- * @param username string
- * @param recovery2Key an ArrayBuffer recovery key
- * @param array of answer strings
- * @param `Login` object promise
  */
 export function login (io, recovery2Key, username, answers) {
-  const request = {
-    'recovery2Id': base64.stringify(recovery2Id(recovery2Key, username)),
-    'recovery2Auth': recovery2Auth(recovery2Key, answers)
-    // "otp": null
-  }
-  return io.authRequest('POST', '/v2/login', request).then(reply => {
-    // Recovery login:
-    const recovery2Box = reply['recovery2Box']
-    if (recovery2Box == null) {
-      throw new Error('Missing data for recovery v2 login')
-    }
-
-    // Decrypt the loginKey:
-    const loginKey = crypto.decrypt(recovery2Box, recovery2Key)
-
-    // Build the login object:
-    return io.loginStore.getUserId(username).then(userId => {
-      return loginOnline(io, username, userId, loginKey, reply)
+  return io.loginStore.load(username).then(loginStash => {
+    return fetchLoginKey(io, recovery2Key, username, answers).then(values => {
+      const { loginKey, loginReply } = values
+      loginStash = applyLoginReply(loginStash, loginKey, loginReply)
+      io.loginStore.save(loginStash)
+      return makeLogin(loginStash, loginKey)
     })
   })
 }

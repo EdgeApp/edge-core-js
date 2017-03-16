@@ -12,13 +12,6 @@ export class LoginStore {
   }
 
   /**
-   * Finds the userId for a particular username.
-   */
-  getUserId (username) {
-    return this.load(username).then(stash => base64.parse(stash.userId))
-  }
-
-  /**
    * Finds the loginStash for the given username.
    */
   load (username) {
@@ -75,6 +68,13 @@ export class LoginStore {
     const users = this._loadUsers()
     delete users[fixedName]
     this.io.localStorage.setItem('airbitz.users', JSON.stringify(users))
+  }
+
+  /**
+   * Saves a loginStash.
+   */
+  save (loginStash) {
+    return this.update(base64.parse(loginStash.userId), loginStash)
   }
 
   update (userId, loginStash) {

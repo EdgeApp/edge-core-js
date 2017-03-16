@@ -55,12 +55,7 @@ Context.prototype.pinExists = function (username) {
 Context.prototype.pinLoginEnabled = Context.prototype.pinExists
 
 Context.prototype.loginWithPIN = nodeify(function (username, pin) {
-  const loginStash = this.io.loginStore.loadSync(username)
-  const pin2Key = loginPin2.getKey(loginStash)
-  if (pin2Key == null) {
-    throw new Error('No PIN set locally for this account')
-  }
-  return loginPin2.login(this.io, pin2Key, username, pin).then(login => {
+  return loginPin2.login(this.io, username, pin).then(login => {
     return makeAccount(this, login, 'pinLogin')
   })
 })
