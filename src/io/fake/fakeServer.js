@@ -292,27 +292,7 @@ addRoute(
   },
   authHandler,
   function (req) {
-    return makeResponse(
-      filterObject(req.login, [
-        'appId',
-        'loginId',
-        'loginAuthBox',
-        'parentBox',
-        'passwordAuthBox',
-        'passwordAuthSnrp',
-        'passwordBox',
-        'passwordKeySnrp',
-        'pin2Box',
-        'pin2KeyBox',
-        'question2Box',
-        'recovery2Box',
-        'recovery2KeyBox',
-        'mnemonicBox',
-        'rootKeyBox',
-        'syncKeyBox',
-        'keyBoxes'
-      ])
-    )
+    return makeResponse(this.makeReply(req.login))
   }
 )
 
@@ -327,7 +307,7 @@ addRoute('POST', '/api/v2/login/create', function (req) {
   }
 
   // Set up login object:
-  this.db.logins.push(filterObject(data, [
+  const row = filterObject(data, [
     'appId',
     'loginId',
     'loginAuth',
@@ -351,7 +331,11 @@ addRoute('POST', '/api/v2/login/create', function (req) {
     'rootKeyBox', // Same
     'syncKeyBox', // Same
     'repos'
-  ]))
+  ])
+  if (!authHandler.call(this, req)) {
+    row.parent = req.login.loginId
+  }
+  this.db.logins.push(row)
 
   return makeResponse()
 })
@@ -514,6 +498,32 @@ export class FakeServer {
 
   findRecovery2Id (recovery2Id) {
     return this.db.logins.find(login => login.recovery2Id === recovery2Id)
+  }
+
+  makeReply (login) {
+    const reply = filterObject(login, [
+      'appId',
+      'loginId',
+      'loginAuthBox',
+      'parentBox',
+      'passwordAuthBox',
+      'passwordAuthSnrp',
+      'passwordBox',
+      'passwordKeySnrp',
+      'pin2Box',
+      'pin2KeyBox',
+      'question2Box',
+      'recovery2Box',
+      'recovery2KeyBox',
+      'mnemonicBox',
+      'rootKeyBox',
+      'syncKeyBox',
+      'keyBoxes'
+    ])
+    reply.children = this.db.logins
+      .filter(child => child.parent === login.loginId)
+      .map(child => this.makeReply(child))
+    return reply
   }
 
   request (uri, opts) {

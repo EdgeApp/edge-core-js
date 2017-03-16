@@ -134,6 +134,30 @@ export const syncKeyBox = {
   'iv_hex': '59309614b12c169af977681e01d6ad8b'
 }
 
+export const children = [
+  {
+    appId: 'test-child',
+    loginAuth: 'cfNNeN4xPQK7+2/j8xSyF/xm5NVTDOZkzacwO1FTaKw=',
+    loginAuthBox: {
+      encryptionType: 0,
+      iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
+      data_base64: 'VpqitCInCKYD8ZkYgR9/1aPrAFPEPDd/h6mqZmUE9eXuVDKzJcufXV/TgPnomLKBsprNOoZ0QNzudtXYLJu6AxDtMI4i/brvj/6gC26zaqE='
+    },
+    loginId: 'XLEnM4m6ArsEQp+OheBSgIXGLb88RvO086D65ILwAkg=',
+    parentBox: {
+      encryptionType: 0,
+      iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
+      data_base64: 'Eel57GZtGBSs5WmIK2YpCelZd793qsWcjfHz4zrsUHyV8PgifyAcFH/9ByKmHg6JUFUPW5mqMNCjn+gLjUGyibV6LA0iD6FVm+FGhhDlxEY='
+    },
+    keyBoxes: [],
+    children: []
+  }
+]
+
+export const childLoginKey = base64.parse(
+  'Ae7zAhoykf1Zky9Lx9vs6VkC0M3VjoLkEpr/5Mf31Xo='
+)
+
 // Repositories:
 export const repos = {
   'e254eb85285f96574a33bfe97b13f533fe245b42': {
@@ -172,6 +196,18 @@ export function makeAccount (context) {
     body: JSON.stringify({ data })
   })
 
+  // Create children on the auth server:
+  children.forEach(child => {
+    context.io.fetch('https://hostname/api/v2/login/create', {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: base64.stringify(userId),
+        passwordAuth,
+        data: child
+      })
+    })
+  })
+
   // Store the login on the client:
   const loginStash = {
     username: context.fixUsername(username),
@@ -186,7 +222,8 @@ export function makeAccount (context) {
     recovery2Key: base64.stringify(recovery2Key),
     rootKeyBox,
     syncKeyBox,
-    keyBoxes: []
+    keyBoxes: [],
+    children
   }
   context.io.loginStore.save(loginStash)
 
