@@ -4,7 +4,7 @@
  */
 import {Account} from '../../src/account.js'
 import { makeLogin } from '../../src/login/login.js'
-import { base16, base58, base64 } from '../../src/util/encoding.js'
+import { base16, base64 } from '../../src/util/encoding.js'
 import * as repoModule from '../../src/util/repo.js'
 
 export const userId = base64.parse('m3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=')
@@ -180,10 +180,10 @@ export function makeAccount (context) {
     passwordAuthBox,
     passwordBox,
     passwordKeySnrp,
-    pinAuthId: pinId,
+    pinId,
     pinBox,
-    pin2Key: base58.stringify(pin2Key),
-    recovery2Key: base58.stringify(recovery2Key),
+    pin2Key: base64.stringify(pin2Key),
+    recovery2Key: base64.stringify(recovery2Key),
     rootKeyBox,
     syncKeyBox,
     keyBoxes: []

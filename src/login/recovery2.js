@@ -1,6 +1,6 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
-import {base58, base64, utf8} from '../util/encoding.js'
+import { base64, utf8 } from '../util/encoding.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 
 function recovery2Id (recovery2Key, username) {
@@ -40,7 +40,7 @@ function fetchLoginKey (io, recovery2Key, username, answers) {
  */
 export function getKey (loginStash) {
   if (loginStash.recovery2Key != null) {
-    return base58.parse(loginStash.recovery2Key)
+    return base64.parse(loginStash.recovery2Key)
   }
 }
 
@@ -111,7 +111,7 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
       question2Box
     },
     stash: {
-      recovery2Key: base58.stringify(recovery2Key)
+      recovery2Key: base64.stringify(recovery2Key)
     },
     login: {
       recovery2Key

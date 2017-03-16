@@ -1,6 +1,6 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
-import {base58, base64} from '../util/encoding.js'
+import { base64 } from '../util/encoding.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 
 function pin2Id (pin2Key, username) {
@@ -37,7 +37,7 @@ function fetchLoginKey (io, pin2Key, username, pin) {
  */
 export function getKey (loginStash) {
   if (loginStash.pin2Key != null) {
-    return base58.parse(loginStash.pin2Key)
+    return base64.parse(loginStash.pin2Key)
   }
 }
 
@@ -75,7 +75,7 @@ export function makePin2Kit (io, login, username, pin) {
       pin2KeyBox
     },
     stash: {
-      pin2Key: base58.stringify(pin2Key)
+      pin2Key: base64.stringify(pin2Key)
     },
     login: {
       pin2Key

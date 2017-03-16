@@ -3,7 +3,7 @@
  */
 
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
-import { base16, base58, base64, utf8 } from '../util/encoding.js'
+import { base16, base64, utf8 } from '../util/encoding.js'
 import { filterObject, objectAssign } from '../util/util.js'
 import { makeAccountType } from '../account.js'
 
@@ -29,13 +29,13 @@ export function applyLoginReply (loginStash, loginKey, loginReply) {
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
     const pin2Key = decrypt(loginReply.pin2KeyBox, loginKey)
-    out.pin2Key = base58.stringify(pin2Key)
+    out.pin2Key = base64.stringify(pin2Key)
   }
 
   // Store the recovery key unencrypted:
   if (loginReply.recovery2KeyBox != null) {
     const recovery2Key = decrypt(loginReply.recovery2KeyBox, loginKey)
-    out.recovery2Key = base58.stringify(recovery2Key)
+    out.recovery2Key = base64.stringify(recovery2Key)
   }
 
   // Keys (we could be more picky about this):
@@ -98,10 +98,10 @@ export function makeLogin (loginStash, loginKey) {
 
   // Local keys:
   if (loginStash.pin2Key != null) {
-    login.pin2Key = base58.parse(loginStash.pin2Key)
+    login.pin2Key = base64.parse(loginStash.pin2Key)
   }
   if (loginStash.recovery2Key != null) {
-    login.recovery2Key = base58.parse(loginStash.recovery2Key)
+    login.recovery2Key = base64.parse(loginStash.recovery2Key)
   }
 
   return login
