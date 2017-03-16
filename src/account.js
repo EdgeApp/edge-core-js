@@ -1,3 +1,4 @@
+import { findAccount } from './login/login.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
@@ -15,7 +16,7 @@ import {WalletList} from './util/walletList.js'
 export function Account (ctx, login) {
   this.io = ctx.io
   this.login = login
-  this.keys = login.accountFind(ctx.accountType)
+  this.keys = findAccount(login, ctx.accountType)
   this.repoInfo = this.keys // Deprecated name
   this.loggedIn = true
   this.edgeLogin = false

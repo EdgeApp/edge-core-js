@@ -1,7 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
 import {base58, base64} from '../util/encoding.js'
-import {Login} from './login.js'
+import { loginOnline, makeAuthJson } from './login.js'
 
 function pin2Id (pin2Key, username) {
   return crypto.hmacSha256(fixUsername(username), pin2Key)
@@ -46,7 +46,7 @@ export function login (io, pin2Key, username, pin) {
 
     // Build the login object:
     return io.loginStore.getUserId(username).then(userId => {
-      return Login.online(io, username, userId, loginKey, reply)
+      return loginOnline(io, username, userId, loginKey, reply)
     })
   })
 }
@@ -81,7 +81,7 @@ export function makePin2Kit (io, login, username, pin) {
 export function setup (io, login, pin) {
   const kit = makePin2Kit(io, login, login.username, pin)
 
-  const request = login.authJson()
+  const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/pin2', request).then(reply => {
     io.loginStore.update(login.userId, kit.stash)

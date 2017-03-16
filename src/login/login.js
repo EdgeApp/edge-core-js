@@ -44,80 +44,84 @@ function makeLoginStash (username, loginReply, loginKey) {
  * - A list of account repos
  * - The legacy BitID rootKey
  */
-export function Login (io, userId, loginKey, loginStash) {
+function makeLogin (io, userId, loginKey, loginStash) {
+  const login = {}
+
   if (userId.length !== 32) {
     throw new Error('userId must be a hash')
   }
 
   // Identity:
-  this.username = loginStash.username
-  this.userId = userId
-  this.loginKey = loginKey
+  login.username = loginStash.username
+  login.userId = userId
+  login.loginKey = loginKey
 
   // Return access to the server:
   if (loginStash.passwordAuthBox == null) {
     throw new Error('Missing passwordAuthBox')
   }
-  this.passwordAuth = crypto.decrypt(loginStash.passwordAuthBox, loginKey)
+  login.passwordAuth = crypto.decrypt(loginStash.passwordAuthBox, loginKey)
 
   // Legacy account repo:
   if (loginStash.syncKeyBox != null) {
-    this.syncKey = crypto.decrypt(loginStash.syncKeyBox, loginKey)
+    login.syncKey = crypto.decrypt(loginStash.syncKeyBox, loginKey)
   }
 
   // Legacy BitID key:
   if (loginStash.rootKeyBox != null) {
-    this.rootKey = crypto.decrypt(loginStash.rootKeyBox, loginKey)
+    login.rootKey = crypto.decrypt(loginStash.rootKeyBox, loginKey)
   }
 
   // TODO: Decrypt these:
-  this.repos = loginStash.repos || []
+  login.repos = loginStash.repos || []
 
   // Local keys:
   if (loginStash.pin2Key != null) {
-    this.pin2Key = base58.parse(loginStash.pin2Key)
+    login.pin2Key = base58.parse(loginStash.pin2Key)
   }
   if (loginStash.recovery2Key != null) {
-    this.recovery2Key = base58.parse(loginStash.recovery2Key)
+    login.recovery2Key = base58.parse(loginStash.recovery2Key)
   }
+
+  return login
 }
 
 /**
  * Returns a new login object, populated with data from the server.
  */
-Login.online = function (io, username, userId, loginKey, loginReply) {
+export function loginOnline (io, username, userId, loginKey, loginReply) {
   const loginStash = makeLoginStash(username, loginReply, loginKey)
   io.loginStore.update(userId, loginStash)
 
-  return new Login(io, userId, loginKey, loginStash)
+  return makeLogin(io, userId, loginKey, loginStash)
 }
 
 /**
  * Returns a new login object, populated with data from the local storage.
  */
-Login.offline = function (io, username, userId, loginKey) {
+export function loginOffline (io, username, userId, loginKey) {
   const loginStash = io.loginStore.find({username})
-  const out = new Login(io, userId, loginKey, loginStash)
+  const login = makeLogin(io, userId, loginKey, loginStash)
 
   // Try updating our locally-stored login data (failure is ok):
   io
-    .authRequest('POST', '/v2/login', out.authJson())
+    .authRequest('POST', '/v2/login', makeAuthJson(login))
     .then(loginReply => {
       const loginStash = makeLoginStash(username, loginReply, loginKey)
       return io.loginStore.update(userId, loginStash)
     })
     .catch(e => io.log.error(e))
 
-  return out
+  return login
 }
 
 /**
  * Sets up a login v2 server authorization JSON.
  */
-Login.prototype.authJson = function () {
+export function makeAuthJson (login) {
   return {
-    'userId': base64.stringify(this.userId),
-    'passwordAuth': base64.stringify(this.passwordAuth)
+    'userId': base64.stringify(login.userId),
+    'passwordAuth': base64.stringify(login.passwordAuth)
   }
 }
 
@@ -125,20 +129,20 @@ Login.prototype.authJson = function () {
  * Searches for the given account type in the provided login object.
  * Returns the repo keys in the JSON bundle format.
  */
-Login.prototype.accountFind = function (type) {
+export function findAccount (login, type) {
   // Search the repos array:
-  for (const repo of this.repos) {
+  for (const repo of login.repos) {
     if (repo['type'] === type) {
       const keysBox = repo['keysBox'] || repo['info']
-      return JSON.parse(utf8.stringify(crypto.decrypt(keysBox, this.loginKey)))
+      return JSON.parse(utf8.stringify(crypto.decrypt(keysBox, login.loginKey)))
     }
   }
 
   // Handle the legacy Airbitz repo:
   if (type === 'account:repo:co.airbitz.wallet') {
     return {
-      'syncKey': base16.stringify(this.syncKey),
-      'dataKey': base16.stringify(this.loginKey)
+      'syncKey': base16.stringify(login.syncKey),
+      'dataKey': base16.stringify(login.loginKey)
     }
   }
 
@@ -148,10 +152,10 @@ Login.prototype.accountFind = function (type) {
 /**
  * Creates and attaches new account repo.
  */
-Login.prototype.accountCreate = function (io, type) {
-  return server.repoCreate(io, this, {}).then(keysJson => {
-    return this.accountAttach(io, type, keysJson).then(() => {
-      return server.repoActivate(io, this, keysJson)
+export function createAccount (io, login, type) {
+  return server.repoCreate(io, login, {}).then(keysJson => {
+    return attachAccount(io, login, type, keysJson).then(() => {
+      return server.repoActivate(io, login, keysJson)
     })
   })
 }
@@ -159,18 +163,18 @@ Login.prototype.accountCreate = function (io, type) {
 /**
  * Attaches an account repo to the login.
  */
-Login.prototype.accountAttach = function (io, type, info) {
+export function attachAccount (io, login, type, info) {
   const infoBlob = utf8.parse(JSON.stringify(info))
   const data = {
     'type': type,
-    'info': crypto.encrypt(io, infoBlob, this.loginKey)
+    'info': crypto.encrypt(io, infoBlob, login.loginKey)
   }
 
-  const request = this.authJson()
+  const request = makeAuthJson(login)
   request['data'] = data
   return io.authRequest('POST', '/v2/login/repos', request).then(reply => {
-    this.repos.push(data)
-    io.loginStore.update(this.userId, {repos: this.repos})
+    login.repos.push(data)
+    io.loginStore.update(login.userId, {repos: login.repos})
     return null
   })
 }

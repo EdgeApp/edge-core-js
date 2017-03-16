@@ -3,7 +3,7 @@
  * used by the unit tests.
  */
 import {Account} from '../../src/account.js'
-import {Login} from '../../src/login/login.js'
+import { loginOffline } from '../../src/login/login.js'
 import { base16, base58, base64 } from '../../src/util/encoding.js'
 import * as repoModule from '../../src/util/repo.js'
 
@@ -208,6 +208,6 @@ export function makeAccount (context) {
   })
 
   // Return the account object:
-  const login = Login.offline(context.io, fixedName, userId, loginKey)
+  const login = loginOffline(context.io, fixedName, userId, loginKey)
   return new Account(context, login)
 }

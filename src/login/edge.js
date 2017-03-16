@@ -2,6 +2,7 @@ import * as crypto from '../crypto/crypto.js'
 import {elliptic} from '../crypto/external.js'
 import {base16, base58, utf8} from '../util/encoding.js'
 import * as loginCreate from './create.js'
+import { attachAccount } from './login.js'
 import * as loginPin2 from './pin2.js'
 
 const EllipticCurve = elliptic.ec
@@ -30,7 +31,7 @@ function createLogin (io, accountReply) {
   }
 
   return loginCreate.create(io, username, password, opts).then(login => {
-    return login.accountAttach(io, accountReply.type, accountReply.info).then(() => {
+    return attachAccount(io, login, accountReply.type, accountReply.info).then(() => {
       if (typeof pin === 'string' && pin.length === 4) {
         if (loginPin2.getKey(io, username) == null) {
           return loginPin2.setup(io, login, pin).catch(e => login)

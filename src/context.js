@@ -2,6 +2,7 @@ import {Account} from './account.js'
 import {fixUsername} from './io/loginStore.js'
 import * as loginCreate from './login/create.js'
 import * as loginEdge from './login/edge.js'
+import { createAccount, findAccount } from './login/login.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
@@ -37,10 +38,10 @@ Context.prototype.usernameAvailable = nodeify(function (username) {
 Context.prototype.createAccount = nodeify(function (username, password, pin) {
   return loginCreate.create(this.io, username, password, {}).then(login => {
     try {
-      login.accountFind(this.accountType)
+      findAccount(login, this.accountType)
     } catch (e) {
       // If the login doesn't have the correct account type, add it first:
-      return login.accountCreate(this.io, this.accountType).then(() => {
+      return createAccount(this.io, login, this.accountType).then(() => {
         return loginPin2.setup(this.io, login, pin).then(login => {
           const account = new Account(this, login)
           account.newAccount = true

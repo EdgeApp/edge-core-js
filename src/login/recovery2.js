@@ -1,7 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
 import {base58, base64, utf8} from '../util/encoding.js'
-import {Login} from './login.js'
+import { loginOnline, makeAuthJson } from './login.js'
 
 function recovery2Id (recovery2Key, username) {
   return crypto.hmacSha256(fixUsername(username), recovery2Key)
@@ -49,7 +49,7 @@ export function login (io, recovery2Key, username, answers) {
 
     // Build the login object:
     return io.loginStore.getUserId(username).then(userId => {
-      return Login.online(io, username, userId, loginKey, reply)
+      return loginOnline(io, username, userId, loginKey, reply)
     })
   })
 }
@@ -121,7 +121,7 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
 export function setup (io, login, questions, answers) {
   const kit = makeRecovery2Kit(io, login, login.username, questions, answers)
 
-  const request = login.authJson()
+  const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/recovery2', request).then(reply => {
     io.loginStore.update(login.userId, kit.stash)

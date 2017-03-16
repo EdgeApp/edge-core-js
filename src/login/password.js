@@ -3,7 +3,11 @@ import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
 import {fixUsername} from '../io/loginStore.js'
 import {rejectify} from '../util/decorators.js'
 import {base64} from '../util/encoding.js'
-import {Login} from './login.js'
+import {
+  loginOnline as makeLoginOnline,
+  loginOffline as makeLoginOffline,
+  makeAuthJson
+} from './login.js'
 
 function makeHashInput (username, password) {
   return fixUsername(username) + password
@@ -22,7 +26,7 @@ function loginOffline (io, username, userId, password) {
   const up = makeHashInput(username, password)
   return scrypt(up, passwordKeySnrp).then(passwordKey => {
     const loginKey = crypto.decrypt(passwordBox, passwordKey)
-    return Login.offline(io, username, userId, loginKey)
+    return makeLoginOffline(io, username, userId, loginKey)
   })
 }
 
@@ -48,7 +52,7 @@ function loginOnline (io, username, userId, password) {
         const loginKey = crypto.decrypt(passwordBox, passwordKey)
 
         // Build the login object:
-        return Login.online(io, username, userId, loginKey, reply)
+        return makeLoginOnline(io, username, userId, loginKey, reply)
       })
     })
   })
@@ -135,7 +139,7 @@ export function makePasswordKit (io, login, username, password) {
  */
 export function setup (io, login, password) {
   return makePasswordKit(io, login, login.username, password).then(kit => {
-    const request = login.authJson()
+    const request = makeAuthJson(login)
     request.data = kit.server
     return io.authRequest('POST', '/v2/login/password', request).then(reply => {
       io.loginStore.update(login.userId, kit.stash)

@@ -1,5 +1,6 @@
 /* global describe, it */
 import { makeFakeContexts } from '../src'
+import { attachAccount, findAccount } from '../src/login/login.js'
 import { base58 } from '../src/util/encoding.js'
 import * as fakeUser from './fake/fakeUser.js'
 import assert from 'assert'
@@ -9,9 +10,9 @@ describe('login', function () {
     const [context] = makeFakeContexts(1)
     const login = fakeUser.makeAccount(context).login
 
-    assert.ok(login.accountFind('account:repo:co.airbitz.wallet'))
+    assert.ok(findAccount(login, 'account:repo:co.airbitz.wallet'))
     assert.throws(function () {
-      login.accountFind('account:repo:blah')
+      findAccount(login, 'account:repo:blah')
     })
   })
 
@@ -23,10 +24,9 @@ describe('login', function () {
       dataKey: 'fa57',
       syncKey: 'f00d'
     }
-    return login
-      .accountAttach(context.io, 'account:repo:test', info)
+    return attachAccount(context.io, login, 'account:repo:test', info)
       .then(() => {
-        assert.deepEqual(login.accountFind('account:repo:test'), info)
+        assert.deepEqual(findAccount(login, 'account:repo:test'), info)
         return null
       })
   })
