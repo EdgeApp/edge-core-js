@@ -23,7 +23,7 @@ export function usernameAvailable (io, username) {
 export function create (io, username, password, opts) {
   // Create account repo info:
   const loginKey = io.random(32)
-  const syncKey = opts.syncKey || io.random(20)
+  const syncKey = io.random(20)
   const syncKeyBox = crypto.encrypt(io, syncKey, loginKey)
 
   return Promise.all([
@@ -53,7 +53,8 @@ export function create (io, username, password, opts) {
         username: fixUsername(username),
         appId: '',
         userId: base64.stringify(userId),
-        syncKeyBox
+        syncKeyBox,
+        keyBoxes: []
       },
       passwordKit.stash
     )

@@ -1,34 +1,38 @@
 /* global describe, it */
 import { makeFakeContexts } from '../src'
-import { attachAccount, findAccount } from '../src/login/login.js'
-import { base58 } from '../src/util/encoding.js'
+import { attachKeys, makeKeyInfo } from '../src/login/login.js'
+import { base58, base64 } from '../src/util/encoding.js'
 import * as fakeUser from './fake/fakeUser.js'
 import assert from 'assert'
+
+function findKeys (login, type) {
+  return login.keyInfos.find(info => info.type === type)
+}
 
 describe('login', function () {
   it('find repo', function () {
     const [context] = makeFakeContexts(1)
     const login = fakeUser.makeAccount(context).login
 
-    assert.ok(findAccount(login, 'account:repo:co.airbitz.wallet'))
-    assert.throws(function () {
-      findAccount(login, 'account:repo:blah')
-    })
+    const accountRepo = findKeys(login, 'account-repo:co.airbitz.wallet')
+    assert(accountRepo)
+    assert.equal(accountRepo.keys.syncKey, base64.stringify(fakeUser.syncKey))
+    assert(findKeys(login, 'account-repo:blah') == null)
   })
 
   it('attach repo', function () {
     const [context] = makeFakeContexts(1)
     const login = fakeUser.makeAccount(context).login
 
-    const info = {
+    const keysJson = {
       dataKey: 'fa57',
       syncKey: 'f00d'
     }
-    return attachAccount(context.io, login, 'account:repo:test', info)
-      .then(() => {
-        assert.deepEqual(findAccount(login, 'account:repo:test'), info)
-        return null
-      })
+    const keyInfo = makeKeyInfo(keysJson, 'account-repo:blah', [])
+    return attachKeys(context.io, login, [keyInfo]).then(() => {
+      assert.deepEqual(findKeys(login, 'account-repo:blah'), keyInfo)
+      return null
+    })
   })
 })
 

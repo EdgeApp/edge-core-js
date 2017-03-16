@@ -47,7 +47,7 @@ export class LoginStore {
 
       rootKeyBox: store.getJson('rootKeyBox'),
       syncKeyBox: store.getJson('syncKeyBox'),
-      repos: store.getJson('repos') || []
+      keyBoxes: store.getJson('keyBoxes') || []
     }
   }
 

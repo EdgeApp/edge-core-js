@@ -2,10 +2,10 @@
  * Functions for working with login data in its on-disk format.
  */
 
-import * as crypto from '../crypto/crypto.js'
-import {base16, base58, base64, utf8} from '../util/encoding.js'
-import { filterObject } from '../util/util.js'
-import * as server from './server.js'
+import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
+import { base16, base58, base64, utf8 } from '../util/encoding.js'
+import { filterObject, objectAssign } from '../util/util.js'
+import { makeAccountType } from '../account.js'
 
 /**
  * Updates the given loginStash object with fields from the auth server.
@@ -19,8 +19,8 @@ export function applyLoginReply (loginStash, loginKey, loginReply) {
     'passwordBox',
     'passwordKeySnrp',
     'rootKeyBox',
-    'syncKeyBox',
-    'repos'
+    'mnemonicBox',
+    'syncKeyBox'
   ])
 
   out.username = loginStash.username
@@ -28,15 +28,18 @@ export function applyLoginReply (loginStash, loginKey, loginReply) {
 
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
-    const pin2Key = crypto.decrypt(loginReply.pin2KeyBox, loginKey)
+    const pin2Key = decrypt(loginReply.pin2KeyBox, loginKey)
     out.pin2Key = base58.stringify(pin2Key)
   }
 
   // Store the recovery key unencrypted:
   if (loginReply.recovery2KeyBox != null) {
-    const recovery2Key = crypto.decrypt(loginReply.recovery2KeyBox, loginKey)
+    const recovery2Key = decrypt(loginReply.recovery2KeyBox, loginKey)
     out.recovery2Key = base58.stringify(recovery2Key)
   }
+
+  // Keys (we could be more picky about this):
+  out.keyBoxes = loginReply.keyBoxes != null ? loginReply.keyBoxes : []
 
   return out
 }
@@ -61,20 +64,37 @@ export function makeLogin (loginStash, loginKey) {
   if (loginStash.passwordAuthBox == null) {
     throw new Error('Missing passwordAuthBox')
   }
-  login.passwordAuth = crypto.decrypt(loginStash.passwordAuthBox, loginKey)
+  login.passwordAuth = decrypt(loginStash.passwordAuthBox, loginKey)
 
-  // Legacy account repo:
+  const legacyKeys = []
+
+  // BitID wallet:
+  if (loginStash.menemonicBox != null && loginStash.rootKeyBox != null) {
+    const mnemonic = utf8.stringify(decrypt(loginStash.menemonicBox, loginKey))
+    const rootKey = decrypt(loginStash.rootKeyBox, loginKey)
+    const keysJson = {
+      mnemonic,
+      rootKey: base64.stringify(rootKey)
+    }
+    legacyKeys.push(makeKeyInfo(keysJson, 'wallet:bitid', rootKey))
+  }
+
+  // Account settings:
   if (loginStash.syncKeyBox != null) {
-    login.syncKey = crypto.decrypt(loginStash.syncKeyBox, loginKey)
+    const syncKey = decrypt(loginStash.syncKeyBox, loginKey)
+    const type = makeAccountType(login.appId)
+    const keysJson = {
+      syncKey: base64.stringify(syncKey),
+      dataKey: base64.stringify(loginKey)
+    }
+    legacyKeys.push(makeKeyInfo(keysJson, type, loginKey))
   }
 
-  // Legacy BitID key:
-  if (loginStash.rootKeyBox != null) {
-    login.rootKey = crypto.decrypt(loginStash.rootKeyBox, loginKey)
-  }
+  // Keys:
+  const keyInfos = loginStash.keyBoxes.map(box =>
+    JSON.parse(utf8.stringify(decrypt(box, loginKey))))
 
-  // TODO: Decrypt these:
-  login.repos = loginStash.repos || []
+  login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos])
 
   // Local keys:
   if (loginStash.pin2Key != null) {
@@ -98,55 +118,95 @@ export function makeAuthJson (login) {
 }
 
 /**
- * Searches for the given account type in the provided login object.
- * Returns the repo keys in the JSON bundle format.
+ * Assembles the key metadata structure that is encrypted within a keyBox.
+ * @param idKey Used to derive the wallet id. It's usually `dataKey`.
  */
-export function findAccount (login, type) {
-  // Search the repos array:
-  for (const repo of login.repos) {
-    if (repo['type'] === type) {
-      const keysBox = repo['keysBox'] || repo['info']
-      return JSON.parse(utf8.stringify(crypto.decrypt(keysBox, login.loginKey)))
-    }
+export function makeKeyInfo (keys, type, idKey) {
+  return {
+    id: base64.stringify(hmacSha256(idKey, utf8.parse(type))),
+    type,
+    keys
   }
-
-  // Handle the legacy Airbitz repo:
-  if (type === 'account:repo:co.airbitz.wallet') {
-    return {
-      'syncKey': base16.stringify(login.syncKey),
-      'dataKey': base16.stringify(login.loginKey)
-    }
-  }
-
-  throw new Error(`Cannot find a "${type}" repo`)
 }
 
 /**
- * Creates and attaches new account repo.
+ * Assembles all the resources needed to attach new keys to the account.
  */
-export function createAccount (io, login, type) {
-  return server.repoCreate(io, login, {}).then(keysJson => {
-    return attachAccount(io, login, type, keysJson).then(() => {
-      return server.repoActivate(io, login, keysJson)
-    })
+export function makeKeysKit (io, login, keyInfos, newSyncKeys = []) {
+  const keyBoxes = keyInfos.map(info =>
+    encrypt(io, utf8.parse(JSON.stringify(info)), login.loginKey))
+
+  return {
+    server: {
+      keyBoxes,
+      newSyncKeys: newSyncKeys.map(syncKey => base16.stringify(syncKey))
+    },
+    stash: { keyBoxes },
+    login: { keyInfos }
+  }
+}
+
+/**
+ * Flattens an array of key structures, removing duplicates.
+ */
+export function mergeKeyInfos (keyInfos) {
+  const ids = [] // All ID's, in order of appearance
+  const keys = {} // All keys, indexed by id
+  const types = {} // Key types, indexed by id
+
+  keyInfos.forEach(info => {
+    const id = info.id
+    if (id == null || base64.parse(id).length !== 32) {
+      throw new Error(`Key integrity violation: invalid id ${id}`)
+    }
+
+    if (keys[id] == null) {
+      // The id is new, so just insert the keys:
+      ids.push(id)
+      keys[id] = objectAssign({}, info.keys)
+      types[id] = info.type
+    } else {
+      // An object with this ID already exists, so update it:
+      if (types[id] !== info.type) {
+        throw new Error(
+          `Key integrity violation for ${id}: type ${info.type} does not match ${types[id]}`
+        )
+      }
+      info.keys.forEach(key => {
+        if (keys[id][key] && keys[id][key] !== info.keys[key]) {
+          throw new Error(
+            `Key integrity violation for ${id}: ${key} keys do not match`
+          )
+        }
+        keys[id][key] = info.keys[key]
+      })
+    }
+  })
+
+  return ids.map(id => {
+    return {
+      id,
+      keys: keys[id],
+      type: types[id]
+    }
   })
 }
 
 /**
- * Attaches an account repo to the login.
+ * Attaches keys to the login object,
+ * optionally creating any repos needed.
  */
-export function attachAccount (io, login, type, info) {
-  const infoBlob = utf8.parse(JSON.stringify(info))
-  const data = {
-    'type': type,
-    'info': crypto.encrypt(io, infoBlob, login.loginKey)
-  }
+export function attachKeys (io, login, keyInfos, syncKeys = []) {
+  const kit = makeKeysKit(io, login, keyInfos, syncKeys)
 
   const request = makeAuthJson(login)
-  request['data'] = data
-  return io.authRequest('POST', '/v2/login/repos', request).then(reply => {
-    login.repos.push(data)
-    io.loginStore.update(login.userId, {repos: login.repos})
-    return null
+  request.data = kit.server
+  return io.authRequest('POST', '/v2/login/keys', request).then(reply => {
+    login.keyInfos = mergeKeyInfos([...login.keyInfos, ...kit.login.keyInfos])
+    const oldKeys = io.loginStore.loadSync(login.username).keyBoxes
+    io.loginStore.update(login.userId, {
+      keys: [...oldKeys, ...kit.stash.keyBoxes]
+    })
+    return login
   })
 }

@@ -268,7 +268,7 @@ addRoute(
         'recovery2KeyBox',
         'rootKeyBox',
         'syncKeyBox',
-        'repos'
+        'keyBoxes'
       ])
     )
   }
@@ -305,9 +305,28 @@ addRoute('POST', '/api/v2/login/create', function (req) {
       'recovery2KeyBox',
       'rootKeyBox',
       'syncKeyBox',
-      'repos'
+      'keyBoxes'
     ])
   )
+
+  return makeResponse()
+})
+
+addRoute('POST', '/api/v2/login/keys', authHandler, function (req) {
+  const data = req.body['data']
+  if (data.keyBoxes == null) {
+    return makeErrorResponse(errorCodes.error)
+  }
+
+  // Set up repos:
+  if (data.newSyncKeys != null) {
+    data.newSyncKeys.forEach(syncKey => {
+      this.repos[syncKey] = {}
+    })
+  }
+
+  const keyBoxes = this.db.keyBoxes != null ? this.db.keyBoxes : []
+  this.db.keyBoxes = [...keyBoxes, ...data.keyBoxes]
 
   return makeResponse()
 })
@@ -367,21 +386,6 @@ addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
   this.db.recovery2Box = data.recovery2Box
   this.db.recovery2Id = data.recovery2Id
   this.db.recovery2KeyBox = data.recovery2KeyBox
-
-  return makeResponse()
-})
-
-addRoute('POST', '/api/v2/login/repos', authHandler, function (req) {
-  const data = req.body['data']
-  if (data.type == null || data.info == null) {
-    return makeErrorResponse(errorCodes.error)
-  }
-
-  if (this.db.repos != null) {
-    this.db.repos.push(data)
-  } else {
-    this.db.repos = [data]
-  }
 
   return makeResponse()
 })

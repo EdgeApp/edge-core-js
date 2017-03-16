@@ -1,3 +1,4 @@
+import { attachKeys } from '../login/login.js'
 import {repoId} from './repo.js'
 import {base16} from './encoding.js'
 
@@ -84,19 +85,26 @@ WalletList.prototype.getKeys = function (id) {
  * This will typically include `dataKey`, `syncKey`,
  * and some type of crytpocurrency key.
  */
-WalletList.prototype.addWallet = function (type, keysJson) {
-  const walletJson = {
-    'type': type,
-    'keys': keysJson,
-    'Archived': false,
-    'SortIndex': 0
-  }
+WalletList.prototype.addWallet = function (io, login, type, keysJson) {
+  keysJson.dataKey = keysJson.dataKey || base16.stringify(io.random(32))
+  keysJson.syncKey = keysJson.syncKey || base16.stringify(io.random(20))
+  const dataKey = base16.parse(keysJson.dataKey)
+  const syncKey = base16.parse(keysJson.syncKey)
 
-  const dataKey = base16.parse(keysJson['dataKey'])
-  const filename = this.repo.secureFilename(dataKey)
-  this.repo.setJson(this.folder + '/' + filename, walletJson)
+  // We are just using this to create the repo, not to attach:
+  return attachKeys(io, login, [], [syncKey]).then(() => {
+    const walletJson = {
+      type: type,
+      keys: keysJson,
+      Archived: false,
+      SortIndex: 0
+    }
 
-  const id = walletId(walletJson)
-  this.wallets[id] = walletJson
-  return id
+    const filename = this.repo.secureFilename(dataKey)
+    this.repo.setJson(this.folder + '/' + filename, walletJson)
+
+    const id = walletId(walletJson)
+    this.wallets[id] = walletJson
+    return id
+  })
 }

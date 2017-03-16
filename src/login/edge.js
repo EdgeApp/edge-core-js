@@ -1,8 +1,8 @@
 import * as crypto from '../crypto/crypto.js'
 import {elliptic} from '../crypto/external.js'
-import {base16, base58, utf8} from '../util/encoding.js'
+import { base58, base64, utf8 } from '../util/encoding.js'
 import * as loginCreate from './create.js'
-import { attachAccount } from './login.js'
+import { attachKeys, makeKeyInfo } from './login.js'
 import * as loginPin2 from './pin2.js'
 
 const EllipticCurve = elliptic.ec
@@ -25,13 +25,10 @@ function createLogin (io, accountReply) {
   const password = base58.stringify(io.random(24))
   const pin = accountReply.pinString
 
-  const opts = {}
-  if (accountReply.type === 'account:repo:co.airbitz.wallet') {
-    opts.syncKey = base16.parse(accountReply.info['syncKey'])
-  }
-
-  return loginCreate.create(io, username, password, opts).then(login => {
-    return attachAccount(io, login, accountReply.type, accountReply.info).then(() => {
+  return loginCreate.create(io, username, password, {}).then(login => {
+    const dataKey = base64.parse(accountReply.info.dataKey)
+    const keyInfo = makeKeyInfo(accountReply.info, accountReply.type, dataKey)
+    return attachKeys(io, login, [keyInfo]).then(() => {
       if (typeof pin === 'string' && pin.length === 4) {
         if (loginPin2.getKey(io, username) == null) {
           return loginPin2.setup(io, login, pin).catch(e => login)

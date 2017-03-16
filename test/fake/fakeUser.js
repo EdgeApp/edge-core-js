@@ -185,7 +185,8 @@ export function makeAccount (context) {
     pin2Key: base58.stringify(pin2Key),
     recovery2Key: base58.stringify(recovery2Key),
     rootKeyBox,
-    syncKeyBox
+    syncKeyBox,
+    keyBoxes: []
   }
   context.io.loginStore.update(userId, loginStash)
 

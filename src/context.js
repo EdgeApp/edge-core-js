@@ -16,7 +16,7 @@ export function Context (io, opts) {
   this.appId = opts.appId != null
     ? opts.appId
     : opts.accountType != null
-      ? opts.accountType.replace(/^account:repo:/, '')
+      ? opts.accountType.replace(/^account.repo:/, '')
       : ''
 }
 

@@ -1,8 +1,9 @@
 /* global describe, it */
 import {makeFakeContexts} from '../src'
 import * as crypto from '../src/crypto/crypto.js'
+import { attachKeys } from '../src/login/login.js'
 import * as loginEdge from '../src/login/edge.js'
-import {utf8} from '../src/util/encoding.js'
+import { base64, utf8 } from '../src/util/encoding.js'
 import * as fakeUser from './fake/fakeUser.js'
 import assert from 'assert'
 import elliptic from 'elliptic'
@@ -14,8 +15,8 @@ const fakeReply = {
   username: 'test',
   pinString: '1234',
   keys: {
-    dataKey: 'fa57',
-    syncKey: 'f00d'
+    dataKey: 'base64encypt',
+    syncKey: 'base64syncit'
   }
 }
 
@@ -50,12 +51,12 @@ describe('edge login', function () {
         },
         'replyKey': '022484c4e59a4a7638045fcb232f7ead696510127276feb37441e3e071117d9cdd',
         'requestKey': '033affa1149e4263db9a7e8320a7f612ffb76dd3099d8786eca8e70a27e48e0ece',
-        'type': 'account:repo:co.airbitz.wallet'
+        'type': 'account-repo:co.airbitz.wallet'
       }
     }
 
     assert.deepEqual(loginEdge.decodeAccountReply(key, lobby), {
-      'type': 'account:repo:co.airbitz.wallet',
+      'type': 'account-repo:co.airbitz.wallet',
       'username': 'test',
       'info': {
         'test': 'test'
@@ -67,8 +68,15 @@ describe('edge login', function () {
     this.timeout(9000)
     const [context, remote] = makeFakeContexts(2)
     const remoteAccount = fakeUser.makeAccount(remote)
-    remoteAccount.createWallet('account:repo:test', fakeReply.keys)
     context.appId = 'test'
+
+    // Make the repo:
+    attachKeys(
+      remote.io,
+      remoteAccount.login,
+      [],
+      [base64.parse(fakeReply.keys.syncKey)]
+    )
 
     const opts = {
       onLogin: function (err, account) {
