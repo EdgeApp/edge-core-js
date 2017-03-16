@@ -103,7 +103,6 @@ export function create (io, username, opts) {
       kit.login.username = fixedName
       kit.stash.username = fixedName
       kit.login.userId = kit.login.loginId
-      kit.stash.userId = kit.stash.loginId
       io.loginStore.save(kit.stash)
 
       return kit.login

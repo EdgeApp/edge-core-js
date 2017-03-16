@@ -25,15 +25,7 @@ export class LoginStore {
    * Finds the loginStash for the given username.
    */
   load (username) {
-    const loginStash = this.loadSync(username)
-    if (loginStash.userId != null) {
-      return Promise.resolve(loginStash)
-    }
-
-    return hashUsername(username).then(userId => {
-      loginStash.userId = base64.stringify(userId)
-      return loginStash
-    })
+    return Promise.resolve(this.loadSync(username))
   }
 
   /**
@@ -43,7 +35,7 @@ export class LoginStore {
     const filename = this._findFilename(username)
     return filename != null
       ? this.storage.getJson(filename)
-      : { username: fixUsername(username) }
+      : { username: fixUsername(username), appId: '' }
   }
 
   /**
@@ -60,22 +52,25 @@ export class LoginStore {
    * Saves a loginStash.
    */
   save (loginStash) {
-    const userId = base64.parse(loginStash.userId)
-    if (userId.length !== 32) {
-      throw new Error('Invalid userId')
+    const loginId = base64.parse(loginStash.loginId)
+    if (loginStash.appId == null) {
+      throw new Error('Cannot save a login without an appId.')
     }
-    const filename = base58.stringify(userId)
+    if (loginId.length !== 32) {
+      throw new Error('Invalid loginId')
+    }
+    const filename = base58.stringify(loginId)
     this.storage.setJson(filename, loginStash)
   }
 
-  update (userId, loginStash) {
-    if (userId.length !== 32) {
-      throw new Error('Invalid userId')
+  update (loginId, loginStash) {
+    if (loginId.length !== 32) {
+      throw new Error('Invalid loginId')
     }
-    const filename = base58.stringify(userId)
+    const filename = base58.stringify(loginId)
     const old = this.storage.getJson(filename)
     const out = old != null ? objectAssign(old, loginStash) : loginStash
-    out.loginId = base64.stringify(userId)
+    out.loginId = base64.stringify(loginId)
     return this.save(out)
   }
 

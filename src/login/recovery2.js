@@ -128,7 +128,7 @@ export function setup (io, login, questions, answers) {
   const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/recovery2', request).then(reply => {
-    io.loginStore.update(login.userId, kit.stash)
+    io.loginStore.update(login.loginId, kit.stash)
     login.recovery2Key = kit.login.recovery2Key
     return login
   })

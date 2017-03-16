@@ -1,6 +1,6 @@
 import * as crypto from '../crypto/crypto.js'
 import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
-import {fixUsername} from '../io/loginStore.js'
+import { fixUsername, hashUsername } from '../io/loginStore.js'
 import {rejectify} from '../util/decorators.js'
 import {base64} from '../util/encoding.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
@@ -25,9 +25,13 @@ function extractLoginKey (loginStash, username, password) {
 /**
  * Fetches the loginKey from the server.
  */
-function fetchLoginKey (io, userId, username, password) {
+function fetchLoginKey (io, username, password) {
   const up = makeHashInput(username, password)
-  return scrypt(up, passwordAuthSnrp).then(passwordAuth => {
+  const userId = hashUsername(username)
+  const passwordAuth = scrypt(up, passwordAuthSnrp)
+
+  return Promise.all([userId, passwordAuth]).then(values => {
+    const [userId, passwordAuth] = values
     const request = {
       userId: base64.stringify(userId),
       passwordAuth: base64.stringify(passwordAuth)
@@ -72,12 +76,7 @@ export function login (io, username, password) {
       })
       .catch(e => {
         // If that failed, try an online login:
-        return fetchLoginKey(
-          io,
-          base64.parse(loginStash.userId),
-          username,
-          password
-        ).then(values => {
+        return fetchLoginKey(io, username, password).then(values => {
           const { loginKey, loginReply } = values
           loginStash = applyLoginReply(loginStash, loginKey, loginReply)
           io.loginStore.save(loginStash)
@@ -157,7 +156,7 @@ export function setup (io, login, password) {
     const request = makeAuthJson(login)
     request.data = kit.server
     return io.authRequest('POST', '/v2/login/password', request).then(reply => {
-      io.loginStore.update(login.userId, kit.stash)
+      io.loginStore.update(login.loginId, kit.stash)
       login.passwordAuth = kit.login.passwordAuth
       return login
     })

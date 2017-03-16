@@ -176,7 +176,7 @@ export function makeAccount (context) {
   const loginStash = {
     username: context.fixUsername(username),
     appId: '',
-    userId: base64.stringify(userId),
+    loginId: base64.stringify(userId),
     passwordAuthBox,
     passwordBox,
     passwordKeySnrp,

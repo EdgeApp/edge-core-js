@@ -15,9 +15,14 @@ export function applyLoginReply (loginStash, loginKey, loginReply) {
   // Copy common items:
   const out = filterObject(loginReply, [
     'appId',
+    'loginId',
+    'loginAuthBox',
+    'userId',
+    'parentBox',
     'passwordAuthBox',
     'passwordBox',
     'passwordKeySnrp',
+    'mnemonicBox',
     'rootKeyBox',
     'mnemonicBox',
     'syncKeyBox'
@@ -50,21 +55,43 @@ export function applyLoginReply (loginStash, loginKey, loginReply) {
 export function makeLogin (loginStash, loginKey) {
   const login = {}
 
-  login.username = loginStash.username
+  if (loginStash.username != null) {
+    login.username = loginStash.username
+  }
 
   // Identity:
   if (loginStash.appId == null) {
     throw new Error('No appId provided')
   }
+  if (loginStash.loginAuthBox != null) {
+    login.loginAuth = decrypt(loginStash.loginAuthBox, loginKey)
+  }
+  if (loginStash.loginId == null) {
+    throw new Error('No loginId provided')
+  }
   login.appId = loginStash.appId
-  login.userId = base64.parse(loginStash.userId)
+  login.loginId = base64.parse(loginStash.loginId)
   login.loginKey = loginKey
 
-  // Return access to the server:
-  if (loginStash.passwordAuthBox == null) {
-    throw new Error('Missing passwordAuthBox')
+  // Password:
+  if (loginStash.userId != null) {
+    login.userId = base64.parse(loginStash.userId)
+  } else if (loginStash.passwordAuthBox != null) {
+    login.userId = login.loginId
   }
-  login.passwordAuth = decrypt(loginStash.passwordAuthBox, loginKey)
+  if (loginStash.passwordAuthBox != null) {
+    login.passwordAuth = decrypt(loginStash.passwordAuthBox, loginKey)
+  }
+
+  // PIN v2:
+  if (loginStash.pin2Key != null) {
+    login.pin2Key = base64.parse(loginStash.pin2Key)
+  }
+
+  // Recovery v2:
+  if (loginStash.recovery2Key != null) {
+    login.recovery2Key = base64.parse(loginStash.recovery2Key)
+  }
 
   const legacyKeys = []
 
@@ -96,12 +123,9 @@ export function makeLogin (loginStash, loginKey) {
 
   login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos])
 
-  // Local keys:
-  if (loginStash.pin2Key != null) {
-    login.pin2Key = base64.parse(loginStash.pin2Key)
-  }
-  if (loginStash.recovery2Key != null) {
-    login.recovery2Key = base64.parse(loginStash.recovery2Key)
+  // Integrity check:
+  if (login.loginAuth == null && login.passwordAuth == null) {
+    throw new Error('No server authentication methods on login')
   }
 
   return login
@@ -111,10 +135,19 @@ export function makeLogin (loginStash, loginKey) {
  * Sets up a login v2 server authorization JSON.
  */
 export function makeAuthJson (login) {
-  return {
-    'userId': base64.stringify(login.userId),
-    'passwordAuth': base64.stringify(login.passwordAuth)
+  if (login.loginAuth != null) {
+    return {
+      loginId: base64.stringify(login.loginId),
+      loginAuth: base64.stringify(login.loginAuth)
+    }
   }
+  if (login.passwordAuth != null) {
+    return {
+      userId: base64.stringify(login.userId),
+      passwordAuth: base64.stringify(login.passwordAuth)
+    }
+  }
+  throw new Error('No server authentication methods available')
 }
 
 /**
@@ -204,7 +237,7 @@ export function attachKeys (io, login, keyInfos, syncKeys = []) {
   return io.authRequest('POST', '/v2/login/keys', request).then(reply => {
     login.keyInfos = mergeKeyInfos([...login.keyInfos, ...kit.login.keyInfos])
     const oldKeys = io.loginStore.loadSync(login.username).keyBoxes
-    io.loginStore.update(login.userId, {
+    io.loginStore.update(login.loginId, {
       keys: [...oldKeys, ...kit.stash.keyBoxes]
     })
     return login

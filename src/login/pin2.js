@@ -92,7 +92,7 @@ export function setup (io, login, pin) {
   const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/pin2', request).then(reply => {
-    io.loginStore.update(login.userId, kit.stash)
+    io.loginStore.update(login.loginId, kit.stash)
     login.pin2Key = kit.login.pin2Key
     return login
   })
