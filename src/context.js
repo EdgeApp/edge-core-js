@@ -133,5 +133,5 @@ Context.prototype.requestEdgeLogin = nodeify(function (opts) {
 })
 
 Context.prototype.listRecoveryQuestionChoices = nodeify(function () {
-  return loginRecovery2.listRecoveryQuestionChoices(this)
+  return loginRecovery2.listRecoveryQuestionChoices(this.io)
 })
