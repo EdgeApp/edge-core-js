@@ -1,6 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
+import { objectAssign } from '../util/util.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 
 function pin2Id (pin2Key, username) {
@@ -86,14 +87,15 @@ export function makePin2Kit (io, login, username, pin) {
 /**
  * Sets up PIN login v2.
  */
-export function setup (io, login, pin) {
-  const kit = makePin2Kit(io, login, login.username, pin)
+export function setup (io, rootLogin, login, pin) {
+  const kit = makePin2Kit(io, login, rootLogin.username, pin)
 
   const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/pin2', request).then(reply => {
-    io.loginStore.update(login.loginId, kit.stash)
     login.pin2Key = kit.login.pin2Key
-    return login
+    return io.loginStore
+      .update(rootLogin, login, stash => objectAssign(stash, kit.stash))
+      .then(() => login)
   })
 }

@@ -74,6 +74,7 @@ describe('edge login', function () {
     attachKeys(
       remote.io,
       remoteAccount.login,
+      remoteAccount.login,
       [],
       [base64.parse(fakeReply.keys.syncKey)]
     )

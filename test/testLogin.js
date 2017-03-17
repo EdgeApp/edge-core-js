@@ -29,7 +29,7 @@ describe('login', function () {
       syncKey: 'f00d'
     }
     const keyInfo = makeKeyInfo(keysJson, 'account-repo:blah', [])
-    return attachKeys(context.io, login, [keyInfo]).then(() => {
+    return attachKeys(context.io, login, login, [keyInfo]).then(() => {
       assert.deepEqual(findKeys(login, 'account-repo:blah'), keyInfo)
       return null
     })

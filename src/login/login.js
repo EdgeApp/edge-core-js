@@ -288,17 +288,32 @@ export function mergeKeyInfos (keyInfos) {
  * Attaches keys to the login object,
  * optionally creating any repos needed.
  */
-export function attachKeys (io, login, keyInfos, syncKeys = []) {
+export function attachKeys (io, rootLogin, login, keyInfos, syncKeys = []) {
   const kit = makeKeysKit(io, login, keyInfos, syncKeys)
 
   const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/keys', request).then(reply => {
     login.keyInfos = mergeKeyInfos([...login.keyInfos, ...kit.login.keyInfos])
-    const oldKeys = io.loginStore.loadSync(login.username).keyBoxes
-    io.loginStore.update(login.loginId, {
-      keys: [...oldKeys, ...kit.stash.keyBoxes]
+    return io.loginStore.update(rootLogin, login, stash => {
+      stash.keyBoxes = [...stash.keyBoxes, ...kit.stash.keyBoxes]
+      return stash
     })
-    return login
   })
+}
+
+/**
+ * Passes the selected loginStash to the `update` callback,
+ * allowing it to make changes. Returns the new stash tree.
+ */
+export function updateLoginStash (loginStash, predicate, update) {
+  return updateTree(
+    loginStash,
+    (stash, newChildren) => {
+      stash.children = newChildren
+      return stash
+    },
+    predicate,
+    update
+  )
 }

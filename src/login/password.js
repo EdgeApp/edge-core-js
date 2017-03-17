@@ -3,6 +3,7 @@ import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import {rejectify} from '../util/decorators.js'
 import {base64} from '../util/encoding.js'
+import { objectAssign } from '../util/util.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 
 function makeHashInput (username, password) {
@@ -151,14 +152,15 @@ export function makePasswordKit (io, login, username, password) {
 /**
  * Sets up a password for the login.
  */
-export function setup (io, login, password) {
-  return makePasswordKit(io, login, login.username, password).then(kit => {
+export function setup (io, rootLogin, login, password) {
+  return makePasswordKit(io, login, rootLogin.username, password).then(kit => {
     const request = makeAuthJson(login)
     request.data = kit.server
     return io.authRequest('POST', '/v2/login/password', request).then(reply => {
-      io.loginStore.update(login.loginId, kit.stash)
       login.passwordAuth = kit.login.passwordAuth
-      return login
+      return io.loginStore
+        .update(rootLogin, login, stash => objectAssign(stash, kit.stash))
+        .then(() => login)
     })
   })
 }

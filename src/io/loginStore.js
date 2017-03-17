@@ -1,7 +1,7 @@
 import { scrypt, userIdSnrp } from '../crypto/scrypt.js'
+import { updateLoginStash } from '../login/login.js'
 import { base58, base64 } from '../util/encoding.js'
 import { ScopedStorage } from '../util/scopedStorage.js'
-import { objectAssign } from '../util/util.js'
 
 /**
  * Handles login data storage.
@@ -63,15 +63,23 @@ export class LoginStore {
     this.storage.setJson(filename, loginStash)
   }
 
-  update (loginId, loginStash) {
-    if (loginId.length !== 32) {
-      throw new Error('Invalid loginId')
-    }
-    const filename = base58.stringify(loginId)
-    const old = this.storage.getJson(filename)
-    const out = old != null ? objectAssign(old, loginStash) : loginStash
-    out.loginId = base64.stringify(loginId)
-    return this.save(out)
+  /**
+   * Updates the selected login stash.
+   * The `username` gives the root of the search,
+   * and the `targetLoginId` gives the node to update.
+   * The `update` callback is called on the selected node,
+   * and can make any modifications it likes.
+   */
+  update (rootLogin, targetLogin, update) {
+    return this.load(rootLogin.username).then(loginStash => {
+      if (loginStash.loginId == null) {
+        throw new Error(`Could not load stash for "${rootLogin.username}"`)
+      }
+      const target = base64.stringify(targetLogin.loginId)
+      return this.save(
+        updateLoginStash(loginStash, stash => stash.loginId === target, update)
+      )
+    })
   }
 
   _findFilename (username) {

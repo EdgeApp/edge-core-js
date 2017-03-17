@@ -1,6 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
 import { base64, utf8 } from '../util/encoding.js'
+import { objectAssign } from '../util/util.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 
 function recovery2Id (recovery2Key, username) {
@@ -122,15 +123,16 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
 /**
  * Sets up recovery questions for the login.
  */
-export function setup (io, login, questions, answers) {
-  const kit = makeRecovery2Kit(io, login, login.username, questions, answers)
+export function setup (io, rootLogin, login, questions, answers) {
+  const kit = makeRecovery2Kit(io, login, rootLogin.username, questions, answers)
 
   const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/recovery2', request).then(reply => {
-    io.loginStore.update(login.loginId, kit.stash)
     login.recovery2Key = kit.login.recovery2Key
-    return login
+    return io.loginStore
+      .update(rootLogin, login, stash => objectAssign(stash, kit.stash))
+      .then(() => login)
   })
 }
 

@@ -92,7 +92,7 @@ WalletList.prototype.addWallet = function (io, login, type, keysJson) {
   const syncKey = base16.parse(keysJson.syncKey)
 
   // We are just using this to create the repo, not to attach:
-  return attachKeys(io, login, [], [syncKey]).then(() => {
+  return attachKeys(io, login, login, [], [syncKey]).then(() => {
     const walletJson = {
       type: type,
       keys: keysJson,

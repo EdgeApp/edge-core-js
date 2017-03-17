@@ -31,7 +31,7 @@ function createLogin (io, accountReply) {
   return loginCreate.create(io, username, opts).then(login => {
     const dataKey = base64.parse(accountReply.info.dataKey)
     const keyInfo = makeKeyInfo(accountReply.info, accountReply.type, dataKey)
-    return attachKeys(io, login, [keyInfo]).then(() => login)
+    return attachKeys(io, login, login, [keyInfo]).then(() => login)
   })
 }
 

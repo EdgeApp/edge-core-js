@@ -29,7 +29,7 @@ export function makeAccount (ctx, login, loginType) {
     }
     const keyInfo = makeKeyInfo(keyJson, accountType, dataKey)
 
-    return attachKeys(ctx.io, login, [keyInfo], [syncKey]).then(() => {
+    return attachKeys(ctx.io, login, login, [keyInfo], [syncKey]).then(() => {
       const account = new Account(ctx, login)
       account[loginType] = true
       return account.sync().then(dirty => account)
@@ -84,20 +84,20 @@ Account.prototype.passwordOk = nodeify(function (password) {
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
 Account.prototype.passwordSetup = nodeify(function (password) {
-  return loginPassword.setup(this.io, this.login, password)
+  return loginPassword.setup(this.io, this.login, this.login, password)
 })
 Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = nodeify(function (pin) {
   return loginPin2
-    .setup(this.io, this.login, pin)
+    .setup(this.io, this.login, this.login, pin)
     .then(login => base58.stringify(login.pin2Key))
 })
 Account.prototype.changePIN = Account.prototype.pinSetup
 
 Account.prototype.recovery2Set = nodeify(function (questions, answers) {
   return loginRecovery2
-    .setup(this.io, this.login, questions, answers)
+    .setup(this.io, this.login, this.login, questions, answers)
     .then(login => base58.stringify(login.recovery2Key))
 })
 
