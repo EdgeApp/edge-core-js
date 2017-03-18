@@ -148,6 +148,7 @@ export const repos = {
 export function makeAccount (context) {
   // Create the login on the server:
   const data = {
+    appId: '',
     userId: base64.stringify(userId),
     passwordAuth,
     passwordAuthBox,
@@ -174,6 +175,7 @@ export function makeAccount (context) {
   // Store the login on the client:
   const loginStash = {
     username: context.fixUsername(username),
+    appId: '',
     userId: base64.stringify(userId),
     passwordAuthBox,
     passwordBox,

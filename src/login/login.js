@@ -14,6 +14,7 @@ import * as server from './server.js'
 export function applyLoginReply (loginStash, loginKey, loginReply) {
   // Copy common items:
   const out = filterObject(loginReply, [
+    'appId',
     'passwordAuthBox',
     'passwordBox',
     'passwordKeySnrp',
@@ -46,8 +47,13 @@ export function applyLoginReply (loginStash, loginKey, loginReply) {
 export function makeLogin (loginStash, loginKey) {
   const login = {}
 
-  // Identity:
   login.username = loginStash.username
+
+  // Identity:
+  if (loginStash.appId == null) {
+    throw new Error('No appId provided')
+  }
+  login.appId = loginStash.appId
   login.userId = base64.parse(loginStash.userId)
   login.loginKey = loginKey
 

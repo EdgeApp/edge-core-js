@@ -51,6 +51,7 @@ export function create (io, username, password, opts) {
     const loginStash = objectAssign(
       {
         username: fixUsername(username),
+        appId: '',
         userId: base64.stringify(userId),
         syncKeyBox
       },

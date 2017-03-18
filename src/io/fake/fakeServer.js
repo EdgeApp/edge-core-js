@@ -152,6 +152,7 @@ addRoute('POST', '/api/v1/account/available', function (req) {
 })
 
 addRoute('POST', '/api/v1/account/create', function (req) {
+  this.db.appId = ''
   this.db.userId = req.body['l1']
   this.db.passwordAuth = req.body['lp1']
 
@@ -240,6 +241,7 @@ addRoute('POST', '/api/v2/login', function (req) {
   return null
 }, authHandler, function (req) {
   return makeResponse(filterObject(this.db, [
+    'appId',
     'passwordAuthBox',
     'passwordBox',
     'passwordKeySnrp',
@@ -265,6 +267,7 @@ addRoute('POST', '/api/v2/login/create', function (req) {
 
   // Set up login object:
   objectAssign(this.db, filterObject(data, [
+    'appId',
     'userId',
     'passwordAuth',
     'passwordAuthBox',

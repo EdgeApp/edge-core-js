@@ -35,6 +35,7 @@ export class LoginStore {
 
     return {
       username: fixedName,
+      appId: store.getItem('appId'),
       userId: this._loadUsers(this.io)[fixedName],
 
       passwordAuthBox: store.getJson('passwordAuthBox'),
