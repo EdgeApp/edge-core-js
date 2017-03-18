@@ -19,9 +19,11 @@ function addRoute (method, path, ...handlers) {
  * Finds all matching handlers in the routing table.
  */
 function findRoute (method, path) {
-  return routes.filter(route => {
-    return route.method === method && route.path.test(path)
-  }).map(route => route.handler)
+  return routes
+    .filter(route => {
+      return route.method === method && route.path.test(path)
+    })
+    .map(route => route.handler)
 }
 
 const errorCodes = {
@@ -60,10 +62,10 @@ class FakeResponse {
 
 function makeResponse (results) {
   const reply = {
-    'status_code': 0
+    status_code: 0
   }
   if (results != null) {
-    reply['results'] = results
+    reply.results = results
   }
   return new FakeResponse(JSON.stringify(reply))
 }
@@ -73,7 +75,7 @@ function makeErrorResponse (code, message = '', status = 500) {
     status_code: code,
     message: message || 'Server error'
   }
-  return new FakeResponse(JSON.stringify(body), {status})
+  return new FakeResponse(JSON.stringify(body), { status })
 }
 
 // Authentication middleware: ----------------------------------------------
@@ -179,39 +181,49 @@ addRoute('POST', '/api/v1/account/carepackage/get', function (req) {
   }
 
   return makeResponse({
-    'care_package': JSON.stringify({
-      'SNRP2': this.db.passwordKeySnrp
+    care_package: JSON.stringify({
+      SNRP2: this.db.passwordKeySnrp
     })
   })
 })
 
-addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function (req) {
-  const results = {
-    'login_package': JSON.stringify({
-      'ELP1': this.db.passwordAuthBox,
-      'EMK_LP2': this.db.passwordBox,
-      'ESyncKey': this.db.syncKeyBox
-    })
+addRoute(
+  'POST',
+  '/api/v1/account/loginpackage/get',
+  authHandler1,
+  function (req) {
+    const results = {
+      login_package: JSON.stringify({
+        ELP1: this.db.passwordAuthBox,
+        EMK_LP2: this.db.passwordBox,
+        ESyncKey: this.db.syncKeyBox
+      })
+    }
+    if (this.db.rootKeyBox != null) {
+      results.rootKeyBox = this.db.rootKeyBox
+    }
+    return makeResponse(results)
   }
-  if (this.db.rootKeyBox != null) {
-    results['rootKeyBox'] = this.db.rootKeyBox
-  }
-  return makeResponse(results)
-})
+)
 
 // PIN login v1: -----------------------------------------------------------
 
-addRoute('POST', '/api/v1/account/pinpackage/update', authHandler1, function (req) {
-  this.db.pinKeyBox = JSON.parse(req.body['pin_package'])
-  return makeResponse()
-})
+addRoute(
+  'POST',
+  '/api/v1/account/pinpackage/update',
+  authHandler1,
+  function (req) {
+    this.db.pinKeyBox = JSON.parse(req.body['pin_package'])
+    return makeResponse()
+  }
+)
 
 addRoute('POST', '/api/v1/account/pinpackage/get', function (req) {
   if (this.db.pinKeyBox == null) {
     return makeErrorResponse(errorCodes.noAccount)
   }
   return makeResponse({
-    'pin_package': JSON.stringify(this.db.pinKeyBox)
+    pin_package: JSON.stringify(this.db.pinKeyBox)
   })
 })
 
@@ -228,34 +240,42 @@ addRoute('POST', '/api/v1/wallet/activate', authHandler1, function (req) {
 
 // login v2: ---------------------------------------------------------------
 
-addRoute('POST', '/api/v2/login', function (req) {
-  if (req.body.recovery2Id != null && req.body.recovery2Auth == null) {
-    if (req.body.recovery2Id !== this.db.recovery2Id) {
-      return makeErrorResponse(errorCodes.noAccount)
+addRoute(
+  'POST',
+  '/api/v2/login',
+  function (req) {
+    if (req.body.recovery2Id != null && req.body.recovery2Auth == null) {
+      if (req.body.recovery2Id !== this.db.recovery2Id) {
+        return makeErrorResponse(errorCodes.noAccount)
+      }
+      return makeResponse({
+        question2Box: this.db.question2Box
+      })
     }
-    return makeResponse({
-      'question2Box': this.db.question2Box
-    })
+    return null
+  },
+  authHandler,
+  function (req) {
+    return makeResponse(
+      filterObject(this.db, [
+        'appId',
+        'passwordAuthBox',
+        'passwordBox',
+        'passwordKeySnrp',
+        'pin2Box',
+        'pin2KeyBox',
+        'recovery2Box',
+        'recovery2KeyBox',
+        'rootKeyBox',
+        'syncKeyBox',
+        'repos'
+      ])
+    )
   }
-  return null
-}, authHandler, function (req) {
-  return makeResponse(filterObject(this.db, [
-    'appId',
-    'passwordAuthBox',
-    'passwordBox',
-    'passwordKeySnrp',
-    'pin2Box',
-    'pin2KeyBox',
-    'recovery2Box',
-    'recovery2KeyBox',
-    'rootKeyBox',
-    'syncKeyBox',
-    'repos'
-  ]))
-})
+)
 
 addRoute('POST', '/api/v2/login/create', function (req) {
-  const data = req.body['data']
+  const data = req.body.data
 
   // Set up repos:
   if (data.newSyncKeys != null) {
@@ -265,73 +285,88 @@ addRoute('POST', '/api/v2/login/create', function (req) {
   }
 
   // Set up login object:
-  objectAssign(this.db, filterObject(data, [
-    'appId',
-    'userId',
-    'passwordAuth',
-    'passwordAuthBox',
-    'passwordBox',
-    'passwordKeySnrp',
-    'pin2Auth',
-    'pin2Box',
-    'pin2Id',
-    'pin2KeyBox',
-    'question2Box',
-    'recovery2Auth',
-    'recovery2Box',
-    'recovery2Id',
-    'recovery2KeyBox',
-    'rootKeyBox',
-    'syncKeyBox',
-    'repos'
-  ]))
+  objectAssign(
+    this.db,
+    filterObject(data, [
+      'appId',
+      'userId',
+      'passwordAuth',
+      'passwordAuthBox',
+      'passwordBox',
+      'passwordKeySnrp',
+      'pin2Auth',
+      'pin2Box',
+      'pin2Id',
+      'pin2KeyBox',
+      'question2Box',
+      'recovery2Auth',
+      'recovery2Box',
+      'recovery2Id',
+      'recovery2KeyBox',
+      'rootKeyBox',
+      'syncKeyBox',
+      'repos'
+    ])
+  )
 
   return makeResponse()
 })
 
 addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
-  const data = req.body['data']
-  if (data.passwordAuth == null || data.passwordKeySnrp == null ||
-      data.passwordBox == null || data.passwordAuthBox == null) {
+  const data = req.body.data
+  if (
+    data.passwordAuth == null ||
+    data.passwordAuthBox == null ||
+    data.passwordBox == null ||
+    data.passwordKeySnrp == null
+  ) {
     return makeErrorResponse(errorCodes.error)
   }
 
-  this.db.passwordAuth = data['passwordAuth']
-  this.db.passwordKeySnrp = data['passwordKeySnrp']
-  this.db.passwordBox = data['passwordBox']
-  this.db.passwordAuthBox = data['passwordAuthBox']
+  this.db.passwordAuth = data.passwordAuth
+  this.db.passwordAuthBox = data.passwordAuthBox
+  this.db.passwordBox = data.passwordBox
+  this.db.passwordKeySnrp = data.passwordKeySnrp
 
   return makeResponse()
 })
 
 addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
-  const data = req.body['data']
-  if (data.pin2Id == null || data.pin2Auth == null ||
-      data.pin2Box == null || data.pin2KeyBox == null) {
+  const data = req.body.data
+  if (
+    data.pin2Auth == null ||
+    data.pin2Box == null ||
+    data.pin2Id == null ||
+    data.pin2KeyBox == null
+  ) {
     return makeErrorResponse(errorCodes.error)
   }
 
-  this.db.pin2Id = data['pin2Id']
-  this.db.pin2Auth = data['pin2Auth']
-  this.db.pin2Box = data['pin2Box']
-  this.db.pin2KeyBox = data['pin2KeyBox']
+  this.db.pin2Auth = data.pin2Auth
+  this.db.pin2Box = data.pin2Box
+  this.db.pin2Id = data.pin2Id
+  this.db.pin2KeyBox = data.pin2KeyBox
 
   return makeResponse()
 })
 
 addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
-  const data = req.body['data']
-  if (data.recovery2Id == null || data.recovery2Auth == null ||
-      data.question2Box == null || data.recovery2Box == null ||
-      data.recovery2KeyBox == null) {
+  const data = req.body.data
+  if (
+    data.question2Box == null ||
+    data.recovery2Auth == null ||
+    data.recovery2Box == null ||
+    data.recovery2Id == null ||
+    data.recovery2KeyBox == null
+  ) {
     return makeErrorResponse(errorCodes.error)
   }
 
-  this.db.recovery2Id = data['recovery2Id']
-  this.db.recovery2Auth = data['recovery2Auth']
-  this.db.question2Box = data['question2Box']
-  this.db.recovery2Box = data['recovery2Box']
-  this.db.recovery2KeyBox = data['recovery2KeyBox']
+  this.db.question2Box = data.question2Box
+  this.db.recovery2Auth = data.recovery2Auth
+  this.db.recovery2Box = data.recovery2Box
+  this.db.recovery2Id = data.recovery2Id
+  this.db.recovery2KeyBox = data.recovery2KeyBox
 
   return makeResponse()
 })
@@ -354,9 +389,9 @@ addRoute('POST', '/api/v2/login/repos', authHandler, function (req) {
 // lobby: ------------------------------------------------------------------
 
 addRoute('POST', '/api/v2/lobby', function (req) {
-  this.db.lobby = req.body['data']
+  this.db.lobby = req.body.data
   return makeResponse({
-    'id': 'IMEDGELOGIN'
+    id: 'IMEDGELOGIN'
   })
 })
 
@@ -365,7 +400,7 @@ addRoute('GET', '/api/v2/lobby/IMEDGELOGIN', function (req) {
 })
 
 addRoute('PUT', '/api/v2/lobby/IMEDGELOGIN', function (req) {
-  this.db.lobby = req.body['data']
+  this.db.lobby = req.body.data
   return makeResponse()
 })
 
@@ -378,22 +413,24 @@ function storeRoute (req) {
 
   const repo = this.repos[syncKey]
   if (repo == null) {
-    return new FakeResponse('Cannot find repo ' + syncKey, {status: 404})
+    return new FakeResponse('Cannot find repo ' + syncKey, { status: 404 })
   }
 
   switch (req.method) {
     case 'POST':
-      const changes = req.body['changes']
+      const changes = req.body.changes
       Object.keys(changes).forEach(change => {
         repo[change] = changes[change]
       })
-      return new FakeResponse(JSON.stringify({
-        'changes': changes,
-        'hash': '1111111111111111111111111111111111111111'
-      }))
+      return new FakeResponse(
+        JSON.stringify({
+          changes: changes,
+          hash: '1111111111111111111111111111111111111111'
+        })
+      )
 
     case 'GET':
-      return new FakeResponse(JSON.stringify({'changes': repo}))
+      return new FakeResponse(JSON.stringify({ changes: repo }))
   }
 }
 
@@ -430,6 +467,10 @@ export class FakeServer {
         return out
       }
     }
-    return makeErrorResponse(errorCodes.error, `Unknown API endpoint ${req.path}`, 404)
+    return makeErrorResponse(
+      errorCodes.error,
+      `Unknown API endpoint ${req.path}`,
+      404
+    )
   }
 }
