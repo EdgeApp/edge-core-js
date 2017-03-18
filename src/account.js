@@ -1,4 +1,5 @@
-import { attachKeys, makeKeyInfo } from './login/login.js'
+import { createChildLogin } from './login/create.js'
+import { attachKeys, makeKeyInfo, searchTree } from './login/login.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
@@ -18,43 +19,74 @@ export function makeAccountType (appId) {
     : `account-repo:${appId}`
 }
 
-export function makeAccount (ctx, login, loginType) {
-  const accountType = makeAccountType(ctx.appId)
+function ensureAppIdExists (io, rootLogin, appId) {
+  const login = searchTree(rootLogin, login => login.appId === appId)
+  if (!login) {
+    const accountType = makeAccountType(appId)
+    const dataKey = io.random(32)
+    const syncKey = io.random(20)
+    const keyJson = {
+      dataKey: base64.stringify(dataKey),
+      syncKey: base64.stringify(syncKey)
+    }
+    const opts = {
+      pin: rootLogin.pin,
+      keyInfos: [makeKeyInfo(keyJson, accountType, dataKey)],
+      newSyncKeys: [syncKey]
+    }
+    return createChildLogin(io, rootLogin, rootLogin, appId, opts).then(login => {
+      return { rootLogin, login }
+    })
+  }
+
+  return Promise.resolve({ rootLogin, login })
+}
+
+function ensureAccountRepoExists (io, rootLogin, login) {
+  const accountType = makeAccountType(login.appId)
   if (findAccount(login, accountType) == null) {
-    const dataKey = ctx.io.random(32)
-    const syncKey = ctx.io.random(20)
+    const dataKey = io.random(32)
+    const syncKey = io.random(20)
     const keyJson = {
       dataKey: base64.stringify(dataKey),
       syncKey: base64.stringify(syncKey)
     }
     const keyInfo = makeKeyInfo(keyJson, accountType, dataKey)
 
-    return attachKeys(ctx.io, login, login, [keyInfo], [syncKey]).then(() => {
-      const account = new Account(ctx, login)
+    return attachKeys(io, rootLogin, login, [keyInfo], [syncKey])
+  }
+
+  return Promise.resolve()
+}
+
+export function makeAccount (ctx, rootLogin, loginType) {
+  const { io, appId } = ctx
+
+  return ensureAppIdExists(io, rootLogin, appId).then(value => {
+    const { rootLogin, login } = value
+    return ensureAccountRepoExists(io, rootLogin, login).then(() => {
+      const account = new Account(ctx, rootLogin, login)
       account[loginType] = true
       return account.sync().then(dirty => account)
     })
-  }
-
-  const account = new Account(ctx, login)
-  account[loginType] = true
-  return account.sync().then(dirty => account)
+  })
 }
 
 /**
  * This is a thin shim object,
  * which wraps the core implementation in a more OOP-style API.
  */
-export function Account (ctx, login) {
+export function Account (ctx, rootLogin, login) {
   this.io = ctx.io
 
   // Login:
-  this.username = login.username
+  this.username = rootLogin.username
+  this.rootLogin = rootLogin
   this.login = login
 
   // Repo:
   this.type = makeAccountType(ctx.appId)
-  const keyInfo = findAccount(login, this.type)
+  const keyInfo = findAccount(this.login, this.type)
   if (keyInfo == null) {
     throw new Error(`Cannot find a "${this.type}" repo`)
   }
@@ -63,7 +95,7 @@ export function Account (ctx, login) {
 
   // Flags:
   this.loggedIn = true
-  this.edgeLogin = false
+  this.edgeLogin = this.rootLogin.loginKey == null
   this.pinLogin = false
   this.passwordLogin = false
   this.newAccount = false
@@ -84,20 +116,26 @@ Account.prototype.passwordOk = nodeify(function (password) {
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
 Account.prototype.passwordSetup = nodeify(function (password) {
-  return loginPassword.setup(this.io, this.login, this.login, password)
+  if (this.rootLogin.loginKey == null) {
+    return Promise.reject(new Error('Edge logged-in account'))
+  }
+  return loginPassword.setup(this.io, this.rootLogin, this.rootLogin, password)
 })
 Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = nodeify(function (pin) {
   return loginPin2
-    .setup(this.io, this.login, this.login, pin)
+    .setup(this.io, this.rootLogin, this.login, pin)
     .then(login => base58.stringify(login.pin2Key))
 })
 Account.prototype.changePIN = Account.prototype.pinSetup
 
 Account.prototype.recovery2Set = nodeify(function (questions, answers) {
+  if (this.rootLogin.loginKey == null) {
+    return Promise.reject(new Error('Edge logged-in account'))
+  }
   return loginRecovery2
-    .setup(this.io, this.login, this.login, questions, answers)
+    .setup(this.io, this.rootLogin, this.rootLogin, questions, answers)
     .then(login => base58.stringify(login.recovery2Key))
 })
 

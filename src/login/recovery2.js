@@ -47,6 +47,7 @@ export function getKey (loginStash) {
 
 /**
  * Logs a user in using recovery answers.
+ * @return A `Promise` for the new root login.
  */
 export function login (io, recovery2Key, username, answers) {
   return io.loginStore.load(username).then(loginStash => {

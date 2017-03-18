@@ -1,8 +1,8 @@
 import * as crypto from '../crypto/crypto.js'
 import {elliptic} from '../crypto/external.js'
 import { base58, base64, utf8 } from '../util/encoding.js'
-import { createLogin } from './create.js'
-import { attachKeys, makeKeyInfo } from './login.js'
+import { createLogin, createChildLogin } from './create.js'
+import { makeKeyInfo } from './login.js'
 
 const EllipticCurve = elliptic.ec
 const secp256k1 = new EllipticCurve('secp256k1')
@@ -23,15 +23,23 @@ function createEdgeLogin (io, accountReply) {
   const username = accountReply.username + '-' + base58.stringify(io.random(4))
 
   const opts = {
-    password: base58.stringify(io.random(24))
+    password: base58.stringify(io.random(24)),
+    pin: accountReply.pinString
   }
   if (accountReply.pinString != null) {
     opts.pin = accountReply.pinString
   }
-  return createLogin(io, username, opts).then(login => {
+  return createLogin(io, username, opts).then(rootLogin => {
     const dataKey = base64.parse(accountReply.info.dataKey)
     const keyInfo = makeKeyInfo(accountReply.info, accountReply.type, dataKey)
-    return attachKeys(io, login, login, [keyInfo]).then(() => login)
+    const opts = {
+      pin: accountReply.pinString,
+      keyInfos: [keyInfo]
+    }
+    const appId = accountReply.type.replace(/account.repo:/, '')
+    return createChildLogin(io, rootLogin, rootLogin, appId, opts).then(
+      login => rootLogin
+    )
   })
 }
 

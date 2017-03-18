@@ -56,7 +56,7 @@ function fetchLoginKey (io, username, password) {
  * Logs a user in using a password.
  * @param username string
  * @param password string
- * @return `Login` object promise
+ * @return A `Promise` for the new root login.
  */
 export function login (io, username, password) {
   return io.loginStore.load(username).then(loginStash => {

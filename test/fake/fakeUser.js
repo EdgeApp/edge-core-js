@@ -249,5 +249,5 @@ export function makeAccount (context) {
 
   // Return the account object:
   const login = makeLogin(loginStash, loginKey)
-  return new Account(context, login)
+  return new Account(context, login, login)
 }

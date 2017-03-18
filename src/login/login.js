@@ -8,6 +8,19 @@ import { filterObject, objectAssign } from '../util/util.js'
 import { makeAccountType } from '../account.js'
 
 /**
+ * Returns the login that satisifies the given predicated,
+ * or undefined if nothing matches.
+ */
+export function searchTree (node, predicate) {
+  const children = node.children != null ? node.children : []
+  return predicate(node)
+    ? node
+    : children
+        .map(child => searchTree(child, predicate))
+        .find(child => child != null)
+}
+
+/**
  * Replaces a node within a tree.
  * The `clone` callback is called for each unmodified node.
  * The `predicate` callback is used to find the target node.

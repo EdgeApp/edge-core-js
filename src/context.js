@@ -59,12 +59,12 @@ Context.prototype.loginWithPassword = nodeify(function (username, password, otp,
 
 Context.prototype.pinExists = function (username) {
   const loginStash = this.io.loginStore.loadSync(username)
-  return loginPin2.getKey(loginStash) != null
+  return loginPin2.getKey(loginStash, this.appId) != null
 }
 Context.prototype.pinLoginEnabled = Context.prototype.pinExists
 
 Context.prototype.loginWithPIN = nodeify(function (username, pin) {
-  return loginPin2.login(this.io, username, pin).then(login => {
+  return loginPin2.login(this.io, this.appId, username, pin).then(login => {
     return makeAccount(this, login, 'pinLogin')
   })
 })
