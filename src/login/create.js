@@ -3,7 +3,7 @@ import { UsernameError } from '../error.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
-import { makeKeysKit } from './login.js'
+import { makeAuthJson, makeKeysKit } from './login.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 
@@ -30,14 +30,17 @@ export function usernameAvailable (io, username) {
 /**
  * Assembles all the data needed to create a new login.
  */
-export function makeNewKit (io, appId, username, opts) {
+export function makeNewKit (io, parentLogin, appId, username, opts) {
   // Figure out login identity:
-  const loginId = hashUsername(username)
+  const loginId = parentLogin != null ? io.random(32) : hashUsername(username)
   const loginKey = io.random(32)
   const loginAuth = io.random(32)
   const loginAuthBox = encrypt(io, loginAuth, loginKey)
 
   // Set up login methods:
+  const parentBox = parentLogin != null
+    ? encrypt(io, loginKey, parentLogin.loginKey)
+    : null
   const passwordKit = opts.password != null
     ? makePasswordKit(io, { loginKey }, username, opts.password)
     : {}
@@ -57,7 +60,8 @@ export function makeNewKit (io, appId, username, opts) {
           appId,
           loginId: base64.stringify(loginId),
           loginAuth: base64.stringify(loginAuth),
-          loginAuthBox
+          loginAuthBox,
+          parentBox
         },
         passwordKit.server,
         pin2Kit.server,
@@ -68,6 +72,7 @@ export function makeNewKit (io, appId, username, opts) {
           appId,
           loginId: base64.stringify(loginId),
           loginAuthBox,
+          parentBox,
           keyBoxes: [],
           children: []
         },
@@ -95,10 +100,10 @@ export function makeNewKit (io, appId, username, opts) {
 /**
  * Creates a new login on the auth server.
  */
-export function create (io, username, opts) {
+export function createLogin (io, username, opts) {
   const fixedName = fixUsername(username)
 
-  return makeNewKit(io, '', fixedName, opts).then(kit => {
+  return makeNewKit(io, null, '', fixedName, opts).then(kit => {
     const request = {}
     request.data = kit.server
     return io.authRequest('POST', '/v2/login/create', request).then(reply => {
@@ -108,6 +113,31 @@ export function create (io, username, opts) {
       io.loginStore.save(kit.stash)
 
       return kit.login
+    })
+  })
+}
+
+/**
+ * Creates a new child login on the auth server.
+ */
+export function createChildLogin (io, rootLogin, parentLogin, appId, opts) {
+  return makeNewKit(
+    io,
+    parentLogin,
+    appId,
+    rootLogin.username,
+    opts
+  ).then(kit => {
+    const request = makeAuthJson(parentLogin)
+    request.data = kit.server
+    return io.authRequest('POST', '/v2/login/create', request).then(reply => {
+      parentLogin.children.push(kit.login)
+      return io.loginStore
+        .update(rootLogin, parentLogin, stash => {
+          stash.children.push(kit.stash)
+          return stash
+        })
+        .then(() => kit.login)
     })
   })
 }

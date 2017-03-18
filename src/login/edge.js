@@ -1,7 +1,7 @@
 import * as crypto from '../crypto/crypto.js'
 import {elliptic} from '../crypto/external.js'
 import { base58, base64, utf8 } from '../util/encoding.js'
-import * as loginCreate from './create.js'
+import { createLogin } from './create.js'
 import { attachKeys, makeKeyInfo } from './login.js'
 
 const EllipticCurve = elliptic.ec
@@ -19,7 +19,7 @@ ABCEdgeLoginRequest.prototype.cancelRequest = function () {
 /**
  * Creates a new login object, and attaches the account repo info to it.
  */
-function createLogin (io, accountReply) {
+function createEdgeLogin (io, accountReply) {
   const username = accountReply.username + '-' + base58.stringify(io.random(4))
 
   const opts = {
@@ -28,7 +28,7 @@ function createLogin (io, accountReply) {
   if (accountReply.pinString != null) {
     opts.pin = accountReply.pinString
   }
-  return loginCreate.create(io, username, opts).then(login => {
+  return createLogin(io, username, opts).then(login => {
     const dataKey = base64.parse(accountReply.info.dataKey)
     const keyInfo = makeKeyInfo(accountReply.info, accountReply.type, dataKey)
     return attachKeys(io, login, login, [keyInfo]).then(() => login)
@@ -85,7 +85,7 @@ function pollServer (io, edgeLogin, keys, onLogin, onProcessLogin) {
       if (onProcessLogin != null) {
         onProcessLogin(accountReply.username)
       }
-      return createLogin(io, accountReply).then(
+      return createEdgeLogin(io, accountReply).then(
         login => onLogin(null, login), e => onLogin(e)
       )
     }).catch(e => {
