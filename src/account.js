@@ -3,7 +3,7 @@ import { attachKeys, makeKeyInfo, searchTree } from './login/login.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
-import {nodeify} from './util/decorators.js'
+import { asyncApi, syncApi } from './util/decorators.js'
 import { base58, base64 } from './util/encoding.js'
 import {Repo} from './util/repo.js'
 import {Wallet} from './wallet.js'
@@ -105,17 +105,17 @@ export function Account (ctx, rootLogin, login) {
   this.walletList = new WalletList(this.repo)
 }
 
-Account.prototype.logout = function () {
+Account.prototype.logout = syncApi(function () {
   this.login = null
   this.loggedIn = false
-}
+})
 
-Account.prototype.passwordOk = nodeify(function (password) {
+Account.prototype.passwordOk = asyncApi(function (password) {
   return loginPassword.check(this.io, this.rootLogin, password)
 })
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
-Account.prototype.passwordSetup = nodeify(function (password) {
+Account.prototype.passwordSetup = asyncApi(function (password) {
   if (this.rootLogin.loginKey == null) {
     return Promise.reject(new Error('Edge logged-in account'))
   }
@@ -123,14 +123,14 @@ Account.prototype.passwordSetup = nodeify(function (password) {
 })
 Account.prototype.changePassword = Account.prototype.passwordSetup
 
-Account.prototype.pinSetup = nodeify(function (pin) {
+Account.prototype.pinSetup = asyncApi(function (pin) {
   return loginPin2
     .setup(this.io, this.rootLogin, this.login, pin)
     .then(login => base58.stringify(login.pin2Key))
 })
 Account.prototype.changePIN = Account.prototype.pinSetup
 
-Account.prototype.recovery2Set = nodeify(function (questions, answers) {
+Account.prototype.recovery2Set = asyncApi(function (questions, answers) {
   if (this.rootLogin.loginKey == null) {
     return Promise.reject(new Error('Edge logged-in account'))
   }
@@ -141,11 +141,11 @@ Account.prototype.recovery2Set = nodeify(function (questions, answers) {
 
 Account.prototype.setupRecovery2Questions = Account.prototype.recovery2Set
 
-Account.prototype.isLoggedIn = function () {
+Account.prototype.isLoggedIn = syncApi(function () {
   return this.loggedIn
-}
+})
 
-Account.prototype.sync = nodeify(function () {
+Account.prototype.sync = asyncApi(function () {
   return this.repo.sync().then(changed => {
     if (changed) {
       this.walletList.load()
@@ -154,24 +154,24 @@ Account.prototype.sync = nodeify(function () {
   })
 })
 
-Account.prototype.listWalletIds = function () {
+Account.prototype.listWalletIds = syncApi(function () {
   return this.login.keyInfos.map(info => info.id)
-}
+})
 
-Account.prototype.getWallet = function (id) {
+Account.prototype.getWallet = syncApi(function (id) {
   const info = this.login.keyInfos.find(info => info.id === id)
   return info != null ? new Wallet(info.type, info.keys) : null
-}
+})
 
 /**
  * Gets the first wallet in an account (the first by sort order).
  * If type is a string, finds the first wallet with the same type.
  * Might return null if there are no wallets.
  */
-Account.prototype.getFirstWallet = function (type) {
+Account.prototype.getFirstWallet = syncApi(function (type) {
   const info = this.login.keyInfos.find(info => info.type === type)
   return info != null ? new Wallet(info.type, info.keys) : null
-}
+})
 
 /**
  * Creates a new wallet repo, and attaches it to the account.
@@ -179,7 +179,7 @@ Account.prototype.getFirstWallet = function (type) {
  * that should be stored along with the wallet. For example,
  * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
  */
-Account.prototype.createWallet = nodeify(function (type, keysJson) {
+Account.prototype.createWallet = asyncApi(function (type, keysJson) {
   keysJson.dataKey = keysJson.dataKey || base64.stringify(this.io.random(32))
   keysJson.syncKey = keysJson.syncKey || base64.stringify(this.io.random(20))
   const dataKey = base64.parse(keysJson.dataKey)

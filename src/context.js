@@ -6,7 +6,7 @@ import { requestEdgeLogin } from './login/edge.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
-import {nodeify} from './util/decorators.js'
+import { asyncApi, syncApi } from './util/decorators.js'
 import { base58 } from './util/encoding.js'
 
 /**
@@ -21,18 +21,18 @@ export function Context (io, opts) {
       : ''
 }
 
-Context.prototype.usernameList = function () {
+Context.prototype.usernameList = syncApi(function () {
   return this.io.loginStore.listUsernames()
-}
+})
 Context.prototype.listUsernames = Context.prototype.usernameList
 
-Context.prototype.fixUsername = fixUsername
+Context.prototype.fixUsername = syncApi(fixUsername)
 
-Context.prototype.removeUsername = function (username) {
+Context.prototype.removeUsername = syncApi(function (username) {
   this.io.loginStore.remove(username)
-}
+})
 
-Context.prototype.usernameAvailable = nodeify(function (username) {
+Context.prototype.usernameAvailable = asyncApi(function (username) {
   // TODO: We should change the API to expect a bool, rather than throwing:
   return usernameAvailable(this.io, username).then(bool => {
     if (!bool) {
@@ -45,31 +45,31 @@ Context.prototype.usernameAvailable = nodeify(function (username) {
 /**
  * Creates a login, then creates and attaches an account to it.
  */
-Context.prototype.createAccount = nodeify(function (username, password, pin) {
+Context.prototype.createAccount = asyncApi(function (username, password, pin) {
   return createLogin(this.io, username, { password, pin }).then(login => {
     return makeAccount(this, login, 'newAccount')
   })
 })
 
-Context.prototype.loginWithPassword = nodeify(function (username, password, otp, opts) {
+Context.prototype.loginWithPassword = asyncApi(function (username, password, otp, opts) {
   return loginPassword.login(this.io, username, password).then(login => {
     return makeAccount(this, login, 'passwordLogin')
   })
 })
 
-Context.prototype.pinExists = function (username) {
+Context.prototype.pinExists = syncApi(function (username) {
   const loginStash = this.io.loginStore.loadSync(username)
   return loginPin2.getKey(loginStash, this.appId) != null
-}
+})
 Context.prototype.pinLoginEnabled = Context.prototype.pinExists
 
-Context.prototype.loginWithPIN = nodeify(function (username, pin) {
+Context.prototype.loginWithPIN = asyncApi(function (username, pin) {
   return loginPin2.login(this.io, this.appId, username, pin).then(login => {
     return makeAccount(this, login, 'pinLogin')
   })
 })
 
-Context.prototype.getRecovery2Key = nodeify(function (username) {
+Context.prototype.getRecovery2Key = asyncApi(function (username) {
   const loginStash = this.io.loginStore.loadSync(username)
   const recovery2Key = loginRecovery2.getKey(loginStash)
   if (recovery2Key == null) {
@@ -78,19 +78,19 @@ Context.prototype.getRecovery2Key = nodeify(function (username) {
   return Promise.resolve(base58.stringify(recovery2Key))
 })
 
-Context.prototype.loginWithRecovery2 = nodeify(function (recovery2Key, username, answers, otp, options) {
+Context.prototype.loginWithRecovery2 = asyncApi(function (recovery2Key, username, answers, otp, options) {
   recovery2Key = base58.parse(recovery2Key)
   return loginRecovery2.login(this.io, recovery2Key, username, answers).then(login => {
     return makeAccount(this, login, 'recoveryLogin')
   })
 })
 
-Context.prototype.fetchRecovery2Questions = nodeify(function (recovery2Key, username) {
+Context.prototype.fetchRecovery2Questions = asyncApi(function (recovery2Key, username) {
   recovery2Key = base58.parse(recovery2Key)
   return loginRecovery2.questions(this.io, recovery2Key, username)
 })
 
-Context.prototype.checkPasswordRules = function (password) {
+Context.prototype.checkPasswordRules = syncApi(function (password) {
   const tooShort = password.length < 10
   const noNumber = password.match(/\d/) == null
   const noUpperCase = password.match(/[A-Z]/) == null
@@ -104,9 +104,9 @@ Context.prototype.checkPasswordRules = function (password) {
     'noLowerCase': noLowerCase,
     'passed': extraLong || !(tooShort || noNumber || noUpperCase || noLowerCase)
   }
-}
+})
 
-Context.prototype.requestEdgeLogin = nodeify(function (opts) {
+Context.prototype.requestEdgeLogin = asyncApi(function (opts) {
   const onLogin = opts.onLogin
   opts.onLogin = (err, login) => {
     if (err) return onLogin(err)
@@ -118,6 +118,6 @@ Context.prototype.requestEdgeLogin = nodeify(function (opts) {
   return requestEdgeLogin(this.io, this.appId, opts)
 })
 
-Context.prototype.listRecoveryQuestionChoices = nodeify(function () {
+Context.prototype.listRecoveryQuestionChoices = asyncApi(function () {
   return loginRecovery2.listRecoveryQuestionChoices(this.io)
 })
