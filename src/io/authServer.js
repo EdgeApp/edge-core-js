@@ -1,8 +1,7 @@
 import * as error from '../error.js'
 import {timeout} from '../util/promise.js'
 
-const serverRoot = 'https://auth.airbitz.co/api'
-// const serverRoot = 'https://test-auth.airbitz.co/api'
+const serverRoot = 'https://test-auth.airbitz.co/api'
 
 function parseReply (json) {
   switch (json['status_code']) {
