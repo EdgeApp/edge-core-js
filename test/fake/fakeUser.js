@@ -148,9 +148,7 @@ export const children = [
       encryptionType: 0,
       iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
       data_base64: 'Eel57GZtGBSs5WmIK2YpCelZd793qsWcjfHz4zrsUHyV8PgifyAcFH/9ByKmHg6JUFUPW5mqMNCjn+gLjUGyibV6LA0iD6FVm+FGhhDlxEY='
-    },
-    keyBoxes: [],
-    children: []
+    }
   }
 ]
 
@@ -222,7 +220,6 @@ export function makeAccount (context) {
     recovery2Key: base64.stringify(recovery2Key),
     rootKeyBox,
     syncKeyBox,
-    keyBoxes: [],
     children
   }
   context.io.loginStore.save(loginStash)

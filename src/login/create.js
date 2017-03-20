@@ -2,7 +2,7 @@ import { encrypt } from '../crypto/crypto.js'
 import { UsernameError } from '../error.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
-import { objectAssign } from '../util/util.js'
+import { elvis, objectAssign } from '../util/util.js'
 import { makeAuthJson, makeKeysKit } from './login.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
@@ -72,9 +72,7 @@ export function makeNewKit (io, parentLogin, appId, username, opts) {
           appId,
           loginId: base64.stringify(loginId),
           loginAuthBox,
-          parentBox,
-          keyBoxes: [],
-          children: []
+          parentBox
         },
         passwordKit.stash,
         pin2Kit.stash,
@@ -134,7 +132,7 @@ export function createChildLogin (io, rootLogin, parentLogin, appId, opts) {
       parentLogin.children.push(kit.login)
       return io.loginStore
         .update(rootLogin, parentLogin, stash => {
-          stash.children.push(kit.stash)
+          stash.children = [...elvis(stash.children, []), kit.stash]
           return stash
         })
         .then(() => kit.login)

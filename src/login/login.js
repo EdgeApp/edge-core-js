@@ -4,7 +4,7 @@
 
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { base16, base64, utf8 } from '../util/encoding.js'
-import { filterObject, objectAssign } from '../util/util.js'
+import { elvis, filterObject, objectAssign } from '../util/util.js'
 import { makeAccountType } from '../account.js'
 
 /**
@@ -12,10 +12,9 @@ import { makeAccountType } from '../account.js'
  * or undefined if nothing matches.
  */
 export function searchTree (node, predicate) {
-  const children = node.children != null ? node.children : []
   return predicate(node)
     ? node
-    : children
+    : elvis(node.children, [])
         .map(child => searchTree(child, predicate))
         .find(child => child != null)
 }
@@ -27,12 +26,12 @@ export function searchTree (node, predicate) {
  * The `update` callback is called on the target.
  */
 function updateTree (node, clone, predicate, update) {
-  const children = node.children != null ? node.children : []
   return predicate(node)
     ? update(node)
     : clone(
         node,
-        children.map(child => updateTree(child, clone, predicate, update))
+        elvis(node.children, []).map(child =>
+          updateTree(child, clone, predicate, update))
       )
 }
 
@@ -69,11 +68,11 @@ function applyLoginReplyInner (loginStash, loginKey, loginReply) {
   }
 
   // Keys (we could be more picky about this):
-  out.keyBoxes = loginReply.keyBoxes != null ? loginReply.keyBoxes : []
+  out.keyBoxes = elvis(loginReply.keyBoxes, [])
 
   // Recurse into children:
-  const stashChildren = loginStash.children != null ? loginStash.children : []
-  const replyChildren = loginReply.children != null ? loginReply.children : []
+  const stashChildren = elvis(loginStash.children, [])
+  const replyChildren = elvis(loginReply.children, [])
   if (stashChildren.length > replyChildren.length) {
     throw new Error('The server has lost children!')
   }
@@ -168,13 +167,13 @@ function makeLoginInner (loginStash, loginKey) {
   }
 
   // Keys:
-  const keyInfos = loginStash.keyBoxes.map(box =>
+  const keyInfos = elvis(loginStash.keyBoxes, []).map(box =>
     JSON.parse(utf8.stringify(decrypt(box, loginKey))))
 
   login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos])
 
   // Recurse into children:
-  login.children = loginStash.children.map(child => {
+  login.children = elvis(loginStash.children, []).map(child => {
     const childKey = decrypt(child.parentBox, loginKey)
     return makeLoginInner(child, childKey)
   })
@@ -309,7 +308,7 @@ export function attachKeys (io, rootLogin, login, keyInfos, syncKeys = []) {
   return io.authRequest('POST', '/v2/login/keys', request).then(reply => {
     login.keyInfos = mergeKeyInfos([...login.keyInfos, ...kit.login.keyInfos])
     return io.loginStore.update(rootLogin, login, stash => {
-      stash.keyBoxes = [...stash.keyBoxes, ...kit.stash.keyBoxes]
+      stash.keyBoxes = [...elvis(stash.keyBoxes, []), ...kit.stash.keyBoxes]
       return stash
     })
   })
