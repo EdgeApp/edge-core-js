@@ -19,7 +19,8 @@ describe('wallet list', function () {
     const [context] = makeFakeContexts(1)
     const account = fakeUser.makeAccount(context)
     const ids = account.listWalletIds()
-    assert.deepEqual(ids, ['7QjUtdhLqh6F84yPRi5D2MmubsYBtyai6YY3WqyPfK64'])
+    assert.equal(ids.length, 1)
+    assert.equal(account.getWallet(ids[0]).type, 'account-repo:co.airbitz.wallet')
   })
 
   it('create', function (done) {

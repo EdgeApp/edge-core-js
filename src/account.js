@@ -155,11 +155,12 @@ Account.prototype.sync = nodeify(function () {
 })
 
 Account.prototype.listWalletIds = function () {
-  return this.walletList.listIds()
+  return this.login.keyInfos.map(info => info.id)
 }
 
 Account.prototype.getWallet = function (id) {
-  return new Wallet(this.walletList.getType(id), this.walletList.getKeys(id))
+  const info = this.login.keyInfos.find(info => info.id === id)
+  return info != null ? new Wallet(info.type, info.keys) : null
 }
 
 /**
@@ -168,10 +169,8 @@ Account.prototype.getWallet = function (id) {
  * Might return null if there are no wallets.
  */
 Account.prototype.getFirstWallet = function (type) {
-  const id = this.walletList.listIds().find(
-    id => type == null || this.walletList.getType(id) === type
-  )
-  return id ? this.getWallet(id) : null
+  const info = this.login.keyInfos.find(info => info.type === type)
+  return info != null ? new Wallet(info.type, info.keys) : null
 }
 
 /**
@@ -181,9 +180,15 @@ Account.prototype.getFirstWallet = function (type) {
  * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
  */
 Account.prototype.createWallet = nodeify(function (type, keysJson) {
-  return this.walletList
-    .addWallet(this.io, this.login, type, keysJson)
-    .then(id => {
-      return this.sync().then(dirty => id)
-    })
+  keysJson.dataKey = keysJson.dataKey || base64.stringify(this.io.random(32))
+  keysJson.syncKey = keysJson.syncKey || base64.stringify(this.io.random(20))
+  const dataKey = base64.parse(keysJson.dataKey)
+  const syncKey = base64.parse(keysJson.syncKey)
+
+  const info = makeKeyInfo(keysJson, type, dataKey)
+
+  // We are just using this to create the repo, not to attach:
+  return attachKeys(this.io, this.rootLogin, this.login, [info], [syncKey]).then(() => {
+    return info.id
+  })
 })
