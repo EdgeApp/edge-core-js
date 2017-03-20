@@ -1,62 +1,107 @@
-import { createAccount, findAccount } from './login/login.js'
+import { createChildLogin } from './login/create.js'
+import { attachKeys, makeKeyInfo, searchTree } from './login/login.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
-import * as server from './login/server.js'
 import {nodeify} from './util/decorators.js'
-import { base16, base58 } from './util/encoding.js'
+import { base58, base64 } from './util/encoding.js'
 import {Repo} from './util/repo.js'
 import {Wallet} from './wallet.js'
 import {WalletList} from './util/walletList.js'
 
-export function makeAccountType (appId) {
-  return appId === ''
-    ? 'account:repo:co.airbitz.wallet'
-    : `account:repo:${appId}`
+function findAccount (login, type) {
+  return login.keyInfos.find(info => info.type === type)
 }
 
-export function makeAccount (ctx, login, loginType) {
-  const accountType = makeAccountType(ctx.appId)
-  try {
-    findAccount(login, accountType)
-  } catch (e) {
-    return createAccount(ctx.io, login, accountType).then(() => {
-      const account = new Account(ctx, login)
-      account[loginType] = true
-      return account.sync().then(dirty => account)
+export function makeAccountType (appId) {
+  return appId === ''
+    ? 'account-repo:co.airbitz.wallet'
+    : `account-repo:${appId}`
+}
+
+function ensureAppIdExists (io, rootLogin, appId) {
+  const login = searchTree(rootLogin, login => login.appId === appId)
+  if (!login) {
+    const accountType = makeAccountType(appId)
+    const dataKey = io.random(32)
+    const syncKey = io.random(20)
+    const keyJson = {
+      dataKey: base64.stringify(dataKey),
+      syncKey: base64.stringify(syncKey)
+    }
+    const opts = {
+      pin: rootLogin.pin,
+      keyInfos: [makeKeyInfo(keyJson, accountType, dataKey)],
+      newSyncKeys: [syncKey]
+    }
+    return createChildLogin(io, rootLogin, rootLogin, appId, opts).then(login => {
+      return { rootLogin, login }
     })
   }
 
-  const account = new Account(ctx, login)
-  account[loginType] = true
-  return account.sync().then(dirty => account)
+  return Promise.resolve({ rootLogin, login })
+}
+
+function ensureAccountRepoExists (io, rootLogin, login) {
+  const accountType = makeAccountType(login.appId)
+  if (findAccount(login, accountType) == null) {
+    const dataKey = io.random(32)
+    const syncKey = io.random(20)
+    const keyJson = {
+      dataKey: base64.stringify(dataKey),
+      syncKey: base64.stringify(syncKey)
+    }
+    const keyInfo = makeKeyInfo(keyJson, accountType, dataKey)
+
+    return attachKeys(io, rootLogin, login, [keyInfo], [syncKey])
+  }
+
+  return Promise.resolve()
+}
+
+export function makeAccount (ctx, rootLogin, loginType) {
+  const { io, appId } = ctx
+
+  return ensureAppIdExists(io, rootLogin, appId).then(value => {
+    const { rootLogin, login } = value
+    return ensureAccountRepoExists(io, rootLogin, login).then(() => {
+      const account = new Account(ctx, rootLogin, login)
+      account[loginType] = true
+      return account.sync().then(dirty => account)
+    })
+  })
 }
 
 /**
  * This is a thin shim object,
  * which wraps the core implementation in a more OOP-style API.
  */
-export function Account (ctx, login) {
+export function Account (ctx, rootLogin, login) {
   this.io = ctx.io
 
   // Login:
-  this.username = login.username
+  this.username = rootLogin.username
+  this.rootLogin = rootLogin
   this.login = login
 
   // Repo:
   this.type = makeAccountType(ctx.appId)
-  this.keys = findAccount(login, this.type)
+  const keyInfo = findAccount(this.login, this.type)
+  if (keyInfo == null) {
+    throw new Error(`Cannot find a "${this.type}" repo`)
+  }
+  this.keys = keyInfo.keys
   this.repoInfo = this.keys // Deprecated name
 
   // Flags:
   this.loggedIn = true
-  this.edgeLogin = false
+  this.edgeLogin = this.rootLogin.loginKey == null
   this.pinLogin = false
   this.passwordLogin = false
   this.newAccount = false
   this.recoveryLogin = false
 
-  this.repo = new Repo(this.io, base16.parse(this.keys.dataKey), base16.parse(this.keys.syncKey))
+  this.repo = new Repo(this.io, base64.parse(this.keys.dataKey), base64.parse(this.keys.syncKey))
   this.walletList = new WalletList(this.repo)
 }
 
@@ -71,20 +116,26 @@ Account.prototype.passwordOk = nodeify(function (password) {
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
 Account.prototype.passwordSetup = nodeify(function (password) {
-  return loginPassword.setup(this.io, this.login, password)
+  if (this.rootLogin.loginKey == null) {
+    return Promise.reject(new Error('Edge logged-in account'))
+  }
+  return loginPassword.setup(this.io, this.rootLogin, this.rootLogin, password)
 })
 Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = nodeify(function (pin) {
   return loginPin2
-    .setup(this.io, this.login, pin)
+    .setup(this.io, this.rootLogin, this.login, pin)
     .then(login => base58.stringify(login.pin2Key))
 })
 Account.prototype.changePIN = Account.prototype.pinSetup
 
 Account.prototype.recovery2Set = nodeify(function (questions, answers) {
+  if (this.rootLogin.loginKey == null) {
+    return Promise.reject(new Error('Edge logged-in account'))
+  }
   return loginRecovery2
-    .setup(this.io, this.login, questions, answers)
+    .setup(this.io, this.rootLogin, this.rootLogin, questions, answers)
     .then(login => base58.stringify(login.recovery2Key))
 })
 
@@ -130,10 +181,9 @@ Account.prototype.getFirstWallet = function (type) {
  * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
  */
 Account.prototype.createWallet = nodeify(function (type, keysJson) {
-  return server.repoCreate(this.io, this.login, keysJson).then(keysJson => {
-    const id = this.walletList.addWallet(type, keysJson)
-    return this.sync().then(dirty => {
-      return server.repoActivate(this.io, this.login, keysJson).then(() => id)
+  return this.walletList
+    .addWallet(this.io, this.login, type, keysJson)
+    .then(id => {
+      return this.sync().then(dirty => id)
     })
-  })
 })

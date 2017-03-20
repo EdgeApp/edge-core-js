@@ -1,7 +1,8 @@
-import { makeAccount, makeAccountType } from './account.js'
+import { makeAccount } from './account.js'
+import { UsernameError } from './error.js'
 import {fixUsername} from './io/loginStore.js'
-import * as loginCreate from './login/create.js'
-import * as loginEdge from './login/edge.js'
+import { createLogin, usernameAvailable } from './login/create.js'
+import { requestEdgeLogin } from './login/edge.js'
 import * as loginPassword from './login/password.js'
 import * as loginPin2 from './login/pin2.js'
 import * as loginRecovery2 from './login/recovery2.js'
@@ -16,7 +17,7 @@ export function Context (io, opts) {
   this.appId = opts.appId != null
     ? opts.appId
     : opts.accountType != null
-      ? opts.accountType.replace(/^account:repo:/, '')
+      ? opts.accountType.replace(/^account.repo:/, '')
       : ''
 }
 
@@ -32,17 +33,21 @@ Context.prototype.removeUsername = function (username) {
 }
 
 Context.prototype.usernameAvailable = nodeify(function (username) {
-  return loginCreate.usernameAvailable(this.io, username)
+  // TODO: We should change the API to expect a bool, rather than throwing:
+  return usernameAvailable(this.io, username).then(bool => {
+    if (!bool) {
+      throw new UsernameError()
+    }
+    return bool
+  })
 })
 
 /**
  * Creates a login, then creates and attaches an account to it.
  */
 Context.prototype.createAccount = nodeify(function (username, password, pin) {
-  return loginCreate.create(this.io, username, password, {}).then(login => {
-    return loginPin2.setup(this.io, login, pin).then(login => {
-      return makeAccount(this, login, 'newAccount')
-    })
+  return createLogin(this.io, username, { password, pin }).then(login => {
+    return makeAccount(this, login, 'newAccount')
   })
 })
 
@@ -54,12 +59,12 @@ Context.prototype.loginWithPassword = nodeify(function (username, password, otp,
 
 Context.prototype.pinExists = function (username) {
   const loginStash = this.io.loginStore.loadSync(username)
-  return loginPin2.getKey(loginStash) != null
+  return loginPin2.getKey(loginStash, this.appId) != null
 }
 Context.prototype.pinLoginEnabled = Context.prototype.pinExists
 
 Context.prototype.loginWithPIN = nodeify(function (username, pin) {
-  return loginPin2.login(this.io, username, pin).then(login => {
+  return loginPin2.login(this.io, this.appId, username, pin).then(login => {
     return makeAccount(this, login, 'pinLogin')
   })
 })
@@ -110,8 +115,7 @@ Context.prototype.requestEdgeLogin = nodeify(function (opts) {
       err => onLogin(err)
     )
   }
-  opts.type = opts.type || makeAccountType(this.appId)
-  return loginEdge.create(this.io, opts)
+  return requestEdgeLogin(this.io, this.appId, opts)
 })
 
 Context.prototype.listRecoveryQuestionChoices = nodeify(function () {

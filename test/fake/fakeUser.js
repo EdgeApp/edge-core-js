@@ -4,7 +4,7 @@
  */
 import {Account} from '../../src/account.js'
 import { makeLogin } from '../../src/login/login.js'
-import { base16, base58, base64 } from '../../src/util/encoding.js'
+import { base16, base64 } from '../../src/util/encoding.js'
 import * as repoModule from '../../src/util/repo.js'
 
 export const userId = base64.parse('m3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=')
@@ -134,6 +134,30 @@ export const syncKeyBox = {
   'iv_hex': '59309614b12c169af977681e01d6ad8b'
 }
 
+export const children = [
+  {
+    appId: 'test-child',
+    loginAuth: 'cfNNeN4xPQK7+2/j8xSyF/xm5NVTDOZkzacwO1FTaKw=',
+    loginAuthBox: {
+      encryptionType: 0,
+      iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
+      data_base64: 'VpqitCInCKYD8ZkYgR9/1aPrAFPEPDd/h6mqZmUE9eXuVDKzJcufXV/TgPnomLKBsprNOoZ0QNzudtXYLJu6AxDtMI4i/brvj/6gC26zaqE='
+    },
+    loginId: 'XLEnM4m6ArsEQp+OheBSgIXGLb88RvO086D65ILwAkg=',
+    parentBox: {
+      encryptionType: 0,
+      iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
+      data_base64: 'Eel57GZtGBSs5WmIK2YpCelZd793qsWcjfHz4zrsUHyV8PgifyAcFH/9ByKmHg6JUFUPW5mqMNCjn+gLjUGyibV6LA0iD6FVm+FGhhDlxEY='
+    },
+    keyBoxes: [],
+    children: []
+  }
+]
+
+export const childLoginKey = base64.parse(
+  'Ae7zAhoykf1Zky9Lx9vs6VkC0M3VjoLkEpr/5Mf31Xo='
+)
+
 // Repositories:
 export const repos = {
   'e254eb85285f96574a33bfe97b13f533fe245b42': {
@@ -149,7 +173,7 @@ export function makeAccount (context) {
   // Create the login on the server:
   const data = {
     appId: '',
-    userId: base64.stringify(userId),
+    loginId: base64.stringify(userId),
     passwordAuth,
     passwordAuthBox,
     passwordBox,
@@ -172,22 +196,36 @@ export function makeAccount (context) {
     body: JSON.stringify({ data })
   })
 
+  // Create children on the auth server:
+  children.forEach(child => {
+    context.io.fetch('https://hostname/api/v2/login/create', {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: base64.stringify(userId),
+        passwordAuth,
+        data: child
+      })
+    })
+  })
+
   // Store the login on the client:
   const loginStash = {
     username: context.fixUsername(username),
     appId: '',
-    userId: base64.stringify(userId),
+    loginId: base64.stringify(userId),
     passwordAuthBox,
     passwordBox,
     passwordKeySnrp,
-    pinAuthId: pinId,
+    pinId,
     pinBox,
-    pin2Key: base58.stringify(pin2Key),
-    recovery2Key: base58.stringify(recovery2Key),
+    pin2Key: base64.stringify(pin2Key),
+    recovery2Key: base64.stringify(recovery2Key),
     rootKeyBox,
-    syncKeyBox
+    syncKeyBox,
+    keyBoxes: [],
+    children
   }
-  context.io.loginStore.update(userId, loginStash)
+  context.io.loginStore.save(loginStash)
 
   // Populate the repos on the server:
   Object.keys(repos)
@@ -211,5 +249,5 @@ export function makeAccount (context) {
 
   // Return the account object:
   const login = makeLogin(loginStash, loginKey)
-  return new Account(context, login)
+  return new Account(context, login, login)
 }

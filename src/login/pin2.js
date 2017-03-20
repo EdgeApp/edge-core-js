@@ -1,7 +1,8 @@
 import * as crypto from '../crypto/crypto.js'
 import {fixUsername} from '../io/loginStore.js'
-import {base58, base64} from '../util/encoding.js'
-import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
+import { base64 } from '../util/encoding.js'
+import { objectAssign } from '../util/util.js'
+import { applyLoginReply, makeAuthJson, makeLogin, searchTree } from './login.js'
 
 function pin2Id (pin2Key, username) {
   return crypto.hmacSha256(fixUsername(username), pin2Key)
@@ -35,18 +36,20 @@ function fetchLoginKey (io, pin2Key, username, pin) {
 /**
  * Returns a copy of the PIN login key if one exists on the local device.
  */
-export function getKey (loginStash) {
-  if (loginStash.pin2Key != null) {
-    return base58.parse(loginStash.pin2Key)
+export function getKey (loginStash, appId) {
+  const stash = searchTree(loginStash, stash => stash.appId === appId)
+  if (stash != null && stash.pin2Key != null) {
+    return base64.parse(stash.pin2Key)
   }
 }
 
 /**
  * Logs a user in using their PIN.
+ * @return A `Promise` for the new root login.
  */
-export function login (io, username, pin) {
+export function login (io, appId, username, pin) {
   return io.loginStore.load(username).then(loginStash => {
-    const pin2Key = getKey(loginStash)
+    const pin2Key = getKey(loginStash, appId)
     if (pin2Key == null) {
       throw new Error('No PIN set locally for this account')
     }
@@ -54,7 +57,7 @@ export function login (io, username, pin) {
       const { loginKey, loginReply } = values
       loginStash = applyLoginReply(loginStash, loginKey, loginReply)
       io.loginStore.save(loginStash)
-      return makeLogin(loginStash, loginKey)
+      return makeLogin(loginStash, loginKey, appId)
     })
   })
 }
@@ -75,9 +78,10 @@ export function makePin2Kit (io, login, username, pin) {
       pin2KeyBox
     },
     stash: {
-      pin2Key: base58.stringify(pin2Key)
+      pin2Key: base64.stringify(pin2Key)
     },
     login: {
+      pin,
       pin2Key
     }
   }
@@ -86,14 +90,15 @@ export function makePin2Kit (io, login, username, pin) {
 /**
  * Sets up PIN login v2.
  */
-export function setup (io, login, pin) {
-  const kit = makePin2Kit(io, login, login.username, pin)
+export function setup (io, rootLogin, login, pin) {
+  const kit = makePin2Kit(io, login, rootLogin.username, pin)
 
   const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/pin2', request).then(reply => {
-    io.loginStore.update(login.userId, kit.stash)
     login.pin2Key = kit.login.pin2Key
-    return login
+    return io.loginStore
+      .update(rootLogin, login, stash => objectAssign(stash, kit.stash))
+      .then(() => login)
   })
 }

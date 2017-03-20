@@ -1,98 +1,41 @@
 /* global describe, it */
-import {makeFakeContexts} from '../src'
-import * as crypto from '../src/crypto/crypto.js'
-import * as loginEdge from '../src/login/edge.js'
-import {utf8} from '../src/util/encoding.js'
+import { makeFakeContexts } from '../src'
 import * as fakeUser from './fake/fakeUser.js'
+import { fetchLobbyRequest, sendLobbyReply } from '../src/login/lobby.js'
+import { base64 } from '../src/util/encoding.js'
 import assert from 'assert'
-import elliptic from 'elliptic'
-
-const EllipticCurve = elliptic.ec
-const secp256k1 = new EllipticCurve('secp256k1')
-
-const fakeReply = {
-  username: 'test',
-  pinString: '1234',
-  keys: {
-    dataKey: 'fa57',
-    syncKey: 'f00d'
-  }
-}
-
-/**
- * Modifies the lobby object with a fake reply to an account request.
- */
-function craftFakeReply (io, lobby) {
-  const accountRequest = lobby['accountRequest']
-  const requestKey = accountRequest['requestKey']
-
-  const keys = secp256k1.genKeyPair()
-  const requestPubkey = secp256k1.keyFromPublic(requestKey, 'hex').getPublic()
-  const secret = keys.derive(requestPubkey).toArray('be')
-  const dataKey = crypto.hmacSha256('dataKey', new Uint8Array(secret))
-
-  const replyBlob = utf8.parse(JSON.stringify(fakeReply))
-  accountRequest['replyBox'] = crypto.encrypt(io, replyBlob, dataKey)
-  accountRequest['replyKey'] = keys.getPublic().encodeCompressed('hex')
-  return lobby
-}
 
 describe('edge login', function () {
-  it('decode reply', function () {
-    const key = secp256k1.keyFromPrivate('ab989c9ac164effe74d89c0ab0e7dc2345f8e091f43bba2c02d99ed4aa107af1')
-    const lobby = {
-      'accountRequest': {
-        'displayName': 'test',
-        'replyBox': {
-          'data_base64': 'uMhgQkfFJT9G8jTov/3uF0ntPlv50Gp6U5cqu7kBgrvJ3tt22gQ0iJDFWWIAiB1aQ3VoZQLo+uJzbfBUXByc5UjhHGaZNudW77YOQL4egoTBFPDz2UybcPq9feClGCbKbJw1ayTyfl7oQxIa8p8oOHCs+3UQbpHRTAjGaVPId7g=',
-          'encryptionType': 0,
-          'iv_hex': 'ba70845459c593e63bab244b00cc5a69'
-        },
-        'replyKey': '022484c4e59a4a7638045fcb232f7ead696510127276feb37441e3e071117d9cdd',
-        'requestKey': '033affa1149e4263db9a7e8320a7f612ffb76dd3099d8786eca8e70a27e48e0ece',
-        'type': 'account:repo:co.airbitz.wallet'
-      }
-    }
-
-    assert.deepEqual(loginEdge.decodeAccountReply(key, lobby), {
-      'type': 'account:repo:co.airbitz.wallet',
-      'username': 'test',
-      'info': {
-        'test': 'test'
-      }
-    })
-  })
-
-  it('request', function (done) {
-    this.timeout(9000)
+  it('request', function () {
     const [context, remote] = makeFakeContexts(2)
-    const remoteAccount = fakeUser.makeAccount(remote)
-    remoteAccount.createWallet('account:repo:test', fakeReply.keys)
-    context.appId = 'test'
+    context.appId = 'test-child'
+    fakeUser.makeAccount(remote)
 
-    const opts = {
-      onLogin: function (err, account) {
-        if (err) return done(err)
-        assert.deepEqual(account.keys, fakeReply.keys)
-        done()
-      },
-      displayName: 'test suite'
-    }
+    return new Promise((resolve, reject) => {
+      const opts = {
+        onLogin: (err, account) => {
+          if (err) return reject(err)
+          return resolve()
+        },
+        displayName: 'test suite'
+      }
+      return context.requestEdgeLogin(opts).then(pending => {
+        const prefix = new RegExp('^airbitz://edge/')
+        assert(prefix.test(pending.id))
+        const lobbyId = pending.id.replace(prefix, '')
 
-    context.requestEdgeLogin(opts, function (err, pendingLogin) {
-      if (err) return done(err)
-      const lobbyUri = 'https://hostmane/api/v2/lobby/' + pendingLogin.id
-      remote.io
-        .fetch(lobbyUri)
-        .then(reply => reply.json())
-        .then(json => {
-          const data = craftFakeReply(remote.io, json.results)
-          return remote.io.fetch(lobbyUri, {
-            method: 'PUT',
-            body: JSON.stringify({ data })
-          })
+        return fetchLobbyRequest(remote.io, lobbyId).then(request => {
+          assert.equal(request.loginRequest.appId, context.appId)
+          assert.equal(request.loginRequest.displayName, 'test suite')
+
+          const reply = {
+            appId: request.loginRequest.appId,
+            loginKey: base64.stringify(fakeUser.childLoginKey),
+            loginStash: remote.io.loginStore.loadSync(fakeUser.username)
+          }
+          return sendLobbyReply(remote.io, lobbyId, request, reply)
         })
-        .catch(e => done(e))
+      }).catch(reject)
     })
   })
 

@@ -1,4 +1,4 @@
-import { filterObject, objectAssign } from '../../util/util.js'
+import { filterObject } from '../../util/util.js'
 
 const routes = []
 
@@ -86,49 +86,69 @@ function makeErrorResponse (code, message = '', status = 500) {
 function authHandler1 (req) {
   // Password login:
   if (req.body.l1 != null && req.body.lp1 != null) {
-    if (req.body.l1 !== this.db.userId) {
+    const login = this.findLoginId(req.body.l1)
+    if (login == null) {
       return makeErrorResponse(errorCodes.noAccount)
     }
-    if (req.body.lp1 !== this.db.passwordAuth) {
+    if (req.body.lp1 !== login.passwordAuth) {
       return makeErrorResponse(errorCodes.invalidPassword)
     }
-    return null
+    req.login = login
+    return
   }
-  return makeErrorResponse(errorCodes.error)
+  return makeErrorResponse(errorCodes.error, 'Missing credentials')
 }
 
 /**
  * Verifies that the request contains valid v2 authenticaion.
  */
 function authHandler (req) {
-  // Password login:
-  if (req.body.userId != null && req.body.passwordAuth != null) {
-    if (req.body.userId !== this.db.userId) {
+  // Token login:
+  if (req.body.loginId != null && req.body.loginAuth != null) {
+    const login = this.findLoginId(req.body.loginId)
+    if (login == null) {
       return makeErrorResponse(errorCodes.noAccount)
     }
-    if (req.body.passwordAuth !== this.db.passwordAuth) {
+    if (req.body.loginAuth !== login.loginAuth) {
       return makeErrorResponse(errorCodes.invalidPassword)
     }
-    return null
+    req.login = login
+    return
+  }
+
+  // Password login:
+  if (req.body.userId != null && req.body.passwordAuth != null) {
+    const login = this.findLoginId(req.body.userId)
+    if (login == null) {
+      return makeErrorResponse(errorCodes.noAccount)
+    }
+    if (req.body.passwordAuth !== login.passwordAuth) {
+      return makeErrorResponse(errorCodes.invalidPassword)
+    }
+    req.login = login
+    return
   }
 
   // PIN2 login:
   if (req.body.pin2Id != null && req.body.pin2Auth != null) {
-    if (req.body.pin2Id !== this.db.pin2Id) {
+    const login = this.findPin2Id(req.body.pin2Id)
+    if (login == null) {
       return makeErrorResponse(errorCodes.noAccount)
     }
-    if (req.body.pin2Auth !== this.db.pin2Auth) {
+    if (req.body.pin2Auth !== login.pin2Auth) {
       return makeErrorResponse(errorCodes.invalidPassword)
     }
-    return null
+    req.login = login
+    return
   }
 
   // Recovery2 login:
   if (req.body.recovery2Id != null && req.body.recovery2Auth != null) {
-    if (req.body.recovery2Id !== this.db.recovery2Id) {
+    const login = this.findRecovery2Id(req.body.recovery2Id)
+    if (login == null) {
       return makeErrorResponse(errorCodes.noAccount)
     }
-    const serverAuth = this.db.recovery2Auth
+    const serverAuth = login.recovery2Auth
     const clientAuth = req.body.recovery2Auth
     if (clientAuth.length !== serverAuth.length) {
       return makeErrorResponse(errorCodes.invalidAnswers)
@@ -138,32 +158,37 @@ function authHandler (req) {
         return makeErrorResponse(errorCodes.invalidAnswers)
       }
     }
-    return null
+    req.login = login
+    return
   }
-  return makeErrorResponse(errorCodes.error)
+  return makeErrorResponse(errorCodes.error, 'Missing credentials')
 }
 
 // Account lifetime v1: ----------------------------------------------------
 
 addRoute('POST', '/api/v1/account/available', function (req) {
-  if (req.body.l1 != null && req.body.l1 === this.db.userId) {
+  if (this.findLoginId(req.body.l1)) {
     return makeErrorResponse(errorCodes.accountExists)
   }
   return makeResponse()
 })
 
 addRoute('POST', '/api/v1/account/create', function (req) {
-  this.db.appId = ''
-  this.db.userId = req.body['l1']
-  this.db.passwordAuth = req.body['lp1']
+  if (this.findLoginId(req.body.l1)) {
+    return makeErrorResponse(errorCodes.accountExists)
+  }
 
   const carePackage = JSON.parse(req.body['care_package'])
-  this.db.passwordKeySnrp = carePackage['SNRP2']
-
   const loginPackage = JSON.parse(req.body['login_package'])
-  this.db.passwordAuthBox = loginPackage['ELP1']
-  this.db.passwordBox = loginPackage['EMK_LP2']
-  this.db.syncKeyBox = loginPackage['ESyncKey']
+  this.db.logins.push({
+    appId: '',
+    loginId: req.body['l1'],
+    passwordAuth: req.body['lp1'],
+    passwordKeySnrp: carePackage['SNRP2'],
+    passwordAuthBox: loginPackage['ELP1'],
+    passwordBox: loginPackage['EMK_LP2'],
+    syncKeyBox: loginPackage['ESyncKey']
+  })
   this.repos[req.body['repo_account_key']] = {}
 
   return makeResponse()
@@ -176,13 +201,14 @@ addRoute('POST', '/api/v1/account/activate', authHandler1, function (req) {
 // Login v1: ---------------------------------------------------------------
 
 addRoute('POST', '/api/v1/account/carepackage/get', function (req) {
-  if (req.body.l1 == null || req.body.l1 !== this.db.userId) {
+  const login = this.findLoginId(req.body.l1)
+  if (login == null) {
     return makeErrorResponse(errorCodes.noAccount)
   }
 
   return makeResponse({
     care_package: JSON.stringify({
-      SNRP2: this.db.passwordKeySnrp
+      SNRP2: login.passwordKeySnrp
     })
   })
 })
@@ -194,13 +220,13 @@ addRoute(
   function (req) {
     const results = {
       login_package: JSON.stringify({
-        ELP1: this.db.passwordAuthBox,
-        EMK_LP2: this.db.passwordBox,
-        ESyncKey: this.db.syncKeyBox
+        ELP1: req.login.passwordAuthBox,
+        EMK_LP2: req.login.passwordBox,
+        ESyncKey: req.login.syncKeyBox
       })
     }
-    if (this.db.rootKeyBox != null) {
-      results.rootKeyBox = this.db.rootKeyBox
+    if (req.login.rootKeyBox != null) {
+      results.rootKeyBox = req.login.rootKeyBox
     }
     return makeResponse(results)
   }
@@ -244,33 +270,29 @@ addRoute(
   'POST',
   '/api/v2/login',
   function (req) {
-    if (req.body.recovery2Id != null && req.body.recovery2Auth == null) {
-      if (req.body.recovery2Id !== this.db.recovery2Id) {
+    if (req.body.userId != null && req.body.passwordAuth == null) {
+      const login = this.findLoginId(req.body.userId)
+      if (login == null) {
         return makeErrorResponse(errorCodes.noAccount)
       }
       return makeResponse({
-        question2Box: this.db.question2Box
+        passwordAuthSnrp: login.passwordAuthSnrp
+      })
+    }
+    if (req.body.recovery2Id != null && req.body.recovery2Auth == null) {
+      const login = this.findRecovery2Id(req.body.recovery2Id)
+      if (login == null) {
+        return makeErrorResponse(errorCodes.noAccount)
+      }
+      return makeResponse({
+        question2Box: login.question2Box
       })
     }
     return null
   },
   authHandler,
   function (req) {
-    return makeResponse(
-      filterObject(this.db, [
-        'appId',
-        'passwordAuthBox',
-        'passwordBox',
-        'passwordKeySnrp',
-        'pin2Box',
-        'pin2KeyBox',
-        'recovery2Box',
-        'recovery2KeyBox',
-        'rootKeyBox',
-        'syncKeyBox',
-        'repos'
-      ])
-    )
+    return makeResponse(this.makeReply(req.login))
   }
 )
 
@@ -285,29 +307,54 @@ addRoute('POST', '/api/v2/login/create', function (req) {
   }
 
   // Set up login object:
-  objectAssign(
-    this.db,
-    filterObject(data, [
-      'appId',
-      'userId',
-      'passwordAuth',
-      'passwordAuthBox',
-      'passwordBox',
-      'passwordKeySnrp',
-      'pin2Auth',
-      'pin2Box',
-      'pin2Id',
-      'pin2KeyBox',
-      'question2Box',
-      'recovery2Auth',
-      'recovery2Box',
-      'recovery2Id',
-      'recovery2KeyBox',
-      'rootKeyBox',
-      'syncKeyBox',
-      'repos'
-    ])
-  )
+  const row = filterObject(data, [
+    'appId',
+    'loginId',
+    'loginAuth',
+    'loginAuthBox',
+    'parentBox',
+    'passwordAuth',
+    'passwordAuthBox',
+    'passwordAuthSnrp',
+    'passwordBox',
+    'passwordKeySnrp',
+    'pin2Auth',
+    'pin2Box',
+    'pin2Id',
+    'pin2KeyBox',
+    'question2Box',
+    'recovery2Auth',
+    'recovery2Box',
+    'recovery2Id',
+    'recovery2KeyBox',
+    'mnemonicBox', // Used for testing, not part of the real server!
+    'rootKeyBox', // Same
+    'syncKeyBox', // Same
+    'repos'
+  ])
+  if (!authHandler.call(this, req)) {
+    row.parent = req.login.loginId
+  }
+  this.db.logins.push(row)
+
+  return makeResponse()
+})
+
+addRoute('POST', '/api/v2/login/keys', authHandler, function (req) {
+  const data = req.body['data']
+  if (data.keyBoxes == null) {
+    return makeErrorResponse(errorCodes.error)
+  }
+
+  // Set up repos:
+  if (data.newSyncKeys != null) {
+    data.newSyncKeys.forEach(syncKey => {
+      this.repos[syncKey] = {}
+    })
+  }
+
+  const keyBoxes = req.login.keyBoxes != null ? req.login.keyBoxes : []
+  req.login.keyBoxes = [...keyBoxes, ...data.keyBoxes]
 
   return makeResponse()
 })
@@ -317,16 +364,18 @@ addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   if (
     data.passwordAuth == null ||
     data.passwordAuthBox == null ||
+    data.passwordAuthSnrp == null ||
     data.passwordBox == null ||
     data.passwordKeySnrp == null
   ) {
     return makeErrorResponse(errorCodes.error)
   }
 
-  this.db.passwordAuth = data.passwordAuth
-  this.db.passwordAuthBox = data.passwordAuthBox
-  this.db.passwordBox = data.passwordBox
-  this.db.passwordKeySnrp = data.passwordKeySnrp
+  req.login.passwordAuth = data.passwordAuth
+  req.login.passwordAuthBox = data.passwordAuthBox
+  req.login.passwordAuthSnrp = data.passwordAuthSnrp
+  req.login.passwordBox = data.passwordBox
+  req.login.passwordKeySnrp = data.passwordKeySnrp
 
   return makeResponse()
 })
@@ -342,10 +391,10 @@ addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
     return makeErrorResponse(errorCodes.error)
   }
 
-  this.db.pin2Auth = data.pin2Auth
-  this.db.pin2Box = data.pin2Box
-  this.db.pin2Id = data.pin2Id
-  this.db.pin2KeyBox = data.pin2KeyBox
+  req.login.pin2Auth = data.pin2Auth
+  req.login.pin2Box = data.pin2Box
+  req.login.pin2Id = data.pin2Id
+  req.login.pin2KeyBox = data.pin2KeyBox
 
   return makeResponse()
 })
@@ -362,45 +411,40 @@ addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
     return makeErrorResponse(errorCodes.error)
   }
 
-  this.db.question2Box = data.question2Box
-  this.db.recovery2Auth = data.recovery2Auth
-  this.db.recovery2Box = data.recovery2Box
-  this.db.recovery2Id = data.recovery2Id
-  this.db.recovery2KeyBox = data.recovery2KeyBox
-
-  return makeResponse()
-})
-
-addRoute('POST', '/api/v2/login/repos', authHandler, function (req) {
-  const data = req.body['data']
-  if (data.type == null || data.info == null) {
-    return makeErrorResponse(errorCodes.error)
-  }
-
-  if (this.db.repos != null) {
-    this.db.repos.push(data)
-  } else {
-    this.db.repos = [data]
-  }
+  req.login.question2Box = data.question2Box
+  req.login.recovery2Auth = data.recovery2Auth
+  req.login.recovery2Box = data.recovery2Box
+  req.login.recovery2Id = data.recovery2Id
+  req.login.recovery2KeyBox = data.recovery2KeyBox
 
   return makeResponse()
 })
 
 // lobby: ------------------------------------------------------------------
 
-addRoute('POST', '/api/v2/lobby', function (req) {
-  this.db.lobby = req.body.data
-  return makeResponse({
-    id: 'IMEDGELOGIN'
-  })
+addRoute('PUT', '/api/v2/lobby/.*', function (req) {
+  const pubkey = req.path.split('/')[4]
+  this.db.lobbies[pubkey] = { request: req.body['data'], replies: [] }
+  return makeResponse()
 })
 
-addRoute('GET', '/api/v2/lobby/IMEDGELOGIN', function (req) {
-  return makeResponse(this.db.lobby)
+addRoute('POST', '/api/v2/lobby/.*', function (req) {
+  const pubkey = req.path.split('/')[4]
+  this.db.lobbies[pubkey].replies.push(req.body['data'])
+  return makeResponse()
 })
 
-addRoute('PUT', '/api/v2/lobby/IMEDGELOGIN', function (req) {
-  this.db.lobby = req.body.data
+addRoute('GET', '/api/v2/lobby/.*', function (req) {
+  const pubkey = req.path.split('/')[4]
+  if (this.db.lobbies[pubkey] == null) {
+    return new FakeResponse(`Cannot find lobby "${pubkey}"`, { status: 404 })
+  }
+  return makeResponse(this.db.lobbies[pubkey])
+})
+
+addRoute('DELETE', '/api/v2/lobby/.*', function (req) {
+  const pubkey = req.path.split('/')[4]
+  delete this.db.lobbies[pubkey]
   return makeResponse()
 })
 
@@ -442,7 +486,7 @@ addRoute('POST', '/api/v2/store/.*', storeRoute)
  */
 export class FakeServer {
   constructor () {
-    this.db = {}
+    this.db = { lobbies: {}, logins: [] }
     this.repos = {}
     this.fetch = (uri, opts = {}) => {
       try {
@@ -451,6 +495,45 @@ export class FakeServer {
         return Promise.reject(e)
       }
     }
+  }
+
+  findLoginId (loginId) {
+    if (loginId == null) return
+    return this.db.logins.find(login => login.loginId === loginId)
+  }
+
+  findPin2Id (pin2Id) {
+    return this.db.logins.find(login => login.pin2Id === pin2Id)
+  }
+
+  findRecovery2Id (recovery2Id) {
+    return this.db.logins.find(login => login.recovery2Id === recovery2Id)
+  }
+
+  makeReply (login) {
+    const reply = filterObject(login, [
+      'appId',
+      'loginId',
+      'loginAuthBox',
+      'parentBox',
+      'passwordAuthBox',
+      'passwordAuthSnrp',
+      'passwordBox',
+      'passwordKeySnrp',
+      'pin2Box',
+      'pin2KeyBox',
+      'question2Box',
+      'recovery2Box',
+      'recovery2KeyBox',
+      'mnemonicBox',
+      'rootKeyBox',
+      'syncKeyBox',
+      'keyBoxes'
+    ])
+    reply.children = this.db.logins
+      .filter(child => child.parent === login.loginId)
+      .map(child => this.makeReply(child))
+    return reply
   }
 
   request (uri, opts) {

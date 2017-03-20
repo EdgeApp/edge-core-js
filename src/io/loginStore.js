@@ -1,6 +1,7 @@
 import { scrypt, userIdSnrp } from '../crypto/scrypt.js'
-import {base64} from '../util/encoding.js'
-import {ScopedStorage} from '../util/scopedStorage.js'
+import { updateLoginStash } from '../login/login.js'
+import { base58, base64 } from '../util/encoding.js'
+import { ScopedStorage } from '../util/scopedStorage.js'
 
 /**
  * Handles login data storage.
@@ -8,116 +9,85 @@ import {ScopedStorage} from '../util/scopedStorage.js'
  */
 export class LoginStore {
   constructor (io) {
-    this.io = io
-  }
-
-  /**
-   * Finds the loginStash for the given username.
-   */
-  load (username) {
-    const loginStash = this.loadSync(username)
-    if (loginStash.userId != null) {
-      return Promise.resolve(loginStash)
-    }
-
-    return hashUsername(username).then(userId => {
-      loginStash.userId = base64.stringify(userId)
-      return loginStash
-    })
-  }
-
-  /**
-   * Same thing as `load`, but doesn't block on the `userId`.
-   */
-  loadSync (username) {
-    const fixedName = fixUsername(username)
-    const store = this._findUsername(fixedName)
-
-    return {
-      username: fixedName,
-      appId: store.getItem('appId'),
-      userId: this._loadUsers(this.io)[fixedName],
-
-      passwordAuthBox: store.getJson('passwordAuthBox'),
-      passwordBox: store.getJson('passwordBox'),
-      passwordKeySnrp: store.getJson('passwordKeySnrp'),
-
-      pin2Key: store.getItem('pin2Key'),
-      recovery2Key: store.getItem('recovery2Key'),
-
-      rootKeyBox: store.getJson('rootKeyBox'),
-      syncKeyBox: store.getJson('syncKeyBox'),
-      repos: store.getJson('repos') || []
-    }
+    this.storage = new ScopedStorage(io.localStorage, 'airbitz.login')
   }
 
   /**
    * Lists the usernames that have data in the store.
    */
   listUsernames () {
-    const users = this._loadUsers()
-    return Object.keys(users)
+    return this.storage.keys().map(filename => {
+      return this.storage.getJson(filename).username
+    })
+  }
+
+  /**
+   * Finds the loginStash for the given username.
+   */
+  load (username) {
+    return Promise.resolve(this.loadSync(username))
+  }
+
+  /**
+   * Same thing as `load`, but doesn't block on the `userId`.
+   */
+  loadSync (username) {
+    const filename = this._findFilename(username)
+    return filename != null
+      ? this.storage.getJson(filename)
+      : { username: fixUsername(username), appId: '' }
   }
 
   /**
    * Removes any loginStash that may be stored for the given username.
    */
   remove (username) {
-    const fixedName = fixUsername(username)
-    this._findUsername(fixedName).removeAll()
-
-    const users = this._loadUsers()
-    delete users[fixedName]
-    this.io.localStorage.setItem('airbitz.users', JSON.stringify(users))
+    const filename = this._findFilename(username)
+    if (filename != null) {
+      this.storage.removeItem(filename)
+    }
   }
 
   /**
    * Saves a loginStash.
    */
   save (loginStash) {
-    return this.update(base64.parse(loginStash.userId), loginStash)
+    const loginId = base64.parse(loginStash.loginId)
+    if (loginStash.appId == null) {
+      throw new Error('Cannot save a login without an appId.')
+    }
+    if (loginId.length !== 32) {
+      throw new Error('Invalid loginId')
+    }
+    const filename = base58.stringify(loginId)
+    this.storage.setJson(filename, loginStash)
   }
 
-  update (userId, loginStash) {
-    if (userId.length !== 32) {
-      throw new Error('Invalid userId')
-    }
-
-    // Find the username:
-    let username
-    const users = this._loadUsers()
-    if ('username' in loginStash) {
-      username = loginStash.username
-
-      // Add the userId to the table, in case it's new:
-      users[username] = base64.stringify(userId)
-      this.io.localStorage.setItem('airbitz.users', JSON.stringify(users))
-    } else {
-      username = Object.keys(users).find(username => {
-        return users[username] === base64.stringify(userId)
-      })
-      if (!username) {
-        throw new Error('Cannot find userId')
+  /**
+   * Updates the selected login stash.
+   * The `username` gives the root of the search,
+   * and the `targetLoginId` gives the node to update.
+   * The `update` callback is called on the selected node,
+   * and can make any modifications it likes.
+   */
+  update (rootLogin, targetLogin, update) {
+    return this.load(rootLogin.username).then(loginStash => {
+      if (loginStash.loginId == null) {
+        throw new Error(`Could not load stash for "${rootLogin.username}"`)
       }
-    }
-
-    // Actually save:
-    const store = this._findUsername(username)
-    return store.setItems(loginStash)
+      const target = base64.stringify(targetLogin.loginId)
+      return this.save(
+        updateLoginStash(loginStash, stash => stash.loginId === target, update)
+      )
+    })
   }
 
-  _findUsername (username) {
-    const path = 'airbitz.user.' + fixUsername(username)
-    return new ScopedStorage(this.io.localStorage, path)
-  }
-
-  _loadUsers () {
-    try {
-      const users = JSON.parse(this.io.localStorage.getItem('airbitz.users'))
-      return users || {}
-    } catch (e) {
-      return {}
-    }
+  _findFilename (username) {
+    const fixedName = fixUsername(username)
+    return this.storage.keys().find(filename => {
+      const loginStash = this.storage.getJson(filename)
+      return loginStash && loginStash.username === fixedName
+    })
   }
 }
 

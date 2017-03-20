@@ -1,8 +1,9 @@
 import * as crypto from '../crypto/crypto.js'
 import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
-import {fixUsername} from '../io/loginStore.js'
+import { fixUsername, hashUsername } from '../io/loginStore.js'
 import {rejectify} from '../util/decorators.js'
 import {base64} from '../util/encoding.js'
+import { objectAssign } from '../util/util.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 
 function makeHashInput (username, password) {
@@ -25,9 +26,13 @@ function extractLoginKey (loginStash, username, password) {
 /**
  * Fetches the loginKey from the server.
  */
-function fetchLoginKey (io, userId, username, password) {
+function fetchLoginKey (io, username, password) {
   const up = makeHashInput(username, password)
-  return scrypt(up, passwordAuthSnrp).then(passwordAuth => {
+  const userId = hashUsername(username)
+  const passwordAuth = scrypt(up, passwordAuthSnrp)
+
+  return Promise.all([userId, passwordAuth]).then(values => {
+    const [userId, passwordAuth] = values
     const request = {
       userId: base64.stringify(userId),
       passwordAuth: base64.stringify(passwordAuth)
@@ -51,7 +56,7 @@ function fetchLoginKey (io, userId, username, password) {
  * Logs a user in using a password.
  * @param username string
  * @param password string
- * @return `Login` object promise
+ * @return A `Promise` for the new root login.
  */
 export function login (io, username, password) {
   return io.loginStore.load(username).then(loginStash => {
@@ -72,12 +77,7 @@ export function login (io, username, password) {
       })
       .catch(e => {
         // If that failed, try an online login:
-        return fetchLoginKey(
-          io,
-          base64.parse(loginStash.userId),
-          username,
-          password
-        ).then(values => {
+        return fetchLoginKey(io, username, password).then(values => {
           const { loginKey, loginReply } = values
           loginStash = applyLoginReply(loginStash, loginKey, loginReply)
           io.loginStore.save(loginStash)
@@ -152,14 +152,15 @@ export function makePasswordKit (io, login, username, password) {
 /**
  * Sets up a password for the login.
  */
-export function setup (io, login, password) {
-  return makePasswordKit(io, login, login.username, password).then(kit => {
+export function setup (io, rootLogin, login, password) {
+  return makePasswordKit(io, login, rootLogin.username, password).then(kit => {
     const request = makeAuthJson(login)
     request.data = kit.server
     return io.authRequest('POST', '/v2/login/password', request).then(reply => {
-      io.loginStore.update(login.userId, kit.stash)
       login.passwordAuth = kit.login.passwordAuth
-      return login
+      return io.loginStore
+        .update(rootLogin, login, stash => objectAssign(stash, kit.stash))
+        .then(() => login)
     })
   })
 }
