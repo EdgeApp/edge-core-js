@@ -40,7 +40,7 @@ export function makeNewKit (io, parentLogin, appId, username, opts) {
   // Set up login methods:
   const parentBox = parentLogin != null
     ? encrypt(io, loginKey, parentLogin.loginKey)
-    : null
+    : void 0
   const passwordKit = opts.password != null
     ? makePasswordKit(io, { loginKey }, username, opts.password)
     : {}
