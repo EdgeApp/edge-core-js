@@ -18,7 +18,7 @@ class ABCEdgeLoginRequest {
 function onReply (io, subscription, reply, appId, opts) {
   subscription.unsubscribe()
   if (opts.onProcessLogin != null) {
-    opts.onProcessLogin(reply.username)
+    opts.onProcessLogin(reply.loginStash.username)
   }
 
   // Find the appropriate child:
