@@ -111,7 +111,7 @@ Account.prototype.logout = function () {
 }
 
 Account.prototype.passwordOk = nodeify(function (password) {
-  return loginPassword.check(this.io, this.login, password)
+  return loginPassword.check(this.io, this.rootLogin, password)
 })
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
