@@ -7,7 +7,7 @@ import { makeLogin, searchTree } from './login.js'
  */
 class ABCEdgeLoginRequest {
   constructor (lobbyId, subscription) {
-    this.id = `airbitz://edge/${lobbyId}`
+    this.id = lobbyId
     this.cancelRequest = () => subscription.unsubscribe()
   }
 }

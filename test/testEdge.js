@@ -20,9 +20,7 @@ describe('edge login', function () {
         displayName: 'test suite'
       }
       return context.requestEdgeLogin(opts).then(pending => {
-        const prefix = new RegExp('^airbitz://edge/')
-        assert(prefix.test(pending.id))
-        const lobbyId = pending.id.replace(prefix, '')
+        const lobbyId = pending.id
 
         return fetchLobbyRequest(remote.io, lobbyId).then(request => {
           assert.equal(request.loginRequest.appId, context.appId)
