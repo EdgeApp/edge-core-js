@@ -1,5 +1,6 @@
 // Airbitz context stuff:
 import {makeNodeContext} from '../..'
+import { PasswordError } from '../../error.js'
 import {rejectify} from '../../util/decorators.js'
 import { objectAssign } from '../../util/util.js'
 
@@ -165,6 +166,11 @@ rejectify(main)().catch(e => {
       case UsageError.type:
         if (e.command != null) {
           console.error(`Usage: ${e.command.usage}`)
+        }
+        break
+      case PasswordError.name:
+        if (e.wait) {
+          console.error(`Please try again in ${e.wait} seconds`)
         }
         break
     }
