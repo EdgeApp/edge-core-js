@@ -37,10 +37,12 @@ function fetchLoginKey (io, pin2Key, username, pin) {
  * Returns a copy of the PIN login key if one exists on the local device.
  */
 export function getPin2Key (loginStash, appId) {
-  const stash = searchTree(loginStash, stash => stash.appId === appId)
-  if (stash != null && stash.pin2Key != null) {
-    return base64.parse(stash.pin2Key)
-  }
+  const stash = loginStash.pin2Key != null
+    ? loginStash
+    : searchTree(loginStash, stash => stash.appId === appId)
+  return stash != null && stash.pin2Key != null
+    ? { pin2Key: base64.parse(stash.pin2Key), appId: stash.appId }
+    : {}
 }
 
 /**
@@ -49,7 +51,7 @@ export function getPin2Key (loginStash, appId) {
  */
 export function loginPin2 (io, appId, username, pin) {
   return io.loginStore.load(username).then(loginStash => {
-    const pin2Key = getPin2Key(loginStash, appId)
+    const { pin2Key, appIdFound } = getPin2Key(loginStash, appId)
     if (pin2Key == null) {
       throw new Error('No PIN set locally for this account')
     }
@@ -57,7 +59,7 @@ export function loginPin2 (io, appId, username, pin) {
       const { loginKey, loginReply } = values
       loginStash = applyLoginReply(loginStash, loginKey, loginReply)
       io.loginStore.save(loginStash)
-      return makeLogin(loginStash, loginKey, appId)
+      return makeLogin(loginStash, loginKey, appIdFound)
     })
   })
 }
