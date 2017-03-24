@@ -1,6 +1,15 @@
 import { Context } from './api/context.js'
 import { objectAssign } from './util/util.js'
 
+// Secret CLI exports:
+import * as internal from './internal.js'
+export { internal }
+
+// Ancillary exports:
+export * from './error.js'
+export { makeBrowserIo } from './io/browser'
+export { makeFakeIos } from './io/fake'
+
 /**
  * Initializes the Airbitz core library.
  *
@@ -22,16 +31,3 @@ export function makeContext (opts) {
 export function makeABCContext (apiKey, appId, opts) {
   return makeContext(objectAssign({ apiKey, appId }, opts))
 }
-
-// Ancillary exports:
-export * from './error.js'
-export { makeBrowserIo } from './io/browser'
-export { makeFakeIos } from './io/fake'
-
-// Secret CLI exports:
-import * as internal from './internal.js'
-export { internal }
-
-// Deprecated exports:
-export {Context}
-export {fixUsername as usernameFix} from './io/loginStore.js'
