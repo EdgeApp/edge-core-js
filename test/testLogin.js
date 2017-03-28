@@ -2,6 +2,7 @@
 import { makeFakeContexts } from '../src'
 import { attachKeys, makeKeyInfo } from '../src/login/login.js'
 import { base58, base64 } from '../src/util/encoding.js'
+import { objectAssign } from '../src/util/util.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
 
@@ -187,6 +188,19 @@ describe('pin', function () {
     makeFakeAccount(context, fakeUser)
 
     return context.loginWithPIN(fakeUser.username, fakeUser.pin)
+  })
+
+  it('child login', function () {
+    const trimmedUser = objectAssign({}, fakeUser)
+    trimmedUser.pin2Key = null
+
+    const [context] = makeFakeContexts(1)
+    makeFakeAccount(context, trimmedUser)
+    context.appId = 'test-child'
+
+    return context
+      .loginWithPIN(fakeUser.username, fakeUser.pin)
+      .then(account => assert.equal(account.login.appId, 'test-child'))
   })
 
   it('setup', function () {

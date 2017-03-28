@@ -19,22 +19,31 @@ describe('edge login', function () {
         },
         displayName: 'test suite'
       }
-      return context.requestEdgeLogin(opts).then(pending => {
-        const lobbyId = pending.id
+      return context
+        .requestEdgeLogin(opts)
+        .then(pending => {
+          const lobbyId = pending.id
 
-        return fetchLobbyRequest(remote.io, lobbyId).then(request => {
-          assert.equal(request.loginRequest.appId, context.appId)
-          assert.equal(request.loginRequest.displayName, 'test suite')
+          return fetchLobbyRequest(remote.io, lobbyId).then(request => {
+            assert.equal(request.loginRequest.appId, context.appId)
+            assert.equal(request.loginRequest.displayName, 'test suite')
 
-          const reply = {
-            appId: request.loginRequest.appId,
-            loginKey: base64.stringify(fakeUser.children[0].loginKey),
-            loginStash: remote.io.loginStore.loadSync(fakeUser.username)
-          }
-          return sendLobbyReply(remote.io, lobbyId, request, reply)
+            const stash = remote.io.loginStore.loadSync(fakeUser.username)
+            stash.passwordAuthBox = null
+            stash.passwordBox = null
+            stash.pin2Key = null
+            stash.recovery2Key = null
+
+            const reply = {
+              appId: request.loginRequest.appId,
+              loginKey: base64.stringify(fakeUser.children[0].loginKey),
+              loginStash: stash
+            }
+            return sendLobbyReply(remote.io, lobbyId, request, reply)
+          })
         })
-      }).catch(reject)
-    })
+        .catch(reject)
+    }).then(() => context.loginWithPIN(fakeUser.username, fakeUser.pin))
   })
 
   it('cancel', function (done) {

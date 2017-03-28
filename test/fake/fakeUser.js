@@ -129,6 +129,19 @@ export const fakeUser = {
         encryptionType: 0,
         iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
         data_base64: 'Eel57GZtGBSs5WmIK2YpCelZd793qsWcjfHz4zrsUHyV8PgifyAcFH/9ByKmHg6JUFUPW5mqMNCjn+gLjUGyibV6LA0iD6FVm+FGhhDlxEY='
+      },
+      pin2Auth: 'i5LBqVNDTMU60rQLfjOiEatR5P/xzRS9mmdfk8TQdrM=',
+      pin2Box: {
+        encryptionType: 0,
+        iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
+        data_base64: 'G/edIgFPvr57S02TyT2qH3ylZ5BmOWMvMAMLKUksRr5Zw4nNGAy95Erga2BqWCqAYR3fCAp+TTKoCR/Wd6lgesCkpQYxh3fTUBliZwbUUtY='
+      },
+      pin2Id: 'oEfMhgYiGLM0JGcrxA3FgACSURA9QIkb+yanM8Euiqo=',
+      pin2Key: 'AxJd1CfG4WgLOiW8r24p0BNi7aQ3FnE4G4q1jL++uaA=',
+      pin2KeyBox: {
+        encryptionType: 0,
+        iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
+        data_base64: '1nCWjsW66E8RceBNFkP8bH5I5H4yhMGJrLCxwhbsKmo5x+hpFW0G/sUNXlsuIRCaEiKGODuI4cyeeUQoqbd03ZxFCwpDHrYD8C1NDW2JOJY='
       }
     }
   ]
