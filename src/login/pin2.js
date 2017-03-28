@@ -51,7 +51,7 @@ export function getPin2Key (loginStash, appId) {
  */
 export function loginPin2 (io, appId, username, pin) {
   return io.loginStore.load(username).then(loginStash => {
-    const { pin2Key, appIdFound } = getPin2Key(loginStash, appId)
+    const { pin2Key, appId: appIdFound } = getPin2Key(loginStash, appId)
     if (pin2Key == null) {
       throw new Error('No PIN set locally for this account')
     }
