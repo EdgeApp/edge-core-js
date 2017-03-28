@@ -1,6 +1,6 @@
 /* global describe, it */
 import { makeFakeContexts } from '../src'
-import * as fakeUser from './fake/fakeUser.js'
+import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../src/login/lobby.js'
 import { base64 } from '../src/util/encoding.js'
 import assert from 'assert'
@@ -9,7 +9,7 @@ describe('edge login', function () {
   it('request', function () {
     const [context, remote] = makeFakeContexts(2)
     context.appId = 'test-child'
-    fakeUser.makeAccount(remote)
+    makeFakeAccount(remote, fakeUser)
 
     return new Promise((resolve, reject) => {
       const opts = {
@@ -28,7 +28,7 @@ describe('edge login', function () {
 
           const reply = {
             appId: request.loginRequest.appId,
-            loginKey: base64.stringify(fakeUser.childLoginKey),
+            loginKey: base64.stringify(fakeUser.children[0].loginKey),
             loginStash: remote.io.loginStore.loadSync(fakeUser.username)
           }
           return sendLobbyReply(remote.io, lobbyId, request, reply)

@@ -2,13 +2,13 @@
 import {makeFakeContexts} from '../src'
 import {Repo} from '../src/util/repo.js'
 import {WalletList} from '../src/util/walletList.js'
-import * as fakeUser from './fake/fakeUser.js'
+import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
 
 describe('wallet list', function () {
   it('raw id list', function () {
     const [context] = makeFakeContexts(1)
-    fakeUser.makeAccount(context)
+    makeFakeAccount(context, fakeUser)
     const repo = new Repo(context.io, fakeUser.loginKey, fakeUser.syncKey)
     const list = new WalletList(repo)
 
@@ -17,7 +17,7 @@ describe('wallet list', function () {
 
   it('account id list', function () {
     const [context] = makeFakeContexts(1)
-    const account = fakeUser.makeAccount(context)
+    const account = makeFakeAccount(context, fakeUser)
     const ids = account.listWalletIds()
     assert.equal(ids.length, 1)
     assert.equal(account.getWallet(ids[0]).type, 'account-repo:co.airbitz.wallet')
@@ -25,7 +25,7 @@ describe('wallet list', function () {
 
   it('create', function (done) {
     const [context] = makeFakeContexts(1)
-    const account = fakeUser.makeAccount(context)
+    const account = makeFakeAccount(context, fakeUser)
 
     const type = 'wallet:repo:magic'
     const keysJson = {
