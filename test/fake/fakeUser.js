@@ -6,7 +6,7 @@ import { Account } from '../../src/account.js'
 import { applyLoginReply, makeLogin } from '../../src/login/login.js'
 import { base16, base64 } from '../../src/util/encoding.js'
 import { mergeChanges, Repo } from '../../src/util/repo.js'
-import { filterObject } from '../../src/util/util.js'
+import { elvis, filterObject } from '../../src/util/util.js'
 
 export const fakeUser = {
   username: 'JS test 0',
@@ -44,7 +44,6 @@ export const fakeUser = {
     encryptionType: 0,
     iv_hex: '33dbb4188630d572cd4a474f780e2799'
   },
-
   pinKeyBox: {
     data_base64: 'gW1L57CIJ0sCJa8mDUiqGWpI9dUrV/OQzS+BvIFUtAlBqO6ZxwssTVkos5C1sBDnxlV25eNdrkV4NY24r89wW0k6tGoR6LeKrT0PQggw882vRT4zavAPZNj39sNZ0+Ls1PCdZIU+Ez6a0ZzimAnkofgB1PcS17gmb8mKZOpFyfoKgdg/EBfipUmPn80FWwxvOwM+HTotV3BL3wRLC58UuZzLAFV6cGPCHyYQphWLVk307VaajAAEp7+XHXi6gxp4',
     encryptionType: 0,
@@ -142,7 +141,27 @@ export const fakeUser = {
         encryptionType: 0,
         iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
         data_base64: '1nCWjsW66E8RceBNFkP8bH5I5H4yhMGJrLCxwhbsKmo5x+hpFW0G/sUNXlsuIRCaEiKGODuI4cyeeUQoqbd03ZxFCwpDHrYD8C1NDW2JOJY='
-      }
+      },
+      children: [
+        {
+          appId: 'test-child-child',
+          loginAuth: 'bqqKPbbmpcBS1185JjzNFRRYPjkkIG8aCLujRMdqng==',
+          loginAuthBox: {
+            encryptionType: 0,
+            iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
+            data_base64: 'mLsk9qk63Ds3otupOcQwCvDgfzmn9koQ1tBNyBDGGDYvbVmD6gS/hZuresxTpX2DHWNVQC25Y5sISRvbCO1jWuImv8JuT9rCp7aWd+fTgdY='
+          },
+          loginId: 'aE08nXKAftS37IQiOx7ccRrCkh8fLLiRbw5CnG26bbc=',
+          loginKey: base64.parse(
+            'S0FLOgSDjJjvA07vs7UEAMbagS3qiV/5o7c4+kwW7o8='
+          ),
+          parentBox: {
+            encryptionType: 0,
+            iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
+            data_base64: 'nT3OFKzf/hsIZOZhG6BtPwL1z9wkZk5KolB9MH02FITQQOvQ0pPZtf0Es5rj9TCrJM3VUSJ4AjPh8NGzgyY6q8qr/mKI158pyqeDai+IeL4='
+          }
+        }
+      ]
     }
   ]
 }
@@ -158,11 +177,17 @@ export const repos = {
   }
 }
 
-export function makeFakeAccount (context, user) {
+/**
+ * Creates a login object on the fakeServer
+ */
+function createFakeServerUser (context, user, authJson = {}) {
   // Create the login on the server:
   const data = filterObject(user, [
     'appId',
     'loginId',
+    'loginAuth',
+    'loginAuthBox',
+    'parentBox',
     'passwordAuth',
     'passwordAuthBox',
     'passwordBox',
@@ -180,22 +205,29 @@ export function makeFakeAccount (context, user) {
     'syncKeyBox'
   ])
   data.newSyncKeys = Object.keys(repos)
+  authJson.data = data
   context.io.fetch('https://hostname/api/v2/login/create', {
     method: 'POST',
-    body: JSON.stringify({ data })
+    body: JSON.stringify(authJson)
   })
 
-  // Create children on the auth server:
-  user.children.forEach(child => {
-    context.io.fetch('https://hostname/api/v2/login/create', {
-      method: 'POST',
-      body: JSON.stringify({
-        userId: user.loginId,
-        passwordAuth: user.passwordAuth,
-        data: child
-      })
-    })
-  })
+  // Create children:
+  const children = elvis(user.children, [])
+  const parentAuth = user.loginAuth != null
+    ? {
+      loginId: user.loginId,
+      loginAuth: user.loginAuth
+    }
+    : {
+      userId: user.loginId,
+      passwordAuth: user.passwordAuth
+    }
+  children.forEach(child => createFakeServerUser(context, child, parentAuth))
+}
+
+export function makeFakeAccount (context, user) {
+  // Create the login on the server:
+  createFakeServerUser(context, user)
 
   // Store the login on the client:
   const loginStash = applyLoginReply(
