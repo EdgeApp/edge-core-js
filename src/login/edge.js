@@ -1,4 +1,4 @@
-import { base64 } from '../util/encoding.js'
+import { base58, base64 } from '../util/encoding.js'
 import { makeLobby } from './lobby.js'
 import { makeLogin, searchTree } from './login.js'
 
@@ -22,8 +22,16 @@ function onReply (io, subscription, reply, appId, opts) {
   }
 
   // Find the appropriate child:
-  if (!searchTree(reply.loginStash, stash => stash.appId === appId)) {
+  const child = searchTree(reply.loginStash, stash => stash.appId === appId)
+  if (child == null) {
     throw new Error(`Cannot find requested appId: "${appId}"`)
+  }
+
+  // The Airbitz mobile will sometimes send the pin2Key in base58
+  // instead of base64 due to an unfortunate bug. Fix that:
+  if (child.pin2Key != null && child.pin2Key.slice(-1) !== '=') {
+    io.log.warn('Fixing base58 pin2Key')
+    child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
   }
   io.loginStore.save(reply.loginStash)
 
