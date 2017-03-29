@@ -1,3 +1,4 @@
+import './edge.js'
 import './login.js'
 import './password.js'
 import './pin.js'
