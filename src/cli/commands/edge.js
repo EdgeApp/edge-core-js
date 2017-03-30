@@ -21,7 +21,7 @@ command(
       }
 
       return session.context.requestEdgeLogin(opts).then(pending => {
-        console.log(`airbitz://edge/${pending.id}`)
+        return console.log(`airbitz://edge/${pending.id}`)
       })
     })
   }

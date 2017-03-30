@@ -38,6 +38,7 @@
     "eslint-config-standard": "^7.1.0",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^2.1.1",
+    "husky": "^0.13.3",
     "json-loader": "^0.5.4",
     "mocha": "^3.1.2",
     "rollup": "^0.41.6",
@@ -57,6 +58,7 @@
   "scripts": {
     "build": "webpack && rollup -c && rollup -c rollup.config.cli.js",
     "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "precommit": "npm run lint",
     "prepublish": "npm run lint && npm run build",
     "pretest": "npm run lint && webpack && rollup -c rollup.config.test.js",
     "test": "mocha --require source-map-support/register dist/tests.cjs.js"
