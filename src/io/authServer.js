@@ -1,8 +1,6 @@
 import * as error from '../error.js'
 import {timeout} from '../util/promise.js'
 
-const serverRoot = 'https://test-auth.airbitz.co/api'
-
 function parseReply (json) {
   switch (json['status_code']) {
     case 0: // Success
@@ -36,11 +34,12 @@ function parseReply (json) {
 }
 
 export class AuthServer {
-  constructor (io, apiKey) {
+  constructor (io, apiKey, authServer = 'https://auth.airbitz.co/api') {
     // if (!apiKey) throw new TypeError('No API key provided')
 
     this.io = io
     this.apiKey = apiKey
+    this.authServer = authServer
   }
 
   /**
@@ -49,7 +48,7 @@ export class AuthServer {
    * @param body JSON object to send
    * @return a promise of the server's JSON reply
    */
-  request (method, uri, body) {
+  request (method, path, body) {
     const opts = {
       method: method,
       headers: {
@@ -62,8 +61,9 @@ export class AuthServer {
       opts.body = JSON.stringify(body)
     }
 
-    this.io.log.info(`auth: ${method} ${uri}`)
-    return timeout(this.io.fetch(serverRoot + uri, opts).then(response => {
+    const uri = this.authServer + path
+    this.io.log.info(`${method} ${uri}`)
+    return timeout(this.io.fetch(uri, opts).then(response => {
       return response.json().then(parseReply, jsonError => {
         throw new Error('Non-JSON reply, HTTP status ' + response.status)
       })

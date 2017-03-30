@@ -2,7 +2,7 @@
 import {makeNodeContext} from '../..'
 import { PasswordError } from '../../error.js'
 import {rejectify} from '../../util/decorators.js'
-import { objectAssign } from '../../util/util.js'
+import { filterObject, objectAssign } from '../../util/util.js'
 
 // Commands:
 import {command, UsageError} from '../command.js'
@@ -23,6 +23,7 @@ sourceMapSupport.install()
 const getopt = new Getopt([
   ['k', 'api-key=ARG', 'Auth server API key'],
   ['a', 'app-id=ARG', 'appId'],
+  ['', 'auth-server=ARG', 'Auth server URI'],
   ['c', 'config=ARG', 'Configuration file'],
   ['d', 'directory=ARG', 'Working directory'],
   ['u', 'username=ARG', 'Username'],
@@ -89,6 +90,7 @@ function loadConfig (options) {
   return {
     appId: options['app-id'] || config['appId'],
     apiKey: options['api-key'] || config['apiKey'],
+    authServer: options['auth-server'] || config['authServer'],
     directory: options['directory'] || config['workingDir'],
     username: options['username'] || config['username'],
     password: options['password'] || config['password']
@@ -110,10 +112,10 @@ function makeSession (config, cmd) {
     if (config.apiKey == null) {
       throw new UsageError(cmd, 'No API key')
     }
-    session.context = makeNodeContext(config.directory || './.cli', {
-      appId: config.appId,
-      apiKey: config.apiKey
-    })
+    session.context = makeNodeContext(
+      config.directory || './.cli',
+      filterObject(config, ['appId', 'apiKey', 'authServer'])
+    )
   }
 
   // Create a login if we need one:
