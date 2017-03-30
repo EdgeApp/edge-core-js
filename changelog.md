@@ -1,5 +1,10 @@
 # airbitz-core-js
 
+## 0.2.1
+
+* Make the auth server configurable
+* Switch back to the production auth server by default
+
 ## 0.2.0
 
 Breaking changes:
