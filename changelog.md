@@ -1,5 +1,11 @@
 # airbitz-core-js
 
+## 0.2.0
+
+Breaking changes:
+* Edge login v2
+* New on-disk storage format
+
 ## 0.1.1
 
 * Quick fix to pachage.json to exclude nodeisms from the browser
