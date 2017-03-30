@@ -1,5 +1,12 @@
-import * as error from '../error.js'
-import {timeout} from '../util/promise.js'
+import {
+  NetworkError,
+  ObsoleteApiError,
+  OtpError,
+  PasswordError,
+  UsernameError
+} from '../error.js'
+import { timeout } from '../util/promise.js'
+import { elvis } from '../util/util.js'
 
 function parseReply (json) {
   switch (json['status_code']) {
@@ -7,23 +14,23 @@ function parseReply (json) {
       return json['results']
 
     case 2: // Account exists
-      throw new error.UsernameError('Account already exists on server')
+      throw new UsernameError('Account already exists on server')
 
     case 3: // Account does not exist
-      throw new error.UsernameError('Account does not exist on server')
+      throw new UsernameError('Account does not exist on server')
 
     case 4: // Invalid password
     case 5: // Invalid answers
-      throw new error.PasswordError(json['results'])
+      throw new PasswordError(json['results'])
 
     case 6: // Invalid API key
       throw new Error('Invalid API key')
 
     case 8: // Invalid OTP
-      throw new error.OtpError(json['results'])
+      throw new OtpError(json['results'])
 
     case 1000: // Endpoint obsolete
-      throw new error.ObsoleteApiError()
+      throw new ObsoleteApiError()
 
     case 1: // Error
     case 7: // Pin expired
@@ -34,12 +41,12 @@ function parseReply (json) {
 }
 
 export class AuthServer {
-  constructor (io, apiKey, authServer = 'https://auth.airbitz.co/api') {
-    // if (!apiKey) throw new TypeError('No API key provided')
+  constructor (io, apiKey, authServer) {
+    // if (apiKey == null) throw new TypeError('No API key provided')
 
     this.io = io
     this.apiKey = apiKey
-    this.authServer = authServer
+    this.authServer = elvis(authServer, 'https://auth.airbitz.co/api')
   }
 
   /**
@@ -52,9 +59,9 @@ export class AuthServer {
     const opts = {
       method: method,
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': 'Token ' + this.apiKey
+        Authorization: 'Token ' + this.apiKey
       }
     }
     if (method !== 'GET') {
@@ -63,12 +70,17 @@ export class AuthServer {
 
     const uri = this.authServer + path
     this.io.log.info(`${method} ${uri}`)
-    return timeout(this.io.fetch(uri, opts).then(response => {
-      return response.json().then(parseReply, jsonError => {
-        throw new Error('Non-JSON reply, HTTP status ' + response.status)
-      })
-    }, networkError => {
-      throw new error.NetworkError('Could not reach the auth server')
-    }), 10000, new error.NetworkError('Could not reach the auth server: timeout'))
+    return timeout(
+      this.io.fetch(uri, opts).then(
+        response => response.json().then(parseReply, jsonError => {
+          throw new Error('Non-JSON reply, HTTP status ' + response.status)
+        }),
+        networkError => {
+          throw new NetworkError('Could not reach the auth server')
+        }
+      ),
+      10000,
+      new NetworkError('Could not reach the auth server: timeout')
+    )
   }
 }
