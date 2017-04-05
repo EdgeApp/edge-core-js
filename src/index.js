@@ -35,6 +35,10 @@ export function makeNodeContext (path, opts = {}) {
 export * from './error.js'
 export {makeRandomGenerator} from './crypto/crypto.js'
 
+// Secret CLI exports:
+import * as internal from './internal.js'
+export { internal }
+
 // Deprecated exports:
 export {abcc as ABCConditionCode} from './ABCConditionCode.js'
 export {ABCError} from './ABCError.js'
