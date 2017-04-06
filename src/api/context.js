@@ -1,18 +1,18 @@
+import { UsernameError } from '../error.js'
+import { fixUsername } from '../io/loginStore.js'
+import { createLogin, usernameAvailable } from '../login/create.js'
+import { requestEdgeLogin } from '../login/edge.js'
+import { loginPassword } from '../login/password.js'
+import { loginPin2, getPin2Key } from '../login/pin2.js'
 import { makeAccount } from './account.js'
-import { UsernameError } from './error.js'
-import {fixUsername} from './io/loginStore.js'
-import { createLogin, usernameAvailable } from './login/create.js'
-import { requestEdgeLogin } from './login/edge.js'
-import { loginPassword } from './login/password.js'
-import { loginPin2, getPin2Key } from './login/pin2.js'
 import {
   getQuestions2,
   getRecovery2Key,
   loginRecovery2,
   listRecoveryQuestionChoices
-} from './login/recovery2.js'
-import { asyncApi, syncApi } from './util/decorators.js'
-import { base58 } from './util/encoding.js'
+} from '../login/recovery2.js'
+import { asyncApi, syncApi } from '../util/decorators.js'
+import { base58 } from '../util/encoding.js'
 
 /**
  * @param opts An object containing optional arguments.

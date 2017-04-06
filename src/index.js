@@ -1,4 +1,4 @@
-import {Context} from './context.js'
+import { Context } from './api/context.js'
 import {makeBrowserIo} from './io/browser'
 import {makeFakeIos} from './io/fake'
 import {makeNodeIo} from './io/node'
@@ -40,8 +40,8 @@ import * as internal from './internal.js'
 export { internal }
 
 // Deprecated exports:
-export {abcc as ABCConditionCode} from './ABCConditionCode.js'
-export {ABCError} from './ABCError.js'
+export { abcc as ABCConditionCode } from './api/ABCConditionCode.js'
+export { ABCError } from './api/ABCError.js'
 export {Context}
 export {fixUsername as usernameFix} from './io/loginStore.js'
 export {makeBrowserContext as makeABCContext}

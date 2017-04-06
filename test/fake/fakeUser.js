@@ -2,7 +2,7 @@
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
-import { Account } from '../../src/account.js'
+import { Account } from '../../src/api/account.js'
 import { applyLoginReply, makeLogin } from '../../src/login/login.js'
 import { base16, base64 } from '../../src/util/encoding.js'
 import { mergeChanges, Repo } from '../../src/util/repo.js'

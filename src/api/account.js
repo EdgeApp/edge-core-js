@@ -1,13 +1,13 @@
-import { createChildLogin } from './login/create.js'
-import { attachKeys, makeKeyInfo, searchTree } from './login/login.js'
-import { checkPassword, setupPassword } from './login/password.js'
-import { setupPin2 } from './login/pin2.js'
-import { setupRecovery2 } from './login/recovery2.js'
-import { asyncApi, syncApi } from './util/decorators.js'
-import { base58, base64 } from './util/encoding.js'
-import {Repo} from './util/repo.js'
-import {Wallet} from './wallet.js'
-import {WalletList} from './util/walletList.js'
+import { createChildLogin } from '../login/create.js'
+import { attachKeys, makeKeyInfo, searchTree } from '../login/login.js'
+import { checkPassword, setupPassword } from '../login/password.js'
+import { setupPin2 } from '../login/pin2.js'
+import { setupRecovery2 } from '../login/recovery2.js'
+import { asyncApi, syncApi } from '../util/decorators.js'
+import { base58, base64 } from '../util/encoding.js'
+import { Repo } from '../util/repo.js'
+import { WalletList } from '../util/walletList.js'
+import { Wallet } from './wallet.js'
 
 function findAccount (login, type) {
   return login.keyInfos.find(info => info.type === type)

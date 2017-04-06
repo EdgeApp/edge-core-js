@@ -5,7 +5,7 @@
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { base16, base64, utf8 } from '../util/encoding.js'
 import { elvis, filterObject, objectAssign } from '../util/util.js'
-import { makeAccountType } from '../account.js'
+import { makeAccountType } from '../api/account.js'
 
 /**
  * Returns the login that satisifies the given predicated,
