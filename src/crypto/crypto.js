@@ -61,9 +61,12 @@ export function decrypt (box, key) {
     }
   }
 
-  // Verify pkcs7 padding (if any):
+  // Verify pkcs7 padding:
   const paddingStart = hashStart + hashSize
   const paddingSize = raw.length - paddingStart
+  if (paddingSize <= 0) {
+    throw new Error('Mising PKCS7 padding')
+  }
   for (let i = paddingStart; i < raw.length; ++i) {
     if (raw[i] !== paddingSize) {
       throw new Error('Invalid PKCS7 padding')
