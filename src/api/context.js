@@ -1,4 +1,6 @@
 import { UsernameError } from '../error.js'
+import { makeBrowserIo } from '../io/browser'
+import { IoContext } from '../io/io.js'
 import { fixUsername } from '../io/loginStore.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
@@ -17,8 +19,8 @@ import { base58 } from '../util/encoding.js'
 /**
  * @param opts An object containing optional arguments.
  */
-export function Context (io, opts) {
-  this.io = io
+export function Context (opts) {
+  this.io = new IoContext(opts.io != null ? opts.io : makeBrowserIo(), opts)
   this.appId = opts.appId != null
     ? opts.appId
     : opts.accountType != null

@@ -1,21 +1,19 @@
-import {IoContext} from '../io.js'
-
 /**
  * Extracts the io functions we need from the browser.
  */
-export function makeBrowserIo (opts = {}) {
-  const native = {}
+export function makeBrowserIo () {
+  const out = {}
 
   if (typeof console !== 'undefined') {
-    native.console = console
+    out.console = console
   }
 
   if (typeof window !== 'undefined') {
-    native.fetch = (...rest) => window.fetch(...rest)
-    native.localStorage = window.localStorage
+    out.fetch = (...rest) => window.fetch(...rest)
+    out.localStorage = window.localStorage
 
     if (window.crypto != null && window.crypto.getRandomValues != null) {
-      native.random = (size) => {
+      out.random = (size) => {
         const out = new Uint8Array(size)
         window.crypto.getRandomValues(out)
         return out
@@ -23,5 +21,5 @@ export function makeBrowserIo (opts = {}) {
     }
   }
 
-  return new IoContext(native, opts)
+  return out
 }

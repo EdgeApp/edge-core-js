@@ -10,12 +10,11 @@ export class IoContext {
   constructor (nativeIo, opts = {}) {
     // Copy native io resources:
     const keys = ['console', 'fetch', 'localStorage', 'random']
+    keys.forEach(key => { this[key] = nativeIo[key] })
+
+    // Verify that we have what we need:
     keys.forEach(key => {
-      if (opts[key] != null) {
-        this[key] = opts[key]
-      } else if (nativeIo[key] != null) {
-        this[key] = nativeIo[key]
-      } else {
+      if (this[key] == null) {
         throw new Error(`Could not find "${key}" in the environment`)
       }
     })
