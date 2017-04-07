@@ -1,10 +1,14 @@
 /* global describe, it */
-import { makeFakeContexts } from '../src'
+import { makeContext, makeFakeIos } from '../src'
 import { attachKeys, makeKeyInfo } from '../src/login/login.js'
 import { base58, base64 } from '../src/util/encoding.js'
 import { objectAssign } from '../src/util/util.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
+
+function makeFakeContexts (count) {
+  return makeFakeIos(count).map(io => makeContext({ io }))
+}
 
 function findKeys (login, type) {
   return login.keyInfos.find(info => info.type === type)

@@ -1,5 +1,5 @@
 /* global describe, it */
-import { makeFakeContexts } from '../src'
+import { makeContext, makeFakeIos } from '../src'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../src/login/lobby.js'
 import { base64 } from '../src/util/encoding.js'
@@ -7,8 +7,9 @@ import assert from 'assert'
 
 describe('edge login', function () {
   it('request', function () {
-    const [context, remote] = makeFakeContexts(2)
-    context.appId = 'test-child'
+    const ios = makeFakeIos(2)
+    const context = makeContext({ io: ios[0], appId: 'test-child' })
+    const remote = makeContext({ io: ios[1] })
     makeFakeAccount(remote, fakeUser)
 
     return new Promise((resolve, reject) => {
@@ -47,7 +48,7 @@ describe('edge login', function () {
   })
 
   it('cancel', function (done) {
-    const [context] = makeFakeContexts(1)
+    const context = makeContext({ io: makeFakeIos(1)[0] })
 
     const opts = {
       onLogin: function () {},

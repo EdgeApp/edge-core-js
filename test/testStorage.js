@@ -1,11 +1,12 @@
 /* global describe, it */
-import { makeFakeContexts } from '../src'
+import { makeFakeIos } from '../src'
+import { LocalStorageFolder } from '../src/io/localStorageFolder.js'
 import assert from 'assert'
 
 describe('storage', function () {
   it('single file', function () {
-    const [context] = makeFakeContexts(1)
-    const folder = context.io.folder
+    const [io] = makeFakeIos(1)
+    const folder = new LocalStorageFolder(io.localStorage, '')
 
     folder.setFileText('a', 'text')
     assert.equal(folder.getFileText('a'), 'text')
@@ -17,8 +18,8 @@ describe('storage', function () {
   })
 
   it('sub-folder', function () {
-    const [context] = makeFakeContexts(1)
-    const folder = context.io.folder
+    const [io] = makeFakeIos(1)
+    const folder = new LocalStorageFolder(io.localStorage, '')
     const child = folder.getFolder('sub')
 
     child.setFileText('a', 'text')
@@ -34,8 +35,8 @@ describe('storage', function () {
   })
 
   it('remove folder', function () {
-    const [context] = makeFakeContexts(1)
-    const folder = context.io.folder
+    const [io] = makeFakeIos(1)
+    const folder = new LocalStorageFolder(io.localStorage, '')
     const child = folder.getFolder('sub')
 
     child.setFileText('a', 'text')

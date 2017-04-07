@@ -1,5 +1,5 @@
 /* global describe, it */
-import {makeFakeContexts} from '../src'
+import { makeContext, makeFakeIos } from '../src'
 import {Repo} from '../src/util/repo.js'
 import {WalletList} from '../src/util/walletList.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
@@ -7,7 +7,7 @@ import assert from 'assert'
 
 describe('wallet list', function () {
   it('raw id list', function () {
-    const [context] = makeFakeContexts(1)
+    const context = makeContext({ io: makeFakeIos(1)[0] })
     makeFakeAccount(context, fakeUser)
     const repo = new Repo(context.io, fakeUser.loginKey, fakeUser.syncKey)
     const list = new WalletList(repo)
@@ -16,7 +16,7 @@ describe('wallet list', function () {
   })
 
   it('account id list', function () {
-    const [context] = makeFakeContexts(1)
+    const context = makeContext({ io: makeFakeIos(1)[0] })
     const account = makeFakeAccount(context, fakeUser)
     const ids = account.listWalletIds()
     assert.equal(ids.length, 1)
@@ -24,7 +24,7 @@ describe('wallet list', function () {
   })
 
   it('create', function (done) {
-    const [context] = makeFakeContexts(1)
+    const context = makeContext({ io: makeFakeIos(1)[0] })
     const account = makeFakeAccount(context, fakeUser)
 
     const type = 'wallet:repo:magic'

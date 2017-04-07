@@ -1,5 +1,6 @@
 /* global describe, it */
-import { makeFakeContexts } from '../src'
+import { makeFakeIos } from '../src'
+import { IoContext } from '../src/io/io.js'
 import {
   encryptLobbyReply,
   decryptLobbyReply,
@@ -15,37 +16,29 @@ const secp256k1 = new EC('secp256k1')
 
 describe('edge login lobby', function () {
   it('round-trip data', function () {
-    const [context] = makeFakeContexts(1)
-    const keypair = secp256k1.genKeyPair({ entropy: context.io.random(32) })
+    const [io] = makeFakeIos(1)
+    const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
     const pubkey = keypair.getPublic().encodeCompressed()
     const testReply = { testReply: 'This is a test' }
 
     assert.deepEqual(
-      decryptLobbyReply(
-        keypair,
-        encryptLobbyReply(context.io, pubkey, testReply)
-      ),
+      decryptLobbyReply(keypair, encryptLobbyReply(io, pubkey, testReply)),
       testReply
     )
   })
 
   it('lobby ping-pong', function () {
-    const [context1, context2] = makeFakeContexts(2)
+    const [io1, io2] = makeFakeIos(2).map(io => new IoContext(io))
     const testRequest = { testRequest: 'This is a test' }
     const testReply = { testReply: 'This is a test' }
 
     return new Promise((resolve, reject) => {
-      makeLobby(context1.io, testRequest)
+      makeLobby(io1, testRequest)
         .then(lobby => {
-          return fetchLobbyRequest(context2.io, lobby.lobbyId)
+          return fetchLobbyRequest(io2, lobby.lobbyId)
             .then(request => {
               assert.deepEqual(request, testRequest)
-              return sendLobbyReply(
-                context2.io,
-                lobby.lobbyId,
-                request,
-                testReply
-              )
+              return sendLobbyReply(io2, lobby.lobbyId, request, testReply)
             })
             .then(() => {
               const subscription = lobby.subscribe(

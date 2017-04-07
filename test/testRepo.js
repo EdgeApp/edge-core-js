@@ -1,8 +1,12 @@
 /* global describe, it */
-import {makeFakeContexts} from '../src'
+import { makeContext, makeFakeIos } from '../src'
 import {Repo} from '../src/util/repo.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
+
+function makeFakeContexts (count) {
+  return makeFakeIos(count).map(io => makeContext({ io }))
+}
 
 describe('repo', function () {
   it('local get', function () {
