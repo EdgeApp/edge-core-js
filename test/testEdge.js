@@ -5,6 +5,22 @@ import { fetchLobbyRequest, sendLobbyReply } from '../src/login/lobby.js'
 import { base64 } from '../src/util/encoding.js'
 import assert from 'assert'
 
+function sendFakeResponse (context, lobbyId, request) {
+  return context.io.loginStore.load(fakeUser.username).then(stash => {
+    stash.passwordAuthBox = null
+    stash.passwordBox = null
+    stash.pin2Key = null
+    stash.recovery2Key = null
+
+    const reply = {
+      appId: request.loginRequest.appId,
+      loginKey: base64.stringify(fakeUser.children[0].loginKey),
+      loginStash: stash
+    }
+    return sendLobbyReply(context.io, lobbyId, request, reply)
+  })
+}
+
 describe('edge login', function () {
   it('request', function () {
     const ios = makeFakeIos(2)
@@ -29,18 +45,7 @@ describe('edge login', function () {
             assert.equal(request.loginRequest.appId, context.appId)
             assert.equal(request.loginRequest.displayName, 'test suite')
 
-            const stash = remote.io.loginStore.loadSync(fakeUser.username)
-            stash.passwordAuthBox = null
-            stash.passwordBox = null
-            stash.pin2Key = null
-            stash.recovery2Key = null
-
-            const reply = {
-              appId: request.loginRequest.appId,
-              loginKey: base64.stringify(fakeUser.children[0].loginKey),
-              loginStash: stash
-            }
-            return sendLobbyReply(remote.io, lobbyId, request, reply)
+            return sendFakeResponse(remote, lobbyId, request)
           })
         })
         .catch(reject)

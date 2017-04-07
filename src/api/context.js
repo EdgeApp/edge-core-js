@@ -71,12 +71,13 @@ Context.prototype.loginWithPIN = asyncApi(function (username, pin) {
 })
 
 Context.prototype.getRecovery2Key = asyncApi(function (username) {
-  const loginStash = this.io.loginStore.loadSync(username)
-  const recovery2Key = getRecovery2Key(loginStash)
-  if (recovery2Key == null) {
-    return Promise.reject(new Error('No recovery key stored locally.'))
-  }
-  return Promise.resolve(base58.stringify(recovery2Key))
+  return this.io.loginStore.load(username).then(loginStash => {
+    const recovery2Key = getRecovery2Key(loginStash)
+    if (recovery2Key == null) {
+      throw new Error('No recovery key stored locally.')
+    }
+    return base58.stringify(recovery2Key)
+  })
 })
 
 Context.prototype.loginWithRecovery2 = asyncApi(function (recovery2Key, username, answers, otp, options) {

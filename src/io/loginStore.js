@@ -24,17 +24,12 @@ export class LoginStore {
    * Finds the loginStash for the given username.
    */
   load (username) {
-    return Promise.resolve(this.loadSync(username))
-  }
-
-  /**
-   * Same thing as `load`, but doesn't block on the `userId`.
-   */
-  loadSync (username) {
     const filename = this._findFilename(username)
-    return filename != null
-      ? this.storage.getFileJson(filename)
-      : { username: fixUsername(username), appId: '' }
+    return Promise.resolve(
+      filename != null
+        ? this.storage.getFileJson(filename)
+        : { username: fixUsername(username), appId: '' }
+    )
   }
 
   /**
