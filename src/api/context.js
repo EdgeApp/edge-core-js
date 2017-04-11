@@ -28,8 +28,8 @@ export function Context (opts) {
       : ''
 }
 
-Context.prototype.usernameList = syncApi(function () {
-  return this.io.loginStore.listUsernames()
+Context.prototype.usernameList = asyncApi(function () {
+  return Promise.resolve(this.io.loginStore.listUsernames())
 })
 Context.prototype.listUsernames = Context.prototype.usernameList
 

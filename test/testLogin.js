@@ -58,7 +58,9 @@ describe('username', function () {
     const [context] = makeFakeContexts(1)
     makeFakeAccount(context, fakeUser)
 
-    assert.deepEqual(context.usernameList(), ['js test 0'])
+    return context
+      .usernameList()
+      .then(list => assert.deepEqual(list, ['js test 0']))
   })
 
   it('remove username from local storage', function () {
@@ -66,7 +68,9 @@ describe('username', function () {
     makeFakeAccount(context, fakeUser)
 
     context.removeUsername(fakeUser.username)
-    assert.equal(context.usernameList().length, 0)
+    return context
+      .usernameList()
+      .then(list => assert.equal(list.length, 0))
   })
 })
 
