@@ -1,5 +1,19 @@
 # airbitz-core-js
 
+## 0.3.0
+
+New:
+* Accept the `io` object as a `makeContext` option
+
+Breaking changes:
+* Move the CLI tool to its own package
+* api: Make `usernameAvailable` produce a bool
+* api: Make `listUsernames` async
+* api: Make `pinExists` & `pinLoginEnabled` async
+* api: Remove deprecated exports
+* api: Remove obsolete C++ error code system
+* api: Remove platform-specific context constructors
+
 ## 0.2.1
 
 * Make the auth server configurable
