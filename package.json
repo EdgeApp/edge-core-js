@@ -41,8 +41,11 @@
     "webpack": "^1.14.0"
   },
   "files": [
-    "bin/airbitz-cli*",
-    "dist/abc.*.js*"
+    "changelog.md",
+    "dist/abc.*.js*",
+    "LICENSE",
+    "package.json",
+    "readme.md"
   ],
   "repository": {
     "type": "git",
