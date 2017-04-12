@@ -1,4 +1,3 @@
-import { UsernameError } from '../error.js'
 import { makeBrowserIo } from '../io/browser'
 import { IoContext } from '../io/io.js'
 import { fixUsername } from '../io/loginStore.js'
@@ -28,8 +27,8 @@ export function Context (opts) {
       : ''
 }
 
-Context.prototype.usernameList = syncApi(function () {
-  return this.io.loginStore.listUsernames()
+Context.prototype.usernameList = asyncApi(function () {
+  return Promise.resolve(this.io.loginStore.listUsernames())
 })
 Context.prototype.listUsernames = Context.prototype.usernameList
 
@@ -40,13 +39,7 @@ Context.prototype.removeUsername = syncApi(function (username) {
 })
 
 Context.prototype.usernameAvailable = asyncApi(function (username) {
-  // TODO: We should change the API to expect a bool, rather than throwing:
-  return usernameAvailable(this.io, username).then(bool => {
-    if (!bool) {
-      throw new UsernameError()
-    }
-    return bool
-  })
+  return usernameAvailable(this.io, username)
 })
 
 /**
@@ -64,9 +57,10 @@ Context.prototype.loginWithPassword = asyncApi(function (username, password, otp
   })
 })
 
-Context.prototype.pinExists = syncApi(function (username) {
-  const loginStash = this.io.loginStore.loadSync(username)
-  return getPin2Key(loginStash, this.appId).pin2Key != null
+Context.prototype.pinExists = asyncApi(function (username) {
+  return this.io.loginStore.load(username).then(loginStash =>
+    getPin2Key(loginStash, this.appId).pin2Key != null
+  )
 })
 Context.prototype.pinLoginEnabled = Context.prototype.pinExists
 

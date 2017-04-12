@@ -58,7 +58,9 @@ describe('username', function () {
     const [context] = makeFakeContexts(1)
     makeFakeAccount(context, fakeUser)
 
-    assert.deepEqual(context.usernameList(), ['js test 0'])
+    return context
+      .usernameList()
+      .then(list => assert.deepEqual(list, ['js test 0']))
   })
 
   it('remove username from local storage', function () {
@@ -66,25 +68,25 @@ describe('username', function () {
     makeFakeAccount(context, fakeUser)
 
     context.removeUsername(fakeUser.username)
-    assert.equal(context.usernameList().length, 0)
+    return context
+      .usernameList()
+      .then(list => assert.equal(list.length, 0))
   })
 })
 
 describe('creation', function () {
-  it('username available', function (done) {
+  it('username available', function () {
     const [context, remote] = makeFakeContexts(2)
     makeFakeAccount(remote, fakeUser)
 
-    context.usernameAvailable('js test 1', done)
+    context.usernameAvailable('js test 1').then(result => assert(result))
   })
 
-  it('username not available', function (done) {
+  it('username not available', function () {
     const [context, remote] = makeFakeContexts(2)
     makeFakeAccount(remote, fakeUser)
 
-    context.usernameAvailable(fakeUser.username, function (err) {
-      done(!err)
-    })
+    context.usernameAvailable(fakeUser.username).then(result => assert(!result))
   })
 
   it('create account', function () {
@@ -178,13 +180,13 @@ describe('pin', function () {
     const [context] = makeFakeContexts(1)
     makeFakeAccount(context, fakeUser)
 
-    assert.equal(context.pinExists(fakeUser.username), true)
+    return context.pinExists(fakeUser.username).then(result => assert(result))
   })
 
   it('does not exist', function () {
     const [context] = makeFakeContexts(1)
 
-    assert.equal(context.pinExists(fakeUser.username), false)
+    return context.pinExists(fakeUser.username).then(result => assert(!result))
   })
 
   it('login', function () {

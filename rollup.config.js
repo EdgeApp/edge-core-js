@@ -6,10 +6,7 @@ export default {
   entry: 'src/index.js',
   external: [
     'assert',
-    'path',
-    'crypto',
-    'buffer',
-    'fs'
+    'buffer'
   ].concat(Object.keys(packageJson.dependencies)),
   plugins: [
     buble({

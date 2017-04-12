@@ -2,23 +2,8 @@ import {base16, base64} from '../util/encoding.js'
 import {hashjs} from './external.js'
 import aesjs from 'aes-js'
 import {Buffer} from 'buffer'
-import HmacDRBG from 'hmac-drbg'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
-
-/**
- * Creates a pseudo-random number generator based on the provided entropy.
- * This can be used to turn an async random number generator into
- * a synchronous one.
- */
-export function makeRandomGenerator (entropy) {
-  const rng = new HmacDRBG({
-    hash: hashjs.sha256,
-    entropy: entropy
-  })
-
-  return bytes => rng.generate(bytes)
-}
 
 /**
  * @param box an Airbitz JSON encryption box
