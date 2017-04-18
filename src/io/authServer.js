@@ -72,9 +72,10 @@ export class AuthServer {
     this.io.log.info(`${method} ${uri}`)
     return timeout(
       this.io.fetch(uri, opts).then(
-        response => response.json().then(parseReply, jsonError => {
-          throw new Error('Non-JSON reply, HTTP status ' + response.status)
-        }),
+        response =>
+          response.json().then(parseReply, jsonError => {
+            throw new Error('Non-JSON reply, HTTP status ' + response.status)
+          }),
         networkError => {
           throw new NetworkError('Could not reach the auth server')
         }

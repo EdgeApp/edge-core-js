@@ -242,7 +242,8 @@ export function makeFakeAccount (context, user) {
     context.io.fetch('https://hostname/api/v2/store/' + syncKey, {
       method: 'POST',
       body: JSON.stringify({ changes: repos[syncKey] })
-    }))
+    })
+  )
 
   // Populate the repos on the client:
   Object.keys(repos).forEach(syncKey => {

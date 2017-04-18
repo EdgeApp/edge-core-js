@@ -1,17 +1,19 @@
 import { attachKeys } from '../login/login.js'
-import {repoId} from './repo.js'
-import {base16} from './encoding.js'
+import { repoId } from './repo.js'
+import { base16 } from './encoding.js'
 
 function walletType (walletJson) {
   return walletJson['type'] || 'wallet:repo:bitcoin:bip32'
 }
 
 function walletKeys (walletJson) {
-  return walletJson['keys'] || {
-    dataKey: walletJson['MK'],
-    syncKey: walletJson['SyncKey'],
-    bitcoinKey: walletJson['BitcoinSeed']
-  }
+  return (
+    walletJson['keys'] || {
+      dataKey: walletJson['MK'],
+      syncKey: walletJson['SyncKey'],
+      bitcoinKey: walletJson['BitcoinSeed']
+    }
+  )
 }
 
 function walletId (walletJson) {

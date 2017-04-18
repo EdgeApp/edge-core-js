@@ -1,5 +1,5 @@
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
-import {fixUsername} from '../io/loginStore.js'
+import { fixUsername } from '../io/loginStore.js'
 import { base64, utf8 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
@@ -68,7 +68,7 @@ export function loginRecovery2 (io, recovery2Key, username, answers) {
  */
 export function getQuestions2 (io, recovery2Key, username) {
   const request = {
-    'recovery2Id': base64.stringify(recovery2Id(recovery2Key, username))
+    recovery2Id: base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null
   }
   return io.authRequest('POST', '/v2/login', request).then(reply => {
@@ -125,7 +125,13 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
  * Sets up recovery questions for the login.
  */
 export function setupRecovery2 (io, rootLogin, login, questions, answers) {
-  const kit = makeRecovery2Kit(io, login, rootLogin.username, questions, answers)
+  const kit = makeRecovery2Kit(
+    io,
+    login,
+    rootLogin.username,
+    questions,
+    answers
+  )
 
   const request = makeAuthJson(login)
   request.data = kit.server
@@ -137,6 +143,8 @@ export function setupRecovery2 (io, rootLogin, login, questions, answers) {
   })
 }
 
-export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (io) {
+export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (
+  io
+) {
   return io.authRequest('POST', '/v1/questions', '')
 }

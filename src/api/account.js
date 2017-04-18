@@ -34,7 +34,13 @@ function ensureAppIdExists (io, rootLogin, appId) {
       keyInfos: [makeKeyInfo(keyJson, accountType, dataKey)],
       newSyncKeys: [syncKey]
     }
-    return createChildLogin(io, rootLogin, rootLogin, appId, opts).then(login => {
+    return createChildLogin(
+      io,
+      rootLogin,
+      rootLogin,
+      appId,
+      opts
+    ).then(login => {
       return { rootLogin, login }
     })
   }
@@ -101,7 +107,11 @@ export function Account (ctx, rootLogin, login) {
   this.newAccount = false
   this.recoveryLogin = false
 
-  this.repo = new Repo(this.io, base64.parse(this.keys.dataKey), base64.parse(this.keys.syncKey))
+  this.repo = new Repo(
+    this.io,
+    base64.parse(this.keys.dataKey),
+    base64.parse(this.keys.syncKey)
+  )
   this.walletList = new WalletList(this.repo)
 }
 
@@ -125,7 +135,8 @@ Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = asyncApi(function (pin) {
   return setupPin2(this.io, this.rootLogin, this.login, pin).then(login =>
-    base58.stringify(login.pin2Key))
+    base58.stringify(login.pin2Key)
+  )
 })
 Account.prototype.changePIN = Account.prototype.pinSetup
 
@@ -191,7 +202,13 @@ Account.prototype.createWallet = asyncApi(function (type, keysJson) {
   const info = makeKeyInfo(keysJson, type, dataKey)
 
   // We are just using this to create the repo, not to attach:
-  return attachKeys(this.io, this.rootLogin, this.login, [info], [syncKey]).then(() => {
+  return attachKeys(
+    this.io,
+    this.rootLogin,
+    this.login,
+    [info],
+    [syncKey]
+  ).then(() => {
     return info.id
   })
 })

@@ -213,36 +213,30 @@ addRoute('POST', '/api/v1/account/carepackage/get', function (req) {
   })
 })
 
-addRoute(
-  'POST',
-  '/api/v1/account/loginpackage/get',
-  authHandler1,
-  function (req) {
-    const results = {
-      login_package: JSON.stringify({
-        ELP1: req.login.passwordAuthBox,
-        EMK_LP2: req.login.passwordBox,
-        ESyncKey: req.login.syncKeyBox
-      })
-    }
-    if (req.login.rootKeyBox != null) {
-      results.rootKeyBox = req.login.rootKeyBox
-    }
-    return makeResponse(results)
+addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function (
+  req
+) {
+  const results = {
+    login_package: JSON.stringify({
+      ELP1: req.login.passwordAuthBox,
+      EMK_LP2: req.login.passwordBox,
+      ESyncKey: req.login.syncKeyBox
+    })
   }
-)
+  if (req.login.rootKeyBox != null) {
+    results.rootKeyBox = req.login.rootKeyBox
+  }
+  return makeResponse(results)
+})
 
 // PIN login v1: -----------------------------------------------------------
 
-addRoute(
-  'POST',
-  '/api/v1/account/pinpackage/update',
-  authHandler1,
-  function (req) {
-    this.db.pinKeyBox = JSON.parse(req.body['pin_package'])
-    return makeResponse()
-  }
-)
+addRoute('POST', '/api/v1/account/pinpackage/update', authHandler1, function (
+  req
+) {
+  this.db.pinKeyBox = JSON.parse(req.body['pin_package'])
+  return makeResponse()
+})
 
 addRoute('POST', '/api/v1/account/pinpackage/get', function (req) {
   if (this.db.pinKeyBox == null) {

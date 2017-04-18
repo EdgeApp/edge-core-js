@@ -1,7 +1,7 @@
-import {base16, base64} from '../util/encoding.js'
-import {hashjs} from './external.js'
+import { base16, base64 } from '../util/encoding.js'
+import { hashjs } from './external.js'
 import aesjs from 'aes-js'
-import {Buffer} from 'buffer'
+import { Buffer } from 'buffer'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 
@@ -29,9 +29,9 @@ export function decrypt (box, key) {
   // Calculate field locations:
   const headerSize = raw[0]
   const dataSize =
-    raw[1 + headerSize] << 24 |
-    raw[2 + headerSize] << 16 |
-    raw[3 + headerSize] << 8 |
+    (raw[1 + headerSize] << 24) |
+    (raw[2 + headerSize] << 16) |
+    (raw[3 + headerSize] << 8) |
     raw[4 + headerSize]
   const dataStart = 1 + headerSize + 4
   const footerSize = raw[dataStart + dataSize]
@@ -118,9 +118,9 @@ export function encrypt (io, data, key) {
   const cipher = new AesCbc(key, iv)
   const ciphertext = cipher.encrypt(raw) // BUG: requires a `Buffer`
   return {
-    'encryptionType': 0,
-    'iv_hex': base16.stringify(iv),
-    'data_base64': base64.stringify(ciphertext)
+    encryptionType: 0,
+    iv_hex: base16.stringify(iv),
+    data_base64: base64.stringify(ciphertext)
   }
 }
 

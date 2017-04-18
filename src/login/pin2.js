@@ -1,8 +1,13 @@
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
-import {fixUsername} from '../io/loginStore.js'
+import { fixUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
-import { applyLoginReply, makeAuthJson, makeLogin, searchTree } from './login.js'
+import {
+  applyLoginReply,
+  makeAuthJson,
+  makeLogin,
+  searchTree
+} from './login.js'
 
 function pin2Id (pin2Key, username) {
   return hmacSha256(fixUsername(username), pin2Key)

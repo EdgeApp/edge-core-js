@@ -31,7 +31,8 @@ function updateTree (node, clone, predicate, update) {
     : clone(
         node,
         elvis(node.children, []).map(child =>
-          updateTree(child, clone, predicate, update))
+          updateTree(child, clone, predicate, update)
+        )
       )
 }
 
@@ -168,7 +169,8 @@ function makeLoginInner (loginStash, loginKey) {
 
   // Keys:
   const keyInfos = elvis(loginStash.keyBoxes, []).map(box =>
-    JSON.parse(utf8.stringify(decrypt(box, loginKey))))
+    JSON.parse(utf8.stringify(decrypt(box, loginKey)))
+  )
 
   login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos])
 
@@ -238,7 +240,8 @@ export function makeKeyInfo (keys, type, idKey) {
  */
 export function makeKeysKit (io, login, keyInfos, newSyncKeys = []) {
   const keyBoxes = keyInfos.map(info =>
-    encrypt(io, utf8.parse(JSON.stringify(info)), login.loginKey))
+    encrypt(io, utf8.parse(JSON.stringify(info)), login.loginKey)
+  )
 
   return {
     server: {

@@ -41,14 +41,11 @@ describe('edge login lobby', function () {
               return sendLobbyReply(io2, lobby.lobbyId, request, testReply)
             })
             .then(() => {
-              const subscription = lobby.subscribe(
-                reply => {
-                  assert.deepEqual(reply, testReply)
-                  subscription.unsubscribe()
-                  return resolve()
-                },
-                reject
-              )
+              const subscription = lobby.subscribe(reply => {
+                assert.deepEqual(reply, testReply)
+                subscription.unsubscribe()
+                return resolve()
+              }, reject)
               return subscription
             })
         })

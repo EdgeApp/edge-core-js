@@ -4,10 +4,7 @@ const packageJson = require('./package.json')
 
 export default {
   entry: 'src/index.js',
-  external: [
-    'assert',
-    'buffer'
-  ].concat(Object.keys(packageJson.dependencies)),
+  external: ['assert', 'buffer'].concat(Object.keys(packageJson.dependencies)),
   plugins: [
     buble({
       transforms: {
@@ -23,7 +20,8 @@ export default {
       dest: packageJson['main'],
       format: 'cjs',
       sourceMap: true
-    }, {
+    },
+    {
       dest: packageJson['module'],
       format: 'es',
       sourceMap: true

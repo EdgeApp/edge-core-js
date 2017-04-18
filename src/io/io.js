@@ -1,6 +1,6 @@
 import { LocalStorageFolder } from './localStorageFolder.js'
-import {AuthServer} from './authServer.js'
-import {LoginStore} from './loginStore.js'
+import { AuthServer } from './authServer.js'
+import { LoginStore } from './loginStore.js'
 
 /**
  * Constructs an object containing the io resources used in this library,
@@ -10,7 +10,9 @@ export class IoContext {
   constructor (nativeIo, opts = {}) {
     // Copy native io resources:
     const keys = ['console', 'fetch', 'localStorage', 'random']
-    keys.forEach(key => { this[key] = nativeIo[key] })
+    keys.forEach(key => {
+      this[key] = nativeIo[key]
+    })
 
     // Verify that we have what we need:
     keys.forEach(key => {

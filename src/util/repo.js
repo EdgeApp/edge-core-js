@@ -1,10 +1,7 @@
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { base16, base58, utf8 } from './encoding.js'
 
-const syncServers = [
-  'https://git-js.airbitz.co',
-  'https://git4-js.airbitz.co'
-]
+const syncServers = ['https://git-js.airbitz.co', 'https://git4-js.airbitz.co']
 
 /**
  * Fetches some resource from a sync server.
@@ -19,7 +16,7 @@ function syncRequestInner (io, method, uri, body, serverIndex) {
   const headers = {
     method: method,
     headers: {
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'Content-Type': 'application/json'
     }
   }
@@ -27,16 +24,18 @@ function syncRequestInner (io, method, uri, body, serverIndex) {
     headers.body = JSON.stringify(body)
   }
 
-  return io.fetch(uri, headers).then(response => {
-    return response.json().catch(jsonError => {
-      throw new Error('Non-JSON reply, HTTP status ' + response.status)
-    })
-  }, networkError => {
-    if (serverIndex + 1 < syncServers.length) {
-      return syncRequestInner(io, method, uri, body, serverIndex + 1)
+  return io.fetch(uri, headers).then(
+    response =>
+      response.json().catch(jsonError => {
+        throw new Error('Non-JSON reply, HTTP status ' + response.status)
+      }),
+    networkError => {
+      if (serverIndex + 1 < syncServers.length) {
+        return syncRequestInner(io, method, uri, body, serverIndex + 1)
+      }
+      throw new Error('NetworkError: Could not connect to sync server')
     }
-    throw new Error('NetworkError: Could not connect to sync server')
-  })
+  )
 }
 
 /**
@@ -217,7 +216,12 @@ Repo.prototype.sync = function () {
   }
 
   // Make the request:
-  return syncRequest(this.io, request.changes ? 'POST' : 'GET', uri, request).then(reply => {
+  return syncRequest(
+    this.io,
+    request.changes ? 'POST' : 'GET',
+    uri,
+    request
+  ).then(reply => {
     let changed = false
 
     // Delete any changed keys (since the upload is done):

@@ -23,8 +23,8 @@ export function Context (opts) {
   this.appId = opts.appId != null
     ? opts.appId
     : opts.accountType != null
-      ? opts.accountType.replace(/^account.repo:/, '')
-      : ''
+        ? opts.accountType.replace(/^account.repo:/, '')
+        : ''
 }
 
 Context.prototype.usernameList = asyncApi(function () {
@@ -51,16 +51,21 @@ Context.prototype.createAccount = asyncApi(function (username, password, pin) {
   })
 })
 
-Context.prototype.loginWithPassword = asyncApi(function (username, password, otp, opts) {
+Context.prototype.loginWithPassword = asyncApi(function (
+  username,
+  password,
+  otp,
+  opts
+) {
   return loginPassword(this.io, username, password).then(login => {
     return makeAccount(this, login, 'passwordLogin')
   })
 })
 
 Context.prototype.pinExists = asyncApi(function (username) {
-  return this.io.loginStore.load(username).then(loginStash =>
-    getPin2Key(loginStash, this.appId).pin2Key != null
-  )
+  return this.io.loginStore
+    .load(username)
+    .then(loginStash => getPin2Key(loginStash, this.appId).pin2Key != null)
 })
 Context.prototype.pinLoginEnabled = Context.prototype.pinExists
 
@@ -80,14 +85,28 @@ Context.prototype.getRecovery2Key = asyncApi(function (username) {
   })
 })
 
-Context.prototype.loginWithRecovery2 = asyncApi(function (recovery2Key, username, answers, otp, options) {
+Context.prototype.loginWithRecovery2 = asyncApi(function (
+  recovery2Key,
+  username,
+  answers,
+  otp,
+  options
+) {
   recovery2Key = base58.parse(recovery2Key)
-  return loginRecovery2(this.io, recovery2Key, username, answers).then(login => {
+  return loginRecovery2(
+    this.io,
+    recovery2Key,
+    username,
+    answers
+  ).then(login => {
     return makeAccount(this, login, 'recoveryLogin')
   })
 })
 
-Context.prototype.fetchRecovery2Questions = asyncApi(function (recovery2Key, username) {
+Context.prototype.fetchRecovery2Questions = asyncApi(function (
+  recovery2Key,
+  username
+) {
   recovery2Key = base58.parse(recovery2Key)
   return getQuestions2(this.io, recovery2Key, username)
 })
@@ -100,11 +119,11 @@ Context.prototype.checkPasswordRules = syncApi(function (password) {
   const extraLong = password.length >= 16
 
   return {
-    'tooShort': tooShort,
-    'noNumber': noNumber,
-    'noUpperCase': noUpperCase,
-    'noLowerCase': noLowerCase,
-    'passed': extraLong || !(tooShort || noNumber || noUpperCase || noLowerCase)
+    tooShort,
+    noNumber,
+    noUpperCase,
+    noLowerCase,
+    passed: extraLong || !(tooShort || noNumber || noUpperCase || noLowerCase)
   }
 })
 

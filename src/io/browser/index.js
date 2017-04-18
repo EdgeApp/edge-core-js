@@ -13,7 +13,7 @@ export function makeBrowserIo () {
     out.localStorage = window.localStorage
 
     if (window.crypto != null && window.crypto.getRandomValues != null) {
-      out.random = (size) => {
+      out.random = size => {
         const out = new Uint8Array(size)
         window.crypto.getRandomValues(out)
         return out

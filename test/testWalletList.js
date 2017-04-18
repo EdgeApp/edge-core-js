@@ -1,7 +1,7 @@
 /* global describe, it */
 import { makeContext, makeFakeIos } from '../src'
-import {Repo} from '../src/util/repo.js'
-import {WalletList} from '../src/util/walletList.js'
+import { Repo } from '../src/util/repo.js'
+import { WalletList } from '../src/util/walletList.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
 
@@ -12,7 +12,9 @@ describe('wallet list', function () {
     const repo = new Repo(context.io, fakeUser.loginKey, fakeUser.syncKey)
     const list = new WalletList(repo)
 
-    assert.deepEqual(list.listIds(), ['7QjUtdhLqh6F84yPRi5D2MmubsYBtyai6YY3WqyPfK64'])
+    assert.deepEqual(list.listIds(), [
+      '7QjUtdhLqh6F84yPRi5D2MmubsYBtyai6YY3WqyPfK64'
+    ])
   })
 
   it('account id list', function () {
@@ -20,7 +22,10 @@ describe('wallet list', function () {
     const account = makeFakeAccount(context, fakeUser)
     const ids = account.listWalletIds()
     assert.equal(ids.length, 1)
-    assert.equal(account.getWallet(ids[0]).type, 'account-repo:co.airbitz.wallet')
+    assert.equal(
+      account.getWallet(ids[0]).type,
+      'account-repo:co.airbitz.wallet'
+    )
   })
 
   it('create', function (done) {

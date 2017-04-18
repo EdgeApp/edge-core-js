@@ -68,9 +68,7 @@ describe('username', function () {
     makeFakeAccount(context, fakeUser)
 
     context.removeUsername(fakeUser.username)
-    return context
-      .usernameList()
-      .then(list => assert.equal(list.length, 0))
+    return context.usernameList().then(list => assert.equal(list.length, 0))
   })
 })
 
@@ -116,12 +114,7 @@ describe('password', function () {
     const account = makeFakeAccount(context, fakeUser)
 
     return account.passwordSetup('Test1234').then(() => {
-      return remote.loginWithPassword(
-        fakeUser.username,
-        'Test1234',
-        null,
-        null
-      )
+      return remote.loginWithPassword(fakeUser.username, 'Test1234', null, null)
     })
   })
 
@@ -150,9 +143,9 @@ describe('password', function () {
     // Disable network access (but leave the sync server up):
     const oldFetch = context.io.fetch
     context.io.fetch = (url, opts) =>
-      /store/.test(url)
+      (/store/.test(url)
         ? oldFetch(url, opts)
-        : Promise.reject(new Error('Network error'))
+        : Promise.reject(new Error('Network error')))
 
     return context.loginWithPassword(
       fakeUser.username,
@@ -276,6 +269,7 @@ describe('recovery2', function () {
             null,
             null
           )
-        ]))
+        ])
+      )
   })
 })

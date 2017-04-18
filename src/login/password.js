@@ -1,8 +1,8 @@
 import { decrypt, encrypt } from '../crypto/crypto.js'
 import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
-import {rejectify} from '../util/decorators.js'
-import {base64} from '../util/encoding.js'
+import { rejectify } from '../util/decorators.js'
+import { base64 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
 import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
 

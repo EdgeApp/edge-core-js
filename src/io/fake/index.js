@@ -1,5 +1,5 @@
-import {FakeServer} from './fakeServer.js'
-import {FakeStorage} from './fakeStorage.js'
+import { FakeServer } from './fakeServer.js'
+import { FakeStorage } from './fakeStorage.js'
 
 /**
  * Silences all logging.
@@ -19,7 +19,7 @@ function fakeRandom (bytes) {
   for (let i = 0; i < bytes; ++i) {
     // Simplest numbers that give a full-period generator with
     // a good mix of high & low values within the first few bytes:
-    x = ((5 * x) + 3) & 0xff
+    x = (5 * x + 3) & 0xff
     out[i] = x
   }
   return out

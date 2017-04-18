@@ -1,6 +1,8 @@
 import baseX from 'base-x'
-import {Buffer} from 'buffer'
-const base58Codec = baseX('123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz')
+import { Buffer } from 'buffer'
+const base58Codec = baseX(
+  '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+)
 
 function assertString (text) {
   if (typeof text !== 'string') {

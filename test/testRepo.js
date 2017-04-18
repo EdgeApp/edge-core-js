@@ -1,6 +1,6 @@
 /* global describe, it */
 import { makeContext, makeFakeIos } from '../src'
-import {Repo} from '../src/util/repo.js'
+import { Repo } from '../src/util/repo.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
 
@@ -13,7 +13,7 @@ describe('repo', function () {
     const [context] = makeFakeContexts(1)
     const repo = new Repo(context.io, fakeUser.loginKey, fakeUser.syncKey)
 
-    const payload = {'message': 'Hello'}
+    const payload = { message: 'Hello' }
     context.io.localStorage.setItem(
       'airbitz/repos/2XYHMLLi8CapUQJDwxfeosLkfEwRABDgARM4B3Egqhn1/changes/a/b',
       '{"encryptionType":0,"iv_hex":"82454458a5eaa6bc7dc4b4081b9f36d1","data_base64":"lykLWi2MUBbcrdbbo2cZ9Q97aVohe6LZUihp7xfr1neAMj8mr0l9MP1ElteAzG4GG1FmjSsptajr6I2sNc5Kmw=="}'
@@ -25,7 +25,7 @@ describe('repo', function () {
     const [context] = makeFakeContexts(1)
     const repo = new Repo(context.io, fakeUser.loginKey, fakeUser.syncKey)
 
-    const payload = {'message': 'Hello'}
+    const payload = { message: 'Hello' }
     repo.setJson('a/b', payload)
     assert.deepEqual(repo.getJson('a/b'), payload)
   })
@@ -35,7 +35,7 @@ describe('repo', function () {
     makeFakeAccount(context3, fakeUser)
     const repo1 = new Repo(context1.io, fakeUser.loginKey, fakeUser.syncKey)
 
-    const payload = {'message': 'Hello'}
+    const payload = { message: 'Hello' }
     repo1.setJson('a/b', payload)
     return repo1.sync().then(changed => {
       assert(changed)

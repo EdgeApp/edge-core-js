@@ -28,14 +28,18 @@ function defineError (type, defaultMessage) {
 /**
  * Could not reach the server at all.
  */
-export const NetworkError =
-  defineError('NetworkError', 'Cannot reach the network')
+export const NetworkError = defineError(
+  'NetworkError',
+  'Cannot reach the network'
+)
 
 /**
  * The endpoint on the server is obsolete, and the app needs to be upgraded.
  */
-export const ObsoleteApiError =
-  defineError('ObsoleteApiError', 'The application is too old. Please upgrade.')
+export const ObsoleteApiError = defineError(
+  'ObsoleteApiError',
+  'The application is too old. Please upgrade.'
+)
 
 /**
  * Cannot find a login with that id.
@@ -45,8 +49,7 @@ export const ObsoleteApiError =
  * - PIN login: wrong PIN key
  * - Recovery login: wrong username, or wrong recovery key
  */
-export const UsernameError =
-  defineError('UsernameError', 'Invaid username')
+export const UsernameError = defineError('UsernameError', 'Invaid username')
 
 /**
  * The provided authentication is incorrect.
