@@ -53,7 +53,7 @@
   },
   "scripts": {
     "build": "webpack && rollup -c",
-    "format": "prettier --no-semi --write '*.js' 'src/**/*.js' 'test/**/*.js' && standard --fix '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' 'test/**/*.js' && standard --fix '*.js' 'src/**/*.js' 'test/**/*.js'",
     "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
     "precommit": "npm run lint",
     "prepublish": "npm run lint && npm run build",
