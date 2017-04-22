@@ -1,3 +1,6 @@
+import { NetworkError } from '../error.js'
+import { timeout } from '../util/promise.js'
+
 const syncServers = ['https://git-js.airbitz.co', 'https://git4-js.airbitz.co']
 
 /**
@@ -7,10 +10,8 @@ export function syncRequest (io, method, uri, body) {
   return syncRequestInner(io, method, uri, body, 0)
 }
 
-function syncRequestInner (io, method, uri, body, serverIndex) {
-  uri = syncServers[serverIndex] + uri
-  io.log.info(`sync: ${method} ${uri}`)
-  const headers = {
+function syncRequestInner (io, method, path, body, serverIndex) {
+  const opts = {
     method: method,
     headers: {
       Accept: 'application/json',
@@ -18,19 +19,22 @@ function syncRequestInner (io, method, uri, body, serverIndex) {
     }
   }
   if (method !== 'GET') {
-    headers.body = JSON.stringify(body)
+    opts.body = JSON.stringify(body)
   }
 
-  return io.fetch(uri, headers).then(
-    response =>
-      response.json().catch(jsonError => {
-        throw new Error('Non-JSON reply, HTTP status ' + response.status)
-      }),
-    networkError => {
-      if (serverIndex + 1 < syncServers.length) {
-        return syncRequestInner(io, method, uri, body, serverIndex + 1)
+  const uri = syncServers[serverIndex] + path
+  io.log.info(`${method} ${uri}`)
+  return timeout(
+    io.fetch(uri, opts).then(
+      response =>
+        response.json().catch(jsonError => {
+          throw new Error('Non-JSON reply, HTTP status ' + response.status)
+        }),
+      networkError => {
+        throw new NetworkError('Could not reach the sync server')
       }
-      throw new Error('NetworkError: Could not connect to sync server')
-    }
+    ),
+    10000,
+    new NetworkError('Could not reach the sync server: timeout')
   )
 }
