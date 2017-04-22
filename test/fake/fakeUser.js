@@ -4,8 +4,8 @@
  */
 import { Account } from '../../src/api/account.js'
 import { applyLoginReply, makeLogin } from '../../src/login/login.js'
+import { mergeChanges, Repo } from '../../src/repo'
 import { base16, base64 } from '../../src/util/encoding.js'
-import { mergeChanges, Repo } from '../../src/util/repo.js'
 import { elvis, filterObject } from '../../src/util/util.js'
 
 export const fakeUser = {

@@ -1,5 +1,5 @@
 import { attachKeys } from '../login/login.js'
-import { repoId } from './repo.js'
+import { repoId } from '../repo'
 import { base16 } from './encoding.js'
 
 function walletType (walletJson) {
