@@ -4,9 +4,14 @@
  */
 import { Account } from '../../src/api/account.js'
 import { applyLoginReply, makeLogin } from '../../src/login/login.js'
+import { makeRepoFolders, saveChanges } from '../../src/repo'
 import { base16, base64 } from '../../src/util/encoding.js'
 import { elvis, filterObject } from '../../src/util/util.js'
 
+/**
+ * Everything here is in server format (text), except for keys.
+ * Those are in the post-login format (binary).
+ */
 export const fakeUser = {
   username: 'JS test 0',
 
@@ -176,6 +181,13 @@ export const repos = {
   }
 }
 
+export const fakeRepoInfo = {
+  keys: {
+    dataKey: base64.stringify(fakeUser.loginKey),
+    syncKey: base64.stringify(fakeUser.syncKey)
+  }
+}
+
 /**
  * Creates a login object on the fakeServer
  */
@@ -243,6 +255,12 @@ export function makeFakeAccount (context, user) {
       body: JSON.stringify({ changes: repos[syncKey] })
     })
   )
+
+  // Populate the repos on the client:
+  Object.keys(repos).forEach(syncKey => {
+    const folders = makeRepoFolders(context.io, fakeRepoInfo)
+    saveChanges(folders.data, repos[syncKey])
+  })
 
   // Return the account object:
   const login = makeLogin(loginStash, user.loginKey)

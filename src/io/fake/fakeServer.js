@@ -461,7 +461,7 @@ function storeRoute (req) {
       })
       return new FakeResponse(
         JSON.stringify({
-          changes: changes,
+          changes: repo,
           hash: '1111111111111111111111111111111111111111'
         })
       )
