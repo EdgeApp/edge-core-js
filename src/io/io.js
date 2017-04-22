@@ -1,6 +1,6 @@
-import { LocalStorageFolder } from './localStorageFolder.js'
 import { AuthServer } from './authServer.js'
 import { LoginStore } from './loginStore.js'
+import { makeLocalStorageFolder } from 'disklet'
 
 /**
  * Constructs an object containing the io resources used in this library,
@@ -9,10 +9,17 @@ import { LoginStore } from './loginStore.js'
 export class IoContext {
   constructor (nativeIo, opts = {}) {
     // Copy native io resources:
-    const keys = ['console', 'fetch', 'localStorage', 'random']
+    const keys = ['console', 'fetch', 'folder', 'random']
     keys.forEach(key => {
       this[key] = nativeIo[key]
     })
+
+    // If there is no native folder, try `localStorage` instead:
+    if (this.folder == null && nativeIo.localStorage != null) {
+      this.folder = makeLocalStorageFolder(nativeIo.localStorage, {
+        prefix: 'airbitz'
+      })
+    }
 
     // Verify that we have what we need:
     keys.forEach(key => {
@@ -23,7 +30,6 @@ export class IoContext {
 
     // Set up wrapper objects:
     this.authServer = new AuthServer(this, opts.apiKey, opts.authServer)
-    this.folder = new LocalStorageFolder(this.localStorage, 'airbitz')
     this.log = this.console
     this.loginStore = new LoginStore(this)
   }

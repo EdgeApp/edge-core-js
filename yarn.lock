@@ -479,6 +479,12 @@ diff@1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-1.4.0.tgz#7f28d2eb9ee7b15a97efd89ce63dcfdaa3ccbabf"
 
+disklet@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.1.0.tgz#f96a8e28e8d28013f5b3a2d79d3aea5828929e7c"
+  dependencies:
+    rfc4648 "^0.9.1"
+
 doctrine@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/doctrine/-/doctrine-2.0.0.tgz#c73d8d2909d22291e1a007a395804da8b665fe63"
@@ -1754,6 +1760,10 @@ restore-cursor@^1.0.1:
   dependencies:
     exit-hook "^1.0.0"
     onetime "^1.0.0"
+
+rfc4648@^0.9.1:
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-0.9.1.tgz#6dff84c2ed0e63381424da2a7caa9b750fa7e477"
 
 right-align@^0.1.1:
   version "0.1.3"

@@ -1,5 +1,5 @@
 import { FakeServer } from './fakeServer.js'
-import { FakeStorage } from './fakeStorage.js'
+import { makeMemoryFolder } from 'disklet'
 
 /**
  * Silences all logging.
@@ -40,7 +40,7 @@ export function makeFakeIos (count) {
     out[i] = {
       console: fakeConsole,
       fetch: server.fetch,
-      localStorage: new FakeStorage(),
+      folder: makeMemoryFolder(),
       random: fakeRandom
     }
   }
