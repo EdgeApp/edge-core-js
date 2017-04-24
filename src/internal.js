@@ -3,7 +3,6 @@
 // In the future we hope to minimize / reduce this
 
 export { makeLobby } from './login/lobby.js'
-export * from './repo'
 export * from './util/decorators.js'
 export * from './util/encoding.js'
 export * from './util/util.js'

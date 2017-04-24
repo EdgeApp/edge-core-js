@@ -3,7 +3,6 @@ import { attachKeys, makeKeyInfo, searchTree } from '../login/login.js'
 import { checkPassword, setupPassword } from '../login/password.js'
 import { setupPin2 } from '../login/pin2.js'
 import { setupRecovery2 } from '../login/recovery2.js'
-import { Repo } from '../repo'
 import { asyncApi, syncApi } from '../util/decorators.js'
 import { base58, base64 } from '../util/encoding.js'
 import { Wallet } from './wallet.js'
@@ -105,12 +104,6 @@ export function Account (ctx, rootLogin, login) {
   this.passwordLogin = false
   this.newAccount = false
   this.recoveryLogin = false
-
-  this.repo = new Repo(
-    this.io,
-    base64.parse(this.keys.dataKey),
-    base64.parse(this.keys.syncKey)
-  )
 }
 
 Account.prototype.logout = syncApi(function () {
@@ -158,9 +151,7 @@ Account.prototype.isLoggedIn = syncApi(function () {
 })
 
 Account.prototype.sync = asyncApi(function () {
-  return this.repo.sync().then(changed => {
-    return changed
-  })
+  return Promise.resolve(false)
 })
 
 Account.prototype.listWalletIds = syncApi(function () {

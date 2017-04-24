@@ -4,7 +4,6 @@
  */
 import { Account } from '../../src/api/account.js'
 import { applyLoginReply, makeLogin } from '../../src/login/login.js'
-import { mergeChanges, Repo } from '../../src/repo'
 import { base16, base64 } from '../../src/util/encoding.js'
 import { elvis, filterObject } from '../../src/util/util.js'
 
@@ -244,12 +243,6 @@ export function makeFakeAccount (context, user) {
       body: JSON.stringify({ changes: repos[syncKey] })
     })
   )
-
-  // Populate the repos on the client:
-  Object.keys(repos).forEach(syncKey => {
-    const repo = new Repo(context.io, user.loginKey, base16.parse(syncKey))
-    mergeChanges(repo.dataStore, repos[syncKey])
-  })
 
   // Return the account object:
   const login = makeLogin(loginStash, user.loginKey)
