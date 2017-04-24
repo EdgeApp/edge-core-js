@@ -6,7 +6,6 @@ import { setupRecovery2 } from '../login/recovery2.js'
 import { Repo } from '../repo'
 import { asyncApi, syncApi } from '../util/decorators.js'
 import { base58, base64 } from '../util/encoding.js'
-import { WalletList } from '../util/walletList.js'
 import { Wallet } from './wallet.js'
 
 function findAccount (login, type) {
@@ -112,7 +111,6 @@ export function Account (ctx, rootLogin, login) {
     base64.parse(this.keys.dataKey),
     base64.parse(this.keys.syncKey)
   )
-  this.walletList = new WalletList(this.repo)
 }
 
 Account.prototype.logout = syncApi(function () {
@@ -161,9 +159,6 @@ Account.prototype.isLoggedIn = syncApi(function () {
 
 Account.prototype.sync = asyncApi(function () {
   return this.repo.sync().then(changed => {
-    if (changed) {
-      this.walletList.load()
-    }
     return changed
   })
 })
