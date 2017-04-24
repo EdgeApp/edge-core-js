@@ -34,8 +34,8 @@ Context.prototype.listUsernames = Context.prototype.usernameList
 
 Context.prototype.fixUsername = syncApi(fixUsername)
 
-Context.prototype.removeUsername = syncApi(function (username) {
-  this.io.loginStore.remove(username)
+Context.prototype.removeUsername = asyncApi(function (username) {
+  return this.io.loginStore.remove(username)
 })
 
 Context.prototype.usernameAvailable = asyncApi(function (username) {

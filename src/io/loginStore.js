@@ -40,6 +40,7 @@ export class LoginStore {
     if (filename != null) {
       this.storage.removeFile(filename)
     }
+    return Promise.resolve()
   }
 
   /**

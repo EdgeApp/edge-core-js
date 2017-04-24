@@ -67,8 +67,10 @@ describe('username', function () {
     const [context] = makeFakeContexts(1)
     makeFakeAccount(context, fakeUser)
 
-    context.removeUsername(fakeUser.username)
-    return context.usernameList().then(list => assert.equal(list.length, 0))
+    return context
+      .removeUsername(fakeUser.username)
+      .then(() => context.usernameList())
+      .then(list => assert.equal(list.length, 0))
   })
 })
 
