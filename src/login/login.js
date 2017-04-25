@@ -8,7 +8,7 @@ import { elvis, filterObject, objectAssign } from '../util/util.js'
 import { makeAccountType } from '../api/account.js'
 
 /**
- * Returns the login that satisifies the given predicated,
+ * Returns the login that satisifies the given predicate,
  * or undefined if nothing matches.
  */
 export function searchTree (node, predicate) {
@@ -25,7 +25,7 @@ export function searchTree (node, predicate) {
  * The `predicate` callback is used to find the target node.
  * The `update` callback is called on the target.
  */
-function updateTree (node, clone, predicate, update) {
+export function updateTree (node, clone, predicate, update) {
   return predicate(node)
     ? update(node)
     : clone(
@@ -204,6 +204,7 @@ export function makeLogin (loginStash, loginKey, appId = '') {
     stash => makeLoginInner(stash, loginKey)
   )
 }
+
 /**
  * Sets up a login v2 server authorization JSON.
  */
@@ -315,20 +316,4 @@ export function attachKeys (io, rootLogin, login, keyInfos, syncKeys = []) {
       return stash
     })
   })
-}
-
-/**
- * Passes the selected loginStash to the `update` callback,
- * allowing it to make changes. Returns the new stash tree.
- */
-export function updateLoginStash (loginStash, predicate, update) {
-  return updateTree(
-    loginStash,
-    (stash, newChildren) => {
-      stash.children = newChildren
-      return stash
-    },
-    predicate,
-    update
-  )
 }

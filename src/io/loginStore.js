@@ -1,5 +1,5 @@
 import { scrypt, userIdSnrp } from '../crypto/scrypt.js'
-import { updateLoginStash } from '../login/login.js'
+import { updateTree } from '../login/login.js'
 import { base58, base64 } from '../util/encoding.js'
 
 /**
@@ -70,10 +70,21 @@ export class LoginStore {
       if (loginStash.loginId == null) {
         throw new Error(`Could not load stash for "${rootLogin.username}"`)
       }
+
+      // Update the stash:
       const target = base64.stringify(targetLogin.loginId)
-      return this.save(
-        updateLoginStash(loginStash, stash => stash.loginId === target, update)
+      const newStash = updateTree(
+        loginStash,
+        (stash, newChildren) => {
+          stash.children = newChildren
+          return stash
+        },
+        stash => stash.loginId === target,
+        update
       )
+
+      // Save:
+      return this.save(newStash)
     })
   }
 
