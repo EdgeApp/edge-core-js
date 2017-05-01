@@ -2,6 +2,7 @@
 // which makes use of some undocumented core features.
 // In the future we hope to minimize / reduce this
 
+export { hashUsername } from './io/loginStore.js'
 export { makeLobby } from './login/lobby.js'
 export * from './util/decorators.js'
 export * from './util/encoding.js'
