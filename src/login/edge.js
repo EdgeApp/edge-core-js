@@ -1,6 +1,6 @@
 import { base58, base64 } from '../util/encoding.js'
 import { makeLobby } from './lobby.js'
-import { makeLogin, searchTree } from './login.js'
+import { makeLoginTree, searchTree } from './login.js'
 
 /**
  * The public API for edge login requests.
@@ -38,7 +38,7 @@ function onReply (io, subscription, reply, appId, opts) {
   io.loginStore.save(stashTree)
 
   // This is almost guaranteed to blow up spectacularly:
-  const login = makeLogin(stashTree, base64.parse(reply.loginKey), appId)
+  const login = makeLoginTree(stashTree, base64.parse(reply.loginKey), appId)
   if (opts.onLogin != null) {
     opts.onLogin(null, login)
   }

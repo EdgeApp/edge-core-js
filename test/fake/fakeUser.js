@@ -3,7 +3,7 @@
  * used by the unit tests.
  */
 import { Account } from '../../src/api/account.js'
-import { applyLoginReply, makeLogin } from '../../src/login/login.js'
+import { applyLoginReply, makeLoginTree } from '../../src/login/login.js'
 import { makeRepoFolders, saveChanges } from '../../src/repo'
 import { base16, base64 } from '../../src/util/encoding.js'
 import { elvis, filterObject } from '../../src/util/util.js'
@@ -263,6 +263,6 @@ export function makeFakeAccount (context, user) {
   })
 
   // Return the account object:
-  const login = makeLogin(loginStash, user.loginKey)
+  const login = makeLoginTree(loginStash, user.loginKey)
   return new Account(context, login, login)
 }

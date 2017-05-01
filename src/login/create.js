@@ -117,21 +117,16 @@ export function createLogin (io, username, opts) {
 
 /**
  * Creates a new child login on the auth server.
+ * @param login the parent of the new login.
  */
-export function createChildLogin (io, rootLogin, parentLogin, appId, opts) {
-  return makeNewKit(
-    io,
-    parentLogin,
-    appId,
-    rootLogin.username,
-    opts
-  ).then(kit => {
-    const request = makeAuthJson(parentLogin)
+export function createChildLogin (io, loginTree, login, appId, opts) {
+  return makeNewKit(io, login, appId, loginTree.username, opts).then(kit => {
+    const request = makeAuthJson(login)
     request.data = kit.server
     return io.authRequest('POST', '/v2/login/create', request).then(reply => {
-      parentLogin.children.push(kit.login)
+      login.children.push(kit.login)
       return io.loginStore
-        .update(rootLogin, parentLogin, stash => {
+        .update(loginTree, login, stash => {
           stash.children = [...elvis(stash.children, []), kit.stash]
           return stash
         })

@@ -75,19 +75,19 @@ export class LoginStore {
 
   /**
    * Updates the selected login stash.
-   * The `rootLogin` gives the root of the search,
-   * and the `targetLogin` gives the node to update.
+   * The `loginTree` gives the root of the search,
+   * and the `login` gives the node to update.
    * The `update` callback is called on the selected node,
    * and can make any modifications it likes.
    */
-  update (rootLogin, targetLogin, update) {
-    return this.load(rootLogin.username).then(stashTree => {
+  update (loginTree, login, update) {
+    return this.load(loginTree.username).then(stashTree => {
       if (stashTree.loginId == null) {
-        throw new Error(`Could not load stash for "${rootLogin.username}"`)
+        throw new Error(`Could not load stash for "${loginTree.username}"`)
       }
 
       // Update the stash:
-      const target = base64.stringify(targetLogin.loginId)
+      const target = base64.stringify(login.loginId)
       const newStash = updateTree(
         stashTree,
         (stash, newChildren) => {

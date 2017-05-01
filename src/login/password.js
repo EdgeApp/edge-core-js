@@ -4,7 +4,7 @@ import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { rejectify } from '../util/decorators.js'
 import { base64 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
-import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
+import { applyLoginReply, makeAuthJson, makeLoginTree } from './login.js'
 
 function makeHashInput (username, password) {
   return fixUsername(username) + password
@@ -62,18 +62,18 @@ export function loginPassword (io, username, password) {
   return io.loginStore.load(username).then(stashTree => {
     return rejectify(extractLoginKey)(stashTree, username, password)
       .then(loginKey => {
-        const login = makeLogin(stashTree, loginKey)
+        const loginTree = makeLoginTree(stashTree, loginKey)
 
         // Since we logged in offline, update the stash in the background:
         io
-          .authRequest('POST', '/v2/login', makeAuthJson(login))
+          .authRequest('POST', '/v2/login', makeAuthJson(loginTree))
           .then(loginReply => {
             stashTree = applyLoginReply(stashTree, loginKey, loginReply)
             return io.loginStore.save(stashTree)
           })
           .catch(e => io.log.warn(e))
 
-        return login
+        return loginTree
       })
       .catch(e => {
         // If that failed, try an online login:
@@ -81,7 +81,7 @@ export function loginPassword (io, username, password) {
           const { loginKey, loginReply } = values
           stashTree = applyLoginReply(stashTree, loginKey, loginReply)
           io.loginStore.save(stashTree)
-          return makeLogin(stashTree, loginKey)
+          return makeLoginTree(stashTree, loginKey)
         })
       })
   })
@@ -152,14 +152,14 @@ export function makePasswordKit (io, login, username, password) {
 /**
  * Sets up a password for the login.
  */
-export function setupPassword (io, rootLogin, login, password) {
-  return makePasswordKit(io, login, rootLogin.username, password).then(kit => {
+export function setupPassword (io, loginTree, login, password) {
+  return makePasswordKit(io, login, loginTree.username, password).then(kit => {
     const request = makeAuthJson(login)
     request.data = kit.server
     return io.authRequest('POST', '/v2/login/password', request).then(reply => {
       login.passwordAuth = kit.login.passwordAuth
       return io.loginStore
-        .update(rootLogin, login, stash => objectAssign(stash, kit.stash))
+        .update(loginTree, login, stash => objectAssign(stash, kit.stash))
         .then(() => login)
     })
   })

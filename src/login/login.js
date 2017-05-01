@@ -102,7 +102,7 @@ export function applyLoginReply (stashTree, loginKey, loginReply) {
   )
 }
 
-function makeLoginInner (stash, loginKey) {
+function makeLoginTreeInner (stash, loginKey) {
   const login = {}
 
   if (stash.username != null) {
@@ -177,7 +177,7 @@ function makeLoginInner (stash, loginKey) {
   // Recurse into children:
   login.children = elvis(stash.children, []).map(child => {
     const childKey = decrypt(child.parentBox, loginKey)
-    return makeLoginInner(child, childKey)
+    return makeLoginTreeInner(child, childKey)
   })
 
   // Integrity check:
@@ -191,7 +191,7 @@ function makeLoginInner (stash, loginKey) {
 /**
  * Converts a login stash into an in-memory login object.
  */
-export function makeLogin (stashTree, loginKey, appId = '') {
+export function makeLoginTree (stashTree, loginKey, appId = '') {
   return updateTree(
     stashTree,
     (stash, newChildren) => {
@@ -201,7 +201,7 @@ export function makeLogin (stashTree, loginKey, appId = '') {
       return login
     },
     stash => stash.appId === appId,
-    stash => makeLoginInner(stash, loginKey)
+    stash => makeLoginTreeInner(stash, loginKey)
   )
 }
 
@@ -304,14 +304,14 @@ export function mergeKeyInfos (keyInfos) {
  * Attaches keys to the login object,
  * optionally creating any repos needed.
  */
-export function attachKeys (io, rootLogin, login, keyInfos, syncKeys = []) {
+export function attachKeys (io, loginTree, login, keyInfos, syncKeys = []) {
   const kit = makeKeysKit(io, login, keyInfos, syncKeys)
 
   const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/keys', request).then(reply => {
     login.keyInfos = mergeKeyInfos([...login.keyInfos, ...kit.login.keyInfos])
-    return io.loginStore.update(rootLogin, login, stash => {
+    return io.loginStore.update(loginTree, login, stash => {
       stash.keyBoxes = [...elvis(stash.keyBoxes, []), ...kit.stash.keyBoxes]
       return stash
     })

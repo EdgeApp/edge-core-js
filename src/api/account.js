@@ -18,8 +18,8 @@ export function makeAccountType (appId) {
     : `account-repo:${appId}`
 }
 
-function ensureAppIdExists (io, rootLogin, appId) {
-  const login = searchTree(rootLogin, login => login.appId === appId)
+function ensureAppIdExists (io, loginTree, appId) {
+  const login = searchTree(loginTree, login => login.appId === appId)
   if (!login) {
     const accountType = makeAccountType(appId)
     const dataKey = io.random(32)
@@ -29,25 +29,25 @@ function ensureAppIdExists (io, rootLogin, appId) {
       syncKey: base64.stringify(syncKey)
     }
     const opts = {
-      pin: rootLogin.pin,
+      pin: loginTree.pin,
       keyInfos: [makeKeyInfo(keyJson, accountType, dataKey)],
       newSyncKeys: [syncKey]
     }
     return createChildLogin(
       io,
-      rootLogin,
-      rootLogin,
+      loginTree,
+      loginTree,
       appId,
       opts
     ).then(login => {
-      return { rootLogin, login }
+      return { loginTree, login }
     })
   }
 
-  return Promise.resolve({ rootLogin, login })
+  return Promise.resolve({ loginTree, login })
 }
 
-function ensureAccountRepoExists (io, rootLogin, login) {
+function ensureAccountRepoExists (io, loginTree, login) {
   const accountType = makeAccountType(login.appId)
   if (findAccount(login, accountType) == null) {
     const dataKey = io.random(32)
@@ -58,19 +58,19 @@ function ensureAccountRepoExists (io, rootLogin, login) {
     }
     const keyInfo = makeKeyInfo(keyJson, accountType, dataKey)
 
-    return attachKeys(io, rootLogin, login, [keyInfo], [syncKey])
+    return attachKeys(io, loginTree, login, [keyInfo], [syncKey])
   }
 
   return Promise.resolve()
 }
 
-export function makeAccount (ctx, rootLogin, loginType) {
+export function makeAccount (ctx, loginTree, loginType) {
   const { io, appId } = ctx
 
-  return ensureAppIdExists(io, rootLogin, appId).then(value => {
-    const { rootLogin, login } = value
-    return ensureAccountRepoExists(io, rootLogin, login).then(() => {
-      const account = new Account(ctx, rootLogin, login)
+  return ensureAppIdExists(io, loginTree, appId).then(value => {
+    const { loginTree, login } = value
+    return ensureAccountRepoExists(io, loginTree, login).then(() => {
+      const account = new Account(ctx, loginTree, login)
       account[loginType] = true
       return account.sync().then(dirty => account)
     })
@@ -81,17 +81,17 @@ export function makeAccount (ctx, rootLogin, loginType) {
  * This is a thin shim object,
  * which wraps the core implementation in a more OOP-style API.
  */
-export function Account (ctx, rootLogin, login) {
+export function Account (ctx, loginTree, login) {
   this.io = ctx.io
 
   // Login:
-  this.username = rootLogin.username
-  this.rootLogin = rootLogin
+  this.username = loginTree.username
+  this.loginTree = loginTree
   this.login = login
 
   // Flags:
   this.loggedIn = true
-  this.edgeLogin = this.rootLogin.loginKey == null
+  this.edgeLogin = this.loginTree.loginKey == null
   this.pinLogin = false
   this.passwordLogin = false
   this.newAccount = false
@@ -112,33 +112,33 @@ Account.prototype.logout = syncApi(function () {
 })
 
 Account.prototype.passwordOk = asyncApi(function (password) {
-  return checkPassword(this.io, this.rootLogin, password)
+  return checkPassword(this.io, this.loginTree, password)
 })
 Account.prototype.checkPassword = Account.prototype.passwordOk
 
 Account.prototype.passwordSetup = asyncApi(function (password) {
-  if (this.rootLogin.loginKey == null) {
+  if (this.loginTree.loginKey == null) {
     return Promise.reject(new Error('Edge logged-in account'))
   }
-  return setupPassword(this.io, this.rootLogin, this.rootLogin, password)
+  return setupPassword(this.io, this.loginTree, this.loginTree, password)
 })
 Account.prototype.changePassword = Account.prototype.passwordSetup
 
 Account.prototype.pinSetup = asyncApi(function (pin) {
-  return setupPin2(this.io, this.rootLogin, this.login, pin).then(login =>
+  return setupPin2(this.io, this.loginTree, this.login, pin).then(login =>
     base58.stringify(login.pin2Key)
   )
 })
 Account.prototype.changePIN = Account.prototype.pinSetup
 
 Account.prototype.recovery2Set = asyncApi(function (questions, answers) {
-  if (this.rootLogin.loginKey == null) {
+  if (this.loginTree.loginKey == null) {
     return Promise.reject(new Error('Edge logged-in account'))
   }
   return setupRecovery2(
     this.io,
-    this.rootLogin,
-    this.rootLogin,
+    this.loginTree,
+    this.loginTree,
     questions,
     answers
   ).then(login => base58.stringify(login.recovery2Key))
@@ -194,7 +194,7 @@ Account.prototype.createWallet = asyncApi(function (type, keysJson) {
   // We are just using this to create the repo, not to attach:
   return attachKeys(
     this.io,
-    this.rootLogin,
+    this.loginTree,
     this.login,
     [info],
     [syncKey]

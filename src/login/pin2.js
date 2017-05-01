@@ -5,7 +5,7 @@ import { objectAssign } from '../util/util.js'
 import {
   applyLoginReply,
   makeAuthJson,
-  makeLogin,
+  makeLoginTree,
   searchTree
 } from './login.js'
 
@@ -64,7 +64,7 @@ export function loginPin2 (io, appId, username, pin) {
       const { loginKey, loginReply } = values
       stashTree = applyLoginReply(stashTree, loginKey, loginReply)
       io.loginStore.save(stashTree)
-      return makeLogin(stashTree, loginKey, appIdFound)
+      return makeLoginTree(stashTree, loginKey, appIdFound)
     })
   })
 }
@@ -97,15 +97,15 @@ export function makePin2Kit (io, login, username, pin) {
 /**
  * Sets up PIN login v2.
  */
-export function setupPin2 (io, rootLogin, login, pin) {
-  const kit = makePin2Kit(io, login, rootLogin.username, pin)
+export function setupPin2 (io, loginTree, login, pin) {
+  const kit = makePin2Kit(io, login, loginTree.username, pin)
 
   const request = makeAuthJson(login)
   request.data = kit.server
   return io.authRequest('POST', '/v2/login/pin2', request).then(reply => {
     login.pin2Key = kit.login.pin2Key
     return io.loginStore
-      .update(rootLogin, login, stash => objectAssign(stash, kit.stash))
+      .update(loginTree, login, stash => objectAssign(stash, kit.stash))
       .then(() => login)
   })
 }

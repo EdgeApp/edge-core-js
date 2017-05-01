@@ -2,7 +2,7 @@ import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { fixUsername } from '../io/loginStore.js'
 import { base64, utf8 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
-import { applyLoginReply, makeAuthJson, makeLogin } from './login.js'
+import { applyLoginReply, makeAuthJson, makeLoginTree } from './login.js'
 
 function recovery2Id (recovery2Key, username) {
   return hmacSha256(fixUsername(username), recovery2Key)
@@ -55,7 +55,7 @@ export function loginRecovery2 (io, recovery2Key, username, answers) {
       const { loginKey, loginReply } = values
       stashTree = applyLoginReply(stashTree, loginKey, loginReply)
       io.loginStore.save(stashTree)
-      return makeLogin(stashTree, loginKey)
+      return makeLoginTree(stashTree, loginKey)
     })
   })
 }
@@ -124,11 +124,11 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
 /**
  * Sets up recovery questions for the login.
  */
-export function setupRecovery2 (io, rootLogin, login, questions, answers) {
+export function setupRecovery2 (io, loginTree, login, questions, answers) {
   const kit = makeRecovery2Kit(
     io,
     login,
-    rootLogin.username,
+    loginTree.username,
     questions,
     answers
   )
@@ -138,7 +138,7 @@ export function setupRecovery2 (io, rootLogin, login, questions, answers) {
   return io.authRequest('POST', '/v2/login/recovery2', request).then(reply => {
     login.recovery2Key = kit.login.recovery2Key
     return io.loginStore
-      .update(rootLogin, login, stash => objectAssign(stash, kit.stash))
+      .update(loginTree, login, stash => objectAssign(stash, kit.stash))
       .then(() => login)
   })
 }
