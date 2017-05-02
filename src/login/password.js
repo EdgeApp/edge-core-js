@@ -11,15 +11,15 @@ function makeHashInput (username, password) {
 }
 
 /**
- * Extracts the loginKey from the loginStash.
+ * Extracts the loginKey from the login stash.
  */
-function extractLoginKey (loginStash, username, password) {
-  if (loginStash.passwordBox == null || loginStash.passwordKeySnrp == null) {
+function extractLoginKey (stash, username, password) {
+  if (stash.passwordBox == null || stash.passwordKeySnrp == null) {
     throw new Error('Missing data for offline password login')
   }
   const up = makeHashInput(username, password)
-  return scrypt(up, loginStash.passwordKeySnrp).then(passwordKey => {
-    return decrypt(loginStash.passwordBox, passwordKey)
+  return scrypt(up, stash.passwordKeySnrp).then(passwordKey => {
+    return decrypt(stash.passwordBox, passwordKey)
   })
 }
 
@@ -59,17 +59,17 @@ function fetchLoginKey (io, username, password) {
  * @return A `Promise` for the new root login.
  */
 export function loginPassword (io, username, password) {
-  return io.loginStore.load(username).then(loginStash => {
-    return rejectify(extractLoginKey)(loginStash, username, password)
+  return io.loginStore.load(username).then(stashTree => {
+    return rejectify(extractLoginKey)(stashTree, username, password)
       .then(loginKey => {
-        const login = makeLogin(loginStash, loginKey)
+        const login = makeLogin(stashTree, loginKey)
 
         // Since we logged in offline, update the stash in the background:
         io
           .authRequest('POST', '/v2/login', makeAuthJson(login))
           .then(loginReply => {
-            loginStash = applyLoginReply(loginStash, loginKey, loginReply)
-            return io.loginStore.save(loginStash)
+            stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+            return io.loginStore.save(stashTree)
           })
           .catch(e => io.log.warn(e))
 
@@ -79,9 +79,9 @@ export function loginPassword (io, username, password) {
         // If that failed, try an online login:
         return fetchLoginKey(io, username, password).then(values => {
           const { loginKey, loginReply } = values
-          loginStash = applyLoginReply(loginStash, loginKey, loginReply)
-          io.loginStore.save(loginStash)
-          return makeLogin(loginStash, loginKey)
+          stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+          io.loginStore.save(stashTree)
+          return makeLogin(stashTree, loginKey)
         })
       })
   })

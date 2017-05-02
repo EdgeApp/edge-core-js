@@ -37,7 +37,7 @@ export class LoginStore {
   }
 
   /**
-   * Finds the loginStash for the given username.
+   * Finds the login stash for the given username.
    * Returns a default object if
    */
   load (username) {
@@ -50,7 +50,7 @@ export class LoginStore {
   }
 
   /**
-   * Removes any loginStash that may be stored for the given username.
+   * Removes any login stash that may be stored for the given username.
    */
   remove (username) {
     return findUserFile(this.folder, username).then(
@@ -59,18 +59,18 @@ export class LoginStore {
   }
 
   /**
-   * Saves a root loginStash to the folder.
+   * Saves a login stash tree to the folder.
    */
-  save (loginStash) {
-    const loginId = base64.parse(loginStash.loginId)
-    if (loginStash.appId == null) {
+  save (stashTree) {
+    const loginId = base64.parse(stashTree.loginId)
+    if (stashTree.appId == null) {
       throw new Error('Cannot save a login without an appId.')
     }
     if (loginId.length !== 32) {
       throw new Error('Invalid loginId')
     }
     const filename = base58.stringify(loginId) + '.json'
-    return this.folder.file(filename).setText(JSON.stringify(loginStash))
+    return this.folder.file(filename).setText(JSON.stringify(stashTree))
   }
 
   /**
@@ -81,15 +81,15 @@ export class LoginStore {
    * and can make any modifications it likes.
    */
   update (rootLogin, targetLogin, update) {
-    return this.load(rootLogin.username).then(loginStash => {
-      if (loginStash.loginId == null) {
+    return this.load(rootLogin.username).then(stashTree => {
+      if (stashTree.loginId == null) {
         throw new Error(`Could not load stash for "${rootLogin.username}"`)
       }
 
       // Update the stash:
       const target = base64.stringify(targetLogin.loginId)
       const newStash = updateTree(
-        loginStash,
+        stashTree,
         (stash, newChildren) => {
           stash.children = newChildren
           return stash

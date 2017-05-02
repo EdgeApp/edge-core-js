@@ -41,10 +41,10 @@ function fetchLoginKey (io, pin2Key, username, pin) {
 /**
  * Returns a copy of the PIN login key if one exists on the local device.
  */
-export function getPin2Key (loginStash, appId) {
-  const stash = loginStash.pin2Key != null
-    ? loginStash
-    : searchTree(loginStash, stash => stash.appId === appId)
+export function getPin2Key (stashTree, appId) {
+  const stash = stashTree.pin2Key != null
+    ? stashTree
+    : searchTree(stashTree, stash => stash.appId === appId)
   return stash != null && stash.pin2Key != null
     ? { pin2Key: base64.parse(stash.pin2Key), appId: stash.appId }
     : {}
@@ -55,16 +55,16 @@ export function getPin2Key (loginStash, appId) {
  * @return A `Promise` for the new root login.
  */
 export function loginPin2 (io, appId, username, pin) {
-  return io.loginStore.load(username).then(loginStash => {
-    const { pin2Key, appId: appIdFound } = getPin2Key(loginStash, appId)
+  return io.loginStore.load(username).then(stashTree => {
+    const { pin2Key, appId: appIdFound } = getPin2Key(stashTree, appId)
     if (pin2Key == null) {
       throw new Error('No PIN set locally for this account')
     }
     return fetchLoginKey(io, pin2Key, username, pin).then(values => {
       const { loginKey, loginReply } = values
-      loginStash = applyLoginReply(loginStash, loginKey, loginReply)
-      io.loginStore.save(loginStash)
-      return makeLogin(loginStash, loginKey, appIdFound)
+      stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+      io.loginStore.save(stashTree)
+      return makeLogin(stashTree, loginKey, appIdFound)
     })
   })
 }

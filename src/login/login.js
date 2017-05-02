@@ -36,7 +36,7 @@ export function updateTree (node, clone, predicate, update) {
       )
 }
 
-function applyLoginReplyInner (loginStash, loginKey, loginReply) {
+function applyLoginReplyInner (stash, loginKey, loginReply) {
   // Copy common items:
   const out = filterObject(loginReply, [
     'appId',
@@ -53,8 +53,8 @@ function applyLoginReplyInner (loginStash, loginKey, loginReply) {
     'syncKeyBox'
   ])
 
-  out.username = loginStash.username
-  out.userId = loginStash.userId
+  out.username = stash.username
+  out.userId = stash.userId
 
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
@@ -72,7 +72,7 @@ function applyLoginReplyInner (loginStash, loginKey, loginReply) {
   out.keyBoxes = elvis(loginReply.keyBoxes, [])
 
   // Recurse into children:
-  const stashChildren = elvis(loginStash.children, [])
+  const stashChildren = elvis(stash.children, [])
   const replyChildren = elvis(loginReply.children, [])
   if (stashChildren.length > replyChildren.length) {
     throw new Error('The server has lost children!')
@@ -87,12 +87,12 @@ function applyLoginReplyInner (loginStash, loginKey, loginReply) {
 }
 
 /**
- * Updates the given loginStash object with fields from the auth server.
+ * Updates the given login stash object with fields from the auth server.
  * TODO: We don't trust the auth server 100%, so be picky about what we copy.
  */
-export function applyLoginReply (loginStash, loginKey, loginReply) {
+export function applyLoginReply (stashTree, loginKey, loginReply) {
   return updateTree(
-    loginStash,
+    stashTree,
     (stash, newChildren) => {
       stash.children = newChildren
       return stash
@@ -102,53 +102,53 @@ export function applyLoginReply (loginStash, loginKey, loginReply) {
   )
 }
 
-function makeLoginInner (loginStash, loginKey) {
+function makeLoginInner (stash, loginKey) {
   const login = {}
 
-  if (loginStash.username != null) {
-    login.username = loginStash.username
+  if (stash.username != null) {
+    login.username = stash.username
   }
 
   // Identity:
-  if (loginStash.appId == null) {
+  if (stash.appId == null) {
     throw new Error('No appId provided')
   }
-  if (loginStash.loginAuthBox != null) {
-    login.loginAuth = decrypt(loginStash.loginAuthBox, loginKey)
+  if (stash.loginAuthBox != null) {
+    login.loginAuth = decrypt(stash.loginAuthBox, loginKey)
   }
-  if (loginStash.loginId == null) {
+  if (stash.loginId == null) {
     throw new Error('No loginId provided')
   }
-  login.appId = loginStash.appId
-  login.loginId = base64.parse(loginStash.loginId)
+  login.appId = stash.appId
+  login.loginId = base64.parse(stash.loginId)
   login.loginKey = loginKey
 
   // Password:
-  if (loginStash.userId != null) {
-    login.userId = base64.parse(loginStash.userId)
-  } else if (loginStash.passwordAuthBox != null) {
+  if (stash.userId != null) {
+    login.userId = base64.parse(stash.userId)
+  } else if (stash.passwordAuthBox != null) {
     login.userId = login.loginId
   }
-  if (loginStash.passwordAuthBox != null) {
-    login.passwordAuth = decrypt(loginStash.passwordAuthBox, loginKey)
+  if (stash.passwordAuthBox != null) {
+    login.passwordAuth = decrypt(stash.passwordAuthBox, loginKey)
   }
 
   // PIN v2:
-  if (loginStash.pin2Key != null) {
-    login.pin2Key = base64.parse(loginStash.pin2Key)
+  if (stash.pin2Key != null) {
+    login.pin2Key = base64.parse(stash.pin2Key)
   }
 
   // Recovery v2:
-  if (loginStash.recovery2Key != null) {
-    login.recovery2Key = base64.parse(loginStash.recovery2Key)
+  if (stash.recovery2Key != null) {
+    login.recovery2Key = base64.parse(stash.recovery2Key)
   }
 
   const legacyKeys = []
 
   // BitID wallet:
-  if (loginStash.menemonicBox != null && loginStash.rootKeyBox != null) {
-    const mnemonic = utf8.stringify(decrypt(loginStash.menemonicBox, loginKey))
-    const rootKey = decrypt(loginStash.rootKeyBox, loginKey)
+  if (stash.menemonicBox != null && stash.rootKeyBox != null) {
+    const mnemonic = utf8.stringify(decrypt(stash.menemonicBox, loginKey))
+    const rootKey = decrypt(stash.rootKeyBox, loginKey)
     const keysJson = {
       mnemonic,
       rootKey: base64.stringify(rootKey)
@@ -157,8 +157,8 @@ function makeLoginInner (loginStash, loginKey) {
   }
 
   // Account settings:
-  if (loginStash.syncKeyBox != null) {
-    const syncKey = decrypt(loginStash.syncKeyBox, loginKey)
+  if (stash.syncKeyBox != null) {
+    const syncKey = decrypt(stash.syncKeyBox, loginKey)
     const type = makeAccountType(login.appId)
     const keysJson = {
       syncKey: base64.stringify(syncKey),
@@ -168,14 +168,14 @@ function makeLoginInner (loginStash, loginKey) {
   }
 
   // Keys:
-  const keyInfos = elvis(loginStash.keyBoxes, []).map(box =>
+  const keyInfos = elvis(stash.keyBoxes, []).map(box =>
     JSON.parse(utf8.stringify(decrypt(box, loginKey)))
   )
 
   login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos])
 
   // Recurse into children:
-  login.children = elvis(loginStash.children, []).map(child => {
+  login.children = elvis(stash.children, []).map(child => {
     const childKey = decrypt(child.parentBox, loginKey)
     return makeLoginInner(child, childKey)
   })
@@ -189,11 +189,11 @@ function makeLoginInner (loginStash, loginKey) {
 }
 
 /**
- * Converts a loginStash into an in-memory login object.
+ * Converts a login stash into an in-memory login object.
  */
-export function makeLogin (loginStash, loginKey, appId = '') {
+export function makeLogin (stashTree, loginKey, appId = '') {
   return updateTree(
-    loginStash,
+    stashTree,
     (stash, newChildren) => {
       const login = filterObject(stash, ['username', 'appId', 'loginId'])
       login.keyInfos = []

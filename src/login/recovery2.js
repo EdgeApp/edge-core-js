@@ -39,9 +39,9 @@ function fetchLoginKey (io, recovery2Key, username, answers) {
 /**
  * Returns a copy of the recovery key if one exists on the local device.
  */
-export function getRecovery2Key (loginStash) {
-  if (loginStash.recovery2Key != null) {
-    return base64.parse(loginStash.recovery2Key)
+export function getRecovery2Key (stashTree) {
+  if (stashTree.recovery2Key != null) {
+    return base64.parse(stashTree.recovery2Key)
   }
 }
 
@@ -50,12 +50,12 @@ export function getRecovery2Key (loginStash) {
  * @return A `Promise` for the new root login.
  */
 export function loginRecovery2 (io, recovery2Key, username, answers) {
-  return io.loginStore.load(username).then(loginStash => {
+  return io.loginStore.load(username).then(stashTree => {
     return fetchLoginKey(io, recovery2Key, username, answers).then(values => {
       const { loginKey, loginReply } = values
-      loginStash = applyLoginReply(loginStash, loginKey, loginReply)
-      io.loginStore.save(loginStash)
-      return makeLogin(loginStash, loginKey)
+      stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+      io.loginStore.save(stashTree)
+      return makeLogin(stashTree, loginKey)
     })
   })
 }

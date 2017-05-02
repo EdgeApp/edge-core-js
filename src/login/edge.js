@@ -17,12 +17,14 @@ class ABCEdgeLoginRequest {
  */
 function onReply (io, subscription, reply, appId, opts) {
   subscription.unsubscribe()
+  const stashTree = reply.loginStash
+
   if (opts.onProcessLogin != null) {
-    opts.onProcessLogin(reply.loginStash.username)
+    opts.onProcessLogin(stashTree.username)
   }
 
   // Find the appropriate child:
-  const child = searchTree(reply.loginStash, stash => stash.appId === appId)
+  const child = searchTree(stashTree, stash => stash.appId === appId)
   if (child == null) {
     throw new Error(`Cannot find requested appId: "${appId}"`)
   }
@@ -33,10 +35,10 @@ function onReply (io, subscription, reply, appId, opts) {
     io.log.warn('Fixing base58 pin2Key')
     child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
   }
-  io.loginStore.save(reply.loginStash)
+  io.loginStore.save(stashTree)
 
   // This is almost guaranteed to blow up spectacularly:
-  const login = makeLogin(reply.loginStash, base64.parse(reply.loginKey), appId)
+  const login = makeLogin(stashTree, base64.parse(reply.loginKey), appId)
   if (opts.onLogin != null) {
     opts.onLogin(null, login)
   }
