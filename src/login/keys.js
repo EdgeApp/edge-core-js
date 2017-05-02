@@ -13,7 +13,7 @@ export function makeAccountType (appId) {
  */
 export function makeKeyInfo (type, keys, idKey) {
   return {
-    id: base64.stringify(hmacSha256(idKey, utf8.parse(type))),
+    id: base64.stringify(hmacSha256(utf8.parse(type), idKey)),
     type,
     keys
   }
