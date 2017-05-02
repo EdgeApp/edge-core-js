@@ -7,16 +7,23 @@ import { base64, utf8 } from '../util/encoding.js'
 import { elvis, filterObject, objectAssign } from '../util/util.js'
 import { makeAccountType, makeKeyInfo } from './keys.js'
 
+function cloneNode (node, children) {
+  return objectAssign({}, node, { children })
+}
+
 /**
  * Returns the login that satisifies the given predicate,
  * or undefined if nothing matches.
  */
 export function searchTree (node, predicate) {
-  return predicate(node)
-    ? node
-    : elvis(node.children, [])
-        .map(child => searchTree(child, predicate))
-        .find(child => child != null)
+  if (predicate(node)) return node
+
+  if (node.children != null) {
+    for (const child of node.children) {
+      const out = searchTree(child, predicate)
+      if (out != null) return out
+    }
+  }
 }
 
 /**
@@ -25,15 +32,14 @@ export function searchTree (node, predicate) {
  * The `predicate` callback is used to find the target node.
  * The `update` callback is called on the target.
  */
-export function updateTree (node, clone, predicate, update) {
-  return predicate(node)
-    ? update(node)
-    : clone(
-        node,
-        elvis(node.children, []).map(child =>
-          updateTree(child, clone, predicate, update)
-        )
-      )
+export function updateTree (node, predicate, update, clone = cloneNode) {
+  if (predicate(node)) return update(node)
+
+  const children = node.children != null
+    ? node.children.map(child => updateTree(child, predicate, update, clone))
+    : []
+
+  return clone(node, children)
 }
 
 function applyLoginReplyInner (stash, loginKey, loginReply) {
@@ -93,10 +99,6 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
 export function applyLoginReply (stashTree, loginKey, loginReply) {
   return updateTree(
     stashTree,
-    (stash, newChildren) => {
-      stash.children = newChildren
-      return stash
-    },
     stash => stash.appId === loginReply.appId,
     stash => applyLoginReplyInner(stash, loginKey, loginReply)
   )
@@ -194,14 +196,14 @@ function makeLoginTreeInner (stash, loginKey) {
 export function makeLoginTree (stashTree, loginKey, appId = '') {
   return updateTree(
     stashTree,
-    (stash, newChildren) => {
+    stash => stash.appId === appId,
+    stash => makeLoginTreeInner(stash, loginKey),
+    (stash, children) => {
       const login = filterObject(stash, ['username', 'appId', 'loginId'])
       login.keyInfos = []
-      login.children = newChildren
+      login.children = children
       return login
-    },
-    stash => stash.appId === appId,
-    stash => makeLoginTreeInner(stash, loginKey)
+    }
   )
 }
 

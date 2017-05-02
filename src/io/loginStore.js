@@ -90,10 +90,6 @@ export class LoginStore {
       const target = base64.stringify(login.loginId)
       const newStash = updateTree(
         stashTree,
-        (stash, newChildren) => {
-          stash.children = newChildren
-          return stash
-        },
         stash => stash.loginId === target,
         update
       )
