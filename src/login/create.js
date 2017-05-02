@@ -2,9 +2,9 @@ import { encrypt } from '../crypto/crypto.js'
 import { UsernameError } from '../error.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
-import { objectAssign, softCat } from '../util/util.js'
+import { objectAssign } from '../util/util.js'
 import { makeKeysKit } from './keys.js'
-import { makeAuthJson } from './login.js'
+import { dispatchKit } from './login.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 
@@ -31,7 +31,7 @@ export function usernameAvailable (io, username) {
 /**
  * Assembles all the data needed to create a new login.
  */
-export function makeNewKit (io, parentLogin, appId, username, opts) {
+export function makeCreateKit (io, parentLogin, appId, username, opts) {
   // Figure out login identity:
   const loginId = parentLogin != null ? io.random(32) : hashUsername(username)
   const loginKey = io.random(32)
@@ -56,6 +56,7 @@ export function makeNewKit (io, parentLogin, appId, username, opts) {
   return Promise.all([loginId, passwordKit]).then(values => {
     const [loginId, passwordKit] = values
     return {
+      serverPath: '/v2/login/create',
       server: objectAssign(
         {
           appId,
@@ -102,17 +103,16 @@ export function makeNewKit (io, parentLogin, appId, username, opts) {
 export function createLogin (io, username, opts) {
   const fixedName = fixUsername(username)
 
-  return makeNewKit(io, null, '', fixedName, opts).then(kit => {
+  return makeCreateKit(io, null, '', fixedName, opts).then(kit => {
+    kit.login.username = fixedName
+    kit.stash.username = fixedName
+    kit.login.userId = kit.login.loginId
+
     const request = {}
     request.data = kit.server
-    return io.authRequest('POST', '/v2/login/create', request).then(reply => {
-      kit.login.username = fixedName
-      kit.stash.username = fixedName
-      kit.login.userId = kit.login.loginId
-      io.loginStore.save(kit.stash)
-
-      return kit.login
-    })
+    return io
+      .authRequest('POST', kit.serverPath, request)
+      .then(reply => io.loginStore.save(kit.stash).then(() => kit.login))
   })
 }
 
@@ -121,17 +121,7 @@ export function createLogin (io, username, opts) {
  * @param login the parent of the new login.
  */
 export function createChildLogin (io, loginTree, login, appId, opts) {
-  return makeNewKit(io, login, appId, loginTree.username, opts).then(kit => {
-    const request = makeAuthJson(login)
-    request.data = kit.server
-    return io.authRequest('POST', '/v2/login/create', request).then(reply => {
-      login.children.push(kit.login)
-      return io.loginStore
-        .update(loginTree, login, stash => {
-          stash.children = softCat(stash.children, kit.stash)
-          return stash
-        })
-        .then(() => kit.login)
-    })
-  })
+  return makeCreateKit(io, login, appId, loginTree.username, opts).then(kit =>
+    dispatchKit(io, loginTree, login, kit)
+  )
 }

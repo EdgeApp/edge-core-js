@@ -56,7 +56,7 @@ function ensureAccountRepoExists (io, loginTree, login) {
     return attachKeys(io, loginTree, login, [keyInfo], [syncKey])
   }
 
-  return Promise.resolve()
+  return Promise.resolve(loginTree)
 }
 
 export function makeAccount (ctx, loginTree, loginType) {
@@ -64,7 +64,8 @@ export function makeAccount (ctx, loginTree, loginType) {
 
   return ensureAppIdExists(io, loginTree, appId).then(value => {
     const { loginTree, login } = value
-    return ensureAccountRepoExists(io, loginTree, login).then(() => {
+    return ensureAccountRepoExists(io, loginTree, login).then(loginTree => {
+      const login = searchTree(loginTree, login => login.appId === appId)
       const account = new Account(ctx, loginTree, login)
       account[loginType] = true
       return account.sync().then(dirty => account)

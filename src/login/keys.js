@@ -1,7 +1,6 @@
 import { encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { base16, base64, utf8 } from '../util/encoding.js'
-import { softCat } from '../util/util.js'
-import { makeAuthJson, mergeKeyInfos } from './login.js'
+import { dispatchKit } from './login.js'
 
 export function makeAccountType (appId) {
   return appId === ''
@@ -30,6 +29,7 @@ export function makeKeysKit (io, login, keyInfos, newSyncKeys = []) {
   )
 
   return {
+    serverPath: '/v2/login/keys',
     server: {
       keyBoxes,
       newSyncKeys: newSyncKeys.map(syncKey => base16.stringify(syncKey))
@@ -44,15 +44,10 @@ export function makeKeysKit (io, login, keyInfos, newSyncKeys = []) {
  * optionally creating any repos needed.
  */
 export function attachKeys (io, loginTree, login, keyInfos, syncKeys = []) {
-  const kit = makeKeysKit(io, login, keyInfos, syncKeys)
-
-  const request = makeAuthJson(login)
-  request.data = kit.server
-  return io.authRequest('POST', '/v2/login/keys', request).then(reply => {
-    login.keyInfos = mergeKeyInfos([...login.keyInfos, ...kit.login.keyInfos])
-    return io.loginStore.update(loginTree, login, stash => {
-      stash.keyBoxes = softCat(stash.keyBoxes, kit.stash.keyBoxes)
-      return stash
-    })
-  })
+  return dispatchKit(
+    io,
+    loginTree,
+    login,
+    makeKeysKit(io, login, keyInfos, syncKeys)
+  )
 }

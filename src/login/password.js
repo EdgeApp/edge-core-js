@@ -3,10 +3,9 @@ import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { rejectify } from '../util/decorators.js'
 import { base64 } from '../util/encoding.js'
-import { objectAssign } from '../util/util.js'
 import {
   applyLoginReply,
-  makeAuthJson,
+  dispatchKit,
   makeLoginTree,
   syncLogin
 } from './login.js'
@@ -129,6 +128,7 @@ export function makePasswordKit (io, login, username, password) {
       { passwordAuth, passwordAuthBox }
     ] = values
     return {
+      serverPath: '/v2/login/password',
       server: {
         passwordAuth: base64.stringify(passwordAuth),
         passwordAuthSnrp, // TODO: Use this on the other side
@@ -152,14 +152,7 @@ export function makePasswordKit (io, login, username, password) {
  * Sets up a password for the login.
  */
 export function setupPassword (io, loginTree, login, password) {
-  return makePasswordKit(io, login, loginTree.username, password).then(kit => {
-    const request = makeAuthJson(login)
-    request.data = kit.server
-    return io.authRequest('POST', '/v2/login/password', request).then(reply => {
-      login.passwordAuth = kit.login.passwordAuth
-      return io.loginStore
-        .update(loginTree, login, stash => objectAssign(stash, kit.stash))
-        .then(() => login)
-    })
-  })
+  return makePasswordKit(io, login, loginTree.username, password).then(kit =>
+    dispatchKit(io, loginTree, login, kit)
+  )
 }
