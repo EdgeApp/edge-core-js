@@ -1,5 +1,6 @@
 import { createChildLogin } from '../login/create.js'
-import { attachKeys, makeKeyInfo, searchTree } from '../login/login.js'
+import { attachKeys, makeAccountType, makeKeyInfo } from '../login/keys.js'
+import { searchTree } from '../login/login.js'
 import { checkPassword, setupPassword } from '../login/password.js'
 import { setupPin2 } from '../login/pin2.js'
 import { setupRecovery2 } from '../login/recovery2.js'
@@ -10,12 +11,6 @@ import { Wallet } from './wallet.js'
 
 function findAccount (login, type) {
   return login.keyInfos.find(info => info.type === type)
-}
-
-export function makeAccountType (appId) {
-  return appId === ''
-    ? 'account-repo:co.airbitz.wallet'
-    : `account-repo:${appId}`
 }
 
 function ensureAppIdExists (io, loginTree, appId) {

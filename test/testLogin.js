@@ -1,6 +1,6 @@
 /* global describe, it */
 import { makeContext, makeFakeIos } from '../src'
-import { attachKeys, makeKeyInfo } from '../src/login/login.js'
+import { attachKeys, makeKeyInfo } from '../src/login/keys.js'
 import { base58, base64 } from '../src/util/encoding.js'
 import { objectAssign } from '../src/util/util.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
