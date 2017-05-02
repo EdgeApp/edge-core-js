@@ -3,10 +3,9 @@ import { attachKeys, makeKeyInfo, searchTree } from '../login/login.js'
 import { checkPassword, setupPassword } from '../login/password.js'
 import { setupPin2 } from '../login/pin2.js'
 import { setupRecovery2 } from '../login/recovery2.js'
-import { Repo } from '../repo'
+import { makeRepoFolder, syncRepo } from '../repo'
 import { asyncApi, syncApi } from '../util/decorators.js'
 import { base58, base64 } from '../util/encoding.js'
-import { WalletList } from '../util/walletList.js'
 import { Wallet } from './wallet.js'
 
 function findAccount (login, type) {
@@ -90,15 +89,6 @@ export function Account (ctx, rootLogin, login) {
   this.rootLogin = rootLogin
   this.login = login
 
-  // Repo:
-  this.type = makeAccountType(ctx.appId)
-  const keyInfo = findAccount(this.login, this.type)
-  if (keyInfo == null) {
-    throw new Error(`Cannot find a "${this.type}" repo`)
-  }
-  this.keys = keyInfo.keys
-  this.repoInfo = this.keys // Deprecated name
-
   // Flags:
   this.loggedIn = true
   this.edgeLogin = this.rootLogin.loginKey == null
@@ -107,12 +97,13 @@ export function Account (ctx, rootLogin, login) {
   this.newAccount = false
   this.recoveryLogin = false
 
-  this.repo = new Repo(
-    this.io,
-    base64.parse(this.keys.dataKey),
-    base64.parse(this.keys.syncKey)
-  )
-  this.walletList = new WalletList(this.repo)
+  // Repo:
+  this.type = makeAccountType(ctx.appId)
+  const keyInfo = findAccount(this.login, this.type)
+  if (keyInfo == null) {
+    throw new Error(`Cannot find a "${this.type}" repo`)
+  }
+  this.repo = makeRepoFolder(this.io, keyInfo)
 }
 
 Account.prototype.logout = syncApi(function () {
@@ -160,12 +151,11 @@ Account.prototype.isLoggedIn = syncApi(function () {
 })
 
 Account.prototype.sync = asyncApi(function () {
-  return this.repo.sync().then(changed => {
-    if (changed) {
-      this.walletList.load()
-    }
-    return changed
-  })
+  const keyInfo = findAccount(this.login, this.type)
+  if (keyInfo != null) {
+    syncRepo(this.io, keyInfo)
+  }
+  return Promise.resolve()
 })
 
 Account.prototype.listWalletIds = syncApi(function () {

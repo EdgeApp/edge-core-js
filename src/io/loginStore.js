@@ -1,34 +1,51 @@
 import { scrypt, userIdSnrp } from '../crypto/scrypt.js'
 import { updateTree } from '../login/login.js'
 import { base58, base64 } from '../util/encoding.js'
+import { mapFiles } from 'disklet'
+
+function getJsonFiles (folder) {
+  return mapFiles(folder, file =>
+    file
+      .getText()
+      .then(text => ({ file, json: JSON.parse(text) }))
+      .catch(e => void 0)
+  ).then(files => files.filter(file => file != null))
+}
+
+function findUserFile (folder, username) {
+  const fixedName = fixUsername(username)
+  return getJsonFiles(folder).then(files =>
+    files.find(file => file.json.username === fixedName)
+  )
+}
 
 /**
  * Handles login data storage.
- * TODO: Make all methods async!
  */
 export class LoginStore {
   constructor (io) {
-    this.storage = io.folder.getFolder('logins')
+    this.folder = io.folder.folder('logins')
   }
 
   /**
    * Lists the usernames that have data in the store.
    */
   listUsernames () {
-    return this.storage.listFiles().map(filename => {
-      return this.storage.getFileJson(filename).username
-    })
+    return getJsonFiles(this.folder).then(files =>
+      files.map(file => file.json.username)
+    )
   }
 
   /**
    * Finds the loginStash for the given username.
+   * Returns a default object if
    */
   load (username) {
-    const filename = this._findFilename(username)
-    return Promise.resolve(
-      filename != null
-        ? this.storage.getFileJson(filename)
-        : { username: fixUsername(username), appId: '' }
+    return findUserFile(this.folder, username).then(
+      file =>
+        (file != null
+          ? file.json
+          : { username: fixUsername(username), appId: '' })
     )
   }
 
@@ -36,15 +53,13 @@ export class LoginStore {
    * Removes any loginStash that may be stored for the given username.
    */
   remove (username) {
-    const filename = this._findFilename(username)
-    if (filename != null) {
-      this.storage.removeFile(filename)
-    }
-    return Promise.resolve()
+    return findUserFile(this.folder, username).then(
+      file => (file != null ? file.file.delete() : void 0)
+    )
   }
 
   /**
-   * Saves a loginStash.
+   * Saves a root loginStash to the folder.
    */
   save (loginStash) {
     const loginId = base64.parse(loginStash.loginId)
@@ -55,13 +70,13 @@ export class LoginStore {
       throw new Error('Invalid loginId')
     }
     const filename = base58.stringify(loginId) + '.json'
-    this.storage.setFileJson(filename, loginStash)
+    return this.folder.file(filename).setText(JSON.stringify(loginStash))
   }
 
   /**
    * Updates the selected login stash.
-   * The `username` gives the root of the search,
-   * and the `targetLoginId` gives the node to update.
+   * The `rootLogin` gives the root of the search,
+   * and the `targetLogin` gives the node to update.
    * The `update` callback is called on the selected node,
    * and can make any modifications it likes.
    */
@@ -85,14 +100,6 @@ export class LoginStore {
 
       // Save:
       return this.save(newStash)
-    })
-  }
-
-  _findFilename (username) {
-    const fixedName = fixUsername(username)
-    return this.storage.listFiles().find(filename => {
-      const loginStash = this.storage.getFileJson(filename)
-      return loginStash && loginStash.username === fixedName
     })
   }
 }

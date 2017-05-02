@@ -1,214 +1,121 @@
-import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
-import { base16, base58, utf8 } from '../util/encoding.js'
+import { hmacSha256, sha256 } from '../crypto/crypto.js'
+import { base16, base58, base64 } from '../util/encoding.js'
+import { locateFile, mapAllFiles, makeUnionFolder } from 'disklet'
+import { RepoFolder } from './repoFolder.js'
 import { syncRequest } from './servers.js'
-
-/**
- * Navigates down to the sub-folder indicated by the path.
- * Returns the folder object and the filename in an object.
- */
-function navigate (folder, path) {
-  const parts = path.split('/')
-  const filename = parts.pop()
-  return {
-    filename,
-    folder: parts.reduce((folder, name) => folder.getFolder(name), folder)
-  }
-}
-
-/**
- * Builds an object containing the folder's complete contents.
- */
-function bundleChanges (folder, changes = {}, prefix = '') {
-  folder.listFiles().forEach(name => {
-    changes[prefix + name] = folder.getFileJson(name)
-  })
-  folder.listFolders().forEach(name => {
-    bundleChanges(folder.getFolder(name), changes, name + '/')
-  })
-  return changes
-}
-
-/**
- * This will merge a changeset into the local storage.
- * This function ignores folder-level deletes and overwrites,
- * but those can't happen under the current rules anyhow.
- */
-export function mergeChanges (store, changes) {
-  Object.keys(changes).forEach(path => {
-    const { filename, folder } = navigate(store, path)
-    if (changes[path] == null) {
-      folder.removeFile(filename)
-    } else {
-      folder.setFileJson(filename, changes[path])
-    }
-  })
-}
-
-/**
- * Creates an ID string from a repo's dataKey.
- */
-export function repoId (dataKey) {
-  return base58.stringify(hmacSha256(dataKey, dataKey))
-}
-
-/**
- * Creates a data storage and syncing object.
- * The data inside the repo is encrypted with `dataKey`.
- */
-export function Repo (io, dataKey, syncKey) {
-  this.io = io
-  this.dataKey = dataKey
-  this.syncKey = syncKey
-
-  this.store = io.folder.getFolder('repos').getFolder(repoId(dataKey))
-  this.changeStore = this.store.getFolder('changes')
-  this.dataStore = this.store.getFolder('data')
-}
 
 /**
  * Creates a secure file name by hashing
  * the provided binary data with the repo's dataKey.
  */
-Repo.prototype.secureFilename = function (data) {
-  return base58.stringify(hmacSha256(data, this.dataKey)) + '.json'
+export function secureFilename (dataKey, data) {
+  return base58.stringify(hmacSha256(data, dataKey)) + '.json'
 }
 
 /**
- * Decrypts and returns the file at the given path.
- * The return value will either be a byte buffer or null.
+ * Sets up the back-end folders needed to emulate Git on disk.
+ * You probably don't want this.
  */
-Repo.prototype.getData = function (path) {
-  const { filename, folder } = navigate(this.changeStore, path)
-  let box = folder.getFileJson(filename)
-  if (box == null) {
-    const { filename, folder } = navigate(this.dataStore, path)
-    box = folder.getFileJson(filename)
+export function makeRepoFolders (io, keyInfo) {
+  const syncKey = base64.parse(keyInfo.keys.syncKey)
+  const base = io.folder
+    .folder('repos')
+    .folder(base58.stringify(sha256(sha256(syncKey))))
+
+  return {
+    base,
+    changes: base.folder('changes'),
+    data: base.folder('data')
   }
-  return box ? decrypt(box, this.dataKey) : null
 }
 
 /**
- * Decrypts and returns the file at the given path,
- * treating the contents as text.
+ * Creates a folder instance that writes to the synced data area on disk.
  */
-Repo.prototype.getText = function (path) {
-  let data = this.getData(path)
-  if (data == null) {
-    return null
-  }
-  // Due to a legacy bug, some Airbitz data contains trailing nulls:
-  if (data.length && data[data.length - 1] === 0) {
-    data = data.slice(0, data.length - 1)
-  }
-  return utf8.stringify(data)
+export function makeRepoFolder (io, keyInfo) {
+  const dataKey = base64.parse(keyInfo.keys.dataKey)
+
+  const folders = makeRepoFolders(io, keyInfo)
+  const union = makeUnionFolder(folders.changes, folders.data)
+  return new RepoFolder(io, dataKey, union)
 }
 
 /**
- * Decrypts and returns the file at the given path,
- * treating the contents as JSON.
+ * This will save a changeset into the local storage.
+ * This function ignores folder-level deletes and overwrites,
+ * but those can't happen under the current rules anyhow.
  */
-Repo.prototype.getJson = function (path) {
-  const text = this.getText(path)
-  return text == null ? null : JSON.parse(text)
-}
+export function saveChanges (folder, changes) {
+  return Promise.all(
+    Object.keys(changes).map(path => {
+      const json = changes[path]
+      const file = locateFile(folder, path)
 
-/**
- * Lists the files (not folders) contained in the given path.
- */
-Repo.prototype.keys = function (path) {
-  path = path + '/'
-  const changeFiles = navigate(this.changeStore, path).folder.listFiles()
-  const dataFiles = navigate(this.dataStore, path).folder.listFiles()
-  const files = [...changeFiles, ...dataFiles]
-
-  // Remove duplicates:
-  return files.sort().filter(function (item, i, array) {
-    return !i || item !== array[i - 1]
-  })
-}
-
-/**
- * Deletes a particular file path.
- */
-Repo.prototype.removeItem = function (path) {
-  const { filename, folder } = navigate(this.changeStore, path)
-  folder.setFileJson(filename, null)
-}
-
-/**
- * Encrypts a value and saves it at the provided file path.
- * The value must be either a byte buffer or null.
- */
-Repo.prototype.setData = function (path, value) {
-  const { filename, folder } = navigate(this.changeStore, path)
-  folder.setFileJson(filename, encrypt(this.io, value, this.dataKey))
-}
-
-/**
- * Encrypts a text string and saves it as the provided file path.
- */
-Repo.prototype.setText = function (path, value) {
-  return this.setData(path, utf8.parse(value))
-}
-
-/**
- * Encrypts a JSON object and saves it as the provided file path.
- */
-Repo.prototype.setJson = function (path, value) {
-  return this.setText(path, JSON.stringify(value))
+      return json != null ? file.setText(JSON.stringify(json)) : file.delete()
+    })
+  )
 }
 
 /**
  * Synchronizes the local store with the remote server.
  */
-Repo.prototype.sync = function () {
-  const self = this
+export function syncRepo (io, keyInfo) {
+  const syncKey = base64.parse(keyInfo.keys.syncKey)
+  const folders = makeRepoFolders(io, keyInfo)
 
-  // If we have local changes, we need to bundle those:
-  const request = {}
-  const changes = bundleChanges(this.changeStore)
-  const changeKeys = Object.keys(changes)
-  if (changeKeys.length > 0) {
-    request.changes = changes
-  }
+  return Promise.all([
+    mapAllFiles(folders.changes, (file, name) =>
+      file.getText().then(text => ({ file, name, json: JSON.parse(text) }))
+    ),
+    folders.base
+      .file('status.json')
+      .getText()
+      .then(text => JSON.parse(text).lastHash)
+      .catch(e => null)
+  ]).then(values => {
+    const [ourChanges, lastHash] = values
 
-  // Calculate the URI:
-  let uri = '/api/v2/store/' + base16.stringify(this.syncKey)
-  const lastHash = this.store.getFileText('lastHash')
-  if (lastHash != null) {
-    uri = uri + '/' + lastHash
-  }
+    // If we have local changes, we need to bundle those:
+    const request = {}
+    if (ourChanges.length > 0) {
+      request.changes = {}
+      ourChanges.forEach(change => {
+        request.changes[change.name] = change.json
+      })
+    }
+    const method = request.changes ? 'POST' : 'GET'
 
-  // Make the request:
-  return syncRequest(
-    this.io,
-    request.changes ? 'POST' : 'GET',
-    uri,
-    request
-  ).then(reply => {
-    let changed = false
+    // Calculate the URI:
+    let path = '/api/v2/store/' + base16.stringify(syncKey)
+    if (lastHash != null) {
+      path += '/' + lastHash
+    }
 
-    // Delete any changed keys (since the upload is done):
-    changeKeys.forEach(path => {
-      const { filename, folder } = navigate(this.changeStore, path)
-      folder.removeFile(filename)
+    // Make the request:
+    return syncRequest(io, method, path, request).then(reply => {
+      const { changes, hash } = reply
+      const changed = changes != null && Object.keys(changes).length
+
+      // Save the incoming changes into our `data` folder:
+      const promise = changes != null
+        ? saveChanges(folders.data, changes)
+        : Promise.resolve()
+
+      return promise
+        .then(
+          // Delete any changed keys (since the upload is done):
+          () => Promise.all(ourChanges.map(change => change.file.delete()))
+        )
+        .then(() => {
+          // Save the current hash:
+          if (hash != null) {
+            folders.base
+              .file('status.json')
+              .setText(JSON.stringify({ lastHash: hash }))
+              .then(() => changed)
+          }
+          return changed
+        })
     })
-
-    // Process the change list:
-    const changes = reply['changes']
-    if (changes != null) {
-      if (Object.keys(changes).length > 0) {
-        changed = true
-      }
-      mergeChanges(self.dataStore, changes)
-    }
-
-    // Save the current hash:
-    const hash = reply['hash']
-    if (hash != null) {
-      self.store.setFileText('lastHash', hash)
-    }
-
-    return changed
   })
 }
