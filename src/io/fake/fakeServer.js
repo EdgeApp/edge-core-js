@@ -1,4 +1,4 @@
-import { elvis, filterObject } from '../../util/util.js'
+import { filterObject, softCat } from '../../util/util.js'
 
 const routes = []
 
@@ -347,7 +347,7 @@ addRoute('POST', '/api/v2/login/keys', authHandler, function (req) {
     })
   }
 
-  req.login.keyBoxes = [...elvis(req.login.keyBoxes, []), ...data.keyBoxes]
+  req.login.keyBoxes = softCat(req.login.keyBoxes, data.keyBoxes)
 
   return makeResponse()
 })

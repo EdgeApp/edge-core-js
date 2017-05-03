@@ -2,7 +2,7 @@ import { encrypt } from '../crypto/crypto.js'
 import { UsernameError } from '../error.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
-import { elvis, objectAssign } from '../util/util.js'
+import { objectAssign, softCat } from '../util/util.js'
 import { makeKeysKit } from './keys.js'
 import { makeAuthJson } from './login.js'
 import { makePasswordKit } from './password.js'
@@ -128,7 +128,7 @@ export function createChildLogin (io, loginTree, login, appId, opts) {
       login.children.push(kit.login)
       return io.loginStore
         .update(loginTree, login, stash => {
-          stash.children = [...elvis(stash.children, []), kit.stash]
+          stash.children = softCat(stash.children, kit.stash)
           return stash
         })
         .then(() => kit.login)

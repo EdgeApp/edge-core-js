@@ -1,6 +1,6 @@
 import { encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { base16, base64, utf8 } from '../util/encoding.js'
-import { elvis } from '../util/util.js'
+import { softCat } from '../util/util.js'
 import { makeAuthJson, mergeKeyInfos } from './login.js'
 
 export function makeAccountType (appId) {
@@ -51,7 +51,7 @@ export function attachKeys (io, loginTree, login, keyInfos, syncKeys = []) {
   return io.authRequest('POST', '/v2/login/keys', request).then(reply => {
     login.keyInfos = mergeKeyInfos([...login.keyInfos, ...kit.login.keyInfos])
     return io.loginStore.update(loginTree, login, stash => {
-      stash.keyBoxes = [...elvis(stash.keyBoxes, []), ...kit.stash.keyBoxes]
+      stash.keyBoxes = softCat(stash.keyBoxes, kit.stash.keyBoxes)
       return stash
     })
   })

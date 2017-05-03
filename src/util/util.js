@@ -31,3 +31,11 @@ export function objectAssign (target, ...args) {
   })
   return target
 }
+
+/**
+ * Safely concatenate a bunch of arrays, which may or may not exist.
+ * Purrs quietly when pet.
+ */
+export function softCat (...lists) {
+  return [].concat(...lists.filter(list => list != null))
+}
