@@ -4,7 +4,12 @@ import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { rejectify } from '../util/decorators.js'
 import { base64 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
-import { applyLoginReply, makeAuthJson, makeLoginTree } from './login.js'
+import {
+  applyLoginReply,
+  makeAuthJson,
+  makeLoginTree,
+  syncLogin
+} from './login.js'
 
 function makeHashInput (username, password) {
   return fixUsername(username) + password
@@ -65,13 +70,7 @@ export function loginPassword (io, username, password) {
         const loginTree = makeLoginTree(stashTree, loginKey)
 
         // Since we logged in offline, update the stash in the background:
-        io
-          .authRequest('POST', '/v2/login', makeAuthJson(loginTree))
-          .then(loginReply => {
-            stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-            return io.loginStore.save(stashTree)
-          })
-          .catch(e => io.log.warn(e))
+        syncLogin(io, loginTree, loginTree).catch(e => io.log.warn(e))
 
         return loginTree
       })

@@ -208,6 +208,21 @@ export function makeLoginTree (stashTree, loginKey, appId = '') {
 }
 
 /**
+ * Refreshes a login with data from the server.
+ */
+export function syncLogin (io, loginTree, login) {
+  return io.loginStore.load(loginTree.username).then(stashTree => {
+    const request = makeAuthJson(login)
+    return io.authRequest('POST', '/v2/login', request).then(reply => {
+      const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
+      const newLoginTree = makeLoginTree(stashTree, login.loginKey, login.appId)
+
+      return io.loginStore.save(newStashTree).then(() => newLoginTree)
+    })
+  })
+}
+
+/**
  * Sets up a login v2 server authorization JSON.
  */
 export function makeAuthJson (login) {
