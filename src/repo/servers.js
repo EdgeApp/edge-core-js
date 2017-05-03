@@ -36,5 +36,11 @@ function syncRequestInner (io, method, path, body, serverIndex) {
     ),
     10000,
     new NetworkError('Could not reach the sync server: timeout')
-  )
+  ).catch(e => {
+    if (serverIndex + 1 < syncServers.length) {
+      return syncRequestInner(io, method, path, body, serverIndex + 1)
+    } else {
+      throw e
+    }
+  })
 }
