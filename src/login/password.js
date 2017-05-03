@@ -103,6 +103,25 @@ export function checkPassword (io, login, password) {
 }
 
 /**
+ * Verifies that a password meets our suggested rules.
+ */
+export function checkPasswordRules (password) {
+  const tooShort = password.length < 10
+  const noNumber = !/[0-9]/.test(password)
+  const noLowerCase = !/[a-z]/.test(password)
+  const noUpperCase = !/[A-Z]/.test(password)
+
+  return {
+    tooShort,
+    noNumber,
+    noLowerCase,
+    noUpperCase,
+    passed: password.length >= 16 ||
+      !(tooShort || noNumber || noUpperCase || noLowerCase)
+  }
+}
+
+/**
  * Creates the data needed to attach a password to a login.
  */
 export function makePasswordKit (io, login, username, password) {

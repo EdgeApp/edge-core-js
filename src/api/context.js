@@ -3,9 +3,8 @@ import { IoContext } from '../io/io.js'
 import { fixUsername } from '../io/loginStore.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
-import { loginPassword } from '../login/password.js'
+import { checkPasswordRules, loginPassword } from '../login/password.js'
 import { loginPin2, getPin2Key } from '../login/pin2.js'
-import { makeAccount } from './account.js'
 import {
   getQuestions2,
   getRecovery2Key,
@@ -14,6 +13,7 @@ import {
 } from '../login/recovery2.js'
 import { asyncApi, syncApi } from '../util/decorators.js'
 import { base58 } from '../util/encoding.js'
+import { makeAccount } from './account.js'
 
 /**
  * @param opts An object containing optional arguments.
@@ -112,19 +112,7 @@ Context.prototype.fetchRecovery2Questions = asyncApi(function (
 })
 
 Context.prototype.checkPasswordRules = syncApi(function (password) {
-  const tooShort = password.length < 10
-  const noNumber = password.match(/\d/) == null
-  const noUpperCase = password.match(/[A-Z]/) == null
-  const noLowerCase = password.match(/[a-z]/) == null
-  const extraLong = password.length >= 16
-
-  return {
-    tooShort,
-    noNumber,
-    noUpperCase,
-    noLowerCase,
-    passed: extraLong || !(tooShort || noNumber || noUpperCase || noLowerCase)
-  }
+  return checkPasswordRules(password)
 })
 
 Context.prototype.requestEdgeLogin = asyncApi(function (opts) {
