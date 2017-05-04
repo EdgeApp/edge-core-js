@@ -1,7 +1,7 @@
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { fixUsername } from '../io/loginStore.js'
 import { base64, utf8 } from '../util/encoding.js'
-import { applyLoginReply, dispatchKit, makeLoginTree } from './login.js'
+import { applyLoginReply, makeLoginTree } from './login.js'
 
 function recovery2Id (recovery2Key, username) {
   return hmacSha256(fixUsername(username), recovery2Key)
@@ -119,18 +119,6 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
       recovery2Key
     }
   }
-}
-
-/**
- * Sets up recovery questions for the login.
- */
-export function setupRecovery2 (io, loginTree, login, questions, answers) {
-  return dispatchKit(
-    io,
-    loginTree,
-    login,
-    makeRecovery2Kit(io, login, loginTree.username, questions, answers)
-  )
 }
 
 export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (

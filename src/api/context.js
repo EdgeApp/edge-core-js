@@ -43,14 +43,14 @@ Context.prototype = wrapPrototype('Context', {
   },
 
   createAccount (username, password, pin) {
-    return createLogin(this.io, username, { password, pin }).then(login => {
-      return makeAccount(this, login, 'newAccount')
+    return createLogin(this.io, username, { password, pin }).then(loginTree => {
+      return makeAccount(this, loginTree, 'newAccount')
     })
   },
 
   loginWithPassword (username, password) {
-    return loginPassword(this.io, username, password).then(login => {
-      return makeAccount(this, login, 'passwordLogin')
+    return loginPassword(this.io, username, password).then(loginTree => {
+      return makeAccount(this, loginTree, 'passwordLogin')
     })
   },
 
@@ -70,8 +70,8 @@ Context.prototype = wrapPrototype('Context', {
   },
 
   loginWithPIN (username, pin) {
-    return loginPin2(this.io, this.appId, username, pin).then(login => {
-      return makeAccount(this, login, 'pinLogin')
+    return loginPin2(this.io, this.appId, username, pin).then(loginTree => {
+      return makeAccount(this, loginTree, 'pinLogin')
     })
   },
 
@@ -92,8 +92,8 @@ Context.prototype = wrapPrototype('Context', {
       recovery2Key,
       username,
       answers
-    ).then(login => {
-      return makeAccount(this, login, 'recoveryLogin')
+    ).then(loginTree => {
+      return makeAccount(this, loginTree, 'recoveryLogin')
     })
   },
 
@@ -108,9 +108,9 @@ Context.prototype = wrapPrototype('Context', {
 
   requestEdgeLogin (opts) {
     const onLogin = opts.onLogin
-    opts.onLogin = (err, login) => {
+    opts.onLogin = (err, loginTree) => {
       if (err) return onLogin(err)
-      makeAccount(this, login, 'edgeLogin').then(
+      makeAccount(this, loginTree).then(
         account => onLogin(null, account),
         err => onLogin(err)
       )

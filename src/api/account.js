@@ -1,9 +1,6 @@
-import { createChildLogin } from '../login/create.js'
 import { makeAccountType, makeRepoKit } from '../login/keys.js'
-import { dispatchKit, searchTree } from '../login/login.js'
-import { checkPassword, setupPassword } from '../login/password.js'
-import { setupPin2 } from '../login/pin2.js'
-import { setupRecovery2 } from '../login/recovery2.js'
+import { checkPassword } from '../login/password.js'
+import { LoginState } from '../login/state.js'
 import { makeRepoFolder, syncRepo } from '../repo'
 import { base58 } from '../util/encoding.js'
 import { Wallet } from './wallet.js'
@@ -13,67 +10,31 @@ function findAccount (login, type) {
   return login.keyInfos.find(info => info.type === type)
 }
 
-function ensureAppIdExists (io, loginTree, appId) {
-  const login = searchTree(loginTree, login => login.appId === appId)
-  if (!login) {
-    const accountType = makeAccountType(appId)
-    const keysKit = makeRepoKit(io, login, accountType)
-
-    const opts = { pin: loginTree.pin, keysKit }
-    return createChildLogin(
-      io,
-      loginTree,
-      loginTree,
-      appId,
-      opts
-    ).then(loginTree => {
-      return { loginTree, login }
-    })
-  }
-
-  return Promise.resolve({ loginTree, login })
-}
-
-function ensureAccountRepoExists (io, loginTree, login) {
-  const accountType = makeAccountType(login.appId)
-  if (findAccount(login, accountType) == null) {
-    const kit = makeRepoKit(io, login, accountType)
-
-    return dispatchKit(io, loginTree, login, kit)
-  }
-
-  return Promise.resolve(loginTree)
-}
-
-export function makeAccount (ctx, loginTree, loginType) {
+export function makeAccount (ctx, loginTree, loginType = 'loggedIn') {
   const { io, appId } = ctx
 
-  return ensureAppIdExists(io, loginTree, appId).then(value => {
-    const { loginTree, login } = value
-    return ensureAccountRepoExists(io, loginTree, login).then(loginTree => {
-      const login = searchTree(loginTree, login => login.appId === appId)
-      const account = new Account(ctx, loginTree, login)
+  const state = new LoginState(io, loginTree)
+  return state
+    .ensureLogin(appId)
+    .then(() => state.ensureAccountRepo(state.findLogin(appId)))
+    .then(() => {
+      const account = new Account(ctx, state)
       account[loginType] = true
       return account.sync().then(dirty => account)
     })
-  })
 }
 
 /**
  * This is a thin shim object,
  * which wraps the core implementation in a more OOP-style API.
  */
-export function Account (ctx, loginTree, login) {
+export function Account (ctx, loginState) {
   this.io = ctx.io
-
-  // Login:
-  this.username = loginTree.username
-  this.loginTree = loginTree
-  this.login = login
+  this.appId = ctx.appId
+  this._state = loginState
 
   // Flags:
   this.loggedIn = true
-  this.edgeLogin = this.loginTree.loginKey == null
   this.pinLogin = false
   this.passwordLogin = false
   this.newAccount = false
@@ -95,34 +56,37 @@ Account.prototype = wrapPrototype('Account', {
     this.loggedIn = false
   },
 
+  get edgeLogin () {
+    return this.loginTree.loginKey == null
+  },
+  get login () {
+    return this._state.findLogin(this.appId)
+  },
+  get loginTree () {
+    return this._state.loginTree
+  },
+  get username () {
+    return this.loginTree.username
+  },
+
   passwordOk (password) {
     return checkPassword(this.io, this.loginTree, password)
   },
 
   passwordSetup (password) {
-    if (this.loginTree.loginKey == null) {
-      return Promise.reject(new Error('Edge logged-in account'))
-    }
-    return setupPassword(this.io, this.loginTree, this.loginTree, password)
+    return this._state.changePassword(password)
   },
 
   pinSetup (pin) {
-    return setupPin2(this.io, this.loginTree, this.login, pin).then(login =>
-      base58.stringify(login.pin2Key)
-    )
+    return this._state
+      .changePin(pin, this.login)
+      .then(() => base58.stringify(this.loginTree.pin2Key))
   },
 
   recovery2Set (questions, answers) {
-    if (this.loginTree.loginKey == null) {
-      return Promise.reject(new Error('Edge logged-in account'))
-    }
-    return setupRecovery2(
-      this.io,
-      this.loginTree,
-      this.loginTree,
-      questions,
-      answers
-    ).then(login => base58.stringify(login.recovery2Key))
+    return this._state
+      .changeRecovery(questions, answers)
+      .then(() => base58.stringify(this.loginTree.recovery2Key))
   },
 
   '@isLoggedIn': { sync: true },
@@ -168,20 +132,9 @@ Account.prototype = wrapPrototype('Account', {
    */
   createWallet (type, keys) {
     const kit = makeRepoKit(this.io, this.login, type, keys)
-
-    return dispatchKit(
-      this.io,
-      this.loginTree,
-      this.login,
-      kit
-    ).then(loginTree => {
-      this.loginTree = loginTree
-      this.login = searchTree(
-        loginTree,
-        login => login.appId === this.login.appId
-      )
-      return kit.login.keyInfos[0].id
-    })
+    return this._state
+      .dispatchKit(this.login, kit)
+      .then(() => kit.login.keyInfos[0].id)
   }
 })
 

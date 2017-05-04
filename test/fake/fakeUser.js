@@ -4,6 +4,7 @@
  */
 import { Account } from '../../src/api/account.js'
 import { applyLoginReply, makeLoginTree } from '../../src/login/login.js'
+import { LoginState } from '../../src/login/state.js'
 import { makeRepoFolders, saveChanges } from '../../src/repo'
 import { base16, base64 } from '../../src/util/encoding.js'
 import { elvis, filterObject } from '../../src/util/util.js'
@@ -263,6 +264,7 @@ export function makeFakeAccount (context, user) {
   })
 
   // Return the account object:
-  const login = makeLoginTree(loginStash, user.loginKey)
-  return new Account(context, login, login)
+  const loginTree = makeLoginTree(loginStash, user.loginKey)
+  const state = new LoginState(context.io, loginTree)
+  return new Account(context, state)
 }

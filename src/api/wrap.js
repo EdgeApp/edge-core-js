@@ -55,10 +55,10 @@ export function wrapPrototype (className, template) {
       d.value = wrapApi(d.value, `${className}.${key}`, opts)
     }
     if (d.get != null) {
-      d.get = wrapApi(d.get, `get ${className}.${key}`, opts)
+      d.get = syncApi(d.get, `get ${className}.${key}`)
     }
     if (d.set != null) {
-      d.set = wrapApi(d.set, `set ${className}.${key}`, opts)
+      d.set = syncApi(d.set, `set ${className}.${key}`)
     }
 
     Object.defineProperty(out, key, d)

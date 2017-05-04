@@ -3,12 +3,7 @@ import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { rejectify } from '../util/decorators.js'
 import { base64 } from '../util/encoding.js'
-import {
-  applyLoginReply,
-  dispatchKit,
-  makeLoginTree,
-  syncLogin
-} from './login.js'
+import { applyLoginReply, makeLoginTree, syncLogin } from './login.js'
 
 function makeHashInput (username, password) {
   return fixUsername(username) + password
@@ -165,13 +160,4 @@ export function makePasswordKit (io, login, username, password) {
       }
     }
   })
-}
-
-/**
- * Sets up a password for the login.
- */
-export function setupPassword (io, loginTree, login, password) {
-  return makePasswordKit(io, login, loginTree.username, password).then(kit =>
-    dispatchKit(io, loginTree, login, kit)
-  )
 }

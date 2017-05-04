@@ -1,12 +1,7 @@
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { fixUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
-import {
-  applyLoginReply,
-  dispatchKit,
-  makeLoginTree,
-  searchTree
-} from './login.js'
+import { applyLoginReply, makeLoginTree, searchTree } from './login.js'
 
 function pin2Id (pin2Key, username) {
   return hmacSha256(fixUsername(username), pin2Key)
@@ -92,16 +87,4 @@ export function makePin2Kit (io, login, username, pin) {
       pin2Key
     }
   }
-}
-
-/**
- * Sets up PIN login v2.
- */
-export function setupPin2 (io, loginTree, login, pin) {
-  return dispatchKit(
-    io,
-    loginTree,
-    login,
-    makePin2Kit(io, login, loginTree.username, pin)
-  )
 }

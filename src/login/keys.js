@@ -1,6 +1,5 @@
 import { encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { base16, base64, utf8 } from '../util/encoding.js'
-import { dispatchKit } from './login.js'
 
 export function makeAccountType (appId) {
   return appId === ''
@@ -50,17 +49,4 @@ export function makeKeysKit (io, login, keyInfos, newSyncKeys = []) {
     stash: { keyBoxes },
     login: { keyInfos }
   }
-}
-
-/**
- * Attaches keys to the login object,
- * optionally creating any repos needed.
- */
-export function attachKeys (io, loginTree, login, keyInfos, syncKeys = []) {
-  return dispatchKit(
-    io,
-    loginTree,
-    login,
-    makeKeysKit(io, login, keyInfos, syncKeys)
-  )
 }
