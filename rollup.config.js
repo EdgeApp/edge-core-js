@@ -12,7 +12,7 @@ export default {
       }
     }),
     commonjs({
-      include: 'dist/crypto-bundle.js'
+      include: 'build/crypto-bundle.js'
     })
   ],
   targets: [

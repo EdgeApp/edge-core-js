@@ -17,8 +17,8 @@
     "Tim Horton <tim@airbitz.co>"
   ],
   "license": "SEE LICENSE IN LICENSE",
-  "main": "dist/abc.cjs.js",
-  "module": "dist/abc.es6.js",
+  "main": "lib/index.cjs.js",
+  "module": "lib/index.es.js",
   "dependencies": {
     "aes-js": "^2.1.0",
     "base-x": "^1.0.4",
@@ -43,7 +43,7 @@
   },
   "files": [
     "changelog.md",
-    "dist/abc.*.js*",
+    "lib/*",
     "LICENSE",
     "package.json",
     "readme.md"
@@ -59,6 +59,6 @@
     "precommit": "npm run lint",
     "prepublish": "npm run lint && npm run build",
     "pretest": "npm run lint && webpack && rollup -c rollup.config.test.js",
-    "test": "mocha --require source-map-support/register dist/tests.cjs.js"
+    "test": "mocha --require source-map-support/register build/tests.cjs.js"
   }
 }

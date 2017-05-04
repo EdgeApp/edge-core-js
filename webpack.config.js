@@ -5,7 +5,7 @@ module.exports = {
     loaders: [{ test: /\.json$/, loader: 'json-loader' }]
   },
   output: {
-    filename: './dist/crypto-bundle.js',
+    filename: './build/crypto-bundle.js',
     libraryTarget: 'commonjs'
   }
 }
