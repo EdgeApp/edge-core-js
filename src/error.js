@@ -61,7 +61,7 @@ UsernameError.type = UsernameError.name
 export function PasswordError (resultsJson = {}, message) {
   const e = new Error(message || 'Invalid password')
   e.name = e.type = PasswordError.name
-  e.wait = resultsJson['wait_seconds']
+  e.wait = resultsJson.wait_seconds
   return e
 }
 PasswordError.type = PasswordError.name
@@ -79,7 +79,7 @@ PasswordError.type = PasswordError.name
 export function OtpError (resultsJson = {}, message) {
   const e = new Error(message || 'Invalid OTP token')
   e.name = e.type = OtpError.name
-  e.resetToken = resultsJson['otp_reset_auth']
+  e.resetToken = resultsJson.otp_reset_auth
   if (resultsJson.otp_timeout_date != null) {
     e.resetDate = new Date(resultsJson.otp_timeout_date)
   }

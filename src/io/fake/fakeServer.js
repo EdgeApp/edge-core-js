@@ -178,18 +178,18 @@ addRoute('POST', '/api/v1/account/create', function (req) {
     return makeErrorResponse(errorCodes.accountExists)
   }
 
-  const carePackage = JSON.parse(req.body['care_package'])
-  const loginPackage = JSON.parse(req.body['login_package'])
+  const carePackage = JSON.parse(req.body.care_package)
+  const loginPackage = JSON.parse(req.body.login_package)
   this.db.logins.push({
     appId: '',
-    loginId: req.body['l1'],
-    passwordAuth: req.body['lp1'],
-    passwordKeySnrp: carePackage['SNRP2'],
-    passwordAuthBox: loginPackage['ELP1'],
-    passwordBox: loginPackage['EMK_LP2'],
-    syncKeyBox: loginPackage['ESyncKey']
+    loginId: req.body.l1,
+    passwordAuth: req.body.lp1,
+    passwordKeySnrp: carePackage.SNRP2,
+    passwordAuthBox: loginPackage.ELP1,
+    passwordBox: loginPackage.EMK_LP2,
+    syncKeyBox: loginPackage.ESyncKey
   })
-  this.repos[req.body['repo_account_key']] = {}
+  this.repos[req.body.repo_account_key] = {}
 
   return makeResponse()
 })
@@ -234,7 +234,7 @@ addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function (
 addRoute('POST', '/api/v1/account/pinpackage/update', authHandler1, function (
   req
 ) {
-  this.db.pinKeyBox = JSON.parse(req.body['pin_package'])
+  this.db.pinKeyBox = JSON.parse(req.body.pin_package)
   return makeResponse()
 })
 
@@ -250,7 +250,7 @@ addRoute('POST', '/api/v1/account/pinpackage/get', function (req) {
 // Repo server v1: ---------------------------------------------------------
 
 addRoute('POST', '/api/v1/wallet/create', authHandler1, function (req) {
-  this.repos[req.body['repo_wallet_key']] = {}
+  this.repos[req.body.repo_wallet_key] = {}
   return makeResponse()
 })
 
@@ -335,7 +335,7 @@ addRoute('POST', '/api/v2/login/create', function (req) {
 })
 
 addRoute('POST', '/api/v2/login/keys', authHandler, function (req) {
-  const data = req.body['data']
+  const data = req.body.data
   if (data.keyBoxes == null) {
     return makeErrorResponse(errorCodes.error)
   }
@@ -417,13 +417,13 @@ addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
 
 addRoute('PUT', '/api/v2/lobby/.*', function (req) {
   const pubkey = req.path.split('/')[4]
-  this.db.lobbies[pubkey] = { request: req.body['data'], replies: [] }
+  this.db.lobbies[pubkey] = { request: req.body.data, replies: [] }
   return makeResponse()
 })
 
 addRoute('POST', '/api/v2/lobby/.*', function (req) {
   const pubkey = req.path.split('/')[4]
-  this.db.lobbies[pubkey].replies.push(req.body['data'])
+  this.db.lobbies[pubkey].replies.push(req.body.data)
   return makeResponse()
 })
 

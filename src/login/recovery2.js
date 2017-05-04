@@ -72,7 +72,7 @@ export function getQuestions2 (io, recovery2Key, username) {
   }
   return io.authRequest('POST', '/v2/login', request).then(reply => {
     // Recovery login:
-    const question2Box = reply['question2Box']
+    const question2Box = reply.question2Box
     if (question2Box == null) {
       throw new Error('Login has no recovery questions')
     }

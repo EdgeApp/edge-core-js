@@ -17,12 +17,12 @@ export default {
   ],
   targets: [
     {
-      dest: packageJson['main'],
+      dest: packageJson.main,
       format: 'cjs',
       sourceMap: true
     },
     {
-      dest: packageJson['module'],
+      dest: packageJson.module,
       format: 'es',
       sourceMap: true
     }

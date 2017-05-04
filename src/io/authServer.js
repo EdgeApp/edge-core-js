@@ -9,9 +9,9 @@ import { timeout } from '../util/promise.js'
 import { elvis } from '../util/util.js'
 
 function parseReply (json) {
-  switch (json['status_code']) {
+  switch (json.status_code) {
     case 0: // Success
-      return json['results']
+      return json.results
 
     case 2: // Account exists
       throw new UsernameError('Account already exists on server')
@@ -21,13 +21,13 @@ function parseReply (json) {
 
     case 4: // Invalid password
     case 5: // Invalid answers
-      throw new PasswordError(json['results'])
+      throw new PasswordError(json.results)
 
     case 6: // Invalid API key
       throw new Error('Invalid API key')
 
     case 8: // Invalid OTP
-      throw new OtpError(json['results'])
+      throw new OtpError(json.results)
 
     case 1000: // Endpoint obsolete
       throw new ObsoleteApiError()
@@ -35,7 +35,7 @@ function parseReply (json) {
     case 1: // Error
     case 7: // Pin expired
     default:
-      const message = json['message'] || json['detail'] || JSON.stringify(json)
+      const message = json.message || json.detail || JSON.stringify(json)
       throw new Error(`Server error: ${message}`)
   }
 }

@@ -11,11 +11,11 @@ const AesCbc = aesjs.ModeOfOperation.cbc
  */
 export function decrypt (box, key) {
   // Check JSON:
-  if (box['encryptionType'] !== 0) {
+  if (box.encryptionType !== 0) {
     throw new Error('Unknown encryption type')
   }
-  const iv = base16.parse(box['iv_hex'])
-  const ciphertext = base64.parse(box['data_base64'])
+  const iv = base16.parse(box.iv_hex)
+  const ciphertext = base64.parse(box.data_base64)
 
   // Decrypt:
   const cipher = new AesCbc(key, iv)
