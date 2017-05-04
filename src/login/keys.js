@@ -12,12 +12,25 @@ export function makeAccountType (appId) {
  * Assembles the key metadata structure that is encrypted within a keyBox.
  * @param idKey Used to derive the wallet id. It's usually `dataKey`.
  */
-export function makeKeyInfo (keys, type, idKey) {
+export function makeKeyInfo (type, keys, idKey) {
   return {
     id: base64.stringify(hmacSha256(idKey, utf8.parse(type))),
     type,
     keys
   }
+}
+
+/**
+ * Make a kit for attaching a repo to a login.
+ */
+export function makeRepoKit (io, login, type, keys = {}) {
+  if (keys.dataKey == null) keys.dataKey = base64.stringify(io.random(32))
+  if (keys.syncKey == null) keys.syncKey = base64.stringify(io.random(20))
+  const dataKey = base64.parse(keys.dataKey)
+  const syncKey = base64.parse(keys.syncKey)
+
+  const keyInfo = makeKeyInfo(type, keys, dataKey)
+  return makeKeysKit(io, login, [keyInfo], [syncKey])
 }
 
 /**

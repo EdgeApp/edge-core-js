@@ -3,7 +3,6 @@ import { UsernameError } from '../error.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
-import { makeKeysKit } from './keys.js'
 import { dispatchKit } from './login.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
@@ -48,9 +47,7 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
   const pin2Kit = opts.pin != null
     ? makePin2Kit(io, { loginKey }, username, opts.pin)
     : {}
-  const keysKit = opts.keyInfos != null
-    ? makeKeysKit(io, { loginKey }, opts.keyInfos, opts.newSyncKeys)
-    : {}
+  const keysKit = opts.keysKit != null ? opts.keysKit : {}
 
   // Bundle everything:
   return Promise.all([loginId, passwordKit]).then(values => {

@@ -151,22 +151,22 @@ function makeLoginTreeInner (stash, loginKey) {
   if (stash.menemonicBox != null && stash.rootKeyBox != null) {
     const mnemonic = utf8.stringify(decrypt(stash.menemonicBox, loginKey))
     const rootKey = decrypt(stash.rootKeyBox, loginKey)
-    const keysJson = {
+    const keys = {
       mnemonic,
       rootKey: base64.stringify(rootKey)
     }
-    legacyKeys.push(makeKeyInfo(keysJson, 'wallet:bitid', rootKey))
+    legacyKeys.push(makeKeyInfo('wallet:bitid', keys, rootKey))
   }
 
   // Account settings:
   if (stash.syncKeyBox != null) {
     const syncKey = decrypt(stash.syncKeyBox, loginKey)
     const type = makeAccountType(login.appId)
-    const keysJson = {
+    const keys = {
       syncKey: base64.stringify(syncKey),
       dataKey: base64.stringify(loginKey)
     }
-    legacyKeys.push(makeKeyInfo(keysJson, type, loginKey))
+    legacyKeys.push(makeKeyInfo(type, keys, loginKey))
   }
 
   // Keys:

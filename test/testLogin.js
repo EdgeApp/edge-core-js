@@ -1,6 +1,5 @@
 /* global describe, it */
 import { makeContext, makeFakeIos } from '../src'
-import { attachKeys, makeKeyInfo } from '../src/login/keys.js'
 import { base58, base64 } from '../src/util/encoding.js'
 import { objectAssign } from '../src/util/util.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
@@ -27,15 +26,16 @@ describe('login', function () {
 
   it('attach repo', function () {
     const [context] = makeFakeContexts(1)
-    const login = makeFakeAccount(context, fakeUser).login
+    const account = makeFakeAccount(context, fakeUser)
 
-    const keysJson = {
+    const keys = {
       dataKey: 'fa57',
       syncKey: 'f00d'
     }
-    const keyInfo = makeKeyInfo(keysJson, 'account-repo:blah', [])
-    return attachKeys(context.io, login, login, [keyInfo]).then(login => {
-      assert.deepEqual(findKeys(login, 'account-repo:blah'), keyInfo)
+    return account.createWallet('account-repo:blah', keys).then(id => {
+      const info = account.login.keyInfos.find(info => info.id === id)
+
+      assert.deepEqual(info.keys, keys)
       return null
     })
   })

@@ -1,11 +1,11 @@
 import { createChildLogin } from '../login/create.js'
-import { attachKeys, makeAccountType, makeKeyInfo } from '../login/keys.js'
-import { searchTree } from '../login/login.js'
+import { makeAccountType, makeRepoKit } from '../login/keys.js'
+import { dispatchKit, searchTree } from '../login/login.js'
 import { checkPassword, setupPassword } from '../login/password.js'
 import { setupPin2 } from '../login/pin2.js'
 import { setupRecovery2 } from '../login/recovery2.js'
 import { makeRepoFolder, syncRepo } from '../repo'
-import { base58, base64 } from '../util/encoding.js'
+import { base58 } from '../util/encoding.js'
 import { Wallet } from './wallet.js'
 import { wrapPrototype } from './wrap.js'
 
@@ -17,24 +17,16 @@ function ensureAppIdExists (io, loginTree, appId) {
   const login = searchTree(loginTree, login => login.appId === appId)
   if (!login) {
     const accountType = makeAccountType(appId)
-    const dataKey = io.random(32)
-    const syncKey = io.random(20)
-    const keyJson = {
-      dataKey: base64.stringify(dataKey),
-      syncKey: base64.stringify(syncKey)
-    }
-    const opts = {
-      pin: loginTree.pin,
-      keyInfos: [makeKeyInfo(keyJson, accountType, dataKey)],
-      newSyncKeys: [syncKey]
-    }
+    const keysKit = makeRepoKit(io, login, accountType)
+
+    const opts = { pin: loginTree.pin, keysKit }
     return createChildLogin(
       io,
       loginTree,
       loginTree,
       appId,
       opts
-    ).then(login => {
+    ).then(loginTree => {
       return { loginTree, login }
     })
   }
@@ -45,15 +37,9 @@ function ensureAppIdExists (io, loginTree, appId) {
 function ensureAccountRepoExists (io, loginTree, login) {
   const accountType = makeAccountType(login.appId)
   if (findAccount(login, accountType) == null) {
-    const dataKey = io.random(32)
-    const syncKey = io.random(20)
-    const keyJson = {
-      dataKey: base64.stringify(dataKey),
-      syncKey: base64.stringify(syncKey)
-    }
-    const keyInfo = makeKeyInfo(keyJson, accountType, dataKey)
+    const kit = makeRepoKit(io, login, accountType)
 
-    return attachKeys(io, loginTree, login, [keyInfo], [syncKey])
+    return dispatchKit(io, loginTree, login, kit)
   }
 
   return Promise.resolve(loginTree)
@@ -176,27 +162,25 @@ Account.prototype = wrapPrototype('Account', {
 
   /**
    * Creates a new wallet repo, and attaches it to the account.
-   * @param keysJson An object with any user-provided keys
+   * @param keys An object with any user-provided keys
    * that should be stored along with the wallet. For example,
    * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
    */
-  createWallet (type, keysJson) {
-    keysJson.dataKey = keysJson.dataKey || base64.stringify(this.io.random(32))
-    keysJson.syncKey = keysJson.syncKey || base64.stringify(this.io.random(20))
-    const dataKey = base64.parse(keysJson.dataKey)
-    const syncKey = base64.parse(keysJson.syncKey)
+  createWallet (type, keys) {
+    const kit = makeRepoKit(this.io, this.login, type, keys)
 
-    const info = makeKeyInfo(keysJson, type, dataKey)
-
-    // We are just using this to create the repo, not to attach:
-    return attachKeys(
+    return dispatchKit(
       this.io,
       this.loginTree,
       this.login,
-      [info],
-      [syncKey]
-    ).then(() => {
-      return info.id
+      kit
+    ).then(loginTree => {
+      this.loginTree = loginTree
+      this.login = searchTree(
+        loginTree,
+        login => login.appId === this.login.appId
+      )
+      return kit.login.keyInfos[0].id
     })
   }
 })
