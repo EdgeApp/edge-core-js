@@ -89,6 +89,25 @@ describe('creation', function () {
     context.usernameAvailable(fakeUser.username).then(result => assert(!result))
   })
 
+  it('passwordless account', function () {
+    this.timeout(1000)
+    const [context, remote] = makeFakeContexts(2, { appId: 'test' })
+
+    const username = 'some fancy user'
+    const questions = fakeUser.recovery2Questions
+    const answers = fakeUser.recovery2Answers
+    const recovery2Key = context
+      .createAccount(username, null, fakeUser.pin)
+      .then(account => account.recovery2Set(questions, answers))
+
+    return recovery2Key.then(recovery2Key =>
+      Promise.all([
+        context.loginWithPIN(username, fakeUser.pin, null, null),
+        remote.loginWithRecovery2(recovery2Key, username, answers, null, null)
+      ])
+    )
+  })
+
   it('create account', function () {
     this.timeout(9000)
     const [context, remote] = makeFakeContexts(2, { appId: 'test' })
