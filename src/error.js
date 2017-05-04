@@ -17,7 +17,7 @@
  */
 export function NetworkError (message) {
   const e = new Error(message || 'Cannot reach the network')
-  e.type = NetworkError.name
+  e.name = e.type = NetworkError.name
   return e
 }
 NetworkError.type = NetworkError.name
@@ -27,7 +27,7 @@ NetworkError.type = NetworkError.name
  */
 export function ObsoleteApiError (message) {
   const e = new Error(message || 'The application is too old. Please upgrade.')
-  e.type = ObsoleteApiError.name
+  e.name = e.type = ObsoleteApiError.name
   return e
 }
 ObsoleteApiError.type = ObsoleteApiError.name
@@ -42,7 +42,7 @@ ObsoleteApiError.type = ObsoleteApiError.name
  */
 export function UsernameError (message) {
   const e = new Error(message || 'Invalid username')
-  e.type = UsernameError.name
+  e.name = e.type = UsernameError.name
   return e
 }
 UsernameError.type = UsernameError.name
@@ -60,7 +60,7 @@ UsernameError.type = UsernameError.name
  */
 export function PasswordError (resultsJson = {}, message) {
   const e = new Error(message || 'Invalid password')
-  e.type = PasswordError.name
+  e.name = e.type = PasswordError.name
   e.wait = resultsJson['wait_seconds']
   return e
 }
@@ -78,7 +78,7 @@ PasswordError.type = PasswordError.name
  */
 export function OtpError (resultsJson = {}, message) {
   const e = new Error(message || 'Invalid OTP token')
-  e.type = OtpError.name
+  e.name = e.type = OtpError.name
   e.resetToken = resultsJson['otp_reset_auth']
   if (resultsJson.otp_timeout_date != null) {
     e.resetDate = new Date(resultsJson.otp_timeout_date)
