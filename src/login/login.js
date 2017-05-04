@@ -199,8 +199,8 @@ export function makeLoginTree (stashTree, loginKey, appId = '') {
     stash => stash.appId === appId,
     stash => makeLoginTreeInner(stash, loginKey),
     (stash, children) => {
-      const login = filterObject(stash, ['username', 'appId', 'loginId'])
-      login.keyInfos = []
+      const login = filterObject(stash, ['username', 'appId'])
+      login.loginId = base64.parse(stash.loginId)
       login.children = children
       return login
     }

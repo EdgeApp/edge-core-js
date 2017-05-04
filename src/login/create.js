@@ -57,9 +57,9 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
       server: objectAssign(
         {
           appId,
-          loginId: base64.stringify(loginId),
           loginAuth: base64.stringify(loginAuth),
           loginAuthBox,
+          loginId: base64.stringify(loginId),
           parentBox
         },
         passwordKit.server,
@@ -69,8 +69,8 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
       stash: objectAssign(
         {
           appId,
-          loginId: base64.stringify(loginId),
           loginAuthBox,
+          loginId: base64.stringify(loginId),
           parentBox
         },
         passwordKit.stash,
@@ -79,12 +79,11 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
       ),
       login: objectAssign(
         {
-          loginKey,
           appId,
-          loginId,
           loginAuth,
-          keyInfos: [],
-          children: []
+          loginId,
+          loginKey,
+          keyInfos: []
         },
         passwordKit.login,
         pin2Kit.login,
