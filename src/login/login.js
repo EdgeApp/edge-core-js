@@ -4,7 +4,7 @@
 
 import { decrypt } from '../crypto/crypto.js'
 import { base64, utf8 } from '../util/encoding.js'
-import { elvis, filterObject, objectAssign } from '../util/util.js'
+import { elvis, filterObject, objectAssign, softCat } from '../util/util.js'
 import { makeAccountType, makeKeyInfo } from './keys.js'
 
 function cloneNode (node, children) {
@@ -32,7 +32,7 @@ export function searchTree (node, predicate) {
  * The `predicate` callback is used to find the target node.
  * The `update` callback is called on the target.
  */
-export function updateTree (node, predicate, update, clone = cloneNode) {
+function updateTree (node, predicate, update, clone = cloneNode) {
   if (predicate(node)) return update(node)
 
   const children = node.children != null
@@ -151,22 +151,22 @@ function makeLoginTreeInner (stash, loginKey) {
   if (stash.menemonicBox != null && stash.rootKeyBox != null) {
     const mnemonic = utf8.stringify(decrypt(stash.menemonicBox, loginKey))
     const rootKey = decrypt(stash.rootKeyBox, loginKey)
-    const keysJson = {
+    const keys = {
       mnemonic,
       rootKey: base64.stringify(rootKey)
     }
-    legacyKeys.push(makeKeyInfo(keysJson, 'wallet:bitid', rootKey))
+    legacyKeys.push(makeKeyInfo('wallet:bitid', keys, rootKey))
   }
 
   // Account settings:
   if (stash.syncKeyBox != null) {
     const syncKey = decrypt(stash.syncKeyBox, loginKey)
     const type = makeAccountType(login.appId)
-    const keysJson = {
+    const keys = {
       syncKey: base64.stringify(syncKey),
       dataKey: base64.stringify(loginKey)
     }
-    legacyKeys.push(makeKeyInfo(keysJson, type, loginKey))
+    legacyKeys.push(makeKeyInfo(type, keys, loginKey))
   }
 
   // Keys:
@@ -208,6 +208,45 @@ export function makeLoginTree (stashTree, loginKey, appId = '') {
 }
 
 /**
+ * Changing a login involves updating the server, the in-memory login,
+ * and the on-disk stash. A login kit contains all three elements,
+ * and this function knows how to apply them all.
+ */
+export function dispatchKit (io, loginTree, login, kit) {
+  return io.loginStore.load(loginTree.username).then(stashTree => {
+    const request = makeAuthJson(login)
+    request.data = kit.server
+    return io.authRequest('POST', kit.serverPath, request).then(reply => {
+      const appId = login.appId
+
+      const newLoginTree = updateTree(
+        loginTree,
+        login => login.appId === appId,
+        login =>
+          objectAssign({}, login, kit.login, {
+            children: softCat(login.children, kit.login.children),
+            keyInfos: mergeKeyInfos(
+              softCat(login.keyInfos, kit.login.keyInfos)
+            )
+          })
+      )
+
+      const newStashTree = updateTree(
+        stashTree,
+        stash => stash.appId === appId,
+        stash =>
+          objectAssign({}, stash, kit.stash, {
+            children: softCat(stash.children, kit.stash.children),
+            keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
+          })
+      )
+
+      return io.loginStore.save(newStashTree).then(() => newLoginTree)
+    })
+  })
+}
+
+/**
  * Refreshes a login with data from the server.
  */
 export function syncLogin (io, loginTree, login) {
@@ -244,7 +283,7 @@ export function makeAuthJson (login) {
 /**
  * Flattens an array of key structures, removing duplicates.
  */
-export function mergeKeyInfos (keyInfos) {
+function mergeKeyInfos (keyInfos) {
   const ids = [] // All ID's, in order of appearance
   const keys = {} // All keys, indexed by id
   const types = {} // Key types, indexed by id

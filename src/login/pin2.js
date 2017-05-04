@@ -1,13 +1,7 @@
 import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { fixUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
-import { objectAssign } from '../util/util.js'
-import {
-  applyLoginReply,
-  makeAuthJson,
-  makeLoginTree,
-  searchTree
-} from './login.js'
+import { applyLoginReply, makeLoginTree, searchTree } from './login.js'
 
 function pin2Id (pin2Key, username) {
   return hmacSha256(fixUsername(username), pin2Key)
@@ -78,6 +72,7 @@ export function makePin2Kit (io, login, username, pin) {
   const pin2KeyBox = encrypt(io, pin2Key, login.loginKey)
 
   return {
+    serverPath: '/v2/login/pin2',
     server: {
       pin2Id: base64.stringify(pin2Id(pin2Key, username)),
       pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
@@ -92,20 +87,4 @@ export function makePin2Kit (io, login, username, pin) {
       pin2Key
     }
   }
-}
-
-/**
- * Sets up PIN login v2.
- */
-export function setupPin2 (io, loginTree, login, pin) {
-  const kit = makePin2Kit(io, login, loginTree.username, pin)
-
-  const request = makeAuthJson(login)
-  request.data = kit.server
-  return io.authRequest('POST', '/v2/login/pin2', request).then(reply => {
-    login.pin2Key = kit.login.pin2Key
-    return io.loginStore
-      .update(loginTree, login, stash => objectAssign(stash, kit.stash))
-      .then(() => login)
-  })
 }

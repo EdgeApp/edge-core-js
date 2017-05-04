@@ -1,5 +1,4 @@
 import { scrypt, userIdSnrp } from '../crypto/scrypt.js'
-import { updateTree } from '../login/login.js'
 import { base58, base64 } from '../util/encoding.js'
 import { mapFiles } from 'disklet'
 
@@ -71,32 +70,6 @@ export class LoginStore {
     }
     const filename = base58.stringify(loginId) + '.json'
     return this.folder.file(filename).setText(JSON.stringify(stashTree))
-  }
-
-  /**
-   * Updates the selected login stash.
-   * The `loginTree` gives the root of the search,
-   * and the `login` gives the node to update.
-   * The `update` callback is called on the selected node,
-   * and can make any modifications it likes.
-   */
-  update (loginTree, login, update) {
-    return this.load(loginTree.username).then(stashTree => {
-      if (stashTree.loginId == null) {
-        throw new Error(`Could not load stash for "${loginTree.username}"`)
-      }
-
-      // Update the stash:
-      const target = base64.stringify(login.loginId)
-      const newStash = updateTree(
-        stashTree,
-        stash => stash.loginId === target,
-        update
-      )
-
-      // Save:
-      return this.save(newStash)
-    })
   }
 }
 

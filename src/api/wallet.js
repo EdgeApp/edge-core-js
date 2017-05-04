@@ -1,4 +1,4 @@
-export function Wallet (type, keysJson) {
+export function Wallet (type, keys) {
   this.type = type
-  this.keys = keysJson
+  this.keys = keys
 }

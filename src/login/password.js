@@ -3,13 +3,7 @@ import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { rejectify } from '../util/decorators.js'
 import { base64 } from '../util/encoding.js'
-import { objectAssign } from '../util/util.js'
-import {
-  applyLoginReply,
-  makeAuthJson,
-  makeLoginTree,
-  syncLogin
-} from './login.js'
+import { applyLoginReply, makeLoginTree, syncLogin } from './login.js'
 
 function makeHashInput (username, password) {
   return fixUsername(username) + password
@@ -104,6 +98,25 @@ export function checkPassword (io, login, password) {
 }
 
 /**
+ * Verifies that a password meets our suggested rules.
+ */
+export function checkPasswordRules (password) {
+  const tooShort = password.length < 10
+  const noNumber = !/[0-9]/.test(password)
+  const noLowerCase = !/[a-z]/.test(password)
+  const noUpperCase = !/[A-Z]/.test(password)
+
+  return {
+    tooShort,
+    noNumber,
+    noLowerCase,
+    noUpperCase,
+    passed: password.length >= 16 ||
+      !(tooShort || noNumber || noUpperCase || noLowerCase)
+  }
+}
+
+/**
  * Creates the data needed to attach a password to a login.
  */
 export function makePasswordKit (io, login, username, password) {
@@ -129,6 +142,7 @@ export function makePasswordKit (io, login, username, password) {
       { passwordAuth, passwordAuthBox }
     ] = values
     return {
+      serverPath: '/v2/login/password',
       server: {
         passwordAuth: base64.stringify(passwordAuth),
         passwordAuthSnrp, // TODO: Use this on the other side
@@ -145,21 +159,5 @@ export function makePasswordKit (io, login, username, password) {
         passwordAuth
       }
     }
-  })
-}
-
-/**
- * Sets up a password for the login.
- */
-export function setupPassword (io, loginTree, login, password) {
-  return makePasswordKit(io, login, loginTree.username, password).then(kit => {
-    const request = makeAuthJson(login)
-    request.data = kit.server
-    return io.authRequest('POST', '/v2/login/password', request).then(reply => {
-      login.passwordAuth = kit.login.passwordAuth
-      return io.loginStore
-        .update(loginTree, login, stash => objectAssign(stash, kit.stash))
-        .then(() => login)
-    })
   })
 }

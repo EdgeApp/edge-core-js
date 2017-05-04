@@ -38,9 +38,10 @@ function onReply (io, subscription, reply, appId, opts) {
   io.loginStore.save(stashTree)
 
   // This is almost guaranteed to blow up spectacularly:
-  const login = makeLoginTree(stashTree, base64.parse(reply.loginKey), appId)
+  const loginKey = base64.parse(reply.loginKey)
+  const loginTree = makeLoginTree(stashTree, loginKey, appId)
   if (opts.onLogin != null) {
-    opts.onLogin(null, login)
+    opts.onLogin(null, loginTree)
   }
 }
 
