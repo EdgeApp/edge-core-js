@@ -1,5 +1,21 @@
 # airbitz-core-js
 
+## 0.3.1
+
+Fixes:
+* The library explicitly depends on `buffer` now, fixing React Native
+* Build system cleanups
+* Many, many code cleanups
+
+New:
+* Error types all have a `name` property, which will replace the `type`
+* Use the `disklet` library for all storage needs
+* Expose `hashUsername` for the CLI
+
+Breaking changes:
+* api: Make `removeUsername` async
+* The on-disk repo format has changed, requiring a re-sync
+
 ## 0.3.0
 
 New:
