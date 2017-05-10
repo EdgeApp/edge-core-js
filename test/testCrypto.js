@@ -28,7 +28,7 @@ describe('encryption', function () {
       iv_hex: '96a4cd52670c13df9712fdc1b564d44b'
     }
 
-    assert.equal('payload', decrypt(box, key).toString('utf8'))
+    assert.deepEqual('payload', utf8.stringify(decrypt(box, key)))
   })
 
   it('round-trip data', function () {
@@ -38,7 +38,7 @@ describe('encryption', function () {
     )
     const data = utf8.parse('payload')
     const box = encrypt(io, data, key)
-    assert.equal('payload', decrypt(box, key).toString('utf8'))
+    assert.deepEqual('payload', utf8.stringify(decrypt(box, key)))
   })
 })
 
