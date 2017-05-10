@@ -26,9 +26,9 @@ acorn@^3.0.0, acorn@^3.0.4, acorn@^3.1.0, acorn@^3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-3.3.0.tgz#45e37fb39e8da3f25baee3ff5369e2bb5f22017a"
 
-aes-js@^2.1.0:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/aes-js/-/aes-js-2.1.1.tgz#68989763bbade2a39172ea48f4953d1272ff38a7"
+aes-js@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/aes-js/-/aes-js-3.1.0.tgz#f5f7588494526997cc635cc334c8bb8e967a5d82"
 
 ajv-keywords@^1.0.0:
   version "1.5.1"

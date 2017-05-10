@@ -10,16 +10,17 @@ system.
 Run `npm install` to download dependencies and build the library,
 then run `npm test` to run the tests.
 
-If you would like to make the CLI tool globally accessible, do `npm link`.
-After that, you can invoke the `airbitz-core-js` executable from anywhere.
+The bundled library uses only ES5 feature thanks to [Bublé](https://buble.surge.sh),
+but we do require the following ES6 either natively or as pollyfills:
 
-## Developing
+* Promise
+* Uint8Array
 
-All sources are in the [JavaScript Standard Style](http://standardjs.com/).
+If you want to run in the browser, you must also provide:
 
-We use a limited subset of ES6 syntax feature,
-as supported by [Bublé](https://buble.surge.sh). We also use the `Promise`
-and node.js `Buffer` types, so polyfills may be necessary.
+* fetch
+* localStorage
+* Window.crypto.getRandomNumbers
 
 ## Account Management UI
 
@@ -29,3 +30,7 @@ management (change PIN/password), use [airbitz-core-js-ui](https://github.com/Ai
 ## Documentation
 
 See https://developer.airbitz.co/javascript/
+
+## Developing
+
+All sources are in the [JavaScript Standard Style](http://standardjs.com/).

@@ -9,7 +9,6 @@
     "key management",
     "security"
   ],
-  "url": "https://airbitz.co",
   "author": "Airbitz, Inc.",
   "contributors": [
     "Paul Puey <paul@airbitz.co>",
@@ -17,10 +16,22 @@
     "Tim Horton <tim@airbitz.co>"
   ],
   "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Airbitz/airbitz-core-js.git"
+  },
+  "url": "https://airbitz.co",
+  "files": [
+    "changelog.md",
+    "lib/*",
+    "LICENSE",
+    "package.json",
+    "readme.md"
+  ],
   "main": "lib/index.cjs.js",
   "module": "lib/index.es.js",
   "dependencies": {
-    "aes-js": "^2.1.0",
+    "aes-js": "^3.1.0",
     "base-x": "^1.0.4",
     "buffer": "^5.0.6",
     "disklet": "^0.1.2",
@@ -41,17 +52,6 @@
     "rollup-plugin-commonjs": "^8.0.2",
     "source-map-support": "^0.4.6",
     "webpack": "^1.14.0"
-  },
-  "files": [
-    "changelog.md",
-    "lib/*",
-    "LICENSE",
-    "package.json",
-    "readme.md"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
     "build": "webpack && rollup -c",

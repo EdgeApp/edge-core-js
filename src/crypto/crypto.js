@@ -1,7 +1,6 @@
 import { base16, base64 } from '../util/encoding.js'
 import { hashjs } from './external.js'
 import aesjs from 'aes-js'
-import { Buffer } from 'buffer'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 
@@ -77,7 +76,7 @@ export function encrypt (io, data, key) {
   const hashSize = 32
   const paddingStart = hashStart + hashSize
   const paddingSize = 16 - (paddingStart & 0xf)
-  const raw = new Buffer(paddingStart + paddingSize)
+  const raw = new Uint8Array(paddingStart + paddingSize)
 
   // Random header:
   const header = io.random(headerSize)
@@ -116,7 +115,7 @@ export function encrypt (io, data, key) {
   // Encrypt to JSON:
   const iv = io.random(16)
   const cipher = new AesCbc(key, iv)
-  const ciphertext = cipher.encrypt(raw) // BUG: requires a `Buffer`
+  const ciphertext = cipher.encrypt(raw)
   return {
     encryptionType: 0,
     iv_hex: base16.stringify(iv),
