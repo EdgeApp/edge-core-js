@@ -33,11 +33,12 @@
   "dependencies": {
     "aes-js": "^3.1.0",
     "base-x": "^1.0.4",
-    "buffer": "^5.0.6",
     "disklet": "^0.1.2",
     "elliptic": "^6.4.0",
     "hash.js": "^1.0.3",
-    "scrypt-js": "^2.0.3"
+    "rfc4648": "^0.9.1",
+    "scrypt-js": "^2.0.3",
+    "utf8": "^2.1.2"
   },
   "devDependencies": {
     "eslint": "^3.18.0",
@@ -61,5 +62,8 @@
     "prepublish": "npm run lint && npm run build",
     "pretest": "npm run lint && webpack && rollup -c rollup.config.test.js",
     "test": "mocha --require source-map-support/register build/tests.cjs.js"
+  },
+  "browser": {
+    "buffer": false
   }
 }

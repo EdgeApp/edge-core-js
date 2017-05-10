@@ -1,5 +1,7 @@
 import baseX from 'base-x'
-import { Buffer } from 'buffer'
+import { base16 as base16Inner, base64 as base64Inner } from 'rfc4648'
+import utf8Codec from 'utf8'
+
 const base58Codec = baseX(
   '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 )
@@ -19,18 +21,18 @@ function assertData (data) {
 export const base16 = {
   parse (text) {
     assertString(text)
-    return new Buffer(text, 'hex')
+    return base16Inner.parse(text, { out: Uint8Array })
   },
   stringify (data) {
     assertData(data)
-    return new Buffer(data).toString('hex')
+    return base16Inner.stringify(data).toLowerCase()
   }
 }
 
 export const base58 = {
   parse (text) {
     assertString(text)
-    return new Buffer(base58Codec.decode(text))
+    return base58Codec.decode(text)
   },
   stringify (data) {
     assertData(data)
@@ -41,25 +43,38 @@ export const base58 = {
 export const base64 = {
   parse (text) {
     assertString(text)
-    return new Buffer(text, 'base64')
+    return base64Inner.parse(text, { out: Uint8Array })
   },
   stringify (data) {
     assertData(data)
-    return new Buffer(data).toString('base64')
+    return base64Inner.stringify(data)
   }
 }
 
 export const utf8 = {
   parse (text) {
-    assertString(text)
-    return new Buffer(text, 'utf8')
+    const byteString = utf8Codec.encode(text)
+    const out = new Uint8Array(text.length)
+
+    for (let i = 0; i < text.length; ++i) {
+      out[i] = byteString.charCodeAt(i)
+    }
+
+    return out
   },
+
   stringify (data) {
     assertData(data)
+
     // Some of our data contains terminating null bytes due to an old bug.
     // We need to filter that out here:
-    const cleanData = data[data.length - 1] === 0 ? data.slice(0, -1) : data
+    const length = data[data.length - 1] === 0 ? data.length - 1 : data.length
 
-    return new Buffer(cleanData).toString('utf8')
+    let byteString = ''
+    for (let i = 0; i < length; ++i) {
+      byteString += String.fromCharCode(data[i])
+    }
+
+    return utf8Codec.decode(byteString)
   }
 }
