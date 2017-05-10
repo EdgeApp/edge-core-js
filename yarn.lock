@@ -486,9 +486,9 @@ diff@1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-1.4.0.tgz#7f28d2eb9ee7b15a97efd89ce63dcfdaa3ccbabf"
 
-disklet@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.1.0.tgz#f96a8e28e8d28013f5b3a2d79d3aea5828929e7c"
+disklet@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.1.2.tgz#b90a7425e94e12fc1b30676e8fa358bc9eeb5fec"
   dependencies:
     rfc4648 "^0.9.1"
 

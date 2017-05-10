@@ -23,7 +23,7 @@
     "aes-js": "^2.1.0",
     "base-x": "^1.0.4",
     "buffer": "^5.0.6",
-    "disklet": "^0.1.0",
+    "disklet": "^0.1.2",
     "elliptic": "^6.4.0",
     "hash.js": "^1.0.3",
     "scrypt-js": "^2.0.3"
