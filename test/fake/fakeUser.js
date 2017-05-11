@@ -116,6 +116,13 @@ export const fakeUser = {
     encryptionType: 0,
     iv_hex: '59309614b12c169af977681e01d6ad8b'
   },
+  keyBoxes: [
+    {
+      data_base64: 'ABM8mwYTGuODvGXR6BMN0/2AXK6nO+AaZ0QZamdLsZGd1YnfdnERXyYHZJPXD3CtUPY7lpXuohawb8H9MMce6fDxI9Dx+xEb6FjZZYcQsRD0r6fCWHgGSbXhQyo5AQ8xMLQrs0Y34bOH5MWnIlKU8zci5P0RvryZNDa9QvaHWTK5Klxsd9dD7MlkGAjeCloyN+aLi11SdK0IaCz14FqEwQatcbSQeStY4xGh2fKIKQp41ycvEYg6y94UB9kmQ1ncYSnpElfNb7Eb8XjzH7xOje4Bxs29gYC3uE72u4RslcpjxGZJFApKxYhn5gNfTfA4z1PGBSl0ihe5ABq1F8AavkGzY65+IwVmYqDYVum9JoErXG3qM8eE4W2WU+SomAsU',
+      encryptionType: 0,
+      iv_hex: '59492a8c11fac4baf5fccfdef83be212'
+    }
+  ],
 
   // Hierarchy:
   children: [
@@ -179,7 +186,8 @@ export const repos = {
       data_base64: 'gmTTFYpxEJKM+ibmvwDi/uvdL0mq0Pzy1vziTKXRSL49ekHuE2o7HtYJENztg9dLJd1nNXpZD1Y9xsrLrPDzV8r3LDcm6yOLBbBBHle9UwsaSaPLE4KNgh8QzCnm3eeDJMaNHRoxyr/hyUsDo2KwV7FYrmf2gLdnG0yXu/W0im5YgUmAMvG+7u/OQpCuQQyJvBpFVR+7UpP2MNVUnaTacXPPNjfktegHQ8mWwgomRLtVZQbgYcZZFivSvWuUoWbr61/qosF5qGzqRQ9slI3w4J6veN5xpzRMkP9B6pFQRn+tk1jWk8v3GnKACI8+SOzQt+ZcBt/XVR3vExrHgVF7j+OrBy+jyhg9KaiaxoCTVDd0zaqkN+kCh9KgqOLZn2s0SXl2O0IzpdbtKZUyVxoh6Pjkli/t2FqEs5WdZrbwI2k=',
       encryptionType: 0
     }
-  }
+  },
+  '5ca83c3a724244d519aec49efe5a8fc96c6fcdac': {}
 }
 
 export const fakeRepoInfo = {

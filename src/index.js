@@ -1,3 +1,4 @@
+import { makeCurrencyWallet } from './currency/currencyApi.js'
 import { makeContext } from './io/context.js'
 import { objectAssign } from './util/util.js'
 
@@ -29,3 +30,8 @@ export { makeContext }
 export function makeABCContext (apiKey, appId, opts) {
   return makeContext(objectAssign({ apiKey, appId }, opts))
 }
+
+/**
+ * Creates a new wallet object based on a set of keys.
+ */
+export { makeCurrencyWallet }
