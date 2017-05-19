@@ -1,4 +1,8 @@
-import { makeAccountType, makeRepoKit } from '../login/keys.js'
+import {
+  makeAccountType,
+  makeKeysKit,
+  makeStorageKeyInfo
+} from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
 import { LoginState } from '../login/state.js'
 import { makeRepoFolder, syncRepo } from '../repo'
@@ -131,10 +135,9 @@ Account.prototype = wrapPrototype('Account', {
    * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
    */
   createWallet (type, keys) {
-    const kit = makeRepoKit(this.io, this.login, type, keys)
-    return this._state
-      .dispatchKit(this.login, kit)
-      .then(() => kit.login.keyInfos[0].id)
+    const keyInfo = makeStorageKeyInfo(this.io, type, keys)
+    const kit = makeKeysKit(this.io, this.login, keyInfo)
+    return this._state.dispatchKit(this.login, kit).then(() => keyInfo.id)
   }
 })
 

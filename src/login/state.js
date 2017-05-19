@@ -1,5 +1,5 @@
 import { makeCreateKit } from './create.js'
-import { makeAccountType, makeRepoKit } from './keys.js'
+import { makeAccountType, makeKeysKit, makeStorageKeyInfo } from './keys.js'
 import { dispatchKit, searchTree } from './login.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
@@ -36,9 +36,10 @@ export class LoginState {
     const { io, loginTree, loginTree: { username } } = this
     checkLogin(login)
 
+    const keyInfo = makeStorageKeyInfo(io, makeAccountType(login.appId))
     const opts = { pin: loginTree.pin }
     if (wantRepo) {
-      opts.keysKit = makeRepoKit(io, login, makeAccountType(appId))
+      opts.keysKit = makeKeysKit(io, login, keyInfo)
     }
     return makeCreateKit(io, login, appId, username, opts).then(kit =>
       this.dispatchKit(login, kit)
@@ -57,8 +58,8 @@ export class LoginState {
     const { io } = this
     checkLogin(login)
 
-    const kit = makeRepoKit(io, login, accountType)
-    return this.dispatchKit(login, kit)
+    const keyInfo = makeStorageKeyInfo(io, accountType)
+    return this.dispatchKit(login, makeKeysKit(io, login, keyInfo))
   }
 
   changePassword (password, login = this.loginTree) {

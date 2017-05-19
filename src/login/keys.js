@@ -20,32 +20,29 @@ export function makeKeyInfo (type, keys, idKey) {
 }
 
 /**
- * Make a kit for attaching a repo to a login.
+ * Makes keys for accessing an encrypted Git repo.
  */
-export function makeRepoKit (io, login, type, keys = {}) {
+export function makeStorageKeyInfo (io, type, keys = {}) {
   if (keys.dataKey == null) keys.dataKey = base64.stringify(io.random(32))
   if (keys.syncKey == null) keys.syncKey = base64.stringify(io.random(20))
-  const dataKey = base64.parse(keys.dataKey)
-  const syncKey = base64.parse(keys.syncKey)
 
-  const keyInfo = makeKeyInfo(type, keys, dataKey)
-  return makeKeysKit(io, login, [keyInfo], [syncKey])
+  return makeKeyInfo(type, keys, base64.parse(keys.dataKey))
 }
 
 /**
  * Assembles all the resources needed to attach new keys to the account.
  */
-export function makeKeysKit (io, login, keyInfos, newSyncKeys = []) {
+export function makeKeysKit (io, login, ...keyInfos) {
   const keyBoxes = keyInfos.map(info =>
     encrypt(io, utf8.parse(JSON.stringify(info)), login.loginKey)
   )
+  const newSyncKeys = keyInfos
+    .filter(info => info.keys.syncKey != null)
+    .map(info => base16.stringify(base64.parse(info.keys.syncKey)))
 
   return {
     serverPath: '/v2/login/keys',
-    server: {
-      keyBoxes,
-      newSyncKeys: newSyncKeys.map(syncKey => base16.stringify(syncKey))
-    },
+    server: { keyBoxes, newSyncKeys },
     stash: { keyBoxes },
     login: { keyInfos }
   }
