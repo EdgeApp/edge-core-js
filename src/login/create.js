@@ -3,7 +3,6 @@ import { UsernameError } from '../error.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
 import { objectAssign } from '../util/util.js'
-import { dispatchKit } from './login.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 
@@ -110,14 +109,4 @@ export function createLogin (io, username, opts) {
       .authRequest('POST', kit.serverPath, request)
       .then(reply => io.loginStore.save(kit.stash).then(() => kit.login))
   })
-}
-
-/**
- * Creates a new child login on the auth server.
- * @param login the parent of the new login.
- */
-export function createChildLogin (io, loginTree, login, appId, opts) {
-  return makeCreateKit(io, login, appId, loginTree.username, opts).then(kit =>
-    dispatchKit(io, loginTree, login, kit)
-  )
 }
