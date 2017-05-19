@@ -1,6 +1,6 @@
 /* global describe, it */
 import { makeContext, makeFakeIos } from '../src'
-import { makeRepoFolder, syncRepo } from '../src/repo'
+import { makeRepoFolder, syncRepo } from '../src/storage/repo.js'
 import { fakeUser, fakeRepoInfo, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
 

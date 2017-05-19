@@ -9,7 +9,7 @@ import { applyKit, searchTree } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
-import { makeRepoFolder, syncRepo } from '../repo'
+import { makeRepoFolder, syncRepo } from '../storage/repo.js'
 
 function findAppLogin (loginTree, appId) {
   return searchTree(loginTree, login => login.appId === appId)
