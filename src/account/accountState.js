@@ -9,7 +9,7 @@ import { applyKit, searchTree } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
-import { makeRepoFolder, syncRepo } from '../storage/repo.js'
+import { makeStorageState } from '../storage/storageState.js'
 
 function findAppLogin (loginTree, appId) {
   return searchTree(loginTree, login => login.appId === appId)
@@ -68,12 +68,11 @@ function ensureAccountExists (io, loginTree, appId) {
  * This is the data an account contains, and the methods to update it.
  */
 class AccountState {
-  constructor (io, appId, loginTree, keyInfo) {
+  constructor (io, appId, loginTree, storage) {
     // Constant stuff:
     this.io = io
     this.appId = appId
-    this.keyInfo = keyInfo
-    this.folder = makeRepoFolder(io, keyInfo)
+    this.storage = storage
 
     // Login state:
     this.loginTree = loginTree
@@ -112,10 +111,6 @@ class AccountState {
       return this
     })
   }
-
-  sync () {
-    return syncRepo(this.io, this.keyInfo)
-  }
 }
 
 export function makeAccountState (io, appId, loginTree) {
@@ -128,6 +123,8 @@ export function makeAccountState (io, appId, loginTree) {
       throw new Error(`Cannot find a "${type}" repo`)
     }
 
-    return new AccountState(io, appId, loginTree, keyInfo)
+    return makeStorageState(keyInfo, { io }).then(
+      storage => new AccountState(io, appId, loginTree, storage)
+    )
   })
 }

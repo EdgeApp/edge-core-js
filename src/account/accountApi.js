@@ -1,6 +1,7 @@
 import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
-import { wrapObject } from '../util/api.js'
+import { makeStorageWalletApi } from '../storage/storageApi.js'
+import { copyProperties, wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
 import { makeAccountState } from './accountState.js'
 
@@ -17,13 +18,11 @@ export function makeAccount (io, appId, loginTree, loginType) {
  * Creates an unwrapped account API object around an account state object.
  */
 function makeAccountApi (state, loginType) {
-  const { io, appId, keyInfo: { type }, folder } = state
+  const { io, appId, storage } = state
 
   const out = {
     // Immutable info:
     appId,
-    type,
-    folder,
 
     // These change dynamically as the login is modified:
     get login () {
@@ -76,10 +75,6 @@ function makeAccountApi (state, loginType) {
         .then(() => base58.stringify(state.loginTree.recovery2Key))
     },
 
-    sync () {
-      return state.sync()
-    },
-
     '@listWalletIds': { sync: true },
     listWalletIds () {
       return state.login.keyInfos.map(info => info.id)
@@ -113,6 +108,7 @@ function makeAccountApi (state, loginType) {
       return state.applyKit(kit).then(() => keyInfo.id)
     }
   }
+  copyProperties(out, makeStorageWalletApi(storage))
 
   out.checkPassword = out.passwordOk
   out.changePassword = out.passwordSetup
