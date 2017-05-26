@@ -15,114 +15,116 @@ import { makeBrowserIo } from './browser'
 import { IoContext } from './io.js'
 import { fixUsername } from './loginStore.js'
 
-export function Context (opts) {
-  this.io = new IoContext(opts.io != null ? opts.io : makeBrowserIo(), opts)
-  this.appId = opts.appId != null
+export function makeContext (opts) {
+  const io = new IoContext(opts.io != null ? opts.io : makeBrowserIo(), opts)
+  const appId = opts.appId != null
     ? opts.appId
     : opts.accountType != null
         ? opts.accountType.replace(/^account.repo:/, '')
         : ''
-}
 
-Context.prototype = wrapPrototype('Context', {
-  '@fixUsername': { sync: true },
-  fixUsername (username) {
-    return fixUsername(username)
-  },
+  const out = wrapPrototype('Context', {
+    io,
+    appId,
 
-  listUsernames () {
-    return this.io.loginStore.listUsernames()
-  },
+    '@fixUsername': { sync: true },
+    fixUsername (username) {
+      return fixUsername(username)
+    },
 
-  removeUsername (username) {
-    return this.io.loginStore.remove(username)
-  },
+    listUsernames () {
+      return io.loginStore.listUsernames()
+    },
 
-  usernameAvailable (username) {
-    return usernameAvailable(this.io, username)
-  },
+    removeUsername (username) {
+      return io.loginStore.remove(username)
+    },
 
-  createAccount (username, password, pin) {
-    const { io, appId } = this
-    return createLogin(io, username, { password, pin }).then(loginTree => {
-      return makeAccount(io, appId, loginTree, 'newAccount')
-    })
-  },
+    usernameAvailable (username) {
+      return usernameAvailable(io, username)
+    },
 
-  loginWithPassword (username, password) {
-    const { io, appId } = this
-    return loginPassword(io, username, password).then(loginTree => {
-      return makeAccount(io, appId, loginTree, 'passwordLogin')
-    })
-  },
+    createAccount (username, password, pin) {
+      return createLogin(io, username, {
+        password,
+        pin
+      }).then(loginTree => {
+        return makeAccount(io, appId, loginTree, 'newAccount')
+      })
+    },
 
-  '@checkPasswordRules': { sync: true },
-  checkPasswordRules (password) {
-    return checkPasswordRules(password)
-  },
+    loginWithPassword (username, password) {
+      return loginPassword(io, username, password).then(loginTree => {
+        return makeAccount(io, appId, loginTree, 'passwordLogin')
+      })
+    },
 
-  pinExists (username) {
-    return this.io.loginStore
-      .load(username)
-      .then(loginStash => getPin2Key(loginStash, this.appId).pin2Key != null)
-  },
+    '@checkPasswordRules': { sync: true },
+    checkPasswordRules (password) {
+      return checkPasswordRules(password)
+    },
 
-  pinLoginEnabled (username) {
-    return this.pinExists(username)
-  },
+    pinExists (username) {
+      return io.loginStore
+        .load(username)
+        .then(loginStash => getPin2Key(loginStash, appId).pin2Key != null)
+    },
 
-  loginWithPIN (username, pin) {
-    const { io, appId } = this
-    return loginPin2(io, appId, username, pin).then(loginTree => {
-      return makeAccount(io, appId, loginTree, 'pinLogin')
-    })
-  },
+    pinLoginEnabled (username) {
+      return this.pinExists(username)
+    },
 
-  getRecovery2Key (username) {
-    return this.io.loginStore.load(username).then(loginStash => {
-      const recovery2Key = getRecovery2Key(loginStash)
-      if (recovery2Key == null) {
-        throw new Error('No recovery key stored locally.')
+    loginWithPIN (username, pin) {
+      return loginPin2(io, appId, username, pin).then(loginTree => {
+        return makeAccount(io, appId, loginTree, 'pinLogin')
+      })
+    },
+
+    getRecovery2Key (username) {
+      return io.loginStore.load(username).then(loginStash => {
+        const recovery2Key = getRecovery2Key(loginStash)
+        if (recovery2Key == null) {
+          throw new Error('No recovery key stored locally.')
+        }
+        return base58.stringify(recovery2Key)
+      })
+    },
+
+    loginWithRecovery2 (recovery2Key, username, answers) {
+      recovery2Key = base58.parse(recovery2Key)
+      return loginRecovery2(
+        io,
+        recovery2Key,
+        username,
+        answers
+      ).then(loginTree => {
+        return makeAccount(io, appId, loginTree, 'recoveryLogin')
+      })
+    },
+
+    fetchRecovery2Questions (recovery2Key, username) {
+      recovery2Key = base58.parse(recovery2Key)
+      return getQuestions2(io, recovery2Key, username)
+    },
+
+    listRecoveryQuestionChoices () {
+      return listRecoveryQuestionChoices(io)
+    },
+
+    requestEdgeLogin (opts) {
+      const onLogin = opts.onLogin
+      opts.onLogin = (err, loginTree) => {
+        if (err) return onLogin(err)
+        makeAccount(io, appId, loginTree).then(
+          account => onLogin(null, account),
+          err => onLogin(err)
+        )
       }
-      return base58.stringify(recovery2Key)
-    })
-  },
-
-  loginWithRecovery2 (recovery2Key, username, answers) {
-    const { io, appId } = this
-    recovery2Key = base58.parse(recovery2Key)
-    return loginRecovery2(
-      io,
-      recovery2Key,
-      username,
-      answers
-    ).then(loginTree => {
-      return makeAccount(io, appId, loginTree, 'recoveryLogin')
-    })
-  },
-
-  fetchRecovery2Questions (recovery2Key, username) {
-    recovery2Key = base58.parse(recovery2Key)
-    return getQuestions2(this.io, recovery2Key, username)
-  },
-
-  listRecoveryQuestionChoices () {
-    return listRecoveryQuestionChoices(this.io)
-  },
-
-  requestEdgeLogin (opts) {
-    const { io, appId } = this
-    const { onLogin } = opts
-
-    opts.onLogin = (err, loginTree) => {
-      if (err) return onLogin(err)
-      makeAccount(io, appId, loginTree).then(
-        account => onLogin(null, account),
-        err => onLogin(err)
-      )
+      return requestEdgeLogin(io, appId, opts)
     }
-    return requestEdgeLogin(io, appId, opts)
-  }
-})
+  })
 
-Context.prototype.usernameList = Context.prototype.listUsernames
+  out.usernameList = out.listUsernames
+
+  return out
+}
