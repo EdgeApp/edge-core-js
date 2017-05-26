@@ -3,6 +3,7 @@
  * used by the unit tests.
  */
 import { Account } from '../../src/api/account.js'
+import { fixUsername } from '../../src/io/loginStore.js'
 import { applyLoginReply, makeLoginTree } from '../../src/login/login.js'
 import { LoginState } from '../../src/login/state.js'
 import { makeRepoFolders, saveChanges } from '../../src/repo'
@@ -192,7 +193,7 @@ export const fakeRepoInfo = {
 /**
  * Creates a login object on the fakeServer
  */
-function createFakeServerUser (context, user, authJson = {}) {
+function createFakeServerUser (io, user, authJson = {}) {
   // Create the login on the server:
   const data = filterObject(user, [
     'appId',
@@ -218,7 +219,7 @@ function createFakeServerUser (context, user, authJson = {}) {
   ])
   data.newSyncKeys = Object.keys(repos)
   authJson.data = data
-  context.io.fetch('https://hostname/api/v2/login/create', {
+  io.fetch('https://hostname/api/v2/login/create', {
     method: 'POST',
     body: JSON.stringify(authJson)
   })
@@ -234,24 +235,26 @@ function createFakeServerUser (context, user, authJson = {}) {
       userId: user.loginId,
       passwordAuth: user.passwordAuth
     }
-  children.forEach(child => createFakeServerUser(context, child, parentAuth))
+  children.forEach(child => createFakeServerUser(io, child, parentAuth))
 }
 
 export function makeFakeAccount (context, user) {
+  const { io, appId } = context
+
   // Create the login on the server:
-  createFakeServerUser(context, user)
+  createFakeServerUser(io, user)
 
   // Store the login on the client:
   const loginStash = applyLoginReply(
-    { username: context.fixUsername(user.username), appId: '' },
+    { username: fixUsername(user.username), appId: '' },
     user.loginKey,
     user
   )
-  context.io.loginStore.save(loginStash)
+  io.loginStore.save(loginStash)
 
   // Populate the repos on the server:
   Object.keys(repos).forEach(syncKey =>
-    context.io.fetch('https://hostname/api/v2/store/' + syncKey, {
+    io.fetch('https://hostname/api/v2/store/' + syncKey, {
       method: 'POST',
       body: JSON.stringify({ changes: repos[syncKey] })
     })
@@ -259,12 +262,12 @@ export function makeFakeAccount (context, user) {
 
   // Populate the repos on the client:
   Object.keys(repos).forEach(syncKey => {
-    const folders = makeRepoFolders(context.io, fakeRepoInfo)
+    const folders = makeRepoFolders(io, fakeRepoInfo)
     saveChanges(folders.data, repos[syncKey])
   })
 
   // Return the account object:
   const loginTree = makeLoginTree(loginStash, user.loginKey)
-  const state = new LoginState(context.io, loginTree)
-  return new Account(context, state)
+  const state = new LoginState(io, loginTree)
+  return new Account(io, appId, state)
 }

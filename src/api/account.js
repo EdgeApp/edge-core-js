@@ -14,15 +14,13 @@ function findAccount (login, type) {
   return login.keyInfos.find(info => info.type === type)
 }
 
-export function makeAccount (ctx, loginTree, loginType = 'loggedIn') {
-  const { io, appId } = ctx
-
+export function makeAccount (io, appId, loginTree, loginType = 'loggedIn') {
   const state = new LoginState(io, loginTree)
   return state
     .ensureLogin(appId)
     .then(() => state.ensureAccountRepo(state.findLogin(appId)))
     .then(() => {
-      const account = new Account(ctx, state)
+      const account = new Account(io, appId, state)
       account[loginType] = true
       return account.sync().then(dirty => account)
     })
@@ -32,9 +30,9 @@ export function makeAccount (ctx, loginTree, loginType = 'loggedIn') {
  * This is a thin shim object,
  * which wraps the core implementation in a more OOP-style API.
  */
-export function Account (ctx, loginState) {
-  this.io = ctx.io
-  this.appId = ctx.appId
+export function Account (io, appId, loginState) {
+  this.io = io
+  this.appId = appId
   this._state = loginState
 
   // Flags:
@@ -45,7 +43,7 @@ export function Account (ctx, loginState) {
   this.recoveryLogin = false
 
   // Repo:
-  this.type = makeAccountType(ctx.appId)
+  this.type = makeAccountType(appId)
   const keyInfo = findAccount(this.login, this.type)
   if (keyInfo == null) {
     throw new Error(`Cannot find a "${this.type}" repo`)

@@ -43,14 +43,16 @@ Context.prototype = wrapPrototype('Context', {
   },
 
   createAccount (username, password, pin) {
-    return createLogin(this.io, username, { password, pin }).then(loginTree => {
-      return makeAccount(this, loginTree, 'newAccount')
+    const { io, appId } = this
+    return createLogin(io, username, { password, pin }).then(loginTree => {
+      return makeAccount(io, appId, loginTree, 'newAccount')
     })
   },
 
   loginWithPassword (username, password) {
-    return loginPassword(this.io, username, password).then(loginTree => {
-      return makeAccount(this, loginTree, 'passwordLogin')
+    const { io, appId } = this
+    return loginPassword(io, username, password).then(loginTree => {
+      return makeAccount(io, appId, loginTree, 'passwordLogin')
     })
   },
 
@@ -70,8 +72,9 @@ Context.prototype = wrapPrototype('Context', {
   },
 
   loginWithPIN (username, pin) {
-    return loginPin2(this.io, this.appId, username, pin).then(loginTree => {
-      return makeAccount(this, loginTree, 'pinLogin')
+    const { io, appId } = this
+    return loginPin2(io, appId, username, pin).then(loginTree => {
+      return makeAccount(io, appId, loginTree, 'pinLogin')
     })
   },
 
@@ -86,14 +89,15 @@ Context.prototype = wrapPrototype('Context', {
   },
 
   loginWithRecovery2 (recovery2Key, username, answers) {
+    const { io, appId } = this
     recovery2Key = base58.parse(recovery2Key)
     return loginRecovery2(
-      this.io,
+      io,
       recovery2Key,
       username,
       answers
     ).then(loginTree => {
-      return makeAccount(this, loginTree, 'recoveryLogin')
+      return makeAccount(io, appId, loginTree, 'recoveryLogin')
     })
   },
 
@@ -107,15 +111,17 @@ Context.prototype = wrapPrototype('Context', {
   },
 
   requestEdgeLogin (opts) {
-    const onLogin = opts.onLogin
+    const { io, appId } = this
+    const { onLogin } = opts
+
     opts.onLogin = (err, loginTree) => {
       if (err) return onLogin(err)
-      makeAccount(this, loginTree).then(
+      makeAccount(io, appId, loginTree).then(
         account => onLogin(null, account),
         err => onLogin(err)
       )
     }
-    return requestEdgeLogin(this.io, this.appId, opts)
+    return requestEdgeLogin(io, appId, opts)
   }
 })
 

@@ -214,9 +214,9 @@ describe('pin', function () {
     const trimmedUser = objectAssign({}, fakeUser)
     trimmedUser.pin2Key = null
 
-    const [context] = makeFakeContexts(1)
-    makeFakeAccount(context, trimmedUser)
-    context.appId = 'test-child'
+    const [io] = makeFakeIos(1)
+    const context = makeContext({ io, appId: 'test-child' })
+    makeFakeAccount({ io: context.io, appId: '' }, trimmedUser)
 
     return context
       .loginWithPIN(fakeUser.username, fakeUser.pin)
