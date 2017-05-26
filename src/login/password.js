@@ -157,7 +157,8 @@ export function makePasswordKit (io, login, username, password) {
       },
       login: {
         passwordAuth
-      }
+      },
+      loginId: login.loginId
     }
   })
 }

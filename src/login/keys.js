@@ -44,6 +44,7 @@ export function makeKeysKit (io, login, ...keyInfos) {
     serverPath: '/v2/login/keys',
     server: { keyBoxes, newSyncKeys },
     stash: { keyBoxes },
-    login: { keyInfos }
+    login: { keyInfos },
+    loginId: login.loginId
   }
 }

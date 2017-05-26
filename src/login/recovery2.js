@@ -117,7 +117,8 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
     },
     login: {
       recovery2Key
-    }
+    },
+    loginId: login.loginId
   }
 }
 

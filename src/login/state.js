@@ -1,6 +1,6 @@
 import { makeCreateKit } from './create.js'
 import { makeAccountType, makeKeysKit, makeStorageKeyInfo } from './keys.js'
-import { dispatchKit, searchTree } from './login.js'
+import { applyKit, searchTree } from './login.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 import { makeRecovery2Kit } from './recovery2.js'
@@ -36,13 +36,13 @@ export class LoginState {
     const { io, loginTree, loginTree: { username } } = this
     checkLogin(login)
 
-    const keyInfo = makeStorageKeyInfo(io, makeAccountType(login.appId))
     const opts = { pin: loginTree.pin }
     if (wantRepo) {
+      const keyInfo = makeStorageKeyInfo(io, makeAccountType(login.appId))
       opts.keysKit = makeKeysKit(io, login, keyInfo)
     }
     return makeCreateKit(io, login, appId, username, opts).then(kit =>
-      this.dispatchKit(login, kit)
+      this.applyKit(kit)
     )
   }
 
@@ -59,7 +59,7 @@ export class LoginState {
     checkLogin(login)
 
     const keyInfo = makeStorageKeyInfo(io, accountType)
-    return this.dispatchKit(login, makeKeysKit(io, login, keyInfo))
+    return this.applyKit(makeKeysKit(io, login, keyInfo))
   }
 
   changePassword (password, login = this.loginTree) {
@@ -67,7 +67,7 @@ export class LoginState {
     checkLogin(login)
 
     return makePasswordKit(io, login, username, password).then(kit =>
-      this.dispatchKit(login, kit)
+      this.applyKit(kit)
     )
   }
 
@@ -76,7 +76,7 @@ export class LoginState {
     checkLogin(login)
 
     const kit = makePin2Kit(io, login, username, pin)
-    return this.dispatchKit(login, kit)
+    return this.applyKit(kit)
   }
 
   changeRecovery (questions, answers, login = this.loginTree) {
@@ -84,7 +84,7 @@ export class LoginState {
     checkLogin(login)
 
     const kit = makeRecovery2Kit(io, login, username, questions, answers)
-    return this.dispatchKit(login, kit)
+    return this.applyKit(kit)
   }
 
   findLogin (appId) {
@@ -92,8 +92,8 @@ export class LoginState {
   }
 
   // Internal helper functions
-  dispatchKit (login, kit) {
-    return dispatchKit(this.io, this.loginTree, login, kit).then(loginTree =>
+  applyKit (kit) {
+    return applyKit(this.io, this.loginTree, kit).then(loginTree =>
       this.update(loginTree)
     )
   }

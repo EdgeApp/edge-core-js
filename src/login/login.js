@@ -212,16 +212,17 @@ export function makeLoginTree (stashTree, loginKey, appId = '') {
  * and the on-disk stash. A login kit contains all three elements,
  * and this function knows how to apply them all.
  */
-export function dispatchKit (io, loginTree, login, kit) {
+export function applyKit (io, loginTree, kit) {
+  const { loginId } = kit
+  const login = searchTree(loginTree, login => login.loginId === loginId)
+
   return io.loginStore.load(loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
     request.data = kit.server
     return io.authRequest('POST', kit.serverPath, request).then(reply => {
-      const appId = login.appId
-
       const newLoginTree = updateTree(
         loginTree,
-        login => login.appId === appId,
+        login => login.loginId === loginId,
         login =>
           objectAssign({}, login, kit.login, {
             children: softCat(login.children, kit.login.children),
@@ -233,7 +234,7 @@ export function dispatchKit (io, loginTree, login, kit) {
 
       const newStashTree = updateTree(
         stashTree,
-        stash => stash.appId === appId,
+        stash => stash.loginId === loginId,
         stash =>
           objectAssign({}, stash, kit.stash, {
             children: softCat(stash.children, kit.stash.children),

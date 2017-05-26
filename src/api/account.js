@@ -137,7 +137,7 @@ Account.prototype = wrapPrototype('Account', {
   createWallet (type, keys) {
     const keyInfo = makeStorageKeyInfo(this.io, type, keys)
     const kit = makeKeysKit(this.io, this.login, keyInfo)
-    return this._state.dispatchKit(this.login, kit).then(() => keyInfo.id)
+    return this._state.applyKit(kit).then(() => keyInfo.id)
   }
 })
 

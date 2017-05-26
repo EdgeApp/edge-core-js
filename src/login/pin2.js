@@ -85,6 +85,7 @@ export function makePin2Kit (io, login, username, pin) {
     login: {
       pin,
       pin2Key
-    }
+    },
+    loginId: login.loginId
   }
 }
