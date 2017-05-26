@@ -7,7 +7,7 @@ import {
 import { checkPassword } from '../login/password.js'
 import { LoginState } from '../login/state.js'
 import { makeRepoFolder, syncRepo } from '../repo'
-import { wrapPrototype } from '../util/api.js'
+import { wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
 
 /**
@@ -20,7 +20,7 @@ export function makeAccount (io, appId, loginTree, loginType) {
     .then(() => state.ensureAccountRepo(state.findLogin(appId)))
     .then(() => {
       const account = makeAccountInner(io, appId, state, loginType)
-      return account.sync().then(dirty => wrapPrototype('Account', account))
+      return account.sync().then(dirty => wrapObject(io.log, 'Account', account))
     })
 }
 
@@ -40,7 +40,6 @@ export function makeAccountInner (io, appId, state, loginType) {
 
   const out = {
     // Immutable info:
-    io,
     appId,
     type,
     folder,

@@ -9,7 +9,7 @@ import {
   loginRecovery2,
   listRecoveryQuestionChoices
 } from '../login/recovery2.js'
-import { wrapPrototype } from '../util/api.js'
+import { wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
 import { makeBrowserIo } from './browser'
 import { IoContext } from './io.js'
@@ -23,7 +23,7 @@ export function makeContext (opts) {
         ? opts.accountType.replace(/^account.repo:/, '')
         : ''
 
-  const out = wrapPrototype('Context', {
+  const out = wrapObject(io.log, 'Context', {
     io,
     appId,
 

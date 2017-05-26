@@ -3,10 +3,10 @@ import { rejectify } from '../util/decorators.js'
 /**
  * Prepares an async API endpoint for consumption by the outside world.
  */
-export function asyncApi (f, name) {
+function asyncApi (f, log, name) {
   return function asyncApi (...rest) {
     const promise = rejectify(f).apply(this, rest).catch(e => {
-      this.io.log.error(name, e)
+      log.error(name, e)
       throw e
     })
 
@@ -23,45 +23,58 @@ export function asyncApi (f, name) {
 /**
  * Prepares a sync API endploint for consumption by the outside world.
  */
-export function syncApi (f, name) {
+function syncApi (f, log, name) {
   return function syncApi (...rest) {
     try {
       return f.apply(this, rest)
     } catch (e) {
-      this.io.log.error(name, e)
+      log.error(name, e)
       throw e
     }
   }
 }
 
-function wrapApi (f, name, opts = {}) {
-  return opts.sync ? syncApi(f, name) : asyncApi(f, name)
+/**
+ * Adjusts a property decscriptor, making the property ready for use as an API.
+ */
+function wrapProperty (key, d, log, className, opts = {}) {
+  // Wrap functions:
+  if (typeof d.value === 'function') {
+    const name = `${className}.${key}`
+    d.value = opts.sync
+      ? syncApi(d.value, log, name)
+      : asyncApi(d.value, log, name)
+  }
+  if (d.get != null) {
+    d.get = syncApi(d.get, log, `get ${className}.${key}`)
+  }
+  if (d.set != null) {
+    d.set = syncApi(d.set, log, `set ${className}.${key}`)
+  }
+
+  // Properties are read-only by default:
+  if (!opts.writable && d.get == null && d.set == null) {
+    d.writable = false
+  }
+
+  return d
 }
 
 /**
- * Decorates the functions in the provided prototype object,
- * making them ready for use as an API.
+ * Copies the provided object, making its properties ready for use as an API.
+ * If a property name starts with `@`, it is treated as an options structure.
  */
-export function wrapPrototype (className, template) {
+export function wrapObject (log, className, object) {
   const out = {}
 
-  Object.getOwnPropertyNames(template).forEach(key => {
+  Object.getOwnPropertyNames(object).forEach(key => {
+    // Skip over options:
     if (/^@/.test(key)) return
-    const d = Object.getOwnPropertyDescriptor(template, key)
-    const opts = template['@' + key]
 
-    // Wrap the value:
-    if (typeof d.value === 'function') {
-      d.value = wrapApi(d.value, `${className}.${key}`, opts)
-    }
-    if (d.get != null) {
-      d.get = syncApi(d.get, `get ${className}.${key}`)
-    }
-    if (d.set != null) {
-      d.set = syncApi(d.set, `set ${className}.${key}`)
-    }
-
-    Object.defineProperty(out, key, d)
+    // Copy properties:
+    const d = Object.getOwnPropertyDescriptor(object, key)
+    const opts = object['@' + key]
+    Object.defineProperty(out, key, wrapProperty(key, d, log, className, opts))
   })
 
   return out
