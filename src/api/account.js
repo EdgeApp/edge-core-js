@@ -8,7 +8,6 @@ import { checkPassword } from '../login/password.js'
 import { LoginState } from '../login/state.js'
 import { makeRepoFolder, syncRepo } from '../repo'
 import { base58 } from '../util/encoding.js'
-import { Wallet } from './wallet.js'
 import { wrapPrototype } from './wrap.js'
 
 export function makeAccount (io, appId, loginTree, loginType = 'loggedIn') {
@@ -109,7 +108,7 @@ Account.prototype = wrapPrototype('Account', {
   '@getWallet': { sync: true },
   getWallet (id) {
     const info = this.login.keyInfos.find(info => info.id === id)
-    return info != null ? new Wallet(info.type, info.keys) : null
+    return info
   },
 
   /**
@@ -119,8 +118,7 @@ Account.prototype = wrapPrototype('Account', {
    */
   '@getFirstWallet': { sync: true },
   getFirstWallet (type) {
-    const info = findFirstKey(this.login.keyInfos, type)
-    return info != null ? new Wallet(info.type, info.keys) : null
+    return findFirstKey(this.login.keyInfos, type)
   },
 
   /**
