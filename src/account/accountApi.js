@@ -1,42 +1,23 @@
-import {
-  findFirstKey,
-  makeAccountType,
-  makeKeysKit,
-  makeStorageKeyInfo
-} from '../login/keys.js'
+import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
-import { LoginState } from '../login/state.js'
-import { makeRepoFolder, syncRepo } from '../repo'
 import { wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
+import { makeAccountState } from './accountState.js'
 
 /**
- * Creates an `Account` API object, setting up any missing prerequisites.
+ * Creates an `Account` API object.
  */
 export function makeAccount (io, appId, loginTree, loginType) {
-  const state = new LoginState(io, loginTree)
-  return state
-    .ensureLogin(appId)
-    .then(() => state.ensureAccountRepo(state.findLogin(appId)))
-    .then(() => {
-      const account = makeAccountInner(io, appId, state, loginType)
-      return account.sync().then(dirty => wrapObject(io.log, 'Account', account))
-    })
+  return makeAccountState(io, appId, loginTree).then(state =>
+    wrapObject(io.log, 'Account', makeAccountApi(state, loginType))
+  )
 }
 
 /**
- * Creates an `Account` API object,
- * assuming all the prerequisites are present (proper appId, account repo).
+ * Creates an unwrapped account API object around an account state object.
  */
-export function makeAccountInner (io, appId, state, loginType) {
-  // Find repo keys:
-  const login = state.findLogin(appId)
-  const type = makeAccountType(appId)
-  const keyInfo = findFirstKey(login.keyInfos, type)
-  if (keyInfo == null) {
-    throw new Error(`Cannot find a "${type}" repo`)
-  }
-  const folder = makeRepoFolder(io, keyInfo)
+function makeAccountApi (state, loginType) {
+  const { io, appId, keyInfo: { type }, folder } = state
 
   const out = {
     // Immutable info:
@@ -46,7 +27,7 @@ export function makeAccountInner (io, appId, state, loginType) {
 
     // These change dynamically as the login is modified:
     get login () {
-      return state.findLogin(appId)
+      return state.login
     },
     get loginTree () {
       return state.loginTree
@@ -72,7 +53,7 @@ export function makeAccountInner (io, appId, state, loginType) {
     },
 
     logout () {
-      state.loginTree = null
+      state.logout()
     },
 
     passwordOk (password) {
@@ -85,8 +66,8 @@ export function makeAccountInner (io, appId, state, loginType) {
 
     pinSetup (pin) {
       return state
-        .changePin(pin, this.login)
-        .then(() => base58.stringify(this.login.pin2Key))
+        .changePin(pin)
+        .then(() => base58.stringify(state.login.pin2Key))
     },
 
     recovery2Set (questions, answers) {
@@ -96,17 +77,17 @@ export function makeAccountInner (io, appId, state, loginType) {
     },
 
     sync () {
-      return syncRepo(io, keyInfo)
+      return state.sync()
     },
 
     '@listWalletIds': { sync: true },
     listWalletIds () {
-      return this.login.keyInfos.map(info => info.id)
+      return state.login.keyInfos.map(info => info.id)
     },
 
     '@getWallet': { sync: true },
     getWallet (id) {
-      const info = this.login.keyInfos.find(info => info.id === id)
+      const info = state.login.keyInfos.find(info => info.id === id)
       return info
     },
 
@@ -117,7 +98,7 @@ export function makeAccountInner (io, appId, state, loginType) {
      */
     '@getFirstWallet': { sync: true },
     getFirstWallet (type) {
-      return findFirstKey(this.login.keyInfos, type)
+      return findFirstKey(state.login.keyInfos, type)
     },
 
     /**
@@ -128,7 +109,7 @@ export function makeAccountInner (io, appId, state, loginType) {
      */
     createWallet (type, keys) {
       const keyInfo = makeStorageKeyInfo(io, type, keys)
-      const kit = makeKeysKit(io, this.login, keyInfo)
+      const kit = makeKeysKit(io, state.login, keyInfo)
       return state.applyKit(kit).then(() => keyInfo.id)
     }
   }
