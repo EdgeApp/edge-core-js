@@ -1,13 +1,14 @@
 import { makeCreateKit } from './create.js'
-import { makeAccountType, makeKeysKit, makeStorageKeyInfo } from './keys.js'
+import {
+  findFirstKey,
+  makeAccountType,
+  makeKeysKit,
+  makeStorageKeyInfo
+} from './keys.js'
 import { applyKit, searchTree } from './login.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 import { makeRecovery2Kit } from './recovery2.js'
-
-function findKeyInfo (login, type) {
-  return login.keyInfos.find(info => info.type === type)
-}
 
 function checkLogin (login) {
   if (login == null || login.loginKey == null) {
@@ -51,7 +52,7 @@ export class LoginState {
    */
   ensureAccountRepo (login) {
     const accountType = makeAccountType(login.appId)
-    if (findKeyInfo(login, accountType) != null) {
+    if (findFirstKey(login.keyInfos, accountType) != null) {
       return Promise.resolve(this)
     }
 

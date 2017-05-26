@@ -1,6 +1,13 @@
 import { encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { base16, base64, utf8 } from '../util/encoding.js'
 
+/**
+ * Returns the first keyInfo with a matching type.
+ */
+export function findFirstKey (keyInfos, type) {
+  return keyInfos.find(info => info.type === type)
+}
+
 export function makeAccountType (appId) {
   return appId === ''
     ? 'account-repo:co.airbitz.wallet'

@@ -1,4 +1,5 @@
 import {
+  findFirstKey,
   makeAccountType,
   makeKeysKit,
   makeStorageKeyInfo
@@ -9,10 +10,6 @@ import { makeRepoFolder, syncRepo } from '../repo'
 import { base58 } from '../util/encoding.js'
 import { Wallet } from './wallet.js'
 import { wrapPrototype } from './wrap.js'
-
-function findAccount (login, type) {
-  return login.keyInfos.find(info => info.type === type)
-}
 
 export function makeAccount (io, appId, loginTree, loginType = 'loggedIn') {
   const state = new LoginState(io, loginTree)
@@ -44,7 +41,7 @@ export function Account (io, appId, loginState) {
 
   // Repo:
   this.type = makeAccountType(appId)
-  const keyInfo = findAccount(this.login, this.type)
+  const keyInfo = findFirstKey(this.login.keyInfos, this.type)
   if (keyInfo == null) {
     throw new Error(`Cannot find a "${this.type}" repo`)
   }
@@ -97,7 +94,7 @@ Account.prototype = wrapPrototype('Account', {
   },
 
   sync () {
-    const keyInfo = findAccount(this.login, this.type)
+    const keyInfo = findFirstKey(this.login.keyInfos, this.type)
     if (keyInfo != null) {
       return syncRepo(this.io, keyInfo)
     }
@@ -122,7 +119,7 @@ Account.prototype = wrapPrototype('Account', {
    */
   '@getFirstWallet': { sync: true },
   getFirstWallet (type) {
-    const info = this.login.keyInfos.find(info => info.type === type)
+    const info = findFirstKey(this.login.keyInfos, type)
     return info != null ? new Wallet(info.type, info.keys) : null
   },
 
