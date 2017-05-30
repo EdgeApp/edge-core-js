@@ -32,7 +32,7 @@ function onReply (io, subscription, reply, appId, opts) {
   // The Airbitz mobile will sometimes send the pin2Key in base58
   // instead of base64 due to an unfortunate bug. Fix that:
   if (child.pin2Key != null && child.pin2Key.slice(-1) !== '=') {
-    io.log.warn('Fixing base58 pin2Key')
+    io.console.warn('Fixing base58 pin2Key')
     child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
   }
   io.loginStore.save(stashTree)

@@ -64,7 +64,7 @@ export function loginPassword (io, username, password) {
         const loginTree = makeLoginTree(stashTree, loginKey)
 
         // Since we logged in offline, update the stash in the background:
-        syncLogin(io, loginTree, loginTree).catch(e => io.log.warn(e))
+        syncLogin(io, loginTree, loginTree).catch(e => io.console.warn(e))
 
         return loginTree
       })

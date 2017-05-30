@@ -69,7 +69,7 @@ export class AuthServer {
     }
 
     const uri = this.authServer + path
-    this.io.log.info(`${method} ${uri}`)
+    this.io.console.info(`${method} ${uri}`)
     return timeout(
       this.io.fetch(uri, opts).then(
         response =>

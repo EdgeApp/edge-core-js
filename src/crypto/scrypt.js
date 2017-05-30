@@ -89,7 +89,7 @@ function calcSnrpForTarget (io, targetHashTimeMilliseconds) {
     nUnPowered = nUnPowered >= 1 ? nUnPowered : 1
     snrp.n = Math.pow(2, nUnPowered + 13)
 
-    io.log.info(
+    io.console.info(
       `snrp: ${snrp.n} ${snrp.r} ${snrp.p} based on ${timeElapsed}ms benchmark`
     )
     return snrp

@@ -23,7 +23,7 @@ function syncRequestInner (io, method, path, body, serverIndex) {
   }
 
   const uri = syncServers[serverIndex] + path
-  io.log.info(`${method} ${uri}`)
+  io.console.info(`${method} ${uri}`)
   return timeout(
     io.fetch(uri, opts).then(
       response =>

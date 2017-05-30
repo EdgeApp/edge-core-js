@@ -30,7 +30,6 @@ export class IoContext {
 
     // Set up wrapper objects:
     this.authServer = new AuthServer(this, opts.apiKey, opts.authServer)
-    this.log = this.console
     this.loginStore = new LoginStore(this)
   }
 
