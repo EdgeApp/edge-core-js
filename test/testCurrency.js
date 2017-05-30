@@ -18,7 +18,25 @@ describe('currency wallets', function () {
       return makeCurrencyWallet(keyInfo, {
         io,
         plugin: fakeCurrency
-      }).then(wallet => assert.equal(wallet.id, keyInfo.id))
+      }).then(wallet => assert.equal(wallet.name, 'Fake Wallet'))
+    })
+  })
+
+  it('can be renamed', function () {
+    const [io] = makeFakeIos(1)
+    const context = makeContext({ io })
+
+    return makeFakeAccount(context, fakeUser).then(account => {
+      const keyInfo = account.getFirstWallet('wallet:fakecoin')
+
+      return makeCurrencyWallet(keyInfo, {
+        io,
+        plugin: fakeCurrency
+      }).then(wallet =>
+        wallet
+          .renameWallet('Another Name')
+          .then(() => assert.equal(wallet.name, 'Another Name'))
+      )
     })
   })
 })

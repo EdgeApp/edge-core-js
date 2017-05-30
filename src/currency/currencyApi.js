@@ -31,6 +31,9 @@ export function makeCurrencyApi (state) {
     get name () {
       return state.name
     },
+    renameWallet (name) {
+      return state.rename(name)
+    },
 
     // Currency info:
     get fiatCurrencyCode () {

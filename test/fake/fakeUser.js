@@ -187,7 +187,13 @@ export const repos = {
       encryptionType: 0
     }
   },
-  '5ca83c3a724244d519aec49efe5a8fc96c6fcdac': {}
+  '5ca83c3a724244d519aec49efe5a8fc96c6fcdac': {
+    'WalletName.json': {
+      data_base64: 'MFD9Q9hL48NfjUkP7XYi1UKhenwCxsw10y5ASMZvNLWBmBkxiSiBxQzd92ga15qtuce+0iWj43tRn6HWw0wzvglIuxqNDAXE9B8WLGxOS9U=',
+      encryptionType: 0,
+      iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0'
+    }
+  }
 }
 
 export const fakeRepoInfo = {
