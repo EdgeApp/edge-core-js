@@ -42,4 +42,44 @@ describe('account', function () {
       })
     })
   })
+
+  it('list keys', function () {
+    const [context] = makeFakeContexts(1)
+
+    return makeFakeAccount(context, fakeUser).then(account => {
+      const allTypes = account.allKeys.map(info => info.type)
+      assert.deepEqual(allTypes, [
+        'wallet:bitcoin',
+        'account-repo:co.airbitz.wallet',
+        'wallet:fakecoin'
+      ])
+      return null
+    })
+  })
+
+  it('change key state', function () {
+    const [context] = makeFakeContexts(1)
+
+    return makeFakeAccount(context, fakeUser).then(account =>
+      account
+        .changeKeyStates({
+          'l3A0+Sx7oNFmrmRa1eefkCxbF9Y3ya9afVadVOBLgT8=': { sortIndex: 1 },
+          'JN4meEIJO05QhDMN3QZd48Qh7F1xHUpUmy2oEhg9DdY=': { deleted: true },
+          'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=': { sortIndex: 0 }
+        })
+        .then(() =>
+          account.changeKeyStates({
+            'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=': { archived: true }
+          })
+        )
+        .then(() => {
+          const allKeys = account.allKeys
+          assert.equal(allKeys[0].sortIndex, 1)
+          assert.equal(allKeys[1].deleted, true)
+          assert.equal(allKeys[2].sortIndex, 0)
+          assert.equal(allKeys[2].archived, true)
+          return null
+        })
+    )
+  })
 })

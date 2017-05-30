@@ -1,8 +1,14 @@
-import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
+import {
+  findFirstKey,
+  makeKeysKit,
+  makeStorageKeyInfo,
+  mergeKeyInfos
+} from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
+import { softCat } from '../util/util.js'
 import { makeAccountState } from './accountState.js'
 
 /**
@@ -79,8 +85,24 @@ function makeAccountApi (state, loginType) {
      * Retrieves all the keys that are available to this login object.
      */
     get allKeys () {
-      const { appId, login } = this
-      return login.keyInfos.map(info => ({ appId, archived: false, ...info }))
+      const { keyStates, legacyKeyInfos, login } = state
+      const allKeys = mergeKeyInfos(softCat(legacyKeyInfos, login.keyInfos))
+
+      return allKeys.map(info => ({
+        appId,
+        archived: false,
+        deleted: false,
+        sortIndex: allKeys.length,
+        ...keyStates[info.id],
+        ...info
+      }))
+    },
+
+    /**
+     * Adjusts the sort, archive, or deletion state of keys.
+     */
+    changeKeyStates (keyStates) {
+      return state.changeKeyStates(keyStates)
     },
 
     '@listWalletIds': { sync: true },

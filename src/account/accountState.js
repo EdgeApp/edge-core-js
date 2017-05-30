@@ -10,6 +10,7 @@ import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
 import { makeStorageState } from '../storage/storageState.js'
+import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 function findAppLogin (loginTree, appId) {
   return searchTree(loginTree, login => login.appId === appId)
@@ -77,6 +78,8 @@ class AccountState {
     // Login state:
     this.loginTree = loginTree
     this.login = findAppLogin(loginTree, this.appId)
+    this.legacyKeyInfos = []
+    this.keyStates = {}
   }
 
   changePassword (password, login = this.loginTree) {
@@ -111,6 +114,24 @@ class AccountState {
       return this
     })
   }
+
+  changeKeyStates (newStates) {
+    const { keyStates, storage } = this
+    return changeKeyStates(storage, keyStates, newStates).then(keyStates => {
+      this.keyStates = keyStates
+      return void 0
+    })
+  }
+
+  reloadKeyStates () {
+    const { storage } = this
+    return loadAllKeyStates(storage).then(values => {
+      const { keyInfos, keyStates } = values
+      this.legacyKeyInfos = keyInfos
+      this.keyStates = keyStates
+      return this
+    })
+  }
 }
 
 export function makeAccountState (io, appId, loginTree) {
@@ -123,8 +144,9 @@ export function makeAccountState (io, appId, loginTree) {
       throw new Error(`Cannot find a "${type}" repo`)
     }
 
-    return makeStorageState(keyInfo, { io }).then(
-      storage => new AccountState(io, appId, loginTree, storage)
-    )
+    return makeStorageState(keyInfo, { io }).then(storage => {
+      const account = new AccountState(io, appId, loginTree, storage)
+      return account.reloadKeyStates()
+    })
   })
 }
