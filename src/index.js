@@ -1,4 +1,4 @@
-import { Context } from './api/context.js'
+import { makeContext } from './io/context.js'
 import { objectAssign } from './util/util.js'
 
 // Secret CLI exports:
@@ -21,9 +21,7 @@ export { makeFakeIos } from './io/fake'
  *       Defaults to browser IO if not provided.
  * @return An Airbitz core library instance.
  */
-export function makeContext (opts) {
-  return new Context(opts)
-}
+export { makeContext }
 
 /**
  * Same thing as `makeContext`, but corresponding to the documentation.

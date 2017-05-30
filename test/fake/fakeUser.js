@@ -2,11 +2,10 @@
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
-import { Account } from '../../src/api/account.js'
+import { makeAccount } from '../../src/account/accountApi.js'
 import { fixUsername } from '../../src/io/loginStore.js'
 import { applyLoginReply, makeLoginTree } from '../../src/login/login.js'
-import { LoginState } from '../../src/login/state.js'
-import { makeRepoFolders, saveChanges } from '../../src/repo'
+import { makeRepoFolders, saveChanges } from '../../src/storage/repo.js'
 import { base16, base64 } from '../../src/util/encoding.js'
 import { elvis, filterObject } from '../../src/util/util.js'
 
@@ -191,7 +190,7 @@ export const fakeRepoInfo = {
 }
 
 /**
- * Creates a login object on the fakeServer
+ * Creates a login object on the fakeServer.
  */
 function createFakeServerUser (io, user, authJson = {}) {
   // Create the login on the server:
@@ -219,55 +218,67 @@ function createFakeServerUser (io, user, authJson = {}) {
   ])
   data.newSyncKeys = Object.keys(repos)
   authJson.data = data
-  io.fetch('https://hostname/api/v2/login/create', {
-    method: 'POST',
-    body: JSON.stringify(authJson)
+  return io.authRequest('POST', '/v2/login/create', authJson).then(reply => {
+    // Create children:
+    const children = elvis(user.children, [])
+    const parentAuth = user.loginAuth != null
+      ? {
+        loginId: user.loginId,
+        loginAuth: user.loginAuth
+      }
+      : {
+        userId: user.loginId,
+        passwordAuth: user.passwordAuth
+      }
+    return Promise.all(
+      children.map(child => createFakeServerUser(io, child, parentAuth))
+    )
   })
-
-  // Create children:
-  const children = elvis(user.children, [])
-  const parentAuth = user.loginAuth != null
-    ? {
-      loginId: user.loginId,
-      loginAuth: user.loginAuth
-    }
-    : {
-      userId: user.loginId,
-      passwordAuth: user.passwordAuth
-    }
-  children.forEach(child => createFakeServerUser(io, child, parentAuth))
 }
 
-export function makeFakeAccount (context, user) {
-  const { io, appId } = context
-
-  // Create the login on the server:
-  createFakeServerUser(io, user)
-
-  // Store the login on the client:
+/**
+ * Creates a fake login object, both on the server and on disk.
+ */
+function createFakeLogin (io, appId, user) {
   const loginStash = applyLoginReply(
     { username: fixUsername(user.username), appId: '' },
     user.loginKey,
     user
   )
-  io.loginStore.save(loginStash)
 
-  // Populate the repos on the server:
-  Object.keys(repos).forEach(syncKey =>
-    io.fetch('https://hostname/api/v2/store/' + syncKey, {
-      method: 'POST',
-      body: JSON.stringify({ changes: repos[syncKey] })
+  return Promise.all([
+    createFakeServerUser(io, user),
+    io.loginStore.save(loginStash)
+  ]).then(() => makeLoginTree(loginStash, user.loginKey))
+}
+
+/**
+ * Creates fake repos, both on-disk and on the auth server.
+ */
+function createFakeRepos (io, repos) {
+  const syncKeys = Object.keys(repos)
+
+  return Promise.all([
+    // Populate the repos on the server:
+    ...syncKeys.map(syncKey =>
+      io.fetch('https://hostname/api/v2/store/' + syncKey, {
+        method: 'POST',
+        body: JSON.stringify({ changes: repos[syncKey] })
+      })
+    ),
+
+    // Populate the repos on the client:
+    ...syncKeys.map(syncKey => {
+      const folders = makeRepoFolders(io, fakeRepoInfo)
+      return saveChanges(folders.data, repos[syncKey])
     })
+  ])
+}
+
+export function makeFakeAccount (context, user) {
+  const { io, appId } = context
+
+  return createFakeLogin(io, appId, user).then(loginTree =>
+    createFakeRepos(io, repos).then(() => makeAccount(io, appId, loginTree))
   )
-
-  // Populate the repos on the client:
-  Object.keys(repos).forEach(syncKey => {
-    const folders = makeRepoFolders(io, fakeRepoInfo)
-    saveChanges(folders.data, repos[syncKey])
-  })
-
-  // Return the account object:
-  const loginTree = makeLoginTree(loginStash, user.loginKey)
-  const state = new LoginState(io, loginTree)
-  return new Account(io, appId, state)
 }

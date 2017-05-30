@@ -1,6 +1,6 @@
 /* global describe, it */
 import { makeContext, makeFakeIos } from '../src'
-import { makeRepoFolder, syncRepo } from '../src/repo'
+import { makeRepoFolder, syncRepo } from '../src/storage/repo.js'
 import { fakeUser, fakeRepoInfo, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
 
@@ -48,19 +48,24 @@ describe('repo', function () {
     const [io1, io2, io3] = makeFakeIos(3)
     io1.log = io1.console
     io2.log = io2.console
-    makeFakeAccount(makeContext({ io: io3 }), fakeUser)
 
     const folder1 = makeRepoFolder(io1, fakeRepoInfo)
     const folder2 = makeRepoFolder(io2, fakeRepoInfo)
     const payload = 'Test data'
 
-    return folder1
-      .folder('a')
-      .file('b.json')
-      .setText(payload)
-      .then(() => syncRepo(io1, fakeRepoInfo).then(changed => assert(changed)))
-      .then(() => syncRepo(io2, fakeRepoInfo).then(changed => assert(changed)))
-      .then(() => folder2.folder('a').file('b.json').getText())
-      .then(text => assert.equal(text, payload))
+    return makeFakeAccount(makeContext({ io: io3 }), fakeUser).then(() =>
+      folder1
+        .folder('a')
+        .file('b.json')
+        .setText(payload)
+        .then(() =>
+          syncRepo(io1, fakeRepoInfo).then(changed => assert(changed))
+        )
+        .then(() =>
+          syncRepo(io2, fakeRepoInfo).then(changed => assert(changed))
+        )
+        .then(() => folder2.folder('a').file('b.json').getText())
+        .then(text => assert.equal(text, payload))
+    )
   })
 })
