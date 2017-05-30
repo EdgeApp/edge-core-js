@@ -26,7 +26,7 @@ export function makeAccount (io, appId, loginTree, loginType = 'loggedIn') {
  * This is a thin shim object,
  * which wraps the core implementation in a more OOP-style API.
  */
-export function Account (io, appId, loginState) {
+function Account (io, appId, loginState) {
   this.io = io
   this.appId = appId
   this._state = loginState

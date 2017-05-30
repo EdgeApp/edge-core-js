@@ -26,30 +26,31 @@ describe('edge login', function () {
     const ios = makeFakeIos(2)
     const context = makeContext({ io: ios[0], appId: 'test-child' })
     const remote = makeContext({ io: ios[1] })
-    makeFakeAccount(remote, fakeUser)
 
-    return new Promise((resolve, reject) => {
-      const opts = {
-        onLogin: (err, account) => {
-          if (err) return reject(err)
-          return resolve()
-        },
-        displayName: 'test suite'
-      }
-      return context
-        .requestEdgeLogin(opts)
-        .then(pending => {
-          const lobbyId = pending.id
+    return makeFakeAccount(remote, fakeUser).then(() => {
+      return new Promise((resolve, reject) => {
+        const opts = {
+          onLogin: (err, account) => {
+            if (err) return reject(err)
+            return resolve()
+          },
+          displayName: 'test suite'
+        }
+        return context
+          .requestEdgeLogin(opts)
+          .then(pending => {
+            const lobbyId = pending.id
 
-          return fetchLobbyRequest(remote.io, lobbyId).then(request => {
-            assert.equal(request.loginRequest.appId, context.appId)
-            assert.equal(request.loginRequest.displayName, 'test suite')
+            return fetchLobbyRequest(remote.io, lobbyId).then(request => {
+              assert.equal(request.loginRequest.appId, context.appId)
+              assert.equal(request.loginRequest.displayName, 'test suite')
 
-            return sendFakeResponse(remote, lobbyId, request)
+              return sendFakeResponse(remote, lobbyId, request)
+            })
           })
-        })
-        .catch(reject)
-    }).then(() => context.loginWithPIN(fakeUser.username, fakeUser.pin))
+          .catch(reject)
+      }).then(() => context.loginWithPIN(fakeUser.username, fakeUser.pin))
+    })
   })
 
   it('cancel', function (done) {
