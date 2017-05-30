@@ -59,6 +59,7 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
     'syncKeyBox'
   ])
 
+  // Preserve client-only data:
   out.username = stash.username
   out.userId = stash.userId
 
@@ -122,12 +123,12 @@ function makeLoginTreeInner (stash, loginKey) {
     throw new Error('No loginId provided')
   }
   login.appId = stash.appId
-  login.loginId = base64.parse(stash.loginId)
+  login.loginId = stash.loginId
   login.loginKey = loginKey
 
   // Password:
   if (stash.userId != null) {
-    login.userId = base64.parse(stash.userId)
+    login.userId = stash.userId
   } else if (stash.passwordAuthBox != null) {
     login.userId = login.loginId
   }
@@ -199,8 +200,7 @@ export function makeLoginTree (stashTree, loginKey, appId = '') {
     stash => stash.appId === appId,
     stash => makeLoginTreeInner(stash, loginKey),
     (stash, children) => {
-      const login = filterObject(stash, ['username', 'appId'])
-      login.loginId = base64.parse(stash.loginId)
+      const login = filterObject(stash, ['username', 'appId', 'loginId'])
       login.children = children
       return login
     }
@@ -267,13 +267,13 @@ export function syncLogin (io, loginTree, login) {
 export function makeAuthJson (login) {
   if (login.loginAuth != null) {
     return {
-      loginId: base64.stringify(login.loginId),
+      loginId: login.loginId,
       loginAuth: base64.stringify(login.loginAuth)
     }
   }
   if (login.passwordAuth != null) {
     return {
-      userId: base64.stringify(login.userId),
+      userId: login.userId,
       passwordAuth: base64.stringify(login.passwordAuth)
     }
   }

@@ -80,7 +80,7 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
         {
           appId,
           loginAuth,
-          loginId,
+          loginId: base64.stringify(loginId),
           loginKey,
           keyInfos: []
         },
