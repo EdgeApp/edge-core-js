@@ -4,7 +4,7 @@ function nop () {}
 
 class CurrencyState {
   constructor (keyInfo, opts, storage) {
-    const { callbacks = {} } = opts
+    const { callbacks = {}, plugin } = opts
     const {
       onAddressesChecked = nop,
       onBalanceChanged = nop,
@@ -27,6 +27,19 @@ class CurrencyState {
     // Storage:
     this.storage = storage
     storage.onDataChanged = () => this.load()
+
+    // Currency plugin:
+    this.plugin = plugin
+    this.engine = plugin.makeEngine(keyInfo, {
+      walletLocalFolder: storage.localFolder,
+      walletFolder: storage.folder,
+      callbacks: {
+        onAddressesChecked,
+        onBalanceChanged,
+        onBlockHeightChanged,
+        onTransactionsChanged
+      }
+    })
 
     // State:
     this.name = null

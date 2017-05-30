@@ -24,7 +24,7 @@ export function makeCurrencyWallet (keyInfo, opts) {
  * Creates an unwrapped account API object around an account state object.
  */
 export function makeCurrencyApi (state) {
-  const { storage } = state
+  const { storage, engine, plugin } = state
 
   const out = {
     // Storage stuff:
@@ -39,25 +39,37 @@ export function makeCurrencyApi (state) {
     get fiatCurrencyCode () {
       return 'USD'
     },
+    get currencyInfo () {
+      return plugin.getInfo()
+    },
+
+    // Running state:
+    startEngine () {
+      return engine.startEngine()
+    },
+
+    stopEngine () {
+      return engine.killEngine()
+    },
 
     // Transactions:
     '@getBalance': { sync: true },
     getBalance (currencyCode) {
-      return 0
+      return engine.getBalance({ currencyCode })
     },
 
     '@getBlockHeight': { sync: true },
     getBlockHeight () {
-      return 0
+      return engine.getBlockHeight()
     },
 
     getTransactions (opts = {}) {
-      return Promise.resolve([])
+      return engine.getTransactions(opts)
     },
 
     getReceiveAddress (opts) {
       return Promise.resolve({
-        publicAddress: 'foobar',
+        publicAddress: engine.getFreshAddress(opts),
         amountSatoshi: 0,
         metadata: fakeMetadata
       })
@@ -73,28 +85,28 @@ export function makeCurrencyApi (state) {
 
     '@makeAddressQrCode': { sync: true },
     makeAddressQrCode (address) {
-      return ''
+      return address.publicAddress
     },
 
     '@makeAddressUri': { sync: true },
     makeAddressUri (address) {
-      return ''
+      return address.publicAddress
     },
 
     makeSpend (spendInfo) {
-      return Promise.resolve({})
+      return engine.makeSpend(spendInfo)
     },
 
     signTx (tx) {
-      return Promise.resolve(tx)
+      return engine.signTx(tx)
     },
 
     broadcastTx (tx) {
-      return Promise.resolve(tx)
+      return engine.broadcastTx(tx)
     },
 
     saveTx (tx) {
-      return Promise.resolve(tx)
+      return engine.saveTx(tx)
     },
 
     getMaxSpendable (spendInfo) {
