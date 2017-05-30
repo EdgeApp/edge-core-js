@@ -56,6 +56,10 @@ export const utf8 = {
   },
   stringify (data) {
     assertData(data)
-    return new Buffer(data).toString('utf8')
+    // Some of our data contains terminating null bytes due to an old bug.
+    // We need to filter that out here:
+    const cleanData = data[data.length - 1] === 0 ? data.slice(0, -1) : data
+
+    return new Buffer(cleanData).toString('utf8')
   }
 }
