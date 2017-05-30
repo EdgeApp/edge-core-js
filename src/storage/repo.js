@@ -16,28 +16,24 @@ export function secureFilename (dataKey, data) {
  * Sets up the back-end folders needed to emulate Git on disk.
  * You probably don't want this.
  */
-export function makeRepoFolders (io, keyInfo) {
+export function makeRepoPaths (io, keyInfo) {
+  const dataKey = base64.parse(keyInfo.keys.dataKey)
   const syncKey = base64.parse(keyInfo.keys.syncKey)
   const base = io.folder
     .folder('repos')
     .folder(base58.stringify(sha256(sha256(syncKey))))
+  const changesFolder = base.folder('changes')
+  const dataFolder = base.folder('data')
+  const unionFolder = makeUnionFolder(changesFolder, dataFolder)
 
   return {
-    base,
-    changes: base.folder('changes'),
-    data: base.folder('data')
+    dataKey,
+    syncKey,
+    changesFolder,
+    dataFolder,
+    folder: new RepoFolder(io, dataKey, unionFolder),
+    statusFile: base.file('status.json')
   }
-}
-
-/**
- * Creates a folder instance that writes to the synced data area on disk.
- */
-export function makeRepoFolder (io, keyInfo) {
-  const dataKey = base64.parse(keyInfo.keys.dataKey)
-
-  const folders = makeRepoFolders(io, keyInfo)
-  const union = makeUnionFolder(folders.changes, folders.data)
-  return new RepoFolder(io, dataKey, union)
 }
 
 /**
@@ -59,16 +55,14 @@ export function saveChanges (folder, changes) {
 /**
  * Synchronizes the local store with the remote server.
  */
-export function syncRepo (io, keyInfo) {
-  const syncKey = base64.parse(keyInfo.keys.syncKey)
-  const folders = makeRepoFolders(io, keyInfo)
+export function syncRepo (io, paths) {
+  const { changesFolder, dataFolder, statusFile, syncKey } = paths
 
   return Promise.all([
-    mapAllFiles(folders.changes, (file, name) =>
+    mapAllFiles(changesFolder, (file, name) =>
       file.getText().then(text => ({ file, name, json: JSON.parse(text) }))
     ),
-    folders.base
-      .file('status.json')
+    statusFile
       .getText()
       .then(text => JSON.parse(text).lastHash)
       .catch(e => null)
@@ -98,7 +92,7 @@ export function syncRepo (io, keyInfo) {
 
       // Save the incoming changes into our `data` folder:
       const promise = changes != null
-        ? saveChanges(folders.data, changes)
+        ? saveChanges(dataFolder, changes)
         : Promise.resolve()
 
       return promise
@@ -109,8 +103,7 @@ export function syncRepo (io, keyInfo) {
         .then(() => {
           // Save the current hash:
           if (hash != null) {
-            folders.base
-              .file('status.json')
+            statusFile
               .setText(JSON.stringify({ lastHash: hash }))
               .then(() => changed)
           }

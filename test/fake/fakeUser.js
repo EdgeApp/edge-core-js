@@ -5,7 +5,7 @@
 import { makeAccount } from '../../src/account/accountApi.js'
 import { fixUsername } from '../../src/io/loginStore.js'
 import { applyLoginReply, makeLoginTree } from '../../src/login/login.js'
-import { makeRepoFolders, saveChanges } from '../../src/storage/repo.js'
+import { makeRepoPaths, saveChanges } from '../../src/storage/repo.js'
 import { base16, base64 } from '../../src/util/encoding.js'
 import { elvis, filterObject } from '../../src/util/util.js'
 
@@ -283,8 +283,8 @@ function createFakeRepos (io, repos) {
 
     // Populate the repos on the client:
     ...syncKeys.map(syncKey => {
-      const folders = makeRepoFolders(io, fakeRepoInfo)
-      return saveChanges(folders.data, repos[syncKey])
+      const { dataFolder } = makeRepoPaths(io, fakeRepoInfo)
+      return saveChanges(dataFolder, repos[syncKey])
     })
   ])
 }

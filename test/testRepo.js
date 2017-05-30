@@ -1,13 +1,13 @@
 /* global describe, it */
 import { makeContext, makeFakeIos } from '../src'
-import { makeRepoFolder, syncRepo } from '../src/storage/repo.js'
+import { makeRepoPaths, syncRepo } from '../src/storage/repo.js'
 import { fakeUser, fakeRepoInfo, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
 
 describe('repo', function () {
   it('local get', function () {
     const [io] = makeFakeIos(1)
-    const folder = makeRepoFolder(io, fakeRepoInfo)
+    const paths = makeRepoPaths(io, fakeRepoInfo)
 
     const payload = '{"message":"Hello"}'
     const box = `{
@@ -24,7 +24,7 @@ describe('repo', function () {
       .file('b.json')
       .setText(box)
       .then(() => {
-        return folder
+        return paths.folder
           .folder('a')
           .file('b.json')
           .getText()
@@ -34,7 +34,7 @@ describe('repo', function () {
 
   it('offline set/get', function () {
     const [io] = makeFakeIos(1)
-    const folder = makeRepoFolder(io, fakeRepoInfo)
+    const { folder } = makeRepoPaths(io, fakeRepoInfo)
     const file = folder.file('b.txt')
     const payload = 'Test data'
 
@@ -49,22 +49,22 @@ describe('repo', function () {
     io1.log = io1.console
     io2.log = io2.console
 
-    const folder1 = makeRepoFolder(io1, fakeRepoInfo)
-    const folder2 = makeRepoFolder(io2, fakeRepoInfo)
+    const paths1 = makeRepoPaths(io1, fakeRepoInfo)
+    const paths2 = makeRepoPaths(io2, fakeRepoInfo)
     const payload = 'Test data'
 
     return makeFakeAccount(makeContext({ io: io3 }), fakeUser).then(() =>
-      folder1
+      paths1.folder
         .folder('a')
         .file('b.json')
         .setText(payload)
         .then(() =>
-          syncRepo(io1, fakeRepoInfo).then(changed => assert(changed))
+          syncRepo(io1, paths1).then(changed => assert(changed))
         )
         .then(() =>
-          syncRepo(io2, fakeRepoInfo).then(changed => assert(changed))
+          syncRepo(io2, paths2).then(changed => assert(changed))
         )
-        .then(() => folder2.folder('a').file('b.json').getText())
+        .then(() => paths2.folder.folder('a').file('b.json').getText())
         .then(text => assert.equal(text, payload))
     )
   })
