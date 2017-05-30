@@ -36,6 +36,14 @@ export function makeRepoPaths (io, keyInfo) {
   }
 }
 
+export function loadRepoStatus (paths) {
+  const fallback = { lastSync: 0 }
+  return paths.statusFile
+    .getText()
+    .then(text => ({ lastSync: 0, ...JSON.parse(text) }))
+    .catch(e => fallback)
+}
+
 /**
  * This will save a changeset into the local storage.
  * This function ignores folder-level deletes and overwrites,
@@ -55,20 +63,12 @@ export function saveChanges (folder, changes) {
 /**
  * Synchronizes the local store with the remote server.
  */
-export function syncRepo (io, paths) {
+export function syncRepo (io, paths, status) {
   const { changesFolder, dataFolder, statusFile, syncKey } = paths
 
-  return Promise.all([
-    mapAllFiles(changesFolder, (file, name) =>
-      file.getText().then(text => ({ file, name, json: JSON.parse(text) }))
-    ),
-    statusFile
-      .getText()
-      .then(text => JSON.parse(text).lastHash)
-      .catch(e => null)
-  ]).then(values => {
-    const [ourChanges, lastHash] = values
-
+  return mapAllFiles(changesFolder, (file, name) =>
+    file.getText().then(text => ({ file, name, json: JSON.parse(text) }))
+  ).then(ourChanges => {
     // If we have local changes, we need to bundle those:
     const request = {}
     if (ourChanges.length > 0) {
@@ -81,33 +81,27 @@ export function syncRepo (io, paths) {
 
     // Calculate the URI:
     let path = '/api/v2/store/' + base16.stringify(syncKey)
-    if (lastHash != null) {
-      path += '/' + lastHash
+    if (status.lastHash != null) {
+      path += '/' + status.lastHash
     }
 
     // Make the request:
     return syncRequest(io, method, path, request).then(reply => {
-      const { changes, hash } = reply
-      const changed = changes != null && Object.keys(changes).length
+      const { changes = {}, hash } = reply
 
       // Save the incoming changes into our `data` folder:
-      const promise = changes != null
-        ? saveChanges(dataFolder, changes)
-        : Promise.resolve()
-
-      return promise
+      return saveChanges(dataFolder, changes)
         .then(
           // Delete any changed keys (since the upload is done):
           () => Promise.all(ourChanges.map(change => change.file.delete()))
         )
         .then(() => {
-          // Save the current hash:
-          if (hash != null) {
-            statusFile
-              .setText(JSON.stringify({ lastHash: hash }))
-              .then(() => changed)
-          }
-          return changed
+          // Update the repo status:
+          status.lastSync = Date.now()
+          if (hash != null) status.lastHash = hash
+          return statusFile
+            .setText(JSON.stringify(status))
+            .then(() => ({ status, changes }))
         })
     })
   })

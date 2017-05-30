@@ -59,10 +59,10 @@ describe('repo', function () {
         .file('b.json')
         .setText(payload)
         .then(() =>
-          syncRepo(io1, paths1).then(changed => assert(changed))
+          syncRepo(io1, paths1, {}).then(changed => assert(changed))
         )
         .then(() =>
-          syncRepo(io2, paths2).then(changed => assert(changed))
+          syncRepo(io2, paths2, {}).then(changed => assert(changed))
         )
         .then(() => paths2.folder.folder('a').file('b.json').getText())
         .then(text => assert.equal(text, payload))
