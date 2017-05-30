@@ -2,7 +2,7 @@
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
-import { makeAccount } from '../../src/api/account.js'
+import { makeAccount } from '../../src/account/accountApi.js'
 import { fixUsername } from '../../src/io/loginStore.js'
 import { applyLoginReply, makeLoginTree } from '../../src/login/login.js'
 import { makeRepoFolders, saveChanges } from '../../src/repo'

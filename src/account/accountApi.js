@@ -7,8 +7,8 @@ import {
 import { checkPassword } from '../login/password.js'
 import { LoginState } from '../login/state.js'
 import { makeRepoFolder, syncRepo } from '../repo'
+import { wrapPrototype } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
-import { wrapPrototype } from './wrap.js'
 
 export function makeAccount (io, appId, loginTree, loginType = 'loggedIn') {
   const state = new LoginState(io, loginTree)

@@ -1,6 +1,4 @@
-import { makeBrowserIo } from '../io/browser'
-import { IoContext } from '../io/io.js'
-import { fixUsername } from '../io/loginStore.js'
+import { makeAccount } from '../account/accountApi.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
 import { checkPasswordRules, loginPassword } from '../login/password.js'
@@ -11,9 +9,11 @@ import {
   loginRecovery2,
   listRecoveryQuestionChoices
 } from '../login/recovery2.js'
+import { wrapPrototype } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
-import { makeAccount } from './account.js'
-import { wrapPrototype } from './wrap.js'
+import { makeBrowserIo } from './browser'
+import { IoContext } from './io.js'
+import { fixUsername } from './loginStore.js'
 
 export function Context (opts) {
   this.io = new IoContext(opts.io != null ? opts.io : makeBrowserIo(), opts)
