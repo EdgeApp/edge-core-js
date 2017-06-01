@@ -10,7 +10,7 @@ import { makeAccountState } from './accountState.js'
  */
 export function makeAccount (io, appId, loginTree, loginType) {
   return makeAccountState(io, appId, loginTree).then(state =>
-    wrapObject(io.log, 'Account', makeAccountApi(state, loginType))
+    wrapObject(io.console, 'Account', makeAccountApi(state, loginType))
   )
 }
 

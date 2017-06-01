@@ -23,7 +23,7 @@ export function makeContext (opts) {
         ? opts.accountType.replace(/^account.repo:/, '')
         : ''
 
-  const out = wrapObject(io.log, 'Context', {
+  const out = wrapObject(io.console, 'Context', {
     io,
     appId,
 

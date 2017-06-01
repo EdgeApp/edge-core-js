@@ -3,10 +3,10 @@ import { rejectify } from '../util/decorators.js'
 /**
  * Prepares an async API endpoint for consumption by the outside world.
  */
-function asyncApi (f, log, name) {
+function asyncApi (f, console, name) {
   return function asyncApi (...rest) {
     const promise = rejectify(f).apply(this, rest).catch(e => {
-      log.error(name, e)
+      console.error(name, e)
       throw e
     })
 
@@ -23,12 +23,12 @@ function asyncApi (f, log, name) {
 /**
  * Prepares a sync API endploint for consumption by the outside world.
  */
-function syncApi (f, log, name) {
+function syncApi (f, console, name) {
   return function syncApi (...rest) {
     try {
       return f.apply(this, rest)
     } catch (e) {
-      log.error(name, e)
+      console.error(name, e)
       throw e
     }
   }
@@ -37,19 +37,19 @@ function syncApi (f, log, name) {
 /**
  * Adjusts a property decscriptor, making the property ready for use as an API.
  */
-function wrapProperty (key, d, log, className, opts = {}) {
+function wrapProperty (key, d, console, className, opts = {}) {
   // Wrap functions:
   if (typeof d.value === 'function') {
     const name = `${className}.${key}`
     d.value = opts.sync
-      ? syncApi(d.value, log, name)
-      : asyncApi(d.value, log, name)
+      ? syncApi(d.value, console, name)
+      : asyncApi(d.value, console, name)
   }
   if (d.get != null) {
-    d.get = syncApi(d.get, log, `get ${className}.${key}`)
+    d.get = syncApi(d.get, console, `get ${className}.${key}`)
   }
   if (d.set != null) {
-    d.set = syncApi(d.set, log, `set ${className}.${key}`)
+    d.set = syncApi(d.set, console, `set ${className}.${key}`)
   }
 
   // Properties are read-only by default:
@@ -64,7 +64,7 @@ function wrapProperty (key, d, log, className, opts = {}) {
  * Copies the provided object, making its properties ready for use as an API.
  * If a property name starts with `@`, it is treated as an options structure.
  */
-export function wrapObject (log, className, object) {
+export function wrapObject (console, className, object) {
   const out = {}
 
   Object.getOwnPropertyNames(object).forEach(key => {
@@ -74,7 +74,7 @@ export function wrapObject (log, className, object) {
     // Copy properties:
     const d = Object.getOwnPropertyDescriptor(object, key)
     const opts = object['@' + key]
-    Object.defineProperty(out, key, wrapProperty(key, d, log, className, opts))
+    Object.defineProperty(out, key, wrapProperty(key, d, console, className, opts))
   })
 
   return out
