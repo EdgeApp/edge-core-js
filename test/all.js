@@ -1,3 +1,4 @@
+import './testAccount.js'
 import './testCrypto.js'
 import './testCurrency.js'
 import './testEdge.js'
