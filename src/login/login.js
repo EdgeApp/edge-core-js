@@ -5,7 +5,7 @@
 import { decrypt } from '../crypto/crypto.js'
 import { base64, utf8 } from '../util/encoding.js'
 import { elvis, filterObject, objectAssign, softCat } from '../util/util.js'
-import { makeAccountType, makeKeyInfo } from './keys.js'
+import { makeAccountType, makeKeyInfo, mergeKeyInfos } from './keys.js'
 
 function cloneNode (node, children) {
   return objectAssign({}, node, { children })
@@ -279,50 +279,4 @@ export function makeAuthJson (login) {
     }
   }
   throw new Error('No server authentication methods available')
-}
-
-/**
- * Flattens an array of key structures, removing duplicates.
- */
-function mergeKeyInfos (keyInfos) {
-  const ids = [] // All ID's, in order of appearance
-  const keys = {} // All keys, indexed by id
-  const types = {} // Key types, indexed by id
-
-  keyInfos.forEach(info => {
-    const id = info.id
-    if (id == null || base64.parse(id).length !== 32) {
-      throw new Error(`Key integrity violation: invalid id ${id}`)
-    }
-
-    if (keys[id] == null) {
-      // The id is new, so just insert the keys:
-      ids.push(id)
-      keys[id] = objectAssign({}, info.keys)
-      types[id] = info.type
-    } else {
-      // An object with this ID already exists, so update it:
-      if (types[id] !== info.type) {
-        throw new Error(
-          `Key integrity violation for ${id}: type ${info.type} does not match ${types[id]}`
-        )
-      }
-      info.keys.forEach(key => {
-        if (keys[id][key] && keys[id][key] !== info.keys[key]) {
-          throw new Error(
-            `Key integrity violation for ${id}: ${key} keys do not match`
-          )
-        }
-        keys[id][key] = info.keys[key]
-      })
-    }
-  })
-
-  return ids.map(id => {
-    return {
-      id,
-      keys: keys[id],
-      type: types[id]
-    }
-  })
 }
