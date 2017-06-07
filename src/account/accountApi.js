@@ -32,7 +32,7 @@ function makeAccountApi (state, loginType) {
     get loginTree () {
       return state.loginTree
     },
-    get usernname () {
+    get username () {
       return state.loginTree.username
     },
 
