@@ -1,3 +1,4 @@
+import { hmacSha256 } from '../crypto/crypto.js'
 import { makeRepoPaths, loadRepoStatus, syncRepo } from '../storage/repo.js'
 import { base58, base64 } from '../util/encoding.js'
 
@@ -29,6 +30,15 @@ export class StorageState {
       if (dirty) this.onDataChanged()
       return dirty
     })
+  }
+
+  /**
+   * Creates a secure file name by hashing
+   * the provided binary data with the repo's dataKey.
+   */
+  hashFilename (data) {
+    const { paths: { dataKey } } = this
+    return base58.stringify(hmacSha256(data, dataKey))
   }
 }
 

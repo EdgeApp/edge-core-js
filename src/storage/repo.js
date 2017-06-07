@@ -1,16 +1,8 @@
-import { hmacSha256, sha256 } from '../crypto/crypto.js'
+import { sha256 } from '../crypto/crypto.js'
 import { base16, base58, base64 } from '../util/encoding.js'
 import { locateFile, mapAllFiles, makeUnionFolder } from 'disklet'
 import { RepoFolder } from './repoFolder.js'
 import { syncRequest } from './servers.js'
-
-/**
- * Creates a secure file name by hashing
- * the provided binary data with the repo's dataKey.
- */
-export function secureFilename (dataKey, data) {
-  return base58.stringify(hmacSha256(data, dataKey)) + '.json'
-}
 
 /**
  * Sets up the back-end folders needed to emulate Git on disk.
