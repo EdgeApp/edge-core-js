@@ -79,9 +79,9 @@ export function syncRepo (io, keyInfo) {
     const request = {}
     if (ourChanges.length > 0) {
       request.changes = {}
-      ourChanges.forEach(change => {
+      for (const change of ourChanges) {
         request.changes[change.name] = change.json
-      })
+      }
     }
     const method = request.changes ? 'POST' : 'GET'
 

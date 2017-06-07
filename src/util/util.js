@@ -11,11 +11,11 @@ export function elvis (x, fallback) {
  */
 export function filterObject (source, keys) {
   const out = {}
-  keys.forEach(key => {
+  for (const key of keys) {
     if (key in source) {
       out[key] = source[key]
     }
-  })
+  }
   return out
 }
 
@@ -23,12 +23,12 @@ export function filterObject (source, keys) {
  * Ponyfill for `Object.assign`.
  */
 export function objectAssign (target, ...args) {
-  args.forEach(arg => {
+  for (const arg of args) {
     const from = Object(arg)
-    Object.keys(from).forEach(key => {
+    for (const key of Object.keys(from)) {
       target[key] = from[key]
-    })
-  })
+    }
+  }
   return target
 }
 

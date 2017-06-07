@@ -67,23 +67,27 @@ function wrapProperty (key, d, console, className, opts = {}) {
 export function wrapObject (console, className, object) {
   const out = {}
 
-  Object.getOwnPropertyNames(object).forEach(key => {
+  for (const key of Object.getOwnPropertyNames(object)) {
     // Skip over options:
-    if (/^@/.test(key)) return
+    if (/^@/.test(key)) continue
 
     // Copy properties:
     const d = Object.getOwnPropertyDescriptor(object, key)
     const opts = object['@' + key]
-    Object.defineProperty(out, key, wrapProperty(key, d, console, className, opts))
-  })
+    Object.defineProperty(
+      out,
+      key,
+      wrapProperty(key, d, console, className, opts)
+    )
+  }
 
   return out
 }
 
 export function copyProperties (target, object) {
-  Object.getOwnPropertyNames(object).forEach(key => {
+  for (const key of Object.getOwnPropertyNames(object)) {
     const d = Object.getOwnPropertyDescriptor(object, key)
     Object.defineProperty(target, key, d)
-  })
+  }
   return target
 }

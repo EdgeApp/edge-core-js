@@ -6,13 +6,13 @@ const routes = []
  * Wires one or more handlers into the routing table.
  */
 function addRoute (method, path, ...handlers) {
-  handlers.forEach(handler => {
+  for (const handler of handlers) {
     routes.push({
       method,
       path: new RegExp(`^${path}$`),
       handler
     })
-  })
+  }
 }
 
 /**
@@ -295,9 +295,9 @@ addRoute('POST', '/api/v2/login/create', function (req) {
 
   // Set up repos:
   if (data.newSyncKeys != null) {
-    data.newSyncKeys.forEach(syncKey => {
+    for (const syncKey of data.newSyncKeys) {
       this.repos[syncKey] = {}
-    })
+    }
   }
 
   // Set up login object:
@@ -342,9 +342,9 @@ addRoute('POST', '/api/v2/login/keys', authHandler, function (req) {
 
   // Set up repos:
   if (data.newSyncKeys != null) {
-    data.newSyncKeys.forEach(syncKey => {
+    for (const syncKey of data.newSyncKeys) {
       this.repos[syncKey] = {}
-    })
+    }
   }
 
   req.login.keyBoxes = softCat(req.login.keyBoxes, data.keyBoxes)
@@ -456,9 +456,9 @@ function storeRoute (req) {
   switch (req.method) {
     case 'POST':
       const changes = req.body.changes
-      Object.keys(changes).forEach(change => {
+      for (const change of Object.keys(changes)) {
         repo[change] = changes[change]
-      })
+      }
       return new FakeResponse(
         JSON.stringify({
           changes: repo,

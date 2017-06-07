@@ -63,7 +63,7 @@ export function mergeKeyInfos (keyInfos) {
   const out = []
   const ids = {} // Maps ID's to output array indexes
 
-  keyInfos.forEach(keyInfo => {
+  for (const keyInfo of keyInfos) {
     const { id, type, keys } = keyInfo
     if (id == null || base64.parse(id).length !== 32) {
       throw new Error(`Key integrity violation: invalid id ${id}`)
@@ -78,20 +78,20 @@ export function mergeKeyInfos (keyInfos) {
           `Key integrity violation for ${id}: type ${type} does not match ${old.type}`
         )
       }
-      Object.keys(keys).forEach(key => {
+      for (const key of Object.keys(keys)) {
         if (old.keys[key] != null && old.keys[key] !== keys[key]) {
           throw new Error(
             `Key integrity violation for ${id}: ${key} keys do not match`
           )
         }
         old.keys[key] = keys[key]
-      })
+      }
     } else {
       // We haven't seen this id, so insert it:
       ids[id] = out.length
       out.push(keyInfo)
     }
-  })
+  }
 
   return out
 }
