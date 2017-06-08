@@ -24,6 +24,8 @@ describe('mergeKeyInfos', function () {
 
     assert.equal(out.length, 1)
     assert.deepEqual(out[0], key3)
+    assert.deepEqual(key1.keys, { a: 1 })
+    assert.deepEqual(key2.keys, { b: 2 })
   })
 
   it('merge conflicting types', function () {

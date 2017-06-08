@@ -69,10 +69,9 @@ export function mergeKeyInfos (keyInfos) {
       throw new Error(`Key integrity violation: invalid id ${id}`)
     }
 
-    if (id in ids) {
-      // We have already seen this id, so update it:
+    if (ids[id] != null) {
+      // We have already seen this id, so check for conflicts:
       const old = out[ids[id]]
-
       if (old.type !== type) {
         throw new Error(
           `Key integrity violation for ${id}: type ${type} does not match ${old.type}`
@@ -84,8 +83,10 @@ export function mergeKeyInfos (keyInfos) {
             `Key integrity violation for ${id}: ${key} keys do not match`
           )
         }
-        old.keys[key] = keys[key]
       }
+
+      // Do the update:
+      out[ids[id]] = { id, type, keys: { ...old.keys, ...keys } }
     } else {
       // We haven't seen this id, so insert it:
       ids[id] = out.length
