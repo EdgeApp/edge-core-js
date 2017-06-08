@@ -9,6 +9,7 @@
     "key management",
     "security"
   ],
+  "homepage": "https://airbitz.co",
   "author": "Airbitz, Inc.",
   "contributors": [
     "Paul Puey <paul@airbitz.co>",
@@ -20,7 +21,6 @@
     "type": "git",
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
-  "url": "https://airbitz.co",
   "files": [
     "changelog.md",
     "lib/*",
