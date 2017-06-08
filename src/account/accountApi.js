@@ -3,7 +3,6 @@ import { checkPassword } from '../login/password.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
-import { objectAssign } from '../util/util.js'
 import { makeAccountState } from './accountState.js'
 
 /**
@@ -80,10 +79,8 @@ function makeAccountApi (state, loginType) {
      * Retrieves all the keys that are available to this login object.
      */
     get allKeys () {
-      const { appId } = this
-      return this.login.keyInfos.map(info =>
-        objectAssign({ appId, archived: false }, info)
-      )
+      const { appId, login } = this
+      return login.keyInfos.map(info => ({ appId, archived: false, ...info }))
     },
 
     '@listWalletIds': { sync: true },

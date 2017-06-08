@@ -11,12 +11,13 @@ Run `npm install` to download dependencies and build the library,
 then run `npm test` to run the tests.
 
 The bundled library uses only ES5 feature thanks to [Bublé](https://buble.surge.sh),
-but we do require the following ES6 either natively or as pollyfills:
+but we do require the following ES2015 features either natively or as pollyfills:
 
+* Object.assign
 * Promise
 * Uint8Array
 
-If you want to run in the browser, you must also provide:
+If you want to run in the browser, you must also have:
 
 * fetch
 * localStorage

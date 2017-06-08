@@ -2,7 +2,6 @@ import { encrypt } from '../crypto/crypto.js'
 import { UsernameError } from '../error.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
-import { objectAssign } from '../util/util.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 
@@ -53,41 +52,35 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
     const [loginId, passwordKit] = values
     return {
       serverPath: '/v2/login/create',
-      server: objectAssign(
-        {
-          appId,
-          loginAuth: base64.stringify(loginAuth),
-          loginAuthBox,
-          loginId: base64.stringify(loginId),
-          parentBox
-        },
-        passwordKit.server,
-        pin2Kit.server,
-        keysKit.server
-      ),
-      stash: objectAssign(
-        {
-          appId,
-          loginAuthBox,
-          loginId: base64.stringify(loginId),
-          parentBox
-        },
-        passwordKit.stash,
-        pin2Kit.stash,
-        keysKit.stash
-      ),
-      login: objectAssign(
-        {
-          appId,
-          loginAuth,
-          loginId: base64.stringify(loginId),
-          loginKey,
-          keyInfos: []
-        },
-        passwordKit.login,
-        pin2Kit.login,
-        keysKit.login
-      )
+      server: {
+        appId,
+        loginAuth: base64.stringify(loginAuth),
+        loginAuthBox,
+        loginId: base64.stringify(loginId),
+        parentBox,
+        ...passwordKit.server,
+        ...pin2Kit.server,
+        ...keysKit.server
+      },
+      stash: {
+        appId,
+        loginAuthBox,
+        loginId: base64.stringify(loginId),
+        parentBox,
+        ...passwordKit.stash,
+        ...pin2Kit.stash,
+        ...keysKit.stash
+      },
+      login: {
+        appId,
+        loginAuth,
+        loginId: base64.stringify(loginId),
+        loginKey,
+        keyInfos: [],
+        ...passwordKit.login,
+        ...pin2Kit.login,
+        ...keysKit.login
+      }
     }
   })
 }

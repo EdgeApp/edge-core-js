@@ -1,6 +1,5 @@
 import { makeCurrencyWallet } from './currency/currencyApi.js'
 import { makeContext } from './io/context.js'
-import { objectAssign } from './util/util.js'
 
 // Secret CLI exports:
 import * as internal from './internal.js'
@@ -28,7 +27,7 @@ export { makeContext }
  * Same thing as `makeContext`, but corresponding to the documentation.
  */
 export function makeABCContext (apiKey, appId, opts) {
-  return makeContext(objectAssign({ apiKey, appId }, opts))
+  return makeContext({ apiKey, appId, ...opts })
 }
 
 /**

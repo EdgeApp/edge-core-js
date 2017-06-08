@@ -1,7 +1,6 @@
 /* global describe, it */
 import { makeContext, makeFakeIos } from '../src'
 import { base58 } from '../src/util/encoding.js'
-import { objectAssign } from '../src/util/util.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
 
@@ -188,8 +187,7 @@ describe('pin', function () {
   })
 
   it('child login', function () {
-    const trimmedUser = objectAssign({}, fakeUser)
-    trimmedUser.pin2Key = null
+    const trimmedUser = { ...fakeUser, pin2Key: null }
 
     const [io] = makeFakeIos(1)
     const context = makeContext({ io, appId: 'test-child' })

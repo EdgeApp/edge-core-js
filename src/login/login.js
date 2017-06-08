@@ -4,11 +4,11 @@
 
 import { decrypt } from '../crypto/crypto.js'
 import { base64, utf8 } from '../util/encoding.js'
-import { elvis, filterObject, objectAssign, softCat } from '../util/util.js'
+import { elvis, filterObject, softCat } from '../util/util.js'
 import { makeAccountType, makeKeyInfo, mergeKeyInfos } from './keys.js'
 
 function cloneNode (node, children) {
-  return objectAssign({}, node, { children })
+  return { ...node, children }
 }
 
 /**
@@ -223,23 +223,23 @@ export function applyKit (io, loginTree, kit) {
       const newLoginTree = updateTree(
         loginTree,
         login => login.loginId === loginId,
-        login =>
-          objectAssign({}, login, kit.login, {
-            children: softCat(login.children, kit.login.children),
-            keyInfos: mergeKeyInfos(
-              softCat(login.keyInfos, kit.login.keyInfos)
-            )
-          })
+        login => ({
+          ...login,
+          ...kit.login,
+          children: softCat(login.children, kit.login.children),
+          keyInfos: mergeKeyInfos(softCat(login.keyInfos, kit.login.keyInfos))
+        })
       )
 
       const newStashTree = updateTree(
         stashTree,
         stash => stash.loginId === loginId,
-        stash =>
-          objectAssign({}, stash, kit.stash, {
-            children: softCat(stash.children, kit.stash.children),
-            keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
-          })
+        stash => ({
+          ...stash,
+          ...kit.stash,
+          children: softCat(stash.children, kit.stash.children),
+          keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
+        })
       )
 
       return io.loginStore.save(newStashTree).then(() => newLoginTree)

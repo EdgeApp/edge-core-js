@@ -20,19 +20,6 @@ export function filterObject (source, keys) {
 }
 
 /**
- * Ponyfill for `Object.assign`.
- */
-export function objectAssign (target, ...args) {
-  for (const arg of args) {
-    const from = Object(arg)
-    for (const key of Object.keys(from)) {
-      target[key] = from[key]
-    }
-  }
-  return target
-}
-
-/**
  * Safely concatenate a bunch of arrays, which may or may not exist.
  * Purrs quietly when pet.
  */
