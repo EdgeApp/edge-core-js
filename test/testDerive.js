@@ -1,6 +1,12 @@
 /* global describe, it */
-import { makeStore, makeComputed, makeReaction } from '../src/util/derive.js'
+import {
+  makeStore,
+  makeComputed,
+  makeReaction,
+  reduxSource
+} from '../src/util/derive.js'
 import assert from 'assert'
+import { createStore } from 'redux'
 
 describe('derive', function () {
   it('basic operation', function () {
@@ -112,5 +118,82 @@ describe('derive', function () {
 
     assert.equal(reactionCount, 1)
     disposer()
+  })
+
+  it('redux connection', function () {
+    const disposers = []
+
+    // Logs which functions were called:
+    let log = []
+    function assertLog (ref) {
+      assert.deepEqual(log.sort(), ref)
+      log = []
+    }
+
+    // Redux store:
+    function reducer (state = { count: 1, toggle: false }, action) {
+      switch (action.type) {
+        case 'ADD':
+          return { ...state, count: state.count + action.delta }
+        case 'TOGGLE':
+          return { ...state, toggle: !state.toggle }
+        default:
+          return state
+      }
+    }
+    const store = createStore(reducer, void 0, reduxSource())
+
+    // Computed values:
+    const count = makeComputed(() => {
+      const { count } = store.getState()
+      log.push(`count: ${count}`)
+      return count
+    })
+    const double = makeComputed(() => {
+      const double = count() * 2
+      log.push(`double: ${double}`)
+      return double
+    })
+    const toggle = makeComputed(() => {
+      const { toggle } = store.getState()
+      log.push(`toggle: ${toggle}`)
+      return toggle
+    })
+
+    // Reactions:
+    disposers.push(
+      makeReaction(() => {
+        log.push(`react to double: ${double()}`)
+      })
+    )
+    disposers.push(
+      makeReaction(() => {
+        log.push(`react to toggle: ${toggle()}`)
+      })
+    )
+
+    // Everything runs once to start:
+    assertLog([
+      'count: 1',
+      'double: 2',
+      'react to double: 2',
+      'react to toggle: false',
+      'toggle: false'
+    ])
+
+    // Changing the count should trigger the count reaction:
+    store.dispatch({ type: 'ADD', delta: 2 })
+    assertLog(['count: 3', 'double: 6', 'react to double: 6', 'toggle: false'])
+
+    // Leaving the count unafected shouldn't trigger any reactions:
+    store.dispatch({ type: 'ADD', delta: 0 })
+    assertLog(['count: 3', 'toggle: false'])
+
+    // Changing the toggle shouldn't affect the reaction,
+    // but the count still needs to run to see that nothing has changed:
+    store.dispatch({ type: 'TOGGLE' })
+    assertLog(['count: 3', 'react to toggle: true', 'toggle: true'])
+
+    disposers.forEach(disposer => disposer())
   })
 })

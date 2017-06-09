@@ -178,3 +178,39 @@ export function makeReaction (f) {
 
   return disposer
 }
+
+/**
+ * Stops watching a function for source access,  so that derived values
+ * or reactions that call this function will not depend on its inputs.
+ */
+export function unwatched (f) {
+  return function unwatched (...args) {
+    const lastSink = currentSink
+    currentSink = null
+    try {
+      return f.apply(this, args)
+    } finally {
+      currentSink = lastSink
+    }
+  }
+}
+
+/**
+ * Turns a Redux store into something that can be derived from.
+ */
+export function reduxSource (invoke) {
+  return createStore => (reducer, preloadedState, enhancer) => {
+    const store = createStore(reducer, preloadedState, enhancer)
+    const derivableStore = makeStore(preloadedState, invoke)
+    const dispatch = unwatched(store.dispatch)
+
+    store.subscribe(unwatched(() => derivableStore.set(store.getState())))
+
+    function getState () {
+      derivableStore()
+      return store.getState()
+    }
+
+    return { ...store, dispatch, getState }
+  }
+}
