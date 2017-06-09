@@ -10,17 +10,13 @@
     "security"
   ],
   "homepage": "https://airbitz.co",
+  "license": "SEE LICENSE IN LICENSE",
   "author": "Airbitz, Inc.",
   "contributors": [
     "Paul Puey <paul@airbitz.co>",
     "William Swanson <william@airbitz.co>",
     "Tim Horton <tim@airbitz.co>"
   ],
-  "license": "SEE LICENSE IN LICENSE",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:Airbitz/airbitz-core-js.git"
-  },
   "files": [
     "changelog.md",
     "lib/*",
@@ -30,6 +26,22 @@
   ],
   "main": "lib/index.cjs.js",
   "module": "lib/index.es.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Airbitz/airbitz-core-js.git"
+  },
+  "scripts": {
+    "build": "webpack && rollup -c",
+    "precommit": "npm run lint",
+    "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' 'test/**/*.js' && standard --fix '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "prepublish": "npm run lint && npm run build",
+    "pretest": "npm run lint && webpack && rollup -c rollup.config.test.js",
+    "test": "mocha --require source-map-support/register build/tests.cjs.js"
+  },
+  "browser": {
+    "buffer": false
+  },
   "dependencies": {
     "aes-js": "^3.1.0",
     "base-x": "^1.0.4",
@@ -55,17 +67,5 @@
     "rollup-plugin-commonjs": "^8.0.2",
     "source-map-support": "^0.4.6",
     "webpack": "^1.14.0"
-  },
-  "scripts": {
-    "build": "webpack && rollup -c",
-    "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' 'test/**/*.js' && standard --fix '*.js' 'src/**/*.js' 'test/**/*.js'",
-    "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
-    "precommit": "npm run lint",
-    "prepublish": "npm run lint && npm run build",
-    "pretest": "npm run lint && webpack && rollup -c rollup.config.test.js",
-    "test": "mocha --require source-map-support/register build/tests.cjs.js"
-  },
-  "browser": {
-    "buffer": false
   }
 }
