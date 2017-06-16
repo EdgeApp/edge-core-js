@@ -49,7 +49,7 @@ export function makeCurrencyApi (state) {
     },
 
     stopEngine () {
-      return engine.killEngine()
+      return Promise.resolve(engine.killEngine())
     },
 
     // Transactions:
