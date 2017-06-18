@@ -1,5 +1,6 @@
 import { AuthServer } from './authServer.js'
 import { LoginStore } from './loginStore.js'
+import { makeRedux } from './redux.js'
 import { makeLocalStorageFolder } from 'disklet'
 
 /**
@@ -31,6 +32,7 @@ export class IoContext {
     // Set up wrapper objects:
     this.authServer = new AuthServer(this, opts.apiKey, opts.authServer)
     this.loginStore = new LoginStore(this)
+    this.redux = makeRedux()
   }
 
   authRequest (...rest) {
