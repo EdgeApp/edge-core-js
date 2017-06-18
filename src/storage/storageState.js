@@ -1,6 +1,7 @@
 import { hmacSha256 } from '../crypto/crypto.js'
 import { makeRepoPaths, loadRepoStatus, syncRepo } from '../storage/repo.js'
 import { base58, base64 } from '../util/encoding.js'
+import { makeStore } from '../util/derive.js'
 
 function nop () {}
 
@@ -17,6 +18,7 @@ export class StorageState {
 
     // Mutable state:
     this.status = status
+    this.epoch = makeStore(0) // Incremented on every dirty sync.
   }
 
   sync () {
@@ -27,7 +29,10 @@ export class StorageState {
     ).then(({ changes, status }) => {
       this.status = status
       const dirty = Object.keys(changes).length !== 0
-      if (dirty) this.onDataChanged()
+      if (dirty) {
+        this.epoch.set(this.epoch() + 1)
+        this.onDataChanged()
+      }
       return dirty
     })
   }
