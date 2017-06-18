@@ -1,4 +1,4 @@
-import { makeCurrencyWallet } from './currency/currencyApi.js'
+import { makeCurrencyWallet } from './currencyWallets/api.js'
 import { makeContext } from './io/context.js'
 
 // Secret CLI exports:
