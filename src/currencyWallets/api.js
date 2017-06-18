@@ -1,6 +1,10 @@
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
-import { makeCurrencyState } from './currencyState.js'
+import { derive, makeReaction } from '../util/derive.js'
+import { addCurrencyWallet, renameCurrencyWallet } from './actions.js'
+import { getCurrencyWalletName } from './selectors.js'
+
+function nop () {}
 
 const fakeMetadata = {
   payeeName: '',
@@ -14,25 +18,47 @@ const fakeMetadata = {
  * Creates a `CurrencyWallet` API object.
  */
 export function makeCurrencyWallet (keyInfo, opts) {
-  const { io } = opts
-  return makeCurrencyState(keyInfo, opts).then(state =>
-    wrapObject(io.console, 'CurrencyWallet', makeCurrencyApi(state))
+  const { io, callbacks = {} } = opts
+  const { redux: { dispatch, getState } } = io
+  const state = derive(() => getState().currencyWallets)
+  return dispatch(
+    addCurrencyWallet(state, keyInfo, opts)
+  ).then(currencyWallet =>
+    wrapObject(
+      io.console,
+      'CurrencyWallet',
+      makeCurrencyApi(dispatch, currencyWallet, callbacks)
+    )
   )
 }
 
 /**
  * Creates an unwrapped account API object around an account state object.
  */
-export function makeCurrencyApi (state) {
-  const { storage, engine, plugin } = state
+export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
+  const name = derive(() => getCurrencyWalletName(currencyWallet()))
+  const engine = derive(() => currencyWallet().engine)
+  const plugin = derive(() => currencyWallet().plugin)
+
+  const {
+    // onAddressesChecked = nop,
+    // onBalanceChanged = nop,
+    // onBlockHeightChanged = nop,
+    // onDataChanged = nop,
+    // onNewTransactions = nop,
+    // onTransactionsChanged = nop,
+    onWalletNameChanged = nop
+  } = callbacks
+
+  makeReaction(() => onWalletNameChanged(name()))
 
   const out = {
     // Storage stuff:
     get name () {
-      return state.name
+      return name()
     },
     renameWallet (name) {
-      return state.rename(name)
+      return dispatch(renameCurrencyWallet(currencyWallet, name))
     },
 
     // Currency info:
@@ -40,36 +66,36 @@ export function makeCurrencyApi (state) {
       return 'USD'
     },
     get currencyInfo () {
-      return plugin.getInfo()
+      return plugin().getInfo()
     },
 
     // Running state:
     startEngine () {
-      return engine.startEngine()
+      return engine().startEngine()
     },
 
     stopEngine () {
-      return Promise.resolve(engine.killEngine())
+      return Promise.resolve(engine().killEngine())
     },
 
     // Transactions:
     '@getBalance': { sync: true },
     getBalance (currencyCode) {
-      return engine.getBalance({ currencyCode })
+      return engine().getBalance({ currencyCode })
     },
 
     '@getBlockHeight': { sync: true },
     getBlockHeight () {
-      return engine.getBlockHeight()
+      return engine().getBlockHeight()
     },
 
     getTransactions (opts = {}) {
-      return engine.getTransactions(opts)
+      return engine().getTransactions(opts)
     },
 
     getReceiveAddress (opts) {
       return Promise.resolve({
-        publicAddress: engine.getFreshAddress(opts),
+        publicAddress: engine().getFreshAddress(opts),
         amountSatoshi: 0,
         metadata: fakeMetadata
       })
@@ -94,19 +120,19 @@ export function makeCurrencyApi (state) {
     },
 
     makeSpend (spendInfo) {
-      return engine.makeSpend(spendInfo)
+      return engine().makeSpend(spendInfo)
     },
 
     signTx (tx) {
-      return engine.signTx(tx)
+      return engine().signTx(tx)
     },
 
     broadcastTx (tx) {
-      return engine.broadcastTx(tx)
+      return engine().broadcastTx(tx)
     },
 
     saveTx (tx) {
-      return engine.saveTx(tx)
+      return engine().saveTx(tx)
     },
 
     getMaxSpendable (spendInfo) {
@@ -117,7 +143,7 @@ export function makeCurrencyApi (state) {
       return Promise.resolve(0)
     }
   }
-  copyProperties(out, makeStorageWalletApi(storage))
+  copyProperties(out, makeStorageWalletApi(currencyWallet().storage))
 
   return out
 }
