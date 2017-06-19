@@ -63,9 +63,10 @@ describe('currency wallets', function () {
     }
 
     return makeFakeCurrencyWallet(stores, callbacks).then(wallet => {
+      let txState = []
       assert.equal(countBalanceChanged, 1)
       assert.equal(countBlockHeightChanged, 1)
-      assert.equal(countTransactionsChanged, 1)
+      assert.equal(countTransactionsChanged, 0)
 
       balance.set(20)
       assert.equal(wallet.getBalance(), 20)
@@ -76,7 +77,19 @@ describe('currency wallets', function () {
       assert.equal(countBlockHeightChanged, 2)
 
       expectedTxs = [{ txid: 'a' }, { txid: 'b' }]
-      txs.set(expectedTxs)
+      txState = [...txState, ...expectedTxs]
+      txs.set(txState)
+      assert.equal(countTransactionsChanged, 1)
+
+      // Should not trigger:
+      expectedTxs = []
+      txState = [...txState, ...expectedTxs]
+      txs.set(txState)
+      assert.equal(countTransactionsChanged, 1)
+
+      expectedTxs = [{ txid: 'c' }]
+      txState = [...txState, ...expectedTxs]
+      txs.set(txState)
       assert.equal(countTransactionsChanged, 2)
 
       return null

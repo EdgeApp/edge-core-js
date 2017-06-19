@@ -2,7 +2,8 @@ import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
 import { derive, makeReaction } from '../util/derive.js'
 import { addCurrencyWallet, renameCurrencyWallet } from './actions.js'
-import { getCurrencyWalletName } from './selectors.js'
+import { compareTxs } from './functions.js'
+import { getEngine, getName, getPlugin, getTxs } from './selectors.js'
 
 function nop () {}
 
@@ -36,9 +37,10 @@ export function makeCurrencyWallet (keyInfo, opts) {
  * Creates an unwrapped account API object around an account state object.
  */
 export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
-  const name = derive(() => getCurrencyWalletName(currencyWallet()))
-  const engine = derive(() => currencyWallet().engine)
-  const plugin = derive(() => currencyWallet().plugin)
+  const name = derive(() => getName(currencyWallet()))
+  const engine = derive(() => getEngine(currencyWallet()))
+  const plugin = derive(() => getPlugin(currencyWallet()))
+  const txs = derive(() => getTxs(currencyWallet()))
 
   const {
     // onAddressesChecked = nop,
@@ -46,11 +48,21 @@ export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
     // onBlockHeightChanged = nop,
     // onDataChanged = nop,
     // onNewTransactions = nop,
-    // onTransactionsChanged = nop,
+    onTransactionsChanged = nop,
     onWalletNameChanged = nop
   } = callbacks
 
+  // Hook up the `onWalletNameChanged` callback:
   makeReaction(() => onWalletNameChanged(name()))
+
+  // Hook up the `onTransactionsChanged` and `onNewTransactions` callbacks:
+  let oldTxs
+  makeReaction(() => {
+    const newTxs = txs()
+    const { changes } = compareTxs(oldTxs, newTxs)
+    oldTxs = newTxs
+    if (changes.length) onTransactionsChanged(changes)
+  })
 
   const out = {
     // Storage stuff:

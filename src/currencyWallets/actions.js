@@ -1,6 +1,6 @@
 import { makeStorageState } from '../storage/storageState.js'
 import { derive, makeReaction, unwatched } from '../util/derive.js'
-import { add, setName } from './reducer.js'
+import { add, setName, addTxs } from './reducer.js'
 import { getCurrencyWallet } from './selectors.js'
 
 function nop () {}
@@ -17,19 +17,17 @@ export function addCurrencyWallet (state, keyInfo, opts = {}) {
       onAddressesChecked = nop,
       onBalanceChanged = nop,
       onBlockHeightChanged = nop,
-      onDataChanged = nop,
-      onTransactionsChanged = nop
+      onDataChanged = nop
     } = callbacks
 
     return makeStorageState(keyInfo, {
       io,
       callbacks: { onDataChanged }
     }).then(storage => {
-      const currencyWallet = derive(() =>
-        getCurrencyWallet(state(), keyInfo.id)
-      )
+      const keyId = keyInfo.id
+      const currencyWallet = derive(() => getCurrencyWallet(state(), keyId))
 
-      // Currency plugin:
+      // Create the currency plugin:
       const engine = plugin.makeEngine(keyInfo, {
         walletLocalFolder: storage.localFolder,
         walletFolder: storage.folder,
@@ -37,20 +35,14 @@ export function addCurrencyWallet (state, keyInfo, opts = {}) {
           onAddressesChecked,
           onBalanceChanged,
           onBlockHeightChanged,
-          onTransactionsChanged
+          onTransactionsChanged (txs) {
+            dispatch(addTxs(keyId, txs))
+          }
         }
       })
 
       // Add the wallet to the store:
-      dispatch(
-        add(keyInfo.id, {
-          engine,
-          keyId: keyInfo.id,
-          name: null,
-          plugin,
-          storage
-        })
-      )
+      dispatch(add(keyId, { keyId, engine, plugin, storage }))
 
       // Sign up for events:
       const disposer = makeReaction(() => {
