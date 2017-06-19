@@ -5,7 +5,7 @@ export function makeStorageWallet (keyInfo, opts) {
   const { io } = opts
 
   return makeStorageState(keyInfo, opts).then(state =>
-    wrapObject(io.console, 'StorageWallet', makeStorageWalletApi(state))
+    wrapObject(io.onError, 'StorageWallet', makeStorageWalletApi(state))
   )
 }
 

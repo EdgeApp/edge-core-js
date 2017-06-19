@@ -9,6 +9,15 @@ import { makeLocalStorageFolder } from 'disklet'
  */
 export class IoContext {
   constructor (nativeIo, opts = {}) {
+    const onErrorDefault = (error, name) => this.console.error(name, error)
+
+    const {
+      apiKey,
+      authServer = 'https://auth.airbitz.co/api',
+      callbacks = {}
+    } = opts
+    const { onError = onErrorDefault } = callbacks
+
     // Copy native io resources:
     const keys = ['console', 'fetch', 'folder', 'random']
     for (const key of keys) {
@@ -30,7 +39,8 @@ export class IoContext {
     }
 
     // Set up wrapper objects:
-    this.authServer = new AuthServer(this, opts.apiKey, opts.authServer)
+    this.onError = onError
+    this.authServer = new AuthServer(this, apiKey, authServer)
     this.loginStore = new LoginStore(this)
     this.redux = makeRedux()
   }

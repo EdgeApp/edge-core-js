@@ -16,7 +16,7 @@ import { makeAccountState } from './accountState.js'
  */
 export function makeAccount (io, appId, loginTree, loginType) {
   return makeAccountState(io, appId, loginTree).then(state =>
-    wrapObject(io.console, 'Account', makeAccountApi(state, loginType))
+    wrapObject(io.onError, 'Account', makeAccountApi(state, loginType))
   )
 }
 

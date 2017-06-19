@@ -25,7 +25,7 @@ export function makeCurrencyWallet (keyInfo, opts) {
     addCurrencyWallet(state, keyInfo, opts)
   ).then(currencyWallet =>
     wrapObject(
-      io.console,
+      io.onError,
       'CurrencyWallet',
       makeCurrencyApi(dispatch, currencyWallet, callbacks)
     )

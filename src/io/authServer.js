@@ -6,7 +6,6 @@ import {
   UsernameError
 } from '../error.js'
 import { timeout } from '../util/promise.js'
-import { elvis } from '../util/util.js'
 
 function parseReply (json) {
   switch (json.status_code) {
@@ -46,7 +45,7 @@ export class AuthServer {
 
     this.io = io
     this.apiKey = apiKey
-    this.authServer = elvis(authServer, 'https://auth.airbitz.co/api')
+    this.authServer = authServer
   }
 
   /**
