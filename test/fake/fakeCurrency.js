@@ -83,6 +83,10 @@ class FakeCurrencyEngine {
   getTransactions () {
     return Promise.resolve(this.txs())
   }
+
+  saveTx () {
+    return Promise.resolve()
+  }
 }
 
 /**

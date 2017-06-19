@@ -1,7 +1,8 @@
 import { makeStorageState } from '../storage/storageState.js'
 import { derive, makeReaction, unwatched } from '../util/derive.js'
-import { add, setName, addTxs } from './reducer.js'
+import { add, setName, addTxs, setFile, setFiles } from './reducer.js'
 import { getCurrencyWallet } from './selectors.js'
+import { mapFiles } from 'disklet'
 
 function nop () {}
 
@@ -71,11 +72,44 @@ export function renameCurrencyWallet (currencyWallet, name) {
  * @param currencyWallet A deriver for the wallet's state.
  */
 function loadFiles (currencyWallet) {
-  return dispatch =>
-    currencyWallet().storage.folder
-      .file('WalletName.json')
-      .getText()
-      .then(text => JSON.parse(text).walletName)
-      .catch(e => null)
-      .then(name => dispatch(setName(currencyWallet().keyId, name)))
+  return dispatch => {
+    const folder = currencyWallet().storage.folder
+    const keyId = currencyWallet().keyId
+    return Promise.all([
+      // Wallet name:
+      folder
+        .file('WalletName.json')
+        .getText()
+        .then(text => JSON.parse(text).walletName)
+        .catch(e => null)
+        .then(name => dispatch(setName(keyId, name))),
+      // Transaction metadata:
+      mapFiles(folder.folder('transaction'), file =>
+        file.getText().then(text => JSON.parse(text)).catch(e => null)
+      ).then(files => {
+        const out = {}
+        const jsons = files.filter(json => json != null && json.txid != null)
+        for (const json of jsons) {
+          out[json.txid] = json
+        }
+        return dispatch(setFiles(keyId, out))
+      })
+    ])
+  }
+}
+
+/**
+ * Changes a wallet's metadata.
+ * @param currencyWallet A deriver for the wallet's state.
+ */
+export function setMetadata (currencyWallet, txid, json) {
+  return dispatch => {
+    const folder = currencyWallet().storage.folder
+    const keyId = currencyWallet().keyId
+    return folder
+      .folder('transaction')
+      .file(txid + '.json')
+      .setText(JSON.stringify(json))
+      .then(() => dispatch(setFile(keyId, txid, json)))
+  }
 }

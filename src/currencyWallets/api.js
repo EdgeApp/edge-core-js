@@ -1,9 +1,14 @@
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
 import { derive, makeReaction } from '../util/derive.js'
-import { addCurrencyWallet, renameCurrencyWallet } from './actions.js'
-import { compareTxs } from './functions.js'
-import { getEngine, getName, getPlugin, getTxs } from './selectors.js'
+import { filterObject } from '../util/util.js'
+import {
+  addCurrencyWallet,
+  renameCurrencyWallet,
+  setMetadata
+} from './actions.js'
+import { compareTxs, mergeTxs } from './functions.js'
+import { getFiles, getEngine, getName, getPlugin, getTxs } from './selectors.js'
 
 function nop () {}
 
@@ -37,10 +42,13 @@ export function makeCurrencyWallet (keyInfo, opts) {
  * Creates an unwrapped account API object around an account state object.
  */
 export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
+  const files = derive(() => getFiles(currencyWallet()))
   const name = derive(() => getName(currencyWallet()))
   const engine = derive(() => getEngine(currencyWallet()))
   const plugin = derive(() => getPlugin(currencyWallet()))
   const txs = derive(() => getTxs(currencyWallet()))
+
+  const mergedTxs = derive(() => mergeTxs(txs(), files()))
 
   const {
     // onAddressesChecked = nop,
@@ -58,7 +66,7 @@ export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
   // Hook up the `onTransactionsChanged` and `onNewTransactions` callbacks:
   let oldTxs
   makeReaction(() => {
-    const newTxs = txs()
+    const newTxs = mergedTxs()
     const { changes } = compareTxs(oldTxs, newTxs)
     oldTxs = newTxs
     if (changes.length) onTransactionsChanged(changes)
@@ -102,7 +110,8 @@ export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
     },
 
     getTransactions (opts = {}) {
-      return engine().getTransactions(opts)
+      const txs = mergedTxs()
+      return Promise.resolve(Object.keys(txs).map(key => txs[key]))
     },
 
     getReceiveAddress (opts) {
@@ -144,7 +153,16 @@ export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
     },
 
     saveTx (tx) {
-      return engine().saveTx(tx)
+      return Promise.all([
+        engine().saveTx(tx),
+        dispatch(
+          setMetadata(
+            currencyWallet,
+            tx.txid,
+            filterObject(tx, ['metadata', 'txid', 'amountSatoshi'])
+          )
+        )
+      ])
     },
 
     getMaxSpendable (spendInfo) {

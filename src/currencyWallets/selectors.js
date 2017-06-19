@@ -17,3 +17,7 @@ export function getPlugin (currencyWallet) {
 export function getTxs (currencyWallet) {
   return currencyWallet.txs
 }
+
+export function getFiles (currencyWallet) {
+  return currencyWallet.files
+}

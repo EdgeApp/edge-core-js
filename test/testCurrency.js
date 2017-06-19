@@ -95,4 +95,25 @@ describe('currency wallets', function () {
       return null
     })
   })
+
+  it('can have metadata', function () {
+    const txs = makeStore([])
+    const stores = { txs }
+
+    return makeFakeCurrencyWallet(stores).then(wallet => {
+      const tx = { txid: 'a', metadata: { name: 'me' } }
+      txs.set([{ txid: 'a', signedTx: 'blah' }])
+      return wallet
+        .saveTx(tx)
+        .then(() =>
+          wallet
+            .getTransactions({})
+            .then(txs =>
+              assert.deepEqual(txs, [
+                { txid: 'a', signedTx: 'blah', metadata: { name: 'me' } }
+              ])
+            )
+        )
+    })
+  })
 })
