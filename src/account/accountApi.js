@@ -123,7 +123,7 @@ function makeAccountApi (state, loginType) {
      */
     '@getFirstWallet': { sync: true },
     getFirstWallet (type) {
-      return findFirstKey(state.login.keyInfos, type)
+      return findFirstKey(this.allKeys, type)
     },
 
     /**
