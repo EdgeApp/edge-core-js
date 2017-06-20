@@ -1,5 +1,15 @@
 # airbitz-core-js
 
+## 0.3.2
+
+New:
+* Currency wallet support
+* Wallet sort / archive / delete support
+* Support for legacy wallet keys
+
+Breaking changes:
+* Fix the wallet id derivation algorithm
+
 ## 0.3.1
 
 Fixes:
