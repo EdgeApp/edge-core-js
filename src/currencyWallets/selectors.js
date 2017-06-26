@@ -1,23 +1,23 @@
-export function getCurrencyWallet (state, keyId) {
-  return state[keyId]
+export function getCurrencyWalletEngine (state, keyId) {
+  return state.currencyWallets[keyId].engine
 }
 
-export function getEngine (currencyWallet) {
-  return currencyWallet.engine
+export function getCurrencyWalletName (state, keyId) {
+  return state.currencyWallets[keyId].name
 }
 
-export function getName (currencyWallet) {
-  return currencyWallet.name
+export function getCurrencyWalletPlugin (state, keyId) {
+  return state.currencyWallets[keyId].plugin
 }
 
-export function getPlugin (currencyWallet) {
-  return currencyWallet.plugin
+export function getCurrencyWalletTxs (state, keyId) {
+  return state.currencyWallets[keyId].txs
 }
 
-export function getTxs (currencyWallet) {
-  return currencyWallet.txs
+export function getCurrencyWalletFiles (state, keyId) {
+  return state.currencyWallets[keyId].files
 }
 
-export function getFiles (currencyWallet) {
-  return currencyWallet.files
+export function getStorageWallet (state, keyId) {
+  return state.currencyWallets[keyId].storage
 }

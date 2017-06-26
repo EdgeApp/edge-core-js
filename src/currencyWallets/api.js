@@ -5,10 +5,17 @@ import { filterObject } from '../util/util.js'
 import {
   addCurrencyWallet,
   renameCurrencyWallet,
-  setMetadata
+  setCurrencyWalletTxMetadata
 } from './actions.js'
 import { compareTxs, mergeTxs } from './functions.js'
-import { getFiles, getEngine, getName, getPlugin, getTxs } from './selectors.js'
+import {
+  getCurrencyWalletEngine,
+  getCurrencyWalletFiles,
+  getCurrencyWalletName,
+  getCurrencyWalletPlugin,
+  getCurrencyWalletTxs,
+  getStorageWallet
+} from './selectors.js'
 
 function nop () {}
 
@@ -25,28 +32,29 @@ const fakeMetadata = {
  */
 export function makeCurrencyWallet (keyInfo, opts) {
   const { io, callbacks = {} } = opts
-  const { redux: { dispatch, getState } } = io
-  const state = derive(() => getState().currencyWallets)
-  return dispatch(
-    addCurrencyWallet(state, keyInfo, opts)
-  ).then(currencyWallet =>
-    wrapObject(
-      io.onError,
-      'CurrencyWallet',
-      makeCurrencyApi(dispatch, currencyWallet, callbacks)
+  const { redux } = io
+
+  return redux
+    .dispatch(addCurrencyWallet(keyInfo, opts))
+    .then(keyId =>
+      wrapObject(
+        io.onError,
+        'CurrencyWallet',
+        makeCurrencyApi(redux, keyId, callbacks)
+      )
     )
-  )
 }
 
 /**
  * Creates an unwrapped account API object around an account state object.
  */
-export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
-  const files = derive(() => getFiles(currencyWallet()))
-  const name = derive(() => getName(currencyWallet()))
-  const engine = derive(() => getEngine(currencyWallet()))
-  const plugin = derive(() => getPlugin(currencyWallet()))
-  const txs = derive(() => getTxs(currencyWallet()))
+export function makeCurrencyApi (redux, keyId, callbacks) {
+  const { dispatch, getState } = redux
+  const files = derive(() => getCurrencyWalletFiles(getState(), keyId))
+  const name = derive(() => getCurrencyWalletName(getState(), keyId))
+  const engine = derive(() => getCurrencyWalletEngine(getState(), keyId))
+  const plugin = derive(() => getCurrencyWalletPlugin(getState(), keyId))
+  const txs = derive(() => getCurrencyWalletTxs(getState(), keyId))
 
   const mergedTxs = derive(() => mergeTxs(txs(), files()))
 
@@ -78,7 +86,7 @@ export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
       return name()
     },
     renameWallet (name) {
-      return dispatch(renameCurrencyWallet(currencyWallet, name))
+      return dispatch(renameCurrencyWallet(keyId, name))
     },
 
     // Currency info:
@@ -156,8 +164,8 @@ export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
       return Promise.all([
         engine().saveTx(tx),
         dispatch(
-          setMetadata(
-            currencyWallet,
+          setCurrencyWalletTxMetadata(
+            keyId,
             tx.txid,
             filterObject(tx, ['metadata', 'txid', 'amountSatoshi'])
           )
@@ -173,7 +181,7 @@ export function makeCurrencyApi (dispatch, currencyWallet, callbacks) {
       return Promise.resolve(0)
     }
   }
-  copyProperties(out, makeStorageWalletApi(currencyWallet().storage))
+  copyProperties(out, makeStorageWalletApi(getStorageWallet(getState(), keyId)))
 
   return out
 }

@@ -1,17 +1,17 @@
 import { makeStorageState } from '../storage/storageState.js'
-import { derive, makeReaction, unwatched } from '../util/derive.js'
+import { makeReaction, unwatched } from '../util/derive.js'
 import { add, setName, addTxs, setFile, setFiles } from './reducer.js'
-import { getCurrencyWallet } from './selectors.js'
+import { getStorageWallet } from './selectors.js'
 import { mapFiles } from 'disklet'
 
 function nop () {}
 
 /**
  * Creates the initial state for a currency wallet and adds it to the store.
- * @param state A deriver for the module's state slice.
- * @return A deriver for the wallet's state.
+ * @param opts The options passed to `createCurrencyWallet`.
+ * @return A `Promise` that will resolve when the state is ready.
  */
-export function addCurrencyWallet (state, keyInfo, opts = {}) {
+export function addCurrencyWallet (keyInfo, opts = {}) {
   return dispatch => {
     const { io, plugin, callbacks = {} } = opts
     const {
@@ -26,7 +26,6 @@ export function addCurrencyWallet (state, keyInfo, opts = {}) {
       callbacks: { onDataChanged }
     }).then(storage => {
       const keyId = keyInfo.id
-      const currencyWallet = derive(() => getCurrencyWallet(state(), keyId))
 
       // Create the currency plugin:
       const engine = plugin.makeEngine(keyInfo, {
@@ -48,33 +47,31 @@ export function addCurrencyWallet (state, keyInfo, opts = {}) {
       // Sign up for events:
       const disposer = makeReaction(() => {
         storage.epoch()
-        return dispatch(unwatched(loadFiles(currencyWallet)))
+        return dispatch(unwatched(loadFiles(keyId)))
       })
-      return disposer.result.then(() => currencyWallet)
+      return disposer.result.then(() => keyInfo.id)
     })
   }
 }
 
 /**
  * Changes a wallet's name.
- * @param currencyWallet A deriver for the wallet's state.
  */
-export function renameCurrencyWallet (currencyWallet, name) {
-  return dispatch =>
-    currencyWallet().storage.folder
-      .file('WalletName.json')
+export function renameCurrencyWallet (keyId, name) {
+  return (dispatch, getState) =>
+    getStorageWallet(getState(), keyId)
+      .folder.file('WalletName.json')
       .setText(JSON.stringify({ walletName: name }))
-      .then(() => dispatch(setName(currencyWallet().keyId, name)))
+      .then(() => dispatch(setName(keyId, name)))
 }
 
 /**
  * Updates the wallet in response to data syncs.
- * @param currencyWallet A deriver for the wallet's state.
  */
-function loadFiles (currencyWallet) {
-  return dispatch => {
-    const folder = currencyWallet().storage.folder
-    const keyId = currencyWallet().keyId
+function loadFiles (keyId) {
+  return (dispatch, getState) => {
+    const folder = getStorageWallet(getState(), keyId).folder
+
     return Promise.all([
       // Wallet name:
       folder
@@ -100,12 +97,11 @@ function loadFiles (currencyWallet) {
 
 /**
  * Changes a wallet's metadata.
- * @param currencyWallet A deriver for the wallet's state.
  */
-export function setMetadata (currencyWallet, txid, json) {
-  return dispatch => {
-    const folder = currencyWallet().storage.folder
-    const keyId = currencyWallet().keyId
+export function setCurrencyWalletTxMetadata (keyId, txid, json) {
+  return (dispatch, getState) => {
+    const folder = getStorageWallet(getState(), keyId).folder
+
     return folder
       .folder('transaction')
       .file(txid + '.json')
