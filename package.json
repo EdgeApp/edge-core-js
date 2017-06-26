@@ -31,10 +31,11 @@
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
+    "build": "webpack && rollup -c",
     "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' 'test/**/*.js' && standard --fix '*.js' 'src/**/*.js' 'test/**/*.js'",
     "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
     "precommit": "npm run lint",
-    "prepare": "npm run lint && webpack && rollup -c",
+    "prepare": "npm run lint && npm run build",
     "pretest": "webpack && rollup -c rollup.config.test.js",
     "test": "mocha --require source-map-support/register build/tests.cjs.js"
   },
