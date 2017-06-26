@@ -31,11 +31,10 @@
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
-    "build": "webpack && rollup -c",
-    "precommit": "npm run lint",
     "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' 'test/**/*.js' && standard --fix '*.js' 'src/**/*.js' 'test/**/*.js'",
     "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
-    "prepublish": "npm run lint && npm run build",
+    "precommit": "npm run lint",
+    "prepare": "npm run lint && webpack && rollup -c",
     "pretest": "npm run lint && webpack && rollup -c rollup.config.test.js",
     "test": "mocha --require source-map-support/register build/tests.cjs.js"
   },
@@ -64,7 +63,7 @@
     "husky": "^0.13.3",
     "json-loader": "^0.5.4",
     "mocha": "^3.1.2",
-    "rollup": "^0.41.6",
+    "rollup": "^0.43.0",
     "rollup-plugin-buble": "^0.15.0",
     "rollup-plugin-commonjs": "^8.0.2",
     "source-map-support": "^0.4.6",
