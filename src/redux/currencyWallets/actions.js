@@ -1,7 +1,7 @@
 import { makeStorageState } from '../../storage/storageState.js'
 import { createReaction } from '../../util/reaction.js'
+import { getIo, getStorageWallet } from '../selectors.js'
 import { add, setName, addTxs, setFile, setFiles } from './reducer.js'
-import { getStorageWallet } from './selectors.js'
 import { mapFiles } from 'disklet'
 
 function nop () {}
@@ -12,8 +12,9 @@ function nop () {}
  * @return A `Promise` that will resolve when the state is ready.
  */
 export function addCurrencyWallet (keyInfo, opts = {}) {
-  return dispatch => {
-    const { io, plugin, callbacks = {} } = opts
+  return (dispatch, getState) => {
+    const io = getIo(getState())
+    const { plugin, callbacks = {} } = opts
     const {
       onAddressesChecked = nop,
       onBalanceChanged = nop,
