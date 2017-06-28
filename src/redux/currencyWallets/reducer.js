@@ -1,4 +1,4 @@
-import { recycle } from '../util/recycle.js'
+import { recycle } from '../../util/recycle.js'
 
 const ADD = 'airbitz-core-js/currencyWallet/ADD'
 const UPDATE = 'airbitz-core-js/currencyWallet/UPDATE'

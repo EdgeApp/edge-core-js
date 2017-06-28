@@ -1,20 +1,20 @@
-import { makeStorageWalletApi } from '../storage/storageApi.js'
-import { copyProperties, wrapObject } from '../util/api.js'
-import { createReaction } from '../util/reaction.js'
-import { compare } from '../util/recycle.js'
-import { filterObject } from '../util/util.js'
 import {
   addCurrencyWallet,
   renameCurrencyWallet,
   setCurrencyWalletTxMetadata
-} from './actions.js'
+} from '../redux/actions.js'
 import {
   getCurrencyWalletEngine,
   getCurrencyWalletName,
   getCurrencyWalletPlugin,
   getCurrencyWalletTxs,
   getStorageWallet
-} from './selectors.js'
+} from '../redux/selectors.js'
+import { makeStorageWalletApi } from '../storage/storageApi.js'
+import { copyProperties, wrapObject } from '../util/api.js'
+import { createReaction } from '../util/reaction.js'
+import { compare } from '../util/recycle.js'
+import { filterObject } from '../util/util.js'
 
 function nop () {}
 

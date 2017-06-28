@@ -1,5 +1,5 @@
-import { makeStorageState } from '../storage/storageState.js'
-import { createReaction } from '../util/reaction.js'
+import { makeStorageState } from '../../storage/storageState.js'
+import { createReaction } from '../../util/reaction.js'
 import { add, setName, addTxs, setFile, setFiles } from './reducer.js'
 import { getStorageWallet } from './selectors.js'
 import { mapFiles } from 'disklet'

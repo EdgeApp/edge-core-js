@@ -1,4 +1,4 @@
-import { deriveSelector } from '../util/derive.js'
+import { deriveSelector } from '../../util/derive.js'
 
 export function getCurrencyWalletEngine (state, keyId) {
   return state.currencyWallets[keyId].engine
