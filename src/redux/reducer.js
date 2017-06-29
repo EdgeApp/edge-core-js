@@ -1,5 +1,6 @@
 import { INIT } from './actions.js'
 import currencyWallets from './currencyWallets/reducer.js'
+import storageWallets from './storageWallets/reducer.js'
 import { combineReducers } from 'redux'
 
 function io (state = {}, action) {
@@ -11,5 +12,6 @@ export default combineReducers({
   io,
 
   // Wallet state:
-  currencyWallets
+  currencyWallets,
+  storageWallets
 })

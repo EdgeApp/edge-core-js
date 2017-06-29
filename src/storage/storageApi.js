@@ -1,16 +1,39 @@
+import { addStorageWallet, syncStorageWallet } from '../redux/actions.js'
+import {
+  getStorageWalletFolder,
+  getStorageWalletLastSync,
+  getStorageWalletLocalFolder
+} from '../redux/selectors.js'
+import { createReaction } from '../util/reaction.js'
 import { wrapObject } from '../util/api.js'
-import { makeStorageState } from './storageState.js'
 
 export function makeStorageWallet (keyInfo, opts) {
-  const { io } = opts
+  const { io, callbacks = {} } = opts
+  const { redux } = io
 
-  return makeStorageState(keyInfo, opts).then(state =>
-    wrapObject(io.onError, 'StorageWallet', makeStorageWalletApi(state))
-  )
+  return redux
+    .dispatch(addStorageWallet(keyInfo))
+    .then(() =>
+      wrapObject(
+        io.onError,
+        'StorageWallet',
+        makeStorageWalletApi(redux, keyInfo, callbacks)
+      )
+    )
 }
 
-export function makeStorageWalletApi (state) {
-  const { keyInfo: { id, type, keys } } = state
+export function makeStorageWalletApi (redux, keyInfo, callbacks) {
+  const { id, type, keys } = keyInfo
+  const { onDataChanged } = callbacks
+
+  if (onDataChanged) {
+    redux.dispatch(
+      createReaction(
+        state => getStorageWalletLastSync(state, id),
+        onDataChanged
+      )
+    )
+  }
 
   return {
     // Broken-out key info:
@@ -19,11 +42,16 @@ export function makeStorageWalletApi (state) {
     keys,
 
     // Folders:
-    folder: state.folder,
-    localFolder: state.localFolder,
+    get folder () {
+      return getStorageWalletFolder(redux.getState(), id)
+    },
+
+    get localFolder () {
+      return getStorageWalletLocalFolder(redux.getState(), id)
+    },
 
     sync () {
-      return state.sync()
+      return redux.dispatch(syncStorageWallet(id))
     }
   }
 }

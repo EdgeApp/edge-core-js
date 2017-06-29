@@ -7,8 +7,7 @@ import {
   getCurrencyWalletEngine,
   getCurrencyWalletName,
   getCurrencyWalletPlugin,
-  getCurrencyWalletTxs,
-  getStorageWallet
+  getCurrencyWalletTxs
 } from '../redux/selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
@@ -39,7 +38,7 @@ export function makeCurrencyWallet (keyInfo, opts) {
       wrapObject(
         io.onError,
         'CurrencyWallet',
-        makeCurrencyApi(redux, keyId, callbacks)
+        makeCurrencyApi(redux, keyInfo, callbacks)
       )
     )
 }
@@ -47,8 +46,9 @@ export function makeCurrencyWallet (keyInfo, opts) {
 /**
  * Creates an unwrapped account API object around an account state object.
  */
-export function makeCurrencyApi (redux, keyId, callbacks) {
+export function makeCurrencyApi (redux, keyInfo, callbacks) {
   const { dispatch, getState } = redux
+  const keyId = keyInfo.id
 
   // Bound selectors:
   const engine = () => getCurrencyWalletEngine(getState(), keyId)
@@ -197,7 +197,7 @@ export function makeCurrencyApi (redux, keyId, callbacks) {
       return Promise.resolve(0)
     }
   }
-  copyProperties(out, makeStorageWalletApi(getStorageWallet(getState(), keyId)))
+  copyProperties(out, makeStorageWalletApi(redux, keyInfo, callbacks))
 
   return out
 }

@@ -24,7 +24,8 @@ export function makeAccount (io, appId, loginTree, loginType) {
  * Creates an unwrapped account API object around an account state object.
  */
 function makeAccountApi (state, loginType) {
-  const { io, appId, storage } = state
+  const { io, appId, keyInfo } = state
+  const callbacks = {}
 
   const out = {
     // Immutable info:
@@ -138,7 +139,10 @@ function makeAccountApi (state, loginType) {
       return state.applyKit(kit).then(() => keyInfo.id)
     }
   }
-  copyProperties(out, makeStorageWalletApi(storage))
+  copyProperties(
+    out,
+    makeStorageWalletApi(io.redux, keyInfo, callbacks)
+  )
 
   out.checkPassword = out.passwordOk
   out.changePassword = out.passwordSetup

@@ -25,7 +25,3 @@ export const getCurrencyWalletTxs = deriveSelector(
     return out
   }
 )
-
-export function getStorageWallet (state, keyId) {
-  return state.currencyWallets[keyId].storage
-}

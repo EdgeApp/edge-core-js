@@ -9,7 +9,9 @@ import { applyKit, searchTree } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
-import { makeStorageState } from '../storage/storageState.js'
+import { addStorageWallet } from '../redux/actions.js'
+import { getStorageWalletLastSync } from '../redux/selectors.js'
+import { createReaction } from '../util/reaction.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 function findAppLogin (loginTree, appId) {
@@ -69,11 +71,11 @@ function ensureAccountExists (io, loginTree, appId) {
  * This is the data an account contains, and the methods to update it.
  */
 class AccountState {
-  constructor (io, appId, loginTree, storage) {
+  constructor (io, appId, loginTree, keyInfo) {
     // Constant stuff:
     this.io = io
     this.appId = appId
-    this.storage = storage
+    this.keyInfo = keyInfo
 
     // Login state:
     this.loginTree = loginTree
@@ -116,16 +118,21 @@ class AccountState {
   }
 
   changeKeyStates (newStates) {
-    const { keyStates, storage } = this
-    return changeKeyStates(storage, keyStates, newStates).then(keyStates => {
+    const { io, keyInfo, keyStates } = this
+    return changeKeyStates(
+      io.redux.getState(),
+      keyInfo.id,
+      keyStates,
+      newStates
+    ).then(keyStates => {
       this.keyStates = keyStates
       return void 0
     })
   }
 
   reloadKeyStates () {
-    const { storage } = this
-    return loadAllKeyStates(storage).then(values => {
+    const { io, keyInfo } = this
+    return loadAllKeyStates(io.redux.getState(), keyInfo.id).then(values => {
       const { keyInfos, keyStates } = values
       this.legacyKeyInfos = keyInfos
       this.keyStates = keyStates
@@ -144,9 +151,15 @@ export function makeAccountState (io, appId, loginTree) {
       throw new Error(`Cannot find a "${type}" repo`)
     }
 
-    return makeStorageState(keyInfo, { io }).then(storage => {
-      const account = new AccountState(io, appId, loginTree, storage)
-      return account.reloadKeyStates()
+    return io.redux.dispatch(addStorageWallet(keyInfo)).then(() => {
+      const account = new AccountState(io, appId, loginTree, keyInfo)
+      const disposer = io.redux.dispatch(
+        createReaction(
+          state => getStorageWalletLastSync(state, keyInfo.id),
+          () => account.reloadKeyStates()
+        )
+      )
+      return disposer.payload.out.then(() => account)
     })
   })
 }

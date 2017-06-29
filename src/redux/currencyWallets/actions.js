@@ -1,6 +1,10 @@
-import { makeStorageState } from '../../storage/storageState.js'
 import { createReaction } from '../../util/reaction.js'
-import { getIo, getStorageWallet } from '../selectors.js'
+import { addStorageWallet } from '../actions.js'
+import {
+  getStorageWalletFolder,
+  getStorageWalletLocalFolder,
+  getStorageWalletLastSync
+} from '../selectors.js'
 import { add, setName, addTxs, setFile, setFiles } from './reducer.js'
 import { mapFiles } from 'disklet'
 
@@ -13,25 +17,21 @@ function nop () {}
  */
 export function addCurrencyWallet (keyInfo, opts = {}) {
   return (dispatch, getState) => {
-    const io = getIo(getState())
     const { plugin, callbacks = {} } = opts
     const {
       onAddressesChecked = nop,
       onBalanceChanged = nop,
-      onBlockHeightChanged = nop,
-      onDataChanged = nop
+      onBlockHeightChanged = nop
     } = callbacks
 
-    return makeStorageState(keyInfo, {
-      io,
-      callbacks: { onDataChanged }
-    }).then(storage => {
+    return dispatch(addStorageWallet(keyInfo)).then(() => {
+      const state = getState()
       const keyId = keyInfo.id
 
       // Create the currency plugin:
       const engine = plugin.makeEngine(keyInfo, {
-        walletLocalFolder: storage.localFolder,
-        walletFolder: storage.folder,
+        walletFolder: getStorageWalletFolder(state, keyId),
+        walletLocalFolder: getStorageWalletLocalFolder(state, keyId),
         callbacks: {
           onAddressesChecked,
           onBalanceChanged,
@@ -43,13 +43,13 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
       })
 
       // Add the wallet to the store:
-      dispatch(add(keyId, { keyId, engine, plugin, storage }))
+      dispatch(add(keyId, { keyId, engine, plugin }))
 
       // Sign up for events:
       const disposer = dispatch(
         createReaction(
-          state => storage.epoch,
-          epoch => dispatch => dispatch(loadFiles(keyId))
+          state => getStorageWalletLastSync(state, keyId),
+          timestamp => dispatch => dispatch(loadFiles(keyId))
         )
       )
       return disposer.payload.out.then(() => keyInfo.id)
@@ -62,7 +62,7 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
  */
 export function renameCurrencyWallet (keyId, name) {
   return (dispatch, getState) =>
-    getStorageWallet(getState(), keyId).folder
+    getStorageWalletFolder(getState(), keyId)
       .file('WalletName.json')
       .setText(JSON.stringify({ walletName: name }))
       .then(() => dispatch(setName(keyId, name)))
@@ -73,7 +73,7 @@ export function renameCurrencyWallet (keyId, name) {
  */
 function loadFiles (keyId) {
   return (dispatch, getState) => {
-    const folder = getStorageWallet(getState(), keyId).folder
+    const folder = getStorageWalletFolder(getState(), keyId)
 
     return Promise.all([
       // Wallet name:
@@ -103,7 +103,7 @@ function loadFiles (keyId) {
  */
 export function setCurrencyWalletTxMetadata (keyId, txid, json) {
   return (dispatch, getState) => {
-    const folder = getStorageWallet(getState(), keyId).folder
+    const folder = getStorageWalletFolder(getState(), keyId)
 
     return folder
       .folder('transaction')

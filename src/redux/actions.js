@@ -1,4 +1,5 @@
 export * from './currencyWallets/actions.js'
+export * from './storageWallets/actions.js'
 
 export const INIT = 'airbitz-core-js/INIT'
 

@@ -1,6 +1,10 @@
+import { makeKeyInfo } from '../login/keys.js'
+import {
+  getStorageWalletFolder,
+  hashStorageWalletFilename
+} from '../redux/selectors.js'
 import { base16, base64 } from '../util/encoding.js'
 import { mapFiles } from 'disklet'
-import { makeKeyInfo } from '../login/keys.js'
 
 /**
  * Returns true if `Object.assign(a, b)` would alter `a`.
@@ -26,8 +30,8 @@ function getJsonFiles (folder) {
 /**
  * Loads the legacy wallet list from the account folder.
  */
-function loadWalletList (storage) {
-  return getJsonFiles(storage.folder.folder('Wallets')).then(files => {
+function loadWalletList (folder) {
+  return getJsonFiles(folder.folder('Wallets')).then(files => {
     const keyInfos = []
     const keyStates = {}
 
@@ -59,8 +63,8 @@ function loadWalletList (storage) {
 /**
  * Loads the modern key state list from the account folder.
  */
-function loadKeyStates (storage) {
-  return getJsonFiles(storage.folder.folder('Keys')).then(files => {
+function loadKeyStates (folder) {
+  return getJsonFiles(folder.folder('Keys')).then(files => {
     const keyStates = []
 
     files.forEach(file => {
@@ -77,10 +81,12 @@ function loadKeyStates (storage) {
  * diffs them with the current keyStates and legacy wallet list,
  * and returns true if there are any changes.
  */
-export function loadAllKeyStates (storage) {
+export function loadAllKeyStates (state, keyId) {
+  const folder = getStorageWalletFolder(state, keyId)
+
   return Promise.all([
-    loadWalletList(storage),
-    loadKeyStates(storage)
+    loadWalletList(folder),
+    loadKeyStates(folder)
   ]).then(values => {
     const [{ keyInfos, keyStates: legacyKeyStates }, newKeyStates] = values
     const keyStates = { ...legacyKeyStates, ...newKeyStates }
@@ -91,8 +97,8 @@ export function loadAllKeyStates (storage) {
 /**
  * Writes some key states to the account folder.
  */
-function saveKeyStates (storage, keyStates) {
-  const keyFolder = storage.folder.folder('Keys')
+function saveKeyStates (state, keyId, keyStates) {
+  const keyFolder = getStorageWalletFolder(state, keyId).folder('Keys')
 
   // If there are no changes, do nothing:
   const ids = Object.keys(keyStates)
@@ -101,7 +107,8 @@ function saveKeyStates (storage, keyStates) {
   return Promise.all(
     ids.map(id => {
       const { archived, deleted, sortIndex } = keyStates[id]
-      const filename = storage.hashFilename(base64.parse(id)) + '.json'
+      const filename =
+        hashStorageWalletFilename(state, keyId, base64.parse(id)) + '.json'
       return keyFolder
         .file(filename)
         .setText(JSON.stringify({ archived, deleted, sortIndex, id }))
@@ -113,7 +120,7 @@ function saveKeyStates (storage, keyStates) {
  * Given a list of new key states, as well as the existing list,
  * writes out the ones that have changed, and returns the combined list.
  */
-export function changeKeyStates (storage, keyStates, newStates) {
+export function changeKeyStates (state, keyId, keyStates, newStates) {
   // Find the changes between the new states and the old states:
   const toWrite = {}
   for (const id of Object.keys(newStates)) {
@@ -126,7 +133,7 @@ export function changeKeyStates (storage, keyStates, newStates) {
     }
   }
 
-  return saveKeyStates(storage, toWrite).then(() => ({
+  return saveKeyStates(state, keyId, toWrite).then(() => ({
     ...keyStates,
     ...toWrite
   }))
