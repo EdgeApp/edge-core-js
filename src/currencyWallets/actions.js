@@ -1,5 +1,5 @@
 import { makeStorageState } from '../storage/storageState.js'
-import { makeReaction, unwatched } from '../util/derive.js'
+import { createReaction } from '../util/reaction.js'
 import { add, setName, addTxs, setFile, setFiles } from './reducer.js'
 import { getStorageWallet } from './selectors.js'
 import { mapFiles } from 'disklet'
@@ -45,11 +45,13 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
       dispatch(add(keyId, { keyId, engine, plugin, storage }))
 
       // Sign up for events:
-      const disposer = makeReaction(() => {
-        storage.epoch()
-        return dispatch(unwatched(loadFiles(keyId)))
-      })
-      return disposer.result.then(() => keyInfo.id)
+      const disposer = dispatch(
+        createReaction(
+          state => storage.epoch,
+          epoch => dispatch => dispatch(loadFiles(keyId))
+        )
+      )
+      return disposer.payload.out.then(() => keyInfo.id)
     })
   }
 }
@@ -59,8 +61,8 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
  */
 export function renameCurrencyWallet (keyId, name) {
   return (dispatch, getState) =>
-    getStorageWallet(getState(), keyId)
-      .folder.file('WalletName.json')
+    getStorageWallet(getState(), keyId).folder
+      .file('WalletName.json')
       .setText(JSON.stringify({ walletName: name }))
       .then(() => dispatch(setName(keyId, name)))
 }

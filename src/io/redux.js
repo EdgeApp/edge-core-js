@@ -1,5 +1,6 @@
 import currencyWallets from '../currencyWallets/reducer.js'
 import { reduxSource } from '../util/derive.js'
+import { reactionMiddleware } from '../util/reaction.js'
 import { applyMiddleware, combineReducers, compose, createStore } from 'redux'
 import thunk from 'redux-thunk'
 
@@ -23,7 +24,6 @@ export function makeRedux (onError) {
 
   return createStore(
     reducer,
-    void 0,
-    compose(applyMiddleware(thunk), reduxSource(invoke))
+    compose(applyMiddleware(thunk, reactionMiddleware), reduxSource(invoke))
   )
 }

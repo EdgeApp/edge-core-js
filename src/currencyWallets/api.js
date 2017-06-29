@@ -1,13 +1,15 @@
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
-import { derive, makeReaction } from '../util/derive.js'
+import { derive } from '../util/derive.js'
+import { createReaction } from '../util/reaction.js'
+import { compare } from '../util/recycle.js'
 import { filterObject } from '../util/util.js'
 import {
   addCurrencyWallet,
   renameCurrencyWallet,
   setCurrencyWalletTxMetadata
 } from './actions.js'
-import { compareTxs, mergeTxs } from './functions.js'
+import { mergeTxs } from './functions.js'
 import {
   getCurrencyWalletEngine,
   getCurrencyWalletFiles,
@@ -50,12 +52,14 @@ export function makeCurrencyWallet (keyInfo, opts) {
  */
 export function makeCurrencyApi (redux, keyId, callbacks) {
   const { dispatch, getState } = redux
-  const files = derive(() => getCurrencyWalletFiles(getState(), keyId))
-  const name = derive(() => getCurrencyWalletName(getState(), keyId))
-  const engine = derive(() => getCurrencyWalletEngine(getState(), keyId))
-  const plugin = derive(() => getCurrencyWalletPlugin(getState(), keyId))
-  const txs = derive(() => getCurrencyWalletTxs(getState(), keyId))
 
+  // Bound selectors:
+  const engine = () => getCurrencyWalletEngine(getState(), keyId)
+  const plugin = () => getCurrencyWalletPlugin(getState(), keyId)
+
+  // Derived values:
+  const files = derive(() => getCurrencyWalletFiles(getState(), keyId))
+  const txs = derive(() => getCurrencyWalletTxs(getState(), keyId))
   const mergedTxs = derive(() => mergeTxs(txs(), files()))
 
   const {
@@ -63,27 +67,47 @@ export function makeCurrencyApi (redux, keyId, callbacks) {
     // onBalanceChanged = nop,
     // onBlockHeightChanged = nop,
     // onDataChanged = nop,
-    // onNewTransactions = nop,
+    onNewTransactions = nop,
     onTransactionsChanged = nop,
-    onWalletNameChanged = nop
+    onWalletNameChanged
   } = callbacks
 
-  // Hook up the `onWalletNameChanged` callback:
-  makeReaction(() => onWalletNameChanged(name()))
-
   // Hook up the `onTransactionsChanged` and `onNewTransactions` callbacks:
-  let oldTxs
-  makeReaction(() => {
-    const newTxs = mergedTxs()
-    const { changes } = compareTxs(oldTxs, newTxs)
-    oldTxs = newTxs
-    if (changes.length) onTransactionsChanged(changes)
-  })
+  dispatch(
+    createReaction(
+      state => mergedTxs(),
+      (mergedTxs, oldTxs = {}) => {
+        const changes = []
+        const created = []
+
+        // Diff the transaction list:
+        for (const txid of Object.keys(mergedTxs)) {
+          if (!compare(oldTxs[txid], mergedTxs[txid])) {
+            if (oldTxs[txid]) changes.push(mergedTxs[txid])
+            else created.push(mergedTxs[txid])
+          }
+        }
+
+        if (changes.length) onTransactionsChanged(changes)
+        if (created.length) onNewTransactions(created)
+      }
+    )
+  )
+
+  // Hook up the `onWalletNameChanged` callback:
+  if (onWalletNameChanged) {
+    dispatch(
+      createReaction(
+        state => getCurrencyWalletName(state, keyId),
+        onWalletNameChanged
+      )
+    )
+  }
 
   const out = {
     // Storage stuff:
     get name () {
-      return name()
+      return getCurrencyWalletName(getState(), keyId)
     },
     renameWallet (name) {
       return dispatch(renameCurrencyWallet(keyId, name))

@@ -41,6 +41,7 @@ describe('currency wallets', function () {
 
     let countBalanceChanged = 0
     let countBlockHeightChanged = 0
+    let countNewTransactions = 0
     let countTransactionsChanged = 0
     let expectedTxs = []
 
@@ -52,6 +53,10 @@ describe('currency wallets', function () {
       ++countBlockHeightChanged
       assert.equal(blockHeight, stores.blockHeight())
     }
+    function onNewTransactions (txs) {
+      ++countNewTransactions
+      assert.deepEqual(txs, expectedTxs)
+    }
     function onTransactionsChanged (txs) {
       ++countTransactionsChanged
       assert.deepEqual(txs, expectedTxs)
@@ -59,6 +64,7 @@ describe('currency wallets', function () {
     const callbacks = {
       onBalanceChanged,
       onBlockHeightChanged,
+      onNewTransactions,
       onTransactionsChanged
     }
 
@@ -76,21 +82,26 @@ describe('currency wallets', function () {
       assert.equal(wallet.getBlockHeight(), 200)
       assert.equal(countBlockHeightChanged, 2)
 
+      // New transactions:
       expectedTxs = [{ txid: 'a' }, { txid: 'b' }]
       txState = [...txState, ...expectedTxs]
       txs.set(txState)
-      assert.equal(countTransactionsChanged, 1)
+      assert.equal(countNewTransactions, 1)
+      assert.equal(countTransactionsChanged, 0)
 
       // Should not trigger:
       expectedTxs = []
       txState = [...txState, ...expectedTxs]
       txs.set(txState)
-      assert.equal(countTransactionsChanged, 1)
+      assert.equal(countNewTransactions, 1)
+      assert.equal(countTransactionsChanged, 0)
 
-      expectedTxs = [{ txid: 'c' }]
+      // Changed transactions:
+      expectedTxs = [{ txid: 'a', metadata: 1 }]
       txState = [...txState, ...expectedTxs]
       txs.set(txState)
-      assert.equal(countTransactionsChanged, 2)
+      assert.equal(countNewTransactions, 1)
+      assert.equal(countTransactionsChanged, 1)
 
       return null
     })
