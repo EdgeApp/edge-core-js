@@ -1,3 +1,5 @@
+import { deriveSelector } from '../util/derive.js'
+
 export function getCurrencyWalletEngine (state, keyId) {
   return state.currencyWallets[keyId].engine
 }
@@ -10,13 +12,19 @@ export function getCurrencyWalletPlugin (state, keyId) {
   return state.currencyWallets[keyId].plugin
 }
 
-export function getCurrencyWalletTxs (state, keyId) {
-  return state.currencyWallets[keyId].txs
-}
-
-export function getCurrencyWalletFiles (state, keyId) {
-  return state.currencyWallets[keyId].files
-}
+export const getCurrencyWalletTxs = deriveSelector(
+  (state, keyId) => [
+    state.currencyWallets[keyId].txs,
+    state.currencyWallets[keyId].files
+  ],
+  (txs, files) => {
+    const out = {}
+    for (const txid of Object.keys(txs)) {
+      out[txid] = { ...txs[txid], ...files[txid] }
+    }
+    return out
+  }
+)
 
 export function getStorageWallet (state, keyId) {
   return state.currencyWallets[keyId].storage

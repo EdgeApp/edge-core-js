@@ -1,216 +1,58 @@
-export { makeComputed as derive }
-
-// Triggers an initial value calculation by always appearing dirty:
-const DIRTY_SOURCES = { x: { get () {}, value: null } }
-
-let currentSink = null
-let epoch = 0
-let nextId = 0
-
-function makeId (type) {
-  return type + nextId++
+function compareInputs (a, b = []) {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
 }
 
 /**
- * Returns true if a computed value or reaction is fresh.
+ * Creates a cached selector for an expensive-to-compute value.
+ * @param {*} selector A function that takes the state and some optional
+ * parameters. Each parameter is used to index into the cache.
+ * The selector should return an array of values, which are passed into
+ * the derive function.
+ * @param {*} derive This is the expensive calculation.
+ * Its inputs come from the selector function.
  */
-function isSinkFresh (sink) {
-  const lastSink = currentSink
-  currentSink = null
-  try {
-    for (const id in sink.sources) {
-      const info = sink.sources[id]
-      if (info.value !== info.get()) {
-        return false
-      }
-    }
-    return true
-  } finally {
-    currentSink = lastSink
-  }
-}
+export function deriveSelector (selector, derive) {
+  let cacheTree = {}
 
-/**
- * Runs a reaction.
- */
-function runReaction (reaction, invoke) {
-  const { f, stores } = reaction
-
-  // Run the reaction:
-  const lastSink = currentSink
-  currentSink = reaction
-  try {
-    reaction.sources = {}
-    reaction.stores = {}
-    invoke(f)
-  } finally {
-    currentSink = lastSink
-  }
-
-  // Add new store registrations:
-  for (const id in reaction.stores) {
-    const info = reaction.stores[id]
-    info[reaction.id] = reaction
-  }
-
-  // Remove old store registrations:
-  for (const id in stores) {
-    if (reaction.stores[id] == null) {
-      const info = stores[id]
-      delete info[reaction.id]
-    }
-  }
-}
-
-/**
- * Creates a value store.
- * Changing the store contents will automatically invalidate any downstream
- * computed values and trigger any downstream actions.
- */
-export function makeStore (value, invoke = f => f()) {
-  const store = {
-    id: makeId('s'),
-    invoke,
-    reactions: {},
-    value
-  }
-
-  const get = function get () {
-    // If any sinks are currently evaluating, add ourselves as a source:
-    if (currentSink != null) {
-      const { id, value, reactions } = store
-      // If a reaction does an update, it might read two versions of the
-      // same source. Only write our value if it hasn't been read already:
-      if (currentSink.sources[id] !== null) {
-        currentSink.sources[id] = { get, value }
-      }
-      currentSink.stores[id] = reactions
+  const out = function derivedSelector (state, ...args) {
+    // The arguments must match the selector:
+    if (args.length + 1 !== selector.length) {
+      throw new Error(`Expected ${selector.length} arguments`)
     }
 
-    return store.value
-  }
-
-  get.set = function set (value) {
-    if (value !== store.value) {
-      store.value = value
-      ++epoch
-
-      // Run any reactions that depend on us:
-      for (const id in store.reactions) {
-        const reaction = store.reactions[id]
-        if (!isSinkFresh(reaction)) {
-          runReaction(reaction, store.invoke)
-        }
-      }
-    }
-  }
-
-  return get
-}
-
-/**
- * Memoizes the provided function, not over its formal parameters,
- * but over the stores and computed values it accesses.
- */
-export function makeComputed (f) {
-  const computed = {
-    epoch: -1,
-    f,
-    id: makeId('c'),
-    sources: DIRTY_SOURCES,
-    stores: {}
-  }
-
-  const get = function get () {
-    // If we are stale, re-compute our value:
-    if (computed.epoch !== epoch && !isSinkFresh(computed)) {
-      const lastSink = currentSink
-      currentSink = computed
-      try {
-        computed.sources = {}
-        computed.stores = {}
-        computed.value = f()
-      } finally {
-        currentSink = lastSink
-      }
-    }
-    computed.epoch = epoch
-
-    // If any sinks are currently evaluating, add ourselves as a source:
-    if (currentSink != null) {
-      const { id, value, stores } = computed
-      // If a reaction does an update, it might read two versions of the
-      // same source. Only write our value if it hasn't been read already:
-      if (currentSink.sources[id] !== null) {
-        currentSink.sources[id] = { get, value }
-      }
-      for (const id in stores) {
-        const info = stores[id]
-        currentSink.stores[id] = info
-      }
+    // Navigate to our specific cache:
+    let cache = cacheTree
+    for (const arg of args) {
+      if (!cache[arg]) cache[arg] = {}
+      cache = cache[arg]
     }
 
-    return computed.value
-  }
+    // First, see if the state has changed:
+    if (cache.oldState === state) return cache.value
+    cache.oldState = state
 
-  return get
-}
-
-/**
- * Runs the provided block of code each time an observed value changes.
- */
-export function makeReaction (f) {
-  const reaction = {
-    f,
-    id: makeId('r'),
-    sources: {},
-    stores: {}
-  }
-
-  const disposer = function disposer () {
-    for (const id in reaction.stores) {
-      const info = reaction.stores[id]
-      delete info[reaction.id]
-    }
-  }
-
-  runReaction(reaction, f => (disposer.result = f()))
-
-  return disposer
-}
-
-/**
- * Stops watching a function for source access,  so that derived values
- * or reactions that call this function will not depend on its inputs.
- */
-export function unwatched (f) {
-  return function unwatched (...args) {
-    const lastSink = currentSink
-    currentSink = null
-    try {
-      return f.apply(this, args)
-    } finally {
-      currentSink = lastSink
-    }
-  }
-}
-
-/**
- * Turns a Redux store into something that can be derived from.
- */
-export function reduxSource (invoke) {
-  return createStore => (reducer, preloadedState, enhancer) => {
-    const store = createStore(reducer, preloadedState, enhancer)
-    const derivableStore = makeStore(preloadedState, invoke)
-    const dispatch = unwatched(store.dispatch)
-
-    store.subscribe(unwatched(() => derivableStore.set(store.getState())))
-
-    function getState () {
-      derivableStore()
-      return store.getState()
+    // Next, check the inputs:
+    const newInputs = selector(state, ...args)
+    if (!Array.isArray(newInputs)) {
+      throw new Error('The sector for a derived value should return an array.')
     }
 
-    return { ...store, dispatch, getState }
+    // Run the derivation if the inputs have changed:
+    if (!compareInputs(newInputs, cache.inputs)) {
+      cache.inputs = newInputs
+      cache.value = derive(...newInputs)
+    }
+
+    return cache.value
   }
+
+  out.clearCache = function clearCache () {
+    cacheTree = {}
+  }
+
+  return out
 }

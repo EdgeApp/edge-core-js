@@ -1,6 +1,5 @@
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
-import { derive } from '../util/derive.js'
 import { createReaction } from '../util/reaction.js'
 import { compare } from '../util/recycle.js'
 import { filterObject } from '../util/util.js'
@@ -9,10 +8,8 @@ import {
   renameCurrencyWallet,
   setCurrencyWalletTxMetadata
 } from './actions.js'
-import { mergeTxs } from './functions.js'
 import {
   getCurrencyWalletEngine,
-  getCurrencyWalletFiles,
   getCurrencyWalletName,
   getCurrencyWalletPlugin,
   getCurrencyWalletTxs,
@@ -57,11 +54,6 @@ export function makeCurrencyApi (redux, keyId, callbacks) {
   const engine = () => getCurrencyWalletEngine(getState(), keyId)
   const plugin = () => getCurrencyWalletPlugin(getState(), keyId)
 
-  // Derived values:
-  const files = derive(() => getCurrencyWalletFiles(getState(), keyId))
-  const txs = derive(() => getCurrencyWalletTxs(getState(), keyId))
-  const mergedTxs = derive(() => mergeTxs(txs(), files()))
-
   const {
     // onAddressesChecked = nop,
     // onBalanceChanged = nop,
@@ -75,7 +67,7 @@ export function makeCurrencyApi (redux, keyId, callbacks) {
   // Hook up the `onTransactionsChanged` and `onNewTransactions` callbacks:
   dispatch(
     createReaction(
-      state => mergedTxs(),
+      state => getCurrencyWalletTxs(state, keyId),
       (mergedTxs, oldTxs = {}) => {
         const changes = []
         const created = []
@@ -142,7 +134,7 @@ export function makeCurrencyApi (redux, keyId, callbacks) {
     },
 
     getTransactions (opts = {}) {
-      const txs = mergedTxs()
+      const txs = getCurrencyWalletTxs(getState(), keyId)
       return Promise.resolve(Object.keys(txs).map(key => txs[key]))
     },
 

@@ -42,7 +42,7 @@ export class IoContext {
     this.onError = onError
     this.authServer = new AuthServer(this, apiKey, authServer)
     this.loginStore = new LoginStore(this)
-    this.redux = makeRedux(onError)
+    this.redux = makeRedux()
   }
 
   authRequest (...rest) {
