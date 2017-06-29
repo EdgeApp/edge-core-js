@@ -1,14 +1,13 @@
 /* global describe, it */
 import { makeContext, makeCurrencyWallet, makeFakeIos } from '../src'
-import { makeStore } from '../src/util/derive.js'
-import { makeFakeCurrency } from './fake/fakeCurrency.js'
+import { makeFakeCurrency, makeFakeCurrencyStore } from './fake/fakeCurrency.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
 
-function makeFakeCurrencyWallet (stores, callbacks) {
+function makeFakeCurrencyWallet (store, callbacks) {
   const [io] = makeFakeIos(1)
   const context = makeContext({ io })
-  const plugin = makeFakeCurrency(stores)
+  const plugin = makeFakeCurrency(store)
 
   return makeFakeAccount(context, fakeUser).then(account => {
     const keyInfo = account.getFirstWallet('wallet:fakecoin')
@@ -34,10 +33,7 @@ describe('currency wallets', function () {
   })
 
   it('triggers callbacks', function () {
-    const balance = makeStore(0)
-    const blockHeight = makeStore(0)
-    const txs = makeStore([])
-    const stores = { balance, blockHeight, txs }
+    const store = makeFakeCurrencyStore()
 
     let countBalanceChanged = 0
     let countBlockHeightChanged = 0
@@ -47,11 +43,11 @@ describe('currency wallets', function () {
 
     function onBalanceChanged (balance) {
       ++countBalanceChanged
-      assert.equal(balance, stores.balance())
+      assert.equal(balance, store.getState().balance)
     }
     function onBlockHeightChanged (blockHeight) {
       ++countBlockHeightChanged
-      assert.equal(blockHeight, stores.blockHeight())
+      assert.equal(blockHeight, store.getState().blockHeight)
     }
     function onNewTransactions (txs) {
       ++countNewTransactions
@@ -68,38 +64,38 @@ describe('currency wallets', function () {
       onTransactionsChanged
     }
 
-    return makeFakeCurrencyWallet(stores, callbacks).then(wallet => {
+    return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []
       assert.equal(countBalanceChanged, 1)
       assert.equal(countBlockHeightChanged, 1)
       assert.equal(countTransactionsChanged, 0)
 
-      balance.set(20)
+      store.dispatch({ type: 'SET_BALANCE', payload: 20 })
       assert.equal(wallet.getBalance(), 20)
       assert.equal(countBalanceChanged, 2)
 
-      blockHeight.set(200)
+      store.dispatch({ type: 'SET_BLOCK_HEIGHT', payload: 200 })
       assert.equal(wallet.getBlockHeight(), 200)
       assert.equal(countBlockHeightChanged, 2)
 
       // New transactions:
       expectedTxs = [{ txid: 'a' }, { txid: 'b' }]
       txState = [...txState, ...expectedTxs]
-      txs.set(txState)
+      store.dispatch({ type: 'SET_TXS', payload: txState })
       assert.equal(countNewTransactions, 1)
       assert.equal(countTransactionsChanged, 0)
 
       // Should not trigger:
       expectedTxs = []
       txState = [...txState, ...expectedTxs]
-      txs.set(txState)
+      store.dispatch({ type: 'SET_TXS', payload: txState })
       assert.equal(countNewTransactions, 1)
       assert.equal(countTransactionsChanged, 0)
 
       // Changed transactions:
       expectedTxs = [{ txid: 'a', metadata: 1 }]
       txState = [...txState, ...expectedTxs]
-      txs.set(txState)
+      store.dispatch({ type: 'SET_TXS', payload: txState })
       assert.equal(countNewTransactions, 1)
       assert.equal(countTransactionsChanged, 1)
 
@@ -108,12 +104,14 @@ describe('currency wallets', function () {
   })
 
   it('can have metadata', function () {
-    const txs = makeStore([])
-    const stores = { txs }
+    const store = makeFakeCurrencyStore()
 
-    return makeFakeCurrencyWallet(stores).then(wallet => {
+    return makeFakeCurrencyWallet(store).then(wallet => {
       const tx = { txid: 'a', metadata: { name: 'me' } }
-      txs.set([{ txid: 'a', signedTx: 'blah' }])
+      store.dispatch({
+        type: 'SET_TXS',
+        payload: [{ txid: 'a', signedTx: 'blah' }]
+      })
       return wallet
         .saveTx(tx)
         .then(() =>

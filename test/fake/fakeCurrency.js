@@ -1,17 +1,29 @@
-import { makeReaction, makeStore } from '../../src/util/derive.js'
+import { createReaction, reactionMiddleware } from '../../src/util/reaction.js'
+import { applyMiddleware, combineReducers, createStore } from 'redux'
 
 function nop () {}
+
+const reducer = combineReducers({
+  balance: (state = 0, action) =>
+    (action.type === 'SET_BALANCE' ? action.payload : state),
+
+  blockHeight: (state = 0, action) =>
+    (action.type === 'SET_BLOCK_HEIGHT' ? action.payload : state),
+
+  txs: (state = [], action) =>
+    (action.type === 'SET_TXS' ? action.payload : state)
+})
+
+export function makeFakeCurrencyStore () {
+  return createStore(reducer, applyMiddleware(reactionMiddleware))
+}
 
 /**
  * Currency plugin transaction engine.
  */
 class FakeCurrencyEngine {
-  constructor (stores, keyInfo, opts) {
-    const {
-      balance = makeStore(0),
-      blockHeight = makeStore(0),
-      txs = makeStore([])
-    } = stores
+  constructor (store, keyInfo, opts) {
+    this.store = store
 
     const { callbacks } = opts
     const {
@@ -21,39 +33,38 @@ class FakeCurrencyEngine {
       onTransactionsChanged = nop
     } = callbacks
 
-    // Save store objects:
-    this.balance = balance
-    this.blockHeight = blockHeight
-    this.txs = txs
-    this.disposers = []
-
     // Address callback:
     this.onAddressesChecked = onAddressesChecked
 
     // Balance callback:
-    this.disposers.push(makeReaction(() => onBalanceChanged(balance())))
+    this.store.dispatch(
+      createReaction(state => state.balance, onBalanceChanged)
+    )
 
     // Block height callback:
-    this.disposers.push(makeReaction(() => onBlockHeightChanged(blockHeight())))
+    this.store.dispatch(
+      createReaction(state => state.blockHeight, onBlockHeightChanged)
+    )
 
     // Transactions callback:
     const oldTxs = {}
-    this.disposers.push(
-      makeReaction(() => {
-        const txs = this.txs()
+    this.store.dispatch(
+      createReaction(
+        state => state.txs,
+        txs => {
+          // Build the list of changed transactions:
+          const changed = []
+          for (const tx of txs) {
+            if (oldTxs[tx.txid] !== tx) changed.push(tx)
+          }
+          onTransactionsChanged(changed)
 
-        // Build the list of changed transactions:
-        const changed = []
-        for (const tx of txs) {
-          if (oldTxs[tx.txid] !== tx) changed.push(tx)
+          // Save the new list of transactions:
+          for (const tx of txs) {
+            oldTxs[tx.txid] = tx
+          }
         }
-        onTransactionsChanged(changed)
-
-        // Save the new list of transactions:
-        for (const tx of txs) {
-          oldTxs[tx.txid] = tx
-        }
-      })
+      )
     )
   }
 
@@ -69,19 +80,19 @@ class FakeCurrencyEngine {
   }
 
   getBalance (opts = {}) {
-    return this.balance()
+    return this.store.getState().balance
   }
 
   getBlockHeight () {
-    return this.blockHeight()
+    return this.store.getState().blockHeight
   }
 
   getNumTransactions () {
-    return this.txs().length
+    return this.store.getState().txs.length
   }
 
   getTransactions () {
-    return Promise.resolve(this.txs())
+    return Promise.resolve(this.store.getState().txs)
   }
 
   saveTx () {
@@ -93,8 +104,8 @@ class FakeCurrencyEngine {
  * Currency plugin setup object.
  */
 class FakeCurrencyPlugin {
-  constructor (stores) {
-    this.stores = stores
+  constructor (store) {
+    this.store = store
   }
 
   getInfo () {
@@ -102,14 +113,14 @@ class FakeCurrencyPlugin {
   }
 
   makeEngine (keyInfo, opts = {}) {
-    return new FakeCurrencyEngine(this.stores, keyInfo, opts)
+    return new FakeCurrencyEngine(this.store, keyInfo, opts)
   }
 }
 
 /**
  * Creates a currency plugin setup object
- * @param {*} opts Accepts stores for balance, blockHeight, and txs.
+ * @param store Redux store for the engine to use.
  */
-export function makeFakeCurrency (stores = {}) {
-  return new FakeCurrencyPlugin(stores)
+export function makeFakeCurrency (store = makeFakeCurrencyStore()) {
+  return new FakeCurrencyPlugin(store)
 }
