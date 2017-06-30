@@ -79,7 +79,10 @@ describe('currency wallets', function () {
       assert.equal(countBlockHeightChanged, 2)
 
       // New transactions:
-      expectedTxs = [{ txid: 'a' }, { txid: 'b' }]
+      expectedTxs = [
+        { txid: 'a', metadata: null },
+        { txid: 'b', metadata: null }
+      ]
       txState = [...txState, ...expectedTxs]
       store.dispatch({ type: 'SET_TXS', payload: txState })
       assert.equal(countNewTransactions, 1)
