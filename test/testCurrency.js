@@ -1,5 +1,6 @@
 /* global describe, it */
 import { makeContext, makeCurrencyWallet, makeFakeIos } from '../src'
+import { makeAssertLog } from './fake/assertLog.js'
 import { makeFakeCurrency, makeFakeCurrencyStore } from './fake/fakeCurrency.js'
 import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
 import assert from 'assert'
@@ -33,74 +34,39 @@ describe('currency wallets', function () {
   })
 
   it('triggers callbacks', function () {
+    const log = makeAssertLog(true)
     const store = makeFakeCurrencyStore()
 
-    let countBalanceChanged = 0
-    let countBlockHeightChanged = 0
-    let countNewTransactions = 0
-    let countTransactionsChanged = 0
-    let expectedTxs = []
-
-    function onBalanceChanged (balance) {
-      ++countBalanceChanged
-      assert.equal(balance, store.getState().balance)
-    }
-    function onBlockHeightChanged (blockHeight) {
-      ++countBlockHeightChanged
-      assert.equal(blockHeight, store.getState().blockHeight)
-    }
-    function onNewTransactions (txs) {
-      ++countNewTransactions
-      assert.deepEqual(txs, expectedTxs)
-    }
-    function onTransactionsChanged (txs) {
-      ++countTransactionsChanged
-      assert.deepEqual(txs, expectedTxs)
-    }
     const callbacks = {
-      onBalanceChanged,
-      onBlockHeightChanged,
-      onNewTransactions,
-      onTransactionsChanged
+      onBalanceChanged: balance => log('balance', balance),
+      onBlockHeightChanged: blockHeight => log('blockHeight', blockHeight),
+      onNewTransactions: txs => txs.map(tx => log('new', tx.txid)),
+      onTransactionsChanged: txs => txs.map(tx => log('changed', tx.txid))
     }
-
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []
-      assert.equal(countBalanceChanged, 1)
-      assert.equal(countBlockHeightChanged, 1)
-      assert.equal(countTransactionsChanged, 0)
+      log.assert(['balance 0', 'blockHeight 0'])
 
       store.dispatch({ type: 'SET_BALANCE', payload: 20 })
-      assert.equal(wallet.getBalance(), 20)
-      assert.equal(countBalanceChanged, 2)
+      log.assert(['balance 20'])
 
       store.dispatch({ type: 'SET_BLOCK_HEIGHT', payload: 200 })
+      log.assert(['blockHeight 200'])
       assert.equal(wallet.getBlockHeight(), 200)
-      assert.equal(countBlockHeightChanged, 2)
 
       // New transactions:
-      expectedTxs = [
-        { txid: 'a', metadata: null },
-        { txid: 'b', metadata: null }
-      ]
-      txState = [...txState, ...expectedTxs]
+      txState = [{ txid: 'a' }, { txid: 'b' }]
       store.dispatch({ type: 'SET_TXS', payload: txState })
-      assert.equal(countNewTransactions, 1)
-      assert.equal(countTransactionsChanged, 0)
+      log.assert(['new a', 'new b'])
 
       // Should not trigger:
-      expectedTxs = []
-      txState = [...txState, ...expectedTxs]
       store.dispatch({ type: 'SET_TXS', payload: txState })
-      assert.equal(countNewTransactions, 1)
-      assert.equal(countTransactionsChanged, 0)
+      log.assert([])
 
       // Changed transactions:
-      expectedTxs = [{ txid: 'a', metadata: 1 }]
-      txState = [...txState, ...expectedTxs]
+      txState = [...txState, { txid: 'a', metadata: 1 }, { txid: 'c' }]
       store.dispatch({ type: 'SET_TXS', payload: txState })
-      assert.equal(countNewTransactions, 1)
-      assert.equal(countTransactionsChanged, 1)
+      log.assert(['changed a', 'new c'])
 
       return null
     })
