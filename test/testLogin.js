@@ -80,7 +80,7 @@ describe('creation', function () {
   })
 
   it('create account', function () {
-    this.timeout(9000)
+    this.timeout(15000)
     const [context, remote] = makeFakeContexts(2, { appId: 'test' })
 
     return context
@@ -101,7 +101,7 @@ describe('creation', function () {
 
 describe('password', function () {
   it('setup', function () {
-    this.timeout(9000)
+    this.timeout(15000)
     const [context, remote] = makeFakeContexts(2)
 
     return makeFakeAccount(context, fakeUser).then(account =>
