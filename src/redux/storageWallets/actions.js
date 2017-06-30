@@ -13,7 +13,7 @@ export function addStorageWallet (keyInfo) {
       .folder(base58.stringify(base64.parse(keyInfo.id)))
 
     return loadRepoStatus(paths).then(status => {
-      dispatch(add(keyInfo.id, { keyInfo, paths, localFolder, status }))
+      dispatch(add(keyInfo.id, { localFolder, paths, status }))
       return dispatch(syncStorageWallet(keyInfo.id))
     })
   }

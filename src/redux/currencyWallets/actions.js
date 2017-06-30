@@ -43,7 +43,7 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
       })
 
       // Add the wallet to the store:
-      dispatch(add(keyId, { keyId, engine, plugin }))
+      dispatch(add(keyId, { engine, plugin }))
 
       // Sign up for events:
       const disposer = dispatch(

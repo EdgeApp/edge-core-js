@@ -1,4 +1,10 @@
 import { recycle } from '../../util/recycle.js'
+import {
+  constReducer,
+  listReducer,
+  settableReducer
+} from '../../util/reducers.js'
+import { combineReducers } from 'redux'
 
 const ADD = 'airbitz-core-js/currencyWallet/ADD'
 const UPDATE = 'airbitz-core-js/currencyWallet/UPDATE'
@@ -8,15 +14,15 @@ const SET_FILE = 'airbitz-core-js/currencyWallet/transactions/SET_FILE'
 const SET_FILES = 'airbitz-core-js/currencyWallet/transactions/SET_FILES'
 
 export function add (keyId, initialState) {
-  return { type: ADD, payload: { keyId, initialState } }
+  return { type: ADD, payload: { id: keyId, initialState } }
 }
 
 export function update (keyId, action) {
-  return { type: UPDATE, payload: { keyId, action } }
+  return { type: UPDATE, payload: { id: keyId, action } }
 }
 
 export function setName (keyId, name) {
-  return update(keyId, { type: SET_NAME, payload: { name } })
+  return update(keyId, { type: SET_NAME, payload: name })
 }
 
 export function addTxs (keyId, txs) {
@@ -64,13 +70,6 @@ function files (state = {}, action) {
 }
 
 /**
- * Wallet name reducer.
- */
-function name (state = null, action) {
-  return action.type === SET_NAME ? action.payload.name : state
-}
-
-/**
  * Transaction list reducer.
  */
 function txs (state = {}, action) {
@@ -92,39 +91,15 @@ function txs (state = {}, action) {
 /**
  * Individual wallet reducer.
  */
-function currencyWallet (state, action) {
-  return {
-    ...state,
-    files: files(state.files, action),
-    name: name(state.name, action),
-    txs: txs(state.txs, action)
-  }
-}
+const currencyWallet = combineReducers({
+  engine: constReducer(),
+  files,
+  name: settableReducer(null, SET_NAME),
+  plugin: constReducer(),
+  txs
+})
 
 /**
  * Wallet list reducer.
  */
-export default function currencyWallets (state = {}, action) {
-  const { type, payload } = action
-
-  switch (type) {
-    case ADD: {
-      const { keyId, initialState } = payload
-      const out = { ...state }
-      out[keyId] = currencyWallet(initialState, { type: 'setup' })
-      return out
-    }
-    case UPDATE: {
-      const { keyId, action } = payload
-      if (state[keyId] != null) {
-        // Only update if the wallet exists:
-        const out = { ...state }
-        out[keyId] = currencyWallet(state[keyId], action)
-        return out
-      } else {
-        return state
-      }
-    }
-  }
-  return state
-}
+export default listReducer(currencyWallet, { ADD, UPDATE })
