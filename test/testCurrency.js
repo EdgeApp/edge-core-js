@@ -40,8 +40,10 @@ describe('currency wallets', function () {
     const callbacks = {
       onBalanceChanged: balance => log('balance', balance),
       onBlockHeightChanged: blockHeight => log('blockHeight', blockHeight),
-      onNewTransactions: txs => txs.map(tx => log('new', tx.txid)),
-      onTransactionsChanged: txs => txs.map(tx => log('changed', tx.txid))
+      onNewTransactions: txs =>
+        txs.map(tx => log('new', tx.txid, tx.nativeAmount)),
+      onTransactionsChanged: txs =>
+        txs.map(tx => log('changed', tx.txid, tx.nativeAmount))
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []
@@ -55,18 +57,25 @@ describe('currency wallets', function () {
       assert.equal(wallet.getBlockHeight(), 200)
 
       // New transactions:
-      txState = [{ txid: 'a' }, { txid: 'b' }]
+      txState = [
+        { txid: 'a', amountSatoshi: 1 },
+        { txid: 'b', nativeAmount: '100' }
+      ]
       store.dispatch({ type: 'SET_TXS', payload: txState })
-      log.assert(['new a', 'new b'])
+      log.assert(['new a 1', 'new b 100'])
 
       // Should not trigger:
       store.dispatch({ type: 'SET_TXS', payload: txState })
       log.assert([])
 
       // Changed transactions:
-      txState = [...txState, { txid: 'a', metadata: 1 }, { txid: 'c' }]
+      txState = [
+        ...txState,
+        { txid: 'a', amountSatoshi: 2 },
+        { txid: 'c', nativeAmount: '200' }
+      ]
       store.dispatch({ type: 'SET_TXS', payload: txState })
-      log.assert(['changed a', 'new c'])
+      log.assert(['changed a 2', 'new c 200'])
 
       return null
     })
@@ -79,7 +88,7 @@ describe('currency wallets', function () {
       const tx = { txid: 'a', metadata: { name: 'me' } }
       store.dispatch({
         type: 'SET_TXS',
-        payload: [{ txid: 'a', signedTx: 'blah' }]
+        payload: [{ txid: 'a', nativeAmount: '25' }]
       })
       return wallet
         .saveTx(tx)
@@ -88,7 +97,12 @@ describe('currency wallets', function () {
             .getTransactions({})
             .then(txs =>
               assert.deepEqual(txs, [
-                { txid: 'a', signedTx: 'blah', metadata: { name: 'me' } }
+                {
+                  txid: 'a',
+                  amountSatoshi: 25,
+                  nativeAmount: '25',
+                  metadata: { name: 'me' }
+                }
               ])
             )
         )

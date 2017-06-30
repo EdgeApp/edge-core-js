@@ -31,6 +31,20 @@ export function setFiles (keyId, files) {
   return update(keyId, { type: SET_FILES, payload: { files } })
 }
 
+/**
+ * Given a transaction from the plugin, make any fixes we need.
+ */
+function fixTx (tx) {
+  const out = { ...tx }
+  if (tx.nativeAmount == null) {
+    out.nativeAmount = tx.amountSatoshi.toString()
+  }
+  if (tx.amountSatoshi == null) {
+    out.amountSatoshi = parseInt(tx.nativeAmount)
+  }
+  return out
+}
+
 function files (state = {}, action) {
   const { type, payload } = action
 
@@ -67,7 +81,7 @@ function txs (state = {}, action) {
       const { txs } = payload
       const out = { ...state }
       for (const tx of txs) {
-        out[tx.txid] = tx
+        out[tx.txid] = fixTx(tx)
       }
       return out
     }
