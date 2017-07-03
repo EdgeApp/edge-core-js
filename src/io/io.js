@@ -1,5 +1,5 @@
 import { makeStore } from '../redux/index.js'
-import { initStore } from '../redux/actions.js'
+import { initStore, setupPlugins } from '../redux/actions.js'
 import { AuthServer } from './authServer.js'
 import { LoginStore } from './loginStore.js'
 import { makeLocalStorageFolder } from 'disklet'
@@ -45,7 +45,8 @@ export class IoContext {
     const {
       apiKey,
       authServer = 'https://auth.airbitz.co/api',
-      callbacks = {}
+      callbacks = {},
+      plugins = []
     } = opts
     const { onError = onErrorDefault } = callbacks
 
@@ -59,6 +60,7 @@ export class IoContext {
     this.loginStore = new LoginStore(this)
     this.redux = makeStore()
     this.redux.dispatch(initStore(fixedIo))
+    this.redux.dispatch(setupPlugins(fixedIo, plugins))
   }
 
   authRequest (...rest) {
