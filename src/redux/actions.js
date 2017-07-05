@@ -1,4 +1,5 @@
 export * from './currencyWallets/actions.js'
+export * from './exchangeCache/actions.js'
 export * from './plugins/actions.js'
 export * from './storageWallets/actions.js'
 
