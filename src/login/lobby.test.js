@@ -1,13 +1,13 @@
 /* global describe, it */
-import { makeFakeIos } from '../src'
-import { IoContext } from '../src/io/io.js'
+import { makeFakeIos } from '../index.js'
+import { IoContext } from '../io/io.js'
 import {
   encryptLobbyReply,
   decryptLobbyReply,
   makeLobby,
   fetchLobbyRequest,
   sendLobbyReply
-} from '../src/login/lobby.js'
+} from './lobby.js'
 import assert from 'assert'
 import elliptic from 'elliptic'
 

@@ -1,7 +1,7 @@
 /* global describe, it */
-import { makeContext, makeFakeIos } from '../src'
-import { makeRepoPaths, syncRepo } from '../src/storage/repo.js'
-import { fakeUser, fakeRepoInfo, makeFakeAccount } from './fake/fakeUser.js'
+import { makeContext, makeFakeIos } from '../index.js'
+import { makeRepoPaths, syncRepo } from '../storage/repo.js'
+import { fakeUser, fakeRepoInfo, makeFakeAccount } from '../test/fakeUser.js'
 import assert from 'assert'
 
 describe('repo', function () {

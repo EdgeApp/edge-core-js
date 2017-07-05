@@ -1,8 +1,8 @@
 /* global describe, it */
-import { makeContext, makeCurrencyWallet, makeFakeIos } from '../src'
-import { makeAssertLog } from './fake/assertLog.js'
-import { makeFakeCurrency, makeFakeCurrencyStore } from './fake/fakeCurrency.js'
-import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
+import { makeContext, makeCurrencyWallet, makeFakeIos } from '../index.js'
+import { makeAssertLog } from '../test/assertLog.js'
+import { makeFakeCurrency, makeFakeCurrencyStore } from '../test/fakeCurrency.js'
+import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import assert from 'assert'
 
 function makeFakeCurrencyWallet (store, callbacks) {

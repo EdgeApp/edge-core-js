@@ -1,6 +1,6 @@
 /* global describe, it */
-import { deriveSelector } from '../src/util/derive.js'
-import { makeAssertLog } from './fake/assertLog.js'
+import { makeAssertLog } from '../test/assertLog.js'
+import { deriveSelector } from './derive.js'
 import assert from 'assert'
 
 describe('derive', function () {

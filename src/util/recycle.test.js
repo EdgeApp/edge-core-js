@@ -1,5 +1,5 @@
 /* global describe, it */
-import { compare, recycle } from '../src/util/recycle.js'
+import { compare, recycle } from './recycle.js'
 import assert from 'assert'
 
 describe('recycle', function () {

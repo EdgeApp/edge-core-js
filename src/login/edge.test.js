@@ -1,8 +1,8 @@
 /* global describe, it */
-import { makeContext, makeFakeIos } from '../src'
-import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
-import { fetchLobbyRequest, sendLobbyReply } from '../src/login/lobby.js'
-import { base64 } from '../src/util/encoding.js'
+import { makeContext, makeFakeIos } from '../index.js'
+import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
+import { base64 } from '../util/encoding.js'
+import { fetchLobbyRequest, sendLobbyReply } from './lobby.js'
 import assert from 'assert'
 
 function sendFakeResponse (context, lobbyId, request) {

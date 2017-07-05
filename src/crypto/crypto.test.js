@@ -1,8 +1,8 @@
 /* global describe, it */
-import { makeFakeIos } from '../src'
-import { decrypt, encrypt, hmacSha256, sha256 } from '../src/crypto/crypto.js'
-import { scrypt, userIdSnrp } from '../src/crypto/scrypt.js'
-import { base16, base64, utf8 } from '../src/util/encoding.js'
+import { makeFakeIos } from '../index.js'
+import { base16, base64, utf8 } from '../util/encoding.js'
+import { decrypt, encrypt, hmacSha256, sha256 } from './crypto.js'
+import { scrypt, userIdSnrp } from './scrypt.js'
 import assert from 'assert'
 
 describe('scrypt', function () {

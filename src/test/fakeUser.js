@@ -2,12 +2,12 @@
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
-import { makeAccount } from '../../src/account/accountApi.js'
-import { fixUsername } from '../../src/io/loginStore.js'
-import { applyLoginReply, makeLoginTree } from '../../src/login/login.js'
-import { makeRepoPaths, saveChanges } from '../../src/storage/repo.js'
-import { base16, base64 } from '../../src/util/encoding.js'
-import { elvis, filterObject } from '../../src/util/util.js'
+import { makeAccount } from '../account/accountApi.js'
+import { fixUsername } from '../io/loginStore.js'
+import { applyLoginReply, makeLoginTree } from '../login/login.js'
+import { makeRepoPaths, saveChanges } from '../storage/repo.js'
+import { base16, base64 } from '../util/encoding.js'
+import { elvis, filterObject } from '../util/util.js'
 
 /**
  * Everything here is in server format (text), except for keys.

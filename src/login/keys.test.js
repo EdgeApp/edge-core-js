@@ -1,5 +1,5 @@
 /* global describe, it */
-import { mergeKeyInfos } from '../src/login/keys.js'
+import { mergeKeyInfos } from './keys.js'
 import assert from 'assert'
 
 const ID_1 = 'PPptx6SBfwGXM+FZURMvYnsOfHpIKZBbqXTCbYmFd44='

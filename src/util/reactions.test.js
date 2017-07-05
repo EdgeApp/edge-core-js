@@ -1,6 +1,6 @@
 /* global describe, it */
-import { reactionMiddleware, createReaction } from '../src/util/reaction.js'
-import { makeAssertLog } from './fake/assertLog.js'
+import { makeAssertLog } from '../test/assertLog.js'
+import { reactionMiddleware, createReaction } from './reaction.js'
 import assert from 'assert'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 

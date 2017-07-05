@@ -1,7 +1,7 @@
 /* global describe, it */
-import { makeContext, makeFakeIos } from '../src'
-import { base64 } from '../src/util/encoding.js'
-import { fakeUser, makeFakeAccount } from './fake/fakeUser.js'
+import { makeContext, makeFakeIos } from '../index.js'
+import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
+import { base64 } from '../util/encoding.js'
 import assert from 'assert'
 
 function makeFakeContexts (count) {
