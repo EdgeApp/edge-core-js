@@ -1,5 +1,5 @@
 import { makeStore } from '../redux/index.js'
-import { initStore, setupPlugins } from '../redux/actions.js'
+import { fetchExchangeRates, initStore, setupPlugins } from '../redux/actions.js'
 import { AuthServer } from './authServer.js'
 import { LoginStore } from './loginStore.js'
 import { makeLocalStorageFolder } from 'disklet'
@@ -60,7 +60,9 @@ export class IoContext {
     this.loginStore = new LoginStore(this)
     this.redux = makeStore()
     this.redux.dispatch(initStore(fixedIo))
-    this.redux.dispatch(setupPlugins(fixedIo, plugins))
+    this.redux
+      .dispatch(setupPlugins(fixedIo, plugins))
+      .then(() => this.redux.dispatch(fetchExchangeRates()))
   }
 
   authRequest (...rest) {

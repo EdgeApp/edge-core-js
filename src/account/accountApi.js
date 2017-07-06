@@ -10,6 +10,7 @@ import { copyProperties, wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
 import { softCat } from '../util/util.js'
 import { makeAccountState } from './accountState.js'
+import { makeExchangeCache } from './exchangeApi.js'
 
 /**
  * Creates an `Account` API object.
@@ -27,6 +28,8 @@ function makeAccountApi (state, loginType) {
   const { io, appId, keyInfo } = state
   const callbacks = {}
 
+  const exchangeCache = makeExchangeCache(io)
+
   const out = {
     // Immutable info:
     appId,
@@ -40,6 +43,11 @@ function makeAccountApi (state, loginType) {
     },
     get username () {
       return state.loginTree.username
+    },
+
+    // Exchange cache:
+    get exchangeCache () {
+      return exchangeCache
     },
 
     // Flags:
@@ -139,10 +147,7 @@ function makeAccountApi (state, loginType) {
       return state.applyKit(kit).then(() => keyInfo.id)
     }
   }
-  copyProperties(
-    out,
-    makeStorageWalletApi(io.redux, keyInfo, callbacks)
-  )
+  copyProperties(out, makeStorageWalletApi(io.redux, keyInfo, callbacks))
 
   out.checkPassword = out.passwordOk
   out.changePassword = out.passwordSetup
