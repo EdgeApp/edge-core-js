@@ -89,7 +89,7 @@ export function syncRepo (io, paths, status) {
         )
         .then(() => {
           // Update the repo status:
-          status.lastSync = Date.now()
+          status.lastSync = Date.now() / 1000
           if (hash != null) status.lastHash = hash
           return statusFile
             .setText(JSON.stringify(status))
