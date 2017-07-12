@@ -1,4 +1,4 @@
-import { scrypt, userIdSnrp } from '../crypto/scrypt.js'
+import { scrypt, userIdSnrp } from '../redux/selectors.js'
 import { base58, base64 } from '../util/encoding.js'
 import { mapFiles } from 'disklet'
 
@@ -99,10 +99,11 @@ const userIdCache = {}
 /**
  * Hashes a username into a userId.
  */
-export function hashUsername (username) {
+export function hashUsername (io, username) {
+  const state = io.redux.getState()
   const fixedName = fixUsername(username)
   if (userIdCache[fixedName] == null) {
-    userIdCache[fixedName] = scrypt(fixedName, userIdSnrp)
+    userIdCache[fixedName] = scrypt(state, fixedName, userIdSnrp)
   }
   return userIdCache[fixedName]
 }

@@ -9,7 +9,7 @@ import { makePin2Kit } from './pin2.js'
  * Determines whether or not a username is available.
  */
 export function usernameAvailable (io, username) {
-  return hashUsername(username).then(userId => {
+  return hashUsername(io, username).then(userId => {
     const request = {
       userId: base64.stringify(userId)
     }
@@ -30,7 +30,9 @@ export function usernameAvailable (io, username) {
  */
 export function makeCreateKit (io, parentLogin, appId, username, opts) {
   // Figure out login identity:
-  const loginId = parentLogin != null ? io.random(32) : hashUsername(username)
+  const loginId = parentLogin != null
+    ? io.random(32)
+    : hashUsername(io, username)
   const loginKey = io.random(32)
   const loginAuth = io.random(32)
   const loginAuthBox = encrypt(io, loginAuth, loginKey)

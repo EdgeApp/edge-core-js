@@ -1,9 +1,11 @@
 import { decrypt, encrypt } from '../crypto/crypto.js'
-import { makeSnrp, passwordAuthSnrp, scrypt } from '../crypto/scrypt.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
+import { makeSnrp, scrypt, userIdSnrp } from '../redux/selectors.js'
 import { rejectify } from '../util/decorators.js'
 import { base64 } from '../util/encoding.js'
 import { applyLoginReply, makeLoginTree, syncLogin } from './login.js'
+
+export const passwordAuthSnrp = userIdSnrp
 
 function makeHashInput (username, password) {
   return fixUsername(username) + password
@@ -12,12 +14,14 @@ function makeHashInput (username, password) {
 /**
  * Extracts the loginKey from the login stash.
  */
-function extractLoginKey (stash, username, password) {
+function extractLoginKey (io, stash, username, password) {
+  const state = io.redux.getState()
+
   if (stash.passwordBox == null || stash.passwordKeySnrp == null) {
     throw new Error('Missing data for offline password login')
   }
   const up = makeHashInput(username, password)
-  return scrypt(up, stash.passwordKeySnrp).then(passwordKey => {
+  return scrypt(state, up, stash.passwordKeySnrp).then(passwordKey => {
     return decrypt(stash.passwordBox, passwordKey)
   })
 }
@@ -26,9 +30,10 @@ function extractLoginKey (stash, username, password) {
  * Fetches the loginKey from the server.
  */
 function fetchLoginKey (io, username, password) {
+  const state = io.redux.getState()
   const up = makeHashInput(username, password)
-  const userId = hashUsername(username)
-  const passwordAuth = scrypt(up, passwordAuthSnrp)
+  const userId = hashUsername(io, username)
+  const passwordAuth = scrypt(state, up, passwordAuthSnrp)
 
   return Promise.all([userId, passwordAuth]).then(values => {
     const [userId, passwordAuth] = values
@@ -41,7 +46,7 @@ function fetchLoginKey (io, username, password) {
       if (reply.passwordBox == null || reply.passwordKeySnrp == null) {
         throw new Error('Missing data for online password login')
       }
-      return scrypt(up, reply.passwordKeySnrp).then(passwordKey => {
+      return scrypt(state, up, reply.passwordKeySnrp).then(passwordKey => {
         return {
           loginKey: decrypt(reply.passwordBox, passwordKey),
           loginReply: reply
@@ -59,7 +64,7 @@ function fetchLoginKey (io, username, password) {
  */
 export function loginPassword (io, username, password) {
   return io.loginStore.load(username).then(stashTree => {
-    return rejectify(extractLoginKey)(stashTree, username, password)
+    return rejectify(extractLoginKey)(io, stashTree, username, password)
       .then(loginKey => {
         const loginTree = makeLoginTree(stashTree, loginKey)
 
@@ -84,9 +89,11 @@ export function loginPassword (io, username, password) {
  * Returns true if the given password is correct.
  */
 export function checkPassword (io, login, password) {
+  const state = io.redux.getState()
+
   // Derive passwordAuth:
   const up = makeHashInput(login.username, password)
-  return scrypt(up, passwordAuthSnrp).then(passwordAuth => {
+  return scrypt(state, up, passwordAuthSnrp).then(passwordAuth => {
     // Compare what we derived with what we have:
     for (let i = 0; i < passwordAuth.length; ++i) {
       if (passwordAuth[i] !== login.passwordAuth[i]) {
@@ -121,17 +128,18 @@ export function checkPasswordRules (password) {
  */
 export function makePasswordKit (io, login, username, password) {
   const up = makeHashInput(username, password)
+  const state = io.redux.getState()
 
   // loginKey chain:
-  const boxPromise = makeSnrp(io).then(passwordKeySnrp => {
-    return scrypt(up, passwordKeySnrp).then(passwordKey => {
+  const boxPromise = makeSnrp(state).then(passwordKeySnrp => {
+    return scrypt(state, up, passwordKeySnrp).then(passwordKey => {
       const passwordBox = encrypt(io, login.loginKey, passwordKey)
       return { passwordKeySnrp, passwordBox }
     })
   })
 
   // authKey chain:
-  const authPromise = scrypt(up, passwordAuthSnrp).then(passwordAuth => {
+  const authPromise = scrypt(state, up, passwordAuthSnrp).then(passwordAuth => {
     const passwordAuthBox = encrypt(io, passwordAuth, login.loginKey)
     return { passwordAuth, passwordAuthBox }
   })

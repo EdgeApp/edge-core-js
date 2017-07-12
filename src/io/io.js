@@ -1,5 +1,10 @@
+import { scrypt } from '../crypto/scrypt.js'
 import { makeStore } from '../redux/index.js'
-import { fetchExchangeRates, initStore, setupPlugins } from '../redux/actions.js'
+import {
+  fetchExchangeRates,
+  initStore,
+  setupPlugins
+} from '../redux/actions.js'
 import { AuthServer } from './authServer.js'
 import { LoginStore } from './loginStore.js'
 import { makeLocalStorageFolder } from 'disklet'
@@ -12,7 +17,7 @@ export function fixIo (io) {
   const out = {}
 
   // Copy native io resources:
-  const keys = ['console', 'fetch', 'folder', 'random']
+  const keys = ['console', 'fetch', 'folder', 'random', 'scrypt']
   for (const key of keys) {
     out[key] = io[key]
   }
@@ -22,6 +27,11 @@ export function fixIo (io) {
     out.folder = makeLocalStorageFolder(io.localStorage, {
       prefix: 'airbitz'
     })
+  }
+
+  // If there is no scrypt, use the JS one:
+  if (out.scrypt == null) {
+    out.scrypt = scrypt
   }
 
   // Verify that we have what we need:

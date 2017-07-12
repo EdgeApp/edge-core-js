@@ -2,16 +2,18 @@
 import { makeFakeIos } from '../index.js'
 import { base16, base64, utf8 } from '../util/encoding.js'
 import { decrypt, encrypt, hmacSha256, sha256 } from './crypto.js'
-import { scrypt, userIdSnrp } from './scrypt.js'
+import { scrypt } from './scrypt.js'
 import assert from 'assert'
 
 describe('scrypt', function () {
   it('match a known userId', function () {
-    const password = 'william test'
+    const password = utf8.parse('william test')
+    const salt = base16.parse(
+      'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b'
+    )
     const result = 'TGnly9w3Fch7tyJVO+0MWLpvlbMGgWODf/tFlNkV6js='
-    const snrp = userIdSnrp
 
-    return scrypt(password, snrp).then(userId => {
+    return scrypt(password, salt, 16384, 1, 1, 32).then(userId => {
       return assert.equal(base64.stringify(userId), result)
     })
   })
