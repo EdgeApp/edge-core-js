@@ -1,8 +1,10 @@
 import { makeCurrencyWallet } from './currencyWallets/api.js'
 import { makeContext } from './io/context.js'
 
-// Secret CLI exports:
+// Sub-module exports:
+import * as error from './error.js'
 import * as internal from './internal.js'
+export { error }
 export { internal }
 
 // Ancillary exports:
