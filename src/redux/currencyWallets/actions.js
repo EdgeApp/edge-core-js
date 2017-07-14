@@ -5,10 +5,17 @@ import {
   getStorageWalletLocalFolder,
   getStorageWalletLastSync
 } from '../selectors.js'
-import { add, setName, addTxs, setFile, setFiles } from './reducer.js'
+import {
+  add,
+  addTxs,
+  setBalance,
+  setBlockHeight,
+  setFile,
+  setFiles,
+  setName,
+  setProgress
+} from './reducer.js'
 import { mapFiles } from 'disklet'
-
-function nop () {}
 
 /**
  * Creates the initial state for a currency wallet and adds it to the store.
@@ -17,12 +24,7 @@ function nop () {}
  */
 export function addCurrencyWallet (keyInfo, opts = {}) {
   return (dispatch, getState) => {
-    const { plugin, callbacks = {} } = opts
-    const {
-      onAddressesChecked = nop,
-      onBalanceChanged = nop,
-      onBlockHeightChanged = nop
-    } = callbacks
+    const { plugin } = opts
 
     return dispatch(addStorageWallet(keyInfo)).then(() => {
       const state = getState()
@@ -33,9 +35,18 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
         walletFolder: getStorageWalletFolder(state, keyId),
         walletLocalFolder: getStorageWalletLocalFolder(state, keyId),
         callbacks: {
-          onAddressesChecked,
-          onBalanceChanged,
-          onBlockHeightChanged,
+          onAddressesChecked (ratio) {
+            dispatch(setProgress(keyId, ratio))
+          },
+
+          onBalanceChanged (balance) {
+            dispatch(setBalance(keyId, balance))
+          },
+
+          onBlockHeightChanged (height) {
+            dispatch(setBlockHeight(keyId, height))
+          },
+
           onTransactionsChanged (txs) {
             dispatch(addTxs(keyId, txs))
           }

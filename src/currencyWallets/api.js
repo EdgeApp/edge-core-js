@@ -4,10 +4,14 @@ import {
   setCurrencyWalletTxMetadata
 } from '../redux/actions.js'
 import {
+  getCurrencyWalletBalance,
+  getCurrencyWalletBlockHeight,
   getCurrencyWalletEngine,
   getCurrencyWalletName,
   getCurrencyWalletPlugin,
-  getCurrencyWalletTxs
+  getCurrencyWalletProgress,
+  getCurrencyWalletTxs,
+  getStorageWalletLastSync
 } from '../redux/selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
@@ -55,14 +59,52 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
   const plugin = () => getCurrencyWalletPlugin(getState(), keyId)
 
   const {
-    // onAddressesChecked = nop,
-    // onBalanceChanged = nop,
-    // onBlockHeightChanged = nop,
-    // onDataChanged = nop,
+    onAddressesChecked,
+    onBalanceChanged,
+    onBlockHeightChanged,
+    onDataChanged,
     onNewTransactions = nop,
     onTransactionsChanged = nop,
     onWalletNameChanged
   } = callbacks
+
+  // Hook up engine callbacks:
+  if (onAddressesChecked) {
+    dispatch(
+      createReaction(
+        state => getCurrencyWalletProgress(state, keyId),
+        onAddressesChecked
+      )
+    )
+  }
+
+  if (onBalanceChanged) {
+    dispatch(
+      createReaction(
+        state => getCurrencyWalletBalance(state, keyId),
+        onBalanceChanged
+      )
+    )
+  }
+
+  if (onBlockHeightChanged) {
+    dispatch(
+      createReaction(
+        state => getCurrencyWalletBlockHeight(state, keyId),
+        onBlockHeightChanged
+      )
+    )
+  }
+
+  // Hook up storage callback:
+  if (onDataChanged) {
+    dispatch(
+      createReaction(
+        state => getStorageWalletLastSync(state, keyId),
+        timestamp => onDataChanged()
+      )
+    )
+  }
 
   // Hook up the `onTransactionsChanged` and `onNewTransactions` callbacks:
   dispatch(

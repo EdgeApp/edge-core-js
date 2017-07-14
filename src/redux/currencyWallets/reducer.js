@@ -6,12 +6,9 @@ import {
 } from '../../util/reducers.js'
 import { combineReducers } from 'redux'
 
+// Basic wallet list:
 const ADD = 'airbitz-core-js/currencyWallet/ADD'
 const UPDATE = 'airbitz-core-js/currencyWallet/UPDATE'
-const SET_NAME = 'airbitz-core-js/currencyWallet/SET_NAME'
-const ADD_TXS = 'airbitz-core-js/currencyWallet/transactions/UPDATE'
-const SET_FILE = 'airbitz-core-js/currencyWallet/transactions/SET_FILE'
-const SET_FILES = 'airbitz-core-js/currencyWallet/transactions/SET_FILES'
 
 export function add (keyId, initialState) {
   return { type: ADD, payload: { id: keyId, initialState } }
@@ -21,9 +18,32 @@ export function update (keyId, action) {
   return { type: UPDATE, payload: { id: keyId, action } }
 }
 
+// Wallet settable data:
+const SET_BALANCE = 'airbitz-core-js/currencyWallet/balance/SET'
+const SET_BLOCK_HEIGHT = 'airbitz-core-js/currencyWallet/blockHeight/SET'
+const SET_NAME = 'airbitz-core-js/currencyWallet/name/SET'
+const SET_PROGRESS = 'airbitz-core-js/currencyWallet/progress/SET'
+
+export function setBalance (keyId, balance) {
+  return update(keyId, { type: SET_BALANCE, payload: balance })
+}
+
+export function setBlockHeight (keyId, blockHeight) {
+  return update(keyId, { type: SET_BLOCK_HEIGHT, payload: blockHeight })
+}
+
 export function setName (keyId, name) {
   return update(keyId, { type: SET_NAME, payload: name })
 }
+
+export function setProgress (keyId, progress) {
+  return update(keyId, { type: SET_PROGRESS, payload: progress })
+}
+
+// Transactions list:
+const ADD_TXS = 'airbitz-core-js/currencyWallet/transactions/UPDATE'
+const SET_FILE = 'airbitz-core-js/currencyWallet/transactions/SET_FILE'
+const SET_FILES = 'airbitz-core-js/currencyWallet/transactions/SET_FILES'
 
 export function addTxs (keyId, txs) {
   return update(keyId, { type: ADD_TXS, payload: { txs } })
@@ -92,10 +112,18 @@ function txs (state = {}, action) {
  * Individual wallet reducer.
  */
 const currencyWallet = combineReducers({
+  // Basic wallet stuff:
   engine: constReducer(),
-  files,
-  name: settableReducer(null, SET_NAME),
   plugin: constReducer(),
+
+  // Settable data:
+  balance: settableReducer(0, SET_BALANCE),
+  blockHeight: settableReducer(0, SET_BLOCK_HEIGHT),
+  name: settableReducer(null, SET_NAME),
+  progress: settableReducer(null, SET_PROGRESS),
+
+  // Transaction data:
+  files,
   txs
 })
 
