@@ -53,6 +53,7 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
           },
 
           onTransactionsChanged (txs) {
+            if (!txs) return
             dispatch(addTxs(keyId, txs, defaultCurrency))
           }
         }
