@@ -38,7 +38,10 @@ class FakeCurrencyEngine {
 
     // Balance callback:
     this.store.dispatch(
-      createReaction(state => state.balance, onBalanceChanged)
+      createReaction(
+        state => state.balance,
+        balance => onBalanceChanged('TEST', balance)
+      )
     )
 
     // Block height callback:

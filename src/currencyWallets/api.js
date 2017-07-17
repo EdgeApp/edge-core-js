@@ -82,7 +82,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     dispatch(
       createReaction(
         state => getCurrencyWalletBalance(state, keyId),
-        onBalanceChanged
+        balance => onBalanceChanged(balance.currencyCode, balance.balance)
       )
     )
   }

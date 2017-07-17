@@ -41,17 +41,18 @@ describe('currency wallets', function () {
     const store = makeFakeCurrencyStore()
 
     const callbacks = {
-      onBalanceChanged: balance => log('balance', balance),
+      onBalanceChanged: (currencyCode, balance) =>
+        log('balance', currencyCode, balance),
       onBlockHeightChanged: blockHeight => log('blockHeight', blockHeight),
       onNewTransactions: txids => txids.map(txid => log('new', txid)),
       onTransactionsChanged: txids => txids.map(txid => log('changed', txid))
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []
-      log.assert(['balance 0', 'blockHeight 0'])
+      log.assert(['balance TEST 0', 'blockHeight 0'])
 
       store.dispatch({ type: 'SET_BALANCE', payload: 20 })
-      log.assert(['balance 20'])
+      log.assert(['balance TEST 20'])
 
       store.dispatch({ type: 'SET_BLOCK_HEIGHT', payload: 200 })
       log.assert(['blockHeight 200'])
@@ -103,7 +104,7 @@ describe('currency wallets', function () {
           })
         )
         .then(() =>
-          wallet.getTransactions({currencyCode: 'TOKEN'}).then(txs => {
+          wallet.getTransactions({ currencyCode: 'TOKEN' }).then(txs => {
             assert.equal(txs.length, 1)
             assert.equal(txs[0].txid, 'b')
             assert.strictEqual(txs[0].nativeAmount, '200')

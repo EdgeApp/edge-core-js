@@ -44,8 +44,8 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
             dispatch(setProgress(keyId, ratio))
           },
 
-          onBalanceChanged (balance) {
-            dispatch(setBalance(keyId, balance))
+          onBalanceChanged (currencyCode, balance) {
+            dispatch(setBalance(keyId, {currencyCode, balance}))
           },
 
           onBlockHeightChanged (height) {
