@@ -1,7 +1,10 @@
 /* global describe, it */
 import { makeContext, makeCurrencyWallet, makeFakeIos } from '../index.js'
 import { makeAssertLog } from '../test/assertLog.js'
-import { makeFakeCurrency, makeFakeCurrencyStore } from '../test/fakeCurrency.js'
+import {
+  makeFakeCurrency,
+  makeFakeCurrencyStore
+} from '../test/fakeCurrency.js'
 import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import assert from 'assert'
 
@@ -40,10 +43,8 @@ describe('currency wallets', function () {
     const callbacks = {
       onBalanceChanged: balance => log('balance', balance),
       onBlockHeightChanged: blockHeight => log('blockHeight', blockHeight),
-      onNewTransactions: txs =>
-        txs.map(tx => log('new', tx.txid, tx.nativeAmount)),
-      onTransactionsChanged: txs =>
-        txs.map(tx => log('changed', tx.txid, tx.nativeAmount))
+      onNewTransactions: txids => txids.map(txid => log('new', txid)),
+      onTransactionsChanged: txids => txids.map(txid => log('changed', txid))
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []
@@ -62,7 +63,7 @@ describe('currency wallets', function () {
         { txid: 'b', nativeAmount: '100' }
       ]
       store.dispatch({ type: 'SET_TXS', payload: txState })
-      log.assert(['new a 1', 'new b 100'])
+      log.assert(['new a', 'new b'])
 
       // Should not trigger:
       store.dispatch({ type: 'SET_TXS', payload: txState })
@@ -71,13 +72,45 @@ describe('currency wallets', function () {
       // Changed transactions:
       txState = [
         ...txState,
-        { txid: 'a', amountSatoshi: 2 },
+        { txid: 'a', nativeAmount: '2' },
         { txid: 'c', nativeAmount: '200' }
       ]
       store.dispatch({ type: 'SET_TXS', payload: txState })
-      log.assert(['changed a 2', 'new c 200'])
+      log.assert(['changed a', 'new c'])
 
       return null
+    })
+  })
+
+  it('handles tokens', function () {
+    const store = makeFakeCurrencyStore()
+
+    return makeFakeCurrencyWallet(store).then(wallet => {
+      const txs = [
+        { txid: 'a', currencyCode: 'TEST', nativeAmount: '2' },
+        { txid: 'b', currencyCode: 'TOKEN', nativeAmount: '200' }
+      ]
+      store.dispatch({ type: 'SET_TXS', payload: txs })
+
+      return Promise.resolve()
+        .then(() =>
+          wallet.getTransactions({}).then(txs => {
+            assert.equal(txs.length, 1)
+            assert.equal(txs[0].txid, 'a')
+            assert.strictEqual(txs[0].nativeAmount, '2')
+            assert.strictEqual(txs[0].amountSatoshi, 2)
+            return null
+          })
+        )
+        .then(() =>
+          wallet.getTransactions({currencyCode: 'TOKEN'}).then(txs => {
+            assert.equal(txs.length, 1)
+            assert.equal(txs[0].txid, 'b')
+            assert.strictEqual(txs[0].nativeAmount, '200')
+            assert.strictEqual(txs[0].amountSatoshi, 200)
+            return null
+          })
+        )
     })
   })
 
@@ -90,22 +123,15 @@ describe('currency wallets', function () {
         type: 'SET_TXS',
         payload: [{ txid: 'a', nativeAmount: '25' }]
       })
-      return wallet
-        .saveTx(tx)
-        .then(() =>
-          wallet
-            .getTransactions({})
-            .then(txs =>
-              assert.deepEqual(txs, [
-                {
-                  txid: 'a',
-                  amountSatoshi: 25,
-                  nativeAmount: '25',
-                  metadata: { name: 'me' }
-                }
-              ])
-            )
-        )
+      return wallet.saveTx(tx).then(() =>
+        wallet.getTransactions({}).then(txs => {
+          assert.equal(txs.length, 1)
+          assert.deepEqual(txs[0].metadata, tx.metadata)
+          assert.strictEqual(txs[0].amountSatoshi, 25)
+          assert.strictEqual(txs[0].nativeAmount, '25')
+          return null
+        })
+      )
     })
   })
 })

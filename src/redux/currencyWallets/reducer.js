@@ -50,8 +50,8 @@ const ADD_TXS = 'airbitz-core-js/currencyWallet/transactions/UPDATE'
 const SET_FILE = 'airbitz-core-js/currencyWallet/transactions/SET_FILE'
 const SET_FILES = 'airbitz-core-js/currencyWallet/transactions/SET_FILES'
 
-export function addTxs (keyId, txs) {
-  return update(keyId, { type: ADD_TXS, payload: { txs } })
+export function addTxs (keyId, txs, defaultCurrency) {
+  return update(keyId, { type: ADD_TXS, payload: { txs, defaultCurrency } })
 }
 
 export function setFile (keyId, txid, json) {
@@ -63,16 +63,31 @@ export function setFiles (keyId, files) {
 }
 
 /**
- * Given a transaction from the plugin, make any fixes we need.
+ * Merges a new incoming transaction with an existing transaction.
  */
-function fixTx (tx) {
-  const out = { ...tx }
-  if (tx.nativeAmount == null) {
-    out.nativeAmount = tx.amountSatoshi.toString()
+function mergeTx (tx, defaultCurrency, oldTx = {}) {
+  const out = {
+    blockHeight: tx.blockHeight,
+    date: tx.date,
+    signedTx: tx.signedTx,
+    txid: tx.txid,
+
+    nativeAmount: { ...oldTx.nativeAmount },
+    networkFee: { ...oldTx.networkFee },
+    providerFee: { ...oldTx.providerFee }
   }
-  if (tx.amountSatoshi == null) {
-    out.amountSatoshi = parseInt(tx.nativeAmount)
-  }
+
+  const currencyCode = tx.currencyCode != null ? tx.currencyCode : defaultCurrency
+  out.nativeAmount[currencyCode] = tx.nativeAmount != null
+    ? tx.nativeAmount
+    : tx.amountSatoshi.toString()
+  out.networkFee[currencyCode] = tx.networkFee != null
+    ? tx.networkFee.toString()
+    : '0'
+  out.providerFee[currencyCode] = tx.providerFee != null
+    ? tx.providerFee.toString()
+    : '0'
+
   return out
 }
 
@@ -102,10 +117,10 @@ function txs (state = {}, action) {
 
   switch (type) {
     case ADD_TXS: {
-      const { txs } = payload
+      const { txs, defaultCurrency } = payload
       const out = { ...state }
       for (const tx of txs) {
-        out[tx.txid] = fixTx(tx)
+        out[tx.txid] = mergeTx(tx, defaultCurrency, out[tx.txid])
       }
       return out
     }

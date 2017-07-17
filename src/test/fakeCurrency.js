@@ -109,7 +109,9 @@ class FakeCurrencyPlugin {
   }
 
   getInfo () {
-    return {}
+    return {
+      currencyCode: 'TEST'
+    }
   }
 
   makeEngine (keyInfo, opts = {}) {

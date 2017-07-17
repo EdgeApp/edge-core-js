@@ -117,8 +117,8 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
         // Diff the transaction list:
         for (const txid of Object.keys(mergedTxs)) {
           if (!compare(oldTxs[txid], mergedTxs[txid])) {
-            if (oldTxs[txid]) changes.push(mergedTxs[txid])
-            else created.push(mergedTxs[txid])
+            if (oldTxs[txid]) changes.push(txid)
+            else created.push(txid)
           }
         }
 
@@ -177,7 +177,26 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
     getTransactions (opts = {}) {
       const txs = getCurrencyWalletTxs(getState(), keyId)
-      return Promise.resolve(Object.keys(txs).map(key => txs[key]))
+      const defaultCurrency = plugin().getInfo().currencyCode
+      const currencyCode = opts.currencyCode || defaultCurrency
+
+      const list = Object.keys(txs)
+        .map(key => txs[key])
+        .filter(
+          tx =>
+            tx.nativeAmount[currencyCode] ||
+            tx.networkFee[currencyCode] ||
+            tx.providerFee[currencyCode]
+        )
+        .map(tx => ({
+          ...tx,
+          amountSatoshi: Number(tx.nativeAmount[currencyCode]),
+          nativeAmount: tx.nativeAmount[currencyCode],
+          networkFee: tx.networkFee[currencyCode],
+          providerFee: tx.providerFee[currencyCode]
+        }))
+
+      return Promise.resolve(list)
     },
 
     getReceiveAddress (opts) {

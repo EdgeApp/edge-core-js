@@ -2,8 +2,8 @@ import { createReaction } from '../../util/reaction.js'
 import { addStorageWallet } from '../actions.js'
 import {
   getStorageWalletFolder,
-  getStorageWalletLocalFolder,
-  getStorageWalletLastSync
+  getStorageWalletLastSync,
+  getStorageWalletLocalFolder
 } from '../selectors.js'
 import {
   add,
@@ -35,6 +35,7 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
       dispatch(add(keyId, { plugin }))
 
       // Create the currency plugin:
+      const defaultCurrency = plugin.getInfo().currencyCode
       const engine = plugin.makeEngine(keyInfo, {
         walletFolder: getStorageWalletFolder(state, keyId),
         walletLocalFolder: getStorageWalletLocalFolder(state, keyId),
@@ -52,7 +53,7 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
           },
 
           onTransactionsChanged (txs) {
-            dispatch(addTxs(keyId, txs))
+            dispatch(addTxs(keyId, txs, defaultCurrency))
           }
         }
       })
