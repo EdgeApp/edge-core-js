@@ -10,6 +10,7 @@ import {
   addTxs,
   setBalance,
   setBlockHeight,
+  setEngine,
   setFile,
   setFiles,
   setName,
@@ -29,6 +30,9 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
     return dispatch(addStorageWallet(keyInfo)).then(() => {
       const state = getState()
       const keyId = keyInfo.id
+
+      // Add the wallet to the store:
+      dispatch(add(keyId, { plugin }))
 
       // Create the currency plugin:
       const engine = plugin.makeEngine(keyInfo, {
@@ -52,9 +56,7 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
           }
         }
       })
-
-      // Add the wallet to the store:
-      dispatch(add(keyId, { engine, plugin }))
+      dispatch(setEngine(keyId, engine))
 
       // Sign up for events:
       const disposer = dispatch(

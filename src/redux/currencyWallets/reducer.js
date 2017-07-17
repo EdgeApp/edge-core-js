@@ -9,6 +9,7 @@ import { combineReducers } from 'redux'
 // Basic wallet list:
 const ADD = 'airbitz-core-js/currencyWallet/ADD'
 const UPDATE = 'airbitz-core-js/currencyWallet/UPDATE'
+const SET_ENGINE = 'airbitz-core-js/currencyWallet/engine/SET'
 
 export function add (keyId, initialState) {
   return { type: ADD, payload: { id: keyId, initialState } }
@@ -16,6 +17,10 @@ export function add (keyId, initialState) {
 
 export function update (keyId, action) {
   return { type: UPDATE, payload: { id: keyId, action } }
+}
+
+export function setEngine (keyId, engine) {
+  return update(keyId, { type: SET_ENGINE, payload: engine })
 }
 
 // Wallet settable data:
@@ -113,7 +118,7 @@ function txs (state = {}, action) {
  */
 const currencyWallet = combineReducers({
   // Basic wallet stuff:
-  engine: constReducer(),
+  engine: settableReducer(0, SET_ENGINE),
   plugin: constReducer(),
 
   // Settable data:
