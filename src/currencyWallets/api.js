@@ -166,8 +166,8 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
     // Transactions:
     '@getBalance': { sync: true },
-    getBalance (currencyCode) {
-      return engine().getBalance({ currencyCode })
+    getBalance (opts) {
+      return engine().getBalance(opts)
     },
 
     '@getBlockHeight': { sync: true },
