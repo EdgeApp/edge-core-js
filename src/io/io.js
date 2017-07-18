@@ -69,7 +69,7 @@ export class IoContext {
     this.authServer = new AuthServer(this, apiKey, authServer)
     this.loginStore = new LoginStore(this)
     this.redux = makeStore()
-    this.redux.dispatch(initStore(fixedIo))
+    this.redux.dispatch(initStore(fixedIo, onError))
     this.redux
       .dispatch(setupPlugins(fixedIo, plugins))
       .then(() => this.redux.dispatch(fetchExchangeRates()))
