@@ -1,5 +1,8 @@
 /* global describe, it */
-import { fakeExchangePlugin } from '../../test/fakeExchange.js'
+import {
+  brokenExchangePlugin,
+  fakeExchangePlugin
+} from '../../test/fakeExchange.js'
 import { fetchExchangeRates, setupPlugins } from '../actions.js'
 import { makeStore } from '../index.js'
 import reducer, { addPairs } from './reducer.js'
@@ -145,7 +148,9 @@ describe('exchange cache reducer', function () {
 
     const fakeIo = {}
     return store
-      .dispatch(setupPlugins(fakeIo, [fakeExchangePlugin]))
+      .dispatch(
+        setupPlugins(fakeIo, [brokenExchangePlugin, fakeExchangePlugin])
+      )
       .then(() => store.dispatch(fetchExchangeRates()))
       .then(() => {
         const state = store.getState()

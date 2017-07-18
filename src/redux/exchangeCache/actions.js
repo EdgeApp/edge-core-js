@@ -1,9 +1,11 @@
-import { getExchangePlugins } from '../selectors.js'
+import { rejectify } from '../../util/decorators.js'
+import { getExchangePlugins, getOnError } from '../selectors.js'
 import { addPairs } from './reducer.js'
 
 export function fetchExchangeRates () {
   return (dispatch, getState) => {
     const state = getState()
+    const onError = getOnError(state)
     const plugins = getExchangePlugins(state)
 
     // TODO: Stop hard-coding this once wallets have a fiat setting:
@@ -15,7 +17,12 @@ export function fetchExchangeRates () {
     ]
 
     return Promise.all(
-      plugins.map(plugin => plugin.fetchExchangeRates(pairs))
+      plugins.map(plugin =>
+        rejectify(plugin.fetchExchangeRates)(pairs).catch(e => {
+          onError(e)
+          return []
+        })
+      )
     ).then(pairLists => {
       const timestamp = Date.now() / 1000
       const pairs = []
