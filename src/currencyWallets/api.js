@@ -149,7 +149,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
     // Currency info:
     get fiatCurrencyCode () {
-      return 'USD'
+      return 'iso:USD'
     },
     get currencyInfo () {
       return plugin().getInfo()
