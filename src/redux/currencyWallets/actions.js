@@ -35,7 +35,7 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
       dispatch(add(keyId, { plugin }))
 
       // Create the currency plugin:
-      const defaultCurrency = plugin.getInfo().currencyCode
+      const defaultCurrency = plugin.currencyInfo.currencyCode
       const engine = plugin.makeEngine(keyInfo, {
         walletFolder: getStorageWalletFolder(state, keyId),
         walletLocalFolder: getStorageWalletLocalFolder(state, keyId),
@@ -45,7 +45,7 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
           },
 
           onBalanceChanged (currencyCode, balance) {
-            dispatch(setBalance(keyId, {currencyCode, balance}))
+            dispatch(setBalance(keyId, { currencyCode, balance }))
           },
 
           onBlockHeightChanged (height) {
@@ -58,16 +58,19 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
           }
         }
       })
-      dispatch(setEngine(keyId, engine))
 
-      // Sign up for events:
-      const disposer = dispatch(
-        createReaction(
-          state => getStorageWalletLastSync(state, keyId),
-          timestamp => dispatch => dispatch(loadFiles(keyId))
+      return Promise.resolve(engine).then(engine => {
+        dispatch(setEngine(keyId, engine))
+
+        // Sign up for events:
+        const disposer = dispatch(
+          createReaction(
+            state => getStorageWalletLastSync(state, keyId),
+            timestamp => dispatch => dispatch(loadFiles(keyId))
+          )
         )
-      )
-      return disposer.payload.out.then(() => keyInfo.id)
+        return disposer.payload.out.then(() => keyInfo.id)
+      })
     })
   }
 }

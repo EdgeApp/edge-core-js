@@ -10,14 +10,16 @@ import assert from 'assert'
 
 function makeFakeCurrencyWallet (store, callbacks) {
   const [io] = makeFakeIos(1)
-  const context = makeContext({ io })
   const plugin = makeFakeCurrency(store)
 
+  const context = makeContext({ io, plugins: [plugin] })
   return makeFakeAccount(context, fakeUser).then(account => {
-    const keyInfo = account.getFirstWallet('wallet:fakecoin')
-    const opts = { io: context.io, plugin, callbacks }
+    return plugin.makePlugin(io).then(plugin => {
+      const keyInfo = account.getFirstWallet('wallet:fakecoin')
+      const opts = { io: context.io, plugin, callbacks }
 
-    return makeCurrencyWallet(keyInfo, opts)
+      return makeCurrencyWallet(keyInfo, opts)
+    })
   })
 }
 

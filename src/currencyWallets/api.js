@@ -152,7 +152,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       return 'iso:USD'
     },
     get currencyInfo () {
-      return plugin().getInfo()
+      return plugin().currencyInfo
     },
 
     // Running state:
@@ -177,7 +177,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
     getTransactions (opts = {}) {
       const txs = getCurrencyWalletTxs(getState(), keyId)
-      const defaultCurrency = plugin().getInfo().currencyCode
+      const defaultCurrency = plugin().currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
 
       const list = Object.keys(txs)

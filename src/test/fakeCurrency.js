@@ -111,14 +111,23 @@ class FakeCurrencyPlugin {
     this.store = store
   }
 
-  getInfo () {
+  get currencyInfo () {
     return {
-      currencyCode: 'TEST'
+      currencyCode: 'TEST',
+      metaTokens: [
+        {
+          currencyCode: 'TOKEN'
+        }
+      ]
     }
   }
 
+  // createPrivateKeyInfo () {}
+  // derivePublicKeyInfo () {}
+  // parseUri () {}
+
   makeEngine (keyInfo, opts = {}) {
-    return new FakeCurrencyEngine(this.store, keyInfo, opts)
+    return Promise.resolve(new FakeCurrencyEngine(this.store, keyInfo, opts))
   }
 }
 
@@ -127,5 +136,11 @@ class FakeCurrencyPlugin {
  * @param store Redux store for the engine to use.
  */
 export function makeFakeCurrency (store = makeFakeCurrencyStore()) {
-  return new FakeCurrencyPlugin(store)
+  return {
+    pluginType: 'currency',
+
+    makePlugin (io) {
+      return Promise.resolve(new FakeCurrencyPlugin(store))
+    }
+  }
 }

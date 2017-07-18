@@ -21,7 +21,14 @@ export function setupPlugins (io, plugins) {
     Promise.all([
       Promise.all(currencyPromises),
       Promise.all(exchangePromises)
-    ]).then(([currencyPlugins, exchangePlugins]) =>
-      dispatch(setPlugins(currencyPlugins, exchangePlugins))
-    )
+    ]).then(([currencyPlugins, exchangePlugins]) => {
+      // Fix legacy plugins:
+      for (const plugin of currencyPlugins) {
+        if (plugin.currencyInfo == null) {
+          plugin.currencyInfo = plugin.getInfo()
+        }
+      }
+
+      return dispatch(setPlugins(currencyPlugins, exchangePlugins))
+    })
 }
