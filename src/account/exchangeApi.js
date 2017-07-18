@@ -22,10 +22,9 @@ function makeExchangeCacheApi (dispatch, getState) {
    * TODO: Once the user has an exchange-rate preference,
    * look that up and bias in favor of the preferred exchange.
    */
-  function scorePair (pair, inverse, now) {
+  function getPairCost (source, age, inverse) {
     // The age curve goes from 0 to 1, with 1 being infinitely old.
     // The curve reaches half way (0.5) at 30 seconds in:
-    const age = Math.abs(now - pair.timestamp)
     const ageCurve = age / (30 + age)
 
     return 1 + 0.1 * inverse + ageCurve // + 2 * isWrongExchange()
@@ -36,9 +35,9 @@ function makeExchangeCacheApi (dispatch, getState) {
     convertCurrency (fromCurrency, toCurrency, amount = 1) {
       const rate = getExchangeRate(
         getState(),
-        scorePair,
         fromCurrency,
-        toCurrency
+        toCurrency,
+        getPairCost
       )
       return amount * rate
     }
