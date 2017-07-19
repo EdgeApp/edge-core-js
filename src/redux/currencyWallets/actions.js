@@ -1,6 +1,10 @@
 import { createReaction } from '../../util/reaction.js'
+import { mergeDeeply } from '../../util/util.js'
 import { addStorageWallet } from '../actions.js'
 import {
+  getCurrencyWalletFiat,
+  getCurrencyWalletFile,
+  getExchangeRate,
   getStorageWalletFolder,
   getStorageWalletLastSync,
   getStorageWalletLocalFolder
@@ -122,14 +126,72 @@ function loadFiles (keyId) {
 /**
  * Changes a wallet's metadata.
  */
-export function setCurrencyWalletTxMetadata (keyId, txid, json) {
+export function setCurrencyWalletTxMetadata (
+  keyId,
+  txid,
+  currencyCode,
+  metadata
+) {
   return (dispatch, getState) => {
-    const folder = getStorageWalletFolder(getState(), keyId)
+    const state = getState()
+    const folder = getStorageWalletFolder(state, keyId)
+    const oldFile = getCurrencyWalletFile(state, keyId, txid)
+    const newFile = {
+      txid,
+      internal: false,
+      currencies: {}
+    }
+    newFile.currencies[currencyCode] = {
+      metadata
+    }
+    const file = mergeDeeply(oldFile, newFile)
 
+    // Ensure we have a date:
+    if (oldFile == null) {
+      file.creationDate = Date.now() / 1000
+    }
+
+    // Save the new file:
+    dispatch(setFile(keyId, txid, file))
     return folder
       .folder('transaction')
       .file(txid + '.json')
-      .setText(JSON.stringify(json))
-      .then(() => dispatch(setFile(keyId, txid, json)))
+      .setText(JSON.stringify(file))
+      .then(() => void 0)
+  }
+}
+
+export function setupNewTxMetadata (keyId, tx) {
+  return (dispatch, getState) => {
+    const state = getState()
+    const folder = getStorageWalletFolder(state, keyId)
+    const fiatCurrency = getCurrencyWalletFiat(state, keyId)
+    const txid = tx.txid
+
+    // Basic file template:
+    const file = {
+      txid,
+      internal: true,
+      creationDate: Date.now() / 1000,
+      currencies: {}
+    }
+
+    // Set up exchange-rate metadata:
+    for (const nativeCurrency of Object.keys(tx.nativeAmount)) {
+      const rate = getExchangeRate(state, nativeCurrency, fiatCurrency, () => 1)
+      const nativeAmount = tx.nativeAmount[nativeCurrency]
+
+      const metadata = { exchangeAmount: {} }
+      metadata.exchangeAmount[fiatCurrency] = rate * nativeAmount
+      file.currencies[nativeCurrency] = { metadata, nativeAmount }
+    }
+
+    // Save the new file:
+    dispatch(setFile(keyId, txid, file))
+    return folder
+      .folder('transaction')
+      .file(txid + '.json')
+      .setText(JSON.stringify(file))
+      .then(() => void 0)
   }
 }
