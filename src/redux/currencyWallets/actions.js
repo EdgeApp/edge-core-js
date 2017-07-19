@@ -26,6 +26,9 @@ import { mapFiles } from 'disklet'
 export function addCurrencyWallet (keyInfo, opts = {}) {
   return (dispatch, getState) => {
     const { plugin } = opts
+    if (plugin.currencyInfo == null) {
+      plugin.currencyInfo = plugin.getInfo()
+    }
 
     return dispatch(addStorageWallet(keyInfo)).then(() => {
       const state = getState()
