@@ -7,6 +7,7 @@ import {
   getCurrencyWalletBalance,
   getCurrencyWalletBlockHeight,
   getCurrencyWalletEngine,
+  getCurrencyWalletFiat,
   getCurrencyWalletName,
   getCurrencyWalletPlugin,
   getCurrencyWalletProgress,
@@ -149,7 +150,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
     // Currency info:
     get fiatCurrencyCode () {
-      return 'iso:USD'
+      return getCurrencyWalletFiat(getState(), keyId)
     },
     get currencyInfo () {
       return plugin().currencyInfo

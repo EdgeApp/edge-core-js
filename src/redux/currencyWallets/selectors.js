@@ -23,6 +23,10 @@ export function getCurrencyWalletName (state, keyId) {
   return state.currencyWallets[keyId].name
 }
 
+export function getCurrencyWalletFiat (state, keyId) {
+  return 'iso:USD'
+}
+
 export function getCurrencyWalletProgress (state, keyId) {
   return state.currencyWallets[keyId].progress
 }
