@@ -5,6 +5,7 @@ import {
   makeFakeCurrency,
   makeFakeCurrencyStore
 } from '../test/fakeCurrency.js'
+import { fakeExchangePlugin } from '../test/fakeExchange.js'
 import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import assert from 'assert'
 
@@ -12,7 +13,7 @@ function makeFakeCurrencyWallet (store, callbacks) {
   const [io] = makeFakeIos(1)
   const plugin = makeFakeCurrency(store)
 
-  const context = makeContext({ io, plugins: [plugin] })
+  const context = makeContext({ io, plugins: [plugin, fakeExchangePlugin] })
   return makeFakeAccount(context, fakeUser).then(account => {
     return plugin.makePlugin(io).then(plugin => {
       const keyInfo = account.getFirstWallet('wallet:fakecoin')
