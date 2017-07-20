@@ -251,7 +251,8 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
         outList.push(out)
       }
 
-      return Promise.resolve(outList)
+      // TODO: Handle the sort within the tx list merge process:
+      return Promise.resolve(outList.sort((a, b) => a.date - b.date))
     },
 
     getReceiveAddress (opts) {
