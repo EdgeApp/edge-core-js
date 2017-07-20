@@ -1,15 +1,19 @@
 import {
   addCurrencyWallet,
   renameCurrencyWallet,
-  setCurrencyWalletTxMetadata
+  setCurrencyWalletTxMetadata,
+  setupNewTxMetadata
 } from '../redux/actions.js'
 import {
   getCurrencyWalletBalance,
   getCurrencyWalletBlockHeight,
   getCurrencyWalletEngine,
+  getCurrencyWalletFiat,
+  getCurrencyWalletFiles,
   getCurrencyWalletName,
   getCurrencyWalletPlugin,
   getCurrencyWalletProgress,
+  getCurrencyWalletTxList,
   getCurrencyWalletTxs,
   getStorageWalletLastSync
 } from '../redux/selectors.js'
@@ -17,16 +21,16 @@ import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
 import { createReaction } from '../util/reaction.js'
 import { compare } from '../util/recycle.js'
-import { filterObject } from '../util/util.js'
+import { filterObject, mergeDeeply } from '../util/util.js'
 
 function nop () {}
 
 const fakeMetadata = {
-  payeeName: '',
+  bizId: 0,
   category: '',
-  notes: '',
-  amountFiat: 0,
-  bizId: 0
+  exchangeAmount: {},
+  name: '',
+  notes: ''
 }
 
 /**
@@ -107,23 +111,38 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
   }
 
   // Hook up the `onTransactionsChanged` and `onNewTransactions` callbacks:
+  let inhibit = false
   dispatch(
     createReaction(
+      state => getCurrencyWalletFiles(state, keyId),
       state => getCurrencyWalletTxs(state, keyId),
-      (mergedTxs, oldTxs = {}) => {
+      state => getCurrencyWalletTxList(state, keyId),
+      (files, txs, list, oldFiles = {}, oldTxs = {}) => {
+        if (inhibit) return
+        inhibit = true
+
         const changes = []
         const created = []
 
         // Diff the transaction list:
-        for (const txid of Object.keys(mergedTxs)) {
-          if (!compare(oldTxs[txid], mergedTxs[txid])) {
-            if (oldTxs[txid]) changes.push(txid)
-            else created.push(txid)
+        for (const info of list) {
+          if (
+            !compare(txs[info.txid], oldTxs[info.txid]) ||
+            !compare(files[info.txid], oldFiles[info.txid])
+          ) {
+            // If we have no metadata, it's new:
+            if (files[info.txid] == null) {
+              dispatch(setupNewTxMetadata(keyId, txs[info.txid]))
+              created.push(info.txid)
+            } else {
+              changes.push(info.txid)
+            }
           }
         }
 
         if (changes.length) onTransactionsChanged(changes)
         if (created.length) onNewTransactions(created)
+        inhibit = false
       }
     )
   )
@@ -149,7 +168,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
     // Currency info:
     get fiatCurrencyCode () {
-      return 'iso:USD'
+      return getCurrencyWalletFiat(getState(), keyId)
     },
     get currencyInfo () {
       return plugin().currencyInfo
@@ -176,27 +195,64 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     },
 
     getTransactions (opts = {}) {
-      const txs = getCurrencyWalletTxs(getState(), keyId)
+      const state = getState()
+      const files = getCurrencyWalletFiles(state, keyId)
+      const list = getCurrencyWalletTxList(state, keyId)
+      const txs = getCurrencyWalletTxs(state, keyId)
       const defaultCurrency = plugin().currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
 
-      const list = Object.keys(txs)
-        .map(key => txs[key])
-        .filter(
-          tx =>
-            tx.nativeAmount[currencyCode] ||
-            tx.networkFee[currencyCode] ||
-            tx.providerFee[currencyCode]
-        )
-        .map(tx => ({
+      const outList = []
+      for (const info of list) {
+        const tx = txs[info.txid]
+        const file = files[info.txid]
+
+        // Skip irrelevant transactions:
+        if (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode]) {
+          continue
+        }
+
+        // Copy the tx properties to the output:
+        const out = {
           ...tx,
           amountSatoshi: Number(tx.nativeAmount[currencyCode]),
           nativeAmount: tx.nativeAmount[currencyCode],
-          networkFee: tx.networkFee[currencyCode],
-          providerFee: tx.providerFee[currencyCode]
-        }))
+          networkFee: tx.networkFee[currencyCode]
+        }
 
-      return Promise.resolve(list)
+        // These are our fallback values:
+        const fallbackFile = {
+          currencies: {}
+        }
+        fallbackFile.currencies[defaultCurrency] = {
+          providerFreeSent: 0,
+          metadata: {
+            name: '',
+            category: '',
+            notes: '',
+            bizId: 0,
+            exchangeAmounts: {}
+          }
+        }
+
+        // Copy the appropriate metadata to the output:
+        if (file) {
+          const merged = mergeDeeply(
+            fallbackFile,
+            file.currencies[defaultCurrency],
+            file.currencies[currencyCode]
+          )
+
+          if (file.creationDate < out.date) out.date = file.creationDate
+          out.providerFee = merged.providerFeeSent
+          out.metadata = merged.metadata
+        }
+
+        outList.push(out)
+      }
+
+      // TODO: Handle the sort within the tx list merge process:
+      return Promise.resolve(outList.sort((a, b) => a.date - b.date))
     },
 
     getReceiveAddress (opts) {
@@ -238,16 +294,30 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     },
 
     saveTx (tx) {
+      const defaultCurrency = plugin().currencyInfo.currencyCode
+      const currencyCode = tx.currencyCode || defaultCurrency
+
       return Promise.all([
         engine().saveTx(tx),
-        dispatch(
-          setCurrencyWalletTxMetadata(
-            keyId,
-            tx.txid,
-            filterObject(tx, ['metadata', 'txid', 'amountSatoshi'])
-          )
-        )
+        out.saveTxMetadata(tx.txid, currencyCode, tx.metadata)
       ])
+    },
+
+    saveTxMetadata (txid, currencyCode, metadata) {
+      return dispatch(
+        setCurrencyWalletTxMetadata(
+          keyId,
+          txid,
+          currencyCode,
+          filterObject(metadata, [
+            'bizId',
+            'category',
+            'exchangeAmount',
+            'name',
+            'notes'
+          ])
+        )
+      )
     },
 
     getMaxSpendable (spendInfo) {

@@ -23,21 +23,33 @@ export function getCurrencyWalletName (state, keyId) {
   return state.currencyWallets[keyId].name
 }
 
+export function getCurrencyWalletFiat (state, keyId) {
+  return 'iso:USD'
+}
+
+export function getCurrencyWalletFile (state, keyId, txid) {
+  return state.currencyWallets[keyId].files[txid]
+}
+
 export function getCurrencyWalletProgress (state, keyId) {
   return state.currencyWallets[keyId].progress
 }
 
-// Transaction list:
-export const getCurrencyWalletTxs = deriveSelector(
-  (state, keyId) => [
-    state.currencyWallets[keyId].txs,
-    state.currencyWallets[keyId].files
-  ],
-  (txs, files) => {
-    const out = {}
-    for (const txid of Object.keys(txs)) {
-      out[txid] = { metadata: {}, ...txs[txid], ...files[txid] }
-    }
-    return out
-  }
+// Transactions:
+
+export function getCurrencyWalletFiles (state, keyId) {
+  return state.currencyWallets[keyId].files
+}
+
+/**
+ * Returns a list of `{ txid?: string, filename?: string, date?: number }`.
+ * TODO: Merge our file list with the plugin txid list.
+ */
+export const getCurrencyWalletTxList = deriveSelector(
+  (state, keyId) => [state.currencyWallets[keyId].txs],
+  txs => Object.keys(txs).map(txid => ({ txid }))
 )
+
+export function getCurrencyWalletTxs (state, keyId) {
+  return state.currencyWallets[keyId].txs
+}

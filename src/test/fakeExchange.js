@@ -35,7 +35,8 @@ export const fakeExchangePlugin = {
           },
           { fromCurrency: 'BTC', toCurrency: 'iso:USD', rate: 2590.75 + fuzz },
           { fromCurrency: 'ETH', toCurrency: 'iso:EUR', rate: 230.74 + fuzz },
-          { fromCurrency: 'ETH', toCurrency: 'iso:USD', rate: 2590.75 + fuzz }
+          { fromCurrency: 'ETH', toCurrency: 'iso:USD', rate: 2590.75 + fuzz },
+          { fromCurrency: 'TEST', toCurrency: 'iso:USD', rate: 3 + fuzz }
         ])
       }
     })

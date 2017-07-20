@@ -26,3 +26,25 @@ export function filterObject (source, keys) {
 export function softCat (...lists) {
   return [].concat(...lists.filter(list => list != null))
 }
+
+/**
+ * Merges several Javascript objects deeply,
+ * prefering the items from later objects.
+ */
+export function mergeDeeply (...objects) {
+  const out = {}
+
+  for (const o of objects) {
+    if (o == null) continue
+
+    for (const key of Object.keys(o)) {
+      if (o[key] == null) continue
+
+      out[key] = out[key] != null && typeof o[key] === 'object'
+        ? mergeDeeply(out[key], o[key])
+        : o[key]
+    }
+  }
+
+  return out
+}
