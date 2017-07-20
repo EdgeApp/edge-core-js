@@ -78,9 +78,9 @@ function mergeTx (tx, defaultCurrency, oldTx = {}) {
   }
 
   const currencyCode = tx.currencyCode != null ? tx.currencyCode : defaultCurrency
-  out.nativeAmount[currencyCode] = tx.nativeAmount != null
-    ? tx.nativeAmount
-    : tx.amountSatoshi.toString()
+  out.nativeAmount[currencyCode] = tx.amountSatoshi != null
+    ? tx.amountSatoshi.toString()
+    : tx.nativeAmount
   out.networkFee[currencyCode] = tx.networkFee != null
     ? tx.networkFee.toString()
     : '0'
