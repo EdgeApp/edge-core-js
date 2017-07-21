@@ -199,6 +199,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       const files = getCurrencyWalletFiles(state, keyId)
       const list = getCurrencyWalletTxList(state, keyId)
       const txs = getCurrencyWalletTxs(state, keyId)
+      const fiat = getCurrencyWalletFiat(state, keyId)
       const defaultCurrency = plugin().currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
 
@@ -231,7 +232,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
             category: '',
             notes: '',
             bizId: 0,
-            exchangeAmounts: {}
+            exchangeAmount: {}
           }
         }
 
@@ -246,6 +247,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
           if (file.creationDate < out.date) out.date = file.creationDate
           out.providerFee = merged.providerFeeSent
           out.metadata = merged.metadata
+          out.metadata.amountFiat = merged.metadata.exchangeAmount[fiat]
         }
 
         outList.push(out)
@@ -304,18 +306,14 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     },
 
     saveTxMetadata (txid, currencyCode, metadata) {
+      const fiat = getCurrencyWalletFiat(getState(), keyId)
+
       return dispatch(
         setCurrencyWalletTxMetadata(
           keyId,
           txid,
           currencyCode,
-          filterObject(metadata, [
-            'bizId',
-            'category',
-            'exchangeAmount',
-            'name',
-            'notes'
-          ])
+          fixMetadata(metadata, fiat)
         )
       )
     },
@@ -329,6 +327,23 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     }
   }
   copyProperties(out, makeStorageWalletApi(redux, keyInfo, callbacks))
+
+  return out
+}
+
+function fixMetadata (metadata, fiat) {
+  const out = filterObject(metadata, [
+    'bizId',
+    'category',
+    'exchangeAmount',
+    'name',
+    'notes'
+  ])
+
+  if (metadata.amountFiat != null) {
+    if (out.exchangeAmount == null) out.exchangeAmount = {}
+    out.exchangeAmount[fiat] = metadata.amountFiat
+  }
 
   return out
 }
