@@ -37,6 +37,9 @@ function makeAccountApi (state, loginType) {
     get username () {
       return state.loginTree.username
     },
+    get loginKey () {
+      return base58.stringify(state.login.loginKey)
+    },
 
     // Exchange cache:
     get exchangeCache () {
@@ -47,6 +50,7 @@ function makeAccountApi (state, loginType) {
     get loggedIn () {
       return state.loginTree != null
     },
+    keyLogin: loginType === 'keyLogin',
     pinLogin: loginType === 'pinLogin',
     passwordLogin: loginType === 'passwordLogin',
     newAccount: loginType === 'newAccount',

@@ -1,6 +1,7 @@
 import { makeAccount } from '../account/accountApi.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
+import { makeLoginTree } from '../login/login.js'
 import { checkPasswordRules, loginPassword } from '../login/password.js'
 import { loginPin2, getPin2Key } from '../login/pin2.js'
 import {
@@ -50,6 +51,17 @@ export function makeContext (opts) {
         pin
       }).then(loginTree => {
         return makeAccount(io, appId, loginTree, 'newAccount')
+      })
+    },
+
+    loginWithKey (username, loginKey) {
+      return io.loginStore.load(username).then(stashTree => {
+        const loginTree = makeLoginTree(
+          stashTree,
+          base58.parse(loginKey),
+          appId
+        )
+        return makeAccount(io, appId, loginTree, 'keyLogin')
       })
     },
 

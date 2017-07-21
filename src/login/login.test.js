@@ -93,7 +93,8 @@ describe('creation', function () {
             fakeUser.password,
             null,
             null
-          )
+          ),
+          context.loginWithKey(fakeUser.username, account.loginKey)
         ])
       })
   })
