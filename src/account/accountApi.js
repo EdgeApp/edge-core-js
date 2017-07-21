@@ -31,15 +31,8 @@ function makeAccountApi (state, loginType) {
   const exchangeCache = makeExchangeCache(io)
 
   const out = {
-    // Immutable info:
-    appId,
-
-    // These change dynamically as the login is modified:
-    get login () {
-      return state.login
-    },
-    get loginTree () {
-      return state.loginTree
+    get appId () {
+      return state.login.appId
     },
     get username () {
       return state.loginTree.username

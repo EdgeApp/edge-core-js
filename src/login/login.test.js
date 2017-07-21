@@ -196,7 +196,7 @@ describe('pin', function () {
     return makeFakeAccount(fakeContext, trimmedUser).then(() =>
       context
         .loginWithPIN(fakeUser.username, fakeUser.pin)
-        .then(account => assert.equal(account.login.appId, 'test-child'))
+        .then(account => assert.equal(account.appId, 'test-child'))
     )
   })
 

@@ -8,8 +8,8 @@ function makeFakeContexts (count) {
   return makeFakeIos(count).map(io => makeContext({ io }))
 }
 
-function findKeys (login, type) {
-  return login.keyInfos.find(info => info.type === type)
+function findKeys (keyInfos, type) {
+  return keyInfos.find(info => info.type === type)
 }
 
 describe('account', function () {
@@ -17,11 +17,11 @@ describe('account', function () {
     const [context] = makeFakeContexts(1)
 
     return makeFakeAccount(context, fakeUser).then(account => {
-      const login = account.login
-      const accountRepo = findKeys(login, 'account-repo:co.airbitz.wallet')
+      const { allKeys } = account
+      const accountRepo = findKeys(allKeys, 'account-repo:co.airbitz.wallet')
       assert(accountRepo)
       assert.equal(accountRepo.keys.syncKey, base64.stringify(fakeUser.syncKey))
-      assert(findKeys(login, 'account-repo:blah') == null)
+      assert(findKeys(allKeys, 'account-repo:blah') == null)
       return null
     })
   })
@@ -35,7 +35,7 @@ describe('account', function () {
         syncKey: 'f00d'
       }
       return account.createWallet('account-repo:blah', keys).then(id => {
-        const info = account.login.keyInfos.find(info => info.id === id)
+        const info = account.allKeys.find(info => info.id === id)
 
         assert.deepEqual(info.keys, keys)
         return null
