@@ -5,6 +5,7 @@ import {
   getCurrencyMultiplier,
   getCurrencyWalletFiat,
   getCurrencyWalletFile,
+  getCurrencyWalletPlugin,
   getExchangeRate,
   getStorageWalletFolder,
   getStorageWalletLastSync,
@@ -177,11 +178,16 @@ export function setupNewTxMetadata (keyId, tx) {
       currencies: {}
     }
 
+    // Trick `getCurrencyMultiplier` into using our plugin:
+    const fakeState = {
+      plugins: { currencyPlugins: [getCurrencyWalletPlugin(state, keyId)] }
+    }
+
     // Set up exchange-rate metadata:
     for (const currency of Object.keys(tx.nativeAmount)) {
       const rate =
         getExchangeRate(state, currency, fiatCurrency, () => 1) /
-        getCurrencyMultiplier(state, currency)
+        getCurrencyMultiplier(fakeState, currency)
       const nativeAmount = tx.nativeAmount[currency]
 
       const metadata = { exchangeAmount: {} }
