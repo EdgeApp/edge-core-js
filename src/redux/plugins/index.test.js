@@ -1,8 +1,9 @@
 /* global describe, it */
+import { makeFakeCurrency } from '../../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../../test/fakeExchange.js'
 import { makeStore } from '../index.js'
 import { setupPlugins } from './actions.js'
-import { getExchangePlugins } from './selectors.js'
+import { getCurrencyMultiplier, getExchangePlugins } from './selectors.js'
 import assert from 'assert'
 
 describe('plugins reducer', function () {
@@ -26,5 +27,20 @@ describe('plugins reducer', function () {
       pluginType: 'fake'
     }
     assert.throws(() => store.dispatch(setupPlugins(fakeIo, [fakePlugin])))
+  })
+
+  it('find currency multiplier', function () {
+    const store = makeStore()
+    const plugin = makeFakeCurrency()
+
+    const fakeIo = {}
+    return store.dispatch(setupPlugins(fakeIo, [plugin])).then(() => {
+      const state = store.getState()
+      assert.equal(getCurrencyMultiplier(state, 'SMALL'), 10)
+      assert.equal(getCurrencyMultiplier(state, 'TEST'), 100)
+      assert.equal(getCurrencyMultiplier(state, 'TOKEN'), 1000)
+      assert.equal(getCurrencyMultiplier(state, '-error-'), 1)
+      return null
+    })
   })
 })
