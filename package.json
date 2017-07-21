@@ -1,6 +1,6 @@
 {
   "name": "airbitz-core-js",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Airbitz core Javascript implementation",
   "keywords": [
     "bitcoin",

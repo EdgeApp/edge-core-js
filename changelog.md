@@ -1,5 +1,21 @@
 # airbitz-core-js
 
+## 0.3.3
+
+New:
+* New plugin format
+* Exchange rate cache
+* `looginWithKey` method
+* Store transaction metadata on first detection
+
+Fixes:
+* Code cleanup & reorganization
+* Fixes to the transaction list
+* Fixes to the transaction metadata format
+
+Breaking changes:
+* No longer expose the internal `login` or `loginTree` on the account.
+
 ## 0.3.2
 
 New:
