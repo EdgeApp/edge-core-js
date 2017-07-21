@@ -2,6 +2,7 @@ import { createReaction } from '../../util/reaction.js'
 import { mergeDeeply } from '../../util/util.js'
 import { addStorageWallet } from '../actions.js'
 import {
+  getCurrencyMultiplier,
   getCurrencyWalletFiat,
   getCurrencyWalletFile,
   getExchangeRate,
@@ -177,13 +178,15 @@ export function setupNewTxMetadata (keyId, tx) {
     }
 
     // Set up exchange-rate metadata:
-    for (const nativeCurrency of Object.keys(tx.nativeAmount)) {
-      const rate = getExchangeRate(state, nativeCurrency, fiatCurrency, () => 1)
-      const nativeAmount = tx.nativeAmount[nativeCurrency]
+    for (const currency of Object.keys(tx.nativeAmount)) {
+      const rate =
+        getExchangeRate(state, currency, fiatCurrency, () => 1) /
+        getCurrencyMultiplier(state, currency)
+      const nativeAmount = tx.nativeAmount[currency]
 
       const metadata = { exchangeAmount: {} }
       metadata.exchangeAmount[fiatCurrency] = rate * nativeAmount
-      file.currencies[nativeCurrency] = { metadata, nativeAmount }
+      file.currencies[currency] = { metadata, nativeAmount }
     }
 
     // Save the new file:

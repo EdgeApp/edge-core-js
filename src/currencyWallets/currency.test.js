@@ -131,7 +131,7 @@ describe('currency wallets', function () {
         wallet.getTransactions({}).then(txs => {
           assert.equal(txs.length, 1)
           assert.strictEqual(txs[0].metadata.name, tx.metadata.name)
-          assert.strictEqual(txs[0].metadata.amountFiat, 75)
+          assert.strictEqual(txs[0].metadata.amountFiat, 0.75)
           assert.strictEqual(txs[0].amountSatoshi, 25)
           assert.strictEqual(txs[0].nativeAmount, '25')
           return null
