@@ -300,8 +300,8 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       const currencyCode = tx.currencyCode || defaultCurrency
 
       return Promise.all([
-        engine().saveTx(tx),
-        out.saveTxMetadata(tx.txid, currencyCode, tx.metadata)
+        engine().saveTx(tx)
+        // out.saveTxMetadata(tx.txid, currencyCode, tx.metadata)
       ])
     },
 
