@@ -296,12 +296,8 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     },
 
     saveTx (tx) {
-      const defaultCurrency = plugin().currencyInfo.currencyCode
-      // const currencyCode = tx.currencyCode || defaultCurrency
-
       return Promise.all([
         engine().saveTx(tx)
-        // out.saveTxMetadata(tx.txid, currencyCode, tx.metadata)
       ])
     },
 
