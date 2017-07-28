@@ -47,8 +47,8 @@ describe('currency wallets', function () {
       onBalanceChanged: (currencyCode, balance) =>
         log('balance', currencyCode, balance),
       onBlockHeightChanged: blockHeight => log('blockHeight', blockHeight),
-      onNewTransactions: txids => txids.map(txid => log('new', txid)),
-      onTransactionsChanged: txids => txids.map(txid => log('changed', txid))
+      onNewTransactions: txs => txs.map(tx => log('new', tx.txid)),
+      onTransactionsChanged: txs => txs.map(tx => log('changed', tx.txid))
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []

@@ -117,7 +117,17 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       state => getCurrencyWalletFiles(state, keyId),
       state => getCurrencyWalletTxs(state, keyId),
       state => getCurrencyWalletTxList(state, keyId),
-      (files, txs, list, oldFiles = {}, oldTxs = {}) => {
+      state => getCurrencyWalletFiat(state, keyId),
+      state => getCurrencyWalletPlugin(state, keyId).currencyInfo.currencyCode,
+      (
+        files,
+        txs,
+        list,
+        walletFiat,
+        walletCurrency,
+        oldFiles = {},
+        oldTxs = {}
+      ) => {
         if (inhibit) return
         inhibit = true
 
@@ -126,16 +136,31 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
         // Diff the transaction list:
         for (const info of list) {
+          const tx = txs[info.txid]
+          const file = files[info.txid]
+
           if (
-            !compare(txs[info.txid], oldTxs[info.txid]) ||
-            !compare(files[info.txid], oldFiles[info.txid])
+            !compare(tx, oldTxs[info.txid]) ||
+            !compare(file, oldFiles[info.txid])
           ) {
             // If we have no metadata, it's new:
-            if (files[info.txid] == null) {
-              dispatch(setupNewTxMetadata(keyId, txs[info.txid]))
-              created.push(info.txid)
+            if (file == null) {
+              dispatch(setupNewTxMetadata(keyId, tx))
+              prepareTxForCallback(
+                walletCurrency,
+                walletFiat,
+                tx,
+                file,
+                created
+              )
             } else {
-              changes.push(info.txid)
+              prepareTxForCallback(
+                walletCurrency,
+                walletFiat,
+                tx,
+                file,
+                changes
+              )
             }
           }
         }
@@ -356,4 +381,13 @@ function combineTxWithFile (walletCurrency, walletFiat, tx, file, currencyCode) 
   }
 
   return out
+}
+
+function prepareTxForCallback (walletCurrency, walletFiat, tx, file, array) {
+  const currencies = Object.keys(tx.nativeAmount)
+  for (const currency of currencies) {
+    array.push(
+      combineTxWithFile(walletCurrency, walletFiat, tx, file, currency)
+    )
+  }
 }
