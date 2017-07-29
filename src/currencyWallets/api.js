@@ -320,6 +320,14 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
     sweepPrivateKey (keyUri) {
       return Promise.resolve(0)
+    },
+
+    parseUri (uri) {
+      return engine().parseUri(uri)
+    },
+
+    encodeUri (obj) {
+      return engine().encodeUri(obj)
     }
   }
   copyProperties(out, makeStorageWalletApi(redux, keyInfo, callbacks))
