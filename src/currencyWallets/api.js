@@ -322,10 +322,12 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       return Promise.resolve(0)
     },
 
+    '@parseUri': { sync: true },
     parseUri (uri) {
       return engine().parseUri(uri)
     },
 
+    '@encodeUri': { sync: true },
     encodeUri (obj) {
       return engine().encodeUri(obj)
     }
