@@ -324,12 +324,12 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
     '@parseUri': { sync: true },
     parseUri (uri) {
-      return engine().parseUri(uri)
+      return plugin().parseUri(uri)
     },
 
     '@encodeUri': { sync: true },
     encodeUri (obj) {
-      return engine().encodeUri(obj)
+      return plugin().encodeUri(obj)
     }
   }
   copyProperties(out, makeStorageWalletApi(redux, keyInfo, callbacks))
