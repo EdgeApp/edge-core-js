@@ -30,6 +30,7 @@ export function usernameAvailable (io, username) {
  */
 export function makeCreateKit (io, parentLogin, appId, username, opts) {
   // Figure out login identity:
+  const parentLoginId = parentLogin != null ? parentLogin.loginId : null
   const loginId = parentLogin != null
     ? io.random(32)
     : hashUsername(io, username)
@@ -82,7 +83,8 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
         ...passwordKit.login,
         ...pin2Kit.login,
         ...keysKit.login
-      }
+      },
+      loginId: parentLoginId
     }
   })
 }

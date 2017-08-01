@@ -41,6 +41,15 @@ describe('username', function () {
   })
 })
 
+describe('appId', function () {
+  it('can log into unknown apps', function () {
+    const [io] = makeFakeIos(1)
+    const context = makeContext({ io, appId: 'fakeApp' })
+
+    return makeFakeAccount(context, fakeUser)
+  })
+})
+
 describe('creation', function () {
   it('username available', function () {
     const [context, remote] = makeFakeContexts(2)
