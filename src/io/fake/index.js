@@ -13,16 +13,21 @@ const fakeConsole = {
 /**
  * Generates deterministic "random" data for unit-testing.
  */
-function fakeRandom (bytes) {
-  const out = []
-  let x = 0
-  for (let i = 0; i < bytes; ++i) {
-    // Simplest numbers that give a full-period generator with
-    // a good mix of high & low values within the first few bytes:
-    x = (5 * x + 3) & 0xff
-    out[i] = x
+function makeFakeRandom () {
+  let seed = 0
+
+  return bytes => {
+    const out = []
+
+    for (let i = 0; i < bytes; ++i) {
+      // Simplest numbers that give a full-period generator with
+      // a good mix of high & low values within the first few bytes:
+      seed = (5 * seed + 3) & 0xff
+      out[i] = seed
+    }
+
+    return out
   }
-  return out
 }
 
 /**
@@ -33,6 +38,7 @@ function fakeRandom (bytes) {
 export function makeFakeIos (count) {
   // The common server used by all contexts:
   const server = new FakeServer()
+  const random = makeFakeRandom()
 
   // Make the io objects:
   const out = []
@@ -41,7 +47,7 @@ export function makeFakeIos (count) {
       console: fakeConsole,
       fetch: server.fetch,
       folder: makeMemoryFolder(),
-      random: fakeRandom
+      random
     }
   }
 

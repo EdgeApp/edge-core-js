@@ -4,8 +4,8 @@ import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import { base58 } from '../util/encoding.js'
 import assert from 'assert'
 
-function makeFakeContexts (count) {
-  return makeFakeIos(count).map(io => makeContext({ io }))
+function makeFakeContexts (count, opts) {
+  return makeFakeIos(count).map(io => makeContext({ ...opts, io }))
 }
 
 describe('username', function () {
