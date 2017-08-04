@@ -292,6 +292,13 @@ addRoute(
 
 addRoute('POST', '/api/v2/login/create', function (req) {
   const data = req.body.data
+  if (
+    data.appId == null ||
+    data.loginId == null ||
+    this.db.logins.find(login => login.loginId === data.loginId)
+  ) {
+    return makeErrorResponse(errorCodes.error)
+  }
 
   // Set up repos:
   if (data.newSyncKeys != null) {
@@ -326,7 +333,10 @@ addRoute('POST', '/api/v2/login/create', function (req) {
     'syncKeyBox', // Same
     'repos'
   ])
-  if (!authHandler.call(this, req)) {
+  if (req.body.loginId != null || req.body.userId != null) {
+    const e = authHandler.call(this, req)
+    if (e) return e
+
     row.parent = req.login.loginId
   }
   this.db.logins.push(row)

@@ -2,6 +2,7 @@ import { encrypt } from '../crypto/crypto.js'
 import { UsernameError } from '../error.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { base64 } from '../util/encoding.js'
+import { makeKeysKit } from './keys.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 
@@ -30,7 +31,6 @@ export function usernameAvailable (io, username) {
  */
 export function makeCreateKit (io, parentLogin, appId, username, opts) {
   // Figure out login identity:
-  const parentLoginId = parentLogin != null ? parentLogin.loginId : null
   const loginId = parentLogin != null
     ? io.random(32)
     : hashUsername(io, username)
@@ -48,7 +48,9 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
   const pin2Kit = opts.pin != null
     ? makePin2Kit(io, { loginKey }, username, opts.pin)
     : {}
-  const keysKit = opts.keysKit != null ? opts.keysKit : {}
+  const keysKit = opts.keyInfo != null
+    ? makeKeysKit(io, { loginKey }, opts.keyInfo)
+    : {}
 
   // Bundle everything:
   return Promise.all([loginId, passwordKit]).then(values => {
@@ -83,8 +85,7 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
         ...passwordKit.login,
         ...pin2Kit.login,
         ...keysKit.login
-      },
-      loginId: parentLoginId
+      }
     }
   })
 }

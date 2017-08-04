@@ -33,12 +33,18 @@ function createChildLogin (io, loginTree, login, appId, wantRepo = true) {
 
   const opts = { pin: loginTree.pin }
   if (wantRepo) {
-    const keyInfo = makeStorageKeyInfo(io, makeAccountType(appId))
-    opts.keysKit = makeKeysKit(io, login, keyInfo)
+    opts.keyInfo = makeStorageKeyInfo(io, makeAccountType(appId))
   }
-  return makeCreateKit(io, login, appId, username, opts).then(kit =>
-    applyKit(io, loginTree, kit)
-  )
+  return makeCreateKit(io, login, appId, username, opts).then(kit => {
+    const parentKit = {
+      serverPath: kit.serverPath,
+      server: kit.server,
+      login: { children: [kit.login] },
+      stash: { children: [kit.stash] },
+      loginId: login.loginId
+    }
+    return applyKit(io, loginTree, parentKit)
+  })
 }
 
 /**
