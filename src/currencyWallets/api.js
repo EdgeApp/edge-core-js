@@ -86,7 +86,11 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     dispatch(
       createReaction(
         state => getCurrencyWalletBalance(state, keyId),
-        balance => onBalanceChanged(balance.currencyCode, balance.balance)
+        balance => {
+          if (balance.currencyCode != null) {
+            onBalanceChanged(balance.currencyCode, balance.balance)
+          }
+        }
       )
     )
   }
