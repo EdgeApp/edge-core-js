@@ -1,5 +1,10 @@
 # airbitz-core-js
 
+## 0.3.5
+
+Fixes:
+* Logging into partner apps works again (round 2)
+
 ## 0.3.4
 
 Fixes:
