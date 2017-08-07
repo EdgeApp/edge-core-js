@@ -18,9 +18,10 @@ import { fixUsername } from './loginStore.js'
 
 export function makeContext (opts) {
   const io = new IoContext(opts.io != null ? opts.io : makeBrowserIo(), opts)
-  const appId = opts.appId != null
-    ? opts.appId
-    : opts.accountType != null
+  const appId =
+    opts.appId != null
+      ? opts.appId
+      : opts.accountType != null
         ? opts.accountType.replace(/^account.repo:/, '')
         : ''
 

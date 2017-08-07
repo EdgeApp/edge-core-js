@@ -1,8 +1,7 @@
 {
   "extends": "standard",
   "plugins": [
-    "standard",
-    "promise"
+    "standard"
   ],
   "rules": {
     "camelcase": "error",

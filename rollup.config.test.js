@@ -7,7 +7,8 @@ export default {
   external: ['assert', ...config.external],
   plugins: [
     eslint({
-      exclude: 'build/crypto-bundle.js'
+      exclude: 'build/crypto-bundle.js',
+      throwOnError: true
     }),
     multiEntry(),
     ...config.plugins
