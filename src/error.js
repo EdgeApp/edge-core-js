@@ -13,6 +13,24 @@
  */
 
 /**
+ * Trying to spend an uneconomically small amount of money.
+ */
+export function DustSpendError (message = 'Please send a larger amount') {
+  const e = new Error(message)
+  e.name = DustSpendError.name
+  return e
+}
+
+/**
+ * Trying to spend more money than the wallet contains.
+ */
+export function InsufficientFundsError (message = 'Insufficient funds') {
+  const e = new Error(message)
+  e.name = InsufficientFundsError.name
+  return e
+}
+
+/**
  * Could not reach the server at all.
  */
 export function NetworkError (message = 'Cannot reach the network') {
