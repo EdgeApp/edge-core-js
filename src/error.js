@@ -15,8 +15,8 @@
 /**
  * Could not reach the server at all.
  */
-export function NetworkError (message) {
-  const e = new Error(message || 'Cannot reach the network')
+export function NetworkError (message = 'Cannot reach the network') {
+  const e = new Error(message)
   e.name = e.type = NetworkError.name
   return e
 }
@@ -25,27 +25,35 @@ NetworkError.type = NetworkError.name
 /**
  * The endpoint on the server is obsolete, and the app needs to be upgraded.
  */
-export function ObsoleteApiError (message) {
-  const e = new Error(message || 'The application is too old. Please upgrade.')
+export function ObsoleteApiError (
+  message = 'The application is too old. Please upgrade.'
+) {
+  const e = new Error(message)
   e.name = e.type = ObsoleteApiError.name
   return e
 }
 ObsoleteApiError.type = ObsoleteApiError.name
 
 /**
- * Cannot find a login with that id.
+ * The OTP token was missing / incorrect.
  *
- * Reasons could include:
- * - Password login: wrong username
- * - PIN login: wrong PIN key
- * - Recovery login: wrong username, or wrong recovery key
+ * The error object should include a `resetToken` member,
+ * which can be used to reset OTP protection on the account.
+ *
+ * The error object may include a `resetDate` member,
+ * which indicates that an OTP reset is already pending,
+ * and when it will complete.
  */
-export function UsernameError (message) {
-  const e = new Error(message || 'Invalid username')
-  e.name = e.type = UsernameError.name
+export function OtpError (resultsJson = {}, message = 'Invalid OTP token') {
+  const e = new Error(message)
+  e.name = e.type = OtpError.name
+  e.resetToken = resultsJson.otp_reset_auth
+  if (resultsJson.otp_timeout_date != null) {
+    e.resetDate = new Date(1000 * resultsJson.otp_timeout_date)
+  }
   return e
 }
-UsernameError.type = UsernameError.name
+OtpError.type = OtpError.name
 
 /**
  * The provided authentication is incorrect.
@@ -58,8 +66,8 @@ UsernameError.type = UsernameError.name
  * The error object may include a `wait` member,
  * which is the number of seconds the user must wait before trying again.
  */
-export function PasswordError (resultsJson = {}, message) {
-  const e = new Error(message || 'Invalid password')
+export function PasswordError (resultsJson = {}, message = 'Invalid password') {
+  const e = new Error(message)
   e.name = e.type = PasswordError.name
   e.wait = resultsJson.wait_seconds
   return e
@@ -67,22 +75,16 @@ export function PasswordError (resultsJson = {}, message) {
 PasswordError.type = PasswordError.name
 
 /**
- * The OTP token was missing / incorrect.
+ * Cannot find a login with that id.
  *
- * The error object should include a `resetToken` member,
- * which can be used to reset OTP protection on the account.
- *
- * The error object may include a `resetDate` member,
- * which indicates that an OTP reset is already pending,
- * and when it will complete.
+ * Reasons could include:
+ * - Password login: wrong username
+ * - PIN login: wrong PIN key
+ * - Recovery login: wrong username, or wrong recovery key
  */
-export function OtpError (resultsJson = {}, message) {
-  const e = new Error(message || 'Invalid OTP token')
-  e.name = e.type = OtpError.name
-  e.resetToken = resultsJson.otp_reset_auth
-  if (resultsJson.otp_timeout_date != null) {
-    e.resetDate = new Date(1000 * resultsJson.otp_timeout_date)
-  }
+export function UsernameError (message = 'Invalid username') {
+  const e = new Error(message)
+  e.name = e.type = UsernameError.name
   return e
 }
-OtpError.type = OtpError.name
+UsernameError.type = UsernameError.name
