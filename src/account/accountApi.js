@@ -107,7 +107,7 @@ function makeAccountApi (state, loginType) {
     /**
      * Adjusts the sort, archive, or deletion state of keys.
      */
-    changeKeyStates (keyStates) {
+    changeWalletStates (keyStates) {
       return state.changeKeyStates(keyStates)
     },
 
@@ -150,6 +150,7 @@ function makeAccountApi (state, loginType) {
   out.changePassword = out.passwordSetup
   out.changePIN = out.pinSetup
   out.setupRecovery2Questions = out.recovery2Set
+  out.changeKeyStates = out.changeWalletStates
 
   return out
 }
