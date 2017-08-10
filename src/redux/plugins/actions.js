@@ -7,10 +7,10 @@ export function setupPlugins (io, plugins) {
   for (const plugin of plugins) {
     switch (plugin.pluginType) {
       case 'currency':
-        currencyPromises.push(plugin.makePlugin(io))
+        currencyPromises.push(plugin.makePlugin({ io }))
         break
       case 'exchange':
-        exchangePromises.push(plugin.makePlugin(io))
+        exchangePromises.push(plugin.makePlugin({ io }))
         break
       default:
         throw new Error(`Unknown plugin type ${plugin.pluginType}`)
