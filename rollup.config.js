@@ -4,7 +4,7 @@ import packageJson from './package.json'
 
 export default {
   entry: 'src/index.js',
-  external: ['buffer', ...Object.keys(packageJson.dependencies)],
+  external: Object.keys(packageJson.dependencies),
   plugins: [
     buble({
       objectAssign: 'Object.assign',

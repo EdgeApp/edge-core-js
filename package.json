@@ -38,9 +38,6 @@
     "pretest": "webpack && rollup -c rollup.config.test.js",
     "test": "mocha --require source-map-support/register build/tests.cjs.js"
   },
-  "browser": {
-    "buffer": false
-  },
   "dependencies": {
     "aes-js": "^3.1.0",
     "base-x": "^1.0.4",
