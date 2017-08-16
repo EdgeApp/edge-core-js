@@ -82,4 +82,17 @@ describe('account', function () {
         })
     )
   })
+
+  it('logout', function (done) {
+    const [context] = makeFakeContexts(1)
+    assert.doesNotThrow(() => {
+      makeFakeAccount(context, fakeUser).then(account => {
+        account.logout().then(() => {
+          done()
+          return null
+        })
+        return null
+      })
+    })
+  })
 })

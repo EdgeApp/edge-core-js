@@ -64,7 +64,7 @@ function makeAccountApi (state, loginType) {
     },
 
     logout () {
-      state.logout()
+      return state.logout()
     },
 
     passwordOk (password) {
