@@ -90,6 +90,21 @@ class AccountState {
     this.keyStates = {}
   }
 
+  logout () {
+    return new Promise((resolve, reject) => {
+      this.io = null
+      this.appId = null
+      this.keyInfo = null
+
+      // Login state:
+      this.loginTree = null
+      this.login = null
+      this.legacyKeyInfos = null
+      this.keyStates = null
+      resolve()
+    })
+  }
+
   changePassword (password, login = this.loginTree) {
     const { io, loginTree: { username } } = this
     checkLogin(login)
