@@ -18,21 +18,21 @@
     "Tim Horton <tim@airbitz.co>"
   ],
   "files": [
-    "changelog.md",
-    "lib/*",
+    "CHANGELOG.md",
     "LICENSE",
-    "package.json",
-    "readme.md"
+    "README.md",
+    "lib/airbitz-core.*",
+    "package.json"
   ],
-  "main": "lib/index.cjs.js",
-  "module": "lib/index.es.js",
+  "main": "lib/airbitz-core.cjs.js",
+  "module": "lib/airbitz-core.es.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
     "build": "npm run prepare",
-    "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' 'test/**/*.js' && standard --fix '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' && standard --fix '*.js' 'src/**/*.js'",
     "precommit": "npm run pretest",
     "prepare": "webpack && rollup -c",
     "pretest": "webpack && rollup -c rollup.config.test.js",
