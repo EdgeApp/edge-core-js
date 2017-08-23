@@ -9,7 +9,8 @@ import {
   getExchangeRate,
   getStorageWalletFolder,
   getStorageWalletLastSync,
-  getStorageWalletLocalFolder
+  getStorageWalletLocalFolder,
+  hashStorageWalletFilename
 } from '../selectors.js'
 import {
   add,
@@ -23,6 +24,15 @@ import {
   setProgress
 } from './reducer.js'
 import { mapFiles } from 'disklet'
+
+function getTxFile (state, keyId, timestamp, txid) {
+  const txidHash = hashStorageWalletFilename(state, keyId, txid)
+  const filename = `${timestamp}-${txidHash}.json`
+
+  return getStorageWalletFolder(state, keyId)
+    .folder('transaction')
+    .file(filename)
+}
 
 /**
  * Creates the initial state for a currency wallet and adds it to the store.
@@ -166,9 +176,9 @@ export function setCurrencyWalletTxMetadata (
 export function setupNewTxMetadata (keyId, tx) {
   return (dispatch, getState) => {
     const state = getState()
-    const folder = getStorageWalletFolder(state, keyId)
     const fiatCurrency = getCurrencyWalletFiat(state, keyId)
     const txid = tx.txid
+    const txFile = getTxFile(state, keyId, 0, txid)
 
     // Basic file template:
     const file = {
@@ -197,10 +207,6 @@ export function setupNewTxMetadata (keyId, tx) {
 
     // Save the new file:
     dispatch(setFile(keyId, txid, file))
-    return folder
-      .folder('transaction')
-      .file(txid + '.json')
-      .setText(JSON.stringify(file))
-      .then(() => void 0)
+    return txFile.setText(JSON.stringify(file)).then(() => void 0)
   }
 }
