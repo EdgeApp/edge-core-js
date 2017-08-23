@@ -1,3 +1,5 @@
+// @flow
+
 import { makeCurrencyWallet } from './currencyWallets/api.js'
 import { makeContext } from './io/context.js'
 
@@ -25,10 +27,21 @@ export { makeFakeIos } from './io/fake'
  */
 export { makeContext }
 
+type ContextOpts = {
+  apiKey: string,
+  appId: string,
+  io: any,
+  plugins: Array<any>,
+}
+
 /**
  * Same thing as `makeContext`, but corresponding to the documentation.
  */
-export function makeABCContext (apiKey, appId, opts) {
+export function makeABCContext (
+  apiKey: string,
+  appId: string,
+  opts: ContextOpts
+) {
   return makeContext({ apiKey, appId, ...opts })
 }
 

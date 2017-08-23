@@ -32,7 +32,8 @@
   },
   "scripts": {
     "build": "npm run prepare",
-    "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' && standard --fix '*.js' 'src/**/*.js'",
+    "flow": "flow status",
+    "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' && eslint --fix '*.js' 'src/**/*.js'",
     "precommit": "npm run pretest",
     "prepare": "webpack && rollup -c",
     "pretest": "webpack && rollup -c rollup.config.test.js",
@@ -51,17 +52,22 @@
     "utf8": "^2.1.2"
   },
   "devDependencies": {
+    "babel-eslint": "^7.2.3",
+    "eslint": "^4.5.0",
     "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-flowtype": "^2.35.0",
     "eslint-plugin-import": "^2.7.0",
     "eslint-plugin-node": "^5.1.1",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^3.0.1",
+    "flow-bin": "^0.53.1",
     "husky": "^0.14.3",
     "mocha": "^3.5.0",
     "rollup": "^0.46.2",
     "rollup-plugin-buble": "^0.15.0",
     "rollup-plugin-commonjs": "^8.1.0",
     "rollup-plugin-eslint": "^4.0.0",
+    "rollup-plugin-flow": "^1.1.1",
     "rollup-plugin-multi-entry": "^2.0.1",
     "source-map-support": "^0.4.15",
     "webpack": "^3.5.3"
