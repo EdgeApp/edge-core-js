@@ -21,17 +21,18 @@
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
-    "lib/airbitz-core.*",
+    "lib/indexABC.*",
     "package.json"
   ],
-  "main": "lib/airbitz-core.cjs.js",
-  "module": "lib/airbitz-core.es.js",
+  "main": "lib/indexABC.cjs.js",
+  "module": "lib/indexABC.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
-    "build": "npm run prepare",
+    "build": "npm run prepare && npm run build:flow",
+    "build:flow": "flow-copy-source -v -i '**/test/**' src lib",
     "flow": "flow status",
     "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' && eslint --fix '*.js' 'src/**/*.js'",
     "precommit": "npm run pretest",
@@ -61,6 +62,7 @@
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^3.0.1",
     "flow-bin": "^0.53.1",
+    "flow-copy-source": "^1.2.1",
     "husky": "^0.14.3",
     "mocha": "^3.5.0",
     "rollup": "^0.46.2",

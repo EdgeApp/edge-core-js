@@ -1,5 +1,5 @@
 /* global describe, it */
-import { makeContext, makeCurrencyWallet, makeFakeIos } from '../index.js'
+import { makeContext, makeCurrencyWallet, makeFakeIos } from '../indexABC.js'
 import { makeAssertLog } from '../test/assertLog.js'
 import {
   makeFakeCurrency,

@@ -1,5 +1,5 @@
 /* global describe, it */
-import { makeContext, makeFakeIos } from '../index.js'
+import { makeContext, makeFakeIos } from '../indexABC.js'
 import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import { base64 } from '../util/encoding.js'
 import assert from 'assert'

@@ -4,7 +4,7 @@ import commonjs from 'rollup-plugin-commonjs'
 import packageJson from './package.json'
 
 export default {
-  entry: 'src/index.js',
+  entry: 'src/indexABC.js',
   external: Object.keys(packageJson.dependencies),
   plugins: [
     flow(),
