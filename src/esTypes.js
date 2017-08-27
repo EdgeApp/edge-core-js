@@ -149,3 +149,7 @@ export type EsMakeEngineOptions = {
   callbacks: EsCurrencyPluginCallbacks,
   optionalSettings?: EsCurrencySettings
 }
+
+export interface EsCurrencyPluginFactory {
+  static makePlugin (opts:{}):Promise<EsCurrencyPlugin>
+}

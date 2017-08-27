@@ -28,6 +28,7 @@ export type {
   EsMakeEngineOptions,
   EsCurrencyPlugin,
   EsCurrencyPluginCallbacks,
+  EsCurrencyPluginFactory,
   EsMakeCurrencyPlugin
 } from './esTypes.js'
 export { makeBrowserIo } from './io/browser'
