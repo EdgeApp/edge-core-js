@@ -21,7 +21,7 @@
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
-    "lib/indexABC.*",
+    "lib/*",
     "package.json"
   ],
   "main": "lib/indexABC.js",
