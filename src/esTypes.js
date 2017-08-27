@@ -4,29 +4,29 @@
 // @flow
 
 export type EsMetadata = {
-  name:?string,
-  category:?string,
-  notes:?string,
-  amountFiat:?number,
-  bizId:?number,
-  miscJson:?string
+  name?:string,
+  category?:string,
+  notes?:string,
+  amountFiat?:number,
+  bizId?:number,
+  miscJson?:string
 }
 
 export type EsSpendTarget = {
-  currencyCode:?string,
-  destWallet:?any,
-  publicAddress:?string,
-  nativeAmount:?string,
-  destMetadata:?EsMetadata
+  currencyCode?:string,
+  destWallet?:any,
+  publicAddress?:string,
+  nativeAmount?:string,
+  destMetadata?:EsMetadata
 }
 
 export type EsSpendInfo = {
-  currencyCode:?string,
-  noUnconfirmed:?boolean,
+  currencyCode?:string,
+  noUnconfirmed?:boolean,
   spendTargets:Array<EsSpendTarget>,
-  networkFeeOption:?string,
-  customNetworkFee:?string,
-  metadata:?EsMetadata
+  networkFeeOption?:string,
+  customNetworkFee?:string,
+  metadata?:EsMetadata
 }
 
 export type EsTransaction = {
@@ -58,18 +58,53 @@ console.log(esTransaction)
 export interface EsDenomination {
   name:string,
   multiplier:string,
-  symbol:string|null
+  symbol?:string
 }
 
 export interface EsMetaToken {
   currencyCode:string,
   currencyName:string,
   denominations:Array<EsDenomination>,
-  contractAddress:string|null,
-  symbolImage:string|null
+  contractAddress?:string,
+  symbolImage?:string
 }
 
-export type ABCTransaction = EsTransaction
+export type EsCurrencySettings = {
+  addressExplorer: string,
+  transactionExplorer: string,
+  denomCurrencyCode: string,
+  otherSettings: any
+}
+
+export type EsCurrencyInfo = {
+  walletTypes: Array<string>,
+  currencyName: string,
+  currencyCode: string,
+  defaultSettings: EsCurrencySettings,
+  denominations: Array<EsDenomination>,
+  symbolImage?: string,
+  metaTokens: Array<EsMetaToken>
+}
+
+export type EsParsedUri = {
+  publicAddress:string,
+  nativeAmount?:string,
+  currencyCode?:string,
+  label?:string,
+  message?:string
+}
+
+export type EsWalletInfo = {
+  type:string,
+  keys:any
+}
+
+export type EsEncodeUri = {
+  publicAddress: string,
+  nativeAmount?: string,
+  label?: string,
+  message?: string
+}
 
 export interface EsCurrencyEngine {
   updateSettings (settings:any):void,
@@ -89,3 +124,14 @@ export interface EsCurrencyEngine {
   broadcastTx (esTransaction:EsTransaction):Promise<EsTransaction>,
   saveTx (esTransaction:EsTransaction):Promise<void>
 }
+
+export type EsCurrencyPlugin = {
+  createPrivateKey (walletType: string): any,
+  derivePublicKey (walletInfo:EsWalletInfo): any,
+  makeEngine (keyInfo: any, opts: any):EsCurrencyEngine,
+  parseUri (uri:string):EsParsedUri,
+  encodeUri (obj:EsEncodeUri):string
+}
+
+export type EsMakeCurrencyPlugin = (opts:any) => Promise<EsCurrencyPlugin>
+

@@ -13,13 +13,21 @@ export { internal }
 // Ancillary exports:
 export * from './error.js'
 export type {
-  EsCurrencyEngine,
   EsTransaction,
   EsSpendInfo,
   EsSpendTarget,
   EsMetaToken,
   EsDenomination,
-  EsMetadata } from './esTypes.js'
+  EsMetadata,
+  EsCurrencySettings,
+  EsCurrencyInfo,
+  EsCurrencyEngine,
+  EsParsedUri,
+  EsEncodeUri,
+  EsWalletInfo,
+  EsCurrencyPlugin,
+  EsMakeCurrencyPlugin
+} from './esTypes.js'
 export { makeBrowserIo } from './io/browser'
 export { makeFakeIos } from './io/fake'
 
