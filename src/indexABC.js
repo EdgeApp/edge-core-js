@@ -25,7 +25,9 @@ export type {
   EsParsedUri,
   EsEncodeUri,
   EsWalletInfo,
+  EsMakeEngineOptions,
   EsCurrencyPlugin,
+  EsCurrencyPluginCallbacks,
   EsMakeCurrencyPlugin
 } from './esTypes.js'
 export { makeBrowserIo } from './io/browser'

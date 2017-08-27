@@ -137,3 +137,15 @@ export type EsCurrencyPlugin = {
 
 export type EsMakeCurrencyPlugin = (opts:any) => Promise<EsCurrencyPlugin>
 
+export type EsCurrencyPluginCallbacks = {
+  onBlockHeightChanged (blockHeight: number): void,
+  onTransactionsChanged (esTransactions: Array<EsTransaction>): void,
+  onBalanceChanged (currencyCode: string, nativeBalance: string): void,
+  onAddressesChecked (progressRatio: number): void
+}
+
+export type EsMakeEngineOptions = {
+  walletLocalFolder: any,
+  callbacks: EsCurrencyPluginCallbacks,
+  optionalSettings?: EsCurrencySettings
+}
