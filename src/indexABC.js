@@ -6,11 +6,20 @@ import { makeContext } from './io/context.js'
 // Sub-module exports:
 import * as error from './error.js'
 import * as internal from './internal.js'
+
 export { error }
 export { internal }
 
 // Ancillary exports:
 export * from './error.js'
+export type {
+  EsCurrencyEngine,
+  EsTransaction,
+  EsSpendInfo,
+  EsSpendTarget,
+  EsMetaToken,
+  EsDenomination,
+  EsMetadata } from './esTypes.js'
 export { makeBrowserIo } from './io/browser'
 export { makeFakeIos } from './io/fake'
 

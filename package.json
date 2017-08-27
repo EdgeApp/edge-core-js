@@ -24,19 +24,19 @@
     "lib/indexABC.*",
     "package.json"
   ],
-  "main": "lib/indexABC.cjs.js",
-  "module": "lib/indexABC.js",
+  "main": "lib/indexABC.js",
+  "module": "lib/indexABC.es.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
-    "build": "npm run prepare && npm run build:flow",
+    "build": "npm run prepare",
     "build:flow": "flow-copy-source -v -i '**/test/**' src lib",
     "flow": "flow status",
     "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' && eslint --fix '*.js' 'src/**/*.js'",
     "precommit": "npm run pretest",
-    "prepare": "webpack && rollup -c",
+    "prepare": "webpack && rollup -c && npm run build:flow",
     "pretest": "webpack && rollup -c rollup.config.test.js",
     "test": "mocha --require source-map-support/register build/tests.cjs.js"
   },
