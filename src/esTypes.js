@@ -126,6 +126,8 @@ export interface EsCurrencyEngine {
 }
 
 export type EsCurrencyPlugin = {
+  pluginName: string,
+  currencyInfo: EsCurrencyInfo,
   createPrivateKey (walletType: string): any,
   derivePublicKey (walletInfo:EsWalletInfo): any,
   makeEngine (keyInfo: any, opts: any):EsCurrencyEngine,
