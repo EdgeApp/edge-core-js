@@ -54,29 +54,35 @@ export function makeContext (opts) {
       return usernameAvailable(io, username)
     },
 
-    createAccount (username, password, pin) {
+    createAccount (username, password, pin, opts) {
+      const { callbacks } = opts || {} // opts can be `null`
+
       return createLogin(io, username, {
         password,
         pin
       }).then(loginTree => {
-        return makeAccount(io, appId, loginTree, 'newAccount')
+        return makeAccount(io, appId, loginTree, 'newAccount', callbacks)
       })
     },
 
-    loginWithKey (username, loginKey) {
+    loginWithKey (username, loginKey, opts) {
+      const { callbacks } = opts || {} // opts can be `null`
+
       return io.loginStore.load(username).then(stashTree => {
         const loginTree = makeLoginTree(
           stashTree,
           base58.parse(loginKey),
           appId
         )
-        return makeAccount(io, appId, loginTree, 'keyLogin')
+        return makeAccount(io, appId, loginTree, 'keyLogin', callbacks)
       })
     },
 
-    loginWithPassword (username, password) {
+    loginWithPassword (username, password, opts) {
+      const { callbacks } = opts || {} // opts can be `null`
+
       return loginPassword(io, username, password).then(loginTree => {
-        return makeAccount(io, appId, loginTree, 'passwordLogin')
+        return makeAccount(io, appId, loginTree, 'passwordLogin', callbacks)
       })
     },
 
@@ -95,9 +101,11 @@ export function makeContext (opts) {
       return this.pinExists(username)
     },
 
-    loginWithPIN (username, pin) {
+    loginWithPIN (username, pin, opts) {
+      const { callbacks } = opts || {} // opts can be `null`
+
       return loginPin2(io, appId, username, pin).then(loginTree => {
-        return makeAccount(io, appId, loginTree, 'pinLogin')
+        return makeAccount(io, appId, loginTree, 'pinLogin', callbacks)
       })
     },
 
@@ -111,7 +119,9 @@ export function makeContext (opts) {
       })
     },
 
-    loginWithRecovery2 (recovery2Key, username, answers) {
+    loginWithRecovery2 (recovery2Key, username, answers, opts) {
+      const { callbacks } = opts || {} // opts can be `null`
+
       recovery2Key = base58.parse(recovery2Key)
       return loginRecovery2(
         io,
@@ -119,7 +129,7 @@ export function makeContext (opts) {
         username,
         answers
       ).then(loginTree => {
-        return makeAccount(io, appId, loginTree, 'recoveryLogin')
+        return makeAccount(io, appId, loginTree, 'recoveryLogin', callbacks)
       })
     },
 
@@ -133,7 +143,8 @@ export function makeContext (opts) {
     },
 
     requestEdgeLogin (opts) {
-      const onLogin = opts.onLogin
+      const { callbacks, onLogin } = opts
+
       opts.onLogin = (err, loginTree) => {
         if (err) return onLogin(err)
         makeAccount(io, appId, loginTree).then(
@@ -141,7 +152,7 @@ export function makeContext (opts) {
           err => onLogin(err)
         )
       }
-      return requestEdgeLogin(io, appId, opts)
+      return requestEdgeLogin(io, appId, opts, callbacks)
     }
   })
 

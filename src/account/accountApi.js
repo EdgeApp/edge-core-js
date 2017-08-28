@@ -16,18 +16,21 @@ import { makeExchangeCache } from './exchangeApi.js'
 /**
  * Creates an `Account` API object.
  */
-export function makeAccount (io, appId, loginTree, loginType) {
+export function makeAccount (io, appId, loginTree, loginType, callbacks = {}) {
   return makeAccountState(io, appId, loginTree).then(state =>
-    wrapObject(io.onError, 'Account', makeAccountApi(state, loginType))
+    wrapObject(
+      io.onError,
+      'Account',
+      makeAccountApi(state, loginType, callbacks)
+    )
   )
 }
 
 /**
  * Creates an unwrapped account API object around an account state object.
  */
-function makeAccountApi (state, loginType) {
+function makeAccountApi (state, loginType, callbacks) {
   const { io, appId, keyInfo } = state
-  const callbacks = {}
   const { redux } = io
 
   const exchangeCache = makeExchangeCache(io)

@@ -16,6 +16,21 @@ function findKeys (keyInfos, type) {
 }
 
 describe('account', function () {
+  it('calls callbacks', async function () {
+    const [context] = makeFakeContexts(1)
+    await makeFakeAccount(context, fakeUser)
+
+    let callbackCalled = false
+    const callbacks = {
+      onDataChanged () {
+        callbackCalled = true
+      }
+    }
+
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin, { callbacks })
+    assert(callbackCalled)
+  })
+
   it('find repo', function () {
     const [context] = makeFakeContexts(1)
 
