@@ -1,3 +1,5 @@
+import { awaitState } from '../../util/reaction.js'
+
 export function getCurrencyPlugins (state) {
   return state.plugins.currencyPlugins
 }
@@ -41,4 +43,8 @@ export function getCurrencyMultiplier (state, currencyCode) {
 
 export function getExchangePlugins (state) {
   return state.plugins.exchangePlugins
+}
+
+export function awaitPluginsLoaded (store) {
+  return awaitState(store, state => state.plugins.loaded)
 }
