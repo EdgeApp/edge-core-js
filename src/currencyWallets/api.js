@@ -212,6 +212,10 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       return Promise.resolve(engine().killEngine())
     },
 
+    enableTokens (tokens) {
+      return engine().enableTokens(tokens)
+    },
+
     // Transactions:
     '@getBalance': { sync: true },
     getBalance (opts) {
