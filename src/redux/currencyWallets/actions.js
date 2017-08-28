@@ -3,6 +3,7 @@ import { mergeDeeply } from '../../util/util.js'
 import { addStorageWallet } from '../actions.js'
 import {
   getCurrencyMultiplier,
+  getCurrencyPlugin,
   getCurrencyWalletFiat,
   getCurrencyWalletFile,
   getCurrencyWalletPlugin,
@@ -41,7 +42,7 @@ function getTxFile (state, keyId, timestamp, txid) {
  */
 export function addCurrencyWallet (keyInfo, opts = {}) {
   return (dispatch, getState) => {
-    const { plugin } = opts
+    const plugin = getCurrencyPlugin(getState(), keyInfo.type)
     if (plugin.currencyInfo == null) {
       plugin.currencyInfo = plugin.getInfo()
     }

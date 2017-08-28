@@ -15,12 +15,10 @@ function makeFakeCurrencyWallet (store, callbacks) {
 
   const context = makeContext({ io, plugins: [plugin, fakeExchangePlugin] })
   return makeFakeAccount(context, fakeUser).then(account => {
-    return plugin.makePlugin(io).then(plugin => {
-      const keyInfo = account.getFirstWallet('wallet:fakecoin')
-      const opts = { io: context.io, plugin, callbacks }
+    const keyInfo = account.getFirstWallet('wallet:fakecoin')
+    const opts = { io: context.io, callbacks }
 
-      return makeCurrencyWallet(keyInfo, opts)
-    })
+    return makeCurrencyWallet(keyInfo, opts)
   })
 }
 
