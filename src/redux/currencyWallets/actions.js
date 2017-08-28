@@ -146,7 +146,7 @@ export function setCurrencyWalletTxMetadata (
 ) {
   return (dispatch, getState) => {
     const state = getState()
-    const folder = getStorageWalletFolder(state, keyId)
+    const txFile = getTxFile(state, keyId, 0, txid)
     const oldFile = getCurrencyWalletFile(state, keyId, txid)
     const newFile = {
       txid,
@@ -165,11 +165,7 @@ export function setCurrencyWalletTxMetadata (
 
     // Save the new file:
     dispatch(setFile(keyId, txid, file))
-    return folder
-      .folder('transaction')
-      .file(txid + '.json')
-      .setText(JSON.stringify(file))
-      .then(() => void 0)
+    return txFile.setText(JSON.stringify(file)).then(() => void 0)
   }
 }
 
