@@ -32,7 +32,7 @@
   },
   "scripts": {
     "build": "npm run prepare",
-    "build:flow": "flow-copy-source -v -i '**/test/**' src lib",
+    "build:flow": "flow-copy-source -i '**/*.test.js' src lib",
     "flow": "flow status",
     "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' && eslint --fix '*.js' 'src/**/*.js'",
     "precommit": "npm run pretest",
