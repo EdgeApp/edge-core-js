@@ -1,22 +1,23 @@
-import buble from 'rollup-plugin-buble'
-import flow from 'rollup-plugin-flow'
+import babel from 'rollup-plugin-babel'
 import commonjs from 'rollup-plugin-commonjs'
 import packageJson from './package.json'
+
+const babelOpts = {
+  presets: ['es2015-rollup', 'flow'],
+  plugins: [
+    'transform-object-rest-spread',
+    ['fast-async', { compiler: { promises: true, noRuntime: true } }]
+  ]
+}
 
 export default {
   entry: 'src/indexABC.js',
   external: Object.keys(packageJson.dependencies),
   plugins: [
-    flow(),
-    buble({
-      objectAssign: 'Object.assign',
-      transforms: {
-        dangerousForOf: true
-      }
-    }),
     commonjs({
       include: 'build/crypto-bundle.js'
-    })
+    }),
+    babel(babelOpts)
   ],
   targets: [
     {
