@@ -5,6 +5,7 @@ import {
   mergeKeyInfos
 } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
+import { getCurrencyPlugin } from '../redux/selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
@@ -27,6 +28,7 @@ export function makeAccount (io, appId, loginTree, loginType) {
 function makeAccountApi (state, loginType) {
   const { io, appId, keyInfo } = state
   const callbacks = {}
+  const { redux } = io
 
   const exchangeCache = makeExchangeCache(io)
 
@@ -139,6 +141,12 @@ function makeAccountApi (state, loginType) {
      * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
      */
     createWallet (type, keys) {
+      if (keys == null) {
+        // Use the currency plugin to create the keys:
+        const plugin = getCurrencyPlugin(redux.getState(), type)
+        keys = plugin.createPrivateKey(type)
+      }
+
       const keyInfo = makeStorageKeyInfo(io, type, keys)
       const kit = makeKeysKit(io, state.login, keyInfo)
       return state.applyKit(kit).then(() => keyInfo.id)

@@ -123,12 +123,21 @@ class FakeCurrencyPlugin {
           currencyCode: 'TOKEN',
           denominations: [{ multiplier: 1000, name: 'TOKEN' }]
         }
-      ]
+      ],
+      walletTypes: ['wallet:fakecoin']
     }
   }
 
-  // createPrivateKeyInfo () {}
-  // derivePublicKeyInfo () {}
+  createPrivateKey (type) {
+    if (type !== this.currencyInfo.walletTypes[0]) {
+      throw new Error('Unsupported key type')
+    }
+    return {
+      fakeKey: 'FakePrivateKey'
+    }
+  }
+
+  // derivePublicKey () {}
   // parseUri () {}
 
   makeEngine (keyInfo, opts = {}) {

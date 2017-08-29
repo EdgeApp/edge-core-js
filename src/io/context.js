@@ -10,6 +10,7 @@ import {
   loginRecovery2,
   listRecoveryQuestionChoices
 } from '../login/recovery2.js'
+import { awaitPluginsLoaded, getCurrencyPlugins } from '../redux/selectors.js'
 import { wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
 import { makeBrowserIo } from './browser'
@@ -18,6 +19,8 @@ import { fixUsername } from './loginStore.js'
 
 export function makeContext (opts) {
   const io = new IoContext(opts.io != null ? opts.io : makeBrowserIo(), opts)
+  const { redux } = io
+
   const appId =
     opts.appId != null
       ? opts.appId
@@ -28,6 +31,11 @@ export function makeContext (opts) {
   const out = wrapObject(io.onError, 'Context', {
     io,
     appId,
+
+    async getCurrencyPlugins () {
+      await awaitPluginsLoaded(redux)
+      return getCurrencyPlugins(redux.getState())
+    },
 
     '@fixUsername': { sync: true },
     fixUsername (username) {

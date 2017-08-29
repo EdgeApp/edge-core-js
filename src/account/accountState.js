@@ -10,7 +10,10 @@ import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
 import { addStorageWallet } from '../redux/actions.js'
-import { getStorageWalletLastSync } from '../redux/selectors.js'
+import {
+  awaitPluginsLoaded,
+  getStorageWalletLastSync
+} from '../redux/selectors.js'
 import { createReaction } from '../util/reaction.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
@@ -162,7 +165,9 @@ class AccountState {
   }
 }
 
-export function makeAccountState (io, appId, loginTree) {
+export async function makeAccountState (io, appId, loginTree) {
+  await awaitPluginsLoaded(io.redux)
+
   return ensureAccountExists(io, loginTree, appId).then(loginTree => {
     // Find our repo:
     const type = makeAccountType(appId)
