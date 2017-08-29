@@ -31,13 +31,14 @@
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
-    "build": "npm run prepare",
-    "build:flow": "flow-copy-source -i '**/*.test.js' src lib",
+    "build": "webpack && rollup -c",
+    "build:test": "webpack && rollup -c rollup.config.test.js",
+    "build:types": "flow-copy-source -i '**/*.test.js' src lib",
     "flow": "flow status",
     "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' && eslint --fix '*.js' 'src/**/*.js'",
-    "precommit": "npm run pretest",
-    "prepare": "webpack && rollup -c && npm run build:flow",
-    "pretest": "webpack && rollup -c rollup.config.test.js",
+    "precommit": "npm run build:test",
+    "prepare": "npm run build && npm run build:types",
+    "pretest": "npm run build:test",
     "test": "mocha --require source-map-support/register build/tests.cjs.js"
   },
   "dependencies": {
