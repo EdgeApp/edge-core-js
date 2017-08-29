@@ -41,6 +41,9 @@ export function fixIo (io) {
     }
   }
 
+  // The network interface (used by plugins):
+  if (io.net != null) out.net = io.net
+
   return out
 }
 
