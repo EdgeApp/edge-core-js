@@ -10,7 +10,7 @@ import {
   loginRecovery2,
   listRecoveryQuestionChoices
 } from '../login/recovery2.js'
-import { awaitPluginsLoaded, getCurrencyPlugins } from '../redux/selectors.js'
+import { awaitPluginsLoaded } from '../redux/selectors.js'
 import { wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
 import { makeBrowserIo } from './browser'
@@ -34,7 +34,7 @@ export function makeContext (opts) {
 
     async getCurrencyPlugins () {
       await awaitPluginsLoaded(redux)
-      return getCurrencyPlugins(redux.getState())
+      return redux.getState().plugins.currencyPlugins
     },
 
     '@fixUsername': { sync: true },
