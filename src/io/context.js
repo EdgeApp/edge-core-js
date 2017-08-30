@@ -46,7 +46,7 @@ export function makeContext (opts) {
       return io.loginStore.listUsernames()
     },
 
-    removeUsername (username) {
+    deleteLocalAccount (username) {
       return io.loginStore.remove(username)
     },
 
@@ -146,6 +146,7 @@ export function makeContext (opts) {
   })
 
   out.usernameList = out.listUsernames
+  out.removeUsername = out.deleteLocalAccount
 
   return out
 }
