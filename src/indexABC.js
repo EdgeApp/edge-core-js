@@ -13,24 +13,24 @@ export { internal }
 // Ancillary exports:
 export * from './error.js'
 export type {
-  EsTransaction,
-  EsSpendInfo,
-  EsSpendTarget,
-  EsMetaToken,
-  EsDenomination,
-  EsMetadata,
-  EsCurrencySettings,
-  EsCurrencyInfo,
-  EsCurrencyEngine,
-  EsParsedUri,
-  EsEncodeUri,
-  EsWalletInfo,
-  EsMakeEngineOptions,
-  EsCurrencyPlugin,
-  EsCurrencyPluginCallbacks,
-  EsCurrencyPluginFactory,
-  EsMakeCurrencyPlugin
-} from './esTypes.js'
+  AbcTransaction,
+  AbcSpendInfo,
+  AbcSpendTarget,
+  AbcMetaToken,
+  AbcDenomination,
+  AbcMetadata,
+  AbcCurrencySettings,
+  AbcCurrencyInfo,
+  AbcCurrencyEngine,
+  AbcParsedUri,
+  AbcEncodeUri,
+  AbcWalletInfo,
+  AbcMakeEngineOptions,
+  AbcCurrencyPlugin,
+  AbcCurrencyPluginCallbacks,
+  AbcCurrencyPluginFactory,
+  AbcMakeCurrencyPlugin
+} from './abcTypes.js'
 export { makeBrowserIo } from './io/browser'
 export { makeFakeIos } from './io/fake'
 

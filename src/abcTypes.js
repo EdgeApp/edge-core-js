@@ -3,7 +3,7 @@
  */
 // @flow
 
-export type EsMetadata = {
+export type AbcMetadata = {
   name?:string,
   category?:string,
   notes?:string,
@@ -12,24 +12,24 @@ export type EsMetadata = {
   miscJson?:string
 }
 
-export type EsSpendTarget = {
+export type AbcSpendTarget = {
   currencyCode?:string,
   destWallet?:any,
   publicAddress?:string,
   nativeAmount?:string,
-  destMetadata?:EsMetadata
+  destMetadata?:AbcMetadata
 }
 
-export type EsSpendInfo = {
+export type AbcSpendInfo = {
   currencyCode?:string,
   noUnconfirmed?:boolean,
-  spendTargets:Array<EsSpendTarget>,
+  spendTargets:Array<AbcSpendTarget>,
   networkFeeOption?:string,
   customNetworkFee?:string,
-  metadata?:EsMetadata
+  metadata?:AbcMetadata
 }
 
-export type EsTransaction = {
+export type AbcTransaction = {
   txid: string,
   date: number,
   currencyCode: string,
@@ -41,7 +41,7 @@ export type EsTransaction = {
   otherParams: any
 }
 
-const esTransaction:EsTransaction = {
+const abcTransaction:AbcTransaction = {
   txid: '',
   date: 1,
   currencyCode: 'ETH',
@@ -53,40 +53,40 @@ const esTransaction:EsTransaction = {
   otherParams: {}
 }
 
-console.log(esTransaction)
+console.log(abcTransaction)
 
-export interface EsDenomination {
+export interface AbcDenomination {
   name:string,
   multiplier:string,
   symbol?:string
 }
 
-export interface EsMetaToken {
+export interface AbcMetaToken {
   currencyCode:string,
   currencyName:string,
-  denominations:Array<EsDenomination>,
+  denominations:Array<AbcDenomination>,
   contractAddress?:string,
   symbolImage?:string
 }
 
-export type EsCurrencySettings = {
+export type AbcCurrencySettings = {
   addressExplorer: string,
   transactionExplorer: string,
   denomCurrencyCode: string,
   otherSettings: any
 }
 
-export type EsCurrencyInfo = {
+export type AbcCurrencyInfo = {
   walletTypes: Array<string>,
   currencyName: string,
   currencyCode: string,
-  defaultSettings: EsCurrencySettings,
-  denominations: Array<EsDenomination>,
+  defaultSettings: AbcCurrencySettings,
+  denominations: Array<AbcDenomination>,
   symbolImage?: string,
-  metaTokens: Array<EsMetaToken>
+  metaTokens: Array<AbcMetaToken>
 }
 
-export type EsParsedUri = {
+export type AbcParsedUri = {
   publicAddress:string,
   nativeAmount?:string,
   currencyCode?:string,
@@ -94,19 +94,19 @@ export type EsParsedUri = {
   message?:string
 }
 
-export type EsWalletInfo = {
+export type AbcWalletInfo = {
   type:string,
   keys:any
 }
 
-export type EsEncodeUri = {
+export type AbcEncodeUri = {
   publicAddress: string,
   nativeAmount?: string,
   label?: string,
   message?: string
 }
 
-export interface EsCurrencyEngine {
+export interface AbcCurrencyEngine {
   updateSettings (settings:any):void,
   startEngine ():Promise<void>,
   killEngine ():void,
@@ -115,41 +115,41 @@ export interface EsCurrencyEngine {
   getTokenStatus (token:string):boolean,
   getBalance (options:any):string,
   getNumTransactions (options:any):number,
-  getTransactions (options:any):Promise<Array<EsTransaction>>,
+  getTransactions (options:any):Promise<Array<AbcTransaction>>,
   getFreshAddress (options:any):string,
   addGapLimitAddresses (addresses:Array<string>, options:any):void,
   isAddressUsed (address:string, options:any):boolean,
-  makeSpend (esSpendInfo:EsSpendInfo):Promise<EsTransaction>,
-  signTx (esTransaction:EsTransaction):Promise<EsTransaction>,
-  broadcastTx (esTransaction:EsTransaction):Promise<EsTransaction>,
-  saveTx (esTransaction:EsTransaction):Promise<void>
+  makeSpend (abcSpendInfo:AbcSpendInfo):Promise<AbcTransaction>,
+  signTx (abcTransaction:AbcTransaction):Promise<AbcTransaction>,
+  broadcastTx (abcTransaction:AbcTransaction):Promise<AbcTransaction>,
+  saveTx (abcTransaction:AbcTransaction):Promise<void>
 }
 
-export type EsCurrencyPlugin = {
+export type AbcCurrencyPlugin = {
   pluginName: string,
-  currencyInfo: EsCurrencyInfo,
+  currencyInfo: AbcCurrencyInfo,
   createPrivateKey (walletType: string): any,
-  derivePublicKey (walletInfo:EsWalletInfo): any,
-  makeEngine (keyInfo: any, opts: any):EsCurrencyEngine,
-  parseUri (uri:string):EsParsedUri,
-  encodeUri (obj:EsEncodeUri):string
+  derivePublicKey (walletInfo:AbcWalletInfo): any,
+  makeEngine (keyInfo: any, opts: any):AbcCurrencyEngine,
+  parseUri (uri:string):AbcParsedUri,
+  encodeUri (obj:AbcEncodeUri):string
 }
 
-export type EsMakeCurrencyPlugin = (opts:any) => Promise<EsCurrencyPlugin>
+export type AbcMakeCurrencyPlugin = (opts:any) => Promise<AbcCurrencyPlugin>
 
-export type EsCurrencyPluginCallbacks = {
+export type AbcCurrencyPluginCallbacks = {
   onBlockHeightChanged (blockHeight: number): void,
-  onTransactionsChanged (esTransactions: Array<EsTransaction>): void,
+  onTransactionsChanged (abcTransactions: Array<AbcTransaction>): void,
   onBalanceChanged (currencyCode: string, nativeBalance: string): void,
   onAddressesChecked (progressRatio: number): void
 }
 
-export type EsMakeEngineOptions = {
+export type AbcMakeEngineOptions = {
   walletLocalFolder: any,
-  callbacks: EsCurrencyPluginCallbacks,
-  optionalSettings?: EsCurrencySettings
+  callbacks: AbcCurrencyPluginCallbacks,
+  optionalSettings?: AbcCurrencySettings
 }
 
-export interface EsCurrencyPluginFactory {
-  static makePlugin (opts:{}):Promise<EsCurrencyPlugin>
+export interface AbcCurrencyPluginFactory {
+  static makePlugin (opts:{}):Promise<AbcCurrencyPlugin>
 }
