@@ -7,6 +7,11 @@ import { makeContext } from './io/context.js'
 import * as error from './error.js'
 import * as internal from './internal.js'
 
+import type
+{
+  AbcMakeContextOpts
+} from './abcTypes'
+
 export { error }
 export { internal }
 
@@ -29,7 +34,12 @@ export type {
   AbcCurrencyPlugin,
   AbcCurrencyPluginCallbacks,
   AbcCurrencyPluginFactory,
-  AbcMakeCurrencyPlugin
+  AbcMakeCurrencyPlugin,
+  AbcMakeContextOpts,
+  AbcWalletState,
+  AbcWalletStates,
+  AbcAccountOptions,
+  AbcAccountCallbacks
 } from './abcTypes.js'
 export { makeBrowserIo } from './io/browser'
 export { makeFakeIos } from './io/fake'
@@ -47,20 +57,13 @@ export { makeFakeIos } from './io/fake'
  */
 export { makeContext }
 
-type ContextOpts = {
-  apiKey: string,
-  appId: string,
-  io: any,
-  plugins: Array<any>,
-}
-
 /**
  * Same thing as `makeContext`, but corresponding to the documentation.
  */
 export function makeABCContext (
   apiKey: string,
   appId: string,
-  opts: ContextOpts
+  opts: AbcMakeContextOpts
 ) {
   return makeContext({ apiKey, appId, ...opts })
 }
