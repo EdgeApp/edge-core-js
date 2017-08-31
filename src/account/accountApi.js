@@ -1,23 +1,17 @@
 // @flow
-import {
-  findFirstKey,
-  makeKeysKit,
-  makeStorageKeyInfo,
-  mergeKeyInfos
-} from '../login/keys.js'
+import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
 import { getCurrencyPlugin } from '../redux/selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
-import { softCat } from '../util/util.js'
 import { makeAccountState } from './accountState.js'
 import { makeExchangeCache } from './exchangeApi.js'
 import type {
-  AbcWalletStates,
-  AbcWalletInfo,
   AbcAccount,
-  AbcAccountCallbacks
+  AbcAccountCallbacks,
+  AbcWalletInfo,
+  AbcWalletStates
 } from 'airbitz-core-types'
 
 /**
@@ -30,7 +24,7 @@ export function makeAccount (
   loginType: string = '',
   callbacks: AbcAccountCallbacks | {} = {}
 ) {
-  return makeAccountState(io, appId, loginTree).then(state =>
+  return makeAccountState(io, appId, loginTree, callbacks).then(state =>
     wrapObject(
       io.onError,
       'Account',
@@ -47,7 +41,7 @@ function makeAccountApi (
   loginType: string,
   callbacks: AbcAccountCallbacks | {}
 ): AbcAccount {
-  const { io, appId, keyInfo } = state
+  const { io, keyInfo } = state
   const { redux } = io
 
   const exchangeCache = makeExchangeCache(io)
@@ -113,17 +107,7 @@ function makeAccountApi (
      * Retrieves all the keys that are available to this login object.
      */
     get allKeys (): Array<any> {
-      const { keyStates, legacyKeyInfos, login } = state
-      const allKeys = mergeKeyInfos(softCat(legacyKeyInfos, login.keyInfos))
-
-      return allKeys.map(info => ({
-        appId,
-        archived: false,
-        deleted: false,
-        sortIndex: allKeys.length,
-        ...keyStates[info.id],
-        ...info
-      }))
+      return state.allKeys
     },
 
     /**
@@ -170,6 +154,18 @@ function makeAccountApi (
       const keyInfo = makeStorageKeyInfo(io, type, keys)
       const kit = makeKeysKit(io, state.login, keyInfo)
       return state.applyKit(kit).then(() => keyInfo.id)
+    },
+
+    // Core-managed wallets:
+    get activeWalletIds (): Array<string> {
+      return state.activeWalletIds
+    },
+    get archivedWalletIds (): Array<string> {
+      return state.archivedWalletIds
+    },
+    get currencyWallets (): { [walletId: string]: {} } {
+      // TODO: Return a map of AbcCurrencyWallets ^^
+      return state.currencyWallets
     },
 
     // Name aliases:

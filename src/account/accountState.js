@@ -1,9 +1,11 @@
+import { makeCurrencyWallet } from '../currencyWallets/api.js'
 import { makeCreateKit } from '../login/create.js'
 import {
   findFirstKey,
   makeAccountType,
   makeKeysKit,
-  makeStorageKeyInfo
+  makeStorageKeyInfo,
+  mergeKeyInfos
 } from '../login/keys.js'
 import { applyKit, searchTree } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
@@ -12,9 +14,11 @@ import { makeRecovery2Kit } from '../login/recovery2.js'
 import { addStorageWallet } from '../redux/actions.js'
 import {
   awaitPluginsLoaded,
-  getStorageWalletLastSync
+  getStorageWalletLastSync,
+  hasCurrencyPlugin
 } from '../redux/selectors.js'
 import { createReaction } from '../util/reaction.js'
+import { softCat } from '../util/util.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 function findAppLogin (loginTree, appId) {
@@ -77,20 +81,70 @@ function ensureAccountExists (io, loginTree, appId) {
 }
 
 /**
+ * Binds a collection of wallet callbacks,
+ * to pass into the currency wallet constructor.
+ */
+function makeCurrencyWalletCallbacks (walletId, accountCallbacks) {
+  const {
+    onAddressesChecked,
+    onBalanceChanged,
+    onBlockHeightChanged,
+    onNewTransactions,
+    onTransactionsChanged,
+    onWalletDataChanged,
+    onWalletNameChanged
+  } = accountCallbacks
+
+  const out = {}
+
+  if (onAddressesChecked) {
+    out.onAddressesChecked = (...rest) => onAddressesChecked(walletId, ...rest)
+  }
+  if (onBalanceChanged) {
+    out.onBalanceChanged = (...rest) => onBalanceChanged(walletId, ...rest)
+  }
+  if (onBlockHeightChanged) {
+    out.onBlockHeightChanged = (...rest) =>
+      onBlockHeightChanged(walletId, ...rest)
+  }
+  if (onNewTransactions) {
+    out.onNewTransactions = (...rest) => onNewTransactions(walletId, ...rest)
+  }
+  if (onTransactionsChanged) {
+    out.onTransactionsChanged = (...rest) =>
+      onTransactionsChanged(walletId, ...rest)
+  }
+  if (onWalletDataChanged) {
+    out.onDataChanged = (...rest) => onWalletDataChanged(walletId, ...rest)
+  }
+  if (onWalletNameChanged) {
+    out.onWalletNameChanged = (...rest) =>
+      onWalletNameChanged(walletId, ...rest)
+  }
+
+  return out
+}
+
+/**
  * This is the data an account contains, and the methods to update it.
  */
 class AccountState {
-  constructor (io, appId, loginTree, keyInfo) {
+  constructor (io, appId, loginTree, keyInfo, callbacks) {
     // Constant stuff:
     this.io = io
     this.appId = appId
     this.keyInfo = keyInfo
+    this.callbacks = callbacks
 
     // Login state:
     this.loginTree = loginTree
     this.login = findAppLogin(loginTree, this.appId)
     this.legacyKeyInfos = []
     this.keyStates = {}
+
+    // Wallet state:
+    this.currencyWallets = {}
+    this.currencyWalletsLoading = {}
   }
 
   logout () {
@@ -150,6 +204,7 @@ class AccountState {
       newStates
     ).then(keyStates => {
       this.keyStates = keyStates
+      this.updateCurrencyWallets()
       return void 0
     })
   }
@@ -160,12 +215,85 @@ class AccountState {
       const { keyInfos, keyStates } = values
       this.legacyKeyInfos = keyInfos
       this.keyStates = keyStates
+      this.updateCurrencyWallets()
       return this
     })
   }
+
+  get allKeys () {
+    const { appId, keyStates, legacyKeyInfos, login } = this
+    const allKeys = mergeKeyInfos(softCat(legacyKeyInfos, login.keyInfos))
+
+    return allKeys.map(info => ({
+      appId,
+      archived: false,
+      deleted: false,
+      sortIndex: allKeys.length,
+      ...keyStates[info.id],
+      ...info
+    }))
+  }
+
+  get activeWalletIds () {
+    const { io } = this
+    return this.allKeys
+      .filter(
+        info =>
+          !info.deleted &&
+          !info.archived &&
+          hasCurrencyPlugin(io.redux.getState(), info.type)
+      )
+      .sort((a, b) => a.sortIndex - b.sortIndex)
+      .map(info => info.id)
+  }
+
+  get archivedWalletIds () {
+    const { io } = this
+    return this.allKeys
+      .filter(
+        info =>
+          !info.deleted &&
+          info.archived &&
+          hasCurrencyPlugin(io.redux.getState(), info.type)
+      )
+      .sort((a, b) => a.sortIndex - b.sortIndex)
+      .map(info => info.id)
+  }
+
+  updateCurrencyWallets () {
+    const { io, login } = this
+
+    // List all the wallets we can mangage:
+    const allWalletIds = [...this.activeWalletIds, ...this.archivedWalletIds]
+
+    // If there is a wallet we could be managing, but aren't, load it:
+    for (const id of allWalletIds) {
+      if (
+        this.currencyWallets[id] == null &&
+        !this.currencyWalletsLoading[id]
+      ) {
+        const walletInfo = login.keyInfos.find(info => info.id === id)
+        const callbacks = makeCurrencyWalletCallbacks(id, this.callbacks)
+
+        this.currencyWalletsLoading[id] = true
+        makeCurrencyWallet(walletInfo, { callbacks, io })
+          .then(wallet => {
+            this.currencyWalletsLoading[id] = false
+            this.currencyWallets[id] = wallet
+            if (this.callbacks.onKeyListChanged) {
+              this.callbacks.onKeyListChanged()
+            }
+            return null
+          })
+          .catch(e => io.onError(e))
+      }
+    }
+
+    // TODO: Unload deleted wallets
+  }
 }
 
-export async function makeAccountState (io, appId, loginTree) {
+export async function makeAccountState (io, appId, loginTree, callbacks) {
   await awaitPluginsLoaded(io.redux)
 
   return ensureAccountExists(io, loginTree, appId).then(loginTree => {
@@ -178,7 +306,7 @@ export async function makeAccountState (io, appId, loginTree) {
     }
 
     return io.redux.dispatch(addStorageWallet(keyInfo)).then(() => {
-      const account = new AccountState(io, appId, loginTree, keyInfo)
+      const account = new AccountState(io, appId, loginTree, keyInfo, callbacks)
       const disposer = io.redux.dispatch(
         createReaction(
           state => getStorageWalletLastSync(state, keyInfo.id),

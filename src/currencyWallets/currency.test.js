@@ -1,5 +1,5 @@
 /* global describe, it */
-import { makeContext, makeCurrencyWallet, makeFakeIos } from '../indexABC.js'
+import { makeContext, makeFakeIos } from '../indexABC.js'
 import { makeAssertLog } from '../test/assertLog.js'
 import {
   makeFakeCurrency,
@@ -7,19 +7,29 @@ import {
 } from '../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../test/fakeExchange.js'
 import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
+import { awaitState } from '../util/reaction.js'
 import assert from 'assert'
+import { createStore } from 'redux'
 
-function makeFakeCurrencyWallet (store, callbacks) {
+async function makeFakeCurrencyWallet (store, callbacks) {
   const [io] = makeFakeIos(1)
   const plugin = makeFakeCurrency(store)
 
-  const context = makeContext({ io, plugins: [plugin, fakeExchangePlugin] })
-  return makeFakeAccount(context, fakeUser).then(account => {
-    const keyInfo = account.getFirstWallet('wallet:fakecoin')
-    const opts = { io: context.io, callbacks }
+  // Use `onKeyListChanged` to trigger checking for wallets:
+  const trigger = createStore(state => null)
+  callbacks = {
+    ...callbacks,
+    onKeyListChanged () {
+      trigger.dispatch({ type: 'DUMMY' })
+    }
+  }
 
-    return makeCurrencyWallet(keyInfo, opts)
-  })
+  const context = makeContext({ io, plugins: [plugin, fakeExchangePlugin] })
+  const account = await makeFakeAccount(context, fakeUser, callbacks)
+
+  // Wait for the wallet to load:
+  const walletId = account.getFirstWallet('wallet:fakecoin').id
+  return awaitState(trigger, state => account.currencyWallets[walletId])
 }
 
 describe('currency wallets', function () {
@@ -42,11 +52,18 @@ describe('currency wallets', function () {
     const store = makeFakeCurrencyStore()
 
     const callbacks = {
-      onBalanceChanged: (currencyCode, balance) =>
-        log('balance', currencyCode, balance),
-      onBlockHeightChanged: blockHeight => log('blockHeight', blockHeight),
-      onNewTransactions: txs => txs.map(tx => log('new', tx.txid)),
-      onTransactionsChanged: txs => txs.map(tx => log('changed', tx.txid))
+      onBalanceChanged (walletId, currencyCode, balance) {
+        log('balance', currencyCode, balance)
+      },
+      onBlockHeightChanged (walletId, blockHeight) {
+        log('blockHeight', blockHeight)
+      },
+      onNewTransactions (walletId, txs) {
+        txs.map(tx => log('new', tx.txid))
+      },
+      onTransactionsChanged (walletId, txs) {
+        txs.map(tx => log('changed', tx.txid))
+      }
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []

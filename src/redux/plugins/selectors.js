@@ -4,7 +4,7 @@ export function getCurrencyPlugins (state) {
   return state.plugins.currencyPlugins
 }
 
-export function getCurrencyPlugin (state, walletType) {
+function lookupCurrencyPlugin (state, walletType) {
   const plugins = getCurrencyPlugins(state)
 
   for (const plugin of plugins) {
@@ -15,8 +15,22 @@ export function getCurrencyPlugin (state, walletType) {
       }
     }
   }
+}
 
-  throw new Error(`Cannot find a currency plugin for wallet type ${walletType}`)
+export function getCurrencyPlugin (state, walletType) {
+  const plugin = lookupCurrencyPlugin(state, walletType)
+  if (plugin == null) {
+    throw new Error(
+      `Cannot find a currency plugin for wallet type ${walletType}`
+    )
+  }
+
+  return plugin
+}
+
+export function hasCurrencyPlugin (state, walletType) {
+  const plugin = lookupCurrencyPlugin(state, walletType)
+  return plugin != null
 }
 
 export function getCurrencyMultiplier (state, currencyCode) {

@@ -310,10 +310,11 @@ function createFakeRepos (io, repos) {
   ])
 }
 
-export function makeFakeAccount (context, user) {
+export async function makeFakeAccount (context, user, callbacks) {
   const { io, appId } = context
 
-  return createFakeLogin(io, appId, user).then(loginTree =>
-    createFakeRepos(io, repos).then(() => makeAccount(io, appId, loginTree))
-  )
+  const loginTree = await createFakeLogin(io, appId, user)
+  await createFakeRepos(io, repos)
+
+  return makeAccount(io, appId, loginTree, 'fake', callbacks)
 }
