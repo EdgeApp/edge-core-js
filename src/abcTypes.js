@@ -41,19 +41,12 @@ export type AbcTransaction = {
   otherParams: any
 }
 
-const abcTransaction:AbcTransaction = {
-  txid: '',
-  date: 1,
-  currencyCode: 'ETH',
-  blockHeight: 1,
-  nativeAmount: '',
-  networkFee: '',
-  ourReceiveAddresses: [''],
-  signedTx: 'unsigned_right_now',
-  otherParams: {}
+export type AbcMakeContextOpts = {
+  apiKey: string,
+  appId: string,
+  io: any,
+  plugins: Array<any>,
 }
-
-console.log(abcTransaction)
 
 export interface AbcDenomination {
   name:string,
@@ -95,6 +88,7 @@ export type AbcParsedUri = {
 }
 
 export type AbcWalletInfo = {
+  id?:string,
   type:string,
   keys:any
 }
@@ -104,6 +98,66 @@ export type AbcEncodeUri = {
   nativeAmount?: string,
   label?: string,
   message?: string
+}
+
+export type AbcWalletState = {
+  archived?: boolean,
+  deleted?: boolean,
+  sortIndex?: number
+}
+
+export type AbcWalletStates = {
+  [walletId: string]: AbcWalletState
+}
+
+export interface AbcAccountCallbacks {
+  onDataChanged():void,
+  onKeyListChanged():void,
+  onLoggedOut():void,
+  onOTPRequired():void,
+  onOTPSkew():void,
+  onRemotePasswordChange():void
+}
+
+export type AbcAccountOptions = {
+  otp: string,
+  callbacks: AbcAccountCallbacks
+}
+
+export interface AbcAccount {
+  // appId?:string,
+  // username?:string,
+  // loginKey?:string,
+  // exchangeCache?:any,
+  // loggedIn?:boolean,
+  // edgeLogin?:boolean,
+  keyLogin:boolean,
+  pinLogin:boolean,
+  passwordLogin:boolean,
+  newAccount:boolean,
+  recoveryLogin:boolean,
+  isLoggedIn ():boolean,
+  logout ():Promise<void>,
+  passwordOk (password:string):Promise<boolean>,
+  checkPassword (password:string):Promise<boolean>,
+  passwordSetup (password:string):Promise<void>,
+  changePassword (password:string):Promise<void>,
+  pinSetup (password:string):Promise<void>,
+  changePIN (password:string):Promise<void>,
+  recovery2Set (questions:string, answers:string):Promise<string>,
+  setupRecovery2Questions (questions:string, answers:string):Promise<string>,
+  changeWalletStates (walletStates:AbcWalletStates):Promise<void>,
+  changeKeyStates (walletStates:AbcWalletStates):Promise<void>,
+  listWalletIds ():Array<string>,
+  getWallet (id:string):AbcWalletInfo,
+  getWalletInfo (id:string):AbcWalletInfo,
+  getFirstWallet (type:string):AbcWalletInfo,
+  getFirstWalletInfo (type:string):AbcWalletInfo,
+  createWallet (type:string, keys:any):string
+}
+
+export interface AbcContext {
+
 }
 
 export interface AbcCurrencyEngine {
