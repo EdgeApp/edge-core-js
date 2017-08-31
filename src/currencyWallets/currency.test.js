@@ -1,5 +1,5 @@
 /* global describe, it */
-import { makeContext, makeCurrencyWallet, makeFakeIos } from '../index.js'
+import { makeContext, makeCurrencyWallet, makeFakeIos } from '../indexABC.js'
 import { makeAssertLog } from '../test/assertLog.js'
 import {
   makeFakeCurrency,
@@ -15,12 +15,10 @@ function makeFakeCurrencyWallet (store, callbacks) {
 
   const context = makeContext({ io, plugins: [plugin, fakeExchangePlugin] })
   return makeFakeAccount(context, fakeUser).then(account => {
-    return plugin.makePlugin(io).then(plugin => {
-      const keyInfo = account.getFirstWallet('wallet:fakecoin')
-      const opts = { io: context.io, plugin, callbacks }
+    const keyInfo = account.getFirstWallet('wallet:fakecoin')
+    const opts = { io: context.io, callbacks }
 
-      return makeCurrencyWallet(keyInfo, opts)
-    })
+    return makeCurrencyWallet(keyInfo, opts)
   })
 }
 
@@ -47,8 +45,8 @@ describe('currency wallets', function () {
       onBalanceChanged: (currencyCode, balance) =>
         log('balance', currencyCode, balance),
       onBlockHeightChanged: blockHeight => log('blockHeight', blockHeight),
-      onNewTransactions: txids => txids.map(txid => log('new', txid)),
-      onTransactionsChanged: txids => txids.map(txid => log('changed', txid))
+      onNewTransactions: txs => txs.map(tx => log('new', tx.txid)),
+      onTransactionsChanged: txs => txs.map(tx => log('changed', tx.txid))
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []

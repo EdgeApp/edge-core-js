@@ -137,7 +137,7 @@ const currencyWallet = combineReducers({
   plugin: constReducer(),
 
   // Settable data:
-  balance: settableReducer({currencyCode: '', balance: 0}, SET_BALANCE),
+  balance: settableReducer({currencyCode: null, balance: 0}, SET_BALANCE),
   blockHeight: settableReducer(0, SET_BLOCK_HEIGHT),
   name: settableReducer(null, SET_NAME),
   progress: settableReducer(null, SET_PROGRESS),

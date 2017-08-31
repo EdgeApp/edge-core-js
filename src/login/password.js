@@ -113,7 +113,16 @@ export function checkPasswordRules (password) {
   const noLowerCase = !/[a-z]/.test(password)
   const noUpperCase = !/[A-Z]/.test(password)
 
+  // Quick & dirty password strength estimation:
+  const charset =
+    10 * /[0-9]/.test(password) +
+    26 * /[A-Z]/.test(password) +
+    26 * /[a-z]/.test(password) +
+    30 * /[^0-9A-Za-z]/.test(password)
+  const secondsToCrack = Math.pow(charset, password.length) / 1e6
+
   return {
+    secondsToCrack,
     tooShort,
     noNumber,
     noLowerCase,

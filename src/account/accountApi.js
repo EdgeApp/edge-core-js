@@ -1,10 +1,18 @@
+// @flow
 import {
   findFirstKey,
   makeKeysKit,
   makeStorageKeyInfo,
   mergeKeyInfos
 } from '../login/keys.js'
+import type {
+  AbcWalletStates,
+  AbcWalletInfo,
+  AbcAccount,
+  AbcAccountCallbacks
+} from '../abcTypes.js'
 import { checkPassword } from '../login/password.js'
+import { getCurrencyPlugin } from '../redux/selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
@@ -15,39 +23,43 @@ import { makeExchangeCache } from './exchangeApi.js'
 /**
  * Creates an `Account` API object.
  */
-export function makeAccount (io, appId, loginTree, loginType) {
+export function makeAccount (io:any, appId:string, loginTree:any, loginType:string = '', callbacks:AbcAccountCallbacks|{} = {}) {
   return makeAccountState(io, appId, loginTree).then(state =>
-    wrapObject(io.onError, 'Account', makeAccountApi(state, loginType))
+    wrapObject(
+      io.onError,
+      'Account',
+      makeAccountApi(state, loginType, callbacks)
+    )
   )
 }
 
 /**
  * Creates an unwrapped account API object around an account state object.
  */
-function makeAccountApi (state, loginType) {
+function makeAccountApi (state:any, loginType:string, callbacks:AbcAccountCallbacks|{}):AbcAccount {
   const { io, appId, keyInfo } = state
-  const callbacks = {}
+  const { redux } = io
 
   const exchangeCache = makeExchangeCache(io)
 
-  const out = {
-    get appId () {
+  const abcAccount:AbcAccount = {
+    get appId ():string {
       return state.login.appId
     },
-    get username () {
+    get username ():string {
       return state.loginTree.username
     },
-    get loginKey () {
+    get loginKey ():string {
       return base58.stringify(state.login.loginKey)
     },
 
     // Exchange cache:
-    get exchangeCache () {
+    get exchangeCache ():any {
       return exchangeCache
     },
 
     // Flags:
-    get loggedIn () {
+    get loggedIn ():boolean {
       return state.loginTree != null
     },
     keyLogin: loginType === 'keyLogin',
@@ -55,33 +67,33 @@ function makeAccountApi (state, loginType) {
     passwordLogin: loginType === 'passwordLogin',
     newAccount: loginType === 'newAccount',
     recoveryLogin: loginType === 'recoveryLogin',
-    get edgeLogin () {
+    get edgeLogin ():boolean {
       return state.loginTree.loginKey == null
     },
     '@isLoggedIn': { sync: true },
-    isLoggedIn () {
+    isLoggedIn ():boolean {
       return state.loginTree != null
     },
 
-    logout () {
+    logout ():Promise<void> {
       return state.logout()
     },
 
-    passwordOk (password) {
+    passwordOk (password:string):Promise<boolean> {
       return checkPassword(io, state.loginTree, password)
     },
 
-    passwordSetup (password) {
+    passwordSetup (password:string):Promise<void> {
       return state.changePassword(password)
     },
 
-    pinSetup (pin) {
+    pinSetup (pin:string):Promise<void> {
       return state
         .changePin(pin)
         .then(() => base58.stringify(state.login.pin2Key))
     },
 
-    recovery2Set (questions, answers) {
+    recovery2Set (questions:string, answers:string):Promise<string> {
       return state
         .changeRecovery(questions, answers)
         .then(() => base58.stringify(state.loginTree.recovery2Key))
@@ -90,7 +102,7 @@ function makeAccountApi (state, loginType) {
     /**
      * Retrieves all the keys that are available to this login object.
      */
-    get allKeys () {
+    get allKeys ():Array<any> {
       const { keyStates, legacyKeyInfos, login } = state
       const allKeys = mergeKeyInfos(softCat(legacyKeyInfos, login.keyInfos))
 
@@ -107,17 +119,17 @@ function makeAccountApi (state, loginType) {
     /**
      * Adjusts the sort, archive, or deletion state of keys.
      */
-    changeKeyStates (keyStates) {
-      return state.changeKeyStates(keyStates)
+    changeWalletStates (walletStates:AbcWalletStates):Promise<void> {
+      return state.changeKeyStates(walletStates)
     },
 
     '@listWalletIds': { sync: true },
-    listWalletIds () {
+    listWalletIds ():Array<string> {
       return state.login.keyInfos.map(info => info.id)
     },
 
     '@getWallet': { sync: true },
-    getWallet (id) {
+    getWallet (id:string):AbcWalletInfo {
       const info = state.login.keyInfos.find(info => info.id === id)
       return info
     },
@@ -128,7 +140,7 @@ function makeAccountApi (state, loginType) {
      * Might return null if there are no wallets.
      */
     '@getFirstWallet': { sync: true },
-    getFirstWallet (type) {
+    getFirstWallet (type:string):AbcWalletInfo {
       return findFirstKey(this.allKeys, type)
     },
 
@@ -138,18 +150,27 @@ function makeAccountApi (state, loginType) {
      * that should be stored along with the wallet. For example,
      * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
      */
-    createWallet (type, keys) {
+    createWallet (type:string, keys:any):string {
+      if (keys == null) {
+        // Use the currency plugin to create the keys:
+        const plugin = getCurrencyPlugin(redux.getState(), type)
+        keys = plugin.createPrivateKey(type)
+      }
+
       const keyInfo = makeStorageKeyInfo(io, type, keys)
       const kit = makeKeysKit(io, state.login, keyInfo)
       return state.applyKit(kit).then(() => keyInfo.id)
-    }
+    },
+
+    checkPassword (password:string):Promise<boolean> { return this.passwordOk(password) },
+    changePassword (password:string):Promise<void> { return this.passwordSetup(password) },
+    changePIN (pin:string):Promise<void> { return this.pinSetup(pin) },
+    setupRecovery2Questions (questions:string, answers:string):Promise<string> { return this.recovery2Set(questions, answers) },
+    changeKeyStates (walletStates:AbcWalletStates):Promise<void> { return this.changeWalletStates(walletStates) },
+    getFirstWalletInfo (type:string):AbcWalletInfo { return this.getFirstWallet(type) },
+    getWalletInfo (id:string):AbcWalletInfo { return this.getWallet(id) }
   }
-  copyProperties(out, makeStorageWalletApi(io.redux, keyInfo, callbacks))
+  copyProperties(abcAccount, makeStorageWalletApi(io.redux, keyInfo, callbacks))
 
-  out.checkPassword = out.passwordOk
-  out.changePassword = out.passwordSetup
-  out.changePIN = out.pinSetup
-  out.setupRecovery2Questions = out.recovery2Set
-
-  return out
+  return abcAccount
 }

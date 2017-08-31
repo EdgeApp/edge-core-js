@@ -1,11 +1,14 @@
 /* global describe, it */
-import { makeContext, makeFakeIos } from '../index.js'
+import { makeContext, makeFakeIos } from '../indexABC.js'
+import { makeFakeCurrency } from '../test/fakeCurrency.js'
 import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import { base64 } from '../util/encoding.js'
 import assert from 'assert'
 
 function makeFakeContexts (count) {
-  return makeFakeIos(count).map(io => makeContext({ io }))
+  return makeFakeIos(count).map(io =>
+    makeContext({ io, plugins: [makeFakeCurrency()] })
+  )
 }
 
 function findKeys (keyInfos, type) {
@@ -13,6 +16,21 @@ function findKeys (keyInfos, type) {
 }
 
 describe('account', function () {
+  it('calls callbacks', async function () {
+    const [context] = makeFakeContexts(1)
+    await makeFakeAccount(context, fakeUser)
+
+    let callbackCalled = false
+    const callbacks = {
+      onDataChanged () {
+        callbackCalled = true
+      }
+    }
+
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin, { callbacks })
+    assert(callbackCalled)
+  })
+
   it('find repo', function () {
     const [context] = makeFakeContexts(1)
 
@@ -38,6 +56,19 @@ describe('account', function () {
         const info = account.allKeys.find(info => info.id === id)
 
         assert.deepEqual(info.keys, keys)
+        return null
+      })
+    })
+  })
+
+  it('create wallet', function () {
+    const [context] = makeFakeContexts(1)
+
+    return makeFakeAccount(context, fakeUser).then(account => {
+      return account.createWallet('wallet:fakecoin').then(id => {
+        const info = account.allKeys.find(info => info.id === id)
+
+        assert.equal(info.keys.fakeKey, 'FakePrivateKey')
         return null
       })
     })

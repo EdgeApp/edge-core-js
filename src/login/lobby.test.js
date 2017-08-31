@@ -1,5 +1,5 @@
 /* global describe, it */
-import { makeFakeIos } from '../index.js'
+import { makeFakeIos } from '../indexABC.js'
 import { IoContext } from '../io/io.js'
 import {
   encryptLobbyReply,

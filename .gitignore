@@ -1,5 +1,5 @@
 /build
 /lib
 /node_modules
-.cli
 .idea
+.vscode

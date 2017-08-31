@@ -101,17 +101,16 @@ function saveKeyStates (state, keyId, keyStates) {
   const keyFolder = getStorageWalletFolder(state, keyId).folder('Keys')
 
   // If there are no changes, do nothing:
-  const ids = Object.keys(keyStates)
-  if (!ids.length) return Promise.resolve()
+  const walletIds = Object.keys(keyStates)
+  if (!walletIds.length) return Promise.resolve()
 
   return Promise.all(
-    ids.map(id => {
-      const { archived, deleted, sortIndex } = keyStates[id]
-      const filename =
-        hashStorageWalletFilename(state, keyId, base64.parse(id)) + '.json'
+    walletIds.map(walletId => {
+      const { archived, deleted, sortIndex } = keyStates[walletId]
+      const walletIdHash = hashStorageWalletFilename(state, keyId, walletId)
       return keyFolder
-        .file(filename)
-        .setText(JSON.stringify({ archived, deleted, sortIndex, id }))
+        .file(`${walletIdHash}.json`)
+        .setText(JSON.stringify({ archived, deleted, sortIndex, walletId }))
     })
   )
 }

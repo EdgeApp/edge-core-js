@@ -3,13 +3,15 @@ import { mergeDeeply } from '../../util/util.js'
 import { addStorageWallet } from '../actions.js'
 import {
   getCurrencyMultiplier,
+  getCurrencyPlugin,
   getCurrencyWalletFiat,
   getCurrencyWalletFile,
   getCurrencyWalletPlugin,
   getExchangeRate,
   getStorageWalletFolder,
   getStorageWalletLastSync,
-  getStorageWalletLocalFolder
+  getStorageWalletLocalFolder,
+  hashStorageWalletFilename
 } from '../selectors.js'
 import {
   add,
@@ -24,6 +26,15 @@ import {
 } from './reducer.js'
 import { mapFiles } from 'disklet'
 
+function getTxFile (state, keyId, timestamp, txid) {
+  const txidHash = hashStorageWalletFilename(state, keyId, txid)
+  const filename = `${timestamp}-${txidHash}.json`
+
+  return getStorageWalletFolder(state, keyId)
+    .folder('transaction')
+    .file(filename)
+}
+
 /**
  * Creates the initial state for a currency wallet and adds it to the store.
  * @param opts The options passed to `createCurrencyWallet`.
@@ -31,7 +42,7 @@ import { mapFiles } from 'disklet'
  */
 export function addCurrencyWallet (keyInfo, opts = {}) {
   return (dispatch, getState) => {
-    const { plugin } = opts
+    const plugin = getCurrencyPlugin(getState(), keyInfo.type)
     if (plugin.currencyInfo == null) {
       plugin.currencyInfo = plugin.getInfo()
     }
@@ -136,7 +147,7 @@ export function setCurrencyWalletTxMetadata (
 ) {
   return (dispatch, getState) => {
     const state = getState()
-    const folder = getStorageWalletFolder(state, keyId)
+    const txFile = getTxFile(state, keyId, 0, txid)
     const oldFile = getCurrencyWalletFile(state, keyId, txid)
     const newFile = {
       txid,
@@ -155,20 +166,16 @@ export function setCurrencyWalletTxMetadata (
 
     // Save the new file:
     dispatch(setFile(keyId, txid, file))
-    return folder
-      .folder('transaction')
-      .file(txid + '.json')
-      .setText(JSON.stringify(file))
-      .then(() => void 0)
+    return txFile.setText(JSON.stringify(file)).then(() => void 0)
   }
 }
 
 export function setupNewTxMetadata (keyId, tx) {
   return (dispatch, getState) => {
     const state = getState()
-    const folder = getStorageWalletFolder(state, keyId)
     const fiatCurrency = getCurrencyWalletFiat(state, keyId)
     const txid = tx.txid
+    const txFile = getTxFile(state, keyId, 0, txid)
 
     // Basic file template:
     const file = {
@@ -197,10 +204,6 @@ export function setupNewTxMetadata (keyId, tx) {
 
     // Save the new file:
     dispatch(setFile(keyId, txid, file))
-    return folder
-      .folder('transaction')
-      .file(txid + '.json')
-      .setText(JSON.stringify(file))
-      .then(() => void 0)
+    return txFile.setText(JSON.stringify(file)).then(() => void 0)
   }
 }

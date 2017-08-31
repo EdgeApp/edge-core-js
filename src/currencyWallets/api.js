@@ -86,7 +86,11 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     dispatch(
       createReaction(
         state => getCurrencyWalletBalance(state, keyId),
-        balance => onBalanceChanged(balance.currencyCode, balance.balance)
+        balance => {
+          if (balance.currencyCode != null) {
+            onBalanceChanged(balance.currencyCode, balance.balance)
+          }
+        }
       )
     )
   }
@@ -117,7 +121,17 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       state => getCurrencyWalletFiles(state, keyId),
       state => getCurrencyWalletTxs(state, keyId),
       state => getCurrencyWalletTxList(state, keyId),
-      (files, txs, list, oldFiles = {}, oldTxs = {}) => {
+      state => getCurrencyWalletFiat(state, keyId),
+      state => getCurrencyWalletPlugin(state, keyId).currencyInfo.currencyCode,
+      (
+        files,
+        txs,
+        list,
+        walletFiat,
+        walletCurrency,
+        oldFiles = {},
+        oldTxs = {}
+      ) => {
         if (inhibit) return
         inhibit = true
 
@@ -126,16 +140,31 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
 
         // Diff the transaction list:
         for (const info of list) {
+          const tx = txs[info.txid]
+          const file = files[info.txid]
+
           if (
-            !compare(txs[info.txid], oldTxs[info.txid]) ||
-            !compare(files[info.txid], oldFiles[info.txid])
+            !compare(tx, oldTxs[info.txid]) ||
+            !compare(file, oldFiles[info.txid])
           ) {
             // If we have no metadata, it's new:
-            if (files[info.txid] == null) {
-              dispatch(setupNewTxMetadata(keyId, txs[info.txid]))
-              created.push(info.txid)
+            if (file == null) {
+              dispatch(setupNewTxMetadata(keyId, tx))
+              prepareTxForCallback(
+                walletCurrency,
+                walletFiat,
+                tx,
+                file,
+                created
+              )
             } else {
-              changes.push(info.txid)
+              prepareTxForCallback(
+                walletCurrency,
+                walletFiat,
+                tx,
+                file,
+                changes
+              )
             }
           }
         }
@@ -183,6 +212,10 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       return Promise.resolve(engine().killEngine())
     },
 
+    enableTokens (tokens) {
+      return engine().enableTokens(tokens)
+    },
+
     // Transactions:
     '@getBalance': { sync: true },
     getBalance (opts) {
@@ -203,7 +236,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       const defaultCurrency = plugin().currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
 
-      const outList = []
+      const out = []
       for (const info of list) {
         const tx = txs[info.txid]
         const file = files[info.txid]
@@ -213,48 +246,13 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
           continue
         }
 
-        // Copy the tx properties to the output:
-        const out = {
-          ...tx,
-          amountSatoshi: Number(tx.nativeAmount[currencyCode]),
-          nativeAmount: tx.nativeAmount[currencyCode],
-          networkFee: tx.networkFee[currencyCode]
-        }
-
-        // These are our fallback values:
-        const fallbackFile = {
-          currencies: {}
-        }
-        fallbackFile.currencies[defaultCurrency] = {
-          providerFreeSent: 0,
-          metadata: {
-            name: '',
-            category: '',
-            notes: '',
-            bizId: 0,
-            exchangeAmount: {}
-          }
-        }
-
-        // Copy the appropriate metadata to the output:
-        if (file) {
-          const merged = mergeDeeply(
-            fallbackFile,
-            file.currencies[defaultCurrency],
-            file.currencies[currencyCode]
-          )
-
-          if (file.creationDate < out.date) out.date = file.creationDate
-          out.providerFee = merged.providerFeeSent
-          out.metadata = merged.metadata
-          out.metadata.amountFiat = merged.metadata.exchangeAmount[fiat]
-        }
-
-        outList.push(out)
+        out.push(
+          combineTxWithFile(defaultCurrency, fiat, tx, file, currencyCode)
+        )
       }
 
       // TODO: Handle the sort within the tx list merge process:
-      return Promise.resolve(outList.sort((a, b) => a.date - b.date))
+      return Promise.resolve(out.sort((a, b) => a.date - b.date))
     },
 
     getReceiveAddress (opts) {
@@ -296,9 +294,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     },
 
     saveTx (tx) {
-      return Promise.all([
-        engine().saveTx(tx)
-      ])
+      return Promise.all([engine().saveTx(tx)])
     },
 
     saveTxMetadata (txid, currencyCode, metadata) {
@@ -352,4 +348,54 @@ function fixMetadata (metadata, fiat) {
   }
 
   return out
+}
+
+function combineTxWithFile (walletCurrency, walletFiat, tx, file, currencyCode) {
+  // Copy the tx properties to the output:
+  const out = {
+    ...tx,
+    amountSatoshi: Number(tx.nativeAmount[currencyCode]),
+    nativeAmount: tx.nativeAmount[currencyCode],
+    networkFee: tx.networkFee[currencyCode]
+  }
+
+  // These are our fallback values:
+  const fallbackFile = {
+    currencies: {}
+  }
+  fallbackFile.currencies[walletCurrency] = {
+    providerFreeSent: 0,
+    metadata: {
+      name: '',
+      category: '',
+      notes: '',
+      bizId: 0,
+      exchangeAmount: {}
+    }
+  }
+
+  // Copy the appropriate metadata to the output:
+  if (file) {
+    const merged = mergeDeeply(
+      fallbackFile,
+      file.currencies[walletCurrency],
+      file.currencies[currencyCode]
+    )
+
+    if (file.creationDate < out.date) out.date = file.creationDate
+    out.providerFee = merged.providerFeeSent
+    out.metadata = merged.metadata
+    out.metadata.amountFiat = merged.metadata.exchangeAmount[walletFiat]
+  }
+
+  return out
+}
+
+function prepareTxForCallback (walletCurrency, walletFiat, tx, file, array) {
+  const currencies = Object.keys(tx.nativeAmount)
+  for (const currency of currencies) {
+    array.push(
+      combineTxWithFile(walletCurrency, walletFiat, tx, file, currency)
+    )
+  }
 }
