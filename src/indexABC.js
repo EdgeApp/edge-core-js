@@ -10,37 +10,13 @@ import * as internal from './internal.js'
 import type
 {
   AbcMakeContextOpts
-} from './abcTypes'
+} from 'airbitz-core-types'
 
 export { error }
 export { internal }
 
 // Ancillary exports:
 export * from './error.js'
-export type {
-  AbcTransaction,
-  AbcSpendInfo,
-  AbcSpendTarget,
-  AbcMetaToken,
-  AbcDenomination,
-  AbcMetadata,
-  AbcCurrencySettings,
-  AbcCurrencyInfo,
-  AbcCurrencyEngine,
-  AbcParsedUri,
-  AbcEncodeUri,
-  AbcWalletInfo,
-  AbcMakeEngineOptions,
-  AbcCurrencyPlugin,
-  AbcCurrencyPluginCallbacks,
-  AbcCurrencyPluginFactory,
-  AbcMakeCurrencyPlugin,
-  AbcMakeContextOpts,
-  AbcWalletState,
-  AbcWalletStates,
-  AbcAccountOptions,
-  AbcAccountCallbacks
-} from './abcTypes.js'
 export { makeBrowserIo } from './io/browser'
 export { makeFakeIos } from './io/fake'
 

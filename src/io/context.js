@@ -1,7 +1,7 @@
 // @flow
 import type {
   AbcMakeContextOpts
-} from '../abcTypes.js'
+} from 'airbitz-core-types'
 import { makeAccount } from '../account/accountApi.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'

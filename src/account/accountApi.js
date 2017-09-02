@@ -10,7 +10,7 @@ import type {
   AbcWalletInfo,
   AbcAccount,
   AbcAccountCallbacks
-} from '../abcTypes.js'
+} from 'airbitz-core-types'
 import { checkPassword } from '../login/password.js'
 import { getCurrencyPlugin } from '../redux/selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
