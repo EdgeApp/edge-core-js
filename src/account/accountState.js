@@ -191,6 +191,7 @@ class AccountState {
     return applyKit(this.io, this.loginTree, kit).then(loginTree => {
       this.loginTree = loginTree
       this.login = findAppLogin(loginTree, this.appId)
+      this.updateCurrencyWallets()
       return this
     })
   }

@@ -41,57 +41,54 @@ function getTxFile (state, keyId, timestamp, txid) {
  * @return A `Promise` that will resolve when the state is ready.
  */
 export function addCurrencyWallet (keyInfo, opts = {}) {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const plugin = getCurrencyPlugin(getState(), keyInfo.type)
     if (plugin.currencyInfo == null) {
       plugin.currencyInfo = plugin.getInfo()
     }
 
-    return dispatch(addStorageWallet(keyInfo)).then(() => {
-      const state = getState()
-      const keyId = keyInfo.id
+    await dispatch(addStorageWallet(keyInfo))
+    const state = getState()
+    const keyId = keyInfo.id
 
-      // Add the wallet to the store:
-      dispatch(add(keyId, { plugin }))
+    // Add the wallet to the store:
+    dispatch(add(keyId, { plugin }))
 
-      // Create the currency plugin:
-      const defaultCurrency = plugin.currencyInfo.currencyCode
-      const engine = plugin.makeEngine(keyInfo, {
-        walletFolder: getStorageWalletFolder(state, keyId),
-        walletLocalFolder: getStorageWalletLocalFolder(state, keyId),
-        callbacks: {
-          onAddressesChecked (ratio) {
-            dispatch(setProgress(keyId, ratio))
-          },
+    // Create the currency plugin:
+    const defaultCurrency = plugin.currencyInfo.currencyCode
+    const engine = await Promise.resolve(plugin.makeEngine(keyInfo, {
+      walletFolder: getStorageWalletFolder(state, keyId),
+      walletLocalFolder: getStorageWalletLocalFolder(state, keyId),
+      callbacks: {
+        onAddressesChecked (ratio) {
+          dispatch(setProgress(keyId, ratio))
+        },
 
-          onBalanceChanged (currencyCode, balance) {
-            dispatch(setBalance(keyId, { currencyCode, balance }))
-          },
+        onBalanceChanged (currencyCode, balance) {
+          dispatch(setBalance(keyId, { currencyCode, balance }))
+        },
 
-          onBlockHeightChanged (height) {
-            dispatch(setBlockHeight(keyId, height))
-          },
+        onBlockHeightChanged (height) {
+          dispatch(setBlockHeight(keyId, height))
+        },
 
-          onTransactionsChanged (txs) {
-            if (!txs) return
-            dispatch(addTxs(keyId, txs, defaultCurrency))
-          }
+        onTransactionsChanged (txs) {
+          if (!txs) return
+          dispatch(addTxs(keyId, txs, defaultCurrency))
         }
-      })
+      }
+    }))
+    dispatch(setEngine(keyId, engine))
+    await engine.startEngine()
 
-      return Promise.resolve(engine).then(engine => {
-        dispatch(setEngine(keyId, engine))
-
-        // Sign up for events:
-        const disposer = dispatch(
-          createReaction(
-            state => getStorageWalletLastSync(state, keyId),
-            timestamp => dispatch => dispatch(loadFiles(keyId))
-          )
-        )
-        return disposer.payload.out.then(() => keyInfo.id)
-      })
-    })
+    // Sign up for events:
+    const disposer = dispatch(
+      createReaction(
+        state => getStorageWalletLastSync(state, keyId),
+        timestamp => dispatch => dispatch(loadFiles(keyId))
+      )
+    )
+    return disposer.payload.out.then(() => keyInfo.id)
   }
 }
 
