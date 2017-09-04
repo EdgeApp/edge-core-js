@@ -10,13 +10,13 @@ describe('redux-reactions', function () {
 
     // Reducers:
     const count = (state = 1, action) =>
-      (action.type === 'ADD' ? state + action.payload : state)
+      action.type === 'ADD' ? state + action.payload : state
 
     const toggle = (state = false, action) =>
-      (action.type === 'TOGGLE' ? !state : state)
+      action.type === 'TOGGLE' ? !state : state
 
     const double = (state = 0, action) =>
-      (action.type === 'SET_DOUBLE' ? action.payload : state)
+      action.type === 'SET_DOUBLE' ? action.payload : state
 
     const reducer = combineReducers({
       count,
@@ -67,7 +67,7 @@ describe('redux-reactions', function () {
 
   it('can await redux states', async function () {
     const reducer = (state = false, action) =>
-      (action.type === 'TOGGLE' ? !state : state)
+      action.type === 'TOGGLE' ? !state : state
     const store = createStore(reducer)
     const promise = awaitState(store, state => state)
 

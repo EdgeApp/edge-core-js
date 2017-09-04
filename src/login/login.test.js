@@ -146,9 +146,9 @@ describe('password', function () {
       // Disable network access (but leave the sync server up):
       const oldFetch = context.io.fetch
       context.io.fetch = (url, opts) =>
-        (/store/.test(url)
+        /store/.test(url)
           ? oldFetch(url, opts)
-          : Promise.reject(new Error('Network error')))
+          : Promise.reject(new Error('Network error'))
 
       return context.loginWithPassword(
         fakeUser.username,

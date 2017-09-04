@@ -58,13 +58,14 @@ describe('repo', function () {
         .folder('a')
         .file('b.json')
         .setText(payload)
+        .then(() => syncRepo(io1, paths1, {}).then(changed => assert(changed)))
+        .then(() => syncRepo(io2, paths2, {}).then(changed => assert(changed)))
         .then(() =>
-          syncRepo(io1, paths1, {}).then(changed => assert(changed))
+          paths2.folder
+            .folder('a')
+            .file('b.json')
+            .getText()
         )
-        .then(() =>
-          syncRepo(io2, paths2, {}).then(changed => assert(changed))
-        )
-        .then(() => paths2.folder.folder('a').file('b.json').getText())
         .then(text => assert.equal(text, payload))
     )
   })

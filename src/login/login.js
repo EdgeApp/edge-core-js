@@ -35,9 +35,10 @@ export function searchTree (node, predicate) {
 function updateTree (node, predicate, update, clone = cloneNode) {
   if (predicate(node)) return update(node)
 
-  const children = node.children != null
-    ? node.children.map(child => updateTree(child, predicate, update, clone))
-    : []
+  const children =
+    node.children != null
+      ? node.children.map(child => updateTree(child, predicate, update, clone))
+      : []
 
   return clone(node, children)
 }

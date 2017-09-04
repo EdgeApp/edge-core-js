@@ -31,26 +31,23 @@ export function usernameAvailable (io, username) {
  */
 export function makeCreateKit (io, parentLogin, appId, username, opts) {
   // Figure out login identity:
-  const loginId = parentLogin != null
-    ? io.random(32)
-    : hashUsername(io, username)
+  const loginId =
+    parentLogin != null ? io.random(32) : hashUsername(io, username)
   const loginKey = io.random(32)
   const loginAuth = io.random(32)
   const loginAuthBox = encrypt(io, loginAuth, loginKey)
 
   // Set up login methods:
-  const parentBox = parentLogin != null
-    ? encrypt(io, loginKey, parentLogin.loginKey)
-    : void 0
-  const passwordKit = opts.password != null
-    ? makePasswordKit(io, { loginKey }, username, opts.password)
-    : {}
-  const pin2Kit = opts.pin != null
-    ? makePin2Kit(io, { loginKey }, username, opts.pin)
-    : {}
-  const keysKit = opts.keyInfo != null
-    ? makeKeysKit(io, { loginKey }, opts.keyInfo)
-    : {}
+  const parentBox =
+    parentLogin != null ? encrypt(io, loginKey, parentLogin.loginKey) : void 0
+  const passwordKit =
+    opts.password != null
+      ? makePasswordKit(io, { loginKey }, username, opts.password)
+      : {}
+  const pin2Kit =
+    opts.pin != null ? makePin2Kit(io, { loginKey }, username, opts.pin) : {}
+  const keysKit =
+    opts.keyInfo != null ? makeKeysKit(io, { loginKey }, opts.keyInfo) : {}
 
   // Bundle everything:
   return Promise.all([loginId, passwordKit]).then(values => {

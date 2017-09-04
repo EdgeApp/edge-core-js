@@ -40,9 +40,10 @@ export function mergeDeeply (...objects) {
     for (const key of Object.keys(o)) {
       if (o[key] == null) continue
 
-      out[key] = out[key] != null && typeof o[key] === 'object'
-        ? mergeDeeply(out[key], o[key])
-        : o[key]
+      out[key] =
+        out[key] != null && typeof o[key] === 'object'
+          ? mergeDeeply(out[key], o[key])
+          : o[key]
     }
   }
 

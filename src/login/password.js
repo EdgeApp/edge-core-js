@@ -127,7 +127,8 @@ export function checkPasswordRules (password) {
     noNumber,
     noLowerCase,
     noUpperCase,
-    passed: password.length >= 16 ||
+    passed:
+      password.length >= 16 ||
       !(tooShort || noNumber || noUpperCase || noLowerCase)
   }
 }

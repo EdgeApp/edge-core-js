@@ -37,7 +37,10 @@ export function decrypt (box, key) {
   const hashStart = dataStart + dataSize + 1 + footerSize
 
   // Verify SHA-256 checksum:
-  const hash = hashjs.sha256().update(raw.slice(0, hashStart)).digest()
+  const hash = hashjs
+    .sha256()
+    .update(raw.slice(0, hashStart))
+    .digest()
   const hashSize = hash.length
   for (let i = 0; i < hashSize; ++i) {
     if (raw[hashStart + i] !== hash[i]) {
@@ -102,7 +105,10 @@ export function encrypt (io, data, key) {
   }
 
   // SHA-256 checksum:
-  const hash = hashjs.sha256().update(raw.slice(0, hashStart)).digest()
+  const hash = hashjs
+    .sha256()
+    .update(raw.slice(0, hashStart))
+    .digest()
   for (let i = 0; i < hashSize; ++i) {
     raw[hashStart + i] = hash[i]
   }
@@ -129,5 +135,8 @@ export function hmacSha256 (data, key) {
 }
 
 export function sha256 (data) {
-  return hashjs.sha256().update(data).digest()
+  return hashjs
+    .sha256()
+    .update(data)
+    .digest()
 }

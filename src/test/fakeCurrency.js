@@ -5,13 +5,13 @@ function nop () {}
 
 const reducer = combineReducers({
   balance: (state = 0, action) =>
-    (action.type === 'SET_BALANCE' ? action.payload : state),
+    action.type === 'SET_BALANCE' ? action.payload : state,
 
   blockHeight: (state = 0, action) =>
-    (action.type === 'SET_BLOCK_HEIGHT' ? action.payload : state),
+    action.type === 'SET_BLOCK_HEIGHT' ? action.payload : state,
 
   txs: (state = [], action) =>
-    (action.type === 'SET_TXS' ? action.payload : state)
+    action.type === 'SET_TXS' ? action.payload : state
 })
 
 export function makeFakeCurrencyStore () {

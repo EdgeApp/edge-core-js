@@ -36,9 +36,10 @@ function fetchLoginKey (io, pin2Key, username, pin) {
  * Returns a copy of the PIN login key if one exists on the local device.
  */
 export function getPin2Key (stashTree, appId) {
-  const stash = stashTree.pin2Key != null
-    ? stashTree
-    : searchTree(stashTree, stash => stash.appId === appId)
+  const stash =
+    stashTree.pin2Key != null
+      ? stashTree
+      : searchTree(stashTree, stash => stash.appId === appId)
   return stash != null && stash.pin2Key != null
     ? { pin2Key: base64.parse(stash.pin2Key), appId: stash.appId }
     : {}

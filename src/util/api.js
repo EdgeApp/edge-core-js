@@ -5,10 +5,12 @@ import { rejectify } from '../util/decorators.js'
  */
 function asyncApi (f, onError, name) {
   return function asyncApi (...rest) {
-    const promise = rejectify(f).apply(this, rest).catch(e => {
-      onError(e, name)
-      throw e
-    })
+    const promise = rejectify(f)
+      .apply(this, rest)
+      .catch(e => {
+        onError(e, name)
+        throw e
+      })
 
     // Figure out what to do with the promise:
     const callback = rest[rest.length - 1]

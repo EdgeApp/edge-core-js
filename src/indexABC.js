@@ -7,10 +7,7 @@ import { makeContext } from './io/context.js'
 import * as error from './error.js'
 import * as internal from './internal.js'
 
-import type
-{
-  AbcMakeContextOpts
-} from 'airbitz-core-types'
+import type { AbcMakeContextOpts } from 'airbitz-core-types'
 
 export { error }
 export { internal }

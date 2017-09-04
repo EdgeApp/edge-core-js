@@ -42,9 +42,9 @@ export class LoginStore {
   load (username) {
     return findUserFile(this.folder, username).then(
       file =>
-        (file != null
+        file != null
           ? file.json
-          : { username: fixUsername(username), appId: '' })
+          : { username: fixUsername(username), appId: '' }
     )
   }
 

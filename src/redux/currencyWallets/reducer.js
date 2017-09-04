@@ -77,16 +77,14 @@ function mergeTx (tx, defaultCurrency, oldTx = {}) {
     providerFee: { ...oldTx.providerFee }
   }
 
-  const currencyCode = tx.currencyCode != null ? tx.currencyCode : defaultCurrency
-  out.nativeAmount[currencyCode] = tx.amountSatoshi != null
-    ? tx.amountSatoshi.toString()
-    : tx.nativeAmount
-  out.networkFee[currencyCode] = tx.networkFee != null
-    ? tx.networkFee.toString()
-    : '0'
-  out.providerFee[currencyCode] = tx.providerFee != null
-    ? tx.providerFee.toString()
-    : '0'
+  const currencyCode =
+    tx.currencyCode != null ? tx.currencyCode : defaultCurrency
+  out.nativeAmount[currencyCode] =
+    tx.amountSatoshi != null ? tx.amountSatoshi.toString() : tx.nativeAmount
+  out.networkFee[currencyCode] =
+    tx.networkFee != null ? tx.networkFee.toString() : '0'
+  out.providerFee[currencyCode] =
+    tx.providerFee != null ? tx.providerFee.toString() : '0'
 
   return out
 }
@@ -137,7 +135,7 @@ const currencyWallet = combineReducers({
   plugin: constReducer(),
 
   // Settable data:
-  balance: settableReducer({currencyCode: null, balance: 0}, SET_BALANCE),
+  balance: settableReducer({ currencyCode: null, balance: 0 }, SET_BALANCE),
   blockHeight: settableReducer(0, SET_BLOCK_HEIGHT),
   name: settableReducer(null, SET_NAME),
   progress: settableReducer(null, SET_PROGRESS),

@@ -11,12 +11,14 @@ describe('plugins reducer', function () {
     const store = makeStore()
 
     const fakeIo = {}
-    return store.dispatch(setupPlugins(fakeIo, [fakeExchangePlugin])).then(() => {
-      const plugins = getExchangePlugins(store.getState())
-      assert.equal(plugins.length, 1)
-      assert.equal(plugins[0].exchangeInfo.exchangeName, 'FakeExchange')
-      return null
-    })
+    return store
+      .dispatch(setupPlugins(fakeIo, [fakeExchangePlugin]))
+      .then(() => {
+        const plugins = getExchangePlugins(store.getState())
+        assert.equal(plugins.length, 1)
+        assert.equal(plugins[0].exchangeInfo.exchangeName, 'FakeExchange')
+        return null
+      })
   })
 
   it('reject invalid plugin', function () {

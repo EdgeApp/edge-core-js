@@ -123,7 +123,10 @@ function loadFiles (keyId) {
         .then(name => dispatch(setName(keyId, name))),
       // Transaction metadata:
       mapFiles(folder.folder('transaction'), file =>
-        file.getText().then(text => JSON.parse(text)).catch(e => null)
+        file
+          .getText()
+          .then(text => JSON.parse(text))
+          .catch(e => null)
       ).then(files => {
         const out = {}
         const jsons = files.filter(json => json != null && json.txid != null)

@@ -2,9 +2,12 @@ import { INIT } from '../actions.js'
 import { serialize } from '../../util/decorators.js'
 import { base16, utf8 } from '../../util/encoding.js'
 
-const getTime = typeof window !== 'undefined' && window.performance && typeof window.performance.now === 'function'
-  ? () => window.performance.now()
-  : () => Date.now()
+const getTime =
+  typeof window !== 'undefined' &&
+  window.performance &&
+  typeof window.performance.now === 'function'
+    ? () => window.performance.now()
+    : () => Date.now()
 
 function timeScrypt (scrypt, data, snrp, dklen = 32) {
   if (typeof data === 'string') {

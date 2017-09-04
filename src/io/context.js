@@ -1,7 +1,5 @@
 // @flow
-import type {
-  AbcMakeContextOpts
-} from 'airbitz-core-types'
+import type { AbcMakeContextOpts } from 'airbitz-core-types'
 import { makeAccount } from '../account/accountApi.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
@@ -21,7 +19,7 @@ import { makeBrowserIo } from './browser'
 import { IoContext } from './io.js'
 import { fixUsername } from './loginStore.js'
 
-export function makeContext (opts:AbcMakeContextOpts) {
+export function makeContext (opts: AbcMakeContextOpts) {
   const io = new IoContext(opts.io != null ? opts.io : makeBrowserIo(), opts)
   const { redux } = io
 
@@ -42,23 +40,23 @@ export function makeContext (opts:AbcMakeContextOpts) {
     },
 
     '@fixUsername': { sync: true },
-    fixUsername (username:string):string {
+    fixUsername (username: string): string {
       return fixUsername(username)
     },
 
-    listUsernames ():Promise<Array<string>> {
+    listUsernames (): Promise<Array<string>> {
       return io.loginStore.listUsernames()
     },
 
-    deleteLocalAccount (username:string):Promise<void> {
+    deleteLocalAccount (username: string): Promise<void> {
       return io.loginStore.remove(username)
     },
 
-    usernameAvailable (username:string):Promise<boolean> {
+    usernameAvailable (username: string): Promise<boolean> {
       return usernameAvailable(io, username)
     },
 
-    createAccount (username:string, password:string, pin:string, opts) {
+    createAccount (username: string, password: string, pin: string, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return createLogin(io, username, {
@@ -69,7 +67,7 @@ export function makeContext (opts:AbcMakeContextOpts) {
       })
     },
 
-    loginWithKey (username:string, loginKey:string, opts) {
+    loginWithKey (username: string, loginKey: string, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return io.loginStore.load(username).then(stashTree => {
@@ -82,7 +80,7 @@ export function makeContext (opts:AbcMakeContextOpts) {
       })
     },
 
-    loginWithPassword (username:string, password:string, opts):Promise<any> {
+    loginWithPassword (username: string, password: string, opts): Promise<any> {
       const { callbacks } = opts || {} // opts can be `null`
 
       return loginPassword(io, username, password).then(loginTree => {
