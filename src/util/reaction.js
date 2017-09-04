@@ -99,6 +99,7 @@ export function reactionMiddleware ({ dispatch, getState }) {
 
 /**
  * Creates a promise that resolves when the specified condition is true.
+ * The promise return value is whatever `condition` evaluates to.
  */
 export function awaitState (store, condition) {
   // If the condition is already true, we are done:
@@ -110,9 +111,10 @@ export function awaitState (store, condition) {
   let unsubscribe = () => {}
   const out = new Promise((resolve, reject) => {
     unsubscribe = store.subscribe(() => {
-      if (condition(store.getState())) {
+      const out = condition(store.getState())
+      if (out) {
         unsubscribe()
-        resolve(true)
+        resolve(out)
       }
     })
   })
