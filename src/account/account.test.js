@@ -114,16 +114,9 @@ describe('account', function () {
     )
   })
 
-  it('logout', function (done) {
+  it('logout', async function () {
     const [context] = makeFakeContexts(1)
-    assert.doesNotThrow(() => {
-      makeFakeAccount(context, fakeUser).then(account => {
-        account.logout().then(() => {
-          done()
-          return null
-        })
-        return null
-      })
-    })
+    const account = await makeFakeAccount(context, fakeUser)
+    return account.logout()
   })
 })

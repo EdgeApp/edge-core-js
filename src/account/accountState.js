@@ -147,19 +147,18 @@ class AccountState {
     this.currencyWalletsLoading = {}
   }
 
-  logout () {
-    return new Promise((resolve, reject) => {
-      this.io = null
-      this.appId = null
-      this.keyInfo = null
+  async logout () {
+    // Shut down:
+    this.io.redux.dispatch(this.disposer)
+    this.io = null
 
-      // Login state:
-      this.loginTree = null
-      this.login = null
-      this.legacyKeyInfos = null
-      this.keyStates = null
-      resolve()
-    })
+    // Clear keys:
+    this.appId = null
+    this.keyInfo = null
+    this.loginTree = null
+    this.login = null
+    this.legacyKeyInfos = null
+    this.keyStates = null
   }
 
   changePassword (password, login = this.loginTree) {
@@ -314,6 +313,7 @@ export async function makeAccountState (io, appId, loginTree, callbacks) {
           () => account.reloadKeyStates()
         )
       )
+      account.disposer = disposer
       return disposer.payload.out.then(() => account)
     })
   })
