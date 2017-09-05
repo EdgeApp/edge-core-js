@@ -1,4 +1,5 @@
 // @flow
+import type { AbcAccount } from 'airbitz-core-types'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 import { fakeUser, makeFakeContexts } from '../../indexABC.js'
@@ -62,6 +63,21 @@ describe('account', function () {
     const info = account.allKeys.find(info => info.id === id)
     if (!info) throw new Error('Missing key info')
     assert.equal(info.keys.fakeKey, 'FakePrivateKey')
+  })
+
+  it('create currency wallet', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    const account: AbcAccount = await context.loginWithPIN(
+      fakeUser.username,
+      fakeUser.pin
+    )
+
+    const wallet = await account.createCurrencyWallet('wallet:fakecoin', {
+      name: 'test wallet',
+      fiatCurrencyCode: 'iso:JPY'
+    })
+    assert.equal(wallet.name, 'test wallet')
+    assert.equal(wallet.fiatCurrencyCode, 'iso:JPY')
   })
 
   it('list keys', async function () {

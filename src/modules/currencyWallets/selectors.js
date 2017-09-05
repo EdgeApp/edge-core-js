@@ -24,7 +24,7 @@ export function getCurrencyWalletName (state, keyId) {
 }
 
 export function getCurrencyWalletFiat (state, keyId) {
-  return 'iso:USD'
+  return state.currencyWallets[keyId].fiat
 }
 
 export function getCurrencyWalletFile (state, keyId, txid) {

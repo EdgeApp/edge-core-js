@@ -20,11 +20,13 @@ import {
   setBalance,
   setBlockHeight,
   setEngine,
+  setFiat,
   setFile,
   setFiles,
   setName,
   setProgress
 } from './reducer.js'
+import { number as currencyFromNumber } from 'currency-codes'
 
 function getTxFile (state, keyId, timestamp, txid) {
   const txidHash = hashStorageWalletFilename(state, keyId, txid)
@@ -47,12 +49,13 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
       plugin.currencyInfo = plugin.getInfo()
     }
 
+    // Add the wallet to the store:
+    const keyId = keyInfo.id
+    dispatch(add(keyId, { plugin }))
+
+    // Start the data sync:
     await dispatch(addStorageWallet(keyInfo))
     const state = getState()
-    const keyId = keyInfo.id
-
-    // Add the wallet to the store:
-    dispatch(add(keyId, { plugin }))
 
     // Create the currency plugin:
     const defaultCurrency = plugin.currencyInfo.currencyCode
@@ -106,6 +109,21 @@ export function renameCurrencyWallet (keyId, name) {
 }
 
 /**
+ * Changes a wallet's fiat currency code.
+ */
+export function setCurrencyWalletFiat (keyId, fiatCurrencyCode) {
+  if (!/^iso:/.test(fiatCurrencyCode)) {
+    throw new TypeError('Fiat currency codes must start with `iso:`')
+  }
+
+  return (dispatch, getState) =>
+    getStorageWalletFolder(getState(), keyId)
+      .file('Currency.json')
+      .setText(JSON.stringify({ fiat: fiatCurrencyCode }))
+      .then(() => dispatch(setFiat(keyId, fiatCurrencyCode)))
+}
+
+/**
  * Updates the wallet in response to data syncs.
  */
 function loadFiles (keyId) {
@@ -120,6 +138,20 @@ function loadFiles (keyId) {
         .then(text => JSON.parse(text).walletName)
         .then(name => dispatch(setName(keyId, name)))
         .catch(e => dispatch(setName(keyId, null))),
+
+      folder
+        .file('Currency.json')
+        .getText()
+        .then(text => JSON.parse(text))
+        .then(file =>
+          dispatch(
+            setFiat(
+              keyId,
+              file.fiat ? file.fiat : 'iso:' + currencyFromNumber(file.num).code
+            )
+          )
+        )
+        .catch(e => getState().onError(e)),
 
       // Transaction metadata:
       mapFiles(folder.folder('transaction'), file =>

@@ -2,6 +2,7 @@
 import type {
   AbcAccount,
   AbcAccountCallbacks,
+  AbcCreateCurrencyWalletOptions,
   AbcCurrencyWallet,
   AbcWalletInfo,
   AbcWalletStates
@@ -158,6 +159,13 @@ function makeAccountApi (
       const keyInfo = makeStorageKeyInfo(ai, type, keys)
       const kit = makeKeysKit(ai, state.login, keyInfo)
       return state.applyKit(kit).then(() => keyInfo.id)
+    },
+
+    async createCurrencyWallet (
+      type: string,
+      opts?: AbcCreateCurrencyWalletOptions = {}
+    ) {
+      return state.createCurrencyWallet(type, opts)
     },
 
     // Core-managed wallets:

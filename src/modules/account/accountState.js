@@ -14,7 +14,11 @@ import { applyKit, searchTree } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
-import { getStorageWalletLastSync, hasCurrencyPlugin } from '../selectors.js'
+import {
+  getStorageWalletLastSync,
+  hasCurrencyPlugin,
+  getCurrencyPlugin
+} from '../selectors.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 function findAppLogin (loginTree, appId) {
@@ -242,6 +246,29 @@ class AccountState {
     })
   }
 
+  async createCurrencyWallet (type, opts) {
+    const { ai, login } = this
+
+    // Make the keys:
+    const plugin = getCurrencyPlugin(ai.props.state, type)
+    const keys = opts.keys || plugin.createPrivateKey(type)
+    const keyInfo = makeStorageKeyInfo(ai, type, keys)
+    const kit = makeKeysKit(ai, login, keyInfo)
+
+    // Add the keys to the login:
+    await this.applyKit(kit)
+    const wallet = await ai.waitFor(props => this.currencyWallets[keyInfo.id])
+
+    if (opts.name) await wallet.renameWallet(opts.name)
+    if (opts.fiatCurrencyCode) {
+      await ai.props.dispatch(
+        ACTIONS.setCurrencyWalletFiat(keyInfo.id, opts.fiatCurrencyCode)
+      )
+    }
+
+    return wallet
+  }
+
   get allKeys () {
     const { appId, keyStates, legacyKeyInfos, login } = this
     const allKeys = mergeKeyInfos(softCat(legacyKeyInfos, login.keyInfos))
@@ -283,7 +310,7 @@ class AccountState {
   }
 
   updateCurrencyWallets () {
-    const { ai, login } = this
+    const { activeLoginId, ai, login } = this
 
     // List all the wallets we can mangage:
     const allWalletIds = [...this.activeWalletIds, ...this.archivedWalletIds]
@@ -305,6 +332,13 @@ class AccountState {
             if (this.callbacks.onKeyListChanged) {
               this.callbacks.onKeyListChanged()
             }
+
+            // Horrible hack used to kick `createCurrencyWallet` awake:
+            ai.props.dispatch({
+              type: ACTIONS.ACCOUNT_KEYS_LOADED,
+              payload: { activeLoginId, walletInfos: this.allKeys }
+            })
+
             return null
           })
           .catch(e => ai.props.onError(e))

@@ -5,6 +5,7 @@ import type { WalletInfo } from './login/login-types.js'
 export {
   addCurrencyWallet,
   renameCurrencyWallet,
+  setCurrencyWalletFiat,
   setCurrencyWalletTxMetadata,
   setupNewTxMetadata
 } from './currencyWallets/actions.js'

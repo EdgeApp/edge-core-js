@@ -26,6 +26,7 @@ export function setEngine (keyId, engine) {
 // Wallet settable data:
 const SET_BALANCE = 'airbitz-core-js/currencyWallet/balance/SET'
 const SET_BLOCK_HEIGHT = 'airbitz-core-js/currencyWallet/blockHeight/SET'
+const SET_FIAT = 'airbitz-core-js/currencyWallet/fiat/SET'
 const SET_NAME = 'airbitz-core-js/currencyWallet/name/SET'
 const SET_PROGRESS = 'airbitz-core-js/currencyWallet/progress/SET'
 
@@ -35,6 +36,10 @@ export function setBalance (keyId, balance) {
 
 export function setBlockHeight (keyId, blockHeight) {
   return update(keyId, { type: SET_BLOCK_HEIGHT, payload: blockHeight })
+}
+
+export function setFiat (keyId, currencyCode) {
+  return update(keyId, { type: SET_FIAT, payload: currencyCode })
 }
 
 export function setName (keyId, name) {
@@ -137,6 +142,7 @@ const currencyWallet = combineReducers({
   // Settable data:
   balance: settableReducer({ currencyCode: null, balance: 0 }, SET_BALANCE),
   blockHeight: settableReducer(0, SET_BLOCK_HEIGHT),
+  fiat: settableReducer('iso:USD', SET_FIAT),
   name: settableReducer(null, SET_NAME),
   nameLoaded: (state = false, action) =>
     action.type === SET_NAME ? true : state,

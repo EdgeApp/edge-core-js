@@ -58,7 +58,7 @@ aes-js@^3.1.0:
 
 "airbitz-core-types@git://github.com/Airbitz/airbitz-core-types.git":
   version "0.0.1"
-  resolved "git://github.com/Airbitz/airbitz-core-types.git#bdb7cef45003ee1be8b80944bb27d1969cd39bab"
+  resolved "git://github.com/Airbitz/airbitz-core-types.git#e05c416f86a6db379c2b9da9be3ebcebd988ed02"
 
 ajv-keywords@^1.0.0:
   version "1.5.1"
@@ -1587,6 +1587,13 @@ csurf@~1.8.3:
     csrf "~3.0.0"
     http-errors "~1.3.1"
 
+currency-codes@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/currency-codes/-/currency-codes-1.1.2.tgz#60d334279f819d29605c1ff518ade17ad6681308"
+  dependencies:
+    first-match "~0.0.1"
+    nub "~0.0.0"
+
 d@1:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/d/-/d-1.0.0.tgz#754bb5bfe55451da69a58b94d45f4c5b0462d58f"
@@ -2229,6 +2236,10 @@ find-up@^2.0.0:
   resolved "https://registry.yarnpkg.com/find-up/-/find-up-2.1.0.tgz#45d1b7e506c717ddd482775a2b77920a3c0c57a7"
   dependencies:
     locate-path "^2.0.0"
+
+first-match@~0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/first-match/-/first-match-0.0.1.tgz#a60ec642700f0f437234ebb7ec3f382476e542fd"
 
 flat-cache@^1.2.1:
   version "1.2.2"
@@ -3649,6 +3660,10 @@ npmlog@^4.0.2:
     console-control-strings "~1.1.0"
     gauge "~2.7.3"
     set-blocking "~2.0.0"
+
+nub@~0.0.0:
+  version "0.0.0"
+  resolved "https://registry.yarnpkg.com/nub/-/nub-0.0.0.tgz#b369bd32bdde66af59605c3b0520bc219dccc04f"
 
 number-is-nan@^1.0.0:
   version "1.0.1"
