@@ -205,6 +205,9 @@ class AccountState {
     ).then(keyStates => {
       this.keyStates = keyStates
       this.updateCurrencyWallets()
+      if (this.callbacks.onKeyListChanged) {
+        this.callbacks.onKeyListChanged()
+      }
       return void 0
     })
   }
