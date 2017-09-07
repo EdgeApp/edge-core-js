@@ -1,10 +1,10 @@
-import { scrypt } from '../crypto/scrypt.js'
 import { makeStore } from '../redux/index.js'
 import {
   fetchExchangeRates,
   initStore,
   setupPlugins
 } from '../redux/actions.js'
+import { scrypt } from '../util/crypto/scrypt.js'
 import { AuthServer } from './authServer.js'
 import { LoginStore } from './loginStore.js'
 import { makeLocalStorageFolder } from 'disklet'

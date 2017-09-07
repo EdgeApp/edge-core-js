@@ -1,5 +1,5 @@
-import { encrypt, decrypt, hmacSha256, sha256 } from '../crypto/crypto.js'
-import { elliptic } from '../crypto/external.js'
+import { encrypt, decrypt, hmacSha256, sha256 } from '../util/crypto/crypto.js'
+import { elliptic } from '../util/crypto/external.js'
 import { base58, base64, utf8 } from '../util/encoding.js'
 
 const EC = elliptic.ec

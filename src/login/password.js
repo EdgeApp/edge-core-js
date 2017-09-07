@@ -1,6 +1,6 @@
-import { decrypt, encrypt } from '../crypto/crypto.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../redux/selectors.js'
+import { decrypt, encrypt } from '../util/crypto/crypto.js'
 import { rejectify } from '../util/decorators.js'
 import { base64 } from '../util/encoding.js'
 import { applyLoginReply, makeLoginTree, syncLogin } from './login.js'

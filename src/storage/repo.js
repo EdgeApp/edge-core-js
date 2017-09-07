@@ -1,4 +1,4 @@
-import { sha256 } from '../crypto/crypto.js'
+import { sha256 } from '../util/crypto/crypto.js'
 import { base16, base58, base64 } from '../util/encoding.js'
 import { locateFile, mapAllFiles, makeUnionFolder } from 'disklet'
 import { RepoFolder } from './repoFolder.js'

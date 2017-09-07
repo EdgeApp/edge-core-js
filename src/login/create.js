@@ -1,6 +1,6 @@
-import { encrypt } from '../crypto/crypto.js'
 import { UsernameError } from '../error.js'
 import { fixUsername, hashUsername } from '../io/loginStore.js'
+import { encrypt } from '../util/crypto/crypto.js'
 import { base64 } from '../util/encoding.js'
 import { makeKeysKit } from './keys.js'
 import { makePasswordKit } from './password.js'

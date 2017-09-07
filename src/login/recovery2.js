@@ -1,5 +1,5 @@
-import { decrypt, encrypt, hmacSha256 } from '../crypto/crypto.js'
 import { fixUsername } from '../io/loginStore.js'
+import { decrypt, encrypt, hmacSha256 } from '../util/crypto/crypto.js'
 import { base64, utf8 } from '../util/encoding.js'
 import { applyLoginReply, makeLoginTree } from './login.js'
 

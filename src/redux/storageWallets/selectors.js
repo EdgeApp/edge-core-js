@@ -1,4 +1,4 @@
-import { hmacSha256 } from '../../crypto/crypto.js'
+import { hmacSha256 } from '../../util/crypto/crypto.js'
 import { base58, utf8 } from '../../util/encoding.js'
 
 export function getStorageWalletLastSync (state, keyId) {

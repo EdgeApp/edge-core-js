@@ -2,7 +2,7 @@
  * Functions for working with login data in its on-disk format.
  */
 
-import { decrypt } from '../crypto/crypto.js'
+import { decrypt } from '../util/crypto/crypto.js'
 import { base64, utf8 } from '../util/encoding.js'
 import { elvis, filterObject, softCat } from '../util/util.js'
 import { makeAccountType, makeKeyInfo, mergeKeyInfos } from './keys.js'
