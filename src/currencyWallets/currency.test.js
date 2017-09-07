@@ -1,4 +1,3 @@
-/* global describe, it */
 import { makeContext, makeFakeIos } from '../indexABC.js'
 import { makeAssertLog } from '../test/assertLog.js'
 import {
@@ -9,6 +8,7 @@ import { fakeExchangePlugin } from '../test/fakeExchange.js'
 import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import { awaitState } from '../util/reaction.js'
 import assert from 'assert'
+import { describe, it } from 'mocha'
 import { createStore } from 'redux'
 
 async function makeFakeCurrencyWallet (store, callbacks) {

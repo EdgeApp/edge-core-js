@@ -1,10 +1,10 @@
-/* global describe, it */
 import { makeFakeCurrency } from '../../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../../test/fakeExchange.js'
 import { makeStore } from '../index.js'
 import { setupPlugins } from './actions.js'
 import { getCurrencyMultiplier, getExchangePlugins } from './selectors.js'
 import assert from 'assert'
+import { describe, it } from 'mocha'
 
 describe('plugins reducer', function () {
   it('add exchange plugin', function () {

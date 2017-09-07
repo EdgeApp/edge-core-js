@@ -4,7 +4,7 @@ import config from './rollup.config.js'
 
 export default {
   entry: 'src/**/*.test.js',
-  external: ['assert', ...config.external],
+  external: config.external,
   plugins: [
     eslint({
       exclude: 'build/crypto-bundle.js',

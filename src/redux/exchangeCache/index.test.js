@@ -1,4 +1,3 @@
-/* global describe, it */
 import {
   brokenExchangePlugin,
   fakeExchangePlugin
@@ -8,6 +7,7 @@ import { makeStore } from '../index.js'
 import reducer, { addPairs } from './reducer.js'
 import { getExchangeRate } from './selectors.js'
 import assert from 'assert'
+import { describe, it } from 'mocha'
 
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.

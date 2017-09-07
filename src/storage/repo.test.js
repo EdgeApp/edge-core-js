@@ -1,8 +1,8 @@
-/* global describe, it */
 import { makeContext, makeFakeIos } from '../indexABC.js'
 import { makeRepoPaths, syncRepo } from '../storage/repo.js'
 import { fakeUser, fakeRepoInfo, makeFakeAccount } from '../test/fakeUser.js'
 import assert from 'assert'
+import { describe, it } from 'mocha'
 
 describe('repo', function () {
   it('local get', function () {

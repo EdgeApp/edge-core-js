@@ -1,9 +1,9 @@
-/* global describe, it */
 import { makeFakeIos } from '../indexABC.js'
 import { base16, base64, utf8 } from '../util/encoding.js'
 import { decrypt, encrypt, hmacSha256, sha256 } from './crypto.js'
 import { scrypt } from './scrypt.js'
 import assert from 'assert'
+import { describe, it } from 'mocha'
 
 describe('scrypt', function () {
   it('match a known userId', function () {

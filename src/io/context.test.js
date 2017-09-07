@@ -1,8 +1,8 @@
-/* global describe, it */
 import { makeContext, makeFakeIos } from '../indexABC.js'
 import { makeFakeCurrency } from '../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../test/fakeExchange.js'
 import assert from 'assert'
+import { describe, it } from 'mocha'
 
 function makeFakeContexts (count, opts) {
   return makeFakeIos(count).map(io => makeContext({ ...opts, io }))

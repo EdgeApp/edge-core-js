@@ -12,7 +12,10 @@ const babelOpts = {
 
 export default {
   entry: 'src/indexABC.js',
-  external: Object.keys(packageJson.dependencies),
+  external: [
+    ...Object.keys(packageJson.dependencies),
+    ...Object.keys(packageJson.devDependencies)
+  ],
   plugins: [
     commonjs({
       include: 'build/crypto-bundle.js'

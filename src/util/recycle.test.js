@@ -1,6 +1,6 @@
-/* global describe, it */
 import { compare, recycle } from './recycle.js'
 import assert from 'assert'
+import { describe, it } from 'mocha'
 
 describe('recycle', function () {
   it('compare', function () {

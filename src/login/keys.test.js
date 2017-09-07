@@ -1,6 +1,6 @@
-/* global describe, it */
 import { mergeKeyInfos } from './keys.js'
 import assert from 'assert'
+import { describe, it } from 'mocha'
 
 const ID_1 = 'PPptx6SBfwGXM+FZURMvYnsOfHpIKZBbqXTCbYmFd44='
 const ID_2 = 'y14MYFMP6vnip2hUBP7aqB6Ut0d4UNqHV9a/2vgE9eQ='

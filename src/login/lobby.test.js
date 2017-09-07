@@ -1,4 +1,3 @@
-/* global describe, it */
 import { makeFakeIos } from '../indexABC.js'
 import { IoContext } from '../io/io.js'
 import {
@@ -10,6 +9,7 @@ import {
 } from './lobby.js'
 import assert from 'assert'
 import elliptic from 'elliptic'
+import { describe, it } from 'mocha'
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
