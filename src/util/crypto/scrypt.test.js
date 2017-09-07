@@ -1,3 +1,4 @@
+// @flow
 import { base16, base64, utf8 } from '../encoding.js'
 import { scrypt } from './scrypt.js'
 import { assert } from 'chai'

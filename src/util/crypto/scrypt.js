@@ -1,3 +1,4 @@
+// @flow
 import scryptJs from 'scrypt-js'
 
 export const userIdSnrp = {
@@ -8,7 +9,14 @@ export const userIdSnrp = {
 }
 export const passwordAuthSnrp = userIdSnrp
 
-export function scrypt (data, salt, n, r, p, dklen) {
+export function scrypt (
+  data: Uint8Array,
+  salt: Uint8Array,
+  n: number,
+  r: number,
+  p: number,
+  dklen: number
+): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const callback = (error, progress, key) => {
       if (error) return reject(error)
