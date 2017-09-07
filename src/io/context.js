@@ -121,13 +121,12 @@ export function makeContext (opts: AbcContextOptions) {
       })
     },
 
-    loginWithRecovery2 (recovery2Key, username, answers, opts) {
+    loginWithRecovery2 (recovery2Key: string, username, answers, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
-      recovery2Key = base58.parse(recovery2Key)
       return loginRecovery2(
         io,
-        recovery2Key,
+        base58.parse(recovery2Key),
         username,
         answers
       ).then(loginTree => {
@@ -136,8 +135,7 @@ export function makeContext (opts: AbcContextOptions) {
     },
 
     fetchRecovery2Questions (recovery2Key, username) {
-      recovery2Key = base58.parse(recovery2Key)
-      return getQuestions2(io, recovery2Key, username)
+      return getQuestions2(io, base58.parse(recovery2Key), username)
     },
 
     listRecoveryQuestionChoices () {
