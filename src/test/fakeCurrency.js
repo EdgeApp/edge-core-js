@@ -1,4 +1,4 @@
-import { createReaction, reactionMiddleware } from '../util/reaction.js'
+import { createReaction, reactionMiddleware } from '../util/redux/reaction.js'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 
 function nop () {}

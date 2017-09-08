@@ -4,7 +4,7 @@ import {
   getStorageWalletLastSync,
   getStorageWalletLocalFolder
 } from '../redux/selectors.js'
-import { createReaction } from '../util/reaction.js'
+import { createReaction } from '../util/redux/reaction.js'
 import { wrapObject } from '../util/api.js'
 
 export function makeStorageWallet (keyInfo, opts) {

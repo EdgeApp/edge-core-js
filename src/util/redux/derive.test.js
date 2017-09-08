@@ -1,4 +1,4 @@
-import { makeAssertLog } from '../test/assertLog.js'
+import { makeAssertLog } from '../../test/assertLog.js'
 import { deriveSelector } from './derive.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'

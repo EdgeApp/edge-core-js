@@ -3,7 +3,7 @@ import {
   constReducer,
   listReducer,
   settableReducer
-} from '../../util/reducers.js'
+} from '../../util/redux/reducers.js'
 import { combineReducers } from 'redux'
 
 // Basic wallet list:

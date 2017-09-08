@@ -1,4 +1,4 @@
-import { settableReducer } from '../../util/reducers.js'
+import { settableReducer } from '../../util/redux/reducers.js'
 
 const SET = 'airbitz-core-js/plugins/SET'
 

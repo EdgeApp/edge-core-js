@@ -1,4 +1,4 @@
-import { awaitState } from '../../util/reaction.js'
+import { awaitState } from '../../util/redux/reaction.js'
 
 export function getCurrencyPlugins (state) {
   return state.plugins.currencyPlugins

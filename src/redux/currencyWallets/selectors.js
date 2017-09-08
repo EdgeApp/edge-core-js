@@ -1,4 +1,4 @@
-import { deriveSelector } from '../../util/derive.js'
+import { deriveSelector } from '../../util/redux/derive.js'
 
 // Basic wallet functionality:
 export function getCurrencyWalletEngine (state, keyId) {

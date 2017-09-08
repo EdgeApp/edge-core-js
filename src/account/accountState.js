@@ -17,7 +17,7 @@ import {
   getStorageWalletLastSync,
   hasCurrencyPlugin
 } from '../redux/selectors.js'
-import { createReaction } from '../util/reaction.js'
+import { createReaction } from '../util/redux/reaction.js'
 import { softCat } from '../util/util.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 

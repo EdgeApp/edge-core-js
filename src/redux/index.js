@@ -1,4 +1,4 @@
-import { reactionMiddleware } from '../util/reaction.js'
+import { reactionMiddleware } from '../util/redux/reaction.js'
 import reducer from './reducer.js'
 import { applyMiddleware, createStore } from 'redux'
 import thunk from 'redux-thunk'

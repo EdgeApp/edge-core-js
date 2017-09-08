@@ -1,4 +1,4 @@
-import { createReaction } from '../../util/reaction.js'
+import { createReaction } from '../../util/redux/reaction.js'
 import { mergeDeeply } from '../../util/util.js'
 import { addStorageWallet } from '../actions.js'
 import {

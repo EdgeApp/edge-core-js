@@ -19,7 +19,7 @@ import {
 } from '../redux/selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
-import { createReaction } from '../util/reaction.js'
+import { createReaction } from '../util/redux/reaction.js'
 import { compare } from '../util/recycle.js'
 import { filterObject, mergeDeeply } from '../util/util.js'
 
