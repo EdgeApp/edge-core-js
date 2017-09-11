@@ -1,8 +1,9 @@
-import { compare, recycle } from './recycle.js'
+// @flow
+import { compare, recycle } from './compare.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-describe('recycle', function () {
+describe('compare', function () {
   it('compare', function () {
     assert(!compare(1, 2))
     assert(!compare(1, '1'))

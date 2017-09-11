@@ -1,4 +1,4 @@
-import { recycle } from '../../util/recycle.js'
+import { recycle } from '../../util/compare.js'
 import {
   constReducer,
   listReducer,

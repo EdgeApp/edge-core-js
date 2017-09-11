@@ -1,3 +1,5 @@
+// @flow
+
 const TYPED_ARRAYS = {
   '[object Float32Array]': true,
   '[object Float64Array]': true,
@@ -13,7 +15,7 @@ const TYPED_ARRAYS = {
 /**
  * Compares two objects that are already known to have a common `[[Class]]`.
  */
-function compareObjects (a, b, type) {
+function compareObjects (a: any, b: any, type) {
   // User-created objects:
   if (type === '[object Object]') {
     const proto = Object.getPrototypeOf(a)
@@ -61,7 +63,7 @@ function compareObjects (a, b, type) {
 /**
  * Returns true if two Javascript values are equal in value.
  */
-export function compare (a, b) {
+export function compare<A, B> (a: A, b: B): boolean {
   if (a === b) return true
 
   // Fast path for primitives:
@@ -79,7 +81,7 @@ export function compare (a, b) {
  * Returns an object that is value-wise equivalent to `value`,
  * but preserves as much structure from object `original` as possible.
  */
-export function recycle (value, original) {
+export function recycle (value: any, original: any): any {
   if (value === original) return original
 
   // Fast path for primitives:
