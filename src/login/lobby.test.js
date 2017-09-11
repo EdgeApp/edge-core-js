@@ -7,7 +7,7 @@ import {
   fetchLobbyRequest,
   sendLobbyReply
 } from './lobby.js'
-import assert from 'assert'
+import { assert } from 'chai'
 import elliptic from 'elliptic'
 import { describe, it } from 'mocha'
 

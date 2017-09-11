@@ -1,4 +1,4 @@
-import { deepEqual } from 'assert'
+import { assert as chaiAssert } from 'chai'
 
 function stringify (...args) {
   return args
@@ -23,8 +23,8 @@ export function makeAssertLog (sort = false) {
 
   out.assert = function assert (expected) {
     sort
-      ? deepEqual(events.sort(), expected.sort())
-      : deepEqual(events, expected)
+      ? chaiAssert.deepEqual(events.sort(), expected.sort())
+      : chaiAssert.deepEqual(events, expected)
     events = []
   }
 

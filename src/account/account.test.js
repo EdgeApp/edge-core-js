@@ -2,7 +2,7 @@ import { makeContext, makeFakeIos } from '../indexABC.js'
 import { makeFakeCurrency } from '../test/fakeCurrency.js'
 import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import { base64 } from '../util/encoding.js'
-import assert from 'assert'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 function makeFakeContexts (count) {

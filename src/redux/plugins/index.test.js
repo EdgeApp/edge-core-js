@@ -3,7 +3,7 @@ import { fakeExchangePlugin } from '../../test/fakeExchange.js'
 import { makeStore } from '../index.js'
 import { setupPlugins } from './actions.js'
 import { getCurrencyMultiplier, getExchangePlugins } from './selectors.js'
-import assert from 'assert'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 describe('plugins reducer', function () {

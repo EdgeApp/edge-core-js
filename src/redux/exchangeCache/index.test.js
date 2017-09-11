@@ -6,7 +6,7 @@ import { fetchExchangeRates, setupPlugins } from '../actions.js'
 import { makeStore } from '../index.js'
 import reducer, { addPairs } from './reducer.js'
 import { getExchangeRate } from './selectors.js'
-import assert from 'assert'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 // A hypothetical collection of currency pairs.

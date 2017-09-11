@@ -1,7 +1,7 @@
 import { makeContext, makeFakeIos } from '../indexABC.js'
 import { makeFakeCurrency } from '../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../test/fakeExchange.js'
-import assert from 'assert'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 function makeFakeContexts (count, opts) {

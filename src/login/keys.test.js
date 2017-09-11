@@ -1,5 +1,5 @@
 import { mergeKeyInfos } from './keys.js'
-import assert from 'assert'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 const ID_1 = 'PPptx6SBfwGXM+FZURMvYnsOfHpIKZBbqXTCbYmFd44='

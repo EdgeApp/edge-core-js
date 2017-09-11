@@ -1,5 +1,5 @@
 import { mergeDeeply } from './util.js'
-import assert from 'assert'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 describe('utilities', function () {

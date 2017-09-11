@@ -1,7 +1,7 @@
 import { makeContext, makeFakeIos } from '../indexABC.js'
 import { makeRepoPaths, syncRepo } from '../storage/repo.js'
 import { fakeUser, fakeRepoInfo, makeFakeAccount } from '../test/fakeUser.js'
-import assert from 'assert'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 describe('repo', function () {

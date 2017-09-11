@@ -1,5 +1,5 @@
 import { compare, recycle } from './recycle.js'
-import assert from 'assert'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 describe('recycle', function () {
