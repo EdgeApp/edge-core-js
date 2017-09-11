@@ -99,8 +99,8 @@ const userIdCache = {}
 /**
  * Hashes a username into a userId.
  */
-export function hashUsername (io, username) {
-  const state = io.redux.getState()
+export function hashUsername (coreRoot, username) {
+  const state = coreRoot.redux.getState()
   const fixedName = fixUsername(username)
   if (userIdCache[fixedName] == null) {
     userIdCache[fixedName] = scrypt(state, fixedName, userIdSnrp)

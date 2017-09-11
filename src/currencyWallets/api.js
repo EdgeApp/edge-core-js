@@ -37,14 +37,14 @@ const fakeMetadata = {
  * Creates a `CurrencyWallet` API object.
  */
 export function makeCurrencyWallet (keyInfo, opts) {
-  const { io, callbacks = {} } = opts
-  const { redux } = io
+  const { coreRoot, callbacks = {} } = opts
+  const { redux } = coreRoot
 
   return redux
     .dispatch(addCurrencyWallet(keyInfo, opts))
     .then(keyId =>
       wrapObject(
-        io.onError,
+        coreRoot.onError,
         'CurrencyWallet',
         makeCurrencyApi(redux, keyInfo, callbacks)
       )

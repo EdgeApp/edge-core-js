@@ -46,9 +46,9 @@ function scheduleLobbyPoll (watcher) {
 }
 
 function pollLobby (watcher) {
-  const { io, lobbyId, keypair, onReply, onError } = watcher
+  const { coreRoot, lobbyId, keypair, onReply, onError } = watcher
 
-  return io
+  return coreRoot
     .authRequest('GET', '/v2/lobby/' + lobbyId, '')
     .then(reply => {
       while (watcher.replyCount < reply.replies.length) {
@@ -72,8 +72,8 @@ function pollLobby (watcher) {
  * allowing clients to subscribe to lobby reply messages.
  */
 class ObservableLobby {
-  constructor (io, lobbyId, keypair) {
-    this.io = io
+  constructor (coreRoot, lobbyId, keypair) {
+    this.coreRoot = coreRoot
     this.lobbyId = lobbyId
     this.keypair = keypair
   }
@@ -102,8 +102,8 @@ class ObservableLobby {
  * Creates a new lobby on the auth server holding the given request.
  * @return A lobby watcher object that will check for incoming replies.
  */
-export function makeLobby (io, lobbyRequest) {
-  const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
+export function makeLobby (coreRoot, lobbyRequest) {
+  const keypair = secp256k1.genKeyPair({ entropy: coreRoot.io.random(32) })
   const pubkey = keypair.getPublic().encodeCompressed()
   if (lobbyRequest.timeout == null) {
     lobbyRequest.timeout = 600
@@ -115,17 +115,19 @@ export function makeLobby (io, lobbyRequest) {
   const request = {
     data: lobbyRequest
   }
-  return io.authRequest('PUT', '/v2/lobby/' + lobbyId, request).then(reply => {
-    return new ObservableLobby(io, lobbyId, keypair)
-  })
+  return coreRoot
+    .authRequest('PUT', '/v2/lobby/' + lobbyId, request)
+    .then(reply => {
+      return new ObservableLobby(coreRoot, lobbyId, keypair)
+    })
 }
 
 /**
  * Fetches a lobby request from the auth server.
  * @return A promise of the lobby request JSON.
  */
-export function fetchLobbyRequest (io, lobbyId) {
-  return io.authRequest('GET', '/v2/lobby/' + lobbyId, '').then(reply => {
+export function fetchLobbyRequest (coreRoot, lobbyId) {
+  return coreRoot.authRequest('GET', '/v2/lobby/' + lobbyId, '').then(reply => {
     const lobbyRequest = reply.request
 
     // Verify the public key:
@@ -144,12 +146,12 @@ export function fetchLobbyRequest (io, lobbyId) {
 /**
  * Encrypts and sends a reply to a lobby request.
  */
-export function sendLobbyReply (io, lobbyId, lobbyRequest, replyData) {
+export function sendLobbyReply (coreRoot, lobbyId, lobbyRequest, replyData) {
   const pubkey = base64.parse(lobbyRequest.publicKey)
   const request = {
-    data: encryptLobbyReply(io, pubkey, replyData)
+    data: encryptLobbyReply(coreRoot.io, pubkey, replyData)
   }
-  return io
+  return coreRoot
     .authRequest('POST', '/v2/lobby/' + lobbyId, request)
     .then(reply => null)
 }

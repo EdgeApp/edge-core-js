@@ -1,14 +1,16 @@
+// @flow
+import type { CoreRoot } from '../coreRoot.js'
 import { wrapObject } from '../util/api.js'
 import { getExchangeRate } from '../redux/selectors.js'
 
 /**
  * Creates an `ExchangeCache` API object.
  */
-export function makeExchangeCache (io) {
-  const { redux } = io
+export function makeExchangeCache (coreRoot: CoreRoot) {
+  const { redux } = coreRoot
 
   return wrapObject(
-    io.onError,
+    coreRoot.onError,
     'ExchangeCache',
     makeExchangeCacheApi(redux.dispatch, redux.getState)
   )

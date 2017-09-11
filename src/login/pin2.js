@@ -15,13 +15,13 @@ function pin2Auth (pin2Key, pin) {
  * Fetches and decrypts the loginKey from the server.
  * @return Promise<{loginKey, loginReply}>
  */
-function fetchLoginKey (io, pin2Key, username, pin) {
+function fetchLoginKey (coreRoot, pin2Key, username, pin) {
   const request = {
     pin2Id: base64.stringify(pin2Id(pin2Key, username)),
     pin2Auth: base64.stringify(pin2Auth(pin2Key, pin))
     // "otp": null
   }
-  return io.authRequest('POST', '/v2/login', request).then(reply => {
+  return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
     if (reply.pin2Box == null) {
       throw new Error('Missing data for PIN v2 login')
     }
@@ -49,16 +49,16 @@ export function getPin2Key (stashTree, appId) {
  * Logs a user in using their PIN.
  * @return A `Promise` for the new root login.
  */
-export function loginPin2 (io, appId, username, pin) {
-  return io.loginStore.load(username).then(stashTree => {
+export function loginPin2 (coreRoot, appId, username, pin) {
+  return coreRoot.loginStore.load(username).then(stashTree => {
     const { pin2Key, appId: appIdFound } = getPin2Key(stashTree, appId)
     if (pin2Key == null) {
       throw new Error('No PIN set locally for this account')
     }
-    return fetchLoginKey(io, pin2Key, username, pin).then(values => {
+    return fetchLoginKey(coreRoot, pin2Key, username, pin).then(values => {
       const { loginKey, loginReply } = values
       stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-      io.loginStore.save(stashTree)
+      coreRoot.loginStore.save(stashTree)
       return makeLoginTree(stashTree, loginKey, appIdFound)
     })
   })
@@ -67,7 +67,8 @@ export function loginPin2 (io, appId, username, pin) {
 /**
  * Creates the data needed to attach a PIN to a login.
  */
-export function makePin2Kit (io, login, username, pin) {
+export function makePin2Kit (coreRoot, login, username, pin) {
+  const { io } = coreRoot
   const pin2Key = login.pin2Key || io.random(32)
   const pin2Box = encrypt(io, login.loginKey, pin2Key)
   const pin2KeyBox = encrypt(io, pin2Key, login.loginKey)

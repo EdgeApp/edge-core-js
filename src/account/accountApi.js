@@ -1,4 +1,5 @@
 // @flow
+import type { CoreRoot } from '../coreRoot.js'
 import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
 import { getCurrencyPlugin } from '../redux/selectors.js'
@@ -18,15 +19,15 @@ import type {
  * Creates an `Account` API object.
  */
 export function makeAccount (
-  io: any,
+  coreRoot: CoreRoot,
   appId: string,
   loginTree: any,
   loginType: string = '',
   callbacks: AbcAccountCallbacks | {} = {}
 ) {
-  return makeAccountState(io, appId, loginTree, callbacks).then(state =>
+  return makeAccountState(coreRoot, appId, loginTree, callbacks).then(state =>
     wrapObject(
-      io.onError,
+      coreRoot.onError,
       'Account',
       makeAccountApi(state, loginType, callbacks)
     )
@@ -41,10 +42,10 @@ function makeAccountApi (
   loginType: string,
   callbacks: AbcAccountCallbacks | {}
 ): AbcAccount {
-  const { io, keyInfo } = state
-  const { redux } = io
+  const { coreRoot, keyInfo } = state
+  const { redux } = coreRoot
 
-  const exchangeCache = makeExchangeCache(io)
+  const exchangeCache = makeExchangeCache(coreRoot)
 
   const abcAccount: AbcAccount = {
     get appId (): string {
@@ -84,7 +85,7 @@ function makeAccountApi (
     },
 
     passwordOk (password: string): Promise<boolean> {
-      return checkPassword(io, state.loginTree, password)
+      return checkPassword(coreRoot, state.loginTree, password)
     },
 
     passwordSetup (password: string): Promise<void> {
@@ -151,8 +152,8 @@ function makeAccountApi (
         keys = plugin.createPrivateKey(type)
       }
 
-      const keyInfo = makeStorageKeyInfo(io, type, keys)
-      const kit = makeKeysKit(io, state.login, keyInfo)
+      const keyInfo = makeStorageKeyInfo(coreRoot, type, keys)
+      const kit = makeKeysKit(coreRoot, state.login, keyInfo)
       return state.applyKit(kit).then(() => keyInfo.id)
     },
 
@@ -194,7 +195,10 @@ function makeAccountApi (
       return this.getWallet(id)
     }
   }
-  copyProperties(abcAccount, makeStorageWalletApi(io.redux, keyInfo, callbacks))
+  copyProperties(
+    abcAccount,
+    makeStorageWalletApi(coreRoot.redux, keyInfo, callbacks)
+  )
 
   return abcAccount
 }

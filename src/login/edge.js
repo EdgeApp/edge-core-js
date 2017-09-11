@@ -15,7 +15,7 @@ class ABCEdgeLoginRequest {
 /**
  * Turns a reply into a logged-in account.
  */
-function onReply (io, subscription, reply, appId, opts) {
+function onReply (coreRoot, subscription, reply, appId, opts) {
   subscription.unsubscribe()
   const stashTree = reply.loginStash
 
@@ -32,10 +32,10 @@ function onReply (io, subscription, reply, appId, opts) {
   // The Airbitz mobile will sometimes send the pin2Key in base58
   // instead of base64 due to an unfortunate bug. Fix that:
   if (child.pin2Key != null && child.pin2Key.slice(-1) !== '=') {
-    io.console.warn('Fixing base58 pin2Key')
+    coreRoot.io.console.warn('Fixing base58 pin2Key')
     child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
   }
-  io.loginStore.save(stashTree)
+  coreRoot.loginStore.save(stashTree)
 
   // This is almost guaranteed to blow up spectacularly:
   const loginKey = base64.parse(reply.loginKey)
@@ -54,7 +54,7 @@ function onError (lobby, e, opts) {
 /**
  * Creates a new account request lobby on the server.
  */
-export function requestEdgeLogin (io, appId, opts) {
+export function requestEdgeLogin (coreRoot, appId, opts) {
   const request = {
     loginRequest: {
       appId,
@@ -63,9 +63,9 @@ export function requestEdgeLogin (io, appId, opts) {
     }
   }
 
-  return makeLobby(io, request).then(lobby => {
+  return makeLobby(coreRoot, request).then(lobby => {
     const subscription = lobby.subscribe(
-      reply => onReply(io, subscription, reply, appId, opts),
+      reply => onReply(coreRoot, subscription, reply, appId, opts),
       e => onError(lobby, e, opts)
     )
     return new ABCEdgeLoginRequest(lobby.lobbyId, subscription)

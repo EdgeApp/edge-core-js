@@ -29,7 +29,8 @@ export function makeKeyInfo (type, keys, idKey) {
 /**
  * Makes keys for accessing an encrypted Git repo.
  */
-export function makeStorageKeyInfo (io, type, keys = {}) {
+export function makeStorageKeyInfo (coreRoot, type, keys = {}) {
+  const { io } = coreRoot
   if (keys.dataKey == null) keys.dataKey = base64.stringify(io.random(32))
   if (keys.syncKey == null) keys.syncKey = base64.stringify(io.random(20))
 
@@ -39,7 +40,8 @@ export function makeStorageKeyInfo (io, type, keys = {}) {
 /**
  * Assembles all the resources needed to attach new keys to the account.
  */
-export function makeKeysKit (io, login, ...keyInfos) {
+export function makeKeysKit (coreRoot, login, ...keyInfos) {
+  const { io } = coreRoot
   const keyBoxes = keyInfos.map(info =>
     encrypt(io, utf8.parse(JSON.stringify(info)), login.loginKey)
   )

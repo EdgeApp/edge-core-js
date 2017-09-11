@@ -1,5 +1,5 @@
 // @flow
-import type { AbcContextOptions } from 'airbitz-core-types'
+import { makeCoreRoot } from '../coreRoot.js'
 import { makeAccount } from '../account/accountApi.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
@@ -15,13 +15,12 @@ import {
 import { awaitPluginsLoaded } from '../redux/selectors.js'
 import { wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
-import { makeBrowserIo } from './browser'
-import { IoContext } from './io.js'
 import { fixUsername } from './loginStore.js'
+import type { AbcContextOptions } from 'airbitz-core-types'
 
 export function makeContext (opts: AbcContextOptions) {
-  const io = new IoContext(opts.io != null ? opts.io : makeBrowserIo(), opts)
-  const { redux } = io
+  const coreRoot = makeCoreRoot(opts)
+  const { redux } = coreRoot
 
   const appId =
     opts.appId != null
@@ -30,9 +29,11 @@ export function makeContext (opts: AbcContextOptions) {
         ? opts.accountType.replace(/^account.repo:/, '')
         : ''
 
-  const out = wrapObject(io.onError, 'Context', {
-    io,
+  const out = wrapObject(coreRoot.onError, 'Context', {
+    io: coreRoot.io,
     appId,
+
+    coreRoot, // TODO: Stop allowing the tests to access our guts
 
     async getCurrencyPlugins () {
       await awaitPluginsLoaded(redux)
@@ -45,46 +46,52 @@ export function makeContext (opts: AbcContextOptions) {
     },
 
     listUsernames (): Promise<Array<string>> {
-      return io.loginStore.listUsernames()
+      return coreRoot.loginStore.listUsernames()
     },
 
     deleteLocalAccount (username: string): Promise<void> {
-      return io.loginStore.remove(username)
+      return coreRoot.loginStore.remove(username)
     },
 
     usernameAvailable (username: string): Promise<boolean> {
-      return usernameAvailable(io, username)
+      return usernameAvailable(coreRoot, username)
     },
 
     createAccount (username: string, password: string, pin: string, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return createLogin(io, username, {
+      return createLogin(coreRoot, username, {
         password,
         pin
       }).then(loginTree => {
-        return makeAccount(io, appId, loginTree, 'newAccount', callbacks)
+        return makeAccount(coreRoot, appId, loginTree, 'newAccount', callbacks)
       })
     },
 
     loginWithKey (username: string, loginKey: string, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return io.loginStore.load(username).then(stashTree => {
+      return coreRoot.loginStore.load(username).then(stashTree => {
         const loginTree = makeLoginTree(
           stashTree,
           base58.parse(loginKey),
           appId
         )
-        return makeAccount(io, appId, loginTree, 'keyLogin', callbacks)
+        return makeAccount(coreRoot, appId, loginTree, 'keyLogin', callbacks)
       })
     },
 
     loginWithPassword (username: string, password: string, opts): Promise<any> {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return loginPassword(io, username, password).then(loginTree => {
-        return makeAccount(io, appId, loginTree, 'passwordLogin', callbacks)
+      return loginPassword(coreRoot, username, password).then(loginTree => {
+        return makeAccount(
+          coreRoot,
+          appId,
+          loginTree,
+          'passwordLogin',
+          callbacks
+        )
       })
     },
 
@@ -94,7 +101,7 @@ export function makeContext (opts: AbcContextOptions) {
     },
 
     pinExists (username) {
-      return io.loginStore
+      return coreRoot.loginStore
         .load(username)
         .then(loginStash => getPin2Key(loginStash, appId).pin2Key != null)
     },
@@ -106,13 +113,13 @@ export function makeContext (opts: AbcContextOptions) {
     loginWithPIN (username, pin, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return loginPin2(io, appId, username, pin).then(loginTree => {
-        return makeAccount(io, appId, loginTree, 'pinLogin', callbacks)
+      return loginPin2(coreRoot, appId, username, pin).then(loginTree => {
+        return makeAccount(coreRoot, appId, loginTree, 'pinLogin', callbacks)
       })
     },
 
     getRecovery2Key (username) {
-      return io.loginStore.load(username).then(loginStash => {
+      return coreRoot.loginStore.load(username).then(loginStash => {
         const recovery2Key = getRecovery2Key(loginStash)
         if (recovery2Key == null) {
           throw new Error('No recovery key stored locally.')
@@ -125,21 +132,27 @@ export function makeContext (opts: AbcContextOptions) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return loginRecovery2(
-        io,
+        coreRoot,
         base58.parse(recovery2Key),
         username,
         answers
       ).then(loginTree => {
-        return makeAccount(io, appId, loginTree, 'recoveryLogin', callbacks)
+        return makeAccount(
+          coreRoot,
+          appId,
+          loginTree,
+          'recoveryLogin',
+          callbacks
+        )
       })
     },
 
     fetchRecovery2Questions (recovery2Key, username) {
-      return getQuestions2(io, base58.parse(recovery2Key), username)
+      return getQuestions2(coreRoot, base58.parse(recovery2Key), username)
     },
 
     listRecoveryQuestionChoices () {
-      return listRecoveryQuestionChoices(io)
+      return listRecoveryQuestionChoices(coreRoot)
     },
 
     requestEdgeLogin (opts) {
@@ -147,12 +160,12 @@ export function makeContext (opts: AbcContextOptions) {
 
       opts.onLogin = (err, loginTree) => {
         if (err) return onLogin(err)
-        makeAccount(io, appId, loginTree).then(
+        makeAccount(coreRoot, appId, loginTree).then(
           account => onLogin(null, account),
           err => onLogin(err)
         )
       }
-      return requestEdgeLogin(io, appId, opts, callbacks)
+      return requestEdgeLogin(coreRoot, appId, opts, callbacks)
     }
   })
 

@@ -1,7 +1,10 @@
+// @flow
+import type { AbcIo } from 'airbitz-core-types'
+
 /**
  * Extracts the io functions we need from the browser.
  */
-export function makeBrowserIo () {
+export function makeBrowserIo (): AbcIo {
   const out = {}
 
   if (typeof console !== 'undefined') {

@@ -9,12 +9,12 @@ import { makePin2Kit } from './pin2.js'
 /**
  * Determines whether or not a username is available.
  */
-export function usernameAvailable (io, username) {
-  return hashUsername(io, username).then(userId => {
+export function usernameAvailable (coreRoot, username) {
+  return hashUsername(coreRoot, username).then(userId => {
     const request = {
       userId: base64.stringify(userId)
     }
-    return io
+    return coreRoot
       .authRequest('POST', '/v2/login', request)
       .then(reply => false) // It's not available if we can hit it!
       .catch(e => {
@@ -29,25 +29,33 @@ export function usernameAvailable (io, username) {
 /**
  * Assembles all the data needed to create a new login.
  */
-export function makeCreateKit (io, parentLogin, appId, username, opts) {
+export function makeCreateKit (coreRoot, parentLogin, appId, username, opts) {
   // Figure out login identity:
   const loginId =
-    parentLogin != null ? io.random(32) : hashUsername(io, username)
-  const loginKey = io.random(32)
-  const loginAuth = io.random(32)
-  const loginAuthBox = encrypt(io, loginAuth, loginKey)
+    parentLogin != null
+      ? coreRoot.io.random(32)
+      : hashUsername(coreRoot, username)
+  const loginKey = coreRoot.io.random(32)
+  const loginAuth = coreRoot.io.random(32)
+  const loginAuthBox = encrypt(coreRoot.io, loginAuth, loginKey)
 
   // Set up login methods:
   const parentBox =
-    parentLogin != null ? encrypt(io, loginKey, parentLogin.loginKey) : void 0
+    parentLogin != null
+      ? encrypt(coreRoot.io, loginKey, parentLogin.loginKey)
+      : void 0
   const passwordKit =
     opts.password != null
-      ? makePasswordKit(io, { loginKey }, username, opts.password)
+      ? makePasswordKit(coreRoot, { loginKey }, username, opts.password)
       : {}
   const pin2Kit =
-    opts.pin != null ? makePin2Kit(io, { loginKey }, username, opts.pin) : {}
+    opts.pin != null
+      ? makePin2Kit(coreRoot, { loginKey }, username, opts.pin)
+      : {}
   const keysKit =
-    opts.keyInfo != null ? makeKeysKit(io, { loginKey }, opts.keyInfo) : {}
+    opts.keyInfo != null
+      ? makeKeysKit(coreRoot, { loginKey }, opts.keyInfo)
+      : {}
 
   // Bundle everything:
   return Promise.all([loginId, passwordKit]).then(values => {
@@ -90,18 +98,18 @@ export function makeCreateKit (io, parentLogin, appId, username, opts) {
 /**
  * Creates a new login on the auth server.
  */
-export function createLogin (io, username, opts) {
+export function createLogin (coreRoot, username, opts) {
   const fixedName = fixUsername(username)
 
-  return makeCreateKit(io, null, '', fixedName, opts).then(kit => {
+  return makeCreateKit(coreRoot, null, '', fixedName, opts).then(kit => {
     kit.login.username = fixedName
     kit.stash.username = fixedName
     kit.login.userId = kit.login.loginId
 
     const request = {}
     request.data = kit.server
-    return io
+    return coreRoot
       .authRequest('POST', kit.serverPath, request)
-      .then(reply => io.loginStore.save(kit.stash).then(() => kit.login))
+      .then(reply => coreRoot.loginStore.save(kit.stash).then(() => kit.login))
   })
 }

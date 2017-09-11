@@ -226,7 +226,7 @@ export const fakeRepoInfo = {
 /**
  * Creates a login object on the fakeServer.
  */
-function createFakeServerUser (io, user, authJson = {}) {
+function createFakeServerUser (coreRoot, user, authJson = {}) {
   // Create the login on the server:
   const data = filterObject(user, [
     'appId',
@@ -252,29 +252,31 @@ function createFakeServerUser (io, user, authJson = {}) {
   ])
   data.newSyncKeys = Object.keys(repos)
   authJson.data = data
-  return io.authRequest('POST', '/v2/login/create', authJson).then(reply => {
-    // Create children:
-    const children = elvis(user.children, [])
-    const parentAuth =
-      user.loginAuth != null
-        ? {
-          loginId: user.loginId,
-          loginAuth: user.loginAuth
-        }
-        : {
-          userId: user.loginId,
-          passwordAuth: user.passwordAuth
-        }
-    return Promise.all(
-      children.map(child => createFakeServerUser(io, child, parentAuth))
-    )
-  })
+  return coreRoot
+    .authRequest('POST', '/v2/login/create', authJson)
+    .then(reply => {
+      // Create children:
+      const children = elvis(user.children, [])
+      const parentAuth =
+        user.loginAuth != null
+          ? {
+            loginId: user.loginId,
+            loginAuth: user.loginAuth
+          }
+          : {
+            userId: user.loginId,
+            passwordAuth: user.passwordAuth
+          }
+      return Promise.all(
+        children.map(child => createFakeServerUser(coreRoot, child, parentAuth))
+      )
+    })
 }
 
 /**
  * Creates a fake login object, both on the server and on disk.
  */
-function createFakeLogin (io, appId, user) {
+function createFakeLogin (coreRoot, appId, user) {
   const loginStash = applyLoginReply(
     { username: fixUsername(user.username), appId: '' },
     user.loginKey,
@@ -282,8 +284,8 @@ function createFakeLogin (io, appId, user) {
   )
 
   return Promise.all([
-    createFakeServerUser(io, user),
-    io.loginStore.save(loginStash)
+    createFakeServerUser(coreRoot, user),
+    coreRoot.loginStore.save(loginStash)
   ]).then(() => makeLoginTree(loginStash, user.loginKey))
 }
 
@@ -311,10 +313,10 @@ function createFakeRepos (io, repos) {
 }
 
 export async function makeFakeAccount (context, user, callbacks) {
-  const { io, appId } = context
+  const { coreRoot, appId } = context
 
-  const loginTree = await createFakeLogin(io, appId, user)
-  await createFakeRepos(io, repos)
+  const loginTree = await createFakeLogin(coreRoot, appId, user)
+  await createFakeRepos(coreRoot.io, repos)
 
-  return makeAccount(io, appId, loginTree, 'fake', callbacks)
+  return makeAccount(coreRoot, appId, loginTree, 'fake', callbacks)
 }

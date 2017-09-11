@@ -1,5 +1,5 @@
 import { makeFakeIos } from '../indexABC.js'
-import { IoContext } from '../io/io.js'
+import { makeCoreRoot } from '../coreRoot.js'
 import {
   encryptLobbyReply,
   decryptLobbyReply,
@@ -28,17 +28,24 @@ describe('edge login lobby', function () {
   })
 
   it('lobby ping-pong', function () {
-    const [io1, io2] = makeFakeIos(2).map(io => new IoContext(io))
+    const [coreRoot1, coreRoot2] = makeFakeIos(2).map(io =>
+      makeCoreRoot({ io })
+    )
     const testRequest = { testRequest: 'This is a test' }
     const testReply = { testReply: 'This is a test' }
 
     return new Promise((resolve, reject) => {
-      makeLobby(io1, testRequest)
+      makeLobby(coreRoot1, testRequest)
         .then(lobby => {
-          return fetchLobbyRequest(io2, lobby.lobbyId)
+          return fetchLobbyRequest(coreRoot2, lobby.lobbyId)
             .then(request => {
               assert.deepEqual(request, testRequest)
-              return sendLobbyReply(io2, lobby.lobbyId, request, testReply)
+              return sendLobbyReply(
+                coreRoot2,
+                lobby.lobbyId,
+                request,
+                testReply
+              )
             })
             .then(() => {
               const subscription = lobby.subscribe(reply => {

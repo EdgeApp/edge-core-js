@@ -203,7 +203,7 @@ describe('pin', function () {
     const trimmedUser = { ...fakeUser, pin2Key: null }
 
     const [context] = makeFakeContexts({ appId: 'test-child' })
-    const fakeContext = { io: context.io, appId: '' }
+    const fakeContext = { coreRoot: context.coreRoot, appId: '' }
 
     return makeFakeAccount(fakeContext, trimmedUser).then(() =>
       context

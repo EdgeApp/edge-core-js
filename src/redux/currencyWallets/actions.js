@@ -56,28 +56,30 @@ export function addCurrencyWallet (keyInfo, opts = {}) {
 
     // Create the currency plugin:
     const defaultCurrency = plugin.currencyInfo.currencyCode
-    const engine = await Promise.resolve(plugin.makeEngine(keyInfo, {
-      walletFolder: getStorageWalletFolder(state, keyId),
-      walletLocalFolder: getStorageWalletLocalFolder(state, keyId),
-      callbacks: {
-        onAddressesChecked (ratio) {
-          dispatch(setProgress(keyId, ratio))
-        },
+    const engine = await Promise.resolve(
+      plugin.makeEngine(keyInfo, {
+        walletFolder: getStorageWalletFolder(state, keyId),
+        walletLocalFolder: getStorageWalletLocalFolder(state, keyId),
+        callbacks: {
+          onAddressesChecked (ratio) {
+            dispatch(setProgress(keyId, ratio))
+          },
 
-        onBalanceChanged (currencyCode, balance) {
-          dispatch(setBalance(keyId, { currencyCode, balance }))
-        },
+          onBalanceChanged (currencyCode, balance) {
+            dispatch(setBalance(keyId, { currencyCode, balance }))
+          },
 
-        onBlockHeightChanged (height) {
-          dispatch(setBlockHeight(keyId, height))
-        },
+          onBlockHeightChanged (height) {
+            dispatch(setBlockHeight(keyId, height))
+          },
 
-        onTransactionsChanged (txs) {
-          if (!txs) return
-          dispatch(addTxs(keyId, txs, defaultCurrency))
+          onTransactionsChanged (txs) {
+            if (!txs) return
+            dispatch(addTxs(keyId, txs, defaultCurrency))
+          }
         }
-      }
-    }))
+      })
+    )
     dispatch(setEngine(keyId, engine))
     await engine.startEngine()
 

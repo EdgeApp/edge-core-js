@@ -213,14 +213,14 @@ export function makeLoginTree (stashTree, loginKey, appId = '') {
  * and the on-disk stash. A login kit contains all three elements,
  * and this function knows how to apply them all.
  */
-export function applyKit (io, loginTree, kit) {
+export function applyKit (coreRoot, loginTree, kit) {
   const { loginId } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
 
-  return io.loginStore.load(loginTree.username).then(stashTree => {
+  return coreRoot.loginStore.load(loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
     request.data = kit.server
-    return io.authRequest('POST', kit.serverPath, request).then(reply => {
+    return coreRoot.authRequest('POST', kit.serverPath, request).then(reply => {
       const newLoginTree = updateTree(
         loginTree,
         login => login.loginId === loginId,
@@ -243,7 +243,7 @@ export function applyKit (io, loginTree, kit) {
         })
       )
 
-      return io.loginStore.save(newStashTree).then(() => newLoginTree)
+      return coreRoot.loginStore.save(newStashTree).then(() => newLoginTree)
     })
   })
 }
@@ -251,14 +251,14 @@ export function applyKit (io, loginTree, kit) {
 /**
  * Refreshes a login with data from the server.
  */
-export function syncLogin (io, loginTree, login) {
-  return io.loginStore.load(loginTree.username).then(stashTree => {
+export function syncLogin (coreRoot, loginTree, login) {
+  return coreRoot.loginStore.load(loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
-    return io.authRequest('POST', '/v2/login', request).then(reply => {
+    return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
       const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
       const newLoginTree = makeLoginTree(stashTree, login.loginKey, login.appId)
 
-      return io.loginStore.save(newStashTree).then(() => newLoginTree)
+      return coreRoot.loginStore.save(newStashTree).then(() => newLoginTree)
     })
   })
 }

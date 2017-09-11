@@ -18,13 +18,13 @@ function recovery2Auth (recovery2Key, answers) {
  * Fetches and decrypts the loginKey from the server.
  * @return Promise<{loginKey, loginReply}>
  */
-function fetchLoginKey (io, recovery2Key, username, answers) {
+function fetchLoginKey (coreRoot, recovery2Key, username, answers) {
   const request = {
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
     recovery2Auth: recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
-  return io.authRequest('POST', '/v2/login', request).then(reply => {
+  return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
     if (reply.recovery2Box == null) {
       throw new Error('Missing data for recovery v2 login')
     }
@@ -48,12 +48,17 @@ export function getRecovery2Key (stashTree) {
  * Logs a user in using recovery answers.
  * @return A `Promise` for the new root login.
  */
-export function loginRecovery2 (io, recovery2Key, username, answers) {
-  return io.loginStore.load(username).then(stashTree => {
-    return fetchLoginKey(io, recovery2Key, username, answers).then(values => {
+export function loginRecovery2 (coreRoot, recovery2Key, username, answers) {
+  return coreRoot.loginStore.load(username).then(stashTree => {
+    return fetchLoginKey(
+      coreRoot,
+      recovery2Key,
+      username,
+      answers
+    ).then(values => {
       const { loginKey, loginReply } = values
       stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-      io.loginStore.save(stashTree)
+      coreRoot.loginStore.save(stashTree)
       return makeLoginTree(stashTree, loginKey)
     })
   })
@@ -65,12 +70,12 @@ export function loginRecovery2 (io, recovery2Key, username, answers) {
  * @param recovery2Key an ArrayBuffer recovery key
  * @param Question array promise
  */
-export function getQuestions2 (io, recovery2Key, username) {
+export function getQuestions2 (coreRoot, recovery2Key, username) {
   const request = {
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null
   }
-  return io.authRequest('POST', '/v2/login', request).then(reply => {
+  return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
     // Recovery login:
     const question2Box = reply.question2Box
     if (question2Box == null) {
@@ -86,7 +91,14 @@ export function getQuestions2 (io, recovery2Key, username) {
 /**
  * Creates the data needed to attach recovery questions to a login.
  */
-export function makeRecovery2Kit (io, login, username, questions, answers) {
+export function makeRecovery2Kit (
+  coreRoot,
+  login,
+  username,
+  questions,
+  answers
+) {
+  const { io } = coreRoot
   if (!Array.isArray(questions)) {
     throw new TypeError('Questions must be an array of strings')
   }
@@ -123,7 +135,7 @@ export function makeRecovery2Kit (io, login, username, questions, answers) {
 }
 
 export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (
-  io
+  coreRoot
 ) {
-  return io.authRequest('POST', '/v1/questions', '')
+  return coreRoot.authRequest('POST', '/v1/questions', '')
 }

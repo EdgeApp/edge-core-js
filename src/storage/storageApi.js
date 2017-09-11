@@ -8,14 +8,14 @@ import { createReaction } from '../util/redux/reaction.js'
 import { wrapObject } from '../util/api.js'
 
 export function makeStorageWallet (keyInfo, opts) {
-  const { io, callbacks = {} } = opts
-  const { redux } = io
+  const { coreRoot, callbacks = {} } = opts
+  const { redux } = coreRoot
 
   return redux
     .dispatch(addStorageWallet(keyInfo))
     .then(() =>
       wrapObject(
-        io.onError,
+        coreRoot.onError,
         'StorageWallet',
         makeStorageWalletApi(redux, keyInfo, callbacks)
       )
