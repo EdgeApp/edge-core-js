@@ -1,5 +1,5 @@
 // @flow
-import type { AbcMakeContextOpts } from 'airbitz-core-types'
+import type { AbcContextOptions } from 'airbitz-core-types'
 import { makeAccount } from '../account/accountApi.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
@@ -19,7 +19,7 @@ import { makeBrowserIo } from './browser'
 import { IoContext } from './io.js'
 import { fixUsername } from './loginStore.js'
 
-export function makeContext (opts: AbcMakeContextOpts) {
+export function makeContext (opts: AbcContextOptions) {
   const io = new IoContext(opts.io != null ? opts.io : makeBrowserIo(), opts)
   const { redux } = io
 
