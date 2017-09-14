@@ -1,3 +1,4 @@
+// @flow
 import { makeFakeIos } from '../../indexABC.js'
 import { base16, utf8 } from '../encoding.js'
 import { decrypt, encrypt, hmacSha256, sha256 } from './crypto.js'

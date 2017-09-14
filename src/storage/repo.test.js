@@ -1,4 +1,6 @@
+// @flow
 import { fakeUser, makeFakeIos } from '../indexABC.js'
+import { fixIo } from '../io/fixIo.js'
 import { makeRepoPaths, syncRepo } from '../storage/repo.js'
 import { base64 } from '../util/encoding.js'
 import { assert } from 'chai'
@@ -13,7 +15,7 @@ const fakeRepoInfo = {
 
 describe('repo', function () {
   it('local get', async function () {
-    const [io] = makeFakeIos(1)
+    const [io] = makeFakeIos(1).map(fixIo)
     const paths = makeRepoPaths(io, fakeRepoInfo)
 
     const payload = '{"message":"Hello"}'
@@ -36,7 +38,7 @@ describe('repo', function () {
   })
 
   it('offline set/get', async function () {
-    const [io] = makeFakeIos(1)
+    const [io] = makeFakeIos(1).map(fixIo)
     const { folder } = makeRepoPaths(io, fakeRepoInfo)
     const file = folder.file('b.txt')
     const payload = 'Test data'
@@ -47,7 +49,7 @@ describe('repo', function () {
   })
 
   it('repo-to-repo sync', async function () {
-    const [io1, io2] = makeFakeIos(2)
+    const [io1, io2] = makeFakeIos(2).map(fixIo)
 
     const paths1 = makeRepoPaths(io1, fakeRepoInfo)
     const paths2 = makeRepoPaths(io2, fakeRepoInfo)

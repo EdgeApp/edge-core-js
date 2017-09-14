@@ -1,3 +1,4 @@
+// @flow
 import { fakeUser, makeFakeContexts } from '../indexABC.js'
 import { base58 } from '../util/encoding.js'
 import { assert } from 'chai'
@@ -22,7 +23,7 @@ describe('username', function () {
     const [context] = makeFakeContexts(contextOptions)
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    const list = await context.usernameList()
+    const list = await context.listUsernames()
     assert.deepEqual(list, ['js test 0'])
   })
 
@@ -30,8 +31,8 @@ describe('username', function () {
     const [context] = makeFakeContexts(contextOptions)
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    await context.removeUsername(fakeUser.username)
-    const list = await context.usernameList()
+    await context.deleteLocalAccount(fakeUser.username)
+    const list = await context.listUsernames()
     assert.equal(list.length, 0)
   })
 })
@@ -134,7 +135,7 @@ describe('password', function () {
     // Disable network access (but leave the sync server up):
     const oldFetch = context.io.fetch
     context.io.fetch = (url, opts) =>
-      /store/.test(url)
+      /store/.test(url.toString())
         ? oldFetch(url, opts)
         : Promise.reject(new Error('Network error'))
 
@@ -151,14 +152,14 @@ describe('pin', function () {
   it('exists', async function () {
     const [context] = makeFakeContexts(contextOptions)
 
-    const exists = await context.pinExists(fakeUser.username)
+    const exists = await context.pinLoginEnabled(fakeUser.username)
     assert(exists)
   })
 
   it('does not exist', async function () {
     const [context] = makeFakeContexts({})
 
-    const exists = await context.pinExists(fakeUser.username)
+    const exists = await context.pinLoginEnabled(fakeUser.username)
     assert(!exists)
   })
 

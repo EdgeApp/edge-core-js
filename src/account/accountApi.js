@@ -98,7 +98,10 @@ function makeAccountApi (
         .then(() => base58.stringify(state.login.pin2Key))
     },
 
-    recovery2Set (questions: string, answers: string): Promise<string> {
+    recovery2Set (
+      questions: Array<string>,
+      answers: Array<string>
+    ): Promise<string> {
       return state
         .changeRecovery(questions, answers)
         .then(() => base58.stringify(state.loginTree.recovery2Key))
@@ -180,8 +183,8 @@ function makeAccountApi (
       return this.pinSetup(pin)
     },
     setupRecovery2Questions (
-      questions: string,
-      answers: string
+      questions: Array<string>,
+      answers: Array<string>
     ): Promise<string> {
       return this.recovery2Set(questions, answers)
     },

@@ -1,3 +1,4 @@
+// @flow
 import { makeFakeCurrency } from '../../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../../test/fakeExchange.js'
 import { makeStore } from '../index.js'

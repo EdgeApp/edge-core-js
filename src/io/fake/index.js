@@ -1,4 +1,6 @@
+// @flow
 import { FakeServer } from './fakeServer.js'
+import type { AbcIo } from 'airbitz-core-types'
 import { makeMemoryFolder } from 'disklet'
 
 /**
@@ -16,8 +18,8 @@ const fakeConsole = {
 function makeFakeRandom () {
   let seed = 0
 
-  return bytes => {
-    const out = []
+  return (bytes: number) => {
+    const out = new Uint8Array(bytes)
 
     for (let i = 0; i < bytes; ++i) {
       // Simplest numbers that give a full-period generator with
@@ -35,7 +37,7 @@ function makeFakeRandom () {
  * Each object has its own storage, but all contexts share a server.
  * @param {number} count number of io contexts to create
  */
-export function makeFakeIos (count) {
+export function makeFakeIos (count: number): Array<AbcIo> {
   // The common server used by all contexts:
   const server = new FakeServer()
   const random = makeFakeRandom()

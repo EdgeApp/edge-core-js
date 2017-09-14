@@ -1,3 +1,4 @@
+// @flow
 import { makeFakeIos } from '../indexABC.js'
 import { makeCoreRoot } from '../coreRoot.js'
 import {

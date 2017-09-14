@@ -1,3 +1,4 @@
+// @flow
 import { mergeKeyInfos } from './keys.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
