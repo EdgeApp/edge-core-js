@@ -16,7 +16,7 @@ import { awaitPluginsLoaded } from '../redux/selectors.js'
 import { wrapObject } from '../util/api.js'
 import { base58 } from '../util/encoding.js'
 import { fixUsername } from './loginStore.js'
-import type { AbcContextOptions } from 'airbitz-core-types'
+import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
 
 export function makeContext (opts: AbcContextOptions) {
   const coreRoot = makeCoreRoot(opts)
@@ -29,8 +29,8 @@ export function makeContext (opts: AbcContextOptions) {
         ? opts.accountType.replace(/^account.repo:/, '')
         : ''
 
-  const out = wrapObject(coreRoot.onError, 'Context', {
-    io: coreRoot.io,
+  const rawContext: AbcContext = {
+    io: (coreRoot.io: any),
     appId,
 
     async getCurrencyPlugins () {
@@ -55,7 +55,7 @@ export function makeContext (opts: AbcContextOptions) {
       return usernameAvailable(coreRoot, username)
     },
 
-    createAccount (username: string, password: string, pin: string, opts) {
+    createAccount (username: string, password?: string, pin?: string, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return createLogin(coreRoot, username, {
@@ -154,19 +154,31 @@ export function makeContext (opts: AbcContextOptions) {
     },
 
     requestEdgeLogin (opts) {
-      const { callbacks, onLogin } = opts
+      const {
+        callbacks,
+        onLogin,
+        displayImageUrl,
+        displayName,
+        onProcessLogin
+      } = opts
 
-      opts.onLogin = (err, loginTree) => {
-        if (err) return onLogin(err)
-        makeAccount(coreRoot, appId, loginTree).then(
-          account => onLogin(null, account),
-          err => onLogin(err)
-        )
-      }
-      return requestEdgeLogin(coreRoot, appId, opts, callbacks)
+      return requestEdgeLogin(coreRoot, appId, {
+        displayImageUrl,
+        displayName,
+        onProcessLogin,
+        onLogin (err, loginTree) {
+          if (err) return onLogin(err)
+          makeAccount(coreRoot, appId, loginTree, 'edgeLogin', callbacks).then(
+            account => onLogin(void 0, account),
+            err => onLogin(err)
+          )
+        }
+      })
     }
-  })
+  }
 
+  // Wrap the context with logging:
+  const out = wrapObject(coreRoot.onError, 'Context', rawContext)
   out.usernameList = out.listUsernames
   out.removeUsername = out.deleteLocalAccount
 

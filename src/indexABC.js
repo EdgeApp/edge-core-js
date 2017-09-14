@@ -44,8 +44,9 @@ export function makeFakeContexts (
   ...opts: Array<AbcContextOptions>
 ): Array<AbcContext> {
   return makeFakeIos(opts.length).map((io, i) => {
-    if (opts[i].localFakeUser) stashFakeUser(io)
-    return makeContext({ ...opts[i], io })
+    const context = makeContext({ ...opts[i], io })
+    if (opts[i].localFakeUser) stashFakeUser(context.io)
+    return context
   })
 }
 export { fakeUser }

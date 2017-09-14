@@ -72,7 +72,7 @@ describe('creation', function () {
     const questions = fakeUser.recovery2Questions
     const answers = fakeUser.recovery2Answers
 
-    const account = await context.createAccount(username, null, fakeUser.pin)
+    const account = await context.createAccount(username, void 0, fakeUser.pin)
     const recovery2Key = await account.recovery2Set(questions, answers)
 
     return Promise.all([

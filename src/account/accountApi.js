@@ -11,6 +11,7 @@ import { makeExchangeCache } from './exchangeApi.js'
 import type {
   AbcAccount,
   AbcAccountCallbacks,
+  AbcCurrencyWallet,
   AbcWalletInfo,
   AbcWalletStates
 } from 'airbitz-core-types'
@@ -23,7 +24,7 @@ export function makeAccount (
   appId: string,
   loginTree: any,
   loginType: string = '',
-  callbacks: AbcAccountCallbacks | {} = {}
+  callbacks: AbcAccountCallbacks = {}
 ) {
   return makeAccountState(coreRoot, appId, loginTree, callbacks).then(state =>
     wrapObject(
@@ -47,7 +48,7 @@ function makeAccountApi (
 
   const exchangeCache = makeExchangeCache(coreRoot)
 
-  const abcAccount: AbcAccount = {
+  const rawAccount: AbcAccount = {
     get appId (): string {
       return state.login.appId
     },
@@ -161,14 +162,18 @@ function makeAccountApi (
     },
 
     // Core-managed wallets:
+    '@activeWalletIds': { sync: true },
     get activeWalletIds (): Array<string> {
       return state.activeWalletIds
     },
+
+    '@archivedWalletIds': { sync: true },
     get archivedWalletIds (): Array<string> {
       return state.archivedWalletIds
     },
-    get currencyWallets (): { [walletId: string]: {} } {
-      // TODO: Return a map of AbcCurrencyWallets ^^
+
+    '@currencyWallets': { sync: true },
+    get currencyWallets (): { [walletId: string]: AbcCurrencyWallet } {
       return state.currencyWallets
     },
 
@@ -191,17 +196,20 @@ function makeAccountApi (
     changeKeyStates (walletStates: AbcWalletStates): Promise<void> {
       return this.changeWalletStates(walletStates)
     },
+    '@getFirstWalletInfo': { sync: true },
     getFirstWalletInfo (type: string): AbcWalletInfo {
       return this.getFirstWallet(type)
     },
+    '@getWalletInfo': { sync: true },
     getWalletInfo (id: string): AbcWalletInfo {
       return this.getWallet(id)
     }
   }
+
   copyProperties(
-    abcAccount,
+    rawAccount,
     makeStorageWalletApi(coreRoot.redux, keyInfo, callbacks)
   )
 
-  return abcAccount
+  return rawAccount
 }
