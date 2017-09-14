@@ -55,9 +55,9 @@ export const base64 = {
 export const utf8 = {
   parse (text: string): Uint8Array {
     const byteString: string = utf8Codec.encode(text)
-    const out = new Uint8Array(text.length)
+    const out = new Uint8Array(byteString.length)
 
-    for (let i = 0; i < text.length; ++i) {
+    for (let i = 0; i < byteString.length; ++i) {
       out[i] = byteString.charCodeAt(i)
     }
 
