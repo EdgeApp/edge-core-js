@@ -1,14 +1,12 @@
 // @flow
-
 import { makeCurrencyWallet } from './currencyWallets/api.js'
 import { makeContext } from './io/context.js'
+import { makeFakeIos } from './io/fake'
+import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
 
 // Sub-module exports:
 import * as error from './error.js'
 import * as internal from './internal.js'
-
-import type { AbcContextOptions } from 'airbitz-core-types'
-
 export { error }
 export { internal }
 
@@ -31,17 +29,31 @@ export { makeFakeIos } from './io/fake'
 export { makeContext }
 
 /**
- * Same thing as `makeContext`, but corresponding to the documentation.
+ * Creates one or more fake Airbitz core library instances for testing.
+ * The instances all share the same virtual server,
+ * but each one receives its own options.
+ */
+export function makeFakeContexts (
+  ...opts: Array<AbcContextOptions>
+): Array<AbcContext> {
+  return makeFakeIos(opts.length).map((io, i) =>
+    makeContext({ ...opts[i], io })
+  )
+}
+
+/**
+ * Older, deprecated version of `makeContext`.
+ * It should be named `makeAbcContext`, if anything.
  */
 export function makeABCContext (
   apiKey: string,
   appId: string,
   opts: AbcContextOptions
-) {
+): AbcContext {
   return makeContext({ apiKey, appId, ...opts })
 }
 
 /**
- * Creates a new wallet object based on a set of keys.
+ * Creates a new wallet object based on a set of keys. Deprecated.
  */
 export { makeCurrencyWallet }

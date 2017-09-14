@@ -58,7 +58,7 @@ aes-js@^3.1.0:
 
 "airbitz-core-types@git+ssh://git@github.com/Airbitz/airbitz-core-types.git":
   version "0.0.1"
-  resolved "git+ssh://git@github.com/Airbitz/airbitz-core-types.git#ff18432b2b09748e3aa1fa0f024618df32018ff0"
+  resolved "git+ssh://git@github.com/Airbitz/airbitz-core-types.git#abaaadf3c2d25f0ccc6290d3d759970c3c0bb28e"
 
 ajv-keywords@^1.0.0:
   version "1.5.1"

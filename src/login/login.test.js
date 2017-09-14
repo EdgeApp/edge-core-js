@@ -1,28 +1,26 @@
-import { makeContext, makeFakeIos } from '../indexABC.js'
+import { makeFakeContexts } from '../indexABC.js'
 import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import { base58 } from '../util/encoding.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-function makeFakeContexts (count, opts) {
-  return makeFakeIos(count).map(io => makeContext({ ...opts, io }))
-}
+const contextOptions = {}
 
 describe('username', function () {
   it('normalize spaces and capitalization', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     assert.equal('test test', context.fixUsername('  TEST TEST  '))
   })
 
   it('reject invalid characters', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     assert.throws(() => context.fixUsername('テスト'))
   })
 
   it('list usernames in local storage', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(() =>
       context.usernameList().then(list => assert.deepEqual(list, ['js test 0']))
@@ -30,7 +28,7 @@ describe('username', function () {
   })
 
   it('remove username from local storage', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(() =>
       context
@@ -43,8 +41,7 @@ describe('username', function () {
 
 describe('appId', function () {
   it('can log into unknown apps', function () {
-    const [io] = makeFakeIos(1)
-    const context = makeContext({ io, appId: 'fakeApp' })
+    const [context] = makeFakeContexts({ appId: 'fakeApp' })
 
     return makeFakeAccount(context, fakeUser)
   })
@@ -52,7 +49,7 @@ describe('appId', function () {
 
 describe('creation', function () {
   it('username available', function () {
-    const [context, remote] = makeFakeContexts(2)
+    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
 
     return makeFakeAccount(remote, fakeUser).then(() =>
       context.usernameAvailable('js test 1').then(result => assert(result))
@@ -60,7 +57,7 @@ describe('creation', function () {
   })
 
   it('username not available', function () {
-    const [context, remote] = makeFakeContexts(2)
+    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
 
     return makeFakeAccount(remote, fakeUser).then(() =>
       context
@@ -71,7 +68,10 @@ describe('creation', function () {
 
   it('passwordless account', function () {
     this.timeout(1000)
-    const [context, remote] = makeFakeContexts(2, { appId: 'test' })
+    const [context, remote] = makeFakeContexts(
+      { appId: 'test' },
+      { appId: 'test' }
+    )
 
     const username = 'some fancy user'
     const questions = fakeUser.recovery2Questions
@@ -90,7 +90,10 @@ describe('creation', function () {
 
   it('create account', function () {
     this.timeout(15000)
-    const [context, remote] = makeFakeContexts(2, { appId: 'test' })
+    const [context, remote] = makeFakeContexts(
+      { appId: 'test' },
+      { appId: 'test' }
+    )
 
     return context
       .createAccount(fakeUser.username, fakeUser.password, fakeUser.pin)
@@ -112,7 +115,7 @@ describe('creation', function () {
 describe('password', function () {
   it('setup', function () {
     this.timeout(15000)
-    const [context, remote] = makeFakeContexts(2)
+    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account =>
       account
@@ -124,7 +127,7 @@ describe('password', function () {
   })
 
   it('check good', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account =>
       account.passwordOk(fakeUser.password).then(result => assert(result))
@@ -132,7 +135,7 @@ describe('password', function () {
   })
 
   it('check bad', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account =>
       account.passwordOk('wrong one').then(result => assert(!result))
@@ -140,7 +143,7 @@ describe('password', function () {
   })
 
   it('login offline', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(() => {
       // Disable network access (but leave the sync server up):
@@ -160,7 +163,7 @@ describe('password', function () {
   })
 
   it('login online', function () {
-    const [context, remote] = makeFakeContexts(2)
+    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
 
     return makeFakeAccount(remote, fakeUser).then(() =>
       context.loginWithPassword(
@@ -175,7 +178,7 @@ describe('password', function () {
 
 describe('pin', function () {
   it('exists', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(() =>
       context.pinExists(fakeUser.username).then(result => assert(result))
@@ -183,13 +186,13 @@ describe('pin', function () {
   })
 
   it('does not exist', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return context.pinExists(fakeUser.username).then(result => assert(!result))
   })
 
   it('login', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(() =>
       context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -199,8 +202,7 @@ describe('pin', function () {
   it('child login', function () {
     const trimmedUser = { ...fakeUser, pin2Key: null }
 
-    const [io] = makeFakeIos(1)
-    const context = makeContext({ io, appId: 'test-child' })
+    const [context] = makeFakeContexts({ appId: 'test-child' })
     const fakeContext = { io: context.io, appId: '' }
 
     return makeFakeAccount(fakeContext, trimmedUser).then(() =>
@@ -211,7 +213,7 @@ describe('pin', function () {
   })
 
   it('setup', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account =>
       account
@@ -223,7 +225,7 @@ describe('pin', function () {
 
 describe('recovery2', function () {
   it('get local key', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(() =>
       context
@@ -233,7 +235,7 @@ describe('recovery2', function () {
   })
 
   it('get questions', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(() =>
       context
@@ -252,7 +254,7 @@ describe('recovery2', function () {
   })
 
   it('login', function () {
-    const [context, remote] = makeFakeContexts(2)
+    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
 
     return makeFakeAccount(remote, fakeUser).then(() =>
       context.loginWithRecovery2(
@@ -266,7 +268,7 @@ describe('recovery2', function () {
   })
 
   it('set', function () {
-    const [context, remote] = makeFakeContexts(2)
+    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account =>
       account

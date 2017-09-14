@@ -1,14 +1,12 @@
-import { makeContext, makeFakeIos } from '../indexABC.js'
+import { makeFakeContexts } from '../indexABC.js'
 import { makeFakeCurrency } from '../test/fakeCurrency.js'
 import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import { base64 } from '../util/encoding.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-function makeFakeContexts (count) {
-  return makeFakeIos(count).map(io =>
-    makeContext({ io, plugins: [makeFakeCurrency()] })
-  )
+const contextOptions = {
+  plugins: [makeFakeCurrency()]
 }
 
 function findKeys (keyInfos, type) {
@@ -17,7 +15,7 @@ function findKeys (keyInfos, type) {
 
 describe('account', function () {
   it('calls callbacks', async function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
     await makeFakeAccount(context, fakeUser)
 
     let callbackCalled = false
@@ -32,7 +30,7 @@ describe('account', function () {
   })
 
   it('find repo', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account => {
       const { allKeys } = account
@@ -45,7 +43,7 @@ describe('account', function () {
   })
 
   it('attach repo', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account => {
       const keys = {
@@ -62,7 +60,7 @@ describe('account', function () {
   })
 
   it('create wallet', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account => {
       return account.createWallet('wallet:fakecoin').then(id => {
@@ -75,7 +73,7 @@ describe('account', function () {
   })
 
   it('list keys', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account => {
       const allTypes = account.allKeys.map(info => info.type)
@@ -89,7 +87,7 @@ describe('account', function () {
   })
 
   it('change key state', function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
 
     return makeFakeAccount(context, fakeUser).then(account =>
       account
@@ -115,7 +113,7 @@ describe('account', function () {
   })
 
   it('logout', async function () {
-    const [context] = makeFakeContexts(1)
+    const [context] = makeFakeContexts(contextOptions)
     const account = await makeFakeAccount(context, fakeUser)
     return account.logout()
   })
