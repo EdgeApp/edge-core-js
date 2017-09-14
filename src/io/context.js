@@ -33,8 +33,6 @@ export function makeContext (opts: AbcContextOptions) {
     io: coreRoot.io,
     appId,
 
-    coreRoot, // TODO: Stop allowing the tests to access our guts
-
     async getCurrencyPlugins () {
       await awaitPluginsLoaded(redux)
       return redux.getState().plugins.currencyPlugins

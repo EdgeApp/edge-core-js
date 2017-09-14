@@ -1,11 +1,12 @@
-import { makeFakeContexts } from '../indexABC.js'
+// @flow
+import { fakeUser, makeFakeContexts } from '../indexABC.js'
 import { makeFakeCurrency } from '../test/fakeCurrency.js'
-import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import { base64 } from '../util/encoding.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 const contextOptions = {
+  localFakeUser: true,
   plugins: [makeFakeCurrency()]
 }
 
@@ -16,7 +17,6 @@ function findKeys (keyInfos, type) {
 describe('account', function () {
   it('calls callbacks', async function () {
     const [context] = makeFakeContexts(contextOptions)
-    await makeFakeAccount(context, fakeUser)
 
     let callbackCalled = false
     const callbacks = {
@@ -29,92 +29,75 @@ describe('account', function () {
     assert(callbackCalled)
   })
 
-  it('find repo', function () {
+  it('find repo', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(context, fakeUser).then(account => {
-      const { allKeys } = account
-      const accountRepo = findKeys(allKeys, 'account-repo:co.airbitz.wallet')
-      assert(accountRepo)
-      assert.equal(accountRepo.keys.syncKey, base64.stringify(fakeUser.syncKey))
-      assert(findKeys(allKeys, 'account-repo:blah') == null)
-      return null
-    })
+    const { allKeys } = account
+    const accountRepo = findKeys(allKeys, 'account-repo:co.airbitz.wallet')
+    if (!accountRepo) throw new Error('Missing repo')
+    assert.equal(accountRepo.keys.syncKey, base64.stringify(fakeUser.syncKey))
+    assert(findKeys(allKeys, 'account-repo:blah') == null)
   })
 
-  it('attach repo', function () {
+  it('attach repo', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(context, fakeUser).then(account => {
-      const keys = {
-        dataKey: 'fa57',
-        syncKey: 'f00d'
-      }
-      return account.createWallet('account-repo:blah', keys).then(id => {
-        const info = account.allKeys.find(info => info.id === id)
-
-        assert.deepEqual(info.keys, keys)
-        return null
-      })
-    })
+    const keys = {
+      dataKey: 'fa57',
+      syncKey: 'f00d'
+    }
+    const id = await account.createWallet('account-repo:blah', keys)
+    const info = account.allKeys.find(info => info.id === id)
+    if (!info) throw new Error('Missing key info')
+    assert.deepEqual(info.keys, keys)
   })
 
-  it('create wallet', function () {
+  it('create wallet', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(context, fakeUser).then(account => {
-      return account.createWallet('wallet:fakecoin').then(id => {
-        const info = account.allKeys.find(info => info.id === id)
-
-        assert.equal(info.keys.fakeKey, 'FakePrivateKey')
-        return null
-      })
-    })
+    const id = await account.createWallet('wallet:fakecoin')
+    const info = account.allKeys.find(info => info.id === id)
+    if (!info) throw new Error('Missing key info')
+    assert.equal(info.keys.fakeKey, 'FakePrivateKey')
   })
 
-  it('list keys', function () {
+  it('list keys', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(context, fakeUser).then(account => {
-      const allTypes = account.allKeys.map(info => info.type)
-      assert.deepEqual(allTypes, [
-        'wallet:bitcoin',
-        'account-repo:co.airbitz.wallet',
-        'wallet:fakecoin'
-      ])
-      return null
-    })
+    const allTypes = account.allKeys.map(info => info.type)
+    assert.deepEqual(allTypes, [
+      'wallet:bitcoin',
+      'account-repo:co.airbitz.wallet',
+      'wallet:fakecoin'
+    ])
   })
 
-  it('change key state', function () {
+  it('change key state', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(context, fakeUser).then(account =>
-      account
-        .changeKeyStates({
-          'l3A0+Sx7oNFmrmRa1eefkCxbF9Y3ya9afVadVOBLgT8=': { sortIndex: 1 },
-          'JN4meEIJO05QhDMN3QZd48Qh7F1xHUpUmy2oEhg9DdY=': { deleted: true },
-          'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=': { sortIndex: 0 }
-        })
-        .then(() =>
-          account.changeKeyStates({
-            'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=': { archived: true }
-          })
-        )
-        .then(() => {
-          const allKeys = account.allKeys
-          assert.equal(allKeys[0].sortIndex, 1)
-          assert.equal(allKeys[1].deleted, true)
-          assert.equal(allKeys[2].sortIndex, 0)
-          assert.equal(allKeys[2].archived, true)
-          return null
-        })
-    )
+    await account.changeKeyStates({
+      'l3A0+Sx7oNFmrmRa1eefkCxbF9Y3ya9afVadVOBLgT8=': { sortIndex: 1 },
+      'JN4meEIJO05QhDMN3QZd48Qh7F1xHUpUmy2oEhg9DdY=': { deleted: true },
+      'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=': { sortIndex: 0 }
+    })
+    await account.changeKeyStates({
+      'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=': { archived: true }
+    })
+    const allKeys = account.allKeys
+    assert.equal(allKeys[0].sortIndex, 1)
+    assert.equal(allKeys[1].deleted, true)
+    assert.equal(allKeys[2].sortIndex, 0)
+    assert.equal(allKeys[2].archived, true)
   })
 
   it('logout', async function () {
     const [context] = makeFakeContexts(contextOptions)
-    const account = await makeFakeAccount(context, fakeUser)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     return account.logout()
   })
 })

@@ -2,6 +2,7 @@
 import { makeCurrencyWallet } from './currencyWallets/api.js'
 import { makeContext } from './io/context.js'
 import { makeFakeIos } from './io/fake'
+import { fakeUser, stashFakeUser } from './io/fake/fakeUser.js'
 import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
 
 // Sub-module exports:
@@ -30,16 +31,24 @@ export { makeContext }
 
 /**
  * Creates one or more fake Airbitz core library instances for testing.
+ *
  * The instances all share the same virtual server,
- * but each one receives its own options.
+ * but each context receives its own options.
+ *
+ * The virtual server comes pre-populated with a testing account.
+ * The credentials for this account are available in the 'fakeUser' export.
+ * Setting the `localFakeUser` context option to `true` will enable PIN
+ * and offline password login for that particular context.
  */
 export function makeFakeContexts (
   ...opts: Array<AbcContextOptions>
 ): Array<AbcContext> {
-  return makeFakeIos(opts.length).map((io, i) =>
-    makeContext({ ...opts[i], io })
-  )
+  return makeFakeIos(opts.length).map((io, i) => {
+    if (opts[i].localFakeUser) stashFakeUser(io)
+    return makeContext({ ...opts[i], io })
+  })
 }
+export { fakeUser }
 
 /**
  * Older, deprecated version of `makeContext`.

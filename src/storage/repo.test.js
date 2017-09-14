@@ -1,11 +1,18 @@
-import { makeContext, makeFakeIos } from '../indexABC.js'
+import { fakeUser, makeFakeIos } from '../indexABC.js'
 import { makeRepoPaths, syncRepo } from '../storage/repo.js'
-import { fakeUser, fakeRepoInfo, makeFakeAccount } from '../test/fakeUser.js'
+import { base64 } from '../util/encoding.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
+const fakeRepoInfo = {
+  keys: {
+    dataKey: base64.stringify(fakeUser.loginKey),
+    syncKey: base64.stringify(fakeUser.syncKey)
+  }
+}
+
 describe('repo', function () {
-  it('local get', function () {
+  it('local get', async function () {
     const [io] = makeFakeIos(1)
     const paths = makeRepoPaths(io, fakeRepoInfo)
 
@@ -16,57 +23,40 @@ describe('repo', function () {
       "data_base64": "lykLWi2MUBbcrdbbo2cZ9Q97aVohe6LZUihp7xfr1neAMj8mr0l9MP1ElteAzG4GG1FmjSsptajr6I2sNc5Kmw=="
     }`
 
-    return io.folder
+    await io.folder
       .folder('repos')
       .folder('GkVrxd1EmZpU6SkEwfo3911t1WjwBDW3tdrKd7QUDvvN')
       .folder('changes')
       .folder('a')
       .file('b.json')
       .setText(box)
-      .then(() => {
-        return paths.folder
-          .folder('a')
-          .file('b.json')
-          .getText()
-          .then(text => assert.equal(text, payload))
-      })
+
+    const text = await paths.folder.folder('a').file('b.json').getText()
+    assert.equal(text, payload)
   })
 
-  it('offline set/get', function () {
+  it('offline set/get', async function () {
     const [io] = makeFakeIos(1)
     const { folder } = makeRepoPaths(io, fakeRepoInfo)
     const file = folder.file('b.txt')
     const payload = 'Test data'
 
-    return file
-      .setText(payload)
-      .then(() => file.getText())
-      .then(text => assert.equal(text, payload))
+    await file.setText(payload)
+    const text = await file.getText()
+    assert.equal(text, payload)
   })
 
-  it('repo-to-repo sync', function () {
-    const [io1, io2, io3] = makeFakeIos(3)
-    io1.log = io1.console
-    io2.log = io2.console
+  it('repo-to-repo sync', async function () {
+    const [io1, io2] = makeFakeIos(2)
 
     const paths1 = makeRepoPaths(io1, fakeRepoInfo)
     const paths2 = makeRepoPaths(io2, fakeRepoInfo)
     const payload = 'Test data'
 
-    return makeFakeAccount(makeContext({ io: io3 }), fakeUser).then(() =>
-      paths1.folder
-        .folder('a')
-        .file('b.json')
-        .setText(payload)
-        .then(() => syncRepo(io1, paths1, {}).then(changed => assert(changed)))
-        .then(() => syncRepo(io2, paths2, {}).then(changed => assert(changed)))
-        .then(() =>
-          paths2.folder
-            .folder('a')
-            .file('b.json')
-            .getText()
-        )
-        .then(text => assert.equal(text, payload))
-    )
+    await paths1.folder.folder('a').file('b.json').setText(payload)
+    await syncRepo(io1, paths1, {}).then(changed => assert(changed))
+    await syncRepo(io2, paths2, {}).then(changed => assert(changed))
+    const text = await paths2.folder.folder('a').file('b.json').getText()
+    assert.equal(text, payload)
   })
 })

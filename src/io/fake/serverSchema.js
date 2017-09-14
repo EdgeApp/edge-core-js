@@ -22,7 +22,7 @@ export const loginReplyColumns = [
 ]
 
 // The database includes extra columns used for authentication:
-export const loginCreateColumns = [
+export const loginDbColumns = [
   ...loginReplyColumns,
   'loginAuth',
   'passwordAuth',
@@ -31,3 +31,8 @@ export const loginCreateColumns = [
   'recovery2Auth',
   'recovery2Id'
 ]
+
+// The v2 account creation endpoint doesn't accept legacy keys:
+export const loginCreateColumns = loginDbColumns.filter(
+  item => ['mnemonicBox', 'rootKeyBox', 'syncKeyBox'].indexOf(item) < 0
+)

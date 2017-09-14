@@ -1,10 +1,9 @@
-import { makeFakeContexts } from '../indexABC.js'
-import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
+import { fakeUser, makeFakeContexts } from '../indexABC.js'
 import { base58 } from '../util/encoding.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-const contextOptions = {}
+const contextOptions = { localFakeUser: true }
 
 describe('username', function () {
   it('normalize spaces and capitalization', function () {
@@ -19,272 +18,213 @@ describe('username', function () {
     assert.throws(() => context.fixUsername('テスト'))
   })
 
-  it('list usernames in local storage', function () {
+  it('list usernames in local storage', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(context, fakeUser).then(() =>
-      context.usernameList().then(list => assert.deepEqual(list, ['js test 0']))
-    )
+    const list = await context.usernameList()
+    assert.deepEqual(list, ['js test 0'])
   })
 
-  it('remove username from local storage', function () {
+  it('remove username from local storage', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(context, fakeUser).then(() =>
-      context
-        .removeUsername(fakeUser.username)
-        .then(() => context.usernameList())
-        .then(list => assert.equal(list.length, 0))
-    )
+    await context.removeUsername(fakeUser.username)
+    const list = await context.usernameList()
+    assert.equal(list.length, 0)
   })
 })
 
 describe('appId', function () {
-  it('can log into unknown apps', function () {
-    const [context] = makeFakeContexts({ appId: 'fakeApp' })
-
-    return makeFakeAccount(context, fakeUser)
+  it('can log into unknown apps', async function () {
+    const [context] = makeFakeContexts({
+      appId: 'fakeApp',
+      localFakeUser: true
+    })
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 })
 
 describe('creation', function () {
-  it('username available', function () {
-    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
+  it('username available', async function () {
+    const [context] = makeFakeContexts(contextOptions)
 
-    return makeFakeAccount(remote, fakeUser).then(() =>
-      context.usernameAvailable('js test 1').then(result => assert(result))
-    )
+    const available = await context.usernameAvailable('js test 1')
+    assert(available)
   })
 
-  it('username not available', function () {
-    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
+  it('username not available', async function () {
+    const [context] = makeFakeContexts(contextOptions)
 
-    return makeFakeAccount(remote, fakeUser).then(() =>
-      context
-        .usernameAvailable(fakeUser.username)
-        .then(result => assert(!result))
-    )
+    const available = await context.usernameAvailable(fakeUser.username)
+    assert(!available)
   })
 
-  it('passwordless account', function () {
+  it('passwordless account', async function () {
     this.timeout(1000)
     const [context, remote] = makeFakeContexts(
       { appId: 'test' },
       { appId: 'test' }
     )
-
     const username = 'some fancy user'
     const questions = fakeUser.recovery2Questions
     const answers = fakeUser.recovery2Answers
-    const recovery2Key = context
-      .createAccount(username, null, fakeUser.pin)
-      .then(account => account.recovery2Set(questions, answers))
 
-    return recovery2Key.then(recovery2Key =>
-      Promise.all([
-        context.loginWithPIN(username, fakeUser.pin, null, null),
-        remote.loginWithRecovery2(recovery2Key, username, answers, null, null)
-      ])
-    )
+    const account = await context.createAccount(username, null, fakeUser.pin)
+    const recovery2Key = await account.recovery2Set(questions, answers)
+
+    return Promise.all([
+      context.loginWithPIN(username, fakeUser.pin),
+      remote.loginWithRecovery2(recovery2Key, username, answers)
+    ])
   })
 
-  it('create account', function () {
+  it('create account', async function () {
     this.timeout(15000)
     const [context, remote] = makeFakeContexts(
       { appId: 'test' },
       { appId: 'test' }
     )
+    const username = 'some fancy user'
+    const password = 'some fancy password'
+    const pin = '0218'
 
-    return context
-      .createAccount(fakeUser.username, fakeUser.password, fakeUser.pin)
-      .then(account => {
-        return Promise.all([
-          context.loginWithPIN(fakeUser.username, fakeUser.pin, null, null),
-          remote.loginWithPassword(
-            fakeUser.username,
-            fakeUser.password,
-            null,
-            null
-          ),
-          context.loginWithKey(fakeUser.username, account.loginKey)
-        ])
-      })
+    const account = await context.createAccount(username, password, pin)
+
+    return Promise.all([
+      context.loginWithPIN(username, pin),
+      remote.loginWithPassword(username, password),
+      context.loginWithKey(username, account.loginKey)
+    ])
   })
 })
 
 describe('password', function () {
-  it('setup', function () {
+  it('setup', async function () {
     this.timeout(15000)
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
 
-    return makeFakeAccount(context, fakeUser).then(account =>
-      account
-        .passwordSetup('Test1234')
-        .then(() =>
-          remote.loginWithPassword(fakeUser.username, 'Test1234', null, null)
-        )
-    )
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.passwordSetup('Test1234')
+
+    return remote.loginWithPassword(fakeUser.username, 'Test1234')
   })
 
-  it('check good', function () {
+  it('check good', async function () {
     const [context] = makeFakeContexts(contextOptions)
 
-    return makeFakeAccount(context, fakeUser).then(account =>
-      account.passwordOk(fakeUser.password).then(result => assert(result))
-    )
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const ok = await account.passwordOk(fakeUser.password)
+    assert(ok)
   })
 
-  it('check bad', function () {
+  it('check bad', async function () {
     const [context] = makeFakeContexts(contextOptions)
 
-    return makeFakeAccount(context, fakeUser).then(account =>
-      account.passwordOk('wrong one').then(result => assert(!result))
-    )
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const ok = await account.passwordOk('wrong one')
+    assert(!ok)
   })
 
-  it('login offline', function () {
+  it('login offline', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(context, fakeUser).then(() => {
-      // Disable network access (but leave the sync server up):
-      const oldFetch = context.io.fetch
-      context.io.fetch = (url, opts) =>
-        /store/.test(url)
-          ? oldFetch(url, opts)
-          : Promise.reject(new Error('Network error'))
+    // Disable network access (but leave the sync server up):
+    const oldFetch = context.io.fetch
+    context.io.fetch = (url, opts) =>
+      /store/.test(url)
+        ? oldFetch(url, opts)
+        : Promise.reject(new Error('Network error'))
 
-      return context.loginWithPassword(
-        fakeUser.username,
-        fakeUser.password,
-        null,
-        null
-      )
-    })
+    return context.loginWithPassword(fakeUser.username, fakeUser.password)
   })
 
   it('login online', function () {
-    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
-
-    return makeFakeAccount(remote, fakeUser).then(() =>
-      context.loginWithPassword(
-        fakeUser.username,
-        fakeUser.password,
-        null,
-        null
-      )
-    )
+    const [context] = makeFakeContexts(contextOptions, contextOptions)
+    return context.loginWithPassword(fakeUser.username, fakeUser.password)
   })
 })
 
 describe('pin', function () {
-  it('exists', function () {
+  it('exists', async function () {
     const [context] = makeFakeContexts(contextOptions)
 
-    return makeFakeAccount(context, fakeUser).then(() =>
-      context.pinExists(fakeUser.username).then(result => assert(result))
-    )
+    const exists = await context.pinExists(fakeUser.username)
+    assert(exists)
   })
 
-  it('does not exist', function () {
+  it('does not exist', async function () {
+    const [context] = makeFakeContexts({})
+
+    const exists = await context.pinExists(fakeUser.username)
+    assert(!exists)
+  })
+
+  it('login', async function () {
     const [context] = makeFakeContexts(contextOptions)
-
-    return context.pinExists(fakeUser.username).then(result => assert(!result))
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
-  it('login', function () {
+  it('setup', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(context, fakeUser).then(() =>
-      context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    )
-  })
-
-  it('child login', function () {
-    const trimmedUser = { ...fakeUser, pin2Key: null }
-
-    const [context] = makeFakeContexts({ appId: 'test-child' })
-    const fakeContext = { coreRoot: context.coreRoot, appId: '' }
-
-    return makeFakeAccount(fakeContext, trimmedUser).then(() =>
-      context
-        .loginWithPIN(fakeUser.username, fakeUser.pin)
-        .then(account => assert.equal(account.appId, 'test-child'))
-    )
-  })
-
-  it('setup', function () {
-    const [context] = makeFakeContexts(contextOptions)
-
-    return makeFakeAccount(context, fakeUser).then(account =>
-      account
-        .pinSetup('4321')
-        .then(() => context.loginWithPIN(fakeUser.username, '4321'))
-    )
+    await account.pinSetup('4321')
+    await context.loginWithPIN(fakeUser.username, '4321')
   })
 })
 
 describe('recovery2', function () {
-  it('get local key', function () {
+  it('get local key', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    const recovery2Key = await context.getRecovery2Key(fakeUser.username)
+    assert.equal(recovery2Key, base58.stringify(fakeUser.recovery2Key))
+  })
+
+  it('get questions', async function () {
     const [context] = makeFakeContexts(contextOptions)
 
-    return makeFakeAccount(context, fakeUser).then(() =>
-      context
-        .getRecovery2Key(fakeUser.username)
-        .then(key => assert.equal(key, base58.stringify(fakeUser.recovery2Key)))
+    const questions = await context.fetchRecovery2Questions(
+      base58.stringify(fakeUser.recovery2Key),
+      fakeUser.username
+    )
+
+    assert.equal(questions.length, fakeUser.recovery2Questions.length)
+    for (let i = 0; i < questions.length; ++i) {
+      assert.equal(questions[i], fakeUser.recovery2Questions[i])
+    }
+  })
+
+  it('login', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+
+    await context.loginWithRecovery2(
+      base58.stringify(fakeUser.recovery2Key),
+      fakeUser.username,
+      fakeUser.recovery2Answers
     )
   })
 
-  it('get questions', function () {
-    const [context] = makeFakeContexts(contextOptions)
-
-    return makeFakeAccount(context, fakeUser).then(() =>
-      context
-        .fetchRecovery2Questions(
-          base58.stringify(fakeUser.recovery2Key),
-          fakeUser.username
-        )
-        .then(questions => {
-          assert.equal(questions.length, fakeUser.recovery2Questions.length)
-          for (let i = 0; i < questions.length; ++i) {
-            assert.equal(questions[i], fakeUser.recovery2Questions[i])
-          }
-          return true
-        })
-    )
-  })
-
-  it('login', function () {
+  it('set', async function () {
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    return makeFakeAccount(remote, fakeUser).then(() =>
-      context.loginWithRecovery2(
-        base58.stringify(fakeUser.recovery2Key),
+    const recovery2Key = await account.recovery2Set(
+      fakeUser.recovery2Questions,
+      fakeUser.recovery2Answers
+    )
+
+    await Promise.all([
+      remote.fetchRecovery2Questions(recovery2Key, fakeUser.username),
+      remote.loginWithRecovery2(
+        recovery2Key,
         fakeUser.username,
-        fakeUser.recovery2Answers,
-        null,
-        null
+        fakeUser.recovery2Answers
       )
-    )
-  })
-
-  it('set', function () {
-    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
-
-    return makeFakeAccount(context, fakeUser).then(account =>
-      account
-        .recovery2Set(fakeUser.recovery2Questions, fakeUser.recovery2Answers)
-        .then(key =>
-          Promise.all([
-            remote.fetchRecovery2Questions(key, fakeUser.username),
-            remote.loginWithRecovery2(
-              key,
-              fakeUser.username,
-              fakeUser.recovery2Answers,
-              null,
-              null
-            )
-          ])
-        )
-    )
+    ])
   })
 })

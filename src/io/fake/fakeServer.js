@@ -1,6 +1,8 @@
 import { filterObject, softCat } from '../../util/util.js'
+import { fakeRepos, fakeUserServer } from './fakeUser.js'
 import {
   loginCreateColumns,
+  loginDbColumns,
   loginReplyColumns
 } from './serverSchema.js'
 
@@ -477,6 +479,14 @@ export class FakeServer {
         return Promise.reject(e)
       }
     }
+
+    // Create fake repos:
+    for (const syncKey of Object.keys(fakeRepos)) {
+      this.repos[syncKey] = { ...fakeRepos[syncKey] }
+    }
+
+    // Create fake users:
+    this.setupFakeUser(fakeUserServer)
   }
 
   findLoginId (loginId) {
@@ -519,5 +529,19 @@ export class FakeServer {
       `Unknown API endpoint ${req.path}`,
       404
     )
+  }
+
+  setupFakeUser (user, parent = null) {
+    // Fill in the database row for this login:
+    const row = filterObject(user, loginDbColumns)
+    row.parent = parent
+    this.db.logins.push(row)
+
+    // Recurse into our children:
+    if (user.children != null) {
+      for (const child of user.children) {
+        this.setupFakeUser(child, user.loginId)
+      }
+    }
   }
 }

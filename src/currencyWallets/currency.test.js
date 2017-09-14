@@ -1,18 +1,17 @@
-import { makeContext, makeFakeIos } from '../indexABC.js'
+// @flow
+import { fakeUser, makeFakeContexts } from '../indexABC.js'
 import { makeAssertLog } from '../test/assertLog.js'
 import {
   makeFakeCurrency,
   makeFakeCurrencyStore
 } from '../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../test/fakeExchange.js'
-import { fakeUser, makeFakeAccount } from '../test/fakeUser.js'
 import { awaitState } from '../util/redux/reaction.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 import { createStore } from 'redux'
 
 async function makeFakeCurrencyWallet (store, callbacks) {
-  const [io] = makeFakeIos(1)
   const plugin = makeFakeCurrency(store)
 
   // Use `onKeyListChanged` to trigger checking for wallets:
@@ -24,8 +23,13 @@ async function makeFakeCurrencyWallet (store, callbacks) {
     }
   }
 
-  const context = makeContext({ io, plugins: [plugin, fakeExchangePlugin] })
-  const account = await makeFakeAccount(context, fakeUser, callbacks)
+  const [context] = makeFakeContexts({
+    localFakeUser: true,
+    plugins: [plugin, fakeExchangePlugin]
+  })
+  const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin, {
+    callbacks
+  })
 
   // Wait for the wallet to load:
   const walletId = account.getFirstWallet('wallet:fakecoin').id

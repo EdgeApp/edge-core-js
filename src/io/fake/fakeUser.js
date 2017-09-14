@@ -1,28 +1,53 @@
+// @flow
 /**
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
-import { makeAccount } from '../account/accountApi.js'
-import { fixUsername } from '../io/loginStore.js'
-import { applyLoginReply, makeLoginTree } from '../login/login.js'
-import { makeRepoPaths, saveChanges } from '../storage/repo.js'
-import { base16, base64 } from '../util/encoding.js'
-import { elvis, filterObject } from '../util/util.js'
+import type { CoreIo } from '../../coreRoot.js'
+import { base16, base58, base64 } from '../../util/encoding.js'
+
+export const fakeUser = {
+  // Credentials:
+  username: 'JS test 0',
+  password: 'y768Mv4PLFupQjMu',
+  pin: '1234',
+  recovery2Answers: [
+    'Sir Lancelot of Camelot',
+    'To seek the Holy Grail',
+    'Blue'
+  ],
+  recovery2Questions: [
+    'What is your name?',
+    'What is your quest?',
+    'What is your favorite color?'
+  ],
+
+  // Keys:
+  loginKey: base64.parse('GfkdeJm4b4WUYNhQqWcI5e0J/e6wra+QUxmichsaCfA='),
+  pin2Key: base64.parse('D0PT0Gtj0S9vxlcaktwdk3iMlH6osgTgUUNtoTmE2pA='),
+  recovery2Key: base64.parse('BYEJSOxFj983EUeAfj57W+dFYm+pdUfIP+jCmYtutOc='),
+  syncKey: base16.parse('e254eb85285f96574a33bfe97b13f533fe245b42'),
+
+  // test-child keys:
+  childLoginKey: base64.parse('Ae7zAhoykf1Zky9Lx9vs6VkC0M3VjoLkEpr/5Mf31Xo='),
+  childPin2Key: base64.parse('AxJd1CfG4WgLOiW8r24p0BNi7aQ3FnE4G4q1jL++uaA='),
+
+  // test-child-child keys:
+  childChildLoginKey: base64.parse(
+    'S0FLOgSDjJjvA07vs7UEAMbagS3qiV/5o7c4+kwW7o8='
+  )
+}
 
 /**
  * Everything here is in server format (text), except for keys.
  * Those are in the post-login format (binary).
  */
-export const fakeUser = {
-  username: 'JS test 0',
-
+export const fakeUserServer = {
   // Identity:
   appId: '',
   loginId: 'm3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=',
-  loginKey: base64.parse('GfkdeJm4b4WUYNhQqWcI5e0J/e6wra+QUxmichsaCfA='),
 
   // Password:
-  password: 'y768Mv4PLFupQjMu',
   passwordAuth: '5dd0xXRq1tN7JF0aGwmXf9kaExbZyMyIKBWGc0hIACc=',
   passwordAuthBox: {
     data_base64:
@@ -44,7 +69,6 @@ export const fakeUser = {
   },
 
   // PIN v1:
-  pin: '1234',
   pinId: 'ykRUVmIqaGNx3wlp3myep+dDUCHjiRCQ/u30o/0I1tc=',
   pinBox: {
     data_base64:
@@ -68,7 +92,6 @@ export const fakeUser = {
       'TYNoHvzlC/7r/2mR26bvXI0OBPEuY8lBs3DZi4NephEFjs5za+5RRyilG35piSHhgLzn3u1scpLt0fuvwjT+ZhLsMvsZug8RXzIEqSZFijI='
   },
   pin2Id: 'X8iNgUh49p8B5FZNAsaTk0nXTtbOzWI5Eo91zUvJgd0=',
-  pin2Key: base64.parse('D0PT0Gtj0S9vxlcaktwdk3iMlH6osgTgUUNtoTmE2pA='),
   pin2KeyBox: {
     encryptionType: 0,
     iv_hex: '84e0026a5826e614a0228c68b2161e9c',
@@ -77,11 +100,12 @@ export const fakeUser = {
   },
 
   // Recovery v2:
-  recovery2Answers: [
-    'Sir Lancelot of Camelot',
-    'To seek the Holy Grail',
-    'Blue'
-  ],
+  question2Box: {
+    encryptionType: 0,
+    iv_hex: '9e9e326f3290798710db411479a4492f',
+    data_base64:
+      'U4exiu8ycykdZUL/+urQxbVcpyugCJJKtPZ48jvkrMawJhUnolv9g2oCs5IPkUpXx3V7atgpIZHi71tadC0zaIgJfoyXBw0V4ZVNZtiFIljJxYsuI60sGHIrYmyNj3ZDHevpRWoHtEIYNtg8S57ZLIWUO1eQmuEkfpj8VAasGbk='
+  },
   recovery2Auth: [
     '3HLK5/t/b423IHXRU+Y3QpchDs7vYBTRcmVSDCSxtrM=',
     'NB//m53r5qqz8CvJTU+oX6MUrnRGsXkyiQLvLmBkOpU=',
@@ -94,23 +118,11 @@ export const fakeUser = {
       'bSHUW6sKgDkqaiwsvxWeCNj4KSE3FSKsQ12EAv0iUe9Ym/l6nMrt/Vamwe5Rw7gpRlKaLSklFCXD1TL5EytfwfSrWYz4ijR1NG9FZThW4B8='
   },
   recovery2Id: 'DeovL5jZTjnVjj+W/a7mTFKn0evQw0a3RxaAEwBC1+8=',
-  recovery2Key: base64.parse('BYEJSOxFj983EUeAfj57W+dFYm+pdUfIP+jCmYtutOc='),
   recovery2KeyBox: {
     encryptionType: 0,
     iv_hex: 'a1d70b50758a8b4adee8b1f56b310f6c',
     data_base64:
       'Z7lrDhvJC3t/TMwFXVX+iA1RP7erSeLrESbdOGbs0Kl1jeaYDNZMIovo5bX01DB7myS4ozbGu1NKhNk4sxTa3eraTe+dz4khLqm+5cNwuIA='
-  },
-  recovery2Questions: [
-    'What is your name?',
-    'What is your quest?',
-    'What is your favorite color?'
-  ],
-  question2Box: {
-    encryptionType: 0,
-    iv_hex: '9e9e326f3290798710db411479a4492f',
-    data_base64:
-      'U4exiu8ycykdZUL/+urQxbVcpyugCJJKtPZ48jvkrMawJhUnolv9g2oCs5IPkUpXx3V7atgpIZHi71tadC0zaIgJfoyXBw0V4ZVNZtiFIljJxYsuI60sGHIrYmyNj3ZDHevpRWoHtEIYNtg8S57ZLIWUO1eQmuEkfpj8VAasGbk='
   },
 
   // Long-term key storage:
@@ -120,7 +132,6 @@ export const fakeUser = {
     encryptionType: 0,
     iv_hex: '96cc1ebc2d11a0b38c9259c056d3ca23'
   },
-  syncKey: base16.parse('e254eb85285f96574a33bfe97b13f533fe245b42'),
   syncKeyBox: {
     data_base64:
       'ruf9v3eWUg2GZJf+94boCPyui4nQ9HnJCWx07kmRg+nKns+1MlqSFQQNINgHXLWDrQvho69AnQrP9Ep+PcXOnG+m0kiqlmzm8UdhQoQJOKP/O5S2TFwMuLpLrGN+I4F5HbdGVMA20WJjhfQ7Kzc3H2hHwm1BUo0xItbV/audT6KySR+ugeW+jF5glzB0/8eAYFKloYd0YC6TZg1gmZU7jqBatpylk7a9znrZG6zKVyPQxnkKr6TnF3xQihSw2H7g1Gd4AI4Pttye/RYsVbwqFFnD2OZwgp7kqeyLwVRsU6OboRtkBYuaa4adYhXHda94',
@@ -148,7 +159,6 @@ export const fakeUser = {
           'VpqitCInCKYD8ZkYgR9/1aPrAFPEPDd/h6mqZmUE9eXuVDKzJcufXV/TgPnomLKBsprNOoZ0QNzudtXYLJu6AxDtMI4i/brvj/6gC26zaqE='
       },
       loginId: 'XLEnM4m6ArsEQp+OheBSgIXGLb88RvO086D65ILwAkg=',
-      loginKey: base64.parse('Ae7zAhoykf1Zky9Lx9vs6VkC0M3VjoLkEpr/5Mf31Xo='),
       parentBox: {
         encryptionType: 0,
         iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
@@ -163,7 +173,6 @@ export const fakeUser = {
           'G/edIgFPvr57S02TyT2qH3ylZ5BmOWMvMAMLKUksRr5Zw4nNGAy95Erga2BqWCqAYR3fCAp+TTKoCR/Wd6lgesCkpQYxh3fTUBliZwbUUtY='
       },
       pin2Id: 'oEfMhgYiGLM0JGcrxA3FgACSURA9QIkb+yanM8Euiqo=',
-      pin2Key: 'AxJd1CfG4WgLOiW8r24p0BNi7aQ3FnE4G4q1jL++uaA=',
       pin2KeyBox: {
         encryptionType: 0,
         iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
@@ -181,9 +190,6 @@ export const fakeUser = {
               'mLsk9qk63Ds3otupOcQwCvDgfzmn9koQ1tBNyBDGGDYvbVmD6gS/hZuresxTpX2DHWNVQC25Y5sISRvbCO1jWuImv8JuT9rCp7aWd+fTgdY='
           },
           loginId: 'aE08nXKAftS37IQiOx7ccRrCkh8fLLiRbw5CnG26bbc=',
-          loginKey: base64.parse(
-            'S0FLOgSDjJjvA07vs7UEAMbagS3qiV/5o7c4+kwW7o8='
-          ),
           parentBox: {
             encryptionType: 0,
             iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
@@ -197,7 +203,7 @@ export const fakeUser = {
 }
 
 // Repositories:
-export const repos = {
+export const fakeRepos = {
   e254eb85285f96574a33bfe97b13f533fe245b42: {
     'Wallets/8568EAC0-62D0-405E-95A1-B457AE372F09.json': {
       iv_hex: '2902014ac691c90f8183140ba74c921c',
@@ -216,107 +222,29 @@ export const repos = {
   }
 }
 
-export const fakeRepoInfo = {
-  keys: {
-    dataKey: base64.stringify(fakeUser.loginKey),
-    syncKey: base64.stringify(fakeUser.syncKey)
+export function stashFakeUser (io: CoreIo) {
+  // The bare minimum data needed to log in with PIN:
+  const fakeStash = {
+    appId: fakeUserServer.appId,
+    loginId: fakeUserServer.loginId,
+    username: 'js test 0',
+    passwordAuthBox: fakeUserServer.passwordAuthBox,
+    pin2Key: base64.stringify(fakeUser.pin2Key),
+    children: [
+      {
+        appId: fakeUserServer.children[0].appId,
+        loginAuthBox: fakeUserServer.children[0].loginAuthBox,
+        loginId: fakeUserServer.children[0].loginId,
+        parentBox: fakeUserServer.children[0].parentBox,
+        pin2Key: base64.stringify(fakeUser.childPin2Key)
+      }
+    ]
   }
-}
 
-/**
- * Creates a login object on the fakeServer.
- */
-function createFakeServerUser (coreRoot, user, authJson = {}) {
-  // Create the login on the server:
-  const data = filterObject(user, [
-    'appId',
-    'loginId',
-    'loginAuth',
-    'loginAuthBox',
-    'parentBox',
-    'passwordAuth',
-    'passwordAuthBox',
-    'passwordBox',
-    'passwordKeySnrp',
-    'pin2Auth',
-    'pin2Box',
-    'pin2Id',
-    'pin2KeyBox',
-    'question2Box',
-    'recovery2Auth',
-    'recovery2Box',
-    'recovery2Id',
-    'recovery2KeyBox',
-    'rootKeyBox',
-    'syncKeyBox'
-  ])
-  data.newSyncKeys = Object.keys(repos)
-  authJson.data = data
-  return coreRoot
-    .authRequest('POST', '/v2/login/create', authJson)
-    .then(reply => {
-      // Create children:
-      const children = elvis(user.children, [])
-      const parentAuth =
-        user.loginAuth != null
-          ? {
-            loginId: user.loginId,
-            loginAuth: user.loginAuth
-          }
-          : {
-            userId: user.loginId,
-            passwordAuth: user.passwordAuth
-          }
-      return Promise.all(
-        children.map(child => createFakeServerUser(coreRoot, child, parentAuth))
-      )
-    })
-}
-
-/**
- * Creates a fake login object, both on the server and on disk.
- */
-function createFakeLogin (coreRoot, appId, user) {
-  const loginStash = applyLoginReply(
-    { username: fixUsername(user.username), appId: '' },
-    user.loginKey,
-    user
-  )
-
-  return Promise.all([
-    createFakeServerUser(coreRoot, user),
-    coreRoot.loginStore.save(loginStash)
-  ]).then(() => makeLoginTree(loginStash, user.loginKey))
-}
-
-/**
- * Creates fake repos, both on-disk and on the auth server.
- */
-function createFakeRepos (io, repos) {
-  const syncKeys = Object.keys(repos)
-
-  return Promise.all([
-    // Populate the repos on the server:
-    ...syncKeys.map(syncKey =>
-      io.fetch('https://hostname/api/v2/store/' + syncKey, {
-        method: 'POST',
-        body: JSON.stringify({ changes: repos[syncKey] })
-      })
-    ),
-
-    // Populate the repos on the client:
-    ...syncKeys.map(syncKey => {
-      const { dataFolder } = makeRepoPaths(io, fakeRepoInfo)
-      return saveChanges(dataFolder, repos[syncKey])
-    })
-  ])
-}
-
-export async function makeFakeAccount (context, user, callbacks) {
-  const { coreRoot, appId } = context
-
-  const loginTree = await createFakeLogin(coreRoot, appId, user)
-  await createFakeRepos(coreRoot.io, repos)
-
-  return makeAccount(coreRoot, appId, loginTree, 'fake', callbacks)
+  // Write to disk, relying on the fact that the in-memory folder is not
+  // really async. Context creation can't be async, so we have no choice:
+  io.folder
+    .folder('logins')
+    .file(base58.stringify(base64.parse(fakeUserServer.loginId)) + '.json')
+    .setText(JSON.stringify(fakeStash))
 }
