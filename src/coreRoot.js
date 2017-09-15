@@ -4,7 +4,7 @@ import { fixIo } from './io/fixIo.js'
 import { LoginStore } from './io/loginStore.js'
 import { makeBrowserIo } from './io/browser'
 import { fetchExchangeRates, initStore, setupPlugins } from './redux/actions.js'
-import type { RootState } from './redux/types.js'
+import type { RootState } from './redux/rootReducer.js'
 import { makeStore } from './redux/index.js'
 import type {
   AbcConsole,

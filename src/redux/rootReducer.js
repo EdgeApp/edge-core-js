@@ -1,8 +1,11 @@
+// @flow
+import type { CoreIo } from '../coreRoot.js'
 import currencyWallets from './currencyWallets/reducer.js'
 import exchangeCache from './exchangeCache/reducer.js'
 import plugins from './plugins/reducer.js'
 import scrypt from './scrypt/reducer.js'
 import storageWallets from './storageWallets/reducer.js'
+import type { AbcCurrencyPlugin } from 'airbitz-core-types'
 import { combineReducers } from 'redux'
 
 export const INIT = 'airbitz-core-js/INIT'
@@ -10,7 +13,7 @@ export const INIT = 'airbitz-core-js/INIT'
 /**
  * Initializes the redux store on context creation.
  */
-export function initStore (io, onError) {
+export function initStore (io: CoreIo, onError: (e: Error) => void) {
   return { type: INIT, payload: { io, onError } }
 }
 
@@ -36,3 +39,11 @@ export default combineReducers({
   currencyWallets,
   storageWallets
 })
+
+export interface RootState {
+  io: CoreIo,
+  onError: (e: Error) => void,
+  plugins: {
+    currencyPlugins: Array<AbcCurrencyPlugin>
+  }
+}
