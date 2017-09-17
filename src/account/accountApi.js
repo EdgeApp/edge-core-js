@@ -24,7 +24,7 @@ export function makeAccount (
   appId: string,
   loginTree: any,
   loginType: string = '',
-  callbacks: AbcAccountCallbacks = {}
+  callbacks: AbcAccountCallbacks | {} = {}
 ) {
   return makeAccountState(coreRoot, appId, loginTree, callbacks).then(state =>
     wrapObject(
