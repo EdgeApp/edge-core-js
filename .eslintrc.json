@@ -4,11 +4,11 @@
   "plugins": ["standard", "flowtype"],
   "rules": {
     "camelcase": "error",
+    "flowtype/generic-spacing": "off",
     "no-throw-literal": "error",
     "no-var": "error",
     "prefer-const": "error",
     "promise/always-return": "error",
-    "promise/no-return-wrap": "error",
-    "flow/generic-spacing": "off"
+    "promise/no-return-wrap": "error"
   }
 }
