@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "aes-js": "^3.1.0",
-    "airbitz-core-types": "git+ssh://git@github.com/Airbitz/airbitz-core-types.git",
+    "airbitz-core-types": "git://github.com/Airbitz/airbitz-core-types.git",
     "base-x": "^1.0.4",
     "chai": "^4.1.2",
     "mocha": "^3.5.0",
