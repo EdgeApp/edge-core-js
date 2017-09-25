@@ -4,11 +4,14 @@ import { fixIo } from './io/fixIo.js'
 import type { FixedIo } from './io/fixIo.js'
 import { LoginStore } from './io/loginStore.js'
 import { makeBrowserIo } from './io/browser'
+import { rootPixie } from './pixies/rootPixie.js'
+import type { RootOutput } from './pixies/rootPixie.js'
 import { fetchExchangeRates, initStore, setupPlugins } from './redux/actions.js'
 import type { RootState } from './redux/rootReducer.js'
 import { makeStore } from './redux/index.js'
 import type { AbcContextCallbacks, AbcContextOptions } from 'airbitz-core-types'
 import type { Store } from 'redux'
+import { attachPixie, filterPixie } from 'redux-pixies'
 
 /**
  * The root of the entire core state machine.
@@ -21,10 +24,14 @@ class CoreRootClass {
 
   authServer: any
   loginStore: any
-  redux: Store<RootState, {}, any>
   authRequest (method: string, path: string, body?: {}) {
     return this.authServer.request(method, path, body)
   }
+
+  // Redux state:
+  redux: Store<RootState, any, any>
+  output: RootOutput
+  destroyPixie: () => void
 
   constructor (opts: AbcContextOptions) {
     const onErrorDefault = (error, name) => this.io.console.error(name, error)
@@ -45,11 +52,25 @@ class CoreRootClass {
     // Set up wrapper objects:
     this.authServer = new AuthServer(this.io, apiKey, authServer)
     this.loginStore = new LoginStore(this.io)
+
+    // Set up redux:
     this.redux = makeStore()
     this.redux.dispatch(initStore(this.io, onError))
     this.redux
       .dispatch(setupPlugins(this.io, plugins))
       .then(() => this.redux.dispatch(fetchExchangeRates()))
+    this.destroyPixie = attachPixie(
+      this.redux,
+      filterPixie(rootPixie, props => ({
+        ...props,
+        io: this.io,
+        onError,
+        output: (void 0: any),
+        plugins
+      })),
+      e => console.error(e),
+      output => (this.output = output)
+    )
   }
 }
 
