@@ -1,14 +1,30 @@
 // @flow
-import type { CoreIo } from '../coreRoot.js'
 import { scrypt } from '../util/crypto/scrypt.js'
-import type { AbcIo } from 'airbitz-core-types'
+import type {
+  AbcIo,
+  AbcConsole,
+  AbcScryptFunction,
+  DiskletFolder,
+  FetchFunction,
+  RandomFunction
+} from 'airbitz-core-types'
 import { makeLocalStorageFolder } from 'disklet'
+
+// None of the io resources are optional at this point,
+// so this is a separate type:
+export type FixedIo = {
+  console: AbcConsole,
+  fetch: FetchFunction,
+  folder: DiskletFolder,
+  random: RandomFunction,
+  scrypt: AbcScryptFunction
+}
 
 /**
  * Checks the properties of an `io` object,
  * upgrading obsolete ones and verifying that we have all necessary ones.
  */
-export function fixIo (io: AbcIo): CoreIo {
+export function fixIo (io: AbcIo): FixedIo {
   const out = {}
 
   // Copy native io resources:

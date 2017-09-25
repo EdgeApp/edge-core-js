@@ -1,31 +1,14 @@
 // @flow
 import { AuthServer } from './io/authServer.js'
 import { fixIo } from './io/fixIo.js'
+import type { FixedIo } from './io/fixIo.js'
 import { LoginStore } from './io/loginStore.js'
 import { makeBrowserIo } from './io/browser'
 import { fetchExchangeRates, initStore, setupPlugins } from './redux/actions.js'
 import type { RootState } from './redux/rootReducer.js'
 import { makeStore } from './redux/index.js'
-import type {
-  AbcConsole,
-  AbcContextCallbacks,
-  AbcContextOptions,
-  AbcScryptFunction,
-  DiskletFolder,
-  FetchFunction,
-  RandomFunction
-} from 'airbitz-core-types'
+import type { AbcContextCallbacks, AbcContextOptions } from 'airbitz-core-types'
 import type { Store } from 'redux'
-
-// None of the io resources are optional at this point,
-// so this is a separate type:
-export type CoreIo = {
-  console: AbcConsole,
-  fetch: FetchFunction,
-  folder: DiskletFolder,
-  random: RandomFunction,
-  scrypt: AbcScryptFunction
-}
 
 /**
  * The root of the entire core state machine.
@@ -33,7 +16,7 @@ export type CoreIo = {
  * and tree of background workers. Everything that happens, happens here.
  */
 class CoreRootClass {
-  io: CoreIo
+  io: FixedIo
   onError: $PropertyType<AbcContextCallbacks, 'onError'>
 
   authServer: any

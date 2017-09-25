@@ -3,7 +3,7 @@
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
-import type { CoreIo } from '../../coreRoot.js'
+import type { FixedIo } from '../../io/fixIo.js'
 import { base16, base58, base64 } from '../../util/encoding.js'
 
 export const fakeUser = {
@@ -222,7 +222,7 @@ export const fakeRepos = {
   }
 }
 
-export function stashFakeUser (io: CoreIo) {
+export function stashFakeUser (io: FixedIo) {
   // The bare minimum data needed to log in with PIN:
   const fakeStash = {
     appId: fakeUserServer.appId,
