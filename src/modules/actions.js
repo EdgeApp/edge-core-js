@@ -1,4 +1,6 @@
 // @flow
+import type { FixedIo } from '../io/fixIo.js'
+
 export {
   addCurrencyWallet,
   renameCurrencyWallet,
@@ -8,6 +10,20 @@ export {
 
 export { setupPlugins } from './plugins/actions.js'
 
-export { initStore, INIT } from './rootReducer.js'
-
 export { addStorageWallet, syncStorageWallet } from './storage/actions.js'
+
+export const INIT: 'airbitz-core-js/INIT' = 'airbitz-core-js/INIT'
+
+/**
+ * Initializes the redux store on context creation.
+ */
+export interface InitAction {
+  type: typeof INIT,
+  payload: {
+    appId: string,
+    io: FixedIo,
+    onError: (e: Error) => void
+  }
+}
+
+export type RootAction = InitAction

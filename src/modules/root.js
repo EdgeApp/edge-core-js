@@ -5,7 +5,8 @@ import { attachPixie, filterPixie } from 'redux-pixies'
 import { makeBrowserIo } from '../io/browser'
 import { fixIo } from '../io/fixIo.js'
 import type { FixedIo } from '../io/fixIo.js'
-import { initStore } from './actions.js'
+import * as ACTIONS from './actions.js'
+import type { RootAction } from './actions.js'
 import { LoginStore } from './login/loginStore.js'
 import { makeStore } from './makeStore.js'
 import { rootPixie } from './rootPixie.js'
@@ -32,7 +33,7 @@ export interface CoreRoot {
   loginStore: any,
 
   // Redux state:
-  redux: Store<RootState, any, any>,
+  redux: Store<RootState, RootAction>,
 
   // Pixies:
   output: RootOutput,
@@ -76,7 +77,10 @@ export function makeCoreRoot (opts: AbcContextOptions) {
     redux: makeStore(),
     output: ({}: any)
   }
-  coreRoot.redux.dispatch(initStore(fixedIo, onError))
+  coreRoot.redux.dispatch({
+    type: ACTIONS.INIT,
+    payload: { io: fixedIo, onError, appId }
+  })
 
   return coreRoot
 }
