@@ -1,8 +1,13 @@
+import { destroyAllCores } from '../coreRoot.js'
 import { makeFakeContexts } from '../indexABC.js'
 import { makeFakeCurrency } from '../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../test/fakeExchange.js'
 import { assert } from 'chai'
-import { describe, it } from 'mocha'
+import { afterEach, describe, it } from 'mocha'
+
+afterEach(function () {
+  destroyAllCores()
+})
 
 describe('context', function () {
   it('returns the currency plugin list', async function () {

@@ -13,6 +13,8 @@ import type { AbcContextCallbacks, AbcContextOptions } from 'airbitz-core-types'
 import type { Store } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
 
+let allDestroyPixies: Array<() => void> = []
+
 /**
  * The root of the entire core state machine.
  * Contains io resources, context options, Redux store,
@@ -71,6 +73,7 @@ class CoreRootClass {
       e => console.error(e),
       output => (this.output = output)
     )
+    allDestroyPixies.push(this.destroyPixie)
   }
 }
 
@@ -83,4 +86,14 @@ export type CoreRoot = CoreRootClass
  */
 export function makeCoreRoot (opts: AbcContextOptions) {
   return new CoreRootClass(opts)
+}
+
+/**
+ * We use this for unit testing, to kill all core contexts.
+ */
+export function destroyAllCores () {
+  for (const destroyPixie of allDestroyPixies) {
+    destroyPixie()
+  }
+  allDestroyPixies = []
 }
