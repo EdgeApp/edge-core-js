@@ -6,7 +6,7 @@ import { LoginStore } from './io/loginStore.js'
 import { makeBrowserIo } from './io/browser'
 import { rootPixie } from './pixies/rootPixie.js'
 import type { RootOutput } from './pixies/rootPixie.js'
-import { fetchExchangeRates, initStore, setupPlugins } from './redux/actions.js'
+import { initStore } from './redux/actions.js'
 import type { RootState } from './redux/rootReducer.js'
 import { makeStore } from './redux/index.js'
 import type { AbcContextCallbacks, AbcContextOptions } from 'airbitz-core-types'
@@ -58,16 +58,12 @@ class CoreRootClass {
     // Set up redux:
     this.redux = makeStore()
     this.redux.dispatch(initStore(this.io, onError))
-    this.redux
-      .dispatch(setupPlugins(this.io, plugins))
-      .then(() => this.redux.dispatch(fetchExchangeRates()))
     this.destroyPixie = attachPixie(
       this.redux,
       filterPixie(rootPixie, props => ({
         ...props,
         io: this.io,
         onError,
-        output: (void 0: any),
         plugins
       })),
       e => console.error(e),

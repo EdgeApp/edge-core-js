@@ -1,10 +1,4 @@
 // @flow
-import {
-  brokenExchangePlugin,
-  fakeExchangePlugin
-} from '../../test/fakeExchange.js'
-import { fetchExchangeRates, setupPlugins } from '../actions.js'
-import { makeStore } from '../index.js'
 import reducer, { addPairs } from './reducer.js'
 import { getExchangeRate } from './selectors.js'
 import { assert } from 'chai'
@@ -142,21 +136,5 @@ describe('exchange cache reducer', function () {
     const state = { exchangeCache: reducer(void 0, addPairs(pairs)) }
 
     assert.equal(getExchangeRate(state, 'NONE', 'EUR', pair => 1), 0)
-  })
-
-  it('fetches exchange rates', function () {
-    const store = makeStore()
-
-    const fakeIo = {}
-    return store
-      .dispatch(
-        setupPlugins(fakeIo, [brokenExchangePlugin, fakeExchangePlugin])
-      )
-      .then(() => store.dispatch(fetchExchangeRates()))
-      .then(() => {
-        const state = store.getState()
-        const rate = getExchangeRate(state, 'BTC', 'iso:EUR', pair => 1)
-        return assert(rate > 2274 && rate < 2277)
-      })
   })
 })
