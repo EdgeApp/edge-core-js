@@ -1,31 +1,19 @@
 // @flow
 import { AuthServer } from './io/authServer.js'
 import { fixIo } from './io/fixIo.js'
+import type { FixedIo } from './io/fixIo.js'
 import { LoginStore } from './io/loginStore.js'
 import { makeBrowserIo } from './io/browser'
-import { fetchExchangeRates, initStore, setupPlugins } from './redux/actions.js'
+import { rootPixie } from './pixies/rootPixie.js'
+import type { RootOutput } from './pixies/rootPixie.js'
+import { initStore } from './redux/actions.js'
 import type { RootState } from './redux/rootReducer.js'
 import { makeStore } from './redux/index.js'
-import type {
-  AbcConsole,
-  AbcContextCallbacks,
-  AbcContextOptions,
-  AbcScryptFunction,
-  DiskletFolder,
-  FetchFunction,
-  RandomFunction
-} from 'airbitz-core-types'
+import type { AbcContextCallbacks, AbcContextOptions } from 'airbitz-core-types'
 import type { Store } from 'redux'
+import { attachPixie, filterPixie } from 'redux-pixies'
 
-// None of the io resources are optional at this point,
-// so this is a separate type:
-export type CoreIo = {
-  console: AbcConsole,
-  fetch: FetchFunction,
-  folder: DiskletFolder,
-  random: RandomFunction,
-  scrypt: AbcScryptFunction
-}
+let allDestroyPixies: Array<() => void> = []
 
 /**
  * The root of the entire core state machine.
@@ -33,15 +21,19 @@ export type CoreIo = {
  * and tree of background workers. Everything that happens, happens here.
  */
 class CoreRootClass {
-  io: CoreIo
+  io: FixedIo
   onError: $PropertyType<AbcContextCallbacks, 'onError'>
 
   authServer: any
   loginStore: any
-  redux: Store<RootState, {}, any>
   authRequest (method: string, path: string, body?: {}) {
     return this.authServer.request(method, path, body)
   }
+
+  // Redux state:
+  redux: Store<RootState, any, any>
+  output: RootOutput
+  destroyPixie: () => void
 
   constructor (opts: AbcContextOptions) {
     const onErrorDefault = (error, name) => this.io.console.error(name, error)
@@ -62,11 +54,22 @@ class CoreRootClass {
     // Set up wrapper objects:
     this.authServer = new AuthServer(this.io, apiKey, authServer)
     this.loginStore = new LoginStore(this.io)
+
+    // Set up redux:
     this.redux = makeStore()
     this.redux.dispatch(initStore(this.io, onError))
-    this.redux
-      .dispatch(setupPlugins(this.io, plugins))
-      .then(() => this.redux.dispatch(fetchExchangeRates()))
+    this.destroyPixie = attachPixie(
+      this.redux,
+      filterPixie(rootPixie, props => ({
+        ...props,
+        io: this.io,
+        onError,
+        plugins
+      })),
+      e => console.error(e),
+      output => (this.output = output)
+    )
+    allDestroyPixies.push(this.destroyPixie)
   }
 }
 
@@ -79,4 +82,14 @@ export type CoreRoot = CoreRootClass
  */
 export function makeCoreRoot (opts: AbcContextOptions) {
   return new CoreRootClass(opts)
+}
+
+/**
+ * We use this for unit testing, to kill all core contexts.
+ */
+export function destroyAllCores () {
+  for (const destroyPixie of allDestroyPixies) {
+    destroyPixie()
+  }
+  allDestroyPixies = []
 }
