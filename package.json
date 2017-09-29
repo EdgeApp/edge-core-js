@@ -45,6 +45,7 @@
     "aes-js": "^3.1.0",
     "airbitz-core-types": "git://github.com/Airbitz/airbitz-core-types.git",
     "base-x": "^1.0.4",
+    "biggystring": "^1.0.7",
     "chai": "^4.1.2",
     "disklet": "^0.2.2",
     "core-js": "^2.5.1",
