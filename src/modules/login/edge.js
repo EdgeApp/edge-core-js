@@ -1,11 +1,17 @@
+// @flow
 import { base58, base64 } from '../../util/encoding.js'
+import type { CoreRoot } from '../root.js'
 import { makeLobby } from './lobby.js'
+import type { LoginTree } from './login-types.js'
 import { makeLoginTree, searchTree } from './login.js'
 
 /**
  * The public API for edge login requests.
  */
 class ABCEdgeLoginRequest {
+  id: string
+  cancelRequest: () => void
+
   constructor (lobbyId, subscription) {
     this.id = lobbyId
     this.cancelRequest = () => subscription.unsubscribe()
@@ -41,7 +47,7 @@ function onReply (coreRoot, subscription, reply, appId, opts) {
   const loginKey = base64.parse(reply.loginKey)
   const loginTree = makeLoginTree(stashTree, loginKey, appId)
   if (opts.onLogin != null) {
-    opts.onLogin(null, loginTree)
+    opts.onLogin(void 0, loginTree)
   }
 }
 
@@ -54,7 +60,16 @@ function onError (lobby, e, opts) {
 /**
  * Creates a new account request lobby on the server.
  */
-export function requestEdgeLogin (coreRoot, appId, opts) {
+export function requestEdgeLogin (
+  coreRoot: CoreRoot,
+  appId: string,
+  opts: {
+    displayImageUrl: ?string,
+    displayName: ?string,
+    onProcessLogin?: (username: string) => void,
+    onLogin(e?: Error, account?: LoginTree): void
+  }
+) {
   const request = {
     loginRequest: {
       appId,

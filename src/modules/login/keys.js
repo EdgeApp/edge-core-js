@@ -1,14 +1,23 @@
+// @flow
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base16, base64, utf8 } from '../../util/encoding.js'
+import type { CoreRoot } from '../root.js'
+import type {
+  LoginKit,
+  StorageWalletInfo,
+  LoginTree,
+  StorageKeys,
+  WalletInfo
+} from './login-types.js'
 
 /**
  * Returns the first keyInfo with a matching type.
  */
-export function findFirstKey (keyInfos, type) {
+export function findFirstKey<K> (keyInfos: Array<WalletInfo<K>>, type: string) {
   return keyInfos.find(info => info.type === type)
 }
 
-export function makeAccountType (appId) {
+export function makeAccountType (appId: string) {
   return appId === ''
     ? 'account-repo:co.airbitz.wallet'
     : `account-repo:${appId}`
@@ -18,7 +27,7 @@ export function makeAccountType (appId) {
  * Assembles the key metadata structure that is encrypted within a keyBox.
  * @param idKey Used to derive the wallet id. It's usually `dataKey`.
  */
-export function makeKeyInfo (type, keys, idKey) {
+export function makeKeyInfo (type: string, keys: {}, idKey: Uint8Array) {
   return {
     id: base64.stringify(hmacSha256(utf8.parse(type), idKey)),
     type,
@@ -29,7 +38,11 @@ export function makeKeyInfo (type, keys, idKey) {
 /**
  * Makes keys for accessing an encrypted Git repo.
  */
-export function makeStorageKeyInfo (coreRoot, type, keys = {}) {
+export function makeStorageKeyInfo (
+  coreRoot: CoreRoot,
+  type: string,
+  keys: StorageKeys = {}
+) {
   const { io } = coreRoot
   if (keys.dataKey == null) keys.dataKey = base64.stringify(io.random(32))
   if (keys.syncKey == null) keys.syncKey = base64.stringify(io.random(20))
@@ -40,14 +53,21 @@ export function makeStorageKeyInfo (coreRoot, type, keys = {}) {
 /**
  * Assembles all the resources needed to attach new keys to the account.
  */
-export function makeKeysKit (coreRoot, login, ...keyInfos) {
+export function makeKeysKit (
+  coreRoot: CoreRoot,
+  login: LoginTree,
+  ...keyInfos: Array<StorageWalletInfo>
+): LoginKit {
   const { io } = coreRoot
   const keyBoxes = keyInfos.map(info =>
     encrypt(io, utf8.parse(JSON.stringify(info)), login.loginKey)
   )
-  const newSyncKeys = keyInfos
-    .filter(info => info.keys.syncKey != null)
-    .map(info => base16.stringify(base64.parse(info.keys.syncKey)))
+  const newSyncKeys: Array<string> = []
+  for (const info of keyInfos) {
+    if (info.keys.syncKey != null) {
+      newSyncKeys.push(base16.stringify(base64.parse(info.keys.syncKey)))
+    }
+  }
 
   return {
     serverPath: '/v2/login/keys',
@@ -61,7 +81,7 @@ export function makeKeysKit (coreRoot, login, ...keyInfos) {
 /**
  * Flattens an array of key structures, removing duplicates.
  */
-export function mergeKeyInfos (keyInfos) {
+export function mergeKeyInfos (keyInfos: Array<WalletInfo<any>>) {
   const out = []
   const ids = {} // Maps ID's to output array indexes
 

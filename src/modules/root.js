@@ -39,7 +39,7 @@ class CoreRootClass {
     const onErrorDefault = (error, name) => this.io.console.error(name, error)
 
     const {
-      apiKey,
+      apiKey = '!invalid',
       authServer = 'https://auth.airbitz.co/api',
       callbacks = {},
       io = makeBrowserIo(),

@@ -1,6 +1,10 @@
+// @flow
 import { mapFiles } from 'disklet'
+import type { FixedIo } from '../../io/fixIo.js'
 import { base58, base64 } from '../../util/encoding.js'
+import type { CoreRoot } from '../root.js'
 import { scrypt, userIdSnrp } from '../selectors.js'
+import type { LoginStash } from './login-types.js'
 
 function getJsonFiles (folder) {
   return mapFiles(folder, file =>
@@ -22,7 +26,9 @@ function findUserFile (folder, username) {
  * Handles login data storage.
  */
 export class LoginStore {
-  constructor (io) {
+  folder: $PropertyType<FixedIo, 'folder'>
+
+  constructor (io: FixedIo) {
     this.folder = io.folder.folder('logins')
   }
 
@@ -39,7 +45,7 @@ export class LoginStore {
    * Finds the login stash for the given username.
    * Returns a default object if
    */
-  load (username) {
+  load (username: string) {
     return findUserFile(this.folder, username).then(
       file =>
         file != null
@@ -51,7 +57,7 @@ export class LoginStore {
   /**
    * Removes any login stash that may be stored for the given username.
    */
-  remove (username) {
+  remove (username: string) {
     return findUserFile(this.folder, username).then(
       file => (file != null ? file.file.delete() : void 0)
     )
@@ -60,7 +66,7 @@ export class LoginStore {
   /**
    * Saves a login stash tree to the folder.
    */
-  save (stashTree) {
+  save (stashTree: LoginStash) {
     const loginId = base64.parse(stashTree.loginId)
     if (stashTree.appId !== '') {
       throw new Error('Cannot save a login without an appId.')
@@ -77,7 +83,7 @@ export class LoginStore {
  * Normalizes a username, and checks for invalid characters.
  * TODO: Support a wider character range via Unicode normalization.
  */
-export function fixUsername (username) {
+export function fixUsername (username: string) {
   const out = username
     .toLowerCase()
     .replace(/[ \f\r\n\t\v]+/g, ' ')
@@ -99,7 +105,7 @@ const userIdCache = {}
 /**
  * Hashes a username into a userId.
  */
-export function hashUsername (coreRoot, username) {
+export function hashUsername (coreRoot: CoreRoot, username: string) {
   const state = coreRoot.redux.getState()
   const fixedName = fixUsername(username)
   if (userIdCache[fixedName] == null) {

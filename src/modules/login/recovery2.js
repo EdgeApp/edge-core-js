@@ -1,9 +1,12 @@
+// @flow
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base64, utf8 } from '../../util/encoding.js'
+import type { CoreRoot } from '../root.js'
+import type { LoginStash, LoginTree } from './login-types.js'
 import { applyLoginReply, makeLoginTree } from './login.js'
 import { fixUsername } from './loginStore.js'
 
-function recovery2Id (recovery2Key, username) {
+function recovery2Id (recovery2Key: Uint8Array, username: string) {
   return hmacSha256(fixUsername(username), recovery2Key)
 }
 
@@ -18,7 +21,12 @@ function recovery2Auth (recovery2Key, answers) {
  * Fetches and decrypts the loginKey from the server.
  * @return Promise<{loginKey, loginReply}>
  */
-function fetchLoginKey (coreRoot, recovery2Key, username, answers) {
+function fetchLoginKey (
+  coreRoot: CoreRoot,
+  recovery2Key: Uint8Array,
+  username: string,
+  answers: Array<string>
+) {
   const request = {
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
     recovery2Auth: recovery2Auth(recovery2Key, answers)
@@ -38,7 +46,7 @@ function fetchLoginKey (coreRoot, recovery2Key, username, answers) {
 /**
  * Returns a copy of the recovery key if one exists on the local device.
  */
-export function getRecovery2Key (stashTree) {
+export function getRecovery2Key (stashTree: LoginStash) {
   if (stashTree.recovery2Key != null) {
     return base64.parse(stashTree.recovery2Key)
   }
@@ -48,7 +56,12 @@ export function getRecovery2Key (stashTree) {
  * Logs a user in using recovery answers.
  * @return A `Promise` for the new root login.
  */
-export function loginRecovery2 (coreRoot, recovery2Key, username, answers) {
+export function loginRecovery2 (
+  coreRoot: CoreRoot,
+  recovery2Key: Uint8Array,
+  username: string,
+  answers: Array<string>
+) {
   return coreRoot.loginStore.load(username).then(stashTree => {
     return fetchLoginKey(
       coreRoot,
@@ -70,7 +83,11 @@ export function loginRecovery2 (coreRoot, recovery2Key, username, answers) {
  * @param recovery2Key an ArrayBuffer recovery key
  * @param Question array promise
  */
-export function getQuestions2 (coreRoot, recovery2Key, username) {
+export function getQuestions2 (
+  coreRoot: CoreRoot,
+  recovery2Key: Uint8Array,
+  username: string
+) {
   const request = {
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null
@@ -92,11 +109,11 @@ export function getQuestions2 (coreRoot, recovery2Key, username) {
  * Creates the data needed to attach recovery questions to a login.
  */
 export function makeRecovery2Kit (
-  coreRoot,
-  login,
-  username,
-  questions,
-  answers
+  coreRoot: CoreRoot,
+  login: LoginTree,
+  username: string,
+  questions: Array<string>,
+  answers: Array<string>
 ) {
   const { io } = coreRoot
   if (!Array.isArray(questions)) {
@@ -135,7 +152,7 @@ export function makeRecovery2Kit (
 }
 
 export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (
-  coreRoot
+  coreRoot: CoreRoot
 ) {
-  return coreRoot.authRequest('POST', '/v1/questions', '')
+  return coreRoot.authRequest('POST', '/v1/questions', {})
 }

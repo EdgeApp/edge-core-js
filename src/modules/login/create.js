@@ -1,15 +1,24 @@
+// @flow
 import { UsernameError } from '../../error.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
+import type { CoreRoot } from '../root.js'
 import { makeKeysKit } from './keys.js'
+import type { LoginKit, LoginTree, WalletInfo } from './login-types.js'
 import { fixUsername, hashUsername } from './loginStore.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 
+export interface LoginCreateOpts {
+  keyInfo?: WalletInfo<{}>,
+  password?: string | void,
+  pin?: string | void
+}
+
 /**
  * Determines whether or not a username is available.
  */
-export function usernameAvailable (coreRoot, username) {
+export function usernameAvailable (coreRoot: CoreRoot, username: string) {
   return hashUsername(coreRoot, username).then(userId => {
     const request = {
       userId: base64.stringify(userId)
@@ -29,7 +38,13 @@ export function usernameAvailable (coreRoot, username) {
 /**
  * Assembles all the data needed to create a new login.
  */
-export function makeCreateKit (coreRoot, parentLogin, appId, username, opts) {
+export function makeCreateKit (
+  coreRoot: CoreRoot,
+  parentLogin?: LoginTree,
+  appId: string,
+  username: string,
+  opts: LoginCreateOpts
+): Promise<LoginKit> {
   // Figure out login identity:
   const loginId =
     parentLogin != null
@@ -98,10 +113,14 @@ export function makeCreateKit (coreRoot, parentLogin, appId, username, opts) {
 /**
  * Creates a new login on the auth server.
  */
-export function createLogin (coreRoot, username, opts) {
+export function createLogin (
+  coreRoot: CoreRoot,
+  username: string,
+  opts: LoginCreateOpts
+): Promise<LoginTree> {
   const fixedName = fixUsername(username)
 
-  return makeCreateKit(coreRoot, null, '', fixedName, opts).then(kit => {
+  return makeCreateKit(coreRoot, void 0, '', fixedName, opts).then(kit => {
     kit.login.username = fixedName
     kit.stash.username = fixedName
     kit.login.userId = kit.login.loginId

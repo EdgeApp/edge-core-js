@@ -136,10 +136,10 @@ function makeAccountApi (
     /**
      * Gets the first wallet in an account (the first by sort order).
      * If type is a string, finds the first wallet with the same type.
-     * Might return null if there are no wallets.
+     * Might return undefined if there are no wallets.
      */
     '@getFirstWallet': { sync: true },
-    getFirstWallet (type: string): AbcWalletInfo {
+    getFirstWallet (type: string): ?AbcWalletInfo {
       return findFirstKey(this.allKeys, type)
     },
 

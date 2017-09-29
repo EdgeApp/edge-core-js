@@ -1,5 +1,9 @@
 // @flow
-import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
+import type {
+  AbcContext,
+  AbcContextOptions,
+  AbcEdgeLoginOptions
+} from 'airbitz-core-types'
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/accountApi.js'
@@ -98,10 +102,10 @@ export function makeContext (opts: AbcContextOptions) {
       return checkPasswordRules(password)
     },
 
-    pinExists (username) {
-      return coreRoot.loginStore
-        .load(username)
-        .then(loginStash => getPin2Key(loginStash, appId).pin2Key != null)
+    async pinExists (username) {
+      const loginStash = await coreRoot.loginStore.load(username)
+      const pin2Key = getPin2Key(loginStash, appId)
+      return pin2Key && pin2Key.pin2Key != null
     },
 
     pinLoginEnabled (username) {
@@ -153,7 +157,7 @@ export function makeContext (opts: AbcContextOptions) {
       return listRecoveryQuestionChoices(coreRoot)
     },
 
-    requestEdgeLogin (opts) {
+    requestEdgeLogin (opts: AbcEdgeLoginOptions) {
       const {
         callbacks,
         onLogin,

@@ -1,20 +1,28 @@
+// @flow
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { rejectify } from '../../util/decorators.js'
 import { base64 } from '../../util/encoding.js'
+import type { CoreRoot } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../selectors.js'
+import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
 import { applyLoginReply, makeLoginTree, syncLogin } from './login.js'
 import { fixUsername, hashUsername } from './loginStore.js'
 
 export const passwordAuthSnrp = userIdSnrp
 
-function makeHashInput (username, password) {
+function makeHashInput (username: string, password: string) {
   return fixUsername(username) + password
 }
 
 /**
  * Extracts the loginKey from the login stash.
  */
-function extractLoginKey (coreRoot, stash, username, password) {
+function extractLoginKey (
+  coreRoot: CoreRoot,
+  stash: LoginStash,
+  username: string,
+  password: string
+) {
   const state = coreRoot.redux.getState()
 
   if (stash.passwordBox == null || stash.passwordKeySnrp == null) {
@@ -29,7 +37,11 @@ function extractLoginKey (coreRoot, stash, username, password) {
 /**
  * Fetches the loginKey from the server.
  */
-function fetchLoginKey (coreRoot, username, password) {
+function fetchLoginKey (
+  coreRoot: CoreRoot,
+  username: string,
+  password: string
+) {
   const state = coreRoot.redux.getState()
   const up = makeHashInput(username, password)
   const userId = hashUsername(coreRoot, username)
@@ -62,7 +74,11 @@ function fetchLoginKey (coreRoot, username, password) {
  * @param password string
  * @return A `Promise` for the new root login.
  */
-export function loginPassword (coreRoot, username, password) {
+export function loginPassword (
+  coreRoot: CoreRoot,
+  username: string,
+  password: string
+) {
   return coreRoot.loginStore.load(username).then(stashTree => {
     return rejectify(extractLoginKey)(coreRoot, stashTree, username, password)
       .then(loginKey => {
@@ -90,7 +106,11 @@ export function loginPassword (coreRoot, username, password) {
 /**
  * Returns true if the given password is correct.
  */
-export function checkPassword (coreRoot, login, password) {
+export function checkPassword (
+  coreRoot: CoreRoot,
+  login: LoginTree,
+  password: string
+) {
   const state = coreRoot.redux.getState()
 
   // Derive passwordAuth:
@@ -109,7 +129,7 @@ export function checkPassword (coreRoot, login, password) {
 /**
  * Verifies that a password meets our suggested rules.
  */
-export function checkPasswordRules (password) {
+export function checkPasswordRules (password: string) {
   const tooShort = password.length < 10
   const noNumber = !/[0-9]/.test(password)
   const noLowerCase = !/[a-z]/.test(password)
@@ -117,10 +137,10 @@ export function checkPasswordRules (password) {
 
   // Quick & dirty password strength estimation:
   const charset =
-    10 * /[0-9]/.test(password) +
-    26 * /[A-Z]/.test(password) +
-    26 * /[a-z]/.test(password) +
-    30 * /[^0-9A-Za-z]/.test(password)
+    (/[0-9]/.test(password) ? 10 : 0) +
+    (/[A-Z]/.test(password) ? 26 : 0) +
+    (/[a-z]/.test(password) ? 26 : 0) +
+    (/[^0-9A-Za-z]/.test(password) ? 30 : 0)
   const secondsToCrack = Math.pow(charset, password.length) / 1e6
 
   return {
@@ -138,7 +158,12 @@ export function checkPasswordRules (password) {
 /**
  * Creates the data needed to attach a password to a login.
  */
-export function makePasswordKit (coreRoot, login, username, password) {
+export function makePasswordKit (
+  coreRoot: CoreRoot,
+  login: LoginTree,
+  username: string,
+  password: string
+): Promise<LoginKit> {
   const up = makeHashInput(username, password)
   const state = coreRoot.redux.getState()
 

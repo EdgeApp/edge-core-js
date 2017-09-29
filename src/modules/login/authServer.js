@@ -1,3 +1,4 @@
+// @flow
 import {
   NetworkError,
   ObsoleteApiError,
@@ -5,6 +6,7 @@ import {
   PasswordError,
   UsernameError
 } from '../../error.js'
+import type { FixedIo } from '../../io/fixIo.js'
 import { timeout } from '../../util/promise.js'
 
 function parseReply (json) {
@@ -40,7 +42,11 @@ function parseReply (json) {
 }
 
 export class AuthServer {
-  constructor (io, apiKey, authServer) {
+  io: FixedIo
+  apiKey: string
+  authServer: string
+
+  constructor (io: FixedIo, apiKey: string, authServer: string) {
     // if (apiKey == null) throw new TypeError('No API key provided')
 
     this.io = io
@@ -54,8 +60,8 @@ export class AuthServer {
    * @param body JSON object to send
    * @return a promise of the server's JSON reply
    */
-  request (method, path, body) {
-    const opts = {
+  request (method: string, path: string, body: {}) {
+    const opts: RequestOptions = {
       method: method,
       headers: {
         Accept: 'application/json',

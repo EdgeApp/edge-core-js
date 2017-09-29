@@ -2,10 +2,18 @@
  * Functions for working with login data in its on-disk format.
  */
 
+// @flow
 import { decrypt } from '../../util/crypto/crypto.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import { elvis, filterObject, softCat } from '../../util/util.js'
+import type { CoreRoot } from '../root.js'
 import { makeAccountType, makeKeyInfo, mergeKeyInfos } from './keys.js'
+import type {
+  LoginKit,
+  LoginTree,
+  LoginStash,
+  LoginReply
+} from './login-types.js'
 
 function cloneNode (node, children) {
   return { ...node, children }
@@ -15,7 +23,7 @@ function cloneNode (node, children) {
  * Returns the login that satisifies the given predicate,
  * or undefined if nothing matches.
  */
-export function searchTree (node, predicate) {
+export function searchTree (node: any, predicate: (any) => boolean) {
   if (predicate(node)) return node
 
   if (node.children != null) {
@@ -98,7 +106,11 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
  * Updates the given login stash object with fields from the auth server.
  * TODO: We don't trust the auth server 100%, so be picky about what we copy.
  */
-export function applyLoginReply (stashTree, loginKey, loginReply) {
+export function applyLoginReply (
+  stashTree: LoginStash,
+  loginKey: Uint8Array,
+  loginReply: LoginReply
+) {
   return updateTree(
     stashTree,
     stash => stash.appId === loginReply.appId,
@@ -195,7 +207,11 @@ function makeLoginTreeInner (stash, loginKey) {
 /**
  * Converts a login stash into an in-memory login object.
  */
-export function makeLoginTree (stashTree, loginKey, appId = '') {
+export function makeLoginTree (
+  stashTree: LoginStash,
+  loginKey: Uint8Array,
+  appId: string = ''
+) {
   return updateTree(
     stashTree,
     stash => stash.appId === appId,
@@ -213,12 +229,17 @@ export function makeLoginTree (stashTree, loginKey, appId = '') {
  * and the on-disk stash. A login kit contains all three elements,
  * and this function knows how to apply them all.
  */
-export function applyKit (coreRoot, loginTree, kit) {
+export function applyKit (
+  coreRoot: CoreRoot,
+  loginTree: LoginTree,
+  kit: LoginKit
+) {
   const { loginId } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
+  if (!login) throw new Error('Cannot apply kit: missing login')
 
   return coreRoot.loginStore.load(loginTree.username).then(stashTree => {
-    const request = makeAuthJson(login)
+    const request: Object = makeAuthJson(login)
     request.data = kit.server
     return coreRoot.authRequest('POST', kit.serverPath, request).then(reply => {
       const newLoginTree = updateTree(
@@ -251,7 +272,11 @@ export function applyKit (coreRoot, loginTree, kit) {
 /**
  * Refreshes a login with data from the server.
  */
-export function syncLogin (coreRoot, loginTree, login) {
+export function syncLogin (
+  coreRoot: CoreRoot,
+  loginTree: LoginTree,
+  login: LoginTree
+) {
   return coreRoot.loginStore.load(loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
     return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
@@ -266,7 +291,7 @@ export function syncLogin (coreRoot, loginTree, login) {
 /**
  * Sets up a login v2 server authorization JSON.
  */
-export function makeAuthJson (login) {
+export function makeAuthJson (login: LoginTree) {
   if (login.loginAuth != null) {
     return {
       loginId: login.loginId,
