@@ -5,7 +5,7 @@ import type { FixedIo } from './io/fixIo.js'
 import { LoginStore } from './io/loginStore.js'
 import { makeBrowserIo } from './io/browser'
 import { rootPixie } from './pixies/rootPixie.js'
-import type { RootOutput } from './pixies/rootPixie.js'
+import type { RootOutput, RootProps } from './pixies/rootPixie.js'
 import { initStore } from './redux/actions.js'
 import type { RootState } from './redux/rootReducer.js'
 import { makeStore } from './redux/index.js'
@@ -60,11 +60,12 @@ class CoreRootClass {
     this.redux.dispatch(initStore(this.io, onError))
     this.destroyPixie = attachPixie(
       this.redux,
-      filterPixie(rootPixie, props => ({
+      filterPixie(rootPixie, (props): RootProps => ({
         ...props,
         io: this.io,
         onError,
-        plugins
+        plugins,
+        output: (props: any).output
       })),
       e => console.error(e),
       output => (this.output = output)
