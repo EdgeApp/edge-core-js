@@ -11,6 +11,9 @@ import * as internal from './internal.js'
 export { error }
 export { internal }
 
+// Polyfill
+require('core-js')
+
 // Ancillary exports:
 export * from './error.js'
 export { makeBrowserIo } from './io/browser'
