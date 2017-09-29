@@ -1,9 +1,7 @@
 // @flow
-import type {
-  AbcContext,
-  AbcContextOptions,
-  AbcEdgeLoginOptions
-} from 'airbitz-core-types'
+import type { AbcContext, AbcEdgeLoginOptions } from 'airbitz-core-types'
+import type { PixieInput } from 'redux-pixies'
+import { stopUpdates } from 'redux-pixies'
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/accountApi.js'
@@ -19,20 +17,19 @@ import {
   listRecoveryQuestionChoices,
   loginRecovery2
 } from '../login/recovery2.js'
-import { makeCoreRoot, startCoreRoot } from '../root.js'
+import type { RootProps } from '../rootPixie.js'
 import { awaitPluginsLoaded } from '../selectors.js'
 
-export function makeContext (opts: AbcContextOptions) {
-  const coreRoot = makeCoreRoot(opts)
-  startCoreRoot(coreRoot)
-  const { redux } = coreRoot
+export const contextApiPixie = (input: PixieInput<RootProps>) => (
+  props: RootProps
+) => {
+  input.onOutput(makeContext(input))
+  return stopUpdates
+}
 
-  const appId =
-    opts.appId != null
-      ? opts.appId
-      : typeof opts.accountType === 'string'
-        ? opts.accountType.replace(/^account.repo:/, '')
-        : ''
+export function makeContext (propsWrapper: PixieInput<RootProps>) {
+  const { coreRoot } = propsWrapper.props
+  const { redux, appId } = coreRoot
 
   const rawContext: AbcContext = {
     io: (coreRoot.io: any),

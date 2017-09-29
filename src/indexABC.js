@@ -2,7 +2,7 @@
 import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
 import { makeFakeIos } from './io/fake'
 import { fakeUser, stashFakeUser } from './io/fake/fakeUser.js'
-import { makeContext } from './modules/context/context.js'
+import { makeCoreRoot, startCoreRoot } from './modules/root.js'
 import { makeCurrencyWallet } from './modules/currencyWallets/api.js'
 
 // Sub-module exports:
@@ -30,7 +30,11 @@ export { makeFakeIos } from './io/fake'
  *       Defaults to browser IO if not provided.
  * @return An Airbitz core library instance.
  */
-export { makeContext }
+export function makeContext (opts: AbcContextOptions): AbcContext {
+  const coreRoot = makeCoreRoot(opts)
+  startCoreRoot(coreRoot)
+  return coreRoot.output.contextApi
+}
 
 /**
  * Creates one or more fake Airbitz core library instances for testing.
@@ -47,9 +51,10 @@ export function makeFakeContexts (
   ...opts: Array<AbcContextOptions>
 ): Array<AbcContext> {
   return makeFakeIos(opts.length).map((io, i) => {
-    const context = makeContext({ ...opts[i], io })
-    if (opts[i].localFakeUser) stashFakeUser(context.io)
-    return context
+    const coreRoot = makeCoreRoot({ ...opts[i], io })
+    startCoreRoot(coreRoot)
+    if (opts[i].localFakeUser) stashFakeUser(coreRoot.io)
+    return coreRoot.output.contextApi
   })
 }
 export { fakeUser }

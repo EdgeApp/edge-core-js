@@ -1,5 +1,6 @@
 // @flow
 import type {
+  AbcContext,
   AbcCorePlugin,
   AbcCurrencyPlugin,
   AbcExchangePlugin
@@ -7,6 +8,7 @@ import type {
 import type { Dispatch } from 'redux'
 import { combinePixies } from 'redux-pixies'
 import type { FixedIo } from '../io/fixIo.js'
+import { contextApiPixie } from './context/context-api-pixie.js'
 import { exchangePixie } from './exchange/updateExchange.js'
 import {
   currencyPlugins,
@@ -18,6 +20,7 @@ import type { RootState } from './rootReducer.js'
 
 // The top-level pixie output structure:
 export interface RootOutput {
+  contextApi: AbcContext,
   currencyPlugins: Array<AbcCurrencyPlugin>,
   exchangePlugins: Array<AbcExchangePlugin>
 }
@@ -34,6 +37,7 @@ export interface RootProps {
 }
 
 export const rootPixie = combinePixies({
+  contextApi: contextApiPixie,
   currencyPlugins,
   exchangePlugins,
   tempPluginsDispatch,
