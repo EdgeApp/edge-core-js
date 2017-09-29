@@ -36,9 +36,11 @@
     "build:types": "flow-copy-source -i '**/*.test.js' src lib",
     "flow": "flow status",
     "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' && eslint --fix '*.js' 'src/**/*.js'",
+    "lint:fix": "eslint --fix '*.js' 'src/**/*.js'",
     "precommit": "npm run build:test",
     "prepare": "npm run build && npm run build:types",
     "pretest": "npm run build:test",
+    "updot": "updot",
     "test": "mocha --require source-map-support/register build/tests.cjs.js"
   },
   "dependencies": {
@@ -81,6 +83,7 @@
     "rollup-plugin-flow": "^1.1.1",
     "rollup-plugin-multi-entry": "^2.0.1",
     "source-map-support": "^0.4.15",
+    "updot": "^1.1.4",
     "webpack": "^3.5.3"
   }
 }

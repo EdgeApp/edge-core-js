@@ -1,3 +1,5 @@
+// @flow
+
 import {
   addCurrencyWallet,
   renameCurrencyWallet,
@@ -22,8 +24,16 @@ import { copyProperties, wrapObject } from '../util/api.js'
 import { createReaction } from '../util/redux/reaction.js'
 import { compare } from '../util/compare.js'
 import { filterObject, mergeDeeply } from '../util/util.js'
+import type {
+  AbcReceiveAddress,
+  AbcWalletInfo,
+  AbcSpendInfo,
+  AbcTransaction,
+  AbcMetadata,
+  AbcParsedUri
+} from 'airbitz-core-types'
 
-function nop () {}
+function nop (nopstuff: any) {}
 
 const fakeMetadata = {
   bizId: 0,
@@ -36,7 +46,7 @@ const fakeMetadata = {
 /**
  * Creates a `CurrencyWallet` API object.
  */
-export function makeCurrencyWallet (keyInfo, opts) {
+export function makeCurrencyWallet (keyInfo: AbcWalletInfo, opts: any) {
   const { coreRoot, callbacks = {} } = opts
   const { redux } = coreRoot
 
@@ -54,7 +64,11 @@ export function makeCurrencyWallet (keyInfo, opts) {
 /**
  * Creates an unwrapped account API object around an account state object.
  */
-export function makeCurrencyApi (redux, keyInfo, callbacks) {
+export function makeCurrencyApi (
+  redux: any,
+  keyInfo: AbcWalletInfo,
+  callbacks: any
+) {
   const { dispatch, getState } = redux
   const keyId = keyInfo.id
 
@@ -191,12 +205,12 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
     get name () {
       return getCurrencyWalletName(getState(), keyId)
     },
-    renameWallet (name) {
+    renameWallet (name: string) {
       return dispatch(renameCurrencyWallet(keyId, name))
     },
 
     // Currency info:
-    get fiatCurrencyCode () {
+    get fiatCurrencyCode (): string {
       return getCurrencyWalletFiat(getState(), keyId)
     },
     get currencyInfo () {
@@ -208,17 +222,17 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       return engine().startEngine()
     },
 
-    stopEngine () {
+    stopEngine (): Promise<void> {
       return Promise.resolve(engine().killEngine())
     },
 
-    enableTokens (tokens) {
+    enableTokens (tokens: Array<string>) {
       return engine().enableTokens(tokens)
     },
 
     // Transactions:
     '@getBalance': { sync: true },
-    getBalance (opts) {
+    getBalance (opts: any) {
       return engine().getBalance(opts)
     },
 
@@ -227,7 +241,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       return engine().getBlockHeight()
     },
 
-    getTransactions (opts = {}) {
+    getTransactions (opts: any = {}): Promise<Array<AbcTransaction>> {
       const state = getState()
       const files = getCurrencyWalletFiles(state, keyId)
       const list = getCurrencyWalletTxList(state, keyId)
@@ -255,49 +269,48 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       return Promise.resolve(out.sort((a, b) => a.date - b.date))
     },
 
-    getReceiveAddress (opts) {
-      return Promise.resolve({
-        publicAddress: engine().getFreshAddress(opts),
-        amountSatoshi: 0,
-        metadata: fakeMetadata
-      })
+    getReceiveAddress (opts: any): Promise<AbcReceiveAddress> {
+      const abcReceiveAddress: AbcReceiveAddress = engine.getFreshAddress(opts)
+      abcReceiveAddress.nativeAmount = '0'
+      abcReceiveAddress.metadata = fakeMetadata
+      return Promise.resolve(abcReceiveAddress)
     },
 
-    saveReceiveAddress (receiveAddress) {
+    saveReceiveAddress (receiveAddress: AbcReceiveAddress): Promise<void> {
       return Promise.resolve()
     },
 
-    lockReceiveAddress (receiveAddress) {
+    lockReceiveAddress (receiveAddress: AbcReceiveAddress): Promise<void> {
       return Promise.resolve()
     },
 
     '@makeAddressQrCode': { sync: true },
-    makeAddressQrCode (address) {
+    makeAddressQrCode (address: AbcReceiveAddress) {
       return address.publicAddress
     },
 
     '@makeAddressUri': { sync: true },
-    makeAddressUri (address) {
+    makeAddressUri (address: AbcReceiveAddress) {
       return address.publicAddress
     },
 
-    makeSpend (spendInfo) {
+    makeSpend (spendInfo: AbcSpendInfo): Promise<AbcTransaction> {
       return engine().makeSpend(spendInfo)
     },
 
-    signTx (tx) {
+    signTx (tx: AbcTransaction): Promise<AbcTransaction> {
       return engine().signTx(tx)
     },
 
-    broadcastTx (tx) {
+    broadcastTx (tx: AbcTransaction): Promise<AbcTransaction> {
       return engine().broadcastTx(tx)
     },
 
-    saveTx (tx) {
+    saveTx (tx: AbcTransaction) {
       return Promise.all([engine().saveTx(tx)])
     },
 
-    saveTxMetadata (txid, currencyCode, metadata) {
+    saveTxMetadata (txid: string, currencyCode: string, metadata: AbcMetadata) {
       const fiat = getCurrencyWalletFiat(getState(), keyId)
 
       return dispatch(
@@ -310,21 +323,21 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       )
     },
 
-    getMaxSpendable (spendInfo) {
-      return Promise.resolve(0)
+    getMaxSpendable (spendInfo: AbcSpendInfo): Promise<string> {
+      return Promise.resolve('0')
     },
 
-    sweepPrivateKey (keyUri) {
-      return Promise.resolve(0)
+    sweepPrivateKey (keyUri: string): Promise<void> {
+      return Promise.resolve()
     },
 
     '@parseUri': { sync: true },
-    parseUri (uri) {
+    parseUri (uri: string) {
       return plugin().parseUri(uri)
     },
 
     '@encodeUri': { sync: true },
-    encodeUri (obj) {
+    encodeUri (obj: AbcParsedUri) {
       return plugin().encodeUri(obj)
     }
   }
@@ -333,7 +346,7 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
   return out
 }
 
-function fixMetadata (metadata, fiat) {
+function fixMetadata (metadata: AbcMetadata, fiat: any) {
   const out = filterObject(metadata, [
     'bizId',
     'category',
@@ -350,7 +363,13 @@ function fixMetadata (metadata, fiat) {
   return out
 }
 
-function combineTxWithFile (walletCurrency, walletFiat, tx, file, currencyCode) {
+function combineTxWithFile (
+  walletCurrency: any,
+  walletFiat: any,
+  tx: any,
+  file: any,
+  currencyCode: string
+) {
   // Copy the tx properties to the output:
   const out = {
     ...tx,
@@ -391,7 +410,13 @@ function combineTxWithFile (walletCurrency, walletFiat, tx, file, currencyCode) 
   return out
 }
 
-function prepareTxForCallback (walletCurrency, walletFiat, tx, file, array) {
+function prepareTxForCallback (
+  walletCurrency: any,
+  walletFiat: any,
+  tx: any,
+  file: any,
+  array: any
+) {
   const currencies = Object.keys(tx.nativeAmount)
   for (const currency of currencies) {
     array.push(
