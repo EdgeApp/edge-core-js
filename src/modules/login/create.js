@@ -3,6 +3,7 @@ import { UsernameError } from '../../error.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
 import type { CoreRoot } from '../root.js'
+import { authRequest } from './authServer.js'
 import { makeKeysKit } from './keys.js'
 import type { LoginKit, LoginTree, WalletInfo } from './login-types.js'
 import { fixUsername, hashUsername } from './loginStore.js'
@@ -23,8 +24,7 @@ export function usernameAvailable (coreRoot: CoreRoot, username: string) {
     const request = {
       userId: base64.stringify(userId)
     }
-    return coreRoot
-      .authRequest('POST', '/v2/login', request)
+    return authRequest(coreRoot, 'POST', '/v2/login', request)
       .then(reply => false) // It's not available if we can hit it!
       .catch(e => {
         if (e.type !== UsernameError.type) {
@@ -127,8 +127,8 @@ export function createLogin (
 
     const request = {}
     request.data = kit.server
-    return coreRoot
-      .authRequest('POST', kit.serverPath, request)
-      .then(reply => coreRoot.loginStore.save(kit.stash).then(() => kit.login))
+    return authRequest(coreRoot, 'POST', kit.serverPath, request).then(reply =>
+      coreRoot.loginStore.save(kit.stash).then(() => kit.login)
+    )
   })
 }

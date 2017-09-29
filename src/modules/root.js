@@ -6,7 +6,6 @@ import { makeBrowserIo } from '../io/browser'
 import { fixIo } from '../io/fixIo.js'
 import type { FixedIo } from '../io/fixIo.js'
 import { initStore } from './actions.js'
-import { AuthServer } from './login/authServer.js'
 import { LoginStore } from './login/loginStore.js'
 import { makeStore } from './makeStore.js'
 import { rootPixie } from './rootPixie.js'
@@ -24,11 +23,9 @@ class CoreRootClass {
   io: FixedIo
   onError: $PropertyType<AbcContextCallbacks, 'onError'>
 
-  authServer: any
+  apiKey: string
+  authServer: string
   loginStore: any
-  authRequest (method: string, path: string, body?: {}) {
-    return this.authServer.request(method, path, body)
-  }
 
   // Redux state:
   redux: Store<RootState, any, any>
@@ -52,7 +49,8 @@ class CoreRootClass {
     this.onError = onError
 
     // Set up wrapper objects:
-    this.authServer = new AuthServer(this.io, apiKey, authServer)
+    this.apiKey = apiKey
+    this.authServer = authServer
     this.loginStore = new LoginStore(this.io)
 
     // Set up redux:

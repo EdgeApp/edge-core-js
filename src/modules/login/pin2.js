@@ -2,6 +2,7 @@
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
 import type { CoreRoot } from '../root.js'
+import { authRequest } from './authServer.js'
 import type { LoginStash, LoginTree } from './login-types.js'
 import { applyLoginReply, makeLoginTree, searchTree } from './login.js'
 import { fixUsername } from './loginStore.js'
@@ -29,7 +30,7 @@ function fetchLoginKey (
     pin2Auth: base64.stringify(pin2Auth(pin2Key, pin))
     // "otp": null
   }
-  return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
+  return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
     if (reply.pin2Box == null) {
       throw new Error('Missing data for PIN v2 login')
     }

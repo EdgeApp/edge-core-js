@@ -2,6 +2,7 @@
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import type { CoreRoot } from '../root.js'
+import { authRequest } from './authServer.js'
 import type { LoginStash, LoginTree } from './login-types.js'
 import { applyLoginReply, makeLoginTree } from './login.js'
 import { fixUsername } from './loginStore.js'
@@ -32,7 +33,7 @@ function fetchLoginKey (
     recovery2Auth: recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
-  return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
+  return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
     if (reply.recovery2Box == null) {
       throw new Error('Missing data for recovery v2 login')
     }
@@ -92,7 +93,7 @@ export function getQuestions2 (
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null
   }
-  return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
+  return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
     // Recovery login:
     const question2Box = reply.question2Box
     if (question2Box == null) {
@@ -154,5 +155,5 @@ export function makeRecovery2Kit (
 export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (
   coreRoot: CoreRoot
 ) {
-  return coreRoot.authRequest('POST', '/v1/questions', {})
+  return authRequest(coreRoot, 'POST', '/v1/questions', {})
 }

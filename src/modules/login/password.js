@@ -4,6 +4,7 @@ import { rejectify } from '../../util/decorators.js'
 import { base64 } from '../../util/encoding.js'
 import type { CoreRoot } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../selectors.js'
+import { authRequest } from './authServer.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
 import { applyLoginReply, makeLoginTree, syncLogin } from './login.js'
 import { fixUsername, hashUsername } from './loginStore.js'
@@ -54,7 +55,7 @@ function fetchLoginKey (
       passwordAuth: base64.stringify(passwordAuth)
       // "otp": null
     }
-    return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
+    return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
       if (reply.passwordBox == null || reply.passwordKeySnrp == null) {
         throw new Error('Missing data for online password login')
       }

@@ -6,8 +6,8 @@ import {
   PasswordError,
   UsernameError
 } from '../../error.js'
-import type { FixedIo } from '../../io/fixIo.js'
 import { timeout } from '../../util/promise.js'
+import type { CoreRoot } from '../root.js'
 
 function parseReply (json) {
   switch (json.status_code) {
@@ -41,52 +41,37 @@ function parseReply (json) {
   }
 }
 
-export class AuthServer {
-  io: FixedIo
-  apiKey: string
-  authServer: string
-
-  constructor (io: FixedIo, apiKey: string, authServer: string) {
-    // if (apiKey == null) throw new TypeError('No API key provided')
-
-    this.io = io
-    this.apiKey = apiKey
-    this.authServer = authServer
+export function authRequest (
+  coreRoot: CoreRoot,
+  method: string,
+  path: string,
+  body?: {}
+) {
+  const opts: RequestOptions = {
+    method: method,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: 'Token ' + coreRoot.apiKey
+    }
+  }
+  if (method !== 'GET') {
+    opts.body = JSON.stringify(body)
   }
 
-  /**
-   * Wraps the raw `fetch` API with the headers and error processing needed
-   * to talk to the auth server.
-   * @param body JSON object to send
-   * @return a promise of the server's JSON reply
-   */
-  request (method: string, path: string, body: {}) {
-    const opts: RequestOptions = {
-      method: method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        Authorization: 'Token ' + this.apiKey
+  const uri = coreRoot.authServer + path
+  coreRoot.io.console.info(`${method} ${uri}`)
+  return timeout(
+    coreRoot.io.fetch(uri, opts).then(
+      response =>
+        response.json().then(parseReply, jsonError => {
+          throw new Error('Non-JSON reply, HTTP status ' + response.status)
+        }),
+      networkError => {
+        throw new NetworkError('Could not reach the auth server')
       }
-    }
-    if (method !== 'GET') {
-      opts.body = JSON.stringify(body)
-    }
-
-    const uri = this.authServer + path
-    this.io.console.info(`${method} ${uri}`)
-    return timeout(
-      this.io.fetch(uri, opts).then(
-        response =>
-          response.json().then(parseReply, jsonError => {
-            throw new Error('Non-JSON reply, HTTP status ' + response.status)
-          }),
-        networkError => {
-          throw new NetworkError('Could not reach the auth server')
-        }
-      ),
-      10000,
-      new NetworkError('Could not reach the auth server: timeout')
-    )
-  }
+    ),
+    10000,
+    new NetworkError('Could not reach the auth server: timeout')
+  )
 }

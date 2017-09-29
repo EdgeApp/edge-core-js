@@ -7,12 +7,13 @@ import { decrypt } from '../../util/crypto/crypto.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import { elvis, filterObject, softCat } from '../../util/util.js'
 import type { CoreRoot } from '../root.js'
+import { authRequest } from './authServer.js'
 import { makeAccountType, makeKeyInfo, mergeKeyInfos } from './keys.js'
 import type {
   LoginKit,
-  LoginTree,
+  LoginReply,
   LoginStash,
-  LoginReply
+  LoginTree
 } from './login-types.js'
 
 function cloneNode (node, children) {
@@ -241,7 +242,12 @@ export function applyKit (
   return coreRoot.loginStore.load(loginTree.username).then(stashTree => {
     const request: Object = makeAuthJson(login)
     request.data = kit.server
-    return coreRoot.authRequest('POST', kit.serverPath, request).then(reply => {
+    return authRequest(
+      coreRoot,
+      'POST',
+      kit.serverPath,
+      request
+    ).then(reply => {
       const newLoginTree = updateTree(
         loginTree,
         login => login.loginId === loginId,
@@ -279,7 +285,7 @@ export function syncLogin (
 ) {
   return coreRoot.loginStore.load(loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
-    return coreRoot.authRequest('POST', '/v2/login', request).then(reply => {
+    return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
       const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
       const newLoginTree = makeLoginTree(stashTree, login.loginKey, login.appId)
 

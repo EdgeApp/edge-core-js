@@ -9,6 +9,7 @@ import { elliptic } from '../../util/crypto/external.js'
 import { base58, base64, utf8 } from '../../util/encoding.js'
 import type { JsonBox } from '../login/login-types.js'
 import type { CoreRoot } from '../root.js'
+import { authRequest } from './authServer.js'
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
@@ -70,8 +71,7 @@ function scheduleLobbyPoll (watcher) {
 function pollLobby (watcher) {
   const { coreRoot, lobbyId, keypair, onReply, onError } = watcher
 
-  return coreRoot
-    .authRequest('GET', '/v2/lobby/' + lobbyId, {})
+  return authRequest(coreRoot, 'GET', '/v2/lobby/' + lobbyId, {})
     .then(reply => {
       while (watcher.replyCount < reply.replies.length) {
         const lobbyReply = reply.replies[watcher.replyCount]
@@ -149,11 +149,14 @@ export function makeLobby (
   const request = {
     data: lobbyRequest
   }
-  return coreRoot
-    .authRequest('PUT', '/v2/lobby/' + lobbyId, request)
-    .then(reply => {
-      return new ObservableLobby(coreRoot, lobbyId, keypair)
-    })
+  return authRequest(
+    coreRoot,
+    'PUT',
+    '/v2/lobby/' + lobbyId,
+    request
+  ).then(reply => {
+    return new ObservableLobby(coreRoot, lobbyId, keypair)
+  })
 }
 
 /**
@@ -161,7 +164,12 @@ export function makeLobby (
  * @return A promise of the lobby request JSON.
  */
 export function fetchLobbyRequest (coreRoot: CoreRoot, lobbyId: string) {
-  return coreRoot.authRequest('GET', '/v2/lobby/' + lobbyId, {}).then(reply => {
+  return authRequest(
+    coreRoot,
+    'GET',
+    '/v2/lobby/' + lobbyId,
+    {}
+  ).then(reply => {
     const lobbyRequest = reply.request
 
     // Verify the public key:
@@ -193,7 +201,7 @@ export function sendLobbyReply (
   const request = {
     data: encryptLobbyReply(coreRoot.io, pubkey, replyData)
   }
-  return coreRoot
-    .authRequest('POST', '/v2/lobby/' + lobbyId, request)
-    .then(reply => null)
+  return authRequest(coreRoot, 'POST', '/v2/lobby/' + lobbyId, request).then(
+    reply => null
+  )
 }
