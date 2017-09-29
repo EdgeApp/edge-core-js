@@ -1,5 +1,5 @@
 // @flow
-
+import { mulf, divf } from 'biggystring'
 import {
   addCurrencyWallet,
   renameCurrencyWallet,
@@ -42,6 +42,8 @@ const fakeMetadata = {
   name: '',
   notes: ''
 }
+
+const PRECISION = 1 / 1000000000 // 0.000 000 001
 
 /**
  * Creates a `CurrencyWallet` API object.
@@ -323,8 +325,41 @@ export function makeCurrencyApi (
       )
     },
 
-    getMaxSpendable (spendInfo: AbcSpendInfo): Promise<string> {
-      return Promise.resolve('0')
+    async getMaxSpendable (spendInfo: AbcSpendInfo): Promise<string> {
+      const publicAddress = spendInfo.spendTargets[0].publicAddress
+      const currencyCode = spendInfo.currencyCode
+
+      const currencyInfo = plugin().currencyInfo
+
+      const ratio = currencyInfo.denominations
+        .find(dem => dem.name === currencyCode)
+        .multiplier.toString()
+
+      const toDisplay = nativeAmount => divf(nativeAmount, ratio).toString()
+
+      const toNative = displayAmount =>
+        !displayAmount ? '' : mulf(parseFloat(displayAmount), ratio)
+
+      const balance = +toDisplay(engine().getBalance({ currencyCode }))
+
+      async function getMax (min, max) {
+        if (max - min < PRECISION) return min
+        const avg = (min + max) / 2
+        const nativeAmount = toNative(avg)
+
+        try {
+          await engine().makeSpend({
+            spendTargets: [{ publicAddress, nativeAmount }]
+          })
+          return getMax(avg, max)
+        } catch (err) {
+          return getMax(min, avg)
+        }
+      }
+
+      const maxSpendable = await getMax(0, balance)
+
+      return toNative(`${maxSpendable}`)
     },
 
     sweepPrivateKey (keyUri: string): Promise<void> {
