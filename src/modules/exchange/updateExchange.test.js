@@ -7,7 +7,7 @@ import {
 } from '../../fake-plugins/fakeExchange.js'
 import { makeFakeIos } from '../../indexABC.js'
 import { awaitState } from '../../util/redux/reaction.js'
-import { makeCoreRoot } from '../root.js'
+import { makeCoreRoot, startCoreRoot } from '../root.js'
 import { getExchangeRate } from './selectors.js'
 
 describe('update exchange cache pixie', function () {
@@ -16,6 +16,7 @@ describe('update exchange cache pixie', function () {
       io: makeFakeIos(1)[0],
       plugins: [brokenExchangePlugin, fakeExchangePlugin]
     })
+    startCoreRoot(coreRoot)
 
     await awaitState(
       coreRoot.redux,

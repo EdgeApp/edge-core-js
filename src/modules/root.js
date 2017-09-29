@@ -1,5 +1,5 @@
 // @flow
-import type { AbcContextCallbacks, AbcContextOptions } from 'airbitz-core-types'
+import type { AbcContextOptions, AbcCorePlugin } from 'airbitz-core-types'
 import type { Store } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
 import { makeBrowserIo } from '../io/browser'
@@ -19,60 +19,25 @@ let allDestroyPixies: Array<() => void> = []
  * Contains io resources, context options, Redux store,
  * and tree of background workers. Everything that happens, happens here.
  */
-class CoreRootClass {
-  io: FixedIo
-  onError: $PropertyType<AbcContextCallbacks, 'onError'>
+export interface CoreRoot {
+  // Context options:
+  apiKey: string,
+  appId: string,
+  authServer: string,
+  io: FixedIo,
+  onError(e: Error): void,
+  plugins: Array<AbcCorePlugin>,
 
-  apiKey: string
-  authServer: string
-  loginStore: any
+  // Loose objects:
+  loginStore: any,
 
   // Redux state:
-  redux: Store<RootState, any, any>
-  output: RootOutput
-  destroyPixie: () => void
+  redux: Store<RootState, any, any>,
 
-  constructor (opts: AbcContextOptions) {
-    const onErrorDefault = (error, name) => this.io.console.error(name, error)
-
-    const {
-      apiKey = '!invalid',
-      authServer = 'https://auth.airbitz.co/api',
-      callbacks = {},
-      io = makeBrowserIo(),
-      plugins = []
-    } = opts
-    const { onError = onErrorDefault } = callbacks
-
-    // Copy native io resources:
-    this.io = fixIo(io)
-    this.onError = onError
-
-    // Set up wrapper objects:
-    this.apiKey = apiKey
-    this.authServer = authServer
-    this.loginStore = new LoginStore(this.io)
-
-    // Set up redux:
-    this.redux = makeStore()
-    this.redux.dispatch(initStore(this.io, onError))
-    this.destroyPixie = attachPixie(
-      this.redux,
-      filterPixie(rootPixie, (props): RootProps => ({
-        ...props,
-        io: this.io,
-        onError,
-        plugins,
-        output: (props: any).output
-      })),
-      e => console.error(e),
-      output => (this.output = output)
-    )
-    allDestroyPixies.push(this.destroyPixie)
-  }
+  // Pixies:
+  output: RootOutput,
+  destroyPixie?: () => void
 }
-
-export type CoreRoot = CoreRootClass
 
 /**
  * Creates the root object for the entire core state machine.
@@ -80,7 +45,62 @@ export type CoreRoot = CoreRootClass
  * Redux store, and tree of background workers.
  */
 export function makeCoreRoot (opts: AbcContextOptions) {
-  return new CoreRootClass(opts)
+  const onErrorDefault = (error, name) => fixedIo.console.error(name, error)
+
+  const {
+    apiKey = '!invalid',
+    authServer = 'https://auth.airbitz.co/api',
+    callbacks = {},
+    io = makeBrowserIo(),
+    plugins = []
+  } = opts
+  const { onError = onErrorDefault } = callbacks
+
+  const appId =
+    opts.appId != null
+      ? opts.appId
+      : typeof opts.accountType === 'string'
+        ? opts.accountType.replace(/^account.repo:/, '')
+        : ''
+
+  const fixedIo = fixIo(io)
+
+  const coreRoot: CoreRoot = {
+    apiKey,
+    appId,
+    authServer,
+    io: fixedIo,
+    onError,
+    plugins,
+    loginStore: new LoginStore(fixedIo),
+    redux: makeStore(),
+    output: ({}: any)
+  }
+  coreRoot.redux.dispatch(initStore(fixedIo, onError))
+
+  return coreRoot
+}
+
+/**
+ * Attaches pixies to the core root, begining all background work.
+ */
+export function startCoreRoot (coreRoot: CoreRoot) {
+  coreRoot.destroyPixie = attachPixie(
+    coreRoot.redux,
+    filterPixie(rootPixie, (props): RootProps => ({
+      ...props,
+      coreRoot,
+      io: coreRoot.io,
+      onError: coreRoot.onError,
+      plugins: coreRoot.plugins,
+      output: (props: any).output
+    })),
+    e => console.error(e),
+    output => (coreRoot.output = output)
+  )
+  allDestroyPixies.push(coreRoot.destroyPixie)
+
+  return coreRoot
 }
 
 /**

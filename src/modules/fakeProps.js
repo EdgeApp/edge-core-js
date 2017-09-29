@@ -1,17 +1,26 @@
 // @flow
+import type { AbcContextOptions } from 'airbitz-core-types'
 import { makeFakeIos } from '../io/fake/index.js'
-import { fixIo } from '../io/fixIo.js'
+import { makeCoreRoot } from './root.js'
+import type { CoreRoot } from './root.js'
 import type { RootProps } from './rootPixie.js'
 
-export function makeFakeProps (): RootProps {
-  return {
-    dispatch (action: any) {
-      return action
-    },
-    io: fixIo(makeFakeIos(1)[0]),
-    onError (e: Error) {},
-    output: ({}: any),
-    plugins: [],
-    state: ({}: any)
-  }
+export function makeFakeProps (
+  ...opts: Array<AbcContextOptions>
+): Array<RootProps> {
+  return makeFakeIos(opts.length).map((io, i) => {
+    const coreRoot: CoreRoot = makeCoreRoot({ ...opts[i], io })
+
+    return {
+      dispatch (action: any) {
+        return action
+      },
+      coreRoot,
+      io: coreRoot.io,
+      onError: coreRoot.onError,
+      output: coreRoot.output,
+      plugins: coreRoot.plugins,
+      state: ({}: any)
+    }
+  })
 }

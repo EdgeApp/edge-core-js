@@ -13,6 +13,7 @@ import {
   exchangePlugins,
   tempPluginsDispatch
 } from './plugins/loadPlugins.js'
+import type { CoreRoot } from './root.js'
 import type { RootState } from './rootReducer.js'
 
 // The top-level pixie output structure:
@@ -23,10 +24,11 @@ export interface RootOutput {
 
 // Props passed to the root pixie:
 export interface RootProps {
+  coreRoot: CoreRoot,
   +dispatch: Dispatch<any>,
   io: FixedIo,
   onError(e: Error): void,
-  output: RootOutput,
+  output: RootOutput | void,
   plugins: Array<AbcCorePlugin>,
   state: RootState
 }

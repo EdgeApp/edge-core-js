@@ -10,9 +10,7 @@ export function exchangePixie (input: PixieInput<RootProps>) {
 
   return {
     update (props: RootProps): Promise<void> | void {
-      function doFetch (): Promise<void> {
-        const plugins: Array<AbcExchangePlugin> = props.output.exchangePlugins
-
+      function doFetch (plugins: Array<AbcExchangePlugin>): Promise<void> {
         // TODO: Grab this off the list of loaded wallet currency types & fiats:
         const pairs = [
           { fromCurrency: 'BTC', toCurrency: 'iso:EUR' },
@@ -47,7 +45,7 @@ export function exchangePixie (input: PixieInput<RootProps>) {
 
       // Do an initial fetch once the plugins are loaded:
       if (timeout == null && props.output && props.output.exchangePlugins) {
-        return doFetch()
+        return doFetch(props.output.exchangePlugins)
       }
     },
 

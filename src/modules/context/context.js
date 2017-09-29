@@ -19,11 +19,12 @@ import {
   listRecoveryQuestionChoices,
   loginRecovery2
 } from '../login/recovery2.js'
-import { makeCoreRoot } from '../root.js'
+import { makeCoreRoot, startCoreRoot } from '../root.js'
 import { awaitPluginsLoaded } from '../selectors.js'
 
 export function makeContext (opts: AbcContextOptions) {
   const coreRoot = makeCoreRoot(opts)
+  startCoreRoot(coreRoot)
   const { redux } = coreRoot
 
   const appId =

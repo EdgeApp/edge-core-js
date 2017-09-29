@@ -8,7 +8,7 @@ import { exchangePlugins } from './loadPlugins.js'
 
 describe('plugins pixie', function () {
   it('adds plugins', async function () {
-    const fakeProps = makeFakeProps()
+    const [fakeProps] = makeFakeProps({})
     fakeProps.plugins = [fakeExchangePlugin]
 
     const output = await new Promise((resolve, reject) =>
