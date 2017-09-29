@@ -1,8 +1,8 @@
-import { makeAssertLog } from '../../test/assertLog.js'
-import { reactionMiddleware, createReaction, awaitState } from './reaction.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
+import { makeAssertLog } from '../assertLog.js'
+import { awaitState, createReaction, reactionMiddleware } from './reaction.js'
 
 describe('redux-reactions', function () {
   it('basic operations', function () {

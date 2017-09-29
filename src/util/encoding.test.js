@@ -1,7 +1,7 @@
 // @flow
-import { base16, utf8 } from './encoding.js'
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
+import { base16, utf8 } from './encoding.js'
 
 describe('encoding', function () {
   it('utf8', function () {

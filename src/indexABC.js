@@ -1,9 +1,9 @@
 // @flow
-import { makeCurrencyWallet } from './currencyWallets/api.js'
-import { makeContext } from './io/context.js'
+import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
 import { makeFakeIos } from './io/fake'
 import { fakeUser, stashFakeUser } from './io/fake/fakeUser.js'
-import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
+import { makeContext } from './modules/context/context.js'
+import { makeCurrencyWallet } from './modules/currencyWallets/api.js'
 
 // Sub-module exports:
 import * as error from './error.js'
