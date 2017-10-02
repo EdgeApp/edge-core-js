@@ -1,6 +1,6 @@
 {
   "name": "airbitz-core-js",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "description": "Airbitz core Javascript implementation",
   "keywords": [
     "bitcoin",
@@ -31,17 +31,18 @@
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
-    "build": "webpack && rollup -c",
+    "build": "webpack && rollup -c && npm run build:types",
     "build:test": "webpack && rollup -c rollup.config.test.js",
     "build:types": "flow-copy-source -i '**/*.test.js' src lib",
     "flow": "flow status",
     "format": "prettier --no-semi --single-quote --write '*.js' 'src/**/*.js' && eslint --fix '*.js' 'src/**/*.js'",
+    "lint": "eslint '*.js' 'src/**/*.js' && npm run flow",
     "lint:fix": "eslint --fix '*.js' 'src/**/*.js'",
-    "precommit": "npm run build:test",
-    "prepare": "npm run build && npm run build:types",
+    "precommit": "npm run build:test && npm run test",
+    "prepare": "npm run build",
     "pretest": "npm run build:test",
     "updot": "updot",
-    "test": "mocha --require source-map-support/register build/tests.cjs.js"
+    "test": "npm run lint && mocha --require source-map-support/register build/tests.cjs.js"
   },
   "dependencies": {
     "aes-js": "^3.1.0",
