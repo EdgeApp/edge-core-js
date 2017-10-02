@@ -1,4 +1,4 @@
-import {mulf, divf} from 'biggystring'
+import {add, sub, lte, div} from 'biggystring'
 import {
   addCurrencyWallet,
   renameCurrencyWallet,
@@ -34,7 +34,7 @@ const fakeMetadata = {
   notes: ''
 }
 
-const PRECISION = 1 / 1000000000 // 0.000 000 001
+export const PRECISION = '1'
 
 /**
  * Creates a `CurrencyWallet` API object.
@@ -317,32 +317,21 @@ export function makeCurrencyApi (redux, keyInfo, callbacks) {
       const publicAddress = spendInfo.spendTargets[0].publicAddress
       const currencyCode = spendInfo.currencyCode
 
-      const currencyInfo = plugin().currencyInfo
-
-      const ratio = currencyInfo.denominations.find((dem) => dem.name === currencyCode).multiplier.toString()
-
-      const toDisplay = (nativeAmount) => divf(nativeAmount, ratio).toString()
-
-      const toNative = (displayAmount) => !displayAmount ? '' : mulf(parseFloat(displayAmount), ratio)
-
-      const balance = +toDisplay(engine().getBalance({ currencyCode }))
+      const balance = engine().getBalance({ currencyCode })
 
       async function getMax (min, max) {
-        if (max - min < PRECISION) return min
-        const avg = (min + max) / 2
-        const nativeAmount = toNative(avg)
+        if (lte(sub(max, min), PRECISION)) return min
+        const avg = div(add(min, max), '2')
 
         try {
-          await engine().makeSpend({spendTargets: [{publicAddress, nativeAmount}]})
+          await engine().makeSpend({spendTargets: [{publicAddress, nativeAmount: avg}]})
           return getMax(avg, max)
         } catch (err) {
           return getMax(min, avg)
         }
       }
 
-      const maxSpendable = await getMax(0, balance)
-
-      return toNative(`${maxSpendable}`)
+      return getMax('0', balance)
     },
 
     sweepPrivateKey (keyUri) {

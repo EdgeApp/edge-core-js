@@ -47,6 +47,7 @@
     "base-x": "^1.0.4",
     "biggystring": "^1.0.7",
     "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
     "disklet": "^0.2.2",
     "elliptic": "^6.4.0",
     "hash.js": "^1.0.3",
