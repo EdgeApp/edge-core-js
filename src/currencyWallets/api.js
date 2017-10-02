@@ -270,7 +270,7 @@ export function makeCurrencyApi (
     },
 
     getReceiveAddress (opts: any): Promise<AbcReceiveAddress> {
-      const abcReceiveAddress: AbcReceiveAddress = engine.getFreshAddress(opts)
+      const abcReceiveAddress: AbcReceiveAddress = engine().getFreshAddress(opts)
       abcReceiveAddress.nativeAmount = '0'
       abcReceiveAddress.metadata = fakeMetadata
       return Promise.resolve(abcReceiveAddress)
