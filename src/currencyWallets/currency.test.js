@@ -1,4 +1,5 @@
 // @flow
+import { add } from 'biggystring'
 import { fakeUser, makeFakeContexts } from '../indexABC.js'
 import { makeAssertLog } from '../test/assertLog.js'
 import {
@@ -7,9 +8,15 @@ import {
 } from '../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../test/fakeExchange.js'
 import { awaitState } from '../util/redux/reaction.js'
-import { assert } from 'chai'
+import { PRECISION } from './api'
+import chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
 import { describe, it } from 'mocha'
 import { createStore } from 'redux'
+
+chai.use(chaiAsPromised)
+
+const { assert } = chai
 
 async function makeFakeCurrencyWallet (store, callbacks) {
   const plugin = makeFakeCurrency(store)
@@ -135,6 +142,28 @@ describe('currency wallets', function () {
           })
         )
     })
+  })
+
+  it('getMaxSpendable', async function () {
+    const store = makeFakeCurrencyStore()
+    store.dispatch({ type: 'SET_BALANCE', payload: 50 })
+
+    const wallet = await makeFakeCurrencyWallet(store)
+    const maxSpendable = await wallet.getMaxSpendable({
+      currencyCode: 'TEST',
+      spendTargets: [{}]
+    })
+
+    assert.isFulfilled(
+      wallet.makeSpend({ spendTargets: [{ nativeAmount: maxSpendable }] })
+    )
+    assert.isRejected(
+      wallet.makeSpend({
+        spendTargets: [{ nativeAmount: add(maxSpendable, PRECISION) }]
+      })
+    )
+
+    return null
   })
 
   // it('can have metadata', function () {

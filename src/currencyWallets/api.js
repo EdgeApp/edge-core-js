@@ -1,5 +1,13 @@
 // @flow
-import { mulf, divf } from 'biggystring'
+import type {
+  AbcMetadata,
+  AbcParsedUri,
+  AbcReceiveAddress,
+  AbcSpendInfo,
+  AbcTransaction,
+  AbcWalletInfo
+} from 'airbitz-core-types'
+import { add, div, lte, sub } from 'biggystring'
 import {
   addCurrencyWallet,
   renameCurrencyWallet,
@@ -21,17 +29,9 @@ import {
 } from '../redux/selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { copyProperties, wrapObject } from '../util/api.js'
-import { createReaction } from '../util/redux/reaction.js'
 import { compare } from '../util/compare.js'
+import { createReaction } from '../util/redux/reaction.js'
 import { filterObject, mergeDeeply } from '../util/util.js'
-import type {
-  AbcReceiveAddress,
-  AbcWalletInfo,
-  AbcSpendInfo,
-  AbcTransaction,
-  AbcMetadata,
-  AbcParsedUri
-} from 'airbitz-core-types'
 
 function nop (nopstuff: any) {}
 
@@ -43,7 +43,7 @@ const fakeMetadata = {
   notes: ''
 }
 
-const PRECISION = 1 / 1000000000 // 0.000 000 001
+export const PRECISION = '1'
 
 /**
  * Creates a `CurrencyWallet` API object.
@@ -272,7 +272,9 @@ export function makeCurrencyApi (
     },
 
     getReceiveAddress (opts: any): Promise<AbcReceiveAddress> {
-      const abcReceiveAddress: AbcReceiveAddress = engine().getFreshAddress(opts)
+      const abcReceiveAddress: AbcReceiveAddress = engine().getFreshAddress(
+        opts
+      )
       abcReceiveAddress.nativeAmount = '0'
       abcReceiveAddress.metadata = fakeMetadata
       return Promise.resolve(abcReceiveAddress)
@@ -329,27 +331,15 @@ export function makeCurrencyApi (
       const publicAddress = spendInfo.spendTargets[0].publicAddress
       const currencyCode = spendInfo.currencyCode
 
-      const currencyInfo = plugin().currencyInfo
-
-      const ratio = currencyInfo.denominations
-        .find(dem => dem.name === currencyCode)
-        .multiplier.toString()
-
-      const toDisplay = nativeAmount => divf(nativeAmount, ratio).toString()
-
-      const toNative = displayAmount =>
-        !displayAmount ? '' : mulf(parseFloat(displayAmount), ratio)
-
-      const balance = +toDisplay(engine().getBalance({ currencyCode }))
+      const balance = engine().getBalance({ currencyCode })
 
       async function getMax (min, max) {
-        if (max - min < PRECISION) return min
-        const avg = (min + max) / 2
-        const nativeAmount = toNative(avg)
+        if (lte(sub(max, min), PRECISION)) return min
+        const avg = div(add(min, max), '2')
 
         try {
           await engine().makeSpend({
-            spendTargets: [{ publicAddress, nativeAmount }]
+            spendTargets: [{ publicAddress, nativeAmount: avg }]
           })
           return getMax(avg, max)
         } catch (err) {
@@ -357,9 +347,7 @@ export function makeCurrencyApi (
         }
       }
 
-      const maxSpendable = await getMax(0, balance)
-
-      return toNative(`${maxSpendable}`)
+      return getMax('0', balance)
     },
 
     sweepPrivateKey (keyUri: string): Promise<void> {
