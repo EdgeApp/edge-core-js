@@ -17,7 +17,7 @@ import {
   listRecoveryQuestionChoices,
   loginRecovery2
 } from '../login/recovery2.js'
-import type { RootProps } from '../rootPixie.js'
+import type { RootProps } from '../root.js'
 import { awaitPluginsLoaded } from '../selectors.js'
 
 export const contextApiPixie = (input: PixieInput<RootProps>) => (

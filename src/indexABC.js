@@ -1,9 +1,12 @@
 // @flow
 import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
-import { makeFakeIos } from './io/fake'
-import { fakeUser, stashFakeUser } from './io/fake/fakeUser.js'
-import { makeCoreRoot, startCoreRoot } from './modules/root.js'
+import { fakeUser } from './io/fake/fakeUser.js'
 import { makeCurrencyWallet } from './modules/currencyWallets/api.js'
+import {
+  makeCoreRoot,
+  makeFakeCoreRoots,
+  startCoreRoot
+} from './modules/root.js'
 
 // Sub-module exports:
 import * as error from './error.js'
@@ -50,10 +53,8 @@ export function makeContext (opts: AbcContextOptions): AbcContext {
 export function makeFakeContexts (
   ...opts: Array<AbcContextOptions>
 ): Array<AbcContext> {
-  return makeFakeIos(opts.length).map((io, i) => {
-    const coreRoot = makeCoreRoot({ ...opts[i], io })
+  return makeFakeCoreRoots(...opts).map(coreRoot => {
     startCoreRoot(coreRoot)
-    if (opts[i].localFakeUser) stashFakeUser(coreRoot.io)
     return coreRoot.output.contextApi
   })
 }

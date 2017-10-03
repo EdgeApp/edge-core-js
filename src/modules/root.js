@@ -1,16 +1,19 @@
 // @flow
 import type { AbcContextOptions, AbcCorePlugin } from 'airbitz-core-types'
-import type { Store } from 'redux'
+import type { Store, Dispatch } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
+import type { ReduxProps } from 'redux-pixies'
 import { makeBrowserIo } from '../io/browser'
-import { fixIo } from '../io/fixIo.js'
+import { stashFakeUser } from '../io/fake/fakeUser.js'
+import { makeFakeIos } from '../io/fake/index.js'
 import type { FixedIo } from '../io/fixIo.js'
+import { fixIo } from '../io/fixIo.js'
 import * as ACTIONS from './actions.js'
 import type { RootAction } from './actions.js'
 import { LoginStore } from './login/loginStore.js'
 import { makeStore } from './makeStore.js'
 import { rootPixie } from './rootPixie.js'
-import type { RootOutput, RootProps } from './rootPixie.js'
+import type { RootOutput } from './rootPixie.js'
 import type { RootState } from './rootReducer.js'
 
 let allDestroyPixies: Array<() => void> = []
@@ -91,20 +94,26 @@ export function makeCoreRoot (opts: AbcContextOptions) {
 export function startCoreRoot (coreRoot: CoreRoot) {
   coreRoot.destroyPixie = attachPixie(
     coreRoot.redux,
-    filterPixie(rootPixie, (props): RootProps => ({
-      ...props,
-      coreRoot,
-      io: coreRoot.io,
-      onError: coreRoot.onError,
-      plugins: coreRoot.plugins,
-      output: (props: any).output
-    })),
+    filterPixie(rootPixie, makeRootProps(coreRoot)),
     e => console.error(e),
     output => (coreRoot.output = output)
   )
   allDestroyPixies.push(coreRoot.destroyPixie)
 
   return coreRoot
+}
+
+/**
+ * Makes a bunch of coreRoot objects with fake io's for unit-testing.
+ */
+export function makeFakeCoreRoots (
+  ...opts: Array<AbcContextOptions>
+): Array<CoreRoot> {
+  return makeFakeIos(opts.length).map((io, i) => {
+    const coreRoot: CoreRoot = makeCoreRoot({ ...opts[i], io })
+    if (opts[i].localFakeUser) stashFakeUser(coreRoot.io)
+    return coreRoot
+  })
 }
 
 /**
@@ -115,4 +124,30 @@ export function destroyAllCores () {
     destroyPixie()
   }
   allDestroyPixies = []
+}
+
+// Props passed to the root pixie:
+export interface RootProps {
+  coreRoot: CoreRoot,
+  +dispatch: Dispatch<RootAction>,
+  io: FixedIo,
+  onError(e: Error): void,
+  output: RootOutput | void,
+  plugins: Array<AbcCorePlugin>,
+  state: RootState
+}
+
+/**
+ * Builds the root props based on a coreRoot object.
+ */
+export function makeRootProps (
+  coreRoot: CoreRoot
+): (props: ReduxProps<RootState, RootAction>) => RootProps {
+  return (props: ReduxProps<RootState, RootAction>): RootProps => ({
+    ...props,
+    coreRoot,
+    io: coreRoot.io,
+    onError: coreRoot.onError,
+    plugins: coreRoot.plugins
+  })
 }

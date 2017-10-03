@@ -2,7 +2,7 @@
 import type { AbcExchangePlugin } from 'airbitz-core-types'
 import type { PixieInput } from 'redux-pixies'
 import { rejectify } from '../../util/decorators.js'
-import type { RootProps } from '../rootPixie.js'
+import type { RootProps } from '../root.js'
 import { addPairs } from './reducer.js'
 
 export function exchangePixie (input: PixieInput<RootProps>) {

@@ -3,7 +3,7 @@ import type { AbcCurrencyPlugin, AbcExchangePlugin } from 'airbitz-core-types'
 import { stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 import { setPlugins } from '../plugins/reducer.js'
-import type { RootProps } from '../rootPixie.js'
+import type { RootProps } from '../root.js'
 
 export function currencyPlugins (input: PixieInput<RootProps>) {
   return (props: RootProps): any => {
