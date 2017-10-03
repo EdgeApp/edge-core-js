@@ -4238,9 +4238,9 @@ rebound@^0.0.13:
   version "0.0.13"
   resolved "https://registry.yarnpkg.com/rebound/-/rebound-0.0.13.tgz#4a225254caf7da756797b19c5817bf7a7941fac1"
 
-redux-pixies@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.2.0.tgz#ecf32c69fbd098f515abb3666116cc4f0f001c32"
+redux-pixies@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.3.0.tgz#d621f99f27bca9a8c517a5956a756cb91ec6d59e"
 
 redux-thunk@^2.2.0:
   version "2.2.0"

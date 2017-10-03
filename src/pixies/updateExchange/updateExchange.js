@@ -2,10 +2,10 @@
 import { addPairs } from '../../redux/exchangeCache/reducer.js'
 import { rejectify } from '../../util/decorators.js'
 import type { RootProps } from '../rootPixie.js'
-import type { OnError, OnOutput } from 'redux-pixies'
+import type { PixieInput } from 'redux-pixies'
 import type { AbcExchangePlugin } from 'airbitz-core-types'
 
-export function exchangePixie (onError: OnError, onOutput: OnOutput) {
+export function exchangePixie (input: PixieInput<RootProps>) {
   let timeout: number | void
 
   return {

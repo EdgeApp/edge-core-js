@@ -2,10 +2,10 @@
 import { setPlugins } from '../../redux/plugins/reducer.js'
 import type { RootProps } from '../rootPixie.js'
 import { stopUpdates } from 'redux-pixies'
-import type { OnError, OnOutput } from 'redux-pixies'
+import type { PixieInput } from 'redux-pixies'
 import type { AbcCurrencyPlugin, AbcExchangePlugin } from 'airbitz-core-types'
 
-export function currencyPlugins (onError: OnError, onOutput: OnOutput) {
+export function currencyPlugins (input: PixieInput<RootProps>) {
   return (props: RootProps): any => {
     const opts = { io: (props.io: any) }
     const promises: Array<Promise<AbcCurrencyPlugin>> = []
@@ -15,12 +15,12 @@ export function currencyPlugins (onError: OnError, onOutput: OnOutput) {
       }
     }
 
-    Promise.all(promises).then(plugins => onOutput(plugins))
+    Promise.all(promises).then(plugins => input.onOutput(plugins))
     return stopUpdates
   }
 }
 
-export function exchangePlugins (onError: OnError, onOutput: OnOutput) {
+export function exchangePlugins (input: PixieInput<RootProps>) {
   return (props: RootProps): any => {
     const opts = { io: (props.io: any) }
     const promises: Array<Promise<AbcExchangePlugin>> = []
@@ -30,7 +30,7 @@ export function exchangePlugins (onError: OnError, onOutput: OnOutput) {
       }
     }
 
-    Promise.all(promises).then(plugins => onOutput(plugins))
+    Promise.all(promises).then(plugins => input.onOutput(plugins))
     return stopUpdates
   }
 }
