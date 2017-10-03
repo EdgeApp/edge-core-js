@@ -1,7 +1,7 @@
 // @flow
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base16, base64, utf8 } from '../../util/encoding.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import type {
   LoginKit,
   StorageWalletInfo,
@@ -39,11 +39,11 @@ export function makeKeyInfo (type: string, keys: {}, idKey: Uint8Array) {
  * Makes keys for accessing an encrypted Git repo.
  */
 export function makeStorageKeyInfo (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   type: string,
   keys: StorageKeys = {}
 ) {
-  const { io } = coreRoot
+  const { io } = ai.props
   if (keys.dataKey == null) keys.dataKey = base64.stringify(io.random(32))
   if (keys.syncKey == null) keys.syncKey = base64.stringify(io.random(20))
 
@@ -54,11 +54,11 @@ export function makeStorageKeyInfo (
  * Assembles all the resources needed to attach new keys to the account.
  */
 export function makeKeysKit (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   login: LoginTree,
   ...keyInfos: Array<StorageWalletInfo>
 ): LoginKit {
-  const { io } = coreRoot
+  const { io } = ai.props
   const keyBoxes = keyInfos.map(info =>
     encrypt(io, utf8.parse(JSON.stringify(info)), login.loginKey)
   )

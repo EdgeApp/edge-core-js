@@ -11,7 +11,7 @@ import { base58 } from '../../util/encoding.js'
 import { makeExchangeCache } from '../exchange/exchangeApi.js'
 import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { getCurrencyPlugin } from '../selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { makeAccountState } from './accountState.js'
@@ -20,15 +20,15 @@ import { makeAccountState } from './accountState.js'
  * Creates an `Account` API object.
  */
 export function makeAccount (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   appId: string,
   loginTree: any,
   loginType: string = '',
   callbacks: AbcAccountCallbacks | {} = {}
 ) {
-  return makeAccountState(coreRoot, appId, loginTree, callbacks).then(state =>
+  return makeAccountState(ai, appId, loginTree, callbacks).then(state =>
     wrapObject(
-      coreRoot.onError,
+      ai.props.onError,
       'Account',
       makeAccountApi(state, loginType, callbacks)
     )
@@ -43,10 +43,9 @@ function makeAccountApi (
   loginType: string,
   callbacks: AbcAccountCallbacks | {}
 ): AbcAccount {
-  const { coreRoot, keyInfo } = state
-  const { redux } = coreRoot
+  const { ai, keyInfo } = state
 
-  const exchangeCache = makeExchangeCache(coreRoot)
+  const exchangeCache = makeExchangeCache(ai)
 
   const rawAccount: AbcAccount = {
     get appId (): string {
@@ -86,7 +85,7 @@ function makeAccountApi (
     },
 
     passwordOk (password: string): Promise<boolean> {
-      return checkPassword(coreRoot, state.loginTree, password)
+      return checkPassword(ai, state.loginTree, password)
     },
 
     passwordSetup (password: string): Promise<void> {
@@ -152,12 +151,12 @@ function makeAccountApi (
     createWallet (type: string, keys: any): string {
       if (keys == null) {
         // Use the currency plugin to create the keys:
-        const plugin = getCurrencyPlugin(redux.getState(), type)
+        const plugin = getCurrencyPlugin(ai.props.state, type)
         keys = plugin.createPrivateKey(type)
       }
 
-      const keyInfo = makeStorageKeyInfo(coreRoot, type, keys)
-      const kit = makeKeysKit(coreRoot, state.login, keyInfo)
+      const keyInfo = makeStorageKeyInfo(ai, type, keys)
+      const kit = makeKeysKit(ai, state.login, keyInfo)
       return state.applyKit(kit).then(() => keyInfo.id)
     },
 
@@ -206,10 +205,7 @@ function makeAccountApi (
     }
   }
 
-  copyProperties(
-    rawAccount,
-    makeStorageWalletApi(coreRoot.redux, keyInfo, callbacks)
-  )
+  copyProperties(rawAccount, makeStorageWalletApi(ai, keyInfo, callbacks))
 
   return rawAccount
 }

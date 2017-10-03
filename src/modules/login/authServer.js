@@ -7,7 +7,7 @@ import {
   UsernameError
 } from '../../error.js'
 import { timeout } from '../../util/promise.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 
 function parseReply (json) {
   switch (json.status_code) {
@@ -42,27 +42,33 @@ function parseReply (json) {
 }
 
 export function authRequest (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   method: string,
   path: string,
   body?: {}
 ) {
+  const { state, io } = ai.props
+  const { apiKey, uri } = state.login.server
+  if (apiKey == null) {
+    throw new Error('No API key provided at context creation time')
+  }
+
   const opts: RequestOptions = {
     method: method,
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: 'Token ' + coreRoot.apiKey
+      Authorization: 'Token ' + apiKey
     }
   }
   if (method !== 'GET') {
     opts.body = JSON.stringify(body)
   }
 
-  const uri = coreRoot.authServer + path
-  coreRoot.io.console.info(`${method} ${uri}`)
+  const fullUri = uri + path
+  io.console.info(`${method} ${fullUri}`)
   return timeout(
-    coreRoot.io.fetch(uri, opts).then(
+    io.fetch(fullUri, opts).then(
       response =>
         response.json().then(parseReply, jsonError => {
           throw new Error('Non-JSON reply, HTTP status ' + response.status)

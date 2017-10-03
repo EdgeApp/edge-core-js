@@ -1,7 +1,7 @@
 // @flow
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base64, utf8 } from '../../util/encoding.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import type { LoginStash, LoginTree } from './login-types.js'
 import { applyLoginReply, makeLoginTree } from './login.js'
@@ -23,7 +23,7 @@ function recovery2Auth (recovery2Key, answers) {
  * @return Promise<{loginKey, loginReply}>
  */
 function fetchLoginKey (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
   answers: Array<string>
@@ -33,7 +33,7 @@ function fetchLoginKey (
     recovery2Auth: recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
-  return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
+  return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
     if (reply.recovery2Box == null) {
       throw new Error('Missing data for recovery v2 login')
     }
@@ -58,21 +58,17 @@ export function getRecovery2Key (stashTree: LoginStash) {
  * @return A `Promise` for the new root login.
  */
 export function loginRecovery2 (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
   answers: Array<string>
 ) {
-  return coreRoot.loginStore.load(username).then(stashTree => {
-    return fetchLoginKey(
-      coreRoot,
-      recovery2Key,
-      username,
-      answers
-    ).then(values => {
+  const { loginStore } = ai.props
+  return loginStore.load(username).then(stashTree => {
+    return fetchLoginKey(ai, recovery2Key, username, answers).then(values => {
       const { loginKey, loginReply } = values
       stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-      coreRoot.loginStore.save(stashTree)
+      loginStore.save(stashTree)
       return makeLoginTree(stashTree, loginKey)
     })
   })
@@ -85,7 +81,7 @@ export function loginRecovery2 (
  * @param Question array promise
  */
 export function getQuestions2 (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string
 ) {
@@ -93,7 +89,7 @@ export function getQuestions2 (
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null
   }
-  return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
+  return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
     // Recovery login:
     const question2Box = reply.question2Box
     if (question2Box == null) {
@@ -110,13 +106,13 @@ export function getQuestions2 (
  * Creates the data needed to attach recovery questions to a login.
  */
 export function makeRecovery2Kit (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   login: LoginTree,
   username: string,
   questions: Array<string>,
   answers: Array<string>
 ) {
-  const { io } = coreRoot
+  const { io } = ai.props
   if (!Array.isArray(questions)) {
     throw new TypeError('Questions must be an array of strings')
   }
@@ -153,7 +149,7 @@ export function makeRecovery2Kit (
 }
 
 export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices (
-  coreRoot: CoreRoot
+  ai: ApiInput
 ) {
-  return authRequest(coreRoot, 'POST', '/v1/questions', {})
+  return authRequest(ai, 'POST', '/v1/questions', {})
 }

@@ -2,7 +2,7 @@
 import { UsernameError } from '../../error.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import { makeKeysKit } from './keys.js'
 import type { LoginKit, LoginTree, WalletInfo } from './login-types.js'
@@ -19,12 +19,12 @@ export interface LoginCreateOpts {
 /**
  * Determines whether or not a username is available.
  */
-export function usernameAvailable (coreRoot: CoreRoot, username: string) {
-  return hashUsername(coreRoot, username).then(userId => {
+export function usernameAvailable (ai: ApiInput, username: string) {
+  return hashUsername(ai, username).then(userId => {
     const request = {
       userId: base64.stringify(userId)
     }
-    return authRequest(coreRoot, 'POST', '/v2/login', request)
+    return authRequest(ai, 'POST', '/v2/login', request)
       .then(reply => false) // It's not available if we can hit it!
       .catch(e => {
         if (e.type !== UsernameError.type) {
@@ -39,38 +39,32 @@ export function usernameAvailable (coreRoot: CoreRoot, username: string) {
  * Assembles all the data needed to create a new login.
  */
 export function makeCreateKit (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   parentLogin?: LoginTree,
   appId: string,
   username: string,
   opts: LoginCreateOpts
 ): Promise<LoginKit> {
+  const { io } = ai.props
+
   // Figure out login identity:
   const loginId =
-    parentLogin != null
-      ? coreRoot.io.random(32)
-      : hashUsername(coreRoot, username)
-  const loginKey = coreRoot.io.random(32)
-  const loginAuth = coreRoot.io.random(32)
-  const loginAuthBox = encrypt(coreRoot.io, loginAuth, loginKey)
+    parentLogin != null ? io.random(32) : hashUsername(ai, username)
+  const loginKey = io.random(32)
+  const loginAuth = io.random(32)
+  const loginAuthBox = encrypt(io, loginAuth, loginKey)
 
   // Set up login methods:
   const parentBox =
-    parentLogin != null
-      ? encrypt(coreRoot.io, loginKey, parentLogin.loginKey)
-      : void 0
+    parentLogin != null ? encrypt(io, loginKey, parentLogin.loginKey) : void 0
   const passwordKit =
     opts.password != null
-      ? makePasswordKit(coreRoot, { loginKey }, username, opts.password)
+      ? makePasswordKit(ai, { loginKey }, username, opts.password)
       : {}
   const pin2Kit =
-    opts.pin != null
-      ? makePin2Kit(coreRoot, { loginKey }, username, opts.pin)
-      : {}
+    opts.pin != null ? makePin2Kit(ai, { loginKey }, username, opts.pin) : {}
   const keysKit =
-    opts.keyInfo != null
-      ? makeKeysKit(coreRoot, { loginKey }, opts.keyInfo)
-      : {}
+    opts.keyInfo != null ? makeKeysKit(ai, { loginKey }, opts.keyInfo) : {}
 
   // Bundle everything:
   return Promise.all([loginId, passwordKit]).then(values => {
@@ -114,21 +108,21 @@ export function makeCreateKit (
  * Creates a new login on the auth server.
  */
 export function createLogin (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   username: string,
   opts: LoginCreateOpts
 ): Promise<LoginTree> {
   const fixedName = fixUsername(username)
 
-  return makeCreateKit(coreRoot, void 0, '', fixedName, opts).then(kit => {
+  return makeCreateKit(ai, void 0, '', fixedName, opts).then(kit => {
     kit.login.username = fixedName
     kit.stash.username = fixedName
     kit.login.userId = kit.login.loginId
 
     const request = {}
     request.data = kit.server
-    return authRequest(coreRoot, 'POST', kit.serverPath, request).then(reply =>
-      coreRoot.loginStore.save(kit.stash).then(() => kit.login)
+    return authRequest(ai, 'POST', kit.serverPath, request).then(reply =>
+      ai.props.loginStore.save(kit.stash).then(() => kit.login)
     )
   })
 }

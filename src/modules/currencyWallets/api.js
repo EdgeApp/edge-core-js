@@ -17,6 +17,7 @@ import {
   setCurrencyWalletTxMetadata,
   setupNewTxMetadata
 } from '../actions.js'
+import type { ApiInput } from '../root.js'
 import {
   getCurrencyWalletBalance,
   getCurrencyWalletBlockHeight,
@@ -46,34 +47,32 @@ const fakeMetadata = {
  * Creates a `CurrencyWallet` API object.
  */
 export function makeCurrencyWallet (keyInfo: AbcWalletInfo, opts: any) {
-  const { coreRoot, callbacks = {} } = opts
-  const { redux } = coreRoot
+  const { ai, callbacks = {} } = opts
+  const { dispatch, onError } = ai.props
 
-  return redux
-    .dispatch(addCurrencyWallet(keyInfo, opts))
-    .then(keyId =>
-      wrapObject(
-        coreRoot.onError,
-        'CurrencyWallet',
-        makeCurrencyApi(redux, keyInfo, callbacks)
-      )
+  return dispatch(addCurrencyWallet(keyInfo, opts)).then(keyId =>
+    wrapObject(
+      onError,
+      'CurrencyWallet',
+      makeCurrencyApi(ai, keyInfo, callbacks)
     )
+  )
 }
 
 /**
  * Creates an unwrapped account API object around an account state object.
  */
 export function makeCurrencyApi (
-  redux: any,
+  ai: ApiInput,
   keyInfo: AbcWalletInfo,
   callbacks: any
 ) {
-  const { dispatch, getState } = redux
+  const { dispatch } = ai.props
   const keyId = keyInfo.id
 
   // Bound selectors:
-  const engine = () => getCurrencyWalletEngine(getState(), keyId)
-  const plugin = () => getCurrencyWalletPlugin(getState(), keyId)
+  const engine = () => getCurrencyWalletEngine(ai.props.state, keyId)
+  const plugin = () => getCurrencyWalletPlugin(ai.props.state, keyId)
 
   const {
     onAddressesChecked,
@@ -202,7 +201,7 @@ export function makeCurrencyApi (
   const out = {
     // Storage stuff:
     get name () {
-      return getCurrencyWalletName(getState(), keyId)
+      return getCurrencyWalletName(ai.props.state, keyId)
     },
     renameWallet (name: string) {
       return dispatch(renameCurrencyWallet(keyId, name))
@@ -210,7 +209,7 @@ export function makeCurrencyApi (
 
     // Currency info:
     get fiatCurrencyCode (): string {
-      return getCurrencyWalletFiat(getState(), keyId)
+      return getCurrencyWalletFiat(ai.props.state, keyId)
     },
     get currencyInfo () {
       return plugin().currencyInfo
@@ -241,7 +240,7 @@ export function makeCurrencyApi (
     },
 
     getTransactions (opts: any = {}): Promise<Array<AbcTransaction>> {
-      const state = getState()
+      const state = ai.props.state
       const files = getCurrencyWalletFiles(state, keyId)
       const list = getCurrencyWalletTxList(state, keyId)
       const txs = getCurrencyWalletTxs(state, keyId)
@@ -312,7 +311,7 @@ export function makeCurrencyApi (
     },
 
     saveTxMetadata (txid: string, currencyCode: string, metadata: AbcMetadata) {
-      const fiat = getCurrencyWalletFiat(getState(), keyId)
+      const fiat = getCurrencyWalletFiat(ai.props.state, keyId)
 
       return dispatch(
         setCurrencyWalletTxMetadata(
@@ -342,7 +341,7 @@ export function makeCurrencyApi (
       return plugin().encodeUri(obj)
     }
   }
-  copyProperties(out, makeStorageWalletApi(redux, keyInfo, callbacks))
+  copyProperties(out, makeStorageWalletApi(ai, keyInfo, callbacks))
 
   return out
 }

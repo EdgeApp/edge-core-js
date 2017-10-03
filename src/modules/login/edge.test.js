@@ -3,12 +3,11 @@ import { assert } from 'chai'
 import { describe, it } from 'mocha'
 import { fakeUser, makeFakeContexts } from '../../indexABC.js'
 import { base64 } from '../../util/encoding.js'
-import { makeCoreRoot } from '../root.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { fetchLobbyRequest, sendLobbyReply } from './lobby.js'
 
-async function sendFakeResponse (coreRoot: CoreRoot, lobbyId, request) {
-  const stashTree = await coreRoot.loginStore.load(fakeUser.username)
+async function sendFakeResponse (ai: ApiInput, lobbyId, request) {
+  const stashTree = await ai.props.loginStore.load(fakeUser.username)
   stashTree.passwordAuthBox = null
   stashTree.passwordBox = null
   stashTree.pin2Key = null
@@ -19,19 +18,19 @@ async function sendFakeResponse (coreRoot: CoreRoot, lobbyId, request) {
     loginKey: base64.stringify(fakeUser.childLoginKey),
     loginStash: stashTree
   }
-  return sendLobbyReply(coreRoot, lobbyId, request, reply)
+  return sendLobbyReply(ai, lobbyId, request, reply)
 }
 
 async function simulateRemoteApproval (remote, lobbyId: string) {
   // Populate the remote device's local stash:
   await remote.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-  const coreRoot = makeCoreRoot({ io: remote.io })
-  const request = await fetchLobbyRequest(coreRoot, lobbyId)
+  const ai: ApiInput = (remote: any).internalUnitTestingHack()
+  const request = await fetchLobbyRequest(ai, lobbyId)
   assert.equal(request.loginRequest.appId, 'test-child')
   assert.equal(request.loginRequest.displayName, 'test suite')
 
-  return sendFakeResponse(coreRoot, lobbyId, request)
+  return sendFakeResponse(ai, lobbyId, request)
 }
 
 describe('edge login', function () {

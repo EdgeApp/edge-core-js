@@ -1,25 +1,21 @@
 // @flow
 import { wrapObject } from '../../util/api.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { getExchangeRate } from '../selectors.js'
 
 /**
  * Creates an `ExchangeCache` API object.
  */
-export function makeExchangeCache (coreRoot: CoreRoot) {
-  const { redux } = coreRoot
+export function makeExchangeCache (ai: ApiInput) {
+  const { onError } = ai.props
 
-  return wrapObject(
-    coreRoot.onError,
-    'ExchangeCache',
-    makeExchangeCacheApi(redux.dispatch, redux.getState)
-  )
+  return wrapObject(onError, 'ExchangeCache', makeExchangeCacheApi(ai))
 }
 
 /**
  * Creates an unwrapped exchange cache API object.
  */
-function makeExchangeCacheApi (dispatch, getState) {
+function makeExchangeCacheApi (ai: ApiInput) {
   /**
    * TODO: Once the user has an exchange-rate preference,
    * look that up and bias in favor of the preferred exchange.
@@ -36,7 +32,7 @@ function makeExchangeCacheApi (dispatch, getState) {
     '@convertCurrency': { sync: true },
     convertCurrency (fromCurrency, toCurrency, amount = 1) {
       const rate = getExchangeRate(
-        getState(),
+        ai.props.state,
         fromCurrency,
         toCurrency,
         getPairCost

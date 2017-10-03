@@ -2,7 +2,7 @@
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { rejectify } from '../../util/decorators.js'
 import { base64 } from '../../util/encoding.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../selectors.js'
 import { authRequest } from './authServer.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
@@ -19,12 +19,12 @@ function makeHashInput (username: string, password: string) {
  * Extracts the loginKey from the login stash.
  */
 function extractLoginKey (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   stash: LoginStash,
   username: string,
   password: string
 ) {
-  const state = coreRoot.redux.getState()
+  const state = ai.props.state
 
   if (stash.passwordBox == null || stash.passwordKeySnrp == null) {
     throw new Error('Missing data for offline password login')
@@ -38,14 +38,10 @@ function extractLoginKey (
 /**
  * Fetches the loginKey from the server.
  */
-function fetchLoginKey (
-  coreRoot: CoreRoot,
-  username: string,
-  password: string
-) {
-  const state = coreRoot.redux.getState()
+function fetchLoginKey (ai: ApiInput, username: string, password: string) {
+  const state = ai.props.state
   const up = makeHashInput(username, password)
-  const userId = hashUsername(coreRoot, username)
+  const userId = hashUsername(ai, username)
   const passwordAuth = scrypt(state, up, passwordAuthSnrp)
 
   return Promise.all([userId, passwordAuth]).then(values => {
@@ -55,7 +51,7 @@ function fetchLoginKey (
       passwordAuth: base64.stringify(passwordAuth)
       // "otp": null
     }
-    return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
+    return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
       if (reply.passwordBox == null || reply.passwordKeySnrp == null) {
         throw new Error('Missing data for online password login')
       }
@@ -76,28 +72,28 @@ function fetchLoginKey (
  * @return A `Promise` for the new root login.
  */
 export function loginPassword (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   username: string,
   password: string
 ) {
-  return coreRoot.loginStore.load(username).then(stashTree => {
-    return rejectify(extractLoginKey)(coreRoot, stashTree, username, password)
+  const { io, loginStore } = ai.props
+
+  return loginStore.load(username).then(stashTree => {
+    return rejectify(extractLoginKey)(ai, stashTree, username, password)
       .then(loginKey => {
         const loginTree = makeLoginTree(stashTree, loginKey)
 
         // Since we logged in offline, update the stash in the background:
-        syncLogin(coreRoot, loginTree, loginTree).catch(e =>
-          coreRoot.io.console.warn(e)
-        )
+        syncLogin(ai, loginTree, loginTree).catch(e => io.console.warn(e))
 
         return loginTree
       })
       .catch(e => {
         // If that failed, try an online login:
-        return fetchLoginKey(coreRoot, username, password).then(values => {
+        return fetchLoginKey(ai, username, password).then(values => {
           const { loginKey, loginReply } = values
           stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-          coreRoot.loginStore.save(stashTree)
+          loginStore.save(stashTree)
           return makeLoginTree(stashTree, loginKey)
         })
       })
@@ -108,11 +104,11 @@ export function loginPassword (
  * Returns true if the given password is correct.
  */
 export function checkPassword (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   login: LoginTree,
   password: string
 ) {
-  const state = coreRoot.redux.getState()
+  const state = ai.props.state
 
   // Derive passwordAuth:
   const up = makeHashInput(login.username, password)
@@ -160,25 +156,25 @@ export function checkPasswordRules (password: string) {
  * Creates the data needed to attach a password to a login.
  */
 export function makePasswordKit (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   login: LoginTree,
   username: string,
   password: string
 ): Promise<LoginKit> {
   const up = makeHashInput(username, password)
-  const state = coreRoot.redux.getState()
+  const { state, io } = ai.props
 
   // loginKey chain:
   const boxPromise = makeSnrp(state).then(passwordKeySnrp => {
     return scrypt(state, up, passwordKeySnrp).then(passwordKey => {
-      const passwordBox = encrypt(coreRoot.io, login.loginKey, passwordKey)
+      const passwordBox = encrypt(io, login.loginKey, passwordKey)
       return { passwordKeySnrp, passwordBox }
     })
   })
 
   // authKey chain:
   const authPromise = scrypt(state, up, passwordAuthSnrp).then(passwordAuth => {
-    const passwordAuthBox = encrypt(coreRoot.io, passwordAuth, login.loginKey)
+    const passwordAuthBox = encrypt(io, passwordAuth, login.loginKey)
     return { passwordAuth, passwordAuthBox }
   })
 

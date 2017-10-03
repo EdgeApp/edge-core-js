@@ -14,11 +14,7 @@ import { applyKit, searchTree } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
-import {
-  awaitPluginsLoaded,
-  getStorageWalletLastSync,
-  hasCurrencyPlugin
-} from '../selectors.js'
+import { getStorageWalletLastSync, hasCurrencyPlugin } from '../selectors.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 function findAppLogin (loginTree, appId) {
@@ -34,15 +30,15 @@ function checkLogin (login) {
 /**
  * Creates a child login under the provided login, with the given appId.
  */
-function createChildLogin (coreRoot, loginTree, login, appId, wantRepo = true) {
+function createChildLogin (ai, loginTree, login, appId, wantRepo = true) {
   const username = loginTree.username
   checkLogin(login)
 
   const opts = { pin: loginTree.pin }
   if (wantRepo) {
-    opts.keyInfo = makeStorageKeyInfo(coreRoot, makeAccountType(appId))
+    opts.keyInfo = makeStorageKeyInfo(ai, makeAccountType(appId))
   }
-  return makeCreateKit(coreRoot, login, appId, username, opts).then(kit => {
+  return makeCreateKit(ai, login, appId, username, opts).then(kit => {
     const parentKit = {
       serverPath: kit.serverPath,
       server: kit.server,
@@ -50,7 +46,7 @@ function createChildLogin (coreRoot, loginTree, login, appId, wantRepo = true) {
       stash: { children: [kit.stash] },
       loginId: login.loginId
     }
-    return applyKit(coreRoot, loginTree, parentKit)
+    return applyKit(ai, loginTree, parentKit)
   })
 }
 
@@ -59,21 +55,21 @@ function createChildLogin (coreRoot, loginTree, login, appId, wantRepo = true) {
  * @return A `Promise`, which will resolve to a loginTree that does have
  * the requested account.
  */
-function ensureAccountExists (coreRoot, loginTree, appId) {
+function ensureAccountExists (ai, loginTree, appId) {
   const accountType = makeAccountType(appId)
 
   // If there is no app login, make that:
   const login = findAppLogin(loginTree, appId)
   if (login == null) {
-    return createChildLogin(coreRoot, loginTree, loginTree, appId, true)
+    return createChildLogin(ai, loginTree, loginTree, appId, true)
   }
 
   // Otherwise, make the repo:
   if (findFirstKey(login.keyInfos, accountType) == null) {
     checkLogin(login)
-    const keyInfo = makeStorageKeyInfo(coreRoot, accountType)
-    const keysKit = makeKeysKit(coreRoot, login, keyInfo)
-    return applyKit(coreRoot, loginTree, keysKit)
+    const keyInfo = makeStorageKeyInfo(ai, accountType)
+    const keysKit = makeKeysKit(ai, login, keyInfo)
+    return applyKit(ai, loginTree, keysKit)
   }
 
   // Everything is fine, so do nothing:
@@ -129,9 +125,9 @@ function makeCurrencyWalletCallbacks (walletId, accountCallbacks) {
  * This is the data an account contains, and the methods to update it.
  */
 class AccountState {
-  constructor (coreRoot, appId, loginTree, keyInfo, callbacks) {
+  constructor (ai, appId, loginTree, keyInfo, callbacks) {
     // Constant stuff:
-    this.coreRoot = coreRoot
+    this.ai = ai
     this.appId = appId
     this.keyInfo = keyInfo
     this.callbacks = callbacks
@@ -149,8 +145,8 @@ class AccountState {
 
   async logout () {
     // Shut down:
-    this.coreRoot.redux.dispatch(this.disposer)
-    this.coreRoot = null
+    this.ai.props.dispatch(this.disposer)
+    this.ai = null
 
     // Clear keys:
     this.appId = null
@@ -162,32 +158,32 @@ class AccountState {
   }
 
   changePassword (password, login = this.loginTree) {
-    const { coreRoot, loginTree: { username } } = this
+    const { ai, loginTree: { username } } = this
     checkLogin(login)
 
-    return makePasswordKit(coreRoot, login, username, password).then(kit =>
+    return makePasswordKit(ai, login, username, password).then(kit =>
       this.applyKit(kit)
     )
   }
 
   changePin (pin, login = this.login) {
-    const { coreRoot, loginTree: { username } } = this
+    const { ai, loginTree: { username } } = this
     checkLogin(login)
 
-    const kit = makePin2Kit(coreRoot, login, username, pin)
+    const kit = makePin2Kit(ai, login, username, pin)
     return this.applyKit(kit)
   }
 
   changeRecovery (questions, answers, login = this.loginTree) {
-    const { coreRoot, loginTree: { username } } = this
+    const { ai, loginTree: { username } } = this
     checkLogin(login)
 
-    const kit = makeRecovery2Kit(coreRoot, login, username, questions, answers)
+    const kit = makeRecovery2Kit(ai, login, username, questions, answers)
     return this.applyKit(kit)
   }
 
   applyKit (kit) {
-    return applyKit(this.coreRoot, this.loginTree, kit).then(loginTree => {
+    return applyKit(this.ai, this.loginTree, kit).then(loginTree => {
       this.loginTree = loginTree
       this.login = findAppLogin(loginTree, this.appId)
       this.updateCurrencyWallets()
@@ -196,9 +192,9 @@ class AccountState {
   }
 
   changeKeyStates (newStates) {
-    const { coreRoot, keyInfo, keyStates } = this
+    const { ai, keyInfo, keyStates } = this
     return changeKeyStates(
-      coreRoot.redux.getState(),
+      ai.props.state,
       keyInfo.id,
       keyStates,
       newStates
@@ -213,11 +209,8 @@ class AccountState {
   }
 
   reloadKeyStates () {
-    const { coreRoot, keyInfo } = this
-    return loadAllKeyStates(
-      coreRoot.redux.getState(),
-      keyInfo.id
-    ).then(values => {
+    const { ai, keyInfo } = this
+    return loadAllKeyStates(ai.props.state, keyInfo.id).then(values => {
       const { keyInfos, keyStates } = values
       this.legacyKeyInfos = keyInfos
       this.keyStates = keyStates
@@ -241,33 +234,33 @@ class AccountState {
   }
 
   get activeWalletIds () {
-    const { coreRoot } = this
+    const { ai } = this
     return this.allKeys
       .filter(
         info =>
           !info.deleted &&
           !info.archived &&
-          hasCurrencyPlugin(coreRoot.redux.getState(), info.type)
+          hasCurrencyPlugin(ai.props.state, info.type)
       )
       .sort((a, b) => a.sortIndex - b.sortIndex)
       .map(info => info.id)
   }
 
   get archivedWalletIds () {
-    const { coreRoot } = this
+    const { ai } = this
     return this.allKeys
       .filter(
         info =>
           !info.deleted &&
           info.archived &&
-          hasCurrencyPlugin(coreRoot.redux.getState(), info.type)
+          hasCurrencyPlugin(ai.props.state, info.type)
       )
       .sort((a, b) => a.sortIndex - b.sortIndex)
       .map(info => info.id)
   }
 
   updateCurrencyWallets () {
-    const { coreRoot, login } = this
+    const { ai, login } = this
 
     // List all the wallets we can mangage:
     const allWalletIds = [...this.activeWalletIds, ...this.archivedWalletIds]
@@ -282,7 +275,7 @@ class AccountState {
         const callbacks = makeCurrencyWalletCallbacks(id, this.callbacks)
 
         this.currencyWalletsLoading[id] = true
-        makeCurrencyWallet(walletInfo, { callbacks, coreRoot })
+        makeCurrencyWallet(walletInfo, { callbacks, ai })
           .then(wallet => {
             this.currencyWalletsLoading[id] = false
             this.currencyWallets[id] = wallet
@@ -291,7 +284,7 @@ class AccountState {
             }
             return null
           })
-          .catch(e => coreRoot.onError(e))
+          .catch(e => ai.props.onError(e))
       }
     }
 
@@ -299,10 +292,11 @@ class AccountState {
   }
 }
 
-export async function makeAccountState (coreRoot, appId, loginTree, callbacks) {
-  await awaitPluginsLoaded(coreRoot.redux)
+export async function makeAccountState (ai, appId, loginTree, callbacks) {
+  const { dispatch } = ai.props
+  ai.waitFor(props => props.output.currencyPlugins)
 
-  return ensureAccountExists(coreRoot, loginTree, appId).then(loginTree => {
+  return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
     // Find our repo:
     const type = makeAccountType(appId)
     const login = findAppLogin(loginTree, appId)
@@ -311,15 +305,9 @@ export async function makeAccountState (coreRoot, appId, loginTree, callbacks) {
       throw new Error(`Cannot find a "${type}" repo`)
     }
 
-    return coreRoot.redux.dispatch(addStorageWallet(keyInfo)).then(() => {
-      const account = new AccountState(
-        coreRoot,
-        appId,
-        loginTree,
-        keyInfo,
-        callbacks
-      )
-      const disposer = coreRoot.redux.dispatch(
+    return dispatch(addStorageWallet(keyInfo)).then(() => {
+      const account = new AccountState(ai, appId, loginTree, keyInfo, callbacks)
+      const disposer = dispatch(
         createReaction(
           state => getStorageWalletLastSync(state, keyInfo.id),
           () => account.reloadKeyStates()

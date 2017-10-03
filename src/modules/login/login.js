@@ -6,7 +6,7 @@
 import { decrypt } from '../../util/crypto/crypto.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import { elvis, filterObject, softCat } from '../../util/util.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import { makeAccountType, makeKeyInfo, mergeKeyInfos } from './keys.js'
 import type {
@@ -24,7 +24,7 @@ function cloneNode (node, children) {
  * Returns the login that satisifies the given predicate,
  * or undefined if nothing matches.
  */
-export function searchTree (node: any, predicate: (any) => boolean) {
+export function searchTree (node: any, predicate: any => boolean) {
   if (predicate(node)) return node
 
   if (node.children != null) {
@@ -230,24 +230,16 @@ export function makeLoginTree (
  * and the on-disk stash. A login kit contains all three elements,
  * and this function knows how to apply them all.
  */
-export function applyKit (
-  coreRoot: CoreRoot,
-  loginTree: LoginTree,
-  kit: LoginKit
-) {
+export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
+  const { loginStore } = ai.props
   const { loginId } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
   if (!login) throw new Error('Cannot apply kit: missing login')
 
-  return coreRoot.loginStore.load(loginTree.username).then(stashTree => {
+  return loginStore.load(loginTree.username).then(stashTree => {
     const request: Object = makeAuthJson(login)
     request.data = kit.server
-    return authRequest(
-      coreRoot,
-      'POST',
-      kit.serverPath,
-      request
-    ).then(reply => {
+    return authRequest(ai, 'POST', kit.serverPath, request).then(reply => {
       const newLoginTree = updateTree(
         loginTree,
         login => login.loginId === loginId,
@@ -270,7 +262,7 @@ export function applyKit (
         })
       )
 
-      return coreRoot.loginStore.save(newStashTree).then(() => newLoginTree)
+      return loginStore.save(newStashTree).then(() => newLoginTree)
     })
   })
 }
@@ -279,17 +271,18 @@ export function applyKit (
  * Refreshes a login with data from the server.
  */
 export function syncLogin (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   loginTree: LoginTree,
   login: LoginTree
 ) {
-  return coreRoot.loginStore.load(loginTree.username).then(stashTree => {
+  const { loginStore } = ai.props
+  return loginStore.load(loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
-    return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
+    return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
       const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
       const newLoginTree = makeLoginTree(stashTree, login.loginKey, login.appId)
 
-      return coreRoot.loginStore.save(newStashTree).then(() => newLoginTree)
+      return loginStore.save(newStashTree).then(() => newLoginTree)
     })
   })
 }

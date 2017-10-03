@@ -1,7 +1,7 @@
 // @flow
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import type { LoginStash, LoginTree } from './login-types.js'
 import { applyLoginReply, makeLoginTree, searchTree } from './login.js'
@@ -20,7 +20,7 @@ function pin2Auth (pin2Key, pin) {
  * @return Promise<{loginKey, loginReply}>
  */
 function fetchLoginKey (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   pin2Key: Uint8Array,
   username: string,
   pin: string
@@ -30,7 +30,7 @@ function fetchLoginKey (
     pin2Auth: base64.stringify(pin2Auth(pin2Key, pin))
     // "otp": null
   }
-  return authRequest(coreRoot, 'POST', '/v2/login', request).then(reply => {
+  return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
     if (reply.pin2Box == null) {
       throw new Error('Missing data for PIN v2 login')
     }
@@ -59,20 +59,21 @@ export function getPin2Key (stashTree: LoginStash, appId: string) {
  * @return A `Promise` for the new root login.
  */
 export function loginPin2 (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   appId: string,
   username: string,
   pin: string
 ) {
-  return coreRoot.loginStore.load(username).then(stashTree => {
+  const { loginStore } = ai.props
+  return loginStore.load(username).then(stashTree => {
     const { pin2Key, appId: appIdFound } = getPin2Key(stashTree, appId)
     if (pin2Key == null) {
       throw new Error('No PIN set locally for this account')
     }
-    return fetchLoginKey(coreRoot, pin2Key, username, pin).then(values => {
+    return fetchLoginKey(ai, pin2Key, username, pin).then(values => {
       const { loginKey, loginReply } = values
       stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-      coreRoot.loginStore.save(stashTree)
+      loginStore.save(stashTree)
       return makeLoginTree(stashTree, loginKey, appIdFound)
     })
   })
@@ -82,12 +83,12 @@ export function loginPin2 (
  * Creates the data needed to attach a PIN to a login.
  */
 export function makePin2Kit (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   login: LoginTree,
   username: string,
   pin: string
 ) {
-  const { io } = coreRoot
+  const { io } = ai.props
   const pin2Key = login.pin2Key || io.random(32)
   const pin2Box = encrypt(io, login.loginKey, pin2Key)
   const pin2KeyBox = encrypt(io, pin2Key, login.loginKey)

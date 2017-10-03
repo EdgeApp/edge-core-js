@@ -2,7 +2,7 @@
 import { mapFiles } from 'disklet'
 import type { FixedIo } from '../../io/fixIo.js'
 import { base58, base64 } from '../../util/encoding.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { scrypt, userIdSnrp } from '../selectors.js'
 import type { LoginStash } from './login-types.js'
 
@@ -105,8 +105,8 @@ const userIdCache = {}
 /**
  * Hashes a username into a userId.
  */
-export function hashUsername (coreRoot: CoreRoot, username: string) {
-  const state = coreRoot.redux.getState()
+export function hashUsername (ai: ApiInput, username: string) {
+  const { state } = ai.props
   const fixedName = fixUsername(username)
   if (userIdCache[fixedName] == null) {
     userIdCache[fixedName] = scrypt(state, fixedName, userIdSnrp)

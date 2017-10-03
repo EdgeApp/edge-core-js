@@ -1,8 +1,8 @@
 // @flow
 import type { AbcContextOptions, AbcCorePlugin } from 'airbitz-core-types'
-import type { Store, Dispatch } from 'redux'
+import type { Dispatch, Store } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
-import type { ReduxProps } from 'redux-pixies'
+import type { PixieInput, ReduxProps } from 'redux-pixies'
 import { makeBrowserIo } from '../io/browser'
 import { stashFakeUser } from '../io/fake/fakeUser.js'
 import { makeFakeIos } from '../io/fake/index.js'
@@ -151,3 +151,33 @@ export function makeRootProps (
     plugins: coreRoot.plugins
   })
 }
+
+/**
+ * Props passed through the API objects (AbcContext, AbcAccount, etc.)
+ */
+export interface ApiProps {
+  +dispatch: Dispatch<RootAction>,
+  io: FixedIo,
+  loginStore: any,
+  onError(e: Error): void,
+  output: RootOutput,
+  state: RootState
+}
+
+/**
+ * Converts the root props to the API props format.
+ */
+export function makeApiProps (props: RootProps): ApiProps | void {
+  if (!props.output) return
+  const { dispatch, coreRoot, output, io, onError, state } = props
+  return {
+    dispatch,
+    loginStore: coreRoot.loginStore,
+    output,
+    io,
+    onError,
+    state
+  }
+}
+
+export type ApiInput = PixieInput<ApiProps>

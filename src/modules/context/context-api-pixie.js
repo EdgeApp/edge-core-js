@@ -1,6 +1,5 @@
 // @flow
 import type { AbcContext, AbcEdgeLoginOptions } from 'airbitz-core-types'
-import type { PixieInput } from 'redux-pixies'
 import { stopUpdates } from 'redux-pixies'
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
@@ -17,27 +16,23 @@ import {
   listRecoveryQuestionChoices,
   loginRecovery2
 } from '../login/recovery2.js'
-import type { RootProps } from '../root.js'
-import { awaitPluginsLoaded } from '../selectors.js'
+import type { ApiInput } from '../root.js'
 
-export const contextApiPixie = (input: PixieInput<RootProps>) => (
-  props: RootProps
-) => {
-  input.onOutput(makeContext(input))
+export const contextApiPixie = (ai: ApiInput) => () => {
+  ai.onOutput(makeContext(ai))
   return stopUpdates
 }
 
-export function makeContext (propsWrapper: PixieInput<RootProps>) {
-  const { coreRoot } = propsWrapper.props
-  const { redux, appId } = coreRoot
+export function makeContext (ai: ApiInput) {
+  const appId = ai.props.state.login.appId
+  const { loginStore } = ai.props
 
   const rawContext: AbcContext = {
-    io: (coreRoot.io: any),
+    io: (ai.props.io: any),
     appId,
 
-    async getCurrencyPlugins () {
-      await awaitPluginsLoaded(redux)
-      return redux.getState().plugins.currencyPlugins
+    getCurrencyPlugins () {
+      return ai.waitFor(props => props.output.currencyPlugins)
     },
 
     '@fixUsername': { sync: true },
@@ -46,52 +41,46 @@ export function makeContext (propsWrapper: PixieInput<RootProps>) {
     },
 
     listUsernames (): Promise<Array<string>> {
-      return coreRoot.loginStore.listUsernames()
+      return loginStore.listUsernames()
     },
 
     deleteLocalAccount (username: string): Promise<void> {
-      return coreRoot.loginStore.remove(username)
+      return loginStore.remove(username)
     },
 
     usernameAvailable (username: string): Promise<boolean> {
-      return usernameAvailable(coreRoot, username)
+      return usernameAvailable(ai, username)
     },
 
     createAccount (username: string, password?: string, pin?: string, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return createLogin(coreRoot, username, {
+      return createLogin(ai, username, {
         password,
         pin
       }).then(loginTree => {
-        return makeAccount(coreRoot, appId, loginTree, 'newAccount', callbacks)
+        return makeAccount(ai, appId, loginTree, 'newAccount', callbacks)
       })
     },
 
     loginWithKey (username: string, loginKey: string, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return coreRoot.loginStore.load(username).then(stashTree => {
+      return loginStore.load(username).then(stashTree => {
         const loginTree = makeLoginTree(
           stashTree,
           base58.parse(loginKey),
           appId
         )
-        return makeAccount(coreRoot, appId, loginTree, 'keyLogin', callbacks)
+        return makeAccount(ai, appId, loginTree, 'keyLogin', callbacks)
       })
     },
 
     loginWithPassword (username: string, password: string, opts): Promise<any> {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return loginPassword(coreRoot, username, password).then(loginTree => {
-        return makeAccount(
-          coreRoot,
-          appId,
-          loginTree,
-          'passwordLogin',
-          callbacks
-        )
+      return loginPassword(ai, username, password).then(loginTree => {
+        return makeAccount(ai, appId, loginTree, 'passwordLogin', callbacks)
       })
     },
 
@@ -101,7 +90,7 @@ export function makeContext (propsWrapper: PixieInput<RootProps>) {
     },
 
     async pinExists (username) {
-      const loginStash = await coreRoot.loginStore.load(username)
+      const loginStash = await loginStore.load(username)
       const pin2Key = getPin2Key(loginStash, appId)
       return pin2Key && pin2Key.pin2Key != null
     },
@@ -113,13 +102,13 @@ export function makeContext (propsWrapper: PixieInput<RootProps>) {
     loginWithPIN (username, pin, opts) {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return loginPin2(coreRoot, appId, username, pin).then(loginTree => {
-        return makeAccount(coreRoot, appId, loginTree, 'pinLogin', callbacks)
+      return loginPin2(ai, appId, username, pin).then(loginTree => {
+        return makeAccount(ai, appId, loginTree, 'pinLogin', callbacks)
       })
     },
 
     getRecovery2Key (username) {
-      return coreRoot.loginStore.load(username).then(loginStash => {
+      return loginStore.load(username).then(loginStash => {
         const recovery2Key = getRecovery2Key(loginStash)
         if (recovery2Key == null) {
           throw new Error('No recovery key stored locally.')
@@ -132,27 +121,21 @@ export function makeContext (propsWrapper: PixieInput<RootProps>) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return loginRecovery2(
-        coreRoot,
+        ai,
         base58.parse(recovery2Key),
         username,
         answers
       ).then(loginTree => {
-        return makeAccount(
-          coreRoot,
-          appId,
-          loginTree,
-          'recoveryLogin',
-          callbacks
-        )
+        return makeAccount(ai, appId, loginTree, 'recoveryLogin', callbacks)
       })
     },
 
     fetchRecovery2Questions (recovery2Key, username) {
-      return getQuestions2(coreRoot, base58.parse(recovery2Key), username)
+      return getQuestions2(ai, base58.parse(recovery2Key), username)
     },
 
     listRecoveryQuestionChoices () {
-      return listRecoveryQuestionChoices(coreRoot)
+      return listRecoveryQuestionChoices(ai)
     },
 
     requestEdgeLogin (opts: AbcEdgeLoginOptions) {
@@ -164,13 +147,13 @@ export function makeContext (propsWrapper: PixieInput<RootProps>) {
         onProcessLogin
       } = opts
 
-      return requestEdgeLogin(coreRoot, appId, {
+      return requestEdgeLogin(ai, appId, {
         displayImageUrl,
         displayName,
         onProcessLogin,
         onLogin (err, loginTree) {
           if (err) return onLogin(err)
-          makeAccount(coreRoot, appId, loginTree, 'edgeLogin', callbacks).then(
+          makeAccount(ai, appId, loginTree, 'edgeLogin', callbacks).then(
             account => onLogin(void 0, account),
             err => onLogin(err)
           )
@@ -180,9 +163,12 @@ export function makeContext (propsWrapper: PixieInput<RootProps>) {
   }
 
   // Wrap the context with logging:
-  const out = wrapObject(coreRoot.onError, 'Context', rawContext)
+  const out = wrapObject(ai.props.onError, 'Context', rawContext)
   out.usernameList = out.listUsernames
   out.removeUsername = out.deleteLocalAccount
+
+  // Used for the edge-login unit tests:
+  out.internalUnitTestingHack = () => ai
 
   return out
 }

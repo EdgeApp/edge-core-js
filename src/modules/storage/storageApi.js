@@ -1,33 +1,41 @@
+// @flow
 import { wrapObject } from '../../util/api.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import { addStorageWallet, syncStorageWallet } from '../actions.js'
+import type { StorageWalletInfo } from '../login/login-types.js'
+import type { ApiInput } from '../root.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLastSync,
   getStorageWalletLocalFolder
 } from '../selectors.js'
 
-export function makeStorageWallet (keyInfo, opts) {
-  const { coreRoot, callbacks = {} } = opts
-  const { redux } = coreRoot
+export function makeStorageWallet (keyInfo: StorageWalletInfo, opts: any) {
+  const { callbacks = {} } = opts
+  const ai: ApiInput = opts.ai
+  const { dispatch, onError } = ai.props
 
-  return redux
-    .dispatch(addStorageWallet(keyInfo))
-    .then(() =>
-      wrapObject(
-        coreRoot.onError,
-        'StorageWallet',
-        makeStorageWalletApi(redux, keyInfo, callbacks)
-      )
+  const promise: any = dispatch(addStorageWallet(keyInfo))
+  return promise.then(() =>
+    wrapObject(
+      onError,
+      'StorageWallet',
+      makeStorageWalletApi(ai, keyInfo, callbacks)
     )
+  )
 }
 
-export function makeStorageWalletApi (redux, keyInfo, callbacks) {
+export function makeStorageWalletApi (
+  ai: ApiInput,
+  keyInfo: StorageWalletInfo,
+  callbacks: any
+) {
+  const { dispatch } = ai.props
   const { id, type, keys } = keyInfo
   const { onDataChanged } = callbacks
 
   if (onDataChanged) {
-    redux.dispatch(
+    dispatch(
       createReaction(
         state => getStorageWalletLastSync(state, id),
         onDataChanged
@@ -43,15 +51,15 @@ export function makeStorageWalletApi (redux, keyInfo, callbacks) {
 
     // Folders:
     get folder () {
-      return getStorageWalletFolder(redux.getState(), id)
+      return getStorageWalletFolder(ai.props.state, id)
     },
 
     get localFolder () {
-      return getStorageWalletLocalFolder(redux.getState(), id)
+      return getStorageWalletLocalFolder(ai.props.state, id)
     },
 
     sync () {
-      return redux.dispatch(syncStorageWallet(id))
+      return dispatch(syncStorageWallet(id))
     }
   }
 }

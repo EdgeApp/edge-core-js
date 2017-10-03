@@ -2,8 +2,8 @@
 import { assert } from 'chai'
 import elliptic from 'elliptic'
 import { describe, it } from 'mocha'
-import { makeFakeIos } from '../../indexABC.js'
-import { makeCoreRoot } from '../root.js'
+import { makeFakeContexts, makeFakeIos } from '../../indexABC.js'
+import type { ApiInput } from '../root.js'
 import {
   decryptLobbyReply,
   encryptLobbyReply,
@@ -29,24 +29,19 @@ describe('edge login lobby', function () {
   })
 
   it('lobby ping-pong', function () {
-    const [coreRoot1, coreRoot2] = makeFakeIos(2).map(io =>
-      makeCoreRoot({ io })
-    )
+    const [context1, context2] = makeFakeContexts({}, {})
+    const ai1: ApiInput = (context1: any).internalUnitTestingHack()
+    const ai2: ApiInput = (context2: any).internalUnitTestingHack()
     const testRequest = { testRequest: 'This is a test' }
     const testReply = { testReply: 'This is a test' }
 
     return new Promise((resolve, reject) => {
-      makeLobby(coreRoot1, testRequest)
+      makeLobby(ai1, testRequest)
         .then(lobby => {
-          return fetchLobbyRequest(coreRoot2, lobby.lobbyId)
+          return fetchLobbyRequest(ai2, lobby.lobbyId)
             .then(request => {
               assert.deepEqual(request, testRequest)
-              return sendLobbyReply(
-                coreRoot2,
-                lobby.lobbyId,
-                request,
-                testReply
-              )
+              return sendLobbyReply(ai2, lobby.lobbyId, request, testReply)
             })
             .then(() => {
               const subscription = lobby.subscribe(reply => {

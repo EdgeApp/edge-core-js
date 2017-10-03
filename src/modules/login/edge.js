@@ -1,6 +1,6 @@
 // @flow
 import { base58, base64 } from '../../util/encoding.js'
-import type { CoreRoot } from '../root.js'
+import type { ApiInput } from '../root.js'
 import { makeLobby } from './lobby.js'
 import type { LoginTree } from './login-types.js'
 import { makeLoginTree, searchTree } from './login.js'
@@ -21,9 +21,10 @@ class ABCEdgeLoginRequest {
 /**
  * Turns a reply into a logged-in account.
  */
-function onReply (coreRoot, subscription, reply, appId, opts) {
+function onReply (ai: ApiInput, subscription, reply, appId, opts) {
   subscription.unsubscribe()
   const stashTree = reply.loginStash
+  const { io, loginStore } = ai.props
 
   if (opts.onProcessLogin != null) {
     opts.onProcessLogin(stashTree.username)
@@ -38,10 +39,10 @@ function onReply (coreRoot, subscription, reply, appId, opts) {
   // The Airbitz mobile will sometimes send the pin2Key in base58
   // instead of base64 due to an unfortunate bug. Fix that:
   if (child.pin2Key != null && child.pin2Key.slice(-1) !== '=') {
-    coreRoot.io.console.warn('Fixing base58 pin2Key')
+    io.console.warn('Fixing base58 pin2Key')
     child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
   }
-  coreRoot.loginStore.save(stashTree)
+  loginStore.save(stashTree)
 
   // This is almost guaranteed to blow up spectacularly:
   const loginKey = base64.parse(reply.loginKey)
@@ -61,7 +62,7 @@ function onError (lobby, e, opts) {
  * Creates a new account request lobby on the server.
  */
 export function requestEdgeLogin (
-  coreRoot: CoreRoot,
+  ai: ApiInput,
   appId: string,
   opts: {
     displayImageUrl: ?string,
@@ -78,9 +79,9 @@ export function requestEdgeLogin (
     }
   }
 
-  return makeLobby(coreRoot, request).then(lobby => {
+  return makeLobby(ai, request).then(lobby => {
     const subscription = lobby.subscribe(
-      reply => onReply(coreRoot, subscription, reply, appId, opts),
+      reply => onReply(ai, subscription, reply, appId, opts),
       e => onError(lobby, e, opts)
     )
     return new ABCEdgeLoginRequest(lobby.lobbyId, subscription)
