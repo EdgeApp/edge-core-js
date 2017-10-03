@@ -6,6 +6,8 @@ import type { RootAction } from './actions.js'
 import * as ACTIONS from './actions.js'
 import currencyWallets from './currencyWallets/reducer.js'
 import exchangeCache from './exchange/reducer.js'
+import type { LoginState } from './login/login-reducer.js'
+import login from './login/login-reducer.js'
 import plugins from './plugins/reducer.js'
 import scrypt from './scrypt/reducer.js'
 import storageWallets from './storage/reducer.js'
@@ -19,22 +21,19 @@ function onError (state = () => {}, action: RootAction) {
 }
 
 export default combineReducers({
-  // Library state:
+  currencyWallets,
+  exchangeCache,
   io,
+  login,
   onError,
   plugins,
   scrypt,
-
-  // Exchanges:
-  exchangeCache,
-
-  // Wallet state:
-  currencyWallets,
   storageWallets
 })
 
 export interface RootState {
   io: FixedIo,
+  login: LoginState,
   onError: (e: Error) => void,
   plugins: {
     currencyPlugins: Array<AbcCurrencyPlugin>

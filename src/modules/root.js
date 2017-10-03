@@ -82,7 +82,7 @@ export function makeCoreRoot (opts: AbcContextOptions) {
   }
   coreRoot.redux.dispatch({
     type: ACTIONS.INIT,
-    payload: { io: fixedIo, onError, appId }
+    payload: { io: fixedIo, onError, apiKey, appId, authServer }
   })
 
   return coreRoot

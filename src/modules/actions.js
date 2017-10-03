@@ -20,7 +20,9 @@ export const INIT: 'airbitz-core-js/INIT' = 'airbitz-core-js/INIT'
 export interface InitAction {
   type: typeof INIT,
   payload: {
-    appId: string,
+    apiKey: string | void,
+    appId: string | void,
+    authServer: string | void,
     io: FixedIo,
     onError: (e: Error) => void
   }
