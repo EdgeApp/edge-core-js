@@ -32,8 +32,9 @@ async function makeFakeCurrencyWallet (store, callbacks) {
   })
 
   // Wait for the wallet to load:
-  const walletId = account.getFirstWallet('wallet:fakecoin').id
-  return awaitState(trigger, state => account.currencyWallets[walletId])
+  const walletInfo = account.getFirstWallet('wallet:fakecoin')
+  if (!walletInfo) throw new Error('Broken test account')
+  return awaitState(trigger, state => account.currencyWallets[walletInfo.id])
 }
 
 describe('currency wallets', function () {
