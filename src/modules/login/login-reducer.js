@@ -4,6 +4,7 @@ import type { RootAction } from '../actions.js'
 import type { RootState } from '../rootReducer.js'
 import activeLoginReducer from './active/active-login-reducer.js'
 import type { ActiveLoginState } from './active/active-login-reducer.js'
+import type { WalletInfoMap } from './login-types.js'
 import server from './server/login-server-reducer.js'
 import type { LoginServerState } from './server/login-server-reducer.js'
 
@@ -14,6 +15,7 @@ export interface LoginState {
   loginCount: number;
   logins: { [index: string]: ActiveLoginState };
   server: LoginServerState;
+  walletInfos: WalletInfoMap;
 }
 
 export default buildReducer({
@@ -57,5 +59,23 @@ export default buildReducer({
     (next: RootState) => next.login.activeLoginIds
   ),
 
-  server
+  server,
+
+  walletInfos (state, action, next: RootState) {
+    // Optimize the common case:
+    if (next.login.activeLoginIds.length === 1) {
+      const id = next.login.activeLoginIds[0]
+      return next.login.logins[id].allWalletInfos
+    }
+
+    const out = {}
+    for (const activeLoginId of next.login.activeLoginIds) {
+      const login = next.login.logins[activeLoginId]
+      for (const id of Object.keys(login.allWalletInfos)) {
+        const info = login.allWalletInfos[id]
+        out[id] = info
+      }
+    }
+    return out
+  }
 })

@@ -1,6 +1,21 @@
 // @flow
 import type { AbcCurrencyInfo, AbcCurrencyPlugin } from 'airbitz-core-types'
-import type { ApiInput } from '../root.js'
+import type { ApiInput, ApiProps } from '../root.js'
+
+export function getCurrencyInfo (
+  infos: Array<AbcCurrencyInfo>,
+  walletType: string
+): AbcCurrencyInfo {
+  for (const info of infos) {
+    for (const type of info.walletTypes) {
+      if (type === walletType) {
+        return info
+      }
+    }
+  }
+
+  throw new Error(`Cannot find a currency info for wallet type ${walletType}`)
+}
 
 export function getCurrencyMultiplier (
   infos: Array<AbcCurrencyInfo>,
@@ -57,4 +72,15 @@ export function hasCurrencyPlugin (
 
 export function waitForCurrencyPlugins (ai: ApiInput) {
   return ai.waitFor(props => props.output.currency.plugins)
+}
+
+export function waitForCurrencyWallet (ai: ApiInput, walletId: string) {
+  return ai.waitFor((props: ApiProps) => {
+    if (props.state.currency.wallets[walletId].engineFailure) {
+      throw props.state.currency.wallets[walletId].engineFailure
+    }
+    if (props.output.currency.wallets[walletId]) {
+      return props.output.currency.wallets[walletId].api
+    }
+  })
 }

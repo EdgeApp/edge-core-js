@@ -5,7 +5,6 @@ import type { FixedIo } from '../io/fixIo.js'
 import type { RootAction } from './actions.js'
 import type { CurrencyState } from './currency/currency-reducer.js'
 import currency from './currency/currency-reducer.js'
-import currencyWallets from './currencyWallets/reducer.js'
 import exchangeCache from './exchange/reducer.js'
 import type { LoginState } from './login/login-reducer.js'
 import login from './login/login-reducer.js'
@@ -37,7 +36,6 @@ function onError (state = () => {}, action: RootAction) {
 }
 
 export default buildReducer({
-  currencyWallets,
   currency,
   exchangeCache,
   io,
