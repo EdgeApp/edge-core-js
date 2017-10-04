@@ -1,6 +1,6 @@
 // @flow
 import type { AbcCurrencyPlugin } from 'airbitz-core-types'
-import { combineReducers } from 'redux'
+import { buildReducer } from 'redux-keto'
 import type { FixedIo } from '../io/fixIo.js'
 import type { RootAction } from './actions.js'
 import * as ACTIONS from './actions.js'
@@ -12,25 +12,6 @@ import plugins from './plugins/reducer.js'
 import scrypt from './scrypt/reducer.js'
 import storageWallets from './storage/reducer.js'
 
-function io (state = {}, action: RootAction) {
-  return action.type === ACTIONS.INIT ? action.payload.io : state
-}
-
-function onError (state = () => {}, action: RootAction) {
-  return action.type === ACTIONS.INIT ? action.payload.onError : state
-}
-
-export default combineReducers({
-  currencyWallets,
-  exchangeCache,
-  io,
-  login,
-  onError,
-  plugins,
-  scrypt,
-  storageWallets
-})
-
 export interface RootState {
   io: FixedIo,
   login: LoginState,
@@ -39,3 +20,24 @@ export interface RootState {
     currencyPlugins: Array<AbcCurrencyPlugin>
   }
 }
+
+function io (state = {}, action: RootAction) {
+  return action.type === ACTIONS.INIT ? action.payload.io : state
+}
+
+function onError (state = () => {}, action: RootAction) {
+  return action.type === ACTIONS.INIT ? action.payload.onError : state
+}
+
+export default buildReducer(
+  {
+    currencyWallets,
+    exchangeCache,
+    io,
+    login,
+    onError,
+    plugins,
+    scrypt,
+    storageWallets
+  }
+)

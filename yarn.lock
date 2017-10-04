@@ -4238,6 +4238,10 @@ rebound@^0.0.13:
   version "0.0.13"
   resolved "https://registry.yarnpkg.com/rebound/-/rebound-0.0.13.tgz#4a225254caf7da756797b19c5817bf7a7941fac1"
 
+redux-keto@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.0.tgz#4f9f3306efdb8fd95dcd08c045b2ab52a6b21158"
+
 redux-pixies@^0.3.1:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.3.1.tgz#26cc790b218b1258cda713112cf3b224afc98f12"
