@@ -12,7 +12,8 @@ const routes = []
  * Wires one or more handlers into the routing table.
  */
 function addRoute (method, path, ...handlers) {
-  for (const handler of handlers) {
+  for (let i = 0; i < handlers.length; i++) {
+    const handler = handlers[i]
     routes.push({
       method,
       path: new RegExp(`^${path}$`),
