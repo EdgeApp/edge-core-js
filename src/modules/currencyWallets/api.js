@@ -12,12 +12,12 @@ import { compare } from '../../util/compare.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import { filterObject, mergeDeeply } from '../../util/util.js'
 import {
-  addCurrencyWallet,
   renameCurrencyWallet,
   setCurrencyWalletTxMetadata,
   setupNewTxMetadata
 } from '../actions.js'
-import type { ApiInput } from '../root.js'
+import type { ApiInput, ApiProps } from '../root.js'
+import type { WalletInfo } from '../login/login-types.js'
 import {
   getCurrencyWalletBalance,
   getCurrencyWalletBlockHeight,
@@ -46,17 +46,25 @@ const fakeMetadata = {
 /**
  * Creates a `CurrencyWallet` API object.
  */
-export function makeCurrencyWallet (keyInfo: AbcWalletInfo, opts: any) {
-  const { ai, callbacks = {} } = opts
-  const { dispatch, onError } = ai.props
+export function makeCurrencyWalletApi (
+  ai: ApiInput,
+  walletInfo: WalletInfo<>,
+  callbacks: any = {}
+) {
+  const { onError } = ai.props
 
-  return dispatch(addCurrencyWallet(keyInfo, opts)).then(keyId =>
-    wrapObject(
-      onError,
-      'CurrencyWallet',
-      makeCurrencyApi(ai, keyInfo, callbacks)
+  return ai
+    .waitFor((props: ApiProps) => {
+      const walletState = props.state.currencyWallets[walletInfo.id]
+      if (walletState && walletState.engine && walletState.name) return true
+    })
+    .then(() =>
+      wrapObject(
+        onError,
+        'CurrencyWallet',
+        makeCurrencyApi(ai, walletInfo, callbacks)
+      )
     )
-  )
 }
 
 /**

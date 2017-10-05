@@ -18,6 +18,12 @@ export interface RootState {
   onError: (e: Error) => void,
   plugins: {
     currencyPlugins: Array<AbcCurrencyPlugin>
+  },
+  currencyWallets: {
+    [walletId: string]: {
+      engine: any,
+      name: string
+    }
   }
 }
 
@@ -29,15 +35,13 @@ function onError (state = () => {}, action: RootAction) {
   return action.type === ACTIONS.INIT ? action.payload.onError : state
 }
 
-export default buildReducer(
-  {
-    currencyWallets,
-    exchangeCache,
-    io,
-    login,
-    onError,
-    plugins,
-    scrypt,
-    storageWallets
-  }
-)
+export default buildReducer({
+  currencyWallets,
+  exchangeCache,
+  io,
+  login,
+  onError,
+  plugins,
+  scrypt,
+  storageWallets
+})

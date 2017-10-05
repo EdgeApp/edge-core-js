@@ -10,6 +10,7 @@ type WalletInfoMap = { [walletId: string]: WalletInfo<> }
 
 export interface ActiveLoginState {
   allWalletInfos: WalletInfoMap,
+  currencyWalletIds: Array<string>,
   appId: string,
   loginKey: Uint8Array,
   username: string

@@ -1,7 +1,6 @@
 // @flow
 import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
 import { fakeUser } from './io/fake/fakeUser.js'
-import { makeCurrencyWallet } from './modules/currencyWallets/api.js'
 import {
   makeCoreRoot,
   makeFakeCoreRoots,
@@ -71,8 +70,3 @@ export function makeABCContext (
 ): AbcContext {
   return makeContext({ apiKey, appId, ...opts })
 }
-
-/**
- * Creates a new wallet object based on a set of keys. Deprecated.
- */
-export { makeCurrencyWallet }

@@ -14,6 +14,8 @@ import {
 } from './plugins/loadPlugins.js'
 import { makeApiProps } from './root.js'
 
+import currencyWalletPixie from './currencyWallets/currency-wallet-pixie.js'
+
 // The top-level pixie output structure:
 export interface RootOutput {
   contextApi: AbcContext,
@@ -26,5 +28,6 @@ export const rootPixie = combinePixies({
   currencyPlugins,
   exchangePlugins,
   tempPluginsDispatch,
-  exchangePixie
+  exchangePixie,
+  currencyWalletPixie
 })

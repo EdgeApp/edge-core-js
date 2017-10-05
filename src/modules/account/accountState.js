@@ -1,7 +1,7 @@
 import { createReaction } from '../../util/redux/reaction.js'
 import { softCat } from '../../util/util.js'
 import * as ACTIONS from '../actions.js'
-import { makeCurrencyWallet } from '../currencyWallets/api.js'
+import { makeCurrencyWalletApi } from '../currencyWallets/api.js'
 import { makeCreateKit } from '../login/create.js'
 import {
   findFirstKey,
@@ -298,7 +298,7 @@ class AccountState {
         const callbacks = makeCurrencyWalletCallbacks(id, this.callbacks)
 
         this.currencyWalletsLoading[id] = true
-        makeCurrencyWallet(walletInfo, { callbacks, ai })
+        makeCurrencyWalletApi(ai, walletInfo, callbacks)
           .then(wallet => {
             this.currencyWalletsLoading[id] = false
             this.currencyWallets[id] = wallet
