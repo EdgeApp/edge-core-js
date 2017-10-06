@@ -15,7 +15,7 @@ export interface LoginKit {
   stash: LoginStash
 }
 
-export interface WalletInfo<K> {
+export interface WalletInfo<K = {}> {
   type: string,
   id: string,
   keys: K

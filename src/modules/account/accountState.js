@@ -1,6 +1,6 @@
 import { createReaction } from '../../util/redux/reaction.js'
 import { softCat } from '../../util/util.js'
-import { addStorageWallet } from '../actions.js'
+import * as ACTIONS from '../actions.js'
 import { makeCurrencyWallet } from '../currencyWallets/api.js'
 import { makeCreateKit } from '../login/create.js'
 import {
@@ -141,11 +141,27 @@ class AccountState {
     // Wallet state:
     this.currencyWallets = {}
     this.currencyWalletsLoading = {}
+
+    // Add the login to redux:
+    const { dispatch } = ai.props
+    dispatch({
+      type: ACTIONS.LOGIN,
+      payload: {
+        appId,
+        username: loginTree.username,
+        loginKey: this.login.loginKey
+      }
+    })
+    this.activeLoginId = ai.props.state.login.lastActiveLoginId
   }
 
   async logout () {
+    const { activeLoginId } = this
+    const { dispatch } = this.ai.props
+    dispatch({ type: ACTIONS.LOGOUT, payload: { activeLoginId } })
+
     // Shut down:
-    this.ai.props.dispatch(this.disposer)
+    dispatch(this.disposer)
     this.ai = null
 
     // Clear keys:
@@ -209,12 +225,19 @@ class AccountState {
   }
 
   reloadKeyStates () {
-    const { ai, keyInfo } = this
+    const { ai, keyInfo, activeLoginId } = this
     return loadAllKeyStates(ai.props.state, keyInfo.id).then(values => {
       const { keyInfos, keyStates } = values
       this.legacyKeyInfos = keyInfos
       this.keyStates = keyStates
       this.updateCurrencyWallets()
+
+      const { dispatch } = ai.props
+      dispatch({
+        type: ACTIONS.ACCOUNT_KEYS_LOADED,
+        payload: { activeLoginId, walletInfos: this.allKeys }
+      })
+
       return this
     })
   }
@@ -305,7 +328,7 @@ export async function makeAccountState (ai, appId, loginTree, callbacks) {
       throw new Error(`Cannot find a "${type}" repo`)
     }
 
-    return dispatch(addStorageWallet(keyInfo)).then(() => {
+    return dispatch(ACTIONS.addStorageWallet(keyInfo)).then(() => {
       const account = new AccountState(ai, appId, loginTree, keyInfo, callbacks)
       const disposer = dispatch(
         createReaction(

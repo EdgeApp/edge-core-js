@@ -17,13 +17,7 @@
     "William Swanson <william@airbitz.co>",
     "Tim Horton <tim@airbitz.co>"
   ],
-  "files": [
-    "CHANGELOG.md",
-    "LICENSE",
-    "README.md",
-    "lib/*",
-    "package.json"
-  ],
+  "files": ["CHANGELOG.md", "LICENSE", "README.md", "lib/*", "package.json"],
   "main": "lib/indexABC.js",
   "module": "lib/indexABC.es.js",
   "repository": {
