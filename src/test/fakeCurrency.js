@@ -50,7 +50,7 @@ class FakeCurrencyEngine {
       createReaction(state => state.blockHeight, onBlockHeightChanged)
     )
 
-    this.MAX_SPENDABLE_SHARE = 0.9 + 0.1 * Math.random()
+    this.MAX_SPENDABLE_SHARE = 0.954
     this.currencyCode = 'TEST'
     this.nativeRate = '12345'
 

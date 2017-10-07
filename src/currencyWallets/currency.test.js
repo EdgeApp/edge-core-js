@@ -8,15 +8,9 @@ import {
 } from '../test/fakeCurrency.js'
 import { fakeExchangePlugin } from '../test/fakeExchange.js'
 import { awaitState } from '../util/redux/reaction.js'
-import { PRECISION } from './api'
-import chai from 'chai'
-import chaiAsPromised from 'chai-as-promised'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 import { createStore } from 'redux'
-
-chai.use(chaiAsPromised)
-
-const { assert } = chai
 
 async function makeFakeCurrencyWallet (store, callbacks) {
   const plugin = makeFakeCurrency(store)
@@ -144,26 +138,34 @@ describe('currency wallets', function () {
     })
   })
 
-  it('getMaxSpendable', async function () {
+  it('get max spendable', function () {
     const store = makeFakeCurrencyStore()
     store.dispatch({ type: 'SET_BALANCE', payload: 50 })
 
-    const wallet = await makeFakeCurrencyWallet(store)
-    const maxSpendable = await wallet.getMaxSpendable({
+    const spendInfo = {
       currencyCode: 'TEST',
       spendTargets: [{}]
-    })
+    }
 
-    assert.isFulfilled(
-      wallet.makeSpend({ spendTargets: [{ nativeAmount: maxSpendable }] })
-    )
-    assert.isRejected(
-      wallet.makeSpend({
-        spendTargets: [{ nativeAmount: add(maxSpendable, PRECISION) }]
-      })
-    )
+    const fulfill = () => 'FULFILL'
+    const reject = () => 'REJECT'
 
-    return null
+    return makeFakeCurrencyWallet(store)
+      .then(wallet => wallet.getMaxSpendable(spendInfo)
+        .then(maxSpendable => {
+          const fulfillSpendInfo = { spendTargets: [{ nativeAmount: maxSpendable }] }
+          const rejectSpendInfo = { spendTargets: [{ nativeAmount: add(maxSpendable, '1') }] }
+          return Promise.all([
+            wallet.makeSpend(fulfillSpendInfo).then(fulfill, reject),
+            wallet.makeSpend(rejectSpendInfo).then(fulfill, reject)
+          ])
+            .then(([fulfillResult, rejectResult]) => {
+              assert.equal(fulfillResult, 'FULFILL')
+              assert.equal(rejectResult, 'REJECT')
+              return null
+            })
+        })
+      )
   })
 
   // it('can have metadata', function () {

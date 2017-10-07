@@ -43,8 +43,6 @@ const fakeMetadata = {
   notes: ''
 }
 
-export const PRECISION = '1'
-
 /**
  * Creates a `CurrencyWallet` API object.
  */
@@ -327,14 +325,14 @@ export function makeCurrencyApi (
       )
     },
 
-    async getMaxSpendable (spendInfo: AbcSpendInfo): Promise<string> {
+    getMaxSpendable (spendInfo: AbcSpendInfo): Promise<string> {
       const publicAddress = spendInfo.spendTargets[0].publicAddress
       const currencyCode = spendInfo.currencyCode
 
       const balance = engine().getBalance({ currencyCode })
 
       async function getMax (min, max) {
-        if (lte(sub(max, min), PRECISION)) return min
+        if (lte(sub(max, min), '1')) return min
         const avg = div(add(min, max), '2')
 
         try {
