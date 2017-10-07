@@ -1,8 +1,9 @@
-// @flow
 /**
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
+
+// @flow
 import type { FixedIo } from '../../io/fixIo.js'
 import { base16, base58, base64 } from '../../util/encoding.js'
 

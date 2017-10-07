@@ -17,13 +17,7 @@
     "William Swanson <william@airbitz.co>",
     "Tim Horton <tim@airbitz.co>"
   ],
-  "files": [
-    "CHANGELOG.md",
-    "LICENSE",
-    "README.md",
-    "lib/*",
-    "package.json"
-  ],
+  "files": ["CHANGELOG.md", "LICENSE", "README.md", "lib/*", "package.json"],
   "main": "lib/indexABC.js",
   "module": "lib/indexABC.es.js",
   "repository": {
@@ -55,7 +49,8 @@
     "hash.js": "^1.0.3",
     "mocha": "^3.5.0",
     "redux": "^3.6.0",
-    "redux-pixies": "^0.2.0",
+    "redux-keto": "^0.3.0",
+    "redux-pixies": "^0.3.1",
     "redux-thunk": "^2.2.0",
     "rfc4648": "^0.9.1",
     "scrypt-js": "^2.0.3",

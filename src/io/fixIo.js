@@ -1,14 +1,14 @@
 // @flow
-import { scrypt } from '../util/crypto/scrypt.js'
 import type {
-  AbcIo,
   AbcConsole,
+  AbcIo,
   AbcScryptFunction,
   DiskletFolder,
   FetchFunction,
   RandomFunction
 } from 'airbitz-core-types'
 import { makeLocalStorageFolder } from 'disklet'
+import { scrypt } from '../util/crypto/scrypt.js'
 
 // None of the io resources are optional at this point,
 // so this is a separate type:
