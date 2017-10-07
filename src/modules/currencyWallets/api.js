@@ -390,6 +390,7 @@ function combineTxWithFile (
   const fallbackFile = {
     currencies: {}
   }
+
   fallbackFile.currencies[walletCurrency] = {
     providerFreeSent: 0,
     metadata: {
@@ -412,7 +413,12 @@ function combineTxWithFile (
     if (file.creationDate < out.date) out.date = file.creationDate
     out.providerFee = merged.providerFeeSent
     out.metadata = merged.metadata
-    out.metadata.amountFiat = merged.metadata.exchangeAmount[walletFiat]
+    if (merged.metadata && merged.metadata.exchangeAmount && merged.metadata.exchangeAmount[walletFiat]) {
+      out.metadata.amountFiat = merged.metadata.exchangeAmount[walletFiat]
+    } else {
+      out.metadata.amountFiat = 0
+      console.log('Missing amountFiat in combineTxWithFile')
+    }
   }
 
   return out
