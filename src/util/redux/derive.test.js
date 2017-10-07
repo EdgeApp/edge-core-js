@@ -1,7 +1,7 @@
-import { makeAssertLog } from '../../test/assertLog.js'
-import { deriveSelector } from './derive.js'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
+import { makeAssertLog } from '../assertLog.js'
+import { deriveSelector } from './derive.js'
 
 describe('derive', function () {
   it('basic operation', function () {

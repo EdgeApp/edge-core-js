@@ -1,7 +1,7 @@
 // @flow
-import { FakeServer } from './fakeServer.js'
 import type { AbcIo } from 'airbitz-core-types'
 import { makeMemoryFolder } from 'disklet'
+import { FakeServer } from './fakeServer.js'
 
 /**
  * Silences all logging.

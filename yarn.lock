@@ -58,7 +58,7 @@ aes-js@^3.1.0:
 
 "airbitz-core-types@git://github.com/Airbitz/airbitz-core-types.git":
   version "0.0.1"
-  resolved "git://github.com/Airbitz/airbitz-core-types.git#a8123cd98cdaf58d0dc8ba84c685cf69db6747c2"
+  resolved "git://github.com/Airbitz/airbitz-core-types.git#bdb7cef45003ee1be8b80944bb27d1969cd39bab"
 
 ajv-keywords@^1.0.0:
   version "1.5.1"
@@ -4250,9 +4250,13 @@ rebound@^0.0.13:
   version "0.0.13"
   resolved "https://registry.yarnpkg.com/rebound/-/rebound-0.0.13.tgz#4a225254caf7da756797b19c5817bf7a7941fac1"
 
-redux-pixies@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.2.0.tgz#ecf32c69fbd098f515abb3666116cc4f0f001c32"
+redux-keto@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.0.tgz#4f9f3306efdb8fd95dcd08c045b2ab52a6b21158"
+
+redux-pixies@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.3.1.tgz#26cc790b218b1258cda713112cf3b224afc98f12"
 
 redux-thunk@^2.2.0:
   version "2.2.0"

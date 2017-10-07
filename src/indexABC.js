@@ -1,9 +1,11 @@
 // @flow
-import { makeCurrencyWallet } from './currencyWallets/api.js'
-import { makeContext } from './io/context.js'
-import { makeFakeIos } from './io/fake'
-import { fakeUser, stashFakeUser } from './io/fake/fakeUser.js'
 import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
+import { fakeUser } from './io/fake/fakeUser.js'
+import {
+  makeCoreRoot,
+  makeFakeCoreRoots,
+  startCoreRoot
+} from './modules/root.js'
 
 // Sub-module exports:
 import * as error from './error.js'
@@ -30,7 +32,11 @@ export { makeFakeIos } from './io/fake'
  *       Defaults to browser IO if not provided.
  * @return An Airbitz core library instance.
  */
-export { makeContext }
+export function makeContext (opts: AbcContextOptions): AbcContext {
+  const coreRoot = makeCoreRoot(opts)
+  startCoreRoot(coreRoot)
+  return coreRoot.output.contextApi
+}
 
 /**
  * Creates one or more fake Airbitz core library instances for testing.
@@ -46,10 +52,9 @@ export { makeContext }
 export function makeFakeContexts (
   ...opts: Array<AbcContextOptions>
 ): Array<AbcContext> {
-  return makeFakeIos(opts.length).map((io, i) => {
-    const context = makeContext({ ...opts[i], io })
-    if (opts[i].localFakeUser) stashFakeUser(context.io)
-    return context
+  return makeFakeCoreRoots(...opts).map(coreRoot => {
+    startCoreRoot(coreRoot)
+    return coreRoot.output.contextApi
   })
 }
 export { fakeUser }
@@ -65,8 +70,3 @@ export function makeABCContext (
 ): AbcContext {
   return makeContext({ apiKey, appId, ...opts })
 }
-
-/**
- * Creates a new wallet object based on a set of keys. Deprecated.
- */
-export { makeCurrencyWallet }
