@@ -37,7 +37,11 @@ export function exchangePixie (input: PixieInput<RootProps>) {
             }
           }
 
-          timeout = setTimeout(doFetch, 30 * 1000)
+          timeout = setTimeout(() => {
+            if (props.output && props.output.exchangePlugins) {
+              doFetch(props.output.exchangePlugins)
+            }
+          }, 30 * 1000)
           props.dispatch(addPairs(pairs))
           return void 0
         })
