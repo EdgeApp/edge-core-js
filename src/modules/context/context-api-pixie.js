@@ -19,11 +19,11 @@ import {
 import type { ApiInput } from '../root.js'
 
 export const contextApiPixie = (ai: ApiInput) => () => {
-  ai.onOutput(makeContext(ai))
+  ai.onOutput(makeContextApi(ai))
   return stopUpdates
 }
 
-export function makeContext (ai: ApiInput) {
+function makeContextApi (ai: ApiInput) {
   const appId = ai.props.state.login.appId
   const { loginStore } = ai.props
 
