@@ -57,7 +57,9 @@ export function makeCurrencyWalletApi (
   return ai
     .waitFor((props: ApiProps) => {
       const walletState = props.state.currencyWallets[walletInfo.id]
-      if (walletState && walletState.engine && walletState.name) return true
+      if (walletState && walletState.engine && walletState.nameLoaded) {
+        return true
+      }
     })
     .then(() =>
       wrapObject(

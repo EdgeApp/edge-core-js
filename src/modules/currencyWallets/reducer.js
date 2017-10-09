@@ -138,6 +138,8 @@ const currencyWallet = combineReducers({
   balance: settableReducer({ currencyCode: null, balance: 0 }, SET_BALANCE),
   blockHeight: settableReducer(0, SET_BLOCK_HEIGHT),
   name: settableReducer(null, SET_NAME),
+  nameLoaded: (state = false, action) =>
+    action.type === SET_NAME ? true : state,
   progress: settableReducer(null, SET_PROGRESS),
 
   // Transaction data:

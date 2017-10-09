@@ -118,8 +118,9 @@ function loadFiles (keyId) {
         .file('WalletName.json')
         .getText()
         .then(text => JSON.parse(text).walletName)
-        .catch(e => null)
-        .then(name => dispatch(setName(keyId, name))),
+        .then(name => dispatch(setName(keyId, name)))
+        .catch(e => dispatch(setName(keyId, null))),
+
       // Transaction metadata:
       mapFiles(folder.folder('transaction'), file =>
         file.getText().then(text => JSON.parse(text)).catch(e => null)
