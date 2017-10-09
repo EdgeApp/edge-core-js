@@ -7,6 +7,7 @@ import type {
   AbcTransaction,
   AbcWalletInfo
 } from 'airbitz-core-types'
+import { add, div, lte, sub } from 'biggystring'
 import { copyProperties, wrapObject } from '../../util/api.js'
 import { compare } from '../../util/compare.js'
 import { createReaction } from '../../util/redux/reaction.js'
@@ -332,7 +333,26 @@ export function makeCurrencyApi (
     },
 
     getMaxSpendable (spendInfo: AbcSpendInfo): Promise<string> {
-      return Promise.resolve('0')
+      const publicAddress = spendInfo.spendTargets[0].publicAddress
+      const currencyCode = spendInfo.currencyCode
+
+      const balance = engine().getBalance({ currencyCode })
+
+      async function getMax (min, max) {
+        if (lte(sub(max, min), '1')) return min
+        const avg = div(add(min, max), '2')
+
+        try {
+          await engine().makeSpend({
+            spendTargets: [{ publicAddress, nativeAmount: avg }]
+          })
+          return getMax(avg, max)
+        } catch (err) {
+          return getMax(min, avg)
+        }
+      }
+
+      return getMax('0', balance)
     },
 
     sweepPrivateKey (keyUri: string): Promise<void> {

@@ -1,3 +1,4 @@
+import { mul, lte } from 'biggystring'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 import { createReaction, reactionMiddleware } from '../util/redux/reaction.js'
 
@@ -49,6 +50,10 @@ class FakeCurrencyEngine {
       createReaction(state => state.blockHeight, onBlockHeightChanged)
     )
 
+    this.MAX_SPENDABLE_SHARE = 0.954
+    this.currencyCode = 'TEST'
+    this.nativeRate = '12345'
+
     // Transactions callback:
     const oldTxs = {}
     this.store.dispatch(
@@ -83,7 +88,11 @@ class FakeCurrencyEngine {
   }
 
   getBalance (opts = {}) {
-    return this.store.getState().balance
+    const balance = this.store.getState().balance
+    if (opts.currencyCode === this.currencyCode) {
+      return mul('' + balance, this.nativeRate)
+    }
+    return balance
   }
 
   getBlockHeight () {
@@ -100,6 +109,17 @@ class FakeCurrencyEngine {
 
   saveTx () {
     return Promise.resolve()
+  }
+
+  makeSpend ({ spendTargets: [{ nativeAmount }] }) {
+    const maxSpendable = Math.floor(
+      this.store.getState().balance * this.MAX_SPENDABLE_SHARE
+    )
+    const maxSpendableNative = mul('' + maxSpendable, this.nativeRate)
+
+    if (lte(nativeAmount, maxSpendableNative)) return Promise.resolve()
+
+    throw new Error()
   }
 }
 

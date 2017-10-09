@@ -1,4 +1,5 @@
 // @flow
+import { add } from 'biggystring'
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 import { createStore } from 'redux'
@@ -136,6 +137,36 @@ describe('currency wallets', function () {
           })
         )
     })
+  })
+
+  it('get max spendable', function () {
+    const store = makeFakeCurrencyStore()
+    store.dispatch({ type: 'SET_BALANCE', payload: 50 })
+
+    const spendInfo = {
+      currencyCode: 'TEST',
+      spendTargets: [{}]
+    }
+
+    const fulfill = () => 'FULFILL'
+    const reject = () => 'REJECT'
+
+    return makeFakeCurrencyWallet(store)
+      .then(wallet => wallet.getMaxSpendable(spendInfo)
+        .then(maxSpendable => {
+          const fulfillSpendInfo = { spendTargets: [{ nativeAmount: maxSpendable }] }
+          const rejectSpendInfo = { spendTargets: [{ nativeAmount: add(maxSpendable, '1') }] }
+          return Promise.all([
+            wallet.makeSpend(fulfillSpendInfo).then(fulfill, reject),
+            wallet.makeSpend(rejectSpendInfo).then(fulfill, reject)
+          ])
+            .then(([fulfillResult, rejectResult]) => {
+              assert.equal(fulfillResult, 'FULFILL')
+              assert.equal(rejectResult, 'REJECT')
+              return null
+            })
+        })
+      )
   })
 
   // it('can have metadata', function () {
