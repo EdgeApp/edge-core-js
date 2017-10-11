@@ -405,7 +405,8 @@ function combineTxWithFile (
     ...tx,
     amountSatoshi: Number(tx.nativeAmount[currencyCode]),
     nativeAmount: tx.nativeAmount[currencyCode],
-    networkFee: tx.networkFee[currencyCode]
+    networkFee: tx.networkFee[currencyCode],
+    currencyCode
   }
 
   // These are our fallback values:
