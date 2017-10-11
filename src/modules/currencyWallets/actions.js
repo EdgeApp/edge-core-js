@@ -4,7 +4,9 @@ import { mergeDeeply } from '../../util/util.js'
 import { addStorageWallet } from '../actions.js'
 import {
   getCurrencyMultiplier,
-  getCurrencyPlugin,
+  getCurrencyPlugin
+} from '../currency/currency-selectors.js'
+import {
   getCurrencyWalletFiat,
   getCurrencyWalletFile,
   getCurrencyWalletPlugin,
@@ -39,12 +41,11 @@ function getTxFile (state, keyId, timestamp, txid) {
 
 /**
  * Creates the initial state for a currency wallet and adds it to the store.
- * @param opts The options passed to `createCurrencyWallet`.
  * @return A `Promise` that will resolve when the state is ready.
  */
-export function addCurrencyWallet (keyInfo, opts = {}) {
+export function addCurrencyWallet (keyInfo, ai) {
   return async (dispatch, getState) => {
-    const plugin = getCurrencyPlugin(getState(), keyInfo.type)
+    const plugin = getCurrencyPlugin(ai, keyInfo.type)
     if (plugin.currencyInfo == null) {
       plugin.currencyInfo = plugin.getInfo()
     }
@@ -211,6 +212,7 @@ export function setupNewTxMetadata (keyId, tx) {
     const fiatCurrency = getCurrencyWalletFiat(state, keyId)
     const txid = tx.txid
     const txFile = getTxFile(state, keyId, 0, txid)
+    const currencyInfo = getCurrencyWalletPlugin(state, keyId).currencyInfo
 
     // Basic file template:
     const file = {
@@ -220,16 +222,11 @@ export function setupNewTxMetadata (keyId, tx) {
       currencies: {}
     }
 
-    // Trick `getCurrencyMultiplier` into using our plugin:
-    const fakeState = {
-      plugins: { currencyPlugins: [getCurrencyWalletPlugin(state, keyId)] }
-    }
-
     // Set up exchange-rate metadata:
     for (const currency of Object.keys(tx.nativeAmount)) {
       const rate =
         getExchangeRate(state, currency, fiatCurrency, () => 1) /
-        getCurrencyMultiplier(fakeState, currency)
+        getCurrencyMultiplier([currencyInfo], currency)
       const nativeAmount = tx.nativeAmount[currency]
 
       const metadata = { exchangeAmount: {} }

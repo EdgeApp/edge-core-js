@@ -2,6 +2,11 @@ import { timeout } from '../../util/promise.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import { softCat } from '../../util/util.js'
 import * as ACTIONS from '../actions.js'
+import {
+  getCurrencyPlugin,
+  hasCurrencyPlugin,
+  waitForCurrencyPlugins
+} from '../currency/currency-selectors.js'
 import { makeCurrencyWalletApi } from '../currencyWallets/api.js'
 import { makeCreateKit } from '../login/create.js'
 import {
@@ -15,11 +20,7 @@ import { applyKit, searchTree } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
-import {
-  getStorageWalletLastSync,
-  hasCurrencyPlugin,
-  getCurrencyPlugin
-} from '../selectors.js'
+import { getStorageWalletLastSync } from '../selectors.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 export function findAppLogin (loginTree, appId) {
@@ -259,7 +260,7 @@ class AccountState {
     const { ai, login } = this
 
     // Make the keys:
-    const plugin = getCurrencyPlugin(ai.props.state, type)
+    const plugin = getCurrencyPlugin(ai, type)
     const keys = opts.keys || plugin.createPrivateKey(type)
     const keyInfo = makeStorageKeyInfo(ai, type, keys)
     const kit = makeKeysKit(ai, login, keyInfo)
@@ -303,7 +304,7 @@ class AccountState {
         info =>
           !info.deleted &&
           !info.archived &&
-          hasCurrencyPlugin(ai.props.state, info.type)
+          hasCurrencyPlugin(ai.props.state.currency.infos, info.type)
       )
       .sort((a, b) => a.sortIndex - b.sortIndex)
       .map(info => info.id)
@@ -316,7 +317,7 @@ class AccountState {
         info =>
           !info.deleted &&
           info.archived &&
-          hasCurrencyPlugin(ai.props.state, info.type)
+          hasCurrencyPlugin(ai.props.state.currency.infos, info.type)
       )
       .sort((a, b) => a.sortIndex - b.sortIndex)
       .map(info => info.id)
@@ -364,7 +365,7 @@ class AccountState {
 
 export async function makeAccountState (ai, appId, loginTree, callbacks) {
   const { dispatch } = ai.props
-  ai.waitFor(props => props.output.currencyPlugins)
+  await waitForCurrencyPlugins(ai)
 
   return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
     // Find our repo:

@@ -18,7 +18,7 @@ function walletPixie (input: PixieInput<CurrencyWalletProps>) {
   return {
     async update (props: CurrencyWalletProps) {
       try {
-        await props.dispatch(addCurrencyWallet(props.walletInfo))
+        await props.dispatch(addCurrencyWallet(props.walletInfo, input))
       } catch (e) {
         e.message += ` (wallet ${props.walletInfo.id})`
         input.props.onError(e)

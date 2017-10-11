@@ -1,4 +1,5 @@
 // @flow
+import type { AbcCurrencyInfo } from 'airbitz-core-types'
 import type { FixedIo } from '../io/fixIo.js'
 import type { WalletInfo } from './login/login-types.js'
 
@@ -9,8 +10,6 @@ export {
   setCurrencyWalletTxMetadata,
   setupNewTxMetadata
 } from './currencyWallets/actions.js'
-
-export { setupPlugins } from './plugins/actions.js'
 
 export { addStorageWallet, syncStorageWallet } from './storage/actions.js'
 
@@ -23,6 +22,14 @@ export interface AccountKeysLoadedAction {
     activeLoginId: string,
     walletInfos: Array<WalletInfo<any>>
   };
+}
+
+/**
+ * Called when the plugins are loaded.
+ */
+export interface CurrencyPluginsLoadedAction {
+  type: 'CURRENCY_PLUGINS_LOADED';
+  payload: Array<AbcCurrencyInfo>;
 }
 
 /**
@@ -61,6 +68,7 @@ export interface LogoutAction {
 
 export type RootAction =
   | AccountKeysLoadedAction
+  | CurrencyPluginsLoadedAction
   | InitAction
   | LoginAction
   | LogoutAction

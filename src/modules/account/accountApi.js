@@ -10,11 +10,11 @@ import type {
 } from 'airbitz-core-types'
 import { copyProperties, wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
+import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchangeApi.js'
 import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
 import type { ApiInput } from '../root.js'
-import { getCurrencyPlugin } from '../selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { makeAccountState } from './accountState.js'
 import { makeLobbyApi } from './lobbyApi.js'
@@ -157,7 +157,7 @@ function makeAccountApi (
     createWallet (type: string, keys: any): Promise<string> {
       if (keys == null) {
         // Use the currency plugin to create the keys:
-        const plugin = getCurrencyPlugin(ai.props.state, type)
+        const plugin = getCurrencyPlugin(ai, type)
         keys = plugin.createPrivateKey(type)
       }
 
