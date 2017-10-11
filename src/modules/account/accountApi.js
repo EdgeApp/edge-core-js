@@ -149,7 +149,7 @@ function makeAccountApi (
      * that should be stored along with the wallet. For example,
      * Airbitz Bitcoin wallets would place their `bitcoinKey` here.
      */
-    createWallet (type: string, keys: any): string {
+    createWallet (type: string, keys: any): Promise<string> {
       if (keys == null) {
         // Use the currency plugin to create the keys:
         const plugin = getCurrencyPlugin(ai.props.state, type)
