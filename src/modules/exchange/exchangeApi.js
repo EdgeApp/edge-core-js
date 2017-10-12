@@ -1,4 +1,5 @@
 // @flow
+import type { FixedIo } from '../../io/fixIo.js'
 import { wrapObject } from '../../util/api.js'
 import type { ApiInput } from '../root.js'
 import { getExchangeRate } from '../selectors.js'
@@ -42,4 +43,23 @@ function makeExchangeCacheApi (ai: ApiInput) {
   }
 
   return out
+}
+
+export type ExchangeSwapRate = {
+  pair: string,
+  rate: string,
+}
+
+const API_PREFIX = 'https://shapeshift.io'
+
+export function makeShapeshiftApi (io: FixedIo) {
+  return {
+    async getExchangeSwapRate (fromCurrency: string, toCurrency: string) {
+      const pair = `${fromCurrency}_${toCurrency}`
+      const reply = await io.fetch(`${API_PREFIX}/rate/${pair}`)
+      const json: ExchangeSwapRate = await reply.json()
+
+      return json
+    }
+  }
 }

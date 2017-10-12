@@ -17,8 +17,10 @@ import {
   setCurrencyWalletTxMetadata,
   setupNewTxMetadata
 } from '../actions.js'
-import type { ApiInput, ApiProps } from '../root.js'
+import { makeShapeshiftApi } from '../exchange/exchangeApi.js'
+import type { ExchangeSwapRate } from '../exchange/exchangeApi.js'
 import type { WalletInfo } from '../login/login-types.js'
+import type { ApiInput, ApiProps } from '../root.js'
 import {
   getCurrencyWalletBalance,
   getCurrencyWalletBlockHeight,
@@ -84,6 +86,8 @@ export function makeCurrencyApi (
   // Bound selectors:
   const engine = () => getCurrencyWalletEngine(ai.props.state, keyId)
   const plugin = () => getCurrencyWalletPlugin(ai.props.state, keyId)
+
+  const shapeshiftApi = makeShapeshiftApi(ai.props.io)
 
   const {
     onAddressesChecked,
@@ -355,6 +359,12 @@ export function makeCurrencyApi (
       }
 
       return getMax('0', balance)
+    },
+
+    getExchangeSwapRate (currencyToCode: string): Promise<ExchangeSwapRate> {
+      const currencyFromCode = plugin().currencyInfo.currencyCode
+
+      return shapeshiftApi.getExchangeSwapRate(currencyFromCode, currencyToCode)
     },
 
     sweepPrivateKey (keyUri: string): Promise<void> {
