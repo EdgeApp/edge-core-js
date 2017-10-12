@@ -1,3 +1,4 @@
+import { timeout } from '../../util/promise.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import { softCat } from '../../util/util.js'
 import * as ACTIONS from '../actions.js'
@@ -206,7 +207,15 @@ class AccountState {
     return applyKit(this.ai, this.loginTree, kit).then(loginTree => {
       this.loginTree = loginTree
       this.login = findAppLogin(loginTree, this.appId)
+
+      // Update the key list in case something changed:
+      const { activeLoginId, ai } = this
+      ai.props.dispatch({
+        type: ACTIONS.ACCOUNT_KEYS_LOADED,
+        payload: { activeLoginId, walletInfos: this.allKeys }
+      })
       this.updateCurrencyWallets()
+
       return this
     })
   }
@@ -257,7 +266,11 @@ class AccountState {
 
     // Add the keys to the login:
     await this.applyKit(kit)
-    const wallet = await ai.waitFor(props => this.currencyWallets[keyInfo.id])
+    const wallet = await timeout(
+      ai.waitFor(props => this.currencyWallets[keyInfo.id]),
+      10000,
+      new Error('Error creating wallet')
+    )
 
     if (opts.name) await wallet.renameWallet(opts.name)
     if (opts.fiatCurrencyCode) {
