@@ -19,7 +19,10 @@ import {
 } from '../actions.js'
 import type { ApiInput, ApiProps } from '../root.js'
 import type { WalletInfo } from '../login/login-types.js'
+import type { ExchangeSwapRate } from '../exchange/exchangeApi.js'
+
 import {
+  getIo,
   getCurrencyWalletBalance,
   getCurrencyWalletBlockHeight,
   getCurrencyWalletEngine,
@@ -33,6 +36,7 @@ import {
   getStorageWalletLastSync
 } from '../selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
+import { makeShapeshiftApi } from '../exchange/exchangeApi.js'
 
 function nop (nopstuff: any) {}
 
@@ -84,6 +88,9 @@ export function makeCurrencyApi (
   // Bound selectors:
   const engine = () => getCurrencyWalletEngine(ai.props.state, keyId)
   const plugin = () => getCurrencyWalletPlugin(ai.props.state, keyId)
+
+  const io = getIo(ai.props.state)
+  const shapeshiftApi = makeShapeshiftApi(io)
 
   const {
     onAddressesChecked,
@@ -355,6 +362,12 @@ export function makeCurrencyApi (
       }
 
       return getMax('0', balance)
+    },
+
+    getExchangeSwapRate (currencyToCode: string): Promise<ExchangeSwapRate> {
+      const currencyFromCode = plugin().currencyInfo.currencyCode
+
+      return shapeshiftApi.getExchangeSwapRate(currencyFromCode, currencyToCode)
     },
 
     sweepPrivateKey (keyUri: string): Promise<void> {
