@@ -74,6 +74,7 @@ function mergeTx (tx, defaultCurrency, oldTx = {}) {
   const out = {
     blockHeight: tx.blockHeight,
     date: tx.date,
+    ourReceiveAddresses: tx.ourReceiveAddresses,
     signedTx: tx.signedTx,
     txid: tx.txid,
 
