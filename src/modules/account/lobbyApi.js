@@ -4,6 +4,7 @@ import { wrapObject } from '../../util/api.js'
 import { base64 } from '../../util/encoding.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import type { LobbyRequest } from '../login/lobby.js'
+import { sanitizeLoginStash } from '../login/login.js'
 import type { ApiInput } from '../root.js'
 import { ensureAccountExists, findAppLogin } from './accountState.js'
 
@@ -49,8 +50,7 @@ async function approveLoginRequest (
   const stashTree = await ai.props.loginStore.load(
     accountState.loginTree.username
   )
-  // TODO: Sanitize
-  const loginStash = stashTree
+  const loginStash = sanitizeLoginStash(stashTree, appId)
 
   // Send the reply:
   const replyData = {
