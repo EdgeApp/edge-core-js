@@ -110,7 +110,7 @@ function saveKeyStates (state, keyId, keyStates) {
       const walletIdHash = hashStorageWalletFilename(state, keyId, walletId)
       return keyFolder
         .file(`${walletIdHash}.json`)
-        .setText(JSON.stringify({ archived, deleted, sortIndex, walletId }))
+        .setText(JSON.stringify({ archived, deleted, sortIndex, id: walletId }))
     })
   )
 }
