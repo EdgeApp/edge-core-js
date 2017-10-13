@@ -110,7 +110,7 @@ function saveKeyStates (state, keyId, keyStates) {
       const walletIdHash = hashStorageWalletFilename(state, keyId, walletId)
       return keyFolder
         .file(`${walletIdHash}.json`)
-        .setText(JSON.stringify({ archived, deleted, sortIndex, walletId }))
+        .setText(JSON.stringify({ archived, deleted, sortIndex, id: walletId }))
     })
   )
 }
@@ -123,6 +123,10 @@ export function changeKeyStates (state, keyId, keyStates, newStates) {
   // Find the changes between the new states and the old states:
   const toWrite = {}
   for (const id of Object.keys(newStates)) {
+    if (id === 'undefined') {
+      throw new Error('undefined is not a valid wallet id')
+    }
+
     if (keyStates[id] == null) {
       // We don't have this id, so everything is new:
       toWrite[id] = newStates[id]
@@ -131,6 +135,7 @@ export function changeKeyStates (state, keyId, keyStates, newStates) {
       toWrite[id] = { ...keyStates[id], ...newStates[id] }
     }
   }
+  console.log('meta-data update', newStates, toWrite)
 
   return saveKeyStates(state, keyId, toWrite).then(() => ({
     ...keyStates,
