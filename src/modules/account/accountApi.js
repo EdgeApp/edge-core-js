@@ -4,6 +4,7 @@ import type {
   AbcAccountCallbacks,
   AbcCreateCurrencyWalletOptions,
   AbcCurrencyWallet,
+  AbcLobby,
   AbcWalletInfo,
   AbcWalletStates
 } from 'airbitz-core-types'
@@ -16,6 +17,7 @@ import type { ApiInput } from '../root.js'
 import { getCurrencyPlugin } from '../selectors.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { makeAccountState } from './accountState.js'
+import { makeLobbyApi } from './lobbyApi.js'
 
 /**
  * Creates an `Account` API object.
@@ -106,6 +108,13 @@ function makeAccountApi (
       return state
         .changeRecovery(questions, answers)
         .then(() => base58.stringify(state.loginTree.recovery2Key))
+    },
+
+    /**
+     * Fetches an edge login lobby from the server.
+     */
+    fetchLobby (lobbyId: string): Promise<AbcLobby> {
+      return makeLobbyApi(ai, lobbyId, state)
     },
 
     /**

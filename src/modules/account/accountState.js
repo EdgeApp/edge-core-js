@@ -22,7 +22,7 @@ import {
 } from '../selectors.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
-function findAppLogin (loginTree, appId) {
+export function findAppLogin (loginTree, appId) {
   return searchTree(loginTree, login => login.appId === appId)
 }
 
@@ -60,7 +60,7 @@ function createChildLogin (ai, loginTree, login, appId, wantRepo = true) {
  * @return A `Promise`, which will resolve to a loginTree that does have
  * the requested account.
  */
-function ensureAccountExists (ai, loginTree, appId) {
+export function ensureAccountExists (ai, loginTree, appId) {
   const accountType = makeAccountType(appId)
 
   // If there is no app login, make that:

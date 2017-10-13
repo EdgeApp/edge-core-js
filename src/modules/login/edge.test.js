@@ -1,36 +1,18 @@
 // @flow
-import { assert } from 'chai'
+import type { AbcLobby } from 'airbitz-core-types'
+import { expect } from 'chai'
 import { describe, it } from 'mocha'
 import { fakeUser, makeFakeContexts } from '../../indexABC.js'
-import { base64 } from '../../util/encoding.js'
-import type { ApiInput } from '../root.js'
-import { fetchLobbyRequest, sendLobbyReply } from './lobby.js'
-
-async function sendFakeResponse (ai: ApiInput, lobbyId, request) {
-  const stashTree = await ai.props.loginStore.load(fakeUser.username)
-  stashTree.passwordAuthBox = null
-  stashTree.passwordBox = null
-  stashTree.pin2Key = null
-  stashTree.recovery2Key = null
-
-  const reply = {
-    appId: request.loginRequest.appId,
-    loginKey: base64.stringify(fakeUser.childLoginKey),
-    loginStash: stashTree
-  }
-  return sendLobbyReply(ai, lobbyId, request, reply)
-}
 
 async function simulateRemoteApproval (remote, lobbyId: string) {
-  // Populate the remote device's local stash:
-  await remote.loginWithPIN(fakeUser.username, fakeUser.pin)
+  const account = await remote.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-  const ai: ApiInput = (remote: any).internalUnitTestingHack()
-  const request = await fetchLobbyRequest(ai, lobbyId)
-  assert.equal(request.loginRequest.appId, 'test-child')
-  assert.equal(request.loginRequest.displayName, 'test suite')
+  const lobby: AbcLobby = await account.fetchLobby(lobbyId)
+  const { loginRequest } = lobby
+  if (!loginRequest) throw new Error('No login request')
+  expect(loginRequest.appId).to.equal('test-child')
 
-  return sendFakeResponse(ai, lobbyId, request)
+  return loginRequest.approve()
 }
 
 describe('edge login', function () {
