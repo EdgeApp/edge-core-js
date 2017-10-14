@@ -32,7 +32,7 @@ async function fetchAppIdInfo (
 
     return { displayImageUrl: imageUrl, displayName: appName }
   } catch (e) {
-    ai.onError(e)
+    ai.props.onError(e)
 
     // If we can't find the info, just show the appId as a fallback:
     return { displayName: appId }
