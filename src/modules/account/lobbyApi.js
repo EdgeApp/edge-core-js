@@ -20,13 +20,23 @@ async function fetchAppIdInfo (
   ai: ApiInput,
   appId: string
 ): Promise<AppIdInfo> {
-  const url = 'https://info1.edgesecure.co:8444/v1/appIdInfo/' + appId
-  const response = await ai.props.io.fetch(url)
-  if (!response.ok) {
+  try {
+    const url = 'https://info1.edgesecure.co:8444/v1/appIdInfo/' + appId
+    const response = await ai.props.io.fetch(url)
+    if (!response.ok) {
+      throw new Error(`Fetching ${url} returned ${response.status}`)
+    }
+
+    const { appName, imageUrl } = await response.json()
+    if (!appName) throw new Error(`No appName in appId lookup response.`)
+
+    return { displayImageUrl: imageUrl, displayName: appName }
+  } catch (e) {
+    ai.onError(e)
+
     // If we can't find the info, just show the appId as a fallback:
     return { displayName: appId }
   }
-  return response.json()
 }
 
 /**
