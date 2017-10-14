@@ -226,6 +226,26 @@ export function makeLoginTree (
 }
 
 /**
+ * Prepares a login stash for edge login,
+ * stripping out any information that the target app is not allowed to see.
+ */
+export function sanitizeLoginStash (
+  stashTree: LoginStash,
+  appId: string
+) {
+  return updateTree(
+    stashTree,
+    stash => stash.appId === appId,
+    stash => stash,
+    (stash, children) => {
+      const login = filterObject(stash, ['username', 'appId', 'loginId'])
+      login.children = children
+      return login
+    }
+  )
+}
+
+/**
  * Changing a login involves updating the server, the in-memory login,
  * and the on-disk stash. A login kit contains all three elements,
  * and this function knows how to apply them all.
