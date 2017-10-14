@@ -1,4 +1,5 @@
 // @flow
+import type { AbcWalletInfo } from 'airbitz-core-types'
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base16, base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
@@ -6,14 +7,13 @@ import type {
   LoginKit,
   StorageWalletInfo,
   LoginTree,
-  StorageKeys,
-  WalletInfo
+  StorageKeys
 } from './login-types.js'
 
 /**
  * Returns the first keyInfo with a matching type.
  */
-export function findFirstKey<K> (keyInfos: Array<WalletInfo<K>>, type: string) {
+export function findFirstKey (keyInfos: Array<AbcWalletInfo>, type: string) {
   return keyInfos.find(info => info.type === type)
 }
 
@@ -81,7 +81,7 @@ export function makeKeysKit (
 /**
  * Flattens an array of key structures, removing duplicates.
  */
-export function mergeKeyInfos (keyInfos: Array<WalletInfo<any>>) {
+export function mergeKeyInfos (keyInfos: Array<AbcWalletInfo>) {
   const out = []
   const ids = {} // Maps ID's to output array indexes
 

@@ -1,4 +1,5 @@
 // @flow
+import type { AbcWalletInfo } from 'airbitz-core-types'
 
 export type JsonBox = Object
 export type JsonSnrp = Object
@@ -15,7 +16,9 @@ export interface LoginKit {
   stash: LoginStash;
 }
 
-export interface WalletInfo<K = {}> {
+// Helper for defining specific key types.
+// Use `AbcWalletInfo` for generic wallet infos:
+interface WalletInfo<K = {}> {
   type: string;
   id: string;
   keys: K;
@@ -25,5 +28,6 @@ export interface StorageKeys {
   dataKey?: string; // base64
   syncKey?: string; // base64
 }
-
 export type StorageWalletInfo = WalletInfo<StorageKeys>
+
+export type WalletInfoMap = { [walletId: string]: AbcWalletInfo }

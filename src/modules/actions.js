@@ -1,7 +1,6 @@
 // @flow
-import type { AbcCurrencyInfo } from 'airbitz-core-types'
+import type { AbcCurrencyInfo, AbcWalletInfo } from 'airbitz-core-types'
 import type { FixedIo } from '../io/fixIo.js'
-import type { WalletInfo } from './login/login-types.js'
 
 export {
   addCurrencyWallet,
@@ -20,7 +19,7 @@ export interface AccountKeysLoadedAction {
   type: 'ACCOUNT_KEYS_LOADED';
   payload: {
     activeLoginId: string,
-    walletInfos: Array<WalletInfo<any>>
+    walletInfos: Array<AbcWalletInfo>
   };
 }
 

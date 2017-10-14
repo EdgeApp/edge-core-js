@@ -3,9 +3,7 @@ import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 import type { RootAction } from '../../actions.js'
 import type { RootState } from '../../rootReducer.js'
 import { hasCurrencyPlugin } from '../../currency/currency-selectors.js'
-import type { WalletInfo } from '../login-types.js'
-
-type WalletInfoMap = { [walletId: string]: WalletInfo<> }
+import type { WalletInfoMap } from '../login-types.js'
 
 export interface ActiveLoginState {
   allWalletInfos: WalletInfoMap;

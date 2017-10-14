@@ -20,7 +20,6 @@ import {
   setupNewTxMetadata
 } from '../actions.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
-import type { WalletInfo } from '../login/login-types.js'
 import type { ApiInput, ApiProps } from '../root.js'
 import {
   getCurrencyWalletBalance,
@@ -52,7 +51,7 @@ const fakeMetadata = {
  */
 export function makeCurrencyWalletApi (
   ai: ApiInput,
-  walletInfo: WalletInfo<>,
+  walletInfo: AbcWalletInfo,
   callbacks: any = {}
 ) {
   return ai
