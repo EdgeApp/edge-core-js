@@ -31,6 +31,7 @@ export interface CoreRoot {
   io: FixedIo,
   onError(e: Error): void,
   plugins: Array<AbcCorePlugin>,
+  shapeshiftKey: string | void,
 
   // Loose objects:
   loginStore: any,
@@ -56,7 +57,8 @@ export function makeCoreRoot (opts: AbcContextOptions) {
     authServer = 'https://auth.airbitz.co/api',
     callbacks = {},
     io = makeBrowserIo(),
-    plugins = []
+    plugins = [],
+    shapeshiftKey = void 0
   } = opts
   const { onError = onErrorDefault } = callbacks
 
@@ -76,6 +78,7 @@ export function makeCoreRoot (opts: AbcContextOptions) {
     io: fixedIo,
     onError,
     plugins,
+    shapeshiftKey,
     loginStore: new LoginStore(fixedIo),
     redux: makeStore(),
     output: ({}: any)
@@ -134,6 +137,7 @@ export interface RootProps {
   onError(e: Error): void,
   output: RootOutput | void,
   plugins: Array<AbcCorePlugin>,
+  shapeshiftKey: string | void,
   state: RootState
 }
 
@@ -148,6 +152,7 @@ export function makeRootProps (
     coreRoot,
     io: coreRoot.io,
     onError: coreRoot.onError,
+    shapeshiftKey: coreRoot.shapeshiftKey,
     plugins: coreRoot.plugins
   })
 }
@@ -161,6 +166,7 @@ export interface ApiProps {
   loginStore: any,
   onError(e: Error): void,
   output: RootOutput,
+  shapeshiftKey: string | void,
   state: RootState
 }
 
@@ -169,13 +175,23 @@ export interface ApiProps {
  */
 export function makeApiProps (props: RootProps): ApiProps | void {
   if (!props.output) return
-  const { dispatch, coreRoot, output, io, onError, state } = props
+  const {
+    dispatch,
+    coreRoot,
+    output,
+    io,
+    onError,
+    shapeshiftKey,
+    state
+  } = props
+
   return {
     dispatch,
     loginStore: coreRoot.loginStore,
     output,
     io,
     onError,
+    shapeshiftKey,
     state
   }
 }

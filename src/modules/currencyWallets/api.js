@@ -17,8 +17,8 @@ import {
   setCurrencyWalletTxMetadata,
   setupNewTxMetadata
 } from '../actions.js'
-import makeShapeshiftApi from '../exchange/api.js'
-import type { ExchangeSwapRate } from '../exchange/api.js'
+import { makeShapeshiftApi } from '../exchange/shapeshift.js'
+import type { ExchangeSwapRate } from '../exchange/shapeshift.js'
 import type { WalletInfo } from '../login/login-types.js'
 import type { ApiInput, ApiProps } from '../root.js'
 import {
@@ -87,7 +87,7 @@ export function makeCurrencyApi (
   const engine = () => getCurrencyWalletEngine(ai.props.state, keyId)
   const plugin = () => getCurrencyWalletPlugin(ai.props.state, keyId)
 
-  const shapeshiftApi = makeShapeshiftApi(ai.props.io)
+  const shapeshiftApi = makeShapeshiftApi(ai)
 
   const {
     onAddressesChecked,
@@ -313,10 +313,15 @@ export function makeCurrencyApi (
       const currentCurrencyCode = plugin().currencyInfo.currencyCode
       const { destWallet } = spendInfo.spendTargets[0]
 
-      if (destWallet && destWallet.currencyInfo.currencyCode !== currentCurrencyCode) {
+      if (
+        destWallet &&
+        destWallet.currencyInfo.currencyCode !== currentCurrencyCode
+      ) {
         const destCurrencyCode = destWallet.currencyInfo.currencyCode
         const currentPublicAddress = engine().getFreshAddress().publicAddress
-        const { publicAddress: destPublicAddress } = await destWallet.getReceiveAddress()
+        const {
+          publicAddress: destPublicAddress
+        } = await destWallet.getReceiveAddress()
 
         const exchangeData = await shapeshiftApi.getSwapAddress(
           currentCurrencyCode,
@@ -327,10 +332,12 @@ export function makeCurrencyApi (
 
         const exchangeSpendInfo = {
           ...spendInfo,
-          spendTargets: [{
-            ...spendInfo.spendTargets[0],
-            publicAddress: exchangeData.deposit
-          }]
+          spendTargets: [
+            {
+              ...spendInfo.spendTargets[0],
+              publicAddress: exchangeData.deposit
+            }
+          ]
         }
         const tx = await engine().makeSpend(exchangeSpendInfo)
 

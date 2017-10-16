@@ -1,3 +1,0 @@
-export default {
-  SHAPESIFT_PUBLIC_API_KEY: 'SHAPESIFT_PUBLIC_API_KEY'
-}

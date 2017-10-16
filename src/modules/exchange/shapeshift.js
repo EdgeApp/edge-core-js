@@ -1,16 +1,17 @@
 // @flow
-import type { FixedIo } from '../../io/fixIo.js'
-
-import ENV from '../../../env'
+import type { ApiInput } from '../root.js'
 
 export type ExchangeSwapRate = {
   pair: string,
-  rate: string,
+  rate: string
 }
 
 const API_PREFIX = 'https://shapeshift.io'
 
-export default function makeShapeshiftApi (io: FixedIo) {
+export function makeShapeshiftApi (ai: ApiInput) {
+  const io = ai.props.io
+  const apiKey = ai.props.shapeshiftKey
+
   const api = {
     async get (path) {
       const reply = await io.fetch(`${API_PREFIX}${path}`)
@@ -20,7 +21,7 @@ export default function makeShapeshiftApi (io: FixedIo) {
       const reply = await io.fetch(`${API_PREFIX}${path}`, {
         method: 'POST',
         headers: {
-          'Accept': 'application/json, text/plain, */*',
+          Accept: 'application/json, text/plain, */*',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(body)
@@ -35,12 +36,19 @@ export default function makeShapeshiftApi (io: FixedIo) {
       return api.get(`/rate/${pair}`)
     },
 
-    async getSwapAddress (fromCurrency: string, toCurrency: string, addressFrom: string, addressTo: string) {
+    async getSwapAddress (
+      fromCurrency: string,
+      toCurrency: string,
+      addressFrom: string,
+      addressTo: string
+    ) {
+      if (!apiKey) throw new Error('No Shapeshift API key provided')
+
       const body = {
         withdrawal: addressTo,
         pair: `${fromCurrency}_${toCurrency}`,
         returnAddress: addressFrom,
-        apiKey: ENV.SHAPESIFT_PUBLIC_API_KEY
+        apiKey
       }
       return api.post('/shift', body)
     }
