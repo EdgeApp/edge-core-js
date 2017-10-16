@@ -13,15 +13,11 @@ import {
 export function makeStorageWallet (keyInfo: StorageWalletInfo, opts: any) {
   const { callbacks = {} } = opts
   const ai: ApiInput = opts.ai
-  const { dispatch, onError } = ai.props
+  const { dispatch } = ai.props
 
   const promise: any = dispatch(addStorageWallet(keyInfo))
   return promise.then(() =>
-    wrapObject(
-      onError,
-      'StorageWallet',
-      makeStorageWalletApi(ai, keyInfo, callbacks)
-    )
+    wrapObject('StorageWallet', makeStorageWalletApi(ai, keyInfo, callbacks))
   )
 }
 

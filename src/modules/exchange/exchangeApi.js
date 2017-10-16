@@ -7,9 +7,7 @@ import { getExchangeRate } from '../selectors.js'
  * Creates an `ExchangeCache` API object.
  */
 export function makeExchangeCache (ai: ApiInput) {
-  const { onError } = ai.props
-
-  return wrapObject(onError, 'ExchangeCache', makeExchangeCacheApi(ai))
+  return wrapObject('ExchangeCache', makeExchangeCacheApi(ai))
 }
 
 /**

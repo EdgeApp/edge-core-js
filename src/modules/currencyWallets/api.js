@@ -53,8 +53,6 @@ export function makeCurrencyWalletApi (
   walletInfo: WalletInfo<>,
   callbacks: any = {}
 ) {
-  const { onError } = ai.props
-
   return ai
     .waitFor((props: ApiProps) => {
       const walletState = props.state.currencyWallets[walletInfo.id]
@@ -63,11 +61,7 @@ export function makeCurrencyWalletApi (
       }
     })
     .then(() =>
-      wrapObject(
-        onError,
-        'CurrencyWallet',
-        makeCurrencyApi(ai, walletInfo, callbacks)
-      )
+      wrapObject('CurrencyWallet', makeCurrencyApi(ai, walletInfo, callbacks))
     )
 }
 
@@ -483,7 +477,7 @@ function combineTxWithFile (
       out.metadata.amountFiat = merged.metadata.exchangeAmount[walletFiat]
     } else {
       out.metadata.amountFiat = 0
-      console.log('Missing amountFiat in combineTxWithFile')
+      console.info('Missing amountFiat in combineTxWithFile')
     }
   }
 

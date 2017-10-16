@@ -173,7 +173,7 @@ function makeContextApi (ai: ApiInput) {
   }
 
   // Wrap the context with logging:
-  const out = wrapObject(ai.props.onError, 'Context', rawContext)
+  const out = wrapObject('Context', rawContext)
   out.usernameList = out.listUsernames
   out.removeUsername = out.deleteLocalAccount
 

@@ -5,6 +5,9 @@ import { fakeExchangePlugin } from '../../fake-plugins/fakeExchange.js'
 import { makeFakeContexts } from '../../indexABC.js'
 import { destroyAllCores } from '../root.js'
 
+// Silence console.info:
+console.info = () => {}
+
 afterEach(function () {
   destroyAllCores()
 })

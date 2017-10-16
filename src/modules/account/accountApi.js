@@ -30,11 +30,7 @@ export function makeAccount (
   callbacks: AbcAccountCallbacks | {} = {}
 ) {
   return makeAccountState(ai, appId, loginTree, callbacks).then(state =>
-    wrapObject(
-      ai.props.onError,
-      'Account',
-      makeAccountApi(state, loginType, callbacks)
-    )
+    wrapObject('Account', makeAccountApi(state, loginType, callbacks))
   )
 }
 

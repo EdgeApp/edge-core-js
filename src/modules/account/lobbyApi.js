@@ -101,12 +101,8 @@ export async function makeLobbyApi (
     if (displayImageUrl) rawLoginRequest.displayImageUrl = displayImageUrl
 
     // Wrap the API:
-    lobbyApi.loginRequest = wrapObject(
-      ai.props.onError,
-      'LoginRequest',
-      rawLoginRequest
-    )
+    lobbyApi.loginRequest = wrapObject('LoginRequest', rawLoginRequest)
   }
 
-  return wrapObject(ai.props.onError, 'Lobby', lobbyApi)
+  return wrapObject('Lobby', lobbyApi)
 }
