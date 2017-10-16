@@ -1,5 +1,6 @@
 // @flow
 import type {
+  AbcCurrencyWallet,
   AbcMetadata,
   AbcParsedUri,
   AbcReceiveAddress,
@@ -171,6 +172,7 @@ export function makeCurrencyApi (
             if (file == null) {
               dispatch(setupNewTxMetadata(keyId, tx))
               prepareTxForCallback(
+                out,
                 walletCurrency,
                 walletFiat,
                 tx,
@@ -179,6 +181,7 @@ export function makeCurrencyApi (
               )
             } else {
               prepareTxForCallback(
+                out,
                 walletCurrency,
                 walletFiat,
                 tx,
@@ -267,7 +270,7 @@ export function makeCurrencyApi (
         }
 
         out.push(
-          combineTxWithFile(defaultCurrency, fiat, tx, file, currencyCode)
+          combineTxWithFile(this, defaultCurrency, fiat, tx, file, currencyCode)
         )
       }
 
@@ -427,6 +430,7 @@ function fixMetadata (metadata: AbcMetadata, fiat: any) {
 }
 
 function combineTxWithFile (
+  wallet: AbcCurrencyWallet,
   walletCurrency: any,
   walletFiat: any,
   tx: any,
@@ -439,7 +443,8 @@ function combineTxWithFile (
     amountSatoshi: Number(tx.nativeAmount[currencyCode]),
     nativeAmount: tx.nativeAmount[currencyCode],
     networkFee: tx.networkFee[currencyCode],
-    currencyCode
+    currencyCode,
+    wallet
   }
 
   // These are our fallback values:
@@ -485,6 +490,7 @@ function combineTxWithFile (
 }
 
 function prepareTxForCallback (
+  wallet: AbcCurrencyWallet,
   walletCurrency: any,
   walletFiat: any,
   tx: any,
@@ -494,7 +500,7 @@ function prepareTxForCallback (
   const currencies = Object.keys(tx.nativeAmount)
   for (const currency of currencies) {
     array.push(
-      combineTxWithFile(walletCurrency, walletFiat, tx, file, currency)
+      combineTxWithFile(wallet, walletCurrency, walletFiat, tx, file, currency)
     )
   }
 }
