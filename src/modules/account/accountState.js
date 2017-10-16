@@ -214,6 +214,7 @@ class AccountState {
         type: ACTIONS.ACCOUNT_KEYS_LOADED,
         payload: { activeLoginId, walletInfos: this.allKeys }
       })
+      console.log('applyKit update', this.allKeys)
       this.updateCurrencyWallets()
 
       return this
@@ -229,6 +230,7 @@ class AccountState {
       newStates
     ).then(keyStates => {
       this.keyStates = keyStates
+      console.log('changeKeyStates update', this.allKeys)
       this.updateCurrencyWallets()
       if (this.callbacks.onKeyListChanged) {
         this.callbacks.onKeyListChanged()
@@ -243,6 +245,7 @@ class AccountState {
       const { keyInfos, keyStates } = values
       this.legacyKeyInfos = keyInfos
       this.keyStates = keyStates
+      console.log('reloadKeyStates update', this.allKeys)
       this.updateCurrencyWallets()
 
       const { dispatch } = ai.props
