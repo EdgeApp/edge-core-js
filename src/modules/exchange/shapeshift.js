@@ -1,11 +1,6 @@
 // @flow
 import type { ApiInput } from '../root.js'
 
-export type ExchangeSwapRate = {
-  pair: string,
-  rate: string
-}
-
 const API_PREFIX = 'https://shapeshift.io'
 
 export function makeShapeshiftApi (ai: ApiInput) {
@@ -31,9 +26,13 @@ export function makeShapeshiftApi (ai: ApiInput) {
   }
 
   return {
-    async getExchangeSwapRate (fromCurrency: string, toCurrency: string) {
+    async getExchangeSwapRate (
+      fromCurrency: string,
+      toCurrency: string
+    ): Promise<number> {
       const pair = `${fromCurrency}_${toCurrency}`
-      return api.get(`/rate/${pair}`)
+      const json = await api.get(`/rate/${pair}`)
+      return json.rate
     },
 
     async getSwapAddress (

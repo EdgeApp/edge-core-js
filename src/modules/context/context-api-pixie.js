@@ -5,7 +5,6 @@ import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/accountApi.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
-import type { ExchangeSwapRate } from '../exchange/shapeshift.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
 import { makeLoginTree } from '../login/login.js'
@@ -168,7 +167,7 @@ function makeContextApi (ai: ApiInput) {
     getExchangeSwapRate (
       fromCurrencyCode: string,
       toCurrencyCode: string
-    ): Promise<ExchangeSwapRate> {
+    ): Promise<number> {
       return shapeshiftApi.getExchangeSwapRate(fromCurrencyCode, toCurrencyCode)
     }
   }
