@@ -18,7 +18,6 @@ import {
   setupNewTxMetadata
 } from '../actions.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
-import type { ExchangeSwapRate } from '../exchange/shapeshift.js'
 import type { WalletInfo } from '../login/login-types.js'
 import type { ApiInput, ApiProps } from '../root.js'
 import {
@@ -395,12 +394,6 @@ export function makeCurrencyApi (
       }
 
       return getMax('0', balance)
-    },
-
-    getExchangeSwapRate (currencyToCode: string): Promise<ExchangeSwapRate> {
-      const currencyFromCode = plugin().currencyInfo.currencyCode
-
-      return shapeshiftApi.getExchangeSwapRate(currencyFromCode, currencyToCode)
     },
 
     sweepPrivateKey (keyUri: string): Promise<void> {
