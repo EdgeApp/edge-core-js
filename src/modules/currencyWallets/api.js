@@ -17,8 +17,8 @@ import {
   setCurrencyWalletTxMetadata,
   setupNewTxMetadata
 } from '../actions.js'
-import { makeShapeshiftApi } from '../exchange/exchangeApi.js'
-import type { ExchangeSwapRate } from '../exchange/exchangeApi.js'
+import makeShapeshiftApi from '../exchange/api.js'
+import type { ExchangeSwapRate } from '../exchange/api.js'
 import type { WalletInfo } from '../login/login-types.js'
 import type { ApiInput, ApiProps } from '../root.js'
 import {
@@ -309,7 +309,36 @@ export function makeCurrencyApi (
       return address.publicAddress
     },
 
-    makeSpend (spendInfo: AbcSpendInfo): Promise<AbcTransaction> {
+    async makeSpend (spendInfo: AbcSpendInfo): Promise<AbcTransaction> {
+      const currentCurrencyCode = plugin().currencyInfo.currencyCode
+      const { destWallet } = spendInfo.spendTargets[0]
+
+      if (destWallet && destWallet.currencyInfo.currencyCode !== currentCurrencyCode) {
+        const destCurrencyCode = destWallet.currencyInfo.currencyCode
+        const currentPublicAddress = engine().getFreshAddress().publicAddress
+        const { publicAddress: destPublicAddress } = await destWallet.getReceiveAddress()
+
+        const exchangeData = await shapeshiftApi.getSwapAddress(
+          currentCurrencyCode,
+          destCurrencyCode,
+          currentPublicAddress,
+          destPublicAddress
+        )
+
+        const exchangeSpendInfo = {
+          ...spendInfo,
+          spendTargets: [{
+            ...spendInfo.spendTargets[0],
+            publicAddress: exchangeData.deposit
+          }]
+        }
+        const tx = await engine().makeSpend(exchangeSpendInfo)
+
+        tx.otherParams = tx.otherParams || {}
+        tx.otherParams.exchangeData = exchangeData
+        return tx
+      }
+
       return engine().makeSpend(spendInfo)
     },
 
