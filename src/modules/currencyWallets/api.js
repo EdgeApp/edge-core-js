@@ -5,6 +5,7 @@ import type {
   AbcParsedUri,
   AbcReceiveAddress,
   AbcSpendInfo,
+  AbcSpendTarget,
   AbcTransaction,
   AbcWalletInfo
 } from 'airbitz-core-types'
@@ -306,14 +307,15 @@ export function makeCurrencyApi (
     },
 
     async makeSpend (spendInfo: AbcSpendInfo): Promise<AbcTransaction> {
-      const currentCurrencyCode = plugin().currencyInfo.currencyCode
+      const currentCurrencyCode = spendInfo.currencyCode ? spendInfo.currencyCode : plugin().currencyInfo.currencyCode
       const { destWallet } = spendInfo.spendTargets[0]
 
       if (
         destWallet &&
         destWallet.currencyInfo.currencyCode !== currentCurrencyCode
       ) {
-        const destCurrencyCode = destWallet.currencyInfo.currencyCode
+        // const destCurrencyCode = destWallet.currencyInfo.currencyCode
+        const destCurrencyCode = spendInfo.spendTargets[0].currencyCode ? spendInfo.spendTargets[0].currencyCode : destWallet.currencyInfo.currencyCode
         const currentPublicAddress = engine().getFreshAddress().publicAddress
         const {
           publicAddress: destPublicAddress
@@ -325,15 +327,13 @@ export function makeCurrencyApi (
           currentPublicAddress,
           destPublicAddress
         )
-
-        const exchangeSpendInfo = {
-          ...spendInfo,
-          spendTargets: [
-            {
-              ...spendInfo.spendTargets[0],
-              publicAddress: exchangeData.deposit
-            }
-          ]
+        const spendTarget: AbcSpendTarget = {
+          currencyCode: spendInfo.currencyCode,
+          nativeAmount: spendInfo.nativeAmount,
+          publicAddress: exchangeData.deposit
+        }
+        const exchangeSpendInfo: AbcSpendInfo = {
+          spendTargets: [spendTarget]
         }
         const tx = await engine().makeSpend(exchangeSpendInfo)
 
