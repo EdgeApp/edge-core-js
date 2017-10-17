@@ -307,39 +307,39 @@ export function makeCurrencyApi (
     },
 
     async makeSpend (spendInfo: AbcSpendInfo): Promise<AbcTransaction> {
-      const currentCurrencyCode = spendInfo.currencyCode ? spendInfo.currencyCode : plugin().currencyInfo.currencyCode
-      const { destWallet } = spendInfo.spendTargets[0]
-
       if (
-        destWallet &&
-        destWallet.currencyInfo.currencyCode !== currentCurrencyCode
+        spendInfo.spendTargets[0].destWallet
       ) {
-        // const destCurrencyCode = destWallet.currencyInfo.currencyCode
+        const destWallet = spendInfo.spendTargets[0].destWallet
+        const currentCurrencyCode = spendInfo.currencyCode ? spendInfo.currencyCode : plugin().currencyInfo.currencyCode
         const destCurrencyCode = spendInfo.spendTargets[0].currencyCode ? spendInfo.spendTargets[0].currencyCode : destWallet.currencyInfo.currencyCode
-        const currentPublicAddress = engine().getFreshAddress().publicAddress
-        const {
-          publicAddress: destPublicAddress
-        } = await destWallet.getReceiveAddress()
+        if (destCurrencyCode !== currentCurrencyCode) {
+          const currentPublicAddress = engine().getFreshAddress().publicAddress
+          const {
+            publicAddress: destPublicAddress
+          } = await destWallet.getReceiveAddress()
 
-        const exchangeData = await shapeshiftApi.getSwapAddress(
-          currentCurrencyCode,
-          destCurrencyCode,
-          currentPublicAddress,
-          destPublicAddress
-        )
-        const spendTarget: AbcSpendTarget = {
-          currencyCode: spendInfo.currencyCode,
-          nativeAmount: spendInfo.nativeAmount,
-          publicAddress: exchangeData.deposit
-        }
-        const exchangeSpendInfo: AbcSpendInfo = {
-          spendTargets: [spendTarget]
-        }
-        const tx = await engine().makeSpend(exchangeSpendInfo)
+          const exchangeData = await shapeshiftApi.getSwapAddress(
+            currentCurrencyCode,
+            destCurrencyCode,
+            currentPublicAddress,
+            destPublicAddress
+          )
+          const spendTarget: AbcSpendTarget = {
+            currencyCode: spendInfo.currencyCode,
+            nativeAmount: spendInfo.nativeAmount,
+            publicAddress: exchangeData.deposit
+          }
+          const exchangeSpendInfo: AbcSpendInfo = {
+            spendTargets: [spendTarget]
+          }
+          const tx = await engine().makeSpend(exchangeSpendInfo)
 
-        tx.otherParams = tx.otherParams || {}
-        tx.otherParams.exchangeData = exchangeData
-        return tx
+          tx.otherParams = tx.otherParams || {}
+          tx.otherParams.exchangeData = exchangeData
+          return tx
+        }
+        // transfer same currencly from one wallet to another
       }
 
       return engine().makeSpend(spendInfo)
