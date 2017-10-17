@@ -307,7 +307,7 @@ export function makeCurrencyApi (
 
     async makeSpend (spendInfo: AbcSpendInfo): Promise<AbcTransaction> {
       const currentCurrencyCode = plugin().currencyInfo.currencyCode
-      const { destWallet } = spendInfo.spendTargets[0]
+      const { destWallet, nativeAmount: destAmount } = spendInfo.spendTargets[0]
 
       if (
         destWallet &&
@@ -326,8 +326,15 @@ export function makeCurrencyApi (
           destPublicAddress
         )
 
+        let nativeAmount = spendInfo.nativeAmount
+        if (destAmount) {
+          const rate = await shapeshiftApi.getExchangeSwapRate(currentCurrencyCode, destCurrencyCode)
+          nativeAmount = div(destAmount, rate.toString())
+        }
+
         const exchangeSpendInfo = {
           ...spendInfo,
+          nativeAmount,
           spendTargets: [
             {
               ...spendInfo.spendTargets[0],

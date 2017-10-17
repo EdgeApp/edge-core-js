@@ -32,7 +32,7 @@ export function makeShapeshiftApi (ai: ApiInput) {
     ): Promise<number> {
       const pair = `${fromCurrency}_${toCurrency}`
       const json = await api.get(`/rate/${pair}`)
-      return json.rate
+      return +json.rate
     },
 
     async getSwapAddress (
