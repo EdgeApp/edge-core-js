@@ -325,14 +325,25 @@ export function makeCurrencyApi (
             currentPublicAddress,
             destPublicAddress
           )
+
+          let nativeAmount = spendInfo.nativeAmount
+          const destAmount = spendInfo.spendTargets[0].nativeAmount
+
+          if (destAmount) {
+            const rate = await shapeshiftApi.getExchangeSwapRate(currentCurrencyCode, destCurrencyCode)
+            nativeAmount = div(destAmount, rate.toString())
+          }
+
           const spendTarget: AbcSpendTarget = {
             currencyCode: spendInfo.currencyCode,
-            nativeAmount: spendInfo.nativeAmount,
+            nativeAmount: nativeAmount,
             publicAddress: exchangeData.deposit
           }
+
           const exchangeSpendInfo: AbcSpendInfo = {
             spendTargets: [spendTarget]
           }
+
           const tx = await engine().makeSpend(exchangeSpendInfo)
 
           tx.otherParams = tx.otherParams || {}
