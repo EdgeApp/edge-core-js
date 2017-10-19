@@ -382,6 +382,7 @@ export function makeCurrencyApi (
 
         try {
           await engine().makeSpend({
+            currencyCode,
             spendTargets: [{ publicAddress, nativeAmount: avg }]
           })
           return getMax(avg, max)
@@ -390,7 +391,7 @@ export function makeCurrencyApi (
         }
       }
 
-      return getMax('0', balance)
+      return getMax('0', add(balance, '1'))
     },
 
     sweepPrivateKey (keyUri: string): Promise<void> {
