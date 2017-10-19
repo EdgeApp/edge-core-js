@@ -5,6 +5,7 @@ import type {
   AbcParsedUri,
   AbcReceiveAddress,
   AbcSpendInfo,
+  AbcSpendTarget,
   AbcTransaction,
   AbcWalletInfo
 } from 'airbitz-core-types'
@@ -306,47 +307,50 @@ export function makeCurrencyApi (
     },
 
     async makeSpend (spendInfo: AbcSpendInfo): Promise<AbcTransaction> {
-      const currentCurrencyCode = plugin().currencyInfo.currencyCode
-      const { destWallet, nativeAmount: destAmount } = spendInfo.spendTargets[0]
-
       if (
-        destWallet &&
-        destWallet.currencyInfo.currencyCode !== currentCurrencyCode
+        spendInfo.spendTargets[0].destWallet
       ) {
-        const destCurrencyCode = destWallet.currencyInfo.currencyCode
-        const currentPublicAddress = engine().getFreshAddress().publicAddress
-        const {
-          publicAddress: destPublicAddress
-        } = await destWallet.getReceiveAddress()
+        const destWallet = spendInfo.spendTargets[0].destWallet
+        const currentCurrencyCode = spendInfo.currencyCode ? spendInfo.currencyCode : plugin().currencyInfo.currencyCode
+        const destCurrencyCode = spendInfo.spendTargets[0].currencyCode ? spendInfo.spendTargets[0].currencyCode : destWallet.currencyInfo.currencyCode
+        if (destCurrencyCode !== currentCurrencyCode) {
+          const currentPublicAddress = engine().getFreshAddress().publicAddress
+          const {
+            publicAddress: destPublicAddress
+          } = await destWallet.getReceiveAddress()
 
-        const exchangeData = await shapeshiftApi.getSwapAddress(
-          currentCurrencyCode,
-          destCurrencyCode,
-          currentPublicAddress,
-          destPublicAddress
-        )
+          const exchangeData = await shapeshiftApi.getSwapAddress(
+            currentCurrencyCode,
+            destCurrencyCode,
+            currentPublicAddress,
+            destPublicAddress
+          )
 
-        let nativeAmount = spendInfo.nativeAmount
-        if (destAmount) {
-          const rate = await shapeshiftApi.getExchangeSwapRate(currentCurrencyCode, destCurrencyCode)
-          nativeAmount = div(destAmount, rate.toString())
+          let nativeAmount = spendInfo.nativeAmount
+          const destAmount = spendInfo.spendTargets[0].nativeAmount
+
+          if (destAmount) {
+            const rate = await shapeshiftApi.getExchangeSwapRate(currentCurrencyCode, destCurrencyCode)
+            nativeAmount = div(destAmount, rate.toString())
+          }
+
+          const spendTarget: AbcSpendTarget = {
+            currencyCode: spendInfo.currencyCode,
+            nativeAmount: nativeAmount,
+            publicAddress: exchangeData.deposit
+          }
+
+          const exchangeSpendInfo: AbcSpendInfo = {
+            spendTargets: [spendTarget]
+          }
+
+          const tx = await engine().makeSpend(exchangeSpendInfo)
+
+          tx.otherParams = tx.otherParams || {}
+          tx.otherParams.exchangeData = exchangeData
+          return tx
         }
-
-        const exchangeSpendInfo = {
-          ...spendInfo,
-          nativeAmount,
-          spendTargets: [
-            {
-              ...spendInfo.spendTargets[0],
-              publicAddress: exchangeData.deposit
-            }
-          ]
-        }
-        const tx = await engine().makeSpend(exchangeSpendInfo)
-
-        tx.otherParams = tx.otherParams || {}
-        tx.otherParams.exchangeData = exchangeData
-        return tx
+        // transfer same currencly from one wallet to another
       }
 
       return engine().makeSpend(spendInfo)
