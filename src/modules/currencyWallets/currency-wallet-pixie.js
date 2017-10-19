@@ -17,7 +17,12 @@ interface CurrencyWalletProps extends RootProps {
 function walletPixie (input: PixieInput<CurrencyWalletProps>) {
   return {
     async update (props: CurrencyWalletProps) {
-      await props.dispatch(addCurrencyWallet(props.walletInfo))
+      try {
+        await props.dispatch(addCurrencyWallet(props.walletInfo))
+      } catch (e) {
+        e.message += ` (wallet ${props.walletInfo.id})`
+        input.props.onError(e)
+      }
       return stopUpdates
     },
 
