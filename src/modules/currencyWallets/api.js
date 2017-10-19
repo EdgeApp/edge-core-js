@@ -9,7 +9,7 @@ import type {
   AbcTransaction,
   AbcWalletInfo
 } from 'airbitz-core-types'
-import { add, div, lte, sub } from 'biggystring'
+import { add, div, eq, sub } from 'biggystring'
 import { copyProperties, wrapObject } from '../../util/api.js'
 import { compare } from '../../util/compare.js'
 import { createReaction } from '../../util/redux/reaction.js'
@@ -377,7 +377,20 @@ export function makeCurrencyApi (
       const balance = engine().getBalance({ currencyCode })
 
       async function getMax (min, max) {
-        if (lte(sub(max, min), '1')) return min
+        if (eq(max, min)) return min
+
+        if (eq(sub(max, min), '1')) {
+          try {
+            await engine().makeSpend({
+              currencyCode,
+              spendTargets: [{ publicAddress, nativeAmount: max }]
+            })
+            return max
+          } catch (err) {
+            return min
+          }
+        }
+
         const avg = div(add(min, max), '2')
 
         try {
@@ -391,7 +404,7 @@ export function makeCurrencyApi (
         }
       }
 
-      return getMax('0', add(balance, '1'))
+      return getMax('0', balance)
     },
 
     sweepPrivateKey (keyUri: string): Promise<void> {
