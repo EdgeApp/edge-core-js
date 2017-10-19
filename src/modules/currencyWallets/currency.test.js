@@ -1,6 +1,6 @@
 // @flow
 import { add } from 'biggystring'
-import { assert } from 'chai'
+import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 import { createStore } from 'redux'
 import {
@@ -139,36 +139,35 @@ describe('currency wallets', function () {
     })
   })
 
-  it('get max spendable', function () {
+  it('get max spendable', async function () {
     const store = makeFakeCurrencyStore()
     store.dispatch({ type: 'SET_BALANCE', payload: 50 })
 
-    const spendInfo = {
+    const wallet = await makeFakeCurrencyWallet(store)
+    const maxSpendable = await wallet.getMaxSpendable({
       currencyCode: 'TEST',
       spendTargets: [{}]
-    }
+    })
+    expect(maxSpendable).to.equal('50')
 
     const fulfill = () => 'FULFILL'
     const reject = () => 'REJECT'
 
-    return makeFakeCurrencyWallet(store).then(wallet =>
-      wallet.getMaxSpendable(spendInfo).then(maxSpendable => {
-        const fulfillSpendInfo = {
-          spendTargets: [{ nativeAmount: maxSpendable }]
-        }
-        const rejectSpendInfo = {
-          spendTargets: [{ nativeAmount: add(maxSpendable, '1') }]
-        }
-        return Promise.all([
-          wallet.makeSpend(fulfillSpendInfo).then(fulfill, reject),
-          wallet.makeSpend(rejectSpendInfo).then(fulfill, reject)
-        ]).then(([fulfillResult, rejectResult]) => {
-          assert.equal(fulfillResult, 'FULFILL')
-          assert.equal(rejectResult, 'REJECT')
-          return null
-        })
+    const fulfilResult = await wallet
+      .makeSpend({
+        currencyCode: 'TEST',
+        spendTargets: [{ nativeAmount: maxSpendable }]
       })
-    )
+      .then(fulfill, reject)
+    expect(fulfilResult).to.equal('FULFILL')
+
+    const rejectResult = await wallet
+      .makeSpend({
+        currencyCode: 'TEST',
+        spendTargets: [{ nativeAmount: add(maxSpendable, '1') }]
+      })
+      .then(fulfill, reject)
+    expect(rejectResult).to.equal('REJECT')
   })
 
   // it('can have metadata', function () {

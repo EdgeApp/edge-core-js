@@ -9,7 +9,7 @@ import type {
   AbcTransaction,
   AbcWalletInfo
 } from 'airbitz-core-types'
-import { add, div, eq, sub } from 'biggystring'
+import { add, div, lte, sub } from 'biggystring'
 import { copyProperties, wrapObject } from '../../util/api.js'
 import { compare } from '../../util/compare.js'
 import { createReaction } from '../../util/redux/reaction.js'
@@ -387,40 +387,38 @@ export function makeCurrencyApi (
     },
 
     getMaxSpendable (spendInfo: AbcSpendInfo): Promise<string> {
-      const publicAddress = spendInfo.spendTargets[0].publicAddress
-      const currencyCode = spendInfo.currencyCode
-
+      const { currencyCode } = spendInfo
       const balance = engine().getBalance({ currencyCode })
 
-      async function getMax (min, max) {
-        if (eq(max, min)) return min
-
-        if (eq(sub(max, min), '1')) {
-          try {
-            await engine().makeSpend({
-              currencyCode,
-              spendTargets: [{ publicAddress, nativeAmount: max }]
-            })
-            return max
-          } catch (err) {
-            return min
-          }
+      // Copy all the spend targets, setting the amounts to 0
+      // but keeping all other information so we can get accurate fees:
+      const spendTargets = spendInfo.spendTargets.map(spendTarget => {
+        if (
+          spendTarget.currencyCode &&
+          spendTarget.currencyCode !== currencyCode
+        ) {
+          throw new Error('Cannot to a cross-currency max-spend')
         }
+        return { ...spendTarget, nativeAmount: '0' }
+      })
 
-        const avg = div(add(min, max), '2')
-
-        try {
-          await engine().makeSpend({
-            currencyCode,
-            spendTargets: [{ publicAddress, nativeAmount: avg }]
-          })
-          return getMax(avg, max)
-        } catch (err) {
-          return getMax(min, avg)
+      // The range of possible values includes `min`, but not `max`.
+      function getMax (min: string, max: string): Promise<string> {
+        const diff = sub(max, min)
+        if (lte(diff, '1')) {
+          return Promise.resolve(min)
         }
+        const mid = add(min, div(diff, '2'))
+
+        // Try the average:
+        spendTargets[0].nativeAmount = mid
+        return engine()
+          .makeSpend({ currencyCode, spendTargets })
+          .then(good => getMax(mid, max))
+          .catch(bad => getMax(min, mid))
       }
 
-      return getMax('0', balance)
+      return getMax('0', add(balance, '1'))
     },
 
     sweepPrivateKey (keyUri: string): Promise<void> {

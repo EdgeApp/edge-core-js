@@ -1,5 +1,6 @@
-import { mul, lte } from 'biggystring'
+import { add, lt } from 'biggystring'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
+import { InsufficientFundsError } from '../error.js'
 import { createReaction, reactionMiddleware } from '../util/redux/reaction.js'
 
 function nop () {}
@@ -7,6 +8,9 @@ function nop () {}
 const reducer = combineReducers({
   balance: (state = 0, action) =>
     action.type === 'SET_BALANCE' ? action.payload : state,
+
+  tokenBalance: (state = 0, action) =>
+    action.type === 'SET_TOKEN_BALANCE' ? action.payload : state,
 
   blockHeight: (state = 0, action) =>
     action.type === 'SET_BLOCK_HEIGHT' ? action.payload : state,
@@ -45,14 +49,18 @@ class FakeCurrencyEngine {
       )
     )
 
+    // Token balance callback: (TODO: fix the bug in the currencyWallet)
+    // this.store.dispatch(
+    //   createReaction(
+    //     state => state.tokenBalance,
+    //     balance => onBalanceChanged('TOKEN', balance)
+    //   )
+    // )
+
     // Block height callback:
     this.store.dispatch(
       createReaction(state => state.blockHeight, onBlockHeightChanged)
     )
-
-    this.MAX_SPENDABLE_SHARE = 0.954
-    this.currencyCode = 'TEST'
-    this.nativeRate = '12345'
 
     // Transactions callback:
     const oldTxs = {}
@@ -88,11 +96,15 @@ class FakeCurrencyEngine {
   }
 
   getBalance (opts = {}) {
-    const balance = this.store.getState().balance
-    if (opts.currencyCode === this.currencyCode) {
-      return mul('' + balance, this.nativeRate)
+    const { currencyCode = 'TEST' } = opts
+    switch (currencyCode) {
+      case 'TEST':
+        return this.store.getState().balance.toString()
+      case 'TOKEN':
+        return this.store.getState().tokenBalance.toString()
+      default:
+        throw new Error('Unknown currency')
     }
-    return balance
   }
 
   getBlockHeight () {
@@ -111,15 +123,22 @@ class FakeCurrencyEngine {
     return Promise.resolve()
   }
 
-  makeSpend ({ spendTargets: [{ nativeAmount }] }) {
-    const maxSpendable = Math.floor(
-      this.store.getState().balance * this.MAX_SPENDABLE_SHARE
-    )
-    const maxSpendableNative = mul('' + maxSpendable, this.nativeRate)
+  makeSpend (spendInfo) {
+    const { currencyCode = 'TEST', spendTargets } = spendInfo
 
-    if (lte(nativeAmount, maxSpendableNative)) return Promise.resolve()
+    // Check the spend targets:
+    let total = '0'
+    for (const spendTarget of spendTargets) {
+      total = add(total, spendTarget.nativeAmount)
+    }
 
-    throw new Error()
+    // Check the balances:
+    if (lt(this.getBalance(currencyCode), total)) {
+      return Promise.reject(new InsufficientFundsError())
+    }
+
+    // TODO: Return a high-fidelity transaction
+    return Promise.resolve({ currencyCode })
   }
 }
 
