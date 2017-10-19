@@ -16,16 +16,16 @@ const secp256k1 = new EC('secp256k1')
 
 // The JSON structure placed in the lobby as a reply:
 export interface LobbyReply {
-  publicKey: string,
-  box: JsonBox
+  publicKey: string;
+  box: JsonBox;
 }
 
 // The JSON structure placed in the lobby as a request:
 export interface LobbyRequest {
-  timeout?: number,
-  publicKey?: string,
-  loginRequest?: Object,
-  replies?: Array<LobbyReply>
+  timeout?: number;
+  publicKey?: string;
+  loginRequest?: Object;
+  replies?: Array<LobbyReply>;
 }
 
 /**

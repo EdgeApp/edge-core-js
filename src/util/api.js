@@ -6,10 +6,12 @@ import { rejectify } from '../util/decorators.js'
 function asyncApi (f, name) {
   return function asyncApi (...rest) {
     console.info(name)
-    const promise = rejectify(f).apply(this, rest).catch(e => {
-      console.info(name, e)
-      throw e
-    })
+    const promise = rejectify(f)
+      .apply(this, rest)
+      .catch(e => {
+        console.info(name, e)
+        throw e
+      })
 
     // Figure out what to do with the promise:
     const callback = rest[rest.length - 1]

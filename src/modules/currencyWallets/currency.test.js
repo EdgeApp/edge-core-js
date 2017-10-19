@@ -151,22 +151,24 @@ describe('currency wallets', function () {
     const fulfill = () => 'FULFILL'
     const reject = () => 'REJECT'
 
-    return makeFakeCurrencyWallet(store)
-      .then(wallet => wallet.getMaxSpendable(spendInfo)
-        .then(maxSpendable => {
-          const fulfillSpendInfo = { spendTargets: [{ nativeAmount: maxSpendable }] }
-          const rejectSpendInfo = { spendTargets: [{ nativeAmount: add(maxSpendable, '1') }] }
-          return Promise.all([
-            wallet.makeSpend(fulfillSpendInfo).then(fulfill, reject),
-            wallet.makeSpend(rejectSpendInfo).then(fulfill, reject)
-          ])
-            .then(([fulfillResult, rejectResult]) => {
-              assert.equal(fulfillResult, 'FULFILL')
-              assert.equal(rejectResult, 'REJECT')
-              return null
-            })
+    return makeFakeCurrencyWallet(store).then(wallet =>
+      wallet.getMaxSpendable(spendInfo).then(maxSpendable => {
+        const fulfillSpendInfo = {
+          spendTargets: [{ nativeAmount: maxSpendable }]
+        }
+        const rejectSpendInfo = {
+          spendTargets: [{ nativeAmount: add(maxSpendable, '1') }]
+        }
+        return Promise.all([
+          wallet.makeSpend(fulfillSpendInfo).then(fulfill, reject),
+          wallet.makeSpend(rejectSpendInfo).then(fulfill, reject)
+        ]).then(([fulfillResult, rejectResult]) => {
+          assert.equal(fulfillResult, 'FULFILL')
+          assert.equal(rejectResult, 'REJECT')
+          return null
         })
-      )
+      })
+    )
   })
 
   // it('can have metadata', function () {

@@ -1,7 +1,7 @@
 {
   "extends": ["standard", "plugin:flowtype/recommended"],
   "parser": "babel-eslint",
-  "plugins": ["standard", "flowtype"],
+  "plugins": ["flowtype", "standard"],
   "rules": {
     "camelcase": "error",
     "flowtype/generic-spacing": "off",

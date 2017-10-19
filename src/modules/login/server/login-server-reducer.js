@@ -4,8 +4,8 @@ import type { RootAction } from '../../actions.js'
 import * as ACTIONS from '../../actions.js'
 
 export interface LoginServerState {
-  apiKey: string | null,
-  uri: string
+  apiKey: string | null;
+  uri: string;
 }
 
 export default combineReducers({

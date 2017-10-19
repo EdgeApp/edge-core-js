@@ -13,18 +13,18 @@ import scrypt from './scrypt/reducer.js'
 import storageWallets from './storage/reducer.js'
 
 export interface RootState {
-  io: FixedIo,
-  login: LoginState,
-  onError: (e: Error) => void,
+  io: FixedIo;
+  login: LoginState;
+  onError: (e: Error) => void;
   plugins: {
     currencyPlugins: Array<AbcCurrencyPlugin>
-  },
+  };
   currencyWallets: {
     [walletId: string]: {
       engine: any,
       name: string
     }
-  }
+  };
 }
 
 function io (state = {}, action: RootAction) {

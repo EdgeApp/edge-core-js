@@ -33,7 +33,10 @@ describe('repo', function () {
       .file('b.json')
       .setText(box)
 
-    const text = await paths.folder.folder('a').file('b.json').getText()
+    const text = await paths.folder
+      .folder('a')
+      .file('b.json')
+      .getText()
     assert.equal(text, payload)
   })
 
@@ -55,10 +58,16 @@ describe('repo', function () {
     const paths2 = makeRepoPaths(io2, fakeRepoInfo)
     const payload = 'Test data'
 
-    await paths1.folder.folder('a').file('b.json').setText(payload)
+    await paths1.folder
+      .folder('a')
+      .file('b.json')
+      .setText(payload)
     await syncRepo(io1, paths1, {}).then(changed => assert(changed))
     await syncRepo(io2, paths2, {}).then(changed => assert(changed))
-    const text = await paths2.folder.folder('a').file('b.json').getText()
+    const text = await paths2.folder
+      .folder('a')
+      .file('b.json')
+      .getText()
     assert.equal(text, payload)
   })
 })

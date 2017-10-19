@@ -229,10 +229,7 @@ export function makeLoginTree (
  * Prepares a login stash for edge login,
  * stripping out any information that the target app is not allowed to see.
  */
-export function sanitizeLoginStash (
-  stashTree: LoginStash,
-  appId: string
-) {
+export function sanitizeLoginStash (stashTree: LoginStash, appId: string) {
   return updateTree(
     stashTree,
     stash => stash.appId === appId,

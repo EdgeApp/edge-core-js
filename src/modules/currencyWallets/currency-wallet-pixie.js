@@ -7,11 +7,11 @@ import type { RootProps } from '../root.js'
 import { addCurrencyWallet } from './actions.js'
 
 interface TempProps extends RootProps {
-  login: ActiveLoginState
+  login: ActiveLoginState;
 }
 
 interface CurrencyWalletProps extends RootProps {
-  walletInfo: WalletInfo<any>
+  walletInfo: WalletInfo<any>;
 }
 
 function walletPixie (input: PixieInput<CurrencyWalletProps>) {

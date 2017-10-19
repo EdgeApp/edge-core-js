@@ -9,12 +9,12 @@ import server from './server/login-server-reducer.js'
 import type { LoginServerState } from './server/login-server-reducer.js'
 
 export interface LoginState {
-  activeLoginIds: Array<string>,
-  appId: string,
-  lastActiveLoginId: string,
-  loginCount: number,
-  logins: { [index: string]: ActiveLoginState },
-  server: LoginServerState
+  activeLoginIds: Array<string>;
+  appId: string;
+  lastActiveLoginId: string;
+  loginCount: number;
+  logins: { [index: string]: ActiveLoginState };
+  server: LoginServerState;
 }
 
 export default buildReducer({

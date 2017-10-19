@@ -9,17 +9,17 @@ import type { WalletInfo } from '../login-types.js'
 type WalletInfoMap = { [walletId: string]: WalletInfo<> }
 
 export interface ActiveLoginState {
-  allWalletInfos: WalletInfoMap,
-  currencyWalletIds: Array<string>,
-  appId: string,
-  loginKey: Uint8Array,
-  username: string
+  allWalletInfos: WalletInfoMap;
+  currencyWalletIds: Array<string>;
+  appId: string;
+  loginKey: Uint8Array;
+  username: string;
 }
 
 export interface ActiveLoginProps {
-  id: string,
-  peers: ActiveLoginState,
-  state: RootState
+  id: string;
+  peers: ActiveLoginState;
+  state: RootState;
 }
 
 const activeLogin = buildReducer(

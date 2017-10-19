@@ -11,9 +11,9 @@ import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 
 export interface LoginCreateOpts {
-  keyInfo?: WalletInfo<{}>,
-  password?: string | void,
-  pin?: string | void
+  keyInfo?: WalletInfo<{}>;
+  password?: string | void;
+  pin?: string | void;
 }
 
 /**

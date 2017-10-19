@@ -307,12 +307,14 @@ export function makeCurrencyApi (
     },
 
     async makeSpend (spendInfo: AbcSpendInfo): Promise<AbcTransaction> {
-      if (
-        spendInfo.spendTargets[0].destWallet
-      ) {
+      if (spendInfo.spendTargets[0].destWallet) {
         const destWallet = spendInfo.spendTargets[0].destWallet
-        const currentCurrencyCode = spendInfo.currencyCode ? spendInfo.currencyCode : plugin().currencyInfo.currencyCode
-        const destCurrencyCode = spendInfo.spendTargets[0].currencyCode ? spendInfo.spendTargets[0].currencyCode : destWallet.currencyInfo.currencyCode
+        const currentCurrencyCode = spendInfo.currencyCode
+          ? spendInfo.currencyCode
+          : plugin().currencyInfo.currencyCode
+        const destCurrencyCode = spendInfo.spendTargets[0].currencyCode
+          ? spendInfo.spendTargets[0].currencyCode
+          : destWallet.currencyInfo.currencyCode
         if (destCurrencyCode !== currentCurrencyCode) {
           const currentPublicAddress = engine().getFreshAddress().publicAddress
           const {
@@ -330,7 +332,10 @@ export function makeCurrencyApi (
           const destAmount = spendInfo.spendTargets[0].nativeAmount
 
           if (destAmount) {
-            const rate = await shapeshiftApi.getExchangeSwapRate(currentCurrencyCode, destCurrencyCode)
+            const rate = await shapeshiftApi.getExchangeSwapRate(
+              currentCurrencyCode,
+              destCurrencyCode
+            )
             nativeAmount = div(destAmount, rate.toString())
           }
 

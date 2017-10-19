@@ -25,23 +25,23 @@ let allDestroyPixies: Array<() => void> = []
  */
 export interface CoreRoot {
   // Context options:
-  apiKey: string,
-  appId: string,
-  authServer: string,
-  io: FixedIo,
-  onError(e: Error): void,
-  plugins: Array<AbcCorePlugin>,
-  shapeshiftKey: string | void,
+  apiKey: string;
+  appId: string;
+  authServer: string;
+  io: FixedIo;
+  onError(e: Error): void;
+  plugins: Array<AbcCorePlugin>;
+  shapeshiftKey: string | void;
 
   // Loose objects:
-  loginStore: any,
+  loginStore: any;
 
   // Redux state:
-  redux: Store<RootState, RootAction>,
+  redux: Store<RootState, RootAction>;
 
   // Pixies:
-  output: RootOutput,
-  destroyPixie?: () => void
+  output: RootOutput;
+  destroyPixie?: () => void;
 }
 
 /**
@@ -131,14 +131,14 @@ export function destroyAllCores () {
 
 // Props passed to the root pixie:
 export interface RootProps {
-  coreRoot: CoreRoot,
-  +dispatch: Dispatch<RootAction>,
-  io: FixedIo,
-  onError(e: Error): void,
-  output: RootOutput | void,
-  plugins: Array<AbcCorePlugin>,
-  shapeshiftKey: string | void,
-  state: RootState
+  coreRoot: CoreRoot;
+  +dispatch: Dispatch<RootAction>;
+  io: FixedIo;
+  onError(e: Error): void;
+  output: RootOutput | void;
+  plugins: Array<AbcCorePlugin>;
+  shapeshiftKey: string | void;
+  state: RootState;
 }
 
 /**
@@ -161,13 +161,13 @@ export function makeRootProps (
  * Props passed through the API objects (AbcContext, AbcAccount, etc.)
  */
 export interface ApiProps {
-  +dispatch: Dispatch<RootAction>,
-  io: FixedIo,
-  loginStore: any,
-  onError(e: Error): void,
-  output: RootOutput,
-  shapeshiftKey: string | void,
-  state: RootState
+  +dispatch: Dispatch<RootAction>;
+  io: FixedIo;
+  loginStore: any;
+  onError(e: Error): void;
+  output: RootOutput;
+  shapeshiftKey: string | void;
+  state: RootState;
 }
 
 /**

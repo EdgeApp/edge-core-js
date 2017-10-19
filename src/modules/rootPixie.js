@@ -18,9 +18,9 @@ import currencyWalletPixie from './currencyWallets/currency-wallet-pixie.js'
 
 // The top-level pixie output structure:
 export interface RootOutput {
-  contextApi: AbcContext,
-  currencyPlugins: Array<AbcCurrencyPlugin>,
-  exchangePlugins: Array<AbcExchangePlugin>
+  contextApi: AbcContext;
+  currencyPlugins: Array<AbcCurrencyPlugin>;
+  exchangePlugins: Array<AbcExchangePlugin>;
 }
 
 export const rootPixie = combinePixies({

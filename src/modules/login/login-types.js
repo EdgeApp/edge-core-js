@@ -8,22 +8,22 @@ export type LoginTree = Object
 export type ServerPayload = Object
 
 export interface LoginKit {
-  loginId?: string, // Really!? Doesn't seem optional
-  login: LoginTree,
-  server: ServerPayload,
-  serverPath: string,
-  stash: LoginStash
+  loginId?: string; // Really!? Doesn't seem optional
+  login: LoginTree;
+  server: ServerPayload;
+  serverPath: string;
+  stash: LoginStash;
 }
 
 export interface WalletInfo<K = {}> {
-  type: string,
-  id: string,
-  keys: K
+  type: string;
+  id: string;
+  keys: K;
 }
 
 export interface StorageKeys {
-  dataKey?: string, // base64
-  syncKey?: string // base64
+  dataKey?: string; // base64
+  syncKey?: string; // base64
 }
 
 export type StorageWalletInfo = WalletInfo<StorageKeys>
