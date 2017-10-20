@@ -3,7 +3,6 @@ import type { AbcCurrencyPlugin } from 'airbitz-core-types'
 import { buildReducer } from 'redux-keto'
 import type { FixedIo } from '../io/fixIo.js'
 import type { RootAction } from './actions.js'
-import * as ACTIONS from './actions.js'
 import currencyWallets from './currencyWallets/reducer.js'
 import exchangeCache from './exchange/reducer.js'
 import type { LoginState } from './login/login-reducer.js'
@@ -28,11 +27,11 @@ export interface RootState {
 }
 
 function io (state = {}, action: RootAction) {
-  return action.type === ACTIONS.INIT ? action.payload.io : state
+  return action.type === 'INIT' ? action.payload.io : state
 }
 
 function onError (state = () => {}, action: RootAction) {
-  return action.type === ACTIONS.INIT ? action.payload.onError : state
+  return action.type === 'INIT' ? action.payload.onError : state
 }
 
 export default buildReducer({

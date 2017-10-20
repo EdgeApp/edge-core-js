@@ -1,6 +1,5 @@
 // @flow
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
-import * as ACTIONS from '../../actions.js'
 import type { RootAction } from '../../actions.js'
 import type { RootState } from '../../rootReducer.js'
 import { hasCurrencyPlugin } from '../../selectors.js'
@@ -28,7 +27,7 @@ const activeLogin = buildReducer(
       state: WalletInfoMap = {},
       action: RootAction
     ): WalletInfoMap {
-      if (action.type === ACTIONS.ACCOUNT_KEYS_LOADED) {
+      if (action.type === 'ACCOUNT_KEYS_LOADED') {
         const out = {}
         for (const info of action.payload.walletInfos) {
           out[info.id] = info
@@ -50,15 +49,15 @@ const activeLogin = buildReducer(
     ),
 
     appId (state: string, action: RootAction) {
-      return action.type === ACTIONS.LOGIN ? action.payload.appId : state
+      return action.type === 'LOGIN' ? action.payload.appId : state
     },
 
     loginKey (state: Uint8Array, action: RootAction) {
-      return action.type === ACTIONS.LOGIN ? action.payload.loginKey : state
+      return action.type === 'LOGIN' ? action.payload.loginKey : state
     },
 
     username (state: string, action: RootAction) {
-      return action.type === ACTIONS.LOGIN ? action.payload.username : state
+      return action.type === 'LOGIN' ? action.payload.username : state
     }
   },
   ({ id, state }, peers: ActiveLoginState): ActiveLoginProps => ({
@@ -72,9 +71,9 @@ export default filterReducer(
   activeLogin,
   (action: RootAction, props: ActiveLoginProps) => {
     if (
-      (action.type === ACTIONS.ACCOUNT_KEYS_LOADED &&
+      (action.type === 'ACCOUNT_KEYS_LOADED' &&
         action.payload.activeLoginId === props.id) ||
-      (action.type === ACTIONS.LOGIN &&
+      (action.type === 'LOGIN' &&
         props.state.login.lastActiveLoginId === props.id)
     ) {
       return action

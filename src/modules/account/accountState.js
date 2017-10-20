@@ -150,7 +150,7 @@ class AccountState {
     // Add the login to redux:
     const { dispatch } = ai.props
     dispatch({
-      type: ACTIONS.LOGIN,
+      type: 'LOGIN',
       payload: {
         appId,
         username: loginTree.username,
@@ -163,7 +163,7 @@ class AccountState {
   async logout () {
     const { activeLoginId } = this
     const { dispatch } = this.ai.props
-    dispatch({ type: ACTIONS.LOGOUT, payload: { activeLoginId } })
+    dispatch({ type: 'LOGOUT', payload: { activeLoginId } })
 
     // Shut down:
     dispatch(this.disposer)
@@ -211,7 +211,7 @@ class AccountState {
       // Update the key list in case something changed:
       const { activeLoginId, ai } = this
       ai.props.dispatch({
-        type: ACTIONS.ACCOUNT_KEYS_LOADED,
+        type: 'ACCOUNT_KEYS_LOADED',
         payload: { activeLoginId, walletInfos: this.allKeys }
       })
       this.updateCurrencyWallets()
@@ -247,7 +247,7 @@ class AccountState {
 
       const { dispatch } = ai.props
       dispatch({
-        type: ACTIONS.ACCOUNT_KEYS_LOADED,
+        type: 'ACCOUNT_KEYS_LOADED',
         payload: { activeLoginId, walletInfos: this.allKeys }
       })
 
@@ -348,7 +348,7 @@ class AccountState {
 
             // Horrible hack used to kick `createCurrencyWallet` awake:
             ai.props.dispatch({
-              type: ACTIONS.ACCOUNT_KEYS_LOADED,
+              type: 'ACCOUNT_KEYS_LOADED',
               payload: { activeLoginId, walletInfos: this.allKeys }
             })
 
