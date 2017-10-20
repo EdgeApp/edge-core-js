@@ -1,17 +1,18 @@
 // @flow
+import type { AbcWalletInfo } from 'airbitz-core-types'
 import { UsernameError } from '../../error.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import { makeKeysKit } from './keys.js'
-import type { LoginKit, LoginTree, WalletInfo } from './login-types.js'
+import type { LoginKit, LoginTree } from './login-types.js'
 import { fixUsername, hashUsername } from './loginStore.js'
 import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 
 export interface LoginCreateOpts {
-  keyInfo?: WalletInfo<{}>;
+  keyInfo?: AbcWalletInfo;
   password?: string | void;
   pin?: string | void;
 }

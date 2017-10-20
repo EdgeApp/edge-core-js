@@ -17,15 +17,6 @@ export {
 
 export { getExchangeRate } from './exchange/selectors.js'
 
-export {
-  getCurrencyPlugins,
-  getCurrencyPlugin,
-  hasCurrencyPlugin,
-  getCurrencyMultiplier,
-  getExchangePlugins,
-  awaitPluginsLoaded
-} from './plugins/selectors.js'
-
 export { scrypt, makeSnrp, userIdSnrp } from './scrypt/selectors.js'
 
 export {

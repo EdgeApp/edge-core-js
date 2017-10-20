@@ -8,7 +8,6 @@ import { stashFakeUser } from '../io/fake/fakeUser.js'
 import { makeFakeIos } from '../io/fake/index.js'
 import type { FixedIo } from '../io/fixIo.js'
 import { fixIo } from '../io/fixIo.js'
-import * as ACTIONS from './actions.js'
 import type { RootAction } from './actions.js'
 import { LoginStore } from './login/loginStore.js'
 import { makeStore } from './makeStore.js'
@@ -84,7 +83,7 @@ export function makeCoreRoot (opts: AbcContextOptions) {
     output: ({}: any)
   }
   coreRoot.redux.dispatch({
-    type: ACTIONS.INIT,
+    type: 'INIT',
     payload: { io: fixedIo, onError, apiKey, appId, authServer }
   })
 

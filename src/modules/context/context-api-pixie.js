@@ -4,6 +4,7 @@ import { stopUpdates } from 'redux-pixies'
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/accountApi.js'
+import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
@@ -35,7 +36,7 @@ function makeContextApi (ai: ApiInput) {
     appId,
 
     getCurrencyPlugins () {
-      return ai.waitFor(props => props.output.currencyPlugins)
+      return waitForCurrencyPlugins(ai)
     },
 
     '@fixUsername': { sync: true },

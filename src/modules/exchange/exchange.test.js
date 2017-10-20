@@ -1,8 +1,22 @@
 // @flow
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
+import { attachPixie, filterPixie } from 'redux-pixies'
+import {
+  makeFakeCoreRoots,
+  makeRootProps,
+  makeCoreRoot,
+  startCoreRoot
+} from '../root.js'
+import exchangePixie from './exchange-pixie.js'
 import reducer, { addPairs } from './reducer.js'
 import { getExchangeRate } from './selectors.js'
+import {
+  brokenExchangePlugin,
+  fakeExchangePlugin
+} from '../../fake-plugins/fakeExchange.js'
+import { makeFakeIos } from '../../indexABC.js'
+import { awaitState } from '../../util/redux/reaction.js'
 
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.
@@ -136,5 +150,42 @@ describe('exchange cache reducer', function () {
     const state = { exchangeCache: reducer(void 0, addPairs(pairs)) }
 
     assert.equal(getExchangeRate(state, 'NONE', 'EUR', pair => 1), 0)
+  })
+})
+
+describe('exchange pixie', function () {
+  it('adds plugins', async function () {
+    const [coreRoot] = makeFakeCoreRoots({ plugins: [fakeExchangePlugin] })
+
+    const output = await new Promise((resolve, reject) =>
+      attachPixie(
+        coreRoot.redux,
+        filterPixie(exchangePixie, makeRootProps(coreRoot)),
+        reject,
+        output => {
+          if (output.plugins) resolve(output)
+        }
+      )
+    )
+
+    assert.equal(output.plugins.length, 1)
+    assert.equal(output.plugins[0].exchangeInfo.exchangeName, 'FakeExchange')
+  })
+
+  it('fetches exchange rates', async function () {
+    const coreRoot = makeCoreRoot({
+      io: makeFakeIos(1)[0],
+      plugins: [brokenExchangePlugin, fakeExchangePlugin]
+    })
+    startCoreRoot(coreRoot)
+
+    await awaitState(
+      coreRoot.redux,
+      state => state.exchangeCache.rates.pairs.length > 0
+    )
+
+    const state = coreRoot.redux.getState()
+    const rate = getExchangeRate(state, 'BTC', 'iso:EUR', pair => 1)
+    return assert(rate > 2274 && rate < 2277)
   })
 })

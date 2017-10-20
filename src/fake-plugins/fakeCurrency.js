@@ -2,6 +2,7 @@ import { add, lt } from 'biggystring'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 import { InsufficientFundsError } from '../error.js'
 import { createReaction, reactionMiddleware } from '../util/redux/reaction.js'
+import { fakeCurrencyInfo } from './fakeCurrencyInfo.js'
 
 function nop () {}
 
@@ -151,20 +152,7 @@ class FakeCurrencyPlugin {
   }
 
   get currencyInfo () {
-    return {
-      currencyCode: 'TEST',
-      denominations: [
-        { multiplier: 10, name: 'SMALL' },
-        { multiplier: 100, name: 'TEST' }
-      ],
-      metaTokens: [
-        {
-          currencyCode: 'TOKEN',
-          denominations: [{ multiplier: 1000, name: 'TOKEN' }]
-        }
-      ],
-      walletTypes: ['wallet:fakecoin']
-    }
+    return fakeCurrencyInfo
   }
 
   createPrivateKey (type) {

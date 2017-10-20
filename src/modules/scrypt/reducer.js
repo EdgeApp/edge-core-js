@@ -1,6 +1,5 @@
 import { serialize } from '../../util/decorators.js'
 import { base16, utf8 } from '../../util/encoding.js'
-import { INIT } from '../actions.js'
 
 const getTime =
   typeof window !== 'undefined' &&
@@ -25,7 +24,7 @@ function timeScrypt (scrypt, data, snrp, dklen = 32) {
 export default function scryptReducer (state = {}, action) {
   const { type, payload } = action
 
-  if (type === INIT) {
+  if (type === 'INIT') {
     const { io } = payload
 
     return {

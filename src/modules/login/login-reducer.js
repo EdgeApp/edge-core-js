@@ -1,7 +1,6 @@
 // @flow
 import { buildReducer, mapReducer } from 'redux-keto'
 import type { RootAction } from '../actions.js'
-import * as ACTIONS from '../actions.js'
 import type { RootState } from '../rootReducer.js'
 import activeLogin from './active/active-login-reducer.js'
 import type { ActiveLoginState } from './active/active-login-reducer.js'
@@ -19,13 +18,13 @@ export interface LoginState {
 
 export default buildReducer({
   appId (state: string = '', action: RootAction) {
-    return action.type === ACTIONS.INIT && action.payload.appId
+    return action.type === 'INIT' && action.payload.appId
       ? action.payload.appId
       : state
   },
 
   loginCount (state: number = 0, action: RootAction) {
-    return action.type === ACTIONS.LOGIN ? state + 1 : state
+    return action.type === 'LOGIN' ? state + 1 : state
   },
 
   lastActiveLoginId (state, action, next: RootState) {
@@ -38,10 +37,10 @@ export default buildReducer({
     next: RootState
   ): Array<string> {
     switch (action.type) {
-      case ACTIONS.LOGIN:
+      case 'LOGIN':
         return [...state, next.login.lastActiveLoginId]
 
-      case ACTIONS.LOGOUT: {
+      case 'LOGOUT': {
         const { activeLoginId } = action.payload
         const out = state.filter(id => id !== activeLoginId)
         if (out.length === state.length) {

@@ -1,7 +1,6 @@
 // @flow
 import { combineReducers } from 'redux'
 import type { RootAction } from '../../actions.js'
-import * as ACTIONS from '../../actions.js'
 
 export interface LoginServerState {
   apiKey: string | null;
@@ -10,7 +9,7 @@ export interface LoginServerState {
 
 export default combineReducers({
   apiKey (state: string | null = null, action: RootAction): string | null {
-    return action.type === ACTIONS.INIT && action.payload.apiKey
+    return action.type === 'INIT' && action.payload.apiKey
       ? action.payload.apiKey
       : state
   },
@@ -19,7 +18,7 @@ export default combineReducers({
     state: string = 'https://auth.airbitz.co/api',
     action: RootAction
   ): string {
-    return action.type === ACTIONS.INIT && action.payload.authServer
+    return action.type === 'INIT' && action.payload.authServer
       ? action.payload.authServer
       : state
   }
