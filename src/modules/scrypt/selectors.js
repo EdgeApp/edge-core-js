@@ -1,11 +1,18 @@
 import { base16 } from '../../util/encoding.js'
 
-function calcSnrpForTarget (salt, benchMs, targetMs) {
+export function calcSnrpForTarget (salt, benchMs, targetMs) {
   const snrp = {
     salt_hex: base16.stringify(salt),
     n: 16384,
     r: 1,
     p: 1
+  }
+
+  if (benchMs === 0) {
+    snrp.n = 131072
+    snrp.r = 8
+    snrp.p = 64
+    return snrp
   }
 
   let estTargetTimeElapsed = benchMs
