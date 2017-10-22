@@ -4,7 +4,6 @@ import { softCat } from '../../util/util.js'
 import * as ACTIONS from '../actions.js'
 import {
   getCurrencyPlugin,
-  hasCurrencyPlugin,
   waitForCurrencyPlugins
 } from '../currency/currency-selectors.js'
 import { makeCurrencyWalletApi } from '../currencyWallets/api.js'
@@ -159,6 +158,12 @@ class AccountState {
       }
     })
     this.activeLoginId = ai.props.state.login.lastActiveLoginId
+
+    const { activeLoginId } = this
+    dispatch({
+      type: 'ACCOUNT_KEYS_LOADED',
+      payload: { activeLoginId, walletInfos: this.allKeys }
+    })
   }
 
   async logout () {
@@ -244,13 +249,13 @@ class AccountState {
       const { keyInfos, keyStates } = values
       this.legacyKeyInfos = keyInfos
       this.keyStates = keyStates
-      this.updateCurrencyWallets()
 
       const { dispatch } = ai.props
       dispatch({
         type: 'ACCOUNT_KEYS_LOADED',
         payload: { activeLoginId, walletInfos: this.allKeys }
       })
+      this.updateCurrencyWallets()
 
       return this
     })
@@ -297,37 +302,12 @@ class AccountState {
     }))
   }
 
-  get activeWalletIds () {
-    const { ai } = this
-    return this.allKeys
-      .filter(
-        info =>
-          !info.deleted &&
-          !info.archived &&
-          hasCurrencyPlugin(ai.props.state.currency.infos, info.type)
-      )
-      .sort((a, b) => a.sortIndex - b.sortIndex)
-      .map(info => info.id)
-  }
-
-  get archivedWalletIds () {
-    const { ai } = this
-    return this.allKeys
-      .filter(
-        info =>
-          !info.deleted &&
-          info.archived &&
-          hasCurrencyPlugin(ai.props.state.currency.infos, info.type)
-      )
-      .sort((a, b) => a.sortIndex - b.sortIndex)
-      .map(info => info.id)
-  }
-
   updateCurrencyWallets () {
     const { activeLoginId, ai, login } = this
 
     // List all the wallets we can mangage:
-    const allWalletIds = [...this.activeWalletIds, ...this.archivedWalletIds]
+    const allWalletIds =
+      ai.props.state.login.logins[activeLoginId].currencyWalletIds
 
     // If there is a wallet we could be managing, but aren't, load it:
     for (const id of allWalletIds) {

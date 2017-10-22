@@ -1,6 +1,6 @@
 // @flow
 import type { AbcAccount } from 'airbitz-core-types'
-import { assert } from 'chai'
+import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 import { fakeUser, makeFakeContexts } from '../../indexABC.js'
 import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
@@ -90,6 +90,14 @@ describe('account', function () {
       'account-repo:co.airbitz.wallet',
       'wallet:fakecoin'
     ])
+  })
+
+  it('list active wallet ids', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    const ids = account.activeWalletIds
+    expect(ids).to.deep.equal(['narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54='])
   })
 
   it('change key state', async function () {
