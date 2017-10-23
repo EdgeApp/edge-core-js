@@ -26,12 +26,14 @@
   ],
   "main": "lib/indexABC.js",
   "module": "lib/indexABC.es.js",
+  "react-native": "lib/indexABC.rn.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
-    "build": "webpack && rollup -c && npm run build:types",
+    "build": "webpack && rollup -c && rollup -c rollup.config.rn.js && npm run build:types",
+    "webpack": "webpack",
     "build:test": "webpack && rollup -c rollup.config.test.js",
     "build:types": "flow-copy-source -i '**/*.test.js' src lib",
     "flow": "flow status",
