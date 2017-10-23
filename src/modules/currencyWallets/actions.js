@@ -152,7 +152,7 @@ function loadFiles (keyId) {
             )
           )
         )
-        .catch(e => getState().onError(e)),
+        .catch(e => dispatch(setCurrencyWalletFiat(keyId, 'iso:USD'))),
 
       // Transaction metadata:
       mapFiles(folder.folder('transaction'), file =>
