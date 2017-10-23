@@ -85,11 +85,15 @@ describe('account', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const allTypes = account.allKeys.map(info => info.type)
-    assert.deepEqual(allTypes, [
+    expect(allTypes).to.deep.equal([
       'wallet:bitcoin',
       'account-repo:co.airbitz.wallet',
+      'wallet:fakecoin',
       'wallet:fakecoin'
     ])
+
+    const allAppIds = account.allKeys.map(info => info.appIds)
+    expect(allAppIds).to.deep.equal([[''], [''], [''], ['test-child']])
   })
 
   it('list active wallet ids', async function () {
@@ -97,7 +101,10 @@ describe('account', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const ids = account.activeWalletIds
-    expect(ids).to.deep.equal(['narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54='])
+    expect(ids).to.deep.equal([
+      'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=',
+      '3ZR9nMKd0vpZgEcSbehoBsLoLlFWMJhBbsxTs/d/jqA='
+    ])
   })
 
   it('change key state', async function () {

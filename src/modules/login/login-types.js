@@ -8,6 +8,8 @@ export type LoginStash = Object
 export type LoginTree = Object
 export type ServerPayload = Object
 
+export type AppIdMap = { [walletId: string]: Array<string> }
+
 export interface LoginKit {
   loginId?: string; // Really!? Doesn't seem optional
   login: LoginTree;

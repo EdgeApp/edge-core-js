@@ -1,6 +1,5 @@
 import { timeout } from '../../util/promise.js'
 import { createReaction } from '../../util/redux/reaction.js'
-import { softCat } from '../../util/util.js'
 import * as ACTIONS from '../actions.js'
 import {
   getCurrencyPlugin,
@@ -10,10 +9,10 @@ import { makeCurrencyWalletApi } from '../currencyWallets/api.js'
 import { makeCreateKit } from '../login/create.js'
 import {
   findFirstKey,
+  getAllWalletInfos,
   makeAccountType,
   makeKeysKit,
-  makeStorageKeyInfo,
-  mergeKeyInfos
+  makeStorageKeyInfo
 } from '../login/keys.js'
 import { applyKit, searchTree } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
@@ -289,25 +288,28 @@ class AccountState {
   }
 
   get allKeys () {
-    const { appId, keyStates, legacyKeyInfos, login } = this
-    const allKeys = mergeKeyInfos(softCat(legacyKeyInfos, login.keyInfos))
+    const { keyStates, legacyKeyInfos, login } = this
+    const { walletInfos, appIdMap } = getAllWalletInfos(login, legacyKeyInfos)
+    const getLast = array => array[array.length - 1]
 
-    return allKeys.map(info => ({
-      appId,
+    return walletInfos.map(info => ({
+      appId: getLast(appIdMap[info.id]),
+      appIds: appIdMap[info.id],
       archived: false,
       deleted: false,
-      sortIndex: allKeys.length,
+      sortIndex: walletInfos.length,
       ...keyStates[info.id],
       ...info
     }))
   }
 
   updateCurrencyWallets () {
-    const { activeLoginId, ai, login } = this
+    const { activeLoginId, ai } = this
 
     // List all the wallets we can mangage:
     const allWalletIds =
       ai.props.state.login.logins[activeLoginId].currencyWalletIds
+    const allWalletInfos = this.allKeys
 
     // If there is a wallet we could be managing, but aren't, load it:
     for (const id of allWalletIds) {
@@ -315,7 +317,7 @@ class AccountState {
         this.currencyWallets[id] == null &&
         !this.currencyWalletsLoading[id]
       ) {
-        const walletInfo = login.keyInfos.find(info => info.id === id)
+        const walletInfo = allWalletInfos.find(info => info.id === id)
         const callbacks = makeCurrencyWalletCallbacks(id, this.callbacks)
 
         this.currencyWalletsLoading[id] = true
