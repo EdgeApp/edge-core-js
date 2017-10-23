@@ -1,4 +1,10 @@
 import { filterObject, softCat } from '../../util/util.js'
+import { fakeRepos, fakeUserServer } from './fakeUser.js'
+import {
+  loginCreateColumns,
+  loginDbColumns,
+  loginReplyColumns
+} from './serverSchema.js'
 
 const routes = []
 
@@ -6,7 +12,8 @@ const routes = []
  * Wires one or more handlers into the routing table.
  */
 function addRoute (method, path, ...handlers) {
-  for (const handler of handlers) {
+  for (let i = 0; i < handlers.length; i++) {
+    const handler = handlers[i]
     routes.push({
       method,
       path: new RegExp(`^${path}$`),
@@ -292,12 +299,11 @@ addRoute(
 
 addRoute('POST', '/api/v2/login/create', function (req) {
   const data = req.body.data
-  if (
-    data.appId == null ||
-    data.loginId == null ||
-    this.db.logins.find(login => login.loginId === data.loginId)
-  ) {
+  if (data.appId == null || data.loginId == null) {
     return makeErrorResponse(errorCodes.error)
+  }
+  if (this.db.logins.find(login => login.loginId === data.loginId)) {
+    return makeErrorResponse(errorCodes.accountExists)
   }
 
   // Set up repos:
@@ -308,31 +314,7 @@ addRoute('POST', '/api/v2/login/create', function (req) {
   }
 
   // Set up login object:
-  const row = filterObject(data, [
-    'appId',
-    'loginId',
-    'loginAuth',
-    'loginAuthBox',
-    'parentBox',
-    'passwordAuth',
-    'passwordAuthBox',
-    'passwordAuthSnrp',
-    'passwordBox',
-    'passwordKeySnrp',
-    'pin2Auth',
-    'pin2Box',
-    'pin2Id',
-    'pin2KeyBox',
-    'question2Box',
-    'recovery2Auth',
-    'recovery2Box',
-    'recovery2Id',
-    'recovery2KeyBox',
-    'mnemonicBox', // Used for testing, not part of the real server!
-    'rootKeyBox', // Same
-    'syncKeyBox', // Same
-    'repos'
-  ])
+  const row = filterObject(data, loginCreateColumns)
   if (req.body.loginId != null || req.body.userId != null) {
     const e = authHandler.call(this, req)
     if (e) return e
@@ -498,6 +480,14 @@ export class FakeServer {
         return Promise.reject(e)
       }
     }
+
+    // Create fake repos:
+    for (const syncKey of Object.keys(fakeRepos)) {
+      this.repos[syncKey] = { ...fakeRepos[syncKey] }
+    }
+
+    // Create fake users:
+    this.setupFakeUser(fakeUserServer)
   }
 
   findLoginId (loginId) {
@@ -514,25 +504,7 @@ export class FakeServer {
   }
 
   makeReply (login) {
-    const reply = filterObject(login, [
-      'appId',
-      'loginId',
-      'loginAuthBox',
-      'parentBox',
-      'passwordAuthBox',
-      'passwordAuthSnrp',
-      'passwordBox',
-      'passwordKeySnrp',
-      'pin2Box',
-      'pin2KeyBox',
-      'question2Box',
-      'recovery2Box',
-      'recovery2KeyBox',
-      'mnemonicBox',
-      'rootKeyBox',
-      'syncKeyBox',
-      'keyBoxes'
-    ])
+    const reply = filterObject(login, loginReplyColumns)
     reply.children = this.db.logins
       .filter(child => child.parent === login.loginId)
       .map(child => this.makeReply(child))
@@ -558,5 +530,19 @@ export class FakeServer {
       `Unknown API endpoint ${req.path}`,
       404
     )
+  }
+
+  setupFakeUser (user, parent = null) {
+    // Fill in the database row for this login:
+    const row = filterObject(user, loginDbColumns)
+    row.parent = parent
+    this.db.logins.push(row)
+
+    // Recurse into our children:
+    if (user.children != null) {
+      for (const child of user.children) {
+        this.setupFakeUser(child, user.loginId)
+      }
+    }
   }
 }

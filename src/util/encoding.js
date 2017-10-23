@@ -1,3 +1,4 @@
+// @flow
 import baseX from 'base-x'
 import { base16 as base16Inner, base64 as base64Inner } from 'rfc4648'
 import utf8Codec from 'utf8'
@@ -19,51 +20,51 @@ function assertData (data) {
 }
 
 export const base16 = {
-  parse (text) {
+  parse (text: string): Uint8Array {
     assertString(text)
     return base16Inner.parse(text, { out: Uint8Array })
   },
-  stringify (data) {
+  stringify (data: Uint8Array | Array<number>): string {
     assertData(data)
     return base16Inner.stringify(data).toLowerCase()
   }
 }
 
 export const base58 = {
-  parse (text) {
+  parse (text: string): Uint8Array {
     assertString(text)
     return base58Codec.decode(text)
   },
-  stringify (data) {
+  stringify (data: Uint8Array | Array<number>): string {
     assertData(data)
     return base58Codec.encode(data)
   }
 }
 
 export const base64 = {
-  parse (text) {
+  parse (text: string): Uint8Array {
     assertString(text)
     return base64Inner.parse(text, { out: Uint8Array })
   },
-  stringify (data) {
+  stringify (data: Uint8Array | Array<number>): string {
     assertData(data)
     return base64Inner.stringify(data)
   }
 }
 
 export const utf8 = {
-  parse (text) {
-    const byteString = utf8Codec.encode(text)
-    const out = new Uint8Array(text.length)
+  parse (text: string): Uint8Array {
+    const byteString: string = utf8Codec.encode(text)
+    const out = new Uint8Array(byteString.length)
 
-    for (let i = 0; i < text.length; ++i) {
+    for (let i = 0; i < byteString.length; ++i) {
       out[i] = byteString.charCodeAt(i)
     }
 
     return out
   },
 
-  stringify (data) {
+  stringify (data: Uint8Array | Array<number>): string {
     assertData(data)
 
     // Some of our data contains terminating null bytes due to an old bug.
