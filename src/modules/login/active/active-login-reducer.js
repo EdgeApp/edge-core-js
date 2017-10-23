@@ -13,66 +13,55 @@ export interface ActiveLoginState {
   username: string;
 }
 
-export interface ActiveLoginProps {
+export interface ActiveLoginNext {
   id: string;
-  peers: ActiveLoginState;
-  state: RootState;
+  root: RootState;
+  +self: ActiveLoginState;
 }
 
-const activeLogin = buildReducer(
-  {
-    allWalletInfos (
-      state: WalletInfoMap = {},
-      action: RootAction
-    ): WalletInfoMap {
-      if (action.type === 'ACCOUNT_KEYS_LOADED') {
-        const out = {}
-        for (const info of action.payload.walletInfos) {
-          out[info.id] = info
-        }
-        return out
+const activeLogin = buildReducer({
+  allWalletInfos (state: WalletInfoMap = {}, action: RootAction): WalletInfoMap {
+    if (action.type === 'ACCOUNT_KEYS_LOADED') {
+      const out = {}
+      for (const info of action.payload.walletInfos) {
+        out[info.id] = info
       }
-      return state
-    },
-
-    currencyWalletIds: memoizeReducer(
-      (props: ActiveLoginProps) => props.peers.allWalletInfos,
-      (props: ActiveLoginProps) => props.state.currency.infos,
-      (allWalletInfos, currencyInfos) => {
-        return Object.keys(allWalletInfos).filter(walletId => {
-          const info = allWalletInfos[walletId]
-          return !info.deleted && hasCurrencyPlugin(currencyInfos, info.type)
-        })
-      }
-    ),
-
-    appId (state: string, action: RootAction) {
-      return action.type === 'LOGIN' ? action.payload.appId : state
-    },
-
-    loginKey (state: Uint8Array, action: RootAction) {
-      return action.type === 'LOGIN' ? action.payload.loginKey : state
-    },
-
-    username (state: string, action: RootAction) {
-      return action.type === 'LOGIN' ? action.payload.username : state
+      return out
     }
+    return state
   },
-  ({ id, state }, peers: ActiveLoginState): ActiveLoginProps => ({
-    id,
-    state,
-    peers
-  })
-)
+
+  currencyWalletIds: memoizeReducer(
+    (next: ActiveLoginNext) => next.self.allWalletInfos,
+    (next: ActiveLoginNext) => next.root.currency.infos,
+    (allWalletInfos, currencyInfos) => {
+      return Object.keys(allWalletInfos).filter(walletId => {
+        const info = allWalletInfos[walletId]
+        return !info.deleted && hasCurrencyPlugin(currencyInfos, info.type)
+      })
+    }
+  ),
+
+  appId (state: string, action: RootAction) {
+    return action.type === 'LOGIN' ? action.payload.appId : state
+  },
+
+  loginKey (state: Uint8Array, action: RootAction) {
+    return action.type === 'LOGIN' ? action.payload.loginKey : state
+  },
+
+  username (state: string, action: RootAction) {
+    return action.type === 'LOGIN' ? action.payload.username : state
+  }
+})
 
 export default filterReducer(
   activeLogin,
-  (action: RootAction, props: ActiveLoginProps) => {
+  (action: RootAction, next: ActiveLoginNext) => {
     if (
       (action.type === 'ACCOUNT_KEYS_LOADED' &&
-        action.payload.activeLoginId === props.id) ||
-      (action.type === 'LOGIN' &&
-        props.state.login.lastActiveLoginId === props.id)
+        action.payload.activeLoginId === next.id) ||
+      (action.type === 'LOGIN' && next.root.login.lastActiveLoginId === next.id)
     ) {
       return action
     }

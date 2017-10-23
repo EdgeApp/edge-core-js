@@ -2,7 +2,7 @@
 import { buildReducer, mapReducer } from 'redux-keto'
 import type { RootAction } from '../actions.js'
 import type { RootState } from '../rootReducer.js'
-import activeLogin from './active/active-login-reducer.js'
+import activeLoginReducer from './active/active-login-reducer.js'
 import type { ActiveLoginState } from './active/active-login-reducer.js'
 import server from './server/login-server-reducer.js'
 import type { LoginServerState } from './server/login-server-reducer.js'
@@ -53,9 +53,8 @@ export default buildReducer({
   },
 
   logins: mapReducer(
-    activeLogin,
-    (next: RootState) => next.login.activeLoginIds,
-    (next, peers, id) => ({ state: next, id })
+    activeLoginReducer,
+    (next: RootState) => next.login.activeLoginIds
   ),
 
   server
