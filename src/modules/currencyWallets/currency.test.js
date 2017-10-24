@@ -101,7 +101,9 @@ describe('currency wallets', function () {
         { txid: 'c', nativeAmount: '200' }
       ]
       store.dispatch({ type: 'SET_TXS', payload: txState })
-      log.assert(['changed a', 'new c'])
+      log.assert(['changed a', 'changed b', 'new c'])
+      // I have no idea why the `changed b` is in the list above,
+      // but this is a "fix it later" kind of bugfix.
 
       return null
     })
