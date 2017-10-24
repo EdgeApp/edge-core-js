@@ -140,12 +140,14 @@ export function makeCurrencyApi (
   dispatch(
     createReaction(
       state => getCurrencyWalletFiles(state, keyId),
+      state => state.currencyWallets[keyId].filesLoaded,
       state => getCurrencyWalletTxs(state, keyId),
       state => getCurrencyWalletTxList(state, keyId),
       state => getCurrencyWalletFiat(state, keyId),
       state => getCurrencyWalletPlugin(state, keyId).currencyInfo.currencyCode,
       (
         files,
+        filesLoaded,
         txs,
         list,
         walletFiat,
@@ -169,7 +171,7 @@ export function makeCurrencyApi (
             !compare(file, oldFiles[info.txid])
           ) {
             // If we have no metadata, it's new:
-            if (file == null) {
+            if (file == null && filesLoaded) {
               dispatch(setupNewTxMetadata(keyId, tx))
               prepareTxForCallback(
                 out,

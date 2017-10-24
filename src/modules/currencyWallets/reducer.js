@@ -150,6 +150,9 @@ const currencyWallet = combineReducers({
   progress: settableReducer(null, SET_PROGRESS),
 
   // Transaction data:
+  filesLoaded (state = false, action) {
+    return action.type === SET_FILES ? true : state
+  },
   files,
   txs
 })
