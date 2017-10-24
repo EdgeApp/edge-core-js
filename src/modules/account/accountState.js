@@ -1,20 +1,18 @@
 import { timeout } from '../../util/promise.js'
 import { createReaction } from '../../util/redux/reaction.js'
-import { softCat } from '../../util/util.js'
 import * as ACTIONS from '../actions.js'
 import {
   getCurrencyPlugin,
-  hasCurrencyPlugin,
   waitForCurrencyPlugins
 } from '../currency/currency-selectors.js'
 import { makeCurrencyWalletApi } from '../currencyWallets/api.js'
 import { makeCreateKit } from '../login/create.js'
 import {
   findFirstKey,
+  getAllWalletInfos,
   makeAccountType,
   makeKeysKit,
-  makeStorageKeyInfo,
-  mergeKeyInfos
+  makeStorageKeyInfo
 } from '../login/keys.js'
 import { applyKit, searchTree } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
@@ -159,6 +157,12 @@ class AccountState {
       }
     })
     this.activeLoginId = ai.props.state.login.lastActiveLoginId
+
+    const { activeLoginId } = this
+    dispatch({
+      type: 'ACCOUNT_KEYS_LOADED',
+      payload: { activeLoginId, walletInfos: this.allKeys }
+    })
   }
 
   async logout () {
@@ -244,13 +248,13 @@ class AccountState {
       const { keyInfos, keyStates } = values
       this.legacyKeyInfos = keyInfos
       this.keyStates = keyStates
-      this.updateCurrencyWallets()
 
       const { dispatch } = ai.props
       dispatch({
         type: 'ACCOUNT_KEYS_LOADED',
         payload: { activeLoginId, walletInfos: this.allKeys }
       })
+      this.updateCurrencyWallets()
 
       return this
     })
@@ -284,50 +288,28 @@ class AccountState {
   }
 
   get allKeys () {
-    const { appId, keyStates, legacyKeyInfos, login } = this
-    const allKeys = mergeKeyInfos(softCat(legacyKeyInfos, login.keyInfos))
+    const { keyStates, legacyKeyInfos, login } = this
+    const { walletInfos, appIdMap } = getAllWalletInfos(login, legacyKeyInfos)
+    const getLast = array => array[array.length - 1]
 
-    return allKeys.map(info => ({
-      appId,
+    return walletInfos.map(info => ({
+      appId: getLast(appIdMap[info.id]),
+      appIds: appIdMap[info.id],
       archived: false,
       deleted: false,
-      sortIndex: allKeys.length,
+      sortIndex: walletInfos.length,
       ...keyStates[info.id],
       ...info
     }))
   }
 
-  get activeWalletIds () {
-    const { ai } = this
-    return this.allKeys
-      .filter(
-        info =>
-          !info.deleted &&
-          !info.archived &&
-          hasCurrencyPlugin(ai.props.state.currency.infos, info.type)
-      )
-      .sort((a, b) => a.sortIndex - b.sortIndex)
-      .map(info => info.id)
-  }
-
-  get archivedWalletIds () {
-    const { ai } = this
-    return this.allKeys
-      .filter(
-        info =>
-          !info.deleted &&
-          info.archived &&
-          hasCurrencyPlugin(ai.props.state.currency.infos, info.type)
-      )
-      .sort((a, b) => a.sortIndex - b.sortIndex)
-      .map(info => info.id)
-  }
-
   updateCurrencyWallets () {
-    const { activeLoginId, ai, login } = this
+    const { activeLoginId, ai } = this
 
     // List all the wallets we can mangage:
-    const allWalletIds = [...this.activeWalletIds, ...this.archivedWalletIds]
+    const allWalletIds =
+      ai.props.state.login.logins[activeLoginId].currencyWalletIds
+    const allWalletInfos = this.allKeys
 
     // If there is a wallet we could be managing, but aren't, load it:
     for (const id of allWalletIds) {
@@ -335,7 +317,7 @@ class AccountState {
         this.currencyWallets[id] == null &&
         !this.currencyWalletsLoading[id]
       ) {
-        const walletInfo = login.keyInfos.find(info => info.id === id)
+        const walletInfo = allWalletInfos.find(info => info.id === id)
         const callbacks = makeCurrencyWalletCallbacks(id, this.callbacks)
 
         this.currencyWalletsLoading[id] = true

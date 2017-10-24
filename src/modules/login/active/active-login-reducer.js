@@ -1,13 +1,15 @@
 // @flow
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 import type { RootAction } from '../../actions.js'
-import type { RootState } from '../../rootReducer.js'
 import { hasCurrencyPlugin } from '../../currency/currency-selectors.js'
+import type { RootState } from '../../rootReducer.js'
 import type { WalletInfoMap } from '../login-types.js'
 
 export interface ActiveLoginState {
   allWalletInfos: WalletInfoMap;
   currencyWalletIds: Array<string>;
+  activeWalletIds: Array<string>;
+  archivedWalletIds: Array<string>;
   appId: string;
   loginKey: Uint8Array;
   username: string;
@@ -34,12 +36,29 @@ const activeLogin = buildReducer({
   currencyWalletIds: memoizeReducer(
     (next: ActiveLoginNext) => next.self.allWalletInfos,
     (next: ActiveLoginNext) => next.root.currency.infos,
-    (allWalletInfos, currencyInfos) => {
-      return Object.keys(allWalletInfos).filter(walletId => {
-        const info = allWalletInfos[walletId]
-        return !info.deleted && hasCurrencyPlugin(currencyInfos, info.type)
-      })
-    }
+    (allWalletInfos, currencyInfos) =>
+      Object.keys(allWalletInfos)
+        .filter(walletId => {
+          const info = allWalletInfos[walletId]
+          return !info.deleted && hasCurrencyPlugin(currencyInfos, info.type)
+        })
+        .sort((walletId1, walletId2) => {
+          const info1 = allWalletInfos[walletId1]
+          const info2 = allWalletInfos[walletId2]
+          return info1.sortIndex - info2.sortIndex
+        })
+  ),
+
+  activeWalletIds: memoizeReducer(
+    (next: ActiveLoginNext) => next.self.allWalletInfos,
+    (next: ActiveLoginNext) => next.self.currencyWalletIds,
+    (walletInfos, ids) => ids.filter(id => !walletInfos[id].archived)
+  ),
+
+  archivedWalletIds: memoizeReducer(
+    (next: ActiveLoginNext) => next.self.allWalletInfos,
+    (next: ActiveLoginNext) => next.self.currencyWalletIds,
+    (walletInfos, ids) => ids.filter(id => walletInfos[id].archived)
   ),
 
   appId (state: string, action: RootAction) {

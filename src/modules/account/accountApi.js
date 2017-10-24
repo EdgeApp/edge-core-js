@@ -42,7 +42,8 @@ function makeAccountApi (
   loginType: string,
   callbacks: AbcAccountCallbacks | {}
 ): AbcAccount {
-  const { ai, keyInfo } = state
+  const ai: ApiInput = state.ai
+  const { activeLoginId, keyInfo } = state
 
   const exchangeCache = makeExchangeCache(ai)
 
@@ -176,12 +177,12 @@ function makeAccountApi (
     // Core-managed wallets:
     '@activeWalletIds': { sync: true },
     get activeWalletIds (): Array<string> {
-      return state.activeWalletIds
+      return ai.props.state.login.logins[activeLoginId].activeWalletIds
     },
 
     '@archivedWalletIds': { sync: true },
     get archivedWalletIds (): Array<string> {
-      return state.archivedWalletIds
+      return ai.props.state.login.logins[activeLoginId].archivedWalletIds
     },
 
     '@currencyWallets': { sync: true },

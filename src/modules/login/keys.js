@@ -4,10 +4,11 @@ import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base16, base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import type {
+  AppIdMap,
   LoginKit,
-  StorageWalletInfo,
   LoginTree,
-  StorageKeys
+  StorageKeys,
+  StorageWalletInfo
 } from './login-types.js'
 
 /**
@@ -117,4 +118,42 @@ export function mergeKeyInfos (keyInfos: Array<AbcWalletInfo>) {
   }
 
   return out
+}
+
+/**
+ * Returns all the wallet infos accessible from this login object,
+ * as well as a map showing which wallets are in which applications.
+ */
+export function getAllWalletInfos (
+  login: LoginTree,
+  legacyWalletInfos: Array<AbcWalletInfo> = []
+) {
+  const appIdMap: AppIdMap = {}
+  const walletInfos: Array<AbcWalletInfo> = []
+
+  // Add the legacy wallets first:
+  for (const info of legacyWalletInfos) {
+    walletInfos.push(info)
+    if (appIdMap[info.id] == null) appIdMap[info.id] = [login.appId]
+    else appIdMap[info.id].push(login.appId)
+  }
+
+  function getAllWalletInfosLoop (login: LoginTree) {
+    // Add our own walletInfos:
+    for (const info of login.keyInfos) {
+      walletInfos.push(info)
+      if (appIdMap[info.id] == null) appIdMap[info.id] = [login.appId]
+      else appIdMap[info.id].push(login.appId)
+    }
+
+    // Add our children's walletInfos:
+    if (login.children) {
+      for (const child of login.children) {
+        getAllWalletInfosLoop(child)
+      }
+    }
+  }
+  getAllWalletInfosLoop(login)
+
+  return { appIdMap, walletInfos: mergeKeyInfos(walletInfos) }
 }

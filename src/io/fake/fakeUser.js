@@ -180,6 +180,14 @@ export const fakeUserServer = {
         data_base64:
           '1nCWjsW66E8RceBNFkP8bH5I5H4yhMGJrLCxwhbsKmo5x+hpFW0G/sUNXlsuIRCaEiKGODuI4cyeeUQoqbd03ZxFCwpDHrYD8C1NDW2JOJY='
       },
+      keyBoxes: [
+        {
+          encryptionType: 0,
+          iv_hex: 'b691d83b2ad52cdf5ed94043529d1467',
+          data_base64:
+            'xHKpFZab1tRhari9uZFouMMF8jC6kwDyi4aEivrigdCRACcB5Ojz9dmTUBxqnTGYkMnEDcdNkcxh7hFOe6y1vp6047gT/yMt1t2hLnTuyC9ebFDEDcCpWvOGSEPS9rOqEj8JDBU13xOCkAee0m5KmDaB5a2W1dehSAf6gD9OCdAap8WhcDP3CNodBDQYEpJuWGtUF7vxf46WyG3PYswnrXbMJAT0ksFBv5vhre2mcSHxxXj39TqyQZN6YESNujUkamge/0ky5MVXG2abIMouU4QgsoTkRZJfJ9w/4giXT8KSyMlCOL8/n9Xb67Tow5HeTiPZe7SHz7NUkW1N13E4CpnJUSj8NwW77LQbmuikci9avhpGiXDZOOK+VEm0aMjVAuZ9kVjkEHxXsuOk1yowfA=='
+        }
+      ],
       children: [
         {
           appId: 'test-child-child',
