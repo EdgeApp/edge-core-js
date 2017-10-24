@@ -1,4 +1,5 @@
 import { makeCurrencyWallet } from './currencyWallets/api.js'
+import { makeStorageWallet } from "./storage/storageApi";
 import { makeContext } from './io/context.js'
 
 // Sub-module exports:
@@ -36,3 +37,8 @@ export function makeABCContext (apiKey, appId, opts) {
  * Creates a new wallet object based on a set of keys.
  */
 export { makeCurrencyWallet }
+
+/**
+ * Creates a new wallet object based on a set of keys.
+ */
+export { makeStorageWallet}
