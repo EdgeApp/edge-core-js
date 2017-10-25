@@ -318,9 +318,8 @@ export function makeCurrencyApi (
           : destWallet.currencyInfo.currencyCode
         if (destCurrencyCode !== currentCurrencyCode) {
           const currentPublicAddress = engine().getFreshAddress().publicAddress
-          const {
-            publicAddress: destPublicAddress
-          } = await destWallet.getReceiveAddress()
+          const destPublicAddress = await destWallet.getReceiveAddress()
+            .publicAddress
 
           const exchangeData = await shapeshiftApi.getSwapAddress(
             currentCurrencyCode,
