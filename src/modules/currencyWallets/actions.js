@@ -47,7 +47,10 @@ function getTxFile (state, keyId, timestamp, txid) {
  */
 export function addCurrencyWallet (keyInfo, ai) {
   return async (dispatch, getState) => {
-    const plugin = getCurrencyPlugin(ai, keyInfo.type)
+    const plugin = getCurrencyPlugin(
+      ai.props.output.currency.plugins,
+      keyInfo.type
+    )
     if (plugin.currencyInfo == null) {
       plugin.currencyInfo = plugin.getInfo()
     }

@@ -158,7 +158,7 @@ function makeAccountApi (
     createWallet (type: string, keys: any): Promise<string> {
       if (keys == null) {
         // Use the currency plugin to create the keys:
-        const plugin = getCurrencyPlugin(ai, type)
+        const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
         keys = plugin.createPrivateKey(type)
       }
 

@@ -265,7 +265,7 @@ class AccountState {
     const { ai, login } = this
 
     // Make the keys:
-    const plugin = getCurrencyPlugin(ai, type)
+    const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
     const keys = opts.keys || plugin.createPrivateKey(type)
     const keyInfo = makeStorageKeyInfo(ai, type, keys)
     const kit = makeKeysKit(ai, login, keyInfo)

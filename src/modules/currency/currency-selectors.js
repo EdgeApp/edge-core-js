@@ -1,10 +1,6 @@
 // @flow
-import type { AbcCurrencyInfo } from 'airbitz-core-types'
+import type { AbcCurrencyInfo, AbcCurrencyPlugin } from 'airbitz-core-types'
 import type { ApiInput } from '../root.js'
-
-export function waitForCurrencyPlugins (ai: ApiInput) {
-  return ai.waitFor(props => props.output.currency.plugins)
-}
 
 export function getCurrencyMultiplier (
   infos: Array<AbcCurrencyInfo>,
@@ -29,8 +25,11 @@ export function getCurrencyMultiplier (
   return 1
 }
 
-export function getCurrencyPlugin (ai: ApiInput, walletType: string) {
-  for (const plugin of ai.props.output.currency.plugins) {
+export function getCurrencyPlugin (
+  plugins: Array<AbcCurrencyPlugin>,
+  walletType: string
+) {
+  for (const plugin of plugins) {
     const currencyInfo = plugin.currencyInfo || plugin.getInfo()
     for (const type of currencyInfo.walletTypes) {
       if (type === walletType) {
@@ -54,4 +53,8 @@ export function hasCurrencyPlugin (
     }
   }
   return false
+}
+
+export function waitForCurrencyPlugins (ai: ApiInput) {
+  return ai.waitFor(props => props.output.currency.plugins)
 }
