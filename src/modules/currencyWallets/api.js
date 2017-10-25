@@ -340,12 +340,12 @@ export function makeCurrencyApi (
           }
 
           const spendTarget: AbcSpendTarget = {
-            currencyCode: spendInfo.currencyCode,
             nativeAmount: nativeAmount,
             publicAddress: exchangeData.deposit
           }
 
           const exchangeSpendInfo: AbcSpendInfo = {
+            currencyCode: spendInfo.currencyCode,
             spendTargets: [spendTarget]
           }
 
