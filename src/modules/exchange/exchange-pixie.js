@@ -32,13 +32,8 @@ export default combinePixies({
 
     function doFetch (): Promise<void> {
       // Bail out if we have no plugins:
-      if (
-        !input.props.output ||
-        !input.props.output.exchange ||
-        !input.props.output.exchange.plugins
-      ) {
-        return Promise.resolve()
-      }
+      if (!input.props.output.exchange.plugins) return Promise.resolve()
+
       const plugins = input.props.output.exchange.plugins
 
       // TODO: Grab this off the list of loaded wallet currency types & fiats:

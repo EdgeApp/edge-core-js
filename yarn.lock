@@ -3150,13 +3150,13 @@ readdirp@^2.0.0:
     readable-stream "^2.0.2"
     set-immediate-shim "^1.0.1"
 
-redux-keto@^0.3.0:
+redux-keto@^0.3.2:
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.2.tgz#15c18d61fec5e76e3d0d3f02767a996fee4ff622"
 
-redux-pixies@^0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.3.1.tgz#26cc790b218b1258cda713112cf3b224afc98f12"
+redux-pixies@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.3.2.tgz#7ebbc11f8a7873cef165ccfbdba00146ef3df659"
 
 redux-thunk@^2.2.0:
   version "2.2.0"

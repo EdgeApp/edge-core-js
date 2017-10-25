@@ -134,7 +134,7 @@ export interface RootProps {
   +dispatch: Dispatch<RootAction>;
   io: FixedIo;
   onError(e: Error): void;
-  output: RootOutput | void;
+  output: RootOutput;
   plugins: Array<AbcCorePlugin>;
   shapeshiftKey: string | void;
   state: RootState;

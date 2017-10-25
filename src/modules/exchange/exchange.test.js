@@ -1,22 +1,22 @@
 // @flow
-import { assert } from 'chai'
+import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 import { attachPixie, filterPixie } from 'redux-pixies'
-import {
-  makeFakeCoreRoots,
-  makeRootProps,
-  makeCoreRoot,
-  startCoreRoot
-} from '../root.js'
-import exchangePixie from './exchange-pixie.js'
-import reducer, { addPairs } from './reducer.js'
-import { getExchangeRate } from './selectors.js'
 import {
   brokenExchangePlugin,
   fakeExchangePlugin
 } from '../../fake-plugins/fakeExchange.js'
 import { makeFakeIos } from '../../indexABC.js'
 import { awaitState } from '../../util/redux/reaction.js'
+import {
+  makeCoreRoot,
+  makeFakeCoreRoots,
+  makeRootProps,
+  startCoreRoot
+} from '../root.js'
+import { rootPixie } from '../rootPixie.js'
+import reducer, { addPairs } from './reducer.js'
+import { getExchangeRate } from './selectors.js'
 
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.
@@ -157,19 +157,19 @@ describe('exchange pixie', function () {
   it('adds plugins', async function () {
     const [coreRoot] = makeFakeCoreRoots({ plugins: [fakeExchangePlugin] })
 
-    const output = await new Promise((resolve, reject) =>
+    const plugins = await new Promise((resolve, reject) =>
       attachPixie(
         coreRoot.redux,
-        filterPixie(exchangePixie, makeRootProps(coreRoot)),
+        filterPixie(rootPixie, makeRootProps(coreRoot)),
         reject,
         output => {
-          if (output.plugins) resolve(output)
+          if (output.exchange.plugins) resolve(output.exchange.plugins)
         }
       )
     )
 
-    assert.equal(output.plugins.length, 1)
-    assert.equal(output.plugins[0].exchangeInfo.exchangeName, 'FakeExchange')
+    expect(plugins.length).to.equal(1)
+    expect(plugins[0].exchangeInfo.exchangeName).to.equal('FakeExchange')
   })
 
   it('fetches exchange rates', async function () {
