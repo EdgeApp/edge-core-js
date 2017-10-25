@@ -33,7 +33,11 @@ export function makeShapeshiftApi (ai: ApiInput) {
       if (!reply.ok) {
         throw new Error(`Shapeshift ${uri} returned error code ${reply.status}`)
       }
-      return reply.json()
+      const replyJson = await reply.json()
+      if (replyJson.error) {
+        throw new Error(replyJson.error)
+      }
+      return replyJson
     }
   }
 
