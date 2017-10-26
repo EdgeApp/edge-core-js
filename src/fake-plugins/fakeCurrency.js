@@ -89,10 +89,7 @@ class FakeCurrencyEngine {
     return Promise.resolve()
   }
 
-  stopEngine () {
-    for (const disposer of this.disposers) {
-      disposer()
-    }
+  killEngine () {
     return Promise.resolve()
   }
 
