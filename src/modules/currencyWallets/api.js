@@ -14,13 +14,15 @@ import { copyProperties, wrapObject } from '../../util/api.js'
 import { compare } from '../../util/compare.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import { filterObject, mergeDeeply } from '../../util/util.js'
+import { makeShapeshiftApi } from '../exchange/shapeshift.js'
+import type { ApiInput, ApiProps } from '../root.js'
+import { getStorageWalletLastSync } from '../selectors.js'
+import { makeStorageWalletApi } from '../storage/storageApi.js'
 import {
   renameCurrencyWallet,
   setCurrencyWalletTxMetadata,
   setupNewTxMetadata
-} from '../actions.js'
-import { makeShapeshiftApi } from '../exchange/shapeshift.js'
-import type { ApiInput, ApiProps } from '../root.js'
+} from './actions.js'
 import {
   getCurrencyWalletBalance,
   getCurrencyWalletBlockHeight,
@@ -31,10 +33,8 @@ import {
   getCurrencyWalletPlugin,
   getCurrencyWalletProgress,
   getCurrencyWalletTxList,
-  getCurrencyWalletTxs,
-  getStorageWalletLastSync
-} from '../selectors.js'
-import { makeStorageWalletApi } from '../storage/storageApi.js'
+  getCurrencyWalletTxs
+} from './selectors.js'
 
 function nop (nopstuff: any) {}
 

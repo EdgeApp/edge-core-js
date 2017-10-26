@@ -5,6 +5,7 @@ import {
   getCurrencyPlugin,
   waitForCurrencyPlugins
 } from '../currency/currency-selectors.js'
+import { setCurrencyWalletFiat } from '../currencyWallets/actions.js'
 import { makeCurrencyWalletApi } from '../currencyWallets/api.js'
 import { makeCreateKit } from '../login/create.js'
 import {
@@ -280,7 +281,7 @@ class AccountState {
     if (opts.name) await wallet.renameWallet(opts.name)
     if (opts.fiatCurrencyCode) {
       await ai.props.dispatch(
-        ACTIONS.setCurrencyWalletFiat(keyInfo.id, opts.fiatCurrencyCode)
+        setCurrencyWalletFiat(keyInfo.id, opts.fiatCurrencyCode)
       )
     }
 

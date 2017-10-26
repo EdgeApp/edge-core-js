@@ -1,3 +1,4 @@
+import { number as currencyFromNumber } from 'currency-codes'
 import { mapFiles } from 'disklet'
 import { createReaction } from '../../util/redux/reaction.js'
 import { mergeDeeply } from '../../util/util.js'
@@ -7,9 +8,6 @@ import {
   getCurrencyPlugin
 } from '../currency/currency-selectors.js'
 import {
-  getCurrencyWalletFiat,
-  getCurrencyWalletFile,
-  getCurrencyWalletPlugin,
   getExchangeRate,
   getStorageWalletFolder,
   getStorageWalletLastSync,
@@ -28,7 +26,11 @@ import {
   setName,
   setProgress
 } from './reducer.js'
-import { number as currencyFromNumber } from 'currency-codes'
+import {
+  getCurrencyWalletFiat,
+  getCurrencyWalletFile,
+  getCurrencyWalletPlugin
+} from './selectors.js'
 
 function getTxFile (state, keyId, timestamp, txid) {
   const txidHash = hashStorageWalletFilename(state, keyId, txid)
