@@ -26,7 +26,11 @@ export function forEachListener (
   for (const activeLoginId of input.props.state.login.activeLoginIds) {
     const login = input.props.state.login.logins[activeLoginId]
     if (input.props.id in login.allWalletInfos) {
-      f(login.callbacks)
+      try {
+        f(login.callbacks)
+      } catch (e) {
+        input.props.onError(e)
+      }
     }
   }
 }
@@ -122,39 +126,38 @@ export function watchCurrencyWallet (input: CurrencyWalletInput) {
   function checkChangesLoop (props: CurrencyWalletProps) {
     lastProps = props
 
-    try {
-      if (props.selfState.name !== lastProps.selfState.name) {
-        const name = props.selfState.name
+    if (props.selfState.name !== lastProps.selfState.name) {
+      const name = props.selfState.name
 
-        // Call onWalletNameChanged:
-        forEachListener(input, ({ onWalletNameChanged }) => {
-          if (onWalletNameChanged) {
-            onWalletNameChanged(walletId, name)
-          }
-        })
-      }
-
-      if (
-        getStorageWalletLastSync(props.state, walletId) !==
-        getStorageWalletLastSync(lastProps.state, walletId)
-      ) {
-        // Reload our data from disk:
-        loadAllFiles(input).catch(e => input.props.onError(e))
-
-        // Call onWalletDataChanged:
-        forEachListener(input, ({ onWalletDataChanged }) => {
-          if (onWalletDataChanged) {
-            onWalletDataChanged(walletId)
-          }
-        })
-      }
-    } catch (e) {
-      input.props.onError(e)
+      // Call onWalletNameChanged:
+      forEachListener(input, ({ onWalletNameChanged }) => {
+        if (onWalletNameChanged) {
+          onWalletNameChanged(walletId, name)
+        }
+      })
     }
 
-    input.nextProps().then(checkChangesLoop, e => {
-      if (!isPixieShutdownError(e)) input.props.onError(e)
-    })
+    if (
+      getStorageWalletLastSync(props.state, walletId) !==
+      getStorageWalletLastSync(lastProps.state, walletId)
+    ) {
+      // Reload our data from disk:
+      loadAllFiles(input).catch(e => input.props.onError(e))
+
+      // Call onWalletDataChanged:
+      forEachListener(input, ({ onWalletDataChanged }) => {
+        if (onWalletDataChanged) {
+          onWalletDataChanged(walletId)
+        }
+      })
+    }
+
+    input
+      .nextProps()
+      .then(checkChangesLoop)
+      .catch(e => {
+        if (!isPixieShutdownError(e)) input.props.onError(e)
+      })
   }
   checkChangesLoop(input.props)
 }
