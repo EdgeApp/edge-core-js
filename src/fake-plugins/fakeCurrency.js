@@ -55,13 +55,13 @@ class FakeCurrencyEngine {
       )
     )
 
-    // Token balance callback: (TODO: fix the bug in the currencyWallet)
-    // this.store.dispatch(
-    //   createReaction(
-    //     state => state.tokenBalance,
-    //     balance => onBalanceChanged('TOKEN', balance)
-    //   )
-    // )
+    // Token balance callback:
+    this.store.dispatch(
+      createReaction(
+        state => state.tokenBalance,
+        balance => onBalanceChanged('TOKEN', balance)
+      )
+    )
 
     // Block height callback:
     this.store.dispatch(

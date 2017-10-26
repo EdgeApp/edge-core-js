@@ -76,13 +76,16 @@ describe('currency wallets', function () {
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []
-      log.assert(['balance TEST 0', 'blockHeight 0', 'progress 0'])
+      log.assert(['balance TEST 0', 'balance TOKEN 0', 'blockHeight 0', 'progress 0'])
 
       store.dispatch({ type: 'SET_PROGRESS', payload: 0.5 })
       log.assert(['progress 0.5'])
 
       store.dispatch({ type: 'SET_BALANCE', payload: 20 })
       log.assert(['balance TEST 20'])
+
+      store.dispatch({ type: 'SET_TOKEN_BALANCE', payload: 30 })
+      log.assert(['balance TOKEN 30'])
 
       store.dispatch({ type: 'SET_BLOCK_HEIGHT', payload: 200 })
       log.assert(['blockHeight 200'])
