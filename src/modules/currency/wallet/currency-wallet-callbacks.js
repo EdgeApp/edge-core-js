@@ -84,11 +84,15 @@ export function makeCurrencyWalletCallbacks (
       for (const rawTx of txs) {
         const tx = mergeTx(rawTx, defaultCurrency, existingTxs[rawTx.txid])
 
-        const isNew = existingTxs[tx.txid] == null
+        // If we already have it in the list, make sure something about it has changed:
+        if (existingTxs[tx.txid] != null) {
+          if (compare(tx, existingTxs[tx.txid])) continue
+        }
+
+        // If we don't have a file, make one and report the transaction as new:
+        const isNew = existingTxs[tx.txid] == null && files[tx.txid] == null
         if (isNew) {
           setupNewTxMetadata(input, tx).catch(e => input.props.onError(e))
-        } else {
-          if (compare(tx, existingTxs[tx.txid])) continue
         }
 
         const list = isNew ? created : changes

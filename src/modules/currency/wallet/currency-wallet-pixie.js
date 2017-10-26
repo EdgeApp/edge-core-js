@@ -92,7 +92,8 @@ export default combinePixies({
         if (
           !input.props.selfOutput ||
           !input.props.selfOutput.api ||
-          !input.props.selfState.fiatLoaded
+          !input.props.selfState.fiatLoaded ||
+          !input.props.selfState.filesLoaded
         ) {
           return
         }
