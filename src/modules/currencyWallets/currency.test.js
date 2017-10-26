@@ -58,6 +58,9 @@ describe('currency wallets', function () {
     const store = makeFakeCurrencyStore()
 
     const callbacks = {
+      onAddressesChecked (walletId, progress) {
+        log('progress', progress)
+      },
       onBalanceChanged (walletId, currencyCode, balance) {
         log('balance', currencyCode, balance)
       },
@@ -73,7 +76,10 @@ describe('currency wallets', function () {
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []
-      log.assert(['balance TEST 0', 'blockHeight 0'])
+      log.assert(['balance TEST 0', 'blockHeight 0', 'progress 0'])
+
+      store.dispatch({ type: 'SET_PROGRESS', payload: 0.5 })
+      log.assert(['progress 0.5'])
 
       store.dispatch({ type: 'SET_BALANCE', payload: 20 })
       log.assert(['balance TEST 20'])

@@ -16,6 +16,9 @@ const reducer = combineReducers({
   blockHeight: (state = 0, action) =>
     action.type === 'SET_BLOCK_HEIGHT' ? action.payload : state,
 
+  progress: (state = 0, action) =>
+    action.type === 'SET_PROGRESS' ? action.payload : state,
+
   txs: (state = [], action) =>
     action.type === 'SET_TXS' ? action.payload : state
 })
@@ -40,7 +43,9 @@ class FakeCurrencyEngine {
     } = callbacks
 
     // Address callback:
-    this.onAddressesChecked = onAddressesChecked
+    this.store.dispatch(
+      createReaction(state => state.progress, onAddressesChecked)
+    )
 
     // Balance callback:
     this.store.dispatch(
