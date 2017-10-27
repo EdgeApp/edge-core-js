@@ -221,6 +221,9 @@ export const fakeRepos = {
       encryptionType: 0
     }
   },
+  // wallet:bitcoin
+  '6036207e1f8c87346a8c7585495537d98804084c': {},
+  // wallet:fakecoin
   '5ca83c3a724244d519aec49efe5a8fc96c6fcdac': {
     'WalletName.json': {
       data_base64:
@@ -228,7 +231,9 @@ export const fakeRepos = {
       encryptionType: 0,
       iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0'
     }
-  }
+  },
+  // wallet:fakecoin (test-child)
+  '0930F3C2CD0417765198FBEA95EC9F1E99000312': {}
 }
 
 export function stashFakeUser (io: FixedIo) {
