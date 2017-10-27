@@ -3,7 +3,7 @@ import { getIo } from '../selectors.js'
 import { loadRepoStatus, makeRepoPaths, syncRepo } from '../storage/repo.js'
 import { add, setStatus } from './reducer.js'
 
-export function addStorageWallet (keyInfo) {
+export function addStorageWallet (keyInfo, onError) {
   return (dispatch, getState) => {
     const io = getIo(getState())
 
@@ -14,7 +14,13 @@ export function addStorageWallet (keyInfo) {
 
     return loadRepoStatus(paths).then(status => {
       dispatch(add(keyInfo.id, { localFolder, paths, status }))
-      return dispatch(syncStorageWallet(keyInfo.id))
+      const syncPromise = dispatch(syncStorageWallet(keyInfo.id))
+      if (status.lastSync) {
+        // If we have already done a sync, let this one run in the background:
+        syncPromise.catch(e => onError(e))
+        return Promise.resolve({ status, changes: [] })
+      }
+      return syncPromise
     })
   }
 }
