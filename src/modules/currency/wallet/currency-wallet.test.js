@@ -6,11 +6,11 @@ import { createStore } from 'redux'
 import {
   makeFakeCurrency,
   makeFakeCurrencyStore
-} from '../../fake-plugins/fakeCurrency.js'
-import { fakeExchangePlugin } from '../../fake-plugins/fakeExchange.js'
-import { fakeUser, makeFakeContexts } from '../../indexABC.js'
-import { makeAssertLog } from '../../util/assertLog.js'
-import { awaitState } from '../../util/redux/reaction.js'
+} from '../../../fake-plugins/fakeCurrency.js'
+import { fakeExchangePlugin } from '../../../fake-plugins/fakeExchange.js'
+import { fakeUser, makeFakeContexts } from '../../../indexABC.js'
+import { makeAssertLog } from '../../../util/assertLog.js'
+import { awaitState } from '../../../util/redux/reaction.js'
 
 async function makeFakeCurrencyWallet (store, callbacks) {
   const plugin = makeFakeCurrency(store)
@@ -58,6 +58,9 @@ describe('currency wallets', function () {
     const store = makeFakeCurrencyStore()
 
     const callbacks = {
+      onAddressesChecked (walletId, progress) {
+        log('progress', progress)
+      },
       onBalanceChanged (walletId, currencyCode, balance) {
         log('balance', currencyCode, balance)
       },
@@ -73,10 +76,16 @@ describe('currency wallets', function () {
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []
-      log.assert(['balance TEST 0', 'blockHeight 0'])
+      log.assert(['balance TEST 0', 'balance TOKEN 0', 'blockHeight 0', 'progress 0'])
+
+      store.dispatch({ type: 'SET_PROGRESS', payload: 0.5 })
+      log.assert(['progress 0.5'])
 
       store.dispatch({ type: 'SET_BALANCE', payload: 20 })
       log.assert(['balance TEST 20'])
+
+      store.dispatch({ type: 'SET_TOKEN_BALANCE', payload: 30 })
+      log.assert(['balance TOKEN 30'])
 
       store.dispatch({ type: 'SET_BLOCK_HEIGHT', payload: 200 })
       log.assert(['blockHeight 200'])
@@ -101,9 +110,7 @@ describe('currency wallets', function () {
         { txid: 'c', nativeAmount: '200' }
       ]
       store.dispatch({ type: 'SET_TXS', payload: txState })
-      log.assert(['changed a', 'changed b', 'new c'])
-      // I have no idea why the `changed b` is in the list above,
-      // but this is a "fix it later" kind of bugfix.
+      log.assert(['changed a', 'new c'])
 
       return null
     })

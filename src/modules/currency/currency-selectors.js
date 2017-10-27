@@ -1,9 +1,20 @@
 // @flow
-import type { AbcCurrencyInfo } from 'airbitz-core-types'
-import type { ApiInput } from '../root.js'
+import type { AbcCurrencyInfo, AbcCurrencyPlugin } from 'airbitz-core-types'
+import type { ApiInput, ApiProps } from '../root.js'
 
-export function waitForCurrencyPlugins (ai: ApiInput) {
-  return ai.waitFor(props => props.output.currency.plugins)
+export function getCurrencyInfo (
+  infos: Array<AbcCurrencyInfo>,
+  walletType: string
+): AbcCurrencyInfo {
+  for (const info of infos) {
+    for (const type of info.walletTypes) {
+      if (type === walletType) {
+        return info
+      }
+    }
+  }
+
+  throw new Error(`Cannot find a currency info for wallet type ${walletType}`)
 }
 
 export function getCurrencyMultiplier (
@@ -29,8 +40,11 @@ export function getCurrencyMultiplier (
   return 1
 }
 
-export function getCurrencyPlugin (ai: ApiInput, walletType: string) {
-  for (const plugin of ai.props.output.currency.plugins) {
+export function getCurrencyPlugin (
+  plugins: Array<AbcCurrencyPlugin>,
+  walletType: string
+) {
+  for (const plugin of plugins) {
     const currencyInfo = plugin.currencyInfo || plugin.getInfo()
     for (const type of currencyInfo.walletTypes) {
       if (type === walletType) {
@@ -54,4 +68,19 @@ export function hasCurrencyPlugin (
     }
   }
   return false
+}
+
+export function waitForCurrencyPlugins (ai: ApiInput) {
+  return ai.waitFor(props => props.output.currency.plugins)
+}
+
+export function waitForCurrencyWallet (ai: ApiInput, walletId: string) {
+  return ai.waitFor((props: ApiProps) => {
+    if (props.state.currency.wallets[walletId].engineFailure) {
+      throw props.state.currency.wallets[walletId].engineFailure
+    }
+    if (props.output.currency.wallets[walletId]) {
+      return props.output.currency.wallets[walletId].api
+    }
+  })
 }

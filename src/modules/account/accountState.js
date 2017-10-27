@@ -1,11 +1,10 @@
-import { timeout } from '../../util/promise.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import * as ACTIONS from '../actions.js'
 import {
   getCurrencyPlugin,
-  waitForCurrencyPlugins
+  waitForCurrencyPlugins,
+  waitForCurrencyWallet
 } from '../currency/currency-selectors.js'
-import { makeCurrencyWalletApi } from '../currencyWallets/api.js'
 import { makeCreateKit } from '../login/create.js'
 import {
   findFirstKey,
@@ -81,51 +80,6 @@ export function ensureAccountExists (ai, loginTree, appId) {
 }
 
 /**
- * Binds a collection of wallet callbacks,
- * to pass into the currency wallet constructor.
- */
-function makeCurrencyWalletCallbacks (walletId, accountCallbacks) {
-  const {
-    onAddressesChecked,
-    onBalanceChanged,
-    onBlockHeightChanged,
-    onNewTransactions,
-    onTransactionsChanged,
-    onWalletDataChanged,
-    onWalletNameChanged
-  } = accountCallbacks
-
-  const out = {}
-
-  if (onAddressesChecked) {
-    out.onAddressesChecked = (...rest) => onAddressesChecked(walletId, ...rest)
-  }
-  if (onBalanceChanged) {
-    out.onBalanceChanged = (...rest) => onBalanceChanged(walletId, ...rest)
-  }
-  if (onBlockHeightChanged) {
-    out.onBlockHeightChanged = (...rest) =>
-      onBlockHeightChanged(walletId, ...rest)
-  }
-  if (onNewTransactions) {
-    out.onNewTransactions = (...rest) => onNewTransactions(walletId, ...rest)
-  }
-  if (onTransactionsChanged) {
-    out.onTransactionsChanged = (...rest) =>
-      onTransactionsChanged(walletId, ...rest)
-  }
-  if (onWalletDataChanged) {
-    out.onDataChanged = (...rest) => onWalletDataChanged(walletId, ...rest)
-  }
-  if (onWalletNameChanged) {
-    out.onWalletNameChanged = (...rest) =>
-      onWalletNameChanged(walletId, ...rest)
-  }
-
-  return out
-}
-
-/**
  * This is the data an account contains, and the methods to update it.
  */
 class AccountState {
@@ -142,16 +96,13 @@ class AccountState {
     this.legacyKeyInfos = []
     this.keyStates = {}
 
-    // Wallet state:
-    this.currencyWallets = {}
-    this.currencyWalletsLoading = {}
-
     // Add the login to redux:
     const { dispatch } = ai.props
     dispatch({
       type: 'LOGIN',
       payload: {
         appId,
+        callbacks,
         username: loginTree.username,
         loginKey: this.login.loginKey
       }
@@ -219,7 +170,6 @@ class AccountState {
         type: 'ACCOUNT_KEYS_LOADED',
         payload: { activeLoginId, walletInfos: this.allKeys }
       })
-      this.updateCurrencyWallets()
 
       return this
     })
@@ -234,7 +184,6 @@ class AccountState {
       newStates
     ).then(keyStates => {
       this.keyStates = keyStates
-      this.updateCurrencyWallets()
       if (this.callbacks.onKeyListChanged) {
         this.callbacks.onKeyListChanged()
       }
@@ -254,7 +203,6 @@ class AccountState {
         type: 'ACCOUNT_KEYS_LOADED',
         payload: { activeLoginId, walletInfos: this.allKeys }
       })
-      this.updateCurrencyWallets()
 
       return this
     })
@@ -264,24 +212,18 @@ class AccountState {
     const { ai, login } = this
 
     // Make the keys:
-    const plugin = getCurrencyPlugin(ai, type)
+    const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
     const keys = opts.keys || plugin.createPrivateKey(type)
     const keyInfo = makeStorageKeyInfo(ai, type, keys)
     const kit = makeKeysKit(ai, login, keyInfo)
 
     // Add the keys to the login:
     await this.applyKit(kit)
-    const wallet = await timeout(
-      ai.waitFor(props => this.currencyWallets[keyInfo.id]),
-      10000,
-      new Error('Error creating wallet')
-    )
+    const wallet = await waitForCurrencyWallet(ai, keyInfo.id)
 
     if (opts.name) await wallet.renameWallet(opts.name)
     if (opts.fiatCurrencyCode) {
-      await ai.props.dispatch(
-        ACTIONS.setCurrencyWalletFiat(keyInfo.id, opts.fiatCurrencyCode)
-      )
+      await wallet.setFiatCurrencyCode(opts.fiatCurrencyCode)
     }
 
     return wallet
@@ -301,47 +243,6 @@ class AccountState {
       ...keyStates[info.id],
       ...info
     }))
-  }
-
-  updateCurrencyWallets () {
-    const { activeLoginId, ai } = this
-
-    // List all the wallets we can mangage:
-    const allWalletIds =
-      ai.props.state.login.logins[activeLoginId].currencyWalletIds
-    const allWalletInfos = this.allKeys
-
-    // If there is a wallet we could be managing, but aren't, load it:
-    for (const id of allWalletIds) {
-      if (
-        this.currencyWallets[id] == null &&
-        !this.currencyWalletsLoading[id]
-      ) {
-        const walletInfo = allWalletInfos.find(info => info.id === id)
-        const callbacks = makeCurrencyWalletCallbacks(id, this.callbacks)
-
-        this.currencyWalletsLoading[id] = true
-        makeCurrencyWalletApi(ai, walletInfo, callbacks)
-          .then(wallet => {
-            this.currencyWalletsLoading[id] = false
-            this.currencyWallets[id] = wallet
-            if (this.callbacks.onKeyListChanged) {
-              this.callbacks.onKeyListChanged()
-            }
-
-            // Horrible hack used to kick `createCurrencyWallet` awake:
-            ai.props.dispatch({
-              type: 'ACCOUNT_KEYS_LOADED',
-              payload: { activeLoginId, walletInfos: this.allKeys }
-            })
-
-            return null
-          })
-          .catch(e => ai.props.onError(e))
-      }
-    }
-
-    // TODO: Unload deleted wallets
   }
 }
 

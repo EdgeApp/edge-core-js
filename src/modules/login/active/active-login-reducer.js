@@ -1,4 +1,5 @@
 // @flow
+import type { AbcAccountCallbacks } from 'airbitz-core-types'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 import type { RootAction } from '../../actions.js'
 import { hasCurrencyPlugin } from '../../currency/currency-selectors.js'
@@ -11,6 +12,7 @@ export interface ActiveLoginState {
   activeWalletIds: Array<string>;
   archivedWalletIds: Array<string>;
   appId: string;
+  callbacks: AbcAccountCallbacks;
   loginKey: Uint8Array;
   username: string;
 }
@@ -63,6 +65,10 @@ const activeLogin = buildReducer({
 
   appId (state: string, action: RootAction) {
     return action.type === 'LOGIN' ? action.payload.appId : state
+  },
+
+  callbacks (state: string, action: RootAction) {
+    return action.type === 'LOGIN' ? action.payload.callbacks : state
   },
 
   loginKey (state: Uint8Array, action: RootAction) {

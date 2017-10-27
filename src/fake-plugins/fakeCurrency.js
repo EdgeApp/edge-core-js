@@ -16,6 +16,9 @@ const reducer = combineReducers({
   blockHeight: (state = 0, action) =>
     action.type === 'SET_BLOCK_HEIGHT' ? action.payload : state,
 
+  progress: (state = 0, action) =>
+    action.type === 'SET_PROGRESS' ? action.payload : state,
+
   txs: (state = [], action) =>
     action.type === 'SET_TXS' ? action.payload : state
 })
@@ -40,7 +43,9 @@ class FakeCurrencyEngine {
     } = callbacks
 
     // Address callback:
-    this.onAddressesChecked = onAddressesChecked
+    this.store.dispatch(
+      createReaction(state => state.progress, onAddressesChecked)
+    )
 
     // Balance callback:
     this.store.dispatch(
@@ -50,13 +55,13 @@ class FakeCurrencyEngine {
       )
     )
 
-    // Token balance callback: (TODO: fix the bug in the currencyWallet)
-    // this.store.dispatch(
-    //   createReaction(
-    //     state => state.tokenBalance,
-    //     balance => onBalanceChanged('TOKEN', balance)
-    //   )
-    // )
+    // Token balance callback:
+    this.store.dispatch(
+      createReaction(
+        state => state.tokenBalance,
+        balance => onBalanceChanged('TOKEN', balance)
+      )
+    )
 
     // Block height callback:
     this.store.dispatch(
@@ -89,10 +94,7 @@ class FakeCurrencyEngine {
     return Promise.resolve()
   }
 
-  stopEngine () {
-    for (const disposer of this.disposers) {
-      disposer()
-    }
+  killEngine () {
     return Promise.resolve()
   }
 

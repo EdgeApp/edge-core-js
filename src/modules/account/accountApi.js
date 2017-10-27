@@ -158,7 +158,7 @@ function makeAccountApi (
     createWallet (type: string, keys: any): Promise<string> {
       if (keys == null) {
         // Use the currency plugin to create the keys:
-        const plugin = getCurrencyPlugin(ai, type)
+        const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
         keys = plugin.createPrivateKey(type)
       }
 
@@ -187,7 +187,17 @@ function makeAccountApi (
 
     '@currencyWallets': { sync: true },
     get currencyWallets (): { [walletId: string]: AbcCurrencyWallet } {
-      return state.currencyWallets
+      const allIds = ai.props.state.currency.currencyWalletIds
+      const selfState = ai.props.state.login.logins[state.activeLoginId]
+      const myIds = allIds.filter(id => id in selfState.allWalletInfos)
+
+      const out = {}
+      for (const walletId of myIds) {
+        const api = ai.props.output.currency.wallets[walletId].api
+        if (api) out[walletId] = api
+      }
+
+      return out
     },
 
     // Name aliases:

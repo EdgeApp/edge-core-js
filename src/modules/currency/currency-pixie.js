@@ -1,11 +1,14 @@
 // @flow
 import type { AbcCurrencyPlugin } from 'airbitz-core-types'
-import { combinePixies, stopUpdates } from 'redux-pixies'
+import { combinePixies, mapPixie, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 import type { RootProps } from '../root.js'
+import type { CurrencyWalletOutput, CurrencyWalletProps } from './wallet/currency-wallet-pixie.js'
+import walletPixie from './wallet/currency-wallet-pixie.js'
 
 export interface CurrencyOutput {
   plugins: Array<AbcCurrencyPlugin>;
+  wallets: { [walletId: string]: CurrencyWalletOutput };
 }
 
 export default combinePixies({
@@ -29,5 +32,16 @@ export default combinePixies({
         return stopUpdates
       })
     }
-  }
+  },
+
+  wallets: mapPixie(
+    walletPixie,
+    (props: RootProps) => props.state.currency.currencyWalletIds,
+    (props: RootProps, id: string): CurrencyWalletProps => ({
+      ...props,
+      id,
+      selfState: props.state.currency.wallets[id],
+      selfOutput: props.output.currency.wallets[id]
+    })
+  )
 })
