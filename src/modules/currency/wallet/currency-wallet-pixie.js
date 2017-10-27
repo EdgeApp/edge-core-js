@@ -62,7 +62,7 @@ export default combinePixies({
 
     try {
       // Start the data sync:
-      await input.props.dispatch(addStorageWallet(walletInfo))
+      await input.props.dispatch(addStorageWallet(walletInfo, input.props.onError))
       const state = input.props.state
 
       const engine = await plugin.makeEngine(walletInfo, {
