@@ -341,6 +341,7 @@ export function combineTxWithFile (
     ) {
       out.metadata.amountFiat = merged.metadata.exchangeAmount[walletFiat]
     } else {
+      if (!out.metadata) out.metadata = {}
       out.metadata.amountFiat = 0
       console.info('Missing amountFiat in combineTxWithFile')
     }
