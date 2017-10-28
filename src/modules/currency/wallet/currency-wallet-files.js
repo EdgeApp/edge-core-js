@@ -10,9 +10,28 @@ import {
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
 
-function getTxFile (state, keyId, timestamp, txid) {
+type TransactionFile = {
+  txid: string,
+  internal: boolean,
+  creationDate: number,
+  currencies: {
+    [currencyCode: string]: {
+      metadata: {
+        bizId?: number,
+        category?: string,
+        exchangeAmount: { [fiatCurrencyCode: string]: number },
+        name?: string,
+        notes?: string
+      },
+      nativeAmount?: string,
+      providerFeeSent?: string
+    }
+  }
+}
+
+function getTxFile (state, keyId: string, timestamp: number, txid: string) {
   const txidHash = hashStorageWalletFilename(state, keyId, txid)
-  const filename = `${timestamp}-${txidHash}.json`
+  const filename = `${timestamp.toFixed(0)}-${txidHash}.json`
 
   return getStorageWalletFolder(state, keyId)
     .folder('transaction')
@@ -148,22 +167,23 @@ export function setCurrencyWalletTxMetadata (
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
-  const txFile = getTxFile(state, walletId, 0, txid)
+  // Load the old file:
   const oldFile = input.props.selfState.files[txid]
-  const newFile = {
+  const creationDate =
+    oldFile == null ? Date.now() / 1000 : oldFile.creationDate
+
+  // Set up the new file:
+  const txFile = getTxFile(state, walletId, creationDate, txid)
+  const newFile: TransactionFile = {
     txid,
     internal: false,
+    creationDate,
     currencies: {}
   }
   newFile.currencies[currencyCode] = {
     metadata
   }
   const file = mergeDeeply(oldFile, newFile)
-
-  // Ensure we have a date:
-  if (oldFile == null) {
-    file.creationDate = Date.now() / 1000
-  }
 
   // Save the new file:
   dispatch({
@@ -178,12 +198,12 @@ export function setupNewTxMetadata (input: CurrencyWalletInput, tx: any) {
   const { dispatch, state } = input.props
 
   const txid = tx.txid
-  const txFile = getTxFile(state, walletId, 0, txid)
+  const txFile = getTxFile(state, walletId, Date.now() / 1000, txid)
   const currencyInfo = input.props.selfState.currencyInfo
   const fiatCurrency: string = input.props.selfState.fiat || 'iso:USD'
 
   // Basic file template:
-  const file = {
+  const file: TransactionFile = {
     txid,
     internal: true,
     creationDate: Date.now() / 1000,
