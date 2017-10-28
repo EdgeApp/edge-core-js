@@ -17,11 +17,11 @@ export default buildReducer({
     // Optimize the common case:
     if (next.login.activeLoginIds.length === 1) {
       const id = next.login.activeLoginIds[0]
-      return next.login.logins[id].currencyWalletIds
+      return next.login.logins[id].activeWalletIds
     }
 
     const allIds = next.login.activeLoginIds.map(
-      activeLoginId => next.login.logins[activeLoginId].currencyWalletIds
+      activeLoginId => next.login.logins[activeLoginId].activeWalletIds
     )
     return [].concat(...allIds)
   },
