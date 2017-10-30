@@ -40,7 +40,7 @@
     "format": "prettier-eslint --write '*.js' 'src/**/*.js'",
     "lint": "eslint '*.js' 'src/**/*.js' && npm run flow",
     "lint:fix": "eslint --fix '*.js' 'src/**/*.js'",
-    "precommit": "npm run test",
+    "precommit": "npm run build && npm test",
     "prepare": "npm run build",
     "pretest": "npm run build:test",
     "updot": "updot",
@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "aes-js": "^3.1.0",
-    "airbitz-core-types": "git://github.com/Airbitz/airbitz-core-types.git",
+    "airbitz-core-types": "git+https://github.com/Airbitz/airbitz-core-types.git",
     "base-x": "^1.0.4",
     "biggystring": "^1.0.7",
     "chai": "^4.1.2",
