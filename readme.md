@@ -1,6 +1,6 @@
 # Airbitz Javascript core
 
-[![Build Status](https://travis-ci.org/Airbitz/airbitz-core-js.svg?branch=develop)](https://travis-ci.org/Airbitz/airbitz-core-js)
+[![Build Status](https://travis-ci.org/Airbitz/airbitz-core-js.svg?branch=master)](https://travis-ci.org/Airbitz/airbitz-core-js)
 
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
