@@ -1,5 +1,9 @@
 # Airbitz Javascript core
 
+[![Build Status](https://travis-ci.org/Airbitz/airbitz-core-js.svg?branch=develop)](https://travis-ci.org/Airbitz/airbitz-core-js)
+
+[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
+
 This library implements the Airbitz Edge Security login infrastructure.
 It runs inside a client application, and provides zero-knowledge access to
 cryptographic keys and other secrets via a familiar password-based login
