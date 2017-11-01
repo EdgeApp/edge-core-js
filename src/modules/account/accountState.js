@@ -109,11 +109,14 @@ class AccountState {
     })
     this.activeLoginId = ai.props.state.login.lastActiveLoginId
 
-    const { activeLoginId } = this
-    dispatch({
-      type: 'ACCOUNT_KEYS_LOADED',
-      payload: { activeLoginId, walletInfos: this.allKeys }
-    })
+    // While it would make logical sense to do this now,
+    // starting the wallet engines is too expensive,
+    // so we allow the data sync to trigger the work later:
+    // const { activeLoginId } = this
+    // dispatch({
+    //   type: 'ACCOUNT_KEYS_LOADED',
+    //   payload: { activeLoginId, walletInfos: this.allKeys }
+    // })
   }
 
   async logout () {
