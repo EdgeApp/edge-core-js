@@ -187,6 +187,14 @@ class AccountState {
       newStates
     ).then(keyStates => {
       this.keyStates = keyStates
+
+      // Update the key list in case something changed:
+      const { activeLoginId, ai } = this
+      ai.props.dispatch({
+        type: 'ACCOUNT_KEYS_LOADED',
+        payload: { activeLoginId, walletInfos: this.allKeys }
+      })
+
       if (this.callbacks.onKeyListChanged) {
         this.callbacks.onKeyListChanged()
       }
