@@ -2,8 +2,9 @@
 import type { AbcAccount } from 'airbitz-core-types'
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
-import { fakeUser, makeFakeContexts } from '../../indexABC.js'
+
 import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
+import { fakeUser, makeFakeContexts } from '../../indexABC.js'
 import { base64 } from '../../util/encoding.js'
 
 const contextOptions = {

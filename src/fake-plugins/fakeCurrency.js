@@ -1,5 +1,6 @@
 import { add, lt } from 'biggystring'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
+
 import { InsufficientFundsError } from '../error.js'
 import { createReaction, reactionMiddleware } from '../util/redux/reaction.js'
 import { fakeCurrencyInfo } from './fakeCurrencyInfo.js'

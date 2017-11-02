@@ -1,5 +1,6 @@
 // @flow
 import type { AbcWalletInfo } from 'airbitz-core-types'
+
 import { UsernameError } from '../../error.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'

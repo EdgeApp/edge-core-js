@@ -1,6 +1,7 @@
 // @flow
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
+
 import { base16 } from '../../util/encoding.js'
 import { calcSnrpForTarget } from './selectors.js'
 

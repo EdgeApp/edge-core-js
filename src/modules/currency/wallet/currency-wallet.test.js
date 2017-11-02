@@ -3,6 +3,7 @@ import { add } from 'biggystring'
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 import { createStore } from 'redux'
+
 import {
   makeFakeCurrency,
   makeFakeCurrencyStore
@@ -76,7 +77,12 @@ describe('currency wallets', function () {
     }
     return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
       let txState = []
-      log.assert(['balance TEST 0', 'balance TOKEN 0', 'blockHeight 0', 'progress 0'])
+      log.assert([
+        'balance TEST 0',
+        'balance TOKEN 0',
+        'blockHeight 0',
+        'progress 0'
+      ])
 
       store.dispatch({ type: 'SET_PROGRESS', payload: 0.5 })
       log.assert(['progress 0.5'])

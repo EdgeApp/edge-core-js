@@ -5,6 +5,7 @@ import type {
   AbcTransaction
 } from 'airbitz-core-types'
 import { isPixieShutdownError } from 'redux-pixies'
+
 import { compare } from '../../../util/compare.js'
 import { getStorageWalletLastSync } from '../../selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'

@@ -1,6 +1,7 @@
 // @flow
 import { applyMiddleware, compose, createStore } from 'redux'
 import thunk from 'redux-thunk'
+
 import { reactionMiddleware } from '../util/redux/reaction.js'
 import reducer from './rootReducer.js'
 

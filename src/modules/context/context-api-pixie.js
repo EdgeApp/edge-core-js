@@ -1,6 +1,7 @@
 // @flow
 import type { AbcContext, AbcEdgeLoginOptions } from 'airbitz-core-types'
 import { stopUpdates } from 'redux-pixies'
+
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/accountApi.js'

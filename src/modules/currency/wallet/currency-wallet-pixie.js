@@ -6,6 +6,7 @@ import type {
 } from 'airbitz-core-types'
 import { combinePixies, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
+
 import { addStorageWallet } from '../../actions.js'
 import type { RootProps } from '../../root.js'
 import {
@@ -62,7 +63,9 @@ export default combinePixies({
 
     try {
       // Start the data sync:
-      await input.props.dispatch(addStorageWallet(walletInfo, input.props.onError))
+      await input.props.dispatch(
+        addStorageWallet(walletInfo, input.props.onError)
+      )
       const state = input.props.state
 
       const engine = await plugin.makeEngine(walletInfo, {

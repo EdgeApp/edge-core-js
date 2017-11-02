@@ -37,7 +37,7 @@
     "build:test": "webpack && rollup -c rollup.config.test.js",
     "build:types": "flow-copy-source -i '**/*.test.js' src lib",
     "flow": "flow status",
-    "format": "prettier-eslint --write '*.js' 'src/**/*.js'",
+    "format": "import-sort -o src && prettier-eslint --write '*.js' 'src/**/*.js'",
     "lint": "eslint '*.js' 'src/**/*.js' && npm run flow",
     "lint:fix": "eslint --fix '*.js' 'src/**/*.js'",
     "precommit": "npm run build && npm test",
@@ -83,6 +83,9 @@
     "flow-bin": "^0.56.0",
     "flow-copy-source": "^1.2.1",
     "husky": "^0.14.3",
+    "import-sort-cli": "^3.3.0",
+    "import-sort-parser-babylon": "^3.2.0",
+    "import-sort-style-module": "^3.0.0",
     "prettier-eslint-cli": "^4.4.0",
     "rollup": "^0.46.2",
     "rollup-plugin-babel": "^3.0.2",
@@ -92,5 +95,11 @@
     "source-map-support": "^0.4.15",
     "updot": "^1.1.4",
     "webpack": "^3.5.3"
+  },
+  "importSort": {
+    ".js, .es": {
+      "parser": "babylon",
+      "style": "module"
+    }
   }
 }

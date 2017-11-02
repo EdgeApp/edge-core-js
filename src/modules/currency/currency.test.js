@@ -2,6 +2,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 import { attachPixie, filterPixie } from 'redux-pixies'
+
 import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
 import { fakeCurrencyInfo } from '../../fake-plugins/fakeCurrencyInfo.js'
 import { makeFakeCoreRoots, makeRootProps } from '../root.js'

@@ -1,6 +1,7 @@
 // @flow
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
+
 import { fakeUser, makeFakeContexts } from '../../indexABC.js'
 import { base58 } from '../../util/encoding.js'
 

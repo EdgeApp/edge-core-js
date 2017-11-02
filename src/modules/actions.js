@@ -4,6 +4,7 @@ import type {
   AbcCurrencyInfo,
   AbcWalletInfo
 } from 'airbitz-core-types'
+
 import type { FixedIo } from '../io/fixIo.js'
 
 export { addStorageWallet, syncStorageWallet } from './storage/actions.js'

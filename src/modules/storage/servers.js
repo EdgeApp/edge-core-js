@@ -28,7 +28,9 @@ function syncRequestInner (io, method, path, body, serverIndex) {
     io.fetch(uri, opts).then(
       response =>
         response.json().catch(jsonError => {
-          throw new Error(`Non-JSON reply, HTTP status ${response.status}, ${path}`)
+          throw new Error(
+            `Non-JSON reply, HTTP status ${response.status}, ${path}`
+          )
         }),
       networkError => {
         throw new NetworkError('Could not reach the sync server')

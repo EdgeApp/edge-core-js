@@ -1,6 +1,7 @@
 // @flow
 import type { AbcCurrencyInfo, AbcWalletInfo } from 'airbitz-core-types'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
+
 import { recycle } from '../../../util/compare.js'
 import type { RootAction } from '../../actions.js'
 import type { RootState } from '../../rootReducer.js'

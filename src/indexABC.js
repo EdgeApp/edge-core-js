@@ -1,5 +1,8 @@
 // @flow
 import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
+
+import * as error from './error.js'
+import * as internal from './internal.js'
 import { fakeUser } from './io/fake/fakeUser.js'
 import {
   makeCoreRoot,
@@ -8,8 +11,6 @@ import {
 } from './modules/root.js'
 
 // Sub-module exports:
-import * as error from './error.js'
-import * as internal from './internal.js'
 export { error }
 export { internal }
 

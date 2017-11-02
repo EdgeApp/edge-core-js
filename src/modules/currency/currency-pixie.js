@@ -2,8 +2,12 @@
 import type { AbcCurrencyPlugin } from 'airbitz-core-types'
 import { combinePixies, mapPixie, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
+
 import type { RootProps } from '../root.js'
-import type { CurrencyWalletOutput, CurrencyWalletProps } from './wallet/currency-wallet-pixie.js'
+import type {
+  CurrencyWalletOutput,
+  CurrencyWalletProps
+} from './wallet/currency-wallet-pixie.js'
 import walletPixie from './wallet/currency-wallet-pixie.js'
 
 export interface CurrencyOutput {

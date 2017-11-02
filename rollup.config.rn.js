@@ -4,9 +4,7 @@ import packageJson from './package.json'
 
 const babelOpts = {
   presets: ['flow'],
-  plugins: [
-    'transform-object-rest-spread'
-  ]
+  plugins: ['transform-object-rest-spread']
 }
 
 export default {

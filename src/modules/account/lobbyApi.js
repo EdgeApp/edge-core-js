@@ -1,5 +1,6 @@
 // @flow
 import type { AbcLobby, AbcLoginRequest } from 'airbitz-core-types'
+
 import { wrapObject } from '../../util/api.js'
 import { base64 } from '../../util/encoding.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'

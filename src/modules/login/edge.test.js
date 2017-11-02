@@ -2,6 +2,7 @@
 import type { AbcLobby } from 'airbitz-core-types'
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
+
 import { fakeUser, makeFakeContexts } from '../../indexABC.js'
 
 async function simulateRemoteApproval (remote, lobbyId: string) {

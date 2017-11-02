@@ -1,6 +1,7 @@
 // @flow
 import type { AbcCurrencyPlugin } from 'airbitz-core-types'
 import { buildReducer } from 'redux-keto'
+
 import type { FixedIo } from '../io/fixIo.js'
 import type { RootAction } from './actions.js'
 import type { CurrencyState } from './currency/currency-reducer.js'

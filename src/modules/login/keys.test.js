@@ -1,6 +1,7 @@
 // @flow
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
+
 import { mergeKeyInfos } from './keys.js'
 
 const ID_1 = 'PPptx6SBfwGXM+FZURMvYnsOfHpIKZBbqXTCbYmFd44='
