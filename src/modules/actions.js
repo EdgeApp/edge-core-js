@@ -111,8 +111,7 @@ export interface InitAction {
     apiKey: string | void,
     appId: string | void,
     authServer: string | void,
-    io: EdgeIo,
-    onError: (e: Error) => void
+    io: EdgeIo
   };
 }
 

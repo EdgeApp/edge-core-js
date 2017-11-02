@@ -22,15 +22,10 @@ function io (state = {}, action: RootAction) {
   return action.type === 'INIT' ? action.payload.io : state
 }
 
-function onError (state = () => {}, action: RootAction) {
-  return action.type === 'INIT' ? action.payload.onError : state
-}
-
 export default buildReducer({
   currency,
   exchangeCache,
   io,
   login,
-  onError,
   storageWallets
 })
