@@ -173,7 +173,13 @@ describe('exchange pixie', function () {
   })
 
   it('fetches exchange rates', async function () {
+    let updateCalled = false
     const coreRoot = makeCoreRoot({
+      callbacks: {
+        onExchangeUpdate () {
+          updateCalled = true
+        }
+      },
       io: makeFakeIos(1)[0],
       plugins: [brokenExchangePlugin, fakeExchangePlugin]
     })
@@ -183,6 +189,7 @@ describe('exchange pixie', function () {
       coreRoot.redux,
       state => state.exchangeCache.rates.pairs.length > 0
     )
+    expect(updateCalled).to.equal(true)
 
     const state = coreRoot.redux.getState()
     const rate = getExchangeRate(state, 'BTC', 'iso:EUR', pair => 1)

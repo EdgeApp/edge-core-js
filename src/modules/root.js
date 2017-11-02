@@ -17,6 +17,8 @@ import type { RootState } from './rootReducer.js'
 
 let allDestroyPixies: Array<() => void> = []
 
+function nop () {}
+
 /**
  * The root of the entire core state machine.
  * Contains io resources, context options, Redux store,
@@ -29,6 +31,7 @@ export interface CoreRoot {
   authServer: string;
   io: FixedIo;
   onError(e: Error): void;
+  onExchangeUpdate(): void;
   plugins: Array<AbcCorePlugin>;
   shapeshiftKey: string | void;
 
@@ -59,7 +62,7 @@ export function makeCoreRoot (opts: AbcContextOptions) {
     plugins = [],
     shapeshiftKey = void 0
   } = opts
-  const { onError = onErrorDefault } = callbacks
+  const { onError = onErrorDefault, onExchangeUpdate = nop } = callbacks
 
   const appId =
     opts.appId != null
@@ -76,6 +79,7 @@ export function makeCoreRoot (opts: AbcContextOptions) {
     authServer,
     io: fixedIo,
     onError,
+    onExchangeUpdate,
     plugins,
     shapeshiftKey,
     loginStore: new LoginStore(fixedIo),
@@ -134,6 +138,7 @@ export interface RootProps {
   +dispatch: Dispatch<RootAction>;
   io: FixedIo;
   onError(e: Error): void;
+  onExchangeUpdate(): void;
   output: RootOutput;
   plugins: Array<AbcCorePlugin>;
   shapeshiftKey: string | void;
@@ -151,6 +156,7 @@ export function makeRootProps (
     coreRoot,
     io: coreRoot.io,
     onError: coreRoot.onError,
+    onExchangeUpdate: coreRoot.onExchangeUpdate,
     shapeshiftKey: coreRoot.shapeshiftKey,
     plugins: coreRoot.plugins
   })

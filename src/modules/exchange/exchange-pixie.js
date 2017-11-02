@@ -68,6 +68,12 @@ export default combinePixies({
           }
         }
 
+        try {
+          input.props.onExchangeUpdate()
+        } catch (e) {
+          input.props.onError(e)
+        }
+
         input.props.dispatch(addPairs(pairs))
         timeout = setTimeout(doFetch, 30 * 1000)
         return void 0
