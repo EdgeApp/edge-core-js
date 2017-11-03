@@ -13,7 +13,7 @@ import {
   makeKeysKit,
   makeStorageKeyInfo
 } from '../login/keys.js'
-import { applyKit, searchTree } from '../login/login.js'
+import { applyKit, searchTree, syncLogin } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
@@ -211,6 +211,23 @@ class AccountState {
 
       const { dispatch } = ai.props
       dispatch({
+        type: 'ACCOUNT_KEYS_LOADED',
+        payload: { activeLoginId, walletInfos: this.allKeys }
+      })
+
+      return this
+    })
+  }
+
+  syncLogin () {
+    const { ai, loginTree, login } = this
+    return syncLogin(ai, loginTree, login).then(loginTree => {
+      this.loginTree = loginTree
+      this.login = findAppLogin(loginTree, this.appId)
+
+      // Update the key list in case something changed:
+      const { activeLoginId, ai } = this
+      ai.props.dispatch({
         type: 'ACCOUNT_KEYS_LOADED',
         payload: { activeLoginId, walletInfos: this.allKeys }
       })
