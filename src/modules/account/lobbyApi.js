@@ -66,7 +66,17 @@ async function approveLoginRequest (
     loginKey: base64.stringify(requestedLogin.loginKey),
     loginStash
   }
-  return sendLobbyReply(ai, lobbyId, lobbyJson, replyData)
+  return sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
+    setTimeout(() => {
+      accountState.syncLogin().then(() => {
+        setTimeout(() => {
+          accountState.syncLogin().catch(e => ai.props.onError(e))
+        }, 20000)
+        return void 0
+      }).catch(e => ai.props.onError(e))
+    }, 10000)
+    return void 0
+  })
 }
 
 /**
