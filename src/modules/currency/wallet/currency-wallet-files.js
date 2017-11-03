@@ -9,6 +9,8 @@ import {
   hashStorageWalletFilename
 } from '../../selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
+import { combineTxWithFile } from './currency-wallet-api.js'
+import { forEachListener } from './currency-wallet-callbacks.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
 
 type TransactionFile = {
@@ -264,6 +266,12 @@ export function setCurrencyWalletTxMetadata (
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
+  // Find the tx:
+  const tx = input.props.selfState.txs[txid]
+  if (!tx) {
+    throw new Error(`Setting metatdata for missing tx ${txid}`)
+  }
+
   // Load the old file:
   const oldFile = input.props.selfState.files[txid]
   const creationDate =
@@ -287,7 +295,16 @@ export function setCurrencyWalletTxMetadata (
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { json: file, txid, walletId }
   })
-  return txFile.setText(JSON.stringify(file)).then(() => void 0)
+  return txFile.setText(JSON.stringify(file)).then(() => {
+    const callbackTx = combineTxWithFile(input, tx, file, currencyCode)
+    forEachListener(input, ({ onTransactionsChanged }) => {
+      if (onTransactionsChanged) {
+        onTransactionsChanged(walletId, [callbackTx])
+      }
+    })
+
+    return void 0
+  })
 }
 
 export function setupNewTxMetadata (input: CurrencyWalletInput, tx: any) {
