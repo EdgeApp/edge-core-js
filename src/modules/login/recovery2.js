@@ -9,7 +9,8 @@ import { applyLoginReply, makeLoginTree } from './login.js'
 import { fixUsername } from './loginStore.js'
 
 function recovery2Id (recovery2Key: Uint8Array, username: string) {
-  return hmacSha256(fixUsername(username), recovery2Key)
+  const data = utf8.parse(fixUsername(username))
+  return hmacSha256(data, recovery2Key)
 }
 
 function recovery2Auth (recovery2Key, answers) {

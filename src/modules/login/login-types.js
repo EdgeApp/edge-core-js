@@ -1,7 +1,6 @@
 // @flow
 import type { AbcWalletInfo } from 'airbitz-core-types'
 
-export type JsonBox = Object
 export type JsonSnrp = Object
 export type LoginReply = Object
 export type LoginStash = Object
