@@ -15,7 +15,3 @@ export {
 export function getIo (state: RootState) {
   return state.io
 }
-
-export function getOnError (state: RootState) {
-  return state.onError
-}
