@@ -93,7 +93,7 @@ export function makeCoreRoot (opts: EdgeContextOptions) {
   }
   coreRoot.redux.dispatch({
     type: 'INIT',
-    payload: { io, apiKey, appId, authServer }
+    payload: { apiKey, appId, authServer }
   })
 
   return coreRoot

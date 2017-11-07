@@ -66,7 +66,7 @@ export default combinePixies({
     try {
       // Start the data sync:
       await input.props.dispatch(
-        addStorageWallet(walletInfo, input.props.onError)
+        addStorageWallet(walletInfo, input.props.onError, input.props.io)
       )
       const state = input.props.state
 
@@ -75,7 +75,8 @@ export default combinePixies({
         walletLocalFolder: getStorageWalletLocalFolder(state, walletInfo.id),
         walletLocalEncryptedFolder: getStorageWalletLocalEncryptedFolder(
           state,
-          walletInfo.id
+          walletInfo.id,
+          input.props.io
         ),
         callbacks: makeCurrencyWalletCallbacks(input)
       })

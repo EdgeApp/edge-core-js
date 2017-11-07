@@ -15,7 +15,9 @@ export function makeStorageWallet (keyInfo: StorageWalletInfo, opts: any) {
   const ai: ApiInput = opts.ai
   const { dispatch } = ai.props
 
-  const promise: any = dispatch(addStorageWallet(keyInfo, ai.props.onError))
+  const promise: any = dispatch(
+    addStorageWallet(keyInfo, ai.props.onError, ai.props.io)
+  )
   return promise.then(() =>
     wrapObject('StorageWallet', makeStorageWalletApi(ai, keyInfo, callbacks))
   )
@@ -55,8 +57,7 @@ export function makeStorageWalletApi (
     },
 
     sync () {
-      const thunkPromise: any = dispatch(syncStorageWallet(id))
-      return thunkPromise.then(changes => changes.length !== 0)
+      return dispatch(syncStorageWallet(id, ai.props.io))
     }
   }
 }

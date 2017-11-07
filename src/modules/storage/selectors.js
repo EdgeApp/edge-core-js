@@ -14,9 +14,9 @@ export function getStorageWalletLocalFolder (state, keyId) {
   return state.storageWallets[keyId].localFolder
 }
 
-export function getStorageWalletLocalEncryptedFolder (state, keyId) {
+export function getStorageWalletLocalEncryptedFolder (state, keyId, io) {
   return new RepoFolder(
-    state.io,
+    io,
     state.storageWallets[keyId].paths.dataKey,
     state.storageWallets[keyId].localFolder
   )

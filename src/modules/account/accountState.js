@@ -483,7 +483,9 @@ export async function makeAccountState (ai, appId, loginTree, callbacks) {
       throw new Error(`Cannot find a "${type}" repo`)
     }
 
-    return dispatch(addStorageWallet(keyInfo, ai.props.onError)).then(() => {
+    return dispatch(
+      addStorageWallet(keyInfo, ai.props.onError, ai.props.io)
+    ).then(() => {
       const account = new AccountState(ai, appId, loginTree, keyInfo, callbacks)
       const disposer = dispatch(
         createReaction(
