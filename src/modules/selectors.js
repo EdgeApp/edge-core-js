@@ -1,5 +1,5 @@
 // @flow
-import type { RootState } from './rootReducer.js'
+import type { RootState } from './root-reducer.js'
 
 export { getExchangeRate } from './exchange/selectors.js'
 

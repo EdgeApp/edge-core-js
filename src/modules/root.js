@@ -15,9 +15,9 @@ import { fixIo } from '../io/fixIo.js'
 import type { RootAction } from './actions.js'
 import { LoginStore } from './login/loginStore.js'
 import { makeStore } from './makeStore.js'
-import { rootPixie } from './rootPixie.js'
-import type { RootOutput } from './rootPixie.js'
-import type { RootState } from './rootReducer.js'
+import { rootPixie } from './root-pixie.js'
+import type { RootOutput } from './root-pixie.js'
+import type { RootState } from './root-reducer.js'
 
 let allDestroyPixies: Array<() => void> = []
 
