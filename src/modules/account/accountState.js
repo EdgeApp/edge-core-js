@@ -135,6 +135,8 @@ class AccountState {
     this.login = null
     this.legacyKeyInfos = null
     this.keyStates = null
+
+    if (this.callbacks.onLoggedOut) this.callbacks.onLoggedOut()
   }
 
   changePassword (password, login = this.loginTree) {

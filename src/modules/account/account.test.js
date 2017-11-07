@@ -5,6 +5,7 @@ import { describe, it } from 'mocha'
 
 import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
 import { fakeUser, makeFakeContexts } from '../../indexABC.js'
+import { makeAssertLog } from '../../util/assertLog.js'
 import { base64 } from '../../util/encoding.js'
 
 const contextOptions = {
@@ -128,8 +129,20 @@ describe('account', function () {
   })
 
   it('logout', async function () {
+    const log = makeAssertLog()
+    const callbacks = {
+      onLoggedOut () {
+        log('logout')
+      }
+    }
+
     const [context] = makeFakeContexts(contextOptions)
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    return account.logout()
+    const account = await context.loginWithPIN(
+      fakeUser.username,
+      fakeUser.pin,
+      { callbacks }
+    )
+    await account.logout()
+    log.assert(['logout'])
   })
 })
