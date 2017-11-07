@@ -68,12 +68,15 @@ async function approveLoginRequest (
   }
   return sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
     setTimeout(() => {
-      accountState.syncLogin().then(() => {
-        setTimeout(() => {
-          accountState.syncLogin().catch(e => ai.props.onError(e))
-        }, 20000)
-        return void 0
-      }).catch(e => ai.props.onError(e))
+      accountState
+        .syncLogin()
+        .then(() => {
+          setTimeout(() => {
+            accountState.syncLogin().catch(e => ai.props.onError(e))
+          }, 20000)
+          return void 0
+        })
+        .catch(e => ai.props.onError(e))
     }, 10000)
     return void 0
   })

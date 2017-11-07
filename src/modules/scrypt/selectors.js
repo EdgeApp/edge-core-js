@@ -1,7 +1,9 @@
 import { base16 } from '../../util/encoding.js'
 
 export function calcSnrpForTarget (salt, benchMs, targetMs) {
-  console.log('calcSnrpForTarget:' + benchMs.toString() + ' ' + targetMs.toString())
+  console.log(
+    'calcSnrpForTarget:' + benchMs.toString() + ' ' + targetMs.toString()
+  )
   const snrp = {
     salt_hex: base16.stringify(salt),
     n: 16384,
@@ -33,8 +35,15 @@ export function calcSnrpForTarget (salt, benchMs, targetMs) {
   }
   addR = Math.floor(addR)
   snrp.r = STARTING_R + addR
-  timeUsed += (addR * perRValue)
-  console.log('   perRValue: ' + perRValue.toString() + ' addR:' + addR.toString() + ' timeUsed:' + timeUsed.toString())
+  timeUsed += addR * perRValue
+  console.log(
+    '   perRValue: ' +
+      perRValue.toString() +
+      ' addR:' +
+      addR.toString() +
+      ' timeUsed:' +
+      timeUsed.toString()
+  )
 
   //
   // Add additional N value in powers of 2. Each power of 2 doubles the amount of time it takes
@@ -50,11 +59,13 @@ export function calcSnrpForTarget (salt, benchMs, targetMs) {
     addN = 3
   }
   addN = Math.floor(addN)
-  nPow += (addN >= 0 ? addN : 0)
-  timeUsed += (addN * timeUsed)
+  nPow += addN >= 0 ? addN : 0
+  timeUsed += addN * timeUsed
 
   snrp.n = Math.pow(2, nPow)
-  console.log('   addN: ' + addN.toString() + ' timeUsed:' + timeUsed.toString())
+  console.log(
+    '   addN: ' + addN.toString() + ' timeUsed:' + timeUsed.toString()
+  )
 
   //
   // Add additional p value which increases parallelization factor
@@ -67,8 +78,10 @@ export function calcSnrpForTarget (salt, benchMs, targetMs) {
   }
   addP = Math.floor(addP)
   snrp.p = addP >= 1 ? addP : 1
-  timeUsed += (addP * timeUsed)
-  console.log('   addP: ' + addP.toString() + ' timeUsed:' + timeUsed.toString())
+  timeUsed += addP * timeUsed
+  console.log(
+    '   addP: ' + addP.toString() + ' timeUsed:' + timeUsed.toString()
+  )
 
   return snrp
 }
@@ -91,7 +104,8 @@ export function makeSnrp (state, targetMs = 2000) {
   // but memoization is "state" in the normal sense:
   if (scrypt.benchmark == null) {
     scrypt.benchmark = scrypt.timeScrypt('1reallyJunkiePasswordToCheck', {
-      salt_hex: 'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b',
+      salt_hex:
+        'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b',
       n: 16384,
       r: 8,
       p: 1

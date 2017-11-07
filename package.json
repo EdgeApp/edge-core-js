@@ -37,7 +37,7 @@
     "build:test": "webpack && rollup -c rollup.config.test.js",
     "build:types": "flow-copy-source -i '**/*.test.js' src lib",
     "flow": "flow status",
-    "format": "import-sort -o src && prettier-eslint --write '*.js' 'src/**/*.js'",
+    "format": "import-sort -o src; prettier-eslint --write '*.js' 'src/**/*.js'",
     "lint": "eslint '*.js' 'src/**/*.js' && npm run flow",
     "lint:fix": "eslint --fix '*.js' 'src/**/*.js'",
     "precommit": "npm run build && npm test",

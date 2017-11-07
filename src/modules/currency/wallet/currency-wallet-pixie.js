@@ -11,8 +11,8 @@ import { addStorageWallet } from '../../actions.js'
 import type { RootProps } from '../../root.js'
 import {
   getStorageWalletFolder,
-  getStorageWalletLocalFolder,
-  getStorageWalletLocalEncryptedFolder
+  getStorageWalletLocalEncryptedFolder,
+  getStorageWalletLocalFolder
 } from '../../storage/selectors.js'
 import { getCurrencyPlugin } from '../currency-selectors.js'
 import { makeCurrencyWalletApi } from './currency-wallet-api.js'
