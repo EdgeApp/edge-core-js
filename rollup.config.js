@@ -11,10 +11,14 @@ const babelOpts = {
 }
 
 export default {
-  entry: 'src/indexABC.js',
   external: [
     ...Object.keys(packageJson.dependencies),
     ...Object.keys(packageJson.devDependencies)
+  ],
+  input: 'src/indexABC.js',
+  output: [
+    { file: packageJson.main, format: 'cjs' },
+    { file: packageJson.module, format: 'es' }
   ],
   plugins: [
     commonjs({
@@ -22,16 +26,5 @@ export default {
     }),
     babel(babelOpts)
   ],
-  targets: [
-    {
-      dest: packageJson.main,
-      format: 'cjs',
-      sourceMap: true
-    },
-    {
-      dest: packageJson.module,
-      format: 'es',
-      sourceMap: true
-    }
-  ]
+  sourcemap: true
 }

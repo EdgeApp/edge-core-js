@@ -8,22 +8,17 @@ const babelOpts = {
 }
 
 export default {
-  entry: 'src/indexABC.js',
   external: [
     ...Object.keys(packageJson.dependencies),
     ...Object.keys(packageJson.devDependencies)
   ],
+  input: 'src/indexABC.js',
+  output: [{ file: packageJson['react-native'], format: 'es' }],
   plugins: [
     commonjs({
       include: 'build/crypto-bundle.js'
     }),
     babel(babelOpts)
   ],
-  targets: [
-    {
-      dest: packageJson['react-native'],
-      format: 'es',
-      sourceMap: true
-    }
-  ]
+  sourcemap: true
 }
