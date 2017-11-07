@@ -8,7 +8,7 @@ import type {
 } from '../../edge-core-index.js'
 import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
-import { scrypt, userIdSnrp } from '../scrypt/selectors.js'
+import { scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import type { LoginStash } from './login-types.js'
 
 export type LoginIdMap = { [loginId: string]: string }
@@ -134,10 +134,9 @@ export function hashUsername (
   ai: ApiInput,
   username: string
 ): Promise<Uint8Array> {
-  const { state } = ai.props
   const fixedName = fixUsername(username)
   if (userIdCache[fixedName] == null) {
-    userIdCache[fixedName] = scrypt(state, fixedName, userIdSnrp)
+    userIdCache[fixedName] = scrypt(ai, fixedName, userIdSnrp)
   }
   return userIdCache[fixedName]
 }
