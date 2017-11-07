@@ -7,7 +7,7 @@ import type {
 import { isPixieShutdownError } from 'redux-pixies'
 
 import { compare } from '../../../util/compare.js'
-import { getStorageWalletLastSync } from '../../selectors.js'
+import { getStorageWalletLastSync } from '../../storage/selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { loadAllFiles, setupNewTxMetadata } from './currency-wallet-files.js'
 import type {

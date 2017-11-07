@@ -6,8 +6,6 @@ import type {
   AbcWalletInfo
 } from 'airbitz-core-types'
 
-export { addStorageWallet, syncStorageWallet } from './storage/actions.js'
-
 /**
  * The account fires this when it loads its keys from disk.
  */

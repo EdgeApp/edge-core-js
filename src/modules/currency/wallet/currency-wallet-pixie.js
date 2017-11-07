@@ -7,8 +7,8 @@ import type {
 import { combinePixies, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 
-import { addStorageWallet } from '../../actions.js'
 import type { RootProps } from '../../root.js'
+import { addStorageWallet } from '../../storage/actions.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalEncryptedFolder,

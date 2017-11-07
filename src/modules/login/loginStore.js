@@ -4,7 +4,7 @@ import { mapFiles } from 'disklet'
 
 import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
-import { scrypt, userIdSnrp } from '../selectors.js'
+import { scrypt, userIdSnrp } from '../scrypt/selectors.js'
 import type { LoginStash } from './login-types.js'
 
 export type LoginIdMap = { [loginId: string]: string }

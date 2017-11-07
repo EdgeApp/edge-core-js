@@ -3,11 +3,11 @@ import { number as currencyFromNumber } from 'currency-codes'
 import { mapFiles } from 'disklet'
 
 import { mergeDeeply } from '../../../util/util.js'
+import { getExchangeRate } from '../../exchange/selectors.js'
 import {
-  getExchangeRate,
   getStorageWalletFolder,
   hashStorageWalletFilename
-} from '../../selectors.js'
+} from '../../storage/selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { forEachListener } from './currency-wallet-callbacks.js'
