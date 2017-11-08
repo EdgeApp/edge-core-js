@@ -70,7 +70,23 @@ export function makeCurrencyWalletCallbacks (
     },
 
     onTransactionsChanged (txs: Array<AbcTransaction>) {
+      // Sanity-check incoming transactions:
       if (!txs) return
+      for (const tx of txs) {
+        if (
+          typeof tx.txid !== 'string' ||
+          typeof tx.date !== 'number' ||
+          typeof tx.networkFee !== 'string' ||
+          typeof tx.blockHeight !== 'number' ||
+          typeof tx.nativeAmount !== 'string' ||
+          typeof tx.ourReceiveAddresses !== 'object'
+        ) {
+          input.props.onError(
+            new Error('Plugin sent bogus tx: ' + JSON.stringify(tx, null, 2))
+          )
+          return
+        }
+      }
 
       const existingTxs = input.props.selfState.txs
       input.props.dispatch({

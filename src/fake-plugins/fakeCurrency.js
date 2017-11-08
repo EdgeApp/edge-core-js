@@ -20,8 +20,24 @@ const reducer = combineReducers({
   progress: (state = 0, action) =>
     action.type === 'SET_PROGRESS' ? action.payload : state,
 
-  txs: (state = [], action) =>
-    action.type === 'SET_TXS' ? action.payload : state
+  txs: (state = [], action) => {
+    if (action.type === 'SET_TXS') {
+      const out = []
+      for (const tx of action.payload) {
+        out.push({
+          txid: '',
+          date: 0,
+          networkFee: '0',
+          blockHeight: 0,
+          nativeAmount: '0',
+          ourReceiveAddresses: [],
+          ...tx
+        })
+      }
+      return out
+    }
+    return state
+  }
 })
 
 export function makeFakeCurrencyStore () {
