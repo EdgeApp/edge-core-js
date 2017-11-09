@@ -11,8 +11,9 @@ import { addStorageWallet } from '../../actions.js'
 import type { RootProps } from '../../root.js'
 import {
   getStorageWalletFolder,
-  getStorageWalletLocalFolder
-} from '../../selectors.js'
+  getStorageWalletLocalFolder,
+  getStorageWalletLocalEncryptedFolder
+} from '../../storage/selectors.js'
 import { getCurrencyPlugin } from '../currency-selectors.js'
 import { makeCurrencyWalletApi } from './currency-wallet-api.js'
 import {
@@ -71,6 +72,10 @@ export default combinePixies({
       const engine = await plugin.makeEngine(walletInfo, {
         walletFolder: getStorageWalletFolder(state, walletInfo.id),
         walletLocalFolder: getStorageWalletLocalFolder(state, walletInfo.id),
+        walletLocalEncryptedFolder: getStorageWalletLocalEncryptedFolder(
+          state,
+          walletInfo.id
+        ),
         callbacks: makeCurrencyWalletCallbacks(input)
       })
       input.onOutput(engine)

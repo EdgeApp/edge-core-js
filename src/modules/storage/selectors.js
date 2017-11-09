@@ -1,5 +1,6 @@
 import { hmacSha256 } from '../../util/crypto/crypto.js'
 import { base58, utf8 } from '../../util/encoding.js'
+import { RepoFolder } from './repoFolder.js'
 
 export function getStorageWalletLastSync (state, keyId) {
   return state.storageWallets[keyId].status.lastSync
@@ -11,6 +12,14 @@ export function getStorageWalletFolder (state, keyId) {
 
 export function getStorageWalletLocalFolder (state, keyId) {
   return state.storageWallets[keyId].localFolder
+}
+
+export function getStorageWalletLocalEncryptedFolder (state, keyId) {
+  return new RepoFolder(
+    state.io,
+    state.storageWallets[keyId].paths.dataKey,
+    state.storageWallets[keyId].localFolder
+  )
 }
 
 export function hashStorageWalletFilename (state, keyId, data) {
