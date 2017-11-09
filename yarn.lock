@@ -3825,6 +3825,10 @@ rfc4648@^0.9.1:
   version "0.9.1"
   resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-0.9.1.tgz#6dff84c2ed0e63381424da2a7caa9b750fa7e477"
 
+rfc4648@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-1.0.0.tgz#fdcbf9a438feef09bde4b8ee7eaf6b7f47935528"
+
 right-align@^0.1.1:
   version "0.1.3"
   resolved "https://registry.yarnpkg.com/right-align/-/right-align-0.1.3.tgz#61339b722fe6a3515689210d24e14c96148613ef"
