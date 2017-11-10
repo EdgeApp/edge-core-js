@@ -65,14 +65,19 @@ export function authRequest (
     opts.body = JSON.stringify(body)
   }
 
+  const start = Date.now()
   const fullUri = uri + path
-  io.console.info(`${method} ${fullUri}`)
   return timeout(
     io.fetch(fullUri, opts).then(
-      response =>
-        response.json().then(parseReply, jsonError => {
+      response => {
+        const time = Date.now() - start
+        io.console.info(
+          `${method} ${fullUri} returned ${response.status} in ${time}ms`
+        )
+        return response.json().then(parseReply, jsonError => {
           throw new Error('Non-JSON reply, HTTP status ' + response.status)
-        }),
+        })
+      },
       networkError => {
         throw new NetworkError('Could not reach the auth server')
       }
