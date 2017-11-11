@@ -15,7 +15,7 @@ describe('SNRP calculation', function () {
       salt_hex: saltHex,
       n: 131072,
       r: 8,
-      p: 1
+      p: 14
     })
 
     // Insane speeds:
@@ -23,7 +23,7 @@ describe('SNRP calculation', function () {
       salt_hex: saltHex,
       n: 131072,
       r: 8,
-      p: 62
+      p: 64
     })
 
     // Infinity:

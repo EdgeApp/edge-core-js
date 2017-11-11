@@ -15,10 +15,10 @@ function timeScrypt (scrypt, data, snrp, dklen = 32) {
 
   const salt = base16.parse(snrp.salt_hex)
   const startTime = getTime()
-  console.info('starting scrypt')
+  console.info('starting scrypt n=' + snrp.n + ' r=' + snrp.r + ' p=' + snrp.p)
   return scrypt(data, salt, snrp.n, snrp.r, snrp.p, dklen).then(hash => {
     const time = getTime() - startTime
-    console.info(`finished scrypt in ${time}ms`)
+    console.info('finished scrypt n=' + snrp.n + ' r=' + snrp.r + ' p=' + snrp.p + ` in ${time}ms`)
     return { hash, time }
   })
 }
