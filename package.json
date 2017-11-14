@@ -33,18 +33,18 @@
   },
   "scripts": {
     "build": "webpack && rollup -c && rollup -c rollup.config.rn.js && npm run build:types",
-    "webpack": "webpack",
     "build:test": "webpack && rollup -c rollup.config.test.js",
     "build:types": "flow-copy-source -i '**/*.test.js' src lib",
+    "precommit": "lint-staged && npm test && npm run build",
     "flow": "flow status",
     "format": "import-sort -o src; prettier-eslint --write '*.js' 'src/**/*.js'",
     "lint": "eslint '*.js' 'src/**/*.js' && npm run flow",
-    "lint:fix": "eslint --fix '*.js' 'src/**/*.js'",
-    "precommit": "npm run build && npm test",
+    "lint:fix": "npm run format",
     "prepare": "npm run build",
     "pretest": "npm run build:test",
+    "test": "npm run lint && mocha --require source-map-support/register build/tests.cjs.js",
     "updot": "updot",
-    "test": "npm run lint && mocha --require source-map-support/register build/tests.cjs.js"
+    "webpack": "webpack"
   },
   "dependencies": {
     "aes-js": "^3.1.0",
@@ -86,6 +86,7 @@
     "import-sort-cli": "^3.3.0",
     "import-sort-parser-babylon": "^3.2.0",
     "import-sort-style-module": "^3.0.0",
+    "lint-staged": "^5.0.0",
     "prettier-eslint-cli": "^4.4.0",
     "rollup": "0.48.0",
     "rollup-plugin-babel": "^3.0.2",
@@ -101,5 +102,10 @@
       "parser": "babylon",
       "style": "module"
     }
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier-eslint --list-different"
+    ]
   }
 }
