@@ -1,16 +1,18 @@
+// @flow
 import { assert } from 'chai'
 import { afterEach, describe, it } from 'mocha'
 
 import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
 import { fakeExchangePlugin } from '../../fake-plugins/fakeExchange.js'
 import { makeFakeContexts } from '../../indexABC.js'
-import { destroyAllCores } from '../root.js'
+import { destroyAllContexts } from '../root.js'
 
 // Silence console.info:
-console.info = () => {}
+const consoleHack: any = console // Flow thinks console is read-only
+consoleHack.info = () => {}
 
 afterEach(function () {
-  destroyAllCores()
+  destroyAllContexts()
 })
 
 describe('context', function () {

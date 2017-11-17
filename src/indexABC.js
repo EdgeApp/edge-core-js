@@ -5,6 +5,7 @@ import * as error from './error.js'
 import * as internal from './internal.js'
 import { fakeUser } from './io/fake/fakeUser.js'
 import {
+  destroyAllContexts,
   makeCoreRoot,
   makeFakeCoreRoots,
   startCoreRoot
@@ -21,6 +22,7 @@ require('core-js')
 export * from './error.js'
 export { makeBrowserIo } from './io/browser'
 export { makeFakeIos } from './io/fake'
+export { destroyAllContexts, fakeUser }
 
 /**
  * Initializes the Airbitz core library.
@@ -58,7 +60,6 @@ export function makeFakeContexts (
     return coreRoot.output.contextApi
   })
 }
-export { fakeUser }
 
 /**
  * Older, deprecated version of `makeContext`.

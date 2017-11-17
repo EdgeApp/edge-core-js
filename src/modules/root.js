@@ -126,7 +126,7 @@ export function makeFakeCoreRoots (
 /**
  * We use this for unit testing, to kill all core contexts.
  */
-export function destroyAllCores () {
+export function destroyAllContexts () {
   for (const destroyPixie of allDestroyPixies) {
     destroyPixie()
   }
