@@ -133,7 +133,9 @@ export function makeCurrencyWalletCallbacks (
           }
         })
       }
-    }
+    },
+
+    onTxidsChanged () {}
   }
 }
 

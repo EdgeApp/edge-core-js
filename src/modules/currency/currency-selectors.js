@@ -46,7 +46,7 @@ export function getCurrencyPlugin (
   walletType: string
 ) {
   for (const plugin of plugins) {
-    const currencyInfo = plugin.currencyInfo || plugin.getInfo()
+    const { currencyInfo } = plugin
     for (const type of currencyInfo.walletTypes) {
       if (type === walletType) {
         return plugin
