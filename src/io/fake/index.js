@@ -1,5 +1,5 @@
 // @flow
-import type { AbcIo } from 'airbitz-core-types'
+import type { AbcRawIo } from 'airbitz-core-types'
 import { makeMemoryFolder } from 'disklet'
 
 import { FakeServer } from './fakeServer.js'
@@ -38,7 +38,7 @@ function makeFakeRandom () {
  * Each object has its own storage, but all contexts share a server.
  * @param {number} count number of io contexts to create
  */
-export function makeFakeIos (count: number): Array<AbcIo> {
+export function makeFakeIos (count: number): Array<AbcRawIo> {
   // The common server used by all contexts:
   const server = new FakeServer()
   const random = makeFakeRandom()

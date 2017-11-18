@@ -2,10 +2,9 @@
 import type {
   AbcAccountCallbacks,
   AbcCurrencyInfo,
+  AbcIo,
   AbcWalletInfo
 } from 'airbitz-core-types'
-
-import type { FixedIo } from '../io/fixIo.js'
 
 export { addStorageWallet, syncStorageWallet } from './storage/actions.js'
 
@@ -104,7 +103,7 @@ export interface InitAction {
     apiKey: string | void,
     appId: string | void,
     authServer: string | void,
-    io: FixedIo,
+    io: AbcIo,
     onError: (e: Error) => void
   };
 }

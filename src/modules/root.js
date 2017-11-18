@@ -1,12 +1,15 @@
 // @flow
-import type { AbcContextOptions, AbcCorePlugin } from 'airbitz-core-types'
+import type {
+  AbcContextOptions,
+  AbcCorePlugin,
+  AbcIo
+} from 'airbitz-core-types'
 import type { Dispatch, Store } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
 import type { PixieInput, ReduxProps } from 'redux-pixies'
 
 import { stashFakeUser } from '../io/fake/fakeUser.js'
 import { makeFakeIos } from '../io/fake/index.js'
-import type { FixedIo } from '../io/fixIo.js'
 import { fixIo } from '../io/fixIo.js'
 import { makeBrowserIo } from '../io/browser'
 import type { RootAction } from './actions.js'
@@ -30,7 +33,7 @@ export interface CoreRoot {
   apiKey: string;
   appId: string;
   authServer: string;
-  io: FixedIo;
+  io: AbcIo;
   onError(e: Error): void;
   onExchangeUpdate(): void;
   plugins: Array<AbcCorePlugin>;
@@ -53,13 +56,13 @@ export interface CoreRoot {
  * Redux store, and tree of background workers.
  */
 export function makeCoreRoot (opts: AbcContextOptions) {
-  const onErrorDefault = (error, name) => fixedIo.console.error(name, error)
+  const onErrorDefault = (error, name) => io.console.error(name, error)
 
   const {
     apiKey = '!invalid',
     authServer = 'https://auth.airbitz.co/api',
     callbacks = {},
-    io = makeBrowserIo(),
+    io: rawIo = makeBrowserIo(),
     plugins = [],
     shapeshiftKey = void 0
   } = opts
@@ -72,24 +75,24 @@ export function makeCoreRoot (opts: AbcContextOptions) {
         ? opts.accountType.replace(/^account.repo:/, '')
         : ''
 
-  const fixedIo = fixIo(io)
+  const io = fixIo(rawIo)
 
   const coreRoot: CoreRoot = {
     apiKey,
     appId,
     authServer,
-    io: fixedIo,
+    io,
     onError,
     onExchangeUpdate,
     plugins,
     shapeshiftKey,
-    loginStore: new LoginStore(fixedIo),
+    loginStore: new LoginStore(io),
     redux: makeStore(),
     output: ({}: any)
   }
   coreRoot.redux.dispatch({
     type: 'INIT',
-    payload: { io: fixedIo, onError, apiKey, appId, authServer }
+    payload: { io, onError, apiKey, appId, authServer }
   })
 
   return coreRoot
@@ -137,7 +140,7 @@ export function destroyAllContexts () {
 export interface RootProps {
   coreRoot: CoreRoot;
   +dispatch: Dispatch<RootAction>;
-  io: FixedIo;
+  io: AbcIo;
   onError(e: Error): void;
   onExchangeUpdate(): void;
   output: RootOutput;
@@ -168,7 +171,7 @@ export function makeRootProps (
  */
 export interface ApiProps {
   +dispatch: Dispatch<RootAction>;
-  io: FixedIo;
+  io: AbcIo;
   loginStore: any;
   onError(e: Error): void;
   output: RootOutput;

@@ -4,7 +4,8 @@
  */
 
 // @flow
-import type { FixedIo } from '../../io/fixIo.js'
+import type { AbcIo } from 'airbitz-core-types'
+
 import { base16, base58, base64 } from '../../util/encoding.js'
 
 export const fakeUser = {
@@ -236,7 +237,7 @@ export const fakeRepos = {
   '0930F3C2CD0417765198FBEA95EC9F1E99000312': {}
 }
 
-export function stashFakeUser (io: FixedIo) {
+export function stashFakeUser (io: AbcIo) {
   // The bare minimum data needed to log in with PIN:
   const fakeStash = {
     appId: fakeUserServer.appId,

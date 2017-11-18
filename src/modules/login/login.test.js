@@ -135,7 +135,8 @@ describe('password', function () {
 
     // Disable network access (but leave the sync server up):
     const oldFetch = context.io.fetch
-    context.io.fetch = (url, opts) =>
+    const ioHack: any = context.io
+    ioHack.fetch = (url, opts) =>
       /store/.test(url.toString())
         ? oldFetch(url, opts)
         : Promise.reject(new Error('Network error'))

@@ -1,7 +1,7 @@
 // @flow
+import type { AbcIo } from 'airbitz-core-types'
 import { mapFiles } from 'disklet'
 
-import type { FixedIo } from '../../io/fixIo.js'
 import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { scrypt, userIdSnrp } from '../selectors.js'
@@ -27,9 +27,9 @@ function findUserFile (folder, username) {
  * Handles login data storage.
  */
 export class LoginStore {
-  folder: $PropertyType<FixedIo, 'folder'>
+  folder: $PropertyType<AbcIo, 'folder'>
 
-  constructor (io: FixedIo) {
+  constructor (io: AbcIo) {
     this.folder = io.folder.folder('logins')
   }
 
