@@ -82,6 +82,10 @@ export function makeCurrencyWalletApi (
       return engine.disableTokens(tokens)
     },
 
+    getEnabledTokens () {
+      return engine.getEnabledTokens()
+    },
+
     addCustomToken (token: any) {
       return engine.addCustomToken(token)
     },
