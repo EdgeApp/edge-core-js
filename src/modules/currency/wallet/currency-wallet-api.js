@@ -78,6 +78,14 @@ export function makeCurrencyWalletApi (
       return engine.enableTokens(tokens)
     },
 
+    disableTokens (tokens: Array<string>) {
+      return engine.disableTokens(tokens)
+    },
+
+    addCustomToken (token: any) {
+      return engine.addCustomToken(token)
+    },
+
     // Transactions:
     '@getBalance': { sync: true },
     getBalance (opts: any) {
