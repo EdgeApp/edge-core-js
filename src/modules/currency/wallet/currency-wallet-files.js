@@ -60,6 +60,19 @@ type LegacyTransactionFile = {
   }
 }
 
+type LegacyAddressFile = {
+  seq: number, // index
+  address: string,
+  state: {
+    recycleable: boolean,
+    creationDate: number
+  },
+  meta: {
+    amountSatoshi: number // requestAmount
+    // TODO: Normal AbcMetatada
+  }
+}
+
 /**
  * Converts a LegacyTransactionFile to a TransactionFile.
  */
@@ -246,6 +259,41 @@ function loadTxFiles (input: CurrencyWalletInput, folder) {
 }
 
 /**
+ * Loads address metadata files.
+ */
+function loadAddressFiles (input: CurrencyWalletInput, folder) {
+  // Actually load the files:
+  const allFiles = Promise.all([
+    // Legacy transaction metadata:
+    mapFiles(folder.folder('Addresses'), file =>
+      file
+        .getText()
+        .then(text => JSON.parse(text))
+        .catch(e => null)
+    )
+  ])
+
+  // Save the results to our state:
+  return allFiles.then(allFiles => {
+    const [oldFiles] = allFiles
+
+    const out: Array<string> = []
+    for (const json: LegacyAddressFile of oldFiles) {
+      if (json == null || !json.state || !json.meta) continue
+      const address = json.address
+      if (!address || json.state.recycleable) continue
+      out.push(address)
+    }
+
+    // Load these addresses into the engine:
+    const engine = input.props.selfOutput.engine
+    if (engine) engine.addGapLimitAddresses(out)
+
+    return out
+  })
+}
+
+/**
  * Updates the wallet in response to data syncs.
  */
 export async function loadAllFiles (input: CurrencyWalletInput) {
@@ -255,6 +303,7 @@ export async function loadAllFiles (input: CurrencyWalletInput) {
   await loadFiatFile(input, folder)
   await loadNameFile(input, folder)
   await loadTxFiles(input, folder)
+  await loadAddressFiles(input, folder)
 }
 
 /**
