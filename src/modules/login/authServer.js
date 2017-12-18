@@ -82,7 +82,7 @@ export function authRequest (
         throw new NetworkError('Could not reach the auth server')
       }
     ),
-    10000,
+    30000,
     new NetworkError('Could not reach the auth server: timeout')
   )
 }
