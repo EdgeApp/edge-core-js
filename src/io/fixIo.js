@@ -29,6 +29,10 @@ export function fixIo (io: AbcRawIo): AbcIo {
     out.scrypt = scrypt
   }
 
+  if (io.secp256k1) {
+    out.secp256k1 = io.secp256k1
+  }
+
   // Verify that we have what we need:
   for (const key of keys) {
     if (out[key] == null) {
