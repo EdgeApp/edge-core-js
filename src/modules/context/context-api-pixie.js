@@ -1,5 +1,9 @@
 // @flow
-import type { AbcContext, AbcEdgeLoginOptions } from 'airbitz-core-types'
+import type {
+  AbcAccountOptions,
+  AbcContext,
+  AbcEdgeLoginOptions
+} from 'airbitz-core-types'
 import { stopUpdates } from 'redux-pixies'
 
 import { wrapObject } from '../../util/api.js'
@@ -57,7 +61,12 @@ function makeContextApi (ai: ApiInput) {
       return usernameAvailable(ai, username)
     },
 
-    createAccount (username: string, password?: string, pin?: string, opts) {
+    createAccount (
+      username: string,
+      password?: string,
+      pin?: string,
+      opts?: AbcAccountOptions
+    ) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return createLogin(ai, username, {
@@ -68,7 +77,7 @@ function makeContextApi (ai: ApiInput) {
       })
     },
 
-    loginWithKey (username: string, loginKey: string, opts) {
+    loginWithKey (username: string, loginKey: string, opts?: AbcAccountOptions) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return loginStore.load(username).then(stashTree => {
@@ -81,7 +90,11 @@ function makeContextApi (ai: ApiInput) {
       })
     },
 
-    loginWithPassword (username: string, password: string, opts): Promise<any> {
+    loginWithPassword (
+      username: string,
+      password: string,
+      opts?: AbcAccountOptions
+    ): Promise<any> {
       const { callbacks } = opts || {} // opts can be `null`
 
       return loginPassword(ai, username, password).then(loginTree => {
@@ -94,17 +107,17 @@ function makeContextApi (ai: ApiInput) {
       return checkPasswordRules(password)
     },
 
-    async pinExists (username) {
+    async pinExists (username: string) {
       const loginStash = await loginStore.load(username)
       const pin2Key = getPin2Key(loginStash, appId)
       return pin2Key && pin2Key.pin2Key != null
     },
 
-    pinLoginEnabled (username) {
+    pinLoginEnabled (username: string) {
       return this.pinExists(username)
     },
 
-    loginWithPIN (username, pin, opts) {
+    loginWithPIN (username: string, pin: string, opts?: AbcAccountOptions) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return loginPin2(ai, appId, username, pin).then(loginTree => {
@@ -112,7 +125,7 @@ function makeContextApi (ai: ApiInput) {
       })
     },
 
-    getRecovery2Key (username) {
+    getRecovery2Key (username: string) {
       return loginStore.load(username).then(loginStash => {
         const recovery2Key = getRecovery2Key(loginStash)
         if (recovery2Key == null) {
@@ -122,7 +135,12 @@ function makeContextApi (ai: ApiInput) {
       })
     },
 
-    loginWithRecovery2 (recovery2Key: string, username, answers, opts) {
+    loginWithRecovery2 (
+      recovery2Key: string,
+      username: string,
+      answers: Array<string>,
+      opts?: AbcAccountOptions
+    ) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return loginRecovery2(
@@ -135,7 +153,7 @@ function makeContextApi (ai: ApiInput) {
       })
     },
 
-    fetchRecovery2Questions (recovery2Key, username) {
+    fetchRecovery2Questions (recovery2Key: string, username: string) {
       return getQuestions2(ai, base58.parse(recovery2Key), username)
     },
 
