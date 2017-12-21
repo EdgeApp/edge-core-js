@@ -50,3 +50,12 @@ export function totp (
   if (secret == null) return
   return hotp(base32.parse(secret), now / 30, 6)
 }
+
+export function checkTotp (secret: string, otp: string): boolean {
+  const now = Date.now() / 1000
+  return (
+    otp === totp(secret, now - 1) ||
+    otp === totp(secret, now) ||
+    otp === totp(secret, now + 1)
+  )
+}
