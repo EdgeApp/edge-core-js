@@ -1,5 +1,6 @@
 // @flow
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../selectors.js'
@@ -36,7 +37,12 @@ async function extractLoginKey (
 /**
  * Fetches the loginKey from the server.
  */
-async function fetchLoginKey (ai: ApiInput, username: string, password: string) {
+async function fetchLoginKey (
+  ai: ApiInput,
+  username: string,
+  password: string,
+  otp: string | void
+) {
   const state = ai.props.state
   const up = makeHashInput(username, password)
 
@@ -46,8 +52,8 @@ async function fetchLoginKey (ai: ApiInput, username: string, password: string) 
   ])
   const request = {
     userId: base64.stringify(userId),
-    passwordAuth: base64.stringify(passwordAuth)
-    // "otp": null
+    passwordAuth: base64.stringify(passwordAuth),
+    otp
   }
   const reply = await authRequest(ai, 'POST', '/v2/login', request)
   if (reply.passwordBox == null || reply.passwordKeySnrp == null) {
@@ -69,7 +75,8 @@ async function fetchLoginKey (ai: ApiInput, username: string, password: string) 
 export async function loginPassword (
   ai: ApiInput,
   username: string,
-  password: string
+  password: string,
+  otpKey: string | void
 ) {
   const { io, loginStore } = ai.props
   let stashTree = await loginStore.load(username)
@@ -79,12 +86,19 @@ export async function loginPassword (
     const loginTree = makeLoginTree(stashTree, loginKey)
 
     // Since we logged in offline, update the stash in the background:
+    // TODO: If the user provides an OTP token, add that to the stash.
     syncLogin(ai, loginTree, loginTree).catch(e => io.console.warn(e))
 
     return loginTree
   } catch (e) {
-    const { loginKey, loginReply } = await fetchLoginKey(ai, username, password)
+    const { loginKey, loginReply } = await fetchLoginKey(
+      ai,
+      username,
+      password,
+      totp(otpKey || stashTree.otpKey)
+    )
     stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+    if (otpKey) stashTree.otpKey = otpKey
     loginStore.save(stashTree)
     return makeLoginTree(stashTree, loginKey)
   }

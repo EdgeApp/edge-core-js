@@ -95,9 +95,9 @@ function makeContextApi (ai: ApiInput) {
       password: string,
       opts?: AbcAccountOptions
     ): Promise<any> {
-      const { callbacks } = opts || {} // opts can be `null`
+      const { callbacks, otp } = opts || {} // opts can be `null`
 
-      return loginPassword(ai, username, password).then(loginTree => {
+      return loginPassword(ai, username, password, otp).then(loginTree => {
         return makeAccount(ai, appId, loginTree, 'passwordLogin', callbacks)
       })
     },
@@ -118,9 +118,9 @@ function makeContextApi (ai: ApiInput) {
     },
 
     loginWithPIN (username: string, pin: string, opts?: AbcAccountOptions) {
-      const { callbacks } = opts || {} // opts can be `null`
+      const { callbacks, otp } = opts || {} // opts can be `null`
 
-      return loginPin2(ai, appId, username, pin).then(loginTree => {
+      return loginPin2(ai, appId, username, pin, otp).then(loginTree => {
         return makeAccount(ai, appId, loginTree, 'pinLogin', callbacks)
       })
     },
@@ -141,13 +141,14 @@ function makeContextApi (ai: ApiInput) {
       answers: Array<string>,
       opts?: AbcAccountOptions
     ) {
-      const { callbacks } = opts || {} // opts can be `null`
+      const { callbacks, otp } = opts || {} // opts can be `null`
 
       return loginRecovery2(
         ai,
         base58.parse(recovery2Key),
         username,
-        answers
+        answers,
+        otp
       ).then(loginTree => {
         return makeAccount(ai, appId, loginTree, 'recoveryLogin', callbacks)
       })

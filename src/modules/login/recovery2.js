@@ -1,5 +1,6 @@
 // @flow
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
@@ -26,12 +27,13 @@ async function fetchLoginKey (
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
-  answers: Array<string>
+  answers: Array<string>,
+  otp: string | void
 ) {
   const request = {
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
-    recovery2Auth: recovery2Auth(recovery2Key, answers)
-    // "otp": null
+    recovery2Auth: recovery2Auth(recovery2Key, answers),
+    otp
   }
   const reply = await authRequest(ai, 'POST', '/v2/login', request)
   if (reply.recovery2Box == null) {
@@ -60,7 +62,8 @@ export async function loginRecovery2 (
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
-  answers: Array<string>
+  answers: Array<string>,
+  otpKey: string | void
 ) {
   const { loginStore } = ai.props
   let stashTree = await loginStore.load(username)
@@ -68,9 +71,11 @@ export async function loginRecovery2 (
     ai,
     recovery2Key,
     username,
-    answers
+    answers,
+    totp(otpKey || stashTree.otpKey)
   )
   stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+  if (otpKey) stashTree.otpKey = otpKey
   loginStore.save(stashTree)
   return makeLoginTree(stashTree, loginKey)
 }

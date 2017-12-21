@@ -1,5 +1,6 @@
 // @flow
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
@@ -23,12 +24,13 @@ async function fetchLoginKey (
   ai: ApiInput,
   pin2Key: Uint8Array,
   username: string,
-  pin: string
+  pin: string,
+  otp: string | void
 ) {
   const request = {
     pin2Id: base64.stringify(pin2Id(pin2Key, username)),
-    pin2Auth: base64.stringify(pin2Auth(pin2Key, pin))
-    // "otp": null
+    pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
+    otp
   }
   const reply = await authRequest(ai, 'POST', '/v2/login', request)
   if (reply.pin2Box == null) {
@@ -61,7 +63,8 @@ export async function loginPin2 (
   ai: ApiInput,
   appId: string,
   username: string,
-  pin: string
+  pin: string,
+  otpKey: string | void
 ) {
   const { loginStore } = ai.props
   let stashTree = await loginStore.load(username)
@@ -73,9 +76,11 @@ export async function loginPin2 (
     ai,
     pin2Key,
     username,
-    pin
+    pin,
+    totp(otpKey || stashTree.otpKey)
   )
   stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+  if (otpKey) stashTree.otpKey = otpKey
   loginStore.save(stashTree)
   return makeLoginTree(stashTree, loginKey, appIdFound)
 }

@@ -1,4 +1,6 @@
 // @flow
+import { base32 } from 'rfc4648'
+
 import { hashjs } from './external.js'
 
 export function numberToBe64 (number: number): Uint8Array {
@@ -39,4 +41,12 @@ export function hotp (secret: Uint8Array, counter: number, digits: number) {
 
   const padding = Array(digits).join('0')
   return (padding + text).slice(-digits)
+}
+
+export function totp (
+  secret: string | void,
+  now: number = Date.now() / 1000
+): string | void {
+  if (secret == null) return
+  return hotp(base32.parse(secret), now / 30, 6)
 }
