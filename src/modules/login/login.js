@@ -16,6 +16,7 @@ import type {
   LoginStash,
   LoginTree
 } from './login-types.js'
+import { hashUsername } from './loginStore.js'
 
 function cloneNode (node, children) {
   return { ...node, children }
@@ -326,4 +327,19 @@ export function makeAuthJson (login: LoginTree) {
     }
   }
   throw new Error('No server authentication methods available')
+}
+
+/**
+ * Requests an OTP reset.
+ */
+export async function resetOtp (
+  ai: ApiInput,
+  username: string,
+  resetToken: string
+): Promise<void> {
+  const request = {
+    l1: base64.stringify(await hashUsername(ai, username)),
+    otp_reset_auth: resetToken
+  }
+  return authRequest(ai, 'POST', '/v1/otp/reset', request)
 }

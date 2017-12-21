@@ -106,7 +106,10 @@ const userIdCache = {}
 /**
  * Hashes a username into a userId.
  */
-export function hashUsername (ai: ApiInput, username: string) {
+export function hashUsername (
+  ai: ApiInput,
+  username: string
+): Promise<Uint8Array> {
   const { state } = ai.props
   const fixedName = fixUsername(username)
   if (userIdCache[fixedName] == null) {

@@ -13,7 +13,7 @@ import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
-import { makeLoginTree } from '../login/login.js'
+import { makeLoginTree, resetOtp } from '../login/login.js'
 import { fixUsername } from '../login/loginStore.js'
 import { checkPasswordRules, loginPassword } from '../login/password.js'
 import { getPin2Key, loginPin2 } from '../login/pin2.js'
@@ -183,6 +183,10 @@ function makeContextApi (ai: ApiInput) {
           )
         }
       })
+    },
+
+    requestOtpReset (username: string, otpResetToken: string): Promise<void> {
+      return resetOtp(ai, username, otpResetToken)
     },
 
     getExchangeSwapRate (
