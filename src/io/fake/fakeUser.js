@@ -49,6 +49,8 @@ export const fakeUserServer = {
   appId: '',
   loginId: 'm3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=',
 
+  otpKey: 'HELLO===',
+
   // Password:
   passwordAuth: '5dd0xXRq1tN7JF0aGwmXf9kaExbZyMyIKBWGc0hIACc=',
   passwordAuthBox: {
@@ -242,6 +244,7 @@ export function stashFakeUser (io: AbcIo) {
   const fakeStash = {
     appId: fakeUserServer.appId,
     loginId: fakeUserServer.loginId,
+    otpKey: fakeUserServer.otpKey,
     username: 'js test 0',
     passwordAuthBox: fakeUserServer.passwordAuthBox,
     pin2Key: base64.stringify(fakeUser.pin2Key),

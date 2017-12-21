@@ -4,6 +4,7 @@
 
 // @flow
 import { decrypt } from '../../util/crypto/crypto.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import { elvis, filterObject, softCat } from '../../util/util.js'
 import type { ApiInput } from '../root.js'
@@ -72,6 +73,7 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
   // Preserve client-only data:
   out.username = stash.username
   out.userId = stash.userId
+  out.otpKey = stash.otpKey
 
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
@@ -111,7 +113,7 @@ export function applyLoginReply (
   stashTree: LoginStash,
   loginKey: Uint8Array,
   loginReply: LoginReply
-) {
+): LoginStash {
   return updateTree(
     stashTree,
     stash => stash.appId === loginReply.appId,
@@ -139,6 +141,7 @@ function makeLoginTreeInner (stash, loginKey) {
   login.appId = stash.appId
   login.loginId = stash.loginId
   login.loginKey = loginKey
+  login.otpKey = stash.otpKey
 
   // Password:
   if (stash.userId != null) {
@@ -311,13 +314,15 @@ export function makeAuthJson (login: LoginTree) {
   if (login.loginAuth != null) {
     return {
       loginId: login.loginId,
-      loginAuth: base64.stringify(login.loginAuth)
+      loginAuth: base64.stringify(login.loginAuth),
+      otp: totp(login.otpKey)
     }
   }
   if (login.passwordAuth != null) {
     return {
       userId: login.userId,
-      passwordAuth: base64.stringify(login.passwordAuth)
+      passwordAuth: base64.stringify(login.passwordAuth),
+      otp: totp(login.otpKey)
     }
   }
   throw new Error('No server authentication methods available')

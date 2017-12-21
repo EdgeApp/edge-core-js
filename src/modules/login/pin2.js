@@ -1,5 +1,6 @@
 // @flow
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
@@ -19,26 +20,26 @@ function pin2Auth (pin2Key, pin) {
  * Fetches and decrypts the loginKey from the server.
  * @return Promise<{loginKey, loginReply}>
  */
-function fetchLoginKey (
+async function fetchLoginKey (
   ai: ApiInput,
   pin2Key: Uint8Array,
   username: string,
-  pin: string
+  pin: string,
+  otp: string | void
 ) {
   const request = {
     pin2Id: base64.stringify(pin2Id(pin2Key, username)),
-    pin2Auth: base64.stringify(pin2Auth(pin2Key, pin))
-    // "otp": null
+    pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
+    otp
   }
-  return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
-    if (reply.pin2Box == null) {
-      throw new Error('Missing data for PIN v2 login')
-    }
-    return {
-      loginKey: decrypt(reply.pin2Box, pin2Key),
-      loginReply: reply
-    }
-  })
+  const reply = await authRequest(ai, 'POST', '/v2/login', request)
+  if (reply.pin2Box == null) {
+    throw new Error('Missing data for PIN v2 login')
+  }
+  return {
+    loginKey: decrypt(reply.pin2Box, pin2Key),
+    loginReply: reply
+  }
 }
 
 /**
@@ -58,25 +59,30 @@ export function getPin2Key (stashTree: LoginStash, appId: string) {
  * Logs a user in using their PIN.
  * @return A `Promise` for the new root login.
  */
-export function loginPin2 (
+export async function loginPin2 (
   ai: ApiInput,
   appId: string,
   username: string,
-  pin: string
+  pin: string,
+  otpKey: string | void
 ) {
   const { loginStore } = ai.props
-  return loginStore.load(username).then(stashTree => {
-    const { pin2Key, appId: appIdFound } = getPin2Key(stashTree, appId)
-    if (pin2Key == null) {
-      throw new Error('No PIN set locally for this account')
-    }
-    return fetchLoginKey(ai, pin2Key, username, pin).then(values => {
-      const { loginKey, loginReply } = values
-      stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-      loginStore.save(stashTree)
-      return makeLoginTree(stashTree, loginKey, appIdFound)
-    })
-  })
+  let stashTree = await loginStore.load(username)
+  const { pin2Key, appId: appIdFound } = getPin2Key(stashTree, appId)
+  if (pin2Key == null) {
+    throw new Error('No PIN set locally for this account')
+  }
+  const { loginKey, loginReply } = await fetchLoginKey(
+    ai,
+    pin2Key,
+    username,
+    pin,
+    totp(otpKey || stashTree.otpKey)
+  )
+  stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+  if (otpKey) stashTree.otpKey = otpKey
+  loginStore.save(stashTree)
+  return makeLoginTree(stashTree, loginKey, appIdFound)
 }
 
 /**

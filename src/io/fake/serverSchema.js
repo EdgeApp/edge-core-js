@@ -5,6 +5,7 @@ export const loginReplyColumns = [
   'appId',
   'loginId',
   'loginAuthBox',
+  'otpKey',
   'parentBox',
   'passwordAuthBox',
   'passwordAuthSnrp',

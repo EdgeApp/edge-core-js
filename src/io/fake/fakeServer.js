@@ -1,3 +1,4 @@
+import { checkTotp } from '../../util/crypto/hotp.js'
 import { filterObject, softCat } from '../../util/util.js'
 import { fakeRepos, fakeUserServer } from './fakeUser.js'
 import {
@@ -85,6 +86,15 @@ function makeErrorResponse (code, message = '', status = 500) {
   return new FakeResponse(JSON.stringify(body), { status })
 }
 
+function makeOtpErrorResponse (status = 500) {
+  const body = {
+    status_code: errorCodes.invalidOtp,
+    message: 'OTP error',
+    otp_reset_auth: 'Super secret reset token'
+  }
+  return new FakeResponse(JSON.stringify(body), { status })
+}
+
 // Authentication middleware: ----------------------------------------------
 
 /**
@@ -119,6 +129,9 @@ function authHandler (req) {
     if (req.body.loginAuth !== login.loginAuth) {
       return makeErrorResponse(errorCodes.invalidPassword)
     }
+    if (login.otpKey && !checkTotp(login.otpKey, req.body.otp)) {
+      return makeOtpErrorResponse()
+    }
     req.login = login
     return
   }
@@ -132,6 +145,9 @@ function authHandler (req) {
     if (req.body.passwordAuth !== login.passwordAuth) {
       return makeErrorResponse(errorCodes.invalidPassword)
     }
+    if (login.otpKey && !checkTotp(login.otpKey, req.body.otp)) {
+      return makeOtpErrorResponse()
+    }
     req.login = login
     return
   }
@@ -144,6 +160,9 @@ function authHandler (req) {
     }
     if (req.body.pin2Auth !== login.pin2Auth) {
       return makeErrorResponse(errorCodes.invalidPassword)
+    }
+    if (login.otpKey && !checkTotp(login.otpKey, req.body.otp)) {
+      return makeOtpErrorResponse()
     }
     req.login = login
     return
@@ -164,6 +183,9 @@ function authHandler (req) {
       if (clientAuth[i] !== serverAuth[i]) {
         return makeErrorResponse(errorCodes.invalidAnswers)
       }
+    }
+    if (login.otpKey && !checkTotp(login.otpKey, req.body.otp)) {
+      return makeOtpErrorResponse()
     }
     req.login = login
     return

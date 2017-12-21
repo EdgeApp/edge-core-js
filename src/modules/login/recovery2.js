@@ -1,5 +1,6 @@
 // @flow
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
@@ -22,26 +23,26 @@ function recovery2Auth (recovery2Key, answers) {
  * Fetches and decrypts the loginKey from the server.
  * @return Promise<{loginKey, loginReply}>
  */
-function fetchLoginKey (
+async function fetchLoginKey (
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
-  answers: Array<string>
+  answers: Array<string>,
+  otp: string | void
 ) {
   const request = {
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
-    recovery2Auth: recovery2Auth(recovery2Key, answers)
-    // "otp": null
+    recovery2Auth: recovery2Auth(recovery2Key, answers),
+    otp
   }
-  return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
-    if (reply.recovery2Box == null) {
-      throw new Error('Missing data for recovery v2 login')
-    }
-    return {
-      loginKey: decrypt(reply.recovery2Box, recovery2Key),
-      loginReply: reply
-    }
-  })
+  const reply = await authRequest(ai, 'POST', '/v2/login', request)
+  if (reply.recovery2Box == null) {
+    throw new Error('Missing data for recovery v2 login')
+  }
+  return {
+    loginKey: decrypt(reply.recovery2Box, recovery2Key),
+    loginReply: reply
+  }
 }
 
 /**
@@ -57,21 +58,26 @@ export function getRecovery2Key (stashTree: LoginStash) {
  * Logs a user in using recovery answers.
  * @return A `Promise` for the new root login.
  */
-export function loginRecovery2 (
+export async function loginRecovery2 (
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
-  answers: Array<string>
+  answers: Array<string>,
+  otpKey: string | void
 ) {
   const { loginStore } = ai.props
-  return loginStore.load(username).then(stashTree => {
-    return fetchLoginKey(ai, recovery2Key, username, answers).then(values => {
-      const { loginKey, loginReply } = values
-      stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-      loginStore.save(stashTree)
-      return makeLoginTree(stashTree, loginKey)
-    })
-  })
+  let stashTree = await loginStore.load(username)
+  const { loginKey, loginReply } = await fetchLoginKey(
+    ai,
+    recovery2Key,
+    username,
+    answers,
+    totp(otpKey || stashTree.otpKey)
+  )
+  stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+  if (otpKey) stashTree.otpKey = otpKey
+  loginStore.save(stashTree)
+  return makeLoginTree(stashTree, loginKey)
 }
 
 /**

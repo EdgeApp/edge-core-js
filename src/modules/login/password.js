@@ -1,6 +1,6 @@
 // @flow
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
-import { rejectify } from '../../util/decorators.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../selectors.js'
@@ -18,7 +18,7 @@ function makeHashInput (username: string, password: string) {
 /**
  * Extracts the loginKey from the login stash.
  */
-function extractLoginKey (
+async function extractLoginKey (
   ai: ApiInput,
   stash: LoginStash,
   username: string,
@@ -30,39 +30,40 @@ function extractLoginKey (
     throw new Error('Missing data for offline password login')
   }
   const up = makeHashInput(username, password)
-  return scrypt(state, up, stash.passwordKeySnrp).then(passwordKey => {
-    return decrypt(stash.passwordBox, passwordKey)
-  })
+  const passwordKey = await scrypt(state, up, stash.passwordKeySnrp)
+  return decrypt(stash.passwordBox, passwordKey)
 }
 
 /**
  * Fetches the loginKey from the server.
  */
-function fetchLoginKey (ai: ApiInput, username: string, password: string) {
+async function fetchLoginKey (
+  ai: ApiInput,
+  username: string,
+  password: string,
+  otp: string | void
+) {
   const state = ai.props.state
   const up = makeHashInput(username, password)
-  const userId = hashUsername(ai, username)
-  const passwordAuth = scrypt(state, up, passwordAuthSnrp)
 
-  return Promise.all([userId, passwordAuth]).then(values => {
-    const [userId, passwordAuth] = values
-    const request = {
-      userId: base64.stringify(userId),
-      passwordAuth: base64.stringify(passwordAuth)
-      // "otp": null
-    }
-    return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
-      if (reply.passwordBox == null || reply.passwordKeySnrp == null) {
-        throw new Error('Missing data for online password login')
-      }
-      return scrypt(state, up, reply.passwordKeySnrp).then(passwordKey => {
-        return {
-          loginKey: decrypt(reply.passwordBox, passwordKey),
-          loginReply: reply
-        }
-      })
-    })
-  })
+  const [userId, passwordAuth] = await Promise.all([
+    hashUsername(ai, username),
+    scrypt(state, up, passwordAuthSnrp)
+  ])
+  const request = {
+    userId: base64.stringify(userId),
+    passwordAuth: base64.stringify(passwordAuth),
+    otp
+  }
+  const reply = await authRequest(ai, 'POST', '/v2/login', request)
+  if (reply.passwordBox == null || reply.passwordKeySnrp == null) {
+    throw new Error('Missing data for online password login')
+  }
+  const passwordKey = await scrypt(state, up, reply.passwordKeySnrp)
+  return {
+    loginKey: decrypt(reply.passwordBox, passwordKey),
+    loginReply: reply
+  }
 }
 
 /**
@@ -71,33 +72,36 @@ function fetchLoginKey (ai: ApiInput, username: string, password: string) {
  * @param password string
  * @return A `Promise` for the new root login.
  */
-export function loginPassword (
+export async function loginPassword (
   ai: ApiInput,
   username: string,
-  password: string
+  password: string,
+  otpKey: string | void
 ) {
   const { io, loginStore } = ai.props
+  let stashTree = await loginStore.load(username)
 
-  return loginStore.load(username).then(stashTree => {
-    return rejectify(extractLoginKey)(ai, stashTree, username, password)
-      .then(loginKey => {
-        const loginTree = makeLoginTree(stashTree, loginKey)
+  try {
+    const loginKey = await extractLoginKey(ai, stashTree, username, password)
+    const loginTree = makeLoginTree(stashTree, loginKey)
 
-        // Since we logged in offline, update the stash in the background:
-        syncLogin(ai, loginTree, loginTree).catch(e => io.console.warn(e))
+    // Since we logged in offline, update the stash in the background:
+    // TODO: If the user provides an OTP token, add that to the stash.
+    syncLogin(ai, loginTree, loginTree).catch(e => io.console.warn(e))
 
-        return loginTree
-      })
-      .catch(e => {
-        // If that failed, try an online login:
-        return fetchLoginKey(ai, username, password).then(values => {
-          const { loginKey, loginReply } = values
-          stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-          loginStore.save(stashTree)
-          return makeLoginTree(stashTree, loginKey)
-        })
-      })
-  })
+    return loginTree
+  } catch (e) {
+    const { loginKey, loginReply } = await fetchLoginKey(
+      ai,
+      username,
+      password,
+      totp(otpKey || stashTree.otpKey)
+    )
+    stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+    if (otpKey) stashTree.otpKey = otpKey
+    loginStore.save(stashTree)
+    return makeLoginTree(stashTree, loginKey)
+  }
 }
 
 /**
