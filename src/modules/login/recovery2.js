@@ -22,7 +22,7 @@ function recovery2Auth (recovery2Key, answers) {
  * Fetches and decrypts the loginKey from the server.
  * @return Promise<{loginKey, loginReply}>
  */
-function fetchLoginKey (
+async function fetchLoginKey (
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
@@ -33,15 +33,14 @@ function fetchLoginKey (
     recovery2Auth: recovery2Auth(recovery2Key, answers)
     // "otp": null
   }
-  return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
-    if (reply.recovery2Box == null) {
-      throw new Error('Missing data for recovery v2 login')
-    }
-    return {
-      loginKey: decrypt(reply.recovery2Box, recovery2Key),
-      loginReply: reply
-    }
-  })
+  const reply = await authRequest(ai, 'POST', '/v2/login', request)
+  if (reply.recovery2Box == null) {
+    throw new Error('Missing data for recovery v2 login')
+  }
+  return {
+    loginKey: decrypt(reply.recovery2Box, recovery2Key),
+    loginReply: reply
+  }
 }
 
 /**
@@ -57,21 +56,23 @@ export function getRecovery2Key (stashTree: LoginStash) {
  * Logs a user in using recovery answers.
  * @return A `Promise` for the new root login.
  */
-export function loginRecovery2 (
+export async function loginRecovery2 (
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
   answers: Array<string>
 ) {
   const { loginStore } = ai.props
-  return loginStore.load(username).then(stashTree => {
-    return fetchLoginKey(ai, recovery2Key, username, answers).then(values => {
-      const { loginKey, loginReply } = values
-      stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-      loginStore.save(stashTree)
-      return makeLoginTree(stashTree, loginKey)
-    })
-  })
+  let stashTree = await loginStore.load(username)
+  const { loginKey, loginReply } = await fetchLoginKey(
+    ai,
+    recovery2Key,
+    username,
+    answers
+  )
+  stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+  loginStore.save(stashTree)
+  return makeLoginTree(stashTree, loginKey)
 }
 
 /**
