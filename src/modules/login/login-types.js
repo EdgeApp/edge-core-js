@@ -11,7 +11,7 @@ export type ServerPayload = Object
 export type AppIdMap = { [walletId: string]: Array<string> }
 
 export interface LoginKit {
-  loginId?: string; // Really!? Doesn't seem optional
+  loginId: string;
   login: LoginTree;
   server: ServerPayload;
   serverPath: string;

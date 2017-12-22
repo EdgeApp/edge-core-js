@@ -1,5 +1,5 @@
 // @flow
-import type { AbcIo } from 'airbitz-core-types'
+import type { AbcIo, DiskletFile, DiskletFolder } from 'airbitz-core-types'
 import { mapFiles } from 'disklet'
 
 import { base58, base64 } from '../../util/encoding.js'
@@ -7,7 +7,12 @@ import type { ApiInput } from '../root.js'
 import { scrypt, userIdSnrp } from '../selectors.js'
 import type { LoginStash } from './login-types.js'
 
-function getJsonFiles (folder) {
+export type FileInfo = {
+  file: DiskletFile,
+  json: Object
+}
+
+function getJsonFiles (folder: DiskletFolder): Promise<Array<FileInfo>> {
   return mapFiles(folder, file =>
     file
       .getText()
@@ -36,7 +41,7 @@ export class LoginStore {
   /**
    * Lists the usernames that have data in the store.
    */
-  listUsernames () {
+  listUsernames (): Promise<Array<string>> {
     return getJsonFiles(this.folder).then(files =>
       files.map(file => file.json.username)
     )
@@ -46,7 +51,7 @@ export class LoginStore {
    * Finds the login stash for the given username.
    * Returns a default object if
    */
-  load (username: string) {
+  load (username: string): Promise<LoginStash> {
     return findUserFile(this.folder, username).then(
       file =>
         file != null
@@ -58,7 +63,7 @@ export class LoginStore {
   /**
    * Removes any login stash that may be stored for the given username.
    */
-  remove (username: string) {
+  remove (username: string): Promise<void> {
     return findUserFile(this.folder, username).then(
       file => (file != null ? file.file.delete() : void 0)
     )

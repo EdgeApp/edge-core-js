@@ -40,7 +40,7 @@ export interface CoreRoot {
   shapeshiftKey: string | void;
 
   // Loose objects:
-  loginStore: any;
+  loginStore: LoginStore;
 
   // Redux state:
   redux: Store<RootState, RootAction>;
@@ -172,7 +172,7 @@ export function makeRootProps (
 export interface ApiProps {
   +dispatch: Dispatch<RootAction>;
   io: AbcIo;
-  loginStore: any;
+  loginStore: LoginStore;
   onError(e: Error): void;
   output: RootOutput;
   shapeshiftKey: string | void;
