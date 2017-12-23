@@ -1,8 +1,8 @@
 // @flow
-import { assert } from 'chai'
+import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { fakeUser, makeFakeContexts } from '../../indexABC.js'
+import { error, fakeUser, makeFakeContexts } from '../../indexABC.js'
 import { base58 } from '../../util/encoding.js'
 
 const contextOptions = { localFakeUser: true }
@@ -99,6 +99,41 @@ describe('creation', function () {
       remote.loginWithPassword(username, password),
       context.loginWithKey(username, account.loginKey)
     ])
+  })
+})
+
+describe('otp', function () {
+  it('local login works', async function () {
+    const [context] = makeFakeContexts(contextOptions, contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    expect(account.otpEnabled).to.equal(false)
+    await account.enableOtp()
+    expect(account.otpEnabled).to.equal(true)
+
+    // Can still log in locally:
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+  })
+
+  it('remote login fails', async function () {
+    const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.enableOtp()
+
+    // Cannot log in remotely:
+    await remote.loginWithPIN(fakeUser.username, fakeUser.pin).catch(e => {
+      expect(e.name).to.equal(error.OtpError.name)
+      const hack: any = context
+      return hack.requestOtpReset(fakeUser.username, e.resetToken)
+    })
+
+    // Verify that a reset has been requested:
+    const messages1 = await context.fetchLoginMessages()
+    expect(messages1['js test 0'].otpResetPending).to.equal(true)
+
+    // Cancel the reset:
+    await account.cancelOtpResetRequest()
+    const messages2 = await context.fetchLoginMessages()
+    expect(messages2['js test 0'].otpResetPending).to.equal(false)
   })
 })
 

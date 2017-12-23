@@ -1,3 +1,5 @@
+import { base32 } from 'rfc4648'
+
 import { createReaction } from '../../util/redux/reaction.js'
 import * as ACTIONS from '../actions.js'
 import {
@@ -137,6 +139,77 @@ class AccountState {
     this.keyStates = null
 
     if (this.callbacks.onLoggedOut) this.callbacks.onLoggedOut()
+  }
+
+  enableOtp (otpTimeout, login = this.loginTree) {
+    const { ai } = this
+    checkLogin(login)
+    const otpKey =
+      login.otpKey == null
+        ? login.otpKey
+        : base32.stringify(ai.props.io.random(10))
+
+    const kit = {
+      serverPath: '/v2/login/otp',
+      server: {
+        otpKey,
+        otpTimeout
+      },
+      stash: {
+        otpKey,
+        otpResetDate: void 0,
+        otpTimeout
+      },
+      login: {
+        otpKey,
+        otpResetDate: void 0,
+        otpTimeout
+      },
+      loginId: login.loginId
+    }
+    return this.applyKit(kit)
+  }
+
+  disableOtp (login = this.loginTree) {
+    checkLogin(login)
+
+    const kit = {
+      serverMethod: 'DELETE',
+      serverPath: '/v2/login/otp',
+      server: {},
+      stash: {
+        otpKey: void 0,
+        otpResetDate: void 0,
+        otpTimeout: void 0
+      },
+      login: {
+        otpKey: void 0,
+        otpResetDate: void 0,
+        otpTimeout: void 0
+      },
+      loginId: login.loginId
+    }
+    return this.applyKit(kit)
+  }
+
+  cancelOtpReset (login = this.loginTree) {
+    checkLogin(login)
+
+    const kit = {
+      serverPath: '/v2/login/otp',
+      server: {
+        otpTimeout: login.otpTimeout,
+        otpKey: login.otpKey
+      },
+      stash: {
+        otpResetDate: void 0
+      },
+      login: {
+        otpResetDate: void 0
+      },
+      loginId: login.loginId
+    }
+    return this.applyKit(kit)
   }
 
   changePassword (password, login = this.loginTree) {

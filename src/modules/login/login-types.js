@@ -14,6 +14,7 @@ export interface LoginKit {
   loginId: string;
   login: LoginTree;
   server: ServerPayload;
+  serverMethod?: string;
   serverPath: string;
   stash: LoginStash;
 }

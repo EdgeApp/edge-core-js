@@ -7,6 +7,8 @@ import type { ApiInput } from '../root.js'
 import { scrypt, userIdSnrp } from '../selectors.js'
 import type { LoginStash } from './login-types.js'
 
+export type LoginIdMap = { [loginId: string]: string }
+
 export type FileInfo = {
   file: DiskletFile,
   json: Object
@@ -45,6 +47,19 @@ export class LoginStore {
     return getJsonFiles(this.folder).then(files =>
       files.map(file => file.json.username)
     )
+  }
+
+  /**
+   * Creates a map from loginIds to usernames.
+   */
+  mapLoginIds (): Promise<LoginIdMap> {
+    return getJsonFiles(this.folder).then(files => {
+      const out: LoginIdMap = {}
+      for (const file of files) {
+        out[file.json.loginId] = file.json.username
+      }
+      return out
+    })
   }
 
   /**

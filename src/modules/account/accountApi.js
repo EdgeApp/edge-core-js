@@ -58,6 +58,9 @@ function makeAccountApi (
     get loginKey (): string {
       return base58.stringify(state.login.loginKey)
     },
+    get otpEnabled (): boolean {
+      return state.login.otpTimeout != null
+    },
 
     // Exchange cache:
     get exchangeCache (): any {
@@ -83,6 +86,18 @@ function makeAccountApi (
 
     logout (): Promise<void> {
       return state.logout()
+    },
+
+    enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<void> {
+      return state.enableOtp(timeout)
+    },
+
+    disableOtp (): Promise<void> {
+      return state.disableOtp()
+    },
+
+    cancelOtpResetRequest (): Promise<void> {
+      return state.cancelOtpReset()
     },
 
     passwordOk (password: string): Promise<boolean> {
