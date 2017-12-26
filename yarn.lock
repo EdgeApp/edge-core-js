@@ -44,7 +44,7 @@ aes-js@^3.1.0:
 
 "airbitz-core-types@git+https://github.com/Airbitz/airbitz-core-types.git":
   version "0.0.1"
-  resolved "git+https://github.com/Airbitz/airbitz-core-types.git#469bb2737cbb215582cba647f6db17d96f85d596"
+  resolved "git+https://github.com/Airbitz/airbitz-core-types.git#eb3df3247e8dba765136ed8d499902ece64558a8"
 
 ajv-keywords@^2.0.0, ajv-keywords@^2.1.0:
   version "2.1.0"

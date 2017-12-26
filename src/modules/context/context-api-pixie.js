@@ -2,7 +2,8 @@
 import type {
   AbcAccountOptions,
   AbcContext,
-  AbcEdgeLoginOptions
+  AbcEdgeLoginOptions,
+  AbcExchangeSwapInfo
 } from 'airbitz-core-types'
 import { stopUpdates } from 'redux-pixies'
 
@@ -194,6 +195,13 @@ function makeContextApi (ai: ApiInput) {
       toCurrencyCode: string
     ): Promise<number> {
       return shapeshiftApi.getExchangeSwapRate(fromCurrencyCode, toCurrencyCode)
+    },
+
+    getExchangeSwapInfo (
+      fromCurrencyCode: string,
+      toCurrencyCode: string
+    ): Promise<AbcExchangeSwapInfo> {
+      return shapeshiftApi.getExchangeSwapInfo(fromCurrencyCode, toCurrencyCode)
     }
   }
 

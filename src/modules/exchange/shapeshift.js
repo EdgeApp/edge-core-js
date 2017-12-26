@@ -1,5 +1,8 @@
 // @flow
+import { bns } from 'biggystring'
+
 import type { ApiInput } from '../root.js'
+import { getCurrencyMultiplier } from '../currency/currency-selectors'
 
 const API_PREFIX = 'https://shapeshift.io'
 
@@ -49,6 +52,27 @@ export function makeShapeshiftApi (ai: ApiInput) {
       const pair = `${fromCurrency}_${toCurrency}`
       const json = await api.get(`/rate/${pair}`)
       return +json.rate
+    },
+
+    async getExchangeSwapInfo (
+      fromCurrency: string,
+      toCurrency: string
+    ): Promise<{
+      rate: number,
+      nativeMax: string,
+      nativeMin: string
+    }> {
+      const pair = `${fromCurrency}_${toCurrency}`
+      const json = await api.get(`/marketinfo/${pair}`)
+
+      const currencyInfos = ai.props.state.currency.infos
+      const multiplier = getCurrencyMultiplier(currencyInfos, fromCurrency)
+      const swapInfo = {
+        rate: json.rate,
+        nativeMax: bns.mulf(json.limit, multiplier),
+        nativeMin: bns.mulf(json.minumum, multiplier)
+      }
+      return swapInfo
     },
 
     async getSwapAddress (
