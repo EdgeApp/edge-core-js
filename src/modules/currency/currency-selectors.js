@@ -21,7 +21,7 @@ export function getCurrencyInfo (
 export function getCurrencyMultiplier (
   infos: Array<AbcCurrencyInfo>,
   currencyCode: string
-) {
+): string {
   for (const info of infos) {
     for (const denomination of info.denominations) {
       if (denomination.name === currencyCode) {
@@ -38,7 +38,7 @@ export function getCurrencyMultiplier (
     }
   }
 
-  return 1
+  return '1'
 }
 
 export function getCurrencyPlugin (
