@@ -73,7 +73,7 @@
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-es2015-rollup": "^3.0.0",
     "babel-preset-flow": "^6.23.0",
-    "eslint": "^4.5.0",
+    "eslint": "4.13.1",
     "eslint-config-standard": "^10.2.1",
     "eslint-plugin-flowtype": "^2.35.0",
     "eslint-plugin-import": "^2.7.0",
