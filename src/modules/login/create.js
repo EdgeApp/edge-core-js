@@ -70,14 +70,16 @@ export function makeCreateKit (
 
   // Bundle everything:
   return Promise.all([loginId, passwordKit]).then(values => {
-    const [loginId, passwordKit] = values
+    const [loginIdRaw, passwordKit] = values
+    const loginId = base64.stringify(loginIdRaw)
     return {
+      loginId,
       serverPath: '/v2/login/create',
       server: {
         appId,
         loginAuth: base64.stringify(loginAuth),
         loginAuthBox,
-        loginId: base64.stringify(loginId),
+        loginId,
         parentBox,
         ...passwordKit.server,
         ...pin2Kit.server,
@@ -86,7 +88,7 @@ export function makeCreateKit (
       stash: {
         appId,
         loginAuthBox,
-        loginId: base64.stringify(loginId),
+        loginId,
         parentBox,
         ...passwordKit.stash,
         ...pin2Kit.stash,
@@ -95,7 +97,7 @@ export function makeCreateKit (
       login: {
         appId,
         loginAuth,
-        loginId: base64.stringify(loginId),
+        loginId,
         loginKey,
         keyInfos: [],
         ...passwordKit.login,

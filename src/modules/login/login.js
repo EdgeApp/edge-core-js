@@ -3,6 +3,8 @@
  */
 
 // @flow
+import type { AbcLoginMessages } from 'airbitz-core-types'
+
 import { decrypt } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
@@ -61,6 +63,8 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
     'loginId',
     'loginAuthBox',
     'userId',
+    'otpResetDate',
+    'otpTimeout',
     'parentBox',
     'passwordAuthBox',
     'passwordBox',
@@ -143,6 +147,8 @@ function makeLoginTreeInner (stash, loginKey) {
   login.loginId = stash.loginId
   login.loginKey = loginKey
   login.otpKey = stash.otpKey
+  login.otpResetDate = stash.otpResetDate
+  login.otpTimeout = stash.otpTimeout
 
   // Password:
   if (stash.userId != null) {
@@ -253,14 +259,14 @@ export function sanitizeLoginStash (stashTree: LoginStash, appId: string) {
  */
 export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
   const { loginStore } = ai.props
-  const { loginId } = kit
+  const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
   if (!login) throw new Error('Cannot apply kit: missing login')
 
   return loginStore.load(loginTree.username).then(stashTree => {
     const request: Object = makeAuthJson(login)
     request.data = kit.server
-    return authRequest(ai, 'POST', kit.serverPath, request).then(reply => {
+    return authRequest(ai, serverMethod, serverPath, request).then(reply => {
       const newLoginTree = updateTree(
         loginTree,
         login => login.loginId === loginId,
@@ -342,4 +348,24 @@ export async function resetOtp (
     otp_reset_auth: resetToken
   }
   return authRequest(ai, 'POST', '/v1/otp/reset', request)
+}
+
+/**
+ * Fetches any login-related messages for all the users on this device.
+ */
+export function fetchLoginMessages (ai: ApiInput): Promise<AbcLoginMessages> {
+  const { loginStore } = ai.props
+  return loginStore.mapLoginIds().then(loginMap => {
+    const request = {
+      loginIds: Object.keys(loginMap)
+    }
+    return authRequest(ai, 'POST', '/v2/messages', request).then(reply => {
+      const out = {}
+      for (const message of reply) {
+        const username = loginMap[message.loginId]
+        if (username) out[username] = message
+      }
+      return out
+    })
+  })
 }
