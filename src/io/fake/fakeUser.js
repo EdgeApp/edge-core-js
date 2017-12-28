@@ -50,6 +50,7 @@ export const fakeUserServer = {
   loginId: 'm3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=',
 
   otpKey: 'HELLO===',
+  otpTimeout: 100,
 
   // Password:
   passwordAuth: '5dd0xXRq1tN7JF0aGwmXf9kaExbZyMyIKBWGc0hIACc=',

@@ -61,6 +61,9 @@ function makeAccountApi (
     get otpEnabled (): boolean {
       return state.login.otpTimeout != null
     },
+    get otpKey (): string | void {
+      return state.login.otpKey
+    },
 
     // Exchange cache:
     get exchangeCache (): any {

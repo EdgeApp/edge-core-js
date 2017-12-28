@@ -106,6 +106,8 @@ describe('otp', function () {
   it('local login works', async function () {
     const [context] = makeFakeContexts(contextOptions, contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    expect(account.otpEnabled).to.equal(true)
+    await account.disableOtp()
     expect(account.otpEnabled).to.equal(false)
     await account.enableOtp()
     expect(account.otpEnabled).to.equal(true)
@@ -117,13 +119,13 @@ describe('otp', function () {
   it('remote login fails', async function () {
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.disableOtp()
     await account.enableOtp()
 
     // Cannot log in remotely:
     await remote.loginWithPIN(fakeUser.username, fakeUser.pin).catch(e => {
       expect(e.name).to.equal(error.OtpError.name)
-      const hack: any = context
-      return hack.requestOtpReset(fakeUser.username, e.resetToken)
+      return context.requestOtpReset(fakeUser.username, e.resetToken)
     })
 
     // Verify that a reset has been requested:

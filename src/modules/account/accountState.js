@@ -145,7 +145,7 @@ class AccountState {
     const { ai } = this
     checkLogin(login)
     const otpKey =
-      login.otpKey == null
+      login.otpKey != null
         ? login.otpKey
         : base32.stringify(ai.props.io.random(10))
 
@@ -176,7 +176,7 @@ class AccountState {
     const kit = {
       serverMethod: 'DELETE',
       serverPath: '/v2/login/otp',
-      server: {},
+      server: void 0,
       stash: {
         otpKey: void 0,
         otpResetDate: void 0,
