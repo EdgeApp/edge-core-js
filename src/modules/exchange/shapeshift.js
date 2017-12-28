@@ -70,7 +70,7 @@ export function makeShapeshiftApi (ai: ApiInput) {
       const swapInfo = {
         rate: json.rate,
         nativeMax: bns.mulf(json.limit, multiplier),
-        nativeMin: bns.mulf(json.minumum, multiplier)
+        nativeMin: bns.mulf(json.minimum, multiplier)
       }
       return swapInfo
     },
