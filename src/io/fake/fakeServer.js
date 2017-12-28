@@ -7,6 +7,7 @@ import {
   loginReplyColumns
 } from './serverSchema.js'
 
+const OTP_RESET_TOKEN = 'Super secret reset token'
 const routes = []
 
 /**
@@ -90,7 +91,9 @@ function makeOtpErrorResponse (status = 500) {
   const body = {
     status_code: errorCodes.invalidOtp,
     message: 'OTP error',
-    otp_reset_auth: 'Super secret reset token'
+    results: {
+      otp_reset_auth: OTP_RESET_TOKEN
+    }
   }
   return new FakeResponse(JSON.stringify(body), { status })
 }
@@ -258,6 +261,15 @@ addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function (
   return makeResponse(results)
 })
 
+addRoute('POST', '/api/v1/otp/reset', function (req) {
+  const login = this.findLoginId(req.body.l1)
+  if (!login || req.body.otp_reset_auth !== OTP_RESET_TOKEN) {
+    return makeErrorResponse(errorCodes.invalidOtp)
+  }
+  login.otpResetDate = login.otpTimeout + Date.now() / 1000
+  return makeResponse()
+})
+
 // PIN login v1: -----------------------------------------------------------
 
 addRoute('POST', '/api/v1/account/pinpackage/update', authHandler1, function (
@@ -366,6 +378,27 @@ addRoute('POST', '/api/v2/login/keys', authHandler, function (req) {
   return makeResponse()
 })
 
+addRoute('POST', '/api/v2/login/otp', authHandler, function (req) {
+  const data = req.body.data
+  if (data.otpKey == null || data.otpTimeout == null) {
+    return makeErrorResponse(errorCodes.error)
+  }
+
+  req.login.otpKey = data.otpKey
+  req.login.otpTimeout = data.otpTimeout
+  req.login.otpResetDate = void 0
+
+  return makeResponse()
+})
+
+addRoute('DELETE', '/api/v2/login/otp', authHandler, function (req) {
+  req.login.otpKey = void 0
+  req.login.otpTimeout = void 0
+  req.login.otpResetDate = void 0
+
+  return makeResponse()
+})
+
 addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   const data = req.body.data
   if (
@@ -453,6 +486,25 @@ addRoute('DELETE', '/api/v2/lobby/.*', function (req) {
   const pubkey = req.path.split('/')[4]
   delete this.db.lobbies[pubkey]
   return makeResponse()
+})
+
+// messages: ---------------------------------------------------------------
+
+addRoute('POST', '/api/v2/messages', function (req) {
+  const { loginIds } = req.body
+
+  const out = []
+  for (const loginId of loginIds) {
+    const login = this.findLoginId(loginId)
+    if (login) {
+      out.push({
+        loginId,
+        otpResetPending: !!login.otpResetDate,
+        recovery2Corrupt: false
+      })
+    }
+  }
+  return makeResponse(out)
 })
 
 // sync: -------------------------------------------------------------------
