@@ -67,7 +67,8 @@ export function OtpError (resultsJson = {}, message = 'Invalid OTP token') {
   e.name = e.type = OtpError.name
   e.resetToken = resultsJson.otp_reset_auth
   if (resultsJson.otp_timeout_date != null) {
-    e.resetDate = new Date(1000 * resultsJson.otp_timeout_date)
+    // The server returns dates as ISO 8601 formatted strings:
+    e.resetDate = new Date(resultsJson.otp_timeout_date)
   }
   return e
 }
