@@ -266,7 +266,8 @@ addRoute('POST', '/api/v1/otp/reset', function (req) {
   if (!login || req.body.otp_reset_auth !== OTP_RESET_TOKEN) {
     return makeErrorResponse(errorCodes.invalidOtp)
   }
-  login.otpResetDate = login.otpTimeout + Date.now() / 1000
+  const resetDate = new Date(Date.now() + 1000 * login.otpTimeout)
+  login.otpResetDate = resetDate.toISOString()
   return makeResponse()
 })
 
@@ -391,13 +392,42 @@ addRoute('POST', '/api/v2/login/otp', authHandler, function (req) {
   return makeResponse()
 })
 
-addRoute('DELETE', '/api/v2/login/otp', authHandler, function (req) {
-  req.login.otpKey = void 0
-  req.login.otpTimeout = void 0
-  req.login.otpResetDate = void 0
+addRoute(
+  'DELETE',
+  '/api/v2/login/otp',
+  function (req) {
+    if (req.body.userId != null && req.body.otpResetAuth != null) {
+      const login = this.findLoginId(req.body.userId)
+      if (login == null) {
+        return makeErrorResponse(errorCodes.noAccount)
+      }
+      if (req.body.otpResetAuth !== OTP_RESET_TOKEN) {
+        return makeErrorResponse(errorCodes.invalidPassword)
+      }
+      if (login.otpKey == null || login.otpTimeout == null) {
+        return makeErrorResponse(
+          errorCodes.error,
+          'OTP is not enabled on this account'
+        )
+      }
+      if (login.otpResetDate == null) {
+        const resetDate = new Date(Date.now() + 1000 * login.otpTimeout)
+        login.otpResetDate = resetDate.toISOString()
+      }
+      return makeResponse({
+        otpResetDate: login.otpResetDate
+      })
+    }
+  },
+  authHandler,
+  function (req) {
+    req.login.otpKey = void 0
+    req.login.otpTimeout = void 0
+    req.login.otpResetDate = void 0
 
-  return makeResponse()
-})
+    return makeResponse()
+  }
+)
 
 addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   const data = req.body.data

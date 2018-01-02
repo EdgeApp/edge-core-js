@@ -342,12 +342,15 @@ export async function resetOtp (
   ai: ApiInput,
   username: string,
   resetToken: string
-): Promise<void> {
+): Promise<Date> {
   const request = {
-    l1: base64.stringify(await hashUsername(ai, username)),
-    otp_reset_auth: resetToken
+    userId: base64.stringify(await hashUsername(ai, username)),
+    otpResetAuth: resetToken
   }
-  return authRequest(ai, 'POST', '/v1/otp/reset', request)
+  return authRequest(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
+    // The server returns dates as ISO 8601 formatted strings:
+    return new Date(reply.otpResetDate)
+  })
 }
 
 /**

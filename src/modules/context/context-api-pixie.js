@@ -187,7 +187,7 @@ function makeContextApi (ai: ApiInput) {
       })
     },
 
-    requestOtpReset (username: string, otpResetToken: string): Promise<void> {
+    requestOtpReset (username: string, otpResetToken: string): Promise<Date> {
       return resetOtp(ai, username, otpResetToken)
     },
 
