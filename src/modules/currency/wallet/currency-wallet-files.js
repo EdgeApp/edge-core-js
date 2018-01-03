@@ -184,7 +184,10 @@ function loadNameFile (input: CurrencyWalletInput, folder) {
     .then((name: string | null) =>
       dispatch({
         type: 'CURRENCY_WALLET_NAME_CHANGED',
-        payload: { name, walletId }
+        payload: {
+          name: typeof name === 'string' ? name : null,
+          walletId
+        }
       })
     )
 }
