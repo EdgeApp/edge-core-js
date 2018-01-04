@@ -154,7 +154,7 @@ function makeAccountApi (
 
     '@getWallet': { sync: true },
     getWallet (id: string): AbcWalletInfo {
-      const info = state.login.keyInfos.find(info => info.id === id)
+      const info = state.allKeys.find(info => info.id === id)
       return info
     },
 
@@ -165,7 +165,7 @@ function makeAccountApi (
      */
     '@getFirstWallet': { sync: true },
     getFirstWallet (type: string): ?AbcWalletInfo {
-      return findFirstKey(this.allKeys, type)
+      return findFirstKey(state.allKeys, type)
     },
 
     /**
