@@ -82,12 +82,15 @@ function makeAccountApi (
     changePassword (password: string): Promise<void> {
       return state.changePassword(password)
     },
-    changePIN (pin: string): Promise<void> {
+    changePin (opts: {
+      pin?: string, // We keep the existing PIN if unspecified
+      enableLogin?: boolean // We default to true if unspecified
+    }): Promise<string> {
       return state
-        .changePin(pin)
+        .changePin(opts.pin)
         .then(() => base58.stringify(state.login.pin2Key))
     },
-    setupRecovery2Questions (
+    changeRecoveryQuestions (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
@@ -102,16 +105,13 @@ function makeAccountApi (
     },
 
     // OTP:
-    get otpEnabled (): boolean {
-      return state.login.otpTimeout != null
-    },
     get otpKey (): string | void {
       return state.login.otpTimeout != null ? state.login.otpKey : void 0
     },
     get otpResetDate (): Date | void {
       return state.login.otpResetDate
     },
-    cancelOtpResetRequest (): Promise<void> {
+    cancelOtpReset (): Promise<void> {
       return state.cancelOtpReset()
     },
     enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<void> {
@@ -191,8 +191,17 @@ function makeAccountApi (
     },
 
     // Deprecated stuff (will be deleted soon):
+    get otpEnabled (): boolean {
+      return state.login.otpTimeout != null
+    },
+    cancelOtpResetRequest (): Promise<void> {
+      return this.cancelOtpReset()
+    },
     changeKeyStates (walletStates: AbcWalletStates): Promise<void> {
       return this.changeWalletStates(walletStates)
+    },
+    changePIN (pin: string): Promise<void> {
+      return this.changePin({ pin })
     },
     '@getFirstWallet': { sync: true },
     getFirstWallet (type: string): ?AbcWalletInfo {
@@ -213,13 +222,19 @@ function makeAccountApi (
       return this.changePassword(password)
     },
     pinSetup (pin: string): Promise<void> {
-      return this.changePIN(pin)
+      return this.changePin({ pin })
     },
     recovery2Set (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
-      return this.setupRecovery2Questions(questions, answers)
+      return this.changeRecoveryQuestions(questions, answers)
+    },
+    setupRecovery2Questions (
+      questions: Array<string>,
+      answers: Array<string>
+    ): Promise<string> {
+      return this.changeRecoveryQuestions(questions, answers)
     }
   }
 
