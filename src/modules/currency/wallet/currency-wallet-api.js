@@ -8,7 +8,8 @@ import type {
   AbcReceiveAddress,
   AbcSpendInfo,
   AbcSpendTarget,
-  AbcTransaction
+  AbcTransaction,
+  AbcDataDump
 } from 'airbitz-core-types'
 import { add, div, lte, sub } from 'biggystring'
 
@@ -224,15 +225,15 @@ export function makeCurrencyWalletApi (
       return Promise.resolve(engine.resyncBlockchain())
     },
 
-    dumpData () {
+    dumpData (): AbcDataDump {
       return engine.dumpData()
     },
 
-    getDisplayPrivateSeed () {
+    getDisplayPrivateSeed (): string | null {
       return engine.getDisplayPrivateSeed()
     },
 
-    getDisplayPublicSeed () {
+    getDisplayPublicSeed (): string | null {
       return engine.getDisplayPublicSeed()
     },
 
