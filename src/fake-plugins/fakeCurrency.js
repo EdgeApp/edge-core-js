@@ -143,6 +143,22 @@ class FakeCurrencyEngine {
     return Promise.resolve()
   }
 
+  resyncBlockchain () {
+    return Promise.resolve()
+  }
+
+  dumpData () {
+    return ''
+  }
+
+  getDisplayPrivateSeed () {
+    return ''
+  }
+
+  getDisplayPublicSeed () {
+    return ''
+  }
+
   makeSpend (spendInfo) {
     const { currencyCode = 'TEST', spendTargets } = spendInfo
 

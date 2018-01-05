@@ -220,6 +220,22 @@ export function makeCurrencyWalletApi (
       return Promise.all([engine.saveTx(tx)])
     },
 
+    resyncBlockchain (): Promise<void> {
+      return Promise.resolve(engine.resyncBlockchain())
+    },
+
+    dumpData () {
+      return engine.dumpData()
+    },
+
+    getDisplayPrivateSeed () {
+      return engine.getDisplayPrivateSeed()
+    },
+
+    getDisplayPublicSeed () {
+      return engine.getDisplayPublicSeed()
+    },
+
     saveTxMetadata (txid: string, currencyCode: string, metadata: AbcMetadata) {
       return setCurrencyWalletTxMetadata(
         input,
