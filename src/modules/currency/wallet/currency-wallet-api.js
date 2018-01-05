@@ -225,14 +225,17 @@ export function makeCurrencyWalletApi (
       return Promise.resolve(engine.resyncBlockchain())
     },
 
+    '@dumpData': { sync: true },
     dumpData (): AbcDataDump {
       return engine.dumpData()
     },
 
+    '@getDisplayPrivateSeed': { sync: true },
     getDisplayPrivateSeed (): string | null {
       return engine.getDisplayPrivateSeed()
     },
 
+    '@getDisplayPublicSeed': { sync: true },
     getDisplayPublicSeed (): string | null {
       return engine.getDisplayPublicSeed()
     },
