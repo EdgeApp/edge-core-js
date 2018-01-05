@@ -48,7 +48,7 @@ function wrapProperty (key, d, className, opts = {}) {
   // Wrap functions:
   if (typeof d.value === 'function') {
     const name = `${className}.${key}`
-    const { log = true } = opts
+    const { log = false } = opts
     d.value = opts.sync
       ? syncApi(d.value, name, log)
       : asyncApi(d.value, name, log)
@@ -58,7 +58,7 @@ function wrapProperty (key, d, className, opts = {}) {
     d.get = syncApi(d.get, `get ${className}.${key}`, log)
   }
   if (d.set != null) {
-    const { log = true } = opts
+    const { log = false } = opts
     d.set = syncApi(d.set, `set ${className}.${key}`, log)
   }
 
