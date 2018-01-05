@@ -1,15 +1,23 @@
+// @flow
 import aesjs from 'aes-js'
+import type { AbcIo } from 'airbitz-core-types'
 
 import { base16, base64 } from '../encoding.js'
 import { hashjs } from './external.js'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 
+export interface JsonBox {
+  encryptionType: number;
+  data_base64: string;
+  iv_hex: string;
+}
+
 /**
  * @param box an Airbitz JSON encryption box
  * @param key a key, as an ArrayBuffer
  */
-export function decrypt (box, key) {
+export function decrypt (box: JsonBox, key: Uint8Array): Uint8Array {
   // Check JSON:
   if (box.encryptionType !== 0) {
     throw new Error('Unknown encryption type')
@@ -69,7 +77,7 @@ export function decrypt (box, key) {
  * @param payload an ArrayBuffer of data
  * @param key a key, as an ArrayBuffer
  */
-export function encrypt (io, data, key) {
+export function encrypt (io: AbcIo, data: Uint8Array, key: Uint8Array): JsonBox {
   // Calculate sizes and locations:
   const headerSize = io.random(1)[0] & 0x1f
   const dataStart = 1 + headerSize + 4
@@ -130,12 +138,12 @@ export function encrypt (io, data, key) {
   }
 }
 
-export function hmacSha256 (data, key) {
+export function hmacSha256 (data: Uint8Array, key: Uint8Array): Uint8Array {
   const hmac = hashjs.hmac(hashjs.sha256, key)
   return hmac.update(data).digest()
 }
 
-export function sha256 (data) {
+export function sha256 (data: Uint8Array): Uint8Array {
   return hashjs
     .sha256()
     .update(data)

@@ -1,14 +1,14 @@
 // @flow
 import { wrapObject } from '../../util/api.js'
 import { createReaction } from '../../util/redux/reaction.js'
-import { addStorageWallet, syncStorageWallet } from '../actions.js'
 import type { StorageWalletInfo } from '../login/login-types.js'
 import type { ApiInput } from '../root.js'
+import { addStorageWallet, syncStorageWallet } from './actions.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLastSync,
   getStorageWalletLocalFolder
-} from '../selectors.js'
+} from './selectors.js'
 
 export function makeStorageWallet (keyInfo: StorageWalletInfo, opts: any) {
   const { callbacks = {} } = opts

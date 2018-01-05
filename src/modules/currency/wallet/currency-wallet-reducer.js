@@ -4,7 +4,7 @@ import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import { recycle } from '../../../util/compare.js'
 import type { RootAction } from '../../actions.js'
-import type { RootState } from '../../rootReducer.js'
+import type { RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'
 
 export interface CurrencyWalletState {

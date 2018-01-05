@@ -2,7 +2,7 @@
 import { buildReducer, mapReducer } from 'redux-keto'
 
 import type { RootAction } from '../actions.js'
-import type { RootState } from '../rootReducer.js'
+import type { RootState } from '../root-reducer.js'
 import activeLoginReducer from './active/active-login-reducer.js'
 import type { ActiveLoginState } from './active/active-login-reducer.js'
 import type { WalletInfoMap } from './login-types.js'

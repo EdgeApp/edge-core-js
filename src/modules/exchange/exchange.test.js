@@ -9,13 +9,13 @@ import {
 } from '../../fake-plugins/fakeExchange.js'
 import { makeFakeIos } from '../../indexABC.js'
 import { awaitState } from '../../util/redux/reaction.js'
+import { rootPixie } from '../root-pixie.js'
 import {
   makeCoreRoot,
   makeFakeCoreRoots,
   makeRootProps,
   startCoreRoot
 } from '../root.js'
-import { rootPixie } from '../rootPixie.js'
 import reducer, { addPairs } from './reducer.js'
 import { getExchangeRate } from './selectors.js'
 

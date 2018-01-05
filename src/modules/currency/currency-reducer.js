@@ -3,7 +3,7 @@ import type { AbcCurrencyInfo } from 'airbitz-core-types'
 import { buildReducer, mapReducer } from 'redux-keto'
 
 import type { RootAction } from '../actions.js'
-import type { RootState } from '../rootReducer.js'
+import type { RootState } from '../root-reducer.js'
 import type { CurrencyWalletState } from './wallet/currency-wallet-reducer.js'
 import currencyWalletReducer from './wallet/currency-wallet-reducer.js'
 

@@ -3,6 +3,7 @@ import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 import { makeFakeIos } from '../../indexABC.js'
+import { fixIo } from '../../io/fixIo.js'
 import { base16, utf8 } from '../encoding.js'
 import { decrypt, encrypt, hmacSha256, sha256 } from './crypto.js'
 
@@ -27,7 +28,7 @@ describe('encryption', function () {
       '002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393'
     )
     const data = utf8.parse('payload')
-    const box = encrypt(io, data, key)
+    const box = encrypt(fixIo(io), data, key)
     assert.deepEqual('payload', utf8.stringify(decrypt(box, key)))
   })
 })

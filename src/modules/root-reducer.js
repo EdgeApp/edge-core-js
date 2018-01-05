@@ -1,5 +1,5 @@
 // @flow
-import type { AbcCurrencyPlugin, AbcIo } from 'airbitz-core-types'
+import type { AbcIo } from 'airbitz-core-types'
 import { buildReducer } from 'redux-keto'
 
 import type { RootAction } from './actions.js'
@@ -15,16 +15,6 @@ export interface RootState {
   currency: CurrencyState;
   io: AbcIo;
   login: LoginState;
-  onError: (e: Error) => void;
-  plugins: {
-    currencyPlugins: Array<AbcCurrencyPlugin>
-  };
-  currencyWallets: {
-    [walletId: string]: {
-      engine: any,
-      name: string
-    }
-  };
 }
 
 function io (state = {}, action: RootAction) {
