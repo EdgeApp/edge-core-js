@@ -469,6 +469,16 @@ addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
   return makeResponse()
 })
 
+addRoute('DELETE', '/api/v2/login/recovery2', authHandler, function (req) {
+  req.login.question2Box = void 0
+  req.login.recovery2Auth = void 0
+  req.login.recovery2Box = void 0
+  req.login.recovery2Id = void 0
+  req.login.recovery2KeyBox = void 0
+
+  return makeResponse()
+})
+
 addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
   const data = req.body.data
   if (

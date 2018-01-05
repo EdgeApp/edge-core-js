@@ -249,7 +249,7 @@ describe('recovery2', function () {
     )
   })
 
-  it('set', async function () {
+  it('change', async function () {
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -268,5 +268,21 @@ describe('recovery2', function () {
         fakeUser.recovery2Answers
       )
     ])
+  })
+
+  it('delete', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+
+    const account = await context.loginWithRecovery2(
+      base58.stringify(fakeUser.recovery2Key),
+      fakeUser.username,
+      fakeUser.recovery2Answers
+    )
+    const flowHack: any = account
+    expect(flowHack.recoveryKey).to.equal(
+      base58.stringify(fakeUser.recovery2Key)
+    )
+    await flowHack.deleteRecovery()
+    expect(flowHack.recoveryKey).to.equal(void 0)
   })
 })

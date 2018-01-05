@@ -60,7 +60,9 @@ function makeAccountApi (
       return base58.stringify(state.login.loginKey)
     },
     get recoveryKey (): string | void {
-      return base58.stringify(state.login.recovery2Key)
+      return state.login.recovery2Key != null
+        ? base58.stringify(state.login.recovery2Key)
+        : void 0
     },
     get username (): string {
       return state.loginTree.username
@@ -105,6 +107,11 @@ function makeAccountApi (
     // Verify existing credentials:
     checkPassword (password: string): Promise<boolean> {
       return checkPassword(ai, state.loginTree, password)
+    },
+
+    // Remove credentials:
+    deleteRecovery (): Promise<void> {
+      return state.deleteRecovery()
     },
 
     // OTP:
