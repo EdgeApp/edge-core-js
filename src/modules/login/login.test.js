@@ -257,6 +257,8 @@ describe('recovery2', function () {
       fakeUser.recovery2Questions,
       fakeUser.recovery2Answers
     )
+    const flowHack: any = account
+    expect(flowHack.recoveryKey).to.equal(recovery2Key)
 
     await Promise.all([
       remote.fetchRecovery2Questions(recovery2Key, fakeUser.username),

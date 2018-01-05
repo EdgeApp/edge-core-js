@@ -59,6 +59,9 @@ function makeAccountApi (
     get loginKey (): string {
       return base58.stringify(state.login.loginKey)
     },
+    get recoveryKey (): string | void {
+      return base58.stringify(state.login.recovery2Key)
+    },
     get username (): string {
       return state.loginTree.username
     },
