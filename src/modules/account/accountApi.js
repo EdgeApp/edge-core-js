@@ -110,6 +110,9 @@ function makeAccountApi (
     },
 
     // Remove credentials:
+    deletePin (): Promise<void> {
+      return state.deletePin()
+    },
     deleteRecovery (): Promise<void> {
       return state.deleteRecovery()
     },

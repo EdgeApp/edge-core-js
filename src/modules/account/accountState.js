@@ -237,6 +237,24 @@ class AccountState {
     return this.applyKit(kit)
   }
 
+  deletePin (login = this.login) {
+    checkLogin(login)
+
+    const kit = {
+      serverMethod: 'DELETE',
+      serverPath: '/v2/login/pin2',
+      server: void 0,
+      stash: {
+        pin2Key: void 0
+      },
+      login: {
+        pin2Key: void 0
+      },
+      loginId: login.loginId
+    }
+    return this.applyKit(kit)
+  }
+
   deleteRecovery (login = this.loginTree) {
     checkLogin(login)
 

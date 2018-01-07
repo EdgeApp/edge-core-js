@@ -207,12 +207,20 @@ describe('pin', function () {
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
-  it('setup', async function () {
+  it('changes', async function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.pinSetup('4321')
     await context.loginWithPIN(fakeUser.username, '4321')
+  })
+
+  it('delete', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const flowHack: any = account
+    await flowHack.deletePin()
+    expect(await context.pinLoginEnabled(fakeUser.username)).to.equal(false)
   })
 })
 

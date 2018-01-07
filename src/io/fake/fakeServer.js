@@ -450,6 +450,15 @@ addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   return makeResponse()
 })
 
+addRoute('DELETE', '/api/v2/login/pin2', authHandler, function (req) {
+  req.login.pin2Auth = void 0
+  req.login.pin2Box = void 0
+  req.login.pin2Id = void 0
+  req.login.pin2KeyBox = void 0
+
+  return makeResponse()
+})
+
 addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
   const data = req.body.data
   if (
