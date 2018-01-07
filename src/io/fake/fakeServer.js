@@ -429,6 +429,16 @@ addRoute(
   }
 )
 
+addRoute('DELETE', '/api/v2/login/password', authHandler, function (req) {
+  req.login.passwordAuth = void 0
+  req.login.passwordAuthBox = void 0
+  req.login.passwordAuthSnrp = void 0
+  req.login.passwordBox = void 0
+  req.login.passwordKeySnrp = void 0
+
+  return makeResponse()
+})
+
 addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   const data = req.body.data
   if (

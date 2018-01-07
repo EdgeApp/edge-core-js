@@ -237,6 +237,30 @@ class AccountState {
     return this.applyKit(kit)
   }
 
+  deletePassword (login = this.login) {
+    checkLogin(login)
+
+    const kit = {
+      serverMethod: 'DELETE',
+      serverPath: '/v2/login/password',
+      server: void 0,
+      stash: {
+        passwordAuthBox: void 0,
+        passwordAuthSnrp: void 0,
+        passwordBox: void 0,
+        passwordKeySnrp: void 0
+      },
+      login: {
+        passwordAuthBox: void 0,
+        passwordAuthSnrp: void 0,
+        passwordBox: void 0,
+        passwordKeySnrp: void 0
+      },
+      loginId: login.loginId
+    }
+    return this.applyKit(kit)
+  }
+
   deletePin (login = this.login) {
     checkLogin(login)
 

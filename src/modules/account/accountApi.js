@@ -114,6 +114,9 @@ function makeAccountApi (
     },
 
     // Remove credentials:
+    deletePassword (): Promise<void> {
+      return state.deletePassword()
+    },
     deletePin (): Promise<void> {
       return state.deletePin()
     },
