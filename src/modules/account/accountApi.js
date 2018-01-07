@@ -15,6 +15,7 @@ import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchangeApi.js'
 import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
+import { checkPin2 } from '../login/pin2.js'
 import type { ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storageApi.js'
 import { makeAccountState } from './accountState.js'
@@ -107,6 +108,9 @@ function makeAccountApi (
     // Verify existing credentials:
     checkPassword (password: string): Promise<boolean> {
       return checkPassword(ai, state.loginTree, password)
+    },
+    checkPin (pin: string): Promise<boolean> {
+      return checkPin2(ai, state.loginTree, pin)
     },
 
     // Remove credentials:

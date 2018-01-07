@@ -87,6 +87,23 @@ export async function loginPin2 (
 }
 
 /**
+ * Returns true if the given pin is correct.
+ */
+export async function checkPin2 (ai: ApiInput, login: LoginTree, pin: string) {
+  const { appId, username } = login
+  const { loginStore } = ai.props
+  const stashTree = await loginStore.load(username)
+  const { pin2Key } = getPin2Key(stashTree, appId)
+  if (pin2Key == null) {
+    throw new Error('No PIN set locally for this account')
+  }
+  return fetchLoginKey(ai, pin2Key, username, pin, totp(stashTree.otpKey)).then(
+    good => true,
+    bad => false
+  )
+}
+
+/**
  * Creates the data needed to attach a PIN to a login.
  */
 export function makePin2Kit (
