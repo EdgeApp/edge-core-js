@@ -429,6 +429,16 @@ addRoute(
   }
 )
 
+addRoute('DELETE', '/api/v2/login/password', authHandler, function (req) {
+  req.login.passwordAuth = void 0
+  req.login.passwordAuthBox = void 0
+  req.login.passwordAuthSnrp = void 0
+  req.login.passwordBox = void 0
+  req.login.passwordKeySnrp = void 0
+
+  return makeResponse()
+})
+
 addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   const data = req.body.data
   if (
@@ -450,6 +460,15 @@ addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   return makeResponse()
 })
 
+addRoute('DELETE', '/api/v2/login/pin2', authHandler, function (req) {
+  req.login.pin2Auth = void 0
+  req.login.pin2Box = void 0
+  req.login.pin2Id = void 0
+  req.login.pin2KeyBox = void 0
+
+  return makeResponse()
+})
+
 addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
   const data = req.body.data
   if (
@@ -465,6 +484,16 @@ addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
   req.login.pin2Box = data.pin2Box
   req.login.pin2Id = data.pin2Id
   req.login.pin2KeyBox = data.pin2KeyBox
+
+  return makeResponse()
+})
+
+addRoute('DELETE', '/api/v2/login/recovery2', authHandler, function (req) {
+  req.login.question2Box = void 0
+  req.login.recovery2Auth = void 0
+  req.login.recovery2Box = void 0
+  req.login.recovery2Id = void 0
+  req.login.recovery2KeyBox = void 0
 
   return makeResponse()
 })

@@ -237,6 +237,66 @@ class AccountState {
     return this.applyKit(kit)
   }
 
+  deletePassword (login = this.login) {
+    checkLogin(login)
+
+    const kit = {
+      serverMethod: 'DELETE',
+      serverPath: '/v2/login/password',
+      server: void 0,
+      stash: {
+        passwordAuthBox: void 0,
+        passwordAuthSnrp: void 0,
+        passwordBox: void 0,
+        passwordKeySnrp: void 0
+      },
+      login: {
+        passwordAuthBox: void 0,
+        passwordAuthSnrp: void 0,
+        passwordBox: void 0,
+        passwordKeySnrp: void 0
+      },
+      loginId: login.loginId
+    }
+    return this.applyKit(kit)
+  }
+
+  deletePin (login = this.login) {
+    checkLogin(login)
+
+    const kit = {
+      serverMethod: 'DELETE',
+      serverPath: '/v2/login/pin2',
+      server: void 0,
+      stash: {
+        pin2Key: void 0
+      },
+      login: {
+        pin2Key: void 0
+      },
+      loginId: login.loginId
+    }
+    return this.applyKit(kit)
+  }
+
+  deleteRecovery (login = this.loginTree) {
+    checkLogin(login)
+
+    const kit = {
+      serverMethod: 'DELETE',
+      serverPath: '/v2/login/recovery2',
+      server: void 0,
+      stash: {
+        recovery2Key: void 0
+      },
+      login: {
+        recovery2Key: void 0
+      },
+      loginId: login.loginId
+    }
+    return this.applyKit(kit)
+  }
+
   applyKit (kit) {
     return applyKit(this.ai, this.loginTree, kit).then(loginTree => {
       this.loginTree = loginTree

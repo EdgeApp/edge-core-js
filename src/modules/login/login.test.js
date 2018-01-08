@@ -140,7 +140,27 @@ describe('otp', function () {
 })
 
 describe('password', function () {
-  it('setup', async function () {
+  it('login offline', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    // Disable network access (but leave the sync server up):
+    const oldFetch = context.io.fetch
+    const ioHack: any = context.io
+    ioHack.fetch = (url, opts) =>
+      /store/.test(url.toString())
+        ? oldFetch(url, opts)
+        : Promise.reject(new Error('Network error'))
+
+    return context.loginWithPassword(fakeUser.username, fakeUser.password)
+  })
+
+  it('login online', function () {
+    const [context] = makeFakeContexts(contextOptions, contextOptions)
+    return context.loginWithPassword(fakeUser.username, fakeUser.password)
+  })
+
+  it('change', async function () {
     this.timeout(15000)
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
 
@@ -166,24 +186,15 @@ describe('password', function () {
     assert(!ok)
   })
 
-  it('login offline', async function () {
+  it('delete', async function () {
     const [context] = makeFakeContexts(contextOptions)
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    // Disable network access (but leave the sync server up):
-    const oldFetch = context.io.fetch
-    const ioHack: any = context.io
-    ioHack.fetch = (url, opts) =>
-      /store/.test(url.toString())
-        ? oldFetch(url, opts)
-        : Promise.reject(new Error('Network error'))
-
-    return context.loginWithPassword(fakeUser.username, fakeUser.password)
-  })
-
-  it('login online', function () {
-    const [context] = makeFakeContexts(contextOptions, contextOptions)
-    return context.loginWithPassword(fakeUser.username, fakeUser.password)
+    const flowHack: any = account
+    await flowHack.deletePassword()
+    return context
+      .loginWithPassword(fakeUser.username, fakeUser.password)
+      .then(x => Promise.reject(x), x => x)
   })
 })
 
@@ -207,12 +218,28 @@ describe('pin', function () {
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
-  it('setup', async function () {
+  it('changes', async function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.pinSetup('4321')
     await context.loginWithPIN(fakeUser.username, '4321')
+  })
+
+  it('check', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const flowHack: any = account
+    expect(await flowHack.checkPin(fakeUser.pin)).to.equal(true)
+    expect(await flowHack.checkPin(fakeUser.pin + '!')).to.equal(false)
+  })
+
+  it('delete', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const flowHack: any = account
+    await flowHack.deletePin()
+    expect(await context.pinLoginEnabled(fakeUser.username)).to.equal(false)
   })
 })
 
@@ -249,7 +276,7 @@ describe('recovery2', function () {
     )
   })
 
-  it('set', async function () {
+  it('change', async function () {
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -257,6 +284,8 @@ describe('recovery2', function () {
       fakeUser.recovery2Questions,
       fakeUser.recovery2Answers
     )
+    const flowHack: any = account
+    expect(flowHack.recoveryKey).to.equal(recovery2Key)
 
     await Promise.all([
       remote.fetchRecovery2Questions(recovery2Key, fakeUser.username),
@@ -266,5 +295,21 @@ describe('recovery2', function () {
         fakeUser.recovery2Answers
       )
     ])
+  })
+
+  it('delete', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+
+    const account = await context.loginWithRecovery2(
+      base58.stringify(fakeUser.recovery2Key),
+      fakeUser.username,
+      fakeUser.recovery2Answers
+    )
+    const flowHack: any = account
+    expect(flowHack.recoveryKey).to.equal(
+      base58.stringify(fakeUser.recovery2Key)
+    )
+    await flowHack.deleteRecovery()
+    expect(flowHack.recoveryKey).to.equal(void 0)
   })
 })
