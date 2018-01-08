@@ -96,7 +96,7 @@ function makeAccountApi (
         .changePin(opts.pin)
         .then(() => base58.stringify(state.login.pin2Key))
     },
-    changeRecoveryQuestions (
+    changeRecovery (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
@@ -248,13 +248,13 @@ function makeAccountApi (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
-      return this.changeRecoveryQuestions(questions, answers)
+      return this.changeRecovery(questions, answers)
     },
     setupRecovery2Questions (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
-      return this.changeRecoveryQuestions(questions, answers)
+      return this.changeRecovery(questions, answers)
     }
   }
 

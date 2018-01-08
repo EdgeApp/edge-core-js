@@ -74,10 +74,7 @@ describe('creation', function () {
     const answers = fakeUser.recovery2Answers
 
     const account = await context.createAccount(username, void 0, fakeUser.pin)
-    const recovery2Key = await account.changeRecoveryQuestions(
-      questions,
-      answers
-    )
+    const recovery2Key = await account.changeRecovery(questions, answers)
 
     return Promise.all([
       context.loginWithPIN(username, fakeUser.pin),
@@ -282,7 +279,7 @@ describe('recovery2', function () {
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    const recovery2Key = await account.changeRecoveryQuestions(
+    const recovery2Key = await account.changeRecovery(
       fakeUser.recovery2Questions,
       fakeUser.recovery2Answers
     )
