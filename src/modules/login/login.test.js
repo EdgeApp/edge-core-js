@@ -74,7 +74,10 @@ describe('creation', function () {
     const answers = fakeUser.recovery2Answers
 
     const account = await context.createAccount(username, void 0, fakeUser.pin)
-    const recovery2Key = await account.recovery2Set(questions, answers)
+    const recovery2Key = await account.changeRecoveryQuestions(
+      questions,
+      answers
+    )
 
     return Promise.all([
       context.loginWithPIN(username, fakeUser.pin),
@@ -133,7 +136,7 @@ describe('otp', function () {
     expect(messages1['js test 0'].otpResetPending).to.equal(true)
 
     // Cancel the reset:
-    await account.cancelOtpResetRequest()
+    await account.cancelOtpReset()
     const messages2 = await context.fetchLoginMessages()
     expect(messages2['js test 0'].otpResetPending).to.equal(false)
   })
@@ -165,7 +168,7 @@ describe('password', function () {
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
 
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    await account.passwordSetup('Test1234')
+    await account.changePassword('Test1234')
 
     return remote.loginWithPassword(fakeUser.username, 'Test1234')
   })
@@ -174,7 +177,7 @@ describe('password', function () {
     const [context] = makeFakeContexts(contextOptions)
 
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const ok = await account.passwordOk(fakeUser.password)
+    const ok = await account.checkPassword(fakeUser.password)
     assert(ok)
   })
 
@@ -182,7 +185,7 @@ describe('password', function () {
     const [context] = makeFakeContexts(contextOptions)
 
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const ok = await account.passwordOk('wrong one')
+    const ok = await account.checkPassword('wrong one')
     assert(!ok)
   })
 
@@ -190,8 +193,7 @@ describe('password', function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    const flowHack: any = account
-    await flowHack.deletePassword()
+    await account.deletePassword()
     return context
       .loginWithPassword(fakeUser.username, fakeUser.password)
       .then(x => Promise.reject(x), x => x)
@@ -222,23 +224,23 @@ describe('pin', function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    await account.pinSetup('4321')
+    await account.changePin({ pin: '4321' })
     await context.loginWithPIN(fakeUser.username, '4321')
   })
 
   it('check', async function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const flowHack: any = account
-    expect(await flowHack.checkPin(fakeUser.pin)).to.equal(true)
-    expect(await flowHack.checkPin(fakeUser.pin + '!')).to.equal(false)
+
+    expect(await account.checkPin(fakeUser.pin)).to.equal(true)
+    expect(await account.checkPin(fakeUser.pin + '!')).to.equal(false)
   })
 
   it('delete', async function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const flowHack: any = account
-    await flowHack.deletePin()
+
+    await account.deletePin()
     expect(await context.pinLoginEnabled(fakeUser.username)).to.equal(false)
   })
 })
@@ -280,12 +282,11 @@ describe('recovery2', function () {
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    const recovery2Key = await account.recovery2Set(
+    const recovery2Key = await account.changeRecoveryQuestions(
       fakeUser.recovery2Questions,
       fakeUser.recovery2Answers
     )
-    const flowHack: any = account
-    expect(flowHack.recoveryKey).to.equal(recovery2Key)
+    expect(account.recoveryKey).to.equal(recovery2Key)
 
     await Promise.all([
       remote.fetchRecovery2Questions(recovery2Key, fakeUser.username),
@@ -305,11 +306,10 @@ describe('recovery2', function () {
       fakeUser.username,
       fakeUser.recovery2Answers
     )
-    const flowHack: any = account
-    expect(flowHack.recoveryKey).to.equal(
+    expect(account.recoveryKey).to.equal(
       base58.stringify(fakeUser.recovery2Key)
     )
-    await flowHack.deleteRecovery()
-    expect(flowHack.recoveryKey).to.equal(void 0)
+    await account.deleteRecovery()
+    expect(account.recoveryKey).to.equal(void 0)
   })
 })

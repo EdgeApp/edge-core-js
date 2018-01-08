@@ -3,13 +3,13 @@ import type {
   AbcCurrencyEngine,
   AbcCurrencyPlugin,
   AbcCurrencyWallet,
+  AbcDataDump,
   AbcEncodeUri,
   AbcMetadata,
   AbcReceiveAddress,
   AbcSpendInfo,
   AbcSpendTarget,
-  AbcTransaction,
-  AbcDataDump
+  AbcTransaction
 } from 'airbitz-core-types'
 import { add, div, lte, sub } from 'biggystring'
 
