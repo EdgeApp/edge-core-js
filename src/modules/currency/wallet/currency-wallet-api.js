@@ -203,7 +203,7 @@ export function makeCurrencyWalletApi (
           tx.otherParams.exchangeData = exchangeData
           return tx
         }
-        // transfer same currencly from one wallet to another
+        // transfer same currency from one wallet to another
       }
 
       return engine.makeSpend(spendInfo)

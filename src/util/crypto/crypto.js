@@ -61,7 +61,7 @@ export function decrypt (box: JsonBox, key: Uint8Array): Uint8Array {
   const paddingStart = hashStart + hashSize
   const paddingSize = raw.length - paddingStart
   if (paddingSize <= 0) {
-    throw new Error('Mising PKCS7 padding')
+    throw new Error('Missing PKCS7 padding')
   }
   for (let i = paddingStart; i < raw.length; ++i) {
     if (raw[i] !== paddingSize) {

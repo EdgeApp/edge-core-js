@@ -27,7 +27,7 @@ function asyncApi (f, name, log) {
 }
 
 /**
- * Prepares a sync API endploint for consumption by the outside world.
+ * Prepares a sync API endpoint for consumption by the outside world.
  */
 function syncApi (f, name, log) {
   return function syncApi (...rest) {
@@ -42,7 +42,7 @@ function syncApi (f, name, log) {
 }
 
 /**
- * Adjusts a property decscriptor, making the property ready for use as an API.
+ * Adjusts a property descriptor, making the property ready for use as an API.
  */
 function wrapProperty (key, d, className, opts = {}) {
   // Wrap functions:

@@ -99,7 +99,7 @@ export function makeCoreRoot (opts: AbcContextOptions) {
 }
 
 /**
- * Attaches pixies to the core root, begining all background work.
+ * Attaches pixies to the core root, beginning all background work.
  */
 export function startCoreRoot (coreRoot: CoreRoot) {
   coreRoot.destroyPixie = attachPixie(

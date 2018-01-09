@@ -29,7 +29,7 @@ export function softCat (...lists) {
 
 /**
  * Merges several Javascript objects deeply,
- * prefering the items from later objects.
+ * preferring the items from later objects.
  */
 export function mergeDeeply (...objects) {
   const out = {}

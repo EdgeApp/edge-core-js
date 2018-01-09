@@ -18,7 +18,7 @@ import { mergeTx } from './currency-wallet-reducer.js'
 
 /**
  * Iterates over all the active logins that care about this particular wallet,
- * returing their callbacks.
+ * returning their callbacks.
  */
 export function forEachListener (
   input: CurrencyWalletInput,
