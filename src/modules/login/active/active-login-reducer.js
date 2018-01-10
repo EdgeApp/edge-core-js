@@ -86,9 +86,15 @@ export default filterReducer(
   activeLogin,
   (action: RootAction, next: ActiveLoginNext) => {
     if (
-      (action.type === 'ACCOUNT_KEYS_LOADED' &&
-        action.payload.activeLoginId === next.id) ||
-      (action.type === 'LOGIN' && next.root.login.lastActiveLoginId === next.id)
+      action.type === 'ACCOUNT_KEYS_LOADED' &&
+      action.payload.activeLoginId === next.id
+    ) {
+      return action
+    }
+
+    if (
+      action.type === 'LOGIN' &&
+      next.root.login.lastActiveLoginId === next.id
     ) {
       return action
     }
