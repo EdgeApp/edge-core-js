@@ -135,7 +135,13 @@ class AccountState {
           if (!this.login) return
 
           // If there are changes, reload our wallet infos:
-          if (changes.length) this.reloadKeyStates()
+          if (changes.length) {
+            this.reloadKeyStates().then(() => {
+              if (this.callbacks.onKeyListChanged) {
+                this.callbacks.onKeyListChanged()
+              }
+            })
+          }
           this.startTimer()
         })
         .catch(e => this.startTimer())
