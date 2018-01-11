@@ -7,7 +7,7 @@ import type {
 import { isPixieShutdownError } from 'redux-pixies'
 
 import { compare } from '../../../util/compare.js'
-import { getStorageWalletLastSync } from '../../storage/selectors.js'
+import { getStorageWalletLastChanges } from '../../storage/selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { loadAllFiles, setupNewTxMetadata } from './currency-wallet-files.js'
 import type {
@@ -161,8 +161,8 @@ export function watchCurrencyWallet (input: CurrencyWalletInput) {
     }
 
     if (
-      getStorageWalletLastSync(props.state, walletId) !==
-      getStorageWalletLastSync(lastProps.state, walletId)
+      getStorageWalletLastChanges(props.state, walletId) !==
+      getStorageWalletLastChanges(lastProps.state, walletId)
     ) {
       // Reload our data from disk:
       loadAllFiles(input).catch(e => input.props.onError(e))
