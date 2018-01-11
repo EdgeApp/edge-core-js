@@ -60,17 +60,20 @@ export function makeShapeshiftApi (ai: ApiInput) {
     ): Promise<{
       rate: number,
       nativeMax: string,
-      nativeMin: string
+      nativeMin: string,
+      minerFee: string
     }> {
       const pair = `${fromCurrency}_${toCurrency}`
       const json = await api.get(`/marketinfo/${pair}`)
 
       const currencyInfos = ai.props.state.currency.infos
-      const multiplier = getCurrencyMultiplier(currencyInfos, fromCurrency)
+      const multiplierFrom = getCurrencyMultiplier(currencyInfos, fromCurrency)
+      const multiplierTo = getCurrencyMultiplier(currencyInfos, toCurrency)
       const swapInfo = {
         rate: json.rate,
-        nativeMax: bns.mulf(json.limit, multiplier),
-        nativeMin: bns.mulf(json.minimum, multiplier)
+        minerFee: bns.mul(json.minerFee.toString(), multiplierTo),
+        nativeMax: bns.mulf(json.limit, multiplierFrom),
+        nativeMin: bns.mulf(json.minimum, multiplierFrom)
       }
       return swapInfo
     },
