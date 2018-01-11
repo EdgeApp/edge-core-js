@@ -33,7 +33,7 @@ export function syncStorageWallet (keyId) {
 
     return syncRepo(io, paths, { ...status }).then(({ changes, status }) => {
       dispatch(setStatus(keyId, status))
-      return Object.keys(changes).length !== 0
+      return Object.keys(changes)
     })
   }
 }

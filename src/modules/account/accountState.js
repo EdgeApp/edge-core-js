@@ -18,7 +18,7 @@ import { applyKit, searchTree, syncLogin } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
-import { addStorageWallet } from '../storage/actions.js'
+import { addStorageWallet, syncStorageWallet } from '../storage/actions.js'
 import { getStorageWalletLastSync } from '../storage/selectors.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
@@ -119,6 +119,27 @@ class AccountState {
     //   type: 'ACCOUNT_KEYS_LOADED',
     //   payload: { activeLoginId, walletInfos: this.allKeys }
     // })
+
+    this.startTimer()
+  }
+
+  startTimer () {
+    setTimeout(() => {
+      // If we are logged out, do nothing!
+      if (!this.login) return
+
+      const { dispatch } = this.ai.props
+      dispatch(syncStorageWallet(this.keyInfo.id))
+        .then(changes => {
+          // If we are logged out, do nothing!
+          if (!this.login) return
+
+          // If there are changes, reload our wallet infos:
+          if (changes.length) this.reloadKeyStates()
+          this.startTimer()
+        })
+        .catch(e => this.startTimer())
+    }, 30000)
   }
 
   async logout () {

@@ -55,7 +55,8 @@ export function makeStorageWalletApi (
     },
 
     sync () {
-      return dispatch(syncStorageWallet(id))
+      const thunkPromise: any = dispatch(syncStorageWallet(id))
+      return thunkPromise.then(changes => changes.length !== 0)
     }
   }
 }
