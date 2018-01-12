@@ -8,7 +8,7 @@ import { combinePixies, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 
 import type { RootProps } from '../../root.js'
-import { addStorageWallet } from '../../storage/actions.js'
+import { addStorageWallet, syncStorageWallet } from '../../storage/actions.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalEncryptedFolder,
@@ -29,6 +29,7 @@ export interface CurrencyWalletOutput {
   plugin: AbcCurrencyPlugin | void;
   engine: AbcCurrencyEngine | void;
   engineStarted: boolean | void;
+  syncTimer: void;
 }
 
 export interface CurrencyWalletProps extends RootProps {
@@ -149,5 +150,37 @@ export default combinePixies({
     })
 
     return stopUpdates
+  },
+
+  syncTimer (input: CurrencyWalletInput) {
+    let timeout: number | void
+
+    function startTimer () {
+      // Bail out if either the wallet or the repo aren't ready:
+      const { dispatch, id, state } = input.props
+      if (
+        !input.props.selfOutput ||
+        !state.storageWallets[id] ||
+        !state.storageWallets[id].status.lastSync
+      ) {
+        return
+      }
+
+      timeout = setTimeout(() => {
+        const thunkPromise: any = dispatch(syncStorageWallet(id))
+        thunkPromise.then(changes => startTimer()).catch(e => startTimer())
+      }, 30 * 1000)
+    }
+
+    return {
+      update () {
+        // Kick off the initial sync if we don't already have one running:
+        if (timeout == null) return startTimer()
+      },
+
+      destroy () {
+        clearTimeout(timeout)
+      }
+    }
   }
 })

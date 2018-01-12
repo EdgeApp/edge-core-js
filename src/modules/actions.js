@@ -127,6 +127,20 @@ export interface LogoutAction {
   payload: { activeLoginId: string };
 }
 
+/**
+ * Fires when a repo has been synced.
+ */
+export interface RepoSynced {
+  type: 'REPO_SYNCED';
+  payload: {
+    changes: Array<string>,
+    status: {
+      lastHash: string,
+      lastSync: number
+    }
+  };
+}
+
 export type RootAction =
   | AccountKeysLoadedAction
   | CurrencyEngineChangedTxs
@@ -139,3 +153,4 @@ export type RootAction =
   | InitAction
   | LoginAction
   | LogoutAction
+  | RepoSynced

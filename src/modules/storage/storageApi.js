@@ -6,7 +6,7 @@ import type { ApiInput } from '../root.js'
 import { addStorageWallet, syncStorageWallet } from './actions.js'
 import {
   getStorageWalletFolder,
-  getStorageWalletLastSync,
+  getStorageWalletLastChanges,
   getStorageWalletLocalFolder
 } from './selectors.js'
 
@@ -33,8 +33,8 @@ export function makeStorageWalletApi (
   if (onDataChanged) {
     dispatch(
       createReaction(
-        state => getStorageWalletLastSync(state, id),
-        onDataChanged
+        state => getStorageWalletLastChanges(state, id),
+        changes => onDataChanged(changes)
       )
     )
   }

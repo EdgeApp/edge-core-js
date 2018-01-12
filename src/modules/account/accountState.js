@@ -19,7 +19,7 @@ import { makePasswordKit } from '../login/password.js'
 import { makePin2Kit } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
 import { addStorageWallet, syncStorageWallet } from '../storage/actions.js'
-import { getStorageWalletLastSync } from '../storage/selectors.js'
+import { getStorageWalletLastChanges } from '../storage/selectors.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 export function findAppLogin (loginTree, appId) {
@@ -130,22 +130,19 @@ class AccountState {
 
       const { dispatch } = this.ai.props
       dispatch(syncStorageWallet(this.keyInfo.id))
-        .then(changes => {
-          // If we are logged out, do nothing!
-          if (!this.login) return
-
-          // If there are changes, reload our wallet infos:
-          if (changes.length) {
-            this.reloadKeyStates().then(() => {
-              if (this.callbacks.onKeyListChanged) {
-                this.callbacks.onKeyListChanged()
-              }
-            })
-          }
-          this.startTimer()
-        })
+        .then(changes => this.startTimer())
         .catch(e => this.startTimer())
     }, 30000)
+  }
+
+  async onDataChanged (changes) {
+    // If we are logged out, do nothing!
+    if (!this.login) return
+
+    await this.reloadKeyStates()
+    if (this.callbacks.onKeyListChanged) {
+      this.callbacks.onKeyListChanged()
+    }
   }
 
   async logout () {
@@ -453,8 +450,8 @@ export async function makeAccountState (ai, appId, loginTree, callbacks) {
       const account = new AccountState(ai, appId, loginTree, keyInfo, callbacks)
       const disposer = dispatch(
         createReaction(
-          state => getStorageWalletLastSync(state, keyInfo.id),
-          () => account.reloadKeyStates()
+          state => getStorageWalletLastChanges(state, keyInfo.id),
+          changes => account.onDataChanged(changes)
         )
       )
       account.disposer = disposer

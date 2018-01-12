@@ -1,34 +1,54 @@
+// @flow
 import { combineReducers } from 'redux'
 
-import {
-  constReducer,
-  listReducer,
-  settableReducer
-} from '../../util/redux/reducers.js'
+import { listReducer } from '../../util/redux/reducers.js'
+import type { RootAction } from '../actions.js'
+
+export interface StorageWalletState {
+  lastChanges: Array<string>;
+  status: {
+    lastHash: string | void,
+    lastSync: number
+  };
+}
 
 const ADD = 'airbitz-core-js/storageWallet/ADD'
 const UPDATE = 'airbitz-core-js/storageWallet/UPDATE'
-const SET_STATUS = 'airbitz-core-js/storageWallet/SET_STATUS'
 
-export function add (keyId, initialState) {
+export function add (keyId: string, initialState: any) {
   return { type: ADD, payload: { id: keyId, initialState } }
 }
 
-export function update (keyId, action) {
+export function update (keyId: string, action: RootAction) {
   return { type: UPDATE, payload: { id: keyId, action } }
 }
 
-export function setStatus (keyId, status) {
-  return update(keyId, { type: SET_STATUS, payload: status })
-}
-
 /**
- * Individual wallet reducer.
+ * Individual repo reducer.
  */
 const storageWallet = combineReducers({
-  localFolder: constReducer(),
-  paths: constReducer(),
-  status: settableReducer({}, SET_STATUS)
+  lastChanges (state = [], action: RootAction): Array<string> {
+    if (action.type === 'REPO_SYNCED') {
+      const { changes } = action.payload
+      return changes.length ? changes : state
+    }
+    return state
+  },
+
+  localFolder (state = null) {
+    return state
+  },
+
+  paths (state = null) {
+    return state
+  },
+
+  status (state = { lastSync: 0 }, action: RootAction) {
+    if (action.type === 'REPO_SYNCED') {
+      return action.payload.status
+    }
+    return state
+  }
 })
 
 /**

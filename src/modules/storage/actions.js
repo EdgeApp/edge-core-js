@@ -1,7 +1,7 @@
 import { base58, base64 } from '../../util/encoding.js'
 import { getIo } from '../selectors.js'
 import { loadRepoStatus, makeRepoPaths, syncRepo } from '../storage/repo.js'
-import { add, setStatus } from './reducer.js'
+import { add, update } from './reducer.js'
 
 export function addStorageWallet (keyInfo, onError) {
   return (dispatch, getState) => {
@@ -32,7 +32,11 @@ export function syncStorageWallet (keyId) {
     const { paths, status } = state.storageWallets[keyId]
 
     return syncRepo(io, paths, { ...status }).then(({ changes, status }) => {
-      dispatch(setStatus(keyId, status))
+      const action = {
+        type: 'REPO_SYNCED',
+        payload: { changes: Object.keys(changes), status }
+      }
+      dispatch(update(keyId, action))
       return Object.keys(changes)
     })
   }

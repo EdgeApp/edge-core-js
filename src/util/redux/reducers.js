@@ -1,14 +1,4 @@
 /**
- * A no-op reducer.
- * The state would generally be pre-loaded at store creation time.
- */
-export function constReducer (initialState = null) {
-  return function constReducer (state = initialState, action) {
-    return state
-  }
-}
-
-/**
  * Creates a reducer for managing a key/value collection.
  * @param {*} itemReducer The reducer to use on the individual items.
  * @param {*} ACTIONS An object with the strings to use for the
@@ -38,14 +28,5 @@ export function listReducer (itemReducer, ACTIONS = {}) {
       }
     }
     return state
-  }
-}
-
-/**
- * A simple settable value reducer.
- */
-export function settableReducer (initialState, SET) {
-  return function settableReducer (state = initialState, action) {
-    return action.type === SET ? action.payload : state
   }
 }
