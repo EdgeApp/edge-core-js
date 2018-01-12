@@ -29,6 +29,16 @@ export interface CurrencyEngineChangedTxs {
 }
 
 /**
+ * Called when a currency engine is wiped out.
+ */
+export interface CurrencyEngineCleared {
+  type: 'CURRENCY_ENGINE_CLEARED';
+  payload: {
+    walletId: string
+  };
+}
+
+/**
  * Called when a currency engine dies on startup.
  */
 export interface CurrencyEngineFailed {
@@ -144,6 +154,7 @@ export interface RepoSynced {
 export type RootAction =
   | AccountKeysLoadedAction
   | CurrencyEngineChangedTxs
+  | CurrencyEngineCleared
   | CurrencyEngineFailed
   | CurrencyPluginsLoadedAction
   | CurrencyWalletFiatChanged

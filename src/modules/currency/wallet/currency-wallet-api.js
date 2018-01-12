@@ -222,6 +222,10 @@ export function makeCurrencyWalletApi (
     },
 
     resyncBlockchain (): Promise<void> {
+      ai.props.dispatch({
+        type: 'CURRENCY_ENGINE_CLEARED',
+        payload: { walletId: input.props.id }
+      })
       return Promise.resolve(engine.resyncBlockchain())
     },
 

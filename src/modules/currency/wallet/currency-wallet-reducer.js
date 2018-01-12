@@ -93,7 +93,10 @@ const currencyWalletReducer = buildReducer({
         }
         return out
       }
+      case 'CURRENCY_ENGINE_CLEARED':
+        return {}
     }
+
     return state
   },
 
