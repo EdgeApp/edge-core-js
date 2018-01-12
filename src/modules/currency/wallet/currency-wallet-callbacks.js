@@ -145,12 +145,13 @@ export function makeCurrencyWalletCallbacks (
 export function watchCurrencyWallet (input: CurrencyWalletInput) {
   const walletId = input.props.id
 
-  let lastProps = input.props
+  let lastChanges
+  let lastName
   function checkChangesLoop (props: CurrencyWalletProps) {
-    lastProps = props
-
-    if (props.selfState.name !== lastProps.selfState.name) {
-      const name = props.selfState.name
+    // Check for name changes:
+    const name = props.selfState.name
+    if (name !== lastName) {
+      lastName = name
 
       // Call onWalletNameChanged:
       forEachListener(input, ({ onWalletNameChanged }) => {
@@ -160,10 +161,11 @@ export function watchCurrencyWallet (input: CurrencyWalletInput) {
       })
     }
 
-    if (
-      getStorageWalletLastChanges(props.state, walletId) !==
-      getStorageWalletLastChanges(lastProps.state, walletId)
-    ) {
+    // Check for data changes:
+    const changes = getStorageWalletLastChanges(props.state, walletId)
+    if (changes !== lastChanges) {
+      lastChanges = changes
+
       // Reload our data from disk:
       loadAllFiles(input).catch(e => input.props.onError(e))
 
