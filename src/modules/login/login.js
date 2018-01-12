@@ -11,7 +11,12 @@ import { base64, utf8 } from '../../util/encoding.js'
 import { elvis, filterObject, softCat } from '../../util/util.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
-import { makeAccountType, makeKeyInfo, mergeKeyInfos } from './keys.js'
+import {
+  fixWalletInfo,
+  makeAccountType,
+  makeKeyInfo,
+  mergeKeyInfos
+} from './keys.js'
 import type {
   LoginKit,
   LoginReply,
@@ -199,7 +204,9 @@ function makeLoginTreeInner (stash, loginKey) {
     JSON.parse(utf8.stringify(decrypt(box, loginKey)))
   )
 
-  login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos])
+  login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos]).map(walletInfo =>
+    fixWalletInfo(walletInfo)
+  )
 
   // Recurse into children:
   login.children = elvis(stash.children, []).map(child => {

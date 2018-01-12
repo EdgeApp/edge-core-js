@@ -128,6 +128,31 @@ describe('account', function () {
     assert.equal(allKeys[2].archived, true)
   })
 
+  it('split wallet', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    const fakecoinWallet = account.getFirstWalletInfo('wallet:fakecoin')
+    if (!fakecoinWallet) throw new Error('Missing wallet')
+
+    // Do the split:
+    await account.splitWalletInfo(fakecoinWallet.id, 'wallet:tulipcoin')
+    const tulipWallet = account.getFirstWalletInfo('wallet:tulipcoin')
+    if (!tulipWallet) throw new Error('Missing wallet')
+
+    // Check the keys:
+    expect(fakecoinWallet.keys.dataKey).to.equal(tulipWallet.keys.dataKey)
+    expect(fakecoinWallet.keys.fakecoinKey).to.equal(
+      tulipWallet.keys.tulipcoinKey
+    )
+
+    // Splitting back should not work:
+    try {
+      await account.splitWalletInfo(tulipWallet.id, 'wallet:fakecoin')
+      throw new Error('This should fail')
+    } catch (e) {}
+  })
+
   it('logout', async function () {
     const log = makeAssertLog()
     const callbacks = {

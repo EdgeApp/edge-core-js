@@ -43,8 +43,9 @@ function loadWalletList (folder) {
       const bitcoinKey = base16.parse(BitcoinSeed)
       const syncKey = base16.parse(SyncKey)
       const keys = {
-        dataKey: base64.stringify(dataKey),
         bitcoinKey: base64.stringify(bitcoinKey),
+        dataKey: base64.stringify(dataKey),
+        format: 'bip32',
         syncKey: base64.stringify(syncKey)
       }
 

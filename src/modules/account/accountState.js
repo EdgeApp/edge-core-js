@@ -9,10 +9,12 @@ import {
 import { makeCreateKit } from '../login/create.js'
 import {
   findFirstKey,
+  fixWalletInfo,
   getAllWalletInfos,
   makeAccountType,
   makeKeysKit,
-  makeStorageKeyInfo
+  makeStorageKeyInfo,
+  splitWalletInfo
 } from '../login/keys.js'
 import { applyKit, searchTree, syncLogin } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
@@ -402,7 +404,7 @@ class AccountState {
     const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
     const keys = opts.keys || plugin.createPrivateKey(type)
     const keyInfo = makeStorageKeyInfo(ai, type, keys)
-    const kit = makeKeysKit(ai, login, keyInfo)
+    const kit = makeKeysKit(ai, login, fixWalletInfo(keyInfo))
 
     // Add the keys to the login:
     await this.applyKit(kit)
@@ -414,6 +416,23 @@ class AccountState {
     }
 
     return wallet
+  }
+
+  splitWalletInfo (walletId, newWalletType) {
+    const { ai, login } = this
+
+    const walletInfo = this.allKeys.find(
+      walletInfo => walletInfo.id === walletId
+    )
+    if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
+
+    const newWalletInfo = splitWalletInfo(walletInfo, newWalletType)
+    if (this.allKeys.find(walletInfo => walletInfo.id === newWalletInfo.id)) {
+      throw new Error('This wallet has already been split')
+    }
+
+    const kit = makeKeysKit(ai, login, newWalletInfo)
+    return this.applyKit(kit).then(() => newWalletInfo.id)
   }
 
   get allKeys () {

@@ -182,6 +182,9 @@ function makeAccountApi (
     listWalletIds (): Array<string> {
       return state.login.keyInfos.map(info => info.id)
     },
+    splitWalletInfo (walletId: string, newWalletType: string): Promise<string> {
+      return state.splitWalletInfo(walletId, newWalletType)
+    },
 
     // Currency wallets:
     get activeWalletIds (): Array<string> {

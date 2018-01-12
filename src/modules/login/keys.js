@@ -158,3 +158,102 @@ export function getAllWalletInfos (
 
   return { appIdMap, walletInfos: mergeKeyInfos(walletInfos) }
 }
+
+/**
+ * Upgrades legacy wallet info structures into the new format.
+ */
+export function fixWalletInfo (walletInfo: AbcWalletInfo): AbcWalletInfo {
+  const { id, keys, type } = walletInfo
+
+  // Wallet types we need to fix:
+  const defaults = {
+    // BTC:
+    'wallet:bitcoin': { format: 'bip32' },
+    'wallet:bitcoin-bip44': { format: 'bip44', coinType: 0 },
+    'wallet:bitcoin-bip49': { format: 'bip49', coinType: 0 },
+    // BCH:
+    'wallet:bitcoincash-bip32': { format: 'bip32' },
+    'wallet:bitcoincash-bip44': { format: 'bip44', coinType: 145 },
+    // BCH testnet:
+    'wallet:bitcoincash-bip44-testnet': { format: 'bip44', coinType: 1 },
+    'wallet:bitcoincash-testnet': { format: 'bip32' },
+    // BTC testnet:
+    'wallet:bitcoin-bip44-testnet': { format: 'bip44', coinType: 1 },
+    'wallet:bitcoin-bip49-testnet': { format: 'bip49', coinType: 1 },
+    'wallet:bitcoin-testnet': { format: 'bip32' },
+    // DASH:
+    'wallet:dash-bip44': { format: 'bip44', coinType: 5 },
+    // DOGE:
+    'wallet:dogecoin-bip44': { format: 'bip44', coinType: 3 },
+    // LTC:
+    'wallet:litecoin-bip44': { format: 'bip44', coinType: 2 },
+    'wallet:litecoin-bip49': { format: 'bip49', coinType: 2 }
+  }
+
+  if (defaults[type]) {
+    return {
+      id,
+      keys: { ...defaults[type], ...keys },
+      type: type.replace(/-bip[0-9]+/, '')
+    }
+  }
+
+  return walletInfo
+}
+
+/**
+ * Combines two byte arrays via the XOR operation.
+ */
+export function xorData (a: Uint8Array, b: Uint8Array): Uint8Array {
+  if (a.length !== b.length) {
+    throw new Error(`Array lengths do not match: ${a.length}, ${b.length}`)
+  }
+
+  const out = new Uint8Array(a.length)
+  for (let i = 0; i < a.length; ++i) {
+    out[i] = a[i] ^ b[i]
+  }
+  return out
+}
+
+export function splitWalletInfo (
+  walletInfo: AbcWalletInfo,
+  newWalletType: string
+): AbcWalletInfo {
+  const { id, type, keys } = walletInfo
+  if (!keys.dataKey || !keys.syncKey) {
+    throw new Error(`Wallet ${id} is not a splittable type`)
+  }
+
+  const dataKey = base64.parse(keys.dataKey)
+  const syncKey = base64.parse(keys.syncKey)
+  const xorKey = xorData(
+    hmacSha256(utf8.parse(type), dataKey),
+    hmacSha256(utf8.parse(newWalletType), dataKey)
+  )
+
+  // Fix the id:
+  const newWalletId = xorData(base64.parse(id), xorKey)
+  const newSyncKey = xorData(syncKey, xorKey.subarray(0, syncKey.length))
+
+  // Fix the keys:
+  const networkName = type.replace(/wallet:/, '').replace('-', '')
+  const newNetworkName = newWalletType.replace(/wallet:/, '').replace('-', '')
+  const newKeys = {}
+  for (const key of Object.keys(keys)) {
+    if (key === networkName + 'Key') {
+      newKeys[newNetworkName + 'Key'] = keys[key]
+    } else {
+      newKeys[key] = keys[key]
+    }
+  }
+
+  return {
+    id: base64.stringify(newWalletId),
+    keys: {
+      ...newKeys,
+      syncKey: base64.stringify(newSyncKey)
+    },
+    type: newWalletType
+  }
+}
