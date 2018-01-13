@@ -418,7 +418,7 @@ class AccountState {
     return wallet
   }
 
-  splitWalletInfo (walletId, newWalletType) {
+  async splitWalletInfo (walletId, newWalletType) {
     const { ai, login } = this
 
     const walletInfo = this.allKeys.find(
@@ -431,8 +431,23 @@ class AccountState {
       throw new Error('This wallet has already been split')
     }
 
+    // Add the keys to the login:
     const kit = makeKeysKit(ai, login, newWalletInfo)
-    return this.applyKit(kit).then(() => newWalletInfo.id)
+    await this.applyKit(kit)
+
+    // Try to copy metadata on a best-effort basis.
+    // In the future we should clone the repo instead:
+    waitForCurrencyWallet(ai, newWalletInfo.id).then(wallet => {
+      const oldWallet = ai.props.output.currency.wallets[walletId].api
+      if (oldWallet) {
+        if (oldWallet.name) wallet.renameWallet(oldWallet.name).catch(e => {})
+        if (oldWallet.fiatCurrencyCode) {
+          wallet.setFiatCurrencyCode(oldWallet.fiatCurrencyCode).catch(e => {})
+        }
+      }
+    })
+
+    return newWalletInfo.id
   }
 
   get allKeys () {
