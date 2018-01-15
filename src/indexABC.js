@@ -19,10 +19,10 @@ export { internal }
 require('core-js')
 
 // Ancillary exports:
-export * from './error.js'
 export { makeBrowserIo } from './io/browser'
 export { makeFakeIos } from './io/fake'
 export { destroyAllContexts, fakeUser }
+export { errorNames } from './error.js'
 
 /**
  * Initializes the Airbitz core library.

@@ -1,7 +1,7 @@
 // @flow
 import type { AbcWalletInfo } from 'airbitz-core-types'
 
-import { UsernameError } from '../../error.js'
+import { errorNames } from '../../error.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
@@ -29,9 +29,7 @@ export function usernameAvailable (ai: ApiInput, username: string) {
     return authRequest(ai, 'POST', '/v2/login', request)
       .then(reply => false) // It's not available if we can hit it!
       .catch(e => {
-        if (e.type !== UsernameError.type) {
-          throw e
-        }
+        if (e.name !== errorNames.UsernameError) throw e
         return true
       })
   })

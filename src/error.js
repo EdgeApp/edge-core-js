@@ -12,12 +12,22 @@
  * since the program has basically crashed at that point.
  */
 
+export const errorNames = {
+  DustSpendError: 'DustSpendError',
+  InsufficientFundsError: 'InsufficientFundsError',
+  NetworkError: 'NetworkError',
+  ObsoleteApiError: 'ObsoleteApiError',
+  OtpError: 'OtpError',
+  PasswordError: 'PasswordError',
+  UsernameError: 'UsernameError'
+}
+
 /**
  * Trying to spend an uneconomically small amount of money.
  */
 export function DustSpendError (message = 'Please send a larger amount') {
   const e = new Error(message)
-  e.name = DustSpendError.name
+  e.name = errorNames.DustSpendError
   return e
 }
 
@@ -26,7 +36,7 @@ export function DustSpendError (message = 'Please send a larger amount') {
  */
 export function InsufficientFundsError (message = 'Insufficient funds') {
   const e = new Error(message)
-  e.name = InsufficientFundsError.name
+  e.name = errorNames.InsufficientFundsError
   return e
 }
 
@@ -35,10 +45,9 @@ export function InsufficientFundsError (message = 'Insufficient funds') {
  */
 export function NetworkError (message = 'Cannot reach the network') {
   const e = new Error(message)
-  e.name = e.type = NetworkError.name
+  e.name = e.type = errorNames.NetworkError
   return e
 }
-NetworkError.type = NetworkError.name
 
 /**
  * The endpoint on the server is obsolete, and the app needs to be upgraded.
@@ -47,10 +56,9 @@ export function ObsoleteApiError (
   message = 'The application is too old. Please upgrade.'
 ) {
   const e = new Error(message)
-  e.name = e.type = ObsoleteApiError.name
+  e.name = e.type = errorNames.ObsoleteApiError
   return e
 }
-ObsoleteApiError.type = ObsoleteApiError.name
 
 /**
  * The OTP token was missing / incorrect.
@@ -64,7 +72,7 @@ ObsoleteApiError.type = ObsoleteApiError.name
  */
 export function OtpError (resultsJson = {}, message = 'Invalid OTP token') {
   const e = new Error(message)
-  e.name = e.type = OtpError.name
+  e.name = e.type = errorNames.OtpError
   e.resetToken = resultsJson.otp_reset_auth
   if (resultsJson.otp_timeout_date != null) {
     // The server returns dates as ISO 8601 formatted strings:
@@ -72,7 +80,6 @@ export function OtpError (resultsJson = {}, message = 'Invalid OTP token') {
   }
   return e
 }
-OtpError.type = OtpError.name
 
 /**
  * The provided authentication is incorrect.
@@ -87,11 +94,10 @@ OtpError.type = OtpError.name
  */
 export function PasswordError (resultsJson = {}, message = 'Invalid password') {
   const e = new Error(message)
-  e.name = e.type = PasswordError.name
+  e.name = e.type = errorNames.PasswordError
   e.wait = resultsJson.wait_seconds
   return e
 }
-PasswordError.type = PasswordError.name
 
 /**
  * Cannot find a login with that id.
@@ -103,7 +109,6 @@ PasswordError.type = PasswordError.name
  */
 export function UsernameError (message = 'Invalid username') {
   const e = new Error(message)
-  e.name = e.type = UsernameError.name
+  e.name = e.type = errorNames.UsernameError
   return e
 }
-UsernameError.type = UsernameError.name
