@@ -48,7 +48,18 @@ export function totp (
   now: number = Date.now() / 1000
 ): string | void {
   if (secret == null) return
-  return hotp(base32.parse(secret), now / 30, 6)
+  return hotp(
+    base32.parse(
+      secret
+        .toUpperCase()
+        .replace(/0/g, 'O')
+        .replace(/1/g, 'L')
+        .replace(/8/g, 'B'),
+      { loose: true }
+    ),
+    now / 30,
+    6
+  )
 }
 
 export function checkTotp (secret: string, otp: string): boolean {

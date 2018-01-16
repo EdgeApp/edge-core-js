@@ -49,7 +49,7 @@ export const fakeUserServer = {
   appId: '',
   loginId: 'm3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=',
 
-  otpKey: 'HELLO===',
+  otpKey: 'He110==', // Should be 'HELLO===', but we can fix typos
   otpTimeout: 100,
 
   // Password:
