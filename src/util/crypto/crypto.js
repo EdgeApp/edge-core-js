@@ -48,7 +48,7 @@ export function decrypt (box: JsonBox, key: Uint8Array): Uint8Array {
   // Verify SHA-256 checksum:
   const hash = hashjs
     .sha256()
-    .update(raw.slice(0, hashStart))
+    .update(raw.subarray(0, hashStart))
     .digest()
   const hashSize = hash.length
   for (let i = 0; i < hashSize; ++i) {
@@ -70,7 +70,7 @@ export function decrypt (box: JsonBox, key: Uint8Array): Uint8Array {
   }
 
   // Return the payload:
-  return raw.slice(dataStart, dataStart + dataSize)
+  return raw.subarray(dataStart, dataStart + dataSize)
 }
 
 /**
@@ -116,7 +116,7 @@ export function encrypt (io: AbcIo, data: Uint8Array, key: Uint8Array): JsonBox 
   // SHA-256 checksum:
   const hash = hashjs
     .sha256()
-    .update(raw.slice(0, hashStart))
+    .update(raw.subarray(0, hashStart))
     .digest()
   for (let i = 0; i < hashSize; ++i) {
     raw[hashStart + i] = hash[i]
