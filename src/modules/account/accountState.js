@@ -437,15 +437,18 @@ class AccountState {
 
     // Try to copy metadata on a best-effort basis.
     // In the future we should clone the repo instead:
-    waitForCurrencyWallet(ai, newWalletInfo.id).then(wallet => {
+    try {
+      const wallet = await waitForCurrencyWallet(ai, newWalletInfo.id)
       const oldWallet = ai.props.output.currency.wallets[walletId].api
       if (oldWallet) {
-        if (oldWallet.name) wallet.renameWallet(oldWallet.name).catch(e => {})
+        if (oldWallet.name) await wallet.renameWallet(oldWallet.name)
         if (oldWallet.fiatCurrencyCode) {
-          wallet.setFiatCurrencyCode(oldWallet.fiatCurrencyCode).catch(e => {})
+          await wallet.setFiatCurrencyCode(oldWallet.fiatCurrencyCode)
         }
       }
-    })
+    } catch (e) {
+      ai.props.onError(e)
+    }
 
     return newWalletInfo.id
   }

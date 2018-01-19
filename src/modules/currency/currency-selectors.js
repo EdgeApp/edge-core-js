@@ -77,9 +77,17 @@ export function waitForCurrencyPlugins (ai: ApiInput) {
 
 export function waitForCurrencyWallet (ai: ApiInput, walletId: string) {
   return ai.waitFor((props: ApiProps) => {
+    // If the wallet id doesn't even exist, bail out:
+    if (!props.state.currency.wallets[walletId]) {
+      throw new Error(`Wallet ${walletId} is not a supported type`)
+    }
+
+    // Return the error if one exists:
     if (props.state.currency.wallets[walletId].engineFailure) {
       throw props.state.currency.wallets[walletId].engineFailure
     }
+
+    // Return the context if that exists:
     if (props.output.currency.wallets[walletId]) {
       return props.output.currency.wallets[walletId].api
     }
