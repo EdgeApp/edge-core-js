@@ -1,5 +1,6 @@
 // @flow
 import type { EdgeContext, EdgeContextOptions } from './edge-core-index.js'
+import { makeReactNativeIo } from './io/react-native/react-native-io.js'
 import {
   makeCoreRoot,
   makeFakeCoreRoots,
@@ -41,6 +42,15 @@ export function makeFakeContexts (
     startCoreRoot(coreRoot)
     return coreRoot.output.contextApi
   })
+}
+
+/**
+ * Creates an Edge context for use with React Native.
+ */
+export function makeReactNativeContext (
+  opts: EdgeContextOptions
+): Promise<EdgeContext> {
+  return makeReactNativeIo().then(io => makeContext({ ...opts, io }))
 }
 
 /**

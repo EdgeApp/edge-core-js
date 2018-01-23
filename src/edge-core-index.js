@@ -13,6 +13,7 @@ export { internal }
 // Ancillary exports:
 export { makeBrowserIo } from './io/browser/browser-io.js'
 export { makeFakeIos } from './io/fake/fake-io.js'
+export { makeReactNativeIo } from './io/react-native/react-native-io.js'
 export { fakeUser } from './io/fake/fakeUser.js'
 export { errorNames } from './error.js'
 export { makeABCContext, makeContext, makeFakeContexts } from './makeContext.js'

@@ -50,9 +50,11 @@
     "chai": "^4.1.2",
     "core-js": "^2.5.1",
     "currency-codes": "^1.1.2",
+    "detect-bundler": "^1.0.0",
     "disklet": "^0.2.2",
     "elliptic": "^6.4.0",
     "hash.js": "^1.0.3",
+    "hmac-drbg": "^1.0.1",
     "mocha": "^3.5.0",
     "redux": "^3.6.0",
     "redux-keto": "^0.3.2",
@@ -104,5 +106,10 @@
       "import-sort --list-different",
       "prettier-eslint --list-different"
     ]
+  },
+  "peerDepdendencies": {
+    "react-native-fast-crypto": "^1.5.3",
+    "react-native-randombytes": "git://github.com/Airbitz/react-native-randombytes.git#40d02a5f922",
+    "react-native-tcp": "git://github.com/Airbitz/react-native-tcp.git"
   }
 }

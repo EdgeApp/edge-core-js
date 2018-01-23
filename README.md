@@ -18,6 +18,19 @@ management (change PIN/password), use [airbitz-core-js-ui](https://github.com/Ai
 
 Just use `npm install --save airbitz-core-js` to add this library to your project.
 
+If you are on React Native, you must also do:
+
+    # Install native support libraries:
+    npm install --save react-native-fast-crypto react-native-fs
+    npm install --save git://github.com/Airbitz/react-native-randombytes.git
+    npm install --save git://github.com/Airbitz/react-native-tcp.git
+
+    # Link support libraries into the native project files:
+    react-native link react-native-fast-crypto
+    react-native link react-native-fs
+    react-native link react-native-randombytes
+    react-native link react-native-tcp
+
 The bundled library uses only ES5 feature thanks to [Bublé](https://buble.surge.sh),
 but we do require the following ES2015 features either natively or as pollyfills:
 
