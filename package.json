@@ -31,19 +31,17 @@
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
-    "build": "webpack && rollup -c && npm run build:types",
+    "build": "webpack && rollup -c && flow-copy-source -i '**/*.test.js' src lib",
     "build:test": "webpack && rollup -c rollup.config.test.js",
-    "build:types": "flow-copy-source -i '**/*.test.js' src lib",
-    "precommit": "lint-staged && npm test && npm run build",
+    "precommit": "lint-staged && flow status && npm test && npm run build",
     "flow": "flow status",
     "format": "import-sort -l --write '*.js' 'src/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js'",
-    "lint": "eslint '*.js' 'src/**/*.js' && npm run flow",
+    "lint": "eslint '*.js' 'src/**/*.js'",
     "lint:fix": "npm run format",
     "prepare": "npm run build",
     "pretest": "npm run build:test",
-    "test": "npm run lint && mocha --require source-map-support/register build/tests.cjs.js",
-    "updot": "updot",
-    "webpack": "webpack"
+    "test": "mocha --require source-map-support/register build/tests.cjs.js",
+    "updot": "updot"
   },
   "dependencies": {
     "aes-js": "^3.1.0",
