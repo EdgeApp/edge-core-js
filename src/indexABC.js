@@ -19,8 +19,8 @@ export { internal }
 require('core-js')
 
 // Ancillary exports:
-export { makeBrowserIo } from './io/browser'
-export { makeFakeIos } from './io/fake'
+export { makeBrowserIo } from './io/browser/browser-io.js'
+export { makeFakeIos } from './io/fake/fake-io.js'
 export { destroyAllContexts, fakeUser }
 export { errorNames } from './error.js'
 
