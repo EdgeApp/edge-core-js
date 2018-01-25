@@ -4,12 +4,12 @@ import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 import { createStore } from 'redux'
 
+import { fakeUser, makeFakeContexts } from '../../../edge-core-index.js'
 import {
   makeFakeCurrency,
   makeFakeCurrencyStore
 } from '../../../fake-plugins/fakeCurrency.js'
 import { fakeExchangePlugin } from '../../../fake-plugins/fakeExchange.js'
-import { fakeUser, makeFakeContexts } from '../../../indexABC.js'
 import { makeAssertLog } from '../../../util/assertLog.js'
 import { awaitState } from '../../../util/redux/reaction.js'
 

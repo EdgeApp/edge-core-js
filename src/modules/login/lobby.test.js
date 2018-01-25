@@ -3,7 +3,7 @@ import { assert } from 'chai'
 import elliptic from 'elliptic'
 import { describe, it } from 'mocha'
 
-import { makeFakeContexts, makeFakeIos } from '../../indexABC.js'
+import { makeFakeContexts, makeFakeIos } from '../../edge-core-index.js'
 import type { ApiInput } from '../root.js'
 import {
   decryptLobbyReply,

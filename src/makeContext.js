@@ -1,28 +1,11 @@
 // @flow
 import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
 
-import * as error from './error.js'
-import * as internal from './internal.js'
-import { fakeUser } from './io/fake/fakeUser.js'
 import {
-  destroyAllContexts,
   makeCoreRoot,
   makeFakeCoreRoots,
   startCoreRoot
 } from './modules/root.js'
-
-// Sub-module exports:
-export { error }
-export { internal }
-
-// Polyfill
-require('core-js')
-
-// Ancillary exports:
-export { makeBrowserIo } from './io/browser/browser-io.js'
-export { makeFakeIos } from './io/fake/fake-io.js'
-export { destroyAllContexts, fakeUser }
-export { errorNames } from './error.js'
 
 /**
  * Initializes the Airbitz core library.

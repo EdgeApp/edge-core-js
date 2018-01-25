@@ -2,9 +2,9 @@
 import { assert } from 'chai'
 import { afterEach, describe, it } from 'mocha'
 
+import { makeFakeContexts } from '../../edge-core-index.js'
 import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
 import { fakeExchangePlugin } from '../../fake-plugins/fakeExchange.js'
-import { makeFakeContexts } from '../../indexABC.js'
 import { destroyAllContexts } from '../root.js'
 
 // Silence console.info:

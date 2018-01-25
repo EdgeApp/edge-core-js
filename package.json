@@ -24,8 +24,8 @@
     "lib/*",
     "package.json"
   ],
-  "main": "lib/indexABC.js",
-  "module": "lib/indexABC.es.js",
+  "main": "lib/edge-core-index.js",
+  "module": "lib/edge-core-index.es.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
