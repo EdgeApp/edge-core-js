@@ -7,6 +7,7 @@ const babelOpts = {
   presets: ['es2015-rollup', 'flow'],
   plugins: [
     'transform-object-rest-spread',
+    ['transform-es2015-for-of', { loose: true }],
     ['fast-async', { compiler: { promises: true, noRuntime: true } }]
   ]
 }
