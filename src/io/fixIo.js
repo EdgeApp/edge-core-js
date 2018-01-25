@@ -9,7 +9,7 @@ import { scrypt } from '../util/crypto/scrypt.js'
  * upgrading obsolete ones and verifying that we have all necessary ones.
  */
 export function fixIo (io: AbcRawIo): AbcIo {
-  const out = {}
+  const out: any = {}
 
   // Copy native io resources:
   const keys = ['console', 'fetch', 'folder', 'random', 'scrypt']
@@ -50,5 +50,5 @@ export function fixIo (io: AbcRawIo): AbcIo {
   if (io.TLSSocket != null) out.TLSSocket = io.TLSSocket
   if (io.WebSocket != null) out.WebSocket = io.WebSocket
 
-  return (out: any)
+  return out
 }

@@ -36,7 +36,7 @@ export function makeAssertLog (
 ): AssertLog {
   let events: Array<string> = []
 
-  const out = function log (...args: Array<any>) {
+  const out: any = function log (...args: Array<any>) {
     const event = stringify(...args)
     if (verbose) console.log(event)
     events.push(event)
@@ -49,5 +49,5 @@ export function makeAssertLog (
     events = []
   }
 
-  return (out: any)
+  return out
 }

@@ -76,6 +76,7 @@ export function makeCoreRoot (opts: AbcContextOptions) {
         : ''
 
   const io = fixIo(rawIo)
+  const output: any = {}
 
   const coreRoot: CoreRoot = {
     apiKey,
@@ -88,7 +89,7 @@ export function makeCoreRoot (opts: AbcContextOptions) {
     shapeshiftKey,
     loginStore: new LoginStore(io),
     redux: makeStore(),
-    output: ({}: any)
+    output
   }
   coreRoot.redux.dispatch({
     type: 'INIT',
