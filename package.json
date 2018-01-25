@@ -45,7 +45,6 @@
   },
   "dependencies": {
     "aes-js": "^3.1.0",
-    "airbitz-core-types": "git+https://github.com/Airbitz/airbitz-core-types.git",
     "base-x": "^1.0.4",
     "biggystring": "^1.0.7",
     "chai": "^4.1.2",

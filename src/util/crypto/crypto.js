@@ -1,7 +1,7 @@
 // @flow
 import aesjs from 'aes-js'
-import type { AbcIo } from 'airbitz-core-types'
 
+import type { AbcIo } from '../../edge-core-index.js'
 import { base16, base64 } from '../encoding.js'
 import { hashjs } from './external.js'
 

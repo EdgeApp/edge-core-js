@@ -68,10 +68,6 @@ aes-js@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/aes-js/-/aes-js-3.1.0.tgz#f5f7588494526997cc635cc334c8bb8e967a5d82"
 
-"airbitz-core-types@git+https://github.com/Airbitz/airbitz-core-types.git":
-  version "0.0.1"
-  resolved "git+https://github.com/Airbitz/airbitz-core-types.git#375064e4ea1953c3a7a726e688cb3776baf3ff70"
-
 ajv-keywords@^2.0.0, ajv-keywords@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/ajv-keywords/-/ajv-keywords-2.1.0.tgz#a296e17f7bfae7c1ce4f7e0de53d29cb32162df0"

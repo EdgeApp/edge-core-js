@@ -1,8 +1,8 @@
 // @flow
-import type { AbcAccount } from 'airbitz-core-types'
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
+import type { AbcAccount } from '../../edge-core-index.js'
 import { fakeUser, makeFakeContexts } from '../../edge-core-index.js'
 import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
 import { makeAssertLog } from '../../util/assertLog.js'

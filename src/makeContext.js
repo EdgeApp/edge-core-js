@@ -1,6 +1,5 @@
 // @flow
-import type { AbcContext, AbcContextOptions } from 'airbitz-core-types'
-
+import type { AbcContext, AbcContextOptions } from './edge-core-index.js'
 import {
   makeCoreRoot,
   makeFakeCoreRoots,

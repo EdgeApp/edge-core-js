@@ -1,8 +1,8 @@
 // @flow
-import type { AbcLobby } from 'airbitz-core-types'
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
+import type { AbcLobby } from '../../edge-core-index.js'
 import { fakeUser, makeFakeContexts } from '../../edge-core-index.js'
 
 async function simulateRemoteApproval (remote, lobbyId: string) {

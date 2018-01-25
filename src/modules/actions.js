@@ -4,7 +4,7 @@ import type {
   AbcCurrencyInfo,
   AbcIo,
   AbcWalletInfo
-} from 'airbitz-core-types'
+} from '../edge-core-index.js'
 
 /**
  * The account fires this when it loads its keys from disk.

@@ -1,7 +1,7 @@
 // @flow
-import type { AbcContext } from 'airbitz-core-types'
 import { combinePixies, filterPixie } from 'redux-pixies'
 
+import type { AbcContext } from '../edge-core-index.js'
 import { contextApiPixie } from './context/context-api-pixie.js'
 import type { CurrencyOutput } from './currency/currency-pixie.js'
 import currency from './currency/currency-pixie.js'

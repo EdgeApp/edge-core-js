@@ -1,7 +1,7 @@
 // @flow
-import type { AbcIo, AbcRawIo } from 'airbitz-core-types'
 import { makeLocalStorageFolder } from 'disklet'
 
+import type { AbcIo, AbcRawIo } from '../edge-core-index.js'
 import { scrypt } from '../util/crypto/scrypt.js'
 
 /**

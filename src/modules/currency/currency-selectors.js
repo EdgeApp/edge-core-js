@@ -1,6 +1,8 @@
 // @flow
-import type { AbcCurrencyInfo, AbcCurrencyPlugin } from 'airbitz-core-types'
-
+import type {
+  AbcCurrencyInfo,
+  AbcCurrencyPlugin
+} from '../../edge-core-index.js'
 import type { ApiInput, ApiProps } from '../root.js'
 
 export function getCurrencyInfo (

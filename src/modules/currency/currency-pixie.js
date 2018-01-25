@@ -1,8 +1,8 @@
 // @flow
-import type { AbcCurrencyPlugin } from 'airbitz-core-types'
 import { combinePixies, mapPixie, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 
+import type { AbcCurrencyPlugin } from '../../edge-core-index.js'
 import type { RootProps } from '../root.js'
 import type {
   CurrencyWalletOutput,

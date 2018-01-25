@@ -1,7 +1,7 @@
 // @flow
-import type { AbcRawIo } from 'airbitz-core-types'
 import { makeMemoryFolder } from 'disklet'
 
+import type { AbcRawIo } from '../../edge-core-index.js'
 import { FakeServer } from './fakeServer.js'
 
 /**

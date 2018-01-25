@@ -1,6 +1,5 @@
 // @flow
-import type { AbcWalletInfo } from 'airbitz-core-types'
-
+import type { AbcWalletInfo } from '../../edge-core-index.js'
 import { errorNames } from '../../error.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'

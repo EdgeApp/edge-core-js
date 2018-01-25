@@ -1,7 +1,11 @@
 // @flow
-import type { AbcIo, DiskletFile, DiskletFolder } from 'airbitz-core-types'
 import { mapFiles } from 'disklet'
 
+import type {
+  AbcIo,
+  DiskletFile,
+  DiskletFolder
+} from '../../edge-core-index.js'
 import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { scrypt, userIdSnrp } from '../scrypt/selectors.js'

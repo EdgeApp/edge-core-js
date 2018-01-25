@@ -4,8 +4,7 @@
  */
 
 // @flow
-import type { AbcIo } from 'airbitz-core-types'
-
+import type { AbcIo } from '../../edge-core-index.js'
 import { base16, base58, base64 } from '../../util/encoding.js'
 
 export const fakeUser = {

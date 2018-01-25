@@ -1,5 +1,5 @@
 // @flow
-import type { AbcWalletInfo } from 'airbitz-core-types'
+import type { AbcWalletInfo } from '../../edge-core-index.js'
 
 export type JsonSnrp = Object
 export type LoginReply = Object

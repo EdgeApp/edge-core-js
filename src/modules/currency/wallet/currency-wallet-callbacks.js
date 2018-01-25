@@ -1,11 +1,11 @@
 // @flow
+import { isPixieShutdownError } from 'redux-pixies'
+
 import type {
   AbcAccountCallbacks,
   AbcCurrencyPluginCallbacks,
   AbcTransaction
-} from 'airbitz-core-types'
-import { isPixieShutdownError } from 'redux-pixies'
-
+} from '../../../edge-core-index.js'
 import { compare } from '../../../util/compare.js'
 import { getStorageWalletLastChanges } from '../../storage/selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'

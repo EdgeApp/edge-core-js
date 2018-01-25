@@ -1,13 +1,13 @@
 // @flow
-import type {
-  AbcContextOptions,
-  AbcCorePlugin,
-  AbcIo
-} from 'airbitz-core-types'
 import type { Dispatch, Store } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
 import type { PixieInput, ReduxProps } from 'redux-pixies'
 
+import type {
+  AbcContextOptions,
+  AbcCorePlugin,
+  AbcIo
+} from '../edge-core-index.js'
 import { makeBrowserIo } from '../io/browser/browser-io.js'
 import { makeFakeIos } from '../io/fake/fake-io.js'
 import { stashFakeUser } from '../io/fake/fakeUser.js'

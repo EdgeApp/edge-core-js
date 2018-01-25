@@ -1,13 +1,13 @@
 // @flow
+import { stopUpdates } from 'redux-pixies'
+
 import type {
   AbcAccountOptions,
   AbcContext,
   AbcEdgeLoginOptions,
   AbcExchangeSwapInfo,
   AbcLoginMessages
-} from 'airbitz-core-types'
-import { stopUpdates } from 'redux-pixies'
-
+} from '../../edge-core-index.js'
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/accountApi.js'

@@ -3,8 +3,7 @@
  */
 
 // @flow
-import type { AbcLoginMessages } from 'airbitz-core-types'
-
+import type { AbcLoginMessages } from '../../edge-core-index.js'
 import { decrypt } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'

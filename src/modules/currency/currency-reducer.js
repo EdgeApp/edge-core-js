@@ -1,7 +1,7 @@
 // @flow
-import type { AbcCurrencyInfo } from 'airbitz-core-types'
 import { buildReducer, mapReducer } from 'redux-keto'
 
+import type { AbcCurrencyInfo } from '../../edge-core-index.js'
 import type { RootAction } from '../actions.js'
 import type { RootState } from '../root-reducer.js'
 import type { CurrencyWalletState } from './wallet/currency-wallet-reducer.js'

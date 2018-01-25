@@ -1,8 +1,8 @@
 // @flow
-import type { AbcExchangePlugin } from 'airbitz-core-types'
 import { combinePixies, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 
+import type { AbcExchangePlugin } from '../../edge-core-index.js'
 import { rejectify } from '../../util/decorators.js'
 import type { RootProps } from '../root.js'
 import { addPairs } from './reducer.js'

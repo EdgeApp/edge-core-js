@@ -7,8 +7,7 @@ import type {
   AbcLobby,
   AbcWalletInfo,
   AbcWalletStates
-} from 'airbitz-core-types'
-
+} from '../../edge-core-index.js'
 import { copyProperties, wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'

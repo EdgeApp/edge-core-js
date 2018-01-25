@@ -1,4 +1,6 @@
 // @flow
+import { add, div, lte, sub } from 'biggystring'
+
 import type {
   AbcCurrencyEngine,
   AbcCurrencyPlugin,
@@ -10,9 +12,7 @@ import type {
   AbcSpendInfo,
   AbcSpendTarget,
   AbcTransaction
-} from 'airbitz-core-types'
-import { add, div, lte, sub } from 'biggystring'
-
+} from '../../../edge-core-index.js'
 import { copyProperties, wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'

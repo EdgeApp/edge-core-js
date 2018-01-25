@@ -1,12 +1,12 @@
 // @flow
+import { combinePixies, stopUpdates } from 'redux-pixies'
+import type { PixieInput } from 'redux-pixies'
+
 import type {
   AbcCurrencyEngine,
   AbcCurrencyPlugin,
   AbcCurrencyWallet
-} from 'airbitz-core-types'
-import { combinePixies, stopUpdates } from 'redux-pixies'
-import type { PixieInput } from 'redux-pixies'
-
+} from '../../../edge-core-index.js'
 import type { RootProps } from '../../root.js'
 import { addStorageWallet, syncStorageWallet } from '../../storage/actions.js'
 import {

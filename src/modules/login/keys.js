@@ -1,6 +1,5 @@
 // @flow
-import type { AbcWalletInfo } from 'airbitz-core-types'
-
+import type { AbcWalletInfo } from '../../edge-core-index.js'
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base16, base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
