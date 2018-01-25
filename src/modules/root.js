@@ -182,8 +182,7 @@ export interface ApiProps {
 /**
  * Converts the root props to the API props format.
  */
-export function makeApiProps (props: RootProps): ApiProps | void {
-  if (!props.output) return
+export function makeApiProps (props: RootProps): ApiProps {
   const {
     dispatch,
     coreRoot,
@@ -193,16 +192,9 @@ export function makeApiProps (props: RootProps): ApiProps | void {
     shapeshiftKey,
     state
   } = props
+  const { loginStore } = coreRoot
 
-  return {
-    dispatch,
-    loginStore: coreRoot.loginStore,
-    output,
-    io,
-    onError,
-    shapeshiftKey,
-    state
-  }
+  return { dispatch, loginStore, output, io, onError, shapeshiftKey, state }
 }
 
 export type ApiInput = PixieInput<ApiProps>
