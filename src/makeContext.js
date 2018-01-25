@@ -1,5 +1,6 @@
 // @flow
 import type { EdgeContext, EdgeContextOptions } from './edge-core-index.js'
+import { makeNodeIo } from './io/node/node-io.js'
 import { makeReactNativeIo } from './io/react-native/react-native-io.js'
 import {
   makeCoreRoot,
@@ -42,6 +43,18 @@ export function makeFakeContexts (
     startCoreRoot(coreRoot)
     return coreRoot.output.contextApi
   })
+}
+
+/**
+ * Creates an Edge context for use on node.js.
+ *
+ * @param {{ path?: string }} opts Options for creating the context,
+ * including the `path` where data should be written to disk.
+ */
+export function makeNodeContext (opts: EdgeContextOptions = {}) {
+  const { path = './edge' } = opts
+  opts.io = makeNodeIo(path)
+  return makeContext(opts)
 }
 
 /**
