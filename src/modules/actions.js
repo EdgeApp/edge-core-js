@@ -1,9 +1,9 @@
 // @flow
 import type {
-  AbcAccountCallbacks,
-  AbcCurrencyInfo,
-  AbcIo,
-  AbcWalletInfo
+  EdgeAccountCallbacks,
+  EdgeCurrencyInfo,
+  EdgeIo,
+  EdgeWalletInfo
 } from '../edge-core-index.js'
 
 /**
@@ -13,7 +13,7 @@ export interface AccountKeysLoadedAction {
   type: 'ACCOUNT_KEYS_LOADED';
   payload: {
     activeLoginId: string,
-    walletInfos: Array<AbcWalletInfo>
+    walletInfos: Array<EdgeWalletInfo>
   };
 }
 
@@ -99,7 +99,7 @@ export interface CurrencyWalletNameChanged {
  */
 export interface CurrencyPluginsLoadedAction {
   type: 'CURRENCY_PLUGINS_LOADED';
-  payload: Array<AbcCurrencyInfo>;
+  payload: Array<EdgeCurrencyInfo>;
 }
 
 /**
@@ -111,7 +111,7 @@ export interface InitAction {
     apiKey: string | void,
     appId: string | void,
     authServer: string | void,
-    io: AbcIo,
+    io: EdgeIo,
     onError: (e: Error) => void
   };
 }
@@ -123,7 +123,7 @@ export interface LoginAction {
   type: 'LOGIN';
   payload: {
     appId: string,
-    callbacks: AbcAccountCallbacks,
+    callbacks: EdgeAccountCallbacks,
     loginKey: Uint8Array,
     username: string
   };

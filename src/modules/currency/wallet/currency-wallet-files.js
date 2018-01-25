@@ -69,7 +69,7 @@ type LegacyAddressFile = {
   },
   meta: {
     amountSatoshi: number // requestAmount
-    // TODO: Normal AbcMetatada
+    // TODO: Normal EdgeMetatada
   }
 }
 

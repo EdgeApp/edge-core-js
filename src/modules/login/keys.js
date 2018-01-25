@@ -1,5 +1,5 @@
 // @flow
-import type { AbcWalletInfo } from '../../edge-core-index.js'
+import type { EdgeWalletInfo } from '../../edge-core-index.js'
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base16, base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
@@ -14,7 +14,7 @@ import type {
 /**
  * Returns the first keyInfo with a matching type.
  */
-export function findFirstKey (keyInfos: Array<AbcWalletInfo>, type: string) {
+export function findFirstKey (keyInfos: Array<EdgeWalletInfo>, type: string) {
   return keyInfos.find(info => info.type === type)
 }
 
@@ -82,7 +82,7 @@ export function makeKeysKit (
 /**
  * Flattens an array of key structures, removing duplicates.
  */
-export function mergeKeyInfos (keyInfos: Array<AbcWalletInfo>) {
+export function mergeKeyInfos (keyInfos: Array<EdgeWalletInfo>) {
   const out = []
   const ids = {} // Maps ID's to output array indexes
 
@@ -126,10 +126,10 @@ export function mergeKeyInfos (keyInfos: Array<AbcWalletInfo>) {
  */
 export function getAllWalletInfos (
   login: LoginTree,
-  legacyWalletInfos: Array<AbcWalletInfo> = []
+  legacyWalletInfos: Array<EdgeWalletInfo> = []
 ) {
   const appIdMap: AppIdMap = {}
-  const walletInfos: Array<AbcWalletInfo> = []
+  const walletInfos: Array<EdgeWalletInfo> = []
 
   // Add the legacy wallets first:
   for (const info of legacyWalletInfos) {
@@ -161,7 +161,7 @@ export function getAllWalletInfos (
 /**
  * Upgrades legacy wallet info structures into the new format.
  */
-export function fixWalletInfo (walletInfo: AbcWalletInfo): AbcWalletInfo {
+export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
   const { id, keys, type } = walletInfo
 
   // Wallet types we need to fix:
@@ -216,9 +216,9 @@ export function xorData (a: Uint8Array, b: Uint8Array): Uint8Array {
 }
 
 export function splitWalletInfo (
-  walletInfo: AbcWalletInfo,
+  walletInfo: EdgeWalletInfo,
   newWalletType: string
-): AbcWalletInfo {
+): EdgeWalletInfo {
   const { id, type, keys } = walletInfo
   if (!keys.dataKey || !keys.syncKey) {
     throw new Error(`Wallet ${id} is not a splittable type`)

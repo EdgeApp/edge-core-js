@@ -1,5 +1,5 @@
 // @flow
-import type { AbcContext, AbcContextOptions } from './edge-core-index.js'
+import type { EdgeContext, EdgeContextOptions } from './edge-core-index.js'
 import {
   makeCoreRoot,
   makeFakeCoreRoots,
@@ -17,7 +17,7 @@ import {
  *       Defaults to browser IO if not provided.
  * @return An Airbitz core library instance.
  */
-export function makeContext (opts: AbcContextOptions): AbcContext {
+export function makeContext (opts: EdgeContextOptions): EdgeContext {
   const coreRoot = makeCoreRoot(opts)
   startCoreRoot(coreRoot)
   return coreRoot.output.contextApi
@@ -35,8 +35,8 @@ export function makeContext (opts: AbcContextOptions): AbcContext {
  * and offline password login for that particular context.
  */
 export function makeFakeContexts (
-  ...opts: Array<AbcContextOptions>
-): Array<AbcContext> {
+  ...opts: Array<EdgeContextOptions>
+): Array<EdgeContext> {
   return makeFakeCoreRoots(...opts).map(coreRoot => {
     startCoreRoot(coreRoot)
     return coreRoot.output.contextApi
@@ -45,12 +45,12 @@ export function makeFakeContexts (
 
 /**
  * Older, deprecated version of `makeContext`.
- * It should be named `makeAbcContext`, if anything.
+ * It should be named `makeEdgeContext`, if anything.
  */
 export function makeABCContext (
   apiKey: string,
   appId: string,
-  opts: AbcContextOptions
-): AbcContext {
+  opts: EdgeContextOptions
+): EdgeContext {
   return makeContext({ apiKey, appId, ...opts })
 }

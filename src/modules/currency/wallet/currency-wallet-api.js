@@ -2,16 +2,16 @@
 import { add, div, lte, sub } from 'biggystring'
 
 import type {
-  AbcCurrencyEngine,
-  AbcCurrencyPlugin,
-  AbcCurrencyWallet,
-  AbcDataDump,
-  AbcEncodeUri,
-  AbcMetadata,
-  AbcReceiveAddress,
-  AbcSpendInfo,
-  AbcSpendTarget,
-  AbcTransaction
+  EdgeCurrencyEngine,
+  EdgeCurrencyPlugin,
+  EdgeCurrencyWallet,
+  EdgeDataDump,
+  EdgeEncodeUri,
+  EdgeMetadata,
+  EdgeReceiveAddress,
+  EdgeSpendInfo,
+  EdgeSpendTarget,
+  EdgeTransaction
 } from '../../../edge-core-index.js'
 import { copyProperties, wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
@@ -34,19 +34,19 @@ const fakeMetadata = {
 }
 
 /**
- * Creates an `AbcCurrencyWallet` API object.
+ * Creates an `EdgeCurrencyWallet` API object.
  */
 export function makeCurrencyWalletApi (
   input: CurrencyWalletInput,
-  plugin: AbcCurrencyPlugin,
-  engine: AbcCurrencyEngine
+  plugin: EdgeCurrencyPlugin,
+  engine: EdgeCurrencyEngine
 ) {
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
   const walletInfo = input.props.selfState.walletInfo
 
   const shapeshiftApi = makeShapeshiftApi(ai)
 
-  const out: AbcCurrencyWallet = {
+  const out: EdgeCurrencyWallet = {
     // Storage stuff:
     get name () {
       return input.props.selfState.name
@@ -102,7 +102,7 @@ export function makeCurrencyWalletApi (
       return engine.getBlockHeight()
     },
 
-    getTransactions (opts: any = {}): Promise<Array<AbcTransaction>> {
+    getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
       const files = input.props.selfState.files
       const txids = input.props.selfState.txids
       const txs = input.props.selfState.txs
@@ -126,9 +126,9 @@ export function makeCurrencyWalletApi (
       return Promise.resolve(out.sort((a, b) => a.date - b.date))
     },
 
-    getReceiveAddress (opts: any): Promise<AbcReceiveAddress> {
+    getReceiveAddress (opts: any): Promise<EdgeReceiveAddress> {
       const freshAddress = engine.getFreshAddress(opts)
-      const receiveAddress: AbcReceiveAddress = {
+      const receiveAddress: EdgeReceiveAddress = {
         metadata: fakeMetadata,
         nativeAmount: '0',
         publicAddress: freshAddress.publicAddress,
@@ -137,25 +137,25 @@ export function makeCurrencyWalletApi (
       return Promise.resolve(receiveAddress)
     },
 
-    saveReceiveAddress (receiveAddress: AbcReceiveAddress): Promise<void> {
+    saveReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<void> {
       return Promise.resolve()
     },
 
-    lockReceiveAddress (receiveAddress: AbcReceiveAddress): Promise<void> {
+    lockReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<void> {
       return Promise.resolve()
     },
 
     '@makeAddressQrCode': { sync: true },
-    makeAddressQrCode (address: AbcReceiveAddress) {
+    makeAddressQrCode (address: EdgeReceiveAddress) {
       return address.publicAddress
     },
 
     '@makeAddressUri': { sync: true },
-    makeAddressUri (address: AbcReceiveAddress) {
+    makeAddressUri (address: EdgeReceiveAddress) {
       return address.publicAddress
     },
 
-    async makeSpend (spendInfo: AbcSpendInfo): Promise<AbcTransaction> {
+    async makeSpend (spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
       if (spendInfo.spendTargets[0].destWallet) {
         const destWallet = spendInfo.spendTargets[0].destWallet
         const currentCurrencyCode = spendInfo.currencyCode
@@ -187,12 +187,12 @@ export function makeCurrencyWalletApi (
             nativeAmount = div(destAmount, rate.toString())
           }
 
-          const spendTarget: AbcSpendTarget = {
+          const spendTarget: EdgeSpendTarget = {
             nativeAmount: nativeAmount,
             publicAddress: exchangeData.deposit
           }
 
-          const exchangeSpendInfo: AbcSpendInfo = {
+          const exchangeSpendInfo: EdgeSpendInfo = {
             currencyCode: spendInfo.currencyCode,
             spendTargets: [spendTarget]
           }
@@ -209,15 +209,15 @@ export function makeCurrencyWalletApi (
       return engine.makeSpend(spendInfo)
     },
 
-    signTx (tx: AbcTransaction): Promise<AbcTransaction> {
+    signTx (tx: EdgeTransaction): Promise<EdgeTransaction> {
       return engine.signTx(tx)
     },
 
-    broadcastTx (tx: AbcTransaction): Promise<AbcTransaction> {
+    broadcastTx (tx: EdgeTransaction): Promise<EdgeTransaction> {
       return engine.broadcastTx(tx)
     },
 
-    saveTx (tx: AbcTransaction) {
+    saveTx (tx: EdgeTransaction) {
       return Promise.all([engine.saveTx(tx)])
     },
 
@@ -230,7 +230,7 @@ export function makeCurrencyWalletApi (
     },
 
     '@dumpData': { sync: true },
-    dumpData (): AbcDataDump {
+    dumpData (): EdgeDataDump {
       return engine.dumpData()
     },
 
@@ -244,7 +244,7 @@ export function makeCurrencyWalletApi (
       return engine.getDisplayPublicSeed()
     },
 
-    saveTxMetadata (txid: string, currencyCode: string, metadata: AbcMetadata) {
+    saveTxMetadata (txid: string, currencyCode: string, metadata: EdgeMetadata) {
       return setCurrencyWalletTxMetadata(
         input,
         txid,
@@ -253,7 +253,7 @@ export function makeCurrencyWalletApi (
       )
     },
 
-    getMaxSpendable (spendInfo: AbcSpendInfo): Promise<string> {
+    getMaxSpendable (spendInfo: EdgeSpendInfo): Promise<string> {
       const { currencyCode } = spendInfo
       const balance = engine.getBalance({ currencyCode })
 
@@ -298,7 +298,7 @@ export function makeCurrencyWalletApi (
     },
 
     '@encodeUri': { sync: true },
-    encodeUri (obj: AbcEncodeUri) {
+    encodeUri (obj: EdgeEncodeUri) {
       return plugin.encodeUri(obj)
     }
   }
@@ -307,7 +307,7 @@ export function makeCurrencyWalletApi (
   return wrapObject('CurrencyWallet', out)
 }
 
-function fixMetadata (metadata: AbcMetadata, fiat: any) {
+function fixMetadata (metadata: EdgeMetadata, fiat: any) {
   const out = filterObject(metadata, [
     'bizId',
     'category',

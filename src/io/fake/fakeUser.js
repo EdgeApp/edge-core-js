@@ -4,7 +4,7 @@
  */
 
 // @flow
-import type { AbcIo } from '../../edge-core-index.js'
+import type { EdgeIo } from '../../edge-core-index.js'
 import { base16, base58, base64 } from '../../util/encoding.js'
 
 export const fakeUser = {
@@ -239,7 +239,7 @@ export const fakeRepos = {
   '0930F3C2CD0417765198FBEA95EC9F1E99000312': {}
 }
 
-export function stashFakeUser (io: AbcIo) {
+export function stashFakeUser (io: EdgeIo) {
   // The bare minimum data needed to log in with PIN:
   const fakeStash = {
     appId: fakeUserServer.appId,

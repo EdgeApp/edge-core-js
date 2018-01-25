@@ -2,7 +2,7 @@
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import type { AbcAccount } from '../../edge-core-index.js'
+import type { EdgeAccount } from '../../edge-core-index.js'
 import { fakeUser, makeFakeContexts } from '../../edge-core-index.js'
 import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
 import { makeAssertLog } from '../../util/assertLog.js'
@@ -69,7 +69,7 @@ describe('account', function () {
 
   it('create currency wallet', async function () {
     const [context] = makeFakeContexts(contextOptions)
-    const account: AbcAccount = await context.loginWithPIN(
+    const account: EdgeAccount = await context.loginWithPIN(
       fakeUser.username,
       fakeUser.pin
     )

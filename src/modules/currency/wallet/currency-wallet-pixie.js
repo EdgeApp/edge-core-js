@@ -3,9 +3,9 @@ import { combinePixies, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 
 import type {
-  AbcCurrencyEngine,
-  AbcCurrencyPlugin,
-  AbcCurrencyWallet
+  EdgeCurrencyEngine,
+  EdgeCurrencyPlugin,
+  EdgeCurrencyWallet
 } from '../../../edge-core-index.js'
 import type { RootProps } from '../../root.js'
 import { addStorageWallet, syncStorageWallet } from '../../storage/actions.js'
@@ -25,9 +25,9 @@ import { loadAllFiles } from './currency-wallet-files.js'
 import type { CurrencyWalletState } from './currency-wallet-reducer.js'
 
 export interface CurrencyWalletOutput {
-  api: AbcCurrencyWallet | void;
-  plugin: AbcCurrencyPlugin | void;
-  engine: AbcCurrencyEngine | void;
+  api: EdgeCurrencyWallet | void;
+  plugin: EdgeCurrencyPlugin | void;
+  engine: EdgeCurrencyEngine | void;
   engineStarted: boolean | void;
   syncTimer: void;
 }

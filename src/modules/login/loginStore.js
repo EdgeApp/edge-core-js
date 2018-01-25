@@ -2,9 +2,9 @@
 import { mapFiles } from 'disklet'
 
 import type {
-  AbcIo,
   DiskletFile,
-  DiskletFolder
+  DiskletFolder,
+  EdgeIo
 } from '../../edge-core-index.js'
 import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
@@ -38,9 +38,9 @@ function findUserFile (folder, username) {
  * Handles login data storage.
  */
 export class LoginStore {
-  folder: $PropertyType<AbcIo, 'folder'>
+  folder: $PropertyType<EdgeIo, 'folder'>
 
-  constructor (io: AbcIo) {
+  constructor (io: EdgeIo) {
     this.folder = io.folder.folder('logins')
   }
 

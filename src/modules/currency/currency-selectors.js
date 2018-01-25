@@ -1,14 +1,14 @@
 // @flow
 import type {
-  AbcCurrencyInfo,
-  AbcCurrencyPlugin
+  EdgeCurrencyInfo,
+  EdgeCurrencyPlugin
 } from '../../edge-core-index.js'
 import type { ApiInput, ApiProps } from '../root.js'
 
 export function getCurrencyInfo (
-  infos: Array<AbcCurrencyInfo>,
+  infos: Array<EdgeCurrencyInfo>,
   walletType: string
-): AbcCurrencyInfo {
+): EdgeCurrencyInfo {
   for (const info of infos) {
     for (const type of info.walletTypes) {
       if (type === walletType) {
@@ -21,7 +21,7 @@ export function getCurrencyInfo (
 }
 
 export function getCurrencyMultiplier (
-  infos: Array<AbcCurrencyInfo>,
+  infos: Array<EdgeCurrencyInfo>,
   currencyCode: string
 ): string {
   for (const info of infos) {
@@ -44,7 +44,7 @@ export function getCurrencyMultiplier (
 }
 
 export function getCurrencyPlugin (
-  plugins: Array<AbcCurrencyPlugin>,
+  plugins: Array<EdgeCurrencyPlugin>,
   walletType: string
 ) {
   for (const plugin of plugins) {
@@ -60,7 +60,7 @@ export function getCurrencyPlugin (
 }
 
 export function hasCurrencyPlugin (
-  infos: Array<AbcCurrencyInfo>,
+  infos: Array<EdgeCurrencyInfo>,
   walletType: string
 ) {
   for (const info of infos) {

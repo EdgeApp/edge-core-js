@@ -2,11 +2,11 @@
 import { stopUpdates } from 'redux-pixies'
 
 import type {
-  AbcAccountOptions,
-  AbcContext,
-  AbcEdgeLoginOptions,
-  AbcExchangeSwapInfo,
-  AbcLoginMessages
+  EdgeAccountOptions,
+  EdgeContext,
+  EdgeEdgeLoginOptions,
+  EdgeExchangeSwapInfo,
+  EdgeLoginMessages
 } from '../../edge-core-index.js'
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
@@ -38,7 +38,7 @@ function makeContextApi (ai: ApiInput) {
 
   const shapeshiftApi = makeShapeshiftApi(ai)
 
-  const rawContext: AbcContext = {
+  const rawContext: EdgeContext = {
     io: (ai.props.io: any),
     appId,
 
@@ -67,7 +67,7 @@ function makeContextApi (ai: ApiInput) {
       username: string,
       password?: string,
       pin?: string,
-      opts?: AbcAccountOptions
+      opts?: EdgeAccountOptions
     ) {
       const { callbacks } = opts || {} // opts can be `null`
 
@@ -79,7 +79,11 @@ function makeContextApi (ai: ApiInput) {
       })
     },
 
-    loginWithKey (username: string, loginKey: string, opts?: AbcAccountOptions) {
+    loginWithKey (
+      username: string,
+      loginKey: string,
+      opts?: EdgeAccountOptions
+    ) {
       const { callbacks } = opts || {} // opts can be `null`
 
       return loginStore.load(username).then(stashTree => {
@@ -95,7 +99,7 @@ function makeContextApi (ai: ApiInput) {
     loginWithPassword (
       username: string,
       password: string,
-      opts?: AbcAccountOptions
+      opts?: EdgeAccountOptions
     ): Promise<any> {
       const { callbacks, otp } = opts || {} // opts can be `null`
 
@@ -119,7 +123,7 @@ function makeContextApi (ai: ApiInput) {
       return this.pinExists(username)
     },
 
-    loginWithPIN (username: string, pin: string, opts?: AbcAccountOptions) {
+    loginWithPIN (username: string, pin: string, opts?: EdgeAccountOptions) {
       const { callbacks, otp } = opts || {} // opts can be `null`
 
       return loginPin2(ai, appId, username, pin, otp).then(loginTree => {
@@ -141,7 +145,7 @@ function makeContextApi (ai: ApiInput) {
       recovery2Key: string,
       username: string,
       answers: Array<string>,
-      opts?: AbcAccountOptions
+      opts?: EdgeAccountOptions
     ) {
       const { callbacks, otp } = opts || {} // opts can be `null`
 
@@ -164,7 +168,7 @@ function makeContextApi (ai: ApiInput) {
       return listRecoveryQuestionChoices(ai)
     },
 
-    requestEdgeLogin (opts: AbcEdgeLoginOptions) {
+    requestEdgeLogin (opts: EdgeEdgeLoginOptions) {
       const {
         callbacks,
         onLogin,
@@ -191,7 +195,7 @@ function makeContextApi (ai: ApiInput) {
       return resetOtp(ai, username, otpResetToken)
     },
 
-    fetchLoginMessages (): Promise<AbcLoginMessages> {
+    fetchLoginMessages (): Promise<EdgeLoginMessages> {
       return fetchLoginMessages(ai)
     },
 
@@ -205,7 +209,7 @@ function makeContextApi (ai: ApiInput) {
     getExchangeSwapInfo (
       fromCurrencyCode: string,
       toCurrencyCode: string
-    ): Promise<AbcExchangeSwapInfo> {
+    ): Promise<EdgeExchangeSwapInfo> {
       return shapeshiftApi.getExchangeSwapInfo(fromCurrencyCode, toCurrencyCode)
     }
   }

@@ -2,13 +2,13 @@
 import { combinePixies, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 
-import type { AbcExchangePlugin } from '../../edge-core-index.js'
+import type { EdgeExchangePlugin } from '../../edge-core-index.js'
 import { rejectify } from '../../util/decorators.js'
 import type { RootProps } from '../root.js'
 import { addPairs } from './reducer.js'
 
 export interface ExchangeOutput {
-  plugins: Array<AbcExchangePlugin>;
+  plugins: Array<EdgeExchangePlugin>;
   update: void;
 }
 
@@ -16,7 +16,7 @@ export default combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): any => {
       const opts = { io: (props.io: any) }
-      const promises: Array<Promise<AbcExchangePlugin>> = []
+      const promises: Array<Promise<EdgeExchangePlugin>> = []
       for (const plugin of props.plugins) {
         if (plugin.pluginType === 'exchange') {
           promises.push(plugin.makePlugin(opts))

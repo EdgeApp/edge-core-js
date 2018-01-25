@@ -2,13 +2,13 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import type { AbcLobby } from '../../edge-core-index.js'
+import type { EdgeLobby } from '../../edge-core-index.js'
 import { fakeUser, makeFakeContexts } from '../../edge-core-index.js'
 
 async function simulateRemoteApproval (remote, lobbyId: string) {
   const account = await remote.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-  const lobby: AbcLobby = await account.fetchLobby(lobbyId)
+  const lobby: EdgeLobby = await account.fetchLobby(lobbyId)
   const { loginRequest } = lobby
   if (!loginRequest) throw new Error('No login request')
   expect(loginRequest.appId).to.equal('test-child')

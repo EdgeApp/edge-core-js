@@ -4,9 +4,9 @@ import { attachPixie, filterPixie } from 'redux-pixies'
 import type { PixieInput, ReduxProps } from 'redux-pixies'
 
 import type {
-  AbcContextOptions,
-  AbcCorePlugin,
-  AbcIo
+  EdgeContextOptions,
+  EdgeCorePluginFactory,
+  EdgeIo
 } from '../edge-core-index.js'
 import { makeBrowserIo } from '../io/browser/browser-io.js'
 import { makeFakeIos } from '../io/fake/fake-io.js'
@@ -33,10 +33,10 @@ export interface CoreRoot {
   apiKey: string;
   appId: string;
   authServer: string;
-  io: AbcIo;
+  io: EdgeIo;
   onError(e: Error): void;
   onExchangeUpdate(): void;
-  plugins: Array<AbcCorePlugin>;
+  plugins: Array<EdgeCorePluginFactory>;
   shapeshiftKey: string | void;
 
   // Loose objects:
@@ -55,7 +55,7 @@ export interface CoreRoot {
  * This core object contains the `io` object, context options,
  * Redux store, and tree of background workers.
  */
-export function makeCoreRoot (opts: AbcContextOptions) {
+export function makeCoreRoot (opts: EdgeContextOptions) {
   const onErrorDefault = (error, name) => io.console.error(name, error)
 
   const {
@@ -118,7 +118,7 @@ export function startCoreRoot (coreRoot: CoreRoot) {
  * Makes a bunch of coreRoot objects with fake io's for unit-testing.
  */
 export function makeFakeCoreRoots (
-  ...opts: Array<AbcContextOptions>
+  ...opts: Array<EdgeContextOptions>
 ): Array<CoreRoot> {
   return makeFakeIos(opts.length).map((io, i) => {
     const coreRoot: CoreRoot = makeCoreRoot({ ...opts[i], io })
@@ -141,11 +141,11 @@ export function destroyAllContexts () {
 export interface RootProps {
   coreRoot: CoreRoot;
   +dispatch: Dispatch<RootAction>;
-  io: AbcIo;
+  io: EdgeIo;
   onError(e: Error): void;
   onExchangeUpdate(): void;
   output: RootOutput;
-  plugins: Array<AbcCorePlugin>;
+  plugins: Array<EdgeCorePluginFactory>;
   shapeshiftKey: string | void;
   state: RootState;
 }
@@ -168,11 +168,11 @@ export function makeRootProps (
 }
 
 /**
- * Props passed through the API objects (AbcContext, AbcAccount, etc.)
+ * Props passed through the API objects (EdgeContext, EdgeAccount, etc.)
  */
 export interface ApiProps {
   +dispatch: Dispatch<RootAction>;
-  io: AbcIo;
+  io: EdgeIo;
   loginStore: LoginStore;
   onError(e: Error): void;
   output: RootOutput;

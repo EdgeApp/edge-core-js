@@ -1,5 +1,5 @@
 // @flow
-import type { AbcWalletInfo } from '../../edge-core-index.js'
+import type { EdgeWalletInfo } from '../../edge-core-index.js'
 
 export type JsonSnrp = Object
 export type LoginReply = Object
@@ -19,7 +19,7 @@ export interface LoginKit {
 }
 
 // Helper for defining specific key types.
-// Use `AbcWalletInfo` for generic wallet infos:
+// Use `EdgeWalletInfo` for generic wallet infos:
 interface WalletInfo<K = {}> {
   type: string;
   id: string;
@@ -32,4 +32,4 @@ export interface StorageKeys {
 }
 export type StorageWalletInfo = WalletInfo<StorageKeys>
 
-export type WalletInfoMap = { [walletId: string]: AbcWalletInfo }
+export type WalletInfoMap = { [walletId: string]: EdgeWalletInfo }
