@@ -56,8 +56,8 @@ export function makeStorageWalletApi (
       return getStorageWalletLocalFolder(ai.props.state, id)
     },
 
-    sync () {
-      return dispatch(syncStorageWallet(id, ai.props.io))
+    async sync (): Promise<void> {
+      await dispatch(syncStorageWallet(id, ai.props.io))
     }
   }
 }

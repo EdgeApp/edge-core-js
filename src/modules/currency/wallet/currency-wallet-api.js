@@ -13,7 +13,7 @@ import type {
   EdgeSpendTarget,
   EdgeTransaction
 } from '../../../edge-core-index.js'
-import { copyProperties, wrapObject } from '../../../util/api.js'
+import { wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
@@ -45,8 +45,29 @@ export function makeCurrencyWalletApi (
   const walletInfo = input.props.selfState.walletInfo
 
   const shapeshiftApi = makeShapeshiftApi(ai)
+  const storageWalletApi = makeStorageWalletApi(ai, walletInfo, {})
 
   const out: EdgeCurrencyWallet = {
+    // Storage wallet properties:
+    get id () {
+      return storageWalletApi.id
+    },
+    get type () {
+      return storageWalletApi.type
+    },
+    get keys () {
+      return storageWalletApi.keys
+    },
+    get folder () {
+      return storageWalletApi.folder
+    },
+    get localFolder () {
+      return storageWalletApi.localFolder
+    },
+    sync () {
+      return storageWalletApi.sync()
+    },
+
     // Storage stuff:
     get name () {
       return input.props.selfState.name
@@ -219,7 +240,7 @@ export function makeCurrencyWalletApi (
     },
 
     saveTx (tx: EdgeTransaction) {
-      return Promise.all([engine.saveTx(tx)])
+      return engine.saveTx(tx)
     },
 
     resyncBlockchain (): Promise<void> {
@@ -303,7 +324,6 @@ export function makeCurrencyWalletApi (
       return plugin.encodeUri(obj)
     }
   }
-  copyProperties(out, makeStorageWalletApi(ai, walletInfo, {}))
 
   return wrapObject('CurrencyWallet', out)
 }

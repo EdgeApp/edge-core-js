@@ -446,7 +446,76 @@ export type EdgeLoginRequest = {
 
 // currency wallet types ----------------------------------------------
 
-export type EdgeCurrencyWallet = any
+export type EdgeTokenInfo = {
+  currencyCode: string,
+  currencyName: string,
+  contractAddress: string,
+  multiplier: string
+}
+
+export type EdgeCurrencyWallet = {
+  // EdgeWalletInfo members:
+  +id: string,
+  +keys: any,
+  +type: string,
+
+  // Data store:
+  +folder: DiskletFolder,
+  +localFolder: DiskletFolder,
+  sync(): Promise<void>,
+
+  // Wallet name:
+  +name: string | null,
+  renameWallet(name: string): Promise<void>,
+
+  // Fiat currency option:
+  +fiatCurrencyCode: string,
+  setFiatCurrencyCode(fiatCurrencyCode: string): Promise<void>,
+
+  // Currency info:
+  +currencyInfo: EdgeCurrencyInfo,
+
+  // Running state:
+  startEngine(): Promise<void>,
+  stopEngine(): Promise<void>,
+
+  // Token management:
+  enableTokens(tokens: Array<string>): Promise<void>,
+  disableTokens(tokens: Array<string>): Promise<void>,
+  getEnabledTokens(): Promise<Array<string>>,
+  addCustomToken(token: EdgeTokenInfo): Promise<void>,
+
+  // Transactions:
+  getBalance(opts: any): string,
+  getBlockHeight(): number,
+  getTransactions(opts?: any): Promise<Array<EdgeTransaction>>,
+  getReceiveAddress(opts: any): Promise<EdgeReceiveAddress>,
+  saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,
+  lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,
+  makeAddressQrCode(address: EdgeReceiveAddress): string,
+  makeAddressUri(address: EdgeReceiveAddress): string,
+  makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
+  signTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
+  broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
+  saveTx(tx: EdgeTransaction): Promise<void>,
+  sweepPrivateKey(keyUri: string): Promise<void>,
+  saveTxMetadata(
+    txid: string,
+    currencyCode: string,
+    metadata: EdgeMetadata
+  ): Promise<void>,
+  getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
+
+  // Wallet management:
+  resyncBlockchain(): Promise<void>,
+  dumpData(): EdgeDataDump,
+  getDisplayPrivateSeed(): string | null,
+  getDisplayPublicSeed(): string | null,
+
+  // URI handling:
+  parseUri(uri: string): EdgeParsedUri,
+  encodeUri(obj: EdgeEncodeUri): string
+}
 
 export type EdgeMetadata = {
   name?: string,
@@ -593,7 +662,7 @@ export type EdgeCurrencyEngine = {
   enableTokens(tokens: Array<string>): Promise<void>,
   disableTokens(tokens: Array<string>): Promise<void>,
   getEnabledTokens(): Promise<Array<string>>,
-  addCustomToken(token: any): Promise<void>,
+  addCustomToken(token: EdgeTokenInfo): Promise<void>,
   getTokenStatus(token: string): boolean,
   getBalance(options: any): string,
   getNumTransactions(options: any): number,
