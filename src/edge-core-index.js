@@ -17,7 +17,11 @@ export { makeNodeIo } from './io/node/node-io.js'
 export { makeReactNativeIo } from './io/react-native/react-native-io.js'
 export { fakeUser } from './io/fake/fakeUser.js'
 export { errorNames } from './error.js'
-export { makeABCContext, makeContext, makeFakeContexts } from './makeContext.js'
+export {
+  makeContext,
+  makeEdgeContext,
+  makeFakeContexts
+} from './makeContext.js'
 export { destroyAllContexts } from './modules/root.js'
 
 // io types -----------------------------------------------------------
