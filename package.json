@@ -1,7 +1,7 @@
 {
-  "name": "airbitz-core-js",
-  "version": "0.4.0",
-  "description": "Airbitz core Javascript implementation",
+  "name": "edge-core",
+  "version": "0.5.0",
+  "description": "Edge core login & key-management library",
   "keywords": [
     "bitcoin",
     "blockchain",
@@ -9,7 +9,7 @@
     "key management",
     "security"
   ],
-  "homepage": "https://airbitz.co",
+  "homepage": "https://edgesecure.co",
   "license": "SEE LICENSE IN LICENSE",
   "author": "Airbitz, Inc.",
   "contributors": [
