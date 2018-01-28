@@ -6,14 +6,16 @@ import packageJson from './package.json'
 const babelOpts = {
   presets: ['es2015-rollup', 'flow'],
   plugins: [
-    'transform-object-rest-spread',
+    'transform-async-to-generator',
     ['transform-es2015-for-of', { loose: true }],
-    ['fast-async', { compiler: { promises: true, noRuntime: true } }]
+    'transform-object-rest-spread',
+    'transform-regenerator'
   ]
 }
 
 export default {
   external: [
+    'regenerator-runtime/runtime',
     ...Object.keys(packageJson.dependencies),
     ...Object.keys(packageJson.devDependencies)
   ],
