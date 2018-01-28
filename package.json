@@ -61,6 +61,7 @@
     "redux-keto": "^0.3.2",
     "redux-pixies": "^0.3.3",
     "redux-thunk": "^2.2.0",
+    "regenerator-runtime": "^0.11.1",
     "rfc4648": "^1.0.0",
     "scrypt-js": "^2.0.3",
     "utf8": "^2.1.2"
@@ -68,8 +69,9 @@
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-eslint": "^7.2.3",
-    "babel-plugin-fast-async": "^6.1.2",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-regenerator": "^6.26.0",
     "babel-preset-es2015-rollup": "^3.0.0",
     "babel-preset-flow": "^6.23.0",
     "eslint": "4.13.1",

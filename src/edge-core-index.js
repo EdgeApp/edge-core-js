@@ -1,8 +1,5 @@
 // @flow
 
-// Polyfill:
-import 'core-js'
-
 // Sub-module exports:
 import * as error from './error.js'
 import * as internal from './internal.js'
