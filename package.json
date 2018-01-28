@@ -1,7 +1,7 @@
 {
-  "name": "edge-core",
+  "name": "edge-login",
   "version": "0.5.0",
-  "description": "Edge core login & key-management library",
+  "description": "Edge account & wallet management library",
   "keywords": [
     "bitcoin",
     "blockchain",

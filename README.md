@@ -1,4 +1,4 @@
-# Edge Core
+# Edge Login
 
 This library implements the Edge login system. It runs inside a client application, and provides zero-knowledge backup for cryptographic keys and other secrets via a familiar password-based login system.
 
@@ -12,7 +12,7 @@ To quickly get up and running with the UI for account creation, login, and manag
 
 ## Setup
 
-Just use `npm install --save edge-core` to add this library to your project.
+Just use `npm install --save edge-login` to add this library to your project.
 
 If you are on React Native, you must also do:
 
