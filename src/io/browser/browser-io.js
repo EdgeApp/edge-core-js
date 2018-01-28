@@ -1,10 +1,10 @@
 // @flow
-import type { AbcRawIo } from 'airbitz-core-types'
+import type { EdgeRawIo } from '../../edge-core-index.js'
 
 /**
  * Extracts the io functions we need from the browser.
  */
-export function makeBrowserIo (): AbcRawIo {
+export function makeBrowserIo (): EdgeRawIo {
   const out = {}
 
   if (typeof console !== 'undefined') {

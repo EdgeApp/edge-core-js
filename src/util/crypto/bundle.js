@@ -4,3 +4,4 @@
 
 exports.elliptic = require('elliptic')
 exports.hashjs = require('hash.js')
+exports.HmacDRBG = require('hmac-drbg')

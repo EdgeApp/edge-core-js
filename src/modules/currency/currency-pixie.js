@@ -1,8 +1,8 @@
 // @flow
-import type { AbcCurrencyPlugin } from 'airbitz-core-types'
 import { combinePixies, mapPixie, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 
+import type { EdgeCurrencyPlugin } from '../../edge-core-index.js'
 import type { RootProps } from '../root.js'
 import type {
   CurrencyWalletOutput,
@@ -11,7 +11,7 @@ import type {
 import walletPixie from './wallet/currency-wallet-pixie.js'
 
 export interface CurrencyOutput {
-  plugins: Array<AbcCurrencyPlugin>;
+  plugins: Array<EdgeCurrencyPlugin>;
   wallets: { [walletId: string]: CurrencyWalletOutput };
 }
 
@@ -19,7 +19,7 @@ export default combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): any => {
       const opts = { io: (props.io: any) }
-      const promises: Array<Promise<AbcCurrencyPlugin>> = []
+      const promises: Array<Promise<EdgeCurrencyPlugin>> = []
       for (const plugin of props.plugins) {
         if (plugin.pluginType === 'currency') {
           promises.push(plugin.makePlugin(opts))

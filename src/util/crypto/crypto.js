@@ -1,7 +1,7 @@
 // @flow
 import aesjs from 'aes-js'
-import type { AbcIo } from 'airbitz-core-types'
 
+import type { EdgeIo } from '../../edge-core-index.js'
 import { base16, base64 } from '../encoding.js'
 import { hashjs } from './external.js'
 
@@ -77,7 +77,11 @@ export function decrypt (box: JsonBox, key: Uint8Array): Uint8Array {
  * @param payload an ArrayBuffer of data
  * @param key a key, as an ArrayBuffer
  */
-export function encrypt (io: AbcIo, data: Uint8Array, key: Uint8Array): JsonBox {
+export function encrypt (
+  io: EdgeIo,
+  data: Uint8Array,
+  key: Uint8Array
+): JsonBox {
   // Calculate sizes and locations:
   const headerSize = io.random(1)[0] & 0x1f
   const dataStart = 1 + headerSize + 4

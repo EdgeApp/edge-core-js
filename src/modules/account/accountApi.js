@@ -1,14 +1,13 @@
 // @flow
 import type {
-  AbcAccount,
-  AbcAccountCallbacks,
-  AbcCreateCurrencyWalletOptions,
-  AbcCurrencyWallet,
-  AbcLobby,
-  AbcWalletInfo,
-  AbcWalletStates
-} from 'airbitz-core-types'
-
+  EdgeAccount,
+  EdgeAccountCallbacks,
+  EdgeCreateCurrencyWalletOptions,
+  EdgeCurrencyWallet,
+  EdgeLobby,
+  EdgeWalletInfo,
+  EdgeWalletStates
+} from '../../edge-core-index.js'
 import { copyProperties, wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
@@ -29,7 +28,7 @@ export function makeAccount (
   appId: string,
   loginTree: any,
   loginType: string = '',
-  callbacks: AbcAccountCallbacks | {} = {}
+  callbacks: EdgeAccountCallbacks | {} = {}
 ) {
   return makeAccountState(ai, appId, loginTree, callbacks).then(state =>
     wrapObject('Account', makeAccountApi(state, loginType, callbacks))
@@ -42,14 +41,14 @@ export function makeAccount (
 function makeAccountApi (
   state: any,
   loginType: string,
-  callbacks: AbcAccountCallbacks | {}
-): AbcAccount {
+  callbacks: EdgeAccountCallbacks | {}
+): EdgeAccount {
   const ai: ApiInput = state.ai
   const { activeLoginId, keyInfo } = state
 
   const exchangeCache = makeExchangeCache(ai)
 
-  const rawAccount: AbcAccount = {
+  const rawAccount: EdgeAccount = {
     // Basic login information:
     get appId (): string {
       return state.login.appId
@@ -142,7 +141,7 @@ function makeAccountApi (
     },
 
     // Edge login approval:
-    fetchLobby (lobbyId: string): Promise<AbcLobby> {
+    fetchLobby (lobbyId: string): Promise<EdgeLobby> {
       return makeLobbyApi(ai, lobbyId, state)
     },
 
@@ -155,7 +154,7 @@ function makeAccountApi (
     get allKeys (): Array<any> {
       return state.allKeys
     },
-    changeWalletStates (walletStates: AbcWalletStates): Promise<void> {
+    changeWalletStates (walletStates: EdgeWalletStates): Promise<void> {
       return state.changeKeyStates(walletStates)
     },
     createWallet (type: string, keys: any): Promise<string> {
@@ -170,11 +169,11 @@ function makeAccountApi (
       return state.applyKit(kit).then(() => keyInfo.id)
     },
     '@getFirstWalletInfo': { sync: true },
-    getFirstWalletInfo (type: string): ?AbcWalletInfo {
+    getFirstWalletInfo (type: string): ?EdgeWalletInfo {
       return findFirstKey(state.allKeys, type)
     },
     '@getWalletInfo': { sync: true },
-    getWalletInfo (id: string): AbcWalletInfo {
+    getWalletInfo (id: string): EdgeWalletInfo {
       const info = state.allKeys.find(info => info.id === id)
       return info
     },
@@ -193,7 +192,7 @@ function makeAccountApi (
     get archivedWalletIds (): Array<string> {
       return ai.props.state.login.logins[activeLoginId].archivedWalletIds
     },
-    get currencyWallets (): { [walletId: string]: AbcCurrencyWallet } {
+    get currencyWallets (): { [walletId: string]: EdgeCurrencyWallet } {
       const allIds = ai.props.state.currency.currencyWalletIds
       const selfState = ai.props.state.login.logins[state.activeLoginId]
       const myIds = allIds.filter(id => id in selfState.allWalletInfos)
@@ -208,8 +207,8 @@ function makeAccountApi (
     },
     async createCurrencyWallet (
       type: string,
-      opts?: AbcCreateCurrencyWalletOptions = {}
-    ): Promise<AbcCurrencyWallet> {
+      opts?: EdgeCreateCurrencyWalletOptions = {}
+    ): Promise<EdgeCurrencyWallet> {
       return state.createCurrencyWallet(type, opts)
     },
 
@@ -220,18 +219,18 @@ function makeAccountApi (
     cancelOtpResetRequest (): Promise<void> {
       return this.cancelOtpReset()
     },
-    changeKeyStates (walletStates: AbcWalletStates): Promise<void> {
+    changeKeyStates (walletStates: EdgeWalletStates): Promise<void> {
       return this.changeWalletStates(walletStates)
     },
     changePIN (pin: string): Promise<void> {
       return this.changePin({ pin })
     },
     '@getFirstWallet': { sync: true },
-    getFirstWallet (type: string): ?AbcWalletInfo {
+    getFirstWallet (type: string): ?EdgeWalletInfo {
       return this.getFirstWalletInfo(type)
     },
     '@getWallet': { sync: true },
-    getWallet (id: string): AbcWalletInfo {
+    getWallet (id: string): EdgeWalletInfo {
       return this.getWalletInfo(id)
     },
     '@isLoggedIn': { sync: true },

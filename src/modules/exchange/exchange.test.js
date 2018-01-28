@@ -3,11 +3,11 @@ import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 import { attachPixie, filterPixie } from 'redux-pixies'
 
+import { makeFakeIos } from '../../edge-core-index.js'
 import {
   brokenExchangePlugin,
   fakeExchangePlugin
 } from '../../fake-plugins/fakeExchange.js'
-import { makeFakeIos } from '../../indexABC.js'
 import { awaitState } from '../../util/redux/reaction.js'
 import { rootPixie } from '../root-pixie.js'
 import {

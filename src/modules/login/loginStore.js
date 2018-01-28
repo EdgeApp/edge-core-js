@@ -1,7 +1,11 @@
 // @flow
-import type { AbcIo, DiskletFile, DiskletFolder } from 'airbitz-core-types'
 import { mapFiles } from 'disklet'
 
+import type {
+  DiskletFile,
+  DiskletFolder,
+  EdgeIo
+} from '../../edge-core-index.js'
 import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { scrypt, userIdSnrp } from '../scrypt/selectors.js'
@@ -34,9 +38,9 @@ function findUserFile (folder, username) {
  * Handles login data storage.
  */
 export class LoginStore {
-  folder: $PropertyType<AbcIo, 'folder'>
+  folder: $PropertyType<EdgeIo, 'folder'>
 
-  constructor (io: AbcIo) {
+  constructor (io: EdgeIo) {
     this.folder = io.folder.folder('logins')
   }
 

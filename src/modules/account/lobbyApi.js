@@ -1,6 +1,5 @@
 // @flow
-import type { AbcLobby, AbcLoginRequest } from 'airbitz-core-types'
-
+import type { EdgeLobby, EdgeLoginRequest } from '../../edge-core-index.js'
 import { wrapObject } from '../../util/api.js'
 import { base64 } from '../../util/encoding.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
@@ -83,14 +82,14 @@ async function approveLoginRequest (
 }
 
 /**
- * Fetches the contents of a lobby and returns them as an AbcLobby API.
+ * Fetches the contents of a lobby and returns them as an EdgeLobby API.
  */
 export async function makeLobbyApi (
   ai: ApiInput,
   lobbyId: string,
   accountState: any
-): Promise<AbcLobby> {
-  const lobbyApi: AbcLobby = {}
+): Promise<EdgeLobby> {
+  const lobbyApi: EdgeLobby = {}
 
   // Look up the lobby on the server:
   const lobbyJson: LobbyRequest = await fetchLobbyRequest(ai, lobbyId)
@@ -102,7 +101,7 @@ export async function makeLobbyApi (
     const { displayName, displayImageUrl } = await fetchAppIdInfo(ai, appId)
 
     // Make the API:
-    const rawLoginRequest: AbcLoginRequest = {
+    const rawLoginRequest: EdgeLoginRequest = {
       appId,
       displayName,
       approve () {

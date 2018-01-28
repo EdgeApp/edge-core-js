@@ -1,7 +1,7 @@
 // @flow
-import type { AbcIo } from 'airbitz-core-types'
 import { buildReducer } from 'redux-keto'
 
+import type { EdgeIo } from '../edge-core-index.js'
 import type { RootAction } from './actions.js'
 import type { CurrencyState } from './currency/currency-reducer.js'
 import currency from './currency/currency-reducer.js'
@@ -14,7 +14,7 @@ import type { StorageWalletState } from './storage/reducer.js'
 
 export interface RootState {
   currency: CurrencyState;
-  io: AbcIo;
+  io: EdgeIo;
   login: LoginState;
   storageWallets: { [walletId: string]: StorageWalletState };
 }

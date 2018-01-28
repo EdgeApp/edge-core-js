@@ -1,11 +1,11 @@
 // @flow
-import type {
-  AbcAccountCallbacks,
-  AbcCurrencyPluginCallbacks,
-  AbcTransaction
-} from 'airbitz-core-types'
 import { isPixieShutdownError } from 'redux-pixies'
 
+import type {
+  EdgeAccountCallbacks,
+  EdgeCurrencyEngineCallbacks,
+  EdgeTransaction
+} from '../../../edge-core-index.js'
 import { compare } from '../../../util/compare.js'
 import { getStorageWalletLastChanges } from '../../storage/selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
@@ -22,7 +22,7 @@ import { mergeTx } from './currency-wallet-reducer.js'
  */
 export function forEachListener (
   input: CurrencyWalletInput,
-  f: (callbacks: AbcAccountCallbacks) => void
+  f: (callbacks: EdgeAccountCallbacks) => void
 ) {
   for (const activeLoginId of input.props.state.login.activeLoginIds) {
     const login = input.props.state.login.logins[activeLoginId]
@@ -41,7 +41,7 @@ export function forEachListener (
  */
 export function makeCurrencyWalletCallbacks (
   input: CurrencyWalletInput
-): AbcCurrencyPluginCallbacks {
+): EdgeCurrencyEngineCallbacks {
   const walletId = input.props.id
 
   return {
@@ -69,7 +69,7 @@ export function makeCurrencyWalletCallbacks (
       })
     },
 
-    onTransactionsChanged (txs: Array<AbcTransaction>) {
+    onTransactionsChanged (txs: Array<EdgeTransaction>) {
       // Sanity-check incoming transactions:
       if (!txs) return
       for (const tx of txs) {

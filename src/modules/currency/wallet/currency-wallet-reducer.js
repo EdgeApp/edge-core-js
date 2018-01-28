@@ -1,14 +1,17 @@
 // @flow
-import type { AbcCurrencyInfo, AbcWalletInfo } from 'airbitz-core-types'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
+import type {
+  EdgeCurrencyInfo,
+  EdgeWalletInfo
+} from '../../../edge-core-index.js'
 import { recycle } from '../../../util/compare.js'
 import type { RootAction } from '../../actions.js'
 import type { RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'
 
 export interface CurrencyWalletState {
-  currencyInfo: AbcCurrencyInfo;
+  currencyInfo: EdgeCurrencyInfo;
   engineFailure: Error | null;
   fiat: string;
   fiatLoaded: boolean;
@@ -16,7 +19,7 @@ export interface CurrencyWalletState {
   filesLoaded: boolean;
   name: string | null;
   nameLoaded: boolean;
-  walletInfo: AbcWalletInfo;
+  walletInfo: EdgeWalletInfo;
   txids: Array<string>;
   txs: { [txid: string]: Object };
 }
@@ -28,7 +31,7 @@ export interface CurrencyWalletNext {
 }
 
 const currencyWalletReducer = buildReducer({
-  currencyInfo (state, action, next: CurrencyWalletNext): AbcCurrencyInfo {
+  currencyInfo (state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
     if (state) return state
     return getCurrencyInfo(next.root.currency.infos, next.self.walletInfo.type)
   },

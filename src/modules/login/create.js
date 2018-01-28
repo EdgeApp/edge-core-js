@@ -1,6 +1,5 @@
 // @flow
-import type { AbcWalletInfo } from 'airbitz-core-types'
-
+import type { EdgeWalletInfo } from '../../edge-core-index.js'
 import { errorNames } from '../../error.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
@@ -13,7 +12,7 @@ import { makePasswordKit } from './password.js'
 import { makePin2Kit } from './pin2.js'
 
 export interface LoginCreateOpts {
-  keyInfo?: AbcWalletInfo;
+  keyInfo?: EdgeWalletInfo;
   password?: string | void;
   pin?: string | void;
 }

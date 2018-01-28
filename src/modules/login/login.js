@@ -3,8 +3,7 @@
  */
 
 // @flow
-import type { AbcLoginMessages } from 'airbitz-core-types'
-
+import type { EdgeLoginMessages } from '../../edge-core-index.js'
 import { decrypt } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
@@ -363,7 +362,7 @@ export async function resetOtp (
 /**
  * Fetches any login-related messages for all the users on this device.
  */
-export function fetchLoginMessages (ai: ApiInput): Promise<AbcLoginMessages> {
+export function fetchLoginMessages (ai: ApiInput): Promise<EdgeLoginMessages> {
   const { loginStore } = ai.props
   return loginStore.mapLoginIds().then(loginMap => {
     const request = {

@@ -1,14 +1,14 @@
 // @flow
-import type { AbcIo, AbcRawIo } from 'airbitz-core-types'
 import { makeLocalStorageFolder } from 'disklet'
 
+import type { EdgeIo, EdgeRawIo } from '../edge-core-index.js'
 import { scrypt } from '../util/crypto/scrypt.js'
 
 /**
  * Checks the properties of an `io` object,
  * upgrading obsolete ones and verifying that we have all necessary ones.
  */
-export function fixIo (io: AbcRawIo): AbcIo {
+export function fixIo (io: EdgeRawIo): EdgeIo {
   const out: any = {}
 
   // Copy native io resources:

@@ -1,7 +1,7 @@
 // @flow
-import type { AbcAccountCallbacks } from 'airbitz-core-types'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
+import type { EdgeAccountCallbacks } from '../../../edge-core-index.js'
 import type { RootAction } from '../../actions.js'
 import { hasCurrencyPlugin } from '../../currency/currency-selectors.js'
 import type { RootState } from '../../root-reducer.js'
@@ -13,7 +13,7 @@ export interface ActiveLoginState {
   activeWalletIds: Array<string>;
   archivedWalletIds: Array<string>;
   appId: string;
-  callbacks: AbcAccountCallbacks;
+  callbacks: EdgeAccountCallbacks;
   loginKey: Uint8Array;
   username: string;
 }

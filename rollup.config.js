@@ -17,7 +17,7 @@ export default {
     ...Object.keys(packageJson.dependencies),
     ...Object.keys(packageJson.devDependencies)
   ],
-  input: 'src/indexABC.js',
+  input: 'src/edge-core-index.js',
   output: [
     { file: packageJson.main, format: 'cjs' },
     { file: packageJson.module, format: 'es' }

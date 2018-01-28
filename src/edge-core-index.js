@@ -1,0 +1,718 @@
+// @flow
+
+// Polyfill:
+import 'core-js'
+
+// Sub-module exports:
+import * as error from './error.js'
+import * as internal from './internal.js'
+
+export { error }
+export { internal }
+
+// Ancillary exports:
+export { makeBrowserIo } from './io/browser/browser-io.js'
+export { makeFakeIos } from './io/fake/fake-io.js'
+export { makeNodeIo } from './io/node/node-io.js'
+export { makeReactNativeIo } from './io/react-native/react-native-io.js'
+export { fakeUser } from './io/fake/fakeUser.js'
+export { errorNames } from './error.js'
+export {
+  makeContext,
+  makeEdgeContext,
+  makeFakeContexts
+} from './makeContext.js'
+export { destroyAllContexts } from './modules/root.js'
+
+// io types -----------------------------------------------------------
+
+export interface DiskletFile {
+  delete(): Promise<void>;
+  getData(): Promise<Uint8Array>;
+  getText(): Promise<string>;
+  setData(data: Array<number> | Uint8Array): Promise<void>;
+  setText(text: string): Promise<void>;
+}
+
+export interface DiskletFolder {
+  delete(): Promise<void>;
+  file(name: string): DiskletFile;
+  folder(name: string): DiskletFolder;
+  listFiles(): Promise<Array<string>>;
+  listFolders(): Promise<Array<string>>;
+}
+
+// Node.js randomBytes function:
+export type EdgeRandomFunction = (bytes: number) => Uint8Array
+
+// The only subset of `Console` that Edge core uses:
+export type EdgeConsole = {
+  error(...data: Array<any>): void,
+  info(...data: Array<any>): void,
+  warn(...data: Array<any>): void
+}
+
+// The scrypt function Edge expects:
+export type EdgeScryptFunction = (
+  data: Uint8Array,
+  salt: Uint8Array,
+  n: number,
+  r: number,
+  p: number,
+  dklen: number
+) => Promise<Uint8Array>
+
+export type EdgeSecp256k1 = {
+  publicKeyCreate: (
+    privateKey: Uint8Array,
+    compressed: boolean
+  ) => Promise<string>,
+  privateKeyTweakAdd: (
+    privateKey: Uint8Array,
+    tweak: Uint8Array
+  ) => Promise<Uint8Array>,
+  publicKeyTweakAdd: (
+    publicKey: Uint8Array,
+    tweak: Uint8Array,
+    compressed: boolean
+  ) => Promise<Uint8Array>
+}
+
+export type EdgePbkdf2 = {
+  deriveAsync: (
+    key: Uint8Array,
+    salt: Uint8Array,
+    iter: number,
+    len: number,
+    algo: string
+  ) => Promise<Uint8Array>
+}
+
+/**
+ * Access to platform-specific resources, with many optional fields.
+ * The core will emulate/adapt whatever is missing.
+ */
+export type EdgeRawIo = {
+  // Crypto:
+  +random: EdgeRandomFunction, // Non-optional & security-critical
+  +scrypt?: EdgeScryptFunction,
+  +secp256k1?: EdgeSecp256k1,
+  +pbkdf2?: EdgePbkdf2,
+
+  // Local io:
+  +console?: EdgeConsole,
+  +folder?: DiskletFolder,
+  +localStorage?: Storage,
+
+  // Networking:
+  +fetch: typeof fetch,
+  +Socket?: net$Socket,
+  +TLSSocket?: tls$TLSSocket,
+  +WebSocket?: WebSocket
+}
+
+/**
+ * Access to platform-specific resources.
+ * The core never talks to the outside world on its own,
+ * but always goes through this object.
+ */
+export type EdgeIo = {
+  // Crypto:
+  +random: EdgeRandomFunction,
+  +scrypt: EdgeScryptFunction,
+  // TODO: Make these two non-optional, providing JS versions as needed:
+  +secp256k1?: EdgeSecp256k1,
+  +pbkdf2?: EdgePbkdf2,
+
+  // Local io:
+  +console: EdgeConsole,
+  +folder: DiskletFolder,
+
+  // Networking:
+  +fetch: typeof fetch,
+  +Socket?: net$Socket, // Still optional (no browser version)
+  +TLSSocket?: tls$TLSSocket, // Still optional (no browser version)
+  +WebSocket?: WebSocket // TODO: Make this non-optional
+}
+
+// context types ------------------------------------------------------
+
+/* eslint-disable no-use-before-define */
+export type EdgeCorePluginFactory =
+  | EdgeCurrencyPluginFactory
+  | EdgeExchangePluginFactory
+
+export type EdgeCorePluginOptions = {
+  io: EdgeIo
+}
+
+export type EdgeContextCallbacks = {
+  +onError?: (e: Error) => void,
+  +onExchangeUpdate?: () => void
+}
+
+export type EdgeContextOptions = {
+  apiKey?: string,
+  appId?: string,
+  authServer?: string,
+  callbacks?: EdgeContextCallbacks,
+  io?: EdgeRawIo,
+  path?: string, // Only used on node.js
+  plugins?: Array<EdgeCorePluginFactory>,
+  shapeshiftKey?: string
+}
+
+export type EdgeContext = {
+  appId: string,
+  io: EdgeIo,
+
+  // Local user management:
+  fixUsername(username: string): string,
+  listUsernames(): Promise<Array<string>>,
+  deleteLocalAccount(username: string): Promise<void>,
+
+  // Account creation:
+  usernameAvailable(username: string): Promise<boolean>,
+  createAccount(
+    username: string,
+    password?: string,
+    pin?: string,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+
+  // Edge login:
+  requestEdgeLogin(opts: EdgeEdgeLoginOptions): Promise<EdgeEdgeLoginRequest>,
+
+  // Fingerprint login:
+  loginWithKey(
+    username: string,
+    loginKey: string,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+
+  // Password login:
+  checkPasswordRules(password: string): EdgePasswordRules,
+  loginWithPassword(
+    username: string,
+    pin: string,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+
+  // PIN login:
+  pinLoginEnabled(username: string): Promise<boolean>,
+  loginWithPIN(
+    username: string,
+    pin: string,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+
+  // Recovery2 login:
+  getRecovery2Key(username: string): Promise<string>,
+  loginWithRecovery2(
+    recovery2Key: string,
+    username: string,
+    answers: Array<string>,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+  fetchRecovery2Questions(
+    recovery2Key: string,
+    username: string
+  ): Promise<Array<string>>,
+  listRecoveryQuestionChoices(): Promise<Array<string>>,
+
+  // Misc. stuff:
+  getCurrencyPlugins(): Promise<Array<EdgeCurrencyPlugin>>,
+
+  // OTP stuff:
+  requestOtpReset(username: string, otpResetToken: string): Promise<Date>,
+  fetchLoginMessages(): Promise<EdgeLoginMessages>,
+
+  // Shapeshift:
+  getExchangeSwapRate(
+    fromCurrencyCode: string,
+    toCurrencyCode: string
+  ): Promise<number>,
+
+  getExchangeSwapInfo(
+    fromCurrencyCode: string,
+    toCurrencyCode: string
+  ): Promise<EdgeExchangeSwapInfo>
+}
+
+export type EdgeExchangeSwapInfo = {
+  rate: number,
+  nativeMin: string,
+  nativeMax: string,
+  minerFee: string
+}
+
+export type EdgePasswordRules = {
+  secondsToCrack: number,
+  tooShort: boolean,
+  noNumber: boolean,
+  noLowerCase: boolean,
+  noUpperCase: boolean,
+  passed: boolean
+}
+
+export type EdgeEdgeLoginRequest = {
+  id: string,
+  cancelRequest(): void
+}
+
+export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
+  displayImageUrl?: string,
+  displayName?: string,
+  onProcessLogin?: (username: string) => void,
+  onLogin(e?: Error, account?: EdgeAccount): void
+}
+
+export type EdgeLoginMessages = {
+  [username: string]: {
+    otpResetPending: boolean,
+    recovery2Corrupt: boolean
+  }
+}
+
+// account types ------------------------------------------------------
+
+export type EdgeWalletInfo = {
+  id: string,
+  type: string,
+  keys: any
+}
+
+export type EdgeWalletInfoFull = {
+  appIds: Array<string>,
+  archived: boolean,
+  deleted: boolean,
+  id: string,
+  keys: any,
+  sortIndex: number,
+  type: string
+}
+
+export type EdgeWalletState = {
+  archived?: boolean,
+  deleted?: boolean,
+  sortIndex?: number
+}
+
+export type EdgeWalletStates = {
+  [walletId: string]: EdgeWalletState
+}
+
+export type EdgeAccountCallbacks = {
+  +onDataChanged?: () => void,
+  +onKeyListChanged?: () => void,
+  +onLoggedOut?: () => void,
+  +onOtpDrift?: (drift: number) => void,
+  +onRemoteOtpChange?: () => void,
+  +onRemotePasswordChange?: () => void,
+
+  // Currency wallet callbacks:
+  +onAddressesChecked?: (walletId: string, progressRatio: number) => void,
+  +onBalanceChanged?: (
+    walletId: string,
+    currencyCode: string,
+    nativeBalance: string
+  ) => void,
+  +onBlockHeightChanged?: (walletId: string, blockHeight: number) => void,
+  +onNewTransactions?: (
+    walletId: string,
+    abcTransactions: Array<EdgeTransaction>
+  ) => void,
+  +onTransactionsChanged?: (
+    walletId: string,
+    abcTransactions: Array<EdgeTransaction>
+  ) => void,
+  +onWalletDataChanged?: (walletId: string) => void,
+  +onWalletNameChanged?: (walletId: string, name: string | null) => void
+}
+
+export type EdgeAccountOptions = {
+  otp?: string,
+  callbacks?: EdgeAccountCallbacks
+}
+
+export type EdgeCreateCurrencyWalletOptions = {
+  name?: string,
+  fiatCurrencyCode?: string,
+  keys?: {}
+}
+
+export type EdgeAccount = {
+  // Basic login information:
+  +appId: string,
+  +loggedIn: boolean,
+  +loginKey: string,
+  +recoveryKey: string | void, // For email backup
+  +username: string,
+
+  // Exchange-rate info:
+  +exchangeCache: any,
+
+  // What login method was used?
+  +edgeLogin: boolean,
+  keyLogin: boolean,
+  newAccount: boolean,
+  passwordLogin: boolean,
+  pinLogin: boolean,
+  recoveryLogin: boolean,
+
+  // Change or create credentials:
+  changePassword(password: string): Promise<void>,
+  changePin(opts: {
+    pin?: string, // We keep the existing PIN if unspecified
+    enableLogin?: boolean // We default to true if unspecified
+  }): Promise<string>,
+  changeRecovery(
+    questions: Array<string>,
+    answers: Array<string>
+  ): Promise<string>,
+
+  // Verify existing credentials:
+  checkPassword(password: string): Promise<boolean>,
+  checkPin(pin: string): Promise<boolean>,
+
+  // Remove credentials:
+  deletePassword(): Promise<void>,
+  deletePin(): Promise<void>,
+  deleteRecovery(): Promise<void>,
+
+  // OTP:
+  +otpKey: string | void, // OTP is enabled if this exists
+  +otpResetDate: Date | void, // A reset is requested if this exists
+  cancelOtpReset(): Promise<void>,
+  disableOtp(): Promise<void>,
+  enableOtp(timeout?: number): Promise<void>,
+
+  // Edge login approval:
+  fetchLobby(lobbyId: string): Promise<EdgeLobby>,
+
+  // Login management:
+  logout(): Promise<void>,
+
+  // Master wallet list:
+  +allKeys: Array<EdgeWalletInfoFull>,
+  changeWalletStates(walletStates: EdgeWalletStates): Promise<void>,
+  createWallet(type: string, keys: any): Promise<string>,
+  getFirstWalletInfo(type: string): ?EdgeWalletInfo,
+  getWalletInfo(id: string): EdgeWalletInfo,
+  listWalletIds(): Array<string>,
+  splitWalletInfo(walletId: string, newWalletType: string): Promise<string>,
+
+  // Currency wallets:
+  +activeWalletIds: Array<string>,
+  +archivedWalletIds: Array<string>,
+  +currencyWallets: { [walletId: string]: EdgeCurrencyWallet },
+  createCurrencyWallet(
+    type: string,
+    opts?: EdgeCreateCurrencyWalletOptions
+  ): Promise<EdgeCurrencyWallet>,
+
+  // Deprecated stuff (will be deleted soon):
+  +otpEnabled: boolean,
+  cancelOtpResetRequest(): Promise<void>,
+  changeKeyStates(walletStates: EdgeWalletStates): Promise<void>,
+  changePIN(password: string): Promise<void>,
+  getFirstWallet(type: string): ?EdgeWalletInfo,
+  getWallet(id: string): EdgeWalletInfo,
+  isLoggedIn(): boolean,
+  passwordOk(password: string): Promise<boolean>,
+  passwordSetup(password: string): Promise<void>,
+  pinSetup(password: string): Promise<void>,
+  recovery2Set(
+    questions: Array<string>,
+    answers: Array<string>
+  ): Promise<string>,
+  setupRecovery2Questions(
+    questions: Array<string>,
+    answers: Array<string>
+  ): Promise<string>
+}
+
+// edge login types ---------------------------------------------------
+
+export type EdgeLobby = {
+  loginRequest?: EdgeLoginRequest
+  // walletRequest?: EdgeWalletRequest
+}
+
+export type EdgeLoginRequest = {
+  appId: string,
+  approve(): Promise<void>,
+
+  displayName: string,
+  displayImageUrl?: string
+}
+
+// currency wallet types ----------------------------------------------
+
+export type EdgeCurrencyWallet = any
+
+export type EdgeMetadata = {
+  name?: string,
+  category?: string,
+  notes?: string,
+  amountFiat?: number,
+  bizId?: number,
+  miscJson?: string
+}
+
+export type EdgeSpendTarget = {
+  currencyCode?: string,
+  destWallet?: any,
+  publicAddress?: string,
+  nativeAmount?: string,
+  destMetadata?: EdgeMetadata
+}
+
+export type EdgeSpendInfo = {
+  currencyCode?: string,
+  noUnconfirmed?: boolean,
+  spendTargets: Array<EdgeSpendTarget>,
+  nativeAmount?: string,
+  networkFeeOption?: string,
+  customNetworkFee?: any,
+  metadata?: EdgeMetadata
+}
+
+export type EdgeTransaction = {
+  txid: string,
+  date: number,
+  currencyCode: string,
+  blockHeight: number,
+  nativeAmount: string,
+  networkFee: string,
+  ourReceiveAddresses: Array<string>,
+  signedTx: string,
+  metadata?: EdgeMetadata,
+  otherParams: any,
+  wallet?: EdgeCurrencyWallet
+}
+
+export type EdgeDenomination = {
+  name: string,
+  multiplier: string,
+  symbol?: string
+}
+
+export type EdgeMetaToken = {
+  currencyCode: string,
+  currencyName: string,
+  denominations: Array<EdgeDenomination>,
+  contractAddress?: string,
+  symbolImage?: string
+}
+
+export type EdgeCurrencyInfo = {
+  // Basic currency information:
+  currencyCode: string,
+  currencyName: string,
+  pluginName: string,
+  denominations: Array<EdgeDenomination>,
+  walletTypes: Array<string>,
+
+  // Configuration options:
+  defaultSettings: any,
+  metaTokens: Array<EdgeMetaToken>,
+
+  // Explorers:
+  addressExplorer: string,
+  blockExplorer?: string,
+  transactionExplorer: string,
+
+  // Images:
+  symbolImage?: string,
+  symbolImageDarkMono?: string
+}
+
+export type EdgeParsedUri = {
+  publicAddress?: string,
+  segwitAddress?: string,
+  nativeAmount?: string,
+  currencyCode?: string,
+  metadata?: EdgeMetadata,
+  bitIDURI?: string,
+  bitIDDomain?: string,
+  bitIDCallbackUri?: string,
+  paymentProtocolUri?: string,
+  returnUri?: string,
+  bitidPaymentAddress?: string, // Experimental
+  bitidKycProvider?: string, // Experimental
+  bitidKycRequest?: string // Experimental
+}
+
+export type EdgeEncodeUri = {
+  publicAddress: string,
+  segwitAddress?: string,
+  nativeAmount?: string,
+  label?: string,
+  message?: string
+}
+
+export type EdgeFreshAddress = {
+  publicAddress: string,
+  segwitAddress?: string
+}
+
+export type EdgeDataDump = {
+  walletId: string,
+  walletType: string,
+  pluginType: string,
+  data: {
+    [dataCache: string]: any
+  }
+}
+
+export type EdgeReceiveAddress = EdgeFreshAddress & {
+  metadata: EdgeMetadata,
+  nativeAmount: string
+}
+
+// currency plugin types ----------------------------------------------
+
+export type EdgeCurrencyEngineCallbacks = {
+  +onBlockHeightChanged: (blockHeight: number) => void,
+  +onTransactionsChanged: (abcTransactions: Array<EdgeTransaction>) => void,
+  +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
+  +onAddressesChecked: (progressRatio: number) => void,
+  +onTxidsChanged: (txids: Array<string>) => void
+}
+
+export type EdgeCurrencyEngineOptions = {
+  callbacks: EdgeCurrencyEngineCallbacks,
+  walletLocalFolder: DiskletFolder,
+  walletLocalEncryptedFolder: DiskletFolder,
+  optionalSettings?: any
+}
+
+export type EdgeCurrencyEngine = {
+  updateSettings(settings: any): void,
+  startEngine(): Promise<void>,
+  killEngine(): Promise<void>,
+  getBlockHeight(): number,
+  enableTokens(tokens: Array<string>): Promise<void>,
+  disableTokens(tokens: Array<string>): Promise<void>,
+  getEnabledTokens(): Promise<Array<string>>,
+  addCustomToken(token: any): Promise<void>,
+  getTokenStatus(token: string): boolean,
+  getBalance(options: any): string,
+  getNumTransactions(options: any): number,
+  getTransactions(options: any): Promise<Array<EdgeTransaction>>,
+  getFreshAddress(options: any): EdgeFreshAddress,
+  addGapLimitAddresses(addresses: Array<string>, options: any): void,
+  isAddressUsed(address: string, options: any): boolean,
+  makeSpend(abcSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
+  signTx(abcTransaction: EdgeTransaction): Promise<EdgeTransaction>,
+  broadcastTx(abcTransaction: EdgeTransaction): Promise<EdgeTransaction>,
+  saveTx(abcTransaction: EdgeTransaction): Promise<void>,
+  resyncBlockchain(): Promise<void>,
+  dumpData(): EdgeDataDump,
+  getDisplayPrivateSeed(): string | null,
+  getDisplayPublicSeed(): string | null
+}
+
+export type EdgeCurrencyPlugin = {
+  +pluginName: string,
+  +currencyInfo: EdgeCurrencyInfo,
+  createPrivateKey(walletType: string): {},
+  derivePublicKey(walletInfo: EdgeWalletInfo): {},
+  makeEngine(
+    walletInfo: EdgeWalletInfo,
+    options: EdgeCurrencyEngineOptions
+  ): Promise<EdgeCurrencyEngine>,
+  parseUri(uri: string): EdgeParsedUri,
+  encodeUri(obj: EdgeEncodeUri): string
+}
+
+export type EdgeCurrencyPluginFactory = {
+  pluginType: 'currency',
+  +pluginName: string,
+  makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeCurrencyPlugin>
+}
+
+// exchange plugin types ----------------------------------------------
+
+export type EdgeExchangePairHint = {
+  fromCurrency: string,
+  toCurrency: string
+}
+
+export type EdgeExchangePair = {
+  fromCurrency: string,
+  toCurrency: string,
+  rate: number
+}
+
+export type EdgeExchangePlugin = {
+  exchangeInfo: { exchangeName: string },
+
+  fetchExchangeRates(
+    pairHints: Array<EdgeExchangePairHint>
+  ): Array<EdgeExchangePair>
+}
+
+export type EdgeExchangePluginFactory = {
+  pluginType: 'exchange',
+  makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeExchangePlugin>
+}
+
+// legacy names -------------------------------------------------------
+
+export type {
+  EdgeConsole as AbcConsole,
+  EdgeScryptFunction as AbcScryptFunction,
+  EdgeSecp256k1 as AbcSecp256k1,
+  EdgePbkdf2 as AbcPbkdf2,
+  EdgeRawIo as AbcRawIo,
+  EdgeIo as AbcIo,
+  EdgeCorePluginFactory as AbcCorePluginFactory,
+  EdgeCorePluginOptions as AbcCorePluginOptions,
+  EdgeContextCallbacks as AbcContextCallbacks,
+  EdgeContextOptions as AbcContextOptions,
+  EdgeContext as AbcContext,
+  EdgeExchangeSwapInfo as AbcExchangeSwapInfo,
+  EdgePasswordRules as AbcPasswordRules,
+  EdgeEdgeLoginRequest as AbcEdgeLoginRequest,
+  EdgeEdgeLoginOptions as AbcEdgeLoginOptions,
+  EdgeLoginMessages as AbcLoginMessages,
+  EdgeWalletInfo as AbcWalletInfo,
+  EdgeWalletInfoFull as AbcWalletInfoFull,
+  EdgeWalletState as AbcWalletState,
+  EdgeWalletStates as AbcWalletStates,
+  EdgeAccountCallbacks as AbcAccountCallbacks,
+  EdgeAccountOptions as AbcAccountOptions,
+  EdgeCreateCurrencyWalletOptions as AbcCreateCurrencyWalletOptions,
+  EdgeAccount as AbcAccount,
+  EdgeLobby as AbcLobby,
+  EdgeLoginRequest as AbcLoginRequest,
+  EdgeCurrencyWallet as AbcCurrencyWallet,
+  EdgeMetadata as AbcMetadata,
+  EdgeSpendTarget as AbcSpendTarget,
+  EdgeSpendInfo as AbcSpendInfo,
+  EdgeTransaction as AbcTransaction,
+  EdgeDenomination as AbcDenomination,
+  EdgeMetaToken as AbcMetaToken,
+  EdgeCurrencyInfo as AbcCurrencyInfo,
+  EdgeParsedUri as AbcParsedUri,
+  EdgeEncodeUri as AbcEncodeUri,
+  EdgeFreshAddress as AbcFreshAddress,
+  EdgeDataDump as AbcDataDump,
+  EdgeReceiveAddress as AbcReceiveAddress,
+  EdgeCurrencyEngineCallbacks as AbcCurrencyEngineCallbacks,
+  EdgeCurrencyEngineOptions as AbcCurrencyEngineOptions,
+  EdgeCurrencyEngine as AbcCurrencyEngine,
+  EdgeCurrencyPlugin as AbcCurrencyPlugin,
+  EdgeCurrencyPluginFactory as AbcCurrencyPluginFactory,
+  EdgeExchangePairHint as AbcExchangePairHint,
+  EdgeExchangePair as AbcExchangePair,
+  EdgeExchangePlugin as AbcExchangePlugin,
+  EdgeExchangePluginFactory as AbcExchangePluginFactory,
+  // Wrong names:
+  EdgeCorePluginFactory as AbcCorePlugin,
+  EdgeContextOptions as AbcMakeContextOpts,
+  EdgeCurrencyEngineOptions as AbcMakeEngineOptions,
+  EdgeCurrencyEngineCallbacks as AbcCurrencyPluginCallbacks
+}
