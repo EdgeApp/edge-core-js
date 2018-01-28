@@ -1,5 +1,14 @@
 # airbitz-core-js
 
+## 0.5.1
+
+* Remove core-js polyfill. The main GUI needs to pull this in, if needed, since including it too late in the setup process can break React.
+* Switch to regenerator instead of nodent for async / await support. This is slower but more compatible.
+
+## 0.5.0
+
+Renamed the library to edge-login, massive development work.
+
 ## 0.3.5
 
 Fixes:
