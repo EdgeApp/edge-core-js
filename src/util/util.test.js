@@ -1,6 +1,7 @@
-/* global describe, it */
+import { assert } from 'chai'
+import { describe, it } from 'mocha'
+
 import { mergeDeeply } from './util.js'
-import assert from 'assert'
 
 describe('utilities', function () {
   it('mergeDeeply', function () {
