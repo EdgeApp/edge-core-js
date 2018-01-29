@@ -193,6 +193,7 @@ export function makeCurrencyWalletApi (
           }
 
           const exchangeSpendInfo: EdgeSpendInfo = {
+            networkFeeOption: spendInfo.networkFeeOption,
             currencyCode: spendInfo.currencyCode,
             spendTargets: [spendTarget]
           }
