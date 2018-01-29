@@ -1,5 +1,9 @@
 # airbitz-core-js
 
+## 0.5.2
+
+* Fix accelerated crypto on React Native.
+
 ## 0.5.1
 
 * Remove core-js polyfill. The main GUI needs to pull this in, if needed, since including it too late in the setup process can break React.
