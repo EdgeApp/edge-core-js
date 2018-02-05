@@ -1,8 +1,8 @@
 /**
  * Functions for working with login data in its on-disk format.
  */
-
 // @flow
+
 import type { EdgeLoginMessages } from '../../edge-core-index.js'
 import { decrypt } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'

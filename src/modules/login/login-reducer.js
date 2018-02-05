@@ -1,4 +1,5 @@
 // @flow
+
 import { buildReducer, mapReducer } from 'redux-keto'
 
 import type { RootAction } from '../actions.js'

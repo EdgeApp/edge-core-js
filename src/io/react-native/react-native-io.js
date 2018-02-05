@@ -1,4 +1,5 @@
 // @flow
+
 import { isReactNative } from 'detect-bundler'
 import { makeReactNativeFolder } from 'disklet'
 import { base64 } from 'rfc4648'

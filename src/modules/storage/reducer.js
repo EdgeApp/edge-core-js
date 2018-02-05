@@ -1,4 +1,5 @@
 // @flow
+
 import { combineReducers } from 'redux'
 
 import { listReducer } from '../../util/redux/reducers.js'

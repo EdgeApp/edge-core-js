@@ -1,4 +1,5 @@
 // @flow
+
 import { mapFiles } from 'disklet'
 
 import type {

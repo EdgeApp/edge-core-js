@@ -1,4 +1,5 @@
 // @flow
+
 import { combinePixies, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 

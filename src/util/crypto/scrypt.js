@@ -1,4 +1,5 @@
 // @flow
+
 import scryptJs from 'scrypt-js'
 
 export const userIdSnrp = {

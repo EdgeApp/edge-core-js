@@ -1,4 +1,5 @@
 // @flow
+
 import type { EdgeWalletInfo } from '../../edge-core-index.js'
 
 export type LoginReply = Object

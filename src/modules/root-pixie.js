@@ -1,4 +1,5 @@
 // @flow
+
 import { combinePixies, filterPixie } from 'redux-pixies'
 
 import type { EdgeContext } from '../edge-core-index.js'

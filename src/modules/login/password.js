@@ -1,4 +1,5 @@
 // @flow
+
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { base64 } from '../../util/encoding.js'

@@ -1,4 +1,5 @@
 // @flow
+
 import { stopUpdates } from 'redux-pixies'
 
 import type {

@@ -1,4 +1,5 @@
 // @flow
+
 import { wrapObject } from '../../util/api.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import type { StorageWalletInfo } from '../login/login-types.js'

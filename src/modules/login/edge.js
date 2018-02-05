@@ -1,4 +1,5 @@
 // @flow
+
 import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { makeLobby } from './lobby.js'

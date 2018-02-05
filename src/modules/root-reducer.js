@@ -1,4 +1,5 @@
 // @flow
+
 import { buildReducer } from 'redux-keto'
 
 import type { CurrencyState } from './currency/currency-reducer.js'
