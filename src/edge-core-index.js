@@ -718,7 +718,7 @@ export type EdgeExchangePlugin = {
 
   fetchExchangeRates(
     pairHints: Array<EdgeExchangePairHint>
-  ): Array<EdgeExchangePair>
+  ): Promise<Array<EdgeExchangePair>>
 }
 
 export type EdgeExchangePluginFactory = {
