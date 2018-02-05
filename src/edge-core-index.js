@@ -537,6 +537,7 @@ export type EdgeSpendTarget = {
 export type EdgeSpendInfo = {
   currencyCode?: string,
   noUnconfirmed?: boolean,
+  allowLegacyAddress?: boolean,
   spendTargets: Array<EdgeSpendTarget>,
   nativeAmount?: string,
   networkFeeOption?: string,
