@@ -11,6 +11,7 @@ import currencyWalletReducer from './wallet/currency-wallet-reducer.js'
 export interface CurrencyState {
   currencyWalletIds: Array<string>;
   infos: Array<EdgeCurrencyInfo>;
+  pluginsError: Error | null;
   wallets: { [walletId: string]: CurrencyWalletState };
 }
 
@@ -33,6 +34,10 @@ export default buildReducer({
     action: RootAction
   ): Array<EdgeCurrencyInfo> {
     return action.type === 'CURRENCY_PLUGINS_LOADED' ? action.payload : state
+  },
+
+  pluginsError (state = null, action: RootAction) {
+    return action.type === 'CURRENCY_PLUGINS_FAILED' ? action.payload : state
   },
 
   wallets: mapReducer(

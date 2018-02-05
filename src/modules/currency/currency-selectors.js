@@ -75,7 +75,12 @@ export function hasCurrencyPlugin (
 }
 
 export function waitForCurrencyPlugins (ai: ApiInput) {
-  return ai.waitFor(props => props.output.currency.plugins)
+  return ai.waitFor(props => {
+    if (props.state.currency.pluginsError) {
+      throw props.state.currency.pluginsError
+    }
+    return props.output.currency.plugins
+  })
 }
 
 export function waitForCurrencyWallet (ai: ApiInput, walletId: string) {

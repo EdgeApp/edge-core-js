@@ -50,6 +50,22 @@ export interface CurrencyEngineFailed {
 }
 
 /**
+ * Fired when the currency plugins failed to load.
+ */
+export interface CurrencyPluginsFailed {
+  type: 'CURRENCY_PLUGINS_FAILED';
+  payload: Error;
+}
+
+/**
+ * Fired when the currency plugins load successfully.
+ */
+export interface CurrencyPluginsLoaded {
+  type: 'CURRENCY_PLUGINS_LOADED';
+  payload: Array<EdgeCurrencyInfo>;
+}
+
+/**
  * Called when a currency wallet receives a new name.
  */
 export interface CurrencyWalletFiatChanged {
@@ -92,14 +108,6 @@ export interface CurrencyWalletNameChanged {
     name: string | null,
     walletId: string
   };
-}
-
-/**
- * Called when the plugins are loaded.
- */
-export interface CurrencyPluginsLoadedAction {
-  type: 'CURRENCY_PLUGINS_LOADED';
-  payload: Array<EdgeCurrencyInfo>;
 }
 
 /**
@@ -154,7 +162,8 @@ export type RootAction =
   | CurrencyEngineChangedTxs
   | CurrencyEngineCleared
   | CurrencyEngineFailed
-  | CurrencyPluginsLoadedAction
+  | CurrencyPluginsFailed
+  | CurrencyPluginsLoaded
   | CurrencyWalletFiatChanged
   | CurrencyWalletFileChanged
   | CurrencyWalletFilesLoaded
