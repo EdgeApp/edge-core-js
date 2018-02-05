@@ -620,7 +620,8 @@ export type EdgeEncodeUri = {
 
 export type EdgeFreshAddress = {
   publicAddress: string,
-  segwitAddress?: string
+  segwitAddress?: string,
+  legacyAddress?: string
 }
 
 export type EdgeDataDump = {

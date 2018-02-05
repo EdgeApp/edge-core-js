@@ -153,6 +153,7 @@ export function makeCurrencyWalletApi (
         metadata: fakeMetadata,
         nativeAmount: '0',
         publicAddress: freshAddress.publicAddress,
+        legacyAddress: freshAddress.legacyAddress,
         segwitAddress: freshAddress.segwitAddress
       }
       return Promise.resolve(receiveAddress)
@@ -186,10 +187,22 @@ export function makeCurrencyWalletApi (
           ? spendInfo.spendTargets[0].currencyCode
           : destWallet.currencyInfo.currencyCode
         if (destCurrencyCode !== currentCurrencyCode) {
-          const currentPublicAddress = engine.getFreshAddress().publicAddress
-          const addressInfo = await destWallet.getReceiveAddress()
-          const destPublicAddress = addressInfo.publicAddress
+          const edgeFreshAddress = engine.getFreshAddress()
+          const edgeReceiveAddress = await destWallet.getReceiveAddress()
 
+          let destPublicAddress
+          if (edgeReceiveAddress.legacyAddress) {
+            destPublicAddress = edgeReceiveAddress.legacyAddress
+          } else {
+            destPublicAddress = edgeReceiveAddress.publicAddress
+          }
+
+          let currentPublicAddress
+          if (edgeFreshAddress.legacyAddress) {
+            currentPublicAddress = edgeFreshAddress.legacyAddress
+          } else {
+            currentPublicAddress = edgeFreshAddress.publicAddress
+          }
           const exchangeData = await shapeshiftApi.getSwapAddress(
             currentCurrencyCode,
             destCurrencyCode,
