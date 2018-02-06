@@ -254,7 +254,7 @@ export function makeCurrencyWalletApi (
     },
 
     getMaxSpendable (spendInfo: EdgeSpendInfo): Promise<string> {
-      const { currencyCode } = spendInfo
+      const { currencyCode, networkFeeOption, customNetworkFee } = spendInfo
       const balance = engine.getBalance({ currencyCode })
 
       // Copy all the spend targets, setting the amounts to 0
@@ -280,7 +280,12 @@ export function makeCurrencyWalletApi (
         // Try the average:
         spendTargets[0].nativeAmount = mid
         return engine
-          .makeSpend({ currencyCode, spendTargets })
+          .makeSpend({
+            currencyCode,
+            spendTargets,
+            networkFeeOption,
+            customNetworkFee
+          })
           .then(good => getMax(mid, max))
           .catch(bad => getMax(min, mid))
       }
