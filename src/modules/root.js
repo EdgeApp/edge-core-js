@@ -1,4 +1,5 @@
 // @flow
+
 import type { Dispatch, Store } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
 import type { PixieInput, ReduxProps } from 'redux-pixies'
@@ -93,7 +94,7 @@ export function makeCoreRoot (opts: EdgeContextOptions) {
   }
   coreRoot.redux.dispatch({
     type: 'INIT',
-    payload: { io, onError, apiKey, appId, authServer }
+    payload: { apiKey, appId, authServer }
   })
 
   return coreRoot

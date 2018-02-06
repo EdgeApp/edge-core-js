@@ -1,4 +1,5 @@
 // @flow
+
 import { isPixieShutdownError } from 'redux-pixies'
 
 import type {

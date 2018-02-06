@@ -1,4 +1,5 @@
 // @flow
+
 import { assert } from 'chai'
 import { afterEach, describe, it } from 'mocha'
 

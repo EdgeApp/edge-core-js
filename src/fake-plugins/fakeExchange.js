@@ -1,4 +1,13 @@
-export const brokenExchangePlugin = {
+// @flow
+
+import type {
+  EdgeExchangePair,
+  EdgeExchangePairHint,
+  EdgeExchangePlugin,
+  EdgeExchangePluginFactory
+} from '../edge-core-index.js'
+
+export const brokenExchangePlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',
 
   makePlugin () {
@@ -14,16 +23,18 @@ export const brokenExchangePlugin = {
   }
 }
 
-export const fakeExchangePlugin = {
+export const fakeExchangePlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',
 
-  makePlugin () {
-    return Promise.resolve({
+  makePlugin (): Promise<EdgeExchangePlugin> {
+    const plugin: EdgeExchangePlugin = {
       exchangeInfo: {
         exchangeName: 'FakeExchange'
       },
 
-      fetchExchangeRates (pairs) {
+      fetchExchangeRates (
+        pairs: Array<EdgeExchangePairHint>
+      ): Promise<Array<EdgeExchangePair>> {
         const fuzz = Math.sin(Math.PI * Date.now() / (30 * 60 * 1000))
 
         return Promise.resolve([
@@ -39,6 +50,7 @@ export const fakeExchangePlugin = {
           { fromCurrency: 'TEST', toCurrency: 'iso:USD', rate: 3 }
         ])
       }
-    })
+    }
+    return Promise.resolve(plugin)
   }
 }

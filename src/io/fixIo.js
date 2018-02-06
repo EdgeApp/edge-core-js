@@ -1,4 +1,5 @@
 // @flow
+
 import { makeLocalStorageFolder } from 'disklet'
 
 import type { EdgeIo, EdgeRawIo } from '../edge-core-index.js'

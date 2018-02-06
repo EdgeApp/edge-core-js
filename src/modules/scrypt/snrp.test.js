@@ -1,9 +1,10 @@
 // @flow
+
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { base16 } from '../../util/encoding.js'
-import { calcSnrpForTarget } from './selectors.js'
+import { calcSnrpForTarget } from './scrypt-pixie.js'
 
 describe('SNRP calculation', function () {
   const salt = new Uint8Array(32)

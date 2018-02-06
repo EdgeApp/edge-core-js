@@ -1,4 +1,5 @@
 // @flow
+
 import { bns } from 'biggystring'
 
 import { getCurrencyMultiplier } from '../currency/currency-selectors'

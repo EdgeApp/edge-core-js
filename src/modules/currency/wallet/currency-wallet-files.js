@@ -1,4 +1,5 @@
 // @flow
+
 import { number as currencyFromNumber } from 'currency-codes'
 import { mapFiles } from 'disklet'
 

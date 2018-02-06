@@ -1,8 +1,8 @@
 // @flow
+
 import type {
   EdgeAccountCallbacks,
   EdgeCurrencyInfo,
-  EdgeIo,
   EdgeWalletInfo
 } from '../edge-core-index.js'
 
@@ -110,9 +110,7 @@ export interface InitAction {
   payload: {
     apiKey: string | void,
     appId: string | void,
-    authServer: string | void,
-    io: EdgeIo,
-    onError: (e: Error) => void
+    authServer: string | void
   };
 }
 

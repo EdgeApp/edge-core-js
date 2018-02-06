@@ -1,4 +1,5 @@
 // @flow
+
 import {
   decrypt,
   encrypt,

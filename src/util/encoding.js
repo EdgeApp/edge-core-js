@@ -1,4 +1,5 @@
 // @flow
+
 import baseX from 'base-x'
 import { base16 as base16Inner, base64 as base64Inner } from 'rfc4648'
 import utf8Codec from 'utf8'

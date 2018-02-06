@@ -1,4 +1,5 @@
 // @flow
+
 import { combineReducers } from 'redux'
 
 import type { RootAction } from '../../actions.js'

@@ -2,8 +2,8 @@
  * Complete information for the 'js test 0' user,
  * used by the unit tests.
  */
-
 // @flow
+
 import type { EdgeIo } from '../../edge-core-index.js'
 import { base16, base58, base64 } from '../../util/encoding.js'
 

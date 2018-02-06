@@ -1,4 +1,5 @@
 // @flow
+
 import { base32 } from 'rfc4648'
 
 import { hashjs } from './external.js'

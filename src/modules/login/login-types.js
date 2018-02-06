@@ -1,7 +1,7 @@
 // @flow
+
 import type { EdgeWalletInfo } from '../../edge-core-index.js'
 
-export type JsonSnrp = Object
 export type LoginReply = Object
 export type LoginStash = Object
 export type LoginTree = Object

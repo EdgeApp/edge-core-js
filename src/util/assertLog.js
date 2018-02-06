@@ -1,4 +1,5 @@
 // @flow
+
 import { assert as chaiAssert } from 'chai'
 
 /**

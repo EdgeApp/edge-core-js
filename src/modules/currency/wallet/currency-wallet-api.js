@@ -1,4 +1,5 @@
 // @flow
+
 import { add, div, lte, sub } from 'biggystring'
 
 import type {
@@ -13,7 +14,7 @@ import type {
   EdgeSpendTarget,
   EdgeTransaction
 } from '../../../edge-core-index.js'
-import { copyProperties, wrapObject } from '../../../util/api.js'
+import { wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
@@ -45,8 +46,29 @@ export function makeCurrencyWalletApi (
   const walletInfo = input.props.selfState.walletInfo
 
   const shapeshiftApi = makeShapeshiftApi(ai)
+  const storageWalletApi = makeStorageWalletApi(ai, walletInfo, {})
 
   const out: EdgeCurrencyWallet = {
+    // Storage wallet properties:
+    get id () {
+      return storageWalletApi.id
+    },
+    get type () {
+      return storageWalletApi.type
+    },
+    get keys () {
+      return storageWalletApi.keys
+    },
+    get folder () {
+      return storageWalletApi.folder
+    },
+    get localFolder () {
+      return storageWalletApi.localFolder
+    },
+    sync () {
+      return storageWalletApi.sync()
+    },
+
     // Storage stuff:
     get name () {
       return input.props.selfState.name
@@ -132,6 +154,7 @@ export function makeCurrencyWalletApi (
         metadata: fakeMetadata,
         nativeAmount: '0',
         publicAddress: freshAddress.publicAddress,
+        legacyAddress: freshAddress.legacyAddress,
         segwitAddress: freshAddress.segwitAddress
       }
       return Promise.resolve(receiveAddress)
@@ -165,10 +188,22 @@ export function makeCurrencyWalletApi (
           ? spendInfo.spendTargets[0].currencyCode
           : destWallet.currencyInfo.currencyCode
         if (destCurrencyCode !== currentCurrencyCode) {
-          const currentPublicAddress = engine.getFreshAddress().publicAddress
-          const addressInfo = await destWallet.getReceiveAddress()
-          const destPublicAddress = addressInfo.publicAddress
+          const edgeFreshAddress = engine.getFreshAddress()
+          const edgeReceiveAddress = await destWallet.getReceiveAddress()
 
+          let destPublicAddress
+          if (edgeReceiveAddress.legacyAddress) {
+            destPublicAddress = edgeReceiveAddress.legacyAddress
+          } else {
+            destPublicAddress = edgeReceiveAddress.publicAddress
+          }
+
+          let currentPublicAddress
+          if (edgeFreshAddress.legacyAddress) {
+            currentPublicAddress = edgeFreshAddress.legacyAddress
+          } else {
+            currentPublicAddress = edgeFreshAddress.publicAddress
+          }
           const exchangeData = await shapeshiftApi.getSwapAddress(
             currentCurrencyCode,
             destCurrencyCode,
@@ -193,6 +228,7 @@ export function makeCurrencyWalletApi (
           }
 
           const exchangeSpendInfo: EdgeSpendInfo = {
+            networkFeeOption: spendInfo.networkFeeOption,
             currencyCode: spendInfo.currencyCode,
             spendTargets: [spendTarget]
           }
@@ -218,7 +254,7 @@ export function makeCurrencyWalletApi (
     },
 
     saveTx (tx: EdgeTransaction) {
-      return Promise.all([engine.saveTx(tx)])
+      return engine.saveTx(tx)
     },
 
     resyncBlockchain (): Promise<void> {
@@ -254,7 +290,7 @@ export function makeCurrencyWalletApi (
     },
 
     getMaxSpendable (spendInfo: EdgeSpendInfo): Promise<string> {
-      const { currencyCode } = spendInfo
+      const { currencyCode, networkFeeOption, customNetworkFee } = spendInfo
       const balance = engine.getBalance({ currencyCode })
 
       // Copy all the spend targets, setting the amounts to 0
@@ -280,7 +316,12 @@ export function makeCurrencyWalletApi (
         // Try the average:
         spendTargets[0].nativeAmount = mid
         return engine
-          .makeSpend({ currencyCode, spendTargets })
+          .makeSpend({
+            currencyCode,
+            spendTargets,
+            networkFeeOption,
+            customNetworkFee
+          })
           .then(good => getMax(mid, max))
           .catch(bad => getMax(min, mid))
       }
@@ -302,7 +343,6 @@ export function makeCurrencyWalletApi (
       return plugin.encodeUri(obj)
     }
   }
-  copyProperties(out, makeStorageWalletApi(ai, walletInfo, {}))
 
   return wrapObject('CurrencyWallet', out)
 }
