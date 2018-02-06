@@ -2,8 +2,8 @@
 
 ## 0.5.3
 
-* Fixes to Flow types, including brand-flow types for EdgeCurrencyWallet.
-* Fixes for Shapeshift spends (Bitcoin cash addresses, proper fees).
+* Fixes to Flow types, including brand-new flow types for EdgeCurrencyWallet.
+* Fixes for Shapeshift spends (Bitcoin Cash addresses, proper fees).
 * Redux state cleanups
 
 ## 0.5.2
