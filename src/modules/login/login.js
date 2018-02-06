@@ -186,9 +186,10 @@ function makeLoginTreeInner (stash, loginKey) {
   const legacyKeys = []
 
   // BitID wallet:
-  if (stash.menemonicBox != null && stash.rootKeyBox != null) {
-    const mnemonic = utf8.stringify(decrypt(stash.menemonicBox, loginKey))
-    const rootKey = decrypt(stash.rootKeyBox, loginKey)
+  const { mnemonicBox, rootKeyBox } = stash
+  if (mnemonicBox != null && rootKeyBox != null) {
+    const mnemonic = utf8.stringify(decrypt(mnemonicBox, loginKey))
+    const rootKey = decrypt(rootKeyBox, loginKey)
     const keys = {
       mnemonic,
       rootKey: base64.stringify(rootKey)
