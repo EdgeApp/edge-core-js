@@ -24,12 +24,16 @@ import type {
 } from './login-types.js'
 import { hashUsername } from './loginStore.js'
 
-function cloneNode (node, children) {
-  return { ...node, children }
+function cloneNode<Node, Output> (
+  node: Node,
+  children: Array<Output> | void
+): Output {
+  const out: any = { ...node, children }
+  return out
 }
 
 /**
- * Returns the login that satisifies the given predicate,
+ * Returns the login that satisfies the given predicate,
  * or undefined if nothing matches.
  */
 export function searchTree (node: any, predicate: any => boolean) {
@@ -49,10 +53,15 @@ export function searchTree (node: any, predicate: any => boolean) {
  * The `predicate` callback is used to find the target node.
  * The `update` callback is called on the target.
  */
-function updateTree (node, predicate, update, clone = cloneNode) {
+function updateTree<Node: { children?: Array<any> }, Output> (
+  node: Node,
+  predicate: (node: Node) => boolean,
+  update: (node: Node) => Output,
+  clone: (node: Node, children: Array<Output> | void) => Output = cloneNode
+): Output {
   if (predicate(node)) return update(node)
 
-  const children =
+  const children: Array<Output> =
     node.children != null
       ? node.children.map(child => updateTree(child, predicate, update, clone))
       : []
