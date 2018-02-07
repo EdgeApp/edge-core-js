@@ -6,6 +6,7 @@ import type { DiskletFile, DiskletFolder } from '../../edge-core-index.js'
 import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
+import { waitForStashes } from './login-selectors.js'
 import type { LoginStash } from './login-types.js'
 
 export type LoginIdMap = { [loginId: string]: string }
@@ -28,30 +29,22 @@ function getJsonFiles (folder: DiskletFolder): Promise<Array<FileInfo>> {
   ).then(files => files.filter(file => file != null))
 }
 
-function findUserFile (folder, username) {
-  const fixedName = fixUsername(username)
-  return getJsonFiles(folder).then(files =>
-    files.find(file => file.json.username === fixedName)
-  )
-}
-
 /**
  * Lists the usernames that have data in the store.
  */
 export function listUsernames (ai: ApiInput): Promise<Array<string>> {
-  return getJsonFiles(loginsFolder(ai)).then(files =>
-    files.map(file => file.json.username)
-  )
+  return waitForStashes(ai).then(stashes => Object.keys(stashes))
 }
 
 /**
  * Creates a map from loginIds to usernames.
  */
 export function mapLoginIds (ai: ApiInput): Promise<LoginIdMap> {
-  return getJsonFiles(loginsFolder(ai)).then(files => {
+  return waitForStashes(ai).then(stashes => {
     const out: LoginIdMap = {}
-    for (const file of files) {
-      out[file.json.loginId] = file.json.username
+    for (const username of Object.keys(stashes)) {
+      const loginId = stashes[username].loginId
+      if (loginId) out[loginId] = username
     }
     return out
   })
@@ -62,19 +55,26 @@ export function mapLoginIds (ai: ApiInput): Promise<LoginIdMap> {
  * Returns a default object if
  */
 export function loadStash (ai: ApiInput, username: string): Promise<LoginStash> {
-  return findUserFile(loginsFolder(ai), username).then(
-    file =>
-      file != null ? file.json : { username: fixUsername(username), appId: '' }
-  )
+  return waitForStashes(ai).then(stashes => {
+    const fixedName = fixUsername(username)
+    return stashes[fixedName] || { username: fixedName, appId: '' }
+  })
 }
 
 /**
  * Removes any login stash that may be stored for the given username.
  */
 export function removeStash (ai: ApiInput, username: string): Promise<mixed> {
-  return findUserFile(loginsFolder(ai), username).then(
-    file => (file != null ? file.file.delete() : void 0)
-  )
+  const fixedName = fixUsername(username)
+  return getJsonFiles(loginsFolder(ai))
+    .then(files => files.find(file => file.json.username === fixedName))
+    .then(file => (file != null ? file.file.delete() : void 0))
+    .then(() => {
+      ai.props.dispatch({
+        type: 'LOGIN_STASH_DELETED',
+        payload: fixUsername(username)
+      })
+    })
 }
 
 /**
@@ -98,6 +98,9 @@ export function saveStash (ai: ApiInput, stashTree: LoginStash): Promise<mixed> 
   return loginsFolder(ai)
     .file(filename)
     .setText(JSON.stringify(stashTree))
+    .then(() =>
+      ai.props.dispatch({ type: 'LOGIN_STASH_SAVED', payload: stashTree })
+    )
 }
 
 /**

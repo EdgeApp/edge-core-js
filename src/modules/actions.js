@@ -12,6 +12,7 @@ import type {
   TxFileNames
 } from './currency/wallet/currency-wallet-reducer.js'
 import type { ExchangePair } from './exchange/exchange-reducer.js'
+import type { LoginStash } from './login/login-types.js'
 import type {
   StorageWalletState,
   StorageWalletStatus
@@ -235,6 +236,30 @@ export type LoginAction = {
 }
 
 /**
+ * Fires when we delete login data from disk.
+ */
+export type LoginStashDeleted = {
+  type: 'LOGIN_STASH_DELETED',
+  payload: string // username
+}
+
+/**
+ * Fires when we load the login data from disk.
+ */
+export type LoginStashesLoaded = {
+  type: 'LOGIN_STASHES_LOADED',
+  payload: { [filename: string]: Object }
+}
+
+/**
+ * Fires when we write a login stash to disk.
+ */
+export type LoginStashSaved = {
+  type: 'LOGIN_STASH_SAVED',
+  payload: LoginStash
+}
+
+/**
  * Fires when a user logs out.
  */
 export type LogoutAction = {
@@ -294,6 +319,9 @@ export type RootAction =
   | ExchangePairsFetched
   | InitAction
   | LoginAction
+  | LoginStashDeleted
+  | LoginStashesLoaded
+  | LoginStashSaved
   | LogoutAction
   | NewCurrencyPluginSettingsAction
   | StorageWalletAdded
