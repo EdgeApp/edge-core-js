@@ -18,7 +18,7 @@ import {
 } from '../login/keys.js'
 import { applyKit, searchTree, syncLogin } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
-import { makePin2Kit } from '../login/pin2.js'
+import { makeChangePin2Kits, makeDeletePin2Kits } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
 import { addStorageWallet, syncStorageWallet } from '../storage/actions.js'
 import { getStorageWalletLastChanges } from '../storage/selectors.js'
@@ -251,13 +251,30 @@ class AccountState {
     )
   }
 
-  changePin (pin) {
+  changePin (pin, enableLogin) {
     const { ai, loginTree: { username } } = this
     const login = this.loginTree
     checkLogin(login)
 
-    const kit = makePin2Kit(ai, login, username, pin)
-    return this.applyKit(kit)
+    // Figure out defaults:
+    if (enableLogin == null) {
+      enableLogin = login.pin2Key != null || (pin != null && login.pin == null)
+    }
+    if (pin == null) pin = login.pin
+
+    // We cannot enable PIN login if we don't know the PIN:
+    if (pin == null) {
+      if (!enableLogin) {
+        // But we can disable PIN login by just deleting it entirely:
+        return this.applyKits(makeDeletePin2Kits(login))
+      }
+      throw new Error(
+        'Please change your PIN in the settings area above before enabling.'
+      )
+    }
+
+    const kits = makeChangePin2Kits(ai, login, username, pin, enableLogin)
+    return this.applyKits(kits)
   }
 
   changeRecovery (questions, answers) {
@@ -298,19 +315,8 @@ class AccountState {
     const login = this.loginTree
     checkLogin(login)
 
-    const kit = {
-      serverMethod: 'DELETE',
-      serverPath: '/v2/login/pin2',
-      server: void 0,
-      stash: {
-        pin2Key: void 0
-      },
-      login: {
-        pin2Key: void 0
-      },
-      loginId: login.loginId
-    }
-    return this.applyKit(kit)
+    const kits = makeDeletePin2Kits(login)
+    return this.applyKits(kits)
   }
 
   deleteRecovery () {
@@ -346,6 +352,18 @@ class AccountState {
 
       return this
     })
+  }
+
+  /*
+   * Applies an array of kits to a login, one after another.
+   * We can't use `Promise.all`, since `applyKit` doesn't handle
+   * parallelism correctly.
+   */
+  applyKits (kits) {
+    if (!kits.length) return Promise.resolve(this)
+
+    const [first, ...rest] = kits
+    return this.applyKit(first).then(() => this.applyKits(rest))
   }
 
   changeKeyStates (newStates) {

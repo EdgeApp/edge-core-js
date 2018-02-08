@@ -226,6 +226,29 @@ describe('pin', function () {
     await context.loginWithPIN(fakeUser.username, '4321')
   })
 
+  it('enable / disable', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    // Disable PIN login:
+    await account.changePin({ enableLogin: false })
+    await context
+      .loginWithPIN(fakeUser.username, fakeUser.pin)
+      .then(ok => Promise.reject(new Error('Should fail')), e => true)
+
+    // Change PIN, leaving it disabled:
+    expect(await account.checkPin(fakeUser.pin)).to.equal(true)
+    await account.changePin({ pin: '4321' })
+    await context
+      .loginWithPIN(fakeUser.username, fakeUser.pin)
+      .then(ok => Promise.reject(new Error('Should fail')), e => true)
+    expect(await account.checkPin('4321')).to.equal(true)
+
+    // Enable PIN login:
+    await account.changePin({ enableLogin: true })
+    await context.loginWithPIN(fakeUser.username, '4321')
+  })
+
   it('check', async function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)

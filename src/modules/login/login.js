@@ -82,6 +82,7 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
     'passwordAuthBox',
     'passwordBox',
     'passwordKeySnrp',
+    'pin2TextBox',
     'mnemonicBox',
     'rootKeyBox',
     'mnemonicBox',
@@ -177,6 +178,9 @@ function makeLoginTreeInner (stash, loginKey) {
   if (stash.pin2Key != null) {
     login.pin2Key = base64.parse(stash.pin2Key)
   }
+  if (stash.pin2TextBox != null) {
+    login.pin = utf8.stringify(decrypt(stash.pin2TextBox, loginKey))
+  }
 
   // Recovery v2:
   if (stash.recovery2Key != null) {
@@ -238,7 +242,7 @@ export function makeLoginTree (
   stashTree: LoginStash,
   loginKey: Uint8Array,
   appId: string = ''
-) {
+): LoginTree {
   return updateTree(
     stashTree,
     stash => stash.appId === appId,

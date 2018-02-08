@@ -29,8 +29,11 @@ export type LoginStash = {
   passwordBox?: JsonBox,
   passwordKeySnrp?: JsonSnrp,
 
-  // Decrypted keys:
+  // PIN login:
+  pin2TextBox?: JsonBox,
   pin2Key?: string,
+
+  // Recovery login:
   recovery2Key?: string,
 
   // Resources:

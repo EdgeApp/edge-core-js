@@ -5,7 +5,7 @@ import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
-import type { LoginStash, LoginTree } from './login-types.js'
+import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
 import { applyLoginReply, makeLoginTree, searchTree } from './login.js'
 import { fixUsername } from './loginStore.js'
 
@@ -84,7 +84,11 @@ export async function loginPin2 (
   stashTree = applyLoginReply(stashTree, loginKey, loginReply)
   if (otpKey) stashTree.otpKey = otpKey
   loginStore.save(stashTree)
-  return makeLoginTree(stashTree, loginKey, appIdFound)
+
+  // Capture the PIN into the login tree:
+  const loginTree = makeLoginTree(stashTree, loginKey, appIdFound)
+  if (loginTree.pin == null) loginTree.pin = pin
+  return loginTree
 }
 
 /**
@@ -105,34 +109,115 @@ export async function checkPin2 (ai: ApiInput, login: LoginTree, pin: string) {
 }
 
 /**
+ * Creates the data needed to attach a PIN to a tree of logins.
+ */
+export function makeChangePin2Kits (
+  ai: ApiInput,
+  loginTree: LoginTree,
+  username: string,
+  pin: string,
+  enableLogin: boolean
+): Array<LoginKit> {
+  const out: Array<LoginKit> = [
+    makeChangePin2Kit(ai, loginTree, username, pin, enableLogin)
+  ]
+
+  if (loginTree.children) {
+    for (const child of loginTree.children) {
+      out.push(...makeChangePin2Kits(ai, child, username, pin, enableLogin))
+    }
+  }
+
+  return out
+}
+
+/**
  * Creates the data needed to attach a PIN to a login.
  */
-export function makePin2Kit (
+export function makeChangePin2Kit (
   ai: ApiInput,
   login: LoginTree,
   username: string,
-  pin: string
+  pin: string,
+  enableLogin: boolean
 ) {
   const { io } = ai.props
-  const pin2Key = login.pin2Key || io.random(32)
-  const pin2Box = encrypt(io, login.loginKey, pin2Key)
-  const pin2KeyBox = encrypt(io, pin2Key, login.loginKey)
+  const pin2TextBox = encrypt(io, utf8.parse(pin), login.loginKey)
 
-  return {
+  if (enableLogin) {
+    const pin2Key = login.pin2Key || io.random(32)
+    const pin2Box = encrypt(io, login.loginKey, pin2Key)
+    const pin2KeyBox = encrypt(io, pin2Key, login.loginKey)
+
+    return {
+      serverPath: '/v2/login/pin2',
+      server: {
+        pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+        pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
+        pin2Box,
+        pin2KeyBox,
+        pin2TextBox
+      },
+      stash: {
+        pin2Key: base64.stringify(pin2Key),
+        pin2TextBox
+      },
+      login: {
+        pin2Key,
+        pin
+      },
+      loginId: login.loginId
+    }
+  } else {
+    return {
+      serverPath: '/v2/login/pin2',
+      server: {
+        pin2TextBox
+      },
+      stash: {
+        pin2Key: void 0,
+        pin2TextBox
+      },
+      login: {
+        pin2Key: void 0,
+        pin
+      },
+      loginId: login.loginId
+    }
+  }
+}
+
+/**
+ * Creates the data needed to delete a PIN from a tree of logins.
+ */
+export function makeDeletePin2Kits (loginTree: LoginTree): Array<LoginKit> {
+  const out: Array<LoginKit> = [makeDeletePin2Kit(loginTree)]
+
+  if (loginTree.children) {
+    for (const child of loginTree.children) {
+      out.push(...makeDeletePin2Kits(child))
+    }
+  }
+
+  return out
+}
+
+/**
+ * Creates the data needed to delete a PIN from a login.
+ */
+export function makeDeletePin2Kit (login: LoginTree): LoginKit {
+  // Flow complains about these fields being `undefined`:
+  const out: any = {
+    serverMethod: 'DELETE',
     serverPath: '/v2/login/pin2',
-    server: {
-      pin2Id: base64.stringify(pin2Id(pin2Key, username)),
-      pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
-      pin2Box,
-      pin2KeyBox
-    },
+    server: void 0,
     stash: {
-      pin2Key: base64.stringify(pin2Key)
+      pin2Key: void 0
     },
     login: {
-      pin,
-      pin2Key
+      pin2Key: void 0
     },
     loginId: login.loginId
   }
+  return out
 }

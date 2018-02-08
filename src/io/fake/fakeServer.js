@@ -465,18 +465,27 @@ addRoute('DELETE', '/api/v2/login/pin2', authHandler, function (req) {
   req.login.pin2Box = void 0
   req.login.pin2Id = void 0
   req.login.pin2KeyBox = void 0
+  req.login.pin2TextBox = void 0
 
   return makeResponse()
 })
 
 addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
   const data = req.body.data
-  if (
-    data.pin2Auth == null ||
-    data.pin2Box == null ||
-    data.pin2Id == null ||
-    data.pin2KeyBox == null
-  ) {
+
+  const enablingPin =
+    data.pin2Auth != null &&
+    data.pin2Box != null &&
+    data.pin2Id != null &&
+    data.pin2KeyBox != null
+  const disablingPin =
+    data.pin2Auth == null &&
+    data.pin2Box == null &&
+    data.pin2Id == null &&
+    data.pin2KeyBox == null &&
+    data.pin2TextBox != null
+
+  if (!enablingPin && !disablingPin) {
     return makeErrorResponse(errorCodes.error)
   }
 
@@ -484,6 +493,7 @@ addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
   req.login.pin2Box = data.pin2Box
   req.login.pin2Id = data.pin2Id
   req.login.pin2KeyBox = data.pin2KeyBox
+  req.login.pin2TextBox = data.pin2TextBox
 
   return makeResponse()
 })
