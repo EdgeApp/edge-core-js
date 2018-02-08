@@ -167,8 +167,9 @@ class AccountState {
     if (this.callbacks.onLoggedOut) this.callbacks.onLoggedOut()
   }
 
-  enableOtp (otpTimeout, login = this.loginTree) {
+  enableOtp (otpTimeout) {
     const { ai } = this
+    const login = this.loginTree
     checkLogin(login)
     const otpKey =
       login.otpKey != null
@@ -196,7 +197,8 @@ class AccountState {
     return this.applyKit(kit)
   }
 
-  disableOtp (login = this.loginTree) {
+  disableOtp () {
+    const login = this.loginTree
     checkLogin(login)
 
     const kit = {
@@ -218,7 +220,8 @@ class AccountState {
     return this.applyKit(kit)
   }
 
-  cancelOtpReset (login = this.loginTree) {
+  cancelOtpReset () {
+    const login = this.loginTree
     checkLogin(login)
 
     const kit = {
@@ -238,8 +241,9 @@ class AccountState {
     return this.applyKit(kit)
   }
 
-  changePassword (password, login = this.loginTree) {
+  changePassword (password) {
     const { ai, loginTree: { username } } = this
+    const login = this.loginTree
     checkLogin(login)
 
     return makePasswordKit(ai, login, username, password).then(kit =>
@@ -247,23 +251,26 @@ class AccountState {
     )
   }
 
-  changePin (pin, login = this.login) {
+  changePin (pin) {
     const { ai, loginTree: { username } } = this
+    const login = this.loginTree
     checkLogin(login)
 
     const kit = makePin2Kit(ai, login, username, pin)
     return this.applyKit(kit)
   }
 
-  changeRecovery (questions, answers, login = this.loginTree) {
+  changeRecovery (questions, answers) {
     const { ai, loginTree: { username } } = this
+    const login = this.loginTree
     checkLogin(login)
 
     const kit = makeRecovery2Kit(ai, login, username, questions, answers)
     return this.applyKit(kit)
   }
 
-  deletePassword (login = this.login) {
+  deletePassword () {
+    const login = this.loginTree
     checkLogin(login)
 
     const kit = {
@@ -287,7 +294,8 @@ class AccountState {
     return this.applyKit(kit)
   }
 
-  deletePin (login = this.login) {
+  deletePin () {
+    const login = this.loginTree
     checkLogin(login)
 
     const kit = {
@@ -305,7 +313,8 @@ class AccountState {
     return this.applyKit(kit)
   }
 
-  deleteRecovery (login = this.loginTree) {
+  deleteRecovery () {
+    const login = this.loginTree
     checkLogin(login)
 
     const kit = {
