@@ -2,7 +2,8 @@
 
 import type {
   EdgeCurrencyInfo,
-  EdgeCurrencyPlugin
+  EdgeCurrencyPlugin,
+  EdgeTokenInfo
 } from '../../edge-core-index.js'
 import type { ApiInput, ApiProps } from '../root.js'
 
@@ -22,10 +23,11 @@ export function getCurrencyInfo (
 }
 
 export function getCurrencyMultiplier (
-  infos: Array<EdgeCurrencyInfo>,
+  currencyInfos: Array<EdgeCurrencyInfo>,
+  tokenInfos: Array<EdgeTokenInfo>,
   currencyCode: string
 ): string {
-  for (const info of infos) {
+  for (const info of currencyInfos) {
     for (const denomination of info.denominations) {
       if (denomination.name === currencyCode) {
         return denomination.multiplier
@@ -39,6 +41,10 @@ export function getCurrencyMultiplier (
         }
       }
     }
+  }
+
+  for (const info of tokenInfos) {
+    if (info.currencyCode === currencyCode) return info.multiplier
   }
 
   return '1'
@@ -75,7 +81,12 @@ export function hasCurrencyPlugin (
 }
 
 export function waitForCurrencyPlugins (ai: ApiInput) {
-  return ai.waitFor(props => props.output.currency.plugins)
+  return ai.waitFor(props => {
+    if (props.state.currency.pluginsError) {
+      throw props.state.currency.pluginsError
+    }
+    return props.output.currency.plugins
+  })
 }
 
 export function waitForCurrencyWallet (ai: ApiInput, walletId: string) {

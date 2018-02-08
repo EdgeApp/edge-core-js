@@ -3643,9 +3643,9 @@ redux-keto@^0.3.2:
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.2.tgz#15c18d61fec5e76e3d0d3f02767a996fee4ff622"
 
-redux-pixies@^0.3.3:
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.3.3.tgz#8e7b95271328a4c1eee520cca8c2cb6503f6b85c"
+redux-pixies@^0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.3.4.tgz#e9b88f059c246931a6a17fc63392cbbd30724954"
 
 redux-thunk@^2.2.0:
   version "2.2.0"

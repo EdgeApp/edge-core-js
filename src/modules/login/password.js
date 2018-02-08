@@ -25,12 +25,13 @@ async function extractLoginKey (
   username: string,
   password: string
 ) {
-  if (stash.passwordBox == null || stash.passwordKeySnrp == null) {
+  const { passwordBox, passwordKeySnrp } = stash
+  if (passwordBox == null || passwordKeySnrp == null) {
     throw new Error('Missing data for offline password login')
   }
   const up = makeHashInput(username, password)
-  const passwordKey = await scrypt(ai, up, stash.passwordKeySnrp)
-  return decrypt(stash.passwordBox, passwordKey)
+  const passwordKey = await scrypt(ai, up, passwordKeySnrp)
+  return decrypt(passwordBox, passwordKey)
 }
 
 /**
