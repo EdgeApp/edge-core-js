@@ -19,10 +19,10 @@ describe('currency selectors', function () {
   const infos = [fakeCurrencyInfo]
 
   it('find currency multiplier', function () {
-    expect(getCurrencyMultiplier(infos, 'SMALL')).to.equal('10')
-    expect(getCurrencyMultiplier(infos, 'TEST')).to.equal('100')
-    expect(getCurrencyMultiplier(infos, 'TOKEN')).to.equal('1000')
-    expect(getCurrencyMultiplier(infos, '-error-')).to.equal('1')
+    expect(getCurrencyMultiplier(infos, [], 'SMALL')).to.equal('10')
+    expect(getCurrencyMultiplier(infos, [], 'TEST')).to.equal('100')
+    expect(getCurrencyMultiplier(infos, [], 'TOKEN')).to.equal('1000')
+    expect(getCurrencyMultiplier(infos, [], '-error-')).to.equal('1')
   })
 
   it('has currency plugin', function () {

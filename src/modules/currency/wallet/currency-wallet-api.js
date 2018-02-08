@@ -12,6 +12,7 @@ import type {
   EdgeReceiveAddress,
   EdgeSpendInfo,
   EdgeSpendTarget,
+  EdgeTokenInfo,
   EdgeTransaction
 } from '../../../edge-core-index.js'
 import { wrapObject } from '../../../util/api.js'
@@ -109,8 +110,9 @@ export function makeCurrencyWalletApi (
       return engine.getEnabledTokens()
     },
 
-    addCustomToken (token: any) {
-      return engine.addCustomToken(token)
+    addCustomToken (tokenInfo: EdgeTokenInfo) {
+      ai.props.dispatch({ type: 'ADDED_CUSTOM_TOKEN', payload: tokenInfo })
+      return engine.addCustomToken(tokenInfo)
     },
 
     // Transactions:

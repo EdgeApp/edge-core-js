@@ -68,8 +68,17 @@ export function makeShapeshiftApi (ai: ApiInput) {
       const json = await api.get(`/marketinfo/${pair}`)
 
       const currencyInfos = ai.props.state.currency.infos
-      const multiplierFrom = getCurrencyMultiplier(currencyInfos, fromCurrency)
-      const multiplierTo = getCurrencyMultiplier(currencyInfos, toCurrency)
+      const tokenInfos = ai.props.state.currency.customTokens
+      const multiplierFrom = getCurrencyMultiplier(
+        currencyInfos,
+        tokenInfos,
+        fromCurrency
+      )
+      const multiplierTo = getCurrencyMultiplier(
+        currencyInfos,
+        tokenInfos,
+        toCurrency
+      )
       const swapInfo = {
         rate: json.rate,
         minerFee: bns.mul(json.minerFee.toString(), multiplierTo),

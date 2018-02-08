@@ -3,6 +3,7 @@
 import type {
   EdgeAccountCallbacks,
   EdgeCurrencyInfo,
+  EdgeTokenInfo,
   EdgeWalletInfo
 } from '../edge-core-index.js'
 
@@ -15,6 +16,14 @@ export interface AccountKeysLoadedAction {
     activeLoginId: string,
     walletInfos: Array<EdgeWalletInfo>
   };
+}
+
+/**
+ * Somebody just added a custom token type to the wallet.
+ */
+export interface AddedCustomToken {
+  type: 'ADDED_CUSTOM_TOKEN';
+  payload: EdgeTokenInfo;
 }
 
 /**
@@ -159,6 +168,7 @@ export interface RepoSynced {
 
 export type RootAction =
   | AccountKeysLoadedAction
+  | AddedCustomToken
   | CurrencyEngineChangedTxs
   | CurrencyEngineCleared
   | CurrencyEngineFailed
