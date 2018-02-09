@@ -24,7 +24,7 @@ import type {
 } from './login-types.js'
 import { hashUsername } from './loginStore.js'
 
-function cloneNode<Node, Output> (
+function cloneNode<Node: {}, Output> (
   node: Node,
   children: Array<Output> | void
 ): Output {
