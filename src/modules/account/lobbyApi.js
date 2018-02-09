@@ -17,7 +17,10 @@ interface AppIdInfo {
 /**
  * Translate an appId into a user-presentable icon and string.
  */
-async function fetchAppIdInfo (ai: ApiInput, appId: string): Promise<AppIdInfo> {
+export async function fetchAppIdInfo (
+  ai: ApiInput,
+  appId: string
+): Promise<AppIdInfo> {
   try {
     const url = 'https://info1.edgesecure.co:8444/v1/appIdInfo/' + appId
     const response = await ai.props.io.fetch(url)
