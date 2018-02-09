@@ -4,7 +4,7 @@
 // @flow
 
 import type { EdgeLoginMessages } from '../../edge-core-index.js'
-import { decrypt } from '../../util/crypto/crypto.js'
+import { decrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import { elvis, filterObject, softCat } from '../../util/util.js'
@@ -192,10 +192,10 @@ function makeLoginTreeInner (stash, loginKey) {
   // BitID wallet:
   const { mnemonicBox, rootKeyBox } = stash
   if (mnemonicBox != null && rootKeyBox != null) {
-    const mnemonic = utf8.stringify(decrypt(mnemonicBox, loginKey))
     const rootKey = decrypt(rootKeyBox, loginKey)
+    const infoKey = hmacSha256(rootKey, utf8.parse('infoKey'))
     const keys = {
-      mnemonic,
+      mnemonic: utf8.stringify(decrypt(mnemonicBox, infoKey)),
       rootKey: base64.stringify(rootKey)
     }
     legacyKeys.push(makeKeyInfo('wallet:bitid', keys, rootKey))
