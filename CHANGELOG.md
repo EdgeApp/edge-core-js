@@ -1,5 +1,12 @@
 # airbitz-core-js
 
+## 0.5.4
+
+* Fixes exchange rate multipliers for custom tokens.
+* Handle plugin errors more gracefully.
+* Make PIN changes fully recursive across all apps
+* Allow the PIN to be enabled / disabled
+
 ## 0.5.3
 
 * Fixes to Flow types, including brand-new flow types for EdgeCurrencyWallet.
