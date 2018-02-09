@@ -10,7 +10,7 @@ import { makeKeysKit } from './keys.js'
 import type { LoginKit, LoginTree } from './login-types.js'
 import { fixUsername, hashUsername } from './loginStore.js'
 import { makePasswordKit } from './password.js'
-import { makePin2Kit } from './pin2.js'
+import { makeChangePin2Kit } from './pin2.js'
 
 export interface LoginCreateOpts {
   keyInfo?: EdgeWalletInfo;
@@ -62,7 +62,9 @@ export function makeCreateKit (
       ? makePasswordKit(ai, { loginKey }, username, opts.password)
       : {}
   const pin2Kit =
-    opts.pin != null ? makePin2Kit(ai, { loginKey }, username, opts.pin) : {}
+    opts.pin != null
+      ? makeChangePin2Kit(ai, { loginKey }, username, opts.pin, true)
+      : {}
   const keysKit =
     opts.keyInfo != null ? makeKeysKit(ai, { loginKey }, opts.keyInfo) : {}
 

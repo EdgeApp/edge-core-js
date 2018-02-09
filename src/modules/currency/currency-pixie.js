@@ -23,19 +23,30 @@ export default combinePixies({
       const promises: Array<Promise<EdgeCurrencyPlugin>> = []
       for (const plugin of props.plugins) {
         if (plugin.pluginType === 'currency') {
-          promises.push(plugin.makePlugin(opts))
+          try {
+            promises.push(plugin.makePlugin(opts))
+          } catch (e) {
+            promises.push(Promise.reject(e))
+          }
         }
       }
 
-      return Promise.all(promises).then(plugins => {
-        input.onOutput(plugins)
-        input.props.dispatch({
-          type: 'CURRENCY_PLUGINS_LOADED',
-          payload: plugins.map(plugin => plugin.currencyInfo)
+      return Promise.all(promises)
+        .then(plugins => {
+          input.onOutput(plugins)
+          input.props.dispatch({
+            type: 'CURRENCY_PLUGINS_LOADED',
+            payload: plugins.map(plugin => plugin.currencyInfo)
+          })
+          return stopUpdates
         })
-
-        return stopUpdates
-      })
+        .catch(e => {
+          input.props.dispatch({
+            type: 'CURRENCY_PLUGINS_FAILED',
+            payload: e
+          })
+          return stopUpdates
+        })
     }
   },
 

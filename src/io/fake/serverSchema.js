@@ -14,6 +14,7 @@ export const loginReplyColumns = [
   'passwordKeySnrp',
   'pin2Box',
   'pin2KeyBox',
+  'pin2TextBox',
   'question2Box',
   'recovery2Box',
   'recovery2KeyBox',

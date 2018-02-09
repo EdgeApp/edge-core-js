@@ -93,10 +93,13 @@ export class LoginStore {
    * Saves a login stash tree to the folder.
    */
   save (stashTree: LoginStash) {
-    const loginId = base64.parse(stashTree.loginId)
     if (stashTree.appId !== '') {
       throw new Error('Cannot save a login without an appId.')
     }
+    if (!stashTree.loginId) {
+      throw new Error('Cannot save a login without a loginId.')
+    }
+    const loginId = base64.parse(stashTree.loginId)
     if (loginId.length !== 32) {
       throw new Error('Invalid loginId')
     }

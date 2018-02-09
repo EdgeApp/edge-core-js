@@ -1,11 +1,48 @@
 // @flow
 
 import type { EdgeWalletInfo } from '../../edge-core-index.js'
+import type { JsonBox } from '../../util/crypto/crypto.js'
+import type { JsonSnrp } from '../scrypt/scrypt-pixie.js'
 
 export type LoginReply = Object
-export type LoginStash = Object
 export type LoginTree = Object
 export type ServerPayload = Object
+
+/**
+ * The login data we store on disk.
+ */
+export type LoginStash = {
+  // Basic account info:
+  appId?: string, // Not actually optional
+  loginAuthBox?: JsonBox,
+  loginId?: string, // Not actually optional
+  userId?: string,
+  username?: string,
+
+  // 2-factor:
+  otpKey?: string,
+  otpResetDate?: number,
+  otpTimeout?: number,
+
+  // Offline password logins:
+  passwordAuthBox?: JsonBox,
+  passwordBox?: JsonBox,
+  passwordKeySnrp?: JsonSnrp,
+
+  // PIN login:
+  pin2TextBox?: JsonBox,
+  pin2Key?: string,
+
+  // Recovery login:
+  recovery2Key?: string,
+
+  // Resources:
+  children?: Array<LoginStash>,
+  keyBoxes?: Array<JsonBox>,
+  mnemonicBox?: JsonBox,
+  rootKeyBox?: JsonBox,
+  syncKeyBox?: JsonBox
+}
 
 export type AppIdMap = { [walletId: string]: Array<string> }
 

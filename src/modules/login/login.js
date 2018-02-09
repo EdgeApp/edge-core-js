@@ -24,12 +24,16 @@ import type {
 } from './login-types.js'
 import { hashUsername } from './loginStore.js'
 
-function cloneNode (node, children) {
-  return { ...node, children }
+function cloneNode<Node: {}, Output> (
+  node: Node,
+  children: Array<Output> | void
+): Output {
+  const out: any = { ...node, children }
+  return out
 }
 
 /**
- * Returns the login that satisifies the given predicate,
+ * Returns the login that satisfies the given predicate,
  * or undefined if nothing matches.
  */
 export function searchTree (node: any, predicate: any => boolean) {
@@ -49,10 +53,15 @@ export function searchTree (node: any, predicate: any => boolean) {
  * The `predicate` callback is used to find the target node.
  * The `update` callback is called on the target.
  */
-function updateTree (node, predicate, update, clone = cloneNode) {
+function updateTree<Node: { children?: Array<any> }, Output> (
+  node: Node,
+  predicate: (node: Node) => boolean,
+  update: (node: Node) => Output,
+  clone: (node: Node, children: Array<Output> | void) => Output = cloneNode
+): Output {
   if (predicate(node)) return update(node)
 
-  const children =
+  const children: Array<Output> =
     node.children != null
       ? node.children.map(child => updateTree(child, predicate, update, clone))
       : []
@@ -73,6 +82,7 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
     'passwordAuthBox',
     'passwordBox',
     'passwordKeySnrp',
+    'pin2TextBox',
     'mnemonicBox',
     'rootKeyBox',
     'mnemonicBox',
@@ -168,6 +178,9 @@ function makeLoginTreeInner (stash, loginKey) {
   if (stash.pin2Key != null) {
     login.pin2Key = base64.parse(stash.pin2Key)
   }
+  if (stash.pin2TextBox != null) {
+    login.pin = utf8.stringify(decrypt(stash.pin2TextBox, loginKey))
+  }
 
   // Recovery v2:
   if (stash.recovery2Key != null) {
@@ -177,9 +190,10 @@ function makeLoginTreeInner (stash, loginKey) {
   const legacyKeys = []
 
   // BitID wallet:
-  if (stash.menemonicBox != null && stash.rootKeyBox != null) {
-    const mnemonic = utf8.stringify(decrypt(stash.menemonicBox, loginKey))
-    const rootKey = decrypt(stash.rootKeyBox, loginKey)
+  const { mnemonicBox, rootKeyBox } = stash
+  if (mnemonicBox != null && rootKeyBox != null) {
+    const mnemonic = utf8.stringify(decrypt(mnemonicBox, loginKey))
+    const rootKey = decrypt(rootKeyBox, loginKey)
     const keys = {
       mnemonic,
       rootKey: base64.stringify(rootKey)
@@ -228,7 +242,7 @@ export function makeLoginTree (
   stashTree: LoginStash,
   loginKey: Uint8Array,
   appId: string = ''
-) {
+): LoginTree {
   return updateTree(
     stashTree,
     stash => stash.appId === appId,

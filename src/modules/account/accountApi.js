@@ -92,9 +92,10 @@ function makeAccountApi (
       pin?: string, // We keep the existing PIN if unspecified
       enableLogin?: boolean // We default to true if unspecified
     }): Promise<string> {
-      return state
-        .changePin(opts.pin)
-        .then(() => base58.stringify(state.login.pin2Key))
+      const { pin, enableLogin } = opts
+      return state.changePin(pin, enableLogin).then(() => {
+        return state.login.pin2Key ? base58.stringify(state.login.pin2Key) : ''
+      })
     },
     changeRecovery (
       questions: Array<string>,
@@ -110,7 +111,10 @@ function makeAccountApi (
       return checkPassword(ai, state.loginTree, password)
     },
     checkPin (pin: string): Promise<boolean> {
-      return checkPin2(ai, state.loginTree, pin)
+      // Try to check the PIN locally, then fall back on the server:
+      return state.login.pin != null
+        ? Promise.resolve(pin === state.login.pin)
+        : checkPin2(ai, state.loginTree, pin)
     },
 
     // Remove credentials:

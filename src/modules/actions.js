@@ -3,6 +3,7 @@
 import type {
   EdgeAccountCallbacks,
   EdgeCurrencyInfo,
+  EdgeTokenInfo,
   EdgeWalletInfo
 } from '../edge-core-index.js'
 
@@ -15,6 +16,14 @@ export interface AccountKeysLoadedAction {
     activeLoginId: string,
     walletInfos: Array<EdgeWalletInfo>
   };
+}
+
+/**
+ * Somebody just added a custom token type to the wallet.
+ */
+export interface AddedCustomToken {
+  type: 'ADDED_CUSTOM_TOKEN';
+  payload: EdgeTokenInfo;
 }
 
 /**
@@ -47,6 +56,22 @@ export interface CurrencyEngineFailed {
     error: Error,
     walletId: string
   };
+}
+
+/**
+ * Fired when the currency plugins failed to load.
+ */
+export interface CurrencyPluginsFailed {
+  type: 'CURRENCY_PLUGINS_FAILED';
+  payload: Error;
+}
+
+/**
+ * Fired when the currency plugins load successfully.
+ */
+export interface CurrencyPluginsLoaded {
+  type: 'CURRENCY_PLUGINS_LOADED';
+  payload: Array<EdgeCurrencyInfo>;
 }
 
 /**
@@ -92,14 +117,6 @@ export interface CurrencyWalletNameChanged {
     name: string | null,
     walletId: string
   };
-}
-
-/**
- * Called when the plugins are loaded.
- */
-export interface CurrencyPluginsLoadedAction {
-  type: 'CURRENCY_PLUGINS_LOADED';
-  payload: Array<EdgeCurrencyInfo>;
 }
 
 /**
@@ -151,10 +168,12 @@ export interface RepoSynced {
 
 export type RootAction =
   | AccountKeysLoadedAction
+  | AddedCustomToken
   | CurrencyEngineChangedTxs
   | CurrencyEngineCleared
   | CurrencyEngineFailed
-  | CurrencyPluginsLoadedAction
+  | CurrencyPluginsFailed
+  | CurrencyPluginsLoaded
   | CurrencyWalletFiatChanged
   | CurrencyWalletFileChanged
   | CurrencyWalletFilesLoaded

@@ -381,7 +381,13 @@ export function setupNewTxMetadata (input: CurrencyWalletInput, tx: any) {
   for (const currency of Object.keys(tx.nativeAmount)) {
     const rate =
       getExchangeRate(state, currency, fiatCurrency, () => 1) /
-      parseFloat(getCurrencyMultiplier([currencyInfo], currency))
+      parseFloat(
+        getCurrencyMultiplier(
+          [currencyInfo],
+          input.props.state.currency.customTokens,
+          currency
+        )
+      )
     const nativeAmount = tx.nativeAmount[currency]
 
     const metadata = { exchangeAmount: {} }
