@@ -4,6 +4,7 @@ import { number as currencyFromNumber } from 'currency-codes'
 import { mapFiles } from 'disklet'
 
 import { mergeDeeply } from '../../../util/util.js'
+import { fetchAppIdInfo } from '../../account/lobbyApi.js'
 import { getExchangeRate } from '../../exchange/selectors.js'
 import {
   getStorageWalletFolder,
@@ -194,7 +195,13 @@ function loadNameFile (input: CurrencyWalletInput, folder) {
     .file('WalletName.json')
     .getText()
     .then(text => JSON.parse(text).walletName)
-    .catch(e => null)
+    .catch(async e => {
+      // The wallet info does happen to have full data, so this works:
+      const fullWalletInfo: any = input.props.selfState.walletInfo
+      const name = await fetchBackupName(input, fullWalletInfo.appIds || [])
+      if (name != null) await renameCurrencyWallet(input, name)
+      return name
+    })
     .then((name: string | null) =>
       dispatch({
         type: 'CURRENCY_WALLET_NAME_CHANGED',
@@ -204,6 +211,24 @@ function loadNameFile (input: CurrencyWalletInput, folder) {
         }
       })
     )
+}
+
+/**
+ * If a wallet has no name file, try to pick a name based on the appId.
+ */
+function fetchBackupName (
+  input: CurrencyWalletInput,
+  appIds: Array<string>
+): Promise<string | null> {
+  // Dirty type hack, but `io` and `onError` do exist on both objects:
+  const ai: any = input
+  for (const appId of appIds) {
+    if (appId !== '') {
+      return fetchAppIdInfo(ai, appId).then(info => info.displayName)
+    }
+  }
+
+  return Promise.resolve(null)
 }
 
 /**

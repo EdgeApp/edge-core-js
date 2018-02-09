@@ -1,5 +1,10 @@
 # airbitz-core-js
 
+## 0.5.5
+
+* Fix login checksum errors exposed by previous release.
+* Fall back on the app name for unnamed wallets.
+
 ## 0.5.4
 
 * Fixes exchange rate multipliers for custom tokens.
@@ -105,7 +110,7 @@ Breaking changes:
 
 ## 0.1.1
 
-* Quick fix to pachage.json to exclude nodeisms from the browser
+* Quick fix to package.json to exclude nodeisms from the browser
 
 ## 0.1.0
 
