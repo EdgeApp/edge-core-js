@@ -62,6 +62,7 @@
     "redux-thunk": "^2.2.0",
     "regenerator-runtime": "^0.11.1",
     "rfc4648": "^1.0.0",
+    "rollup-plugin-alias": "^1.4.0",
     "scrypt-js": "^2.0.3",
     "utf8": "^2.1.2"
   },
@@ -113,5 +114,6 @@
     "react-native-fast-crypto": "^1.5.3",
     "react-native-randombytes": "git://github.com/Airbitz/react-native-randombytes.git#40d02a5f922",
     "react-native-tcp": "git://github.com/Airbitz/react-native-tcp.git"
-  }
+  },
+  "react-native": "lib/edge-login-index-rn.js"
 }
