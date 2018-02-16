@@ -1,5 +1,11 @@
 # airbitz-core-js
 
+## 0.5.6
+
+* Fix build issues on React Native & web.
+* Properly handle Shapeshift HTTP error codes.
+* Add a `getAvailableExchangeTokens` function to the context.
+
 ## 0.5.5
 
 * Fix login checksum errors exposed by previous release.

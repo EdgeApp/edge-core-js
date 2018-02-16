@@ -3,9 +3,9 @@ import multiEntry from 'rollup-plugin-multi-entry'
 import config from './rollup.config.js'
 
 export default {
-  external: config.external,
+  external: config[0].external,
   input: 'src/**/*.test.js',
   output: [{ file: 'build/tests.cjs.js', format: 'cjs' }],
-  plugins: [multiEntry(), ...config.plugins],
+  plugins: [multiEntry(), ...config[0].plugins],
   sourcemap: true
 }

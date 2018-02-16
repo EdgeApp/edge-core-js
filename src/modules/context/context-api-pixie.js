@@ -207,6 +207,10 @@ function makeContextApi (ai: ApiInput) {
       return shapeshiftApi.getExchangeSwapRate(fromCurrencyCode, toCurrencyCode)
     },
 
+    getAvailableExchangeTokens (): Promise<Array<string>> {
+      return shapeshiftApi.getAvailableExchangeTokens()
+    },
+
     getExchangeSwapInfo (
       fromCurrencyCode: string,
       toCurrencyCode: string

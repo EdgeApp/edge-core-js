@@ -7,7 +7,7 @@ function searchRoutes (search, fromCurrency, parentRate, blacklist) {
     search.bestRate = parentRate
   }
 
-  // Never re-vist the same currency:
+  // Never re-visit the same currency:
   blacklist = { ...blacklist }
   blacklist[fromCurrency] = true
 
@@ -71,7 +71,7 @@ function startRouteSearch (
 
 /**
  * Looks up the best available exchange rate.
- * @param {*} getPairCost a function that assigns scores to currecy pairs.
+ * @param {*} getPairCost a function that assigns scores to currency pairs.
  * Higher scores are worse. The scores add, so longer paths have higher costs
  * than shorter paths. The signature is `(source, age, inverse) => cost`.
  */

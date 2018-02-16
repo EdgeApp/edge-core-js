@@ -20,9 +20,19 @@ export function makeShapeshiftApi (ai: ApiInput) {
 
   const api = {
     async get (path) {
-      const reply = await io.fetch(`${API_PREFIX}${path}`)
-      return reply.json()
+      const uri = `${API_PREFIX}${path}`
+      const reply = await io.fetch(uri)
+
+      if (!reply.ok) {
+        throw new Error(`Shapeshift ${uri} returned error code ${reply.status}`)
+      }
+      const replyJson = await reply.json()
+      if (replyJson.error) {
+        throw new Error(replyJson.error)
+      }
+      return replyJson
     },
+
     async post (path, body): Object {
       const uri = `${API_PREFIX}${path}`
       const reply = await io.fetch(uri, {
@@ -53,6 +63,17 @@ export function makeShapeshiftApi (ai: ApiInput) {
       const pair = `${fromCurrency}_${toCurrency}`
       const json = await api.get(`/rate/${pair}`)
       return +json.rate
+    },
+
+    async getAvailableExchangeTokens (): Promise<Array<string>> {
+      const json = await api.get(`/getcoins/`)
+      const availableTokens = []
+      for (const key in json) {
+        if (json[key].status === 'available') {
+          availableTokens.push(key)
+        }
+      }
+      return availableTokens
     },
 
     async getExchangeSwapInfo (

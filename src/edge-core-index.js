@@ -233,7 +233,9 @@ export type EdgeContext = {
   getExchangeSwapInfo(
     fromCurrencyCode: string,
     toCurrencyCode: string
-  ): Promise<EdgeExchangeSwapInfo>
+  ): Promise<EdgeExchangeSwapInfo>,
+
+  getAvailableExchangeTokens(): Promise<Array<string>>
 }
 
 export type EdgeExchangeSwapInfo = {
