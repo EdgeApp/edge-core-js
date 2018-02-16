@@ -397,6 +397,7 @@ export type EdgeAccount = {
   getFirstWalletInfo(type: string): ?EdgeWalletInfo,
   getWalletInfo(id: string): EdgeWalletInfo,
   listWalletIds(): Array<string>,
+  listSplittableWalletTypes(walletId: string): Array<string>,
   splitWalletInfo(walletId: string, newWalletType: string): Promise<string>,
 
   // Currency wallets:
@@ -692,7 +693,8 @@ export type EdgeCurrencyPlugin = {
     options: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine>,
   parseUri(uri: string): EdgeParsedUri,
-  encodeUri(obj: EdgeEncodeUri): string
+  encodeUri(obj: EdgeEncodeUri): string,
+  getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>
 }
 
 export type EdgeCurrencyPluginFactory = {

@@ -483,6 +483,23 @@ class AccountState {
     return newWalletInfo.id
   }
 
+  listSplittableWalletTypes (walletId) {
+    const walletInfo = this.allKeys.find(
+      walletInfo => walletInfo.id === walletId
+    )
+    if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
+    const plugin = getCurrencyPlugin(
+      this.ai.props.output.currency.plugins,
+      walletInfo.type
+    )
+
+    if (plugin && plugin.getSplittableTypes) {
+      return plugin.getSplittableTypes(walletInfo)
+    }
+
+    return []
+  }
+
   get allKeys () {
     const { keyStates, legacyKeyInfos, login } = this
     const { walletInfos, appIdMap } = getAllWalletInfos(login, legacyKeyInfos)
