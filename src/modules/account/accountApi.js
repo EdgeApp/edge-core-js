@@ -189,6 +189,9 @@ function makeAccountApi (
     splitWalletInfo (walletId: string, newWalletType: string): Promise<string> {
       return state.splitWalletInfo(walletId, newWalletType)
     },
+    listSplittableWalletTypes (walletId: string): Array<string> {
+      return state.listSplittableWalletTypes(walletId)
+    },
 
     // Currency wallets:
     get activeWalletIds (): Array<string> {

@@ -483,6 +483,20 @@ class AccountState {
     return newWalletInfo.id
   }
 
+  listSplittableWalletTypes (walletId) {
+    const walletInfo = this.allKeys.find(
+      walletInfo => walletInfo.id === walletId
+    )
+    if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
+
+    // This is the bare minimum for now:
+    if (walletInfo.type === 'wallet:bitcoin') {
+      return ['wallet:bitcoincash']
+    }
+
+    return []
+  }
+
   get allKeys () {
     const { keyStates, legacyKeyInfos, login } = this
     const { walletInfos, appIdMap } = getAllWalletInfos(login, legacyKeyInfos)
