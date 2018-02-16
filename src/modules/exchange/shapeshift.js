@@ -65,6 +65,17 @@ export function makeShapeshiftApi (ai: ApiInput) {
       return +json.rate
     },
 
+    async getAvailableExchangeTokens (): Promise<Array<string>> {
+      const json = await api.get(`/getcoins/`)
+      const availableTokens = []
+      for (const key in json) {
+        if (json[key].status === 'available') {
+          availableTokens.push(key)
+        }
+      }
+      return availableTokens
+    },
+
     async getExchangeSwapInfo (
       fromCurrency: string,
       toCurrency: string
