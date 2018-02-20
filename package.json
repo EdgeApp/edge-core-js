@@ -1,5 +1,5 @@
 {
-  "name": "edge-login",
+  "name": "edge-core-js",
   "version": "0.5.6",
   "description": "Edge account & wallet management library",
   "keywords": [
@@ -34,7 +34,7 @@
     "build": "webpack && rollup -c && flow-copy-source -i '**/*.test.js' src lib",
     "build:test": "webpack && rollup -c rollup.config.test.js",
     "precommit": "lint-staged && flow status && npm test && npm run build",
-    "flow": "flow status",
+    "flow": "flow",
     "format": "import-sort -l --write '*.js' 'src/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js'",
     "lint": "eslint '*.js' 'src/**/*.js'",
     "lint:fix": "npm run format",
@@ -115,5 +115,5 @@
     "react-native-randombytes": "git://github.com/Airbitz/react-native-randombytes.git#40d02a5f922",
     "react-native-tcp": "git://github.com/Airbitz/react-native-tcp.git"
   },
-  "react-native": "lib/edge-login-index-rn.js"
+  "react-native": "lib/edge-core-index-rn.js"
 }

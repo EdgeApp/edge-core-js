@@ -12,7 +12,7 @@ To quickly get up and running with the UI for account creation, login, and manag
 
 ## Setup
 
-Just use `npm install --save edge-login` to add this library to your project.
+Just use `npm install --save edge-core-js` to add this library to your project.
 
 If you are on React Native, you must also do:
 
