@@ -1,5 +1,9 @@
 # airbitz-core-js
 
+## 0.6.0
+
+* Renamed the library to edge-core-js
+
 ## 0.5.6
 
 * Fix build issues on React Native & web.
