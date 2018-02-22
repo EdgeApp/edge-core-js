@@ -217,24 +217,22 @@ export type EdgeContext = {
   ): Promise<Array<string>>,
   listRecoveryQuestionChoices(): Promise<Array<string>>,
 
-  // Misc. stuff:
-  getCurrencyPlugins(): Promise<Array<EdgeCurrencyPlugin>>,
-
   // OTP stuff:
   requestOtpReset(username: string, otpResetToken: string): Promise<Date>,
   fetchLoginMessages(): Promise<EdgeLoginMessages>,
+
+  // Misc. stuff:
+  getCurrencyPlugins(): Promise<Array<EdgeCurrencyPlugin>>,
 
   // Shapeshift:
   getExchangeSwapRate(
     fromCurrencyCode: string,
     toCurrencyCode: string
   ): Promise<number>,
-
   getExchangeSwapInfo(
     fromCurrencyCode: string,
     toCurrencyCode: string
   ): Promise<EdgeExchangeSwapInfo>,
-
   getAvailableExchangeTokens(): Promise<Array<string>>
 }
 
