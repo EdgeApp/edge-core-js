@@ -1,5 +1,4 @@
 import { NetworkError } from '../../error.js'
-import { timeout } from '../../util/promise.js'
 
 const syncServers = ['https://git2.airbitz.co', 'https://git3.airbitz.co']
 
@@ -24,8 +23,9 @@ function syncRequestInner (io, method, path, body, serverIndex) {
 
   const uri = syncServers[serverIndex] + path
   io.console.info(`${method} ${uri}`)
-  return timeout(
-    io.fetch(uri, opts).then(
+  return io
+    .fetch(uri, opts)
+    .then(
       response =>
         response.json().catch(jsonError => {
           throw new Error(
@@ -35,14 +35,12 @@ function syncRequestInner (io, method, path, body, serverIndex) {
       networkError => {
         throw new NetworkError('Could not reach the sync server')
       }
-    ),
-    180000,
-    new NetworkError('Could not reach the sync server: timeout')
-  ).catch(e => {
-    if (serverIndex + 1 < syncServers.length) {
-      return syncRequestInner(io, method, path, body, serverIndex + 1)
-    } else {
-      throw e
-    }
-  })
+    )
+    .catch(e => {
+      if (serverIndex + 1 < syncServers.length) {
+        return syncRequestInner(io, method, path, body, serverIndex + 1)
+      } else {
+        throw e
+      }
+    })
 }
