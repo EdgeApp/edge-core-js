@@ -1,7 +1,7 @@
 import { NetworkError } from '../../error.js'
 import { timeout } from '../../util/promise.js'
 
-const syncServers = ['https://git-js.airbitz.co', 'https://git4-js.airbitz.co']
+const syncServers = ['https://git2.airbitz.co', 'https://git3.airbitz.co']
 
 /**
  * Fetches some resource from a sync server.
@@ -36,7 +36,7 @@ function syncRequestInner (io, method, path, body, serverIndex) {
         throw new NetworkError('Could not reach the sync server')
       }
     ),
-    10000,
+    180000,
     new NetworkError('Could not reach the sync server: timeout')
   ).catch(e => {
     if (serverIndex + 1 < syncServers.length) {
