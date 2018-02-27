@@ -455,7 +455,10 @@ class AccountState {
 
     const newWalletInfo = splitWalletInfo(walletInfo, newWalletType)
     if (this.allKeys.find(walletInfo => walletInfo.id === newWalletInfo.id)) {
-      throw new Error('This wallet has already been split')
+      const walletInfos = {}
+      walletInfos[walletInfo.id] = { deleted: false }
+      await this.changeKeyStates(walletInfos)
+      return walletInfo.id
     }
 
     // Add the keys to the login:
