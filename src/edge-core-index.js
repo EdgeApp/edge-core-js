@@ -553,6 +553,7 @@ export type EdgeTransaction = {
   networkFee: string,
   ourReceiveAddresses: Array<string>,
   signedTx: string,
+  parentNetworkFee?: string,
   metadata?: EdgeMetadata,
   otherParams: any,
   wallet?: EdgeCurrencyWallet
