@@ -455,7 +455,10 @@ class AccountState {
 
     const newWalletInfo = splitWalletInfo(walletInfo, newWalletType)
     if (this.allKeys.find(walletInfo => walletInfo.id === newWalletInfo.id)) {
-      throw new Error('This wallet has already been split')
+      const walletInfos = {}
+      walletInfos[walletInfo.id] = { deleted: false }
+      await this.changeKeyStates(walletInfos)
+      return walletInfo.id
     }
 
     // Add the keys to the login:
@@ -478,6 +481,20 @@ class AccountState {
     }
 
     return newWalletInfo.id
+  }
+
+  listSplittableWalletTypes (walletId) {
+    const walletInfo = this.allKeys.find(
+      walletInfo => walletInfo.id === walletId
+    )
+    if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
+
+    // This is the bare minimum for now:
+    if (walletInfo.type === 'wallet:bitcoin') {
+      return ['wallet:bitcoincash']
+    }
+
+    return []
   }
 
   get allKeys () {
