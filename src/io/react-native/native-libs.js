@@ -1,12 +1,16 @@
 // This file exists to hide the React Native dependencies from flow.
 
+import { Platform } from 'react-native'
+
 // Networking stuff:
 let Socket, TLSSocket
 try {
   const net = require('react-native-tcp')
   const tls = require('react-native-tcp/tls')
   Socket = net.Socket
-  TLSSocket = tls.TLSSocket || tls.Socket
+  if (Platform.OS !== 'android') {
+    TLSSocket = tls.TLSSocket || tls.Socket
+  }
 } catch (e) {}
 export { Socket, TLSSocket }
 
