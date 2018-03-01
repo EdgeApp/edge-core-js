@@ -416,6 +416,10 @@ export function combineTxWithFile (
     merged.metadata.exchangeAmount[walletFiat]
   ) {
     out.metadata.amountFiat = merged.metadata.exchangeAmount[walletFiat]
+    if (out.metadata.amountFiat.toString().includes('e')) {
+      // Corrupt amountFiat that exceeds a number that JS can cleanly represent without exponents. Set to 0
+      out.metadata.amountFiat = 0
+    }
   } else {
     console.info('Missing amountFiat in combineTxWithFile')
   }
