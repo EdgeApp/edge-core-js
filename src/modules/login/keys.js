@@ -98,7 +98,9 @@ export function mergeKeyInfos (keyInfos: Array<EdgeWalletInfo>) {
       const old = out[ids[id]]
       if (old.type !== type) {
         throw new Error(
-          `Key integrity violation for ${id}: type ${type} does not match ${old.type}`
+          `Key integrity violation for ${id}: type ${type} does not match ${
+            old.type
+          }`
         )
       }
       for (const key of Object.keys(keys)) {
