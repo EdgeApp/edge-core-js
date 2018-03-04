@@ -136,6 +136,11 @@ describe('account', function () {
     const fakecoinWallet = account.getFirstWalletInfo('wallet:fakecoin')
     if (!fakecoinWallet) throw new Error('Missing wallet')
 
+    // We should be able to split another type:
+    expect(account.listSplittableWalletTypes(fakecoinWallet.id)).to.deep.equal([
+      'wallet:tulipcoin'
+    ])
+
     // Do the split:
     await account.splitWalletInfo(fakecoinWallet.id, 'wallet:tulipcoin')
     const tulipWallet = account.getFirstWalletInfo('wallet:tulipcoin')
@@ -145,6 +150,11 @@ describe('account', function () {
     expect(fakecoinWallet.keys.dataKey).to.equal(tulipWallet.keys.dataKey)
     expect(fakecoinWallet.keys.fakecoinKey).to.equal(
       tulipWallet.keys.tulipcoinKey
+    )
+
+    // Now that the wallet is split, we can't split again:
+    expect(account.listSplittableWalletTypes(fakecoinWallet.id)).to.deep.equal(
+      []
     )
 
     // Splitting back should not work:
