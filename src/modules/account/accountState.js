@@ -447,18 +447,28 @@ class AccountState {
 
   async splitWalletInfo (walletId, newWalletType) {
     const { ai, login } = this
+    const allWalletInfos = this.allKeys
 
-    const walletInfo = this.allKeys.find(
+    // Find the wallet we are going to split:
+    const walletInfo = allWalletInfos.find(
       walletInfo => walletInfo.id === walletId
     )
     if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
 
+    // See if the wallet has already been split:
     const newWalletInfo = splitWalletInfo(walletInfo, newWalletType)
-    if (this.allKeys.find(walletInfo => walletInfo.id === newWalletInfo.id)) {
-      const walletInfos = {}
-      walletInfos[walletInfo.id] = { deleted: false }
-      await this.changeKeyStates(walletInfos)
-      return walletInfo.id
+    const existingWalletInfo = allWalletInfos.find(
+      walletInfo => walletInfo.id === newWalletInfo.id
+    )
+    if (existingWalletInfo) {
+      if (existingWalletInfo.archived || existingWalletInfo.deleted) {
+        // Simply undelete the existing wallet:
+        const walletInfos = {}
+        walletInfos[newWalletInfo.id] = { archived: false, deleted: false }
+        await this.changeKeyStates(walletInfos)
+        return walletInfo.id
+      }
+      throw new Error('This wallet has already been split')
     }
 
     // Add the keys to the login:
@@ -484,20 +494,37 @@ class AccountState {
   }
 
   listSplittableWalletTypes (walletId) {
-    const walletInfo = this.allKeys.find(
+    const allWalletInfos = this.allKeys
+
+    // Find the wallet we are going to split:
+    const walletInfo = allWalletInfos.find(
       walletInfo => walletInfo.id === walletId
     )
     if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
+
+    // Get the list of available types:
     const plugin = getCurrencyPlugin(
       this.ai.props.output.currency.plugins,
       walletInfo.type
     )
+    const types =
+      plugin && plugin.getSplittableTypes
+        ? plugin.getSplittableTypes(walletInfo)
+        : {}
 
-    if (plugin && plugin.getSplittableTypes) {
-      return plugin.getSplittableTypes(walletInfo)
-    }
-
-    return []
+    // Filter out wallet types we have already split:
+    return types.filter(type => {
+      const newWalletInfo = splitWalletInfo(walletInfo, type)
+      const existingWalletInfo = allWalletInfos.find(
+        walletInfo => walletInfo.id === newWalletInfo.id
+      )
+      // We can split the wallet if it doesn't exist, or is deleted:
+      return (
+        !existingWalletInfo ||
+        existingWalletInfo.archived ||
+        existingWalletInfo.deleted
+      )
+    })
   }
 
   get allKeys () {
