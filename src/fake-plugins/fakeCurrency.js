@@ -205,6 +205,10 @@ class FakeCurrencyPlugin {
   makeEngine (keyInfo, opts = {}) {
     return Promise.resolve(new FakeCurrencyEngine(this.store, keyInfo, opts))
   }
+
+  getSplittableTypes (walletInfo) {
+    return ['wallet:tulipcoin']
+  }
 }
 
 /**

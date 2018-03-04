@@ -217,24 +217,22 @@ export type EdgeContext = {
   ): Promise<Array<string>>,
   listRecoveryQuestionChoices(): Promise<Array<string>>,
 
-  // Misc. stuff:
-  getCurrencyPlugins(): Promise<Array<EdgeCurrencyPlugin>>,
-
   // OTP stuff:
   requestOtpReset(username: string, otpResetToken: string): Promise<Date>,
   fetchLoginMessages(): Promise<EdgeLoginMessages>,
+
+  // Misc. stuff:
+  getCurrencyPlugins(): Promise<Array<EdgeCurrencyPlugin>>,
 
   // Shapeshift:
   getExchangeSwapRate(
     fromCurrencyCode: string,
     toCurrencyCode: string
   ): Promise<number>,
-
   getExchangeSwapInfo(
     fromCurrencyCode: string,
     toCurrencyCode: string
   ): Promise<EdgeExchangeSwapInfo>,
-
   getAvailableExchangeTokens(): Promise<Array<string>>
 }
 
@@ -399,6 +397,7 @@ export type EdgeAccount = {
   getFirstWalletInfo(type: string): ?EdgeWalletInfo,
   getWalletInfo(id: string): EdgeWalletInfo,
   listWalletIds(): Array<string>,
+  listSplittableWalletTypes(walletId: string): Array<string>,
   splitWalletInfo(walletId: string, newWalletType: string): Promise<string>,
 
   // Currency wallets:
@@ -555,6 +554,7 @@ export type EdgeTransaction = {
   networkFee: string,
   ourReceiveAddresses: Array<string>,
   signedTx: string,
+  parentNetworkFee?: string,
   metadata?: EdgeMetadata,
   otherParams: any,
   wallet?: EdgeCurrencyWallet
@@ -693,7 +693,8 @@ export type EdgeCurrencyPlugin = {
     options: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine>,
   parseUri(uri: string): EdgeParsedUri,
-  encodeUri(obj: EdgeEncodeUri): string
+  encodeUri(obj: EdgeEncodeUri): string,
+  getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>
 }
 
 export type EdgeCurrencyPluginFactory = {

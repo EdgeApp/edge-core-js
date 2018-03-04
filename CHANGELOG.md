@@ -1,5 +1,11 @@
 # airbitz-core-js
 
+## 0.6.1
+
+* Fix wallet splitting issues
+* Fix git syncing issues for large wallets
+* Add a `listSplittableWaleltTypes` function
+
 ## 0.6.0
 
 * Renamed the library to edge-core-js

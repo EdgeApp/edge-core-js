@@ -86,14 +86,13 @@ function loadKeyStates (folder) {
 export function loadAllKeyStates (state, keyId) {
   const folder = getStorageWalletFolder(state, keyId)
 
-  return Promise.all([
-    loadWalletList(folder),
-    loadKeyStates(folder)
-  ]).then(values => {
-    const [{ keyInfos, keyStates: legacyKeyStates }, newKeyStates] = values
-    const keyStates = { ...legacyKeyStates, ...newKeyStates }
-    return { keyInfos, keyStates }
-  })
+  return Promise.all([loadWalletList(folder), loadKeyStates(folder)]).then(
+    values => {
+      const [{ keyInfos, keyStates: legacyKeyStates }, newKeyStates] = values
+      const keyStates = { ...legacyKeyStates, ...newKeyStates }
+      return { keyInfos, keyStates }
+    }
+  )
 }
 
 /**
