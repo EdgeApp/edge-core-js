@@ -131,7 +131,7 @@ class AccountState {
       if (!this.login) return
 
       const { dispatch } = this.ai.props
-      dispatch(syncStorageWallet(this.keyInfo.id))
+      dispatch(syncStorageWallet(this.keyInfo.id, this.ai.props.io))
         .then(changes => this.startTimer())
         .catch(e => this.startTimer())
     }, 30000)

@@ -1,4 +1,8 @@
-# airbitz-core-js
+# edge-core-js
+
+## 0.6.2
+
+* Fix git sync on timer after login
 
 ## 0.6.1
 
