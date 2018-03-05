@@ -159,7 +159,7 @@ export default combinePixies({
 
     function startTimer () {
       // Bail out if either the wallet or the repo aren't ready:
-      const { dispatch, id, state } = input.props
+      const { dispatch, id, state, io } = input.props
       if (
         !input.props.selfOutput ||
         !state.storageWallets[id] ||
@@ -169,7 +169,7 @@ export default combinePixies({
       }
 
       timeout = setTimeout(() => {
-        const thunkPromise: any = dispatch(syncStorageWallet(id))
+        const thunkPromise: any = dispatch(syncStorageWallet(id, io))
         thunkPromise.then(changes => startTimer()).catch(e => startTimer())
       }, 30 * 1000)
     }
