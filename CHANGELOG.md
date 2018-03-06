@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.6.3
+
+* Add legacyAddress to EdgeEncodeUri
+
 ## 0.6.2
 
 * Fix git sync on timer after login
