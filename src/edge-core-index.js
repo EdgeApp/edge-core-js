@@ -615,6 +615,7 @@ export type EdgeParsedUri = {
 export type EdgeEncodeUri = {
   publicAddress: string,
   segwitAddress?: string,
+  legacyAddress?: string,
   nativeAmount?: string,
   label?: string,
   message?: string
