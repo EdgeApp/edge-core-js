@@ -21,6 +21,7 @@ import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storageApi.js'
 import {
+  loadTxFiles,
   renameCurrencyWallet,
   setCurrencyWalletFiat,
   setCurrencyWalletTxMetadata
@@ -126,15 +127,24 @@ export function makeCurrencyWalletApi (
       return engine.getBlockHeight()
     },
 
-    getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
-      const files = input.props.selfState.files
+    async getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
+      // Txid array of all txs
       const txids = input.props.selfState.txids
+      const { numIndex = 0, numEntries = txids.length } = opts
+      const slicedTxids = txids.slice(numIndex, numEntries)
+      // Decrepted metadata files
+      const files = input.props.selfState.files
+      // Merged tx data from metadata files and blockchain data
       const txs = input.props.selfState.txs
+
       const defaultCurrency = plugin.currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
+      const missingTxids = slicedTxids.filter(txid => !files[txid])
+      const missingFiles = await loadTxFiles(input, missingTxids)
+      Object.assign(files, missingFiles)
 
       const out = []
-      for (const txid of txids) {
+      for (const txid of slicedTxids) {
         const tx = txs[txid]
         const file = files[txid]
 
@@ -146,8 +156,7 @@ export function makeCurrencyWalletApi (
         out.push(combineTxWithFile(input, tx, file, currencyCode))
       }
 
-      // TODO: Handle the sort within the tx list merge process:
-      return Promise.resolve(out.sort((a, b) => a.date - b.date))
+      return out
     },
 
     getReceiveAddress (opts: any): Promise<EdgeReceiveAddress> {
