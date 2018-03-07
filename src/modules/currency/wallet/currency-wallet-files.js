@@ -16,6 +16,10 @@ import { combineTxWithFile } from './currency-wallet-api.js'
 import { forEachListener } from './currency-wallet-callbacks.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
 
+const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
+const WALLET_NAME_FILE = 'WalletName.json'
+const CURRENCY_FILE = 'Currency.json'
+
 type TransactionFile = {
   txid: string,
   internal: boolean,
@@ -129,7 +133,7 @@ export function renameCurrencyWallet (
   const { dispatch, state } = input.props
 
   return getStorageWalletFolder(state, walletId)
-    .file('WalletName.json')
+    .file(WALLET_NAME_FILE)
     .setText(JSON.stringify({ walletName: name }))
     .then(() =>
       dispatch({
@@ -154,7 +158,7 @@ export function setCurrencyWalletFiat (
   }
 
   return getStorageWalletFolder(state, walletId)
-    .file('Currency.json')
+    .file(CURRENCY_FILE)
     .setText(JSON.stringify({ fiat: fiatCurrencyCode }))
     .then(() =>
       dispatch({
@@ -172,7 +176,7 @@ function loadFiatFile (input: CurrencyWalletInput, folder) {
   const { dispatch } = input.props
 
   return folder
-    .file('Currency.json')
+    .file(CURRENCY_FILE)
     .getText()
     .then(text => {
       const file = JSON.parse(text)
@@ -196,7 +200,7 @@ function loadNameFile (input: CurrencyWalletInput, folder) {
   const { dispatch } = input.props
 
   return folder
-    .file('WalletName.json')
+    .file(WALLET_NAME_FILE)
     .getText()
     .then(text => JSON.parse(text).walletName)
     .catch(async e => {
