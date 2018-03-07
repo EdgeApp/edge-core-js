@@ -257,7 +257,7 @@ export async function loadTxFiles (
     Promise.all(
       fileNames.map(fileName =>
         folder
-          .folder('folderName')
+          .folder(folderName)
           .file(fileName)
           .getText()
           .then(text => JSON.parse(text))
