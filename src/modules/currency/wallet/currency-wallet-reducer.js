@@ -24,7 +24,6 @@ export interface CurrencyWalletState {
   fiat: string;
   fiatLoaded: boolean;
   files: { [txid: string]: Object };
-  filesLoaded: boolean;
   fileNames: { [txidHash: string]: number };
   fileNamesLoaded: boolean;
   sortedTransactions: SortedTransactionList;
@@ -77,9 +76,6 @@ const currencyWalletReducer = buildReducer({
     return state
   },
 
-  filesLoaded (state = false, action) {
-    return action.type === 'CURRENCY_WALLET_FILES_LOADED' ? true : state
-  },
 
   sortedTransactions (state = [], action: RootAction, next: CurrencyWalletNext) {
     switch (action.type) {
