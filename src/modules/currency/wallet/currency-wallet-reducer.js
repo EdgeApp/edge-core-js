@@ -11,6 +11,13 @@ import type { RootAction } from '../../actions.js'
 import type { RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'
 
+export type TxIdHash = {
+  txidHash: string,
+  timestamp: number
+}
+
+export type SortedTransactionList = Array<TxIdHash>
+
 export interface CurrencyWalletState {
   currencyInfo: EdgeCurrencyInfo;
   engineFailure: Error | null;
@@ -18,6 +25,9 @@ export interface CurrencyWalletState {
   fiatLoaded: boolean;
   files: { [txid: string]: Object };
   filesLoaded: boolean;
+  fileNames: { [txidHash: string]: number };
+  fileNamesLoaded: boolean;
+  sortedTransactions: SortedTransactionList;
   name: string | null;
   nameLoaded: boolean;
   walletInfo: EdgeWalletInfo;
@@ -71,6 +81,47 @@ const currencyWalletReducer = buildReducer({
     return action.type === 'CURRENCY_WALLET_FILES_LOADED' ? true : state
   },
 
+  sortedTransactions (state = [], action: RootAction, next: CurrencyWalletNext) {
+    switch (action.type) {
+      case 'CURRENCY_ENGINE_CHANGED_TXS': {
+        return sortTxs(state, action.payload.txidHashes)
+      }
+      case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
+        const { fileNames } = action.payload
+        const txidHashes = Object.keys(fileNames).map(txidHash => ({
+          txidHash,
+          timestamp: fileNames[txidHash]
+        }))
+        return sortTxs(state, txidHashes)
+      }
+    }
+    return state
+  },
+
+  fileNames (state = {}, action: RootAction) {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
+        const { fileNames } = action.payload
+        return {
+          ...state,
+          ...fileNames
+        }
+      }
+      case 'CURRENCY_WALLET_FILE_CHANGED': {
+        const { txidHash, json } = action.payload
+        if (!state[txidHash] || state[txidHash] < json.creationDate) {
+          state[txidHash] = json.creationDate
+        }
+        return state
+      }
+    }
+    return state
+  },
+
+  fileNamesLoaded (state = false, action) {
+    return action.type === 'CURRENCY_WALLET_FILE_NAMES_LOADED' ? true : state
+  },
+
   name (state = null, action: RootAction) {
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED'
       ? action.payload.name
@@ -108,6 +159,47 @@ const currencyWalletReducer = buildReducer({
     return next.root.login.walletInfos[next.id]
   }
 })
+
+export function sortTxs (
+  listA: SortedTransactionList,
+  listB: SortedTransactionList
+) {
+  const sort = (tx1, tx2) => tx2.timestamp - tx1.timestamp
+  listA.sort(sort)
+  listB.sort(sort)
+  let i = 0
+  let j = 0
+  const listLenA = listA.length
+  const listLenB = listB.length
+  const sortedList = []
+  while (i < listLenA || j < listLenB) {
+    let tx = {}
+    const txA = i < listLenA && listA[i]
+    const txB = j < listLenB && listB[j]
+    const timestampA = txA ? txA.timestamp : 0
+    const timestampB = txB ? txB.timestamp : 0
+    if (!txA) {
+      tx = txB
+      j++
+    } else if (!txB) {
+      tx = txA
+      i++
+    } else if (txA.txidHash === txB.txidHash) {
+      tx = timestampA > timestampB ? txA : txB
+      i++
+      j++
+    } else if (timestampA > timestampB) {
+      i++
+      tx = txA
+    } else {
+      j++
+      tx = txB
+    }
+
+    sortedList.push(tx)
+  }
+  return sortedList
+}
 
 export default filterReducer(
   currencyWalletReducer,

@@ -33,7 +33,8 @@ export interface CurrencyEngineChangedTxs {
   type: 'CURRENCY_ENGINE_CHANGED_TXS';
   payload: {
     txs: Array<any>,
-    walletId: string
+    walletId: string,
+    txidHashes: any
   };
 }
 
@@ -93,7 +94,8 @@ export interface CurrencyWalletFileChanged {
   payload: {
     json: any,
     txid: string,
-    walletId: string
+    walletId: string,
+    txidHash: string
   };
 }
 
@@ -104,6 +106,17 @@ export interface CurrencyWalletFilesLoaded {
   type: 'CURRENCY_WALLET_FILES_LOADED';
   payload: {
     files: any,
+    walletId: string
+  };
+}
+
+/**
+ * Called when a currency wallet's files have been loaded from disk.
+ */
+export interface CurrencyWalletFileNamesLoaded {
+  type: 'CURRENCY_WALLET_FILE_NAMES_LOADED';
+  payload: {
+    fileNames: any,
     walletId: string
   };
 }
@@ -177,6 +190,7 @@ export type RootAction =
   | CurrencyWalletFiatChanged
   | CurrencyWalletFileChanged
   | CurrencyWalletFilesLoaded
+  | CurrencyWalletFileNamesLoaded
   | CurrencyWalletNameChanged
   | InitAction
   | LoginAction

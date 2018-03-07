@@ -8,7 +8,10 @@ import type {
   EdgeTransaction
 } from '../../../edge-core-index.js'
 import { compare } from '../../../util/compare.js'
-import { getStorageWalletLastChanges } from '../../storage/selectors.js'
+import {
+  getStorageWalletLastChanges,
+  hashStorageWalletFilename
+} from '../../storage/selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { loadAllFiles, setupNewTxMetadata } from './currency-wallet-files.js'
 import type {
@@ -88,52 +91,51 @@ export function makeCurrencyWalletCallbacks (
           return
         }
       }
-
+      const { state } = input.props
       const existingTxs = input.props.selfState.txs
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_TXS',
-        payload: { txs, walletId }
-      })
-
-      const files = input.props.selfState.files
+      const txidHashes = []
+      const files = input.props.selfState.files || {}
+      const fileNames = input.props.selfState.fileNames || []
       const defaultCurrency = input.props.selfState.currencyInfo.currencyCode
-      const changes = []
+      const changed = []
       const created = []
       for (const rawTx of txs) {
         const tx = mergeTx(rawTx, defaultCurrency, existingTxs[rawTx.txid])
-
+        const txid = tx.txid
         // If we already have it in the list, make sure something about it has changed:
-        if (existingTxs[tx.txid] != null) {
-          if (compare(tx, existingTxs[tx.txid])) continue
-        }
+        if (compare(tx, existingTxs[txid])) continue
 
-        // If we don't have a file, make one and report the transaction as new:
-        const isNew = existingTxs[tx.txid] == null && files[tx.txid] == null
+        const txidHash = hashStorageWalletFilename(state, walletId, txid)
+        const isNew = !fileNames[txidHash]
+        const decryptedMetadata = files[txid]
+        const combinedTx = combineTxWithFile(
+          input,
+          tx,
+          decryptedMetadata,
+          rawTx.currencyCode
+        )
         if (isNew) {
           setupNewTxMetadata(input, tx).catch(e => input.props.onError(e))
+          created.push(combinedTx)
+        } else if (decryptedMetadata) {
+          changed.push(combinedTx)
         }
-
-        const list = isNew ? created : changes
-        list.push(
-          combineTxWithFile(input, tx, files[tx.txid], rawTx.currencyCode)
-        )
+        txidHashes.push({ txidHash, timestamp: combinedTx.date })
       }
+      // Side Effect
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_CHANGED_TXS',
+        payload: { txs, walletId, txidHashes }
+      })
 
-      if (changes.length) {
-        forEachListener(input, ({ onTransactionsChanged }) => {
-          if (onTransactionsChanged) {
-            onTransactionsChanged(walletId, changes)
-          }
-        })
-      }
-
-      if (created.length) {
-        forEachListener(input, ({ onNewTransactions }) => {
-          if (onNewTransactions) {
-            onNewTransactions(walletId, created)
-          }
-        })
-      }
+      forEachListener(input, ({ onTransactionsChanged, onNewTransactions }) => {
+        if (onTransactionsChanged && changed.length) {
+          onTransactionsChanged(walletId, changed)
+        }
+        if (onNewTransactions && created.length) {
+          onNewTransactions(walletId, created)
+        }
+      })
     },
 
     onTxidsChanged () {}
