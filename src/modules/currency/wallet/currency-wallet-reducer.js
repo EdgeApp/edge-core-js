@@ -94,11 +94,11 @@ const currencyWalletReducer = buildReducer({
       }
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
         const { txFileNames } = action.payload
-        const txidHashes = {}
+        const newTxidHashes = {}
         Object.keys(txFileNames).map(txidHash => {
-          txidHashes[txidHash] = txFileNames[txidHash].timestamp
+          newTxidHashes[txidHash] = txFileNames[txidHash].timestamp
         })
-        return sortTxs(txidHashes, txidHashes)
+        return sortTxs(txidHashes, newTxidHashes)
       }
     }
     return state
