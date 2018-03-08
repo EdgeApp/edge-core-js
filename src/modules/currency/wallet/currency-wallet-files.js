@@ -293,11 +293,11 @@ async function getLegacyFileNames (state: any, walletId: string, folder) {
   // Get the non encrypted folder
   const localFolder = getStorageWalletLocalFolder(state, walletId)
   const fixedNamesFile = localFolder.file(LEGACY_MAP_FILE)
-  let legacyFileNames = []
+  const legacyFileNames = []
   let legacyMap = {}
   try {
     // Get the real legacy file names
-    legacyFileNames = await folder.listFiles()
+    await mapFiles(folder, (file, name) => legacyFileNames.push(name))
   } catch (e) {}
   try {
     const text = await fixedNamesFile.getText()
@@ -321,10 +321,15 @@ async function getLegacyFileNames (state: any, walletId: string, folder) {
       .file(legacyFileName)
       .getText()
       .then(txText => {
-        const tx = JSON.parse(txText)
-        const timestamp = tx.date.toFixed(0)
+        const legacyFile = JSON.parse(txText)
+        const { creationDate, malleableTxId } = legacyFile.state
+        const timestamp = creationDate
         const fileName = legacyFileName
-        const txidHash = hashStorageWalletFilename(state, walletId, tx.txid)
+        const txidHash = hashStorageWalletFilename(
+          state,
+          walletId,
+          malleableTxId
+        )
         newFormatFileNames[txidHash] = { timestamp, fileName }
         legacyMap[fileName] = { timestamp, txidHash }
       })
@@ -349,8 +354,7 @@ async function loadTxFileNames (input: CurrencyWalletInput, folder) {
   const { dispatch, state } = input.props
   const txFileNames = {}
   // New transactions files:
-  const newFileNames = await folder.folder('transaction').listFiles()
-  newFileNames.forEach(fileName => {
+  await mapFiles(folder.folder('transaction'), (file, fileName) => {
     const prefix = fileName.split('.json')[0]
     const [timestamp, txidHash] = prefix.split('-')
     txFileNames[txidHash] = {
