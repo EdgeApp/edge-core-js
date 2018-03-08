@@ -15,7 +15,6 @@ import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { forEachListener } from './currency-wallet-callbacks.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
-import type { TxIdHash } from './currency-wallet-reducer.js'
 
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
 const WALLET_NAME_FILE = 'WalletName.json'
@@ -245,7 +244,7 @@ function fetchBackupName (
  */
 export async function loadTxFiles (
   input: CurrencyWalletInput,
-  txIdHashes: Array<TxIdHash>
+  txIdHashes: Array<string>
 ): any {
   const walletId = input.props.id
   const folder = getStorageWalletFolder(input.props.state, walletId)
@@ -256,7 +255,7 @@ export async function loadTxFiles (
 
   const getFiles = (folderName, cb) =>
     Promise.all(
-      txIdHashes.map(({ txidHash }) =>
+      txIdHashes.map(txidHash =>
         folder
           .folder(folderName)
           .file(fileNames[txidHash].fileName)

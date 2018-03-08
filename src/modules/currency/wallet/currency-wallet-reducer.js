@@ -11,8 +11,7 @@ import type { RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'
 
 export type TxIdHash = {
-  txidHash: string,
-  timestamp: number
+  [txidHash: string]: number
 }
 
 export type TxFileName = {
@@ -20,7 +19,10 @@ export type TxFileName = {
   fileName: string
 }
 
-export type SortedTransactionList = Array<TxIdHash>
+export type SortedTransactions = {
+  sortedList: Array<string>,
+  txidHashes: TxIdHash
+}
 
 export interface CurrencyWalletState {
   currencyInfo: EdgeCurrencyInfo;
@@ -30,7 +32,7 @@ export interface CurrencyWalletState {
   files: { [txidHash: string]: Object };
   fileNames: { [txidHash: string]: TxFileName };
   fileNamesLoaded: boolean;
-  sortedTransactions: SortedTransactionList;
+  sortedTransactions: SortedTransactions;
   name: string | null;
   nameLoaded: boolean;
   walletInfo: EdgeWalletInfo;
@@ -84,18 +86,19 @@ const currencyWalletReducer = buildReducer({
     return state
   },
 
-  sortedTransactions (state = [], action: RootAction, next: CurrencyWalletNext) {
+  sortedTransactions (state = {}, action: RootAction, next: CurrencyWalletNext) {
+    const { txidHashes = {} } = state
     switch (action.type) {
       case 'CURRENCY_ENGINE_CHANGED_TXS': {
-        return sortTxs(state, action.payload.txidHashes)
+        return sortTxs(txidHashes, action.payload.txidHashes)
       }
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
         const { txFileNames } = action.payload
-        const txidHashes = Object.keys(txFileNames).map(txidHash => {
-          const { filename, timestamp } = txFileNames[txidHash]
-          return { txidHash, filename, timestamp }
+        const txidHashes = {}
+        Object.keys(txFileNames).map(txidHash => {
+          txidHashes[txidHash] = txFileNames[txidHash].timestamp
         })
-        return sortTxs(state, txidHashes)
+        return sortTxs(txidHashes, txidHashes)
       }
     }
     return state
@@ -164,45 +167,19 @@ const currencyWalletReducer = buildReducer({
   }
 })
 
-export function sortTxs (
-  listA: SortedTransactionList,
-  listB: SortedTransactionList
-) {
-  const sort = (tx1, tx2) => tx2.timestamp - tx1.timestamp
-  listA.sort(sort)
-  listB.sort(sort)
-  let i = 0
-  let j = 0
-  const listLenA = listA.length
-  const listLenB = listB.length
-  const sortedList = []
-  while (i < listLenA || j < listLenB) {
-    let tx = {}
-    const txA = i < listLenA && listA[i]
-    const txB = j < listLenB && listB[j]
-    const timestampA = txA ? txA.timestamp : 0
-    const timestampB = txB ? txB.timestamp : 0
-    if (!txA) {
-      tx = txB
-      j++
-    } else if (!txB) {
-      tx = txA
-      i++
-    } else if (txA.txidHash === txB.txidHash) {
-      tx = timestampA > timestampB ? txA : txB
-      i++
-      j++
-    } else if (timestampA > timestampB) {
-      i++
-      tx = txA
-    } else {
-      j++
-      tx = txB
+export function sortTxs (txidHashes: TxIdHash, newHashes: TxIdHash) {
+  for (const newTxidHash in newHashes) {
+    const newTime = newHashes[newTxidHash]
+    if (!txidHashes[newTxidHash] || newTime < txidHashes[newTxidHash]) {
+      txidHashes[newTxidHash] = newTime
     }
-
-    sortedList.push(tx)
   }
-  return sortedList
+  const sortedList = Object.keys(txidHashes).sort((txidHash1, txidHash2) => {
+    if (txidHashes[txidHash1] > txidHashes[txidHash2]) return -1
+    if (txidHashes[txidHash1] < txidHashes[txidHash2]) return 1
+    return 0
+  })
+  return { sortedList, txidHashes }
 }
 
 export default filterReducer(

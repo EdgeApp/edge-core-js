@@ -147,25 +147,25 @@ export function makeCurrencyWalletApi (
     async getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
       const defaultCurrency = plugin.currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
+      const state = input.props.selfState
       // Txid array of all txs
-      const txids = input.props.selfState.txids
+      const txids = state.txids
       // Merged tx data from metadata files and blockchain data
-      const txs = input.props.selfState.txs
+      const txs = state.txs
       const { numIndex = 0, numEntries = txids.length } = opts
       // Decrypted metadata files
-      const files = input.props.selfState.files
+      const files = state.files
       // A sorted list of transaction based on chronological order
-      const sortedTransactions = input.props.selfState.sortedTransactions
+      const sortedTransactions = state.sortedTransactions.sortedList
       const slicedTransactions = sortedTransactions.slice(numIndex, numEntries)
       const missingTxIdHashes = slicedTransactions.filter(
-        ({ txidHash }) => !files[txidHash]
+        txidHash => !files[txidHash]
       )
       const missingFiles = await loadTxFiles(input, missingTxIdHashes)
       Object.assign(files, missingFiles)
 
       const out = []
-      for (const selectedTX of slicedTransactions) {
-        const { txidHash } = selectedTX
+      for (const txidHash of slicedTransactions) {
         const file = files[txidHash]
         const tx =
           txs[file.txid] || mergeTx(defaultTx(file, currencyCode), currencyCode)

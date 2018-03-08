@@ -93,7 +93,7 @@ export function makeCurrencyWalletCallbacks (
       }
       const { state } = input.props
       const existingTxs = input.props.selfState.txs
-      const txidHashes = []
+      const txidHashes = {}
       const files = input.props.selfState.files || {}
       const fileNames = input.props.selfState.fileNames || []
       const defaultCurrency = input.props.selfState.currencyInfo.currencyCode
@@ -120,7 +120,7 @@ export function makeCurrencyWalletCallbacks (
         } else if (decryptedMetadata) {
           changed.push(combinedTx)
         }
-        txidHashes.push({ txidHash, timestamp: combinedTx.date })
+        txidHashes[txidHash] = combinedTx.date
       }
       // Side Effect
       input.props.dispatch({
