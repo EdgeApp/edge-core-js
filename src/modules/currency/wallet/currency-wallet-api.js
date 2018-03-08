@@ -20,6 +20,7 @@ import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storageApi.js'
+import type { TransactionFile } from './currency-wallet-files.js'
 import {
   loadTxFiles,
   renameCurrencyWallet,
@@ -27,6 +28,7 @@ import {
   setCurrencyWalletTxMetadata
 } from './currency-wallet-files.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
+import { mergeTx } from './currency-wallet-reducer.js'
 
 const fakeMetadata = {
   bizId: 0,
@@ -35,6 +37,21 @@ const fakeMetadata = {
   name: '',
   notes: ''
 }
+
+const defaultTx = (
+  file: TransactionFile,
+  currencyCode: string
+): EdgeTransaction => ({
+  txid: file.txid,
+  date: file.creationDate,
+  currencyCode: currencyCode,
+  blockHeight: -1,
+  nativeAmount: '0',
+  networkFee: '0',
+  ourReceiveAddresses: [],
+  signedTx: '',
+  otherParams: {}
+})
 
 /**
  * Creates an `EdgeCurrencyWallet` API object.
@@ -147,6 +164,11 @@ export function makeCurrencyWalletApi (
       Object.assign(files, missingFiles)
 
       const out = []
+      for (const selectedTX of slicedTransactions) {
+        const { txidHash } = selectedTX
+        const file = files[txidHash]
+        const tx =
+          txs[file.txid] || mergeTx(defaultTx(file, currencyCode), currencyCode)
         // Skip irrelevant transactions:
         if (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode]) {
           continue
