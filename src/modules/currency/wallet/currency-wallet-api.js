@@ -20,12 +20,15 @@ import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storageApi.js'
+import type { TransactionFile } from './currency-wallet-files.js'
 import {
+  loadTxFiles,
   renameCurrencyWallet,
   setCurrencyWalletFiat,
   setCurrencyWalletTxMetadata
 } from './currency-wallet-files.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
+import { mergeTx } from './currency-wallet-reducer.js'
 
 const fakeMetadata = {
   bizId: 0,
@@ -34,6 +37,21 @@ const fakeMetadata = {
   name: '',
   notes: ''
 }
+
+const defaultTx = (
+  file: TransactionFile,
+  currencyCode: string
+): EdgeTransaction => ({
+  txid: file.txid,
+  date: file.creationDate,
+  currencyCode: currencyCode,
+  blockHeight: -1,
+  nativeAmount: '0',
+  networkFee: '0',
+  ourReceiveAddresses: [],
+  signedTx: '',
+  otherParams: {}
+})
 
 /**
  * Creates an `EdgeCurrencyWallet` API object.
@@ -126,18 +144,31 @@ export function makeCurrencyWalletApi (
       return engine.getBlockHeight()
     },
 
-    getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
-      const files = input.props.selfState.files
-      const txids = input.props.selfState.txids
-      const txs = input.props.selfState.txs
+    async getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
       const defaultCurrency = plugin.currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
+      const state = input.props.selfState
+      // Txid array of all txs
+      const txids = state.txids
+      // Merged tx data from metadata files and blockchain data
+      const txs = state.txs
+      const { numIndex = 0, numEntries = txids.length } = opts
+      // Decrypted metadata files
+      const files = state.files
+      // A sorted list of transaction based on chronological order
+      const sortedTransactions = state.sortedTransactions.sortedList
+      const slicedTransactions = sortedTransactions.slice(numIndex, numEntries)
+      const missingTxIdHashes = slicedTransactions.filter(
+        txidHash => !files[txidHash]
+      )
+      const missingFiles = await loadTxFiles(input, missingTxIdHashes)
+      Object.assign(files, missingFiles)
 
       const out = []
-      for (const txid of txids) {
-        const tx = txs[txid]
-        const file = files[txid]
-
+      for (const txidHash of slicedTransactions) {
+        const file = files[txidHash]
+        const tx =
+          txs[file.txid] || mergeTx(defaultTx(file, currencyCode), currencyCode)
         // Skip irrelevant transactions:
         if (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode]) {
           continue
@@ -146,8 +177,7 @@ export function makeCurrencyWalletApi (
         out.push(combineTxWithFile(input, tx, file, currencyCode))
       }
 
-      // TODO: Handle the sort within the tx list merge process:
-      return Promise.resolve(out.sort((a, b) => a.date - b.date))
+      return out
     },
 
     getReceiveAddress (opts: any): Promise<EdgeReceiveAddress> {
