@@ -6,7 +6,6 @@ import type {
   EdgeCurrencyInfo,
   EdgeWalletInfo
 } from '../../../edge-core-index.js'
-import { recycle } from '../../../util/compare.js'
 import type { RootAction } from '../../actions.js'
 import type { RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'
@@ -16,6 +15,11 @@ export type TxIdHash = {
   timestamp: number
 }
 
+export type TxFileName = {
+  timestamp: number,
+  fileName: string
+}
+
 export type SortedTransactionList = Array<TxIdHash>
 
 export interface CurrencyWalletState {
@@ -23,8 +27,8 @@ export interface CurrencyWalletState {
   engineFailure: Error | null;
   fiat: string;
   fiatLoaded: boolean;
-  files: { [txid: string]: Object };
-  fileNames: { [txidHash: string]: number };
+  files: { [txidHash: string]: Object };
+  fileNames: { [txidHash: string]: TxFileName };
   fileNamesLoaded: boolean;
   sortedTransactions: SortedTransactionList;
   name: string | null;
@@ -63,19 +67,22 @@ const currencyWalletReducer = buildReducer({
   files (state = {}, action: RootAction) {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_CHANGED': {
-        const { txid, json } = action.payload
+        const { json, txFileName } = action.payload
+        const { txidHash } = txFileName
         const out = { ...state }
-        out[txid] = json
+        out[txidHash] = json
         return out
       }
       case 'CURRENCY_WALLET_FILES_LOADED': {
         const { files } = action.payload
-        return recycle(files, state)
+        return {
+          ...state,
+          ...files
+        }
       }
     }
     return state
   },
-
 
   sortedTransactions (state = [], action: RootAction, next: CurrencyWalletNext) {
     switch (action.type) {
@@ -83,11 +90,11 @@ const currencyWalletReducer = buildReducer({
         return sortTxs(state, action.payload.txidHashes)
       }
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
-        const { fileNames } = action.payload
-        const txidHashes = Object.keys(fileNames).map(txidHash => ({
-          txidHash,
-          timestamp: fileNames[txidHash]
-        }))
+        const { txFileNames } = action.payload
+        const txidHashes = Object.keys(txFileNames).map(txidHash => {
+          const { filename, timestamp } = txFileNames[txidHash]
+          return { txidHash, filename, timestamp }
+        })
         return sortTxs(state, txidHashes)
       }
     }
@@ -97,16 +104,17 @@ const currencyWalletReducer = buildReducer({
   fileNames (state = {}, action: RootAction) {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
-        const { fileNames } = action.payload
+        const { txFileNames } = action.payload
         return {
           ...state,
-          ...fileNames
+          ...txFileNames
         }
       }
       case 'CURRENCY_WALLET_FILE_CHANGED': {
-        const { txidHash, json } = action.payload
-        if (!state[txidHash] || state[txidHash] < json.creationDate) {
-          state[txidHash] = json.creationDate
+        const { txFileName } = action.payload
+        const { txidHash, timestamp, fileName } = txFileName
+        if (!state[txidHash] || timestamp < state[fileName].timestamp) {
+          state[txidHash] = { timestamp, fileName }
         }
         return state
       }

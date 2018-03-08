@@ -95,7 +95,7 @@ export interface CurrencyWalletFileChanged {
     json: any,
     txid: string,
     walletId: string,
-    txidHash: string
+    txFileName: any
   };
 }
 
@@ -111,12 +111,12 @@ export interface CurrencyWalletFilesLoaded {
 }
 
 /**
- * Called when a currency wallet's files have been loaded from disk.
+ * Called when a currency wallet's file names have been loaded from disk.
  */
 export interface CurrencyWalletFileNamesLoaded {
   type: 'CURRENCY_WALLET_FILE_NAMES_LOADED';
   payload: {
-    fileNames: any,
+    txFileNames: any,
     walletId: string
   };
 }

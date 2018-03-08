@@ -15,12 +15,13 @@ import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { forEachListener } from './currency-wallet-callbacks.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
+import type { TxIdHash } from './currency-wallet-reducer.js'
 
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
 const WALLET_NAME_FILE = 'WalletName.json'
 const CURRENCY_FILE = 'Currency.json'
 
-type TransactionFile = {
+export type TransactionFile = {
   txid: string,
   internal: boolean,
   creationDate: number,
@@ -39,7 +40,7 @@ type TransactionFile = {
   }
 }
 
-type LegacyTransactionFile = {
+export type LegacyTransactionFile = {
   airbitzFeeWanted: number,
   meta: {
     amountFeeAirBitzSatoshi: number,
@@ -67,7 +68,7 @@ type LegacyTransactionFile = {
   }
 }
 
-type LegacyAddressFile = {
+export type LegacyAddressFile = {
   seq: number, // index
   address: string,
   state: {
@@ -113,13 +114,13 @@ function fixLegacyFile (
 function getTxFile (state: any, keyId: string, date: number, txid: string) {
   const txidHash = hashStorageWalletFilename(state, keyId, txid)
   const timestamp = date.toFixed(0)
-
-  return [
-    txidHash,
-    getStorageWalletFolder(state, keyId)
+  const fileName = `${timestamp}-${txidHash}.json`
+  return {
+    txFileName: { txidHash, timestamp, fileName },
+    txFile: getStorageWalletFolder(state, keyId)
       .folder('transaction')
-      .file(`${timestamp}-${txidHash}.json`)
-  ]
+      .file(fileName)
+  }
 }
 
 /**
@@ -244,46 +245,36 @@ function fetchBackupName (
  */
 export async function loadTxFiles (
   input: CurrencyWalletInput,
-  missingTxids: Array<string>
+  txIdHashes: Array<TxIdHash>
 ): any {
   const walletId = input.props.id
   const folder = getStorageWalletFolder(input.props.state, walletId)
-  const { dispatch, state, selfState } = input.props
-  const fileNames = missingTxids.map(txid => {
-    const txidHash = hashStorageWalletFilename(state, walletId, txid)
-    const timestamp = selfState.fileNames[txidHash]
-    return `${timestamp}-${txidHash}.json`
-  })
+  const { dispatch } = input.props
   const walletCurrency = input.props.selfState.currencyInfo.currencyCode
+  const fileNames = input.props.selfState.fileNames
   const walletFiat = input.props.selfState.fiat
 
-  const getFiles = folderName =>
+  const getFiles = (folderName, cb) =>
     Promise.all(
-      fileNames.map(fileName =>
+      txIdHashes.map(({ txidHash }) =>
         folder
           .folder(folderName)
-          .file(fileName)
+          .file(fileNames[txidHash].fileName)
           .getText()
-          .then(text => JSON.parse(text))
+          .then(text => cb(JSON.parse(text), txidHash))
           .catch(e => null)
       )
     )
 
-  const newFiles = await getFiles('transaction')
-  const oldFiles = await getFiles('Transactions')
-
   const out = {}
-  for (const json of oldFiles) {
-    if (json == null || !json.state) continue
-    const txid = json.state.malleableTxId
-    if (!txid) continue
-
-    out[txid] = fixLegacyFile(json, walletCurrency, walletFiat)
-  }
-  for (const json of newFiles) {
-    if (json == null || !json.txid) continue
-    out[json.txid] = json
-  }
+  await getFiles('Transactions', (json, txidHash) => {
+    if (!json.state || !json.state.malleableTxId) return
+    out[txidHash] = fixLegacyFile(json, walletCurrency, walletFiat)
+  })
+  await getFiles('transaction', (json, txidHash) => {
+    if (!json.txid) return
+    out[txidHash] = json
+  })
 
   dispatch({
     type: 'CURRENCY_WALLET_FILES_LOADED',
@@ -298,47 +289,56 @@ export async function loadTxFiles (
  * and cache them on disk
  */
 async function getLegacyFileNames (state: any, walletId: string, folder) {
-  const fixedLegacyFileNames = []
+  const newFormatFileNames = {}
+  // Get the non encrypted folder
+  const localFolder = getStorageWalletLocalFolder(state, walletId)
+  const fixedNamesFile = localFolder.file(LEGACY_MAP_FILE)
+  let legacyFileNames = []
+  let legacyMap = {}
   try {
     // Get the real legacy file names
-    const legacyFileNames = await folder.listFiles()
-    // Get the non encrypted folder
-    const localFolder = getStorageWalletLocalFolder(state, walletId)
-    // Get the legacy file names in the format
-    const fixedNamesFile = localFolder.file('fixedLegacyFileNames.json')
-    const text = await fixedNamesFile.getText()
-    const fixedNames = JSON.parse(text)
-    const missingLegacyFiles = []
-    for (let i = 0; i < legacyFileNames.length; i++) {
-      const legacyFileName = legacyFileNames[i]
-      const fixedLegacyFileName = fixedNames[legacyFileName]
-      // If we already have converted the legacy file name to the new format then just add it results array
-      if (fixedLegacyFileName) {
-        fixedLegacyFileNames.push(fixedLegacyFileName)
-      } else {
-        // If we havn't converted it, then open the legacy file and convert it to the new format
-        try {
-          missingLegacyFiles.push(legacyFileName)
-        } catch (e) {}
-      }
-    }
-    const convertFileNames = missingLegacyFiles.map(legacyFileName =>
-      folder
-        .file(legacyFileName)
-        .getText()
-        .then(txText => {
-          const tx = JSON.parse(txText)
-          const txidHash = hashStorageWalletFilename(state, walletId, tx.txid)
-          const timestamp = tx.date.toFixed(0)
-          fixedNames[legacyFileName] = `${timestamp}-${txidHash}.json`
-        })
-    )
-    if (convertFileNames.length) {
-      await Promise.all(convertFileNames)
-      await fixedNamesFile.setText(JSON.stringify(fixedNames))
-    }
+    legacyFileNames = await folder.listFiles()
   } catch (e) {}
-  return fixedLegacyFileNames
+  try {
+    const text = await fixedNamesFile.getText()
+    legacyMap = JSON.parse(text)
+  } catch (e) {}
+
+  const missingLegacyFiles = []
+  for (let i = 0; i < legacyFileNames.length; i++) {
+    const fileName = legacyFileNames[i]
+    const fileNameMap = legacyMap[fileName]
+    // If we haven't converted it, then open the legacy file and convert it to the new format
+    if (fileNameMap) {
+      const { timestamp, txidHash } = fileNameMap
+      newFormatFileNames[txidHash] = { timestamp, fileName }
+    } else {
+      missingLegacyFiles.push(fileName)
+    }
+  }
+  const convertFileNames = missingLegacyFiles.map(legacyFileName =>
+    folder
+      .file(legacyFileName)
+      .getText()
+      .then(txText => {
+        const tx = JSON.parse(txText)
+        const timestamp = tx.date.toFixed(0)
+        const fileName = legacyFileName
+        const txidHash = hashStorageWalletFilename(state, walletId, tx.txid)
+        newFormatFileNames[txidHash] = { timestamp, fileName }
+        legacyMap[fileName] = { timestamp, txidHash }
+      })
+      .catch(e => null)
+  )
+
+  if (convertFileNames.length) {
+    await Promise.all(convertFileNames)
+    // Cache the new results
+    try {
+      await fixedNamesFile.setText(JSON.stringify(legacyMap))
+    } catch (e) {}
+  }
+  return newFormatFileNames
 }
 
 /**
@@ -349,23 +349,27 @@ async function loadTxFileNames (input: CurrencyWalletInput, folder) {
   const { dispatch, state } = input.props
   const txFileNames = {}
   // New transactions files:
-  const fileNames = await folder.folder('transaction').listFiles()
+  const newFileNames = await folder.folder('transaction').listFiles()
+  newFileNames.forEach(fileName => {
+    const prefix = fileName.split('.json')[0]
+    const [timestamp, txidHash] = prefix.split('-')
+    txFileNames[txidHash] = {
+      fileName,
+      timestamp: parseInt(timestamp)
+    }
+  })
+
   // Legacy transactions files:
   const legacyFileNames = await getLegacyFileNames(
     state,
     walletId,
     folder.folder('Transactions')
   )
-  // Turn arrays into Object
-  fileNames.concat(legacyFileNames).forEach(name => {
-    name = name.split('.json')[0]
-    const [timestamp, txidHash] = name.split('-')
-    txFileNames[txidHash] = parseInt(timestamp)
-  })
+  Object.assign(txFileNames, legacyFileNames)
 
   dispatch({
     type: 'CURRENCY_WALLET_FILE_NAMES_LOADED',
-    payload: { fileNames: txFileNames, walletId }
+    payload: { txFileNames, walletId }
   })
 }
 
@@ -435,13 +439,23 @@ export function setCurrencyWalletTxMetadata (
     throw new Error(`Setting metatdata for missing tx ${txid}`)
   }
 
+  const files = input.props.selfState.files
+  // Get the txidHash for this txid
+  let txidHash = ''
+  for (const hash of Object.keys(files)) {
+    if (files[hash].txid === txid) {
+      txidHash = hash
+      break
+    }
+  }
+
   // Load the old file:
-  const oldFile = input.props.selfState.files[txid]
+  const oldFile = input.props.selfState.files[txidHash]
   const creationDate =
     oldFile == null ? Date.now() / 1000 : oldFile.creationDate
 
   // Set up the new file:
-  const [txidHash, txFile] = getTxFile(state, walletId, creationDate, txid)
+  const { txFileName, txFile } = getTxFile(state, walletId, creationDate, txid)
   const newFile: TransactionFile = {
     txid,
     internal: false,
@@ -456,7 +470,7 @@ export function setCurrencyWalletTxMetadata (
   // Save the new file:
   dispatch({
     type: 'CURRENCY_WALLET_FILE_CHANGED',
-    payload: { json: file, txid, walletId, txidHash }
+    payload: { json: file, txid, walletId, txFileName }
   })
   return txFile.setText(JSON.stringify(file)).then(() => {
     const callbackTx = combineTxWithFile(input, tx, file, currencyCode)
@@ -475,7 +489,12 @@ export function setupNewTxMetadata (input: CurrencyWalletInput, tx: any) {
   const { dispatch, state } = input.props
 
   const txid = tx.txid
-  const [txidHash, txFile] = getTxFile(state, walletId, Date.now() / 1000, txid)
+  const { txFileName, txFile } = getTxFile(
+    state,
+    walletId,
+    Date.now() / 1000,
+    txid
+  )
   const currencyInfo = input.props.selfState.currencyInfo
   const fiatCurrency: string = input.props.selfState.fiat || 'iso:USD'
 
@@ -508,7 +527,7 @@ export function setupNewTxMetadata (input: CurrencyWalletInput, tx: any) {
   // Save the new file:
   dispatch({
     type: 'CURRENCY_WALLET_FILE_CHANGED',
-    payload: { json: file, txid, walletId, txidHash }
+    payload: { json: file, txid, walletId, txFileName }
   })
   return txFile.setText(JSON.stringify(file)).then(() => void 0)
 }

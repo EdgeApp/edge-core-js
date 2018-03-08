@@ -128,26 +128,25 @@ export function makeCurrencyWalletApi (
     },
 
     async getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
-      // Txid array of all txs
-      const txids = input.props.selfState.txids
-      const { numIndex = 0, numEntries = txids.length } = opts
-      const slicedTxids = txids.slice(numIndex, numEntries)
-      // Decrepted metadata files
-      const files = input.props.selfState.files
-      // Merged tx data from metadata files and blockchain data
-      const txs = input.props.selfState.txs
-
       const defaultCurrency = plugin.currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
-      const missingTxids = slicedTxids.filter(txid => !files[txid])
-      const missingFiles = await loadTxFiles(input, missingTxids)
+      // Txid array of all txs
+      const txids = input.props.selfState.txids
+      // Merged tx data from metadata files and blockchain data
+      const txs = input.props.selfState.txs
+      const { numIndex = 0, numEntries = txids.length } = opts
+      // Decrypted metadata files
+      const files = input.props.selfState.files
+      // A sorted list of transaction based on chronological order
+      const sortedTransactions = input.props.selfState.sortedTransactions
+      const slicedTransactions = sortedTransactions.slice(numIndex, numEntries)
+      const missingTxIdHashes = slicedTransactions.filter(
+        ({ txidHash }) => !files[txidHash]
+      )
+      const missingFiles = await loadTxFiles(input, missingTxIdHashes)
       Object.assign(files, missingFiles)
 
       const out = []
-      for (const txid of slicedTxids) {
-        const tx = txs[txid]
-        const file = files[txid]
-
         // Skip irrelevant transactions:
         if (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode]) {
           continue

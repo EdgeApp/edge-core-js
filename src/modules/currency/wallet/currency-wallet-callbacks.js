@@ -107,7 +107,7 @@ export function makeCurrencyWalletCallbacks (
 
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
         const isNew = !fileNames[txidHash]
-        const decryptedMetadata = files[txid]
+        const decryptedMetadata = files[txidHash]
         const combinedTx = combineTxWithFile(
           input,
           tx,
