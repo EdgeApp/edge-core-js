@@ -15,6 +15,7 @@ export type TxIdHash = {
 }
 
 export type TxFileName = {
+  currencyCode: string,
   timestamp: number,
   fileName: string
 }
@@ -114,10 +115,27 @@ const currencyWalletReducer = buildReducer({
         }
       }
       case 'CURRENCY_WALLET_FILE_CHANGED': {
-        const { txFileName } = action.payload
+        const { txFileName, json } = action.payload
         const { txidHash, timestamp, fileName } = txFileName
-        if (!state[txidHash] || timestamp < state[fileName].timestamp) {
-          state[txidHash] = { timestamp, fileName }
+        const currentFileName = state[txidHash] || {}
+        const { currencyCode = '' } = currentFileName
+        let newCurrencyCode = currencyCode
+        const currencyCodes = Object.keys(json.currencies)
+        currencyCodes.forEach(newCode => {
+          if (!newCurrencyCode.includes(newCode)) {
+            newCurrencyCode += `${newCode}`
+          }
+        })
+        if (
+          !currentFileName.fileName ||
+          timestamp < currentFileName.timestamp ||
+          newCurrencyCode !== currentFileName.currencyCode
+        ) {
+          state[txidHash] = {
+            timestamp,
+            fileName,
+            currencyCode: newCurrencyCode
+          }
         }
         return state
       }

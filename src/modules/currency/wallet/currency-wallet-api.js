@@ -155,20 +155,12 @@ export function makeCurrencyWalletApi (
       const { numIndex = 0, numEntries = txids.length } = opts
       // Decrypted metadata files
       const files = state.files
+      const fileNames = state.fileNames
       // A sorted list of transaction based on chronological order
-      const sortedTransactions = state.sortedTransactions.sortedList
-      // Quick fix for Tokens
-      const allInfos = input.props.state.currency.infos
-      let slice = false
-      for (const currencyInfo of allInfos) {
-        if (currencyCode === currencyInfo.currencyCode) {
-          slice = true
-          break
-        }
-      }
-      const slicedTransactions = slice
-        ? sortedTransactions.slice(numIndex, numEntries)
-        : sortedTransactions
+      const sortedTransactions = state.sortedTransactions.sortedList.filter(
+        txidHash => fileNames[txidHash].currencyCode.includes(currencyCode)
+      )
+      const slicedTransactions = sortedTransactions.slice(numIndex, numEntries)
       const missingTxIdHashes = slicedTransactions.filter(
         txidHash => !files[txidHash]
       )

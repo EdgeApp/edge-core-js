@@ -3,6 +3,7 @@
 import { number as currencyFromNumber } from 'currency-codes'
 import { mapFiles } from 'disklet'
 
+import type { EdgeMetaToken } from '../../../edge-core-index.js'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobbyApi.js'
 import { getExchangeRate } from '../../exchange/selectors.js'
@@ -17,6 +18,7 @@ import { forEachListener } from './currency-wallet-callbacks.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
 
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
+const TOKEN_MAP_FILE = 'tokenCurrencyCodes.json'
 const WALLET_NAME_FILE = 'WalletName.json'
 const CURRENCY_FILE = 'Currency.json'
 
@@ -282,16 +284,90 @@ export async function loadTxFiles (
   return out
 }
 
+async function getFileNames (
+  state: any,
+  walletId: string,
+  currencyCode: string,
+  tokenMapFile: any,
+  folder,
+  metaTokens: Array<EdgeMetaToken>
+) {
+  const txFileNames = {}
+  const fileNames = []
+  let tokenMap = {}
+  try {
+    // Get the real legacy file names
+    await mapFiles(folder, (file, name) => fileNames.push(name))
+  } catch (e) {}
+  try {
+    const text = await tokenMapFile.getText()
+    tokenMap = JSON.parse(text)
+  } catch (e) {}
+
+  const missingTokenFiles = []
+  for (let i = 0; i < fileNames.length; i++) {
+    const fileName = fileNames[i]
+    const prefix = fileName.split('.json')[0]
+    const [timestamp, txidHash] = prefix.split('-')
+    const txFileName = {
+      fileName,
+      currencyCode,
+      timestamp: parseInt(timestamp)
+    }
+    // If we haven't converted it, then open the legacy file and convert it to the new format
+    if (metaTokens.length) {
+      const txTokens = tokenMap[fileName]
+      if (!txTokens) {
+        missingTokenFiles.push({ txidHash, fileName })
+      } else {
+        txFileName.currencyCode = txTokens
+      }
+    }
+    txFileNames[txidHash] = txFileName
+  }
+
+  const tokenFileNames = missingTokenFiles.map(({ txidHash, fileName }) =>
+    folder
+      .file(fileName)
+      .getText()
+      .then(txText => {
+        const currencieCodes = JSON.parse(txText).currencies
+        let tokenCodes = ''
+        Object.keys(currencieCodes).forEach(code => {
+          if (!tokenCodes.includes(code)) tokenCodes += `:${code}`
+        })
+        const newCode = tokenCodes.includes(currencyCode)
+          ? tokenCodes
+          : `${currencyCode}:${tokenCodes}`
+        txFileNames[txidHash].currencyCode = newCode
+        tokenMap[fileName] = newCode
+      })
+      .catch(e => null)
+  )
+
+  if (tokenFileNames.length) {
+    await Promise.all(tokenFileNames)
+    // Cache the new results
+    try {
+      await tokenMapFile.setText(JSON.stringify(tokenMap))
+    } catch (e) {}
+  }
+  return txFileNames
+}
+
 /**
  * Return the legacy file names in the new format.
  * If they in the legacy format, convert them to the new format
  * and cache them on disk
  */
-async function getLegacyFileNames (state: any, walletId: string, folder) {
+async function getLegacyFileNames (
+  state: any,
+  walletId: string,
+  currencyCode: string,
+  fixedNamesFile: any,
+  folder
+) {
   const newFormatFileNames = {}
-  // Get the non encrypted folder
-  const localFolder = getStorageWalletLocalFolder(state, walletId)
-  const fixedNamesFile = localFolder.file(LEGACY_MAP_FILE)
   const legacyFileNames = []
   let legacyMap = {}
   try {
@@ -310,7 +386,7 @@ async function getLegacyFileNames (state: any, walletId: string, folder) {
     // If we haven't converted it, then open the legacy file and convert it to the new format
     if (fileNameMap) {
       const { timestamp, txidHash } = fileNameMap
-      newFormatFileNames[txidHash] = { timestamp, fileName }
+      newFormatFileNames[txidHash] = { timestamp, fileName, currencyCode }
     } else {
       missingLegacyFiles.push(fileName)
     }
@@ -329,7 +405,7 @@ async function getLegacyFileNames (state: any, walletId: string, folder) {
           walletId,
           malleableTxId
         )
-        newFormatFileNames[txidHash] = { timestamp, fileName }
+        newFormatFileNames[txidHash] = { timestamp, fileName, currencyCode }
         legacyMap[fileName] = { timestamp, txidHash }
       })
       .catch(e => null)
@@ -350,29 +426,36 @@ async function getLegacyFileNames (state: any, walletId: string, folder) {
  */
 async function loadTxFileNames (input: CurrencyWalletInput, folder) {
   const walletId = input.props.id
-  const { dispatch, state } = input.props
-  const txFileNames = {}
+  const { dispatch, state, selfState } = input.props
+  const { metaTokens, currencyCode } = selfState.currencyInfo
+  // Get the non encrypted folder
+  const localFolder = getStorageWalletLocalFolder(state, walletId)
+
   // New transactions files:
-  await mapFiles(folder.folder('transaction'), (file, fileName) => {
-    const prefix = fileName.split('.json')[0]
-    const [timestamp, txidHash] = prefix.split('-')
-    txFileNames[txidHash] = {
-      fileName,
-      timestamp: parseInt(timestamp)
-    }
-  })
+  const txFileNames = await getFileNames(
+    state,
+    walletId,
+    currencyCode,
+    localFolder.file(TOKEN_MAP_FILE),
+    folder.folder('transaction'),
+    metaTokens
+  )
 
   // Legacy transactions files:
   const legacyFileNames = await getLegacyFileNames(
     state,
     walletId,
+    currencyCode,
+    localFolder.file(LEGACY_MAP_FILE),
     folder.folder('Transactions')
   )
-  Object.assign(txFileNames, legacyFileNames)
 
   dispatch({
     type: 'CURRENCY_WALLET_FILE_NAMES_LOADED',
-    payload: { txFileNames, walletId }
+    payload: {
+      walletId,
+      txFileNames: Object.assign(txFileNames, legacyFileNames)
+    }
   })
 }
 
