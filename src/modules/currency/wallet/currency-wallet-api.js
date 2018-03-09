@@ -158,14 +158,12 @@ export function makeCurrencyWalletApi (
       // A sorted list of transaction based on chronological order
       const sortedTransactions = state.sortedTransactions.sortedList
       // Quick fix for Tokens
-      const metaTokens = plugin.currencyInfo.metaTokens
-      let slice = true
-      if (defaultCurrency === 'ETH' && currencyCode !== 'ETH') {
-        for (const token of metaTokens) {
-          if (currencyCode === token.currencyCode) {
-            slice = false
-            break
-          }
+      const allInfos = input.props.state.currency.infos
+      let slice = false
+      for (const currencyInfo of allInfos) {
+        if (currencyCode === currencyInfo.currencyCode) {
+          slice = true
+          break
         }
       }
       const slicedTransactions = slice
