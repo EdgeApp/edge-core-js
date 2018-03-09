@@ -157,7 +157,18 @@ export function makeCurrencyWalletApi (
       const files = state.files
       // A sorted list of transaction based on chronological order
       const sortedTransactions = state.sortedTransactions.sortedList
-      const slicedTransactions = sortedTransactions.slice(numIndex, numEntries)
+      // Quick fix for Tokens
+      const allInfos = input.props.state.currency.infos
+      let slice = false
+      for (const currencyInfo of allInfos) {
+        if (currencyCode === currencyInfo.currencyCode) {
+          slice = true
+          break
+        }
+      }
+      const slicedTransactions = slice
+        ? sortedTransactions.slice(numIndex, numEntries)
+        : sortedTransactions
       const missingTxIdHashes = slicedTransactions.filter(
         txidHash => !files[txidHash]
       )
