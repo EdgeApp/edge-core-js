@@ -158,10 +158,19 @@ export function makeCurrencyWalletApi (
       // A sorted list of transaction based on chronological order
       const sortedTransactions = state.sortedTransactions.sortedList
       // Quick fix for Tokens
-      const slicedTransactions =
-        defaultCurrency === 'ETH'
-          ? sortedTransactions
-          : sortedTransactions.slice(numIndex, numEntries)
+      const metaTokens = plugin.currencyInfo.metaTokens
+      let slice = true
+      if (defaultCurrency === 'ETH' && currencyCode !== 'ETH') {
+        for (const token of metaTokens) {
+          if (currencyCode === token.currencyCode) {
+            slice = false
+            break
+          }
+        }
+      }
+      const slicedTransactions = slice
+        ? sortedTransactions.slice(numIndex, numEntries)
+        : sortedTransactions
       const missingTxIdHashes = slicedTransactions.filter(
         txidHash => !files[txidHash]
       )
