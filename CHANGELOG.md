@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.6.4
+
+* Optimize getTransactions to only decrypt data for the range queried
+* Prevent bitcoin segwit wallets from being split to bitcoin cash
+
 ## 0.6.3
 
 * Add legacyAddress to EdgeEncodeUri
