@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.6.6
+
+* Fix incorrect array dereference when saving transaction metadata
+
 ## 0.6.5
 
 * Optimize getTransactions to only decrypt data for the range queried
