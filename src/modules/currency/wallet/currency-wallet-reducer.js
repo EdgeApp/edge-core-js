@@ -116,7 +116,7 @@ const currencyWalletReducer = buildReducer({
       case 'CURRENCY_WALLET_FILE_CHANGED': {
         const { txFileName } = action.payload
         const { txidHash, timestamp, fileName } = txFileName
-        if (!state[txidHash] || timestamp < state[fileName].timestamp) {
+        if (!state[txidHash] || timestamp < state[txidHash].timestamp) {
           state[txidHash] = { timestamp, fileName }
         }
         return state
