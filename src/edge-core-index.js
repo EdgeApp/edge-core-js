@@ -597,6 +597,8 @@ export type EdgeCurrencyInfo = {
 }
 
 export type EdgeParsedUri = {
+  token?: EdgeTokenInfo,
+  privateKey?: string,
   publicAddress?: string,
   segwitAddress?: string,
   nativeAmount?: string,
