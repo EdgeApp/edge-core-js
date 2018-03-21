@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.6.7
+
+* Do not report transactions that have been dropped
+
 ## 0.6.6
 
 * Fix incorrect array dereference when saving transaction metadata
