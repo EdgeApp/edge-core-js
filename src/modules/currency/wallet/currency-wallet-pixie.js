@@ -104,7 +104,7 @@ export default combinePixies({
           !input.props.selfOutput ||
           !input.props.selfOutput.api ||
           !input.props.selfState.fiatLoaded ||
-          !input.props.selfState.filesLoaded
+          !input.props.selfState.fileNamesLoaded
         ) {
           return
         }

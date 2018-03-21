@@ -21,6 +21,7 @@ import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storageApi.js'
 import {
+  loadTxFiles,
   renameCurrencyWallet,
   setCurrencyWalletFiat,
   setCurrencyWalletTxMetadata
@@ -126,28 +127,53 @@ export function makeCurrencyWalletApi (
       return engine.getBlockHeight()
     },
 
-    getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
-      const files = input.props.selfState.files
-      const txids = input.props.selfState.txids
-      const txs = input.props.selfState.txs
+    async getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
       const defaultCurrency = plugin.currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
+      const state = input.props.selfState
+      // Txid array of all txs
+      const txids = state.txids
+      // Merged tx data from metadata files and blockchain data
+      const txs = state.txs
+      const { numIndex = 0, numEntries = txids.length } = opts
+      // Decrypted metadata files
+      const files = state.files
+      // A sorted list of transaction based on chronological order
+      const sortedTransactions = state.sortedTransactions.sortedList
+      // Quick fix for Tokens
+      const allInfos = input.props.state.currency.infos
+      let slice = false
+      for (const currencyInfo of allInfos) {
+        if (currencyCode === currencyInfo.currencyCode) {
+          slice = true
+          break
+        }
+      }
+      const slicedTransactions = slice
+        ? sortedTransactions.slice(numIndex, numEntries)
+        : sortedTransactions
+      const missingTxIdHashes = slicedTransactions.filter(
+        txidHash => !files[txidHash]
+      )
+      const missingFiles = await loadTxFiles(input, missingTxIdHashes)
+      Object.assign(files, missingFiles)
 
       const out = []
-      for (const txid of txids) {
-        const tx = txs[txid]
-        const file = files[txid]
-
+      for (const txidHash of slicedTransactions) {
+        const file = files[txidHash]
+        const tx = txs[file.txid]
         // Skip irrelevant transactions:
-        if (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode]) {
+        if (
+          !tx ||
+          (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
+        ) {
           continue
         }
 
         out.push(combineTxWithFile(input, tx, file, currencyCode))
       }
 
-      // TODO: Handle the sort within the tx list merge process:
-      return Promise.resolve(out.sort((a, b) => a.date - b.date))
+      return out
     },
 
     getReceiveAddress (opts: any): Promise<EdgeReceiveAddress> {

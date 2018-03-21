@@ -455,6 +455,17 @@ class AccountState {
     )
     if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
 
+    // Handle BCH / BTC+segwit special case:
+    if (
+      newWalletType === 'wallet:bitcoincash' &&
+      walletInfo.type === 'wallet:bitcoin' &&
+      walletInfo.keys.format === 'bip49'
+    ) {
+      throw new Error(
+        'Cannot split segwit-format Bitcoin wallets to Bitcoin Cash'
+      )
+    }
+
     // See if the wallet has already been split:
     const newWalletInfo = splitWalletInfo(walletInfo, newWalletType)
     const existingWalletInfo = allWalletInfos.find(

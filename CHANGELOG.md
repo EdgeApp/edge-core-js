@@ -1,5 +1,18 @@
 # edge-core-js
 
+## 0.6.7
+
+* Do not report transactions that have been dropped
+
+## 0.6.6
+
+* Fix incorrect array dereference when saving transaction metadata
+
+## 0.6.5
+
+* Optimize getTransactions to only decrypt data for the range queried
+* Prevent bitcoin segwit wallets from being split to bitcoin cash
+
 ## 0.6.3
 
 * Add legacyAddress to EdgeEncodeUri
