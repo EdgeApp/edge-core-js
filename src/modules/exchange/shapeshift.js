@@ -103,8 +103,8 @@ export function makeShapeshiftApi (ai: ApiInput) {
       const swapInfo = {
         rate: json.rate,
         minerFee: bns.mul(json.minerFee.toString(), multiplierTo),
-        nativeMax: bns.mulf(json.limit, multiplierFrom),
-        nativeMin: bns.mulf(json.minimum, multiplierFrom)
+        nativeMax: bns.mul(json.limit, multiplierFrom),
+        nativeMin: bns.mul(json.minimum, multiplierFrom)
       }
       return swapInfo
     },

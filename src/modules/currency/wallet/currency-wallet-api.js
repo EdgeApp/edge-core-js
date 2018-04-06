@@ -247,7 +247,7 @@ export function makeCurrencyWalletApi (
               currentCurrencyCode,
               destCurrencyCode
             )
-            nativeAmount = div(destAmount, rate.toString())
+            nativeAmount = div(destAmount, rate.toString(), 16)
           }
 
           const spendTarget: EdgeSpendTarget = {
