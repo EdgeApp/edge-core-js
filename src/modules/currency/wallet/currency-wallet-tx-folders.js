@@ -64,7 +64,7 @@ function fixLegacyFile (
 export const TxFolders = {
   // Version 1 (Airbitz) files
   V1: {
-    folder: 'Transaction',
+    folder: 'Transactions',
     loader: (json: LegacyTransactionFile, input: CurrencyWalletInput) => {
       const walletCurrency = input.props.selfState.currencyInfo.currencyCode
       const walletFiat = input.props.selfState.fiat
@@ -93,7 +93,7 @@ export const TxFolders = {
                 walletId,
                 malleableTxId
               ),
-              dropped: false,
+              dropped: true,
               token: false
             }
           })
@@ -118,7 +118,7 @@ export const TxFolders = {
         filesMetadata[fileName] = {
           version: 'V2',
           txidHash: prefix[1],
-          dropped: false,
+          dropped: true,
           token: false,
           creationDate: parseInt(prefix[0])
         }
