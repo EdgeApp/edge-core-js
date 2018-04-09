@@ -6,6 +6,7 @@ import type {
   EdgeTokenInfo,
   EdgeWalletInfo
 } from '../edge-core-index.js'
+import type { TxFilesMetadata } from '../modules/currency/wallet/currency-wallet-tx-files.js'
 
 /**
  * The account fires this when it loads its keys from disk.
@@ -33,7 +34,7 @@ export interface CurrencyEngineChangedTxs {
   type: 'CURRENCY_ENGINE_CHANGED_TXS';
   payload: {
     txs: Array<any>,
-    filesMetadata: any,
+    filesMetadata: TxFilesMetadata,
     walletId: string
   };
 }
@@ -101,8 +102,7 @@ export interface CurrencyWalletFileChanged {
   type: 'CURRENCY_WALLET_FILE_CHANGED';
   payload: {
     file: any,
-    fileName: string,
-    fileMetadata: any,
+    filesMetadata: TxFilesMetadata,
     walletId: string
   };
 }
@@ -124,7 +124,7 @@ export interface CurrencyWalletFilesLoaded {
 export interface CurrencyWalletFilesMetadataLoaded {
   type: 'CURRENCY_WALLET_FILES_METADATA_LOADED';
   payload: {
-    filesMetadata: any,
+    filesMetadata: TxFilesMetadata,
     walletId: string
   };
 }

@@ -97,14 +97,9 @@ export function makeCurrencyWalletCallbacks (
       }
 
       const { state, selfState } = input.props
-      const {
-        currencyInfo,
-        files,
-        filesMetadata,
-        sortedTransactions,
-        txs: existingTxs
-      } = selfState
+      const { currencyInfo, files, filesMetadata, txs: existingTxs } = selfState
 
+      const { sortedTransactions, metadata } = filesMetadata
       const { txidHashes = {} } = sortedTransactions
       const { currencyCode, metaTokens = [] } = currencyInfo
 
@@ -134,7 +129,7 @@ export function makeCurrencyWalletCallbacks (
           const file = setupNewTxMetadata(input, tx, newTxMetadata)
           created.push(combineTxWithFile(input, tx, file, txCurrencyCode))
         } else {
-          const fileMetadata = filesMetadata[fileName] || {}
+          const fileMetadata = metadata[fileName] || {}
           const { creationDate } = fileMetadata
           for (const param in newTxMetadata) {
             if (fileMetadata[param] !== newTxMetadata[param]) {
@@ -155,7 +150,7 @@ export function makeCurrencyWalletCallbacks (
       // Dispatch new Tx's
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_TXS',
-        payload: { walletId, txs, filesMetadata }
+        payload: { walletId, txs, filesMetadata: changedMetadata }
       })
 
       forEachListener(input, ({ onTransactionsChanged, onNewTransactions }) => {

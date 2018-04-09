@@ -82,7 +82,7 @@ function getCurrentTxFile (
 export async function saveFilesMetadata (input: CurrencyWalletInput) {
   const walletId = input.props.id
   const { state } = input.props
-  const filesMetadata = input.props.selfState.filesMetadata
+  const { metadata } = input.props.selfState.filesMetadata
 
   // Get the non encrypted folder and the filename file
   const localFolder = getStorageWalletLocalFolder(state, walletId)
@@ -90,7 +90,7 @@ export async function saveFilesMetadata (input: CurrencyWalletInput) {
 
   // Cache the new results
   try {
-    await file.setText(JSON.stringify(filesMetadata))
+    await file.setText(JSON.stringify(metadata))
   } catch (e) {
     input.props.onError(e)
   }
@@ -105,7 +105,7 @@ export async function loadMetadataFile (
 ) {
   const walletId = input.props.id
   const { dispatch, state } = input.props
-
+  // console.log('currency-wallet-tx-files.js - loadMetadataFile - walletId', walletId)
   // Get the non encrypted folder and the filename file
   const localFolder = getStorageWalletLocalFolder(state, walletId)
   const file = localFolder.file(FILES_METADATA_FILE)
@@ -277,7 +277,7 @@ export async function setCurrencyWalletTxMetadata (
   // Dispatch the new file:
   dispatch({
     type: 'CURRENCY_WALLET_FILE_CHANGED',
-    payload: { walletId, file, fileName, fileMetadata }
+    payload: { walletId, file, filesMetadata: { [fileName]: fileMetadata } }
   })
 
   // Save the new file:
@@ -345,7 +345,7 @@ export function setupNewTxMetadata (
   // Dispatch the new file:
   dispatch({
     type: 'CURRENCY_WALLET_FILE_CHANGED',
-    payload: { walletId, file, fileName, fileMetadata }
+    payload: { walletId, file, filesMetadata: { [fileName]: fileMetadata } }
   })
 
   // Save the new file:

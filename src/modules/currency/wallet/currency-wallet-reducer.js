@@ -6,7 +6,6 @@ import type {
   EdgeCurrencyInfo,
   EdgeWalletInfo
 } from '../../../edge-core-index.js'
-import { compare } from '../../../util/compare.js'
 import type { RootAction } from '../../actions.js'
 import type { RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'
@@ -37,10 +36,12 @@ export interface CurrencyWalletState {
   fiat: string;
   fiatLoaded: boolean;
   files: { [txidHash: string]: Object };
-  filesMetadata: TxFilesMetadata;
+  filesMetadata: {
+    metadata: TxFilesMetadata,
+    sortedTransactions: SortedTransactions
+  };
   filesMetadataLoaded: boolean;
   filesMetadataChanged: boolean;
-  sortedTransactions: SortedTransactions;
   name: string | null;
   nameLoaded: boolean;
   walletInfo: EdgeWalletInfo;
@@ -52,6 +53,14 @@ export interface CurrencyWalletNext {
   id: string;
   root: RootState;
   +self: CurrencyWalletState;
+}
+
+const DefaultFilesMetadata = {
+  sortedTransactions: {
+    sortedTxidHashes: [],
+    txidHashes: {}
+  },
+  metadata: {}
 }
 
 const currencyWalletReducer = buildReducer({
@@ -83,10 +92,12 @@ const currencyWalletReducer = buildReducer({
   files (state = {}, action: RootAction) {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_CHANGED': {
-        const { file, fileMetadata } = action.payload
-        const { txidHash } = fileMetadata
+        const { file, filesMetadata } = action.payload
         const out = { ...state }
-        out[txidHash] = file
+        for (const fileName in filesMetadata) {
+          const { txidHash } = filesMetadata[fileName]
+          out[txidHash] = file
+        }
         return out
       }
       case 'CURRENCY_WALLET_FILES_LOADED': {
@@ -100,49 +111,27 @@ const currencyWalletReducer = buildReducer({
     return state
   },
 
-  sortedTransactions (state = {}, action: RootAction) {
-    const { txidHashes = {} } = state
-    switch (action.type) {
-      case 'CURRENCY_WALLET_FILES_METADATA_LOADED': {
-        const { filesMetadata } = action.payload
-        return sortTxs(txidHashes, filesMetadata)
-      }
-      case 'CURRENCY_ENGINE_CHANGED_TXS': {
-        const { filesMetadata } = action.payload
-        return sortTxs(txidHashes, filesMetadata)
-      }
-      case 'CURRENCY_WALLET_FILE_CHANGED': {
-        const { fileMetadata, fileName } = action.payload
-        return sortTxs(txidHashes, { [fileName]: fileMetadata })
+  filesMetadata (state = DefaultFilesMetadata, action: RootAction) {
+    const mergeMetadata = action => {
+      const { filesMetadata } = action.payload
+      if (!Object.keys(filesMetadata).length) return state
+      const { sortedTransactions, metadata } = state
+      const { txidHashes } = sortedTransactions
+      return {
+        sortedTransactions: sortTxs(txidHashes, filesMetadata),
+        metadata: { ...metadata, ...filesMetadata }
       }
     }
-    return state
-  },
 
-  filesMetadata (state = {}, action: RootAction) {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILES_METADATA_LOADED': {
-        const { filesMetadata } = action.payload
-        if (!Object.keys(filesMetadata).length) break
-        return {
-          ...state,
-          ...filesMetadata
-        }
+        return mergeMetadata(action)
       }
       case 'CURRENCY_ENGINE_CHANGED_TXS': {
-        const { filesMetadata } = action.payload
-        return {
-          ...state,
-          ...filesMetadata
-        }
+        return mergeMetadata(action)
       }
       case 'CURRENCY_WALLET_FILE_CHANGED': {
-        const { fileMetadata, fileName } = action.payload
-        if (compare(state[fileName], fileMetadata)) break
-        return {
-          ...state,
-          [fileName]: fileMetadata
-        }
+        return mergeMetadata(action)
       }
     }
     return state
@@ -155,7 +144,9 @@ const currencyWalletReducer = buildReducer({
     prev: CurrencyWalletNext
   ) {
     if (prev && prev.self) {
-      return next.self.filesMetadata !== prev.self.filesMetadata
+      return (
+        next.self.filesMetadata.metadata !== prev.self.filesMetadata.metadata
+      )
     }
     return state
   },
