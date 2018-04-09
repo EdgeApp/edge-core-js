@@ -13,10 +13,7 @@ import {
   hashStorageWalletFilename
 } from '../../storage/selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
-import {
-  loadAllFiles,
-  setupNewTxMetadata
-} from './currency-wallet-files.js'
+import { loadAllFiles, setupNewTxMetadata } from './currency-wallet-files.js'
 import type {
   CurrencyWalletInput,
   CurrencyWalletProps
@@ -125,9 +122,10 @@ export function makeCurrencyWalletCallbacks (
         const txCurrencyCode = rawTx.currencyCode || currencyCode
         let file = fileName && (files[txidHash] || filesMetadata[fileName])
         // Test if this is a Token transaction
-        const token = txCurrencyCode !== currencyCode &&
-          !!metaTokens.find(({ currencyCode }) =>
-            currencyCode === txCurrencyCode
+        const token =
+          txCurrencyCode !== currencyCode &&
+          !!metaTokens.find(
+            ({ currencyCode }) => currencyCode === txCurrencyCode
           )
         const newTxMetadata = { token, txidHash, dropped: false }
         // If it's a new Tx, create a new file.

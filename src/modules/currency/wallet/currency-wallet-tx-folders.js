@@ -1,7 +1,7 @@
 // @flow
 import { hashStorageWalletFilename } from '../../storage/selectors.js'
-import type { TransactionFile } from './currency-wallet-tx-files.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
+import type { TransactionFile } from './currency-wallet-tx-files.js'
 
 export type LegacyTransactionFile = {
   airbitzFeeWanted: number,

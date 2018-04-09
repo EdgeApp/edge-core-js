@@ -1,17 +1,22 @@
 // @flow
 import { mapFiles } from 'disklet'
+
+import { mergeDeeply } from '../../../util/util.js'
+import { getExchangeRate } from '../../exchange/selectors.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalFolder,
   hashStorageWalletFilename
 } from '../../storage/selectors.js'
-import { mergeDeeply } from '../../../util/util.js'
-import { getExchangeRate } from '../../exchange/selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { forEachListener } from './currency-wallet-callbacks.js'
-import { TxFolders, CurrentVersion, isNewerVersion } from './currency-wallet-tx-folders.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
+import {
+  CurrentVersion,
+  TxFolders,
+  isNewerVersion
+} from './currency-wallet-tx-folders.js'
 
 const FILES_METADATA_FILE = 'filesMetadata.json'
 
@@ -50,7 +55,12 @@ export type TransactionFile = {
   }
 }
 
-function getCurrentTxFile (state: any, keyId: string, date: number, txidHash: TxidHash) {
+function getCurrentTxFile (
+  state: any,
+  keyId: string,
+  date: number,
+  txidHash: TxidHash
+) {
   const creationDate = parseInt(date.toFixed(0))
   const fileName = `${creationDate}-${txidHash}.json`
   const fileObject = getStorageWalletFolder(state, keyId)
@@ -89,7 +99,10 @@ export async function saveFilesMetadata (input: CurrencyWalletInput) {
 /**
  * Loads transaction metadata file names.
  */
-export async function loadMetadataFile (input: CurrencyWalletInput, encryptedFolder: any) {
+export async function loadMetadataFile (
+  input: CurrencyWalletInput,
+  encryptedFolder: any
+) {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
@@ -115,7 +128,12 @@ export async function loadMetadataFile (input: CurrencyWalletInput, encryptedFol
       await mapFiles(txFilesFolder, (file, fileName) => {
         if (!filesMetadata[fileName]) missingNames.push(fileName)
       })
-      const missingFilesMetadata = converter(missingNames, state, walletId, txFilesFolder)
+      const missingFilesMetadata = converter(
+        missingNames,
+        state,
+        walletId,
+        txFilesFolder
+      )
       Object.assign(newFilesMetadata, missingFilesMetadata)
     } catch (e) {
       input.props.onError(e)
@@ -221,14 +239,20 @@ export async function setCurrencyWalletTxMetadata (
   // If we haven't loaded the file into redux, but we have the file on disk try and load the file
   if (!oldFile && oldFileName) {
     try {
-      oldFile = await loadTxFiles(input, { [oldFileName]: oldFileMetadata })[newTxidHash]
+      oldFile = await loadTxFiles(input, { [oldFileName]: oldFileMetadata })
+      oldFile = oldFile[newTxidHash]
     } catch (e) {
       input.props.onError(e)
     }
   }
 
   // Set up the new file:
-  const { fileName, fileObject, fileMetadata } = getCurrentTxFile(state, walletId, creationDate, newTxidHash)
+  const { fileName, fileObject, fileMetadata } = getCurrentTxFile(
+    state,
+    walletId,
+    creationDate,
+    newTxidHash
+  )
 
   // Merge the new fileMetadata with the old one but keep the new version just in case
   const { version, ...rest } = oldFileMetadata
@@ -257,7 +281,8 @@ export async function setCurrencyWalletTxMetadata (
   })
 
   // Save the new file:
-  return fileObject.setText(JSON.stringify(file))
+  return fileObject
+    .setText(JSON.stringify(file))
     .then(() => {
       const callbackTx = combineTxWithFile(input, tx, file, currencyCode)
       forEachListener(input, ({ onTransactionsChanged }) => {
@@ -269,7 +294,11 @@ export async function setCurrencyWalletTxMetadata (
     .catch(e => {})
 }
 
-export function setupNewTxMetadata (input: CurrencyWalletInput, tx: any, customFileMetadata: any): any {
+export function setupNewTxMetadata (
+  input: CurrencyWalletInput,
+  tx: any,
+  customFileMetadata: any
+): any {
   const walletId = input.props.id
   const { dispatch, state } = input.props
   const txid = tx.txid

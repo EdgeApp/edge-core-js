@@ -6,11 +6,16 @@ import type {
   EdgeCurrencyInfo,
   EdgeWalletInfo
 } from '../../../edge-core-index.js'
+import { compare } from '../../../util/compare.js'
 import type { RootAction } from '../../actions.js'
 import type { RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'
-import { compare } from '../../../util/compare.js'
-import type { TxidHash, FileName, TxFileMetadata, TxFilesMetadata } from './currency-wallet-tx-files.js'
+import type {
+  FileName,
+  TxFileMetadata,
+  TxFilesMetadata,
+  TxidHash
+} from './currency-wallet-tx-files.js'
 import { isNewerVersion } from './currency-wallet-tx-folders.js'
 
 export type TxidHashes = {
@@ -156,7 +161,9 @@ const currencyWalletReducer = buildReducer({
   },
 
   filesMetadataLoaded (state = false, action: RootAction) {
-    return action.type === 'CURRENCY_WALLET_FILES_METADATA_LOADED' ? true : state
+    return action.type === 'CURRENCY_WALLET_FILES_METADATA_LOADED'
+      ? true
+      : state
   },
 
   name (state = null, action: RootAction) {
@@ -197,7 +204,10 @@ const currencyWalletReducer = buildReducer({
   }
 })
 
-export function sortTxs (oldTxidHashes: TxidHashes, filesMetadata: TxFilesMetadata): SortedTransactions {
+export function sortTxs (
+  oldTxidHashes: TxidHashes,
+  filesMetadata: TxFilesMetadata
+): SortedTransactions {
   const txidHashes = { ...oldTxidHashes }
 
   for (const fileName in filesMetadata) {
@@ -215,11 +225,13 @@ export function sortTxs (oldTxidHashes: TxidHashes, filesMetadata: TxFilesMetada
     }
   }
 
-  const sortedTxidHashes = Object.keys(txidHashes).sort((txidHash1, txidHash2) => {
-    if (txidHashes[txidHash1] > txidHashes[txidHash2]) return -1
-    if (txidHashes[txidHash1] < txidHashes[txidHash2]) return 1
-    return 0
-  })
+  const sortedTxidHashes = Object.keys(txidHashes).sort(
+    (txidHash1, txidHash2) => {
+      if (txidHashes[txidHash1] > txidHashes[txidHash2]) return -1
+      if (txidHashes[txidHash1] < txidHashes[txidHash2]) return 1
+      return 0
+    }
+  )
 
   return { sortedTxidHashes, txidHashes }
 }

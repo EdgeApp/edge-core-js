@@ -157,7 +157,10 @@ export function makeCurrencyWalletApi (
       const files = state.files
       // A sorted list of transaction based on chronological order
       const filesMetadata = state.filesMetadata
-      const { txidHashes = {}, sortedTxidHashes = [] } = state.sortedTransactions
+      const {
+        txidHashes = {},
+        sortedTxidHashes = []
+      } = state.sortedTransactions
 
       // Quick fix for Tokens
       const allInfos = input.props.state.currency.infos
