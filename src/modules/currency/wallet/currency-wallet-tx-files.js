@@ -128,7 +128,7 @@ export async function loadMetadataFile (
       await mapFiles(txFilesFolder, (file, fileName) => {
         if (!filesMetadata[fileName]) missingNames.push(fileName)
       })
-      const missingFilesMetadata = converter(
+      const missingFilesMetadata = await converter(
         missingNames,
         state,
         walletId,

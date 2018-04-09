@@ -120,7 +120,6 @@ export function makeCurrencyWalletCallbacks (
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
         const fileName = txidHashes[txidHash] && txidHashes[txidHash].fileName
         const txCurrencyCode = rawTx.currencyCode || currencyCode
-        let file = fileName && (files[txidHash] || filesMetadata[fileName])
         // Test if this is a Token transaction
         const token =
           txCurrencyCode !== currencyCode &&
@@ -130,17 +129,24 @@ export function makeCurrencyWalletCallbacks (
         const newTxMetadata = { token, txidHash, dropped: false }
         // If it's a new Tx, create a new file.
         // If not, try and get as much data as we currently have in redux
-        if (!file) {
+        if (!fileName) {
           // Create, save and return the new transaction metadata object
-          file = setupNewTxMetadata(input, tx, newTxMetadata)
+          const file = setupNewTxMetadata(input, tx, newTxMetadata)
           created.push(combineTxWithFile(input, tx, file, txCurrencyCode))
         } else {
-          const fileMetadata = filesMetadata[fileName]
+          const fileMetadata = filesMetadata[fileName] || {}
+          const { creationDate } = fileMetadata
           for (const param in newTxMetadata) {
             if (fileMetadata[param] !== newTxMetadata[param]) {
               changedMetadata[fileName] = { ...fileMetadata, ...newTxMetadata }
               break
             }
+          }
+          const file = files[txidHash] || {
+            txid,
+            internal: false,
+            creationDate,
+            currencies: {}
           }
           changed.push(combineTxWithFile(input, tx, file, txCurrencyCode))
         }
