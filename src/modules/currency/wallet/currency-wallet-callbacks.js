@@ -13,7 +13,10 @@ import {
   hashStorageWalletFilename
 } from '../../storage/selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
-import { loadAllFiles, setupNewTxMetadata } from './currency-wallet-files.js'
+import {
+  loadAllFiles,
+  setupNewTxMetadata
+} from './currency-wallet-files.js'
 import type {
   CurrencyWalletInput,
   CurrencyWalletProps
@@ -50,6 +53,10 @@ export function makeCurrencyWalletCallbacks (
 
   return {
     onAddressesChecked (ratio: number) {
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_PROGGRESS_RATIO',
+        payload: { walletId, ratio }
+      })
       forEachListener(input, ({ onAddressesChecked }) => {
         if (onAddressesChecked) {
           onAddressesChecked(walletId, ratio)
@@ -91,41 +98,60 @@ export function makeCurrencyWalletCallbacks (
           return
         }
       }
-      const { state } = input.props
-      const existingTxs = input.props.selfState.txs
-      const txidHashes = {}
-      const files = input.props.selfState.files || {}
-      const fileNames = input.props.selfState.fileNames || []
-      const defaultCurrency = input.props.selfState.currencyInfo.currencyCode
+
+      const { state, selfState } = input.props
+      const {
+        currencyInfo,
+        files,
+        filesMetadata,
+        sortedTransactions,
+        txs: existingTxs
+      } = selfState
+
+      const { txidHashes = {} } = sortedTransactions
+      const { currencyCode, metaTokens = [] } = currencyInfo
+
       const changed = []
       const created = []
+      const changedMetadata = {}
       for (const rawTx of txs) {
-        const tx = mergeTx(rawTx, defaultCurrency, existingTxs[rawTx.txid])
+        const tx = mergeTx(rawTx, currencyCode, existingTxs[rawTx.txid])
         const txid = tx.txid
         // If we already have it in the list, make sure something about it has changed:
         if (compare(tx, existingTxs[txid])) continue
 
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
-        const isNew = !fileNames[txidHash]
-        const decryptedMetadata = files[txidHash]
-        const combinedTx = combineTxWithFile(
-          input,
-          tx,
-          decryptedMetadata,
-          rawTx.currencyCode
-        )
-        if (isNew) {
-          setupNewTxMetadata(input, tx).catch(e => input.props.onError(e))
-          created.push(combinedTx)
-        } else if (decryptedMetadata) {
-          changed.push(combinedTx)
+        const fileName = txidHashes[txidHash] && txidHashes[txidHash].fileName
+        const txCurrencyCode = rawTx.currencyCode || currencyCode
+        let file = fileName && (files[txidHash] || filesMetadata[fileName])
+        // Test if this is a Token transaction
+        const token = txCurrencyCode !== currencyCode &&
+          !!metaTokens.find(({ currencyCode }) =>
+            currencyCode === txCurrencyCode
+          )
+        const newTxMetadata = { token, txidHash, dropped: false }
+        // If it's a new Tx, create a new file.
+        // If not, try and get as much data as we currently have in redux
+        if (!file) {
+          // Create, save and return the new transaction metadata object
+          file = setupNewTxMetadata(input, tx, newTxMetadata)
+          created.push(combineTxWithFile(input, tx, file, txCurrencyCode))
+        } else {
+          const fileMetadata = filesMetadata[fileName]
+          for (const param in newTxMetadata) {
+            if (fileMetadata[param] !== newTxMetadata[param]) {
+              changedMetadata[fileName] = { ...fileMetadata, ...newTxMetadata }
+              break
+            }
+          }
+          changed.push(combineTxWithFile(input, tx, file, txCurrencyCode))
         }
-        txidHashes[txidHash] = combinedTx.date
       }
-      // Side Effect
+
+      // Dispatch new Tx's
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_TXS',
-        payload: { txs, walletId, txidHashes }
+        payload: { walletId, txs, filesMetadata }
       })
 
       forEachListener(input, ({ onTransactionsChanged, onNewTransactions }) => {

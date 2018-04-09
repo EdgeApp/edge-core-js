@@ -156,7 +156,9 @@ export function makeCurrencyWalletApi (
       // Decrypted metadata files
       const files = state.files
       // A sorted list of transaction based on chronological order
-      const sortedTransactions = state.sortedTransactions.sortedList
+      const filesMetadata = state.filesMetadata
+      const { txidHashes = {}, sortedTxidHashes = [] } = state.sortedTransactions
+
       // Quick fix for Tokens
       const allInfos = input.props.state.currency.infos
       let slice = false
@@ -166,14 +168,29 @@ export function makeCurrencyWalletApi (
           break
         }
       }
+      // Slice to get only what the user wanted
       const slicedTransactions = slice
-        ? sortedTransactions.slice(numIndex, numEntries)
-        : sortedTransactions
-      const missingTxIdHashes = slicedTransactions.filter(
-        txidHash => !files[txidHash]
-      )
-      const missingFiles = await loadTxFiles(input, missingTxIdHashes)
-      Object.assign(files, missingFiles)
+        ? sortedTxidHashes.slice(numIndex, numEntries)
+        : sortedTxidHashes
+
+      // Find which files needs to be loaded from disk
+      const missingFilesMetadata = slicedTransactions
+        .filter(txidHash => !files[txidHash])
+        .reduce((result, txidHash) => {
+          const { fileName } = txidHashes[txidHash]
+          if (fileName) result[fileName] = filesMetadata[fileName]
+          return result
+        }, {})
+
+      // Load files from disk if needed
+      if (Object.keys(missingFilesMetadata).length) {
+        try {
+          const missingFiles = await loadTxFiles(input, missingFilesMetadata)
+          Object.assign(files, missingFiles)
+        } catch (e) {
+          input.props.onError(e)
+        }
+      }
 
       const out = []
       for (const txidHash of slicedTransactions) {

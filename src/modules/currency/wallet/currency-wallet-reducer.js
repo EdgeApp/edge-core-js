@@ -9,29 +9,32 @@ import type {
 import type { RootAction } from '../../actions.js'
 import type { RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'
+import { compare } from '../../../util/compare.js'
+import type { TxidHash, FileName, TxFileMetadata, TxFilesMetadata } from './currency-wallet-tx-files.js'
+import { isNewerVersion } from './currency-wallet-tx-folders.js'
 
-export type TxIdHash = {
-  [txidHash: string]: number
-}
-
-export type TxFileName = {
-  timestamp: number,
-  fileName: string
+export type TxidHashes = {
+  [txidHash: TxidHash]: {
+    ...TxFileMetadata,
+    fileName: FileName
+  }
 }
 
 export type SortedTransactions = {
-  sortedList: Array<string>,
-  txidHashes: TxIdHash
+  sortedTxidHashes: Array<TxidHash>,
+  txidHashes: TxidHashes
 }
 
 export interface CurrencyWalletState {
   currencyInfo: EdgeCurrencyInfo;
   engineFailure: Error | null;
+  progressRatio: number;
   fiat: string;
   fiatLoaded: boolean;
   files: { [txidHash: string]: Object };
-  fileNames: { [txidHash: string]: TxFileName };
-  fileNamesLoaded: boolean;
+  filesMetadata: TxFilesMetadata;
+  filesMetadataLoaded: boolean;
+  filesMetadataChanged: boolean;
   sortedTransactions: SortedTransactions;
   name: string | null;
   nameLoaded: boolean;
@@ -56,6 +59,12 @@ const currencyWalletReducer = buildReducer({
     return action.type === 'CURRENCY_ENGINE_FAILED' ? action.payload : state
   },
 
+  progressRatio (state = 0, action: RootAction) {
+    return action.type === 'CURRENCY_ENGINE_PROGGRESS_RATIO'
+      ? action.payload.ratio
+      : state
+  },
+
   fiat (state = '', action: RootAction) {
     return action.type === 'CURRENCY_WALLET_FIAT_CHANGED'
       ? action.payload.fiatCurrencyCode
@@ -69,10 +78,10 @@ const currencyWalletReducer = buildReducer({
   files (state = {}, action: RootAction) {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_CHANGED': {
-        const { json, txFileName } = action.payload
-        const { txidHash } = txFileName
+        const { file, fileMetadata } = action.payload
+        const { txidHash } = fileMetadata
         const out = { ...state }
-        out[txidHash] = json
+        out[txidHash] = file
         return out
       }
       case 'CURRENCY_WALLET_FILES_LOADED': {
@@ -86,47 +95,68 @@ const currencyWalletReducer = buildReducer({
     return state
   },
 
-  sortedTransactions (state = {}, action: RootAction, next: CurrencyWalletNext) {
+  sortedTransactions (state = {}, action: RootAction) {
     const { txidHashes = {} } = state
     switch (action.type) {
-      case 'CURRENCY_ENGINE_CHANGED_TXS': {
-        return sortTxs(txidHashes, action.payload.txidHashes)
+      case 'CURRENCY_WALLET_FILES_METADATA_LOADED': {
+        const { filesMetadata } = action.payload
+        return sortTxs(txidHashes, filesMetadata)
       }
-      case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
-        const { txFileNames } = action.payload
-        const newTxidHashes = {}
-        Object.keys(txFileNames).map(txidHash => {
-          newTxidHashes[txidHash] = txFileNames[txidHash].timestamp
-        })
-        return sortTxs(txidHashes, newTxidHashes)
+      case 'CURRENCY_ENGINE_CHANGED_TXS': {
+        const { filesMetadata } = action.payload
+        return sortTxs(txidHashes, filesMetadata)
+      }
+      case 'CURRENCY_WALLET_FILE_CHANGED': {
+        const { fileMetadata, fileName } = action.payload
+        return sortTxs(txidHashes, { [fileName]: fileMetadata })
       }
     }
     return state
   },
 
-  fileNames (state = {}, action: RootAction) {
+  filesMetadata (state = {}, action: RootAction) {
     switch (action.type) {
-      case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
-        const { txFileNames } = action.payload
+      case 'CURRENCY_WALLET_FILES_METADATA_LOADED': {
+        const { filesMetadata } = action.payload
+        if (!Object.keys(filesMetadata).length) break
         return {
           ...state,
-          ...txFileNames
+          ...filesMetadata
+        }
+      }
+      case 'CURRENCY_ENGINE_CHANGED_TXS': {
+        const { filesMetadata } = action.payload
+        return {
+          ...state,
+          ...filesMetadata
         }
       }
       case 'CURRENCY_WALLET_FILE_CHANGED': {
-        const { txFileName } = action.payload
-        const { txidHash, timestamp, fileName } = txFileName
-        if (!state[txidHash] || timestamp < state[txidHash].timestamp) {
-          state[txidHash] = { timestamp, fileName }
+        const { fileMetadata, fileName } = action.payload
+        if (compare(state[fileName], fileMetadata)) break
+        return {
+          ...state,
+          [fileName]: fileMetadata
         }
-        return state
       }
     }
     return state
   },
 
-  fileNamesLoaded (state = false, action) {
-    return action.type === 'CURRENCY_WALLET_FILE_NAMES_LOADED' ? true : state
+  filesMetadataChanged (
+    state = false,
+    action: RootAction,
+    next: CurrencyWalletNext,
+    prev: CurrencyWalletNext
+  ) {
+    if (prev && prev.self) {
+      return next.self.filesMetadata !== prev.self.filesMetadata
+    }
+    return state
+  },
+
+  filesMetadataLoaded (state = false, action: RootAction) {
+    return action.type === 'CURRENCY_WALLET_FILES_METADATA_LOADED' ? true : state
   },
 
   name (state = null, action: RootAction) {
@@ -167,19 +197,31 @@ const currencyWalletReducer = buildReducer({
   }
 })
 
-export function sortTxs (txidHashes: TxIdHash, newHashes: TxIdHash) {
-  for (const newTxidHash in newHashes) {
-    const newTime = newHashes[newTxidHash]
-    if (!txidHashes[newTxidHash] || newTime < txidHashes[newTxidHash]) {
-      txidHashes[newTxidHash] = newTime
+export function sortTxs (oldTxidHashes: TxidHashes, filesMetadata: TxFilesMetadata): SortedTransactions {
+  const txidHashes = { ...oldTxidHashes }
+
+  for (const fileName in filesMetadata) {
+    const newData = filesMetadata[fileName]
+    const { dropped, creationDate, version, txidHash } = newData
+    const oldData = txidHashes[txidHash]
+    if (dropped) {
+      delete txidHashes[txidHash]
+    } else if (
+      !oldData ||
+      creationDate < oldData.creationDate ||
+      isNewerVersion(version, oldData.version)
+    ) {
+      txidHashes[txidHash] = { fileName, ...newData }
     }
   }
-  const sortedList = Object.keys(txidHashes).sort((txidHash1, txidHash2) => {
+
+  const sortedTxidHashes = Object.keys(txidHashes).sort((txidHash1, txidHash2) => {
     if (txidHashes[txidHash1] > txidHashes[txidHash2]) return -1
     if (txidHashes[txidHash1] < txidHashes[txidHash2]) return 1
     return 0
   })
-  return { sortedList, txidHashes }
+
+  return { sortedTxidHashes, txidHashes }
 }
 
 export default filterReducer(

@@ -22,7 +22,7 @@ import {
   makeCurrencyWalletCallbacks,
   watchCurrencyWallet
 } from './currency-wallet-callbacks.js'
-import { loadAllFiles } from './currency-wallet-files.js'
+import { loadAllFiles, saveFilesMetadata } from './currency-wallet-files.js'
 import type { CurrencyWalletState } from './currency-wallet-reducer.js'
 
 export interface CurrencyWalletOutput {
@@ -30,6 +30,7 @@ export interface CurrencyWalletOutput {
   plugin: EdgeCurrencyPlugin | void;
   engine: EdgeCurrencyEngine | void;
   engineStarted: boolean | void;
+  saveMetadata: boolean | void;
   syncTimer: void;
 }
 
@@ -96,6 +97,15 @@ export default combinePixies({
     return stopUpdates
   },
 
+  saveMetadata (input: CurrencyWalletInput) {
+    return {
+      update () {
+        if (input.props.selfState.filesMetadataChanged) saveFilesMetadata(input)
+      },
+      destroy () {}
+    }
+  },
+
   // Starts & stops the engine for this wallet:
   engineStarted (input: CurrencyWalletInput) {
     return {
@@ -104,7 +114,7 @@ export default combinePixies({
           !input.props.selfOutput ||
           !input.props.selfOutput.api ||
           !input.props.selfState.fiatLoaded ||
-          !input.props.selfState.fileNamesLoaded
+          !input.props.selfState.filesMetadataLoaded
         ) {
           return
         }

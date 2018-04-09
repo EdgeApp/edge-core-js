@@ -33,9 +33,17 @@ export interface CurrencyEngineChangedTxs {
   type: 'CURRENCY_ENGINE_CHANGED_TXS';
   payload: {
     txs: Array<any>,
-    walletId: string,
-    txidHashes: any
+    filesMetadata: any,
+    walletId: string
   };
+}
+
+/**
+ * Called when a currency engine is fully synced
+ */
+export interface CurrencyEngineSynced {
+  type: 'CURRENCY_ENGINE_PROGGRESS_RATIO';
+  payload: { walletId: string, ratio: number };
 }
 
 /**
@@ -92,10 +100,10 @@ export interface CurrencyWalletFiatChanged {
 export interface CurrencyWalletFileChanged {
   type: 'CURRENCY_WALLET_FILE_CHANGED';
   payload: {
-    json: any,
-    txid: string,
-    walletId: string,
-    txFileName: any
+    file: any,
+    fileName: string,
+    fileMetadata: any,
+    walletId: string
   };
 }
 
@@ -111,12 +119,12 @@ export interface CurrencyWalletFilesLoaded {
 }
 
 /**
- * Called when a currency wallet's file names have been loaded from disk.
+ * Called when a currency wallet's file metadata have been loaded from disk.
  */
-export interface CurrencyWalletFileNamesLoaded {
-  type: 'CURRENCY_WALLET_FILE_NAMES_LOADED';
+export interface CurrencyWalletFilesMetadataLoaded {
+  type: 'CURRENCY_WALLET_FILES_METADATA_LOADED';
   payload: {
-    txFileNames: any,
+    filesMetadata: any,
     walletId: string
   };
 }
@@ -183,6 +191,7 @@ export type RootAction =
   | AccountKeysLoadedAction
   | AddedCustomToken
   | CurrencyEngineChangedTxs
+  | CurrencyEngineSynced
   | CurrencyEngineCleared
   | CurrencyEngineFailed
   | CurrencyPluginsFailed
@@ -190,7 +199,7 @@ export type RootAction =
   | CurrencyWalletFiatChanged
   | CurrencyWalletFileChanged
   | CurrencyWalletFilesLoaded
-  | CurrencyWalletFileNamesLoaded
+  | CurrencyWalletFilesMetadataLoaded
   | CurrencyWalletNameChanged
   | InitAction
   | LoginAction
