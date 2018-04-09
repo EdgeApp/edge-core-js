@@ -93,7 +93,7 @@ export const TxFolders = {
                 walletId,
                 malleableTxId
               ),
-              dropped: true,
+              dropped: false,
               token: false
             }
           })
@@ -118,7 +118,7 @@ export const TxFolders = {
         filesMetadata[fileName] = {
           version: 'V2',
           txidHash: prefix[1],
-          dropped: true,
+          dropped: false,
           token: false,
           creationDate: parseInt(prefix[0])
         }

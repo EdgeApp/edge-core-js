@@ -116,9 +116,8 @@ const currencyWalletReducer = buildReducer({
       const { filesMetadata } = action.payload
       if (!Object.keys(filesMetadata).length) return state
       const { sortedTransactions, metadata } = state
-      const { txidHashes } = sortedTransactions
       return {
-        sortedTransactions: sortTxs(txidHashes, filesMetadata),
+        sortedTransactions: sortTxs(sortedTransactions, filesMetadata),
         metadata: { ...metadata, ...filesMetadata }
       }
     }
@@ -196,35 +195,42 @@ const currencyWalletReducer = buildReducer({
 })
 
 export function sortTxs (
-  oldTxidHashes: TxidHashes,
+  oldSorted: SortedTransactions,
   filesMetadata: TxFilesMetadata
 ): SortedTransactions {
-  const txidHashes = { ...oldTxidHashes }
+  const { sortedTxidHashes, txidHashes } = oldSorted
+  const newTxidHashes = { ...txidHashes }
+  let changed = false
 
   for (const fileName in filesMetadata) {
     const newData = filesMetadata[fileName]
     const { dropped, creationDate, version, txidHash } = newData
-    const oldData = txidHashes[txidHash]
-    if (dropped) {
-      delete txidHashes[txidHash]
-    } else if (
+    const oldData = newTxidHashes[txidHash]
+    if (
       !oldData ||
+      dropped !== oldData.dropped ||
       creationDate < oldData.creationDate ||
       isNewerVersion(version, oldData.version)
     ) {
-      txidHashes[txidHash] = { fileName, ...newData }
+      changed = true
+      newTxidHashes[txidHash] = { fileName, ...newData }
     }
   }
 
-  const sortedTxidHashes = Object.keys(txidHashes).sort(
-    (txidHash1, txidHash2) => {
-      if (txidHashes[txidHash1] > txidHashes[txidHash2]) return -1
-      if (txidHashes[txidHash1] < txidHashes[txidHash2]) return 1
-      return 0
-    }
-  )
+  if (!changed) return { sortedTxidHashes, txidHashes }
 
-  return { sortedTxidHashes, txidHashes }
+  const newSortedTxidHashes = Object.keys(newTxidHashes)
+    .filter(txidHash => !newTxidHashes[txidHash].dropped)
+    .sort((txidHash1, txidHash2) => {
+      if (newTxidHashes[txidHash1] > newTxidHashes[txidHash2]) return -1
+      if (newTxidHashes[txidHash1] < newTxidHashes[txidHash2]) return 1
+      return 0
+    })
+
+  return {
+    sortedTxidHashes: newSortedTxidHashes,
+    txidHashes: newTxidHashes
+  }
 }
 
 export default filterReducer(
