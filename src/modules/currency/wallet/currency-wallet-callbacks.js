@@ -106,6 +106,7 @@ export function makeCurrencyWalletCallbacks (
       const changed = []
       const created = []
       const changedMetadata = {}
+      const liveTxidHashes = {}
       for (const rawTx of txs) {
         const tx = mergeTx(rawTx, currencyCode, existingTxs[rawTx.txid])
         const txid = tx.txid
@@ -113,6 +114,7 @@ export function makeCurrencyWalletCallbacks (
         if (compare(tx, existingTxs[txid])) continue
 
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
+        liveTxidHashes[txidHash] = true
         const fileName = txidHashes[txidHash] && txidHashes[txidHash].fileName
         const txCurrencyCode = rawTx.currencyCode || currencyCode
         // Test if this is a Token transaction
@@ -150,7 +152,12 @@ export function makeCurrencyWalletCallbacks (
       // Dispatch new Tx's
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_TXS',
-        payload: { walletId, txs, filesMetadata: changedMetadata }
+        payload: {
+          walletId,
+          txs,
+          filesMetadata: changedMetadata,
+          txidHashes: liveTxidHashes
+        }
       })
 
       forEachListener(input, ({ onTransactionsChanged, onNewTransactions }) => {

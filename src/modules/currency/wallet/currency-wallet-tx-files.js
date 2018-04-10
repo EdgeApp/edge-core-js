@@ -222,7 +222,7 @@ export async function setCurrencyWalletTxMetadata (
   let oldFileName, latestVersion
 
   // Get the old file metadata:
-  const filesMetadata = input.props.selfState.filesMetadata
+  const filesMetadata = input.props.selfState.filesMetadata.metadata
   for (const fileName in filesMetadata) {
     const fileMetadata = filesMetadata[fileName]
     const { txidHash, creationDate: oldDate, version } = fileMetadata

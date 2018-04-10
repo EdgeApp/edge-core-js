@@ -45,6 +45,7 @@ export interface CurrencyWalletState {
   name: string | null;
   nameLoaded: boolean;
   walletInfo: EdgeWalletInfo;
+  txidHashes: { [txidHash: TxidHash]: boolean };
   txids: Array<string>;
   txs: { [txid: string]: Object };
 }
@@ -111,9 +112,12 @@ const currencyWalletReducer = buildReducer({
     return state
   },
 
-  filesMetadata (state = DefaultFilesMetadata, action: RootAction) {
-    const mergeMetadata = action => {
-      const { filesMetadata } = action.payload
+  filesMetadata (
+    state = DefaultFilesMetadata,
+    action: RootAction,
+    next: CurrencyWalletNext
+  ) {
+    const mergeMetadata = filesMetadata => {
       if (!Object.keys(filesMetadata).length) return state
       const { sortedTransactions, metadata } = state
       return {
@@ -124,13 +128,30 @@ const currencyWalletReducer = buildReducer({
 
     switch (action.type) {
       case 'CURRENCY_WALLET_FILES_METADATA_LOADED': {
-        return mergeMetadata(action)
+        return mergeMetadata(action.payload.filesMetadata)
       }
       case 'CURRENCY_ENGINE_CHANGED_TXS': {
-        return mergeMetadata(action)
+        return mergeMetadata(action.payload.filesMetadata)
       }
       case 'CURRENCY_WALLET_FILE_CHANGED': {
-        return mergeMetadata(action)
+        return mergeMetadata(action.payload.filesMetadata)
+      }
+      case 'CURRENCY_ENGINE_PROGGRESS_RATIO': {
+        if (action.payload.ratio === 1) {
+          const newFilesMetadata = {}
+          const { txidHashes } = next.self
+          const { metadata } = state
+          for (const fileName in metadata) {
+            const { txidHash, dropped } = metadata[fileName]
+            if (!txidHashes[txidHash] && !dropped) {
+              newFilesMetadata[fileName] = {
+                ...metadata[fileName],
+                dropped: true
+              }
+            }
+          }
+          return mergeMetadata(newFilesMetadata)
+        }
       }
     }
     return state
@@ -164,6 +185,14 @@ const currencyWalletReducer = buildReducer({
 
   nameLoaded (state = false, action: RootAction) {
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ? true : state
+  },
+
+  txidHashes (state = {}, action: RootAction) {
+    if (action.type === 'CURRENCY_ENGINE_CHANGED_TXS') {
+      const { txidHashes } = action.payload
+      return { ...state, ...txidHashes }
+    }
+    return state
   },
 
   txids: memoizeReducer(

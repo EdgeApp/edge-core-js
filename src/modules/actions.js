@@ -6,7 +6,10 @@ import type {
   EdgeTokenInfo,
   EdgeWalletInfo
 } from '../edge-core-index.js'
-import type { TxFilesMetadata } from '../modules/currency/wallet/currency-wallet-tx-files.js'
+import type {
+  TxFilesMetadata,
+  TxidHash
+} from '../modules/currency/wallet/currency-wallet-tx-files.js'
 
 /**
  * The account fires this when it loads its keys from disk.
@@ -34,6 +37,7 @@ export interface CurrencyEngineChangedTxs {
   type: 'CURRENCY_ENGINE_CHANGED_TXS';
   payload: {
     txs: Array<any>,
+    txidHashes: { [txidHash: TxidHash]: boolean },
     filesMetadata: TxFilesMetadata,
     walletId: string
   };
