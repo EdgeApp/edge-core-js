@@ -245,13 +245,12 @@ export function makeCurrencyWalletApi (
         currentPublicAddress = edgeFreshAddress.publicAddress
       }
 
-      let nativeAmount = spendInfo.nativeAmount
+      const nativeAmount = spendInfo.nativeAmount
       const quoteFor = spendInfo.quoteFor
       if (!quoteFor) {
         throw new Error('Need to define direction for quoteFor')
       }
       const destAmount = spendInfo.spendTargets[0].nativeAmount
-      console.log('core: spendInfo', spendInfo)
       /* console.log('core: destAmount', destAmount) */
       // here we are going to get multipliers
       const currencyInfos = ai.props.state.currency.infos
@@ -267,21 +266,20 @@ export function makeCurrencyWalletApi (
         destCurrencyCode
       )
 
-      if (destAmount) {
-        console.log(
-          'core: we got the dest , we got the dest , we got the dest. '
-        )
+      /* if (destAmount) {
         nativeAmount = destAmount
-      }
+      } */
       if (!nativeAmount) {
         throw new Error('Need to define a native amount')
       }
+      const nativeAmountForQuote = destAmount || nativeAmount
+
       const quoteData: SSExchangeQuote = await shapeshiftApi.getexactQuote(
         currentCurrencyCode,
         destCurrencyCode,
         currentPublicAddress,
         destPublicAddress,
-        nativeAmount,
+        nativeAmountForQuote,
         quoteFor,
         multiplierFrom,
         multiplierTo
@@ -290,9 +288,12 @@ export function makeCurrencyWalletApi (
         throw new Error('Did not get back successful quote')
       }
       const exchangeData = quoteData.success
+      const nativeAmountForSpend = destAmount
+        ? mul(exchangeData.depositAmount, multiplierFrom)
+        : nativeAmount
 
       const spendTarget: EdgeSpendTarget = {
-        nativeAmount: nativeAmount,
+        nativeAmount: nativeAmountForSpend,
         publicAddress: exchangeData.deposit
       }
 
