@@ -540,6 +540,7 @@ export type EdgeSpendInfo = {
   noUnconfirmed?: boolean,
   spendTargets: Array<EdgeSpendTarget>,
   nativeAmount?: string,
+  quoteFor?: string,
   networkFeeOption?: string,
   customNetworkFee?: any,
   metadata?: EdgeMetadata
@@ -641,6 +642,34 @@ export type EdgeDataDump = {
 export type EdgeReceiveAddress = EdgeFreshAddress & {
   metadata: EdgeMetadata,
   nativeAmount: string
+}
+
+export type EdgeCoinExchangeQuote = {
+  depositAmount: string,
+  depositAmountNative: string,
+  withdrawalAmount: string,
+  withdrawalAmountNative: string,
+  expiration: number,
+  quotedRate: string,
+  maxLimit: number,
+  orderId: string,
+  edgeTransacton: EdgeTransaction
+}
+
+export type SSExchangeQuote = {
+  success: {
+    pair: string,
+    withdrawal: string,
+    withdrawalAmount: string,
+    deposit: string,
+    depositAmount: string,
+    expiration: number,
+    quotedRate: string,
+    apiPubKey: string,
+    minerFee: string,
+    maxLimit: number,
+    orderId: string
+  }
 }
 
 // currency plugin types ----------------------------------------------

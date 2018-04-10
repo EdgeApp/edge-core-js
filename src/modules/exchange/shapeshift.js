@@ -1,7 +1,8 @@
 // @flow
 
-import { bns } from 'biggystring'
+import { div, mul } from 'biggystring'
 
+import type { SSExchangeQuote } from '../../edge-core-index'
 import { getCurrencyMultiplier } from '../currency/currency-selectors'
 import type { ApiInput } from '../root.js'
 
@@ -100,11 +101,12 @@ export function makeShapeshiftApi (ai: ApiInput) {
         tokenInfos,
         toCurrency
       )
+
       const swapInfo = {
         rate: json.rate,
-        minerFee: bns.mul(json.minerFee.toString(), multiplierTo),
-        nativeMax: bns.mul(json.limit, multiplierFrom),
-        nativeMin: bns.mul(json.minimum, multiplierFrom)
+        minerFee: mul(json.minerFee.toString(), multiplierTo),
+        nativeMax: mul(json.limit.toString(), multiplierFrom),
+        nativeMin: mul(json.minimum.toString(), multiplierFrom)
       }
       return swapInfo
     },
@@ -123,8 +125,34 @@ export function makeShapeshiftApi (ai: ApiInput) {
         returnAddress: addressFrom,
         apiKey
       }
-
       const replyJson: ShapeshiftReply = api.post('/shift', body)
+      return replyJson
+    },
+
+    async getexactQuote (
+      fromCurrency: string,
+      toCurrency: string,
+      addressFrom: string,
+      addressTo: string,
+      nativeAmount: string,
+      quoteFor: string,
+      multiplierFrom: string,
+      multiplierTo: string
+    ): Promise<SSExchangeQuote> {
+      if (!apiKey) throw new Error('No Shapeshift API key provided')
+
+      let body = {
+        withdrawal: addressTo,
+        pair: `${fromCurrency}_${toCurrency}`,
+        returnAddress: addressFrom,
+        apiKey
+      }
+      if (quoteFor === 'from') {
+        body = { ...body, depositAmount: div(nativeAmount, multiplierFrom, 16) }
+      } else {
+        body = { ...body, amount: div(nativeAmount, multiplierTo, 16) }
+      }
+      const replyJson: SSExchangeQuote = api.post('/sendamount', body)
       return replyJson
     }
   }
