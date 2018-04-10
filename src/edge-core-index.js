@@ -506,7 +506,7 @@ export type EdgeCurrencyWallet = {
     metadata: EdgeMetadata
   ): Promise<void>,
   getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
-
+  getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
   // Wallet management:
   resyncBlockchain(): Promise<void>,
   dumpData(): EdgeDataDump,
