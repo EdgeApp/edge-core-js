@@ -251,8 +251,10 @@ export function sortTxs (
   const newSortedTxidHashes = Object.keys(newTxidHashes)
     .filter(txidHash => !newTxidHashes[txidHash].dropped)
     .sort((txidHash1, txidHash2) => {
-      if (newTxidHashes[txidHash1] > newTxidHashes[txidHash2]) return -1
-      if (newTxidHashes[txidHash1] < newTxidHashes[txidHash2]) return 1
+      const date1 = newTxidHashes[txidHash1].creationDate
+      const date2 = newTxidHashes[txidHash2].creationDate
+      if (date1 > date2) return -1
+      if (date1 < date2) return 1
       return 0
     })
 

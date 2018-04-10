@@ -189,7 +189,7 @@ export function makeCurrencyWalletApi (
           const missingFiles = await loadTxFiles(input, missingFilesMetadata)
           Object.assign(files, missingFiles)
         } catch (e) {
-          input.props.onError(e)
+          console.log(e)
         }
       }
 

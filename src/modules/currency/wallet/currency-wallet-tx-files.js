@@ -92,7 +92,7 @@ export async function saveFilesMetadata (input: CurrencyWalletInput) {
   try {
     await file.setText(JSON.stringify(metadata))
   } catch (e) {
-    input.props.onError(e)
+    console.log(e)
   }
 }
 
@@ -116,7 +116,7 @@ export async function loadMetadataFile (
     const text = await file.getText()
     filesMetadata = JSON.parse(text)
   } catch (e) {
-    input.props.onError(e)
+    console.log(e)
   }
 
   const newFilesMetadata = {}
@@ -136,7 +136,7 @@ export async function loadMetadataFile (
       )
       Object.assign(newFilesMetadata, missingFilesMetadata)
     } catch (e) {
-      input.props.onError(e)
+      console.log(e)
     }
   }
 
@@ -146,7 +146,7 @@ export async function loadMetadataFile (
     try {
       await file.setText(JSON.stringify(filesMetadata))
     } catch (e) {
-      input.props.onError(e)
+      console.log(e)
     }
   }
 
@@ -242,7 +242,7 @@ export async function setCurrencyWalletTxMetadata (
       oldFile = await loadTxFiles(input, { [oldFileName]: oldFileMetadata })
       oldFile = oldFile[newTxidHash]
     } catch (e) {
-      input.props.onError(e)
+      console.log(e)
     }
   }
 
@@ -349,7 +349,7 @@ export function setupNewTxMetadata (
   })
 
   // Save the new file:
-  fileObject.setText(JSON.stringify(file)).catch(e => input.props.onError(e))
+  fileObject.setText(JSON.stringify(file)).catch(e => console.log(e))
 
   return file
 }
