@@ -46,7 +46,7 @@
   "dependencies": {
     "aes-js": "^3.1.0",
     "base-x": "^1.0.4",
-    "biggystring": "^1.0.7",
+    "biggystring": "^3.0.1",
     "currency-codes": "^1.1.2",
     "detect-bundler": "^1.0.0",
     "disklet": "^0.2.2",

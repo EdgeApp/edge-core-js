@@ -872,9 +872,9 @@ big.js@^3.1.3:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/big.js/-/big.js-3.2.0.tgz#a5fc298b81b9e0dca2e458824784b65c52ba588e"
 
-biggystring@^1.0.7:
-  version "1.1.10"
-  resolved "https://registry.yarnpkg.com/biggystring/-/biggystring-1.1.10.tgz#90cd3410802699b2605c443f6f13c52259a3cc61"
+biggystring@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/biggystring/-/biggystring-3.0.1.tgz#7ba82b7d0cca3331beeeb9d252cb44e2c74068e9"
   dependencies:
     bn.js "^4.11.7"
 
