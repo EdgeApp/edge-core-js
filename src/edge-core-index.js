@@ -601,6 +601,7 @@ export type EdgeParsedUri = {
   token?: EdgeTokenInfo,
   privateKey?: string,
   publicAddress?: string,
+  legacyAddress?: string,
   segwitAddress?: string,
   nativeAmount?: string,
   currencyCode?: string,
