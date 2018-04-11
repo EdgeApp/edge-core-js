@@ -645,31 +645,13 @@ export type EdgeReceiveAddress = EdgeFreshAddress & {
 }
 
 export type EdgeCoinExchangeQuote = {
-  depositAmount: string,
   depositAmountNative: string,
-  withdrawalAmount: string,
   withdrawalAmountNative: string,
-  expiration: number,
+  expiration: number, // this is in milliseconds since 1970/ it is a date.
   quotedRate: string,
   maxLimit: number,
   orderId: string,
   edgeTransacton: EdgeTransaction
-}
-
-export type SSExchangeQuote = {
-  success: {
-    pair: string,
-    withdrawal: string,
-    withdrawalAmount: string,
-    deposit: string,
-    depositAmount: string,
-    expiration: number,
-    quotedRate: string,
-    apiPubKey: string,
-    minerFee: string,
-    maxLimit: number,
-    orderId: string
-  }
 }
 
 // currency plugin types ----------------------------------------------

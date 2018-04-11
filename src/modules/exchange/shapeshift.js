@@ -2,7 +2,6 @@
 
 import { div, mul } from 'biggystring'
 
-import type { SSExchangeQuote } from '../../edge-core-index'
 import { getCurrencyMultiplier } from '../currency/currency-selectors'
 import type { ApiInput } from '../root.js'
 
@@ -13,6 +12,21 @@ export interface ShapeshiftReply {
   depositType: string;
   withdrawal: string;
   withdrawalType: string;
+}
+export type ShapeShiftExactQuoteReply = {
+  success: {
+    pair: string,
+    withdrawal: string,
+    withdrawalAmount: string,
+    deposit: string,
+    depositAmount: string,
+    expiration: number,
+    quotedRate: string,
+    apiPubKey: string,
+    minerFee: string,
+    maxLimit: number,
+    orderId: string
+  }
 }
 
 export function makeShapeshiftApi (ai: ApiInput) {
@@ -138,7 +152,7 @@ export function makeShapeshiftApi (ai: ApiInput) {
       quoteFor: string,
       multiplierFrom: string,
       multiplierTo: string
-    ): Promise<SSExchangeQuote> {
+    ): Promise<ShapeShiftExactQuoteReply> {
       if (!apiKey) throw new Error('No Shapeshift API key provided')
 
       let body = {
@@ -152,7 +166,7 @@ export function makeShapeshiftApi (ai: ApiInput) {
       } else {
         body = { ...body, amount: div(nativeAmount, multiplierTo, 16) }
       }
-      const replyJson: SSExchangeQuote = api.post('/sendamount', body)
+      const replyJson: ShapeShiftExactQuoteReply = api.post('/sendamount', body)
       return replyJson
     }
   }

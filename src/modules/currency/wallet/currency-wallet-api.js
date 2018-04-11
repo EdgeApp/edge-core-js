@@ -14,14 +14,14 @@ import type {
   EdgeSpendInfo,
   EdgeSpendTarget,
   EdgeTokenInfo,
-  EdgeTransaction,
-  SSExchangeQuote
+  EdgeTransaction
 } from '../../../edge-core-index.js'
 import { SameCurrencyError } from '../../../error.js'
 import { wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { getCurrencyMultiplier } from '../../currency/currency-selectors'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
+import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storageApi.js'
 import {
@@ -274,7 +274,7 @@ export function makeCurrencyWalletApi (
       }
       const nativeAmountForQuote = destAmount || nativeAmount
 
-      const quoteData: SSExchangeQuote = await shapeshiftApi.getexactQuote(
+      const quoteData: ShapeShiftExactQuoteReply = await shapeshiftApi.getexactQuote(
         currentCurrencyCode,
         destCurrencyCode,
         currentPublicAddress,
@@ -306,9 +306,7 @@ export function makeCurrencyWalletApi (
       tx.otherParams = tx.otherParams || {}
       tx.otherParams.exchangeData = exchangeData
       const edgeCoinExchangeQuote: EdgeCoinExchangeQuote = {
-        depositAmount: exchangeData.depositAmount,
         depositAmountNative: mul(exchangeData.depositAmount, multiplierFrom),
-        withdrawalAmount: exchangeData.withdrawalAmount,
         withdrawalAmountNative: mul(
           exchangeData.withdrawalAmount,
           multiplierTo

@@ -121,6 +121,6 @@ export function SameCurrencyError (
   message = 'Wallets can not be the same currency'
 ) {
   const e = new Error(message)
-  e.name = e.type = errorNames.SameCurrencyError
+  e.name = errorNames.SameCurrencyError
   return e
 }
