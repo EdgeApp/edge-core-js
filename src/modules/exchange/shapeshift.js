@@ -1,6 +1,6 @@
 // @flow
 
-import { bns } from 'biggystring'
+import { div, mul } from 'biggystring'
 
 import { getCurrencyMultiplier } from '../currency/currency-selectors'
 import type { ApiInput } from '../root.js'
@@ -12,6 +12,21 @@ export interface ShapeshiftReply {
   depositType: string;
   withdrawal: string;
   withdrawalType: string;
+}
+export type ShapeShiftExactQuoteReply = {
+  success: {
+    pair: string,
+    withdrawal: string,
+    withdrawalAmount: string,
+    deposit: string,
+    depositAmount: string,
+    expiration: number,
+    quotedRate: string,
+    apiPubKey: string,
+    minerFee: string,
+    maxLimit: number,
+    orderId: string
+  }
 }
 
 export function makeShapeshiftApi (ai: ApiInput) {
@@ -100,11 +115,12 @@ export function makeShapeshiftApi (ai: ApiInput) {
         tokenInfos,
         toCurrency
       )
+
       const swapInfo = {
         rate: json.rate,
-        minerFee: bns.mul(json.minerFee.toString(), multiplierTo),
-        nativeMax: bns.mulf(json.limit, multiplierFrom),
-        nativeMin: bns.mulf(json.minimum, multiplierFrom)
+        minerFee: mul(json.minerFee.toString(), multiplierTo),
+        nativeMax: mul(json.limit.toString(), multiplierFrom),
+        nativeMin: mul(json.minimum.toString(), multiplierFrom)
       }
       return swapInfo
     },
@@ -123,8 +139,34 @@ export function makeShapeshiftApi (ai: ApiInput) {
         returnAddress: addressFrom,
         apiKey
       }
-
       const replyJson: ShapeshiftReply = api.post('/shift', body)
+      return replyJson
+    },
+
+    async getexactQuote (
+      fromCurrency: string,
+      toCurrency: string,
+      addressFrom: string,
+      addressTo: string,
+      nativeAmount: string,
+      quoteFor: string,
+      multiplierFrom: string,
+      multiplierTo: string
+    ): Promise<ShapeShiftExactQuoteReply> {
+      if (!apiKey) throw new Error('No Shapeshift API key provided')
+
+      let body = {
+        withdrawal: addressTo,
+        pair: `${fromCurrency}_${toCurrency}`,
+        returnAddress: addressFrom,
+        apiKey
+      }
+      if (quoteFor === 'from') {
+        body = { ...body, depositAmount: div(nativeAmount, multiplierFrom, 16) }
+      } else {
+        body = { ...body, amount: div(nativeAmount, multiplierTo, 16) }
+      }
+      const replyJson: ShapeShiftExactQuoteReply = api.post('/sendamount', body)
       return replyJson
     }
   }

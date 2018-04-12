@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.7.0
+
+* Support Shapeshift precise transactions
+
 ## 0.6.7
 
 * Do not report transactions that have been dropped

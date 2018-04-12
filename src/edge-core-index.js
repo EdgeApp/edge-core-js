@@ -506,7 +506,7 @@ export type EdgeCurrencyWallet = {
     metadata: EdgeMetadata
   ): Promise<void>,
   getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
-
+  getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
   // Wallet management:
   resyncBlockchain(): Promise<void>,
   dumpData(): EdgeDataDump,
@@ -540,6 +540,7 @@ export type EdgeSpendInfo = {
   noUnconfirmed?: boolean,
   spendTargets: Array<EdgeSpendTarget>,
   nativeAmount?: string,
+  quoteFor?: string,
   networkFeeOption?: string,
   customNetworkFee?: any,
   metadata?: EdgeMetadata
@@ -642,6 +643,16 @@ export type EdgeDataDump = {
 export type EdgeReceiveAddress = EdgeFreshAddress & {
   metadata: EdgeMetadata,
   nativeAmount: string
+}
+
+export type EdgeCoinExchangeQuote = {
+  depositAmountNative: string,
+  withdrawalAmountNative: string,
+  expiration: number, // this is in milliseconds since 1970/ it is a date.
+  quotedRate: string,
+  maxLimit: number,
+  orderId: string,
+  edgeTransacton: EdgeTransaction
 }
 
 // currency plugin types ----------------------------------------------
