@@ -1,6 +1,6 @@
 // @flow
 
-import { bns } from 'biggystring'
+import { mul } from 'biggystring'
 
 import { getCurrencyMultiplier } from '../currency/currency-selectors'
 import type { ApiInput } from '../root.js'
@@ -102,9 +102,9 @@ export function makeShapeshiftApi (ai: ApiInput) {
       )
       const swapInfo = {
         rate: json.rate,
-        minerFee: bns.mul(json.minerFee.toString(), multiplierTo),
-        nativeMax: bns.mulf(json.limit, multiplierFrom),
-        nativeMin: bns.mulf(json.minimum, multiplierFrom)
+        minerFee: mul(json.minerFee.toString(), multiplierTo),
+        nativeMax: mul(json.limit.toString(), multiplierFrom),
+        nativeMin: mul(json.minimum.toString(), multiplierFrom)
       }
       return swapInfo
     },
