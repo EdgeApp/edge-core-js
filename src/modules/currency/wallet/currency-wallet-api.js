@@ -1,8 +1,9 @@
 // @flow
 
-import { add, div, lte, sub } from 'biggystring'
+import { add, div, lte, mul, sub } from 'biggystring'
 
 import type {
+  EdgeCoinExchangeQuote,
   EdgeCurrencyEngine,
   EdgeCurrencyPlugin,
   EdgeCurrencyWallet,
@@ -15,9 +16,12 @@ import type {
   EdgeTokenInfo,
   EdgeTransaction
 } from '../../../edge-core-index.js'
+import { SameCurrencyError } from '../../../error.js'
 import { wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
+import { getCurrencyMultiplier } from '../../currency/currency-selectors'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
+import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storageApi.js'
 import {
@@ -207,70 +211,113 @@ export function makeCurrencyWalletApi (
     },
 
     async makeSpend (spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-      if (spendInfo.spendTargets[0].destWallet) {
-        const destWallet = spendInfo.spendTargets[0].destWallet
-        const currentCurrencyCode = spendInfo.currencyCode
-          ? spendInfo.currencyCode
-          : plugin.currencyInfo.currencyCode
-        const destCurrencyCode = spendInfo.spendTargets[0].currencyCode
-          ? spendInfo.spendTargets[0].currencyCode
-          : destWallet.currencyInfo.currencyCode
-        if (destCurrencyCode !== currentCurrencyCode) {
-          const edgeFreshAddress = engine.getFreshAddress()
-          const edgeReceiveAddress = await destWallet.getReceiveAddress()
+      return engine.makeSpend(spendInfo)
+    },
 
-          let destPublicAddress
-          if (edgeReceiveAddress.legacyAddress) {
-            destPublicAddress = edgeReceiveAddress.legacyAddress
-          } else {
-            destPublicAddress = edgeReceiveAddress.publicAddress
-          }
+    async getQuote (spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote> {
+      const destWallet = spendInfo.spendTargets[0].destWallet
+      if (!destWallet) {
+        throw new SameCurrencyError()
+      }
+      const currentCurrencyCode = spendInfo.currencyCode
+        ? spendInfo.currencyCode
+        : plugin.currencyInfo.currencyCode
+      const destCurrencyCode = spendInfo.spendTargets[0].currencyCode
+        ? spendInfo.spendTargets[0].currencyCode
+        : destWallet.currencyInfo.currencyCode
+      if (destCurrencyCode === currentCurrencyCode) {
+        throw new SameCurrencyError()
+      }
+      const edgeFreshAddress = engine.getFreshAddress()
+      const edgeReceiveAddress = await destWallet.getReceiveAddress()
 
-          let currentPublicAddress
-          if (edgeFreshAddress.legacyAddress) {
-            currentPublicAddress = edgeFreshAddress.legacyAddress
-          } else {
-            currentPublicAddress = edgeFreshAddress.publicAddress
-          }
-          const exchangeData = await shapeshiftApi.getSwapAddress(
-            currentCurrencyCode,
-            destCurrencyCode,
-            currentPublicAddress,
-            destPublicAddress
-          )
-
-          let nativeAmount = spendInfo.nativeAmount
-          const destAmount = spendInfo.spendTargets[0].nativeAmount
-
-          if (destAmount) {
-            const rate = await shapeshiftApi.getExchangeSwapRate(
-              currentCurrencyCode,
-              destCurrencyCode
-            )
-            nativeAmount = div(destAmount, rate.toString())
-          }
-
-          const spendTarget: EdgeSpendTarget = {
-            nativeAmount: nativeAmount,
-            publicAddress: exchangeData.deposit
-          }
-
-          const exchangeSpendInfo: EdgeSpendInfo = {
-            networkFeeOption: spendInfo.networkFeeOption,
-            currencyCode: spendInfo.currencyCode,
-            spendTargets: [spendTarget]
-          }
-
-          const tx = await engine.makeSpend(exchangeSpendInfo)
-
-          tx.otherParams = tx.otherParams || {}
-          tx.otherParams.exchangeData = exchangeData
-          return tx
-        }
-        // transfer same currency from one wallet to another
+      let destPublicAddress
+      if (edgeReceiveAddress.legacyAddress) {
+        destPublicAddress = edgeReceiveAddress.legacyAddress
+      } else {
+        destPublicAddress = edgeReceiveAddress.publicAddress
       }
 
-      return engine.makeSpend(spendInfo)
+      let currentPublicAddress
+      if (edgeFreshAddress.legacyAddress) {
+        currentPublicAddress = edgeFreshAddress.legacyAddress
+      } else {
+        currentPublicAddress = edgeFreshAddress.publicAddress
+      }
+
+      const nativeAmount = spendInfo.nativeAmount
+      const quoteFor = spendInfo.quoteFor
+      if (!quoteFor) {
+        throw new Error('Need to define direction for quoteFor')
+      }
+      const destAmount = spendInfo.spendTargets[0].nativeAmount
+      /* console.log('core: destAmount', destAmount) */
+      // here we are going to get multipliers
+      const currencyInfos = ai.props.state.currency.infos
+      const tokenInfos = ai.props.state.currency.customTokens
+      const multiplierFrom = getCurrencyMultiplier(
+        currencyInfos,
+        tokenInfos,
+        currentCurrencyCode
+      )
+      const multiplierTo = getCurrencyMultiplier(
+        currencyInfos,
+        tokenInfos,
+        destCurrencyCode
+      )
+
+      /* if (destAmount) {
+        nativeAmount = destAmount
+      } */
+      if (!nativeAmount) {
+        throw new Error('Need to define a native amount')
+      }
+      const nativeAmountForQuote = destAmount || nativeAmount
+
+      const quoteData: ShapeShiftExactQuoteReply = await shapeshiftApi.getexactQuote(
+        currentCurrencyCode,
+        destCurrencyCode,
+        currentPublicAddress,
+        destPublicAddress,
+        nativeAmountForQuote,
+        quoteFor,
+        multiplierFrom,
+        multiplierTo
+      )
+      if (!quoteData.success) {
+        throw new Error('Did not get back successful quote')
+      }
+      const exchangeData = quoteData.success
+      const nativeAmountForSpend = destAmount
+        ? mul(exchangeData.depositAmount, multiplierFrom)
+        : nativeAmount
+
+      const spendTarget: EdgeSpendTarget = {
+        nativeAmount: nativeAmountForSpend,
+        publicAddress: exchangeData.deposit
+      }
+
+      const exchangeSpendInfo: EdgeSpendInfo = {
+        // networkFeeOption: spendInfo.networkFeeOption,
+        currencyCode: spendInfo.currencyCode,
+        spendTargets: [spendTarget]
+      }
+      const tx = await engine.makeSpend(exchangeSpendInfo)
+      tx.otherParams = tx.otherParams || {}
+      tx.otherParams.exchangeData = exchangeData
+      const edgeCoinExchangeQuote: EdgeCoinExchangeQuote = {
+        depositAmountNative: mul(exchangeData.depositAmount, multiplierFrom),
+        withdrawalAmountNative: mul(
+          exchangeData.withdrawalAmount,
+          multiplierTo
+        ),
+        expiration: exchangeData.expiration,
+        quotedRate: exchangeData.quotedRate,
+        maxLimit: exchangeData.maxLimit,
+        orderId: exchangeData.orderId,
+        edgeTransacton: tx
+      }
+      return edgeCoinExchangeQuote
     },
 
     signTx (tx: EdgeTransaction): Promise<EdgeTransaction> {

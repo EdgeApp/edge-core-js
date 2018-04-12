@@ -19,7 +19,8 @@ export const errorNames = {
   ObsoleteApiError: 'ObsoleteApiError',
   OtpError: 'OtpError',
   PasswordError: 'PasswordError',
-  UsernameError: 'UsernameError'
+  UsernameError: 'UsernameError',
+  SameCurrencyError: 'SameCurrencyError'
 }
 
 /**
@@ -110,5 +111,16 @@ export function PasswordError (resultsJson = {}, message = 'Invalid password') {
 export function UsernameError (message = 'Invalid username') {
   const e = new Error(message)
   e.name = e.type = errorNames.UsernameError
+  return e
+}
+
+/**
+ * Attempting to shape shift between two wallets of same currency.
+ */
+export function SameCurrencyError (
+  message = 'Wallets can not be the same currency'
+) {
+  const e = new Error(message)
+  e.name = errorNames.SameCurrencyError
   return e
 }
