@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.7.1
+
+* Fix Edge login race conditions.
+
 ## 0.7.0
 
 * Support Shapeshift precise transactions

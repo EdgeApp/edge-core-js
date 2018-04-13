@@ -51,6 +51,7 @@ async function approveLoginRequest (
   accountState: any
 ): Promise<void> {
   // Ensure that the login object & account repo exist:
+  await accountState.syncLogin()
   const loginTree = await ensureAccountExists(ai, accountState.loginTree, appId)
   const requestedLogin = findAppLogin(loginTree, appId)
   if (!requestedLogin) {
