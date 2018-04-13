@@ -4,7 +4,7 @@ import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { makeLobby } from './lobby.js'
 import type { LoginTree } from './login-types.js'
-import { makeLoginTree, searchTree } from './login.js'
+import { makeLoginTree, searchTree, syncLogin } from './login.js'
 
 /**
  * The public API for edge login requests.
@@ -49,7 +49,13 @@ function onReply (ai: ApiInput, subscription, reply, appId, opts) {
   const loginKey = base64.parse(reply.loginKey)
   const loginTree = makeLoginTree(stashTree, loginKey, appId)
   if (opts.onLogin != null) {
-    opts.onLogin(void 0, loginTree)
+    const login = searchTree(loginTree, login => login.appId === appId)
+    if (login == null) {
+      throw new Error(`Cannot find requested appId: "${appId}"`)
+    }
+    syncLogin(ai, loginTree, login).then(loginTree => {
+      opts.onLogin(void 0, loginTree)
+    })
   }
 }
 
