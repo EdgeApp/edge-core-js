@@ -24,6 +24,10 @@ export function scrypt (
       if (key) return resolve(key)
     }
 
-    scryptJs(data, salt, n, r, p, dklen, callback)
+    // The scrypt library will crash if it gets a Uint8Array > 64 bytes:
+    const copy = []
+    for (let i = 0; i < data.length; ++i) copy[i] = data[i]
+
+    scryptJs(copy, salt, n, r, p, dklen, callback)
   })
 }
