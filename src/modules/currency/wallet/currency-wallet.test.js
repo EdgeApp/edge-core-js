@@ -106,20 +106,39 @@ describe('currency wallets', function () {
       store.dispatch({ type: 'SET_TXS', payload: txState })
       log.assert(['new a', 'new b'])
 
-      // Should not trigger:
-      store.dispatch({ type: 'SET_TXS', payload: txState })
-      log.assert([])
+      return setTimeout(() => {
+        // Should not trigger:
+        store.dispatch({ type: 'SET_TXS', payload: txState })
+        log.assert([])
 
-      // Changed transactions:
-      txState = [
-        ...txState,
-        { txid: 'a', nativeAmount: '2' },
-        { txid: 'c', nativeAmount: '200' }
-      ]
-      store.dispatch({ type: 'SET_TXS', payload: txState })
-      log.assert(['changed a', 'new c'])
+        return setTimeout(() => {
+          // Changed transactions:
+          txState = [
+            ...txState,
+            { txid: 'a', nativeAmount: '2' },
+            { txid: 'c', nativeAmount: '200' }
+          ]
+          store.dispatch({ type: 'SET_TXS', payload: txState })
+          log.assert(['changed a', 'new c'])
 
-      return null
+          return setTimeout(() => {
+            txState = [{ txid: 'd', nativeAmount: '200' }]
+            store.dispatch({ type: 'SET_TXS', payload: txState })
+            log.assert(['new d'])
+
+            // Make several changes in a row which should get batched into one call due to throttling
+            txState = [{ txid: 'e', nativeAmount: '200' }]
+            store.dispatch({ type: 'SET_TXS', payload: txState })
+            txState = [{ txid: 'f', nativeAmount: '200' }]
+            store.dispatch({ type: 'SET_TXS', payload: txState })
+            txState = [{ txid: 'g', nativeAmount: '200' }]
+            store.dispatch({ type: 'SET_TXS', payload: txState })
+            setTimeout(() => {
+              log.assert(['new e', 'new f', 'new g'])
+            }, 251)
+          }, 251)
+        }, 251)
+      }, 251)
     })
   })
 
