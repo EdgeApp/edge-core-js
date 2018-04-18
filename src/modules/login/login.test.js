@@ -164,11 +164,12 @@ describe('password', function () {
   it('change', async function () {
     this.timeout(15000)
     const [context, remote] = makeFakeContexts(contextOptions, contextOptions)
+    const longPassword = '0123456789'.repeat(10)
 
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    await account.changePassword('Test1234')
+    await account.changePassword(longPassword)
 
-    return remote.loginWithPassword(fakeUser.username, 'Test1234')
+    return remote.loginWithPassword(fakeUser.username, longPassword)
   })
 
   it('check good', async function () {

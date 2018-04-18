@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.7.2
+
+* Do not crash on really long passwords when running in the web.
+
 ## 0.7.1
 
 * Fix Edge login race conditions.
