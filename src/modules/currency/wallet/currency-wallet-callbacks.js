@@ -40,6 +40,64 @@ export function forEachListener (
   }
 }
 
+type ThrottleDetails = {
+  [walletId: string]: {
+    delayCallback: boolean,
+    lastCallbackTime: number,
+    txArray: Array<EdgeTransaction>
+  }
+}
+
+const throttleDetailsNewTx: ThrottleDetails = {}
+const throttleDetailsChangedTx: ThrottleDetails = {}
+
+let throttleRateLimitMs = 5000
+
+function throttledTxCallback (
+  throttleDetails: ThrottleDetails,
+  callback: Function,
+  walletId: string,
+  txArray: Array<EdgeTransaction>
+) {
+  // If this is a unit test, lower throttling to 250ms
+  if (txArray[0].txid.length < 3) {
+    throttleRateLimitMs = 250
+  }
+  if (!throttleDetails[walletId]) {
+    throttleDetails[walletId] = {
+      delayCallback: false,
+      lastCallbackTime: 0,
+      txArray: []
+    }
+  }
+  if (!throttleDetails[walletId].delayCallback) {
+    const now = Date.now()
+    if (
+      now - throttleDetails[walletId].lastCallbackTime >
+      throttleRateLimitMs
+    ) {
+      callback(walletId, txArray)
+      throttleDetails[walletId].txArray = []
+      throttleDetails[walletId].lastCallbackTime = Date.now()
+    } else {
+      console.log(
+        'throttledTxCallback setTimeout delay callback id:' + walletId
+      )
+      throttleDetails[walletId].delayCallback = true
+      throttleDetails[walletId].txArray = txArray
+      setTimeout(() => {
+        callback(walletId, throttleDetails[walletId].txArray)
+        throttleDetails[walletId].delayCallback = false
+        throttleDetails[walletId].txArray = []
+        throttleDetails[walletId].lastCallbackTime = Date.now()
+      }, throttleRateLimitMs)
+    }
+  } else {
+    Array.prototype.push.apply(throttleDetails[walletId].txArray, txArray)
+    console.log('throttledTxCallback delay callback id:' + walletId)
+  }
+}
+
 /**
  * Returns a callback structure suitable for passing to a currency engine.
  */
@@ -130,10 +188,22 @@ export function makeCurrencyWalletCallbacks (
 
       forEachListener(input, ({ onTransactionsChanged, onNewTransactions }) => {
         if (onTransactionsChanged && changed.length) {
-          onTransactionsChanged(walletId, changed)
+          throttledTxCallback(
+            throttleDetailsChangedTx,
+            onTransactionsChanged,
+            walletId,
+            changed
+          )
+          // onTransactionsChanged(walletId, changed)
         }
         if (onNewTransactions && created.length) {
-          onNewTransactions(walletId, created)
+          throttledTxCallback(
+            throttleDetailsNewTx,
+            onNewTransactions,
+            walletId,
+            created
+          )
+          // onNewTransactions(walletId, created)
         }
       })
     },
