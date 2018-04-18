@@ -154,7 +154,7 @@ export function makeCurrencyWalletApi (
         }
       }
       const slicedTransactions = slice
-        ? sortedTransactions.slice(numIndex, numEntries)
+        ? sortedTransactions.slice(numIndex, numIndex + numEntries)
         : sortedTransactions
       const missingTxIdHashes = slicedTransactions.filter(
         txidHash => !files[txidHash]
