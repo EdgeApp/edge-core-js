@@ -514,7 +514,10 @@ export type EdgeCurrencyWallet = {
   signTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
   saveTx(tx: EdgeTransaction): Promise<void>,
-  sweepPrivateKey(keyUri: string): Promise<void>,
+  sweepPrivateKeys(
+    edgeSpendInfo: EdgeSpendInfo,
+    options?: any
+  ): Promise<EdgeTransaction>,
   saveTxMetadata(
     txid: string,
     currencyCode: string,
@@ -558,6 +561,7 @@ export type EdgeSpendTarget = {
 export type EdgeSpendInfo = {
   currencyCode?: string,
   noUnconfirmed?: boolean,
+  privateKeys?: Array<string>,
   spendTargets: Array<EdgeSpendTarget>,
   nativeAmount?: string,
   quoteFor?: string,
@@ -619,7 +623,7 @@ export type EdgeCurrencyInfo = {
 
 export type EdgeParsedUri = {
   token?: EdgeTokenInfo,
-  privateKey?: string,
+  privateKeys?: Array<string>,
   publicAddress?: string,
   legacyAddress?: string,
   segwitAddress?: string,
@@ -709,6 +713,7 @@ export type EdgeCurrencyEngine = {
   addGapLimitAddresses(addresses: Array<string>, options: any): void,
   isAddressUsed(address: string, options: any): boolean,
   makeSpend(abcSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
+  sweepPrivateKeys?: (abcSpendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
   signTx(abcTransaction: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(abcTransaction: EdgeTransaction): Promise<EdgeTransaction>,
   saveTx(abcTransaction: EdgeTransaction): Promise<void>,

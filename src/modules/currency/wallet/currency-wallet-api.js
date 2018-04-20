@@ -263,6 +263,15 @@ export function makeCurrencyWalletApi (
       return engine.makeSpend(spendInfo)
     },
 
+    async sweepPrivateKeys (spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+      if (!engine.sweepPrivateKeys) {
+        return Promise.reject(
+          new Error('Sweeping this currency is not supported.')
+        )
+      }
+      return engine.sweepPrivateKeys(spendInfo)
+    },
+
     async getQuote (spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote> {
       const destWallet = spendInfo.spendTargets[0].destWallet
       if (!destWallet) {
@@ -451,10 +460,6 @@ export function makeCurrencyWalletApi (
       }
 
       return getMax('0', add(balance, '1'))
-    },
-
-    sweepPrivateKey (keyUri: string): Promise<void> {
-      return Promise.resolve()
     },
 
     '@parseUri': { sync: true },
