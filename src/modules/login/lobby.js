@@ -63,33 +63,6 @@ export function encryptLobbyReply (io: any, pubkey: Uint8Array, replyData: {}) {
   }
 }
 
-function scheduleLobbyPoll (watcher) {
-  if (!watcher.done) {
-    watcher.timeout = setTimeout(() => pollLobby(watcher), watcher.period)
-  }
-}
-
-function pollLobby (watcher) {
-  const { ai, lobbyId, keypair, onReply, onError } = watcher
-
-  return authRequest(ai, 'GET', '/v2/lobby/' + lobbyId, {})
-    .then(reply => {
-      while (watcher.replyCount < reply.replies.length) {
-        const lobbyReply = reply.replies[watcher.replyCount]
-        if (onReply) {
-          onReply(decryptLobbyReply(keypair, lobbyReply))
-        }
-        ++watcher.replyCount
-      }
-      return watcher
-    })
-    .then(scheduleLobbyPoll)
-    .catch(e => {
-      if (onError) onError(e)
-      return watcher
-    })
-}
-
 /**
  * Approximates the proposed ES `Observable` interface,
  * allowing clients to subscribe to lobby reply messages.
@@ -103,6 +76,7 @@ class ObservableLobby {
   onReply: (reply: Object) => void
   period: number
   replyCount: number
+  timeout: number
 
   constructor (ai: ApiInput, lobbyId: string, keypair) {
     this.ai = ai
@@ -128,6 +102,30 @@ class ObservableLobby {
     }
     return subscription
   }
+}
+
+function pollLobby (watcher: ObservableLobby) {
+  const { ai, lobbyId, keypair, onReply, onError } = watcher
+
+  return authRequest(ai, 'GET', '/v2/lobby/' + lobbyId, {})
+    .then(reply => {
+      // Process any new replies that have arrived on the server:
+      while (watcher.replyCount < reply.replies.length) {
+        const lobbyReply = reply.replies[watcher.replyCount]
+        if (onReply) {
+          onReply(decryptLobbyReply(keypair, lobbyReply))
+        }
+        ++watcher.replyCount
+      }
+
+      // Schedule another poll:
+      if (!watcher.done) {
+        watcher.timeout = setTimeout(() => pollLobby(watcher), watcher.period)
+      }
+    })
+    .catch(e => {
+      if (onError) onError(e)
+    })
 }
 
 /**
