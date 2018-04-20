@@ -41,12 +41,81 @@ export function forEachListener (
 }
 
 /**
+ * Wraps a transaction-accepting callback with throttling logic.
+ * Returns a function that can be called at high frequency, and batches its
+ * inputs to only call the real callback every 5 seconds.
+ */
+function makeThrottledTxCallback (
+  input: CurrencyWalletInput,
+  callback: (txArray: Array<EdgeTransaction>) => mixed
+) {
+  const walletId = input.props.id
+  const { console } = input.props.io
+
+  let delayCallback = false
+  let lastCallbackTime = 0
+  let throttleRateLimitMs = 5000
+  let pendingTxs: Array<EdgeTransaction> = []
+
+  return (txArray: Array<EdgeTransaction>) => {
+    // If this is a unit test, lower throttling to 200ms
+    if (txArray[0].txid.length < 3) {
+      throttleRateLimitMs = 200
+    }
+    if (delayCallback) {
+      console.info(`throttledTxCallback delay, walletId: ${walletId}`)
+      pendingTxs.push(...txArray)
+    } else {
+      const now = Date.now()
+      if (now - lastCallbackTime > throttleRateLimitMs) {
+        lastCallbackTime = now
+        callback(txArray)
+      } else {
+        console.info(
+          console.info(`throttledTxCallback delay, walletId: ${walletId}`)
+        )
+        delayCallback = true
+        pendingTxs = txArray
+        setTimeout(() => {
+          lastCallbackTime = Date.now()
+          callback(pendingTxs)
+          delayCallback = false
+          pendingTxs = []
+        }, throttleRateLimitMs)
+      }
+    }
+  }
+}
+
+/**
  * Returns a callback structure suitable for passing to a currency engine.
  */
 export function makeCurrencyWalletCallbacks (
   input: CurrencyWalletInput
 ): EdgeCurrencyEngineCallbacks {
   const walletId = input.props.id
+
+  const throtteldOnTxChanged = makeThrottledTxCallback(
+    input,
+    (txArray: Array<EdgeTransaction>) => {
+      forEachListener(input, ({ onTransactionsChanged }) => {
+        if (onTransactionsChanged) {
+          onTransactionsChanged(walletId, txArray)
+        }
+      })
+    }
+  )
+
+  const throttledOnNewTx = makeThrottledTxCallback(
+    input,
+    (txArray: Array<EdgeTransaction>) => {
+      forEachListener(input, ({ onNewTransactions }) => {
+        if (onNewTransactions) {
+          onNewTransactions(walletId, txArray)
+        }
+      })
+    }
+  )
 
   return {
     onAddressesChecked (ratio: number) {
@@ -160,14 +229,9 @@ export function makeCurrencyWalletCallbacks (
         }
       })
 
-      forEachListener(input, ({ onTransactionsChanged, onNewTransactions }) => {
-        if (onTransactionsChanged && changed.length) {
-          onTransactionsChanged(walletId, changed)
-        }
-        if (onNewTransactions && created.length) {
-          onNewTransactions(walletId, created)
-        }
-      })
+      // Call the callbacks:
+      if (changed.length) throtteldOnTxChanged(changed)
+      if (created.length) throttledOnNewTx(created)
     },
 
     onTxidsChanged () {}

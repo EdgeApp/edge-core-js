@@ -321,7 +321,7 @@ export function syncLogin (
   ai: ApiInput,
   loginTree: LoginTree,
   login: LoginTree
-) {
+): Promise<LoginTree> {
   const { loginStore } = ai.props
   return loginStore.load(loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
