@@ -407,27 +407,7 @@ export type EdgeAccount = {
   createCurrencyWallet(
     type: string,
     opts?: EdgeCreateCurrencyWalletOptions
-  ): Promise<EdgeCurrencyWallet>,
-
-  // Deprecated stuff (will be deleted soon):
-  +otpEnabled: boolean,
-  cancelOtpResetRequest(): Promise<void>,
-  changeKeyStates(walletStates: EdgeWalletStates): Promise<void>,
-  changePIN(password: string): Promise<void>,
-  getFirstWallet(type: string): ?EdgeWalletInfo,
-  getWallet(id: string): EdgeWalletInfo,
-  isLoggedIn(): boolean,
-  passwordOk(password: string): Promise<boolean>,
-  passwordSetup(password: string): Promise<void>,
-  pinSetup(password: string): Promise<void>,
-  recovery2Set(
-    questions: Array<string>,
-    answers: Array<string>
-  ): Promise<string>,
-  setupRecovery2Questions(
-    questions: Array<string>,
-    answers: Array<string>
-  ): Promise<string>
+  ): Promise<EdgeCurrencyWallet>
 }
 
 // edge login types ---------------------------------------------------
