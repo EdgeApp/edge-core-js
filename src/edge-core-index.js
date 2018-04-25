@@ -454,6 +454,18 @@ export type EdgeTokenInfo = {
   multiplier: string
 }
 
+export type EdgeGetTransactionsOptions = {
+  currencyCode?: string,
+  startIndex?: number,
+  startEntries?: 100,
+  startDate?: number,
+  endDate?: number,
+  searchString?: string,
+  returnIndex?: number,
+  returnEntries?: number,
+  denomination?: number
+}
+
 export type EdgeCurrencyWallet = {
   // EdgeWalletInfo members:
   +id: string,
@@ -489,7 +501,9 @@ export type EdgeCurrencyWallet = {
   // Transactions:
   getBalance(opts: any): string,
   getBlockHeight(): number,
-  getTransactions(opts?: any): Promise<Array<EdgeTransaction>>,
+  getTransactions(
+    options?: EdgeGetTransactionsOptions
+  ): Promise<Array<EdgeTransaction>>,
   getReceiveAddress(opts: any): Promise<EdgeReceiveAddress>,
   saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,
   lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,

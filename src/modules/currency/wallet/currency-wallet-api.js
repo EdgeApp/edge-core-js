@@ -1,6 +1,8 @@
 // @flow
 
-import { add, div, lte, mul, sub } from 'biggystring'
+import { abs, add, div, lt, lte, mul, sub } from 'biggystring'
+import jsoncsv from 'json-csv'
+import ofx from 'ofx'
 
 import type {
   EdgeCoinExchangeQuote,
@@ -9,6 +11,7 @@ import type {
   EdgeCurrencyWallet,
   EdgeDataDump,
   EdgeEncodeUri,
+  EdgeGetTransactionsOptions,
   EdgeMetadata,
   EdgeReceiveAddress,
   EdgeSpendInfo,
@@ -131,7 +134,9 @@ export function makeCurrencyWalletApi (
       return engine.getBlockHeight()
     },
 
-    async getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
+    async getTransactions (
+      opts: EdgeGetTransactionsOptions = {}
+    ): Promise<Array<EdgeTransaction>> {
       const defaultCurrency = plugin.currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
       const state = input.props.selfState
@@ -139,7 +144,7 @@ export function makeCurrencyWalletApi (
       const txids = state.txids
       // Merged tx data from metadata files and blockchain data
       const txs = state.txs
-      const { numIndex = 0, numEntries = txids.length } = opts
+      const { startIndex = 0, startEntries = txids.length } = opts
       // Decrypted metadata files
       const files = state.files
       // A sorted list of transaction based on chronological order
@@ -154,7 +159,7 @@ export function makeCurrencyWalletApi (
         }
       }
       const slicedTransactions = slice
-        ? sortedTransactions.slice(numIndex, numIndex + numEntries)
+        ? sortedTransactions.slice(startIndex, startIndex + startEntries)
         : sortedTransactions
       const missingTxIdHashes = slicedTransactions.filter(
         txidHash => !files[txidHash]
@@ -178,6 +183,43 @@ export function makeCurrencyWalletApi (
       }
 
       return out
+    },
+
+    async exportTransactionsToQBO (
+      opts: EdgeGetTransactionsOptions
+    ): Promise<string> {
+      const edgeTransactions: Array<
+        EdgeTransaction
+      > = await this.getTransactions(opts)
+      const currencyCode =
+        opts && opts.currencyCode ? opts.currencyCode : this.currencyCode
+      const denom = opts && opts.denomination ? opts.denomination : null
+      const qbo: string = exportTransactionsToQBOInner(
+        edgeTransactions,
+        currencyCode,
+        this.fiatCurrencyCode,
+        denom,
+        Date.now()
+      )
+      return qbo
+    },
+
+    async exportTransactionsToCSV (
+      opts: EdgeGetTransactionsOptions
+    ): Promise<string> {
+      const edgeTransactions: Array<
+        EdgeTransaction
+      > = await this.getTransactions(opts)
+      const currencyCode =
+        opts && opts.currencyCode ? opts.currencyCode : this.currencyCode
+      const denom = opts && opts.denomination ? opts.denomination : null
+      const csv: string = await exportTransactionsToCSVInner(
+        edgeTransactions,
+        currencyCode,
+        this.fiatCurrencyCode,
+        denom
+      )
+      return csv
     },
 
     getReceiveAddress (opts: any): Promise<EdgeReceiveAddress> {
@@ -498,4 +540,255 @@ export function combineTxWithFile (
   }
 
   return out
+}
+
+function makeOfxDate (date: number): string {
+  const d = new Date(date * 1000)
+  const yyyy = d.getFullYear().toString()
+  const mm = padZero((d.getMonth() + 1).toString())
+  const dd = padZero(d.getDate().toString())
+  const hh = padZero(d.getHours().toString())
+  const min = padZero(d.getMinutes().toString())
+  const ss = padZero(d.getSeconds().toString())
+  return `${yyyy}${mm}${dd}${hh}${min}${ss}.000`
+}
+
+function padZero (val: string) {
+  if (val.length === 1) {
+    return '0' + val
+  }
+  return val
+}
+function makeCsvDateTime (date: number): { date: string, time: string } {
+  const d = new Date(date * 1000)
+  const yyyy = d.getFullYear().toString()
+  const mm = padZero((d.getMonth() + 1).toString())
+  const dd = padZero(d.getDate().toString())
+  const hh = padZero(d.getHours().toString())
+  const min = padZero(d.getMinutes().toString())
+
+  return {
+    date: `${yyyy}-${mm}-${dd}`,
+    time: `${hh}:${min}`
+  }
+}
+export function exportTransactionsToQBOInner (
+  edgeTransactions: Array<EdgeTransaction>,
+  currencyCode: string,
+  fiatCurrencyCode: string,
+  denom: number | null,
+  dateNow: number
+): string {
+  const STMTTRN = []
+  const now = makeOfxDate(dateNow / 1000)
+
+  for (const edgeTx: EdgeTransaction of edgeTransactions) {
+    const TRNAMT: string = denom
+      ? div(edgeTx.nativeAmount, denom.toString(), 18)
+      : edgeTx.nativeAmount
+    const TRNTYPE = lt(edgeTx.nativeAmount, '0') ? 'DEBIT' : 'CREDIT'
+    const DTPOSTED = makeOfxDate(edgeTx.date)
+    let NAME: string = ''
+    let amountFiat: number = 0
+    let category: string = ''
+    let notes: string = ''
+    if (edgeTx.metadata) {
+      NAME = edgeTx.metadata.name ? edgeTx.metadata.name : ''
+      amountFiat = edgeTx.metadata.amountFiat ? edgeTx.metadata.amountFiat : 0
+      category = edgeTx.metadata.category ? edgeTx.metadata.category : ''
+      notes = edgeTx.metadata.notes ? edgeTx.metadata.notes : ''
+    }
+    const absFiat = abs(amountFiat.toString())
+    const absAmount = abs(TRNAMT)
+    const CURRATE = absAmount !== '0' ? div(absFiat, absAmount, 8) : '0'
+    const MEMO = `// Rate=${CURRATE} ${fiatCurrencyCode}=${amountFiat} category="${category}" memo="${notes}"`
+
+    const qboTx = {
+      TRNTYPE,
+      DTPOSTED,
+      TRNAMT,
+      FITID: edgeTx.txid,
+      NAME,
+      MEMO,
+      CURRENCY: {
+        CURRATE: '',
+        CURSYM: fiatCurrencyCode
+      }
+    }
+    STMTTRN.push(qboTx)
+  }
+
+  const header = {
+    OFXHEADER: '100',
+    DATA: 'OFXSGML',
+    VERSION: '102',
+    SECURITY: 'NONE',
+    ENCODING: 'USASCII',
+    CHARSET: '1252',
+    COMPRESSION: 'NONE',
+    OLDFILEUID: 'NONE',
+    NEWFILEUID: 'NONE'
+  }
+
+  const body = {
+    SIGNONMSGSRSV1: {
+      SONRS: {
+        STATUS: {
+          CODE: '0',
+          SEVERITY: 'INFO'
+        },
+        DTSERVER: now,
+        LANGUAGE: 'ENG',
+        'INTU.BID': '3000'
+      }
+    },
+    BANKMSGSRSV1: {
+      STMTTRNRS: {
+        TRNUID: now,
+        STATUS: {
+          CODE: '0',
+          SEVERITY: 'INFO',
+          MESSAGE: 'OK'
+        },
+        STMTRS: {
+          CURDEF: 'USD',
+          BANKACCTFROM: {
+            BANKID: '999999999',
+            ACCTID: '999999999999',
+            ACCTTYPE: 'CHECKING'
+          },
+          BANKTRANLIST: {
+            DTSTART: now,
+            DTEND: now,
+            STMTTRN
+          },
+          LEDGERBAL: {
+            BALAMT: '0.00',
+            DTASOF: now
+          },
+          AVAILBAL: {
+            BALAMT: '0.00',
+            DTASOF: now
+          }
+        }
+      }
+    }
+  }
+
+  return ofx.serialize(header, body)
+}
+
+export async function exportTransactionsToCSVInner (
+  edgeTransactions: Array<EdgeTransaction>,
+  currencyCode: string,
+  fiatCurrencyCode: string,
+  denom: number | null
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const currencyField = 'AMT_' + currencyCode
+    const networkFeeField = 'AMT_NETWORK_FEES_' + currencyCode
+    const items = []
+
+    for (const edgeTx: EdgeTransaction of edgeTransactions) {
+      const amount: string = denom
+        ? div(edgeTx.nativeAmount, denom.toString(), 18)
+        : edgeTx.nativeAmount
+      const networkFeeField: string = denom
+        ? div(edgeTx.networkFee, denom.toString(), 18)
+        : edgeTx.networkFee
+      const { date, time } = makeCsvDateTime(edgeTx.date)
+      let name: string = ''
+      let amountFiat: number = 0
+      let category: string = ''
+      let notes: string = ''
+      if (edgeTx.metadata) {
+        name = edgeTx.metadata.name ? edgeTx.metadata.name : ''
+        amountFiat = edgeTx.metadata.amountFiat ? edgeTx.metadata.amountFiat : 0
+        category = edgeTx.metadata.category ? edgeTx.metadata.category : ''
+        notes = edgeTx.metadata.notes ? edgeTx.metadata.notes : ''
+      }
+
+      const csvTx = {
+        date,
+        time,
+        name,
+        amount,
+        amountFiat,
+        category,
+        notes,
+        networkFeeField,
+        txid: edgeTx.txid,
+        ourReceiveAddresses: edgeTx.ourReceiveAddresses,
+        version: 1
+      }
+      items.push(csvTx)
+    }
+
+    const options = {
+      fields: [
+        {
+          name: 'date',
+          label: 'DATE',
+          quoted: true
+        },
+        {
+          name: 'time',
+          label: 'TIME',
+          quoted: true
+        },
+        {
+          name: 'name',
+          label: 'PAYEE_PAYER_NAME',
+          quoted: true
+        },
+        {
+          name: 'amount',
+          label: currencyField,
+          quoted: true
+        },
+        {
+          name: 'amountFiat',
+          label: fiatCurrencyCode,
+          quoted: true
+        },
+        {
+          name: 'category',
+          label: 'CATEGORY',
+          quoted: true
+        },
+        {
+          name: 'notes',
+          label: 'NOTES',
+          quoted: true
+        },
+        {
+          name: 'networkFeeField',
+          label: networkFeeField,
+          quoted: true
+        },
+        {
+          name: 'txid',
+          label: 'TXID',
+          quoted: true
+        },
+        {
+          name: 'ourReceiveAddresses',
+          label: 'OUR_RECEIVE_ADDRESSES',
+          quoted: true
+        },
+        {
+          name: 'version',
+          label: 'VER'
+        }
+      ]
+    }
+
+    jsoncsv.csvBuffered(items, options, (err, csv) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(csv)
+      }
+    })
+  })
 }
