@@ -213,7 +213,7 @@ describe('currency wallets', function () {
   const edgeTxs: Array<EdgeTransaction> = [
     {
       txid: 'txid1',
-      date: 1524469780,
+      date: 1524476980,
       currencyCode: 'BTC',
       blockHeight: 500000,
       nativeAmount: '123000000',
@@ -231,7 +231,7 @@ describe('currency wallets', function () {
     },
     {
       txid: 'txid2',
-      date: 1524479780,
+      date: 1524486980,
       currencyCode: 'BTC',
       blockHeight: 500000,
       nativeAmount: '-321000000',
@@ -262,7 +262,7 @@ describe('currency wallets', function () {
       'BTC',
       'USD',
       100,
-      1524570871304
+      1524578071304
     )
     expect(out).to.equal(
       'OFXHEADER:100\n' +

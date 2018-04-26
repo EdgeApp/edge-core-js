@@ -544,12 +544,12 @@ export function combineTxWithFile (
 
 function makeOfxDate (date: number): string {
   const d = new Date(date * 1000)
-  const yyyy = d.getFullYear().toString()
-  const mm = padZero((d.getMonth() + 1).toString())
-  const dd = padZero(d.getDate().toString())
-  const hh = padZero(d.getHours().toString())
-  const min = padZero(d.getMinutes().toString())
-  const ss = padZero(d.getSeconds().toString())
+  const yyyy = d.getUTCFullYear().toString()
+  const mm = padZero((d.getUTCMonth() + 1).toString())
+  const dd = padZero(d.getUTCDate().toString())
+  const hh = padZero(d.getUTCHours().toString())
+  const min = padZero(d.getUTCMinutes().toString())
+  const ss = padZero(d.getUTCSeconds().toString())
   return `${yyyy}${mm}${dd}${hh}${min}${ss}.000`
 }
 
@@ -561,11 +561,11 @@ function padZero (val: string) {
 }
 function makeCsvDateTime (date: number): { date: string, time: string } {
   const d = new Date(date * 1000)
-  const yyyy = d.getFullYear().toString()
-  const mm = padZero((d.getMonth() + 1).toString())
-  const dd = padZero(d.getDate().toString())
-  const hh = padZero(d.getHours().toString())
-  const min = padZero(d.getMinutes().toString())
+  const yyyy = d.getUTCFullYear().toString()
+  const mm = padZero((d.getUTCMonth() + 1).toString())
+  const dd = padZero(d.getUTCDate().toString())
+  const hh = padZero(d.getUTCHours().toString())
+  const min = padZero(d.getUTCMinutes().toString())
 
   return {
     date: `${yyyy}-${mm}-${dd}`,
