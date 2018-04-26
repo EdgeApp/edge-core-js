@@ -5,7 +5,7 @@ import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 import { createStore } from 'redux'
 
-import { fakeUser, makeFakeContexts } from '../../../edge-core-index.js'
+import { fakeUser, makeFakeContexts } from '../../../edge-core-index'
 import {
   makeFakeCurrency,
   makeFakeCurrencyStore

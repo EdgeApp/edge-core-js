@@ -9,6 +9,7 @@ import type {
   EdgeCurrencyWallet,
   EdgeDataDump,
   EdgeEncodeUri,
+  EdgeGetTransactionsOptions,
   EdgeMetadata,
   EdgeReceiveAddress,
   EdgeSpendInfo,
@@ -24,6 +25,10 @@ import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storageApi.js'
+import {
+  exportTransactionsToCSVInner,
+  exportTransactionsToQBOInner
+} from './currency-wallet-export.js'
 import {
   loadTxFiles,
   renameCurrencyWallet,
@@ -131,7 +136,9 @@ export function makeCurrencyWalletApi (
       return engine.getBlockHeight()
     },
 
-    async getTransactions (opts: any = {}): Promise<Array<EdgeTransaction>> {
+    async getTransactions (
+      opts: EdgeGetTransactionsOptions = {}
+    ): Promise<Array<EdgeTransaction>> {
       const defaultCurrency = plugin.currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
       const state = input.props.selfState
@@ -139,7 +146,7 @@ export function makeCurrencyWalletApi (
       const txids = state.txids
       // Merged tx data from metadata files and blockchain data
       const txs = state.txs
-      const { numIndex = 0, numEntries = txids.length } = opts
+      const { startIndex = 0, startEntries = txids.length } = opts
       // Decrypted metadata files
       const files = state.files
       // A sorted list of transaction based on chronological order
@@ -154,7 +161,7 @@ export function makeCurrencyWalletApi (
         }
       }
       const slicedTransactions = slice
-        ? sortedTransactions.slice(numIndex, numIndex + numEntries)
+        ? sortedTransactions.slice(startIndex, startIndex + startEntries)
         : sortedTransactions
       const missingTxIdHashes = slicedTransactions.filter(
         txidHash => !files[txidHash]
@@ -178,6 +185,43 @@ export function makeCurrencyWalletApi (
       }
 
       return out
+    },
+
+    async exportTransactionsToQBO (
+      opts: EdgeGetTransactionsOptions
+    ): Promise<string> {
+      const edgeTransactions: Array<
+        EdgeTransaction
+      > = await this.getTransactions(opts)
+      const currencyCode =
+        opts && opts.currencyCode ? opts.currencyCode : this.currencyCode
+      const denom = opts && opts.denomination ? opts.denomination : null
+      const qbo: string = exportTransactionsToQBOInner(
+        edgeTransactions,
+        currencyCode,
+        this.fiatCurrencyCode,
+        denom,
+        Date.now()
+      )
+      return qbo
+    },
+
+    async exportTransactionsToCSV (
+      opts: EdgeGetTransactionsOptions
+    ): Promise<string> {
+      const edgeTransactions: Array<
+        EdgeTransaction
+      > = await this.getTransactions(opts)
+      const currencyCode =
+        opts && opts.currencyCode ? opts.currencyCode : this.currencyCode
+      const denom = opts && opts.denomination ? opts.denomination : null
+      const csv: string = await exportTransactionsToCSVInner(
+        edgeTransactions,
+        currencyCode,
+        this.fiatCurrencyCode,
+        denom
+      )
+      return csv
     },
 
     getReceiveAddress (opts: any): Promise<EdgeReceiveAddress> {
