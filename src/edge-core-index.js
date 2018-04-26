@@ -521,11 +521,16 @@ export type EdgeCurrencyWallet = {
   ): Promise<void>,
   getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
   getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
+
   // Wallet management:
   resyncBlockchain(): Promise<void>,
   dumpData(): EdgeDataDump,
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
+
+  // Data exports:
+  exportTransactionsToQBO(opts: EdgeGetTransactionsOptions): Promise<string>,
+  exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
 
   // URI handling:
   parseUri(uri: string): EdgeParsedUri,
