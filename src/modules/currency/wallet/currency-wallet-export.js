@@ -2,7 +2,6 @@
 
 import { abs, div, lt } from 'biggystring'
 import jsoncsv from 'json-csv'
-import ofx from 'ofx'
 
 import type { EdgeTransaction } from '../../../edge-core-index.js'
 
@@ -11,6 +10,62 @@ function padZero (val: string) {
     return '0' + val
   }
   return val
+}
+
+function escapeOFXString (str: string) {
+  str = str.replace('&', '&amp;')
+  str = str.replace('>', '&gt;')
+  return str.replace('<', '&lt;')
+}
+
+function exportOfxHeader (inputObj: Object) {
+  let out = ''
+  for (const key in inputObj) {
+    if (inputObj.hasOwnProperty(key)) {
+      let element = inputObj[key]
+      if (typeof element === 'string') {
+        element = escapeOFXString(element)
+        out += `${key}:${element}\n`
+      } else {
+        throw new Error('Invalid OFX header')
+      }
+    }
+  }
+  return out
+}
+
+function exportOfxBody (inputObj: Object) {
+  let out = ''
+  for (const key in inputObj) {
+    if (inputObj.hasOwnProperty(key)) {
+      let element = inputObj[key]
+      if (typeof element === 'string') {
+        element = escapeOFXString(element)
+        out += `<${key}>${element}\n`
+      } else if (element instanceof Array) {
+        for (const a of element) {
+          out += `<${key}>\n`
+          out += exportOfxBody(a)
+          out += `</${key}>\n`
+        }
+      } else if (typeof element === 'object') {
+        out += `<${key}>\n`
+        out += exportOfxBody(element)
+        out += `</${key}>\n`
+      } else {
+        throw new Error('Invalid OFX body')
+      }
+    }
+  }
+  return out
+}
+
+function exportOfx (header: Object, body: Object) {
+  let out = exportOfxHeader(header) + '\n'
+  out += '<OFX>\n'
+  out += exportOfxBody(body)
+  out += '</OFX>\n'
+  return out
 }
 
 function makeOfxDate (date: number): string {
@@ -141,7 +196,7 @@ export function exportTransactionsToQBOInner (
     }
   }
 
-  return ofx.serialize(header, body)
+  return exportOfx(header, body)
 }
 
 export async function exportTransactionsToCSVInner (
