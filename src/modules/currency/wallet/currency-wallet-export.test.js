@@ -23,7 +23,7 @@ const edgeTxs: Array<EdgeTransaction> = [
     metadata: {
       name: 'Crazy Person',
       category: 'Income: Mo Money',
-      notes: 'Hell yeah! Thanks for the fish',
+      notes: 'Hell yeah! Thanks for the fish <<&&>>',
       amountFiat: 12000.45
     },
     otherParams: null
@@ -52,7 +52,7 @@ describe('transaction export formats', function () {
   it('matches CSV reference data', async function () {
     const out = await exportTransactionsToCSVInner(edgeTxs, 'BTC', 'USD', 100)
     expect(out).to.equal(
-      `DATE,TIME,PAYEE_PAYER_NAME,AMT_BTC,USD,CATEGORY,NOTES,AMT_NETWORK_FEES_BTC,TXID,OUR_RECEIVE_ADDRESSES,VER\r\n"2018-04-23","09:49","Crazy Person","1230000","12000.45","Income: Mo Money","Hell yeah! Thanks for the fish","10","txid1","receiveaddress1,receiveaddress2",1\r\n"2018-04-23","12:36","Crazy Person 2","-3210000","36001.45","Expense: Less Money","Hell yeah! Here's a fish""","20","txid2","receiveaddress3,receiveaddress4",1\r\n`
+      `DATE,TIME,PAYEE_PAYER_NAME,AMT_BTC,USD,CATEGORY,NOTES,AMT_NETWORK_FEES_BTC,TXID,OUR_RECEIVE_ADDRESSES,VER\r\n"2018-04-23","09:49","Crazy Person","1230000","12000.45","Income: Mo Money","Hell yeah! Thanks for the fish <<&&>>","10","txid1","receiveaddress1,receiveaddress2",1\r\n"2018-04-23","12:36","Crazy Person 2","-3210000","36001.45","Expense: Less Money","Hell yeah! Here's a fish""","20","txid2","receiveaddress3,receiveaddress4",1\r\n`
     )
   })
 
@@ -111,7 +111,7 @@ describe('transaction export formats', function () {
         '<TRNAMT>1230000\n' +
         '<FITID>txid1\n' +
         '<NAME>Crazy Person\n' +
-        '<MEMO>// Rate=0.00975646 USD=12000.45 category="Income: Mo Money" memo="Hell yeah! Thanks for the fish"\n' +
+        '<MEMO>// Rate=0.00975646 USD=12000.45 category="Income: Mo Money" memo="Hell yeah! Thanks for the fish &lt;&lt;&amp;&amp;&gt;&gt;"\n' +
         '<CURRENCY>\n' +
         '<CURRATE>\n' +
         '<CURSYM>USD\n' +
