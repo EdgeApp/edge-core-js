@@ -13,7 +13,7 @@ export function fixIo (io: EdgeRawIo): EdgeIo {
   const out: any = {}
 
   // Copy native io resources:
-  const keys = ['console', 'fetch', 'folder', 'random', 'scrypt']
+  const keys = ['console', 'fetch', 'folder', 'random', 'scrypt', 'WebSocket']
   for (const key of keys) {
     out[key] = io[key]
   }
@@ -49,7 +49,6 @@ export function fixIo (io: EdgeRawIo): EdgeIo {
   if (io.net != null) out.net = io.net
   if (io.Socket != null) out.Socket = io.Socket
   if (io.TLSSocket != null) out.TLSSocket = io.TLSSocket
-  if (io.WebSocket != null) out.WebSocket = io.WebSocket
 
   return out
 }
