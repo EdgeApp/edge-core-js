@@ -13,9 +13,9 @@ function padZero (val: string) {
 }
 
 function escapeOFXString (str: string) {
-  str = str.replace('&', '&amp;')
-  str = str.replace('>', '&gt;')
-  return str.replace('<', '&lt;')
+  str = str.replace(/&/g, '&amp;')
+  str = str.replace(/>/g, '&gt;')
+  return str.replace(/</g, '&lt;')
 }
 
 function exportOfxHeader (inputObj: Object) {
