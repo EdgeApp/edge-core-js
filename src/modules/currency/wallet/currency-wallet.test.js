@@ -14,6 +14,10 @@ import { fakeExchangePlugin } from '../../../fake-plugins/fakeExchange.js'
 import { makeAssertLog } from '../../../util/assertLog.js'
 import { awaitState } from '../../../util/redux/reaction.js'
 
+function snooze (ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 async function makeFakeCurrencyWallet (store, callbacks) {
   const plugin = makeFakeCurrency(store)
 
@@ -55,7 +59,7 @@ describe('currency wallets', function () {
     )
   })
 
-  it('triggers callbacks', function () {
+  it('triggers callbacks', async function () {
     const log = makeAssertLog(true)
     const store = makeFakeCurrencyStore()
 
@@ -76,70 +80,66 @@ describe('currency wallets', function () {
         txs.map(tx => log('changed', tx.txid))
       }
     }
-    return makeFakeCurrencyWallet(store, callbacks).then(wallet => {
-      let txState = []
-      log.assert([
-        'balance TEST 0',
-        'balance TOKEN 0',
-        'blockHeight 0',
-        'progress 0'
-      ])
+    const wallet = await makeFakeCurrencyWallet(store, callbacks)
+    let txState = []
+    log.assert(['balance TEST 0', 'blockHeight 0', 'progress 0'])
+    const snoozeTimeMs = 251
+    await snooze(snoozeTimeMs)
+    log.assert(['balance TOKEN 0'])
 
-      store.dispatch({ type: 'SET_PROGRESS', payload: 0.5 })
-      log.assert(['progress 0.5'])
+    await snooze(snoozeTimeMs)
+    store.dispatch({ type: 'SET_TOKEN_BALANCE', payload: 30 })
+    log.assert(['balance TOKEN 30'])
 
-      store.dispatch({ type: 'SET_BALANCE', payload: 20 })
-      log.assert(['balance TEST 20'])
+    store.dispatch({ type: 'SET_BLOCK_HEIGHT', payload: 200 })
+    log.assert(['blockHeight 200'])
+    assert.equal(wallet.getBlockHeight(), 200)
 
-      store.dispatch({ type: 'SET_TOKEN_BALANCE', payload: 30 })
-      log.assert(['balance TOKEN 30'])
+    await snooze(snoozeTimeMs)
+    store.dispatch({ type: 'SET_PROGRESS', payload: 0.123456789 })
+    log.assert(['progress 0.123456789'])
 
-      store.dispatch({ type: 'SET_BLOCK_HEIGHT', payload: 200 })
-      log.assert(['blockHeight 200'])
-      assert.equal(wallet.getBlockHeight(), 200)
+    store.dispatch({ type: 'SET_BALANCE', payload: 1234567890 })
+    log.assert(['balance TEST 1234567890'])
 
-      // New transactions:
-      txState = [
-        { txid: 'a', amountSatoshi: 1 },
-        { txid: 'b', nativeAmount: '100' }
-      ]
-      store.dispatch({ type: 'SET_TXS', payload: txState })
-      log.assert(['new a', 'new b'])
+    // New transactions:
+    txState = [
+      { txid: 'a', amountSatoshi: 1 },
+      { txid: 'b', nativeAmount: '100' }
+    ]
+    store.dispatch({ type: 'SET_TXS', payload: txState })
+    log.assert(['new a', 'new b'])
 
-      return setTimeout(() => {
-        // Should not trigger:
-        store.dispatch({ type: 'SET_TXS', payload: txState })
-        log.assert([])
+    await snooze(snoozeTimeMs)
+    // Should not trigger:
+    store.dispatch({ type: 'SET_TXS', payload: txState })
+    log.assert([])
 
-        return setTimeout(() => {
-          // Changed transactions:
-          txState = [
-            ...txState,
-            { txid: 'a', nativeAmount: '2' },
-            { txid: 'c', nativeAmount: '200' }
-          ]
-          store.dispatch({ type: 'SET_TXS', payload: txState })
-          log.assert(['changed a', 'new c'])
+    await snooze(snoozeTimeMs)
+    // Changed transactions:
+    txState = [
+      ...txState,
+      { txid: 'a', nativeAmount: '2' },
+      { txid: 'c', nativeAmount: '200' }
+    ]
+    store.dispatch({ type: 'SET_TXS', payload: txState })
+    log.assert(['changed a', 'new c'])
 
-          return setTimeout(() => {
-            txState = [{ txid: 'd', nativeAmount: '200' }]
-            store.dispatch({ type: 'SET_TXS', payload: txState })
-            log.assert(['new d'])
+    await snooze(snoozeTimeMs)
+    txState = [{ txid: 'd', nativeAmount: '200' }]
+    store.dispatch({ type: 'SET_TXS', payload: txState })
+    log.assert(['new d'])
 
-            // Make several changes in a row which should get batched into one call due to throttling
-            txState = [{ txid: 'e', nativeAmount: '200' }]
-            store.dispatch({ type: 'SET_TXS', payload: txState })
-            txState = [{ txid: 'f', nativeAmount: '200' }]
-            store.dispatch({ type: 'SET_TXS', payload: txState })
-            txState = [{ txid: 'g', nativeAmount: '200' }]
-            store.dispatch({ type: 'SET_TXS', payload: txState })
-            setTimeout(() => {
-              log.assert(['new e', 'new f', 'new g'])
-            }, 251)
-          }, 251)
-        }, 251)
-      }, 251)
-    })
+    // Make several changes in a row which should get batched into one call due to throttling
+    txState = [{ txid: 'e', nativeAmount: '200' }]
+    store.dispatch({ type: 'SET_TXS', payload: txState })
+    txState = [{ txid: 'f', nativeAmount: '200' }]
+    store.dispatch({ type: 'SET_TXS', payload: txState })
+    txState = [{ txid: 'g', nativeAmount: '200' }]
+    store.dispatch({ type: 'SET_TXS', payload: txState })
+    await snooze(snoozeTimeMs)
+
+    log.assert(['new e', 'new f', 'new g'])
   })
 
   it('handles tokens', function () {
