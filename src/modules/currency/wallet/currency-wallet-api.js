@@ -136,6 +136,11 @@ export function makeCurrencyWalletApi (
       return engine.getBlockHeight()
     },
 
+    '@getNumTransactions': { sync: true },
+    getNumTransactions (opts: any) {
+      return engine.getNumTransactions(opts)
+    },
+
     async getTransactions (
       opts: EdgeGetTransactionsOptions = {}
     ): Promise<Array<EdgeTransaction>> {

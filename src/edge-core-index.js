@@ -501,6 +501,7 @@ export type EdgeCurrencyWallet = {
   // Transactions:
   getBalance(opts: any): string,
   getBlockHeight(): number,
+  getNumTransactions(options: any): number,
   getTransactions(
     options?: EdgeGetTransactionsOptions
   ): Promise<Array<EdgeTransaction>>,
