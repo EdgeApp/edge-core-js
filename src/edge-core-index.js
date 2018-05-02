@@ -105,7 +105,7 @@ export type EdgeRawIo = {
   +fetch: typeof fetch,
   +Socket?: net$Socket,
   +TLSSocket?: tls$TLSSocket,
-  +WebSocket?: WebSocket
+  +WebSocket: WebSocket
 }
 
 /**
@@ -129,7 +129,7 @@ export type EdgeIo = {
   +fetch: typeof fetch,
   +Socket?: net$Socket, // Still optional (no browser version)
   +TLSSocket?: tls$TLSSocket, // Still optional (no browser version)
-  +WebSocket?: WebSocket // TODO: Make this non-optional
+  +WebSocket: WebSocket
 }
 
 // context types ------------------------------------------------------

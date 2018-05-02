@@ -73,7 +73,8 @@ export function makeReactNativeIo (): Promise<EdgeRawIo> {
       TLSSocket,
       pbkdf2,
       scrypt,
-      secp256k1
+      secp256k1,
+      WebSocket: window.WebSocket
     }
     return io
   })

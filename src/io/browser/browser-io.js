@@ -15,6 +15,7 @@ export function makeBrowserIo (): EdgeRawIo {
   if (typeof window !== 'undefined') {
     out.fetch = (...rest) => window.fetch(...rest)
     out.localStorage = window.localStorage
+    out.WebSocket = window.WebSocket
 
     if (window.crypto != null && window.crypto.getRandomValues != null) {
       out.random = size => {
