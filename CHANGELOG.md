@@ -1,5 +1,13 @@
 # edge-core-js
 
+## 0.8.0
+
+* Add QBO & CSV export
+* Add private key sweeping
+* Add `EdgeCurrencyWallet.getNumTransactions`
+* Remove deprecated methods
+* Throttle wallet callbacks
+
 ## 0.7.2
 
 * Do not crash on really long passwords when running in the web.
