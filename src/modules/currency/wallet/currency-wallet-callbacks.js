@@ -47,20 +47,19 @@ let throttleRateLimitMs = 5000
  * Returns a function that can be called at high frequency, and batches its
  * inputs to only call the real callback every 5 seconds.
  */
-function makeThrottledCallback (
+function makeThrottledCallback<Arg> (
   input: CurrencyWalletInput,
-  callback: (arg: any) => mixed
-) {
+  callback: (arg: Arg) => mixed
+): (callbackArg: Arg) => mixed {
   const walletId = input.props.id
   const { console } = input.props.io
 
   let delayCallback = false
   let lastCallbackTime = 0
-  let finalCallbackArg: any
+  let finalCallbackArg: Arg
 
-  return (callbackArg: any) => {
-    // XXX Hack. to get unit tests to pass, check if walletId is a specific magic number
-    // and reduce the timeout if so.
+  return (callbackArg: Arg) => {
+    // XXX: Reduce the timeout for our special unit-test wallet:
     if (walletId === 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=') {
       throttleRateLimitMs = 200
     }
@@ -75,9 +74,7 @@ function makeThrottledCallback (
         lastCallbackTime = now
         callback(callbackArg)
       } else {
-        console.info(
-          console.info(`makeThrottledCallback delay, walletId: ${walletId}`)
-        )
+        console.info(`makeThrottledCallback delay, walletId: ${walletId}`)
         delayCallback = true
         finalCallbackArg = callbackArg
         setTimeout(() => {
