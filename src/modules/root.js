@@ -35,8 +35,8 @@ export interface CoreRoot {
   appId: string;
   authServer: string;
   io: EdgeIo;
-  onError(e: Error): void;
-  onExchangeUpdate(): void;
+  onError(e: Error): mixed;
+  onExchangeUpdate(): mixed;
   plugins: Array<EdgeCorePluginFactory>;
   shapeshiftKey: string | void;
 
@@ -143,8 +143,8 @@ export interface RootProps {
   coreRoot: CoreRoot;
   +dispatch: Dispatch<RootAction>;
   io: EdgeIo;
-  onError(e: Error): void;
-  onExchangeUpdate(): void;
+  onError(e: Error): mixed;
+  onExchangeUpdate(): mixed;
   output: RootOutput;
   plugins: Array<EdgeCorePluginFactory>;
   shapeshiftKey: string | void;
@@ -175,7 +175,7 @@ export interface ApiProps {
   +dispatch: Dispatch<RootAction>;
   io: EdgeIo;
   loginStore: LoginStore;
-  onError(e: Error): void;
+  onError(e: Error): mixed;
   output: RootOutput;
   shapeshiftKey: string | void;
   state: RootState;

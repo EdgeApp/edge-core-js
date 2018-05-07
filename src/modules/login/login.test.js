@@ -107,11 +107,11 @@ describe('otp', function () {
   it('local login works', async function () {
     const [context] = makeFakeContexts(contextOptions, contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    expect(account.otpEnabled).to.equal(true)
+    expect(account.otpKey != null).to.equal(true)
     await account.disableOtp()
-    expect(account.otpEnabled).to.equal(false)
+    expect(account.otpKey == null).to.equal(true)
     await account.enableOtp()
-    expect(account.otpEnabled).to.equal(true)
+    expect(account.otpKey != null).to.equal(true)
 
     // Can still log in locally:
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)

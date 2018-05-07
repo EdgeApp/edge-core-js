@@ -3,6 +3,7 @@
 import { makeMemoryFolder } from 'disklet'
 
 import type { EdgeRawIo } from '../../edge-core-index.js'
+import { FakeWebSocket } from './fake-socket.js'
 import { FakeServer } from './fakeServer.js'
 
 /**
@@ -45,13 +46,14 @@ export function makeFakeIos (count: number): Array<EdgeRawIo> {
   const random = makeFakeRandom()
 
   // Make the io objects:
-  const out = []
+  const out: Array<EdgeRawIo> = []
   for (let i = 0; i < count; ++i) {
     out[i] = {
       console: fakeConsole,
       fetch: server.fetch,
       folder: makeMemoryFolder(),
-      random
+      random,
+      WebSocket: FakeWebSocket
     }
   }
 

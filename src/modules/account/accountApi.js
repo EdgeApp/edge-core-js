@@ -219,53 +219,6 @@ function makeAccountApi (
       opts?: EdgeCreateCurrencyWalletOptions = {}
     ): Promise<EdgeCurrencyWallet> {
       return state.createCurrencyWallet(type, opts)
-    },
-
-    // Deprecated stuff (will be deleted soon):
-    get otpEnabled (): boolean {
-      return state.login.otpTimeout != null
-    },
-    cancelOtpResetRequest (): Promise<void> {
-      return this.cancelOtpReset()
-    },
-    changeKeyStates (walletStates: EdgeWalletStates): Promise<void> {
-      return this.changeWalletStates(walletStates)
-    },
-    changePIN (pin: string): Promise<void> {
-      return this.changePin({ pin })
-    },
-    '@getFirstWallet': { sync: true },
-    getFirstWallet (type: string): ?EdgeWalletInfo {
-      return this.getFirstWalletInfo(type)
-    },
-    '@getWallet': { sync: true },
-    getWallet (id: string): EdgeWalletInfo {
-      return this.getWalletInfo(id)
-    },
-    '@isLoggedIn': { sync: true },
-    isLoggedIn (): boolean {
-      return this.loggedIn
-    },
-    passwordOk (password: string): Promise<boolean> {
-      return this.checkPassword(password)
-    },
-    passwordSetup (password: string): Promise<void> {
-      return this.changePassword(password)
-    },
-    pinSetup (pin: string): Promise<void> {
-      return this.changePin({ pin })
-    },
-    recovery2Set (
-      questions: Array<string>,
-      answers: Array<string>
-    ): Promise<string> {
-      return this.changeRecovery(questions, answers)
-    },
-    setupRecovery2Questions (
-      questions: Array<string>,
-      answers: Array<string>
-    ): Promise<string> {
-      return this.changeRecovery(questions, answers)
     }
   }
 

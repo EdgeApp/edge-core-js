@@ -60,14 +60,6 @@ export function calcSnrpForTarget (
   addR = Math.floor(addR)
   snrp.r = STARTING_R + addR
   timeUsed += addR * perRValue
-  console.log(
-    '   perRValue: ' +
-      perRValue.toString() +
-      ' addR:' +
-      addR.toString() +
-      ' timeUsed:' +
-      timeUsed.toString()
-  )
 
   //
   // Add additional N value in powers of 2. Each power of 2 doubles the amount of time it takes
@@ -127,7 +119,9 @@ export default combinePixies({
       return benchmark.then(benchMs => {
         const snrp = calcSnrpForTarget(io.random(32), benchMs, targetMs)
         io.console.info(
-          `snrp: ${snrp.n} ${snrp.r} ${snrp.p} based on ${benchMs}ms benchmark`
+          `snrp for ${targetMs}ms target: ${snrp.n} ${snrp.r} ${
+            snrp.p
+          } based on ${benchMs}ms benchmark`
         )
         return snrp
       })
@@ -156,10 +150,10 @@ export default combinePixies({
     ): Promise<{ hash: Uint8Array, time: number }> {
       const salt = base16.parse(snrp.salt_hex)
       const startTime = getTime()
-      console.info(`starting scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p}`)
+      io.console.info(`starting scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p}`)
       return io.scrypt(data, salt, snrp.n, snrp.r, snrp.p, dklen).then(hash => {
         const time = getTime() - startTime
-        console.info(
+        io.console.info(
           `finished scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p} in ${time}ms`
         )
         return { hash, time }
