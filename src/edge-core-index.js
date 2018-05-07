@@ -144,8 +144,8 @@ export type EdgeCorePluginOptions = {
 }
 
 export type EdgeContextCallbacks = {
-  +onError?: (e: Error) => void,
-  +onExchangeUpdate?: () => void
+  +onError?: (e: Error) => mixed,
+  +onExchangeUpdate?: () => mixed
 }
 
 export type EdgeContextOptions = {
@@ -260,8 +260,8 @@ export type EdgeEdgeLoginRequest = {
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
   displayImageUrl?: string,
   displayName?: string,
-  onProcessLogin?: (username: string) => void,
-  onLogin(e?: Error, account?: EdgeAccount): void
+  onProcessLogin?: (username: string) => mixed,
+  onLogin(e?: Error, account?: EdgeAccount): mixed
 }
 
 export type EdgeLoginMessages = {
@@ -300,31 +300,31 @@ export type EdgeWalletStates = {
 }
 
 export type EdgeAccountCallbacks = {
-  +onDataChanged?: () => void,
-  +onKeyListChanged?: () => void,
-  +onLoggedOut?: () => void,
-  +onOtpDrift?: (drift: number) => void,
-  +onRemoteOtpChange?: () => void,
-  +onRemotePasswordChange?: () => void,
+  +onDataChanged?: () => mixed,
+  +onKeyListChanged?: () => mixed,
+  +onLoggedOut?: () => mixed,
+  +onOtpDrift?: (drift: number) => mixed,
+  +onRemoteOtpChange?: () => mixed,
+  +onRemotePasswordChange?: () => mixed,
 
   // Currency wallet callbacks:
-  +onAddressesChecked?: (walletId: string, progressRatio: number) => void,
+  +onAddressesChecked?: (walletId: string, progressRatio: number) => mixed,
   +onBalanceChanged?: (
     walletId: string,
     currencyCode: string,
     nativeBalance: string
-  ) => void,
-  +onBlockHeightChanged?: (walletId: string, blockHeight: number) => void,
+  ) => mixed,
+  +onBlockHeightChanged?: (walletId: string, blockHeight: number) => mixed,
   +onNewTransactions?: (
     walletId: string,
     abcTransactions: Array<EdgeTransaction>
-  ) => void,
+  ) => mixed,
   +onTransactionsChanged?: (
     walletId: string,
     abcTransactions: Array<EdgeTransaction>
-  ) => void,
-  +onWalletDataChanged?: (walletId: string) => void,
-  +onWalletNameChanged?: (walletId: string, name: string | null) => void
+  ) => mixed,
+  +onWalletDataChanged?: (walletId: string) => mixed,
+  +onWalletNameChanged?: (walletId: string, name: string | null) => mixed
 }
 
 export type EdgeAccountOptions = {
@@ -407,27 +407,7 @@ export type EdgeAccount = {
   createCurrencyWallet(
     type: string,
     opts?: EdgeCreateCurrencyWalletOptions
-  ): Promise<EdgeCurrencyWallet>,
-
-  // Deprecated stuff (will be deleted soon):
-  +otpEnabled: boolean,
-  cancelOtpResetRequest(): Promise<void>,
-  changeKeyStates(walletStates: EdgeWalletStates): Promise<void>,
-  changePIN(password: string): Promise<void>,
-  getFirstWallet(type: string): ?EdgeWalletInfo,
-  getWallet(id: string): EdgeWalletInfo,
-  isLoggedIn(): boolean,
-  passwordOk(password: string): Promise<boolean>,
-  passwordSetup(password: string): Promise<void>,
-  pinSetup(password: string): Promise<void>,
-  recovery2Set(
-    questions: Array<string>,
-    answers: Array<string>
-  ): Promise<string>,
-  setupRecovery2Questions(
-    questions: Array<string>,
-    answers: Array<string>
-  ): Promise<string>
+  ): Promise<EdgeCurrencyWallet>
 }
 
 // edge login types ---------------------------------------------------
