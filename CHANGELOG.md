@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.8.1
+
+* Flow type fix
+
 ## 0.8.0
 
 * Add QBO & CSV export
