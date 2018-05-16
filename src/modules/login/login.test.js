@@ -64,7 +64,7 @@ describe('creation', function () {
     assert(!available)
   })
 
-  it('passwordless account', async function () {
+  it('password-less account', async function () {
     this.timeout(1000)
     const [context, remote] = makeFakeContexts(
       { appId: 'test' },

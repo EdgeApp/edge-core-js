@@ -38,7 +38,7 @@ export function loadRepoStatus (paths) {
 }
 
 /**
- * This will save a changeset into the local storage.
+ * This will save a change-set into the local storage.
  * This function ignores folder-level deletes and overwrites,
  * but those can't happen under the current rules anyhow.
  */

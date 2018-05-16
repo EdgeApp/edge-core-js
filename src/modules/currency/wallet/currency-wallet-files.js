@@ -76,7 +76,7 @@ export type LegacyAddressFile = {
   },
   meta: {
     amountSatoshi: number // requestAmount
-    // TODO: Normal EdgeMetatada
+    // TODO: Normal EdgeMetadata
   }
 }
 
