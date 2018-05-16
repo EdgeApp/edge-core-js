@@ -131,8 +131,7 @@ class AccountState {
       // If we are logged out, do nothing!
       if (!this.login) return
 
-      const { dispatch } = this.ai.props
-      dispatch(syncStorageWallet(this.keyInfo.id, this.ai.props.io))
+      syncStorageWallet(this.ai, this.keyInfo.id)
         .then(changes => this.startTimer())
         .catch(e => this.startTimer())
     }, 30000)
@@ -557,7 +556,6 @@ class AccountState {
 }
 
 export async function makeAccountState (ai, appId, loginTree, callbacks) {
-  const { dispatch } = ai.props
   await waitForCurrencyPlugins(ai)
 
   return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
@@ -569,11 +567,9 @@ export async function makeAccountState (ai, appId, loginTree, callbacks) {
       throw new Error(`Cannot find a "${type}" repo`)
     }
 
-    return dispatch(
-      addStorageWallet(keyInfo, ai.props.onError, ai.props.io)
-    ).then(() => {
+    return addStorageWallet(ai, keyInfo).then(() => {
       const account = new AccountState(ai, appId, loginTree, keyInfo, callbacks)
-      const disposer = dispatch(
+      const disposer = ai.props.dispatch(
         createReaction(
           state => getStorageWalletLastChanges(state, keyInfo.id),
           changes => account.onDataChanged(changes)

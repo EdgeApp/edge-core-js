@@ -2,41 +2,36 @@
 
 import { combineReducers } from 'redux'
 
-import { listReducer } from '../../util/redux/reducers.js'
+import type { DiskletFolder } from '../../edge-core-index.js'
 import type { RootAction } from '../actions.js'
 
-export interface StorageWalletState {
-  lastChanges: Array<string>;
-  status: {
-    lastHash: string | void,
-    lastSync: number
-  };
+export type StorageWalletStatus = {
+  lastHash: string | void,
+  lastSync: number
 }
 
-const ADD = 'airbitz-core-js/storageWallet/ADD'
-const UPDATE = 'airbitz-core-js/storageWallet/UPDATE'
-
-export function add (keyId: string, initialState: any) {
-  return { type: ADD, payload: { id: keyId, initialState } }
+export type StorageWalletState = {
+  lastChanges: Array<string>,
+  localFolder: DiskletFolder,
+  paths: any,
+  status: StorageWalletStatus
 }
 
-export function update (keyId: string, action: RootAction) {
-  return { type: UPDATE, payload: { id: keyId, action } }
-}
+export type StorageWalletsState = { [id: string]: StorageWalletState }
 
 /**
  * Individual repo reducer.
  */
-const storageWallet = combineReducers({
+const storageWalletReducer = combineReducers({
   lastChanges (state = [], action: RootAction): Array<string> {
-    if (action.type === 'REPO_SYNCED') {
+    if (action.type === 'STORAGE_WALLET_SYNCED') {
       const { changes } = action.payload
       return changes.length ? changes : state
     }
     return state
   },
 
-  localFolder (state = null) {
+  localFolder (state: any = null): DiskletFolder {
     return state
   },
 
@@ -44,15 +39,40 @@ const storageWallet = combineReducers({
     return state
   },
 
-  status (state = { lastSync: 0 }, action: RootAction) {
-    if (action.type === 'REPO_SYNCED') {
-      return action.payload.status
-    }
-    return state
+  status (
+    state = { lastSync: 0, lastHash: void 0 },
+    action: RootAction
+  ): StorageWalletStatus {
+    return action.type === 'STORAGE_WALLET_SYNCED'
+      ? action.payload.status
+      : state
   }
 })
 
 /**
- * Wallet list reducer.
+ * Repo list reducer.
  */
-export default listReducer(storageWallet, { ADD, UPDATE })
+export default function storageWalletsReducer (
+  state: StorageWalletsState = {},
+  action: RootAction
+) {
+  switch (action.type) {
+    case 'STORAGE_WALLET_ADDED': {
+      const { id, initialState } = action.payload
+      const out = { ...state }
+      out[id] = storageWalletReducer(initialState, { type: '' })
+      return out
+    }
+
+    case 'STORAGE_WALLET_SYNCED': {
+      const { id } = action.payload
+      if (state[id] != null) {
+        const out = { ...state }
+        out[id] = storageWalletReducer(state[id], action)
+        return out
+      }
+      return state
+    }
+  }
+  return state
+}
