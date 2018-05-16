@@ -1,7 +1,7 @@
 // @flow
 
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
-import { totp } from '../../util/crypto/hotp.js'
+import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
@@ -97,7 +97,7 @@ export async function loginPassword (
       totp(otpKey || stashTree.otpKey)
     )
     stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-    if (otpKey) stashTree.otpKey = otpKey
+    if (otpKey) stashTree.otpKey = fixOtpKey(otpKey)
     loginStore.save(stashTree)
     return makeLoginTree(stashTree, loginKey)
   }

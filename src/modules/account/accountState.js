@@ -1,5 +1,6 @@
 import { base32 } from 'rfc4648'
 
+import { fixOtpKey } from '../../util/crypto/hotp.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import {
   getCurrencyPlugin,
@@ -173,7 +174,7 @@ class AccountState {
     checkLogin(login)
     const otpKey =
       login.otpKey != null
-        ? login.otpKey
+        ? fixOtpKey(login.otpKey)
         : base32.stringify(ai.props.io.random(10))
 
     const kit = {
