@@ -11,7 +11,7 @@ import { compare } from '../../../util/compare.js'
 import {
   getStorageWalletLastChanges,
   hashStorageWalletFilename
-} from '../../storage/selectors.js'
+} from '../../storage/storage-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { loadAllFiles, setupNewTxMetadata } from './currency-wallet-files.js'
 import type {

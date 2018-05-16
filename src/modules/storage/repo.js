@@ -9,9 +9,12 @@ import type {
 } from '../../edge-core-index.js'
 import { sha256 } from '../../util/crypto/crypto.js'
 import { base16, base58, base64 } from '../../util/encoding.js'
-import type { StorageWalletPaths, StorageWalletStatus } from './reducer.js'
 import { RepoFolder } from './repoFolder.js'
-import { syncRequest } from './servers.js'
+import type {
+  StorageWalletPaths,
+  StorageWalletStatus
+} from './storage-reducer.js'
+import { syncRequest } from './storage-servers.js'
 
 /**
  * Sets up the back-end folders needed to emulate Git on disk.

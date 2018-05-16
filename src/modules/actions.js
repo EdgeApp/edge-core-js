@@ -9,7 +9,7 @@ import type {
 import type {
   StorageWalletState,
   StorageWalletStatus
-} from './storage/reducer.js'
+} from './storage/storage-reducer.js'
 
 /**
  * The account fires this when it loads its keys from disk.

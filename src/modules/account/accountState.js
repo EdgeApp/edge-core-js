@@ -21,8 +21,11 @@ import { applyKit, searchTree, syncLogin } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makeChangePin2Kits, makeDeletePin2Kits } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
-import { addStorageWallet, syncStorageWallet } from '../storage/actions.js'
-import { getStorageWalletLastChanges } from '../storage/selectors.js'
+import {
+  addStorageWallet,
+  syncStorageWallet
+} from '../storage/storage-actions.js'
+import { getStorageWalletLastChanges } from '../storage/storage-selectors.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 export function findAppLogin (loginTree, appId) {

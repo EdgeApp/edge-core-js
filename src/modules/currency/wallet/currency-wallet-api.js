@@ -24,7 +24,7 @@ import { getCurrencyMultiplier } from '../../currency/currency-selectors'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
-import { makeStorageWalletApi } from '../../storage/storageApi.js'
+import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import {
   exportTransactionsToCSVInner,
   exportTransactionsToQBOInner

@@ -9,12 +9,15 @@ import type {
   EdgeCurrencyWallet
 } from '../../../edge-core-index.js'
 import type { ApiInput, RootProps } from '../../root.js'
-import { addStorageWallet, syncStorageWallet } from '../../storage/actions.js'
+import {
+  addStorageWallet,
+  syncStorageWallet
+} from '../../storage/storage-actions.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalFolder,
   makeStorageWalletLocalEncryptedFolder
-} from '../../storage/selectors.js'
+} from '../../storage/storage-selectors.js'
 import { getCurrencyPlugin } from '../currency-selectors.js'
 import { makeCurrencyWalletApi } from './currency-wallet-api.js'
 import {

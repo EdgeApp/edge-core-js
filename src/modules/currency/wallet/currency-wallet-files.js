@@ -10,7 +10,7 @@ import {
   getStorageWalletFolder,
   getStorageWalletLocalFolder,
   hashStorageWalletFilename
-} from '../../storage/selectors.js'
+} from '../../storage/storage-selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { forEachListener } from './currency-wallet-callbacks.js'
