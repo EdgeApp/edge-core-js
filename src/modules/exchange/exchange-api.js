@@ -1,7 +1,7 @@
 // @flow
 
 import { wrapObject } from '../../util/api.js'
-import { getExchangeRate } from '../exchange/selectors.js'
+import { getExchangeRate } from '../exchange/exchange-selectors.js'
 import type { ApiInput } from '../root.js'
 
 /**

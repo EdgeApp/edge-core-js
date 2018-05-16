@@ -5,7 +5,7 @@ import { mapFiles } from 'disklet'
 
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobbyApi.js'
-import { getExchangeRate } from '../../exchange/selectors.js'
+import { getExchangeRate } from '../../exchange/exchange-selectors.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalFolder,

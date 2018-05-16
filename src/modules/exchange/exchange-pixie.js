@@ -6,7 +6,7 @@ import type { PixieInput } from 'redux-pixies'
 import type { EdgeExchangePlugin } from '../../edge-core-index.js'
 import { rejectify } from '../../util/decorators.js'
 import type { RootProps } from '../root.js'
-import type { ExchangePair } from './reducer.js'
+import type { ExchangePair } from './exchange-reducer.js'
 
 export interface ExchangeOutput {
   plugins: Array<EdgeExchangePlugin>;

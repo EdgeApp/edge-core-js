@@ -17,9 +17,9 @@ import {
   makeRootProps,
   startCoreRoot
 } from '../root.js'
-import reducer from './reducer.js'
-import type { ExchangePair } from './reducer.js'
-import { getExchangeRate } from './selectors.js'
+import reducer from './exchange-reducer.js'
+import type { ExchangePair } from './exchange-reducer.js'
+import { getExchangeRate } from './exchange-selectors.js'
 
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.

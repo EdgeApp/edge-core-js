@@ -12,7 +12,7 @@ import type {
 import { copyProperties, wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
-import { makeExchangeCache } from '../exchange/exchangeApi.js'
+import { makeExchangeCache } from '../exchange/exchange-api.js'
 import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
 import { checkPin2 } from '../login/pin2.js'

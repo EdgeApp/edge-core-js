@@ -6,7 +6,7 @@ import type {
   EdgeTokenInfo,
   EdgeWalletInfo
 } from '../edge-core-index.js'
-import type { ExchangePair } from './exchange/reducer.js'
+import type { ExchangePair } from './exchange/exchange-reducer.js'
 import type {
   StorageWalletState,
   StorageWalletStatus
