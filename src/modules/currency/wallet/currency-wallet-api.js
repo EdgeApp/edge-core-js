@@ -85,7 +85,7 @@ export function makeCurrencyWalletApi (
       return input.props.selfState.name
     },
     renameWallet (name: string) {
-      return renameCurrencyWallet(input, name)
+      return renameCurrencyWallet(input, name).then(() => {})
     },
 
     // Currency info:
@@ -96,7 +96,7 @@ export function makeCurrencyWalletApi (
       return plugin.currencyInfo
     },
     setFiatCurrencyCode (fiatCurrencyCode: string) {
-      return setCurrencyWalletFiat(input, fiatCurrencyCode)
+      return setCurrencyWalletFiat(input, fiatCurrencyCode).then(() => {})
     },
 
     // Running state:

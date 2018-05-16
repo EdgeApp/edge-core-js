@@ -2,8 +2,17 @@
 
 import { combineReducers } from 'redux'
 
-import type { DiskletFolder } from '../../edge-core-index.js'
+import type { DiskletFile, DiskletFolder } from '../../edge-core-index.js'
 import type { RootAction } from '../actions.js'
+
+export type StorageWalletPaths = {
+  dataKey: Uint8Array,
+  syncKey: Uint8Array,
+  changesFolder: DiskletFolder,
+  dataFolder: DiskletFolder,
+  folder: DiskletFolder,
+  statusFile: DiskletFile
+}
 
 export type StorageWalletStatus = {
   lastHash: string | void,
@@ -13,7 +22,7 @@ export type StorageWalletStatus = {
 export type StorageWalletState = {
   lastChanges: Array<string>,
   localFolder: DiskletFolder,
-  paths: any,
+  paths: StorageWalletPaths,
   status: StorageWalletStatus
 }
 
@@ -35,7 +44,7 @@ const storageWalletReducer = combineReducers({
     return state
   },
 
-  paths (state = null) {
+  paths (state: any = null): StorageWalletPaths {
     return state
   },
 

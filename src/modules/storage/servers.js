@@ -1,3 +1,6 @@
+// @flow
+
+import type { EdgeIo } from '../../edge-core-index.js'
 import { NetworkError } from '../../error.js'
 
 const syncServers = ['https://git2.airbitz.co', 'https://git3.airbitz.co']
@@ -5,12 +8,17 @@ const syncServers = ['https://git2.airbitz.co', 'https://git3.airbitz.co']
 /**
  * Fetches some resource from a sync server.
  */
-export function syncRequest (io, method, uri, body) {
+export function syncRequest (
+  io: EdgeIo,
+  method: string,
+  uri: string,
+  body: Object
+) {
   return syncRequestInner(io, method, uri, body, 0)
 }
 
 function syncRequestInner (io, method, path, body, serverIndex) {
-  const opts = {
+  const opts: Object = {
     method: method,
     headers: {
       Accept: 'application/json',

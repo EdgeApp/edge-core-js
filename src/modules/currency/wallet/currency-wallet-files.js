@@ -128,7 +128,7 @@ function getTxFile (state: any, keyId: string, date: number, txid: string) {
 export function renameCurrencyWallet (
   input: CurrencyWalletInput,
   name: string | null
-) {
+): Promise<mixed> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
@@ -149,7 +149,7 @@ export function renameCurrencyWallet (
 export function setCurrencyWalletFiat (
   input: CurrencyWalletInput,
   fiatCurrencyCode: string
-) {
+): Promise<mixed> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
