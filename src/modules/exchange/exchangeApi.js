@@ -24,7 +24,7 @@ function makeExchangeCacheApi (ai: ApiInput) {
     // The curve reaches half way (0.5) at 30 seconds in:
     const ageCurve = age / (30 + age)
 
-    return 1 + 0.1 * inverse + ageCurve // + 2 * isWrongExchange()
+    return ageCurve + (inverse ? 1.1 : 1) // + 2 * isWrongExchange()
   }
 
   const out = {

@@ -6,11 +6,11 @@ import type { PixieInput } from 'redux-pixies'
 import type { EdgeExchangePlugin } from '../../edge-core-index.js'
 import { rejectify } from '../../util/decorators.js'
 import type { RootProps } from '../root.js'
-import { addPairs } from './reducer.js'
+import type { ExchangePair } from './reducer.js'
 
 export interface ExchangeOutput {
   plugins: Array<EdgeExchangePlugin>;
-  update: void;
+  update: mixed;
 }
 
 export default combinePixies({
@@ -55,7 +55,7 @@ export default combinePixies({
         )
       ).then(pairLists => {
         const timestamp = Date.now() / 1000
-        const pairs = []
+        const pairs: Array<ExchangePair> = []
         for (let i = 0; i < plugins.length; ++i) {
           const source = plugins[i].exchangeInfo.exchangeName
           for (const pair of pairLists[i]) {
@@ -76,7 +76,7 @@ export default combinePixies({
           input.props.onError(e)
         }
 
-        input.props.dispatch(addPairs(pairs))
+        input.props.dispatch({ type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs })
         timeout = setTimeout(doFetch, 30 * 1000)
         return void 0
       })

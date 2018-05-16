@@ -6,6 +6,7 @@ import type {
   EdgeTokenInfo,
   EdgeWalletInfo
 } from '../edge-core-index.js'
+import type { ExchangePair } from './exchange/reducer.js'
 import type {
   StorageWalletState,
   StorageWalletStatus
@@ -137,6 +138,14 @@ export interface CurrencyWalletNameChanged {
 }
 
 /**
+ * Fired when we fetch exchange pairs from some server.
+ */
+export interface ExchangePairsFetched {
+  type: 'EXCHANGE_PAIRS_FETCHED';
+  payload: Array<ExchangePair>;
+}
+
+/**
  * Initializes the redux store on context creation.
  */
 export interface InitAction {
@@ -205,6 +214,7 @@ export type RootAction =
   | CurrencyWalletFilesLoaded
   | CurrencyWalletFileNamesLoaded
   | CurrencyWalletNameChanged
+  | ExchangePairsFetched
   | InitAction
   | LoginAction
   | LogoutAction
