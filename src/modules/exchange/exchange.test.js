@@ -17,8 +17,9 @@ import {
   makeRootProps,
   startCoreRoot
 } from '../root.js'
-import reducer, { addPairs } from './reducer.js'
-import { getExchangeRate } from './selectors.js'
+import reducer from './exchange-reducer.js'
+import type { ExchangePair } from './exchange-reducer.js'
+import { getExchangeRate } from './exchange-selectors.js'
 
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.
@@ -81,6 +82,10 @@ const routes = {
   JPY: { BTC: [2] }
 }
 
+function addPairs (pairs: Array<ExchangePair>) {
+  return { type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs }
+}
+
 describe('exchange cache reducer', function () {
   it('add currency pairs', function () {
     const pairs = makePairs()
@@ -114,7 +119,7 @@ describe('exchange cache reducer', function () {
 
   it('find the shortest route', function () {
     const pairs = makePairs()
-    const state = { exchangeCache: reducer(void 0, addPairs(pairs)) }
+    const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
     const getPairCost = (source, age, inverse) => 1
 
     assert.equal(getExchangeRate(state, 'BTC', 'BTC', getPairCost), 1)
@@ -127,7 +132,7 @@ describe('exchange cache reducer', function () {
 
   it('find a route using the preferred exchange', function () {
     const pairs = makePairs()
-    const state = { exchangeCache: reducer(void 0, addPairs(pairs)) }
+    const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
     const getPairCost = source => (source === 'complexSource' ? 1 : 10)
 
     assert.equal(
@@ -138,7 +143,7 @@ describe('exchange cache reducer', function () {
 
   it('find the freshest route', function () {
     const pairs = makePairs()
-    const state = { exchangeCache: reducer(void 0, addPairs(pairs)) }
+    const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
     const getPairCost = (source, age) => age
 
     assert.equal(
@@ -149,7 +154,7 @@ describe('exchange cache reducer', function () {
 
   it('missing routes return zero', function () {
     const pairs = makePairs()
-    const state = { exchangeCache: reducer(void 0, addPairs(pairs)) }
+    const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
 
     assert.equal(getExchangeRate(state, 'NONE', 'EUR', pair => 1), 0)
   })

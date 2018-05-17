@@ -1,7 +1,7 @@
 // @flow
 
 import { wrapObject } from '../../util/api.js'
-import { getExchangeRate } from '../exchange/selectors.js'
+import { getExchangeRate } from '../exchange/exchange-selectors.js'
 import type { ApiInput } from '../root.js'
 
 /**
@@ -24,7 +24,7 @@ function makeExchangeCacheApi (ai: ApiInput) {
     // The curve reaches half way (0.5) at 30 seconds in:
     const ageCurve = age / (30 + age)
 
-    return 1 + 0.1 * inverse + ageCurve // + 2 * isWrongExchange()
+    return ageCurve + (inverse ? 1.1 : 1) // + 2 * isWrongExchange()
   }
 
   const out = {

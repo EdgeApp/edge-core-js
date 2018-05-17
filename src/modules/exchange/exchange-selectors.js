@@ -1,3 +1,13 @@
+// @flow
+
+import type { RootState } from '../root-reducer.js'
+
+export type GetPairCost = (
+  source: string,
+  age: number,
+  inverse: boolean
+) => number
+
 /**
  * Recursively searches for the best exchange rate.
  */
@@ -75,7 +85,12 @@ function startRouteSearch (
  * Higher scores are worse. The scores add, so longer paths have higher costs
  * than shorter paths. The signature is `(source, age, inverse) => cost`.
  */
-export function getExchangeRate (state, fromCurrency, toCurrency, getPairCost) {
+export function getExchangeRate (
+  state: RootState,
+  fromCurrency: string,
+  toCurrency: string,
+  getPairCost: GetPairCost
+) {
   return startRouteSearch(
     state.exchangeCache.rates.routes,
     state.exchangeCache.rates.pairs,
