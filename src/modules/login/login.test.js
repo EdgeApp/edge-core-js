@@ -129,6 +129,11 @@ describe('otp', function () {
       return context.requestOtpReset(fakeUser.username, e.resetToken)
     })
 
+    // Can log in remotely with the token:
+    await remote.loginWithPIN(fakeUser.username, fakeUser.pin, {
+      otp: account.otpKey
+    })
+
     // Verify that a reset has been requested:
     const messages1 = await context.fetchLoginMessages()
     expect(messages1['js test 0'].otpResetPending).to.equal(true)

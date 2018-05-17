@@ -1,7 +1,7 @@
 // @flow
 
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
-import { totp } from '../../util/crypto/hotp.js'
+import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
@@ -82,7 +82,7 @@ export async function loginPin2 (
     totp(otpKey || stashTree.otpKey)
   )
   stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-  if (otpKey) stashTree.otpKey = otpKey
+  if (otpKey) stashTree.otpKey = fixOtpKey(otpKey)
   loginStore.save(stashTree)
 
   // Capture the PIN into the login tree:
