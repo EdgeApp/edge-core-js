@@ -5,7 +5,7 @@ import { makeKeyInfo } from '../login/keys.js'
 import {
   getStorageWalletFolder,
   hashStorageWalletFilename
-} from '../storage/selectors.js'
+} from '../storage/storage-selectors.js'
 
 /**
  * Returns true if `Object.assign(a, b)` would alter `a`.

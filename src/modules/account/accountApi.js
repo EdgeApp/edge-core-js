@@ -17,7 +17,7 @@ import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
 import { checkPassword } from '../login/password.js'
 import { checkPin2 } from '../login/pin2.js'
 import type { ApiInput } from '../root.js'
-import { makeStorageWalletApi } from '../storage/storageApi.js'
+import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { makeAccountState } from './accountState.js'
 import { makeLobbyApi } from './lobbyApi.js'
 

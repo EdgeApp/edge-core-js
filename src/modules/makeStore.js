@@ -2,7 +2,6 @@
 
 import { applyMiddleware, compose, createStore } from 'redux'
 import type { StoreEnhancer } from 'redux'
-import thunk from 'redux-thunk'
 
 import { reactionMiddleware } from '../util/redux/reaction.js'
 import type { RootAction } from './actions.js'
@@ -16,7 +15,7 @@ const composeEnhancers =
 
 export function makeStore () {
   const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers(
-    applyMiddleware(thunk, reactionMiddleware)
+    applyMiddleware(reactionMiddleware)
   )
   return createStore(reducer, enhancers)
 }

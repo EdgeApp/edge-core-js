@@ -9,6 +9,8 @@ import { base64 } from '../../util/encoding.js'
 import { makeRepoPaths, syncRepo } from '../storage/repo.js'
 
 const fakeRepoInfo = {
+  id: '',
+  type: '',
   keys: {
     dataKey: base64.stringify(fakeUser.loginKey),
     syncKey: base64.stringify(fakeUser.syncKey)
@@ -60,12 +62,13 @@ describe('repo', function () {
     const paths2 = makeRepoPaths(io2, fakeRepoInfo)
     const payload = 'Test data'
 
+    const dummyStatus = { lastSync: 0, lastHash: void 0 }
     await paths1.folder
       .folder('a')
       .file('b.json')
       .setText(payload)
-    await syncRepo(io1, paths1, {}).then(changed => assert(changed))
-    await syncRepo(io2, paths2, {}).then(changed => assert(changed))
+    await syncRepo(io1, paths1, dummyStatus).then(changed => assert(changed))
+    await syncRepo(io2, paths2, dummyStatus).then(changed => assert(changed))
     const text = await paths2.folder
       .folder('a')
       .file('b.json')
