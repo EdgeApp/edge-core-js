@@ -29,7 +29,9 @@ import { getStorageWalletLastChanges } from '../storage/storage-selectors.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 export function findAppLogin (loginTree, appId) {
-  return searchTree(loginTree, login => login.appId === appId)
+  const out = searchTree(loginTree, login => login.appId === appId)
+  if (!out) throw new Error(`Internal error: cannot find login for ${appId}`)
+  return out
 }
 
 function checkLogin (login) {
@@ -70,7 +72,7 @@ export function ensureAccountExists (ai, loginTree, appId) {
   const accountType = makeAccountType(appId)
 
   // If there is no app login, make that:
-  const login = findAppLogin(loginTree, appId)
+  const login = searchTree(loginTree, login => login.appId === appId)
   if (login == null) {
     return createChildLogin(ai, loginTree, loginTree, appId, true)
   }
