@@ -456,7 +456,7 @@ class AccountState {
     const walletInfo = allWalletInfos.find(
       walletInfo => walletInfo.id === walletId
     )
-    if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
+    if (!walletInfo) throw new Error(`Invalid wallet id ${walletId}`)
 
     // Handle BCH / BTC+segwit special case:
     if (
@@ -514,7 +514,7 @@ class AccountState {
     const walletInfo = allWalletInfos.find(
       walletInfo => walletInfo.id === walletId
     )
-    if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
+    if (!walletInfo) throw new Error(`Invalid wallet id ${walletId}`)
 
     // Get the list of available types:
     const plugin = getCurrencyPlugin(
