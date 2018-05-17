@@ -109,7 +109,7 @@ export type AppIdMap = { [walletId: string]: Array<string> }
 export interface LoginKit {
   loginId: string;
   login: Object;
-  server: Object;
+  server?: Object;
   serverMethod?: string;
   serverPath: string;
   stash: LoginStash;

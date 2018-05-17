@@ -19,7 +19,7 @@ import { checkPassword } from '../login/password.js'
 import { checkPin2 } from '../login/pin2.js'
 import type { ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
-import { makeAccountState } from './accountState.js'
+import { AccountState, makeAccountState } from './accountState.js'
 import { makeLobbyApi } from './lobbyApi.js'
 
 /**
@@ -41,7 +41,7 @@ export function makeAccount (
  * Creates an unwrapped account API object around an account state object.
  */
 function makeAccountApi (
-  state: any,
+  state: AccountState,
   loginType: string,
   callbacks: EdgeAccountCallbacks | {}
 ): EdgeAccount {
@@ -67,6 +67,7 @@ function makeAccountApi (
         : void 0
     },
     get username (): string {
+      if (!state.loginTree.username) throw new Error('Missing username')
       return state.loginTree.username
     },
 
@@ -87,7 +88,7 @@ function makeAccountApi (
 
     // Change or create credentials:
     changePassword (password: string): Promise<void> {
-      return state.changePassword(password)
+      return state.changePassword(password).then(() => {})
     },
     changePin (opts: {
       pin?: string, // We keep the existing PIN if unspecified
@@ -102,9 +103,12 @@ function makeAccountApi (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
-      return state
-        .changeRecovery(questions, answers)
-        .then(() => base58.stringify(state.loginTree.recovery2Key))
+      return state.changeRecovery(questions, answers).then(() => {
+        if (!state.loginTree.recovery2Key) {
+          throw new Error('Missing recoveryKey')
+        }
+        return base58.stringify(state.loginTree.recovery2Key)
+      })
     },
 
     // Verify existing credentials:
@@ -120,13 +124,13 @@ function makeAccountApi (
 
     // Remove credentials:
     deletePassword (): Promise<void> {
-      return state.deletePassword()
+      return state.deletePassword().then(() => {})
     },
     deletePin (): Promise<void> {
-      return state.deletePin()
+      return state.deletePin().then(() => {})
     },
     deleteRecovery (): Promise<void> {
-      return state.deleteRecovery()
+      return state.deleteRecovery().then(() => {})
     },
 
     // OTP:
@@ -137,13 +141,13 @@ function makeAccountApi (
       return state.login.otpResetDate
     },
     cancelOtpReset (): Promise<void> {
-      return state.cancelOtpReset()
+      return state.cancelOtpReset().then(() => {})
     },
     enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<void> {
-      return state.enableOtp(timeout)
+      return state.enableOtp(timeout).then(() => {})
     },
     disableOtp (): Promise<void> {
-      return state.disableOtp()
+      return state.disableOtp().then(() => {})
     },
 
     // Edge login approval:
@@ -176,12 +180,13 @@ function makeAccountApi (
     },
     '@getFirstWalletInfo': { sync: true },
     getFirstWalletInfo (type: string): ?EdgeWalletInfo {
-      return findFirstKey(state.allKeys, type)
+      const allKeys: any = state.allKeys // WalletInfoFull -> WalletInfo
+      return findFirstKey(allKeys, type)
     },
     '@getWalletInfo': { sync: true },
-    getWalletInfo (id: string): EdgeWalletInfo {
-      const info = state.allKeys.find(info => info.id === id)
-      return info
+    getWalletInfo (id: string): ?EdgeWalletInfo {
+      const allKeys: any = state.allKeys // WalletInfoFull -> WalletInfo
+      return allKeys.find(info => info.id === id)
     },
     '@listWalletIds': { sync: true },
     listWalletIds (): Array<string> {
