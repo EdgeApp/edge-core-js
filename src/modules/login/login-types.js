@@ -40,6 +40,7 @@ export type LoginStash = {
   children?: Array<LoginStash>,
   keyBoxes?: Array<JsonBox>,
   mnemonicBox?: JsonBox,
+  parentBox?: JsonBox,
   rootKeyBox?: JsonBox,
   syncKeyBox?: JsonBox
 }

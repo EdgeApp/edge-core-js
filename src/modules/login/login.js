@@ -7,7 +7,7 @@ import type { EdgeLoginMessages } from '../../edge-core-index.js'
 import { decrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
-import { elvis, filterObject, softCat } from '../../util/util.js'
+import { filterObject, softCat } from '../../util/util.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import {
@@ -107,11 +107,11 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
   }
 
   // Keys (we could be more picky about this):
-  out.keyBoxes = elvis(loginReply.keyBoxes, [])
+  out.keyBoxes = loginReply.keyBoxes != null ? loginReply.keyBoxes : []
 
   // Recurse into children:
-  const stashChildren = elvis(stash.children, [])
-  const replyChildren = elvis(loginReply.children, [])
+  const stashChildren = stash.children != null ? stash.children : []
+  const replyChildren = loginReply.children != null ? loginReply.children : []
   if (stashChildren.length > replyChildren.length) {
     throw new Error('The server has lost children!')
   }
@@ -213,7 +213,8 @@ function makeLoginTreeInner (stash, loginKey) {
   }
 
   // Keys:
-  const keyInfos = elvis(stash.keyBoxes, []).map(box =>
+  const stashKeyBoxes = stash.keyBoxes != null ? stash.keyBoxes : []
+  const keyInfos = stashKeyBoxes.map(box =>
     JSON.parse(utf8.stringify(decrypt(box, loginKey)))
   )
 
@@ -222,7 +223,11 @@ function makeLoginTreeInner (stash, loginKey) {
   )
 
   // Recurse into children:
-  login.children = elvis(stash.children, []).map(child => {
+  const stashChildren = stash.children != null ? stash.children : []
+  login.children = stashChildren.map(child => {
+    if (!child.parentBox) {
+      throw new Error('Key integrity violation: No parentBox on child login.')
+    }
     const childKey = decrypt(child.parentBox, loginKey)
     return makeLoginTreeInner(child, childKey)
   })
