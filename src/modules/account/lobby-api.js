@@ -11,7 +11,7 @@ import {
   AccountState,
   ensureAccountExists,
   findAppLogin
-} from './accountState.js'
+} from './account-state.js'
 
 interface AppIdInfo {
   displayName: string;

@@ -19,8 +19,8 @@ import { checkPassword } from '../login/password.js'
 import { checkPin2 } from '../login/pin2.js'
 import type { ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
-import { AccountState, makeAccountState } from './accountState.js'
-import { makeLobbyApi } from './lobbyApi.js'
+import { AccountState, makeAccountState } from './account-state.js'
+import { makeLobbyApi } from './lobby-api.js'
 
 /**
  * Creates an `Account` API object.

@@ -38,7 +38,7 @@ import {
   syncStorageWallet
 } from '../storage/storage-actions.js'
 import { getStorageWalletLastChanges } from '../storage/storage-selectors.js'
-import { changeWalletStates, loadAllWalletStates } from './keyState.js'
+import { changeWalletStates, loadAllWalletStates } from './wallet-states.js'
 
 export function findAppLogin (loginTree: LoginTree, appId: string): LoginTree {
   const out = searchTree(loginTree, login => login.appId === appId)

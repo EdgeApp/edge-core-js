@@ -4,7 +4,7 @@ import { number as currencyFromNumber } from 'currency-codes'
 import { mapFiles } from 'disklet'
 
 import { mergeDeeply } from '../../../util/util.js'
-import { fetchAppIdInfo } from '../../account/lobbyApi.js'
+import { fetchAppIdInfo } from '../../account/lobby-api.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
 import type { RootState } from '../../root-reducer.js'
 import {
