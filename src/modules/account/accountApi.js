@@ -14,6 +14,7 @@ import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
 import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
+import type { LoginTree } from '../login/login-types.js'
 import { checkPassword } from '../login/password.js'
 import { checkPin2 } from '../login/pin2.js'
 import type { ApiInput } from '../root.js'
@@ -27,7 +28,7 @@ import { makeLobbyApi } from './lobbyApi.js'
 export function makeAccount (
   ai: ApiInput,
   appId: string,
-  loginTree: any,
+  loginTree: LoginTree,
   loginType: string = '',
   callbacks: EdgeAccountCallbacks | {} = {}
 ) {

@@ -183,7 +183,7 @@ function makeContextApi (ai: ApiInput) {
         displayName,
         onProcessLogin,
         onLogin (err, loginTree) {
-          if (err) return onLogin(err)
+          if (err || !loginTree) return onLogin(err)
           makeAccount(ai, appId, loginTree, 'edgeLogin', callbacks).then(
             account => onLogin(void 0, account),
             err => onLogin(err)

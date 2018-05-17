@@ -53,7 +53,7 @@ export function searchTree (node: any, predicate: any => boolean) {
  * The `predicate` callback is used to find the target node.
  * The `update` callback is called on the target.
  */
-function updateTree<Node: { children?: Array<any> }, Output> (
+function updateTree<Node: { +children?: Array<any> }, Output> (
   node: Node,
   predicate: (node: Node) => boolean,
   update: (node: Node) => Output,
@@ -71,7 +71,7 @@ function updateTree<Node: { children?: Array<any> }, Output> (
 
 function applyLoginReplyInner (stash, loginKey, loginReply) {
   // Copy common items:
-  const out = filterObject(loginReply, [
+  const out: LoginStash = filterObject(loginReply, [
     'appId',
     'loginId',
     'loginAuthBox',
@@ -80,6 +80,7 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
     'otpTimeout',
     'parentBox',
     'passwordAuthBox',
+    'passwordAuthSnrp',
     'passwordBox',
     'passwordKeySnrp',
     'pin2TextBox',
@@ -116,8 +117,11 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
     throw new Error('The server has lost children!')
   }
   out.children = replyChildren.map((child, index) => {
-    const childStash = stashChildren[index] != null ? stashChildren[index] : {}
+    if (!child.parentBox) {
+      throw new Error('Key integrity violation: No parentBox on child login.')
+    }
     const childKey = decrypt(child.parentBox, loginKey)
+    const childStash = stashChildren[index] != null ? stashChildren[index] : {}
     return applyLoginReplyInner(childStash, childKey, child)
   })
 
@@ -140,7 +144,10 @@ export function applyLoginReply (
   )
 }
 
-function makeLoginTreeInner (stash, loginKey) {
+function makeLoginTreeInner (
+  stash: LoginStash,
+  loginKey: Uint8Array
+): LoginTree {
   const login = {}
 
   if (stash.username != null) {
@@ -253,8 +260,12 @@ export function makeLoginTree (
     stash => stash.appId === appId,
     stash => makeLoginTreeInner(stash, loginKey),
     (stash, children) => {
-      const login = filterObject(stash, ['username', 'appId', 'loginId'])
-      login.children = children
+      const login: LoginTree = filterObject(stash, [
+        'username',
+        'appId',
+        'loginId'
+      ])
+      login.children = children != null ? children : []
       return login
     }
   )
@@ -270,7 +281,11 @@ export function sanitizeLoginStash (stashTree: LoginStash, appId: string) {
     stash => stash.appId === appId,
     stash => stash,
     (stash, children) => {
-      const login = filterObject(stash, ['username', 'appId', 'loginId'])
+      const login: LoginStash = filterObject(stash, [
+        'username',
+        'appId',
+        'loginId'
+      ])
       login.children = children
       return login
     }
@@ -287,6 +302,7 @@ export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
   const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
   if (!login) throw new Error('Cannot apply kit: missing login')
+  if (!loginTree.username) throw new Error('Cannot apply kit: missing username')
 
   return loginStore.load(loginTree.username).then(stashTree => {
     const request: Object = makeAuthJson(login)
@@ -328,6 +344,8 @@ export function syncLogin (
   login: LoginTree
 ): Promise<LoginTree> {
   const { loginStore } = ai.props
+  if (!loginTree.username) throw new Error('Cannot sync: missing username')
+
   return loginStore.load(loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
     return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
