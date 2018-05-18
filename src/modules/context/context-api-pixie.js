@@ -101,7 +101,7 @@ function makeContextApi (ai: ApiInput) {
       username: string,
       password: string,
       opts?: EdgeAccountOptions
-    ): Promise<any> {
+    ) {
       const { callbacks, otp } = opts || {} // opts can be `null`
 
       return loginPassword(ai, username, password, otp).then(loginTree => {

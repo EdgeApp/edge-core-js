@@ -7,6 +7,7 @@ import type {
   EdgeCurrencyWallet,
   EdgeLobby,
   EdgeWalletInfo,
+  EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../edge-core-index.js'
 import { copyProperties, wrapObject } from '../../util/api.js'
@@ -30,7 +31,7 @@ export function makeAccount (
   appId: string,
   loginTree: LoginTree,
   loginType: string = '',
-  callbacks: EdgeAccountCallbacks | {} = {}
+  callbacks: EdgeAccountCallbacks = {}
 ) {
   return makeAccountState(ai, appId, loginTree, callbacks).then(state =>
     wrapObject('Account', makeAccountApi(state, loginType, callbacks))
@@ -43,7 +44,7 @@ export function makeAccount (
 function makeAccountApi (
   state: AccountState,
   loginType: string,
-  callbacks: EdgeAccountCallbacks | {}
+  callbacks: EdgeAccountCallbacks
 ): EdgeAccount {
   const ai: ApiInput = state.ai
   const { activeLoginId, accountWalletInfo } = state
@@ -161,7 +162,7 @@ function makeAccountApi (
     },
 
     // Master wallet list:
-    get allKeys (): Array<any> {
+    get allKeys (): Array<EdgeWalletInfoFull> {
       return state.allKeys
     },
     changeWalletStates (walletStates: EdgeWalletStates): Promise<void> {
