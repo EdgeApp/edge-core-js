@@ -21,7 +21,7 @@ export type LoginStash = {
 
   // 2-factor:
   otpKey?: string,
-  otpResetDate?: number,
+  otpResetDate?: string,
   otpTimeout?: number,
 
   // Offline password logins:

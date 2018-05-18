@@ -132,7 +132,7 @@ function makeAccountApi (
     get otpKey (): string | void {
       return state.login.otpTimeout != null ? state.login.otpKey : void 0
     },
-    get otpResetDate (): Date | void {
+    get otpResetDate (): string | void {
       return state.login.otpResetDate
     },
     cancelOtpReset (): Promise<void> {
