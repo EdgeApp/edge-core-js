@@ -46,7 +46,7 @@ function makeAccountApi (
   callbacks: EdgeAccountCallbacks | {}
 ): EdgeAccount {
   const ai: ApiInput = state.ai
-  const { activeLoginId, keyInfo } = state
+  const { activeLoginId, accountWalletInfo } = state
 
   const exchangeCache = makeExchangeCache(ai)
 
@@ -165,7 +165,7 @@ function makeAccountApi (
       return state.allKeys
     },
     changeWalletStates (walletStates: EdgeWalletStates): Promise<void> {
-      return state.changeKeyStates(walletStates)
+      return state.changeWalletStates(walletStates)
     },
     createWallet (type: string, keys: any): Promise<string> {
       if (keys == null) {
@@ -174,9 +174,9 @@ function makeAccountApi (
         keys = plugin.createPrivateKey(type)
       }
 
-      const keyInfo = makeStorageKeyInfo(ai, type, keys)
-      const kit = makeKeysKit(ai, state.login, keyInfo)
-      return state.applyKit(kit).then(() => keyInfo.id)
+      const walletInfo = makeStorageKeyInfo(ai, type, keys)
+      const kit = makeKeysKit(ai, state.login, walletInfo)
+      return state.applyKit(kit).then(() => walletInfo.id)
     },
     '@getFirstWalletInfo': { sync: true },
     getFirstWalletInfo (type: string): ?EdgeWalletInfo {
@@ -228,7 +228,10 @@ function makeAccountApi (
     }
   }
 
-  copyProperties(rawAccount, makeStorageWalletApi(ai, keyInfo, callbacks))
+  copyProperties(
+    rawAccount,
+    makeStorageWalletApi(ai, accountWalletInfo, callbacks)
+  )
 
   return rawAccount
 }
