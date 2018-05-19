@@ -349,6 +349,17 @@ export type EdgeCreateCurrencyWalletOptions = {
   keys?: {}
 }
 
+export type EdgePluginData = {
+  deleteItem(pluginId: string, itemId: string): Promise<mixed>,
+  deletePlugin(pluginId: string): Promise<mixed>,
+
+  listItemIds(pluginId: string): Promise<Array<string>>,
+  listPluginIds(): Promise<Array<string>>,
+
+  getItem(pluginId: string, itemId: string): Promise<string>,
+  setItem(pluginId: string, itemId: string, value: string): Promise<mixed>
+}
+
 export type EdgeAccount = {
   // Basic login information:
   +appId: string,
@@ -357,8 +368,9 @@ export type EdgeAccount = {
   +recoveryKey: string | void, // For email backup
   +username: string,
 
-  // Exchange-rate info:
+  // Special-purpose API's:
   +exchangeCache: any,
+  +pluginData: EdgePluginData,
 
   // What login method was used?
   +edgeLogin: boolean,
