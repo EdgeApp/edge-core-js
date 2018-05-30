@@ -124,7 +124,7 @@ export function exportTransactionsToQBOInner (
     const CURRATE = absAmount !== '0' ? div(absFiat, absAmount, 8) : '0'
     const MEMO = `// Rate=${CURRATE} ${fiatCurrencyCode}=${amountFiat} category="${category}" memo="${notes}"`
 
-    const qboTx = {
+    const qboTxNamed = {
       TRNTYPE,
       DTPOSTED,
       TRNAMT,
@@ -132,11 +132,23 @@ export function exportTransactionsToQBOInner (
       NAME,
       MEMO,
       CURRENCY: {
-        CURRATE: '',
+        CURRATE: CURRATE,
         CURSYM: fiatCurrencyCode
       }
     }
-    STMTTRN.push(qboTx)
+    const qboTx = {
+      TRNTYPE,
+      DTPOSTED,
+      TRNAMT,
+      FITID: edgeTx.txid,
+      MEMO,
+      CURRENCY: {
+        CURRATE: CURRATE,
+        CURSYM: fiatCurrencyCode
+      }
+    }
+    const use = NAME === '' ? qboTx : qboTxNamed
+    STMTTRN.push(use)
   }
 
   const header = {

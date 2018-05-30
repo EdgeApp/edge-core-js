@@ -113,7 +113,7 @@ describe('transaction export formats', function () {
         '<NAME>Crazy Person\n' +
         '<MEMO>// Rate=0.00975646 USD=12000.45 category="Income: Mo Money" memo="Hell yeah! Thanks for the fish &lt;&lt;&amp;&amp;&gt;&gt;"\n' +
         '<CURRENCY>\n' +
-        '<CURRATE>\n' +
+        '<CURRATE>0.00975646\n' +
         '<CURSYM>USD\n' +
         '</CURRENCY>\n' +
         '</STMTTRN>\n' +
@@ -125,7 +125,7 @@ describe('transaction export formats', function () {
         '<NAME>Crazy Person 2\n' +
         '<MEMO>// Rate=0.0112154 USD=36001.45 category="Expense: Less Money" memo="Hell yeah! Here\'s a fish""\n' +
         '<CURRENCY>\n' +
-        '<CURRATE>\n' +
+        '<CURRATE>0.0112154\n' +
         '<CURSYM>USD\n' +
         '</CURRENCY>\n' +
         '</STMTTRN>\n' +
