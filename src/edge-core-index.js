@@ -703,8 +703,8 @@ export type EdgeCurrencyEngine = {
 export type EdgeCurrencyPlugin = {
   +pluginName: string,
   +currencyInfo: EdgeCurrencyInfo,
-  createPrivateKey(walletType: string): {},
-  derivePublicKey(walletInfo: EdgeWalletInfo): {},
+  createPrivateKey(walletType: string): Object,
+  derivePublicKey(walletInfo: EdgeWalletInfo): Object,
   makeEngine(
     walletInfo: EdgeWalletInfo,
     options: EdgeCurrencyEngineOptions
