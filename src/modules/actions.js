@@ -6,6 +6,11 @@ import type {
   EdgeTokenInfo,
   EdgeWalletInfo
 } from '../edge-core-index.js'
+import type { ExchangePair } from './exchange/exchange-reducer.js'
+import type {
+  StorageWalletState,
+  StorageWalletStatus
+} from './storage/storage-reducer.js'
 
 /**
  * The account fires this when it loads its keys from disk.
@@ -133,6 +138,14 @@ export interface CurrencyWalletNameChanged {
 }
 
 /**
+ * Fired when we fetch exchange pairs from some server.
+ */
+export interface ExchangePairsFetched {
+  type: 'EXCHANGE_PAIRS_FETCHED';
+  payload: Array<ExchangePair>;
+}
+
+/**
  * Initializes the redux store on context creation.
  */
 export interface InitAction {
@@ -166,16 +179,25 @@ export interface LogoutAction {
 }
 
 /**
+ * Fires when a storage wallet has been loaded.
+ */
+export interface StorageWalletAdded {
+  type: 'STORAGE_WALLET_ADDED';
+  payload: {
+    id: string,
+    initialState: StorageWalletState
+  };
+}
+
+/**
  * Fires when a repo has been synced.
  */
-export interface RepoSynced {
-  type: 'REPO_SYNCED';
+export interface StorageWalletSynced {
+  type: 'STORAGE_WALLET_SYNCED';
   payload: {
+    id: string,
     changes: Array<string>,
-    status: {
-      lastHash: string,
-      lastSync: number
-    }
+    status: StorageWalletStatus
   };
 }
 
@@ -192,7 +214,9 @@ export type RootAction =
   | CurrencyWalletFilesLoaded
   | CurrencyWalletFileNamesLoaded
   | CurrencyWalletNameChanged
+  | ExchangePairsFetched
   | InitAction
   | LoginAction
   | LogoutAction
-  | RepoSynced
+  | StorageWalletAdded
+  | StorageWalletSynced

@@ -1,17 +1,31 @@
+// @flow
+
 import { locateFile, makeUnionFolder, mapAllFiles } from 'disklet'
 
+import type {
+  DiskletFolder,
+  EdgeIo,
+  EdgeWalletInfo
+} from '../../edge-core-index.js'
 import { sha256 } from '../../util/crypto/crypto.js'
 import { base16, base58, base64 } from '../../util/encoding.js'
 import { RepoFolder } from './repoFolder.js'
-import { syncRequest } from './servers.js'
+import type {
+  StorageWalletPaths,
+  StorageWalletStatus
+} from './storage-reducer.js'
+import { syncRequest } from './storage-servers.js'
 
 /**
  * Sets up the back-end folders needed to emulate Git on disk.
  * You probably don't want this.
  */
-export function makeRepoPaths (io, keyInfo) {
-  const dataKey = base64.parse(keyInfo.keys.dataKey)
-  const syncKey = base64.parse(keyInfo.keys.syncKey)
+export function makeRepoPaths (
+  io: EdgeIo,
+  walletInfo: EdgeWalletInfo
+): StorageWalletPaths {
+  const dataKey = base64.parse(walletInfo.keys.dataKey)
+  const syncKey = base64.parse(walletInfo.keys.syncKey)
   const base = io.folder
     .folder('repos')
     .folder(base58.stringify(sha256(sha256(syncKey))))
@@ -29,8 +43,10 @@ export function makeRepoPaths (io, keyInfo) {
   }
 }
 
-export function loadRepoStatus (paths) {
-  const fallback = { lastSync: 0 }
+export function loadRepoStatus (
+  paths: StorageWalletPaths
+): Promise<StorageWalletStatus> {
+  const fallback = { lastSync: 0, lastHash: void 0 }
   return paths.statusFile
     .getText()
     .then(text => ({ lastSync: 0, ...JSON.parse(text) }))
@@ -38,11 +54,14 @@ export function loadRepoStatus (paths) {
 }
 
 /**
- * This will save a changeset into the local storage.
+ * This will save a change-set into the local storage.
  * This function ignores folder-level deletes and overwrites,
  * but those can't happen under the current rules anyhow.
  */
-export function saveChanges (folder, changes) {
+export function saveChanges (
+  folder: DiskletFolder,
+  changes: { [path: string]: Object }
+) {
   return Promise.all(
     Object.keys(changes).map(path => {
       const json = changes[path]
@@ -56,7 +75,11 @@ export function saveChanges (folder, changes) {
 /**
  * Synchronizes the local store with the remote server.
  */
-export function syncRepo (io, paths, status) {
+export function syncRepo (
+  io: EdgeIo,
+  paths: StorageWalletPaths,
+  status: StorageWalletStatus
+) {
   const { changesFolder, dataFolder, statusFile, syncKey } = paths
 
   return mapAllFiles(changesFolder, (file, name) =>

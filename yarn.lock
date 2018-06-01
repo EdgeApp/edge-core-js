@@ -4392,10 +4392,6 @@ redux-pixies@^0.3.4:
   version "0.3.4"
   resolved "https://registry.yarnpkg.com/redux-pixies/-/redux-pixies-0.3.4.tgz#e9b88f059c246931a6a17fc63392cbbd30724954"
 
-redux-thunk@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/redux-thunk/-/redux-thunk-2.2.0.tgz#e615a16e16b47a19a515766133d1e3e99b7852e5"
-
 redux@^3.6.0:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/redux/-/redux-3.7.2.tgz#06b73123215901d25d065be342eb026bc1c8537b"
@@ -4616,9 +4612,9 @@ rfc4648@^0.9.1:
   version "0.9.1"
   resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-0.9.1.tgz#6dff84c2ed0e63381424da2a7caa9b750fa7e477"
 
-rfc4648@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-1.0.0.tgz#fdcbf9a438feef09bde4b8ee7eaf6b7f47935528"
+rfc4648@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-1.1.0.tgz#5e05a16b3c3fc76552f95853a10bd95b6bc0752f"
 
 right-align@^0.1.1:
   version "0.1.3"

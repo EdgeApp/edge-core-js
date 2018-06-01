@@ -8,13 +8,16 @@ import type {
   EdgeCurrencyPlugin,
   EdgeCurrencyWallet
 } from '../../../edge-core-index.js'
-import type { RootProps } from '../../root.js'
-import { addStorageWallet, syncStorageWallet } from '../../storage/actions.js'
+import type { ApiInput, RootProps } from '../../root.js'
+import {
+  addStorageWallet,
+  syncStorageWallet
+} from '../../storage/storage-actions.js'
 import {
   getStorageWalletFolder,
-  getStorageWalletLocalEncryptedFolder,
-  getStorageWalletLocalFolder
-} from '../../storage/selectors.js'
+  getStorageWalletLocalFolder,
+  makeStorageWalletLocalEncryptedFolder
+} from '../../storage/storage-selectors.js'
 import { getCurrencyPlugin } from '../currency-selectors.js'
 import { makeCurrencyWalletApi } from './currency-wallet-api.js'
 import {
@@ -66,15 +69,14 @@ export default combinePixies({
 
     try {
       // Start the data sync:
-      await input.props.dispatch(
-        addStorageWallet(walletInfo, input.props.onError, input.props.io)
-      )
-      const state = input.props.state
+      const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+      await addStorageWallet(ai, walletInfo)
+      const { state } = input.props
 
       const engine = await plugin.makeEngine(walletInfo, {
         walletFolder: getStorageWalletFolder(state, walletInfo.id),
         walletLocalFolder: getStorageWalletLocalFolder(state, walletInfo.id),
-        walletLocalEncryptedFolder: getStorageWalletLocalEncryptedFolder(
+        walletLocalEncryptedFolder: makeStorageWalletLocalEncryptedFolder(
           state,
           walletInfo.id,
           input.props.io
@@ -155,11 +157,12 @@ export default combinePixies({
   },
 
   syncTimer (input: CurrencyWalletInput) {
+    const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
     let timeout: number | void
 
     function startTimer () {
       // Bail out if either the wallet or the repo aren't ready:
-      const { dispatch, id, state, io } = input.props
+      const { id, state } = input.props
       if (
         !input.props.selfOutput ||
         !state.storageWallets[id] ||
@@ -169,8 +172,9 @@ export default combinePixies({
       }
 
       timeout = setTimeout(() => {
-        const thunkPromise: any = dispatch(syncStorageWallet(id, io))
-        thunkPromise.then(changes => startTimer()).catch(e => startTimer())
+        syncStorageWallet(ai, id)
+          .then(changes => startTimer())
+          .catch(e => startTimer())
       }, 30 * 1000)
     }
 

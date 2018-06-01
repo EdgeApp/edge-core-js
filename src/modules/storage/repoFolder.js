@@ -1,3 +1,10 @@
+// @flow
+
+import type {
+  DiskletFile,
+  DiskletFolder,
+  EdgeIo
+} from '../../edge-core-index.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { utf8 } from '../../util/encoding.js'
 
@@ -5,7 +12,11 @@ import { utf8 } from '../../util/encoding.js'
  * A file within an encrypted folder.
  */
 class RepoFile {
-  constructor (io, dataKey, file) {
+  io: EdgeIo
+  dataKey: Uint8Array
+  file: DiskletFile
+
+  constructor (io: EdgeIo, dataKey: Uint8Array, file: DiskletFile) {
     this.io = io
     this.dataKey = dataKey
     this.file = file
@@ -15,24 +26,25 @@ class RepoFile {
     return this.file.delete()
   }
 
-  getData () {
+  getData (): Promise<Uint8Array> {
     return this.file
       .getText()
       .then(text => JSON.parse(text))
       .then(json => decrypt(json, this.dataKey))
   }
 
-  getText () {
+  getText (): Promise<string> {
     return this.getData().then(data => utf8.stringify(data))
   }
 
-  setData (data) {
+  setData (data: Array<number> | Uint8Array): Promise<void> {
+    const dataCast: any = data // Treating Array<number> like Uint8Array
     return this.file.setText(
-      JSON.stringify(encrypt(this.io, data, this.dataKey))
+      JSON.stringify(encrypt(this.io, dataCast, this.dataKey))
     )
   }
 
-  setText (text) {
+  setText (text: string): Promise<void> {
     return this.setData(utf8.parse(text))
   }
 }
@@ -41,7 +53,11 @@ class RepoFile {
  * Wraps a folder with automatic encryption and decryption.
  */
 export class RepoFolder {
-  constructor (io, dataKey, folder) {
+  io: EdgeIo
+  dataKey: Uint8Array
+  inner: DiskletFolder
+
+  constructor (io: EdgeIo, dataKey: Uint8Array, folder: DiskletFolder) {
     this.io = io
     this.dataKey = dataKey
     this.inner = folder
@@ -51,11 +67,11 @@ export class RepoFolder {
     return this.inner.delete()
   }
 
-  file (name) {
+  file (name: string): DiskletFile {
     return new RepoFile(this.io, this.dataKey, this.inner.file(name))
   }
 
-  folder (name) {
+  folder (name: string): DiskletFolder {
     return new RepoFolder(this.io, this.dataKey, this.inner.folder(name))
   }
 

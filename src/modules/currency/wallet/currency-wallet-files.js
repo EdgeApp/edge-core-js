@@ -5,12 +5,12 @@ import { mapFiles } from 'disklet'
 
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobbyApi.js'
-import { getExchangeRate } from '../../exchange/selectors.js'
+import { getExchangeRate } from '../../exchange/exchange-selectors.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalFolder,
   hashStorageWalletFilename
-} from '../../storage/selectors.js'
+} from '../../storage/storage-selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { forEachListener } from './currency-wallet-callbacks.js'
@@ -76,7 +76,7 @@ export type LegacyAddressFile = {
   },
   meta: {
     amountSatoshi: number // requestAmount
-    // TODO: Normal EdgeMetatada
+    // TODO: Normal EdgeMetadata
   }
 }
 
@@ -128,7 +128,7 @@ function getTxFile (state: any, keyId: string, date: number, txid: string) {
 export function renameCurrencyWallet (
   input: CurrencyWalletInput,
   name: string | null
-) {
+): Promise<mixed> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
@@ -149,7 +149,7 @@ export function renameCurrencyWallet (
 export function setCurrencyWalletFiat (
   input: CurrencyWalletInput,
   fiatCurrencyCode: string
-) {
+): Promise<mixed> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 

@@ -1,5 +1,6 @@
 import { base32 } from 'rfc4648'
 
+import { fixOtpKey } from '../../util/crypto/hotp.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import {
   getCurrencyPlugin,
@@ -20,8 +21,11 @@ import { applyKit, searchTree, syncLogin } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makeChangePin2Kits, makeDeletePin2Kits } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
-import { addStorageWallet, syncStorageWallet } from '../storage/actions.js'
-import { getStorageWalletLastChanges } from '../storage/selectors.js'
+import {
+  addStorageWallet,
+  syncStorageWallet
+} from '../storage/storage-actions.js'
+import { getStorageWalletLastChanges } from '../storage/storage-selectors.js'
 import { changeKeyStates, loadAllKeyStates } from './keyState.js'
 
 export function findAppLogin (loginTree, appId) {
@@ -130,8 +134,7 @@ class AccountState {
       // If we are logged out, do nothing!
       if (!this.login) return
 
-      const { dispatch } = this.ai.props
-      dispatch(syncStorageWallet(this.keyInfo.id, this.ai.props.io))
+      syncStorageWallet(this.ai, this.keyInfo.id)
         .then(changes => this.startTimer())
         .catch(e => this.startTimer())
     }, 30000)
@@ -173,7 +176,7 @@ class AccountState {
     checkLogin(login)
     const otpKey =
       login.otpKey != null
-        ? login.otpKey
+        ? fixOtpKey(login.otpKey)
         : base32.stringify(ai.props.io.random(10))
 
     const kit = {
@@ -556,7 +559,6 @@ class AccountState {
 }
 
 export async function makeAccountState (ai, appId, loginTree, callbacks) {
-  const { dispatch } = ai.props
   await waitForCurrencyPlugins(ai)
 
   return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
@@ -568,11 +570,9 @@ export async function makeAccountState (ai, appId, loginTree, callbacks) {
       throw new Error(`Cannot find a "${type}" repo`)
     }
 
-    return dispatch(
-      addStorageWallet(keyInfo, ai.props.onError, ai.props.io)
-    ).then(() => {
+    return addStorageWallet(ai, keyInfo).then(() => {
       const account = new AccountState(ai, appId, loginTree, keyInfo, callbacks)
-      const disposer = dispatch(
+      const disposer = ai.props.dispatch(
         createReaction(
           state => getStorageWalletLastChanges(state, keyInfo.id),
           changes => account.onDataChanged(changes)

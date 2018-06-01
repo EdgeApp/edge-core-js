@@ -4,33 +4,29 @@ import { wrapObject } from '../../util/api.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import type { StorageWalletInfo } from '../login/login-types.js'
 import type { ApiInput } from '../root.js'
-import { addStorageWallet, syncStorageWallet } from './actions.js'
+import { addStorageWallet, syncStorageWallet } from './storage-actions.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLastChanges,
   getStorageWalletLocalFolder
-} from './selectors.js'
+} from './storage-selectors.js'
 
-export function makeStorageWallet (keyInfo: StorageWalletInfo, opts: any) {
+export function makeStorageWallet (walletInfo: StorageWalletInfo, opts: any) {
   const { callbacks = {} } = opts
   const ai: ApiInput = opts.ai
-  const { dispatch } = ai.props
 
-  const promise: any = dispatch(
-    addStorageWallet(keyInfo, ai.props.onError, ai.props.io)
-  )
-  return promise.then(() =>
-    wrapObject('StorageWallet', makeStorageWalletApi(ai, keyInfo, callbacks))
+  return addStorageWallet(ai, walletInfo).then(() =>
+    wrapObject('StorageWallet', makeStorageWalletApi(ai, walletInfo, callbacks))
   )
 }
 
 export function makeStorageWalletApi (
   ai: ApiInput,
-  keyInfo: StorageWalletInfo,
+  walletInfo: StorageWalletInfo,
   callbacks: any
 ) {
   const { dispatch } = ai.props
-  const { id, type, keys } = keyInfo
+  const { id, type, keys } = walletInfo
   const { onDataChanged } = callbacks
 
   if (onDataChanged) {
@@ -58,7 +54,7 @@ export function makeStorageWalletApi (
     },
 
     async sync (): Promise<void> {
-      await dispatch(syncStorageWallet(id, ai.props.io))
+      await syncStorageWallet(ai, id)
     }
   }
 }

@@ -64,7 +64,7 @@ describe('creation', function () {
     assert(!available)
   })
 
-  it('passwordless account', async function () {
+  it('password-less account', async function () {
     this.timeout(1000)
     const [context, remote] = makeFakeContexts(
       { appId: 'test' },
@@ -127,6 +127,11 @@ describe('otp', function () {
     await remote.loginWithPIN(fakeUser.username, fakeUser.pin).catch(e => {
       expect(e.name).to.equal(error.OtpError.name)
       return context.requestOtpReset(fakeUser.username, e.resetToken)
+    })
+
+    // Can log in remotely with the token:
+    await remote.loginWithPIN(fakeUser.username, fakeUser.pin, {
+      otp: account.otpKey
     })
 
     // Verify that a reset has been requested:
