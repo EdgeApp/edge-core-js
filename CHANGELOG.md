@@ -3,7 +3,7 @@
 ## 0.9.0-beta.0
 * Auto-correct mis-typed 2fa secrets
 * Expose hmacSha256 for the CLI
-* Fixed spelling errors
+* Fixed spelling mistake
 * Storage and Wallet flow coverage
 * Rename storeage ande exchange related files
 * Change createPrivateKey and derivePublicKey to Object instead of {}
