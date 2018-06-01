@@ -1,6 +1,6 @@
 # edge-core-js
 
-## 0.9.0-beta.0
+## 0.9.0-beta.1
 * Auto-correct mis-typed 2fa secrets
 * Expose hmacSha256 for the CLI
 * Fixed spelling mistake
