@@ -1,5 +1,14 @@
 # edge-core-js
 
+## 0.9.0-beta.0
+* Auto-correct mis-typed 2fa secrets
+* Expose hmacSha256 for the CLI
+* Fixed spelling errors
+* Storage and Wallet flow coverage
+* Rename storeage ande exchange related files
+* Change createPrivateKey and derivePublicKey to Object instead of {}
+* Remove empty strings in the QBO export
+
 ## 0.8.1
 
 * Flow type fix
