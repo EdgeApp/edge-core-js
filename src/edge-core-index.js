@@ -700,7 +700,7 @@ export type EdgeCurrencyEngine = {
   dumpData(): EdgeDataDump,
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
-  getTxids(): EdgeTxidMap
+  getTxids?: () => EdgeTxidMap
 }
 
 export type EdgeCurrencyPlugin = {
