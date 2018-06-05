@@ -15,7 +15,7 @@ export interface ExchangeOutput {
 
 export default combinePixies({
   plugins (input: PixieInput<RootProps>) {
-    return (props: RootProps): any => {
+    return (props: RootProps): mixed => {
       const opts = { io: (props.io: any) }
       const promises: Array<Promise<EdgeExchangePlugin>> = []
       for (const plugin of props.plugins) {

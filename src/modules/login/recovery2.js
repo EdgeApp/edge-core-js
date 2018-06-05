@@ -5,7 +5,7 @@ import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
-import type { LoginStash, LoginTree } from './login-types.js'
+import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
 import { applyLoginReply, makeLoginTree } from './login.js'
 import { fixUsername } from './loginStore.js'
 
@@ -119,7 +119,7 @@ export function makeRecovery2Kit (
   username: string,
   questions: Array<string>,
   answers: Array<string>
-) {
+): LoginKit {
   const { io } = ai.props
   if (!Array.isArray(questions)) {
     throw new TypeError('Questions must be an array of strings')

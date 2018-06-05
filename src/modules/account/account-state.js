@@ -1,5 +1,14 @@
+// @flow
+
 import { base32 } from 'rfc4648'
 
+import type {
+  EdgeAccountCallbacks,
+  EdgeCreateCurrencyWalletOptions,
+  EdgeWalletInfo,
+  EdgeWalletInfoFull,
+  EdgeWalletStates
+} from '../../edge-core-index.js'
 import { fixOtpKey } from '../../util/crypto/hotp.js'
 import { createReaction } from '../../util/redux/reaction.js'
 import {
@@ -8,6 +17,7 @@ import {
   waitForCurrencyWallet
 } from '../currency/currency-selectors.js'
 import { makeCreateKit } from '../login/create.js'
+import type { LoginCreateOpts } from '../login/create.js'
 import {
   findFirstKey,
   fixWalletInfo,
@@ -17,19 +27,23 @@ import {
   makeStorageKeyInfo,
   splitWalletInfo
 } from '../login/keys.js'
+import type { LoginKit, LoginTree } from '../login/login-types.js'
 import { applyKit, searchTree, syncLogin } from '../login/login.js'
 import { makePasswordKit } from '../login/password.js'
 import { makeChangePin2Kits, makeDeletePin2Kits } from '../login/pin2.js'
 import { makeRecovery2Kit } from '../login/recovery2.js'
+import type { ApiInput } from '../root.js'
 import {
   addStorageWallet,
   syncStorageWallet
 } from '../storage/storage-actions.js'
 import { getStorageWalletLastChanges } from '../storage/storage-selectors.js'
-import { changeKeyStates, loadAllKeyStates } from './keyState.js'
+import { changeWalletStates, loadAllWalletStates } from './wallet-states.js'
 
-export function findAppLogin (loginTree, appId) {
-  return searchTree(loginTree, login => login.appId === appId)
+export function findAppLogin (loginTree: LoginTree, appId: string): LoginTree {
+  const out = searchTree(loginTree, login => login.appId === appId)
+  if (!out) throw new Error(`Internal error: cannot find login for ${appId}`)
+  return out
 }
 
 function checkLogin (login) {
@@ -42,17 +56,18 @@ function checkLogin (login) {
  * Creates a child login under the provided login, with the given appId.
  */
 function createChildLogin (ai, loginTree, login, appId, wantRepo = true) {
-  const username = loginTree.username
+  const { username } = loginTree
   checkLogin(login)
+  if (!username) throw new Error('Cannot create child: missing username')
 
-  const opts = { pin: loginTree.pin }
+  const opts: LoginCreateOpts = { pin: loginTree.pin }
   if (wantRepo) {
     opts.keyInfo = makeStorageKeyInfo(ai, makeAccountType(appId))
   }
   return makeCreateKit(ai, login, appId, username, opts).then(kit => {
     const parentKit = {
       serverPath: kit.serverPath,
-      server: kit.server,
+      server: kit.server || {},
       login: { children: [kit.login] },
       stash: { children: [kit.stash] },
       loginId: login.loginId
@@ -66,11 +81,15 @@ function createChildLogin (ai, loginTree, login, appId, wantRepo = true) {
  * @return A `Promise`, which will resolve to a loginTree that does have
  * the requested account.
  */
-export function ensureAccountExists (ai, loginTree, appId) {
+export function ensureAccountExists (
+  ai: ApiInput,
+  loginTree: LoginTree,
+  appId: string
+): Promise<LoginTree> {
   const accountType = makeAccountType(appId)
 
   // If there is no app login, make that:
-  const login = findAppLogin(loginTree, appId)
+  const login = searchTree(loginTree, login => login.appId === appId)
   if (login == null) {
     return createChildLogin(ai, loginTree, loginTree, appId, true)
   }
@@ -90,19 +109,39 @@ export function ensureAccountExists (ai, loginTree, appId) {
 /**
  * This is the data an account contains, and the methods to update it.
  */
-class AccountState {
-  constructor (ai, appId, loginTree, keyInfo, callbacks) {
+export class AccountState {
+  ai: ApiInput
+  appId: string
+  accountWalletInfo: EdgeWalletInfo
+  callbacks: Object
+  loginTree: LoginTree
+  login: LoginTree
+  legacyWalletInfos: Array<EdgeWalletInfo>
+  walletStates: EdgeWalletStates
+  activeLoginId: string
+  disposer: any
+
+  constructor (
+    ai: ApiInput,
+    appId: string,
+    loginTree: LoginTree,
+    accountWalletInfo: EdgeWalletInfo,
+    callbacks: EdgeAccountCallbacks
+  ) {
+    if (!loginTree.username) throw new Error('Cannot log in: missing username')
+    const { username } = loginTree
+
     // Constant stuff:
     this.ai = ai
     this.appId = appId
-    this.keyInfo = keyInfo
+    this.accountWalletInfo = accountWalletInfo
     this.callbacks = callbacks
 
     // Login state:
     this.loginTree = loginTree
     this.login = findAppLogin(loginTree, this.appId)
-    this.legacyKeyInfos = []
-    this.keyStates = {}
+    this.legacyWalletInfos = []
+    this.walletStates = {}
 
     // Add the login to redux:
     const { dispatch } = ai.props
@@ -111,7 +150,7 @@ class AccountState {
       payload: {
         appId,
         callbacks,
-        username: loginTree.username,
+        username,
         loginKey: this.login.loginKey
       }
     })
@@ -134,17 +173,17 @@ class AccountState {
       // If we are logged out, do nothing!
       if (!this.login) return
 
-      syncStorageWallet(this.ai, this.keyInfo.id)
+      syncStorageWallet(this.ai, this.accountWalletInfo.id)
         .then(changes => this.startTimer())
         .catch(e => this.startTimer())
     }, 30000)
   }
 
-  async onDataChanged (changes) {
+  async onDataChanged (changes: Array<string>) {
     // If we are logged out, do nothing!
     if (!this.login) return
 
-    await this.reloadKeyStates()
+    await this.reloadWalletStates()
     if (this.callbacks.onKeyListChanged) {
       this.callbacks.onKeyListChanged()
     }
@@ -157,20 +196,21 @@ class AccountState {
 
     // Shut down:
     dispatch(this.disposer)
-    this.ai = null
+    const killedAccount: any = this
+    killedAccount.ai = null
 
     // Clear keys:
-    this.appId = null
-    this.keyInfo = null
-    this.loginTree = null
-    this.login = null
-    this.legacyKeyInfos = null
-    this.keyStates = null
+    killedAccount.appId = null
+    killedAccount.accountWalletInfo = null
+    killedAccount.loginTree = null
+    killedAccount.login = null
+    killedAccount.legacyWalletInfos = null
+    killedAccount.walletStates = null
 
     if (this.callbacks.onLoggedOut) this.callbacks.onLoggedOut()
   }
 
-  enableOtp (otpTimeout) {
+  enableOtp (otpTimeout: number) {
     const { ai } = this
     const login = this.loginTree
     checkLogin(login)
@@ -207,7 +247,6 @@ class AccountState {
     const kit = {
       serverMethod: 'DELETE',
       serverPath: '/v2/login/otp',
-      server: void 0,
       stash: {
         otpKey: void 0,
         otpResetDate: void 0,
@@ -244,20 +283,22 @@ class AccountState {
     return this.applyKit(kit)
   }
 
-  changePassword (password) {
+  changePassword (password: string) {
     const { ai, loginTree: { username } } = this
     const login = this.loginTree
     checkLogin(login)
+    if (!username) throw new Error('Cannot change password: missing username')
 
     return makePasswordKit(ai, login, username, password).then(kit =>
       this.applyKit(kit)
     )
   }
 
-  changePin (pin, enableLogin) {
+  changePin (pin: string | void, enableLogin: boolean | void) {
     const { ai, loginTree: { username } } = this
     const login = this.loginTree
     checkLogin(login)
+    if (!username) throw new Error('Cannot change pin: missing username')
 
     // Figure out defaults:
     if (enableLogin == null) {
@@ -280,10 +321,11 @@ class AccountState {
     return this.applyKits(kits)
   }
 
-  changeRecovery (questions, answers) {
+  changeRecovery (questions: Array<string>, answers: Array<string>) {
     const { ai, loginTree: { username } } = this
     const login = this.loginTree
     checkLogin(login)
+    if (!username) throw new Error('Cannot change recovery: missing username')
 
     const kit = makeRecovery2Kit(ai, login, username, questions, answers)
     return this.applyKit(kit)
@@ -296,7 +338,6 @@ class AccountState {
     const kit = {
       serverMethod: 'DELETE',
       serverPath: '/v2/login/password',
-      server: void 0,
       stash: {
         passwordAuthBox: void 0,
         passwordAuthSnrp: void 0,
@@ -329,7 +370,6 @@ class AccountState {
     const kit = {
       serverMethod: 'DELETE',
       serverPath: '/v2/login/recovery2',
-      server: void 0,
       stash: {
         recovery2Key: void 0
       },
@@ -341,7 +381,7 @@ class AccountState {
     return this.applyKit(kit)
   }
 
-  applyKit (kit) {
+  applyKit (kit: LoginKit) {
     return applyKit(this.ai, this.loginTree, kit).then(loginTree => {
       this.loginTree = loginTree
       this.login = findAppLogin(loginTree, this.appId)
@@ -362,22 +402,22 @@ class AccountState {
    * We can't use `Promise.all`, since `applyKit` doesn't handle
    * parallelism correctly.
    */
-  applyKits (kits) {
+  applyKits (kits: Array<LoginKit>): Promise<mixed> {
     if (!kits.length) return Promise.resolve(this)
 
     const [first, ...rest] = kits
     return this.applyKit(first).then(() => this.applyKits(rest))
   }
 
-  changeKeyStates (newStates) {
-    const { ai, keyInfo, keyStates } = this
-    return changeKeyStates(
+  changeWalletStates (newStates: EdgeWalletStates) {
+    const { ai, accountWalletInfo, walletStates } = this
+    return changeWalletStates(
       ai.props.state,
-      keyInfo.id,
-      keyStates,
+      accountWalletInfo.id,
+      walletStates,
       newStates
-    ).then(keyStates => {
-      this.keyStates = keyStates
+    ).then(walletStates => {
+      this.walletStates = walletStates
 
       // Update the key list in case something changed:
       const { activeLoginId, ai } = this
@@ -393,21 +433,22 @@ class AccountState {
     })
   }
 
-  reloadKeyStates () {
-    const { ai, keyInfo, activeLoginId } = this
-    return loadAllKeyStates(ai.props.state, keyInfo.id).then(values => {
-      const { keyInfos, keyStates } = values
-      this.legacyKeyInfos = keyInfos
-      this.keyStates = keyStates
+  async reloadWalletStates () {
+    const { ai, accountWalletInfo, activeLoginId } = this
+    const { walletInfos, walletStates } = await loadAllWalletStates(
+      ai.props.state,
+      accountWalletInfo.id
+    )
+    this.legacyWalletInfos = walletInfos
+    this.walletStates = walletStates
 
-      const { dispatch } = ai.props
-      dispatch({
-        type: 'ACCOUNT_KEYS_LOADED',
-        payload: { activeLoginId, walletInfos: this.allKeys }
-      })
-
-      return this
+    const { dispatch } = ai.props
+    dispatch({
+      type: 'ACCOUNT_KEYS_LOADED',
+      payload: { activeLoginId, walletInfos: this.allKeys }
     })
+
+    return this
   }
 
   syncLogin () {
@@ -427,18 +468,21 @@ class AccountState {
     })
   }
 
-  async createCurrencyWallet (type, opts) {
+  async createCurrencyWallet (
+    type: string,
+    opts: EdgeCreateCurrencyWalletOptions
+  ) {
     const { ai, login } = this
 
     // Make the keys:
     const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
     const keys = opts.keys || plugin.createPrivateKey(type)
-    const keyInfo = makeStorageKeyInfo(ai, type, keys)
-    const kit = makeKeysKit(ai, login, fixWalletInfo(keyInfo))
+    const walletInfo = makeStorageKeyInfo(ai, type, keys)
+    const kit = makeKeysKit(ai, login, fixWalletInfo(walletInfo))
 
     // Add the keys to the login:
     await this.applyKit(kit)
-    const wallet = await waitForCurrencyWallet(ai, keyInfo.id)
+    const wallet = await waitForCurrencyWallet(ai, walletInfo.id)
 
     if (opts.name) await wallet.renameWallet(opts.name)
     if (opts.fiatCurrencyCode) {
@@ -448,7 +492,7 @@ class AccountState {
     return wallet
   }
 
-  async splitWalletInfo (walletId, newWalletType) {
+  async splitWalletInfo (walletId: string, newWalletType: string) {
     const { ai, login } = this
     const allWalletInfos = this.allKeys
 
@@ -456,7 +500,7 @@ class AccountState {
     const walletInfo = allWalletInfos.find(
       walletInfo => walletInfo.id === walletId
     )
-    if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
+    if (!walletInfo) throw new Error(`Invalid wallet id ${walletId}`)
 
     // Handle BCH / BTC+segwit special case:
     if (
@@ -479,7 +523,7 @@ class AccountState {
         // Simply undelete the existing wallet:
         const walletInfos = {}
         walletInfos[newWalletInfo.id] = { archived: false, deleted: false }
-        await this.changeKeyStates(walletInfos)
+        await this.changeWalletStates(walletInfos)
         return walletInfo.id
       }
       throw new Error('This wallet has already been split')
@@ -507,14 +551,14 @@ class AccountState {
     return newWalletInfo.id
   }
 
-  listSplittableWalletTypes (walletId) {
+  listSplittableWalletTypes (walletId: string) {
     const allWalletInfos = this.allKeys
 
     // Find the wallet we are going to split:
     const walletInfo = allWalletInfos.find(
       walletInfo => walletInfo.id === walletId
     )
-    if (!walletInfo) throw new Error(`Invalid wallet id ${walletInfo.id}`)
+    if (!walletInfo) throw new Error(`Invalid wallet id ${walletId}`)
 
     // Get the list of available types:
     const plugin = getCurrencyPlugin(
@@ -541,9 +585,10 @@ class AccountState {
     })
   }
 
-  get allKeys () {
-    const { keyStates, legacyKeyInfos, login } = this
-    const { walletInfos, appIdMap } = getAllWalletInfos(login, legacyKeyInfos)
+  get allKeys (): Array<EdgeWalletInfoFull> {
+    const { walletStates, legacyWalletInfos, login } = this
+    const values = getAllWalletInfos(login, legacyWalletInfos)
+    const { walletInfos, appIdMap } = values
     const getLast = array => array[array.length - 1]
 
     return walletInfos.map(info => ({
@@ -552,34 +597,46 @@ class AccountState {
       archived: false,
       deleted: false,
       sortIndex: walletInfos.length,
-      ...keyStates[info.id],
+      ...walletStates[info.id],
       ...info
     }))
   }
 }
 
-export async function makeAccountState (ai, appId, loginTree, callbacks) {
+export async function makeAccountState (
+  ai: ApiInput,
+  appId: string,
+  loginTree: LoginTree,
+  callbacks: Object
+): Promise<AccountState> {
   await waitForCurrencyPlugins(ai)
 
   return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
     // Find our repo:
     const type = makeAccountType(appId)
     const login = findAppLogin(loginTree, appId)
-    const keyInfo = findFirstKey(login.keyInfos, type)
-    if (keyInfo == null) {
+    const accountWalletInfo = findFirstKey(login.keyInfos, type)
+    if (accountWalletInfo == null) {
       throw new Error(`Cannot find a "${type}" repo`)
     }
 
-    return addStorageWallet(ai, keyInfo).then(() => {
-      const account = new AccountState(ai, appId, loginTree, keyInfo, callbacks)
+    return addStorageWallet(ai, accountWalletInfo).then(() => {
+      const account = new AccountState(
+        ai,
+        appId,
+        loginTree,
+        accountWalletInfo,
+        callbacks
+      )
       const disposer = ai.props.dispatch(
         createReaction(
-          state => getStorageWalletLastChanges(state, keyInfo.id),
+          state => getStorageWalletLastChanges(state, accountWalletInfo.id),
           changes => account.onDataChanged(changes)
         )
       )
       account.disposer = disposer
-      return disposer.payload.out.then(() => account)
+      const hookupResult: any = disposer.payload
+      return hookupResult.out.then(() => account)
     })
   })
 }

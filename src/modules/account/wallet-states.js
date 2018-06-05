@@ -1,7 +1,11 @@
+// @flow
+
 import { mapFiles } from 'disklet'
 
+import type { EdgeWalletInfo, EdgeWalletStates } from '../../edge-core-index.js'
 import { base16, base64 } from '../../util/encoding.js'
 import { makeKeyInfo } from '../login/keys.js'
+import type { RootState } from '../root-reducer.js'
 import {
   getStorageWalletFolder,
   hashStorageWalletFilename
@@ -31,10 +35,15 @@ function getJsonFiles (folder) {
 /**
  * Loads the legacy wallet list from the account folder.
  */
-function loadWalletList (folder) {
+function loadWalletList (
+  folder
+): Promise<{
+  walletInfos: Array<EdgeWalletInfo>,
+  walletStates: EdgeWalletStates
+}> {
   return getJsonFiles(folder.folder('Wallets')).then(files => {
-    const keyInfos = []
-    const keyStates = {}
+    const walletInfos = []
+    const walletStates = {}
 
     files.forEach(file => {
       const { SortIndex, Archived, BitcoinSeed, MK, SyncKey } = file.json
@@ -50,24 +59,24 @@ function loadWalletList (folder) {
       }
 
       const keyInfo = makeKeyInfo('wallet:bitcoin', keys, dataKey)
-      keyInfos.push(keyInfo)
-      keyStates[keyInfo.id] = {
+      walletInfos.push(keyInfo)
+      walletStates[keyInfo.id] = {
         sortIndex: SortIndex,
         archived: Archived,
         deleted: false
       }
     })
 
-    return { keyInfos, keyStates }
+    return { walletInfos, walletStates }
   })
 }
 
 /**
  * Loads the modern key state list from the account folder.
  */
-function loadKeyStates (folder) {
+function loadWalletStates (folder): Promise<EdgeWalletStates> {
   return getJsonFiles(folder.folder('Keys')).then(files => {
-    const keyStates = []
+    const keyStates = {}
 
     files.forEach(file => {
       const { id, archived, deleted, sortIndex } = file.json
@@ -83,14 +92,23 @@ function loadKeyStates (folder) {
  * diffs them with the current keyStates and legacy wallet list,
  * and returns true if there are any changes.
  */
-export function loadAllKeyStates (state, keyId) {
-  const folder = getStorageWalletFolder(state, keyId)
+export async function loadAllWalletStates (
+  state: RootState,
+  accountWalletId: string
+): Promise<{
+  walletInfos: Array<EdgeWalletInfo>,
+  walletStates: EdgeWalletStates
+}> {
+  const folder = getStorageWalletFolder(state, accountWalletId)
 
-  return Promise.all([loadWalletList(folder), loadKeyStates(folder)]).then(
+  return Promise.all([loadWalletList(folder), loadWalletStates(folder)]).then(
     values => {
-      const [{ keyInfos, keyStates: legacyKeyStates }, newKeyStates] = values
-      const keyStates = { ...legacyKeyStates, ...newKeyStates }
-      return { keyInfos, keyStates }
+      const [
+        { walletInfos, walletStates: legacyWalletStates },
+        newKeyStates
+      ] = values
+      const walletStates = { ...legacyWalletStates, ...newKeyStates }
+      return { walletInfos, walletStates }
     }
   )
 }
@@ -98,17 +116,27 @@ export function loadAllKeyStates (state, keyId) {
 /**
  * Writes some key states to the account folder.
  */
-function saveKeyStates (state, keyId, keyStates) {
-  const keyFolder = getStorageWalletFolder(state, keyId).folder('Keys')
+function saveWalletStates (
+  state: RootState,
+  accountWalletId: string,
+  walletStates: EdgeWalletStates
+): Promise<mixed> {
+  const keyFolder = getStorageWalletFolder(state, accountWalletId).folder(
+    'Keys'
+  )
 
   // If there are no changes, do nothing:
-  const walletIds = Object.keys(keyStates)
+  const walletIds = Object.keys(walletStates)
   if (!walletIds.length) return Promise.resolve()
 
   return Promise.all(
     walletIds.map(walletId => {
-      const { archived, deleted, sortIndex } = keyStates[walletId]
-      const walletIdHash = hashStorageWalletFilename(state, keyId, walletId)
+      const { archived, deleted, sortIndex } = walletStates[walletId]
+      const walletIdHash = hashStorageWalletFilename(
+        state,
+        accountWalletId,
+        walletId
+      )
       return keyFolder
         .file(`${walletIdHash}.json`)
         .setText(JSON.stringify({ archived, deleted, sortIndex, id: walletId }))
@@ -120,21 +148,26 @@ function saveKeyStates (state, keyId, keyStates) {
  * Given a list of new key states, as well as the existing list,
  * writes out the ones that have changed, and returns the combined list.
  */
-export function changeKeyStates (state, keyId, keyStates, newStates) {
+export function changeWalletStates (
+  state: RootState,
+  accountWalletId: string,
+  walletStates: EdgeWalletStates,
+  newStates: EdgeWalletStates
+): Promise<EdgeWalletStates> {
   // Find the changes between the new states and the old states:
   const toWrite = {}
   for (const id of Object.keys(newStates)) {
-    if (keyStates[id] == null) {
+    if (walletStates[id] == null) {
       // We don't have this id, so everything is new:
       toWrite[id] = newStates[id]
-    } else if (different(keyStates[id], newStates[id])) {
+    } else if (different(walletStates[id], newStates[id])) {
       // We already have this id, so only update if it has changed:
-      toWrite[id] = { ...keyStates[id], ...newStates[id] }
+      toWrite[id] = { ...walletStates[id], ...newStates[id] }
     }
   }
 
-  return saveKeyStates(state, keyId, toWrite).then(() => ({
-    ...keyStates,
+  return saveWalletStates(state, accountWalletId, toWrite).then(() => ({
+    ...walletStates,
     ...toWrite
   }))
 }

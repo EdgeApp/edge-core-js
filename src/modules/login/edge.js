@@ -75,7 +75,7 @@ export function requestEdgeLogin (
     displayImageUrl: ?string,
     displayName: ?string,
     onProcessLogin?: (username: string) => mixed,
-    onLogin(e?: Error, account?: LoginTree): mixed
+    onLogin(e?: Error, loginTree?: LoginTree): mixed
   }
 ) {
   const request = {
