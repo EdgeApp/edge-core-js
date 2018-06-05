@@ -542,7 +542,8 @@ export type EdgeSpendTarget = {
   destWallet?: EdgeCurrencyWallet,
   publicAddress?: string,
   nativeAmount?: string,
-  destMetadata?: EdgeMetadata
+  destMetadata?: EdgeMetadata,
+  otherParams?: Object
 }
 
 export type EdgeSpendInfo = {
@@ -554,7 +555,8 @@ export type EdgeSpendInfo = {
   quoteFor?: string,
   networkFeeOption?: string,
   customNetworkFee?: any,
-  metadata?: EdgeMetadata
+  metadata?: EdgeMetadata,
+  otherParams?: Object
 }
 
 export type EdgeTransaction = {
