@@ -447,6 +447,8 @@ export type EdgeTokenInfo = {
   multiplier: string
 }
 
+export type EdgeBalances = { [currencyCode: string]: string }
+
 export type EdgeGetTransactionsOptions = {
   currencyCode?: string,
   startIndex?: number,
@@ -489,6 +491,10 @@ export type EdgeCurrencyWallet = {
   // Currency info:
   +currencyInfo: EdgeCurrencyInfo,
 
+  // Chain state:
+  +balances: EdgeBalances,
+  +blockHeight: number,
+
   // Running state:
   startEngine(): Promise<mixed>,
   stopEngine(): Promise<mixed>,
@@ -500,8 +506,6 @@ export type EdgeCurrencyWallet = {
   addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
 
   // Transactions:
-  getBalance(opts?: EdgeCurrencyCodeOptions): string,
-  getBlockHeight(): number,
   getNumTransactions(opts?: EdgeCurrencyCodeOptions): Promise<number>,
   getTransactions(
     options?: EdgeGetTransactionsOptions
@@ -539,7 +543,11 @@ export type EdgeCurrencyWallet = {
 
   // URI handling:
   parseUri(uri: string): Promise<EdgeParsedUri>,
-  encodeUri(obj: EdgeEncodeUri): Promise<string>
+  encodeUri(obj: EdgeEncodeUri): Promise<string>,
+
+  // Deprecated API's:
+  getBalance(opts?: EdgeCurrencyCodeOptions): string,
+  getBlockHeight(): number
 }
 
 export type EdgeMetadata = {

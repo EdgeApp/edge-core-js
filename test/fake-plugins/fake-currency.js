@@ -71,7 +71,7 @@ class FakeCurrencyEngine {
     this.store.dispatch(
       createReaction(
         state => state.balance,
-        balance => onBalanceChanged('TEST', balance)
+        balance => onBalanceChanged('TEST', balance.toString())
       )
     )
 
@@ -79,7 +79,7 @@ class FakeCurrencyEngine {
     this.store.dispatch(
       createReaction(
         state => state.tokenBalance,
-        balance => onBalanceChanged('TOKEN', balance)
+        balance => onBalanceChanged('TOKEN', balance.toString())
       )
     )
 

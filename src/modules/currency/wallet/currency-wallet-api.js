@@ -3,6 +3,7 @@
 import { add, div, lte, mul, sub } from 'biggystring'
 
 import type {
+  EdgeBalances,
   EdgeCoinExchangeQuote,
   EdgeCurrencyCodeOptions,
   EdgeCurrencyEngine,
@@ -103,6 +104,15 @@ export function makeCurrencyWalletApi (
       return setCurrencyWalletFiat(input, fiatCurrencyCode).then(() => {})
     },
 
+    // Chain state:
+    get balances (): EdgeBalances {
+      return input.props.selfState.balances
+    },
+
+    get blockHeight (): number {
+      return input.props.selfState.height
+    },
+
     // Running state:
     startEngine () {
       return engine.startEngine()
@@ -130,16 +140,6 @@ export function makeCurrencyWalletApi (
     },
 
     // Transactions:
-    '@getBalance': { sync: true },
-    getBalance (opts: EdgeCurrencyCodeOptions = {}) {
-      return engine.getBalance(opts)
-    },
-
-    '@getBlockHeight': { sync: true },
-    getBlockHeight () {
-      return engine.getBlockHeight()
-    },
-
     getNumTransactions (opts: EdgeCurrencyCodeOptions = {}) {
       return Promise.resolve(engine.getNumTransactions(opts))
     },
@@ -499,6 +499,17 @@ export function makeCurrencyWalletApi (
 
     encodeUri (obj: EdgeEncodeUri) {
       return Promise.resolve(plugin.encodeUri(obj))
+    },
+
+    // Deprecated API's:
+    '@getBalance': { sync: true },
+    getBalance (opts: EdgeCurrencyCodeOptions = {}) {
+      return engine.getBalance(opts)
+    },
+
+    '@getBlockHeight': { sync: true },
+    getBlockHeight () {
+      return engine.getBlockHeight()
     }
   }
 
