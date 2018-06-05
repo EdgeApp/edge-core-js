@@ -466,6 +466,8 @@ export type EdgeGetTransactionsOptions = {
   denomination?: number
 }
 
+export type EdgeTxidMap = { [txid: string]: number }
+
 export type EdgeCurrencyWallet = {
   // EdgeWalletInfo members:
   +id: string,
@@ -681,7 +683,7 @@ export type EdgeCurrencyEngineCallbacks = {
   +onTransactionsChanged: (abcTransactions: Array<EdgeTransaction>) => void,
   +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
   +onAddressesChecked: (progressRatio: number) => void,
-  +onTxidsChanged: (txids: { [id: string]: number }) => void
+  +onTxidsChanged: (txids: EdgeTxidMap) => void
 }
 
 export type EdgeCurrencyEngineOptions = {
@@ -715,7 +717,7 @@ export type EdgeCurrencyEngine = {
   dumpData(): EdgeDataDump,
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
-  getTxids(): { [txid: string]: number }
+  getTxids(): EdgeTxidMap
 }
 
 export type EdgeCurrencyPlugin = {
