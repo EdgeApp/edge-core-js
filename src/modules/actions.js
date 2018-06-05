@@ -6,6 +6,10 @@ import type {
   EdgeTokenInfo,
   EdgeWalletInfoFull
 } from '../edge-core-index.js'
+import type {
+  TxFileJsons,
+  TxFileNames
+} from './currency/wallet/currency-wallet-reducer.js'
 import type { ExchangePair } from './exchange/exchange-reducer.js'
 import type {
   StorageWalletState,
@@ -97,10 +101,12 @@ export interface CurrencyWalletFiatChanged {
 export interface CurrencyWalletFileChanged {
   type: 'CURRENCY_WALLET_FILE_CHANGED';
   payload: {
-    json: any,
+    creationDate: number,
+    fileName: string,
+    json: Object,
     txid: string,
-    walletId: string,
-    txFileName: any
+    txidHash: string,
+    walletId: string
   };
 }
 
@@ -110,7 +116,7 @@ export interface CurrencyWalletFileChanged {
 export interface CurrencyWalletFilesLoaded {
   type: 'CURRENCY_WALLET_FILES_LOADED';
   payload: {
-    files: any,
+    files: TxFileJsons,
     walletId: string
   };
 }
@@ -121,7 +127,7 @@ export interface CurrencyWalletFilesLoaded {
 export interface CurrencyWalletFileNamesLoaded {
   type: 'CURRENCY_WALLET_FILE_NAMES_LOADED';
   payload: {
-    txFileNames: any,
+    txFileNames: TxFileNames,
     walletId: string
   };
 }
