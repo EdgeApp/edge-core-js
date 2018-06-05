@@ -7,7 +7,11 @@ import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import type { LobbyRequest } from '../login/lobby.js'
 import { sanitizeLoginStash } from '../login/login.js'
 import type { ApiInput } from '../root.js'
-import { ensureAccountExists, findAppLogin } from './accountState.js'
+import {
+  AccountState,
+  ensureAccountExists,
+  findAppLogin
+} from './account-state.js'
 
 interface AppIdInfo {
   displayName: string;
@@ -48,7 +52,7 @@ async function approveLoginRequest (
   appId: string,
   lobbyId: string,
   lobbyJson: LobbyRequest,
-  accountState: any
+  accountState: AccountState
 ): Promise<void> {
   // Ensure that the login object & account repo exist:
   await accountState.syncLogin()
@@ -56,6 +60,9 @@ async function approveLoginRequest (
   const requestedLogin = findAppLogin(loginTree, appId)
   if (!requestedLogin) {
     throw new Error('Failed to create the requested login object')
+  }
+  if (!accountState.loginTree.username) {
+    throw new Error('Cannot log in: missing username')
   }
 
   // Create a sanitized login stash object:
@@ -92,7 +99,7 @@ async function approveLoginRequest (
 export async function makeLobbyApi (
   ai: ApiInput,
   lobbyId: string,
-  accountState: any
+  accountState: AccountState
 ): Promise<EdgeLobby> {
   const lobbyApi: EdgeLobby = {}
 

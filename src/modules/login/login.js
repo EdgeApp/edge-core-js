@@ -7,7 +7,7 @@ import type { EdgeLoginMessages } from '../../edge-core-index.js'
 import { decrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
-import { elvis, filterObject, softCat } from '../../util/util.js'
+import { filterObject, softCat } from '../../util/util.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import {
@@ -53,7 +53,7 @@ export function searchTree (node: any, predicate: any => boolean) {
  * The `predicate` callback is used to find the target node.
  * The `update` callback is called on the target.
  */
-function updateTree<Node: { children?: Array<any> }, Output> (
+function updateTree<Node: { +children?: Array<any> }, Output> (
   node: Node,
   predicate: (node: Node) => boolean,
   update: (node: Node) => Output,
@@ -71,7 +71,7 @@ function updateTree<Node: { children?: Array<any> }, Output> (
 
 function applyLoginReplyInner (stash, loginKey, loginReply) {
   // Copy common items:
-  const out = filterObject(loginReply, [
+  const out: LoginStash = filterObject(loginReply, [
     'appId',
     'loginId',
     'loginAuthBox',
@@ -80,6 +80,7 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
     'otpTimeout',
     'parentBox',
     'passwordAuthBox',
+    'passwordAuthSnrp',
     'passwordBox',
     'passwordKeySnrp',
     'pin2TextBox',
@@ -107,17 +108,20 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
   }
 
   // Keys (we could be more picky about this):
-  out.keyBoxes = elvis(loginReply.keyBoxes, [])
+  out.keyBoxes = loginReply.keyBoxes != null ? loginReply.keyBoxes : []
 
   // Recurse into children:
-  const stashChildren = elvis(stash.children, [])
-  const replyChildren = elvis(loginReply.children, [])
+  const stashChildren = stash.children != null ? stash.children : []
+  const replyChildren = loginReply.children != null ? loginReply.children : []
   if (stashChildren.length > replyChildren.length) {
     throw new Error('The server has lost children!')
   }
   out.children = replyChildren.map((child, index) => {
-    const childStash = stashChildren[index] != null ? stashChildren[index] : {}
+    if (!child.parentBox) {
+      throw new Error('Key integrity violation: No parentBox on child login.')
+    }
     const childKey = decrypt(child.parentBox, loginKey)
+    const childStash = stashChildren[index] != null ? stashChildren[index] : {}
     return applyLoginReplyInner(childStash, childKey, child)
   })
 
@@ -140,7 +144,10 @@ export function applyLoginReply (
   )
 }
 
-function makeLoginTreeInner (stash, loginKey) {
+function makeLoginTreeInner (
+  stash: LoginStash,
+  loginKey: Uint8Array
+): LoginTree {
   const login = {}
 
   if (stash.username != null) {
@@ -213,7 +220,8 @@ function makeLoginTreeInner (stash, loginKey) {
   }
 
   // Keys:
-  const keyInfos = elvis(stash.keyBoxes, []).map(box =>
+  const stashKeyBoxes = stash.keyBoxes != null ? stash.keyBoxes : []
+  const keyInfos = stashKeyBoxes.map(box =>
     JSON.parse(utf8.stringify(decrypt(box, loginKey)))
   )
 
@@ -222,7 +230,11 @@ function makeLoginTreeInner (stash, loginKey) {
   )
 
   // Recurse into children:
-  login.children = elvis(stash.children, []).map(child => {
+  const stashChildren = stash.children != null ? stash.children : []
+  login.children = stashChildren.map(child => {
+    if (!child.parentBox) {
+      throw new Error('Key integrity violation: No parentBox on child login.')
+    }
     const childKey = decrypt(child.parentBox, loginKey)
     return makeLoginTreeInner(child, childKey)
   })
@@ -248,8 +260,12 @@ export function makeLoginTree (
     stash => stash.appId === appId,
     stash => makeLoginTreeInner(stash, loginKey),
     (stash, children) => {
-      const login = filterObject(stash, ['username', 'appId', 'loginId'])
-      login.children = children
+      const login: LoginTree = filterObject(stash, [
+        'username',
+        'appId',
+        'loginId'
+      ])
+      login.children = children != null ? children : []
       return login
     }
   )
@@ -265,7 +281,11 @@ export function sanitizeLoginStash (stashTree: LoginStash, appId: string) {
     stash => stash.appId === appId,
     stash => stash,
     (stash, children) => {
-      const login = filterObject(stash, ['username', 'appId', 'loginId'])
+      const login: LoginStash = filterObject(stash, [
+        'username',
+        'appId',
+        'loginId'
+      ])
       login.children = children
       return login
     }
@@ -282,6 +302,7 @@ export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
   const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
   if (!login) throw new Error('Cannot apply kit: missing login')
+  if (!loginTree.username) throw new Error('Cannot apply kit: missing username')
 
   return loginStore.load(loginTree.username).then(stashTree => {
     const request: Object = makeAuthJson(login)
@@ -323,6 +344,8 @@ export function syncLogin (
   login: LoginTree
 ): Promise<LoginTree> {
   const { loginStore } = ai.props
+  if (!loginTree.username) throw new Error('Cannot sync: missing username')
+
   return loginStore.load(loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
     return authRequest(ai, 'POST', '/v2/login', request).then(reply => {

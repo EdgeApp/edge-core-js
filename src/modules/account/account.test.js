@@ -14,8 +14,8 @@ const contextOptions = {
   plugins: [makeFakeCurrency()]
 }
 
-function findKeys (keyInfos, type) {
-  return keyInfos.find(info => info.type === type)
+function findWallet (walletInfos, type) {
+  return walletInfos.find(info => info.type === type)
 }
 
 describe('account', function () {
@@ -38,10 +38,10 @@ describe('account', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const { allKeys } = account
-    const accountRepo = findKeys(allKeys, 'account-repo:co.airbitz.wallet')
+    const accountRepo = findWallet(allKeys, 'account-repo:co.airbitz.wallet')
     if (!accountRepo) throw new Error('Missing repo')
     assert.equal(accountRepo.keys.syncKey, base64.stringify(fakeUser.syncKey))
-    assert(findKeys(allKeys, 'account-repo:blah') == null)
+    assert(findWallet(allKeys, 'account-repo:blah') == null)
   })
 
   it('attach repo', async function () {

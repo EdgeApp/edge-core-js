@@ -379,7 +379,7 @@ export type EdgeAccount = {
 
   // OTP:
   +otpKey: string | void, // OTP is enabled if this exists
-  +otpResetDate: Date | void, // A reset is requested if this exists
+  +otpResetDate: string | void, // A reset is requested if this exists
   cancelOtpReset(): Promise<void>,
   disableOtp(): Promise<void>,
   enableOtp(timeout?: number): Promise<void>,
@@ -395,7 +395,7 @@ export type EdgeAccount = {
   changeWalletStates(walletStates: EdgeWalletStates): Promise<void>,
   createWallet(type: string, keys: any): Promise<string>,
   getFirstWalletInfo(type: string): ?EdgeWalletInfo,
-  getWalletInfo(id: string): EdgeWalletInfo,
+  getWalletInfo(id: string): ?EdgeWalletInfo,
   listWalletIds(): Array<string>,
   listSplittableWalletTypes(walletId: string): Array<string>,
   splitWalletInfo(walletId: string, newWalletType: string): Promise<string>,

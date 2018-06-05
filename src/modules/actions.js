@@ -4,7 +4,7 @@ import type {
   EdgeAccountCallbacks,
   EdgeCurrencyInfo,
   EdgeTokenInfo,
-  EdgeWalletInfo
+  EdgeWalletInfoFull
 } from '../edge-core-index.js'
 import type { ExchangePair } from './exchange/exchange-reducer.js'
 import type {
@@ -19,7 +19,7 @@ export interface AccountKeysLoadedAction {
   type: 'ACCOUNT_KEYS_LOADED';
   payload: {
     activeLoginId: string,
-    walletInfos: Array<EdgeWalletInfo>
+    walletInfos: Array<EdgeWalletInfoFull>
   };
 }
 
