@@ -663,7 +663,7 @@ export type EdgeCurrencyEngineCallbacks = {
   +onTransactionsChanged: (abcTransactions: Array<EdgeTransaction>) => void,
   +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
   +onAddressesChecked: (progressRatio: number) => void,
-  +onTxidsChanged: (txids: Array<string>) => void
+  +onTxidsChanged: (txids: { [id: string]: number }) => void
 }
 
 export type EdgeCurrencyEngineOptions = {
@@ -697,7 +697,8 @@ export type EdgeCurrencyEngine = {
   resyncBlockchain(): Promise<void>,
   dumpData(): EdgeDataDump,
   getDisplayPrivateSeed(): string | null,
-  getDisplayPublicSeed(): string | null
+  getDisplayPublicSeed(): string | null,
+  getTxids(): { [txid: string]: number }
 }
 
 export type EdgeCurrencyPlugin = {
