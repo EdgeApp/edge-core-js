@@ -18,8 +18,8 @@ export interface CurrencyOutput {
 
 export default combinePixies({
   plugins (input: PixieInput<RootProps>) {
-    return (props: RootProps): any => {
-      const opts = { io: (props.io: any) }
+    return (props: RootProps): mixed => {
+      const opts = { io: props.io }
       const promises: Array<Promise<EdgeCurrencyPlugin>> = []
       for (const plugin of props.plugins) {
         if (plugin.pluginType === 'currency') {

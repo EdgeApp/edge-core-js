@@ -6,6 +6,7 @@ import { mapFiles } from 'disklet'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobbyApi.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
+import type { RootState } from '../../root-reducer.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalFolder,
@@ -110,7 +111,12 @@ function fixLegacyFile (
   return out
 }
 
-function getTxFile (state: any, keyId: string, date: number, txid: string) {
+function getTxFile (
+  state: RootState,
+  keyId: string,
+  date: number,
+  txid: string
+) {
   const txidHash = hashStorageWalletFilename(state, keyId, txid)
   const timestamp = date.toFixed(0)
   const fileName = `${timestamp}-${txidHash}.json`
@@ -405,7 +411,7 @@ function loadAddressFiles (input: CurrencyWalletInput, folder) {
 
     // Load these addresses into the engine:
     const engine = input.props.selfOutput.engine
-    if (engine) engine.addGapLimitAddresses(out)
+    if (engine) engine.addGapLimitAddresses(out, {})
 
     return out
   })
