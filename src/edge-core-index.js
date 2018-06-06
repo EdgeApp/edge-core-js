@@ -624,6 +624,7 @@ export type EdgeParsedUri = {
   bitIDCallbackUri?: string,
   paymentProtocolUri?: string,
   returnUri?: string,
+  uniqueIdentifier?: string, // Ripple payment id
   bitidPaymentAddress?: string, // Experimental
   bitidKycProvider?: string, // Experimental
   bitidKycRequest?: string // Experimental
