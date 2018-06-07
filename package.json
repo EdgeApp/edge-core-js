@@ -1,6 +1,6 @@
 {
   "name": "edge-core-js",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Edge account & wallet management library",
   "keywords": [
     "bitcoin",
@@ -22,10 +22,11 @@
   ],
   "files": [
     "CHANGELOG.md",
-    "LICENSE",
-    "README.md",
     "lib/*",
-    "package.json"
+    "LICENSE",
+    "package.json",
+    "README.md",
+    "src/*"
   ],
   "main": "lib/edge-core-index.js",
   "module": "lib/edge-core-index.es.js",
@@ -34,7 +35,7 @@
     "url": "git@github.com:Airbitz/airbitz-core-js.git"
   },
   "scripts": {
-    "build": "webpack && rollup -c && flow-copy-source -i '**/*.test.js' src lib",
+    "build": "rimraf lib && webpack && rollup -c",
     "build:test": "webpack && rollup -c rollup.config.test.js",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "flow": "flow",
@@ -84,7 +85,6 @@
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^3.0.1",
     "flow-bin": "^0.62.0",
-    "flow-copy-source": "^1.2.1",
     "husky": "^0.14.3",
     "import-sort-cli": "^4.2.0",
     "import-sort-parser-babylon": "^4.2.0",
@@ -92,11 +92,13 @@
     "lint-staged": "^7.0.0",
     "mocha": "^3.5.0",
     "prettier-eslint-cli": "^4.7.1",
+    "rimraf": "^2.6.2",
     "rollup": "0.48.0",
     "rollup-plugin-alias": "^1.4.0",
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-flow": "^1.1.1",
+    "rollup-plugin-flow-entry": "^0.2.0",
     "rollup-plugin-multi-entry": "^2.0.2",
     "source-map-support": "^0.5.3",
     "updot": "^1.1.4",

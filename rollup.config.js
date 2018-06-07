@@ -1,6 +1,7 @@
 import alias from 'rollup-plugin-alias'
 import babel from 'rollup-plugin-babel'
 import commonjs from 'rollup-plugin-commonjs'
+import flowEntry from 'rollup-plugin-flow-entry'
 
 import packageJson from './package.json'
 
@@ -39,7 +40,8 @@ export default [
           'src/io/react-native/react-native-dummy.js'
       }),
       commonjs(commonjsOpts),
-      babel(babelOpts)
+      babel(babelOpts),
+      flowEntry()
     ],
     sourcemap: true
   },
