@@ -5,14 +5,14 @@ import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 import { createStore } from 'redux'
 
-import { fakeUser, makeFakeContexts } from '../../../edge-core-index'
+import { fakeUser, makeFakeContexts } from '../../../../src/edge-core-index.js'
+import { awaitState } from '../../../../src/util/redux/reaction.js'
+import { makeAssertLog } from '../../../assert-log.js'
 import {
   makeFakeCurrency,
   makeFakeCurrencyStore
-} from '../../../fake-plugins/fakeCurrency.js'
-import { fakeExchangePlugin } from '../../../fake-plugins/fakeExchange.js'
-import { makeAssertLog } from '../../../util/assertLog.js'
-import { awaitState } from '../../../util/redux/reaction.js'
+} from '../../../fake-plugins/fake-currency.js'
+import { fakeExchangePlugin } from '../../../fake-plugins/fake-exchange.js'
 
 function snooze (ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))

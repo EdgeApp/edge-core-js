@@ -1,6 +1,6 @@
 // @flow
 
-import nodeAssert from 'assert'
+import { expect } from 'chai'
 
 /**
  * Asserts that a correct sequence of events have occurred.
@@ -45,8 +45,8 @@ export function makeAssertLog (
 
   out.assert = function assert (expected: Array<string>) {
     sort
-      ? nodeAssert.deepEqual(events.sort(), expected.sort())
-      : nodeAssert.deepEqual(events, expected)
+      ? expect(events.sort()).to.deep.equal(expected.sort())
+      : expect(events).to.deep.equal(expected)
     events = []
   }
 

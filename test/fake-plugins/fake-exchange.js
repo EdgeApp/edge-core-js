@@ -5,7 +5,7 @@ import type {
   EdgeExchangePairHint,
   EdgeExchangePlugin,
   EdgeExchangePluginFactory
-} from '../edge-core-index.js'
+} from '../../src/edge-core-index.js'
 
 export const brokenExchangePlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',

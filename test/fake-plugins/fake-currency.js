@@ -1,9 +1,12 @@
 import { add, lt } from 'biggystring'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 
-import { InsufficientFundsError } from '../error.js'
-import { createReaction, reactionMiddleware } from '../util/redux/reaction.js'
-import { fakeCurrencyInfo } from './fakeCurrencyInfo.js'
+import { InsufficientFundsError } from '../../src/error.js'
+import {
+  createReaction,
+  reactionMiddleware
+} from '../../src/util/redux/reaction.js'
+import { fakeCurrencyInfo } from './fake-currency-info.js'
 
 function nop () {}
 

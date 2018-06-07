@@ -2,8 +2,12 @@ import { assert } from 'chai'
 import { describe, it } from 'mocha'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 
-import { makeAssertLog } from '../assertLog.js'
-import { awaitState, createReaction, reactionMiddleware } from './reaction.js'
+import {
+  awaitState,
+  createReaction,
+  reactionMiddleware
+} from '../../../src/util/redux/reaction.js'
+import { makeAssertLog } from '../../assert-log.js'
 
 describe('redux-reactions', function () {
   it('basic operations', function () {

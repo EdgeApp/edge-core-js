@@ -3,11 +3,11 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import type { EdgeTransaction } from '../../../edge-core-index'
+import type { EdgeTransaction } from '../../../../src/edge-core-index.js'
 import {
   exportTransactionsToCSVInner,
   exportTransactionsToQBOInner
-} from './currency-wallet-export.js'
+} from '../../../../src/modules/currency/wallet/currency-wallet-export.js'
 
 const edgeTxs: Array<EdgeTransaction> = [
   {

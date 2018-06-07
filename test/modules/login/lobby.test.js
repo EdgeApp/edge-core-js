@@ -4,15 +4,15 @@ import { assert } from 'chai'
 import elliptic from 'elliptic'
 import { describe, it } from 'mocha'
 
-import { makeFakeContexts, makeFakeIos } from '../../edge-core-index.js'
-import type { ApiInput } from '../root.js'
+import { makeFakeContexts, makeFakeIos } from '../../../src/edge-core-index.js'
 import {
   decryptLobbyReply,
   encryptLobbyReply,
   fetchLobbyRequest,
   makeLobby,
   sendLobbyReply
-} from './lobby.js'
+} from '../../../src/modules/login/lobby.js'
+import type { ApiInput } from '../../../src/modules/root.js'
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')

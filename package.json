@@ -36,15 +36,15 @@
   },
   "scripts": {
     "build": "rimraf lib && webpack && rollup -c",
-    "build:test": "webpack && rollup -c rollup.config.test.js",
+    "build:test": "webpack && rollup -c test/rollup.config.js",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "flow": "flow",
-    "format": "import-sort -l --write '*.js' 'src/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js'",
-    "lint": "eslint '*.js' 'src/**/*.js'",
+    "format": "import-sort -l --write '*.js' 'src/**/*.js' 'test/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
     "lint:fix": "npm run format",
     "prepare": "npm run build",
     "pretest": "npm run build:test",
-    "test": "mocha --require source-map-support/register build/tests.cjs.js",
+    "test": "mocha --require source-map-support/register build/tests.js",
     "updot": "updot"
   },
   "dependencies": {

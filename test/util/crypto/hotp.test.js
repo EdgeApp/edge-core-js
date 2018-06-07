@@ -4,8 +4,8 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 import { base32 } from 'rfc4648'
 
-import { base16, utf8 } from '../encoding.js'
-import { hotp, numberToBe64 } from './hotp.js'
+import { hotp, numberToBe64 } from '../../../src/util/crypto/hotp.js'
+import { base16, utf8 } from '../../../src/util/encoding.js'
 
 describe('hotp', function () {
   it('converts numbers to bytes', function () {
