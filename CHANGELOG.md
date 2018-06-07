@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.9.2
+
+* Replace flow-copy-source with rollup-plugin-flow-entry to fix a packaging bug.
+* Add `uniqueIdentifier` to `EdgeParsedUri`.
+
 ## 0.9.1
 * Improve various flow typing issues, both inside and outside the core
 * Add `getTxids` & related callback to the CurrencyEngine.
