@@ -25,7 +25,8 @@ export type ShapeShiftExactQuoteReply = {
     apiPubKey: string,
     minerFee: string,
     maxLimit: number,
-    orderId: string
+    orderId: string,
+    sAddress?: string
   }
 }
 
