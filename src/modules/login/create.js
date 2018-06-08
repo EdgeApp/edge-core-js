@@ -54,19 +54,28 @@ export function makeCreateKit (
   const loginAuth = io.random(32)
   const loginAuthBox = encrypt(io, loginAuth, loginKey)
 
+  const dummyLogin: LoginTree = {
+    appId,
+    loginId: '',
+    loginKey,
+    userId: '',
+    children: [],
+    keyInfos: []
+  }
+
   // Set up login methods:
   const parentBox =
     parentLogin != null ? encrypt(io, loginKey, parentLogin.loginKey) : void 0
   const passwordKit =
     opts.password != null
-      ? makePasswordKit(ai, { loginKey }, username, opts.password)
+      ? makePasswordKit(ai, dummyLogin, username, opts.password)
       : {}
   const pin2Kit =
     opts.pin != null
-      ? makeChangePin2Kit(ai, { loginKey }, username, opts.pin, true)
+      ? makeChangePin2Kit(ai, dummyLogin, username, opts.pin, true)
       : {}
   const keysKit =
-    opts.keyInfo != null ? makeKeysKit(ai, { loginKey }, opts.keyInfo) : {}
+    opts.keyInfo != null ? makeKeysKit(ai, dummyLogin, opts.keyInfo) : {}
 
   // Bundle everything:
   return Promise.all([loginId, passwordKit]).then(values => {

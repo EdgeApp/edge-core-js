@@ -1,11 +1,20 @@
 # edge-core-js
 
+## 0.9.2
+
+* Replace flow-copy-source with rollup-plugin-flow-entry to fix a packaging bug.
+* Add `uniqueIdentifier` to `EdgeParsedUri`.
+
+## 0.9.1
+* Improve various flow typing issues, both inside and outside the core
+* Add `getTxids` & related callback to the CurrencyEngine.
+
 ## 0.9.0-beta.1
 * Auto-correct mis-typed 2fa secrets
 * Expose hmacSha256 for the CLI
 * Fixed spelling mistake
 * Storage and Wallet flow coverage
-* Rename storeage ande exchange related files
+* Rename storage and exchange related files
 * Change createPrivateKey and derivePublicKey to Object instead of {}
 * Remove empty strings in the QBO export
 

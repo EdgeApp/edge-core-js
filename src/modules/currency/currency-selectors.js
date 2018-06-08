@@ -3,6 +3,7 @@
 import type {
   EdgeCurrencyInfo,
   EdgeCurrencyPlugin,
+  EdgeCurrencyWallet,
   EdgeTokenInfo
 } from '../../edge-core-index.js'
 import type { ApiInput, ApiProps } from '../root.js'
@@ -89,8 +90,11 @@ export function waitForCurrencyPlugins (ai: ApiInput) {
   })
 }
 
-export function waitForCurrencyWallet (ai: ApiInput, walletId: string) {
-  return ai.waitFor((props: ApiProps) => {
+export function waitForCurrencyWallet (
+  ai: ApiInput,
+  walletId: string
+): Promise<EdgeCurrencyWallet> {
+  const out: any = ai.waitFor((props: ApiProps): EdgeCurrencyWallet | void => {
     // If the wallet id doesn't even exist, bail out:
     if (!props.state.currency.wallets[walletId]) {
       throw new Error(`Wallet ${walletId} is not a supported type`)
@@ -106,4 +110,5 @@ export function waitForCurrencyWallet (ai: ApiInput, walletId: string) {
       return props.output.currency.wallets[walletId].api
     }
   })
+  return out
 }
