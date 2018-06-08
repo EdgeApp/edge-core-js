@@ -533,7 +533,6 @@ export type EdgeSpendTarget = {
   publicAddress?: string,
   nativeAmount?: string,
   destMetadata?: EdgeMetadata,
-  sAddress?: string,
   otherParams?: Object
 }
 
