@@ -356,7 +356,6 @@ export function makeCurrencyWalletApi (
         const splitArray = exchangeData.deposit.split('?dt=')
         exchangeData.deposit = splitArray[0]
         destTag = splitArray[1]
-        console.log('ss: splitArray', splitArray)
       }
 
       const spendTarget: EdgeSpendTarget = {
