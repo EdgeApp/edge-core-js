@@ -356,9 +356,29 @@ export function makeCurrencyWalletApi (
         ? mul(exchangeData.depositAmount, multiplierFrom)
         : nativeAmount
 
+      const hasDestTag = exchangeData.deposit.indexOf('?dt=') !== -1
+      let destTag
+      if (hasDestTag) {
+        const splitArray = exchangeData.deposit.split('?dt=')
+        exchangeData.deposit = splitArray[0]
+        destTag = splitArray[1]
+      }
+
       const spendTarget: EdgeSpendTarget = {
         nativeAmount: nativeAmountForSpend,
         publicAddress: exchangeData.deposit
+      }
+      if (hasDestTag) {
+        spendTarget.otherParams = {
+          uniqueIndentifier: Number(destTag)
+        }
+      }
+      if (currentCurrencyCode === 'XMR' && exchangeData.sAddress) {
+        const paymentId = exchangeData.deposit
+        spendTarget.publicAddress = exchangeData.sAddress
+        spendTarget.otherParams = {
+          uniqueIndentifier: paymentId
+        }
       }
 
       const exchangeSpendInfo: EdgeSpendInfo = {
