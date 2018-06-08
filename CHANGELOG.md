@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.9.3
+
+* Move the unit tests out of the `src` directory.
+
 ## 0.9.2
 
 * Replace flow-copy-source with rollup-plugin-flow-entry to fix a packaging bug.
