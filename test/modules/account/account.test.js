@@ -3,11 +3,11 @@
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import type { EdgeAccount } from '../../edge-core-index.js'
-import { fakeUser, makeFakeContexts } from '../../edge-core-index.js'
-import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
-import { makeAssertLog } from '../../util/assertLog.js'
-import { base64 } from '../../util/encoding.js'
+import type { EdgeAccount } from '../../../src/edge-core-index.js'
+import { fakeUser, makeFakeContexts } from '../../../src/edge-core-index.js'
+import { base64 } from '../../../src/util/encoding.js'
+import { makeAssertLog } from '../../assert-log.js'
+import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
 
 const contextOptions = {
   localFakeUser: true,

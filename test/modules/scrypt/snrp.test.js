@@ -3,8 +3,8 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { base16 } from '../../util/encoding.js'
-import { calcSnrpForTarget } from './scrypt-pixie.js'
+import { calcSnrpForTarget } from '../../../src/modules/scrypt/scrypt-pixie.js'
+import { base16 } from '../../../src/util/encoding.js'
 
 describe('SNRP calculation', function () {
   const salt = new Uint8Array(32)

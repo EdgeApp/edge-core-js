@@ -3,8 +3,8 @@
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-import { base16, base64, utf8 } from '../encoding.js'
-import { scrypt } from './scrypt.js'
+import { scrypt } from '../../../src/util/crypto/scrypt.js'
+import { base16, base64, utf8 } from '../../../src/util/encoding.js'
 
 describe('scrypt', function () {
   it('match a known userId', async function () {

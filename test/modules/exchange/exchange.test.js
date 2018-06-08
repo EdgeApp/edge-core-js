@@ -4,22 +4,22 @@ import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 import { attachPixie, filterPixie } from 'redux-pixies'
 
-import { makeFakeIos } from '../../edge-core-index.js'
-import {
-  brokenExchangePlugin,
-  fakeExchangePlugin
-} from '../../fake-plugins/fakeExchange.js'
-import { awaitState } from '../../util/redux/reaction.js'
-import { rootPixie } from '../root-pixie.js'
+import { makeFakeIos } from '../../../src/edge-core-index.js'
+import reducer from '../../../src/modules/exchange/exchange-reducer.js'
+import type { ExchangePair } from '../../../src/modules/exchange/exchange-reducer.js'
+import { getExchangeRate } from '../../../src/modules/exchange/exchange-selectors.js'
+import { rootPixie } from '../../../src/modules/root-pixie.js'
 import {
   makeCoreRoot,
   makeFakeCoreRoots,
   makeRootProps,
   startCoreRoot
-} from '../root.js'
-import reducer from './exchange-reducer.js'
-import type { ExchangePair } from './exchange-reducer.js'
-import { getExchangeRate } from './exchange-selectors.js'
+} from '../../../src/modules/root.js'
+import { awaitState } from '../../../src/util/redux/reaction.js'
+import {
+  brokenExchangePlugin,
+  fakeExchangePlugin
+} from '../../fake-plugins/fake-exchange.js'
 
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.

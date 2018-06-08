@@ -4,16 +4,16 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 import { attachPixie, filterPixie } from 'redux-pixies'
 
-import { fakeUser, makeFakeContexts } from '../../edge-core-index.js'
-import type { EdgeCurrencyPluginFactory } from '../../edge-core-index.js'
-import { makeFakeCurrency } from '../../fake-plugins/fakeCurrency.js'
-import { fakeCurrencyInfo } from '../../fake-plugins/fakeCurrencyInfo.js'
-import { makeFakeCoreRoots, makeRootProps } from '../root.js'
-import currencyPixie from './currency-pixie.js'
+import { fakeUser, makeFakeContexts } from '../../../src/edge-core-index.js'
+import type { EdgeCurrencyPluginFactory } from '../../../src/edge-core-index.js'
+import currencyPixie from '../../../src/modules/currency/currency-pixie.js'
 import {
   getCurrencyMultiplier,
   hasCurrencyPlugin
-} from './currency-selectors.js'
+} from '../../../src/modules/currency/currency-selectors.js'
+import { makeFakeCoreRoots, makeRootProps } from '../../../src/modules/root.js'
+import { fakeCurrencyInfo } from '../../fake-plugins/fake-currency-info.js'
+import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
 
 describe('currency selectors', function () {
   const infos = [fakeCurrencyInfo]

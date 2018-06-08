@@ -3,8 +3,12 @@
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { error, fakeUser, makeFakeContexts } from '../../edge-core-index.js'
-import { base58 } from '../../util/encoding.js'
+import {
+  error,
+  fakeUser,
+  makeFakeContexts
+} from '../../../src/edge-core-index.js'
+import { base58 } from '../../../src/util/encoding.js'
 
 const contextOptions = { localFakeUser: true }
 

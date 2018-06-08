@@ -3,10 +3,15 @@
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-import { makeFakeIos } from '../../edge-core-index.js'
-import { fixIo } from '../../io/fixIo.js'
-import { base16, utf8 } from '../encoding.js'
-import { decrypt, encrypt, hmacSha256, sha256 } from './crypto.js'
+import { makeFakeIos } from '../../../src/edge-core-index.js'
+import { fixIo } from '../../../src/io/fixIo.js'
+import {
+  decrypt,
+  encrypt,
+  hmacSha256,
+  sha256
+} from '../../../src/util/crypto/crypto.js'
+import { base16, utf8 } from '../../../src/util/encoding.js'
 
 describe('encryption', function () {
   it('decrypt existing data', function () {

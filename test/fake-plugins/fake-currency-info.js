@@ -1,6 +1,6 @@
 // @flow
 
-import type { EdgeCurrencyInfo } from '../edge-core-index.js'
+import type { EdgeCurrencyInfo } from '../../src/edge-core-index.js'
 
 export const fakeCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
