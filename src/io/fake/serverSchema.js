@@ -2,12 +2,13 @@
 
 // The information the server returns on every login:
 export const loginReplyColumns = [
+  // Identity:
   'appId',
-  'loginId',
   'loginAuthBox',
-  'otpTimeout',
+  'loginId',
+  // Login methods:
   'otpResetDate',
-  'parentBox',
+  'otpTimeout',
   'passwordAuthBox',
   'passwordAuthSnrp',
   'passwordBox',
@@ -18,10 +19,12 @@ export const loginReplyColumns = [
   'question2Box',
   'recovery2Box',
   'recovery2KeyBox',
+  // Resources:
+  'keyBoxes',
   'mnemonicBox',
+  'parentBox',
   'rootKeyBox',
-  'syncKeyBox',
-  'keyBoxes'
+  'syncKeyBox'
 ]
 
 // The database includes extra columns used for authentication:

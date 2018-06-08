@@ -106,22 +106,24 @@ export async function loginPassword (
 /**
  * Returns true if the given password is correct.
  */
-export function checkPassword (
+export async function checkPassword (
   ai: ApiInput,
   login: LoginTree,
   password: string
 ) {
+  const { username, passwordAuth } = login
+  if (!username || !passwordAuth) return false
+
   // Derive passwordAuth:
-  const up = makeHashInput(login.username, password)
-  return scrypt(ai, up, passwordAuthSnrp).then(passwordAuth => {
-    // Compare what we derived with what we have:
-    for (let i = 0; i < passwordAuth.length; ++i) {
-      if (passwordAuth[i] !== login.passwordAuth[i]) {
-        return false
-      }
-    }
-    return true
-  })
+  const up = makeHashInput(username, password)
+  const newPasswordAuth = await scrypt(ai, up, passwordAuthSnrp)
+
+  // Compare what we derived with what we have:
+  for (let i = 0; i < passwordAuth.length; ++i) {
+    if (newPasswordAuth[i] !== passwordAuth[i]) return false
+  }
+
+  return true
 }
 
 /**

@@ -379,7 +379,7 @@ export type EdgeAccount = {
 
   // OTP:
   +otpKey: string | void, // OTP is enabled if this exists
-  +otpResetDate: Date | void, // A reset is requested if this exists
+  +otpResetDate: string | void, // A reset is requested if this exists
   cancelOtpReset(): Promise<void>,
   disableOtp(): Promise<void>,
   enableOtp(timeout?: number): Promise<void>,
@@ -395,7 +395,7 @@ export type EdgeAccount = {
   changeWalletStates(walletStates: EdgeWalletStates): Promise<void>,
   createWallet(type: string, keys: any): Promise<string>,
   getFirstWalletInfo(type: string): ?EdgeWalletInfo,
-  getWalletInfo(id: string): EdgeWalletInfo,
+  getWalletInfo(id: string): ?EdgeWalletInfo,
   listWalletIds(): Array<string>,
   listSplittableWalletTypes(walletId: string): Array<string>,
   splitWalletInfo(walletId: string, newWalletType: string): Promise<string>,
@@ -446,6 +446,14 @@ export type EdgeGetTransactionsOptions = {
   denomination?: number
 }
 
+export type EdgeCurrencyCodeOptions = {
+  currencyCode?: string
+}
+
+export type EdgeTxidMap = { [txid: string]: number }
+
+export type EdgeUnusedOptions = {}
+
 export type EdgeCurrencyWallet = {
   // EdgeWalletInfo members:
   +id: string,
@@ -479,13 +487,15 @@ export type EdgeCurrencyWallet = {
   addCustomToken(token: EdgeTokenInfo): Promise<void>,
 
   // Transactions:
-  getBalance(opts: any): string,
+  getBalance(opts?: EdgeCurrencyCodeOptions): string,
   getBlockHeight(): number,
-  getNumTransactions(options: any): number,
+  getNumTransactions(opts?: EdgeCurrencyCodeOptions): number,
   getTransactions(
     options?: EdgeGetTransactionsOptions
   ): Promise<Array<EdgeTransaction>>,
-  getReceiveAddress(opts: any): Promise<EdgeReceiveAddress>,
+  getReceiveAddress(
+    opts?: EdgeCurrencyCodeOptions
+  ): Promise<EdgeReceiveAddress>,
   saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,
   lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,
   makeAddressQrCode(address: EdgeReceiveAddress): string,
@@ -529,7 +539,7 @@ export type EdgeMetadata = {
 
 export type EdgeSpendTarget = {
   currencyCode?: string,
-  destWallet?: any,
+  destWallet?: EdgeCurrencyWallet,
   publicAddress?: string,
   nativeAmount?: string,
   destMetadata?: EdgeMetadata,
@@ -546,7 +556,8 @@ export type EdgeSpendInfo = {
   quoteFor?: string,
   networkFeeOption?: string,
   customNetworkFee?: any,
-  metadata?: EdgeMetadata
+  metadata?: EdgeMetadata,
+  otherParams?: Object
 }
 
 export type EdgeTransaction = {
@@ -614,6 +625,7 @@ export type EdgeParsedUri = {
   bitIDCallbackUri?: string,
   paymentProtocolUri?: string,
   returnUri?: string,
+  uniqueIdentifier?: string, // Ripple payment id
   bitidPaymentAddress?: string, // Experimental
   bitidKycProvider?: string, // Experimental
   bitidKycRequest?: string // Experimental
@@ -665,7 +677,7 @@ export type EdgeCurrencyEngineCallbacks = {
   +onTransactionsChanged: (abcTransactions: Array<EdgeTransaction>) => void,
   +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
   +onAddressesChecked: (progressRatio: number) => void,
-  +onTxidsChanged: (txids: Array<string>) => void
+  +onTxidsChanged: (txids: EdgeTxidMap) => void
 }
 
 export type EdgeCurrencyEngineOptions = {
@@ -685,12 +697,17 @@ export type EdgeCurrencyEngine = {
   getEnabledTokens(): Promise<Array<string>>,
   addCustomToken(token: EdgeTokenInfo): Promise<void>,
   getTokenStatus(token: string): boolean,
-  getBalance(options: any): string,
-  getNumTransactions(options: any): number,
-  getTransactions(options: any): Promise<Array<EdgeTransaction>>,
-  getFreshAddress(options: any): EdgeFreshAddress,
-  addGapLimitAddresses(addresses: Array<string>, options: any): void,
-  isAddressUsed(address: string, options: any): boolean,
+  getBalance(options: EdgeCurrencyCodeOptions): string,
+  getNumTransactions(options: EdgeCurrencyCodeOptions): number,
+  getTransactions(
+    options: EdgeGetTransactionsOptions
+  ): Promise<Array<EdgeTransaction>>,
+  getFreshAddress(options: EdgeCurrencyCodeOptions): EdgeFreshAddress,
+  addGapLimitAddresses(
+    addresses: Array<string>,
+    options: EdgeUnusedOptions
+  ): void,
+  isAddressUsed(address: string, options: EdgeUnusedOptions): boolean,
   makeSpend(abcSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   +sweepPrivateKeys?: (abcSpendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
   signTx(abcTransaction: EdgeTransaction): Promise<EdgeTransaction>,
@@ -699,7 +716,8 @@ export type EdgeCurrencyEngine = {
   resyncBlockchain(): Promise<void>,
   dumpData(): EdgeDataDump,
   getDisplayPrivateSeed(): string | null,
-  getDisplayPublicSeed(): string | null
+  getDisplayPublicSeed(): string | null,
+  getTxids?: () => EdgeTxidMap
 }
 
 export type EdgeCurrencyPlugin = {

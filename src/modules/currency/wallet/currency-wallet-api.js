@@ -4,6 +4,7 @@ import { add, div, lte, mul, sub } from 'biggystring'
 
 import type {
   EdgeCoinExchangeQuote,
+  EdgeCurrencyCodeOptions,
   EdgeCurrencyEngine,
   EdgeCurrencyPlugin,
   EdgeCurrencyWallet,
@@ -20,7 +21,7 @@ import type {
 import { SameCurrencyError } from '../../../error.js'
 import { wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
-import { getCurrencyMultiplier } from '../../currency/currency-selectors'
+import { getCurrencyMultiplier } from '../../currency/currency-selectors.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
@@ -35,6 +36,7 @@ import {
   setCurrencyWalletFiat,
   setCurrencyWalletTxMetadata
 } from './currency-wallet-files.js'
+import type { TransactionFile } from './currency-wallet-files.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
 
 const fakeMetadata = {
@@ -127,7 +129,7 @@ export function makeCurrencyWalletApi (
 
     // Transactions:
     '@getBalance': { sync: true },
-    getBalance (opts: any) {
+    getBalance (opts: EdgeCurrencyCodeOptions = {}) {
       return engine.getBalance(opts)
     },
 
@@ -137,7 +139,7 @@ export function makeCurrencyWalletApi (
     },
 
     '@getNumTransactions': { sync: true },
-    getNumTransactions (opts: any) {
+    getNumTransactions (opts: EdgeCurrencyCodeOptions = {}) {
       return engine.getNumTransactions(opts)
     },
 
@@ -229,7 +231,9 @@ export function makeCurrencyWalletApi (
       return csv
     },
 
-    getReceiveAddress (opts: any): Promise<EdgeReceiveAddress> {
+    getReceiveAddress (
+      opts: EdgeCurrencyCodeOptions = {}
+    ): Promise<EdgeReceiveAddress> {
       const freshAddress = engine.getFreshAddress(opts)
       const receiveAddress: EdgeReceiveAddress = {
         metadata: fakeMetadata,
@@ -286,7 +290,9 @@ export function makeCurrencyWalletApi (
       if (destCurrencyCode === currentCurrencyCode) {
         throw new SameCurrencyError()
       }
-      const edgeFreshAddress = engine.getFreshAddress()
+      const edgeFreshAddress = engine.getFreshAddress({
+        currencyCode: destCurrencyCode
+      })
       const edgeReceiveAddress = await destWallet.getReceiveAddress()
 
       let destPublicAddress
@@ -496,7 +502,7 @@ export function makeCurrencyWalletApi (
   return wrapObject('CurrencyWallet', out)
 }
 
-function fixMetadata (metadata: EdgeMetadata, fiat: any) {
+function fixMetadata (metadata: EdgeMetadata, fiat: string) {
   const out = filterObject(metadata, [
     'bizId',
     'category',
@@ -516,7 +522,7 @@ function fixMetadata (metadata: EdgeMetadata, fiat: any) {
 export function combineTxWithFile (
   input: CurrencyWalletInput,
   tx: any,
-  file: any,
+  file: TransactionFile,
   currencyCode: string
 ) {
   const wallet = input.props.selfOutput.api

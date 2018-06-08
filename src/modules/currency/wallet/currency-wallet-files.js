@@ -4,8 +4,10 @@ import { number as currencyFromNumber } from 'currency-codes'
 import { mapFiles } from 'disklet'
 
 import { mergeDeeply } from '../../../util/util.js'
-import { fetchAppIdInfo } from '../../account/lobbyApi.js'
+import { fetchAppIdInfo } from '../../account/lobby-api.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
+import type { RootState } from '../../root-reducer.js'
+import type { ApiInput } from '../../root.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalFolder,
@@ -110,7 +112,12 @@ function fixLegacyFile (
   return out
 }
 
-function getTxFile (state: any, keyId: string, date: number, txid: string) {
+function getTxFile (
+  state: RootState,
+  keyId: string,
+  date: number,
+  txid: string
+) {
   const txidHash = hashStorageWalletFilename(state, keyId, txid)
   const timestamp = date.toFixed(0)
   const fileName = `${timestamp}-${txidHash}.json`
@@ -228,8 +235,7 @@ function fetchBackupName (
   input: CurrencyWalletInput,
   appIds: Array<string>
 ): Promise<string | null> {
-  // Dirty type hack, but `io` and `onError` do exist on both objects:
-  const ai: any = input
+  const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
   for (const appId of appIds) {
     if (appId !== '') {
       return fetchAppIdInfo(ai, appId).then(info => info.displayName)
@@ -287,7 +293,7 @@ export async function loadTxFiles (
  * If they in the legacy format, convert them to the new format
  * and cache them on disk
  */
-async function getLegacyFileNames (state: any, walletId: string, folder) {
+async function getLegacyFileNames (state: RootState, walletId: string, folder) {
   const newFormatFileNames = {}
   // Get the non encrypted folder
   const localFolder = getStorageWalletLocalFolder(state, walletId)
@@ -405,7 +411,7 @@ function loadAddressFiles (input: CurrencyWalletInput, folder) {
 
     // Load these addresses into the engine:
     const engine = input.props.selfOutput.engine
-    if (engine) engine.addGapLimitAddresses(out)
+    if (engine) engine.addGapLimitAddresses(out, {})
 
     return out
   })

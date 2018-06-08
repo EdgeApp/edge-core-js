@@ -7,6 +7,7 @@ import type {
   EdgeCurrencyWallet,
   EdgeLobby,
   EdgeWalletInfo,
+  EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../edge-core-index.js'
 import { copyProperties, wrapObject } from '../../util/api.js'
@@ -14,12 +15,13 @@ import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
 import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
+import type { LoginTree } from '../login/login-types.js'
 import { checkPassword } from '../login/password.js'
 import { checkPin2 } from '../login/pin2.js'
 import type { ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
-import { makeAccountState } from './accountState.js'
-import { makeLobbyApi } from './lobbyApi.js'
+import { AccountState, makeAccountState } from './account-state.js'
+import { makeLobbyApi } from './lobby-api.js'
 
 /**
  * Creates an `Account` API object.
@@ -27,9 +29,9 @@ import { makeLobbyApi } from './lobbyApi.js'
 export function makeAccount (
   ai: ApiInput,
   appId: string,
-  loginTree: any,
+  loginTree: LoginTree,
   loginType: string = '',
-  callbacks: EdgeAccountCallbacks | {} = {}
+  callbacks: EdgeAccountCallbacks = {}
 ) {
   return makeAccountState(ai, appId, loginTree, callbacks).then(state =>
     wrapObject('Account', makeAccountApi(state, loginType, callbacks))
@@ -40,12 +42,12 @@ export function makeAccount (
  * Creates an unwrapped account API object around an account state object.
  */
 function makeAccountApi (
-  state: any,
+  state: AccountState,
   loginType: string,
-  callbacks: EdgeAccountCallbacks | {}
+  callbacks: EdgeAccountCallbacks
 ): EdgeAccount {
   const ai: ApiInput = state.ai
-  const { activeLoginId, keyInfo } = state
+  const { activeLoginId, accountWalletInfo } = state
 
   const exchangeCache = makeExchangeCache(ai)
 
@@ -66,6 +68,7 @@ function makeAccountApi (
         : void 0
     },
     get username (): string {
+      if (!state.loginTree.username) throw new Error('Missing username')
       return state.loginTree.username
     },
 
@@ -86,7 +89,7 @@ function makeAccountApi (
 
     // Change or create credentials:
     changePassword (password: string): Promise<void> {
-      return state.changePassword(password)
+      return state.changePassword(password).then(() => {})
     },
     changePin (opts: {
       pin?: string, // We keep the existing PIN if unspecified
@@ -101,9 +104,12 @@ function makeAccountApi (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
-      return state
-        .changeRecovery(questions, answers)
-        .then(() => base58.stringify(state.loginTree.recovery2Key))
+      return state.changeRecovery(questions, answers).then(() => {
+        if (!state.loginTree.recovery2Key) {
+          throw new Error('Missing recoveryKey')
+        }
+        return base58.stringify(state.loginTree.recovery2Key)
+      })
     },
 
     // Verify existing credentials:
@@ -119,30 +125,30 @@ function makeAccountApi (
 
     // Remove credentials:
     deletePassword (): Promise<void> {
-      return state.deletePassword()
+      return state.deletePassword().then(() => {})
     },
     deletePin (): Promise<void> {
-      return state.deletePin()
+      return state.deletePin().then(() => {})
     },
     deleteRecovery (): Promise<void> {
-      return state.deleteRecovery()
+      return state.deleteRecovery().then(() => {})
     },
 
     // OTP:
     get otpKey (): string | void {
       return state.login.otpTimeout != null ? state.login.otpKey : void 0
     },
-    get otpResetDate (): Date | void {
+    get otpResetDate (): string | void {
       return state.login.otpResetDate
     },
     cancelOtpReset (): Promise<void> {
-      return state.cancelOtpReset()
+      return state.cancelOtpReset().then(() => {})
     },
     enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<void> {
-      return state.enableOtp(timeout)
+      return state.enableOtp(timeout).then(() => {})
     },
     disableOtp (): Promise<void> {
-      return state.disableOtp()
+      return state.disableOtp().then(() => {})
     },
 
     // Edge login approval:
@@ -156,11 +162,11 @@ function makeAccountApi (
     },
 
     // Master wallet list:
-    get allKeys (): Array<any> {
+    get allKeys (): Array<EdgeWalletInfoFull> {
       return state.allKeys
     },
     changeWalletStates (walletStates: EdgeWalletStates): Promise<void> {
-      return state.changeKeyStates(walletStates)
+      return state.changeWalletStates(walletStates)
     },
     createWallet (type: string, keys: any): Promise<string> {
       if (keys == null) {
@@ -169,18 +175,19 @@ function makeAccountApi (
         keys = plugin.createPrivateKey(type)
       }
 
-      const keyInfo = makeStorageKeyInfo(ai, type, keys)
-      const kit = makeKeysKit(ai, state.login, keyInfo)
-      return state.applyKit(kit).then(() => keyInfo.id)
+      const walletInfo = makeStorageKeyInfo(ai, type, keys)
+      const kit = makeKeysKit(ai, state.login, walletInfo)
+      return state.applyKit(kit).then(() => walletInfo.id)
     },
     '@getFirstWalletInfo': { sync: true },
     getFirstWalletInfo (type: string): ?EdgeWalletInfo {
-      return findFirstKey(state.allKeys, type)
+      const allKeys: any = state.allKeys // WalletInfoFull -> WalletInfo
+      return findFirstKey(allKeys, type)
     },
     '@getWalletInfo': { sync: true },
-    getWalletInfo (id: string): EdgeWalletInfo {
-      const info = state.allKeys.find(info => info.id === id)
-      return info
+    getWalletInfo (id: string): ?EdgeWalletInfo {
+      const allKeys: any = state.allKeys // WalletInfoFull -> WalletInfo
+      return allKeys.find(info => info.id === id)
     },
     '@listWalletIds': { sync: true },
     listWalletIds (): Array<string> {
@@ -222,7 +229,10 @@ function makeAccountApi (
     }
   }
 
-  copyProperties(rawAccount, makeStorageWalletApi(ai, keyInfo, callbacks))
+  copyProperties(
+    rawAccount,
+    makeStorageWalletApi(ai, accountWalletInfo, callbacks)
+  )
 
   return rawAccount
 }

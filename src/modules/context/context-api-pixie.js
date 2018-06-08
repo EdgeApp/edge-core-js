@@ -11,7 +11,7 @@ import type {
 } from '../../edge-core-index.js'
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
-import { makeAccount } from '../account/accountApi.js'
+import { makeAccount } from '../account/account-api.js'
 import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
@@ -101,7 +101,7 @@ function makeContextApi (ai: ApiInput) {
       username: string,
       password: string,
       opts?: EdgeAccountOptions
-    ): Promise<any> {
+    ) {
       const { callbacks, otp } = opts || {} // opts can be `null`
 
       return loginPassword(ai, username, password, otp).then(loginTree => {
@@ -183,7 +183,7 @@ function makeContextApi (ai: ApiInput) {
         displayName,
         onProcessLogin,
         onLogin (err, loginTree) {
-          if (err) return onLogin(err)
+          if (err || !loginTree) return onLogin(err)
           makeAccount(ai, appId, loginTree, 'edgeLogin', callbacks).then(
             account => onLogin(void 0, account),
             err => onLogin(err)

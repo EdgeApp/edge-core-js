@@ -96,8 +96,9 @@ export async function loginPin2 (
  */
 export async function checkPin2 (ai: ApiInput, login: LoginTree, pin: string) {
   const { appId, username } = login
-  const { loginStore } = ai.props
-  const stashTree = await loginStore.load(username)
+  if (!username) return false
+
+  const stashTree = await ai.props.loginStore.load(username)
   const { pin2Key } = getPin2Key(stashTree, appId)
   if (pin2Key == null) {
     throw new Error('No PIN set locally for this account')
@@ -140,7 +141,7 @@ export function makeChangePin2Kit (
   username: string,
   pin: string,
   enableLogin: boolean
-) {
+): LoginKit {
   const { io } = ai.props
   const pin2TextBox = encrypt(io, utf8.parse(pin), login.loginKey)
 
