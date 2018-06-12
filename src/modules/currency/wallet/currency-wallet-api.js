@@ -370,14 +370,14 @@ export function makeCurrencyWalletApi (
       }
       if (hasDestTag) {
         spendTarget.otherParams = {
-          uniqueIndentifier: Number(destTag)
+          uniqueIdentifier: destTag
         }
       }
       if (currentCurrencyCode === 'XMR' && exchangeData.sAddress) {
         const paymentId = exchangeData.deposit
         spendTarget.publicAddress = exchangeData.sAddress
         spendTarget.otherParams = {
-          uniqueIndentifier: paymentId
+          uniqueIdentifier: paymentId
         }
       }
 
