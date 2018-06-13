@@ -595,6 +595,7 @@ export type EdgeCurrencyInfo = {
   pluginName: string,
   denominations: Array<EdgeDenomination>,
   walletTypes: Array<string>,
+  requiredConfirmations?: number,
 
   // Configuration options:
   defaultSettings: any,

@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.9.4
+
+* Fix Shapeshifting XMR and XRP.
+* Add `EdgeCurrencyInfo.requiredConfirmations` and associated `PendingFundsError` types.
+
 ## 0.9.3
 
 * Move the unit tests out of the `src` directory.
