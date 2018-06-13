@@ -610,25 +610,67 @@ export type EdgeCurrencyInfo = {
   symbolImageDarkMono?: string
 }
 
-export type EdgeParsedUri = {
-  token?: EdgeTokenInfo,
-  privateKeys?: Array<string>,
-  publicAddress?: string,
-  legacyAddress?: string,
-  segwitAddress?: string,
+export type EdgeParsedTokenUri = {
+  token: EdgeTokenInfo
+}
+
+export type EdgeParsedPrivateKeyUri = {
+  privateKeys: Array<string>
+}
+
+export type EdgeParsedLegacyAddressUri = {
+  publicAddress: string,
+  legacyAddress: string,
+  nativeAmount?: string,
+  currencyCode: 'LTC' | 'BCH',
+  metadata?: EdgeMetadata
+}
+
+export type EdgeParsedSegwitAddress = {
+  publicAddress: string,
+  segwitAddress: string,
+  nativeAmount?: string,
+  currencyCode: 'BTC' | 'LTC',
+  metadata?: EdgeMetadata
+}
+
+export type EdgeParsedPublicAddressUri = {
+  publicAddress: string,
   nativeAmount?: string,
   currencyCode?: string,
   metadata?: EdgeMetadata,
-  bitIDURI?: string,
-  bitIDDomain?: string,
+  uniqueIdentifier?: string
+}
+
+export type EdgeParsedPaymentProtocolUri = {
+  nativeAmount?: string,
+  currencyCode: 'BTC',
+  metadata?: EdgeMetadata,
+  paymentProtocolUri?: string
+}
+
+export type EdgeParsedEdgeLoginUri = {
+  // ???
+}
+
+export type EdgeParsedBitIdUri = {
+  bitIDURI: string,
+  bitIDDomain: string,
   bitIDCallbackUri?: string,
-  paymentProtocolUri?: string,
-  returnUri?: string,
-  uniqueIdentifier?: string, // Ripple payment id
   bitidPaymentAddress?: string, // Experimental
   bitidKycProvider?: string, // Experimental
   bitidKycRequest?: string // Experimental
 }
+
+export type EdgeParsedUri =
+  | EdgeParsedTokenUri
+  | EdgeParsedSegwitAddress
+  | EdgeParsedBitIdUri
+  | EdgeParsedEdgeLoginUri
+  | EdgeParsedPublicAddressUri
+  | EdgeParsedLegacyAddressUri
+  | EdgeParsedPaymentProtocolUri
+  | EdgeParsedPrivateKeyUri
 
 export type EdgeEncodeUri = {
   publicAddress: string,
