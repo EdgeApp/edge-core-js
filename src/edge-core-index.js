@@ -13,7 +13,18 @@ export { makeFakeIos } from './io/fake/fake-io.js'
 export { makeNodeIo } from './io/node/node-io.js'
 export { makeReactNativeIo } from './io/react-native/react-native-io.js'
 export { fakeUser } from './io/fake/fakeUser.js'
-export { errorNames } from './error.js'
+export {
+  DustSpendError,
+  errorNames,
+  InsufficientFundsError,
+  NetworkError,
+  ObsoleteApiError,
+  OtpError,
+  PasswordError,
+  PendingFundsError,
+  SameCurrencyError,
+  UsernameError
+} from './error.js'
 export {
   makeContext,
   makeEdgeContext,
