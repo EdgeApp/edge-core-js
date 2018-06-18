@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.9.5
+
+* Fix Edge login unhandled promise rejection error.
+* Fix the Flow type for the transaction export denomination.
+* Export the `Error` types directly.
+
 ## 0.9.4
 
 * Fix Shapeshifting XMR and XRP.
