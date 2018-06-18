@@ -97,7 +97,7 @@ export function exportTransactionsToQBOInner (
   edgeTransactions: Array<EdgeTransaction>,
   currencyCode: string,
   fiatCurrencyCode: string,
-  denom: number | null,
+  denom: string | null,
   dateNow: number
 ): string {
   const STMTTRN = []
@@ -105,7 +105,7 @@ export function exportTransactionsToQBOInner (
 
   for (const edgeTx: EdgeTransaction of edgeTransactions) {
     const TRNAMT: string = denom
-      ? div(edgeTx.nativeAmount, denom.toString(), 18)
+      ? div(edgeTx.nativeAmount, denom, 18)
       : edgeTx.nativeAmount
     const TRNTYPE = lt(edgeTx.nativeAmount, '0') ? 'DEBIT' : 'CREDIT'
     const DTPOSTED = makeOfxDate(edgeTx.date)
@@ -215,7 +215,7 @@ export async function exportTransactionsToCSVInner (
   edgeTransactions: Array<EdgeTransaction>,
   currencyCode: string,
   fiatCurrencyCode: string,
-  denom: number | null
+  denom: string | null
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const currencyField = 'AMT_' + currencyCode
@@ -224,10 +224,10 @@ export async function exportTransactionsToCSVInner (
 
     for (const edgeTx: EdgeTransaction of edgeTransactions) {
       const amount: string = denom
-        ? div(edgeTx.nativeAmount, denom.toString(), 18)
+        ? div(edgeTx.nativeAmount, denom, 18)
         : edgeTx.nativeAmount
       const networkFeeField: string = denom
-        ? div(edgeTx.networkFee, denom.toString(), 18)
+        ? div(edgeTx.networkFee, denom, 18)
         : edgeTx.networkFee
       const { date, time } = makeCsvDateTime(edgeTx.date)
       let name: string = ''
