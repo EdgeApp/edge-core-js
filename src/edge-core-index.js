@@ -443,7 +443,7 @@ export type EdgeGetTransactionsOptions = {
   searchString?: string,
   returnIndex?: number,
   returnEntries?: number,
-  denomination?: number
+  denomination?: string
 }
 
 export type EdgeCurrencyCodeOptions = {
