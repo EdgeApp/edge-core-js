@@ -53,9 +53,15 @@ function onReply (ai: ApiInput, subscription, reply, appId, opts) {
     if (login == null) {
       throw new Error(`Cannot find requested appId: "${appId}"`)
     }
-    syncLogin(ai, loginTree, login).then(loginTree => {
-      opts.onLogin(void 0, loginTree)
-    })
+    syncLogin(ai, loginTree, login)
+      .then(loginTree => {
+        opts.onLogin(void 0, loginTree)
+      })
+      .catch(e => {
+        if (opts.onLogin != null) {
+          opts.onLogin(e)
+        }
+      })
   }
 }
 
