@@ -350,7 +350,11 @@ export function syncLogin (
     const request = makeAuthJson(login)
     return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
       const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
-      const newLoginTree = makeLoginTree(stashTree, login.loginKey, login.appId)
+      const newLoginTree = makeLoginTree(
+        newStashTree,
+        login.loginKey,
+        login.appId
+      )
 
       return loginStore.save(newStashTree).then(() => newLoginTree)
     })
