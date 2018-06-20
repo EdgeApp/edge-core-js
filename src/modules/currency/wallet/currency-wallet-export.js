@@ -118,6 +118,10 @@ export function exportTransactionsToQBOInner (
       amountFiat = edgeTx.metadata.amountFiat ? edgeTx.metadata.amountFiat : 0
       category = edgeTx.metadata.category ? edgeTx.metadata.category : ''
       notes = edgeTx.metadata.notes ? edgeTx.metadata.notes : ''
+      if (notes.length > 250) {
+        notes = notes.substring(0, 250)
+        notes += '...'
+      }
     }
     const absFiat = abs(amountFiat.toString())
     const absAmount = abs(TRNAMT)
