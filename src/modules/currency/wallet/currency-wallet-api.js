@@ -12,6 +12,7 @@ import type {
   EdgeEncodeUri,
   EdgeGetTransactionsOptions,
   EdgeMetadata,
+  EdgePaymentProtocolInfo,
   EdgeReceiveAddress,
   EdgeSpendInfo,
   EdgeSpendTarget,
@@ -437,6 +438,18 @@ export function makeCurrencyWalletApi (
     '@getDisplayPublicSeed': { sync: true },
     getDisplayPublicSeed (): string | null {
       return engine.getDisplayPublicSeed()
+    },
+
+    '@getPaymentProtocolInfo': { sync: true },
+    getPaymentProtocolInfo (
+      paymentProtocolUrl: string
+    ): EdgePaymentProtocolInfo {
+      if (!engine.getPaymentProtocolInfo) {
+        throw new Error(
+          "'getPaymentProtocolInfo' is not implemented on wallets of this type"
+        )
+      }
+      return engine.getPaymentProtocolInfo(paymentProtocolUrl)
     },
 
     saveTxMetadata (txid: string, currencyCode: string, metadata: EdgeMetadata) {
