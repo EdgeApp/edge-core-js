@@ -525,7 +525,7 @@ export type EdgeCurrencyWallet = {
   getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
   getPaymentProtocolInfo?: (
     paymentProtocolUrl: string
-  ) => EdgePaymentProtocolInfo,
+  ) => Promise<EdgePaymentProtocolInfo>,
 
   // Wallet management:
   resyncBlockchain(): Promise<void>,
@@ -739,7 +739,7 @@ export type EdgeCurrencyEngine = {
   dumpData(): EdgeDataDump,
   getPaymentProtocolInfo?: (
     paymentProtocolUrl: string
-  ) => EdgePaymentProtocolInfo,
+  ) => Promise<EdgePaymentProtocolInfo>,
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
   getTxids?: () => EdgeTxidMap

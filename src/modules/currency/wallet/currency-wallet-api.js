@@ -440,10 +440,9 @@ export function makeCurrencyWalletApi (
       return engine.getDisplayPublicSeed()
     },
 
-    '@getPaymentProtocolInfo': { sync: true },
     getPaymentProtocolInfo (
       paymentProtocolUrl: string
-    ): EdgePaymentProtocolInfo {
+    ): Promise<EdgePaymentProtocolInfo> {
       if (!engine.getPaymentProtocolInfo) {
         throw new Error(
           "'getPaymentProtocolInfo' is not implemented on wallets of this type"
