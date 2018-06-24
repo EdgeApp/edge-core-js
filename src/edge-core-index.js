@@ -737,7 +737,7 @@ export type EdgeCurrencyEngine = {
   saveTx(abcTransaction: EdgeTransaction): Promise<void>,
   resyncBlockchain(): Promise<void>,
   dumpData(): EdgeDataDump,
-  getPaymentProtocolInfo?: (
+  +getPaymentProtocolInfo?: (
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>,
   getDisplayPrivateSeed(): string | null,
