@@ -6,6 +6,7 @@ import type {
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyWallet,
   EdgeLobby,
+  EdgePluginData,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
   EdgeWalletStates
@@ -22,6 +23,7 @@ import type { ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { AccountState, makeAccountState } from './account-state.js'
 import { makeLobbyApi } from './lobby-api.js'
+import { makePluginDataApi } from './plugin-data-api.js'
 
 /**
  * Creates an `Account` API object.
@@ -50,6 +52,7 @@ function makeAccountApi (
   const { activeLoginId, accountWalletInfo } = state
 
   const exchangeCache = makeExchangeCache(ai)
+  const pluginData = makePluginDataApi(ai, state)
 
   const rawAccount: EdgeAccount = {
     // Basic login information:
@@ -72,9 +75,12 @@ function makeAccountApi (
       return state.loginTree.username
     },
 
-    // Exchange cache:
+    // Speciality API's:
     get exchangeCache (): any {
       return exchangeCache
+    },
+    get pluginData (): EdgePluginData {
+      return pluginData
     },
 
     // What login method was used?
