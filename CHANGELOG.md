@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.9.7
+
+* Fix payment request Flow types.
+* Implement plugin data API.
+
 ## 0.9.5
 
 * Fix Edge login unhandled promise rejection error.
