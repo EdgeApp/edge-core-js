@@ -140,9 +140,8 @@ export function makeCurrencyWalletApi (
       return engine.getBlockHeight()
     },
 
-    '@getNumTransactions': { sync: true },
     getNumTransactions (opts: EdgeCurrencyCodeOptions = {}) {
-      return engine.getNumTransactions(opts)
+      return Promise.resolve(engine.getNumTransactions(opts))
     },
 
     async getTransactions (
@@ -420,9 +419,8 @@ export function makeCurrencyWalletApi (
       return Promise.resolve(engine.resyncBlockchain())
     },
 
-    '@dumpData': { sync: true },
-    dumpData (): EdgeDataDump {
-      return engine.dumpData()
+    dumpData (): Promise<EdgeDataDump> {
+      return Promise.resolve(engine.dumpData())
     },
 
     '@getDisplayPrivateSeed': { sync: true },
@@ -495,14 +493,12 @@ export function makeCurrencyWalletApi (
       return getMax('0', add(balance, '1'))
     },
 
-    '@parseUri': { sync: true },
     parseUri (uri: string) {
-      return plugin.parseUri(uri)
+      return Promise.resolve(plugin.parseUri(uri))
     },
 
-    '@encodeUri': { sync: true },
     encodeUri (obj: EdgeEncodeUri) {
-      return plugin.encodeUri(obj)
+      return Promise.resolve(plugin.encodeUri(obj))
     }
   }
 
