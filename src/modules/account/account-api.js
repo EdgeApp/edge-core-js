@@ -206,8 +206,7 @@ function makeAccountApi (
     splitWalletInfo (walletId: string, newWalletType: string): Promise<string> {
       return state.splitWalletInfo(walletId, newWalletType)
     },
-    '@listSplittableWalletTypes': { sync: true },
-    listSplittableWalletTypes (walletId: string): Array<string> {
+    listSplittableWalletTypes (walletId: string): Promise<Array<string>> {
       return state.listSplittableWalletTypes(walletId)
     },
 

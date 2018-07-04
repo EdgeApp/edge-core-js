@@ -579,7 +579,7 @@ export class AccountState {
     return newWalletInfo.id
   }
 
-  listSplittableWalletTypes (walletId: string): Array<string> {
+  listSplittableWalletTypes (walletId: string): Promise<Array<string>> {
     const allWalletInfos = this.allKeys
 
     // Find the wallet we are going to split:
@@ -599,18 +599,20 @@ export class AccountState {
         : []
 
     // Filter out wallet types we have already split:
-    return types.filter(type => {
-      const newWalletInfo = splitWalletInfo(walletInfo, type)
-      const existingWalletInfo = allWalletInfos.find(
-        walletInfo => walletInfo.id === newWalletInfo.id
-      )
-      // We can split the wallet if it doesn't exist, or is deleted:
-      return (
-        !existingWalletInfo ||
-        existingWalletInfo.archived ||
-        existingWalletInfo.deleted
-      )
-    })
+    return Promise.resolve(
+      types.filter(type => {
+        const newWalletInfo = splitWalletInfo(walletInfo, type)
+        const existingWalletInfo = allWalletInfos.find(
+          walletInfo => walletInfo.id === newWalletInfo.id
+        )
+        // We can split the wallet if it doesn't exist, or is deleted:
+        return (
+          !existingWalletInfo ||
+          existingWalletInfo.archived ||
+          existingWalletInfo.deleted
+        )
+      })
+    )
   }
 
   get allKeys (): Array<EdgeWalletInfoFull> {
