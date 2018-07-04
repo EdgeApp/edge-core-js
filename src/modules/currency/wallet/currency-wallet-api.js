@@ -259,16 +259,6 @@ export function makeCurrencyWalletApi (
       return Promise.resolve()
     },
 
-    '@makeAddressQrCode': { sync: true },
-    makeAddressQrCode (address: EdgeReceiveAddress) {
-      return address.publicAddress
-    },
-
-    '@makeAddressUri': { sync: true },
-    makeAddressUri (address: EdgeReceiveAddress) {
-      return address.publicAddress
-    },
-
     async makeSpend (spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
       return engine.makeSpend(spendInfo)
     },

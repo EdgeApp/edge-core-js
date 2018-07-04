@@ -511,8 +511,6 @@ export type EdgeCurrencyWallet = {
   ): Promise<EdgeReceiveAddress>,
   saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
   lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
-  makeAddressQrCode(address: EdgeReceiveAddress): string,
-  makeAddressUri(address: EdgeReceiveAddress): string,
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   signTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
