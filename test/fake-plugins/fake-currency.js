@@ -155,11 +155,11 @@ class FakeCurrencyEngine {
   }
 
   getDisplayPrivateSeed () {
-    return ''
+    return 'xpriv'
   }
 
   getDisplayPublicSeed () {
-    return ''
+    return 'xpub'
   }
 
   makeSpend (spendInfo) {

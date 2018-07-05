@@ -44,6 +44,8 @@ export type MergedTransaction = {
 
 export interface CurrencyWalletState {
   currencyInfo: EdgeCurrencyInfo;
+  displayPrivateSeed: string | null;
+  displayPublicSeed: string | null;
   engineFailure: Error | null;
   fiat: string;
   fiatLoaded: boolean;
@@ -70,6 +72,18 @@ const currencyWalletReducer = buildReducer({
   currencyInfo (state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
     if (state) return state
     return getCurrencyInfo(next.root.currency.infos, next.self.walletInfo.type)
+  },
+
+  displayPrivateSeed (state = null, action: RootAction): string | null {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
+      ? action.payload.displayPrivateSeed
+      : state
+  },
+
+  displayPublicSeed (state = null, action: RootAction): string | null {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
+      ? action.payload.displayPublicSeed
+      : state
   },
 
   engineFailure (state = null, action: RootAction) {

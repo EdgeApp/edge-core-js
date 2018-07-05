@@ -81,6 +81,12 @@ export function makeCurrencyWalletApi (
     get localFolder () {
       return storageWalletApi.localFolder
     },
+    get displayPrivateSeed () {
+      return input.props.selfState.displayPrivateSeed
+    },
+    get displayPublicSeed () {
+      return input.props.selfState.displayPublicSeed
+    },
     sync () {
       return storageWalletApi.sync()
     },
@@ -423,16 +429,6 @@ export function makeCurrencyWalletApi (
       return Promise.resolve(engine.dumpData())
     },
 
-    '@getDisplayPrivateSeed': { sync: true },
-    getDisplayPrivateSeed (): string | null {
-      return engine.getDisplayPrivateSeed()
-    },
-
-    '@getDisplayPublicSeed': { sync: true },
-    getDisplayPublicSeed (): string | null {
-      return engine.getDisplayPublicSeed()
-    },
-
     getPaymentProtocolInfo (
       paymentProtocolUrl: string
     ): Promise<EdgePaymentProtocolInfo> {
@@ -510,6 +506,16 @@ export function makeCurrencyWalletApi (
     '@getBlockHeight': { sync: true },
     getBlockHeight () {
       return engine.getBlockHeight()
+    },
+
+    '@getDisplayPrivateSeed': { sync: true },
+    getDisplayPrivateSeed (): string | null {
+      return engine.getDisplayPrivateSeed()
+    },
+
+    '@getDisplayPublicSeed': { sync: true },
+    getDisplayPublicSeed (): string | null {
+      return engine.getDisplayPublicSeed()
     }
   }
 

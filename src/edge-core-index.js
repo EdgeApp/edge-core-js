@@ -474,6 +474,8 @@ export type EdgeCurrencyWallet = {
   +id: string,
   +keys: any,
   +type: string,
+  +displayPrivateSeed: string | null,
+  +displayPublicSeed: string | null,
 
   // Data store:
   +folder: DiskletFolder,

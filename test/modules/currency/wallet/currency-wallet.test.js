@@ -46,9 +46,11 @@ async function makeFakeCurrencyWallet (store, callbacks) {
 
 describe('currency wallets', function () {
   it('can be created', function () {
-    return makeFakeCurrencyWallet().then(wallet =>
-      assert.equal(wallet.name, 'Fake Wallet')
-    )
+    return makeFakeCurrencyWallet().then(wallet => {
+      expect(wallet.name).to.equal('Fake Wallet')
+      expect(wallet.displayPrivateSeed).to.equal('xpriv')
+      expect(wallet.displayPublicSeed).to.equal('xpub')
+    })
   })
 
   it('can be renamed', function () {
