@@ -27,6 +27,7 @@ import {
   loginRecovery2
 } from '../login/recovery2.js'
 import type { ApiInput } from '../root.js'
+import { EdgeInternalStuff } from './internal-api.js'
 
 export const contextApiPixie = (ai: ApiInput) => () => {
   ai.onOutput(makeContextApi(ai))
@@ -36,11 +37,16 @@ export const contextApiPixie = (ai: ApiInput) => () => {
 function makeContextApi (ai: ApiInput) {
   const appId = ai.props.state.login.appId
   const { loginStore } = ai.props
+  const internalApi = new EdgeInternalStuff(ai)
 
   const shapeshiftApi = makeShapeshiftApi(ai)
 
   const rawContext: EdgeContext = {
     appId,
+
+    get _internalEdgeStuff () {
+      return internalApi
+    },
 
     getCurrencyPlugins () {
       return waitForCurrencyPlugins(ai)
@@ -220,9 +226,6 @@ function makeContextApi (ai: ApiInput) {
 
   // Wrap the context with logging:
   const out = wrapObject('Context', rawContext)
-
-  // Used for the edge-login unit tests:
-  out.internalUnitTestingHack = () => ai
 
   return out
 }

@@ -78,16 +78,16 @@ class ObservableLobby {
   replyCount: number
   timeout: * // Infer the proper timer type.
 
-  constructor (ai: ApiInput, lobbyId: string, keypair) {
+  constructor (ai: ApiInput, lobbyId: string, keypair, period) {
     this.ai = ai
     this.lobbyId = lobbyId
     this.keypair = keypair
+    this.period = period
   }
 
-  subscribe (onReply, onError, period = 1000) {
+  subscribe (onReply, onError) {
     this.onReply = onReply
     this.onError = onError
-    this.period = period
     this.replyCount = 0
     this.done = false
     pollLobby(this)
@@ -134,7 +134,8 @@ function pollLobby (watcher: ObservableLobby) {
  */
 export function makeLobby (
   ai: ApiInput,
-  lobbyRequest: LobbyRequest
+  lobbyRequest: LobbyRequest,
+  period: number = 1000
 ): Promise<ObservableLobby> {
   const { io } = ai.props
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
@@ -150,7 +151,7 @@ export function makeLobby (
     data: lobbyRequest
   }
   return authRequest(ai, 'PUT', '/v2/lobby/' + lobbyId, request).then(reply => {
-    return new ObservableLobby(ai, lobbyId, keypair)
+    return new ObservableLobby(ai, lobbyId, keypair, period)
   })
 }
 
