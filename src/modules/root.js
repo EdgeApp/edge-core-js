@@ -9,10 +9,6 @@ import type {
   EdgeCorePluginFactory,
   EdgeIo
 } from '../edge-core-index.js'
-import { makeBrowserIo } from '../io/browser/browser-io.js'
-import { makeFakeIos } from '../io/fake/fake-io.js'
-import { stashFakeUser } from '../io/fake/fakeUser.js'
-import { fixIo } from '../io/fixIo.js'
 import type { RootAction } from './actions.js'
 import { LoginStore } from './login/loginStore.js'
 import { makeStore } from './makeStore.js'
@@ -56,14 +52,13 @@ export interface CoreRoot {
  * This core object contains the `io` object, context options,
  * Redux store, and tree of background workers.
  */
-export function makeCoreRoot (opts: EdgeContextOptions) {
+export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
   const onErrorDefault = (error, name) => io.console.error(name, error)
 
   const {
     apiKey = '!invalid',
     authServer = 'https://auth.airbitz.co/api',
     callbacks = {},
-    io: rawIo = makeBrowserIo(),
     plugins = [],
     shapeshiftKey = void 0
   } = opts
@@ -71,7 +66,6 @@ export function makeCoreRoot (opts: EdgeContextOptions) {
 
   const appId = opts.appId != null ? opts.appId : ''
 
-  const io = fixIo(rawIo)
   const output: any = {}
 
   const coreRoot: CoreRoot = {
@@ -108,19 +102,6 @@ export function startCoreRoot (coreRoot: CoreRoot) {
   allDestroyPixies.push(coreRoot.destroyPixie)
 
   return coreRoot
-}
-
-/**
- * Makes a bunch of coreRoot objects with fake io's for unit-testing.
- */
-export function makeFakeCoreRoots (
-  ...opts: Array<EdgeContextOptions>
-): Array<CoreRoot> {
-  return makeFakeIos(opts.length).map((io, i) => {
-    const coreRoot: CoreRoot = makeCoreRoot({ ...opts[i], io })
-    if (opts[i].localFakeUser) stashFakeUser(coreRoot.io)
-    return coreRoot
-  })
 }
 
 /**

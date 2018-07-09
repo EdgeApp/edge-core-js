@@ -26,11 +26,7 @@ export {
   SameCurrencyError,
   UsernameError
 } from './error.js'
-export {
-  makeContext,
-  makeEdgeContext,
-  makeFakeContexts
-} from './makeContext.js'
+export { makeEdgeContext, makeFakeContexts } from './makeContext.js'
 export { destroyAllContexts } from './modules/root.js'
 
 // io types -----------------------------------------------------------
@@ -98,29 +94,6 @@ export type EdgePbkdf2 = {
 }
 
 /**
- * Access to platform-specific resources, with many optional fields.
- * The core will emulate/adapt whatever is missing.
- */
-export type EdgeRawIo = {
-  // Crypto:
-  +random: EdgeRandomFunction, // Non-optional & security-critical
-  +scrypt?: EdgeScryptFunction,
-  +secp256k1?: EdgeSecp256k1,
-  +pbkdf2?: EdgePbkdf2,
-
-  // Local io:
-  +console?: EdgeConsole,
-  +folder?: DiskletFolder,
-  +localStorage?: Storage,
-
-  // Networking:
-  +fetch: typeof fetch,
-  +Socket?: typeof net$Socket,
-  +TLSSocket?: typeof tls$TLSSocket,
-  +WebSocket: typeof WebSocket
-}
-
-/**
  * Access to platform-specific resources.
  * The core never talks to the outside world on its own,
  * but always goes through this object.
@@ -165,7 +138,6 @@ export type EdgeContextOptions = {
   appId?: string,
   authServer?: string,
   callbacks?: EdgeContextCallbacks,
-  io?: EdgeRawIo,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
   shapeshiftKey?: string,
@@ -842,7 +814,6 @@ export type {
   EdgeScryptFunction as AbcScryptFunction,
   EdgeSecp256k1 as AbcSecp256k1,
   EdgePbkdf2 as AbcPbkdf2,
-  EdgeRawIo as AbcRawIo,
   EdgeIo as AbcIo,
   EdgeCorePluginFactory as AbcCorePluginFactory,
   EdgeCorePluginOptions as AbcCorePluginOptions,

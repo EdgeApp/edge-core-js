@@ -4,7 +4,7 @@ import { isReactNative } from 'detect-bundler'
 import { makeReactNativeFolder } from 'disklet'
 import { base64 } from 'rfc4648'
 
-import type { EdgeRawIo } from '../../edge-core-index.js'
+import type { EdgeIo } from '../../edge-core-index.js'
 import { HmacDRBG, hashjs } from '../../util/crypto/external.js'
 import {
   Socket,
@@ -49,7 +49,7 @@ function makeRandomGenerator (
 /**
  * Gathers the IO resources needed by the Edge core library.
  */
-export function makeReactNativeIo (): Promise<EdgeRawIo> {
+export function makeReactNativeIo (): Promise<EdgeIo> {
   if (!isReactNative) {
     throw new Error('This function only works on React Native')
   }
@@ -60,22 +60,26 @@ export function makeReactNativeIo (): Promise<EdgeRawIo> {
   }
 
   return getRandom(32).then(entropy => {
-    const io: EdgeRawIo = {
+    return {
+      // Crypto:
+      random: makeRandomGenerator(entropy),
+      scrypt,
+      pbkdf2,
+      secp256k1,
+
+      // Local io:
       console: {
         info: console.log,
         warn: console.warn,
         error: console.warn
       },
-      fetch: (...rest) => window.fetch(...rest),
       folder: makeReactNativeFolder(),
-      random: makeRandomGenerator(entropy),
+
+      // Networking:
+      fetch: (...rest) => window.fetch(...rest),
       Socket,
       TLSSocket,
-      pbkdf2,
-      scrypt,
-      secp256k1,
       WebSocket: window.WebSocket
     }
-    return io
   })
 }

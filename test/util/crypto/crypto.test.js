@@ -4,7 +4,6 @@ import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 import { makeFakeIos } from '../../../src/edge-core-index.js'
-import { fixIo } from '../../../src/io/fixIo.js'
 import {
   decrypt,
   encrypt,
@@ -34,7 +33,7 @@ describe('encryption', function () {
       '002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393'
     )
     const data = utf8.parse('payload')
-    const box = encrypt(fixIo(io), data, key)
+    const box = encrypt(io, data, key)
     assert.deepEqual('payload', utf8.stringify(decrypt(box, key)))
   })
 })
