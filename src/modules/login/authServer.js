@@ -77,7 +77,7 @@ export function authRequest (
         })
       },
       networkError => {
-        throw new NetworkError('Could not reach the auth server')
+        throw new NetworkError(`Could not reach the auth server: ${path}`)
       }
     ),
     30000,
