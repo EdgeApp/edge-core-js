@@ -441,14 +441,14 @@ export function makeCurrencyWalletApi (
     },
 
     getPaymentProtocolInfo (
-      paymentProtocolUrl: string
+      paymentProtocolURL: string
     ): Promise<EdgePaymentProtocolInfo> {
       if (!engine.getPaymentProtocolInfo) {
         throw new Error(
           "'getPaymentProtocolInfo' is not implemented on wallets of this type"
         )
       }
-      return engine.getPaymentProtocolInfo(paymentProtocolUrl)
+      return engine.getPaymentProtocolInfo(paymentProtocolURL)
     },
 
     saveTxMetadata (txid: string, currencyCode: string, metadata: EdgeMetadata) {
