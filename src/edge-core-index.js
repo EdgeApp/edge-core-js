@@ -536,7 +536,7 @@ export type EdgeCurrencyWallet = {
   getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
   getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
   getPaymentProtocolInfo?: (
-    paymentProtocolUrl: string
+    paymentProtocolURL: string
   ) => Promise<EdgePaymentProtocolInfo>,
 
   // Wallet management:
@@ -657,7 +657,7 @@ export type EdgeParsedUri = {
   bitIDURI?: string,
   bitIDDomain?: string,
   bitIDCallbackUri?: string,
-  paymentProtocolUrl?: string,
+  paymentProtocolURL?: string,
   returnUri?: string,
   uniqueIdentifier?: string, // Ripple payment id
   bitidPaymentAddress?: string, // Experimental
@@ -750,7 +750,7 @@ export type EdgeCurrencyEngine = {
   resyncBlockchain(): Promise<void>,
   dumpData(): EdgeDataDump,
   +getPaymentProtocolInfo?: (
-    paymentProtocolUrl: string
+    paymentProtocolURL: string
   ) => Promise<EdgePaymentProtocolInfo>,
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
