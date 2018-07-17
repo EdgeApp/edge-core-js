@@ -768,7 +768,7 @@ export type EdgeCurrencyPlugin = {
   ): Promise<EdgeCurrencyEngine>,
   parseUri(uri: string): EdgeParsedUri,
   encodeUri(obj: EdgeEncodeUri): string,
-  getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>
+  +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>
 }
 
 export type EdgeCurrencyPluginFactory = {
