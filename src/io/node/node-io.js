@@ -17,7 +17,10 @@ try {
 /**
  * Returns true if the runtime environment appears to be node.js.
  */
-export const isNode = crypto && fetch
+export const isNode =
+  typeof process !== 'undefined' &&
+  process.versions != null &&
+  process.versions.node != null
 
 /**
  * Creates the io resources needed to run the Edge core on node.js.

@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.9.8
+
+* Fix Flow type bugs
+* Fix incorrect platform detection on Web.
+
 ## 0.9.7
 
 * Fix payment request Flow types.

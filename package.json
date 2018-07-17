@@ -1,6 +1,6 @@
 {
   "name": "edge-core-js",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "description": "Edge account & wallet management library",
   "keywords": [
     "bitcoin",
@@ -97,7 +97,6 @@
     "rollup-plugin-alias": "^1.4.0",
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^8.2.6",
-    "rollup-plugin-flow": "^1.1.1",
     "rollup-plugin-flow-entry": "^0.2.0",
     "rollup-plugin-multi-entry": "^2.0.2",
     "source-map-support": "^0.5.3",
