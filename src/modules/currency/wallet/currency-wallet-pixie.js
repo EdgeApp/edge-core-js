@@ -158,7 +158,7 @@ export default combinePixies({
 
   syncTimer (input: CurrencyWalletInput) {
     const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-    let timeout: number | void
+    let timeout: *
 
     function startTimer () {
       // Bail out if either the wallet or the repo aren't ready:

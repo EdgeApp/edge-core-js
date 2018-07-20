@@ -174,11 +174,13 @@ export function sortTxs (txidHashes: TxIdHash, newHashes: TxIdHash) {
       txidHashes[newTxidHash] = newTime
     }
   }
-  const sortedList = Object.keys(txidHashes).sort((txidHash1, txidHash2) => {
-    if (txidHashes[txidHash1] > txidHashes[txidHash2]) return -1
-    if (txidHashes[txidHash1] < txidHashes[txidHash2]) return 1
-    return 0
-  })
+  const sortedList: Array<string> = Object.keys(txidHashes).sort(
+    (txidHash1, txidHash2) => {
+      if (txidHashes[txidHash1] > txidHashes[txidHash2]) return -1
+      if (txidHashes[txidHash1] < txidHashes[txidHash2]) return 1
+      return 0
+    }
+  )
   return { sortedList, txidHashes }
 }
 

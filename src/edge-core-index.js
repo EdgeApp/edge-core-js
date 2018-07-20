@@ -13,18 +13,7 @@ export { makeFakeIos } from './io/fake/fake-io.js'
 export { makeNodeIo } from './io/node/node-io.js'
 export { makeReactNativeIo } from './io/react-native/react-native-io.js'
 export { fakeUser } from './io/fake/fakeUser.js'
-export {
-  DustSpendError,
-  errorNames,
-  InsufficientFundsError,
-  NetworkError,
-  ObsoleteApiError,
-  OtpError,
-  PasswordError,
-  PendingFundsError,
-  SameCurrencyError,
-  UsernameError
-} from './error.js'
+export * from './error.js'
 export {
   makeContext,
   makeEdgeContext,
@@ -167,7 +156,13 @@ export type EdgeContextOptions = {
   io?: EdgeRawIo,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
-  shapeshiftKey?: string
+  shapeshiftKey?: string,
+
+  // Used by the fake context:
+  localFakeUser?: boolean,
+
+  // Deprecated. Use appId instead:
+  accountType?: string
 }
 
 export type EdgeContext = {
