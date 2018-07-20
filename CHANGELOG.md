@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.9.9
+
+* Fix a return value error in `listSplittableWalletTypes`.
+
 ## 0.9.8
 
 * Fix Flow type bugs
