@@ -568,7 +568,7 @@ export class AccountState {
     const types =
       plugin && plugin.getSplittableTypes
         ? plugin.getSplittableTypes(walletInfo)
-        : {}
+        : []
 
     // Filter out wallet types we have already split:
     return types.filter(type => {
