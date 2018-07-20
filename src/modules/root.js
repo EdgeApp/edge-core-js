@@ -69,12 +69,7 @@ export function makeCoreRoot (opts: EdgeContextOptions) {
   } = opts
   const { onError = onErrorDefault, onExchangeUpdate = nop } = callbacks
 
-  const appId =
-    opts.appId != null
-      ? opts.appId
-      : typeof opts.accountType === 'string'
-        ? opts.accountType.replace(/^account.repo:/, '')
-        : ''
+  const appId = opts.appId != null ? opts.appId : ''
 
   const io = fixIo(rawIo)
   const output: any = {}

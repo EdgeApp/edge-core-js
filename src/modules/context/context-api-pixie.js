@@ -221,8 +221,6 @@ function makeContextApi (ai: ApiInput) {
 
   // Wrap the context with logging:
   const out = wrapObject('Context', rawContext)
-  out.usernameList = out.listUsernames
-  out.removeUsername = out.deleteLocalAccount
 
   // Used for the edge-login unit tests:
   out.internalUnitTestingHack = () => ai

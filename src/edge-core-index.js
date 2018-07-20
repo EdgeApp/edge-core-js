@@ -171,10 +171,7 @@ export type EdgeContextOptions = {
   shapeshiftKey?: string,
 
   // Used by the fake context:
-  localFakeUser?: boolean,
-
-  // Deprecated. Use appId instead:
-  accountType?: string
+  localFakeUser?: boolean
 }
 
 export type EdgeContext = {

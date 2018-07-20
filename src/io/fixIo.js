@@ -49,8 +49,5 @@ export function fixIo (io: EdgeRawIo): EdgeIo {
   if (io.Socket != null) out.Socket = io.Socket
   if (io.TLSSocket != null) out.TLSSocket = io.TLSSocket
 
-  // $FlowFixMe This has been deprecated since forever ago.
-  if (io.net != null) out.net = io.net
-
   return out
 }
