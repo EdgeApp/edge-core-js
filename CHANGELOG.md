@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.9.10
+
+* Add a `NoAmountSpecifiedError`.
+
 ## 0.9.9
 
 * Fix a return value error in `listSplittableWalletTypes`.

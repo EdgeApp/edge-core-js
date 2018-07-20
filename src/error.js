@@ -21,7 +21,8 @@ export const errorNames = {
   PasswordError: 'PasswordError',
   PendingFundsError: 'PendingFundsError',
   SameCurrencyError: 'SameCurrencyError',
-  UsernameError: 'UsernameError'
+  UsernameError: 'UsernameError',
+  NoAmountSpecifiedError: 'NoAmountSpecifiedError'
 }
 
 /**
@@ -39,6 +40,18 @@ export function DustSpendError (message = 'Please send a larger amount') {
 export function InsufficientFundsError (message = 'Insufficient funds') {
   const e = new Error(message)
   e.name = errorNames.InsufficientFundsError
+  return e
+}
+
+/**
+ * Attempting to create a MakeSpend without specifying an amount of currency to send
+ */
+
+export function NoAmountSpecifiedError (
+  message = 'Unable to create zero-amount transaction.'
+) {
+  const e = new Error(message)
+  e.name = errorNames.NoAmountSpecifiedError
   return e
 }
 
