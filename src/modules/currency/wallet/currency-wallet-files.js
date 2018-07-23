@@ -366,7 +366,14 @@ async function getLegacyFileNames (
 async function loadTxFileNames (input: CurrencyWalletInput, folder) {
   const walletId = input.props.id
   const { dispatch, state } = input.props
-  const txFileNames: TxFileNames = {}
+
+  // Legacy transactions files:
+  const txFileNames: TxFileNames = await getLegacyFileNames(
+    state,
+    walletId,
+    folder.folder('Transactions')
+  )
+
   // New transactions files:
   await mapFiles(folder.folder('transaction'), (file, fileName) => {
     const prefix = fileName.split('.json')[0]
@@ -374,14 +381,6 @@ async function loadTxFileNames (input: CurrencyWalletInput, folder) {
     const [creationDate, txidHash] = split
     txFileNames[txidHash] = { creationDate: parseInt(creationDate), fileName }
   })
-
-  // Legacy transactions files:
-  const legacyFileNames = await getLegacyFileNames(
-    state,
-    walletId,
-    folder.folder('Transactions')
-  )
-  Object.assign(txFileNames, legacyFileNames)
 
   dispatch({
     type: 'CURRENCY_WALLET_FILE_NAMES_LOADED',
