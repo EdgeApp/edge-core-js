@@ -35,20 +35,20 @@ export { destroyAllContexts } from './modules/root.js'
 
 // io types -----------------------------------------------------------
 
-export interface DiskletFile {
-  delete(): Promise<void>;
-  getData(): Promise<Uint8Array>;
-  getText(): Promise<string>;
-  setData(data: Array<number> | Uint8Array): Promise<void>;
-  setText(text: string): Promise<void>;
+export type DiskletFile = {
+  delete(): Promise<void>,
+  getData(): Promise<Uint8Array>,
+  getText(): Promise<string>,
+  setData(data: Array<number> | Uint8Array): Promise<void>,
+  setText(text: string): Promise<void>
 }
 
-export interface DiskletFolder {
-  delete(): Promise<void>;
-  file(name: string): DiskletFile;
-  folder(name: string): DiskletFolder;
-  listFiles(): Promise<Array<string>>;
-  listFolders(): Promise<Array<string>>;
+export type DiskletFolder = {
+  delete(): Promise<void>,
+  file(name: string): DiskletFile,
+  folder(name: string): DiskletFolder,
+  listFiles(): Promise<Array<string>>,
+  listFolders(): Promise<Array<string>>
 }
 
 // Node.js randomBytes function:
@@ -178,8 +178,8 @@ export type EdgeContextOptions = {
 }
 
 export type EdgeContext = {
-  appId: string,
-  io: EdgeIo,
+  +appId: string,
+  +io: EdgeIo,
 
   // Local user management:
   fixUsername(username: string): string,
@@ -398,11 +398,11 @@ export type EdgeAccount = {
 
   // What login method was used?
   +edgeLogin: boolean,
-  keyLogin: boolean,
-  newAccount: boolean,
-  passwordLogin: boolean,
-  pinLogin: boolean,
-  recoveryLogin: boolean,
+  +keyLogin: boolean,
+  +newAccount: boolean,
+  +passwordLogin: boolean,
+  +pinLogin: boolean,
+  +recoveryLogin: boolean,
 
   // Change or create credentials:
   changePassword(password: string): Promise<void>,
@@ -460,16 +460,16 @@ export type EdgeAccount = {
 // edge login types ---------------------------------------------------
 
 export type EdgeLobby = {
-  loginRequest?: EdgeLoginRequest
-  // walletRequest?: EdgeWalletRequest
+  +loginRequest: EdgeLoginRequest | void
+  // walletRequest: EdgeWalletRequest | void
 }
 
 export type EdgeLoginRequest = {
-  appId: string,
+  +appId: string,
   approve(): Promise<void>,
 
-  displayName: string,
-  displayImageUrl?: string
+  +displayName: string,
+  +displayImageUrl: string | void
 }
 
 // currency wallet types ----------------------------------------------
@@ -559,9 +559,9 @@ export type EdgeCurrencyWallet = {
   ): Promise<void>,
   getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
   getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
-  getPaymentProtocolInfo?: (
+  getPaymentProtocolInfo(
     paymentProtocolUrl: string
-  ) => Promise<EdgePaymentProtocolInfo>,
+  ): Promise<EdgePaymentProtocolInfo>,
 
   // Wallet management:
   resyncBlockchain(): Promise<void>,
@@ -807,7 +807,7 @@ export type EdgeCurrencyPlugin = {
 }
 
 export type EdgeCurrencyPluginFactory = {
-  pluginType: 'currency',
+  +pluginType: 'currency',
   +pluginName: string,
   makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeCurrencyPlugin>
 }
@@ -826,7 +826,7 @@ export type EdgeExchangePair = {
 }
 
 export type EdgeExchangePlugin = {
-  exchangeInfo: { exchangeName: string },
+  +exchangeInfo: { exchangeName: string },
 
   fetchExchangeRates(
     pairHints: Array<EdgeExchangePairHint>
@@ -834,7 +834,7 @@ export type EdgeExchangePlugin = {
 }
 
 export type EdgeExchangePluginFactory = {
-  pluginType: 'exchange',
+  +pluginType: 'exchange',
   makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeExchangePlugin>
 }
 

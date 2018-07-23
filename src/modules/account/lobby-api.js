@@ -101,12 +101,11 @@ export async function makeLobbyApi (
   lobbyId: string,
   accountState: AccountState
 ): Promise<EdgeLobby> {
-  const lobbyApi: EdgeLobby = {}
-
   // Look up the lobby on the server:
   const lobbyJson: LobbyRequest = await fetchLobbyRequest(ai, lobbyId)
 
   // If the lobby has a login request, set up that API:
+  let loginRequest: EdgeLoginRequest | void
   if (lobbyJson.loginRequest) {
     const appId = lobbyJson.loginRequest.appId
     if (typeof appId !== 'string') throw new TypeError('Invalid login request')
@@ -116,15 +115,16 @@ export async function makeLobbyApi (
     const rawLoginRequest: EdgeLoginRequest = {
       appId,
       displayName,
+      displayImageUrl,
       approve () {
         return approveLoginRequest(ai, appId, lobbyId, lobbyJson, accountState)
       }
     }
-    if (displayImageUrl) rawLoginRequest.displayImageUrl = displayImageUrl
-
-    // Wrap the API:
-    lobbyApi.loginRequest = wrapObject('LoginRequest', rawLoginRequest)
+    loginRequest = wrapObject('LoginRequest', rawLoginRequest)
   }
 
+  const lobbyApi: EdgeLobby = {
+    loginRequest
+  }
   return wrapObject('Lobby', lobbyApi)
 }
