@@ -12,7 +12,6 @@ import type {
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-api.js'
-import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
@@ -46,10 +45,6 @@ function makeContextApi (ai: ApiInput) {
 
     get _internalEdgeStuff () {
       return internalApi
-    },
-
-    getCurrencyPlugins () {
-      return waitForCurrencyPlugins(ai)
     },
 
     '@fixUsername': { sync: true },
