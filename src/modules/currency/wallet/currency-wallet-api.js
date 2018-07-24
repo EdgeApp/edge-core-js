@@ -108,7 +108,7 @@ export function makeCurrencyWalletApi (
       return engine.startEngine()
     },
 
-    stopEngine (): Promise<void> {
+    stopEngine (): Promise<mixed> {
       return Promise.resolve(engine.killEngine())
     },
 
@@ -251,11 +251,11 @@ export function makeCurrencyWalletApi (
       return Promise.resolve(receiveAddress)
     },
 
-    saveReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<void> {
+    saveReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<mixed> {
       return Promise.resolve()
     },
 
-    lockReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<void> {
+    lockReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<mixed> {
       return Promise.resolve()
     },
 
@@ -422,7 +422,7 @@ export function makeCurrencyWalletApi (
       return engine.saveTx(tx)
     },
 
-    resyncBlockchain (): Promise<void> {
+    resyncBlockchain (): Promise<mixed> {
       ai.props.dispatch({
         type: 'CURRENCY_ENGINE_CLEARED',
         payload: { walletId: input.props.id }

@@ -83,7 +83,7 @@ export class LoginStore {
   /**
    * Removes any login stash that may be stored for the given username.
    */
-  remove (username: string): Promise<void> {
+  remove (username: string): Promise<mixed> {
     return findUserFile(this.folder, username).then(
       file => (file != null ? file.file.delete() : void 0)
     )

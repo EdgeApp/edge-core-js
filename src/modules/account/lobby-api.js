@@ -53,7 +53,7 @@ async function approveLoginRequest (
   lobbyId: string,
   lobbyJson: LobbyRequest,
   accountState: AccountState
-): Promise<void> {
+): Promise<mixed> {
   // Ensure that the login object & account repo exist:
   await accountState.syncLogin()
   const loginTree = await ensureAccountExists(ai, accountState.loginTree, appId)

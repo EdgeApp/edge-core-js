@@ -56,7 +56,7 @@ function makeContextApi (ai: ApiInput) {
       return loginStore.listUsernames()
     },
 
-    deleteLocalAccount (username: string): Promise<void> {
+    deleteLocalAccount (username: string): Promise<mixed> {
       return loginStore.remove(username)
     },
 
