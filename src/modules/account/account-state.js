@@ -551,7 +551,7 @@ export class AccountState {
     return newWalletInfo.id
   }
 
-  listSplittableWalletTypes (walletId: string) {
+  listSplittableWalletTypes (walletId: string): Array<string> {
     const allWalletInfos = this.allKeys
 
     // Find the wallet we are going to split:

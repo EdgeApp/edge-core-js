@@ -39,6 +39,7 @@ import {
 } from './currency-wallet-files.js'
 import type { TransactionFile } from './currency-wallet-files.js'
 import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
+import type { MergedTransaction } from './currency-wallet-reducer.js'
 
 const fakeMetadata = {
   bizId: 0,
@@ -177,7 +178,7 @@ export function makeCurrencyWalletApi (
       const missingFiles = await loadTxFiles(input, missingTxIdHashes)
       Object.assign(files, missingFiles)
 
-      const out = []
+      const out: Array<EdgeTransaction> = []
       for (const txidHash of slicedTransactions) {
         const file = files[txidHash]
         const tx = txs[file.txid]
@@ -533,22 +534,29 @@ function fixMetadata (metadata: EdgeMetadata, fiat: string) {
 
 export function combineTxWithFile (
   input: CurrencyWalletInput,
-  tx: any,
+  tx: MergedTransaction,
   file: TransactionFile,
   currencyCode: string
-) {
+): EdgeTransaction {
   const wallet = input.props.selfOutput.api
   const walletCurrency = input.props.selfState.currencyInfo.currencyCode
   const walletFiat = input.props.selfState.fiat
 
   // Copy the tx properties to the output:
-  const out = {
-    ...tx,
+  const out: EdgeTransaction = {
+    blockHeight: tx.blockHeight,
+    date: tx.date,
+    ourReceiveAddresses: tx.ourReceiveAddresses,
+    signedTx: tx.signedTx,
+    txid: tx.txid,
+
     amountSatoshi: Number(tx.nativeAmount[currencyCode]),
     nativeAmount: tx.nativeAmount[currencyCode],
     networkFee: tx.networkFee[currencyCode],
     currencyCode,
-    wallet
+    wallet,
+
+    otherParams: {}
   }
 
   // These are our fallback values:
@@ -573,7 +581,6 @@ export function combineTxWithFile (
     : fallback
 
   if (file && file.creationDate < out.date) out.date = file.creationDate
-  out.providerFee = merged.providerFeeSent
   out.metadata = merged.metadata
   if (
     merged.metadata &&
@@ -581,7 +588,7 @@ export function combineTxWithFile (
     merged.metadata.exchangeAmount[walletFiat]
   ) {
     out.metadata.amountFiat = merged.metadata.exchangeAmount[walletFiat]
-    if (out.metadata.amountFiat.toString().includes('e')) {
+    if (out.metadata && out.metadata.amountFiat.toString().includes('e')) {
       // Corrupt amountFiat that exceeds a number that JS can cleanly represent without exponents. Set to 0
       out.metadata.amountFiat = 0
     }
