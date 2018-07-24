@@ -1,6 +1,7 @@
 // @flow
 
 import type { RootState } from '../root-reducer.js'
+import type { ExchangePair, ExchangeRoutes } from './exchange-reducer.js'
 
 export type GetPairCost = (
   source: string,
@@ -9,9 +10,33 @@ export type GetPairCost = (
 ) => number
 
 /**
+ * A path from one currency to another results in both a rate and a total cost.
+ */
+type ExchangeRate = { rate: number, cost: number }
+
+/**
+ * Common data for the recursive exchange-rate search.
+ */
+type ExchangeSearch = {
+  now: number,
+  routes: ExchangeRoutes,
+  pairs: Array<ExchangePair>,
+  toCurrency: string,
+  getPairCost: GetPairCost,
+
+  // The search overwrites this as it finds better rates:
+  bestRate: ExchangeRate
+}
+
+/**
  * Recursively searches for the best exchange rate.
  */
-function searchRoutes (search, fromCurrency, parentRate, blacklist) {
+function searchRoutes (
+  search: ExchangeSearch,
+  fromCurrency: string,
+  parentRate: ExchangeRate,
+  blacklist: { [currency: string]: true }
+) {
   // If we reach our target, we are done:
   if (fromCurrency === search.toCurrency) {
     search.bestRate = parentRate
@@ -27,7 +52,7 @@ function searchRoutes (search, fromCurrency, parentRate, blacklist) {
     if (blacklist[currency]) continue
 
     // Of all the pairs that bring us to this currency, find the best one:
-    let ourRate = { rate: 0, cost: Infinity }
+    let ourRate: ExchangeRate = { rate: 0, cost: Infinity }
     const indices = search.routes[fromCurrency][currency]
     for (const i of indices) {
       const pair = search.pairs[i]
@@ -52,33 +77,6 @@ function searchRoutes (search, fromCurrency, parentRate, blacklist) {
   }
 }
 
-function startRouteSearch (
-  routes,
-  pairs,
-  fromCurrency,
-  toCurrency,
-  getPairCost
-) {
-  const search = {
-    // Search constants:
-    now: Date.now() / 1000,
-    routes,
-    pairs,
-    toCurrency,
-    getPairCost,
-
-    // The search overwrites this as it finds better rates:
-    bestRate: { rate: 0, cost: Infinity }
-  }
-
-  // Only search if the endpoints exist:
-  if (search.routes[fromCurrency] && search.routes[toCurrency]) {
-    searchRoutes(search, fromCurrency, { rate: 1, cost: 0 }, {})
-  }
-
-  return search.bestRate.rate
-}
-
 /**
  * Looks up the best available exchange rate.
  * @param {*} getPairCost a function that assigns scores to currency pairs.
@@ -90,12 +88,21 @@ export function getExchangeRate (
   fromCurrency: string,
   toCurrency: string,
   getPairCost: GetPairCost
-) {
-  return startRouteSearch(
-    state.exchangeCache.rates.routes,
-    state.exchangeCache.rates.pairs,
-    fromCurrency,
+): number {
+  const { routes, pairs } = state.exchangeCache.rates
+  const search: ExchangeSearch = {
+    now: Date.now() / 1000,
+    routes,
+    pairs,
     toCurrency,
-    getPairCost
-  )
+    getPairCost,
+    bestRate: { rate: 0, cost: Infinity }
+  }
+
+  // Only search if the endpoints exist:
+  if (search.routes[fromCurrency] && search.routes[toCurrency]) {
+    searchRoutes(search, fromCurrency, { rate: 1, cost: 0 }, {})
+  }
+
+  return search.bestRate.rate
 }
