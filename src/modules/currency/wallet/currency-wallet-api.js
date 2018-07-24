@@ -22,11 +22,11 @@ import type {
 import { SameCurrencyError } from '../../../error.js'
 import { wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
-import { getCurrencyMultiplier } from '../../currency/currency-selectors.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
 import type { ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
+import { getCurrencyMultiplier } from '../currency-selectors.js'
 import {
   exportTransactionsToCSVInner,
   exportTransactionsToQBOInner

@@ -3,7 +3,7 @@
 import type { EdgeWalletInfo } from '../../edge-core-index.js'
 import { base58, base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
-import { loadRepoStatus, makeRepoPaths, syncRepo } from '../storage/repo.js'
+import { loadRepoStatus, makeRepoPaths, syncRepo } from './repo.js'
 
 export function addStorageWallet (
   ai: ApiInput,
