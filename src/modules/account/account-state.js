@@ -5,6 +5,8 @@ import { base32 } from 'rfc4648'
 import type {
   EdgeAccountCallbacks,
   EdgeCreateCurrencyWalletOptions,
+  EdgeCurrencyPlugin,
+  EdgeCurrencyToolsMap,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
   EdgeWalletStates
@@ -38,6 +40,7 @@ import {
   syncStorageWallet
 } from '../storage/storage-actions.js'
 import { getStorageWalletLastChanges } from '../storage/storage-selectors.js'
+import { CurrencyTools } from './currency-api.js'
 import { changeWalletStates, loadAllWalletStates } from './wallet-states.js'
 
 export function findAppLogin (loginTree: LoginTree, appId: string): LoginTree {
@@ -114,6 +117,7 @@ export class AccountState {
   appId: string
   accountWalletInfo: EdgeWalletInfo
   callbacks: Object
+  currencyTools: EdgeCurrencyToolsMap
   loginTree: LoginTree
   login: LoginTree
   legacyWalletInfos: Array<EdgeWalletInfo>
@@ -126,6 +130,7 @@ export class AccountState {
     appId: string,
     loginTree: LoginTree,
     accountWalletInfo: EdgeWalletInfo,
+    currencyPlugins: Array<EdgeCurrencyPlugin>,
     callbacks: EdgeAccountCallbacks
   ) {
     if (!loginTree.username) throw new Error('Cannot log in: missing username')
@@ -155,6 +160,11 @@ export class AccountState {
       }
     })
     this.activeLoginId = ai.props.state.login.lastActiveLoginId
+
+    this.currencyTools = {}
+    for (const plugin of currencyPlugins) {
+      this.currencyTools[plugin.pluginName] = new CurrencyTools(plugin)
+    }
 
     // While it would make logical sense to do this now,
     // starting the wallet engines is too expensive,
@@ -609,7 +619,7 @@ export async function makeAccountState (
   loginTree: LoginTree,
   callbacks: Object
 ): Promise<AccountState> {
-  await waitForCurrencyPlugins(ai)
+  const currencyPlugins = await waitForCurrencyPlugins(ai)
 
   return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
     // Find our repo:
@@ -626,6 +636,7 @@ export async function makeAccountState (
         appId,
         loginTree,
         accountWalletInfo,
+        currencyPlugins,
         callbacks
       )
       const disposer = ai.props.dispatch(
