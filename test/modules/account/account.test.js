@@ -110,6 +110,15 @@ describe('account', function () {
     ])
   })
 
+  it('list currency plugins', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    expect(Object.keys(account.currencyTools)).deep.equals(['testcoin'])
+    const tools = account.currencyTools['testcoin']
+    expect(tools.currencyInfo.pluginName).equals('testcoin')
+  })
+
   it('change key state', async function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)

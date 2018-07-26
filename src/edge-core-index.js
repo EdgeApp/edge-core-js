@@ -356,6 +356,14 @@ export type EdgeCreateCurrencyWalletOptions = {
   keys?: {}
 }
 
+export interface EdgeCurrencyTools {
+  +currencyInfo: EdgeCurrencyInfo;
+}
+
+export type EdgeCurrencyToolsMap = {
+  [pluginName: string]: EdgeCurrencyTools
+}
+
 export type EdgePluginData = {
   deleteItem(pluginId: string, itemId: string): Promise<mixed>,
   deletePlugin(pluginId: string): Promise<mixed>,
@@ -376,6 +384,7 @@ export type EdgeAccount = {
   +username: string,
 
   // Special-purpose API's:
+  +currencyTools: EdgeCurrencyToolsMap,
   +exchangeCache: any,
   +pluginData: EdgePluginData,
 

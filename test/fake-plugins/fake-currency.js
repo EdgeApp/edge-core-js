@@ -189,6 +189,10 @@ class FakeCurrencyPlugin {
     this.store = store
   }
 
+  get pluginName () {
+    return fakeCurrencyInfo.pluginName
+  }
+
   get currencyInfo () {
     return fakeCurrencyInfo
   }
