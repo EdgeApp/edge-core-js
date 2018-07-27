@@ -46,9 +46,11 @@ export function fixIo (io: EdgeRawIo): EdgeIo {
   }
 
   // The network interface (used by plugins):
-  if (io.net != null) out.net = io.net
   if (io.Socket != null) out.Socket = io.Socket
   if (io.TLSSocket != null) out.TLSSocket = io.TLSSocket
+
+  // $FlowFixMe This has been deprecated since forever ago.
+  if (io.net != null) out.net = io.net
 
   return out
 }

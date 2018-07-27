@@ -18,6 +18,7 @@ export {
   errorNames,
   InsufficientFundsError,
   NetworkError,
+  NoAmountSpecifiedError,
   ObsoleteApiError,
   OtpError,
   PasswordError,
@@ -167,7 +168,13 @@ export type EdgeContextOptions = {
   io?: EdgeRawIo,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
-  shapeshiftKey?: string
+  shapeshiftKey?: string,
+
+  // Used by the fake context:
+  localFakeUser?: boolean,
+
+  // Deprecated. Use appId instead:
+  accountType?: string
 }
 
 export type EdgeContext = {
@@ -349,6 +356,14 @@ export type EdgeCreateCurrencyWalletOptions = {
   keys?: {}
 }
 
+export interface EdgeCurrencyTools {
+  +currencyInfo: EdgeCurrencyInfo;
+}
+
+export type EdgeCurrencyToolsMap = {
+  [pluginName: string]: EdgeCurrencyTools
+}
+
 export type EdgePluginData = {
   deleteItem(pluginId: string, itemId: string): Promise<mixed>,
   deletePlugin(pluginId: string): Promise<mixed>,
@@ -369,6 +384,7 @@ export type EdgeAccount = {
   +username: string,
 
   // Special-purpose API's:
+  +currencyTools: EdgeCurrencyToolsMap,
   +exchangeCache: any,
   +pluginData: EdgePluginData,
 

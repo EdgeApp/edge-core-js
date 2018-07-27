@@ -1,5 +1,14 @@
 # edge-core-js
 
+## 0.9.11
+
+* Upgrade Flow.
+* Improve Flow types in currency wallet code.
+* Fix bug where Edge could not edit Airbitz metadata.
+* Add a basic `EdgeAccount.currencyTools` API.
+* Fix QBO export bug.
+* Fix more incorrect wallet key types.
+
 ## 0.9.10
 
 * Add a `NoAmountSpecifiedError`.

@@ -118,16 +118,19 @@ export function exportTransactionsToQBOInner (
       amountFiat = edgeTx.metadata.amountFiat ? edgeTx.metadata.amountFiat : 0
       category = edgeTx.metadata.category ? edgeTx.metadata.category : ''
       notes = edgeTx.metadata.notes ? edgeTx.metadata.notes : ''
-      if (notes.length > 250) {
-        notes = notes.substring(0, 250)
-        notes += '...'
-      }
     }
     const absFiat = abs(amountFiat.toString())
     const absAmount = abs(TRNAMT)
     const CURRATE = absAmount !== '0' ? div(absFiat, absAmount, 8) : '0'
-    const MEMO = `// Rate=${CURRATE} ${fiatCurrencyCode}=${amountFiat} category="${category}" memo="${notes}"`
-
+    const MEMO_PREFIX = `// Rate=${CURRATE} ${fiatCurrencyCode}=${amountFiat} category="${category}"`
+    const MEMO_PREFIX_LENGTH = MEMO_PREFIX.length
+    const MEMO_SUFFIX = `memo="${notes}"`
+    const MEMO_SUFFIX_LENGTH = MEMO_SUFFIX.length
+    const MEMO_OVERFLOW: number = MEMO_PREFIX_LENGTH + MEMO_SUFFIX_LENGTH - 250
+    if (MEMO_OVERFLOW > 0) {
+      notes = notes.substring(0, notes.length - MEMO_OVERFLOW) + '...'
+    }
+    const MEMO = `${MEMO_PREFIX} memo="${notes}"`
     const qboTxNamed = {
       TRNTYPE,
       DTPOSTED,

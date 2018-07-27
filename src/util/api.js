@@ -1,4 +1,4 @@
-import { rejectify } from '../util/decorators.js'
+import { rejectify } from './decorators.js'
 
 /**
  * Prepares an async API endpoint for consumption by the outside world.
