@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.9.12
+
+* Fix QBO export error.
+* Fix minor Flow bug.
+
 ## 0.9.11
 
 * Upgrade Flow.
