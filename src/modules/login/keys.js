@@ -189,7 +189,17 @@ export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
     'wallet:dogecoin-bip44': { format: 'bip44', coinType: 3 },
     // LTC:
     'wallet:litecoin-bip44': { format: 'bip44', coinType: 2 },
-    'wallet:litecoin-bip49': { format: 'bip49', coinType: 2 }
+    'wallet:litecoin-bip49': { format: 'bip49', coinType: 2 },
+    // FTC:
+    'wallet:feathercoin-bip49': { format: 'bip49', coinType: 8 },
+    'wallet:feathercoin-bip44': { format: 'bip44', coinType: 8 },
+    // QTUM:
+    'wallet:qtum-bip44': { format: 'bip44', coinType: 2301 },
+    // UFO:
+    'wallet:ufo-bip49': { format: 'bip49', coinType: 202 },
+    // XZC:
+    'wallet:zcoin': { format: 'bip32', coinType: 136 },
+    'wallet:zcoin-bip44': { format: 'bip44', coinType: 136 }
   }
 
   if (defaults[type]) {
