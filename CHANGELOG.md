@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.9.13
+
+* Pass options to `EdgeCurrencyPlugin.createPrivateKeys`.
+
 ## 0.9.12
 
 * Fix QBO export error.

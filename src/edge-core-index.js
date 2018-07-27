@@ -351,8 +351,13 @@ export type EdgeAccountOptions = {
 }
 
 export type EdgeCreateCurrencyWalletOptions = {
-  name?: string,
   fiatCurrencyCode?: string,
+  name?: string,
+
+  // Used to tell the currency plugin what keys to create:
+  keyOptions?: EdgeCreatePrivateKeyOptions,
+
+  // Used to copy wallet keys between accounts:
   keys?: {}
 }
 
@@ -773,10 +778,21 @@ export type EdgeCurrencyEngine = {
   getTxids?: () => EdgeTxidMap
 }
 
+export type EdgeBitcoinPrivateKeyOptions = {
+  format?: string,
+  coinType?: number,
+  account?: number
+}
+
+export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
+
 export type EdgeCurrencyPlugin = {
   +pluginName: string,
   +currencyInfo: EdgeCurrencyInfo,
-  createPrivateKey(walletType: string): Object,
+  createPrivateKey(
+    walletType: string,
+    opts?: EdgeCreatePrivateKeyOptions
+  ): Object,
   derivePublicKey(walletInfo: EdgeWalletInfo): Object,
   makeEngine(
     walletInfo: EdgeWalletInfo,
