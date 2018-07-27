@@ -1,6 +1,7 @@
 // @flow
 
 import type {
+  EdgeCurrencyInfo,
   EdgeCurrencyPlugin,
   EdgeCurrencyTools
 } from '../../edge-core-index.js'
@@ -15,7 +16,7 @@ export class CurrencyTools implements EdgeCurrencyTools {
     this._plugin = plugin
   }
 
-  get currencyInfo () {
+  get currencyInfo (): EdgeCurrencyInfo {
     return this._plugin.currencyInfo
   }
 }
