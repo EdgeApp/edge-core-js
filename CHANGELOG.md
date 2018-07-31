@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.9.14
+
+* Another fix to QBO export 255-character limit (memo field)
+
 ## 0.9.13
 
 * Pass options to `EdgeCurrencyPlugin.createPrivateKeys`.

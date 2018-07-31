@@ -122,22 +122,17 @@ export function exportTransactionsToQBOInner (
     const absFiat = abs(amountFiat.toString())
     const absAmount = abs(TRNAMT)
     const CURRATE = absAmount !== '0' ? div(absFiat, absAmount, 8) : '0'
-    const MEMO_PREFIX = `// Rate=${CURRATE} ${fiatCurrencyCode}=${amountFiat} category="${category}"`
-    const MEMO_PREFIX_LENGTH = MEMO_PREFIX.length
-    const MEMO_SUFFIX = `memo="${notes}"`
-    const MEMO_SUFFIX_LENGTH = MEMO_SUFFIX.length
-    const MEMO_OVERFLOW: number = MEMO_PREFIX_LENGTH + MEMO_SUFFIX_LENGTH - 250
-    if (MEMO_OVERFLOW > 0) {
-      notes = notes.substring(0, notes.length - MEMO_OVERFLOW) + '...'
+    let memo = `// Rate=${CURRATE} ${fiatCurrencyCode}=${amountFiat} category="${category}" memo="${notes}"`
+    if (memo.length > 250) {
+      memo = memo.substring(0, 250) + '...'
     }
-    const MEMO = `${MEMO_PREFIX} memo="${notes}"`
     const qboTxNamed = {
       TRNTYPE,
       DTPOSTED,
       TRNAMT,
       FITID: edgeTx.txid,
       NAME,
-      MEMO,
+      MEMO: memo,
       CURRENCY: {
         CURRATE: CURRATE,
         CURSYM: fiatCurrencyCode
@@ -148,7 +143,7 @@ export function exportTransactionsToQBOInner (
       DTPOSTED,
       TRNAMT,
       FITID: edgeTx.txid,
-      MEMO,
+      MEMO: memo,
       CURRENCY: {
         CURRATE: CURRATE,
         CURSYM: fiatCurrencyCode
