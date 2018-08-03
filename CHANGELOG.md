@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.9.15
+
+* Fix QBO & CSV export crash
+
 ## 0.9.14
 
 * Another fix to QBO export 255-character limit (memo field)
