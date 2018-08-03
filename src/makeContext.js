@@ -40,6 +40,15 @@ export function makeFakeContexts (
 ): Array<EdgeContext> {
   return makeFakeIos(opts.length).map((io, i) => {
     if (opts[i].localFakeUser) stashFakeUser(io)
+    if (opts[i].offline) {
+      // Disable network access (but leave the sync server up):
+      const oldFetch = io.fetch
+      const ioHack: any = io
+      ioHack.fetch = (url, opts) =>
+        /store/.test(url.toString())
+          ? oldFetch(url, opts)
+          : Promise.reject(new Error('Network error'))
+    }
 
     const coreRoot = makeCoreRoot(io, opts[i])
     startCoreRoot(coreRoot)

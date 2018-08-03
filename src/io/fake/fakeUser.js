@@ -240,13 +240,15 @@ export const fakeRepos = {
 }
 
 export function stashFakeUser (io: EdgeIo) {
-  // The bare minimum data needed to log in with PIN:
+  // The bare minimum data needed to log in with PIN or password:
   const fakeStash = {
     appId: fakeUserServer.appId,
     loginId: fakeUserServer.loginId,
     otpKey: fakeUserServer.otpKey,
     username: 'js test 0',
     passwordAuthBox: fakeUserServer.passwordAuthBox,
+    passwordBox: fakeUserServer.passwordBox,
+    passwordKeySnrp: fakeUserServer.passwordKeySnrp,
     pin2Key: base64.stringify(fakeUser.pin2Key),
     children: [
       {
@@ -256,7 +258,8 @@ export function stashFakeUser (io: EdgeIo) {
         parentBox: fakeUserServer.children[0].parentBox,
         pin2Key: base64.stringify(fakeUser.childPin2Key)
       }
-    ]
+    ],
+    syncKeyBox: fakeUserServer.syncKeyBox
   }
 
   // Write to disk, relying on the fact that the in-memory folder is not

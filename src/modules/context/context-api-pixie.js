@@ -40,7 +40,6 @@ function makeContextApi (ai: ApiInput) {
   const shapeshiftApi = makeShapeshiftApi(ai)
 
   const rawContext: EdgeContext = {
-    io: (ai.props.io: any),
     appId,
 
     getCurrencyPlugins () {

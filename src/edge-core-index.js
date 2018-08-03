@@ -143,12 +143,12 @@ export type EdgeContextOptions = {
   shapeshiftKey?: string,
 
   // Used by the fake context:
-  localFakeUser?: boolean
+  localFakeUser?: boolean,
+  offline?: boolean
 }
 
 export type EdgeContext = {
   +appId: string,
-  +io: EdgeIo,
 
   // Local user management:
   fixUsername(username: string): string,
