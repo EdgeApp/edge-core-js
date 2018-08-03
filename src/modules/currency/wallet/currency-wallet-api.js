@@ -205,7 +205,7 @@ export function makeCurrencyWalletApi (
       const currencyCode =
         opts && opts.currencyCode
           ? opts.currencyCode
-          : this.input.props.selfState.currencyInfo.currencyCode
+          : input.props.selfState.currencyInfo.currencyCode
       const denom = opts && opts.denomination ? opts.denomination : null
       const qbo: string = exportTransactionsToQBOInner(
         edgeTransactions,
@@ -226,7 +226,7 @@ export function makeCurrencyWalletApi (
       const currencyCode =
         opts && opts.currencyCode
           ? opts.currencyCode
-          : this.input.props.selfState.currencyInfo.currencyCode
+          : input.props.selfState.currencyInfo.currencyCode
       const denom = opts && opts.denomination ? opts.denomination : null
       const csv: string = await exportTransactionsToCSVInner(
         edgeTransactions,
