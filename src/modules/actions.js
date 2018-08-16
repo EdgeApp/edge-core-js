@@ -6,6 +6,7 @@ import type {
   EdgeTokenInfo,
   EdgeWalletInfoFull
 } from '../edge-core-index.js'
+import type { PluginSettings } from './currency/currency-reducer.js'
 import type {
   TxFileJsons,
   TxFileNames
@@ -33,6 +34,17 @@ export interface AccountKeysLoadedAction {
 export interface AddedCustomToken {
   type: 'ADDED_CUSTOM_TOKEN';
   payload: EdgeTokenInfo;
+}
+
+/**
+ * Fired when somebody changes the currency settings for a plugin.
+ */
+export type ChangedCurrencyPluginSettingAction = {
+  type: 'CHANGED_CURRENCY_PLUGIN_SETTING',
+  payload: {
+    pluginName: string,
+    settings: Object
+  }
 }
 
 /**
@@ -185,6 +197,14 @@ export interface LogoutAction {
 }
 
 /**
+ * Fires when we load plugin settings from disk.
+ */
+export type NewCurrencyPluginSettingsAction = {
+  type: 'NEW_CURRENCY_PLUGIN_SETTINGS',
+  payload: PluginSettings
+}
+
+/**
  * Fires when a storage wallet has been loaded.
  */
 export interface StorageWalletAdded {
@@ -210,6 +230,7 @@ export interface StorageWalletSynced {
 export type RootAction =
   | AccountKeysLoadedAction
   | AddedCustomToken
+  | ChangedCurrencyPluginSettingAction
   | CurrencyEngineChangedTxs
   | CurrencyEngineCleared
   | CurrencyEngineFailed
@@ -224,5 +245,6 @@ export type RootAction =
   | InitAction
   | LoginAction
   | LogoutAction
+  | NewCurrencyPluginSettingsAction
   | StorageWalletAdded
   | StorageWalletSynced

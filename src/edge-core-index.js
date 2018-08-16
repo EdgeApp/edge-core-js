@@ -361,8 +361,11 @@ export type EdgeCreateCurrencyWalletOptions = {
   keys?: {}
 }
 
-export interface EdgeCurrencyTools {
-  +currencyInfo: EdgeCurrencyInfo;
+export type EdgeCurrencyTools = {
+  +currencyInfo: EdgeCurrencyInfo,
+  +pluginSettings: Object,
+
+  changePluginSettings(settings: Object): Promise<mixed>
 }
 
 export type EdgeCurrencyToolsMap = {
