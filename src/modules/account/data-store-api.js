@@ -1,6 +1,7 @@
 // @flow
 
 import { mapFiles, mapFolders } from 'disklet'
+import { bridgifyObject } from 'yaob'
 
 import type { EdgeDataStore, EdgePluginData } from '../../edge-core-index.js'
 import type { ApiInput } from '../root.js'
@@ -99,6 +100,7 @@ export function makeDataStoreApi (
       await file.setText(JSON.stringify({ key: itemId, data: value }))
     }
   }
+  bridgifyObject(out)
 
   return out
 }
@@ -129,6 +131,7 @@ export function makePluginDataApi (dataStore: EdgeDataStore): EdgePluginData {
       return dataStore.setItem(pluginId, itemId, value)
     }
   }
+  bridgifyObject(out)
 
   return out
 }

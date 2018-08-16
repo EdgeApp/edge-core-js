@@ -40,7 +40,7 @@ describe('edge login lobby', function () {
         .makeLobby(testRequest, 10)
         .then(lobby => {
           lobby.on('error', reject)
-          lobby.on('repliesChanged', (replies: Array<Object>) => {
+          lobby.watch('replies', (replies: Array<Object>) => {
             if (replies.length === 0) return
             assert.deepEqual(replies[0], testReply)
             lobby.close()

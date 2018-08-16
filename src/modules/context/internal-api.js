@@ -1,5 +1,7 @@
 // @flow
 
+import { Bridgeable } from 'yaob'
+
 import { authRequest } from '../login/authServer.js'
 import { fetchLobbyRequest, makeLobby, sendLobbyReply } from '../login/lobby.js'
 import type { LobbyRequest } from '../login/lobby.js'
@@ -10,7 +12,13 @@ import type { ApiInput } from '../root.js'
  * The requesting side of an Edge login lobby.
  * The `replies` property will update as replies come in.
  */
-class EdgeLobby {
+class EdgeLobby extends Bridgeable<
+  {
+    replies: Array<Object>,
+    lobbyId: string
+  },
+  { error: Error }
+> {
   _lobby: Object
   _onError: Function
   _onRepliesChanged: Function
@@ -18,6 +26,7 @@ class EdgeLobby {
   _unsubscribe: Function
 
   constructor (lobby: Object) {
+    super()
     this._lobby = lobby
     this._onError = () => {}
     this._onRepliesChanged = () => {}
@@ -26,10 +35,10 @@ class EdgeLobby {
     const { unsubscribe } = lobby.subscribe(
       (reply: Object) => {
         this._replies = [...this._replies, reply]
-        this._onRepliesChanged(this._replies)
+        this._update()
       },
       (e: Error) => {
-        this._onError(e)
+        this._emit('error', e)
       }
     )
     this._unsubscribe = unsubscribe
@@ -45,11 +54,7 @@ class EdgeLobby {
 
   close () {
     this._unsubscribe()
-  }
-
-  on (name: string, f: Function) {
-    if (name === 'error') this._onError = f
-    else this._onRepliesChanged = f
+    this._close()
   }
 }
 
@@ -57,10 +62,11 @@ class EdgeLobby {
  * A secret internal API which has some goodies for the CLI
  * and for unit testing.
  */
-export class EdgeInternalStuff {
+export class EdgeInternalStuff extends Bridgeable<{}> {
   _ai: ApiInput
 
   constructor (ai: ApiInput) {
+    super()
     this._ai = ai
   }
 

@@ -1,5 +1,7 @@
 // @flow
 
+import { bridgifyObject, onMethod } from 'yaob'
+
 import type { EdgeExchangeCache } from '../../edge-core-index.js'
 import type { ApiInput } from '../root.js'
 import { getExchangeRate } from './exchange-selectors.js'
@@ -21,7 +23,8 @@ export function makeExchangeCache (ai: ApiInput): EdgeExchangeCache {
   }
 
   const out = {
-    '@convertCurrency': { sync: true },
+    on: onMethod,
+
     convertCurrency (
       fromCurrency: string,
       toCurrency: string,
@@ -36,6 +39,7 @@ export function makeExchangeCache (ai: ApiInput): EdgeExchangeCache {
       return amount * rate
     }
   }
+  bridgifyObject(out)
 
   return out
 }

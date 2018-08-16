@@ -1,5 +1,7 @@
 // @flow
 
+import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
+
 import type {
   EdgeAccount,
   EdgeAccountOptions,
@@ -7,7 +9,6 @@ import type {
   EdgeEdgeLoginOptions,
   EdgeExchangeSwapInfo,
   EdgeLoginMessages,
-  EdgePasswordRules,
   EdgePendingEdgeLogin
 } from '../../edge-core-index.js'
 import { base58 } from '../../util/encoding.js'
@@ -29,6 +30,8 @@ import {
 import type { ApiInput } from '../root.js'
 import { EdgeInternalStuff } from './internal-api.js'
 
+shareData({ fixUsername, checkPasswordRules })
+
 export function makeContextApi (ai: ApiInput) {
   const appId = ai.props.state.login.appId
   const $internalStuff = new EdgeInternalStuff(ai)
@@ -36,14 +39,14 @@ export function makeContextApi (ai: ApiInput) {
   const shapeshiftApi = makeShapeshiftApi(ai)
 
   const out: EdgeContext = {
+    on: onMethod,
+    watch: watchMethod,
+
     appId,
 
     $internalStuff,
 
-    '@fixUsername': { sync: true },
-    fixUsername (username: string): string {
-      return fixUsername(username)
-    },
+    fixUsername,
 
     async listUsernames (): Promise<Array<string>> {
       return Object.keys(ai.props.state.login.stashes)
@@ -105,10 +108,7 @@ export function makeContextApi (ai: ApiInput) {
       })
     },
 
-    '@checkPasswordRules': { sync: true },
-    checkPasswordRules (password): EdgePasswordRules {
-      return checkPasswordRules(password)
-    },
+    checkPasswordRules,
 
     async pinLoginEnabled (username: string): Promise<boolean> {
       const loginStash = getStash(ai, username)
@@ -172,24 +172,34 @@ export function makeContextApi (ai: ApiInput) {
     ): Promise<EdgePendingEdgeLogin> {
       const {
         callbacks,
-        onLogin,
         displayImageUrl,
         displayName,
+        onLogin,
         onProcessLogin
       } = opts
 
-      return requestEdgeLogin(ai, appId, {
-        displayImageUrl,
-        displayName,
-        onProcessLogin,
-        onLogin (err, loginTree) {
-          if (err || !loginTree) return onLogin(err)
-          makeAccount(ai, appId, loginTree, 'edgeLogin', callbacks).then(
-            account => onLogin(void 0, account),
-            err => onLogin(err)
-          )
-        }
-      })
+      const newOpts = { callbacks, displayImageUrl, displayName }
+      const pendingLogin = await requestEdgeLogin(ai, appId, newOpts)
+
+      // Hook up deprecated callbacks:
+      if (onLogin) {
+        const offLogin = this.on('login', account => {
+          offLogin()
+          onLogin(void 0, account)
+        })
+        const offError = this.on('loginError', error => {
+          offError()
+          onLogin(error)
+        })
+      }
+      if (onProcessLogin) {
+        const off = this.on('loginStart', ({ username }) => {
+          off()
+          onProcessLogin(username)
+        })
+      }
+
+      return pendingLogin
     },
 
     async requestOtpReset (
@@ -226,6 +236,7 @@ export function makeContextApi (ai: ApiInput) {
       return this.pinLoginEnabled(username)
     }
   }
+  bridgifyObject(out)
 
   return out
 }

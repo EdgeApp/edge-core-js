@@ -1,8 +1,11 @@
 // @flow
 
+import { Bridgeable } from 'yaob'
+
 import type {
   EdgeCurrencyInfo,
-  EdgeCurrencyPlugin
+  EdgeCurrencyPlugin,
+  EdgeCurrencyTools
 } from '../../edge-core-index.js'
 import type { ApiInput } from '../root.js'
 import { changePluginSettings } from './account-files.js'
@@ -10,12 +13,13 @@ import { changePluginSettings } from './account-files.js'
 /**
  * Access to an individual currency plugin's methods.
  */
-export class CurrencyTools {
+export class CurrencyTools extends Bridgeable<EdgeCurrencyTools> {
   _ai: ApiInput
   _accountId: string
   _plugin: EdgeCurrencyPlugin
 
   constructor (ai: ApiInput, accountId: string, plugin: EdgeCurrencyPlugin) {
+    super()
     this._ai = ai
     this._accountId = accountId
     this._plugin = plugin

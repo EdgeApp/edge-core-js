@@ -2,6 +2,7 @@
 
 import { combinePixies, mapPixie, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
+import { close, emit, update } from 'yaob'
 
 import type { EdgeAccount, EdgeCurrencyWallet } from '../../edge-core-index.js'
 import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
@@ -42,6 +43,18 @@ const accountPixie = combinePixies({
 
         if (timer != null) clearTimeout(timer)
         if (onLoggedOut) onLoggedOut()
+        if (
+          input.props.selfOutput != null &&
+          input.props.selfOutput.api != null
+        ) {
+          update(input.props.selfOutput.api)
+          close(input.props.selfOutput.api)
+          close(input.props.selfOutput.api.dataStore)
+          close(input.props.selfOutput.api.exchangeCache)
+          close(input.props.selfOutput.api.pluginData)
+          const tools = input.props.selfOutput.api.currencyTools
+          for (const n of Object.keys(tools)) close(tools[n])
+        }
       },
 
       async update () {
@@ -105,17 +118,51 @@ const accountPixie = combinePixies({
   },
 
   watcher (input: AccountInput) {
+    let lastState
     let lastWalletInfos
+    let lastWallets
+    let lastCurrencySettings
+    let lastExchangeState
 
-    return function update (props: AccountProps) {
+    return () => {
       const { selfState, selfOutput } = input.props
       if (selfState == null || selfOutput == null) return
 
+      // General account state:
+      if (lastState !== selfState) {
+        lastState = selfState
+        if (selfOutput.api != null) update(selfOutput.api)
+      }
+
+      // onKeyListChanged callback:
       if (lastWalletInfos !== selfState.walletInfos) {
         lastWalletInfos = selfState.walletInfos
-
         const { onKeyListChanged } = selfState.callbacks
         if (onKeyListChanged) onKeyListChanged()
+      }
+
+      // Wallet list:
+      if (lastWallets !== input.props.output.currency.wallets) {
+        lastWallets = input.props.output.currency.wallets
+        if (selfOutput.api != null) update(selfOutput.api)
+      }
+
+      // Wallet settings:
+      if (
+        selfOutput.api != null &&
+        lastCurrencySettings !== input.props.state.currency.settings
+      ) {
+        lastCurrencySettings = input.props.state.currency.settings
+        const tools = input.props.selfOutput.api.currencyTools
+        for (const n of Object.keys(tools)) update(tools[n])
+      }
+
+      // Exchange:
+      if (lastExchangeState !== input.props.state.exchangeCache) {
+        lastExchangeState = input.props.state.exchangeCache
+        if (selfOutput.api != null) {
+          emit(selfOutput.api.exchangeCache, 'update', void 0)
+        }
       }
     }
   },

@@ -4,6 +4,7 @@ import type { Dispatch, Store, StoreEnhancer } from 'redux'
 import { compose, createStore } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
 import type { PixieInput, ReduxProps } from 'redux-pixies'
+import { emit } from 'yaob'
 
 import type {
   EdgeContextOptions,
@@ -93,7 +94,12 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
       (props: ReduxProps<RootState, RootAction>): RootProps => ({
         ...props,
         io,
-        onError,
+        onError: error => {
+          onError(error)
+          if (coreRoot.output.context && coreRoot.output.context.api) {
+            emit(coreRoot.output.context.api, 'error', error)
+          }
+        },
         onExchangeUpdate,
         plugins,
         shapeshiftKey

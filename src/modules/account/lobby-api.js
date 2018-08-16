@@ -1,5 +1,7 @@
 // @flow
 
+import { bridgifyObject } from 'yaob'
+
 import type { EdgeLobby, EdgeLoginRequest } from '../../edge-core-index.js'
 import { base64 } from '../../util/encoding.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
@@ -113,10 +115,13 @@ export async function makeLobbyApi (
         return approveLoginRequest(ai, accountId, appId, lobbyId, lobbyJson)
       }
     }
+    bridgifyObject(loginRequest)
   }
 
-  const lobbyApi: EdgeLobby = {
+  const out: EdgeLobby = {
     loginRequest
   }
-  return lobbyApi
+  bridgifyObject(out)
+
+  return out
 }

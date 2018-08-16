@@ -1,5 +1,7 @@
 // @flow
 
+import type { Subscriber } from 'yaob'
+
 // Sub-module exports:
 import * as error from './error.js'
 import * as internal from './internal.js'
@@ -147,7 +149,17 @@ export type EdgeContextOptions = {
   offline?: boolean
 }
 
+export type EdgeContextEvents = {
+  error: Error,
+  login: EdgeAccount,
+  loginStart: { username: string },
+  loginError: { error: Error }
+}
+
 export type EdgeContext = {
+  +on: Subscriber<EdgeContextEvents>,
+  +watch: Subscriber<EdgeContext>,
+
   +appId: string,
 
   // Local user management:
@@ -237,15 +249,17 @@ export type EdgePasswordRules = {
 }
 
 export type EdgePendingEdgeLogin = {
-  id: string,
+  +id: string,
   cancelRequest(): void
 }
 
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
   displayImageUrl?: string,
   displayName?: string,
+
+  // Deprecated (will crash in bridged contexts):
   onProcessLogin?: (username: string) => mixed,
-  onLogin(e?: Error, account?: EdgeAccount): mixed
+  onLogin?: (e?: Error, account?: EdgeAccount) => mixed
 }
 
 export type EdgeLoginMessages = {
@@ -328,6 +342,8 @@ export type EdgeCreateCurrencyWalletOptions = {
 }
 
 export type EdgeCurrencyTools = {
+  +watch: Subscriber<EdgeCurrencyTools>,
+
   +currencyInfo: EdgeCurrencyInfo,
   +pluginSettings: Object,
 
@@ -338,7 +354,13 @@ export type EdgeCurrencyToolsMap = {
   [pluginName: string]: EdgeCurrencyTools
 }
 
+export type EdgeExchangeCacheEvents = {
+  update: mixed
+}
+
 export type EdgeExchangeCache = {
+  +on: Subscriber<EdgeExchangeCacheEvents>,
+
   convertCurrency(
     fromCurrency: string,
     toCurrency: string,
@@ -369,7 +391,12 @@ export type EdgePluginData = {
   setItem(pluginId: string, itemId: string, value: string): Promise<mixed>
 }
 
+export type EdgeAccountEvents = {}
+
 export type EdgeAccount = {
+  +on: Subscriber<EdgeAccountEvents>,
+  +watch: Subscriber<EdgeAccount>,
+
   // Data store:
   +id: string,
   +keys: any,
@@ -498,7 +525,15 @@ export type EdgeTxidMap = { [txid: string]: number }
 
 export type EdgeUnusedOptions = {}
 
+export type EdgeCurrencyWalletEvents = {
+  newTransactions: Array<EdgeTransaction>,
+  transactionsChanged: Array<EdgeTransaction>
+}
+
 export type EdgeCurrencyWallet = {
+  +on: Subscriber<EdgeCurrencyWalletEvents>,
+  +watch: Subscriber<EdgeCurrencyWallet>,
+
   // Data store:
   +id: string,
   +keys: any,
