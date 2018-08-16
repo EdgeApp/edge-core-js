@@ -361,8 +361,11 @@ export type EdgeCreateCurrencyWalletOptions = {
   keys?: {}
 }
 
-export interface EdgeCurrencyTools {
-  +currencyInfo: EdgeCurrencyInfo;
+export type EdgeCurrencyTools = {
+  +currencyInfo: EdgeCurrencyInfo,
+  +pluginSettings: Object,
+
+  changePluginSettings(settings: Object): Promise<mixed>
 }
 
 export type EdgeCurrencyToolsMap = {
@@ -743,7 +746,6 @@ export type EdgeCurrencyEngineOptions = {
 }
 
 export type EdgeCurrencyEngine = {
-  updateSettings(settings: any): void,
   startEngine(): Promise<void>,
   killEngine(): Promise<void>,
   getBlockHeight(): number,
@@ -800,7 +802,8 @@ export type EdgeCurrencyPlugin = {
   ): Promise<EdgeCurrencyEngine>,
   parseUri(uri: string): EdgeParsedUri,
   encodeUri(obj: EdgeEncodeUri): string,
-  +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>
+  +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
+  +changeSettings?: (settings: Object) => Promise<mixed>
 }
 
 export type EdgeCurrencyPluginFactory = {
