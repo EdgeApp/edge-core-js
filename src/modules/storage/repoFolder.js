@@ -37,14 +37,14 @@ class RepoFile {
     return this.getData().then(data => utf8.stringify(data))
   }
 
-  setData (data: Array<number> | Uint8Array): Promise<void> {
+  setData (data: Array<number> | Uint8Array): Promise<mixed> {
     const dataCast: any = data // Treating Array<number> like Uint8Array
     return this.file.setText(
       JSON.stringify(encrypt(this.io, dataCast, this.dataKey))
     )
   }
 
-  setText (text: string): Promise<void> {
+  setText (text: string): Promise<mixed> {
     return this.setData(utf8.parse(text))
   }
 }

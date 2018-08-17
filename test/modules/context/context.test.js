@@ -1,12 +1,10 @@
 // @flow
 
-import { assert } from 'chai'
+import { expect } from 'chai'
 import { afterEach, describe, it } from 'mocha'
 
 import { makeFakeContexts } from '../../../src/edge-core-index.js'
 import { destroyAllContexts } from '../../../src/modules/root.js'
-import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
-import { fakeExchangePlugin } from '../../fake-plugins/fake-exchange.js'
 
 // Silence console.info:
 const consoleHack: any = console // Flow thinks console is read-only
@@ -17,13 +15,9 @@ afterEach(function () {
 })
 
 describe('context', function () {
-  it('returns the currency plugin list', async function () {
-    const [context] = makeFakeContexts({
-      plugins: [makeFakeCurrency(), fakeExchangePlugin]
-    })
+  it('lists usernames', async function () {
+    const [context] = makeFakeContexts({ localFakeUser: true })
 
-    const plugins = await context.getCurrencyPlugins()
-    assert.equal(plugins.length, 1)
-    assert.equal(plugins[0].currencyInfo.currencyCode, 'TEST')
+    expect(await context.listUsernames()).deep.equals(['js test 0'])
   })
 })

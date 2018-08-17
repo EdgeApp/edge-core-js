@@ -151,18 +151,8 @@ describe('otp', function () {
 
 describe('password', function () {
   it('login offline', async function () {
-    const [context] = makeFakeContexts(contextOptions)
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-
-    // Disable network access (but leave the sync server up):
-    const oldFetch = context.io.fetch
-    const ioHack: any = context.io
-    ioHack.fetch = (url, opts) =>
-      /store/.test(url.toString())
-        ? oldFetch(url, opts)
-        : Promise.reject(new Error('Network error'))
-
-    return context.loginWithPassword(fakeUser.username, fakeUser.password)
+    const [context] = makeFakeContexts({ localFakeUser: true, offline: true })
+    await context.loginWithPassword(fakeUser.username, fakeUser.password)
   })
 
   it('login online', function () {

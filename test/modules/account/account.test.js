@@ -163,9 +163,9 @@ describe('account', function () {
     if (!fakecoinWallet) throw new Error('Missing wallet')
 
     // We should be able to split another type:
-    expect(account.listSplittableWalletTypes(fakecoinWallet.id)).to.deep.equal([
-      'wallet:tulipcoin'
-    ])
+    expect(
+      await account.listSplittableWalletTypes(fakecoinWallet.id)
+    ).to.deep.equal(['wallet:tulipcoin'])
 
     // Do the split:
     await account.splitWalletInfo(fakecoinWallet.id, 'wallet:tulipcoin')
@@ -179,15 +179,16 @@ describe('account', function () {
     )
 
     // Now that the wallet is split, we can't split again:
-    expect(account.listSplittableWalletTypes(fakecoinWallet.id)).to.deep.equal(
-      []
-    )
+    expect(
+      await account.listSplittableWalletTypes(fakecoinWallet.id)
+    ).to.deep.equal([])
 
     // Splitting back should not work:
-    try {
-      await account.splitWalletInfo(tulipWallet.id, 'wallet:fakecoin')
-      throw new Error('This should fail')
-    } catch (e) {}
+    expect(
+      await account
+        .splitWalletInfo(tulipWallet.id, 'wallet:fakecoin')
+        .then(s => 'ok', e => 'fail')
+    ).to.equal('fail')
   })
 
   it('logout', async function () {

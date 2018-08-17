@@ -3,6 +3,7 @@
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import type {
+  EdgeBalances,
   EdgeCurrencyInfo,
   EdgeTransaction,
   EdgeWalletInfo
@@ -43,6 +44,8 @@ export type MergedTransaction = {
 
 export interface CurrencyWalletState {
   currencyInfo: EdgeCurrencyInfo;
+  displayPrivateSeed: string | null;
+  displayPublicSeed: string | null;
   engineFailure: Error | null;
   fiat: string;
   fiatLoaded: boolean;
@@ -50,6 +53,8 @@ export interface CurrencyWalletState {
   fileNames: TxFileNames;
   fileNamesLoaded: boolean;
   sortedTransactions: SortedTransactions;
+  balances: EdgeBalances;
+  height: number;
   name: string | null;
   nameLoaded: boolean;
   walletInfo: EdgeWalletInfo;
@@ -67,6 +72,18 @@ const currencyWalletReducer = buildReducer({
   currencyInfo (state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
     if (state) return state
     return getCurrencyInfo(next.root.currency.infos, next.self.walletInfo.type)
+  },
+
+  displayPrivateSeed (state = null, action: RootAction): string | null {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
+      ? action.payload.displayPrivateSeed
+      : state
+  },
+
+  displayPublicSeed (state = null, action: RootAction): string | null {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
+      ? action.payload.displayPublicSeed
+      : state
   },
 
   engineFailure (state = null, action: RootAction) {
@@ -144,8 +161,23 @@ const currencyWalletReducer = buildReducer({
     return state
   },
 
-  fileNamesLoaded (state = false, action) {
+  fileNamesLoaded (state = false, action: RootAction) {
     return action.type === 'CURRENCY_WALLET_FILE_NAMES_LOADED' ? true : state
+  },
+
+  balances (state = {}, action: RootAction): EdgeBalances {
+    if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
+      const out = { ...state }
+      out[action.payload.currencyCode] = action.payload.balance
+      return out
+    }
+    return state
+  },
+
+  height (state = 0, action: RootAction): number {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_HEIGHT'
+      ? action.payload.height
+      : state
   },
 
   name (state = null, action: RootAction) {
