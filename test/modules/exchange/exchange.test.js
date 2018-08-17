@@ -11,7 +11,6 @@ import { getExchangeRate } from '../../../src/modules/exchange/exchange-selector
 import { rootPixie } from '../../../src/modules/root-pixie.js'
 import {
   makeCoreRoot,
-  makeFakeCoreRoots,
   makeRootProps,
   startCoreRoot
 } from '../../../src/modules/root.js'
@@ -162,7 +161,9 @@ describe('exchange cache reducer', function () {
 
 describe('exchange pixie', function () {
   it('adds plugins', async function () {
-    const [coreRoot] = makeFakeCoreRoots({ plugins: [fakeExchangePlugin] })
+    const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
+      plugins: [fakeExchangePlugin]
+    })
 
     const plugins = await new Promise((resolve, reject) =>
       attachPixie(
@@ -181,13 +182,12 @@ describe('exchange pixie', function () {
 
   it('fetches exchange rates', async function () {
     let updateCalled = false
-    const coreRoot = makeCoreRoot({
+    const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
       callbacks: {
         onExchangeUpdate () {
           updateCalled = true
         }
       },
-      io: makeFakeIos(1)[0],
       plugins: [brokenExchangePlugin, fakeExchangePlugin]
     })
     startCoreRoot(coreRoot)

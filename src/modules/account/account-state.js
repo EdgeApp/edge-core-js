@@ -39,9 +39,14 @@ import {
   addStorageWallet,
   syncStorageWallet
 } from '../storage/storage-actions.js'
-import { getStorageWalletLastChanges } from '../storage/storage-selectors.js'
-import { CurrencyTools } from './currency-api.js'
+import {
+  getStorageWalletFolder,
+  getStorageWalletLastChanges
+} from '../storage/storage-selectors.js'
+import { CurrencyTools, reloadPluginSettings } from './currency-api.js'
 import { changeWalletStates, loadAllWalletStates } from './wallet-states.js'
+
+const CURRENCY_SETTINGS_FILE = 'CurrencySettings.json'
 
 export function findAppLogin (loginTree: LoginTree, appId: string): LoginTree {
   const out = searchTree(loginTree, login => login.appId === appId)
@@ -162,8 +167,16 @@ export class AccountState {
     this.activeLoginId = ai.props.state.login.lastActiveLoginId
 
     this.currencyTools = {}
+    const currencySettingsFile = getStorageWalletFolder(
+      ai.props.state,
+      accountWalletInfo.id
+    ).file(CURRENCY_SETTINGS_FILE)
     for (const plugin of currencyPlugins) {
-      this.currencyTools[plugin.pluginName] = new CurrencyTools(plugin)
+      this.currencyTools[plugin.pluginName] = new CurrencyTools(
+        ai,
+        plugin,
+        currencySettingsFile
+      )
     }
 
     // While it would make logical sense to do this now,
@@ -193,6 +206,11 @@ export class AccountState {
     // If we are logged out, do nothing!
     if (!this.login) return
 
+    const currencySettingsFile = getStorageWalletFolder(
+      this.ai.props.state,
+      this.accountWalletInfo.id
+    ).file(CURRENCY_SETTINGS_FILE)
+    await reloadPluginSettings(this.ai, currencySettingsFile)
     await this.reloadWalletStates()
     if (this.callbacks.onKeyListChanged) {
       this.callbacks.onKeyListChanged()
@@ -561,7 +579,7 @@ export class AccountState {
     return newWalletInfo.id
   }
 
-  listSplittableWalletTypes (walletId: string): Array<string> {
+  listSplittableWalletTypes (walletId: string): Promise<Array<string>> {
     const allWalletInfos = this.allKeys
 
     // Find the wallet we are going to split:
@@ -581,18 +599,20 @@ export class AccountState {
         : []
 
     // Filter out wallet types we have already split:
-    return types.filter(type => {
-      const newWalletInfo = splitWalletInfo(walletInfo, type)
-      const existingWalletInfo = allWalletInfos.find(
-        walletInfo => walletInfo.id === newWalletInfo.id
-      )
-      // We can split the wallet if it doesn't exist, or is deleted:
-      return (
-        !existingWalletInfo ||
-        existingWalletInfo.archived ||
-        existingWalletInfo.deleted
-      )
-    })
+    return Promise.resolve(
+      types.filter(type => {
+        const newWalletInfo = splitWalletInfo(walletInfo, type)
+        const existingWalletInfo = allWalletInfos.find(
+          walletInfo => walletInfo.id === newWalletInfo.id
+        )
+        // We can split the wallet if it doesn't exist, or is deleted:
+        return (
+          !existingWalletInfo ||
+          existingWalletInfo.archived ||
+          existingWalletInfo.deleted
+        )
+      })
+    )
   }
 
   get allKeys (): Array<EdgeWalletInfoFull> {

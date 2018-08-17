@@ -192,10 +192,18 @@ export function makeCurrencyWalletCallbacks (
     },
 
     onBalanceChanged (currencyCode: string, balance: string) {
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
+        payload: { balance, currencyCode, walletId }
+      })
       throttledOnBalanceChanged({ currencyCode, balance })
     },
 
     onBlockHeightChanged (height: number) {
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
+        payload: { height, walletId }
+      })
       forEachListener(input, ({ onBlockHeightChanged }) => {
         if (onBlockHeightChanged) {
           onBlockHeightChanged(walletId, height)

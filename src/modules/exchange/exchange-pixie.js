@@ -32,7 +32,7 @@ export default combinePixies({
   update (input: PixieInput<RootProps>) {
     let timeout: * // Infer the proper timer type
 
-    function doFetch (): Promise<void> {
+    function doFetch (): Promise<mixed> {
       // Bail out if we have no plugins:
       if (!input.props.output.exchange.plugins) return Promise.resolve()
 
@@ -83,7 +83,7 @@ export default combinePixies({
     }
 
     return {
-      update (props: RootProps): Promise<void> | void {
+      update (props: RootProps): Promise<mixed> | void {
         // Kick off the initial fetch if we don't already have one running:
         if (timeout == null) return doFetch()
       },

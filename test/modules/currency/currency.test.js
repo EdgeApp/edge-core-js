@@ -4,14 +4,18 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 import { attachPixie, filterPixie } from 'redux-pixies'
 
-import { fakeUser, makeFakeContexts } from '../../../src/edge-core-index.js'
+import {
+  fakeUser,
+  makeFakeContexts,
+  makeFakeIos
+} from '../../../src/edge-core-index.js'
 import type { EdgeCurrencyPluginFactory } from '../../../src/edge-core-index.js'
 import currencyPixie from '../../../src/modules/currency/currency-pixie.js'
 import {
   getCurrencyMultiplier,
   hasCurrencyPlugin
 } from '../../../src/modules/currency/currency-selectors.js'
-import { makeFakeCoreRoots, makeRootProps } from '../../../src/modules/root.js'
+import { makeCoreRoot, makeRootProps } from '../../../src/modules/root.js'
 import { fakeCurrencyInfo } from '../../fake-plugins/fake-currency-info.js'
 import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
 
@@ -33,7 +37,9 @@ describe('currency selectors', function () {
 
 describe('currency pixie', function () {
   it('adds plugins', async function () {
-    const [coreRoot] = makeFakeCoreRoots({ plugins: [makeFakeCurrency()] })
+    const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
+      plugins: [makeFakeCurrency()]
+    })
 
     const output = await new Promise((resolve, reject) =>
       attachPixie(

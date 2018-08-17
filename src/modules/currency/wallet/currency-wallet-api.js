@@ -3,6 +3,7 @@
 import { add, div, lte, mul, sub } from 'biggystring'
 
 import type {
+  EdgeBalances,
   EdgeCoinExchangeQuote,
   EdgeCurrencyCodeOptions,
   EdgeCurrencyEngine,
@@ -80,6 +81,12 @@ export function makeCurrencyWalletApi (
     get localFolder () {
       return storageWalletApi.localFolder
     },
+    get displayPrivateSeed () {
+      return input.props.selfState.displayPrivateSeed
+    },
+    get displayPublicSeed () {
+      return input.props.selfState.displayPublicSeed
+    },
     sync () {
       return storageWalletApi.sync()
     },
@@ -103,12 +110,21 @@ export function makeCurrencyWalletApi (
       return setCurrencyWalletFiat(input, fiatCurrencyCode).then(() => {})
     },
 
+    // Chain state:
+    get balances (): EdgeBalances {
+      return input.props.selfState.balances
+    },
+
+    get blockHeight (): number {
+      return input.props.selfState.height
+    },
+
     // Running state:
     startEngine () {
       return engine.startEngine()
     },
 
-    stopEngine (): Promise<void> {
+    stopEngine (): Promise<mixed> {
       return Promise.resolve(engine.killEngine())
     },
 
@@ -130,19 +146,8 @@ export function makeCurrencyWalletApi (
     },
 
     // Transactions:
-    '@getBalance': { sync: true },
-    getBalance (opts: EdgeCurrencyCodeOptions = {}) {
-      return engine.getBalance(opts)
-    },
-
-    '@getBlockHeight': { sync: true },
-    getBlockHeight () {
-      return engine.getBlockHeight()
-    },
-
-    '@getNumTransactions': { sync: true },
     getNumTransactions (opts: EdgeCurrencyCodeOptions = {}) {
-      return engine.getNumTransactions(opts)
+      return Promise.resolve(engine.getNumTransactions(opts))
     },
 
     async getTransactions (
@@ -251,22 +256,12 @@ export function makeCurrencyWalletApi (
       return Promise.resolve(receiveAddress)
     },
 
-    saveReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<void> {
+    saveReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<mixed> {
       return Promise.resolve()
     },
 
-    lockReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<void> {
+    lockReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<mixed> {
       return Promise.resolve()
-    },
-
-    '@makeAddressQrCode': { sync: true },
-    makeAddressQrCode (address: EdgeReceiveAddress) {
-      return address.publicAddress
-    },
-
-    '@makeAddressUri': { sync: true },
-    makeAddressUri (address: EdgeReceiveAddress) {
-      return address.publicAddress
     },
 
     async makeSpend (spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
@@ -422,7 +417,7 @@ export function makeCurrencyWalletApi (
       return engine.saveTx(tx)
     },
 
-    resyncBlockchain (): Promise<void> {
+    resyncBlockchain (): Promise<mixed> {
       ai.props.dispatch({
         type: 'CURRENCY_ENGINE_CLEARED',
         payload: { walletId: input.props.id }
@@ -430,19 +425,8 @@ export function makeCurrencyWalletApi (
       return Promise.resolve(engine.resyncBlockchain())
     },
 
-    '@dumpData': { sync: true },
-    dumpData (): EdgeDataDump {
-      return engine.dumpData()
-    },
-
-    '@getDisplayPrivateSeed': { sync: true },
-    getDisplayPrivateSeed (): string | null {
-      return engine.getDisplayPrivateSeed()
-    },
-
-    '@getDisplayPublicSeed': { sync: true },
-    getDisplayPublicSeed (): string | null {
-      return engine.getDisplayPublicSeed()
+    dumpData (): Promise<EdgeDataDump> {
+      return Promise.resolve(engine.dumpData())
     },
 
     getPaymentProtocolInfo (
@@ -505,14 +489,33 @@ export function makeCurrencyWalletApi (
       return getMax('0', add(balance, '1'))
     },
 
-    '@parseUri': { sync: true },
     parseUri (uri: string) {
-      return plugin.parseUri(uri)
+      return Promise.resolve(plugin.parseUri(uri))
     },
 
-    '@encodeUri': { sync: true },
     encodeUri (obj: EdgeEncodeUri) {
-      return plugin.encodeUri(obj)
+      return Promise.resolve(plugin.encodeUri(obj))
+    },
+
+    // Deprecated API's:
+    '@getBalance': { sync: true },
+    getBalance (opts: EdgeCurrencyCodeOptions = {}) {
+      return engine.getBalance(opts)
+    },
+
+    '@getBlockHeight': { sync: true },
+    getBlockHeight () {
+      return engine.getBlockHeight()
+    },
+
+    '@getDisplayPrivateSeed': { sync: true },
+    getDisplayPrivateSeed (): string | null {
+      return engine.getDisplayPrivateSeed()
+    },
+
+    '@getDisplayPublicSeed': { sync: true },
+    getDisplayPublicSeed (): string | null {
+      return engine.getDisplayPublicSeed()
     }
   }
 

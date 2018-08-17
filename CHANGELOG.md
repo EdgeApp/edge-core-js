@@ -1,5 +1,18 @@
 # edge-core-js
 
+## 0.10.0
+
+* Remove deprecated context properties & options
+* Remove `EdgeContext.io`
+* Remove `EdgeContext.getCurrencyPlugins`
+* Make many methods async:
+  * `EdgeCurrencyWallet.getNumTransactions`
+  * `EdgeAccount.listSplittableWalletTypes`
+  * `EdgeCurrencyWallet.dumpData`
+  * `EdgeCurrencyWallet.parseUri`
+  * `EdgeCurrencyWallet.encodeUri`
+* Add wallet properties for balances, block heights, and seeds
+
 ## 0.9.15
 
 * Fix QBO & CSV export crash

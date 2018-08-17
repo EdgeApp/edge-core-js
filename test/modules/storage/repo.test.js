@@ -4,7 +4,6 @@ import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
 import { fakeUser, makeFakeIos } from '../../../src/edge-core-index.js'
-import { fixIo } from '../../../src/io/fixIo.js'
 import { makeRepoPaths, syncRepo } from '../../../src/modules/storage/repo.js'
 import { base64 } from '../../../src/util/encoding.js'
 
@@ -19,7 +18,7 @@ const fakeRepoInfo = {
 
 describe('repo', function () {
   it('local get', async function () {
-    const [io] = makeFakeIos(1).map(fixIo)
+    const [io] = makeFakeIos(1)
     const paths = makeRepoPaths(io, fakeRepoInfo)
 
     const payload = '{"message":"Hello"}'
@@ -45,7 +44,7 @@ describe('repo', function () {
   })
 
   it('offline set/get', async function () {
-    const [io] = makeFakeIos(1).map(fixIo)
+    const [io] = makeFakeIos(1)
     const { folder } = makeRepoPaths(io, fakeRepoInfo)
     const file = folder.file('b.txt')
     const payload = 'Test data'
@@ -56,7 +55,7 @@ describe('repo', function () {
   })
 
   it('repo-to-repo sync', async function () {
-    const [io1, io2] = makeFakeIos(2).map(fixIo)
+    const [io1, io2] = makeFakeIos(2)
 
     const paths1 = makeRepoPaths(io1, fakeRepoInfo)
     const paths2 = makeRepoPaths(io2, fakeRepoInfo)

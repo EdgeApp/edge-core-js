@@ -119,6 +119,23 @@ describe('account', function () {
     expect(tools.currencyInfo.pluginName).equals('testcoin')
   })
 
+  it('change currency plugin settings', async function () {
+    const [context] = makeFakeContexts(contextOptions)
+    const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    const settings = {
+      testSetting: 'some important string'
+    }
+    const tools1 = account1.currencyTools['testcoin']
+    await tools1.changePluginSettings(settings)
+    expect(tools1.pluginSettings).deep.equals(settings)
+
+    // Log in again, and the setting should still be there:
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const tools2 = account2.currencyTools['testcoin']
+    expect(tools2.pluginSettings).deep.equals(settings)
+  })
+
   it('change key state', async function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -146,9 +163,9 @@ describe('account', function () {
     if (!fakecoinWallet) throw new Error('Missing wallet')
 
     // We should be able to split another type:
-    expect(account.listSplittableWalletTypes(fakecoinWallet.id)).to.deep.equal([
-      'wallet:tulipcoin'
-    ])
+    expect(
+      await account.listSplittableWalletTypes(fakecoinWallet.id)
+    ).to.deep.equal(['wallet:tulipcoin'])
 
     // Do the split:
     await account.splitWalletInfo(fakecoinWallet.id, 'wallet:tulipcoin')
@@ -162,15 +179,16 @@ describe('account', function () {
     )
 
     // Now that the wallet is split, we can't split again:
-    expect(account.listSplittableWalletTypes(fakecoinWallet.id)).to.deep.equal(
-      []
-    )
+    expect(
+      await account.listSplittableWalletTypes(fakecoinWallet.id)
+    ).to.deep.equal([])
 
     // Splitting back should not work:
-    try {
-      await account.splitWalletInfo(tulipWallet.id, 'wallet:fakecoin')
-      throw new Error('This should fail')
-    } catch (e) {}
+    expect(
+      await account
+        .splitWalletInfo(tulipWallet.id, 'wallet:fakecoin')
+        .then(s => 'ok', e => 'fail')
+    ).to.equal('fail')
   })
 
   it('logout', async function () {

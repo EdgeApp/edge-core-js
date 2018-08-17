@@ -98,7 +98,7 @@ function makeAccountApi (
     recoveryLogin: loginType === 'recoveryLogin',
 
     // Change or create credentials:
-    changePassword (password: string): Promise<void> {
+    changePassword (password: string): Promise<mixed> {
       return state.changePassword(password).then(() => {})
     },
     changePin (opts: {
@@ -134,13 +134,13 @@ function makeAccountApi (
     },
 
     // Remove credentials:
-    deletePassword (): Promise<void> {
+    deletePassword (): Promise<mixed> {
       return state.deletePassword().then(() => {})
     },
-    deletePin (): Promise<void> {
+    deletePin (): Promise<mixed> {
       return state.deletePin().then(() => {})
     },
-    deleteRecovery (): Promise<void> {
+    deleteRecovery (): Promise<mixed> {
       return state.deleteRecovery().then(() => {})
     },
 
@@ -151,13 +151,13 @@ function makeAccountApi (
     get otpResetDate (): string | void {
       return state.login.otpResetDate
     },
-    cancelOtpReset (): Promise<void> {
+    cancelOtpReset (): Promise<mixed> {
       return state.cancelOtpReset().then(() => {})
     },
-    enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<void> {
+    enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<mixed> {
       return state.enableOtp(timeout).then(() => {})
     },
-    disableOtp (): Promise<void> {
+    disableOtp (): Promise<mixed> {
       return state.disableOtp().then(() => {})
     },
 
@@ -167,7 +167,7 @@ function makeAccountApi (
     },
 
     // Login management:
-    logout (): Promise<void> {
+    logout (): Promise<mixed> {
       return state.logout()
     },
 
@@ -175,7 +175,7 @@ function makeAccountApi (
     get allKeys (): Array<EdgeWalletInfoFull> {
       return state.allKeys
     },
-    changeWalletStates (walletStates: EdgeWalletStates): Promise<void> {
+    changeWalletStates (walletStates: EdgeWalletStates): Promise<mixed> {
       return state.changeWalletStates(walletStates)
     },
     createWallet (type: string, keys: any): Promise<string> {
@@ -206,8 +206,7 @@ function makeAccountApi (
     splitWalletInfo (walletId: string, newWalletType: string): Promise<string> {
       return state.splitWalletInfo(walletId, newWalletType)
     },
-    '@listSplittableWalletTypes': { sync: true },
-    listSplittableWalletTypes (walletId: string): Array<string> {
+    listSplittableWalletTypes (walletId: string): Promise<Array<string>> {
       return state.listSplittableWalletTypes(walletId)
     },
 

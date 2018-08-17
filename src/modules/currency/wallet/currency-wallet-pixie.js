@@ -83,6 +83,14 @@ export default combinePixies({
         ),
         callbacks: makeCurrencyWalletCallbacks(input)
       })
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
+        payload: {
+          walletId: walletInfo.id,
+          displayPrivateSeed: engine.getDisplayPrivateSeed(),
+          displayPublicSeed: engine.getDisplayPublicSeed()
+        }
+      })
       input.onOutput(engine)
     } catch (e) {
       input.props.onError(e)
