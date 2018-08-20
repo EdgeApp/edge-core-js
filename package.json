@@ -9,7 +9,7 @@
     "key management",
     "security"
   ],
-  "homepage": "https://edgesecure.co",
+  "homepage": "https://edge.app",
   "license": "SEE LICENSE IN LICENSE",
   "author": "Airbitz, Inc.",
   "contributors": [
@@ -32,7 +32,7 @@
   "module": "lib/edge-core-index.es.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:Airbitz/airbitz-core-js.git"
+    "url": "git@github.com:EdgeApp/edge-core-js.git"
   },
   "scripts": {
     "build": "rimraf lib && webpack && rollup -c",
