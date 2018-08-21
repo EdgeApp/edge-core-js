@@ -3,10 +3,12 @@
 import { add } from 'biggystring'
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
-import { createStore } from 'redux'
 
-import { fakeUser, makeFakeContexts } from '../../../../src/edge-core-index.js'
-import { awaitState } from '../../../../src/util/redux/reaction.js'
+import {
+  type EdgeCurrencyWallet,
+  fakeUser,
+  makeFakeContexts
+} from '../../../../src/edge-core-index.js'
 import { makeAssertLog } from '../../../assert-log.js'
 import { expectRejection } from '../../../expect-rejection.js'
 import {
@@ -19,15 +21,18 @@ function snooze (ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function makeFakeCurrencyWallet (store, callbacks) {
+async function makeFakeCurrencyWallet (
+  store,
+  callbacks
+): Promise<EdgeCurrencyWallet> {
   const plugin = makeFakeCurrency(store)
 
   // Use `onKeyListChanged` to trigger checking for wallets:
-  const trigger = createStore(state => null)
+  let handleKeyListChanged
   callbacks = {
     ...callbacks,
     onKeyListChanged () {
-      trigger.dispatch({ type: 'DUMMY' })
+      if (handleKeyListChanged) handleKeyListChanged()
     }
   }
 
@@ -42,7 +47,14 @@ async function makeFakeCurrencyWallet (store, callbacks) {
   // Wait for the wallet to load:
   const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
   if (!walletInfo) throw new Error('Broken test account')
-  return awaitState(trigger, state => account.currencyWallets[walletInfo.id])
+  return new Promise(resolve => {
+    handleKeyListChanged = () => {
+      if (account.currencyWallets[walletInfo.id] != null) {
+        resolve(account.currencyWallets[walletInfo.id])
+      }
+    }
+    handleKeyListChanged()
+  })
 }
 
 describe('currency wallets', function () {
@@ -164,6 +176,7 @@ describe('currency wallets', function () {
             assert.equal(txs.length, 1)
             assert.equal(txs[0].txid, 'a')
             assert.strictEqual(txs[0].nativeAmount, '2')
+            // $FlowFixMe legacy support code
             assert.strictEqual(txs[0].amountSatoshi, 2)
             return null
           })
@@ -173,6 +186,7 @@ describe('currency wallets', function () {
             assert.equal(txs.length, 1)
             assert.equal(txs[0].txid, 'b')
             assert.strictEqual(txs[0].nativeAmount, '200')
+            // $FlowFixMe legacy support code
             assert.strictEqual(txs[0].amountSatoshi, 200)
             return null
           })
