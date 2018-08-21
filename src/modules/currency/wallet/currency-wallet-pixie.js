@@ -36,10 +36,10 @@ export interface CurrencyWalletOutput {
   syncTimer: void;
 }
 
-export interface CurrencyWalletProps extends RootProps {
-  id: string;
-  selfState: CurrencyWalletState;
-  selfOutput: CurrencyWalletOutput;
+export type CurrencyWalletProps = RootProps & {
+  +id: string,
+  +selfState: CurrencyWalletState,
+  +selfOutput: CurrencyWalletOutput
 }
 
 export type CurrencyWalletInput = PixieInput<CurrencyWalletProps>

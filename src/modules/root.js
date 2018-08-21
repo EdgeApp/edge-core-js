@@ -25,26 +25,25 @@ function nop () {}
  * Contains io resources, context options, Redux store,
  * and tree of background workers. Everything that happens, happens here.
  */
-export interface CoreRoot {
-  // Context options:
-  apiKey: string;
-  appId: string;
-  authServer: string;
-  io: EdgeIo;
-  onError(e: Error): mixed;
-  onExchangeUpdate(): mixed;
-  plugins: Array<EdgeCorePluginFactory>;
-  shapeshiftKey: string | void;
-
-  // Loose objects:
-  loginStore: LoginStore;
-
-  // Redux state:
-  redux: Store<RootState, RootAction>;
+export type CoreRoot = {
+  redux: Store<RootState, RootAction>,
 
   // Pixies:
-  output: RootOutput;
-  destroyPixie?: () => void;
+  output: RootOutput,
+  destroyPixie?: () => void
+}
+
+// Props passed to the root pixie:
+export type RootProps = {
+  +dispatch: Dispatch<RootAction>,
+  +io: EdgeIo,
+  +loginStore: LoginStore,
+  +onError: (e: Error) => mixed,
+  +onExchangeUpdate: () => mixed,
+  +output: RootOutput,
+  +plugins: Array<EdgeCorePluginFactory>,
+  +shapeshiftKey: string | void,
+  +state: RootState
 }
 
 /**
@@ -65,19 +64,10 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
   const { onError = onErrorDefault, onExchangeUpdate = nop } = callbacks
 
   const appId = opts.appId != null ? opts.appId : ''
+  const loginStore = new LoginStore(io)
 
   const output: any = {}
-
   const coreRoot: CoreRoot = {
-    apiKey,
-    appId,
-    authServer,
-    io,
-    onError,
-    onExchangeUpdate,
-    plugins,
-    shapeshiftKey,
-    loginStore: new LoginStore(io),
     redux: makeStore(),
     output
   }
@@ -86,16 +76,20 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
     payload: { apiKey, appId, authServer }
   })
 
-  return coreRoot
-}
-
-/**
- * Attaches pixies to the core root, beginning all background work.
- */
-export function startCoreRoot (coreRoot: CoreRoot) {
   coreRoot.destroyPixie = attachPixie(
     coreRoot.redux,
-    filterPixie(rootPixie, makeRootProps(coreRoot)),
+    filterPixie(
+      rootPixie,
+      (props: ReduxProps<RootState, RootAction>): RootProps => ({
+        ...props,
+        io,
+        loginStore,
+        onError,
+        onExchangeUpdate,
+        plugins,
+        shapeshiftKey
+      })
+    ),
     e => console.error(e),
     output => (coreRoot.output = output)
   )
@@ -112,36 +106,6 @@ export function destroyAllContexts () {
     destroyPixie()
   }
   allDestroyPixies = []
-}
-
-// Props passed to the root pixie:
-export interface RootProps {
-  coreRoot: CoreRoot;
-  +dispatch: Dispatch<RootAction>;
-  io: EdgeIo;
-  onError(e: Error): mixed;
-  onExchangeUpdate(): mixed;
-  output: RootOutput;
-  plugins: Array<EdgeCorePluginFactory>;
-  shapeshiftKey: string | void;
-  state: RootState;
-}
-
-/**
- * Builds the root props based on a coreRoot object.
- */
-export function makeRootProps (
-  coreRoot: CoreRoot
-): (props: ReduxProps<RootState, RootAction>) => RootProps {
-  return (props: ReduxProps<RootState, RootAction>): RootProps => ({
-    ...props,
-    coreRoot,
-    io: coreRoot.io,
-    onError: coreRoot.onError,
-    onExchangeUpdate: coreRoot.onExchangeUpdate,
-    shapeshiftKey: coreRoot.shapeshiftKey,
-    plugins: coreRoot.plugins
-  })
 }
 
 /**
@@ -163,14 +127,13 @@ export interface ApiProps {
 export function makeApiProps (props: RootProps): ApiProps {
   const {
     dispatch,
-    coreRoot,
+    loginStore,
     output,
     io,
     onError,
     shapeshiftKey,
     state
   } = props
-  const { loginStore } = coreRoot
 
   return { dispatch, loginStore, output, io, onError, shapeshiftKey, state }
 }
