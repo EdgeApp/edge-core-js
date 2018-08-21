@@ -46,6 +46,8 @@ export type RootProps = {
   +state: RootState
 }
 
+export type ApiInput = PixieInput<RootProps>
+
 /**
  * Creates the root object for the entire core state machine.
  * This core object contains the `io` object, context options,
@@ -107,35 +109,3 @@ export function destroyAllContexts () {
   }
   allDestroyPixies = []
 }
-
-/**
- * Props passed through the API objects (EdgeContext, EdgeAccount, etc.)
- */
-export interface ApiProps {
-  +dispatch: Dispatch<RootAction>;
-  io: EdgeIo;
-  loginStore: LoginStore;
-  onError(e: Error): mixed;
-  output: RootOutput;
-  shapeshiftKey: string | void;
-  state: RootState;
-}
-
-/**
- * Converts the root props to the API props format.
- */
-export function makeApiProps (props: RootProps): ApiProps {
-  const {
-    dispatch,
-    loginStore,
-    output,
-    io,
-    onError,
-    shapeshiftKey,
-    state
-  } = props
-
-  return { dispatch, loginStore, output, io, onError, shapeshiftKey, state }
-}
-
-export type ApiInput = PixieInput<ApiProps>
