@@ -338,6 +338,14 @@ export type EdgeCurrencyToolsMap = {
   [pluginName: string]: EdgeCurrencyTools
 }
 
+export type EdgeExchangeCache = {
+  convertCurrency(
+    fromCurrency: string,
+    toCurrency: string,
+    amount: number
+  ): number
+}
+
 export type EdgePluginData = {
   deleteItem(pluginId: string, itemId: string): Promise<mixed>,
   deletePlugin(pluginId: string): Promise<mixed>,

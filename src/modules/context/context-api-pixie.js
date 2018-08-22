@@ -43,7 +43,7 @@ function makeContextApi (ai: ApiInput) {
   const rawContext: EdgeContext = {
     appId,
 
-    get _internalEdgeStuff () {
+    get _internalEdgeStuff (): EdgeInternalStuff {
       return internalApi
     },
 

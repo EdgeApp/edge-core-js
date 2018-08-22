@@ -6,6 +6,7 @@ import type {
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyToolsMap,
   EdgeCurrencyWallet,
+  EdgeExchangeCache,
   EdgeLobby,
   EdgePluginData,
   EdgeWalletInfo,
@@ -80,7 +81,7 @@ function makeAccountApi (
     get currencyTools (): EdgeCurrencyToolsMap {
       return state.currencyTools
     },
-    get exchangeCache (): any {
+    get exchangeCache (): EdgeExchangeCache {
       return exchangeCache
     },
     get pluginData (): EdgePluginData {
