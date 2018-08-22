@@ -358,6 +358,14 @@ export type EdgePluginData = {
 }
 
 export type EdgeAccount = {
+  // Data store:
+  +id: string,
+  +keys: any,
+  +type: string,
+  +folder: DiskletFolder,
+  +localFolder: DiskletFolder,
+  sync(): Promise<mixed>,
+
   // Basic login information:
   +appId: string,
   +loggedIn: boolean,
@@ -478,17 +486,17 @@ export type EdgeTxidMap = { [txid: string]: number }
 export type EdgeUnusedOptions = {}
 
 export type EdgeCurrencyWallet = {
-  // EdgeWalletInfo members:
+  // Data store:
   +id: string,
   +keys: any,
   +type: string,
-  +displayPrivateSeed: string | null,
-  +displayPublicSeed: string | null,
-
-  // Data store:
   +folder: DiskletFolder,
   +localFolder: DiskletFolder,
   sync(): Promise<mixed>,
+
+  // Wallet keys:
+  +displayPrivateSeed: string | null,
+  +displayPublicSeed: string | null,
 
   // Wallet name:
   +name: string | null,

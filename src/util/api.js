@@ -97,11 +97,3 @@ export function wrapObject (className, object) {
 
   return out
 }
-
-export function copyProperties (target, object) {
-  for (const key of Object.getOwnPropertyNames(object)) {
-    const d = Object.getOwnPropertyDescriptor(object, key)
-    Object.defineProperty(target, key, d)
-  }
-  return target
-}

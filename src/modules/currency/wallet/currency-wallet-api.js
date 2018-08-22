@@ -68,7 +68,7 @@ export function makeCurrencyWalletApi (
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo, {})
 
   const out: EdgeCurrencyWallet = {
-    // Storage wallet properties:
+    // Data store:
     get id (): string {
       return storageWalletApi.id
     },
@@ -84,17 +84,19 @@ export function makeCurrencyWalletApi (
     get localFolder (): DiskletFolder {
       return storageWalletApi.localFolder
     },
+    sync (): Promise<mixed> {
+      return storageWalletApi.sync()
+    },
+
+    // Wallet keys:
     get displayPrivateSeed (): string | null {
       return input.props.selfState.displayPrivateSeed
     },
     get displayPublicSeed (): string | null {
       return input.props.selfState.displayPublicSeed
     },
-    sync (): Promise<mixed> {
-      return storageWalletApi.sync()
-    },
 
-    // Storage stuff:
+    // Wallet name:
     get name (): string | null {
       return input.props.selfState.name
     },
@@ -103,11 +105,13 @@ export function makeCurrencyWalletApi (
     },
 
     // Currency info:
-    get fiatCurrencyCode (): string {
-      return input.props.selfState.fiat
-    },
     get currencyInfo (): EdgeCurrencyInfo {
       return plugin.currencyInfo
+    },
+
+    // Fiat currency option:
+    get fiatCurrencyCode (): string {
+      return input.props.selfState.fiat
     },
     setFiatCurrencyCode (fiatCurrencyCode: string): Promise<mixed> {
       return setCurrencyWalletFiat(input, fiatCurrencyCode).then(() => {})
