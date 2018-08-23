@@ -116,7 +116,7 @@ export async function makeLobbyApi (
       appId,
       displayName,
       displayImageUrl,
-      approve () {
+      approve (): Promise<mixed> {
         return approveLoginRequest(ai, appId, lobbyId, lobbyJson, accountState)
       }
     }

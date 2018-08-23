@@ -2,7 +2,6 @@
 
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
-import { attachPixie, filterPixie } from 'redux-pixies'
 
 import {
   fakeUser,
@@ -10,12 +9,11 @@ import {
   makeFakeIos
 } from '../../../src/edge-core-index.js'
 import type { EdgeCurrencyPluginFactory } from '../../../src/edge-core-index.js'
-import currencyPixie from '../../../src/modules/currency/currency-pixie.js'
 import {
   getCurrencyMultiplier,
   hasCurrencyPlugin
 } from '../../../src/modules/currency/currency-selectors.js'
-import { makeCoreRoot, makeRootProps } from '../../../src/modules/root.js'
+import { makeCoreRoot } from '../../../src/modules/root.js'
 import { fakeCurrencyInfo } from '../../fake-plugins/fake-currency-info.js'
 import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
 
@@ -41,16 +39,15 @@ describe('currency pixie', function () {
       plugins: [makeFakeCurrency()]
     })
 
-    const output = await new Promise((resolve, reject) =>
-      attachPixie(
-        coreRoot.redux,
-        filterPixie(currencyPixie, makeRootProps(coreRoot)),
-        reject,
-        output => {
-          if (output.plugins) resolve(output)
+    // Wait for the plugins to appear:
+    const output = await new Promise(resolve => {
+      const unsubscribe = coreRoot.redux.subscribe(() => {
+        if (coreRoot.output.currency.plugins != null) {
+          unsubscribe()
+          resolve(coreRoot.output.currency)
         }
-      )
-    )
+      })
+    })
 
     // Verify the output:
     expect(output.plugins.length).to.equal(1)

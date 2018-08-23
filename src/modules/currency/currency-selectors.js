@@ -6,7 +6,7 @@ import type {
   EdgeCurrencyWallet,
   EdgeTokenInfo
 } from '../../edge-core-index.js'
-import type { ApiInput, ApiProps } from '../root.js'
+import type { ApiInput, RootProps } from '../root.js'
 
 export function getCurrencyInfo (
   infos: Array<EdgeCurrencyInfo>,
@@ -94,7 +94,7 @@ export function waitForCurrencyWallet (
   ai: ApiInput,
   walletId: string
 ): Promise<EdgeCurrencyWallet> {
-  const out: any = ai.waitFor((props: ApiProps): EdgeCurrencyWallet | void => {
+  const out: any = ai.waitFor((props: RootProps): EdgeCurrencyWallet | void => {
     // If the wallet id doesn't even exist, bail out:
     if (!props.state.currency.wallets[walletId]) {
       throw new Error(`Wallet ${walletId} is not a supported type`)
