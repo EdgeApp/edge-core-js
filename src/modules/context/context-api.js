@@ -14,7 +14,12 @@ import { makeShapeshiftApi } from '../exchange/shapeshift.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
 import { fetchLoginMessages, makeLoginTree, resetOtp } from '../login/login.js'
-import { fixUsername } from '../login/loginStore.js'
+import {
+  fixUsername,
+  listUsernames,
+  loadStash,
+  removeStash
+} from '../login/loginStore.js'
 import { checkPasswordRules, loginPassword } from '../login/password.js'
 import { getPin2Key, loginPin2 } from '../login/pin2.js'
 import {
@@ -28,7 +33,6 @@ import { EdgeInternalStuff } from './internal-api.js'
 
 export function makeContextApi (ai: ApiInput) {
   const appId = ai.props.state.login.appId
-  const { loginStore } = ai.props
   const internalApi = new EdgeInternalStuff(ai)
 
   const shapeshiftApi = makeShapeshiftApi(ai)
@@ -46,7 +50,7 @@ export function makeContextApi (ai: ApiInput) {
     },
 
     listUsernames (): Promise<Array<string>> {
-      return loginStore.listUsernames()
+      return listUsernames(ai)
     },
 
     deleteLocalAccount (username: string): Promise<mixed> {
@@ -58,7 +62,7 @@ export function makeContextApi (ai: ApiInput) {
         }
       }
 
-      return loginStore.remove(username)
+      return removeStash(ai, username)
     },
 
     usernameAvailable (username: string): Promise<boolean> {
@@ -88,7 +92,7 @@ export function makeContextApi (ai: ApiInput) {
     ) {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return loginStore.load(username).then(stashTree => {
+      return loadStash(ai, username).then(stashTree => {
         const loginTree = makeLoginTree(
           stashTree,
           base58.parse(loginKey),
@@ -116,7 +120,7 @@ export function makeContextApi (ai: ApiInput) {
     },
 
     async pinExists (username: string) {
-      const loginStash = await loginStore.load(username)
+      const loginStash = await loadStash(ai, username)
       const pin2Key = getPin2Key(loginStash, appId)
       return pin2Key && pin2Key.pin2Key != null
     },
@@ -134,7 +138,7 @@ export function makeContextApi (ai: ApiInput) {
     },
 
     getRecovery2Key (username: string) {
-      return loginStore.load(username).then(loginStash => {
+      return loadStash(ai, username).then(loginStash => {
         const recovery2Key = getRecovery2Key(loginStash)
         if (recovery2Key == null) {
           throw new Error('No recovery key stored locally.')

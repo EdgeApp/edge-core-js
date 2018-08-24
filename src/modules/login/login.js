@@ -22,7 +22,12 @@ import type {
   LoginStash,
   LoginTree
 } from './login-types.js'
-import { hashUsername } from './loginStore.js'
+import {
+  hashUsername,
+  loadStash,
+  mapLoginIds,
+  saveStash
+} from './loginStore.js'
 
 function cloneNode<Node: {}, Output> (
   node: Node,
@@ -298,13 +303,12 @@ export function sanitizeLoginStash (stashTree: LoginStash, appId: string) {
  * and this function knows how to apply them all.
  */
 export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
-  const { loginStore } = ai.props
   const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
   if (!login) throw new Error('Cannot apply kit: missing login')
   if (!loginTree.username) throw new Error('Cannot apply kit: missing username')
 
-  return loginStore.load(loginTree.username).then(stashTree => {
+  return loadStash(ai, loginTree.username).then(stashTree => {
     const request: Object = makeAuthJson(login)
     request.data = kit.server
     return authRequest(ai, serverMethod, serverPath, request).then(reply => {
@@ -330,7 +334,7 @@ export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
         })
       )
 
-      return loginStore.save(newStashTree).then(() => newLoginTree)
+      return saveStash(ai, newStashTree).then(() => newLoginTree)
     })
   })
 }
@@ -343,10 +347,9 @@ export function syncLogin (
   loginTree: LoginTree,
   login: LoginTree
 ): Promise<LoginTree> {
-  const { loginStore } = ai.props
   if (!loginTree.username) throw new Error('Cannot sync: missing username')
 
-  return loginStore.load(loginTree.username).then(stashTree => {
+  return loadStash(ai, loginTree.username).then(stashTree => {
     const request = makeAuthJson(login)
     return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
       const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
@@ -356,7 +359,7 @@ export function syncLogin (
         login.appId
       )
 
-      return loginStore.save(newStashTree).then(() => newLoginTree)
+      return saveStash(ai, newStashTree).then(() => newLoginTree)
     })
   })
 }
@@ -404,8 +407,7 @@ export async function resetOtp (
  * Fetches any login-related messages for all the users on this device.
  */
 export function fetchLoginMessages (ai: ApiInput): Promise<EdgeLoginMessages> {
-  const { loginStore } = ai.props
-  return loginStore.mapLoginIds().then(loginMap => {
+  return mapLoginIds(ai).then(loginMap => {
     const request = {
       loginIds: Object.keys(loginMap)
     }

@@ -8,7 +8,7 @@ import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import { makeKeysKit } from './keys.js'
 import type { LoginKit, LoginTree } from './login-types.js'
-import { fixUsername, hashUsername } from './loginStore.js'
+import { fixUsername, hashUsername, saveStash } from './loginStore.js'
 import { makePasswordKit } from './password.js'
 import { makeChangePin2Kit } from './pin2.js'
 
@@ -135,7 +135,7 @@ export function createLogin (
     const request = {}
     request.data = kit.server
     return authRequest(ai, 'POST', kit.serverPath, request).then(reply =>
-      ai.props.loginStore.save(kit.stash).then(() => kit.login)
+      saveStash(ai, kit.stash).then(() => kit.login)
     )
   })
 }
