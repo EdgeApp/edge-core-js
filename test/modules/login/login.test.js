@@ -71,10 +71,7 @@ describe('creation', function () {
 
   it('password-less account', async function () {
     this.timeout(1000)
-    const [context, remote] = makeFakeContexts(
-      { appId: 'test' },
-      { appId: 'test' }
-    )
+    const [context, remote] = makeFakeContexts({}, {})
     const username = 'some fancy user'
     const questions = fakeUser.recovery2Questions
     const answers = fakeUser.recovery2Answers
