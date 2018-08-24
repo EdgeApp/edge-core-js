@@ -8,6 +8,7 @@ import { createStore } from 'redux'
 import { fakeUser, makeFakeContexts } from '../../../../src/edge-core-index.js'
 import { awaitState } from '../../../../src/util/redux/reaction.js'
 import { makeAssertLog } from '../../../assert-log.js'
+import { expectRejection } from '../../../expect-rejection.js'
 import {
   makeFakeCurrency,
   makeFakeCurrencyStore
@@ -190,24 +191,18 @@ describe('currency wallets', function () {
     })
     expect(maxSpendable).equals('50')
 
-    const fulfill = () => 'FULFILL'
-    const reject = () => 'REJECT'
+    await wallet.makeSpend({
+      currencyCode: 'TEST',
+      spendTargets: [{ nativeAmount: maxSpendable }]
+    })
 
-    const fulfilResult = await wallet
-      .makeSpend({
-        currencyCode: 'TEST',
-        spendTargets: [{ nativeAmount: maxSpendable }]
-      })
-      .then(fulfill, reject)
-    expect(fulfilResult).to.equal('FULFILL')
-
-    const rejectResult = await wallet
-      .makeSpend({
+    await expectRejection(
+      wallet.makeSpend({
         currencyCode: 'TEST',
         spendTargets: [{ nativeAmount: add(maxSpendable, '1') }]
-      })
-      .then(fulfill, reject)
-    expect(rejectResult).to.equal('REJECT')
+      }),
+      'InsufficientFundsError: Insufficient funds'
+    )
   })
 
   // it('can have metadata', function () {

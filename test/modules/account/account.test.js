@@ -7,6 +7,7 @@ import type { EdgeAccount } from '../../../src/edge-core-index.js'
 import { fakeUser, makeFakeContexts } from '../../../src/edge-core-index.js'
 import { base64 } from '../../../src/util/encoding.js'
 import { makeAssertLog } from '../../assert-log.js'
+import { expectRejection } from '../../expect-rejection.js'
 import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
 
 const contextOptions = {
@@ -184,11 +185,10 @@ describe('account', function () {
     ).deep.equals([])
 
     // Splitting back should not work:
-    expect(
-      await account
-        .splitWalletInfo(tulipWallet.id, 'wallet:fakecoin')
-        .then(s => 'ok', e => 'fail')
-    ).to.equal('fail')
+    await expectRejection(
+      account.splitWalletInfo(tulipWallet.id, 'wallet:fakecoin'),
+      'Error: This wallet has already been split'
+    )
   })
 
   it('logout', async function () {

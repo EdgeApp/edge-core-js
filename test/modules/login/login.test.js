@@ -9,6 +9,7 @@ import {
   makeFakeContexts
 } from '../../../src/edge-core-index.js'
 import { base58 } from '../../../src/util/encoding.js'
+import { expectRejection } from '../../expect-rejection.js'
 
 const contextOptions = { localFakeUser: true }
 
@@ -192,9 +193,10 @@ describe('password', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.deletePassword()
-    return context
-      .loginWithPassword(fakeUser.username, fakeUser.password)
-      .then(x => Promise.reject(x), x => x)
+    await expectRejection(
+      context.loginWithPassword(fakeUser.username, fakeUser.password),
+      'PasswordError: Invalid password'
+    )
   })
 })
 
@@ -232,16 +234,18 @@ describe('pin', function () {
 
     // Disable PIN login:
     await account.changePin({ enableLogin: false })
-    await context
-      .loginWithPIN(fakeUser.username, fakeUser.pin)
-      .then(ok => Promise.reject(new Error('Should fail')), e => true)
+    await expectRejection(
+      context.loginWithPIN(fakeUser.username, fakeUser.pin),
+      'Error: No PIN set locally for this account'
+    )
 
     // Change PIN, leaving it disabled:
     expect(await account.checkPin(fakeUser.pin)).equals(true)
     await account.changePin({ pin: '4321' })
-    await context
-      .loginWithPIN(fakeUser.username, fakeUser.pin)
-      .then(ok => Promise.reject(new Error('Should fail')), e => true)
+    await expectRejection(
+      context.loginWithPIN(fakeUser.username, fakeUser.pin),
+      'Error: No PIN set locally for this account'
+    )
     expect(await account.checkPin('4321')).equals(true)
 
     // Enable PIN login:

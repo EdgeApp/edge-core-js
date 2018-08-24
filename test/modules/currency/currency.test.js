@@ -14,6 +14,7 @@ import {
   hasCurrencyPlugin
 } from '../../../src/modules/currency/currency-selectors.js'
 import { makeCoreRoot } from '../../../src/modules/root.js'
+import { expectRejection } from '../../expect-rejection.js'
 import { fakeCurrencyInfo } from '../../fake-plugins/fake-currency-info.js'
 import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
 
@@ -72,11 +73,9 @@ describe('currency pixie', function () {
       localFakeUser: true,
       plugins: [brokenPlugin]
     })
-    return context
-      .loginWithPIN(fakeUser.username, fakeUser.pin)
-      .then(
-        ok => Promise.reject(new Error('Should fail')),
-        e => expect(e.message).to.equal('Expect to fail')
-      )
+    return expectRejection(
+      context.loginWithPIN(fakeUser.username, fakeUser.pin),
+      'Error: Expect to fail'
+    )
   })
 })
