@@ -248,9 +248,14 @@ describe('pin', function () {
       'Error: PIN login is not enabled for this account on this device'
     )
 
+    // Since this was a legacy PIN setup, checking stops working:
+    await expectRejection(
+      account.checkPin(fakeUser.pin),
+      'Error: No PIN set locally for this account'
+    )
+
     // Change PIN, leaving it disabled:
-    expect(await account.checkPin(fakeUser.pin)).equals(true)
-    await account.changePin({ pin: '4321' })
+    await account.changePin({ pin: '4321', enableLogin: false })
     await expectRejection(
       context.loginWithPIN(fakeUser.username, fakeUser.pin),
       'Error: PIN login is not enabled for this account on this device'

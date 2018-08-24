@@ -85,9 +85,7 @@ export async function loginPin2 (
   await saveStash(ai, stashTree)
 
   // Capture the PIN into the login tree:
-  const loginTree = makeLoginTree(stashTree, loginKey, appIdFound)
-  if (loginTree.pin == null) loginTree.pin = pin
-  return loginTree
+  return makeLoginTree(stashTree, loginKey, appIdFound)
 }
 
 /**
