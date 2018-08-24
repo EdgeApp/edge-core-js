@@ -14,6 +14,7 @@ import {
   hasCurrencyPlugin
 } from '../../../src/modules/currency/currency-selectors.js'
 import { makeCoreRoot } from '../../../src/modules/root.js'
+import { expectRejection } from '../../expect-rejection.js'
 import { fakeCurrencyInfo } from '../../fake-plugins/fake-currency-info.js'
 import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
 
@@ -21,15 +22,15 @@ describe('currency selectors', function () {
   const infos = [fakeCurrencyInfo]
 
   it('find currency multiplier', function () {
-    expect(getCurrencyMultiplier(infos, [], 'SMALL')).to.equal('10')
-    expect(getCurrencyMultiplier(infos, [], 'TEST')).to.equal('100')
-    expect(getCurrencyMultiplier(infos, [], 'TOKEN')).to.equal('1000')
-    expect(getCurrencyMultiplier(infos, [], '-error-')).to.equal('1')
+    expect(getCurrencyMultiplier(infos, [], 'SMALL')).equals('10')
+    expect(getCurrencyMultiplier(infos, [], 'TEST')).equals('100')
+    expect(getCurrencyMultiplier(infos, [], 'TOKEN')).equals('1000')
+    expect(getCurrencyMultiplier(infos, [], '-error-')).equals('1')
   })
 
   it('has currency plugin', function () {
-    expect(hasCurrencyPlugin(infos, 'wallet:fakecoin')).to.equal(true)
-    expect(hasCurrencyPlugin(infos, 'wallet:nope')).to.equal(false)
+    expect(hasCurrencyPlugin(infos, 'wallet:fakecoin')).equals(true)
+    expect(hasCurrencyPlugin(infos, 'wallet:nope')).equals(false)
   })
 })
 
@@ -50,14 +51,14 @@ describe('currency pixie', function () {
     })
 
     // Verify the output:
-    expect(output.plugins.length).to.equal(1)
-    expect(output.plugins[0].currencyInfo.walletTypes).to.deep.equal(
+    expect(output.plugins.length).equals(1)
+    expect(output.plugins[0].currencyInfo.walletTypes).deep.equals(
       fakeCurrencyInfo.walletTypes
     )
 
     // Verify the redux state:
     const infos = coreRoot.redux.getState().currency.infos
-    expect(hasCurrencyPlugin(infos, 'wallet:fakecoin')).to.equal(true)
+    expect(hasCurrencyPlugin(infos, 'wallet:fakecoin')).equals(true)
   })
 
   it('handles errors gracefully', function () {
@@ -72,11 +73,9 @@ describe('currency pixie', function () {
       localFakeUser: true,
       plugins: [brokenPlugin]
     })
-    return context
-      .loginWithPIN(fakeUser.username, fakeUser.pin)
-      .then(
-        ok => Promise.reject(new Error('Should fail')),
-        e => expect(e.message).to.equal('Expect to fail')
-      )
+    return expectRejection(
+      context.loginWithPIN(fakeUser.username, fakeUser.pin),
+      'Error: Expect to fail'
+    )
   })
 })

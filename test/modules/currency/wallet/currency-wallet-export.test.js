@@ -51,7 +51,7 @@ const edgeTxs: Array<EdgeTransaction> = [
 describe('transaction export formats', function () {
   it('matches CSV reference data', async function () {
     const out = await exportTransactionsToCSVInner(edgeTxs, 'BTC', 'USD', '100')
-    expect(out).to.equal(
+    expect(out).equals(
       `DATE,TIME,PAYEE_PAYER_NAME,AMT_BTC,USD,CATEGORY,NOTES,AMT_NETWORK_FEES_BTC,TXID,OUR_RECEIVE_ADDRESSES,VER\r\n"2018-04-23","09:49","Crazy Person","1230000","12000.45","Income: Mo Money","Hell yeah! Thanks for the fish <<&&>>","10","txid1","receiveaddress1,receiveaddress2",1\r\n"2018-04-23","12:36","Crazy Person 2","-3210000","36001.45","Expense: Less Money","Hell yeah! Here's a fish""","20","txid2","receiveaddress3,receiveaddress4",1\r\n`
     )
   })
@@ -64,7 +64,7 @@ describe('transaction export formats', function () {
       '100',
       1524578071304
     )
-    expect(out).to.equal(
+    expect(out).equals(
       'OFXHEADER:100\n' +
         'DATA:OFXSGML\n' +
         'VERSION:102\n' +

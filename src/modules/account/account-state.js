@@ -363,22 +363,25 @@ export class AccountState {
     const login = this.loginTree
     checkLogin(login)
 
-    const kit = {
+    const kit: LoginKit = {
       serverMethod: 'DELETE',
       serverPath: '/v2/login/password',
       stash: {
-        passwordAuthBox: void 0,
         passwordAuthSnrp: void 0,
         passwordBox: void 0,
         passwordKeySnrp: void 0
       },
       login: {
-        passwordAuthBox: void 0,
         passwordAuthSnrp: void 0,
         passwordBox: void 0,
         passwordKeySnrp: void 0
       },
       loginId: login.loginId
+    }
+    // Only remove `passwordAuth` if we have another way to get in:
+    if (login.loginAuth != null) {
+      kit.stash.passwordAuthBox = void 0
+      kit.login.passwordAuthBox = void 0
     }
     return this.applyKit(kit)
   }

@@ -45,8 +45,8 @@ export function makeAssertLog (
 
   out.assert = function assert (expected: Array<string>) {
     sort
-      ? expect(events.sort()).to.deep.equal(expected.sort())
-      : expect(events).to.deep.equal(expected)
+      ? expect(events.sort()).deep.equals(expected.sort())
+      : expect(events).deep.equals(expected)
     events = []
   }
 
