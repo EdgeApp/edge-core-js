@@ -88,7 +88,7 @@ describe('account', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const allTypes = account.allKeys.map(info => info.type)
-    expect(allTypes).to.deep.equal([
+    expect(allTypes).deep.equals([
       'wallet:bitcoin',
       'account-repo:co.airbitz.wallet',
       'wallet:fakecoin',
@@ -96,7 +96,7 @@ describe('account', function () {
     ])
 
     const allAppIds = account.allKeys.map(info => info.appIds)
-    expect(allAppIds).to.deep.equal([[''], [''], [''], ['test-child']])
+    expect(allAppIds).deep.equals([[''], [''], [''], ['test-child']])
   })
 
   it('list active wallet ids', async function () {
@@ -104,7 +104,7 @@ describe('account', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const ids = account.activeWalletIds
-    expect(ids).to.deep.equal([
+    expect(ids).deep.equals([
       'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=',
       '3ZR9nMKd0vpZgEcSbehoBsLoLlFWMJhBbsxTs/d/jqA='
     ])
@@ -165,7 +165,7 @@ describe('account', function () {
     // We should be able to split another type:
     expect(
       await account.listSplittableWalletTypes(fakecoinWallet.id)
-    ).to.deep.equal(['wallet:tulipcoin'])
+    ).deep.equals(['wallet:tulipcoin'])
 
     // Do the split:
     await account.splitWalletInfo(fakecoinWallet.id, 'wallet:tulipcoin')
@@ -173,15 +173,15 @@ describe('account', function () {
     if (!tulipWallet) throw new Error('Missing wallet')
 
     // Check the keys:
-    expect(fakecoinWallet.keys.dataKey).to.equal(tulipWallet.keys.dataKey)
-    expect(fakecoinWallet.keys.fakecoinKey).to.equal(
+    expect(fakecoinWallet.keys.dataKey).equals(tulipWallet.keys.dataKey)
+    expect(fakecoinWallet.keys.fakecoinKey).equals(
       tulipWallet.keys.tulipcoinKey
     )
 
     // Now that the wallet is split, we can't split again:
     expect(
       await account.listSplittableWalletTypes(fakecoinWallet.id)
-    ).to.deep.equal([])
+    ).deep.equals([])
 
     // Splitting back should not work:
     expect(

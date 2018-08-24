@@ -62,7 +62,7 @@ describe('fixWalletInfo', function () {
         keys: { bitcoinKey: 'bitcoinKey' },
         type: 'wallet:bitcoin'
       })
-    ).to.deep.equal({
+    ).deep.equals({
       id: 'id',
       keys: { bitcoinKey: 'bitcoinKey', format: 'bip32' },
       type: 'wallet:bitcoin'
@@ -74,7 +74,7 @@ describe('fixWalletInfo', function () {
         keys: { bitcoinKey: 'bitcoinKey' },
         type: 'wallet:bitcoin-bip44-testnet'
       })
-    ).to.deep.equal({
+    ).deep.equals({
       id: 'id',
       keys: { bitcoinKey: 'bitcoinKey', format: 'bip44', coinType: 1 },
       type: 'wallet:bitcoin-testnet'
@@ -88,7 +88,7 @@ describe('fixWalletInfo', function () {
         keys: { bitcoinKey: 'bitcoinKey', format: 'bip32' },
         type: 'wallet:bitcoin'
       })
-    ).to.deep.equal({
+    ).deep.equals({
       id: 'id',
       keys: { bitcoinKey: 'bitcoinKey', format: 'bip32' },
       type: 'wallet:bitcoin'
@@ -104,7 +104,7 @@ describe('fixWalletInfo', function () {
         },
         type: 'wallet:bitcoin'
       })
-    ).to.deep.equal({
+    ).deep.equals({
       id: 'id',
       keys: { bitcoinKey: 'bitcoinKey', format: 'bip44', coinType: 145 },
       type: 'wallet:bitcoin'
@@ -127,7 +127,7 @@ describe('splitWalletInfo', function () {
         }),
         'wallet:bitcoincash'
       )
-    ).to.deep.equal({
+    ).deep.equals({
       id: 'SEsXNQxGL/D+8/vsBHJgwf7bAK6/OyR2BfescT7u/i4=',
       type: 'wallet:bitcoincash',
       keys: {
@@ -155,7 +155,7 @@ describe('splitWalletInfo', function () {
         },
         'wallet:bitcoin'
       )
-    ).to.deep.equal({
+    ).deep.equals({
       id: 'SEsXNQxGL/D+8/vsBHJgwf7bAK6/OyR2BfescT7u/i4=',
       type: 'wallet:bitcoin',
       keys: {

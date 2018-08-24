@@ -169,8 +169,8 @@ describe('exchange pixie', function () {
       })
     })
 
-    expect(output.plugins.length).to.equal(1)
-    expect(output.plugins[0].exchangeInfo.exchangeName).to.equal('FakeExchange')
+    expect(output.plugins.length).equals(1)
+    expect(output.plugins[0].exchangeInfo.exchangeName).equals('FakeExchange')
   })
 
   it('fetches exchange rates', async function () {
@@ -188,7 +188,7 @@ describe('exchange pixie', function () {
       coreRoot.redux,
       state => state.exchangeCache.rates.pairs.length > 0
     )
-    expect(updateCalled).to.equal(true)
+    expect(updateCalled).equals(true)
 
     const state = coreRoot.redux.getState()
     const rate = getExchangeRate(state, 'BTC', 'iso:EUR', pair => 1)

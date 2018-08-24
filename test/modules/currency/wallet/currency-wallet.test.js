@@ -47,9 +47,9 @@ async function makeFakeCurrencyWallet (store, callbacks) {
 describe('currency wallets', function () {
   it('can be created', function () {
     return makeFakeCurrencyWallet().then(wallet => {
-      expect(wallet.name).to.equal('Fake Wallet')
-      expect(wallet.displayPrivateSeed).to.equal('xpriv')
-      expect(wallet.displayPublicSeed).to.equal('xpub')
+      expect(wallet.name).equals('Fake Wallet')
+      expect(wallet.displayPrivateSeed).equals('xpriv')
+      expect(wallet.displayPublicSeed).equals('xpub')
     })
   })
 
@@ -85,7 +85,7 @@ describe('currency wallets', function () {
     const wallet = await makeFakeCurrencyWallet(store, callbacks)
     let txState = []
     log.assert(['balance TEST 0', 'blockHeight 0', 'progress 0'])
-    expect(wallet.balances).to.deep.equal({ TEST: '0', TOKEN: '0' })
+    expect(wallet.balances).deep.equals({ TEST: '0', TOKEN: '0' })
     const snoozeTimeMs = 251
     await snooze(snoozeTimeMs)
     log.assert(['balance TOKEN 0'])
@@ -93,12 +93,12 @@ describe('currency wallets', function () {
     await snooze(snoozeTimeMs)
     store.dispatch({ type: 'SET_TOKEN_BALANCE', payload: 30 })
     log.assert(['balance TOKEN 30'])
-    expect(wallet.balances).to.deep.equal({ TEST: '0', TOKEN: '30' })
+    expect(wallet.balances).deep.equals({ TEST: '0', TOKEN: '30' })
 
     store.dispatch({ type: 'SET_BLOCK_HEIGHT', payload: 200 })
     log.assert(['blockHeight 200'])
     assert.equal(wallet.getBlockHeight(), 200)
-    expect(wallet.blockHeight).to.equal(200)
+    expect(wallet.blockHeight).equals(200)
 
     await snooze(snoozeTimeMs)
     store.dispatch({ type: 'SET_PROGRESS', payload: 0.123456789 })
@@ -188,7 +188,7 @@ describe('currency wallets', function () {
       currencyCode: 'TEST',
       spendTargets: [{}]
     })
-    expect(maxSpendable).to.equal('50')
+    expect(maxSpendable).equals('50')
 
     const fulfill = () => 'FULFILL'
     const reject = () => 'REJECT'

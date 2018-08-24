@@ -111,11 +111,11 @@ describe('otp', function () {
   it('local login works', async function () {
     const [context] = makeFakeContexts(contextOptions, contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    expect(account.otpKey != null).to.equal(true)
+    expect(account.otpKey != null).equals(true)
     await account.disableOtp()
-    expect(account.otpKey == null).to.equal(true)
+    expect(account.otpKey == null).equals(true)
     await account.enableOtp()
-    expect(account.otpKey != null).to.equal(true)
+    expect(account.otpKey != null).equals(true)
 
     // Can still log in locally:
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -129,7 +129,7 @@ describe('otp', function () {
 
     // Cannot log in remotely:
     await remote.loginWithPIN(fakeUser.username, fakeUser.pin).catch(e => {
-      expect(e.name).to.equal(error.OtpError.name)
+      expect(e.name).equals(error.OtpError.name)
       return context.requestOtpReset(fakeUser.username, e.resetToken)
     })
 
@@ -140,12 +140,12 @@ describe('otp', function () {
 
     // Verify that a reset has been requested:
     const messages1 = await context.fetchLoginMessages()
-    expect(messages1['js test 0'].otpResetPending).to.equal(true)
+    expect(messages1['js test 0'].otpResetPending).equals(true)
 
     // Cancel the reset:
     await account.cancelOtpReset()
     const messages2 = await context.fetchLoginMessages()
-    expect(messages2['js test 0'].otpResetPending).to.equal(false)
+    expect(messages2['js test 0'].otpResetPending).equals(false)
   })
 })
 
@@ -237,12 +237,12 @@ describe('pin', function () {
       .then(ok => Promise.reject(new Error('Should fail')), e => true)
 
     // Change PIN, leaving it disabled:
-    expect(await account.checkPin(fakeUser.pin)).to.equal(true)
+    expect(await account.checkPin(fakeUser.pin)).equals(true)
     await account.changePin({ pin: '4321' })
     await context
       .loginWithPIN(fakeUser.username, fakeUser.pin)
       .then(ok => Promise.reject(new Error('Should fail')), e => true)
-    expect(await account.checkPin('4321')).to.equal(true)
+    expect(await account.checkPin('4321')).equals(true)
 
     // Enable PIN login:
     await account.changePin({ enableLogin: true })
@@ -253,8 +253,8 @@ describe('pin', function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    expect(await account.checkPin(fakeUser.pin)).to.equal(true)
-    expect(await account.checkPin(fakeUser.pin + '!')).to.equal(false)
+    expect(await account.checkPin(fakeUser.pin)).equals(true)
+    expect(await account.checkPin(fakeUser.pin + '!')).equals(false)
   })
 
   it('delete', async function () {
@@ -262,7 +262,7 @@ describe('pin', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.deletePin()
-    expect(await context.pinLoginEnabled(fakeUser.username)).to.equal(false)
+    expect(await context.pinLoginEnabled(fakeUser.username)).equals(false)
   })
 })
 
@@ -307,7 +307,7 @@ describe('recovery2', function () {
       fakeUser.recovery2Questions,
       fakeUser.recovery2Answers
     )
-    expect(account.recoveryKey).to.equal(recovery2Key)
+    expect(account.recoveryKey).equals(recovery2Key)
 
     await Promise.all([
       remote.fetchRecovery2Questions(recovery2Key, fakeUser.username),
@@ -327,10 +327,8 @@ describe('recovery2', function () {
       fakeUser.username,
       fakeUser.recovery2Answers
     )
-    expect(account.recoveryKey).to.equal(
-      base58.stringify(fakeUser.recovery2Key)
-    )
+    expect(account.recoveryKey).equals(base58.stringify(fakeUser.recovery2Key))
     await account.deleteRecovery()
-    expect(account.recoveryKey).to.equal(void 0)
+    expect(account.recoveryKey).equals(void 0)
   })
 })

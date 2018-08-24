@@ -12,7 +12,7 @@ async function simulateRemoteApproval (remote, lobbyId: string) {
   const lobby: EdgeLobby = await account.fetchLobby(lobbyId)
   const { loginRequest } = lobby
   if (!loginRequest) throw new Error('No login request')
-  expect(loginRequest.appId).to.equal('test-child')
+  expect(loginRequest.appId).equals('test-child')
 
   return loginRequest.approve()
 }
