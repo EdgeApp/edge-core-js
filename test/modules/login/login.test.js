@@ -36,11 +36,20 @@ describe('username', function () {
 
   it('remove username from local storage', async function () {
     const [context] = makeFakeContexts(contextOptions)
+
+    expect(await context.listUsernames()).has.lengthOf(1)
+    await context.deleteLocalAccount(fakeUser.username)
+    expect(await context.listUsernames()).has.lengthOf(0)
+  })
+
+  it('cannot remove logged-in users', async function () {
+    const [context] = makeFakeContexts(contextOptions)
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    await context.deleteLocalAccount(fakeUser.username)
-    const list = await context.listUsernames()
-    assert.equal(list.length, 0)
+    await expectRejection(
+      context.deleteLocalAccount(fakeUser.username),
+      'Error: Cannot remove logged-in user'
+    )
   })
 })
 
