@@ -4,9 +4,9 @@ import { combineReducers } from 'redux'
 
 import type { RootAction } from '../../actions.js'
 
-export interface LoginServerState {
-  apiKey: string | null;
-  uri: string;
+export type LoginServerState = {
+  +apiKey: string | null,
+  +uri: string
 }
 
 export default combineReducers({

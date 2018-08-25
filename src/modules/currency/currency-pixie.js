@@ -11,9 +11,9 @@ import type {
 } from './wallet/currency-wallet-pixie.js'
 import walletPixie from './wallet/currency-wallet-pixie.js'
 
-export interface CurrencyOutput {
-  plugins: Array<EdgeCurrencyPlugin>;
-  wallets: { [walletId: string]: CurrencyWalletOutput };
+export type CurrencyOutput = {
+  +plugins: Array<EdgeCurrencyPlugin>,
+  +wallets: { [walletId: string]: CurrencyWalletOutput }
 }
 
 export default combinePixies({

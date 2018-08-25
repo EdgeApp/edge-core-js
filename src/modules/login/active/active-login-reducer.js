@@ -8,21 +8,21 @@ import { hasCurrencyPlugin } from '../../currency/currency-selectors.js'
 import type { RootState } from '../../root-reducer.js'
 import type { WalletInfoMap } from '../login-types.js'
 
-export interface ActiveLoginState {
-  allWalletInfos: WalletInfoMap;
-  currencyWalletIds: Array<string>;
-  activeWalletIds: Array<string>;
-  archivedWalletIds: Array<string>;
-  appId: string;
-  callbacks: EdgeAccountCallbacks;
-  loginKey: Uint8Array;
-  username: string;
+export type ActiveLoginState = {
+  +allWalletInfos: WalletInfoMap,
+  +currencyWalletIds: Array<string>,
+  +activeWalletIds: Array<string>,
+  +archivedWalletIds: Array<string>,
+  +appId: string,
+  +callbacks: EdgeAccountCallbacks,
+  +loginKey: Uint8Array,
+  +username: string
 }
 
-export interface ActiveLoginNext {
-  id: string;
-  root: RootState;
-  +self: ActiveLoginState;
+export type ActiveLoginNext = {
+  +id: string,
+  +root: RootState,
+  +self: ActiveLoginState
 }
 
 const activeLogin = buildReducer({

@@ -8,10 +8,10 @@ import { hashjs } from './external.js'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 
-export interface JsonBox {
-  encryptionType: number;
-  data_base64: string;
-  iv_hex: string;
+export type JsonBox = {
+  encryptionType: number,
+  data_base64: string,
+  iv_hex: string
 }
 
 /**

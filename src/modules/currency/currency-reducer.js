@@ -10,13 +10,13 @@ import currencyWalletReducer from './wallet/currency-wallet-reducer.js'
 
 export type PluginSettings = { [pluginName: string]: Object }
 
-export interface CurrencyState {
-  currencyWalletIds: Array<string>;
-  customTokens: Array<EdgeTokenInfo>;
-  infos: Array<EdgeCurrencyInfo>;
-  pluginsError: Error | null;
-  settings: PluginSettings;
-  wallets: { [walletId: string]: CurrencyWalletState };
+export type CurrencyState = {
+  +currencyWalletIds: Array<string>,
+  +customTokens: Array<EdgeTokenInfo>,
+  +infos: Array<EdgeCurrencyInfo>,
+  +pluginsError: Error | null,
+  +settings: PluginSettings,
+  +wallets: { [walletId: string]: CurrencyWalletState }
 }
 
 export default buildReducer({

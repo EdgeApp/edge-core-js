@@ -10,14 +10,14 @@ import type { WalletInfoMap } from './login-types.js'
 import server from './server/login-server-reducer.js'
 import type { LoginServerState } from './server/login-server-reducer.js'
 
-export interface LoginState {
-  activeLoginIds: Array<string>;
-  appId: string;
-  lastActiveLoginId: string;
-  loginCount: number;
-  logins: { [index: string]: ActiveLoginState };
-  server: LoginServerState;
-  walletInfos: WalletInfoMap;
+export type LoginState = {
+  +activeLoginIds: Array<string>,
+  +appId: string,
+  +lastActiveLoginId: string,
+  +loginCount: number,
+  +logins: { [index: string]: ActiveLoginState },
+  +server: LoginServerState,
+  +walletInfos: WalletInfoMap
 }
 
 export default buildReducer({

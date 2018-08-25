@@ -7,11 +7,11 @@ import type { ApiInput } from '../root.js'
 
 const API_PREFIX = 'https://shapeshift.io'
 
-export interface ShapeshiftReply {
-  deposit: string;
-  depositType: string;
-  withdrawal: string;
-  withdrawalType: string;
+export type ShapeshiftReply = {
+  deposit: string,
+  depositType: string,
+  withdrawal: string,
+  withdrawalType: string
 }
 export type ShapeShiftExactQuoteReply = {
   success: {

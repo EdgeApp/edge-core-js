@@ -106,21 +106,21 @@ export type LoginTree = {
 
 export type AppIdMap = { [walletId: string]: Array<string> }
 
-export interface LoginKit {
-  loginId: string;
-  login: Object;
-  server?: Object;
-  serverMethod?: string;
-  serverPath: string;
-  stash: LoginStash;
+export type LoginKit = {
+  loginId: string,
+  login: Object,
+  server?: Object,
+  serverMethod?: string,
+  serverPath: string,
+  stash: LoginStash
 }
 
 // Helper for defining specific key types.
 // Use `EdgeWalletInfo` for generic wallet infos:
-interface WalletInfo<K = {}> {
-  type: string;
-  id: string;
-  keys: K;
+type WalletInfo<K = {}> = {
+  type: string,
+  id: string,
+  keys: K
 }
 
 export interface StorageKeys {

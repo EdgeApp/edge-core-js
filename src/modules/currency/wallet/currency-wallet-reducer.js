@@ -42,30 +42,30 @@ export type MergedTransaction = {
   networkFee: { [currencyCode: string]: string }
 }
 
-export interface CurrencyWalletState {
-  currencyInfo: EdgeCurrencyInfo;
-  displayPrivateSeed: string | null;
-  displayPublicSeed: string | null;
-  engineFailure: Error | null;
-  fiat: string;
-  fiatLoaded: boolean;
-  files: TxFileJsons;
-  fileNames: TxFileNames;
-  fileNamesLoaded: boolean;
-  sortedTransactions: SortedTransactions;
-  balances: EdgeBalances;
-  height: number;
-  name: string | null;
-  nameLoaded: boolean;
-  walletInfo: EdgeWalletInfo;
-  txids: Array<string>;
-  txs: { [txid: string]: MergedTransaction };
+export type CurrencyWalletState = {
+  +currencyInfo: EdgeCurrencyInfo,
+  +displayPrivateSeed: string | null,
+  +displayPublicSeed: string | null,
+  +engineFailure: Error | null,
+  +fiat: string,
+  +fiatLoaded: boolean,
+  +files: TxFileJsons,
+  +fileNames: TxFileNames,
+  +fileNamesLoaded: boolean,
+  +sortedTransactions: SortedTransactions,
+  +balances: EdgeBalances,
+  +height: number,
+  +name: string | null,
+  +nameLoaded: boolean,
+  +walletInfo: EdgeWalletInfo,
+  +txids: Array<string>,
+  +txs: { [txid: string]: MergedTransaction }
 }
 
-export interface CurrencyWalletNext {
-  id: string;
-  root: RootState;
-  +self: CurrencyWalletState;
+export type CurrencyWalletNext = {
+  +id: string,
+  +root: RootState,
+  +self: CurrencyWalletState
 }
 
 const currencyWalletReducer = buildReducer({
