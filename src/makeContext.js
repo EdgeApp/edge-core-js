@@ -51,7 +51,7 @@ export function makeFakeContexts (
     }
 
     const coreRoot = makeCoreRoot(io, opts[i])
-    return coreRoot.output.contextApi
+    return coreRoot.output.context.api
   })
 }
 
@@ -62,7 +62,7 @@ function makeBrowserContext (opts: EdgeContextOptions): Promise<EdgeContext> {
   const io = makeBrowserIo()
 
   const coreRoot = makeCoreRoot(io, opts)
-  return Promise.resolve(coreRoot.output.contextApi)
+  return Promise.resolve(coreRoot.output.context.api)
 }
 
 /**
@@ -76,7 +76,7 @@ function makeNodeContext (opts: EdgeContextOptions = {}): Promise<EdgeContext> {
   const io = makeNodeIo(path)
 
   const coreRoot = makeCoreRoot(io, opts)
-  return Promise.resolve(coreRoot.output.contextApi)
+  return Promise.resolve(coreRoot.output.context.api)
 }
 
 /**
@@ -87,6 +87,6 @@ function makeReactNativeContext (
 ): Promise<EdgeContext> {
   return makeReactNativeIo().then(io => {
     const coreRoot = makeCoreRoot(io, opts)
-    return coreRoot.output.contextApi
+    return coreRoot.output.context.api
   })
 }
