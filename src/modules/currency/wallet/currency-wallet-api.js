@@ -65,7 +65,7 @@ export function makeCurrencyWalletApi (
   const walletInfo = input.props.selfState.walletInfo
 
   const shapeshiftApi = makeShapeshiftApi(ai)
-  const storageWalletApi = makeStorageWalletApi(ai, walletInfo, {})
+  const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
   const out: EdgeCurrencyWallet = {
     // Data store:

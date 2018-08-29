@@ -6,7 +6,7 @@ import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
-import { applyLoginReply, makeLoginTree } from './login.js'
+import { applyKit, applyLoginReply, makeLoginTree } from './login.js'
 import { fixUsername, loadStash, saveStash } from './loginStore.js'
 
 function recovery2Id (recovery2Key: Uint8Array, username: string) {
@@ -107,6 +107,35 @@ export function getQuestions2 (
     const questions = decrypt(question2Box, recovery2Key)
     return JSON.parse(utf8.stringify(questions))
   })
+}
+
+export async function changeRecovery (
+  ai: ApiInput,
+  accountId: string,
+  questions: Array<string>,
+  answers: Array<string>
+) {
+  const { loginTree, username } = ai.props.state.accounts[accountId]
+
+  const kit = makeRecovery2Kit(ai, loginTree, username, questions, answers)
+  await applyKit(ai, loginTree, kit)
+}
+
+export async function deleteRecovery (ai: ApiInput, accountId: string) {
+  const { loginTree } = ai.props.state.accounts[accountId]
+
+  const kit = {
+    serverMethod: 'DELETE',
+    serverPath: '/v2/login/recovery2',
+    stash: {
+      recovery2Key: void 0
+    },
+    login: {
+      recovery2Key: void 0
+    },
+    loginId: loginTree.loginId
+  }
+  await applyKit(ai, loginTree, kit)
 }
 
 /**

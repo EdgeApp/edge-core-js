@@ -7,7 +7,7 @@ import type { ApiInput } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { authRequest } from './authServer.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
-import { applyLoginReply, makeLoginTree, syncLogin } from './login.js'
+import { applyKit, applyLoginReply, makeLoginTree, syncLogin } from './login.js'
 import {
   fixUsername,
   hashUsername,
@@ -108,6 +108,17 @@ export async function loginPassword (
   }
 }
 
+export async function changePassword (
+  ai: ApiInput,
+  accountId: string,
+  password: string
+) {
+  const { loginTree, username } = ai.props.state.accounts[accountId]
+
+  const kit = await makePasswordKit(ai, loginTree, username, password)
+  await applyKit(ai, loginTree, kit)
+}
+
 /**
  * Returns true if the given password is correct.
  */
@@ -158,6 +169,32 @@ export function checkPasswordRules (password: string) {
       password.length >= 16 ||
       !(tooShort || noNumber || noUpperCase || noLowerCase)
   }
+}
+
+export async function deletePassword (ai: ApiInput, accountId: string) {
+  const { loginTree } = ai.props.state.accounts[accountId]
+
+  const kit: LoginKit = {
+    serverMethod: 'DELETE',
+    serverPath: '/v2/login/password',
+    stash: {
+      passwordAuthSnrp: void 0,
+      passwordBox: void 0,
+      passwordKeySnrp: void 0
+    },
+    login: {
+      passwordAuthSnrp: void 0,
+      passwordBox: void 0,
+      passwordKeySnrp: void 0
+    },
+    loginId: loginTree.loginId
+  }
+  // Only remove `passwordAuth` if we have another way to get in:
+  if (loginTree.loginAuth != null) {
+    kit.stash.passwordAuthBox = void 0
+    kit.login.passwordAuthBox = void 0
+  }
+  await applyKit(ai, loginTree, kit)
 }
 
 /**

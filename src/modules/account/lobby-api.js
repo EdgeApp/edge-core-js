@@ -5,14 +5,10 @@ import { wrapObject } from '../../util/api.js'
 import { base64 } from '../../util/encoding.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import type { LobbyRequest } from '../login/lobby.js'
-import { sanitizeLoginStash } from '../login/login.js'
+import { sanitizeLoginStash, syncAccount } from '../login/login.js'
 import { loadStash } from '../login/loginStore.js'
 import type { ApiInput } from '../root.js'
-import {
-  AccountState,
-  ensureAccountExists,
-  findAppLogin
-} from './account-state.js'
+import { ensureAccountExists, findAppLogin } from './account-init.js'
 
 type AppIdInfo = {
   displayName: string,
@@ -50,24 +46,24 @@ export async function fetchAppIdInfo (
  */
 async function approveLoginRequest (
   ai: ApiInput,
+  accountId: string,
   appId: string,
   lobbyId: string,
-  lobbyJson: LobbyRequest,
-  accountState: AccountState
+  lobbyJson: LobbyRequest
 ): Promise<mixed> {
+  const { loginTree, username } = ai.props.state.accounts[accountId]
+
   // Ensure that the login object & account repo exist:
-  await accountState.syncLogin()
-  const loginTree = await ensureAccountExists(ai, accountState.loginTree, appId)
-  const requestedLogin = findAppLogin(loginTree, appId)
+  await syncAccount(ai, accountId)
+
+  const newLoginTree = await ensureAccountExists(ai, loginTree, appId)
+  const requestedLogin = findAppLogin(newLoginTree, appId)
   if (!requestedLogin) {
     throw new Error('Failed to create the requested login object')
   }
-  if (!accountState.loginTree.username) {
-    throw new Error('Cannot log in: missing username')
-  }
 
   // Create a sanitized login stash object:
-  const stashTree = await loadStash(ai, accountState.loginTree.username)
+  const stashTree = await loadStash(ai, username)
   const loginStash = sanitizeLoginStash(stashTree, appId)
 
   // Send the reply:
@@ -78,11 +74,10 @@ async function approveLoginRequest (
   }
   return sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
     setTimeout(() => {
-      accountState
-        .syncLogin()
+      syncAccount(ai, accountId)
         .then(() => {
           setTimeout(() => {
-            accountState.syncLogin().catch(e => ai.props.onError(e))
+            syncAccount(ai, accountId).catch(e => ai.props.onError(e))
           }, 20000)
           return void 0
         })
@@ -97,8 +92,8 @@ async function approveLoginRequest (
  */
 export async function makeLobbyApi (
   ai: ApiInput,
-  lobbyId: string,
-  accountState: AccountState
+  accountId: string,
+  lobbyId: string
 ): Promise<EdgeLobby> {
   // Look up the lobby on the server:
   const lobbyJson: LobbyRequest = await fetchLobbyRequest(ai, lobbyId)
@@ -116,7 +111,7 @@ export async function makeLobbyApi (
       displayName,
       displayImageUrl,
       approve (): Promise<mixed> {
-        return approveLoginRequest(ai, appId, lobbyId, lobbyJson, accountState)
+        return approveLoginRequest(ai, accountId, appId, lobbyId, lobbyJson)
       }
     }
     loginRequest = wrapObject('LoginRequest', rawLoginRequest)

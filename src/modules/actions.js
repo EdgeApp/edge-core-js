@@ -4,7 +4,8 @@ import type {
   EdgeAccountCallbacks,
   EdgeCurrencyInfo,
   EdgeTokenInfo,
-  EdgeWalletInfoFull
+  EdgeWalletInfo,
+  EdgeWalletStates
 } from '../edge-core-index.js'
 import type { PluginSettings } from './currency/currency-reducer.js'
 import type {
@@ -19,13 +20,36 @@ import type {
 } from './storage/storage-reducer.js'
 
 /**
+ * The account fires this when the user sorts or archives wallets.
+ */
+export type AccountChangedWalletStates = {
+  type: 'ACCOUNT_CHANGED_WALLET_STATES',
+  payload: {
+    accountId: string,
+    walletStates: EdgeWalletStates
+  }
+}
+
+/**
  * The account fires this when it loads its keys from disk.
  */
 export type AccountKeysLoadedAction = {
   type: 'ACCOUNT_KEYS_LOADED',
   payload: {
     accountId: string,
-    walletInfos: Array<EdgeWalletInfoFull>
+    legacyWalletInfos: Array<EdgeWalletInfo>,
+    walletStates: EdgeWalletStates
+  }
+}
+
+/**
+ * The account encountered an error when initializing itself.
+ */
+export type AccountLoadFailed = {
+  type: 'ACCOUNT_LOAD_FAILED',
+  payload: {
+    accountId: string,
+    error: Error
   }
 }
 
@@ -231,6 +255,8 @@ export type LoginAction = {
     appId: string,
     callbacks: EdgeAccountCallbacks,
     loginKey: Uint8Array,
+    loginType: string,
+    rootLogin: boolean,
     username: string
   }
 }
@@ -299,7 +325,9 @@ export type StorageWalletSynced = {
 }
 
 export type RootAction =
+  | AccountChangedWalletStates
   | AccountKeysLoadedAction
+  | AccountLoadFailed
   | AddedCustomToken
   | ChangedCurrencyPluginSettingAction
   | CurrencyEngineChangedBalance

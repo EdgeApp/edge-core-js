@@ -6,7 +6,12 @@ import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
-import { applyLoginReply, makeLoginTree, searchTree } from './login.js'
+import {
+  applyKits,
+  applyLoginReply,
+  makeLoginTree,
+  searchTree
+} from './login.js'
 import { fixUsername, loadStash, saveStash } from './loginStore.js'
 
 function pin2Id (pin2Key: Uint8Array, username: string) {
@@ -88,6 +93,36 @@ export async function loginPin2 (
   return makeLoginTree(stashTree, loginKey, appIdFound)
 }
 
+export async function changePin (
+  ai: ApiInput,
+  accountId: string,
+  pin: string | void,
+  enableLogin: boolean | void
+) {
+  const { loginTree, username } = ai.props.state.accounts[accountId]
+
+  // Figure out defaults:
+  if (enableLogin == null) {
+    enableLogin =
+      loginTree.pin2Key != null || (pin != null && loginTree.pin == null)
+  }
+  if (pin == null) pin = loginTree.pin
+
+  // We cannot enable PIN login if we don't know the PIN:
+  if (pin == null) {
+    if (!enableLogin) {
+      // But we can disable PIN login by just deleting it entirely:
+      return applyKits(ai, loginTree, makeDeletePin2Kits(loginTree))
+    }
+    throw new Error(
+      'Please change your PIN in the settings area above before enabling.'
+    )
+  }
+
+  const kits = makeChangePin2Kits(ai, loginTree, username, pin, enableLogin)
+  await applyKits(ai, loginTree, kits)
+}
+
 /**
  * Returns true if the given pin is correct.
  */
@@ -104,6 +139,13 @@ export async function checkPin2 (ai: ApiInput, login: LoginTree, pin: string) {
     good => true,
     bad => false
   )
+}
+
+export async function deletePin (ai: ApiInput, accountId: string) {
+  const { loginTree } = ai.props.state.accounts[accountId]
+
+  const kits = makeDeletePin2Kits(loginTree)
+  await applyKits(ai, loginTree, kits)
 }
 
 /**

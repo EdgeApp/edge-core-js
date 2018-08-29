@@ -340,6 +340,29 @@ export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
 }
 
 /**
+ * Applies an array of kits to a login, one after another.
+ * We can't use `Promise.all`, since `applyKit` doesn't handle
+ * parallelism correctly.
+ */
+export function applyKits (
+  ai: ApiInput,
+  loginTree: LoginTree,
+  kits: Array<LoginKit>
+): Promise<mixed> {
+  if (!kits.length) return Promise.resolve()
+
+  const [first, ...rest] = kits
+  return applyKit(ai, loginTree, first).then(loginTree =>
+    applyKits(ai, loginTree, rest)
+  )
+}
+
+export async function syncAccount (ai: ApiInput, accountId: string) {
+  const { login, loginTree } = ai.props.state.accounts[accountId]
+  return syncLogin(ai, loginTree, login)
+}
+
+/**
  * Refreshes a login with data from the server.
  */
 export function syncLogin (

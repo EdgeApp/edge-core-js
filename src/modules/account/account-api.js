@@ -3,7 +3,6 @@
 import type {
   DiskletFolder,
   EdgeAccount,
-  EdgeAccountCallbacks,
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyToolsMap,
   EdgeCurrencyWallet,
@@ -19,52 +18,46 @@ import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
-import { findFirstKey, makeKeysKit, makeStorageKeyInfo } from '../login/keys.js'
-import type { LoginTree } from '../login/login-types.js'
-import { checkPassword } from '../login/password.js'
-import { checkPin2 } from '../login/pin2.js'
+import {
+  createCurrencyWallet,
+  findFirstKey,
+  listSplittableWalletTypes,
+  makeKeysKit,
+  makeStorageKeyInfo,
+  splitWalletInfo
+} from '../login/keys.js'
+import { applyKit } from '../login/login.js'
+import { cancelOtpReset, disableOtp, enableOtp } from '../login/otp.js'
+import {
+  changePassword,
+  checkPassword,
+  deletePassword
+} from '../login/password.js'
+import { changePin, checkPin2, deletePin } from '../login/pin2.js'
+import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
 import type { ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
-import { AccountState, makeAccountState } from './account-state.js'
+import { changeWalletStates } from './account-files.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
 
 /**
- * Creates an `Account` API object.
- */
-export function makeAccount (
-  ai: ApiInput,
-  appId: string,
-  loginTree: LoginTree,
-  loginType: string = '',
-  callbacks: EdgeAccountCallbacks = {}
-) {
-  return makeAccountState(ai, appId, loginTree, callbacks).then(state =>
-    wrapObject('Account', makeAccountApi(state, loginType, callbacks))
-  )
-}
-
-/**
  * Creates an unwrapped account API object around an account state object.
  */
-function makeAccountApi (
-  state: AccountState,
-  loginType: string,
-  callbacks: EdgeAccountCallbacks
+export function makeAccountApi (
+  ai: ApiInput,
+  accountId: string,
+  currencyTools: EdgeCurrencyToolsMap
 ): EdgeAccount {
-  const ai: ApiInput = state.ai
-  const { accountId, accountWalletInfo } = state
+  const selfState = () => ai.props.state.accounts[accountId]
+  const { accountWalletInfo, loginType } = selfState()
 
   const exchangeCache = makeExchangeCache(ai)
-  const dataStore = makeDataStoreApi(ai, state)
+  const dataStore = makeDataStoreApi(ai, accountId)
   const pluginData = makePluginDataApi(dataStore)
-  const storageWalletApi = makeStorageWalletApi(
-    ai,
-    accountWalletInfo,
-    callbacks
-  )
+  const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
 
-  const rawAccount: EdgeAccount = {
+  const out: EdgeAccount = {
     // Data store:
     get id (): string {
       return storageWalletApi.id
@@ -87,27 +80,29 @@ function makeAccountApi (
 
     // Basic login information:
     get appId (): string {
-      return state.login.appId
+      return selfState().login.appId
     },
     get loggedIn (): boolean {
-      return state.loginTree != null
+      return selfState() != null
     },
     get loginKey (): string {
-      return base58.stringify(state.login.loginKey)
+      return base58.stringify(selfState().login.loginKey)
     },
     get recoveryKey (): string | void {
-      return state.login.recovery2Key != null
-        ? base58.stringify(state.login.recovery2Key)
+      const { login } = selfState()
+      return login.recovery2Key != null
+        ? base58.stringify(login.recovery2Key)
         : void 0
     },
     get username (): string {
-      if (!state.loginTree.username) throw new Error('Missing username')
-      return state.loginTree.username
+      const { loginTree } = selfState()
+      if (!loginTree.username) throw new Error('Missing username')
+      return loginTree.username
     },
 
     // Speciality API's:
     get currencyTools (): EdgeCurrencyToolsMap {
-      return state.currencyTools
+      return currencyTools
     },
     get exchangeCache (): EdgeExchangeCache {
       return exchangeCache
@@ -121,7 +116,8 @@ function makeAccountApi (
 
     // What login method was used?
     get edgeLogin (): boolean {
-      return state.loginTree.loginKey == null
+      const { loginTree } = selfState()
+      return loginTree.loginKey == null
     },
     keyLogin: loginType === 'keyLogin',
     newAccount: loginType === 'newAccount',
@@ -131,86 +127,96 @@ function makeAccountApi (
 
     // Change or create credentials:
     changePassword (password: string): Promise<mixed> {
-      return state.changePassword(password).then(() => {})
+      return changePassword(ai, accountId, password).then(() => {})
     },
     changePin (opts: {
       pin?: string, // We keep the existing PIN if unspecified
       enableLogin?: boolean // We default to true if unspecified
     }): Promise<string> {
       const { pin, enableLogin } = opts
-      return state.changePin(pin, enableLogin).then(() => {
-        return state.login.pin2Key ? base58.stringify(state.login.pin2Key) : ''
+      return changePin(ai, accountId, pin, enableLogin).then(() => {
+        const { login } = selfState()
+        return login.pin2Key ? base58.stringify(login.pin2Key) : ''
       })
     },
     changeRecovery (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
-      return state.changeRecovery(questions, answers).then(() => {
-        if (!state.loginTree.recovery2Key) {
+      return changeRecovery(ai, accountId, questions, answers).then(() => {
+        const { loginTree } = selfState()
+        if (!loginTree.recovery2Key) {
           throw new Error('Missing recoveryKey')
         }
-        return base58.stringify(state.loginTree.recovery2Key)
+        return base58.stringify(loginTree.recovery2Key)
       })
     },
 
     // Verify existing credentials:
     checkPassword (password: string): Promise<boolean> {
-      return checkPassword(ai, state.loginTree, password)
+      const { loginTree } = selfState()
+      return checkPassword(ai, loginTree, password)
     },
     checkPin (pin: string): Promise<boolean> {
+      const { login, loginTree } = selfState()
+
       // Try to check the PIN locally, then fall back on the server:
-      return state.login.pin != null
-        ? Promise.resolve(pin === state.login.pin)
-        : checkPin2(ai, state.loginTree, pin)
+      return login.pin != null
+        ? Promise.resolve(pin === login.pin)
+        : checkPin2(ai, loginTree, pin)
     },
 
     // Remove credentials:
     deletePassword (): Promise<mixed> {
-      return state.deletePassword().then(() => {})
+      return deletePassword(ai, accountId).then(() => {})
     },
     deletePin (): Promise<mixed> {
-      return state.deletePin().then(() => {})
+      return deletePin(ai, accountId).then(() => {})
     },
     deleteRecovery (): Promise<mixed> {
-      return state.deleteRecovery().then(() => {})
+      return deleteRecovery(ai, accountId).then(() => {})
     },
 
     // OTP:
     get otpKey (): string | void {
-      return state.login.otpTimeout != null ? state.login.otpKey : void 0
+      const { login } = selfState()
+      return login.otpTimeout != null ? login.otpKey : void 0
     },
     get otpResetDate (): string | void {
-      return state.login.otpResetDate
+      const { login } = selfState()
+      return login.otpResetDate
     },
     cancelOtpReset (): Promise<mixed> {
-      return state.cancelOtpReset().then(() => {})
+      return cancelOtpReset(ai, accountId).then(() => {})
     },
     enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<mixed> {
-      return state.enableOtp(timeout).then(() => {})
+      return enableOtp(ai, accountId, timeout).then(() => {})
     },
     disableOtp (): Promise<mixed> {
-      return state.disableOtp().then(() => {})
+      return disableOtp(ai, accountId).then(() => {})
     },
 
     // Edge login approval:
     fetchLobby (lobbyId: string): Promise<EdgeLobby> {
-      return makeLobbyApi(ai, lobbyId, state)
+      return makeLobbyApi(ai, accountId, lobbyId)
     },
 
     // Login management:
     logout (): Promise<mixed> {
-      return state.logout()
+      ai.props.dispatch({ type: 'LOGOUT', payload: { accountId } })
+      return Promise.resolve()
     },
 
     // Master wallet list:
     get allKeys (): Array<EdgeWalletInfoFull> {
-      return state.allKeys
+      return ai.props.state.accounts[accountId].allWalletInfosFull
     },
     changeWalletStates (walletStates: EdgeWalletStates): Promise<mixed> {
-      return state.changeWalletStates(walletStates)
+      return changeWalletStates(ai, accountId, walletStates)
     },
     createWallet (type: string, keys: any): Promise<string> {
+      const { login, loginTree } = selfState()
+
       if (keys == null) {
         // Use the currency plugin to create the keys:
         const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
@@ -218,28 +224,28 @@ function makeAccountApi (
       }
 
       const walletInfo = makeStorageKeyInfo(ai, type, keys)
-      const kit = makeKeysKit(ai, state.login, walletInfo)
-      return state.applyKit(kit).then(() => walletInfo.id)
+      const kit = makeKeysKit(ai, login, walletInfo)
+      return applyKit(ai, loginTree, kit).then(() => walletInfo.id)
     },
     '@getFirstWalletInfo': { sync: true },
     getFirstWalletInfo (type: string): ?EdgeWalletInfo {
-      const allKeys: any = state.allKeys // WalletInfoFull -> WalletInfo
+      const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
       return findFirstKey(allKeys, type)
     },
     '@getWalletInfo': { sync: true },
     getWalletInfo (id: string): ?EdgeWalletInfo {
-      const allKeys: any = state.allKeys // WalletInfoFull -> WalletInfo
+      const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
       return allKeys.find(info => info.id === id)
     },
     '@listWalletIds': { sync: true },
     listWalletIds (): Array<string> {
-      return state.login.keyInfos.map(info => info.id)
+      return this.allKeys.map(info => info.id)
     },
     splitWalletInfo (walletId: string, newWalletType: string): Promise<string> {
-      return state.splitWalletInfo(walletId, newWalletType)
+      return splitWalletInfo(ai, accountId, walletId, newWalletType)
     },
     listSplittableWalletTypes (walletId: string): Promise<Array<string>> {
-      return state.listSplittableWalletTypes(walletId)
+      return listSplittableWalletTypes(ai, accountId, walletId)
     },
 
     // Currency wallets:
@@ -251,7 +257,7 @@ function makeAccountApi (
     },
     get currencyWallets (): { [walletId: string]: EdgeCurrencyWallet } {
       const allIds = ai.props.state.currency.currencyWalletIds
-      const selfState = ai.props.state.accounts[state.accountId]
+      const selfState = ai.props.state.accounts[accountId]
       const myIds = allIds.filter(id => id in selfState.allWalletInfos)
 
       const out = {}
@@ -266,9 +272,9 @@ function makeAccountApi (
       type: string,
       opts?: EdgeCreateCurrencyWalletOptions = {}
     ): Promise<EdgeCurrencyWallet> {
-      return state.createCurrencyWallet(type, opts)
+      return createCurrencyWallet(ai, accountId, type, opts)
     }
   }
 
-  return rawAccount
+  return wrapObject('Account', out)
 }
