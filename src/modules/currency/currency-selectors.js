@@ -105,7 +105,7 @@ export function waitForCurrencyWallet (
       throw props.state.currency.wallets[walletId].engineFailure
     }
 
-    // Return the context if that exists:
+    // Return the API if that exists:
     if (props.output.currency.wallets[walletId]) {
       return props.output.currency.wallets[walletId].api
     }

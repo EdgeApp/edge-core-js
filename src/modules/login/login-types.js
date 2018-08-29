@@ -117,10 +117,10 @@ export type LoginKit = {
 
 // Helper for defining specific key types.
 // Use `EdgeWalletInfo` for generic wallet infos:
-type WalletInfo<K = {}> = {
+type WalletInfo<KeysType = {}> = {
   type: string,
   id: string,
-  keys: K
+  keys: KeysType
 }
 
 export interface StorageKeys {

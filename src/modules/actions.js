@@ -71,7 +71,7 @@ export type CurrencyEngineChangedHeight = {
 }
 
 /**
- * Called when a currency engine fires the onTransactionsChanged callback.
+ * Called when a currency engine returns the display private & public seeds.
  */
 export type CurrencyEngineChangedSeeds = {
   type: 'CURRENCY_ENGINE_CHANGED_SEEDS',

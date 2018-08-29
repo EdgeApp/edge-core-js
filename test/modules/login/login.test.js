@@ -242,7 +242,7 @@ describe('pin', function () {
     await account.changePin({ enableLogin: false })
     await expectRejection(
       context.loginWithPIN(fakeUser.username, fakeUser.pin),
-      'Error: No PIN set locally for this account'
+      'Error: PIN login is not enabled for this account on this device'
     )
 
     // Change PIN, leaving it disabled:
@@ -250,7 +250,7 @@ describe('pin', function () {
     await account.changePin({ pin: '4321' })
     await expectRejection(
       context.loginWithPIN(fakeUser.username, fakeUser.pin),
-      'Error: No PIN set locally for this account'
+      'Error: PIN login is not enabled for this account on this device'
     )
     expect(await account.checkPin('4321')).equals(true)
 
