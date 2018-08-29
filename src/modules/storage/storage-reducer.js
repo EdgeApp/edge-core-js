@@ -64,7 +64,7 @@ const storageWalletReducer = combineReducers({
 export default function storageWalletsReducer (
   state: StorageWalletsState = {},
   action: RootAction
-) {
+): StorageWalletsState {
   switch (action.type) {
     case 'STORAGE_WALLET_ADDED': {
       const { id, initialState } = action.payload

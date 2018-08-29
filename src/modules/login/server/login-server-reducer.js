@@ -10,16 +10,13 @@ export type LoginServerState = {
 }
 
 export default combineReducers({
-  apiKey (state: string | null = null, action: RootAction): string | null {
+  apiKey (state = null, action: RootAction): string | null {
     return action.type === 'INIT' && action.payload.apiKey
       ? action.payload.apiKey
       : state
   },
 
-  uri (
-    state: string = 'https://auth.airbitz.co/api',
-    action: RootAction
-  ): string {
+  uri (state = 'https://auth.airbitz.co/api', action: RootAction): string {
     return action.type === 'INIT' && action.payload.authServer
       ? action.payload.authServer
       : state
