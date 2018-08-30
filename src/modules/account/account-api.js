@@ -14,7 +14,6 @@ import type {
   EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../edge-core-index.js'
-import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
@@ -268,5 +267,5 @@ export function makeAccountApi (
     }
   }
 
-  return wrapObject('Account', out)
+  return out
 }

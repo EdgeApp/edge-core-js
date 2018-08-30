@@ -10,7 +10,6 @@ import type {
   EdgePasswordRules,
   EdgePendingEdgeLogin
 } from '../../edge-core-index.js'
-import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
@@ -36,7 +35,7 @@ export function makeContextApi (ai: ApiInput) {
 
   const shapeshiftApi = makeShapeshiftApi(ai)
 
-  const rawContext: EdgeContext = {
+  const out: EdgeContext = {
     appId,
 
     get _internalEdgeStuff (): EdgeInternalStuff {
@@ -230,5 +229,5 @@ export function makeContextApi (ai: ApiInput) {
     }
   }
 
-  return wrapObject('Context', rawContext)
+  return out
 }

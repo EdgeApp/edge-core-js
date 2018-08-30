@@ -24,7 +24,6 @@ import type {
   EdgeTransaction
 } from '../../../edge-core-index.js'
 import { SameCurrencyError } from '../../../error.js'
-import { wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
@@ -540,7 +539,7 @@ export function makeCurrencyWalletApi (
     }
   }
 
-  return wrapObject('CurrencyWallet', out)
+  return out
 }
 
 function fixMetadata (metadata: EdgeMetadata, fiat: string) {

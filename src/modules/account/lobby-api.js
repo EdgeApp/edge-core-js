@@ -1,7 +1,6 @@
 // @flow
 
 import type { EdgeLobby, EdgeLoginRequest } from '../../edge-core-index.js'
-import { wrapObject } from '../../util/api.js'
 import { base64 } from '../../util/encoding.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import type { LobbyRequest } from '../login/lobby.js'
@@ -106,7 +105,7 @@ export async function makeLobbyApi (
     const { displayName, displayImageUrl } = await fetchAppIdInfo(ai, appId)
 
     // Make the API:
-    const rawLoginRequest: EdgeLoginRequest = {
+    loginRequest = {
       appId,
       displayName,
       displayImageUrl,
@@ -114,11 +113,10 @@ export async function makeLobbyApi (
         return approveLoginRequest(ai, accountId, appId, lobbyId, lobbyJson)
       }
     }
-    loginRequest = wrapObject('LoginRequest', rawLoginRequest)
   }
 
   const lobbyApi: EdgeLobby = {
     loginRequest
   }
-  return wrapObject('Lobby', lobbyApi)
+  return lobbyApi
 }
