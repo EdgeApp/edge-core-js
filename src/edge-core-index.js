@@ -512,6 +512,7 @@ export type EdgeCurrencyWallet = {
   // Chain state:
   +balances: EdgeBalances,
   +blockHeight: number,
+  +syncRatio: number,
 
   // Running state:
   startEngine(): Promise<mixed>,

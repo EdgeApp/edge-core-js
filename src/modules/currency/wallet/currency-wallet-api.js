@@ -126,6 +126,10 @@ export function makeCurrencyWalletApi (
       return input.props.selfState.height
     },
 
+    get syncRatio (): number {
+      return input.props.selfState.syncRatio
+    },
+
     // Running state:
     startEngine (): Promise<mixed> {
       return engine.startEngine()

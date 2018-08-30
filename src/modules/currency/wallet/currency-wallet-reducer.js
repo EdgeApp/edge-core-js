@@ -53,6 +53,7 @@ export type CurrencyWalletState = {
   +fileNames: TxFileNames,
   +fileNamesLoaded: boolean,
   +sortedTransactions: SortedTransactions,
+  +syncRatio: number,
   +balances: EdgeBalances,
   +height: number,
   +name: string | null,
@@ -165,6 +166,12 @@ const currencyWalletReducer = buildReducer({
 
   fileNamesLoaded (state = false, action: RootAction): boolean {
     return action.type === 'CURRENCY_WALLET_FILE_NAMES_LOADED' ? true : state
+  },
+
+  syncRatio (state = 0, action: RootAction): number {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO'
+      ? action.payload.ratio
+      : state
   },
 
   balances (state = {}, action: RootAction): EdgeBalances {
