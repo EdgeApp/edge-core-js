@@ -53,7 +53,7 @@ function makeAccountApi (
   callbacks: EdgeAccountCallbacks
 ): EdgeAccount {
   const ai: ApiInput = state.ai
-  const { activeLoginId, accountWalletInfo } = state
+  const { accountId, accountWalletInfo } = state
 
   const exchangeCache = makeExchangeCache(ai)
   const dataStore = makeDataStoreApi(ai, state)
@@ -244,14 +244,14 @@ function makeAccountApi (
 
     // Currency wallets:
     get activeWalletIds (): Array<string> {
-      return ai.props.state.login.logins[activeLoginId].activeWalletIds
+      return ai.props.state.accounts[accountId].activeWalletIds
     },
     get archivedWalletIds (): Array<string> {
-      return ai.props.state.login.logins[activeLoginId].archivedWalletIds
+      return ai.props.state.accounts[accountId].archivedWalletIds
     },
     get currencyWallets (): { [walletId: string]: EdgeCurrencyWallet } {
       const allIds = ai.props.state.currency.currencyWalletIds
-      const selfState = ai.props.state.login.logins[state.activeLoginId]
+      const selfState = ai.props.state.accounts[state.accountId]
       const myIds = allIds.filter(id => id in selfState.allWalletInfos)
 
       const out = {}

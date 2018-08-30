@@ -23,7 +23,7 @@ import type {
 export type AccountKeysLoadedAction = {
   type: 'ACCOUNT_KEYS_LOADED',
   payload: {
-    activeLoginId: string,
+    accountId: string,
     walletInfos: Array<EdgeWalletInfoFull>
   }
 }
@@ -239,7 +239,7 @@ export type LoginAction = {
  */
 export type LogoutAction = {
   type: 'LOGOUT',
-  payload: { activeLoginId: string }
+  payload: { accountId: string }
 }
 
 /**

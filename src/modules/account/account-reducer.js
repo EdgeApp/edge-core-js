@@ -2,13 +2,13 @@
 
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
-import type { EdgeAccountCallbacks } from '../../../edge-core-index.js'
-import type { RootAction } from '../../actions.js'
-import { hasCurrencyPlugin } from '../../currency/currency-selectors.js'
-import type { RootState } from '../../root-reducer.js'
-import type { WalletInfoMap } from '../login-types.js'
+import type { EdgeAccountCallbacks } from '../../edge-core-index.js'
+import type { RootAction } from '../actions.js'
+import { hasCurrencyPlugin } from '../currency/currency-selectors.js'
+import type { WalletInfoMap } from '../login/login-types.js'
+import type { RootState } from '../root-reducer.js'
 
-export type ActiveLoginState = {
+export type AccountState = {
   +allWalletInfos: WalletInfoMap,
   +currencyWalletIds: Array<string>,
   +activeWalletIds: Array<string>,
@@ -19,13 +19,13 @@ export type ActiveLoginState = {
   +username: string
 }
 
-export type ActiveLoginNext = {
+export type AccountNext = {
   +id: string,
   +root: RootState,
-  +self: ActiveLoginState
+  +self: AccountState
 }
 
-const activeLogin = buildReducer({
+const account = buildReducer({
   allWalletInfos (state = {}, action: RootAction): WalletInfoMap {
     if (action.type === 'ACCOUNT_KEYS_LOADED') {
       const out = {}
@@ -38,8 +38,8 @@ const activeLogin = buildReducer({
   },
 
   currencyWalletIds: memoizeReducer(
-    (next: ActiveLoginNext) => next.self.allWalletInfos,
-    (next: ActiveLoginNext) => next.root.currency.infos,
+    (next: AccountNext) => next.self.allWalletInfos,
+    (next: AccountNext) => next.root.currency.infos,
     (allWalletInfos, currencyInfos): Array<string> =>
       Object.keys(allWalletInfos)
         .filter(walletId => {
@@ -54,15 +54,15 @@ const activeLogin = buildReducer({
   ),
 
   activeWalletIds: memoizeReducer(
-    (next: ActiveLoginNext) => next.self.allWalletInfos,
-    (next: ActiveLoginNext) => next.self.currencyWalletIds,
+    (next: AccountNext) => next.self.allWalletInfos,
+    (next: AccountNext) => next.self.currencyWalletIds,
     (walletInfos, ids): Array<string> =>
       ids.filter(id => !walletInfos[id].archived)
   ),
 
   archivedWalletIds: memoizeReducer(
-    (next: ActiveLoginNext) => next.self.allWalletInfos,
-    (next: ActiveLoginNext) => next.self.currencyWalletIds,
+    (next: AccountNext) => next.self.allWalletInfos,
+    (next: AccountNext) => next.self.currencyWalletIds,
     (walletInfos, ids): Array<string> =>
       ids.filter(id => walletInfos[id].archived)
   ),
@@ -85,19 +85,16 @@ const activeLogin = buildReducer({
 })
 
 export default filterReducer(
-  activeLogin,
-  (action: RootAction, next: ActiveLoginNext) => {
+  account,
+  (action: RootAction, next: AccountNext) => {
     if (
       action.type === 'ACCOUNT_KEYS_LOADED' &&
-      action.payload.activeLoginId === next.id
+      action.payload.accountId === next.id
     ) {
       return action
     }
 
-    if (
-      action.type === 'LOGIN' &&
-      next.root.login.lastActiveLoginId === next.id
-    ) {
+    if (action.type === 'LOGIN' && next.root.lastAccountId === next.id) {
       return action
     }
   }

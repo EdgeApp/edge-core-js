@@ -127,7 +127,7 @@ export class AccountState {
   login: LoginTree
   legacyWalletInfos: Array<EdgeWalletInfo>
   walletStates: EdgeWalletStates
-  activeLoginId: string
+  accountId: string
   disposer: any
 
   constructor (
@@ -164,7 +164,7 @@ export class AccountState {
         loginKey: this.login.loginKey
       }
     })
-    this.activeLoginId = ai.props.state.login.lastActiveLoginId
+    this.accountId = ai.props.state.lastAccountId
 
     this.currencyTools = {}
     const currencySettingsFile = getStorageWalletFolder(
@@ -182,10 +182,10 @@ export class AccountState {
     // While it would make logical sense to do this now,
     // starting the wallet engines is too expensive,
     // so we allow the data sync to trigger the work later:
-    // const { activeLoginId } = this
+    // const { accountId } = this
     // dispatch({
     //   type: 'ACCOUNT_KEYS_LOADED',
-    //   payload: { activeLoginId, walletInfos: this.allKeys }
+    //   payload: { accountId, walletInfos: this.allKeys }
     // })
 
     this.startTimer()
@@ -218,9 +218,9 @@ export class AccountState {
   }
 
   async logout () {
-    const { activeLoginId } = this
+    const { accountId } = this
     const { dispatch } = this.ai.props
-    dispatch({ type: 'LOGOUT', payload: { activeLoginId } })
+    dispatch({ type: 'LOGOUT', payload: { accountId } })
 
     // Shut down:
     dispatch(this.disposer)
@@ -418,10 +418,10 @@ export class AccountState {
       this.login = findAppLogin(loginTree, this.appId)
 
       // Update the key list in case something changed:
-      const { activeLoginId, ai } = this
+      const { accountId, ai } = this
       ai.props.dispatch({
         type: 'ACCOUNT_KEYS_LOADED',
-        payload: { activeLoginId, walletInfos: this.allKeys }
+        payload: { accountId, walletInfos: this.allKeys }
       })
 
       return this
@@ -451,10 +451,10 @@ export class AccountState {
       this.walletStates = walletStates
 
       // Update the key list in case something changed:
-      const { activeLoginId, ai } = this
+      const { accountId, ai } = this
       ai.props.dispatch({
         type: 'ACCOUNT_KEYS_LOADED',
-        payload: { activeLoginId, walletInfos: this.allKeys }
+        payload: { accountId, walletInfos: this.allKeys }
       })
 
       if (this.callbacks.onKeyListChanged) {
@@ -465,7 +465,7 @@ export class AccountState {
   }
 
   async reloadWalletStates () {
-    const { ai, accountWalletInfo, activeLoginId } = this
+    const { ai, accountWalletInfo, accountId } = this
     const { walletInfos, walletStates } = await loadAllWalletStates(
       ai.props.state,
       accountWalletInfo.id
@@ -476,7 +476,7 @@ export class AccountState {
     const { dispatch } = ai.props
     dispatch({
       type: 'ACCOUNT_KEYS_LOADED',
-      payload: { activeLoginId, walletInfos: this.allKeys }
+      payload: { accountId, walletInfos: this.allKeys }
     })
 
     return this
@@ -489,10 +489,10 @@ export class AccountState {
       this.login = findAppLogin(loginTree, this.appId)
 
       // Update the key list in case something changed:
-      const { activeLoginId, ai } = this
+      const { accountId, ai } = this
       ai.props.dispatch({
         type: 'ACCOUNT_KEYS_LOADED',
-        payload: { activeLoginId, walletInfos: this.allKeys }
+        payload: { accountId, walletInfos: this.allKeys }
       })
 
       return this

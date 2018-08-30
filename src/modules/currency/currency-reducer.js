@@ -22,13 +22,13 @@ export type CurrencyState = {
 export default buildReducer({
   currencyWalletIds (state, action, next: RootState): Array<string> {
     // Optimize the common case:
-    if (next.login.activeLoginIds.length === 1) {
-      const id = next.login.activeLoginIds[0]
-      return next.login.logins[id].activeWalletIds
+    if (next.accountIds.length === 1) {
+      const id = next.accountIds[0]
+      return next.accounts[id].activeWalletIds
     }
 
-    const allIds = next.login.activeLoginIds.map(
-      activeLoginId => next.login.logins[activeLoginId].activeWalletIds
+    const allIds = next.accountIds.map(
+      accountId => next.accounts[accountId].activeWalletIds
     )
     return [].concat(...allIds)
   },

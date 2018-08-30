@@ -52,8 +52,8 @@ export function makeContextApi (ai: ApiInput) {
     deleteLocalAccount (username: string): Promise<mixed> {
       // Safety check:
       const fixedName = fixUsername(username)
-      for (const activeLoginId of ai.props.state.login.activeLoginIds) {
-        if (ai.props.state.login.logins[activeLoginId].username === fixedName) {
+      for (const accountId of ai.props.state.accountIds) {
+        if (ai.props.state.accounts[accountId].username === fixedName) {
           throw new Error('Cannot remove logged-in user')
         }
       }
