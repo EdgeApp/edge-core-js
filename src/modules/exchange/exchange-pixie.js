@@ -8,9 +8,9 @@ import { rejectify } from '../../util/decorators.js'
 import type { RootProps } from '../root.js'
 import type { ExchangePair } from './exchange-reducer.js'
 
-export interface ExchangeOutput {
-  plugins: Array<EdgeExchangePlugin>;
-  update: mixed;
+export type ExchangeOutput = {
+  +plugins: Array<EdgeExchangePlugin>,
+  +update: mixed
 }
 
 export default combinePixies({

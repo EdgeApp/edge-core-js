@@ -10,24 +10,24 @@ import type { WalletInfoMap } from './login-types.js'
 import server from './server/login-server-reducer.js'
 import type { LoginServerState } from './server/login-server-reducer.js'
 
-export interface LoginState {
-  activeLoginIds: Array<string>;
-  appId: string;
-  lastActiveLoginId: string;
-  loginCount: number;
-  logins: { [index: string]: ActiveLoginState };
-  server: LoginServerState;
-  walletInfos: WalletInfoMap;
+export type LoginState = {
+  +activeLoginIds: Array<string>,
+  +appId: string,
+  +lastActiveLoginId: string,
+  +loginCount: number,
+  +logins: { [index: string]: ActiveLoginState },
+  +server: LoginServerState,
+  +walletInfos: WalletInfoMap
 }
 
 export default buildReducer({
-  appId (state: string = '', action: RootAction) {
+  appId (state = '', action: RootAction): string {
     return action.type === 'INIT' && action.payload.appId
       ? action.payload.appId
       : state
   },
 
-  loginCount (state: number = 0, action: RootAction) {
+  loginCount (state = 0, action: RootAction): number {
     return action.type === 'LOGIN' ? state + 1 : state
   },
 
@@ -36,7 +36,7 @@ export default buildReducer({
   },
 
   activeLoginIds (
-    state: Array<string> = [],
+    state = [],
     action: RootAction,
     next: RootState
   ): Array<string> {
@@ -63,7 +63,7 @@ export default buildReducer({
 
   server,
 
-  walletInfos (state, action, next: RootState) {
+  walletInfos (state, action, next: RootState): WalletInfoMap {
     // Optimize the common case:
     if (next.login.activeLoginIds.length === 1) {
       const id = next.login.activeLoginIds[0]

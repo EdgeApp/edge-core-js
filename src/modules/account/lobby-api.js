@@ -13,9 +13,9 @@ import {
   findAppLogin
 } from './account-state.js'
 
-interface AppIdInfo {
-  displayName: string;
-  displayImageUrl?: string;
+type AppIdInfo = {
+  displayName: string,
+  displayImageUrl?: string
 }
 
 /**
