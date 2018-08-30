@@ -5,6 +5,7 @@ import elliptic from 'elliptic'
 import { describe, it } from 'mocha'
 
 import { makeFakeContexts, makeFakeIos } from '../../../src/edge-core-index.js'
+import type { EdgeInternalStuff } from '../../../src/modules/context/internal-api.js'
 import {
   decryptLobbyReply,
   encryptLobbyReply
@@ -28,8 +29,8 @@ describe('edge login lobby', function () {
 
   it('lobby ping-pong', function () {
     const [context1, context2] = makeFakeContexts({}, {})
-    const s1 = (context1: any)._internalEdgeStuff
-    const s2 = (context2: any)._internalEdgeStuff
+    const s1: EdgeInternalStuff = (context1: any).$internalStuff
+    const s2: EdgeInternalStuff = (context2: any).$internalStuff
     const testRequest = { testRequest: 'This is a test' }
     const testReply = { testReply: 'This is a test' }
 

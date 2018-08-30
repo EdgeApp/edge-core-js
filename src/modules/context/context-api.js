@@ -31,16 +31,14 @@ import { EdgeInternalStuff } from './internal-api.js'
 
 export function makeContextApi (ai: ApiInput) {
   const appId = ai.props.state.login.appId
-  const internalApi = new EdgeInternalStuff(ai)
+  const $internalStuff = new EdgeInternalStuff(ai)
 
   const shapeshiftApi = makeShapeshiftApi(ai)
 
   const out: EdgeContext = {
     appId,
 
-    get _internalEdgeStuff (): EdgeInternalStuff {
-      return internalApi
-    },
+    $internalStuff,
 
     '@fixUsername': { sync: true },
     fixUsername (username: string): string {
