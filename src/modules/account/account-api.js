@@ -7,6 +7,7 @@ import type {
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyToolsMap,
   EdgeCurrencyWallet,
+  EdgeDataStore,
   EdgeExchangeCache,
   EdgeLobby,
   EdgePluginData,
@@ -25,8 +26,8 @@ import { checkPin2 } from '../login/pin2.js'
 import type { ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { AccountState, makeAccountState } from './account-state.js'
+import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
-import { makePluginDataApi } from './plugin-data-api.js'
 
 /**
  * Creates an `Account` API object.
@@ -55,7 +56,8 @@ function makeAccountApi (
   const { activeLoginId, accountWalletInfo } = state
 
   const exchangeCache = makeExchangeCache(ai)
-  const pluginData = makePluginDataApi(ai, state)
+  const dataStore = makeDataStoreApi(ai, state)
+  const pluginData = makePluginDataApi(dataStore)
   const storageWalletApi = makeStorageWalletApi(
     ai,
     accountWalletInfo,
@@ -109,6 +111,9 @@ function makeAccountApi (
     },
     get exchangeCache (): EdgeExchangeCache {
       return exchangeCache
+    },
+    get dataStore (): EdgeDataStore {
+      return dataStore
     },
     get pluginData (): EdgePluginData {
       return pluginData
