@@ -59,11 +59,6 @@ function makeThrottledCallback<Arg> (
   let finalCallbackArg: Arg
 
   return (callbackArg: Arg) => {
-    // XXX: Reduce the timeout for our special unit-test wallet:
-    if (walletId === 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=') {
-      throttleRateLimitMs = 200
-    }
-
     if (delayCallback) {
       console.info(`makeThrottledCallback delay, walletId: ${walletId}`)
       // pendingTxs.push(...txArray)
@@ -104,10 +99,6 @@ function makeThrottledTxCallback (
   let pendingTxs: Array<EdgeTransaction> = []
 
   return (txArray: Array<EdgeTransaction>) => {
-    // If this is a unit test, lower throttling to 200ms
-    if (txArray[0].txid.length < 3) {
-      throttleRateLimitMs = 200
-    }
     if (delayCallback) {
       console.info(`throttledTxCallback delay, walletId: ${walletId}`)
       pendingTxs.push(...txArray)
@@ -117,9 +108,7 @@ function makeThrottledTxCallback (
         lastCallbackTime = now
         callback(txArray)
       } else {
-        console.info(
-          console.info(`throttledTxCallback delay, walletId: ${walletId}`)
-        )
+        console.info(`throttledTxCallback delay, walletId: ${walletId}`)
         delayCallback = true
         pendingTxs = txArray
         setTimeout(() => {
@@ -140,6 +129,11 @@ export function makeCurrencyWalletCallbacks (
   input: CurrencyWalletInput
 ): EdgeCurrencyEngineCallbacks {
   const walletId = input.props.id
+
+  // If this is a unit test, lower throttling to 20ms:
+  if (walletId === 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=') {
+    throttleRateLimitMs = 20
+  }
 
   const throtteldOnTxChanged = makeThrottledTxCallback(
     input,
