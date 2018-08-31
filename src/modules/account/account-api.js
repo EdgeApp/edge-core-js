@@ -1,18 +1,21 @@
 // @flow
 
 import type {
+  DiskletFolder,
   EdgeAccount,
   EdgeAccountCallbacks,
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyToolsMap,
   EdgeCurrencyWallet,
+  EdgeDataStore,
+  EdgeExchangeCache,
   EdgeLobby,
   EdgePluginData,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../edge-core-index.js'
-import { copyProperties, wrapObject } from '../../util/api.js'
+import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
@@ -23,8 +26,8 @@ import { checkPin2 } from '../login/pin2.js'
 import type { ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { AccountState, makeAccountState } from './account-state.js'
+import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
-import { makePluginDataApi } from './plugin-data-api.js'
 
 /**
  * Creates an `Account` API object.
@@ -53,9 +56,35 @@ function makeAccountApi (
   const { activeLoginId, accountWalletInfo } = state
 
   const exchangeCache = makeExchangeCache(ai)
-  const pluginData = makePluginDataApi(ai, state)
+  const dataStore = makeDataStoreApi(ai, state)
+  const pluginData = makePluginDataApi(dataStore)
+  const storageWalletApi = makeStorageWalletApi(
+    ai,
+    accountWalletInfo,
+    callbacks
+  )
 
   const rawAccount: EdgeAccount = {
+    // Data store:
+    get id (): string {
+      return storageWalletApi.id
+    },
+    get type (): string {
+      return storageWalletApi.type
+    },
+    get keys (): Object {
+      return storageWalletApi.keys
+    },
+    get folder (): DiskletFolder {
+      return storageWalletApi.folder
+    },
+    get localFolder (): DiskletFolder {
+      return storageWalletApi.localFolder
+    },
+    sync (): Promise<mixed> {
+      return storageWalletApi.sync()
+    },
+
     // Basic login information:
     get appId (): string {
       return state.login.appId
@@ -80,8 +109,11 @@ function makeAccountApi (
     get currencyTools (): EdgeCurrencyToolsMap {
       return state.currencyTools
     },
-    get exchangeCache (): any {
+    get exchangeCache (): EdgeExchangeCache {
       return exchangeCache
+    },
+    get dataStore (): EdgeDataStore {
+      return dataStore
     },
     get pluginData (): EdgePluginData {
       return pluginData
@@ -237,11 +269,6 @@ function makeAccountApi (
       return state.createCurrencyWallet(type, opts)
     }
   }
-
-  copyProperties(
-    rawAccount,
-    makeStorageWalletApi(ai, accountWalletInfo, callbacks)
-  )
 
   return rawAccount
 }

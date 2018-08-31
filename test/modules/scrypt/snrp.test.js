@@ -12,7 +12,7 @@ describe('SNRP calculation', function () {
 
   it('basic functionality', async function () {
     // Typical desktop with JS + V8:
-    expect(calcSnrpForTarget(salt, 32, 2000)).to.deep.equal({
+    expect(calcSnrpForTarget(salt, 32, 2000)).deep.equals({
       salt_hex: saltHex,
       n: 131072,
       r: 8,
@@ -20,7 +20,7 @@ describe('SNRP calculation', function () {
     })
 
     // Insane speeds:
-    expect(calcSnrpForTarget(salt, 1, 2000)).to.deep.equal({
+    expect(calcSnrpForTarget(salt, 1, 2000)).deep.equals({
       salt_hex: saltHex,
       n: 131072,
       r: 8,
@@ -28,7 +28,7 @@ describe('SNRP calculation', function () {
     })
 
     // Infinity:
-    expect(calcSnrpForTarget(salt, 0, 2000)).to.deep.equal({
+    expect(calcSnrpForTarget(salt, 0, 2000)).deep.equals({
       salt_hex: saltHex,
       n: 131072,
       r: 8,

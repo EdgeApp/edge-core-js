@@ -11,11 +11,11 @@ import login from './login/login-reducer.js'
 import storageWallets from './storage/storage-reducer.js'
 import type { StorageWalletsState } from './storage/storage-reducer.js'
 
-export interface RootState {
-  currency: CurrencyState;
-  exchangeCache: ExchangeState;
-  login: LoginState;
-  storageWallets: StorageWalletsState;
+export type RootState = {
+  +currency: CurrencyState,
+  +exchangeCache: ExchangeState,
+  +login: LoginState,
+  +storageWallets: StorageWalletsState
 }
 
 export default buildReducer({

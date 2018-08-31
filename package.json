@@ -1,6 +1,6 @@
 {
   "name": "edge-core-js",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Edge account & wallet management library",
   "keywords": [
     "bitcoin",
@@ -9,7 +9,7 @@
     "key management",
     "security"
   ],
-  "homepage": "https://edgesecure.co",
+  "homepage": "https://edge.app",
   "license": "SEE LICENSE IN LICENSE",
   "author": "Airbitz, Inc.",
   "contributors": [
@@ -32,7 +32,7 @@
   "module": "lib/edge-core-index.es.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:Airbitz/airbitz-core-js.git"
+    "url": "git@github.com:EdgeApp/edge-core-js.git"
   },
   "scripts": {
     "build": "rimraf lib && webpack && rollup -c",
@@ -61,7 +61,7 @@
     "node-fetch": "^2.0.0",
     "redux": "^3.6.0",
     "redux-keto": "^0.3.2",
-    "redux-pixies": "^0.3.4",
+    "redux-pixies": "^0.3.5",
     "regenerator-runtime": "^0.11.1",
     "rfc4648": "^1.1.0",
     "scrypt-js": "^2.0.3",
@@ -69,27 +69,27 @@
     "ws": "^5.1.1"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-eslint": "^8.2.2",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.6",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-regenerator": "^6.26.0",
     "babel-preset-es2015-rollup": "^3.0.0",
     "babel-preset-flow": "^6.23.0",
     "chai": "^4.1.2",
-    "eslint": "4.18.1",
+    "eslint": "5.4.0",
     "eslint-config-standard": "^11.0.0",
-    "eslint-plugin-flowtype": "^2.46.0",
-    "eslint-plugin-import": "^2.9.0",
-    "eslint-plugin-node": "^6.0.0",
-    "eslint-plugin-promise": "^3.4.0",
-    "eslint-plugin-standard": "^3.0.1",
+    "eslint-plugin-flowtype": "^2.50.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^4.0.0",
+    "eslint-plugin-standard": "^3.1.0",
     "flow-bin": "^0.76.0",
     "husky": "^0.14.3",
-    "import-sort-cli": "^4.2.0",
-    "import-sort-parser-babylon": "^4.2.0",
-    "import-sort-style-module": "^4.2.0",
-    "lint-staged": "^7.0.0",
+    "import-sort-cli": "^5.2.0",
+    "import-sort-parser-babylon": "^5.2.0",
+    "import-sort-style-module": "^5.0.0",
+    "lint-staged": "^7.2.2",
     "mocha": "^3.5.0",
     "prettier-eslint-cli": "^4.7.1",
     "rimraf": "^2.6.2",
@@ -99,8 +99,8 @@
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-flow-entry": "^0.2.0",
     "rollup-plugin-multi-entry": "^2.0.2",
-    "source-map-support": "^0.5.3",
-    "updot": "^1.1.4",
+    "source-map-support": "^0.5.9",
+    "updot": "^1.1.7",
     "webpack": "^3.5.3"
   },
   "importSort": {

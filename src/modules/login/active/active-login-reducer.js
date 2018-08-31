@@ -8,25 +8,25 @@ import { hasCurrencyPlugin } from '../../currency/currency-selectors.js'
 import type { RootState } from '../../root-reducer.js'
 import type { WalletInfoMap } from '../login-types.js'
 
-export interface ActiveLoginState {
-  allWalletInfos: WalletInfoMap;
-  currencyWalletIds: Array<string>;
-  activeWalletIds: Array<string>;
-  archivedWalletIds: Array<string>;
-  appId: string;
-  callbacks: EdgeAccountCallbacks;
-  loginKey: Uint8Array;
-  username: string;
+export type ActiveLoginState = {
+  +allWalletInfos: WalletInfoMap,
+  +currencyWalletIds: Array<string>,
+  +activeWalletIds: Array<string>,
+  +archivedWalletIds: Array<string>,
+  +appId: string,
+  +callbacks: EdgeAccountCallbacks,
+  +loginKey: Uint8Array,
+  +username: string
 }
 
-export interface ActiveLoginNext {
-  id: string;
-  root: RootState;
-  +self: ActiveLoginState;
+export type ActiveLoginNext = {
+  +id: string,
+  +root: RootState,
+  +self: ActiveLoginState
 }
 
 const activeLogin = buildReducer({
-  allWalletInfos (state: WalletInfoMap = {}, action: RootAction): WalletInfoMap {
+  allWalletInfos (state = {}, action: RootAction): WalletInfoMap {
     if (action.type === 'ACCOUNT_KEYS_LOADED') {
       const out = {}
       for (const info of action.payload.walletInfos) {
@@ -40,7 +40,7 @@ const activeLogin = buildReducer({
   currencyWalletIds: memoizeReducer(
     (next: ActiveLoginNext) => next.self.allWalletInfos,
     (next: ActiveLoginNext) => next.root.currency.infos,
-    (allWalletInfos, currencyInfos) =>
+    (allWalletInfos, currencyInfos): Array<string> =>
       Object.keys(allWalletInfos)
         .filter(walletId => {
           const info = allWalletInfos[walletId]
@@ -56,28 +56,30 @@ const activeLogin = buildReducer({
   activeWalletIds: memoizeReducer(
     (next: ActiveLoginNext) => next.self.allWalletInfos,
     (next: ActiveLoginNext) => next.self.currencyWalletIds,
-    (walletInfos, ids) => ids.filter(id => !walletInfos[id].archived)
+    (walletInfos, ids): Array<string> =>
+      ids.filter(id => !walletInfos[id].archived)
   ),
 
   archivedWalletIds: memoizeReducer(
     (next: ActiveLoginNext) => next.self.allWalletInfos,
     (next: ActiveLoginNext) => next.self.currencyWalletIds,
-    (walletInfos, ids) => ids.filter(id => walletInfos[id].archived)
+    (walletInfos, ids): Array<string> =>
+      ids.filter(id => walletInfos[id].archived)
   ),
 
-  appId (state: string, action: RootAction) {
+  appId (state, action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.appId : state
   },
 
-  callbacks (state: string, action: RootAction) {
+  callbacks (state, action: RootAction): EdgeAccountCallbacks {
     return action.type === 'LOGIN' ? action.payload.callbacks : state
   },
 
-  loginKey (state: Uint8Array, action: RootAction) {
+  loginKey (state, action: RootAction): Uint8Array {
     return action.type === 'LOGIN' ? action.payload.loginKey : state
   },
 
-  username (state: string, action: RootAction) {
+  username (state, action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
   }
 })

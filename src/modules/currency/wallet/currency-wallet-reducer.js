@@ -42,30 +42,31 @@ export type MergedTransaction = {
   networkFee: { [currencyCode: string]: string }
 }
 
-export interface CurrencyWalletState {
-  currencyInfo: EdgeCurrencyInfo;
-  displayPrivateSeed: string | null;
-  displayPublicSeed: string | null;
-  engineFailure: Error | null;
-  fiat: string;
-  fiatLoaded: boolean;
-  files: TxFileJsons;
-  fileNames: TxFileNames;
-  fileNamesLoaded: boolean;
-  sortedTransactions: SortedTransactions;
-  balances: EdgeBalances;
-  height: number;
-  name: string | null;
-  nameLoaded: boolean;
-  walletInfo: EdgeWalletInfo;
-  txids: Array<string>;
-  txs: { [txid: string]: MergedTransaction };
+export type CurrencyWalletState = {
+  +currencyInfo: EdgeCurrencyInfo,
+  +displayPrivateSeed: string | null,
+  +displayPublicSeed: string | null,
+  +engineFailure: Error | null,
+  +fiat: string,
+  +fiatLoaded: boolean,
+  +files: TxFileJsons,
+  +fileNames: TxFileNames,
+  +fileNamesLoaded: boolean,
+  +sortedTransactions: SortedTransactions,
+  +syncRatio: number,
+  +balances: EdgeBalances,
+  +height: number,
+  +name: string | null,
+  +nameLoaded: boolean,
+  +walletInfo: EdgeWalletInfo,
+  +txids: Array<string>,
+  +txs: { [txid: string]: MergedTransaction }
 }
 
-export interface CurrencyWalletNext {
-  id: string;
-  root: RootState;
-  +self: CurrencyWalletState;
+export type CurrencyWalletNext = {
+  +id: string,
+  +root: RootState,
+  +self: CurrencyWalletState
 }
 
 const currencyWalletReducer = buildReducer({
@@ -86,21 +87,23 @@ const currencyWalletReducer = buildReducer({
       : state
   },
 
-  engineFailure (state = null, action: RootAction) {
-    return action.type === 'CURRENCY_ENGINE_FAILED' ? action.payload : state
+  engineFailure (state = null, action: RootAction): Error | null {
+    return action.type === 'CURRENCY_ENGINE_FAILED'
+      ? action.payload.error
+      : state
   },
 
-  fiat (state = '', action: RootAction) {
+  fiat (state = '', action: RootAction): string {
     return action.type === 'CURRENCY_WALLET_FIAT_CHANGED'
       ? action.payload.fiatCurrencyCode
       : state
   },
 
-  fiatLoaded (state = false, action: RootAction) {
+  fiatLoaded (state = false, action: RootAction): boolean {
     return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' ? true : state
   },
 
-  files (state: TxFileJsons = {}, action: RootAction) {
+  files (state: TxFileJsons = {}, action: RootAction): TxFileJsons {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_CHANGED': {
         const { json, txidHash } = action.payload
@@ -120,10 +123,10 @@ const currencyWalletReducer = buildReducer({
   },
 
   sortedTransactions (
-    state: SortedTransactions = { txidHashes: {}, sortedList: [] },
+    state = { txidHashes: {}, sortedList: [] },
     action: RootAction,
     next: CurrencyWalletNext
-  ) {
+  ): SortedTransactions {
     const { txidHashes } = state
     switch (action.type) {
       case 'CURRENCY_ENGINE_CHANGED_TXS': {
@@ -141,7 +144,7 @@ const currencyWalletReducer = buildReducer({
     return state
   },
 
-  fileNames (state: TxFileNames = {}, action: RootAction) {
+  fileNames (state = {}, action: RootAction): TxFileNames {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
         const { txFileNames } = action.payload
@@ -161,8 +164,14 @@ const currencyWalletReducer = buildReducer({
     return state
   },
 
-  fileNamesLoaded (state = false, action: RootAction) {
+  fileNamesLoaded (state = false, action: RootAction): boolean {
     return action.type === 'CURRENCY_WALLET_FILE_NAMES_LOADED' ? true : state
+  },
+
+  syncRatio (state = 0, action: RootAction): number {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO'
+      ? action.payload.ratio
+      : state
   },
 
   balances (state = {}, action: RootAction): EdgeBalances {
@@ -180,22 +189,26 @@ const currencyWalletReducer = buildReducer({
       : state
   },
 
-  name (state = null, action: RootAction) {
+  name (state = null, action: RootAction): string | null {
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED'
       ? action.payload.name
       : state
   },
 
-  nameLoaded (state = false, action: RootAction) {
+  nameLoaded (state = false, action: RootAction): boolean {
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ? true : state
   },
 
   txids: memoizeReducer(
     (next: CurrencyWalletNext) => next.self.txs,
-    txs => Object.keys(txs)
+    (txs): Array<string> => Object.keys(txs)
   ),
 
-  txs (state = {}, action: RootAction, next: CurrencyWalletNext) {
+  txs (
+    state = {},
+    action: RootAction,
+    next: CurrencyWalletNext
+  ): { [txid: string]: MergedTransaction } {
     switch (action.type) {
       case 'CURRENCY_ENGINE_CHANGED_TXS': {
         const { txs } = action.payload

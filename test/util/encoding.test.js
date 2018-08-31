@@ -15,13 +15,13 @@ describe('encoding', function () {
 
     for (const { string, data } of tests) {
       // utf8.parse:
-      expect(base16.stringify(utf8.parse(string))).to.equal(data)
+      expect(base16.stringify(utf8.parse(string))).equals(data)
 
       // utf8.stringify:
-      expect(utf8.stringify(base16.parse(data))).to.equal(string)
+      expect(utf8.stringify(base16.parse(data))).equals(string)
 
       // utf8.stringify with extra null byte:
-      expect(utf8.stringify(base16.parse(data + '00'))).to.equal(string)
+      expect(utf8.stringify(base16.parse(data + '00'))).equals(string)
     }
   })
 })

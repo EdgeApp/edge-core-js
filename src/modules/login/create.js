@@ -12,10 +12,10 @@ import { fixUsername, hashUsername } from './loginStore.js'
 import { makePasswordKit } from './password.js'
 import { makeChangePin2Kit } from './pin2.js'
 
-export interface LoginCreateOpts {
-  keyInfo?: EdgeWalletInfo;
-  password?: string | void;
-  pin?: string | void;
+export type LoginCreateOpts = {
+  keyInfo?: EdgeWalletInfo,
+  password?: string | void,
+  pin?: string | void
 }
 
 /**

@@ -14,13 +14,13 @@ export type JsonSnrp = {
   p: number
 }
 
-export interface ScryptOutput {
-  makeSnrp(targetMs: number): Promise<JsonSnrp>;
-  timeScrypt(
+export type ScryptOutput = {
+  +makeSnrp: (targetMs: number) => Promise<JsonSnrp>,
+  +timeScrypt: (
     data: Uint8Array,
     snrp: JsonSnrp,
     dklen?: number
-  ): Promise<{ hash: Uint8Array, time: number }>;
+  ) => Promise<{ hash: Uint8Array, time: number }>
 }
 
 export function calcSnrpForTarget (

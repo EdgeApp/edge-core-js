@@ -103,18 +103,19 @@ export function reactionMiddleware ({ dispatch, getState }) {
  */
 export function awaitState (store, condition) {
   // If the condition is already true, we are done:
-  if (condition(store.getState())) {
-    return Promise.resolve(true)
+  const found = condition(store.getState())
+  if (found) {
+    return Promise.resolve(found)
   }
 
   // Otherwise, subscribe to changes until it becomes true:
   let unsubscribe = () => {}
   const out = new Promise((resolve, reject) => {
     unsubscribe = store.subscribe(() => {
-      const out = condition(store.getState())
-      if (out) {
+      const found = condition(store.getState())
+      if (found) {
         unsubscribe()
-        resolve(out)
+        resolve(found)
       }
     })
   })

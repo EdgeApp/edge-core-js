@@ -10,7 +10,7 @@ import { makeFakeIos } from './io/fake/fake-io.js'
 import { stashFakeUser } from './io/fake/fakeUser.js'
 import { isNode, makeNodeIo } from './io/node/node-io.js'
 import { makeReactNativeIo } from './io/react-native/react-native-io.js'
-import { makeCoreRoot, startCoreRoot } from './modules/root.js'
+import { makeCoreRoot } from './modules/root.js'
 
 /**
  * Initializes the Edge core library,
@@ -51,8 +51,7 @@ export function makeFakeContexts (
     }
 
     const coreRoot = makeCoreRoot(io, opts[i])
-    startCoreRoot(coreRoot)
-    return coreRoot.output.contextApi
+    return coreRoot.output.context.api
   })
 }
 
@@ -63,8 +62,7 @@ function makeBrowserContext (opts: EdgeContextOptions): Promise<EdgeContext> {
   const io = makeBrowserIo()
 
   const coreRoot = makeCoreRoot(io, opts)
-  startCoreRoot(coreRoot)
-  return Promise.resolve(coreRoot.output.contextApi)
+  return Promise.resolve(coreRoot.output.context.api)
 }
 
 /**
@@ -78,8 +76,7 @@ function makeNodeContext (opts: EdgeContextOptions = {}): Promise<EdgeContext> {
   const io = makeNodeIo(path)
 
   const coreRoot = makeCoreRoot(io, opts)
-  startCoreRoot(coreRoot)
-  return Promise.resolve(coreRoot.output.contextApi)
+  return Promise.resolve(coreRoot.output.context.api)
 }
 
 /**
@@ -90,7 +87,6 @@ function makeReactNativeContext (
 ): Promise<EdgeContext> {
   return makeReactNativeIo().then(io => {
     const coreRoot = makeCoreRoot(io, opts)
-    startCoreRoot(coreRoot)
-    return coreRoot.output.contextApi
+    return coreRoot.output.context.api
   })
 }

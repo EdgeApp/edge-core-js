@@ -28,18 +28,18 @@ import {
 import { loadAllFiles } from './currency-wallet-files.js'
 import type { CurrencyWalletState } from './currency-wallet-reducer.js'
 
-export interface CurrencyWalletOutput {
-  api: EdgeCurrencyWallet | void;
-  plugin: EdgeCurrencyPlugin | void;
-  engine: EdgeCurrencyEngine | void;
-  engineStarted: boolean | void;
-  syncTimer: void;
+export type CurrencyWalletOutput = {
+  +api: EdgeCurrencyWallet | void,
+  +plugin: EdgeCurrencyPlugin | void,
+  +engine: EdgeCurrencyEngine | void,
+  +engineStarted: boolean | void,
+  +syncTimer: void
 }
 
-export interface CurrencyWalletProps extends RootProps {
-  id: string;
-  selfState: CurrencyWalletState;
-  selfOutput: CurrencyWalletOutput;
+export type CurrencyWalletProps = RootProps & {
+  +id: string,
+  +selfState: CurrencyWalletState,
+  +selfOutput: CurrencyWalletOutput
 }
 
 export type CurrencyWalletInput = PixieInput<CurrencyWalletProps>

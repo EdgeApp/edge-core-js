@@ -36,7 +36,7 @@ describe('hotp', function () {
       [-9007199254740992, 'ffe0000000000000']
     ]
     for (const [number, hex] of cases) {
-      expect(base16.stringify(numberToBe64(number))).to.equal(hex)
+      expect(base16.stringify(numberToBe64(number))).equals(hex)
     }
   })
 
@@ -56,14 +56,14 @@ describe('hotp', function () {
     ]
 
     for (let i = 0; i < cases.length; ++i) {
-      expect(hotp(key, i, 6)).to.equal(cases[i])
+      expect(hotp(key, i, 6)).equals(cases[i])
     }
   })
 
   it('Handles leading zeros in output', function () {
     const key = base32.parse('AAAAAAAA')
-    expect(hotp(key, 2, 6)).to.equal('073348')
-    expect(hotp(key, 9, 6)).to.equal('003773')
-    expect(hotp(key, 41952, 6)).to.equal('048409')
+    expect(hotp(key, 2, 6)).equals('073348')
+    expect(hotp(key, 9, 6)).equals('003773')
+    expect(hotp(key, 41952, 6)).equals('048409')
   })
 })

@@ -72,7 +72,7 @@ export async function loginPin2 (
   let stashTree = await loginStore.load(username)
   const { pin2Key, appId: appIdFound } = getPin2Key(stashTree, appId)
   if (pin2Key == null) {
-    throw new Error('No PIN set locally for this account')
+    throw new Error('PIN login is not enabled for this account on this device')
   }
   const { loginKey, loginReply } = await fetchLoginKey(
     ai,

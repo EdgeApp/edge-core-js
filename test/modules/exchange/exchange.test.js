@@ -2,18 +2,12 @@
 
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
-import { attachPixie, filterPixie } from 'redux-pixies'
 
 import { makeFakeIos } from '../../../src/edge-core-index.js'
 import reducer from '../../../src/modules/exchange/exchange-reducer.js'
 import type { ExchangePair } from '../../../src/modules/exchange/exchange-reducer.js'
 import { getExchangeRate } from '../../../src/modules/exchange/exchange-selectors.js'
-import { rootPixie } from '../../../src/modules/root-pixie.js'
-import {
-  makeCoreRoot,
-  makeRootProps,
-  startCoreRoot
-} from '../../../src/modules/root.js'
+import { makeCoreRoot } from '../../../src/modules/root.js'
 import { awaitState } from '../../../src/util/redux/reaction.js'
 import {
   brokenExchangePlugin,
@@ -165,19 +159,18 @@ describe('exchange pixie', function () {
       plugins: [fakeExchangePlugin]
     })
 
-    const plugins = await new Promise((resolve, reject) =>
-      attachPixie(
-        coreRoot.redux,
-        filterPixie(rootPixie, makeRootProps(coreRoot)),
-        reject,
-        output => {
-          if (output.exchange.plugins) resolve(output.exchange.plugins)
+    // Wait for the plugins to appear:
+    const output = await new Promise(resolve => {
+      const unsubscribe = coreRoot.redux.subscribe(() => {
+        if (coreRoot.output.exchange.plugins != null) {
+          unsubscribe()
+          resolve(coreRoot.output.exchange)
         }
-      )
-    )
+      })
+    })
 
-    expect(plugins.length).to.equal(1)
-    expect(plugins[0].exchangeInfo.exchangeName).to.equal('FakeExchange')
+    expect(output.plugins.length).equals(1)
+    expect(output.plugins[0].exchangeInfo.exchangeName).equals('FakeExchange')
   })
 
   it('fetches exchange rates', async function () {
@@ -190,13 +183,12 @@ describe('exchange pixie', function () {
       },
       plugins: [brokenExchangePlugin, fakeExchangePlugin]
     })
-    startCoreRoot(coreRoot)
 
     await awaitState(
       coreRoot.redux,
       state => state.exchangeCache.rates.pairs.length > 0
     )
-    expect(updateCalled).to.equal(true)
+    expect(updateCalled).equals(true)
 
     const state = coreRoot.redux.getState()
     const rate = getExchangeRate(state, 'BTC', 'iso:EUR', pair => 1)

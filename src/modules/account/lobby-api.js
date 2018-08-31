@@ -13,9 +13,9 @@ import {
   findAppLogin
 } from './account-state.js'
 
-interface AppIdInfo {
-  displayName: string;
-  displayImageUrl?: string;
+type AppIdInfo = {
+  displayName: string,
+  displayImageUrl?: string
 }
 
 /**
@@ -116,7 +116,7 @@ export async function makeLobbyApi (
       appId,
       displayName,
       displayImageUrl,
-      approve () {
+      approve (): Promise<mixed> {
         return approveLoginRequest(ai, appId, lobbyId, lobbyJson, accountState)
       }
     }

@@ -188,6 +188,10 @@ export function makeCurrencyWalletCallbacks (
 
   return {
     onAddressesChecked (ratio: number) {
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO',
+        payload: { ratio, walletId }
+      })
       throttledOnAddressesChecked(ratio)
     },
 

@@ -1,7 +1,5 @@
 // @flow
 
-import { stopUpdates } from 'redux-pixies'
-
 import type {
   EdgeAccountOptions,
   EdgeContext,
@@ -28,12 +26,7 @@ import {
 import type { ApiInput } from '../root.js'
 import { EdgeInternalStuff } from './internal-api.js'
 
-export const contextApiPixie = (ai: ApiInput) => () => {
-  ai.onOutput(makeContextApi(ai))
-  return stopUpdates
-}
-
-function makeContextApi (ai: ApiInput) {
+export function makeContextApi (ai: ApiInput) {
   const appId = ai.props.state.login.appId
   const { loginStore } = ai.props
   const internalApi = new EdgeInternalStuff(ai)
@@ -43,7 +36,7 @@ function makeContextApi (ai: ApiInput) {
   const rawContext: EdgeContext = {
     appId,
 
-    get _internalEdgeStuff () {
+    get _internalEdgeStuff (): EdgeInternalStuff {
       return internalApi
     },
 
@@ -57,6 +50,14 @@ function makeContextApi (ai: ApiInput) {
     },
 
     deleteLocalAccount (username: string): Promise<mixed> {
+      // Safety check:
+      const fixedName = fixUsername(username)
+      for (const activeLoginId of ai.props.state.login.activeLoginIds) {
+        if (ai.props.state.login.logins[activeLoginId].username === fixedName) {
+          throw new Error('Cannot remove logged-in user')
+        }
+      }
+
       return loginStore.remove(username)
     },
 
@@ -219,8 +220,5 @@ function makeContextApi (ai: ApiInput) {
     }
   }
 
-  // Wrap the context with logging:
-  const out = wrapObject('Context', rawContext)
-
-  return out
+  return wrapObject('Context', rawContext)
 }

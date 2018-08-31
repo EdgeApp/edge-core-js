@@ -22,7 +22,7 @@ class ABCEdgeLoginRequest {
 /**
  * Turns a reply into a logged-in account.
  */
-function onReply (ai: ApiInput, subscription, reply, appId, opts) {
+async function onReply (ai: ApiInput, subscription, reply, appId, opts) {
   subscription.unsubscribe()
   const stashTree = reply.loginStash
   const { io, loginStore } = ai.props
@@ -43,7 +43,7 @@ function onReply (ai: ApiInput, subscription, reply, appId, opts) {
     io.console.warn('Fixing base58 pin2Key')
     child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
   }
-  loginStore.save(stashTree)
+  await loginStore.save(stashTree)
 
   // This is almost guaranteed to blow up spectacularly:
   const loginKey = base64.parse(reply.loginKey)

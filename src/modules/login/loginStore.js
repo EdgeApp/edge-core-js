@@ -99,6 +99,9 @@ export class LoginStore {
     if (!stashTree.loginId) {
       throw new Error('Cannot save a login without a loginId.')
     }
+    if (stashTree.username == null) {
+      throw new Error('Cannot save a login without a username.')
+    }
     const loginId = base64.parse(stashTree.loginId)
     if (loginId.length !== 32) {
       throw new Error('Invalid loginId')

@@ -338,6 +338,26 @@ export type EdgeCurrencyToolsMap = {
   [pluginName: string]: EdgeCurrencyTools
 }
 
+export type EdgeExchangeCache = {
+  convertCurrency(
+    fromCurrency: string,
+    toCurrency: string,
+    amount: number
+  ): number
+}
+
+export type EdgeDataStore = {
+  deleteItem(storeId: string, itemId: string): Promise<mixed>,
+  deleteStore(storeId: string): Promise<mixed>,
+
+  listItemIds(storeId: string): Promise<Array<string>>,
+  listStoreIds(): Promise<Array<string>>,
+
+  getItem(storeId: string, itemId: string): Promise<string>,
+  setItem(storeId: string, itemId: string, value: string): Promise<mixed>
+}
+
+// Deprecated:
 export type EdgePluginData = {
   deleteItem(pluginId: string, itemId: string): Promise<mixed>,
   deletePlugin(pluginId: string): Promise<mixed>,
@@ -350,6 +370,14 @@ export type EdgePluginData = {
 }
 
 export type EdgeAccount = {
+  // Data store:
+  +id: string,
+  +keys: any,
+  +type: string,
+  +folder: DiskletFolder,
+  +localFolder: DiskletFolder,
+  sync(): Promise<mixed>,
+
   // Basic login information:
   +appId: string,
   +loggedIn: boolean,
@@ -360,7 +388,8 @@ export type EdgeAccount = {
   // Special-purpose API's:
   +currencyTools: EdgeCurrencyToolsMap,
   +exchangeCache: any,
-  +pluginData: EdgePluginData,
+  +dataStore: EdgeDataStore,
+  +pluginData: EdgePluginData, // Deprecated
 
   // What login method was used?
   +edgeLogin: boolean,
@@ -470,17 +499,17 @@ export type EdgeTxidMap = { [txid: string]: number }
 export type EdgeUnusedOptions = {}
 
 export type EdgeCurrencyWallet = {
-  // EdgeWalletInfo members:
+  // Data store:
   +id: string,
   +keys: any,
   +type: string,
-  +displayPrivateSeed: string | null,
-  +displayPublicSeed: string | null,
-
-  // Data store:
   +folder: DiskletFolder,
   +localFolder: DiskletFolder,
   sync(): Promise<mixed>,
+
+  // Wallet keys:
+  +displayPrivateSeed: string | null,
+  +displayPublicSeed: string | null,
 
   // Wallet name:
   +name: string | null,
@@ -496,6 +525,7 @@ export type EdgeCurrencyWallet = {
   // Chain state:
   +balances: EdgeBalances,
   +blockHeight: number,
+  +syncRatio: number,
 
   // Running state:
   startEngine(): Promise<mixed>,

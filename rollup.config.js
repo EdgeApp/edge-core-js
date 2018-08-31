@@ -21,6 +21,7 @@ const commonjsOpts = {
 
 const external = [
   ...Object.keys(packageJson.dependencies),
+  'react-native',
   'regenerator-runtime/runtime'
 ]
 
