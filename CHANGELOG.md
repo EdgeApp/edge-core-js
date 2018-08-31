@@ -1,5 +1,14 @@
 # edge-core-js
 
+## 0.10.1
+
+* Expose the wallet sync ratio as a property
+* Rename the account data store API
+* Many, many code cleanups & fixes:
+  * Fix an edge login race condition.
+  * Do not allow users to delete logged-in accounts from disk.
+  * Fix a hang if anything goes wrong creating wallets (redux-pixies upgrade).
+
 ## 0.10.0
 
 * Remove deprecated context properties & options
