@@ -83,6 +83,17 @@ export type CurrencyEngineChangedSeeds = {
 }
 
 /**
+ * Called when a currency engine fires the onAddressChecked callback.
+ */
+export type CurrencyEngineChangedSyncRatio = {
+  type: 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO',
+  payload: {
+    ratio: number,
+    walletId: string
+  }
+}
+
+/**
  * Called when a currency engine fires the onTransactionsChanged callback.
  */
 export type CurrencyEngineChangedTxs = {
@@ -269,6 +280,7 @@ export type RootAction =
   | CurrencyEngineChangedBalance
   | CurrencyEngineChangedHeight
   | CurrencyEngineChangedSeeds
+  | CurrencyEngineChangedSyncRatio
   | CurrencyEngineChangedTxs
   | CurrencyEngineCleared
   | CurrencyEngineFailed
