@@ -72,8 +72,8 @@ class ObservableLobby {
   done: boolean
   keypair: any
   lobbyId: string
-  onError: (e: Error) => void
-  onReply: (reply: Object) => void
+  onError: (e: Error) => mixed
+  onReply: (reply: Object) => mixed
   period: number
   replyCount: number
   timeout: * // Infer the proper timer type.
@@ -85,7 +85,7 @@ class ObservableLobby {
     this.period = period
   }
 
-  subscribe (onReply, onError) {
+  subscribe (onReply: (reply: Object) => mixed, onError: (e: Error) => mixed) {
     this.onReply = onReply
     this.onError = onError
     this.replyCount = 0
