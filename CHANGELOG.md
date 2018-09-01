@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.10.2
+
+* Fix a type error that Flow somehow doesn't catch when run in this repo, but does catch when this library is in somebody else's `node_modules`.
+
 ## 0.10.1
 
 * Expose the wallet sync ratio as a property
