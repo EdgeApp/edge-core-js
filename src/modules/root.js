@@ -1,6 +1,7 @@
 // @flow
 
-import type { Dispatch, Store } from 'redux'
+import type { Dispatch, Store, StoreEnhancer } from 'redux'
+import { compose, createStore } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
 import type { PixieInput, ReduxProps } from 'redux-pixies'
 
@@ -10,14 +11,10 @@ import type {
   EdgeIo
 } from '../edge-core-index.js'
 import type { RootAction } from './actions.js'
-import { makeStore } from './makeStore.js'
 import { rootPixie } from './root-pixie.js'
 import type { RootOutput } from './root-pixie.js'
 import type { RootState } from './root-reducer.js'
-
-let allDestroyPixies: Array<() => void> = []
-
-function nop () {}
+import reducer from './root-reducer.js'
 
 /**
  * The root of the entire core state machine.
@@ -46,6 +43,15 @@ export type RootProps = {
 
 export type ApiInput = PixieInput<RootProps>
 
+let allDestroyPixies: Array<() => void> = []
+
+const composeEnhancers =
+  typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
+    ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'core' })
+    : compose
+
+function nop () {}
+
 /**
  * Creates the root object for the entire core state machine.
  * This core object contains the `io` object, context options,
@@ -65,9 +71,11 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
 
   const appId = opts.appId != null ? opts.appId : ''
 
+  const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
+
   const output: any = {}
   const coreRoot: CoreRoot = {
-    redux: makeStore(),
+    redux: createStore(reducer, enhancers),
     output
   }
   coreRoot.redux.dispatch({
