@@ -72,7 +72,7 @@ const accountPixie = combinePixies({
       async update () {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const accountId = input.props.id
-        const { callbacks, accountWalletInfo } = input.props.selfState
+        const { callbacks, accountWalletInfos } = input.props.selfState
         onLoggedOut = callbacks.onLoggedOut
 
         const loadAllFiles = async () => {
@@ -91,7 +91,9 @@ const accountPixie = combinePixies({
           await waitForCurrencyPlugins(ai)
 
           // Start the repo:
-          await addStorageWallet(ai, accountWalletInfo)
+          await Promise.all(
+            accountWalletInfos.map(info => addStorageWallet(ai, info))
+          )
           await loadAllFiles()
 
           // Load swap plugins:
@@ -130,10 +132,10 @@ const accountPixie = combinePixies({
             timer = setTimeout(async () => {
               try {
                 if (input.props.state.accounts[accountId] == null) return
-                const changes = await syncStorageWallet(
-                  ai,
-                  accountWalletInfo.id
+                const changeLists = await Promise.all(
+                  accountWalletInfos.map(info => syncStorageWallet(ai, info.id))
                 )
+                const changes: Array<string> = [].concat(...changeLists)
                 if (changes.length) loadAllFiles()
               } catch (e) {
                 // We don't report sync failures, since that could be annoying.
