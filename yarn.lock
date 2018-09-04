@@ -1656,9 +1656,9 @@ dir-glob@^2.0.0:
     arrify "^1.0.1"
     path-type "^3.0.0"
 
-disklet@^0.2.2:
-  version "0.2.5"
-  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.2.5.tgz#bf96726e13be18ea99a693daac0ce0575715347c"
+disklet@^0.2.7:
+  version "0.2.7"
+  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.2.7.tgz#03cf699df295043067b6a6215c9f11cb18f15fd0"
   dependencies:
     assert "^1.4.1"
     react "16.0.0-alpha.12"
