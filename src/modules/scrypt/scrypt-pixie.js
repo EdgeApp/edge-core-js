@@ -3,7 +3,6 @@
 import type { PixieInput } from 'redux-pixies'
 import { combinePixies, stopUpdates } from 'redux-pixies'
 
-import { serialize } from '../../util/decorators.js'
 import { base16, utf8 } from '../../util/encoding.js'
 import type { RootProps } from '../root.js'
 
@@ -21,6 +20,19 @@ export type ScryptOutput = {
     snrp: JsonSnrp,
     dklen?: number
   ) => Promise<{ hash: Uint8Array, time: number }>
+}
+
+/**
+ * Prevents a function from running in parallel.
+ * The currently-running operation must finish before the new one starts.
+ */
+function serialize (f) {
+  let nextTask = Promise.resolve()
+  return function serialize (...rest) {
+    const onDone = () => f.apply(this, rest)
+    nextTask = nextTask.then(onDone, onDone)
+    return nextTask
+  }
 }
 
 export function calcSnrpForTarget (
@@ -134,7 +146,7 @@ export default combinePixies({
   timeScrypt: (input: PixieInput<RootProps>) => () => {
     const { io } = input.props
 
-    // Find the best timer on this plaform:
+    // Find the best timer on this platform:
     const getTime =
       typeof window !== 'undefined' &&
       window.performance &&
