@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.10.3
+
+* Upgrade disklet dependency.
+* Add more git servers.
+
 ## 0.10.2
 
 * Fix a type error that Flow somehow doesn't catch when run in this repo, but does catch when this library is in somebody else's `node_modules`.
