@@ -256,17 +256,7 @@ export function makeAccountApi (
       return ai.props.state.accounts[accountId].archivedWalletIds
     },
     get currencyWallets (): { [walletId: string]: EdgeCurrencyWallet } {
-      const allIds = ai.props.state.currency.currencyWalletIds
-      const selfState = ai.props.state.accounts[accountId]
-      const myIds = allIds.filter(id => id in selfState.walletInfos)
-
-      const out = {}
-      for (const walletId of myIds) {
-        const api = ai.props.output.currency.wallets[walletId].api
-        if (api) out[walletId] = api
-      }
-
-      return out
+      return ai.props.output.accounts[accountId].currencyWallets
     },
     async createCurrencyWallet (
       type: string,
