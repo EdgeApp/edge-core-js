@@ -95,6 +95,12 @@ export function makeCurrencyWalletApi (
   const shapeshiftApi = makeShapeshiftApi(ai)
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
+  function lockdown () {
+    if (ai.props.state.hideKeys) {
+      throw new Error('Not available when `hideKeys` is enabled')
+    }
+  }
+
   const out: EdgeCurrencyWallet = {
     on: onMethod,
     watch: watchMethod,
@@ -107,6 +113,7 @@ export function makeCurrencyWalletApi (
       return storageWalletApi.type
     },
     get keys (): Object {
+      lockdown()
       return storageWalletApi.keys
     },
     get folder (): DiskletFolder {
@@ -121,6 +128,7 @@ export function makeCurrencyWalletApi (
 
     // Wallet keys:
     get displayPrivateSeed (): string | null {
+      lockdown()
       return input.props.selfState.displayPrivateSeed
     },
     get displayPublicSeed (): string | null {

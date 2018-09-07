@@ -140,6 +140,7 @@ export type EdgeContextOptions = {
   appId?: string, // TODO: Non-optional
   authServer?: string,
   callbacks?: EdgeContextCallbacks,
+  hideKeys?: boolean,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
   shapeshiftKey?: string,
@@ -393,6 +394,20 @@ export type EdgePluginData = {
 
 export type EdgeAccountEvents = {}
 
+export type EthererumTransaction = {
+  chainId: number, // Not part of raw data, but needed for signing
+  nonce: string,
+  gasPrice: string,
+  gasLimit: string,
+  to: string,
+  value: string,
+  data: string,
+  // The transaction is unsigned, so these are not present:
+  v?: string,
+  r?: string,
+  s?: string
+}
+
 export type EdgeAccount = {
   +on: Subscriber<EdgeAccountEvents>,
   +watch: Subscriber<EdgeAccount>,
@@ -476,7 +491,13 @@ export type EdgeAccount = {
   createCurrencyWallet(
     type: string,
     opts?: EdgeCreateCurrencyWalletOptions
-  ): Promise<EdgeCurrencyWallet>
+  ): Promise<EdgeCurrencyWallet>,
+
+  // Web compatibility:
+  signEthereumTransaction(
+    walletId: string,
+    transaction: EthererumTransaction
+  ): Promise<string>
 }
 
 // edge login types ---------------------------------------------------

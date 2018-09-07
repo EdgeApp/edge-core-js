@@ -66,6 +66,7 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
     appId = '',
     authServer = 'https://auth.airbitz.co/api',
     callbacks = {},
+    hideKeys = false,
     plugins = [],
     shapeshiftKey = void 0
   } = opts
@@ -84,7 +85,7 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
   }
   coreRoot.redux.dispatch({
     type: 'INIT',
-    payload: { apiKey, appId, authServer }
+    payload: { apiKey, appId, authServer, hideKeys }
   })
 
   coreRoot.destroyPixie = attachPixie(
