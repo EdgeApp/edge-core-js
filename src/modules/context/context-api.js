@@ -9,7 +9,8 @@ import type {
   EdgeEdgeLoginOptions,
   EdgeExchangeSwapInfo,
   EdgeLoginMessages,
-  EdgePendingEdgeLogin
+  EdgePendingEdgeLogin,
+  EdgeUserInfo
 } from '../../edge-core-index.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
@@ -47,6 +48,10 @@ export function makeContextApi (ai: ApiInput) {
     $internalStuff,
 
     fixUsername,
+
+    get localUsers (): Array<EdgeUserInfo> {
+      return ai.props.state.login.localUsers
+    },
 
     async listUsernames (): Promise<Array<string>> {
       return Object.keys(ai.props.state.login.stashes)

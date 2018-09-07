@@ -157,6 +157,11 @@ export type EdgeContextEvents = {
   loginError: { error: Error }
 }
 
+export type EdgeUserInfo = {
+  pinLoginEnabled: boolean,
+  username: string
+}
+
 export type EdgeContext = {
   +on: Subscriber<EdgeContextEvents>,
   +watch: Subscriber<EdgeContext>,
@@ -164,6 +169,7 @@ export type EdgeContext = {
   +appId: string,
 
   // Local user management:
+  localUsers: Array<EdgeUserInfo>,
   fixUsername(username: string): string,
   listUsernames(): Promise<Array<string>>,
   deleteLocalAccount(username: string): Promise<mixed>,

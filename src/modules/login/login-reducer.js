@@ -1,10 +1,12 @@
 // @flow
 
-import { buildReducer } from 'redux-keto'
+import { buildReducer, memoizeReducer } from 'redux-keto'
 
+import type { EdgeUserInfo } from '../../edge-core-index.js'
 import type { RootAction } from '../actions.js'
 import type { RootState } from '../root-reducer.js'
 import type { LoginStash, WalletInfoMap } from './login-types.js'
+import { getPin2Key } from './pin2.js'
 import server from './server/login-server-reducer.js'
 import type { LoginServerState } from './server/login-server-reducer.js'
 
@@ -15,6 +17,7 @@ export type LoginState = {
   +server: LoginServerState,
   +stashes: LoginStashMap,
   +stashesLoaded: boolean,
+  +localUsers: Array<EdgeUserInfo>,
   +walletInfos: WalletInfoMap
 }
 
@@ -22,6 +25,23 @@ export default buildReducer({
   appId (state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.appId : state
   },
+
+  localUsers: memoizeReducer(
+    (next: RootState) => next.login.appId,
+    (next: RootState) => next.login.stashes,
+    (appId: string, stashes: LoginStashMap): Array<EdgeUserInfo> => {
+      const out = []
+      for (const username in stashes) {
+        const stash = stashes[username]
+        const pin2Key = getPin2Key(stash, appId)
+        out.push({
+          pinLoginEnabled: pin2Key.pin2Key != null,
+          username
+        })
+      }
+      return out
+    }
+  ),
 
   server,
 
@@ -64,7 +84,7 @@ export default buildReducer({
     return action.type === 'LOGIN_STASHES_LOADED' ? true : state
   },
 
-  walletInfos (state, action, next: RootState): WalletInfoMap {
+  walletInfos (state, action: RootAction, next: RootState): WalletInfoMap {
     // Optimize the common case:
     if (next.accountIds.length === 1) {
       const id = next.accountIds[0]
