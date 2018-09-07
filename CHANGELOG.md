@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.10.4
+
+* Fix the git server list.
+
 ## 0.10.3
 
 * Upgrade disklet dependency.
