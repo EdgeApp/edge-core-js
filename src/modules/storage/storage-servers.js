@@ -4,11 +4,9 @@ import type { EdgeIo } from '../../edge-core-index.js'
 import { NetworkError } from '../../error.js'
 
 const syncServers = [
-  'https://git1.edge.app',
   'https://git2.airbitz.co',
-  'https://git2.edge.app',
   'https://git3.airbitz.co',
-  'https://git3.edge.app'
+  'https://git4.edge.app'
 ]
 
 /**
