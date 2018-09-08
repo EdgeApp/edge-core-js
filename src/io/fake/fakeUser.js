@@ -4,8 +4,7 @@
  */
 // @flow
 
-import type { EdgeIo } from '../../edge-core-index.js'
-import { base16, base58, base64 } from '../../util/encoding.js'
+import { base16, base64 } from '../../util/encoding.js'
 
 export const fakeUser = {
   // Credentials:
@@ -239,9 +238,8 @@ export const fakeRepos = {
   '0930F3C2CD0417765198FBEA95EC9F1E99000312': {}
 }
 
-export function stashFakeUser (io: EdgeIo) {
-  // The bare minimum data needed to log in with PIN or password:
-  const fakeStash = {
+export const fakeStashes = {
+  'js test 0': {
     appId: fakeUserServer.appId,
     loginId: fakeUserServer.loginId,
     otpKey: fakeUserServer.otpKey,
@@ -261,11 +259,4 @@ export function stashFakeUser (io: EdgeIo) {
     ],
     syncKeyBox: fakeUserServer.syncKeyBox
   }
-
-  // Write to disk, relying on the fact that the in-memory folder is not
-  // really async. Context creation can't be async, so we have no choice:
-  io.folder
-    .folder('logins')
-    .file(base58.stringify(base64.parse(fakeUserServer.loginId)) + '.json')
-    .setText(JSON.stringify(fakeStash))
 }

@@ -1,14 +1,40 @@
 // @flow
 
 import { isReactNative } from 'detect-bundler'
+import { mapFiles } from 'disklet'
 
-import type { EdgeContext, EdgeContextOptions } from './edge-core-index.js'
+import type {
+  EdgeContext,
+  EdgeContextOptions,
+  EdgeIo
+} from './edge-core-index.js'
 import { makeBrowserIo } from './io/browser/browser-io.js'
 import { makeFakeIos } from './io/fake/fake-io.js'
-import { stashFakeUser } from './io/fake/fakeUser.js'
+import { fakeStashes } from './io/fake/fakeUser.js'
 import { isNode, makeNodeIo } from './io/node/node-io.js'
 import { makeReactNativeIo } from './io/react-native/react-native-io.js'
 import { makeCoreRoot } from './modules/root.js'
+import type { CoreRoot } from './modules/root.js'
+
+function loadStashes (root: CoreRoot, io: EdgeIo): Promise<mixed> {
+  const fileArray = mapFiles(io.folder.folder('logins'), (file, name) =>
+    file
+      .getText()
+      .then(text => ({ name, json: JSON.parse(text) }))
+      .catch(e => void 0)
+  )
+
+  return fileArray.then(files => {
+    const out = {}
+    for (const file of files) {
+      out[file.name] = file.json
+    }
+    root.redux.dispatch({
+      type: 'LOGIN_STASHES_LOADED',
+      payload: out
+    })
+  })
+}
 
 /**
  * Initializes the Edge core library,
@@ -37,7 +63,6 @@ export function makeFakeContexts (
   ...opts: Array<EdgeContextOptions>
 ): Array<EdgeContext> {
   return makeFakeIos(opts.length).map((io, i) => {
-    if (opts[i].localFakeUser) stashFakeUser(io)
     if (opts[i].offline) {
       // Disable network access (but leave the sync server up):
       const oldFetch = io.fetch
@@ -49,6 +74,10 @@ export function makeFakeContexts (
     }
 
     const coreRoot = makeCoreRoot(io, opts[i])
+    coreRoot.redux.dispatch({
+      type: 'LOGIN_STASHES_LOADED',
+      payload: opts[i].localFakeUser ? fakeStashes : {}
+    })
     return coreRoot.output.context.api
   })
 }
@@ -56,11 +85,14 @@ export function makeFakeContexts (
 /**
  * Creates an Edge context for use in the browser.
  */
-function makeBrowserContext (opts: EdgeContextOptions): Promise<EdgeContext> {
+async function makeBrowserContext (
+  opts: EdgeContextOptions
+): Promise<EdgeContext> {
   const io = makeBrowserIo()
 
   const coreRoot = makeCoreRoot(io, opts)
-  return Promise.resolve(coreRoot.output.context.api)
+  await loadStashes(coreRoot, io)
+  return coreRoot.output.context.api
 }
 
 /**
@@ -69,22 +101,26 @@ function makeBrowserContext (opts: EdgeContextOptions): Promise<EdgeContext> {
  * @param {{ path?: string }} opts Options for creating the context,
  * including the `path` where data should be written to disk.
  */
-function makeNodeContext (opts: EdgeContextOptions = {}): Promise<EdgeContext> {
+async function makeNodeContext (
+  opts: EdgeContextOptions = {}
+): Promise<EdgeContext> {
   const { path = './edge' } = opts
   const io = makeNodeIo(path)
 
   const coreRoot = makeCoreRoot(io, opts)
-  return Promise.resolve(coreRoot.output.context.api)
+  await loadStashes(coreRoot, io)
+  return coreRoot.output.context.api
 }
 
 /**
  * Creates an Edge context for use with React Native.
  */
-function makeReactNativeContext (
+async function makeReactNativeContext (
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
-  return makeReactNativeIo().then(io => {
-    const coreRoot = makeCoreRoot(io, opts)
-    return coreRoot.output.context.api
-  })
+  const io = await makeReactNativeIo()
+
+  const coreRoot = makeCoreRoot(io, opts)
+  await loadStashes(coreRoot, io)
+  return coreRoot.output.context.api
 }
