@@ -6,13 +6,8 @@ import flowEntry from 'rollup-plugin-flow-entry'
 import packageJson from './package.json'
 
 const babelOpts = {
-  presets: ['es2015-rollup', 'flow'],
-  plugins: [
-    'transform-async-to-generator',
-    ['transform-es2015-for-of', { loose: true }],
-    'transform-object-rest-spread',
-    'transform-regenerator'
-  ]
+  presets: ['@babel/preset-env', '@babel/preset-flow'],
+  plugins: [['@babel/plugin-transform-for-of', { assumeArray: true }]]
 }
 
 const commonjsOpts = {
