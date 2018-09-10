@@ -7,7 +7,13 @@ import packageJson from './package.json'
 
 const babelOpts = {
   presets: ['@babel/preset-env', '@babel/preset-flow'],
-  plugins: [['@babel/plugin-transform-for-of', { assumeArray: true }]]
+  plugins: [
+    ['@babel/plugin-transform-for-of', { assumeArray: true }],
+    [
+      '@babel/plugin-transform-runtime',
+      { corejs: false, helpers: false, regenerator: true }
+    ]
+  ]
 }
 
 const commonjsOpts = {
@@ -16,8 +22,8 @@ const commonjsOpts = {
 
 const external = [
   ...Object.keys(packageJson.dependencies),
-  'react-native',
-  'regenerator-runtime/runtime'
+  '@babel/runtime/regenerator',
+  'react-native'
 ]
 
 export default [
