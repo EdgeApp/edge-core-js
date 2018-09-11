@@ -50,9 +50,6 @@ export function authRequest (
 ) {
   const { state, io } = ai.props
   const { apiKey, uri } = state.login.server
-  if (apiKey == null) {
-    throw new Error('No API key provided at context creation time')
-  }
 
   const opts: RequestOptions = {
     method: method,

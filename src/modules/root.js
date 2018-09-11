@@ -61,7 +61,8 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
   const onErrorDefault = (error, name) => io.console.error(name, error)
 
   const {
-    apiKey = '!invalid',
+    apiKey,
+    appId = '',
     authServer = 'https://auth.airbitz.co/api',
     callbacks = {},
     plugins = [],
@@ -69,7 +70,9 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
   } = opts
   const { onError = onErrorDefault, onExchangeUpdate = nop } = callbacks
 
-  const appId = opts.appId != null ? opts.appId : ''
+  if (apiKey == null) {
+    throw new Error('No API key provided')
+  }
 
   const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
 

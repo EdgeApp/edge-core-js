@@ -20,9 +20,7 @@ export type LoginState = {
 
 export default buildReducer({
   appId (state = '', action: RootAction): string {
-    return action.type === 'INIT' && action.payload.appId
-      ? action.payload.appId
-      : state
+    return action.type === 'INIT' ? action.payload.appId : state
   },
 
   server,

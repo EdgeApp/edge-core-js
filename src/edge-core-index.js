@@ -134,8 +134,8 @@ export type EdgeContextCallbacks = {
 }
 
 export type EdgeContextOptions = {
-  apiKey?: string,
-  appId?: string,
+  apiKey?: string, // TODO: Non-optional
+  appId?: string, // TODO: Non-optional
   authServer?: string,
   callbacks?: EdgeContextCallbacks,
   path?: string, // Only used on node.js

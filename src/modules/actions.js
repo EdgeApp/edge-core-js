@@ -240,9 +240,9 @@ export type ExchangePairsFetched = {
 export type InitAction = {
   type: 'INIT',
   payload: {
-    apiKey: string | void,
-    appId: string | void,
-    authServer: string | void
+    apiKey: string,
+    appId: string,
+    authServer: string
   }
 }
 

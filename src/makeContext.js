@@ -72,6 +72,7 @@ export function makeFakeContexts (
           ? oldFetch(url, opts)
           : Promise.reject(new Error('Network error'))
     }
+    if (opts[i].apiKey == null) opts[i].apiKey = 'fake'
 
     const coreRoot = makeCoreRoot(io, opts[i])
     coreRoot.redux.dispatch({
