@@ -63,6 +63,8 @@ describe('currency wallets', function () {
   })
 
   it('triggers callbacks', async function () {
+    this.timeout(4000)
+
     const log = makeAssertLog(true)
     const store = makeFakeCurrencyStore()
 

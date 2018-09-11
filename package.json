@@ -10,6 +10,10 @@
     "security"
   ],
   "homepage": "https://edge.app",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:EdgeApp/edge-core-js.git"
+  },
   "license": "SEE LICENSE IN LICENSE",
   "author": "Airbitz, Inc.",
   "contributors": [
@@ -30,10 +34,6 @@
   ],
   "main": "lib/edge-core-index.js",
   "module": "lib/edge-core-index.es.js",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:EdgeApp/edge-core-js.git"
-  },
   "scripts": {
     "build": "rimraf lib && webpack && rollup -c",
     "build:test": "webpack && rollup -c test/rollup.config.js",
