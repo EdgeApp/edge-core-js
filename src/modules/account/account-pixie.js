@@ -110,8 +110,8 @@ const accountPixie = combinePixies({
       const { selfState, selfOutput } = input.props
       if (selfState == null || selfOutput == null) return
 
-      if (lastWalletInfos !== selfState.allWalletInfos) {
-        lastWalletInfos = selfState.allWalletInfos
+      if (lastWalletInfos !== selfState.walletInfos) {
+        lastWalletInfos = selfState.walletInfos
 
         const { onKeyListChanged } = selfState.callbacks
         if (onKeyListChanged) onKeyListChanged()

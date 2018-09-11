@@ -70,14 +70,14 @@ export default buildReducer({
     // Optimize the common case:
     if (next.accountIds.length === 1) {
       const id = next.accountIds[0]
-      return next.accounts[id].allWalletInfos
+      return next.accounts[id].walletInfos
     }
 
     const out = {}
     for (const accountId of next.accountIds) {
-      const login = next.accounts[accountId]
-      for (const id of Object.keys(login.allWalletInfos)) {
-        const info = login.allWalletInfos[id]
+      const account = next.accounts[accountId]
+      for (const id of Object.keys(account.walletInfos)) {
+        const info = account.walletInfos[id]
         out[id] = info
       }
     }

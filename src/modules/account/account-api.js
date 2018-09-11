@@ -258,7 +258,7 @@ export function makeAccountApi (
     get currencyWallets (): { [walletId: string]: EdgeCurrencyWallet } {
       const allIds = ai.props.state.currency.currencyWalletIds
       const selfState = ai.props.state.accounts[accountId]
-      const myIds = allIds.filter(id => id in selfState.allWalletInfos)
+      const myIds = allIds.filter(id => id in selfState.walletInfos)
 
       const out = {}
       for (const walletId of myIds) {

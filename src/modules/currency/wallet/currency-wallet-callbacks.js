@@ -29,10 +29,10 @@ export function forEachListener (
   f: (callbacks: EdgeAccountCallbacks) => void
 ) {
   for (const accountId of input.props.state.accountIds) {
-    const login = input.props.state.accounts[accountId]
-    if (input.props.id in login.allWalletInfos) {
+    const account = input.props.state.accounts[accountId]
+    if (input.props.id in account.walletInfos) {
       try {
-        f(login.callbacks)
+        f(account.callbacks)
       } catch (e) {
         input.props.onError(e)
       }
