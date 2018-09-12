@@ -28,8 +28,8 @@ export function forEachListener (
   input: CurrencyWalletInput,
   f: (callbacks: EdgeAccountCallbacks) => void
 ) {
-  for (const activeLoginId of input.props.state.login.activeLoginIds) {
-    const login = input.props.state.login.logins[activeLoginId]
+  for (const accountId of input.props.state.accountIds) {
+    const login = input.props.state.accounts[accountId]
     if (input.props.id in login.allWalletInfos) {
       try {
         f(login.callbacks)

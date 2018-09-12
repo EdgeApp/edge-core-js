@@ -10,7 +10,6 @@ import type {
   EdgeIo
 } from '../edge-core-index.js'
 import type { RootAction } from './actions.js'
-import { LoginStore } from './login/loginStore.js'
 import { makeStore } from './makeStore.js'
 import { rootPixie } from './root-pixie.js'
 import type { RootOutput } from './root-pixie.js'
@@ -37,7 +36,6 @@ export type CoreRoot = {
 export type RootProps = {
   +dispatch: Dispatch<RootAction>,
   +io: EdgeIo,
-  +loginStore: LoginStore,
   +onError: (e: Error) => mixed,
   +onExchangeUpdate: () => mixed,
   +output: RootOutput,
@@ -66,7 +64,6 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
   const { onError = onErrorDefault, onExchangeUpdate = nop } = callbacks
 
   const appId = opts.appId != null ? opts.appId : ''
-  const loginStore = new LoginStore(io)
 
   const output: any = {}
   const coreRoot: CoreRoot = {
@@ -85,7 +82,6 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
       (props: ReduxProps<RootState, RootAction>): RootProps => ({
         ...props,
         io,
-        loginStore,
         onError,
         onExchangeUpdate,
         plugins,

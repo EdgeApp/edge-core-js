@@ -1,8 +1,17 @@
 // @flow
 
-import type { EdgeWalletInfo } from '../../edge-core-index.js'
+import type {
+  EdgeCreateCurrencyWalletOptions,
+  EdgeWalletInfo
+} from '../../edge-core-index.js'
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base16, base64, utf8 } from '../../util/encoding.js'
+import { changeWalletStates } from '../account/account-files.js'
+import {
+  getCurrencyPlugin,
+  waitForCurrencyWallet
+} from '../currency/currency-selectors.js'
+import { applyKit } from '../login/login.js'
 import type { ApiInput } from '../root.js'
 import type {
   AppIdMap,
@@ -228,7 +237,7 @@ export function xorData (a: Uint8Array, b: Uint8Array): Uint8Array {
   return out
 }
 
-export function splitWalletInfo (
+export function makeSplitWalletInfo (
   walletInfo: EdgeWalletInfo,
   newWalletType: string
 ): EdgeWalletInfo {
@@ -268,4 +277,132 @@ export function splitWalletInfo (
     },
     type: newWalletType
   }
+}
+
+export async function createCurrencyWallet (
+  ai: ApiInput,
+  accountId: string,
+  type: string,
+  opts: EdgeCreateCurrencyWalletOptions
+) {
+  const { login, loginTree } = ai.props.state.accounts[accountId]
+
+  // Make the keys:
+  const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
+  const keys = opts.keys || plugin.createPrivateKey(type, opts.keyOptions)
+  const walletInfo = makeStorageKeyInfo(ai, type, keys)
+  const kit = makeKeysKit(ai, login, fixWalletInfo(walletInfo))
+
+  // Add the keys to the login:
+  await applyKit(ai, loginTree, kit)
+  const wallet = await waitForCurrencyWallet(ai, walletInfo.id)
+
+  if (opts.name) await wallet.renameWallet(opts.name)
+  if (opts.fiatCurrencyCode) {
+    await wallet.setFiatCurrencyCode(opts.fiatCurrencyCode)
+  }
+
+  return wallet
+}
+
+export async function splitWalletInfo (
+  ai: ApiInput,
+  accountId: string,
+  walletId: string,
+  newWalletType: string
+) {
+  const selfState = ai.props.state.accounts[accountId]
+  const { allWalletInfosFull, login, loginTree } = selfState
+
+  // Find the wallet we are going to split:
+  const walletInfo = allWalletInfosFull.find(
+    walletInfo => walletInfo.id === walletId
+  )
+  if (!walletInfo) throw new Error(`Invalid wallet id ${walletId}`)
+
+  // Handle BCH / BTC+segwit special case:
+  if (
+    newWalletType === 'wallet:bitcoincash' &&
+    walletInfo.type === 'wallet:bitcoin' &&
+    walletInfo.keys.format === 'bip49'
+  ) {
+    throw new Error(
+      'Cannot split segwit-format Bitcoin wallets to Bitcoin Cash'
+    )
+  }
+
+  // See if the wallet has already been split:
+  const newWalletInfo = makeSplitWalletInfo(walletInfo, newWalletType)
+  const existingWalletInfo = allWalletInfosFull.find(
+    walletInfo => walletInfo.id === newWalletInfo.id
+  )
+  if (existingWalletInfo) {
+    if (existingWalletInfo.archived || existingWalletInfo.deleted) {
+      // Simply undelete the existing wallet:
+      const walletInfos = {}
+      walletInfos[newWalletInfo.id] = { archived: false, deleted: false }
+      await changeWalletStates(ai, accountId, walletInfos)
+      return walletInfo.id
+    }
+    throw new Error('This wallet has already been split')
+  }
+
+  // Add the keys to the login:
+  const kit = makeKeysKit(ai, login, newWalletInfo)
+  await applyKit(ai, loginTree, kit)
+
+  // Try to copy metadata on a best-effort basis.
+  // In the future we should clone the repo instead:
+  try {
+    const wallet = await waitForCurrencyWallet(ai, newWalletInfo.id)
+    const oldWallet = ai.props.output.currency.wallets[walletId].api
+    if (oldWallet) {
+      if (oldWallet.name) await wallet.renameWallet(oldWallet.name)
+      if (oldWallet.fiatCurrencyCode) {
+        await wallet.setFiatCurrencyCode(oldWallet.fiatCurrencyCode)
+      }
+    }
+  } catch (e) {
+    ai.props.onError(e)
+  }
+
+  return newWalletInfo.id
+}
+
+export async function listSplittableWalletTypes (
+  ai: ApiInput,
+  accountId: string,
+  walletId: string
+): Promise<Array<string>> {
+  const { allWalletInfosFull } = ai.props.state.accounts[accountId]
+
+  // Find the wallet we are going to split:
+  const walletInfo = allWalletInfosFull.find(
+    walletInfo => walletInfo.id === walletId
+  )
+  if (!walletInfo) throw new Error(`Invalid wallet id ${walletId}`)
+
+  // Get the list of available types:
+  const plugin = getCurrencyPlugin(
+    ai.props.output.currency.plugins,
+    walletInfo.type
+  )
+  const types =
+    plugin && plugin.getSplittableTypes
+      ? plugin.getSplittableTypes(walletInfo)
+      : []
+
+  // Filter out wallet types we have already split:
+  return types.filter(type => {
+    const newWalletInfo = makeSplitWalletInfo(walletInfo, type)
+    const existingWalletInfo = allWalletInfosFull.find(
+      walletInfo => walletInfo.id === newWalletInfo.id
+    )
+    // We can split the wallet if it doesn't exist, or is deleted:
+    return (
+      !existingWalletInfo ||
+      existingWalletInfo.archived ||
+      existingWalletInfo.deleted
+    )
+  })
 }

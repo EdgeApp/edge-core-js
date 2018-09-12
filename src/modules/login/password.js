@@ -7,8 +7,13 @@ import type { ApiInput } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { authRequest } from './authServer.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
-import { applyLoginReply, makeLoginTree, syncLogin } from './login.js'
-import { fixUsername, hashUsername } from './loginStore.js'
+import { applyKit, applyLoginReply, makeLoginTree, syncLogin } from './login.js'
+import {
+  fixUsername,
+  hashUsername,
+  loadStash,
+  saveStash
+} from './loginStore.js'
 
 export const passwordAuthSnrp = userIdSnrp
 
@@ -77,8 +82,8 @@ export async function loginPassword (
   password: string,
   otpKey: string | void
 ) {
-  const { io, loginStore } = ai.props
-  let stashTree = await loginStore.load(username)
+  const { io } = ai.props
+  let stashTree = await loadStash(ai, username)
 
   try {
     const loginKey = await extractLoginKey(ai, stashTree, username, password)
@@ -98,9 +103,20 @@ export async function loginPassword (
     )
     stashTree = applyLoginReply(stashTree, loginKey, loginReply)
     if (otpKey) stashTree.otpKey = fixOtpKey(otpKey)
-    loginStore.save(stashTree)
+    await saveStash(ai, stashTree)
     return makeLoginTree(stashTree, loginKey)
   }
+}
+
+export async function changePassword (
+  ai: ApiInput,
+  accountId: string,
+  password: string
+) {
+  const { loginTree, username } = ai.props.state.accounts[accountId]
+
+  const kit = await makePasswordKit(ai, loginTree, username, password)
+  await applyKit(ai, loginTree, kit)
 }
 
 /**
@@ -153,6 +169,32 @@ export function checkPasswordRules (password: string) {
       password.length >= 16 ||
       !(tooShort || noNumber || noUpperCase || noLowerCase)
   }
+}
+
+export async function deletePassword (ai: ApiInput, accountId: string) {
+  const { loginTree } = ai.props.state.accounts[accountId]
+
+  const kit: LoginKit = {
+    serverMethod: 'DELETE',
+    serverPath: '/v2/login/password',
+    stash: {
+      passwordAuthSnrp: void 0,
+      passwordBox: void 0,
+      passwordKeySnrp: void 0
+    },
+    login: {
+      passwordAuthSnrp: void 0,
+      passwordBox: void 0,
+      passwordKeySnrp: void 0
+    },
+    loginId: loginTree.loginId
+  }
+  // Only remove `passwordAuth` if we have another way to get in:
+  if (loginTree.loginAuth != null) {
+    kit.stash.passwordAuthBox = void 0
+    kit.login.passwordAuthBox = void 0
+  }
+  await applyKit(ai, loginTree, kit)
 }
 
 /**

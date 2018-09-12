@@ -5,8 +5,8 @@ import { describe, it } from 'mocha'
 
 import {
   fixWalletInfo,
-  mergeKeyInfos,
-  splitWalletInfo
+  makeSplitWalletInfo,
+  mergeKeyInfos
 } from '../../../src/modules/login/keys.js'
 
 const ID_1 = 'PPptx6SBfwGXM+FZURMvYnsOfHpIKZBbqXTCbYmFd44='
@@ -115,7 +115,7 @@ describe('fixWalletInfo', function () {
 describe('splitWalletInfo', function () {
   it('handles bitcoin to bitcoin cash', function () {
     expect(
-      splitWalletInfo(
+      makeSplitWalletInfo(
         fixWalletInfo({
           id: 'MPo9EF5krFQNYkxn2I0elOc0XPbs2x7GWjSxtb5c1WU=',
           type: 'wallet:bitcoin',
@@ -141,7 +141,7 @@ describe('splitWalletInfo', function () {
 
   it('handles bitcoin cash to bitcoin', function () {
     expect(
-      splitWalletInfo(
+      makeSplitWalletInfo(
         {
           id: 'MPo9EF5krFQNYkxn2I0elOc0XPbs2x7GWjSxtb5c1WU=',
           type: 'wallet:bitcoincash',

@@ -6,8 +6,8 @@ import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
-import { applyLoginReply, makeLoginTree } from './login.js'
-import { fixUsername } from './loginStore.js'
+import { applyKit, applyLoginReply, makeLoginTree } from './login.js'
+import { fixUsername, loadStash, saveStash } from './loginStore.js'
 
 function recovery2Id (recovery2Key: Uint8Array, username: string) {
   const data = utf8.parse(fixUsername(username))
@@ -67,8 +67,7 @@ export async function loginRecovery2 (
   answers: Array<string>,
   otpKey: string | void
 ) {
-  const { loginStore } = ai.props
-  let stashTree = await loginStore.load(username)
+  let stashTree = await loadStash(ai, username)
   const { loginKey, loginReply } = await fetchLoginKey(
     ai,
     recovery2Key,
@@ -78,7 +77,7 @@ export async function loginRecovery2 (
   )
   stashTree = applyLoginReply(stashTree, loginKey, loginReply)
   if (otpKey) stashTree.otpKey = fixOtpKey(otpKey)
-  loginStore.save(stashTree)
+  await saveStash(ai, stashTree)
   return makeLoginTree(stashTree, loginKey)
 }
 
@@ -108,6 +107,35 @@ export function getQuestions2 (
     const questions = decrypt(question2Box, recovery2Key)
     return JSON.parse(utf8.stringify(questions))
   })
+}
+
+export async function changeRecovery (
+  ai: ApiInput,
+  accountId: string,
+  questions: Array<string>,
+  answers: Array<string>
+) {
+  const { loginTree, username } = ai.props.state.accounts[accountId]
+
+  const kit = makeRecovery2Kit(ai, loginTree, username, questions, answers)
+  await applyKit(ai, loginTree, kit)
+}
+
+export async function deleteRecovery (ai: ApiInput, accountId: string) {
+  const { loginTree } = ai.props.state.accounts[accountId]
+
+  const kit = {
+    serverMethod: 'DELETE',
+    serverPath: '/v2/login/recovery2',
+    stash: {
+      recovery2Key: void 0
+    },
+    login: {
+      recovery2Key: void 0
+    },
+    loginId: loginTree.loginId
+  }
+  await applyKit(ai, loginTree, kit)
 }
 
 /**

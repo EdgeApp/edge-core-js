@@ -6,8 +6,13 @@ import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
-import { applyLoginReply, makeLoginTree, searchTree } from './login.js'
-import { fixUsername } from './loginStore.js'
+import {
+  applyKits,
+  applyLoginReply,
+  makeLoginTree,
+  searchTree
+} from './login.js'
+import { fixUsername, loadStash, saveStash } from './loginStore.js'
 
 function pin2Id (pin2Key: Uint8Array, username: string) {
   const data = utf8.parse(fixUsername(username))
@@ -68,8 +73,7 @@ export async function loginPin2 (
   pin: string,
   otpKey: string | void
 ) {
-  const { loginStore } = ai.props
-  let stashTree = await loginStore.load(username)
+  let stashTree = await loadStash(ai, username)
   const { pin2Key, appId: appIdFound } = getPin2Key(stashTree, appId)
   if (pin2Key == null) {
     throw new Error('PIN login is not enabled for this account on this device')
@@ -83,12 +87,40 @@ export async function loginPin2 (
   )
   stashTree = applyLoginReply(stashTree, loginKey, loginReply)
   if (otpKey) stashTree.otpKey = fixOtpKey(otpKey)
-  loginStore.save(stashTree)
+  await saveStash(ai, stashTree)
 
   // Capture the PIN into the login tree:
-  const loginTree = makeLoginTree(stashTree, loginKey, appIdFound)
-  if (loginTree.pin == null) loginTree.pin = pin
-  return loginTree
+  return makeLoginTree(stashTree, loginKey, appIdFound)
+}
+
+export async function changePin (
+  ai: ApiInput,
+  accountId: string,
+  pin: string | void,
+  enableLogin: boolean | void
+) {
+  const { loginTree, username } = ai.props.state.accounts[accountId]
+
+  // Figure out defaults:
+  if (enableLogin == null) {
+    enableLogin =
+      loginTree.pin2Key != null || (pin != null && loginTree.pin == null)
+  }
+  if (pin == null) pin = loginTree.pin
+
+  // We cannot enable PIN login if we don't know the PIN:
+  if (pin == null) {
+    if (!enableLogin) {
+      // But we can disable PIN login by just deleting it entirely:
+      return applyKits(ai, loginTree, makeDeletePin2Kits(loginTree))
+    }
+    throw new Error(
+      'Please change your PIN in the settings area above before enabling.'
+    )
+  }
+
+  const kits = makeChangePin2Kits(ai, loginTree, username, pin, enableLogin)
+  await applyKits(ai, loginTree, kits)
 }
 
 /**
@@ -98,7 +130,7 @@ export async function checkPin2 (ai: ApiInput, login: LoginTree, pin: string) {
   const { appId, username } = login
   if (!username) return false
 
-  const stashTree = await ai.props.loginStore.load(username)
+  const stashTree = await loadStash(ai, username)
   const { pin2Key } = getPin2Key(stashTree, appId)
   if (pin2Key == null) {
     throw new Error('No PIN set locally for this account')
@@ -107,6 +139,13 @@ export async function checkPin2 (ai: ApiInput, login: LoginTree, pin: string) {
     good => true,
     bad => false
   )
+}
+
+export async function deletePin (ai: ApiInput, accountId: string) {
+  const { loginTree } = ai.props.state.accounts[accountId]
+
+  const kits = makeDeletePin2Kits(loginTree)
+  await applyKits(ai, loginTree, kits)
 }
 
 /**

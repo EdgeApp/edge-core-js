@@ -80,7 +80,10 @@ describe('creation', function () {
 
   it('password-less account', async function () {
     this.timeout(1000)
-    const [context, remote] = makeFakeContexts({}, {})
+    const [context, remote] = makeFakeContexts(
+      { appId: 'test' },
+      { appId: 'test' }
+    )
     const username = 'some fancy user'
     const questions = fakeUser.recovery2Questions
     const answers = fakeUser.recovery2Answers
@@ -245,9 +248,14 @@ describe('pin', function () {
       'Error: PIN login is not enabled for this account on this device'
     )
 
+    // Since this was a legacy PIN setup, checking stops working:
+    await expectRejection(
+      account.checkPin(fakeUser.pin),
+      'Error: No PIN set locally for this account'
+    )
+
     // Change PIN, leaving it disabled:
-    expect(await account.checkPin(fakeUser.pin)).equals(true)
-    await account.changePin({ pin: '4321' })
+    await account.changePin({ pin: '4321', enableLogin: false })
     await expectRejection(
       context.loginWithPIN(fakeUser.username, fakeUser.pin),
       'Error: PIN login is not enabled for this account on this device'

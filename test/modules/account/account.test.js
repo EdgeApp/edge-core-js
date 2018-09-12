@@ -207,5 +207,6 @@ describe('account', function () {
     )
     await account.logout()
     log.assert(['logout'])
+    expect(account.loggedIn).equals(false)
   })
 })
