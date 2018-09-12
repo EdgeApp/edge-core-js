@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.10.5
+
+* Fix the git server list again.
+
 ## 0.10.4
 
 * Fix the git server list.
