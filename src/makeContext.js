@@ -1,7 +1,5 @@
 // @flow
 
-import 'regenerator-runtime/runtime'
-
 import { isReactNative } from 'detect-bundler'
 
 import type { EdgeContext, EdgeContextOptions } from './edge-core-index.js'
