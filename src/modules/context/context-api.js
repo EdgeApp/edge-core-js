@@ -5,10 +5,10 @@ import type {
   EdgeAccountOptions,
   EdgeContext,
   EdgeEdgeLoginOptions,
-  EdgeEdgeLoginRequest,
   EdgeExchangeSwapInfo,
   EdgeLoginMessages,
-  EdgePasswordRules
+  EdgePasswordRules,
+  EdgePendingEdgeLogin
 } from '../../edge-core-index.js'
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
@@ -172,7 +172,7 @@ export function makeContextApi (ai: ApiInput) {
 
     async requestEdgeLogin (
       opts: EdgeEdgeLoginOptions
-    ): Promise<EdgeEdgeLoginRequest> {
+    ): Promise<EdgePendingEdgeLogin> {
       const {
         callbacks,
         onLogin,
