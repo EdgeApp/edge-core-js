@@ -74,7 +74,7 @@ export function makeAccountApi (
     get localFolder (): DiskletFolder {
       return storageWalletApi.localFolder
     },
-    sync (): Promise<mixed> {
+    async sync (): Promise<mixed> {
       return storageWalletApi.sync()
     },
 
@@ -126,10 +126,10 @@ export function makeAccountApi (
     recoveryLogin: loginType === 'recoveryLogin',
 
     // Change or create credentials:
-    changePassword (password: string): Promise<mixed> {
+    async changePassword (password: string): Promise<mixed> {
       return changePassword(ai, accountId, password).then(() => {})
     },
-    changePin (opts: {
+    async changePin (opts: {
       pin?: string, // We keep the existing PIN if unspecified
       enableLogin?: boolean // We default to true if unspecified
     }): Promise<string> {
@@ -139,7 +139,7 @@ export function makeAccountApi (
         return login.pin2Key ? base58.stringify(login.pin2Key) : ''
       })
     },
-    changeRecovery (
+    async changeRecovery (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
@@ -153,27 +153,27 @@ export function makeAccountApi (
     },
 
     // Verify existing credentials:
-    checkPassword (password: string): Promise<boolean> {
+    async checkPassword (password: string): Promise<boolean> {
       const { loginTree } = selfState()
       return checkPassword(ai, loginTree, password)
     },
-    checkPin (pin: string): Promise<boolean> {
+    async checkPin (pin: string): Promise<boolean> {
       const { login, loginTree } = selfState()
 
       // Try to check the PIN locally, then fall back on the server:
       return login.pin != null
-        ? Promise.resolve(pin === login.pin)
+        ? pin === login.pin
         : checkPin2(ai, loginTree, pin)
     },
 
     // Remove credentials:
-    deletePassword (): Promise<mixed> {
+    async deletePassword (): Promise<mixed> {
       return deletePassword(ai, accountId).then(() => {})
     },
-    deletePin (): Promise<mixed> {
+    async deletePin (): Promise<mixed> {
       return deletePin(ai, accountId).then(() => {})
     },
-    deleteRecovery (): Promise<mixed> {
+    async deleteRecovery (): Promise<mixed> {
       return deleteRecovery(ai, accountId).then(() => {})
     },
 
@@ -186,35 +186,34 @@ export function makeAccountApi (
       const { login } = selfState()
       return login.otpResetDate
     },
-    cancelOtpReset (): Promise<mixed> {
+    async cancelOtpReset (): Promise<mixed> {
       return cancelOtpReset(ai, accountId).then(() => {})
     },
-    enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<mixed> {
+    async enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<mixed> {
       return enableOtp(ai, accountId, timeout).then(() => {})
     },
-    disableOtp (): Promise<mixed> {
+    async disableOtp (): Promise<mixed> {
       return disableOtp(ai, accountId).then(() => {})
     },
 
     // Edge login approval:
-    fetchLobby (lobbyId: string): Promise<EdgeLobby> {
+    async fetchLobby (lobbyId: string): Promise<EdgeLobby> {
       return makeLobbyApi(ai, accountId, lobbyId)
     },
 
     // Login management:
-    logout (): Promise<mixed> {
+    async logout (): Promise<mixed> {
       ai.props.dispatch({ type: 'LOGOUT', payload: { accountId } })
-      return Promise.resolve()
     },
 
     // Master wallet list:
     get allKeys (): Array<EdgeWalletInfoFull> {
       return ai.props.state.accounts[accountId].allWalletInfosFull
     },
-    changeWalletStates (walletStates: EdgeWalletStates): Promise<mixed> {
+    async changeWalletStates (walletStates: EdgeWalletStates): Promise<mixed> {
       return changeWalletStates(ai, accountId, walletStates)
     },
-    createWallet (type: string, keys: any): Promise<string> {
+    async createWallet (type: string, keys: any): Promise<string> {
       const { login, loginTree } = selfState()
 
       if (keys == null) {
@@ -241,10 +240,13 @@ export function makeAccountApi (
     listWalletIds (): Array<string> {
       return this.allKeys.map(info => info.id)
     },
-    splitWalletInfo (walletId: string, newWalletType: string): Promise<string> {
+    async splitWalletInfo (
+      walletId: string,
+      newWalletType: string
+    ): Promise<string> {
       return splitWalletInfo(ai, accountId, walletId, newWalletType)
     },
-    listSplittableWalletTypes (walletId: string): Promise<Array<string>> {
+    async listSplittableWalletTypes (walletId: string): Promise<Array<string>> {
       return listSplittableWalletTypes(ai, accountId, walletId)
     },
 
