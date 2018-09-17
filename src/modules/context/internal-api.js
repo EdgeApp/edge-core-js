@@ -3,7 +3,7 @@
 import { authRequest } from '../login/authServer.js'
 import { fetchLobbyRequest, makeLobby, sendLobbyReply } from '../login/lobby.js'
 import type { LobbyRequest } from '../login/lobby.js'
-import { hashUsername } from '../login/loginStore.js'
+import { hashUsername } from '../login/login-selectors.js'
 import type { ApiInput } from '../root.js'
 
 /**

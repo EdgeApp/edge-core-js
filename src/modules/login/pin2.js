@@ -5,6 +5,7 @@ import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
+import { fixUsername, getStash } from './login-selectors.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
 import {
   applyKits,
@@ -12,7 +13,7 @@ import {
   makeLoginTree,
   searchTree
 } from './login.js'
-import { fixUsername, loadStash, saveStash } from './loginStore.js'
+import { saveStash } from './loginStore.js'
 
 function pin2Id (pin2Key: Uint8Array, username: string) {
   const data = utf8.parse(fixUsername(username))
@@ -73,7 +74,7 @@ export async function loginPin2 (
   pin: string,
   otpKey: string | void
 ) {
-  let stashTree = await loadStash(ai, username)
+  let stashTree = getStash(ai, username)
   const { pin2Key, appId: appIdFound } = getPin2Key(stashTree, appId)
   if (pin2Key == null) {
     throw new Error('PIN login is not enabled for this account on this device')
@@ -130,7 +131,7 @@ export async function checkPin2 (ai: ApiInput, login: LoginTree, pin: string) {
   const { appId, username } = login
   if (!username) return false
 
-  const stashTree = await loadStash(ai, username)
+  const stashTree = getStash(ai, username)
   const { pin2Key } = getPin2Key(stashTree, appId)
   if (pin2Key == null) {
     throw new Error('No PIN set locally for this account')

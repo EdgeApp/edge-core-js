@@ -6,14 +6,10 @@ import { base64 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { authRequest } from './authServer.js'
+import { fixUsername, getStash, hashUsername } from './login-selectors.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
 import { applyKit, applyLoginReply, makeLoginTree, syncLogin } from './login.js'
-import {
-  fixUsername,
-  hashUsername,
-  loadStash,
-  saveStash
-} from './loginStore.js'
+import { saveStash } from './loginStore.js'
 
 export const passwordAuthSnrp = userIdSnrp
 
@@ -83,7 +79,7 @@ export async function loginPassword (
   otpKey: string | void
 ) {
   const { io } = ai.props
-  let stashTree = await loadStash(ai, username)
+  let stashTree = getStash(ai, username)
 
   try {
     const loginKey = await extractLoginKey(ai, stashTree, username, password)

@@ -3,7 +3,7 @@
 import { combinePixies, mapPixie, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 
-import type { EdgeAccount } from '../../edge-core-index.js'
+import type { EdgeAccount, EdgeCurrencyWallet } from '../../edge-core-index.js'
 import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
 import type { ApiInput, RootProps } from '../root.js'
 import {
@@ -16,7 +16,8 @@ import type { AccountState } from './account-reducer.js'
 import { CurrencyTools } from './currency-api.js'
 
 export type AccountOutput = {
-  +api: EdgeAccount
+  +api: EdgeAccount,
+  +currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
 }
 
 export type AccountProps = RootProps & {
@@ -110,12 +111,41 @@ const accountPixie = combinePixies({
       const { selfState, selfOutput } = input.props
       if (selfState == null || selfOutput == null) return
 
-      if (lastWalletInfos !== selfState.allWalletInfos) {
-        lastWalletInfos = selfState.allWalletInfos
+      if (lastWalletInfos !== selfState.walletInfos) {
+        lastWalletInfos = selfState.walletInfos
 
         const { onKeyListChanged } = selfState.callbacks
         if (onKeyListChanged) onKeyListChanged()
       }
+    }
+  },
+
+  currencyWallets (input: AccountInput) {
+    let lastActiveWalletIds
+
+    return () => {
+      const { activeWalletIds } = input.props.selfState
+      let dirty = lastActiveWalletIds !== activeWalletIds
+      lastActiveWalletIds = activeWalletIds
+
+      let lastOut = {}
+      if (input.props.selfOutput && input.props.selfOutput.currencyWallets) {
+        lastOut = input.props.selfOutput.currencyWallets
+      }
+
+      const out = {}
+      for (const walletId of activeWalletIds) {
+        if (
+          input.props.output.currency.wallets[walletId] != null &&
+          input.props.output.currency.wallets[walletId].api != null
+        ) {
+          const api = input.props.output.currency.wallets[walletId].api
+          if (api !== lastOut[walletId]) dirty = true
+          out[walletId] = api
+        }
+      }
+
+      if (dirty) input.onOutput(out)
     }
   }
 })

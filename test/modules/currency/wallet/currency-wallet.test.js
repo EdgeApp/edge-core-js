@@ -63,8 +63,7 @@ describe('currency wallets', function () {
   })
 
   it('triggers callbacks', async function () {
-    this.timeout(4000)
-
+    const snoozeTimeMs = 50
     const log = makeAssertLog(true)
     const store = makeFakeCurrencyStore()
 
@@ -89,7 +88,6 @@ describe('currency wallets', function () {
     let txState = []
     log.assert(['balance TEST 0', 'blockHeight 0', 'progress 0'])
     expect(wallet.balances).deep.equals({ TEST: '0', TOKEN: '0' })
-    const snoozeTimeMs = 251
     await snooze(snoozeTimeMs)
     log.assert(['balance TOKEN 0'])
 

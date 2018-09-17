@@ -134,8 +134,8 @@ export type EdgeContextCallbacks = {
 }
 
 export type EdgeContextOptions = {
-  apiKey?: string,
-  appId?: string,
+  apiKey?: string, // TODO: Non-optional
+  appId?: string, // TODO: Non-optional
   authServer?: string,
   callbacks?: EdgeContextCallbacks,
   path?: string, // Only used on node.js
@@ -165,7 +165,7 @@ export type EdgeContext = {
   ): Promise<EdgeAccount>,
 
   // Edge login:
-  requestEdgeLogin(opts: EdgeEdgeLoginOptions): Promise<EdgeEdgeLoginRequest>,
+  requestEdgeLogin(opts: EdgeEdgeLoginOptions): Promise<EdgePendingEdgeLogin>,
 
   // Fingerprint login:
   loginWithKey(
@@ -236,7 +236,7 @@ export type EdgePasswordRules = {
   passed: boolean
 }
 
-export type EdgeEdgeLoginRequest = {
+export type EdgePendingEdgeLogin = {
   id: string,
   cancelRequest(): void
 }
@@ -857,7 +857,7 @@ export type {
   EdgeContext as AbcContext,
   EdgeExchangeSwapInfo as AbcExchangeSwapInfo,
   EdgePasswordRules as AbcPasswordRules,
-  EdgeEdgeLoginRequest as AbcEdgeLoginRequest,
+  EdgePendingEdgeLogin as AbcEdgeLoginRequest,
   EdgeEdgeLoginOptions as AbcEdgeLoginOptions,
   EdgeLoginMessages as AbcLoginMessages,
   EdgeWalletInfo as AbcWalletInfo,
@@ -896,5 +896,6 @@ export type {
   EdgeCorePluginFactory as AbcCorePlugin,
   EdgeContextOptions as AbcMakeContextOpts,
   EdgeCurrencyEngineOptions as AbcMakeEngineOptions,
-  EdgeCurrencyEngineCallbacks as AbcCurrencyPluginCallbacks
+  EdgeCurrencyEngineCallbacks as AbcCurrencyPluginCallbacks,
+  EdgePendingEdgeLogin as EdgeEdgeLoginRequest
 }

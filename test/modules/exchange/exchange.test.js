@@ -156,6 +156,7 @@ describe('exchange cache reducer', function () {
 describe('exchange pixie', function () {
   it('adds plugins', async function () {
     const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
+      apiKey: '',
       plugins: [fakeExchangePlugin]
     })
 
@@ -176,6 +177,7 @@ describe('exchange pixie', function () {
   it('fetches exchange rates', async function () {
     let updateCalled = false
     const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
+      apiKey: '',
       callbacks: {
         onExchangeUpdate () {
           updateCalled = true

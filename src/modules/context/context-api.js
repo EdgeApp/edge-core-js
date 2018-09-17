@@ -1,11 +1,14 @@
 // @flow
 
 import type {
+  EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
   EdgeEdgeLoginOptions,
   EdgeExchangeSwapInfo,
-  EdgeLoginMessages
+  EdgeLoginMessages,
+  EdgePasswordRules,
+  EdgePendingEdgeLogin
 } from '../../edge-core-index.js'
 import { wrapObject } from '../../util/api.js'
 import { base58 } from '../../util/encoding.js'
@@ -13,13 +16,9 @@ import { makeAccount } from '../account/account-init.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
+import { fixUsername, getStash } from '../login/login-selectors.js'
 import { fetchLoginMessages, makeLoginTree, resetOtp } from '../login/login.js'
-import {
-  fixUsername,
-  listUsernames,
-  loadStash,
-  removeStash
-} from '../login/loginStore.js'
+import { removeStash } from '../login/loginStore.js'
 import { checkPasswordRules, loginPassword } from '../login/password.js'
 import { getPin2Key, loginPin2 } from '../login/pin2.js'
 import {
@@ -49,11 +48,11 @@ export function makeContextApi (ai: ApiInput) {
       return fixUsername(username)
     },
 
-    listUsernames (): Promise<Array<string>> {
-      return listUsernames(ai)
+    async listUsernames (): Promise<Array<string>> {
+      return Object.keys(ai.props.state.login.stashes)
     },
 
-    deleteLocalAccount (username: string): Promise<mixed> {
+    async deleteLocalAccount (username: string): Promise<mixed> {
       // Safety check:
       const fixedName = fixUsername(username)
       for (const accountId of ai.props.state.accountIds) {
@@ -65,16 +64,16 @@ export function makeContextApi (ai: ApiInput) {
       return removeStash(ai, username)
     },
 
-    usernameAvailable (username: string): Promise<boolean> {
+    async usernameAvailable (username: string): Promise<boolean> {
       return usernameAvailable(ai, username)
     },
 
-    createAccount (
+    async createAccount (
       username: string,
       password?: string,
       pin?: string,
       opts?: EdgeAccountOptions
-    ) {
+    ): Promise<EdgeAccount> {
       const { callbacks } = opts || {} // opts can be `null`
 
       return createLogin(ai, username, {
@@ -85,28 +84,23 @@ export function makeContextApi (ai: ApiInput) {
       })
     },
 
-    loginWithKey (
+    async loginWithKey (
       username: string,
       loginKey: string,
       opts?: EdgeAccountOptions
-    ) {
+    ): Promise<EdgeAccount> {
       const { callbacks } = opts || {} // opts can be `null`
 
-      return loadStash(ai, username).then(stashTree => {
-        const loginTree = makeLoginTree(
-          stashTree,
-          base58.parse(loginKey),
-          appId
-        )
-        return makeAccount(ai, appId, loginTree, 'keyLogin', callbacks)
-      })
+      const stashTree = getStash(ai, username)
+      const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
+      return makeAccount(ai, appId, loginTree, 'keyLogin', callbacks)
     },
 
-    loginWithPassword (
+    async loginWithPassword (
       username: string,
       password: string,
       opts?: EdgeAccountOptions
-    ) {
+    ): Promise<EdgeAccount> {
       const { callbacks, otp } = opts || {} // opts can be `null`
 
       return loginPassword(ai, username, password, otp).then(loginTree => {
@@ -115,21 +109,21 @@ export function makeContextApi (ai: ApiInput) {
     },
 
     '@checkPasswordRules': { sync: true },
-    checkPasswordRules (password) {
+    checkPasswordRules (password): EdgePasswordRules {
       return checkPasswordRules(password)
     },
 
-    async pinExists (username: string) {
-      const loginStash = await loadStash(ai, username)
+    async pinLoginEnabled (username: string): Promise<boolean> {
+      const loginStash = getStash(ai, username)
       const pin2Key = getPin2Key(loginStash, appId)
       return pin2Key && pin2Key.pin2Key != null
     },
 
-    pinLoginEnabled (username: string) {
-      return this.pinExists(username)
-    },
-
-    loginWithPIN (username: string, pin: string, opts?: EdgeAccountOptions) {
+    async loginWithPIN (
+      username: string,
+      pin: string,
+      opts?: EdgeAccountOptions
+    ): Promise<EdgeAccount> {
       const { callbacks, otp } = opts || {} // opts can be `null`
 
       return loginPin2(ai, appId, username, pin, otp).then(loginTree => {
@@ -137,22 +131,21 @@ export function makeContextApi (ai: ApiInput) {
       })
     },
 
-    getRecovery2Key (username: string) {
-      return loadStash(ai, username).then(loginStash => {
-        const recovery2Key = getRecovery2Key(loginStash)
-        if (recovery2Key == null) {
-          throw new Error('No recovery key stored locally.')
-        }
-        return base58.stringify(recovery2Key)
-      })
+    async getRecovery2Key (username: string): Promise<string> {
+      const loginStash = getStash(ai, username)
+      const recovery2Key = getRecovery2Key(loginStash)
+      if (recovery2Key == null) {
+        throw new Error('No recovery key stored locally.')
+      }
+      return base58.stringify(recovery2Key)
     },
 
-    loginWithRecovery2 (
+    async loginWithRecovery2 (
       recovery2Key: string,
       username: string,
       answers: Array<string>,
       opts?: EdgeAccountOptions
-    ) {
+    ): Promise<EdgeAccount> {
       const { callbacks, otp } = opts || {} // opts can be `null`
 
       return loginRecovery2(
@@ -166,15 +159,20 @@ export function makeContextApi (ai: ApiInput) {
       })
     },
 
-    fetchRecovery2Questions (recovery2Key: string, username: string) {
+    async fetchRecovery2Questions (
+      recovery2Key: string,
+      username: string
+    ): Promise<Array<string>> {
       return getQuestions2(ai, base58.parse(recovery2Key), username)
     },
 
-    listRecoveryQuestionChoices () {
+    async listRecoveryQuestionChoices (): Promise<Array<string>> {
       return listRecoveryQuestionChoices(ai)
     },
 
-    requestEdgeLogin (opts: EdgeEdgeLoginOptions) {
+    async requestEdgeLogin (
+      opts: EdgeEdgeLoginOptions
+    ): Promise<EdgePendingEdgeLogin> {
       const {
         callbacks,
         onLogin,
@@ -197,30 +195,38 @@ export function makeContextApi (ai: ApiInput) {
       })
     },
 
-    requestOtpReset (username: string, otpResetToken: string): Promise<Date> {
+    async requestOtpReset (
+      username: string,
+      otpResetToken: string
+    ): Promise<Date> {
       return resetOtp(ai, username, otpResetToken)
     },
 
-    fetchLoginMessages (): Promise<EdgeLoginMessages> {
+    async fetchLoginMessages (): Promise<EdgeLoginMessages> {
       return fetchLoginMessages(ai)
     },
 
-    getExchangeSwapRate (
+    async getExchangeSwapRate (
       fromCurrencyCode: string,
       toCurrencyCode: string
     ): Promise<number> {
       return shapeshiftApi.getExchangeSwapRate(fromCurrencyCode, toCurrencyCode)
     },
 
-    getAvailableExchangeTokens (): Promise<Array<string>> {
+    async getAvailableExchangeTokens (): Promise<Array<string>> {
       return shapeshiftApi.getAvailableExchangeTokens()
     },
 
-    getExchangeSwapInfo (
+    async getExchangeSwapInfo (
       fromCurrencyCode: string,
       toCurrencyCode: string
     ): Promise<EdgeExchangeSwapInfo> {
       return shapeshiftApi.getExchangeSwapInfo(fromCurrencyCode, toCurrencyCode)
+    },
+
+    // Deprecated API's:
+    pinExists (username: string): Promise<boolean> {
+      return this.pinLoginEnabled(username)
     }
   }
 

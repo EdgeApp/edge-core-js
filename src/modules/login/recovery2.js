@@ -5,9 +5,10 @@ import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import type { ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
+import { fixUsername, getStash } from './login-selectors.js'
 import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
 import { applyKit, applyLoginReply, makeLoginTree } from './login.js'
-import { fixUsername, loadStash, saveStash } from './loginStore.js'
+import { saveStash } from './loginStore.js'
 
 function recovery2Id (recovery2Key: Uint8Array, username: string) {
   const data = utf8.parse(fixUsername(username))
@@ -67,7 +68,7 @@ export async function loginRecovery2 (
   answers: Array<string>,
   otpKey: string | void
 ) {
-  let stashTree = await loadStash(ai, username)
+  let stashTree = getStash(ai, username)
   const { loginKey, loginReply } = await fetchLoginKey(
     ai,
     recovery2Key,

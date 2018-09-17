@@ -26,11 +26,11 @@ export type AccountState = {
   // Wallet stuff:
   +accountWalletInfo: EdgeWalletInfo,
   +allWalletInfosFull: Array<EdgeWalletInfoFull>,
-  +allWalletInfos: WalletInfoMap,
   +currencyWalletIds: Array<string>,
   +activeWalletIds: Array<string>,
   +archivedWalletIds: Array<string>,
   +legacyWalletInfos: Array<EdgeWalletInfo>,
+  +walletInfos: WalletInfoMap,
   +walletStates: EdgeWalletStates,
 
   // Login stuff:
@@ -90,42 +90,31 @@ const account = buildReducer({
     }
   ),
 
-  allWalletInfos: memoizeReducer(
-    (next: AccountNext) => next.self.allWalletInfosFull,
-    (walletInfos: Array<EdgeWalletInfoFull>): WalletInfoMap => {
-      const out = {}
-      for (const info of walletInfos) {
-        out[info.id] = info
-      }
-      return out
-    }
-  ),
-
   currencyWalletIds: memoizeReducer(
-    (next: AccountNext) => next.self.allWalletInfos,
+    (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.root.currency.infos,
-    (allWalletInfos, currencyInfos): Array<string> =>
-      Object.keys(allWalletInfos)
+    (walletInfos, currencyInfos): Array<string> =>
+      Object.keys(walletInfos)
         .filter(walletId => {
-          const info = allWalletInfos[walletId]
+          const info = walletInfos[walletId]
           return !info.deleted && hasCurrencyPlugin(currencyInfos, info.type)
         })
         .sort((walletId1, walletId2) => {
-          const info1 = allWalletInfos[walletId1]
-          const info2 = allWalletInfos[walletId2]
+          const info1 = walletInfos[walletId1]
+          const info2 = walletInfos[walletId2]
           return info1.sortIndex - info2.sortIndex
         })
   ),
 
   activeWalletIds: memoizeReducer(
-    (next: AccountNext) => next.self.allWalletInfos,
+    (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.self.currencyWalletIds,
     (walletInfos, ids): Array<string> =>
       ids.filter(id => !walletInfos[id].archived)
   ),
 
   archivedWalletIds: memoizeReducer(
-    (next: AccountNext) => next.self.allWalletInfos,
+    (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.self.currencyWalletIds,
     (walletInfos, ids): Array<string> =>
       ids.filter(id => walletInfos[id].archived)
@@ -136,6 +125,17 @@ const account = buildReducer({
       ? action.payload.legacyWalletInfos
       : state
   },
+
+  walletInfos: memoizeReducer(
+    (next: AccountNext) => next.self.allWalletInfosFull,
+    (walletInfos: Array<EdgeWalletInfoFull>): WalletInfoMap => {
+      const out = {}
+      for (const info of walletInfos) {
+        out[info.id] = info
+      }
+      return out
+    }
+  ),
 
   walletStates (state = {}, action: RootAction): EdgeWalletStates {
     return action.type === 'ACCOUNT_CHANGED_WALLET_STATES' ||

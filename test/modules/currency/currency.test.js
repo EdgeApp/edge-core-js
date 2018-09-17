@@ -37,6 +37,7 @@ describe('currency selectors', function () {
 describe('currency pixie', function () {
   it('adds plugins', async function () {
     const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
+      apiKey: '',
       plugins: [makeFakeCurrency()]
     })
 

@@ -5,8 +5,8 @@ import { wrapObject } from '../../util/api.js'
 import { base64 } from '../../util/encoding.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import type { LobbyRequest } from '../login/lobby.js'
+import { getStash } from '../login/login-selectors.js'
 import { sanitizeLoginStash, syncAccount } from '../login/login.js'
-import { loadStash } from '../login/loginStore.js'
 import type { ApiInput } from '../root.js'
 import { ensureAccountExists, findAppLogin } from './account-init.js'
 
@@ -63,7 +63,7 @@ async function approveLoginRequest (
   }
 
   // Create a sanitized login stash object:
-  const stashTree = await loadStash(ai, username)
+  const stashTree = getStash(ai, username)
   const loginStash = sanitizeLoginStash(stashTree, appId)
 
   // Send the reply:
