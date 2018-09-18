@@ -94,21 +94,23 @@ export function waitForCurrencyWallet (
   ai: ApiInput,
   walletId: string
 ): Promise<EdgeCurrencyWallet> {
-  const out: any = ai.waitFor((props: RootProps): EdgeCurrencyWallet | void => {
-    // If the wallet id doesn't even exist, bail out:
-    if (!props.state.currency.wallets[walletId]) {
-      throw new Error(`Wallet ${walletId} is not a supported type`)
-    }
+  const out: any = ai.waitFor(
+    (props: RootProps): EdgeCurrencyWallet | void => {
+      // If the wallet id doesn't even exist, bail out:
+      if (!props.state.currency.wallets[walletId]) {
+        throw new Error(`Wallet ${walletId} is not a supported type`)
+      }
 
-    // Return the error if one exists:
-    if (props.state.currency.wallets[walletId].engineFailure) {
-      throw props.state.currency.wallets[walletId].engineFailure
-    }
+      // Return the error if one exists:
+      if (props.state.currency.wallets[walletId].engineFailure) {
+        throw props.state.currency.wallets[walletId].engineFailure
+      }
 
-    // Return the API if that exists:
-    if (props.output.currency.wallets[walletId]) {
-      return props.output.currency.wallets[walletId].api
+      // Return the API if that exists:
+      if (props.output.currency.wallets[walletId]) {
+        return props.output.currency.wallets[walletId].api
+      }
     }
-  })
+  )
   return out
 }

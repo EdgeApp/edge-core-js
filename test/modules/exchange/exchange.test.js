@@ -118,7 +118,7 @@ describe('exchange cache reducer', function () {
     assert.equal(getExchangeRate(state, 'BTC', 'USD', getPairCost), 2500)
     assert.equal(
       getExchangeRate(state, 'JPY', 'USD', getPairCost),
-      1 / 260000 * 2500 // 0.0096
+      (1 / 260000) * 2500 // 0.0096
     )
   })
 
@@ -129,7 +129,7 @@ describe('exchange cache reducer', function () {
 
     assert.equal(
       getExchangeRate(state, 'JPY', 'USD', getPairCost),
-      1 / 260000 * 2600 / 1.1 // 0.0091
+      ((1 / 260000) * 2600) / 1.1 // 0.0091
     )
   })
 
