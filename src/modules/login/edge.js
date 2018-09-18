@@ -1,21 +1,42 @@
 // @flow
 
+import { Bridgeable, emit } from 'yaob'
+
+import type {
+  EdgeAccountCallbacks,
+  EdgePendingEdgeLogin
+} from '../../edge-core-index.js'
 import { base58, base64 } from '../../util/encoding.js'
+import { makeAccount } from '../account/account-init.js'
 import type { ApiInput } from '../root.js'
 import { makeLobby } from './lobby.js'
-import type { LoginTree } from './login-types.js'
 import { makeLoginTree, searchTree, syncLogin } from './login.js'
+import { saveStash } from './loginStore.js'
 
 /**
  * The public API for edge login requests.
  */
-class ABCEdgeLoginRequest {
+class PendingEdgeLogin extends Bridgeable<EdgePendingEdgeLogin> {
   id: string
   cancelRequest: () => void
 
-  constructor (lobbyId, subscription) {
+  constructor (ai, lobbyId, subscription) {
+    super()
     this.id = lobbyId
-    this.cancelRequest = () => subscription.unsubscribe()
+    this.cancelRequest = () => {
+      this._close()
+      subscription.unsubscribe()
+    }
+
+    // If the login starts, close this object:
+    const offStart = ai.props.output.context.api.on('loginStart', () => {
+      offStart()
+      this._close()
+    })
+    const offError = ai.props.output.context.api.on('loginError', () => {
+      offError()
+      this._close()
+    })
   }
 }
 
@@ -25,11 +46,11 @@ class ABCEdgeLoginRequest {
 async function onReply (ai: ApiInput, subscription, reply, appId, opts) {
   subscription.unsubscribe()
   const stashTree = reply.loginStash
-  const { io, loginStore } = ai.props
+  const { io } = ai.props
 
-  if (opts.onProcessLogin != null) {
-    opts.onProcessLogin(stashTree.username)
-  }
+  emit(ai.props.output.context.api, 'loginStart', {
+    username: stashTree.username
+  })
 
   // Find the appropriate child:
   const child = searchTree(stashTree, stash => stash.appId === appId)
@@ -43,32 +64,24 @@ async function onReply (ai: ApiInput, subscription, reply, appId, opts) {
     io.console.warn('Fixing base58 pin2Key')
     child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
   }
-  await loginStore.save(stashTree)
+  await saveStash(ai, stashTree)
 
   // This is almost guaranteed to blow up spectacularly:
   const loginKey = base64.parse(reply.loginKey)
   const loginTree = makeLoginTree(stashTree, loginKey, appId)
-  if (opts.onLogin != null) {
-    const login = searchTree(loginTree, login => login.appId === appId)
-    if (login == null) {
-      throw new Error(`Cannot find requested appId: "${appId}"`)
-    }
-    syncLogin(ai, loginTree, login)
-      .then(loginTree => {
-        opts.onLogin(void 0, loginTree)
-      })
-      .catch(e => {
-        if (opts.onLogin != null) {
-          opts.onLogin(e)
-        }
-      })
+  const login = searchTree(loginTree, login => login.appId === appId)
+  if (login == null) {
+    throw new Error(`Cannot find requested appId: "${appId}"`)
   }
-}
-
-function onError (lobby, e, opts) {
-  if (opts.onLogin != null) {
-    opts.onLogin(e)
-  }
+  const newLoginTree = await syncLogin(ai, loginTree, login)
+  const account = await makeAccount(
+    ai,
+    appId,
+    newLoginTree,
+    'edgeLogin',
+    opts.callbacks
+  )
+  emit(ai.props.output.context.api, 'login', account)
 }
 
 /**
@@ -78,12 +91,11 @@ export function requestEdgeLogin (
   ai: ApiInput,
   appId: string,
   opts: {
+    callbacks: EdgeAccountCallbacks | void,
     displayImageUrl: ?string,
-    displayName: ?string,
-    onProcessLogin?: (username: string) => mixed,
-    onLogin(e?: Error, loginTree?: LoginTree): mixed
+    displayName: ?string
   }
-) {
+): Promise<EdgePendingEdgeLogin> {
   const request = {
     loginRequest: {
       appId,
@@ -94,9 +106,15 @@ export function requestEdgeLogin (
 
   return makeLobby(ai, request).then(lobby => {
     const subscription = lobby.subscribe(
-      reply => onReply(ai, subscription, reply, appId, opts),
-      e => onError(lobby, e, opts)
+      reply => {
+        try {
+          onReply(ai, subscription, reply, appId, opts)
+        } catch (e) {
+          emit(ai.props.output.context.api, 'loginError', { e })
+        }
+      },
+      error => emit(ai.props.output.context.api, 'loginError', { error })
     )
-    return new ABCEdgeLoginRequest(lobby.lobbyId, subscription)
+    return new PendingEdgeLogin(ai, lobby.lobbyId, subscription)
   })
 }

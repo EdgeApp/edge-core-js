@@ -4,7 +4,8 @@ import type {
   EdgeAccountCallbacks,
   EdgeCurrencyInfo,
   EdgeTokenInfo,
-  EdgeWalletInfoFull
+  EdgeWalletInfo,
+  EdgeWalletStates
 } from '../edge-core-index.js'
 import type { PluginSettings } from './currency/currency-reducer.js'
 import type {
@@ -12,10 +13,22 @@ import type {
   TxFileNames
 } from './currency/wallet/currency-wallet-reducer.js'
 import type { ExchangePair } from './exchange/exchange-reducer.js'
+import type { LoginStash } from './login/login-types.js'
 import type {
   StorageWalletState,
   StorageWalletStatus
 } from './storage/storage-reducer.js'
+
+/**
+ * The account fires this when the user sorts or archives wallets.
+ */
+export type AccountChangedWalletStates = {
+  type: 'ACCOUNT_CHANGED_WALLET_STATES',
+  payload: {
+    accountId: string,
+    walletStates: EdgeWalletStates
+  }
+}
 
 /**
  * The account fires this when it loads its keys from disk.
@@ -23,8 +36,20 @@ import type {
 export type AccountKeysLoadedAction = {
   type: 'ACCOUNT_KEYS_LOADED',
   payload: {
-    activeLoginId: string,
-    walletInfos: Array<EdgeWalletInfoFull>
+    accountId: string,
+    legacyWalletInfos: Array<EdgeWalletInfo>,
+    walletStates: EdgeWalletStates
+  }
+}
+
+/**
+ * The account encountered an error when initializing itself.
+ */
+export type AccountLoadFailed = {
+  type: 'ACCOUNT_LOAD_FAILED',
+  payload: {
+    accountId: string,
+    error: Error
   }
 }
 
@@ -215,9 +240,10 @@ export type ExchangePairsFetched = {
 export type InitAction = {
   type: 'INIT',
   payload: {
-    apiKey: string | void,
-    appId: string | void,
-    authServer: string | void
+    apiKey: string,
+    appId: string,
+    authServer: string,
+    hideKeys: boolean
   }
 }
 
@@ -230,8 +256,34 @@ export type LoginAction = {
     appId: string,
     callbacks: EdgeAccountCallbacks,
     loginKey: Uint8Array,
+    loginType: string,
+    rootLogin: boolean,
     username: string
   }
+}
+
+/**
+ * Fires when we delete login data from disk.
+ */
+export type LoginStashDeleted = {
+  type: 'LOGIN_STASH_DELETED',
+  payload: string // username
+}
+
+/**
+ * Fires when we load the login data from disk.
+ */
+export type LoginStashesLoaded = {
+  type: 'LOGIN_STASHES_LOADED',
+  payload: { [filename: string]: Object }
+}
+
+/**
+ * Fires when we write a login stash to disk.
+ */
+export type LoginStashSaved = {
+  type: 'LOGIN_STASH_SAVED',
+  payload: LoginStash
 }
 
 /**
@@ -239,7 +291,7 @@ export type LoginAction = {
  */
 export type LogoutAction = {
   type: 'LOGOUT',
-  payload: { activeLoginId: string }
+  payload: { accountId: string }
 }
 
 /**
@@ -274,7 +326,9 @@ export type StorageWalletSynced = {
 }
 
 export type RootAction =
+  | AccountChangedWalletStates
   | AccountKeysLoadedAction
+  | AccountLoadFailed
   | AddedCustomToken
   | ChangedCurrencyPluginSettingAction
   | CurrencyEngineChangedBalance
@@ -294,6 +348,9 @@ export type RootAction =
   | ExchangePairsFetched
   | InitAction
   | LoginAction
+  | LoginStashDeleted
+  | LoginStashesLoaded
+  | LoginStashSaved
   | LogoutAction
   | NewCurrencyPluginSettingsAction
   | StorageWalletAdded

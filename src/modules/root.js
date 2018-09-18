@@ -1,8 +1,10 @@
 // @flow
 
-import type { Dispatch, Store } from 'redux'
+import type { Dispatch, Store, StoreEnhancer } from 'redux'
+import { compose, createStore } from 'redux'
 import { attachPixie, filterPixie } from 'redux-pixies'
 import type { PixieInput, ReduxProps } from 'redux-pixies'
+import { emit } from 'yaob'
 
 import type {
   EdgeContextOptions,
@@ -10,15 +12,10 @@ import type {
   EdgeIo
 } from '../edge-core-index.js'
 import type { RootAction } from './actions.js'
-import { LoginStore } from './login/loginStore.js'
-import { makeStore } from './makeStore.js'
 import { rootPixie } from './root-pixie.js'
 import type { RootOutput } from './root-pixie.js'
 import type { RootState } from './root-reducer.js'
-
-let allDestroyPixies: Array<() => void> = []
-
-function nop () {}
+import reducer from './root-reducer.js'
 
 /**
  * The root of the entire core state machine.
@@ -37,7 +34,6 @@ export type CoreRoot = {
 export type RootProps = {
   +dispatch: Dispatch<RootAction>,
   +io: EdgeIo,
-  +loginStore: LoginStore,
   +onError: (e: Error) => mixed,
   +onExchangeUpdate: () => mixed,
   +output: RootOutput,
@@ -48,6 +44,15 @@ export type RootProps = {
 
 export type ApiInput = PixieInput<RootProps>
 
+let allDestroyPixies: Array<() => void> = []
+
+const composeEnhancers =
+  typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
+    ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'core' })
+    : compose
+
+function nop () {}
+
 /**
  * Creates the root object for the entire core state machine.
  * This core object contains the `io` object, context options,
@@ -57,25 +62,30 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
   const onErrorDefault = (error, name) => io.console.error(name, error)
 
   const {
-    apiKey = '!invalid',
+    apiKey,
+    appId = '',
     authServer = 'https://auth.airbitz.co/api',
     callbacks = {},
+    hideKeys = false,
     plugins = [],
     shapeshiftKey = void 0
   } = opts
   const { onError = onErrorDefault, onExchangeUpdate = nop } = callbacks
 
-  const appId = opts.appId != null ? opts.appId : ''
-  const loginStore = new LoginStore(io)
+  if (apiKey == null) {
+    throw new Error('No API key provided')
+  }
+
+  const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
 
   const output: any = {}
   const coreRoot: CoreRoot = {
-    redux: makeStore(),
+    redux: createStore(reducer, enhancers),
     output
   }
   coreRoot.redux.dispatch({
     type: 'INIT',
-    payload: { apiKey, appId, authServer }
+    payload: { apiKey, appId, authServer, hideKeys }
   })
 
   coreRoot.destroyPixie = attachPixie(
@@ -85,8 +95,12 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
       (props: ReduxProps<RootState, RootAction>): RootProps => ({
         ...props,
         io,
-        loginStore,
-        onError,
+        onError: error => {
+          onError(error)
+          if (coreRoot.output.context && coreRoot.output.context.api) {
+            emit(coreRoot.output.context.api, 'error', error)
+          }
+        },
         onExchangeUpdate,
         plugins,
         shapeshiftKey

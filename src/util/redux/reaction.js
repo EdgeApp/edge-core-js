@@ -96,29 +96,3 @@ export function reactionMiddleware ({ dispatch, getState }) {
     return out
   }
 }
-
-/**
- * Creates a promise that resolves when the specified condition is true.
- * The promise return value is whatever `condition` evaluates to.
- */
-export function awaitState (store, condition) {
-  // If the condition is already true, we are done:
-  const found = condition(store.getState())
-  if (found) {
-    return Promise.resolve(found)
-  }
-
-  // Otherwise, subscribe to changes until it becomes true:
-  let unsubscribe = () => {}
-  const out = new Promise((resolve, reject) => {
-    unsubscribe = store.subscribe(() => {
-      const found = condition(store.getState())
-      if (found) {
-        unsubscribe()
-        resolve(found)
-      }
-    })
-  })
-
-  return out.catch(e => unsubscribe())
-}

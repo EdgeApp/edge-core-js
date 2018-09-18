@@ -6,12 +6,14 @@ import flowEntry from 'rollup-plugin-flow-entry'
 import packageJson from './package.json'
 
 const babelOpts = {
-  presets: ['es2015-rollup', 'flow'],
+  exclude: './build/crypto-bundle.js',
+  presets: ['@babel/preset-env', '@babel/preset-flow'],
   plugins: [
-    'transform-async-to-generator',
-    ['transform-es2015-for-of', { loose: true }],
-    'transform-object-rest-spread',
-    'transform-regenerator'
+    ['@babel/plugin-transform-for-of', { assumeArray: true }],
+    [
+      '@babel/plugin-transform-runtime',
+      { corejs: false, helpers: false, regenerator: true }
+    ]
   ]
 }
 
@@ -21,8 +23,8 @@ const commonjsOpts = {
 
 const external = [
   ...Object.keys(packageJson.dependencies),
-  'react-native',
-  'regenerator-runtime/runtime'
+  '@babel/runtime/regenerator',
+  'react-native'
 ]
 
 export default [

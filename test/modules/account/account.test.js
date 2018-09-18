@@ -22,16 +22,13 @@ function findWallet (walletInfos, type) {
 describe('account', function () {
   it('calls callbacks', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    const log = makeAssertLog()
 
-    let callbackCalled = false
-    const callbacks = {
-      onDataChanged () {
-        callbackCalled = true
-      }
-    }
-
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin, { callbacks })
-    assert(callbackCalled)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    account.watch('allKeys', () => log('called'))
+    log.assert(['called'])
+    await account.createWallet('wallet:fakecoin')
+    log.assert(['called'])
   })
 
   it('find repo', async function () {
@@ -191,21 +188,45 @@ describe('account', function () {
     )
   })
 
-  it('logout', async function () {
-    const log = makeAssertLog()
-    const callbacks = {
-      onLoggedOut () {
-        log('logout')
-      }
+  it('hides keys', async function () {
+    const [context] = makeFakeContexts({ ...contextOptions, hideKeys: true })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    // Sensitive properties don't work:
+    expect(() => account.loginKey).throw()
+
+    // Changing credentials doesn't work:
+    await expectRejection(
+      account.changePassword('password'),
+      'Error: Not available when `hideKeys` is enabled'
+    )
+
+    // The wallet list is sanitized:
+    for (const info of account.allKeys) {
+      expect(info.keys).deep.equals({})
     }
 
-    const [context] = makeFakeContexts(contextOptions)
-    const account = await context.loginWithPIN(
-      fakeUser.username,
-      fakeUser.pin,
-      { callbacks }
+    // Test ethereum address hack:
+    const id = await account.createWallet('wallet:ethereum', {
+      ethereumKey:
+        '0xbe8b70e1ae1200b0b8825bc027a4420b84bfd29ed6174d10d4470352ce2d4351'
+    })
+    const info = account.allKeys.find(info => info.id === id)
+    if (!info) throw new Error('Missing key info')
+    expect(info.keys.ethereumAddress).equals(
+      '0x3b441e6D24Fd429e5A1F7EBd311F52aded6C4E89'
     )
+  })
+
+  it('logout', async function () {
+    const log = makeAssertLog()
+    const [context] = makeFakeContexts(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    account.watch('loggedIn', loggedIn => log(loggedIn))
+    log.assert(['true'])
     await account.logout()
-    log.assert(['logout'])
+    log.assert(['false'])
+    expect(account.loggedIn).equals(false)
   })
 })

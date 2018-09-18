@@ -7,7 +7,7 @@ export default {
   external: [
     ...Object.keys(packageJson.dependencies),
     ...Object.keys(packageJson.devDependencies),
-    'regenerator-runtime/runtime'
+    '@babel/runtime/regenerator'
   ],
   input: 'test/**/*.test.js',
   output: [{ file: 'build/tests.js', format: 'cjs' }],

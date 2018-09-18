@@ -16,13 +16,14 @@ import {
   makeKeyInfo,
   mergeKeyInfos
 } from './keys.js'
+import { getStash, hashUsername } from './login-selectors.js'
 import type {
   LoginKit,
   LoginReply,
   LoginStash,
   LoginTree
 } from './login-types.js'
-import { hashUsername } from './loginStore.js'
+import { saveStash } from './loginStore.js'
 
 function cloneNode<Node: {}, Output> (
   node: Node,
@@ -298,41 +299,62 @@ export function sanitizeLoginStash (stashTree: LoginStash, appId: string) {
  * and this function knows how to apply them all.
  */
 export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
-  const { loginStore } = ai.props
   const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
   if (!login) throw new Error('Cannot apply kit: missing login')
   if (!loginTree.username) throw new Error('Cannot apply kit: missing username')
 
-  return loginStore.load(loginTree.username).then(stashTree => {
-    const request: Object = makeAuthJson(login)
-    request.data = kit.server
-    return authRequest(ai, serverMethod, serverPath, request).then(reply => {
-      const newLoginTree = updateTree(
-        loginTree,
-        login => login.loginId === loginId,
-        login => ({
-          ...login,
-          ...kit.login,
-          children: softCat(login.children, kit.login.children),
-          keyInfos: mergeKeyInfos(softCat(login.keyInfos, kit.login.keyInfos))
-        })
-      )
+  const stashTree = getStash(ai, loginTree.username)
+  const request: Object = makeAuthJson(login)
+  request.data = kit.server
+  return authRequest(ai, serverMethod, serverPath, request).then(reply => {
+    const newLoginTree = updateTree(
+      loginTree,
+      login => login.loginId === loginId,
+      login => ({
+        ...login,
+        ...kit.login,
+        children: softCat(login.children, kit.login.children),
+        keyInfos: mergeKeyInfos(softCat(login.keyInfos, kit.login.keyInfos))
+      })
+    )
 
-      const newStashTree = updateTree(
-        stashTree,
-        stash => stash.loginId === loginId,
-        stash => ({
-          ...stash,
-          ...kit.stash,
-          children: softCat(stash.children, kit.stash.children),
-          keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
-        })
-      )
+    const newStashTree = updateTree(
+      stashTree,
+      stash => stash.loginId === loginId,
+      stash => ({
+        ...stash,
+        ...kit.stash,
+        children: softCat(stash.children, kit.stash.children),
+        keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
+      })
+    )
 
-      return loginStore.save(newStashTree).then(() => newLoginTree)
-    })
+    return saveStash(ai, newStashTree).then(() => newLoginTree)
   })
+}
+
+/**
+ * Applies an array of kits to a login, one after another.
+ * We can't use `Promise.all`, since `applyKit` doesn't handle
+ * parallelism correctly.
+ */
+export function applyKits (
+  ai: ApiInput,
+  loginTree: LoginTree,
+  kits: Array<LoginKit>
+): Promise<mixed> {
+  if (!kits.length) return Promise.resolve()
+
+  const [first, ...rest] = kits
+  return applyKit(ai, loginTree, first).then(loginTree =>
+    applyKits(ai, loginTree, rest)
+  )
+}
+
+export async function syncAccount (ai: ApiInput, accountId: string) {
+  const { login, loginTree } = ai.props.state.accounts[accountId]
+  return syncLogin(ai, loginTree, login)
 }
 
 /**
@@ -343,21 +365,19 @@ export function syncLogin (
   loginTree: LoginTree,
   login: LoginTree
 ): Promise<LoginTree> {
-  const { loginStore } = ai.props
   if (!loginTree.username) throw new Error('Cannot sync: missing username')
 
-  return loginStore.load(loginTree.username).then(stashTree => {
-    const request = makeAuthJson(login)
-    return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
-      const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
-      const newLoginTree = makeLoginTree(
-        newStashTree,
-        login.loginKey,
-        login.appId
-      )
+  const stashTree = getStash(ai, loginTree.username)
+  const request = makeAuthJson(login)
+  return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
+    const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
+    const newLoginTree = makeLoginTree(
+      newStashTree,
+      login.loginKey,
+      login.appId
+    )
 
-      return loginStore.save(newStashTree).then(() => newLoginTree)
-    })
+    return saveStash(ai, newStashTree).then(() => newLoginTree)
   })
 }
 
@@ -404,18 +424,23 @@ export async function resetOtp (
  * Fetches any login-related messages for all the users on this device.
  */
 export function fetchLoginMessages (ai: ApiInput): Promise<EdgeLoginMessages> {
-  const { loginStore } = ai.props
-  return loginStore.mapLoginIds().then(loginMap => {
-    const request = {
-      loginIds: Object.keys(loginMap)
+  const stashes = ai.props.state.login.stashes
+
+  const loginMap: { [loginId: string]: string } = {} // loginId -> username
+  for (const username of Object.keys(stashes)) {
+    const loginId = stashes[username].loginId
+    if (loginId) loginMap[loginId] = username
+  }
+
+  const request = {
+    loginIds: Object.keys(loginMap)
+  }
+  return authRequest(ai, 'POST', '/v2/messages', request).then(reply => {
+    const out = {}
+    for (const message of reply) {
+      const username = loginMap[message.loginId]
+      if (username) out[username] = message
     }
-    return authRequest(ai, 'POST', '/v2/messages', request).then(reply => {
-      const out = {}
-      for (const message of reply) {
-        const username = loginMap[message.loginId]
-        if (username) out[username] = message
-      }
-      return out
-    })
+    return out
   })
 }

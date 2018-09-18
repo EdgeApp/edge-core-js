@@ -5,20 +5,16 @@ import { combineReducers } from 'redux'
 import type { RootAction } from '../../actions.js'
 
 export type LoginServerState = {
-  +apiKey: string | null,
+  +apiKey: string,
   +uri: string
 }
 
 export default combineReducers({
-  apiKey (state = null, action: RootAction): string | null {
-    return action.type === 'INIT' && action.payload.apiKey
-      ? action.payload.apiKey
-      : state
+  apiKey (state = '', action: RootAction): string {
+    return action.type === 'INIT' ? action.payload.apiKey : state
   },
 
-  uri (state = 'https://auth.airbitz.co/api', action: RootAction): string {
-    return action.type === 'INIT' && action.payload.authServer
-      ? action.payload.authServer
-      : state
+  uri (state = '', action: RootAction): string {
+    return action.type === 'INIT' ? action.payload.authServer : state
   }
 })

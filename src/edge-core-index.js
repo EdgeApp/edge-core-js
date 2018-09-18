@@ -1,5 +1,7 @@
 // @flow
 
+import type { Subscriber } from 'yaob'
+
 // Sub-module exports:
 import * as error from './error.js'
 import * as internal from './internal.js'
@@ -134,10 +136,11 @@ export type EdgeContextCallbacks = {
 }
 
 export type EdgeContextOptions = {
-  apiKey?: string,
-  appId?: string,
+  apiKey?: string, // TODO: Non-optional
+  appId?: string, // TODO: Non-optional
   authServer?: string,
   callbacks?: EdgeContextCallbacks,
+  hideKeys?: boolean,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
   shapeshiftKey?: string,
@@ -147,10 +150,26 @@ export type EdgeContextOptions = {
   offline?: boolean
 }
 
+export type EdgeContextEvents = {
+  error: Error,
+  login: EdgeAccount,
+  loginStart: { username: string },
+  loginError: { error: Error }
+}
+
+export type EdgeUserInfo = {
+  pinLoginEnabled: boolean,
+  username: string
+}
+
 export type EdgeContext = {
+  +on: Subscriber<EdgeContextEvents>,
+  +watch: Subscriber<EdgeContext>,
+
   +appId: string,
 
   // Local user management:
+  localUsers: Array<EdgeUserInfo>,
   fixUsername(username: string): string,
   listUsernames(): Promise<Array<string>>,
   deleteLocalAccount(username: string): Promise<mixed>,
@@ -165,7 +184,7 @@ export type EdgeContext = {
   ): Promise<EdgeAccount>,
 
   // Edge login:
-  requestEdgeLogin(opts: EdgeEdgeLoginOptions): Promise<EdgeEdgeLoginRequest>,
+  requestEdgeLogin(opts: EdgeEdgeLoginOptions): Promise<EdgePendingEdgeLogin>,
 
   // Fingerprint login:
   loginWithKey(
@@ -236,16 +255,18 @@ export type EdgePasswordRules = {
   passed: boolean
 }
 
-export type EdgeEdgeLoginRequest = {
-  id: string,
+export type EdgePendingEdgeLogin = {
+  +id: string,
   cancelRequest(): void
 }
 
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
   displayImageUrl?: string,
   displayName?: string,
+
+  // Deprecated (will crash in bridged contexts):
   onProcessLogin?: (username: string) => mixed,
-  onLogin(e?: Error, account?: EdgeAccount): mixed
+  onLogin?: (e?: Error, account?: EdgeAccount) => mixed
 }
 
 export type EdgeLoginMessages = {
@@ -328,6 +349,8 @@ export type EdgeCreateCurrencyWalletOptions = {
 }
 
 export type EdgeCurrencyTools = {
+  +watch: Subscriber<EdgeCurrencyTools>,
+
   +currencyInfo: EdgeCurrencyInfo,
   +pluginSettings: Object,
 
@@ -338,7 +361,13 @@ export type EdgeCurrencyToolsMap = {
   [pluginName: string]: EdgeCurrencyTools
 }
 
+export type EdgeExchangeCacheEvents = {
+  update: mixed
+}
+
 export type EdgeExchangeCache = {
+  +on: Subscriber<EdgeExchangeCacheEvents>,
+
   convertCurrency(
     fromCurrency: string,
     toCurrency: string,
@@ -369,7 +398,26 @@ export type EdgePluginData = {
   setItem(pluginId: string, itemId: string, value: string): Promise<mixed>
 }
 
+export type EdgeAccountEvents = {}
+
+export type EthererumTransaction = {
+  chainId: number, // Not part of raw data, but needed for signing
+  nonce: string,
+  gasPrice: string,
+  gasLimit: string,
+  to: string,
+  value: string,
+  data: string,
+  // The transaction is unsigned, so these are not present:
+  v?: string,
+  r?: string,
+  s?: string
+}
+
 export type EdgeAccount = {
+  +on: Subscriber<EdgeAccountEvents>,
+  +watch: Subscriber<EdgeAccount>,
+
   // Data store:
   +id: string,
   +keys: any,
@@ -449,7 +497,13 @@ export type EdgeAccount = {
   createCurrencyWallet(
     type: string,
     opts?: EdgeCreateCurrencyWalletOptions
-  ): Promise<EdgeCurrencyWallet>
+  ): Promise<EdgeCurrencyWallet>,
+
+  // Web compatibility:
+  signEthereumTransaction(
+    walletId: string,
+    transaction: EthererumTransaction
+  ): Promise<string>
 }
 
 // edge login types ---------------------------------------------------
@@ -498,7 +552,15 @@ export type EdgeTxidMap = { [txid: string]: number }
 
 export type EdgeUnusedOptions = {}
 
+export type EdgeCurrencyWalletEvents = {
+  newTransactions: Array<EdgeTransaction>,
+  transactionsChanged: Array<EdgeTransaction>
+}
+
 export type EdgeCurrencyWallet = {
+  +on: Subscriber<EdgeCurrencyWalletEvents>,
+  +watch: Subscriber<EdgeCurrencyWallet>,
+
   // Data store:
   +id: string,
   +keys: any,
@@ -857,7 +919,7 @@ export type {
   EdgeContext as AbcContext,
   EdgeExchangeSwapInfo as AbcExchangeSwapInfo,
   EdgePasswordRules as AbcPasswordRules,
-  EdgeEdgeLoginRequest as AbcEdgeLoginRequest,
+  EdgePendingEdgeLogin as AbcEdgeLoginRequest,
   EdgeEdgeLoginOptions as AbcEdgeLoginOptions,
   EdgeLoginMessages as AbcLoginMessages,
   EdgeWalletInfo as AbcWalletInfo,
@@ -896,5 +958,6 @@ export type {
   EdgeCorePluginFactory as AbcCorePlugin,
   EdgeContextOptions as AbcMakeContextOpts,
   EdgeCurrencyEngineOptions as AbcMakeEngineOptions,
-  EdgeCurrencyEngineCallbacks as AbcCurrencyPluginCallbacks
+  EdgeCurrencyEngineCallbacks as AbcCurrencyPluginCallbacks,
+  EdgePendingEdgeLogin as EdgeEdgeLoginRequest
 }

@@ -1,6 +1,7 @@
 // @flow
 
 import { add, div, lte, mul, sub } from 'biggystring'
+import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
 
 import type {
   DiskletFolder,
@@ -24,7 +25,6 @@ import type {
   EdgeTransaction
 } from '../../../edge-core-index.js'
 import { SameCurrencyError } from '../../../error.js'
-import { wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
@@ -54,6 +54,34 @@ const fakeMetadata = {
 }
 
 /**
+ * Client-side CurrencyWallet methods.
+ */
+export class CurrencyWalletSync {
+  +balances: EdgeBalances
+  +blockHeight: number
+  +currencyInfo: EdgeCurrencyInfo
+  +displayPrivateSeed: string | null
+  +displayPublicSeed: string | null
+
+  getBalance (opts: EdgeCurrencyCodeOptions = {}) {
+    return this.balances[opts.currencyCode || this.currencyInfo.currencyCode]
+  }
+
+  getBlockHeight () {
+    return this.blockHeight
+  }
+
+  getDisplayPrivateSeed (): string | null {
+    return this.displayPrivateSeed
+  }
+
+  getDisplayPublicSeed (): string | null {
+    return this.displayPublicSeed
+  }
+}
+shareData(CurrencyWalletSync.prototype, 'CurrencyWallet')
+
+/**
  * Creates an `EdgeCurrencyWallet` API object.
  */
 export function makeCurrencyWalletApi (
@@ -65,9 +93,18 @@ export function makeCurrencyWalletApi (
   const walletInfo = input.props.selfState.walletInfo
 
   const shapeshiftApi = makeShapeshiftApi(ai)
-  const storageWalletApi = makeStorageWalletApi(ai, walletInfo, {})
+  const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
+
+  function lockdown () {
+    if (ai.props.state.hideKeys) {
+      throw new Error('Not available when `hideKeys` is enabled')
+    }
+  }
 
   const out: EdgeCurrencyWallet = {
+    on: onMethod,
+    watch: watchMethod,
+
     // Data store:
     get id (): string {
       return storageWalletApi.id
@@ -76,6 +113,7 @@ export function makeCurrencyWalletApi (
       return storageWalletApi.type
     },
     get keys (): Object {
+      lockdown()
       return storageWalletApi.keys
     },
     get folder (): DiskletFolder {
@@ -84,12 +122,13 @@ export function makeCurrencyWalletApi (
     get localFolder (): DiskletFolder {
       return storageWalletApi.localFolder
     },
-    sync (): Promise<mixed> {
+    async sync (): Promise<mixed> {
       return storageWalletApi.sync()
     },
 
     // Wallet keys:
     get displayPrivateSeed (): string | null {
+      lockdown()
       return input.props.selfState.displayPrivateSeed
     },
     get displayPublicSeed (): string | null {
@@ -100,7 +139,7 @@ export function makeCurrencyWalletApi (
     get name (): string | null {
       return input.props.selfState.name
     },
-    renameWallet (name: string): Promise<mixed> {
+    async renameWallet (name: string): Promise<mixed> {
       return renameCurrencyWallet(input, name).then(() => {})
     },
 
@@ -113,7 +152,7 @@ export function makeCurrencyWalletApi (
     get fiatCurrencyCode (): string {
       return input.props.selfState.fiat
     },
-    setFiatCurrencyCode (fiatCurrencyCode: string): Promise<mixed> {
+    async setFiatCurrencyCode (fiatCurrencyCode: string): Promise<mixed> {
       return setCurrencyWalletFiat(input, fiatCurrencyCode).then(() => {})
     },
 
@@ -131,34 +170,36 @@ export function makeCurrencyWalletApi (
     },
 
     // Running state:
-    startEngine (): Promise<mixed> {
+    async startEngine (): Promise<mixed> {
       return engine.startEngine()
     },
 
-    stopEngine (): Promise<mixed> {
-      return Promise.resolve(engine.killEngine())
+    async stopEngine (): Promise<mixed> {
+      return engine.killEngine()
     },
 
-    enableTokens (tokens: Array<string>): Promise<mixed> {
+    async enableTokens (tokens: Array<string>): Promise<mixed> {
       return engine.enableTokens(tokens)
     },
 
-    disableTokens (tokens: Array<string>): Promise<mixed> {
+    async disableTokens (tokens: Array<string>): Promise<mixed> {
       return engine.disableTokens(tokens)
     },
 
-    getEnabledTokens (): Promise<Array<string>> {
+    async getEnabledTokens (): Promise<Array<string>> {
       return engine.getEnabledTokens()
     },
 
-    addCustomToken (tokenInfo: EdgeTokenInfo): Promise<mixed> {
+    async addCustomToken (tokenInfo: EdgeTokenInfo): Promise<mixed> {
       ai.props.dispatch({ type: 'ADDED_CUSTOM_TOKEN', payload: tokenInfo })
       return engine.addCustomToken(tokenInfo)
     },
 
     // Transactions:
-    getNumTransactions (opts: EdgeCurrencyCodeOptions = {}): Promise<number> {
-      return Promise.resolve(engine.getNumTransactions(opts))
+    async getNumTransactions (
+      opts: EdgeCurrencyCodeOptions = {}
+    ): Promise<number> {
+      return engine.getNumTransactions(opts)
     },
 
     async getTransactions (
@@ -253,7 +294,7 @@ export function makeCurrencyWalletApi (
       return csv
     },
 
-    getReceiveAddress (
+    async getReceiveAddress (
       opts: EdgeCurrencyCodeOptions = {}
     ): Promise<EdgeReceiveAddress> {
       const freshAddress = engine.getFreshAddress(opts)
@@ -264,15 +305,19 @@ export function makeCurrencyWalletApi (
         legacyAddress: freshAddress.legacyAddress,
         segwitAddress: freshAddress.segwitAddress
       }
-      return Promise.resolve(receiveAddress)
+      return receiveAddress
     },
 
-    saveReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<mixed> {
-      return Promise.resolve()
+    async saveReceiveAddress (
+      receiveAddress: EdgeReceiveAddress
+    ): Promise<mixed> {
+      // TODO: Address metadata
     },
 
-    lockReceiveAddress (receiveAddress: EdgeReceiveAddress): Promise<mixed> {
-      return Promise.resolve()
+    async lockReceiveAddress (
+      receiveAddress: EdgeReceiveAddress
+    ): Promise<mixed> {
+      // TODO: Address metadata
     },
 
     async makeSpend (spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
@@ -416,31 +461,31 @@ export function makeCurrencyWalletApi (
       return edgeCoinExchangeQuote
     },
 
-    signTx (tx: EdgeTransaction): Promise<EdgeTransaction> {
+    async signTx (tx: EdgeTransaction): Promise<EdgeTransaction> {
       return engine.signTx(tx)
     },
 
-    broadcastTx (tx: EdgeTransaction): Promise<EdgeTransaction> {
+    async broadcastTx (tx: EdgeTransaction): Promise<EdgeTransaction> {
       return engine.broadcastTx(tx)
     },
 
-    saveTx (tx: EdgeTransaction): Promise<mixed> {
+    async saveTx (tx: EdgeTransaction): Promise<mixed> {
       return engine.saveTx(tx)
     },
 
-    resyncBlockchain (): Promise<mixed> {
+    async resyncBlockchain (): Promise<mixed> {
       ai.props.dispatch({
         type: 'CURRENCY_ENGINE_CLEARED',
         payload: { walletId: input.props.id }
       })
-      return Promise.resolve(engine.resyncBlockchain())
+      return engine.resyncBlockchain()
     },
 
-    dumpData (): Promise<EdgeDataDump> {
-      return Promise.resolve(engine.dumpData())
+    async dumpData (): Promise<EdgeDataDump> {
+      return engine.dumpData()
     },
 
-    getPaymentProtocolInfo (
+    async getPaymentProtocolInfo (
       paymentProtocolUrl: string
     ): Promise<EdgePaymentProtocolInfo> {
       if (!engine.getPaymentProtocolInfo) {
@@ -451,7 +496,7 @@ export function makeCurrencyWalletApi (
       return engine.getPaymentProtocolInfo(paymentProtocolUrl)
     },
 
-    saveTxMetadata (
+    async saveTxMetadata (
       txid: string,
       currencyCode: string,
       metadata: EdgeMetadata
@@ -464,7 +509,7 @@ export function makeCurrencyWalletApi (
       )
     },
 
-    getMaxSpendable (spendInfo: EdgeSpendInfo): Promise<string> {
+    async getMaxSpendable (spendInfo: EdgeSpendInfo): Promise<string> {
       const { currencyCode, networkFeeOption, customNetworkFee } = spendInfo
       const balance = engine.getBalance({ currencyCode })
 
@@ -504,37 +549,23 @@ export function makeCurrencyWalletApi (
       return getMax('0', add(balance, '1'))
     },
 
-    parseUri (uri: string): Promise<EdgeParsedUri> {
-      return Promise.resolve(plugin.parseUri(uri))
+    async parseUri (uri: string): Promise<EdgeParsedUri> {
+      return plugin.parseUri(uri)
     },
 
-    encodeUri (obj: EdgeEncodeUri): Promise<string> {
-      return Promise.resolve(plugin.encodeUri(obj))
+    async encodeUri (obj: EdgeEncodeUri): Promise<string> {
+      return plugin.encodeUri(obj)
     },
 
     // Deprecated API's:
-    '@getBalance': { sync: true },
-    getBalance (opts: EdgeCurrencyCodeOptions = {}): string {
-      return engine.getBalance(opts)
-    },
-
-    '@getBlockHeight': { sync: true },
-    getBlockHeight (): number {
-      return engine.getBlockHeight()
-    },
-
-    '@getDisplayPrivateSeed': { sync: true },
-    getDisplayPrivateSeed (): string | null {
-      return engine.getDisplayPrivateSeed()
-    },
-
-    '@getDisplayPublicSeed': { sync: true },
-    getDisplayPublicSeed (): string | null {
-      return engine.getDisplayPublicSeed()
-    }
+    getBalance: CurrencyWalletSync.prototype.getBalance,
+    getBlockHeight: CurrencyWalletSync.prototype.getBlockHeight,
+    getDisplayPrivateSeed: CurrencyWalletSync.prototype.getDisplayPrivateSeed,
+    getDisplayPublicSeed: CurrencyWalletSync.prototype.getDisplayPublicSeed
   }
+  bridgifyObject(out)
 
-  return wrapObject('CurrencyWallet', out)
+  return out
 }
 
 function fixMetadata (metadata: EdgeMetadata, fiat: string) {

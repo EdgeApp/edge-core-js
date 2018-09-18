@@ -1,6 +1,7 @@
 // @flow
 
 import { mapFiles, mapFolders } from 'disklet'
+import { bridgifyObject } from 'yaob'
 
 import type { EdgeDataStore, EdgePluginData } from '../../edge-core-index.js'
 import type { ApiInput } from '../root.js'
@@ -8,7 +9,6 @@ import {
   getStorageWalletFolder,
   hashStorageWalletFilename
 } from '../storage/storage-selectors.js'
-import { AccountState } from './account-state.js'
 
 function getPluginsFolder (ai, accountWalletInfo) {
   const folder = getStorageWalletFolder(ai.props.state, accountWalletInfo.id)
@@ -32,9 +32,9 @@ function getPluginFile (ai, accountWalletInfo, storeId, itemId) {
 
 export function makeDataStoreApi (
   ai: ApiInput,
-  accountState: AccountState
+  accountId: string
 ): EdgeDataStore {
-  const { accountWalletInfo } = accountState
+  const { accountWalletInfo } = ai.props.state.accounts[accountId]
 
   const out: EdgeDataStore = {
     async deleteItem (storeId: string, itemId: string): Promise<mixed> {
@@ -100,6 +100,7 @@ export function makeDataStoreApi (
       await file.setText(JSON.stringify({ key: itemId, data: value }))
     }
   }
+  bridgifyObject(out)
 
   return out
 }
@@ -130,6 +131,7 @@ export function makePluginDataApi (dataStore: EdgeDataStore): EdgePluginData {
       return dataStore.setItem(pluginId, itemId, value)
     }
   }
+  bridgifyObject(out)
 
   return out
 }
