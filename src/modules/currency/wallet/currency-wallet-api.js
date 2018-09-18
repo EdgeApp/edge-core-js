@@ -1,6 +1,7 @@
 // @flow
 
 import { add, div, lte, mul, sub } from 'biggystring'
+import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
 
 import type {
   DiskletFolder,
@@ -24,7 +25,6 @@ import type {
   EdgeTransaction
 } from '../../../edge-core-index.js'
 import { SameCurrencyError } from '../../../error.js'
-import { wrapObject } from '../../../util/api.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
 import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
@@ -54,6 +54,34 @@ const fakeMetadata = {
 }
 
 /**
+ * Client-side CurrencyWallet methods.
+ */
+export class CurrencyWalletSync {
+  +balances: EdgeBalances
+  +blockHeight: number
+  +currencyInfo: EdgeCurrencyInfo
+  +displayPrivateSeed: string | null
+  +displayPublicSeed: string | null
+
+  getBalance (opts: EdgeCurrencyCodeOptions = {}) {
+    return this.balances[opts.currencyCode || this.currencyInfo.currencyCode]
+  }
+
+  getBlockHeight () {
+    return this.blockHeight
+  }
+
+  getDisplayPrivateSeed (): string | null {
+    return this.displayPrivateSeed
+  }
+
+  getDisplayPublicSeed (): string | null {
+    return this.displayPublicSeed
+  }
+}
+shareData(CurrencyWalletSync.prototype, 'CurrencyWallet')
+
+/**
  * Creates an `EdgeCurrencyWallet` API object.
  */
 export function makeCurrencyWalletApi (
@@ -68,6 +96,9 @@ export function makeCurrencyWalletApi (
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
   const out: EdgeCurrencyWallet = {
+    on: onMethod,
+    watch: watchMethod,
+
     // Data store:
     get id (): string {
       return storageWalletApi.id
@@ -519,28 +550,14 @@ export function makeCurrencyWalletApi (
     },
 
     // Deprecated API's:
-    '@getBalance': { sync: true },
-    getBalance (opts: EdgeCurrencyCodeOptions = {}): string {
-      return engine.getBalance(opts)
-    },
-
-    '@getBlockHeight': { sync: true },
-    getBlockHeight (): number {
-      return engine.getBlockHeight()
-    },
-
-    '@getDisplayPrivateSeed': { sync: true },
-    getDisplayPrivateSeed (): string | null {
-      return engine.getDisplayPrivateSeed()
-    },
-
-    '@getDisplayPublicSeed': { sync: true },
-    getDisplayPublicSeed (): string | null {
-      return engine.getDisplayPublicSeed()
-    }
+    getBalance: CurrencyWalletSync.prototype.getBalance,
+    getBlockHeight: CurrencyWalletSync.prototype.getBlockHeight,
+    getDisplayPrivateSeed: CurrencyWalletSync.prototype.getDisplayPrivateSeed,
+    getDisplayPublicSeed: CurrencyWalletSync.prototype.getDisplayPublicSeed
   }
+  bridgifyObject(out)
 
-  return wrapObject('CurrencyWallet', out)
+  return out
 }
 
 function fixMetadata (metadata: EdgeMetadata, fiat: string) {

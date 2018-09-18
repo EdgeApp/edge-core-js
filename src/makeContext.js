@@ -2,6 +2,7 @@
 
 import { isReactNative } from 'detect-bundler'
 import { mapFiles } from 'disklet'
+import { makeLocalBridge } from 'yaob'
 
 import type {
   EdgeContext,
@@ -79,7 +80,7 @@ export function makeFakeContexts (
       type: 'LOGIN_STASHES_LOADED',
       payload: opts[i].localFakeUser ? fakeStashes : {}
     })
-    return coreRoot.output.context.api
+    return makeLocalBridge(coreRoot.output.context.api)
   })
 }
 

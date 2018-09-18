@@ -3,7 +3,6 @@ import { describe, it } from 'mocha'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 
 import {
-  awaitState,
   createReaction,
   reactionMiddleware
 } from '../../../src/util/redux/reaction.js'
@@ -68,33 +67,5 @@ describe('redux-reactions', function () {
     // The toggle reaction should still be active:
     store.dispatch({ type: 'TOGGLE' })
     log.assert(['toggle'])
-  })
-
-  it('can await redux states', async function () {
-    const reducer = (state = false, action) =>
-      action.type === 'TOGGLE' ? !state : state
-    const store = createStore(reducer)
-    const promise = awaitState(store, state => state)
-
-    // The promise should start off pending:
-    let triggered = false
-    promise.then(() => {
-      triggered = true
-      return null
-    })
-    assert(!triggered)
-
-    // Trigger the transition:
-    store.dispatch({ type: 'TOGGLE' })
-
-    // The promise should resolve now:
-    await promise
-    assert(triggered)
-  })
-
-  it('can await redux states that are already true', async function () {
-    const reducer = (state = true, action) => state
-    const store = createStore(reducer)
-    await awaitState(store, state => state)
   })
 })

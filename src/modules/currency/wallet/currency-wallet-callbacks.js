@@ -1,6 +1,7 @@
 // @flow
 
 import { isPixieShutdownError } from 'redux-pixies'
+import { emit } from 'yaob'
 
 import type {
   EdgeAccountCallbacks,
@@ -138,6 +139,13 @@ export function makeCurrencyWalletCallbacks (
   const throtteldOnTxChanged = makeThrottledTxCallback(
     input,
     (txArray: Array<EdgeTransaction>) => {
+      if (
+        input.props.selfOutput != null &&
+        input.props.selfOutput.api != null
+      ) {
+        emit(input.props.selfOutput.api, 'transactionsChanged', txArray)
+      }
+
       forEachListener(input, ({ onTransactionsChanged }) => {
         if (onTransactionsChanged) {
           onTransactionsChanged(walletId, txArray)
@@ -149,6 +157,13 @@ export function makeCurrencyWalletCallbacks (
   const throttledOnNewTx = makeThrottledTxCallback(
     input,
     (txArray: Array<EdgeTransaction>) => {
+      if (
+        input.props.selfOutput != null &&
+        input.props.selfOutput.api != null
+      ) {
+        emit(input.props.selfOutput.api, 'newTransactions', txArray)
+      }
+
       forEachListener(input, ({ onNewTransactions }) => {
         if (onNewTransactions) {
           onNewTransactions(walletId, txArray)

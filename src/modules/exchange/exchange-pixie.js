@@ -4,7 +4,6 @@ import { combinePixies, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
 
 import type { EdgeExchangePlugin } from '../../edge-core-index.js'
-import { rejectify } from '../../util/decorators.js'
 import type { RootProps } from '../root.js'
 import type { ExchangePair } from './exchange-reducer.js'
 
@@ -47,12 +46,17 @@ export default combinePixies({
       ]
 
       return Promise.all(
-        plugins.map(plugin =>
-          rejectify(plugin.fetchExchangeRates)(pairs).catch(e => {
+        plugins.map(plugin => {
+          try {
+            return plugin.fetchExchangeRates(pairs).catch(e => {
+              input.props.onError(e)
+              return []
+            })
+          } catch (e) {
             input.props.onError(e)
             return []
-          })
-        )
+          }
+        })
       ).then(pairLists => {
         const timestamp = Date.now() / 1000
         const pairs: Array<ExchangePair> = []

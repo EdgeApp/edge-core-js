@@ -3,10 +3,12 @@
 import { add } from 'biggystring'
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
-import { createStore } from 'redux'
 
-import { fakeUser, makeFakeContexts } from '../../../../src/edge-core-index.js'
-import { awaitState } from '../../../../src/util/redux/reaction.js'
+import {
+  type EdgeCurrencyWallet,
+  fakeUser,
+  makeFakeContexts
+} from '../../../../src/edge-core-index.js'
 import { makeAssertLog } from '../../../assert-log.js'
 import { expectRejection } from '../../../expect-rejection.js'
 import {
@@ -19,30 +21,27 @@ function snooze (ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function makeFakeCurrencyWallet (store, callbacks) {
+async function makeFakeCurrencyWallet (store): Promise<EdgeCurrencyWallet> {
   const plugin = makeFakeCurrency(store)
-
-  // Use `onKeyListChanged` to trigger checking for wallets:
-  const trigger = createStore(state => null)
-  callbacks = {
-    ...callbacks,
-    onKeyListChanged () {
-      trigger.dispatch({ type: 'DUMMY' })
-    }
-  }
 
   const [context] = makeFakeContexts({
     localFakeUser: true,
     plugins: [plugin, fakeExchangePlugin]
   })
-  const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin, {
-    callbacks
-  })
+  const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
   // Wait for the wallet to load:
   const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
   if (!walletInfo) throw new Error('Broken test account')
-  return awaitState(trigger, state => account.currencyWallets[walletInfo.id])
+  return new Promise(resolve => {
+    const unsubscribe = account.watch('currencyWallets', currencyWallets => {
+      const wallet = account.currencyWallets[walletInfo.id]
+      if (wallet != null) {
+        if (unsubscribe) unsubscribe()
+        resolve(wallet)
+      }
+    })
+  })
 }
 
 describe('currency wallets', function () {
@@ -63,50 +62,47 @@ describe('currency wallets', function () {
   })
 
   it('triggers callbacks', async function () {
-    const snoozeTimeMs = 50
+    const watchSnooze = 10
+    const throttleSnooze = 30
     const log = makeAssertLog(true)
     const store = makeFakeCurrencyStore()
 
-    const callbacks = {
-      onAddressesChecked (walletId, progress) {
-        log('progress', progress)
-      },
-      onBalanceChanged (walletId, currencyCode, balance) {
-        log('balance', currencyCode, balance)
-      },
-      onBlockHeightChanged (walletId, blockHeight) {
-        log('blockHeight', blockHeight)
-      },
-      onNewTransactions (walletId, txs) {
-        txs.map(tx => log('new', tx.txid))
-      },
-      onTransactionsChanged (walletId, txs) {
-        txs.map(tx => log('changed', tx.txid))
-      }
-    }
-    const wallet = await makeFakeCurrencyWallet(store, callbacks)
-    let txState = []
-    log.assert(['balance TEST 0', 'blockHeight 0', 'progress 0'])
-    expect(wallet.balances).deep.equals({ TEST: '0', TOKEN: '0' })
-    await snooze(snoozeTimeMs)
-    log.assert(['balance TOKEN 0'])
+    // Subscribe to the wallet:
+    const wallet: EdgeCurrencyWallet = await makeFakeCurrencyWallet(store)
+    wallet.on('newTransactions', txs => txs.map(tx => log('new', tx.txid)))
+    wallet.on('transactionsChanged', txs =>
+      txs.map(tx => log('changed', tx.txid))
+    )
+    wallet.watch('balances', balances =>
+      log('balances', JSON.stringify(balances).replace(/"/g, ''))
+    )
+    wallet.watch('blockHeight', blockHeight => log('blockHeight', blockHeight))
+    wallet.watch('syncRatio', syncRatio => log('syncRatio', syncRatio))
 
-    await snooze(snoozeTimeMs)
+    // Test property watchers:
+    let txState = []
+    log.assert(['balances {TEST:0,TOKEN:0}', 'blockHeight 0', 'syncRatio 0'])
+    expect(wallet.balances).to.deep.equal({ TEST: '0', TOKEN: '0' })
+
     store.dispatch({ type: 'SET_TOKEN_BALANCE', payload: 30 })
-    log.assert(['balance TOKEN 30'])
-    expect(wallet.balances).deep.equals({ TEST: '0', TOKEN: '30' })
+    await snooze(watchSnooze)
+    log.assert(['balances {TEST:0,TOKEN:30}'])
+    expect(wallet.balances).to.deep.equal({ TEST: '0', TOKEN: '30' })
 
     store.dispatch({ type: 'SET_BLOCK_HEIGHT', payload: 200 })
+    await snooze(watchSnooze)
     log.assert(['blockHeight 200'])
     assert.equal(wallet.getBlockHeight(), 200)
-    expect(wallet.blockHeight).equals(200)
+    expect(wallet.blockHeight).to.equal(200)
 
-    await snooze(snoozeTimeMs)
     store.dispatch({ type: 'SET_PROGRESS', payload: 0.123456789 })
-    log.assert(['progress 0.123456789'])
+    await snooze(watchSnooze)
+    expect(wallet.syncRatio).to.equal(0.123456789)
+    log.assert(['syncRatio 0.123456789'])
 
     store.dispatch({ type: 'SET_BALANCE', payload: 1234567890 })
-    log.assert(['balance TEST 1234567890'])
+    await snooze(watchSnooze)
+    log.assert(['balances {TEST:1234567890,TOKEN:30}'])
 
     // New transactions:
     txState = [
@@ -114,14 +110,13 @@ describe('currency wallets', function () {
       { txid: 'b', nativeAmount: '100' }
     ]
     store.dispatch({ type: 'SET_TXS', payload: txState })
+    await snooze(throttleSnooze)
     log.assert(['new a', 'new b'])
 
-    await snooze(snoozeTimeMs)
     // Should not trigger:
     store.dispatch({ type: 'SET_TXS', payload: txState })
     log.assert([])
 
-    await snooze(snoozeTimeMs)
     // Changed transactions:
     txState = [
       ...txState,
@@ -129,11 +124,12 @@ describe('currency wallets', function () {
       { txid: 'c', nativeAmount: '200' }
     ]
     store.dispatch({ type: 'SET_TXS', payload: txState })
+    await snooze(throttleSnooze)
     log.assert(['changed a', 'new c'])
 
-    await snooze(snoozeTimeMs)
     txState = [{ txid: 'd', nativeAmount: '200' }]
     store.dispatch({ type: 'SET_TXS', payload: txState })
+    await snooze(throttleSnooze)
     log.assert(['new d'])
 
     // Make several changes in a row which should get batched into one call due to throttling
@@ -143,8 +139,7 @@ describe('currency wallets', function () {
     store.dispatch({ type: 'SET_TXS', payload: txState })
     txState = [{ txid: 'g', nativeAmount: '200' }]
     store.dispatch({ type: 'SET_TXS', payload: txState })
-    await snooze(snoozeTimeMs)
-
+    await snooze(throttleSnooze)
     log.assert(['new e', 'new f', 'new g'])
   })
 
@@ -164,6 +159,7 @@ describe('currency wallets', function () {
             assert.equal(txs.length, 1)
             assert.equal(txs[0].txid, 'a')
             assert.strictEqual(txs[0].nativeAmount, '2')
+            // $FlowFixMe legacy support code
             assert.strictEqual(txs[0].amountSatoshi, 2)
             return null
           })
@@ -173,6 +169,7 @@ describe('currency wallets', function () {
             assert.equal(txs.length, 1)
             assert.equal(txs[0].txid, 'b')
             assert.strictEqual(txs[0].nativeAmount, '200')
+            // $FlowFixMe legacy support code
             assert.strictEqual(txs[0].amountSatoshi, 200)
             return null
           })

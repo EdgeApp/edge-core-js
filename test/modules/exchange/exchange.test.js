@@ -8,7 +8,6 @@ import reducer from '../../../src/modules/exchange/exchange-reducer.js'
 import type { ExchangePair } from '../../../src/modules/exchange/exchange-reducer.js'
 import { getExchangeRate } from '../../../src/modules/exchange/exchange-selectors.js'
 import { makeCoreRoot } from '../../../src/modules/root.js'
-import { awaitState } from '../../../src/util/redux/reaction.js'
 import {
   brokenExchangePlugin,
   fakeExchangePlugin
@@ -186,10 +185,15 @@ describe('exchange pixie', function () {
       plugins: [brokenExchangePlugin, fakeExchangePlugin]
     })
 
-    await awaitState(
-      coreRoot.redux,
-      state => state.exchangeCache.rates.pairs.length > 0
-    )
+    await new Promise(resolve => {
+      const unsubscribe = coreRoot.redux.subscribe(() => {
+        const state = coreRoot.redux.getState()
+        if (state.exchangeCache.rates.pairs.length > 0) {
+          unsubscribe()
+          resolve()
+        }
+      })
+    })
     expect(updateCalled).equals(true)
 
     const state = coreRoot.redux.getState()

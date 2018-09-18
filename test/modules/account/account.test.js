@@ -22,16 +22,13 @@ function findWallet (walletInfos, type) {
 describe('account', function () {
   it('calls callbacks', async function () {
     const [context] = makeFakeContexts(contextOptions)
+    const log = makeAssertLog()
 
-    let callbackCalled = false
-    const callbacks = {
-      onDataChanged () {
-        callbackCalled = true
-      }
-    }
-
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin, { callbacks })
-    assert(callbackCalled)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    account.watch('allKeys', () => log('called'))
+    log.assert(['called'])
+    await account.createWallet('wallet:fakecoin')
+    log.assert(['called'])
   })
 
   it('find repo', async function () {
@@ -193,20 +190,13 @@ describe('account', function () {
 
   it('logout', async function () {
     const log = makeAssertLog()
-    const callbacks = {
-      onLoggedOut () {
-        log('logout')
-      }
-    }
-
     const [context] = makeFakeContexts(contextOptions)
-    const account = await context.loginWithPIN(
-      fakeUser.username,
-      fakeUser.pin,
-      { callbacks }
-    )
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    account.watch('loggedIn', loggedIn => log(loggedIn))
+    log.assert(['true'])
     await account.logout()
-    log.assert(['logout'])
+    log.assert(['false'])
     expect(account.loggedIn).equals(false)
   })
 })
