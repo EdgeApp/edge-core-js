@@ -174,7 +174,13 @@ const currencyWalletReducer = buildReducer({
       : state
   },
 
-  balances (state = {}, action: RootAction): EdgeBalances {
+  balances (state, action: RootAction, next: CurrencyWalletNext): EdgeBalances {
+    // Our default state needs to at least have the primary currency code:
+    if (state == null) {
+      state = {}
+      state[next.self.currencyInfo.currencyCode] = '0'
+    }
+
     if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
       const out = { ...state }
       out[action.payload.currencyCode] = action.payload.balance
