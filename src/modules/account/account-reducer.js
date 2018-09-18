@@ -8,6 +8,7 @@ import type {
   EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../edge-core-index.js'
+import { ethereumKeyToAddress } from '../../util/crypto/external.js'
 import type { RootAction } from '../actions.js'
 import { hasCurrencyPlugin } from '../currency/currency-selectors.js'
 import {
@@ -26,6 +27,7 @@ export type AccountState = {
   // Wallet stuff:
   +accountWalletInfo: EdgeWalletInfo,
   +allWalletInfosFull: Array<EdgeWalletInfoFull>,
+  +allWalletInfosClean: Array<EdgeWalletInfoFull>,
   +currencyWalletIds: Array<string>,
   +activeWalletIds: Array<string>,
   +archivedWalletIds: Array<string>,
@@ -88,6 +90,18 @@ const account = buildReducer({
         ...info
       }))
     }
+  ),
+
+  allWalletInfosClean: memoizeReducer(
+    (next: AccountNext) => next.self.allWalletInfosFull,
+    (walletInfos: Array<EdgeWalletInfoFull>): Array<EdgeWalletInfoFull> =>
+      walletInfos.map(info => {
+        const keys =
+          info.type === 'wallet:ethereum'
+            ? { ethereumAddress: ethereumKeyToAddress(info.keys.ethereumKey) }
+            : {}
+        return { ...info, keys }
+      })
   ),
 
   currencyWalletIds: memoizeReducer(

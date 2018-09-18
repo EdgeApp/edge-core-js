@@ -14,8 +14,10 @@ import type {
   EdgePluginData,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
-  EdgeWalletStates
+  EdgeWalletStates,
+  EthererumTransaction
 } from '../../edge-core-index.js'
+import { signEthereumTransaction } from '../../util/crypto/external.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
@@ -80,6 +82,12 @@ export function makeAccountApi (
   const pluginData = makePluginDataApi(dataStore)
   const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
 
+  function lockdown () {
+    if (ai.props.state.hideKeys) {
+      throw new Error('Not available when `hideKeys` is enabled')
+    }
+  }
+
   const out: EdgeAccount = {
     on: onMethod,
     watch: watchMethod,
@@ -92,12 +100,15 @@ export function makeAccountApi (
       return storageWalletApi.type
     },
     get keys (): Object {
+      lockdown()
       return storageWalletApi.keys
     },
     get folder (): DiskletFolder {
+      lockdown()
       return storageWalletApi.folder
     },
     get localFolder (): DiskletFolder {
+      lockdown()
       return storageWalletApi.localFolder
     },
     async sync (): Promise<mixed> {
@@ -112,9 +123,11 @@ export function makeAccountApi (
       return selfState() != null
     },
     get loginKey (): string {
+      lockdown()
       return base58.stringify(selfState().login.loginKey)
     },
     get recoveryKey (): string | void {
+      lockdown()
       const { login } = selfState()
       return login.recovery2Key != null
         ? base58.stringify(login.recovery2Key)
@@ -153,12 +166,14 @@ export function makeAccountApi (
 
     // Change or create credentials:
     async changePassword (password: string): Promise<mixed> {
+      lockdown()
       return changePassword(ai, accountId, password).then(() => {})
     },
     async changePin (opts: {
       pin?: string, // We keep the existing PIN if unspecified
       enableLogin?: boolean // We default to true if unspecified
     }): Promise<string> {
+      lockdown()
       const { pin, enableLogin } = opts
       return changePin(ai, accountId, pin, enableLogin).then(() => {
         const { login } = selfState()
@@ -169,6 +184,7 @@ export function makeAccountApi (
       questions: Array<string>,
       answers: Array<string>
     ): Promise<string> {
+      lockdown()
       return changeRecovery(ai, accountId, questions, answers).then(() => {
         const { loginTree } = selfState()
         if (!loginTree.recovery2Key) {
@@ -180,10 +196,12 @@ export function makeAccountApi (
 
     // Verify existing credentials:
     async checkPassword (password: string): Promise<boolean> {
+      lockdown()
       const { loginTree } = selfState()
       return checkPassword(ai, loginTree, password)
     },
     async checkPin (pin: string): Promise<boolean> {
+      lockdown()
       const { login, loginTree } = selfState()
 
       // Try to check the PIN locally, then fall back on the server:
@@ -194,36 +212,45 @@ export function makeAccountApi (
 
     // Remove credentials:
     async deletePassword (): Promise<mixed> {
+      lockdown()
       return deletePassword(ai, accountId).then(() => {})
     },
     async deletePin (): Promise<mixed> {
+      lockdown()
       return deletePin(ai, accountId).then(() => {})
     },
     async deleteRecovery (): Promise<mixed> {
+      lockdown()
       return deleteRecovery(ai, accountId).then(() => {})
     },
 
     // OTP:
     get otpKey (): string | void {
+      lockdown()
       const { login } = selfState()
       return login.otpTimeout != null ? login.otpKey : void 0
     },
     get otpResetDate (): string | void {
+      lockdown()
       const { login } = selfState()
       return login.otpResetDate
     },
     async cancelOtpReset (): Promise<mixed> {
+      lockdown()
       return cancelOtpReset(ai, accountId).then(() => {})
     },
     async enableOtp (timeout: number = 7 * 24 * 60 * 60): Promise<mixed> {
+      lockdown()
       return enableOtp(ai, accountId, timeout).then(() => {})
     },
     async disableOtp (): Promise<mixed> {
+      lockdown()
       return disableOtp(ai, accountId).then(() => {})
     },
 
     // Edge login approval:
     async fetchLobby (lobbyId: string): Promise<EdgeLobby> {
+      lockdown()
       return makeLobbyApi(ai, accountId, lobbyId)
     },
 
@@ -234,7 +261,9 @@ export function makeAccountApi (
 
     // Master wallet list:
     get allKeys (): Array<EdgeWalletInfoFull> {
-      return ai.props.state.accounts[accountId].allWalletInfosFull
+      return ai.props.state.hideKeys
+        ? ai.props.state.accounts[accountId].allWalletInfosClean
+        : ai.props.state.accounts[accountId].allWalletInfosFull
     },
     async changeWalletStates (walletStates: EdgeWalletStates): Promise<mixed> {
       return changeWalletStates(ai, accountId, walletStates)
@@ -280,6 +309,19 @@ export function makeAccountApi (
       opts?: EdgeCreateCurrencyWalletOptions = {}
     ): Promise<EdgeCurrencyWallet> {
       return createCurrencyWallet(ai, accountId, type, opts)
+    },
+
+    async signEthereumTransaction (
+      walletId: string,
+      transaction: EthererumTransaction
+    ): Promise<string> {
+      console.log('Edge is signing: ', transaction)
+      const { allWalletInfosFull } = selfState()
+      const walletInfo = allWalletInfosFull.find(info => info.id === walletId)
+      if (!walletInfo || !walletInfo.keys || !walletInfo.keys.ethereumKey) {
+        throw new Error('Cannot find the requested private key in the account')
+      }
+      return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)
     }
   }
   bridgifyObject(out)

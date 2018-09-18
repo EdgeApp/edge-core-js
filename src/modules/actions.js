@@ -242,7 +242,8 @@ export type InitAction = {
   payload: {
     apiKey: string,
     appId: string,
-    authServer: string
+    authServer: string,
+    hideKeys: boolean
   }
 }
 

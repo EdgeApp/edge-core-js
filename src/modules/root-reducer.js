@@ -18,6 +18,7 @@ export type RootState = {
   +accountCount: number,
   +accountIds: Array<string>,
   +accounts: { [accountId: string]: AccountState },
+  +hideKeys: boolean,
   +lastAccountId: string,
 
   +currency: CurrencyState,
@@ -49,6 +50,10 @@ export default buildReducer({
   },
 
   accounts: mapReducer(accountReducer, (next: RootState) => next.accountIds),
+
+  hideKeys (state = true, action: RootAction): boolean {
+    return action.type === 'INIT' ? action.payload.hideKeys : state
+  },
 
   lastAccountId (state, action, next: RootState): string {
     return 'login' + next.accountCount.toString()

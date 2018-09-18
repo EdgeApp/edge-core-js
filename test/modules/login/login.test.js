@@ -32,6 +32,13 @@ describe('username', function () {
 
     const list = await context.listUsernames()
     assert.deepEqual(list, ['js test 0'])
+
+    expect(context.localUsers).deep.equals([
+      {
+        pinLoginEnabled: true,
+        username: 'js test 0'
+      }
+    ])
   })
 
   it('remove username from local storage', async function () {
@@ -108,6 +115,13 @@ describe('creation', function () {
     const pin = '0218'
 
     const account = await context.createAccount(username, password, pin)
+
+    expect(context.localUsers).deep.equals([
+      {
+        pinLoginEnabled: true,
+        username: 'some fancy user'
+      }
+    ])
 
     return Promise.all([
       context.loginWithPIN(username, pin),
