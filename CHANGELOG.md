@@ -1,5 +1,15 @@
 # edge-core-js
 
+## 0.11.0
+
+* Make the core API bridgeable using Yaob.
+* Add a private key hiding mode.
+* Add a user list to the context object.
+
+* Remove the ability to pass a node-style callback to any asynchronous API method instead of getting a promise.
+* Fail earlier if the `apiKey` is missing.
+* Rename `EdgeEdgeLoginRequest` to `EdgePendingEdgeLogin`
+
 ## 0.10.5
 
 * Fix the git server list again.
