@@ -35,7 +35,7 @@ export const fakeExchangePlugin: EdgeExchangePluginFactory = {
       fetchExchangeRates (
         pairs: Array<EdgeExchangePairHint>
       ): Promise<Array<EdgeExchangePair>> {
-        const fuzz = Math.sin(Math.PI * Date.now() / (30 * 60 * 1000))
+        const fuzz = Math.sin((Math.PI * Date.now()) / (30 * 60 * 1000))
 
         return Promise.resolve([
           { fromCurrency: 'BTC', toCurrency: 'iso:EUR', rate: 2275.58 + fuzz },
