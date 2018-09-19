@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.11.1
+
+* Update the readme file.
+* Work around a GUI crash.
+
 ## 0.11.0
 
 * Make the core API bridgeable using Yaob.
