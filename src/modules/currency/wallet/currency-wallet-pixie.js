@@ -2,7 +2,7 @@
 
 import { combinePixies, stopUpdates } from 'redux-pixies'
 import type { PixieInput } from 'redux-pixies'
-import { update as updateBridge } from 'yaob'
+import { update } from 'yaob'
 
 import type {
   EdgeCurrencyEngine,
@@ -202,13 +202,13 @@ export default combinePixies({
   watcher (input: CurrencyWalletInput) {
     let lastState
 
-    return function update () {
+    return () => {
       const { selfState, selfOutput } = input.props
       if (selfState == null || selfOutput == null) return
 
       if (lastState !== selfState) {
         lastState = selfState
-        if (selfOutput.api != null) updateBridge(selfOutput.api)
+        if (selfOutput.api != null) update(selfOutput.api)
       }
     }
   }

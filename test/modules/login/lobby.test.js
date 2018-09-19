@@ -36,8 +36,7 @@ describe('edge login lobby', function () {
 
     return new Promise((resolve, reject) => {
       // Use 10 ms polling to really speed up the test:
-      s1
-        .makeLobby(testRequest, 10)
+      s1.makeLobby(testRequest, 10)
         .then(lobby => {
           lobby.on('error', reject)
           lobby.watch('replies', (replies: Array<Object>) => {

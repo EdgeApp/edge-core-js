@@ -63,8 +63,9 @@ export class CurrencyWalletSync {
   +displayPrivateSeed: string | null
   +displayPublicSeed: string | null
 
-  getBalance (opts: EdgeCurrencyCodeOptions = {}) {
-    return this.balances[opts.currencyCode || this.currencyInfo.currencyCode]
+  getBalance (opts: EdgeCurrencyCodeOptions = {}): string {
+    const { currencyCode = this.currencyInfo.currencyCode } = opts
+    return this.balances[currencyCode] || '0'
   }
 
   getBlockHeight () {
