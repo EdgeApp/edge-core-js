@@ -33,11 +33,14 @@ async function makeFakeCurrencyWallet (store): Promise<EdgeCurrencyWallet> {
   // Wait for the wallet to load:
   const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
   if (!walletInfo) throw new Error('Broken test account')
+  if (account.currencyWallets[walletInfo.id]) {
+    return account.currencyWallets[walletInfo.id]
+  }
   return new Promise(resolve => {
     const unsubscribe = account.watch('currencyWallets', currencyWallets => {
       const wallet = account.currencyWallets[walletInfo.id]
       if (wallet != null) {
-        if (unsubscribe) unsubscribe()
+        unsubscribe()
         resolve(wallet)
       }
     })
@@ -81,7 +84,7 @@ describe('currency wallets', function () {
 
     // Test property watchers:
     let txState = []
-    log.assert(['balances {TEST:0,TOKEN:0}', 'blockHeight 0', 'syncRatio 0'])
+    log.assert([])
     expect(wallet.balances).to.deep.equal({ TEST: '0', TOKEN: '0' })
 
     store.dispatch({ type: 'SET_TOKEN_BALANCE', payload: 30 })
