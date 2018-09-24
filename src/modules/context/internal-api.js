@@ -1,6 +1,6 @@
 // @flow
 
-import { Bridgeable } from 'yaob'
+import { Bridgeable, close, emit, update } from 'yaob'
 
 import { authRequest } from '../login/authServer.js'
 import { fetchLobbyRequest, makeLobby, sendLobbyReply } from '../login/lobby.js'
@@ -35,10 +35,10 @@ class EdgeLobby extends Bridgeable<
     const { unsubscribe } = lobby.subscribe(
       (reply: Object) => {
         this._replies = [...this._replies, reply]
-        this._update()
+        update(this)
       },
       (e: Error) => {
-        this._emit('error', e)
+        emit(this, 'error', e)
       }
     )
     this._unsubscribe = unsubscribe
@@ -54,7 +54,7 @@ class EdgeLobby extends Bridgeable<
 
   close () {
     this._unsubscribe()
-    this._close()
+    close(this)
   }
 }
 
