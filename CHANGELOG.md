@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.11.2
+
+* Hack around weird GUI Flow bug.
+
 ## 0.11.1
 
 * Update the readme file.

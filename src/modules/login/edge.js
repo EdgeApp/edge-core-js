@@ -1,6 +1,6 @@
 // @flow
 
-import { Bridgeable, emit } from 'yaob'
+import { Bridgeable, close, emit } from 'yaob'
 
 import type {
   EdgeAccountCallbacks,
@@ -24,18 +24,18 @@ class PendingEdgeLogin extends Bridgeable<EdgePendingEdgeLogin> {
     super()
     this.id = lobbyId
     this.cancelRequest = () => {
-      this._close()
+      close(this)
       subscription.unsubscribe()
     }
 
     // If the login starts, close this object:
     const offStart = ai.props.output.context.api.on('loginStart', () => {
       offStart()
-      this._close()
+      close(this)
     })
     const offError = ai.props.output.context.api.on('loginError', () => {
       offError()
-      this._close()
+      close(this)
     })
   }
 }
