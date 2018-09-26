@@ -500,6 +500,7 @@ export type EdgeAccount = {
     type: string,
     opts?: EdgeCreateCurrencyWalletOptions
   ): Promise<EdgeCurrencyWallet>,
+  waitForCurrencyWallet(walletId: string): Promise<EdgeCurrencyWallet>,
 
   // Web compatibility:
   signEthereumTransaction(

@@ -33,18 +33,7 @@ async function makeFakeCurrencyWallet (store): Promise<EdgeCurrencyWallet> {
   // Wait for the wallet to load:
   const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
   if (!walletInfo) throw new Error('Broken test account')
-  if (account.currencyWallets[walletInfo.id]) {
-    return account.currencyWallets[walletInfo.id]
-  }
-  return new Promise(resolve => {
-    const unsubscribe = account.watch('currencyWallets', currencyWallets => {
-      const wallet = account.currencyWallets[walletInfo.id]
-      if (wallet != null) {
-        unsubscribe()
-        resolve(wallet)
-      }
-    })
-  })
+  return account.waitForCurrencyWallet(walletInfo.id)
 }
 
 describe('currency wallets', function () {
