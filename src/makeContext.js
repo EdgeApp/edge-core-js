@@ -80,7 +80,9 @@ export function makeFakeContexts (
       type: 'LOGIN_STASHES_LOADED',
       payload: opts[i].localFakeUser ? fakeStashes : {}
     })
-    return makeLocalBridge(coreRoot.output.context.api)
+    return opts[i].tempNoBridge$
+      ? coreRoot.output.context.api
+      : makeLocalBridge(coreRoot.output.context.api)
   })
 }
 

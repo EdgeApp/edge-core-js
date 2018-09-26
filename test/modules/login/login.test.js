@@ -6,6 +6,7 @@ import { describe, it } from 'mocha'
 import {
   error,
   fakeUser,
+  fakeUser1,
   makeFakeContexts
 } from '../../../src/edge-core-index.js'
 import { base58 } from '../../../src/util/encoding.js'
@@ -74,7 +75,7 @@ describe('creation', function () {
   it('username available', async function () {
     const [context] = makeFakeContexts(contextOptions)
 
-    const available = await context.usernameAvailable('js test 1')
+    const available = await context.usernameAvailable('unknown user')
     assert(available)
   })
 
@@ -179,9 +180,15 @@ describe('password', function () {
     await context.loginWithPassword(fakeUser.username, fakeUser.password)
   })
 
-  it('login online', function () {
+  it('login online JS test 0', function () {
     const [context] = makeFakeContexts(contextOptions, contextOptions)
     return context.loginWithPassword(fakeUser.username, fakeUser.password)
+  })
+
+  it('login online JS test 1', function () {
+    this.timeout(15000)
+    const [context] = makeFakeContexts(contextOptions, contextOptions)
+    return context.loginWithPassword(fakeUser1.username, fakeUser1.password)
   })
 
   it('change', async function () {

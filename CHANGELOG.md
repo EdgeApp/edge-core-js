@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.11.3
+
+* Add a fake user with several test wallets.
+
 ## 0.11.2
 
 * Hack around weird GUI Flow bug.
