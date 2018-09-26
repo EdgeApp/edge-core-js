@@ -1,6 +1,7 @@
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { filterObject, softCat } from '../../util/util.js'
 import { fakeRepos, fakeUserServer } from './fakeUser.js'
+import { fakeUser1Server } from './fakeUser1.js'
 import {
   loginCreateColumns,
   loginDbColumns,
@@ -631,6 +632,7 @@ export class FakeServer {
 
     // Create fake users:
     this.setupFakeUser(fakeUserServer)
+    this.setupFakeUser(fakeUser1Server)
   }
 
   findLoginId (loginId) {

@@ -235,7 +235,10 @@ export const fakeRepos = {
     }
   },
   // wallet:fakecoin (test-child)
-  '0930F3C2CD0417765198FBEA95EC9F1E99000312': {}
+  '0930F3C2CD0417765198FBEA95EC9F1E99000312': {},
+
+  // fakeUser1
+  e786a128cbfae57c6f2ee990d322ad64f7d631f8: {}
 }
 
 export const fakeStashes = {
