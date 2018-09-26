@@ -148,7 +148,8 @@ export type EdgeContextOptions = {
 
   // Used by the fake context:
   localFakeUser?: boolean,
-  offline?: boolean
+  offline?: boolean,
+  tempNoBridge$?: boolean
 }
 
 export type EdgeContextEvents = {
