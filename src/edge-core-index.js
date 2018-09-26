@@ -437,7 +437,7 @@ export type EdgeAccount = {
 
   // Special-purpose API's:
   +currencyTools: EdgeCurrencyToolsMap,
-  +exchangeCache: any,
+  +exchangeCache: EdgeExchangeCache,
   +dataStore: EdgeDataStore,
   +pluginData: EdgePluginData, // Deprecated
 
