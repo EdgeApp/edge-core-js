@@ -310,6 +310,19 @@ export function makeAccountApi (
     ): Promise<EdgeCurrencyWallet> {
       return createCurrencyWallet(ai, accountId, type, opts)
     },
+    async waitForCurrencyWallet (walletId: string): Promise<EdgeCurrencyWallet> {
+      return new Promise(resolve => {
+        const f = currencyWallets => {
+          const wallet = this.currencyWallets[walletId]
+          if (wallet != null) {
+            resolve(wallet)
+            unsubscribe()
+          }
+        }
+        const unsubscribe = this.watch('currencyWallets', f)
+        f()
+      })
+    },
 
     async signEthereumTransaction (
       walletId: string,

@@ -26,7 +26,7 @@ describe('account', function () {
 
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     account.watch('allKeys', () => log('called'))
-    log.assert(['called'])
+    log.assert([])
     await account.createWallet('wallet:fakecoin')
     log.assert(['called'])
   })
@@ -224,7 +224,6 @@ describe('account', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     account.watch('loggedIn', loggedIn => log(loggedIn))
-    log.assert(['true'])
     await account.logout()
     log.assert(['false'])
     expect(account.loggedIn).equals(false)

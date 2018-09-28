@@ -437,7 +437,7 @@ export type EdgeAccount = {
 
   // Special-purpose API's:
   +currencyTools: EdgeCurrencyToolsMap,
-  +exchangeCache: any,
+  +exchangeCache: EdgeExchangeCache,
   +dataStore: EdgeDataStore,
   +pluginData: EdgePluginData, // Deprecated
 
@@ -500,6 +500,7 @@ export type EdgeAccount = {
     type: string,
     opts?: EdgeCreateCurrencyWalletOptions
   ): Promise<EdgeCurrencyWallet>,
+  waitForCurrencyWallet(walletId: string): Promise<EdgeCurrencyWallet>,
 
   // Web compatibility:
   signEthereumTransaction(
