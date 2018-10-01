@@ -93,6 +93,19 @@ export default combinePixies({
         }
       })
       input.onOutput(engine)
+
+      // Grab initial state:
+      const { currencyCode } = plugin.currencyInfo
+      const balance = engine.getBalance({ currencyCode })
+      const height = engine.getBlockHeight()
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
+        payload: { balance, currencyCode, walletId: input.props.id }
+      })
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
+        payload: { height, walletId: input.props.id }
+      })
     } catch (e) {
       input.props.onError(e)
       input.props.dispatch({ type: 'CURRENCY_ENGINE_FAILED', payload: e })
@@ -151,11 +164,8 @@ export default combinePixies({
       return
     }
 
-    const currencyWalletApi = makeCurrencyWalletApi(
-      input,
-      input.props.selfOutput.plugin,
-      input.props.selfOutput.engine
-    )
+    const { plugin, engine } = input.props.selfOutput
+    const currencyWalletApi = makeCurrencyWalletApi(input, plugin, engine)
     input.onOutput(currencyWalletApi)
 
     forEachListener(input, ({ onKeyListChanged }) => {
