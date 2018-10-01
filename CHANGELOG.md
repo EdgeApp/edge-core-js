@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.12.0
+
+* Add a `waitForCurrencyWallet` helper.
+* Work around 0 block-height problem with some currency plugins.
+* Update to `yaob` 0.3.0. This one changes the timing on some callbacks a bit (breaking).
+
 ## 0.11.3
 
 * Add a fake user with several test wallets.
