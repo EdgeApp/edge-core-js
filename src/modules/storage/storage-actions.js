@@ -1,6 +1,6 @@
 // @flow
 
-import { type EdgeWalletInfo } from '../../edge-core-index.js'
+import { type EdgeWalletInfo } from '../../index.js'
 import { base58, base64 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
 import { loadRepoStatus, makeRepoPaths, syncRepo } from './repo.js'

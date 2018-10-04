@@ -8,10 +8,7 @@ import {
 } from 'redux-pixies'
 import { close, emit, update } from 'yaob'
 
-import {
-  type EdgeAccount,
-  type EdgeCurrencyWallet
-} from '../../edge-core-index.js'
+import { type EdgeAccount, type EdgeCurrencyWallet } from '../../index.js'
 import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
 import { type ApiInput, type RootProps } from '../root.js'
 import {

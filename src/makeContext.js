@@ -8,7 +8,7 @@ import {
   type EdgeContext,
   type EdgeContextOptions,
   type EdgeIo
-} from './edge-core-index.js'
+} from './index.js'
 import { makeBrowserIo } from './io/browser/browser-io.js'
 import { makeFakeIos } from './io/fake/fake-io.js'
 import { fakeStashes } from './io/fake/fakeUser.js'

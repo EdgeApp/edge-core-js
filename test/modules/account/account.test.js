@@ -7,7 +7,7 @@ import {
   type EdgeAccount,
   fakeUser,
   makeFakeContexts
-} from '../../../src/edge-core-index.js'
+} from '../../../src/index.js'
 import { base64 } from '../../../src/util/encoding.js'
 import { makeAssertLog } from '../../assert-log.js'
 import { expectRejection } from '../../expect-rejection.js'

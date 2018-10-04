@@ -2,7 +2,7 @@
 
 import { mapFiles } from 'disklet'
 
-import { type DiskletFile, type DiskletFolder } from '../../edge-core-index.js'
+import { type DiskletFile, type DiskletFolder } from '../../index.js'
 import { base58, base64 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
 import { fixUsername } from './login-selectors.js'

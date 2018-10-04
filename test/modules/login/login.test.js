@@ -8,7 +8,7 @@ import {
   fakeUser,
   fakeUser1,
   makeFakeContexts
-} from '../../../src/edge-core-index.js'
+} from '../../../src/index.js'
 import { base58 } from '../../../src/util/encoding.js'
 import { expectRejection } from '../../expect-rejection.js'
 

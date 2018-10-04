@@ -7,7 +7,7 @@ import {
   type EdgeAccountCallbacks,
   type EdgeCurrencyEngineCallbacks,
   type EdgeTransaction
-} from '../../../edge-core-index.js'
+} from '../../../index.js'
 import { compare } from '../../../util/compare.js'
 import {
   getStorageWalletLastChanges,

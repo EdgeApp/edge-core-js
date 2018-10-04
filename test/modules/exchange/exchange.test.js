@@ -3,7 +3,7 @@
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { makeFakeIos } from '../../../src/edge-core-index.js'
+import { makeFakeIos } from '../../../src/index.js'
 import {
   type ExchangePair,
   exchangeCache as reducer

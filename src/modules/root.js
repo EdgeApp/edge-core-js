@@ -19,7 +19,7 @@ import {
   type EdgeContextOptions,
   type EdgeCorePluginFactory,
   type EdgeIo
-} from '../edge-core-index.js'
+} from '../index.js'
 import { type RootAction } from './actions.js'
 import { type RootOutput, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'

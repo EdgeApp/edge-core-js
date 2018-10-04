@@ -16,7 +16,7 @@ import {
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
   type EthererumTransaction
-} from '../../edge-core-index.js'
+} from '../../index.js'
 import { signEthereumTransaction } from '../../util/crypto/external.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'

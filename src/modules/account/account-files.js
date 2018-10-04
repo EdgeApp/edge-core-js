@@ -7,7 +7,7 @@ import {
   type EdgeCurrencyPlugin,
   type EdgeWalletInfo,
   type EdgeWalletStates
-} from '../../edge-core-index.js'
+} from '../../index.js'
 import { base16, base64 } from '../../util/encoding.js'
 import { makeKeyInfo } from '../login/keys.js'
 import { type ApiInput } from '../root.js'

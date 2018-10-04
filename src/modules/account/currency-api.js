@@ -6,7 +6,7 @@ import {
   type EdgeCurrencyInfo,
   type EdgeCurrencyPlugin,
   type EdgeCurrencyTools
-} from '../../edge-core-index.js'
+} from '../../index.js'
 import { type ApiInput } from '../root.js'
 import { changePluginSettings } from './account-files.js'
 

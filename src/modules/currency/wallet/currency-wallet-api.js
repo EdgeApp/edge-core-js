@@ -3,6 +3,7 @@
 import { add, div, lte, mul, sub } from 'biggystring'
 import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
 
+import { SameCurrencyError } from '../../../error.js'
 import {
   type DiskletFolder,
   type EdgeBalances,
@@ -23,8 +24,7 @@ import {
   type EdgeSpendTarget,
   type EdgeTokenInfo,
   type EdgeTransaction
-} from '../../../edge-core-index.js'
-import { SameCurrencyError } from '../../../error.js'
+} from '../../../index.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import {
   type ShapeShiftExactQuoteReply,

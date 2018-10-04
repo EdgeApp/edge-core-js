@@ -2,10 +2,7 @@
 
 import { buildReducer, mapReducer } from 'redux-keto'
 
-import {
-  type EdgeCurrencyInfo,
-  type EdgeTokenInfo
-} from '../../edge-core-index.js'
+import { type EdgeCurrencyInfo, type EdgeTokenInfo } from '../../index.js'
 import { type RootAction } from '../actions.js'
 import { type RootState } from '../root-reducer.js'
 import {

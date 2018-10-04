@@ -3,7 +3,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { type EdgeTransaction } from '../../../../src/edge-core-index.js'
+import { type EdgeTransaction } from '../../../../src/index.js'
 import {
   exportTransactionsToCSVInner,
   exportTransactionsToQBOInner

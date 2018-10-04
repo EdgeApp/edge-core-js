@@ -6,7 +6,7 @@ import {
   type EdgeTokenInfo,
   type EdgeWalletInfo,
   type EdgeWalletStates
-} from '../edge-core-index.js'
+} from '../index.js'
 import { type PluginSettings } from './currency/currency-reducer.js'
 import {
   type TxFileJsons,

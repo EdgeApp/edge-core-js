@@ -11,7 +11,7 @@ import {
   type EdgeLoginMessages,
   type EdgePendingEdgeLogin,
   type EdgeUserInfo
-} from '../../edge-core-index.js'
+} from '../../index.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'

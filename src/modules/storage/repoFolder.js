@@ -4,7 +4,7 @@ import {
   type DiskletFile,
   type DiskletFolder,
   type EdgeIo
-} from '../../edge-core-index.js'
+} from '../../index.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { utf8 } from '../../util/encoding.js'
 

@@ -2,7 +2,7 @@
 
 import { makeMemoryFolder } from 'disklet'
 
-import { type EdgeIo } from '../../edge-core-index.js'
+import { type EdgeIo } from '../../index.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 import { FakeWebSocket } from './fake-socket.js'
 import { FakeServer } from './fakeServer.js'

@@ -8,7 +8,7 @@ import {
   type EdgeCurrencyWallet,
   fakeUser,
   makeFakeContexts
-} from '../../../../src/edge-core-index.js'
+} from '../../../../src/index.js'
 import { makeAssertLog } from '../../../assert-log.js'
 import { expectRejection } from '../../../expect-rejection.js'
 import {

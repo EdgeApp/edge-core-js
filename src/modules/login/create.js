@@ -1,7 +1,7 @@
 // @flow
 
-import { type EdgeWalletInfo } from '../../edge-core-index.js'
 import { errorNames } from '../../error.js'
+import { type EdgeWalletInfo } from '../../index.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'

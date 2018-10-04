@@ -7,7 +7,7 @@ import {
   type EdgeLobby,
   fakeUser,
   makeFakeContexts
-} from '../../../src/edge-core-index.js'
+} from '../../../src/index.js'
 
 async function simulateRemoteApproval (remote, lobbyId: string) {
   const account = await remote.loginWithPIN(fakeUser.username, fakeUser.pin)

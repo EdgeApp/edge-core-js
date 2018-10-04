@@ -8,7 +8,7 @@ import {
   fakeUser,
   makeFakeContexts,
   makeFakeIos
-} from '../../../src/edge-core-index.js'
+} from '../../../src/index.js'
 import {
   getCurrencyMultiplier,
   hasCurrencyPlugin

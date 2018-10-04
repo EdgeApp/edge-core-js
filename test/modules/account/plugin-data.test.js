@@ -7,7 +7,7 @@ import {
   type EdgeAccount,
   fakeUser,
   makeFakeContexts
-} from '../../../src/edge-core-index.js'
+} from '../../../src/index.js'
 
 const contextOptions = {
   localFakeUser: true
