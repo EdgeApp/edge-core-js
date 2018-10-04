@@ -5,7 +5,7 @@ import elliptic from 'elliptic'
 import { describe, it } from 'mocha'
 
 import { makeFakeContexts, makeFakeIos } from '../../../src/edge-core-index.js'
-import type { EdgeInternalStuff } from '../../../src/modules/context/internal-api.js'
+import { type EdgeInternalStuff } from '../../../src/modules/context/internal-api.js'
 import {
   decryptLobbyReply,
   encryptLobbyReply

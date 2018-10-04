@@ -2,17 +2,17 @@
 
 import { locateFile, makeUnionFolder, mapAllFiles } from 'disklet'
 
-import type {
-  DiskletFolder,
-  EdgeIo,
-  EdgeWalletInfo
+import {
+  type DiskletFolder,
+  type EdgeIo,
+  type EdgeWalletInfo
 } from '../../edge-core-index.js'
 import { sha256 } from '../../util/crypto/crypto.js'
 import { base16, base58, base64 } from '../../util/encoding.js'
 import { RepoFolder } from './repoFolder.js'
-import type {
-  StorageWalletPaths,
-  StorageWalletStatus
+import {
+  type StorageWalletPaths,
+  type StorageWalletStatus
 } from './storage-reducer.js'
 import { syncRequest } from './storage-servers.js'
 

@@ -2,23 +2,23 @@
 
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
-import type {
-  EdgeAccountCallbacks,
-  EdgeWalletInfo,
-  EdgeWalletInfoFull,
-  EdgeWalletStates
+import {
+  type EdgeAccountCallbacks,
+  type EdgeWalletInfo,
+  type EdgeWalletInfoFull,
+  type EdgeWalletStates
 } from '../../edge-core-index.js'
 import { ethereumKeyToAddress } from '../../util/crypto/external.js'
-import type { RootAction } from '../actions.js'
+import { type RootAction } from '../actions.js'
 import { hasCurrencyPlugin } from '../currency/currency-selectors.js'
 import {
   findFirstKey,
   getAllWalletInfos,
   makeAccountType
 } from '../login/keys.js'
-import type { LoginTree, WalletInfoMap } from '../login/login-types.js'
+import { type LoginTree, type WalletInfoMap } from '../login/login-types.js'
 import { makeLoginTree } from '../login/login.js'
-import type { RootState } from '../root-reducer.js'
+import { type RootState } from '../root-reducer.js'
 import { findAppLogin } from './account-init.js'
 
 export type PluginSettings = { [pluginName: string]: Object }

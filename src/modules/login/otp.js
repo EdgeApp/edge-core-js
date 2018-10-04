@@ -4,7 +4,7 @@ import { base32 } from 'rfc4648'
 
 import { fixOtpKey } from '../../util/crypto/hotp.js'
 import { applyKit } from '../login/login.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 
 export async function enableOtp (
   ai: ApiInput,

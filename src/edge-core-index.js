@@ -1,6 +1,6 @@
 // @flow
 
-import type { Subscriber } from 'yaob'
+import { type Subscriber } from 'yaob'
 
 // Sub-module exports:
 import * as error from './error.js'

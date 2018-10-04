@@ -2,15 +2,15 @@
 
 import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
 
-import type {
-  EdgeAccount,
-  EdgeAccountOptions,
-  EdgeContext,
-  EdgeEdgeLoginOptions,
-  EdgeExchangeSwapInfo,
-  EdgeLoginMessages,
-  EdgePendingEdgeLogin,
-  EdgeUserInfo
+import {
+  type EdgeAccount,
+  type EdgeAccountOptions,
+  type EdgeContext,
+  type EdgeEdgeLoginOptions,
+  type EdgeExchangeSwapInfo,
+  type EdgeLoginMessages,
+  type EdgePendingEdgeLogin,
+  type EdgeUserInfo
 } from '../../edge-core-index.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
@@ -28,7 +28,7 @@ import {
   listRecoveryQuestionChoices,
   loginRecovery2
 } from '../login/recovery2.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { EdgeInternalStuff } from './internal-api.js'
 
 shareData({ fixUsername, checkPasswordRules })

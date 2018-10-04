@@ -2,17 +2,16 @@
 
 import { buildReducer, mapReducer } from 'redux-keto'
 
-import type { AccountState } from './account/account-reducer.js'
-import accountReducer from './account/account-reducer.js'
-import type { RootAction } from './actions.js'
-import type { CurrencyState } from './currency/currency-reducer.js'
-import currency from './currency/currency-reducer.js'
-import exchangeCache from './exchange/exchange-reducer.js'
-import type { ExchangeState } from './exchange/exchange-reducer.js'
-import type { LoginState } from './login/login-reducer.js'
-import login from './login/login-reducer.js'
-import storageWallets from './storage/storage-reducer.js'
-import type { StorageWalletsState } from './storage/storage-reducer.js'
+import accountReducer, { type AccountState } from './account/account-reducer.js'
+import { type RootAction } from './actions.js'
+import currency, { type CurrencyState } from './currency/currency-reducer.js'
+import exchangeCache, {
+  type ExchangeState
+} from './exchange/exchange-reducer.js'
+import login, { type LoginState } from './login/login-reducer.js'
+import storageWallets, {
+  type StorageWalletsState
+} from './storage/storage-reducer.js'
 
 export type RootState = {
   +accountCount: number,

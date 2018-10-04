@@ -1,8 +1,8 @@
 // @flow
 
-import type { EdgeWalletInfo } from '../../edge-core-index.js'
-import type { JsonBox } from '../../util/crypto/crypto.js'
-import type { JsonSnrp } from '../scrypt/scrypt-pixie.js'
+import { type EdgeWalletInfo } from '../../edge-core-index.js'
+import { type JsonBox } from '../../util/crypto/crypto.js'
+import { type JsonSnrp } from '../scrypt/scrypt-pixie.js'
 
 /**
  * Data sent back by the auth server.

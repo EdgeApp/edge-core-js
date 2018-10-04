@@ -1,15 +1,15 @@
 // @flow
 
 import {
+  type JsonBox,
   decrypt,
   encrypt,
   hmacSha256,
   sha256
 } from '../../util/crypto/crypto.js'
-import type { JsonBox } from '../../util/crypto/crypto.js'
 import { elliptic } from '../../util/crypto/external.js'
 import { base58, base64, utf8 } from '../../util/encoding.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 
 const EC = elliptic.ec

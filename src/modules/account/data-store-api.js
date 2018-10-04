@@ -3,8 +3,11 @@
 import { mapFiles, mapFolders } from 'disklet'
 import { bridgifyObject } from 'yaob'
 
-import type { EdgeDataStore, EdgePluginData } from '../../edge-core-index.js'
-import type { ApiInput } from '../root.js'
+import {
+  type EdgeDataStore,
+  type EdgePluginData
+} from '../../edge-core-index.js'
+import { type ApiInput } from '../root.js'
 import {
   getStorageWalletFolder,
   hashStorageWalletFilename

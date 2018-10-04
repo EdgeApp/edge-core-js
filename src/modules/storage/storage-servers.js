@@ -1,6 +1,6 @@
 // @flow
 
-import type { EdgeIo } from '../../edge-core-index.js'
+import { type EdgeIo } from '../../edge-core-index.js'
 import { NetworkError } from '../../error.js'
 
 const syncServers = [

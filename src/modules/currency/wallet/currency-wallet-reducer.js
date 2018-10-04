@@ -2,14 +2,14 @@
 
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
-import type {
-  EdgeBalances,
-  EdgeCurrencyInfo,
-  EdgeTransaction,
-  EdgeWalletInfo
+import {
+  type EdgeBalances,
+  type EdgeCurrencyInfo,
+  type EdgeTransaction,
+  type EdgeWalletInfo
 } from '../../../edge-core-index.js'
-import type { RootAction } from '../../actions.js'
-import type { RootState } from '../../root-reducer.js'
+import { type RootAction } from '../../actions.js'
+import { type RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'
 
 /** Maps from txid hash to file creation date & path. */

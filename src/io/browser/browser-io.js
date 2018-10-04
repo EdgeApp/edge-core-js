@@ -2,7 +2,7 @@
 
 import { makeLocalStorageFolder } from 'disklet'
 
-import type { EdgeIo } from '../../edge-core-index.js'
+import { type EdgeIo } from '../../edge-core-index.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 import { fakeConsole } from '../fake/fake-io.js'
 

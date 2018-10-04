@@ -1,21 +1,28 @@
 // @flow
 
-import type { Dispatch, Store, StoreEnhancer } from 'redux'
-import { compose, createStore } from 'redux'
-import { attachPixie, filterPixie } from 'redux-pixies'
-import type { PixieInput, ReduxProps } from 'redux-pixies'
+import {
+  type Dispatch,
+  type Store,
+  type StoreEnhancer,
+  compose,
+  createStore
+} from 'redux'
+import {
+  type PixieInput,
+  type ReduxProps,
+  attachPixie,
+  filterPixie
+} from 'redux-pixies'
 import { emit } from 'yaob'
 
-import type {
-  EdgeContextOptions,
-  EdgeCorePluginFactory,
-  EdgeIo
+import {
+  type EdgeContextOptions,
+  type EdgeCorePluginFactory,
+  type EdgeIo
 } from '../edge-core-index.js'
-import type { RootAction } from './actions.js'
-import { rootPixie } from './root-pixie.js'
-import type { RootOutput } from './root-pixie.js'
-import type { RootState } from './root-reducer.js'
-import reducer from './root-reducer.js'
+import { type RootAction } from './actions.js'
+import { type RootOutput, rootPixie } from './root-pixie.js'
+import reducer, { type RootState } from './root-reducer.js'
 
 /**
  * The root of the entire core state machine.

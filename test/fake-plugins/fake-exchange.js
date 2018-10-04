@@ -1,10 +1,10 @@
 // @flow
 
-import type {
-  EdgeExchangePair,
-  EdgeExchangePairHint,
-  EdgeExchangePlugin,
-  EdgeExchangePluginFactory
+import {
+  type EdgeExchangePair,
+  type EdgeExchangePairHint,
+  type EdgeExchangePlugin,
+  type EdgeExchangePluginFactory
 } from '../../src/edge-core-index.js'
 
 export const brokenExchangePlugin: EdgeExchangePluginFactory = {

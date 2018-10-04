@@ -4,11 +4,11 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
+  type EdgeCurrencyPluginFactory,
   fakeUser,
   makeFakeContexts,
   makeFakeIos
 } from '../../../src/edge-core-index.js'
-import type { EdgeCurrencyPluginFactory } from '../../../src/edge-core-index.js'
 import {
   getCurrencyMultiplier,
   hasCurrencyPlugin

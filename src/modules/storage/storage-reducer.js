@@ -2,8 +2,8 @@
 
 import { combineReducers } from 'redux'
 
-import type { DiskletFile, DiskletFolder } from '../../edge-core-index.js'
-import type { RootAction } from '../actions.js'
+import { type DiskletFile, type DiskletFolder } from '../../edge-core-index.js'
+import { type RootAction } from '../actions.js'
 
 export type StorageWalletPaths = {
   dataKey: Uint8Array,

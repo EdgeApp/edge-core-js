@@ -1,10 +1,9 @@
 // @flow
 
-import type { PixieInput } from 'redux-pixies'
-import { combinePixies, stopUpdates } from 'redux-pixies'
+import { type PixieInput, combinePixies, stopUpdates } from 'redux-pixies'
 
 import { base16, utf8 } from '../../util/encoding.js'
-import type { RootProps } from '../root.js'
+import { type RootProps } from '../root.js'
 
 export type JsonSnrp = {
   salt_hex: string,

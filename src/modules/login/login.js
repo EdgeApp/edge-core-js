@@ -3,12 +3,12 @@
  */
 // @flow
 
-import type { EdgeLoginMessages } from '../../edge-core-index.js'
+import { type EdgeLoginMessages } from '../../edge-core-index.js'
 import { decrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
 import { filterObject, softCat } from '../../util/util.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import {
   fixWalletInfo,
@@ -17,11 +17,11 @@ import {
   mergeKeyInfos
 } from './keys.js'
 import { getStash, hashUsername } from './login-selectors.js'
-import type {
-  LoginKit,
-  LoginReply,
-  LoginStash,
-  LoginTree
+import {
+  type LoginKit,
+  type LoginReply,
+  type LoginStash,
+  type LoginTree
 } from './login-types.js'
 import { saveStash } from './loginStore.js'
 

@@ -3,32 +3,34 @@
 import { add, div, lte, mul, sub } from 'biggystring'
 import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
 
-import type {
-  DiskletFolder,
-  EdgeBalances,
-  EdgeCoinExchangeQuote,
-  EdgeCurrencyCodeOptions,
-  EdgeCurrencyEngine,
-  EdgeCurrencyInfo,
-  EdgeCurrencyPlugin,
-  EdgeCurrencyWallet,
-  EdgeDataDump,
-  EdgeEncodeUri,
-  EdgeGetTransactionsOptions,
-  EdgeMetadata,
-  EdgeParsedUri,
-  EdgePaymentProtocolInfo,
-  EdgeReceiveAddress,
-  EdgeSpendInfo,
-  EdgeSpendTarget,
-  EdgeTokenInfo,
-  EdgeTransaction
+import {
+  type DiskletFolder,
+  type EdgeBalances,
+  type EdgeCoinExchangeQuote,
+  type EdgeCurrencyCodeOptions,
+  type EdgeCurrencyEngine,
+  type EdgeCurrencyInfo,
+  type EdgeCurrencyPlugin,
+  type EdgeCurrencyWallet,
+  type EdgeDataDump,
+  type EdgeEncodeUri,
+  type EdgeGetTransactionsOptions,
+  type EdgeMetadata,
+  type EdgeParsedUri,
+  type EdgePaymentProtocolInfo,
+  type EdgeReceiveAddress,
+  type EdgeSpendInfo,
+  type EdgeSpendTarget,
+  type EdgeTokenInfo,
+  type EdgeTransaction
 } from '../../../edge-core-index.js'
 import { SameCurrencyError } from '../../../error.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
-import { makeShapeshiftApi } from '../../exchange/shapeshift.js'
-import type { ShapeShiftExactQuoteReply } from '../../exchange/shapeshift.js'
-import type { ApiInput } from '../../root.js'
+import {
+  type ShapeShiftExactQuoteReply,
+  makeShapeshiftApi
+} from '../../exchange/shapeshift.js'
+import { type ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import {
@@ -36,14 +38,14 @@ import {
   exportTransactionsToQBOInner
 } from './currency-wallet-export.js'
 import {
+  type TransactionFile,
   loadTxFiles,
   renameCurrencyWallet,
   setCurrencyWalletFiat,
   setCurrencyWalletTxMetadata
 } from './currency-wallet-files.js'
-import type { TransactionFile } from './currency-wallet-files.js'
-import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
-import type { MergedTransaction } from './currency-wallet-reducer.js'
+import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
+import { type MergedTransaction } from './currency-wallet-reducer.js'
 
 const fakeMetadata = {
   bizId: 0,

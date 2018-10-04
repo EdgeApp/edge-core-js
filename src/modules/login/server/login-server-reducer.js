@@ -2,7 +2,7 @@
 
 import { combineReducers } from 'redux'
 
-import type { RootAction } from '../../actions.js'
+import { type RootAction } from '../../actions.js'
 
 export type LoginServerState = {
   +apiKey: string,

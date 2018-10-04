@@ -1,8 +1,8 @@
 // @flow
 
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
-import type { LoginStash } from './login-types.js'
+import { type LoginStash } from './login-types.js'
 
 /**
  * Normalizes a username, and checks for invalid characters.

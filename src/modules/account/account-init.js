@@ -1,20 +1,19 @@
 // @flow
 
-import type {
-  EdgeAccount,
-  EdgeAccountCallbacks
+import {
+  type EdgeAccount,
+  type EdgeAccountCallbacks
 } from '../../edge-core-index.js'
-import { makeCreateKit } from '../login/create.js'
-import type { LoginCreateOpts } from '../login/create.js'
+import { type LoginCreateOpts, makeCreateKit } from '../login/create.js'
 import {
   findFirstKey,
   makeAccountType,
   makeKeysKit,
   makeStorageKeyInfo
 } from '../login/keys.js'
-import type { LoginTree } from '../login/login-types.js'
+import { type LoginTree } from '../login/login-types.js'
 import { applyKit, searchTree } from '../login/login.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 
 function checkLogin (login: LoginTree) {
   if (login == null || login.loginKey == null) {

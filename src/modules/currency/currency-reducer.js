@@ -2,11 +2,15 @@
 
 import { buildReducer, mapReducer } from 'redux-keto'
 
-import type { EdgeCurrencyInfo, EdgeTokenInfo } from '../../edge-core-index.js'
-import type { RootAction } from '../actions.js'
-import type { RootState } from '../root-reducer.js'
-import type { CurrencyWalletState } from './wallet/currency-wallet-reducer.js'
-import currencyWalletReducer from './wallet/currency-wallet-reducer.js'
+import {
+  type EdgeCurrencyInfo,
+  type EdgeTokenInfo
+} from '../../edge-core-index.js'
+import { type RootAction } from '../actions.js'
+import { type RootState } from '../root-reducer.js'
+import currencyWalletReducer, {
+  type CurrencyWalletState
+} from './wallet/currency-wallet-reducer.js'
 
 export type PluginSettings = { [pluginName: string]: Object }
 

@@ -2,11 +2,11 @@
 
 import { mapFiles } from 'disklet'
 
-import type { DiskletFile, DiskletFolder } from '../../edge-core-index.js'
+import { type DiskletFile, type DiskletFolder } from '../../edge-core-index.js'
 import { base58, base64 } from '../../util/encoding.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { fixUsername } from './login-selectors.js'
-import type { LoginStash } from './login-types.js'
+import { type LoginStash } from './login-types.js'
 
 export type FileInfo = {
   file: DiskletFile,
