@@ -11,7 +11,7 @@ export type ExchangeOutput = {
   +update: mixed
 }
 
-export default combinePixies({
+export const exchange = combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): mixed => {
       const opts = { io: (props.io: any) }

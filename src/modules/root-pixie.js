@@ -2,11 +2,11 @@
 
 import { combinePixies } from 'redux-pixies'
 
-import accounts, { type AccountOutput } from './account/account-pixie.js'
-import context, { type ContextOutput } from './context/context-pixie.js'
-import currency, { type CurrencyOutput } from './currency/currency-pixie.js'
-import exchange, { type ExchangeOutput } from './exchange/exchange-pixie.js'
-import scrypt, { type ScryptOutput } from './scrypt/scrypt-pixie.js'
+import { type AccountOutput, accounts } from './account/account-pixie.js'
+import { type ContextOutput, context } from './context/context-pixie.js'
+import { type CurrencyOutput, currency } from './currency/currency-pixie.js'
+import { type ExchangeOutput, exchange } from './exchange/exchange-pixie.js'
+import { type ScryptOutput, scrypt } from './scrypt/scrypt-pixie.js'
 
 // The top-level pixie output structure:
 export type RootOutput = {

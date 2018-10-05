@@ -4,8 +4,9 @@ import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { makeFakeIos } from '../../../src/edge-core-index.js'
-import reducer, {
-  type ExchangePair
+import {
+  type ExchangePair,
+  exchangeCache as reducer
 } from '../../../src/modules/exchange/exchange-reducer.js'
 import { getExchangeRate } from '../../../src/modules/exchange/exchange-selectors.js'
 import { makeCoreRoot } from '../../../src/modules/root.js'

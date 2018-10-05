@@ -91,6 +91,6 @@ function rates (
   return state
 }
 
-export default combineReducers({
+export const exchangeCache = combineReducers({
   rates
 })

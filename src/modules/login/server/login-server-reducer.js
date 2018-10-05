@@ -9,7 +9,7 @@ export type LoginServerState = {
   +uri: string
 }
 
-export default combineReducers({
+export const server = combineReducers({
   apiKey (state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.apiKey : state
   },

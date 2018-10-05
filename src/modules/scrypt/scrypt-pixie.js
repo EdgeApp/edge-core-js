@@ -107,7 +107,7 @@ export function calcSnrpForTarget (
   return snrp
 }
 
-export default combinePixies({
+export const scrypt = combinePixies({
   makeSnrp: (input: PixieInput<RootProps>) => () => {
     const { io } = input.props
     let benchmark: Promise<number>

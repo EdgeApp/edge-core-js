@@ -22,7 +22,7 @@ import {
 } from '../edge-core-index.js'
 import { type RootAction } from './actions.js'
 import { type RootOutput, rootPixie } from './root-pixie.js'
-import reducer, { type RootState } from './root-reducer.js'
+import { type RootState, reducer } from './root-reducer.js'
 
 /**
  * The root of the entire core state machine.

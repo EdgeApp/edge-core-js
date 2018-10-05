@@ -11,7 +11,7 @@ export type ContextOutput = {
   api: EdgeContext
 }
 
-export default combinePixies({
+export const context = combinePixies({
   api: (ai: ApiInput) => () => {
     ai.onOutput(makeContextApi(ai))
     return stopUpdates

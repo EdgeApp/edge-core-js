@@ -204,7 +204,7 @@ const accountPixie = combinePixies({
   }
 })
 
-export default mapPixie(
+export const accounts = mapPixie(
   accountPixie,
   (props: RootProps) => props.state.accountIds,
   (props: RootProps, id: string): AccountProps => ({

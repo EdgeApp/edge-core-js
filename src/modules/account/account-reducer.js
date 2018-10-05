@@ -202,7 +202,7 @@ const account = buildReducer({
   }
 })
 
-export default filterReducer(
+export const accountReducer = filterReducer(
   account,
   (action: RootAction, next: AccountNext) => {
     if (/^ACCOUNT_/.test(action.type) && action.payload.accountId === next.id) {

@@ -8,8 +8,9 @@ import {
 } from '../../edge-core-index.js'
 import { type RootAction } from '../actions.js'
 import { type RootState } from '../root-reducer.js'
-import currencyWalletReducer, {
-  type CurrencyWalletState
+import {
+  type CurrencyWalletState,
+  currencyWalletReducer
 } from './wallet/currency-wallet-reducer.js'
 
 export type PluginSettings = { [pluginName: string]: Object }
@@ -23,7 +24,7 @@ export type CurrencyState = {
   +wallets: { [walletId: string]: CurrencyWalletState }
 }
 
-export default buildReducer({
+export const currency = buildReducer({
   currencyWalletIds (state, action, next: RootState): Array<string> {
     // Optimize the common case:
     if (next.accountIds.length === 1) {

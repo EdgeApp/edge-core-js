@@ -69,7 +69,7 @@ export type CurrencyWalletNext = {
   +self: CurrencyWalletState
 }
 
-const currencyWalletReducer = buildReducer({
+const currencyWallet = buildReducer({
   currencyInfo (state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
     if (state) return state
     return getCurrencyInfo(next.root.currency.infos, next.self.walletInfo.type)
@@ -248,8 +248,8 @@ export function sortTxs (txidHashes: TxidHashes, newHashes: TxidHashes) {
   return { sortedList, txidHashes }
 }
 
-export default filterReducer(
-  currencyWalletReducer,
+export const currencyWalletReducer = filterReducer(
+  currencyWallet,
   (action: RootAction, next: CurrencyWalletNext) => {
     return /^CURRENCY_/.test(action.type) && action.payload.walletId === next.id
       ? action

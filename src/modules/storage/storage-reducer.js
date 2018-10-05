@@ -61,7 +61,7 @@ const storageWalletReducer = combineReducers({
 /**
  * Repo list reducer.
  */
-export default function storageWalletsReducer (
+export const storageWallets = function storageWalletsReducer (
   state: StorageWalletsState = {},
   action: RootAction
 ): StorageWalletsState {

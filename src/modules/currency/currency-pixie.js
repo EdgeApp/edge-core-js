@@ -9,9 +9,10 @@ import {
 
 import { type EdgeCurrencyPlugin } from '../../edge-core-index.js'
 import { type RootProps } from '../root.js'
-import walletPixie, {
+import {
   type CurrencyWalletOutput,
-  type CurrencyWalletProps
+  type CurrencyWalletProps,
+  walletPixie
 } from './wallet/currency-wallet-pixie.js'
 
 export type CurrencyOutput = {
@@ -19,7 +20,7 @@ export type CurrencyOutput = {
   +wallets: { [walletId: string]: CurrencyWalletOutput }
 }
 
-export default combinePixies({
+export const currency = combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): mixed => {
       const opts = { io: props.io }
