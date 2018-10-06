@@ -53,6 +53,10 @@ const fakeMetadata = {
   notes: ''
 }
 
+const dontUseLegacy = {
+  DGB: true
+}
+
 /**
  * Client-side CurrencyWallet methods.
  */
@@ -354,14 +358,20 @@ export function makeCurrencyWalletApi (
       const edgeReceiveAddress = await destWallet.getReceiveAddress()
 
       let destPublicAddress
-      if (edgeReceiveAddress.legacyAddress) {
+      if (
+        edgeReceiveAddress.legacyAddress &&
+        !dontUseLegacy[destCurrencyCode]
+      ) {
         destPublicAddress = edgeReceiveAddress.legacyAddress
       } else {
         destPublicAddress = edgeReceiveAddress.publicAddress
       }
 
       let currentPublicAddress
-      if (edgeFreshAddress.legacyAddress) {
+      if (
+        edgeFreshAddress.legacyAddress &&
+        !dontUseLegacy[currentCurrencyCode]
+      ) {
         currentPublicAddress = edgeFreshAddress.legacyAddress
       } else {
         currentPublicAddress = edgeFreshAddress.publicAddress
