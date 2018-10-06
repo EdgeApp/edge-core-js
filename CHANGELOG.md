@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.1
+
+* Do not use legacy address for Digibyte when using ShapeShift
+
 ## 0.12.0
 
 * Add a `waitForCurrencyWallet` helper.
