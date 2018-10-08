@@ -29,16 +29,24 @@ export class CurrencyTools extends Bridgeable<EdgeCurrencyTools> {
     return this._plugin.currencyInfo
   }
 
-  get pluginSettings (): Object {
+  get settings (): Object {
     return this._ai.props.state.currency.settings[this._plugin.pluginName]
   }
 
-  async changePluginSettings (settings: Object): Promise<mixed> {
+  async changeSettings (settings: Object): Promise<mixed> {
     await changePluginSettings(
       this._ai,
       this._accountId,
       this._plugin,
       settings
     )
+  }
+
+  // Deprecated names:
+  get pluginSettings (): Object {
+    return this.settings
+  }
+  async changePluginSettings (settings: Object): Promise<mixed> {
+    return this.changeSettings(settings)
   }
 }

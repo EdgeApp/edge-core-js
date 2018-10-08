@@ -354,8 +354,12 @@ export type EdgeCurrencyTools = {
   +watch: Subscriber<EdgeCurrencyTools>,
 
   +currencyInfo: EdgeCurrencyInfo,
-  +pluginSettings: Object,
+  +settings: Object,
 
+  changeSettings(settings: Object): Promise<mixed>,
+
+  // Deprecated names:
+  +pluginSettings: Object,
   changePluginSettings(settings: Object): Promise<mixed>
 }
 
