@@ -2,8 +2,8 @@
 
 import { bridgifyObject, onMethod } from 'yaob'
 
-import type { EdgeExchangeCache } from '../../edge-core-index.js'
-import type { ApiInput } from '../root.js'
+import { type EdgeExchangeCache } from '../../index.js'
+import { type ApiInput } from '../root.js'
 import { getExchangeRate } from './exchange-selectors.js'
 
 /**

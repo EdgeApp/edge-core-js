@@ -2,17 +2,18 @@
 
 import { buildReducer, mapReducer } from 'redux-keto'
 
-import type { AccountState } from './account/account-reducer.js'
-import accountReducer from './account/account-reducer.js'
-import type { RootAction } from './actions.js'
-import type { CurrencyState } from './currency/currency-reducer.js'
-import currency from './currency/currency-reducer.js'
-import exchangeCache from './exchange/exchange-reducer.js'
-import type { ExchangeState } from './exchange/exchange-reducer.js'
-import type { LoginState } from './login/login-reducer.js'
-import login from './login/login-reducer.js'
-import storageWallets from './storage/storage-reducer.js'
-import type { StorageWalletsState } from './storage/storage-reducer.js'
+import { type AccountState, accountReducer } from './account/account-reducer.js'
+import { type RootAction } from './actions.js'
+import { type CurrencyState, currency } from './currency/currency-reducer.js'
+import {
+  type ExchangeState,
+  exchangeCache
+} from './exchange/exchange-reducer.js'
+import { type LoginState, login } from './login/login-reducer.js'
+import {
+  type StorageWalletsState,
+  storageWallets
+} from './storage/storage-reducer.js'
 
 export type RootState = {
   +accountCount: number,
@@ -27,7 +28,7 @@ export type RootState = {
   +storageWallets: StorageWalletsState
 }
 
-export default buildReducer({
+export const reducer = buildReducer({
   accountCount (state = 0, action: RootAction): number {
     return action.type === 'LOGIN' ? state + 1 : state
   },

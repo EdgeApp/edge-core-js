@@ -1,8 +1,8 @@
 // @flow
 
 import { utf8 } from '../../util/encoding.js'
-import type { ApiInput } from '../root.js'
-import type { JsonSnrp } from './scrypt-pixie.js'
+import { type ApiInput } from '../root.js'
+import { type JsonSnrp } from './scrypt-pixie.js'
 
 /**
  * Computes an SNRP value.

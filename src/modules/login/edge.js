@@ -2,13 +2,13 @@
 
 import { Bridgeable, close, emit } from 'yaob'
 
-import type {
-  EdgeAccountCallbacks,
-  EdgePendingEdgeLogin
-} from '../../edge-core-index.js'
+import {
+  type EdgeAccountCallbacks,
+  type EdgePendingEdgeLogin
+} from '../../index.js'
 import { base58, base64 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { makeLobby } from './lobby.js'
 import { makeLoginTree, searchTree, syncLogin } from './login.js'
 import { saveStash } from './loginStore.js'

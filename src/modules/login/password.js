@@ -3,11 +3,15 @@
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { base64 } from '../../util/encoding.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { authRequest } from './authServer.js'
 import { fixUsername, getStash, hashUsername } from './login-selectors.js'
-import type { LoginKit, LoginStash, LoginTree } from './login-types.js'
+import {
+  type LoginKit,
+  type LoginStash,
+  type LoginTree
+} from './login-types.js'
 import { applyKit, applyLoginReply, makeLoginTree, syncLogin } from './login.js'
 import { saveStash } from './loginStore.js'
 

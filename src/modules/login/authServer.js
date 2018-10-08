@@ -8,7 +8,7 @@ import {
   UsernameError
 } from '../../error.js'
 import { timeout } from '../../util/promise.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 
 function parseReply (json) {
   switch (json.status_code) {

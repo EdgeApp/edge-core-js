@@ -3,7 +3,7 @@
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-import { fakeUser, makeFakeIos } from '../../../src/edge-core-index.js'
+import { fakeUser, makeFakeIos } from '../../../src/index.js'
 import { makeRepoPaths, syncRepo } from '../../../src/modules/storage/repo.js'
 import { base64 } from '../../../src/util/encoding.js'
 

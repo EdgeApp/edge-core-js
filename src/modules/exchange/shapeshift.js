@@ -3,7 +3,7 @@
 import { div, mul } from 'biggystring'
 
 import { getCurrencyMultiplier } from '../currency/currency-selectors'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 
 const API_PREFIX = 'https://shapeshift.io'
 

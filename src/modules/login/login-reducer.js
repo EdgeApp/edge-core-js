@@ -2,13 +2,12 @@
 
 import { buildReducer, memoizeReducer } from 'redux-keto'
 
-import type { EdgeUserInfo } from '../../edge-core-index.js'
-import type { RootAction } from '../actions.js'
-import type { RootState } from '../root-reducer.js'
-import type { LoginStash, WalletInfoMap } from './login-types.js'
+import { type EdgeUserInfo } from '../../index.js'
+import { type RootAction } from '../actions.js'
+import { type RootState } from '../root-reducer.js'
+import { type LoginStash, type WalletInfoMap } from './login-types.js'
 import { getPin2Key } from './pin2.js'
-import server from './server/login-server-reducer.js'
-import type { LoginServerState } from './server/login-server-reducer.js'
+import { type LoginServerState, server } from './server/login-server-reducer.js'
 
 export type LoginStashMap = { [username: string]: LoginStash }
 
@@ -21,7 +20,7 @@ export type LoginState = {
   +walletInfos: WalletInfoMap
 }
 
-export default buildReducer({
+export const login = buildReducer({
   appId (state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.appId : state
   },

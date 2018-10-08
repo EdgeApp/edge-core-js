@@ -1,7 +1,7 @@
 // @flow
 
-import type { RootState } from '../root-reducer.js'
-import type { ExchangePair, ExchangeRoutes } from './exchange-reducer.js'
+import { type RootState } from '../root-reducer.js'
+import { type ExchangePair, type ExchangeRoutes } from './exchange-reducer.js'
 
 export type GetPairCost = (
   source: string,

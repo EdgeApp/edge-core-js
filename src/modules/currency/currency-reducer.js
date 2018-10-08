@@ -2,11 +2,13 @@
 
 import { buildReducer, mapReducer } from 'redux-keto'
 
-import type { EdgeCurrencyInfo, EdgeTokenInfo } from '../../edge-core-index.js'
-import type { RootAction } from '../actions.js'
-import type { RootState } from '../root-reducer.js'
-import type { CurrencyWalletState } from './wallet/currency-wallet-reducer.js'
-import currencyWalletReducer from './wallet/currency-wallet-reducer.js'
+import { type EdgeCurrencyInfo, type EdgeTokenInfo } from '../../index.js'
+import { type RootAction } from '../actions.js'
+import { type RootState } from '../root-reducer.js'
+import {
+  type CurrencyWalletState,
+  currencyWalletReducer
+} from './wallet/currency-wallet-reducer.js'
 
 export type PluginSettings = { [pluginName: string]: Object }
 
@@ -19,7 +21,7 @@ export type CurrencyState = {
   +wallets: { [walletId: string]: CurrencyWalletState }
 }
 
-export default buildReducer({
+export const currency = buildReducer({
   currencyWalletIds (state, action, next: RootState): Array<string> {
     // Optimize the common case:
     if (next.accountIds.length === 1) {

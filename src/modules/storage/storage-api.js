@@ -1,7 +1,7 @@
 // @flow
 
-import type { StorageWalletInfo } from '../login/login-types.js'
-import type { ApiInput } from '../root.js'
+import { type StorageWalletInfo } from '../login/login-types.js'
+import { type ApiInput } from '../root.js'
 import { syncStorageWallet } from './storage-actions.js'
 import {
   getStorageWalletFolder,

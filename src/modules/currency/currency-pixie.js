@@ -1,22 +1,26 @@
 // @flow
 
-import { combinePixies, mapPixie, stopUpdates } from 'redux-pixies'
-import type { PixieInput } from 'redux-pixies'
+import {
+  type PixieInput,
+  combinePixies,
+  mapPixie,
+  stopUpdates
+} from 'redux-pixies'
 
-import type { EdgeCurrencyPlugin } from '../../edge-core-index.js'
-import type { RootProps } from '../root.js'
-import type {
-  CurrencyWalletOutput,
-  CurrencyWalletProps
+import { type EdgeCurrencyPlugin } from '../../index.js'
+import { type RootProps } from '../root.js'
+import {
+  type CurrencyWalletOutput,
+  type CurrencyWalletProps,
+  walletPixie
 } from './wallet/currency-wallet-pixie.js'
-import walletPixie from './wallet/currency-wallet-pixie.js'
 
 export type CurrencyOutput = {
   +plugins: Array<EdgeCurrencyPlugin>,
   +wallets: { [walletId: string]: CurrencyWalletOutput }
 }
 
-export default combinePixies({
+export const currency = combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): mixed => {
       const opts = { io: props.io }

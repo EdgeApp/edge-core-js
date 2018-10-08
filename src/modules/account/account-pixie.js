@@ -1,19 +1,23 @@
 // @flow
 
-import { combinePixies, mapPixie, stopUpdates } from 'redux-pixies'
-import type { PixieInput } from 'redux-pixies'
+import {
+  type PixieInput,
+  combinePixies,
+  mapPixie,
+  stopUpdates
+} from 'redux-pixies'
 import { close, emit, update } from 'yaob'
 
-import type { EdgeAccount, EdgeCurrencyWallet } from '../../edge-core-index.js'
+import { type EdgeAccount, type EdgeCurrencyWallet } from '../../index.js'
 import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
-import type { ApiInput, RootProps } from '../root.js'
+import { type ApiInput, type RootProps } from '../root.js'
 import {
   addStorageWallet,
   syncStorageWallet
 } from '../storage/storage-actions.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
-import type { AccountState } from './account-reducer.js'
+import { type AccountState } from './account-reducer.js'
 import { CurrencyTools } from './currency-api.js'
 
 export type AccountOutput = {
@@ -197,7 +201,7 @@ const accountPixie = combinePixies({
   }
 })
 
-export default mapPixie(
+export const accounts = mapPixie(
   accountPixie,
   (props: RootProps) => props.state.accountIds,
   (props: RootProps, id: string): AccountProps => ({

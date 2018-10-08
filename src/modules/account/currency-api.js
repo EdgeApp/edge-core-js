@@ -2,12 +2,12 @@
 
 import { Bridgeable } from 'yaob'
 
-import type {
-  EdgeCurrencyInfo,
-  EdgeCurrencyPlugin,
-  EdgeCurrencyTools
-} from '../../edge-core-index.js'
-import type { ApiInput } from '../root.js'
+import {
+  type EdgeCurrencyInfo,
+  type EdgeCurrencyPlugin,
+  type EdgeCurrencyTools
+} from '../../index.js'
+import { type ApiInput } from '../root.js'
 import { changePluginSettings } from './account-files.js'
 
 /**

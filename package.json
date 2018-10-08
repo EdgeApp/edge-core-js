@@ -32,7 +32,7 @@
     "README.md",
     "src/*"
   ],
-  "main": "lib/edge-core-index.js",
+  "main": "lib/index.js",
   "module": "lib/edge-core-index.es.js",
   "scripts": {
     "build": "rimraf lib && webpack && rollup -c",

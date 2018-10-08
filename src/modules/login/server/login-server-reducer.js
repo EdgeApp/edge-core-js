@@ -2,14 +2,14 @@
 
 import { combineReducers } from 'redux'
 
-import type { RootAction } from '../../actions.js'
+import { type RootAction } from '../../actions.js'
 
 export type LoginServerState = {
   +apiKey: string,
   +uri: string
 }
 
-export default combineReducers({
+export const server = combineReducers({
   apiKey (state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.apiKey : state
   },

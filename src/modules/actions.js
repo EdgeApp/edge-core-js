@@ -1,22 +1,22 @@
 // @flow
 
-import type {
-  EdgeAccountCallbacks,
-  EdgeCurrencyInfo,
-  EdgeTokenInfo,
-  EdgeWalletInfo,
-  EdgeWalletStates
-} from '../edge-core-index.js'
-import type { PluginSettings } from './currency/currency-reducer.js'
-import type {
-  TxFileJsons,
-  TxFileNames
+import {
+  type EdgeAccountCallbacks,
+  type EdgeCurrencyInfo,
+  type EdgeTokenInfo,
+  type EdgeWalletInfo,
+  type EdgeWalletStates
+} from '../index.js'
+import { type PluginSettings } from './currency/currency-reducer.js'
+import {
+  type TxFileJsons,
+  type TxFileNames
 } from './currency/wallet/currency-wallet-reducer.js'
-import type { ExchangePair } from './exchange/exchange-reducer.js'
-import type { LoginStash } from './login/login-types.js'
-import type {
-  StorageWalletState,
-  StorageWalletStatus
+import { type ExchangePair } from './exchange/exchange-reducer.js'
+import { type LoginStash } from './login/login-types.js'
+import {
+  type StorageWalletState,
+  type StorageWalletStatus
 } from './storage/storage-reducer.js'
 
 /**

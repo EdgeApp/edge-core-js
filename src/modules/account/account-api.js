@@ -2,21 +2,21 @@
 
 import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
 
-import type {
-  DiskletFolder,
-  EdgeAccount,
-  EdgeCreateCurrencyWalletOptions,
-  EdgeCurrencyToolsMap,
-  EdgeCurrencyWallet,
-  EdgeDataStore,
-  EdgeExchangeCache,
-  EdgeLobby,
-  EdgePluginData,
-  EdgeWalletInfo,
-  EdgeWalletInfoFull,
-  EdgeWalletStates,
-  EthererumTransaction
-} from '../../edge-core-index.js'
+import {
+  type DiskletFolder,
+  type EdgeAccount,
+  type EdgeCreateCurrencyWalletOptions,
+  type EdgeCurrencyToolsMap,
+  type EdgeCurrencyWallet,
+  type EdgeDataStore,
+  type EdgeExchangeCache,
+  type EdgeLobby,
+  type EdgePluginData,
+  type EdgeWalletInfo,
+  type EdgeWalletInfoFull,
+  type EdgeWalletStates,
+  type EthererumTransaction
+} from '../../index.js'
 import { signEthereumTransaction } from '../../util/crypto/external.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
@@ -38,7 +38,7 @@ import {
 } from '../login/password.js'
 import { changePin, checkPin2, deletePin } from '../login/pin2.js'
 import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { changeWalletStates } from './account-files.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'

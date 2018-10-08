@@ -3,8 +3,11 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import type { EdgeAccount } from '../../../src/edge-core-index.js'
-import { fakeUser, makeFakeContexts } from '../../../src/edge-core-index.js'
+import {
+  type EdgeAccount,
+  fakeUser,
+  makeFakeContexts
+} from '../../../src/index.js'
 
 const contextOptions = {
   localFakeUser: true

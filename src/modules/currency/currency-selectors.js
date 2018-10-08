@@ -1,12 +1,12 @@
 // @flow
 
-import type {
-  EdgeCurrencyInfo,
-  EdgeCurrencyPlugin,
-  EdgeCurrencyWallet,
-  EdgeTokenInfo
-} from '../../edge-core-index.js'
-import type { ApiInput, RootProps } from '../root.js'
+import {
+  type EdgeCurrencyInfo,
+  type EdgeCurrencyPlugin,
+  type EdgeCurrencyWallet,
+  type EdgeTokenInfo
+} from '../../index.js'
+import { type ApiInput, type RootProps } from '../root.js'
 
 export function getCurrencyInfo (
   infos: Array<EdgeCurrencyInfo>,

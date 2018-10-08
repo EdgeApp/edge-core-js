@@ -2,7 +2,7 @@
 
 import { combineReducers } from 'redux'
 
-import type { RootAction } from '../actions.js'
+import { type RootAction } from '../actions.js'
 
 export type ExchangePair = {
   fromCurrency: string,
@@ -91,6 +91,6 @@ function rates (
   return state
 }
 
-export default combineReducers({
+export const exchangeCache = combineReducers({
   rates
 })

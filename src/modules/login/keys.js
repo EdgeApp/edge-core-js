@@ -1,9 +1,9 @@
 // @flow
 
-import type {
-  EdgeCreateCurrencyWalletOptions,
-  EdgeWalletInfo
-} from '../../edge-core-index.js'
+import {
+  type EdgeCreateCurrencyWalletOptions,
+  type EdgeWalletInfo
+} from '../../index.js'
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base16, base64, utf8 } from '../../util/encoding.js'
 import { changeWalletStates } from '../account/account-files.js'
@@ -12,13 +12,13 @@ import {
   waitForCurrencyWallet
 } from '../currency/currency-selectors.js'
 import { applyKit } from '../login/login.js'
-import type { ApiInput } from '../root.js'
-import type {
-  AppIdMap,
-  LoginKit,
-  LoginTree,
-  StorageKeys,
-  StorageWalletInfo
+import { type ApiInput } from '../root.js'
+import {
+  type AppIdMap,
+  type LoginKit,
+  type LoginTree,
+  type StorageKeys,
+  type StorageWalletInfo
 } from './login-types.js'
 
 /**

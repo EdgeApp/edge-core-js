@@ -4,7 +4,7 @@ import { isReactNative } from 'detect-bundler'
 import { makeReactNativeFolder } from 'disklet'
 import { base64 } from 'rfc4648'
 
-import type { EdgeIo } from '../../edge-core-index.js'
+import { type EdgeIo } from '../../index.js'
 import { HmacDRBG, hashjs } from '../../util/crypto/external.js'
 import {
   Socket,
