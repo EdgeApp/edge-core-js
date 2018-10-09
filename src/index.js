@@ -1,6 +1,6 @@
 // @flow
 
-import type { Subscriber } from 'yaob'
+import { type Subscriber } from 'yaob'
 
 // Sub-module exports:
 import * as error from './error.js'
@@ -354,13 +354,26 @@ export type EdgeCurrencyTools = {
   +watch: Subscriber<EdgeCurrencyTools>,
 
   +currencyInfo: EdgeCurrencyInfo,
-  +pluginSettings: Object,
+  +settings: Object,
 
+  changeSettings(settings: Object): Promise<mixed>,
+
+  // Deprecated names:
+  +pluginSettings: Object,
   changePluginSettings(settings: Object): Promise<mixed>
 }
 
 export type EdgeCurrencyToolsMap = {
   [pluginName: string]: EdgeCurrencyTools
+}
+
+export type EdgeExchangeTools = {
+  +watch: Subscriber<EdgeExchangeTools>,
+
+  +exchangeInfo: Object,
+  +settings: Object,
+
+  changeSettings(settings: Object): Promise<mixed>
 }
 
 export type EdgeExchangeCacheEvents = {
@@ -400,6 +413,35 @@ export type EdgePluginData = {
   setItem(pluginId: string, itemId: string, value: string): Promise<mixed>
 }
 
+// Currencies supported by various exchange-rate providers:
+export type EdgeExchangeCurrencies = {
+  [currencyCode: string]: {
+    exchanges: Array<string>
+  }
+}
+
+export type EdgeExchangeQuoteOptions = {
+  fromCurrencyCode: string,
+  fromWallet: EdgeCurrencyWallet,
+  nativeAmount: string,
+  quoteFor: 'from' | 'to',
+  toCurrencyCode: string,
+  toWallet: EdgeCurrencyWallet
+}
+
+export type EdgeExchangeQuote = {
+  +expirationDate: Date,
+  +fromNativeAmount: string,
+  +toNativeAmount: string,
+
+  +exchangeService: string,
+  +quoteId: string,
+  +quoteUri: string,
+
+  approve(): Promise<EdgeTransaction>,
+  close(): Promise<mixed>
+}
+
 export type EdgeAccountEvents = {}
 
 export type EthererumTransaction = {
@@ -437,6 +479,7 @@ export type EdgeAccount = {
 
   // Special-purpose API's:
   +currencyTools: EdgeCurrencyToolsMap,
+  +exchangeTools: { [pluginName: string]: EdgeExchangeTools },
   +exchangeCache: EdgeExchangeCache,
   +dataStore: EdgeDataStore,
   +pluginData: EdgePluginData, // Deprecated
@@ -506,7 +549,11 @@ export type EdgeAccount = {
   signEthereumTransaction(
     walletId: string,
     transaction: EthererumTransaction
-  ): Promise<string>
+  ): Promise<string>,
+
+  // Exchange support:
+  getExchangeCurrencies(): Promise<EdgeExchangeCurrencies>,
+  getExchangeQuote(opts: EdgeExchangeQuoteOptions): Promise<EdgeExchangeQuote>
 }
 
 // edge login types ---------------------------------------------------

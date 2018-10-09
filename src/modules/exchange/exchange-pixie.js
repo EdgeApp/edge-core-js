@@ -1,18 +1,17 @@
 // @flow
 
-import { combinePixies, stopUpdates } from 'redux-pixies'
-import type { PixieInput } from 'redux-pixies'
+import { type PixieInput, combinePixies, stopUpdates } from 'redux-pixies'
 
-import type { EdgeExchangePlugin } from '../../edge-core-index.js'
-import type { RootProps } from '../root.js'
-import type { ExchangePair } from './exchange-reducer.js'
+import { type EdgeExchangePlugin } from '../../index.js'
+import { type RootProps } from '../root.js'
+import { type ExchangePair } from './exchange-reducer.js'
 
 export type ExchangeOutput = {
   +plugins: Array<EdgeExchangePlugin>,
   +update: mixed
 }
 
-export default combinePixies({
+export const exchange = combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): mixed => {
       const opts = { io: (props.io: any) }

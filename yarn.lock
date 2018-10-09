@@ -6589,10 +6589,10 @@ yallist@^2.1.2:
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-2.1.2.tgz#1c11f9218f076089a47dd512f93c6699a6a81d52"
   integrity sha1-HBH5IY8HYImkfdUS+TxmmaaoHVI=
 
-yaob@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.0.tgz#1a98b3e00d71ae5e09092a80fe9b027f7000d4ca"
-  integrity sha512-/rVdTWky0cvnJ2y23DT/F1X1m4QsmjZYW485pmfLjCRO1iHXO/sXU10X85gcbsxkC0RGcULGOJbXBZxvH7wAOw==
+yaob@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.1.tgz#fb59c4ed7cd79877e850ca1bcf42d0e0ebff11b0"
+  integrity sha512-IAfN5KDwt30SiKfzG57TKd6FIJpq88Hqs57gywJ3OWm6zNACqZqLkr3AFYSlP87Qmvze2VnsgRsLfOW4Jibq+Q==
 
 yargs-parser@^7.0.0:
   version "7.0.0"

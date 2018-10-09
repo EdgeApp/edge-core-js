@@ -3,11 +3,11 @@
 import { isPixieShutdownError } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import type {
-  EdgeAccountCallbacks,
-  EdgeCurrencyEngineCallbacks,
-  EdgeTransaction
-} from '../../../edge-core-index.js'
+import {
+  type EdgeAccountCallbacks,
+  type EdgeCurrencyEngineCallbacks,
+  type EdgeTransaction
+} from '../../../index.js'
 import { compare } from '../../../util/compare.js'
 import {
   getStorageWalletLastChanges,
@@ -15,9 +15,9 @@ import {
 } from '../../storage/storage-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { loadAllFiles, setupNewTxMetadata } from './currency-wallet-files.js'
-import type {
-  CurrencyWalletInput,
-  CurrencyWalletProps
+import {
+  type CurrencyWalletInput,
+  type CurrencyWalletProps
 } from './currency-wallet-pixie.js'
 import { mergeTx } from './currency-wallet-reducer.js'
 

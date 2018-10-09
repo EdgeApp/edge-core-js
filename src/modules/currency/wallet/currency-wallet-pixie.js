@@ -1,15 +1,14 @@
 // @flow
 
-import { combinePixies, stopUpdates } from 'redux-pixies'
-import type { PixieInput } from 'redux-pixies'
+import { type PixieInput, combinePixies, stopUpdates } from 'redux-pixies'
 import { update } from 'yaob'
 
-import type {
-  EdgeCurrencyEngine,
-  EdgeCurrencyPlugin,
-  EdgeCurrencyWallet
-} from '../../../edge-core-index.js'
-import type { ApiInput, RootProps } from '../../root.js'
+import {
+  type EdgeCurrencyEngine,
+  type EdgeCurrencyPlugin,
+  type EdgeCurrencyWallet
+} from '../../../index.js'
+import { type ApiInput, type RootProps } from '../../root.js'
 import {
   addStorageWallet,
   syncStorageWallet
@@ -27,7 +26,7 @@ import {
   watchCurrencyWallet
 } from './currency-wallet-callbacks.js'
 import { loadAllFiles } from './currency-wallet-files.js'
-import type { CurrencyWalletState } from './currency-wallet-reducer.js'
+import { type CurrencyWalletState } from './currency-wallet-reducer.js'
 
 export type CurrencyWalletOutput = {
   +api: EdgeCurrencyWallet | void,
@@ -45,7 +44,7 @@ export type CurrencyWalletProps = RootProps & {
 
 export type CurrencyWalletInput = PixieInput<CurrencyWalletProps>
 
-export default combinePixies({
+export const walletPixie = combinePixies({
   // Looks up the currency plugin for this wallet:
   plugin: (input: CurrencyWalletInput) => () => {
     // There are still race conditions where this can happen:

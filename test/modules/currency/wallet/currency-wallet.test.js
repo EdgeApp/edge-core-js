@@ -8,7 +8,7 @@ import {
   type EdgeCurrencyWallet,
   fakeUser,
   makeFakeContexts
-} from '../../../../src/edge-core-index.js'
+} from '../../../../src/index.js'
 import { makeAssertLog } from '../../../assert-log.js'
 import { expectRejection } from '../../../expect-rejection.js'
 import {
@@ -45,12 +45,14 @@ describe('currency wallets', function () {
     })
   })
 
-  it('can be renamed', function () {
-    return makeFakeCurrencyWallet().then(wallet =>
-      wallet
-        .renameWallet('Another Name')
-        .then(() => assert.equal(wallet.name, 'Another Name'))
-    )
+  it('can be renamed', async function () {
+    const log = makeAssertLog()
+    const wallet = await makeFakeCurrencyWallet()
+    wallet.watch('name', name => log(name))
+
+    await wallet.renameWallet('Another Name')
+    assert.equal(wallet.name, 'Another Name')
+    log.assert(['Another Name'])
   })
 
   it('triggers callbacks', async function () {

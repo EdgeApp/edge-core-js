@@ -3,7 +3,7 @@
 import { expect } from 'chai'
 import { afterEach, describe, it } from 'mocha'
 
-import { makeFakeContexts } from '../../../src/edge-core-index.js'
+import { makeFakeContexts } from '../../../src/index.js'
 import { destroyAllContexts } from '../../../src/modules/root.js'
 
 // Silence console.info:

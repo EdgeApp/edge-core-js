@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.12.2
+
+* Add a new Shapeshift API (still experimental & subject to change).
+* Rename `EdgeCurrencyTools.pluginSettings` to `EdgeCurrencyTools.settings`.
+* Rename `EdgeCurrencyTools.changePluginSettings` to `EdgeCurrencyTools.changeSettings`.
+
 ## 0.12.1
 
 * Do not use legacy address for Digibyte when using ShapeShift

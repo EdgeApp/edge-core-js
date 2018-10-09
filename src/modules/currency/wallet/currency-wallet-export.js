@@ -3,7 +3,7 @@
 import { abs, div, lt } from 'biggystring'
 import jsoncsv from 'json-csv'
 
-import type { EdgeTransaction } from '../../../edge-core-index.js'
+import { type EdgeTransaction } from '../../../index.js'
 
 function padZero (val: string) {
   if (val.length === 1) {

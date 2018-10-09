@@ -1,9 +1,9 @@
 // @flow
 
-import type { EdgeIo } from '../../edge-core-index.js'
+import { type EdgeIo } from '../../index.js'
 import { hmacSha256 } from '../../util/crypto/crypto.js'
 import { base58, utf8 } from '../../util/encoding.js'
-import type { RootState } from '../root-reducer.js'
+import { type RootState } from '../root-reducer.js'
 import { RepoFolder } from './repoFolder.js'
 
 export function getStorageWalletLastChanges (

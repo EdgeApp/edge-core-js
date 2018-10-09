@@ -2,13 +2,16 @@
 
 import { bridgifyObject } from 'yaob'
 
-import type { EdgeLobby, EdgeLoginRequest } from '../../edge-core-index.js'
+import { type EdgeLobby, type EdgeLoginRequest } from '../../index.js'
 import { base64 } from '../../util/encoding.js'
-import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
-import type { LobbyRequest } from '../login/lobby.js'
+import {
+  type LobbyRequest,
+  fetchLobbyRequest,
+  sendLobbyReply
+} from '../login/lobby.js'
 import { getStash } from '../login/login-selectors.js'
 import { sanitizeLoginStash, syncAccount } from '../login/login.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { ensureAccountExists, findAppLogin } from './account-init.js'
 
 type AppIdInfo = {

@@ -1,6 +1,6 @@
 {
   "name": "edge-core-js",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "Edge account & wallet management library",
   "keywords": [
     "bitcoin",
@@ -32,7 +32,7 @@
     "README.md",
     "src/*"
   ],
-  "main": "lib/edge-core-index.js",
+  "main": "lib/index.js",
   "module": "lib/edge-core-index.es.js",
   "scripts": {
     "build": "rimraf lib && webpack && rollup -c",
@@ -69,7 +69,7 @@
     "scrypt-js": "^2.0.3",
     "utf8": "^3.0.0",
     "ws": "^5.1.1",
-    "yaob": "^0.3.0"
+    "yaob": "^0.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",

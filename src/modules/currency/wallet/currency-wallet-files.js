@@ -6,8 +6,8 @@ import { mapFiles } from 'disklet'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobby-api.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
-import type { RootState } from '../../root-reducer.js'
-import type { ApiInput } from '../../root.js'
+import { type RootState } from '../../root-reducer.js'
+import { type ApiInput } from '../../root.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalFolder,
@@ -16,8 +16,8 @@ import {
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { forEachListener } from './currency-wallet-callbacks.js'
-import type { CurrencyWalletInput } from './currency-wallet-pixie.js'
-import type { TxFileNames } from './currency-wallet-reducer.js'
+import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
+import { type TxFileNames } from './currency-wallet-reducer.js'
 
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
 const WALLET_NAME_FILE = 'WalletName.json'

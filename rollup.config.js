@@ -30,7 +30,7 @@ const external = [
 export default [
   {
     external,
-    input: 'src/edge-core-index.js',
+    input: 'src/index.js',
     output: [
       { file: packageJson.main, format: 'cjs' },
       { file: packageJson.module, format: 'es' }
@@ -49,7 +49,7 @@ export default [
   },
   {
     external,
-    input: 'src/edge-core-index.js',
+    input: 'src/index.js',
     output: { file: packageJson['react-native'], format: 'cjs' },
     plugins: [
       alias({

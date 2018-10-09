@@ -2,15 +2,15 @@
 
 import { mapFiles } from 'disklet'
 
-import type {
-  DiskletFile,
-  EdgeCurrencyPlugin,
-  EdgeWalletInfo,
-  EdgeWalletStates
-} from '../../edge-core-index.js'
+import {
+  type DiskletFile,
+  type EdgeCurrencyPlugin,
+  type EdgeWalletInfo,
+  type EdgeWalletStates
+} from '../../index.js'
 import { base16, base64 } from '../../util/encoding.js'
 import { makeKeyInfo } from '../login/keys.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import {
   getStorageWalletFolder,
   hashStorageWalletFilename

@@ -2,25 +2,31 @@
 
 import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
 
-import type {
-  DiskletFolder,
-  EdgeAccount,
-  EdgeCreateCurrencyWalletOptions,
-  EdgeCurrencyToolsMap,
-  EdgeCurrencyWallet,
-  EdgeDataStore,
-  EdgeExchangeCache,
-  EdgeLobby,
-  EdgePluginData,
-  EdgeWalletInfo,
-  EdgeWalletInfoFull,
-  EdgeWalletStates,
-  EthererumTransaction
-} from '../../edge-core-index.js'
+import {
+  type DiskletFolder,
+  type EdgeAccount,
+  type EdgeCreateCurrencyWalletOptions,
+  type EdgeCurrencyToolsMap,
+  type EdgeCurrencyWallet,
+  type EdgeDataStore,
+  type EdgeExchangeCache,
+  type EdgeExchangeCurrencies,
+  type EdgeExchangeQuote,
+  type EdgeExchangeQuoteOptions,
+  type EdgeExchangeTools,
+  type EdgeLobby,
+  type EdgePluginData,
+  type EdgeSpendInfo,
+  type EdgeWalletInfo,
+  type EdgeWalletInfoFull,
+  type EdgeWalletStates,
+  type EthererumTransaction
+} from '../../index.js'
 import { signEthereumTransaction } from '../../util/crypto/external.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
+import { makeShapeshiftApi, upgradeQuote } from '../exchange/shapeshift.js'
 import {
   createCurrencyWallet,
   findFirstKey,
@@ -38,9 +44,10 @@ import {
 } from '../login/password.js'
 import { changePin, checkPin2, deletePin } from '../login/pin2.js'
 import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { changeWalletStates } from './account-files.js'
+import { ExchangeTools } from './currency-api.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
 
@@ -77,10 +84,15 @@ export function makeAccountApi (
   const selfState = () => ai.props.state.accounts[accountId]
   const { accountWalletInfo, loginType } = selfState()
 
+  const exchangeTools = {
+    shapeshift: new ExchangeTools()
+  }
   const exchangeCache = makeExchangeCache(ai)
   const dataStore = makeDataStoreApi(ai, accountId)
   const pluginData = makePluginDataApi(dataStore)
   const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
+
+  const shapeshiftApi = makeShapeshiftApi(ai)
 
   function lockdown () {
     if (ai.props.state.hideKeys) {
@@ -142,6 +154,9 @@ export function makeAccountApi (
     // Speciality API's:
     get currencyTools (): EdgeCurrencyToolsMap {
       return currencyTools
+    },
+    get exchangeTools (): { [pluginName: string]: EdgeExchangeTools } {
+      return exchangeTools
     },
     get exchangeCache (): EdgeExchangeCache {
       return exchangeCache
@@ -335,6 +350,38 @@ export function makeAccountApi (
         throw new Error('Cannot find the requested private key in the account')
       }
       return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)
+    },
+
+    async getExchangeCurrencies (): Promise<EdgeExchangeCurrencies> {
+      const shapeshiftTokens = await shapeshiftApi.getAvailableExchangeTokens()
+      const out = {}
+      for (const cc of shapeshiftTokens) out[cc] = { exchanges: ['shapeshift'] }
+      return out
+    },
+    async getExchangeQuote (
+      opts: EdgeExchangeQuoteOptions
+    ): Promise<EdgeExchangeQuote> {
+      const { fromWallet, nativeAmount, quoteFor } = opts
+
+      // Hit the legacy API:
+      const spendInfo: EdgeSpendInfo = {
+        currencyCode: opts.fromCurrencyCode,
+        quoteFor,
+        nativeAmount,
+        spendTargets: [
+          {
+            destWallet: opts.toWallet,
+            currencyCode: opts.toCurrencyCode
+          }
+        ]
+      }
+      if (quoteFor === 'to') {
+        spendInfo.spendTargets[0].nativeAmount = nativeAmount
+      }
+      const legacyQuote = await fromWallet.getQuote(spendInfo)
+
+      // Convert that to the new format:
+      return upgradeQuote(fromWallet, legacyQuote)
     }
   }
   bridgifyObject(out)

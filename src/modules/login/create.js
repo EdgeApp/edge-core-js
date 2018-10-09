@@ -1,14 +1,14 @@
 // @flow
 
-import type { EdgeWalletInfo } from '../../edge-core-index.js'
 import { errorNames } from '../../error.js'
+import { type EdgeWalletInfo } from '../../index.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { base64 } from '../../util/encoding.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import { makeKeysKit } from './keys.js'
 import { fixUsername, hashUsername } from './login-selectors.js'
-import type { LoginKit, LoginTree } from './login-types.js'
+import { type LoginKit, type LoginTree } from './login-types.js'
 import { saveStash } from './loginStore.js'
 import { makePasswordKit } from './password.js'
 import { makeChangePin2Kit } from './pin2.js'

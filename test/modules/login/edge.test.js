@@ -3,8 +3,11 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import type { EdgeLobby } from '../../../src/edge-core-index.js'
-import { fakeUser, makeFakeContexts } from '../../../src/edge-core-index.js'
+import {
+  type EdgeLobby,
+  fakeUser,
+  makeFakeContexts
+} from '../../../src/index.js'
 
 async function simulateRemoteApproval (remote, lobbyId: string) {
   const account = await remote.loginWithPIN(fakeUser.username, fakeUser.pin)
