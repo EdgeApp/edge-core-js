@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.3
+
+* Move the client-side methods into their own file.
+
 ## 0.12.2
 
 * Add a new Shapeshift API (still experimental & subject to change).
