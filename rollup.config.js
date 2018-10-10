@@ -28,6 +28,7 @@ const external = [
 ]
 
 export default [
+  // Normal build:
   {
     external,
     input: 'src/index.js',
@@ -47,6 +48,7 @@ export default [
     ],
     sourcemap: true
   },
+  // React Native build:
   {
     external,
     input: 'src/index.js',
@@ -60,6 +62,13 @@ export default [
       commonjs(commonjsOpts),
       babel(babelOpts)
     ],
+    sourcemap: true
+  },
+  // Client-side methods:
+  {
+    input: 'src/client-side.js',
+    output: { file: 'lib/client-side.js', format: 'cjs' },
+    plugins: [babel(babelOpts)],
     sourcemap: true
   }
 ]

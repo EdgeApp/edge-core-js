@@ -1,7 +1,8 @@
 // @flow
 
-import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
+import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
+import { checkPasswordRules, fixUsername } from '../../client-side.js'
 import {
   type EdgeAccount,
   type EdgeAccountOptions,
@@ -17,10 +18,10 @@ import { makeAccount } from '../account/account-init.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
-import { fixUsername, getStash } from '../login/login-selectors.js'
+import { getStash } from '../login/login-selectors.js'
 import { fetchLoginMessages, makeLoginTree, resetOtp } from '../login/login.js'
 import { removeStash } from '../login/loginStore.js'
-import { checkPasswordRules, loginPassword } from '../login/password.js'
+import { loginPassword } from '../login/password.js'
 import { getPin2Key, loginPin2 } from '../login/pin2.js'
 import {
   getQuestions2,
@@ -30,8 +31,6 @@ import {
 } from '../login/recovery2.js'
 import { type ApiInput } from '../root.js'
 import { EdgeInternalStuff } from './internal-api.js'
-
-shareData({ fixUsername, checkPasswordRules })
 
 export function makeContextApi (ai: ApiInput) {
   const appId = ai.props.state.login.appId

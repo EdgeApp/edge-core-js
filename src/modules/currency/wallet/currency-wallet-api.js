@@ -1,8 +1,9 @@
 // @flow
 
 import { add, div, lte, mul, sub } from 'biggystring'
-import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
+import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
+import { CurrencyWalletSync } from '../../../client-side.js'
 import { SameCurrencyError } from '../../../error.js'
 import {
   type DiskletFolder,
@@ -58,35 +59,6 @@ const fakeMetadata = {
 const dontUseLegacy = {
   DGB: true
 }
-
-/**
- * Client-side CurrencyWallet methods.
- */
-export class CurrencyWalletSync {
-  +balances: EdgeBalances
-  +blockHeight: number
-  +currencyInfo: EdgeCurrencyInfo
-  +displayPrivateSeed: string | null
-  +displayPublicSeed: string | null
-
-  getBalance (opts: EdgeCurrencyCodeOptions = {}): string {
-    const { currencyCode = this.currencyInfo.currencyCode } = opts
-    return this.balances[currencyCode] || '0'
-  }
-
-  getBlockHeight () {
-    return this.blockHeight
-  }
-
-  getDisplayPrivateSeed (): string | null {
-    return this.displayPrivateSeed
-  }
-
-  getDisplayPublicSeed (): string | null {
-    return this.displayPublicSeed
-  }
-}
-shareData(CurrencyWalletSync.prototype, 'CurrencyWallet')
 
 /**
  * Creates an `EdgeCurrencyWallet` API object.
