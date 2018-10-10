@@ -1,28 +1,11 @@
 // @flow
 
+import { fixUsername } from '../../client-side.js'
 import { type ApiInput } from '../root.js'
 import { scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { type LoginStash } from './login-types.js'
 
-/**
- * Normalizes a username, and checks for invalid characters.
- * TODO: Support a wider character range via Unicode normalization.
- */
-export function fixUsername (username: string): string {
-  const out = username
-    .toLowerCase()
-    .replace(/[ \f\r\n\t\v]+/g, ' ')
-    .replace(/ $/, '')
-    .replace(/^ /, '')
-
-  for (let i = 0; i < out.length; ++i) {
-    const c = out.charCodeAt(i)
-    if (c < 0x20 || c > 0x7e) {
-      throw new Error('Bad characters in username')
-    }
-  }
-  return out
-}
+export { fixUsername }
 
 /**
  * Finds the login stash for the given username.

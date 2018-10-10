@@ -1,7 +1,8 @@
 // @flow
 
-import { bridgifyObject, onMethod, shareData, watchMethod } from 'yaob'
+import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
+import { AccountSync } from '../../client-side.js'
 import {
   type DiskletFolder,
   type EdgeAccount,
@@ -17,7 +18,6 @@ import {
   type EdgeLobby,
   type EdgePluginData,
   type EdgeSpendInfo,
-  type EdgeWalletInfo,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
   type EthererumTransaction
@@ -29,7 +29,6 @@ import { makeExchangeCache } from '../exchange/exchange-api.js'
 import { makeShapeshiftApi, upgradeQuote } from '../exchange/shapeshift.js'
 import {
   createCurrencyWallet,
-  findFirstKey,
   listSplittableWalletTypes,
   makeKeysKit,
   makeStorageKeyInfo,
@@ -50,28 +49,6 @@ import { changeWalletStates } from './account-files.js'
 import { ExchangeTools } from './currency-api.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
-
-/**
- * Client-side Account methods.
- */
-class AccountSync {
-  +allKeys: Array<EdgeWalletInfoFull>
-
-  getFirstWalletInfo (type: string): ?EdgeWalletInfo {
-    const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
-    return findFirstKey(allKeys, type)
-  }
-
-  getWalletInfo (id: string): ?EdgeWalletInfo {
-    const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
-    return allKeys.find(info => info.id === id)
-  }
-
-  listWalletIds (): Array<string> {
-    return this.allKeys.map(info => info.id)
-  }
-}
-shareData(AccountSync.prototype, 'AccountSync')
 
 /**
  * Creates an unwrapped account API object around an account state object.
