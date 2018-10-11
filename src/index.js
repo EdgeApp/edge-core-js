@@ -32,7 +32,9 @@ export {
 export { makeEdgeContext, makeFakeContexts } from './makeContext.js'
 export { destroyAllContexts } from './modules/root.js'
 
-// io types -----------------------------------------------------------
+// ---------------------------------------------------------------------
+// io types
+// ---------------------------------------------------------------------
 
 export type DiskletFile = {
   delete(): Promise<mixed>,
@@ -120,165 +122,13 @@ export type EdgeIo = {
   +WebSocket: typeof WebSocket
 }
 
-// context types ------------------------------------------------------
-
-/* eslint-disable no-use-before-define */
-export type EdgeCorePluginFactory =
-  | EdgeCurrencyPluginFactory
-  | EdgeExchangePluginFactory
-
 export type EdgeCorePluginOptions = {
   io: EdgeIo
 }
 
-export type EdgeContextCallbacks = {
-  +onError?: (e: Error) => mixed,
-  +onExchangeUpdate?: () => mixed
-}
-
-export type EdgeContextOptions = {
-  apiKey?: string, // TODO: Non-optional
-  appId?: string, // TODO: Non-optional
-  authServer?: string,
-  callbacks?: EdgeContextCallbacks,
-  hideKeys?: boolean,
-  path?: string, // Only used on node.js
-  plugins?: Array<EdgeCorePluginFactory>,
-  shapeshiftKey?: string,
-
-  // Used by the fake context:
-  localFakeUser?: boolean,
-  offline?: boolean,
-  tempNoBridge$?: boolean
-}
-
-export type EdgeContextEvents = {
-  error: Error,
-  login: EdgeAccount,
-  loginStart: { username: string },
-  loginError: { error: Error }
-}
-
-export type EdgeUserInfo = {
-  pinLoginEnabled: boolean,
-  username: string
-}
-
-export type EdgeContext = {
-  +on: Subscriber<EdgeContextEvents>,
-  +watch: Subscriber<EdgeContext>,
-
-  +appId: string,
-
-  // Local user management:
-  localUsers: Array<EdgeUserInfo>,
-  fixUsername(username: string): string,
-  listUsernames(): Promise<Array<string>>,
-  deleteLocalAccount(username: string): Promise<mixed>,
-
-  // Account creation:
-  usernameAvailable(username: string): Promise<boolean>,
-  createAccount(
-    username: string,
-    password?: string,
-    pin?: string,
-    opts?: EdgeAccountOptions
-  ): Promise<EdgeAccount>,
-
-  // Edge login:
-  requestEdgeLogin(opts: EdgeEdgeLoginOptions): Promise<EdgePendingEdgeLogin>,
-
-  // Fingerprint login:
-  loginWithKey(
-    username: string,
-    loginKey: string,
-    opts?: EdgeAccountOptions
-  ): Promise<EdgeAccount>,
-
-  // Password login:
-  checkPasswordRules(password: string): EdgePasswordRules,
-  loginWithPassword(
-    username: string,
-    pin: string,
-    opts?: EdgeAccountOptions
-  ): Promise<EdgeAccount>,
-
-  // PIN login:
-  pinLoginEnabled(username: string): Promise<boolean>,
-  loginWithPIN(
-    username: string,
-    pin: string,
-    opts?: EdgeAccountOptions
-  ): Promise<EdgeAccount>,
-
-  // Recovery2 login:
-  getRecovery2Key(username: string): Promise<string>,
-  loginWithRecovery2(
-    recovery2Key: string,
-    username: string,
-    answers: Array<string>,
-    opts?: EdgeAccountOptions
-  ): Promise<EdgeAccount>,
-  fetchRecovery2Questions(
-    recovery2Key: string,
-    username: string
-  ): Promise<Array<string>>,
-  listRecoveryQuestionChoices(): Promise<Array<string>>,
-
-  // OTP stuff:
-  requestOtpReset(username: string, otpResetToken: string): Promise<Date>,
-  fetchLoginMessages(): Promise<EdgeLoginMessages>,
-
-  // Shapeshift:
-  getExchangeSwapRate(
-    fromCurrencyCode: string,
-    toCurrencyCode: string
-  ): Promise<number>,
-  getExchangeSwapInfo(
-    fromCurrencyCode: string,
-    toCurrencyCode: string
-  ): Promise<EdgeExchangeSwapInfo>,
-  getAvailableExchangeTokens(): Promise<Array<string>>
-}
-
-export type EdgeExchangeSwapInfo = {
-  rate: number,
-  nativeMin: string,
-  nativeMax: string,
-  minerFee: string
-}
-
-export type EdgePasswordRules = {
-  secondsToCrack: number,
-  tooShort: boolean,
-  noNumber: boolean,
-  noLowerCase: boolean,
-  noUpperCase: boolean,
-  passed: boolean
-}
-
-export type EdgePendingEdgeLogin = {
-  +id: string,
-  cancelRequest(): void
-}
-
-export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
-  displayImageUrl?: string,
-  displayName?: string,
-
-  // Deprecated (will crash in bridged contexts):
-  onProcessLogin?: (username: string) => mixed,
-  onLogin?: (e?: Error, account?: EdgeAccount) => mixed
-}
-
-export type EdgeLoginMessages = {
-  [username: string]: {
-    otpResetPending: boolean,
-    recovery2Corrupt: boolean
-  }
-}
-
-// account types ------------------------------------------------------
+// ---------------------------------------------------------------------
+// key types
+// ---------------------------------------------------------------------
 
 export type EdgeWalletInfo = {
   id: string,
@@ -305,6 +155,411 @@ export type EdgeWalletState = {
 export type EdgeWalletStates = {
   [walletId: string]: EdgeWalletState
 }
+
+// ---------------------------------------------------------------------
+// currency types
+// ---------------------------------------------------------------------
+
+// currency info -------------------------------------------------------
+
+export type EdgeDenomination = {
+  name: string,
+  multiplier: string,
+  symbol?: string
+}
+
+export type EdgeMetaToken = {
+  currencyCode: string,
+  currencyName: string,
+  denominations: Array<EdgeDenomination>,
+  contractAddress?: string,
+  symbolImage?: string
+}
+
+export type EdgeCurrencyInfo = {
+  // Basic currency information:
+  currencyCode: string,
+  currencyName: string,
+  pluginName: string,
+  denominations: Array<EdgeDenomination>,
+  walletTypes: Array<string>,
+  requiredConfirmations?: number,
+
+  // Configuration options:
+  defaultSettings: any,
+  metaTokens: Array<EdgeMetaToken>,
+
+  // Explorers:
+  addressExplorer: string,
+  blockExplorer?: string,
+  transactionExplorer: string,
+
+  // Images:
+  symbolImage?: string,
+  symbolImageDarkMono?: string
+}
+
+// spending ------------------------------------------------------------
+
+export type EdgeMetadata = {
+  name?: string,
+  category?: string,
+  notes?: string,
+  amountFiat?: number,
+  bizId?: number,
+  miscJson?: string
+}
+
+export type EdgeTransaction = {
+  txid: string,
+  date: number,
+  currencyCode: string,
+  blockHeight: number,
+  nativeAmount: string,
+  networkFee: string,
+  ourReceiveAddresses: Array<string>,
+  signedTx: string,
+  parentNetworkFee?: string,
+  metadata?: EdgeMetadata,
+  otherParams: any,
+  wallet?: EdgeCurrencyWallet // eslint-disable-line no-use-before-define
+}
+
+export type EdgeSpendTarget = {
+  currencyCode?: string,
+  destWallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
+  publicAddress?: string,
+  nativeAmount?: string,
+  destMetadata?: EdgeMetadata,
+  otherParams?: Object
+}
+
+export type EdgePaymentProtocolInfo = {
+  domain: string,
+  memo: string,
+  merchant: string,
+  nativeAmount: string,
+  spendTargets: Array<EdgeSpendTarget>
+}
+
+export type EdgeSpendInfo = {
+  currencyCode?: string,
+  noUnconfirmed?: boolean,
+  privateKeys?: Array<string>,
+  spendTargets: Array<EdgeSpendTarget>,
+  nativeAmount?: string,
+  quoteFor?: string,
+  networkFeeOption?: string,
+  customNetworkFee?: any,
+  metadata?: EdgeMetadata,
+  otherParams?: Object
+}
+
+// query data ----------------------------------------------------------
+
+export type EdgeDataDump = {
+  walletId: string,
+  walletType: string,
+  pluginType: string,
+  data: {
+    [dataCache: string]: any
+  }
+}
+
+export type EdgeFreshAddress = {
+  publicAddress: string,
+  segwitAddress?: string,
+  legacyAddress?: string
+}
+
+export type EdgeTokenInfo = {
+  currencyCode: string,
+  currencyName: string,
+  contractAddress: string,
+  multiplier: string
+}
+
+export type EdgeTxidMap = { [txid: string]: number }
+
+// URI -----------------------------------------------------------------
+
+export type EdgeParsedUri = {
+  token?: EdgeTokenInfo,
+  privateKeys?: Array<string>,
+  publicAddress?: string,
+  legacyAddress?: string,
+  segwitAddress?: string,
+  nativeAmount?: string,
+  currencyCode?: string,
+  metadata?: EdgeMetadata,
+  bitIDURI?: string,
+  bitIDDomain?: string,
+  bitIDCallbackUri?: string,
+  paymentProtocolUrl?: string,
+  returnUri?: string,
+  uniqueIdentifier?: string, // Ripple payment id
+  bitidPaymentAddress?: string, // Experimental
+  bitidKycProvider?: string, // Experimental
+  bitidKycRequest?: string // Experimental
+}
+
+export type EdgeEncodeUri = {
+  publicAddress: string,
+  segwitAddress?: string,
+  legacyAddress?: string,
+  nativeAmount?: string,
+  label?: string,
+  message?: string
+}
+
+// options -------------------------------------------------------------
+
+export type EdgeCurrencyCodeOptions = {
+  currencyCode?: string
+}
+
+export type EdgeUnusedOptions = {}
+
+export type EdgeGetTransactionsOptions = {
+  currencyCode?: string,
+  startIndex?: number,
+  startEntries?: 100,
+  startDate?: number,
+  endDate?: number,
+  searchString?: string,
+  returnIndex?: number,
+  returnEntries?: number,
+  denomination?: string
+}
+
+// engine --------------------------------------------------------------
+
+export type EdgeCurrencyEngineCallbacks = {
+  +onBlockHeightChanged: (blockHeight: number) => void,
+  +onTransactionsChanged: (abcTransactions: Array<EdgeTransaction>) => void,
+  +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
+  +onAddressesChecked: (progressRatio: number) => void,
+  +onTxidsChanged: (txids: EdgeTxidMap) => void
+}
+
+export type EdgeCurrencyEngineOptions = {
+  callbacks: EdgeCurrencyEngineCallbacks,
+  walletLocalFolder: DiskletFolder,
+  walletLocalEncryptedFolder: DiskletFolder,
+  optionalSettings?: any
+}
+
+export type EdgeCurrencyEngine = {
+  startEngine(): Promise<mixed>,
+  killEngine(): Promise<mixed>,
+  getBlockHeight(): number,
+  enableTokens(tokens: Array<string>): Promise<mixed>,
+  disableTokens(tokens: Array<string>): Promise<mixed>,
+  getEnabledTokens(): Promise<Array<string>>,
+  addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
+  getTokenStatus(token: string): boolean,
+  getBalance(options: EdgeCurrencyCodeOptions): string,
+  getNumTransactions(options: EdgeCurrencyCodeOptions): number,
+  getTransactions(
+    options: EdgeGetTransactionsOptions
+  ): Promise<Array<EdgeTransaction>>,
+  getFreshAddress(options: EdgeCurrencyCodeOptions): EdgeFreshAddress,
+  addGapLimitAddresses(
+    addresses: Array<string>,
+    options: EdgeUnusedOptions
+  ): void,
+  isAddressUsed(address: string, options: EdgeUnusedOptions): boolean,
+  makeSpend(abcSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
+  +sweepPrivateKeys?: (abcSpendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
+  signTx(abcTransaction: EdgeTransaction): Promise<EdgeTransaction>,
+  broadcastTx(abcTransaction: EdgeTransaction): Promise<EdgeTransaction>,
+  saveTx(abcTransaction: EdgeTransaction): Promise<mixed>,
+  resyncBlockchain(): Promise<mixed>,
+  dumpData(): EdgeDataDump,
+  +getPaymentProtocolInfo?: (
+    paymentProtocolUrl: string
+  ) => Promise<EdgePaymentProtocolInfo>,
+  getDisplayPrivateSeed(): string | null,
+  getDisplayPublicSeed(): string | null,
+  getTxids?: () => EdgeTxidMap
+}
+
+// currency plugin -----------------------------------------------------
+
+export type EdgeBitcoinPrivateKeyOptions = {
+  format?: string,
+  coinType?: number,
+  account?: number
+}
+
+export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
+
+export type EdgeCurrencyPlugin = {
+  +pluginName: string,
+  +currencyInfo: EdgeCurrencyInfo,
+  createPrivateKey(
+    walletType: string,
+    opts?: EdgeCreatePrivateKeyOptions
+  ): Object,
+  derivePublicKey(walletInfo: EdgeWalletInfo): Object,
+  makeEngine(
+    walletInfo: EdgeWalletInfo,
+    options: EdgeCurrencyEngineOptions
+  ): Promise<EdgeCurrencyEngine>,
+  parseUri(uri: string): EdgeParsedUri,
+  encodeUri(obj: EdgeEncodeUri): string,
+  +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
+  +changeSettings?: (settings: Object) => Promise<mixed>
+}
+
+export type EdgeCurrencyPluginFactory = {
+  +pluginType: 'currency',
+  +pluginName: string,
+  makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeCurrencyPlugin>
+}
+
+// wallet --------------------------------------------------------------
+
+export type EdgeCoinExchangeQuote = {
+  depositAmountNative: string,
+  withdrawalAmountNative: string,
+  expiration: number, // this is in milliseconds since 1970/ it is a date.
+  quotedRate: string,
+  maxLimit: number,
+  orderId: string,
+  edgeTransacton: EdgeTransaction
+}
+
+export type EdgeBalances = { [currencyCode: string]: string }
+
+export type EdgeReceiveAddress = EdgeFreshAddress & {
+  metadata: EdgeMetadata,
+  nativeAmount: string
+}
+
+export type EdgeCurrencyWalletEvents = {
+  newTransactions: Array<EdgeTransaction>,
+  transactionsChanged: Array<EdgeTransaction>
+}
+
+export type EdgeCurrencyWallet = {
+  +on: Subscriber<EdgeCurrencyWalletEvents>,
+  +watch: Subscriber<EdgeCurrencyWallet>,
+
+  // Data store:
+  +id: string,
+  +keys: any,
+  +type: string,
+  +folder: DiskletFolder,
+  +localFolder: DiskletFolder,
+  sync(): Promise<mixed>,
+
+  // Wallet keys:
+  +displayPrivateSeed: string | null,
+  +displayPublicSeed: string | null,
+
+  // Wallet name:
+  +name: string | null,
+  renameWallet(name: string): Promise<mixed>,
+
+  // Fiat currency option:
+  +fiatCurrencyCode: string,
+  setFiatCurrencyCode(fiatCurrencyCode: string): Promise<mixed>,
+
+  // Currency info:
+  +currencyInfo: EdgeCurrencyInfo,
+
+  // Chain state:
+  +balances: EdgeBalances,
+  +blockHeight: number,
+  +syncRatio: number,
+
+  // Running state:
+  startEngine(): Promise<mixed>,
+  stopEngine(): Promise<mixed>,
+
+  // Token management:
+  enableTokens(tokens: Array<string>): Promise<mixed>,
+  disableTokens(tokens: Array<string>): Promise<mixed>,
+  getEnabledTokens(): Promise<Array<string>>,
+  addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
+
+  // Transactions:
+  getNumTransactions(opts?: EdgeCurrencyCodeOptions): Promise<number>,
+  getTransactions(
+    options?: EdgeGetTransactionsOptions
+  ): Promise<Array<EdgeTransaction>>,
+  getReceiveAddress(
+    opts?: EdgeCurrencyCodeOptions
+  ): Promise<EdgeReceiveAddress>,
+  saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
+  lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
+  makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
+  signTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
+  broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
+  saveTx(tx: EdgeTransaction): Promise<mixed>,
+  sweepPrivateKeys(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
+  saveTxMetadata(
+    txid: string,
+    currencyCode: string,
+    metadata: EdgeMetadata
+  ): Promise<mixed>,
+  getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
+  getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
+  getPaymentProtocolInfo(
+    paymentProtocolUrl: string
+  ): Promise<EdgePaymentProtocolInfo>,
+
+  // Wallet management:
+  resyncBlockchain(): Promise<mixed>,
+  dumpData(): Promise<EdgeDataDump>,
+  getDisplayPrivateSeed(): string | null,
+  getDisplayPublicSeed(): string | null,
+
+  // Data exports:
+  exportTransactionsToQBO(opts: EdgeGetTransactionsOptions): Promise<string>,
+  exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
+
+  // URI handling:
+  parseUri(uri: string): Promise<EdgeParsedUri>,
+  encodeUri(obj: EdgeEncodeUri): Promise<string>,
+
+  // Deprecated API's:
+  getBalance(opts?: EdgeCurrencyCodeOptions): string,
+  getBlockHeight(): number
+}
+
+// ---------------------------------------------------------------------
+// rate plugin
+// ---------------------------------------------------------------------
+
+export type EdgeExchangePairHint = {
+  fromCurrency: string,
+  toCurrency: string
+}
+
+export type EdgeExchangePair = {
+  fromCurrency: string,
+  toCurrency: string,
+  rate: number
+}
+
+export type EdgeExchangePlugin = {
+  +exchangeInfo: { exchangeName: string },
+
+  fetchExchangeRates(
+    pairHints: Array<EdgeExchangePairHint>
+  ): Promise<Array<EdgeExchangePair>>
+}
+
+export type EdgeExchangePluginFactory = {
+  +pluginType: 'exchange',
+  makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeExchangePlugin>
+}
+
+// ---------------------------------------------------------------------
+// account
+// ---------------------------------------------------------------------
 
 export type EdgeAccountCallbacks = {
   +onDataChanged?: () => mixed,
@@ -339,6 +594,8 @@ export type EdgeAccountOptions = {
   callbacks?: EdgeAccountCallbacks
 }
 
+// currencies ----------------------------------------------------------
+
 export type EdgeCreateCurrencyWalletOptions = {
   fiatCurrencyCode?: string,
   name?: string,
@@ -367,14 +624,21 @@ export type EdgeCurrencyToolsMap = {
   [pluginName: string]: EdgeCurrencyTools
 }
 
-export type EdgeExchangeTools = {
-  +watch: Subscriber<EdgeExchangeTools>,
-
-  +exchangeInfo: Object,
-  +settings: Object,
-
-  changeSettings(settings: Object): Promise<mixed>
+export type EthererumTransaction = {
+  chainId: number, // Not part of raw data, but needed for signing
+  nonce: string,
+  gasPrice: string,
+  gasLimit: string,
+  to: string,
+  value: string,
+  data: string,
+  // The transaction is unsigned, so these are not present:
+  v?: string,
+  r?: string,
+  s?: string
 }
+
+// rates ---------------------------------------------------------------
 
 export type EdgeExchangeCacheEvents = {
   update: mixed
@@ -390,27 +654,15 @@ export type EdgeExchangeCache = {
   ): number
 }
 
-export type EdgeDataStore = {
-  deleteItem(storeId: string, itemId: string): Promise<mixed>,
-  deleteStore(storeId: string): Promise<mixed>,
+// exchange ------------------------------------------------------------
 
-  listItemIds(storeId: string): Promise<Array<string>>,
-  listStoreIds(): Promise<Array<string>>,
+export type EdgeExchangeTools = {
+  +watch: Subscriber<EdgeExchangeTools>,
 
-  getItem(storeId: string, itemId: string): Promise<string>,
-  setItem(storeId: string, itemId: string, value: string): Promise<mixed>
-}
+  +exchangeInfo: Object,
+  +settings: Object,
 
-// Deprecated:
-export type EdgePluginData = {
-  deleteItem(pluginId: string, itemId: string): Promise<mixed>,
-  deletePlugin(pluginId: string): Promise<mixed>,
-
-  listItemIds(pluginId: string): Promise<Array<string>>,
-  listPluginIds(): Promise<Array<string>>,
-
-  getItem(pluginId: string, itemId: string): Promise<string>,
-  setItem(pluginId: string, itemId: string, value: string): Promise<mixed>
+  changeSettings(settings: Object): Promise<mixed>
 }
 
 // Currencies supported by various exchange-rate providers:
@@ -442,21 +694,49 @@ export type EdgeExchangeQuote = {
   close(): Promise<mixed>
 }
 
-export type EdgeAccountEvents = {}
+// edge login ----------------------------------------------------------
 
-export type EthererumTransaction = {
-  chainId: number, // Not part of raw data, but needed for signing
-  nonce: string,
-  gasPrice: string,
-  gasLimit: string,
-  to: string,
-  value: string,
-  data: string,
-  // The transaction is unsigned, so these are not present:
-  v?: string,
-  r?: string,
-  s?: string
+export type EdgeLoginRequest = {
+  +appId: string,
+  approve(): Promise<mixed>,
+
+  +displayName: string,
+  +displayImageUrl: string | void
 }
+
+export type EdgeLobby = {
+  +loginRequest: EdgeLoginRequest | void
+  // walletRequest: EdgeWalletRequest | void
+}
+
+// storage -------------------------------------------------------------
+
+export type EdgeDataStore = {
+  deleteItem(storeId: string, itemId: string): Promise<mixed>,
+  deleteStore(storeId: string): Promise<mixed>,
+
+  listItemIds(storeId: string): Promise<Array<string>>,
+  listStoreIds(): Promise<Array<string>>,
+
+  getItem(storeId: string, itemId: string): Promise<string>,
+  setItem(storeId: string, itemId: string, value: string): Promise<mixed>
+}
+
+// Deprecated:
+export type EdgePluginData = {
+  deleteItem(pluginId: string, itemId: string): Promise<mixed>,
+  deletePlugin(pluginId: string): Promise<mixed>,
+
+  listItemIds(pluginId: string): Promise<Array<string>>,
+  listPluginIds(): Promise<Array<string>>,
+
+  getItem(pluginId: string, itemId: string): Promise<string>,
+  setItem(pluginId: string, itemId: string, value: string): Promise<mixed>
+}
+
+// account -------------------------------------------------------------
+
+export type EdgeAccountEvents = {}
 
 export type EdgeAccount = {
   +on: Subscriber<EdgeAccountEvents>,
@@ -556,405 +836,171 @@ export type EdgeAccount = {
   getExchangeQuote(opts: EdgeExchangeQuoteOptions): Promise<EdgeExchangeQuote>
 }
 
-// edge login types ---------------------------------------------------
+// ---------------------------------------------------------------------
+// context types
+// ---------------------------------------------------------------------
 
-export type EdgeLobby = {
-  +loginRequest: EdgeLoginRequest | void
-  // walletRequest: EdgeWalletRequest | void
+export type EdgeCorePluginFactory =
+  | EdgeCurrencyPluginFactory
+  | EdgeExchangePluginFactory
+
+export type EdgeContextCallbacks = {
+  +onError?: (e: Error) => mixed,
+  +onExchangeUpdate?: () => mixed
 }
 
-export type EdgeLoginRequest = {
-  +appId: string,
-  approve(): Promise<mixed>,
+export type EdgeContextOptions = {
+  apiKey?: string, // TODO: Non-optional
+  appId?: string, // TODO: Non-optional
+  authServer?: string,
+  callbacks?: EdgeContextCallbacks,
+  hideKeys?: boolean,
+  path?: string, // Only used on node.js
+  plugins?: Array<EdgeCorePluginFactory>,
+  shapeshiftKey?: string,
 
-  +displayName: string,
-  +displayImageUrl: string | void
+  // Used by the fake context:
+  localFakeUser?: boolean,
+  offline?: boolean,
+  tempNoBridge$?: boolean
 }
 
-// currency wallet types ----------------------------------------------
+// deprecated ----------------------------------------------------------
 
-export type EdgeTokenInfo = {
-  currencyCode: string,
-  currencyName: string,
-  contractAddress: string,
-  multiplier: string
+export type EdgeExchangeSwapInfo = {
+  rate: number,
+  nativeMin: string,
+  nativeMax: string,
+  minerFee: string
 }
 
-export type EdgeBalances = { [currencyCode: string]: string }
+// parameters ----------------------------------------------------------
 
-export type EdgeGetTransactionsOptions = {
-  currencyCode?: string,
-  startIndex?: number,
-  startEntries?: 100,
-  startDate?: number,
-  endDate?: number,
-  searchString?: string,
-  returnIndex?: number,
-  returnEntries?: number,
-  denomination?: string
+export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
+  // Deprecated. The info server handles these now:
+  displayImageUrl?: string,
+  displayName?: string,
+
+  // Deprecated (will crash in bridged contexts):
+  onProcessLogin?: (username: string) => mixed,
+  onLogin?: (e?: Error, account?: EdgeAccount) => mixed
 }
 
-export type EdgeCurrencyCodeOptions = {
-  currencyCode?: string
-}
-
-export type EdgeTxidMap = { [txid: string]: number }
-
-export type EdgeUnusedOptions = {}
-
-export type EdgeCurrencyWalletEvents = {
-  newTransactions: Array<EdgeTransaction>,
-  transactionsChanged: Array<EdgeTransaction>
-}
-
-export type EdgeCurrencyWallet = {
-  +on: Subscriber<EdgeCurrencyWalletEvents>,
-  +watch: Subscriber<EdgeCurrencyWallet>,
-
-  // Data store:
-  +id: string,
-  +keys: any,
-  +type: string,
-  +folder: DiskletFolder,
-  +localFolder: DiskletFolder,
-  sync(): Promise<mixed>,
-
-  // Wallet keys:
-  +displayPrivateSeed: string | null,
-  +displayPublicSeed: string | null,
-
-  // Wallet name:
-  +name: string | null,
-  renameWallet(name: string): Promise<mixed>,
-
-  // Fiat currency option:
-  +fiatCurrencyCode: string,
-  setFiatCurrencyCode(fiatCurrencyCode: string): Promise<mixed>,
-
-  // Currency info:
-  +currencyInfo: EdgeCurrencyInfo,
-
-  // Chain state:
-  +balances: EdgeBalances,
-  +blockHeight: number,
-  +syncRatio: number,
-
-  // Running state:
-  startEngine(): Promise<mixed>,
-  stopEngine(): Promise<mixed>,
-
-  // Token management:
-  enableTokens(tokens: Array<string>): Promise<mixed>,
-  disableTokens(tokens: Array<string>): Promise<mixed>,
-  getEnabledTokens(): Promise<Array<string>>,
-  addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
-
-  // Transactions:
-  getNumTransactions(opts?: EdgeCurrencyCodeOptions): Promise<number>,
-  getTransactions(
-    options?: EdgeGetTransactionsOptions
-  ): Promise<Array<EdgeTransaction>>,
-  getReceiveAddress(
-    opts?: EdgeCurrencyCodeOptions
-  ): Promise<EdgeReceiveAddress>,
-  saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
-  lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
-  makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
-  signTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
-  broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
-  saveTx(tx: EdgeTransaction): Promise<mixed>,
-  sweepPrivateKeys(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
-  saveTxMetadata(
-    txid: string,
-    currencyCode: string,
-    metadata: EdgeMetadata
-  ): Promise<mixed>,
-  getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
-  getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
-  getPaymentProtocolInfo(
-    paymentProtocolUrl: string
-  ): Promise<EdgePaymentProtocolInfo>,
-
-  // Wallet management:
-  resyncBlockchain(): Promise<mixed>,
-  dumpData(): Promise<EdgeDataDump>,
-  getDisplayPrivateSeed(): string | null,
-  getDisplayPublicSeed(): string | null,
-
-  // Data exports:
-  exportTransactionsToQBO(opts: EdgeGetTransactionsOptions): Promise<string>,
-  exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
-
-  // URI handling:
-  parseUri(uri: string): Promise<EdgeParsedUri>,
-  encodeUri(obj: EdgeEncodeUri): Promise<string>,
-
-  // Deprecated API's:
-  getBalance(opts?: EdgeCurrencyCodeOptions): string,
-  getBlockHeight(): number
-}
-
-export type EdgeMetadata = {
-  name?: string,
-  category?: string,
-  notes?: string,
-  amountFiat?: number,
-  bizId?: number,
-  miscJson?: string
-}
-
-export type EdgeSpendTarget = {
-  currencyCode?: string,
-  destWallet?: EdgeCurrencyWallet,
-  publicAddress?: string,
-  nativeAmount?: string,
-  destMetadata?: EdgeMetadata,
-  otherParams?: Object
-}
-
-export type EdgeSpendInfo = {
-  currencyCode?: string,
-  noUnconfirmed?: boolean,
-  privateKeys?: Array<string>,
-  spendTargets: Array<EdgeSpendTarget>,
-  nativeAmount?: string,
-  quoteFor?: string,
-  networkFeeOption?: string,
-  customNetworkFee?: any,
-  metadata?: EdgeMetadata,
-  otherParams?: Object
-}
-
-export type EdgePaymentProtocolInfo = {
-  domain: string,
-  memo: string,
-  merchant: string,
-  nativeAmount: string,
-  spendTargets: Array<EdgeSpendTarget>
-}
-
-export type EdgeTransaction = {
-  txid: string,
-  date: number,
-  currencyCode: string,
-  blockHeight: number,
-  nativeAmount: string,
-  networkFee: string,
-  ourReceiveAddresses: Array<string>,
-  signedTx: string,
-  parentNetworkFee?: string,
-  metadata?: EdgeMetadata,
-  otherParams: any,
-  wallet?: EdgeCurrencyWallet
-}
-
-export type EdgeDenomination = {
-  name: string,
-  multiplier: string,
-  symbol?: string
-}
-
-export type EdgeMetaToken = {
-  currencyCode: string,
-  currencyName: string,
-  denominations: Array<EdgeDenomination>,
-  contractAddress?: string,
-  symbolImage?: string
-}
-
-export type EdgeCurrencyInfo = {
-  // Basic currency information:
-  currencyCode: string,
-  currencyName: string,
-  pluginName: string,
-  denominations: Array<EdgeDenomination>,
-  walletTypes: Array<string>,
-  requiredConfirmations?: number,
-
-  // Configuration options:
-  defaultSettings: any,
-  metaTokens: Array<EdgeMetaToken>,
-
-  // Explorers:
-  addressExplorer: string,
-  blockExplorer?: string,
-  transactionExplorer: string,
-
-  // Images:
-  symbolImage?: string,
-  symbolImageDarkMono?: string
-}
-
-export type EdgeParsedUri = {
-  token?: EdgeTokenInfo,
-  privateKeys?: Array<string>,
-  publicAddress?: string,
-  legacyAddress?: string,
-  segwitAddress?: string,
-  nativeAmount?: string,
-  currencyCode?: string,
-  metadata?: EdgeMetadata,
-  bitIDURI?: string,
-  bitIDDomain?: string,
-  bitIDCallbackUri?: string,
-  paymentProtocolUrl?: string,
-  returnUri?: string,
-  uniqueIdentifier?: string, // Ripple payment id
-  bitidPaymentAddress?: string, // Experimental
-  bitidKycProvider?: string, // Experimental
-  bitidKycRequest?: string // Experimental
-}
-
-export type EdgeEncodeUri = {
-  publicAddress: string,
-  segwitAddress?: string,
-  legacyAddress?: string,
-  nativeAmount?: string,
-  label?: string,
-  message?: string
-}
-
-export type EdgeFreshAddress = {
-  publicAddress: string,
-  segwitAddress?: string,
-  legacyAddress?: string
-}
-
-export type EdgeDataDump = {
-  walletId: string,
-  walletType: string,
-  pluginType: string,
-  data: {
-    [dataCache: string]: any
+export type EdgeLoginMessages = {
+  [username: string]: {
+    otpResetPending: boolean,
+    recovery2Corrupt: boolean
   }
 }
 
-export type EdgeReceiveAddress = EdgeFreshAddress & {
-  metadata: EdgeMetadata,
-  nativeAmount: string
+export type EdgePasswordRules = {
+  secondsToCrack: number,
+  tooShort: boolean,
+  noNumber: boolean,
+  noLowerCase: boolean,
+  noUpperCase: boolean,
+  passed: boolean
 }
 
-export type EdgeCoinExchangeQuote = {
-  depositAmountNative: string,
-  withdrawalAmountNative: string,
-  expiration: number, // this is in milliseconds since 1970/ it is a date.
-  quotedRate: string,
-  maxLimit: number,
-  orderId: string,
-  edgeTransacton: EdgeTransaction
+export type EdgePendingEdgeLogin = {
+  +id: string,
+  cancelRequest(): void
 }
 
-// currency plugin types ----------------------------------------------
-
-export type EdgeCurrencyEngineCallbacks = {
-  +onBlockHeightChanged: (blockHeight: number) => void,
-  +onTransactionsChanged: (abcTransactions: Array<EdgeTransaction>) => void,
-  +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
-  +onAddressesChecked: (progressRatio: number) => void,
-  +onTxidsChanged: (txids: EdgeTxidMap) => void
+export type EdgeUserInfo = {
+  pinLoginEnabled: boolean,
+  username: string
 }
 
-export type EdgeCurrencyEngineOptions = {
-  callbacks: EdgeCurrencyEngineCallbacks,
-  walletLocalFolder: DiskletFolder,
-  walletLocalEncryptedFolder: DiskletFolder,
-  optionalSettings?: any
+// context -------------------------------------------------------------
+
+export type EdgeContextEvents = {
+  error: Error,
+  login: EdgeAccount,
+  loginStart: { username: string },
+  loginError: { error: Error }
 }
 
-export type EdgeCurrencyEngine = {
-  startEngine(): Promise<mixed>,
-  killEngine(): Promise<mixed>,
-  getBlockHeight(): number,
-  enableTokens(tokens: Array<string>): Promise<mixed>,
-  disableTokens(tokens: Array<string>): Promise<mixed>,
-  getEnabledTokens(): Promise<Array<string>>,
-  addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
-  getTokenStatus(token: string): boolean,
-  getBalance(options: EdgeCurrencyCodeOptions): string,
-  getNumTransactions(options: EdgeCurrencyCodeOptions): number,
-  getTransactions(
-    options: EdgeGetTransactionsOptions
-  ): Promise<Array<EdgeTransaction>>,
-  getFreshAddress(options: EdgeCurrencyCodeOptions): EdgeFreshAddress,
-  addGapLimitAddresses(
-    addresses: Array<string>,
-    options: EdgeUnusedOptions
-  ): void,
-  isAddressUsed(address: string, options: EdgeUnusedOptions): boolean,
-  makeSpend(abcSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
-  +sweepPrivateKeys?: (abcSpendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
-  signTx(abcTransaction: EdgeTransaction): Promise<EdgeTransaction>,
-  broadcastTx(abcTransaction: EdgeTransaction): Promise<EdgeTransaction>,
-  saveTx(abcTransaction: EdgeTransaction): Promise<mixed>,
-  resyncBlockchain(): Promise<mixed>,
-  dumpData(): EdgeDataDump,
-  +getPaymentProtocolInfo?: (
-    paymentProtocolUrl: string
-  ) => Promise<EdgePaymentProtocolInfo>,
-  getDisplayPrivateSeed(): string | null,
-  getDisplayPublicSeed(): string | null,
-  getTxids?: () => EdgeTxidMap
+export type EdgeContext = {
+  +on: Subscriber<EdgeContextEvents>,
+  +watch: Subscriber<EdgeContext>,
+
+  +appId: string,
+
+  // Local user management:
+  localUsers: Array<EdgeUserInfo>,
+  fixUsername(username: string): string,
+  listUsernames(): Promise<Array<string>>,
+  deleteLocalAccount(username: string): Promise<mixed>,
+
+  // Account creation:
+  usernameAvailable(username: string): Promise<boolean>,
+  createAccount(
+    username: string,
+    password?: string,
+    pin?: string,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+
+  // Edge login:
+  requestEdgeLogin(opts: EdgeEdgeLoginOptions): Promise<EdgePendingEdgeLogin>,
+
+  // Fingerprint login:
+  loginWithKey(
+    username: string,
+    loginKey: string,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+
+  // Password login:
+  checkPasswordRules(password: string): EdgePasswordRules,
+  loginWithPassword(
+    username: string,
+    pin: string,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+
+  // PIN login:
+  pinLoginEnabled(username: string): Promise<boolean>,
+  loginWithPIN(
+    username: string,
+    pin: string,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+
+  // Recovery2 login:
+  getRecovery2Key(username: string): Promise<string>,
+  loginWithRecovery2(
+    recovery2Key: string,
+    username: string,
+    answers: Array<string>,
+    opts?: EdgeAccountOptions
+  ): Promise<EdgeAccount>,
+  fetchRecovery2Questions(
+    recovery2Key: string,
+    username: string
+  ): Promise<Array<string>>,
+  listRecoveryQuestionChoices(): Promise<Array<string>>,
+
+  // OTP stuff:
+  requestOtpReset(username: string, otpResetToken: string): Promise<Date>,
+  fetchLoginMessages(): Promise<EdgeLoginMessages>,
+
+  // Shapeshift:
+  getExchangeSwapRate(
+    fromCurrencyCode: string,
+    toCurrencyCode: string
+  ): Promise<number>,
+  getExchangeSwapInfo(
+    fromCurrencyCode: string,
+    toCurrencyCode: string
+  ): Promise<EdgeExchangeSwapInfo>,
+  getAvailableExchangeTokens(): Promise<Array<string>>
 }
 
-export type EdgeBitcoinPrivateKeyOptions = {
-  format?: string,
-  coinType?: number,
-  account?: number
-}
-
-export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
-
-export type EdgeCurrencyPlugin = {
-  +pluginName: string,
-  +currencyInfo: EdgeCurrencyInfo,
-  createPrivateKey(
-    walletType: string,
-    opts?: EdgeCreatePrivateKeyOptions
-  ): Object,
-  derivePublicKey(walletInfo: EdgeWalletInfo): Object,
-  makeEngine(
-    walletInfo: EdgeWalletInfo,
-    options: EdgeCurrencyEngineOptions
-  ): Promise<EdgeCurrencyEngine>,
-  parseUri(uri: string): EdgeParsedUri,
-  encodeUri(obj: EdgeEncodeUri): string,
-  +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
-  +changeSettings?: (settings: Object) => Promise<mixed>
-}
-
-export type EdgeCurrencyPluginFactory = {
-  +pluginType: 'currency',
-  +pluginName: string,
-  makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeCurrencyPlugin>
-}
-
-// exchange plugin types ----------------------------------------------
-
-export type EdgeExchangePairHint = {
-  fromCurrency: string,
-  toCurrency: string
-}
-
-export type EdgeExchangePair = {
-  fromCurrency: string,
-  toCurrency: string,
-  rate: number
-}
-
-export type EdgeExchangePlugin = {
-  +exchangeInfo: { exchangeName: string },
-
-  fetchExchangeRates(
-    pairHints: Array<EdgeExchangePairHint>
-  ): Promise<Array<EdgeExchangePair>>
-}
-
-export type EdgeExchangePluginFactory = {
-  +pluginType: 'exchange',
-  makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeExchangePlugin>
-}
-
-// legacy names -------------------------------------------------------
+// ---------------------------------------------------------------------
+// legacy names
+// ---------------------------------------------------------------------
 
 export type {
   EdgeConsole as AbcConsole,
