@@ -67,7 +67,7 @@ export default [
   // Client-side methods:
   {
     input: 'src/client-side.js',
-    output: { file: 'lib/client-side.js', format: 'cjs' },
+    output: { file: 'lib/client-side.js', format: 'es' },
     plugins: [babel(babelOpts)],
     sourcemap: true
   }

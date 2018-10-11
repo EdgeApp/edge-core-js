@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.4
+
+* Fix a packaging issue with the client-side methods.
+
 ## 0.12.3
 
 * Move the client-side methods into their own file.
