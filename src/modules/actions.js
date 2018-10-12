@@ -7,6 +7,7 @@ import {
   type EdgeWalletInfo,
   type EdgeWalletStates
 } from '../index.js'
+import { type SwapState } from './account/account-reducer.js'
 import {
   type TxFileJsons,
   type TxFileNames
@@ -72,6 +73,17 @@ export type AccountPluginSettingsLoaded = {
   payload: {
     accountId: string,
     userSettings: { [pluginName: string]: Object }
+  }
+}
+
+/**
+ * The swap plugins have been initialized.
+ */
+export type AccountSwapPluginsLoaded = {
+  type: 'ACCOUNT_SWAP_PLUGINS_LOADED',
+  payload: {
+    accountId: string,
+    plugins: SwapState
   }
 }
 
@@ -334,6 +346,7 @@ export type RootAction =
   | AccountLoadFailed
   | AccountPluginSettingsChanged
   | AccountPluginSettingsLoaded
+  | AccountSwapPluginsLoaded
   | AddedCustomToken
   | CurrencyEngineChangedBalance
   | CurrencyEngineChangedHeight

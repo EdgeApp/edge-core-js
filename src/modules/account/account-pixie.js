@@ -15,9 +15,11 @@ import {
   addStorageWallet,
   syncStorageWallet
 } from '../storage/storage-actions.js'
+import { changellyPlugin } from '../swap/changelly-plugin.js'
+import { shapeshiftPlugin } from '../swap/shapeshift-plugin.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
-import { type AccountState } from './account-reducer.js'
+import { type AccountState, type SwapState } from './account-reducer.js'
 
 export type AccountOutput = {
   +api: EdgeAccount,
@@ -57,6 +59,8 @@ const accountPixie = combinePixies({
           close(input.props.selfOutput.api.pluginData)
           const currencies = input.props.selfOutput.api.currencyConfig
           for (const n of Object.keys(currencies)) close(currencies[n])
+          const swaps = input.props.selfOutput.api.swapConfig
+          for (const n of Object.keys(swaps)) close(swaps[n])
         }
       },
 
@@ -78,12 +82,41 @@ const accountPixie = combinePixies({
         }
 
         try {
+          // Wait for the currency plugins (should already be loaded by now):
+          await waitForCurrencyPlugins(ai)
+
           // Start the repo:
           await addStorageWallet(ai, accountWalletInfo)
           await loadAllFiles()
 
-          // Wait for the currency plugins:
-          await waitForCurrencyPlugins(ai)
+          // Load swap plugins:
+          const swapState: SwapState = {}
+          if (input.props.changellyInit) {
+            const plugin = changellyPlugin
+            const tools = await changellyPlugin.makeTools({
+              io: input.props.io,
+              initOptions: input.props.changellyInit,
+              get userSettings () {
+                return input.props.selfState.pluginSettings.changelly
+              }
+            })
+            swapState.changelly = { plugin, tools }
+          }
+          if (input.props.shapeshiftKey != null) {
+            const plugin = shapeshiftPlugin
+            const tools = await shapeshiftPlugin.makeTools({
+              io: input.props.io,
+              initOptions: { apiKey: input.props.shapeshiftKey },
+              get userSettings () {
+                return input.props.selfState.pluginSettings.shapeshift
+              }
+            })
+            swapState.shapeshift = { plugin, tools }
+          }
+          input.props.dispatch({
+            type: 'ACCOUNT_SWAP_PLUGINS_LOADED',
+            payload: { accountId, plugins: swapState }
+          })
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))

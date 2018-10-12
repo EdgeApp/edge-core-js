@@ -4,6 +4,8 @@ import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
   type EdgeAccountCallbacks,
+  type EdgeSwapPlugin,
+  type EdgeSwapTools,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull,
   type EdgeWalletStates
@@ -20,6 +22,13 @@ import { type LoginTree, type WalletInfoMap } from '../login/login-types.js'
 import { makeLoginTree } from '../login/login.js'
 import { type RootState } from '../root-reducer.js'
 import { findAppLogin } from './account-init.js'
+
+export type SwapState = {
+  [pluginName: string]: {
+    plugin: EdgeSwapPlugin,
+    tools: EdgeSwapTools
+  }
+}
 
 export type PluginSettingsState = { [pluginName: string]: Object }
 
@@ -47,7 +56,8 @@ export type AccountState = {
   +username: string,
 
   // Plugin stuff:
-  +pluginSettings: PluginSettingsState
+  +pluginSettings: PluginSettingsState,
+  +swap: SwapState
 }
 
 export type AccountNext = {
@@ -216,6 +226,12 @@ const account = buildReducer({
         return action.payload.userSettings
     }
     return state
+  },
+
+  swap (state = {}, action: RootAction): SwapState {
+    return action.type === 'ACCOUNT_SWAP_PLUGINS_LOADED'
+      ? action.payload.plugins
+      : state
   }
 })
 

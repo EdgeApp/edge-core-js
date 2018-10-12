@@ -137,6 +137,34 @@ describe('account', function () {
     expect(config2.userSettings).deep.equals(settings)
   })
 
+  it('change swap plugin settings', async function () {
+    const [context] = makeFakeContexts({
+      ...contextOptions,
+      shapeshiftKey: 'fake-key',
+      changellyInit: { apiKey: 'fake-key', secret: 'fake-secret' }
+    })
+    const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    // Check the initial settings:
+    expect(account1.swapConfig).has.keys('changelly', 'shapeshift')
+    const config1 = account1.swapConfig.shapeshift
+    expect(config1.swapInfo.pluginName).equals('shapeshift')
+    expect(config1.userSettings).equals(void 0)
+
+    // Change the settings:
+    const settings = {
+      accessToken: 'fake-token',
+      refreshToken: 'fake-token'
+    }
+    await config1.changeUserSettings(settings)
+    expect(config1.userSettings).deep.equals(settings)
+
+    // Log in again, and the setting should still be there:
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const config2 = account2.swapConfig.shapeshift
+    expect(config2.userSettings).deep.equals(settings)
+  })
+
   it('change key state', async function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)

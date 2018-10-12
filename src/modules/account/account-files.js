@@ -260,8 +260,6 @@ async function updatePluginSettings (
   const { pluginSettings } = selfState
   const promises: Array<Promise<mixed>> = []
 
-  if (ai.props.output.currency.plugins == null) return
-
   for (const plugin of ai.props.output.currency.plugins) {
     if (pluginName == null || plugin.pluginName === pluginName) {
       // Update currency plugin:
@@ -276,6 +274,21 @@ async function updatePluginSettings (
     // Update currency config API:
     if (selfOutput.api != null) {
       update(selfOutput.api.currencyConfig[plugin.pluginName])
+    }
+  }
+
+  for (const n in selfState.swap) {
+    if (pluginName == null || n === pluginName) {
+      // Update the swap plugin:
+      const promise = selfState.swap[n].tools
+        .changeUserSettings(pluginSettings[n])
+        .catch(e => ai.props.onError(e))
+      promises.push(promise)
+
+      // Update the swap config API once the plugin finishes:
+      if (selfOutput.api != null) {
+        promise.then(() => update(selfOutput.api.swapConfig[n]))
+      }
     }
   }
 
