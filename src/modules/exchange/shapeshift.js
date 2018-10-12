@@ -6,7 +6,7 @@ import { bridgifyObject, close } from 'yaob'
 import type {
   EdgeCoinExchangeQuote,
   EdgeCurrencyWallet,
-  EdgeExchangeQuote,
+  EdgeSwapQuote,
   EdgeTransaction
 } from '../../index.js'
 import { getCurrencyMultiplier } from '../currency/currency-selectors.js'
@@ -183,15 +183,15 @@ export function makeShapeshiftApi (ai: ApiInput) {
 export function upgradeQuote (
   fromWallet: EdgeCurrencyWallet,
   legacyQuote: EdgeCoinExchangeQuote
-): EdgeExchangeQuote {
+): EdgeSwapQuote {
   const quoteUri = 'https://shapeshift.io/#/status/' + legacyQuote.orderId
 
-  const out: EdgeExchangeQuote = {
+  const out: EdgeSwapQuote = {
     expirationDate: new Date(legacyQuote.expiration),
     fromNativeAmount: legacyQuote.depositAmountNative,
     toNativeAmount: legacyQuote.withdrawalAmountNative,
 
-    exchangeService: 'shapeshift',
+    pluginName: 'shapeshift',
     quoteId: legacyQuote.orderId,
     quoteUri,
 
@@ -209,7 +209,10 @@ export function upgradeQuote (
 
     async close () {
       close(this)
-    }
+    },
+
+    // Deprecated names:
+    exchangeService: 'shapeshift'
   }
   bridgifyObject(out)
 

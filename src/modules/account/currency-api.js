@@ -3,18 +3,20 @@
 import { Bridgeable } from 'yaob'
 
 import {
+  type EdgeCurrencyConfig,
   type EdgeCurrencyInfo,
   type EdgeCurrencyPlugin,
-  type EdgeCurrencyTools,
-  type EdgeExchangeTools
+  type EdgeSwapConfig,
+  type EdgeSwapInfo
 } from '../../index.js'
+import { deprecate } from '../../util/deprecate.js'
 import type { ApiInput } from '../root.js'
 import { changePluginSettings } from './account-files.js'
 
 /**
  * Access to an individual currency plugin's methods.
  */
-export class CurrencyTools extends Bridgeable<EdgeCurrencyTools> {
+export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   _ai: ApiInput
   _accountId: string
   _plugin: EdgeCurrencyPlugin
@@ -30,11 +32,11 @@ export class CurrencyTools extends Bridgeable<EdgeCurrencyTools> {
     return this._plugin.currencyInfo
   }
 
-  get settings (): Object {
+  get userSettings (): Object {
     return this._ai.props.state.currency.settings[this._plugin.pluginName]
   }
 
-  async changeSettings (settings: Object): Promise<mixed> {
+  async changeUserSettings (settings: Object): Promise<mixed> {
     await changePluginSettings(
       this._ai,
       this._accountId,
@@ -44,36 +46,54 @@ export class CurrencyTools extends Bridgeable<EdgeCurrencyTools> {
   }
 
   // Deprecated names:
+  get settings (): Object {
+    return this.userSettings
+  }
   get pluginSettings (): Object {
-    return this.settings
+    return this.userSettings
+  }
+  async changeSettings (settings: Object): Promise<mixed> {
+    deprecate('changeSettings', 'changeUserSettings')
+    return this.changeUserSettings(settings)
   }
   async changePluginSettings (settings: Object): Promise<mixed> {
-    return this.changeSettings(settings)
+    deprecate('changePluginSettings', 'changeUserSettings')
+    return this.changeUserSettings(settings)
   }
 }
 
-export class ExchangeTools extends Bridgeable<EdgeExchangeTools> {
-  _settings: Object
+export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
+  _userSettings: Object
 
   constructor () {
     super()
-    this._settings = {}
+    this._userSettings = {}
   }
 
-  // TODO: Type EdgeExchangeInfo
-  get exchangeInfo (): Object {
+  get swapInfo (): EdgeSwapInfo {
     return {
       pluginName: 'shapeshift',
-      exchangeName: 'ShapeShift',
-      homepage: 'https://shapeshift.io/'
+      displayName: 'ShapeShift'
     }
   }
 
-  get settings (): Object {
-    return this._settings
+  get userSettings (): Object {
+    return this._userSettings
   }
 
+  async changeUserSettings (settings: Object): Promise<mixed> {
+    this._userSettings = settings
+  }
+
+  // Deprecated names:
+  get exchangeInfo (): EdgeSwapInfo {
+    return this.swapInfo
+  }
+  get settings (): Object {
+    return this.userSettings
+  }
   async changeSettings (settings: Object): Promise<mixed> {
-    this._settings = settings
+    deprecate('changeSettings', 'changeUserSettings')
+    return this.changeUserSettings(settings)
   }
 }

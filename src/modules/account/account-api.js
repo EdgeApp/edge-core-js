@@ -7,22 +7,23 @@ import {
   type DiskletFolder,
   type EdgeAccount,
   type EdgeCreateCurrencyWalletOptions,
-  type EdgeCurrencyToolsMap,
+  type EdgeCurrencyConfig,
   type EdgeCurrencyWallet,
   type EdgeDataStore,
-  type EdgeExchangeCache,
-  type EdgeExchangeCurrencies,
-  type EdgeExchangeQuote,
-  type EdgeExchangeQuoteOptions,
-  type EdgeExchangeTools,
   type EdgeLobby,
   type EdgePluginData,
+  type EdgeRateCache,
   type EdgeSpendInfo,
+  type EdgeSwapConfig,
+  type EdgeSwapCurrencies,
+  type EdgeSwapQuote,
+  type EdgeSwapQuoteOptions,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
   type EthererumTransaction
 } from '../../index.js'
 import { signEthereumTransaction } from '../../util/crypto/external.js'
+import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
@@ -46,7 +47,7 @@ import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
 import { type ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { changeWalletStates } from './account-files.js'
-import { ExchangeTools } from './currency-api.js'
+import { SwapConfig } from './currency-api.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
 
@@ -56,15 +57,13 @@ import { makeLobbyApi } from './lobby-api.js'
 export function makeAccountApi (
   ai: ApiInput,
   accountId: string,
-  currencyTools: EdgeCurrencyToolsMap
+  currencyConfig: { [pluginName: string]: EdgeCurrencyConfig }
 ): EdgeAccount {
   const selfState = () => ai.props.state.accounts[accountId]
   const { accountWalletInfo, loginType } = selfState()
 
-  const exchangeTools = {
-    shapeshift: new ExchangeTools()
-  }
-  const exchangeCache = makeExchangeCache(ai)
+  const swapConfig = { shapeshift: new SwapConfig() }
+  const rateCache = makeExchangeCache(ai)
   const dataStore = makeDataStoreApi(ai, accountId)
   const pluginData = makePluginDataApi(dataStore)
   const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
@@ -129,20 +128,17 @@ export function makeAccountApi (
     },
 
     // Speciality API's:
-    get currencyTools (): EdgeCurrencyToolsMap {
-      return currencyTools
+    get currencyConfig (): { [pluginName: string]: EdgeCurrencyConfig } {
+      return currencyConfig
     },
-    get exchangeTools (): { [pluginName: string]: EdgeExchangeTools } {
-      return exchangeTools
+    get swapConfig (): { [pluginName: string]: EdgeSwapConfig } {
+      return swapConfig
     },
-    get exchangeCache (): EdgeExchangeCache {
-      return exchangeCache
+    get rateCache (): EdgeRateCache {
+      return rateCache
     },
     get dataStore (): EdgeDataStore {
       return dataStore
-    },
-    get pluginData (): EdgePluginData {
-      return pluginData
     },
 
     // What login method was used?
@@ -329,15 +325,16 @@ export function makeAccountApi (
       return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)
     },
 
-    async getExchangeCurrencies (): Promise<EdgeExchangeCurrencies> {
+    async fetchSwapCurrencies (): Promise<EdgeSwapCurrencies> {
       const shapeshiftTokens = await shapeshiftApi.getAvailableExchangeTokens()
-      const out = {}
-      for (const cc of shapeshiftTokens) out[cc] = { exchanges: ['shapeshift'] }
+      const out: EdgeSwapCurrencies = {}
+      for (const cc of shapeshiftTokens) {
+        const pluginNames = ['shapeshift']
+        out[cc] = { pluginNames, exchanges: pluginNames }
+      }
       return out
     },
-    async getExchangeQuote (
-      opts: EdgeExchangeQuoteOptions
-    ): Promise<EdgeExchangeQuote> {
+    async fetchSwapQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote> {
       const { fromWallet, nativeAmount, quoteFor } = opts
 
       // Hit the legacy API:
@@ -359,6 +356,31 @@ export function makeAccountApi (
 
       // Convert that to the new format:
       return upgradeQuote(fromWallet, legacyQuote)
+    },
+
+    // Deprecated names:
+    get currencyTools (): { [pluginName: string]: EdgeCurrencyConfig } {
+      return currencyConfig
+    },
+    get exchangeTools (): { [pluginName: string]: EdgeSwapConfig } {
+      return swapConfig
+    },
+    get exchangeCache (): EdgeRateCache {
+      return rateCache
+    },
+    get pluginData (): EdgePluginData {
+      return pluginData
+    },
+    async getExchangeCurrencies (): Promise<EdgeSwapCurrencies> {
+      deprecate(
+        'EdgeAccount.getExchangeCurrencies',
+        'EdgeAccount.fetchSwapCurrencies'
+      )
+      return this.fetchSwapCurrencies()
+    },
+    async getExchangeQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote> {
+      deprecate('EdgeAccount.getExchangeQuote', 'EdgeAccount.fetchSwapQuote')
+      return this.fetchSwapQuote(opts)
     }
   }
   bridgifyObject(out)
