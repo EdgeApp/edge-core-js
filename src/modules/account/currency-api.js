@@ -70,6 +70,10 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     this._userSettings = {}
   }
 
+  get needsActivation (): boolean {
+    return false
+  }
+
   get swapInfo (): EdgeSwapInfo {
     return {
       pluginName: 'shapeshift',

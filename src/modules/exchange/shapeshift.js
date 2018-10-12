@@ -190,6 +190,10 @@ export function upgradeQuote (
     expirationDate: new Date(legacyQuote.expiration),
     fromNativeAmount: legacyQuote.depositAmountNative,
     toNativeAmount: legacyQuote.withdrawalAmountNative,
+    networkFee: {
+      currencyCode: fromWallet.currencyInfo.currencyCode,
+      nativeAmount: legacyQuote.edgeTransacton.networkFee
+    },
 
     pluginName: 'shapeshift',
     quoteId: legacyQuote.orderId,

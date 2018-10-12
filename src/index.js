@@ -210,6 +210,11 @@ export type EdgeMetadata = {
   miscJson?: string
 }
 
+export type EdgeNetworkFee = {
+  +currencyCode: string,
+  +nativeAmount: string
+}
+
 export type EdgeTransaction = {
   txid: string,
   date: number,
@@ -660,6 +665,7 @@ export type EdgeRateCache = {
 export type EdgeSwapConfig = {
   +watch: Subscriber<EdgeSwapConfig>,
 
+  +needsActivation: boolean,
   +swapInfo: Object,
   +userSettings: Object,
 
@@ -698,6 +704,7 @@ export type EdgeSwapQuote = {
   +expirationDate: Date,
   +fromNativeAmount: string,
   +toNativeAmount: string,
+  +networkFee: EdgeNetworkFee,
 
   +pluginName: string,
   +quoteId: string,
