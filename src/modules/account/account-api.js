@@ -1,8 +1,10 @@
 // @flow
 
+import { gt, lt } from 'biggystring'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { AccountSync } from '../../client-side.js'
+import { SwapAboveLimitError, SwapBelowLimitError } from '../../error.js'
 import {
   type DiskletFolder,
   type EdgeAccount,
@@ -337,6 +339,21 @@ export function makeAccountApi (
     async fetchSwapQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote> {
       const { fromWallet, nativeAmount, quoteFor } = opts
 
+      // Check for minimum / maximum:
+      if (quoteFor === 'from') {
+        const swapInfo = await shapeshiftApi.getExchangeSwapInfo(
+          opts.fromCurrencyCode,
+          opts.toCurrencyCode
+        )
+        const { nativeMax, nativeMin } = swapInfo
+        if (lt(nativeAmount, nativeMin)) {
+          throw new SwapBelowLimitError(nativeMin)
+        }
+        if (gt(nativeAmount, nativeMax)) {
+          throw new SwapAboveLimitError(nativeMax)
+        }
+      }
+
       // Hit the legacy API:
       const spendInfo: EdgeSpendInfo = {
         currencyCode: opts.fromCurrencyCode,
@@ -352,10 +369,22 @@ export function makeAccountApi (
       if (quoteFor === 'to') {
         spendInfo.spendTargets[0].nativeAmount = nativeAmount
       }
-      const legacyQuote = await fromWallet.getQuote(spendInfo)
+      try {
+        const legacyQuote = await fromWallet.getQuote(spendInfo)
 
-      // Convert that to the new format:
-      return upgradeQuote(fromWallet, legacyQuote)
+        // Convert that to the new format:
+        return upgradeQuote(fromWallet, legacyQuote)
+      } catch (e) {
+        // TODO: Using the nativeAmount here is technically a bug,
+        // since we don't know the actual limit in this case:
+        if (/is below/.test(e.message)) {
+          throw new SwapBelowLimitError(nativeAmount)
+        }
+        if (/is greater/.test(e.message)) {
+          throw new SwapAboveLimitError(nativeAmount)
+        }
+        throw new Error(e)
+      }
     },
 
     // Deprecated names:
