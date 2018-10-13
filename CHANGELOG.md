@@ -1,5 +1,28 @@
 # edge-core-js
 
+## 0.12.5
+
+New:
+* `EdgeSwapConfig.needsActivation` for exchanges that need KYC or other data.
+* `EdgeSwapQuote.networkFee` for outgoing network fee.
+* `SwapBelowLimitError` & `SwapAboveLimitError` for failed quotes.
+
+Deprecations:
+* `EdgeContext.getAvailableExchangeTokens`
+* `EdgeContext.getExchangeSwapInfo`
+* `EdgeContext.getExchangeSwapRate`
+* `EdgeCurrencyWallet.getQuote`
+
+Renames (old names deprecated):
+* `EdgeAccount.currencyTools` -> `EdgeAccount.currencyConfig`
+* `EdgeAccount.exchangeTools` -> `EdgeAccount.swapConfig`
+* `EdgeAccount.getExchangeCurrencies` -> `EdgeAccount.fetchSwapCurrencies`
+* `EdgeAccount.getExchangeQuote` -> `EdgeAccount.fetchSwapQuote`
+* `EdgeCurrencyTools.settings` -> `EdgeCurrencyConfig.userSettings`
+* `EdgeCurrencyTools.changeSettings` -> `EdgeCurrencyConfig.changeUserSettings`
+* `EdgeExchangeQuote.exchangeSource` -> `EdgeSwapQuote.pluginName`
+* `EdgeExchangeCurrencies.exchanges` -> `EdgeSwapCurrencies.pluginNames`
+
 ## 0.12.4
 
 * Fix a packaging issue with the client-side methods.

@@ -21,6 +21,8 @@ export const errorNames = {
   PasswordError: 'PasswordError',
   PendingFundsError: 'PendingFundsError',
   SameCurrencyError: 'SameCurrencyError',
+  SwapAboveLimitError: 'SwapAboveLimitError',
+  SwapBelowLimitError: 'SwapBelowLimitError',
   UsernameError: 'UsernameError',
   NoAmountSpecifiedError: 'NoAmountSpecifiedError'
 }
@@ -131,6 +133,26 @@ export function SameCurrencyError (
 ) {
   const e = new Error(message)
   e.name = errorNames.SameCurrencyError
+  return e
+}
+
+/**
+ * Trying to swap an amount that is either too low or too high.
+ */
+export function SwapAboveLimitError (nativeMax) {
+  const e = new Error('Amount is too high')
+  e.name = errorNames.SwapAboveLimitError
+  e.nativeMax = nativeMax
+  return e
+}
+
+/**
+ * Trying to swap an amount that is either too low or too high.
+ */
+export function SwapBelowLimitError (nativeMin) {
+  const e = new Error('Amount is too low')
+  e.name = errorNames.SwapBelowLimitError
+  e.nativeMin = nativeMin
   return e
 }
 

@@ -2,14 +2,14 @@
 
 import { bridgifyObject, onMethod } from 'yaob'
 
-import { type EdgeExchangeCache } from '../../index.js'
+import { type EdgeRateCache } from '../../index.js'
 import { type ApiInput } from '../root.js'
 import { getExchangeRate } from './exchange-selectors.js'
 
 /**
  * Creates an unwrapped exchange cache API object.
  */
-export function makeExchangeCache (ai: ApiInput): EdgeExchangeCache {
+export function makeExchangeCache (ai: ApiInput): EdgeRateCache {
   /**
    * TODO: Once the user has an exchange-rate preference,
    * look that up and bias in favor of the preferred exchange.
