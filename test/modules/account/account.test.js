@@ -115,9 +115,9 @@ describe('account', function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    expect(Object.keys(account.currencyTools)).deep.equals(['testcoin'])
-    const tools = account.currencyTools['testcoin']
-    expect(tools.currencyInfo.pluginName).equals('testcoin')
+    expect(Object.keys(account.currencyConfig)).deep.equals(['testcoin'])
+    const config = account.currencyConfig['testcoin']
+    expect(config.currencyInfo.pluginName).equals('testcoin')
   })
 
   it('change currency plugin settings', async function () {
@@ -127,14 +127,14 @@ describe('account', function () {
     const settings = {
       testSetting: 'some important string'
     }
-    const tools1 = account1.currencyTools['testcoin']
-    await tools1.changePluginSettings(settings)
-    expect(tools1.pluginSettings).deep.equals(settings)
+    const config1 = account1.currencyConfig['testcoin']
+    await config1.changeUserSettings(settings)
+    expect(config1.userSettings).deep.equals(settings)
 
     // Log in again, and the setting should still be there:
     const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const tools2 = account2.currencyTools['testcoin']
-    expect(tools2.pluginSettings).deep.equals(settings)
+    const config2 = account2.currencyConfig['testcoin']
+    expect(config2.userSettings).deep.equals(settings)
   })
 
   it('change key state', async function () {

@@ -13,6 +13,7 @@ import {
   type EdgePendingEdgeLogin,
   type EdgeUserInfo
 } from '../../index.js'
+import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { makeShapeshiftApi } from '../exchange/shapeshift.js'
@@ -221,10 +222,12 @@ export function makeContextApi (ai: ApiInput) {
       fromCurrencyCode: string,
       toCurrencyCode: string
     ): Promise<number> {
+      deprecate('getExchangeSwapRate', 'EdgeAccount.fetchSwapQuote')
       return shapeshiftApi.getExchangeSwapRate(fromCurrencyCode, toCurrencyCode)
     },
 
     async getAvailableExchangeTokens (): Promise<Array<string>> {
+      deprecate('getAvailableExchangeTokens', 'EdgeAccount.fetchSwapCurrencies')
       return shapeshiftApi.getAvailableExchangeTokens()
     },
 
@@ -232,6 +235,7 @@ export function makeContextApi (ai: ApiInput) {
       fromCurrencyCode: string,
       toCurrencyCode: string
     ): Promise<EdgeExchangeSwapInfo> {
+      deprecate('getExchangeSwapInfo', 'EdgeAccount.fetchSwapQuote')
       return shapeshiftApi.getExchangeSwapInfo(fromCurrencyCode, toCurrencyCode)
     },
 
