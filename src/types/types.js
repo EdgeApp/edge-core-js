@@ -642,13 +642,7 @@ export type EdgeCurrencyConfig = {
   +otherMethods: Object,
   +userSettings: Object,
 
-  changeUserSettings(settings: Object): Promise<mixed>,
-
-  // Deprecated names:
-  +settings: Object, // userSettings
-  +pluginSettings: Object, // userSettings
-  changeSettings(settings: Object): Promise<mixed>,
-  changePluginSettings(settings: Object): Promise<mixed>
+  changeUserSettings(settings: Object): Promise<mixed>
 }
 
 export type EthereumTransaction = {
@@ -695,28 +689,18 @@ export type EdgeSwapConfig = {
   +userSettings: Object,
 
   changeEnabled(enabled: boolean): Promise<mixed>,
-  changeUserSettings(settings: Object): Promise<mixed>,
-
-  // Deprecated names:
-  +exchangeInfo: Object, // swapInfo
-  +settings: Object, // userSettings
-  changeSettings(settings: Object): Promise<mixed>
+  changeUserSettings(settings: Object): Promise<mixed>
 }
 
 // Currencies supported by various swap plugins:
 export type EdgeSwapCurrencies = {
   [currencyCode: string]: {
-    pluginNames: Array<string>,
-    // Deprecated:
-    exchanges: Array<string> // pluginNames
+    pluginNames: Array<string>
   }
 }
 
 export type EdgeSwapQuote = EdgeSwapPluginQuote & {
-  +quoteUri?: string,
-
-  // Deprecated names:
-  +exchangeService: string // pluginName
+  +quoteUri?: string
 }
 
 // edge login ----------------------------------------------------------
@@ -1088,14 +1072,5 @@ export type {
   EdgeContextOptions as AbcMakeContextOpts,
   EdgeCurrencyEngineOptions as AbcMakeEngineOptions,
   EdgeCurrencyEngineCallbacks as AbcCurrencyPluginCallbacks,
-  EdgePendingEdgeLogin as EdgeEdgeLoginRequest,
-  // Deprecated names:
-  EdgeCurrencyConfig as EdgeCurrencyTools,
-  EdgeRateCache as EdgeExchangeCache,
-  EdgeSwapConfig as EdgeExchangeTools,
-  EdgeSwapCurrencies as EdgeExchangeCurrencies,
-  EdgeSwapQuote as EdgeExchangeQuote,
-  EdgeSwapQuoteOptions as EdgeExchangeQuoteOptions
+  EdgePendingEdgeLogin as EdgeEdgeLoginRequest
 }
-
-export type EdgeCurrencyToolsMap = { [pluginName: string]: EdgeCurrencyConfig }
