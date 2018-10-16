@@ -66,6 +66,7 @@ export default [
   },
   // Client-side methods:
   {
+    external: ['yaob'],
     input: 'src/client-side.js',
     output: { file: 'lib/client-side.js', format: 'es' },
     plugins: [babel(babelOpts)],
