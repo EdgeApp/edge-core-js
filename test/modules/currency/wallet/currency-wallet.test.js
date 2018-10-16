@@ -196,6 +196,16 @@ describe('currency wallets', function () {
     )
   })
 
+  it('converts number formats', async function () {
+    const wallet: EdgeCurrencyWallet = await makeFakeCurrencyWallet()
+    expect(await wallet.denominationToNative('0.1', 'SMALL')).equals('1')
+    expect(await wallet.denominationToNative('0.1', 'TEST')).equals('10')
+    expect(await wallet.denominationToNative('0.1', 'TOKEN')).equals('100')
+    expect(await wallet.nativeToDenomination('10', 'SMALL')).equals('1')
+    expect(await wallet.nativeToDenomination('10', 'TEST')).equals('0.1')
+    expect(await wallet.nativeToDenomination('10', 'TOKEN')).equals('0.01')
+  })
+
   // it('can have metadata', function () {
   //   const store = makeFakeCurrencyStore()
   //

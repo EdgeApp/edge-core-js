@@ -475,6 +475,14 @@ export type EdgeCurrencyWallet = {
 
   // Currency info:
   +currencyInfo: EdgeCurrencyInfo,
+  nativeToDenomination(
+    nativeAmount: string,
+    currencyCode: string
+  ): Promise<string>,
+  denominationToNative(
+    denominatedAmount: string,
+    currencyCode: string
+  ): Promise<string>,
 
   // Chain state:
   +balances: EdgeBalances,

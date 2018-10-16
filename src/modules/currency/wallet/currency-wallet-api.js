@@ -126,6 +126,28 @@ export function makeCurrencyWalletApi (
     get currencyInfo (): EdgeCurrencyInfo {
       return plugin.currencyInfo
     },
+    async nativeToDenomination (
+      nativeAmount: string,
+      currencyCode: string
+    ): Promise<string> {
+      const multiplier = getCurrencyMultiplier(
+        input.props.state.currency.infos,
+        input.props.state.currency.customTokens,
+        currencyCode
+      )
+      return div(nativeAmount, multiplier, multiplier.length)
+    },
+    async denominationToNative (
+      denominatedAmount: string,
+      currencyCode: string
+    ): Promise<string> {
+      const multiplier = getCurrencyMultiplier(
+        input.props.state.currency.infos,
+        input.props.state.currency.customTokens,
+        currencyCode
+      )
+      return mul(denominatedAmount, multiplier)
+    },
 
     // Fiat currency option:
     get fiatCurrencyCode (): string {
@@ -157,6 +179,7 @@ export function makeCurrencyWalletApi (
       return engine.killEngine()
     },
 
+    // Tokens:
     async enableTokens (tokens: Array<string>): Promise<mixed> {
       return engine.enableTokens(tokens)
     },
