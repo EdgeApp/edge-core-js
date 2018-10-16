@@ -10,7 +10,7 @@ import {
   type EdgeSwapInfo
 } from '../../index.js'
 import { deprecate } from '../../util/deprecate.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { changePluginSettings } from './account-files.js'
 
 /**

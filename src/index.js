@@ -27,6 +27,8 @@ export {
   PasswordError,
   PendingFundsError,
   SameCurrencyError,
+  SwapAboveLimitError,
+  SwapBelowLimitError,
   UsernameError
 } from './error.js'
 export { makeEdgeContext, makeFakeContexts } from './makeContext.js'
