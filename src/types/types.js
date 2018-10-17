@@ -389,16 +389,6 @@ export type EdgeCurrencyPluginFactory = {
 
 // wallet --------------------------------------------------------------
 
-export type EdgeCoinExchangeQuote = {
-  depositAmountNative: string,
-  withdrawalAmountNative: string,
-  expiration: number, // this is in milliseconds since 1970/ it is a date.
-  quotedRate: string,
-  maxLimit: number,
-  orderId: string,
-  edgeTransacton: EdgeTransaction
-}
-
 export type EdgeBalances = { [currencyCode: string]: string }
 
 export type EdgeReceiveAddress = EdgeFreshAddress & {
@@ -482,7 +472,6 @@ export type EdgeCurrencyWallet = {
     metadata: EdgeMetadata
   ): Promise<mixed>,
   getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
-  getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
   getPaymentProtocolInfo(
     paymentProtocolUrl: string
   ): Promise<EdgePaymentProtocolInfo>,
@@ -882,15 +871,6 @@ export type EdgeContextOptions = {
   tempNoBridge$?: boolean
 }
 
-// deprecated ----------------------------------------------------------
-
-export type EdgeExchangeSwapInfo = {
-  rate: number,
-  nativeMin: string,
-  nativeMax: string,
-  minerFee: string
-}
-
 // parameters ----------------------------------------------------------
 
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
@@ -1001,18 +981,7 @@ export type EdgeContext = {
 
   // OTP stuff:
   requestOtpReset(username: string, otpResetToken: string): Promise<Date>,
-  fetchLoginMessages(): Promise<EdgeLoginMessages>,
-
-  // Shapeshift:
-  getExchangeSwapRate(
-    fromCurrencyCode: string,
-    toCurrencyCode: string
-  ): Promise<number>,
-  getExchangeSwapInfo(
-    fromCurrencyCode: string,
-    toCurrencyCode: string
-  ): Promise<EdgeExchangeSwapInfo>,
-  getAvailableExchangeTokens(): Promise<Array<string>>
+  fetchLoginMessages(): Promise<EdgeLoginMessages>
 }
 
 // ---------------------------------------------------------------------
@@ -1030,7 +999,6 @@ export type {
   EdgeContextCallbacks as AbcContextCallbacks,
   EdgeContextOptions as AbcContextOptions,
   EdgeContext as AbcContext,
-  EdgeExchangeSwapInfo as AbcExchangeSwapInfo,
   EdgePasswordRules as AbcPasswordRules,
   EdgePendingEdgeLogin as AbcEdgeLoginRequest,
   EdgeEdgeLoginOptions as AbcEdgeLoginOptions,
