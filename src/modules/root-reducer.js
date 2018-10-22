@@ -56,7 +56,7 @@ export const reducer = buildReducer({
     return action.type === 'INIT' ? action.payload.hideKeys : state
   },
 
-  lastAccountId (state, action, next: RootState): string {
+  lastAccountId (state, action: RootAction, next: RootState): string {
     return 'login' + next.accountCount.toString()
   },
 

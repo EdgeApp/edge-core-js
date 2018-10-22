@@ -18,6 +18,10 @@ import {
 
 const CURRENCY_SETTINGS_FILE = 'CurrencySettings.json'
 
+type CurrencySettingsFile = {
+  pluginSettings?: { [pluginName: string]: Object }
+}
+
 /**
  * Returns true if `Object.assign(a, b)` would alter `a`.
  */
@@ -214,7 +218,7 @@ export async function changePluginSettings (
   }
 
   // Write the new state to disk:
-  const json = await getJson(file)
+  const json: CurrencySettingsFile = await getJson(file)
   json.pluginSettings = { ...ai.props.state.currency.settings }
   json.pluginSettings[plugin.pluginName] = settings
   await file.setText(JSON.stringify(json))
@@ -239,7 +243,7 @@ export async function reloadPluginSettings (ai: ApiInput, accountId: string) {
     accountWalletInfo.id
   ).file(CURRENCY_SETTINGS_FILE)
 
-  const json = await getJson(file)
+  const json: CurrencySettingsFile = await getJson(file)
 
   const goodSettings = {}
   const plugins = ai.props.output.currency.plugins

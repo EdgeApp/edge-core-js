@@ -256,8 +256,8 @@ export type EdgeSpendInfo = {
   spendTargets: Array<EdgeSpendTarget>,
   nativeAmount?: string,
   quoteFor?: string,
-  networkFeeOption?: string,
-  customNetworkFee?: any,
+  networkFeeOption?: 'high' | 'standard' | 'low' | 'custom',
+  customNetworkFee?: any, // Some kind of currency-specific JSON
   metadata?: EdgeMetadata,
   otherParams?: Object
 }
@@ -475,6 +475,14 @@ export type EdgeCurrencyWallet = {
 
   // Currency info:
   +currencyInfo: EdgeCurrencyInfo,
+  nativeToDenomination(
+    nativeAmount: string,
+    currencyCode: string
+  ): Promise<string>,
+  denominationToNative(
+    denominatedAmount: string,
+    currencyCode: string
+  ): Promise<string>,
 
   // Chain state:
   +balances: EdgeBalances,
