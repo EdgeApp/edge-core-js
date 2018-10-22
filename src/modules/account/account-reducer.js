@@ -21,7 +21,7 @@ import { makeLoginTree } from '../login/login.js'
 import { type RootState } from '../root-reducer.js'
 import { findAppLogin } from './account-init.js'
 
-export type PluginSettings = { [pluginName: string]: Object }
+export type PluginSettingsState = { [pluginName: string]: Object }
 
 export type AccountState = {
   // Wallet stuff:
@@ -44,7 +44,10 @@ export type AccountState = {
   +loginTree: LoginTree,
   +loginType: string,
   +rootLogin: boolean, // True if the loginKey is for the root
-  +username: string
+  +username: string,
+
+  // Plugin stuff:
+  +pluginSettings: PluginSettingsState
 }
 
 export type AccountNext = {
@@ -199,6 +202,20 @@ const account = buildReducer({
 
   username (state, action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
+  },
+
+  pluginSettings (state = {}, action: RootAction): PluginSettingsState {
+    switch (action.type) {
+      case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED':
+        const { pluginName, userSettings } = action.payload
+        const out = { ...state }
+        out[pluginName] = userSettings
+        return out
+
+      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
+        return action.payload.userSettings
+    }
+    return state
   }
 })
 

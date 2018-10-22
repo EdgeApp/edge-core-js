@@ -33,14 +33,15 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   }
 
   get userSettings (): Object {
-    return this._ai.props.state.currency.settings[this._plugin.pluginName]
+    const selfState = this._ai.props.state.accounts[this._accountId]
+    return selfState.pluginSettings[this._plugin.pluginName]
   }
 
   async changeUserSettings (settings: Object): Promise<mixed> {
     await changePluginSettings(
       this._ai,
       this._accountId,
-      this._plugin,
+      this._plugin.pluginName,
       settings
     )
   }

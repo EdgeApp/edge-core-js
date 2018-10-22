@@ -7,7 +7,6 @@ import {
   type EdgeWalletInfo,
   type EdgeWalletStates
 } from '../index.js'
-import { type PluginSettings } from './currency/currency-reducer.js'
 import {
   type TxFileJsons,
   type TxFileNames
@@ -54,22 +53,34 @@ export type AccountLoadFailed = {
 }
 
 /**
+ * Fired when somebody changes the currency settings for a plugin.
+ */
+export type AccountPluginSettingsChanged = {
+  type: 'ACCOUNT_PLUGIN_SETTINGS_CHANGED',
+  payload: {
+    accountId: string,
+    pluginName: string,
+    userSettings: Object
+  }
+}
+
+/**
+ * Fires when we load plugin settings from disk.
+ */
+export type AccountPluginSettingsLoaded = {
+  type: 'ACCOUNT_PLUGIN_SETTINGS_LOADED',
+  payload: {
+    accountId: string,
+    userSettings: { [pluginName: string]: Object }
+  }
+}
+
+/**
  * Somebody just added a custom token type to the wallet.
  */
 export type AddedCustomToken = {
   type: 'ADDED_CUSTOM_TOKEN',
   payload: EdgeTokenInfo
-}
-
-/**
- * Fired when somebody changes the currency settings for a plugin.
- */
-export type ChangedCurrencyPluginSettingAction = {
-  type: 'CHANGED_CURRENCY_PLUGIN_SETTING',
-  payload: {
-    pluginName: string,
-    settings: Object
-  }
 }
 
 /**
@@ -295,14 +306,6 @@ export type LogoutAction = {
 }
 
 /**
- * Fires when we load plugin settings from disk.
- */
-export type NewCurrencyPluginSettingsAction = {
-  type: 'NEW_CURRENCY_PLUGIN_SETTINGS',
-  payload: PluginSettings
-}
-
-/**
  * Fires when a storage wallet has been loaded.
  */
 export type StorageWalletAdded = {
@@ -329,8 +332,9 @@ export type RootAction =
   | AccountChangedWalletStates
   | AccountKeysLoadedAction
   | AccountLoadFailed
+  | AccountPluginSettingsChanged
+  | AccountPluginSettingsLoaded
   | AddedCustomToken
-  | ChangedCurrencyPluginSettingAction
   | CurrencyEngineChangedBalance
   | CurrencyEngineChangedHeight
   | CurrencyEngineChangedSeeds
@@ -352,6 +356,5 @@ export type RootAction =
   | LoginStashesLoaded
   | LoginStashSaved
   | LogoutAction
-  | NewCurrencyPluginSettingsAction
   | StorageWalletAdded
   | StorageWalletSynced

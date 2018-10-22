@@ -56,8 +56,8 @@ const accountPixie = combinePixies({
           close(input.props.selfOutput.api.dataStore)
           close(input.props.selfOutput.api.exchangeCache)
           close(input.props.selfOutput.api.pluginData)
-          const tools = input.props.selfOutput.api.currencyTools
-          for (const n of Object.keys(tools)) close(tools[n])
+          const currencies = input.props.selfOutput.api.currencyConfig
+          for (const n of Object.keys(currencies)) close(currencies[n])
         }
       },
 
@@ -125,7 +125,6 @@ const accountPixie = combinePixies({
     let lastState
     let lastWalletInfos
     let lastWallets
-    let lastCurrencySettings
     let lastExchangeState
 
     return () => {
@@ -149,16 +148,6 @@ const accountPixie = combinePixies({
       if (lastWallets !== input.props.output.currency.wallets) {
         lastWallets = input.props.output.currency.wallets
         if (selfOutput.api != null) update(selfOutput.api)
-      }
-
-      // Wallet settings:
-      if (
-        selfOutput.api != null &&
-        lastCurrencySettings !== input.props.state.currency.settings
-      ) {
-        lastCurrencySettings = input.props.state.currency.settings
-        const tools = input.props.selfOutput.api.currencyTools
-        for (const n of Object.keys(tools)) update(tools[n])
       }
 
       // Exchange:

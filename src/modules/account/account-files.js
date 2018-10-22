@@ -1,10 +1,10 @@
 // @flow
 
 import { mapFiles } from 'disklet'
+import { update } from 'yaob'
 
 import {
   type DiskletFile,
-  type EdgeCurrencyPlugin,
   type EdgeWalletInfo,
   type EdgeWalletStates
 } from '../../index.js'
@@ -16,10 +16,10 @@ import {
   hashStorageWalletFilename
 } from '../storage/storage-selectors.js'
 
-const CURRENCY_SETTINGS_FILE = 'CurrencySettings.json'
+const PLUGIN_SETTINGS_FILE = 'PluginSettings.json'
 
-type CurrencySettingsFile = {
-  pluginSettings?: { [pluginName: string]: Object }
+type PluginSettingsFile = {
+  userSettings?: { [pluginName: string]: Object }
 }
 
 /**
@@ -48,15 +48,6 @@ function getJsonFiles (folder) {
       .then(text => ({ file, name, json: JSON.parse(text) }))
       .catch(e => void 0)
   ).then(files => files.filter(file => file != null))
-}
-
-function findPlugin (
-  plugins: Array<EdgeCurrencyPlugin>,
-  pluginName: string
-): EdgeCurrencyPlugin | void {
-  for (const plugin of plugins) {
-    if (plugin.pluginName === pluginName) return plugin
-  }
 }
 
 /**
@@ -203,34 +194,33 @@ export async function changeWalletStates (
 export async function changePluginSettings (
   ai: ApiInput,
   accountId: string,
-  plugin: EdgeCurrencyPlugin,
-  settings: Object
+  pluginName: string,
+  userSettings: Object
 ) {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const file = getStorageWalletFolder(
     ai.props.state,
     accountWalletInfo.id
-  ).file(CURRENCY_SETTINGS_FILE)
-
-  // Actually change the settings on the plugin:
-  if (plugin.changeSettings) {
-    await plugin.changeSettings(settings)
-  }
+  ).file(PLUGIN_SETTINGS_FILE)
 
   // Write the new state to disk:
-  const json: CurrencySettingsFile = await getJson(file)
-  json.pluginSettings = { ...ai.props.state.currency.settings }
-  json.pluginSettings[plugin.pluginName] = settings
+  const json: PluginSettingsFile = await getJson(file)
+  json.userSettings = { ...ai.props.state.accounts[accountId].pluginSettings }
+  json.userSettings[pluginName] = userSettings
   await file.setText(JSON.stringify(json))
 
   // Update Redux:
   ai.props.dispatch({
-    type: 'CHANGED_CURRENCY_PLUGIN_SETTING',
+    type: 'ACCOUNT_PLUGIN_SETTINGS_CHANGED',
     payload: {
-      pluginName: plugin.pluginName,
-      settings
+      accountId,
+      pluginName,
+      userSettings: { ...userSettings }
     }
   })
+
+  // Update the plugins:
+  return updatePluginSettings(ai, accountId, pluginName)
 }
 
 /**
@@ -241,34 +231,53 @@ export async function reloadPluginSettings (ai: ApiInput, accountId: string) {
   const file = getStorageWalletFolder(
     ai.props.state,
     accountWalletInfo.id
-  ).file(CURRENCY_SETTINGS_FILE)
+  ).file(PLUGIN_SETTINGS_FILE)
 
-  const json: CurrencySettingsFile = await getJson(file)
+  const json: PluginSettingsFile = await getJson(file)
 
-  const goodSettings = {}
-  const plugins = ai.props.output.currency.plugins
-  if (json.pluginSettings != null && typeof json.pluginSettings === 'object') {
-    const allSettings = json.pluginSettings
-    for (const pluginName in allSettings) {
-      const setting = allSettings[pluginName]
-      const plugin = findPlugin(plugins, pluginName)
-
-      if (plugin == null || plugin.changeSettings == null) {
-        // If there is no plugin, we just assume the settings are good:
-        goodSettings[pluginName] = setting
-      } else {
-        // Try applying the settings:
-        try {
-          await plugin.changeSettings(setting)
-          goodSettings[pluginName] = setting
-        } catch (e) {}
-      }
-    }
-  }
+  const userSettings =
+    json.userSettings != null && typeof json.userSettings === 'object'
+      ? json.userSettings
+      : {}
 
   // Add the final list to Redux:
   ai.props.dispatch({
-    type: 'NEW_CURRENCY_PLUGIN_SETTINGS',
-    payload: goodSettings
+    type: 'ACCOUNT_PLUGIN_SETTINGS_LOADED',
+    payload: { accountId, userSettings }
   })
+
+  // Update the plugins:
+  return updatePluginSettings(ai, accountId)
+}
+
+async function updatePluginSettings (
+  ai: ApiInput,
+  accountId: string,
+  pluginName?: string
+): Promise<mixed> {
+  const selfOutput = ai.props.output.accounts[accountId]
+  const selfState = ai.props.state.accounts[accountId]
+  const { pluginSettings } = selfState
+  const promises: Array<Promise<mixed>> = []
+
+  if (ai.props.output.currency.plugins == null) return
+
+  for (const plugin of ai.props.output.currency.plugins) {
+    if (pluginName == null || plugin.pluginName === pluginName) {
+      // Update currency plugin:
+      if (plugin.changeSettings != null) {
+        const promise = plugin
+          .changeSettings(pluginSettings[plugin.pluginName])
+          .catch(e => ai.props.onError(e))
+        promises.push(promise)
+      }
+    }
+
+    // Update currency config API:
+    if (selfOutput.api != null) {
+      update(selfOutput.api.currencyConfig[plugin.pluginName])
+    }
+  }
+
+  return Promise.all(promises)
 }
