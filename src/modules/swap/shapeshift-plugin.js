@@ -54,6 +54,7 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
     throw new Error('No Shapeshift API key provided')
   }
   const { apiKey } = env.initOptions
+  let userSettings = env.userSettings
 
   async function get (path) {
     const uri = `${API_PREFIX}${path}`
@@ -70,12 +71,16 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
   }
 
   async function post (path, body): Object {
+    if (userSettings == null || userSettings.accessToken == null) {
+      throw new Error('Shapeshift needs activation')
+    }
     const uri = `${API_PREFIX}${path}`
     const reply = await io.fetch(uri, {
       method: 'POST',
       headers: {
         Accept: 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${userSettings.accessToken}`
       },
       body: JSON.stringify(body)
     })
@@ -91,9 +96,13 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
   }
 
   const out: EdgeSwapTools = {
-    needsActivation: false,
+    get needsActivation (): boolean {
+      return userSettings == null || userSettings.accessToken == null
+    },
 
-    async changeUserSettings (userSettings: Object): Promise<mixed> {},
+    async changeUserSettings (settings: Object): Promise<mixed> {
+      userSettings = settings
+    },
 
     async fetchCurrencies (): Promise<Array<string>> {
       const json = await get(`/getcoins/`)
