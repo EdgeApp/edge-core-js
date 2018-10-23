@@ -18,7 +18,6 @@ import {
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
 import { type AccountState } from './account-reducer.js'
-import { CurrencyConfig } from './currency-api.js'
 
 export type AccountOutput = {
   +api: EdgeAccount,
@@ -83,16 +82,11 @@ const accountPixie = combinePixies({
           await addStorageWallet(ai, accountWalletInfo)
           await loadAllFiles()
 
-          // Create the currency tools:
-          const currencyPlugins = await waitForCurrencyPlugins(ai)
-          const currencyConfigs = {}
-          for (const plugin of currencyPlugins) {
-            const api = new CurrencyConfig(ai, accountId, plugin)
-            currencyConfigs[plugin.pluginName] = api
-          }
+          // Wait for the currency plugins:
+          await waitForCurrencyPlugins(ai)
 
           // Create the API object:
-          input.onOutput(makeAccountApi(ai, accountId, currencyConfigs))
+          input.onOutput(makeAccountApi(ai, accountId))
 
           // Start the sync timer:
           const startTimer = () => {

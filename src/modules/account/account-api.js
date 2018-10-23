@@ -49,22 +49,26 @@ import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
 import { type ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { changeWalletStates } from './account-files.js'
-import { SwapConfig } from './currency-api.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
+import { CurrencyConfig, SwapConfig } from './plugin-api.js'
 
 /**
  * Creates an unwrapped account API object around an account state object.
  */
-export function makeAccountApi (
-  ai: ApiInput,
-  accountId: string,
-  currencyConfig: { [pluginName: string]: EdgeCurrencyConfig }
-): EdgeAccount {
+export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
   const selfState = () => ai.props.state.accounts[accountId]
   const { accountWalletInfo, loginType } = selfState()
 
-  const swapConfig = { shapeshift: new SwapConfig() }
+  // Plugin config API's:
+  const currencyConfigs = {}
+  for (const plugin of ai.props.output.currency.plugins) {
+    const api = new CurrencyConfig(ai, accountId, plugin)
+    currencyConfigs[plugin.pluginName] = api
+  }
+  const swapConfigs = { shapeshift: new SwapConfig() }
+
+  // Specialty API's:
   const rateCache = makeExchangeCache(ai)
   const dataStore = makeDataStoreApi(ai, accountId)
   const pluginData = makePluginDataApi(dataStore)
@@ -131,10 +135,10 @@ export function makeAccountApi (
 
     // Speciality API's:
     get currencyConfig (): { [pluginName: string]: EdgeCurrencyConfig } {
-      return currencyConfig
+      return currencyConfigs
     },
     get swapConfig (): { [pluginName: string]: EdgeSwapConfig } {
-      return swapConfig
+      return swapConfigs
     },
     get rateCache (): EdgeRateCache {
       return rateCache
@@ -389,10 +393,10 @@ export function makeAccountApi (
 
     // Deprecated names:
     get currencyTools (): { [pluginName: string]: EdgeCurrencyConfig } {
-      return currencyConfig
+      return currencyConfigs
     },
     get exchangeTools (): { [pluginName: string]: EdgeSwapConfig } {
-      return swapConfig
+      return swapConfigs
     },
     get exchangeCache (): EdgeRateCache {
       return rateCache
