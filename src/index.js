@@ -256,7 +256,7 @@ export type EdgeSpendInfo = {
   spendTargets: Array<EdgeSpendTarget>,
   nativeAmount?: string,
   quoteFor?: string,
-  networkFeeOption?: 'high' | 'standard' | 'low' | 'custom',
+  networkFeeOption?: string, // 'high' | 'standard' | 'low' | 'custom',
   customNetworkFee?: any, // Some kind of currency-specific JSON
   metadata?: EdgeMetadata,
   otherParams?: Object
