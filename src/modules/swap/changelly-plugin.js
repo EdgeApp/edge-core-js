@@ -4,6 +4,7 @@ import { lt, mul } from 'biggystring'
 import { base16 } from 'rfc4648'
 
 import {
+  type EdgeCurrencyWallet,
   type EdgePluginEnvironment,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
@@ -32,6 +33,20 @@ type QuoteInfo = {
   payinAddress: string,
   payoutAddress: string,
   createdAt: string
+}
+
+const dontUseLegacy = {
+  DGB: true
+}
+
+async function getAddress (
+  wallet: EdgeCurrencyWallet,
+  currencyCode: string
+): Promise<string> {
+  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
+  return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
+    ? addressInfo.legacyAddress
+    : addressInfo.publicAddress
 }
 
 function checkReply (reply: Object) {
@@ -88,10 +103,8 @@ function makeChangellyTools (env): EdgeSwapTools {
     async fetchQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapPluginQuote> {
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
-        opts.fromWallet.getReceiveAddress({
-          currencyCode: opts.fromCurrencyCode
-        }),
-        opts.toWallet.getReceiveAddress({ currencyCode: opts.toCurrencyCode })
+        getAddress(opts.fromWallet, opts.fromCurrencyCode),
+        getAddress(opts.toWallet, opts.toCurrencyCode)
       ])
 
       // Convert the native amount to a denomination:
@@ -178,9 +191,9 @@ function makeChangellyTools (env): EdgeSwapTools {
           amount: fromAmount,
           from: opts.fromCurrencyCode,
           to: opts.toCurrencyCode,
-          address: toAddress.publicAddress,
+          address: toAddress,
           extraId: null, // TODO: Do we need this for Monero?
-          refundAddress: fromAddress.publicAddress,
+          refundAddress: fromAddress,
           refundExtraId: null
         }
       })

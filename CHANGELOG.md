@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.7
+
+* Fix Changelly to use legacy addresses except for DGB
+
 ## 0.12.6
 
 * Add denomination conversion helper routines.
