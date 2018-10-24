@@ -125,11 +125,15 @@ const accountPixie = combinePixies({
           const startTimer = () => {
             timer = setTimeout(async () => {
               try {
+                if (input.props.state.accounts[accountId] == null) return
                 const changes = await syncStorageWallet(
                   ai,
                   accountWalletInfo.id
                 )
                 if (changes.length) loadAllFiles()
+              } catch (e) {
+                // We don't report sync failures, since that could be annoying.
+                // Maybe once we have online / offline detection working.
               } finally {
                 startTimer()
               }
