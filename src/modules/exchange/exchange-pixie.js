@@ -7,14 +7,13 @@ import { type RootProps } from '../root.js'
 import { type ExchangePair } from './exchange-reducer.js'
 
 export type ExchangeOutput = {
-  +plugins: Array<EdgeExchangePlugin>,
-  +update: mixed
+  +plugins: Array<EdgeExchangePlugin>
 }
 
 export const exchange = combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): mixed => {
-      const opts = { io: (props.io: any) }
+      const opts = { io: props.io }
       const promises: Array<Promise<EdgeExchangePlugin>> = []
       for (const plugin of props.plugins) {
         if (plugin.pluginType === 'exchange') {

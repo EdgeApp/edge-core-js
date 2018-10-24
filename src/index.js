@@ -27,6 +27,8 @@ export {
   PasswordError,
   PendingFundsError,
   SameCurrencyError,
+  SwapAboveLimitError,
+  SwapBelowLimitError,
   UsernameError
 } from './error.js'
 export { makeEdgeContext, makeFakeContexts } from './makeContext.js'
@@ -124,6 +126,12 @@ export type EdgeIo = {
 
 export type EdgeCorePluginOptions = {
   io: EdgeIo
+}
+
+export type EdgePluginEnvironment = {
+  io: EdgeIo,
+  initOptions?: Object, // Load-time options (like API keys)
+  userSettings?: Object // User-adjustable settings
 }
 
 // ---------------------------------------------------------------------
@@ -254,8 +262,8 @@ export type EdgeSpendInfo = {
   spendTargets: Array<EdgeSpendTarget>,
   nativeAmount?: string,
   quoteFor?: string,
-  networkFeeOption?: string,
-  customNetworkFee?: any,
+  networkFeeOption?: string, // 'high' | 'standard' | 'low' | 'custom',
+  customNetworkFee?: any, // Some kind of currency-specific JSON
   metadata?: EdgeMetadata,
   otherParams?: Object
 }
@@ -473,6 +481,14 @@ export type EdgeCurrencyWallet = {
 
   // Currency info:
   +currencyInfo: EdgeCurrencyInfo,
+  nativeToDenomination(
+    nativeAmount: string,
+    currencyCode: string
+  ): Promise<string>,
+  denominationToNative(
+    denominatedAmount: string,
+    currencyCode: string
+  ): Promise<string>,
 
   // Chain state:
   +balances: EdgeBalances,
@@ -532,6 +548,55 @@ export type EdgeCurrencyWallet = {
   // Deprecated API's:
   getBalance(opts?: EdgeCurrencyCodeOptions): string,
   getBlockHeight(): number
+}
+
+// ---------------------------------------------------------------------
+// swap plugin
+// ---------------------------------------------------------------------
+
+export type EdgeSwapInfo = {
+  +displayName: string,
+  +pluginName: string,
+
+  // The quoteId would be appended to this:
+  +quoteUri?: string
+}
+
+export type EdgeSwapQuoteOptions = {
+  fromCurrencyCode: string,
+  fromWallet: EdgeCurrencyWallet,
+  nativeAmount: string,
+  quoteFor: 'from' | 'to',
+  toCurrencyCode: string,
+  toWallet: EdgeCurrencyWallet
+}
+
+export type EdgeSwapPluginQuote = {
+  +fromNativeAmount: string,
+  +toNativeAmount: string,
+  +networkFee: EdgeNetworkFee,
+
+  +pluginName: string,
+  +expirationDate?: Date,
+  +quoteId?: string,
+
+  approve(): Promise<EdgeTransaction>,
+  close(): Promise<mixed>
+}
+
+export type EdgeSwapTools = {
+  +needsActivation: boolean,
+
+  changeUserSettings(userSettings: Object): Promise<mixed>,
+  fetchCurrencies(): Promise<Array<string>>,
+  fetchQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapPluginQuote>
+}
+
+export type EdgeSwapPlugin = {
+  +pluginType: 'swap',
+  +swapInfo: EdgeSwapInfo,
+
+  makeTools(env: EdgePluginEnvironment): Promise<EdgeSwapTools>
 }
 
 // ---------------------------------------------------------------------
@@ -686,32 +751,8 @@ export type EdgeSwapCurrencies = {
   }
 }
 
-export type EdgeSwapInfo = {
-  +displayName: string,
-  +pluginName: string
-}
-
-export type EdgeSwapQuoteOptions = {
-  fromCurrencyCode: string,
-  fromWallet: EdgeCurrencyWallet,
-  nativeAmount: string,
-  quoteFor: 'from' | 'to',
-  toCurrencyCode: string,
-  toWallet: EdgeCurrencyWallet
-}
-
-export type EdgeSwapQuote = {
-  +expirationDate: Date,
-  +fromNativeAmount: string,
-  +toNativeAmount: string,
-  +networkFee: EdgeNetworkFee,
-
-  +pluginName: string,
-  +quoteId: string,
-  +quoteUri: string,
-
-  approve(): Promise<EdgeTransaction>,
-  close(): Promise<mixed>,
+export type EdgeSwapQuote = EdgeSwapPluginQuote & {
+  +quoteUri?: string,
 
   // Deprecated names:
   +exchangeService: string // pluginName
@@ -888,6 +929,7 @@ export type EdgeContextOptions = {
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
   shapeshiftKey?: string,
+  changellyInit?: { apiKey: string, secret: string },
 
   // Used by the fake context:
   localFakeUser?: boolean,

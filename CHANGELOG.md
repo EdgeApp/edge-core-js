@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.12.6
+
+* Add denomination conversion helper routines.
+* Add Changelly support to the swap API.
+
 ## 0.12.5
 
 New:

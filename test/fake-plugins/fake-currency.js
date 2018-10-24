@@ -197,6 +197,8 @@ class FakeCurrencyPlugin {
     return fakeCurrencyInfo
   }
 
+  async changeSettings (settings) {}
+
   createPrivateKey (type) {
     if (type !== this.currencyInfo.walletTypes[0]) {
       throw new Error('Unsupported key type')

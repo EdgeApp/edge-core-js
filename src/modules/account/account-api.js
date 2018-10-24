@@ -1,10 +1,8 @@
 // @flow
 
-import { gt, lt } from 'biggystring'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { AccountSync } from '../../client-side.js'
-import { SwapAboveLimitError, SwapBelowLimitError } from '../../error.js'
 import {
   type DiskletFolder,
   type EdgeAccount,
@@ -15,7 +13,6 @@ import {
   type EdgeLobby,
   type EdgePluginData,
   type EdgeRateCache,
-  type EdgeSpendInfo,
   type EdgeSwapConfig,
   type EdgeSwapCurrencies,
   type EdgeSwapQuote,
@@ -29,7 +26,6 @@ import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
-import { makeShapeshiftApi, upgradeQuote } from '../exchange/shapeshift.js'
 import {
   createCurrencyWallet,
   listSplittableWalletTypes,
@@ -48,29 +44,36 @@ import { changePin, checkPin2, deletePin } from '../login/pin2.js'
 import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
 import { type ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
+import { fetchSwapCurrencies, fetchSwapQuote } from '../swap/swap-api.js'
 import { changeWalletStates } from './account-files.js'
-import { SwapConfig } from './currency-api.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
+import { CurrencyConfig, SwapConfig } from './plugin-api.js'
 
 /**
  * Creates an unwrapped account API object around an account state object.
  */
-export function makeAccountApi (
-  ai: ApiInput,
-  accountId: string,
-  currencyConfig: { [pluginName: string]: EdgeCurrencyConfig }
-): EdgeAccount {
+export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
   const selfState = () => ai.props.state.accounts[accountId]
   const { accountWalletInfo, loginType } = selfState()
 
-  const swapConfig = { shapeshift: new SwapConfig() }
+  // Plugin config API's:
+  const currencyConfigs = {}
+  for (const plugin of ai.props.output.currency.plugins) {
+    const api = new CurrencyConfig(ai, accountId, plugin)
+    currencyConfigs[plugin.pluginName] = api
+  }
+  const swapConfigs = {}
+  for (const pluginName in selfState().swap) {
+    const api = new SwapConfig(ai, accountId, pluginName)
+    swapConfigs[pluginName] = api
+  }
+
+  // Specialty API's:
   const rateCache = makeExchangeCache(ai)
   const dataStore = makeDataStoreApi(ai, accountId)
   const pluginData = makePluginDataApi(dataStore)
   const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
-
-  const shapeshiftApi = makeShapeshiftApi(ai)
 
   function lockdown () {
     if (ai.props.state.hideKeys) {
@@ -131,10 +134,10 @@ export function makeAccountApi (
 
     // Speciality API's:
     get currencyConfig (): { [pluginName: string]: EdgeCurrencyConfig } {
-      return currencyConfig
+      return currencyConfigs
     },
     get swapConfig (): { [pluginName: string]: EdgeSwapConfig } {
-      return swapConfig
+      return swapConfigs
     },
     get rateCache (): EdgeRateCache {
       return rateCache
@@ -328,71 +331,18 @@ export function makeAccountApi (
     },
 
     async fetchSwapCurrencies (): Promise<EdgeSwapCurrencies> {
-      const shapeshiftTokens = await shapeshiftApi.getAvailableExchangeTokens()
-      const out: EdgeSwapCurrencies = {}
-      for (const cc of shapeshiftTokens) {
-        const pluginNames = ['shapeshift']
-        out[cc] = { pluginNames, exchanges: pluginNames }
-      }
-      return out
+      return fetchSwapCurrencies(ai, accountId)
     },
     async fetchSwapQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote> {
-      const { fromWallet, nativeAmount, quoteFor } = opts
-
-      // Check for minimum / maximum:
-      if (quoteFor === 'from') {
-        const swapInfo = await shapeshiftApi.getExchangeSwapInfo(
-          opts.fromCurrencyCode,
-          opts.toCurrencyCode
-        )
-        const { nativeMax, nativeMin } = swapInfo
-        if (lt(nativeAmount, nativeMin)) {
-          throw new SwapBelowLimitError(nativeMin)
-        }
-        if (gt(nativeAmount, nativeMax)) {
-          throw new SwapAboveLimitError(nativeMax)
-        }
-      }
-
-      // Hit the legacy API:
-      const spendInfo: EdgeSpendInfo = {
-        currencyCode: opts.fromCurrencyCode,
-        quoteFor,
-        nativeAmount,
-        spendTargets: [
-          {
-            destWallet: opts.toWallet,
-            currencyCode: opts.toCurrencyCode
-          }
-        ]
-      }
-      if (quoteFor === 'to') {
-        spendInfo.spendTargets[0].nativeAmount = nativeAmount
-      }
-      try {
-        const legacyQuote = await fromWallet.getQuote(spendInfo)
-
-        // Convert that to the new format:
-        return upgradeQuote(fromWallet, legacyQuote)
-      } catch (e) {
-        // TODO: Using the nativeAmount here is technically a bug,
-        // since we don't know the actual limit in this case:
-        if (/is below/.test(e.message)) {
-          throw new SwapBelowLimitError(nativeAmount)
-        }
-        if (/is greater/.test(e.message)) {
-          throw new SwapAboveLimitError(nativeAmount)
-        }
-        throw new Error(e)
-      }
+      return fetchSwapQuote(ai, accountId, opts)
     },
 
     // Deprecated names:
     get currencyTools (): { [pluginName: string]: EdgeCurrencyConfig } {
-      return currencyConfig
+      return currencyConfigs
     },
     get exchangeTools (): { [pluginName: string]: EdgeSwapConfig } {
-      return swapConfig
+      return swapConfigs
     },
     get exchangeCache (): EdgeRateCache {
       return rateCache

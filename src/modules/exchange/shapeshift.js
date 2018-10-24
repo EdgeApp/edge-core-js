@@ -3,11 +3,11 @@
 import { div, mul } from 'biggystring'
 import { bridgifyObject, close } from 'yaob'
 
-import type {
-  EdgeCoinExchangeQuote,
-  EdgeCurrencyWallet,
-  EdgeSwapQuote,
-  EdgeTransaction
+import {
+  type EdgeCoinExchangeQuote,
+  type EdgeCurrencyWallet,
+  type EdgeSwapQuote,
+  type EdgeTransaction
 } from '../../index.js'
 import { getCurrencyMultiplier } from '../currency/currency-selectors.js'
 import { type ApiInput } from '../root.js'

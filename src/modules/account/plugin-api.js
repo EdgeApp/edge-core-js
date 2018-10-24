@@ -10,7 +10,7 @@ import {
   type EdgeSwapInfo
 } from '../../index.js'
 import { deprecate } from '../../util/deprecate.js'
-import type { ApiInput } from '../root.js'
+import { type ApiInput } from '../root.js'
 import { changePluginSettings } from './account-files.js'
 
 /**
@@ -33,14 +33,15 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   }
 
   get userSettings (): Object {
-    return this._ai.props.state.currency.settings[this._plugin.pluginName]
+    const selfState = this._ai.props.state.accounts[this._accountId]
+    return selfState.pluginSettings[this._plugin.pluginName]
   }
 
   async changeUserSettings (settings: Object): Promise<mixed> {
     await changePluginSettings(
       this._ai,
       this._accountId,
-      this._plugin,
+      this._plugin.pluginName,
       settings
     )
   }
@@ -63,30 +64,39 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
 }
 
 export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
-  _userSettings: Object
+  _ai: ApiInput
+  _accountId: string
+  _pluginName: string
 
-  constructor () {
+  constructor (ai: ApiInput, accountId: string, pluginName: string) {
     super()
-    this._userSettings = {}
+    this._ai = ai
+    this._accountId = accountId
+    this._pluginName = pluginName
   }
 
   get needsActivation (): boolean {
-    return false
+    const account = this._ai.props.state.accounts[this._accountId]
+    return account.swap[this._pluginName].tools.needsActivation
   }
 
   get swapInfo (): EdgeSwapInfo {
-    return {
-      pluginName: 'shapeshift',
-      displayName: 'ShapeShift'
-    }
+    const selfState = this._ai.props.state.accounts[this._accountId]
+    return selfState.swap[this._pluginName].plugin.swapInfo
   }
 
   get userSettings (): Object {
-    return this._userSettings
+    const selfState = this._ai.props.state.accounts[this._accountId]
+    return selfState.pluginSettings[this._pluginName]
   }
 
   async changeUserSettings (settings: Object): Promise<mixed> {
-    this._userSettings = settings
+    await changePluginSettings(
+      this._ai,
+      this._accountId,
+      this._pluginName,
+      settings
+    )
   }
 
   // Deprecated names:
