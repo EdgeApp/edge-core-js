@@ -46,6 +46,7 @@ export type RootProps = {
   +output: RootOutput,
   +plugins: Array<EdgeCorePluginFactory>,
   +shapeshiftKey: string | void,
+  +changellyInit?: { apiKey: string, secret: string } | void,
   +state: RootState
 }
 
@@ -73,6 +74,7 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
     appId = '',
     authServer = 'https://auth.airbitz.co/api',
     callbacks = {},
+    changellyInit = void 0,
     hideKeys = false,
     plugins = [],
     shapeshiftKey = void 0
@@ -110,7 +112,8 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
         },
         onExchangeUpdate,
         plugins,
-        shapeshiftKey
+        shapeshiftKey,
+        changellyInit
       })
     ),
     e => console.error(e),

@@ -10,14 +10,11 @@ import {
   currencyWalletReducer
 } from './wallet/currency-wallet-reducer.js'
 
-export type PluginSettings = { [pluginName: string]: Object }
-
 export type CurrencyState = {
   +currencyWalletIds: Array<string>,
   +customTokens: Array<EdgeTokenInfo>,
   +infos: Array<EdgeCurrencyInfo>,
   +pluginsError: Error | null,
-  +settings: PluginSettings,
   +wallets: { [walletId: string]: CurrencyWalletState }
 }
 
@@ -51,20 +48,6 @@ export const currency = buildReducer({
 
   pluginsError (state = null, action: RootAction): Error | null {
     return action.type === 'CURRENCY_PLUGINS_FAILED' ? action.payload : state
-  },
-
-  settings (state = {}, action: RootAction): PluginSettings {
-    switch (action.type) {
-      case 'CHANGED_CURRENCY_PLUGIN_SETTING':
-        const { pluginName, settings } = action.payload
-        const out = { ...state }
-        out[pluginName] = settings
-        return out
-
-      case 'NEW_CURRENCY_PLUGIN_SETTINGS':
-        return action.payload
-    }
-    return state
   },
 
   wallets: mapReducer(
