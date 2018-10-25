@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.8
+
+* Fix throw when user account doesn't have a Shapeshift auth token
+
 ## 0.12.7
 
 * Fix Changelly to use legacy addresses except for DGB
