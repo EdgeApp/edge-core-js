@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.9
+
+* Remove change to types of createPrivateKey and derivePublicKey due to Flow errors
+
 ## 0.12.8
 
 * Fix throw when user account doesn't have a Shapeshift auth token
