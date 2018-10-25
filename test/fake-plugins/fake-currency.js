@@ -199,7 +199,7 @@ class FakeCurrencyPlugin {
 
   async changeSettings (settings) {}
 
-  async createPrivateKey (type) {
+  createPrivateKey (type) {
     if (type !== this.currencyInfo.walletTypes[0]) {
       throw new Error('Unsupported key type')
     }
@@ -208,14 +208,14 @@ class FakeCurrencyPlugin {
     }
   }
 
-  // async derivePublicKey () {}
-  // async parseUri () {}
+  // derivePublicKey () {}
+  // parseUri () {}
 
   makeEngine (keyInfo, opts = {}) {
     return Promise.resolve(new FakeCurrencyEngine(this.store, keyInfo, opts))
   }
 
-  async getSplittableTypes (walletInfo) {
+  getSplittableTypes (walletInfo) {
     return ['wallet:tulipcoin']
   }
 }
