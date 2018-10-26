@@ -67,7 +67,9 @@ export async function fetchSwapQuote (
 
   const promises: Array<Promise<EdgeSwapPluginQuote>> = []
   for (const n in swapState) {
-    promises.push(swapState[n].tools.fetchQuote(opts))
+    if (!swapState[n].tools.needsActivation) {
+      promises.push(swapState[n].tools.fetchQuote(opts))
+    }
   }
 
   return fuzzyTimeout(promises, 20000).then(
