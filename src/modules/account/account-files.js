@@ -15,11 +15,13 @@ import {
   getStorageWalletFolder,
   hashStorageWalletFilename
 } from '../storage/storage-selectors.js'
+import { type PluginMap, type SwapSettings } from './account-reducer.js'
 
 const PLUGIN_SETTINGS_FILE = 'PluginSettings.json'
 
 type PluginSettingsFile = {
-  userSettings?: { [pluginName: string]: Object }
+  userSettings?: PluginMap<Object>,
+  swapSettings?: PluginMap<SwapSettings>
 }
 
 /**
@@ -32,6 +34,15 @@ function different (a, b) {
     }
   }
   return false
+}
+
+/**
+ * Returns `value` if it is an object,
+ * otherwise returns an empty fallback object.
+ */
+function getObject (value) {
+  if (value == null && typeof value !== 'object') return {}
+  return value
 }
 
 function getJson (file: DiskletFile, fallback: Object = {}) {
@@ -191,7 +202,7 @@ export async function changeWalletStates (
 /**
  * Changes a currency plugin's settings within an account.
  */
-export async function changePluginSettings (
+export async function changePluginUserSettings (
   ai: ApiInput,
   accountId: string,
   pluginName: string,
@@ -220,7 +231,38 @@ export async function changePluginSettings (
   })
 
   // Update the plugins:
-  return updatePluginSettings(ai, accountId, pluginName)
+  return updatePluginUserSettings(ai, accountId, pluginName)
+}
+
+/**
+ * Enables or disables swap plugins.
+ */
+export async function changeSwapSettings (
+  ai: ApiInput,
+  accountId: string,
+  pluginName: string,
+  swapSettings: SwapSettings
+) {
+  const { accountWalletInfo } = ai.props.state.accounts[accountId]
+  const file = getStorageWalletFolder(
+    ai.props.state,
+    accountWalletInfo.id
+  ).file(PLUGIN_SETTINGS_FILE)
+
+  // Write the new state to disk:
+  const json: PluginSettingsFile = await getJson(file)
+  json.swapSettings = { ...ai.props.state.accounts[accountId].swapSettings }
+  json.swapSettings[pluginName] = swapSettings
+  await file.setText(JSON.stringify(json))
+
+  // Update Redux:
+  ai.props.dispatch({
+    type: 'ACCOUNT_SWAP_SETTINGS_CHANGED',
+    payload: { accountId, pluginName, swapSettings }
+  })
+
+  // Update the plugins:
+  return updatePluginUserSettings(ai, accountId, pluginName)
 }
 
 /**
@@ -235,22 +277,23 @@ export async function reloadPluginSettings (ai: ApiInput, accountId: string) {
 
   const json: PluginSettingsFile = await getJson(file)
 
-  const userSettings =
-    json.userSettings != null && typeof json.userSettings === 'object'
-      ? json.userSettings
-      : {}
+  const userSettings = getObject(json.userSettings)
+  const swapSettings = getObject(json.swapSettings)
 
   // Add the final list to Redux:
   ai.props.dispatch({
     type: 'ACCOUNT_PLUGIN_SETTINGS_LOADED',
-    payload: { accountId, userSettings }
+    payload: { accountId, userSettings, swapSettings }
   })
 
   // Update the plugins:
-  return updatePluginSettings(ai, accountId)
+  return updatePluginUserSettings(ai, accountId)
 }
 
-async function updatePluginSettings (
+/**
+ * Applies changed user settings to all plugins.
+ */
+async function updatePluginUserSettings (
   ai: ApiInput,
   accountId: string,
   pluginName?: string

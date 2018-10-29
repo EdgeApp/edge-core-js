@@ -11,7 +11,11 @@ import {
 } from '../../index.js'
 import { deprecate } from '../../util/deprecate.js'
 import { type ApiInput } from '../root.js'
-import { changePluginSettings } from './account-files.js'
+import {
+  changePluginUserSettings,
+  changeSwapSettings
+} from './account-files.js'
+import { swapPluginEnabled } from './account-selectors.js'
 
 /**
  * Access to an individual currency plugin's methods.
@@ -38,7 +42,7 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   }
 
   async changeUserSettings (settings: Object): Promise<mixed> {
-    await changePluginSettings(
+    await changePluginUserSettings(
       this._ai,
       this._accountId,
       this._plugin.pluginName,
@@ -76,7 +80,8 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
   }
 
   get enabled (): boolean {
-    return true
+    const account = this._ai.props.state.accounts[this._accountId]
+    return swapPluginEnabled(account.swapSettings, this._pluginName)
   }
 
   get needsActivation (): boolean {
@@ -94,10 +99,16 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     return selfState.userSettings[this._pluginName]
   }
 
-  async changeEnabled (enabled: boolean): Promise<mixed> {}
+  async changeEnabled (enabled: boolean): Promise<mixed> {
+    const account = this._ai.props.state.accounts[this._accountId]
+    changeSwapSettings(this._ai, this._accountId, this._pluginName, {
+      ...account.swapSettings[this._pluginName],
+      enabled
+    })
+  }
 
   async changeUserSettings (settings: Object): Promise<mixed> {
-    await changePluginSettings(
+    await changePluginUserSettings(
       this._ai,
       this._accountId,
       this._pluginName,

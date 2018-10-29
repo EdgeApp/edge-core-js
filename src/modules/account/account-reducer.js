@@ -25,6 +25,10 @@ import { findAppLogin } from './account-init.js'
 
 export type PluginMap<Value> = { [pluginName: string]: Value }
 
+export type SwapSettings = {
+  enabled?: boolean
+}
+
 export type AccountState = {
   // Wallet stuff:
   +accountWalletInfo: EdgeWalletInfo,
@@ -50,6 +54,7 @@ export type AccountState = {
 
   // Plugin stuff:
   +swapPlugins: PluginMap<EdgeSwapPlugin>,
+  +swapSettings: PluginMap<SwapSettings>,
   +userSettings: PluginMap<Object>,
   +swapTools: PluginMap<EdgeSwapTools>
 }
@@ -212,6 +217,20 @@ const account = buildReducer({
     return action.type === 'ACCOUNT_SWAP_PLUGINS_LOADED'
       ? action.payload.swapPlugins
       : state
+  },
+
+  swapSettings (state = {}, action: RootAction): PluginMap<SwapSettings> {
+    switch (action.type) {
+      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
+        return action.payload.swapSettings
+
+      case 'ACCOUNT_SWAP_SETTINGS_CHANGED':
+        const { pluginName, swapSettings } = action.payload
+        const out = { ...state }
+        out[pluginName] = swapSettings
+        return out
+    }
+    return state
   },
 
   userSettings (state = {}, action: RootAction): PluginMap<Object> {
