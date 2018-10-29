@@ -23,14 +23,7 @@ import { makeLoginTree } from '../login/login.js'
 import { type RootState } from '../root-reducer.js'
 import { findAppLogin } from './account-init.js'
 
-export type SwapState = {
-  [pluginName: string]: {
-    plugin: EdgeSwapPlugin,
-    tools: EdgeSwapTools
-  }
-}
-
-export type PluginSettingsState = { [pluginName: string]: Object }
+export type PluginMap<Value> = { [pluginName: string]: Value }
 
 export type AccountState = {
   // Wallet stuff:
@@ -56,8 +49,9 @@ export type AccountState = {
   +username: string,
 
   // Plugin stuff:
-  +pluginSettings: PluginSettingsState,
-  +swap: SwapState
+  +swapPlugins: PluginMap<EdgeSwapPlugin>,
+  +userSettings: PluginMap<Object>,
+  +swapTools: PluginMap<EdgeSwapTools>
 }
 
 export type AccountNext = {
@@ -214,7 +208,13 @@ const account = buildReducer({
     return action.type === 'LOGIN' ? action.payload.username : state
   },
 
-  pluginSettings (state = {}, action: RootAction): PluginSettingsState {
+  swapPlugins (state = {}, action: RootAction): PluginMap<EdgeSwapPlugin> {
+    return action.type === 'ACCOUNT_SWAP_PLUGINS_LOADED'
+      ? action.payload.swapPlugins
+      : state
+  },
+
+  userSettings (state = {}, action: RootAction): PluginMap<Object> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED':
         const { pluginName, userSettings } = action.payload
@@ -228,9 +228,9 @@ const account = buildReducer({
     return state
   },
 
-  swap (state = {}, action: RootAction): SwapState {
+  swapTools (state = {}, action: RootAction): PluginMap<EdgeSwapTools> {
     return action.type === 'ACCOUNT_SWAP_PLUGINS_LOADED'
-      ? action.payload.plugins
+      ? action.payload.swapTools
       : state
   }
 })

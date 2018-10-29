@@ -205,7 +205,7 @@ export async function changePluginSettings (
 
   // Write the new state to disk:
   const json: PluginSettingsFile = await getJson(file)
-  json.userSettings = { ...ai.props.state.accounts[accountId].pluginSettings }
+  json.userSettings = { ...ai.props.state.accounts[accountId].userSettings }
   json.userSettings[pluginName] = userSettings
   await file.setText(JSON.stringify(json))
 
@@ -257,7 +257,7 @@ async function updatePluginSettings (
 ): Promise<mixed> {
   const selfOutput = ai.props.output.accounts[accountId]
   const selfState = ai.props.state.accounts[accountId]
-  const { pluginSettings } = selfState
+  const { userSettings } = selfState
   const promises: Array<Promise<mixed>> = []
 
   for (const plugin of ai.props.output.currency.plugins) {
@@ -265,7 +265,7 @@ async function updatePluginSettings (
       // Update currency plugin:
       if (plugin.changeSettings != null) {
         const promise = plugin
-          .changeSettings(pluginSettings[plugin.pluginName])
+          .changeSettings(userSettings[plugin.pluginName])
           .catch(e => ai.props.onError(e))
         promises.push(promise)
       }
@@ -277,11 +277,11 @@ async function updatePluginSettings (
     }
   }
 
-  for (const n in selfState.swap) {
+  for (const n in selfState.swapTools) {
     if (pluginName == null || n === pluginName) {
       // Update the swap plugin:
-      const promise = selfState.swap[n].tools
-        .changeUserSettings(pluginSettings[n])
+      const promise = selfState.swapTools[n]
+        .changeUserSettings(userSettings[n])
         .catch(e => ai.props.onError(e))
       promises.push(promise)
 

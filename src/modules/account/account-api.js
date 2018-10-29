@@ -46,6 +46,7 @@ import { type ApiInput } from '../root.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { fetchSwapCurrencies, fetchSwapQuote } from '../swap/swap-api.js'
 import { changeWalletStates } from './account-files.js'
+import { type PluginMap } from './account-reducer.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
 import { CurrencyConfig, SwapConfig } from './plugin-api.js'
@@ -58,13 +59,13 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
   const { accountWalletInfo, loginType } = selfState()
 
   // Plugin config API's:
-  const currencyConfigs = {}
+  const currencyConfigs: PluginMap<EdgeCurrencyConfig> = {}
   for (const plugin of ai.props.output.currency.plugins) {
     const api = new CurrencyConfig(ai, accountId, plugin)
     currencyConfigs[plugin.pluginName] = api
   }
-  const swapConfigs = {}
-  for (const pluginName in selfState().swap) {
+  const swapConfigs: PluginMap<EdgeSwapConfig> = {}
+  for (const pluginName in selfState().swapPlugins) {
     const api = new SwapConfig(ai, accountId, pluginName)
     swapConfigs[pluginName] = api
   }

@@ -3,11 +3,13 @@
 import {
   type EdgeAccountCallbacks,
   type EdgeCurrencyInfo,
+  type EdgeSwapPlugin,
+  type EdgeSwapTools,
   type EdgeTokenInfo,
   type EdgeWalletInfo,
   type EdgeWalletStates
 } from '../index.js'
-import { type SwapState } from './account/account-reducer.js'
+import { type PluginMap } from './account/account-reducer.js'
 import {
   type TxFileJsons,
   type TxFileNames
@@ -72,7 +74,7 @@ export type AccountPluginSettingsLoaded = {
   type: 'ACCOUNT_PLUGIN_SETTINGS_LOADED',
   payload: {
     accountId: string,
-    userSettings: { [pluginName: string]: Object }
+    userSettings: PluginMap<Object>
   }
 }
 
@@ -83,7 +85,8 @@ export type AccountSwapPluginsLoaded = {
   type: 'ACCOUNT_SWAP_PLUGINS_LOADED',
   payload: {
     accountId: string,
-    plugins: SwapState
+    swapPlugins: PluginMap<EdgeSwapPlugin>,
+    swapTools: PluginMap<EdgeSwapTools>
   }
 }
 
