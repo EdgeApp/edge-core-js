@@ -127,5 +127,8 @@ function betterError (a: Object, b: Object) {
     if (b.name !== errorNames.SwapAboveLimitError) return true
     return gt(a.nativeMax, b.nativeMax)
   }
-  return false
+  return (
+    a.name === errorNames.InsufficientFundsError ||
+    a.name === errorNames.PendingFundsError
+  )
 }
