@@ -220,12 +220,13 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
         }
       }
 
-      const exchangeSpendInfo: EdgeSpendInfo = {
+      const spendInfo: EdgeSpendInfo = {
         // networkFeeOption: spendInfo.networkFeeOption,
         currencyCode: fromCurrencyCode,
         spendTargets: [spendTarget]
       }
-      const tx = await fromWallet.makeSpend(exchangeSpendInfo)
+      env.io.console.info('shapeshift spendInfo', spendInfo)
+      const tx = await fromWallet.makeSpend(spendInfo)
 
       // Convert that to the output format:
       return makeSwapPluginQuote(
