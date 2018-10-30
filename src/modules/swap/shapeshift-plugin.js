@@ -249,7 +249,8 @@ export const shapeshiftPlugin: EdgeSwapPlugin = {
     pluginName: 'shapeshift',
     displayName: 'ShapeShift',
 
-    quoteUri: 'https://shapeshift.io/#/status/'
+    quoteUri: 'https://shapeshift.io/#/status/',
+    supportEmail: 'support@shapeshift.io'
   },
 
   async makeTools (env: EdgePluginEnvironment): Promise<EdgeSwapTools> {

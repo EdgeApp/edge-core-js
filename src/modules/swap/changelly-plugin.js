@@ -231,9 +231,10 @@ export const changellyPlugin: EdgeSwapPlugin = {
   pluginType: 'swap',
   swapInfo: {
     pluginName: 'changelly',
-    displayName: 'Changelly'
+    displayName: 'Changelly',
 
-    // quoteUri: 'https://changelly.com/transaction/'
+    // quoteUri: 'https://changelly.com/transaction/',
+    supportEmail: 'support@changelly.com'
   },
 
   async makeTools (env: EdgePluginEnvironment): Promise<EdgeSwapTools> {
