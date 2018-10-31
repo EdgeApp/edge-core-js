@@ -210,7 +210,9 @@ function makeChangellyTools (env): EdgeSwapTools {
           {
             nativeAmount: fromNativeAmount,
             publicAddress: quoteInfo.payinAddress,
-            uniqueIdentifier: quoteInfo.payinExtraId
+            otherParams: {
+              uniqueIdentifier: quoteInfo.payinExtraId
+            }
           }
         ]
       }
