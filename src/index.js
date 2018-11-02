@@ -558,8 +558,8 @@ export type EdgeSwapInfo = {
   +displayName: string,
   +pluginName: string,
 
-  // The quoteId would be appended to this:
-  +quoteUri?: string
+  +quoteUri?: string, // The quoteId would be appended to this
+  +supportEmail: string
 }
 
 export type EdgeSwapQuoteOptions = {
@@ -731,7 +731,7 @@ export type EdgeSwapConfig = {
   +watch: Subscriber<EdgeSwapConfig>,
 
   +needsActivation: boolean,
-  +swapInfo: Object,
+  +swapInfo: EdgeSwapInfo,
   +userSettings: Object,
 
   changeUserSettings(settings: Object): Promise<mixed>,

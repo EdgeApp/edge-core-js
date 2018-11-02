@@ -72,6 +72,7 @@ function makeChangellyTools (env): EdgeSwapTools {
       .stringify(hmacSha512(utf8.parse(body), secret))
       .toLowerCase()
 
+    env.io.console.info('changelly call:', json)
     const headers = {
       'Content-Type': 'application/json',
       'api-key': apiKey,
@@ -81,7 +82,9 @@ function makeChangellyTools (env): EdgeSwapTools {
     if (!reply.ok) {
       throw new Error(`Changelly returned error code ${reply.status}`)
     }
-    return reply.json()
+    const out = await reply.json()
+    env.io.console.info('changelly reply:', out)
+    return out
   }
 
   const out: EdgeSwapTools = {
@@ -201,16 +204,20 @@ function makeChangellyTools (env): EdgeSwapTools {
       const quoteInfo: QuoteInfo = sendReply.result
 
       // Make the transaction:
-      const tx = await opts.fromWallet.makeSpend({
+      const spendInfo = {
         currencyCode: opts.fromCurrencyCode,
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
             publicAddress: quoteInfo.payinAddress,
-            uniqueIdentifier: quoteInfo.payinExtraId
+            otherParams: {
+              uniqueIdentifier: quoteInfo.payinExtraId
+            }
           }
         ]
-      })
+      }
+      env.io.console.info('changelly spendInfo', spendInfo)
+      const tx = await opts.fromWallet.makeSpend(spendInfo)
 
       return makeSwapPluginQuote(
         opts,
@@ -231,9 +238,10 @@ export const changellyPlugin: EdgeSwapPlugin = {
   pluginType: 'swap',
   swapInfo: {
     pluginName: 'changelly',
-    displayName: 'Changelly'
+    displayName: 'Changelly',
 
-    // quoteUri: 'https://changelly.com/transaction/'
+    // quoteUri: 'https://changelly.com/transaction/',
+    supportEmail: 'support@changelly.com'
   },
 
   async makeTools (env: EdgePluginEnvironment): Promise<EdgeSwapTools> {
