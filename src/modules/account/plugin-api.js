@@ -11,7 +11,11 @@ import {
 } from '../../index.js'
 import { deprecate } from '../../util/deprecate.js'
 import { type ApiInput } from '../root.js'
-import { changePluginSettings } from './account-files.js'
+import {
+  changePluginUserSettings,
+  changeSwapSettings
+} from './account-files.js'
+import { swapPluginEnabled } from './account-selectors.js'
 
 /**
  * Access to an individual currency plugin's methods.
@@ -34,11 +38,11 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
 
   get userSettings (): Object {
     const selfState = this._ai.props.state.accounts[this._accountId]
-    return selfState.pluginSettings[this._plugin.pluginName]
+    return selfState.userSettings[this._plugin.pluginName]
   }
 
   async changeUserSettings (settings: Object): Promise<mixed> {
-    await changePluginSettings(
+    await changePluginUserSettings(
       this._ai,
       this._accountId,
       this._plugin.pluginName,
@@ -75,23 +79,36 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     this._pluginName = pluginName
   }
 
+  get enabled (): boolean {
+    const account = this._ai.props.state.accounts[this._accountId]
+    return swapPluginEnabled(account.swapSettings, this._pluginName)
+  }
+
   get needsActivation (): boolean {
     const account = this._ai.props.state.accounts[this._accountId]
-    return account.swap[this._pluginName].tools.needsActivation
+    return account.swapTools[this._pluginName].needsActivation
   }
 
   get swapInfo (): EdgeSwapInfo {
     const selfState = this._ai.props.state.accounts[this._accountId]
-    return selfState.swap[this._pluginName].plugin.swapInfo
+    return selfState.swapPlugins[this._pluginName].swapInfo
   }
 
   get userSettings (): Object {
     const selfState = this._ai.props.state.accounts[this._accountId]
-    return selfState.pluginSettings[this._pluginName]
+    return selfState.userSettings[this._pluginName]
+  }
+
+  async changeEnabled (enabled: boolean): Promise<mixed> {
+    const account = this._ai.props.state.accounts[this._accountId]
+    changeSwapSettings(this._ai, this._accountId, this._pluginName, {
+      ...account.swapSettings[this._pluginName],
+      enabled
+    })
   }
 
   async changeUserSettings (settings: Object): Promise<mixed> {
-    await changePluginSettings(
+    await changePluginUserSettings(
       this._ai,
       this._accountId,
       this._pluginName,

@@ -11,23 +11,8 @@ import {
   errorNames
 } from '../../index.js'
 import { fuzzyTimeout } from '../../util/promise.js'
+import { swapPluginEnabled } from '../account/account-selectors.js'
 import { type ApiInput } from '../root.js'
-
-/**
- * Splits an object into an array of keys and an array of values.
- */
-function splitObject<Type> (object: {
-  [key: string]: Type
-}): [Array<string>, Array<Type>] {
-  const keys = []
-  const values = []
-  for (const key in object) {
-    keys.push(key)
-    values.push(object[key])
-  }
-
-  return [keys, values]
-}
 
 /**
  * Fetch supported currencies from all plugins.
@@ -36,20 +21,29 @@ export async function fetchSwapCurrencies (
   ai: ApiInput,
   accountId: string
 ): Promise<EdgeSwapCurrencies> {
-  const selfState = ai.props.state.accounts[accountId]
-  const [allPluginNames, states] = splitObject(selfState.swap)
-  const arrays: Array<Array<string>> = await Promise.all(
-    states.map(state => state.tools.fetchCurrencies())
-  )
+  const { swapSettings, swapTools } = ai.props.state.accounts[accountId]
+
+  type Result = { currencies: Array<string>, pluginName: string }
+  const promises: Array<Promise<Result>> = []
+  for (const n in swapTools) {
+    if (swapPluginEnabled(swapSettings, n)) {
+      promises.push(
+        swapTools[n]
+          .fetchCurrencies()
+          .then(currencies => ({ currencies, pluginName: n }))
+      )
+    }
+  }
+  const results = await Promise.all(promises)
 
   const out: EdgeSwapCurrencies = {}
-  for (let i = 0; i < arrays.length; ++i) {
-    for (const cc of arrays[i]) {
+  for (const { currencies, pluginName } of results) {
+    for (const cc of currencies) {
       if (out[cc] == null) {
         const pluginNames = []
         out[cc] = { pluginNames, exchanges: pluginNames }
       }
-      out[cc].pluginNames.push(allPluginNames[i])
+      out[cc].pluginNames.push(pluginName)
     }
   }
   return out
@@ -63,12 +57,13 @@ export async function fetchSwapQuote (
   accountId: string,
   opts: EdgeSwapQuoteOptions
 ): Promise<EdgeSwapQuote> {
-  const swapState = ai.props.state.accounts[accountId].swap
+  const account = ai.props.state.accounts[accountId]
+  const { swapPlugins, swapSettings, swapTools } = account
 
   const promises: Array<Promise<EdgeSwapPluginQuote>> = []
-  for (const n in swapState) {
-    if (!swapState[n].tools.needsActivation) {
-      promises.push(swapState[n].tools.fetchQuote(opts))
+  for (const n in swapTools) {
+    if (swapPluginEnabled(swapSettings, n) && !swapTools[n].needsActivation) {
+      promises.push(swapTools[n].fetchQuote(opts))
     }
   }
 
@@ -88,7 +83,7 @@ export async function fetchSwapQuote (
       }
 
       // Cobble together a URI:
-      const swapInfo = swapState[bestQuote.pluginName].plugin.swapInfo
+      const swapInfo = swapPlugins[bestQuote.pluginName].swapInfo
       let quoteUri
       if (bestQuote.quoteId != null && swapInfo.quoteUri != null) {
         quoteUri = swapInfo.quoteUri + bestQuote.quoteId

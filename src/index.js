@@ -730,10 +730,12 @@ export type EdgeRateCache = {
 export type EdgeSwapConfig = {
   +watch: Subscriber<EdgeSwapConfig>,
 
+  +enabled: boolean,
   +needsActivation: boolean,
   +swapInfo: EdgeSwapInfo,
   +userSettings: Object,
 
+  changeEnabled(enabled: boolean): Promise<mixed>,
   changeUserSettings(settings: Object): Promise<mixed>,
 
   // Deprecated names:
