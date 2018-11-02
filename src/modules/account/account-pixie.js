@@ -8,7 +8,12 @@ import {
 } from 'redux-pixies'
 import { close, emit, update } from 'yaob'
 
-import { type EdgeAccount, type EdgeCurrencyWallet } from '../../index.js'
+import {
+  type EdgeAccount,
+  type EdgeCurrencyWallet,
+  type EdgeSwapPlugin,
+  type EdgeSwapTools
+} from '../../index.js'
 import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
 import { type ApiInput, type RootProps } from '../root.js'
 import {
@@ -19,7 +24,7 @@ import { changellyPlugin } from '../swap/changelly-plugin.js'
 import { shapeshiftPlugin } from '../swap/shapeshift-plugin.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
-import { type AccountState, type SwapState } from './account-reducer.js'
+import { type AccountState, type PluginMap } from './account-reducer.js'
 
 export type AccountOutput = {
   +api: EdgeAccount,
@@ -90,32 +95,31 @@ const accountPixie = combinePixies({
           await loadAllFiles()
 
           // Load swap plugins:
-          const swapState: SwapState = {}
+          const swapPlugins: PluginMap<EdgeSwapPlugin> = {}
+          const swapTools: PluginMap<EdgeSwapTools> = {}
           if (input.props.changellyInit) {
-            const plugin = changellyPlugin
-            const tools = await changellyPlugin.makeTools({
+            swapPlugins.changelly = changellyPlugin
+            swapTools.changelly = await changellyPlugin.makeTools({
               io: input.props.io,
               initOptions: input.props.changellyInit,
               get userSettings () {
-                return input.props.selfState.pluginSettings.changelly
+                return input.props.selfState.userSettings.changelly
               }
             })
-            swapState.changelly = { plugin, tools }
           }
           if (input.props.shapeshiftKey != null) {
-            const plugin = shapeshiftPlugin
-            const tools = await shapeshiftPlugin.makeTools({
+            swapPlugins.shapeshift = shapeshiftPlugin
+            swapTools.shapeshift = await shapeshiftPlugin.makeTools({
               io: input.props.io,
               initOptions: { apiKey: input.props.shapeshiftKey },
               get userSettings () {
-                return input.props.selfState.pluginSettings.shapeshift
+                return input.props.selfState.userSettings.shapeshift
               }
             })
-            swapState.shapeshift = { plugin, tools }
           }
           input.props.dispatch({
             type: 'ACCOUNT_SWAP_PLUGINS_LOADED',
-            payload: { accountId, plugins: swapState }
+            payload: { accountId, swapPlugins, swapTools }
           })
 
           // Create the API object:
@@ -125,11 +129,15 @@ const accountPixie = combinePixies({
           const startTimer = () => {
             timer = setTimeout(async () => {
               try {
+                if (input.props.state.accounts[accountId] == null) return
                 const changes = await syncStorageWallet(
                   ai,
                   accountWalletInfo.id
                 )
                 if (changes.length) loadAllFiles()
+              } catch (e) {
+                // We don't report sync failures, since that could be annoying.
+                // Maybe once we have online / offline detection working.
               } finally {
                 startTimer()
               }

@@ -1,5 +1,6 @@
 // @flow
 
+import { type ArrayLike, type DiskletFile, type DiskletFolder } from 'disklet'
 import { type Subscriber } from 'yaob'
 
 // Sub-module exports:
@@ -38,21 +39,7 @@ export { destroyAllContexts } from './modules/root.js'
 // io types
 // ---------------------------------------------------------------------
 
-export type DiskletFile = {
-  delete(): Promise<mixed>,
-  getData(): Promise<Uint8Array>,
-  getText(): Promise<string>,
-  setData(data: Array<number> | Uint8Array): Promise<mixed>,
-  setText(text: string): Promise<mixed>
-}
-
-export type DiskletFolder = {
-  delete(): Promise<mixed>,
-  file(name: string): DiskletFile,
-  folder(name: string): DiskletFolder,
-  listFiles(): Promise<Array<string>>,
-  listFolders(): Promise<Array<string>>
-}
+export type { ArrayLike, DiskletFile, DiskletFolder }
 
 // Node.js randomBytes function:
 export type EdgeRandomFunction = (bytes: number) => Uint8Array
@@ -558,8 +545,8 @@ export type EdgeSwapInfo = {
   +displayName: string,
   +pluginName: string,
 
-  // The quoteId would be appended to this:
-  +quoteUri?: string
+  +quoteUri?: string, // The quoteId would be appended to this
+  +supportEmail: string
 }
 
 export type EdgeSwapQuoteOptions = {
@@ -730,10 +717,12 @@ export type EdgeRateCache = {
 export type EdgeSwapConfig = {
   +watch: Subscriber<EdgeSwapConfig>,
 
+  +enabled: boolean,
   +needsActivation: boolean,
-  +swapInfo: Object,
+  +swapInfo: EdgeSwapInfo,
   +userSettings: Object,
 
+  changeEnabled(enabled: boolean): Promise<mixed>,
   changeUserSettings(settings: Object): Promise<mixed>,
 
   // Deprecated names:

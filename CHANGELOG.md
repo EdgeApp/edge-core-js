@@ -1,5 +1,14 @@
 # edge-core-js
 
+## 0.12.10 (2018-11-02)
+
+* Fix a potential crash on logout.
+* Allow swap plugins to be disabled.
+* Add `supportEmail` to `EdgeSwapInfo`.
+* Fix swapping from coins with unique id's using Changelly.
+* Log more swap steps.
+* Upgrade to Disklet v0.2.8.
+
 ## 0.12.9
 
 * Remove change to types of createPrivateKey and derivePublicKey due to Flow errors

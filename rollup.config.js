@@ -6,6 +6,7 @@ import flowEntry from 'rollup-plugin-flow-entry'
 import packageJson from './package.json'
 
 const babelOpts = {
+  babelrc: false,
   exclude: './build/crypto-bundle.js',
   presets: ['@babel/preset-env', '@babel/preset-flow'],
   plugins: [

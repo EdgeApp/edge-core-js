@@ -353,6 +353,7 @@ export function applyKits (
 }
 
 export async function syncAccount (ai: ApiInput, accountId: string) {
+  if (ai.props.state.accounts[accountId] == null) return
   const { login, loginTree } = ai.props.state.accounts[accountId]
   return syncLogin(ai, loginTree, login)
 }

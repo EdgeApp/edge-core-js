@@ -168,6 +168,27 @@ describe('account', function () {
     expect(config1.needsActivation).equals(false)
   })
 
+  it('disable swap plugin', async function () {
+    const [context] = makeFakeContexts({
+      ...contextOptions,
+      changellyInit: { apiKey: 'fake-key', secret: 'fake-secret' }
+    })
+
+    // Check the initial settings:
+    const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const config1 = account1.swapConfig.changelly
+    expect(config1.enabled).equals(true)
+    await config1.changeEnabled(false)
+    expect(config1.enabled).equals(false)
+
+    // Log in again, and the setting should still be there:
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const config2 = account2.swapConfig.changelly
+    expect(config2.enabled).equals(false)
+    await config2.changeEnabled(true)
+    expect(config2.enabled).equals(true)
+  })
+
   it('change key state', async function () {
     const [context] = makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
