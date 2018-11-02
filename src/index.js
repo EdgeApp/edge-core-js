@@ -1,5 +1,6 @@
 // @flow
 
+import { type ArrayLike, type DiskletFile, type DiskletFolder } from 'disklet'
 import { type Subscriber } from 'yaob'
 
 // Sub-module exports:
@@ -38,21 +39,7 @@ export { destroyAllContexts } from './modules/root.js'
 // io types
 // ---------------------------------------------------------------------
 
-export type DiskletFile = {
-  delete(): Promise<mixed>,
-  getData(): Promise<Uint8Array>,
-  getText(): Promise<string>,
-  setData(data: Array<number> | Uint8Array): Promise<mixed>,
-  setText(text: string): Promise<mixed>
-}
-
-export type DiskletFolder = {
-  delete(): Promise<mixed>,
-  file(name: string): DiskletFile,
-  folder(name: string): DiskletFolder,
-  listFiles(): Promise<Array<string>>,
-  listFolders(): Promise<Array<string>>
-}
+export type { ArrayLike, DiskletFile, DiskletFolder }
 
 // Node.js randomBytes function:
 export type EdgeRandomFunction = (bytes: number) => Uint8Array

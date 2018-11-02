@@ -54,7 +54,7 @@
     "biggystring": "^3.0.2",
     "currency-codes": "^1.1.2",
     "detect-bundler": "^1.0.0",
-    "disklet": "^0.2.7",
+    "disklet": "^0.2.8",
     "elliptic": "^6.4.0",
     "ethereumjs-tx": "^1.3.7",
     "ethereumjs-util": "^5.2.0",

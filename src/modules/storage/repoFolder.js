@@ -1,6 +1,7 @@
 // @flow
 
 import {
+  type ArrayLike,
   type DiskletFile,
   type DiskletFolder,
   type EdgeIo
@@ -37,7 +38,7 @@ class RepoFile {
     return this.getData().then(data => utf8.stringify(data))
   }
 
-  setData (data: Array<number> | Uint8Array): Promise<mixed> {
+  setData (data: ArrayLike<number>): Promise<mixed> {
     const dataCast: any = data // Treating Array<number> like Uint8Array
     return this.file.setText(
       JSON.stringify(encrypt(this.io, dataCast, this.dataKey))
