@@ -289,7 +289,8 @@ export async function createCurrencyWallet (
 
   // Make the keys:
   const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
-  const keys = opts.keys || plugin.createPrivateKey(type, opts.keyOptions)
+  const keys =
+    opts.keys || (await plugin.createPrivateKey(type, opts.keyOptions))
   const walletInfo = makeStorageKeyInfo(ai, type, keys)
   const kit = makeKeysKit(ai, login, fixWalletInfo(walletInfo))
 
