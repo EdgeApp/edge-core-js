@@ -268,7 +268,7 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
       if (keys == null) {
         // Use the currency plugin to create the keys:
         const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
-        keys = plugin.createPrivateKey(type)
+        keys = await plugin.createPrivateKey(type)
       }
 
       const walletInfo = makeStorageKeyInfo(ai, type, keys)

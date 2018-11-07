@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.11
+
+* Allow createPrivateKey, derivePublicKey, parseUri, and encodeUri methods from currency plugins to be async
+
 ## 0.12.10 (2018-11-02)
 
 * Fix a potential crash on logout.
