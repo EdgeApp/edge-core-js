@@ -400,14 +400,14 @@ export type EdgeCurrencyPlugin = {
   createPrivateKey(
     walletType: string,
     opts?: EdgeCreatePrivateKeyOptions
-  ): Object,
-  derivePublicKey(walletInfo: EdgeWalletInfo): Object,
+  ): Object | Promise<Object>,
+  derivePublicKey(walletInfo: EdgeWalletInfo): Object | Promise<Object>,
   makeEngine(
     walletInfo: EdgeWalletInfo,
     options: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine>,
-  parseUri(uri: string): EdgeParsedUri,
-  encodeUri(obj: EdgeEncodeUri): string,
+  parseUri(uri: string): EdgeParsedUri | Promise<EdgeParsedUri>,
+  encodeUri(obj: EdgeEncodeUri): string | Promise<string>,
   +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
   +changeSettings?: (settings: Object) => Promise<mixed>
 }
