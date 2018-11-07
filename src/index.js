@@ -397,11 +397,8 @@ export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
 export type EdgeCurrencyPlugin = {
   +pluginName: string,
   +currencyInfo: EdgeCurrencyInfo,
-  createPrivateKey(
-    walletType: string,
-    opts?: EdgeCreatePrivateKeyOptions
-  ): Object | Promise<Object>,
-  derivePublicKey(walletInfo: EdgeWalletInfo): Object | Promise<Object>,
+  createPrivateKey(walletType: string, opts?: EdgeCreatePrivateKeyOptions): any, // TODO: Fix flow to allow Promise annotation
+  derivePublicKey(walletInfo: EdgeWalletInfo): any, // TODO: Fix flow to allow Promise annotation
   makeEngine(
     walletInfo: EdgeWalletInfo,
     options: EdgeCurrencyEngineOptions
