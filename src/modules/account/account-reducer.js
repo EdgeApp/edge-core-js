@@ -32,6 +32,7 @@ export type SwapSettings = {
 export type AccountState = {
   // Wallet stuff:
   +accountWalletInfo: EdgeWalletInfo,
+  +accountWalletInfos: Array<EdgeWalletInfo>,
   +allWalletInfosFull: Array<EdgeWalletInfoFull>,
   +allWalletInfosClean: Array<EdgeWalletInfoFull>,
   +currencyWalletIds: Array<string>,
@@ -76,6 +77,19 @@ const account = buildReducer({
         throw new Error(`Cannot find a "${type}" repo`)
       }
       return accountWalletInfo
+    }
+  ),
+
+  accountWalletInfos: memoizeReducer(
+    (next: AccountNext) => next.self.appId,
+    (next: AccountNext) => next.self.login,
+    (appId: string, login: LoginTree): Array<EdgeWalletInfo> => {
+      // Wallets created in Edge that then log into Airbitz or BitcoinPay
+      // might end up with wallets stored in the wrong account repo.
+      // This code attempts to locate those repos.
+      const walletTypes = [makeAccountType(appId)]
+      if (appId === '') walletTypes.push('account:repo:co.airbitz.wallet', '')
+      return login.keyInfos.filter(info => walletTypes.indexOf(info.type) >= 0)
     }
   ),
 
