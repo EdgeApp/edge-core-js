@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.12
+
+* Do not call makeEngine on wallets which are archived or deleted
+
 ## 0.12.11
 
 * Allow createPrivateKey, derivePublicKey, parseUri, and encodeUri methods from currency plugins to be async
