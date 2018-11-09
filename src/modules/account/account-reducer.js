@@ -38,6 +38,7 @@ export type AccountState = {
   +currencyWalletIds: Array<string>,
   +activeWalletIds: Array<string>,
   +archivedWalletIds: Array<string>,
+  +keysLoaded: boolean,
   +legacyWalletInfos: Array<EdgeWalletInfo>,
   +walletInfos: WalletInfoMap,
   +walletStates: EdgeWalletStates,
@@ -149,16 +150,22 @@ const account = buildReducer({
   activeWalletIds: memoizeReducer(
     (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.self.currencyWalletIds,
-    (walletInfos, ids): Array<string> =>
-      ids.filter(id => !walletInfos[id].archived)
+    (next: AccountNext) => next.self.keysLoaded,
+    (walletInfos, ids, keysLoaded): Array<string> =>
+      keysLoaded ? ids.filter(id => !walletInfos[id].archived) : []
   ),
 
   archivedWalletIds: memoizeReducer(
     (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.self.currencyWalletIds,
-    (walletInfos, ids): Array<string> =>
-      ids.filter(id => walletInfos[id].archived)
+    (next: AccountNext) => next.self.keysLoaded,
+    (walletInfos, ids, keysLoaded): Array<string> =>
+      keysLoaded ? ids.filter(id => walletInfos[id].archived) : []
   ),
+
+  keysLoaded (state = false, action: RootAction): boolean {
+    return action.type === 'ACCOUNT_KEYS_LOADED' ? true : state
+  },
 
   legacyWalletInfos (state = [], action: RootAction): Array<EdgeWalletInfo> {
     return action.type === 'ACCOUNT_KEYS_LOADED'
