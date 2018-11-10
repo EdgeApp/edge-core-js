@@ -30,7 +30,10 @@ export async function fetchSwapCurrencies (
       promises.push(
         swapTools[n]
           .fetchCurrencies()
-          .then(currencies => ({ currencies, pluginName: n }))
+          .then(
+            currencies => ({ currencies, pluginName: n }),
+            e => ({ currencies: [], pluginName: n })
+          )
       )
     }
   }
