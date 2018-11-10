@@ -4,6 +4,7 @@ import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
   type EdgeAccountCallbacks,
+  type EdgeSwapCurrencies,
   type EdgeSwapPlugin,
   type EdgeSwapTools,
   type EdgeWalletInfo,
@@ -55,6 +56,7 @@ export type AccountState = {
   +username: string,
 
   // Plugin stuff:
+  +swapCurrencies: EdgeSwapCurrencies,
   +swapPlugins: PluginMap<EdgeSwapPlugin>,
   +swapSettings: PluginMap<SwapSettings>,
   +userSettings: PluginMap<Object>,
@@ -232,6 +234,12 @@ const account = buildReducer({
 
   username (state, action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
+  },
+
+  swapCurrencies (state = {}, action: RootAction): EdgeSwapCurrencies {
+    return action.type === 'ACCOUNT_SWAP_CURRENCIES_FETCHED'
+      ? action.payload.currencies
+      : state
   },
 
   swapPlugins (state = {}, action: RootAction): PluginMap<EdgeSwapPlugin> {
