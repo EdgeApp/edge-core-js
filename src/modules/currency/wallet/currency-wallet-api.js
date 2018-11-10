@@ -34,6 +34,7 @@ import {
 import { type ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
+import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks.js'
 import {
   exportTransactionsToCSVInner,
   exportTransactionsToQBOInner
@@ -73,6 +74,8 @@ export function makeCurrencyWalletApi (
 
   const shapeshiftApi = makeShapeshiftApi(ai)
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
+
+  const fakeCallbacks = makeCurrencyWalletCallbacks(input)
 
   function lockdown () {
     if (ai.props.state.hideKeys) {
@@ -207,9 +210,14 @@ export function makeCurrencyWalletApi (
     async getTransactions (
       opts: EdgeGetTransactionsOptions = {}
     ): Promise<Array<EdgeTransaction>> {
+      const state = input.props.selfState
+      if (!state.gotTxs) {
+        const txs = await engine.getTransactions(opts)
+        fakeCallbacks.onTransactionsChanged(txs)
+      }
+
       const defaultCurrency = plugin.currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
-      const state = input.props.selfState
       // Txid array of all txs
       const txids = state.txids
       // Merged tx data from metadata files and blockchain data
