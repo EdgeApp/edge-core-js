@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.13
+
+* Fix getTransactions from only returning a subset of transactions
+
 ## 0.12.12
 
 * Do not call makeEngine on wallets which are archived or deleted
