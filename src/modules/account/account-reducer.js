@@ -32,11 +32,13 @@ export type SwapSettings = {
 export type AccountState = {
   // Wallet stuff:
   +accountWalletInfo: EdgeWalletInfo,
+  +accountWalletInfos: Array<EdgeWalletInfo>,
   +allWalletInfosFull: Array<EdgeWalletInfoFull>,
   +allWalletInfosClean: Array<EdgeWalletInfoFull>,
   +currencyWalletIds: Array<string>,
   +activeWalletIds: Array<string>,
   +archivedWalletIds: Array<string>,
+  +keysLoaded: boolean,
   +legacyWalletInfos: Array<EdgeWalletInfo>,
   +walletInfos: WalletInfoMap,
   +walletStates: EdgeWalletStates,
@@ -76,6 +78,19 @@ const account = buildReducer({
         throw new Error(`Cannot find a "${type}" repo`)
       }
       return accountWalletInfo
+    }
+  ),
+
+  accountWalletInfos: memoizeReducer(
+    (next: AccountNext) => next.self.appId,
+    (next: AccountNext) => next.self.login,
+    (appId: string, login: LoginTree): Array<EdgeWalletInfo> => {
+      // Wallets created in Edge that then log into Airbitz or BitcoinPay
+      // might end up with wallets stored in the wrong account repo.
+      // This code attempts to locate those repos.
+      const walletTypes = [makeAccountType(appId)]
+      if (appId === '') walletTypes.push('account:repo:co.airbitz.wallet', '')
+      return login.keyInfos.filter(info => walletTypes.indexOf(info.type) >= 0)
     }
   ),
 
@@ -135,16 +150,22 @@ const account = buildReducer({
   activeWalletIds: memoizeReducer(
     (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.self.currencyWalletIds,
-    (walletInfos, ids): Array<string> =>
-      ids.filter(id => !walletInfos[id].archived)
+    (next: AccountNext) => next.self.keysLoaded,
+    (walletInfos, ids, keysLoaded): Array<string> =>
+      keysLoaded ? ids.filter(id => !walletInfos[id].archived) : []
   ),
 
   archivedWalletIds: memoizeReducer(
     (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.self.currencyWalletIds,
-    (walletInfos, ids): Array<string> =>
-      ids.filter(id => walletInfos[id].archived)
+    (next: AccountNext) => next.self.keysLoaded,
+    (walletInfos, ids, keysLoaded): Array<string> =>
+      keysLoaded ? ids.filter(id => walletInfos[id].archived) : []
   ),
+
+  keysLoaded (state = false, action: RootAction): boolean {
+    return action.type === 'ACCOUNT_KEYS_LOADED' ? true : state
+  },
 
   legacyWalletInfos (state = [], action: RootAction): Array<EdgeWalletInfo> {
     return action.type === 'ACCOUNT_KEYS_LOADED'

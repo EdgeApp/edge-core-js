@@ -125,28 +125,38 @@ export async function loadAllWalletStates (
   ai: ApiInput,
   accountId: string
 ): Promise<void> {
-  const { accountWalletInfo } = ai.props.state.accounts[accountId]
+  const selfState = ai.props.state.accounts[accountId]
+  const { accountWalletInfo, accountWalletInfos } = selfState
 
-  const folder = getStorageWalletFolder(ai.props.state, accountWalletInfo.id)
+  // Read files from all repos:
+  const [newStates, legacyLists] = await Promise.all([
+    loadWalletStates(
+      getStorageWalletFolder(ai.props.state, accountWalletInfo.id)
+    ),
+    Promise.all(
+      accountWalletInfos.map(info =>
+        loadWalletList(getStorageWalletFolder(ai.props.state, info.id))
+      )
+    )
+  ])
 
-  return Promise.all([loadWalletList(folder), loadWalletStates(folder)]).then(
-    values => {
-      const [
-        { walletInfos, walletStates: legacyWalletStates },
-        newKeyStates
-      ] = values
-      const walletStates = { ...legacyWalletStates, ...newKeyStates }
-
-      ai.props.dispatch({
-        type: 'ACCOUNT_KEYS_LOADED',
-        payload: {
-          accountId,
-          legacyWalletInfos: walletInfos,
-          walletStates
-        }
-      })
-    }
+  // Merge all that information together:
+  const legacyWalletInfos: Array<EdgeWalletInfo> = [].concat(
+    ...legacyLists.map(files => files.walletInfos)
   )
+  const legacyWalletStates: Array<EdgeWalletStates> = legacyLists.map(
+    files => files.walletStates
+  )
+  const walletStates = Object.assign({}, ...legacyWalletStates, newStates)
+
+  ai.props.dispatch({
+    type: 'ACCOUNT_KEYS_LOADED',
+    payload: {
+      accountId,
+      legacyWalletInfos,
+      walletStates
+    }
+  })
 }
 
 /**
