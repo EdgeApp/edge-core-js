@@ -3,7 +3,7 @@
 import { Bridgeable, close, emit } from 'yaob'
 
 import {
-  type EdgeAccountCallbacks,
+  type EdgeEdgeLoginOptions,
   type EdgePendingEdgeLogin
 } from '../../index.js'
 import { base58, base64 } from '../../util/encoding.js'
@@ -74,13 +74,7 @@ async function onReply (ai: ApiInput, subscription, reply, appId, opts) {
     throw new Error(`Cannot find requested appId: "${appId}"`)
   }
   const newLoginTree = await syncLogin(ai, loginTree, login)
-  const account = await makeAccount(
-    ai,
-    appId,
-    newLoginTree,
-    'edgeLogin',
-    opts.callbacks
-  )
+  const account = await makeAccount(ai, appId, newLoginTree, 'edgeLogin', opts)
   emit(ai.props.output.context.api, 'login', account)
 }
 
@@ -90,11 +84,7 @@ async function onReply (ai: ApiInput, subscription, reply, appId, opts) {
 export function requestEdgeLogin (
   ai: ApiInput,
   appId: string,
-  opts: {
-    callbacks: EdgeAccountCallbacks | void,
-    displayImageUrl: ?string,
-    displayName: ?string
-  }
+  opts: EdgeEdgeLoginOptions
 ): Promise<EdgePendingEdgeLogin> {
   const request = {
     loginRequest: {
