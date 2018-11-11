@@ -210,10 +210,11 @@ export function makeCurrencyWalletApi (
     async getTransactions (
       opts: EdgeGetTransactionsOptions = {}
     ): Promise<Array<EdgeTransaction>> {
-      const state = input.props.selfState
+      let state = input.props.selfState
       if (!state.gotTxs) {
         const txs = await engine.getTransactions(opts)
         fakeCallbacks.onTransactionsChanged(txs)
+        state = input.props.selfState
       }
 
       const defaultCurrency = plugin.currencyInfo.currencyCode
