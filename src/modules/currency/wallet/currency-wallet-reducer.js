@@ -60,7 +60,8 @@ export type CurrencyWalletState = {
   +nameLoaded: boolean,
   +walletInfo: EdgeWalletInfo,
   +txids: Array<string>,
-  +txs: { [txid: string]: MergedTransaction }
+  +txs: { [txid: string]: MergedTransaction },
+  +gotTxs: boolean
 }
 
 export type CurrencyWalletNext = {
@@ -224,6 +225,10 @@ const currencyWallet = buildReducer({
     }
 
     return state
+  },
+
+  gotTxs (state = false, action: RootAction): boolean {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_TXS' ? true : state
   },
 
   walletInfo (state, action, next: CurrencyWalletNext) {
