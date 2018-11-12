@@ -214,6 +214,10 @@ export function makeCurrencyWalletApi (
       if (!state.gotTxs) {
         const txs = await engine.getTransactions(opts)
         fakeCallbacks.onTransactionsChanged(txs)
+        input.props.dispatch({
+          type: 'CURRENCY_ENGINE_GOT_TXS',
+          payload: {}
+        })
         state = input.props.selfState
       }
 

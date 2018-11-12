@@ -228,7 +228,11 @@ const currencyWallet = buildReducer({
   },
 
   gotTxs (state = false, action: RootAction): boolean {
-    return action.type === 'CURRENCY_ENGINE_CHANGED_TXS' ? true : state
+    if (action.type === 'CURRENCY_ENGINE_GOT_TXS') {
+      return true
+    } else {
+      return state
+    }
   },
 
   walletInfo (state, action, next: CurrencyWalletNext) {
