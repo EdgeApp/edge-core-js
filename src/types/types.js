@@ -1,6 +1,6 @@
 // @flow
 
-import { type DiskletFolder } from 'disklet'
+import { type Disklet, type DiskletFolder } from 'disklet'
 import { type Subscriber } from 'yaob'
 
 // ---------------------------------------------------------------------
@@ -68,7 +68,7 @@ export type EdgeIo = {
 
   // Local io:
   +console: EdgeConsole,
-  +folder: DiskletFolder,
+  +disklet: Disklet,
 
   // Networking:
   +fetch: typeof fetch,

@@ -2,6 +2,7 @@
 
 import {
   type DiskletFolder,
+  downgradeDisklet,
   locateFile,
   makeUnionFolder,
   mapAllFiles
@@ -27,7 +28,7 @@ export function makeRepoPaths (
 ): StorageWalletPaths {
   const dataKey = base64.parse(walletInfo.keys.dataKey)
   const syncKey = base64.parse(walletInfo.keys.syncKey)
-  const base = io.folder
+  const base = downgradeDisklet(io.disklet)
     .folder('repos')
     .folder(base58.stringify(sha256(sha256(syncKey))))
   const changesFolder = base.folder('changes')

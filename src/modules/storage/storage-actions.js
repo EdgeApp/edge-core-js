@@ -1,5 +1,7 @@
 // @flow
 
+import { downgradeDisklet } from 'disklet'
+
 import { type EdgeWalletInfo } from '../../types/types.js'
 import { base58, base64 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
@@ -12,7 +14,7 @@ export function addStorageWallet (
   const { dispatch, io, onError } = ai.props
 
   const paths = makeRepoPaths(io, walletInfo)
-  const localFolder = io.folder
+  const localFolder = downgradeDisklet(io.disklet)
     .folder('local')
     .folder(base58.stringify(base64.parse(walletInfo.id)))
 
