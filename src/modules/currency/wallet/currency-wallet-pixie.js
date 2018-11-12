@@ -14,7 +14,6 @@ import {
   syncStorageWallet
 } from '../../storage/storage-actions.js'
 import {
-  getStorageWalletFolder,
   getStorageWalletLocalFolder,
   makeStorageWalletLocalEncryptedFolder
 } from '../../storage/storage-selectors.js'
@@ -74,7 +73,6 @@ export const walletPixie = combinePixies({
       const { state } = input.props
 
       const engine = await plugin.makeEngine(walletInfo, {
-        walletFolder: getStorageWalletFolder(state, walletInfo.id),
         walletLocalFolder: getStorageWalletLocalFolder(state, walletInfo.id),
         walletLocalEncryptedFolder: makeStorageWalletLocalEncryptedFolder(
           state,
