@@ -310,9 +310,13 @@ export type EdgeCurrencyEngineCallbacks = {
 
 export type EdgeCurrencyEngineOptions = {
   callbacks: EdgeCurrencyEngineCallbacks,
+  walletLocalDisklet: Disklet,
+  walletLocalEncryptedDisklet: Disklet,
+  optionalSettings?: any,
+
+  // Deprecated:
   walletLocalFolder: DiskletFolder,
-  walletLocalEncryptedFolder: DiskletFolder,
-  optionalSettings?: any
+  walletLocalEncryptedFolder: DiskletFolder
 }
 
 export type EdgeCurrencyEngine = {
@@ -417,8 +421,8 @@ export type EdgeCurrencyWallet = {
   +id: string,
   +keys: any,
   +type: string,
-  +folder: DiskletFolder,
-  +localFolder: DiskletFolder,
+  +disklet: Disklet,
+  +localDisklet: Disklet,
   sync(): Promise<mixed>,
 
   // Wallet keys:
@@ -502,6 +506,8 @@ export type EdgeCurrencyWallet = {
   +otherMethods: Object,
 
   // Deprecated API's:
+  +folder: DiskletFolder,
+  +localFolder: DiskletFolder,
   getBalance(opts?: EdgeCurrencyCodeOptions): string,
   getBlockHeight(): number
 }
@@ -769,8 +775,8 @@ export type EdgeAccount = {
   +id: string,
   +keys: any,
   +type: string,
-  +folder: DiskletFolder,
-  +localFolder: DiskletFolder,
+  +disklet: Disklet,
+  +localDisklet: Disklet,
   sync(): Promise<mixed>,
 
   // Basic login information:
@@ -856,6 +862,10 @@ export type EdgeAccount = {
   // Swapping:
   fetchSwapCurrencies(): Promise<EdgeSwapCurrencies>,
   fetchSwapQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote>,
+
+  // Deprecated API's:
+  +folder: DiskletFolder,
+  +localFolder: DiskletFolder,
 
   // Deprecated names:
   +pluginData: EdgePluginData,

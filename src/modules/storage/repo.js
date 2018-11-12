@@ -4,14 +4,15 @@ import {
   type DiskletFolder,
   downgradeDisklet,
   locateFile,
-  makeUnionFolder,
-  mapAllFiles
+  mapAllFiles,
+  mergeDisklets,
+  navigateDisklet
 } from 'disklet'
 
 import { type EdgeIo, type EdgeWalletInfo } from '../../types/types.js'
 import { sha256 } from '../../util/crypto/crypto.js'
 import { base16, base58, base64 } from '../../util/encoding.js'
-import { RepoFolder } from './repoFolder.js'
+import { encryptDisklet } from './encrypt-disklet.js'
 import {
   type StorageWalletPaths,
   type StorageWalletStatus
@@ -28,20 +29,27 @@ export function makeRepoPaths (
 ): StorageWalletPaths {
   const dataKey = base64.parse(walletInfo.keys.dataKey)
   const syncKey = base64.parse(walletInfo.keys.syncKey)
-  const base = downgradeDisklet(io.disklet)
-    .folder('repos')
-    .folder(base58.stringify(sha256(sha256(syncKey))))
-  const changesFolder = base.folder('changes')
-  const dataFolder = base.folder('data')
-  const unionFolder = makeUnionFolder(changesFolder, dataFolder)
+
+  const baseDisklet = navigateDisklet(
+    io.disklet,
+    'repos/' + base58.stringify(sha256(sha256(syncKey)))
+  )
+  const changesDisklet = navigateDisklet(baseDisklet, 'changes')
+  const dataDisklet = navigateDisklet(baseDisklet, 'data')
+  const disklet = encryptDisklet(
+    io,
+    dataKey,
+    mergeDisklets(changesDisklet, dataDisklet)
+  )
 
   return {
     dataKey,
     syncKey,
-    changesFolder,
-    dataFolder,
-    folder: new RepoFolder(io, dataKey, unionFolder),
-    statusFile: base.file('status.json')
+
+    baseDisklet,
+    changesDisklet,
+    dataDisklet,
+    disklet
   }
 }
 
@@ -49,8 +57,8 @@ export function loadRepoStatus (
   paths: StorageWalletPaths
 ): Promise<StorageWalletStatus> {
   const fallback = { lastSync: 0, lastHash: void 0 }
-  return paths.statusFile
-    .getText()
+  return paths.baseDisklet
+    .getText('status.json')
     .then(text => ({ lastSync: 0, ...JSON.parse(text) }))
     .catch(e => fallback)
 }
@@ -82,7 +90,9 @@ export function syncRepo (
   paths: StorageWalletPaths,
   status: StorageWalletStatus
 ) {
-  const { changesFolder, dataFolder, statusFile, syncKey } = paths
+  const { changesDisklet, dataDisklet, syncKey } = paths
+  const changesFolder = downgradeDisklet(changesDisklet)
+  const dataFolder = downgradeDisklet(dataDisklet)
 
   return mapAllFiles(changesFolder, (file, name) =>
     file.getText().then(text => ({ file, name, json: JSON.parse(text) }))
@@ -117,8 +127,8 @@ export function syncRepo (
           // Update the repo status:
           status.lastSync = Date.now() / 1000
           if (hash != null) status.lastHash = hash
-          return statusFile
-            .setText(JSON.stringify(status))
+          return paths.baseDisklet
+            .setText('status.json', JSON.stringify(status))
             .then(() => ({ status, changes }))
         })
     })
