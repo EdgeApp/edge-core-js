@@ -3,6 +3,7 @@
 import {
   type EdgeAccountCallbacks,
   type EdgeCurrencyInfo,
+  type EdgeSwapCurrencies,
   type EdgeSwapPlugin,
   type EdgeSwapTools,
   type EdgeTokenInfo,
@@ -76,6 +77,17 @@ export type AccountPluginSettingsLoaded = {
     accountId: string,
     userSettings: PluginMap<Object>,
     swapSettings: PluginMap<SwapSettings>
+  }
+}
+
+/**
+ * The GUI has fetched swap currencies.
+ */
+export type AccountSwapCurrenciesFetched = {
+  type: 'ACCOUNT_SWAP_CURRENCIES_FETCHED',
+  payload: {
+    accountId: string,
+    currencies: EdgeSwapCurrencies
   }
 }
 
@@ -167,6 +179,11 @@ export type CurrencyEngineChangedTxs = {
     walletId: string,
     txidHashes: any
   }
+}
+
+export type CurrencyEngineGotTxs = {
+  type: 'CURRENCY_ENGINE_GOT_TXS',
+  payload: {}
 }
 
 /**
@@ -362,6 +379,7 @@ export type RootAction =
   | AccountLoadFailed
   | AccountPluginSettingsChanged
   | AccountPluginSettingsLoaded
+  | AccountSwapCurrenciesFetched
   | AccountSwapPluginsLoaded
   | AccountSwapSettingsChanged
   | AddedCustomToken
@@ -370,6 +388,7 @@ export type RootAction =
   | CurrencyEngineChangedSeeds
   | CurrencyEngineChangedSyncRatio
   | CurrencyEngineChangedTxs
+  | CurrencyEngineGotTxs
   | CurrencyEngineCleared
   | CurrencyEngineFailed
   | CurrencyPluginsFailed

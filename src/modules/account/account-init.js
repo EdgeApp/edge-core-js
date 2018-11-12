@@ -1,6 +1,6 @@
 // @flow
 
-import { type EdgeAccount, type EdgeAccountCallbacks } from '../../index.js'
+import { type EdgeAccount, type EdgeAccountOptions } from '../../index.js'
 import { type LoginCreateOpts, makeCreateKit } from '../login/create.js'
 import {
   findFirstKey,
@@ -86,8 +86,9 @@ export async function makeAccount (
   appId: string,
   loginTree: LoginTree,
   loginType: string = '',
-  callbacks: EdgeAccountCallbacks = {}
+  opts: EdgeAccountOptions = {}
 ): Promise<EdgeAccount> {
+  const { callbacks = {} } = opts
   return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
     const { username } = loginTree
     if (!username) throw new Error('Cannot log in: missing username')

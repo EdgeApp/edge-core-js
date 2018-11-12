@@ -79,13 +79,11 @@ export function makeContextApi (ai: ApiInput) {
       pin?: string,
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
-      const { callbacks } = opts || {} // opts can be `null`
-
       return createLogin(ai, username, {
         password,
         pin
       }).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'newAccount', callbacks)
+        return makeAccount(ai, appId, loginTree, 'newAccount', opts || {})
       })
     },
 
@@ -94,11 +92,9 @@ export function makeContextApi (ai: ApiInput) {
       loginKey: string,
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
-      const { callbacks } = opts || {} // opts can be `null`
-
       const stashTree = getStash(ai, username)
       const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
-      return makeAccount(ai, appId, loginTree, 'keyLogin', callbacks)
+      return makeAccount(ai, appId, loginTree, 'keyLogin', opts || {})
     },
 
     async loginWithPassword (
@@ -106,10 +102,10 @@ export function makeContextApi (ai: ApiInput) {
       password: string,
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
-      const { callbacks, otp } = opts || {} // opts can be `null`
+      const { otp } = opts || {} // opts can be `null`
 
       return loginPassword(ai, username, password, otp).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'passwordLogin', callbacks)
+        return makeAccount(ai, appId, loginTree, 'passwordLogin', opts || {})
       })
     },
 
@@ -126,10 +122,10 @@ export function makeContextApi (ai: ApiInput) {
       pin: string,
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
-      const { callbacks, otp } = opts || {} // opts can be `null`
+      const { otp } = opts || {} // opts can be `null`
 
       return loginPin2(ai, appId, username, pin, otp).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'pinLogin', callbacks)
+        return makeAccount(ai, appId, loginTree, 'pinLogin', opts || {})
       })
     },
 
@@ -148,7 +144,7 @@ export function makeContextApi (ai: ApiInput) {
       answers: Array<string>,
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
-      const { callbacks, otp } = opts || {} // opts can be `null`
+      const { otp } = opts || {} // opts can be `null`
 
       return loginRecovery2(
         ai,
@@ -157,7 +153,7 @@ export function makeContextApi (ai: ApiInput) {
         answers,
         otp
       ).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'recoveryLogin', callbacks)
+        return makeAccount(ai, appId, loginTree, 'recoveryLogin', opts || {})
       })
     },
 
@@ -175,18 +171,10 @@ export function makeContextApi (ai: ApiInput) {
     async requestEdgeLogin (
       opts: EdgeEdgeLoginOptions
     ): Promise<EdgePendingEdgeLogin> {
-      const {
-        callbacks,
-        displayImageUrl,
-        displayName,
-        onLogin,
-        onProcessLogin
-      } = opts
-
-      const newOpts = { callbacks, displayImageUrl, displayName }
-      const pendingLogin = await requestEdgeLogin(ai, appId, newOpts)
+      const pendingLogin = await requestEdgeLogin(ai, appId, opts)
 
       // Hook up deprecated callbacks:
+      const { onLogin, onProcessLogin } = opts
       if (onLogin) {
         const offLogin = this.on('login', account => {
           offLogin()

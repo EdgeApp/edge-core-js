@@ -282,5 +282,6 @@ describe('account', function () {
     await account.logout()
     log.assert(['false'])
     expect(account.loggedIn).equals(false)
+    expect(account.username).equals('js test 0')
   })
 })

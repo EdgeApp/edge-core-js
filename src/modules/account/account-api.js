@@ -56,7 +56,8 @@ import { CurrencyConfig, SwapConfig } from './plugin-api.js'
  */
 export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
   const selfState = () => ai.props.state.accounts[accountId]
-  const { accountWalletInfo, loginType } = selfState()
+  const { accountWalletInfo, loginType, loginTree } = selfState()
+  const { username } = loginTree
 
   // Plugin config API's:
   const currencyConfigs: PluginMap<EdgeCurrencyConfig> = {}
@@ -128,9 +129,8 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
         : void 0
     },
     get username (): string {
-      const { loginTree } = selfState()
-      if (!loginTree.username) throw new Error('Missing username')
-      return loginTree.username
+      if (!username) throw new Error('Missing username')
+      return username
     },
 
     // Speciality API's:

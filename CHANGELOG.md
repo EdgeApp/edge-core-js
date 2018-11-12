@@ -1,8 +1,10 @@
 # edge-core-js
 
-## 0.12.13
+## 0.12.15
 
 * Fix getTransactions from only returning a subset of transactions
+* Fix swap exchange to gracefully fallback if one exchange errors
+* Properly filter out a swap provider if they don't support a getQuote currency pair
 
 ## 0.12.12
 
