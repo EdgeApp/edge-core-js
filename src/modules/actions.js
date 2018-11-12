@@ -181,6 +181,11 @@ export type CurrencyEngineChangedTxs = {
   }
 }
 
+export type CurrencyEngineGotTxs = {
+  type: 'CURRENCY_ENGINE_GOT_TXS',
+  payload: {}
+}
+
 /**
  * Called when a currency engine is wiped out.
  */
@@ -383,6 +388,7 @@ export type RootAction =
   | CurrencyEngineChangedSeeds
   | CurrencyEngineChangedSyncRatio
   | CurrencyEngineChangedTxs
+  | CurrencyEngineGotTxs
   | CurrencyEngineCleared
   | CurrencyEngineFailed
   | CurrencyPluginsFailed
