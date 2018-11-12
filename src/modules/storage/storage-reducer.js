@@ -1,8 +1,8 @@
 // @flow
 
+import { type DiskletFile, type DiskletFolder } from 'disklet'
 import { combineReducers } from 'redux'
 
-import { type DiskletFile, type DiskletFolder } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
 
 export type StorageWalletPaths = {

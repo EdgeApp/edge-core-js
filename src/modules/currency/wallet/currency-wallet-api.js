@@ -1,12 +1,12 @@
 // @flow
 
 import { add, div, lte, mul, sub } from 'biggystring'
+import { type DiskletFolder } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { CurrencyWalletSync } from '../../../client-side.js'
 import { SameCurrencyError } from '../../../types/error.js'
 import {
-  type DiskletFolder,
   type EdgeBalances,
   type EdgeCoinExchangeQuote,
   type EdgeCurrencyCodeOptions,

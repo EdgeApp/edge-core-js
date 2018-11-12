@@ -1,8 +1,7 @@
 // @flow
 
-import { mapFiles } from 'disklet'
+import { type DiskletFile, type DiskletFolder, mapFiles } from 'disklet'
 
-import { type DiskletFile, type DiskletFolder } from '../../types/types.js'
 import { base58, base64 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
 import { fixUsername } from './login-selectors.js'

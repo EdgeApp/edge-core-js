@@ -1,13 +1,11 @@
 // @flow
 
-import { type ArrayLike, type DiskletFile, type DiskletFolder } from 'disklet'
+import { type DiskletFolder } from 'disklet'
 import { type Subscriber } from 'yaob'
 
 // ---------------------------------------------------------------------
 // io types
 // ---------------------------------------------------------------------
-
-export type { ArrayLike, DiskletFile, DiskletFolder }
 
 // Node.js randomBytes function:
 export type EdgeRandomFunction = (bytes: number) => Uint8Array

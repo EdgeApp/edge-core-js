@@ -1,10 +1,9 @@
 // @flow
 
-import { mapFiles } from 'disklet'
+import { type DiskletFile, mapFiles } from 'disklet'
 import { update } from 'yaob'
 
 import {
-  type DiskletFile,
   type EdgeWalletInfo,
   type EdgeWalletStates
 } from '../../types/types.js'

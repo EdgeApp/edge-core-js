@@ -1,11 +1,8 @@
 // @flow
 
-import {
-  type ArrayLike,
-  type DiskletFile,
-  type DiskletFolder,
-  type EdgeIo
-} from '../../types/types.js'
+import { type ArrayLike, type DiskletFile, type DiskletFolder } from 'disklet'
+
+import { type EdgeIo } from '../../types/types.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { utf8 } from '../../util/encoding.js'
 

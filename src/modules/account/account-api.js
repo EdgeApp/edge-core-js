@@ -1,10 +1,10 @@
 // @flow
 
+import { type DiskletFolder } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { AccountSync } from '../../client-side.js'
 import {
-  type DiskletFolder,
   type EdgeAccount,
   type EdgeCreateCurrencyWalletOptions,
   type EdgeCurrencyConfig,
