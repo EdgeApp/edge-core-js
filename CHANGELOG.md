@@ -1,6 +1,6 @@
 # edge-core-js
 
-## 0.12.15
+## 0.12.16
 
 * Fix getTransactions from only returning a subset of transactions
 * Fix swap exchange to gracefully fallback if one exchange errors
