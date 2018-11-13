@@ -183,7 +183,9 @@ export type CurrencyEngineChangedTxs = {
 
 export type CurrencyEngineGotTxs = {
   type: 'CURRENCY_ENGINE_GOT_TXS',
-  payload: {}
+  payload: {
+    walletId: string
+  }
 }
 
 /**
