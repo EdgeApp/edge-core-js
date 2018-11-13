@@ -10,7 +10,6 @@ export default {
     '@babel/runtime/regenerator'
   ],
   input: 'test/**/*.test.js',
-  output: [{ file: 'build/tests.js', format: 'cjs' }],
-  plugins: [...config[0].plugins, multiEntry()],
-  sourcemap: true
+  output: [{ file: 'build/tests.js', format: 'cjs', sourcemap: true }],
+  plugins: [...config[0].plugins, multiEntry()]
 }
