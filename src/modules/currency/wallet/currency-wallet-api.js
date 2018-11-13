@@ -212,11 +212,15 @@ export function makeCurrencyWalletApi (
     ): Promise<Array<EdgeTransaction>> {
       let state = input.props.selfState
       if (!state.gotTxs) {
-        const txs = await engine.getTransactions(opts)
+        const txs = await engine.getTransactions({
+          currencyCode: opts.currencyCode
+        })
         fakeCallbacks.onTransactionsChanged(txs)
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_GOT_TXS',
-          payload: {}
+          payload: {
+            walletId: input.props.id
+          }
         })
         state = input.props.selfState
       }
