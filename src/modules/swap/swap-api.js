@@ -28,12 +28,13 @@ export async function fetchSwapCurrencies (
   for (const n in swapTools) {
     if (swapPluginEnabled(swapSettings, n)) {
       promises.push(
-        swapTools[n]
-          .fetchCurrencies()
-          .then(
-            currencies => ({ currencies, pluginName: n }),
-            e => ({ currencies: [], pluginName: n })
-          )
+        swapTools[n].fetchCurrencies().then(
+          currencies => ({ currencies, pluginName: n }),
+          e => {
+            ai.props.io.console.info(e)
+            return { currencies: [], pluginName: n }
+          }
+        )
       )
     }
   }
@@ -106,7 +107,7 @@ export async function fetchSwapQuote (
 
       let bestError = errors[0]
       for (let i = 1; i < errors.length; ++i) {
-        if (betterError(errors[i], bestError)) bestError = errors[i]
+        bestError = pickError(bestError, errors[i])
       }
       throw bestError
     }
@@ -114,19 +115,35 @@ export async function fetchSwapQuote (
 }
 
 /**
- * Returns true if error a is better than error b.
+ * Ranks different error codes by priority.
  */
-function betterError (a: Object, b: Object) {
+function rankError (error: Object) {
+  if (error.name === errorNames.SwapPermissionError) return 5
+  if (error.name === errorNames.SwapBelowLimitError) return 4
+  if (error.name === errorNames.SwapAboveLimitError) return 3
+  if (error.name === errorNames.InsufficientFundsError) return 2
+  if (error.name === errorNames.PendingFundsError) return 2
+  if (error.name === errorNames.SwapCurrencyError) return 1
+  return 0
+}
+
+/**
+ * Picks the best error out of two choices.
+ */
+function pickError (a: Object, b: Object): Object {
+  // Return the highest-ranked error:
+  const diff = rankError(a) - rankError(b)
+  if (diff > 0) return a
+  if (diff < 0) return b
+
+  // Same ranking, so use amounts to distinguish:
   if (a.name === errorNames.SwapBelowLimitError) {
-    if (b.name !== errorNames.SwapBelowLimitError) return true
-    return lt(a.nativeMin, b.nativeMin)
+    return lt(a.nativeMin, b.nativeMin) ? a : b
   }
   if (a.name === errorNames.SwapAboveLimitError) {
-    if (b.name !== errorNames.SwapAboveLimitError) return true
-    return gt(a.nativeMax, b.nativeMax)
+    return gt(a.nativeMax, b.nativeMax) ? a : b
   }
-  return (
-    a.name === errorNames.InsufficientFundsError ||
-    a.name === errorNames.PendingFundsError
-  )
+
+  // Otherwise, just pick one:
+  return a
 }

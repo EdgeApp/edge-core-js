@@ -10,11 +10,20 @@ import {
   type EdgeSwapPluginQuote,
   type EdgeSwapQuoteOptions,
   type EdgeSwapTools,
-  SwapBelowLimitError
+  SwapBelowLimitError,
+  SwapCurrencyError
 } from '../../index.js'
 import { hmacSha512 } from '../../util/crypto/crypto.js'
 import { utf8 } from '../../util/encoding.js'
 import { makeSwapPluginQuote } from './swap-helpers.js'
+
+const swapInfo = {
+  pluginName: 'changelly',
+  displayName: 'Changelly',
+
+  // quoteUri: 'https://changelly.com/transaction/',
+  supportEmail: 'support@changelly.com'
+}
 
 const uri = 'https://api.changelly.com'
 const expirationMs = 1000 * 60 * 20
@@ -49,8 +58,20 @@ async function getAddress (
     : addressInfo.publicAddress
 }
 
-function checkReply (reply: Object) {
+function checkReply (reply: Object, quoteOpts?: EdgeSwapQuoteOptions) {
   if (reply.error != null) {
+    if (
+      quoteOpts != null &&
+      (reply.error.code === -32602 ||
+        /Invalid currency:/.test(reply.error.message))
+    ) {
+      throw new SwapCurrencyError(
+        swapInfo,
+        quoteOpts.fromCurrencyCode,
+        quoteOpts.toCurrencyCode
+      )
+    }
+
     throw new Error('Changelly error: ' + JSON.stringify(reply.error))
   }
 }
@@ -181,8 +202,7 @@ function makeChangellyTools (env): EdgeSwapTools {
         opts.fromCurrencyCode
       )
       if (lt(fromNativeAmount, nativeMin)) {
-        // TODO: If quoteFor === 'to', flip nativeMin around:
-        throw new SwapBelowLimitError(nativeMin)
+        throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
       // Get the address:
@@ -236,13 +256,7 @@ function makeChangellyTools (env): EdgeSwapTools {
 
 export const changellyPlugin: EdgeSwapPlugin = {
   pluginType: 'swap',
-  swapInfo: {
-    pluginName: 'changelly',
-    displayName: 'Changelly',
-
-    // quoteUri: 'https://changelly.com/transaction/',
-    supportEmail: 'support@changelly.com'
-  },
+  swapInfo,
 
   async makeTools (env: EdgePluginEnvironment): Promise<EdgeSwapTools> {
     return makeChangellyTools(env)
