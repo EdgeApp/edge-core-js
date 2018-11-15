@@ -30,6 +30,8 @@ export {
   SameCurrencyError,
   SwapAboveLimitError,
   SwapBelowLimitError,
+  SwapCurrencyError,
+  SwapPermissionError,
   UsernameError
 } from './error.js'
 export { makeEdgeContext, makeFakeContexts } from './makeContext.js'
