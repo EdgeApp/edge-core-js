@@ -164,15 +164,14 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
 
       // Check for supported currencies:
       const json = await get(`/getcoins/`)
-      let foundFromCurrency = false
-      let foundToCurrency = false
-      for (const key in json) {
-        if (key === fromCurrencyCode && json[key].status === 'available') {
-          if (key === fromCurrencyCode.toUpperCase()) foundFromCurrency = true
-          if (key === toCurrencyCode.toUpperCase()) foundToCurrency = true
-        }
-      }
-      if (!foundFromCurrency || !foundToCurrency) {
+      const fromStatus = json[fromCurrencyCode.toUpperCase()]
+      const toStatus = json[toCurrencyCode.toUpperCase()]
+      if (
+        fromStatus == null ||
+        toStatus == null ||
+        fromStatus.status !== 'available' ||
+        toStatus.status !== 'available'
+      ) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 

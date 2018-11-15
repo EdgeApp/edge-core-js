@@ -118,11 +118,11 @@ export async function fetchSwapQuote (
  * Ranks different error codes by priority.
  */
 function rankError (error: Object) {
-  if (error.name === errorNames.SwapPermissionError) return 5
-  if (error.name === errorNames.SwapBelowLimitError) return 4
-  if (error.name === errorNames.SwapAboveLimitError) return 3
-  if (error.name === errorNames.InsufficientFundsError) return 2
-  if (error.name === errorNames.PendingFundsError) return 2
+  if (error.name === errorNames.SwapBelowLimitError) return 5
+  if (error.name === errorNames.SwapAboveLimitError) return 4
+  if (error.name === errorNames.InsufficientFundsError) return 3
+  if (error.name === errorNames.PendingFundsError) return 3
+  if (error.name === errorNames.SwapPermissionError) return 2
   if (error.name === errorNames.SwapCurrencyError) return 1
   return 0
 }
