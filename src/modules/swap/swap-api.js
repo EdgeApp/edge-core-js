@@ -49,12 +49,6 @@ export async function fetchSwapCurrencies (
       out[cc].pluginNames.push(pluginName)
     }
   }
-
-  ai.props.dispatch({
-    type: 'ACCOUNT_SWAP_CURRENCIES_FETCHED',
-    payload: { accountId, currencies: out }
-  })
-
   return out
 }
 
@@ -67,15 +61,11 @@ export async function fetchSwapQuote (
   opts: EdgeSwapQuoteOptions
 ): Promise<EdgeSwapQuote> {
   const account = ai.props.state.accounts[accountId]
-  const { swapCurrencies, swapPlugins, swapSettings, swapTools } = account
+  const { swapPlugins, swapSettings, swapTools } = account
 
   const promises: Array<Promise<EdgeSwapPluginQuote>> = []
   for (const n in swapTools) {
-    if (
-      swapPluginEnabled(swapSettings, n) &&
-      !swapTools[n].needsActivation &&
-      canSwap(n, swapCurrencies, opts)
-    ) {
+    if (swapPluginEnabled(swapSettings, n) && !swapTools[n].needsActivation) {
       promises.push(swapTools[n].fetchQuote(opts))
     }
   }
@@ -139,27 +129,4 @@ function betterError (a: Object, b: Object) {
     a.name === errorNames.InsufficientFundsError ||
     a.name === errorNames.PendingFundsError
   )
-}
-
-/**
- * Returns true if a pluginName handles both the input & output coins.
- */
-function canSwap (
-  pluginName: string,
-  currencies: EdgeSwapCurrencies,
-  opts: EdgeSwapQuoteOptions
-): boolean {
-  const { fromCurrencyCode, toCurrencyCode } = opts
-
-  const fromPlugins = currencies[fromCurrencyCode]
-  if (fromPlugins == null || fromPlugins.pluginNames.indexOf(pluginName) < 0) {
-    return false
-  }
-
-  const toPlugins = currencies[toCurrencyCode]
-  if (toPlugins == null || toPlugins.pluginNames.indexOf(pluginName) < 0) {
-    return false
-  }
-
-  return true
 }
