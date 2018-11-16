@@ -34,8 +34,8 @@ export default [
     external,
     input: 'src/index.js',
     output: [
-      { file: packageJson.main, format: 'cjs' },
-      { file: packageJson.module, format: 'es' }
+      { file: packageJson.main, format: 'cjs', sourcemap: true },
+      { file: packageJson.module, format: 'es', sourcemap: true }
     ],
     plugins: [
       alias({
@@ -46,14 +46,17 @@ export default [
       commonjs(commonjsOpts),
       babel(babelOpts),
       flowEntry()
-    ],
-    sourcemap: true
+    ]
   },
   // React Native build:
   {
     external,
     input: 'src/index.js',
-    output: { file: packageJson['react-native'], format: 'cjs' },
+    output: {
+      file: packageJson['react-native'],
+      format: 'cjs',
+      sourcemap: true
+    },
     plugins: [
       alias({
         './io/node/node-io.js': 'src/io/node/node-dummy.js',
@@ -62,15 +65,13 @@ export default [
       }),
       commonjs(commonjsOpts),
       babel(babelOpts)
-    ],
-    sourcemap: true
+    ]
   },
   // Client-side methods:
   {
     external: ['yaob'],
     input: 'src/client-side.js',
-    output: { file: 'lib/client-side.js', format: 'es' },
-    plugins: [babel(babelOpts)],
-    sourcemap: true
+    output: { file: 'lib/client-side.js', format: 'es', sourcemap: true },
+    plugins: [babel(babelOpts)]
   }
 ]

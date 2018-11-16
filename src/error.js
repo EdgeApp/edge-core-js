@@ -23,6 +23,8 @@ export const errorNames = {
   SameCurrencyError: 'SameCurrencyError',
   SwapAboveLimitError: 'SwapAboveLimitError',
   SwapBelowLimitError: 'SwapBelowLimitError',
+  SwapCurrencyError: 'SwapCurrencyError',
+  SwapPermissionError: 'SwapPermissionError',
   UsernameError: 'UsernameError',
   NoAmountSpecifiedError: 'NoAmountSpecifiedError'
 }
@@ -138,21 +140,53 @@ export function SameCurrencyError (
 
 /**
  * Trying to swap an amount that is either too low or too high.
+ * @param nativeMax the maximum supported amount, in the "from" currency.
  */
-export function SwapAboveLimitError (nativeMax) {
+export function SwapAboveLimitError (swapInfo, nativeMax) {
   const e = new Error('Amount is too high')
   e.name = errorNames.SwapAboveLimitError
+  e.pluginName = swapInfo.pluginName
   e.nativeMax = nativeMax
   return e
 }
 
 /**
  * Trying to swap an amount that is either too low or too high.
+ * @param nativeMin the minimum supported amount, in the "from" currency.
  */
-export function SwapBelowLimitError (nativeMin) {
+export function SwapBelowLimitError (swapInfo, nativeMin) {
   const e = new Error('Amount is too low')
   e.name = errorNames.SwapBelowLimitError
+  e.pluginName = swapInfo.pluginName
   e.nativeMin = nativeMin
+  return e
+}
+
+/**
+ * The swap plugin does not support this currency pair.
+ */
+export function SwapCurrencyError (swapInfo, fromCurrency, toCurrency) {
+  const e = new Error(
+    `${swapInfo.displayName} does not support ${fromCurrency} to ${toCurrency}`
+  )
+  e.name = errorNames.SwapCurrencyError
+  e.pluginName = swapInfo.pluginName
+  return e
+}
+
+/**
+ * The user is not allowed to swap these coins for some reason
+ * (no KYC, restricted IP address, etc...).
+ * @param reason A string giving the reason for the denial.
+ * - 'geoRestriction': The IP address is in a restricted region
+ * - 'noVerification': The user needs to provide KYC credentials
+ * - 'needsActivation': The user needs to log into the service.
+ */
+export function SwapPermissionError (swapInfo, reason) {
+  const e = new Error(reason || 'You are not allowed to make this trade')
+  e.name = errorNames.SwapPermissionError
+  e.pluginName = swapInfo.pluginName
+  e.reason = reason
   return e
 }
 

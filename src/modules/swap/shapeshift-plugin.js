@@ -11,11 +11,20 @@ import {
   type EdgeSwapPluginQuote,
   type EdgeSwapQuoteOptions,
   type EdgeSwapTools,
-  SameCurrencyError,
   SwapAboveLimitError,
-  SwapBelowLimitError
+  SwapBelowLimitError,
+  SwapCurrencyError,
+  SwapPermissionError
 } from '../../index.js'
 import { makeSwapPluginQuote } from './swap-helpers.js'
+
+const swapInfo = {
+  pluginName: 'shapeshift',
+  displayName: 'ShapeShift',
+
+  quoteUri: 'https://shapeshift.io/#/status/',
+  supportEmail: 'support@shapeshift.io'
+}
 
 const API_PREFIX = 'https://shapeshift.io'
 
@@ -56,23 +65,56 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
   const { apiKey } = env.initOptions
   let userSettings = env.userSettings
 
+  async function checkReply (uri: string, reply: Response) {
+    let replyJson
+    try {
+      replyJson = await reply.json()
+    } catch (e) {
+      throw new Error(
+        `Shapeshift ${uri} returned error code ${reply.status} (no JSON)`
+      )
+    }
+    io.console.info('shapeshift reply', replyJson)
+
+    if (!reply.ok || replyJson.error != null) {
+      // Shapeshift is not available in some parts of the world:
+      if (
+        reply.status === 403 &&
+        replyJson.error != null &&
+        replyJson.error.code === 'geoRestriction'
+      ) {
+        throw new SwapPermissionError(swapInfo, 'geoRestriction')
+      }
+
+      // Shapeshift requires KYC:
+      if (
+        reply.status === 401 &&
+        replyJson.error != null &&
+        replyJson.error.message === 'You must be logged in with a verified user'
+      ) {
+        throw new SwapPermissionError(swapInfo, 'noVerification')
+      }
+
+      // Anything else:
+      throw new Error(
+        `Shapeshift ${uri} returned error code ${
+          reply.status
+        } with JSON "${JSON.stringify(replyJson)}"`
+      )
+    }
+
+    return replyJson
+  }
+
   async function get (path) {
     const uri = `${API_PREFIX}${path}`
     const reply = await io.fetch(uri)
-
-    if (!reply.ok) {
-      throw new Error(`Shapeshift ${uri} returned error code ${reply.status}`)
-    }
-    const replyJson = await reply.json()
-    if (replyJson.error) {
-      throw new Error(replyJson.error)
-    }
-    return replyJson
+    return checkReply(uri, reply)
   }
 
   async function post (path, body): Object {
     if (userSettings == null || userSettings.accessToken == null) {
-      throw new Error('Shapeshift needs activation')
+      throw new SwapPermissionError(swapInfo.pluginName, 'needsActivation')
     }
     const uri = `${API_PREFIX}${path}`
     const reply = await io.fetch(uri, {
@@ -84,15 +126,7 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
       },
       body: JSON.stringify(body)
     })
-
-    if (!reply.ok) {
-      throw new Error(`Shapeshift ${uri} returned error code ${reply.status}`)
-    }
-    const replyJson = await reply.json()
-    if (replyJson.error) {
-      throw new Error(replyJson.error)
-    }
-    return replyJson
+    return checkReply(uri, reply)
   }
 
   const out: EdgeSwapTools = {
@@ -125,7 +159,25 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
         toWallet
       } = opts
       if (toCurrencyCode === fromCurrencyCode) {
-        throw new SameCurrencyError()
+        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
+
+      // Check for supported currencies:
+      const json = await get(`/getcoins/`)
+      const fromStatus = json[fromCurrencyCode.toUpperCase()]
+      const toStatus = json[toCurrencyCode.toUpperCase()]
+      if (
+        fromStatus == null ||
+        toStatus == null ||
+        fromStatus.status !== 'available' ||
+        toStatus.status !== 'available'
+      ) {
+        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
+
+      // Bail out early if we need activation:
+      if (userSettings == null || userSettings.accessToken == null) {
+        throw new SwapPermissionError(swapInfo.pluginName, 'needsActivation')
       }
 
       // Check for minimum / maximum:
@@ -144,10 +196,10 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
           )
         ])
         if (lt(nativeAmount, nativeMin)) {
-          throw new SwapBelowLimitError(nativeMin)
+          throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
         if (gt(nativeAmount, nativeMax)) {
-          throw new SwapAboveLimitError(nativeMax)
+          throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       }
 
@@ -185,10 +237,10 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
         // TODO: Using the nativeAmount here is technically a bug,
         // since we don't know the actual limit in this case:
         if (/is below/.test(e.message)) {
-          throw new SwapBelowLimitError(nativeAmount)
+          throw new SwapBelowLimitError(swapInfo, nativeAmount)
         }
         if (/is greater/.test(e.message)) {
-          throw new SwapAboveLimitError(nativeAmount)
+          throw new SwapAboveLimitError(swapInfo, nativeAmount)
         }
         throw new Error(e)
       }
@@ -246,13 +298,7 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
 
 export const shapeshiftPlugin: EdgeSwapPlugin = {
   pluginType: 'swap',
-  swapInfo: {
-    pluginName: 'shapeshift',
-    displayName: 'ShapeShift',
-
-    quoteUri: 'https://shapeshift.io/#/status/',
-    supportEmail: 'support@shapeshift.io'
-  },
+  swapInfo,
 
   async makeTools (env: EdgePluginEnvironment): Promise<EdgeSwapTools> {
     return makeShapeshiftTools(env)

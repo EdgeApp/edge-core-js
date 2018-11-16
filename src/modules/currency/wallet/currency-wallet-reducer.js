@@ -125,8 +125,7 @@ const currencyWallet = buildReducer({
 
   sortedTransactions (
     state = { txidHashes: {}, sortedList: [] },
-    action: RootAction,
-    next: CurrencyWalletNext
+    action: RootAction
   ): SortedTransactions {
     const { txidHashes } = state
     switch (action.type) {
