@@ -114,7 +114,7 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
 
   async function post (path, body): Object {
     if (userSettings == null || userSettings.accessToken == null) {
-      throw new Error('Shapeshift needs activation')
+      throw new SwapPermissionError(swapInfo.pluginName, 'needsActivation')
     }
     const uri = `${API_PREFIX}${path}`
     const reply = await io.fetch(uri, {
@@ -173,6 +173,11 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
         toStatus.status !== 'available'
       ) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
+
+      // Bail out early if we need activation:
+      if (userSettings == null || userSettings.accessToken == null) {
+        throw new SwapPermissionError(swapInfo.pluginName, 'needsActivation')
       }
 
       // Check for minimum / maximum:

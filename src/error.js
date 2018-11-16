@@ -178,7 +178,9 @@ export function SwapCurrencyError (swapInfo, fromCurrency, toCurrency) {
  * The user is not allowed to swap these coins for some reason
  * (no KYC, restricted IP address, etc...).
  * @param reason A string giving the reason for the denial.
- * Could be 'geoRestriction', 'noVerification', or some other string.
+ * - 'geoRestriction': The IP address is in a restricted region
+ * - 'noVerification': The user needs to provide KYC credentials
+ * - 'needsActivation': The user needs to log into the service.
  */
 export function SwapPermissionError (swapInfo, reason) {
   const e = new Error(reason || 'You are not allowed to make this trade')

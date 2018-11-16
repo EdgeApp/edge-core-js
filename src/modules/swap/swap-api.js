@@ -66,7 +66,7 @@ export async function fetchSwapQuote (
 
   const promises: Array<Promise<EdgeSwapPluginQuote>> = []
   for (const n in swapTools) {
-    if (swapPluginEnabled(swapSettings, n) && !swapTools[n].needsActivation) {
+    if (swapPluginEnabled(swapSettings, n)) {
       promises.push(swapTools[n].fetchQuote(opts))
     }
   }
