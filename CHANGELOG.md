@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.17
+
+* Improve `fetchSwapQuote` error hierarchy with rich information about different possible error conditions.
+
 ## 0.12.16
 
 * Fix getTransactions from only returning a subset of transactions
