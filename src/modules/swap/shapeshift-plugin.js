@@ -89,8 +89,8 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
       // Shapeshift requires KYC:
       if (
         reply.status === 401 &&
-        replyJson.error != null &&
-        replyJson.error.message === 'You must be logged in with a verified user'
+        replyJson &&
+        replyJson.message === 'You must be logged in with a verified user'
       ) {
         throw new SwapPermissionError(swapInfo, 'noVerification')
       }
@@ -242,7 +242,7 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
         if (/is greater/.test(e.message)) {
           throw new SwapAboveLimitError(swapInfo, nativeAmount)
         }
-        throw new Error(e)
+        throw e
       }
       if (!quoteData.success) {
         throw new Error('Did not get back successful quote')
