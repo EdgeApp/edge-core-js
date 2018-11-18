@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.12.18
+
+* Fix detecting and throwing of ShapeShift errors due to geo location or unverified accounts
+
 ## 0.12.17
 
 * Improve `fetchSwapQuote` error hierarchy with rich information about different possible error conditions.

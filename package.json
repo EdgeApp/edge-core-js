@@ -1,6 +1,6 @@
 {
   "name": "edge-core-js",
-  "version": "0.12.17",
+  "version": "0.12.18",
   "description": "Edge account & wallet management library",
   "keywords": [
     "bitcoin",
@@ -17,12 +17,12 @@
   "license": "SEE LICENSE IN LICENSE",
   "author": "Airbitz, Inc.",
   "contributors": [
-    "William Swanson <william@edgesecure.co>",
-    "Tim Horton <tim@edgesecure.co>",
-    "Paul Puey <paul@edgesecure.co>",
-    "Eliran Zach <eliran@edgesecure.co>",
-    "Kevin Sullivan <kevin@edgesecure.co>",
-    "Allen Hujsak <allen@edgesecure.co>"
+    "William Swanson <william@edge.app>",
+    "Tim Horton <tim@edge.app>",
+    "Paul Puey <paul@edge.app>",
+    "Eliran Zach <eliran@edge.app>",
+    "Kevin Sullivan <kevin@edge.app>",
+    "Allen Hujsak <allen@edge.app>"
   ],
   "files": [
     "CHANGELOG.md",
