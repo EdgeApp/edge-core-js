@@ -15,6 +15,7 @@
 export const errorNames = {
   DustSpendError: 'DustSpendError',
   InsufficientFundsError: 'InsufficientFundsError',
+  SpendToSelfError: 'SpendToSelfError',
   NetworkError: 'NetworkError',
   ObsoleteApiError: 'ObsoleteApiError',
   OtpError: 'OtpError',
@@ -44,6 +45,15 @@ export function DustSpendError (message = 'Please send a larger amount') {
 export function InsufficientFundsError (message = 'Insufficient funds') {
   const e = new Error(message)
   e.name = errorNames.InsufficientFundsError
+  return e
+}
+
+/**
+ * Trying to spend to an address of the source wallet
+ */
+export function SpendToSelfError (message = 'Spending to self') {
+  const e = new Error(message)
+  e.name = errorNames.SpendToSelfError
   return e
 }
 
