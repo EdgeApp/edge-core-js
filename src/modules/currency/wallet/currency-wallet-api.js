@@ -77,6 +77,12 @@ export function makeCurrencyWalletApi (
 
   const fakeCallbacks = makeCurrencyWalletCallbacks(input)
 
+  let otherMethods = {}
+  if (engine.otherMethods != null) {
+    otherMethods = engine.otherMethods
+    bridgifyObject(otherMethods)
+  }
+
   function lockdown () {
     if (ai.props.state.hideKeys) {
       throw new Error('Not available when `hideKeys` is enabled')
@@ -581,6 +587,8 @@ export function makeCurrencyWalletApi (
     async encodeUri (obj: EdgeEncodeUri): Promise<string> {
       return plugin.encodeUri(obj)
     },
+
+    otherMethods,
 
     // Deprecated API's:
     getBalance: CurrencyWalletSync.prototype.getBalance,
