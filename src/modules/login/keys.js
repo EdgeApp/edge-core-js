@@ -348,6 +348,34 @@ export async function splitWalletInfo (
     throw new Error('This wallet has already been split')
   }
 
+  // Handle BitcoinABC/SV replay protaction
+  if (
+    newWalletType === 'wallet:bitcoinsv' &&
+    walletInfo.type === 'wallet:bitcoincash'
+  ) {
+    try {
+      const oldWallet = ai.props.output.currency.wallets[walletId].api
+      const { publicAddress } = oldWallet.getReceiveAddress()
+      const spendInfo = {
+        currencyCode: 'BCH',
+        spendTargets: [
+          { nativeAmount: 0, publicAddress },
+          { nativeAmount: 0, otherParams: { useReplayProtection: true } }
+        ],
+        metadata: {},
+        networkFeeOption: 'standard'
+      }
+      const maxAmount = oldWallet.getMaxSpendable(spendInfo)
+      spendInfo.spendTargets[0].nativeAmount = maxAmount
+      const tx = await oldWallet.makeSpend(spendInfo)
+      const signedTx = await oldWallet.signTx(tx)
+      const broadcastedTx = await oldWallet.broadcastTx(signedTx)
+      await oldWallet.saveTx(broadcastedTx)
+    } catch (e) {
+      throw new Error('Replay protaction error, splitting canceled', e)
+    }
+  }
+
   // Add the keys to the login:
   const kit = makeKeysKit(ai, login, newWalletInfo)
   await applyKit(ai, loginTree, kit)
