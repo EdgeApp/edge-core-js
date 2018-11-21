@@ -661,7 +661,7 @@ export type EdgeRateCache = {
     fromCurrency: string,
     toCurrency: string,
     amount: number
-  ): number
+  ): Promise<number>
 }
 
 // swap ----------------------------------------------------------------

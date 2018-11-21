@@ -22,14 +22,14 @@ export function makeExchangeCache (ai: ApiInput): EdgeRateCache {
     return ageCurve + (inverse ? 1.1 : 1) // + 2 * isWrongExchange()
   }
 
-  const out = {
+  const out: EdgeRateCache = {
     on: onMethod,
 
-    convertCurrency (
+    async convertCurrency (
       fromCurrency: string,
       toCurrency: string,
       amount: number = 1
-    ): number {
+    ): Promise<number> {
       const rate = getExchangeRate(
         ai.props.state,
         fromCurrency,
