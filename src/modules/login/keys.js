@@ -353,27 +353,23 @@ export async function splitWalletInfo (
     newWalletType === 'wallet:bitcoinsv' &&
     walletInfo.type === 'wallet:bitcoincash'
   ) {
-    try {
-      const oldWallet = ai.props.output.currency.wallets[walletId].api
-      const { publicAddress } = oldWallet.getReceiveAddress()
-      const spendInfo = {
-        currencyCode: 'BCH',
-        spendTargets: [
-          { nativeAmount: 0, publicAddress },
-          { nativeAmount: 0, otherParams: { useReplayProtection: true } }
-        ],
-        metadata: {},
-        networkFeeOption: 'standard'
-      }
-      const maxAmount = oldWallet.getMaxSpendable(spendInfo)
-      spendInfo.spendTargets[0].nativeAmount = maxAmount
-      const tx = await oldWallet.makeSpend(spendInfo)
-      const signedTx = await oldWallet.signTx(tx)
-      const broadcastedTx = await oldWallet.broadcastTx(signedTx)
-      await oldWallet.saveTx(broadcastedTx)
-    } catch (e) {
-      throw new Error('Replay protaction error, splitting canceled', e)
+    const oldWallet = ai.props.output.currency.wallets[walletId].api
+    const { publicAddress } = await oldWallet.getReceiveAddress()
+    const spendInfo = {
+      currencyCode: 'BCH',
+      spendTargets: [
+        { nativeAmount: 0, publicAddress },
+        { nativeAmount: 0, otherParams: { useReplayProtection: true } }
+      ],
+      metadata: {},
+      networkFeeOption: 'standard'
     }
+    const maxAmount = await oldWallet.getMaxSpendable(spendInfo)
+    spendInfo.spendTargets[0].nativeAmount = maxAmount
+    const tx = await oldWallet.makeSpend(spendInfo)
+    const signedTx = await oldWallet.signTx(tx)
+    const broadcastedTx = await oldWallet.broadcastTx(signedTx)
+    await oldWallet.saveTx(broadcastedTx)
   }
 
   // Add the keys to the login:
