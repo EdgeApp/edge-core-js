@@ -354,13 +354,14 @@ export async function splitWalletInfo (
     walletInfo.type === 'wallet:bitcoincash'
   ) {
     const oldWallet = ai.props.output.currency.wallets[walletId].api
+    if (!oldWallet) throw new Error('Missing Wallet')
     const { publicAddress } = await oldWallet.getReceiveAddress()
     const spendInfo = {
       currencyCode: 'BCH',
       spendTargets: [
-        { nativeAmount: 0, publicAddress },
+        { nativeAmount: '0', publicAddress },
         {
-          nativeAmount: 0,
+          nativeAmount: '0',
           otherParams: {
             script: {
               type: 'replayProtection',
