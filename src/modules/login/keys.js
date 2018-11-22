@@ -359,7 +359,15 @@ export async function splitWalletInfo (
       currencyCode: 'BCH',
       spendTargets: [
         { nativeAmount: 0, publicAddress },
-        { nativeAmount: 0, otherParams: { useReplayProtection: true } }
+        {
+          nativeAmount: 0,
+          otherParams: {
+            script: {
+              type: 'replayProtection',
+              params: []
+            }
+          }
+        }
       ],
       metadata: {},
       networkFeeOption: 'standard'
