@@ -14,6 +14,8 @@ import { expectRejection } from '../../expect-rejection.js'
 import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
 
 const contextOptions = {
+  apiKey: '',
+  appId: '',
   localFakeUser: true,
   plugins: [makeFakeCurrency()]
 }

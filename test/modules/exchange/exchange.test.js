@@ -15,6 +15,11 @@ import {
   fakeExchangePlugin
 } from '../../fake-plugins/fake-exchange.js'
 
+const contextOptions = {
+  apiKey: '',
+  appId: ''
+}
+
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.
 function makePairs () {
@@ -157,7 +162,7 @@ describe('exchange cache reducer', function () {
 describe('exchange pixie', function () {
   it('adds plugins', async function () {
     const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
-      apiKey: '',
+      ...contextOptions,
       plugins: [fakeExchangePlugin]
     })
 
@@ -178,7 +183,7 @@ describe('exchange pixie', function () {
   it('fetches exchange rates', async function () {
     let updateCalled = false
     const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
-      apiKey: '',
+      ...contextOptions,
       callbacks: {
         onExchangeUpdate () {
           updateCalled = true

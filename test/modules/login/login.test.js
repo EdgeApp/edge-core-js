@@ -12,7 +12,11 @@ import {
 import { base58 } from '../../../src/util/encoding.js'
 import { expectRejection } from '../../expect-rejection.js'
 
-const contextOptions = { localFakeUser: true }
+const contextOptions = {
+  apiKey: '',
+  appId: '',
+  localFakeUser: true
+}
 
 describe('username', function () {
   it('normalize spaces and capitalization', async function () {
@@ -64,8 +68,8 @@ describe('username', function () {
 describe('appId', function () {
   it('can log into unknown apps', async function () {
     const [context] = await makeFakeContexts({
-      appId: 'fakeApp',
-      localFakeUser: true
+      ...contextOptions,
+      appId: 'fakeApp'
     })
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
@@ -89,8 +93,8 @@ describe('creation', function () {
   it('password-less account', async function () {
     this.timeout(1000)
     const [context, remote] = await makeFakeContexts(
-      { appId: 'test' },
-      { appId: 'test' }
+      { apiKey: '', appId: 'test' },
+      { apiKey: '', appId: 'test' }
     )
     const username = 'some fancy user'
     const questions = fakeUser.recovery2Questions
@@ -108,8 +112,8 @@ describe('creation', function () {
   it('create account', async function () {
     this.timeout(15000)
     const [context, remote] = await makeFakeContexts(
-      { appId: 'test' },
-      { appId: 'test' }
+      { apiKey: '', appId: 'test' },
+      { apiKey: '', appId: 'test' }
     )
     const username = 'some fancy user'
     const password = 'some fancy password'
@@ -180,7 +184,7 @@ describe('otp', function () {
 describe('password', function () {
   it('login offline', async function () {
     const [context] = await makeFakeContexts({
-      localFakeUser: true,
+      ...contextOptions,
       offline: true
     })
     await context.loginWithPassword(fakeUser.username, fakeUser.password)
@@ -248,7 +252,10 @@ describe('pin', function () {
   })
 
   it('does not exist', async function () {
-    const [context] = await makeFakeContexts({})
+    const [context] = await makeFakeContexts({
+      ...contextOptions,
+      localFakeUser: false
+    })
 
     const exists = await context.pinLoginEnabled(fakeUser.username)
     assert(!exists)

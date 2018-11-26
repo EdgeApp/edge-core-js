@@ -13,6 +13,10 @@ import {
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
+const contextOptions = {
+  apiKey: '',
+  appId: ''
+}
 
 describe('edge login lobby', function () {
   it('round-trip data', function () {
@@ -28,7 +32,10 @@ describe('edge login lobby', function () {
   })
 
   it('lobby ping-pong', async function () {
-    const [context1, context2] = await makeFakeContexts({}, {})
+    const [context1, context2] = await makeFakeContexts(
+      contextOptions,
+      contextOptions
+    )
     const s1: EdgeInternalStuff = (context1: any).$internalStuff
     const s2: EdgeInternalStuff = (context2: any).$internalStuff
     const testRequest = { testRequest: 'This is a test' }

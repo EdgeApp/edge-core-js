@@ -18,6 +18,11 @@ import { expectRejection } from '../../expect-rejection.js'
 import { fakeCurrencyInfo } from '../../fake-plugins/fake-currency-info.js'
 import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
 
+const contextOptions = {
+  apiKey: '',
+  appId: ''
+}
+
 describe('currency selectors', function () {
   const infos = [fakeCurrencyInfo]
 
@@ -37,7 +42,7 @@ describe('currency selectors', function () {
 describe('currency pixie', function () {
   it('adds plugins', async function () {
     const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
-      apiKey: '',
+      ...contextOptions,
       plugins: [makeFakeCurrency()]
     })
 
@@ -71,6 +76,7 @@ describe('currency pixie', function () {
       }
     }
     const [context] = await makeFakeContexts({
+      ...contextOptions,
       localFakeUser: true,
       plugins: [brokenPlugin]
     })

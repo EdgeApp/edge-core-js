@@ -10,6 +10,8 @@ import {
 } from '../../../src/index.js'
 
 const contextOptions = {
+  apiKey: '',
+  appId: '',
   localFakeUser: true
 }
 

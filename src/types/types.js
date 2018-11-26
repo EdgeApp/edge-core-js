@@ -857,17 +857,18 @@ export type EdgeContextCallbacks = {
 }
 
 export type EdgeContextOptions = {
-  apiKey?: string, // TODO: Non-optional
-  appId?: string, // TODO: Non-optional
+  apiKey: string,
+  appId: string,
   authServer?: string,
   callbacks?: EdgeContextCallbacks,
   hideKeys?: boolean,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
   shapeshiftKey?: string,
-  changellyInit?: { apiKey: string, secret: string },
+  changellyInit?: { apiKey: string, secret: string }
+}
 
-  // Used by the fake context:
+export type EdgeFakeContextOptions = EdgeContextOptions & {
   localFakeUser?: boolean,
   offline?: boolean,
   tempNoBridge$?: boolean

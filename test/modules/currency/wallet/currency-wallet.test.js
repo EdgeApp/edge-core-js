@@ -17,6 +17,12 @@ import {
 } from '../../../fake-plugins/fake-currency.js'
 import { fakeExchangePlugin } from '../../../fake-plugins/fake-exchange.js'
 
+const contextOptions = {
+  apiKey: '',
+  appId: '',
+  localFakeUser: true
+}
+
 function snooze (ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
@@ -25,7 +31,7 @@ async function makeFakeCurrencyWallet (store): Promise<EdgeCurrencyWallet> {
   const plugin = makeFakeCurrency(store)
 
   const [context] = await makeFakeContexts({
-    localFakeUser: true,
+    ...contextOptions,
     plugins: [plugin, fakeExchangePlugin]
   })
   const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
