@@ -62,7 +62,7 @@ describe('currency pixie', function () {
     expect(hasCurrencyPlugin(infos, 'wallet:fakecoin')).equals(true)
   })
 
-  it('handles errors gracefully', function () {
+  it('handles errors gracefully', async function () {
     const brokenPlugin: EdgeCurrencyPluginFactory = {
       pluginName: 'broken',
       pluginType: 'currency',
@@ -70,7 +70,7 @@ describe('currency pixie', function () {
         throw new Error('Expect to fail')
       }
     }
-    const [context] = makeFakeContexts({
+    const [context] = await makeFakeContexts({
       localFakeUser: true,
       plugins: [brokenPlugin]
     })

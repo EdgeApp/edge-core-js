@@ -15,7 +15,7 @@ const contextOptions = {
 
 describe('plugin data API', function () {
   it('stores data', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account: EdgeAccount = await context.loginWithPIN(
       fakeUser.username,
       fakeUser.pin

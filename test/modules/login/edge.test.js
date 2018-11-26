@@ -22,7 +22,7 @@ async function simulateRemoteApproval (remote, lobbyId: string) {
 
 describe('edge login', function () {
   it('request', async function () {
-    const [context, remote] = makeFakeContexts(
+    const [context, remote] = await makeFakeContexts(
       { appId: 'test-child' },
       { localFakeUser: true }
     )
@@ -42,7 +42,7 @@ describe('edge login', function () {
   })
 
   it('cancel', async function () {
-    const [context] = makeFakeContexts({})
+    const [context] = await makeFakeContexts({})
 
     const opts = { displayName: 'test suite' }
     const pendingLogin = await context.requestEdgeLogin(opts)

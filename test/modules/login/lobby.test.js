@@ -27,8 +27,8 @@ describe('edge login lobby', function () {
     )
   })
 
-  it('lobby ping-pong', function () {
-    const [context1, context2] = makeFakeContexts({}, {})
+  it('lobby ping-pong', async function () {
+    const [context1, context2] = await makeFakeContexts({}, {})
     const s1: EdgeInternalStuff = (context1: any).$internalStuff
     const s2: EdgeInternalStuff = (context2: any).$internalStuff
     const testRequest = { testRequest: 'This is a test' }

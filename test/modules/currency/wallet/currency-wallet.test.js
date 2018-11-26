@@ -24,7 +24,7 @@ function snooze (ms: number) {
 async function makeFakeCurrencyWallet (store): Promise<EdgeCurrencyWallet> {
   const plugin = makeFakeCurrency(store)
 
-  const [context] = makeFakeContexts({
+  const [context] = await makeFakeContexts({
     localFakeUser: true,
     plugins: [plugin, fakeExchangePlugin]
   })

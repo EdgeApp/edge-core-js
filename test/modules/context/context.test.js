@@ -16,7 +16,7 @@ afterEach(function () {
 
 describe('context', function () {
   it('lists usernames', async function () {
-    const [context] = makeFakeContexts({ localFakeUser: true })
+    const [context] = await makeFakeContexts({ localFakeUser: true })
 
     expect(await context.listUsernames()).deep.equals(['js test 0'])
   })

@@ -24,7 +24,7 @@ function findWallet (walletInfos, type) {
 
 describe('account', function () {
   it('calls callbacks', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const log = makeAssertLog()
 
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -35,7 +35,7 @@ describe('account', function () {
   })
 
   it('find repo', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const { allKeys } = account
@@ -46,7 +46,7 @@ describe('account', function () {
   })
 
   it('attach repo', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const keys = {
@@ -60,7 +60,7 @@ describe('account', function () {
   })
 
   it('create wallet', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const id = await account.createWallet('wallet:fakecoin')
@@ -70,7 +70,7 @@ describe('account', function () {
   })
 
   it('create currency wallet', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account: EdgeAccount = await context.loginWithPIN(
       fakeUser.username,
       fakeUser.pin
@@ -85,7 +85,7 @@ describe('account', function () {
   })
 
   it('list keys', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const allTypes = account.allKeys.map(info => info.type)
@@ -101,7 +101,7 @@ describe('account', function () {
   })
 
   it('list active wallet ids', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const ids = account.activeWalletIds
@@ -112,7 +112,7 @@ describe('account', function () {
   })
 
   it('list currency plugins', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     expect(Object.keys(account.currencyConfig)).deep.equals(['testcoin'])
@@ -121,7 +121,7 @@ describe('account', function () {
   })
 
   it('change currency plugin settings', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const settings = {
@@ -138,7 +138,7 @@ describe('account', function () {
   })
 
   it('change swap plugin settings', async function () {
-    const [context] = makeFakeContexts({
+    const [context] = await makeFakeContexts({
       ...contextOptions,
       shapeshiftKey: 'fake-key',
       changellyInit: { apiKey: 'fake-key', secret: 'fake-secret' }
@@ -169,7 +169,7 @@ describe('account', function () {
   })
 
   it('disable swap plugin', async function () {
-    const [context] = makeFakeContexts({
+    const [context] = await makeFakeContexts({
       ...contextOptions,
       changellyInit: { apiKey: 'fake-key', secret: 'fake-secret' }
     })
@@ -190,7 +190,7 @@ describe('account', function () {
   })
 
   it('change key state', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.changeWalletStates({
@@ -209,7 +209,7 @@ describe('account', function () {
   })
 
   it('split wallet', async function () {
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const fakecoinWallet = account.getFirstWalletInfo('wallet:fakecoin')
@@ -244,7 +244,10 @@ describe('account', function () {
   })
 
   it('hides keys', async function () {
-    const [context] = makeFakeContexts({ ...contextOptions, hideKeys: true })
+    const [context] = await makeFakeContexts({
+      ...contextOptions,
+      hideKeys: true
+    })
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     // Sensitive properties don't work:
@@ -275,7 +278,7 @@ describe('account', function () {
 
   it('logout', async function () {
     const log = makeAssertLog()
-    const [context] = makeFakeContexts(contextOptions)
+    const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     account.watch('loggedIn', loggedIn => log(loggedIn))

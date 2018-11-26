@@ -60,9 +60,9 @@ export function makeEdgeContext (
  * Setting the `localFakeUser` context option to `true` will enable PIN
  * and offline password login for that particular context.
  */
-export function makeFakeContexts (
+export async function makeFakeContexts (
   ...opts: Array<EdgeContextOptions>
-): Array<EdgeContext> {
+): Promise<Array<EdgeContext>> {
   return makeFakeIos(opts.length).map((io, i) => {
     if (opts[i].offline) {
       // Disable network access (but leave the sync server up):
