@@ -2,6 +2,7 @@
 
 import {
   type EdgeCreateCurrencyWalletOptions,
+  type EdgeMetadata,
   type EdgeWalletInfo
 } from '../../index.js'
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
@@ -379,6 +380,12 @@ export async function splitWalletInfo (
     const signedTx = await oldWallet.signTx(tx)
     const broadcastedTx = await oldWallet.broadcastTx(signedTx)
     await oldWallet.saveTx(broadcastedTx)
+    const edgeMetadata: EdgeMetadata = {
+      name: 'Replay Protection Tx',
+      notes:
+        'This transaction is to protect your BCH wallet from unintentionally spending BSV funds. Please wait for the transaction to confirm before making additional transactions using this BCH wallet.'
+    }
+    await oldWallet.saveTxMetadata(broadcastedTx.txid, 'BCH', edgeMetadata)
   }
 
   // Add the keys to the login:
