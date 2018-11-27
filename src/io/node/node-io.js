@@ -2,7 +2,7 @@
 
 import { makeNodeFolder } from 'disklet'
 
-import { type EdgeIo } from '../../index.js'
+import { type EdgeIo } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 
 // Dynamically import platform-specific stuff:

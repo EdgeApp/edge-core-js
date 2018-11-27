@@ -5,7 +5,7 @@ import {
   type EdgeCurrencyPlugin,
   type EdgeCurrencyWallet,
   type EdgeTokenInfo
-} from '../../index.js'
+} from '../../types/types.js'
 import { type ApiInput, type RootProps } from '../root.js'
 
 export function getCurrencyInfo (

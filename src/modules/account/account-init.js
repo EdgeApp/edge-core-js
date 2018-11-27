@@ -1,6 +1,6 @@
 // @flow
 
-import { type EdgeAccount, type EdgeAccountOptions } from '../../index.js'
+import { type EdgeAccount, type EdgeAccountOptions } from '../../types/types.js'
 import { type LoginCreateOpts, makeCreateKit } from '../login/create.js'
 import {
   findFirstKey,

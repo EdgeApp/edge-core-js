@@ -3,7 +3,7 @@
 import { combinePixies, stopUpdates } from 'redux-pixies'
 import { update } from 'yaob'
 
-import { type EdgeContext } from '../../index.js'
+import { type EdgeContext } from '../../types/types.js'
 import { type ApiInput } from '../root.js'
 import { makeContextApi } from './context-api.js'
 

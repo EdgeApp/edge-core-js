@@ -7,7 +7,7 @@ import {
   type EdgeCurrencyEngine,
   type EdgeCurrencyPlugin,
   type EdgeCurrencyWallet
-} from '../../../index.js'
+} from '../../../types/types.js'
 import { type ApiInput, type RootProps } from '../../root.js'
 import {
   addStorageWallet,

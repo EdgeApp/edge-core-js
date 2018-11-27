@@ -2,7 +2,7 @@
 
 import { buildReducer, memoizeReducer } from 'redux-keto'
 
-import { type EdgeUserInfo } from '../../index.js'
+import { type EdgeUserInfo } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
 import { type RootState } from '../root-reducer.js'
 import { type LoginStash, type WalletInfoMap } from './login-types.js'

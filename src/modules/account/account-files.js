@@ -7,7 +7,7 @@ import {
   type DiskletFile,
   type EdgeWalletInfo,
   type EdgeWalletStates
-} from '../../index.js'
+} from '../../types/types.js'
 import { base16, base64 } from '../../util/encoding.js'
 import { makeKeyInfo } from '../login/keys.js'
 import { type ApiInput } from '../root.js'

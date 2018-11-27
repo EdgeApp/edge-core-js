@@ -6,7 +6,7 @@ import {
   OtpError,
   PasswordError,
   UsernameError
-} from '../../error.js'
+} from '../../types/error.js'
 import { timeout } from '../../util/promise.js'
 import { type ApiInput } from '../root.js'
 

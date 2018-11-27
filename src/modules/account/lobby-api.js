@@ -2,7 +2,7 @@
 
 import { bridgifyObject } from 'yaob'
 
-import { type EdgeLobby, type EdgeLoginRequest } from '../../index.js'
+import { type EdgeLobby, type EdgeLoginRequest } from '../../types/types.js'
 import { base64 } from '../../util/encoding.js'
 import {
   type LobbyRequest,

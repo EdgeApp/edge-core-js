@@ -13,7 +13,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeSwapPlugin,
   type EdgeSwapTools
-} from '../../index.js'
+} from '../../types/types.js'
 import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
 import { type ApiInput, type RootProps } from '../root.js'
 import {

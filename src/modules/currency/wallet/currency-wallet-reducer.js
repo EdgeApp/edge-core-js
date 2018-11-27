@@ -7,7 +7,7 @@ import {
   type EdgeCurrencyInfo,
   type EdgeTransaction,
   type EdgeWalletInfo
-} from '../../../index.js'
+} from '../../../types/types.js'
 import { type RootAction } from '../../actions.js'
 import { type RootState } from '../../root-reducer.js'
 import { getCurrencyInfo } from '../currency-selectors.js'

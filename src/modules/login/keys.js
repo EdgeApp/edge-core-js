@@ -4,7 +4,7 @@ import {
   type EdgeCreateCurrencyWalletOptions,
   type EdgeMetadata,
   type EdgeWalletInfo
-} from '../../index.js'
+} from '../../types/types.js'
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { base16, base64, utf8 } from '../../util/encoding.js'
 import { changeWalletStates } from '../account/account-files.js'
