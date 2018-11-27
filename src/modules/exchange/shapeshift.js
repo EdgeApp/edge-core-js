@@ -8,7 +8,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeSwapQuote,
   type EdgeTransaction
-} from '../../index.js'
+} from '../../types/types.js'
 import { getCurrencyMultiplier } from '../currency/currency-selectors.js'
 import { type ApiInput } from '../root.js'
 

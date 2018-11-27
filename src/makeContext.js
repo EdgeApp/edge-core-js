@@ -4,17 +4,17 @@ import { isReactNative } from 'detect-bundler'
 import { mapFiles } from 'disklet'
 import { makeLocalBridge } from 'yaob'
 
-import {
-  type EdgeContext,
-  type EdgeContextOptions,
-  type EdgeIo
-} from './index.js'
 import { makeBrowserIo } from './io/browser/browser-io.js'
 import { makeFakeIos } from './io/fake/fake-io.js'
 import { fakeStashes } from './io/fake/fakeUser.js'
 import { isNode, makeNodeIo } from './io/node/node-io.js'
 import { makeReactNativeIo } from './io/react-native/react-native-io.js'
 import { type CoreRoot, makeCoreRoot } from './modules/root.js'
+import {
+  type EdgeContext,
+  type EdgeContextOptions,
+  type EdgeIo
+} from './types/types.js'
 
 function loadStashes (root: CoreRoot, io: EdgeIo): Promise<mixed> {
   const fileArray = mapFiles(io.folder.folder('logins'), (file, name) =>

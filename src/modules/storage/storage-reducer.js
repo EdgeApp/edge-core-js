@@ -2,7 +2,7 @@
 
 import { combineReducers } from 'redux'
 
-import { type DiskletFile, type DiskletFolder } from '../../index.js'
+import { type DiskletFile, type DiskletFolder } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
 
 export type StorageWalletPaths = {

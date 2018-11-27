@@ -7,7 +7,7 @@ import {
   stopUpdates
 } from 'redux-pixies'
 
-import { type EdgeCurrencyPlugin } from '../../index.js'
+import { type EdgeCurrencyPlugin } from '../../types/types.js'
 import { type RootProps } from '../root.js'
 import {
   type CurrencyWalletOutput,

@@ -4,7 +4,7 @@ import { add, div, lte, mul, sub } from 'biggystring'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { CurrencyWalletSync } from '../../../client-side.js'
-import { SameCurrencyError } from '../../../error.js'
+import { SameCurrencyError } from '../../../types/error.js'
 import {
   type DiskletFolder,
   type EdgeBalances,
@@ -25,7 +25,7 @@ import {
   type EdgeSpendTarget,
   type EdgeTokenInfo,
   type EdgeTransaction
-} from '../../../index.js'
+} from '../../../types/types.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import {
   type ShapeShiftExactQuoteReply,

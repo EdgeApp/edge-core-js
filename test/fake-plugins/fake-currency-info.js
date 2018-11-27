@@ -1,6 +1,6 @@
 // @flow
 
-import { type EdgeCurrencyInfo } from '../../src/index.js'
+import { type EdgeCurrencyInfo } from '../../src/types/types.js'
 
 export const fakeCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:

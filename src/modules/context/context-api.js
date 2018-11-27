@@ -12,7 +12,7 @@ import {
   type EdgeLoginMessages,
   type EdgePendingEdgeLogin,
   type EdgeUserInfo
-} from '../../index.js'
+} from '../../types/types.js'
 import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'

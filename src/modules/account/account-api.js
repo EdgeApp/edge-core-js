@@ -20,7 +20,7 @@ import {
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
   type EthereumTransaction
-} from '../../index.js'
+} from '../../types/types.js'
 import { signEthereumTransaction } from '../../util/crypto/external.js'
 import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'

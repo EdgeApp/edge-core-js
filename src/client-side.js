@@ -8,7 +8,7 @@ import {
   type EdgeCurrencyInfo,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull
-} from './index.js'
+} from './types/types.js'
 
 /**
  * Client-side EdgeAccount methods.

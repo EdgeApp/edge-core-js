@@ -1,6 +1,6 @@
 // @flow
 
-import { type EdgeIo } from '../../index.js'
+import { type EdgeIo } from '../../types/types.js'
 
 export const isNode = false
 
