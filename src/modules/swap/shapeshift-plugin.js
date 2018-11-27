@@ -76,30 +76,31 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
     }
     io.console.info('shapeshift reply', replyJson)
 
-    if (!reply.ok || replyJson.error != null) {
-      // Shapeshift is not available in some parts of the world:
-      if (
-        reply.status === 403 &&
-        replyJson.error != null &&
-        replyJson.error.code === 'geoRestriction'
-      ) {
-        throw new SwapPermissionError(swapInfo, 'geoRestriction')
-      }
+    // Shapeshift is not available in some parts of the world:
+    if (
+      reply.status === 403 &&
+      replyJson != null &&
+      replyJson.error != null &&
+      replyJson.error.code === 'geoRestriction'
+    ) {
+      throw new SwapPermissionError(swapInfo, 'geoRestriction')
+    }
 
-      // Shapeshift requires KYC:
-      if (
-        reply.status === 401 &&
-        replyJson &&
-        replyJson.message === 'You must be logged in with a verified user'
-      ) {
-        throw new SwapPermissionError(swapInfo, 'noVerification')
-      }
+    // Shapeshift requires KYC:
+    if (
+      reply.status === 401 &&
+      replyJson != null &&
+      replyJson.message === 'You must be logged in with a verified user'
+    ) {
+      throw new SwapPermissionError(swapInfo, 'noVerification')
+    }
 
-      // Anything else:
+    // Anything else:
+    if (!reply.ok || (replyJson != null && replyJson.error != null)) {
       throw new Error(
         `Shapeshift ${uri} returned error code ${
           reply.status
-        } with JSON "${JSON.stringify(replyJson)}"`
+        } with JSON ${JSON.stringify(replyJson)}`
       )
     }
 

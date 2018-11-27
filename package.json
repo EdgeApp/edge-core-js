@@ -106,7 +106,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged && flow && npm test && npm run build"
+      "pre-commit": "npm run precommit"
     }
   },
   "importSort": {
