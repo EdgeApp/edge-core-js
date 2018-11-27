@@ -21,6 +21,7 @@ export {
   DustSpendError,
   errorNames,
   InsufficientFundsError,
+  SpendToSelfError,
   NetworkError,
   NoAmountSpecifiedError,
   ObsoleteApiError,
