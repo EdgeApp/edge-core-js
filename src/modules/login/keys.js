@@ -356,36 +356,44 @@ export async function splitWalletInfo (
   ) {
     const oldWallet = ai.props.output.currency.wallets[walletId].api
     if (!oldWallet) throw new Error('Missing Wallet')
-    const { publicAddress } = await oldWallet.getReceiveAddress()
-    const spendInfo = {
+
+    // Create a UTXO which can be spend only on the ABC network
+    const spendInfoSplit = {
       currencyCode: 'BCH',
       spendTargets: [
-        { nativeAmount: '0', publicAddress },
         {
-          nativeAmount: '0',
-          otherParams: {
-            script: {
-              type: 'replayProtection',
-              params: []
-            }
-          }
+          nativeAmount: '1000',
+          otherParams: { script: { type: 'replayProtection' } }
         }
       ],
       metadata: {},
-      networkFeeOption: 'standard'
+      networkFeeOption: 'high'
     }
-    const maxAmount = await oldWallet.getMaxSpendable(spendInfo)
-    spendInfo.spendTargets[0].nativeAmount = maxAmount
-    const tx = await oldWallet.makeSpend(spendInfo)
-    const signedTx = await oldWallet.signTx(tx)
-    const broadcastedTx = await oldWallet.broadcastTx(signedTx)
-    await oldWallet.saveTx(broadcastedTx)
+    const splitTx = await oldWallet.makeSpend(spendInfoSplit)
+    const signedSplitTx = await oldWallet.signTx(splitTx)
+    const broadcastedSplitTx = await oldWallet.broadcastTx(signedSplitTx)
+    await oldWallet.saveTx(broadcastedSplitTx)
+
+    // Taint the rest of the wallet using the UTXO from before
+    const { publicAddress } = await oldWallet.getReceiveAddress()
+    const spendInfoTaint = {
+      currencyCode: 'BCH',
+      spendTargets: [{ publicAddress, nativeAmount: '0' }],
+      metadata: {},
+      networkFeeOption: 'high'
+    }
+    const maxAmount = await oldWallet.getMaxSpendable(spendInfoTaint)
+    spendInfoTaint.spendTargets[0].nativeAmount = maxAmount
+    const taintTx = await oldWallet.makeSpend(spendInfoTaint)
+    const signedTaintTx = await oldWallet.signTx(taintTx)
+    const broadcastedTaintTx = await oldWallet.broadcastTx(signedTaintTx)
+    await oldWallet.saveTx(broadcastedTaintTx)
     const edgeMetadata: EdgeMetadata = {
       name: 'Replay Protection Tx',
       notes:
         'This transaction is to protect your BCH wallet from unintentionally spending BSV funds. Please wait for the transaction to confirm before making additional transactions using this BCH wallet.'
     }
-    await oldWallet.saveTxMetadata(broadcastedTx.txid, 'BCH', edgeMetadata)
+    await oldWallet.saveTxMetadata(broadcastedTaintTx.txid, 'BCH', edgeMetadata)
   }
 
   // Add the keys to the login:
