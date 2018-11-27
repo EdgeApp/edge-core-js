@@ -506,8 +506,6 @@ export type EdgeCurrencyWallet = {
   +otherMethods: Object,
 
   // Deprecated API's:
-  +folder: DiskletFolder,
-  +localFolder: DiskletFolder,
   getBalance(opts?: EdgeCurrencyCodeOptions): string,
   getBlockHeight(): number
 }
@@ -862,10 +860,6 @@ export type EdgeAccount = {
   // Swapping:
   fetchSwapCurrencies(): Promise<EdgeSwapCurrencies>,
   fetchSwapQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote>,
-
-  // Deprecated API's:
-  +folder: DiskletFolder,
-  +localFolder: DiskletFolder,
 
   // Deprecated names:
   +pluginData: EdgePluginData,

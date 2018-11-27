@@ -7,9 +7,7 @@ import { type ApiInput } from '../root.js'
 import { syncStorageWallet } from './storage-actions.js'
 import {
   getStorageWalletDisklet,
-  getStorageWalletFolder,
-  getStorageWalletLocalDisklet,
-  getStorageWalletLocalFolder
+  getStorageWalletLocalDisklet
 } from './storage-selectors.js'
 
 export function makeStorageWalletApi (
@@ -31,14 +29,6 @@ export function makeStorageWalletApi (
 
     get localDisklet (): Disklet {
       return getStorageWalletLocalDisklet(ai.props.state, id)
-    },
-
-    get folder () {
-      return getStorageWalletFolder(ai.props.state, id)
-    },
-
-    get localFolder () {
-      return getStorageWalletLocalFolder(ai.props.state, id)
     },
 
     async sync (): Promise<mixed> {

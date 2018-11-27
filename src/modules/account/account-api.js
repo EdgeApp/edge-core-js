@@ -1,6 +1,6 @@
 // @flow
 
-import { type Disklet, type DiskletFolder } from 'disklet'
+import { type Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { AccountSync } from '../../client-side.js'
@@ -336,16 +336,6 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
     },
     async fetchSwapQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote> {
       return fetchSwapQuote(ai, accountId, opts)
-    },
-
-    // Deprecated API's:
-    get folder (): DiskletFolder {
-      lockdown()
-      return storageWalletApi.folder
-    },
-    get localFolder (): DiskletFolder {
-      lockdown()
-      return storageWalletApi.localFolder
     },
 
     // Deprecated names:

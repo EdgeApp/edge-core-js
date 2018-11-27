@@ -1,7 +1,7 @@
 // @flow
 
 import { add, div, lte, mul, sub } from 'biggystring'
-import { type Disklet, type DiskletFolder } from 'disklet'
+import { type Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { CurrencyWalletSync } from '../../../client-side.js'
@@ -591,12 +591,6 @@ export function makeCurrencyWalletApi (
     otherMethods,
 
     // Deprecated API's:
-    get folder (): DiskletFolder {
-      return storageWalletApi.folder
-    },
-    get localFolder (): DiskletFolder {
-      return storageWalletApi.localFolder
-    },
     getBalance: CurrencyWalletSync.prototype.getBalance,
     getBlockHeight: CurrencyWalletSync.prototype.getBlockHeight,
     getDisplayPrivateSeed: CurrencyWalletSync.prototype.getDisplayPrivateSeed,
