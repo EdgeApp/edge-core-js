@@ -245,30 +245,37 @@ export function makeCurrencyWalletApi (
           break
         }
       }
-      const slicedTransactions = slice
-        ? sortedTransactions.slice(startIndex, startIndex + startEntries)
-        : sortedTransactions
-      const missingTxIdHashes = slicedTransactions.filter(
-        txidHash => !files[txidHash]
-      )
-      const missingFiles = await loadTxFiles(input, missingTxIdHashes)
-      Object.assign(files, missingFiles)
 
-      const out: Array<EdgeTransaction> = []
-      for (const txidHash of slicedTransactions) {
-        const file = files[txidHash]
-        const tx = txs[file.txid]
-        // Skip irrelevant transactions:
-        if (
-          !tx ||
-          (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
-        ) {
-          continue
+      const getBulkTx = async (index: number, entries: number, out: any) => {
+        if (out.length === startEntries || index > sortedTransactions.length) return out
+        const slicedTransactions = slice
+          ? sortedTransactions.slice(index, index + entries)
+          : sortedTransactions
+
+        const missingTxIdHashes = slicedTransactions.filter(
+          txidHash => !files[txidHash]
+        )
+
+        const missingFiles = await loadTxFiles(input, missingTxIdHashes)
+        Object.assign(files, missingFiles)
+
+        for (const txidHash of slicedTransactions) {
+          const file = files[txidHash]
+          const tx = txs[file.txid]
+          // Skip irrelevant transactions:
+          if (
+            !tx ||
+            (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
+          ) {
+            continue
+          }
+          out.push(combineTxWithFile(input, tx, file, currencyCode))
         }
-
-        out.push(combineTxWithFile(input, tx, file, currencyCode))
+        const res = await getBulkTx(index + entries, entries - out.length, out)
+        return res
       }
 
+      const out: Array<EdgeTransaction> = await getBulkTx(startIndex, startEntries, [])
       return out
     },
 
