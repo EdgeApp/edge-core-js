@@ -317,10 +317,9 @@ async function updatePluginUserSettings (
     if (pluginName == null || plugin.pluginName === pluginName) {
       // Update currency plugin:
       if (plugin.changeSettings != null) {
-        const promise = plugin
+        plugin
           .changeSettings(userSettings[plugin.pluginName])
           .catch(e => ai.props.onError(e))
-        promises.push(promise)
       }
     }
 
