@@ -1,6 +1,6 @@
 // @flow
 
-import { Bridgeable } from 'yaob'
+import { Bridgeable, bridgifyObject } from 'yaob'
 
 import {
   type EdgeCurrencyConfig,
@@ -25,11 +25,21 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   _accountId: string
   _plugin: EdgeCurrencyPlugin
 
+  otherMethods: Object
+
   constructor (ai: ApiInput, accountId: string, plugin: EdgeCurrencyPlugin) {
     super()
     this._ai = ai
     this._accountId = accountId
     this._plugin = plugin
+
+    const { otherMethods } = plugin
+    if (otherMethods != null) {
+      bridgifyObject(otherMethods)
+      this.otherMethods = otherMethods
+    } else {
+      this.otherMethods = {}
+    }
   }
 
   get currencyInfo (): EdgeCurrencyInfo {
