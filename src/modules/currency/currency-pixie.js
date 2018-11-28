@@ -26,12 +26,12 @@ export const currency = combinePixies({
       const opts = { io: props.io }
       const promises: Array<Promise<EdgeCurrencyPlugin>> = []
       for (const plugin of props.plugins) {
-        if (plugin.pluginType === 'currency') {
-          try {
+        try {
+          if (plugin.pluginType === 'currency') {
             promises.push(plugin.makePlugin(opts))
-          } catch (e) {
-            promises.push(Promise.reject(e))
           }
+        } catch (e) {
+          promises.push(Promise.reject(e))
         }
       }
 

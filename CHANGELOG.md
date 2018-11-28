@@ -1,5 +1,16 @@
 # edge-core-js
 
+## 0.12.20
+
+* Fix the splitting/replayProtection from bcash to bitcoinsh
+* Some flow fixes
+* Add metadata to replay protection transactions
+* Do not await on `reloadPluginSettings`, This prevents network roundtrips from blocking login. Upwards of 30s saved on really slow networks.
+
+## 0.12.19
+
+* When splitting from bcash to bitcoinsv, preform a maxSpend to self to have replay protaction before splitting the wallet
+
 ## 0.12.18
 
 * Fix detecting and throwing of ShapeShift errors due to geo location or unverified accounts

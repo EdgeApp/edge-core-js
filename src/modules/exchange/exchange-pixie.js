@@ -12,7 +12,7 @@ export type ExchangeOutput = {
 
 export const exchange = combinePixies({
   plugins (input: PixieInput<RootProps>) {
-    return (props: RootProps): mixed => {
+    return async (props: RootProps): mixed => {
       const opts = { io: props.io }
       const promises: Array<Promise<EdgeExchangePlugin>> = []
       for (const plugin of props.plugins) {
@@ -21,7 +21,7 @@ export const exchange = combinePixies({
         }
       }
 
-      Promise.all(promises).then(plugins => input.onOutput(plugins))
+      await Promise.all(promises).then(plugins => input.onOutput(plugins))
       return stopUpdates
     }
   },

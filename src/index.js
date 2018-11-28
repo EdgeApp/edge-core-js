@@ -384,7 +384,9 @@ export type EdgeCurrencyEngine = {
   ) => Promise<EdgePaymentProtocolInfo>,
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
-  getTxids?: () => EdgeTxidMap
+  getTxids?: () => EdgeTxidMap,
+
+  +otherMethods?: Object
 }
 
 // currency plugin -----------------------------------------------------
@@ -409,7 +411,9 @@ export type EdgeCurrencyPlugin = {
   parseUri(uri: string): EdgeParsedUri | Promise<EdgeParsedUri>,
   encodeUri(obj: EdgeEncodeUri): string | Promise<string>,
   +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
-  +changeSettings?: (settings: Object) => Promise<mixed>
+  +changeSettings?: (settings: Object) => Promise<mixed>,
+
+  +otherMethods?: Object
 }
 
 export type EdgeCurrencyPluginFactory = {
@@ -531,6 +535,8 @@ export type EdgeCurrencyWallet = {
   // URI handling:
   parseUri(uri: string): Promise<EdgeParsedUri>,
   encodeUri(obj: EdgeEncodeUri): Promise<string>,
+
+  +otherMethods: Object,
 
   // Deprecated API's:
   getBalance(opts?: EdgeCurrencyCodeOptions): string,
@@ -668,6 +674,7 @@ export type EdgeCurrencyConfig = {
   +watch: Subscriber<EdgeCurrencyConfig>,
 
   +currencyInfo: EdgeCurrencyInfo,
+  +otherMethods: Object,
   +userSettings: Object,
 
   changeUserSettings(settings: Object): Promise<mixed>,
