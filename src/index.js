@@ -686,7 +686,7 @@ export type EdgeCurrencyConfig = {
   changePluginSettings(settings: Object): Promise<mixed>
 }
 
-export type EthererumTransaction = {
+export type EthereumTransaction = {
   chainId: number, // Not part of raw data, but needed for signing
   nonce: string,
   gasPrice: string,
@@ -887,7 +887,7 @@ export type EdgeAccount = {
   // Web compatibility:
   signEthereumTransaction(
     walletId: string,
-    transaction: EthererumTransaction
+    transaction: EthereumTransaction
   ): Promise<string>,
 
   // Swapping:
