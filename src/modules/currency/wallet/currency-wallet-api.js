@@ -245,32 +245,35 @@ export function makeCurrencyWalletApi (
           break
         }
       }
-
+      // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
+      // slice, verify txs in files, if some are dropped and missing, do it again recursively
       const getBulkTx = async (index: number, entries: number, out: any) => {
-        if (out.length === startEntries || index > sortedTransactions.length) return out
+        if (out.length === startEntries || index >= sortedTransactions.length) return out
         const slicedTransactions = slice
           ? sortedTransactions.slice(index, index + entries)
           : sortedTransactions
-
+        // filter the missing files
         const missingTxIdHashes = slicedTransactions.filter(
           txidHash => !files[txidHash]
         )
-
+        // load files into state
         const missingFiles = await loadTxFiles(input, missingTxIdHashes)
         Object.assign(files, missingFiles)
 
         for (const txidHash of slicedTransactions) {
           const file = files[txidHash]
           const tx = txs[file.txid]
-          // Skip irrelevant transactions:
+          // skip irrelevant transactions - txs that are not in the files (dropped)
           if (
             !tx ||
             (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
           ) {
+            console.log('continue')
             continue
           }
           out.push(combineTxWithFile(input, tx, file, currencyCode))
         }
+        // continue until the required tx number loaded
         const res = await getBulkTx(index + entries, entries - out.length, out)
         return res
       }
