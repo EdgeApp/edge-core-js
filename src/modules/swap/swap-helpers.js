@@ -4,7 +4,7 @@ import {
   type EdgeSwapPluginQuote,
   type EdgeSwapQuoteOptions,
   type EdgeTransaction
-} from '../../index.js'
+} from '../../types/types.js'
 
 export function makeSwapPluginQuote (
   opts: EdgeSwapQuoteOptions,

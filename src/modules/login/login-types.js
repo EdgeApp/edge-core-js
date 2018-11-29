@@ -1,6 +1,6 @@
 // @flow
 
-import { type EdgeWalletInfo } from '../../index.js'
+import { type EdgeWalletInfo } from '../../types/types.js'
 import { type JsonBox } from '../../util/crypto/crypto.js'
 import { type JsonSnrp } from '../scrypt/scrypt-pixie.js'
 

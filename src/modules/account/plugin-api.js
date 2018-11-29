@@ -8,7 +8,7 @@ import {
   type EdgeCurrencyPlugin,
   type EdgeSwapConfig,
   type EdgeSwapInfo
-} from '../../index.js'
+} from '../../types/types.js'
 import { deprecate } from '../../util/deprecate.js'
 import { type ApiInput } from '../root.js'
 import {

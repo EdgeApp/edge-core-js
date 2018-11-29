@@ -19,8 +19,8 @@ import {
   type EdgeSwapQuoteOptions,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
-  type EthererumTransaction
-} from '../../index.js'
+  type EthereumTransaction
+} from '../../types/types.js'
 import { signEthereumTransaction } from '../../util/crypto/external.js'
 import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
@@ -320,7 +320,7 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
 
     async signEthereumTransaction (
       walletId: string,
-      transaction: EthererumTransaction
+      transaction: EthereumTransaction
     ): Promise<string> {
       console.log('Edge is signing: ', transaction)
       const { allWalletInfosFull } = selfState()

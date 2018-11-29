@@ -2,7 +2,7 @@
 
 import aesjs from 'aes-js'
 
-import { type EdgeIo } from '../../index.js'
+import { type EdgeIo } from '../../types/types.js'
 import { base16, base64 } from '../encoding.js'
 import { hashjs } from './external.js'
 

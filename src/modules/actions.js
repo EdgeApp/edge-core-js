@@ -8,7 +8,7 @@ import {
   type EdgeTokenInfo,
   type EdgeWalletInfo,
   type EdgeWalletStates
-} from '../index.js'
+} from '../types/types.js'
 import { type PluginMap, type SwapSettings } from './account/account-reducer.js'
 import {
   type TxFileJsons,

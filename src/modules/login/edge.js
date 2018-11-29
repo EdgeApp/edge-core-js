@@ -5,7 +5,7 @@ import { Bridgeable, close, emit } from 'yaob'
 import {
   type EdgeEdgeLoginOptions,
   type EdgePendingEdgeLogin
-} from '../../index.js'
+} from '../../types/types.js'
 import { base58, base64 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { type ApiInput } from '../root.js'

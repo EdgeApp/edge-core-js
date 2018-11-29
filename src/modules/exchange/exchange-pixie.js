@@ -2,7 +2,7 @@
 
 import { type PixieInput, combinePixies, stopUpdates } from 'redux-pixies'
 
-import { type EdgeExchangePlugin } from '../../index.js'
+import { type EdgeExchangePlugin } from '../../types/types.js'
 import { type RootProps } from '../root.js'
 import { type ExchangePair } from './exchange-reducer.js'
 

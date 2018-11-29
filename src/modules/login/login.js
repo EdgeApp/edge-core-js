@@ -3,7 +3,7 @@
  */
 // @flow
 
-import { type EdgeLoginMessages } from '../../index.js'
+import { type EdgeLoginMessages } from '../../types/types.js'
 import { decrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { base64, utf8 } from '../../util/encoding.js'
