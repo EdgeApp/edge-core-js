@@ -274,7 +274,6 @@ export function makeCurrencyWalletApi (
             !tx ||
             (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
           ) {
-            console.log('continue')
             continue
           }
           out.push(combineTxWithFile(input, tx, file, currencyCode))
