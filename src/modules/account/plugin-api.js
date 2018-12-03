@@ -9,7 +9,6 @@ import {
   type EdgeSwapConfig,
   type EdgeSwapInfo
 } from '../../types/types.js'
-import { deprecate } from '../../util/deprecate.js'
 import { type ApiInput } from '../root.js'
 import {
   changePluginUserSettings,
@@ -58,22 +57,6 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
       this._plugin.pluginName,
       settings
     )
-  }
-
-  // Deprecated names:
-  get settings (): Object {
-    return this.userSettings
-  }
-  get pluginSettings (): Object {
-    return this.userSettings
-  }
-  async changeSettings (settings: Object): Promise<mixed> {
-    deprecate('changeSettings', 'changeUserSettings')
-    return this.changeUserSettings(settings)
-  }
-  async changePluginSettings (settings: Object): Promise<mixed> {
-    deprecate('changePluginSettings', 'changeUserSettings')
-    return this.changeUserSettings(settings)
   }
 }
 
@@ -124,17 +107,5 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
       this._pluginName,
       settings
     )
-  }
-
-  // Deprecated names:
-  get exchangeInfo (): EdgeSwapInfo {
-    return this.swapInfo
-  }
-  get settings (): Object {
-    return this.userSettings
-  }
-  async changeSettings (settings: Object): Promise<mixed> {
-    deprecate('changeSettings', 'changeUserSettings')
-    return this.changeUserSettings(settings)
   }
 }

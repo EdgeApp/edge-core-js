@@ -43,10 +43,7 @@ export async function fetchSwapCurrencies (
   const out: EdgeSwapCurrencies = {}
   for (const { currencies, pluginName } of results) {
     for (const cc of currencies) {
-      if (out[cc] == null) {
-        const pluginNames = []
-        out[cc] = { pluginNames, exchanges: pluginNames }
-      }
+      if (out[cc] == null) out[cc] = { pluginNames: [] }
       out[cc].pluginNames.push(pluginName)
     }
   }
@@ -93,11 +90,7 @@ export async function fetchSwapQuote (
         quoteUri = swapInfo.quoteUri + bestQuote.quoteId
       }
 
-      const out: EdgeSwapQuote = {
-        ...bestQuote,
-        quoteUri,
-        exchangeService: bestQuote.pluginName // Deprecated
-      }
+      const out: EdgeSwapQuote = { ...bestQuote, quoteUri }
       bridgifyObject(out)
 
       return out

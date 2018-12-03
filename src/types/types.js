@@ -389,16 +389,6 @@ export type EdgeCurrencyPluginFactory = {
 
 // wallet --------------------------------------------------------------
 
-export type EdgeCoinExchangeQuote = {
-  depositAmountNative: string,
-  withdrawalAmountNative: string,
-  expiration: number, // this is in milliseconds since 1970/ it is a date.
-  quotedRate: string,
-  maxLimit: number,
-  orderId: string,
-  edgeTransacton: EdgeTransaction
-}
-
 export type EdgeBalances = { [currencyCode: string]: string }
 
 export type EdgeReceiveAddress = EdgeFreshAddress & {
@@ -482,7 +472,6 @@ export type EdgeCurrencyWallet = {
     metadata: EdgeMetadata
   ): Promise<mixed>,
   getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
-  getQuote(spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote>,
   getPaymentProtocolInfo(
     paymentProtocolUrl: string
   ): Promise<EdgePaymentProtocolInfo>,
@@ -642,13 +631,7 @@ export type EdgeCurrencyConfig = {
   +otherMethods: Object,
   +userSettings: Object,
 
-  changeUserSettings(settings: Object): Promise<mixed>,
-
-  // Deprecated names:
-  +settings: Object, // userSettings
-  +pluginSettings: Object, // userSettings
-  changeSettings(settings: Object): Promise<mixed>,
-  changePluginSettings(settings: Object): Promise<mixed>
+  changeUserSettings(settings: Object): Promise<mixed>
 }
 
 export type EthereumTransaction = {
@@ -678,7 +661,7 @@ export type EdgeRateCache = {
     fromCurrency: string,
     toCurrency: string,
     amount: number
-  ): number
+  ): Promise<number>
 }
 
 // swap ----------------------------------------------------------------
@@ -695,28 +678,18 @@ export type EdgeSwapConfig = {
   +userSettings: Object,
 
   changeEnabled(enabled: boolean): Promise<mixed>,
-  changeUserSettings(settings: Object): Promise<mixed>,
-
-  // Deprecated names:
-  +exchangeInfo: Object, // swapInfo
-  +settings: Object, // userSettings
-  changeSettings(settings: Object): Promise<mixed>
+  changeUserSettings(settings: Object): Promise<mixed>
 }
 
 // Currencies supported by various swap plugins:
 export type EdgeSwapCurrencies = {
   [currencyCode: string]: {
-    pluginNames: Array<string>,
-    // Deprecated:
-    exchanges: Array<string> // pluginNames
+    pluginNames: Array<string>
   }
 }
 
 export type EdgeSwapQuote = EdgeSwapPluginQuote & {
-  +quoteUri?: string,
-
-  // Deprecated names:
-  +exchangeService: string // pluginName
+  +quoteUri?: string
 }
 
 // edge login ----------------------------------------------------------
@@ -898,15 +871,6 @@ export type EdgeContextOptions = {
   tempNoBridge$?: boolean
 }
 
-// deprecated ----------------------------------------------------------
-
-export type EdgeExchangeSwapInfo = {
-  rate: number,
-  nativeMin: string,
-  nativeMax: string,
-  minerFee: string
-}
-
 // parameters ----------------------------------------------------------
 
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
@@ -1017,18 +981,7 @@ export type EdgeContext = {
 
   // OTP stuff:
   requestOtpReset(username: string, otpResetToken: string): Promise<Date>,
-  fetchLoginMessages(): Promise<EdgeLoginMessages>,
-
-  // Shapeshift:
-  getExchangeSwapRate(
-    fromCurrencyCode: string,
-    toCurrencyCode: string
-  ): Promise<number>,
-  getExchangeSwapInfo(
-    fromCurrencyCode: string,
-    toCurrencyCode: string
-  ): Promise<EdgeExchangeSwapInfo>,
-  getAvailableExchangeTokens(): Promise<Array<string>>
+  fetchLoginMessages(): Promise<EdgeLoginMessages>
 }
 
 // ---------------------------------------------------------------------
@@ -1046,7 +999,6 @@ export type {
   EdgeContextCallbacks as AbcContextCallbacks,
   EdgeContextOptions as AbcContextOptions,
   EdgeContext as AbcContext,
-  EdgeExchangeSwapInfo as AbcExchangeSwapInfo,
   EdgePasswordRules as AbcPasswordRules,
   EdgePendingEdgeLogin as AbcEdgeLoginRequest,
   EdgeEdgeLoginOptions as AbcEdgeLoginOptions,
@@ -1088,14 +1040,5 @@ export type {
   EdgeContextOptions as AbcMakeContextOpts,
   EdgeCurrencyEngineOptions as AbcMakeEngineOptions,
   EdgeCurrencyEngineCallbacks as AbcCurrencyPluginCallbacks,
-  EdgePendingEdgeLogin as EdgeEdgeLoginRequest,
-  // Deprecated names:
-  EdgeCurrencyConfig as EdgeCurrencyTools,
-  EdgeRateCache as EdgeExchangeCache,
-  EdgeSwapConfig as EdgeExchangeTools,
-  EdgeSwapCurrencies as EdgeExchangeCurrencies,
-  EdgeSwapQuote as EdgeExchangeQuote,
-  EdgeSwapQuoteOptions as EdgeExchangeQuoteOptions
+  EdgePendingEdgeLogin as EdgeEdgeLoginRequest
 }
-
-export type EdgeCurrencyToolsMap = { [pluginName: string]: EdgeCurrencyConfig }
