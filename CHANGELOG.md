@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.12.21
+
+* Fixed an issue with `wallet.getTransactions()` that sometimes it wouldn't return the oldest transactions.
+* Small cleanups and type fixes
+
 ## 0.12.20
 
 * Fix the splitting/replayProtection from bcash to bitcoinsh
