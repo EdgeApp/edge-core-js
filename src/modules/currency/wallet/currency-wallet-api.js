@@ -251,30 +251,40 @@ export function makeCurrencyWalletApi (
           break
         }
       }
-      const slicedTransactions = slice
-        ? sortedTransactions.slice(startIndex, startIndex + startEntries)
-        : sortedTransactions
-      const missingTxIdHashes = slicedTransactions.filter(
-        txidHash => !files[txidHash]
-      )
-      const missingFiles = await loadTxFiles(input, missingTxIdHashes)
-      Object.assign(files, missingFiles)
+      // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
+      // slice, verify txs in files, if some are dropped and missing, do it again recursively
+      const getBulkTx = async (index: number, out: any = []) => {
+        if (out.length === startEntries || index >= sortedTransactions.length) return out
+        const entriesLeft = startEntries - out.length
+        const slicedTransactions = slice
+          ? sortedTransactions.slice(index, index + entriesLeft)
+          : sortedTransactions
+        // filter the missing files
+        const missingTxIdHashes = slicedTransactions.filter(
+          txidHash => !files[txidHash]
+        )
+        // load files into state
+        const missingFiles = await loadTxFiles(input, missingTxIdHashes)
+        Object.assign(files, missingFiles)
 
-      const out: Array<EdgeTransaction> = []
-      for (const txidHash of slicedTransactions) {
-        const file = files[txidHash]
-        const tx = txs[file.txid]
-        // Skip irrelevant transactions:
-        if (
-          !tx ||
-          (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
-        ) {
-          continue
+        for (const txidHash of slicedTransactions) {
+          const file = files[txidHash]
+          const tx = txs[file.txid]
+          // skip irrelevant transactions - txs that are not in the files (dropped)
+          if (
+            !tx ||
+            (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
+          ) {
+            continue
+          }
+          out.push(combineTxWithFile(input, tx, file, currencyCode))
         }
-
-        out.push(combineTxWithFile(input, tx, file, currencyCode))
+        // continue until the required tx number loaded
+        const res = await getBulkTx(index + entriesLeft, out)
+        return res
       }
 
+      const out: Array<EdgeTransaction> = await getBulkTx(startIndex)
       return out
     },
 
