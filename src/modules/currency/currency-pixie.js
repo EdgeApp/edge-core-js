@@ -1,5 +1,6 @@
 // @flow
 
+import { downgradeDisklet } from 'disklet'
 import {
   type PixieInput,
   combinePixies,
@@ -23,11 +24,13 @@ export type CurrencyOutput = {
 export const currency = combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): mixed => {
-      const opts = { io: props.io }
       const promises: Array<Promise<EdgeCurrencyPlugin>> = []
       for (const plugin of props.plugins) {
         try {
           if (plugin.pluginType === 'currency') {
+            const opts = {
+              io: { ...props.io, folder: downgradeDisklet(props.io.disklet) }
+            }
             promises.push(plugin.makePlugin(opts))
           }
         } catch (e) {

@@ -1,11 +1,11 @@
 // @flow
 
 import { add, div, lte, mul, sub } from 'biggystring'
+import { type Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { CurrencyWalletSync } from '../../../client-side.js'
 import {
-  type DiskletFolder,
   type EdgeBalances,
   type EdgeCurrencyCodeOptions,
   type EdgeCurrencyEngine,
@@ -92,11 +92,11 @@ export function makeCurrencyWalletApi (
       lockdown()
       return storageWalletApi.keys
     },
-    get folder (): DiskletFolder {
-      return storageWalletApi.folder
+    get disklet (): Disklet {
+      return storageWalletApi.disklet
     },
-    get localFolder (): DiskletFolder {
-      return storageWalletApi.localFolder
+    get localDisklet (): Disklet {
+      return storageWalletApi.localDisklet
     },
     async sync (): Promise<mixed> {
       return storageWalletApi.sync()

@@ -1,6 +1,6 @@
 // @flow
 
-import { makeNodeFolder } from 'disklet'
+import { makeNodeDisklet } from 'disklet'
 
 import { type EdgeIo } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
@@ -46,7 +46,7 @@ export function makeNodeIo (path: string): EdgeIo {
 
     // Local io:
     console,
-    folder: makeNodeFolder(path),
+    disklet: makeNodeDisklet(path),
 
     // Networking:
     fetch,

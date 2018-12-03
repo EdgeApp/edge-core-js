@@ -1,10 +1,10 @@
 // @flow
 
+import { type Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { AccountSync } from '../../client-side.js'
 import {
-  type DiskletFolder,
   type EdgeAccount,
   type EdgeCreateCurrencyWalletOptions,
   type EdgeCurrencyConfig,
@@ -98,13 +98,13 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
       lockdown()
       return storageWalletApi.keys
     },
-    get folder (): DiskletFolder {
+    get disklet (): Disklet {
       lockdown()
-      return storageWalletApi.folder
+      return storageWalletApi.disklet
     },
-    get localFolder (): DiskletFolder {
+    get localDisklet (): Disklet {
       lockdown()
-      return storageWalletApi.localFolder
+      return storageWalletApi.localDisklet
     },
     async sync (): Promise<mixed> {
       return storageWalletApi.sync()

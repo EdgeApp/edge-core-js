@@ -1,5 +1,6 @@
 // @flow
 
+import { downgradeDisklet } from 'disklet'
 import { type PixieInput, combinePixies, stopUpdates } from 'redux-pixies'
 import { update } from 'yaob'
 
@@ -14,8 +15,8 @@ import {
   syncStorageWallet
 } from '../../storage/storage-actions.js'
 import {
-  getStorageWalletLocalFolder,
-  makeStorageWalletLocalEncryptedFolder
+  getStorageWalletLocalDisklet,
+  makeStorageWalletLocalEncryptedDisklet
 } from '../../storage/storage-selectors.js'
 import { getCurrencyPlugin } from '../currency-selectors.js'
 import { makeCurrencyWalletApi } from './currency-wallet-api.js'
@@ -72,12 +73,22 @@ export const walletPixie = combinePixies({
       await addStorageWallet(ai, walletInfo)
       const { state } = input.props
 
+      const walletLocalDisklet = getStorageWalletLocalDisklet(
+        state,
+        walletInfo.id
+      )
+      const walletLocalEncryptedDisklet = makeStorageWalletLocalEncryptedDisklet(
+        state,
+        walletInfo.id,
+        input.props.io
+      )
+
       const engine = await plugin.makeEngine(walletInfo, {
-        walletLocalFolder: getStorageWalletLocalFolder(state, walletInfo.id),
-        walletLocalEncryptedFolder: makeStorageWalletLocalEncryptedFolder(
-          state,
-          walletInfo.id,
-          input.props.io
+        walletLocalDisklet,
+        walletLocalEncryptedDisklet,
+        walletLocalFolder: downgradeDisklet(walletLocalDisklet),
+        walletLocalEncryptedFolder: downgradeDisklet(
+          walletLocalEncryptedDisklet
         ),
         callbacks: makeCurrencyWalletCallbacks(input)
       })

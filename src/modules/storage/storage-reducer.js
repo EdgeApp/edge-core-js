@@ -1,17 +1,18 @@
 // @flow
 
+import { type Disklet } from 'disklet'
 import { combineReducers } from 'redux'
 
-import { type DiskletFile, type DiskletFolder } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
 
 export type StorageWalletPaths = {
   dataKey: Uint8Array,
   syncKey: Uint8Array,
-  changesFolder: DiskletFolder,
-  dataFolder: DiskletFolder,
-  folder: DiskletFolder,
-  statusFile: DiskletFile
+
+  baseDisklet: Disklet,
+  changesDisklet: Disklet,
+  dataDisklet: Disklet,
+  disklet: Disklet
 }
 
 export type StorageWalletStatus = {
@@ -21,7 +22,7 @@ export type StorageWalletStatus = {
 
 export type StorageWalletState = {
   lastChanges: Array<string>,
-  localFolder: DiskletFolder,
+  localDisklet: Disklet,
   paths: StorageWalletPaths,
   status: StorageWalletStatus
 }
@@ -40,7 +41,7 @@ const storageWalletReducer = combineReducers({
     return state
   },
 
-  localFolder (state: any = null): DiskletFolder {
+  localDisklet (state: any = null): Disklet {
     return state
   },
 

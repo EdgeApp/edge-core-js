@@ -1,6 +1,7 @@
 // @flow
 
 import { assert } from 'chai'
+import { downgradeDisklet } from 'disklet'
 import { describe, it } from 'mocha'
 
 import { fakeUser, makeFakeIos } from '../../../src/index.js'
@@ -28,7 +29,7 @@ describe('repo', function () {
       "data_base64": "lykLWi2MUBbcrdbbo2cZ9Q97aVohe6LZUihp7xfr1neAMj8mr0l9MP1ElteAzG4GG1FmjSsptajr6I2sNc5Kmw=="
     }`
 
-    await io.folder
+    await downgradeDisklet(io.disklet)
       .folder('repos')
       .folder('GkVrxd1EmZpU6SkEwfo3911t1WjwBDW3tdrKd7QUDvvN')
       .folder('changes')
@@ -36,21 +37,17 @@ describe('repo', function () {
       .file('b.json')
       .setText(box)
 
-    const text = await paths.folder
-      .folder('a')
-      .file('b.json')
-      .getText()
+    const text = await paths.disklet.getText('a/b.json')
     assert.equal(text, payload)
   })
 
   it('offline set/get', async function () {
     const [io] = makeFakeIos(1)
-    const { folder } = makeRepoPaths(io, fakeRepoInfo)
-    const file = folder.file('b.txt')
+    const { disklet } = makeRepoPaths(io, fakeRepoInfo)
     const payload = 'Test data'
 
-    await file.setText(payload)
-    const text = await file.getText()
+    await disklet.setText('b.txt', payload)
+    const text = await disklet.getText('b.txt')
     assert.equal(text, payload)
   })
 
@@ -62,16 +59,10 @@ describe('repo', function () {
     const payload = 'Test data'
 
     const dummyStatus = { lastSync: 0, lastHash: void 0 }
-    await paths1.folder
-      .folder('a')
-      .file('b.json')
-      .setText(payload)
+    await paths1.disklet.setText('a/b.json', payload)
     await syncRepo(io1, paths1, dummyStatus).then(changed => assert(changed))
     await syncRepo(io2, paths2, dummyStatus).then(changed => assert(changed))
-    const text = await paths2.folder
-      .folder('a')
-      .file('b.json')
-      .getText()
+    const text = await paths2.disklet.getText('a/b.json')
     assert.equal(text, payload)
   })
 })

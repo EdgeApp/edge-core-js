@@ -1962,10 +1962,10 @@ dir-glob@^2.0.0:
     arrify "^1.0.1"
     path-type "^3.0.0"
 
-disklet@^0.2.8:
-  version "0.2.8"
-  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.2.8.tgz#725d700bcd1970bc7be87a2b9388c50d591e0f0a"
-  integrity sha512-CYhtxPszSN5dP3rCBVKfYohqOoZgDxaruLp8zDpuJk+C6AwdlHPfnXqAnhtFvkm4dXYftuEWB7pvf40jYhfVyA==
+disklet@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.3.0.tgz#53a9e6af7e8c780050b292e7da79022b0b2e555a"
+  integrity sha512-ZpV1wcs+tqbZWv/etoOhLQ44Ln+21Q+f/adZh1+HNZ9aew5IgVgbQlgqzECKM04WSjgWkjdXT/rwjJOVYqMe0g==
   dependencies:
     rfc4648 "^0.9.1"
 

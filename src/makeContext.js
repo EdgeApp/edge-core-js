@@ -1,7 +1,7 @@
 // @flow
 
 import { isReactNative } from 'detect-bundler'
-import { mapFiles } from 'disklet'
+import { downgradeDisklet, mapFiles } from 'disklet'
 import { makeLocalBridge } from 'yaob'
 
 import { makeBrowserIo } from './io/browser/browser-io.js'
@@ -17,7 +17,8 @@ import {
 } from './types/types.js'
 
 function loadStashes (root: CoreRoot, io: EdgeIo): Promise<mixed> {
-  const fileArray = mapFiles(io.folder.folder('logins'), (file, name) =>
+  const folder = downgradeDisklet(io.disklet)
+  const fileArray = mapFiles(folder.folder('logins'), (file, name) =>
     file
       .getText()
       .then(text => ({ name, json: JSON.parse(text) }))

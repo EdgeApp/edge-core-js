@@ -1,10 +1,12 @@
 // @flow
 
+import { type Disklet, type DiskletFolder, downgradeDisklet } from 'disklet'
+
 import { type EdgeIo } from '../../types/types.js'
 import { hmacSha256 } from '../../util/crypto/crypto.js'
 import { base58, utf8 } from '../../util/encoding.js'
 import { type RootState } from '../root-reducer.js'
-import { RepoFolder } from './repoFolder.js'
+import { encryptDisklet } from './encrypt-disklet.js'
 
 export function getStorageWalletLastChanges (
   state: RootState,
@@ -13,26 +15,29 @@ export function getStorageWalletLastChanges (
   return state.storageWallets[walletId].lastChanges
 }
 
-export function getStorageWalletFolder (state: RootState, walletId: string) {
-  return state.storageWallets[walletId].paths.folder
-}
-
-export function getStorageWalletLocalFolder (
+export function getStorageWalletDisklet (
   state: RootState,
   walletId: string
-) {
-  return state.storageWallets[walletId].localFolder
+): Disklet {
+  return state.storageWallets[walletId].paths.disklet
 }
 
-export function makeStorageWalletLocalEncryptedFolder (
+export function getStorageWalletLocalDisklet (
+  state: RootState,
+  walletId: string
+): Disklet {
+  return state.storageWallets[walletId].localDisklet
+}
+
+export function makeStorageWalletLocalEncryptedDisklet (
   state: RootState,
   walletId: string,
   io: EdgeIo
-) {
-  return new RepoFolder(
+): Disklet {
+  return encryptDisklet(
     io,
     state.storageWallets[walletId].paths.dataKey,
-    state.storageWallets[walletId].localFolder
+    state.storageWallets[walletId].localDisklet
   )
 }
 
@@ -43,4 +48,20 @@ export function hashStorageWalletFilename (
 ) {
   const dataKey = state.storageWallets[walletId].paths.dataKey
   return base58.stringify(hmacSha256(utf8.parse(data), dataKey))
+}
+
+// deprecated:
+
+export function getStorageWalletFolder (
+  state: RootState,
+  walletId: string
+): DiskletFolder {
+  return downgradeDisklet(state.storageWallets[walletId].paths.disklet)
+}
+
+export function getStorageWalletLocalFolder (
+  state: RootState,
+  walletId: string
+): DiskletFolder {
+  return downgradeDisklet(state.storageWallets[walletId].localDisklet)
 }

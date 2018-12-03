@@ -1,13 +1,11 @@
 // @flow
 
-import { type ArrayLike, type DiskletFile, type DiskletFolder } from 'disklet'
+import { type Disklet, type DiskletFolder } from 'disklet'
 import { type Subscriber } from 'yaob'
 
 // ---------------------------------------------------------------------
 // io types
 // ---------------------------------------------------------------------
-
-export type { ArrayLike, DiskletFile, DiskletFolder }
 
 // Node.js randomBytes function:
 export type EdgeRandomFunction = (bytes: number) => Uint8Array
@@ -70,7 +68,7 @@ export type EdgeIo = {
 
   // Local io:
   +console: EdgeConsole,
-  +folder: DiskletFolder,
+  +disklet: Disklet,
 
   // Networking:
   +fetch: typeof fetch,
@@ -312,9 +310,13 @@ export type EdgeCurrencyEngineCallbacks = {
 
 export type EdgeCurrencyEngineOptions = {
   callbacks: EdgeCurrencyEngineCallbacks,
+  walletLocalDisklet: Disklet,
+  walletLocalEncryptedDisklet: Disklet,
+  optionalSettings?: any,
+
+  // Deprecated:
   walletLocalFolder: DiskletFolder,
-  walletLocalEncryptedFolder: DiskletFolder,
-  optionalSettings?: any
+  walletLocalEncryptedFolder: DiskletFolder
 }
 
 export type EdgeCurrencyEngine = {
@@ -409,8 +411,8 @@ export type EdgeCurrencyWallet = {
   +id: string,
   +keys: any,
   +type: string,
-  +folder: DiskletFolder,
-  +localFolder: DiskletFolder,
+  +disklet: Disklet,
+  +localDisklet: Disklet,
   sync(): Promise<mixed>,
 
   // Wallet keys:
@@ -744,8 +746,8 @@ export type EdgeAccount = {
   +id: string,
   +keys: any,
   +type: string,
-  +folder: DiskletFolder,
-  +localFolder: DiskletFolder,
+  +disklet: Disklet,
+  +localDisklet: Disklet,
   sync(): Promise<mixed>,
 
   // Basic login information:

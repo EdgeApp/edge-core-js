@@ -1,8 +1,12 @@
 // @flow
 
-import { mapFiles } from 'disklet'
+import {
+  type DiskletFile,
+  type DiskletFolder,
+  downgradeDisklet,
+  mapFiles
+} from 'disklet'
 
-import { type DiskletFile, type DiskletFolder } from '../../types/types.js'
 import { base58, base64 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
 import { fixUsername } from './login-selectors.js'
@@ -14,7 +18,8 @@ export type FileInfo = {
 }
 
 function loginsFolder (ai: ApiInput) {
-  return ai.props.io.folder.folder('logins')
+  const folder = downgradeDisklet(ai.props.io.disklet)
+  return folder.folder('logins')
 }
 
 function getJsonFiles (folder: DiskletFolder): Promise<Array<FileInfo>> {

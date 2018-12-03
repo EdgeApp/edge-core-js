@@ -1,6 +1,6 @@
 // @flow
 
-import { makeLocalStorageFolder } from 'disklet'
+import { makeLocalStorageDisklet } from 'disklet'
 
 import { type EdgeIo } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
@@ -31,7 +31,9 @@ export function makeBrowserIo (): EdgeIo {
 
     // Local io:
     console: typeof console !== 'undefined' ? console : fakeConsole,
-    folder: makeLocalStorageFolder(window.localStorage, { prefix: 'airbitz' }),
+    disklet: makeLocalStorageDisklet(window.localStorage, {
+      prefix: 'airbitz'
+    }),
 
     // Networking:
     fetch: (...rest) => window.fetch(...rest),
