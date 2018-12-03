@@ -865,9 +865,10 @@ export type EdgeContextOptions = {
   hideKeys?: boolean,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
-  shapeshiftKey?: string,
+  changellyInit?: { apiKey: string, secret: string },
   changeNowKey?: string,
-  changellyInit?: { apiKey: string, secret: string }
+  faastInit?: { affiliateId: string, affiliateMargin?: number },
+  shapeshiftKey?: string
 }
 
 export type EdgeFakeContextOptions = EdgeContextOptions & {

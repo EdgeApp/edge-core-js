@@ -23,6 +23,7 @@ import {
 } from '../storage/storage-actions.js'
 import { changellyPlugin } from '../swap/changelly-plugin.js'
 import { changenowPlugin } from '../swap/changenow-plugin'
+import { faastPlugin } from '../swap/faast-plugin.js'
 import { shapeshiftPlugin } from '../swap/shapeshift-plugin.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
@@ -136,6 +137,14 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
               }
             })
           }
+          swapPlugins.faast = faastPlugin
+          swapTools.faast = await faastPlugin.makeTools({
+            io: input.props.io,
+            initOptions: input.props.faastInit,
+            get userSettings () {
+              return input.props.selfState.userSettings.faast
+            }
+          })
           input.props.dispatch({
             type: 'ACCOUNT_SWAP_PLUGINS_LOADED',
             payload: { accountId, swapPlugins, swapTools }
