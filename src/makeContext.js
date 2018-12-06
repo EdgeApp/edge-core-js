@@ -13,6 +13,7 @@ import { type CoreRoot, makeCoreRoot } from './modules/root.js'
 import {
   type EdgeContext,
   type EdgeContextOptions,
+  type EdgeFakeContextOptions,
   type EdgeIo
 } from './types/types.js'
 
@@ -60,9 +61,9 @@ export function makeEdgeContext (
  * Setting the `localFakeUser` context option to `true` will enable PIN
  * and offline password login for that particular context.
  */
-export function makeFakeContexts (
-  ...opts: Array<EdgeContextOptions>
-): Array<EdgeContext> {
+export async function makeFakeContexts (
+  ...opts: Array<EdgeFakeContextOptions>
+): Promise<Array<EdgeContext>> {
   return makeFakeIos(opts.length).map((io, i) => {
     if (opts[i].offline) {
       // Disable network access (but leave the sync server up):
@@ -73,7 +74,6 @@ export function makeFakeContexts (
           ? oldFetch(url, opts)
           : Promise.reject(new Error('Network error'))
     }
-    if (opts[i].apiKey == null) opts[i].apiKey = 'fake'
 
     const coreRoot = makeCoreRoot(io, opts[i])
     coreRoot.redux.dispatch({
@@ -105,9 +105,7 @@ async function makeBrowserContext (
  * @param {{ path?: string }} opts Options for creating the context,
  * including the `path` where data should be written to disk.
  */
-async function makeNodeContext (
-  opts: EdgeContextOptions = {}
-): Promise<EdgeContext> {
+async function makeNodeContext (opts: EdgeContextOptions): Promise<EdgeContext> {
   const { path = './edge' } = opts
   const io = makeNodeIo(path)
 
