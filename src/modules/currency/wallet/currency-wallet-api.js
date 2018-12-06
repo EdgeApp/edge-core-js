@@ -279,9 +279,9 @@ export function makeCurrencyWalletApi (
     async exportTransactionsToQBO (
       opts: EdgeGetTransactionsOptions
     ): Promise<string> {
-      const edgeTransactions: Array<
-        EdgeTransaction
-      > = await this.getTransactions(opts)
+      const edgeTransactions: Array<EdgeTransaction> = await this.getTransactions(
+        opts
+      )
       const currencyCode =
         opts && opts.currencyCode
           ? opts.currencyCode
@@ -300,9 +300,9 @@ export function makeCurrencyWalletApi (
     async exportTransactionsToCSV (
       opts: EdgeGetTransactionsOptions
     ): Promise<string> {
-      const edgeTransactions: Array<
-        EdgeTransaction
-      > = await this.getTransactions(opts)
+      const edgeTransactions: Array<EdgeTransaction> = await this.getTransactions(
+        opts
+      )
       const currencyCode =
         opts && opts.currencyCode
           ? opts.currencyCode

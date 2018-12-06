@@ -1,6 +1,6 @@
 // @flow
 
-import { div, gt, lt, mul } from 'biggystring'
+import { gt, lt } from 'biggystring'
 
 import {
   SwapAboveLimitError,
@@ -45,7 +45,7 @@ type FaastQuoteJson = {
   withdrawal_currency: string,
   refund_address?: string,
   user_id?: string,
-  terms?: string,
+  terms?: string
 }
 
 const dontUseLegacy = {
@@ -77,7 +77,7 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
     if (
       reply.status === 403 &&
       replyJson != null &&
-      replyJson.error === 'geoRestriction'
+      /geo/.test(replyJson.error)
     ) {
       throw new SwapPermissionError(swapInfo, 'geoRestriction')
     }
@@ -102,6 +102,7 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
 
   async function post (path, body): Object {
     const uri = `${API_PREFIX}${path}`
+    io.console.info('faast request', path, body)
     const reply = await io.fetch(uri, {
       method: 'POST',
       headers: {
@@ -144,26 +145,56 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
+      let fromCurrency
+      let toCurrency
+      try {
+        fromCurrency = await get(`/currencies/${fromCurrencyCode}`)
+        toCurrency = await get(`/currencies/${toCurrencyCode}`)
+      } catch (e) {
+        if (/not supported/.test(e.message)) {
+          throw new SwapCurrencyError(
+            swapInfo,
+            fromCurrencyCode,
+            toCurrencyCode
+          )
+        }
+        throw e
+      }
+      if (!(fromCurrency.deposit && toCurrency.receive)) {
+        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
+
+      const geoInfo = await get('/geoinfo/')
+      if (
+        geoInfo.blocked ||
+        (geoInfo.restricted &&
+          (fromCurrency.restricted || toCurrency.restricted))
+      ) {
+        throw new SwapPermissionError(swapInfo, 'geoRestriction')
+      }
+
       // Check for minimum / maximum:
       if (quoteFor === 'from') {
         let pairInfo
         try {
-          pairInfo = await get(
-            `/price/${fromCurrencyCode}_${toCurrencyCode}`
-          )
+          pairInfo = await get(`/price/${fromCurrencyCode}_${toCurrencyCode}`)
         } catch (e) {
           if (/not currently supported/.test(e.message)) {
-            throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+            throw new SwapCurrencyError(
+              swapInfo,
+              fromCurrencyCode,
+              toCurrencyCode
+            )
           }
           throw e
         }
         const [nativeMax, nativeMin] = await Promise.all([
-          (pairInfo.maximum_deposit
+          pairInfo.maximum_deposit
             ? fromWallet.denominationToNative(
               pairInfo.maximum_deposit.toString(),
               fromCurrencyCode
             )
-            : null),
+            : null,
           fromWallet.denominationToNative(
             pairInfo.minimum_deposit.toString(),
             fromCurrencyCode
@@ -181,24 +212,27 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
       const fromAddress = await getAddress(fromWallet, fromCurrencyCode)
       const toAddress = await getAddress(toWallet, toCurrencyCode)
 
-      // here we are going to get multipliers
-      const multiplierFrom = await fromWallet.denominationToNative(
-        '1',
-        fromCurrencyCode
-      )
-      const multiplierTo = await fromWallet.denominationToNative(
-        '1',
-        toCurrencyCode
-      )
-
       // Figure out amount:
-      const quoteAmount =
-        quoteFor === 'from'
-          ? { deposit_amount: Number.parseInt(div(nativeAmount, multiplierFrom, 16)) }
-          : { withdrawal_amount: Number.parseInt(div(nativeAmount, multiplierTo, 16)) }
+      let quoteAmount
+      if (quoteFor === 'from') {
+        const amount = await fromWallet.nativeToDenomination(
+          nativeAmount,
+          fromCurrencyCode
+        )
+        io.console.info({ nativeAmount, amount })
+        quoteAmount = { deposit_amount: Number.parseFloat(amount) }
+      } else {
+        const amount = await toWallet.nativeToDenomination(
+          nativeAmount,
+          toCurrencyCode
+        )
+        quoteAmount = { withdrawal_amount: Number.parseFloat(amount) }
+      }
+      io.console.info('quoteAmount', quoteAmount)
+
       const body: Object = {
-        deposit_currency: toCurrencyCode,
-        withdrawal_currency: fromCurrencyCode,
+        deposit_currency: fromCurrencyCode,
+        withdrawal_currency: toCurrencyCode,
         return_address: fromAddress,
         withdrawal_address: toAddress,
         ...quoteAmount
@@ -219,8 +253,14 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
         throw e
       }
 
-      const fromNativeAmount = mul(quoteData.deposit_amount.toString(), multiplierFrom)
-      const toNativeAmount = mul(quoteData.withdrawal_amount.toString(), multiplierTo)
+      const fromNativeAmount = await fromWallet.denominationToNative(
+        quoteData.deposit_amount.toString(),
+        fromCurrencyCode
+      )
+      const toNativeAmount = await toWallet.denominationToNative(
+        quoteData.withdrawal_amount.toString(),
+        toCurrencyCode
+      )
 
       const spendTarget: EdgeSpendTarget = {
         nativeAmount: quoteFor === 'to' ? fromNativeAmount : nativeAmount,

@@ -146,7 +146,7 @@ describe('account', function () {
     const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     // Check the initial settings:
-    expect(account1.swapConfig).has.keys('changelly', 'shapeshift')
+    expect(account1.swapConfig).has.keys('changelly', 'shapeshift', 'faast')
     const config1 = account1.swapConfig.shapeshift
     expect(config1.swapInfo.pluginName).equals('shapeshift')
     expect(config1.needsActivation).equals(true)

@@ -21,8 +21,8 @@ import {
   syncStorageWallet
 } from '../storage/storage-actions.js'
 import { changellyPlugin } from '../swap/changelly-plugin.js'
-import { shapeshiftPlugin } from '../swap/shapeshift-plugin.js'
 import { faastPlugin } from '../swap/faast-plugin.js'
+import { shapeshiftPlugin } from '../swap/shapeshift-plugin.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
 import { type AccountState, type PluginMap } from './account-reducer.js'
