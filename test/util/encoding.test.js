@@ -2,15 +2,16 @@
 
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
+import { base16 } from 'rfc4648'
 
-import { base16, utf8 } from '../../src/util/encoding.js'
+import { utf8 } from '../../src/util/encoding.js'
 
 describe('encoding', function () {
   it('utf8', function () {
     const tests = [
       { string: 'ascii', data: '6173636969' },
-      { string: 'テスト', data: 'e38386e382b9e38388' },
-      { string: '😀', data: 'f09f9880' }
+      { string: 'テスト', data: 'E38386E382B9E38388' },
+      { string: '😀', data: 'F09F9880' }
     ]
 
     for (const { string, data } of tests) {

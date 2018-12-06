@@ -1,6 +1,7 @@
 // @flow
 
 import elliptic from 'elliptic'
+import { base64 } from 'rfc4648'
 
 import {
   type JsonBox,
@@ -9,7 +10,7 @@ import {
   hmacSha256,
   sha256
 } from '../../util/crypto/crypto.js'
-import { base58, base64, utf8 } from '../../util/encoding.js'
+import { base58, utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 

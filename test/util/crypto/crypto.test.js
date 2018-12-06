@@ -2,6 +2,7 @@
 
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
+import { base16 } from 'rfc4648'
 
 import { makeFakeIos } from '../../../src/index.js'
 import {
@@ -10,7 +11,7 @@ import {
   hmacSha256,
   sha256
 } from '../../../src/util/crypto/crypto.js'
-import { base16, utf8 } from '../../../src/util/encoding.js'
+import { utf8 } from '../../../src/util/encoding.js'
 
 describe('encryption', function () {
   it('decrypt existing data', function () {
@@ -43,7 +44,7 @@ describe('hashes', function () {
     const data = utf8.parse('The quick brown fox jumps over the lazy dog')
     const key = utf8.parse('key')
     const expected =
-      'f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8'
+      'F7BC83F430538424B13298E6AA6FB143EF4D59A14946175997479DBC2D1A3CD8'
 
     assert.equal(expected, base16.stringify(hmacSha256(data, key)))
   })
@@ -51,7 +52,7 @@ describe('hashes', function () {
   it('sha256', function () {
     const data = utf8.parse('This is a test')
     const expected =
-      'c7be1ed902fb8dd4d48997c6452f5d7e509fbcdbe2808b16bcf4edce4c07d14e'
+      'C7BE1ED902FB8DD4D48997C6452F5D7E509FBCDBE2808B16BCF4EDCE4C07D14E'
 
     assert.equal(expected, base16.stringify(sha256(data)))
   })

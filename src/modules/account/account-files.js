@@ -1,13 +1,13 @@
 // @flow
 
 import { type DiskletFile, mapFiles } from 'disklet'
+import { base16, base64 } from 'rfc4648'
 import { update } from 'yaob'
 
 import {
   type EdgeWalletInfo,
   type EdgeWalletStates
 } from '../../types/types.js'
-import { base16, base64 } from '../../util/encoding.js'
 import { makeKeyInfo } from '../login/keys.js'
 import { type ApiInput } from '../root.js'
 import {
