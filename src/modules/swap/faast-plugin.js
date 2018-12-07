@@ -147,9 +147,13 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
 
       let fromCurrency
       let toCurrency
+      let geoInfo
       try {
-        fromCurrency = await get(`/currencies/${fromCurrencyCode}`)
-        toCurrency = await get(`/currencies/${toCurrencyCode}`)
+        ;[fromCurrency, toCurrency, geoInfo] = await Promise.all([
+          get(`/currencies/${fromCurrencyCode}`),
+          get(`/currencies/${toCurrencyCode}`),
+          get('/geoinfo/')
+        ])
       } catch (e) {
         if (/not supported/.test(e.message)) {
           throw new SwapCurrencyError(
@@ -164,7 +168,6 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
-      const geoInfo = await get('/geoinfo/')
       if (
         geoInfo.blocked ||
         (geoInfo.restricted &&
@@ -219,7 +222,6 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
           nativeAmount,
           fromCurrencyCode
         )
-        io.console.info({ nativeAmount, amount })
         quoteAmount = { deposit_amount: Number.parseFloat(amount) }
       } else {
         const amount = await toWallet.nativeToDenomination(
@@ -228,7 +230,6 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
         )
         quoteAmount = { withdrawal_amount: Number.parseFloat(amount) }
       }
-      io.console.info('quoteAmount', quoteAmount)
 
       const body: Object = {
         deposit_currency: fromCurrencyCode,
