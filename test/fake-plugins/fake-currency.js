@@ -1,7 +1,7 @@
 import { add, lt } from 'biggystring'
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 
-import { InsufficientFundsError } from '../../src/error.js'
+import { InsufficientFundsError } from '../../src/types/error.js'
 import {
   createReaction,
   reactionMiddleware

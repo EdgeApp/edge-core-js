@@ -1,23 +1,25 @@
 // @flow
 
 import { isReactNative } from 'detect-bundler'
-import { mapFiles } from 'disklet'
+import { downgradeDisklet, mapFiles } from 'disklet'
 import { makeLocalBridge } from 'yaob'
 
-import {
-  type EdgeContext,
-  type EdgeContextOptions,
-  type EdgeIo
-} from './index.js'
 import { makeBrowserIo } from './io/browser/browser-io.js'
 import { makeFakeIos } from './io/fake/fake-io.js'
 import { fakeStashes } from './io/fake/fakeUser.js'
 import { isNode, makeNodeIo } from './io/node/node-io.js'
 import { makeReactNativeIo } from './io/react-native/react-native-io.js'
 import { type CoreRoot, makeCoreRoot } from './modules/root.js'
+import {
+  type EdgeContext,
+  type EdgeContextOptions,
+  type EdgeFakeContextOptions,
+  type EdgeIo
+} from './types/types.js'
 
 function loadStashes (root: CoreRoot, io: EdgeIo): Promise<mixed> {
-  const fileArray = mapFiles(io.folder.folder('logins'), (file, name) =>
+  const folder = downgradeDisklet(io.disklet)
+  const fileArray = mapFiles(folder.folder('logins'), (file, name) =>
     file
       .getText()
       .then(text => ({ name, json: JSON.parse(text) }))
@@ -59,9 +61,9 @@ export function makeEdgeContext (
  * Setting the `localFakeUser` context option to `true` will enable PIN
  * and offline password login for that particular context.
  */
-export function makeFakeContexts (
-  ...opts: Array<EdgeContextOptions>
-): Array<EdgeContext> {
+export async function makeFakeContexts (
+  ...opts: Array<EdgeFakeContextOptions>
+): Promise<Array<EdgeContext>> {
   return makeFakeIos(opts.length).map((io, i) => {
     if (opts[i].offline) {
       // Disable network access (but leave the sync server up):
@@ -72,7 +74,6 @@ export function makeFakeContexts (
           ? oldFetch(url, opts)
           : Promise.reject(new Error('Network error'))
     }
-    if (opts[i].apiKey == null) opts[i].apiKey = 'fake'
 
     const coreRoot = makeCoreRoot(io, opts[i])
     coreRoot.redux.dispatch({
@@ -104,9 +105,7 @@ async function makeBrowserContext (
  * @param {{ path?: string }} opts Options for creating the context,
  * including the `path` where data should be written to disk.
  */
-async function makeNodeContext (
-  opts: EdgeContextOptions = {}
-): Promise<EdgeContext> {
+async function makeNodeContext (opts: EdgeContextOptions): Promise<EdgeContext> {
   const { path = './edge' } = opts
   const io = makeNodeIo(path)
 

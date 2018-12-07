@@ -8,15 +8,12 @@ import {
   type EdgeAccountOptions,
   type EdgeContext,
   type EdgeEdgeLoginOptions,
-  type EdgeExchangeSwapInfo,
   type EdgeLoginMessages,
   type EdgePendingEdgeLogin,
   type EdgeUserInfo
-} from '../../index.js'
-import { deprecate } from '../../util/deprecate.js'
+} from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
-import { makeShapeshiftApi } from '../exchange/shapeshift.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
 import { getStash } from '../login/login-selectors.js'
@@ -36,8 +33,6 @@ import { EdgeInternalStuff } from './internal-api.js'
 export function makeContextApi (ai: ApiInput) {
   const appId = ai.props.state.login.appId
   const $internalStuff = new EdgeInternalStuff(ai)
-
-  const shapeshiftApi = makeShapeshiftApi(ai)
 
   const out: EdgeContext = {
     on: onMethod,
@@ -204,27 +199,6 @@ export function makeContextApi (ai: ApiInput) {
 
     async fetchLoginMessages (): Promise<EdgeLoginMessages> {
       return fetchLoginMessages(ai)
-    },
-
-    async getExchangeSwapRate (
-      fromCurrencyCode: string,
-      toCurrencyCode: string
-    ): Promise<number> {
-      deprecate('getExchangeSwapRate', 'EdgeAccount.fetchSwapQuote')
-      return shapeshiftApi.getExchangeSwapRate(fromCurrencyCode, toCurrencyCode)
-    },
-
-    async getAvailableExchangeTokens (): Promise<Array<string>> {
-      deprecate('getAvailableExchangeTokens', 'EdgeAccount.fetchSwapCurrencies')
-      return shapeshiftApi.getAvailableExchangeTokens()
-    },
-
-    async getExchangeSwapInfo (
-      fromCurrencyCode: string,
-      toCurrencyCode: string
-    ): Promise<EdgeExchangeSwapInfo> {
-      deprecate('getExchangeSwapInfo', 'EdgeAccount.fetchSwapQuote')
-      return shapeshiftApi.getExchangeSwapInfo(fromCurrencyCode, toCurrencyCode)
     },
 
     // Deprecated API's:

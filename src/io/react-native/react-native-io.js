@@ -1,11 +1,12 @@
 // @flow
 
 import { isReactNative } from 'detect-bundler'
-import { makeReactNativeFolder } from 'disklet'
+import { makeReactNativeDisklet } from 'disklet'
+import hashjs from 'hash.js'
+import HmacDRBG from 'hmac-drbg'
 import { base64 } from 'rfc4648'
 
-import { type EdgeIo } from '../../index.js'
-import { HmacDRBG, hashjs } from '../../util/crypto/external.js'
+import { type EdgeIo } from '../../types/types.js'
 import {
   Socket,
   TLSSocket,
@@ -73,7 +74,7 @@ export function makeReactNativeIo (): Promise<EdgeIo> {
         warn: console.warn,
         error: console.warn
       },
-      folder: makeReactNativeFolder(),
+      disklet: makeReactNativeDisklet(),
 
       // Networking:
       fetch: (...rest) => window.fetch(...rest),

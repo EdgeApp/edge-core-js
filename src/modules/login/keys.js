@@ -1,12 +1,14 @@
 // @flow
 
+import { base16, base64 } from 'rfc4648'
+
 import {
   type EdgeCreateCurrencyWalletOptions,
   type EdgeMetadata,
   type EdgeWalletInfo
-} from '../../index.js'
+} from '../../types/types.js'
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
-import { base16, base64, utf8 } from '../../util/encoding.js'
+import { utf8 } from '../../util/encoding.js'
 import { changeWalletStates } from '../account/account-files.js'
 import {
   getCurrencyPlugin,
@@ -77,7 +79,8 @@ export function makeKeysKit (
   const newSyncKeys: Array<string> = []
   for (const info of keyInfos) {
     if (info.keys.syncKey != null) {
-      newSyncKeys.push(base16.stringify(base64.parse(info.keys.syncKey)))
+      const data = base64.parse(info.keys.syncKey)
+      newSyncKeys.push(base16.stringify(data).toLowerCase())
     }
   }
 

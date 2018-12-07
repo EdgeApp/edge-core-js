@@ -1,6 +1,6 @@
 // @flow
 
-import { Bridgeable } from 'yaob'
+import { Bridgeable, bridgifyObject } from 'yaob'
 
 import {
   type EdgeCurrencyConfig,
@@ -8,8 +8,7 @@ import {
   type EdgeCurrencyPlugin,
   type EdgeSwapConfig,
   type EdgeSwapInfo
-} from '../../index.js'
-import { deprecate } from '../../util/deprecate.js'
+} from '../../types/types.js'
 import { type ApiInput } from '../root.js'
 import {
   changePluginUserSettings,
@@ -25,11 +24,21 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   _accountId: string
   _plugin: EdgeCurrencyPlugin
 
+  otherMethods: Object
+
   constructor (ai: ApiInput, accountId: string, plugin: EdgeCurrencyPlugin) {
     super()
     this._ai = ai
     this._accountId = accountId
     this._plugin = plugin
+
+    const { otherMethods } = plugin
+    if (otherMethods != null) {
+      bridgifyObject(otherMethods)
+      this.otherMethods = otherMethods
+    } else {
+      this.otherMethods = {}
+    }
   }
 
   get currencyInfo (): EdgeCurrencyInfo {
@@ -48,22 +57,6 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
       this._plugin.pluginName,
       settings
     )
-  }
-
-  // Deprecated names:
-  get settings (): Object {
-    return this.userSettings
-  }
-  get pluginSettings (): Object {
-    return this.userSettings
-  }
-  async changeSettings (settings: Object): Promise<mixed> {
-    deprecate('changeSettings', 'changeUserSettings')
-    return this.changeUserSettings(settings)
-  }
-  async changePluginSettings (settings: Object): Promise<mixed> {
-    deprecate('changePluginSettings', 'changeUserSettings')
-    return this.changeUserSettings(settings)
   }
 }
 
@@ -101,7 +94,7 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
 
   async changeEnabled (enabled: boolean): Promise<mixed> {
     const account = this._ai.props.state.accounts[this._accountId]
-    changeSwapSettings(this._ai, this._accountId, this._pluginName, {
+    return changeSwapSettings(this._ai, this._accountId, this._pluginName, {
       ...account.swapSettings[this._pluginName],
       enabled
     })
@@ -114,17 +107,5 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
       this._pluginName,
       settings
     )
-  }
-
-  // Deprecated names:
-  get exchangeInfo (): EdgeSwapInfo {
-    return this.swapInfo
-  }
-  get settings (): Object {
-    return this.userSettings
-  }
-  async changeSettings (settings: Object): Promise<mixed> {
-    deprecate('changeSettings', 'changeUserSettings')
-    return this.changeUserSettings(settings)
   }
 }

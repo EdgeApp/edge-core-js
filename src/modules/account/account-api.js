@@ -1,10 +1,10 @@
 // @flow
 
+import { type Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { AccountSync } from '../../client-side.js'
 import {
-  type DiskletFolder,
   type EdgeAccount,
   type EdgeCreateCurrencyWalletOptions,
   type EdgeCurrencyConfig,
@@ -19,9 +19,9 @@ import {
   type EdgeSwapQuoteOptions,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
-  type EthererumTransaction
-} from '../../index.js'
-import { signEthereumTransaction } from '../../util/crypto/external.js'
+  type EthereumTransaction
+} from '../../types/types.js'
+import { signEthereumTransaction } from '../../util/crypto/ethereum.js'
 import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'
@@ -98,13 +98,13 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
       lockdown()
       return storageWalletApi.keys
     },
-    get folder (): DiskletFolder {
+    get disklet (): Disklet {
       lockdown()
-      return storageWalletApi.folder
+      return storageWalletApi.disklet
     },
-    get localFolder (): DiskletFolder {
+    get localDisklet (): Disklet {
       lockdown()
-      return storageWalletApi.localFolder
+      return storageWalletApi.localDisklet
     },
     async sync (): Promise<mixed> {
       return storageWalletApi.sync()
@@ -320,7 +320,7 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
 
     async signEthereumTransaction (
       walletId: string,
-      transaction: EthererumTransaction
+      transaction: EthereumTransaction
     ): Promise<string> {
       console.log('Edge is signing: ', transaction)
       const { allWalletInfosFull } = selfState()

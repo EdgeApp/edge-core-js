@@ -2,7 +2,7 @@
 
 import { bridgifyObject, onMethod } from 'yaob'
 
-import { type EdgeRateCache } from '../../index.js'
+import { type EdgeRateCache } from '../../types/types.js'
 import { type ApiInput } from '../root.js'
 import { getExchangeRate } from './exchange-selectors.js'
 
@@ -22,14 +22,14 @@ export function makeExchangeCache (ai: ApiInput): EdgeRateCache {
     return ageCurve + (inverse ? 1.1 : 1) // + 2 * isWrongExchange()
   }
 
-  const out = {
+  const out: EdgeRateCache = {
     on: onMethod,
 
-    convertCurrency (
+    async convertCurrency (
       fromCurrency: string,
       toCurrency: string,
       amount: number = 1
-    ): number {
+    ): Promise<number> {
       const rate = getExchangeRate(
         ai.props.state,
         fromCurrency,

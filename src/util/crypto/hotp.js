@@ -1,8 +1,7 @@
 // @flow
 
+import hashjs from 'hash.js'
 import { base32 } from 'rfc4648'
-
-import { hashjs } from './external.js'
 
 export function numberToBe64 (number: number): Uint8Array {
   const high = Math.floor(number / 4294967296)

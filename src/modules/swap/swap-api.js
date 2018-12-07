@@ -3,13 +3,13 @@
 import { gt, lt } from 'biggystring'
 import { bridgifyObject } from 'yaob'
 
+import { errorNames } from '../../types/error.js'
 import {
   type EdgeSwapCurrencies,
   type EdgeSwapPluginQuote,
   type EdgeSwapQuote,
-  type EdgeSwapQuoteOptions,
-  errorNames
-} from '../../index.js'
+  type EdgeSwapQuoteOptions
+} from '../../types/types.js'
 import { fuzzyTimeout } from '../../util/promise.js'
 import { swapPluginEnabled } from '../account/account-selectors.js'
 import { type ApiInput } from '../root.js'
@@ -43,10 +43,7 @@ export async function fetchSwapCurrencies (
   const out: EdgeSwapCurrencies = {}
   for (const { currencies, pluginName } of results) {
     for (const cc of currencies) {
-      if (out[cc] == null) {
-        const pluginNames = []
-        out[cc] = { pluginNames, exchanges: pluginNames }
-      }
+      if (out[cc] == null) out[cc] = { pluginNames: [] }
       out[cc].pluginNames.push(pluginName)
     }
   }
@@ -93,11 +90,7 @@ export async function fetchSwapQuote (
         quoteUri = swapInfo.quoteUri + bestQuote.quoteId
       }
 
-      const out: EdgeSwapQuote = {
-        ...bestQuote,
-        quoteUri,
-        exchangeService: bestQuote.pluginName // Deprecated
-      }
+      const out: EdgeSwapQuote = { ...bestQuote, quoteUri }
       bridgifyObject(out)
 
       return out

@@ -1,8 +1,8 @@
 // @flow
 
-import { makeMemoryFolder } from 'disklet'
+import { makeMemoryDisklet } from 'disklet'
 
-import { type EdgeIo } from '../../index.js'
+import { type EdgeIo } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 import { FakeWebSocket } from './fake-socket.js'
 import { FakeServer } from './fakeServer.js'
@@ -56,7 +56,7 @@ export function makeFakeIos (count: number): Array<EdgeIo> {
 
       // Local io:
       console: fakeConsole,
-      folder: makeMemoryFolder(),
+      disklet: makeMemoryDisklet(),
 
       // Networking:
       fetch: server.fetch,

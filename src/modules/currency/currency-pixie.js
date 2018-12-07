@@ -1,5 +1,6 @@
 // @flow
 
+import { downgradeDisklet } from 'disklet'
 import {
   type PixieInput,
   combinePixies,
@@ -7,7 +8,7 @@ import {
   stopUpdates
 } from 'redux-pixies'
 
-import { type EdgeCurrencyPlugin } from '../../index.js'
+import { type EdgeCurrencyPlugin } from '../../types/types.js'
 import { type RootProps } from '../root.js'
 import {
   type CurrencyWalletOutput,
@@ -23,15 +24,17 @@ export type CurrencyOutput = {
 export const currency = combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): mixed => {
-      const opts = { io: props.io }
       const promises: Array<Promise<EdgeCurrencyPlugin>> = []
       for (const plugin of props.plugins) {
-        if (plugin.pluginType === 'currency') {
-          try {
+        try {
+          if (plugin.pluginType === 'currency') {
+            const opts = {
+              io: { ...props.io, folder: downgradeDisklet(props.io.disklet) }
+            }
             promises.push(plugin.makePlugin(opts))
-          } catch (e) {
-            promises.push(Promise.reject(e))
           }
+        } catch (e) {
+          promises.push(Promise.reject(e))
         }
       }
 

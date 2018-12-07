@@ -4,7 +4,7 @@
  */
 // @flow
 
-import { base16, base64 } from '../../util/encoding.js'
+import { base16, base64 } from 'rfc4648'
 
 export const fakeUser = {
   // Credentials:

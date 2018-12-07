@@ -181,6 +181,8 @@ export function SwapCurrencyError (swapInfo, fromCurrency, toCurrency) {
   )
   e.name = errorNames.SwapCurrencyError
   e.pluginName = swapInfo.pluginName
+  e.fromCurrency = fromCurrency
+  e.toCurrency = toCurrency
   return e
 }
 

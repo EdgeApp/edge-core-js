@@ -1,12 +1,13 @@
 // @flow
 
+import { base64 } from 'rfc4648'
 import { Bridgeable, close, emit } from 'yaob'
 
 import {
   type EdgeEdgeLoginOptions,
   type EdgePendingEdgeLogin
-} from '../../index.js'
-import { base58, base64 } from '../../util/encoding.js'
+} from '../../types/types.js'
+import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { type ApiInput } from '../root.js'
 import { makeLobby } from './lobby.js'

@@ -1,14 +1,12 @@
 // @flow
 
 import { add, div, lte, mul, sub } from 'biggystring'
+import { type Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { CurrencyWalletSync } from '../../../client-side.js'
-import { SameCurrencyError } from '../../../error.js'
 import {
-  type DiskletFolder,
   type EdgeBalances,
-  type EdgeCoinExchangeQuote,
   type EdgeCurrencyCodeOptions,
   type EdgeCurrencyEngine,
   type EdgeCurrencyInfo,
@@ -22,15 +20,10 @@ import {
   type EdgePaymentProtocolInfo,
   type EdgeReceiveAddress,
   type EdgeSpendInfo,
-  type EdgeSpendTarget,
   type EdgeTokenInfo,
   type EdgeTransaction
-} from '../../../index.js'
+} from '../../../types/types.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
-import {
-  type ShapeShiftExactQuoteReply,
-  makeShapeshiftApi
-} from '../../exchange/shapeshift.js'
 import { type ApiInput } from '../../root.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
@@ -57,10 +50,6 @@ const fakeMetadata = {
   notes: ''
 }
 
-const dontUseLegacy = {
-  DGB: true
-}
-
 /**
  * Creates an `EdgeCurrencyWallet` API object.
  */
@@ -72,10 +61,15 @@ export function makeCurrencyWalletApi (
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
   const walletInfo = input.props.selfState.walletInfo
 
-  const shapeshiftApi = makeShapeshiftApi(ai)
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
   const fakeCallbacks = makeCurrencyWalletCallbacks(input)
+
+  let otherMethods = {}
+  if (engine.otherMethods != null) {
+    otherMethods = engine.otherMethods
+    bridgifyObject(otherMethods)
+  }
 
   function lockdown () {
     if (ai.props.state.hideKeys) {
@@ -98,11 +92,11 @@ export function makeCurrencyWalletApi (
       lockdown()
       return storageWalletApi.keys
     },
-    get folder (): DiskletFolder {
-      return storageWalletApi.folder
+    get disklet (): Disklet {
+      return storageWalletApi.disklet
     },
-    get localFolder (): DiskletFolder {
-      return storageWalletApi.localFolder
+    get localDisklet (): Disklet {
+      return storageWalletApi.localDisklet
     },
     async sync (): Promise<mixed> {
       return storageWalletApi.sync()
@@ -245,30 +239,42 @@ export function makeCurrencyWalletApi (
           break
         }
       }
-      const slicedTransactions = slice
-        ? sortedTransactions.slice(startIndex, startIndex + startEntries)
-        : sortedTransactions
-      const missingTxIdHashes = slicedTransactions.filter(
-        txidHash => !files[txidHash]
-      )
-      const missingFiles = await loadTxFiles(input, missingTxIdHashes)
-      Object.assign(files, missingFiles)
-
-      const out: Array<EdgeTransaction> = []
-      for (const txidHash of slicedTransactions) {
-        const file = files[txidHash]
-        const tx = txs[file.txid]
-        // Skip irrelevant transactions:
-        if (
-          !tx ||
-          (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
-        ) {
-          continue
+      // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
+      // slice, verify txs in files, if some are dropped and missing, do it again recursively
+      const getBulkTx = async (index: number, out: any = []) => {
+        if (out.length === startEntries || index >= sortedTransactions.length) {
+          return out
         }
+        const entriesLeft = startEntries - out.length
+        const slicedTransactions = slice
+          ? sortedTransactions.slice(index, index + entriesLeft)
+          : sortedTransactions
+        // filter the missing files
+        const missingTxIdHashes = slicedTransactions.filter(
+          txidHash => !files[txidHash]
+        )
+        // load files into state
+        const missingFiles = await loadTxFiles(input, missingTxIdHashes)
+        Object.assign(files, missingFiles)
 
-        out.push(combineTxWithFile(input, tx, file, currencyCode))
+        for (const txidHash of slicedTransactions) {
+          const file = files[txidHash]
+          const tx = txs[file.txid]
+          // skip irrelevant transactions - txs that are not in the files (dropped)
+          if (
+            !tx ||
+            (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
+          ) {
+            continue
+          }
+          out.push(combineTxWithFile(input, tx, file, currencyCode))
+        }
+        // continue until the required tx number loaded
+        const res = await getBulkTx(index + entriesLeft, out)
+        return res
       }
 
+      const out: Array<EdgeTransaction> = await getBulkTx(startIndex)
       return out
     },
 
@@ -350,140 +356,6 @@ export function makeCurrencyWalletApi (
         )
       }
       return engine.sweepPrivateKeys(spendInfo)
-    },
-
-    async getQuote (spendInfo: EdgeSpendInfo): Promise<EdgeCoinExchangeQuote> {
-      const destWallet = spendInfo.spendTargets[0].destWallet
-      if (!destWallet) {
-        throw new SameCurrencyError()
-      }
-      const currentCurrencyCode = spendInfo.currencyCode
-        ? spendInfo.currencyCode
-        : plugin.currencyInfo.currencyCode
-      const destCurrencyCode = spendInfo.spendTargets[0].currencyCode
-        ? spendInfo.spendTargets[0].currencyCode
-        : destWallet.currencyInfo.currencyCode
-      if (destCurrencyCode === currentCurrencyCode) {
-        throw new SameCurrencyError()
-      }
-      const edgeFreshAddress = engine.getFreshAddress({
-        currencyCode: destCurrencyCode
-      })
-      const edgeReceiveAddress = await destWallet.getReceiveAddress()
-
-      let destPublicAddress
-      if (
-        edgeReceiveAddress.legacyAddress &&
-        !dontUseLegacy[destCurrencyCode]
-      ) {
-        destPublicAddress = edgeReceiveAddress.legacyAddress
-      } else {
-        destPublicAddress = edgeReceiveAddress.publicAddress
-      }
-
-      let currentPublicAddress
-      if (
-        edgeFreshAddress.legacyAddress &&
-        !dontUseLegacy[currentCurrencyCode]
-      ) {
-        currentPublicAddress = edgeFreshAddress.legacyAddress
-      } else {
-        currentPublicAddress = edgeFreshAddress.publicAddress
-      }
-
-      const nativeAmount = spendInfo.nativeAmount
-      const quoteFor = spendInfo.quoteFor
-      if (!quoteFor) {
-        throw new Error('Need to define direction for quoteFor')
-      }
-      const destAmount = spendInfo.spendTargets[0].nativeAmount
-      /* console.log('core: destAmount', destAmount) */
-      // here we are going to get multipliers
-      const currencyInfos = ai.props.state.currency.infos
-      const tokenInfos = ai.props.state.currency.customTokens
-      const multiplierFrom = getCurrencyMultiplier(
-        currencyInfos,
-        tokenInfos,
-        currentCurrencyCode
-      )
-      const multiplierTo = getCurrencyMultiplier(
-        currencyInfos,
-        tokenInfos,
-        destCurrencyCode
-      )
-
-      /* if (destAmount) {
-        nativeAmount = destAmount
-      } */
-      if (!nativeAmount) {
-        throw new Error('Need to define a native amount')
-      }
-      const nativeAmountForQuote = destAmount || nativeAmount
-
-      const quoteData: ShapeShiftExactQuoteReply = await shapeshiftApi.getexactQuote(
-        currentCurrencyCode,
-        destCurrencyCode,
-        currentPublicAddress,
-        destPublicAddress,
-        nativeAmountForQuote,
-        quoteFor,
-        multiplierFrom,
-        multiplierTo
-      )
-      if (!quoteData.success) {
-        throw new Error('Did not get back successful quote')
-      }
-      const exchangeData = quoteData.success
-      const nativeAmountForSpend = destAmount
-        ? mul(exchangeData.depositAmount, multiplierFrom)
-        : nativeAmount
-
-      const hasDestTag = exchangeData.deposit.indexOf('?dt=') !== -1
-      let destTag
-      if (hasDestTag) {
-        const splitArray = exchangeData.deposit.split('?dt=')
-        exchangeData.deposit = splitArray[0]
-        destTag = splitArray[1]
-      }
-
-      const spendTarget: EdgeSpendTarget = {
-        nativeAmount: nativeAmountForSpend,
-        publicAddress: exchangeData.deposit
-      }
-      if (hasDestTag) {
-        spendTarget.otherParams = {
-          uniqueIdentifier: destTag
-        }
-      }
-      if (currentCurrencyCode === 'XMR' && exchangeData.sAddress) {
-        const paymentId = exchangeData.deposit
-        spendTarget.publicAddress = exchangeData.sAddress
-        spendTarget.otherParams = {
-          uniqueIdentifier: paymentId
-        }
-      }
-
-      const exchangeSpendInfo: EdgeSpendInfo = {
-        // networkFeeOption: spendInfo.networkFeeOption,
-        currencyCode: spendInfo.currencyCode,
-        spendTargets: [spendTarget]
-      }
-      const tx = await engine.makeSpend(exchangeSpendInfo)
-      tx.otherParams = tx.otherParams || {}
-      tx.otherParams.exchangeData = exchangeData
-      const edgeCoinExchangeQuote: EdgeCoinExchangeQuote = {
-        depositAmountNative: mul(exchangeData.depositAmount, multiplierFrom),
-        withdrawalAmountNative: mul(
-          exchangeData.withdrawalAmount,
-          multiplierTo
-        ),
-        expiration: exchangeData.expiration,
-        quotedRate: exchangeData.quotedRate,
-        maxLimit: exchangeData.maxLimit,
-        orderId: exchangeData.orderId,
-        edgeTransacton: tx
-      }
-      return edgeCoinExchangeQuote
     },
 
     async signTx (tx: EdgeTransaction): Promise<EdgeTransaction> {
@@ -581,6 +453,8 @@ export function makeCurrencyWalletApi (
     async encodeUri (obj: EdgeEncodeUri): Promise<string> {
       return plugin.encodeUri(obj)
     },
+
+    otherMethods,
 
     // Deprecated API's:
     getBalance: CurrencyWalletSync.prototype.getBalance,

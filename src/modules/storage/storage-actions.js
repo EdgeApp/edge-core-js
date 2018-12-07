@@ -1,7 +1,11 @@
 // @flow
 
-import { type EdgeWalletInfo } from '../../index.js'
-import { base58, base64 } from '../../util/encoding.js'
+import { navigateDisklet } from 'disklet'
+import { base64 } from 'rfc4648'
+import { bridgifyObject } from 'yaob'
+
+import { type EdgeWalletInfo } from '../../types/types.js'
+import { base58 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
 import { loadRepoStatus, makeRepoPaths, syncRepo } from './repo.js'
 
@@ -12,16 +16,23 @@ export function addStorageWallet (
   const { dispatch, io, onError } = ai.props
 
   const paths = makeRepoPaths(io, walletInfo)
-  const localFolder = io.folder
-    .folder('local')
-    .folder(base58.stringify(base64.parse(walletInfo.id)))
+  const localDisklet = navigateDisklet(
+    io.disklet,
+    'local/' + base58.stringify(base64.parse(walletInfo.id))
+  )
+  bridgifyObject(localDisklet)
 
   return loadRepoStatus(paths).then(status => {
     dispatch({
       type: 'STORAGE_WALLET_ADDED',
       payload: {
         id: walletInfo.id,
-        initialState: { localFolder, paths, status, lastChanges: [] }
+        initialState: {
+          localDisklet,
+          paths,
+          status,
+          lastChanges: []
+        }
       }
     })
 
