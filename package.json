@@ -35,8 +35,8 @@
   "main": "lib/edge-core-index.cjs.js",
   "module": "lib/edge-core-index.js",
   "scripts": {
-    "build": "rimraf lib && webpack && rollup -c",
-    "build:test": "webpack && rollup -c test/rollup.config.js",
+    "build": "rimraf lib && rollup -c && webpack",
+    "build:test": "rollup -c test/rollup.config.js",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "flow": "flow",
     "format": "import-sort -l --write '*.js' 'src/**/*.js' 'test/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",
@@ -97,9 +97,9 @@
     "rollup": "0.67.1",
     "rollup-plugin-alias": "^1.4.0",
     "rollup-plugin-babel": "^4.0.3",
-    "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-flow-entry": "^0.2.0",
     "rollup-plugin-multi-entry": "^2.0.2",
+    "source-map-loader": "^0.2.4",
     "source-map-support": "^0.5.9",
     "updot": "^1.1.7",
     "webpack": "^3.5.3"

@@ -10,7 +10,7 @@ import {
   type EdgeWalletInfoFull,
   type EdgeWalletStates
 } from '../../types/types.js'
-import { ethereumKeyToAddress } from '../../util/crypto/external.js'
+import { ethereumKeyToAddress } from '../../util/crypto/ethereum.js'
 import { type RootAction } from '../actions.js'
 import { hasCurrencyPlugin } from '../currency/currency-selectors.js'
 import {

@@ -1,7 +1,6 @@
 // @flow
 
 import baseX from 'base-x'
-import { base16 as base16Inner, base64 as base64Inner } from 'rfc4648'
 import utf8Codec from 'utf8'
 
 const base58Codec = baseX(
@@ -20,17 +19,6 @@ function assertData (data) {
   }
 }
 
-export const base16 = {
-  parse (text: string): Uint8Array {
-    assertString(text)
-    return base16Inner.parse(text, { out: Uint8Array })
-  },
-  stringify (data: Uint8Array | Array<number>): string {
-    assertData(data)
-    return base16Inner.stringify(data).toLowerCase()
-  }
-}
-
 export const base58 = {
   parse (text: string): Uint8Array {
     assertString(text)
@@ -39,17 +27,6 @@ export const base58 = {
   stringify (data: Uint8Array | Array<number>): string {
     assertData(data)
     return base58Codec.encode(data)
-  }
-}
-
-export const base64 = {
-  parse (text: string): Uint8Array {
-    assertString(text)
-    return base64Inner.parse(text, { out: Uint8Array })
-  },
-  stringify (data: Uint8Array | Array<number>): string {
-    assertData(data)
-    return base64Inner.stringify(data)
   }
 }
 

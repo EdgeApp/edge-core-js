@@ -1,8 +1,9 @@
 // @flow
 
 import { type PixieInput, combinePixies, stopUpdates } from 'redux-pixies'
+import { base16 } from 'rfc4648'
 
-import { base16, utf8 } from '../../util/encoding.js'
+import { utf8 } from '../../util/encoding.js'
 import { type RootProps } from '../root.js'
 
 export type JsonSnrp = {

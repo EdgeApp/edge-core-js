@@ -1,8 +1,10 @@
 // @flow
 
+import { base64 } from 'rfc4648'
+
 import { decrypt, encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
-import { base64, utf8 } from '../../util/encoding.js'
+import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import { fixUsername, getStash } from './login-selectors.js'

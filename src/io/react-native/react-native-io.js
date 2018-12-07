@@ -2,10 +2,11 @@
 
 import { isReactNative } from 'detect-bundler'
 import { makeReactNativeDisklet } from 'disklet'
+import hashjs from 'hash.js'
+import HmacDRBG from 'hmac-drbg'
 import { base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
-import { HmacDRBG, hashjs } from '../../util/crypto/external.js'
 import {
   Socket,
   TLSSocket,

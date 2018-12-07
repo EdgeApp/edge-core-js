@@ -1,9 +1,10 @@
 // @flow
 
+import { base64 } from 'rfc4648'
+
 import { errorNames } from '../../types/error.js'
 import { type EdgeWalletInfo } from '../../types/types.js'
 import { encrypt } from '../../util/crypto/crypto.js'
-import { base64 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'
 import { makeKeysKit } from './keys.js'
