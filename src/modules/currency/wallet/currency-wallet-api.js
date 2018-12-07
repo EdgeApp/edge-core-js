@@ -242,7 +242,7 @@ export function makeCurrencyWalletApi (
       // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
       // slice, verify txs in files, if some are dropped and missing, do it again recursively
       const getBulkTx = async (index: number, out: any = []) => {
-        if (out.length === startEntries || index >= sortedTransactions.length) return out
+        if (out.length === startEntries || index >= sortedTransactions.length) { return out }
         const entriesLeft = startEntries - out.length
         const slicedTransactions = slice
           ? sortedTransactions.slice(index, index + entriesLeft)
