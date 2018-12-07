@@ -1,5 +1,32 @@
 # edge-core-js
 
+## 0.13.0
+
+* Removed deprecated API's:
+  * Renamed API's:
+    * `EdgeCurrencyConfig.changePluginSettings` (use `changeUserSettings`)
+    * `EdgeCurrencyConfig.changeSettings` (use `changeUserSettings`)
+    * `EdgeCurrencyConfig.pluginSettings` (use `userSettings`)
+    * `EdgeCurrencyConfig.settings` (use `userSettings`)
+    * `EdgeSwapConfig.exchangeInfo` (use `swapInfo`)
+    * `EdgeSwapConfig.settings` (use `userSettings`)
+    * `EdgeSwapConfig.changeSettings` (use `changeUserSettings`)
+    * `EdgeSwapCurrencies.exchanges` (use `pluginNames`)
+    * `EdgeSwapQuote.exchangeService` (use `pluginName`)
+  * Legacy swap API:
+    * `EdgeCurrencyWallet.getQuote`
+    * `EdgeContext.getExchangeSwapRate`
+    * `EdgeContext.getExchangeSwapInfo`
+* Upgraded to Disklet v0.3.0 API:
+  * `EdgeAccount.folder` -> `EdgeAccount.disklet`
+  * `EdgeAccount.localFolder` -> `EdgeAccount.localDisklet`
+  * `EdgeCurrencyWallet.folder` -> `EdgeCurrencyWallet.disklet`
+  * `EdgeCurrencyWallet.localFolder` -> `EdgeCurrencyWallet.localDisklet`
+* Made `convertCurrency` async.
+* Made `makeFakeContexts` async.
+* Make `EdgeContextOptions.apiKey` & `EdgeContextOptions.appId` mandatory.
+* Optimize the build system.
+
 ## 0.12.21
 
 * Fixed an issue with `wallet.getTransactions()` that sometimes it wouldn't return the oldest transactions.
