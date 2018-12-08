@@ -1,6 +1,6 @@
 // @flow
 
-import { gt, lt, mul } from 'biggystring'
+import { lt, mul } from 'biggystring'
 
 import {
   type EdgeCurrencyWallet,
@@ -9,9 +9,9 @@ import {
   type EdgeSwapPluginQuote,
   type EdgeSwapQuoteOptions,
   type EdgeSwapTools,
-  SwapAboveLimitError,
   SwapBelowLimitError,
-  SwapCurrencyError
+  SwapCurrencyError,
+  SwapOutOfRangeError
 } from '../../index.js'
 // import { hmacSha512 } from '../../util/crypto/crypto.js'
 // import { utf8 } from '../../util/encoding.js'
@@ -83,14 +83,16 @@ function makeChangeNowTools (env): EdgeSwapTools {
   }
   const { apiKey } = env.initOptions
 
-  async function callFixed (json: any) {
+  async function call (json: any) {
     const body = JSON.stringify(json.params)
     env.io.console.info('changenow call fixed :', json)
     const headers = {
       'Content-Type': 'application/json'
     }
 
-    const api = uri + 'transactions/fixed-rate/' + apiKey
+    const api = uri + json.method + apiKey
+    console.log('CN: API ', api)
+    console.log('CN: BODY ', json.params)
     const reply = await env.io.fetch(api, { method: 'POST', body, headers })
     if (!reply.ok) {
       throw new Error(`ChangeNow fixed returned error code ${reply.status}`)
@@ -123,8 +125,19 @@ function makeChangeNowTools (env): EdgeSwapTools {
       ])
 
       // get the markets:
+      const allCurrencies = await get('currencies')
       const availablePairs = await get('currencies-to/' + opts.fromCurrencyCode)
       const fixedMarket = await get('market-info/fixed-rate/' + apiKey) // Promise.all([fetchCurrencies()])
+      /* console.log('CN: availablePairs.length ', availablePairs.length)
+      console.log('CN: fixedMarket.length ', fixedMarket.length)
+      console.log('CN: availablePairs ', availablePairs) */
+      const unsupported = []
+      for (let t = 0; t < allCurrencies.length; t++) {
+        const it = allCurrencies[t]
+        if (!it.supportsFixedRate) {
+          unsupported.push(it.ticker)
+        }
+      }
 
       const quoteAmount =
         opts.quoteFor === 'from'
@@ -151,40 +164,26 @@ function makeChangeNowTools (env): EdgeSwapTools {
             amount: quoteAmount
           }
 
-      let fromAmount, fromNativeAmount, toNativeAmount
-      if (opts.quoteFor === 'from') {
-        fromAmount = quoteAmount
-        fromNativeAmount = opts.nativeAmount
-        toNativeAmount = await opts.toWallet.denominationToNative(
-          quoteParams.amount,
-          opts.toCurrencyCode
-        )
-      } else {
-        fromAmount = mul(quoteParams.amount, '1.02')
-        fromNativeAmount = await opts.fromWallet.denominationToNative(
-          fromAmount,
-          opts.fromCurrencyCode
-        )
-        toNativeAmount = opts.nativeAmount
-      }
-
       const pairsToUse = []
       let useFixed = false
-      let minerFee = null
-      let rate = null
+      let fromAmount, fromNativeAmount, toNativeAmount
+      let pairItem
+      let quoteReplyKeep = { estimatedAmount: '0' }
       for (let i = 0; i < availablePairs.length; i++) {
         const obj = availablePairs[i]
         if (opts.toCurrencyCode.toLowerCase() === obj.ticker) {
           pairsToUse.push(obj)
           if (obj.supportsFixedRate) {
+            let minerFee = null
+            let rate = null
             useFixed = true
-
             for (let j = 0; j < fixedMarket.length; j++) {
               const item = fixedMarket[j]
               if (
                 item.from === opts.fromCurrencyCode.toLowerCase() &&
                 item.to === obj.ticker
               ) {
+                pairItem = item
                 const [nativeMax, nativeMin] = await Promise.all([
                   opts.fromWallet.denominationToNative(
                     item.max.toString(),
@@ -195,17 +194,54 @@ function makeChangeNowTools (env): EdgeSwapTools {
                     opts.fromCurrencyCode
                   )
                 ])
-                if (lt(fromNativeAmount, nativeMin)) {
-                  throw new SwapBelowLimitError(swapInfo, nativeMin)
+                // lets get the quoteObject here
+                const estQuery =
+                  'exchange-amount/fixed-rate/' +
+                  quoteParams.amount +
+                  '/' +
+                  quoteParams.from +
+                  '_' +
+                  quoteParams.to +
+                  '?api_key=' +
+                  apiKey
+                const quoteReply = await get(estQuery)
+                console.log('CN: Quote Reply', quoteReply)
+                if (quoteReply.error === 'out_of_range') {
+                  throw new SwapOutOfRangeError(swapInfo, nativeMin, nativeMax)
                 }
-                if (gt(fromNativeAmount, nativeMax)) {
-                  throw new SwapAboveLimitError(swapInfo, nativeMax)
+                if (quoteReply.error) {
+                  throw new SwapCurrencyError(
+                    swapInfo,
+                    opts.fromCurrencyCode,
+                    opts.toCurrencyCode
+                  )
                 }
                 minerFee = item.minerFee
                 rate = item.rate
+                // override to native amount. == so redo
+                quoteReplyKeep = quoteReply
               }
             }
-            const sendReply = await callFixed({
+            console.log(pairItem)
+            if (opts.quoteFor === 'from') {
+              fromAmount = quoteAmount
+              fromNativeAmount = opts.nativeAmount
+              toNativeAmount = await opts.toWallet.denominationToNative(
+                quoteReplyKeep.estimatedAmount.toString(),
+                opts.toCurrencyCode
+              )
+            } else {
+              fromAmount = mul(
+                quoteReplyKeep.estimatedAmount.toString(),
+                '1.02'
+              )
+              fromNativeAmount = await opts.fromWallet.denominationToNative(
+                fromAmount,
+                opts.fromCurrencyCode
+              )
+              toNativeAmount = opts.nativeAmount
+            }
+            const sendReply = await call({
               jsonrpc: '2.0',
               id: 3,
               method: 'transactions/fixed-rate/',
@@ -227,8 +263,8 @@ function makeChangeNowTools (env): EdgeSwapTools {
               payinExtraId: sendReply.payinExtraId || null,
               refundAddress: sendReply.refundAddress,
               amount: sendReply.amount,
-              rate: sendReply.rate || null,
-              minerFee: sendReply.minerFee || null,
+              rate: rate || null,
+              minerFee: minerFee || null,
               isEstimate: !useFixed
             }
             const spendInfo = {
@@ -257,32 +293,59 @@ function makeChangeNowTools (env): EdgeSwapTools {
           }
         }
       }
-      console.log('Now we have to do estimate ', minerFee)
-      console.log('Now we have to do estimate ', rate)
-      console.log('Now we have to do estimate ')
-      console.log('Now we have to do estimate ')
-      console.log('Now we have to do estimate ')
-      console.log('Now we have to do estimate ')
-      console.log('Now we have to do estimate ')
-      console.log('Now we have to do estimate ')
-      console.log('Now we have to do estimate ')
-      // Handle estimate stuff
-      // const fixedQuery = 'exchange-amount/fixed-rate/' + quoteParams.amount + '/' + quoteParams.from + '_' + quoteParams.to + '?api_key=' + apiKey
-      // const estQuery = 'exchange-amount/' + quoteParams.amount + '/' + quoteParams.from + '_' + quoteParams.to
+      if (pairsToUse.length === 0) {
+        throw new SwapCurrencyError(
+          swapInfo,
+          opts.fromCurrencyCode,
+          opts.toCurrencyCode
+        )
+      }
+      const estQuery =
+        'exchange-amount/' +
+        quoteParams.amount +
+        '/' +
+        quoteParams.from +
+        '_' +
+        quoteParams.to
+      const quoteReply = await get(estQuery)
+      if (opts.quoteFor === 'from') {
+        fromAmount = quoteAmount
+        fromNativeAmount = opts.nativeAmount
+        toNativeAmount = await opts.toWallet.denominationToNative(
+          quoteReplyKeep.estimatedAmount.toString(),
+          opts.toCurrencyCode
+        )
+      } else {
+        fromAmount = mul(quoteReplyKeep.estimatedAmount.toString(), '1.02')
+        fromNativeAmount = await opts.fromWallet.denominationToNative(
+          fromAmount,
+          opts.fromCurrencyCode
+        )
+        toNativeAmount = opts.nativeAmount
+      }
+      console.log('CN: estQuery  ', quoteReply)
+      const min = await get(
+        'min-amount/' + quoteParams.from + '_' + quoteParams.to
+      )
+      console.log('CN: min  ', min)
+      const [nativeMin] = await Promise.all([
+        opts.fromWallet.denominationToNative(
+          min.minAmount.toString(),
+          opts.fromCurrencyCode
+        )
+      ])
+      if (lt(fromNativeAmount, nativeMin)) {
+        throw new SwapBelowLimitError(swapInfo, nativeMin)
+      }
 
-      // Get the estimate from the server:
-      /* const quoteReply = useFixed ? await get(fixedQuery) : await get(estQuery)
-      checkReply(quoteReply) */
-
-      // Get the address:
-      const sendReply = await callFixed({
+      const sendReply = await call({
         jsonrpc: '2.0',
         id: 3,
-        method: 'transactions/fixed-rate/',
+        method: 'transactions/',
         params: {
           amount: fromAmount,
-          from: opts.fromCurrencyCode,
-          to: opts.toCurrencyCode,
+          from: opts.fromCurrencyCode.toLowerCase(),
+          to: opts.toCurrencyCode.toLowerCase(),
           address: toAddress,
           extraId: null, // TODO: Do we need this for Monero?
           refundAddress: fromAddress

@@ -30,6 +30,7 @@ export {
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError,
+  SwapOutOfRangeError,
   SwapPermissionError,
   UsernameError
 } from './types/error.js'

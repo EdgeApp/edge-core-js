@@ -24,6 +24,7 @@ export const errorNames = {
   SameCurrencyError: 'SameCurrencyError',
   SwapAboveLimitError: 'SwapAboveLimitError',
   SwapBelowLimitError: 'SwapBelowLimitError',
+  SwapOutOfRangeError: 'SwapOutOfRangeErrorError',
   SwapCurrencyError: 'SwapCurrencyError',
   SwapPermissionError: 'SwapPermissionError',
   UsernameError: 'UsernameError',
@@ -169,6 +170,20 @@ export function SwapBelowLimitError (swapInfo, nativeMin) {
   e.name = errorNames.SwapBelowLimitError
   e.pluginName = swapInfo.pluginName
   e.nativeMin = nativeMin
+  return e
+}
+
+/**
+ * Trying to swap an amount that is either too low or too high.
+ * @param nativeMin the minimum supported amount, in the "from" currency.
+ * @param nativeMax the minimum supported amount, in the "from" currency.
+ */
+export function SwapOutOfRangeError (swapInfo, nativeMin, nativeMax) {
+  const e = new Error('Amount is too low')
+  e.name = errorNames.SwapOutOfRangeError
+  e.pluginName = swapInfo.pluginName
+  e.nativeMin = nativeMin
+  e.nativeMax = nativeMax
   return e
 }
 
