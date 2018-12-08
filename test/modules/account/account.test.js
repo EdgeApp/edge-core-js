@@ -143,12 +143,13 @@ describe('account', function () {
     const [context] = await makeFakeContexts({
       ...contextOptions,
       shapeshiftKey: 'fake-key',
+      changeNowKey: 'fake-key',
       changellyInit: { apiKey: 'fake-key', secret: 'fake-secret' }
     })
     const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     // Check the initial settings:
-    expect(account1.swapConfig).has.keys('changelly', 'shapeshift')
+    expect(account1.swapConfig).has.keys('changelly', 'shapeshift', 'changenow')
     const config1 = account1.swapConfig.shapeshift
     expect(config1.swapInfo.pluginName).equals('shapeshift')
     expect(config1.needsActivation).equals(true)

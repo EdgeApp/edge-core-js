@@ -865,6 +865,7 @@ export type EdgeContextOptions = {
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
   shapeshiftKey?: string,
+  changeNowKey?: string,
   changellyInit?: { apiKey: string, secret: string }
 }
 
