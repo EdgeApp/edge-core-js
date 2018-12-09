@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.13.1
+
+* Add ChangeNOW swap plugin.
+
 ## 0.13.0
 
 * Removed deprecated API's:

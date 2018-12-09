@@ -21,6 +21,7 @@ import {
   syncStorageWallet
 } from '../storage/storage-actions.js'
 import { changellyPlugin } from '../swap/changelly-plugin.js'
+import { changenowPlugin } from '../swap/changenow-plugin'
 import { shapeshiftPlugin } from '../swap/shapeshift-plugin.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
@@ -116,6 +117,16 @@ const accountPixie = combinePixies({
               initOptions: { apiKey: input.props.shapeshiftKey },
               get userSettings () {
                 return input.props.selfState.userSettings.shapeshift
+              }
+            })
+          }
+          if (input.props.changeNowKey) {
+            swapPlugins.changenow = changenowPlugin
+            swapTools.changenow = await changenowPlugin.makeTools({
+              io: input.props.io,
+              initOptions: { apiKey: input.props.changeNowKey },
+              get userSettings () {
+                return input.props.selfState.userSettings.changenow
               }
             })
           }
