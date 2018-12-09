@@ -1,6 +1,6 @@
 // @flow
 
-import { gt, lt, mul } from 'biggystring'
+import { lt, mul } from 'biggystring'
 
 import {
   type EdgeCurrencyWallet,
@@ -14,8 +14,6 @@ import {
   SwapCurrencyError
 } from '../../index.js'
 import { makeSwapPluginQuote } from './swap-helpers.js'
-
-// import { base16 } from 'rfc4648'
 
 const swapInfo = {
   pluginName: 'changenow',
@@ -194,8 +192,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
                 if (quoteReply.error === 'out_of_range') {
                   if (lt(quoteParams.from, item.min.toString())) {
                     throw new SwapBelowLimitError(swapInfo, nativeMin)
-                  }
-                  if (gt(quoteParams.from, item.max.toString())) {
+                  } else {
                     throw new SwapAboveLimitError(swapInfo, nativeMax)
                   }
                 }
