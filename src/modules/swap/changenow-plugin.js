@@ -188,9 +188,8 @@ function makeChangeNowTools (env): EdgeSwapTools {
                   '?api_key=' +
                   apiKey
                 const quoteReply = await get(estQuery)
-                console.log('CN: Quote Reply', quoteReply)
                 if (quoteReply.error === 'out_of_range') {
-                  if (lt(quoteParams.from, item.min.toString())) {
+                  if (lt(quoteParams.amount, item.min.toString())) {
                     throw new SwapBelowLimitError(swapInfo, nativeMin)
                   } else {
                     throw new SwapAboveLimitError(swapInfo, nativeMax)

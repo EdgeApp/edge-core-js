@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.13.2
+
+* Fix ChangeNOW out of range errors.
+
 ## 0.13.1
 
 * Add ChangeNOW swap plugin.
