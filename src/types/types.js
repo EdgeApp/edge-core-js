@@ -524,6 +524,7 @@ export type EdgeSwapPluginQuote = {
   +fromNativeAmount: string,
   +toNativeAmount: string,
   +networkFee: EdgeNetworkFee,
+  +destinationAddress: string,
 
   +pluginName: string,
   +expirationDate?: Date,
