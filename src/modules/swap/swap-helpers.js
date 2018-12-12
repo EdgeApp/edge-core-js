@@ -11,6 +11,7 @@ export function makeSwapPluginQuote (
   fromNativeAmount: string,
   toNativeAmount: string,
   tx: EdgeTransaction,
+  destinationAddress: string,
   pluginName: string,
   expirationDate?: Date,
   quoteId?: string
@@ -24,7 +25,7 @@ export function makeSwapPluginQuote (
       currencyCode: fromWallet.currencyInfo.currencyCode,
       nativeAmount: tx.networkFee
     },
-
+    destinationAddress,
     pluginName,
     expirationDate,
     quoteId,

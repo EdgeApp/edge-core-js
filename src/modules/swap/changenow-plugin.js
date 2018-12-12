@@ -269,6 +269,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
               fromNativeAmount,
               toNativeAmount,
               tx,
+              toAddress,
               'changenow',
               new Date(Date.now() + expirationMs),
               quoteInfo.id
@@ -368,6 +369,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
         fromNativeAmount,
         toNativeAmount,
         tx,
+        toAddress,
         'changenow',
         new Date(Date.now() + expirationMs) // ,
         // quoteInfo.id
