@@ -20,7 +20,7 @@ const swapInfo = {
   displayName: 'Change NOW',
 
   // quoteUri: 'https://changenow.com/transaction/',
-  supportEmail: 'support@changenow.com'
+  supportEmail: 'support@changenow.io'
 }
 
 const uri = 'https://changenow.io/api/v1/'
