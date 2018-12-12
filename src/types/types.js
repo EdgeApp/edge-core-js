@@ -957,7 +957,7 @@ export type EdgeContext = {
   checkPasswordRules(password: string): EdgePasswordRules,
   loginWithPassword(
     username: string,
-    pin: string,
+    password: string,
     opts?: EdgeAccountOptions
   ): Promise<EdgeAccount>,
 
