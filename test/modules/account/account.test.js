@@ -141,7 +141,8 @@ describe('account', function () {
     const [context] = makeFakeContexts({
       ...contextOptions,
       shapeshiftKey: 'fake-key',
-      changellyInit: { apiKey: 'fake-key', secret: 'fake-secret' }
+      changellyInit: { apiKey: 'fake-key', secret: 'fake-secret' },
+      faastInit: { affiliateId: 'fake-id', affiliateMargin: 0.5 }
     })
     const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 

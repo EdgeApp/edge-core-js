@@ -60,7 +60,17 @@ async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
 }
 
 function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
-  const { io } = env
+  const { io, initOptions } = env
+  let affiliateOptions = {}
+  if (initOptions == null || initOptions.affiliateId == null) {
+    io.console.info('No faast affiliateId provided.')
+  } else {
+    const { affiliateId, affiliateMargin } = initOptions
+    affiliateOptions = {
+      affiliate_id: affiliateId,
+      affiliate_margin: affiliateMargin
+    }
+  }
 
   async function checkReply (uri: string, reply: Response) {
     let replyJson
@@ -236,7 +246,8 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
         withdrawal_currency: toCurrencyCode,
         return_address: fromAddress,
         withdrawal_address: toAddress,
-        ...quoteAmount
+        ...quoteAmount,
+        ...affiliateOptions
       }
 
       let quoteData: FaastQuoteJson

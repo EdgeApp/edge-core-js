@@ -123,7 +123,7 @@ const accountPixie = combinePixies({
           swapPlugins.faast = faastPlugin
           swapTools.faast = await faastPlugin.makeTools({
             io: input.props.io,
-            initOptions: {},
+            initOptions: input.props.faastInit,
             get userSettings () {
               return input.props.selfState.userSettings.faast
             }

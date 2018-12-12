@@ -866,6 +866,7 @@ export type EdgeContextOptions = {
   plugins?: Array<EdgeCorePluginFactory>,
   shapeshiftKey?: string,
   changellyInit?: { apiKey: string, secret: string },
+  faastInit?: { affiliateId: string, affiliateMargin?: number },
 
   // Used by the fake context:
   localFakeUser?: boolean,
