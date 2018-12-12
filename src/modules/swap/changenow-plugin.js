@@ -19,7 +19,7 @@ const swapInfo = {
   pluginName: 'changenow',
   displayName: 'Change NOW',
 
-  // quoteUri: 'https://changenow.com/transaction/',
+  quoteUri: 'https://changenow.io/exchange/txs/',
   supportEmail: 'support@changenow.io'
 }
 
