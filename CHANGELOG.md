@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.13.3
+
+* Fix ChangeNOW support email & quote URI.
+* Add `EdgeSwapQuote.destinationAddress`.
+* Re-apply replay protection when splitting BCH->BSV a second time.
+
 ## 0.13.2
 
 * Fix ChangeNOW out of range errors.

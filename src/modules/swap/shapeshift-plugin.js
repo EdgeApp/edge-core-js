@@ -289,6 +289,7 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
         fromNativeAmount,
         toNativeAmount,
         tx,
+        toAddress,
         'shapeshift',
         new Date(exchangeData.expiration),
         exchangeData.orderId

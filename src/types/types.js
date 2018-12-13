@@ -524,6 +524,7 @@ export type EdgeSwapPluginQuote = {
   +fromNativeAmount: string,
   +toNativeAmount: string,
   +networkFee: EdgeNetworkFee,
+  +destinationAddress: string,
 
   +pluginName: string,
   +expirationDate?: Date,
@@ -957,7 +958,7 @@ export type EdgeContext = {
   checkPasswordRules(password: string): EdgePasswordRules,
   loginWithPassword(
     username: string,
-    pin: string,
+    password: string,
     opts?: EdgeAccountOptions
   ): Promise<EdgeAccount>,
 

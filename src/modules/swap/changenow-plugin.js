@@ -19,8 +19,8 @@ const swapInfo = {
   pluginName: 'changenow',
   displayName: 'Change NOW',
 
-  // quoteUri: 'https://changenow.com/transaction/',
-  supportEmail: 'support@changenow.com'
+  quoteUri: 'https://changenow.io/exchange/txs/',
+  supportEmail: 'support@changenow.io'
 }
 
 const uri = 'https://changenow.io/api/v1/'
@@ -269,6 +269,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
               fromNativeAmount,
               toNativeAmount,
               tx,
+              toAddress,
               'changenow',
               new Date(Date.now() + expirationMs),
               quoteInfo.id
@@ -368,6 +369,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
         fromNativeAmount,
         toNativeAmount,
         tx,
+        toAddress,
         'changenow',
         new Date(Date.now() + expirationMs) // ,
         // quoteInfo.id
