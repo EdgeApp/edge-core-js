@@ -21,7 +21,7 @@ import {
   type EdgeWalletStates,
   type EthereumTransaction
 } from '../../types/types.js'
-import { signEthereumTransaction } from '../../util/crypto/external.js'
+import { signEthereumTransaction } from '../../util/crypto/ethereum.js'
 import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
 import { getCurrencyPlugin } from '../currency/currency-selectors.js'

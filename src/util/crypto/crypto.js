@@ -1,10 +1,10 @@
 // @flow
 
 import aesjs from 'aes-js'
+import hashjs from 'hash.js'
+import { base16, base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
-import { base16, base64 } from '../encoding.js'
-import { hashjs } from './external.js'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 

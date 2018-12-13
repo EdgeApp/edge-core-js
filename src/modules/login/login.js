@@ -3,10 +3,12 @@
  */
 // @flow
 
+import { base64 } from 'rfc4648'
+
 import { type EdgeLoginMessages } from '../../types/types.js'
 import { decrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
-import { base64, utf8 } from '../../util/encoding.js'
+import { utf8 } from '../../util/encoding.js'
 import { filterObject, softCat } from '../../util/util.js'
 import { type ApiInput } from '../root.js'
 import { authRequest } from './authServer.js'

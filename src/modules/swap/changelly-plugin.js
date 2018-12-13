@@ -243,6 +243,7 @@ function makeChangellyTools (env): EdgeSwapTools {
         fromNativeAmount,
         toNativeAmount,
         tx,
+        toAddress,
         'changelly',
         new Date(Date.now() + expirationMs),
         quoteInfo.id

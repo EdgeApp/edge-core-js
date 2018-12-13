@@ -1,13 +1,11 @@
 import alias from 'rollup-plugin-alias'
 import babel from 'rollup-plugin-babel'
-import commonjs from 'rollup-plugin-commonjs'
 import flowEntry from 'rollup-plugin-flow-entry'
 
 import packageJson from './package.json'
 
 const babelOpts = {
   babelrc: false,
-  exclude: './build/crypto-bundle.js',
   presets: ['@babel/preset-env', '@babel/preset-flow'],
   plugins: [
     ['@babel/plugin-transform-for-of', { assumeArray: true }],
@@ -16,10 +14,6 @@ const babelOpts = {
       { corejs: false, helpers: false, regenerator: true }
     ]
   ]
-}
-
-const commonjsOpts = {
-  include: 'build/crypto-bundle.js'
 }
 
 const external = [
@@ -43,7 +37,6 @@ export default [
         './io/react-native/react-native-io.js':
           'src/io/react-native/react-native-dummy.js'
       }),
-      commonjs(commonjsOpts),
       babel(babelOpts),
       flowEntry()
     ]
@@ -53,7 +46,7 @@ export default [
     external,
     input: 'src/index.js',
     output: {
-      file: packageJson['react-native'],
+      file: 'build/react-native.js',
       format: 'cjs',
       sourcemap: true
     },
@@ -63,7 +56,6 @@ export default [
         './io/react-native/react-native-io.js':
           'src/io/react-native/react-native-io.js'
       }),
-      commonjs(commonjsOpts),
       babel(babelOpts)
     ]
   },

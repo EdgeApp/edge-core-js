@@ -8,10 +8,11 @@ import {
   mergeDisklets,
   navigateDisklet
 } from 'disklet'
+import { base16, base64 } from 'rfc4648'
 
 import { type EdgeIo, type EdgeWalletInfo } from '../../types/types.js'
 import { sha256 } from '../../util/crypto/crypto.js'
-import { base16, base58, base64 } from '../../util/encoding.js'
+import { base58 } from '../../util/encoding.js'
 import { encryptDisklet } from './encrypt-disklet.js'
 import {
   type StorageWalletPaths,
@@ -108,7 +109,7 @@ export function syncRepo (
     const method = request.changes ? 'POST' : 'GET'
 
     // Calculate the URI:
-    let path = '/api/v2/store/' + base16.stringify(syncKey)
+    let path = '/api/v2/store/' + base16.stringify(syncKey).toLowerCase()
     if (status.lastHash != null) {
       path += '/' + status.lastHash
     }

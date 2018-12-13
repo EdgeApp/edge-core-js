@@ -2,10 +2,10 @@
 
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
-import { base32 } from 'rfc4648'
+import { base16, base32 } from 'rfc4648'
 
 import { hotp, numberToBe64 } from '../../../src/util/crypto/hotp.js'
-import { base16, utf8 } from '../../../src/util/encoding.js'
+import { utf8 } from '../../../src/util/encoding.js'
 
 describe('hotp', function () {
   it('converts numbers to bytes', function () {
@@ -20,7 +20,7 @@ describe('hotp', function () {
       [281474976710657, '0001000000000001'],
       [72057594037927937, '0100000000000000'], // Truncated
       // The edge of the representable integers:
-      [9007199254740991, '001fffffffffffff'],
+      [9007199254740991, '001FFFFFFFFFFFFF'],
       [9007199254740992, '0020000000000000'],
       [9007199254740993, '0020000000000000'], // Truncated
       [9007199254740994, '0020000000000002'],
@@ -28,12 +28,12 @@ describe('hotp', function () {
       [0.75, '0000000000000000'],
       [1.75, '0000000000000001'],
       // Negative numbers:
-      [-1, 'ffffffffffffffff'],
-      [-256, 'ffffffffffffff00'],
-      [-257, 'fffffffffffffeff'],
-      [-4294967296, 'ffffffff00000000'],
-      [-4294967297, 'fffffffeffffffff'],
-      [-9007199254740992, 'ffe0000000000000']
+      [-1, 'FFFFFFFFFFFFFFFF'],
+      [-256, 'FFFFFFFFFFFFFF00'],
+      [-257, 'FFFFFFFFFFFFFEFF'],
+      [-4294967296, 'FFFFFFFF00000000'],
+      [-4294967297, 'FFFFFFFEFFFFFFFF'],
+      [-9007199254740992, 'FFE0000000000000']
     ]
     for (const [number, hex] of cases) {
       expect(base16.stringify(numberToBe64(number))).equals(hex)

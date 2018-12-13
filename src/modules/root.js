@@ -48,6 +48,7 @@ export type RootProps = {
   +shapeshiftKey: string | void,
   +changellyInit?: { apiKey: string, secret: string } | void,
   +faastInit?: { affiliateId: string, affiliateMargin?: number } | void,
+  +changeNowKey?: string | void,
   +state: RootState
 }
 
@@ -79,7 +80,8 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
     faastInit = void 0,
     hideKeys = false,
     plugins = [],
-    shapeshiftKey = void 0
+    shapeshiftKey = void 0,
+    changeNowKey = void 0
   } = opts
   const { onError = onErrorDefault, onExchangeUpdate = nop } = callbacks
 
@@ -116,7 +118,8 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
         plugins,
         shapeshiftKey,
         changellyInit,
-        faastInit
+        faastInit,
+        changeNowKey
       })
     ),
     e => console.error(e),

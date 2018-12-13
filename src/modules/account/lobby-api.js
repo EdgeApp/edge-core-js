@@ -1,9 +1,9 @@
 // @flow
 
+import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
 import { type EdgeLobby, type EdgeLoginRequest } from '../../types/types.js'
-import { base64 } from '../../util/encoding.js'
 import {
   type LobbyRequest,
   fetchLobbyRequest,

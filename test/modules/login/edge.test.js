@@ -9,6 +9,11 @@ import {
   makeFakeContexts
 } from '../../../src/index.js'
 
+const contextOptions = {
+  apiKey: '',
+  appId: ''
+}
+
 async function simulateRemoteApproval (remote, lobbyId: string) {
   const account = await remote.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -22,9 +27,9 @@ async function simulateRemoteApproval (remote, lobbyId: string) {
 
 describe('edge login', function () {
   it('request', async function () {
-    const [context, remote] = makeFakeContexts(
-      { appId: 'test-child' },
-      { localFakeUser: true }
+    const [context, remote] = await makeFakeContexts(
+      { ...contextOptions, appId: 'test-child' },
+      { ...contextOptions, localFakeUser: true }
     )
 
     const account = await new Promise((resolve, reject) => {
@@ -42,7 +47,7 @@ describe('edge login', function () {
   })
 
   it('cancel', async function () {
-    const [context] = makeFakeContexts({})
+    const [context] = await makeFakeContexts(contextOptions)
 
     const opts = { displayName: 'test suite' }
     const pendingLogin = await context.requestEdgeLogin(opts)

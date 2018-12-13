@@ -524,6 +524,7 @@ export type EdgeSwapPluginQuote = {
   +fromNativeAmount: string,
   +toNativeAmount: string,
   +networkFee: EdgeNetworkFee,
+  +destinationAddress: string,
 
   +pluginName: string,
   +expirationDate?: Date,
@@ -857,18 +858,20 @@ export type EdgeContextCallbacks = {
 }
 
 export type EdgeContextOptions = {
-  apiKey?: string, // TODO: Non-optional
-  appId?: string, // TODO: Non-optional
+  apiKey: string,
+  appId: string,
   authServer?: string,
   callbacks?: EdgeContextCallbacks,
   hideKeys?: boolean,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
   shapeshiftKey?: string,
+  changeNowKey?: string,
   changellyInit?: { apiKey: string, secret: string },
-  faastInit?: { affiliateId: string, affiliateMargin?: number },
+  faastInit?: { affiliateId: string, affiliateMargin?: number }
+}
 
-  // Used by the fake context:
+export type EdgeFakeContextOptions = EdgeContextOptions & {
   localFakeUser?: boolean,
   offline?: boolean,
   tempNoBridge$?: boolean
@@ -956,7 +959,7 @@ export type EdgeContext = {
   checkPasswordRules(password: string): EdgePasswordRules,
   loginWithPassword(
     username: string,
-    pin: string,
+    password: string,
     opts?: EdgeAccountOptions
   ): Promise<EdgeAccount>,
 

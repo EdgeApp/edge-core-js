@@ -1,10 +1,11 @@
 // @flow
 
 import { navigateDisklet } from 'disklet'
+import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
 import { type EdgeWalletInfo } from '../../types/types.js'
-import { base58, base64 } from '../../util/encoding.js'
+import { base58 } from '../../util/encoding.js'
 import { type ApiInput } from '../root.js'
 import { loadRepoStatus, makeRepoPaths, syncRepo } from './repo.js'
 
