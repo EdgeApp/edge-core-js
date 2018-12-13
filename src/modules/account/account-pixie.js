@@ -73,6 +73,7 @@ const accountPixie = combinePixies({
       async update () {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const accountId = input.props.id
+        const io = input.props.io
         const { callbacks, accountWalletInfos } = input.props.selfState
         onLoggedOut = callbacks.onLoggedOut
 
@@ -90,12 +91,16 @@ const accountPixie = combinePixies({
         try {
           // Wait for the currency plugins (should already be loaded by now):
           await waitForCurrencyPlugins(ai)
+          io.console.info('Login: currency plugins exist')
 
           // Start the repo:
           await Promise.all(
             accountWalletInfos.map(info => addStorageWallet(ai, info))
           )
+          io.console.info('Login: synced account repos')
+
           await loadAllFiles()
+          io.console.info('Login: loaded files')
 
           // Load swap plugins:
           const swapPlugins: PluginMap<EdgeSwapPlugin> = {}
@@ -137,6 +142,7 @@ const accountPixie = combinePixies({
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))
+          io.console.info('Login: complete')
 
           // Start the sync timer:
           const startTimer = () => {
