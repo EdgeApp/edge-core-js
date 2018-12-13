@@ -292,6 +292,7 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
         fromNativeAmount,
         toNativeAmount,
         tx,
+        toAddress,
         'faast',
         new Date(quoteData.price_locked_until),
         quoteData.swap_id
