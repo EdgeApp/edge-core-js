@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.13.4
+
+* Fix getTransactions to return token transactions in the requested range.
+* Fix ChangeNOW 400 errors.
+
 ## 0.13.3
 
 * Fix ChangeNOW support email & quote URI.
