@@ -230,15 +230,7 @@ export function makeCurrencyWalletApi (
       const files = state.files
       // A sorted list of transaction based on chronological order
       const sortedTransactions = state.sortedTransactions.sortedList
-      // Quick fix for Tokens
-      const allInfos = input.props.state.currency.infos
-      let slice = false
-      for (const currencyInfo of allInfos) {
-        if (currencyCode === currencyInfo.currencyCode) {
-          slice = true
-          break
-        }
-      }
+
       // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
       // slice, verify txs in files, if some are dropped and missing, do it again recursively
       const getBulkTx = async (index: number, out: any = []) => {
@@ -246,10 +238,10 @@ export function makeCurrencyWalletApi (
           return out
         }
         const entriesLeft = startEntries - out.length
-        const slicedTransactions = slice
-          ? sortedTransactions.slice(index, index + entriesLeft)
-          : sortedTransactions
-        // filter the missing files
+        const slicedTransactions = sortedTransactions.slice(
+          index,
+          index + entriesLeft
+        )
         const missingTxIdHashes = slicedTransactions.filter(
           txidHash => !files[txidHash]
         )
