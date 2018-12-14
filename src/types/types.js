@@ -927,6 +927,7 @@ export type EdgeContextEvents = {
 export type EdgeContext = {
   +on: Subscriber<EdgeContextEvents>,
   +watch: Subscriber<EdgeContext>,
+  close(): Promise<mixed>,
 
   +appId: string,
 
