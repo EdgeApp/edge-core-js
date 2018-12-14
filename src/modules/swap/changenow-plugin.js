@@ -207,73 +207,74 @@ function makeChangeNowTools (env): EdgeSwapTools {
                 quoteReplyKeep = quoteReply
               }
             }
-            console.log(pairItem)
-            if (opts.quoteFor === 'from') {
-              fromAmount = quoteAmount
-              fromNativeAmount = opts.nativeAmount
-              toNativeAmount = await opts.toWallet.denominationToNative(
-                quoteReplyKeep.estimatedAmount.toString(),
-                opts.toCurrencyCode
-              )
-            } else {
-              fromAmount = mul(
-                quoteReplyKeep.estimatedAmount.toString(),
-                '1.02'
-              )
-              fromNativeAmount = await opts.fromWallet.denominationToNative(
-                fromAmount,
-                opts.fromCurrencyCode
-              )
-              toNativeAmount = opts.nativeAmount
-            }
-            const sendReply = await call({
-              route: 'transactions/fixed-rate/',
-              body: {
-                amount: fromAmount,
-                from: opts.fromCurrencyCode,
-                to: opts.toCurrencyCode,
-                address: toAddress,
-                extraId: null, // TODO: Do we need this for Monero?
-                refundAddress: fromAddress
+            if (pairItem) {
+              if (opts.quoteFor === 'from') {
+                fromAmount = quoteAmount
+                fromNativeAmount = opts.nativeAmount
+                toNativeAmount = await opts.toWallet.denominationToNative(
+                  quoteReplyKeep.estimatedAmount.toString(),
+                  opts.toCurrencyCode
+                )
+              } else {
+                fromAmount = mul(
+                  quoteReplyKeep.estimatedAmount.toString(),
+                  '1.02'
+                )
+                fromNativeAmount = await opts.fromWallet.denominationToNative(
+                  fromAmount,
+                  opts.fromCurrencyCode
+                )
+                toNativeAmount = opts.nativeAmount
               }
-            })
-            const quoteInfo: QuoteInfo = {
-              id: sendReply.id,
-              payinAddress: sendReply.payinAddress,
-              payoutAddress: sendReply.payoutAddress,
-              fromCurrency: sendReply.fromCurrency,
-              toCurrency: sendReply.toCurrency,
-              payinExtraId: sendReply.payinExtraId || null,
-              refundAddress: sendReply.refundAddress,
-              amount: sendReply.amount,
-              rate: rate || null,
-              minerFee: minerFee || null,
-              isEstimate: !useFixed
-            }
-            const spendInfo = {
-              currencyCode: opts.fromCurrencyCode,
-              spendTargets: [
-                {
-                  nativeAmount: fromNativeAmount,
-                  publicAddress: quoteInfo.payinAddress,
-                  otherParams: {
-                    uniqueIdentifier: quoteInfo.payinExtraId
-                  }
+              const sendReply = await call({
+                route: 'transactions/fixed-rate/',
+                body: {
+                  amount: fromAmount,
+                  from: opts.fromCurrencyCode,
+                  to: opts.toCurrencyCode,
+                  address: toAddress,
+                  extraId: null, // TODO: Do we need this for Monero?
+                  refundAddress: fromAddress
                 }
-              ]
+              })
+              const quoteInfo: QuoteInfo = {
+                id: sendReply.id,
+                payinAddress: sendReply.payinAddress,
+                payoutAddress: sendReply.payoutAddress,
+                fromCurrency: sendReply.fromCurrency,
+                toCurrency: sendReply.toCurrency,
+                payinExtraId: sendReply.payinExtraId || null,
+                refundAddress: sendReply.refundAddress,
+                amount: sendReply.amount,
+                rate: rate || null,
+                minerFee: minerFee || null,
+                isEstimate: !useFixed
+              }
+              const spendInfo = {
+                currencyCode: opts.fromCurrencyCode,
+                spendTargets: [
+                  {
+                    nativeAmount: fromNativeAmount,
+                    publicAddress: quoteInfo.payinAddress,
+                    otherParams: {
+                      uniqueIdentifier: quoteInfo.payinExtraId
+                    }
+                  }
+                ]
+              }
+              env.io.console.info('changenow spendInfo', spendInfo)
+              const tx = await opts.fromWallet.makeSpend(spendInfo)
+              return makeSwapPluginQuote(
+                opts,
+                fromNativeAmount,
+                toNativeAmount,
+                tx,
+                toAddress,
+                'changenow',
+                new Date(Date.now() + expirationMs),
+                quoteInfo.id
+              )
             }
-            env.io.console.info('changenow spendInfo', spendInfo)
-            const tx = await opts.fromWallet.makeSpend(spendInfo)
-            return makeSwapPluginQuote(
-              opts,
-              fromNativeAmount,
-              toNativeAmount,
-              tx,
-              toAddress,
-              'changenow',
-              new Date(Date.now() + expirationMs),
-              quoteInfo.id
-            )
           }
         }
       }
