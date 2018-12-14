@@ -46,6 +46,9 @@ export const reducer = buildReducer({
         }
         return out
       }
+
+      case 'CLOSE':
+        return []
     }
     return state
   },

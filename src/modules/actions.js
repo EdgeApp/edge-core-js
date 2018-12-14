@@ -89,6 +89,10 @@ export type RootAction =
       payload: EdgeTokenInfo
     }
   | {
+      // Shuts down the context and all its objects.
+      type: 'CLOSE'
+    }
+  | {
       // Called when a currency engine fires the onBalanceChanged callback.
       type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
       payload: {
