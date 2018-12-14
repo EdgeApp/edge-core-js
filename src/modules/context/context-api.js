@@ -13,11 +13,16 @@ import {
   type EdgeUserInfo
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
-import { makeAccount } from '../account/account-init.js'
+import { findAppLogin, makeAccount } from '../account/account-init.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
 import { getStash } from '../login/login-selectors.js'
-import { fetchLoginMessages, makeLoginTree, resetOtp } from '../login/login.js'
+import {
+  fetchLoginMessages,
+  makeLoginTree,
+  resetOtp,
+  syncLogin
+} from '../login/login.js'
 import { removeStash } from '../login/loginStore.js'
 import { loginPassword } from '../login/password.js'
 import { getPin2Key, loginPin2 } from '../login/pin2.js'
@@ -89,6 +94,12 @@ export function makeContextApi (ai: ApiInput) {
     ): Promise<EdgeAccount> {
       const stashTree = getStash(ai, username)
       const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
+
+      // Since we logged in offline, update the stash in the background:
+      syncLogin(ai, loginTree, findAppLogin(loginTree, appId)).catch(e =>
+        ai.props.onError(e)
+      )
+
       return makeAccount(ai, appId, loginTree, 'keyLogin', opts || {})
     },
 

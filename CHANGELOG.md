@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.13.5
+
+* Upgrade to redux-pixies v0.3.6 to fix ghost wallets appearing at login.
+* Sync the account keys during a `loginWithKey`.
+
 ## 0.13.4
 
 * Fix getTransactions to return token transactions in the requested range.
