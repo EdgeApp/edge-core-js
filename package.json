@@ -64,7 +64,7 @@
     "node-fetch": "^2.0.0",
     "redux": "^3.6.0",
     "redux-keto": "^0.3.2",
-    "redux-pixies": "^0.3.5",
+    "redux-pixies": "^0.3.6",
     "rfc4648": "^1.1.0",
     "scrypt-js": "^2.0.3",
     "utf8": "^3.0.0",
