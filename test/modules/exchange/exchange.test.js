@@ -1,15 +1,14 @@
 // @flow
 
-import { assert, expect } from 'chai'
+import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-import { makeFakeIos } from '../../../src/index.js'
+import { fakeUser, makeFakeContexts } from '../../../src/index.js'
 import {
   type ExchangePair,
   exchangeCache as reducer
 } from '../../../src/modules/exchange/exchange-reducer.js'
 import { getExchangeRate } from '../../../src/modules/exchange/exchange-selectors.js'
-import { makeCoreRoot } from '../../../src/modules/root.js'
 import {
   brokenExchangePlugin,
   fakeExchangePlugin
@@ -160,51 +159,19 @@ describe('exchange cache reducer', function () {
 })
 
 describe('exchange pixie', function () {
-  it('adds plugins', async function () {
-    const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
-      ...contextOptions,
-      plugins: [fakeExchangePlugin]
-    })
-
-    // Wait for the plugins to appear:
-    const output = await new Promise(resolve => {
-      const unsubscribe = coreRoot.redux.subscribe(() => {
-        if (coreRoot.output.exchange.plugins != null) {
-          unsubscribe()
-          resolve(coreRoot.output.exchange)
-        }
-      })
-    })
-
-    expect(output.plugins.length).equals(1)
-    expect(output.plugins[0].exchangeInfo.exchangeName).equals('FakeExchange')
-  })
-
   it('fetches exchange rates', async function () {
-    let updateCalled = false
-    const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
+    const [context] = await makeFakeContexts({
       ...contextOptions,
-      callbacks: {
-        onExchangeUpdate () {
-          updateCalled = true
-        }
-      },
+      localFakeUser: true,
       plugins: [brokenExchangePlugin, fakeExchangePlugin]
     })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    await new Promise(resolve => {
-      const unsubscribe = coreRoot.redux.subscribe(() => {
-        const state = coreRoot.redux.getState()
-        if (state.exchangeCache.rates.pairs.length > 0) {
-          unsubscribe()
-          resolve()
-        }
-      })
-    })
-    expect(updateCalled).equals(true)
-
-    const state = coreRoot.redux.getState()
-    const rate = getExchangeRate(state, 'BTC', 'iso:EUR', pair => 1)
+    const rate = await account.exchangeCache.convertCurrency(
+      'BTC',
+      'iso:EUR',
+      1
+    )
     return assert(rate > 2274 && rate < 2277)
   })
 })
