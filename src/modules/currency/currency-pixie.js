@@ -3,6 +3,7 @@
 import { downgradeDisklet } from 'disklet'
 import {
   type PixieInput,
+  type TamePixie,
   combinePixies,
   mapPixie,
   stopUpdates
@@ -21,7 +22,7 @@ export type CurrencyOutput = {
   +wallets: { [walletId: string]: CurrencyWalletOutput }
 }
 
-export const currency = combinePixies({
+export const currency: TamePixie<RootProps> = combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): mixed => {
       const promises: Array<Promise<EdgeCurrencyPlugin>> = []

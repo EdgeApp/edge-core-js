@@ -1,6 +1,11 @@
 // @flow
 
-import { type PixieInput, combinePixies, stopUpdates } from 'redux-pixies'
+import {
+  type PixieInput,
+  type TamePixie,
+  combinePixies,
+  stopUpdates
+} from 'redux-pixies'
 import { base16 } from 'rfc4648'
 
 import { utf8 } from '../../util/encoding.js'
@@ -108,7 +113,7 @@ export function calcSnrpForTarget (
   return snrp
 }
 
-export const scrypt = combinePixies({
+export const scrypt: TamePixie<RootProps> = combinePixies({
   makeSnrp: (input: PixieInput<RootProps>) => () => {
     const { io } = input.props
     let benchmark: Promise<number>

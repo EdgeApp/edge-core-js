@@ -2,6 +2,7 @@
 
 import {
   type PixieInput,
+  type TamePixie,
   combinePixies,
   mapPixie,
   stopUpdates
@@ -40,7 +41,7 @@ export type AccountProps = RootProps & {
 
 export type AccountInput = PixieInput<AccountProps>
 
-const accountPixie = combinePixies({
+const accountPixie: TamePixie<AccountProps> = combinePixies({
   api (input: AccountInput) {
     let timer
     let onLoggedOut
@@ -244,7 +245,7 @@ const accountPixie = combinePixies({
   }
 })
 
-export const accounts = mapPixie(
+export const accounts: TamePixie<RootProps> = mapPixie(
   accountPixie,
   (props: RootProps) => props.state.accountIds,
   (props: RootProps, id: string): AccountProps => ({
