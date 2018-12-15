@@ -11,7 +11,7 @@ import {
   sha256
 } from '../../util/crypto/crypto.js'
 import { base58, utf8 } from '../../util/encoding.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { authRequest } from './authServer.js'
 
 const EC = elliptic.ec

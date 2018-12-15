@@ -9,7 +9,7 @@ import {
 } from 'redux-pixies'
 
 import { type EdgeCurrencyPlugin } from '../../types/types.js'
-import { type RootProps } from '../root.js'
+import { type RootProps } from '../root-pixie.js'
 import {
   type CurrencyWalletOutput,
   type CurrencyWalletProps,

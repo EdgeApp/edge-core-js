@@ -10,7 +10,7 @@ import {
 } from '../login/keys.js'
 import { type LoginTree } from '../login/login-types.js'
 import { applyKit, searchTree } from '../login/login.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 
 function checkLogin (login: LoginTree) {
   if (login == null || login.loginKey == null) {

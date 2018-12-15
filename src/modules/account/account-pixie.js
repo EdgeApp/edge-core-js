@@ -15,7 +15,7 @@ import {
   type EdgeSwapTools
 } from '../../types/types.js'
 import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
-import { type ApiInput, type RootProps } from '../root.js'
+import { type ApiInput, type RootProps } from '../root-pixie.js'
 import {
   addStorageWallet,
   syncStorageWallet

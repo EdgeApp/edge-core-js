@@ -42,7 +42,7 @@ import {
 } from '../login/password.js'
 import { changePin, checkPin2, deletePin } from '../login/pin2.js'
 import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { fetchSwapCurrencies, fetchSwapQuote } from '../swap/swap-api.js'
 import { changeWalletStates } from './account-files.js'

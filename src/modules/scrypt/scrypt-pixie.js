@@ -4,7 +4,7 @@ import { type PixieInput, combinePixies, stopUpdates } from 'redux-pixies'
 import { base16 } from 'rfc4648'
 
 import { utf8 } from '../../util/encoding.js'
-import { type RootProps } from '../root.js'
+import { type RootProps } from '../root-pixie.js'
 
 export type JsonSnrp = {
   salt_hex: string,

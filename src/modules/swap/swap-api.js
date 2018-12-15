@@ -12,7 +12,7 @@ import {
 } from '../../types/types.js'
 import { fuzzyTimeout } from '../../util/promise.js'
 import { swapPluginEnabled } from '../account/account-selectors.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 
 /**
  * Fetch supported currencies from all plugins.

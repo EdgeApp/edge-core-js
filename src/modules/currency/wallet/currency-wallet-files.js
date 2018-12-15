@@ -6,8 +6,8 @@ import { mapFiles } from 'disklet'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobby-api.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
+import { type ApiInput } from '../../root-pixie.js'
 import { type RootState } from '../../root-reducer.js'
-import { type ApiInput } from '../../root.js'
 import {
   getStorageWalletFolder,
   getStorageWalletLocalFolder,

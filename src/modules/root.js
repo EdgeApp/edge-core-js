@@ -1,27 +1,12 @@
 // @flow
 
-import {
-  type Dispatch,
-  type Store,
-  type StoreEnhancer,
-  compose,
-  createStore
-} from 'redux'
-import {
-  type PixieInput,
-  type ReduxProps,
-  attachPixie,
-  filterPixie
-} from 'redux-pixies'
+import { type Store, type StoreEnhancer, compose, createStore } from 'redux'
+import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import {
-  type EdgeContextOptions,
-  type EdgeCorePluginFactory,
-  type EdgeIo
-} from '../types/types.js'
+import { type EdgeContextOptions, type EdgeIo } from '../types/types.js'
 import { type RootAction } from './actions.js'
-import { type RootOutput, rootPixie } from './root-pixie.js'
+import { type RootOutput, type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
 
 /**
@@ -36,22 +21,6 @@ export type CoreRoot = {
   output: RootOutput,
   destroyPixie?: () => void
 }
-
-// Props passed to the root pixie:
-export type RootProps = {
-  +dispatch: Dispatch<RootAction>,
-  +io: EdgeIo,
-  +onError: (e: Error) => mixed,
-  +onExchangeUpdate: () => mixed,
-  +output: RootOutput,
-  +plugins: Array<EdgeCorePluginFactory>,
-  +shapeshiftKey: string | void,
-  +changellyInit?: { apiKey: string, secret: string } | void,
-  +changeNowKey?: string | void,
-  +state: RootState
-}
-
-export type ApiInput = PixieInput<RootProps>
 
 let allDestroyPixies: Array<() => void> = []
 

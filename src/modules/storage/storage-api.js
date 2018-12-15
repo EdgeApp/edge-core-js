@@ -3,7 +3,7 @@
 import { type Disklet } from 'disklet'
 
 import { type StorageWalletInfo } from '../login/login-types.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { syncStorageWallet } from './storage-actions.js'
 import {
   getStorageWalletDisklet,

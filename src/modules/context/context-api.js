@@ -32,7 +32,7 @@ import {
   listRecoveryQuestionChoices,
   loginRecovery2
 } from '../login/recovery2.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { EdgeInternalStuff } from './internal-api.js'
 
 export function makeContextApi (ai: ApiInput) {
