@@ -241,7 +241,7 @@ export type RootAction =
   | {
       // Fires when we load the login data from disk.
       type: 'LOGIN_STASHES_LOADED',
-      payload: { [filename: string]: Object }
+      payload: { [path: string]: Object }
     }
   | {
       // Fires when we write a login stash to disk.
