@@ -3,8 +3,7 @@
 import { expect } from 'chai'
 import { afterEach, describe, it } from 'mocha'
 
-import { makeFakeContexts } from '../../../src/index.js'
-import { destroyAllContexts } from '../../../src/modules/root.js'
+import { destroyAllContexts, makeFakeContexts } from '../../../src/index.js'
 
 afterEach(function () {
   destroyAllContexts()
