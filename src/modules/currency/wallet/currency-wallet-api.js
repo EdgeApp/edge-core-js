@@ -537,7 +537,7 @@ export function combineTxWithFile (
       out.metadata.amountFiat = 0
     }
   } else {
-    console.info('Missing amountFiat in combineTxWithFile')
+    input.props.io.console.info('Missing amountFiat in combineTxWithFile')
   }
 
   return out
