@@ -16,15 +16,12 @@ import {
   makeFakeCurrencyStore
 } from '../../../fake-plugins/fake-currency.js'
 import { fakeExchangePlugin } from '../../../fake-plugins/fake-exchange.js'
+import { snooze } from '../../../snooze.js'
 
 const contextOptions = {
   apiKey: '',
   appId: '',
   localFakeUser: true
-}
-
-function snooze (ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 async function makeFakeCurrencyWallet (store): Promise<EdgeCurrencyWallet> {
