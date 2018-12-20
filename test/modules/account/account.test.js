@@ -11,7 +11,7 @@ import {
 } from '../../../src/index.js'
 import { makeAssertLog } from '../../assert-log.js'
 import { expectRejection } from '../../expect-rejection.js'
-import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
+import { makeFakeCurrency } from '../../fake/fake-currency-plugin.js'
 
 const contextOptions = {
   apiKey: '',

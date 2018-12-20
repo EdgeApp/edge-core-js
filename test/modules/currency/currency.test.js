@@ -13,8 +13,8 @@ import {
   hasCurrencyPlugin
 } from '../../../src/modules/currency/currency-selectors.js'
 import { expectRejection } from '../../expect-rejection.js'
-import { fakeCurrencyInfo } from '../../fake-plugins/fake-currency-info.js'
-import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
+import { fakeCurrencyInfo } from '../../fake/fake-currency-info.js'
+import { makeFakeCurrency } from '../../fake/fake-currency-plugin.js'
 
 const contextOptions = {
   apiKey: '',

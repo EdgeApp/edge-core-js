@@ -12,7 +12,7 @@ import { getExchangeRate } from '../../../src/modules/exchange/exchange-selector
 import {
   brokenExchangePlugin,
   fakeExchangePlugin
-} from '../../fake-plugins/fake-exchange.js'
+} from '../../fake/fake-exchange-plugin.js'
 
 const contextOptions = {
   apiKey: '',

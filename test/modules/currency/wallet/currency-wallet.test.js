@@ -14,8 +14,8 @@ import { expectRejection } from '../../../expect-rejection.js'
 import {
   makeFakeCurrency,
   makeFakeCurrencyStore
-} from '../../../fake-plugins/fake-currency.js'
-import { fakeExchangePlugin } from '../../../fake-plugins/fake-exchange.js'
+} from '../../../fake/fake-currency-plugin.js'
+import { fakeExchangePlugin } from '../../../fake/fake-exchange-plugin.js'
 import { snooze } from '../../../snooze.js'
 
 const contextOptions = {
