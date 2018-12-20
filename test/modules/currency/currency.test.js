@@ -3,11 +3,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import {
-  type EdgeCurrencyPluginFactory,
-  fakeUser,
-  makeFakeContexts
-} from '../../../src/index.js'
+import { fakeUser, makeFakeContexts } from '../../../src/index.js'
 import {
   getCurrencyMultiplier,
   hasCurrencyPlugin
@@ -16,7 +12,8 @@ import { expectRejection } from '../../expect-rejection.js'
 import {
   fakeCurrencyInfo,
   fakeCurrencyPlugin
-} from '../../fake-plugins/fake-currency.js'
+} from '../../fake/fake-currency-plugin.js'
+import { brokenCurrencyPlugin } from '../../fake/fake-plugins.js'
 
 const contextOptions = {
   apiKey: '',
@@ -52,17 +49,10 @@ describe('currency pixie', function () {
   })
 
   it('handles errors gracefully', async function () {
-    const brokenPlugin: EdgeCurrencyPluginFactory = {
-      pluginName: 'broken',
-      pluginType: 'currency',
-      makePlugin () {
-        throw new Error('Expect to fail')
-      }
-    }
     const [context] = await makeFakeContexts({
       ...contextOptions,
       localFakeUser: true,
-      plugins: [brokenPlugin]
+      plugins: [brokenCurrencyPlugin]
     })
     return expectRejection(
       context.loginWithPIN(fakeUser.username, fakeUser.pin),

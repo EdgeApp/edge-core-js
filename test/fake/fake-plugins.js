@@ -1,11 +1,21 @@
 // @flow
 
 import {
+  type EdgeCurrencyPluginFactory,
   type EdgeExchangePair,
   type EdgeExchangePairHint,
   type EdgeExchangePlugin,
   type EdgeExchangePluginFactory
-} from '../../src/types/types.js'
+} from '../../src/index.js'
+
+export const brokenCurrencyPlugin: EdgeCurrencyPluginFactory = {
+  pluginName: 'broken-currency',
+  pluginType: 'currency',
+
+  makePlugin () {
+    return Promise.reject(new Error('Expect to fail'))
+  }
+}
 
 export const brokenExchangePlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',

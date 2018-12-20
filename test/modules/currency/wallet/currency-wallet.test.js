@@ -12,8 +12,8 @@ import {
 } from '../../../../src/index.js'
 import { makeAssertLog } from '../../../assert-log.js'
 import { expectRejection } from '../../../expect-rejection.js'
-import { fakeCurrencyPlugin } from '../../../fake-plugins/fake-currency.js'
-import { fakeExchangePlugin } from '../../../fake-plugins/fake-exchange.js'
+import { fakeCurrencyPlugin } from '../../../fake/fake-currency-plugin.js'
+import { fakeExchangePlugin } from '../../../fake/fake-plugins.js'
 import { snooze } from '../../../snooze.js'
 
 const contextOptions = {
