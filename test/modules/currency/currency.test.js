@@ -6,14 +6,12 @@ import { describe, it } from 'mocha'
 import {
   type EdgeCurrencyPluginFactory,
   fakeUser,
-  makeFakeContexts,
-  makeFakeIos
+  makeFakeContexts
 } from '../../../src/index.js'
 import {
   getCurrencyMultiplier,
   hasCurrencyPlugin
 } from '../../../src/modules/currency/currency-selectors.js'
-import { makeCoreRoot } from '../../../src/modules/root.js'
 import { expectRejection } from '../../expect-rejection.js'
 import { fakeCurrencyInfo } from '../../fake-plugins/fake-currency-info.js'
 import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
@@ -41,30 +39,14 @@ describe('currency selectors', function () {
 
 describe('currency pixie', function () {
   it('adds plugins', async function () {
-    const coreRoot = makeCoreRoot(makeFakeIos(1)[0], {
+    const [context] = await makeFakeContexts({
       ...contextOptions,
+      localFakeUser: true,
       plugins: [makeFakeCurrency()]
     })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    // Wait for the plugins to appear:
-    const output = await new Promise(resolve => {
-      const unsubscribe = coreRoot.redux.subscribe(() => {
-        if (coreRoot.output.currency.plugins != null) {
-          unsubscribe()
-          resolve(coreRoot.output.currency)
-        }
-      })
-    })
-
-    // Verify the output:
-    expect(output.plugins.length).equals(1)
-    expect(output.plugins[0].currencyInfo.walletTypes).deep.equals(
-      fakeCurrencyInfo.walletTypes
-    )
-
-    // Verify the redux state:
-    const infos = coreRoot.redux.getState().currency.infos
-    expect(hasCurrencyPlugin(infos, 'wallet:fakecoin')).equals(true)
+    expect(Object.keys(account.currencyConfig)).deep.equals(['testcoin'])
   })
 
   it('handles errors gracefully', async function () {

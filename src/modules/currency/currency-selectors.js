@@ -6,7 +6,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeTokenInfo
 } from '../../types/types.js'
-import { type ApiInput, type RootProps } from '../root.js'
+import { type ApiInput, type RootProps } from '../root-pixie.js'
 
 export function getCurrencyInfo (
   infos: Array<EdgeCurrencyInfo>,

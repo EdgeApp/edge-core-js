@@ -9,7 +9,7 @@ import {
   type EdgeSwapConfig,
   type EdgeSwapInfo
 } from '../../types/types.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import {
   changePluginUserSettings,
   changeSwapSettings

@@ -355,6 +355,16 @@ addRoute('POST', '/api/v2/login/create', function (req) {
     const e = authHandler.call(this, req)
     if (e) return e
 
+    const appIdExists = this.db.logins.find(
+      login => login.parent === req.login.loginId && login.appId === data.appId
+    )
+    if (appIdExists) {
+      return makeErrorResponse(
+        errorCodes.conflict,
+        'A login with the same appId already exists'
+      )
+    }
+
     row.parent = req.login.loginId
   }
   this.db.logins.push(row)

@@ -9,7 +9,7 @@ import {
 import { base64 } from 'rfc4648'
 
 import { base58 } from '../../util/encoding.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { fixUsername } from './login-selectors.js'
 import { type LoginStash } from './login-types.js'
 

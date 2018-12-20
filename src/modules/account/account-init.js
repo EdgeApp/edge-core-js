@@ -10,7 +10,7 @@ import {
 } from '../login/keys.js'
 import { type LoginTree } from '../login/login-types.js'
 import { applyKit, searchTree } from '../login/login.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 
 function checkLogin (login: LoginTree) {
   if (login == null || login.loginKey == null) {
@@ -89,7 +89,11 @@ export async function makeAccount (
   opts: EdgeAccountOptions = {}
 ): Promise<EdgeAccount> {
   const { callbacks = {} } = opts
+  const io = ai.props.io
+  io.console.info(`Login: decrypted keys for user ${loginTree.loginId}`)
+
   return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
+    io.console.info('Login: account exists for appId')
     const { username } = loginTree
     if (!username) throw new Error('Cannot log in: missing username')
 

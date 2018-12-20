@@ -3,13 +3,14 @@
 import { downgradeDisklet } from 'disklet'
 import {
   type PixieInput,
+  type TamePixie,
   combinePixies,
   mapPixie,
   stopUpdates
 } from 'redux-pixies'
 
 import { type EdgeCurrencyPlugin } from '../../types/types.js'
-import { type RootProps } from '../root.js'
+import { type RootProps } from '../root-pixie.js'
 import {
   type CurrencyWalletOutput,
   type CurrencyWalletProps,
@@ -21,7 +22,7 @@ export type CurrencyOutput = {
   +wallets: { [walletId: string]: CurrencyWalletOutput }
 }
 
-export const currency = combinePixies({
+export const currency: TamePixie<RootProps> = combinePixies({
   plugins (input: PixieInput<RootProps>) {
     return (props: RootProps): mixed => {
       const promises: Array<Promise<EdgeCurrencyPlugin>> = []

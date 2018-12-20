@@ -10,7 +10,7 @@ import {
   sendLobbyReply
 } from '../login/lobby.js'
 import { hashUsername } from '../login/login-selectors.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 
 /**
  * The requesting side of an Edge login lobby.

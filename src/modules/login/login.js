@@ -10,7 +10,7 @@ import { decrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import { filterObject, softCat } from '../../util/util.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { authRequest } from './authServer.js'
 import {
   fixWalletInfo,

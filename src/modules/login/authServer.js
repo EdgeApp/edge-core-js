@@ -8,7 +8,7 @@ import {
   UsernameError
 } from '../../types/error.js'
 import { timeout } from '../../util/promise.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 
 function parseReply (json) {
   switch (json.status_code) {
@@ -77,7 +77,7 @@ export function authRequest (
         })
       },
       networkError => {
-        throw new NetworkError('Could not reach the auth server')
+        throw new NetworkError(`Could not reach the auth server: ${path}`)
       }
     ),
     30000,

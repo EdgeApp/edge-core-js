@@ -1,7 +1,7 @@
 // @flow
 
 import { fixUsername } from '../../client-side.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { type LoginStash } from './login-types.js'
 

@@ -1,6 +1,6 @@
 // @flow
 
-import { combineReducers } from 'redux'
+import { type Reducer, combineReducers } from 'redux'
 
 import { type RootAction } from '../../actions.js'
 
@@ -9,7 +9,7 @@ export type LoginServerState = {
   +uri: string
 }
 
-export const server = combineReducers({
+export const server: Reducer<LoginServerState, RootAction> = combineReducers({
   apiKey (state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.apiKey : state
   },
