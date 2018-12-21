@@ -4,7 +4,7 @@ import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
-  error,
+  errorNames,
   fakeUser,
   fakeUser1,
   makeFakeContexts
@@ -161,7 +161,7 @@ describe('otp', function () {
 
     // Cannot log in remotely:
     await remote.loginWithPIN(fakeUser.username, fakeUser.pin).catch(e => {
-      expect(e.name).equals(error.OtpError.name)
+      expect(e.name).equals(errorNames.OtpError)
       return context.requestOtpReset(fakeUser.username, e.resetToken)
     })
 
