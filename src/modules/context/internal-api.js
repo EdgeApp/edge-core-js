@@ -1,6 +1,7 @@
 // @flow
 
-import { Bridgeable, close, emit, update } from 'yaob'
+import { type Disklet } from 'disklet'
+import { Bridgeable, bridgifyObject, close, emit, update } from 'yaob'
 
 import { type EdgeContext } from '../../types/types.js'
 import { authRequest } from '../login/authServer.js'
@@ -12,6 +13,7 @@ import {
 } from '../login/lobby.js'
 import { hashUsername } from '../login/login-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
+import { type SyncResult, makeRepoPaths, syncRepo } from '../storage/repo.js'
 
 /**
  * The requesting side of an Edge login lobby.
@@ -98,6 +100,22 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
     replyData: Object
   ) {
     return sendLobbyReply(this._ai, lobbyId, lobbyRequest, replyData)
+  }
+
+  async syncRepo (syncKey: Uint8Array): Promise<SyncResult> {
+    const { io } = this._ai.props
+    const paths = makeRepoPaths(io, syncKey, new Uint8Array(0))
+    return syncRepo(io, paths, { lastSync: 0, lastHash: void 0 })
+  }
+
+  async getRepoDisklet (
+    syncKey: Uint8Array,
+    dataKey: Uint8Array
+  ): Promise<Disklet> {
+    const { io } = this._ai.props
+    const paths = makeRepoPaths(io, syncKey, dataKey)
+    bridgifyObject(paths.disklet)
+    return paths.disklet
   }
 }
 
