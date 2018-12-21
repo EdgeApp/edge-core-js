@@ -3,6 +3,7 @@
 import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
 
+import { type EdgeIo } from '../../types/types.js'
 import {
   type JsonBox,
   decrypt,
@@ -16,6 +17,8 @@ import { authRequest } from './authServer.js'
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
+
+type Keypair = Object
 
 // The JSON structure placed in the lobby as a reply:
 export type LobbyReply = {
@@ -34,7 +37,7 @@ export type LobbyRequest = {
 /**
  * Derives a shared secret from the given secret key and public key.
  */
-function deriveSharedKey (keypair: any, pubkey: Uint8Array) {
+function deriveSharedKey (keypair: Keypair, pubkey: Uint8Array) {
   const secretX = keypair
     .derive(secp256k1.keyFromPublic(pubkey).getPublic())
     .toArray('be')
@@ -46,7 +49,7 @@ function deriveSharedKey (keypair: any, pubkey: Uint8Array) {
 /**
  * Decrypts a lobby reply using the request's secret key.
  */
-export function decryptLobbyReply (keypair: any, lobbyReply: LobbyReply) {
+export function decryptLobbyReply (keypair: Keypair, lobbyReply: LobbyReply) {
   const pubkey = base64.parse(lobbyReply.publicKey)
   const sharedKey = deriveSharedKey(keypair, pubkey)
   return JSON.parse(utf8.stringify(decrypt(lobbyReply.box, sharedKey)))
@@ -56,7 +59,11 @@ export function decryptLobbyReply (keypair: any, lobbyReply: LobbyReply) {
  * Encrypts a lobby reply JSON replyData, and returns a reply
  * suitable for sending to the server.
  */
-export function encryptLobbyReply (io: any, pubkey: Uint8Array, replyData: {}) {
+export function encryptLobbyReply (
+  io: EdgeIo,
+  pubkey: Uint8Array,
+  replyData: {}
+) {
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
   const sharedKey = deriveSharedKey(keypair, pubkey)
   return {
@@ -72,7 +79,7 @@ export function encryptLobbyReply (io: any, pubkey: Uint8Array, replyData: {}) {
 class ObservableLobby {
   ai: ApiInput
   done: boolean
-  keypair: any
+  keypair: Keypair
   lobbyId: string
   onError: (e: Error) => mixed
   onReply: (reply: Object) => mixed
@@ -80,7 +87,7 @@ class ObservableLobby {
   replyCount: number
   timeout: * // Infer the proper timer type.
 
-  constructor (ai: ApiInput, lobbyId: string, keypair, period) {
+  constructor (ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
     this.ai = ai
     this.lobbyId = lobbyId
     this.keypair = keypair
