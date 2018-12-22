@@ -33,5 +33,10 @@ export {
   SwapPermissionError,
   UsernameError
 } from './types/error.js'
-export { makeEdgeContext, makeFakeContexts } from './makeContext.js'
+export {
+  closeFakeEdgeWorlds,
+  makeEdgeContext,
+  makeFakeContexts,
+  makeFakeEdgeWorld
+} from './makeContext.js'
 export { destroyAllContexts } from './modules/root.js'

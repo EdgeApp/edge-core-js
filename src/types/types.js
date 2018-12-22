@@ -992,6 +992,29 @@ export type EdgeContext = {
 }
 
 // ---------------------------------------------------------------------
+// fake mode
+// ---------------------------------------------------------------------
+
+export type EdgeFakeUser = {
+  username: string,
+  loginId: string,
+  loginKey: string,
+  repos: Object,
+  server: Object
+}
+
+export type EdgeFakeWorld = {
+  close(): Promise<mixed>,
+
+  makeEdgeContext(
+    opts: EdgeContextOptions & { cleanDevice?: boolean }
+  ): Promise<EdgeContext>,
+
+  goOffline(offline?: boolean): Promise<mixed>,
+  dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser>
+}
+
+// ---------------------------------------------------------------------
 // legacy names
 // ---------------------------------------------------------------------
 
