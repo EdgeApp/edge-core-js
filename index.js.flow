@@ -3,16 +3,15 @@
 import {
   type EdgeContext,
   type EdgeContextOptions,
-  type EdgeFakeContextOptions,
+  type EdgeFakeUser,
+  type EdgeFakeWorld,
   type EdgeIo
 } from './src/types/types.js'
 
 export * from './src/types/types.js'
 
-declare export var fakeUser: Object
-declare export var fakeUser1: Object
-declare export function destroyAllContexts(): mixed
-declare export function makeFakeIos(count: number): Array<EdgeIo>
+declare export function closeEdge(): mixed
+declare export function makeFakeIo(): EdgeIo
 
 /**
  * Initializes the Edge core library,
@@ -22,9 +21,9 @@ declare export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext>
 
-declare export function makeFakeContexts(
-  ...opts: Array<EdgeFakeContextOptions>
-): Promise<Array<EdgeContext>>
+declare export function makeFakeEdgeWorld(
+  users?: Array<EdgeFakeUser>
+): Promise<EdgeFakeWorld>
 
 // System-specific io exports:
 declare export function makeBrowserIo(): EdgeIo

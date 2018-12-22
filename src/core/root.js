@@ -104,7 +104,7 @@ export async function makeContext (
 /**
  * We use this for unit testing, to kill all core contexts.
  */
-export function destroyAllContexts () {
+export function closeEdge () {
   for (const context of allContexts) context.close()
   allContexts = []
 }

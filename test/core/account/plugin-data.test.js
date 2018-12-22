@@ -3,25 +3,16 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import {
-  type EdgeAccount,
-  fakeUser,
-  makeFakeContexts
-} from '../../../src/index.js'
+import { makeFakeEdgeWorld } from '../../../src/index.js'
+import { fakeUser } from '../../fake/fake-user.js'
 
-const contextOptions = {
-  apiKey: '',
-  appId: '',
-  localFakeUser: true
-}
+const contextOptions = { apiKey: '', appId: '' }
 
 describe('plugin data API', function () {
   it('stores data', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
-    const account: EdgeAccount = await context.loginWithPIN(
-      fakeUser.username,
-      fakeUser.pin
-    )
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const pluginId = 'localdogecoin'
 

@@ -1,17 +1,16 @@
 // @flow
 
-import { makeContext } from './core/core.js'
+import { makeContext, makeFakeWorld } from './core/core.js'
 import { makeNodeIo } from './io/node/node-io.js'
-import { type EdgeContext, type EdgeContextOptions } from './types/types.js'
+import {
+  type EdgeContext,
+  type EdgeContextOptions,
+  type EdgeFakeUser,
+  type EdgeFakeWorld
+} from './types/types.js'
 
 export { makeNodeIo }
-export {
-  destroyAllContexts,
-  fakeUser,
-  fakeUser1,
-  makeFakeContexts,
-  makeFakeIos
-} from './core/core.js'
+export { closeEdge, makeFakeIo } from './core/core.js'
 export * from './types/types.js'
 
 export function makeEdgeContext (
@@ -19,4 +18,10 @@ export function makeEdgeContext (
 ): Promise<EdgeContext> {
   const { path = './edge' } = opts
   return makeContext(makeNodeIo(path), opts)
+}
+
+export function makeFakeEdgeWorld (
+  users: Array<EdgeFakeUser> = []
+): Promise<EdgeFakeWorld> {
+  return Promise.resolve(makeFakeWorld(makeNodeIo('.'), users))
 }

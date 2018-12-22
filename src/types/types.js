@@ -878,12 +878,6 @@ export type EdgeContextOptions = {
   shapeshiftKey?: string
 }
 
-export type EdgeFakeContextOptions = EdgeContextOptions & {
-  localFakeUser?: boolean,
-  offline?: boolean,
-  tempNoBridge$?: boolean
-}
-
 // parameters ----------------------------------------------------------
 
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
@@ -992,4 +986,27 @@ export type EdgeContext = {
   // OTP stuff:
   requestOtpReset(username: string, otpResetToken: string): Promise<Date>,
   fetchLoginMessages(): Promise<EdgeLoginMessages>
+}
+
+// ---------------------------------------------------------------------
+// fake mode
+// ---------------------------------------------------------------------
+
+export type EdgeFakeUser = {
+  username: string,
+  loginId: string,
+  loginKey: string,
+  repos: Object,
+  server: Object
+}
+
+export type EdgeFakeWorld = {
+  close(): Promise<mixed>,
+
+  makeEdgeContext(
+    opts: EdgeContextOptions & { cleanDevice?: boolean }
+  ): Promise<EdgeContext>,
+
+  goOffline(offline?: boolean): Promise<mixed>,
+  dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser>
 }
