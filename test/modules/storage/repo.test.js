@@ -2,14 +2,16 @@
 
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
+import { base64 } from 'rfc4648'
 
-import { fakeUser, makeFakeContexts, makeFakeIos } from '../../../src/index.js'
+import { makeFakeEdgeWorld, makeFakeIos } from '../../../src/index.js'
 import { getInternalStuff } from '../../../src/modules/context/internal-api.js'
 import { makeRepoPaths } from '../../../src/modules/storage/repo.js'
+import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
-const dataKey = fakeUser.loginKey
-const syncKey = fakeUser.syncKey
+const dataKey = base64.parse(fakeUser.loginKey)
+const syncKey = base64.parse(fakeUser.syncKey)
 
 describe('repo', function () {
   it('read file', async function () {
@@ -39,10 +41,9 @@ describe('repo', function () {
   })
 
   it('repo-to-repo sync', async function () {
-    const [context1, context2] = await makeFakeContexts(
-      contextOptions,
-      contextOptions
-    )
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context1 = await world.makeEdgeContext(contextOptions)
+    const context2 = await world.makeEdgeContext(contextOptions)
     const i1 = getInternalStuff(context1)
     const i2 = getInternalStuff(context2)
     const disklet1 = await i1.getRepoDisklet(syncKey, dataKey)

@@ -4,7 +4,7 @@ import { assert } from 'chai'
 import elliptic from 'elliptic'
 import { describe, it } from 'mocha'
 
-import { makeFakeContexts, makeFakeIos } from '../../../src/index.js'
+import { makeFakeEdgeWorld, makeFakeIos } from '../../../src/index.js'
 import { getInternalStuff } from '../../../src/modules/context/internal-api.js'
 import {
   decryptLobbyReply,
@@ -13,10 +13,7 @@ import {
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
-const contextOptions = {
-  apiKey: '',
-  appId: ''
-}
+const contextOptions = { apiKey: '', appId: '' }
 
 describe('edge login lobby', function () {
   it('round-trip data', function () {
@@ -32,10 +29,9 @@ describe('edge login lobby', function () {
   })
 
   it('lobby ping-pong', async function () {
-    const [context1, context2] = await makeFakeContexts(
-      contextOptions,
-      contextOptions
-    )
+    const world = await makeFakeEdgeWorld()
+    const context1 = await world.makeEdgeContext(contextOptions)
+    const context2 = await world.makeEdgeContext(contextOptions)
     const i1 = getInternalStuff(context1)
     const i2 = getInternalStuff(context2)
     const testRequest = { testRequest: 'This is a test' }

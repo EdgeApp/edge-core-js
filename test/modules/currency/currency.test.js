@@ -5,8 +5,7 @@ import { describe, it } from 'mocha'
 
 import {
   type EdgeCurrencyPluginFactory,
-  fakeUser,
-  makeFakeContexts
+  makeFakeEdgeWorld
 } from '../../../src/index.js'
 import {
   getCurrencyMultiplier,
@@ -15,11 +14,9 @@ import {
 import { expectRejection } from '../../expect-rejection.js'
 import { fakeCurrencyInfo } from '../../fake/fake-currency-info.js'
 import { makeFakeCurrency } from '../../fake/fake-currency-plugin.js'
+import { fakeUser } from '../../fake/fake-user.js'
 
-const contextOptions = {
-  apiKey: '',
-  appId: ''
-}
+const contextOptions = { apiKey: '', appId: '' }
 
 describe('currency selectors', function () {
   const infos = [fakeCurrencyInfo]
@@ -39,9 +36,9 @@ describe('currency selectors', function () {
 
 describe('currency pixie', function () {
   it('adds plugins', async function () {
-    const [context] = await makeFakeContexts({
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext({
       ...contextOptions,
-      localFakeUser: true,
       plugins: [makeFakeCurrency()]
     })
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -57,9 +54,9 @@ describe('currency pixie', function () {
         throw new Error('Expect to fail')
       }
     }
-    const [context] = await makeFakeContexts({
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext({
       ...contextOptions,
-      localFakeUser: true,
       plugins: [brokenPlugin]
     })
     return expectRejection(
