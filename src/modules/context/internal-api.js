@@ -2,6 +2,7 @@
 
 import { Bridgeable, close, emit, update } from 'yaob'
 
+import { type EdgeContext } from '../../types/types.js'
 import { authRequest } from '../login/authServer.js'
 import {
   type LobbyRequest,
@@ -98,4 +99,13 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
   ) {
     return sendLobbyReply(this._ai, lobbyId, lobbyRequest, replyData)
   }
+}
+
+/**
+ * Our public Flow types don't include the internal stuff,
+ * so this function hacks around Flow to retrieve it.
+ */
+export function getInternalStuff (context: EdgeContext): EdgeInternalStuff {
+  const flowHack: any = context
+  return flowHack.$internalStuff
 }
