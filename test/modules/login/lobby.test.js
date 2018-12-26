@@ -5,7 +5,7 @@ import elliptic from 'elliptic'
 import { describe, it } from 'mocha'
 
 import { makeFakeContexts, makeFakeIos } from '../../../src/index.js'
-import { type EdgeInternalStuff } from '../../../src/modules/context/internal-api.js'
+import { getInternalStuff } from '../../../src/modules/context/internal-api.js'
 import {
   decryptLobbyReply,
   encryptLobbyReply
@@ -36,14 +36,14 @@ describe('edge login lobby', function () {
       contextOptions,
       contextOptions
     )
-    const s1: EdgeInternalStuff = (context1: any).$internalStuff
-    const s2: EdgeInternalStuff = (context2: any).$internalStuff
+    const i1 = getInternalStuff(context1)
+    const i2 = getInternalStuff(context2)
     const testRequest = { testRequest: 'This is a test' }
     const testReply = { testReply: 'This is a test' }
 
     return new Promise((resolve, reject) => {
       // Use 10 ms polling to really speed up the test:
-      s1.makeLobby(testRequest, 10)
+      i1.makeLobby(testRequest, 10)
         .then(lobby => {
           lobby.on('error', reject)
           lobby.watch('replies', (replies: Array<Object>) => {
@@ -53,9 +53,9 @@ describe('edge login lobby', function () {
             resolve()
           })
 
-          return s2.fetchLobbyRequest(lobby.lobbyId).then(request => {
+          return i2.fetchLobbyRequest(lobby.lobbyId).then(request => {
             assert.deepEqual(request, testRequest)
-            return s2.sendLobbyReply(lobby.lobbyId, request, testReply)
+            return i2.sendLobbyReply(lobby.lobbyId, request, testReply)
           })
         })
         .catch(reject)
