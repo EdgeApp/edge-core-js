@@ -13,8 +13,6 @@ import { type RootAction } from './actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
 
-let allContexts: Array<EdgeContext> = []
-
 const composeEnhancers =
   typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
     ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'core' })
@@ -104,15 +102,5 @@ export async function makeContext (
     output => (mirror.output = output)
   )
 
-  const out = mirror.output.context.api
-  allContexts.push(out)
-  return out
-}
-
-/**
- * We use this for unit testing, to kill all core contexts.
- */
-export function destroyAllContexts () {
-  for (const context of allContexts) context.close()
-  allContexts = []
+  return mirror.output.context.api
 }

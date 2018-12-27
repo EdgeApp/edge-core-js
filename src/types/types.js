@@ -871,12 +871,6 @@ export type EdgeContextOptions = {
   shapeshiftKey?: string
 }
 
-export type EdgeFakeContextOptions = EdgeContextOptions & {
-  localFakeUser?: boolean,
-  offline?: boolean,
-  tempNoBridge$?: boolean
-}
-
 // parameters ----------------------------------------------------------
 
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
