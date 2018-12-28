@@ -536,7 +536,7 @@ export type EdgeSwapPluginQuote = {
 
 export type EdgeSwapTools = {
   +needsActivation: boolean,
-
+  +needsKYCWarning: boolean,
   changeUserSettings(userSettings: Object): Promise<mixed>,
   fetchCurrencies(): Promise<Array<string>>,
   fetchQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapPluginQuote>
@@ -677,6 +677,7 @@ export type EdgeSwapConfig = {
 
   +enabled: boolean,
   +needsActivation: boolean,
+  +needsKYCWarning: boolean,
   +swapInfo: EdgeSwapInfo,
   +userSettings: Object,
 

@@ -133,6 +133,7 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
   }
 
   const out: EdgeSwapTools = {
+    needsKYCWarning: false,
     get needsActivation (): boolean {
       return userSettings == null || userSettings.accessToken == null
     },

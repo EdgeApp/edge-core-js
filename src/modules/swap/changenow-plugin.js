@@ -80,7 +80,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
     throw new Error('No ChangeNow apiKey or secret provided.')
   }
   const { apiKey } = env.initOptions
-
+  let userSettings = env.userSettings
   async function call (json: any) {
     const body = JSON.stringify(json.body)
     env.io.console.info('changenow call fixed :', json)
@@ -104,8 +104,15 @@ function makeChangeNowTools (env): EdgeSwapTools {
   }
   const out: EdgeSwapTools = {
     needsActivation: false,
+    // needsKYCWarning: true,
+    get needsKYCWarning (): boolean {
+      return userSettings == null || userSettings.accessToken == null
+    },
 
-    async changeUserSettings (userSettings: Object): Promise<mixed> {},
+    async changeUserSettings (settings: Object): Promise<mixed> {
+      userSettings = settings
+    },
+    // async changeUserSettings (userSettings: Object): Promise<mixed> {},
 
     async fetchCurrencies (): Promise<Array<string>> {
       const reply = await get('market-info/fixed-rate/' + apiKey)

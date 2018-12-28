@@ -85,7 +85,7 @@ function makeChangellyTools (env): EdgeSwapTools {
   }
   const { apiKey } = env.initOptions
   const secret = utf8.parse(env.initOptions.secret)
-
+  let userSettings = env.userSettings
   async function call (json: any) {
     const body = JSON.stringify(json)
     const sign = base16
@@ -110,8 +110,13 @@ function makeChangellyTools (env): EdgeSwapTools {
   const out: EdgeSwapTools = {
     needsActivation: false,
 
-    async changeUserSettings (userSettings: Object): Promise<mixed> {},
+    get needsKYCWarning (): boolean {
+      return userSettings == null || userSettings.accessToken == null
+    },
 
+    async changeUserSettings (settings: Object): Promise<mixed> {
+      userSettings = settings
+    },
     async fetchCurrencies (): Promise<Array<string>> {
       const reply = await call({
         jsonrpc: '2.0',
