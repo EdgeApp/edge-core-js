@@ -26,6 +26,8 @@
 
 ## 0.13.0
 
+* Uppgrade to disklet v0.3.0
+  * Replace `folder` and `localFolder` with `disklet` and `localDisklet` in all API's to use the new Disklet API.
 * Removed deprecated API's:
   * Renamed API's:
     * `EdgeCurrencyConfig.changePluginSettings` (use `changeUserSettings`)
