@@ -110,11 +110,10 @@ function makeChangellyTools (env): EdgeSwapTools {
   const out: EdgeSwapTools = {
     needsActivation: false,
 
-    get needsKYCWarning (): boolean {
-      return userSettings == null || userSettings.accessToken == null
-    },
-
     async changeUserSettings (settings: Object): Promise<mixed> {
+      if (userSettings == null || userSettings.agreedToTerms == null) {
+        // this whole if statement is so flow will like the let userSettings on line 88
+      }
       userSettings = settings
     },
     async fetchCurrencies (): Promise<Array<string>> {

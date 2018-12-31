@@ -153,7 +153,6 @@ describe('account', function () {
     const config1 = account1.swapConfig.shapeshift
     expect(config1.swapInfo.pluginName).equals('shapeshift')
     expect(config1.needsActivation).equals(true)
-    expect(config1.needsKYCWarning).equals(false)
     expect(config1.userSettings).equals(void 0)
 
     // Change the settings:
@@ -164,14 +163,12 @@ describe('account', function () {
     await config1.changeUserSettings(settings)
     expect(config1.userSettings).deep.equals(settings)
     expect(config1.needsActivation).equals(false)
-    expect(config1.needsKYCWarning).equals(false)
 
     // Log in again, and the setting should still be there:
     const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     const config2 = account2.swapConfig.shapeshift
     expect(config2.userSettings).deep.equals(settings)
     expect(config1.needsActivation).equals(false)
-    expect(config1.needsKYCWarning).equals(false)
   })
 
   it('disable swap plugin', async function () {

@@ -104,15 +104,12 @@ function makeChangeNowTools (env): EdgeSwapTools {
   }
   const out: EdgeSwapTools = {
     needsActivation: false,
-    // needsKYCWarning: true,
-    get needsKYCWarning (): boolean {
-      return userSettings == null || userSettings.accessToken == null
-    },
-
     async changeUserSettings (settings: Object): Promise<mixed> {
+      if (userSettings == null || userSettings.agreedToTerms == null) {
+        // this whole if statement is so flow will like the let userSettings on line 88
+      }
       userSettings = settings
     },
-    // async changeUserSettings (userSettings: Object): Promise<mixed> {},
 
     async fetchCurrencies (): Promise<Array<string>> {
       const reply = await get('market-info/fixed-rate/' + apiKey)

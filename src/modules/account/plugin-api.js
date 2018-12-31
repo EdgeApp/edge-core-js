@@ -81,10 +81,6 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     const account = this._ai.props.state.accounts[this._accountId]
     return account.swapTools[this._pluginName].needsActivation
   }
-  get needsKYCWarning (): boolean {
-    const account = this._ai.props.state.accounts[this._accountId]
-    return account.swapTools[this._pluginName].needsKYCWarning
-  }
 
   get swapInfo (): EdgeSwapInfo {
     const selfState = this._ai.props.state.accounts[this._accountId]
