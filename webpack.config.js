@@ -21,6 +21,16 @@ const externals = [
   'react-native-tcp/tls'
 ]
 
+const babelOptions = {
+  // For debugging, just remove "@babel/preset-env":
+  presets: ['@babel/preset-env', '@babel/preset-flow', '@babel/preset-react'],
+  plugins: [
+    ['@babel/plugin-transform-for-of', { assumeArray: true }],
+    '@babel/plugin-transform-runtime'
+  ],
+  cacheDirectory: true
+}
+
 module.exports = {
   devtool: 'source-map',
   entry: './src/react-native.js',
@@ -30,10 +40,8 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        use: {
-          loader: '@sucrase/webpack-loader',
-          options: { transforms: ['flow', 'jsx'] }
-        }
+        exclude: /node_modules/,
+        use: { loader: 'babel-loader', options: babelOptions }
       }
     ]
   },
