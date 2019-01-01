@@ -32,7 +32,7 @@ module.exports = {
         test: /\.js$/,
         use: {
           loader: '@sucrase/webpack-loader',
-          options: { transforms: ['flow'] }
+          options: { transforms: ['flow', 'jsx'] }
         }
       }
     ]

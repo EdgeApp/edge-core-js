@@ -40,7 +40,7 @@
   "module": "./lib/index.js",
   "browser": "./lib/browser.js",
   "scripts": {
-    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && node ./make-types.js && webpack",
+    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow,jsx && node ./make-types.js && webpack",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "flow": "flow",
     "format": "import-sort -l --write '*.js' 'src/**/*.js' 'test/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",
@@ -84,6 +84,7 @@
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-node": "^8.0.0",
     "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-react": "^7.12.0",
     "eslint-plugin-standard": "^4.0.0",
     "flow-bin": "^0.89.0",
     "husky": "^1.1.3",
