@@ -16,7 +16,7 @@ import {
   waitForCurrencyWallet
 } from '../currency/currency-selectors.js'
 import { applyKit } from '../login/login.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import {
   type AppIdMap,
   type LoginKit,

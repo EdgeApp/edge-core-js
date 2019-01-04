@@ -24,7 +24,7 @@ import {
   type EdgeTransaction
 } from '../../../types/types.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
-import { type ApiInput } from '../../root.js'
+import { type ApiInput } from '../../root-pixie.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks.js'
@@ -537,7 +537,7 @@ export function combineTxWithFile (
       out.metadata.amountFiat = 0
     }
   } else {
-    console.info('Missing amountFiat in combineTxWithFile')
+    input.props.io.console.info('Missing amountFiat in combineTxWithFile')
   }
 
   return out

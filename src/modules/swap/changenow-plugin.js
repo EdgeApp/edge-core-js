@@ -3,16 +3,18 @@
 import { lt, mul } from 'biggystring'
 
 import {
+  SwapAboveLimitError,
+  SwapBelowLimitError,
+  SwapCurrencyError
+} from '../../types/error.js'
+import {
   type EdgeCurrencyWallet,
   type EdgePluginEnvironment,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapQuoteOptions,
-  type EdgeSwapTools,
-  SwapAboveLimitError,
-  SwapBelowLimitError,
-  SwapCurrencyError
-} from '../../index.js'
+  type EdgeSwapTools
+} from '../../types/types.js'
 import { makeSwapPluginQuote } from './swap-helpers.js'
 
 const swapInfo = {

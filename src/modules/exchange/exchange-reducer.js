@@ -1,6 +1,6 @@
 // @flow
 
-import { combineReducers } from 'redux'
+import { type Reducer, combineReducers } from 'redux'
 
 import { type RootAction } from '../actions.js'
 
@@ -91,6 +91,9 @@ function rates (
   return state
 }
 
-export const exchangeCache = combineReducers({
+export const exchangeCache: Reducer<
+  ExchangeState,
+  RootAction
+> = combineReducers({
   rates
 })

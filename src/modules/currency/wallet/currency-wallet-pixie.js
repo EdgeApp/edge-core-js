@@ -1,7 +1,12 @@
 // @flow
 
 import { downgradeDisklet } from 'disklet'
-import { type PixieInput, combinePixies, stopUpdates } from 'redux-pixies'
+import {
+  type PixieInput,
+  type TamePixie,
+  combinePixies,
+  stopUpdates
+} from 'redux-pixies'
 import { update } from 'yaob'
 
 import {
@@ -9,7 +14,7 @@ import {
   type EdgeCurrencyPlugin,
   type EdgeCurrencyWallet
 } from '../../../types/types.js'
-import { type ApiInput, type RootProps } from '../../root.js'
+import { type ApiInput, type RootProps } from '../../root-pixie.js'
 import {
   addStorageWallet,
   syncStorageWallet
@@ -44,7 +49,7 @@ export type CurrencyWalletProps = RootProps & {
 
 export type CurrencyWalletInput = PixieInput<CurrencyWalletProps>
 
-export const walletPixie = combinePixies({
+export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Looks up the currency plugin for this wallet:
   plugin: (input: CurrencyWalletInput) => () => {
     // There are still race conditions where this can happen:

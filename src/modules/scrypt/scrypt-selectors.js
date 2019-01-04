@@ -1,7 +1,7 @@
 // @flow
 
 import { utf8 } from '../../util/encoding.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { type JsonSnrp } from './scrypt-pixie.js'
 
 /**

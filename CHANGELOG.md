@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.13.6
+
+* Add Faa.st swap plugin.
+* Log more steps during login.
+* Upgrade to Flow v0.89.0.
+
 ## 0.13.5
 
 * Upgrade to redux-pixies v0.3.6 to fix ghost wallets appearing at login.
@@ -26,6 +32,8 @@
 
 ## 0.13.0
 
+* Uppgrade to disklet v0.3.0
+  * Replace `folder` and `localFolder` with `disklet` and `localDisklet` in all API's to use the new Disklet API.
 * Removed deprecated API's:
   * Renamed API's:
     * `EdgeCurrencyConfig.changePluginSettings` (use `changeUserSettings`)

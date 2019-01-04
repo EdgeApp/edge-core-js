@@ -4,7 +4,7 @@ import { base64 } from 'rfc4648'
 
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { authRequest } from './authServer.js'
 import { fixUsername, getStash, hashUsername } from './login-selectors.js'

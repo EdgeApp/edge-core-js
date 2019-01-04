@@ -1,11 +1,7 @@
 import { add, lt } from 'biggystring'
-import { applyMiddleware, combineReducers, createStore } from 'redux'
+import { combineReducers, createStore } from 'redux'
 
 import { InsufficientFundsError } from '../../src/types/error.js'
-import {
-  createReaction,
-  reactionMiddleware
-} from '../../src/util/redux/reaction.js'
 import { fakeCurrencyInfo } from './fake-currency-info.js'
 
 function nop () {}
@@ -44,7 +40,7 @@ const reducer = combineReducers({
 })
 
 export function makeFakeCurrencyStore () {
-  return createStore(reducer, applyMiddleware(reactionMiddleware))
+  return createStore(reducer)
 }
 
 /**
@@ -62,52 +58,51 @@ class FakeCurrencyEngine {
       onTransactionsChanged = nop
     } = callbacks
 
-    // Address callback:
-    this.store.dispatch(
-      createReaction(state => state.progress, onAddressesChecked)
-    )
-
-    // Balance callback:
-    this.store.dispatch(
-      createReaction(
-        state => state.balance,
-        balance => onBalanceChanged('TEST', balance.toString())
-      )
-    )
-
-    // Token balance callback:
-    this.store.dispatch(
-      createReaction(
-        state => state.tokenBalance,
-        balance => onBalanceChanged('TOKEN', balance.toString())
-      )
-    )
-
-    // Block height callback:
-    this.store.dispatch(
-      createReaction(state => state.blockHeight, onBlockHeightChanged)
-    )
-
-    // Transactions callback:
     const oldTxs = {}
-    this.store.dispatch(
-      createReaction(
-        state => state.txs,
-        txs => {
-          // Build the list of changed transactions:
-          const changed = []
-          for (const tx of txs) {
-            if (oldTxs[tx.txid] !== tx) changed.push(tx)
-          }
-          onTransactionsChanged(changed)
+    let lastState = {}
+    const trigger = () => {
+      const state = this.store.getState()
 
-          // Save the new list of transactions:
-          for (const tx of txs) {
-            oldTxs[tx.txid] = tx
-          }
+      // Address callback:
+      if (state.progress !== lastState.progress) {
+        onAddressesChecked(state.progress)
+      }
+
+      // Balance callback:
+      if (state.balance !== lastState.balance) {
+        onBalanceChanged('TEST', state.balance.toString())
+      }
+
+      // Token balance callback:
+      if (state.tokenBalance !== lastState.tokenBalance) {
+        onBalanceChanged('TOKEN', state.tokenBalance.toString())
+      }
+
+      // Block height callback:
+      if (state.blockHeight !== lastState.blockHeight) {
+        onBlockHeightChanged(state.blockHeight)
+      }
+
+      // Transactions callback:
+      if (state.txs !== lastState.txs) {
+        // Build the list of changed transactions:
+        const changed = []
+        for (const tx of state.txs) {
+          if (oldTxs[tx.txid] !== tx) changed.push(tx)
         }
-      )
-    )
+        onTransactionsChanged(changed)
+
+        // Save the new list of transactions:
+        for (const tx of state.txs) {
+          oldTxs[tx.txid] = tx
+        }
+      }
+
+      lastState = state
+    }
+    trigger()
+
+    this.store.subscribe(trigger)
   }
 
   startEngine () {

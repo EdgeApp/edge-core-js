@@ -6,7 +6,7 @@ import { bridgifyObject } from 'yaob'
 
 import { type EdgeWalletInfo } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import { loadRepoStatus, makeRepoPaths, syncRepo } from './repo.js'
 
 export function addStorageWallet (

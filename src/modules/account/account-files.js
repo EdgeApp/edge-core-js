@@ -9,7 +9,7 @@ import {
   type EdgeWalletStates
 } from '../../types/types.js'
 import { makeKeyInfo } from '../login/keys.js'
-import { type ApiInput } from '../root.js'
+import { type ApiInput } from '../root-pixie.js'
 import {
   getStorageWalletFolder,
   hashStorageWalletFilename

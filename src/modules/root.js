@@ -1,57 +1,17 @@
 // @flow
 
-import {
-  type Dispatch,
-  type Store,
-  type StoreEnhancer,
-  compose,
-  createStore
-} from 'redux'
-import {
-  type PixieInput,
-  type ReduxProps,
-  attachPixie,
-  filterPixie
-} from 'redux-pixies'
+import { type StoreEnhancer, compose, createStore } from 'redux'
+import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
 
 import {
+  type EdgeContext,
   type EdgeContextOptions,
-  type EdgeCorePluginFactory,
   type EdgeIo
 } from '../types/types.js'
 import { type RootAction } from './actions.js'
-import { type RootOutput, rootPixie } from './root-pixie.js'
+import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
-
-/**
- * The root of the entire core state machine.
- * Contains io resources, context options, Redux store,
- * and tree of background workers. Everything that happens, happens here.
- */
-export type CoreRoot = {
-  redux: Store<RootState, RootAction>,
-
-  // Pixies:
-  output: RootOutput,
-  destroyPixie?: () => void
-}
-
-// Props passed to the root pixie:
-export type RootProps = {
-  +dispatch: Dispatch<RootAction>,
-  +io: EdgeIo,
-  +onError: (e: Error) => mixed,
-  +onExchangeUpdate: () => mixed,
-  +output: RootOutput,
-  +plugins: Array<EdgeCorePluginFactory>,
-  +shapeshiftKey: string | void,
-  +changellyInit?: { apiKey: string, secret: string } | void,
-  +changeNowKey?: string | void,
-  +state: RootState
-}
-
-export type ApiInput = PixieInput<RootProps>
 
 let allDestroyPixies: Array<() => void> = []
 
@@ -67,7 +27,10 @@ function nop () {}
  * This core object contains the `io` object, context options,
  * Redux store, and tree of background workers.
  */
-export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
+export async function makeContext (
+  io: EdgeIo,
+  opts: EdgeContextOptions
+): Promise<EdgeContext> {
   const onErrorDefault = (error, name) => io.console.error(name, error)
 
   const {
@@ -76,6 +39,7 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
     authServer = 'https://auth.airbitz.co/api',
     callbacks = {},
     changellyInit = void 0,
+    faastInit = void 0,
     hideKeys = false,
     plugins = [],
     shapeshiftKey = void 0,
@@ -87,20 +51,32 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
     throw new Error('No API key provided')
   }
 
+  // Start Redux:
   const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
-
-  const output: any = {}
-  const coreRoot: CoreRoot = {
-    redux: createStore(reducer, enhancers),
-    output
-  }
-  coreRoot.redux.dispatch({
+  const redux = createStore(reducer, enhancers)
+  redux.dispatch({
     type: 'INIT',
     payload: { apiKey, appId, authServer, hideKeys }
   })
 
-  coreRoot.destroyPixie = attachPixie(
-    coreRoot.redux,
+  // Load the login stashes from disk:
+  const stashes = {}
+  const listing = await io.disklet.list('logins')
+  const files = Object.keys(listing).filter(path => listing[path] === 'file')
+  for (const path of files) {
+    try {
+      stashes[path] = JSON.parse(await io.disklet.getText(path))
+    } catch (e) {}
+  }
+  redux.dispatch({
+    type: 'LOGIN_STASHES_LOADED',
+    payload: stashes
+  })
+
+  // Start the pixie tree:
+  const mirror = { output: {} }
+  const closePixie = attachPixie(
+    redux,
     filterPixie(
       rootPixie,
       (props: ReduxProps<RootState, RootAction>): RootProps => ({
@@ -108,23 +84,24 @@ export function makeCoreRoot (io: EdgeIo, opts: EdgeContextOptions) {
         io,
         onError: error => {
           onError(error)
-          if (coreRoot.output.context && coreRoot.output.context.api) {
-            emit(coreRoot.output.context.api, 'error', error)
+          if (mirror.output.context && mirror.output.context.api) {
+            emit(mirror.output.context.api, 'error', error)
           }
         },
         onExchangeUpdate,
         plugins,
-        shapeshiftKey,
         changellyInit,
-        changeNowKey
+        changeNowKey,
+        faastInit,
+        shapeshiftKey
       })
     ),
     e => console.error(e),
-    output => (coreRoot.output = output)
+    output => (mirror.output = output)
   )
-  allDestroyPixies.push(coreRoot.destroyPixie)
+  allDestroyPixies.push(closePixie)
 
-  return coreRoot
+  return mirror.output.context.api
 }
 
 /**
