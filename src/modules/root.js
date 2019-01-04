@@ -39,6 +39,7 @@ export async function makeContext (
     authServer = 'https://auth.airbitz.co/api',
     callbacks = {},
     changellyInit = void 0,
+    faastInit = void 0,
     hideKeys = false,
     plugins = [],
     shapeshiftKey = void 0,
@@ -89,9 +90,10 @@ export async function makeContext (
         },
         onExchangeUpdate,
         plugins,
-        shapeshiftKey,
         changellyInit,
-        changeNowKey
+        changeNowKey,
+        faastInit,
+        shapeshiftKey
       })
     ),
     e => console.error(e),

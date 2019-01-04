@@ -29,9 +29,10 @@ export type RootProps = {
   +onExchangeUpdate: () => mixed,
   +output: RootOutput,
   +plugins: Array<EdgeCorePluginFactory>,
-  +shapeshiftKey: string | void,
   +changellyInit?: { apiKey: string, secret: string } | void,
   +changeNowKey?: string | void,
+  +faastInit?: { affiliateId: string, affiliateMargin?: number } | void,
+  +shapeshiftKey: string | void,
   +state: RootState
 }
 
