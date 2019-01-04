@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.13.6
+
+* Add Faa.st swap plugin.
+* Log more steps during login.
+* Upgrade to Flow v0.89.0.
+
 ## 0.13.5
 
 * Upgrade to redux-pixies v0.3.6 to fix ghost wallets appearing at login.
