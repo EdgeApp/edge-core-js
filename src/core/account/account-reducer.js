@@ -3,7 +3,6 @@
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
-  type EdgeAccountCallbacks,
   type EdgePluginMap,
   type EdgeSwapTools,
   type EdgeWalletInfo,
@@ -43,7 +42,6 @@ export type AccountState = {
 
   // Login stuff:
   +appId: string, // Copy of the context appId
-  +callbacks: EdgeAccountCallbacks,
   +loadFailure: Error | null, // Failed to create API object.
   +login: LoginTree,
   +loginKey: Uint8Array,
@@ -190,10 +188,6 @@ const account = buildReducer({
 
   appId (state, action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.appId : state
-  },
-
-  callbacks (state, action: RootAction): EdgeAccountCallbacks {
-    return action.type === 'LOGIN' ? action.payload.callbacks : state
   },
 
   loadFailure (state = null, action: RootAction): Error | null {

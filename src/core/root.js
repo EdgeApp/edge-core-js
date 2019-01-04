@@ -21,8 +21,6 @@ const composeEnhancers =
     ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'core' })
     : compose
 
-function nop () {}
-
 /**
  * Creates the root object for the entire core state machine.
  * This core object contains the `io` object, context options,
@@ -32,13 +30,10 @@ export async function makeContext (
   io: EdgeIo,
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
-  const onErrorDefault = (error, name) => io.console.error(name, error)
-
   const {
     apiKey,
     appId = '',
     authServer = 'https://auth.airbitz.co/api',
-    callbacks = {},
     changellyInit = void 0,
     faastInit = void 0,
     hideKeys = false,
@@ -46,7 +41,6 @@ export async function makeContext (
     shapeshiftKey = void 0,
     changeNowKey = void 0
   } = opts
-  const { onError = onErrorDefault, onExchangeUpdate = nop } = callbacks
 
   if (apiKey == null) {
     throw new Error('No API key provided')
@@ -87,12 +81,10 @@ export async function makeContext (
         },
         io,
         onError: error => {
-          onError(error)
           if (mirror.output.context && mirror.output.context.api) {
             emit(mirror.output.context.api, 'error', error)
           }
         },
-        onExchangeUpdate,
         plugins,
         changellyInit,
         changeNowKey,

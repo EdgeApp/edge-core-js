@@ -627,37 +627,8 @@ export type EdgeExchangePluginFactory = {
 // account
 // ---------------------------------------------------------------------
 
-export type EdgeAccountCallbacks = {
-  +onDataChanged?: () => mixed,
-  +onKeyListChanged?: () => mixed,
-  +onLoggedOut?: () => mixed,
-  +onOtpDrift?: (drift: number) => mixed,
-  +onRemoteOtpChange?: () => mixed,
-  +onRemotePasswordChange?: () => mixed,
-
-  // Currency wallet callbacks:
-  +onAddressesChecked?: (walletId: string, progressRatio: number) => mixed,
-  +onBalanceChanged?: (
-    walletId: string,
-    currencyCode: string,
-    nativeBalance: string
-  ) => mixed,
-  +onBlockHeightChanged?: (walletId: string, blockHeight: number) => mixed,
-  +onNewTransactions?: (
-    walletId: string,
-    abcTransactions: Array<EdgeTransaction>
-  ) => mixed,
-  +onTransactionsChanged?: (
-    walletId: string,
-    abcTransactions: Array<EdgeTransaction>
-  ) => mixed,
-  +onWalletDataChanged?: (walletId: string) => mixed,
-  +onWalletNameChanged?: (walletId: string, name: string | null) => mixed
-}
-
 export type EdgeAccountOptions = {
-  otp?: string,
-  callbacks?: EdgeAccountCallbacks
+  otp?: string
 }
 
 // currencies ----------------------------------------------------------
@@ -903,16 +874,10 @@ export type EdgeCorePluginFactory =
   | EdgeCurrencyPluginFactory
   | EdgeExchangePluginFactory
 
-export type EdgeContextCallbacks = {
-  +onError?: (e: Error) => mixed,
-  +onExchangeUpdate?: () => mixed
-}
-
 export type EdgeContextOptions = {
   apiKey: string,
   appId: string,
   authServer?: string,
-  callbacks?: EdgeContextCallbacks,
   hideKeys?: boolean,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
@@ -933,11 +898,7 @@ export type EdgeFakeContextOptions = EdgeContextOptions & {
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
   // Deprecated. The info server handles these now:
   displayImageUrl?: string,
-  displayName?: string,
-
-  // Deprecated (will crash in bridged contexts):
-  onProcessLogin?: (username: string) => mixed,
-  onLogin?: (e?: Error, account?: EdgeAccount) => mixed
+  displayName?: string
 }
 
 export type EdgeLoginMessages = {

@@ -396,7 +396,8 @@ export function makeCurrencyWalletApi (
         input,
         txid,
         currencyCode,
-        fixMetadata(metadata, input.props.selfState.fiat)
+        fixMetadata(metadata, input.props.selfState.fiat),
+        fakeCallbacks
       )
     },
 

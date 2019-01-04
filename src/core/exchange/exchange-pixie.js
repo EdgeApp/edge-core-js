@@ -51,12 +51,6 @@ export const exchange: TamePixie<RootProps> = combinePixies({
           }
         }
 
-        try {
-          input.props.onExchangeUpdate()
-        } catch (e) {
-          input.props.onError(e)
-        }
-
         input.props.dispatch({ type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs })
         timeout = setTimeout(doFetch, 30 * 1000)
         return void 0
