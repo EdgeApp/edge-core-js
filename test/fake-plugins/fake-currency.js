@@ -1,178 +1,268 @@
+// @flow
+
 import { add, lt } from 'biggystring'
-import { combineReducers, createStore } from 'redux'
 
-import { InsufficientFundsError } from '../../src/types/error.js'
-import { fakeCurrencyInfo } from './fake-currency-info.js'
+import {
+  type EdgeCorePluginOptions,
+  type EdgeCreatePrivateKeyOptions,
+  type EdgeCurrencyCodeOptions,
+  type EdgeCurrencyEngine,
+  type EdgeCurrencyEngineCallbacks,
+  type EdgeCurrencyEngineOptions,
+  type EdgeCurrencyInfo,
+  type EdgeCurrencyPlugin,
+  type EdgeCurrencyPluginFactory,
+  type EdgeDataDump,
+  type EdgeFreshAddress,
+  type EdgeGetTransactionsOptions,
+  type EdgeParsedUri,
+  type EdgeSpendInfo,
+  type EdgeTokenInfo,
+  type EdgeTransaction,
+  type EdgeUnusedOptions,
+  type EdgeWalletInfo,
+  InsufficientFundsError
+} from '../../src/index.js'
 
-function nop () {}
+export const fakeCurrencyInfo: EdgeCurrencyInfo = {
+  // Basic currency information:
+  currencyCode: 'FAKE',
+  currencyName: 'Fake Coin',
+  pluginName: 'fakecoin',
+  denominations: [
+    { multiplier: '10', name: 'SMALL' },
+    { multiplier: '100', name: 'FAKE' }
+  ],
+  walletTypes: ['wallet:fakecoin'],
 
-const reducer = combineReducers({
-  balance: (state = 0, action) =>
-    action.type === 'SET_BALANCE' ? action.payload : state,
-
-  tokenBalance: (state = 0, action) =>
-    action.type === 'SET_TOKEN_BALANCE' ? action.payload : state,
-
-  blockHeight: (state = 0, action) =>
-    action.type === 'SET_BLOCK_HEIGHT' ? action.payload : state,
-
-  progress: (state = 0, action) =>
-    action.type === 'SET_PROGRESS' ? action.payload : state,
-
-  txs: (state = [], action) => {
-    if (action.type === 'SET_TXS') {
-      const out = []
-      for (const tx of action.payload) {
-        out.push({
-          txid: '',
-          date: 0,
-          networkFee: '0',
-          blockHeight: 0,
-          nativeAmount: '0',
-          ourReceiveAddresses: [],
-          ...tx
-        })
-      }
-      return out
+  // Configuration options:
+  defaultSettings: {},
+  metaTokens: [
+    {
+      currencyCode: 'TOKEN',
+      currencyName: 'Fake Token',
+      denominations: [{ multiplier: '1000', name: 'TOKEN' }]
     }
-    return state
-  }
-})
+  ],
 
-export function makeFakeCurrencyStore () {
-  return createStore(reducer)
+  // Explorers:
+  addressExplorer: 'https://edge.app',
+  transactionExplorer: 'https://edge.app'
 }
+
+const nop: Function = () => {}
 
 /**
  * Currency plugin transaction engine.
  */
 class FakeCurrencyEngine {
-  constructor (store, keyInfo, opts) {
-    this.store = store
+  callbacks: EdgeCurrencyEngineCallbacks
+  state: {
+    balance: number,
+    tokenBalance: number,
+    blockHeight: number,
+    progress: number,
+    txs: { [txid: string]: EdgeTransaction }
+  }
 
-    const { callbacks } = opts
+  constructor (walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
+    this.callbacks = opts.callbacks
+    this.state = {
+      balance: 0,
+      tokenBalance: 0,
+      blockHeight: 0,
+      progress: 0,
+      txs: {}
+    }
+    this._update(this.state)
+  }
+
+  _update (settings: Object = {}): mixed {
+    const state = this.state
     const {
       onAddressesChecked = nop,
       onBalanceChanged = nop,
       onBlockHeightChanged = nop,
       onTransactionsChanged = nop
-    } = callbacks
+    } = this.callbacks
 
-    const oldTxs = {}
-    let lastState = {}
-    const trigger = () => {
-      const state = this.store.getState()
-
-      // Address callback:
-      if (state.progress !== lastState.progress) {
-        onAddressesChecked(state.progress)
-      }
-
-      // Balance callback:
-      if (state.balance !== lastState.balance) {
-        onBalanceChanged('TEST', state.balance.toString())
-      }
-
-      // Token balance callback:
-      if (state.tokenBalance !== lastState.tokenBalance) {
-        onBalanceChanged('TOKEN', state.tokenBalance.toString())
-      }
-
-      // Block height callback:
-      if (state.blockHeight !== lastState.blockHeight) {
-        onBlockHeightChanged(state.blockHeight)
-      }
-
-      // Transactions callback:
-      if (state.txs !== lastState.txs) {
-        // Build the list of changed transactions:
-        const changed = []
-        for (const tx of state.txs) {
-          if (oldTxs[tx.txid] !== tx) changed.push(tx)
-        }
-        onTransactionsChanged(changed)
-
-        // Save the new list of transactions:
-        for (const tx of state.txs) {
-          oldTxs[tx.txid] = tx
-        }
-      }
-
-      lastState = state
+    // Address callback:
+    if (settings.progress != null) {
+      state.progress = settings.progress
+      onAddressesChecked(state.progress)
     }
-    trigger()
 
-    this.store.subscribe(trigger)
+    // Balance callback:
+    if (settings.balance != null) {
+      state.balance = settings.balance
+      onBalanceChanged('FAKE', state.balance.toString())
+    }
+
+    // Token balance callback:
+    if (settings.tokenBalance != null) {
+      state.tokenBalance = settings.tokenBalance
+      onBalanceChanged('TOKEN', state.tokenBalance.toString())
+    }
+
+    // Block height callback:
+    if (settings.blockHeight != null) {
+      state.blockHeight = settings.blockHeight
+      onBlockHeightChanged(state.blockHeight)
+    }
+
+    // Transactions callback:
+    if (settings.txs != null) {
+      const changes: Array<EdgeTransaction> = []
+      for (const txid in settings.txs) {
+        const newTx = {
+          blockHeight: 0,
+          date: 0,
+          nativeAmount: '0',
+          networkFee: '0',
+          ourReceiveAddresses: [],
+          ...settings.txs[txid],
+          txid
+        }
+        const oldTx = state.txs[txid]
+
+        let changed = false
+        if (oldTx != null) {
+          for (const item in newTx) {
+            if (oldTx[item] !== newTx[item]) changed = true
+          }
+        } else {
+          changed = true
+        }
+        if (changed) {
+          changes.push(newTx)
+          state.txs[txid] = newTx
+        }
+      }
+
+      if (changes.length) onTransactionsChanged(changes)
+    }
   }
 
-  startEngine () {
+  // Keys:
+  getDisplayPrivateSeed (): string | null {
+    return 'xpriv'
+  }
+  getDisplayPublicSeed (): string | null {
+    return 'xpub'
+  }
+
+  // Engine state
+  startEngine (): Promise<mixed> {
     return Promise.resolve()
   }
-
-  killEngine () {
+  killEngine (): Promise<mixed> {
     return Promise.resolve()
   }
+  resyncBlockchain (): Promise<mixed> {
+    return Promise.resolve()
+  }
+  dumpData (): EdgeDataDump {
+    return {
+      walletId: 'xxx',
+      walletType: fakeCurrencyInfo.walletTypes[0],
+      pluginType: 'currency',
+      data: {}
+    }
+  }
 
-  getBalance (opts = {}) {
-    const { currencyCode = 'TEST' } = opts
+  // Chain state
+  getBlockHeight (): number {
+    return this.state.blockHeight
+  }
+  getBalance (opts: EdgeCurrencyCodeOptions): string {
+    const { currencyCode = 'FAKE' } = opts
     switch (currencyCode) {
-      case 'TEST':
-        return this.store.getState().balance.toString()
+      case 'FAKE':
+        return this.state.balance.toString()
       case 'TOKEN':
-        return this.store.getState().tokenBalance.toString()
+        return this.state.tokenBalance.toString()
       default:
         throw new Error('Unknown currency')
     }
   }
-
-  getBlockHeight () {
-    return this.store.getState().blockHeight
+  getNumTransactions (opts: EdgeCurrencyCodeOptions): number {
+    return Object.keys(this.state.txs).length
+  }
+  getTransactions (
+    opts: EdgeGetTransactionsOptions
+  ): Promise<Array<EdgeTransaction>> {
+    return Promise.resolve(
+      Object.keys(this.state.txs).map(txid => this.state.txs[txid])
+    )
   }
 
-  getNumTransactions () {
-    return this.store.getState().txs.length
-  }
-
-  getTransactions () {
-    return Promise.resolve(this.store.getState().txs)
-  }
-
-  saveTx () {
+  // Tokens
+  enableTokens (tokens: Array<string>): Promise<mixed> {
     return Promise.resolve()
   }
-
-  resyncBlockchain () {
+  disableTokens (tokens: Array<string>): Promise<mixed> {
     return Promise.resolve()
   }
-
-  dumpData () {
-    return ''
+  getEnabledTokens (): Promise<Array<string>> {
+    return Promise.resolve(['TOKEN'])
+  }
+  addCustomToken (token: EdgeTokenInfo): Promise<mixed> {
+    return Promise.resolve()
+  }
+  getTokenStatus (token: string): boolean {
+    return token === 'TOKEN'
   }
 
-  getDisplayPrivateSeed () {
-    return 'xpriv'
+  // Addresses:
+  getFreshAddress (opts: EdgeCurrencyCodeOptions): EdgeFreshAddress {
+    return { publicAddress: 'fakeaddress' }
+  }
+  addGapLimitAddresses (
+    addresses: Array<string>,
+    opts: EdgeUnusedOptions
+  ): void {}
+  isAddressUsed (address: string, opts: EdgeUnusedOptions): boolean {
+    return address === 'fakeaddress'
   }
 
-  getDisplayPublicSeed () {
-    return 'xpub'
-  }
-
-  makeSpend (spendInfo) {
-    const { currencyCode = 'TEST', spendTargets } = spendInfo
+  // Spending:
+  makeSpend (spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+    const { currencyCode = 'FAKE', spendTargets } = spendInfo
 
     // Check the spend targets:
     let total = '0'
     for (const spendTarget of spendTargets) {
-      total = add(total, spendTarget.nativeAmount)
+      if (spendTarget.nativeAmount != null) {
+        total = add(total, spendTarget.nativeAmount)
+      }
     }
 
     // Check the balances:
-    if (lt(this.getBalance(currencyCode), total)) {
+    if (lt(this.getBalance({ currencyCode }), total)) {
       return Promise.reject(new InsufficientFundsError())
     }
 
     // TODO: Return a high-fidelity transaction
-    return Promise.resolve({ currencyCode })
+    return Promise.resolve({
+      blockHeight: 0,
+      currencyCode,
+      date: 0,
+      nativeAmount: total,
+      networkFee: '0',
+      otherParams: {},
+      ourReceiveAddresses: [],
+      signedTx: '',
+      txid: ''
+    })
+  }
+  signTx (transaction: EdgeTransaction): Promise<EdgeTransaction> {
+    return Promise.resolve(transaction)
+  }
+  broadcastTx (transaction: EdgeTransaction): Promise<EdgeTransaction> {
+    return Promise.resolve(transaction)
+  }
+  saveTx (transaction: EdgeTransaction): Promise<mixed> {
+    return Promise.resolve()
   }
 }
 
@@ -180,38 +270,56 @@ class FakeCurrencyEngine {
  * Currency plugin setup object.
  */
 class FakeCurrencyPlugin {
-  constructor (store) {
-    this.store = store
+  engines: Array<FakeCurrencyEngine>
+
+  constructor () {
+    this.engines = []
   }
 
-  get pluginName () {
+  // Information:
+  get pluginName (): string {
     return fakeCurrencyInfo.pluginName
   }
-
-  get currencyInfo () {
+  get currencyInfo (): EdgeCurrencyInfo {
     return fakeCurrencyInfo
   }
+  async changeSettings (settings: Object): Promise<mixed> {
+    for (const engine of this.engines) engine._update(settings)
+  }
 
-  async changeSettings (settings) {}
-
-  createPrivateKey (type) {
-    if (type !== this.currencyInfo.walletTypes[0]) {
+  // Keys:
+  createPrivateKey (
+    walletType: string,
+    opts?: EdgeCreatePrivateKeyOptions
+  ): Promise<Object> {
+    if (walletType !== this.currencyInfo.walletTypes[0]) {
       throw new Error('Unsupported key type')
     }
-    return {
-      fakeKey: 'FakePrivateKey'
-    }
+    return Promise.resolve({ fakeKey: 'FakePrivateKey' })
   }
-
-  // derivePublicKey () {}
-  // parseUri () {}
-
-  makeEngine (keyInfo, opts = {}) {
-    return Promise.resolve(new FakeCurrencyEngine(this.store, keyInfo, opts))
+  derivePublicKey (walletInfo: EdgeWalletInfo): Promise<Object> {
+    return Promise.resolve({})
   }
-
-  getSplittableTypes (walletInfo) {
+  getSplittableTypes (walletInfo: EdgeWalletInfo): Array<string> {
     return ['wallet:tulipcoin']
+  }
+
+  // URI parsing:
+  parseUri (uri: string): EdgeParsedUri {
+    return {}
+  }
+  encodeUri (): string {
+    return ''
+  }
+
+  // Engine:
+  makeEngine (
+    walletInfo: EdgeWalletInfo,
+    opts: EdgeCurrencyEngineOptions
+  ): Promise<EdgeCurrencyEngine> {
+    const out = new FakeCurrencyEngine(walletInfo, opts)
+    this.engines.push(out)
+    return Promise.resolve(out)
   }
 }
 
@@ -219,12 +327,11 @@ class FakeCurrencyPlugin {
  * Creates a currency plugin setup object
  * @param store Redux store for the engine to use.
  */
-export function makeFakeCurrency (store = makeFakeCurrencyStore()) {
-  return {
-    pluginType: 'currency',
+export const fakeCurrencyPlugin: EdgeCurrencyPluginFactory = {
+  pluginType: 'currency',
+  pluginName: fakeCurrencyInfo.pluginName,
 
-    makePlugin (io) {
-      return Promise.resolve(new FakeCurrencyPlugin(store))
-    }
+  makePlugin (opts: EdgeCorePluginOptions): Promise<EdgeCurrencyPlugin> {
+    return Promise.resolve(new FakeCurrencyPlugin())
   }
 }
