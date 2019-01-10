@@ -1,8 +1,6 @@
 // @flow
 
 import crypto from 'crypto'
-import net from 'net'
-import tls from 'tls'
 
 import { makeNodeDisklet } from 'disklet'
 import fetch from 'node-fetch'
@@ -30,8 +28,6 @@ export function makeNodeIo (path: string): EdgeIo {
 
     // Networking:
     fetch,
-    Socket: net.Socket,
-    TLSSocket: tls.TLSSocket,
     WebSocket
   }
 }

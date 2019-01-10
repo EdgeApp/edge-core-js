@@ -46,32 +46,6 @@ export type EdgeScryptFunction = (
   dklen: number
 ) => Promise<Uint8Array>
 
-export type EdgeSecp256k1 = {
-  publicKeyCreate: (
-    privateKey: Uint8Array,
-    compressed: boolean
-  ) => Promise<string>,
-  privateKeyTweakAdd: (
-    privateKey: Uint8Array,
-    tweak: Uint8Array
-  ) => Promise<Uint8Array>,
-  publicKeyTweakAdd: (
-    publicKey: Uint8Array,
-    tweak: Uint8Array,
-    compressed: boolean
-  ) => Promise<Uint8Array>
-}
-
-export type EdgePbkdf2 = {
-  deriveAsync: (
-    key: Uint8Array,
-    salt: Uint8Array,
-    iter: number,
-    len: number,
-    algo: string
-  ) => Promise<Uint8Array>
-}
-
 /**
  * Access to platform-specific resources.
  * The core never talks to the outside world on its own,
@@ -81,9 +55,6 @@ export type EdgeIo = {
   // Crypto:
   +random: EdgeRandomFunction,
   +scrypt: EdgeScryptFunction,
-  // TODO: Make these two non-optional, providing JS versions as needed:
-  +secp256k1?: EdgeSecp256k1,
-  +pbkdf2?: EdgePbkdf2,
 
   // Local io:
   +console: EdgeConsole,
@@ -91,8 +62,6 @@ export type EdgeIo = {
 
   // Networking:
   +fetch: typeof fetch,
-  +Socket?: typeof net$Socket, // Still optional (no browser version)
-  +TLSSocket?: typeof tls$TLSSocket, // Still optional (no browser version)
   +WebSocket: typeof WebSocket
 }
 
