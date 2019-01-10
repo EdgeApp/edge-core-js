@@ -1,5 +1,6 @@
 // @flow
 
+import { navigateDisklet } from 'disklet'
 import {
   type PixieInput,
   type TamePixie,
@@ -21,10 +22,6 @@ import {
   addStorageWallet,
   syncStorageWallet
 } from '../storage/storage-actions.js'
-import { changellyPlugin } from '../swap/changelly-plugin.js'
-import { changenowPlugin } from '../swap/changenow-plugin'
-import { faastPlugin } from '../swap/faast-plugin.js'
-import { shapeshiftPlugin } from '../swap/shapeshift-plugin.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
 import { type AccountState } from './account-reducer.js'
@@ -97,42 +94,24 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           await loadAllFiles()
           io.console.info('Login: loaded files')
 
-          // Load swap plugins:
+          // Boot the swap plugins:
           const swapTools: EdgePluginMap<EdgeSwapTools> = {}
-          if (input.props.changellyInit) {
-            swapTools.changelly = await changellyPlugin.makeTools({
+          for (const pluginName in input.props.state.plugins.swap) {
+            const plugin = input.props.state.plugins.swap[pluginName]
+            const init = input.props.state.plugins.init[pluginName]
+
+            swapTools[pluginName] = await plugin.makeTools({
+              initOptions: typeof init === 'object' ? init : {},
               io: input.props.io,
-              initOptions: input.props.changellyInit,
+              pluginDisklet: navigateDisklet(
+                io.disklet,
+                'plugins/' + pluginName
+              ),
               get userSettings () {
-                return input.props.selfState.userSettings.changelly
+                return input.props.selfState.userSettings[pluginName]
               }
             })
           }
-          if (input.props.shapeshiftKey != null) {
-            swapTools.shapeshift = await shapeshiftPlugin.makeTools({
-              io: input.props.io,
-              initOptions: { apiKey: input.props.shapeshiftKey },
-              get userSettings () {
-                return input.props.selfState.userSettings.shapeshift
-              }
-            })
-          }
-          if (input.props.changeNowKey) {
-            swapTools.changenow = await changenowPlugin.makeTools({
-              io: input.props.io,
-              initOptions: { apiKey: input.props.changeNowKey },
-              get userSettings () {
-                return input.props.selfState.userSettings.changenow
-              }
-            })
-          }
-          swapTools.faast = await faastPlugin.makeTools({
-            io: input.props.io,
-            initOptions: input.props.faastInit,
-            get userSettings () {
-              return input.props.selfState.userSettings.faast
-            }
-          })
           input.props.dispatch({
             type: 'ACCOUNT_PLUGIN_TOOLS_LOADED',
             payload: { accountId, swapTools }

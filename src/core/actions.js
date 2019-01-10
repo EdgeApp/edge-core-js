@@ -2,6 +2,7 @@
 
 import {
   type EdgeCorePlugin,
+  type EdgeCorePluginsInit,
   type EdgePluginMap,
   type EdgeSwapTools,
   type EdgeTokenInfo,
@@ -96,9 +97,8 @@ export type RootAction =
       payload: EdgePluginMap<EdgeCorePlugin>
     }
   | {
-      // Called when something goes wrong adding plugins.
-      type: 'CORE_PLUGINS_FAILED',
-      payload: Error
+      // Called when the plugin list becomes final.
+      type: 'CORE_PLUGINS_LOCKED'
     }
   | {
       // Called when a currency engine fires the onBalanceChanged callback.
@@ -222,6 +222,7 @@ export type RootAction =
         appId: string,
         authServer: string,
         hideKeys: boolean,
+        pluginsInit: EdgeCorePluginsInit,
         stashes: { [path: string]: Object }
       }
     }

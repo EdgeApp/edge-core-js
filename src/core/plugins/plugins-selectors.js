@@ -44,8 +44,26 @@ export function getCurrencyPlugin (
  */
 export function waitForPlugins (ai: ApiInput) {
   return ai.waitFor(props => {
-    if (!props.state.plugins.locked) return
-    if (props.state.plugins.error) throw props.state.plugins.error
+    const { init, locked } = props.state.plugins
+    if (!locked) return
+
+    const missingPlugins: Array<string> = []
+    for (const pluginName in init) {
+      if (
+        !!init[pluginName] &&
+        props.state.plugins.currency[pluginName] == null &&
+        props.state.plugins.rate[pluginName] == null &&
+        props.state.plugins.swap[pluginName] == null
+      ) {
+        missingPlugins.push(pluginName)
+      }
+    }
+    if (missingPlugins.length > 0) {
+      throw new Error(
+        'The following plugins are missing or failed to load: ' +
+          missingPlugins.join(', ')
+      )
+    }
     return true
   })
 }

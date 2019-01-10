@@ -1,6 +1,7 @@
 // @flow
 
 import {
+  type EdgeCorePluginsInit,
   type EdgeCurrencyPlugin,
   type EdgeExchangePlugin,
   type EdgePluginMap,
@@ -9,7 +10,7 @@ import {
 import { type RootAction } from '../actions.js'
 
 export type PluginsState = {
-  +error: Error | void,
+  +init: EdgeCorePluginsInit,
   +locked: boolean,
 
   +currency: EdgePluginMap<EdgeCurrencyPlugin>,
@@ -18,7 +19,7 @@ export type PluginsState = {
 }
 
 const initialState: PluginsState = {
-  error: void 0,
+  init: {},
   locked: false,
   currency: {},
   rate: {},
@@ -33,7 +34,6 @@ export const plugins = (
     case 'CORE_PLUGINS_ADDED': {
       const out = {
         ...state,
-        locked: true,
         currency: { ...state.currency },
         rate: { ...state.rate },
         swap: { ...state.swap }
@@ -49,9 +49,10 @@ export const plugins = (
       }
       return out
     }
-    case 'CORE_PLUGINS_FAILED': {
-      return { ...state, error: action.payload, locked: true }
-    }
+    case 'CORE_PLUGINS_LOCKED':
+      return { ...state, locked: true }
+    case 'INIT':
+      return { ...state, init: action.payload.pluginsInit }
   }
   return state
 }

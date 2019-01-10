@@ -6,10 +6,9 @@ import { describe, it } from 'mocha'
 import { type EdgeAccount, makeFakeEdgeWorld } from '../../../src/index.js'
 import { makeAssertLog } from '../../assert-log.js'
 import { expectRejection } from '../../expect-rejection.js'
-import { fakeCurrencyPlugin } from '../../fake/fake-currency-plugin.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
-const plugins = [fakeCurrencyPlugin]
+const plugins = { fakecoin: true }
 const contextOptions = { apiKey: '', appId: '', plugins }
 
 function findWallet (walletInfos, type) {
@@ -134,10 +133,12 @@ describe('account', function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
-      changellyInit: { apiKey: 'fake-key', secret: 'fake-secret' },
-      changeNowKey: 'fake-key',
-      faastInit: { affiliateId: 'fake-id', affiliateMargin: 0.5 },
-      shapeshiftKey: 'fake-key'
+      plugins: {
+        changelly: { apiKey: 'fake-key', secret: 'fake-secret' },
+        changenow: { apiKey: 'fake-key' },
+        faast: { affiliateId: 'fake-id', affiliateMargin: 0.5 },
+        shapeshift: { apiKey: 'fake-key' }
+      }
     })
     const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -174,7 +175,9 @@ describe('account', function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
-      changellyInit: { apiKey: 'fake-key', secret: 'fake-secret' }
+      plugins: {
+        changelly: { apiKey: 'fake-key', secret: 'fake-secret' }
+      }
     })
 
     // Check the initial settings:

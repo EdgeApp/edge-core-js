@@ -11,7 +11,6 @@ import {
   type EdgeCurrencyEngineOptions,
   type EdgeCurrencyInfo,
   type EdgeCurrencyPlugin,
-  type EdgeCurrencyPluginFactory,
   type EdgeDataDump,
   type EdgeFreshAddress,
   type EdgeGetTransactionsOptions,
@@ -323,15 +322,8 @@ class FakeCurrencyPlugin {
   }
 }
 
-/**
- * Creates a currency plugin setup object
- * @param store Redux store for the engine to use.
- */
-export const fakeCurrencyPlugin: EdgeCurrencyPluginFactory = {
-  pluginType: 'currency',
-  pluginName: fakeCurrencyInfo.pluginName,
-
-  makePlugin (opts: EdgeCorePluginOptions): Promise<EdgeCurrencyPlugin> {
-    return Promise.resolve(new FakeCurrencyPlugin())
-  }
+export function makeFakeCurrencyPlugin (
+  opts: EdgeCorePluginOptions
+): EdgeCurrencyPlugin {
+  return new FakeCurrencyPlugin()
 }

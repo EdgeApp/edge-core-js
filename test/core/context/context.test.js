@@ -1,5 +1,7 @@
 // @flow
 
+import '../../fake/fake-plugins.js'
+
 import { expect } from 'chai'
 import { afterEach, describe, it } from 'mocha'
 

@@ -9,10 +9,6 @@ import {
 } from '../../../src/core/exchange/exchange-reducer.js'
 import { getExchangeRate } from '../../../src/core/exchange/exchange-selectors.js'
 import { makeFakeEdgeWorld } from '../../../src/index.js'
-import {
-  brokenExchangePlugin,
-  fakeExchangePlugin
-} from '../../fake/fake-plugins.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
@@ -161,7 +157,7 @@ describe('exchange pixie', function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
-      plugins: [brokenExchangePlugin, fakeExchangePlugin]
+      plugins: { 'broken-exchange': true, 'fake-exchange': true }
     })
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
