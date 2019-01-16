@@ -289,7 +289,7 @@ export type EdgeUnusedOptions = {}
 export type EdgeGetTransactionsOptions = {
   currencyCode?: string,
   startIndex?: number,
-  startEntries?: 100,
+  startEntries?: number,
   startDate?: number,
   endDate?: number,
   searchString?: string,
