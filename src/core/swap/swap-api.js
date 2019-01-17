@@ -4,7 +4,6 @@ import { gt, lt } from 'biggystring'
 import { bridgifyObject } from 'yaob'
 
 import {
-  type EdgeSwapCurrencies,
   type EdgeSwapPluginQuote,
   type EdgeSwapQuote,
   type EdgeSwapQuoteOptions,
@@ -13,42 +12,6 @@ import {
 import { fuzzyTimeout } from '../../util/promise.js'
 import { swapPluginEnabled } from '../account/account-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
-
-/**
- * Fetch supported currencies from all plugins.
- */
-export async function fetchSwapCurrencies (
-  ai: ApiInput,
-  accountId: string
-): Promise<EdgeSwapCurrencies> {
-  const { swapSettings, swapTools } = ai.props.state.accounts[accountId]
-
-  type Result = { currencies: Array<string>, pluginName: string }
-  const promises: Array<Promise<Result>> = []
-  for (const n in swapTools) {
-    if (swapPluginEnabled(swapSettings, n)) {
-      promises.push(
-        swapTools[n].fetchCurrencies().then(
-          currencies => ({ currencies, pluginName: n }),
-          e => {
-            ai.props.io.console.info(e)
-            return { currencies: [], pluginName: n }
-          }
-        )
-      )
-    }
-  }
-  const results = await Promise.all(promises)
-
-  const out: EdgeSwapCurrencies = {}
-  for (const { currencies, pluginName } of results) {
-    for (const cc of currencies) {
-      if (out[cc] == null) out[cc] = { pluginNames: [] }
-      out[cc].pluginNames.push(pluginName)
-    }
-  }
-  return out
-}
 
 /**
  * Fetch quotes from all plugins, and pick the best one.

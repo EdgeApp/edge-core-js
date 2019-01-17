@@ -15,7 +15,6 @@ import {
   type EdgePluginMap,
   type EdgeRateCache,
   type EdgeSwapConfig,
-  type EdgeSwapCurrencies,
   type EdgeSwapQuote,
   type EdgeSwapQuoteOptions,
   type EdgeWalletInfoFull,
@@ -45,7 +44,7 @@ import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
 import { getCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
-import { fetchSwapCurrencies, fetchSwapQuote } from '../swap/swap-api.js'
+import { fetchSwapQuote } from '../swap/swap-api.js'
 import { changeWalletStates } from './account-files.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
@@ -331,9 +330,6 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
       return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)
     },
 
-    async fetchSwapCurrencies (): Promise<EdgeSwapCurrencies> {
-      return fetchSwapCurrencies(ai, accountId)
-    },
     async fetchSwapQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote> {
       return fetchSwapQuote(ai, accountId, opts)
     },
@@ -350,13 +346,6 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
     },
     get pluginData (): EdgePluginData {
       return pluginData
-    },
-    async getExchangeCurrencies (): Promise<EdgeSwapCurrencies> {
-      deprecate(
-        'EdgeAccount.getExchangeCurrencies',
-        'EdgeAccount.fetchSwapCurrencies'
-      )
-      return this.fetchSwapCurrencies()
     },
     async getExchangeQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote> {
       deprecate('EdgeAccount.getExchangeQuote', 'EdgeAccount.fetchSwapQuote')

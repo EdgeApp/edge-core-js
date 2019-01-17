@@ -701,13 +701,6 @@ export type EdgeSwapConfig = {
   changeUserSettings(settings: Object): Promise<mixed>
 }
 
-// Currencies supported by various swap plugins:
-export type EdgeSwapCurrencies = {
-  [currencyCode: string]: {
-    pluginNames: Array<string>
-  }
-}
-
 export type EdgeSwapQuote = EdgeSwapPluginQuote & {
   +quoteUri?: string
 }
@@ -849,7 +842,6 @@ export type EdgeAccount = {
   ): Promise<string>,
 
   // Swapping:
-  fetchSwapCurrencies(): Promise<EdgeSwapCurrencies>,
   fetchSwapQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote>,
 
   // Deprecated names:
@@ -857,7 +849,6 @@ export type EdgeAccount = {
   +exchangeCache: EdgeRateCache,
   +currencyTools: EdgePluginMap<EdgeCurrencyConfig>,
   +exchangeTools: EdgePluginMap<EdgeSwapConfig>,
-  getExchangeCurrencies(): Promise<EdgeSwapCurrencies>,
   getExchangeQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote>
 }
 
