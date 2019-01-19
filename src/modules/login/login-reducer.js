@@ -15,7 +15,6 @@ export type LoginState = {
   +appId: string,
   +server: LoginServerState,
   +stashes: LoginStashMap,
-  +stashesLoaded: boolean,
   +localUsers: Array<EdgeUserInfo>,
   +walletInfos: WalletInfoMap
 }
@@ -46,18 +45,12 @@ export const login = buildReducer({
 
   stashes (state = {}, action: RootAction): LoginStashMap {
     switch (action.type) {
-      case 'LOGIN_STASH_DELETED': {
-        const copy = { ...state }
-        delete copy[action.payload]
-        return copy
-      }
-
-      case 'LOGIN_STASHES_LOADED': {
+      case 'INIT': {
         const out: LoginStashMap = {}
 
         // Extract the usernames from the top-level objects:
-        for (const filename of Object.keys(action.payload)) {
-          const json = action.payload[filename]
+        for (const filename of Object.keys(action.payload.stashes)) {
+          const json = action.payload.stashes[filename]
           if (json && json.username && json.loginId) {
             const { username } = json
             out[username] = json
@@ -65,6 +58,12 @@ export const login = buildReducer({
         }
 
         return out
+      }
+
+      case 'LOGIN_STASH_DELETED': {
+        const copy = { ...state }
+        delete copy[action.payload]
+        return copy
       }
 
       case 'LOGIN_STASH_SAVED': {
@@ -77,10 +76,6 @@ export const login = buildReducer({
       }
     }
     return state
-  },
-
-  stashesLoaded (state = false, action: RootAction): boolean {
-    return action.type === 'LOGIN_STASHES_LOADED' ? true : state
   },
 
   walletInfos (state, action: RootAction, next: RootState): WalletInfoMap {

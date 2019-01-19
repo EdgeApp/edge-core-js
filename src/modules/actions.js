@@ -224,7 +224,8 @@ export type RootAction =
         apiKey: string,
         appId: string,
         authServer: string,
-        hideKeys: boolean
+        hideKeys: boolean,
+        stashes: { [path: string]: Object }
       }
     }
   | {
@@ -243,11 +244,6 @@ export type RootAction =
       // Fires when we delete login data from disk.
       type: 'LOGIN_STASH_DELETED',
       payload: string // username
-    }
-  | {
-      // Fires when we load the login data from disk.
-      type: 'LOGIN_STASHES_LOADED',
-      payload: { [path: string]: Object }
     }
   | {
       // Fires when we write a login stash to disk.

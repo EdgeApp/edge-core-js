@@ -51,14 +51,6 @@ export async function makeContext (
     throw new Error('No API key provided')
   }
 
-  // Start Redux:
-  const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
-  const redux = createStore(reducer, enhancers)
-  redux.dispatch({
-    type: 'INIT',
-    payload: { apiKey, appId, authServer, hideKeys }
-  })
-
   // Load the login stashes from disk:
   const stashes = {}
   const listing = await io.disklet.list('logins')
@@ -68,9 +60,13 @@ export async function makeContext (
       stashes[path] = JSON.parse(await io.disklet.getText(path))
     } catch (e) {}
   }
+
+  // Start Redux:
+  const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
+  const redux = createStore(reducer, enhancers)
   redux.dispatch({
-    type: 'LOGIN_STASHES_LOADED',
-    payload: stashes
+    type: 'INIT',
+    payload: { apiKey, appId, authServer, hideKeys, stashes }
   })
 
   // Start the pixie tree:
