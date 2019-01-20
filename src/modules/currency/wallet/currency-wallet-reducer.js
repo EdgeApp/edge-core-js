@@ -61,7 +61,7 @@ export type CurrencyWalletState = {
   +walletInfo: EdgeWalletInfo,
   +txids: Array<string>,
   +txs: { [txid: string]: MergedTransaction },
-  +gotTxs: boolean
+  +gotTxs: { [currencyCode: string]: boolean }
 }
 
 export type CurrencyWalletNext = {
@@ -226,12 +226,11 @@ const currencyWallet = buildReducer({
     return state
   },
 
-  gotTxs (state = false, action: RootAction): boolean {
+  gotTxs (state = {}, action: RootAction): { [currencyCode: string]: boolean } {
     if (action.type === 'CURRENCY_ENGINE_GOT_TXS') {
-      return true
-    } else {
-      return state
+      state[action.payload.currencyCode] = true
     }
+    return state
   },
 
   walletInfo (state, action, next: CurrencyWalletNext) {
