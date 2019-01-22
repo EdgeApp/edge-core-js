@@ -12,6 +12,7 @@ import { close, emit, update } from 'yaob'
 import {
   type EdgeAccount,
   type EdgeCurrencyWallet,
+  type EdgePluginMap,
   type EdgeSwapPlugin,
   type EdgeSwapTools
 } from '../../types/types.js'
@@ -27,7 +28,7 @@ import { faastPlugin } from '../swap/faast-plugin.js'
 import { shapeshiftPlugin } from '../swap/shapeshift-plugin.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
-import { type AccountState, type PluginMap } from './account-reducer.js'
+import { type AccountState } from './account-reducer.js'
 
 export type AccountOutput = {
   +api: EdgeAccount,
@@ -105,8 +106,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           io.console.info('Login: loaded files')
 
           // Load swap plugins:
-          const swapPlugins: PluginMap<EdgeSwapPlugin> = {}
-          const swapTools: PluginMap<EdgeSwapTools> = {}
+          const swapPlugins: EdgePluginMap<EdgeSwapPlugin> = {}
+          const swapTools: EdgePluginMap<EdgeSwapTools> = {}
           if (input.props.changellyInit) {
             swapPlugins.changelly = changellyPlugin
             swapTools.changelly = await changellyPlugin.makeTools({

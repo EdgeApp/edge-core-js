@@ -87,6 +87,8 @@ export type EdgePluginEnvironment = {
   userSettings?: Object // User-adjustable settings
 }
 
+export type EdgePluginMap<Value> = { [pluginName: string]: Value }
+
 // ---------------------------------------------------------------------
 // key types
 // ---------------------------------------------------------------------
@@ -784,9 +786,9 @@ export type EdgeAccount = {
   +username: string,
 
   // Special-purpose API's:
-  +currencyConfig: { [pluginName: string]: EdgeCurrencyConfig },
+  +currencyConfig: EdgePluginMap<EdgeCurrencyConfig>,
   +rateCache: EdgeRateCache,
-  +swapConfig: { [pluginName: string]: EdgeSwapConfig },
+  +swapConfig: EdgePluginMap<EdgeSwapConfig>,
   +dataStore: EdgeDataStore,
 
   // What login method was used?
@@ -863,8 +865,8 @@ export type EdgeAccount = {
   // Deprecated names:
   +pluginData: EdgePluginData,
   +exchangeCache: EdgeRateCache,
-  +currencyTools: { [pluginName: string]: EdgeCurrencyConfig },
-  +exchangeTools: { [pluginName: string]: EdgeSwapConfig },
+  +currencyTools: EdgePluginMap<EdgeCurrencyConfig>,
+  +exchangeTools: EdgePluginMap<EdgeSwapConfig>,
   getExchangeCurrencies(): Promise<EdgeSwapCurrencies>,
   getExchangeQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote>
 }
