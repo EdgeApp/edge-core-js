@@ -59,7 +59,7 @@ export async function fetchSwapQuote (
   opts: EdgeSwapQuoteOptions
 ): Promise<EdgeSwapQuote> {
   const account = ai.props.state.accounts[accountId]
-  const { swapPlugins, swapSettings, swapTools } = account
+  const { swapSettings, swapTools } = account
 
   const promises: Array<Promise<EdgeSwapPluginQuote>> = []
   for (const n in swapTools) {
@@ -84,7 +84,7 @@ export async function fetchSwapQuote (
       }
 
       // Cobble together a URI:
-      const swapInfo = swapPlugins[bestQuote.pluginName].swapInfo
+      const { swapInfo } = ai.props.state.plugins.swap[bestQuote.pluginName]
       let quoteUri
       if (bestQuote.quoteId != null && swapInfo.quoteUri != null) {
         quoteUri = swapInfo.quoteUri + bestQuote.quoteId

@@ -875,6 +875,11 @@ export type EdgeAccount = {
 // context types
 // ---------------------------------------------------------------------
 
+export type EdgeCorePlugin =
+  | EdgeCurrencyPlugin
+  | EdgeExchangePlugin
+  | EdgeSwapPlugin
+
 export type EdgeCorePluginFactory =
   | EdgeCurrencyPluginFactory
   | EdgeExchangePluginFactory

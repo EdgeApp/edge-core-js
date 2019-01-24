@@ -13,10 +13,9 @@ import {
   type EdgeAccount,
   type EdgeCurrencyWallet,
   type EdgePluginMap,
-  type EdgeSwapPlugin,
   type EdgeSwapTools
 } from '../../types/types.js'
-import { waitForCurrencyPlugins } from '../currency/currency-selectors.js'
+import { waitForPlugins } from '../plugins/plugins-selectors.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 import {
   addStorageWallet,
@@ -93,7 +92,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
         try {
           // Wait for the currency plugins (should already be loaded by now):
-          await waitForCurrencyPlugins(ai)
+          await waitForPlugins(ai)
           io.console.info('Login: currency plugins exist')
 
           // Start the repo:
@@ -106,10 +105,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           io.console.info('Login: loaded files')
 
           // Load swap plugins:
-          const swapPlugins: EdgePluginMap<EdgeSwapPlugin> = {}
           const swapTools: EdgePluginMap<EdgeSwapTools> = {}
           if (input.props.changellyInit) {
-            swapPlugins.changelly = changellyPlugin
             swapTools.changelly = await changellyPlugin.makeTools({
               io: input.props.io,
               initOptions: input.props.changellyInit,
@@ -119,7 +116,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             })
           }
           if (input.props.shapeshiftKey != null) {
-            swapPlugins.shapeshift = shapeshiftPlugin
             swapTools.shapeshift = await shapeshiftPlugin.makeTools({
               io: input.props.io,
               initOptions: { apiKey: input.props.shapeshiftKey },
@@ -129,7 +125,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             })
           }
           if (input.props.changeNowKey) {
-            swapPlugins.changenow = changenowPlugin
             swapTools.changenow = await changenowPlugin.makeTools({
               io: input.props.io,
               initOptions: { apiKey: input.props.changeNowKey },
@@ -138,7 +133,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
               }
             })
           }
-          swapPlugins.faast = faastPlugin
           swapTools.faast = await faastPlugin.makeTools({
             io: input.props.io,
             initOptions: input.props.faastInit,
@@ -147,8 +141,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             }
           })
           input.props.dispatch({
-            type: 'ACCOUNT_SWAP_PLUGINS_LOADED',
-            payload: { accountId, swapPlugins, swapTools }
+            type: 'ACCOUNT_PLUGIN_TOOLS_LOADED',
+            payload: { accountId, swapTools }
           })
 
           // Create the API object:

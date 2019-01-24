@@ -14,6 +14,7 @@ import {
   type EdgeCurrencyPlugin,
   type EdgeCurrencyWallet
 } from '../../../types/types.js'
+import { getCurrencyPlugin } from '../../plugins/plugins-selectors.js'
 import { type ApiInput, type RootProps } from '../../root-pixie.js'
 import {
   addStorageWallet,
@@ -23,7 +24,6 @@ import {
   getStorageWalletLocalDisklet,
   makeStorageWalletLocalEncryptedDisklet
 } from '../../storage/storage-selectors.js'
-import { getCurrencyPlugin } from '../currency-selectors.js'
 import { makeCurrencyWalletApi } from './currency-wallet-api.js'
 import {
   forEachListener,
@@ -53,14 +53,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Looks up the currency plugin for this wallet:
   plugin: (input: CurrencyWalletInput) => () => {
     // There are still race conditions where this can happen:
-    if (!input.props.output.currency.plugins) return
     if (input.props.selfOutput && input.props.selfOutput.plugin) return
 
     const walletInfo = input.props.selfState.walletInfo
-    const plugin = getCurrencyPlugin(
-      input.props.output.currency.plugins,
-      walletInfo.type
-    )
+    const plugin = getCurrencyPlugin(input.props.state, walletInfo.type)
     input.onOutput(plugin)
   },
 

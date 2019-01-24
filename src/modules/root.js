@@ -10,6 +10,7 @@ import {
   type EdgeIo
 } from '../types/types.js'
 import { type RootAction } from './actions.js'
+import { loadPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
 
@@ -68,6 +69,9 @@ export async function makeContext (
     type: 'INIT',
     payload: { apiKey, appId, authServer, hideKeys, stashes }
   })
+
+  // Load the plugins in the background:
+  loadPlugins(io, plugins, redux.dispatch)
 
   // Start the pixie tree:
   const mirror = { output: {} }

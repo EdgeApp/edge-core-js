@@ -297,52 +297,38 @@ export async function reloadPluginSettings (ai: ApiInput, accountId: string) {
   })
 
   // Update the plugins:
-  return updatePluginUserSettings(ai, accountId)
+  return Promise.all(
+    Object.keys(userSettings).map(pluginName =>
+      updatePluginUserSettings(ai, accountId, pluginName)
+    )
+  )
 }
 
 /**
- * Applies changed user settings to all plugins.
+ * Applies changed user settings to a single plugin.
  */
 async function updatePluginUserSettings (
   ai: ApiInput,
   accountId: string,
-  pluginName?: string
+  pluginName: string
 ): Promise<mixed> {
   const selfOutput = ai.props.output.accounts[accountId]
   const selfState = ai.props.state.accounts[accountId]
   const { userSettings } = selfState
-  const promises: Array<Promise<mixed>> = []
 
-  for (const plugin of ai.props.output.currency.plugins) {
-    if (pluginName == null || plugin.pluginName === pluginName) {
-      // Update currency plugin:
-      if (plugin.changeSettings != null) {
-        plugin
-          .changeSettings(userSettings[plugin.pluginName])
-          .catch(e => ai.props.onError(e))
-      }
-    }
-
-    // Update currency config API:
+  const currencyPlugin = ai.props.state.plugins.currency[pluginName]
+  if (currencyPlugin != null && currencyPlugin.changeSettings != null) {
+    await currencyPlugin.changeSettings(userSettings[pluginName])
     if (selfOutput.api != null) {
-      update(selfOutput.api.currencyConfig[plugin.pluginName])
+      update(selfOutput.api.currencyConfig[pluginName])
     }
   }
 
-  for (const n in selfState.swapTools) {
-    if (pluginName == null || n === pluginName) {
-      // Update the swap plugin:
-      const promise = selfState.swapTools[n]
-        .changeUserSettings(userSettings[n])
-        .catch(e => ai.props.onError(e))
-      promises.push(promise)
-
-      // Update the swap config API once the plugin finishes:
-      if (selfOutput.api != null) {
-        promise.then(() => update(selfOutput.api.swapConfig[n]))
-      }
+  const swapTools = selfState.swapTools[pluginName]
+  if (swapTools != null) {
+    await swapTools.changeUserSettings(userSettings[pluginName])
+    if (selfOutput.api != null) {
+      update(selfOutput.api.swapConfig[pluginName])
     }
   }
-
-  return Promise.all(promises)
 }

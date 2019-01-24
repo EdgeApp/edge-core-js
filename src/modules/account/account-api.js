@@ -25,7 +25,6 @@ import {
 import { signEthereumTransaction } from '../../util/crypto/ethereum.js'
 import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
-import { getCurrencyPlugin } from '../currency/currency-selectors.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
 import {
   createCurrencyWallet,
@@ -43,6 +42,7 @@ import {
 } from '../login/password.js'
 import { changePin, checkPin2, deletePin } from '../login/pin2.js'
 import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
+import { getCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { fetchSwapCurrencies, fetchSwapQuote } from '../swap/swap-api.js'
@@ -61,12 +61,12 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
 
   // Plugin config API's:
   const currencyConfigs: EdgePluginMap<EdgeCurrencyConfig> = {}
-  for (const plugin of ai.props.output.currency.plugins) {
-    const api = new CurrencyConfig(ai, accountId, plugin)
-    currencyConfigs[plugin.pluginName] = api
+  for (const pluginName in ai.props.state.plugins.currency) {
+    const api = new CurrencyConfig(ai, accountId, pluginName)
+    currencyConfigs[pluginName] = api
   }
   const swapConfigs: EdgePluginMap<EdgeSwapConfig> = {}
-  for (const pluginName in selfState().swapPlugins) {
+  for (const pluginName in selfState().swapTools) {
     const api = new SwapConfig(ai, accountId, pluginName)
     swapConfigs[pluginName] = api
   }
@@ -267,8 +267,7 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
 
       if (keys == null) {
         // Use the currency plugin to create the keys:
-        const { plugins } = ai.props.output.currency
-        const plugin = getCurrencyPlugin(plugins, walletType)
+        const plugin = getCurrencyPlugin(ai.props.state, walletType)
         keys = await plugin.createPrivateKey(walletType)
       }
 

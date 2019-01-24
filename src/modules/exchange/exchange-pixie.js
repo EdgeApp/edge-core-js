@@ -1,44 +1,17 @@
 // @flow
 
-import {
-  type PixieInput,
-  type TamePixie,
-  combinePixies,
-  stopUpdates
-} from 'redux-pixies'
+import { type PixieInput, type TamePixie, combinePixies } from 'redux-pixies'
 
-import { type EdgeExchangePlugin } from '../../types/types.js'
 import { type RootProps } from '../root-pixie.js'
 import { type ExchangePair } from './exchange-reducer.js'
 
-export type ExchangeOutput = {
-  +plugins: Array<EdgeExchangePlugin>
-}
-
 export const exchange: TamePixie<RootProps> = combinePixies({
-  plugins (input: PixieInput<RootProps>) {
-    return async (props: RootProps): mixed => {
-      const opts = { io: props.io }
-      const promises: Array<Promise<EdgeExchangePlugin>> = []
-      for (const plugin of props.plugins) {
-        if (plugin.pluginType === 'exchange') {
-          promises.push(plugin.makePlugin(opts))
-        }
-      }
-
-      await Promise.all(promises).then(plugins => input.onOutput(plugins))
-      return stopUpdates
-    }
-  },
-
   update (input: PixieInput<RootProps>) {
     let timeout: * // Infer the proper timer type
 
     function doFetch (): Promise<mixed> {
       // Bail out if we have no plugins:
-      if (!input.props.output.exchange.plugins) return Promise.resolve()
-
-      const plugins = input.props.output.exchange.plugins
+      if (!input.props.state.plugins.locked) return Promise.resolve()
 
       // TODO: Grab this off the list of loaded wallet currency types & fiats:
       const pairs = [
@@ -48,8 +21,10 @@ export const exchange: TamePixie<RootProps> = combinePixies({
         { fromCurrency: 'ETH', toCurrency: 'iso:USD' }
       ]
 
+      const pluginNames = Object.keys(input.props.state.plugins.rate)
       return Promise.all(
-        plugins.map(plugin => {
+        pluginNames.map(pluginName => {
+          const plugin = input.props.state.plugins.rate[pluginName]
           try {
             return plugin.fetchExchangeRates(pairs).catch(e => {
               input.props.onError(e)
@@ -63,15 +38,14 @@ export const exchange: TamePixie<RootProps> = combinePixies({
       ).then(pairLists => {
         const timestamp = Date.now() / 1000
         const pairs: Array<ExchangePair> = []
-        for (let i = 0; i < plugins.length; ++i) {
-          const source = plugins[i].exchangeInfo.exchangeName
+        for (let i = 0; i < pluginNames.length; ++i) {
           for (const pair of pairLists[i]) {
             const { fromCurrency, toCurrency, rate } = pair
             pairs.push({
               fromCurrency,
               toCurrency,
               rate,
-              source,
+              source: pluginNames[i],
               timestamp
             })
           }
