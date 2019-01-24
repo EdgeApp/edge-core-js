@@ -262,16 +262,17 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
     async changeWalletStates (walletStates: EdgeWalletStates): Promise<mixed> {
       return changeWalletStates(ai, accountId, walletStates)
     },
-    async createWallet (type: string, keys: any): Promise<string> {
+    async createWallet (walletType: string, keys: any): Promise<string> {
       const { login, loginTree } = selfState()
 
       if (keys == null) {
         // Use the currency plugin to create the keys:
-        const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
-        keys = await plugin.createPrivateKey(type)
+        const { plugins } = ai.props.output.currency
+        const plugin = getCurrencyPlugin(plugins, walletType)
+        keys = await plugin.createPrivateKey(walletType)
       }
 
-      const walletInfo = makeStorageKeyInfo(ai, type, keys)
+      const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
       const kit = makeKeysKit(ai, login, walletInfo)
       return applyKit(ai, loginTree, kit).then(() => walletInfo.id)
     },

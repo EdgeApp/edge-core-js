@@ -287,16 +287,16 @@ export function makeSplitWalletInfo (
 export async function createCurrencyWallet (
   ai: ApiInput,
   accountId: string,
-  type: string,
+  walletType: string,
   opts: EdgeCreateCurrencyWalletOptions
 ) {
   const { login, loginTree } = ai.props.state.accounts[accountId]
 
   // Make the keys:
-  const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
+  const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, walletType)
   const keys =
-    opts.keys || (await plugin.createPrivateKey(type, opts.keyOptions))
-  const walletInfo = makeStorageKeyInfo(ai, type, keys)
+    opts.keys || (await plugin.createPrivateKey(walletType, opts.keyOptions))
+  const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
   const kit = makeKeysKit(ai, login, fixWalletInfo(walletInfo))
 
   // Add the keys to the login:
