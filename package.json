@@ -97,7 +97,7 @@
     "rollup": "1.0.0",
     "rollup-plugin-alias": "^1.4.0",
     "rollup-plugin-babel": "^4.2.0",
-    "rollup-plugin-flow-entry": "^0.2.0",
+    "rollup-plugin-flow-entry": "^0.2.2",
     "rollup-plugin-multi-entry": "^2.1.0",
     "source-map-loader": "^0.2.4",
     "source-map-support": "^0.5.9",

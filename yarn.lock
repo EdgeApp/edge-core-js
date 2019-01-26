@@ -5477,13 +5477,12 @@ rollup-plugin-babel@^4.2.0:
     "@babel/helper-module-imports" "^7.0.0"
     rollup-pluginutils "^2.3.0"
 
-rollup-plugin-flow-entry@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-flow-entry/-/rollup-plugin-flow-entry-0.2.0.tgz#5e4c0cf9afa485748a4aa52d52542f88c3e1d1f5"
-  integrity sha512-EMrL1ZEYrrO6PuYhKGu1RLomerIW8XNCrf2CFR2iajSDeHJuNHTwJubE+fCIZ0IYTtZRXHE3pZnqt12aWsSm+Q==
+rollup-plugin-flow-entry@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-flow-entry/-/rollup-plugin-flow-entry-0.2.2.tgz#4f3ae06731f6cc4ff5ef85805159d8bfd6485119"
+  integrity sha512-Lc/C39jYsY7lGuu/CWwE3XU4W3CU+x2Q27u5Qc73kC0sDDHVnM7PU8OFsSz2f/Wk8yLaMHj83iUe6o3rrVQ7TA==
   dependencies:
     matched "^2.0.1"
-    pify "^3.0.0"
 
 rollup-plugin-multi-entry@^2.1.0:
   version "2.1.0"
