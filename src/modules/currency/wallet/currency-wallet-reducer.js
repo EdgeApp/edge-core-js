@@ -258,7 +258,9 @@ export function sortTxs (txidHashes: TxidHashes, newHashes: TxidHashes) {
 export const currencyWalletReducer = filterReducer(
   currencyWallet,
   (action: RootAction, next: CurrencyWalletNext) => {
-    return /^CURRENCY_/.test(action.type) && action.payload.walletId === next.id
+    return /^CURRENCY_/.test(action.type) &&
+      action.payload != null &&
+      action.payload.walletId === next.id
       ? action
       : { type: 'UPDATE_PROPS' }
   }

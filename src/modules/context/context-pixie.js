@@ -1,7 +1,7 @@
 // @flow
 
 import { type TamePixie, combinePixies, stopUpdates } from 'redux-pixies'
-import { update } from 'yaob'
+import { close, update } from 'yaob'
 
 import { type EdgeContext } from '../../types/types.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
@@ -12,9 +12,16 @@ export type ContextOutput = {
 }
 
 export const context: TamePixie<RootProps> = combinePixies({
-  api: (ai: ApiInput) => () => {
-    ai.onOutput(makeContextApi(ai))
-    return stopUpdates
+  api (ai: ApiInput) {
+    return {
+      destroy () {
+        close(ai.props.output.context.api)
+      },
+      update () {
+        ai.onOutput(makeContextApi(ai))
+        return stopUpdates
+      }
+    }
   },
 
   watcher (ai: ApiInput) {

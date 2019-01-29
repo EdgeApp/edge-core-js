@@ -13,7 +13,7 @@ import { type RootAction } from './actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
 
-let allDestroyPixies: Array<() => void> = []
+let allContexts: Array<EdgeContext> = []
 
 const composeEnhancers =
   typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
@@ -81,6 +81,10 @@ export async function makeContext (
       rootPixie,
       (props: ReduxProps<RootState, RootAction>): RootProps => ({
         ...props,
+        close () {
+          closePixie()
+          redux.dispatch({ type: 'CLOSE' })
+        },
         io,
         onError: error => {
           onError(error)
@@ -99,17 +103,16 @@ export async function makeContext (
     e => console.error(e),
     output => (mirror.output = output)
   )
-  allDestroyPixies.push(closePixie)
 
-  return mirror.output.context.api
+  const out = mirror.output.context.api
+  allContexts.push(out)
+  return out
 }
 
 /**
  * We use this for unit testing, to kill all core contexts.
  */
 export function destroyAllContexts () {
-  for (const destroyPixie of allDestroyPixies) {
-    destroyPixie()
-  }
-  allDestroyPixies = []
+  for (const context of allContexts) context.close()
+  allContexts = []
 }
