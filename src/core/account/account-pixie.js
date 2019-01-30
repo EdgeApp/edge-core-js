@@ -1,6 +1,5 @@
 // @flow
 
-import { navigateDisklet } from 'disklet'
 import {
   type PixieInput,
   type TamePixie,
@@ -10,12 +9,7 @@ import {
 } from 'redux-pixies'
 import { close, emit, update } from 'yaob'
 
-import {
-  type EdgeAccount,
-  type EdgeCurrencyWallet,
-  type EdgePluginMap,
-  type EdgeSwapTools
-} from '../../types/types.js'
+import { type EdgeAccount, type EdgeCurrencyWallet } from '../../types/types.js'
 import { waitForPlugins } from '../plugins/plugins-selectors.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 import {
@@ -93,29 +87,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
           await loadAllFiles()
           io.console.info('Login: loaded files')
-
-          // Boot the swap plugins:
-          const swapTools: EdgePluginMap<EdgeSwapTools> = {}
-          for (const pluginName in input.props.state.plugins.swap) {
-            const plugin = input.props.state.plugins.swap[pluginName]
-            const init = input.props.state.plugins.init[pluginName]
-
-            swapTools[pluginName] = await plugin.makeTools({
-              initOptions: typeof init === 'object' ? init : {},
-              io: input.props.io,
-              pluginDisklet: navigateDisklet(
-                io.disklet,
-                'plugins/' + pluginName
-              ),
-              get userSettings () {
-                return input.props.selfState.userSettings[pluginName]
-              }
-            })
-          }
-          input.props.dispatch({
-            type: 'ACCOUNT_PLUGIN_TOOLS_LOADED',
-            payload: { accountId, swapTools }
-          })
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))

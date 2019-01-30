@@ -77,8 +77,12 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
   }
 
   get needsActivation (): boolean {
-    const account = this._ai.props.state.accounts[this._accountId]
-    return account.swapTools[this._pluginName].needsActivation
+    const plugin = this._ai.props.state.plugins.swap[this._pluginName]
+    if (plugin.checkSettings == null) return false
+
+    const selfState = this._ai.props.state.accounts[this._accountId]
+    const settings = selfState.userSettings[this._pluginName] || {}
+    return !!plugin.checkSettings(settings).needsActivation
   }
 
   get swapInfo (): EdgeSwapInfo {

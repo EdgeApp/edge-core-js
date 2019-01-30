@@ -3,14 +3,13 @@
 import { gt, lt } from 'biggystring'
 
 import {
+  type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
-  type EdgePluginEnvironment,
   type EdgeSpendInfo,
   type EdgeSpendTarget,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
-  type EdgeSwapTools,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError,
@@ -57,8 +56,8 @@ async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
     : addressInfo.publicAddress
 }
 
-function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
-  const { initOptions = {}, io } = env
+export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+  const { io, initOptions } = opts
 
   let affiliateOptions = {}
   if (initOptions.affiliateId == null) {
@@ -123,25 +122,13 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
     return checkReply(uri, reply)
   }
 
-  const out: EdgeSwapTools = {
-    get needsActivation (): boolean {
-      return false
-    },
+  const out: EdgeSwapPlugin = {
+    swapInfo,
 
-    async changeUserSettings (settings: Object): Promise<mixed> {},
-
-    async fetchCurrencies (): Promise<Array<string>> {
-      const currenciesList = await get(`/currencies/`)
-      const out = []
-      for (const currency of currenciesList) {
-        if (currency.deposit && currency.receive) {
-          out.push(currency.symbol)
-        }
-      }
-      return out
-    },
-
-    async fetchQuote (request: EdgeSwapRequest): Promise<EdgeSwapPluginQuote> {
+    async fetchSwapQuote (
+      request: EdgeSwapRequest,
+      userSettings: Object
+    ): Promise<EdgeSwapPluginQuote> {
       const {
         fromCurrencyCode,
         fromWallet,
@@ -301,13 +288,4 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
   }
 
   return out
-}
-
-export const faastPlugin: EdgeSwapPlugin = {
-  pluginType: 'swap',
-  swapInfo,
-
-  async makeTools (env: EdgePluginEnvironment): Promise<EdgeSwapTools> {
-    return makeFaastTools(env)
-  }
 }

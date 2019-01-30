@@ -324,11 +324,8 @@ async function updatePluginUserSettings (
     }
   }
 
-  const swapTools = selfState.swapTools[pluginName]
-  if (swapTools != null) {
-    await swapTools.changeUserSettings(userSettings[pluginName])
-    if (selfOutput.api != null) {
-      update(selfOutput.api.swapConfig[pluginName])
-    }
+  const swapPlugin = ai.props.state.plugins.swap[pluginName]
+  if (swapPlugin != null && selfOutput.api != null) {
+    update(selfOutput.api.swapConfig[pluginName])
   }
 }

@@ -71,10 +71,6 @@ export type EdgeCorePluginOptions = {
   pluginDisklet: Disklet // Plugin local storage
 }
 
-export type EdgePluginEnvironment = EdgeCorePluginOptions & {
-  userSettings?: Object // User-adjustable settings
-}
-
 export type EdgePluginMap<Value> = { [pluginName: string]: Value }
 
 // ---------------------------------------------------------------------
@@ -543,19 +539,18 @@ export type EdgeSwapPluginQuote = {
   close(): Promise<mixed>
 }
 
-export type EdgeSwapTools = {
-  +needsActivation: boolean,
-
-  changeUserSettings(userSettings: Object): Promise<mixed>,
-  fetchCurrencies(): Promise<Array<string>>,
-  fetchQuote(request: EdgeSwapRequest): Promise<EdgeSwapPluginQuote>
+export type EdgeSwapPluginStatus = {
+  needsActivation?: boolean
 }
 
 export type EdgeSwapPlugin = {
-  +pluginType: 'swap',
   +swapInfo: EdgeSwapInfo,
 
-  makeTools(env: EdgePluginEnvironment): Promise<EdgeSwapTools>
+  checkSettings?: (userSettings: Object) => EdgeSwapPluginStatus,
+  fetchSwapQuote(
+    request: EdgeSwapRequest,
+    userSettings: Object
+  ): Promise<EdgeSwapPluginQuote>
 }
 
 // ---------------------------------------------------------------------

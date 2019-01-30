@@ -4,7 +4,6 @@ import {
   type EdgeCorePlugin,
   type EdgeCorePluginsInit,
   type EdgePluginMap,
-  type EdgeSwapTools,
   type EdgeTokenInfo,
   type EdgeWalletInfo,
   type EdgeWalletStates
@@ -63,14 +62,6 @@ export type RootAction =
         accountId: string,
         userSettings: EdgePluginMap<Object>,
         swapSettings: EdgePluginMap<SwapSettings>
-      }
-    }
-  | {
-      // The swap plugins have been initialized.
-      type: 'ACCOUNT_PLUGIN_TOOLS_LOADED',
-      payload: {
-        accountId: string,
-        swapTools: EdgePluginMap<EdgeSwapTools>
       }
     }
   | {
