@@ -9,7 +9,10 @@ import {
   type EdgeWalletInfo
 } from '../../../types/types.js'
 import { type RootAction } from '../../actions.js'
-import { getCurrencyPlugin } from '../../plugins/plugins-selectors.js'
+import {
+  findCurrencyPlugin,
+  getCurrencyPlugin
+} from '../../plugins/plugins-selectors.js'
 import { type RootState } from '../../root-reducer.js'
 
 /** Maps from txid hash to file creation date & path. */
@@ -43,6 +46,9 @@ export type MergedTransaction = {
 }
 
 export type CurrencyWalletState = {
+  +accountId: string,
+  +pluginName: string,
+
   +currencyInfo: EdgeCurrencyInfo,
   +displayPrivateSeed: string | null,
   +displayPublicSeed: string | null,
@@ -71,6 +77,27 @@ export type CurrencyWalletNext = {
 }
 
 const currencyWallet = buildReducer({
+  accountId (state, action, next: CurrencyWalletNext): string {
+    if (state) return state
+    for (const accountId in next.root.accounts) {
+      const account = next.root.accounts[accountId]
+      for (const walletId in account.walletInfos) {
+        if (walletId === next.id) return accountId
+      }
+    }
+    throw new Error(`Cannot find account for walletId ${next.id}`)
+  },
+
+  pluginName: memoizeReducer(
+    next => next.root.login.walletInfos[next.id].type,
+    next => next.root.plugins.currency,
+    (walletType: string, plugins): string => {
+      const out = findCurrencyPlugin(plugins, walletType)
+      if (out == null) throw new Error(`Bad wallet type ${walletType}`)
+      return out
+    }
+  ),
+
   currencyInfo (state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
     if (state) return state
     return getCurrencyPlugin(next.root, next.self.walletInfo.type).currencyInfo

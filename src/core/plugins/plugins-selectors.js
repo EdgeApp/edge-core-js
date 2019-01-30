@@ -2,6 +2,7 @@
 
 import {
   type EdgeCurrencyPlugin,
+  type EdgeCurrencyTools,
   type EdgePluginMap
 } from '../../types/types.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -16,9 +17,7 @@ export function findCurrencyPlugin (
 ): string | void {
   for (const pluginName in plugins) {
     const { currencyInfo } = plugins[pluginName]
-    for (const type of currencyInfo.walletTypes) {
-      if (type === walletType) return pluginName
-    }
+    if (walletType === currencyInfo.walletType) return pluginName
   }
 }
 
@@ -36,6 +35,61 @@ export function getCurrencyPlugin (
     )
   }
   return state.plugins.currency[pluginName]
+}
+
+/**
+ * Finds the currency tools for a particular wallet type,
+ * loading them if needed.
+ */
+export function getCurrencyTools (
+  ai: ApiInput,
+  walletType: string
+): Promise<EdgeCurrencyTools> {
+  const { dispatch, state } = ai.props
+
+  const pluginName = findCurrencyPlugin(state.plugins.currency, walletType)
+  if (pluginName == null) {
+    throw new Error(
+      `Cannot find a currency plugin for wallet type ${walletType}`
+    )
+  }
+
+  // Never touched, so start the load:
+  const tools = state.plugins.currencyTools[pluginName]
+  if (tools == null) {
+    const plugin = getCurrencyPlugin(state, walletType)
+    dispatch({ type: 'CURRENCY_TOOLS_LOADING', payload: { pluginName } })
+    return plugin.makeCurrencyTools().then(
+      tools => {
+        dispatch({
+          type: 'CURRENCY_TOOLS_LOADED',
+          payload: { pluginName, tools }
+        })
+        return tools
+      },
+      error => {
+        dispatch({
+          type: 'CURRENCY_TOOLS_LOADED',
+          payload: { pluginName, tools: error }
+        })
+        throw error
+      }
+    )
+  }
+
+  // Already loaded / loading:
+  return ai
+    .waitFor(props => {
+      // Still loading, so wait:
+      if (props.state.plugins.currencyTools[pluginName] === 'pending') return
+      return true
+    })
+    .then(() => {
+      // Flow doesn't realize the block above makes 'pending' impossible:
+      const tools: any = state.plugins.currencyTools[pluginName]
+      if (tools instanceof Error) throw tools
+      return tools
+    })
 }
 
 /**

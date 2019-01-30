@@ -3,7 +3,6 @@
 import { add, lt } from 'biggystring'
 
 import {
-  type EdgeCorePluginOptions,
   type EdgeCreatePrivateKeyOptions,
   type EdgeCurrencyCodeOptions,
   type EdgeCurrencyEngine,
@@ -11,6 +10,7 @@ import {
   type EdgeCurrencyEngineOptions,
   type EdgeCurrencyInfo,
   type EdgeCurrencyPlugin,
+  type EdgeCurrencyTools,
   type EdgeDataDump,
   type EdgeFreshAddress,
   type EdgeGetTransactionsOptions,
@@ -18,7 +18,6 @@ import {
   type EdgeSpendInfo,
   type EdgeTokenInfo,
   type EdgeTransaction,
-  type EdgeUnusedOptions,
   type EdgeWalletInfo,
   InsufficientFundsError
 } from '../../src/index.js'
@@ -26,13 +25,13 @@ import {
 export const fakeCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'FAKE',
-  currencyName: 'Fake Coin',
+  displayName: 'Fake Coin',
   pluginName: 'fakecoin',
   denominations: [
     { multiplier: '10', name: 'SMALL' },
     { multiplier: '100', name: 'FAKE' }
   ],
-  walletTypes: ['wallet:fakecoin'],
+  walletType: 'wallet:fakecoin',
 
   // Configuration options:
   defaultSettings: {},
@@ -73,10 +72,10 @@ class FakeCurrencyEngine {
       progress: 0,
       txs: {}
     }
-    this._update(this.state)
+    this.changeUserSettings(this.state)
   }
 
-  _update (settings: Object = {}): mixed {
+  async changeUserSettings (settings: Object): Promise<mixed> {
     const state = this.state
     const {
       onAddressesChecked = nop,
@@ -163,8 +162,7 @@ class FakeCurrencyEngine {
   dumpData (): EdgeDataDump {
     return {
       walletId: 'xxx',
-      walletType: fakeCurrencyInfo.walletTypes[0],
-      pluginType: 'currency',
+      walletType: fakeCurrencyInfo.walletType,
       data: {}
     }
   }
@@ -216,11 +214,8 @@ class FakeCurrencyEngine {
   getFreshAddress (opts: EdgeCurrencyCodeOptions): EdgeFreshAddress {
     return { publicAddress: 'fakeaddress' }
   }
-  addGapLimitAddresses (
-    addresses: Array<string>,
-    opts: EdgeUnusedOptions
-  ): void {}
-  isAddressUsed (address: string, opts: EdgeUnusedOptions): boolean {
+  addGapLimitAddresses (addresses: Array<string>): void {}
+  isAddressUsed (address: string): boolean {
     return address === 'fakeaddress'
   }
 
@@ -268,30 +263,13 @@ class FakeCurrencyEngine {
 /**
  * Currency plugin setup object.
  */
-class FakeCurrencyPlugin {
-  engines: Array<FakeCurrencyEngine>
-
-  constructor () {
-    this.engines = []
-  }
-
-  // Information:
-  get pluginName (): string {
-    return fakeCurrencyInfo.pluginName
-  }
-  get currencyInfo (): EdgeCurrencyInfo {
-    return fakeCurrencyInfo
-  }
-  async changeSettings (settings: Object): Promise<mixed> {
-    for (const engine of this.engines) engine._update(settings)
-  }
-
+class FakeCurrencyTools {
   // Keys:
   createPrivateKey (
     walletType: string,
     opts?: EdgeCreatePrivateKeyOptions
   ): Promise<Object> {
-    if (walletType !== this.currencyInfo.walletTypes[0]) {
+    if (walletType !== fakeCurrencyInfo.walletType) {
       throw new Error('Unsupported key type')
     }
     return Promise.resolve({ fakeKey: 'FakePrivateKey' })
@@ -304,26 +282,25 @@ class FakeCurrencyPlugin {
   }
 
   // URI parsing:
-  parseUri (uri: string): EdgeParsedUri {
-    return {}
+  parseUri (uri: string): Promise<EdgeParsedUri> {
+    return Promise.resolve({})
   }
-  encodeUri (): string {
-    return ''
-  }
-
-  // Engine:
-  makeEngine (
-    walletInfo: EdgeWalletInfo,
-    opts: EdgeCurrencyEngineOptions
-  ): Promise<EdgeCurrencyEngine> {
-    const out = new FakeCurrencyEngine(walletInfo, opts)
-    this.engines.push(out)
-    return Promise.resolve(out)
+  encodeUri (): Promise<string> {
+    return Promise.resolve('')
   }
 }
 
-export function makeFakeCurrencyPlugin (
-  opts: EdgeCorePluginOptions
-): EdgeCurrencyPlugin {
-  return new FakeCurrencyPlugin()
+export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
+  currencyInfo: fakeCurrencyInfo,
+
+  makeCurrencyEngine (
+    walletInfo: EdgeWalletInfo,
+    opts: EdgeCurrencyEngineOptions
+  ): Promise<EdgeCurrencyEngine> {
+    return Promise.resolve(new FakeCurrencyEngine(walletInfo, opts))
+  },
+
+  makeCurrencyTools (): Promise<EdgeCurrencyTools> {
+    return Promise.resolve(new FakeCurrencyTools())
+  }
 }

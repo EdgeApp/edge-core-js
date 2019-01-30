@@ -1,6 +1,5 @@
 // @flow
 
-import { downgradeDisklet } from 'disklet'
 import {
   type PixieInput,
   type TamePixie,
@@ -71,7 +70,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       // Start the data sync:
       const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
       await addStorageWallet(ai, walletInfo)
-      const { state } = input.props
+      const { selfState, state } = input.props
+      const { accountId, pluginName } = selfState
+      const userSettings = state.accounts[accountId].userSettings[pluginName]
 
       const walletLocalDisklet = getStorageWalletLocalDisklet(
         state,
@@ -83,14 +84,11 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         input.props.io
       )
 
-      const engine = await plugin.makeEngine(walletInfo, {
+      const engine = await plugin.makeCurrencyEngine(walletInfo, {
+        callbacks: makeCurrencyWalletCallbacks(input),
         walletLocalDisklet,
         walletLocalEncryptedDisklet,
-        walletLocalFolder: downgradeDisklet(walletLocalDisklet),
-        walletLocalEncryptedFolder: downgradeDisklet(
-          walletLocalEncryptedDisklet
-        ),
-        callbacks: makeCurrencyWalletCallbacks(input)
+        userSettings
       })
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
@@ -215,14 +213,25 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
   watcher (input: CurrencyWalletInput) {
     let lastState
+    let lastSettings
 
     return () => {
-      const { selfState, selfOutput } = input.props
+      const { state, selfState, selfOutput } = input.props
       if (selfState == null || selfOutput == null) return
 
+      // Update API object:
       if (lastState !== selfState) {
         lastState = selfState
         if (selfOutput.api != null) update(selfOutput.api)
+      }
+
+      // Update engine settings:
+      const { accountId, pluginName } = selfState
+      const userSettings = state.accounts[accountId].userSettings[pluginName]
+      if (lastSettings !== userSettings) {
+        lastSettings = userSettings
+        const engine = selfOutput.engine
+        if (engine != null) engine.changeUserSettings(userSettings || {})
       }
     }
   }

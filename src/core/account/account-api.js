@@ -41,7 +41,7 @@ import {
 } from '../login/password.js'
 import { changePin, checkPin2, deletePin } from '../login/pin2.js'
 import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
-import { getCurrencyPlugin } from '../plugins/plugins-selectors.js'
+import { getCurrencyTools } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { fetchSwapQuote } from '../swap/swap-api.js'
@@ -266,8 +266,8 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
 
       if (keys == null) {
         // Use the currency plugin to create the keys:
-        const plugin = getCurrencyPlugin(ai.props.state, walletType)
-        keys = await plugin.createPrivateKey(walletType)
+        const tools = await getCurrencyTools(ai, walletType)
+        keys = await tools.createPrivateKey(walletType)
       }
 
       const walletInfo = makeStorageKeyInfo(ai, walletType, keys)

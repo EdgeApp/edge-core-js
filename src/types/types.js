@@ -1,6 +1,6 @@
 // @flow
 
-import { type Disklet, type DiskletFolder } from 'disklet'
+import { type Disklet } from 'disklet'
 import { type Subscriber } from 'yaob'
 
 export {
@@ -126,11 +126,11 @@ export type EdgeMetaToken = {
 export type EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: string,
-  currencyName: string,
+  displayName: string,
   pluginName: string,
   denominations: Array<EdgeDenomination>,
   requiredConfirmations?: number,
-  walletTypes: Array<string>,
+  walletType: string,
 
   // Configuration options:
   defaultSettings: any,
@@ -212,7 +212,6 @@ export type EdgeSpendInfo = {
 export type EdgeDataDump = {
   walletId: string,
   walletType: string,
-  pluginType: string,
   data: {
     [dataCache: string]: any
   }
@@ -270,8 +269,6 @@ export type EdgeCurrencyCodeOptions = {
   currencyCode?: string
 }
 
-export type EdgeUnusedOptions = {}
-
 export type EdgeGetTransactionsOptions = {
   currencyCode?: string,
   startIndex?: number,
@@ -298,14 +295,12 @@ export type EdgeCurrencyEngineOptions = {
   callbacks: EdgeCurrencyEngineCallbacks,
   walletLocalDisklet: Disklet,
   walletLocalEncryptedDisklet: Disklet,
-  optionalSettings?: any,
-
-  // Deprecated:
-  walletLocalFolder: DiskletFolder,
-  walletLocalEncryptedFolder: DiskletFolder
+  userSettings: Object | void
 }
 
 export type EdgeCurrencyEngine = {
+  changeUserSettings(settings: Object): Promise<mixed>,
+
   // Keys:
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
@@ -334,8 +329,8 @@ export type EdgeCurrencyEngine = {
 
   // Addresses:
   getFreshAddress(opts: EdgeCurrencyCodeOptions): EdgeFreshAddress,
-  addGapLimitAddresses(addresses: Array<string>, opts: EdgeUnusedOptions): void,
-  isAddressUsed(address: string, opts: EdgeUnusedOptions): boolean,
+  addGapLimitAddresses(addresses: Array<string>): void,
+  isAddressUsed(address: string): boolean,
 
   // Spending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
@@ -362,25 +357,25 @@ export type EdgeBitcoinPrivateKeyOptions = {
 // Add other currencies to this list as they gather options:
 export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
 
-export type EdgeCurrencyPlugin = {
-  // Information:
-  +pluginName: string,
-  +currencyInfo: EdgeCurrencyInfo,
-  +changeSettings?: (settings: Object) => Promise<mixed>,
-
+export type EdgeCurrencyTools = {
   // Keys:
-  // TODO: returns Object | Promise<Object> once Flow is un-broken:
-  createPrivateKey(walletType: string, opts?: EdgeCreatePrivateKeyOptions): any,
-  // TODO: returns Object | Promise<Object> once Flow is un-broken:
-  derivePublicKey(walletInfo: EdgeWalletInfo): any,
+  createPrivateKey(
+    walletType: string,
+    opts?: EdgeCreatePrivateKeyOptions
+  ): Promise<Object>,
+  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<Object>,
   +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
 
   // URIs:
-  parseUri(uri: string): EdgeParsedUri | Promise<EdgeParsedUri>,
-  encodeUri(obj: EdgeEncodeUri): string | Promise<string>,
+  parseUri(uri: string): Promise<EdgeParsedUri>,
+  encodeUri(obj: EdgeEncodeUri): Promise<string>
+}
 
-  // Engine:
-  makeEngine(
+export type EdgeCurrencyPlugin = {
+  +currencyInfo: EdgeCurrencyInfo,
+
+  makeCurrencyTools(): Promise<EdgeCurrencyTools>,
+  makeCurrencyEngine(
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine>,

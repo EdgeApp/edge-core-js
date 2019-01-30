@@ -419,7 +419,7 @@ function loadAddressFiles (input: CurrencyWalletInput, folder) {
 
     // Load these addresses into the engine:
     const engine = input.props.selfOutput.engine
-    if (engine) engine.addGapLimitAddresses(out, {})
+    if (engine) engine.addGapLimitAddresses(out)
 
     return out
   })

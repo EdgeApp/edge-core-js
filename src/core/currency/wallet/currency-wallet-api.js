@@ -24,6 +24,7 @@ import {
   type EdgeTransaction
 } from '../../../types/types.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
+import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
 import { type ApiInput } from '../../root-pixie.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
@@ -59,7 +60,7 @@ export function makeCurrencyWalletApi (
   engine: EdgeCurrencyEngine
 ) {
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-  const walletInfo = input.props.selfState.walletInfo
+  const { walletInfo, pluginName } = input.props.selfState
 
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
@@ -442,11 +443,13 @@ export function makeCurrencyWalletApi (
     },
 
     async parseUri (uri: string): Promise<EdgeParsedUri> {
-      return plugin.parseUri(uri)
+      const tools = await getCurrencyTools(ai, pluginName)
+      return tools.parseUri(uri)
     },
 
     async encodeUri (obj: EdgeEncodeUri): Promise<string> {
-      return plugin.encodeUri(obj)
+      const tools = await getCurrencyTools(ai, pluginName)
+      return tools.encodeUri(obj)
     },
 
     otherMethods,

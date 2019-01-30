@@ -3,6 +3,7 @@
 import {
   type EdgeCorePlugin,
   type EdgeCorePluginsInit,
+  type EdgeCurrencyTools,
   type EdgePluginMap,
   type EdgeTokenInfo,
   type EdgeWalletInfo,
@@ -154,6 +155,19 @@ export type RootAction =
       payload: {
         error: Error,
         walletId: string
+      }
+    }
+  | {
+      // Called when the core starts loading currency tools:
+      type: 'CURRENCY_TOOLS_LOADING',
+      payload: { pluginName: string }
+    }
+  | {
+      // Called when the core finishes loading currency tools:
+      type: 'CURRENCY_TOOLS_LOADED',
+      payload: {
+        pluginName: string,
+        tools: EdgeCurrencyTools | Error
       }
     }
   | {
