@@ -26,7 +26,7 @@ export const exchange: TamePixie<RootProps> = combinePixies({
         pluginNames.map(pluginName => {
           const plugin = input.props.state.plugins.rate[pluginName]
           try {
-            return plugin.fetchExchangeRates(pairs).catch(e => {
+            return plugin.fetchRates(pairs).catch(e => {
               input.props.onError(e)
               return []
             })

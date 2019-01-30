@@ -549,7 +549,7 @@ export type EdgeSwapPlugin = {
   checkSettings?: (userSettings: Object) => EdgeSwapPluginStatus,
   fetchSwapQuote(
     request: EdgeSwapRequest,
-    userSettings: Object
+    userSettings: Object | void
   ): Promise<EdgeSwapPluginQuote>
 }
 
@@ -557,23 +557,25 @@ export type EdgeSwapPlugin = {
 // rate plugin
 // ---------------------------------------------------------------------
 
-export type EdgeExchangePairHint = {
+export type EdgeRateHint = {
   fromCurrency: string,
   toCurrency: string
 }
 
-export type EdgeExchangePair = {
+export type EdgeRateInfo = {
+  +displayName: string
+}
+
+export type EdgeRatePair = {
   fromCurrency: string,
   toCurrency: string,
   rate: number
 }
 
-export type EdgeExchangePlugin = {
-  +exchangeInfo: { exchangeName: string },
+export type EdgeRatePlugin = {
+  +rateInfo: EdgeRateInfo,
 
-  fetchExchangeRates(
-    pairHints: Array<EdgeExchangePairHint>
-  ): Promise<Array<EdgeExchangePair>>
+  fetchRates(hints: Array<EdgeRateHint>): Promise<Array<EdgeRatePair>>
 }
 
 // ---------------------------------------------------------------------
@@ -811,7 +813,7 @@ export type EdgeAccount = {
 
 export type EdgeCorePlugin =
   | EdgeCurrencyPlugin
-  | EdgeExchangePlugin
+  | EdgeRatePlugin
   | EdgeSwapPlugin
 
 export type EdgeCorePlugins = EdgePluginMap<

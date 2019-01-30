@@ -112,7 +112,7 @@ export function makeChangellyPlugin (
 
     async fetchSwapQuote (
       request: EdgeSwapRequest,
-      userSettings: Object
+      userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([

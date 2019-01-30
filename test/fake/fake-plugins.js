@@ -1,32 +1,30 @@
 // @flow
 
 import {
-  type EdgeExchangePair,
-  type EdgeExchangePairHint,
-  type EdgeExchangePlugin,
+  type EdgeRateHint,
+  type EdgeRatePair,
+  type EdgeRatePlugin,
   addEdgeCorePlugins,
   lockEdgeCorePlugins
 } from '../../src/index.js'
 import { makeFakeCurrencyPlugin } from './fake-currency-plugin.js'
 
-export const brokenExchangePlugin: EdgeExchangePlugin = {
-  exchangeInfo: {
-    exchangeName: 'BrokenExchange'
+export const brokenExchangePlugin: EdgeRatePlugin = {
+  rateInfo: {
+    displayName: 'BrokenExchange'
   },
 
-  fetchExchangeRates (pairs) {
+  fetchRates (pairs) {
     throw new Error('boom!')
   }
 }
 
-export const fakeExchangePlugin: EdgeExchangePlugin = {
-  exchangeInfo: {
-    exchangeName: 'FakeExchange'
+const fakeExchangePlugin: EdgeRatePlugin = {
+  rateInfo: {
+    displayName: 'FakeExchange'
   },
 
-  fetchExchangeRates (
-    pairs: Array<EdgeExchangePairHint>
-  ): Promise<Array<EdgeExchangePair>> {
+  fetchRates (pairs: Array<EdgeRateHint>): Promise<Array<EdgeRatePair>> {
     const fuzz = Math.sin((Math.PI * Date.now()) / (30 * 60 * 1000))
 
     return Promise.resolve([

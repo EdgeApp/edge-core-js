@@ -3,8 +3,8 @@
 import {
   type EdgeCorePluginsInit,
   type EdgeCurrencyPlugin,
-  type EdgeExchangePlugin,
   type EdgePluginMap,
+  type EdgeRatePlugin,
   type EdgeSwapPlugin
 } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
@@ -14,7 +14,7 @@ export type PluginsState = {
   +locked: boolean,
 
   +currency: EdgePluginMap<EdgeCurrencyPlugin>,
-  +rate: EdgePluginMap<EdgeExchangePlugin>,
+  +rate: EdgePluginMap<EdgeRatePlugin>,
   +swap: EdgePluginMap<EdgeSwapPlugin>
 }
 
@@ -43,7 +43,7 @@ export const plugins = (
         // $FlowFixMe - Flow doesn't see the type refinement here:
         if (plugin.currencyInfo != null) out.currency[pluginName] = plugin
         // $FlowFixMe
-        if (plugin.exchangeInfo != null) out.rate[pluginName] = plugin
+        if (plugin.rateInfo != null) out.rate[pluginName] = plugin
         // $FlowFixMe
         if (plugin.swapInfo != null) out.swap[pluginName] = plugin
       }
