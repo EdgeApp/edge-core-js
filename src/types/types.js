@@ -532,12 +532,17 @@ export type EdgeSwapInfo = {
 }
 
 export type EdgeSwapQuoteOptions = {
-  fromCurrencyCode: string,
+  // Where?
   fromWallet: EdgeCurrencyWallet,
-  nativeAmount: string,
-  quoteFor: 'from' | 'to',
+  toWallet: EdgeCurrencyWallet,
+
+  // What?
+  fromCurrencyCode: string,
   toCurrencyCode: string,
-  toWallet: EdgeCurrencyWallet
+
+  // How much?
+  nativeAmount: string,
+  quoteFor: 'from' | 'to'
 }
 
 export type EdgeSwapPluginQuote = {
