@@ -5,6 +5,7 @@ import { base16, base64 } from 'rfc4648'
 import { update } from 'yaob'
 
 import {
+  type EdgePluginMap,
   type EdgeWalletInfo,
   type EdgeWalletStates
 } from '../../types/types.js'
@@ -14,13 +15,13 @@ import {
   getStorageWalletFolder,
   hashStorageWalletFilename
 } from '../storage/storage-selectors.js'
-import { type PluginMap, type SwapSettings } from './account-reducer.js'
+import { type SwapSettings } from './account-reducer.js'
 
 const PLUGIN_SETTINGS_FILE = 'PluginSettings.json'
 
 type PluginSettingsFile = {
-  userSettings?: PluginMap<Object>,
-  swapSettings?: PluginMap<SwapSettings>
+  userSettings?: EdgePluginMap<Object>,
+  swapSettings?: EdgePluginMap<SwapSettings>
 }
 
 /**
