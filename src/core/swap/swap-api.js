@@ -6,7 +6,7 @@ import { bridgifyObject } from 'yaob'
 import {
   type EdgeSwapPluginQuote,
   type EdgeSwapQuote,
-  type EdgeSwapQuoteOptions,
+  type EdgeSwapRequest,
   errorNames
 } from '../../types/types.js'
 import { fuzzyTimeout } from '../../util/promise.js'
@@ -19,7 +19,7 @@ import { type ApiInput } from '../root-pixie.js'
 export async function fetchSwapQuote (
   ai: ApiInput,
   accountId: string,
-  opts: EdgeSwapQuoteOptions
+  request: EdgeSwapRequest
 ): Promise<EdgeSwapQuote> {
   const account = ai.props.state.accounts[accountId]
   const { swapSettings, swapTools } = account
@@ -27,7 +27,7 @@ export async function fetchSwapQuote (
   const promises: Array<Promise<EdgeSwapPluginQuote>> = []
   for (const n in swapTools) {
     if (swapPluginEnabled(swapSettings, n)) {
-      promises.push(swapTools[n].fetchQuote(opts))
+      promises.push(swapTools[n].fetchQuote(request))
     }
   }
 

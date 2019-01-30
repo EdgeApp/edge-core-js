@@ -2,12 +2,12 @@
 
 import {
   type EdgeSwapPluginQuote,
-  type EdgeSwapQuoteOptions,
+  type EdgeSwapRequest,
   type EdgeTransaction
 } from '../../types/types.js'
 
 export function makeSwapPluginQuote (
-  opts: EdgeSwapQuoteOptions,
+  request: EdgeSwapRequest,
   fromNativeAmount: string,
   toNativeAmount: string,
   tx: EdgeTransaction,
@@ -16,7 +16,7 @@ export function makeSwapPluginQuote (
   expirationDate?: Date,
   quoteId?: string
 ): EdgeSwapPluginQuote {
-  const { fromWallet } = opts
+  const { fromWallet } = request
 
   const out: EdgeSwapPluginQuote = {
     fromNativeAmount,

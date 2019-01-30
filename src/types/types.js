@@ -552,7 +552,7 @@ export type EdgeSwapInfo = {
   +supportEmail: string
 }
 
-export type EdgeSwapQuoteOptions = {
+export type EdgeSwapRequest = {
   // Where?
   fromWallet: EdgeCurrencyWallet,
   toWallet: EdgeCurrencyWallet,
@@ -585,7 +585,7 @@ export type EdgeSwapTools = {
 
   changeUserSettings(userSettings: Object): Promise<mixed>,
   fetchCurrencies(): Promise<Array<string>>,
-  fetchQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapPluginQuote>
+  fetchQuote(request: EdgeSwapRequest): Promise<EdgeSwapPluginQuote>
 }
 
 export type EdgeSwapPlugin = {
@@ -842,14 +842,14 @@ export type EdgeAccount = {
   ): Promise<string>,
 
   // Swapping:
-  fetchSwapQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote>,
+  fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>,
 
   // Deprecated names:
   +pluginData: EdgePluginData,
   +exchangeCache: EdgeRateCache,
   +currencyTools: EdgePluginMap<EdgeCurrencyConfig>,
   +exchangeTools: EdgePluginMap<EdgeSwapConfig>,
-  getExchangeQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote>
+  getExchangeQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>
 }
 
 // ---------------------------------------------------------------------

@@ -16,7 +16,7 @@ import {
   type EdgeRateCache,
   type EdgeSwapConfig,
   type EdgeSwapQuote,
-  type EdgeSwapQuoteOptions,
+  type EdgeSwapRequest,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
   type EthereumTransaction
@@ -330,8 +330,8 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
       return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)
     },
 
-    async fetchSwapQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote> {
-      return fetchSwapQuote(ai, accountId, opts)
+    async fetchSwapQuote (request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      return fetchSwapQuote(ai, accountId, request)
     },
 
     // Deprecated names:
@@ -347,9 +347,9 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
     get pluginData (): EdgePluginData {
       return pluginData
     },
-    async getExchangeQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote> {
+    async getExchangeQuote (request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       deprecate('EdgeAccount.getExchangeQuote', 'EdgeAccount.fetchSwapQuote')
-      return this.fetchSwapQuote(opts)
+      return this.fetchSwapQuote(request)
     }
   }
   bridgifyObject(out)
