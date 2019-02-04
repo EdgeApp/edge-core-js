@@ -1,0 +1,10 @@
+{
+  "presets": ["@babel/preset-env", "@babel/preset-flow"],
+  "plugins": [
+    ["@babel/plugin-transform-for-of", { "assumeArray": true }],
+    [
+      "@babel/plugin-transform-runtime",
+      { "corejs": false, "helpers": false, "regenerator": true }
+    ]
+  ]
+}

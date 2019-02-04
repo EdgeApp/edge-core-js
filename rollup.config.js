@@ -4,20 +4,9 @@ import flowEntry from 'rollup-plugin-flow-entry'
 
 import packageJson from './package.json'
 
-const babelOpts = {
-  babelrc: false,
-  presets: ['@babel/preset-env', '@babel/preset-flow'],
-  plugins: [
-    ['@babel/plugin-transform-for-of', { assumeArray: true }],
-    [
-      '@babel/plugin-transform-runtime',
-      { corejs: false, helpers: false, regenerator: true }
-    ]
-  ]
-}
-
 const external = [
   ...Object.keys(packageJson.dependencies),
+  ...Object.keys(packageJson.devDependencies),
   '@babel/runtime/regenerator',
   'react-native'
 ]
@@ -33,11 +22,10 @@ export default [
     ],
     plugins: [
       alias({
-        './io/node/node-io.js': 'src/io/node/node-io.js',
         './io/react-native/react-native-io.js':
           'src/io/react-native/react-native-dummy.js'
       }),
-      babel(babelOpts),
+      babel(),
       flowEntry()
     ]
   },
@@ -51,12 +39,8 @@ export default [
       sourcemap: true
     },
     plugins: [
-      alias({
-        './io/node/node-io.js': 'src/io/node/node-dummy.js',
-        './io/react-native/react-native-io.js':
-          'src/io/react-native/react-native-io.js'
-      }),
-      babel(babelOpts)
+      alias({ './io/node/node-io.js': 'src/io/node/node-dummy.js' }),
+      babel()
     ]
   },
   // Client-side methods:
@@ -64,6 +48,6 @@ export default [
     external: ['yaob'],
     input: 'src/client-side.js',
     output: { file: 'lib/client-side.js', format: 'es', sourcemap: true },
-    plugins: [babel(babelOpts)]
+    plugins: [babel()]
   }
 ]

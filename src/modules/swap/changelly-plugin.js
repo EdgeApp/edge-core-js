@@ -76,15 +76,13 @@ function checkReply (reply: Object, quoteOpts?: EdgeSwapQuoteOptions) {
 }
 
 function makeChangellyTools (env): EdgeSwapTools {
-  if (
-    env.initOptions == null ||
-    env.initOptions.apiKey == null ||
-    env.initOptions.secret == null
-  ) {
+  const { initOptions = {}, io } = env
+
+  if (initOptions.apiKey == null || initOptions.secret == null) {
     throw new Error('No Changelly apiKey or secret provided.')
   }
-  const { apiKey } = env.initOptions
-  const secret = utf8.parse(env.initOptions.secret)
+  const { apiKey } = initOptions
+  const secret = utf8.parse(initOptions.secret)
 
   async function call (json: any) {
     const body = JSON.stringify(json)
@@ -92,18 +90,18 @@ function makeChangellyTools (env): EdgeSwapTools {
       .stringify(hmacSha512(utf8.parse(body), secret))
       .toLowerCase()
 
-    env.io.console.info('changelly call:', json)
+    io.console.info('changelly call:', json)
     const headers = {
       'Content-Type': 'application/json',
       'api-key': apiKey,
       sign
     }
-    const reply = await env.io.fetch(uri, { method: 'POST', body, headers })
+    const reply = await io.fetch(uri, { method: 'POST', body, headers })
     if (!reply.ok) {
       throw new Error(`Changelly returned error code ${reply.status}`)
     }
     const out = await reply.json()
-    env.io.console.info('changelly reply:', out)
+    io.console.info('changelly reply:', out)
     return out
   }
 
@@ -235,7 +233,7 @@ function makeChangellyTools (env): EdgeSwapTools {
           }
         ]
       }
-      env.io.console.info('changelly spendInfo', spendInfo)
+      io.console.info('changelly spendInfo', spendInfo)
       const tx = await opts.fromWallet.makeSpend(spendInfo)
 
       return makeSwapPluginQuote(
