@@ -204,8 +204,11 @@ export function makeCurrencyWalletApi (
     async getTransactions (
       opts: EdgeGetTransactionsOptions = {}
     ): Promise<Array<EdgeTransaction>> {
+      const defaultCurrency = plugin.currencyInfo.currencyCode
+      const currencyCode = opts.currencyCode || defaultCurrency
+
       let state = input.props.selfState
-      if (!state.gotTxs) {
+      if (!state.gotTxs[currencyCode]) {
         const txs = await engine.getTransactions({
           currencyCode: opts.currencyCode
         })
@@ -213,14 +216,13 @@ export function makeCurrencyWalletApi (
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_GOT_TXS',
           payload: {
-            walletId: input.props.id
+            walletId: input.props.id,
+            currencyCode
           }
         })
         state = input.props.selfState
       }
 
-      const defaultCurrency = plugin.currencyInfo.currencyCode
-      const currencyCode = opts.currencyCode || defaultCurrency
       // Txid array of all txs
       const txids = state.txids
       // Merged tx data from metadata files and blockchain data

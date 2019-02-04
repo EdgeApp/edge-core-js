@@ -193,7 +193,9 @@ function loadFiatFile (input: CurrencyWalletInput, folder) {
     .getText()
     .then(text => {
       const file = JSON.parse(text)
-      return file.fiat ? file.fiat : 'iso:' + currencyFromNumber(file.num).code
+      return file.fiat
+        ? file.fiat
+        : 'iso:' + currencyFromNumber(('000' + file.num).slice(-3)).code
     })
     .catch(e => 'iso:USD')
     .then((fiatCurrencyCode: string) => {

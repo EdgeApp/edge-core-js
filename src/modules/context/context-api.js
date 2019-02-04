@@ -45,6 +45,10 @@ export function makeContextApi (ai: ApiInput) {
 
     appId,
 
+    async close (): Promise<mixed> {
+      ai.props.close()
+    },
+
     $internalStuff,
 
     fixUsername,

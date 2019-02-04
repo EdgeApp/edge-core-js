@@ -12,6 +12,7 @@ import {
   type EdgeDataStore,
   type EdgeLobby,
   type EdgePluginData,
+  type EdgePluginMap,
   type EdgeRateCache,
   type EdgeSwapConfig,
   type EdgeSwapCurrencies,
@@ -46,7 +47,6 @@ import { type ApiInput } from '../root-pixie.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { fetchSwapCurrencies, fetchSwapQuote } from '../swap/swap-api.js'
 import { changeWalletStates } from './account-files.js'
-import { type PluginMap } from './account-reducer.js'
 import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
 import { CurrencyConfig, SwapConfig } from './plugin-api.js'
@@ -60,12 +60,12 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
   const { username } = loginTree
 
   // Plugin config API's:
-  const currencyConfigs: PluginMap<EdgeCurrencyConfig> = {}
+  const currencyConfigs: EdgePluginMap<EdgeCurrencyConfig> = {}
   for (const plugin of ai.props.output.currency.plugins) {
     const api = new CurrencyConfig(ai, accountId, plugin)
     currencyConfigs[plugin.pluginName] = api
   }
-  const swapConfigs: PluginMap<EdgeSwapConfig> = {}
+  const swapConfigs: EdgePluginMap<EdgeSwapConfig> = {}
   for (const pluginName in selfState().swapPlugins) {
     const api = new SwapConfig(ai, accountId, pluginName)
     swapConfigs[pluginName] = api
@@ -134,10 +134,10 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // Speciality API's:
-    get currencyConfig (): { [pluginName: string]: EdgeCurrencyConfig } {
+    get currencyConfig (): EdgePluginMap<EdgeCurrencyConfig> {
       return currencyConfigs
     },
-    get swapConfig (): { [pluginName: string]: EdgeSwapConfig } {
+    get swapConfig (): EdgePluginMap<EdgeSwapConfig> {
       return swapConfigs
     },
     get rateCache (): EdgeRateCache {
@@ -262,16 +262,17 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
     async changeWalletStates (walletStates: EdgeWalletStates): Promise<mixed> {
       return changeWalletStates(ai, accountId, walletStates)
     },
-    async createWallet (type: string, keys: any): Promise<string> {
+    async createWallet (walletType: string, keys: any): Promise<string> {
       const { login, loginTree } = selfState()
 
       if (keys == null) {
         // Use the currency plugin to create the keys:
-        const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, type)
-        keys = await plugin.createPrivateKey(type)
+        const { plugins } = ai.props.output.currency
+        const plugin = getCurrencyPlugin(plugins, walletType)
+        keys = await plugin.createPrivateKey(walletType)
       }
 
-      const walletInfo = makeStorageKeyInfo(ai, type, keys)
+      const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
       const kit = makeKeysKit(ai, login, walletInfo)
       return applyKit(ai, loginTree, kit).then(() => walletInfo.id)
     },
@@ -339,10 +340,10 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // Deprecated names:
-    get currencyTools (): { [pluginName: string]: EdgeCurrencyConfig } {
+    get currencyTools (): EdgePluginMap<EdgeCurrencyConfig> {
       return currencyConfigs
     },
-    get exchangeTools (): { [pluginName: string]: EdgeSwapConfig } {
+    get exchangeTools (): EdgePluginMap<EdgeSwapConfig> {
       return swapConfigs
     },
     get exchangeCache (): EdgeRateCache {

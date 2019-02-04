@@ -60,9 +60,10 @@ async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
 }
 
 function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
-  const { io, initOptions } = env
+  const { initOptions = {}, io } = env
+
   let affiliateOptions = {}
-  if (initOptions == null || initOptions.affiliateId == null) {
+  if (initOptions.affiliateId == null) {
     io.console.info('No faast affiliateId provided.')
   } else {
     const { affiliateId, affiliateMargin } = initOptions
@@ -216,7 +217,7 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
         if (lt(nativeAmount, nativeMin)) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
-        if (nativeMax !== null && gt(nativeAmount, nativeMax)) {
+        if (nativeMax != null && gt(nativeAmount, nativeMax)) {
           throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       }
@@ -283,7 +284,7 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
         currencyCode: fromCurrencyCode,
         spendTargets: [spendTarget]
       }
-      env.io.console.info('faast spendInfo', spendInfo)
+      io.console.info('faast spendInfo', spendInfo)
       const tx = await fromWallet.makeSpend(spendInfo)
 
       // Convert that to the output format:

@@ -1,15 +1,13 @@
+import babel from 'rollup-plugin-babel'
 import multiEntry from 'rollup-plugin-multi-entry'
 
-import packageJson from '../package.json'
 import config from '../rollup.config.js'
 
+const aliasPlugin = config[0].plugins[0]
+
 export default {
-  external: [
-    ...Object.keys(packageJson.dependencies),
-    ...Object.keys(packageJson.devDependencies),
-    '@babel/runtime/regenerator'
-  ],
+  external: config[0].external,
   input: 'test/**/*.test.js',
   output: [{ file: 'build/tests.js', format: 'cjs', sourcemap: true }],
-  plugins: [...config[0].plugins, multiEntry()]
+  plugins: [aliasPlugin, babel(), multiEntry()]
 }

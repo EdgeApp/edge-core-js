@@ -60,12 +60,13 @@ async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
 }
 
 function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
-  const { io } = env
-  if (env.initOptions == null || env.initOptions.apiKey == null) {
+  const { initOptions = {}, io } = env
+  let { userSettings } = env
+
+  if (initOptions.apiKey == null) {
     throw new Error('No Shapeshift API key provided')
   }
-  const { apiKey } = env.initOptions
-  let userSettings = env.userSettings
+  const { apiKey } = initOptions
 
   async function checkReply (uri: string, reply: Response) {
     let replyJson
@@ -280,7 +281,7 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
         currencyCode: fromCurrencyCode,
         spendTargets: [spendTarget]
       }
-      env.io.console.info('shapeshift spendInfo', spendInfo)
+      io.console.info('shapeshift spendInfo', spendInfo)
       const tx = await fromWallet.makeSpend(spendInfo)
 
       // Convert that to the output format:

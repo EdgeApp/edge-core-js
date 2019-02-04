@@ -1,16 +1,15 @@
 // @flow
 
 import {
-  type DiskletFolder,
+  type Disklet,
   downgradeDisklet,
-  locateFile,
   mapAllFiles,
   mergeDisklets,
   navigateDisklet
 } from 'disklet'
-import { base16, base64 } from 'rfc4648'
+import { base16 } from 'rfc4648'
 
-import { type EdgeIo, type EdgeWalletInfo } from '../../types/types.js'
+import { type EdgeIo } from '../../types/types.js'
 import { sha256 } from '../../util/crypto/crypto.js'
 import { base58 } from '../../util/encoding.js'
 import { encryptDisklet } from './encrypt-disklet.js'
@@ -20,17 +19,20 @@ import {
 } from './storage-reducer.js'
 import { syncRequest } from './storage-servers.js'
 
+export type SyncResult = {
+  changes: { [path: string]: Object },
+  status: StorageWalletStatus
+}
+
 /**
  * Sets up the back-end folders needed to emulate Git on disk.
  * You probably don't want this.
  */
 export function makeRepoPaths (
   io: EdgeIo,
-  walletInfo: EdgeWalletInfo
+  syncKey: Uint8Array,
+  dataKey: Uint8Array
 ): StorageWalletPaths {
-  const dataKey = base64.parse(walletInfo.keys.dataKey)
-  const syncKey = base64.parse(walletInfo.keys.syncKey)
-
   const baseDisklet = navigateDisklet(
     io.disklet,
     'repos/' + base58.stringify(sha256(sha256(syncKey)))
@@ -70,15 +72,15 @@ export function loadRepoStatus (
  * but those can't happen under the current rules anyhow.
  */
 export function saveChanges (
-  folder: DiskletFolder,
+  disklet: Disklet,
   changes: { [path: string]: Object }
 ) {
   return Promise.all(
     Object.keys(changes).map(path => {
       const json = changes[path]
-      const file = locateFile(folder, path)
-
-      return json != null ? file.setText(JSON.stringify(json)) : file.delete()
+      return json != null
+        ? disklet.setText(path, JSON.stringify(json))
+        : disklet.delete(path)
     })
   )
 }
@@ -90,10 +92,9 @@ export function syncRepo (
   io: EdgeIo,
   paths: StorageWalletPaths,
   status: StorageWalletStatus
-) {
+): Promise<SyncResult> {
   const { changesDisklet, dataDisklet, syncKey } = paths
   const changesFolder = downgradeDisklet(changesDisklet)
-  const dataFolder = downgradeDisklet(dataDisklet)
 
   return mapAllFiles(changesFolder, (file, name) =>
     file.getText().then(text => ({ file, name, json: JSON.parse(text) }))
@@ -119,7 +120,7 @@ export function syncRepo (
       const { changes = {}, hash } = reply
 
       // Save the incoming changes into our `data` folder:
-      return saveChanges(dataFolder, changes)
+      return saveChanges(dataDisklet, changes)
         .then(
           // Delete any changed keys (since the upload is done):
           () => Promise.all(ourChanges.map(change => change.file.delete()))

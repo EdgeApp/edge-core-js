@@ -11,13 +11,13 @@ import {
 } from '../../../src/index.js'
 import { makeAssertLog } from '../../assert-log.js'
 import { expectRejection } from '../../expect-rejection.js'
-import { makeFakeCurrency } from '../../fake-plugins/fake-currency.js'
+import { fakeCurrencyPlugin } from '../../fake/fake-currency-plugin.js'
 
 const contextOptions = {
   apiKey: '',
   appId: '',
   localFakeUser: true,
-  plugins: [makeFakeCurrency()]
+  plugins: [fakeCurrencyPlugin]
 }
 
 function findWallet (walletInfos, type) {
@@ -117,9 +117,9 @@ describe('account', function () {
     const [context] = await makeFakeContexts(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    expect(Object.keys(account.currencyConfig)).deep.equals(['testcoin'])
-    const config = account.currencyConfig['testcoin']
-    expect(config.currencyInfo.pluginName).equals('testcoin')
+    expect(Object.keys(account.currencyConfig)).deep.equals(['fakecoin'])
+    const config = account.currencyConfig['fakecoin']
+    expect(config.currencyInfo.pluginName).equals('fakecoin')
   })
 
   it('change currency plugin settings', async function () {
@@ -129,13 +129,13 @@ describe('account', function () {
     const settings = {
       testSetting: 'some important string'
     }
-    const config1 = account1.currencyConfig['testcoin']
+    const config1 = account1.currencyConfig['fakecoin']
     await config1.changeUserSettings(settings)
     expect(config1.userSettings).deep.equals(settings)
 
     // Log in again, and the setting should still be there:
     const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const config2 = account2.currencyConfig['testcoin']
+    const config2 = account2.currencyConfig['fakecoin']
     expect(config2.userSettings).deep.equals(settings)
   })
 

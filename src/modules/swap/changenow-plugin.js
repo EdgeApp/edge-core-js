@@ -76,32 +76,36 @@ function checkReply (reply: Object, quoteOpts?: EdgeSwapQuoteOptions) {
 }
 
 function makeChangeNowTools (env): EdgeSwapTools {
-  if (env.initOptions == null || env.initOptions.apiKey == null) {
-    throw new Error('No ChangeNow apiKey or secret provided.')
+  const { initOptions = {}, io } = env
+
+  if (initOptions.apiKey == null) {
+    throw new Error('No ChangeNow apiKey provided.')
   }
-  const { apiKey } = env.initOptions
+  const { apiKey } = initOptions
 
   async function call (json: any) {
     const body = JSON.stringify(json.body)
-    env.io.console.info('changenow call fixed :', json)
+    io.console.info('changenow call fixed :', json)
     const headers = {
       'Content-Type': 'application/json'
     }
 
     const api = uri + json.route + apiKey
-    const reply = await env.io.fetch(api, { method: 'POST', body, headers })
+    const reply = await io.fetch(api, { method: 'POST', body, headers })
     if (!reply.ok) {
       throw new Error(`ChangeNow fixed returned error code ${reply.status}`)
     }
     const out = await reply.json()
-    env.io.console.info('changenow fixed reply:', out)
+    io.console.info('changenow fixed reply:', out)
     return out
   }
+
   async function get (path: string) {
     const api = `${uri}${path}`
-    const reply = await env.io.fetch(api)
+    const reply = await io.fetch(api)
     return reply.json()
   }
+
   const out: EdgeSwapTools = {
     needsActivation: false,
 
@@ -264,7 +268,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
                   }
                 ]
               }
-              env.io.console.info('changenow spendInfo', spendInfo)
+              io.console.info('changenow spendInfo', spendInfo)
               const tx = await opts.fromWallet.makeSpend(spendInfo)
               return makeSwapPluginQuote(
                 opts,
@@ -364,7 +368,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
           }
         ]
       }
-      env.io.console.info('changenow spendInfo', spendInfo)
+      io.console.info('changenow spendInfo', spendInfo)
       const tx = await opts.fromWallet.makeSpend(spendInfo)
 
       return makeSwapPluginQuote(

@@ -1,11 +1,21 @@
 // @flow
 
 import {
+  type EdgeCurrencyPluginFactory,
   type EdgeExchangePair,
   type EdgeExchangePairHint,
   type EdgeExchangePlugin,
   type EdgeExchangePluginFactory
-} from '../../src/types/types.js'
+} from '../../src/index.js'
+
+export const brokenCurrencyPlugin: EdgeCurrencyPluginFactory = {
+  pluginName: 'broken-currency',
+  pluginType: 'currency',
+
+  makePlugin () {
+    return Promise.reject(new Error('Expect to fail'))
+  }
+}
 
 export const brokenExchangePlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',
@@ -47,7 +57,7 @@ export const fakeExchangePlugin: EdgeExchangePluginFactory = {
           { fromCurrency: 'BTC', toCurrency: 'iso:USD', rate: 2590.75 + fuzz },
           { fromCurrency: 'ETH', toCurrency: 'iso:EUR', rate: 230.74 + fuzz },
           { fromCurrency: 'ETH', toCurrency: 'iso:USD', rate: 2590.75 + fuzz },
-          { fromCurrency: 'TEST', toCurrency: 'iso:USD', rate: 3 }
+          { fromCurrency: 'FAKE', toCurrency: 'iso:USD', rate: 3 }
         ])
       }
     }

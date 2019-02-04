@@ -1,5 +1,16 @@
 # edge-core-js
 
+## 0.13.7 (2019-02-04)
+
+- Fix `getTransactions` for compatibility with edge-currency-accountbased Ethereum.
+- Fix AUD currency lookup bug.
+- Clean up Flow types
+  - Fix `EdgeGetTransactionsOptions.startEntries` type.
+  - Add an `EdgePluginMap` helper type.
+- Upgrade build tools to fix Travis.
+- Fix `peerDependencies` spelling.
+- Expose repo syncing through the secret internal API.
+
 ## 0.13.6
 
 * Add Faa.st swap plugin.
