@@ -659,7 +659,7 @@ export type EdgeCurrencyConfig = {
 
   +currencyInfo: EdgeCurrencyInfo,
   +otherMethods: Object,
-  +userSettings: Object,
+  +userSettings: Object | void,
 
   changeUserSettings(settings: Object): Promise<mixed>
 }
@@ -705,7 +705,7 @@ export type EdgeSwapConfig = {
   +enabled: boolean,
   +needsActivation: boolean,
   +swapInfo: EdgeSwapInfo,
-  +userSettings: Object,
+  +userSettings: Object | void,
 
   changeEnabled(enabled: boolean): Promise<mixed>,
   changeUserSettings(settings: Object): Promise<mixed>
