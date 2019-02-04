@@ -131,9 +131,9 @@ export function makeCurrencyWalletCallbacks (
 ): EdgeCurrencyEngineCallbacks {
   const walletId = input.props.id
 
-  // If this is a unit test, lower throttling to 20ms:
+  // If this is a unit test, lower throttling to something testable:
   if (walletId === 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=') {
-    throttleRateLimitMs = 20
+    throttleRateLimitMs = 25
   }
 
   const throtteldOnTxChanged = makeThrottledTxCallback(

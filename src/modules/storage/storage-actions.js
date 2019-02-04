@@ -15,7 +15,10 @@ export function addStorageWallet (
 ): Promise<mixed> {
   const { dispatch, io, onError } = ai.props
 
-  const paths = makeRepoPaths(io, walletInfo)
+  const dataKey = base64.parse(walletInfo.keys.dataKey)
+  const syncKey = base64.parse(walletInfo.keys.syncKey)
+
+  const paths = makeRepoPaths(io, syncKey, dataKey)
   const localDisklet = navigateDisklet(
     io.disklet,
     'local/' + base58.stringify(base64.parse(walletInfo.id))
