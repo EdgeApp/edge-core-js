@@ -2,11 +2,11 @@
 
 ## 0.13.8 (2019-02-10)
 
-- Add payinAddress and uniqueIdentifier to swap metadata
+- Add `payinAddress` and `uniqueIdentifier` to swap metadata.
 
 ## 0.13.7 (2019-02-04)
 
-- Fix `getTransactions` for compatibility with edge-currency-accountbased Ethereum.
+- Fix `getTransactions` for compatibility with `edge-currency-accountbased` Ethereum.
 - Fix AUD currency lookup bug.
 - Clean up Flow types
   - Fix `EdgeGetTransactionsOptions.startEntries` type.
@@ -28,7 +28,7 @@
 
 ## 0.13.4
 
-- Fix getTransactions to return token transactions in the requested range.
+- Fix `getTransactions` to return token transactions in the requested range.
 - Fix ChangeNOW 400 errors.
 
 ## 0.13.3
@@ -47,7 +47,7 @@
 
 ## 0.13.0
 
-- Uppgrade to disklet v0.3.0
+- Upgrade to disklet v0.3.0
   - Replace `folder` and `localFolder` with `disklet` and `localDisklet` in all API's to use the new Disklet API.
 - Removed deprecated API's:
   - Renamed API's:
@@ -81,14 +81,14 @@
 
 ## 0.12.20
 
-- Fix the splitting/replayProtection from bcash to bitcoinsh
+- Fix the splitting/replay protection from Bitcoin Cash to Bitcoin SV
 - Some flow fixes
 - Add metadata to replay protection transactions
 - Do not await on `reloadPluginSettings`, This prevents network roundtrips from blocking login. Upwards of 30s saved on really slow networks.
 
 ## 0.12.19
 
-- When splitting from bcash to bitcoinsv, preform a maxSpend to self to have replay protaction before splitting the wallet
+- When splitting from Bitcoin Cash to Bitcoin SV, preform a max spend to self to have replay protection before splitting the wallet
 
 ## 0.12.18
 
@@ -100,17 +100,17 @@
 
 ## 0.12.16
 
-- Fix getTransactions from only returning a subset of transactions
+- Fix `getTransactions` from only returning a subset of transactions
 - Fix swap exchange to gracefully fallback if one exchange errors
-- Properly filter out a swap provider if they don't support a getQuote currency pair
+- Properly filter out a swap provider if they don't support a `getQuote` currency pair
 
 ## 0.12.12
 
-- Do not call makeEngine on wallets which are archived or deleted
+- Do not call `makeEngine` on wallets which are archived or deleted
 
 ## 0.12.11
 
-- Allow createPrivateKey, derivePublicKey, parseUri, and encodeUri methods from currency plugins to be async
+- Allow `createPrivateKey`, `derivePublicKey`, `parseUri`, and `encodeUri` methods from currency plugins to be async
 
 ## 0.12.10 (2018-11-02)
 
@@ -123,7 +123,7 @@
 
 ## 0.12.9
 
-- Remove change to types of createPrivateKey and derivePublicKey due to Flow errors
+- Remove change to types of `createPrivateKey` and `derivePublicKey` due to Flow errors
 
 ## 0.12.8
 
@@ -322,7 +322,7 @@ Renames (old names deprecated):
 ## 0.9.0-beta.1
 
 - Auto-correct mis-typed 2fa secrets
-- Expose hmacSha256 for the CLI
+- Expose `hmacSha256` for the CLI
 - Fixed spelling mistake
 - Storage and Wallet flow coverage
 - Rename storage and exchange related files
@@ -368,7 +368,7 @@ Renames (old names deprecated):
 
 ## 0.6.3
 
-- Add legacyAddress to EdgeEncodeUri
+- Add `legacyAddress` to `EdgeEncodeUri`
 
 ## 0.6.2
 
@@ -404,7 +404,7 @@ Renames (old names deprecated):
 
 ## 0.5.3
 
-- Fixes to Flow types, including brand-new flow types for EdgeCurrencyWallet.
+- Fixes to Flow types, including brand-new flow types for `EdgeCurrencyWallet`.
 - Fixes for Shapeshift spends (Bitcoin Cash addresses, proper fees).
 - Redux state cleanups
 
@@ -414,12 +414,12 @@ Renames (old names deprecated):
 
 ## 0.5.1
 
-- Remove core-js polyfill. The main GUI needs to pull this in, if needed, since including it too late in the setup process can break React.
-- Switch to regenerator instead of nodent for async / await support. This is slower but more compatible.
+- Remove `core-js` polyfill. The main GUI needs to pull this in, if needed, since including it too late in the setup process can break React.
+- Switch to `regenerator` instead of `nodent` for async / await support. This is slower but more compatible.
 
 ## 0.5.0
 
-Renamed the library to edge-login, massive development work.
+- Renamed the library to edge-login, massive development work.
 
 ## 0.3.5
 
@@ -513,7 +513,7 @@ Breaking changes:
 
 ## 0.1.1
 
-- Quick fix to package.json to exclude nodeisms from the browser
+- Quick fix to package.json to exclude node-isms from the browser
 
 ## 0.1.0
 
@@ -532,7 +532,7 @@ New:
 
 Fixes:
 
-- Faster scrypt
+- Faster `scrypt`
 - Switch to the `fetch` API
 - Troublesome dependencies are now bundled and isolated
 
@@ -546,6 +546,6 @@ Fixes:
 
 - Sync server rotation support
 - HTTPS connections to sync servers
-- Removed asmcrypto.js
+- Removed `asmcrypto.js`
 - Made the CLI executable & installable
 - Pruned the list of files we publish to NPM
