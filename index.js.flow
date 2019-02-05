@@ -9,24 +9,6 @@ import {
 } from './src/types/types.js'
 
 export { error }
-export {
-  DustSpendError,
-  errorNames,
-  InsufficientFundsError,
-  SpendToSelfError,
-  NetworkError,
-  NoAmountSpecifiedError,
-  ObsoleteApiError,
-  OtpError,
-  PasswordError,
-  PendingFundsError,
-  SameCurrencyError,
-  SwapAboveLimitError,
-  SwapBelowLimitError,
-  SwapCurrencyError,
-  SwapPermissionError,
-  UsernameError
-} from './src/types/error.js'
 export * from './src/types/types.js'
 
 declare export var fakeUser: Object

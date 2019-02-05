@@ -6,7 +6,7 @@ import {
   OtpError,
   PasswordError,
   UsernameError
-} from '../../types/error.js'
+} from '../../types/types.js'
 import { timeout } from '../../util/promise.js'
 import { type ApiInput } from '../root-pixie.js'
 

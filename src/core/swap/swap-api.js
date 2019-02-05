@@ -3,12 +3,12 @@
 import { gt, lt } from 'biggystring'
 import { bridgifyObject } from 'yaob'
 
-import { errorNames } from '../../types/error.js'
 import {
   type EdgeSwapCurrencies,
   type EdgeSwapPluginQuote,
   type EdgeSwapQuote,
-  type EdgeSwapQuoteOptions
+  type EdgeSwapQuoteOptions,
+  errorNames
 } from '../../types/types.js'
 import { fuzzyTimeout } from '../../util/promise.js'
 import { swapPluginEnabled } from '../account/account-selectors.js'

@@ -2,8 +2,7 @@
 
 import { base64 } from 'rfc4648'
 
-import { errorNames } from '../../types/error.js'
-import { type EdgeWalletInfo } from '../../types/types.js'
+import { type EdgeWalletInfo, errorNames } from '../../types/types.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { type ApiInput } from '../root-pixie.js'
 import { authRequest } from './authServer.js'

@@ -32,12 +32,14 @@
     "LICENSE",
     "package.json",
     "README.md",
-    "src/types/*"
+    "src/types/*",
+    "types.js.flow",
+    "types.js"
   ],
   "main": "./index.js",
   "module": "./lib/index.js",
   "scripts": {
-    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && webpack",
+    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && node ./make-types.js && webpack",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "flow": "flow",
     "format": "import-sort -l --write '*.js' 'src/**/*.js' 'test/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",

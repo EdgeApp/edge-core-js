@@ -3,14 +3,15 @@
 import { lt, mul } from 'biggystring'
 import { base16 } from 'rfc4648'
 
-import { SwapBelowLimitError, SwapCurrencyError } from '../../types/error.js'
 import {
   type EdgeCurrencyWallet,
   type EdgePluginEnvironment,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapQuoteOptions,
-  type EdgeSwapTools
+  type EdgeSwapTools,
+  SwapBelowLimitError,
+  SwapCurrencyError
 } from '../../types/types.js'
 import { hmacSha512 } from '../../util/crypto/crypto.js'
 import { utf8 } from '../../util/encoding.js'

@@ -1,7 +1,6 @@
 // @flow
 
-import { NetworkError } from '../../types/error.js'
-import { type EdgeIo } from '../../types/types.js'
+import { type EdgeIo, NetworkError } from '../../types/types.js'
 
 const syncServers = [
   'https://git3.airbitz.co',
