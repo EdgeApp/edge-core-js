@@ -3,12 +3,12 @@
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-import { fakeUser, makeFakeContexts } from '../../../src/index.js'
 import {
   type ExchangePair,
   exchangeCache as reducer
-} from '../../../src/modules/exchange/exchange-reducer.js'
-import { getExchangeRate } from '../../../src/modules/exchange/exchange-selectors.js'
+} from '../../../src/core/exchange/exchange-reducer.js'
+import { getExchangeRate } from '../../../src/core/exchange/exchange-selectors.js'
+import { fakeUser, makeFakeContexts } from '../../../src/index.js'
 import {
   brokenExchangePlugin,
   fakeExchangePlugin

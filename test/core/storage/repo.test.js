@@ -3,9 +3,9 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
+import { getInternalStuff } from '../../../src/core/context/internal-api.js'
+import { makeRepoPaths } from '../../../src/core/storage/repo.js'
 import { fakeUser, makeFakeContexts, makeFakeIos } from '../../../src/index.js'
-import { getInternalStuff } from '../../../src/modules/context/internal-api.js'
-import { makeRepoPaths } from '../../../src/modules/storage/repo.js'
 
 const contextOptions = { apiKey: '', appId: '' }
 const dataKey = fakeUser.loginKey

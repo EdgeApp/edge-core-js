@@ -4,12 +4,12 @@ import { expect } from 'chai'
 import elliptic from 'elliptic'
 import { describe, it } from 'mocha'
 
-import { makeFakeContexts, makeFakeIos } from '../../../src/index.js'
-import { getInternalStuff } from '../../../src/modules/context/internal-api.js'
+import { getInternalStuff } from '../../../src/core/context/internal-api.js'
 import {
   decryptLobbyReply,
   encryptLobbyReply
-} from '../../../src/modules/login/lobby.js'
+} from '../../../src/core/login/lobby.js'
+import { makeFakeContexts, makeFakeIos } from '../../../src/index.js'
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')

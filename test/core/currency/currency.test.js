@@ -3,7 +3,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { getCurrencyMultiplier } from '../../../src/modules/currency/currency-selectors.js'
+import { getCurrencyMultiplier } from '../../../src/core/currency/currency-selectors.js'
 import { fakeCurrencyInfo } from '../../fake/fake-currency-plugin.js'
 
 describe('currency selectors', function () {

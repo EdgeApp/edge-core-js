@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 import { base16 } from 'rfc4648'
 
-import { calcSnrpForTarget } from '../../../src/modules/scrypt/scrypt-pixie.js'
+import { calcSnrpForTarget } from '../../../src/core/scrypt/scrypt-pixie.js'
 
 describe('SNRP calculation', function () {
   const salt = new Uint8Array(32)

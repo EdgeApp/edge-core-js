@@ -2,11 +2,11 @@
 
 import { isReactNative } from 'detect-bundler'
 
+import { makeContext } from './core/root.js'
 import { makeBrowserIo } from './io/browser/browser-io.js'
 import { prepareFakeIos } from './io/fake/fake-io.js'
 import { isNode, makeNodeIo } from './io/node/node-io.js'
 import { makeReactNativeIo } from './io/react-native/react-native-dummy.js'
-import { makeContext } from './modules/root.js'
 import {
   type EdgeContext,
   type EdgeContextOptions,

@@ -7,7 +7,7 @@ import {
   fixWalletInfo,
   makeSplitWalletInfo,
   mergeKeyInfos
-} from '../../../src/modules/login/keys.js'
+} from '../../../src/core/login/keys.js'
 
 const ID_1 = 'PPptx6SBfwGXM+FZURMvYnsOfHpIKZBbqXTCbYmFd44='
 const ID_2 = 'y14MYFMP6vnip2hUBP7aqB6Ut0d4UNqHV9a/2vgE9eQ='
