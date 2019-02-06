@@ -2,9 +2,9 @@
 
 import { makeLocalStorageDisklet } from 'disklet'
 
+import { fakeConsole } from '../../core/fake/fake-io.js'
 import { type EdgeIo } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
-import { fakeConsole } from '../fake/fake-io.js'
 
 /**
  * Extracts the io functions we need from the browser.
