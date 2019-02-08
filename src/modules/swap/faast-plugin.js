@@ -286,6 +286,7 @@ function makeFaastTools (env: EdgePluginEnvironment): EdgeSwapTools {
       }
       io.console.info('faast spendInfo', spendInfo)
       const tx = await fromWallet.makeSpend(spendInfo)
+      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
 
       // Convert that to the output format:
       return makeSwapPluginQuote(

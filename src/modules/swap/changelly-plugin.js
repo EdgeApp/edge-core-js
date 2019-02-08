@@ -235,6 +235,9 @@ function makeChangellyTools (env): EdgeSwapTools {
       }
       io.console.info('changelly spendInfo', spendInfo)
       const tx = await opts.fromWallet.makeSpend(spendInfo)
+      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
+      tx.otherParams.uniqueIdentifier =
+        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
       return makeSwapPluginQuote(
         opts,
