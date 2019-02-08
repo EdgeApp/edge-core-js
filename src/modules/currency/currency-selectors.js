@@ -2,26 +2,10 @@
 
 import {
   type EdgeCurrencyInfo,
-  type EdgeCurrencyPlugin,
   type EdgeCurrencyWallet,
   type EdgeTokenInfo
 } from '../../types/types.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
-
-export function getCurrencyInfo (
-  infos: Array<EdgeCurrencyInfo>,
-  walletType: string
-): EdgeCurrencyInfo {
-  for (const info of infos) {
-    for (const type of info.walletTypes) {
-      if (type === walletType) {
-        return info
-      }
-    }
-  }
-
-  throw new Error(`Cannot find a currency info for wallet type ${walletType}`)
-}
 
 export function getCurrencyMultiplier (
   currencyInfos: Array<EdgeCurrencyInfo>,
@@ -49,45 +33,6 @@ export function getCurrencyMultiplier (
   }
 
   return '1'
-}
-
-export function getCurrencyPlugin (
-  plugins: Array<EdgeCurrencyPlugin>,
-  walletType: string
-) {
-  for (const plugin of plugins) {
-    const { currencyInfo } = plugin
-    for (const type of currencyInfo.walletTypes) {
-      if (type === walletType) {
-        return plugin
-      }
-    }
-  }
-
-  throw new Error(`Cannot find a currency plugin for wallet type ${walletType}`)
-}
-
-export function hasCurrencyPlugin (
-  infos: Array<EdgeCurrencyInfo>,
-  walletType: string
-) {
-  for (const info of infos) {
-    for (const type of info.walletTypes) {
-      if (type === walletType) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
-export function waitForCurrencyPlugins (ai: ApiInput) {
-  return ai.waitFor(props => {
-    if (props.state.currency.pluginsError) {
-      throw props.state.currency.pluginsError
-    }
-    return props.output.currency.plugins
-  })
 }
 
 export function waitForCurrencyWallet (

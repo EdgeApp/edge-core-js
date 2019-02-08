@@ -10,6 +10,7 @@ import {
   exchangeCache
 } from './exchange/exchange-reducer.js'
 import { type LoginState, login } from './login/login-reducer.js'
+import { type PluginsState, plugins } from './plugins/plugins-reducer.js'
 import {
   type StorageWalletsState,
   storageWallets
@@ -25,6 +26,7 @@ export type RootState = {
   +currency: CurrencyState,
   +exchangeCache: ExchangeState,
   +login: LoginState,
+  +plugins: PluginsState,
   +storageWallets: StorageWalletsState
 }
 
@@ -66,5 +68,6 @@ export const reducer = buildReducer({
   currency,
   exchangeCache,
   login,
+  plugins,
   storageWallets
 })

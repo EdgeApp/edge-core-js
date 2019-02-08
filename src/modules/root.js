@@ -10,6 +10,7 @@ import {
   type EdgeIo
 } from '../types/types.js'
 import { type RootAction } from './actions.js'
+import { loadPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
 
@@ -51,14 +52,6 @@ export async function makeContext (
     throw new Error('No API key provided')
   }
 
-  // Start Redux:
-  const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
-  const redux = createStore(reducer, enhancers)
-  redux.dispatch({
-    type: 'INIT',
-    payload: { apiKey, appId, authServer, hideKeys }
-  })
-
   // Load the login stashes from disk:
   const stashes = {}
   const listing = await io.disklet.list('logins')
@@ -68,10 +61,17 @@ export async function makeContext (
       stashes[path] = JSON.parse(await io.disklet.getText(path))
     } catch (e) {}
   }
+
+  // Start Redux:
+  const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
+  const redux = createStore(reducer, enhancers)
   redux.dispatch({
-    type: 'LOGIN_STASHES_LOADED',
-    payload: stashes
+    type: 'INIT',
+    payload: { apiKey, appId, authServer, hideKeys, stashes }
   })
+
+  // Load the plugins in the background:
+  loadPlugins(io, plugins, redux.dispatch)
 
   // Start the pixie tree:
   const mirror = { output: {} }

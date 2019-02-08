@@ -1,8 +1,13 @@
 // @flow
 
-import { buildReducer, mapReducer } from 'redux-keto'
+import { buildReducer, mapReducer, memoizeReducer } from 'redux-keto'
 
-import { type EdgeCurrencyInfo, type EdgeTokenInfo } from '../../types/types.js'
+import {
+  type EdgeCurrencyInfo,
+  type EdgeCurrencyPlugin,
+  type EdgePluginMap,
+  type EdgeTokenInfo
+} from '../../types/types.js'
 import { type RootAction } from '../actions.js'
 import { type RootState } from '../root-reducer.js'
 import {
@@ -14,7 +19,6 @@ export type CurrencyState = {
   +currencyWalletIds: Array<string>,
   +customTokens: Array<EdgeTokenInfo>,
   +infos: Array<EdgeCurrencyInfo>,
-  +pluginsError: Error | null,
   +wallets: { [walletId: string]: CurrencyWalletState }
 }
 
@@ -42,13 +46,16 @@ export const currency = buildReducer({
     return state
   },
 
-  infos (state = [], action: RootAction): Array<EdgeCurrencyInfo> {
-    return action.type === 'CURRENCY_PLUGINS_LOADED' ? action.payload : state
-  },
-
-  pluginsError (state = null, action: RootAction): Error | null {
-    return action.type === 'CURRENCY_PLUGINS_FAILED' ? action.payload : state
-  },
+  infos: memoizeReducer(
+    (state: RootState) => state.plugins.currency,
+    (plugins: EdgePluginMap<EdgeCurrencyPlugin>) => {
+      const out: Array<EdgeCurrencyInfo> = []
+      for (const pluginName in plugins) {
+        out.push(plugins[pluginName].currencyInfo)
+      }
+      return out
+    }
+  ),
 
   wallets: mapReducer(
     currencyWalletReducer,

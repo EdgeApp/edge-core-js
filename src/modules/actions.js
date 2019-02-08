@@ -2,9 +2,8 @@
 
 import {
   type EdgeAccountCallbacks,
-  type EdgeCurrencyInfo,
+  type EdgeCorePlugin,
   type EdgePluginMap,
-  type EdgeSwapPlugin,
   type EdgeSwapTools,
   type EdgeTokenInfo,
   type EdgeWalletInfo,
@@ -68,10 +67,9 @@ export type RootAction =
     }
   | {
       // The swap plugins have been initialized.
-      type: 'ACCOUNT_SWAP_PLUGINS_LOADED',
+      type: 'ACCOUNT_PLUGIN_TOOLS_LOADED',
       payload: {
         accountId: string,
-        swapPlugins: EdgePluginMap<EdgeSwapPlugin>,
         swapTools: EdgePluginMap<EdgeSwapTools>
       }
     }
@@ -92,6 +90,16 @@ export type RootAction =
   | {
       // Shuts down the context and all its objects.
       type: 'CLOSE'
+    }
+  | {
+      // Called when new plugins become available.
+      type: 'CORE_PLUGINS_ADDED',
+      payload: EdgePluginMap<EdgeCorePlugin>
+    }
+  | {
+      // Called when something goes wrong adding plugins.
+      type: 'CORE_PLUGINS_FAILED',
+      payload: Error
     }
   | {
       // Called when a currency engine fires the onBalanceChanged callback.
@@ -159,16 +167,6 @@ export type RootAction =
       }
     }
   | {
-      // Fired when the currency plugins failed to load.
-      type: 'CURRENCY_PLUGINS_FAILED',
-      payload: Error
-    }
-  | {
-      // Fired when the currency plugins load successfully.
-      type: 'CURRENCY_PLUGINS_LOADED',
-      payload: Array<EdgeCurrencyInfo>
-    }
-  | {
       // Called when a currency wallet receives a new name.
       type: 'CURRENCY_WALLET_FIAT_CHANGED',
       payload: {
@@ -224,7 +222,8 @@ export type RootAction =
         apiKey: string,
         appId: string,
         authServer: string,
-        hideKeys: boolean
+        hideKeys: boolean,
+        stashes: { [path: string]: Object }
       }
     }
   | {
@@ -243,11 +242,6 @@ export type RootAction =
       // Fires when we delete login data from disk.
       type: 'LOGIN_STASH_DELETED',
       payload: string // username
-    }
-  | {
-      // Fires when we load the login data from disk.
-      type: 'LOGIN_STASHES_LOADED',
-      payload: { [path: string]: Object }
     }
   | {
       // Fires when we write a login stash to disk.

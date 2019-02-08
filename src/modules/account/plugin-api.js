@@ -5,7 +5,6 @@ import { Bridgeable, bridgifyObject } from 'yaob'
 import {
   type EdgeCurrencyConfig,
   type EdgeCurrencyInfo,
-  type EdgeCurrencyPlugin,
   type EdgeSwapConfig,
   type EdgeSwapInfo
 } from '../../types/types.js'
@@ -22,17 +21,17 @@ import { swapPluginEnabled } from './account-selectors.js'
 export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   _ai: ApiInput
   _accountId: string
-  _plugin: EdgeCurrencyPlugin
+  _pluginName: string
 
   otherMethods: Object
 
-  constructor (ai: ApiInput, accountId: string, plugin: EdgeCurrencyPlugin) {
+  constructor (ai: ApiInput, accountId: string, pluginName: string) {
     super()
     this._ai = ai
     this._accountId = accountId
-    this._plugin = plugin
+    this._pluginName = pluginName
 
-    const { otherMethods } = plugin
+    const { otherMethods } = ai.props.state.plugins.currency[pluginName]
     if (otherMethods != null) {
       bridgifyObject(otherMethods)
       this.otherMethods = otherMethods
@@ -42,19 +41,19 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   }
 
   get currencyInfo (): EdgeCurrencyInfo {
-    return this._plugin.currencyInfo
+    return this._ai.props.state.plugins.currency[this._pluginName].currencyInfo
   }
 
   get userSettings (): Object {
     const selfState = this._ai.props.state.accounts[this._accountId]
-    return selfState.userSettings[this._plugin.pluginName]
+    return selfState.userSettings[this._pluginName]
   }
 
   async changeUserSettings (settings: Object): Promise<mixed> {
     await changePluginUserSettings(
       this._ai,
       this._accountId,
-      this._plugin.pluginName,
+      this._pluginName,
       settings
     )
   }
@@ -83,8 +82,7 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
   }
 
   get swapInfo (): EdgeSwapInfo {
-    const selfState = this._ai.props.state.accounts[this._accountId]
-    return selfState.swapPlugins[this._pluginName].swapInfo
+    return this._ai.props.state.plugins.swap[this._pluginName].swapInfo
   }
 
   get userSettings (): Object {

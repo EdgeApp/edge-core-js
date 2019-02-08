@@ -5,7 +5,6 @@ import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 import {
   type EdgeAccountCallbacks,
   type EdgePluginMap,
-  type EdgeSwapPlugin,
   type EdgeSwapTools,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull,
@@ -13,7 +12,6 @@ import {
 } from '../../types/types.js'
 import { ethereumKeyToAddress } from '../../util/crypto/ethereum.js'
 import { type RootAction } from '../actions.js'
-import { hasCurrencyPlugin } from '../currency/currency-selectors.js'
 import {
   findFirstKey,
   getAllWalletInfos,
@@ -21,6 +19,7 @@ import {
 } from '../login/keys.js'
 import { type LoginTree, type WalletInfoMap } from '../login/login-types.js'
 import { makeLoginTree } from '../login/login.js'
+import { findCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type RootState } from '../root-reducer.js'
 import { findAppLogin } from './account-init.js'
 
@@ -54,7 +53,6 @@ export type AccountState = {
   +username: string,
 
   // Plugin stuff:
-  +swapPlugins: EdgePluginMap<EdgeSwapPlugin>,
   +swapSettings: EdgePluginMap<SwapSettings>,
   +userSettings: EdgePluginMap<Object>,
   +swapTools: EdgePluginMap<EdgeSwapTools>
@@ -132,12 +130,12 @@ const account = buildReducer({
 
   currencyWalletIds: memoizeReducer(
     (next: AccountNext) => next.self.walletInfos,
-    (next: AccountNext) => next.root.currency.infos,
-    (walletInfos, currencyInfos): Array<string> =>
+    (next: AccountNext) => next.root.plugins.currency,
+    (walletInfos, plugins): Array<string> =>
       Object.keys(walletInfos)
         .filter(walletId => {
           const info = walletInfos[walletId]
-          return !info.deleted && hasCurrencyPlugin(currencyInfos, info.type)
+          return !info.deleted && findCurrencyPlugin(plugins, info.type) != null
         })
         .sort((walletId1, walletId2) => {
           const info1 = walletInfos[walletId1]
@@ -233,12 +231,6 @@ const account = buildReducer({
     return action.type === 'LOGIN' ? action.payload.username : state
   },
 
-  swapPlugins (state = {}, action: RootAction): EdgePluginMap<EdgeSwapPlugin> {
-    return action.type === 'ACCOUNT_SWAP_PLUGINS_LOADED'
-      ? action.payload.swapPlugins
-      : state
-  },
-
   swapSettings (state = {}, action: RootAction): EdgePluginMap<SwapSettings> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
@@ -268,7 +260,7 @@ const account = buildReducer({
   },
 
   swapTools (state = {}, action: RootAction): EdgePluginMap<EdgeSwapTools> {
-    return action.type === 'ACCOUNT_SWAP_PLUGINS_LOADED'
+    return action.type === 'ACCOUNT_PLUGIN_TOOLS_LOADED'
       ? action.payload.swapTools
       : state
   }

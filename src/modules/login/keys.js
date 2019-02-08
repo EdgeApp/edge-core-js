@@ -11,11 +11,9 @@ import {
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { utf8 } from '../../util/encoding.js'
 import { changeWalletStates } from '../account/account-files.js'
-import {
-  getCurrencyPlugin,
-  waitForCurrencyWallet
-} from '../currency/currency-selectors.js'
+import { waitForCurrencyWallet } from '../currency/currency-selectors.js'
 import { applyKit } from '../login/login.js'
+import { getCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import {
   type AppIdMap,
@@ -293,7 +291,7 @@ export async function createCurrencyWallet (
   const { login, loginTree } = ai.props.state.accounts[accountId]
 
   // Make the keys:
-  const plugin = getCurrencyPlugin(ai.props.output.currency.plugins, walletType)
+  const plugin = getCurrencyPlugin(ai.props.state, walletType)
   const keys =
     opts.keys || (await plugin.createPrivateKey(walletType, opts.keyOptions))
   const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
@@ -440,10 +438,7 @@ export async function listSplittableWalletTypes (
   if (!walletInfo) throw new Error(`Invalid wallet id ${walletId}`)
 
   // Get the list of available types:
-  const plugin = getCurrencyPlugin(
-    ai.props.output.currency.plugins,
-    walletInfo.type
-  )
+  const plugin = getCurrencyPlugin(ai.props.state, walletInfo.type)
   const types =
     plugin && plugin.getSplittableTypes
       ? plugin.getSplittableTypes(walletInfo)

@@ -9,8 +9,8 @@ import {
   type EdgeWalletInfo
 } from '../../../types/types.js'
 import { type RootAction } from '../../actions.js'
+import { getCurrencyPlugin } from '../../plugins/plugins-selectors.js'
 import { type RootState } from '../../root-reducer.js'
-import { getCurrencyInfo } from '../currency-selectors.js'
 
 /** Maps from txid hash to file creation date & path. */
 export type TxFileNames = {
@@ -73,7 +73,7 @@ export type CurrencyWalletNext = {
 const currencyWallet = buildReducer({
   currencyInfo (state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
     if (state) return state
-    return getCurrencyInfo(next.root.currency.infos, next.self.walletInfo.type)
+    return getCurrencyPlugin(next.root, next.self.walletInfo.type).currencyInfo
   },
 
   displayPrivateSeed (state = null, action: RootAction): string | null {
