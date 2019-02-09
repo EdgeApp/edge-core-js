@@ -23,7 +23,7 @@ const externals = [
 
 module.exports = {
   devtool: 'source-map',
-  entry: './src/index.js',
+  entry: './src/react-native.js',
   externals,
   mode: 'development',
   module: {
@@ -41,12 +41,5 @@ module.exports = {
     filename: packageJson['react-native'],
     libraryTarget: 'commonjs',
     path: path.resolve(__dirname)
-  },
-  resolve: {
-    alias: {
-      './io/node/node-io.js': './io/node/node-dummy.js',
-      './io/react-native/react-native-dummy.js':
-        './io/react-native/react-native-io.js'
-    }
   }
 }

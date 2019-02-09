@@ -38,6 +38,7 @@
   ],
   "main": "./index.js",
   "module": "./lib/index.js",
+  "browser": "./lib/browser.js",
   "scripts": {
     "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && node ./make-types.js && webpack",
     "precommit": "lint-staged && flow && npm test && npm run build",
@@ -55,7 +56,6 @@
     "base-x": "^1.0.4",
     "biggystring": "^3.0.2",
     "currency-codes": "^1.1.2",
-    "detect-bundler": "^1.0.0",
     "disklet": "^0.3.1",
     "elliptic": "^6.4.0",
     "esm": "^3.2.4",
