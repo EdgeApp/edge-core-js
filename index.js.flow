@@ -1,0 +1,47 @@
+// @flow
+
+import * as error from './src/types/error.js'
+import {
+  type EdgeContext,
+  type EdgeContextOptions,
+  type EdgeFakeContextOptions,
+  type EdgeIo
+} from './src/types/types.js'
+
+export { error }
+export {
+  DustSpendError,
+  errorNames,
+  InsufficientFundsError,
+  SpendToSelfError,
+  NetworkError,
+  NoAmountSpecifiedError,
+  ObsoleteApiError,
+  OtpError,
+  PasswordError,
+  PendingFundsError,
+  SameCurrencyError,
+  SwapAboveLimitError,
+  SwapBelowLimitError,
+  SwapCurrencyError,
+  SwapPermissionError,
+  UsernameError
+} from './src/types/error.js'
+export * from './src/types/types.js'
+
+declare export var fakeUser: Object
+declare export var fakeUser1: Object
+declare export function makeBrowserIo(): EdgeIo
+declare export function makeFakeIos(count: number): Array<EdgeIo>
+declare export function makeNodeIo(path: string): EdgeIo
+declare export function makeReactNativeIo(): Promise<EdgeIo>
+
+declare export function destroyAllContexts(): mixed
+
+declare export function makeEdgeContext(
+  opts: EdgeContextOptions
+): Promise<EdgeContext>
+
+declare export function makeFakeContexts(
+  ...opts: Array<EdgeFakeContextOptions>
+): Promise<Array<EdgeContext>>

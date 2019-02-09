@@ -30,7 +30,9 @@ If you are on React Native, you must also do:
     react-native link react-native-randombytes
     react-native link react-native-tcp
 
-The bundled library uses only ES5 features thanks to [Babel](https://babeljs.io/), but we do require the following ES2015 features either natively or as polyfills:
+This library uses modern Javascript syntax features from ES 2018. While these work fine in recent browsers, React Native, and Node 10+, you might need to run this library through [Babel](https://babeljs.io/) if you care about older systems.
+
+On the other hand, this library avoids modern run-time features from ES 2015 or later, so you don't need to provide polyfills. The only features we use from ES 2015 or later are:
 
 - `Object.assign`
 - `Promise`
