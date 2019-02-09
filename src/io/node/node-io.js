@@ -1,23 +1,15 @@
 // @flow
 
+import crypto from 'crypto'
+import net from 'net'
+import tls from 'tls'
+
 import { makeNodeDisklet } from 'disklet'
+import fetch from 'node-fetch'
+import WebSocket from 'ws'
 
 import { type EdgeIo } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
-
-// Dynamically import platform-specific stuff:
-let crypto
-let fetch
-let net
-let tls
-let WebSocket
-try {
-  crypto = require('crypto')
-  fetch = require('node-fetch')
-  net = require('net')
-  tls = require('tls')
-  WebSocket = require('ws')
-} catch (e) {}
 
 /**
  * Returns true if the runtime environment appears to be node.js.

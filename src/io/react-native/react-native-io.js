@@ -1,20 +1,22 @@
 // @flow
 
-import { isReactNative } from 'detect-bundler'
 import { makeReactNativeDisklet } from 'disklet'
 import hashjs from 'hash.js'
 import HmacDRBG from 'hmac-drbg'
+import { NativeModules, Platform } from 'react-native'
+import { pbkdf2, scrypt, secp256k1 } from 'react-native-fast-crypto'
+import { Socket } from 'react-native-tcp'
 import { base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
-import {
-  Socket,
-  TLSSocket,
-  pbkdf2,
-  randomBytes,
-  scrypt,
-  secp256k1
-} from './native-libs.js'
+
+const randomBytes = NativeModules.RNRandomBytes.randomBytes
+
+let TLSSocket
+if (Platform.OS !== 'android') {
+  const tls = require('react-native-tcp/tls')
+  TLSSocket = tls.TLSSocket || tls.Socket
+}
 
 /**
  * Wraps the native `randomBytes` function in a `Promise`.
@@ -51,10 +53,7 @@ function makeRandomGenerator (
  * Gathers the IO resources needed by the Edge core library.
  */
 export function makeReactNativeIo (): Promise<EdgeIo> {
-  if (!isReactNative) {
-    throw new Error('This function only works on React Native')
-  }
-  if (typeof Socket !== 'function' || typeof randomBytes !== 'function') {
+  if (typeof randomBytes !== 'function') {
     throw new Error(
       'Please install & link the following libraries: react-native-fast-crypto react-native-fs react-native-randombytes react-native-tcp'
     )
