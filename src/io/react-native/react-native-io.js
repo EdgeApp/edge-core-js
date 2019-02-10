@@ -1,74 +1,30 @@
 // @flow
 
 import { makeReactNativeDisklet } from 'disklet'
-import hashjs from 'hash.js'
-import HmacDRBG from 'hmac-drbg'
 import { NativeModules } from 'react-native'
 import { scrypt } from 'react-native-fast-crypto'
-import { base64 } from 'rfc4648'
+import { bridgifyObject } from 'yaob'
 
-import { type EdgeIo } from '../../types/types.js'
+import { type ClientIo } from './react-native-types.js'
 
 const randomBytes = NativeModules.RNRandomBytes.randomBytes
 
-/**
- * Wraps the native `randomBytes` function in a `Promise`.
- */
-function getRandom (length) {
+export function makeClientIo (): Promise<ClientIo> {
   return new Promise((resolve, reject) => {
-    randomBytes(length, function (err, base64String) {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(base64.parse(base64String.trim()))
-      }
+    randomBytes(32, (error, base64String) => {
+      if (error) return reject(error)
+
+      const out = bridgifyObject({
+        console: bridgifyObject({
+          info: (...args) => console.info(...args),
+          error: (...args) => console.error(...args),
+          warn: (...args) => console.warn(...args)
+        }),
+        disklet: bridgifyObject(makeReactNativeDisklet()),
+        entropy: base64String,
+        scrypt
+      })
+      resolve(out)
     })
-  })
-}
-
-/**
- * Creates a pseudo-random number generator based on the provided entropy.
- * This can be used to turn an async random number generator into
- * a synchronous one.
- */
-function makeRandomGenerator (
-  entropy: Uint8Array
-): (bytes: number) => Uint8Array {
-  const rng = new HmacDRBG({
-    hash: hashjs.sha256,
-    entropy: entropy
-  })
-
-  return bytes => rng.generate(bytes)
-}
-
-/**
- * Gathers the IO resources needed by the Edge core library.
- */
-export function makeReactNativeIo (): Promise<EdgeIo> {
-  if (typeof randomBytes !== 'function') {
-    throw new Error(
-      'Please install & link the following libraries: react-native-fast-crypto react-native-fs react-native-randombytes'
-    )
-  }
-
-  return getRandom(32).then(entropy => {
-    return {
-      // Crypto:
-      random: makeRandomGenerator(entropy),
-      scrypt,
-
-      // Local io:
-      console: {
-        info: console.log,
-        warn: console.warn,
-        error: console.warn
-      },
-      disklet: makeReactNativeDisklet(),
-
-      // Networking:
-      fetch: (...rest) => window.fetch(...rest),
-      WebSocket: window.WebSocket
-    }
   })
 }

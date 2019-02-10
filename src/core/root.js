@@ -7,7 +7,8 @@ import { emit } from 'yaob'
 import {
   type EdgeContext,
   type EdgeContextOptions,
-  type EdgeIo
+  type EdgeIo,
+  type EdgeNativeIo
 } from '../types/types.js'
 import { type RootAction } from './actions.js'
 import { watchPlugins } from './plugins/plugins-actions.js'
@@ -28,6 +29,7 @@ const composeEnhancers =
  */
 export async function makeContext (
   io: EdgeIo,
+  nativeIo: EdgeNativeIo,
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
   const {
@@ -61,7 +63,7 @@ export async function makeContext (
   })
 
   // Subscribe to new plugins:
-  const closePlugins = watchPlugins(io, pluginsInit, redux.dispatch)
+  const closePlugins = watchPlugins(io, nativeIo, pluginsInit, redux.dispatch)
 
   // Start the pixie tree:
   const mirror = { output: {} }

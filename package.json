@@ -128,5 +128,5 @@
       ]
     }
   },
-  "react-native": "lib/edge-core-react-native.js"
+  "react-native": "lib/react-native.js"
 }

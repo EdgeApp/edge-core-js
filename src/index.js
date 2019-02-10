@@ -24,14 +24,14 @@ export function makeEdgeContext (
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
   const { path = './edge' } = opts
-  return makeContext(makeNodeIo(path), opts)
+  return makeContext(makeNodeIo(path), {}, opts)
 }
 
 export function makeFakeEdgeWorld (
   users: Array<EdgeFakeUser> = []
 ): Promise<EdgeFakeWorld> {
   return Promise.resolve(
-    makeLocalBridge(makeFakeWorld(makeNodeIo('.'), users), {
+    makeLocalBridge(makeFakeWorld(makeNodeIo('.'), {}, users), {
       cloneMessage: message => JSON.parse(JSON.stringify(message))
     })
   )
