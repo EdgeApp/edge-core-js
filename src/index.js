@@ -1,5 +1,7 @@
 // @flow
 
+import { makeLocalBridge } from 'yaob'
+
 import { makeContext, makeFakeWorld } from './core/core.js'
 import { makeNodeIo } from './io/node/node-io.js'
 import {
@@ -28,5 +30,9 @@ export function makeEdgeContext (
 export function makeFakeEdgeWorld (
   users: Array<EdgeFakeUser> = []
 ): Promise<EdgeFakeWorld> {
-  return Promise.resolve(makeFakeWorld(makeNodeIo('.'), users))
+  return Promise.resolve(
+    makeLocalBridge(makeFakeWorld(makeNodeIo('.'), users), {
+      cloneMessage: message => JSON.parse(JSON.stringify(message))
+    })
+  )
 }
