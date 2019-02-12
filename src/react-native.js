@@ -2,10 +2,9 @@
 
 import { makeContext } from './core/core.js'
 import { makeReactNativeIo } from './io/react-native/react-native-io.js'
-import * as error from './types/error.js'
 import { type EdgeContext, type EdgeContextOptions } from './types/types.js'
 
-export { error, makeReactNativeIo }
+export { makeReactNativeIo }
 export {
   destroyAllContexts,
   fakeUser,

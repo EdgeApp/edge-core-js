@@ -2,10 +2,9 @@
 
 import { makeContext } from './core/core.js'
 import { makeBrowserIo } from './io/browser/browser-io.js'
-import * as error from './types/error.js'
 import { type EdgeContext, type EdgeContextOptions } from './types/types.js'
 
-export { error, makeBrowserIo }
+export { makeBrowserIo }
 export {
   destroyAllContexts,
   fakeUser,

@@ -1,6 +1,5 @@
 // @flow
 
-import * as error from './src/types/error.js'
 import {
   type EdgeContext,
   type EdgeContextOptions,
@@ -8,7 +7,6 @@ import {
   type EdgeIo
 } from './src/types/types.js'
 
-export { error }
 export * from './src/types/types.js'
 
 declare export var fakeUser: Object
