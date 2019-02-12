@@ -285,7 +285,8 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
       const tx = await fromWallet.makeSpend(spendInfo)
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
       tx.otherParams.uniqueIdentifier = spendInfo.spendTargets[0].otherParams
-        ? spendInfo.spendTargets[0].otherParams.uniqueIdentifier : ''
+        ? spendInfo.spendTargets[0].otherParams.uniqueIdentifier
+        : ''
 
       // Convert that to the output format:
       return makeSwapPluginQuote(
