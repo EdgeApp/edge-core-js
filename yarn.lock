@@ -6481,10 +6481,12 @@ yallist@^2.1.2:
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-2.1.2.tgz#1c11f9218f076089a47dd512f93c6699a6a81d52"
   integrity sha1-HBH5IY8HYImkfdUS+TxmmaaoHVI=
 
-yaob@^0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.1.tgz#fb59c4ed7cd79877e850ca1bcf42d0e0ebff11b0"
-  integrity sha512-IAfN5KDwt30SiKfzG57TKd6FIJpq88Hqs57gywJ3OWm6zNACqZqLkr3AFYSlP87Qmvze2VnsgRsLfOW4Jibq+Q==
+yaob@^0.3.3:
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.3.tgz#39f6190d1109207f340d5cf7e9e63efedf67ccee"
+  integrity sha512-qNCO9MbgsaweqGGOJG30TFpvnlmXx7BwQacqI2LtMRQhx/WaDDqp6NzGwkWCkoYwbzfXIR1pMCAEZwX3MEnPJg==
+  dependencies:
+    rfc4648 "^1.1.0"
 
 yargs-parser@^7.0.0:
   version "7.0.0"
