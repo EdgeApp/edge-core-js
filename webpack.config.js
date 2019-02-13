@@ -1,3 +1,5 @@
+const path = require('path')
+
 const packageJson = require('./package.json')
 
 const bundledModules = [
@@ -21,19 +23,23 @@ const externals = [
 
 module.exports = {
   devtool: 'source-map',
-  entry: './build/react-native.js',
+  entry: './src/react-native.js',
   externals,
+  mode: 'development',
   module: {
     rules: [
       {
         test: /\.js$/,
-        use: ['source-map-loader'],
-        enforce: 'pre'
+        use: {
+          loader: '@sucrase/webpack-loader',
+          options: { transforms: ['flow'] }
+        }
       }
     ]
   },
   output: {
     filename: packageJson['react-native'],
-    libraryTarget: 'commonjs'
+    libraryTarget: 'commonjs',
+    path: path.resolve(__dirname)
   }
 }

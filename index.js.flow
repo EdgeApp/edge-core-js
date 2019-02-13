@@ -1,0 +1,34 @@
+// @flow
+
+import * as error from './src/types/error.js'
+import {
+  type EdgeContext,
+  type EdgeContextOptions,
+  type EdgeFakeContextOptions,
+  type EdgeIo
+} from './src/types/types.js'
+
+export { error }
+export * from './src/types/types.js'
+
+declare export var fakeUser: Object
+declare export var fakeUser1: Object
+declare export function destroyAllContexts(): mixed
+declare export function makeFakeIos(count: number): Array<EdgeIo>
+
+/**
+ * Initializes the Edge core library,
+ * automatically selecting the appropriate platform.
+ */
+declare export function makeEdgeContext(
+  opts: EdgeContextOptions
+): Promise<EdgeContext>
+
+declare export function makeFakeContexts(
+  ...opts: Array<EdgeFakeContextOptions>
+): Promise<Array<EdgeContext>>
+
+// System-specific io exports:
+declare export function makeBrowserIo(): EdgeIo
+declare export function makeNodeIo(path: string): EdgeIo
+declare export function makeReactNativeIo(): Promise<EdgeIo>

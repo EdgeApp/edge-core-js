@@ -1,37 +1,38 @@
 // @flow
 
-// Sub-module exports:
-import * as internal from './internal.js'
+import { makeContext } from './core/core.js'
+import { makeNodeIo } from './io/node/node-io.js'
 import * as error from './types/error.js'
+import { type EdgeContext, type EdgeContextOptions } from './types/types.js'
+import { hmacSha256 } from './util/crypto/crypto.js'
+import { base58, utf8 } from './util/encoding.js'
+import { filterObject, mergeDeeply, softCat } from './util/util.js'
 
-export { error }
-export { internal }
+export { error, makeNodeIo }
+export {
+  destroyAllContexts,
+  fakeUser,
+  fakeUser1,
+  makeFakeContexts,
+  makeFakeIos
+} from './core/core.js'
 export * from './types/types.js'
 
-// Ancillary exports:
-export { makeBrowserIo } from './io/browser/browser-io.js'
-export { makeFakeIos } from './io/fake/fake-io.js'
-export { makeNodeIo } from './io/node/node-io.js'
-export { makeReactNativeIo } from './io/react-native/react-native-io.js'
-export { fakeUser } from './io/fake/fakeUser.js'
-export { fakeUser1 } from './io/fake/fakeUser1.js'
-export {
-  DustSpendError,
-  errorNames,
-  InsufficientFundsError,
-  SpendToSelfError,
-  NetworkError,
-  NoAmountSpecifiedError,
-  ObsoleteApiError,
-  OtpError,
-  PasswordError,
-  PendingFundsError,
-  SameCurrencyError,
-  SwapAboveLimitError,
-  SwapBelowLimitError,
-  SwapCurrencyError,
-  SwapPermissionError,
-  UsernameError
-} from './types/error.js'
-export { makeEdgeContext, makeFakeContexts } from './makeContext.js'
-export { destroyAllContexts } from './modules/root.js'
+export function makeEdgeContext (
+  opts: EdgeContextOptions
+): Promise<EdgeContext> {
+  const { path = './edge' } = opts
+  return makeContext(makeNodeIo(path), opts)
+}
+
+// We are exporting some internal goodies for the CLI,
+// which makes use of some undocumented core features.
+// In the future we hope to minimize / reduce this
+export const internal = {
+  base58,
+  filterObject,
+  hmacSha256,
+  mergeDeeply,
+  softCat,
+  utf8
+}

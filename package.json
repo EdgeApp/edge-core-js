@@ -26,25 +26,28 @@
   ],
   "files": [
     "CHANGELOG.md",
+    "index.js.flow",
+    "index.js",
     "lib/*",
     "LICENSE",
     "package.json",
     "README.md",
-    "src/*"
+    "src/types/*",
+    "types.js.flow",
+    "types.js"
   ],
-  "main": "lib/edge-core-index.cjs.js",
-  "module": "lib/edge-core-index.js",
+  "main": "./index.js",
+  "module": "./lib/index.js",
+  "browser": "./lib/browser.js",
   "scripts": {
-    "build": "rimraf lib && rollup -c && webpack",
-    "build:test": "rollup -c test/rollup.config.js",
+    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && node ./make-types.js && webpack",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "flow": "flow",
     "format": "import-sort -l --write '*.js' 'src/**/*.js' 'test/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",
     "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
     "lint:fix": "npm run format",
     "prepare": "npm run build",
-    "pretest": "npm run build:test",
-    "test": "mocha --require source-map-support/register build/tests.js",
+    "test": "mocha -r sucrase/register 'test/**/*.test.js'",
     "updot": "updot"
   },
   "dependencies": {
@@ -53,9 +56,9 @@
     "base-x": "^1.0.4",
     "biggystring": "^3.0.2",
     "currency-codes": "^1.1.2",
-    "detect-bundler": "^1.0.0",
     "disklet": "^0.3.1",
     "elliptic": "^6.4.0",
+    "esm": "^3.2.4",
     "ethereumjs-tx": "^1.3.7",
     "ethereumjs-util": "^5.2.0",
     "hash.js": "^1.0.3",
@@ -72,10 +75,7 @@
     "yaob": "^0.3.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0",
-    "@babel/plugin-transform-runtime": "^7.0.0",
-    "@babel/preset-env": "^7.0.0",
-    "@babel/preset-flow": "^7.0.0",
+    "@sucrase/webpack-loader": "^2.0.0",
     "babel-eslint": "^10.0.1",
     "chai": "^4.2.0",
     "eslint": "5.9.0",
@@ -94,15 +94,10 @@
     "mocha": "^3.5.0",
     "prettier-eslint-cli": "^4.7.1",
     "rimraf": "^2.6.2",
-    "rollup": "1.0.0",
-    "rollup-plugin-alias": "^1.4.0",
-    "rollup-plugin-babel": "^4.2.0",
-    "rollup-plugin-flow-entry": "^0.2.2",
-    "rollup-plugin-multi-entry": "^2.1.0",
-    "source-map-loader": "^0.2.4",
-    "source-map-support": "^0.5.9",
+    "sucrase": "^3.9.5",
     "updot": "^1.1.7",
-    "webpack": "^3.5.3"
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.2.3"
   },
   "husky": {
     "hooks": {
@@ -127,5 +122,5 @@
       ]
     }
   },
-  "react-native": "lib/edge-core-index-rn.js"
+  "react-native": "lib/edge-core-react-native.js"
 }
