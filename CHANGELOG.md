@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.14.0 (2019-02-12)
+
+- Ship the library as debug-friendly ES 2018 code. Non-standard features like Flow are still transformed out.
+- Add an `edge-core-js/types` entry point containing just Flow types.
+- Remove `peerDependencies`, which was causing problems for users on platforms other than React Native.
+
 ## 0.13.8 (2019-02-10)
 
 - Add `payinAddress` and `uniqueIdentifier` to swap metadata.
