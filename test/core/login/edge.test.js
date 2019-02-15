@@ -3,19 +3,14 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import {
-  type EdgeLobby,
-  fakeUser,
-  makeFakeContexts
-} from '../../../src/index.js'
+import { type EdgeLobby, makeFakeEdgeWorld } from '../../../src/index.js'
+import { fakeUser } from '../../fake/fake-user.js'
 
-const contextOptions = {
-  apiKey: '',
-  appId: ''
-}
+const contextOptions = { apiKey: '', appId: '' }
 
-async function simulateRemoteApproval (remote, lobbyId: string) {
-  const account = await remote.loginWithPIN(fakeUser.username, fakeUser.pin)
+async function simulateRemoteApproval (world, lobbyId: string) {
+  const context = await world.makeEdgeContext(contextOptions)
+  const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
   const lobby: EdgeLobby = await account.fetchLobby(lobbyId)
   const { loginRequest } = lobby
@@ -27,10 +22,12 @@ async function simulateRemoteApproval (remote, lobbyId: string) {
 
 describe('edge login', function () {
   it('request', async function () {
-    const [context, remote] = await makeFakeContexts(
-      { ...contextOptions, appId: 'test-child' },
-      { ...contextOptions, localFakeUser: true }
-    )
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      appId: 'test-child',
+      cleanDevice: true
+    })
 
     const account = await new Promise((resolve, reject) => {
       context.on('login', account => resolve(account))
@@ -38,7 +35,7 @@ describe('edge login', function () {
 
       return context
         .requestEdgeLogin({ displayName: 'test suite' })
-        .then(pending => simulateRemoteApproval(remote, pending.id))
+        .then(pending => simulateRemoteApproval(world, pending.id))
         .catch(reject)
     })
     expect(account.appId).equals('test-child')
@@ -47,7 +44,8 @@ describe('edge login', function () {
   })
 
   it('cancel', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
 
     const opts = { displayName: 'test suite' }
     const pendingLogin = await context.requestEdgeLogin(opts)

@@ -4,7 +4,6 @@ import { isPixieShutdownError } from 'redux-pixies'
 import { emit } from 'yaob'
 
 import {
-  type EdgeAccountCallbacks,
   type EdgeCurrencyEngineCallbacks,
   type EdgeTransaction
 } from '../../../types/types.js'
@@ -21,67 +20,7 @@ import {
 } from './currency-wallet-pixie.js'
 import { mergeTx } from './currency-wallet-reducer.js'
 
-/**
- * Iterates over all the active logins that care about this particular wallet,
- * returning their callbacks.
- */
-export function forEachListener (
-  input: CurrencyWalletInput,
-  f: (callbacks: EdgeAccountCallbacks) => void
-) {
-  for (const accountId of input.props.state.accountIds) {
-    const account = input.props.state.accounts[accountId]
-    if (input.props.id in account.walletInfos) {
-      try {
-        f(account.callbacks)
-      } catch (e) {
-        input.props.onError(e)
-      }
-    }
-  }
-}
-
 let throttleRateLimitMs = 5000
-
-/**
- * Wraps a single value accepting callback with throttling logic.
- * Returns a function that can be called at high frequency, and batches its
- * inputs to only call the real callback every 5 seconds.
- */
-function makeThrottledCallback<Arg> (
-  input: CurrencyWalletInput,
-  callback: (arg: Arg) => mixed
-): (callbackArg: Arg) => mixed {
-  const walletId = input.props.id
-  const { console } = input.props.io
-
-  let delayCallback = false
-  let lastCallbackTime = 0
-  let finalCallbackArg: Arg
-
-  return (callbackArg: Arg) => {
-    if (delayCallback) {
-      console.info(`makeThrottledCallback delay, walletId: ${walletId}`)
-      // pendingTxs.push(...txArray)
-      finalCallbackArg = callbackArg
-    } else {
-      const now = Date.now()
-      if (now - lastCallbackTime > throttleRateLimitMs) {
-        lastCallbackTime = now
-        callback(callbackArg)
-      } else {
-        console.info(`makeThrottledCallback delay, walletId: ${walletId}`)
-        delayCallback = true
-        finalCallbackArg = callbackArg
-        setTimeout(() => {
-          lastCallbackTime = Date.now()
-          callback(finalCallbackArg)
-          delayCallback = false
-        }, throttleRateLimitMs)
-      }
-    }
-  }
-}
 
 /**
  * Wraps a transaction-accepting callback with throttling logic.
@@ -145,12 +84,6 @@ export function makeCurrencyWalletCallbacks (
       ) {
         emit(input.props.selfOutput.api, 'transactionsChanged', txArray)
       }
-
-      forEachListener(input, ({ onTransactionsChanged }) => {
-        if (onTransactionsChanged) {
-          onTransactionsChanged(walletId, txArray)
-        }
-      })
     }
   )
 
@@ -163,35 +96,6 @@ export function makeCurrencyWalletCallbacks (
       ) {
         emit(input.props.selfOutput.api, 'newTransactions', txArray)
       }
-
-      forEachListener(input, ({ onNewTransactions }) => {
-        if (onNewTransactions) {
-          onNewTransactions(walletId, txArray)
-        }
-      })
-    }
-  )
-
-  const throttledOnAddressesChecked = makeThrottledCallback(
-    input,
-    (ratio: number) => {
-      forEachListener(input, ({ onAddressesChecked }) => {
-        if (onAddressesChecked) {
-          onAddressesChecked(walletId, ratio)
-        }
-      })
-    }
-  )
-
-  const throttledOnBalanceChanged = makeThrottledCallback(
-    input,
-    (balanceArgs: { currencyCode: string, balance: string }) => {
-      const { currencyCode, balance } = balanceArgs
-      forEachListener(input, ({ onBalanceChanged }) => {
-        if (onBalanceChanged) {
-          onBalanceChanged(walletId, currencyCode, balance)
-        }
-      })
     }
   )
 
@@ -201,7 +105,6 @@ export function makeCurrencyWalletCallbacks (
         type: 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO',
         payload: { ratio, walletId }
       })
-      throttledOnAddressesChecked(ratio)
     },
 
     onBalanceChanged (currencyCode: string, balance: string) {
@@ -209,18 +112,12 @@ export function makeCurrencyWalletCallbacks (
         type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
         payload: { balance, currencyCode, walletId }
       })
-      throttledOnBalanceChanged({ currencyCode, balance })
     },
 
     onBlockHeightChanged (height: number) {
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
         payload: { height, walletId }
-      })
-      forEachListener(input, ({ onBlockHeightChanged }) => {
-        if (onBlockHeightChanged) {
-          onBlockHeightChanged(walletId, height)
-        }
       })
     },
 
@@ -295,35 +192,12 @@ export function watchCurrencyWallet (input: CurrencyWalletInput) {
   const walletId = input.props.id
 
   let lastChanges
-  let lastName
   function checkChangesLoop (props: CurrencyWalletProps) {
-    // Check for name changes:
-    const name = props.selfState.name
-    if (name !== lastName) {
-      lastName = name
-
-      // Call onWalletNameChanged:
-      forEachListener(input, ({ onWalletNameChanged }) => {
-        if (onWalletNameChanged) {
-          onWalletNameChanged(walletId, name)
-        }
-      })
-    }
-
     // Check for data changes:
     const changes = getStorageWalletLastChanges(props.state, walletId)
     if (changes !== lastChanges) {
       lastChanges = changes
-
-      // Reload our data from disk:
       loadAllFiles(input).catch(e => input.props.onError(e))
-
-      // Call onWalletDataChanged:
-      forEachListener(input, ({ onWalletDataChanged }) => {
-        if (onWalletDataChanged) {
-          onWalletDataChanged(walletId)
-        }
-      })
     }
 
     input

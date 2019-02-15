@@ -4,7 +4,7 @@ import { assert } from 'chai'
 import { describe, it } from 'mocha'
 import { base16 } from 'rfc4648'
 
-import { makeFakeIos } from '../../../src/index.js'
+import { makeFakeIo } from '../../../src/index.js'
 import {
   decrypt,
   encrypt,
@@ -29,7 +29,7 @@ describe('encryption', function () {
   })
 
   it('round-trip data', function () {
-    const [io] = makeFakeIos(1)
+    const io = makeFakeIo()
     const key = base16.parse(
       '002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393'
     )

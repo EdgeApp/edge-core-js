@@ -45,7 +45,6 @@ export type AccountInput = PixieInput<AccountProps>
 const accountPixie: TamePixie<AccountProps> = combinePixies({
   api (input: AccountInput) {
     let timer
-    let onLoggedOut
 
     return {
       destroy () {
@@ -55,7 +54,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         hack.state = { accounts: {} }
 
         if (timer != null) clearTimeout(timer)
-        if (onLoggedOut) onLoggedOut()
         if (
           input.props.selfOutput != null &&
           input.props.selfOutput.api != null
@@ -76,18 +74,13 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const accountId = input.props.id
         const io = input.props.io
-        const { callbacks, accountWalletInfos } = input.props.selfState
-        onLoggedOut = callbacks.onLoggedOut
+        const { accountWalletInfos } = input.props.selfState
 
         const loadAllFiles = async () => {
           await Promise.all([
             reloadPluginSettings(ai, accountId),
             loadAllWalletStates(ai, accountId)
           ])
-
-          if (callbacks.onDataChanged) {
-            callbacks.onDataChanged()
-          }
         }
 
         try {
@@ -182,7 +175,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
   watcher (input: AccountInput) {
     let lastState
-    let lastWalletInfos
     let lastWallets
     let lastExchangeState
 
@@ -194,13 +186,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       if (lastState !== selfState) {
         lastState = selfState
         if (selfOutput.api != null) update(selfOutput.api)
-      }
-
-      // onKeyListChanged callback:
-      if (lastWalletInfos !== selfState.walletInfos) {
-        lastWalletInfos = selfState.walletInfos
-        const { onKeyListChanged } = selfState.callbacks
-        if (onKeyListChanged) onKeyListChanged()
       }
 
       // Wallet list:

@@ -552,7 +552,7 @@ export type EdgeSwapInfo = {
   +supportEmail: string
 }
 
-export type EdgeSwapQuoteOptions = {
+export type EdgeSwapRequest = {
   // Where?
   fromWallet: EdgeCurrencyWallet,
   toWallet: EdgeCurrencyWallet,
@@ -585,7 +585,7 @@ export type EdgeSwapTools = {
 
   changeUserSettings(userSettings: Object): Promise<mixed>,
   fetchCurrencies(): Promise<Array<string>>,
-  fetchQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapPluginQuote>
+  fetchQuote(request: EdgeSwapRequest): Promise<EdgeSwapPluginQuote>
 }
 
 export type EdgeSwapPlugin = {
@@ -627,37 +627,8 @@ export type EdgeExchangePluginFactory = {
 // account
 // ---------------------------------------------------------------------
 
-export type EdgeAccountCallbacks = {
-  +onDataChanged?: () => mixed,
-  +onKeyListChanged?: () => mixed,
-  +onLoggedOut?: () => mixed,
-  +onOtpDrift?: (drift: number) => mixed,
-  +onRemoteOtpChange?: () => mixed,
-  +onRemotePasswordChange?: () => mixed,
-
-  // Currency wallet callbacks:
-  +onAddressesChecked?: (walletId: string, progressRatio: number) => mixed,
-  +onBalanceChanged?: (
-    walletId: string,
-    currencyCode: string,
-    nativeBalance: string
-  ) => mixed,
-  +onBlockHeightChanged?: (walletId: string, blockHeight: number) => mixed,
-  +onNewTransactions?: (
-    walletId: string,
-    abcTransactions: Array<EdgeTransaction>
-  ) => mixed,
-  +onTransactionsChanged?: (
-    walletId: string,
-    abcTransactions: Array<EdgeTransaction>
-  ) => mixed,
-  +onWalletDataChanged?: (walletId: string) => mixed,
-  +onWalletNameChanged?: (walletId: string, name: string | null) => mixed
-}
-
 export type EdgeAccountOptions = {
-  otp?: string,
-  callbacks?: EdgeAccountCallbacks
+  otp?: string
 }
 
 // currencies ----------------------------------------------------------
@@ -728,13 +699,6 @@ export type EdgeSwapConfig = {
 
   changeEnabled(enabled: boolean): Promise<mixed>,
   changeUserSettings(settings: Object): Promise<mixed>
-}
-
-// Currencies supported by various swap plugins:
-export type EdgeSwapCurrencies = {
-  [currencyCode: string]: {
-    pluginNames: Array<string>
-  }
 }
 
 export type EdgeSwapQuote = EdgeSwapPluginQuote & {
@@ -878,16 +842,14 @@ export type EdgeAccount = {
   ): Promise<string>,
 
   // Swapping:
-  fetchSwapCurrencies(): Promise<EdgeSwapCurrencies>,
-  fetchSwapQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote>,
+  fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>,
 
   // Deprecated names:
   +pluginData: EdgePluginData,
   +exchangeCache: EdgeRateCache,
   +currencyTools: EdgePluginMap<EdgeCurrencyConfig>,
   +exchangeTools: EdgePluginMap<EdgeSwapConfig>,
-  getExchangeCurrencies(): Promise<EdgeSwapCurrencies>,
-  getExchangeQuote(opts: EdgeSwapQuoteOptions): Promise<EdgeSwapQuote>
+  getExchangeQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>
 }
 
 // ---------------------------------------------------------------------
@@ -903,16 +865,10 @@ export type EdgeCorePluginFactory =
   | EdgeCurrencyPluginFactory
   | EdgeExchangePluginFactory
 
-export type EdgeContextCallbacks = {
-  +onError?: (e: Error) => mixed,
-  +onExchangeUpdate?: () => mixed
-}
-
 export type EdgeContextOptions = {
   apiKey: string,
   appId: string,
   authServer?: string,
-  callbacks?: EdgeContextCallbacks,
   hideKeys?: boolean,
   path?: string, // Only used on node.js
   plugins?: Array<EdgeCorePluginFactory>,
@@ -922,22 +878,12 @@ export type EdgeContextOptions = {
   shapeshiftKey?: string
 }
 
-export type EdgeFakeContextOptions = EdgeContextOptions & {
-  localFakeUser?: boolean,
-  offline?: boolean,
-  tempNoBridge$?: boolean
-}
-
 // parameters ----------------------------------------------------------
 
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
   // Deprecated. The info server handles these now:
   displayImageUrl?: string,
-  displayName?: string,
-
-  // Deprecated (will crash in bridged contexts):
-  onProcessLogin?: (username: string) => mixed,
-  onLogin?: (e?: Error, account?: EdgeAccount) => mixed
+  displayName?: string
 }
 
 export type EdgeLoginMessages = {
@@ -1043,60 +989,24 @@ export type EdgeContext = {
 }
 
 // ---------------------------------------------------------------------
-// legacy names
+// fake mode
 // ---------------------------------------------------------------------
 
-export type {
-  EdgeConsole as AbcConsole,
-  EdgeScryptFunction as AbcScryptFunction,
-  EdgeSecp256k1 as AbcSecp256k1,
-  EdgePbkdf2 as AbcPbkdf2,
-  EdgeIo as AbcIo,
-  EdgeCorePluginFactory as AbcCorePluginFactory,
-  EdgeCorePluginOptions as AbcCorePluginOptions,
-  EdgeContextCallbacks as AbcContextCallbacks,
-  EdgeContextOptions as AbcContextOptions,
-  EdgeContext as AbcContext,
-  EdgePasswordRules as AbcPasswordRules,
-  EdgePendingEdgeLogin as AbcEdgeLoginRequest,
-  EdgeEdgeLoginOptions as AbcEdgeLoginOptions,
-  EdgeLoginMessages as AbcLoginMessages,
-  EdgeWalletInfo as AbcWalletInfo,
-  EdgeWalletInfoFull as AbcWalletInfoFull,
-  EdgeWalletState as AbcWalletState,
-  EdgeWalletStates as AbcWalletStates,
-  EdgeAccountCallbacks as AbcAccountCallbacks,
-  EdgeAccountOptions as AbcAccountOptions,
-  EdgeCreateCurrencyWalletOptions as AbcCreateCurrencyWalletOptions,
-  EdgeAccount as AbcAccount,
-  EdgeLobby as AbcLobby,
-  EdgeLoginRequest as AbcLoginRequest,
-  EdgeCurrencyWallet as AbcCurrencyWallet,
-  EdgeMetadata as AbcMetadata,
-  EdgeSpendTarget as AbcSpendTarget,
-  EdgeSpendInfo as AbcSpendInfo,
-  EdgeTransaction as AbcTransaction,
-  EdgeDenomination as AbcDenomination,
-  EdgeMetaToken as AbcMetaToken,
-  EdgeCurrencyInfo as AbcCurrencyInfo,
-  EdgeParsedUri as AbcParsedUri,
-  EdgeEncodeUri as AbcEncodeUri,
-  EdgeFreshAddress as AbcFreshAddress,
-  EdgeDataDump as AbcDataDump,
-  EdgeReceiveAddress as AbcReceiveAddress,
-  EdgeCurrencyEngineCallbacks as AbcCurrencyEngineCallbacks,
-  EdgeCurrencyEngineOptions as AbcCurrencyEngineOptions,
-  EdgeCurrencyEngine as AbcCurrencyEngine,
-  EdgeCurrencyPlugin as AbcCurrencyPlugin,
-  EdgeCurrencyPluginFactory as AbcCurrencyPluginFactory,
-  EdgeExchangePairHint as AbcExchangePairHint,
-  EdgeExchangePair as AbcExchangePair,
-  EdgeExchangePlugin as AbcExchangePlugin,
-  EdgeExchangePluginFactory as AbcExchangePluginFactory,
-  // Wrong names:
-  EdgeCorePluginFactory as AbcCorePlugin,
-  EdgeContextOptions as AbcMakeContextOpts,
-  EdgeCurrencyEngineOptions as AbcMakeEngineOptions,
-  EdgeCurrencyEngineCallbacks as AbcCurrencyPluginCallbacks,
-  EdgePendingEdgeLogin as EdgeEdgeLoginRequest
+export type EdgeFakeUser = {
+  username: string,
+  loginId: string,
+  loginKey: string,
+  repos: Object,
+  server: Object
+}
+
+export type EdgeFakeWorld = {
+  close(): Promise<mixed>,
+
+  makeEdgeContext(
+    opts: EdgeContextOptions & { cleanDevice?: boolean }
+  ): Promise<EdgeContext>,
+
+  goOffline(offline?: boolean): Promise<mixed>,
+  dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser>
 }

@@ -7,25 +7,22 @@ import { describe, it } from 'mocha'
 import {
   type EdgeCurrencyConfig,
   type EdgeCurrencyWallet,
-  fakeUser,
-  makeFakeContexts
+  makeFakeEdgeWorld
 } from '../../../../src/index.js'
 import { makeAssertLog } from '../../../assert-log.js'
 import { expectRejection } from '../../../expect-rejection.js'
 import { fakeCurrencyPlugin } from '../../../fake/fake-currency-plugin.js'
 import { fakeExchangePlugin } from '../../../fake/fake-plugins.js'
+import { fakeUser } from '../../../fake/fake-user.js'
 import { snooze } from '../../../snooze.js'
 
-const contextOptions = {
-  apiKey: '',
-  appId: '',
-  localFakeUser: true
-}
+const contextOptions = { apiKey: '', appId: '' }
 
 async function makeFakeCurrencyWallet (): Promise<
   [EdgeCurrencyWallet, EdgeCurrencyConfig]
   > {
-  const [context] = await makeFakeContexts({
+  const world = await makeFakeEdgeWorld([fakeUser])
+  const context = await world.makeEdgeContext({
     ...contextOptions,
     plugins: [fakeCurrencyPlugin, fakeExchangePlugin]
   })

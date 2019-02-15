@@ -26,7 +26,6 @@ import {
 } from '../../storage/storage-selectors.js'
 import { makeCurrencyWalletApi } from './currency-wallet-api.js'
 import {
-  forEachListener,
   makeCurrencyWalletCallbacks,
   watchCurrencyWallet
 } from './currency-wallet-callbacks.js'
@@ -176,10 +175,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     const { plugin, engine } = input.props.selfOutput
     const currencyWalletApi = makeCurrencyWalletApi(input, plugin, engine)
     input.onOutput(currencyWalletApi)
-
-    forEachListener(input, ({ onKeyListChanged }) => {
-      if (onKeyListChanged) onKeyListChanged()
-    })
 
     return stopUpdates
   },

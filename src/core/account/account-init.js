@@ -88,7 +88,6 @@ export async function makeAccount (
   loginType: string = '',
   opts: EdgeAccountOptions = {}
 ): Promise<EdgeAccount> {
-  const { callbacks = {} } = opts
   const io = ai.props.io
   io.console.info(`Login: decrypted keys for user ${loginTree.loginId}`)
 
@@ -103,7 +102,6 @@ export async function makeAccount (
       type: 'LOGIN',
       payload: {
         appId,
-        callbacks,
         username,
         loginKey: rootLogin
           ? loginTree.loginKey

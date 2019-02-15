@@ -3,7 +3,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { fakeUser, makeFakeContexts } from '../../../src/index.js'
+import { makeFakeEdgeWorld } from '../../../src/index.js'
 import { expectRejection } from '../../expect-rejection.js'
 import { fakeCurrencyPlugin } from '../../fake/fake-currency-plugin.js'
 import {
@@ -11,16 +11,14 @@ import {
   brokenExchangePlugin,
   fakeExchangePlugin
 } from '../../fake/fake-plugins.js'
+import { fakeUser } from '../../fake/fake-user.js'
 
-const contextOptions = {
-  apiKey: '',
-  appId: '',
-  localFakeUser: true
-}
+const contextOptions = { apiKey: '', appId: '' }
 
 describe('plugins system', function () {
   it('adds plugins', async function () {
-    const [context] = await makeFakeContexts({
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext({
       ...contextOptions,
       plugins: [fakeCurrencyPlugin, brokenExchangePlugin, fakeExchangePlugin],
       shapeshiftKey: '?'
@@ -32,7 +30,8 @@ describe('plugins system', function () {
   })
 
   it('cannot log in with broken plugins', async function () {
-    const [context] = await makeFakeContexts({
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext({
       ...contextOptions,
       plugins: [brokenCurrencyPlugin]
     })

@@ -8,16 +8,14 @@ import {
   exchangeCache as reducer
 } from '../../../src/core/exchange/exchange-reducer.js'
 import { getExchangeRate } from '../../../src/core/exchange/exchange-selectors.js'
-import { fakeUser, makeFakeContexts } from '../../../src/index.js'
+import { makeFakeEdgeWorld } from '../../../src/index.js'
 import {
   brokenExchangePlugin,
   fakeExchangePlugin
 } from '../../fake/fake-plugins.js'
+import { fakeUser } from '../../fake/fake-user.js'
 
-const contextOptions = {
-  apiKey: '',
-  appId: ''
-}
+const contextOptions = { apiKey: '', appId: '' }
 
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.
@@ -160,9 +158,9 @@ describe('exchange cache reducer', function () {
 
 describe('exchange pixie', function () {
   it('fetches exchange rates', async function () {
-    const [context] = await makeFakeContexts({
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext({
       ...contextOptions,
-      localFakeUser: true,
       plugins: [brokenExchangePlugin, fakeExchangePlugin]
     })
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)

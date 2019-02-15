@@ -3,37 +3,30 @@
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import {
-  errorNames,
-  fakeUser,
-  fakeUser1,
-  makeFakeContexts
-} from '../../../src/index.js'
-import { base58 } from '../../../src/util/encoding.js'
+import { errorNames, makeFakeEdgeWorld } from '../../../src/index.js'
 import { expectRejection } from '../../expect-rejection.js'
+import { fakeUser } from '../../fake/fake-user.js'
 
-const contextOptions = {
-  apiKey: '',
-  appId: '',
-  localFakeUser: true
-}
+const contextOptions = { apiKey: '', appId: '' }
 
 describe('username', function () {
   it('normalize spaces and capitalization', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld()
+    const context = await world.makeEdgeContext(contextOptions)
 
     assert.equal('test test', context.fixUsername('  TEST TEST  '))
   })
 
   it('reject invalid characters', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld()
+    const context = await world.makeEdgeContext(contextOptions)
 
     assert.throws(() => context.fixUsername('テスト'))
   })
 
   it('list usernames in local storage', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
 
     const list = await context.listUsernames()
     assert.deepEqual(list, ['js test 0'])
@@ -47,7 +40,8 @@ describe('username', function () {
   })
 
   it('remove username from local storage', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
 
     expect(await context.listUsernames()).has.lengthOf(1)
     await context.deleteLocalAccount(fakeUser.username)
@@ -55,7 +49,8 @@ describe('username', function () {
   })
 
   it('cannot remove logged-in users', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await expectRejection(
@@ -67,8 +62,9 @@ describe('username', function () {
 
 describe('appId', function () {
   it('can log into unknown apps', async function () {
-    const [context] = await makeFakeContexts({
-      ...contextOptions,
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext({
+      apiKey: '',
       appId: 'fakeApp'
     })
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -77,14 +73,16 @@ describe('appId', function () {
 
 describe('creation', function () {
   it('username available', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld()
+    const context = await world.makeEdgeContext(contextOptions)
 
     const available = await context.usernameAvailable('unknown user')
     assert(available)
   })
 
   it('username not available', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
 
     const available = await context.usernameAvailable(fakeUser.username)
     assert(!available)
@@ -92,10 +90,10 @@ describe('creation', function () {
 
   it('password-less account', async function () {
     this.timeout(1000)
-    const [context, remote] = await makeFakeContexts(
-      { apiKey: '', appId: 'test' },
-      { apiKey: '', appId: 'test' }
-    )
+    const world = await makeFakeEdgeWorld()
+    const contextOptions = { apiKey: '', appId: 'test' }
+    const context = await world.makeEdgeContext(contextOptions)
+    const remote = await world.makeEdgeContext(contextOptions)
     const username = 'some fancy user'
     const questions = fakeUser.recovery2Questions
     const answers = fakeUser.recovery2Answers
@@ -111,10 +109,10 @@ describe('creation', function () {
 
   it('create account', async function () {
     this.timeout(15000)
-    const [context, remote] = await makeFakeContexts(
-      { apiKey: '', appId: 'test' },
-      { apiKey: '', appId: 'test' }
-    )
+    const world = await makeFakeEdgeWorld()
+    const contextOptions = { apiKey: '', appId: 'test' }
+    const context = await world.makeEdgeContext(contextOptions)
+    const remote = await world.makeEdgeContext(contextOptions)
     const username = 'some fancy user'
     const password = 'some fancy password'
     const pin = '0218'
@@ -138,7 +136,8 @@ describe('creation', function () {
 
 describe('otp', function () {
   it('local login works', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     expect(account.otpKey != null).equals(true)
     await account.disableOtp()
@@ -151,10 +150,9 @@ describe('otp', function () {
   })
 
   it('remote login fails', async function () {
-    const [context, remote] = await makeFakeContexts(
-      contextOptions,
-      contextOptions
-    )
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
+    const remote = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     await account.disableOtp()
     await account.enableOtp()
@@ -183,56 +181,54 @@ describe('otp', function () {
 
 describe('password', function () {
   it('login offline', async function () {
-    const [context] = await makeFakeContexts({
-      ...contextOptions,
-      offline: true
-    })
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
+    await world.goOffline()
+
     await context.loginWithPassword(fakeUser.username, fakeUser.password)
+    await expectRejection(context.loginWithPIN(fakeUser.username, fakeUser.pin))
   })
 
-  it('login online JS test 0', async function () {
-    const [context] = await makeFakeContexts(contextOptions, contextOptions)
+  it('login online', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     return context.loginWithPassword(fakeUser.username, fakeUser.password)
-  })
-
-  it('login online JS test 1', async function () {
-    this.timeout(15000)
-    const [context] = await makeFakeContexts(contextOptions, contextOptions)
-    return context.loginWithPassword(fakeUser1.username, fakeUser1.password)
   })
 
   it('change', async function () {
     this.timeout(15000)
-    const [context, remote] = await makeFakeContexts(
-      contextOptions,
-      contextOptions
-    )
-    const longPassword = '0123456789'.repeat(10)
-
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    const longPassword = '0123456789'.repeat(10)
     await account.changePassword(longPassword)
 
+    const remote = await world.makeEdgeContext(contextOptions)
     return remote.loginWithPassword(fakeUser.username, longPassword)
   })
 
   it('check good', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
-
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
     const ok = await account.checkPassword(fakeUser.password)
     assert(ok)
   })
 
   it('check bad', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
-
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
     const ok = await account.checkPassword('wrong one')
     assert(!ok)
   })
 
   it('delete', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.deletePassword()
@@ -245,37 +241,42 @@ describe('password', function () {
 
 describe('pin', function () {
   it('exists', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
 
     const exists = await context.pinLoginEnabled(fakeUser.username)
     assert(exists)
   })
 
   it('does not exist', async function () {
-    const [context] = await makeFakeContexts({
-      ...contextOptions,
-      localFakeUser: false
-    })
+    const world = await makeFakeEdgeWorld()
+    const context = await world.makeEdgeContext(contextOptions)
 
     const exists = await context.pinLoginEnabled(fakeUser.username)
     assert(!exists)
   })
 
   it('login', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
   it('changes', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.changePin({ pin: '4321' })
     await context.loginWithPIN(fakeUser.username, '4321')
+
+    const remote = await world.makeEdgeContext(contextOptions)
+    return remote.loginWithPIN(fakeUser.username, '4321')
   })
 
   it('enable / disable', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     // Disable PIN login:
@@ -305,7 +306,8 @@ describe('pin', function () {
   })
 
   it('check', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     expect(await account.checkPin(fakeUser.pin)).equals(true)
@@ -313,7 +315,8 @@ describe('pin', function () {
   })
 
   it('delete', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.deletePin()
@@ -323,18 +326,19 @@ describe('pin', function () {
 
 describe('recovery2', function () {
   it('get local key', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
 
     const recovery2Key = await context.getRecovery2Key(fakeUser.username)
-    assert.equal(recovery2Key, base58.stringify(fakeUser.recovery2Key))
+    assert.equal(recovery2Key, fakeUser.recovery2Key)
   })
 
   it('get questions', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
 
     const questions = await context.fetchRecovery2Questions(
-      base58.stringify(fakeUser.recovery2Key),
+      fakeUser.recovery2Key,
       fakeUser.username
     )
 
@@ -345,20 +349,19 @@ describe('recovery2', function () {
   })
 
   it('login', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
 
     await context.loginWithRecovery2(
-      base58.stringify(fakeUser.recovery2Key),
+      fakeUser.recovery2Key,
       fakeUser.username,
       fakeUser.recovery2Answers
     )
   })
 
   it('change', async function () {
-    const [context, remote] = await makeFakeContexts(
-      contextOptions,
-      contextOptions
-    )
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const recovery2Key = await account.changeRecovery(
@@ -367,6 +370,7 @@ describe('recovery2', function () {
     )
     expect(account.recoveryKey).equals(recovery2Key)
 
+    const remote = await world.makeEdgeContext(contextOptions)
     await Promise.all([
       remote.fetchRecovery2Questions(recovery2Key, fakeUser.username),
       remote.loginWithRecovery2(
@@ -378,14 +382,15 @@ describe('recovery2', function () {
   })
 
   it('delete', async function () {
-    const [context] = await makeFakeContexts(contextOptions)
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
 
     const account = await context.loginWithRecovery2(
-      base58.stringify(fakeUser.recovery2Key),
+      fakeUser.recovery2Key,
       fakeUser.username,
       fakeUser.recovery2Answers
     )
-    expect(account.recoveryKey).equals(base58.stringify(fakeUser.recovery2Key))
+    expect(account.recoveryKey).equals(fakeUser.recovery2Key)
     await account.deleteRecovery()
     expect(account.recoveryKey).equals(void 0)
   })

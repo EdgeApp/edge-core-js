@@ -7,7 +7,7 @@ import {
   type EdgePluginEnvironment,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
-  type EdgeSwapQuoteOptions,
+  type EdgeSwapRequest,
   type EdgeSwapTools,
   SwapAboveLimitError,
   SwapBelowLimitError,
@@ -55,17 +55,17 @@ async function getAddress (
     : addressInfo.publicAddress
 }
 
-function checkReply (reply: Object, quoteOpts?: EdgeSwapQuoteOptions) {
+function checkReply (reply: Object, request?: EdgeSwapRequest) {
   if (reply.error != null) {
     if (
-      quoteOpts != null &&
+      request != null &&
       (reply.error.code === -32602 ||
         /Invalid currency:/.test(reply.error.message))
     ) {
       throw new SwapCurrencyError(
         swapInfo,
-        quoteOpts.fromCurrencyCode,
-        quoteOpts.toCurrencyCode
+        request.fromCurrencyCode,
+        request.toCurrencyCode
       )
     }
 
@@ -115,39 +115,41 @@ function makeChangeNowTools (env): EdgeSwapTools {
       return reply.result.map(code => code.toUpperCase())
     },
 
-    async fetchQuote (opts: EdgeSwapQuoteOptions): Promise<EdgeSwapPluginQuote> {
+    async fetchQuote (request: EdgeSwapRequest): Promise<EdgeSwapPluginQuote> {
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
-        getAddress(opts.fromWallet, opts.fromCurrencyCode),
-        getAddress(opts.toWallet, opts.toCurrencyCode)
+        getAddress(request.fromWallet, request.fromCurrencyCode),
+        getAddress(request.toWallet, request.toCurrencyCode)
       ])
 
       // get the markets:
-      const availablePairs = await get('currencies-to/' + opts.fromCurrencyCode)
+      const availablePairs = await get(
+        'currencies-to/' + request.fromCurrencyCode
+      )
       const fixedMarket = await get('market-info/fixed-rate/' + apiKey) // Promise.all([fetchCurrencies()])
 
       const quoteAmount =
-        opts.quoteFor === 'from'
-          ? await opts.fromWallet.nativeToDenomination(
-            opts.nativeAmount,
-            opts.fromCurrencyCode
+        request.quoteFor === 'from'
+          ? await request.fromWallet.nativeToDenomination(
+            request.nativeAmount,
+            request.fromCurrencyCode
           )
-          : await opts.toWallet.nativeToDenomination(
-            opts.nativeAmount,
-            opts.toCurrencyCode
+          : await request.toWallet.nativeToDenomination(
+            request.nativeAmount,
+            request.toCurrencyCode
           )
 
       // Swap the currencies if we need a reverse quote:
       const quoteParams =
-        opts.quoteFor === 'from'
+        request.quoteFor === 'from'
           ? {
-            from: opts.fromCurrencyCode.toLowerCase(),
-            to: opts.toCurrencyCode.toLowerCase(),
+            from: request.fromCurrencyCode.toLowerCase(),
+            to: request.toCurrencyCode.toLowerCase(),
             amount: quoteAmount
           }
           : {
-            from: opts.toCurrencyCode.toLowerCase(),
-            to: opts.fromCurrencyCode.toLowerCase(),
+            from: request.toCurrencyCode.toLowerCase(),
+            to: request.fromCurrencyCode.toLowerCase(),
             amount: quoteAmount
           }
 
@@ -158,7 +160,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
       let quoteReplyKeep = { estimatedAmount: '0' }
       for (let i = 0; i < availablePairs.length; i++) {
         const obj = availablePairs[i]
-        if (opts.toCurrencyCode.toLowerCase() === obj.ticker) {
+        if (request.toCurrencyCode.toLowerCase() === obj.ticker) {
           pairsToUse.push(obj)
           if (obj.supportsFixedRate) {
             let minerFee = null
@@ -167,18 +169,18 @@ function makeChangeNowTools (env): EdgeSwapTools {
             for (let j = 0; j < fixedMarket.length; j++) {
               const item = fixedMarket[j]
               if (
-                item.from === opts.fromCurrencyCode.toLowerCase() &&
+                item.from === request.fromCurrencyCode.toLowerCase() &&
                 item.to === obj.ticker
               ) {
                 pairItem = item
                 const [nativeMax, nativeMin] = await Promise.all([
-                  opts.fromWallet.denominationToNative(
+                  request.fromWallet.denominationToNative(
                     item.max.toString(),
-                    opts.fromCurrencyCode
+                    request.fromCurrencyCode
                   ),
-                  opts.fromWallet.denominationToNative(
+                  request.fromWallet.denominationToNative(
                     item.min.toString(),
-                    opts.fromCurrencyCode
+                    request.fromCurrencyCode
                   )
                 ])
                 // lets get the quoteObject here
@@ -202,8 +204,8 @@ function makeChangeNowTools (env): EdgeSwapTools {
                 if (quoteReply.error) {
                   throw new SwapCurrencyError(
                     swapInfo,
-                    opts.fromCurrencyCode,
-                    opts.toCurrencyCode
+                    request.fromCurrencyCode,
+                    request.toCurrencyCode
                   )
                 }
                 minerFee = item.minerFee
@@ -212,30 +214,30 @@ function makeChangeNowTools (env): EdgeSwapTools {
               }
             }
             if (pairItem) {
-              if (opts.quoteFor === 'from') {
+              if (request.quoteFor === 'from') {
                 fromAmount = quoteAmount
-                fromNativeAmount = opts.nativeAmount
-                toNativeAmount = await opts.toWallet.denominationToNative(
+                fromNativeAmount = request.nativeAmount
+                toNativeAmount = await request.toWallet.denominationToNative(
                   quoteReplyKeep.estimatedAmount.toString(),
-                  opts.toCurrencyCode
+                  request.toCurrencyCode
                 )
               } else {
                 fromAmount = mul(
                   quoteReplyKeep.estimatedAmount.toString(),
                   '1.02'
                 )
-                fromNativeAmount = await opts.fromWallet.denominationToNative(
+                fromNativeAmount = await request.fromWallet.denominationToNative(
                   fromAmount,
-                  opts.fromCurrencyCode
+                  request.fromCurrencyCode
                 )
-                toNativeAmount = opts.nativeAmount
+                toNativeAmount = request.nativeAmount
               }
               const sendReply = await call({
                 route: 'transactions/fixed-rate/',
                 body: {
                   amount: fromAmount,
-                  from: opts.fromCurrencyCode,
-                  to: opts.toCurrencyCode,
+                  from: request.fromCurrencyCode,
+                  to: request.toCurrencyCode,
                   address: toAddress,
                   extraId: null, // TODO: Do we need this for Monero?
                   refundAddress: fromAddress
@@ -255,7 +257,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
                 isEstimate: !useFixed
               }
               const spendInfo = {
-                currencyCode: opts.fromCurrencyCode,
+                currencyCode: request.fromCurrencyCode,
                 spendTargets: [
                   {
                     nativeAmount: fromNativeAmount,
@@ -267,14 +269,14 @@ function makeChangeNowTools (env): EdgeSwapTools {
                 ]
               }
               io.console.info('changenow spendInfo', spendInfo)
-              const tx = await opts.fromWallet.makeSpend(spendInfo)
+              const tx = await request.fromWallet.makeSpend(spendInfo)
               tx.otherParams.payinAddress =
                 spendInfo.spendTargets[0].publicAddress
               tx.otherParams.uniqueIdentifier =
                 spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
               return makeSwapPluginQuote(
-                opts,
+                request,
                 fromNativeAmount,
                 toNativeAmount,
                 tx,
@@ -290,8 +292,8 @@ function makeChangeNowTools (env): EdgeSwapTools {
       if (pairsToUse.length === 0) {
         throw new SwapCurrencyError(
           swapInfo,
-          opts.fromCurrencyCode,
-          opts.toCurrencyCode
+          request.fromCurrencyCode,
+          request.toCurrencyCode
         )
       }
       const estQuery =
@@ -302,20 +304,20 @@ function makeChangeNowTools (env): EdgeSwapTools {
         '_' +
         quoteParams.to
       const quoteReply = await get(estQuery)
-      if (opts.quoteFor === 'from') {
+      if (request.quoteFor === 'from') {
         fromAmount = quoteAmount
-        fromNativeAmount = opts.nativeAmount
-        toNativeAmount = await opts.toWallet.denominationToNative(
+        fromNativeAmount = request.nativeAmount
+        toNativeAmount = await request.toWallet.denominationToNative(
           quoteReply.estimatedAmount.toString(),
-          opts.toCurrencyCode
+          request.toCurrencyCode
         )
       } else {
         fromAmount = mul(quoteReply.estimatedAmount.toString(), '1.02')
-        fromNativeAmount = await opts.fromWallet.denominationToNative(
+        fromNativeAmount = await request.fromWallet.denominationToNative(
           fromAmount,
-          opts.fromCurrencyCode
+          request.fromCurrencyCode
         )
-        toNativeAmount = opts.nativeAmount
+        toNativeAmount = request.nativeAmount
       }
       console.log('CN: estQuery quoteReply  ', quoteReply)
       const min = await get(
@@ -323,9 +325,9 @@ function makeChangeNowTools (env): EdgeSwapTools {
       )
       console.log('CN: min  ', min)
       const [nativeMin] = await Promise.all([
-        opts.fromWallet.denominationToNative(
+        request.fromWallet.denominationToNative(
           min.minAmount.toString(),
-          opts.fromCurrencyCode
+          request.fromCurrencyCode
         )
       ])
       if (lt(fromNativeAmount, nativeMin)) {
@@ -336,8 +338,8 @@ function makeChangeNowTools (env): EdgeSwapTools {
         route: 'transactions/',
         body: {
           amount: fromAmount,
-          from: opts.fromCurrencyCode.toLowerCase(),
-          to: opts.toCurrencyCode.toLowerCase(),
+          from: request.fromCurrencyCode.toLowerCase(),
+          to: request.toCurrencyCode.toLowerCase(),
           address: toAddress,
           extraId: null, // TODO: Do we need this for Monero?
           refundAddress: fromAddress
@@ -360,7 +362,7 @@ function makeChangeNowTools (env): EdgeSwapTools {
 
       // Make the transaction:
       const spendInfo = {
-        currencyCode: opts.fromCurrencyCode,
+        currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
@@ -372,13 +374,13 @@ function makeChangeNowTools (env): EdgeSwapTools {
         ]
       }
       io.console.info('changenow spendInfo', spendInfo)
-      const tx = await opts.fromWallet.makeSpend(spendInfo)
+      const tx = await request.fromWallet.makeSpend(spendInfo)
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
       tx.otherParams.uniqueIdentifier =
         spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
       return makeSwapPluginQuote(
-        opts,
+        request,
         fromNativeAmount,
         toNativeAmount,
         tx,

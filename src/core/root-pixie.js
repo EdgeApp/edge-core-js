@@ -26,7 +26,6 @@ export type RootProps = {
   +dispatch: Dispatch<RootAction>,
   +io: EdgeIo,
   +onError: (e: Error) => mixed,
-  +onExchangeUpdate: () => mixed,
   +output: RootOutput,
   +plugins: Array<EdgeCorePluginFactory>,
   +changellyInit?: { apiKey: string, secret: string } | void,

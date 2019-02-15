@@ -1,7 +1,6 @@
 // @flow
 
 import {
-  type EdgeAccountCallbacks,
   type EdgeCorePlugin,
   type EdgePluginMap,
   type EdgeSwapTools,
@@ -231,7 +230,6 @@ export type RootAction =
       type: 'LOGIN',
       payload: {
         appId: string,
-        callbacks: EdgeAccountCallbacks,
         loginKey: Uint8Array,
         loginType: string,
         rootLogin: boolean,

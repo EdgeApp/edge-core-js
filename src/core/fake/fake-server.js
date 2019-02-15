@@ -1,40 +1,9 @@
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { filterObject, softCat } from '../../util/util.js'
-import { fakeRepos, fakeUserServer } from './fakeUser.js'
-import { fakeUser1Server } from './fakeUser1.js'
-import {
-  loginCreateColumns,
-  loginDbColumns,
-  loginReplyColumns
-} from './serverSchema.js'
+import { loginCreateColumns } from './fake-db.js'
+import { FakeResponse, addRoute } from './fake-fetch.js'
 
 const OTP_RESET_TOKEN = 'Super secret reset token'
-const routes = []
-
-/**
- * Wires one or more handlers into the routing table.
- */
-function addRoute (method, path, ...handlers) {
-  for (let i = 0; i < handlers.length; i++) {
-    const handler = handlers[i]
-    routes.push({
-      method,
-      path: new RegExp(`^${path}$`),
-      handler
-    })
-  }
-}
-
-/**
- * Finds all matching handlers in the routing table.
- */
-function findRoute (method, path) {
-  return routes
-    .filter(route => {
-      return route.method === method && route.path.test(path)
-    })
-    .map(route => route.handler)
-}
 
 const errorCodes = {
   success: 0,
@@ -47,27 +16,6 @@ const errorCodes = {
   invalidOtp: 8,
   conflict: 10,
   obsolete: 1000
-}
-
-class FakeResponse {
-  constructor (body = '', opts = {}) {
-    this.body = body
-    this.status = opts.status || 200
-    this.statusText = opts.statusText || 'OK'
-    this.ok = this.status >= 200 && this.status < 300
-  }
-
-  json () {
-    try {
-      return Promise.resolve(JSON.parse(this.body))
-    } catch (e) {
-      return Promise.reject(e)
-    }
-  }
-
-  text () {
-    return Promise.resolve(this.body)
-  }
 }
 
 function makeResponse (results) {
@@ -619,85 +567,3 @@ function storeRoute (req) {
 
 addRoute('GET', '/api/v2/store/.*', storeRoute)
 addRoute('POST', '/api/v2/store/.*', storeRoute)
-
-/**
- * Emulates the Airbitz login server.
- */
-export class FakeServer {
-  constructor () {
-    this.db = { lobbies: {}, logins: [] }
-    this.repos = {}
-    this.fetch = (uri, opts = {}) => {
-      try {
-        return Promise.resolve(this.request(uri, opts))
-      } catch (e) {
-        return Promise.reject(e)
-      }
-    }
-
-    // Create fake repos:
-    for (const syncKey of Object.keys(fakeRepos)) {
-      this.repos[syncKey] = { ...fakeRepos[syncKey] }
-    }
-
-    // Create fake users:
-    this.setupFakeUser(fakeUserServer)
-    this.setupFakeUser(fakeUser1Server)
-  }
-
-  findLoginId (loginId) {
-    if (loginId == null) return
-    return this.db.logins.find(login => login.loginId === loginId)
-  }
-
-  findPin2Id (pin2Id) {
-    return this.db.logins.find(login => login.pin2Id === pin2Id)
-  }
-
-  findRecovery2Id (recovery2Id) {
-    return this.db.logins.find(login => login.recovery2Id === recovery2Id)
-  }
-
-  makeReply (login) {
-    const reply = filterObject(login, loginReplyColumns)
-    reply.children = this.db.logins
-      .filter(child => child.parent === login.loginId)
-      .map(child => this.makeReply(child))
-    return reply
-  }
-
-  request (uri, opts) {
-    const req = {
-      method: opts.method || 'GET',
-      body: opts.body ? JSON.parse(opts.body) : null,
-      path: uri.replace(new RegExp('https?://[^/]*'), '')
-    }
-
-    const handlers = findRoute(req.method, req.path)
-    for (const handler of handlers) {
-      const out = handler.call(this, req)
-      if (out != null) {
-        return out
-      }
-    }
-    return makeErrorResponse(
-      errorCodes.error,
-      `Unknown API endpoint ${req.path}`,
-      404
-    )
-  }
-
-  setupFakeUser (user, parent = null) {
-    // Fill in the database row for this login:
-    const row = filterObject(user, loginDbColumns)
-    row.parent = parent
-    this.db.logins.push(row)
-
-    // Recurse into our children:
-    if (user.children != null) {
-      for (const child of user.children) {
-        this.setupFakeUser(child, user.loginId)
-      }
-    }
-  }
-}

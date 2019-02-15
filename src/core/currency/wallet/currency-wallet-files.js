@@ -3,6 +3,7 @@
 import { number as currencyFromNumber } from 'currency-codes'
 import { mapFiles } from 'disklet'
 
+import { type EdgeCurrencyEngineCallbacks } from '../../../types/types.js'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobby-api.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
@@ -15,7 +16,6 @@ import {
 } from '../../storage/storage-selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
-import { forEachListener } from './currency-wallet-callbacks.js'
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
 import { type TxFileNames } from './currency-wallet-reducer.js'
 
@@ -445,7 +445,8 @@ export function setCurrencyWalletTxMetadata (
   input: CurrencyWalletInput,
   txid: string,
   currencyCode: string,
-  metadata: any
+  metadata: any,
+  fakeCallbacks: EdgeCurrencyEngineCallbacks
 ) {
   const walletId = input.props.id
   const { dispatch, state } = input.props
@@ -496,13 +497,7 @@ export function setCurrencyWalletTxMetadata (
   })
   return diskletFile.setText(JSON.stringify(json)).then(() => {
     const callbackTx = combineTxWithFile(input, tx, json, currencyCode)
-    forEachListener(input, ({ onTransactionsChanged }) => {
-      if (onTransactionsChanged) {
-        onTransactionsChanged(walletId, [callbackTx])
-      }
-    })
-
-    return void 0
+    fakeCallbacks.onTransactionsChanged([callbackTx])
   })
 }
 

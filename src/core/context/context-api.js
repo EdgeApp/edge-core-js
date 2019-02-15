@@ -181,28 +181,7 @@ export function makeContextApi (ai: ApiInput) {
     async requestEdgeLogin (
       opts: EdgeEdgeLoginOptions
     ): Promise<EdgePendingEdgeLogin> {
-      const pendingLogin = await requestEdgeLogin(ai, appId, opts)
-
-      // Hook up deprecated callbacks:
-      const { onLogin, onProcessLogin } = opts
-      if (onLogin) {
-        const offLogin = this.on('login', account => {
-          offLogin()
-          onLogin(void 0, account)
-        })
-        const offError = this.on('loginError', error => {
-          offError()
-          onLogin(error)
-        })
-      }
-      if (onProcessLogin) {
-        const off = this.on('loginStart', ({ username }) => {
-          off()
-          onProcessLogin(username)
-        })
-      }
-
-      return pendingLogin
+      return requestEdgeLogin(ai, appId, opts)
     },
 
     async requestOtpReset (

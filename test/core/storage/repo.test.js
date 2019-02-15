@@ -2,18 +2,20 @@
 
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
+import { base64 } from 'rfc4648'
 
 import { getInternalStuff } from '../../../src/core/context/internal-api.js'
 import { makeRepoPaths } from '../../../src/core/storage/repo.js'
-import { fakeUser, makeFakeContexts, makeFakeIos } from '../../../src/index.js'
+import { makeFakeEdgeWorld, makeFakeIo } from '../../../src/index.js'
+import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
-const dataKey = fakeUser.loginKey
-const syncKey = fakeUser.syncKey
+const dataKey = base64.parse(fakeUser.loginKey)
+const syncKey = base64.parse(fakeUser.syncKey)
 
 describe('repo', function () {
   it('read file', async function () {
-    const [io] = makeFakeIos(1)
+    const io = makeFakeIo()
     const { disklet } = makeRepoPaths(io, syncKey, dataKey)
     const payload = '{"message":"Hello"}'
     const box = `{
@@ -30,7 +32,7 @@ describe('repo', function () {
   })
 
   it('data round-trip', async function () {
-    const [io] = makeFakeIos(1)
+    const io = makeFakeIo()
     const { disklet } = makeRepoPaths(io, syncKey, dataKey)
     const payload = 'Test data'
 
@@ -39,10 +41,9 @@ describe('repo', function () {
   })
 
   it('repo-to-repo sync', async function () {
-    const [context1, context2] = await makeFakeContexts(
-      contextOptions,
-      contextOptions
-    )
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context1 = await world.makeEdgeContext(contextOptions)
+    const context2 = await world.makeEdgeContext(contextOptions)
     const i1 = getInternalStuff(context1)
     const i2 = getInternalStuff(context2)
     const disklet1 = await i1.getRepoDisklet(syncKey, dataKey)
