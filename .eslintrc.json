@@ -7,6 +7,7 @@
     "flowtype/generic-spacing": "off",
     "no-throw-literal": "error",
     "no-var": "error",
-    "prefer-const": "error"
+    "prefer-const": "error",
+    "standard/computed-property-even-spacing": "off"
   }
 }
