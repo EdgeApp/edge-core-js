@@ -1,66 +1,53 @@
 // @flow
 
 import {
-  type EdgeCurrencyPluginFactory,
-  type EdgeExchangePair,
-  type EdgeExchangePairHint,
-  type EdgeExchangePlugin,
-  type EdgeExchangePluginFactory
+  type EdgeRateHint,
+  type EdgeRatePair,
+  type EdgeRatePlugin,
+  addEdgeCorePlugins,
+  lockEdgeCorePlugins
 } from '../../src/index.js'
+import { fakeCurrencyPlugin } from './fake-currency-plugin.js'
 
-export const brokenCurrencyPlugin: EdgeCurrencyPluginFactory = {
-  pluginName: 'broken-currency',
-  pluginType: 'currency',
+export const brokenExchangePlugin: EdgeRatePlugin = {
+  rateInfo: {
+    displayName: 'BrokenExchange'
+  },
 
-  makePlugin () {
-    return Promise.reject(new Error('Expect to fail'))
+  fetchRates (pairs) {
+    throw new Error('boom!')
   }
 }
 
-export const brokenExchangePlugin: EdgeExchangePluginFactory = {
-  pluginType: 'exchange',
+const fakeExchangePlugin: EdgeRatePlugin = {
+  rateInfo: {
+    displayName: 'FakeExchange'
+  },
 
-  makePlugin () {
-    return Promise.resolve({
-      exchangeInfo: {
-        exchangeName: 'BrokenExchange'
+  fetchRates (pairs: Array<EdgeRateHint>): Promise<Array<EdgeRatePair>> {
+    const fuzz = Math.sin((Math.PI * Date.now()) / (30 * 60 * 1000))
+
+    return Promise.resolve([
+      { fromCurrency: 'BTC', toCurrency: 'iso:EUR', rate: 2275.58 + fuzz },
+      {
+        fromCurrency: 'BTC',
+        toCurrency: 'iso:JPY',
+        rate: 293514.66 + fuzz
       },
-
-      fetchExchangeRates (pairs) {
-        throw new Error('boom!')
-      }
-    })
+      { fromCurrency: 'BTC', toCurrency: 'iso:USD', rate: 2590.75 + fuzz },
+      { fromCurrency: 'ETH', toCurrency: 'iso:EUR', rate: 230.74 + fuzz },
+      { fromCurrency: 'ETH', toCurrency: 'iso:USD', rate: 2590.75 + fuzz },
+      { fromCurrency: 'FAKE', toCurrency: 'iso:USD', rate: 3 }
+    ])
   }
 }
 
-export const fakeExchangePlugin: EdgeExchangePluginFactory = {
-  pluginType: 'exchange',
-
-  makePlugin (): Promise<EdgeExchangePlugin> {
-    const plugin: EdgeExchangePlugin = {
-      exchangeInfo: {
-        exchangeName: 'FakeExchange'
-      },
-
-      fetchExchangeRates (
-        pairs: Array<EdgeExchangePairHint>
-      ): Promise<Array<EdgeExchangePair>> {
-        const fuzz = Math.sin((Math.PI * Date.now()) / (30 * 60 * 1000))
-
-        return Promise.resolve([
-          { fromCurrency: 'BTC', toCurrency: 'iso:EUR', rate: 2275.58 + fuzz },
-          {
-            fromCurrency: 'BTC',
-            toCurrency: 'iso:JPY',
-            rate: 293514.66 + fuzz
-          },
-          { fromCurrency: 'BTC', toCurrency: 'iso:USD', rate: 2590.75 + fuzz },
-          { fromCurrency: 'ETH', toCurrency: 'iso:EUR', rate: 230.74 + fuzz },
-          { fromCurrency: 'ETH', toCurrency: 'iso:USD', rate: 2590.75 + fuzz },
-          { fromCurrency: 'FAKE', toCurrency: 'iso:USD', rate: 3 }
-        ])
-      }
-    }
-    return Promise.resolve(plugin)
-  }
-}
+addEdgeCorePlugins({
+  'broken-plugin': () => {
+    throw new Error('Expect to fail')
+  },
+  'broken-exchange': () => brokenExchangePlugin,
+  'fake-exchange': fakeExchangePlugin,
+  fakecoin: fakeCurrencyPlugin
+})
+lockEdgeCorePlugins()

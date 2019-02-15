@@ -3,20 +3,13 @@
 import { makeReactNativeDisklet } from 'disklet'
 import hashjs from 'hash.js'
 import HmacDRBG from 'hmac-drbg'
-import { NativeModules, Platform } from 'react-native'
-import { pbkdf2, scrypt, secp256k1 } from 'react-native-fast-crypto'
-import { Socket } from 'react-native-tcp'
+import { NativeModules } from 'react-native'
+import { scrypt } from 'react-native-fast-crypto'
 import { base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
 
 const randomBytes = NativeModules.RNRandomBytes.randomBytes
-
-let TLSSocket
-if (Platform.OS !== 'android') {
-  const tls = require('react-native-tcp/tls')
-  TLSSocket = tls.TLSSocket || tls.Socket
-}
 
 /**
  * Wraps the native `randomBytes` function in a `Promise`.
@@ -55,7 +48,7 @@ function makeRandomGenerator (
 export function makeReactNativeIo (): Promise<EdgeIo> {
   if (typeof randomBytes !== 'function') {
     throw new Error(
-      'Please install & link the following libraries: react-native-fast-crypto react-native-fs react-native-randombytes react-native-tcp'
+      'Please install & link the following libraries: react-native-fast-crypto react-native-fs react-native-randombytes'
     )
   }
 
@@ -64,8 +57,6 @@ export function makeReactNativeIo (): Promise<EdgeIo> {
       // Crypto:
       random: makeRandomGenerator(entropy),
       scrypt,
-      pbkdf2,
-      secp256k1,
 
       // Local io:
       console: {
@@ -77,8 +68,6 @@ export function makeReactNativeIo (): Promise<EdgeIo> {
 
       // Networking:
       fetch: (...rest) => window.fetch(...rest),
-      Socket,
-      TLSSocket,
       WebSocket: window.WebSocket
     }
   })

@@ -22,13 +22,11 @@ If you are on React Native, you must also do:
     # Install native support libraries:
     npm install --save react-native-fast-crypto react-native-fs
     npm install --save git://github.com/EdgeApp/react-native-randombytes.git
-    npm install --save git://github.com/EdgeApp/react-native-tcp.git
 
     # Link support libraries into the native project files:
     react-native link react-native-fast-crypto
     react-native link react-native-fs
     react-native link react-native-randombytes
-    react-native link react-native-tcp
 
 This library uses modern Javascript syntax features from ES 2018. While these work fine in recent browsers, React Native, and Node 10+, you might need to run this library through [Babel](https://babeljs.io/) if you care about older systems.
 

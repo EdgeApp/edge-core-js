@@ -1,6 +1,6 @@
 // @flow
 
-import { type Disklet, type DiskletFolder } from 'disklet'
+import { type Disklet } from 'disklet'
 import { type Subscriber } from 'yaob'
 
 export {
@@ -46,32 +46,6 @@ export type EdgeScryptFunction = (
   dklen: number
 ) => Promise<Uint8Array>
 
-export type EdgeSecp256k1 = {
-  publicKeyCreate: (
-    privateKey: Uint8Array,
-    compressed: boolean
-  ) => Promise<string>,
-  privateKeyTweakAdd: (
-    privateKey: Uint8Array,
-    tweak: Uint8Array
-  ) => Promise<Uint8Array>,
-  publicKeyTweakAdd: (
-    publicKey: Uint8Array,
-    tweak: Uint8Array,
-    compressed: boolean
-  ) => Promise<Uint8Array>
-}
-
-export type EdgePbkdf2 = {
-  deriveAsync: (
-    key: Uint8Array,
-    salt: Uint8Array,
-    iter: number,
-    len: number,
-    algo: string
-  ) => Promise<Uint8Array>
-}
-
 /**
  * Access to platform-specific resources.
  * The core never talks to the outside world on its own,
@@ -81,9 +55,6 @@ export type EdgeIo = {
   // Crypto:
   +random: EdgeRandomFunction,
   +scrypt: EdgeScryptFunction,
-  // TODO: Make these two non-optional, providing JS versions as needed:
-  +secp256k1?: EdgeSecp256k1,
-  +pbkdf2?: EdgePbkdf2,
 
   // Local io:
   +console: EdgeConsole,
@@ -91,19 +62,13 @@ export type EdgeIo = {
 
   // Networking:
   +fetch: typeof fetch,
-  +Socket?: typeof net$Socket, // Still optional (no browser version)
-  +TLSSocket?: typeof tls$TLSSocket, // Still optional (no browser version)
   +WebSocket: typeof WebSocket
 }
 
 export type EdgeCorePluginOptions = {
-  io: EdgeIo
-}
-
-export type EdgePluginEnvironment = {
+  initOptions: Object, // Load-time options (like API keys)
   io: EdgeIo,
-  initOptions?: Object, // Load-time options (like API keys)
-  userSettings?: Object // User-adjustable settings
+  pluginDisklet: Disklet // Plugin local storage
 }
 
 export type EdgePluginMap<Value> = { [pluginName: string]: Value }
@@ -161,11 +126,11 @@ export type EdgeMetaToken = {
 export type EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: string,
-  currencyName: string,
+  displayName: string,
   pluginName: string,
   denominations: Array<EdgeDenomination>,
   requiredConfirmations?: number,
-  walletTypes: Array<string>,
+  walletType: string,
 
   // Configuration options:
   defaultSettings: any,
@@ -247,7 +212,6 @@ export type EdgeSpendInfo = {
 export type EdgeDataDump = {
   walletId: string,
   walletType: string,
-  pluginType: string,
   data: {
     [dataCache: string]: any
   }
@@ -305,8 +269,6 @@ export type EdgeCurrencyCodeOptions = {
   currencyCode?: string
 }
 
-export type EdgeUnusedOptions = {}
-
 export type EdgeGetTransactionsOptions = {
   currencyCode?: string,
   startIndex?: number,
@@ -333,14 +295,12 @@ export type EdgeCurrencyEngineOptions = {
   callbacks: EdgeCurrencyEngineCallbacks,
   walletLocalDisklet: Disklet,
   walletLocalEncryptedDisklet: Disklet,
-  optionalSettings?: any,
-
-  // Deprecated:
-  walletLocalFolder: DiskletFolder,
-  walletLocalEncryptedFolder: DiskletFolder
+  userSettings: Object | void
 }
 
 export type EdgeCurrencyEngine = {
+  changeUserSettings(settings: Object): Promise<mixed>,
+
   // Keys:
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
@@ -369,8 +329,8 @@ export type EdgeCurrencyEngine = {
 
   // Addresses:
   getFreshAddress(opts: EdgeCurrencyCodeOptions): EdgeFreshAddress,
-  addGapLimitAddresses(addresses: Array<string>, opts: EdgeUnusedOptions): void,
-  isAddressUsed(address: string, opts: EdgeUnusedOptions): boolean,
+  addGapLimitAddresses(addresses: Array<string>): void,
+  isAddressUsed(address: string): boolean,
 
   // Spending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
@@ -397,37 +357,31 @@ export type EdgeBitcoinPrivateKeyOptions = {
 // Add other currencies to this list as they gather options:
 export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
 
-export type EdgeCurrencyPlugin = {
-  // Information:
-  +pluginName: string,
-  +currencyInfo: EdgeCurrencyInfo,
-  +changeSettings?: (settings: Object) => Promise<mixed>,
-
+export type EdgeCurrencyTools = {
   // Keys:
-  // TODO: returns Object | Promise<Object> once Flow is un-broken:
-  createPrivateKey(walletType: string, opts?: EdgeCreatePrivateKeyOptions): any,
-  // TODO: returns Object | Promise<Object> once Flow is un-broken:
-  derivePublicKey(walletInfo: EdgeWalletInfo): any,
+  createPrivateKey(
+    walletType: string,
+    opts?: EdgeCreatePrivateKeyOptions
+  ): Promise<Object>,
+  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<Object>,
   +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
 
   // URIs:
-  parseUri(uri: string): EdgeParsedUri | Promise<EdgeParsedUri>,
-  encodeUri(obj: EdgeEncodeUri): string | Promise<string>,
+  parseUri(uri: string): Promise<EdgeParsedUri>,
+  encodeUri(obj: EdgeEncodeUri): Promise<string>
+}
 
-  // Engine:
-  makeEngine(
+export type EdgeCurrencyPlugin = {
+  +currencyInfo: EdgeCurrencyInfo,
+
+  makeCurrencyTools(): Promise<EdgeCurrencyTools>,
+  makeCurrencyEngine(
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine>,
 
   // Escape hatch:
   +otherMethods?: Object
-}
-
-export type EdgeCurrencyPluginFactory = {
-  +pluginType: 'currency',
-  +pluginName: string,
-  makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeCurrencyPlugin>
 }
 
 // wallet --------------------------------------------------------------
@@ -580,47 +534,43 @@ export type EdgeSwapPluginQuote = {
   close(): Promise<mixed>
 }
 
-export type EdgeSwapTools = {
-  +needsActivation: boolean,
-
-  changeUserSettings(userSettings: Object): Promise<mixed>,
-  fetchCurrencies(): Promise<Array<string>>,
-  fetchQuote(request: EdgeSwapRequest): Promise<EdgeSwapPluginQuote>
+export type EdgeSwapPluginStatus = {
+  needsActivation?: boolean
 }
 
 export type EdgeSwapPlugin = {
-  +pluginType: 'swap',
   +swapInfo: EdgeSwapInfo,
 
-  makeTools(env: EdgePluginEnvironment): Promise<EdgeSwapTools>
+  checkSettings?: (userSettings: Object) => EdgeSwapPluginStatus,
+  fetchSwapQuote(
+    request: EdgeSwapRequest,
+    userSettings: Object | void
+  ): Promise<EdgeSwapPluginQuote>
 }
 
 // ---------------------------------------------------------------------
 // rate plugin
 // ---------------------------------------------------------------------
 
-export type EdgeExchangePairHint = {
+export type EdgeRateHint = {
   fromCurrency: string,
   toCurrency: string
 }
 
-export type EdgeExchangePair = {
+export type EdgeRateInfo = {
+  +displayName: string
+}
+
+export type EdgeRatePair = {
   fromCurrency: string,
   toCurrency: string,
   rate: number
 }
 
-export type EdgeExchangePlugin = {
-  +exchangeInfo: { exchangeName: string },
+export type EdgeRatePlugin = {
+  +rateInfo: EdgeRateInfo,
 
-  fetchExchangeRates(
-    pairHints: Array<EdgeExchangePairHint>
-  ): Promise<Array<EdgeExchangePair>>
-}
-
-export type EdgeExchangePluginFactory = {
-  +pluginType: 'exchange',
-  makePlugin(opts: EdgeCorePluginOptions): Promise<EdgeExchangePlugin>
+  fetchRates(hints: Array<EdgeRateHint>): Promise<Array<EdgeRatePair>>
 }
 
 // ---------------------------------------------------------------------
@@ -858,12 +808,14 @@ export type EdgeAccount = {
 
 export type EdgeCorePlugin =
   | EdgeCurrencyPlugin
-  | EdgeExchangePlugin
+  | EdgeRatePlugin
   | EdgeSwapPlugin
 
-export type EdgeCorePluginFactory =
-  | EdgeCurrencyPluginFactory
-  | EdgeExchangePluginFactory
+export type EdgeCorePlugins = EdgePluginMap<
+  EdgeCorePlugin | ((env: EdgeCorePluginOptions) => EdgeCorePlugin)
+>
+
+export type EdgeCorePluginsInit = EdgePluginMap<boolean | Object>
 
 export type EdgeContextOptions = {
   apiKey: string,
@@ -871,11 +823,7 @@ export type EdgeContextOptions = {
   authServer?: string,
   hideKeys?: boolean,
   path?: string, // Only used on node.js
-  plugins?: Array<EdgeCorePluginFactory>,
-  changellyInit?: { apiKey: string, secret: string },
-  changeNowKey?: string,
-  faastInit?: { affiliateId: string, affiliateMargin?: number },
-  shapeshiftKey?: string
+  plugins?: EdgeCorePluginsInit
 }
 
 // parameters ----------------------------------------------------------

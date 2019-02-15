@@ -3,14 +3,14 @@
 import { div, gt, lt, mul } from 'biggystring'
 
 import {
+  type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
-  type EdgePluginEnvironment,
   type EdgeSpendInfo,
   type EdgeSpendTarget,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
+  type EdgeSwapPluginStatus,
   type EdgeSwapRequest,
-  type EdgeSwapTools,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError,
@@ -57,9 +57,10 @@ async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
     : addressInfo.publicAddress
 }
 
-function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
-  const { initOptions = {}, io } = env
-  let { userSettings } = env
+export function makeShapeshiftPlugin (
+  opts: EdgeCorePluginOptions
+): EdgeSwapPlugin {
+  const { io, initOptions } = opts
 
   if (initOptions.apiKey == null) {
     throw new Error('No Shapeshift API key provided')
@@ -114,44 +115,33 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
     return checkReply(uri, reply)
   }
 
-  async function post (path, body): Object {
-    if (userSettings == null || userSettings.accessToken == null) {
-      throw new SwapPermissionError(swapInfo.pluginName, 'needsActivation')
-    }
+  async function post (path, body, accessToken: string): Object {
     const uri = `${API_PREFIX}${path}`
     const reply = await io.fetch(uri, {
       method: 'POST',
       headers: {
         Accept: 'application/json, text/plain, */*',
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${userSettings.accessToken}`
+        Authorization: `Bearer ${accessToken}`
       },
       body: JSON.stringify(body)
     })
     return checkReply(uri, reply)
   }
 
-  const out: EdgeSwapTools = {
-    get needsActivation (): boolean {
-      return userSettings == null || userSettings.accessToken == null
-    },
+  const out: EdgeSwapPlugin = {
+    swapInfo,
 
-    async changeUserSettings (settings: Object): Promise<mixed> {
-      userSettings = settings
-    },
-
-    async fetchCurrencies (): Promise<Array<string>> {
-      const json = await get(`/getcoins/`)
-      const out = []
-      for (const key in json) {
-        if (json[key].status === 'available') {
-          out.push(key)
-        }
+    checkSettings (userSettings: Object): EdgeSwapPluginStatus {
+      return {
+        needsActivation: userSettings.accessToken == null
       }
-      return out
     },
 
-    async fetchQuote (request: EdgeSwapRequest): Promise<EdgeSwapPluginQuote> {
+    async fetchSwapQuote (
+      request: EdgeSwapRequest,
+      userSettings: Object | void
+    ): Promise<EdgeSwapPluginQuote> {
       const {
         fromCurrencyCode,
         fromWallet,
@@ -160,6 +150,11 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
         toCurrencyCode,
         toWallet
       } = request
+      if (userSettings == null || userSettings.accessToken == null) {
+        throw new SwapPermissionError(swapInfo.pluginName, 'needsActivation')
+      }
+      const { accessToken } = userSettings
+
       if (toCurrencyCode === fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
@@ -234,7 +229,7 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
 
       let quoteData: ShapeShiftQuoteJson
       try {
-        quoteData = await post('/sendamount', body)
+        quoteData = await post('/sendamount', body, accessToken)
       } catch (e) {
         // TODO: Using the nativeAmount here is technically a bug,
         // since we don't know the actual limit in this case:
@@ -301,13 +296,4 @@ function makeShapeshiftTools (env: EdgePluginEnvironment): EdgeSwapTools {
   }
 
   return out
-}
-
-export const shapeshiftPlugin: EdgeSwapPlugin = {
-  pluginType: 'swap',
-  swapInfo,
-
-  async makeTools (env: EdgePluginEnvironment): Promise<EdgeSwapTools> {
-    return makeShapeshiftTools(env)
-  }
 }

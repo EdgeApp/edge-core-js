@@ -10,7 +10,12 @@ import {
 } from './types/types.js'
 
 export { makeNodeIo }
-export { closeEdge, makeFakeIo } from './core/core.js'
+export {
+  addEdgeCorePlugins,
+  closeEdge,
+  lockEdgeCorePlugins,
+  makeFakeIo
+} from './core/core.js'
 export * from './types/types.js'
 
 export function makeEdgeContext (

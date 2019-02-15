@@ -9,22 +9,13 @@ import {
 } from 'redux-pixies'
 import { close, emit, update } from 'yaob'
 
-import {
-  type EdgeAccount,
-  type EdgeCurrencyWallet,
-  type EdgePluginMap,
-  type EdgeSwapTools
-} from '../../types/types.js'
+import { type EdgeAccount, type EdgeCurrencyWallet } from '../../types/types.js'
 import { waitForPlugins } from '../plugins/plugins-selectors.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 import {
   addStorageWallet,
   syncStorageWallet
 } from '../storage/storage-actions.js'
-import { changellyPlugin } from '../swap/changelly-plugin.js'
-import { changenowPlugin } from '../swap/changenow-plugin'
-import { faastPlugin } from '../swap/faast-plugin.js'
-import { shapeshiftPlugin } from '../swap/shapeshift-plugin.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
 import { type AccountState } from './account-reducer.js'
@@ -96,47 +87,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
           await loadAllFiles()
           io.console.info('Login: loaded files')
-
-          // Load swap plugins:
-          const swapTools: EdgePluginMap<EdgeSwapTools> = {}
-          if (input.props.changellyInit) {
-            swapTools.changelly = await changellyPlugin.makeTools({
-              io: input.props.io,
-              initOptions: input.props.changellyInit,
-              get userSettings () {
-                return input.props.selfState.userSettings.changelly
-              }
-            })
-          }
-          if (input.props.shapeshiftKey != null) {
-            swapTools.shapeshift = await shapeshiftPlugin.makeTools({
-              io: input.props.io,
-              initOptions: { apiKey: input.props.shapeshiftKey },
-              get userSettings () {
-                return input.props.selfState.userSettings.shapeshift
-              }
-            })
-          }
-          if (input.props.changeNowKey) {
-            swapTools.changenow = await changenowPlugin.makeTools({
-              io: input.props.io,
-              initOptions: { apiKey: input.props.changeNowKey },
-              get userSettings () {
-                return input.props.selfState.userSettings.changenow
-              }
-            })
-          }
-          swapTools.faast = await faastPlugin.makeTools({
-            io: input.props.io,
-            initOptions: input.props.faastInit,
-            get userSettings () {
-              return input.props.selfState.userSettings.faast
-            }
-          })
-          input.props.dispatch({
-            type: 'ACCOUNT_PLUGIN_TOOLS_LOADED',
-            payload: { accountId, swapTools }
-          })
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))

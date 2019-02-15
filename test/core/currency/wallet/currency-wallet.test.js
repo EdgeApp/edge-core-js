@@ -11,8 +11,6 @@ import {
 } from '../../../../src/index.js'
 import { makeAssertLog } from '../../../assert-log.js'
 import { expectRejection } from '../../../expect-rejection.js'
-import { fakeCurrencyPlugin } from '../../../fake/fake-currency-plugin.js'
-import { fakeExchangePlugin } from '../../../fake/fake-plugins.js'
 import { fakeUser } from '../../../fake/fake-user.js'
 import { snooze } from '../../../snooze.js'
 
@@ -24,7 +22,7 @@ async function makeFakeCurrencyWallet (): Promise<
   const world = await makeFakeEdgeWorld([fakeUser])
   const context = await world.makeEdgeContext({
     ...contextOptions,
-    plugins: [fakeCurrencyPlugin, fakeExchangePlugin]
+    plugins: { fakecoin: true, 'fake-exchange': true }
   })
   const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -32,7 +30,7 @@ async function makeFakeCurrencyWallet (): Promise<
   const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
   if (!walletInfo) throw new Error('Broken test account')
   const wallet = await account.waitForCurrencyWallet(walletInfo.id)
-  const config = account.currencyConfig[fakeCurrencyPlugin.pluginName]
+  const config = account.currencyConfig['fakecoin']
   return [wallet, config]
 }
 

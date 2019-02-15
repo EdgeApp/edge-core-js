@@ -313,22 +313,14 @@ async function updatePluginUserSettings (
   pluginName: string
 ): Promise<mixed> {
   const selfOutput = ai.props.output.accounts[accountId]
-  const selfState = ai.props.state.accounts[accountId]
-  const { userSettings } = selfState
 
   const currencyPlugin = ai.props.state.plugins.currency[pluginName]
-  if (currencyPlugin != null && currencyPlugin.changeSettings != null) {
-    await currencyPlugin.changeSettings(userSettings[pluginName])
-    if (selfOutput.api != null) {
-      update(selfOutput.api.currencyConfig[pluginName])
-    }
+  if (currencyPlugin != null && selfOutput.api != null) {
+    update(selfOutput.api.currencyConfig[pluginName])
   }
 
-  const swapTools = selfState.swapTools[pluginName]
-  if (swapTools != null) {
-    await swapTools.changeUserSettings(userSettings[pluginName])
-    if (selfOutput.api != null) {
-      update(selfOutput.api.swapConfig[pluginName])
-    }
+  const swapPlugin = ai.props.state.plugins.swap[pluginName]
+  if (swapPlugin != null && selfOutput.api != null) {
+    update(selfOutput.api.swapConfig[pluginName])
   }
 }

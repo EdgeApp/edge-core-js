@@ -2,8 +2,9 @@
 
 import {
   type EdgeCorePlugin,
+  type EdgeCorePluginsInit,
+  type EdgeCurrencyTools,
   type EdgePluginMap,
-  type EdgeSwapTools,
   type EdgeTokenInfo,
   type EdgeWalletInfo,
   type EdgeWalletStates
@@ -65,14 +66,6 @@ export type RootAction =
       }
     }
   | {
-      // The swap plugins have been initialized.
-      type: 'ACCOUNT_PLUGIN_TOOLS_LOADED',
-      payload: {
-        accountId: string,
-        swapTools: EdgePluginMap<EdgeSwapTools>
-      }
-    }
-  | {
       // Fired when somebody enables or disables swap plugins.
       type: 'ACCOUNT_SWAP_SETTINGS_CHANGED',
       payload: {
@@ -96,9 +89,8 @@ export type RootAction =
       payload: EdgePluginMap<EdgeCorePlugin>
     }
   | {
-      // Called when something goes wrong adding plugins.
-      type: 'CORE_PLUGINS_FAILED',
-      payload: Error
+      // Called when the plugin list becomes final.
+      type: 'CORE_PLUGINS_LOCKED'
     }
   | {
       // Called when a currency engine fires the onBalanceChanged callback.
@@ -166,6 +158,19 @@ export type RootAction =
       }
     }
   | {
+      // Called when the core starts loading currency tools:
+      type: 'CURRENCY_TOOLS_LOADING',
+      payload: { pluginName: string }
+    }
+  | {
+      // Called when the core finishes loading currency tools:
+      type: 'CURRENCY_TOOLS_LOADED',
+      payload: {
+        pluginName: string,
+        tools: EdgeCurrencyTools | Error
+      }
+    }
+  | {
       // Called when a currency wallet receives a new name.
       type: 'CURRENCY_WALLET_FIAT_CHANGED',
       payload: {
@@ -222,6 +227,7 @@ export type RootAction =
         appId: string,
         authServer: string,
         hideKeys: boolean,
+        pluginsInit: EdgeCorePluginsInit,
         stashes: { [path: string]: Object }
       }
     }

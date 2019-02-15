@@ -3,7 +3,7 @@
 import { type Dispatch } from 'redux'
 import { type PixieInput, type TamePixie, combinePixies } from 'redux-pixies'
 
-import { type EdgeCorePluginFactory, type EdgeIo } from '../types/types.js'
+import { type EdgeIo } from '../types/types.js'
 import { type AccountOutput, accounts } from './account/account-pixie.js'
 import { type RootAction } from './actions.js'
 import { type ContextOutput, context } from './context/context-pixie.js'
@@ -27,11 +27,6 @@ export type RootProps = {
   +io: EdgeIo,
   +onError: (e: Error) => mixed,
   +output: RootOutput,
-  +plugins: Array<EdgeCorePluginFactory>,
-  +changellyInit?: { apiKey: string, secret: string } | void,
-  +changeNowKey?: string | void,
-  +faastInit?: { affiliateId: string, affiliateMargin?: number } | void,
-  +shapeshiftKey: string | void,
   +state: RootState
 }
 

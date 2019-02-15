@@ -4,7 +4,6 @@ import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
   type EdgePluginMap,
-  type EdgeSwapTools,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull,
   type EdgeWalletStates
@@ -52,8 +51,7 @@ export type AccountState = {
 
   // Plugin stuff:
   +swapSettings: EdgePluginMap<SwapSettings>,
-  +userSettings: EdgePluginMap<Object>,
-  +swapTools: EdgePluginMap<EdgeSwapTools>
+  +userSettings: EdgePluginMap<Object>
 }
 
 export type AccountNext = {
@@ -251,12 +249,6 @@ const account = buildReducer({
         return action.payload.userSettings
     }
     return state
-  },
-
-  swapTools (state = {}, action: RootAction): EdgePluginMap<EdgeSwapTools> {
-    return action.type === 'ACCOUNT_PLUGIN_TOOLS_LOADED'
-      ? action.payload.swapTools
-      : state
   }
 })
 
