@@ -12,7 +12,8 @@ import {
   type EdgeContextOptions,
   type EdgeFakeUser,
   type EdgeFakeWorld,
-  type EdgeIo
+  type EdgeIo,
+  type EdgeNativeIo
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
 import { getInternalStuff } from '../context/internal-api.js'
@@ -53,6 +54,7 @@ async function saveUser (io: EdgeIo, user: EdgeFakeUser) {
  */
 export function makeFakeWorld (
   io: EdgeIo,
+  nativeIo: EdgeNativeIo,
   users: Array<EdgeFakeUser>
 ): EdgeFakeWorld {
   const fakeDb = new FakeDb()
@@ -82,7 +84,7 @@ export function makeFakeWorld (
         await Promise.all(users.map(async user => saveUser(fakeIo, user)))
       }
 
-      const out = await makeContext(fakeIo, opts)
+      const out = await makeContext(fakeIo, nativeIo, opts)
       contexts.push(out)
       return out
     },

@@ -5,7 +5,8 @@ import {
   type EdgeContextOptions,
   type EdgeFakeUser,
   type EdgeFakeWorld,
-  type EdgeIo
+  type EdgeIo,
+  type EdgeNativeIo
 } from './src/types/types.js'
 
 export * from './src/types/types.js'
@@ -25,7 +26,28 @@ declare export function makeFakeEdgeWorld(
   users?: Array<EdgeFakeUser>
 ): Promise<EdgeFakeWorld>
 
+/**
+ * React Native component for creating an EdgeContext.
+ */
+declare export function MakeEdgeContext(props: {
+  debug?: boolean,
+  nativeIo?: EdgeNativeIo,
+  onError?: (e: any) => mixed,
+  onLoad: (context: EdgeContext) => mixed,
+  options: EdgeContextOptions
+}): any // React element
+
+/**
+ * React Native component for creating an EdgeFakeWorld for testing.
+ */
+declare export function MakeFakeEdgeWorld(props: {
+  debug?: boolean,
+  nativeIo?: EdgeNativeIo,
+  onError?: (e: any) => mixed,
+  onLoad: (context: EdgeContext) => mixed,
+  users: Array<EdgeFakeUser>
+}): any // React element
+
 // System-specific io exports:
 declare export function makeBrowserIo(): EdgeIo
 declare export function makeNodeIo(path: string): EdgeIo
-declare export function makeReactNativeIo(): Promise<EdgeIo>

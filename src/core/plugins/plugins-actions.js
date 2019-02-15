@@ -8,6 +8,7 @@ import {
   type EdgeCorePlugins,
   type EdgeCorePluginsInit,
   type EdgeIo,
+  type EdgeNativeIo,
   type EdgePluginMap
 } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
@@ -50,6 +51,7 @@ export function lockEdgeCorePlugins (): mixed {
  */
 export function watchPlugins (
   io: EdgeIo,
+  nativeIo: EdgeNativeIo,
   pluginsInit: EdgeCorePluginsInit,
   dispatch: Dispatch<RootAction>
 ): () => mixed {
@@ -67,6 +69,7 @@ export function watchPlugins (
           const opts = {
             initOptions: typeof initOptions === 'object' ? initOptions : {},
             io,
+            nativeIo,
             pluginDisklet: navigateDisklet(io.disklet, 'plugins/' + pluginName)
           }
           out[pluginName] = plugin(opts)

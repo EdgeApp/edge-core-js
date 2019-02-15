@@ -21,11 +21,11 @@ export * from './types/types.js'
 export function makeEdgeContext (
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
-  return makeContext(makeBrowserIo(), opts)
+  return makeContext(makeBrowserIo(), {}, opts)
 }
 
 export function makeFakeEdgeWorld (
   users: Array<EdgeFakeUser> = []
 ): Promise<EdgeFakeWorld> {
-  return Promise.resolve(makeFakeWorld(makeBrowserIo(), users))
+  return Promise.resolve(makeFakeWorld(makeBrowserIo(), {}, users))
 }

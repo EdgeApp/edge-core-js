@@ -1,7 +1,11 @@
 {
-  "extends": ["standard", "plugin:flowtype/recommended"],
+  "extends": [
+    "plugin:flowtype/recommended",
+    "plugin:react/recommended",
+    "standard"
+  ],
   "parser": "babel-eslint",
-  "plugins": ["flowtype", "standard"],
+  "plugins": ["flowtype", "react", "standard"],
   "rules": {
     "camelcase": "error",
     "flowtype/generic-spacing": "off",
