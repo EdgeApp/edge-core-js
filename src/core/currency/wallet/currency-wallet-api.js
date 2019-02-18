@@ -60,7 +60,7 @@ export function makeCurrencyWalletApi (
   engine: EdgeCurrencyEngine
 ) {
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-  const { walletInfo, pluginName } = input.props.selfState
+  const { walletInfo } = input.props.selfState
 
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
@@ -443,12 +443,12 @@ export function makeCurrencyWalletApi (
     },
 
     async parseUri (uri: string): Promise<EdgeParsedUri> {
-      const tools = await getCurrencyTools(ai, pluginName)
+      const tools = await getCurrencyTools(ai, walletInfo.type)
       return tools.parseUri(uri)
     },
 
     async encodeUri (obj: EdgeEncodeUri): Promise<string> {
-      const tools = await getCurrencyTools(ai, pluginName)
+      const tools = await getCurrencyTools(ai, walletInfo.type)
       return tools.encodeUri(obj)
     },
 
