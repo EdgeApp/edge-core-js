@@ -17,17 +17,6 @@ To quickly get up and running with the UI for account creation, login, and manag
 
 Just use `npm install --save edge-core-js` to add this library to your project.
 
-If you are on React Native, you must also do:
-
-    # Install native support libraries:
-    npm install --save react-native-fast-crypto react-native-fs
-    npm install --save git://github.com/EdgeApp/react-native-randombytes.git
-
-    # Link support libraries into the native project files:
-    react-native link react-native-fast-crypto
-    react-native link react-native-fs
-    react-native link react-native-randombytes
-
 This library uses modern Javascript syntax features from ES 2018. While these work fine in recent browsers, React Native, and Node 10+, you might need to run this library through [Babel](https://babeljs.io/) if you care about older systems.
 
 On the other hand, this library avoids modern run-time features from ES 2015 or later, so you don't need to provide polyfills. The only features we use from ES 2015 or later are:
@@ -41,6 +30,10 @@ If you want to run in the browser, you must also have:
 - `fetch`
 - `localStorage`
 - `Window.crypto.getRandomNumbers`
+
+## React Native
+
+This library has React Native support. Starting at version 0.15.0, however, it achieves this support by running most of its logic inside a WebView component. This has several important advantages, including better performance, but it makes integration quite complicated. We are in the process of simplifying and documenting the necessary steps. In the mean time, please refer to the [edge-react-gui](https://github.com/EdgeApp/edge-react-gui) project for an example of what this integration looks like.
 
 ## Contributing
 

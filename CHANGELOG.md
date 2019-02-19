@@ -1,5 +1,64 @@
 # edge-core-js
 
+## 0.15.0 (2019-02-19)
+
+This is a major release with large numbers of breaking changes for all platforms:
+
+- Remove legacy type names.
+- Remove legacy account and context callbacks.
+- Remove `EdgeAccount.fetchSwapCurrencies`.
+- Rename `EdgeSwapQuoteOptions` to `EdgeSwapRequest`.
+- Replace `makeFakeEdgeContexts` with a new `makeFakeEdgeWorld` API.
+- Replace `makeFakeIos` with `makeFakeIo`.
+- Remove `error` namespace.
+- Rework plugin loading:
+  - Plugins must now provide their own networking and crypto.
+  - The `addEdgeCorePlugins` / `lockEdgeCorePlugins` functions install plugins.
+  - The `makeEdgeContext` function accepts a plain JSON plugin configuration object.
+- Swap plugins:
+  - Remove `pluginType` property
+  - Remove `makeTools` method
+  - Remove `EdgePluginEnvironment` & `EdgeSwapTools` types
+  - Add `checkSettings` method & `EdgeSwapPluginStatus` type
+  - Add `fetchSwapQuote` method
+- Rate plugins:
+  - Rename `EdgeExchangePairHint` to `EdgeRateHint`
+  - Rename `EdgeExchangePair` to `EdgeRatePair`
+  - Rename `EdgeExchangePlugin` to `EdgeRatePlugin`
+  - Rename `exchangeInfo` to `rateInfo`
+  - Rename `rateInfo.exchangeName` to `rateInfo.displayName`
+  - Rename `fetchExchangeRates` to `fetchRates`
+- Currency plugins:
+  - In `EdgeCurrencyInfo`
+    - Change `walletTypes` to `walletType`
+    - Rename `currencyName` to `displayName`
+  - In `EdgeCurrencyPlugin`
+    - Rename `makeEngine` to `makeCurrencyEngine`
+    - Move `changeUserSettings` to the engine.
+    - Move all other features behind a `makeCurrencyTools` method & `EdgeCurrencyTools` type
+    - Make methods fully async
+      - `createPrivateKey`
+      - `derivePublicKey`
+      - `parseUri`
+      - `encodeUri`
+  - In `EdgeCurrencyEngineOptions`
+    - Rename `optionalSettings` to `userSettings`
+    - Remove legacy disklet
+  - In `EdgeCurrencyEngine`
+    - Remove unused options from `isAddressUsed` & `addGapLimitAddresses`
+    - Remove `EdgeUnusedOptions` type
+    - Remove `EdgeDataDump.pluginType`
+
+For React Native in particular, we have the following changes:
+
+- Replace `makeEdgeContext` with a `<MakeEdgeContext />` React component.
+- Replace `makeFakeContexts` with a `<MakeFakeEdgeWorld />` React component.
+- Remove `makeReactNativeIo`.
+- The assets in `lib/react-native` need to be installed into the app bundle and pulled in via HTML:
+  - Android: `file:///android_asset/edge-core/index.html`
+  - iOS: `file://${main-bundle-path}/edge-core/index.html`
+- Plugins need to be compiled as standalone scripts and installed in the same way.
+
 ## 0.14.0 (2019-02-12)
 
 - Ship the library as debug-friendly ES 2018 code. Non-standard features like Flow are still transformed out.
