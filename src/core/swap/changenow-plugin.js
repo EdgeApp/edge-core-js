@@ -147,8 +147,8 @@ export function makeChangeNowPlugin (
             for (let j = 0; j < fixedMarket.length; j++) {
               const item = fixedMarket[j]
               if (
-                item.from === request.fromCurrencyCode.toLowerCase() &&
-                item.to === obj.ticker
+                item.from === quoteParams.from &&
+                item.to === quoteParams.to
               ) {
                 pairItem = item
                 const [nativeMax, nativeMin] = await Promise.all([
