@@ -413,6 +413,7 @@ export type EdgeCurrencyWallet = {
   +id: string,
   +keys: any,
   +type: string,
+  +publicWalletInfo: EdgeWalletInfo,
   +disklet: Disklet,
   +localDisklet: Disklet,
   sync(): Promise<mixed>,

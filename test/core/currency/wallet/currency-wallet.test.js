@@ -52,6 +52,15 @@ describe('currency wallets', function () {
     log.assert(['Another Name'])
   })
 
+  it('has publicWalletInfo', async function () {
+    const [wallet] = await makeFakeCurrencyWallet()
+    expect(wallet.publicWalletInfo).deep.equals({
+      id: 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=',
+      keys: { fakeAddress: 'FakePublicAddress' },
+      type: 'wallet:fakecoin'
+    })
+  })
+
   it('triggers callbacks', async function () {
     const throttleSnooze = 50
     const log = makeAssertLog(true)

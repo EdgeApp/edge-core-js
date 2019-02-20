@@ -210,6 +210,14 @@ export type RootAction =
       }
     }
   | {
+      // Called when a currency wallet derives its public keys.
+      type: 'CURRENCY_WALLET_PUBLIC_INFO',
+      payload: {
+        walletId: string,
+        walletInfo: EdgeWalletInfo
+      }
+    }
+  | {
       // Fired when we fetch exchange pairs from some server.
       type: 'EXCHANGE_PAIRS_FETCHED',
       payload: Array<ExchangePair>

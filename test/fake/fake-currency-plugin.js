@@ -275,7 +275,9 @@ class FakeCurrencyTools {
     return Promise.resolve({ fakeKey: 'FakePrivateKey' })
   }
   derivePublicKey (walletInfo: EdgeWalletInfo): Promise<Object> {
-    return Promise.resolve({})
+    return Promise.resolve({
+      fakeAddress: 'FakePublicAddress'
+    })
   }
   getSplittableTypes (walletInfo: EdgeWalletInfo): Array<string> {
     return ['wallet:tulipcoin']

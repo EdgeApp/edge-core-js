@@ -21,7 +21,8 @@ import {
   type EdgeReceiveAddress,
   type EdgeSpendInfo,
   type EdgeTokenInfo,
-  type EdgeTransaction
+  type EdgeTransaction,
+  type EdgeWalletInfo
 } from '../../../types/types.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
@@ -57,7 +58,8 @@ const fakeMetadata = {
 export function makeCurrencyWalletApi (
   input: CurrencyWalletInput,
   plugin: EdgeCurrencyPlugin,
-  engine: EdgeCurrencyEngine
+  engine: EdgeCurrencyEngine,
+  publicWalletInfo: EdgeWalletInfo
 ) {
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
   const { walletInfo } = input.props.selfState
@@ -93,6 +95,7 @@ export function makeCurrencyWalletApi (
       lockdown()
       return storageWalletApi.keys
     },
+    publicWalletInfo,
     get disklet (): Disklet {
       return storageWalletApi.disklet
     },
