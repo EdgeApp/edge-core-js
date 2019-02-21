@@ -1,15 +1,20 @@
 // @flow
 
+import { makeReactNativeDisklet } from 'disklet'
 import React from 'react'
 
+import { parseReply } from './core/login/authServer.js'
 import { EdgeCoreBridge } from './io/react-native/react-native-webview.js'
 import {
   type EdgeContext,
   type EdgeContextOptions,
   type EdgeFakeUser,
   type EdgeFakeWorld,
-  type EdgeNativeIo
+  type EdgeLoginMessages,
+  type EdgeNativeIo,
+  NetworkError
 } from './types/types.js'
+import { timeout } from './util/promise.js'
 
 export { makeFakeIo } from './core/core.js'
 export * from './types/types.js'
@@ -64,4 +69,60 @@ export function MakeFakeEdgeWorld (props: {
       }
     />
   )
+}
+
+/**
+ * Fetches any login-related messages for all the users on this device.
+ */
+export async function fetchLoginMessages (
+  apiKey: string
+): Promise<EdgeLoginMessages> {
+  const disklet = makeReactNativeDisklet()
+
+  // Load the login stashes from disk:
+  const loginMap: { [loginId: string]: string } = {} // loginId -> username
+  const listing = await disklet.list('logins')
+  const files: Array<string> = await Promise.all(
+    Object.keys(listing)
+      .filter(path => listing[path] === 'file')
+      .map(path => disklet.getText(path).catch(() => '{}'))
+  )
+  for (const text of files) {
+    try {
+      const { username, loginId } = JSON.parse(text)
+      if (loginId == null || username == null) continue
+      loginMap[loginId] = username
+    } catch (e) {}
+  }
+
+  const uri = 'https://auth.airbitz.co/api/v2/messages'
+  const opts: RequestOptions = {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: 'Token ' + apiKey
+    },
+    body: JSON.stringify({ loginIds: Object.keys(loginMap) })
+  }
+
+  return timeout(
+    window.fetch(uri, opts),
+    30000,
+    new NetworkError('Could not reach the auth server: timeout')
+  ).then(response => {
+    if (!response.ok) {
+      throw new Error(`${uri} return status code ${response.status}`)
+    }
+
+    return response.json().then(json => {
+      const reply = parseReply(json)
+      const out = {}
+      for (const message of reply) {
+        const username = loginMap[message.loginId]
+        if (username) out[username] = message
+      }
+      return out
+    })
+  })
 }
