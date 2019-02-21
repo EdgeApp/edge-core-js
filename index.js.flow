@@ -6,6 +6,7 @@ import {
   type EdgeFakeUser,
   type EdgeFakeWorld,
   type EdgeIo,
+  type EdgeLoginMessages,
   type EdgeNativeIo
 } from './src/types/types.js'
 
@@ -47,6 +48,11 @@ declare export function MakeFakeEdgeWorld(props: {
   onLoad: (context: EdgeContext) => mixed,
   users: Array<EdgeFakeUser>
 }): any // React element
+
+/**
+ * React Native function for getting login alerts without a context:
+ */
+declare export function fetchLoginMessages(apiKey: string): EdgeLoginMessages
 
 // System-specific io exports:
 declare export function makeBrowserIo(): EdgeIo
