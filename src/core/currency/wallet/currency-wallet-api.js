@@ -21,8 +21,7 @@ import {
   type EdgeReceiveAddress,
   type EdgeSpendInfo,
   type EdgeTokenInfo,
-  type EdgeTransaction,
-  type EdgeTransactionWithUnfilteredIndex
+  type EdgeTransaction
 } from '../../../types/types.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { type ApiInput } from '../../root-pixie.js'
@@ -503,13 +502,13 @@ export function combineTxWithFile (
   tx: MergedTransaction,
   file: TransactionFile,
   currencyCode: string
-): EdgeTransactionWithUnfilteredIndex {
+): EdgeTransaction {
   const wallet = input.props.selfOutput.api
   const walletCurrency = input.props.selfState.currencyInfo.currencyCode
   const walletFiat = input.props.selfState.fiat
 
   // Copy the tx properties to the output:
-  const out: EdgeTransactionWithUnfilteredIndex = {
+  const out: EdgeTransaction = {
     blockHeight: tx.blockHeight,
     date: tx.date,
     ourReceiveAddresses: tx.ourReceiveAddresses,
