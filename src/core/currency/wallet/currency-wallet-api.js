@@ -21,7 +21,8 @@ import {
   type EdgeReceiveAddress,
   type EdgeSpendInfo,
   type EdgeTokenInfo,
-  type EdgeTransaction
+  type EdgeTransaction,
+  type EdgeTransactionWithUnfilteredIndex
 } from '../../../types/types.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { type ApiInput } from '../../root-pixie.js'
@@ -231,36 +232,55 @@ export function makeCurrencyWalletApi (
       // Decrypted metadata files
       const files = state.files
       // A sorted list of transaction based on chronological order
+      // these are tx id hashes merged between blockchain and cache some tx id hashes
+      // some may have been dropped by the blockchain
       const sortedTransactions = state.sortedTransactions.sortedList
-
+      // create map of tx id hashes to their order (cardinality)
+      const mappedUnfilteredIndexes = {}
+      sortedTransactions.forEach((item, index) => {
+        mappedUnfilteredIndexes[item] = index
+      })
       // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
       // slice, verify txs in files, if some are dropped and missing, do it again recursively
       const getBulkTx = async (index: number, out: any = []) => {
+        // if the output is already filled up or we're at the end of the list of transactions
         if (out.length === startEntries || index >= sortedTransactions.length) {
           return out
         }
+        // entries left to find = number of entries we're looking for minus the current output length
         const entriesLeft = startEntries - out.length
+        // take a slice from sorted transactions that begins at current index and goes until however many are left
         const slicedTransactions = sortedTransactions.slice(
           index,
           index + entriesLeft
         )
-        const missingTxIdHashes = slicedTransactions.filter(
-          txidHash => !files[txidHash]
-        )
+        // filter the transactions
+        const missingTxIdHashes = slicedTransactions.filter(txidHash => {
+          // remove any that do not have a file
+          return !files[txidHash]
+        })
         // load files into state
         const missingFiles = await loadTxFiles(input, missingTxIdHashes)
         Object.assign(files, missingFiles)
+        // give txs the unfilteredIndex
 
         for (const txidHash of slicedTransactions) {
           const file = files[txidHash]
-          const tx = txs[file.txid]
+          const tempTx = txs[file.txid]
           // skip irrelevant transactions - txs that are not in the files (dropped)
           if (
-            !tx ||
-            (!tx.nativeAmount[currencyCode] && !tx.networkFee[currencyCode])
+            !tempTx ||
+            (!tempTx.nativeAmount[currencyCode] &&
+              !tempTx.networkFee[currencyCode])
           ) {
+            // exit block if there is no transaction or no amount / no fee
             continue
           }
+          const tx = {
+            ...tempTx,
+            unfilteredIndex: mappedUnfilteredIndexes[txidHash]
+          }
+          // add this tx / file to the output
           out.push(combineTxWithFile(input, tx, file, currencyCode))
         }
         // continue until the required tx number loaded
@@ -483,13 +503,13 @@ export function combineTxWithFile (
   tx: MergedTransaction,
   file: TransactionFile,
   currencyCode: string
-): EdgeTransaction {
+): EdgeTransactionWithUnfilteredIndex {
   const wallet = input.props.selfOutput.api
   const walletCurrency = input.props.selfState.currencyInfo.currencyCode
   const walletFiat = input.props.selfState.fiat
 
   // Copy the tx properties to the output:
-  const out: EdgeTransaction = {
+  const out: EdgeTransactionWithUnfilteredIndex = {
     blockHeight: tx.blockHeight,
     date: tx.date,
     ourReceiveAddresses: tx.ourReceiveAddresses,
@@ -501,7 +521,7 @@ export function combineTxWithFile (
     networkFee: tx.networkFee[currencyCode],
     currencyCode,
     wallet,
-
+    unfilteredIndex: tx.unfilteredIndex,
     otherParams: {}
   }
 
