@@ -40,7 +40,6 @@ import {
   setCurrencyWalletTxMetadata
 } from './currency-wallet-files.js'
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
-import { type MergedTransaction } from './currency-wallet-reducer.js'
 
 const fakeMetadata = {
   bizId: 0,
@@ -499,16 +498,16 @@ function fixMetadata (metadata: EdgeMetadata, fiat: string) {
 
 export function combineTxWithFile (
   input: CurrencyWalletInput,
-  tx: MergedTransaction,
+  tx: any,
   file: TransactionFile,
   currencyCode: string
-): EdgeTransaction {
+): any {
   const wallet = input.props.selfOutput.api
   const walletCurrency = input.props.selfState.currencyInfo.currencyCode
   const walletFiat = input.props.selfState.fiat
 
   // Copy the tx properties to the output:
-  const out: EdgeTransaction = {
+  const out: any = {
     blockHeight: tx.blockHeight,
     date: tx.date,
     ourReceiveAddresses: tx.ourReceiveAddresses,
