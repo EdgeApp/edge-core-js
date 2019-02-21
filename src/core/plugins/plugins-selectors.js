@@ -54,42 +54,18 @@ export function getCurrencyTools (
     )
   }
 
-  // Never touched, so start the load:
-  const tools = state.plugins.currencyTools[pluginName]
-  if (tools == null) {
-    const plugin = getCurrencyPlugin(state, walletType)
-    dispatch({ type: 'CURRENCY_TOOLS_LOADING', payload: { pluginName } })
-    return plugin.makeCurrencyTools().then(
-      tools => {
-        dispatch({
-          type: 'CURRENCY_TOOLS_LOADED',
-          payload: { pluginName, tools }
-        })
-        return tools
-      },
-      error => {
-        dispatch({
-          type: 'CURRENCY_TOOLS_LOADED',
-          payload: { pluginName, tools: error }
-        })
-        throw error
-      }
-    )
-  }
-
   // Already loaded / loading:
-  return ai
-    .waitFor(props => {
-      // Still loading, so wait:
-      if (props.state.plugins.currencyTools[pluginName] === 'pending') return
-      return true
-    })
-    .then(() => {
-      // Flow doesn't realize the block above makes 'pending' impossible:
-      const tools: any = state.plugins.currencyTools[pluginName]
-      if (tools instanceof Error) throw tools
-      return tools
-    })
+  const tools = state.plugins.currencyTools[pluginName]
+  if (tools != null) return tools
+
+  // Never touched, so start the load:
+  const plugin = getCurrencyPlugin(state, walletType)
+  const promise = plugin.makeCurrencyTools()
+  dispatch({
+    type: 'CURRENCY_TOOLS_LOADED',
+    payload: { pluginName, tools: promise }
+  })
+  return promise
 }
 
 /**

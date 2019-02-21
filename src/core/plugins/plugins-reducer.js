@@ -18,7 +18,7 @@ export type PluginsState = {
   +rate: EdgePluginMap<EdgeRatePlugin>,
   +swap: EdgePluginMap<EdgeSwapPlugin>,
 
-  +currencyTools: EdgePluginMap<EdgeCurrencyTools | Error | 'pending'>
+  +currencyTools: EdgePluginMap<Promise<EdgeCurrencyTools>>
 }
 
 const initialState: PluginsState = {
@@ -55,11 +55,6 @@ export const plugins = (
     }
     case 'CORE_PLUGINS_LOCKED':
       return { ...state, locked: true }
-    case 'CURRENCY_TOOLS_LOADING': {
-      const currencyTools = { ...state.currencyTools }
-      currencyTools[action.payload.pluginName] = 'pending'
-      return { ...state, currencyTools }
-    }
     case 'CURRENCY_TOOLS_LOADED': {
       const currencyTools = { ...state.currencyTools }
       currencyTools[action.payload.pluginName] = action.payload.tools
