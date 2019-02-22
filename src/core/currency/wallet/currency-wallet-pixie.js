@@ -134,7 +134,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         payload: { height, walletId: input.props.id }
       })
     } catch (e) {
-      console.log(e)
       input.props.onError(e)
       input.props.dispatch({ type: 'CURRENCY_ENGINE_FAILED', payload: e })
     }

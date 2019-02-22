@@ -32,10 +32,12 @@ export class EdgeCoreBridge extends Component<Props> {
     this.ref = React.createRef()
 
     this.bridge = new Bridge({
-      sendMessage: message =>
+      sendMessage: message => {
+        if (props.debug) console.info('edge-core ←', message)
         this.ref.current.injectJavaScript(
           `window.bridge.handleMessage(${JSON.stringify(message)})`
         )
+      }
     })
 
     const { nativeIo = {} } = props
@@ -70,7 +72,7 @@ export class EdgeCoreBridge extends Component<Props> {
           allowFileAccess
           onMessage={event => {
             const message = JSON.parse(event.nativeEvent.data)
-            if (this.props.debug) console.info(message)
+            if (this.props.debug) console.info('edge-core →', message)
             this.bridge.handleMessage(message)
           }}
           originWhitelist={['file://*']}
