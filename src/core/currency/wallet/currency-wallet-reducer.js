@@ -65,6 +65,7 @@ export type CurrencyWalletState = {
   +name: string | null,
   +nameLoaded: boolean,
   +walletInfo: EdgeWalletInfo,
+  +publicWalletInfo: EdgeWalletInfo | null,
   +txids: Array<string>,
   +txs: { [txid: string]: MergedTransaction },
   +gotTxs: { [currencyCode: string]: boolean }
@@ -262,6 +263,12 @@ const currencyWallet = buildReducer({
 
   walletInfo (state, action, next: CurrencyWalletNext) {
     return next.root.login.walletInfos[next.id]
+  },
+
+  publicWalletInfo (state = null, action: RootAction): EdgeWalletInfo | null {
+    return action.type === 'CURRENCY_WALLET_PUBLIC_INFO'
+      ? action.payload.walletInfo
+      : state
   }
 })
 

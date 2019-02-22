@@ -13,7 +13,10 @@ import {
   type EdgeCurrencyPlugin,
   type EdgeCurrencyWallet
 } from '../../../types/types.js'
-import { getCurrencyPlugin } from '../../plugins/plugins-selectors.js'
+import {
+  getCurrencyPlugin,
+  getCurrencyTools
+} from '../../plugins/plugins-selectors.js'
 import { type ApiInput, type RootProps } from '../../root-pixie.js'
 import {
   addStorageWallet,
@@ -84,7 +87,25 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         input.props.io
       )
 
-      const engine = await plugin.makeCurrencyEngine(walletInfo, {
+      // Derive the public keys:
+      const tools = await getCurrencyTools(ai, walletInfo.type)
+      const publicWalletInfo = {
+        id: walletInfo.id,
+        type: walletInfo.type,
+        keys: await tools.derivePublicKey(walletInfo)
+      }
+      const mergedWalletInfo = {
+        id: walletInfo.id,
+        type: walletInfo.type,
+        keys: { ...walletInfo.keys, ...publicWalletInfo.keys }
+      }
+      input.props.dispatch({
+        type: 'CURRENCY_WALLET_PUBLIC_INFO',
+        payload: { walletInfo: publicWalletInfo, walletId: input.props.id }
+      })
+
+      // Start the engine:
+      const engine = await plugin.makeCurrencyEngine(mergedWalletInfo, {
         callbacks: makeCurrencyWalletCallbacks(input),
         walletLocalDisklet,
         walletLocalEncryptedDisklet,
@@ -113,6 +134,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         payload: { height, walletId: input.props.id }
       })
     } catch (e) {
+      console.log(e)
       input.props.onError(e)
       input.props.dispatch({ type: 'CURRENCY_ENGINE_FAILED', payload: e })
     }
@@ -165,13 +187,20 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       !input.props.selfOutput ||
       !input.props.selfOutput.plugin ||
       !input.props.selfOutput.engine ||
+      !input.props.selfState.publicWalletInfo ||
       !input.props.selfState.nameLoaded
     ) {
       return
     }
 
     const { plugin, engine } = input.props.selfOutput
-    const currencyWalletApi = makeCurrencyWalletApi(input, plugin, engine)
+    const { publicWalletInfo } = input.props.selfState
+    const currencyWalletApi = makeCurrencyWalletApi(
+      input,
+      plugin,
+      engine,
+      publicWalletInfo
+    )
     input.onOutput(currencyWalletApi)
 
     return stopUpdates

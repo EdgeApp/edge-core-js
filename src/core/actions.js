@@ -158,16 +158,11 @@ export type RootAction =
       }
     }
   | {
-      // Called when the core starts loading currency tools:
-      type: 'CURRENCY_TOOLS_LOADING',
-      payload: { pluginName: string }
-    }
-  | {
       // Called when the core finishes loading currency tools:
       type: 'CURRENCY_TOOLS_LOADED',
       payload: {
         pluginName: string,
-        tools: EdgeCurrencyTools | Error
+        tools: Promise<EdgeCurrencyTools>
       }
     }
   | {
@@ -212,6 +207,14 @@ export type RootAction =
       payload: {
         name: string | null,
         walletId: string
+      }
+    }
+  | {
+      // Called when a currency wallet derives its public keys.
+      type: 'CURRENCY_WALLET_PUBLIC_INFO',
+      payload: {
+        walletId: string,
+        walletInfo: EdgeWalletInfo
       }
     }
   | {
