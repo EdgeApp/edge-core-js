@@ -1,5 +1,12 @@
 # edge-core-js
 
+## 0.15.1 (2019-02-21)
+
+- Fix out of range errors for ChangeNOW.
+- Add a standalone `fetchLoginMessages` for react-native.
+- Add a secret `unfilteredIndex` hack to `EdgeCurrencyWallet.getTransactions` to work around a missing transaction bug.
+- Add an `EdgeCurrencyWallet.publicWalletInfo` property.
+
 ## 0.15.0 (2019-02-19)
 
 This is a major release with large numbers of breaking changes for all platforms:
