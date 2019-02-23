@@ -89,10 +89,14 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       // Derive the public keys:
       const tools = await getCurrencyTools(ai, walletInfo.type)
+      let publicKeys = {}
+      try {
+        publicKeys = await tools.derivePublicKey(walletInfo)
+      } catch (e) {}
       const publicWalletInfo = {
         id: walletInfo.id,
         type: walletInfo.type,
-        keys: await tools.derivePublicKey(walletInfo)
+        keys: publicKeys
       }
       const mergedWalletInfo = {
         id: walletInfo.id,
