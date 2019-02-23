@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.15.2 (2019-02-22)
+
+- Do not send rate plugin errors to `EdgeContext.on('error')`.
+
 ## 0.15.1 (2019-02-21)
 
 - Fix out of range errors for ChangeNOW.
