@@ -366,6 +366,10 @@ export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
 
 export type EdgeCurrencyTools = {
   // Keys:
+  +importPrivateKey?: (
+    key: string,
+    opts?: EdgeCreatePrivateKeyOptions
+  ) => Promise<Object>,
   createPrivateKey(
     walletType: string,
     opts?: EdgeCreatePrivateKeyOptions
@@ -594,6 +598,9 @@ export type EdgeAccountOptions = {
 export type EdgeCreateCurrencyWalletOptions = {
   fiatCurrencyCode?: string,
   name?: string,
+
+  // Create a private key from some text:
+  importText?: string,
 
   // Used to tell the currency plugin what keys to create:
   keyOptions?: EdgeCreatePrivateKeyOptions,
