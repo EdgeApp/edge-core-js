@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.15.3 (2019-02-26)
+
+- Work around bugs in the Bitcoin plugin resulting in missing wallets.
+
 ## 0.15.2 (2019-02-22)
 
 - Do not send rate plugin errors to `EdgeContext.on('error')`.
