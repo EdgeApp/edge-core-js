@@ -209,6 +209,7 @@ export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
     'wallet:qtum-bip44': { format: 'bip44', coinType: 2301 },
     // UFO:
     'wallet:ufo-bip49': { format: 'bip49', coinType: 202 },
+    'wallet:ufo-bip84': { format: 'bip84', coinType: 202 },
     // XZC:
     'wallet:zcoin': { format: 'bip32', coinType: 136 },
     'wallet:zcoin-bip44': { format: 'bip44', coinType: 136 }
