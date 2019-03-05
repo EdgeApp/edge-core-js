@@ -3,6 +3,7 @@
 import {
   type EdgeContext,
   type EdgeContextOptions,
+  type EdgeCorePlugins,
   type EdgeFakeUser,
   type EdgeFakeWorld,
   type EdgeIo,
@@ -12,6 +13,8 @@ import {
 
 export * from './src/types/types.js'
 
+declare export function addEdgeCorePlugins(plugins: EdgeCorePlugins): mixed
+declare export function lockEdgeCorePlugins(): mixed
 declare export function closeEdge(): mixed
 declare export function makeFakeIo(): EdgeIo
 
