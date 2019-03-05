@@ -12,6 +12,8 @@ import {
 
 export * from './src/types/types.js'
 
+declare export function addEdgeCorePlugins(): mixed
+declare export function lockEdgeCorePlugins(): mixed
 declare export function closeEdge(): mixed
 declare export function makeFakeIo(): EdgeIo
 
