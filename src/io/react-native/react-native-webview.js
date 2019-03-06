@@ -23,37 +23,52 @@ type Props = {
  * Launches the Edge core worker in a WebView and returns its API.
  */
 export class EdgeCoreBridge extends Component<Props> {
-  bridge: Bridge
-  ref: Object
-  root: WorkerApi
+  onMessage: Function
+  setWebview: Function
 
   constructor (props: Props) {
     super(props)
-    this.ref = React.createRef()
+    const { nativeIo = {} } = props
 
-    this.bridge = new Bridge({
+    // Listen for the webview component to mount:
+    let webview
+    const webviewReady = new Promise(resolve => {
+      this.setWebview = element => {
+        console.log(
+          'edge-core WebView.ref called with ' +
+            (element == null ? 'null' : 'non-null')
+        )
+        webview = element
+        if (element != null) resolve()
+      }
+    })
+
+    // Create a yaob bridge:
+    const bridge = new Bridge({
       sendMessage: message => {
+        if (webview == null) {
+          throw new Error('The edge-core worker has been unmounted.')
+        }
         if (props.debug) console.info('edge-core ←', message)
-        this.ref.current.injectJavaScript(
+        webview.injectJavaScript(
           `window.bridge.handleMessage(${JSON.stringify(message)})`
         )
       }
     })
+    this.onMessage = event => {
+      const message = JSON.parse(event.nativeEvent.data)
+      if (props.debug) console.info('edge-core →', message)
+      bridge.handleMessage(message)
+    }
 
-    const { nativeIo = {} } = props
-    Promise.all([makeClientIo(), this.bridge.getRoot()])
+    // Fire our callback once everything is ready:
+    Promise.all([makeClientIo(), bridge.getRoot(), webviewReady])
       .then(([coreIo, root]) => {
         nativeIo['edge-core'] = coreIo
         for (const n in nativeIo) bridgifyObject(nativeIo[n])
-
-        this.root = root
         return props.onLoad(nativeIo, root)
       })
       .catch(error => props.onError(error))
-  }
-
-  componentWillUnmount () {
-    if (this.root) this.root.closeEdge()
   }
 
   render () {
@@ -70,13 +85,9 @@ export class EdgeCoreBridge extends Component<Props> {
       <View style={this.props.debug ? styles.debug : styles.hidden}>
         <WebView
           allowFileAccess
-          onMessage={event => {
-            const message = JSON.parse(event.nativeEvent.data)
-            if (this.props.debug) console.info('edge-core →', message)
-            this.bridge.handleMessage(message)
-          }}
+          onMessage={this.onMessage}
           originWhitelist={['file://*']}
-          ref={this.ref}
+          ref={this.setWebview}
           source={{ uri }}
         />
       </View>

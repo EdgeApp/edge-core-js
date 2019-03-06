@@ -21,8 +21,6 @@ export type ClientIo = {
 }
 
 export type WorkerApi = {
-  closeEdge(): mixed,
-
   makeEdgeContext(
     nativeIo: EdgeNativeIo,
     opts: EdgeContextOptions

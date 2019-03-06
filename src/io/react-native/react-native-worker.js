@@ -7,7 +7,6 @@ import { Bridge, bridgifyObject } from 'yaob'
 
 import {
   addEdgeCorePlugins,
-  closeEdge,
   lockEdgeCorePlugins,
   makeContext,
   makeFakeWorld
@@ -41,10 +40,6 @@ function makeIo (nativeIo: EdgeNativeIo): EdgeIo {
 }
 
 const workerApi: WorkerApi = bridgifyObject({
-  closeEdge () {
-    closeEdge()
-  },
-
   makeEdgeContext (nativeIo, opts) {
     return makeContext(makeIo(nativeIo), nativeIo, opts)
   },
