@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.15.4 (2019-03-05)
+
+- Harden the react-native WebView bridge to avoid crashes.
+- Add Flow types for the plugin initialization functions.
+
 ## 0.15.3 (2019-02-26)
 
 - Work around bugs in the Bitcoin plugin resulting in missing wallets.
