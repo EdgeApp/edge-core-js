@@ -47,7 +47,9 @@ export class EdgeCoreBridge extends Component<Props> {
     const bridge = new Bridge({
       sendMessage: message => {
         if (webview == null) {
-          throw new Error('The edge-core worker has been unmounted.')
+          return setTimeout(() => {
+            throw new Error('The edge-core worker has been unmounted.')
+          }, 1000)
         }
         if (props.debug) console.info('edge-core ←', message)
         webview.injectJavaScript(
