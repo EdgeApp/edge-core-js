@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.15.7
+
+- Delay bridge crash
+
 ## 0.15.4 (2019-03-05)
 
 - Harden the react-native WebView bridge to avoid crashes.
