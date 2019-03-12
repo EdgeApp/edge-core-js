@@ -23,7 +23,10 @@ const info = {
   ],
 
   // Account syncKey in base64:
-  syncKey: '4lTrhShflldKM7/pexP1M/4kW0I='
+  syncKey: '4lTrhShflldKM7/pexP1M/4kW0I=',
+
+  // Log in using a non-normalized username:
+  username: 'JS Test 0'
 }
 
 export const fakeUserDump: EdgeFakeUser = {
@@ -210,4 +213,4 @@ export const fakeUserDump: EdgeFakeUser = {
   }
 }
 
-export const fakeUser = { ...info, ...fakeUserDump }
+export const fakeUser = { ...fakeUserDump, ...info }

@@ -6,6 +6,7 @@ import { makeMemoryDisklet } from 'disklet'
 import { base16, base64 } from 'rfc4648'
 import { bridgifyObject, close } from 'yaob'
 
+import { fixUsername } from '../../client-side.js'
 import {
   type EdgeAccount,
   type EdgeContext,
@@ -29,7 +30,11 @@ async function saveUser (io: EdgeIo, user: EdgeFakeUser) {
 
   // Save the stash:
   const stash = applyLoginReply(
-    { appId: '', otpKey: user.server.otpKey, username },
+    {
+      appId: '',
+      otpKey: user.server.otpKey,
+      username: fixUsername(username)
+    },
     base64.parse(loginKey),
     user.server
   )
