@@ -186,10 +186,8 @@ export type EdgeTransaction = {
 
 export type EdgeSpendTarget = {
   currencyCode?: string,
-  destWallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
   publicAddress?: string,
   nativeAmount?: string,
-  destMetadata?: EdgeMetadata,
   otherParams?: Object
 }
 
@@ -206,8 +204,6 @@ export type EdgeSpendInfo = {
   noUnconfirmed?: boolean,
   privateKeys?: Array<string>,
   spendTargets: Array<EdgeSpendTarget>,
-  nativeAmount?: string,
-  quoteFor?: string,
   networkFeeOption?: string, // 'high' | 'standard' | 'low' | 'custom',
   customNetworkFee?: any, // Some kind of currency-specific JSON
   metadata?: EdgeMetadata,
