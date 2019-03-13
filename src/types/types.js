@@ -170,23 +170,32 @@ export type EdgeNetworkFee = {
 }
 
 export type EdgeTransaction = {
-  txid: string,
-  date: number,
+  // Amounts:
   currencyCode: string,
-  blockHeight: number,
   nativeAmount: string,
+
+  // Fees:
   networkFee: string,
-  ourReceiveAddresses: Array<string>,
-  signedTx: string,
   parentNetworkFee?: string,
+
+  // Confirmation status:
+  blockHeight: number,
+  date: number,
+
+  // Transaction info:
+  txid: string,
+  signedTx: string,
+  ourReceiveAddresses: Array<string>,
+
+  // Core:
   metadata?: EdgeMetadata,
-  otherParams: any,
-  wallet?: EdgeCurrencyWallet // eslint-disable-line no-use-before-define
+  wallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
+  otherParams?: Object
 }
 
 export type EdgeSpendTarget = {
-  publicAddress?: string,
   nativeAmount?: string,
+  publicAddress?: string,
   otherParams?: Object
 }
 
@@ -199,12 +208,17 @@ export type EdgePaymentProtocolInfo = {
 }
 
 export type EdgeSpendInfo = {
+  // Basic information:
   currencyCode?: string,
-  noUnconfirmed?: boolean,
   privateKeys?: Array<string>,
   spendTargets: Array<EdgeSpendTarget>,
+
+  // Options:
+  noUnconfirmed?: boolean,
   networkFeeOption?: string, // 'high' | 'standard' | 'low' | 'custom',
-  customNetworkFee?: any, // Some kind of currency-specific JSON
+  customNetworkFee?: Object, // Some kind of currency-specific JSON
+
+  // Core:
   metadata?: EdgeMetadata,
   otherParams?: Object
 }
