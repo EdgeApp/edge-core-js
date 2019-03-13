@@ -185,7 +185,6 @@ export type EdgeTransaction = {
 }
 
 export type EdgeSpendTarget = {
-  currencyCode?: string,
   publicAddress?: string,
   nativeAmount?: string,
   otherParams?: Object
