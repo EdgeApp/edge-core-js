@@ -9,6 +9,10 @@ import {
 } from '../../../types/types.js'
 import { compare } from '../../../util/compare.js'
 import {
+  pushUpdate,
+  enableTestMode
+} from '../../../util/updateQueue.js'
+import {
   getStorageWalletLastChanges,
   hashStorageWalletFilename
 } from '../../storage/storage-selectors.js'
@@ -73,6 +77,7 @@ export function makeCurrencyWalletCallbacks (
   // If this is a unit test, lower throttling to something testable:
   if (walletId === 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=') {
     throttleRateLimitMs = 25
+    enableTestMode()
   }
 
   const throtteldOnTxChanged = makeThrottledTxCallback(
@@ -101,23 +106,41 @@ export function makeCurrencyWalletCallbacks (
 
   return {
     onAddressesChecked (ratio: number) {
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO',
-        payload: { ratio, walletId }
+      pushUpdate({
+        id: walletId,
+        action: 'onAddressesChecked',
+        updateFunc: () => {
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO',
+            payload: { ratio, walletId }
+          })
+        }
       })
     },
 
     onBalanceChanged (currencyCode: string, balance: string) {
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-        payload: { balance, currencyCode, walletId }
+      pushUpdate({
+        id: walletId + '==' + currencyCode,
+        action: 'onBalanceChanged',
+        updateFunc: () => {
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
+            payload: { balance, currencyCode, walletId }
+          })
+        }
       })
     },
 
     onBlockHeightChanged (height: number) {
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
-        payload: { height, walletId }
+      pushUpdate({
+        id: walletId,
+        action: 'onBlockHeightChanged',
+        updateFunc: () => {
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
+            payload: { height, walletId }
+          })
+        }
       })
     },
 
