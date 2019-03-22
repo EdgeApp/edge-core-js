@@ -1,6 +1,14 @@
-.idea
-.vscode
-/lib
-/node_modules
-package-lock.json
+# Build output:
+lib/
 types.js
+
+# Package managers:
+node_modules/
+npm-debug.log
+package-lock.json
+yarn-error.log
+
+# Editors:
+.DS_Store
+.idea/
+.vscode/
