@@ -2213,10 +2213,10 @@ dir-glob@^2.0.0:
     arrify "^1.0.1"
     path-type "^3.0.0"
 
-disklet@^0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.3.1.tgz#ad2a1399ac959480c47f3e3aa06f7cfdaa7e0af7"
-  integrity sha512-TkE2dRJLAot/YTxxSLo5BWqGcolDv6tuvVJOjd0LGO0Qru4R5jjp/55WrI15UOYOlFXLhqVBf54RT9nKsdQ/jQ==
+disklet@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.4.0.tgz#2d4f15dfd8c2b5da6ea1941710939edd63643f7a"
+  integrity sha512-zScgyX2SZBlrQGrV+IZH3zC+pkRz5N13Xb0fPHoafarwzGjjocTrRrieKZw3FAyNu789buUk/2SGXFagSI/QVQ==
   dependencies:
     rfc4648 "^0.9.1"
 
