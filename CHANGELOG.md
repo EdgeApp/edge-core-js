@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.15.8 (2019-03-22)
+
+- Throttle wallet updates.
+- Upgrade to disklet v0.4.0.
+- Add an optional `EdgeCurrencyTools.importPrivateKey` method.
+
 ## 0.15.7
 
 - Delay bridge crash
