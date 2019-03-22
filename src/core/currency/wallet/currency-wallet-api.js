@@ -566,8 +566,6 @@ export function combineTxWithFile (
       // Corrupt amountFiat that exceeds a number that JS can cleanly represent without exponents. Set to 0
       out.metadata.amountFiat = 0
     }
-  } else {
-    input.props.io.console.info('Missing amountFiat in combineTxWithFile')
   }
 
   return out
