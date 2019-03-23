@@ -8,10 +8,7 @@ import {
   type EdgeTransaction
 } from '../../../types/types.js'
 import { compare } from '../../../util/compare.js'
-import {
-  pushUpdate,
-  enableTestMode
-} from '../../../util/updateQueue.js'
+import { enableTestMode, pushUpdate } from '../../../util/updateQueue.js'
 import {
   getStorageWalletLastChanges,
   hashStorageWalletFilename

@@ -1,5 +1,6 @@
 // @flow
 
+import { type Disklet } from 'disklet'
 import {
   type PixieInput,
   type TamePixie,
@@ -11,7 +12,9 @@ import { update } from 'yaob'
 import {
   type EdgeCurrencyEngine,
   type EdgeCurrencyPlugin,
-  type EdgeCurrencyWallet
+  type EdgeCurrencyTools,
+  type EdgeCurrencyWallet,
+  type EdgeWalletInfo
 } from '../../../types/types.js'
 import {
   getCurrencyPlugin,
@@ -50,6 +53,8 @@ export type CurrencyWalletProps = RootProps & {
 
 export type CurrencyWalletInput = PixieInput<CurrencyWalletProps>
 
+const PUBLIC_KEY_CACHE = 'publicKey.json'
+
 export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Looks up the currency plugin for this wallet:
   plugin: (input: CurrencyWalletInput) => () => {
@@ -87,17 +92,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         input.props.io
       )
 
-      // Derive the public keys:
       const tools = await getCurrencyTools(ai, walletInfo.type)
-      let publicKeys = {}
-      try {
-        publicKeys = await tools.derivePublicKey(walletInfo)
-      } catch (e) {}
-      const publicWalletInfo = {
-        id: walletInfo.id,
-        type: walletInfo.type,
-        keys: publicKeys
-      }
+      const publicWalletInfo = await getPublicWalletInfo(
+        walletInfo,
+        walletLocalDisklet,
+        tools
+      )
       const mergedWalletInfo = {
         id: walletInfo.id,
         type: walletInfo.type,
@@ -268,3 +268,49 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     }
   }
 })
+
+/**
+ * Attempts to load/derive the wallet public keys.
+ */
+async function getPublicWalletInfo (
+  walletInfo: EdgeWalletInfo,
+  disklet: Disklet,
+  tools: EdgeCurrencyTools
+): Promise<EdgeWalletInfo> {
+  // Try to load the cache:
+  try {
+    const publicKeyCache = await disklet
+      .getText(PUBLIC_KEY_CACHE)
+      .then(text => JSON.parse(text))
+    if (
+      publicKeyCache != null &&
+      publicKeyCache.walletInfo != null &&
+      publicKeyCache.walletInfo.keys != null &&
+      publicKeyCache.walletInfo.id === walletInfo.id &&
+      publicKeyCache.walletInfo.type === walletInfo.type
+    ) {
+      return publicKeyCache.walletInfo
+    }
+  } catch (e) {}
+
+  // Derive the public keys:
+  let publicKeys = {}
+  try {
+    publicKeys = await tools.derivePublicKey(walletInfo)
+  } catch (e) {}
+  const publicWalletInfo = {
+    id: walletInfo.id,
+    type: walletInfo.type,
+    keys: publicKeys
+  }
+
+  // Save the cache if it's not empty:
+  if (Object.keys(publicKeys).length > 0) {
+    await disklet.setText(
+      PUBLIC_KEY_CACHE,
+      JSON.stringify({ walletInfo: publicWalletInfo })
+    )
+  }
+
+  return publicWalletInfo
+}
