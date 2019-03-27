@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.15.9 (2019-03-27)
+
+- Cache public keys at wallet start-up.
+- Reduce logging related to missing fiat amounts.
+
 ## 0.15.8 (2019-03-22)
 
 - Throttle wallet updates.
