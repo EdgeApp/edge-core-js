@@ -25,16 +25,16 @@
     "Allen Hujsak <allen@edge.app>"
   ],
   "files": [
-    "CHANGELOG.md",
-    "index.js.flow",
-    "index.js",
-    "lib/*",
-    "LICENSE",
-    "package.json",
-    "README.md",
-    "src/types/*",
-    "types.js.flow",
-    "types.js"
+    "/CHANGELOG.md",
+    "/index.js.flow",
+    "/index.js",
+    "/lib/*",
+    "/LICENSE",
+    "/package.json",
+    "/README.md",
+    "/src/types/*",
+    "/types.js.flow",
+    "/types.js"
   ],
   "main": "./index.js",
   "module": "./lib/index.js",
