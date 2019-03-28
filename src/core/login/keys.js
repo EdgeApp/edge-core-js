@@ -200,6 +200,7 @@ export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
     // DOGE:
     'wallet:dogecoin-bip44': { format: 'bip44', coinType: 3 },
     // LTC:
+    'wallet:litecoin': { format: 'bip32', coinType: 2 },
     'wallet:litecoin-bip44': { format: 'bip44', coinType: 2 },
     'wallet:litecoin-bip49': { format: 'bip49', coinType: 2 },
     // FTC:
