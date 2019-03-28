@@ -175,6 +175,15 @@ export function getAllWalletInfos (
 
 /**
  * Upgrades legacy wallet info structures into the new format.
+ *
+ * Wallets normally have `wallet:pluginName` as their type,
+ * but some legacy wallets also put format information into the wallet type.
+ * This routine moves the information out of the wallet type into the keys.
+ *
+ * It also provides some other default values as a historical accident,
+ * but the bitcoin plugin can just provide its own fallback values if
+ * `format` or `coinType` are missing. Please don't make the problem worse
+ * by adding more code here!
  */
 export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
   const { id, keys, type } = walletInfo
@@ -182,7 +191,6 @@ export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
   // Wallet types we need to fix:
   const defaults = {
     // BTC:
-    'wallet:bitcoin': { format: 'bip32' },
     'wallet:bitcoin-bip44': { format: 'bip44', coinType: 0 },
     'wallet:bitcoin-bip49': { format: 'bip49', coinType: 0 },
     // BCH:
@@ -190,17 +198,14 @@ export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
     'wallet:bitcoincash-bip44': { format: 'bip44', coinType: 145 },
     // BCH testnet:
     'wallet:bitcoincash-bip44-testnet': { format: 'bip44', coinType: 1 },
-    'wallet:bitcoincash-testnet': { format: 'bip32' },
     // BTC testnet:
     'wallet:bitcoin-bip44-testnet': { format: 'bip44', coinType: 1 },
     'wallet:bitcoin-bip49-testnet': { format: 'bip49', coinType: 1 },
-    'wallet:bitcoin-testnet': { format: 'bip32' },
     // DASH:
     'wallet:dash-bip44': { format: 'bip44', coinType: 5 },
     // DOGE:
     'wallet:dogecoin-bip44': { format: 'bip44', coinType: 3 },
     // LTC:
-    'wallet:litecoin': { format: 'bip32', coinType: 2 },
     'wallet:litecoin-bip44': { format: 'bip44', coinType: 2 },
     'wallet:litecoin-bip49': { format: 'bip49', coinType: 2 },
     // FTC:
@@ -212,8 +217,15 @@ export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
     'wallet:ufo-bip49': { format: 'bip49', coinType: 202 },
     'wallet:ufo-bip84': { format: 'bip84', coinType: 202 },
     // XZC:
-    'wallet:zcoin': { format: 'bip32', coinType: 136 },
-    'wallet:zcoin-bip44': { format: 'bip44', coinType: 136 }
+    'wallet:zcoin-bip44': { format: 'bip44', coinType: 136 },
+
+    // The plugin itself could handle these lines, but they are here
+    // as a historical accident. Please don't add more:
+    'wallet:bitcoin-testnet': { format: 'bip32' },
+    'wallet:bitcoin': { format: 'bip32' },
+    'wallet:bitcoincash-testnet': { format: 'bip32' },
+    'wallet:litecoin': { format: 'bip32', coinType: 2 },
+    'wallet:zcoin': { format: 'bip32', coinType: 136 }
   }
 
   if (defaults[type]) {
