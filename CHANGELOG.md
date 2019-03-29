@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.15.10 (2019-03-29)
+
+- Do not let missing files crash `EdgeCurrencyWallet.getTransactions`.
+- Fix a packaging error that would wrongly include `src/index.js` in the distribution.
+- Work around bad Litecoin defaults in the bitcoin plugin.
+
 ## 0.15.9 (2019-03-27)
 
 - Cache public keys at wallet start-up.
