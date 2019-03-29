@@ -269,6 +269,7 @@ export function makeCurrencyWalletApi (
 
         for (const txidHash of slicedTransactions) {
           const file = files[txidHash]
+          if (file == null) continue
           const tempTx = txs[file.txid]
           // skip irrelevant transactions - txs that are not in the files (dropped)
           if (
