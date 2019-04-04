@@ -43,7 +43,7 @@ export function waitForCurrencyWallet (
     (props: RootProps): EdgeCurrencyWallet | void => {
       // If the wallet id doesn't even exist, bail out:
       if (!props.state.currency.wallets[walletId]) {
-        throw new Error(`Wallet ${walletId} is not a supported type`)
+        throw new Error(`Wallet id ${walletId} does not exist in this account`)
       }
 
       // Return the error if one exists:
