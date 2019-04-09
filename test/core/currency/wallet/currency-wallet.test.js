@@ -62,6 +62,7 @@ describe('currency wallets', function () {
   })
 
   it('triggers callbacks', async function () {
+    const throttleBug = 10 // Lines with this delay only exist as a temporary hack
     const throttleSnooze = 50
     const log = makeAssertLog(true)
     const [wallet, config] = await makeFakeCurrencyWallet()
@@ -84,19 +85,23 @@ describe('currency wallets', function () {
     expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '0' })
 
     await config.changeUserSettings({ tokenBalance: 30 })
+    await snooze(throttleBug)
     log.assert(['balances {FAKE:0,TOKEN:30}'])
     expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '30' })
 
     await config.changeUserSettings({ blockHeight: 200 })
+    await snooze(throttleBug)
     log.assert(['blockHeight 200'])
     assert.equal(wallet.getBlockHeight(), 200)
     expect(wallet.blockHeight).to.equal(200)
 
     await config.changeUserSettings({ progress: 0.123456789 })
+    await snooze(throttleBug)
     expect(wallet.syncRatio).to.equal(0.123456789)
     log.assert(['syncRatio 0.123456789'])
 
     await config.changeUserSettings({ balance: 1234567890 })
+    await snooze(throttleBug)
     log.assert(['balances {FAKE:1234567890,TOKEN:30}'])
 
     // New transactions:

@@ -13,5 +13,8 @@
     "no-var": "error",
     "prefer-const": "error",
     "standard/computed-property-even-spacing": "off"
+  },
+  "settings": {
+    "react": { "pragma": "React", "version": "16.8.0" }
   }
 }
