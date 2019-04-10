@@ -49,20 +49,33 @@ const workerApi: WorkerApi = bridgifyObject({
   }
 })
 
-// Start the object bridge:
-function sendRoot () {
+/**
+ * Legacy WebView support.
+ */
+function oldSendRoot () {
   if (window.originalPostMessage != null) {
     const reactPostMessage = window.postMessage
     window.postMessage = window.originalPostMessage
-
     window.bridge = new Bridge({
       sendMessage: message => reactPostMessage(JSON.stringify(message))
     })
     window.bridge.sendRoot(workerApi)
     changeStatus('sent root')
   } else {
-    setTimeout(sendRoot, 100)
+    setTimeout(oldSendRoot, 100)
     changeStatus('waiting')
   }
 }
-sendRoot()
+
+// Start the object bridge:
+if (window.ReactNativeWebView != null) {
+  window.bridge = new Bridge({
+    sendMessage (message) {
+      window.ReactNativeWebView.postMessage(JSON.stringify(message))
+    }
+  })
+  window.bridge.sendRoot(workerApi)
+  changeStatus('sent root')
+} else {
+  oldSendRoot()
+}
