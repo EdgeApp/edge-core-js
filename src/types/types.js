@@ -242,7 +242,7 @@ export type EdgeTxidMap = { [txid: string]: number }
 // URI -----------------------------------------------------------------
 
 export type EdgeParsedUri = {
-  token?: EdgeTokenInfo,
+  token?: EdgeMetaToken,
   privateKeys?: Array<string>,
   publicAddress?: string,
   legacyAddress?: string,
@@ -392,11 +392,11 @@ export type EdgeCurrencyTools = {
   parseUri(
     uri: string,
     currencyCode?: string,
-    customTokens?: Array<CustomTokenInfo>
+    customTokens?: Array<EdgeMetaToken>
   ): Promise<EdgeParsedUri>,
   encodeUri(
     obj: EdgeEncodeUri,
-    customTokens?: Array<CustomTokenInfo>
+    customTokens?: Array<EdgeMetaToken>
   ): Promise<string>
 }
 
@@ -514,15 +514,8 @@ export type EdgeCurrencyWallet = {
   exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
 
   // URI handling:
-  parseUri(
-    uri: string,
-    currencyCode?: string,
-    customTokens?: Array<CustomTokenInfo>
-  ): Promise<EdgeParsedUri>,
-  encodeUri(
-    obj: EdgeEncodeUri,
-    customTokens?: Array<CustomTokenInfo>
-  ): Promise<string>,
+  parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri>,
+  encodeUri(obj: EdgeEncodeUri): Promise<string>,
 
   +otherMethods: Object,
 

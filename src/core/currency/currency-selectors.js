@@ -3,13 +3,13 @@
 import {
   type EdgeCurrencyInfo,
   type EdgeCurrencyWallet,
-  type EdgeTokenInfo
+  type EdgeMetaToken
 } from '../../types/types.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 
 export function getCurrencyMultiplier (
   currencyInfos: Array<EdgeCurrencyInfo>,
-  tokenInfos: Array<EdgeTokenInfo>,
+  metaTokens: Array<EdgeMetaToken>,
   currencyCode: string
 ): string {
   for (const info of currencyInfos) {
@@ -28,8 +28,12 @@ export function getCurrencyMultiplier (
     }
   }
 
-  for (const info of tokenInfos) {
-    if (info.currencyCode === currencyCode) return info.multiplier
+  for (const token of metaTokens) {
+    for (const denomination of token.denominations) {
+      if (denomination.name === currencyCode) {
+        return denomination.multiplier
+      }
+    }
   }
 
   return '1'
