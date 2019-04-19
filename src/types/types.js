@@ -267,7 +267,8 @@ export type EdgeEncodeUri = {
   legacyAddress?: string,
   nativeAmount?: string,
   label?: string,
-  message?: string
+  message?: string,
+  currencyCode?: string
 }
 
 // options -------------------------------------------------------------
@@ -364,6 +365,16 @@ export type EdgeBitcoinPrivateKeyOptions = {
 // Add other currencies to this list as they gather options:
 export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
 
+export type CustomTokenInfo = {
+  currencyName: string,
+  currencyCode: string,
+  contractAddress: string,
+  multiplier: string,
+  denomination: string, // eventually change to mandatory
+  isVisible?: boolean, // eventually change to mandatory,
+  denominations: Array<EdgeDenomination>
+}
+
 export type EdgeCurrencyTools = {
   // Keys:
   +importPrivateKey?: (
@@ -378,8 +389,15 @@ export type EdgeCurrencyTools = {
   +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
 
   // URIs:
-  parseUri(uri: string): Promise<EdgeParsedUri>,
-  encodeUri(obj: EdgeEncodeUri): Promise<string>
+  parseUri(
+    uri: string,
+    currencyCode?: string,
+    customTokens?: Array<CustomTokenInfo>
+  ): Promise<EdgeParsedUri>,
+  encodeUri(
+    obj: EdgeEncodeUri,
+    customTokens?: Array<CustomTokenInfo>
+  ): Promise<string>
 }
 
 export type EdgeCurrencyPlugin = {
@@ -496,8 +514,15 @@ export type EdgeCurrencyWallet = {
   exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
 
   // URI handling:
-  parseUri(uri: string): Promise<EdgeParsedUri>,
-  encodeUri(obj: EdgeEncodeUri): Promise<string>,
+  parseUri(
+    uri: string,
+    currencyCode?: string,
+    customTokens?: Array<CustomTokenInfo>
+  ): Promise<EdgeParsedUri>,
+  encodeUri(
+    obj: EdgeEncodeUri,
+    customTokens?: Array<CustomTokenInfo>
+  ): Promise<string>,
 
   +otherMethods: Object,
 
