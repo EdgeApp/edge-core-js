@@ -8,6 +8,7 @@ import {
   lockEdgeCorePlugins
 } from '../../src/index.js'
 import { fakeCurrencyPlugin } from './fake-currency-plugin.js'
+import { fakeSwapPlugin } from './fake-swap-plugin.js'
 
 export const brokenExchangePlugin: EdgeRatePlugin = {
   rateInfo: {
@@ -48,6 +49,7 @@ addEdgeCorePlugins({
   },
   'broken-exchange': () => brokenExchangePlugin,
   'fake-exchange': fakeExchangePlugin,
-  fakecoin: fakeCurrencyPlugin
+  fakecoin: fakeCurrencyPlugin,
+  fakeswap: fakeSwapPlugin
 })
 lockEdgeCorePlugins()
