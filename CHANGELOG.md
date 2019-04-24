@@ -1,5 +1,12 @@
 # edge-core-js
 
+## 0.15.11 (2019-04-24)
+
+- Support `react-native-webview` ^5.0.1.
+- Pass custom tokens to currency plugin URI logic.
+- Improve logging & error messages.
+- Remove unused `EdgeSpendInfo` fields.
+
 ## 0.15.10 (2019-03-29)
 
 - Do not let missing files crash `EdgeCurrencyWallet.getTransactions`.
