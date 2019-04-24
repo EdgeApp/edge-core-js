@@ -5,8 +5,8 @@ import { buildReducer, mapReducer, memoizeReducer } from 'redux-keto'
 import {
   type EdgeCurrencyInfo,
   type EdgeCurrencyPlugin,
-  type EdgePluginMap,
-  type EdgeTokenInfo
+  type EdgeMetaToken,
+  type EdgePluginMap
 } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
 import { type RootState } from '../root-reducer.js'
@@ -17,7 +17,7 @@ import {
 
 export type CurrencyState = {
   +currencyWalletIds: Array<string>,
-  +customTokens: Array<EdgeTokenInfo>,
+  +customTokens: Array<EdgeMetaToken>,
   +infos: Array<EdgeCurrencyInfo>,
   +wallets: { [walletId: string]: CurrencyWalletState }
 }
@@ -36,11 +36,27 @@ export const currency = buildReducer({
     return [].concat(...allIds)
   },
 
-  customTokens (state = [], action: RootAction): Array<EdgeTokenInfo> {
+  customTokens (state = [], action: RootAction): Array<EdgeMetaToken> {
     if (action.type === 'ADDED_CUSTOM_TOKEN') {
-      const currencyCode = action.payload.currencyCode
+      const {
+        currencyCode,
+        currencyName,
+        contractAddress,
+        multiplier
+      } = action.payload
+      const token = {
+        currencyCode,
+        currencyName,
+        contractAddress,
+        denominations: [
+          {
+            name: currencyCode,
+            multiplier
+          }
+        ]
+      }
       const out = state.filter(info => info.currencyCode !== currencyCode)
-      out.push(action.payload)
+      out.push(token)
       return out
     }
     return state

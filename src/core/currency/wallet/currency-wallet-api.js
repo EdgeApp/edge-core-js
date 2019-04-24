@@ -6,7 +6,6 @@ import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { CurrencyWalletSync } from '../../../client-side.js'
 import {
-  type CustomTokenInfo,
   type EdgeBalances,
   type EdgeCurrencyCodeOptions,
   type EdgeCurrencyEngine,
@@ -466,21 +465,18 @@ export function makeCurrencyWalletApi (
       return getMax('0', add(balance, '1'))
     },
 
-    async parseUri (
-      uri: string,
-      currencyCode?: string,
-      customTokens?: Array<CustomTokenInfo>
-    ): Promise<EdgeParsedUri> {
+    async parseUri (uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
       const tools = await getCurrencyTools(ai, walletInfo.type)
-      return tools.parseUri(uri, currencyCode, customTokens)
+      return tools.parseUri(
+        uri,
+        currencyCode,
+        input.props.state.currency.customTokens
+      )
     },
 
-    async encodeUri (
-      obj: EdgeEncodeUri,
-      customTokens?: Array<CustomTokenInfo>
-    ): Promise<string> {
+    async encodeUri (obj: EdgeEncodeUri): Promise<string> {
       const tools = await getCurrencyTools(ai, walletInfo.type)
-      return tools.encodeUri(obj, customTokens)
+      return tools.encodeUri(obj, input.props.state.currency.customTokens)
     },
 
     otherMethods,
