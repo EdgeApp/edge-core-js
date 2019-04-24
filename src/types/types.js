@@ -365,16 +365,6 @@ export type EdgeBitcoinPrivateKeyOptions = {
 // Add other currencies to this list as they gather options:
 export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
 
-export type CustomTokenInfo = {
-  currencyName: string,
-  currencyCode: string,
-  contractAddress: string,
-  multiplier: string,
-  denomination: string, // eventually change to mandatory
-  isVisible?: boolean, // eventually change to mandatory,
-  denominations: Array<EdgeDenomination>
-}
-
 export type EdgeCurrencyTools = {
   // Keys:
   +importPrivateKey?: (
