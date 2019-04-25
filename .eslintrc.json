@@ -1,11 +1,10 @@
 {
   "extends": [
-    "plugin:flowtype/recommended",
-    "plugin:react/recommended",
-    "standard"
+    "standard-kit",
+    "standard-kit/node",
+    "standard-kit/jsx",
+    "standard-kit/flow"
   ],
-  "parser": "babel-eslint",
-  "plugins": ["flowtype", "react", "standard"],
   "rules": {
     "camelcase": "error",
     "flowtype/generic-spacing": "off",
@@ -13,8 +12,5 @@
     "no-var": "error",
     "prefer-const": "error",
     "standard/computed-property-even-spacing": "off"
-  },
-  "settings": {
-    "react": { "pragma": "React", "version": "16.8.0" }
   }
 }
