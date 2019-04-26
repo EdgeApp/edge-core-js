@@ -126,6 +126,46 @@ interface PublicBitcoinKey {
 
 This format is currently disabled, since it has problems. Given the presence of hardened derivation in several of the formats, it's not clear exactly which Xpub is being saved here. This needs to be locked down before the format can be enabled.
 
+### Multi-branch format
+
+The format above requires separate wallets for Segwit / non-segwit coins. We would like to create wallets with multiple branches in one, which means creating an alternative to the `format` field.
+
+Proposal: Set `format` to `*`. Then, the following structure determines which branches are enabled:
+
+```typescript
+interface BitcoinPrivateMultiKey {
+  bitcoinKey: string,
+  coinType: string,
+  format: '*',
+  bip44?: true,
+  bip49?: true,
+  bip84?: true
+}
+```
+
+It is *not* valid to set `bip44` or any of the other flags to `false`. If a branch is not enabled, its property is simply not present. This makes it possible to enable branches later without creating key integrity violations.
+
+The public key format is as follows:
+
+```typescript
+interface BitcoinPublicMultiKey {
+  bitcoinKey: string,
+  coinType: string,
+  format: '*',
+  bip44Xpub?: string,
+  bip49Xpub?: string,
+  bip84Xpub?: string
+}
+```
+
+These public keys represent the derivation *after* all the hardened steps:
+
+- `bip44Xpub`: m/44'/coinType'/0'
+- `bip49Xpub`: m/49'/coinType'/0'
+- `bip84Xpub`: m/84'/coinType'/0'
+
+If format is something other than '*', like 'bip44', but there are also flags like `bip49` set to `true`, the wallet will check both the original `format` branch and the new flag branches. This provides a way to upgrade legacy wallets.
+
 ### Wrong wallet types
 
 Edge had a mistake early on which produced a lot of keys with invalid wallet types, like `wallet:bitcoin-bip44`. There is no plugin called `bitcoin-bip44`, so the normal plugin-matching logic doesn't apply here.
