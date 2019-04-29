@@ -18,15 +18,14 @@ describe('plugins system', function () {
         'broken-exchange': true,
         'fake-exchange': true,
         'missing-plugin': false,
-        faast: false,
         fakecoin: true,
-        shapeshift: { apiKey: '' }
+        fakeswap: { apiKey: '' }
       }
     })
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     expect(Object.keys(account.currencyConfig)).deep.equals(['fakecoin'])
-    expect(Object.keys(account.swapConfig)).deep.equals(['shapeshift'])
+    expect(Object.keys(account.swapConfig)).deep.equals(['fakeswap'])
   })
 
   it('cannot log in with broken plugins', async function () {
@@ -37,7 +36,7 @@ describe('plugins system', function () {
         'broken-plugin': true,
         'fake-exchange': true,
         'missing-plugin': true,
-        shapeshift: false
+        fakeswap: false
       }
     })
     return expectRejection(

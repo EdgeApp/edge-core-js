@@ -133,40 +133,27 @@ describe('account', function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
-      plugins: {
-        changelly: { apiKey: 'fake-key', secret: 'fake-secret' },
-        changenow: { apiKey: 'fake-key' },
-        faast: { affiliateId: 'fake-id', affiliateMargin: 0.5 },
-        shapeshift: { apiKey: 'fake-key' }
-      }
+      plugins: { fakeswap: true }
     })
     const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     // Check the initial settings:
-    expect(account1.swapConfig).has.keys(
-      'changelly',
-      'shapeshift',
-      'faast',
-      'changenow'
-    )
+    expect(account1.swapConfig).has.keys('fakeswap')
 
-    const config1 = account1.swapConfig.shapeshift
-    expect(config1.swapInfo.pluginName).equals('shapeshift')
+    const config1 = account1.swapConfig.fakeswap
+    expect(config1.swapInfo.pluginName).equals('fakeswap')
     expect(config1.needsActivation).equals(true)
     expect(config1.userSettings).equals(void 0)
 
     // Change the settings:
-    const settings = {
-      accessToken: 'fake-token',
-      refreshToken: 'fake-token'
-    }
+    const settings = { kycToken: 'fake-token' }
     await config1.changeUserSettings(settings)
     expect(config1.userSettings).deep.equals(settings)
     expect(config1.needsActivation).equals(false)
 
     // Log in again, and the setting should still be there:
     const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const config2 = account2.swapConfig.shapeshift
+    const config2 = account2.swapConfig.fakeswap
     expect(config2.userSettings).deep.equals(settings)
     expect(config1.needsActivation).equals(false)
   })
@@ -175,21 +162,19 @@ describe('account', function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
-      plugins: {
-        changelly: { apiKey: 'fake-key', secret: 'fake-secret' }
-      }
+      plugins: { fakeswap: true }
     })
 
     // Check the initial settings:
     const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const config1 = account1.swapConfig.changelly
+    const config1 = account1.swapConfig.fakeswap
     expect(config1.enabled).equals(true)
     await config1.changeEnabled(false)
     expect(config1.enabled).equals(false)
 
     // Log in again, and the setting should still be there:
     const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const config2 = account2.swapConfig.changelly
+    const config2 = account2.swapConfig.fakeswap
     expect(config2.enabled).equals(false)
     await config2.changeEnabled(true)
     expect(config2.enabled).equals(true)
