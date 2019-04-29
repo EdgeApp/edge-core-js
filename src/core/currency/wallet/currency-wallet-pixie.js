@@ -107,6 +107,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         type: 'CURRENCY_WALLET_PUBLIC_INFO',
         payload: { walletInfo: publicWalletInfo, walletId: input.props.id }
       })
+      const canSpend: boolean =
+        tools.isPrivateKey != null ? await tools.isPrivateKey(walletInfo) : true
 
       // Start the engine:
       const engine = await plugin.makeCurrencyEngine(mergedWalletInfo, {
@@ -119,6 +121,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
         payload: {
           walletId: walletInfo.id,
+          canSpend,
           displayPrivateSeed: engine.getDisplayPrivateSeed(),
           displayPublicSeed: engine.getDisplayPublicSeed()
         }
@@ -296,7 +299,9 @@ async function getPublicWalletInfo (
   // Derive the public keys:
   let publicKeys = {}
   try {
-    publicKeys = await tools.derivePublicKey(walletInfo)
+    if (tools.derivePublicKey != null) {
+      publicKeys = await tools.derivePublicKey(walletInfo)
+    }
   } catch (e) {}
   const publicWalletInfo = {
     id: walletInfo.id,

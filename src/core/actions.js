@@ -113,6 +113,7 @@ export type RootAction =
       // Called when a currency engine returns the display private & public seeds.
       type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
       payload: {
+        canSpend: boolean,
         displayPublicSeed: string | null,
         displayPrivateSeed: string | null,
         walletId: string

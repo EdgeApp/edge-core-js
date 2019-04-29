@@ -87,7 +87,7 @@ export type EdgePluginMap<Value> = { [pluginName: string]: Value }
 export type EdgeWalletInfo = {
   id: string,
   type: string,
-  keys: any
+  keys: Object
 }
 
 export type EdgeWalletInfoFull = {
@@ -352,7 +352,10 @@ export type EdgeCurrencyEngine = {
 
   // Spending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
-  signTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
+  signTx(
+    transaction: EdgeTransaction,
+    walletInfo: EdgeWalletInfo
+  ): Promise<EdgeTransaction>,
   broadcastTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
   saveTx(transaction: EdgeTransaction): Promise<mixed>,
   +sweepPrivateKeys?: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
@@ -381,12 +384,13 @@ export type EdgeCurrencyTools = {
     newWalletType: string,
     opts?: EdgeCreatePrivateKeyOptions
   ): Promise<Object>,
-  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<Object>,
+  +derivePublicKey?: (walletInfo: EdgeWalletInfo) => Promise<Object>,
   +importKey?: (
     newWalletType: string,
     keyText: string,
     opts?: EdgeCreatePrivateKeyOptions
   ) => Promise<Object>,
+  +isPrivateKey?: (walletInfo: EdgeWalletInfo) => Promise<boolean>,
   +listSplittableTypes?: (walletInfo: EdgeWalletInfo) => Promise<Array<string>>,
   +splitKey?: (
     newWalletType: string,
@@ -447,6 +451,7 @@ export type EdgeCurrencyWallet = {
   sync(): Promise<mixed>,
 
   // Wallet keys:
+  +canSpend: boolean,
   +displayPrivateSeed: string | null,
   +displayPublicSeed: string | null,
 

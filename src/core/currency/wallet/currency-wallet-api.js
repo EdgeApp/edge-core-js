@@ -107,6 +107,9 @@ export function makeCurrencyWalletApi (
     },
 
     // Wallet keys:
+    get canSpend (): boolean {
+      return input.props.selfState.canSpend
+    },
     get displayPrivateSeed (): string | null {
       lockdown()
       return input.props.selfState.displayPrivateSeed
@@ -377,7 +380,7 @@ export function makeCurrencyWalletApi (
     },
 
     async signTx (tx: EdgeTransaction): Promise<EdgeTransaction> {
-      return engine.signTx(tx)
+      return engine.signTx(tx, walletInfo)
     },
 
     async broadcastTx (tx: EdgeTransaction): Promise<EdgeTransaction> {
