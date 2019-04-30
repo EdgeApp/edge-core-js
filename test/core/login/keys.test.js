@@ -3,11 +3,8 @@
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import {
-  fixWalletInfo,
-  makeSplitWalletInfo,
-  mergeKeyInfos
-} from '../../../src/core/login/keys.js'
+import { fixWalletInfo, mergeKeyInfos } from '../../../src/core/login/keys.js'
+import { makeSplitWalletInfo } from '../../../src/core/login/split.js'
 
 const ID_1 = 'PPptx6SBfwGXM+FZURMvYnsOfHpIKZBbqXTCbYmFd44='
 const ID_2 = 'y14MYFMP6vnip2hUBP7aqB6Ut0d4UNqHV9a/2vgE9eQ='
