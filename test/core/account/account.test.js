@@ -63,7 +63,7 @@ describe('account', function () {
     const id = await account.createWallet('wallet:fakecoin')
     const info = account.allKeys.find(info => info.id === id)
     if (!info) throw new Error('Missing key info')
-    assert.equal(info.keys.fakeKey, 'FakePrivateKey')
+    assert.equal(info.keys.fakecoinKey, 'FakePrivateKey')
   })
 
   it('create currency wallet', async function () {
@@ -220,18 +220,16 @@ describe('account', function () {
 
     // Check the keys:
     expect(fakecoinWallet.keys.dataKey).equals(tulipWallet.keys.dataKey)
-    expect(fakecoinWallet.keys.fakecoinKey).equals(
-      tulipWallet.keys.tulipcoinKey
-    )
+    expect(fakecoinWallet.keys.fakecoinKey).equals(tulipWallet.keys.tulipKey)
 
     // Now that the wallet is split, we can't split again:
     expect(
       await account.listSplittableWalletTypes(fakecoinWallet.id)
     ).deep.equals([])
 
-    // Splitting back should not work:
+    // Splitting again should not work:
     await expectRejection(
-      account.splitWalletInfo(tulipWallet.id, 'wallet:fakecoin'),
+      account.splitWalletInfo(fakecoinWallet.id, 'wallet:tulipcoin'),
       'Error: This wallet has already been split'
     )
   })

@@ -3,6 +3,7 @@
 import { base64 } from 'rfc4648'
 
 import {
+  type EdgeCurrencyTools,
   type EdgeCurrencyWallet,
   type EdgeMetadata,
   type EdgeWalletInfo
@@ -31,43 +32,63 @@ export function xorData (a: Uint8Array, b: Uint8Array): Uint8Array {
   return out
 }
 
-export function makeSplitWalletInfo (
-  walletInfo: EdgeWalletInfo,
-  newWalletType: string
-): EdgeWalletInfo {
-  const { id, type, keys } = walletInfo
-  if (!keys.dataKey || !keys.syncKey) {
-    throw new Error(`Wallet ${id} is not a splittable type`)
-  }
-
+function deriveXorKey (
+  newWalletType: string,
+  walletInfo: EdgeWalletInfo
+): Uint8Array {
+  const { keys, type } = walletInfo
   const dataKey = base64.parse(keys.dataKey)
-  const syncKey = base64.parse(keys.syncKey)
-  const xorKey = xorData(
+  return xorData(
     hmacSha256(utf8.parse(type), dataKey),
     hmacSha256(utf8.parse(newWalletType), dataKey)
   )
+}
 
-  // Fix the id:
-  const newWalletId = xorData(base64.parse(id), xorKey)
-  const newSyncKey = xorData(syncKey, xorKey.subarray(0, syncKey.length))
+function splitWalletId (
+  newWalletType: string,
+  walletInfo: EdgeWalletInfo
+): string {
+  const { id } = walletInfo
+  const xorKey = deriveXorKey(newWalletType, walletInfo)
+  return base64.stringify(xorData(base64.parse(id), xorKey))
+}
 
-  // Fix the keys:
-  const networkName = type.replace(/wallet:/, '').replace('-', '')
-  const newNetworkName = newWalletType.replace(/wallet:/, '').replace('-', '')
-  const newKeys = {}
-  for (const key of Object.keys(keys)) {
-    if (key === networkName + 'Key') {
-      newKeys[newNetworkName + 'Key'] = keys[key]
-    } else {
-      newKeys[key] = keys[key]
-    }
-  }
+function splitStorageKeys (
+  newWalletType: string,
+  walletInfo: EdgeWalletInfo
+): Object {
+  const { keys } = walletInfo
+  const xorKey = deriveXorKey(newWalletType, walletInfo)
+  const syncKey = base64.parse(keys.syncKey)
 
   return {
-    id: base64.stringify(newWalletId),
+    dataKey: keys.dataKey,
+    syncKey: base64.stringify(
+      xorData(syncKey, xorKey.subarray(0, syncKey.length))
+    )
+  }
+}
+
+export async function splitWalletInfo (
+  tools: EdgeCurrencyTools,
+  newWalletType: string,
+  walletInfo: EdgeWalletInfo
+): Promise<EdgeWalletInfo> {
+  const { id, keys } = walletInfo
+  if (keys.dataKey == null || keys.syncKey == null) {
+    throw new Error(`Wallet ${id} is not a splittable type`)
+  }
+
+  if (tools.splitKey == null) {
+    throw new Error("This currency plugin doesn't do splitting")
+  }
+  const pluginKeys = await tools.splitKey(newWalletType, walletInfo)
+
+  return {
+    id: splitWalletId(newWalletType, walletInfo),
     keys: {
-      ...newKeys,
-      syncKey: base64.stringify(newSyncKey)
+      ...splitStorageKeys(newWalletType, walletInfo),
+      ...pluginKeys
     },
     type: newWalletType
   }
@@ -113,7 +134,7 @@ async function protectBchWallet (wallet: EdgeCurrencyWallet) {
   await wallet.saveTxMetadata(broadcastedTaintTx.txid, 'BCH', edgeMetadata)
 }
 
-export async function splitWalletInfo (
+export async function splitWallet (
   ai: ApiInput,
   accountId: string,
   walletId: string,
@@ -150,7 +171,8 @@ export async function splitWalletInfo (
   }
 
   // See if the wallet has already been split:
-  const newWalletInfo = makeSplitWalletInfo(walletInfo, newWalletType)
+  const tools = await getCurrencyTools(ai, walletInfo.type)
+  const newWalletInfo = await splitWalletInfo(tools, newWalletType, walletInfo)
   const existingWalletInfo = allWalletInfosFull.find(
     walletInfo => walletInfo.id === newWalletInfo.id
   )
@@ -204,17 +226,19 @@ export async function listSplittableWalletTypes (
   // Get the list of available types:
   const tools = await getCurrencyTools(ai, walletInfo.type)
   const types =
-    tools.getSplittableTypes != null ? tools.getSplittableTypes(walletInfo) : []
+    tools.listSplittableTypes != null
+      ? await tools.listSplittableTypes(walletInfo)
+      : []
 
   // Filter out wallet types we have already split:
   return types.filter(type => {
-    const newWalletInfo = makeSplitWalletInfo(walletInfo, type)
+    const newWalletId = splitWalletId(type, walletInfo)
     const existingWalletInfo = allWalletInfosFull.find(
-      walletInfo => walletInfo.id === newWalletInfo.id
+      walletInfo => walletInfo.id === newWalletId
     )
     // We can split the wallet if it doesn't exist, or is deleted:
     return (
-      !existingWalletInfo ||
+      existingWalletInfo == null ||
       existingWalletInfo.archived ||
       existingWalletInfo.deleted
     )

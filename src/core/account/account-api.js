@@ -39,7 +39,7 @@ import {
 } from '../login/password.js'
 import { changePin, checkPin2, deletePin } from '../login/pin2.js'
 import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
-import { listSplittableWalletTypes, splitWalletInfo } from '../login/split.js'
+import { listSplittableWalletTypes, splitWallet } from '../login/split.js'
 import { getCurrencyTools } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
@@ -280,7 +280,7 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
       walletId: string,
       newWalletType: string
     ): Promise<string> {
-      return splitWalletInfo(ai, accountId, walletId, newWalletType)
+      return splitWallet(ai, accountId, walletId, newWalletType)
     },
     async listSplittableWalletTypes (walletId: string): Promise<Array<string>> {
       return listSplittableWalletTypes(ai, accountId, walletId)

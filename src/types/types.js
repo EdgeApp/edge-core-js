@@ -385,7 +385,11 @@ export type EdgeCurrencyTools = {
     opts?: EdgeCreatePrivateKeyOptions
   ): Promise<Object>,
   derivePublicKey(walletInfo: EdgeWalletInfo): Promise<Object>,
-  +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
+  +listSplittableTypes?: (walletInfo: EdgeWalletInfo) => Promise<Array<string>>,
+  +splitKey?: (
+    newWalletType: string,
+    walletInfo: EdgeWalletInfo
+  ) => Promise<Object>,
 
   // URIs:
   parseUri(
