@@ -28,6 +28,60 @@ Not all wallets can operate with just public keys. Monero, in particular, has tr
 
 Since Edge doesn't have this feature yet, the public key format is "work in progress". We *do* cache some element of these keys on disk for faster startup times, so the format needs to at least be semi-functional.
 
+## Methods
+
+```typescript
+interface EdgeCurrencyTools {
+  createPrivateKey(
+    newWalletType: string,
+    opts?: EdgeCreatePrivateKeyOptions
+  ): Promise<Object>
+
+  readonly derivePublicKey?: (walletInfo: EdgeWalletInfo) => Promise<Object>
+
+  readonly importKey?: (
+    newWalletType: string,
+    keyText: string,
+    opts?: EdgeCreatePrivateKeyOptions
+  ) => Promise<Object>
+
+  readonly isPrivateKey?: (walletInfo: EdgeWalletInfo) => Promise<boolean>
+
+  readonly listSplittableTypes?: (
+    walletInfo: EdgeWalletInfo
+  ) => Promise<Array<string>>
+
+  readonly splitKey?: (
+    newWalletType: string,
+    walletInfo: EdgeWalletInfo
+  ) => Promise<Object>
+}
+```
+
+### createPrivateKey
+
+Create a new private key. The wallet will treat the returned object as the new wallet's `EdgeWalletInfo.keys` property. This method can use `EdgeIo.random` as a source of entropy (passed at plugin creation time).
+
+### derivePublicKey
+
+Creates an key that can see funds, but not spend. Depending on the input data, this may involve some mixture of deriving public fields (like addresses) and removing private fields (like spending keys). The wallet will treat the returned object as the new wallet's `EdgeWalletInfo.keys` property, and will potentially store it in clear-text on the device.
+
+### importKey
+
+Creates a new private or public key from some user-supplied text. The wallet will treat the returned object as the new wallet's `EdgeWalletInfo.keys` property.
+
+### isPrivateKey
+
+Returns true if an `EdgeWalletInfo` contains spending-capable keys.
+
+### listSplittableTypes
+
+Given an `EdgeWalletInfo`, return a list of wallet types that are possible to split into. This should examine all potential compatibility concerns, such as segwit wallets not being able to split to non-segwit chains (like BCH).
+
+### splitKey
+
+Creates a new private or public key from a different coin's `EdgeWalletInfo`. The wallet will treat the returned object as the new wallet's `EdgeWalletInfo.keys` property. The main requirement is that doing a round-trip between two different coin types should produce the *exact* same keys the wallet started with. Starting with a public (read-only) key should produce another public key, and starting with a private key should produce another private key.
+
 # Detailed key formats
 
 ## Storage keys
