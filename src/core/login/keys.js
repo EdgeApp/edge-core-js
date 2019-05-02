@@ -249,11 +249,11 @@ export async function createCurrencyWallet (
   let keys
   if (opts.keys != null) {
     keys = opts.keys
-  } else if (opts.importText) {
-    if (tools.importPrivateKey == null) {
+  } else if (opts.importText != null) {
+    if (tools.importKey == null) {
       throw new Error('This wallet does not support importing keys')
     }
-    keys = await tools.importPrivateKey(opts.importText)
+    keys = await tools.importKey(walletType, opts.importText, opts.keyOptions)
   } else {
     keys = await tools.createPrivateKey(walletType, opts.keyOptions)
   }

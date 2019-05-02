@@ -142,6 +142,7 @@ export type EdgeCurrencyInfo = {
   // Configuration options:
   defaultSettings: any,
   metaTokens: Array<EdgeMetaToken>,
+  canImportKey?: boolean,
 
   // Explorers:
   addressExplorer: string,
@@ -376,15 +377,16 @@ export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
 
 export type EdgeCurrencyTools = {
   // Keys:
-  +importPrivateKey?: (
-    key: string,
-    opts?: EdgeCreatePrivateKeyOptions
-  ) => Promise<Object>,
   createPrivateKey(
-    walletType: string,
+    newWalletType: string,
     opts?: EdgeCreatePrivateKeyOptions
   ): Promise<Object>,
   derivePublicKey(walletInfo: EdgeWalletInfo): Promise<Object>,
+  +importKey?: (
+    newWalletType: string,
+    keyText: string,
+    opts?: EdgeCreatePrivateKeyOptions
+  ) => Promise<Object>,
   +listSplittableTypes?: (walletInfo: EdgeWalletInfo) => Promise<Array<string>>,
   +splitKey?: (
     newWalletType: string,
