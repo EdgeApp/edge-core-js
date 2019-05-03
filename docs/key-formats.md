@@ -31,21 +31,21 @@ Since Edge doesn't have this feature yet, the public key format is "work in prog
 ## Methods
 
 ```typescript
+type KeysJson = object
+
 interface EdgeCurrencyTools {
   createPrivateKey(
-    newWalletType: string,
     opts?: EdgeCreatePrivateKeyOptions
-  ): Promise<Object>
+  ): Promise<KeysJson>
 
   readonly derivePublicKey?: (walletInfo: EdgeWalletInfo) => Promise<Object>
 
   readonly importKey?: (
-    newWalletType: string,
     keyText: string,
     opts?: EdgeCreatePrivateKeyOptions
-  ) => Promise<Object>
+  ) => Promise<KeysJson>
 
-  readonly isPrivateKey?: (walletInfo: EdgeWalletInfo) => Promise<boolean>
+  readonly keyCanSpend?: (walletInfo: EdgeWalletInfo) => Promise<boolean>
 
   readonly listSplittableTypes?: (
     walletInfo: EdgeWalletInfo
@@ -54,7 +54,7 @@ interface EdgeCurrencyTools {
   readonly splitKey?: (
     newWalletType: string,
     walletInfo: EdgeWalletInfo
-  ) => Promise<Object>
+  ) => Promise<KeysJson>
 }
 ```
 

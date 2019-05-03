@@ -253,9 +253,9 @@ export async function createCurrencyWallet (
     if (tools.importKey == null) {
       throw new Error('This wallet does not support importing keys')
     }
-    keys = await tools.importKey(walletType, opts.importText, opts.keyOptions)
+    keys = await tools.importKey(opts.importText, opts.keyOptions)
   } else {
-    keys = await tools.createPrivateKey(walletType, opts.keyOptions)
+    keys = await tools.createPrivateKey(opts.keyOptions)
   }
 
   const walletInfo = makeStorageKeyInfo(ai, walletType, keys)

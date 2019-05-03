@@ -108,7 +108,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         payload: { walletInfo: publicWalletInfo, walletId: input.props.id }
       })
       const canSpend: boolean =
-        tools.isPrivateKey != null ? await tools.isPrivateKey(walletInfo) : true
+        tools.keyCanSpend != null ? await tools.keyCanSpend(walletInfo) : true
 
       // Start the engine:
       const engine = await plugin.makeCurrencyEngine(mergedWalletInfo, {

@@ -380,17 +380,13 @@ export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
 
 export type EdgeCurrencyTools = {
   // Keys:
-  createPrivateKey(
-    newWalletType: string,
-    opts?: EdgeCreatePrivateKeyOptions
-  ): Promise<Object>,
+  createPrivateKey(opts?: EdgeCreatePrivateKeyOptions): Promise<Object>,
   +derivePublicKey?: (walletInfo: EdgeWalletInfo) => Promise<Object>,
   +importKey?: (
-    newWalletType: string,
     keyText: string,
     opts?: EdgeCreatePrivateKeyOptions
   ) => Promise<Object>,
-  +isPrivateKey?: (walletInfo: EdgeWalletInfo) => Promise<boolean>,
+  +keyCanSpend?: (walletInfo: EdgeWalletInfo) => Promise<boolean>,
   +listSplittableTypes?: (walletInfo: EdgeWalletInfo) => Promise<Array<string>>,
   +splitKey?: (
     newWalletType: string,

@@ -265,13 +265,7 @@ class FakeCurrencyEngine {
  */
 class FakeCurrencyTools {
   // Keys:
-  createPrivateKey (
-    walletType: string,
-    opts?: EdgeCreatePrivateKeyOptions
-  ): Promise<Object> {
-    if (walletType !== fakeCurrencyInfo.walletType) {
-      throw new Error('Unsupported key type')
-    }
+  createPrivateKey (opts?: EdgeCreatePrivateKeyOptions): Promise<Object> {
     return Promise.resolve({ fakecoinKey: 'FakePrivateKey' })
   }
   derivePublicKey (walletInfo: EdgeWalletInfo): Promise<Object> {
@@ -279,13 +273,13 @@ class FakeCurrencyTools {
       fakeAddress: 'FakePublicAddress'
     })
   }
+  keyCanSpend (walletInfo: EdgeWalletInfo): Promise<boolean> {
+    return Promise.resolve(true)
+  }
   listSplittableTypes (walletInfo: EdgeWalletInfo): Promise<Array<string>> {
     return Promise.resolve(['wallet:tulipcoin'])
   }
   splitKey (newWalletType: string, walletInfo: EdgeWalletInfo): Promise<Object> {
-    if (newWalletType !== 'wallet:tulipcoin') {
-      throw new Error('Cannot split to this type')
-    }
     return Promise.resolve({
       tulipKey: walletInfo.keys.fakecoinKey
     })
