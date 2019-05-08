@@ -30,6 +30,15 @@ export class EdgeCoreBridge extends Component<Props> {
     super(props)
     const { nativeIo = {} } = props
 
+    // Set up the native IO objects:
+    const nativeIoPromise = makeClientIo().then(coreIo => {
+      const bridgedIo = { 'edge-core': coreIo }
+      for (const n in nativeIo) {
+        bridgedIo[n] = bridgifyObject(nativeIo[n])
+      }
+      return bridgedIo
+    })
+
     // Listen for the webview component to mount:
     let webview
     const webviewReady = new Promise(resolve => {
@@ -64,12 +73,8 @@ export class EdgeCoreBridge extends Component<Props> {
     }
 
     // Fire our callback once everything is ready:
-    Promise.all([makeClientIo(), bridge.getRoot(), webviewReady])
-      .then(([coreIo, root]) => {
-        nativeIo['edge-core'] = coreIo
-        for (const n in nativeIo) bridgifyObject(nativeIo[n])
-        return props.onLoad(nativeIo, root)
-      })
+    Promise.all([nativeIoPromise, bridge.getRoot(), webviewReady])
+      .then(([nativeIo, root]) => props.onLoad(nativeIo, root))
       .catch(error => props.onError(error))
   }
 
