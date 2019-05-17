@@ -1,5 +1,16 @@
 # edge-core-js
 
+## 0.16.0 (2019-05-17)
+
+Breaking changes:
+
+- Remove swap plugins from core. These now live in the `edge-exchange-plugins` project.
+- Tighten up spending-related Flow types
+
+Fixes:
+
+- Do not fail login when accounts contain broken Ethereum keys.
+
 ## 0.15.11 (2019-04-24)
 
 - Support `react-native-webview` ^5.0.1.
