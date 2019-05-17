@@ -432,12 +432,6 @@ export function makeCurrencyWalletApi (
       // Copy all the spend targets, setting the amounts to 0
       // but keeping all other information so we can get accurate fees:
       const spendTargets = spendInfo.spendTargets.map(spendTarget => {
-        if (
-          spendTarget.currencyCode &&
-          spendTarget.currencyCode !== currencyCode
-        ) {
-          throw new Error('Cannot to a cross-currency max-spend')
-        }
         return { ...spendTarget, nativeAmount: '0' }
       })
 
