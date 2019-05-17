@@ -15,12 +15,12 @@ type UpdateQueue = {
 const updateQueue: Array<UpdateQueue> = []
 let timeOut
 
-export function enableTestMode () {
+export function enableTestMode() {
   QUEUE_JOBS_PER_RUN = 99
   QUEUE_RUN_DELAY = 1
 }
 
-export function pushUpdate (update: UpdateQueue) {
+export function pushUpdate(update: UpdateQueue) {
   if (!updateQueue.length) {
     startQueue()
   }
@@ -37,7 +37,7 @@ export function pushUpdate (update: UpdateQueue) {
   }
 }
 
-export function removeIdFromQueue (id: string) {
+export function removeIdFromQueue(id: string) {
   for (let i = 0; i < updateQueue.length; i++) {
     const update = updateQueue[i]
     if (id === update.id) {
@@ -50,7 +50,7 @@ export function removeIdFromQueue (id: string) {
   }
 }
 
-function startQueue () {
+function startQueue() {
   timeOut = setTimeout(() => {
     const numJobs =
       QUEUE_JOBS_PER_RUN < updateQueue.length

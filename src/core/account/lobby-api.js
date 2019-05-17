@@ -22,7 +22,7 @@ type AppIdInfo = {
 /**
  * Translate an appId into a user-presentable icon and string.
  */
-export async function fetchAppIdInfo (
+export async function fetchAppIdInfo(
   ai: ApiInput,
   appId: string
 ): Promise<AppIdInfo> {
@@ -48,7 +48,7 @@ export async function fetchAppIdInfo (
 /**
  * Performs an edge login, approving the request in the provided lobby JSON.
  */
-async function approveLoginRequest (
+async function approveLoginRequest(
   ai: ApiInput,
   accountId: string,
   appId: string,
@@ -94,7 +94,7 @@ async function approveLoginRequest (
 /**
  * Fetches the contents of a lobby and returns them as an EdgeLobby API.
  */
-export async function makeLobbyApi (
+export async function makeLobbyApi(
   ai: ApiInput,
   accountId: string,
   lobbyId: string
@@ -114,7 +114,7 @@ export async function makeLobbyApi (
       appId,
       displayName,
       displayImageUrl,
-      approve (): Promise<mixed> {
+      approve(): Promise<mixed> {
         return approveLoginRequest(ai, accountId, appId, lobbyId, lobbyJson)
       }
     }

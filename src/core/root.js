@@ -27,7 +27,7 @@ const composeEnhancers =
  * This core object contains the `io` object, context options,
  * Redux store, and tree of background workers.
  */
-export async function makeContext (
+export async function makeContext(
   io: EdgeIo,
   nativeIo: EdgeNativeIo,
   opts: EdgeContextOptions
@@ -73,7 +73,7 @@ export async function makeContext (
       rootPixie,
       (props: ReduxProps<RootState, RootAction>): RootProps => ({
         ...props,
-        close () {
+        close() {
           closePixie()
           closePlugins()
           redux.dispatch({ type: 'CLOSE' })
@@ -98,7 +98,7 @@ export async function makeContext (
 /**
  * We use this for unit testing, to kill all core contexts.
  */
-export function closeEdge () {
+export function closeEdge() {
   for (const context of allContexts) context.close()
   allContexts = []
 }

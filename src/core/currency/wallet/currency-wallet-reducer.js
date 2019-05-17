@@ -79,7 +79,7 @@ export type CurrencyWalletNext = {
 }
 
 const currencyWallet = buildReducer({
-  accountId (state, action, next: CurrencyWalletNext): string {
+  accountId(state, action, next: CurrencyWalletNext): string {
     if (state) return state
     for (const accountId in next.root.accounts) {
       const account = next.root.accounts[accountId]
@@ -100,40 +100,40 @@ const currencyWallet = buildReducer({
     }
   ),
 
-  currencyInfo (state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
+  currencyInfo(state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
     if (state) return state
     return getCurrencyPlugin(next.root, next.self.walletInfo.type).currencyInfo
   },
 
-  displayPrivateSeed (state = null, action: RootAction): string | null {
+  displayPrivateSeed(state = null, action: RootAction): string | null {
     return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
       ? action.payload.displayPrivateSeed
       : state
   },
 
-  displayPublicSeed (state = null, action: RootAction): string | null {
+  displayPublicSeed(state = null, action: RootAction): string | null {
     return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
       ? action.payload.displayPublicSeed
       : state
   },
 
-  engineFailure (state = null, action: RootAction): Error | null {
+  engineFailure(state = null, action: RootAction): Error | null {
     return action.type === 'CURRENCY_ENGINE_FAILED'
       ? action.payload.error
       : state
   },
 
-  fiat (state = '', action: RootAction): string {
+  fiat(state = '', action: RootAction): string {
     return action.type === 'CURRENCY_WALLET_FIAT_CHANGED'
       ? action.payload.fiatCurrencyCode
       : state
   },
 
-  fiatLoaded (state = false, action: RootAction): boolean {
+  fiatLoaded(state = false, action: RootAction): boolean {
     return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' ? true : state
   },
 
-  files (state: TxFileJsons = {}, action: RootAction): TxFileJsons {
+  files(state: TxFileJsons = {}, action: RootAction): TxFileJsons {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_CHANGED': {
         const { json, txidHash } = action.payload
@@ -152,7 +152,7 @@ const currencyWallet = buildReducer({
     return state
   },
 
-  sortedTransactions (
+  sortedTransactions(
     state = { txidHashes: {}, sortedList: [] },
     action: RootAction
   ): SortedTransactions {
@@ -173,7 +173,7 @@ const currencyWallet = buildReducer({
     return state
   },
 
-  fileNames (state = {}, action: RootAction): TxFileNames {
+  fileNames(state = {}, action: RootAction): TxFileNames {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
         const { txFileNames } = action.payload
@@ -193,17 +193,17 @@ const currencyWallet = buildReducer({
     return state
   },
 
-  fileNamesLoaded (state = false, action: RootAction): boolean {
+  fileNamesLoaded(state = false, action: RootAction): boolean {
     return action.type === 'CURRENCY_WALLET_FILE_NAMES_LOADED' ? true : state
   },
 
-  syncRatio (state = 0, action: RootAction): number {
+  syncRatio(state = 0, action: RootAction): number {
     return action.type === 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO'
       ? action.payload.ratio
       : state
   },
 
-  balances (state = {}, action: RootAction): EdgeBalances {
+  balances(state = {}, action: RootAction): EdgeBalances {
     if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
       const out = { ...state }
       out[action.payload.currencyCode] = action.payload.balance
@@ -212,19 +212,19 @@ const currencyWallet = buildReducer({
     return state
   },
 
-  height (state = 0, action: RootAction): number {
+  height(state = 0, action: RootAction): number {
     return action.type === 'CURRENCY_ENGINE_CHANGED_HEIGHT'
       ? action.payload.height
       : state
   },
 
-  name (state = null, action: RootAction): string | null {
+  name(state = null, action: RootAction): string | null {
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED'
       ? action.payload.name
       : state
   },
 
-  nameLoaded (state = false, action: RootAction): boolean {
+  nameLoaded(state = false, action: RootAction): boolean {
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ? true : state
   },
 
@@ -233,7 +233,7 @@ const currencyWallet = buildReducer({
     (txs): Array<string> => Object.keys(txs)
   ),
 
-  txs (
+  txs(
     state = {},
     action: RootAction,
     next: CurrencyWalletNext
@@ -255,25 +255,25 @@ const currencyWallet = buildReducer({
     return state
   },
 
-  gotTxs (state = {}, action: RootAction): { [currencyCode: string]: boolean } {
+  gotTxs(state = {}, action: RootAction): { [currencyCode: string]: boolean } {
     if (action.type === 'CURRENCY_ENGINE_GOT_TXS') {
       state[action.payload.currencyCode] = true
     }
     return state
   },
 
-  walletInfo (state, action, next: CurrencyWalletNext) {
+  walletInfo(state, action, next: CurrencyWalletNext) {
     return next.root.login.walletInfos[next.id]
   },
 
-  publicWalletInfo (state = null, action: RootAction): EdgeWalletInfo | null {
+  publicWalletInfo(state = null, action: RootAction): EdgeWalletInfo | null {
     return action.type === 'CURRENCY_WALLET_PUBLIC_INFO'
       ? action.payload.walletInfo
       : state
   }
 })
 
-export function sortTxs (txidHashes: TxidHashes, newHashes: TxidHashes) {
+export function sortTxs(txidHashes: TxidHashes, newHashes: TxidHashes) {
   for (const newTxidHash in newHashes) {
     const newTime = newHashes[newTxidHash]
     if (!txidHashes[newTxidHash] || newTime < txidHashes[newTxidHash]) {
@@ -315,7 +315,7 @@ const defaultTx: MergedTransaction = {
 /**
  * Merges a new incoming transaction with an existing transaction.
  */
-export function mergeTx (
+export function mergeTx(
   tx: EdgeTransaction,
   defaultCurrency: string,
   oldTx: MergedTransaction = defaultTx

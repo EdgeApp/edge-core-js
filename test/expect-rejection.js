@@ -5,7 +5,7 @@ import { expect } from 'chai'
 /**
  * Verifies that a promise rejects with a particular error.
  */
-export function expectRejection (
+export function expectRejection(
   promise: Promise<mixed>,
   message?: string
 ): Promise<mixed> {

@@ -18,13 +18,13 @@ export {
 } from './core/core.js'
 export * from './types/types.js'
 
-export function makeEdgeContext (
+export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
   return makeContext(makeBrowserIo(), {}, opts)
 }
 
-export function makeFakeEdgeWorld (
+export function makeFakeEdgeWorld(
   users: Array<EdgeFakeUser> = []
 ): Promise<EdgeFakeWorld> {
   return Promise.resolve(makeFakeWorld(makeBrowserIo(), {}, users))

@@ -26,7 +26,7 @@ export type ExchangeState = {
   rates: ExchangeRatesState
 }
 
-function addRoute (
+function addRoute(
   routes: ExchangeRoutes,
   from: string,
   to: string,
@@ -51,7 +51,7 @@ function addRoute (
  * indexed by currency. The routing table has twice as many entries
  * as the pair list, since each pair works both ways.
  */
-function rates (
+function rates(
   state: ExchangeRatesState = { ids: {}, pairs: [], routes: {} },
   action: RootAction
 ): ExchangeRatesState {

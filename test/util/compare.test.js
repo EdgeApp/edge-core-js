@@ -5,8 +5,8 @@ import { describe, it } from 'mocha'
 
 import { compare } from '../../src/util/compare.js'
 
-describe('compare', function () {
-  it('compare', function () {
+describe('compare', function() {
+  it('compare', function() {
     assert(!compare(1, 2))
     assert(!compare(1, '1'))
     assert(!compare(1, null))

@@ -59,27 +59,28 @@ export class FakeDb {
     lobbies: { [lobbyId: string]: Object },
     logins: Array<Object>
   }
+
   repos: { [syncKey: string]: Object }
 
-  constructor () {
+  constructor() {
     this.db = { lobbies: {}, logins: [] }
     this.repos = {}
   }
 
-  findLoginId (loginId: string) {
+  findLoginId(loginId: string) {
     if (loginId == null) return
     return this.db.logins.find(login => login.loginId === loginId)
   }
 
-  findPin2Id (pin2Id: string) {
+  findPin2Id(pin2Id: string) {
     return this.db.logins.find(login => login.pin2Id === pin2Id)
   }
 
-  findRecovery2Id (recovery2Id: string) {
+  findRecovery2Id(recovery2Id: string) {
     return this.db.logins.find(login => login.recovery2Id === recovery2Id)
   }
 
-  makeReply (login: Object) {
+  makeReply(login: Object) {
     const reply = filterObject(login, loginReplyColumns)
     reply.children = this.db.logins
       .filter(child => child.parent === login.loginId)
@@ -87,7 +88,7 @@ export class FakeDb {
     return reply
   }
 
-  setupFakeLogin (user: Object, parent: string | null) {
+  setupFakeLogin(user: Object, parent: string | null) {
     // Fill in the database row for this login:
     const row = filterObject(user, loginDbColumns)
     row.parent = parent
@@ -101,7 +102,7 @@ export class FakeDb {
     }
   }
 
-  setupFakeUser (user: EdgeFakeUser) {
+  setupFakeUser(user: EdgeFakeUser) {
     this.setupFakeLogin(user.server, null)
 
     // Create fake repos:
@@ -110,7 +111,7 @@ export class FakeDb {
     }
   }
 
-  dumpLogin (login: Object) {
+  dumpLogin(login: Object) {
     const out = filterObject(login, loginDbColumns)
     out.children = this.db.logins
       .filter(child => child.parent === login.loginId)

@@ -22,7 +22,7 @@ export type LoginCreateOpts = {
 /**
  * Determines whether or not a username is available.
  */
-export function usernameAvailable (ai: ApiInput, username: string) {
+export function usernameAvailable(ai: ApiInput, username: string) {
   return hashUsername(ai, username).then(userId => {
     const request = {
       userId: base64.stringify(userId)
@@ -39,7 +39,7 @@ export function usernameAvailable (ai: ApiInput, username: string) {
 /**
  * Assembles all the data needed to create a new login.
  */
-export function makeCreateKit (
+export function makeCreateKit(
   ai: ApiInput,
   parentLogin?: LoginTree,
   appId: string,
@@ -121,7 +121,7 @@ export function makeCreateKit (
 /**
  * Creates a new login on the auth server.
  */
-export function createLogin (
+export function createLogin(
   ai: ApiInput,
   username: string,
   opts: LoginCreateOpts

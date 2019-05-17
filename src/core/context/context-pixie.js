@@ -12,19 +12,19 @@ export type ContextOutput = {
 }
 
 export const context: TamePixie<RootProps> = combinePixies({
-  api (ai: ApiInput) {
+  api(ai: ApiInput) {
     return {
-      destroy () {
+      destroy() {
         close(ai.props.output.context.api)
       },
-      update () {
+      update() {
         ai.onOutput(makeContextApi(ai))
         return stopUpdates
       }
     }
   },
 
-  watcher (ai: ApiInput) {
+  watcher(ai: ApiInput) {
     let lastLocalUsers
 
     return () => {

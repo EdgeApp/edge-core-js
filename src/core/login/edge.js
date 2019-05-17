@@ -21,7 +21,7 @@ class PendingEdgeLogin extends Bridgeable<EdgePendingEdgeLogin> {
   id: string
   cancelRequest: () => void
 
-  constructor (ai, lobbyId, subscription) {
+  constructor(ai, lobbyId, subscription) {
     super()
     this.id = lobbyId
     this.cancelRequest = () => {
@@ -44,7 +44,7 @@ class PendingEdgeLogin extends Bridgeable<EdgePendingEdgeLogin> {
 /**
  * Turns a reply into a logged-in account.
  */
-async function onReply (ai: ApiInput, subscription, reply, appId, opts) {
+async function onReply(ai: ApiInput, subscription, reply, appId, opts) {
   subscription.unsubscribe()
   const stashTree = reply.loginStash
   const { io } = ai.props
@@ -82,7 +82,7 @@ async function onReply (ai: ApiInput, subscription, reply, appId, opts) {
 /**
  * Creates a new account request lobby on the server.
  */
-export function requestEdgeLogin (
+export function requestEdgeLogin(
   ai: ApiInput,
   appId: string,
   opts: EdgeEdgeLoginOptions

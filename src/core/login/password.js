@@ -18,14 +18,14 @@ import { saveStash } from './loginStore.js'
 
 export const passwordAuthSnrp = userIdSnrp
 
-function makeHashInput (username: string, password: string) {
+function makeHashInput(username: string, password: string) {
   return fixUsername(username) + password
 }
 
 /**
  * Extracts the loginKey from the login stash.
  */
-async function extractLoginKey (
+async function extractLoginKey(
   ai: ApiInput,
   stash: LoginStash,
   username: string,
@@ -43,7 +43,7 @@ async function extractLoginKey (
 /**
  * Fetches the loginKey from the server.
  */
-async function fetchLoginKey (
+async function fetchLoginKey(
   ai: ApiInput,
   username: string,
   password: string,
@@ -77,7 +77,7 @@ async function fetchLoginKey (
  * @param password string
  * @return A `Promise` for the new root login.
  */
-export async function loginPassword (
+export async function loginPassword(
   ai: ApiInput,
   username: string,
   password: string,
@@ -109,7 +109,7 @@ export async function loginPassword (
   }
 }
 
-export async function changePassword (
+export async function changePassword(
   ai: ApiInput,
   accountId: string,
   password: string
@@ -123,7 +123,7 @@ export async function changePassword (
 /**
  * Returns true if the given password is correct.
  */
-export async function checkPassword (
+export async function checkPassword(
   ai: ApiInput,
   login: LoginTree,
   password: string
@@ -143,7 +143,7 @@ export async function checkPassword (
   return true
 }
 
-export async function deletePassword (ai: ApiInput, accountId: string) {
+export async function deletePassword(ai: ApiInput, accountId: string) {
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const kit: LoginKit = {
@@ -172,7 +172,7 @@ export async function deletePassword (ai: ApiInput, accountId: string) {
 /**
  * Creates the data needed to attach a password to a login.
  */
-export function makePasswordKit (
+export function makePasswordKit(
   ai: ApiInput,
   login: LoginTree,
   username: string,

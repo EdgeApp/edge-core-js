@@ -5,20 +5,20 @@ import jsoncsv from 'json-csv'
 
 import { type EdgeTransaction } from '../../../types/types.js'
 
-function padZero (val: string) {
+function padZero(val: string) {
   if (val.length === 1) {
     return '0' + val
   }
   return val
 }
 
-function escapeOFXString (str: string) {
+function escapeOFXString(str: string) {
   str = str.replace(/&/g, '&amp;')
   str = str.replace(/>/g, '&gt;')
   return str.replace(/</g, '&lt;')
 }
 
-function exportOfxHeader (inputObj: Object) {
+function exportOfxHeader(inputObj: Object) {
   let out = ''
   for (const key of Object.keys(inputObj)) {
     let element = inputObj[key]
@@ -32,7 +32,7 @@ function exportOfxHeader (inputObj: Object) {
   return out
 }
 
-function exportOfxBody (inputObj: Object) {
+function exportOfxBody(inputObj: Object) {
   let out = ''
   for (const key of Object.keys(inputObj)) {
     let element = inputObj[key]
@@ -56,7 +56,7 @@ function exportOfxBody (inputObj: Object) {
   return out
 }
 
-function exportOfx (header: Object, body: Object) {
+function exportOfx(header: Object, body: Object) {
   let out = exportOfxHeader(header) + '\n'
   out += '<OFX>\n'
   out += exportOfxBody(body)
@@ -64,7 +64,7 @@ function exportOfx (header: Object, body: Object) {
   return out
 }
 
-function makeOfxDate (date: number): string {
+function makeOfxDate(date: number): string {
   const d = new Date(date * 1000)
   const yyyy = d.getUTCFullYear().toString()
   const mm = padZero((d.getUTCMonth() + 1).toString())
@@ -75,7 +75,7 @@ function makeOfxDate (date: number): string {
   return `${yyyy}${mm}${dd}${hh}${min}${ss}.000`
 }
 
-function makeCsvDateTime (date: number): { date: string, time: string } {
+function makeCsvDateTime(date: number): { date: string, time: string } {
   const d = new Date(date * 1000)
   const yyyy = d.getUTCFullYear().toString()
   const mm = padZero((d.getUTCMonth() + 1).toString())
@@ -89,7 +89,7 @@ function makeCsvDateTime (date: number): { date: string, time: string } {
   }
 }
 
-export function exportTransactionsToQBOInner (
+export function exportTransactionsToQBOInner(
   edgeTransactions: Array<EdgeTransaction>,
   currencyCode: string,
   fiatCurrencyCode: string,
@@ -209,7 +209,7 @@ export function exportTransactionsToQBOInner (
   return exportOfx(header, body)
 }
 
-export async function exportTransactionsToCSVInner (
+export async function exportTransactionsToCSVInner(
   edgeTransactions: Array<EdgeTransaction>,
   currencyCode: string,
   fiatCurrencyCode: string,

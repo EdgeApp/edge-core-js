@@ -34,11 +34,11 @@ export type AccountProps = RootProps & {
 export type AccountInput = PixieInput<AccountProps>
 
 const accountPixie: TamePixie<AccountProps> = combinePixies({
-  api (input: AccountInput) {
+  api(input: AccountInput) {
     let timer
 
     return {
-      destroy () {
+      destroy() {
         // The Pixie library stops updating props after destruction,
         // so we are stuck seeing the logged-in state. Fix that:
         const hack: any = input.props
@@ -61,7 +61,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         }
       },
 
-      async update () {
+      async update() {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const accountId = input.props.id
         const io = input.props.io
@@ -123,7 +123,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     }
   },
 
-  watcher (input: AccountInput) {
+  watcher(input: AccountInput) {
     let lastState
     let lastWallets
     let lastExchangeState
@@ -154,7 +154,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     }
   },
 
-  currencyWallets (input: AccountInput) {
+  currencyWallets(input: AccountInput) {
     let lastActiveWalletIds
 
     return () => {

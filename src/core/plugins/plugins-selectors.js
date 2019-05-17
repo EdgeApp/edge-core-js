@@ -11,7 +11,7 @@ import { type RootState } from '../root-reducer.js'
 /**
  * Finds the currency plugin that can handle a particular wallet type.
  */
-export function findCurrencyPlugin (
+export function findCurrencyPlugin(
   plugins: EdgePluginMap<EdgeCurrencyPlugin>,
   walletType: string
 ): string | void {
@@ -24,7 +24,7 @@ export function findCurrencyPlugin (
 /**
  * Finds the currency plugin that can handle a particular wallet type.
  */
-export function getCurrencyPlugin (
+export function getCurrencyPlugin(
   state: RootState,
   walletType: string
 ): EdgeCurrencyPlugin {
@@ -41,7 +41,7 @@ export function getCurrencyPlugin (
  * Finds the currency tools for a particular wallet type,
  * loading them if needed.
  */
-export function getCurrencyTools (
+export function getCurrencyTools(
   ai: ApiInput,
   walletType: string
 ): Promise<EdgeCurrencyTools> {
@@ -72,7 +72,7 @@ export function getCurrencyTools (
  * Waits for the plugins to load,
  * then validates that all plugins are present.
  */
-export function waitForPlugins (ai: ApiInput) {
+export function waitForPlugins(ai: ApiInput) {
   return ai.waitFor(props => {
     const { init, locked } = props.state.plugins
     if (!locked) return

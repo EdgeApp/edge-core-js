@@ -33,7 +33,7 @@ export const errorNames = {
 /**
  * Trying to spend an uneconomically small amount of money.
  */
-export function DustSpendError (message = 'Please send a larger amount') {
+export function DustSpendError(message = 'Please send a larger amount') {
   const e = new Error(message)
   e.name = errorNames.DustSpendError
   return e
@@ -42,7 +42,7 @@ export function DustSpendError (message = 'Please send a larger amount') {
 /**
  * Trying to spend more money than the wallet contains.
  */
-export function InsufficientFundsError (message = 'Insufficient funds') {
+export function InsufficientFundsError(message = 'Insufficient funds') {
   const e = new Error(message)
   e.name = errorNames.InsufficientFundsError
   return e
@@ -51,7 +51,7 @@ export function InsufficientFundsError (message = 'Insufficient funds') {
 /**
  * Trying to spend to an address of the source wallet
  */
-export function SpendToSelfError (message = 'Spending to self') {
+export function SpendToSelfError(message = 'Spending to self') {
   const e = new Error(message)
   e.name = errorNames.SpendToSelfError
   return e
@@ -61,7 +61,7 @@ export function SpendToSelfError (message = 'Spending to self') {
  * Attempting to create a MakeSpend without specifying an amount of currency to send
  */
 
-export function NoAmountSpecifiedError (
+export function NoAmountSpecifiedError(
   message = 'Unable to create zero-amount transaction.'
 ) {
   const e = new Error(message)
@@ -72,7 +72,7 @@ export function NoAmountSpecifiedError (
 /**
  * Could not reach the server at all.
  */
-export function NetworkError (message = 'Cannot reach the network') {
+export function NetworkError(message = 'Cannot reach the network') {
   const e = new Error(message)
   e.name = e.type = errorNames.NetworkError
   return e
@@ -81,7 +81,7 @@ export function NetworkError (message = 'Cannot reach the network') {
 /**
  * The endpoint on the server is obsolete, and the app needs to be upgraded.
  */
-export function ObsoleteApiError (
+export function ObsoleteApiError(
   message = 'The application is too old. Please upgrade.'
 ) {
   const e = new Error(message)
@@ -99,7 +99,7 @@ export function ObsoleteApiError (
  * which indicates that an OTP reset is already pending,
  * and when it will complete.
  */
-export function OtpError (resultsJson = {}, message = 'Invalid OTP token') {
+export function OtpError(resultsJson = {}, message = 'Invalid OTP token') {
   const e = new Error(message)
   e.name = e.type = errorNames.OtpError
   e.resetToken = resultsJson.otp_reset_auth
@@ -121,7 +121,7 @@ export function OtpError (resultsJson = {}, message = 'Invalid OTP token') {
  * The error object may include a `wait` member,
  * which is the number of seconds the user must wait before trying again.
  */
-export function PasswordError (resultsJson = {}, message = 'Invalid password') {
+export function PasswordError(resultsJson = {}, message = 'Invalid password') {
   const e = new Error(message)
   e.name = e.type = errorNames.PasswordError
   e.wait = resultsJson.wait_seconds
@@ -131,7 +131,7 @@ export function PasswordError (resultsJson = {}, message = 'Invalid password') {
 /**
  * Trying to spend funds that are not yet confirmed.
  */
-export function PendingFundsError (message = 'Not enough confirmed funds') {
+export function PendingFundsError(message = 'Not enough confirmed funds') {
   const e = new Error(message)
   e.name = errorNames.PendingFundsError
   return e
@@ -140,7 +140,7 @@ export function PendingFundsError (message = 'Not enough confirmed funds') {
 /**
  * Attempting to shape shift between two wallets of same currency.
  */
-export function SameCurrencyError (
+export function SameCurrencyError(
   message = 'Wallets can not be the same currency'
 ) {
   const e = new Error(message)
@@ -152,7 +152,7 @@ export function SameCurrencyError (
  * Trying to swap an amount that is either too low or too high.
  * @param nativeMax the maximum supported amount, in the "from" currency.
  */
-export function SwapAboveLimitError (swapInfo, nativeMax) {
+export function SwapAboveLimitError(swapInfo, nativeMax) {
   const e = new Error('Amount is too high')
   e.name = errorNames.SwapAboveLimitError
   e.pluginName = swapInfo.pluginName
@@ -164,7 +164,7 @@ export function SwapAboveLimitError (swapInfo, nativeMax) {
  * Trying to swap an amount that is either too low or too high.
  * @param nativeMin the minimum supported amount, in the "from" currency.
  */
-export function SwapBelowLimitError (swapInfo, nativeMin) {
+export function SwapBelowLimitError(swapInfo, nativeMin) {
   const e = new Error('Amount is too low')
   e.name = errorNames.SwapBelowLimitError
   e.pluginName = swapInfo.pluginName
@@ -175,7 +175,7 @@ export function SwapBelowLimitError (swapInfo, nativeMin) {
 /**
  * The swap plugin does not support this currency pair.
  */
-export function SwapCurrencyError (swapInfo, fromCurrency, toCurrency) {
+export function SwapCurrencyError(swapInfo, fromCurrency, toCurrency) {
   const e = new Error(
     `${swapInfo.displayName} does not support ${fromCurrency} to ${toCurrency}`
   )
@@ -194,7 +194,7 @@ export function SwapCurrencyError (swapInfo, fromCurrency, toCurrency) {
  * - 'noVerification': The user needs to provide KYC credentials
  * - 'needsActivation': The user needs to log into the service.
  */
-export function SwapPermissionError (swapInfo, reason) {
+export function SwapPermissionError(swapInfo, reason) {
   const e = new Error(reason || 'You are not allowed to make this trade')
   e.name = errorNames.SwapPermissionError
   e.pluginName = swapInfo.pluginName
@@ -210,7 +210,7 @@ export function SwapPermissionError (swapInfo, reason) {
  * - PIN login: wrong PIN key
  * - Recovery login: wrong username, or wrong recovery key
  */
-export function UsernameError (message = 'Invalid username') {
+export function UsernameError(message = 'Invalid username') {
   const e = new Error(message)
   e.name = e.type = errorNames.UsernameError
   return e

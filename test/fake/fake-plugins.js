@@ -15,7 +15,7 @@ export const brokenExchangePlugin: EdgeRatePlugin = {
     displayName: 'BrokenExchange'
   },
 
-  fetchRates (pairs) {
+  fetchRates(pairs) {
     throw new Error('boom!')
   }
 }
@@ -25,7 +25,7 @@ const fakeExchangePlugin: EdgeRatePlugin = {
     displayName: 'FakeExchange'
   },
 
-  fetchRates (pairs: Array<EdgeRateHint>): Promise<Array<EdgeRatePair>> {
+  fetchRates(pairs: Array<EdgeRateHint>): Promise<Array<EdgeRatePair>> {
     const fuzz = Math.sin((Math.PI * Date.now()) / (30 * 60 * 1000))
 
     return Promise.resolve([

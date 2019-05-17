@@ -156,11 +156,11 @@ const account = buildReducer({
       keysLoaded ? ids.filter(id => walletInfos[id].archived) : []
   ),
 
-  keysLoaded (state = false, action: RootAction): boolean {
+  keysLoaded(state = false, action: RootAction): boolean {
     return action.type === 'ACCOUNT_KEYS_LOADED' ? true : state
   },
 
-  legacyWalletInfos (state = [], action: RootAction): Array<EdgeWalletInfo> {
+  legacyWalletInfos(state = [], action: RootAction): Array<EdgeWalletInfo> {
     return action.type === 'ACCOUNT_KEYS_LOADED'
       ? action.payload.legacyWalletInfos
       : state
@@ -177,18 +177,18 @@ const account = buildReducer({
     }
   ),
 
-  walletStates (state = {}, action: RootAction): EdgeWalletStates {
+  walletStates(state = {}, action: RootAction): EdgeWalletStates {
     return action.type === 'ACCOUNT_CHANGED_WALLET_STATES' ||
       action.type === 'ACCOUNT_KEYS_LOADED'
       ? action.payload.walletStates
       : state
   },
 
-  appId (state, action: RootAction): string {
+  appId(state, action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.appId : state
   },
 
-  loadFailure (state = null, action: RootAction): Error | null {
+  loadFailure(state = null, action: RootAction): Error | null {
     return action.type === 'ACCOUNT_LOAD_FAILED' ? action.payload.error : state
   },
 
@@ -198,7 +198,7 @@ const account = buildReducer({
     (appId, loginTree): LoginTree => findAppLogin(loginTree, appId)
   ),
 
-  loginKey (state, action: RootAction): Uint8Array {
+  loginKey(state, action: RootAction): Uint8Array {
     return action.type === 'LOGIN' ? action.payload.loginKey : state
   },
 
@@ -211,19 +211,19 @@ const account = buildReducer({
       makeLoginTree(stashTree, loginKey, rootLogin ? '' : appId)
   ),
 
-  loginType (state, action: RootAction): string {
+  loginType(state, action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.loginType : state
   },
 
-  rootLogin (state, action: RootAction): boolean {
+  rootLogin(state, action: RootAction): boolean {
     return action.type === 'LOGIN' ? action.payload.rootLogin : state
   },
 
-  username (state, action: RootAction): string {
+  username(state, action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
   },
 
-  swapSettings (state = {}, action: RootAction): EdgePluginMap<SwapSettings> {
+  swapSettings(state = {}, action: RootAction): EdgePluginMap<SwapSettings> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
         return action.payload.swapSettings
@@ -237,7 +237,7 @@ const account = buildReducer({
     return state
   },
 
-  userSettings (state = {}, action: RootAction): EdgePluginMap<Object> {
+  userSettings(state = {}, action: RootAction): EdgePluginMap<Object> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED':
         const { pluginName, userSettings } = action.payload

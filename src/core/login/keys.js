@@ -26,11 +26,11 @@ import {
 /**
  * Returns the first keyInfo with a matching type.
  */
-export function findFirstKey (keyInfos: Array<EdgeWalletInfo>, type: string) {
+export function findFirstKey(keyInfos: Array<EdgeWalletInfo>, type: string) {
   return keyInfos.find(info => info.type === type)
 }
 
-export function makeAccountType (appId: string) {
+export function makeAccountType(appId: string) {
   return appId === ''
     ? 'account-repo:co.airbitz.wallet'
     : `account-repo:${appId}`
@@ -40,7 +40,7 @@ export function makeAccountType (appId: string) {
  * Assembles the key metadata structure that is encrypted within a keyBox.
  * @param idKey Used to derive the wallet id. It's usually `dataKey`.
  */
-export function makeKeyInfo (type: string, keys: {}, idKey: Uint8Array) {
+export function makeKeyInfo(type: string, keys: {}, idKey: Uint8Array) {
   return {
     id: base64.stringify(hmacSha256(utf8.parse(type), idKey)),
     type,
@@ -51,7 +51,7 @@ export function makeKeyInfo (type: string, keys: {}, idKey: Uint8Array) {
 /**
  * Makes keys for accessing an encrypted Git repo.
  */
-export function makeStorageKeyInfo (
+export function makeStorageKeyInfo(
   ai: ApiInput,
   type: string,
   keys: StorageKeys = {}
@@ -66,7 +66,7 @@ export function makeStorageKeyInfo (
 /**
  * Assembles all the resources needed to attach new keys to the account.
  */
-export function makeKeysKit (
+export function makeKeysKit(
   ai: ApiInput,
   login: LoginTree,
   ...keyInfos: Array<StorageWalletInfo>
@@ -95,7 +95,7 @@ export function makeKeysKit (
 /**
  * Flattens an array of key structures, removing duplicates.
  */
-export function mergeKeyInfos (keyInfos: Array<EdgeWalletInfo>) {
+export function mergeKeyInfos(keyInfos: Array<EdgeWalletInfo>) {
   const out = []
   const ids = {} // Maps ID's to output array indexes
 
@@ -110,9 +110,7 @@ export function mergeKeyInfos (keyInfos: Array<EdgeWalletInfo>) {
       const old = out[ids[id]]
       if (old.type !== type) {
         throw new Error(
-          `Key integrity violation for ${id}: type ${type} does not match ${
-            old.type
-          }`
+          `Key integrity violation for ${id}: type ${type} does not match ${old.type}`
         )
       }
       for (const key of Object.keys(keys)) {
@@ -139,7 +137,7 @@ export function mergeKeyInfos (keyInfos: Array<EdgeWalletInfo>) {
  * Returns all the wallet infos accessible from this login object,
  * as well as a map showing which wallets are in which applications.
  */
-export function getAllWalletInfos (
+export function getAllWalletInfos(
   login: LoginTree,
   legacyWalletInfos: Array<EdgeWalletInfo> = []
 ) {
@@ -153,7 +151,7 @@ export function getAllWalletInfos (
     else appIdMap[info.id].push(login.appId)
   }
 
-  function getAllWalletInfosLoop (login: LoginTree) {
+  function getAllWalletInfosLoop(login: LoginTree) {
     // Add our own walletInfos:
     for (const info of login.keyInfos) {
       walletInfos.push(info)
@@ -185,7 +183,7 @@ export function getAllWalletInfos (
  * `format` or `coinType` are missing. Please don't make the problem worse
  * by adding more code here!
  */
-export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
+export function fixWalletInfo(walletInfo: EdgeWalletInfo): EdgeWalletInfo {
   const { id, keys, type } = walletInfo
 
   // Wallet types we need to fix:
@@ -242,7 +240,7 @@ export function fixWalletInfo (walletInfo: EdgeWalletInfo): EdgeWalletInfo {
 /**
  * Combines two byte arrays via the XOR operation.
  */
-export function xorData (a: Uint8Array, b: Uint8Array): Uint8Array {
+export function xorData(a: Uint8Array, b: Uint8Array): Uint8Array {
   if (a.length !== b.length) {
     throw new Error(`Array lengths do not match: ${a.length}, ${b.length}`)
   }
@@ -254,7 +252,7 @@ export function xorData (a: Uint8Array, b: Uint8Array): Uint8Array {
   return out
 }
 
-export function makeSplitWalletInfo (
+export function makeSplitWalletInfo(
   walletInfo: EdgeWalletInfo,
   newWalletType: string
 ): EdgeWalletInfo {
@@ -296,7 +294,7 @@ export function makeSplitWalletInfo (
   }
 }
 
-export async function createCurrencyWallet (
+export async function createCurrencyWallet(
   ai: ApiInput,
   accountId: string,
   walletType: string,
@@ -333,7 +331,7 @@ export async function createCurrencyWallet (
   return wallet
 }
 
-async function protectBchWallet (wallet: EdgeCurrencyWallet) {
+async function protectBchWallet(wallet: EdgeCurrencyWallet) {
   // Create a UTXO which can be spend only on the ABC network
   const spendInfoSplit = {
     currencyCode: 'BCH',
@@ -373,7 +371,7 @@ async function protectBchWallet (wallet: EdgeCurrencyWallet) {
   await wallet.saveTxMetadata(broadcastedTaintTx.txid, 'BCH', edgeMetadata)
 }
 
-export async function splitWalletInfo (
+export async function splitWalletInfo(
   ai: ApiInput,
   accountId: string,
   walletId: string,
@@ -448,7 +446,7 @@ export async function splitWalletInfo (
   return newWalletInfo.id
 }
 
-export async function listSplittableWalletTypes (
+export async function listSplittableWalletTypes(
   ai: ApiInput,
   accountId: string,
   walletId: string

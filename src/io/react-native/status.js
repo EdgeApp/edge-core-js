@@ -5,17 +5,17 @@ let status = 'loaded'
 /**
  * Change the status message visible in the debug area.
  */
-export function changeStatus (newStatus: string): mixed {
+export function changeStatus(newStatus: string): mixed {
   status = newStatus
 }
 
 /**
  * Display a status line / heartbeat in debug mode.
  */
-export function showStatus () {
+export function showStatus() {
   // Capture script-level errors and display them:
   let errorStatus = ''
-  window.onerror = function (message, source, line, column, error) {
+  window.onerror = function(message, source, line, column, error) {
     errorStatus = `${source}:${line}:${column} ${message}`
   }
 
@@ -30,7 +30,7 @@ export function showStatus () {
   body.style.padding = '0'
 
   let step = 0
-  function updateStatus () {
+  function updateStatus() {
     const steps = ['⠇', '⠋', '⠙', '⠸', '⠴', '⠦']
     step = (step + 1) % steps.length
     div.innerHTML = `${steps[step]} ${status} ${errorStatus}`

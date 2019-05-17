@@ -27,7 +27,7 @@ import {
 } from './login-types.js'
 import { saveStash } from './loginStore.js'
 
-function cloneNode<Node: {}, Output> (
+function cloneNode<Node: {}, Output>(
   node: Node,
   children: Array<Output> | void
 ): Output {
@@ -39,7 +39,7 @@ function cloneNode<Node: {}, Output> (
  * Returns the login that satisfies the given predicate,
  * or undefined if nothing matches.
  */
-export function searchTree (node: any, predicate: any => boolean) {
+export function searchTree(node: any, predicate: any => boolean) {
   if (predicate(node)) return node
 
   if (node.children != null) {
@@ -56,7 +56,7 @@ export function searchTree (node: any, predicate: any => boolean) {
  * The `predicate` callback is used to find the target node.
  * The `update` callback is called on the target.
  */
-function updateTree<Node: { +children?: Array<any> }, Output> (
+function updateTree<Node: { +children?: Array<any> }, Output>(
   node: Node,
   predicate: (node: Node) => boolean,
   update: (node: Node) => Output,
@@ -72,7 +72,7 @@ function updateTree<Node: { +children?: Array<any> }, Output> (
   return clone(node, children)
 }
 
-function applyLoginReplyInner (stash, loginKey, loginReply) {
+function applyLoginReplyInner(stash, loginKey, loginReply) {
   // Copy common items:
   const out: LoginStash = filterObject(loginReply, [
     'appId',
@@ -135,7 +135,7 @@ function applyLoginReplyInner (stash, loginKey, loginReply) {
  * Updates the given login stash object with fields from the auth server.
  * TODO: We don't trust the auth server 100%, so be picky about what we copy.
  */
-export function applyLoginReply (
+export function applyLoginReply(
   stashTree: LoginStash,
   loginKey: Uint8Array,
   loginReply: LoginReply
@@ -147,7 +147,7 @@ export function applyLoginReply (
   )
 }
 
-function makeLoginTreeInner (
+function makeLoginTreeInner(
   stash: LoginStash,
   loginKey: Uint8Array
 ): LoginTree {
@@ -253,7 +253,7 @@ function makeLoginTreeInner (
 /**
  * Converts a login stash into an in-memory login object.
  */
-export function makeLoginTree (
+export function makeLoginTree(
   stashTree: LoginStash,
   loginKey: Uint8Array,
   appId: string = ''
@@ -278,7 +278,7 @@ export function makeLoginTree (
  * Prepares a login stash for edge login,
  * stripping out any information that the target app is not allowed to see.
  */
-export function sanitizeLoginStash (stashTree: LoginStash, appId: string) {
+export function sanitizeLoginStash(stashTree: LoginStash, appId: string) {
   return updateTree(
     stashTree,
     stash => stash.appId === appId,
@@ -300,7 +300,7 @@ export function sanitizeLoginStash (stashTree: LoginStash, appId: string) {
  * and the on-disk stash. A login kit contains all three elements,
  * and this function knows how to apply them all.
  */
-export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
+export function applyKit(ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
   const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
   if (!login) throw new Error('Cannot apply kit: missing login')
@@ -341,7 +341,7 @@ export function applyKit (ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
  * We can't use `Promise.all`, since `applyKit` doesn't handle
  * parallelism correctly.
  */
-export function applyKits (
+export function applyKits(
   ai: ApiInput,
   loginTree: LoginTree,
   kits: Array<LoginKit>
@@ -354,7 +354,7 @@ export function applyKits (
   )
 }
 
-export async function syncAccount (ai: ApiInput, accountId: string) {
+export async function syncAccount(ai: ApiInput, accountId: string) {
   if (ai.props.state.accounts[accountId] == null) return
   const { login, loginTree } = ai.props.state.accounts[accountId]
   return syncLogin(ai, loginTree, login)
@@ -363,7 +363,7 @@ export async function syncAccount (ai: ApiInput, accountId: string) {
 /**
  * Refreshes a login with data from the server.
  */
-export function syncLogin (
+export function syncLogin(
   ai: ApiInput,
   loginTree: LoginTree,
   login: LoginTree
@@ -387,7 +387,7 @@ export function syncLogin (
 /**
  * Sets up a login v2 server authorization JSON.
  */
-export function makeAuthJson (login: LoginTree) {
+export function makeAuthJson(login: LoginTree) {
   if (login.loginAuth != null) {
     return {
       loginId: login.loginId,
@@ -408,7 +408,7 @@ export function makeAuthJson (login: LoginTree) {
 /**
  * Requests an OTP reset.
  */
-export async function resetOtp (
+export async function resetOtp(
   ai: ApiInput,
   username: string,
   resetToken: string
@@ -426,7 +426,7 @@ export async function resetOtp (
 /**
  * Fetches any login-related messages for all the users on this device.
  */
-export function fetchLoginMessages (ai: ApiInput): Promise<EdgeLoginMessages> {
+export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
   const stashes = ai.props.state.login.stashes
 
   const loginMap: { [loginId: string]: string } = {} // loginId -> username

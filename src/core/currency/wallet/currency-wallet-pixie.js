@@ -152,9 +152,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   },
 
   // Starts & stops the engine for this wallet:
-  engineStarted (input: CurrencyWalletInput) {
+  engineStarted(input: CurrencyWalletInput) {
     return {
-      update () {
+      update() {
         if (
           !input.props.selfOutput ||
           !input.props.selfOutput.api ||
@@ -175,7 +175,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         }
       },
 
-      destroy () {
+      destroy() {
         if (!input.props.selfOutput) return
 
         const { engine, engineStarted } = input.props.selfOutput
@@ -209,11 +209,11 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     return stopUpdates
   },
 
-  syncTimer (input: CurrencyWalletInput) {
+  syncTimer(input: CurrencyWalletInput) {
     const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
     let timeout: *
 
-    function startTimer () {
+    function startTimer() {
       // Bail out if either the wallet or the repo aren't ready:
       const { id, state } = input.props
       if (
@@ -232,18 +232,18 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     }
 
     return {
-      update () {
+      update() {
         // Kick off the initial sync if we don't already have one running:
         if (timeout == null) return startTimer()
       },
 
-      destroy () {
+      destroy() {
         clearTimeout(timeout)
       }
     }
   },
 
-  watcher (input: CurrencyWalletInput) {
+  watcher(input: CurrencyWalletInput) {
     let lastState
     let lastSettings
 
@@ -272,7 +272,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 /**
  * Attempts to load/derive the wallet public keys.
  */
-async function getPublicWalletInfo (
+async function getPublicWalletInfo(
   walletInfo: EdgeWalletInfo,
   disklet: Disklet,
   tools: EdgeCurrencyTools

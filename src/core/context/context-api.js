@@ -35,7 +35,7 @@ import {
 import { type ApiInput } from '../root-pixie.js'
 import { EdgeInternalStuff } from './internal-api.js'
 
-export function makeContextApi (ai: ApiInput) {
+export function makeContextApi(ai: ApiInput) {
   const appId = ai.props.state.login.appId
   const $internalStuff = new EdgeInternalStuff(ai)
 
@@ -45,7 +45,7 @@ export function makeContextApi (ai: ApiInput) {
 
     appId,
 
-    async close (): Promise<mixed> {
+    async close(): Promise<mixed> {
       ai.props.close()
     },
 
@@ -53,15 +53,15 @@ export function makeContextApi (ai: ApiInput) {
 
     fixUsername,
 
-    get localUsers (): Array<EdgeUserInfo> {
+    get localUsers(): Array<EdgeUserInfo> {
       return ai.props.state.login.localUsers
     },
 
-    async listUsernames (): Promise<Array<string>> {
+    async listUsernames(): Promise<Array<string>> {
       return Object.keys(ai.props.state.login.stashes)
     },
 
-    async deleteLocalAccount (username: string): Promise<mixed> {
+    async deleteLocalAccount(username: string): Promise<mixed> {
       // Safety check:
       const fixedName = fixUsername(username)
       for (const accountId of ai.props.state.accountIds) {
@@ -73,11 +73,11 @@ export function makeContextApi (ai: ApiInput) {
       return removeStash(ai, username)
     },
 
-    async usernameAvailable (username: string): Promise<boolean> {
+    async usernameAvailable(username: string): Promise<boolean> {
       return usernameAvailable(ai, username)
     },
 
-    async createAccount (
+    async createAccount(
       username: string,
       password?: string,
       pin?: string,
@@ -91,7 +91,7 @@ export function makeContextApi (ai: ApiInput) {
       })
     },
 
-    async loginWithKey (
+    async loginWithKey(
       username: string,
       loginKey: string,
       opts?: EdgeAccountOptions
@@ -107,7 +107,7 @@ export function makeContextApi (ai: ApiInput) {
       return makeAccount(ai, appId, loginTree, 'keyLogin', opts || {})
     },
 
-    async loginWithPassword (
+    async loginWithPassword(
       username: string,
       password: string,
       opts?: EdgeAccountOptions
@@ -121,13 +121,13 @@ export function makeContextApi (ai: ApiInput) {
 
     checkPasswordRules,
 
-    async pinLoginEnabled (username: string): Promise<boolean> {
+    async pinLoginEnabled(username: string): Promise<boolean> {
       const loginStash = getStash(ai, username)
       const pin2Key = getPin2Key(loginStash, appId)
       return pin2Key && pin2Key.pin2Key != null
     },
 
-    async loginWithPIN (
+    async loginWithPIN(
       username: string,
       pin: string,
       opts?: EdgeAccountOptions
@@ -139,7 +139,7 @@ export function makeContextApi (ai: ApiInput) {
       })
     },
 
-    async getRecovery2Key (username: string): Promise<string> {
+    async getRecovery2Key(username: string): Promise<string> {
       const loginStash = getStash(ai, username)
       const recovery2Key = getRecovery2Key(loginStash)
       if (recovery2Key == null) {
@@ -148,7 +148,7 @@ export function makeContextApi (ai: ApiInput) {
       return base58.stringify(recovery2Key)
     },
 
-    async loginWithRecovery2 (
+    async loginWithRecovery2(
       recovery2Key: string,
       username: string,
       answers: Array<string>,
@@ -167,36 +167,36 @@ export function makeContextApi (ai: ApiInput) {
       })
     },
 
-    async fetchRecovery2Questions (
+    async fetchRecovery2Questions(
       recovery2Key: string,
       username: string
     ): Promise<Array<string>> {
       return getQuestions2(ai, base58.parse(recovery2Key), username)
     },
 
-    async listRecoveryQuestionChoices (): Promise<Array<string>> {
+    async listRecoveryQuestionChoices(): Promise<Array<string>> {
       return listRecoveryQuestionChoices(ai)
     },
 
-    async requestEdgeLogin (
+    async requestEdgeLogin(
       opts: EdgeEdgeLoginOptions
     ): Promise<EdgePendingEdgeLogin> {
       return requestEdgeLogin(ai, appId, opts)
     },
 
-    async requestOtpReset (
+    async requestOtpReset(
       username: string,
       otpResetToken: string
     ): Promise<Date> {
       return resetOtp(ai, username, otpResetToken)
     },
 
-    async fetchLoginMessages (): Promise<EdgeLoginMessages> {
+    async fetchLoginMessages(): Promise<EdgeLoginMessages> {
       return fetchLoginMessages(ai)
     },
 
     // Deprecated API's:
-    pinExists (username: string): Promise<boolean> {
+    pinExists(username: string): Promise<boolean> {
       return this.pinLoginEnabled(username)
     }
   }

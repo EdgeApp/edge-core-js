@@ -18,7 +18,7 @@ export const fakeConsole = {
 /**
  * Generates deterministic "random" data for unit-testing.
  */
-function makeFakeRandom () {
+function makeFakeRandom() {
   let seed = 0
 
   return (bytes: number) => {
@@ -35,14 +35,14 @@ function makeFakeRandom () {
   }
 }
 
-function fakeFetch () {
+function fakeFetch() {
   return Promise.reject(new Error('Fake network error'))
 }
 
 /**
  * Creates a simulated io context object.
  */
-export function makeFakeIo (): EdgeIo {
+export function makeFakeIo(): EdgeIo {
   const out: EdgeIo = {
     // Crypto:
     random: makeFakeRandom(),

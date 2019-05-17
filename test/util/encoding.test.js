@@ -6,8 +6,8 @@ import { base16 } from 'rfc4648'
 
 import { utf8 } from '../../src/util/encoding.js'
 
-describe('encoding', function () {
-  it('utf8', function () {
+describe('encoding', function() {
+  it('utf8', function() {
     const tests = [
       { string: 'ascii', data: '6173636969' },
       { string: 'テスト', data: 'E38386E382B9E38388' },

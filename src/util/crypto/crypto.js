@@ -18,7 +18,7 @@ export type JsonBox = {
  * @param box an Airbitz JSON encryption box
  * @param key a key, as an ArrayBuffer
  */
-export function decrypt (box: JsonBox, key: Uint8Array): Uint8Array {
+export function decrypt(box: JsonBox, key: Uint8Array): Uint8Array {
   // Check JSON:
   if (box.encryptionType !== 0) {
     throw new Error('Unknown encryption type')
@@ -78,7 +78,7 @@ export function decrypt (box: JsonBox, key: Uint8Array): Uint8Array {
  * @param payload an ArrayBuffer of data
  * @param key a key, as an ArrayBuffer
  */
-export function encrypt (
+export function encrypt(
   io: EdgeIo,
   data: Uint8Array,
   key: Uint8Array
@@ -143,17 +143,17 @@ export function encrypt (
   }
 }
 
-export function hmacSha256 (data: Uint8Array, key: Uint8Array): Uint8Array {
+export function hmacSha256(data: Uint8Array, key: Uint8Array): Uint8Array {
   const hmac = hashjs.hmac(hashjs.sha256, key)
   return hmac.update(data).digest()
 }
 
-export function hmacSha512 (data: Uint8Array, key: Uint8Array): Uint8Array {
+export function hmacSha512(data: Uint8Array, key: Uint8Array): Uint8Array {
   const hmac = hashjs.hmac(hashjs.sha512, key)
   return hmac.update(data).digest()
 }
 
-export function sha256 (data: Uint8Array): Uint8Array {
+export function sha256(data: Uint8Array): Uint8Array {
   return hashjs
     .sha256()
     .update(data)

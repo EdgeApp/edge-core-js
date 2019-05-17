@@ -7,8 +7,8 @@ import { base16, base32 } from 'rfc4648'
 import { hotp, numberToBe64 } from '../../../src/util/crypto/hotp.js'
 import { utf8 } from '../../../src/util/encoding.js'
 
-describe('hotp', function () {
-  it('converts numbers to bytes', function () {
+describe('hotp', function() {
+  it('converts numbers to bytes', function() {
     const cases = [
       // Powers of 2, plus 1:
       [1, '0000000000000001'],
@@ -40,7 +40,7 @@ describe('hotp', function () {
     }
   })
 
-  it('Handles official rfc4226 test vectors', function () {
+  it('Handles official rfc4226 test vectors', function() {
     const key = utf8.parse('12345678901234567890')
     const cases = [
       '755224',
@@ -60,7 +60,7 @@ describe('hotp', function () {
     }
   })
 
-  it('Handles leading zeros in output', function () {
+  it('Handles leading zeros in output', function() {
     const key = base32.parse('AAAAAAAA')
     expect(hotp(key, 2, 6)).equals('073348')
     expect(hotp(key, 9, 6)).equals('003773')

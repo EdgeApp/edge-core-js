@@ -24,7 +24,7 @@ const onPluginsLocked: Array<PluginsLockedWatcher> = []
 /**
  * Adds plugins to the core.
  */
-export function addEdgeCorePlugins (plugins: EdgeCorePlugins): mixed {
+export function addEdgeCorePlugins(plugins: EdgeCorePlugins): mixed {
   if (allPluginsLocked) {
     throw new Error('The Edge core plugin list has already been locked')
   }
@@ -41,7 +41,7 @@ export function addEdgeCorePlugins (plugins: EdgeCorePlugins): mixed {
 /**
  * Finalizes the core plugin list, so no further plugins are expected.
  */
-export function lockEdgeCorePlugins (): mixed {
+export function lockEdgeCorePlugins(): mixed {
   allPluginsLocked = true
   for (const f of onPluginsLocked) f()
 }
@@ -49,7 +49,7 @@ export function lockEdgeCorePlugins (): mixed {
 /**
  * Subscribes a context object to the core plugin list.
  */
-export function watchPlugins (
+export function watchPlugins(
   io: EdgeIo,
   nativeIo: EdgeNativeIo,
   pluginsInit: EdgeCorePluginsInit,

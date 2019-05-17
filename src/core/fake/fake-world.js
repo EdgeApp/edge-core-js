@@ -25,7 +25,7 @@ import { FakeDb } from './fake-db.js'
 import { makeFakeFetch } from './fake-fetch.js'
 import { fakeConsole } from './fake-io.js'
 
-async function saveUser (io: EdgeIo, user: EdgeFakeUser) {
+async function saveUser(io: EdgeIo, user: EdgeFakeUser) {
   const { loginId, loginKey, username } = user
 
   // Save the stash:
@@ -57,7 +57,7 @@ async function saveUser (io: EdgeIo, user: EdgeFakeUser) {
 /**
  * Creates a fake Edge server for unit testing.
  */
-export function makeFakeWorld (
+export function makeFakeWorld(
   io: EdgeIo,
   nativeIo: EdgeNativeIo,
   users: Array<EdgeFakeUser>
@@ -69,12 +69,12 @@ export function makeFakeWorld (
   const contexts: Array<EdgeContext> = []
 
   const out = {
-    async close () {
+    async close() {
       await Promise.all(contexts.map(context => context.close()))
       close(out)
     },
 
-    async makeEdgeContext (
+    async makeEdgeContext(
       opts: EdgeContextOptions & { cleanDevice?: boolean }
     ): Promise<EdgeContext> {
       const fakeIo = {
@@ -94,11 +94,11 @@ export function makeFakeWorld (
       return out
     },
 
-    async goOffline (offline?: boolean): Promise<mixed> {
+    async goOffline(offline?: boolean): Promise<mixed> {
       fakeFetch.offline = offline || offline == null
     },
 
-    async dumpFakeUser (account: EdgeAccount): Promise<EdgeFakeUser> {
+    async dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser> {
       if (account.appId !== '') {
         throw new Error('Only root logins are dumpable.')
       }

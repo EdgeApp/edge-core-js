@@ -33,7 +33,7 @@ export type StorageWalletsState = { [id: string]: StorageWalletState }
  * Individual repo reducer.
  */
 const storageWalletReducer = combineReducers({
-  lastChanges (state = [], action: RootAction): Array<string> {
+  lastChanges(state = [], action: RootAction): Array<string> {
     if (action.type === 'STORAGE_WALLET_SYNCED') {
       const { changes } = action.payload
       return changes.length ? changes : state
@@ -41,15 +41,15 @@ const storageWalletReducer = combineReducers({
     return state
   },
 
-  localDisklet (state: any = null): Disklet {
+  localDisklet(state: any = null): Disklet {
     return state
   },
 
-  paths (state: any = null): StorageWalletPaths {
+  paths(state: any = null): StorageWalletPaths {
     return state
   },
 
-  status (
+  status(
     state = { lastSync: 0, lastHash: void 0 },
     action: RootAction
   ): StorageWalletStatus {
@@ -62,7 +62,7 @@ const storageWalletReducer = combineReducers({
 /**
  * Repo list reducer.
  */
-export const storageWallets = function storageWalletsReducer (
+export const storageWallets = function storageWalletsReducer(
   state: StorageWalletsState = {},
   action: RootAction
 ): StorageWalletsState {

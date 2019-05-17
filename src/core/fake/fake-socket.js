@@ -2,9 +2,9 @@
  * TODO: WebSocket mock.
  */
 export class FakeWebSocket {
-  on () {}
-  close () {}
-  send () {}
+  on() {}
+  close() {}
+  send() {}
 }
 
 FakeWebSocket.CLOSED = 3

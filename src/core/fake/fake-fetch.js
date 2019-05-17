@@ -11,13 +11,13 @@ export class FakeResponse {
   status: number
   ok: boolean
 
-  constructor (body: string = '', opts: { status?: number } = {}) {
+  constructor(body: string = '', opts: { status?: number } = {}) {
     this.body = body
     this.status = opts.status || 200
     this.ok = this.status >= 200 && this.status < 300
   }
 
-  json () {
+  json() {
     try {
       return Promise.resolve(JSON.parse(this.body))
     } catch (e) {
@@ -25,7 +25,7 @@ export class FakeResponse {
     }
   }
 
-  text () {
+  text() {
     return Promise.resolve(this.body)
   }
 }
@@ -38,7 +38,7 @@ const routes: Array<{ method: string, path: RegExp, handler: Handler }> = []
 /**
  * Wires one or more handlers into the routing table.
  */
-export function addRoute (
+export function addRoute(
   method: string,
   path: string,
   ...handlers: Array<Handler>
@@ -56,7 +56,7 @@ export function addRoute (
 /**
  * Finds all matching handlers in the routing table.
  */
-function findRoute (method, path) {
+function findRoute(method, path) {
   return routes
     .filter(route => {
       return route.method === method && route.path.test(path)
@@ -67,8 +67,8 @@ function findRoute (method, path) {
 /**
  * Returns a fake fetch function bound to a fake DB instance.
  */
-export function makeFakeFetch (db: Object): typeof fetch {
-  const out: any = function fetch (uri, opts = {}) {
+export function makeFakeFetch(db: Object): typeof fetch {
+  const out: any = function fetch(uri, opts = {}) {
     try {
       if (out.offline) throw new Error('Fake network error')
 

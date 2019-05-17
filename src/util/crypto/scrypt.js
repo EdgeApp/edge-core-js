@@ -10,7 +10,7 @@ export const userIdSnrp = {
 }
 export const passwordAuthSnrp = userIdSnrp
 
-export function scrypt (
+export function scrypt(
   data: Uint8Array,
   salt: Uint8Array,
   n: number,

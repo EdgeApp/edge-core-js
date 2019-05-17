@@ -7,7 +7,7 @@ import { type JsonSnrp } from './scrypt-pixie.js'
 /**
  * Computes an SNRP value.
  */
-export function makeSnrp (
+export function makeSnrp(
   ai: ApiInput,
   targetMs: number = 2000
 ): Promise<JsonSnrp> {
@@ -17,7 +17,7 @@ export function makeSnrp (
 /**
  * Performs an scrypt derivation.
  */
-export function scrypt (
+export function scrypt(
   ai: ApiInput,
   data: Uint8Array | string,
   snrp: JsonSnrp

@@ -20,11 +20,11 @@ const swapInfo: EdgeSwapInfo = {
 export const fakeSwapPlugin: EdgeSwapPlugin = {
   swapInfo,
 
-  checkSettings (userSettings: Object): EdgeSwapPluginStatus {
+  checkSettings(userSettings: Object): EdgeSwapPluginStatus {
     return { needsActivation: typeof userSettings.kycToken !== 'string' }
   },
 
-  fetchSwapQuote (
+  fetchSwapQuote(
     request: EdgeSwapRequest,
     userSettings: Object
   ): Promise<EdgeSwapQuote> {

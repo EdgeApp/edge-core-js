@@ -27,7 +27,7 @@ type PluginSettingsFile = {
 /**
  * Returns true if `Object.assign(a, b)` would alter `a`.
  */
-function different (a, b) {
+function different(a, b) {
   for (const key of Object.keys(b)) {
     if (a[key] !== b[key]) {
       return true
@@ -40,19 +40,19 @@ function different (a, b) {
  * Returns `value` if it is an object,
  * otherwise returns an empty fallback object.
  */
-function getObject (value) {
+function getObject(value) {
   if (value == null && typeof value !== 'object') return {}
   return value
 }
 
-function getJson (file: DiskletFile, fallback: Object = {}) {
+function getJson(file: DiskletFile, fallback: Object = {}) {
   return file
     .getText()
     .then(text => JSON.parse(text))
     .catch(e => fallback)
 }
 
-function getJsonFiles (folder) {
+function getJsonFiles(folder) {
   return mapFiles(folder, (file, name) =>
     file
       .getText()
@@ -64,7 +64,7 @@ function getJsonFiles (folder) {
 /**
  * Loads the legacy wallet list from the account folder.
  */
-function loadWalletList (
+function loadWalletList(
   folder
 ): Promise<{
   walletInfos: Array<EdgeWalletInfo>,
@@ -103,7 +103,7 @@ function loadWalletList (
 /**
  * Loads the modern key state list from the account folder.
  */
-function loadWalletStates (folder): Promise<EdgeWalletStates> {
+function loadWalletStates(folder): Promise<EdgeWalletStates> {
   return getJsonFiles(folder.folder('Keys')).then(files => {
     const keyStates = {}
 
@@ -121,7 +121,7 @@ function loadWalletStates (folder): Promise<EdgeWalletStates> {
  * diffs them with the current keyStates and legacy wallet list,
  * and returns true if there are any changes.
  */
-export async function loadAllWalletStates (
+export async function loadAllWalletStates(
   ai: ApiInput,
   accountId: string
 ): Promise<void> {
@@ -162,7 +162,7 @@ export async function loadAllWalletStates (
 /**
  * Changes the wallet states within an account.
  */
-export async function changeWalletStates (
+export async function changeWalletStates(
   ai: ApiInput,
   accountId: string,
   newStates: EdgeWalletStates
@@ -212,7 +212,7 @@ export async function changeWalletStates (
 /**
  * Changes a currency plugin's settings within an account.
  */
-export async function changePluginUserSettings (
+export async function changePluginUserSettings(
   ai: ApiInput,
   accountId: string,
   pluginName: string,
@@ -247,7 +247,7 @@ export async function changePluginUserSettings (
 /**
  * Enables or disables swap plugins.
  */
-export async function changeSwapSettings (
+export async function changeSwapSettings(
   ai: ApiInput,
   accountId: string,
   pluginName: string,
@@ -278,7 +278,7 @@ export async function changeSwapSettings (
 /**
  * Loads the settings for all the currency plugins within an account.
  */
-export async function reloadPluginSettings (ai: ApiInput, accountId: string) {
+export async function reloadPluginSettings(ai: ApiInput, accountId: string) {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const file = getStorageWalletFolder(
     ai.props.state,
@@ -307,7 +307,7 @@ export async function reloadPluginSettings (ai: ApiInput, accountId: string) {
 /**
  * Applies changed user settings to a single plugin.
  */
-async function updatePluginUserSettings (
+async function updatePluginUserSettings(
   ai: ApiInput,
   accountId: string,
   pluginName: string

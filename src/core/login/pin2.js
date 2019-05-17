@@ -21,12 +21,12 @@ import {
 } from './login.js'
 import { saveStash } from './loginStore.js'
 
-function pin2Id (pin2Key: Uint8Array, username: string) {
+function pin2Id(pin2Key: Uint8Array, username: string) {
   const data = utf8.parse(fixUsername(username))
   return hmacSha256(data, pin2Key)
 }
 
-function pin2Auth (pin2Key, pin) {
+function pin2Auth(pin2Key, pin) {
   return hmacSha256(utf8.parse(pin), pin2Key)
 }
 
@@ -34,7 +34,7 @@ function pin2Auth (pin2Key, pin) {
  * Fetches and decrypts the loginKey from the server.
  * @return Promise<{loginKey, loginReply}>
  */
-async function fetchLoginKey (
+async function fetchLoginKey(
   ai: ApiInput,
   pin2Key: Uint8Array,
   username: string,
@@ -59,7 +59,7 @@ async function fetchLoginKey (
 /**
  * Returns a copy of the PIN login key if one exists on the local device.
  */
-export function getPin2Key (stashTree: LoginStash, appId: string) {
+export function getPin2Key(stashTree: LoginStash, appId: string) {
   const stash =
     stashTree.pin2Key != null
       ? stashTree
@@ -73,7 +73,7 @@ export function getPin2Key (stashTree: LoginStash, appId: string) {
  * Logs a user in using their PIN.
  * @return A `Promise` for the new root login.
  */
-export async function loginPin2 (
+export async function loginPin2(
   ai: ApiInput,
   appId: string,
   username: string,
@@ -100,7 +100,7 @@ export async function loginPin2 (
   return makeLoginTree(stashTree, loginKey, appIdFound)
 }
 
-export async function changePin (
+export async function changePin(
   ai: ApiInput,
   accountId: string,
   pin: string | void,
@@ -133,7 +133,7 @@ export async function changePin (
 /**
  * Returns true if the given pin is correct.
  */
-export async function checkPin2 (ai: ApiInput, login: LoginTree, pin: string) {
+export async function checkPin2(ai: ApiInput, login: LoginTree, pin: string) {
   const { appId, username } = login
   if (!username) return false
 
@@ -148,7 +148,7 @@ export async function checkPin2 (ai: ApiInput, login: LoginTree, pin: string) {
   )
 }
 
-export async function deletePin (ai: ApiInput, accountId: string) {
+export async function deletePin(ai: ApiInput, accountId: string) {
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const kits = makeDeletePin2Kits(loginTree)
@@ -158,7 +158,7 @@ export async function deletePin (ai: ApiInput, accountId: string) {
 /**
  * Creates the data needed to attach a PIN to a tree of logins.
  */
-export function makeChangePin2Kits (
+export function makeChangePin2Kits(
   ai: ApiInput,
   loginTree: LoginTree,
   username: string,
@@ -181,7 +181,7 @@ export function makeChangePin2Kits (
 /**
  * Creates the data needed to attach a PIN to a login.
  */
-export function makeChangePin2Kit (
+export function makeChangePin2Kit(
   ai: ApiInput,
   login: LoginTree,
   username: string,
@@ -237,7 +237,7 @@ export function makeChangePin2Kit (
 /**
  * Creates the data needed to delete a PIN from a tree of logins.
  */
-export function makeDeletePin2Kits (loginTree: LoginTree): Array<LoginKit> {
+export function makeDeletePin2Kits(loginTree: LoginTree): Array<LoginKit> {
   const out: Array<LoginKit> = [makeDeletePin2Kit(loginTree)]
 
   if (loginTree.children) {
@@ -252,7 +252,7 @@ export function makeDeletePin2Kits (loginTree: LoginTree): Array<LoginKit> {
 /**
  * Creates the data needed to delete a PIN from a login.
  */
-export function makeDeletePin2Kit (login: LoginTree): LoginKit {
+export function makeDeletePin2Kit(login: LoginTree): LoginKit {
   // Flow complains about these fields being `undefined`:
   const out: any = {
     serverMethod: 'DELETE',

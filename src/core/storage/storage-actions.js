@@ -9,7 +9,7 @@ import { base58 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loadRepoStatus, makeRepoPaths, syncRepo } from './repo.js'
 
-export function addStorageWallet (
+export function addStorageWallet(
   ai: ApiInput,
   walletInfo: EdgeWalletInfo
 ): Promise<mixed> {
@@ -49,7 +49,7 @@ export function addStorageWallet (
   })
 }
 
-export function syncStorageWallet (
+export function syncStorageWallet(
   ai: ApiInput,
   walletId: string
 ): Promise<Array<string>> {

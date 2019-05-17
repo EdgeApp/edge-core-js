@@ -20,7 +20,7 @@ export type LoginState = {
 }
 
 export const login = buildReducer({
-  appId (state = '', action: RootAction): string {
+  appId(state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.appId : state
   },
 
@@ -43,7 +43,7 @@ export const login = buildReducer({
 
   server,
 
-  stashes (state = {}, action: RootAction): LoginStashMap {
+  stashes(state = {}, action: RootAction): LoginStashMap {
     switch (action.type) {
       case 'INIT': {
         const out: LoginStashMap = {}
@@ -78,7 +78,7 @@ export const login = buildReducer({
     return state
   },
 
-  walletInfos (state, action: RootAction, next: RootState): WalletInfoMap {
+  walletInfos(state, action: RootAction, next: RootState): WalletInfoMap {
     // Optimize the common case:
     if (next.accountIds.length === 1) {
       const id = next.accountIds[0]

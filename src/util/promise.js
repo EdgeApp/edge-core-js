@@ -4,7 +4,7 @@
  * Waits for the first successful promise.
  * If no promise succeeds, returns the last failure.
  */
-export function anyPromise<T> (promises: Array<Promise<T>>): Promise<T> {
+export function anyPromise<T>(promises: Array<Promise<T>>): Promise<T> {
   return new Promise((resolve, reject) => {
     let pending = promises.length
     for (const promise of promises) {
@@ -17,7 +17,7 @@ export function anyPromise<T> (promises: Array<Promise<T>>): Promise<T> {
  * If the promise doesn't resolve in the given time,
  * reject it with the provided error, or a generic error if none is provided.
  */
-export function timeout<T> (
+export function timeout<T>(
   promise: Promise<T>,
   ms: number,
   error: Error = new Error(`Timeout of ${ms}ms exceeded`)
@@ -37,7 +37,7 @@ export function timeout<T> (
  * first promise that resolves.
  * If all promises reject, rejects an array of errors.
  */
-export function fuzzyTimeout<Type> (
+export function fuzzyTimeout<Type>(
   promises: Array<Promise<Type>>,
   timeoutMs: number
 ): Promise<Array<Type>> {
@@ -55,7 +55,7 @@ export function fuzzyTimeout<Type> (
       }
     }, timeoutMs)
 
-    function checkEnd () {
+    function checkEnd() {
       const allDone = results.length + failures.length === promises.length
       if (allDone && timer != null) {
         clearTimeout(timer)

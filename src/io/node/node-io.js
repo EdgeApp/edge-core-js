@@ -14,10 +14,10 @@ import { scrypt } from '../../util/crypto/scrypt.js'
  *
  * @param {string} path Location where data should be written to disk.
  */
-export function makeNodeIo (path: string): EdgeIo {
+export function makeNodeIo(path: string): EdgeIo {
   return {
     // Crypto:
-    random (bytes: number) {
+    random(bytes: number) {
       return crypto.randomBytes(bytes)
     },
     scrypt,

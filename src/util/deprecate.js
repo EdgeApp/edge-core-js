@@ -2,7 +2,7 @@
 
 const shown: { [name: string]: true } = {}
 
-export function deprecate (name: string, replacement: string) {
+export function deprecate(name: string, replacement: string) {
   if (shown[name]) return
   shown[name] = true
 

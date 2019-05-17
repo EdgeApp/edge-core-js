@@ -28,7 +28,7 @@ let throttleRateLimitMs = 5000
  * Returns a function that can be called at high frequency, and batches its
  * inputs to only call the real callback every 5 seconds.
  */
-function makeThrottledTxCallback (
+function makeThrottledTxCallback(
   input: CurrencyWalletInput,
   callback: (txArray: Array<EdgeTransaction>) => mixed
 ) {
@@ -66,7 +66,7 @@ function makeThrottledTxCallback (
 /**
  * Returns a callback structure suitable for passing to a currency engine.
  */
-export function makeCurrencyWalletCallbacks (
+export function makeCurrencyWalletCallbacks(
   input: CurrencyWalletInput
 ): EdgeCurrencyEngineCallbacks {
   const walletId = input.props.id
@@ -102,7 +102,7 @@ export function makeCurrencyWalletCallbacks (
   )
 
   return {
-    onAddressesChecked (ratio: number) {
+    onAddressesChecked(ratio: number) {
       pushUpdate({
         id: walletId,
         action: 'onAddressesChecked',
@@ -115,7 +115,7 @@ export function makeCurrencyWalletCallbacks (
       })
     },
 
-    onBalanceChanged (currencyCode: string, balance: string) {
+    onBalanceChanged(currencyCode: string, balance: string) {
       pushUpdate({
         id: walletId + '==' + currencyCode,
         action: 'onBalanceChanged',
@@ -128,7 +128,7 @@ export function makeCurrencyWalletCallbacks (
       })
     },
 
-    onBlockHeightChanged (height: number) {
+    onBlockHeightChanged(height: number) {
       pushUpdate({
         id: walletId,
         action: 'onBlockHeightChanged',
@@ -141,7 +141,7 @@ export function makeCurrencyWalletCallbacks (
       })
     },
 
-    onTransactionsChanged (txs: Array<EdgeTransaction>) {
+    onTransactionsChanged(txs: Array<EdgeTransaction>) {
       // Sanity-check incoming transactions:
       if (!txs) return
       for (const tx of txs) {
@@ -201,18 +201,18 @@ export function makeCurrencyWalletCallbacks (
       if (created.length) throttledOnNewTx(created)
     },
 
-    onTxidsChanged () {}
+    onTxidsChanged() {}
   }
 }
 
 /**
  * Monitors a currency wallet for changes and fires appropriate callbacks.
  */
-export function watchCurrencyWallet (input: CurrencyWalletInput) {
+export function watchCurrencyWallet(input: CurrencyWalletInput) {
   const walletId = input.props.id
 
   let lastChanges
-  function checkChangesLoop (props: CurrencyWalletProps) {
+  function checkChangesLoop(props: CurrencyWalletProps) {
     // Check for data changes:
     const changes = getStorageWalletLastChanges(props.state, walletId)
     if (changes !== lastChanges) {

@@ -28,7 +28,7 @@ export type SyncResult = {
  * Sets up the back-end folders needed to emulate Git on disk.
  * You probably don't want this.
  */
-export function makeRepoPaths (
+export function makeRepoPaths(
   io: EdgeIo,
   syncKey: Uint8Array,
   dataKey: Uint8Array
@@ -56,7 +56,7 @@ export function makeRepoPaths (
   }
 }
 
-export function loadRepoStatus (
+export function loadRepoStatus(
   paths: StorageWalletPaths
 ): Promise<StorageWalletStatus> {
   const fallback = { lastSync: 0, lastHash: void 0 }
@@ -71,7 +71,7 @@ export function loadRepoStatus (
  * This function ignores folder-level deletes and overwrites,
  * but those can't happen under the current rules anyhow.
  */
-export function saveChanges (
+export function saveChanges(
   disklet: Disklet,
   changes: { [path: string]: Object }
 ) {
@@ -88,7 +88,7 @@ export function saveChanges (
 /**
  * Synchronizes the local store with the remote server.
  */
-export function syncRepo (
+export function syncRepo(
   io: EdgeIo,
   paths: StorageWalletPaths,
   status: StorageWalletStatus
