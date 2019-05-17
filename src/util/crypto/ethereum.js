@@ -14,8 +14,12 @@ function hexToBuffer (hex: string) {
 }
 
 export function ethereumKeyToAddress (key: string): string {
-  const addressBytes = privateToAddress(hexToBuffer(key))
-  return toChecksumAddress(addressBytes.toString('hex'))
+  try {
+    const addressBytes = privateToAddress(hexToBuffer(key))
+    return toChecksumAddress(addressBytes.toString('hex'))
+  } catch (e) {
+    return 'invalid_private_key'
+  }
 }
 
 export function signEthereumTransaction (

@@ -2371,11 +2371,6 @@ eslint-config-standard-kit@^0.12.1:
   resolved "https://registry.yarnpkg.com/eslint-config-standard-kit/-/eslint-config-standard-kit-0.12.1.tgz#1ed93073e9970cf29080293f2f9bbc25a19bcde4"
   integrity sha512-ovGsGfdRYbywxcK69+JgnknddcVfeeKObelh+54TcVnWKnV8ZvUzBKMRxO72gw3LMZwVW9zMY5PeidJKvtsVpg==
 
-eslint-config-standard@^12.0.0:
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/eslint-config-standard/-/eslint-config-standard-12.0.0.tgz#638b4c65db0bd5a41319f96bba1f15ddad2107d9"
-  integrity sha512-COUz8FnXhqFitYj4DTqHzidjIL/t4mumGZto5c7DrBpvWoie+Sn3P4sLEzUGeYhRElWuFEf8K1S1EfvD1vixCQ==
-
 eslint-import-resolver-node@^0.3.1:
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/eslint-import-resolver-node/-/eslint-import-resolver-node-0.3.2.tgz#58f15fb839b8d0576ca980413476aab2472db66a"
