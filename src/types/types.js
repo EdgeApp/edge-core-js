@@ -550,6 +550,7 @@ export type EdgeSwapRequest = {
 }
 
 export type EdgeSwapPluginQuote = {
+  +isEstimate?: boolean, // Defaults to true. Edge prefers true quotes (not estimates) where possible.
   +fromNativeAmount: string,
   +toNativeAmount: string,
   +networkFee: EdgeNetworkFee,
