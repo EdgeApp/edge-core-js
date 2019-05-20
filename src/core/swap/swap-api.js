@@ -65,7 +65,9 @@ export async function fetchSwapQuote (
         quoteUri = swapInfo.quoteUri + bestQuote.quoteId
       }
 
-      const out: EdgeSwapQuote = { ...bestQuote, quoteUri }
+      const { isEstimate = true } = bestQuote
+      // $FlowFixMe - Flow wrongly thinks isEstimate might be undefined here:
+      const out: EdgeSwapQuote = { ...bestQuote, quoteUri, isEstimate }
       bridgifyObject(out)
 
       return out

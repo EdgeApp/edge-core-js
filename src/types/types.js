@@ -685,6 +685,7 @@ export type EdgeSwapConfig = {
 }
 
 export type EdgeSwapQuote = EdgeSwapPluginQuote & {
+  +isEstimate: boolean,
   +quoteUri?: string
 }
 
