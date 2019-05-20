@@ -47,6 +47,10 @@ export async function fetchSwapQuote (
       let bestQuote = quotes[0]
       for (let i = 1; i < quotes.length; ++i) {
         if (
+          // Prioritize accurate quotes over estimates:
+          // (use `=== false` so `undefined` maps to `true`):
+          (quotes[i].isEstimate === false && bestQuote.isEstimate !== false) ||
+          // Prefer cheaper quotes:
           gt(quotes[i].toNativeAmount, bestQuote.toNativeAmount) ||
           lt(quotes[i].fromNativeAmount, bestQuote.fromNativeAmount)
         ) {
@@ -61,7 +65,9 @@ export async function fetchSwapQuote (
         quoteUri = swapInfo.quoteUri + bestQuote.quoteId
       }
 
-      const out: EdgeSwapQuote = { ...bestQuote, quoteUri }
+      const { isEstimate = true } = bestQuote
+      // $FlowFixMe - Flow wrongly thinks isEstimate might be undefined here:
+      const out: EdgeSwapQuote = { ...bestQuote, quoteUri, isEstimate }
       bridgifyObject(out)
 
       return out
