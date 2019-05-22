@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.16.1 (2019-05-22)
+
+- Indicate which swap quotes are only estimates, and de-prioritize those.
+
 ## 0.16.0 (2019-05-17)
 
 Breaking changes:
