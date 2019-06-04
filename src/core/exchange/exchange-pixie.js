@@ -9,12 +9,12 @@ export const exchange: TamePixie<RootProps> = combinePixies({
   update (input: PixieInput<RootProps>) {
     let timeout: * // Infer the proper timer type
 
-    function doFetch (): Promise<mixed> {
+    async function doFetch (): Promise<mixed> {
       // Bail out if we have no plugins:
       if (!input.props.state.plugins.locked) return Promise.resolve()
 
       // TODO: Grab this off the list of loaded wallet currency types & fiats:
-      const pairs = [
+      const hintPairs = [
         { fromCurrency: 'BTC', toCurrency: 'iso:EUR' },
         { fromCurrency: 'BTC', toCurrency: 'iso:USD' },
         { fromCurrency: 'ETH', toCurrency: 'iso:EUR' },
@@ -22,45 +22,46 @@ export const exchange: TamePixie<RootProps> = combinePixies({
       ]
 
       const pluginNames = Object.keys(input.props.state.plugins.rate)
-      return Promise.all(
-        pluginNames.map(pluginName => {
+      const pairLists = await Promise.all(
+        pluginNames.map(async pluginName => {
           const plugin = input.props.state.plugins.rate[pluginName]
           try {
-            return plugin.fetchRates(pairs).catch(e => {
-              // input.props.onError(e) skipped due to noise
-              return []
-            })
+            return plugin.fetchRates(hintPairs)
           } catch (e) {
             // input.props.onError(e) skipped due to noise
             return []
           }
         })
-      ).then(pairLists => {
-        const timestamp = Date.now() / 1000
-        const pairs: Array<ExchangePair> = []
-        for (let i = 0; i < pluginNames.length; ++i) {
-          for (const pair of pairLists[i]) {
-            const { fromCurrency, toCurrency, rate } = pair
-            pairs.push({
-              fromCurrency,
-              toCurrency,
-              rate,
-              source: pluginNames[i],
-              timestamp
-            })
-          }
-        }
+      )
 
-        input.props.dispatch({ type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs })
-        timeout = setTimeout(doFetch, 30 * 1000)
-        return void 0
-      })
+      const timestamp = Date.now() / 1000
+      const pairs: Array<ExchangePair> = []
+      for (let i = 0; i < pluginNames.length; ++i) {
+        for (const pair of pairLists[i]) {
+          const { fromCurrency, toCurrency, rate } = pair
+          pairs.push({
+            fromCurrency,
+            toCurrency,
+            rate,
+            source: pluginNames[i],
+            timestamp
+          })
+        }
+      }
+
+      input.props.dispatch({ type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs })
     }
 
     return {
       update (props: RootProps): Promise<mixed> | void {
         // Kick off the initial fetch if we don't already have one running:
-        if (timeout == null) return doFetch()
+        if (timeout == null) {
+          return doFetch()
+            .catch(() => {})
+            .then(() => {
+              timeout = setTimeout(doFetch, 30 * 1000)
+            })
+        }
       },
 
       destroy () {
