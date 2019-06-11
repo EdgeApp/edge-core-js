@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.16.2 (2019-06-10)
+
+- Improve swap error-ranking logic.
+- Make exchange-rate fetching more robust.
+
 ## 0.16.1 (2019-05-22)
 
 - Indicate which swap quotes are only estimates, and de-prioritize those.
