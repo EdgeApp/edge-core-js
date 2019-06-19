@@ -6,13 +6,11 @@ import { type RootProps } from '../root-pixie.js'
 import { type ExchangePair } from './exchange-reducer.js'
 
 export const exchange: TamePixie<RootProps> = combinePixies({
-  update (input: PixieInput<RootProps>) {
+  looper (input: PixieInput<RootProps>) {
+    let started: boolean = false
     let timeout: * // Infer the proper timer type
 
     async function doFetch (): Promise<mixed> {
-      // Bail out if we have no plugins:
-      if (!input.props.state.plugins.locked) return Promise.resolve()
-
       // TODO: Grab this off the list of loaded wallet currency types & fiats:
       const hintPairs = [
         { fromCurrency: 'BTC', toCurrency: 'iso:EUR' },
@@ -49,23 +47,28 @@ export const exchange: TamePixie<RootProps> = combinePixies({
         }
       }
 
+      input.props.io.console.info('Exchange rates updated')
       input.props.dispatch({ type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs })
     }
 
     return {
       update (props: RootProps): Promise<mixed> | void {
-        // Kick off the initial fetch if we don't already have one running:
-        if (timeout == null) {
-          return doFetch()
-            .catch(() => {})
-            .then(() => {
-              timeout = setTimeout(doFetch, 30 * 1000)
-            })
+        // Kick off the initial fetch if we don't already have one running
+        // and the plugins are ready:
+        if (!started && props.state.plugins.locked) {
+          started = true
+          const iteration = () =>
+            doFetch()
+              .catch(() => {})
+              .then(() => {
+                timeout = setTimeout(iteration, 30 * 1000)
+              })
+          iteration()
         }
       },
 
       destroy () {
-        clearTimeout(timeout)
+        if (timeout != null) clearTimeout(timeout)
       }
     }
   }
