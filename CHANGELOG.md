@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.16.3 (2019-06-20)
+
+- Fix exchange-rate fetching again.
+- rn: Re-start the core when the `WebView` reloads.
+
 ## 0.16.2 (2019-06-10)
 
 - Improve swap error-ranking logic.
