@@ -21,12 +21,11 @@ export const exchange: TamePixie<RootProps> = combinePixies({
 
       const pluginNames = Object.keys(input.props.state.plugins.rate)
       const pairLists = await Promise.all(
-        pluginNames.map(async pluginName => {
-          const plugin = input.props.state.plugins.rate[pluginName]
+        pluginNames.map(pluginName => {
           try {
-            return plugin.fetchRates(hintPairs)
+            const plugin = input.props.state.plugins.rate[pluginName]
+            return plugin.fetchRates(hintPairs).catch(e => [])
           } catch (e) {
-            // input.props.onError(e) skipped due to noise
             return []
           }
         })
@@ -35,16 +34,18 @@ export const exchange: TamePixie<RootProps> = combinePixies({
       const timestamp = Date.now() / 1000
       const pairs: Array<ExchangePair> = []
       for (let i = 0; i < pluginNames.length; ++i) {
-        for (const pair of pairLists[i]) {
-          const { fromCurrency, toCurrency, rate } = pair
-          pairs.push({
-            fromCurrency,
-            toCurrency,
-            rate,
-            source: pluginNames[i],
-            timestamp
-          })
-        }
+        try {
+          for (const pair of pairLists[i]) {
+            const { fromCurrency, toCurrency, rate } = pair
+            pairs.push({
+              fromCurrency,
+              toCurrency,
+              rate,
+              source: pluginNames[i],
+              timestamp
+            })
+          }
+        } catch (e) {}
       }
 
       input.props.io.console.info('Exchange rates updated')
