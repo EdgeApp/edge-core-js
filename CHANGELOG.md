@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.16.4 (2019-06-25)
+
+- Fix exchange-rate fetching again (for real this time?).
+
 ## 0.16.3 (2019-06-20)
 
 - Fix exchange-rate fetching again.
