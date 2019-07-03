@@ -159,6 +159,12 @@ export class EdgeCoreBridge extends Component<Props> {
 }
 
 const styles = StyleSheet.create({
-  debug: { height: 20, width: '100%' },
-  hidden: { height: 0, width: 0 }
+  debug: {
+    alignSelf: 'center',
+    position: 'absolute',
+    height: 10,
+    width: 10,
+    top: 50
+  },
+  hidden: { position: 'absolute', height: 0, width: 0 }
 })
