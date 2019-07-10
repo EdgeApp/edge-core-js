@@ -3,7 +3,26 @@
 import { abs, div, lt } from 'biggystring'
 import jsoncsv from 'json-csv'
 
-import { type EdgeTransaction } from '../../../types/types.js'
+import {
+  type EdgeGetTransactionsOptions,
+  type EdgeTransaction
+} from '../../../types/types.js'
+
+export function dateFilter(
+  txs: EdgeTransaction[],
+  opts: EdgeGetTransactionsOptions
+): EdgeTransaction[] {
+  const { startDate, endDate } = opts
+
+  let out = txs
+  if (startDate != null) {
+    out = out.filter(tx => 1000 * tx.date >= startDate.valueOf())
+  }
+  if (endDate != null) {
+    out = out.filter(tx => 1000 * tx.date < endDate.valueOf())
+  }
+  return out
+}
 
 function padZero(val: string): string {
   if (val.length === 1) {
