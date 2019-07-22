@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.16.5 (2019-07-22)
+
+- Add polyfills for old React Native WebView implementations.
+- Pass `otherParams` through the `EdgeCurrencyWallet` implementation.
+
 ## 0.16.4 (2019-06-25)
 
 - Fix exchange-rate fetching again (for real this time?).
