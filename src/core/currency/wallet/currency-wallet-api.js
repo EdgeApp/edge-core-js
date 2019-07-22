@@ -523,13 +523,13 @@ export function combineTxWithFile (
     ourReceiveAddresses: tx.ourReceiveAddresses,
     signedTx: tx.signedTx,
     txid: tx.txid,
+    otherParams: { ...tx.otherParams, unfilteredIndex },
 
     amountSatoshi: Number(tx.nativeAmount[currencyCode]),
     nativeAmount: tx.nativeAmount[currencyCode],
     networkFee: tx.networkFee[currencyCode],
     currencyCode,
-    wallet,
-    otherParams: { unfilteredIndex }
+    wallet
   }
 
   // These are our fallback values:

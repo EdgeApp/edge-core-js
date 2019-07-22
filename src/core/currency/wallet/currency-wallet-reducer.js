@@ -40,6 +40,7 @@ export type MergedTransaction = {
   ourReceiveAddresses: Array<string>,
   signedTx: string,
   txid: string,
+  otherParams?: Object,
 
   nativeAmount: { [currencyCode: string]: string },
   networkFee: { [currencyCode: string]: string }
@@ -325,6 +326,7 @@ export function mergeTx (
     ourReceiveAddresses: tx.ourReceiveAddresses,
     signedTx: tx.signedTx,
     txid: tx.txid,
+    otherParams: tx.otherParams,
 
     nativeAmount: { ...oldTx.nativeAmount },
     networkFee: { ...oldTx.networkFee }
