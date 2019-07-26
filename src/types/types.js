@@ -422,6 +422,7 @@ export type EdgeReceiveAddress = EdgeFreshAddress & {
 }
 
 export type EdgeCurrencyWalletEvents = {
+  close: void,
   newTransactions: Array<EdgeTransaction>,
   transactionsChanged: Array<EdgeTransaction>
 }
@@ -654,6 +655,7 @@ export type EthereumTransaction = {
 // rates ---------------------------------------------------------------
 
 export type EdgeRateCacheEvents = {
+  close: void,
   update: mixed
 }
 
@@ -685,7 +687,7 @@ export type EdgeSwapConfig = {
 }
 
 export type EdgeSwapQuote = EdgeSwapPluginQuote & {
-  +isEstimate: boolean,
+  +isEstimate: boolean, // No longer optional at this point
   +quoteUri?: string
 }
 
@@ -731,7 +733,9 @@ export type EdgePluginData = {
 
 // account -------------------------------------------------------------
 
-export type EdgeAccountEvents = {}
+export type EdgeAccountEvents = {
+  close: void
+}
 
 export type EdgeAccount = {
   +on: Subscriber<EdgeAccountEvents>,
@@ -897,6 +901,7 @@ export type EdgeUserInfo = {
 // context -------------------------------------------------------------
 
 export type EdgeContextEvents = {
+  close: void,
   error: Error,
   login: EdgeAccount,
   loginStart: { username: string },
