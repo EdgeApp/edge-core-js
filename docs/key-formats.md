@@ -176,7 +176,7 @@ interface PublicEthereumKey {
 }
 ```
 
-The `ethereumKey` field is a 256-bit base16 encoded number. It may or may not have a `0x` prefix in front.
+The `ethereumKey` field is either a 256-bit base16 encoded number, or a 12-word mnemonic seed. It may or may not have a `0x` prefix in front.
 
 ## wallet:monero
 
