@@ -137,6 +137,7 @@ export type EdgeCurrencyInfo = {
   pluginName: string,
   denominations: Array<EdgeDenomination>,
   requiredConfirmations?: number,
+  supportsStaking?: boolean,
   walletType: string,
 
   // Configuration options:
@@ -222,6 +223,13 @@ export type EdgeSpendInfo = {
   metadata?: EdgeMetadata,
   otherParams?: Object
 }
+
+export type EdgeStakingSettings =
+  | { stakingEnabled: false }
+  | {
+      stakingEnabled: true,
+      delegateAddress: string
+    }
 
 // query data ----------------------------------------------------------
 
@@ -359,6 +367,12 @@ export type EdgeCurrencyEngine = {
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>,
 
+  // Staking:
+  +stakingSettings?: EdgeStakingSettings,
+  changeStakingSettings?: (
+    stakingSettings: EdgeStakingSettings
+  ) => Promise<EdgeTransaction>,
+
   // Escape hatch:
   +otherMethods?: Object
 }
@@ -478,16 +492,20 @@ export type EdgeCurrencyWallet = {
   getEnabledTokens(): Promise<Array<string>>,
   addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
 
-  // Transactions:
+  // Transaction history:
   getNumTransactions(opts?: EdgeCurrencyCodeOptions): Promise<number>,
   getTransactions(
     opts?: EdgeGetTransactionsOptions
   ): Promise<Array<EdgeTransaction>>,
+
+  // Addresses:
   getReceiveAddress(
     opts?: EdgeCurrencyCodeOptions
   ): Promise<EdgeReceiveAddress>,
   saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
   lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
+
+  // Sending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   signTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
@@ -502,6 +520,12 @@ export type EdgeCurrencyWallet = {
   getPaymentProtocolInfo(
     paymentProtocolUrl: string
   ): Promise<EdgePaymentProtocolInfo>,
+
+  // Staking:
+  +stakingSettings: EdgeStakingSettings,
+  changeStakingSettings: (
+    stakingSettings: EdgeStakingSettings
+  ) => Promise<EdgeTransaction>,
 
   // Wallet management:
   resyncBlockchain(): Promise<mixed>,
