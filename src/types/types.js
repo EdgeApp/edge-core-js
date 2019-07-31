@@ -379,7 +379,7 @@ export type EdgeCurrencyTools = {
   +importPrivateKey?: (
     key: string,
     opts?: EdgeCreatePrivateKeyOptions
-  ) => Promise<Object>,
+  ) => Promise<Object> | Object,
   createPrivateKey(
     walletType: string,
     opts?: EdgeCreatePrivateKeyOptions
