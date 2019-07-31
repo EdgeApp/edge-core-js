@@ -26,6 +26,7 @@ export type RootState = {
   +currency: CurrencyState,
   +exchangeCache: ExchangeState,
   +login: LoginState,
+  +paused: boolean,
   +plugins: PluginsState,
   +storageWallets: StorageWalletsState
 }
@@ -63,6 +64,10 @@ export const reducer = buildReducer({
 
   lastAccountId(state, action: RootAction, next: RootState): string {
     return 'login' + next.accountCount.toString()
+  },
+
+  paused(state = false, action: RootAction): boolean {
+    return action.type === 'PAUSE' ? action.payload : state
   },
 
   currency,

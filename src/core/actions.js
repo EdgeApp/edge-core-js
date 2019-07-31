@@ -261,6 +261,11 @@ export type RootAction =
       payload: { accountId: string }
     }
   | {
+      // Pause / unpause background work.
+      type: 'PAUSE',
+      payload: boolean
+    }
+  | {
       // Fires when a storage wallet has been loaded.
       type: 'STORAGE_WALLET_ADDED',
       payload: {
