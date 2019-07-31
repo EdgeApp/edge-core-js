@@ -31,11 +31,11 @@ type WebViewCallbacks = {
  * race conditions.
  * @param {*} onRoot Called when the inner HTML sends a root object.
  * May be called multiple times if the inner HTML reloads.
- * @param {*} debug Set to true to enable logging.
+ * @param {*} debug Provide a message prefix to enable debugging.
  */
 function makeOuterWebViewBridge<Root> (
   onRoot: (root: Root) => mixed,
-  debug: boolean = false
+  debug?: string
 ): WebViewCallbacks {
   let bridge: Bridge | void
   let gatedRoot: Root | void
@@ -52,7 +52,7 @@ function makeOuterWebViewBridge<Root> (
   // Feed incoming messages into the YAOB bridge (if any):
   const onMessage = event => {
     const message = JSON.parse(event.nativeEvent.data)
-    if (debug) console.info('edge-core →', message)
+    if (debug != null) console.info(`${debug} →`, message)
 
     // This is a terrible hack. We are using our inside knowledge
     // of YAOB's message format to determine when the client has restarted.
@@ -70,7 +70,7 @@ function makeOuterWebViewBridge<Root> (
       let firstMessage = true
       bridge = new Bridge({
         sendMessage: message => {
-          if (debug) console.info('edge-core ←', message)
+          if (debug != null) console.info(`${debug} ←`, message)
           if (webview == null) return
 
           const js = `if (window.bridge != null) {${
@@ -124,13 +124,11 @@ export class EdgeCoreBridge extends Component<Props> {
     })
 
     // Set up the YAOB bridge:
-    this.callbacks = makeOuterWebViewBridge(
-      (root: WorkerApi) =>
-        nativeIoPromise
-          .then(nativeIo => props.onLoad(nativeIo, root))
-          .catch(error => props.onError(error)),
-      debug
-    )
+    this.callbacks = makeOuterWebViewBridge((root: WorkerApi) => {
+      nativeIoPromise
+        .then(nativeIo => props.onLoad(nativeIo, root))
+        .catch(error => props.onError(error))
+    }, debug ? 'edge-core' : void 0)
   }
 
   render () {
