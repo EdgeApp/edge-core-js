@@ -220,13 +220,13 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
     // OTP:
     get otpKey (): string | void {
       lockdown()
-      const { login } = selfState()
-      return login.otpTimeout != null ? login.otpKey : void 0
+      const { loginTree } = selfState()
+      return loginTree.otpTimeout != null ? loginTree.otpKey : void 0
     },
     get otpResetDate (): string | void {
       lockdown()
-      const { login } = selfState()
-      return login.otpResetDate
+      const { loginTree } = selfState()
+      return loginTree.otpResetDate
     },
     async cancelOtpReset (): Promise<mixed> {
       lockdown()
