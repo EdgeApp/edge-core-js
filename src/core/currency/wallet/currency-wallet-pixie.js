@@ -5,6 +5,7 @@ import {
   type PixieInput,
   type TamePixie,
   combinePixies,
+  filterPixie,
   stopUpdates
 } from 'redux-pixies'
 import { update } from 'yaob'
@@ -40,9 +41,7 @@ import { type CurrencyWalletState } from './currency-wallet-reducer.js'
 export type CurrencyWalletOutput = {
   +api: EdgeCurrencyWallet | void,
   +plugin: EdgeCurrencyPlugin | void,
-  +engine: EdgeCurrencyEngine | void,
-  +engineStarted: boolean | void,
-  +syncTimer: void
+  +engine: EdgeCurrencyEngine | void
 }
 
 export type CurrencyWalletProps = RootProps & {
@@ -66,7 +65,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     input.onOutput(plugin)
   },
 
-  // Starts the engine for this wallet:
+  // Creates the engine for this wallet:
   engine: (input: CurrencyWalletInput) => async () => {
     if (!input.props.selfOutput) return
 
@@ -151,39 +150,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     return stopUpdates
   },
 
-  // Starts & stops the engine for this wallet:
-  engineStarted(input: CurrencyWalletInput) {
-    return {
-      update() {
-        if (
-          !input.props.selfOutput ||
-          !input.props.selfOutput.api ||
-          !input.props.selfState.fiatLoaded ||
-          !input.props.selfState.fileNamesLoaded
-        ) {
-          return
-        }
-
-        const { engine, engineStarted } = input.props.selfOutput
-        if (engine && !engineStarted) {
-          input.onOutput(true)
-          try {
-            engine.startEngine()
-          } catch (e) {
-            input.props.onError(e)
-          }
-        }
-      },
-
-      destroy() {
-        if (!input.props.selfOutput) return
-
-        const { engine, engineStarted } = input.props.selfOutput
-        if (engine && engineStarted) engine.killEngine()
-      }
-    }
-  },
-
   // Creates the API object:
   api: (input: CurrencyWalletInput) => () => {
     if (
@@ -208,6 +174,55 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
     return stopUpdates
   },
+
+  // Starts & stops the engine for this wallet:
+  engineStarted: filterPixie(
+    (input: CurrencyWalletInput) => {
+      let started: boolean = false
+
+      return {
+        update() {
+          const { id } = input.props
+          if (
+            !input.props.selfOutput ||
+            !input.props.selfOutput.api ||
+            !input.props.selfState.fiatLoaded ||
+            !input.props.selfState.fileNamesLoaded
+          ) {
+            return
+          }
+
+          const { engine } = input.props.selfOutput
+          if (engine != null && !started) {
+            started = true
+            input.props.io.console.info(`${id} startEngine`)
+            try {
+              engine.startEngine()
+            } catch (e) {
+              input.props.onError(e)
+            }
+          }
+        },
+
+        destroy() {
+          const { id } = input.props
+          if (!input.props.selfOutput) return
+
+          const { engine } = input.props.selfOutput
+          if (engine != null && started) {
+            started = false
+            input.props.io.console.info(`${id} killEngine`)
+            try {
+              engine.killEngine()
+            } catch (e) {
+              input.props.onError(e)
+            }
+          }
+        }
+      }
+    },
+    props => (props.state.paused ? void 0 : props)
+  ),
 
   syncTimer(input: CurrencyWalletInput) {
     const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
