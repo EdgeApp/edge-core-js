@@ -2,54 +2,77 @@
 
 import { type PixieInput, type TamePixie, combinePixies } from 'redux-pixies'
 
+import { type EdgeRateHint, type EdgeRatePlugin } from '../../types/types.js'
 import { type RootProps } from '../root-pixie.js'
 import { type ExchangePair } from './exchange-reducer.js'
 
 export const exchange: TamePixie<RootProps> = combinePixies({
   looper (input: PixieInput<RootProps>) {
     let started: boolean = false
+    let stopped: boolean = false
     let timeout: * // Infer the proper timer type
 
-    async function doFetch (): Promise<mixed> {
+    function gatherHints (): Array<EdgeRateHint> {
       // TODO: Grab this off the list of loaded wallet currency types & fiats:
-      const hintPairs = [
+      return [
         { fromCurrency: 'BTC', toCurrency: 'iso:EUR' },
         { fromCurrency: 'BTC', toCurrency: 'iso:USD' },
         { fromCurrency: 'ETH', toCurrency: 'iso:EUR' },
         { fromCurrency: 'ETH', toCurrency: 'iso:USD' }
       ]
+    }
 
-      const pluginNames = Object.keys(input.props.state.plugins.rate)
-      const pairLists = await Promise.all(
-        pluginNames.map(pluginName => {
-          try {
-            const plugin = input.props.state.plugins.rate[pluginName]
-            return plugin.fetchRates(hintPairs).catch(e => [])
-          } catch (e) {
-            return []
-          }
+    function dispatchPairs (pairs: Array<ExchangePair>, source: string) {
+      input.props.io.console.info(`Exchange rates updated (${source})`)
+      if (pairs.length > 0) {
+        input.props.dispatch({
+          type: 'EXCHANGE_PAIRS_FETCHED',
+          payload: pairs
         })
-      )
-
-      const timestamp = Date.now() / 1000
-      const pairs: Array<ExchangePair> = []
-      for (let i = 0; i < pluginNames.length; ++i) {
-        try {
-          for (const pair of pairLists[i]) {
-            const { fromCurrency, toCurrency, rate } = pair
-            pairs.push({
-              fromCurrency,
-              toCurrency,
-              rate,
-              source: pluginNames[i],
-              timestamp
-            })
-          }
-        } catch (e) {}
       }
+    }
 
-      input.props.io.console.info('Exchange rates updated')
-      input.props.dispatch({ type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs })
+    function doFetch () {
+      const hintPairs = gatherHints()
+
+      // Gather pairs for up to five seconds, then send what we have:
+      let wait: boolean = true
+      let waitingPairs: Array<ExchangePair> = []
+      function sendWaitingPairs (done?: boolean) {
+        wait = false
+        dispatchPairs(waitingPairs, done ? 'complete' : 'some pending')
+      }
+      const waitTimeout = setTimeout(sendWaitingPairs, 5000)
+
+      // Initiate all requests:
+      let finishedPairs: number = 0
+      const timestamp = Date.now() / 1000
+      const pluginNames = Object.keys(input.props.state.plugins.rate)
+      const promises = pluginNames.map(pluginName => {
+        const plugin = input.props.state.plugins.rate[pluginName]
+        return fetchPluginRates(plugin, hintPairs, pluginName, timestamp)
+          .then(pairs => {
+            if (wait) waitingPairs = [...waitingPairs, ...pairs]
+            else dispatchPairs(pairs, pluginName)
+          })
+          .catch(error => {
+            input.props.io.console.info(
+              `Rate provider ${pluginName} failed: ${String(error)}`
+            )
+          })
+          .then(() => {
+            // There is no need to keep waiting if all plugins are done:
+            if (wait && ++finishedPairs >= pluginNames.length) {
+              clearTimeout(waitTimeout)
+              sendWaitingPairs(true)
+            }
+          })
+      })
+
+      // Wait for everyone to finish before doing another round:
+      Promise.all(promises).then(() => {
+        if (!stopped) timeout = setTimeout(doFetch, 30 * 1000)
+      })
     }
 
     return {
@@ -58,19 +81,49 @@ export const exchange: TamePixie<RootProps> = combinePixies({
         // and the plugins are ready:
         if (!started && props.state.plugins.locked) {
           started = true
-          const iteration = () =>
-            doFetch()
-              .catch(() => {})
-              .then(() => {
-                timeout = setTimeout(iteration, 30 * 1000)
-              })
-          iteration()
+          doFetch()
         }
       },
 
       destroy () {
+        stopped = true
         if (timeout != null) clearTimeout(timeout)
       }
     }
   }
 })
+
+/**
+ * Fetching exchange rates can fail in exciting ways,
+ * so performs a fetch with maximum paranoia.
+ */
+function fetchPluginRates (
+  plugin: EdgeRatePlugin,
+  hintPairs: Array<EdgeRateHint>,
+  source: string,
+  timestamp: number
+): Promise<Array<ExchangePair>> {
+  try {
+    return plugin.fetchRates(hintPairs).then(pairs =>
+      pairs.map(pair => {
+        const { fromCurrency, toCurrency, rate } = pair
+        if (
+          typeof fromCurrency !== 'string' ||
+          typeof toCurrency !== 'string' ||
+          typeof rate !== 'number'
+        ) {
+          throw new TypeError('Invalid data format')
+        }
+        return {
+          fromCurrency,
+          toCurrency,
+          rate,
+          source,
+          timestamp
+        }
+      })
+    )
+  } catch (error) {
+    return Promise.reject(error)
+  }
+}
