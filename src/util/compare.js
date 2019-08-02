@@ -28,7 +28,12 @@ function compareObjects (a: any, b: any, type) {
     // so if every property in `a` has a matching property in `b`,
     // the objects must be identical, regardless of key order.
     for (const key of keys) {
-      if (!b.hasOwnProperty(key) || !compare(a[key], b[key])) return false
+      if (
+        !Object.prototype.hasOwnProperty.call(b, key) ||
+        !compare(a[key], b[key])
+      ) {
+        return false
+      }
     }
     return true
   }

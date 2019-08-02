@@ -20,15 +20,13 @@ function escapeOFXString (str: string) {
 
 function exportOfxHeader (inputObj: Object) {
   let out = ''
-  for (const key in inputObj) {
-    if (inputObj.hasOwnProperty(key)) {
-      let element = inputObj[key]
-      if (typeof element === 'string') {
-        element = escapeOFXString(element)
-        out += `${key}:${element}\n`
-      } else {
-        throw new Error('Invalid OFX header')
-      }
+  for (const key of Object.keys(inputObj)) {
+    let element = inputObj[key]
+    if (typeof element === 'string') {
+      element = escapeOFXString(element)
+      out += `${key}:${element}\n`
+    } else {
+      throw new Error('Invalid OFX header')
     }
   }
   return out
@@ -36,25 +34,23 @@ function exportOfxHeader (inputObj: Object) {
 
 function exportOfxBody (inputObj: Object) {
   let out = ''
-  for (const key in inputObj) {
-    if (inputObj.hasOwnProperty(key)) {
-      let element = inputObj[key]
-      if (typeof element === 'string') {
-        element = escapeOFXString(element)
-        out += `<${key}>${element}\n`
-      } else if (element instanceof Array) {
-        for (const a of element) {
-          out += `<${key}>\n`
-          out += exportOfxBody(a)
-          out += `</${key}>\n`
-        }
-      } else if (typeof element === 'object') {
+  for (const key of Object.keys(inputObj)) {
+    let element = inputObj[key]
+    if (typeof element === 'string') {
+      element = escapeOFXString(element)
+      out += `<${key}>${element}\n`
+    } else if (element instanceof Array) {
+      for (const a of element) {
         out += `<${key}>\n`
-        out += exportOfxBody(element)
+        out += exportOfxBody(a)
         out += `</${key}>\n`
-      } else {
-        throw new Error('Invalid OFX body')
       }
+    } else if (typeof element === 'object') {
+      out += `<${key}>\n`
+      out += exportOfxBody(element)
+      out += `</${key}>\n`
+    } else {
+      throw new Error('Invalid OFX body')
     }
   }
   return out
