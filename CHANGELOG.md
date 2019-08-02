@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.16.6 (2019-08-02)
+
+- Fix OTP settings to only apply to the root login.
+- Add `close` events to Flow type definitions.
+- Apply timeouts to the exchange-rate fetching logic.
+
 ## 0.16.5 (2019-07-22)
 
 - Add polyfills for old React Native WebView implementations.
