@@ -27,10 +27,8 @@ import { base58 } from '../../util/encoding.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
 import {
   createCurrencyWallet,
-  listSplittableWalletTypes,
   makeKeysKit,
-  makeStorageKeyInfo,
-  splitWalletInfo
+  makeStorageKeyInfo
 } from '../login/keys.js'
 import { applyKit } from '../login/login.js'
 import { cancelOtpReset, disableOtp, enableOtp } from '../login/otp.js'
@@ -41,6 +39,7 @@ import {
 } from '../login/password.js'
 import { changePin, checkPin2, deletePin } from '../login/pin2.js'
 import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
+import { listSplittableWalletTypes, splitWallet } from '../login/split.js'
 import { getCurrencyTools } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
@@ -267,7 +266,7 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
       if (keys == null) {
         // Use the currency plugin to create the keys:
         const tools = await getCurrencyTools(ai, walletType)
-        keys = await tools.createPrivateKey(walletType)
+        keys = await tools.createPrivateKey()
       }
 
       const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
@@ -281,7 +280,7 @@ export function makeAccountApi (ai: ApiInput, accountId: string): EdgeAccount {
       walletId: string,
       newWalletType: string
     ): Promise<string> {
-      return splitWalletInfo(ai, accountId, walletId, newWalletType)
+      return splitWallet(ai, accountId, walletId, newWalletType)
     },
     async listSplittableWalletTypes (walletId: string): Promise<Array<string>> {
       return listSplittableWalletTypes(ai, accountId, walletId)

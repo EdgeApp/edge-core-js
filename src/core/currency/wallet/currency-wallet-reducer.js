@@ -51,6 +51,7 @@ export type CurrencyWalletState = {
   +pluginName: string,
 
   +currencyInfo: EdgeCurrencyInfo,
+  +canSpend: boolean,
   +displayPrivateSeed: string | null,
   +displayPublicSeed: string | null,
   +engineFailure: Error | null,
@@ -103,6 +104,12 @@ const currencyWallet = buildReducer({
   currencyInfo (state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
     if (state) return state
     return getCurrencyPlugin(next.root, next.self.walletInfo.type).currencyInfo
+  },
+
+  canSpend (state = false, action: RootAction): boolean {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
+      ? action.payload.canSpend
+      : state
   },
 
   displayPrivateSeed (state = null, action: RootAction): string | null {

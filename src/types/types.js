@@ -87,7 +87,7 @@ export type EdgePluginMap<Value> = { [pluginName: string]: Value }
 export type EdgeWalletInfo = {
   id: string,
   type: string,
-  keys: any
+  keys: Object
 }
 
 export type EdgeWalletInfoFull = {
@@ -142,6 +142,7 @@ export type EdgeCurrencyInfo = {
   // Configuration options:
   defaultSettings: any,
   metaTokens: Array<EdgeMetaToken>,
+  canImportKey?: boolean,
 
   // Explorers:
   addressExplorer: string,
@@ -351,7 +352,10 @@ export type EdgeCurrencyEngine = {
 
   // Spending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
-  signTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
+  signTx(
+    transaction: EdgeTransaction,
+    walletInfo: EdgeWalletInfo
+  ): Promise<EdgeTransaction>,
   broadcastTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
   saveTx(transaction: EdgeTransaction): Promise<mixed>,
   +sweepPrivateKeys?: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
@@ -376,16 +380,18 @@ export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
 
 export type EdgeCurrencyTools = {
   // Keys:
-  +importPrivateKey?: (
-    key: string,
+  createPrivateKey(opts?: EdgeCreatePrivateKeyOptions): Promise<Object>,
+  +derivePublicKey?: (walletInfo: EdgeWalletInfo) => Promise<Object>,
+  +importKey?: (
+    keyText: string,
     opts?: EdgeCreatePrivateKeyOptions
   ) => Promise<Object>,
-  createPrivateKey(
-    walletType: string,
-    opts?: EdgeCreatePrivateKeyOptions
-  ): Promise<Object>,
-  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<Object>,
-  +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => Array<string>,
+  +keyCanSpend?: (walletInfo: EdgeWalletInfo) => Promise<boolean>,
+  +listSplittableTypes?: (walletInfo: EdgeWalletInfo) => Promise<Array<string>>,
+  +splitKey?: (
+    newWalletType: string,
+    walletInfo: EdgeWalletInfo
+  ) => Promise<Object>,
 
   // URIs:
   parseUri(
@@ -441,6 +447,7 @@ export type EdgeCurrencyWallet = {
   sync(): Promise<mixed>,
 
   // Wallet keys:
+  +canSpend: boolean,
   +displayPrivateSeed: string | null,
   +displayPublicSeed: string | null,
 
