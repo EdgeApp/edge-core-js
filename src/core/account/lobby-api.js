@@ -77,17 +77,25 @@ async function approveLoginRequest(
     loginStash
   }
   return sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
-    setTimeout(() => {
+    let timeout
+    const accountApi = ai.props.output.accounts[accountId].api
+    if (accountApi != null) {
+      accountApi.on('close', () => {
+        if (timeout != null) clearTimeout(timeout)
+      })
+    }
+
+    timeout = setTimeout(() => {
+      timeout = null
       syncAccount(ai, accountId)
         .then(() => {
-          setTimeout(() => {
+          timeout = setTimeout(() => {
+            timeout = null
             syncAccount(ai, accountId).catch(e => ai.props.onError(e))
           }, 20000)
-          return void 0
         })
         .catch(e => ai.props.onError(e))
     }, 10000)
-    return void 0
   })
 }
 
