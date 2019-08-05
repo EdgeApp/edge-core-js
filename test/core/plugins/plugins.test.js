@@ -9,8 +9,8 @@ import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
 
-describe('plugins system', function () {
-  it('adds plugins', async function () {
+describe('plugins system', function() {
+  it('adds plugins', async function() {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
@@ -28,7 +28,7 @@ describe('plugins system', function () {
     expect(Object.keys(account.swapConfig)).deep.equals(['fakeswap'])
   })
 
-  it('cannot log in with broken plugins', async function () {
+  it('cannot log in with broken plugins', async function() {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,

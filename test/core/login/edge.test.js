@@ -8,7 +8,7 @@ import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
 
-async function simulateRemoteApproval (world, lobbyId: string) {
+async function simulateRemoteApproval(world, lobbyId: string) {
   const context = await world.makeEdgeContext(contextOptions)
   const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -20,8 +20,8 @@ async function simulateRemoteApproval (world, lobbyId: string) {
   return loginRequest.approve()
 }
 
-describe('edge login', function () {
-  it('request', async function () {
+describe('edge login', function() {
+  it('request', async function() {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
@@ -43,7 +43,7 @@ describe('edge login', function () {
     return context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
-  it('cancel', async function () {
+  it('cancel', async function() {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 

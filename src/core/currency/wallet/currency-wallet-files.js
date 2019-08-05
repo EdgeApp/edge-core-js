@@ -91,7 +91,7 @@ export type LegacyMapFile = {
 /**
  * Converts a LegacyTransactionFile to a TransactionFile.
  */
-function fixLegacyFile (
+function fixLegacyFile(
   file: LegacyTransactionFile,
   walletCurrency: string,
   walletFiat: string
@@ -118,7 +118,7 @@ function fixLegacyFile (
   return out
 }
 
-function getTxFile (
+function getTxFile(
   state: RootState,
   keyId: string,
   creationDate: number,
@@ -138,7 +138,7 @@ function getTxFile (
 /**
  * Changes a wallet's name.
  */
-export function renameCurrencyWallet (
+export function renameCurrencyWallet(
   input: CurrencyWalletInput,
   name: string | null
 ): Promise<mixed> {
@@ -159,7 +159,7 @@ export function renameCurrencyWallet (
 /**
  * Changes a wallet's fiat currency code.
  */
-export function setCurrencyWalletFiat (
+export function setCurrencyWalletFiat(
   input: CurrencyWalletInput,
   fiatCurrencyCode: string
 ): Promise<mixed> {
@@ -184,7 +184,7 @@ export function setCurrencyWalletFiat (
 /**
  * Loads the wallet fiat currency file.
  */
-function loadFiatFile (input: CurrencyWalletInput, folder) {
+function loadFiatFile(input: CurrencyWalletInput, folder) {
   const walletId = input.props.id
   const { dispatch } = input.props
 
@@ -210,7 +210,7 @@ function loadFiatFile (input: CurrencyWalletInput, folder) {
 /**
  * Loads the wallet name file.
  */
-function loadNameFile (input: CurrencyWalletInput, folder) {
+function loadNameFile(input: CurrencyWalletInput, folder) {
   const walletId = input.props.id
   const { dispatch } = input.props
 
@@ -239,7 +239,7 @@ function loadNameFile (input: CurrencyWalletInput, folder) {
 /**
  * If a wallet has no name file, try to pick a name based on the appId.
  */
-function fetchBackupName (
+function fetchBackupName(
   input: CurrencyWalletInput,
   appIds: Array<string>
 ): Promise<string | null> {
@@ -256,7 +256,7 @@ function fetchBackupName (
 /**
  * Loads transaction metadata files.
  */
-export async function loadTxFiles (
+export async function loadTxFiles(
   input: CurrencyWalletInput,
   txIdHashes: Array<string>
 ): any {
@@ -301,7 +301,7 @@ export async function loadTxFiles (
  * If they in the legacy format, convert them to the new format
  * and cache them on disk
  */
-async function getLegacyFileNames (
+async function getLegacyFileNames(
   state: RootState,
   walletId: string,
   folder
@@ -365,7 +365,7 @@ async function getLegacyFileNames (
 /**
  * Loads transaction metadata file names.
  */
-async function loadTxFileNames (input: CurrencyWalletInput, folder) {
+async function loadTxFileNames(input: CurrencyWalletInput, folder) {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
@@ -393,7 +393,7 @@ async function loadTxFileNames (input: CurrencyWalletInput, folder) {
 /**
  * Loads address metadata files.
  */
-function loadAddressFiles (input: CurrencyWalletInput, folder) {
+function loadAddressFiles(input: CurrencyWalletInput, folder) {
   // Actually load the files:
   const allFiles = Promise.all([
     // Legacy transaction metadata:
@@ -428,7 +428,7 @@ function loadAddressFiles (input: CurrencyWalletInput, folder) {
 /**
  * Updates the wallet in response to data syncs.
  */
-export async function loadAllFiles (input: CurrencyWalletInput) {
+export async function loadAllFiles(input: CurrencyWalletInput) {
   const walletId = input.props.id
   const folder = getStorageWalletFolder(input.props.state, walletId)
 
@@ -441,7 +441,7 @@ export async function loadAllFiles (input: CurrencyWalletInput) {
 /**
  * Changes a wallet's metadata.
  */
-export function setCurrencyWalletTxMetadata (
+export function setCurrencyWalletTxMetadata(
   input: CurrencyWalletInput,
   txid: string,
   currencyCode: string,
@@ -501,7 +501,7 @@ export function setCurrencyWalletTxMetadata (
   })
 }
 
-export function setupNewTxMetadata (input: CurrencyWalletInput, tx: any) {
+export function setupNewTxMetadata(input: CurrencyWalletInput, tx: any) {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 

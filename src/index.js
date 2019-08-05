@@ -20,14 +20,14 @@ export {
 } from './core/core.js'
 export * from './types/types.js'
 
-export function makeEdgeContext (
+export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
   const { path = './edge' } = opts
   return makeContext(makeNodeIo(path), {}, opts)
 }
 
-export function makeFakeEdgeWorld (
+export function makeFakeEdgeWorld(
   users: Array<EdgeFakeUser> = []
 ): Promise<EdgeFakeWorld> {
   return Promise.resolve(

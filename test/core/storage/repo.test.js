@@ -13,8 +13,8 @@ const contextOptions = { apiKey: '', appId: '' }
 const dataKey = base64.parse(fakeUser.loginKey)
 const syncKey = base64.parse(fakeUser.syncKey)
 
-describe('repo', function () {
-  it('read file', async function () {
+describe('repo', function() {
+  it('read file', async function() {
     const io = makeFakeIo()
     const { disklet } = makeRepoPaths(io, syncKey, dataKey)
     const payload = '{"message":"Hello"}'
@@ -31,7 +31,7 @@ describe('repo', function () {
     expect(await disklet.getText('a/b.json')).equals(payload)
   })
 
-  it('data round-trip', async function () {
+  it('data round-trip', async function() {
     const io = makeFakeIo()
     const { disklet } = makeRepoPaths(io, syncKey, dataKey)
     const payload = 'Test data'
@@ -40,7 +40,7 @@ describe('repo', function () {
     expect(await disklet.getText('b.txt')).equals(payload)
   })
 
-  it('repo-to-repo sync', async function () {
+  it('repo-to-repo sync', async function() {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context1 = await world.makeEdgeContext(contextOptions)
     const context2 = await world.makeEdgeContext(contextOptions)

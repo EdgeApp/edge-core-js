@@ -21,7 +21,7 @@ if (/debug=true/.test(window.location)) showStatus()
 window.addEdgeCorePlugins = addEdgeCorePlugins
 window.lockEdgeCorePlugins = lockEdgeCorePlugins
 
-function makeIo (nativeIo: EdgeNativeIo): EdgeIo {
+function makeIo(nativeIo: EdgeNativeIo): EdgeIo {
   const clientIo: ClientIo = nativeIo['edge-core']
   const { console, disklet, entropy, scrypt } = clientIo
   const csprng = new HmacDRBG({
@@ -42,11 +42,11 @@ function makeIo (nativeIo: EdgeNativeIo): EdgeIo {
 }
 
 const workerApi: WorkerApi = bridgifyObject({
-  makeEdgeContext (nativeIo, opts) {
+  makeEdgeContext(nativeIo, opts) {
     return makeContext(makeIo(nativeIo), nativeIo, opts)
   },
 
-  makeFakeEdgeWorld (nativeIo, users = []) {
+  makeFakeEdgeWorld(nativeIo, users = []) {
     return Promise.resolve(makeFakeWorld(makeIo(nativeIo), nativeIo, users))
   }
 })
@@ -54,7 +54,7 @@ const workerApi: WorkerApi = bridgifyObject({
 /**
  * Legacy WebView support.
  */
-function oldSendRoot () {
+function oldSendRoot() {
   if (window.originalPostMessage != null) {
     const reactPostMessage = window.postMessage
     window.postMessage = window.originalPostMessage
@@ -72,7 +72,7 @@ function oldSendRoot () {
 // Start the object bridge:
 if (window.ReactNativeWebView != null) {
   window.bridge = new Bridge({
-    sendMessage (message) {
+    sendMessage(message) {
       window.ReactNativeWebView.postMessage(JSON.stringify(message))
     }
   })

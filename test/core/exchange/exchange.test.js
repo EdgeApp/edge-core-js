@@ -15,7 +15,7 @@ const contextOptions = { apiKey: '', appId: '' }
 
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.
-function makePairs () {
+function makePairs() {
   const now = Date.now() / 1000
 
   return [
@@ -74,12 +74,12 @@ const routes = {
   JPY: { BTC: [2] }
 }
 
-function addPairs (pairs: Array<ExchangePair>) {
+function addPairs(pairs: Array<ExchangePair>) {
   return { type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs }
 }
 
-describe('exchange cache reducer', function () {
-  it('add currency pairs', function () {
+describe('exchange cache reducer', function() {
+  it('add currency pairs', function() {
     const pairs = makePairs()
 
     // Add the first currency pair:
@@ -93,7 +93,7 @@ describe('exchange cache reducer', function () {
     assert.deepEqual(state.rates.routes, routes)
   })
 
-  it('preserve ordering', function () {
+  it('preserve ordering', function() {
     const pairs = makePairs()
 
     // Add a middle currency , with adjustments:
@@ -109,7 +109,7 @@ describe('exchange cache reducer', function () {
     assert.deepEqual(state.rates.pairs, expected)
   })
 
-  it('find the shortest route', function () {
+  it('find the shortest route', function() {
     const pairs = makePairs()
     const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
     const getPairCost = (source, age, inverse) => 1
@@ -122,7 +122,7 @@ describe('exchange cache reducer', function () {
     )
   })
 
-  it('find a route using the preferred exchange', function () {
+  it('find a route using the preferred exchange', function() {
     const pairs = makePairs()
     const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
     const getPairCost = source => (source === 'complexSource' ? 1 : 10)
@@ -133,7 +133,7 @@ describe('exchange cache reducer', function () {
     )
   })
 
-  it('find the freshest route', function () {
+  it('find the freshest route', function() {
     const pairs = makePairs()
     const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
     const getPairCost = (source, age) => age
@@ -144,7 +144,7 @@ describe('exchange cache reducer', function () {
     )
   })
 
-  it('missing routes return zero', function () {
+  it('missing routes return zero', function() {
     const pairs = makePairs()
     const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
 
@@ -152,8 +152,8 @@ describe('exchange cache reducer', function () {
   })
 })
 
-describe('exchange pixie', function () {
-  it('fetches exchange rates', async function () {
+describe('exchange pixie', function() {
+  it('fetches exchange rates', async function() {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,

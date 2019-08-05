@@ -8,21 +8,21 @@ import { afterEach, describe, it } from 'mocha'
 import { closeEdge, makeFakeEdgeWorld } from '../../../src/index.js'
 import { fakeUser, fakeUserDump } from '../../fake/fake-user.js'
 
-afterEach(function () {
+afterEach(function() {
   closeEdge()
 })
 
 const contextOptions = { apiKey: '', appId: '' }
 
-describe('context', function () {
-  it('lists usernames', async function () {
+describe('context', function() {
+  it('lists usernames', async function() {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 
     expect(await context.listUsernames()).deep.equals(['js test 0'])
   })
 
-  it('dumps fake users', async function () {
+  it('dumps fake users', async function() {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)

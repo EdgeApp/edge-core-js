@@ -33,7 +33,7 @@ type WebViewCallbacks = {
  * May be called multiple times if the inner HTML reloads.
  * @param {*} debug Provide a message prefix to enable debugging.
  */
-function makeOuterWebViewBridge<Root> (
+function makeOuterWebViewBridge<Root>(
   onRoot: (root: Root) => mixed,
   debug?: string
 ): WebViewCallbacks {
@@ -110,7 +110,7 @@ function makeOuterWebViewBridge<Root> (
 export class EdgeCoreBridge extends Component<Props> {
   callbacks: WebViewCallbacks
 
-  constructor (props: Props) {
+  constructor(props: Props) {
     super(props)
     const { nativeIo = {}, debug = false } = props
 
@@ -124,14 +124,17 @@ export class EdgeCoreBridge extends Component<Props> {
     })
 
     // Set up the YAOB bridge:
-    this.callbacks = makeOuterWebViewBridge((root: WorkerApi) => {
-      nativeIoPromise
-        .then(nativeIo => props.onLoad(nativeIo, root))
-        .catch(error => props.onError(error))
-    }, debug ? 'edge-core' : void 0)
+    this.callbacks = makeOuterWebViewBridge(
+      (root: WorkerApi) => {
+        nativeIoPromise
+          .then(nativeIo => props.onLoad(nativeIo, root))
+          .catch(error => props.onError(error))
+      },
+      debug ? 'edge-core' : void 0
+    )
   }
 
-  render () {
+  render() {
     let uri =
       Platform.OS === 'android'
         ? 'file:///android_asset/edge-core/index.html'

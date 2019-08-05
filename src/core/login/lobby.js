@@ -37,7 +37,7 @@ export type LobbyRequest = {
 /**
  * Derives a shared secret from the given secret key and public key.
  */
-function deriveSharedKey (keypair: Keypair, pubkey: Uint8Array) {
+function deriveSharedKey(keypair: Keypair, pubkey: Uint8Array) {
   const secretX = keypair
     .derive(secp256k1.keyFromPublic(pubkey).getPublic())
     .toArray('be')
@@ -49,7 +49,7 @@ function deriveSharedKey (keypair: Keypair, pubkey: Uint8Array) {
 /**
  * Decrypts a lobby reply using the request's secret key.
  */
-export function decryptLobbyReply (keypair: Keypair, lobbyReply: LobbyReply) {
+export function decryptLobbyReply(keypair: Keypair, lobbyReply: LobbyReply) {
   const pubkey = base64.parse(lobbyReply.publicKey)
   const sharedKey = deriveSharedKey(keypair, pubkey)
   return JSON.parse(utf8.stringify(decrypt(lobbyReply.box, sharedKey)))
@@ -59,7 +59,7 @@ export function decryptLobbyReply (keypair: Keypair, lobbyReply: LobbyReply) {
  * Encrypts a lobby reply JSON replyData, and returns a reply
  * suitable for sending to the server.
  */
-export function encryptLobbyReply (
+export function encryptLobbyReply(
   io: EdgeIo,
   pubkey: Uint8Array,
   replyData: {}
@@ -87,14 +87,14 @@ class ObservableLobby {
   replyCount: number
   timeout: * // Infer the proper timer type.
 
-  constructor (ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
+  constructor(ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
     this.ai = ai
     this.lobbyId = lobbyId
     this.keypair = keypair
     this.period = period
   }
 
-  subscribe (onReply: (reply: Object) => mixed, onError: (e: Error) => mixed) {
+  subscribe(onReply: (reply: Object) => mixed, onError: (e: Error) => mixed) {
     this.onReply = onReply
     this.onError = onError
     this.replyCount = 0
@@ -113,7 +113,7 @@ class ObservableLobby {
   }
 }
 
-function pollLobby (watcher: ObservableLobby) {
+function pollLobby(watcher: ObservableLobby) {
   const { ai, lobbyId, keypair, onReply, onError } = watcher
 
   return authRequest(ai, 'GET', '/v2/lobby/' + lobbyId, {})
@@ -141,7 +141,7 @@ function pollLobby (watcher: ObservableLobby) {
  * Creates a new lobby on the auth server holding the given request.
  * @return A lobby watcher object that will check for incoming replies.
  */
-export function makeLobby (
+export function makeLobby(
   ai: ApiInput,
   lobbyRequest: LobbyRequest,
   period: number = 1000
@@ -168,7 +168,7 @@ export function makeLobby (
  * Fetches a lobby request from the auth server.
  * @return A promise of the lobby request JSON.
  */
-export function fetchLobbyRequest (ai: ApiInput, lobbyId: string) {
+export function fetchLobbyRequest(ai: ApiInput, lobbyId: string) {
   return authRequest(ai, 'GET', '/v2/lobby/' + lobbyId, {}).then(reply => {
     const lobbyRequest = reply.request
 
@@ -188,7 +188,7 @@ export function fetchLobbyRequest (ai: ApiInput, lobbyId: string) {
 /**
  * Encrypts and sends a reply to a lobby request.
  */
-export function sendLobbyReply (
+export function sendLobbyReply(
   ai: ApiInput,
   lobbyId: string,
   lobbyRequest: LobbyRequest,

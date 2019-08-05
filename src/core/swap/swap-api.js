@@ -16,7 +16,7 @@ import { type ApiInput } from '../root-pixie.js'
 /**
  * Fetch quotes from all plugins, and pick the best one.
  */
-export async function fetchSwapQuote (
+export async function fetchSwapQuote(
   ai: ApiInput,
   accountId: string,
   request: EdgeSwapRequest
@@ -97,7 +97,7 @@ export async function fetchSwapQuote (
 /**
  * Ranks different error codes by priority.
  */
-function rankError (error: Object) {
+function rankError(error: Object) {
   if (error.name === errorNames.InsufficientFundsError) return 5
   if (error.name === errorNames.PendingFundsError) return 5
   if (error.name === errorNames.SwapBelowLimitError) return 4
@@ -110,7 +110,7 @@ function rankError (error: Object) {
 /**
  * Picks the best error out of two choices.
  */
-function pickError (a: Object, b: Object): Object {
+function pickError(a: Object, b: Object): Object {
   // Return the highest-ranked error:
   const diff = rankError(a) - rankError(b)
   if (diff > 0) return a

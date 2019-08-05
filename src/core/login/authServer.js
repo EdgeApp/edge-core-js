@@ -10,7 +10,7 @@ import {
 import { timeout } from '../../util/promise.js'
 import { type ApiInput } from '../root-pixie.js'
 
-export function parseReply (json: Object) {
+export function parseReply(json: Object) {
   switch (json.status_code) {
     case 0: // Success
       return json.results
@@ -42,7 +42,7 @@ export function parseReply (json: Object) {
   }
 }
 
-export function authRequest (
+export function authRequest(
   ai: ApiInput,
   method: string,
   path: string,

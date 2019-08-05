@@ -19,11 +19,11 @@ import { timeout } from './util/promise.js'
 export { makeFakeIo } from './core/core.js'
 export * from './types/types.js'
 
-function onErrorDefault (e: any): mixed {
+function onErrorDefault(e: any): mixed {
   console.error(e)
 }
 
-export function MakeEdgeContext (props: {
+export function MakeEdgeContext(props: {
   debug?: boolean,
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
@@ -47,7 +47,7 @@ export function MakeEdgeContext (props: {
   )
 }
 
-export function MakeFakeEdgeWorld (props: {
+export function MakeFakeEdgeWorld(props: {
   debug?: boolean,
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
@@ -74,7 +74,7 @@ export function MakeFakeEdgeWorld (props: {
 /**
  * Fetches any login-related messages for all the users on this device.
  */
-export async function fetchLoginMessages (
+export async function fetchLoginMessages(
   apiKey: string
 ): Promise<EdgeLoginMessages> {
   const disklet = makeReactNativeDisklet()

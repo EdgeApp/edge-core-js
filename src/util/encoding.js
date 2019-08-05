@@ -7,31 +7,31 @@ const base58Codec = baseX(
   '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 )
 
-function assertString (text) {
+function assertString(text) {
   if (typeof text !== 'string') {
     throw new Error('Input is not a string')
   }
 }
 
-function assertData (data) {
+function assertData(data) {
   if (typeof data === 'string' || data.length == null) {
     throw new Error('Input is not data')
   }
 }
 
 export const base58 = {
-  parse (text: string): Uint8Array {
+  parse(text: string): Uint8Array {
     assertString(text)
     return base58Codec.decode(text)
   },
-  stringify (data: Uint8Array | Array<number>): string {
+  stringify(data: Uint8Array | Array<number>): string {
     assertData(data)
     return base58Codec.encode(data)
   }
 }
 
 export const utf8 = {
-  parse (text: string): Uint8Array {
+  parse(text: string): Uint8Array {
     const byteString: string = utf8Codec.encode(text)
     const out = new Uint8Array(byteString.length)
 
@@ -42,7 +42,7 @@ export const utf8 = {
     return out
   },
 
-  stringify (data: Uint8Array | Array<number>): string {
+  stringify(data: Uint8Array | Array<number>): string {
     assertData(data)
 
     // Some of our data contains terminating null bytes due to an old bug.

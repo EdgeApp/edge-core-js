@@ -10,11 +10,11 @@ export type LoginServerState = {
 }
 
 export const server: Reducer<LoginServerState, RootAction> = combineReducers({
-  apiKey (state = '', action: RootAction): string {
+  apiKey(state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.apiKey : state
   },
 
-  uri (state = '', action: RootAction): string {
+  uri(state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.authServer : state
   }
 })

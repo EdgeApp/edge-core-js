@@ -9,11 +9,11 @@ import { type EthereumTransaction } from '../../types/types.js'
  * This function needs to live inside the webpack bundle
  * to produce the right `Buffer` type.
  */
-function hexToBuffer (hex: string) {
+function hexToBuffer(hex: string) {
   return Buffer.from(hex.replace(/^0x/, ''), 'hex')
 }
 
-export function ethereumKeyToAddress (key: string): string {
+export function ethereumKeyToAddress(key: string): string {
   try {
     const addressBytes = privateToAddress(hexToBuffer(key))
     return toChecksumAddress(addressBytes.toString('hex'))
@@ -22,7 +22,7 @@ export function ethereumKeyToAddress (key: string): string {
   }
 }
 
-export function signEthereumTransaction (
+export function signEthereumTransaction(
   ethereumKey: string,
   transaction: EthereumTransaction
 ): string {

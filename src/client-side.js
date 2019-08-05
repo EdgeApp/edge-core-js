@@ -16,17 +16,17 @@ import {
 export class AccountSync {
   +allKeys: Array<EdgeWalletInfoFull>
 
-  getFirstWalletInfo (type: string): ?EdgeWalletInfo {
+  getFirstWalletInfo(type: string): ?EdgeWalletInfo {
     const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
     return allKeys.find(info => info.type === type)
   }
 
-  getWalletInfo (id: string): ?EdgeWalletInfo {
+  getWalletInfo(id: string): ?EdgeWalletInfo {
     const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
     return allKeys.find(info => info.id === id)
   }
 
-  listWalletIds (): Array<string> {
+  listWalletIds(): Array<string> {
     return this.allKeys.map(info => info.id)
   }
 }
@@ -35,7 +35,7 @@ shareData(AccountSync.prototype, 'AccountSync')
 /**
  * Verifies that a password meets our suggested rules.
  */
-export function checkPasswordRules (password: string) {
+export function checkPasswordRules(password: string) {
   const tooShort = password.length < 10
   const noNumber = !/[0-9]/.test(password)
   const noLowerCase = !/[a-z]/.test(password)
@@ -72,20 +72,20 @@ export class CurrencyWalletSync {
   +displayPrivateSeed: string | null
   +displayPublicSeed: string | null
 
-  getBalance (opts: EdgeCurrencyCodeOptions = {}): string {
+  getBalance(opts: EdgeCurrencyCodeOptions = {}): string {
     const { currencyCode = this.currencyInfo.currencyCode } = opts
     return this.balances[currencyCode] || '0'
   }
 
-  getBlockHeight () {
+  getBlockHeight() {
     return this.blockHeight
   }
 
-  getDisplayPrivateSeed (): string | null {
+  getDisplayPrivateSeed(): string | null {
     return this.displayPrivateSeed
   }
 
-  getDisplayPublicSeed (): string | null {
+  getDisplayPublicSeed(): string | null {
     return this.displayPublicSeed
   }
 }
@@ -95,7 +95,7 @@ shareData(CurrencyWalletSync.prototype, 'CurrencyWalletSync')
  * Normalizes a username, and checks for invalid characters.
  * TODO: Support a wider character range via Unicode normalization.
  */
-export function fixUsername (username: string): string {
+export function fixUsername(username: string): string {
   const out = username
     .toLowerCase()
     .replace(/[ \f\r\n\t\v]+/g, ' ')

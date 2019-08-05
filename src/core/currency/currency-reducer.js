@@ -23,7 +23,7 @@ export type CurrencyState = {
 }
 
 export const currency = buildReducer({
-  currencyWalletIds (state, action, next: RootState): Array<string> {
+  currencyWalletIds(state, action, next: RootState): Array<string> {
     // Optimize the common case:
     if (next.accountIds.length === 1) {
       const id = next.accountIds[0]
@@ -36,7 +36,7 @@ export const currency = buildReducer({
     return [].concat(...allIds)
   },
 
-  customTokens (state = [], action: RootAction): Array<EdgeMetaToken> {
+  customTokens(state = [], action: RootAction): Array<EdgeMetaToken> {
     if (action.type === 'ADDED_CUSTOM_TOKEN') {
       const {
         currencyCode,

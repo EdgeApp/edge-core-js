@@ -11,7 +11,7 @@ const syncServers = [
 /**
  * Fetches some resource from a sync server.
  */
-export function syncRequest (
+export function syncRequest(
   io: EdgeIo,
   method: string,
   uri: string,
@@ -20,7 +20,7 @@ export function syncRequest (
   return syncRequestInner(io, method, uri, body, 0)
 }
 
-function syncRequestInner (io, method, path, body, serverIndex) {
+function syncRequestInner(io, method, path, body, serverIndex) {
   const opts: Object = {
     method: method,
     headers: {

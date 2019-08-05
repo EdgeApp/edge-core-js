@@ -7,12 +7,12 @@ import { type RootProps } from '../root-pixie.js'
 import { type ExchangePair } from './exchange-reducer.js'
 
 export const exchange: TamePixie<RootProps> = combinePixies({
-  looper (input: PixieInput<RootProps>) {
+  looper(input: PixieInput<RootProps>) {
     let started: boolean = false
     let stopped: boolean = false
     let timeout: * // Infer the proper timer type
 
-    function gatherHints (): Array<EdgeRateHint> {
+    function gatherHints(): Array<EdgeRateHint> {
       // TODO: Grab this off the list of loaded wallet currency types & fiats:
       return [
         { fromCurrency: 'BTC', toCurrency: 'iso:EUR' },
@@ -22,7 +22,7 @@ export const exchange: TamePixie<RootProps> = combinePixies({
       ]
     }
 
-    function dispatchPairs (pairs: Array<ExchangePair>, source: string) {
+    function dispatchPairs(pairs: Array<ExchangePair>, source: string) {
       input.props.io.console.info(`Exchange rates updated (${source})`)
       if (pairs.length > 0) {
         input.props.dispatch({
@@ -32,13 +32,13 @@ export const exchange: TamePixie<RootProps> = combinePixies({
       }
     }
 
-    function doFetch () {
+    function doFetch() {
       const hintPairs = gatherHints()
 
       // Gather pairs for up to five seconds, then send what we have:
       let wait: boolean = true
       let waitingPairs: Array<ExchangePair> = []
-      function sendWaitingPairs (done?: boolean) {
+      function sendWaitingPairs(done?: boolean) {
         wait = false
         dispatchPairs(waitingPairs, done ? 'complete' : 'some pending')
       }
@@ -76,7 +76,7 @@ export const exchange: TamePixie<RootProps> = combinePixies({
     }
 
     return {
-      update (props: RootProps): Promise<mixed> | void {
+      update(props: RootProps): Promise<mixed> | void {
         // Kick off the initial fetch if we don't already have one running
         // and the plugins are ready:
         if (!started && props.state.plugins.locked) {
@@ -85,7 +85,7 @@ export const exchange: TamePixie<RootProps> = combinePixies({
         }
       },
 
-      destroy () {
+      destroy() {
         stopped = true
         if (timeout != null) clearTimeout(timeout)
       }
@@ -97,7 +97,7 @@ export const exchange: TamePixie<RootProps> = combinePixies({
  * Fetching exchange rates can fail in exciting ways,
  * so performs a fetch with maximum paranoia.
  */
-function fetchPluginRates (
+function fetchPluginRates(
   plugin: EdgeRatePlugin,
   hintPairs: Array<EdgeRateHint>,
   source: string,

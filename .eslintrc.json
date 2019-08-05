@@ -1,16 +1,20 @@
 {
   "extends": [
-    "standard-kit",
-    "standard-kit/node",
-    "standard-kit/jsx",
-    "standard-kit/flow"
+    "standard-kit/lint",
+    "standard-kit/lint/node",
+    "standard-kit/lint/jsx",
+    "standard-kit/lint/flow"
   ],
+  "plugins": ["prettier"],
   "rules": {
     "camelcase": "error",
-    "flowtype/generic-spacing": "off",
+    "lines-between-class-members": [
+      "error",
+      "always",
+      { "exceptAfterSingleLine": true }
+    ],
     "no-throw-literal": "error",
     "no-var": "error",
-    "prefer-const": "error",
-    "standard/computed-property-even-spacing": "off"
+    "prettier/prettier": "error"
   }
 }

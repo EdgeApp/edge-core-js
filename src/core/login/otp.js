@@ -7,7 +7,7 @@ import { applyKit } from '../login/login.js'
 import { type ApiInput } from '../root-pixie.js'
 import { type LoginKit } from './login-types.js'
 
-export async function enableOtp (
+export async function enableOtp(
   ai: ApiInput,
   accountId: string,
   otpTimeout: number
@@ -40,7 +40,7 @@ export async function enableOtp (
   await applyKit(ai, loginTree, kit)
 }
 
-export async function disableOtp (ai: ApiInput, accountId: string) {
+export async function disableOtp(ai: ApiInput, accountId: string) {
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const kit: LoginKit = {
@@ -61,7 +61,7 @@ export async function disableOtp (ai: ApiInput, accountId: string) {
   await applyKit(ai, loginTree, kit)
 }
 
-export async function cancelOtpReset (ai: ApiInput, accountId: string) {
+export async function cancelOtpReset(ai: ApiInput, accountId: string) {
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const kit: LoginKit = {

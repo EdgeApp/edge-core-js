@@ -63,7 +63,7 @@ class FakeCurrencyEngine {
     txs: { [txid: string]: EdgeTransaction }
   }
 
-  constructor (walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
+  constructor(walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
     this.callbacks = opts.callbacks
     this.state = {
       balance: 0,
@@ -75,7 +75,7 @@ class FakeCurrencyEngine {
     this.changeUserSettings(this.state)
   }
 
-  async changeUserSettings (settings: Object): Promise<mixed> {
+  async changeUserSettings(settings: Object): Promise<mixed> {
     const state = this.state
     const {
       onAddressesChecked = nop,
@@ -142,24 +142,28 @@ class FakeCurrencyEngine {
   }
 
   // Keys:
-  getDisplayPrivateSeed (): string | null {
+  getDisplayPrivateSeed(): string | null {
     return 'xpriv'
   }
-  getDisplayPublicSeed (): string | null {
+
+  getDisplayPublicSeed(): string | null {
     return 'xpub'
   }
 
   // Engine state
-  startEngine (): Promise<mixed> {
+  startEngine(): Promise<mixed> {
     return Promise.resolve()
   }
-  killEngine (): Promise<mixed> {
+
+  killEngine(): Promise<mixed> {
     return Promise.resolve()
   }
-  resyncBlockchain (): Promise<mixed> {
+
+  resyncBlockchain(): Promise<mixed> {
     return Promise.resolve()
   }
-  dumpData (): EdgeDataDump {
+
+  dumpData(): EdgeDataDump {
     return {
       walletId: 'xxx',
       walletType: fakeCurrencyInfo.walletType,
@@ -168,10 +172,11 @@ class FakeCurrencyEngine {
   }
 
   // Chain state
-  getBlockHeight (): number {
+  getBlockHeight(): number {
     return this.state.blockHeight
   }
-  getBalance (opts: EdgeCurrencyCodeOptions): string {
+
+  getBalance(opts: EdgeCurrencyCodeOptions): string {
     const { currencyCode = 'FAKE' } = opts
     switch (currencyCode) {
       case 'FAKE':
@@ -182,10 +187,12 @@ class FakeCurrencyEngine {
         throw new Error('Unknown currency')
     }
   }
-  getNumTransactions (opts: EdgeCurrencyCodeOptions): number {
+
+  getNumTransactions(opts: EdgeCurrencyCodeOptions): number {
     return Object.keys(this.state.txs).length
   }
-  getTransactions (
+
+  getTransactions(
     opts: EdgeGetTransactionsOptions
   ): Promise<Array<EdgeTransaction>> {
     return Promise.resolve(
@@ -194,33 +201,38 @@ class FakeCurrencyEngine {
   }
 
   // Tokens
-  enableTokens (tokens: Array<string>): Promise<mixed> {
+  enableTokens(tokens: Array<string>): Promise<mixed> {
     return Promise.resolve()
   }
-  disableTokens (tokens: Array<string>): Promise<mixed> {
+
+  disableTokens(tokens: Array<string>): Promise<mixed> {
     return Promise.resolve()
   }
-  getEnabledTokens (): Promise<Array<string>> {
+
+  getEnabledTokens(): Promise<Array<string>> {
     return Promise.resolve(['TOKEN'])
   }
-  addCustomToken (token: EdgeTokenInfo): Promise<mixed> {
+
+  addCustomToken(token: EdgeTokenInfo): Promise<mixed> {
     return Promise.resolve()
   }
-  getTokenStatus (token: string): boolean {
+
+  getTokenStatus(token: string): boolean {
     return token === 'TOKEN'
   }
 
   // Addresses:
-  getFreshAddress (opts: EdgeCurrencyCodeOptions): EdgeFreshAddress {
+  getFreshAddress(opts: EdgeCurrencyCodeOptions): EdgeFreshAddress {
     return { publicAddress: 'fakeaddress' }
   }
-  addGapLimitAddresses (addresses: Array<string>): void {}
-  isAddressUsed (address: string): boolean {
+
+  addGapLimitAddresses(addresses: Array<string>): void {}
+  isAddressUsed(address: string): boolean {
     return address === 'fakeaddress'
   }
 
   // Spending:
-  makeSpend (spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+  makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
     const { currencyCode = 'FAKE', spendTargets } = spendInfo
 
     // Check the spend targets:
@@ -249,13 +261,16 @@ class FakeCurrencyEngine {
       txid: ''
     })
   }
-  signTx (transaction: EdgeTransaction): Promise<EdgeTransaction> {
+
+  signTx(transaction: EdgeTransaction): Promise<EdgeTransaction> {
     return Promise.resolve(transaction)
   }
-  broadcastTx (transaction: EdgeTransaction): Promise<EdgeTransaction> {
+
+  broadcastTx(transaction: EdgeTransaction): Promise<EdgeTransaction> {
     return Promise.resolve(transaction)
   }
-  saveTx (transaction: EdgeTransaction): Promise<mixed> {
+
+  saveTx(transaction: EdgeTransaction): Promise<mixed> {
     return Promise.resolve()
   }
 }
@@ -265,7 +280,7 @@ class FakeCurrencyEngine {
  */
 class FakeCurrencyTools {
   // Keys:
-  createPrivateKey (
+  createPrivateKey(
     walletType: string,
     opts?: EdgeCreatePrivateKeyOptions
   ): Promise<Object> {
@@ -274,20 +289,23 @@ class FakeCurrencyTools {
     }
     return Promise.resolve({ fakeKey: 'FakePrivateKey' })
   }
-  derivePublicKey (walletInfo: EdgeWalletInfo): Promise<Object> {
+
+  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<Object> {
     return Promise.resolve({
       fakeAddress: 'FakePublicAddress'
     })
   }
-  getSplittableTypes (walletInfo: EdgeWalletInfo): Array<string> {
+
+  getSplittableTypes(walletInfo: EdgeWalletInfo): Array<string> {
     return ['wallet:tulipcoin']
   }
 
   // URI parsing:
-  parseUri (uri: string): Promise<EdgeParsedUri> {
+  parseUri(uri: string): Promise<EdgeParsedUri> {
     return Promise.resolve({})
   }
-  encodeUri (): Promise<string> {
+
+  encodeUri(): Promise<string> {
     return Promise.resolve('')
   }
 }
@@ -295,14 +313,14 @@ class FakeCurrencyTools {
 export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
   currencyInfo: fakeCurrencyInfo,
 
-  makeCurrencyEngine (
+  makeCurrencyEngine(
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine> {
     return Promise.resolve(new FakeCurrencyEngine(walletInfo, opts))
   },
 
-  makeCurrencyTools (): Promise<EdgeCurrencyTools> {
+  makeCurrencyTools(): Promise<EdgeCurrencyTools> {
     return Promise.resolve(new FakeCurrencyTools())
   }
 }

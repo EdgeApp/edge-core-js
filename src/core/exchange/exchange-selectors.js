@@ -31,7 +31,7 @@ type ExchangeSearch = {
 /**
  * Recursively searches for the best exchange rate.
  */
-function searchRoutes (
+function searchRoutes(
   search: ExchangeSearch,
   fromCurrency: string,
   parentRate: ExchangeRate,
@@ -83,7 +83,7 @@ function searchRoutes (
  * Higher scores are worse. The scores add, so longer paths have higher costs
  * than shorter paths. The signature is `(source, age, inverse) => cost`.
  */
-export function getExchangeRate (
+export function getExchangeRate(
   state: RootState,
   fromCurrency: string,
   toCurrency: string,

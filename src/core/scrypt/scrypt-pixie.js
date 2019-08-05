@@ -31,16 +31,16 @@ export type ScryptOutput = {
  * Prevents a function from running in parallel.
  * The currently-running operation must finish before the new one starts.
  */
-function serialize (f) {
+function serialize(f) {
   let nextTask = Promise.resolve()
-  return function serialize (...rest) {
+  return function serialize(...rest) {
     const onDone = () => f.apply(this, rest)
     nextTask = nextTask.then(onDone, onDone)
     return nextTask
   }
 }
 
-export function calcSnrpForTarget (
+export function calcSnrpForTarget(
   salt: Uint8Array,
   benchMs: number,
   targetMs: number
@@ -118,7 +118,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
     const { io } = input.props
     let benchmark: Promise<number>
 
-    function makeSnrp (targetMs: number) {
+    function makeSnrp(targetMs: number) {
       // Run the benchmark if needed:
       if (benchmark == null) {
         benchmark = input.props.output.scrypt
@@ -136,9 +136,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
       return benchmark.then(benchMs => {
         const snrp = calcSnrpForTarget(io.random(32), benchMs, targetMs)
         io.console.info(
-          `snrp for ${targetMs}ms target: ${snrp.n} ${snrp.r} ${
-            snrp.p
-          } based on ${benchMs}ms benchmark`
+          `snrp for ${targetMs}ms target: ${snrp.n} ${snrp.r} ${snrp.p} based on ${benchMs}ms benchmark`
         )
         return snrp
       })
@@ -160,7 +158,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
         : () => Date.now()
 
     // Performs an scrypt calculation, recording the elapsed time:
-    function timeScrypt (
+    function timeScrypt(
       data: Uint8Array,
       snrp: JsonSnrp,
       dklen: number = 32

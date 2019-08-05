@@ -9,7 +9,7 @@ import { type ClientIo } from './react-native-types.js'
 
 const randomBytes = NativeModules.RNRandomBytes.randomBytes
 
-export function makeClientIo (): Promise<ClientIo> {
+export function makeClientIo(): Promise<ClientIo> {
   return new Promise((resolve, reject) => {
     randomBytes(32, (error, base64String) => {
       if (error) return reject(error)

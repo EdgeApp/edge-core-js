@@ -18,7 +18,7 @@ const errorCodes = {
   obsolete: 1000
 }
 
-function makeResponse (results) {
+function makeResponse(results) {
   const reply = {
     status_code: 0
   }
@@ -28,7 +28,7 @@ function makeResponse (results) {
   return new FakeResponse(JSON.stringify(reply))
 }
 
-function makeErrorResponse (code, message = '', status = 500) {
+function makeErrorResponse(code, message = '', status = 500) {
   const body = {
     status_code: code,
     message: message || 'Server error'
@@ -36,7 +36,7 @@ function makeErrorResponse (code, message = '', status = 500) {
   return new FakeResponse(JSON.stringify(body), { status })
 }
 
-function makeOtpErrorResponse (status = 500) {
+function makeOtpErrorResponse(status = 500) {
   const body = {
     status_code: errorCodes.invalidOtp,
     message: 'OTP error',
@@ -52,7 +52,7 @@ function makeOtpErrorResponse (status = 500) {
 /**
  * Verifies that the request contains valid v1 authenticaion.
  */
-function authHandler1 (req) {
+function authHandler1(req) {
   // Password login:
   if (req.body.l1 != null && req.body.lp1 != null) {
     const login = this.findLoginId(req.body.l1)
@@ -71,7 +71,7 @@ function authHandler1 (req) {
 /**
  * Verifies that the request contains valid v2 authenticaion.
  */
-function authHandler (req) {
+function authHandler(req) {
   // Token login:
   if (req.body.loginId != null && req.body.loginAuth != null) {
     const login = this.findLoginId(req.body.loginId)
@@ -147,14 +147,14 @@ function authHandler (req) {
 
 // Account lifetime v1: ----------------------------------------------------
 
-addRoute('POST', '/api/v1/account/available', function (req) {
+addRoute('POST', '/api/v1/account/available', function(req) {
   if (this.findLoginId(req.body.l1)) {
     return makeErrorResponse(errorCodes.accountExists)
   }
   return makeResponse()
 })
 
-addRoute('POST', '/api/v1/account/create', function (req) {
+addRoute('POST', '/api/v1/account/create', function(req) {
   if (this.findLoginId(req.body.l1)) {
     return makeErrorResponse(errorCodes.accountExists)
   }
@@ -175,13 +175,13 @@ addRoute('POST', '/api/v1/account/create', function (req) {
   return makeResponse()
 })
 
-addRoute('POST', '/api/v1/account/activate', authHandler1, function (req) {
+addRoute('POST', '/api/v1/account/activate', authHandler1, function(req) {
   return makeResponse()
 })
 
 // Login v1: ---------------------------------------------------------------
 
-addRoute('POST', '/api/v1/account/carepackage/get', function (req) {
+addRoute('POST', '/api/v1/account/carepackage/get', function(req) {
   const login = this.findLoginId(req.body.l1)
   if (login == null) {
     return makeErrorResponse(errorCodes.noAccount)
@@ -194,7 +194,7 @@ addRoute('POST', '/api/v1/account/carepackage/get', function (req) {
   })
 })
 
-addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function (
+addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function(
   req
 ) {
   const results = {
@@ -210,7 +210,7 @@ addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function (
   return makeResponse(results)
 })
 
-addRoute('POST', '/api/v1/otp/reset', function (req) {
+addRoute('POST', '/api/v1/otp/reset', function(req) {
   const login = this.findLoginId(req.body.l1)
   if (!login || req.body.otp_reset_auth !== OTP_RESET_TOKEN) {
     return makeErrorResponse(errorCodes.invalidOtp)
@@ -222,14 +222,14 @@ addRoute('POST', '/api/v1/otp/reset', function (req) {
 
 // PIN login v1: -----------------------------------------------------------
 
-addRoute('POST', '/api/v1/account/pinpackage/update', authHandler1, function (
+addRoute('POST', '/api/v1/account/pinpackage/update', authHandler1, function(
   req
 ) {
   this.db.pinKeyBox = JSON.parse(req.body.pin_package)
   return makeResponse()
 })
 
-addRoute('POST', '/api/v1/account/pinpackage/get', function (req) {
+addRoute('POST', '/api/v1/account/pinpackage/get', function(req) {
   if (this.db.pinKeyBox == null) {
     return makeErrorResponse(errorCodes.noAccount)
   }
@@ -240,12 +240,12 @@ addRoute('POST', '/api/v1/account/pinpackage/get', function (req) {
 
 // Repo server v1: ---------------------------------------------------------
 
-addRoute('POST', '/api/v1/wallet/create', authHandler1, function (req) {
+addRoute('POST', '/api/v1/wallet/create', authHandler1, function(req) {
   this.repos[req.body.repo_wallet_key] = {}
   return makeResponse()
 })
 
-addRoute('POST', '/api/v1/wallet/activate', authHandler1, function (req) {
+addRoute('POST', '/api/v1/wallet/activate', authHandler1, function(req) {
   return makeResponse()
 })
 
@@ -254,7 +254,7 @@ addRoute('POST', '/api/v1/wallet/activate', authHandler1, function (req) {
 addRoute(
   'POST',
   '/api/v2/login',
-  function (req) {
+  function(req) {
     if (req.body.userId != null && req.body.passwordAuth == null) {
       const login = this.findLoginId(req.body.userId)
       if (login == null) {
@@ -276,12 +276,12 @@ addRoute(
     return null
   },
   authHandler,
-  function (req) {
+  function(req) {
     return makeResponse(this.makeReply(req.login))
   }
 )
 
-addRoute('POST', '/api/v2/login/create', function (req) {
+addRoute('POST', '/api/v2/login/create', function(req) {
   const data = req.body.data
   if (data.appId == null || data.loginId == null) {
     return makeErrorResponse(errorCodes.error)
@@ -320,7 +320,7 @@ addRoute('POST', '/api/v2/login/create', function (req) {
   return makeResponse()
 })
 
-addRoute('POST', '/api/v2/login/keys', authHandler, function (req) {
+addRoute('POST', '/api/v2/login/keys', authHandler, function(req) {
   const data = req.body.data
   if (data.keyBoxes == null) {
     return makeErrorResponse(errorCodes.error)
@@ -338,7 +338,7 @@ addRoute('POST', '/api/v2/login/keys', authHandler, function (req) {
   return makeResponse()
 })
 
-addRoute('POST', '/api/v2/login/otp', authHandler, function (req) {
+addRoute('POST', '/api/v2/login/otp', authHandler, function(req) {
   const data = req.body.data
   if (data.otpKey == null || data.otpTimeout == null) {
     return makeErrorResponse(errorCodes.error)
@@ -354,7 +354,7 @@ addRoute('POST', '/api/v2/login/otp', authHandler, function (req) {
 addRoute(
   'DELETE',
   '/api/v2/login/otp',
-  function (req) {
+  function(req) {
     if (req.body.userId != null && req.body.otpResetAuth != null) {
       const login = this.findLoginId(req.body.userId)
       if (login == null) {
@@ -379,7 +379,7 @@ addRoute(
     }
   },
   authHandler,
-  function (req) {
+  function(req) {
     req.login.otpKey = void 0
     req.login.otpTimeout = void 0
     req.login.otpResetDate = void 0
@@ -388,7 +388,7 @@ addRoute(
   }
 )
 
-addRoute('DELETE', '/api/v2/login/password', authHandler, function (req) {
+addRoute('DELETE', '/api/v2/login/password', authHandler, function(req) {
   req.login.passwordAuth = void 0
   req.login.passwordAuthBox = void 0
   req.login.passwordAuthSnrp = void 0
@@ -398,7 +398,7 @@ addRoute('DELETE', '/api/v2/login/password', authHandler, function (req) {
   return makeResponse()
 })
 
-addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
+addRoute('POST', '/api/v2/login/password', authHandler, function(req) {
   const data = req.body.data
   if (
     data.passwordAuth == null ||
@@ -419,7 +419,7 @@ addRoute('POST', '/api/v2/login/password', authHandler, function (req) {
   return makeResponse()
 })
 
-addRoute('DELETE', '/api/v2/login/pin2', authHandler, function (req) {
+addRoute('DELETE', '/api/v2/login/pin2', authHandler, function(req) {
   req.login.pin2Auth = void 0
   req.login.pin2Box = void 0
   req.login.pin2Id = void 0
@@ -429,7 +429,7 @@ addRoute('DELETE', '/api/v2/login/pin2', authHandler, function (req) {
   return makeResponse()
 })
 
-addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
+addRoute('POST', '/api/v2/login/pin2', authHandler, function(req) {
   const data = req.body.data
 
   const enablingPin =
@@ -457,7 +457,7 @@ addRoute('POST', '/api/v2/login/pin2', authHandler, function (req) {
   return makeResponse()
 })
 
-addRoute('DELETE', '/api/v2/login/recovery2', authHandler, function (req) {
+addRoute('DELETE', '/api/v2/login/recovery2', authHandler, function(req) {
   req.login.question2Box = void 0
   req.login.recovery2Auth = void 0
   req.login.recovery2Box = void 0
@@ -467,7 +467,7 @@ addRoute('DELETE', '/api/v2/login/recovery2', authHandler, function (req) {
   return makeResponse()
 })
 
-addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
+addRoute('POST', '/api/v2/login/recovery2', authHandler, function(req) {
   const data = req.body.data
   if (
     data.question2Box == null ||
@@ -490,19 +490,19 @@ addRoute('POST', '/api/v2/login/recovery2', authHandler, function (req) {
 
 // lobby: ------------------------------------------------------------------
 
-addRoute('PUT', '/api/v2/lobby/.*', function (req) {
+addRoute('PUT', '/api/v2/lobby/.*', function(req) {
   const pubkey = req.path.split('/')[4]
   this.db.lobbies[pubkey] = { request: req.body.data, replies: [] }
   return makeResponse()
 })
 
-addRoute('POST', '/api/v2/lobby/.*', function (req) {
+addRoute('POST', '/api/v2/lobby/.*', function(req) {
   const pubkey = req.path.split('/')[4]
   this.db.lobbies[pubkey].replies.push(req.body.data)
   return makeResponse()
 })
 
-addRoute('GET', '/api/v2/lobby/.*', function (req) {
+addRoute('GET', '/api/v2/lobby/.*', function(req) {
   const pubkey = req.path.split('/')[4]
   if (this.db.lobbies[pubkey] == null) {
     return new FakeResponse(`Cannot find lobby "${pubkey}"`, { status: 404 })
@@ -510,7 +510,7 @@ addRoute('GET', '/api/v2/lobby/.*', function (req) {
   return makeResponse(this.db.lobbies[pubkey])
 })
 
-addRoute('DELETE', '/api/v2/lobby/.*', function (req) {
+addRoute('DELETE', '/api/v2/lobby/.*', function(req) {
   const pubkey = req.path.split('/')[4]
   delete this.db.lobbies[pubkey]
   return makeResponse()
@@ -518,7 +518,7 @@ addRoute('DELETE', '/api/v2/lobby/.*', function (req) {
 
 // messages: ---------------------------------------------------------------
 
-addRoute('POST', '/api/v2/messages', function (req) {
+addRoute('POST', '/api/v2/messages', function(req) {
   const { loginIds } = req.body
 
   const out = []
@@ -537,7 +537,7 @@ addRoute('POST', '/api/v2/messages', function (req) {
 
 // sync: -------------------------------------------------------------------
 
-function storeRoute (req) {
+function storeRoute(req) {
   const elements = req.path.split('/')
   const syncKey = elements[4]
   // const hash = elements[5]

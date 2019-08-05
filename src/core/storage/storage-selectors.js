@@ -8,28 +8,28 @@ import { base58, utf8 } from '../../util/encoding.js'
 import { type RootState } from '../root-reducer.js'
 import { encryptDisklet } from './encrypt-disklet.js'
 
-export function getStorageWalletLastChanges (
+export function getStorageWalletLastChanges(
   state: RootState,
   walletId: string
 ) {
   return state.storageWallets[walletId].lastChanges
 }
 
-export function getStorageWalletDisklet (
+export function getStorageWalletDisklet(
   state: RootState,
   walletId: string
 ): Disklet {
   return state.storageWallets[walletId].paths.disklet
 }
 
-export function getStorageWalletLocalDisklet (
+export function getStorageWalletLocalDisklet(
   state: RootState,
   walletId: string
 ): Disklet {
   return state.storageWallets[walletId].localDisklet
 }
 
-export function makeStorageWalletLocalEncryptedDisklet (
+export function makeStorageWalletLocalEncryptedDisklet(
   state: RootState,
   walletId: string,
   io: EdgeIo
@@ -41,7 +41,7 @@ export function makeStorageWalletLocalEncryptedDisklet (
   )
 }
 
-export function hashStorageWalletFilename (
+export function hashStorageWalletFilename(
   state: RootState,
   walletId: string,
   data: string
@@ -52,14 +52,14 @@ export function hashStorageWalletFilename (
 
 // deprecated:
 
-export function getStorageWalletFolder (
+export function getStorageWalletFolder(
   state: RootState,
   walletId: string
 ): DiskletFolder {
   return downgradeDisklet(state.storageWallets[walletId].paths.disklet)
 }
 
-export function getStorageWalletLocalFolder (
+export function getStorageWalletLocalFolder(
   state: RootState,
   walletId: string
 ): DiskletFolder {

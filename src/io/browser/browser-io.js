@@ -9,7 +9,7 @@ import { scrypt } from '../../util/crypto/scrypt.js'
 /**
  * Extracts the io functions we need from the browser.
  */
-export function makeBrowserIo (): EdgeIo {
+export function makeBrowserIo(): EdgeIo {
   if (typeof window === 'undefined') {
     throw new Error('No `window` object')
   }

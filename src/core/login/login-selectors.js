@@ -11,7 +11,7 @@ export { fixUsername }
  * Finds the login stash for the given username.
  * Returns a default object if
  */
-export function getStash (ai: ApiInput, username: string): LoginStash {
+export function getStash(ai: ApiInput, username: string): LoginStash {
   const fixedName = fixUsername(username)
   const { stashes } = ai.props.state.login
 
@@ -24,7 +24,7 @@ const userIdCache = {}
 /**
  * Hashes a username into a userId.
  */
-export function hashUsername (
+export function hashUsername(
   ai: ApiInput,
   username: string
 ): Promise<Uint8Array> {

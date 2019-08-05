@@ -3,7 +3,7 @@
 /**
  * Object.assign
  */
-function assign (out, args) {
+function assign(out, args) {
   if (out == null) {
     throw new TypeError('Cannot convert undefined or null to object')
   }
@@ -25,9 +25,9 @@ function assign (out, args) {
 /**
  * Array.fill
  */
-function fill (value, start, end) {
+function fill(value, start, end) {
   const length = this.length
-  function clamp (endpoint) {
+  function clamp(endpoint) {
     return endpoint < 0
       ? Math.max(length + endpoint, 0)
       : Math.min(endpoint, length)
@@ -44,7 +44,7 @@ function fill (value, start, end) {
 /**
  * Array.find
  */
-function find (test, testThis) {
+function find(test, testThis) {
   for (let i = 0; i < this.length; ++i) {
     const value = this[i]
     if (test.call(testThis, value, i, this)) {
@@ -56,7 +56,7 @@ function find (test, testThis) {
 /**
  * Array.includes
  */
-function includes (target) {
+function includes(target) {
   return Array.prototype.indexOf.call(this, target) >= 0
 }
 
