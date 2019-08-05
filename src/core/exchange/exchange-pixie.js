@@ -33,6 +33,10 @@ export const exchange: TamePixie<RootProps> = combinePixies({
     }
 
     function doFetch() {
+      // Quit early if there is nothing to do:
+      const pluginNames = Object.keys(input.props.state.plugins.rate)
+      if (pluginNames.length === 0) return
+
       const hintPairs = gatherHints()
 
       // Gather pairs for up to five seconds, then send what we have:
@@ -47,7 +51,6 @@ export const exchange: TamePixie<RootProps> = combinePixies({
       // Initiate all requests:
       let finishedPairs: number = 0
       const timestamp = Date.now() / 1000
-      const pluginNames = Object.keys(input.props.state.plugins.rate)
       const promises = pluginNames.map(pluginName => {
         const plugin = input.props.state.plugins.rate[pluginName]
         return fetchPluginRates(plugin, hintPairs, pluginName, timestamp)
