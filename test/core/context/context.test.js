@@ -3,14 +3,10 @@
 import '../../fake/fake-plugins.js'
 
 import { expect } from 'chai'
-import { afterEach, describe, it } from 'mocha'
+import { describe, it } from 'mocha'
 
-import { closeEdge, makeFakeEdgeWorld } from '../../../src/index.js'
+import { makeFakeEdgeWorld } from '../../../src/index.js'
 import { fakeUser, fakeUserDump } from '../../fake/fake-user.js'
-
-afterEach(function() {
-  closeEdge()
-})
 
 const contextOptions = { apiKey: '', appId: '' }
 

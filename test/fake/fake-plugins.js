@@ -3,9 +3,7 @@
 import {
   type EdgeRateHint,
   type EdgeRatePair,
-  type EdgeRatePlugin,
-  addEdgeCorePlugins,
-  lockEdgeCorePlugins
+  type EdgeRatePlugin
 } from '../../src/index.js'
 import { fakeCurrencyPlugin } from './fake-currency-plugin.js'
 import { fakeSwapPlugin } from './fake-swap-plugin.js'
@@ -43,7 +41,7 @@ const fakeExchangePlugin: EdgeRatePlugin = {
   }
 }
 
-addEdgeCorePlugins({
+export const allPlugins = {
   'broken-plugin': () => {
     throw new Error('Expect to fail')
   },
@@ -51,5 +49,4 @@ addEdgeCorePlugins({
   'fake-exchange': fakeExchangePlugin,
   fakecoin: fakeCurrencyPlugin,
   fakeswap: fakeSwapPlugin
-})
-lockEdgeCorePlugins()
+}
