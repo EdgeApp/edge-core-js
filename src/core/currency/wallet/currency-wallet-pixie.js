@@ -224,39 +224,46 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     props => (props.state.paused ? void 0 : props)
   ),
 
-  syncTimer(input: CurrencyWalletInput) {
-    const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-    let timeout: *
+  syncTimer: filterPixie(
+    (input: CurrencyWalletInput) => {
+      let started: boolean = false
+      let stopped: boolean = false
+      let timeout: * // Infer the proper timer type
 
-    function startTimer() {
-      // Bail out if either the wallet or the repo aren't ready:
-      const { id, state } = input.props
-      if (
-        !input.props.selfOutput ||
-        !state.storageWallets[id] ||
-        !state.storageWallets[id].status.lastSync
-      ) {
-        return
+      async function doSync() {
+        const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+        const { id } = input.props
+
+        try {
+          syncStorageWallet(ai, id)
+        } catch (e) {
+          // We don't report sync failures, since that could be annoying.
+        }
+        if (!stopped) timeout = setTimeout(doSync, 30 * 1000)
       }
 
-      timeout = setTimeout(() => {
-        syncStorageWallet(ai, id)
-          .then(changes => startTimer())
-          .catch(e => startTimer())
-      }, 30 * 1000)
-    }
+      return {
+        update() {
+          const { id } = input.props
+          if (
+            !started &&
+            input.props.selfOutput &&
+            input.props.state.storageWallets[id] &&
+            input.props.state.storageWallets[id].status.lastSync
+          ) {
+            started = true
+            doSync()
+          }
+        },
 
-    return {
-      update() {
-        // Kick off the initial sync if we don't already have one running:
-        if (timeout == null) return startTimer()
-      },
-
-      destroy() {
-        clearTimeout(timeout)
+        destroy() {
+          stopped = true
+          if (timeout != null) clearTimeout(timeout)
+        }
       }
-    }
-  },
+    },
+    props => (props.state.paused ? void 0 : props)
+  ),
 
   watcher(input: CurrencyWalletInput) {
     let lastState
