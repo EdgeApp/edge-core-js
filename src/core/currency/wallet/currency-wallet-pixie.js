@@ -178,7 +178,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Starts & stops the engine for this wallet:
   engineStarted: filterPixie(
     (input: CurrencyWalletInput) => {
-      let started: boolean = false
+      let startupPromise: Promise<mixed> | void
 
       return {
         update() {
@@ -187,20 +187,24 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             !input.props.selfOutput ||
             !input.props.selfOutput.api ||
             !input.props.selfState.fiatLoaded ||
-            !input.props.selfState.fileNamesLoaded
+            !input.props.selfState.fileNamesLoaded ||
+            input.props.selfState.engineStarted
           ) {
             return
           }
 
           const { engine } = input.props.selfOutput
-          if (engine != null && !started) {
-            started = true
+          if (engine != null && startupPromise == null) {
             input.props.io.console.info(`${id} startEngine`)
-            try {
-              engine.startEngine()
-            } catch (e) {
-              input.props.onError(e)
-            }
+            input.props.dispatch({
+              type: 'CURRENCY_ENGINE_STARTED',
+              payload: { walletId: id }
+            })
+
+            // Turn synchronous errors into promise rejections:
+            startupPromise = Promise.resolve()
+              .then(() => engine.startEngine())
+              .catch(e => input.props.onError(e))
           }
         },
 
@@ -209,14 +213,19 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           if (!input.props.selfOutput) return
 
           const { engine } = input.props.selfOutput
-          if (engine != null && started) {
-            started = false
+          if (engine != null && startupPromise != null) {
             input.props.io.console.info(`${id} killEngine`)
-            try {
-              engine.killEngine()
-            } catch (e) {
-              input.props.onError(e)
-            }
+
+            // Wait for `startEngine` to finish if that is still going:
+            startupPromise
+              .then(() => engine.killEngine())
+              .catch(e => input.props.onError(e))
+              .then(() =>
+                input.props.dispatch({
+                  type: 'CURRENCY_ENGINE_STOPPED',
+                  payload: { walletId: id }
+                })
+              )
           }
         }
       }

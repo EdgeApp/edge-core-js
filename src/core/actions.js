@@ -150,10 +150,24 @@ export type RootAction =
       }
     }
   | {
-      // Called when a currency engine dies on startup.
+      // Called when a currency engine dies at creation time.
       type: 'CURRENCY_ENGINE_FAILED',
       payload: {
         error: Error,
+        walletId: string
+      }
+    }
+  | {
+      // Called when a currency engine begins connecting to the network.
+      type: 'CURRENCY_ENGINE_STARTED',
+      payload: {
+        walletId: string
+      }
+    }
+  | {
+      // Called when a currency engine finishes shutting down its networking.
+      type: 'CURRENCY_ENGINE_STOPPED',
+      payload: {
         walletId: string
       }
     }
