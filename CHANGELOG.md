@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.16.7 (2019-08-14)
+
+- Update linting and build tooling.
+- Add a new `EdgeContext.paused` control for stopping background work.
+
 ## 0.16.6 (2019-08-02)
 
 - Fix OTP settings to only apply to the root login.
