@@ -38,6 +38,7 @@ import { EdgeInternalStuff } from './internal-api.js'
 export function makeContextApi(ai: ApiInput) {
   const appId = ai.props.state.login.appId
   const $internalStuff = new EdgeInternalStuff(ai)
+  let pauseTimer
 
   const out: EdgeContext = {
     on: onMethod,
@@ -193,6 +194,33 @@ export function makeContextApi(ai: ApiInput) {
 
     async fetchLoginMessages(): Promise<EdgeLoginMessages> {
       return fetchLoginMessages(ai)
+    },
+
+    get paused(): boolean {
+      return ai.props.state.paused
+    },
+
+    async changePaused(paused: boolean, opts = {}): Promise<mixed> {
+      const { secondsDelay = 0 } = opts
+
+      // If a timer is already running, stop that:
+      if (pauseTimer != null) {
+        clearTimeout(pauseTimer)
+        pauseTimer = void 0
+      }
+
+      // If the state is the same, do nothing:
+      if (ai.props.state.paused === paused) return
+
+      // Otherwise, make the change:
+      if (secondsDelay === 0) {
+        ai.props.dispatch({ type: 'PAUSE', payload: paused })
+      } else {
+        pauseTimer = setTimeout(() => {
+          pauseTimer = void 0
+          ai.props.dispatch({ type: 'PAUSE', payload: paused })
+        }, secondsDelay * 1000)
+      }
     },
 
     // Deprecated API's:

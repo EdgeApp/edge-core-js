@@ -972,7 +972,14 @@ export type EdgeContext = {
 
   // OTP stuff:
   requestOtpReset(username: string, otpResetToken: string): Promise<Date>,
-  fetchLoginMessages(): Promise<EdgeLoginMessages>
+  fetchLoginMessages(): Promise<EdgeLoginMessages>,
+
+  // Background mode:
+  +paused: boolean,
+  changePaused(
+    paused: boolean,
+    opts?: { secondsDelay?: number }
+  ): Promise<mixed>
 }
 
 // ---------------------------------------------------------------------

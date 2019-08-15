@@ -1,13 +1,13 @@
 // @flow
 
-import { type PixieInput, type TamePixie, combinePixies } from 'redux-pixies'
+import { type PixieInput, type TamePixie, filterPixie } from 'redux-pixies'
 
 import { type EdgeRateHint, type EdgeRatePlugin } from '../../types/types.js'
 import { type RootProps } from '../root-pixie.js'
 import { type ExchangePair } from './exchange-reducer.js'
 
-export const exchange: TamePixie<RootProps> = combinePixies({
-  looper(input: PixieInput<RootProps>) {
+export const exchange: TamePixie<RootProps> = filterPixie(
+  (input: PixieInput<RootProps>) => {
     let started: boolean = false
     let stopped: boolean = false
     let timeout: * // Infer the proper timer type
@@ -93,8 +93,9 @@ export const exchange: TamePixie<RootProps> = combinePixies({
         if (timeout != null) clearTimeout(timeout)
       }
     }
-  }
-})
+  },
+  props => (props.state.paused ? void 0 : props)
+)
 
 /**
  * Fetching exchange rates can fail in exciting ways,

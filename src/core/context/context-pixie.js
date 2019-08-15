@@ -25,11 +25,15 @@ export const context: TamePixie<RootProps> = combinePixies({
   },
 
   watcher(ai: ApiInput) {
-    let lastLocalUsers
+    let lastLocalUsers, lastPaused
 
     return () => {
-      if (lastLocalUsers !== ai.props.state.login.localUsers) {
+      if (
+        lastLocalUsers !== ai.props.state.login.localUsers ||
+        lastPaused !== ai.props.state.paused
+      ) {
         lastLocalUsers = ai.props.state.login.localUsers
+        lastPaused = ai.props.state.paused
         if (ai.props.output.context.api) update(ai.props.output.context.api)
       }
     }

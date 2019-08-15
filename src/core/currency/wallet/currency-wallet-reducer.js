@@ -54,6 +54,7 @@ export type CurrencyWalletState = {
   +displayPrivateSeed: string | null,
   +displayPublicSeed: string | null,
   +engineFailure: Error | null,
+  +engineStarted: boolean,
   +fiat: string,
   +fiatLoaded: boolean,
   +files: TxFileJsons,
@@ -120,6 +121,14 @@ const currencyWallet = buildReducer({
   engineFailure(state = null, action: RootAction): Error | null {
     return action.type === 'CURRENCY_ENGINE_FAILED'
       ? action.payload.error
+      : state
+  },
+
+  engineStarted(state = false, action: RootAction): boolean {
+    return action.type === 'CURRENCY_ENGINE_STARTED'
+      ? true
+      : action.type === 'CURRENCY_ENGINE_STOPPED'
+      ? false
       : state
   },
 

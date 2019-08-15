@@ -4,6 +4,7 @@ import {
   type PixieInput,
   type TamePixie,
   combinePixies,
+  filterPixie,
   mapPixie,
   stopUpdates
 } from 'redux-pixies'
@@ -35,8 +36,6 @@ export type AccountInput = PixieInput<AccountProps>
 
 const accountPixie: TamePixie<AccountProps> = combinePixies({
   api(input: AccountInput) {
-    let timer
-
     return {
       destroy() {
         // The Pixie library stops updating props after destruction,
@@ -44,7 +43,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         const hack: any = input.props
         hack.state = { accounts: {} }
 
-        if (timer != null) clearTimeout(timer)
         if (
           input.props.selfOutput != null &&
           input.props.selfOutput.api != null
@@ -91,26 +89,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))
           io.console.info('Login: complete')
-
-          // Start the sync timer:
-          const startTimer = () => {
-            timer = setTimeout(async () => {
-              try {
-                if (input.props.state.accounts[accountId] == null) return
-                const changeLists = await Promise.all(
-                  accountWalletInfos.map(info => syncStorageWallet(ai, info.id))
-                )
-                const changes: Array<string> = [].concat(...changeLists)
-                if (changes.length) loadAllFiles()
-              } catch (e) {
-                // We don't report sync failures, since that could be annoying.
-                // Maybe once we have online / offline detection working.
-              } finally {
-                startTimer()
-              }
-            }, 30 * 1000)
-          }
-          startTimer()
         } catch (error) {
           input.props.dispatch({
             type: 'ACCOUNT_LOAD_FAILED',
@@ -122,6 +100,58 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       }
     }
   },
+
+  // Starts & stops the sync timer for this account:
+  syncTimer: filterPixie(
+    (input: AccountInput) => {
+      let started: boolean = false
+      let stopped: boolean = false
+      let timeout: * // Infer the proper timer type
+
+      async function doSync() {
+        const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+        const accountId = input.props.id
+        const { accountWalletInfos } = input.props.selfState
+
+        try {
+          if (input.props.state.accounts[accountId] == null) return
+          const changeLists = await Promise.all(
+            accountWalletInfos.map(info => syncStorageWallet(ai, info.id))
+          )
+          const changes: Array<string> = [].concat(...changeLists)
+          if (changes.length) {
+            await Promise.all([
+              reloadPluginSettings(ai, accountId),
+              loadAllWalletStates(ai, accountId)
+            ])
+          }
+        } catch (e) {
+          // We don't report sync failures, since that could be annoying.
+        }
+
+        if (!stopped) timeout = setTimeout(doSync, 30 * 1000)
+      }
+
+      return {
+        update() {
+          if (
+            !started &&
+            input.props.selfOutput &&
+            input.props.selfOutput.api
+          ) {
+            started = true
+            doSync()
+          }
+        },
+
+        destroy() {
+          stopped = true
+          if (timeout != null) clearTimeout(timeout)
+        }
+      }
+    },
+    props => (props.state.paused ? void 0 : props)
+  ),
 
   watcher(input: AccountInput) {
     let lastState

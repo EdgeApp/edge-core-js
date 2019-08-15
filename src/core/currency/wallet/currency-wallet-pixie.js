@@ -5,6 +5,7 @@ import {
   type PixieInput,
   type TamePixie,
   combinePixies,
+  filterPixie,
   stopUpdates
 } from 'redux-pixies'
 import { update } from 'yaob'
@@ -40,9 +41,7 @@ import { type CurrencyWalletState } from './currency-wallet-reducer.js'
 export type CurrencyWalletOutput = {
   +api: EdgeCurrencyWallet | void,
   +plugin: EdgeCurrencyPlugin | void,
-  +engine: EdgeCurrencyEngine | void,
-  +engineStarted: boolean | void,
-  +syncTimer: void
+  +engine: EdgeCurrencyEngine | void
 }
 
 export type CurrencyWalletProps = RootProps & {
@@ -66,7 +65,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     input.onOutput(plugin)
   },
 
-  // Starts the engine for this wallet:
+  // Creates the engine for this wallet:
   engine: (input: CurrencyWalletInput) => async () => {
     if (!input.props.selfOutput) return
 
@@ -151,39 +150,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     return stopUpdates
   },
 
-  // Starts & stops the engine for this wallet:
-  engineStarted(input: CurrencyWalletInput) {
-    return {
-      update() {
-        if (
-          !input.props.selfOutput ||
-          !input.props.selfOutput.api ||
-          !input.props.selfState.fiatLoaded ||
-          !input.props.selfState.fileNamesLoaded
-        ) {
-          return
-        }
-
-        const { engine, engineStarted } = input.props.selfOutput
-        if (engine && !engineStarted) {
-          input.onOutput(true)
-          try {
-            engine.startEngine()
-          } catch (e) {
-            input.props.onError(e)
-          }
-        }
-      },
-
-      destroy() {
-        if (!input.props.selfOutput) return
-
-        const { engine, engineStarted } = input.props.selfOutput
-        if (engine && engineStarted) engine.killEngine()
-      }
-    }
-  },
-
   // Creates the API object:
   api: (input: CurrencyWalletInput) => () => {
     if (
@@ -209,39 +175,104 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     return stopUpdates
   },
 
-  syncTimer(input: CurrencyWalletInput) {
-    const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-    let timeout: *
+  // Starts & stops the engine for this wallet:
+  engineStarted: filterPixie(
+    (input: CurrencyWalletInput) => {
+      let startupPromise: Promise<mixed> | void
 
-    function startTimer() {
-      // Bail out if either the wallet or the repo aren't ready:
-      const { id, state } = input.props
-      if (
-        !input.props.selfOutput ||
-        !state.storageWallets[id] ||
-        !state.storageWallets[id].status.lastSync
-      ) {
-        return
+      return {
+        update() {
+          const { id } = input.props
+          if (
+            !input.props.selfOutput ||
+            !input.props.selfOutput.api ||
+            !input.props.selfState.fiatLoaded ||
+            !input.props.selfState.fileNamesLoaded ||
+            input.props.selfState.engineStarted
+          ) {
+            return
+          }
+
+          const { engine } = input.props.selfOutput
+          if (engine != null && startupPromise == null) {
+            input.props.io.console.info(`${id} startEngine`)
+            input.props.dispatch({
+              type: 'CURRENCY_ENGINE_STARTED',
+              payload: { walletId: id }
+            })
+
+            // Turn synchronous errors into promise rejections:
+            startupPromise = Promise.resolve()
+              .then(() => engine.startEngine())
+              .catch(e => input.props.onError(e))
+          }
+        },
+
+        destroy() {
+          const { id } = input.props
+          if (!input.props.selfOutput) return
+
+          const { engine } = input.props.selfOutput
+          if (engine != null && startupPromise != null) {
+            input.props.io.console.info(`${id} killEngine`)
+
+            // Wait for `startEngine` to finish if that is still going:
+            startupPromise
+              .then(() => engine.killEngine())
+              .catch(e => input.props.onError(e))
+              .then(() =>
+                input.props.dispatch({
+                  type: 'CURRENCY_ENGINE_STOPPED',
+                  payload: { walletId: id }
+                })
+              )
+          }
+        }
+      }
+    },
+    props => (props.state.paused ? void 0 : props)
+  ),
+
+  syncTimer: filterPixie(
+    (input: CurrencyWalletInput) => {
+      let started: boolean = false
+      let stopped: boolean = false
+      let timeout: * // Infer the proper timer type
+
+      async function doSync() {
+        const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+        const { id } = input.props
+
+        try {
+          syncStorageWallet(ai, id)
+        } catch (e) {
+          // We don't report sync failures, since that could be annoying.
+        }
+        if (!stopped) timeout = setTimeout(doSync, 30 * 1000)
       }
 
-      timeout = setTimeout(() => {
-        syncStorageWallet(ai, id)
-          .then(changes => startTimer())
-          .catch(e => startTimer())
-      }, 30 * 1000)
-    }
+      return {
+        update() {
+          const { id } = input.props
+          if (
+            !started &&
+            input.props.selfOutput &&
+            input.props.state.storageWallets[id] &&
+            input.props.state.storageWallets[id].status.lastSync
+          ) {
+            started = true
+            doSync()
+          }
+        },
 
-    return {
-      update() {
-        // Kick off the initial sync if we don't already have one running:
-        if (timeout == null) return startTimer()
-      },
-
-      destroy() {
-        clearTimeout(timeout)
+        destroy() {
+          stopped = true
+          if (timeout != null) clearTimeout(timeout)
+        }
       }
-    }
-  },
+    },
+    props => (props.state.paused ? void 0 : props)
+  ),
 
   watcher(input: CurrencyWalletInput) {
     let lastState
