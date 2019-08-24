@@ -58,6 +58,11 @@ export async function fetchSwapQuote(
         }
       }
 
+      // Close unused quotes:
+      for (const quote of quotes) {
+        if (quote !== bestQuote) quote.close()
+      }
+
       // Cobble together a URI:
       const { swapInfo } = swapPlugins[bestQuote.pluginName]
       let quoteUri
