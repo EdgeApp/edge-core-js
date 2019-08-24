@@ -165,7 +165,15 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       // General account state:
       if (lastState !== selfState) {
         lastState = selfState
-        if (selfOutput.api != null) update(selfOutput.api)
+        if (selfOutput.api != null) {
+          update(selfOutput.api)
+          for (const pluginName in selfOutput.api.currencyConfig) {
+            update(selfOutput.api.currencyConfig[pluginName])
+          }
+          for (const pluginName in selfOutput.api.swapConfig) {
+            update(selfOutput.api.swapConfig[pluginName])
+          }
+        }
       }
 
       // Wallet list:

@@ -2,7 +2,6 @@
 
 import { type DiskletFile, mapFiles } from 'disklet'
 import { base16, base64 } from 'rfc4648'
-import { update } from 'yaob'
 
 import {
   type EdgePluginMap,
@@ -239,9 +238,6 @@ export async function changePluginUserSettings(
       userSettings: { ...userSettings }
     }
   })
-
-  // Update the plugins:
-  return updatePluginUserSettings(ai, accountId, pluginName)
 }
 
 /**
@@ -270,9 +266,6 @@ export async function changeSwapSettings(
     type: 'ACCOUNT_SWAP_SETTINGS_CHANGED',
     payload: { accountId, pluginName, swapSettings }
   })
-
-  // Update the plugins:
-  return updatePluginUserSettings(ai, accountId, pluginName)
 }
 
 /**
@@ -295,32 +288,4 @@ export async function reloadPluginSettings(ai: ApiInput, accountId: string) {
     type: 'ACCOUNT_PLUGIN_SETTINGS_LOADED',
     payload: { accountId, userSettings, swapSettings }
   })
-
-  // Update the plugins:
-  return Promise.all(
-    Object.keys(userSettings).map(pluginName =>
-      updatePluginUserSettings(ai, accountId, pluginName)
-    )
-  )
-}
-
-/**
- * Applies changed user settings to a single plugin.
- */
-async function updatePluginUserSettings(
-  ai: ApiInput,
-  accountId: string,
-  pluginName: string
-): Promise<mixed> {
-  const selfOutput = ai.props.output.accounts[accountId]
-
-  const currencyPlugin = ai.props.state.plugins.currency[pluginName]
-  if (currencyPlugin != null && selfOutput.api != null) {
-    update(selfOutput.api.currencyConfig[pluginName])
-  }
-
-  const swapPlugin = ai.props.state.plugins.swap[pluginName]
-  if (swapPlugin != null && selfOutput.api != null) {
-    update(selfOutput.api.swapConfig[pluginName])
-  }
 }
