@@ -15,9 +15,19 @@ import {
 } from '../../core/core.js'
 import { type EdgeIo, type EdgeNativeIo } from '../../types/types.js'
 import { type ClientIo, type WorkerApi } from './react-native-types.js'
-import { changeStatus, showStatus } from './status.js'
 
-if (/debug=true/.test(window.location)) showStatus()
+const body = document.body
+if (body != null && /debug=true/.test(window.location)) {
+  const update = () => {
+    const wave = Math.abs(((Date.now() / 2000) % 2) - 1)
+    const color = 0x40 + 0x80 * wave
+    body.style.backgroundColor = `rgb(${color}, ${color}, ${color})`
+
+    setTimeout(update, 100)
+  }
+  update()
+}
+
 window.addEdgeCorePlugins = addEdgeCorePlugins
 window.lockEdgeCorePlugins = lockEdgeCorePlugins
 
@@ -62,10 +72,8 @@ function oldSendRoot() {
       sendMessage: message => reactPostMessage(JSON.stringify(message))
     })
     window.bridge.sendRoot(workerApi)
-    changeStatus('sent root')
   } else {
     setTimeout(oldSendRoot, 100)
-    changeStatus('waiting')
   }
 }
 
@@ -77,7 +85,6 @@ if (window.ReactNativeWebView != null) {
     }
   })
   window.bridge.sendRoot(workerApi)
-  changeStatus('sent root')
 } else {
   oldSendRoot()
 }
