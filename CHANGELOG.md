@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.16.8 (2019-08-26)
+
+- Close unused swap quotes.
+- Update YAOB correctly when plugin configurations change.
+- Simplify the react-native WebView debug appearance.
+
 ## 0.16.7 (2019-08-14)
 
 - Update linting and build tooling.
