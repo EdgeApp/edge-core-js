@@ -478,16 +478,20 @@ export type EdgeCurrencyWallet = {
   getEnabledTokens(): Promise<Array<string>>,
   addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
 
-  // Transactions:
+  // Transaction history:
   getNumTransactions(opts?: EdgeCurrencyCodeOptions): Promise<number>,
   getTransactions(
     opts?: EdgeGetTransactionsOptions
   ): Promise<Array<EdgeTransaction>>,
+
+  // Addresses:
   getReceiveAddress(
     opts?: EdgeCurrencyCodeOptions
   ): Promise<EdgeReceiveAddress>,
   saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
   lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
+
+  // Sending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   signTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
