@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.16.9 (2019-09-05)
+
+- Always prefer top-level currency codes over tokens, if there is a conflict.
+
 ## 0.16.8 (2019-08-26)
 
 - Close unused swap quotes.
