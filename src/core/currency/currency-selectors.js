@@ -18,7 +18,9 @@ export function getCurrencyMultiplier(
         return denomination.multiplier
       }
     }
+  }
 
+  for (const info of currencyInfos) {
     for (const token of info.metaTokens) {
       for (const denomination of token.denominations) {
         if (denomination.name === currencyCode) {
