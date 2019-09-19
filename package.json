@@ -128,5 +128,8 @@
       "style": "module"
     }
   },
-  "react-native": "lib/react-native.js"
+  "react-native": "lib/react-native.js",
+  "resolutions": {
+    "rfc4648": "^1.1.0"
+  }
 }

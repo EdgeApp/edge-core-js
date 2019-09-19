@@ -2101,9 +2101,9 @@ dir-glob@^2.0.0:
     path-type "^3.0.0"
 
 disklet@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.4.0.tgz#2d4f15dfd8c2b5da6ea1941710939edd63643f7a"
-  integrity sha512-zScgyX2SZBlrQGrV+IZH3zC+pkRz5N13Xb0fPHoafarwzGjjocTrRrieKZw3FAyNu789buUk/2SGXFagSI/QVQ==
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/disklet/-/disklet-0.4.1.tgz#e98900934eedb73aef67f4b89444729b98e94f71"
+  integrity sha512-Ui7iVznycaVQwRvGra9qVsG1IwcCDiGetclSXlWfiXamEVplb05U3DK06DhsHJEL1V+fGgKQRigA+BmR+7w7pQ==
   dependencies:
     rfc4648 "^0.9.1"
 
@@ -2168,23 +2168,10 @@ elegant-spinner@^1.0.1:
   resolved "https://registry.yarnpkg.com/elegant-spinner/-/elegant-spinner-1.0.1.tgz#db043521c95d7e303fd8f345bedc3349cfb0729e"
   integrity sha1-2wQ1IcldfjA/2PNFvtwzSc+wcp4=
 
-elliptic@^6.0.0, elliptic@^6.4.0:
-  version "6.4.0"
-  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.4.0.tgz#cac9af8762c85836187003c8dfe193e5e2eae5df"
-  integrity sha1-ysmvh2LIWDYYcAPI3+GT5eLq5d8=
-  dependencies:
-    bn.js "^4.4.0"
-    brorand "^1.0.1"
-    hash.js "^1.0.0"
-    hmac-drbg "^1.0.0"
-    inherits "^2.0.1"
-    minimalistic-assert "^1.0.0"
-    minimalistic-crypto-utils "^1.0.0"
-
-elliptic@^6.2.3:
-  version "6.4.1"
-  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.4.1.tgz#c2d0b7776911b86722c632c3c06c60f2f819939a"
-  integrity sha512-BsXLz5sqX8OHcsh7CqBMztyXARmGQ3LWPtGjJi6DiJHq5C/qvi9P3OqgswKSDftbu8+IoI/QDTAm2fFnQ9SZSQ==
+elliptic@^6.0.0, elliptic@^6.2.3, elliptic@^6.4.0:
+  version "6.5.1"
+  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.1.tgz#c380f5f909bf1b9b4428d028cd18d3b0efd6b52b"
+  integrity sha512-xvJINNLbTeWQjrl6X+7eQCrIy/YPv5XCpKW6kB5mKvtnGILoLDcySuwomfdzt0BMdLNVnuRNTuzKNHj0bva1Cg==
   dependencies:
     bn.js "^4.4.0"
     brorand "^1.0.1"
@@ -5301,15 +5288,10 @@ ret@~0.1.10:
   resolved "https://registry.yarnpkg.com/ret/-/ret-0.1.15.tgz#b8a4825d5bdb1fc3f6f53c2bc33f81388681c7bc"
   integrity sha512-TTlYpa+OL+vMMNG24xSlQGEJ3B/RzEfUlLct7b5G/ytav+wPrplCpVMFuwzXbkecJrb6IYo1iFb0S9v37754mg==
 
-rfc4648@^0.9.1:
-  version "0.9.1"
-  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-0.9.1.tgz#6dff84c2ed0e63381424da2a7caa9b750fa7e477"
-  integrity sha1-bf+Ewu0OYzgUJNoqfKqbdQ+n5Hc=
-
-rfc4648@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-1.1.0.tgz#5e05a16b3c3fc76552f95853a10bd95b6bc0752f"
-  integrity sha512-ExPH8PFXP8Qq//GU6lk23BlHhWdIf1EYP427wJjvF+8ybn3lWTkCRB+JCPRs7vrSw2+IcoyeSqMSWqd1Z/4rIQ==
+rfc4648@^0.9.1, rfc4648@^1.1.0:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-1.2.1.tgz#3d05ae826df5a305ce6f45a19a7756ddf4e551d0"
+  integrity sha512-WtA5N+n7sYVszB4K4ETLoIhREBH4Q/DHpoB/xK8pFPPAmd9TZGLWvj+UTnT3Le1r9va2uj9KZ/79nC7IfeT7vA==
 
 rimraf@2.6.3, rimraf@^2.5.4:
   version "2.6.3"
