@@ -16,7 +16,7 @@ import {
 } from './types/types.js'
 import { timeout } from './util/promise.js'
 
-export { makeFakeIo } from './core/core.js'
+export { makeFakeIo } from './core/fake/fake-io.js'
 export * from './types/types.js'
 
 function onErrorDefault(e: any): mixed {
