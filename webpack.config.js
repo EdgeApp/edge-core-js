@@ -1,8 +1,12 @@
 const path = require('path')
 
+// Set this to false for easier debugging:
+const production = true
+
 const babelOptions = {
-  // For debugging, just remove "@babel/preset-env":
-  presets: ['@babel/preset-env', '@babel/preset-flow', '@babel/preset-react'],
+  presets: production
+    ? ['@babel/preset-env', '@babel/preset-flow', '@babel/preset-react']
+    : ['@babel/preset-flow', '@babel/preset-react'],
   plugins: [
     ['@babel/plugin-transform-for-of', { assumeArray: true }],
     '@babel/plugin-transform-runtime'
@@ -13,7 +17,7 @@ const babelOptions = {
 module.exports = {
   devtool: 'source-map',
   entry: './src/io/react-native/react-native-worker.js',
-  mode: 'development',
+  mode: production ? 'production' : 'development',
   module: {
     rules: [
       {
@@ -26,5 +30,6 @@ module.exports = {
   output: {
     filename: 'lib/react-native/edge-core.js',
     path: path.resolve(__dirname)
-  }
+  },
+  performance: { hints: false }
 }
