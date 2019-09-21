@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.16.10
+
+- De-duplicate dependencies.
+- Enable minification on React Native builds.
+
 ## 0.16.9 (2019-09-05)
 
 - Always prefer top-level currency codes over tokens, if there is a conflict.
