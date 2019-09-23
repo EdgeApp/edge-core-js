@@ -1,6 +1,6 @@
 // @flow
 
-import { gt, lt } from 'biggystring'
+import { div, gt, lt } from 'biggystring'
 import { bridgifyObject } from 'yaob'
 
 import {
@@ -44,19 +44,7 @@ export async function fetchSwapQuote(
       )
 
       // Find the cheapest price:
-      let bestQuote = quotes[0]
-      for (let i = 1; i < quotes.length; ++i) {
-        if (
-          // Prioritize accurate quotes over estimates:
-          // (use `=== false` so `undefined` maps to `true`):
-          (quotes[i].isEstimate === false && bestQuote.isEstimate !== false) ||
-          // Prefer cheaper quotes:
-          gt(quotes[i].toNativeAmount, bestQuote.toNativeAmount) ||
-          lt(quotes[i].fromNativeAmount, bestQuote.fromNativeAmount)
-        ) {
-          bestQuote = quotes[i]
-        }
-      }
+      const bestQuote = quotes.reduce(pickQuote)
 
       // Close unused quotes:
       for (const quote of quotes) {
@@ -97,6 +85,29 @@ export async function fetchSwapQuote(
       throw bestError
     }
   )
+}
+
+/**
+ * Picks the best quote out of two choices.
+ */
+function pickQuote(
+  a: EdgeSwapPluginQuote,
+  b: EdgeSwapPluginQuote
+): EdgeSwapPluginQuote {
+  const { isEstimate: aIsEstimate = true } = a
+  const { isEstimate: bIsEstimate = true } = b
+
+  // Prioritize accurate quotes over estimates:
+  if (aIsEstimate && !bIsEstimate) return b
+  if (!aIsEstimate && bIsEstimate) return a
+
+  // Prefer cheaper quotes:
+  return gt(
+    div(b.toNativeAmount, b.fromNativeAmount),
+    div(a.toNativeAmount, a.fromNativeAmount)
+  )
+    ? b
+    : a
 }
 
 /**
