@@ -137,6 +137,7 @@ export type EdgeCurrencyInfo = {
   pluginName: string,
   denominations: Array<EdgeDenomination>,
   requiredConfirmations?: number,
+  supportsStaking?: boolean,
   walletType: string,
 
   // Configuration options:
@@ -222,6 +223,13 @@ export type EdgeSpendInfo = {
   metadata?: EdgeMetadata,
   otherParams?: Object
 }
+
+export type EdgeStakingSettings =
+  | { stakingEnabled: false }
+  | {
+      stakingEnabled: true,
+      delegateAddress: string
+    }
 
 // query data ----------------------------------------------------------
 
@@ -358,6 +366,12 @@ export type EdgeCurrencyEngine = {
   +getPaymentProtocolInfo?: (
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>,
+
+  // Staking:
+  +stakingSettings?: EdgeStakingSettings,
+  changeStakingSettings?: (
+    stakingSettings: EdgeStakingSettings
+  ) => Promise<EdgeTransaction>,
 
   // Escape hatch:
   +otherMethods?: Object
@@ -506,6 +520,12 @@ export type EdgeCurrencyWallet = {
   getPaymentProtocolInfo(
     paymentProtocolUrl: string
   ): Promise<EdgePaymentProtocolInfo>,
+
+  // Staking:
+  +stakingSettings: EdgeStakingSettings,
+  changeStakingSettings: (
+    stakingSettings: EdgeStakingSettings
+  ) => Promise<EdgeTransaction>,
 
   // Wallet management:
   resyncBlockchain(): Promise<mixed>,

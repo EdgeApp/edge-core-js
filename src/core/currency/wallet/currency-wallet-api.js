@@ -2,7 +2,7 @@
 
 import { add, div, lte, mul, sub } from 'biggystring'
 import { type Disklet } from 'disklet'
-import { bridgifyObject, onMethod, watchMethod } from 'yaob'
+import { bridgifyObject, onMethod, update, watchMethod } from 'yaob'
 
 import { CurrencyWalletSync } from '../../../client-side.js'
 import {
@@ -20,6 +20,7 @@ import {
   type EdgePaymentProtocolInfo,
   type EdgeReceiveAddress,
   type EdgeSpendInfo,
+  type EdgeStakingSettings,
   type EdgeTokenInfo,
   type EdgeTransaction,
   type EdgeWalletInfo
@@ -457,6 +458,23 @@ export function makeCurrencyWalletApi(
       }
 
       return getMax('0', add(balance, '1'))
+    },
+
+    get stakingSettings(): EdgeStakingSettings {
+      return engine.stakingSettings != null
+        ? engine.stakingSettings
+        : { stakingEnabled: false }
+    },
+
+    async changeStakingSettings(
+      stakingSettings: EdgeStakingSettings
+    ): Promise<EdgeTransaction> {
+      if (engine.changeStakingSettings == null) {
+        throw new Error('This currency does not support staking')
+      }
+      const tx = await engine.changeStakingSettings(stakingSettings)
+      update(out) // Check for changes to this.stakingSettings
+      return tx
     },
 
     async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
