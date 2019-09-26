@@ -1,6 +1,16 @@
 # edge-core-js
 
-## 0.16.10
+## 0.16.11 (2019-09-26)
+
+- Fix swap quote prioritization logic to always prefer exact quotes.
+- Add an `EdgeCurrencyConfig.importKey` method.
+- Add optional properties to `EdgeCurrencyInfo`:
+  - `canAdjustFees`
+  - `canImportKeys`
+  - `customFeeTemplate`
+  - `customTokenTemplate`
+
+## 0.16.10 (2019-09-20)
 
 - De-duplicate dependencies.
 - Enable minification on React Native builds.
