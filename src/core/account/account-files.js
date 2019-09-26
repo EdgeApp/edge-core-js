@@ -56,7 +56,7 @@ function getJsonFiles(folder) {
     file
       .getText()
       .then(text => ({ file, name, json: JSON.parse(text) }))
-      .catch(e => void 0)
+      .catch(e => undefined)
   ).then(files => files.filter(file => file != null))
 }
 

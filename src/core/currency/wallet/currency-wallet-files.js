@@ -547,5 +547,5 @@ export function setupNewTxMetadata(input: CurrencyWalletInput, tx: any) {
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { creationDate, fileName, json, txid, txidHash, walletId }
   })
-  return diskletFile.setText(JSON.stringify(json)).then(() => void 0)
+  return diskletFile.setText(JSON.stringify(json)).then(() => undefined)
 }

@@ -27,12 +27,12 @@ export async function enableOtp(
     },
     stash: {
       otpKey,
-      otpResetDate: void 0,
+      otpResetDate: undefined,
       otpTimeout
     },
     login: {
       otpKey,
-      otpResetDate: void 0,
+      otpResetDate: undefined,
       otpTimeout
     },
     loginId: loginTree.loginId
@@ -47,14 +47,14 @@ export async function disableOtp(ai: ApiInput, accountId: string) {
     serverMethod: 'DELETE',
     serverPath: '/v2/login/otp',
     stash: {
-      otpKey: void 0,
-      otpResetDate: void 0,
-      otpTimeout: void 0
+      otpKey: undefined,
+      otpResetDate: undefined,
+      otpTimeout: undefined
     },
     login: {
-      otpKey: void 0,
-      otpResetDate: void 0,
-      otpTimeout: void 0
+      otpKey: undefined,
+      otpResetDate: undefined,
+      otpTimeout: undefined
     },
     loginId: loginTree.loginId
   }
@@ -71,10 +71,10 @@ export async function cancelOtpReset(ai: ApiInput, accountId: string) {
       otpKey: loginTree.otpKey
     },
     stash: {
-      otpResetDate: void 0
+      otpResetDate: undefined
     },
     login: {
-      otpResetDate: void 0
+      otpResetDate: undefined
     },
     loginId: loginTree.loginId
   }

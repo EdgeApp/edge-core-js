@@ -28,7 +28,7 @@ function getJsonFiles(folder: DiskletFolder): Promise<Array<FileInfo>> {
     file
       .getText()
       .then(text => ({ file, json: JSON.parse(text) }))
-      .catch(e => void 0)
+      .catch(e => undefined)
   ).then(files => files.filter(file => file != null))
 }
 
@@ -39,7 +39,7 @@ export function removeStash(ai: ApiInput, username: string): Promise<mixed> {
   const fixedName = fixUsername(username)
   return getJsonFiles(loginsFolder(ai))
     .then(files => files.find(file => file.json.username === fixedName))
-    .then(file => (file != null ? file.file.delete() : void 0))
+    .then(file => (file != null ? file.file.delete() : undefined))
     .then(() => {
       ai.props.dispatch({
         type: 'LOGIN_STASH_DELETED',

@@ -54,7 +54,7 @@ export function makeDataStoreApi(
         file
           .getText()
           .then(text => JSON.parse(text).key)
-          .catch(e => void 0)
+          .catch(e => undefined)
       )
       return itemIds.filter(itemId => typeof itemId === 'string')
     },
@@ -67,7 +67,7 @@ export function makeDataStoreApi(
           .file('Name.json')
           .getText()
           .then(text => JSON.parse(text).name)
-          .catch(e => void 0)
+          .catch(e => undefined)
       )
       return storeIds.filter(storeId => typeof storeId === 'string')
     },

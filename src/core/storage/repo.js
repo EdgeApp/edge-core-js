@@ -59,7 +59,7 @@ export function makeRepoPaths(
 export function loadRepoStatus(
   paths: StorageWalletPaths
 ): Promise<StorageWalletStatus> {
-  const fallback = { lastSync: 0, lastHash: void 0 }
+  const fallback = { lastSync: 0, lastHash: undefined }
   return paths.baseDisklet
     .getText('status.json')
     .then(text => ({ lastSync: 0, ...JSON.parse(text) }))

@@ -98,7 +98,11 @@ describe('creation', function() {
     const questions = fakeUser.recovery2Questions
     const answers = fakeUser.recovery2Answers
 
-    const account = await context.createAccount(username, void 0, fakeUser.pin)
+    const account = await context.createAccount(
+      username,
+      undefined,
+      fakeUser.pin
+    )
     const recovery2Key = await account.changeRecovery(questions, answers)
 
     return Promise.all([
@@ -392,6 +396,6 @@ describe('recovery2', function() {
     )
     expect(account.recoveryKey).equals(fakeUser.recovery2Key)
     await account.deleteRecovery()
-    expect(account.recoveryKey).equals(void 0)
+    expect(account.recoveryKey).equals(undefined)
   })
 })

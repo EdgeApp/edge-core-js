@@ -50,7 +50,7 @@ const storageWalletReducer = combineReducers({
   },
 
   status(
-    state = { lastSync: 0, lastHash: void 0 },
+    state = { lastSync: 0, lastHash: undefined },
     action: RootAction
   ): StorageWalletStatus {
     return action.type === 'STORAGE_WALLET_SYNCED'

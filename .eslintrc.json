@@ -7,13 +7,6 @@
   ],
   "plugins": ["prettier"],
   "rules": {
-    "camelcase": "error",
-    "lines-between-class-members": [
-      "error",
-      "always",
-      { "exceptAfterSingleLine": true }
-    ],
-    "no-throw-literal": "error",
     "no-var": "error",
     "prettier/prettier": "error"
   }

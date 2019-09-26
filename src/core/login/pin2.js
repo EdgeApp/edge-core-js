@@ -66,7 +66,7 @@ export function getPin2Key(stashTree: LoginStash, appId: string) {
       : searchTree(stashTree, stash => stash.appId === appId)
   return stash != null && stash.pin2Key != null
     ? { pin2Key: base64.parse(stash.pin2Key), appId: stash.appId }
-    : { pin2Key: void 0, appId: void 0 }
+    : { pin2Key: undefined, appId: undefined }
 }
 
 /**
@@ -222,11 +222,11 @@ export function makeChangePin2Kit(
         pin2TextBox
       },
       stash: {
-        pin2Key: void 0,
+        pin2Key: undefined,
         pin2TextBox
       },
       login: {
-        pin2Key: void 0,
+        pin2Key: undefined,
         pin
       },
       loginId: login.loginId
@@ -257,12 +257,12 @@ export function makeDeletePin2Kit(login: LoginTree): LoginKit {
   const out: any = {
     serverMethod: 'DELETE',
     serverPath: '/v2/login/pin2',
-    server: void 0,
+    server: undefined,
     stash: {
-      pin2Key: void 0
+      pin2Key: undefined
     },
     login: {
-      pin2Key: void 0
+      pin2Key: undefined
     },
     loginId: login.loginId
   }

@@ -30,7 +30,7 @@ async function makeFakeCurrencyWallet(): Promise<
   const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
   if (!walletInfo) throw new Error('Broken test account')
   const wallet = await account.waitForCurrencyWallet(walletInfo.id)
-  const config = account.currencyConfig['fakecoin']
+  const config = account.currencyConfig.fakecoin
   return [wallet, config]
 }
 

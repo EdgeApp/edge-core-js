@@ -346,7 +346,7 @@ addRoute('POST', '/api/v2/login/otp', authHandler, function(req) {
 
   req.login.otpKey = data.otpKey
   req.login.otpTimeout = data.otpTimeout
-  req.login.otpResetDate = void 0
+  req.login.otpResetDate = undefined
 
   return makeResponse()
 })
@@ -380,20 +380,20 @@ addRoute(
   },
   authHandler,
   function(req) {
-    req.login.otpKey = void 0
-    req.login.otpTimeout = void 0
-    req.login.otpResetDate = void 0
+    req.login.otpKey = undefined
+    req.login.otpTimeout = undefined
+    req.login.otpResetDate = undefined
 
     return makeResponse()
   }
 )
 
 addRoute('DELETE', '/api/v2/login/password', authHandler, function(req) {
-  req.login.passwordAuth = void 0
-  req.login.passwordAuthBox = void 0
-  req.login.passwordAuthSnrp = void 0
-  req.login.passwordBox = void 0
-  req.login.passwordKeySnrp = void 0
+  req.login.passwordAuth = undefined
+  req.login.passwordAuthBox = undefined
+  req.login.passwordAuthSnrp = undefined
+  req.login.passwordBox = undefined
+  req.login.passwordKeySnrp = undefined
 
   return makeResponse()
 })
@@ -420,11 +420,11 @@ addRoute('POST', '/api/v2/login/password', authHandler, function(req) {
 })
 
 addRoute('DELETE', '/api/v2/login/pin2', authHandler, function(req) {
-  req.login.pin2Auth = void 0
-  req.login.pin2Box = void 0
-  req.login.pin2Id = void 0
-  req.login.pin2KeyBox = void 0
-  req.login.pin2TextBox = void 0
+  req.login.pin2Auth = undefined
+  req.login.pin2Box = undefined
+  req.login.pin2Id = undefined
+  req.login.pin2KeyBox = undefined
+  req.login.pin2TextBox = undefined
 
   return makeResponse()
 })
@@ -458,11 +458,11 @@ addRoute('POST', '/api/v2/login/pin2', authHandler, function(req) {
 })
 
 addRoute('DELETE', '/api/v2/login/recovery2', authHandler, function(req) {
-  req.login.question2Box = void 0
-  req.login.recovery2Auth = void 0
-  req.login.recovery2Box = void 0
-  req.login.recovery2Id = void 0
-  req.login.recovery2KeyBox = void 0
+  req.login.question2Box = undefined
+  req.login.recovery2Auth = undefined
+  req.login.recovery2Box = undefined
+  req.login.recovery2Id = undefined
+  req.login.recovery2KeyBox = undefined
 
   return makeResponse()
 })
@@ -548,7 +548,7 @@ function storeRoute(req) {
   }
 
   switch (req.method) {
-    case 'POST':
+    case 'POST': {
       const changes = req.body.changes
       for (const change of Object.keys(changes)) {
         repo[change] = changes[change]
@@ -559,6 +559,7 @@ function storeRoute(req) {
           hash: '1111111111111111111111111111111111111111'
         })
       )
+    }
 
     case 'GET':
       return new FakeResponse(JSON.stringify({ changes: repo }))

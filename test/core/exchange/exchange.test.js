@@ -83,7 +83,7 @@ describe('exchange cache reducer', function() {
     const pairs = makePairs()
 
     // Add the first currency pair:
-    let state = reducer(void 0, addPairs(pairs.slice(0, 1)))
+    let state = reducer(undefined, addPairs(pairs.slice(0, 1)))
     assert.deepEqual(state.rates.pairs, pairs.slice(0, 1))
 
     // Add the rest:
@@ -98,7 +98,7 @@ describe('exchange cache reducer', function() {
 
     // Add a middle currency , with adjustments:
     const easyPairs = [{ ...pairs[1], rate: 2400 }]
-    let state = reducer(void 0, addPairs(easyPairs))
+    let state = reducer(undefined, addPairs(easyPairs))
     assert.deepEqual(state.rates.pairs, easyPairs)
 
     // Add everything:
@@ -111,7 +111,7 @@ describe('exchange cache reducer', function() {
 
   it('find the shortest route', function() {
     const pairs = makePairs()
-    const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
+    const state: any = { exchangeCache: reducer(undefined, addPairs(pairs)) }
     const getPairCost = (source, age, inverse) => 1
 
     assert.equal(getExchangeRate(state, 'BTC', 'BTC', getPairCost), 1)
@@ -124,7 +124,7 @@ describe('exchange cache reducer', function() {
 
   it('find a route using the preferred exchange', function() {
     const pairs = makePairs()
-    const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
+    const state: any = { exchangeCache: reducer(undefined, addPairs(pairs)) }
     const getPairCost = source => (source === 'complexSource' ? 1 : 10)
 
     assert.equal(
@@ -135,7 +135,7 @@ describe('exchange cache reducer', function() {
 
   it('find the freshest route', function() {
     const pairs = makePairs()
-    const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
+    const state: any = { exchangeCache: reducer(undefined, addPairs(pairs)) }
     const getPairCost = (source, age) => age
 
     assert.equal(
@@ -146,7 +146,7 @@ describe('exchange cache reducer', function() {
 
   it('missing routes return zero', function() {
     const pairs = makePairs()
-    const state: any = { exchangeCache: reducer(void 0, addPairs(pairs)) }
+    const state: any = { exchangeCache: reducer(undefined, addPairs(pairs)) }
 
     assert.equal(getExchangeRate(state, 'NONE', 'EUR', pair => 1), 0)
   })
