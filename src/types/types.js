@@ -130,14 +130,41 @@ export type EdgeMetaToken = {
   symbolImage?: string
 }
 
+type EdgeObjectTemplate = Array<
+  | {
+      type: 'nativeAmount',
+      key: string,
+      displayName: string,
+      displayMultiplier: string
+    }
+  | {
+      type: 'number',
+      key: string,
+      displayName: string
+    }
+  | {
+      type: 'string',
+      key: string,
+      displayName: string
+    }
+>
+
 export type EdgeCurrencyInfo = {
   // Basic currency information:
-  currencyCode: string,
   displayName: string,
   pluginName: string,
-  denominations: Array<EdgeDenomination>,
-  requiredConfirmations?: number,
   walletType: string,
+
+  // Native token information:
+  currencyCode: string,
+  denominations: Array<EdgeDenomination>,
+
+  // Chain information:
+  canAdjustFees?: boolean, // Defaults to true
+  canImportKeys?: boolean, // Defaults to false
+  customFeeTemplate?: EdgeObjectTemplate, // Indicates custom fee support
+  customTokenTemplate?: EdgeObjectTemplate, // Indicates custom token support
+  requiredConfirmations?: number,
 
   // Configuration options:
   defaultSettings: any,
@@ -639,7 +666,8 @@ export type EdgeCurrencyConfig = {
   +otherMethods: Object,
   +userSettings: Object | void,
 
-  changeUserSettings(settings: Object): Promise<mixed>
+  changeUserSettings(settings: Object): Promise<mixed>,
+  importKey(userInput: string): Promise<Object>
 }
 
 export type EthereumTransaction = {

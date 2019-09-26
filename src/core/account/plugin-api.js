@@ -8,6 +8,7 @@ import {
   type EdgeSwapConfig,
   type EdgeSwapInfo
 } from '../../types/types.js'
+import { getCurrencyTools } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import {
   changePluginUserSettings,
@@ -56,6 +57,15 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
       this._pluginName,
       settings
     )
+  }
+
+  async importKey(userInput: string): Promise<Object> {
+    const tools = await getCurrencyTools(this._ai, this.currencyInfo.walletType)
+
+    if (tools.importPrivateKey == null) {
+      throw new Error('This wallet does not support importing keys')
+    }
+    return tools.importPrivateKey(userInput)
   }
 }
 
