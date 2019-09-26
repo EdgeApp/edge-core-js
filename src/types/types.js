@@ -666,7 +666,8 @@ export type EdgeCurrencyConfig = {
   +otherMethods: Object,
   +userSettings: Object | void,
 
-  changeUserSettings(settings: Object): Promise<mixed>
+  changeUserSettings(settings: Object): Promise<mixed>,
+  importKey(userInput: string): Promise<Object>
 }
 
 export type EthereumTransaction = {
