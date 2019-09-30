@@ -119,13 +119,13 @@ describe('account', function() {
     const settings = {
       testSetting: 'some important string'
     }
-    const config1 = account1.currencyConfig['fakecoin']
+    const config1 = account1.currencyConfig.fakecoin
     await config1.changeUserSettings(settings)
     expect(config1.userSettings).deep.equals(settings)
 
     // Log in again, and the setting should still be there:
     const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const config2 = account2.currencyConfig['fakecoin']
+    const config2 = account2.currencyConfig.fakecoin
     expect(config2.userSettings).deep.equals(settings)
   })
 
@@ -143,7 +143,7 @@ describe('account', function() {
     const config1 = account1.swapConfig.fakeswap
     expect(config1.swapInfo.pluginName).equals('fakeswap')
     expect(config1.needsActivation).equals(true)
-    expect(config1.userSettings).equals(void 0)
+    expect(config1.userSettings).equals(undefined)
 
     // Change the settings:
     const settings = { kycToken: 'fake-token' }

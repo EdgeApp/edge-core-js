@@ -150,21 +150,21 @@ export async function deletePassword(ai: ApiInput, accountId: string) {
     serverMethod: 'DELETE',
     serverPath: '/v2/login/password',
     stash: {
-      passwordAuthSnrp: void 0,
-      passwordBox: void 0,
-      passwordKeySnrp: void 0
+      passwordAuthSnrp: undefined,
+      passwordBox: undefined,
+      passwordKeySnrp: undefined
     },
     login: {
-      passwordAuthSnrp: void 0,
-      passwordBox: void 0,
-      passwordKeySnrp: void 0
+      passwordAuthSnrp: undefined,
+      passwordBox: undefined,
+      passwordKeySnrp: undefined
     },
     loginId: loginTree.loginId
   }
   // Only remove `passwordAuth` if we have another way to get in:
   if (loginTree.loginAuth != null) {
-    kit.stash.passwordAuthBox = void 0
-    kit.login.passwordAuthBox = void 0
+    kit.stash.passwordAuthBox = undefined
+    kit.login.passwordAuthBox = undefined
   }
   await applyKit(ai, loginTree, kit)
 }

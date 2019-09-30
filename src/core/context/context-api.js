@@ -206,7 +206,7 @@ export function makeContextApi(ai: ApiInput) {
       // If a timer is already running, stop that:
       if (pauseTimer != null) {
         clearTimeout(pauseTimer)
-        pauseTimer = void 0
+        pauseTimer = undefined
       }
 
       // If the state is the same, do nothing:
@@ -217,7 +217,7 @@ export function makeContextApi(ai: ApiInput) {
         ai.props.dispatch({ type: 'PAUSE', payload: paused })
       } else {
         pauseTimer = setTimeout(() => {
-          pauseTimer = void 0
+          pauseTimer = undefined
           ai.props.dispatch({ type: 'PAUSE', payload: paused })
         }, secondsDelay * 1000)
       }

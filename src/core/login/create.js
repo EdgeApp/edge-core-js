@@ -66,7 +66,9 @@ export function makeCreateKit(
 
   // Set up login methods:
   const parentBox =
-    parentLogin != null ? encrypt(io, loginKey, parentLogin.loginKey) : void 0
+    parentLogin != null
+      ? encrypt(io, loginKey, parentLogin.loginKey)
+      : undefined
   const passwordKit =
     opts.password != null
       ? makePasswordKit(ai, dummyLogin, username, opts.password)
@@ -128,7 +130,7 @@ export function createLogin(
 ): Promise<LoginTree> {
   const fixedName = fixUsername(username)
 
-  return makeCreateKit(ai, void 0, '', fixedName, opts).then(kit => {
+  return makeCreateKit(ai, undefined, '', fixedName, opts).then(kit => {
     kit.login.username = fixedName
     kit.stash.username = fixedName
     kit.login.userId = kit.login.loginId

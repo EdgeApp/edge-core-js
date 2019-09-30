@@ -100,7 +100,7 @@
     "babel-loader": "^8.0.5",
     "chai": "^4.2.0",
     "eslint": "6.1.0",
-    "eslint-config-standard-kit": "^0.13.0",
+    "eslint-config-standard-kit": "^0.14.0",
     "eslint-plugin-flowtype": "^3.12.2",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-node": "^9.1.0",

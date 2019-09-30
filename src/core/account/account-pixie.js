@@ -150,7 +150,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         }
       }
     },
-    props => (props.state.paused ? void 0 : props)
+    props => (props.state.paused ? undefined : props)
   ),
 
   watcher(input: AccountInput) {
@@ -186,7 +186,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       if (lastExchangeState !== input.props.state.exchangeCache) {
         lastExchangeState = input.props.state.exchangeCache
         if (selfOutput.api != null) {
-          emit(selfOutput.api.exchangeCache, 'update', void 0)
+          emit(selfOutput.api.exchangeCache, 'update', undefined)
         }
       }
     }

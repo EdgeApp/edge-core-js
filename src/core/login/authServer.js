@@ -36,9 +36,10 @@ export function parseReply(json: Object) {
 
     case 1: // Error
     case 7: // Pin expired
-    default:
+    default: {
       const message = json.message || json.detail || JSON.stringify(json)
       throw new Error(`Server error: ${message}`)
+    }
   }
 }
 

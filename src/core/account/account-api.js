@@ -125,7 +125,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       const { login } = selfState()
       return login.recovery2Key != null
         ? base58.stringify(login.recovery2Key)
-        : void 0
+        : undefined
     },
     get username(): string {
       if (!username) throw new Error('Missing username')
@@ -221,7 +221,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     get otpKey(): string | void {
       lockdown()
       const { loginTree } = selfState()
-      return loginTree.otpTimeout != null ? loginTree.otpKey : void 0
+      return loginTree.otpTimeout != null ? loginTree.otpKey : undefined
     },
     get otpResetDate(): string | void {
       lockdown()

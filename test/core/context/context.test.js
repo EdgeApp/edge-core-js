@@ -24,7 +24,7 @@ describe('context', function() {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     // We should not dump this new guy's repos:
-    await context.createAccount('dummy', void 0, '1111')
+    await context.createAccount('dummy', undefined, '1111')
 
     const dump = await world.dumpFakeUser(account)
     // require('fs').writeFileSync('./fake-user.json', JSON.stringify(dump))

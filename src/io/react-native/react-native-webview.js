@@ -20,7 +20,7 @@ type Props = {
 }
 
 type WebViewCallbacks = {
-  onMessage: Function,
+  handleMessage: Function,
   setRef: Function
 }
 
@@ -45,12 +45,12 @@ function makeOuterWebViewBridge<Root>(
   const tryReleasingRoot = () => {
     if (gatedRoot != null && webview != null) {
       onRoot(gatedRoot)
-      gatedRoot = void 0
+      gatedRoot = undefined
     }
   }
 
   // Feed incoming messages into the YAOB bridge (if any):
-  const onMessage = event => {
+  const handleMessage = event => {
     const message = JSON.parse(event.nativeEvent.data)
     if (debug != null) console.info(`${debug} →`, message)
 
@@ -62,7 +62,7 @@ function makeOuterWebViewBridge<Root>(
       message.events.find(event => event.localId === 0)
     ) {
       bridge.close(new Error('edge-core: The WebView has been unmounted.'))
-      bridge = void 0
+      bridge = undefined
     }
 
     // If we have no bridge, start one:
@@ -101,7 +101,7 @@ function makeOuterWebViewBridge<Root>(
     tryReleasingRoot()
   }
 
-  return { onMessage, setRef }
+  return { handleMessage, setRef }
 }
 
 /**
@@ -130,7 +130,7 @@ export class EdgeCoreBridge extends Component<Props> {
           .then(nativeIo => props.onLoad(nativeIo, root))
           .catch(error => props.onError(error))
       },
-      debug ? 'edge-core' : void 0
+      debug ? 'edge-core' : undefined
     )
   }
 
@@ -148,7 +148,7 @@ export class EdgeCoreBridge extends Component<Props> {
       <View style={this.props.debug ? styles.debug : styles.hidden}>
         <WebView
           allowFileAccess
-          onMessage={this.callbacks.onMessage}
+          onMessage={this.callbacks.handleMessage}
           originWhitelist={['file://*']}
           ref={this.callbacks.setRef}
           source={{ uri }}

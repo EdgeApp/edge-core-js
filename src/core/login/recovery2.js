@@ -135,10 +135,10 @@ export async function deleteRecovery(ai: ApiInput, accountId: string) {
     serverMethod: 'DELETE',
     serverPath: '/v2/login/recovery2',
     stash: {
-      recovery2Key: void 0
+      recovery2Key: undefined
     },
     login: {
-      recovery2Key: void 0
+      recovery2Key: undefined
     },
     loginId: loginTree.loginId
   }

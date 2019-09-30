@@ -94,7 +94,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
       }
     }
   },
-  props => (props.state.paused ? void 0 : props)
+  props => (props.state.paused ? undefined : props)
 )
 
 /**
