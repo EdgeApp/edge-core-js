@@ -42,9 +42,21 @@ export function DustSpendError(message = 'Please send a larger amount') {
 /**
  * Trying to spend more money than the wallet contains.
  */
-export function InsufficientFundsError(message = 'Insufficient funds') {
+export function InsufficientFundsError(currencyCode) {
+  let message
+  if (currencyCode == null) {
+    message = 'Insufficient funds'
+  } else if (currencyCode.length > 5) {
+    // Some plugins pass a message instead of a currency code:
+    message = currencyCode
+    currencyCode = undefined
+  } else {
+    message = `Insufficient ${currencyCode}`
+  }
+
   const e = new Error(message)
   e.name = errorNames.InsufficientFundsError
+  if (currencyCode != null) e.currencyCode = currencyCode
   return e
 }
 
