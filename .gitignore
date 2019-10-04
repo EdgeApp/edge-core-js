@@ -1,6 +1,6 @@
 # Build output:
 lib/
-types.js
+/types.js
 
 # Package managers:
 node_modules/
