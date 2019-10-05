@@ -5,9 +5,10 @@
     "standard-kit/lint/jsx",
     "standard-kit/lint/flow"
   ],
-  "plugins": ["prettier"],
+  "plugins": ["prettier", "simple-import-sort"],
   "rules": {
     "no-var": "error",
-    "prettier/prettier": "error"
+    "prettier/prettier": "error",
+    "simple-import-sort/sort": "error"
   }
 }

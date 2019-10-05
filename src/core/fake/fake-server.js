@@ -1,7 +1,7 @@
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { filterObject, softCat } from '../../util/util.js'
 import { loginCreateColumns } from './fake-db.js'
-import { FakeResponse, addRoute } from './fake-fetch.js'
+import { addRoute, FakeResponse } from './fake-fetch.js'
 
 const OTP_RESET_TOKEN = 'Super secret reset token'
 

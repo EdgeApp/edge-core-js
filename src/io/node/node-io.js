@@ -1,7 +1,6 @@
 // @flow
 
 import crypto from 'crypto'
-
 import { makeNodeDisklet } from 'disklet'
 import fetch from 'node-fetch'
 import WebSocket from 'ws'
