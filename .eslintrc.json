@@ -1,14 +1,14 @@
 {
   "extends": [
-    "standard-kit/lint",
-    "standard-kit/lint/node",
-    "standard-kit/lint/jsx",
-    "standard-kit/lint/flow"
+    "standard-kit/prettier",
+    "standard-kit/prettier/node",
+    "standard-kit/prettier/jsx",
+    "standard-kit/prettier/flow"
   ],
-  "plugins": ["prettier", "simple-import-sort"],
+  "plugins": [ "simple-import-sort"],
   "rules": {
     "no-var": "error",
-    "prettier/prettier": "error",
+    "import/extensions": ["error", "always", { "ignorePackages": true }],
     "simple-import-sort/sort": "error"
   }
 }

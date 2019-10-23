@@ -2117,10 +2117,10 @@ escape-string-regexp@1.0.5, escape-string-regexp@^1.0.2, escape-string-regexp@^1
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-1.0.5.tgz#1b61c0562190a8dff6ae3bb2cf0200ca130b86d4"
   integrity sha1-G2HAViGQqN/2rjuyzwIAyhMLhtQ=
 
-eslint-config-standard-kit@^0.14.0:
-  version "0.14.0"
-  resolved "https://registry.yarnpkg.com/eslint-config-standard-kit/-/eslint-config-standard-kit-0.14.0.tgz#cb3fb85a4060e00ee3a83a45b57ca73513a80638"
-  integrity sha512-adR3nCTng0d4+grOUCbWf9vp9TWRZ5TzWWlJ47LOaUjNGT8yuCR6kd35TxYMFB+uqZsGCH+wTmV2WAHsD4gWKg==
+eslint-config-standard-kit@^0.14.4:
+  version "0.14.4"
+  resolved "https://registry.yarnpkg.com/eslint-config-standard-kit/-/eslint-config-standard-kit-0.14.4.tgz#a81b3df9c41fa338baa4ab514fabc35aadc8f547"
+  integrity sha512-YPk+8Qm5MeinOz8cEgLFuWcDhYa31L9kLUa2PCP0HfPUWYuEhowmCHWkkHhSPQMEPW+/LO3SlZb3p9JVFNkL+g==
 
 eslint-import-resolver-node@^0.3.2:
   version "0.3.2"
