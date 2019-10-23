@@ -2,6 +2,7 @@
 
 This library implements the Edge login system. It runs inside a client application, and provides zero-knowledge backup for cryptographic keys and other secrets via a familiar password-based login system.
 
+[![Build Status](https://travis-ci.com/EdgeApp/edge-core-js.svg?branch=master)](https://travis-ci.com/EdgeApp/edge-core-js)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
