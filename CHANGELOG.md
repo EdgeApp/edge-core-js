@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.16.12 (2019-10-23)
+
+- Add a `currencyCode` to `InsufficientFundsError`.
+- Update the readme with helpful information.
+
 ## 0.16.11 (2019-09-26)
 
 - Fix swap quote prioritization logic to always prefer exact quotes.
