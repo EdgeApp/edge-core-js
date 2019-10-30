@@ -55,9 +55,12 @@ export function authRequest(
   const opts: RequestOptions = {
     method: method,
     headers: {
-      Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: 'Token ' + apiKey
+      Accept: 'application/json',
+      Authorization:
+        'Token ' + apiKey === ''
+          ? '4248c1bf41e53b840a5fdb2c872dd3ade525e66d'
+          : apiKey
     }
   }
   if (method !== 'GET') {
