@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.16.13 (2019-10-31)
+
+- Include a default API key in the core, in case the user initializes the context with a blank `apiKey`.
+
 ## 0.16.12 (2019-10-23)
 
 - Add a `currencyCode` to `InsufficientFundsError`.
