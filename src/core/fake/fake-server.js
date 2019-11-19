@@ -50,7 +50,7 @@ function makeOtpErrorResponse(status = 500) {
 // Authentication middleware: ----------------------------------------------
 
 /**
- * Verifies that the request contains valid v1 authenticaion.
+ * Verifies that the request contains valid v1 authentication.
  */
 function authHandler1(req) {
   // Password login:
@@ -69,7 +69,7 @@ function authHandler1(req) {
 }
 
 /**
- * Verifies that the request contains valid v2 authenticaion.
+ * Verifies that the request contains valid v2 authentication.
  */
 function authHandler(req) {
   // Token login:

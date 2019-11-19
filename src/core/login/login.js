@@ -89,7 +89,6 @@ function applyLoginReplyInner(stash, loginKey, loginReply) {
     'pin2TextBox',
     'mnemonicBox',
     'rootKeyBox',
-    'mnemonicBox',
     'syncKeyBox'
   ])
 
