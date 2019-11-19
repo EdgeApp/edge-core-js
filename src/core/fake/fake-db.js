@@ -10,6 +10,7 @@ export const loginReplyColumns = [
   'loginAuthBox',
   'loginId',
   // Login methods:
+  'otpKey',
   'otpResetDate',
   'otpTimeout',
   'passwordAuthBox',
@@ -34,7 +35,6 @@ export const loginReplyColumns = [
 export const loginDbColumns = [
   ...loginReplyColumns,
   'loginAuth',
-  'otpKey',
   'passwordAuth',
   'pin2Auth',
   'pin2Id',
