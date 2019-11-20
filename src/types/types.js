@@ -927,6 +927,7 @@ export type EdgePendingEdgeLogin = {
 
 export type EdgeUserInfo = {
   pinLoginEnabled: boolean,
+  recovery2Key?: string,
   username: string
 }
 

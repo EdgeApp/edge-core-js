@@ -34,6 +34,7 @@ describe('username', function() {
     expect(context.localUsers).deep.equals([
       {
         pinLoginEnabled: true,
+        recovery2Key: 'NVADGXzb5Zc55PYXVVT7GRcXPnY9NZJUjiZK8aQnidc',
         username: 'js test 0'
       }
     ])
@@ -126,6 +127,7 @@ describe('creation', function() {
     expect(context.localUsers).deep.equals([
       {
         pinLoginEnabled: true,
+        recovery2Key: undefined,
         username: 'some fancy user'
       }
     ])
