@@ -148,7 +148,10 @@ describe('exchange cache reducer', function() {
     const pairs = makePairs()
     const state: any = { exchangeCache: reducer(undefined, addPairs(pairs)) }
 
-    assert.equal(getExchangeRate(state, 'NONE', 'EUR', pair => 1), 0)
+    assert.equal(
+      getExchangeRate(state, 'NONE', 'EUR', pair => 1),
+      0
+    )
   })
 })
 

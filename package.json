@@ -40,11 +40,10 @@
   "module": "./lib/index.js",
   "browser": "./lib/browser.js",
   "scripts": {
-    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow,jsx && node ./make-types.js && webpack",
+    "build": "rimraf lib && node ./make-types.js && sucrase ./src -q -d ./lib -t flow,jsx && webpack",
+    "fix": "npm run lint -- --fix",
     "flow": "flow",
-    "format": "npm run lint -- --fix",
     "lint": "eslint .",
-    "lint:fix": "npm run format",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "prepare": "npm run build",
     "test": "mocha -r sucrase/register 'test/**/*.test.js'",
