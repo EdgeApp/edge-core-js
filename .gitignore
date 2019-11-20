@@ -2,7 +2,6 @@
 /android/*.jar
 /android/src/main/assets/
 /lib/
-/types.d.ts
 /types.js
 /types.js.flow
 /types.mjs
