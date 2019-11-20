@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.16.14 (2019-11-20)
+
+- Save 2-factor keys sent back from the auth server.
+- Expose the `recovery2Key` in `EdgeContext.localUsers`.
+
 ## 0.16.13 (2019-10-31)
 
 - Include a default API key in the core, in case the user initializes the context with a blank `apiKey`.
