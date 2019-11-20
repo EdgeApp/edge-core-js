@@ -79,6 +79,7 @@ function applyLoginReplyInner(stash, loginKey, loginReply) {
     'loginId',
     'loginAuthBox',
     'userId',
+    'otpKey',
     'otpResetDate',
     'otpTimeout',
     'parentBox',
@@ -95,7 +96,6 @@ function applyLoginReplyInner(stash, loginKey, loginReply) {
   // Preserve client-only data:
   if (stash.username != null) out.username = stash.username
   if (stash.userId != null) out.userId = stash.userId
-  if (stash.otpKey != null) out.otpKey = stash.otpKey
 
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
