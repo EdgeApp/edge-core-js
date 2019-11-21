@@ -181,6 +181,16 @@ export function makeCurrencyWalletApi(
     },
 
     // Tokens:
+    async changeEnabledTokens(currencyCodes: Array<string>): Promise<mixed> {
+      const enabled = await engine.getEnabledTokens()
+      await engine.disableTokens(
+        enabled.filter(currencyCode => currencyCodes.indexOf(currencyCode) < 0)
+      )
+      await engine.enableTokens(
+        currencyCodes.filter(currencyCode => enabled.indexOf(currencyCode) < 0)
+      )
+    },
+
     async enableTokens(tokens: Array<string>): Promise<mixed> {
       return engine.enableTokens(tokens)
     },

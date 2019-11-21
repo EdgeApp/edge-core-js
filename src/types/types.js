@@ -500,6 +500,7 @@ export type EdgeCurrencyWallet = {
   stopEngine(): Promise<mixed>,
 
   // Token management:
+  changeEnabledTokens(currencyCodes: Array<string>): Promise<mixed>,
   enableTokens(tokens: Array<string>): Promise<mixed>,
   disableTokens(tokens: Array<string>): Promise<mixed>,
   getEnabledTokens(): Promise<Array<string>>,
