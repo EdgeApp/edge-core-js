@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.16.15 (2019-11-25)
+
+- Add an `EdgeCurrencyWallet.changeEnabledTokens` method.
+
 ## 0.16.14 (2019-11-20)
 
 - Save 2-factor keys sent back from the auth server.
