@@ -1171,6 +1171,11 @@ babel-loader@^8.0.5:
     mkdirp "^0.5.1"
     util.promisify "^1.0.0"
 
+babel-plugin-transform-fake-error-class@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-transform-fake-error-class/-/babel-plugin-transform-fake-error-class-0.1.0.tgz#421362401cc0c6609e7220eac18cd057d5c9a778"
+  integrity sha512-Ao3b/kpRUmTot28BCXb+5Z0r0DmOymhlAaxht73d0x3dXxr5n99yR0ZaqU0az4GIT5/QoUUWbb89IRX9YsrNmg==
+
 balanced-match@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.0.tgz#89b4d199ab2bee49de164ea02b89ce462d71b767"

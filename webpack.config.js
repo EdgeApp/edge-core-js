@@ -9,7 +9,8 @@ const babelOptions = {
     : ['@babel/preset-flow', '@babel/preset-react'],
   plugins: [
     ['@babel/plugin-transform-for-of', { assumeArray: true }],
-    '@babel/plugin-transform-runtime'
+    '@babel/plugin-transform-runtime',
+    'babel-plugin-transform-fake-error-class'
   ],
   cacheDirectory: true
 }
