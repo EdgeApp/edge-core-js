@@ -25,7 +25,7 @@ export type ScryptOutput = {
  * Prevents a function from running in parallel.
  * The currently-running operation must finish before the new one starts.
  */
-function serialize<A: any[], R>(
+function serialize<A extends any[], R>(
   f: (...args: A) => Promise<R>
 ): (...args: A) => Promise<R> {
   let lastTask: Promise<mixed> = Promise.resolve()

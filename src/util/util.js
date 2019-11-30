@@ -35,7 +35,7 @@ export function mergeDeeply(...objects: any[]): any {
 /**
  * Like `Object.assign`, but makes the properties non-enumerable.
  */
-export function addHiddenProperties<O: Object, P: Object>(
+export function addHiddenProperties<O extends {}, P extends {}>(
   object: O,
   properties: P
 ): O & P {

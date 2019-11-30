@@ -64,7 +64,7 @@ export function searchTree<T>(
  * and the `update` callback replaces that node.
  * The `clone` callback updates the `children` on the non-replaced nodes.
  */
-function updateTree<Node: { +children?: any[] }, Output>(
+function updateTree<Node extends { readonly children?: any[] }, Output>(
   node: Node,
   predicate: (node: Node) => boolean,
   update: (node: Node) => Output,
