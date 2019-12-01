@@ -12,7 +12,7 @@ import { expect } from 'chai'
  * `assert` will throw an exception.
  */
 export type AssertLog = {
-  assert(string[]): void
+  assert(expected: string[]): void
 } & ((...args: any[]) => void)
 
 function stringify(...args: any[]) {

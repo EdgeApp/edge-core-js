@@ -299,7 +299,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
     async createCurrencyWallet(
       type: string,
-      opts?: EdgeCreateCurrencyWalletOptions = {}
+      opts: EdgeCreateCurrencyWalletOptions = {}
     ): Promise<EdgeCurrencyWallet> {
       return createCurrencyWallet(ai, accountId, type, opts)
     },

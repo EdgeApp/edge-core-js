@@ -39,7 +39,7 @@ function cloneNode<Node: {}, Output>(
  * Returns the login that satisfies the given predicate,
  * or undefined if nothing matches.
  */
-export function searchTree(node: any, predicate: any => boolean) {
+export function searchTree(node: any, predicate: (node: any) => boolean) {
   if (predicate(node)) return node
 
   if (node.children != null) {

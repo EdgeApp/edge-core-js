@@ -832,8 +832,8 @@ export type EdgeAccount = {
   +allKeys: EdgeWalletInfoFull[],
   changeWalletStates(walletStates: EdgeWalletStates): Promise<mixed>,
   createWallet(type: string, keys: any): Promise<string>,
-  getFirstWalletInfo(type: string): ?EdgeWalletInfo,
-  getWalletInfo(id: string): ?EdgeWalletInfo,
+  getFirstWalletInfo(type: string): EdgeWalletInfo | void,
+  getWalletInfo(id: string): EdgeWalletInfo | void,
   listWalletIds(): string[],
   listSplittableWalletTypes(walletId: string): Promise<string[]>,
   splitWalletInfo(walletId: string, newWalletType: string): Promise<string>,
@@ -874,8 +874,10 @@ export type EdgeCorePlugin =
   | EdgeRatePlugin
   | EdgeSwapPlugin
 
+type EdgeCorePluginFactory = (env: EdgeCorePluginOptions) => EdgeCorePlugin
+
 export type EdgeCorePlugins = EdgePluginMap<
-  EdgeCorePlugin | ((env: EdgeCorePluginOptions) => EdgeCorePlugin)
+  EdgeCorePlugin | EdgeCorePluginFactory
 >
 
 export type EdgeCorePluginsInit = EdgePluginMap<boolean | Object>

@@ -16,12 +16,12 @@ import {
 export class AccountSync {
   +allKeys: EdgeWalletInfoFull[]
 
-  getFirstWalletInfo(type: string): ?EdgeWalletInfo {
+  getFirstWalletInfo(type: string): EdgeWalletInfo | void {
     const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
     return allKeys.find(info => info.type === type)
   }
 
-  getWalletInfo(id: string): ?EdgeWalletInfo {
+  getWalletInfo(id: string): EdgeWalletInfo | void {
     const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
     return allKeys.find(info => info.id === id)
   }

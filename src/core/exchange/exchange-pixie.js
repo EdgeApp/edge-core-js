@@ -10,7 +10,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
   (input: PixieInput<RootProps>) => {
     let started: boolean = false
     let stopped: boolean = false
-    let timeout: * // Infer the proper timer type
+    let timeout: TimeoutID | void
 
     function gatherHints(): EdgeRateHint[] {
       // TODO: Grab this off the list of loaded wallet currency types & fiats:

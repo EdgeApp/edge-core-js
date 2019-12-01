@@ -85,7 +85,7 @@ class ObservableLobby {
   onReply: (reply: Object) => mixed
   period: number
   replyCount: number
-  timeout: * // Infer the proper timer type.
+  timeout: TimeoutID | void
 
   constructor(ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
     this.ai = ai
