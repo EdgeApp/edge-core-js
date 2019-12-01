@@ -186,7 +186,7 @@ export function getAllWalletInfos(
  *
  * Wallets normally have `wallet:pluginId` as their type,
  * but some legacy wallets also put format information into the wallet type.
- * This routine moves the information out of the wallet into the keys.
+ * This routine moves the information out of the wallet type into the keys.
  *
  * It also provides some other default values as a historical accident,
  * but the bitcoin plugin can just provide its own fallback values if
