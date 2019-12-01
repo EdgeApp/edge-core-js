@@ -23,7 +23,7 @@ function loginsFolder(ai: ApiInput) {
   return folder.folder('logins')
 }
 
-function getJsonFiles(folder: DiskletFolder): Promise<Array<FileInfo>> {
+function getJsonFiles(folder: DiskletFolder): Promise<FileInfo[]> {
   return mapFiles(folder, file =>
     file
       .getText()

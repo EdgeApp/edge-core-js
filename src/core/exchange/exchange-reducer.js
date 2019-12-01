@@ -13,12 +13,12 @@ export type ExchangePair = {
 }
 
 export type ExchangeRoutes = {
-  [from: string]: { [to: string]: Array<number> }
+  [from: string]: { [to: string]: number[] }
 }
 
 export type ExchangeRatesState = {
   ids: { [id: string]: number },
-  pairs: Array<ExchangePair>,
+  pairs: ExchangePair[],
   routes: ExchangeRoutes
 }
 

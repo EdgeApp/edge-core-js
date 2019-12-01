@@ -38,11 +38,7 @@ const routes: Array<{ method: string, path: RegExp, handler: Handler }> = []
 /**
  * Wires one or more handlers into the routing table.
  */
-export function addRoute(
-  method: string,
-  path: string,
-  ...handlers: Array<Handler>
-) {
+export function addRoute(method: string, path: string, ...handlers: Handler[]) {
   for (let i = 0; i < handlers.length; i++) {
     const handler = handlers[i]
     routes.push({

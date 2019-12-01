@@ -31,7 +31,7 @@ export type LobbyRequest = {
   timeout?: number,
   publicKey?: string,
   loginRequest?: Object,
-  replies?: Array<LobbyReply>
+  replies?: LobbyReply[]
 }
 
 /**

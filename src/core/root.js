@@ -15,7 +15,7 @@ import { watchPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
 
-let allContexts: Array<EdgeContext> = []
+let allContexts: EdgeContext[] = []
 
 const composeEnhancers =
   typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__

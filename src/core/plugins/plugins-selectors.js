@@ -77,7 +77,7 @@ export function waitForPlugins(ai: ApiInput) {
     const { init, locked } = props.state.plugins
     if (!locked) return
 
-    const missingPlugins: Array<string> = []
+    const missingPlugins: string[] = []
     for (const pluginName in init) {
       if (
         !!init[pluginName] &&

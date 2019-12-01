@@ -30,16 +30,16 @@ let throttleRateLimitMs = 5000
  */
 function makeThrottledTxCallback(
   input: CurrencyWalletInput,
-  callback: (txArray: Array<EdgeTransaction>) => mixed
+  callback: (txArray: EdgeTransaction[]) => mixed
 ) {
   const walletId = input.props.id
   const { console } = input.props.io
 
   let delayCallback = false
   let lastCallbackTime = 0
-  let pendingTxs: Array<EdgeTransaction> = []
+  let pendingTxs: EdgeTransaction[] = []
 
-  return (txArray: Array<EdgeTransaction>) => {
+  return (txArray: EdgeTransaction[]) => {
     if (delayCallback) {
       console.info(`throttledTxCallback delay, walletId: ${walletId}`)
       pendingTxs.push(...txArray)
@@ -79,7 +79,7 @@ export function makeCurrencyWalletCallbacks(
 
   const throtteldOnTxChanged = makeThrottledTxCallback(
     input,
-    (txArray: Array<EdgeTransaction>) => {
+    (txArray: EdgeTransaction[]) => {
       if (
         input.props.selfOutput != null &&
         input.props.selfOutput.api != null
@@ -91,7 +91,7 @@ export function makeCurrencyWalletCallbacks(
 
   const throttledOnNewTx = makeThrottledTxCallback(
     input,
-    (txArray: Array<EdgeTransaction>) => {
+    (txArray: EdgeTransaction[]) => {
       if (
         input.props.selfOutput != null &&
         input.props.selfOutput.api != null
@@ -141,7 +141,7 @@ export function makeCurrencyWalletCallbacks(
       })
     },
 
-    onTransactionsChanged(txs: Array<EdgeTransaction>) {
+    onTransactionsChanged(txs: EdgeTransaction[]) {
       // Sanity-check incoming transactions:
       if (!txs) return
       for (const tx of txs) {

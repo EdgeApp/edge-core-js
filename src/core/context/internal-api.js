@@ -21,7 +21,7 @@ import { type SyncResult, makeRepoPaths, syncRepo } from '../storage/repo.js'
  */
 class EdgeLobby extends Bridgeable<
   {
-    replies: Array<Object>,
+    replies: Object[],
     lobbyId: string
   },
   { error: Error }
@@ -29,7 +29,7 @@ class EdgeLobby extends Bridgeable<
   _lobby: Object
   _onError: Function
   _onRepliesChanged: Function
-  _replies: Array<Object>
+  _replies: Object[]
   _unsubscribe: Function
 
   constructor(lobby: Object) {
@@ -55,7 +55,7 @@ class EdgeLobby extends Bridgeable<
     return this._lobby.lobbyId
   }
 
-  get replies(): Array<Object> {
+  get replies(): Object[] {
     return this._replies
   }
 

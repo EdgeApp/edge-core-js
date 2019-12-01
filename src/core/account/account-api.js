@@ -174,8 +174,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       })
     },
     async changeRecovery(
-      questions: Array<string>,
-      answers: Array<string>
+      questions: string[],
+      answers: string[]
     ): Promise<string> {
       lockdown()
       return changeRecovery(ai, accountId, questions, answers).then(() => {
@@ -253,7 +253,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // Master wallet list:
-    get allKeys(): Array<EdgeWalletInfoFull> {
+    get allKeys(): EdgeWalletInfoFull[] {
       return ai.props.state.hideKeys
         ? ai.props.state.accounts[accountId].allWalletInfosClean
         : ai.props.state.accounts[accountId].allWalletInfosFull
@@ -283,15 +283,15 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     ): Promise<string> {
       return splitWalletInfo(ai, accountId, walletId, newWalletType)
     },
-    async listSplittableWalletTypes(walletId: string): Promise<Array<string>> {
+    async listSplittableWalletTypes(walletId: string): Promise<string[]> {
       return listSplittableWalletTypes(ai, accountId, walletId)
     },
 
     // Currency wallets:
-    get activeWalletIds(): Array<string> {
+    get activeWalletIds(): string[] {
       return ai.props.state.accounts[accountId].activeWalletIds
     },
-    get archivedWalletIds(): Array<string> {
+    get archivedWalletIds(): string[] {
       return ai.props.state.accounts[accountId].archivedWalletIds
     },
     get currencyWallets(): { [walletId: string]: EdgeCurrencyWallet } {

@@ -23,7 +23,7 @@ const fakeExchangePlugin: EdgeRatePlugin = {
     displayName: 'FakeExchange'
   },
 
-  fetchRates(pairs: Array<EdgeRateHint>): Promise<Array<EdgeRatePair>> {
+  fetchRates(pairs: EdgeRateHint[]): Promise<EdgeRatePair[]> {
     const fuzz = Math.sin((Math.PI * Date.now()) / (30 * 60 * 1000))
 
     return Promise.resolve([

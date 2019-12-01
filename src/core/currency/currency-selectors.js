@@ -8,8 +8,8 @@ import {
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 
 export function getCurrencyMultiplier(
-  currencyInfos: Array<EdgeCurrencyInfo>,
-  metaTokens: Array<EdgeMetaToken>,
+  currencyInfos: EdgeCurrencyInfo[],
+  metaTokens: EdgeMetaToken[],
   currencyCode: string
 ): string {
   for (const info of currencyInfos) {

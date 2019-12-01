@@ -66,7 +66,7 @@ function getJsonFiles(folder) {
 function loadWalletList(
   folder
 ): Promise<{
-  walletInfos: Array<EdgeWalletInfo>,
+  walletInfos: EdgeWalletInfo[],
   walletStates: EdgeWalletStates
 }> {
   return getJsonFiles(folder.folder('Wallets')).then(files => {
@@ -140,10 +140,10 @@ export async function loadAllWalletStates(
   ])
 
   // Merge all that information together:
-  const legacyWalletInfos: Array<EdgeWalletInfo> = [].concat(
+  const legacyWalletInfos: EdgeWalletInfo[] = [].concat(
     ...legacyLists.map(files => files.walletInfos)
   )
-  const legacyWalletStates: Array<EdgeWalletStates> = legacyLists.map(
+  const legacyWalletStates: EdgeWalletStates[] = legacyLists.map(
     files => files.walletStates
   )
   const walletStates = Object.assign({}, ...legacyWalletStates, newStates)

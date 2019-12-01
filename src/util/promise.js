@@ -4,7 +4,7 @@
  * Waits for the first successful promise.
  * If no promise succeeds, returns the last failure.
  */
-export function anyPromise<T>(promises: Array<Promise<T>>): Promise<T> {
+export function anyPromise<T>(promises: Promise<T>[]): Promise<T> {
   return new Promise((resolve, reject) => {
     let pending = promises.length
     for (const promise of promises) {
@@ -41,9 +41,9 @@ export function timeout<T>(
  * If all promises reject, rejects an array of errors.
  */
 export function fuzzyTimeout<Type>(
-  promises: Array<Promise<Type>>,
+  promises: Promise<Type>[],
   timeoutMs: number
-): Promise<Array<Type>> {
+): Promise<Type[]> {
   return new Promise((resolve, reject) => {
     let done = false
     const results = []

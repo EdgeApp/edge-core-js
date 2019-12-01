@@ -41,7 +41,7 @@ describe('edge login lobby', function() {
       i1.makeLobby(testRequest, 10)
         .then(lobby => {
           lobby.on('error', reject)
-          lobby.watch('replies', (replies: Array<Object>) => {
+          lobby.watch('replies', (replies: Object[]) => {
             if (replies.length === 0) return
             lobby.close()
             expect(replies[0]).deep.equals(testReply)

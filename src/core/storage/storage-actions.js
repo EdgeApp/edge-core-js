@@ -52,7 +52,7 @@ export function addStorageWallet(
 export function syncStorageWallet(
   ai: ApiInput,
   walletId: string
-): Promise<Array<string>> {
+): Promise<string[]> {
   const { dispatch, io, state } = ai.props
   const { paths, status } = state.storageWallets[walletId]
 

@@ -36,7 +36,7 @@ async function fetchLoginKey(
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
-  answers: Array<string>,
+  answers: string[],
   otp: string | void
 ) {
   const request = {
@@ -71,7 +71,7 @@ export async function loginRecovery2(
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string,
-  answers: Array<string>,
+  answers: string[],
   otpKey: string | void
 ) {
   let stashTree = getStash(ai, username)
@@ -119,8 +119,8 @@ export function getQuestions2(
 export async function changeRecovery(
   ai: ApiInput,
   accountId: string,
-  questions: Array<string>,
-  answers: Array<string>
+  questions: string[],
+  answers: string[]
 ) {
   const { loginTree, username } = ai.props.state.accounts[accountId]
 
@@ -152,8 +152,8 @@ export function makeRecovery2Kit(
   ai: ApiInput,
   login: LoginTree,
   username: string,
-  questions: Array<string>,
-  answers: Array<string>
+  questions: string[],
+  answers: string[]
 ): LoginKit {
   const { io } = ai.props
   if (!Array.isArray(questions)) {

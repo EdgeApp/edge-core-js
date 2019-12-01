@@ -18,8 +18,8 @@ type PluginsLockedWatcher = () => mixed
 
 const allPlugins: EdgeCorePlugins = {}
 let allPluginsLocked: boolean = false
-const onPluginsAdded: Array<PluginsAddedWatcher> = []
-const onPluginsLocked: Array<PluginsLockedWatcher> = []
+const onPluginsAdded: PluginsAddedWatcher[] = []
+const onPluginsLocked: PluginsLockedWatcher[] = []
 
 /**
  * Adds plugins to the core.

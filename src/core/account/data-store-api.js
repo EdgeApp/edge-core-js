@@ -47,7 +47,7 @@ export function makeDataStoreApi(
       await folder.delete()
     },
 
-    async listItemIds(storeId: string): Promise<Array<string>> {
+    async listItemIds(storeId: string): Promise<string[]> {
       const folder = getPluginFolder(ai, accountWalletInfo, storeId)
 
       const itemIds = await mapFiles(folder, file =>
@@ -59,7 +59,7 @@ export function makeDataStoreApi(
       return itemIds.filter(itemId => typeof itemId === 'string')
     },
 
-    async listStoreIds(): Promise<Array<string>> {
+    async listStoreIds(): Promise<string[]> {
       const folder = getPluginsFolder(ai, accountWalletInfo)
 
       const storeIds = await mapFolders(folder, folder =>
@@ -115,11 +115,11 @@ export function makePluginDataApi(dataStore: EdgeDataStore): EdgePluginData {
       return dataStore.deleteStore(pluginId)
     },
 
-    listItemIds(pluginId: string): Promise<Array<string>> {
+    listItemIds(pluginId: string): Promise<string[]> {
       return dataStore.listItemIds(pluginId)
     },
 
-    listPluginIds(): Promise<Array<string>> {
+    listPluginIds(): Promise<string[]> {
       return dataStore.listStoreIds()
     },
 

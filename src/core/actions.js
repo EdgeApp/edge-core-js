@@ -35,7 +35,7 @@ export type RootAction =
       type: 'ACCOUNT_KEYS_LOADED',
       payload: {
         accountId: string,
-        legacyWalletInfos: Array<EdgeWalletInfo>,
+        legacyWalletInfos: EdgeWalletInfo[],
         walletStates: EdgeWalletStates
       }
     }
@@ -130,7 +130,7 @@ export type RootAction =
       // Called when a currency engine fires the onTransactionsChanged callback.
       type: 'CURRENCY_ENGINE_CHANGED_TXS',
       payload: {
-        txs: Array<any>,
+        txs: any[],
         walletId: string,
         txidHashes: any
       }
@@ -234,7 +234,7 @@ export type RootAction =
   | {
       // Fired when we fetch exchange pairs from some server.
       type: 'EXCHANGE_PAIRS_FETCHED',
-      payload: Array<ExchangePair>
+      payload: ExchangePair[]
     }
   | {
       // Initializes the redux store on context creation.
@@ -292,7 +292,7 @@ export type RootAction =
       type: 'STORAGE_WALLET_SYNCED',
       payload: {
         id: string,
-        changes: Array<string>,
+        changes: string[],
         status: StorageWalletStatus
       }
     }

@@ -12,10 +12,10 @@ import { expect } from 'chai'
  * `assert` will throw an exception.
  */
 export type AssertLog = {
-  assert(Array<string>): void
-} & ((...args: Array<any>) => void)
+  assert(string[]): void
+} & ((...args: any[]) => void)
 
-function stringify(...args: Array<any>) {
+function stringify(...args: any[]) {
   return args
     .map(arg => {
       if (arg == null) return typeof arg
@@ -35,15 +35,15 @@ export function makeAssertLog(
   sort: boolean = false,
   verbose: boolean = false
 ): AssertLog {
-  let events: Array<string> = []
+  let events: string[] = []
 
-  const out: any = function log(...args: Array<any>) {
+  const out: any = function log(...args: any[]) {
     const event = stringify(...args)
     if (verbose) console.log(event)
     events.push(event)
   }
 
-  out.assert = function assert(expected: Array<string>) {
+  out.assert = function assert(expected: string[]) {
     sort
       ? expect(events.sort()).deep.equals(expected.sort())
       : expect(events).deep.equals(expected)

@@ -90,7 +90,7 @@ function makeCsvDateTime(date: number): { date: string, time: string } {
 }
 
 export function exportTransactionsToQBOInner(
-  edgeTransactions: Array<EdgeTransaction>,
+  edgeTransactions: EdgeTransaction[],
   currencyCode: string,
   fiatCurrencyCode: string,
   denom: string | null,
@@ -210,7 +210,7 @@ export function exportTransactionsToQBOInner(
 }
 
 export async function exportTransactionsToCSVInner(
-  edgeTransactions: Array<EdgeTransaction>,
+  edgeTransactions: EdgeTransaction[],
   currencyCode: string,
   fiatCurrencyCode: string,
   denom: string | null

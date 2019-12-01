@@ -9,7 +9,7 @@ import {
 } from '../../../../src/core/currency/wallet/currency-wallet-export.js'
 import { type EdgeTransaction } from '../../../../src/index.js'
 
-const edgeTxs: Array<EdgeTransaction> = [
+const edgeTxs: EdgeTransaction[] = [
   {
     txid: 'txid1',
     date: 1524476980,

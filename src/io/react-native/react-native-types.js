@@ -28,6 +28,6 @@ export type WorkerApi = {
 
   makeFakeEdgeWorld(
     nativeIo: EdgeNativeIo,
-    users?: Array<EdgeFakeUser>
+    users?: EdgeFakeUser[]
   ): Promise<EdgeFakeWorld>
 }

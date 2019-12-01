@@ -14,7 +14,7 @@ import {
  * Client-side EdgeAccount methods.
  */
 export class AccountSync {
-  +allKeys: Array<EdgeWalletInfoFull>
+  +allKeys: EdgeWalletInfoFull[]
 
   getFirstWalletInfo(type: string): ?EdgeWalletInfo {
     const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
@@ -26,7 +26,7 @@ export class AccountSync {
     return allKeys.find(info => info.id === id)
   }
 
-  listWalletIds(): Array<string> {
+  listWalletIds(): string[] {
     return this.allKeys.map(info => info.id)
   }
 }

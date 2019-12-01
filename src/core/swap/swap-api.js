@@ -27,7 +27,7 @@ export async function fetchSwapQuote(
   const { swapSettings, userSettings } = account
   const swapPlugins = ai.props.state.plugins.swap
 
-  const promises: Array<Promise<EdgeSwapPluginQuote>> = []
+  const promises: Promise<EdgeSwapPluginQuote>[] = []
   for (const n in swapPlugins) {
     if (swapPluginEnabled(swapSettings, n)) {
       promises.push(swapPlugins[n].fetchSwapQuote(request, userSettings[n]))

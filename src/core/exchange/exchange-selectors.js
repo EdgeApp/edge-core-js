@@ -20,7 +20,7 @@ type ExchangeRate = { rate: number, cost: number }
 type ExchangeSearch = {
   now: number,
   routes: ExchangeRoutes,
-  pairs: Array<ExchangePair>,
+  pairs: ExchangePair[],
   toCurrency: string,
   getPairCost: GetPairCost,
 
