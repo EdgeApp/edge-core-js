@@ -194,7 +194,7 @@ export type RootAction =
       payload: {
         creationDate: number,
         fileName: string,
-        json: Object,
+        json: any,
         txid: string,
         txidHash: string,
         walletId: string
@@ -246,7 +246,7 @@ export type RootAction =
         authServer: string,
         hideKeys: boolean,
         pluginsInit: EdgeCorePluginsInit,
-        stashes: { [path: string]: Object }
+        stashes: { [path: string]: any }
       }
     }
   | {

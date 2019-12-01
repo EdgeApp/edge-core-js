@@ -20,7 +20,7 @@ import {
 import { syncRequest } from './storage-servers.js'
 
 export type SyncResult = {
-  changes: { [path: string]: Object },
+  changes: { [path: string]: any },
   status: StorageWalletStatus
 }
 
@@ -73,7 +73,7 @@ export function loadRepoStatus(
  */
 export function saveChanges(
   disklet: Disklet,
-  changes: { [path: string]: Object }
+  changes: { [path: string]: any }
 ) {
   return Promise.all(
     Object.keys(changes).map(path => {

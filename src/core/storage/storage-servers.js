@@ -21,7 +21,7 @@ export function syncRequest(
   log: EdgeLog,
   method: string,
   uri: string,
-  body: Object
+  body: any
 ) {
   return syncRequestInner(io, log, method, uri, body, 0)
 }
@@ -31,7 +31,7 @@ function syncRequestInner(
   log: EdgeLog,
   method: string,
   path: string,
-  body: Object,
+  body: any,
   serverIndex: number
 ) {
   const opts: EdgeFetchOptions = {

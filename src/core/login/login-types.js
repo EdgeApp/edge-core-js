@@ -109,8 +109,8 @@ export type AppIdMap = { [walletId: string]: string[] }
 
 export type LoginKit = {
   loginId: string,
-  login: Object,
-  server?: Object,
+  login: any,
+  server?: any,
   serverMethod?: string,
   serverPath: string,
   stash: LoginStash

@@ -25,7 +25,7 @@ export type TxFileNames = {
 }
 
 /** Maps from txid hash to file contents (in JSON). */
-export type TxFileJsons = { [txidHash: string]: Object }
+export type TxFileJsons = { [txidHash: string]: any }
 
 /** Maps from txid hash to creation date. */
 export type TxidHashes = { [txidHash: string]: number }

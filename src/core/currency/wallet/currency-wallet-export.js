@@ -18,7 +18,7 @@ function escapeOFXString(str: string) {
   return str.replace(/</g, '&lt;')
 }
 
-function exportOfxHeader(inputObj: Object) {
+function exportOfxHeader(inputObj: any) {
   let out = ''
   for (const key of Object.keys(inputObj)) {
     let element = inputObj[key]
@@ -32,7 +32,7 @@ function exportOfxHeader(inputObj: Object) {
   return out
 }
 
-function exportOfxBody(inputObj: Object) {
+function exportOfxBody(inputObj: any) {
   let out = ''
   for (const key of Object.keys(inputObj)) {
     let element = inputObj[key]
@@ -56,7 +56,7 @@ function exportOfxBody(inputObj: Object) {
   return out
 }
 
-function exportOfx(header: Object, body: Object) {
+function exportOfx(header: any, body: any) {
   let out = exportOfxHeader(header) + '\n'
   out += '<OFX>\n'
   out += exportOfxBody(body)

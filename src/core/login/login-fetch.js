@@ -11,7 +11,7 @@ import {
 import { timeout } from '../../util/promise.js'
 import { type ApiInput } from '../root-pixie.js'
 
-export function parseReply(json: Object) {
+export function parseReply(json: any): any {
   switch (json.status_code) {
     case 0: // Success
       return json.results
@@ -38,7 +38,12 @@ export function parseReply(json: Object) {
     case 1: // Error
     case 7: // Pin expired
     default: {
-      const message = json.message || json.detail || JSON.stringify(json)
+      const message: string =
+        typeof json.message === 'string'
+          ? json.message
+          : typeof json.detail === 'string'
+          ? json.detail
+          : JSON.stringify(json)
       throw new Error(`Server error: ${message}`)
     }
   }
@@ -48,7 +53,7 @@ export function loginFetch(
   ai: ApiInput,
   method: string,
   path: string,
-  body?: {}
+  body?: any
 ): Promise<any> {
   const { state, io, log } = ai.props
   const { apiKey, serverUri } = state.login
