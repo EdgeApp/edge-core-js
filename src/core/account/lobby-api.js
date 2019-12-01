@@ -112,8 +112,8 @@ export async function makeLobbyApi(
 
   // If the lobby has a login request, set up that API:
   let loginRequest: EdgeLoginRequest | void
-  if (lobbyJson.loginRequest) {
-    const appId = lobbyJson.loginRequest.appId
+  if (lobbyJson.loginRequest != null) {
+    const { appId } = lobbyJson.loginRequest
     if (typeof appId !== 'string') throw new TypeError('Invalid login request')
     const { displayName, displayImageUrl } = await fetchAppIdInfo(ai, appId)
 

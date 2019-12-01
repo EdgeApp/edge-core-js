@@ -10,7 +10,7 @@ import {
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { type ApiInput } from '../root-pixie.js'
-import { makeLobby } from './lobby.js'
+import { type LobbySubscription, makeLobby } from './lobby.js'
 import { makeLoginTree, searchTree, syncLogin } from './login.js'
 import { saveStash } from './loginStore.js'
 
@@ -21,7 +21,7 @@ class PendingEdgeLogin extends Bridgeable<EdgePendingEdgeLogin> {
   id: string
   cancelRequest: () => void
 
-  constructor(ai, lobbyId, subscription) {
+  constructor(ai: ApiInput, lobbyId: string, subscription: LobbySubscription) {
     super()
     this.id = lobbyId
     this.cancelRequest = () => {
@@ -44,7 +44,13 @@ class PendingEdgeLogin extends Bridgeable<EdgePendingEdgeLogin> {
 /**
  * Turns a reply into a logged-in account.
  */
-async function onReply(ai: ApiInput, subscription, reply, appId, opts) {
+async function onReply(
+  ai: ApiInput,
+  subscription: LobbySubscription,
+  reply: any,
+  appId: string,
+  opts: EdgeEdgeLoginOptions
+): Promise<void> {
   subscription.unsubscribe()
   const stashTree = reply.loginStash
   const { io } = ai.props

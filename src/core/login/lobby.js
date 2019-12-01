@@ -30,8 +30,19 @@ export type LobbyReply = {
 export type LobbyRequest = {
   timeout?: number,
   publicKey?: string,
-  loginRequest?: Object,
+  loginRequest?: { appId: string },
   replies?: LobbyReply[]
+}
+
+export type LobbySubscription = { unsubscribe(): mixed }
+
+// Use this to subscribe to lobby events:
+export type LobbyInstance = {
+  lobbyId: string,
+  subscribe(
+    onReply: (reply: mixed) => mixed,
+    onError: (e: Error) => mixed
+  ): LobbySubscription
 }
 
 /**
@@ -49,7 +60,10 @@ function deriveSharedKey(keypair: Keypair, pubkey: Uint8Array) {
 /**
  * Decrypts a lobby reply using the request's secret key.
  */
-export function decryptLobbyReply(keypair: Keypair, lobbyReply: LobbyReply) {
+export function decryptLobbyReply(
+  keypair: Keypair,
+  lobbyReply: LobbyReply
+): mixed {
   const pubkey = base64.parse(lobbyReply.publicKey)
   const sharedKey = deriveSharedKey(keypair, pubkey)
   return JSON.parse(utf8.stringify(decrypt(lobbyReply.box, sharedKey)))
@@ -62,7 +76,7 @@ export function decryptLobbyReply(keypair: Keypair, lobbyReply: LobbyReply) {
 export function encryptLobbyReply(
   io: EdgeIo,
   pubkey: Uint8Array,
-  replyData: {}
+  replyData: mixed
 ) {
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
   const sharedKey = deriveSharedKey(keypair, pubkey)
@@ -77,24 +91,36 @@ export function encryptLobbyReply(
  * allowing clients to subscribe to lobby reply messages.
  */
 class ObservableLobby {
+  // Lobby access:
   ai: ApiInput
-  done: boolean
-  keypair: Keypair
   lobbyId: string
-  onError: (e: Error) => mixed
-  onReply: (reply: Object) => mixed
+  keypair: Keypair
   period: number
+
+  // State:
+  done: boolean
   replyCount: number
   timeout: TimeoutID | void
+
+  // Callbacks:
+  onError: ((e: Error) => mixed) | void
+  onReply: ((reply: mixed) => mixed) | void
 
   constructor(ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
     this.ai = ai
     this.lobbyId = lobbyId
     this.keypair = keypair
     this.period = period
+
+    this.done = false
+    this.replyCount = 0
+    this.timeout = undefined
+
+    this.onError = undefined
+    this.onReply = undefined
   }
 
-  subscribe(onReply: (reply: Object) => mixed, onError: (e: Error) => mixed) {
+  subscribe(onReply: (reply: mixed) => mixed, onError: (e: Error) => mixed) {
     this.onReply = onReply
     this.onError = onError
     this.replyCount = 0
@@ -145,7 +171,7 @@ export function makeLobby(
   ai: ApiInput,
   lobbyRequest: LobbyRequest,
   period: number = 1000
-): Promise<ObservableLobby> {
+): Promise<LobbyInstance> {
   const { io } = ai.props
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
   const pubkey = keypair.getPublic().encodeCompressed()
@@ -192,7 +218,7 @@ export function sendLobbyReply(
   ai: ApiInput,
   lobbyId: string,
   lobbyRequest: LobbyRequest,
-  replyData: Object
+  replyData: mixed
 ) {
   const { io } = ai.props
   if (lobbyRequest.publicKey == null) {
