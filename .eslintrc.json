@@ -13,10 +13,11 @@
     "simple-import-sort"
   ],
   "rules": {
+    "@typescript-eslint/default-param-last": "off",
+    "@typescript-eslint/no-dynamic-delete": "off",
+    "@typescript-eslint/no-invalid-void-type": "off",
     "@typescript-eslint/promise-function-async": "off",
-    "flowtype/array-style-complex-type": ["error", "verbose"],
-    "flowtype/array-style-simple-type": ["error", "shorthand"],
-    "no-var": "error",
+    "@typescript-eslint/restrict-template-expressions": "off",
     "simple-import-sort/imports": "error"
   }
 }
