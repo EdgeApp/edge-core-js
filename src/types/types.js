@@ -23,6 +23,25 @@ export {
 } from './error.js'
 
 // ---------------------------------------------------------------------
+// helper types
+// ---------------------------------------------------------------------
+
+/** A JSON object (as opposed to an array or primitive). */
+export type JsonObject = {
+  [name: string]: any // TODO: this needs to become `mixed`
+}
+
+/** A collection of unknown extra methods exposed by a plugin. */
+export type EdgeOtherMethods = {
+  [name: string]: any
+}
+
+/** We frequently index things by pluginId, so provide a helper. */
+export type EdgePluginMap<Value> = {
+  [pluginName: string]: Value
+}
+
+// ---------------------------------------------------------------------
 // io types
 // ---------------------------------------------------------------------
 
@@ -69,16 +88,14 @@ export type EdgeIo = {
  * On React Native, each plugin can provide a bridge to whatever native
  * io it needs.
  */
-export type EdgeNativeIo = { [packageName: string]: Object }
+export type EdgeNativeIo = { [packageName: string]: EdgeOtherMethods }
 
 export type EdgeCorePluginOptions = {
-  initOptions: Object, // Load-time options (like API keys)
+  initOptions: JsonObject, // Load-time options (like API keys)
   io: EdgeIo,
   nativeIo: EdgeNativeIo, // Only filled in on React Native
   pluginDisklet: Disklet // Plugin local storage
 }
-
-export type EdgePluginMap<Value> = { [pluginName: string]: Value }
 
 // ---------------------------------------------------------------------
 // key types
@@ -87,7 +104,7 @@ export type EdgePluginMap<Value> = { [pluginName: string]: Value }
 export type EdgeWalletInfo = {
   id: string,
   type: string,
-  keys: any
+  keys: JsonObject
 }
 
 export type EdgeWalletInfoFull = {
@@ -95,7 +112,7 @@ export type EdgeWalletInfoFull = {
   archived: boolean,
   deleted: boolean,
   id: string,
-  keys: any,
+  keys: JsonObject,
   sortIndex: number,
   type: string
 }
@@ -167,7 +184,7 @@ export type EdgeCurrencyInfo = {
   requiredConfirmations?: number,
 
   // Configuration options:
-  defaultSettings: any,
+  defaultSettings: JsonObject,
   metaTokens: EdgeMetaToken[],
 
   // Explorers:
@@ -217,13 +234,13 @@ export type EdgeTransaction = {
   // Core:
   metadata?: EdgeMetadata,
   wallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
-  otherParams?: Object
+  otherParams?: JsonObject
 }
 
 export type EdgeSpendTarget = {
   nativeAmount?: string,
   publicAddress?: string,
-  otherParams?: Object
+  otherParams?: JsonObject
 }
 
 export type EdgePaymentProtocolInfo = {
@@ -243,11 +260,11 @@ export type EdgeSpendInfo = {
   // Options:
   noUnconfirmed?: boolean,
   networkFeeOption?: string, // 'high' | 'standard' | 'low' | 'custom',
-  customNetworkFee?: Object, // Some kind of currency-specific JSON
+  customNetworkFee?: JsonObject, // Some kind of currency-specific JSON
 
   // Core:
   metadata?: EdgeMetadata,
-  otherParams?: Object
+  otherParams?: JsonObject
 }
 
 // query data ----------------------------------------------------------
@@ -256,7 +273,7 @@ export type EdgeDataDump = {
   walletId: string,
   walletType: string,
   data: {
-    [dataCache: string]: any
+    [dataCache: string]: JsonObject
   }
 }
 
@@ -339,11 +356,11 @@ export type EdgeCurrencyEngineOptions = {
   callbacks: EdgeCurrencyEngineCallbacks,
   walletLocalDisklet: Disklet,
   walletLocalEncryptedDisklet: Disklet,
-  userSettings: Object | void
+  userSettings: JsonObject | void
 }
 
 export type EdgeCurrencyEngine = {
-  changeUserSettings(settings: Object): Promise<mixed>,
+  changeUserSettings(settings: JsonObject): Promise<mixed>,
 
   // Keys:
   getDisplayPrivateSeed(): string | null,
@@ -385,31 +402,16 @@ export type EdgeCurrencyEngine = {
   ) => Promise<EdgePaymentProtocolInfo>,
 
   // Escape hatch:
-  +otherMethods?: Object
+  +otherMethods?: EdgeOtherMethods
 }
 
 // currency plugin -----------------------------------------------------
 
-export type EdgeBitcoinPrivateKeyOptions = {
-  format?: string,
-  coinType?: number,
-  account?: number
-}
-
-// Add other currencies to this list as they gather options:
-export type EdgeCreatePrivateKeyOptions = {} | EdgeBitcoinPrivateKeyOptions
-
 export type EdgeCurrencyTools = {
   // Keys:
-  +importPrivateKey?: (
-    key: string,
-    opts?: EdgeCreatePrivateKeyOptions
-  ) => Promise<Object>,
-  createPrivateKey(
-    walletType: string,
-    opts?: EdgeCreatePrivateKeyOptions
-  ): Promise<Object>,
-  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<Object>,
+  +importPrivateKey?: (key: string, opts?: JsonObject) => Promise<JsonObject>,
+  createPrivateKey(walletType: string, opts?: JsonObject): Promise<JsonObject>,
+  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<JsonObject>,
   +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => string[],
 
   // URIs:
@@ -431,7 +433,7 @@ export type EdgeCurrencyPlugin = {
   ): Promise<EdgeCurrencyEngine>,
 
   // Escape hatch:
-  +otherMethods?: Object
+  +otherMethods?: EdgeOtherMethods
 }
 
 // wallet --------------------------------------------------------------
@@ -455,7 +457,7 @@ export type EdgeCurrencyWallet = {
 
   // Data store:
   +id: string,
-  +keys: any,
+  +keys: JsonObject,
   +type: string,
   +publicWalletInfo: EdgeWalletInfo,
   +disklet: Disklet,
@@ -544,7 +546,7 @@ export type EdgeCurrencyWallet = {
   parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri>,
   encodeUri(obj: EdgeEncodeUri): Promise<string>,
 
-  +otherMethods: Object,
+  +otherMethods: EdgeOtherMethods,
 
   // Deprecated API's:
   getBalance(opts?: EdgeCurrencyCodeOptions): string,
@@ -599,10 +601,10 @@ export type EdgeSwapPluginStatus = {
 export type EdgeSwapPlugin = {
   +swapInfo: EdgeSwapInfo,
 
-  checkSettings?: (userSettings: Object) => EdgeSwapPluginStatus,
+  checkSettings?: (userSettings: JsonObject) => EdgeSwapPluginStatus,
   fetchSwapQuote(
     request: EdgeSwapRequest,
-    userSettings: Object | void
+    userSettings: JsonObject | void
   ): Promise<EdgeSwapPluginQuote>
 }
 
@@ -649,21 +651,21 @@ export type EdgeCreateCurrencyWalletOptions = {
   importText?: string,
 
   // Used to tell the currency plugin what keys to create:
-  keyOptions?: EdgeCreatePrivateKeyOptions,
+  keyOptions?: JsonObject,
 
   // Used to copy wallet keys between accounts:
-  keys?: {}
+  keys?: JsonObject
 }
 
 export type EdgeCurrencyConfig = {
   +watch: Subscriber<EdgeCurrencyConfig>,
 
   +currencyInfo: EdgeCurrencyInfo,
-  +otherMethods: Object,
-  +userSettings: Object | void,
+  +otherMethods: EdgeOtherMethods,
+  +userSettings: JsonObject | void,
 
-  changeUserSettings(settings: Object): Promise<mixed>,
-  importKey(userInput: string): Promise<Object>
+  changeUserSettings(settings: JsonObject): Promise<mixed>,
+  importKey(userInput: string): Promise<JsonObject>
 }
 
 export type EthereumTransaction = {
@@ -708,10 +710,10 @@ export type EdgeSwapConfig = {
   +enabled: boolean,
   +needsActivation: boolean,
   +swapInfo: EdgeSwapInfo,
-  +userSettings: Object | void,
+  +userSettings: JsonObject | void,
 
   changeEnabled(enabled: boolean): Promise<mixed>,
-  changeUserSettings(settings: Object): Promise<mixed>
+  changeUserSettings(settings: JsonObject): Promise<mixed>
 }
 
 export type EdgeSwapQuote = EdgeSwapPluginQuote & {
@@ -747,18 +749,6 @@ export type EdgeDataStore = {
   setItem(storeId: string, itemId: string, value: string): Promise<mixed>
 }
 
-// Deprecated:
-export type EdgePluginData = {
-  deleteItem(pluginId: string, itemId: string): Promise<mixed>,
-  deletePlugin(pluginId: string): Promise<mixed>,
-
-  listItemIds(pluginId: string): Promise<string[]>,
-  listPluginIds(): Promise<string[]>,
-
-  getItem(pluginId: string, itemId: string): Promise<string>,
-  setItem(pluginId: string, itemId: string, value: string): Promise<mixed>
-}
-
 // account -------------------------------------------------------------
 
 export type EdgeAccountEvents = {
@@ -771,7 +761,7 @@ export type EdgeAccount = {
 
   // Data store:
   +id: string,
-  +keys: any,
+  +keys: JsonObject,
   +type: string,
   +disklet: Disklet,
   +localDisklet: Disklet,
@@ -831,7 +821,7 @@ export type EdgeAccount = {
   // Master wallet list:
   +allKeys: EdgeWalletInfoFull[],
   changeWalletStates(walletStates: EdgeWalletStates): Promise<mixed>,
-  createWallet(type: string, keys: any): Promise<string>,
+  createWallet(type: string, keys?: JsonObject): Promise<string>,
   getFirstWalletInfo(type: string): EdgeWalletInfo | void,
   getWalletInfo(id: string): EdgeWalletInfo | void,
   listWalletIds(): string[],
@@ -858,6 +848,7 @@ export type EdgeAccount = {
   fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>,
 
   // Deprecated names:
+  // eslint-disable-next-line no-use-before-define
   +pluginData: EdgePluginData,
   +exchangeCache: EdgeRateCache,
   +currencyTools: EdgePluginMap<EdgeCurrencyConfig>,
@@ -880,7 +871,7 @@ export type EdgeCorePlugins = EdgePluginMap<
   EdgeCorePlugin | EdgeCorePluginFactory
 >
 
-export type EdgeCorePluginsInit = EdgePluginMap<boolean | Object>
+export type EdgeCorePluginsInit = EdgePluginMap<boolean | JsonObject>
 
 export type EdgeContextOptions = {
   apiKey: string,
@@ -1018,8 +1009,8 @@ export type EdgeFakeUser = {
   username: string,
   loginId: string,
   loginKey: string,
-  repos: Object,
-  server: Object
+  repos: { [repo: string]: { [path: string]: JsonObject } },
+  server: JsonObject
 }
 
 export type EdgeFakeWorld = {
@@ -1031,4 +1022,29 @@ export type EdgeFakeWorld = {
 
   goOffline(offline?: boolean): Promise<mixed>,
   dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser>
+}
+
+// ---------------------------------------------------------------------
+// deprecated types
+// ---------------------------------------------------------------------
+
+export type EdgeBitcoinPrivateKeyOptions = {
+  format?: string,
+  coinType?: number,
+  account?: number
+}
+
+export type EdgeCreatePrivateKeyOptions =
+  | EdgeBitcoinPrivateKeyOptions
+  | JsonObject
+
+export type EdgePluginData = {
+  deleteItem(pluginId: string, itemId: string): Promise<mixed>,
+  deletePlugin(pluginId: string): Promise<mixed>,
+
+  listItemIds(pluginId: string): Promise<string[]>,
+  listPluginIds(): Promise<string[]>,
+
+  getItem(pluginId: string, itemId: string): Promise<string>,
+  setItem(pluginId: string, itemId: string, value: string): Promise<mixed>
 }

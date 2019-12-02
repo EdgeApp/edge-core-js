@@ -2,7 +2,7 @@
 
 import { type Disklet } from 'disklet'
 
-import { type StorageWalletInfo } from '../login/login-types.js'
+import { type EdgeWalletInfo } from '../../types/types.js'
 import { type ApiInput } from '../root-pixie.js'
 import { syncStorageWallet } from './storage-actions.js'
 import {
@@ -10,10 +10,7 @@ import {
   getStorageWalletLocalDisklet
 } from './storage-selectors.js'
 
-export function makeStorageWalletApi(
-  ai: ApiInput,
-  walletInfo: StorageWalletInfo
-) {
+export function makeStorageWalletApi(ai: ApiInput, walletInfo: EdgeWalletInfo) {
   const { id, type, keys } = walletInfo
 
   return {

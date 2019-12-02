@@ -115,18 +115,4 @@ export type LoginKit = {
   stash: LoginStash
 }
 
-// Helper for defining specific key types.
-// Use `EdgeWalletInfo` for generic wallet infos:
-type WalletInfo<KeysType = {}> = {
-  type: string,
-  id: string,
-  keys: KeysType
-}
-
-export interface StorageKeys {
-  dataKey?: string; // base64
-  syncKey?: string; // base64
-}
-export type StorageWalletInfo = WalletInfo<StorageKeys>
-
 export type WalletInfoMap = { [walletId: string]: EdgeWalletInfo }

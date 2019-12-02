@@ -6,6 +6,7 @@ import {
   type EdgeSwapPluginStatus,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
+  type JsonObject,
   SwapCurrencyError,
   SwapPermissionError
 } from '../../src/index.js'
@@ -20,13 +21,13 @@ const swapInfo: EdgeSwapInfo = {
 export const fakeSwapPlugin: EdgeSwapPlugin = {
   swapInfo,
 
-  checkSettings(userSettings: Object): EdgeSwapPluginStatus {
+  checkSettings(userSettings: JsonObject): EdgeSwapPluginStatus {
     return { needsActivation: typeof userSettings.kycToken !== 'string' }
   },
 
   fetchSwapQuote(
     request: EdgeSwapRequest,
-    userSettings: Object
+    userSettings: JsonObject = {}
   ): Promise<EdgeSwapQuote> {
     // We need KYC:
     if (typeof userSettings.kycToken !== 'string') {

@@ -25,8 +25,7 @@ const edgeTxs: EdgeTransaction[] = [
       category: 'Income: Mo Money',
       notes: 'Hell yeah! Thanks for the fish <<&&>>',
       amountFiat: 12000.45
-    },
-    otherParams: null
+    }
   },
   {
     txid: 'txid2',
@@ -43,8 +42,7 @@ const edgeTxs: EdgeTransaction[] = [
       category: 'Expense: Less Money',
       notes: 'Hell yeah! Here\'s a fish"',
       amountFiat: 36001.45
-    },
-    otherParams: null
+    }
   }
 ]
 

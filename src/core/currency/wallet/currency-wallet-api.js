@@ -22,7 +22,8 @@ import {
   type EdgeSpendInfo,
   type EdgeTokenInfo,
   type EdgeTransaction,
-  type EdgeWalletInfo
+  type EdgeWalletInfo,
+  type JsonObject
 } from '../../../types/types.js'
 import { filterObject, mergeDeeply } from '../../../util/util.js'
 import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
@@ -91,7 +92,7 @@ export function makeCurrencyWalletApi(
     get type(): string {
       return storageWalletApi.type
     },
-    get keys(): Object {
+    get keys(): JsonObject {
       lockdown()
       return storageWalletApi.keys
     },

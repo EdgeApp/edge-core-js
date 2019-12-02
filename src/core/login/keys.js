@@ -6,7 +6,8 @@ import {
   type EdgeCreateCurrencyWalletOptions,
   type EdgeCurrencyWallet,
   type EdgeMetadata,
-  type EdgeWalletInfo
+  type EdgeWalletInfo,
+  type JsonObject
 } from '../../types/types.js'
 import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
 import { utf8 } from '../../util/encoding.js'
@@ -15,13 +16,7 @@ import { waitForCurrencyWallet } from '../currency/currency-selectors.js'
 import { applyKit } from '../login/login.js'
 import { getCurrencyTools } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
-import {
-  type AppIdMap,
-  type LoginKit,
-  type LoginTree,
-  type StorageKeys,
-  type StorageWalletInfo
-} from './login-types.js'
+import { type AppIdMap, type LoginKit, type LoginTree } from './login-types.js'
 
 /**
  * Returns the first keyInfo with a matching type.
@@ -40,7 +35,7 @@ export function makeAccountType(appId: string) {
  * Assembles the key metadata structure that is encrypted within a keyBox.
  * @param idKey Used to derive the wallet id. It's usually `dataKey`.
  */
-export function makeKeyInfo(type: string, keys: {}, idKey: Uint8Array) {
+export function makeKeyInfo(type: string, keys: JsonObject, idKey: Uint8Array) {
   return {
     id: base64.stringify(hmacSha256(utf8.parse(type), idKey)),
     type,
@@ -54,12 +49,14 @@ export function makeKeyInfo(type: string, keys: {}, idKey: Uint8Array) {
 export function makeStorageKeyInfo(
   ai: ApiInput,
   type: string,
-  keys: StorageKeys = {}
+  keys: JsonObject = {}
 ) {
   const { io } = ai.props
   if (keys.dataKey == null) keys.dataKey = base64.stringify(io.random(32))
   if (keys.syncKey == null) keys.syncKey = base64.stringify(io.random(20))
-
+  if (typeof keys.dataKey !== 'string') {
+    throw new TypeError('Invalid dataKey type')
+  }
   return makeKeyInfo(type, keys, base64.parse(keys.dataKey))
 }
 
@@ -69,7 +66,7 @@ export function makeStorageKeyInfo(
 export function makeKeysKit(
   ai: ApiInput,
   login: LoginTree,
-  ...keyInfos: StorageWalletInfo[]
+  ...keyInfos: EdgeWalletInfo[]
 ): LoginKit {
   const { io } = ai.props
   const keyBoxes = keyInfos.map(info =>

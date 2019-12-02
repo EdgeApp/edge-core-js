@@ -6,7 +6,8 @@ import { base16, base64 } from 'rfc4648'
 import {
   type EdgePluginMap,
   type EdgeWalletInfo,
-  type EdgeWalletStates
+  type EdgeWalletStates,
+  type JsonObject
 } from '../../types/types.js'
 import { makeKeyInfo } from '../login/keys.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -19,7 +20,7 @@ import { type SwapSettings } from './account-reducer.js'
 const PLUGIN_SETTINGS_FILE = 'PluginSettings.json'
 
 type PluginSettingsFile = {
-  userSettings?: EdgePluginMap<Object>,
+  userSettings?: EdgePluginMap<JsonObject>,
   swapSettings?: EdgePluginMap<SwapSettings>
 }
 
@@ -215,7 +216,7 @@ export async function changePluginUserSettings(
   ai: ApiInput,
   accountId: string,
   pluginName: string,
-  userSettings: Object
+  userSettings: JsonObject
 ) {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const file = getStorageWalletFolder(

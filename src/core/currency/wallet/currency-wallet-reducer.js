@@ -6,7 +6,8 @@ import {
   type EdgeBalances,
   type EdgeCurrencyInfo,
   type EdgeTransaction,
-  type EdgeWalletInfo
+  type EdgeWalletInfo,
+  type JsonObject
 } from '../../../types/types.js'
 import { type RootAction } from '../../actions.js'
 import {
@@ -40,7 +41,7 @@ export type MergedTransaction = {
   ourReceiveAddresses: string[],
   signedTx: string,
   txid: string,
-  otherParams?: Object,
+  otherParams?: JsonObject,
 
   nativeAmount: { [currencyCode: string]: string },
   networkFee: { [currencyCode: string]: string }

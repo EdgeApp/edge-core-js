@@ -7,7 +7,8 @@ import {
   type EdgePluginMap,
   type EdgeTokenInfo,
   type EdgeWalletInfo,
-  type EdgeWalletStates
+  type EdgeWalletStates,
+  type JsonObject
 } from '../types/types.js'
 import { type SwapSettings } from './account/account-reducer.js'
 import {
@@ -53,7 +54,7 @@ export type RootAction =
       payload: {
         accountId: string,
         pluginName: string,
-        userSettings: Object
+        userSettings: JsonObject
       }
     }
   | {
@@ -61,7 +62,7 @@ export type RootAction =
       type: 'ACCOUNT_PLUGIN_SETTINGS_LOADED',
       payload: {
         accountId: string,
-        userSettings: EdgePluginMap<Object>,
+        userSettings: EdgePluginMap<JsonObject>,
         swapSettings: EdgePluginMap<SwapSettings>
       }
     }

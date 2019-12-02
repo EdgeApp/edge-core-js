@@ -5,8 +5,10 @@ import { Bridgeable, bridgifyObject } from 'yaob'
 import {
   type EdgeCurrencyConfig,
   type EdgeCurrencyInfo,
+  type EdgeOtherMethods,
   type EdgeSwapConfig,
-  type EdgeSwapInfo
+  type EdgeSwapInfo,
+  type JsonObject
 } from '../../types/types.js'
 import { getCurrencyTools } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -24,7 +26,7 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   _accountId: string
   _pluginName: string
 
-  otherMethods: Object
+  otherMethods: EdgeOtherMethods
 
   constructor(ai: ApiInput, accountId: string, pluginName: string) {
     super()
@@ -45,12 +47,12 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
     return this._ai.props.state.plugins.currency[this._pluginName].currencyInfo
   }
 
-  get userSettings(): Object {
+  get userSettings(): JsonObject {
     const selfState = this._ai.props.state.accounts[this._accountId]
     return selfState.userSettings[this._pluginName]
   }
 
-  async changeUserSettings(settings: Object): Promise<mixed> {
+  async changeUserSettings(settings: JsonObject): Promise<mixed> {
     await changePluginUserSettings(
       this._ai,
       this._accountId,
@@ -59,7 +61,7 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
     )
   }
 
-  async importKey(userInput: string): Promise<Object> {
+  async importKey(userInput: string): Promise<JsonObject> {
     const tools = await getCurrencyTools(this._ai, this.currencyInfo.walletType)
 
     if (tools.importPrivateKey == null) {
@@ -99,7 +101,7 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     return this._ai.props.state.plugins.swap[this._pluginName].swapInfo
   }
 
-  get userSettings(): Object {
+  get userSettings(): JsonObject {
     const selfState = this._ai.props.state.accounts[this._accountId]
     return selfState.userSettings[this._pluginName]
   }
@@ -112,7 +114,7 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     })
   }
 
-  async changeUserSettings(settings: Object): Promise<mixed> {
+  async changeUserSettings(settings: JsonObject): Promise<mixed> {
     await changePluginUserSettings(
       this._ai,
       this._accountId,

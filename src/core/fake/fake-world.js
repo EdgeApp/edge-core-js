@@ -27,16 +27,14 @@ import { fakeConsole } from './fake-io.js'
 
 async function saveUser(io: EdgeIo, user: EdgeFakeUser) {
   const { loginId, loginKey, username } = user
+  // JsonObject doesn't match LoginReply:
+  const server: any = user.server
 
   // Save the stash:
   const stash = applyLoginReply(
-    {
-      appId: '',
-      otpKey: user.server.otpKey,
-      username: fixUsername(username)
-    },
+    { appId: '', otpKey: server.otpKey, username: fixUsername(username) },
     base64.parse(loginKey),
-    user.server
+    server
   )
   const path = `logins/${base58.stringify(base64.parse(loginId))}.json`
   await io.disklet.setText(path, JSON.stringify(stash))

@@ -6,7 +6,8 @@ import {
   type EdgePluginMap,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull,
-  type EdgeWalletStates
+  type EdgeWalletStates,
+  type JsonObject
 } from '../../types/types.js'
 import { ethereumKeyToAddress } from '../../util/crypto/ethereum.js'
 import { type RootAction } from '../actions.js'
@@ -51,7 +52,7 @@ export type AccountState = {
 
   // Plugin stuff:
   +swapSettings: EdgePluginMap<SwapSettings>,
-  +userSettings: EdgePluginMap<Object>
+  +userSettings: EdgePluginMap<JsonObject>
 }
 
 export type AccountNext = {
@@ -117,7 +118,8 @@ const account = buildReducer({
     (walletInfos: EdgeWalletInfoFull[]): EdgeWalletInfoFull[] =>
       walletInfos.map(info => {
         const keys =
-          info.type === 'wallet:ethereum'
+          info.type === 'wallet:ethereum' &&
+          typeof info.keys.ethereumKey === 'string'
             ? { ethereumAddress: ethereumKeyToAddress(info.keys.ethereumKey) }
             : {}
         return { ...info, keys }
@@ -238,7 +240,7 @@ const account = buildReducer({
     return state
   },
 
-  userSettings(state = {}, action: RootAction): EdgePluginMap<Object> {
+  userSettings(state = {}, action: RootAction): EdgePluginMap<JsonObject> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED': {
         const { pluginName, userSettings } = action.payload

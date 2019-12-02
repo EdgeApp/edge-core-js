@@ -19,7 +19,8 @@ import {
   type EdgeSwapRequest,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
-  type EthereumTransaction
+  type EthereumTransaction,
+  type JsonObject
 } from '../../types/types.js'
 import { signEthereumTransaction } from '../../util/crypto/ethereum.js'
 import { deprecate } from '../../util/deprecate.js'
@@ -93,7 +94,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     get type(): string {
       return storageWalletApi.type
     },
-    get keys(): Object {
+    get keys(): JsonObject {
       lockdown()
       return storageWalletApi.keys
     },
@@ -261,7 +262,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async changeWalletStates(walletStates: EdgeWalletStates): Promise<mixed> {
       return changeWalletStates(ai, accountId, walletStates)
     },
-    async createWallet(walletType: string, keys: any): Promise<string> {
+    async createWallet(walletType: string, keys?: JsonObject): Promise<string> {
       const { login, loginTree } = selfState()
 
       if (keys == null) {
@@ -324,7 +325,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       console.log('Edge is signing: ', transaction)
       const { allWalletInfosFull } = selfState()
       const walletInfo = allWalletInfosFull.find(info => info.id === walletId)
-      if (!walletInfo || !walletInfo.keys || !walletInfo.keys.ethereumKey) {
+      if (
+        walletInfo == null ||
+        walletInfo.keys == null ||
+        typeof walletInfo.keys.ethereumKey !== 'string'
+      ) {
         throw new Error('Cannot find the requested private key in the account')
       }
       return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)

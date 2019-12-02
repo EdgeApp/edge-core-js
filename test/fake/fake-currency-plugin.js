@@ -19,6 +19,7 @@ import {
   type EdgeTokenInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
+  type JsonObject,
   InsufficientFundsError
 } from '../../src/index.js'
 
@@ -50,18 +51,20 @@ export const fakeCurrencyInfo: EdgeCurrencyInfo = {
 
 const nop: Function = () => {}
 
+type State = {
+  balance: number,
+  tokenBalance: number,
+  blockHeight: number,
+  progress: number,
+  txs: { [txid: string]: EdgeTransaction }
+}
+
 /**
  * Currency plugin transaction engine.
  */
 class FakeCurrencyEngine {
   callbacks: EdgeCurrencyEngineCallbacks
-  state: {
-    balance: number,
-    tokenBalance: number,
-    blockHeight: number,
-    progress: number,
-    txs: { [txid: string]: EdgeTransaction }
-  }
+  state: State
 
   constructor(walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
     this.callbacks = opts.callbacks
@@ -72,10 +75,11 @@ class FakeCurrencyEngine {
       progress: 0,
       txs: {}
     }
-    this.changeUserSettings(this.state)
+    // Fire initial callbacks:
+    this._updateState(this.state)
   }
 
-  async changeUserSettings(settings: Object): Promise<mixed> {
+  _updateState(settings: State): mixed {
     const state = this.state
     const {
       onAddressesChecked = nop,
@@ -85,31 +89,31 @@ class FakeCurrencyEngine {
     } = this.callbacks
 
     // Address callback:
-    if (settings.progress != null) {
+    if (typeof settings.progress === 'number') {
       state.progress = settings.progress
       onAddressesChecked(state.progress)
     }
 
     // Balance callback:
-    if (settings.balance != null) {
+    if (typeof settings.balance === 'number') {
       state.balance = settings.balance
       onBalanceChanged('FAKE', state.balance.toString())
     }
 
     // Token balance callback:
-    if (settings.tokenBalance != null) {
+    if (typeof settings.tokenBalance === 'number') {
       state.tokenBalance = settings.tokenBalance
       onBalanceChanged('TOKEN', state.tokenBalance.toString())
     }
 
     // Block height callback:
-    if (settings.blockHeight != null) {
+    if (typeof settings.blockHeight === 'number') {
       state.blockHeight = settings.blockHeight
       onBlockHeightChanged(state.blockHeight)
     }
 
     // Transactions callback:
-    if (settings.txs != null) {
+    if (typeof settings.txs === 'object' && settings.txs != null) {
       const changes: EdgeTransaction[] = []
       for (const txid in settings.txs) {
         const newTx = {
@@ -139,6 +143,10 @@ class FakeCurrencyEngine {
 
       if (changes.length) onTransactionsChanged(changes)
     }
+  }
+
+  async changeUserSettings(settings: JsonObject): Promise<mixed> {
+    return this._updateState(settings)
   }
 
   // Keys:
@@ -283,14 +291,14 @@ class FakeCurrencyTools {
   createPrivateKey(
     walletType: string,
     opts?: EdgeCreatePrivateKeyOptions
-  ): Promise<Object> {
+  ): Promise<JsonObject> {
     if (walletType !== fakeCurrencyInfo.walletType) {
       throw new Error('Unsupported key type')
     }
     return Promise.resolve({ fakeKey: 'FakePrivateKey' })
   }
 
-  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<Object> {
+  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<JsonObject> {
     return Promise.resolve({
       fakeAddress: 'FakePublicAddress'
     })
