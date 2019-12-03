@@ -1,9 +1,9 @@
-/* eslint-disable no-extend-native */
+// @flow
 
 /**
  * Object.assign
  */
-function assign(out, args) {
+function assign(out: any) {
   if (out == null) {
     throw new TypeError('Cannot convert undefined or null to object')
   }
@@ -25,9 +25,9 @@ function assign(out, args) {
 /**
  * Array.fill
  */
-function fill(value, start, end) {
+function fill(value: any, start?: number, end?: number) {
   const length = this.length
-  function clamp(endpoint) {
+  function clamp(endpoint: number) {
     return endpoint < 0
       ? Math.max(length + endpoint, 0)
       : Math.min(endpoint, length)
@@ -44,7 +44,10 @@ function fill(value, start, end) {
 /**
  * Array.find
  */
-function find(test, testThis) {
+function find(
+  test: (value: any, i: number, array: any[]) => boolean,
+  testThis?: any
+) {
   for (let i = 0; i < this.length; ++i) {
     const value = this[i]
     if (test.call(testThis, value, i, this)) {
@@ -56,27 +59,26 @@ function find(test, testThis) {
 /**
  * Array.includes
  */
-function includes(target) {
+function includes(target: any) {
   return Array.prototype.indexOf.call(this, target) >= 0
 }
 
+/**
+ * Adds a non-enumerable method to an object.
+ */
+function safeAdd(object: any, name: string, value: any) {
+  if (typeof object[name] !== 'function') {
+    Object.defineProperty(object, name, {
+      configurable: true,
+      writable: true,
+      value
+    })
+  }
+}
+
 // Perform the polyfill:
-if (typeof Object.assign !== 'function') {
-  Object.defineProperty(Object, 'assign', {
-    configurable: true,
-    writable: true,
-    value: assign
-  })
-}
-if (typeof Array.prototype.fill !== 'function') {
-  Array.prototype.fill = fill
-}
-if (typeof Array.prototype.find !== 'function') {
-  Array.prototype.find = find
-}
-if (Array.prototype.includes !== 'function') {
-  Array.prototype.includes = includes
-}
-if (typeof Uint8Array.prototype.fill !== 'function') {
-  Uint8Array.prototype.fill = Array.prototype.fill
-}
+safeAdd(Object, 'assign', assign)
+safeAdd(Array.prototype, 'fill', fill)
+safeAdd(Array.prototype, 'find', find)
+safeAdd(Array.prototype, 'includes', includes)
+safeAdd(Uint8Array.prototype, 'fill', Array.prototype.fill)
