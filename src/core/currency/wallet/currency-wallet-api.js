@@ -181,7 +181,7 @@ export function makeCurrencyWalletApi(
     },
 
     // Tokens:
-    async changeEnabledTokens(currencyCodes: Array<string>): Promise<mixed> {
+    async changeEnabledTokens(currencyCodes: string[]): Promise<mixed> {
       const enabled = await engine.getEnabledTokens()
       await engine.disableTokens(
         enabled.filter(currencyCode => currencyCodes.indexOf(currencyCode) < 0)
@@ -191,15 +191,15 @@ export function makeCurrencyWalletApi(
       )
     },
 
-    async enableTokens(tokens: Array<string>): Promise<mixed> {
+    async enableTokens(tokens: string[]): Promise<mixed> {
       return engine.enableTokens(tokens)
     },
 
-    async disableTokens(tokens: Array<string>): Promise<mixed> {
+    async disableTokens(tokens: string[]): Promise<mixed> {
       return engine.disableTokens(tokens)
     },
 
-    async getEnabledTokens(): Promise<Array<string>> {
+    async getEnabledTokens(): Promise<string[]> {
       return engine.getEnabledTokens()
     },
 
@@ -217,7 +217,7 @@ export function makeCurrencyWalletApi(
 
     async getTransactions(
       opts: EdgeGetTransactionsOptions = {}
-    ): Promise<Array<EdgeTransaction>> {
+    ): Promise<EdgeTransaction[]> {
       const defaultCurrency = plugin.currencyInfo.currencyCode
       const currencyCode = opts.currencyCode || defaultCurrency
 
@@ -302,14 +302,14 @@ export function makeCurrencyWalletApi(
         return res
       }
 
-      const out: Array<EdgeTransaction> = await getBulkTx(startIndex)
+      const out: EdgeTransaction[] = await getBulkTx(startIndex)
       return out
     },
 
     async exportTransactionsToQBO(
       opts: EdgeGetTransactionsOptions
     ): Promise<string> {
-      const edgeTransactions: Array<EdgeTransaction> = await this.getTransactions(
+      const edgeTransactions: EdgeTransaction[] = await this.getTransactions(
         opts
       )
       const currencyCode =
@@ -330,7 +330,7 @@ export function makeCurrencyWalletApi(
     async exportTransactionsToCSV(
       opts: EdgeGetTransactionsOptions
     ): Promise<string> {
-      const edgeTransactions: Array<EdgeTransaction> = await this.getTransactions(
+      const edgeTransactions: EdgeTransaction[] = await this.getTransactions(
         opts
       )
       const currencyCode =

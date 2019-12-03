@@ -47,7 +47,7 @@ export const loginDbColumns = [
 ]
 
 // The v2 account creation endpoint doesn't accept legacy keys:
-export const loginCreateColumns: Array<string> = loginDbColumns.filter(
+export const loginCreateColumns: string[] = loginDbColumns.filter(
   item => ['mnemonicBox', 'rootKeyBox', 'syncKeyBox'].indexOf(item) < 0
 )
 
@@ -57,7 +57,7 @@ export const loginCreateColumns: Array<string> = loginDbColumns.filter(
 export class FakeDb {
   db: {
     lobbies: { [lobbyId: string]: Object },
-    logins: Array<Object>
+    logins: Object[]
   }
 
   repos: { [syncKey: string]: Object }

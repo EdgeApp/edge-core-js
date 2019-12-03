@@ -52,7 +52,7 @@ export function MakeFakeEdgeWorld(props: {
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
   onLoad: (world: EdgeFakeWorld) => mixed,
-  users?: Array<EdgeFakeUser>
+  users?: EdgeFakeUser[]
 }) {
   const { onError = onErrorDefault, onLoad } = props
   if (onLoad == null) {
@@ -82,7 +82,7 @@ export async function fetchLoginMessages(
   // Load the login stashes from disk:
   const loginMap: { [loginId: string]: string } = {} // loginId -> username
   const listing = await disklet.list('logins')
-  const files: Array<string> = await Promise.all(
+  const files: string[] = await Promise.all(
     Object.keys(listing)
       .filter(path => listing[path] === 'file')
       .map(path => disklet.getText(path).catch(() => '{}'))

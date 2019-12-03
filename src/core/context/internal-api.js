@@ -6,6 +6,7 @@ import { Bridgeable, bridgifyObject, close, emit, update } from 'yaob'
 import { type EdgeContext } from '../../types/types.js'
 import { authRequest } from '../login/authServer.js'
 import {
+  type LobbyInstance,
   type LobbyRequest,
   fetchLobbyRequest,
   makeLobby,
@@ -21,18 +22,18 @@ import { type SyncResult, makeRepoPaths, syncRepo } from '../storage/repo.js'
  */
 class EdgeLobby extends Bridgeable<
   {
-    replies: Array<Object>,
+    replies: mixed[],
     lobbyId: string
   },
   { error: Error }
 > {
-  _lobby: Object
+  _lobby: LobbyInstance
   _onError: Function
   _onRepliesChanged: Function
-  _replies: Array<Object>
+  _replies: mixed[]
   _unsubscribe: Function
 
-  constructor(lobby: Object) {
+  constructor(lobby: LobbyInstance) {
     super()
     this._lobby = lobby
     this._onError = () => {}
@@ -40,7 +41,7 @@ class EdgeLobby extends Bridgeable<
     this._replies = []
 
     const { unsubscribe } = lobby.subscribe(
-      (reply: Object) => {
+      (reply: mixed) => {
         this._replies = [...this._replies, reply]
         update(this)
       },
@@ -55,7 +56,7 @@ class EdgeLobby extends Bridgeable<
     return this._lobby.lobbyId
   }
 
-  get replies(): Array<Object> {
+  get replies(): mixed[] {
     return this._replies
   }
 
@@ -97,7 +98,7 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
   sendLobbyReply(
     lobbyId: string,
     lobbyRequest: LobbyRequest,
-    replyData: Object
+    replyData: mixed
   ) {
     return sendLobbyReply(this._ai, lobbyId, lobbyRequest, replyData)
   }

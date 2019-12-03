@@ -241,7 +241,7 @@ function loadNameFile(input: CurrencyWalletInput, folder) {
  */
 function fetchBackupName(
   input: CurrencyWalletInput,
-  appIds: Array<string>
+  appIds: string[]
 ): Promise<string | null> {
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
   for (const appId of appIds) {
@@ -258,7 +258,7 @@ function fetchBackupName(
  */
 export async function loadTxFiles(
   input: CurrencyWalletInput,
-  txIdHashes: Array<string>
+  txIdHashes: string[]
 ): any {
   const walletId = input.props.id
   const folder = getStorageWalletFolder(input.props.state, walletId)
@@ -310,7 +310,7 @@ async function getLegacyFileNames(
   // Get the non encrypted folder
   const localFolder = getStorageWalletLocalFolder(state, walletId)
   const fixedNamesFile = localFolder.file(LEGACY_MAP_FILE)
-  const legacyFileNames: Array<string> = []
+  const legacyFileNames: string[] = []
   let legacyMap: LegacyMapFile = {}
   try {
     // Get the real legacy file names
@@ -379,7 +379,7 @@ async function loadTxFileNames(input: CurrencyWalletInput, folder) {
   // New transactions files:
   await mapFiles(folder.folder('transaction'), (file, fileName) => {
     const prefix = fileName.split('.json')[0]
-    const split: Array<string> = prefix.split('-')
+    const split: string[] = prefix.split('-')
     const [creationDate, txidHash] = split
     txFileNames[txidHash] = { creationDate: parseInt(creationDate), fileName }
   })
@@ -409,7 +409,7 @@ function loadAddressFiles(input: CurrencyWalletInput, folder) {
   return allFiles.then(allFiles => {
     const [oldFiles] = allFiles
 
-    const out: Array<string> = []
+    const out: string[] = []
     for (const json: LegacyAddressFile of oldFiles) {
       if (json == null || !json.state || !json.meta) continue
       const address = json.address

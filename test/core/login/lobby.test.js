@@ -22,9 +22,11 @@ describe('edge login lobby', function() {
     const pubkey = keypair.getPublic().encodeCompressed()
     const testReply = { testReply: 'This is a test' }
 
-    expect(
-      decryptLobbyReply(keypair, encryptLobbyReply(io, pubkey, testReply))
-    ).deep.equals(testReply)
+    const decrypted = decryptLobbyReply(
+      keypair,
+      encryptLobbyReply(io, pubkey, testReply)
+    )
+    expect(decrypted).deep.equals(testReply)
   })
 
   it('lobby ping-pong', async function() {
@@ -33,7 +35,7 @@ describe('edge login lobby', function() {
     const context2 = await world.makeEdgeContext(contextOptions)
     const i1 = getInternalStuff(context1)
     const i2 = getInternalStuff(context2)
-    const testRequest = { testRequest: 'This is a request' }
+    const testRequest = { loginRequest: { appId: 'some.test.app' } }
     const testReply = { testReply: 'This is a reply' }
 
     return new Promise((resolve, reject) => {
@@ -41,7 +43,7 @@ describe('edge login lobby', function() {
       i1.makeLobby(testRequest, 10)
         .then(lobby => {
           lobby.on('error', reject)
-          lobby.watch('replies', (replies: Array<Object>) => {
+          lobby.watch('replies', (replies: mixed[]) => {
             if (replies.length === 0) return
             lobby.close()
             expect(replies[0]).deep.equals(testReply)
@@ -51,8 +53,8 @@ describe('edge login lobby', function() {
           return i2
             .fetchLobbyRequest(lobby.lobbyId)
             .then(request => {
-              expect(request).to.include(testRequest)
-              i2.sendLobbyReply(lobby.lobbyId, request, testReply)
+              expect(request).to.deep.include(testRequest)
+              return i2.sendLobbyReply(lobby.lobbyId, request, testReply)
             })
             .catch(error => {
               lobby.close()

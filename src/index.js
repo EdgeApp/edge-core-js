@@ -28,7 +28,7 @@ export function makeEdgeContext(
 }
 
 export function makeFakeEdgeWorld(
-  users: Array<EdgeFakeUser> = []
+  users: EdgeFakeUser[] = []
 ): Promise<EdgeFakeWorld> {
   return Promise.resolve(
     makeLocalBridge(makeFakeWorld(makeNodeIo('.'), {}, users), {

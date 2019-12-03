@@ -24,7 +24,7 @@ export const base58 = {
     assertString(text)
     return base58Codec.decode(text)
   },
-  stringify(data: Uint8Array | Array<number>): string {
+  stringify(data: Uint8Array | number[]): string {
     assertData(data)
     return base58Codec.encode(data)
   }
@@ -42,7 +42,7 @@ export const utf8 = {
     return out
   },
 
-  stringify(data: Uint8Array | Array<number>): string {
+  stringify(data: Uint8Array | number[]): string {
     assertData(data)
 
     // Some of our data contains terminating null bytes due to an old bug.

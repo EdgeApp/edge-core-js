@@ -19,9 +19,9 @@ describe('account', function() {
   it('calls callbacks', async function() {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
-    const log = makeAssertLog()
-
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    const log = makeAssertLog()
     account.watch('allKeys', () => log('called'))
     log.assert([])
     await account.createWallet('wallet:fakecoin')

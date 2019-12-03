@@ -74,7 +74,7 @@ const routes = {
   JPY: { BTC: [2] }
 }
 
-function addPairs(pairs: Array<ExchangePair>) {
+function addPairs(pairs: ExchangePair[]) {
   return { type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs }
 }
 

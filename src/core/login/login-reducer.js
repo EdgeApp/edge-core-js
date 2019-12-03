@@ -17,7 +17,7 @@ export type LoginState = {
   +appId: string,
   +server: LoginServerState,
   +stashes: LoginStashMap,
-  +localUsers: Array<EdgeUserInfo>,
+  +localUsers: EdgeUserInfo[],
   +walletInfos: WalletInfoMap
 }
 
@@ -29,7 +29,7 @@ export const login = buildReducer({
   localUsers: memoizeReducer(
     (next: RootState) => next.login.appId,
     (next: RootState) => next.login.stashes,
-    (appId: string, stashes: LoginStashMap): Array<EdgeUserInfo> => {
+    (appId: string, stashes: LoginStashMap): EdgeUserInfo[] => {
       const out = []
       for (const username in stashes) {
         const stash = stashes[username]

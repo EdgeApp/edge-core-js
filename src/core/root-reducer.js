@@ -18,7 +18,7 @@ import {
 
 export type RootState = {
   +accountCount: number,
-  +accountIds: Array<string>,
+  +accountIds: string[],
   +accounts: { [accountId: string]: AccountState },
   +hideKeys: boolean,
   +lastAccountId: string,
@@ -36,7 +36,7 @@ export const reducer = buildReducer({
     return action.type === 'LOGIN' ? state + 1 : state
   },
 
-  accountIds(state = [], action: RootAction, next: RootState): Array<string> {
+  accountIds(state = [], action: RootAction, next: RootState): string[] {
     switch (action.type) {
       case 'LOGIN':
         return [...state, next.lastAccountId]

@@ -106,7 +106,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     (input: AccountInput) => {
       let started: boolean = false
       let stopped: boolean = false
-      let timeout: * // Infer the proper timer type
+      let timeout: TimeoutID | void
 
       async function doSync() {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
@@ -118,7 +118,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           const changeLists = await Promise.all(
             accountWalletInfos.map(info => syncStorageWallet(ai, info.id))
           )
-          const changes: Array<string> = [].concat(...changeLists)
+          const changes: string[] = [].concat(...changeLists)
           if (changes.length) {
             await Promise.all([
               reloadPluginSettings(ai, accountId),

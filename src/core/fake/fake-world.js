@@ -60,13 +60,13 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser) {
 export function makeFakeWorld(
   io: EdgeIo,
   nativeIo: EdgeNativeIo,
-  users: Array<EdgeFakeUser>
+  users: EdgeFakeUser[]
 ): EdgeFakeWorld {
   const fakeDb = new FakeDb()
   const fakeFetch = makeFakeFetch(fakeDb)
   for (const user of users) fakeDb.setupFakeUser(user)
 
-  const contexts: Array<EdgeContext> = []
+  const contexts: EdgeContext[] = []
 
   const out = {
     async close() {

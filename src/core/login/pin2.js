@@ -164,8 +164,8 @@ export function makeChangePin2Kits(
   username: string,
   pin: string,
   enableLogin: boolean
-): Array<LoginKit> {
-  const out: Array<LoginKit> = [
+): LoginKit[] {
+  const out: LoginKit[] = [
     makeChangePin2Kit(ai, loginTree, username, pin, enableLogin)
   ]
 
@@ -237,8 +237,8 @@ export function makeChangePin2Kit(
 /**
  * Creates the data needed to delete a PIN from a tree of logins.
  */
-export function makeDeletePin2Kits(loginTree: LoginTree): Array<LoginKit> {
-  const out: Array<LoginKit> = [makeDeletePin2Kit(loginTree)]
+export function makeDeletePin2Kits(loginTree: LoginTree): LoginKit[] {
+  const out: LoginKit[] = [makeDeletePin2Kit(loginTree)]
 
   if (loginTree.children) {
     for (const child of loginTree.children) {

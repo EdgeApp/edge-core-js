@@ -110,7 +110,7 @@ class FakeCurrencyEngine {
 
     // Transactions callback:
     if (settings.txs != null) {
-      const changes: Array<EdgeTransaction> = []
+      const changes: EdgeTransaction[] = []
       for (const txid in settings.txs) {
         const newTx = {
           blockHeight: 0,
@@ -194,22 +194,22 @@ class FakeCurrencyEngine {
 
   getTransactions(
     opts: EdgeGetTransactionsOptions
-  ): Promise<Array<EdgeTransaction>> {
+  ): Promise<EdgeTransaction[]> {
     return Promise.resolve(
       Object.keys(this.state.txs).map(txid => this.state.txs[txid])
     )
   }
 
   // Tokens
-  enableTokens(tokens: Array<string>): Promise<mixed> {
+  enableTokens(tokens: string[]): Promise<mixed> {
     return Promise.resolve()
   }
 
-  disableTokens(tokens: Array<string>): Promise<mixed> {
+  disableTokens(tokens: string[]): Promise<mixed> {
     return Promise.resolve()
   }
 
-  getEnabledTokens(): Promise<Array<string>> {
+  getEnabledTokens(): Promise<string[]> {
     return Promise.resolve(['TOKEN'])
   }
 
@@ -226,7 +226,7 @@ class FakeCurrencyEngine {
     return { publicAddress: 'fakeaddress' }
   }
 
-  addGapLimitAddresses(addresses: Array<string>): void {}
+  addGapLimitAddresses(addresses: string[]): void {}
   isAddressUsed(address: string): boolean {
     return address === 'fakeaddress'
   }
@@ -296,7 +296,7 @@ class FakeCurrencyTools {
     })
   }
 
-  getSplittableTypes(walletInfo: EdgeWalletInfo): Array<string> {
+  getSplittableTypes(walletInfo: EdgeWalletInfo): string[] {
     return ['wallet:tulipcoin']
   }
 

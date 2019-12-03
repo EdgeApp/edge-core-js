@@ -16,14 +16,14 @@ import {
 } from './wallet/currency-wallet-reducer.js'
 
 export type CurrencyState = {
-  +currencyWalletIds: Array<string>,
-  +customTokens: Array<EdgeMetaToken>,
-  +infos: Array<EdgeCurrencyInfo>,
+  +currencyWalletIds: string[],
+  +customTokens: EdgeMetaToken[],
+  +infos: EdgeCurrencyInfo[],
   +wallets: { [walletId: string]: CurrencyWalletState }
 }
 
 export const currency = buildReducer({
-  currencyWalletIds(state, action, next: RootState): Array<string> {
+  currencyWalletIds(state, action, next: RootState): string[] {
     // Optimize the common case:
     if (next.accountIds.length === 1) {
       const id = next.accountIds[0]
@@ -36,7 +36,7 @@ export const currency = buildReducer({
     return [].concat(...allIds)
   },
 
-  customTokens(state = [], action: RootAction): Array<EdgeMetaToken> {
+  customTokens(state = [], action: RootAction): EdgeMetaToken[] {
     if (action.type === 'ADDED_CUSTOM_TOKEN') {
       const {
         currencyCode,
@@ -65,7 +65,7 @@ export const currency = buildReducer({
   infos: memoizeReducer(
     (state: RootState) => state.plugins.currency,
     (plugins: EdgePluginMap<EdgeCurrencyPlugin>) => {
-      const out: Array<EdgeCurrencyInfo> = []
+      const out: EdgeCurrencyInfo[] = []
       for (const pluginName in plugins) {
         out.push(plugins[pluginName].currencyInfo)
       }

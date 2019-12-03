@@ -28,14 +28,14 @@ export type SwapSettings = {
 export type AccountState = {
   // Wallet stuff:
   +accountWalletInfo: EdgeWalletInfo,
-  +accountWalletInfos: Array<EdgeWalletInfo>,
-  +allWalletInfosFull: Array<EdgeWalletInfoFull>,
-  +allWalletInfosClean: Array<EdgeWalletInfoFull>,
-  +currencyWalletIds: Array<string>,
-  +activeWalletIds: Array<string>,
-  +archivedWalletIds: Array<string>,
+  +accountWalletInfos: EdgeWalletInfo[],
+  +allWalletInfosFull: EdgeWalletInfoFull[],
+  +allWalletInfosClean: EdgeWalletInfoFull[],
+  +currencyWalletIds: string[],
+  +activeWalletIds: string[],
+  +archivedWalletIds: string[],
   +keysLoaded: boolean,
-  +legacyWalletInfos: Array<EdgeWalletInfo>,
+  +legacyWalletInfos: EdgeWalletInfo[],
   +walletInfos: WalletInfoMap,
   +walletStates: EdgeWalletStates,
 
@@ -77,7 +77,7 @@ const account = buildReducer({
   accountWalletInfos: memoizeReducer(
     (next: AccountNext) => next.self.appId,
     (next: AccountNext) => next.self.login,
-    (appId: string, login: LoginTree): Array<EdgeWalletInfo> => {
+    (appId: string, login: LoginTree): EdgeWalletInfo[] => {
       // Wallets created in Edge that then log into Airbitz or BitcoinPay
       // might end up with wallets stored in the wrong account repo.
       // This code attempts to locate those repos.
@@ -93,9 +93,9 @@ const account = buildReducer({
     (next: AccountNext) => next.self.walletStates,
     (
       login: LoginTree,
-      legacyWalletInfos: Array<EdgeWalletInfo>,
+      legacyWalletInfos: EdgeWalletInfo[],
       walletStates: EdgeWalletStates
-    ): Array<EdgeWalletInfoFull> => {
+    ): EdgeWalletInfoFull[] => {
       const values = getAllWalletInfos(login, legacyWalletInfos)
       const { walletInfos, appIdMap } = values
       const getLast = array => array[array.length - 1]
@@ -114,7 +114,7 @@ const account = buildReducer({
 
   allWalletInfosClean: memoizeReducer(
     (next: AccountNext) => next.self.allWalletInfosFull,
-    (walletInfos: Array<EdgeWalletInfoFull>): Array<EdgeWalletInfoFull> =>
+    (walletInfos: EdgeWalletInfoFull[]): EdgeWalletInfoFull[] =>
       walletInfos.map(info => {
         const keys =
           info.type === 'wallet:ethereum'
@@ -127,7 +127,7 @@ const account = buildReducer({
   currencyWalletIds: memoizeReducer(
     (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.root.plugins.currency,
-    (walletInfos, plugins): Array<string> =>
+    (walletInfos, plugins): string[] =>
       Object.keys(walletInfos)
         .filter(walletId => {
           const info = walletInfos[walletId]
@@ -144,7 +144,7 @@ const account = buildReducer({
     (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.self.currencyWalletIds,
     (next: AccountNext) => next.self.keysLoaded,
-    (walletInfos, ids, keysLoaded): Array<string> =>
+    (walletInfos, ids, keysLoaded): string[] =>
       keysLoaded ? ids.filter(id => !walletInfos[id].archived) : []
   ),
 
@@ -152,7 +152,7 @@ const account = buildReducer({
     (next: AccountNext) => next.self.walletInfos,
     (next: AccountNext) => next.self.currencyWalletIds,
     (next: AccountNext) => next.self.keysLoaded,
-    (walletInfos, ids, keysLoaded): Array<string> =>
+    (walletInfos, ids, keysLoaded): string[] =>
       keysLoaded ? ids.filter(id => walletInfos[id].archived) : []
   ),
 
@@ -160,7 +160,7 @@ const account = buildReducer({
     return action.type === 'ACCOUNT_KEYS_LOADED' ? true : state
   },
 
-  legacyWalletInfos(state = [], action: RootAction): Array<EdgeWalletInfo> {
+  legacyWalletInfos(state = [], action: RootAction): EdgeWalletInfo[] {
     return action.type === 'ACCOUNT_KEYS_LOADED'
       ? action.payload.legacyWalletInfos
       : state
@@ -168,7 +168,7 @@ const account = buildReducer({
 
   walletInfos: memoizeReducer(
     (next: AccountNext) => next.self.allWalletInfosFull,
-    (walletInfos: Array<EdgeWalletInfoFull>): WalletInfoMap => {
+    (walletInfos: EdgeWalletInfoFull[]): WalletInfoMap => {
       const out = {}
       for (const info of walletInfos) {
         out[info.id] = info

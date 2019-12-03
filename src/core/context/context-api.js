@@ -54,11 +54,11 @@ export function makeContextApi(ai: ApiInput) {
 
     fixUsername,
 
-    get localUsers(): Array<EdgeUserInfo> {
+    get localUsers(): EdgeUserInfo[] {
       return ai.props.state.login.localUsers
     },
 
-    async listUsernames(): Promise<Array<string>> {
+    async listUsernames(): Promise<string[]> {
       return Object.keys(ai.props.state.login.stashes)
     },
 
@@ -152,7 +152,7 @@ export function makeContextApi(ai: ApiInput) {
     async loginWithRecovery2(
       recovery2Key: string,
       username: string,
-      answers: Array<string>,
+      answers: string[],
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
       const { otp } = opts || {} // opts can be `null`
@@ -171,11 +171,11 @@ export function makeContextApi(ai: ApiInput) {
     async fetchRecovery2Questions(
       recovery2Key: string,
       username: string
-    ): Promise<Array<string>> {
+    ): Promise<string[]> {
       return getQuestions2(ai, base58.parse(recovery2Key), username)
     },
 
-    async listRecoveryQuestionChoices(): Promise<Array<string>> {
+    async listRecoveryQuestionChoices(): Promise<string[]> {
       return listRecoveryQuestionChoices(ai)
     },
 

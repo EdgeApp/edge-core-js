@@ -1,9 +1,13 @@
+// @flow
+
+import type { EdgeSwapInfo } from './types.js'
+
 /*
  * These are errors the core knows about.
  *
  * The GUI should handle these errors in an "intelligent" way, such as by
  * displaying a localized error message or asking the user for more info.
- * All these errors have a `type` field, which the GUI can use to select
+ * All these errors have a `name` field, which the GUI can use to select
  * the appropriate response.
  *
  * Other errors are possible, of course, since the Javascript language
@@ -33,72 +37,88 @@ export const errorNames = {
 /**
  * Trying to spend an uneconomically small amount of money.
  */
-export function DustSpendError(message = 'Please send a larger amount') {
-  const e = new Error(message)
-  e.name = errorNames.DustSpendError
-  return e
+export class DustSpendError extends Error {
+  name: string
+
+  constructor(message: string = 'Please send a larger amount') {
+    super(message)
+    this.name = errorNames.DustSpendError
+  }
 }
 
 /**
  * Trying to spend more money than the wallet contains.
  */
-export function InsufficientFundsError(currencyCode) {
-  let message
-  if (currencyCode == null) {
-    message = 'Insufficient funds'
-  } else if (currencyCode.length > 5) {
-    // Some plugins pass a message instead of a currency code:
-    message = currencyCode
-    currencyCode = undefined
-  } else {
-    message = `Insufficient ${currencyCode}`
-  }
+export class InsufficientFundsError extends Error {
+  name: string
+  currencyCode: string | void
 
-  const e = new Error(message)
-  e.name = errorNames.InsufficientFundsError
-  if (currencyCode != null) e.currencyCode = currencyCode
-  return e
+  constructor(currencyCode?: string) {
+    let message
+    if (currencyCode == null) {
+      message = 'Insufficient funds'
+    } else if (currencyCode.length > 5) {
+      // Some plugins pass a message instead of a currency code:
+      message = currencyCode
+      currencyCode = undefined
+    } else {
+      message = `Insufficient ${currencyCode}`
+    }
+
+    super(message)
+    this.name = errorNames.InsufficientFundsError
+    if (currencyCode != null) this.currencyCode = currencyCode
+  }
 }
 
 /**
  * Trying to spend to an address of the source wallet
  */
-export function SpendToSelfError(message = 'Spending to self') {
-  const e = new Error(message)
-  e.name = errorNames.SpendToSelfError
-  return e
+export class SpendToSelfError extends Error {
+  name: string
+
+  constructor(message: string = 'Spending to self') {
+    super(message)
+    this.name = errorNames.SpendToSelfError
+  }
 }
 
 /**
  * Attempting to create a MakeSpend without specifying an amount of currency to send
  */
+export class NoAmountSpecifiedError extends Error {
+  name: string
 
-export function NoAmountSpecifiedError(
-  message = 'Unable to create zero-amount transaction.'
-) {
-  const e = new Error(message)
-  e.name = errorNames.NoAmountSpecifiedError
-  return e
+  constructor(message: string = 'Unable to create zero-amount transaction.') {
+    super(message)
+    this.name = errorNames.NoAmountSpecifiedError
+  }
 }
 
 /**
  * Could not reach the server at all.
  */
-export function NetworkError(message = 'Cannot reach the network') {
-  const e = new Error(message)
-  e.name = e.type = errorNames.NetworkError
-  return e
+export class NetworkError extends Error {
+  name: string
+  type: string // deprecated
+
+  constructor(message: string = 'Cannot reach the network') {
+    super(message)
+    this.name = this.type = errorNames.NetworkError
+  }
 }
 
 /**
  * The endpoint on the server is obsolete, and the app needs to be upgraded.
  */
-export function ObsoleteApiError(
-  message = 'The application is too old. Please upgrade.'
-) {
-  const e = new Error(message)
-  e.name = e.type = errorNames.ObsoleteApiError
-  return e
+export class ObsoleteApiError extends Error {
+  name: string
+  type: string // deprecated
+
+  constructor(message: string = 'The application is too old. Please upgrade.') {
+    super(message)
+    this.name = this.type = errorNames.ObsoleteApiError
+  }
 }
 
 /**
@@ -111,15 +131,21 @@ export function ObsoleteApiError(
  * which indicates that an OTP reset is already pending,
  * and when it will complete.
  */
-export function OtpError(resultsJson = {}, message = 'Invalid OTP token') {
-  const e = new Error(message)
-  e.name = e.type = errorNames.OtpError
-  e.resetToken = resultsJson.otp_reset_auth
-  if (resultsJson.otp_timeout_date != null) {
-    // The server returns dates as ISO 8601 formatted strings:
-    e.resetDate = new Date(resultsJson.otp_timeout_date)
+export class OtpError extends Error {
+  name: string
+  type: string // deprecated
+  resetToken: string | void
+  resetDate: Date | void
+
+  constructor(resultsJson: any = {}, message: string = 'Invalid OTP token') {
+    super(message)
+    this.name = this.type = errorNames.OtpError
+    this.resetToken = resultsJson.otp_reset_auth
+    if (resultsJson.otp_timeout_date != null) {
+      // The server returns dates as ISO 8601 formatted strings:
+      this.resetDate = new Date(resultsJson.otp_timeout_date)
+    }
   }
-  return e
 }
 
 /**
@@ -133,70 +159,104 @@ export function OtpError(resultsJson = {}, message = 'Invalid OTP token') {
  * The error object may include a `wait` member,
  * which is the number of seconds the user must wait before trying again.
  */
-export function PasswordError(resultsJson = {}, message = 'Invalid password') {
-  const e = new Error(message)
-  e.name = e.type = errorNames.PasswordError
-  e.wait = resultsJson.wait_seconds
-  return e
+export class PasswordError extends Error {
+  name: string
+  type: string // deprecated
+  wait: number // seconds
+
+  constructor(resultsJson: any = {}, message: string = 'Invalid password') {
+    super(message)
+    this.name = this.type = errorNames.PasswordError
+    this.wait = resultsJson.wait_seconds
+  }
 }
 
 /**
  * Trying to spend funds that are not yet confirmed.
  */
-export function PendingFundsError(message = 'Not enough confirmed funds') {
-  const e = new Error(message)
-  e.name = errorNames.PendingFundsError
-  return e
+export class PendingFundsError extends Error {
+  name: string
+
+  constructor(message: string = 'Not enough confirmed funds') {
+    super(message)
+    this.name = errorNames.PendingFundsError
+  }
 }
 
 /**
  * Attempting to shape shift between two wallets of same currency.
  */
-export function SameCurrencyError(
-  message = 'Wallets can not be the same currency'
-) {
-  const e = new Error(message)
-  e.name = errorNames.SameCurrencyError
-  return e
+export class SameCurrencyError extends Error {
+  name: string
+
+  constructor(message: string = 'Wallets can not be the same currency') {
+    super(message)
+    this.name = errorNames.SameCurrencyError
+  }
 }
 
 /**
  * Trying to swap an amount that is either too low or too high.
  * @param nativeMax the maximum supported amount, in the "from" currency.
  */
-export function SwapAboveLimitError(swapInfo, nativeMax) {
-  const e = new Error('Amount is too high')
-  e.name = errorNames.SwapAboveLimitError
-  e.pluginName = swapInfo.pluginName
-  e.nativeMax = nativeMax
-  return e
+export class SwapAboveLimitError extends Error {
+  name: string
+  pluginName: string
+  nativeMax: string
+
+  constructor(swapInfo: EdgeSwapInfo, nativeMax: string) {
+    super('Amount is too high')
+    this.name = errorNames.SwapAboveLimitError
+    this.pluginName = swapInfo.pluginName
+    this.nativeMax = nativeMax
+  }
 }
 
 /**
  * Trying to swap an amount that is either too low or too high.
  * @param nativeMin the minimum supported amount, in the "from" currency.
  */
-export function SwapBelowLimitError(swapInfo, nativeMin) {
-  const e = new Error('Amount is too low')
-  e.name = errorNames.SwapBelowLimitError
-  e.pluginName = swapInfo.pluginName
-  e.nativeMin = nativeMin
-  return e
+export class SwapBelowLimitError extends Error {
+  name: string
+  pluginName: string
+  nativeMin: string
+
+  constructor(swapInfo: EdgeSwapInfo, nativeMin: string) {
+    super('Amount is too low')
+    this.name = errorNames.SwapBelowLimitError
+    this.pluginName = swapInfo.pluginName
+    this.nativeMin = nativeMin
+  }
 }
 
 /**
  * The swap plugin does not support this currency pair.
  */
-export function SwapCurrencyError(swapInfo, fromCurrency, toCurrency) {
-  const e = new Error(
-    `${swapInfo.displayName} does not support ${fromCurrency} to ${toCurrency}`
-  )
-  e.name = errorNames.SwapCurrencyError
-  e.pluginName = swapInfo.pluginName
-  e.fromCurrency = fromCurrency
-  e.toCurrency = toCurrency
-  return e
+export class SwapCurrencyError extends Error {
+  name: string
+  pluginName: string
+  fromCurrency: string
+  toCurrency: string
+
+  constructor(
+    swapInfo: EdgeSwapInfo,
+    fromCurrency: string,
+    toCurrency: string
+  ) {
+    super(
+      `${swapInfo.displayName} does not support ${fromCurrency} to ${toCurrency}`
+    )
+    this.name = errorNames.SwapCurrencyError
+    this.pluginName = swapInfo.pluginName
+    this.fromCurrency = fromCurrency
+    this.toCurrency = toCurrency
+  }
 }
+
+type SwapPermissionReason =
+  | 'geoRestriction'
+  | 'noVerification'
+  | 'needsActivation'
 
 /**
  * The user is not allowed to swap these coins for some reason
@@ -206,12 +266,18 @@ export function SwapCurrencyError(swapInfo, fromCurrency, toCurrency) {
  * - 'noVerification': The user needs to provide KYC credentials
  * - 'needsActivation': The user needs to log into the service.
  */
-export function SwapPermissionError(swapInfo, reason) {
-  const e = new Error(reason || 'You are not allowed to make this trade')
-  e.name = errorNames.SwapPermissionError
-  e.pluginName = swapInfo.pluginName
-  e.reason = reason
-  return e
+export class SwapPermissionError extends Error {
+  name: string
+  pluginName: string
+  reason: SwapPermissionReason | void
+
+  constructor(swapInfo: EdgeSwapInfo, reason?: SwapPermissionReason) {
+    if (reason != null) super(reason)
+    else super('You are not allowed to make this trade')
+    this.name = errorNames.SwapPermissionError
+    this.pluginName = swapInfo.pluginName
+    this.reason = reason
+  }
 }
 
 /**
@@ -222,8 +288,12 @@ export function SwapPermissionError(swapInfo, reason) {
  * - PIN login: wrong PIN key
  * - Recovery login: wrong username, or wrong recovery key
  */
-export function UsernameError(message = 'Invalid username') {
-  const e = new Error(message)
-  e.name = e.type = errorNames.UsernameError
-  return e
+export class UsernameError extends Error {
+  name: string
+  type: string // deprecated
+
+  constructor(message: string = 'Invalid username') {
+    super(message)
+    this.name = this.type = errorNames.UsernameError
+  }
 }

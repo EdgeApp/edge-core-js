@@ -26,7 +26,7 @@ import {
 /**
  * Returns the first keyInfo with a matching type.
  */
-export function findFirstKey(keyInfos: Array<EdgeWalletInfo>, type: string) {
+export function findFirstKey(keyInfos: EdgeWalletInfo[], type: string) {
   return keyInfos.find(info => info.type === type)
 }
 
@@ -69,13 +69,13 @@ export function makeStorageKeyInfo(
 export function makeKeysKit(
   ai: ApiInput,
   login: LoginTree,
-  ...keyInfos: Array<StorageWalletInfo>
+  ...keyInfos: StorageWalletInfo[]
 ): LoginKit {
   const { io } = ai.props
   const keyBoxes = keyInfos.map(info =>
     encrypt(io, utf8.parse(JSON.stringify(info)), login.loginKey)
   )
-  const newSyncKeys: Array<string> = []
+  const newSyncKeys: string[] = []
   for (const info of keyInfos) {
     if (info.keys.syncKey != null) {
       const data = base64.parse(info.keys.syncKey)
@@ -95,7 +95,7 @@ export function makeKeysKit(
 /**
  * Flattens an array of key structures, removing duplicates.
  */
-export function mergeKeyInfos(keyInfos: Array<EdgeWalletInfo>) {
+export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]) {
   const out = []
   const ids = {} // Maps ID's to output array indexes
 
@@ -139,10 +139,10 @@ export function mergeKeyInfos(keyInfos: Array<EdgeWalletInfo>) {
  */
 export function getAllWalletInfos(
   login: LoginTree,
-  legacyWalletInfos: Array<EdgeWalletInfo> = []
+  legacyWalletInfos: EdgeWalletInfo[] = []
 ) {
   const appIdMap: AppIdMap = {}
-  const walletInfos: Array<EdgeWalletInfo> = []
+  const walletInfos: EdgeWalletInfo[] = []
 
   // Add the legacy wallets first:
   for (const info of legacyWalletInfos) {
@@ -450,7 +450,7 @@ export async function listSplittableWalletTypes(
   ai: ApiInput,
   accountId: string,
   walletId: string
-): Promise<Array<string>> {
+): Promise<string[]> {
   const { allWalletInfosFull } = ai.props.state.accounts[accountId]
 
   // Find the wallet we are going to split:

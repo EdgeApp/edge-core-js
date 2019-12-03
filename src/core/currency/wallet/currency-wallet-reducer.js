@@ -30,14 +30,14 @@ export type TxFileJsons = { [txidHash: string]: Object }
 export type TxidHashes = { [txidHash: string]: number }
 
 export type SortedTransactions = {
-  sortedList: Array<string>,
+  sortedList: string[],
   txidHashes: TxidHashes
 }
 
 export type MergedTransaction = {
   blockHeight: number,
   date: number,
-  ourReceiveAddresses: Array<string>,
+  ourReceiveAddresses: string[],
   signedTx: string,
   txid: string,
   otherParams?: Object,
@@ -68,7 +68,7 @@ export type CurrencyWalletState = {
   +nameLoaded: boolean,
   +walletInfo: EdgeWalletInfo,
   +publicWalletInfo: EdgeWalletInfo | null,
-  +txids: Array<string>,
+  +txids: string[],
   +txs: { [txid: string]: MergedTransaction },
   +gotTxs: { [currencyCode: string]: boolean }
 }
@@ -239,7 +239,7 @@ const currencyWallet = buildReducer({
 
   txids: memoizeReducer(
     (next: CurrencyWalletNext) => next.self.txs,
-    (txs): Array<string> => Object.keys(txs)
+    (txs): string[] => Object.keys(txs)
   ),
 
   txs(
@@ -289,7 +289,7 @@ export function sortTxs(txidHashes: TxidHashes, newHashes: TxidHashes) {
       txidHashes[newTxidHash] = newTime
     }
   }
-  const sortedList: Array<string> = Object.keys(txidHashes).sort(
+  const sortedList: string[] = Object.keys(txidHashes).sort(
     (txidHash1, txidHash2) => {
       if (txidHashes[txidHash1] > txidHashes[txidHash2]) return -1
       if (txidHashes[txidHash1] < txidHashes[txidHash2]) return 1

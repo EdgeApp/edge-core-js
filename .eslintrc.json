@@ -7,8 +7,10 @@
   ],
   "plugins": [ "simple-import-sort"],
   "rules": {
-    "no-var": "error",
+    "flowtype/array-style-complex-type": ["error", "verbose"],
+    "flowtype/array-style-simple-type": ["error", "shorthand"],
     "import/extensions": ["error", "always", { "ignorePackages": true }],
+    "no-var": "error",
     "simple-import-sort/sort": "error"
   }
 }

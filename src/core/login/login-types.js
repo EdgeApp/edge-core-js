@@ -33,8 +33,8 @@ export type LoginReply = {
   recovery2KeyBox?: JsonBox,
 
   // Resources:
-  children?: Array<LoginReply>,
-  keyBoxes?: Array<JsonBox>,
+  children?: LoginReply[],
+  keyBoxes?: JsonBox[],
   mnemonicBox?: JsonBox,
   parentBox?: JsonBox,
   rootKeyBox?: JsonBox,
@@ -71,8 +71,8 @@ export type LoginStash = {
   recovery2Key?: string,
 
   // Resources:
-  children?: Array<LoginStash>,
-  keyBoxes?: Array<JsonBox>,
+  children?: LoginStash[],
+  keyBoxes?: JsonBox[],
   mnemonicBox?: JsonBox,
   parentBox?: JsonBox,
   rootKeyBox?: JsonBox,
@@ -100,11 +100,11 @@ export type LoginTree = {
   recovery2Key?: Uint8Array,
 
   // Resources:
-  keyInfos: Array<EdgeWalletInfo>,
-  children: Array<LoginTree>
+  keyInfos: EdgeWalletInfo[],
+  children: LoginTree[]
 }
 
-export type AppIdMap = { [walletId: string]: Array<string> }
+export type AppIdMap = { [walletId: string]: string[] }
 
 export type LoginKit = {
   loginId: string,

@@ -21,7 +21,7 @@ export type StorageWalletStatus = {
 }
 
 export type StorageWalletState = {
-  lastChanges: Array<string>,
+  lastChanges: string[],
   localDisklet: Disklet,
   paths: StorageWalletPaths,
   status: StorageWalletStatus
@@ -33,7 +33,7 @@ export type StorageWalletsState = { [id: string]: StorageWalletState }
  * Individual repo reducer.
  */
 const storageWalletReducer = combineReducers({
-  lastChanges(state = [], action: RootAction): Array<string> {
+  lastChanges(state = [], action: RootAction): string[] {
     if (action.type === 'STORAGE_WALLET_SYNCED') {
       const { changes } = action.payload
       return changes.length ? changes : state

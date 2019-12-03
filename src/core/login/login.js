@@ -29,7 +29,7 @@ import { saveStash } from './loginStore.js'
 
 function cloneNode<Node: {}, Output>(
   node: Node,
-  children: Array<Output> | void
+  children: Output[] | void
 ): Output {
   const out: any = { ...node, children }
   return out
@@ -39,7 +39,7 @@ function cloneNode<Node: {}, Output>(
  * Returns the login that satisfies the given predicate,
  * or undefined if nothing matches.
  */
-export function searchTree(node: any, predicate: any => boolean) {
+export function searchTree(node: any, predicate: (node: any) => boolean) {
   if (predicate(node)) return node
 
   if (node.children != null) {
@@ -56,15 +56,15 @@ export function searchTree(node: any, predicate: any => boolean) {
  * The `predicate` callback is used to find the target node.
  * The `update` callback is called on the target.
  */
-function updateTree<Node: { +children?: Array<any> }, Output>(
+function updateTree<Node: { +children?: any[] }, Output>(
   node: Node,
   predicate: (node: Node) => boolean,
   update: (node: Node) => Output,
-  clone: (node: Node, children: Array<Output> | void) => Output = cloneNode
+  clone: (node: Node, children: Output[] | void) => Output = cloneNode
 ): Output {
   if (predicate(node)) return update(node)
 
-  const children: Array<Output> =
+  const children: Output[] =
     node.children != null
       ? node.children.map(child => updateTree(child, predicate, update, clone))
       : []
@@ -343,7 +343,7 @@ export function applyKit(ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
 export function applyKits(
   ai: ApiInput,
   loginTree: LoginTree,
-  kits: Array<LoginKit>
+  kits: LoginKit[]
 ): Promise<mixed> {
   if (!kits.length) return Promise.resolve()
 

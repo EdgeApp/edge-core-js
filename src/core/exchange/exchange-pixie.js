@@ -10,9 +10,9 @@ export const exchange: TamePixie<RootProps> = filterPixie(
   (input: PixieInput<RootProps>) => {
     let started: boolean = false
     let stopped: boolean = false
-    let timeout: * // Infer the proper timer type
+    let timeout: TimeoutID | void
 
-    function gatherHints(): Array<EdgeRateHint> {
+    function gatherHints(): EdgeRateHint[] {
       // TODO: Grab this off the list of loaded wallet currency types & fiats:
       return [
         { fromCurrency: 'BTC', toCurrency: 'iso:EUR' },
@@ -22,7 +22,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
       ]
     }
 
-    function dispatchPairs(pairs: Array<ExchangePair>, source: string) {
+    function dispatchPairs(pairs: ExchangePair[], source: string) {
       input.props.io.console.info(`Exchange rates updated (${source})`)
       if (pairs.length > 0) {
         input.props.dispatch({
@@ -41,7 +41,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
 
       // Gather pairs for up to five seconds, then send what we have:
       let wait: boolean = true
-      let waitingPairs: Array<ExchangePair> = []
+      let waitingPairs: ExchangePair[] = []
       function sendWaitingPairs(done?: boolean) {
         wait = false
         dispatchPairs(waitingPairs, done ? 'complete' : 'some pending')
@@ -103,10 +103,10 @@ export const exchange: TamePixie<RootProps> = filterPixie(
  */
 function fetchPluginRates(
   plugin: EdgeRatePlugin,
-  hintPairs: Array<EdgeRateHint>,
+  hintPairs: EdgeRateHint[],
   source: string,
   timestamp: number
-): Promise<Array<ExchangePair>> {
+): Promise<ExchangePair[]> {
   try {
     return plugin.fetchRates(hintPairs).then(pairs =>
       pairs.map(pair => {

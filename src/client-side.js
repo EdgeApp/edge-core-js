@@ -14,19 +14,19 @@ import {
  * Client-side EdgeAccount methods.
  */
 export class AccountSync {
-  +allKeys: Array<EdgeWalletInfoFull>
+  +allKeys: EdgeWalletInfoFull[]
 
-  getFirstWalletInfo(type: string): ?EdgeWalletInfo {
+  getFirstWalletInfo(type: string): EdgeWalletInfo | void {
     const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
     return allKeys.find(info => info.type === type)
   }
 
-  getWalletInfo(id: string): ?EdgeWalletInfo {
+  getWalletInfo(id: string): EdgeWalletInfo | void {
     const allKeys: any = this.allKeys // WalletInfoFull -> WalletInfo
     return allKeys.find(info => info.id === id)
   }
 
-  listWalletIds(): Array<string> {
+  listWalletIds(): string[] {
     return this.allKeys.map(info => info.id)
   }
 }
