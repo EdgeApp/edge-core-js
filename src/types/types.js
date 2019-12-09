@@ -111,6 +111,7 @@ export type EdgeWalletInfoFull = {
   appIds: string[],
   archived: boolean,
   deleted: boolean,
+  hidden: boolean,
   id: string,
   keys: JsonObject,
   sortIndex: number,
@@ -120,7 +121,8 @@ export type EdgeWalletInfoFull = {
 export type EdgeWalletState = {
   archived?: boolean,
   deleted?: boolean,
-  sortIndex?: number
+  sortIndex?: number,
+  hidden?: boolean
 }
 
 export type EdgeWalletStates = {
@@ -831,6 +833,7 @@ export type EdgeAccount = {
   // Currency wallets:
   +activeWalletIds: string[],
   +archivedWalletIds: string[],
+  +hiddenWalletIds: string[],
   +currencyWallets: { [walletId: string]: EdgeCurrencyWallet },
   createCurrencyWallet(
     type: string,

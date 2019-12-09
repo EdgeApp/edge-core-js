@@ -75,7 +75,7 @@ function loadWalletList(
     const walletStates = {}
 
     files.forEach(file => {
-      const { SortIndex, Archived, BitcoinSeed, MK, SyncKey } = file.json
+      const { SortIndex, Archived, Hidden, BitcoinSeed, MK, SyncKey } = file.json
 
       const dataKey = base16.parse(MK)
       const bitcoinKey = base16.parse(BitcoinSeed)
@@ -92,6 +92,7 @@ function loadWalletList(
       walletStates[keyInfo.id] = {
         sortIndex: SortIndex,
         archived: Archived,
+        hidden: Hidden,
         deleted: false
       }
     })
@@ -108,8 +109,8 @@ function loadWalletStates(folder): Promise<EdgeWalletStates> {
     const keyStates = {}
 
     files.forEach(file => {
-      const { id, archived, deleted, sortIndex } = file.json
-      keyStates[id] = { archived, deleted, sortIndex }
+      const { id, archived, hidden, deleted, sortIndex } = file.json
+      keyStates[id] = { archived, hidden, deleted, sortIndex }
     })
 
     return keyStates
@@ -191,7 +192,7 @@ export async function changeWalletStates(
   ).folder('Keys')
   await Promise.all(
     walletIds.map(walletId => {
-      const { archived, deleted, sortIndex } = toWrite[walletId]
+      const { archived, hidden, deleted, sortIndex } = toWrite[walletId]
       const walletIdHash = hashStorageWalletFilename(
         ai.props.state,
         accountWalletInfo.id,
@@ -199,7 +200,7 @@ export async function changeWalletStates(
       )
       return keyFolder
         .file(`${walletIdHash}.json`)
-        .setText(JSON.stringify({ archived, deleted, sortIndex, id: walletId }))
+        .setText(JSON.stringify({ archived, hidden, deleted, sortIndex, id: walletId }))
     })
   )
 
