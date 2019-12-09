@@ -35,6 +35,7 @@ export type AccountState = {
   +currencyWalletIds: string[],
   +activeWalletIds: string[],
   +archivedWalletIds: string[],
+  +hiddenWalletIds: string[],
   +keysLoaded: boolean,
   +legacyWalletInfos: EdgeWalletInfo[],
   +walletInfos: WalletInfoMap,
@@ -106,6 +107,7 @@ const account = buildReducer({
         appIds: appIdMap[info.id],
         archived: false,
         deleted: false,
+        hidden: false,
         sortIndex: walletInfos.length,
         ...walletStates[info.id],
         ...info
@@ -156,6 +158,14 @@ const account = buildReducer({
     (next: AccountNext) => next.self.keysLoaded,
     (walletInfos, ids, keysLoaded): string[] =>
       keysLoaded ? ids.filter(id => walletInfos[id].archived) : []
+  ),
+
+  hiddenWalletIds: memoizeReducer(
+    (next: AccountNext) => next.self.walletInfos,
+    (next: AccountNext) => next.self.currencyWalletIds,
+    (next: AccountNext) => next.self.keysLoaded,
+    (walletInfos, ids, keysLoaded): string[] =>
+      keysLoaded ? ids.filter(id => walletInfos[id].hidden) : []
   ),
 
   keysLoaded(state = false, action: RootAction): boolean {

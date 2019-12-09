@@ -295,6 +295,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     get archivedWalletIds(): string[] {
       return ai.props.state.accounts[accountId].archivedWalletIds
     },
+    get hiddenWalletIds(): string[] {
+      return ai.props.state.accounts[accountId].hiddenWalletIds
+    },
     get currencyWallets(): { [walletId: string]: EdgeCurrencyWallet } {
       return ai.props.output.accounts[accountId].currencyWallets
     },
