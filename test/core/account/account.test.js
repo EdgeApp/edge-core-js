@@ -1,10 +1,10 @@
 // @flow
 
+import { makeAssertLog } from 'assert-log'
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { type EdgeAccount, makeFakeEdgeWorld } from '../../../src/index.js'
-import { makeAssertLog } from '../../assert-log.js'
 import { expectRejection } from '../../expect-rejection.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
@@ -23,9 +23,9 @@ describe('account', function() {
 
     const log = makeAssertLog()
     account.watch('allKeys', () => log('called'))
-    log.assert([])
+    log.assert()
     await account.createWallet('wallet:fakecoin')
-    log.assert(['called'])
+    log.assert('called')
   })
 
   it('find repo', async function() {
@@ -278,7 +278,7 @@ describe('account', function() {
 
     account.watch('loggedIn', loggedIn => log(loggedIn))
     await account.logout()
-    log.assert(['false'])
+    log.assert('false')
     expect(account.loggedIn).equals(false)
     expect(account.username).equals('js test 0')
   })

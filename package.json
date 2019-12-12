@@ -92,6 +92,7 @@
     "@babel/runtime": "^7.0.0",
     "@typescript-eslint/eslint-plugin": ">=2.0.0",
     "@typescript-eslint/parser": "^2.0.0",
+    "assert-log": "^0.2.1",
     "babel-eslint": ">=10.0.0",
     "babel-loader": "^8.0.5",
     "babel-plugin-transform-fake-error-class": "^0.1.0",
