@@ -48,13 +48,6 @@ export type EdgePluginMap<Value> = {
 // Node.js randomBytes function:
 export type EdgeRandomFunction = (bytes: number) => Uint8Array
 
-// The only subset of `Console` that Edge core uses:
-export type EdgeConsole = {
-  error(...data: any[]): void,
-  info(...data: any[]): void,
-  warn(...data: any[]): void
-}
-
 // The scrypt function Edge expects:
 export type EdgeScryptFunction = (
   data: Uint8Array,
@@ -76,11 +69,12 @@ export type EdgeIo = {
   +scrypt: EdgeScryptFunction,
 
   // Local io:
-  +console: EdgeConsole,
   +disklet: Disklet,
-
-  // Networking:
   +fetch: typeof fetch,
+
+  // Deprecated:
+  // eslint-disable-next-line no-use-before-define
+  +console: EdgeConsole,
   +WebSocket: typeof WebSocket
 }
 
@@ -1050,6 +1044,13 @@ export type EdgeFakeWorld = {
 // ---------------------------------------------------------------------
 // deprecated types
 // ---------------------------------------------------------------------
+
+// The only subset of `Console` that Edge core uses:
+export type EdgeConsole = {
+  error(...data: any[]): void,
+  info(...data: any[]): void,
+  warn(...data: any[]): void
+}
 
 export type EdgeBitcoinPrivateKeyOptions = {
   format?: string,
