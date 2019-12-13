@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.16.16 (2019-12-12)
+
+- Generate TypeScript type definitions from the public Flow types.
+- Add Flow type definitions to the error types.
+- Perform the React Native polyfill more safely.
+
 ## 0.16.15 (2019-11-25)
 
 - Add an `EdgeCurrencyWallet.changeEnabledTokens` method.
