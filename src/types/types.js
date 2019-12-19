@@ -84,6 +84,19 @@ export type EdgeIo = {
   +WebSocket: typeof WebSocket
 }
 
+// logging -------------------------------------------------------------
+
+export type EdgeLogMethod = (...args: any[]) => void
+
+/**
+ * Logs a message. Call `log(message)` for normal information messages,
+ * or `log.warn(message)` / `log.error(message)` for something more severe.
+ */
+export type EdgeLog = EdgeLogMethod & {
+  +warn: EdgeLogMethod,
+  +error: EdgeLogMethod
+}
+
 // plugins -------------------------------------------------------------
 
 /**
@@ -101,6 +114,7 @@ export type EdgeCorePluginOptions = {
 
   // Access to the world outside the plugin:
   io: EdgeIo,
+  log: EdgeLog, // Plugin-scoped logging
   nativeIo: EdgeNativeIo, // Only filled in on React Native
   pluginDisklet: Disklet // Plugin-scoped local storage
 }
@@ -361,6 +375,7 @@ export type EdgeCurrencyEngineCallbacks = {
 
 export type EdgeCurrencyEngineOptions = {
   callbacks: EdgeCurrencyEngineCallbacks,
+  log: EdgeLog, // Wallet-scoped logging
   walletLocalDisklet: Disklet,
   walletLocalEncryptedDisklet: Disklet,
   userSettings: JsonObject | void

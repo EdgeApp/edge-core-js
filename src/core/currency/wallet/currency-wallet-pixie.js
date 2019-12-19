@@ -17,6 +17,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeWalletInfo
 } from '../../../types/types.js'
+import { makeLog } from '../../log/log.js'
 import {
   getCurrencyPlugin,
   getCurrencyTools
@@ -110,6 +111,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       // Start the engine:
       const engine = await plugin.makeCurrencyEngine(mergedWalletInfo, {
         callbacks: makeCurrencyWalletCallbacks(input),
+        log: makeLog(
+          input.props.io,
+          `${plugin.currencyInfo.currencyCode}-${walletInfo.id.slice(0, 2)}`
+        ),
         walletLocalDisklet,
         walletLocalEncryptedDisklet,
         userSettings
