@@ -84,17 +84,25 @@ export type EdgeIo = {
   +WebSocket: typeof WebSocket
 }
 
+// plugins -------------------------------------------------------------
+
 /**
  * On React Native, each plugin can provide a bridge to whatever native
  * io it needs.
  */
 export type EdgeNativeIo = { [packageName: string]: EdgeOtherMethods }
 
+/**
+ * All core plugins receive these options at creation time.
+ */
 export type EdgeCorePluginOptions = {
-  initOptions: JsonObject, // Load-time options (like API keys)
+  // Load-time options (like API keys) passed into the context:
+  initOptions: JsonObject,
+
+  // Access to the world outside the plugin:
   io: EdgeIo,
   nativeIo: EdgeNativeIo, // Only filled in on React Native
-  pluginDisklet: Disklet // Plugin local storage
+  pluginDisklet: Disklet // Plugin-scoped local storage
 }
 
 // ---------------------------------------------------------------------
