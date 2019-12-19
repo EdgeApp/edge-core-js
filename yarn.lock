@@ -1204,6 +1204,11 @@ asn1.js@^4.0.0:
     inherits "^2.0.1"
     minimalistic-assert "^1.0.0"
 
+assert-log@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/assert-log/-/assert-log-0.2.1.tgz#e8e69e04ae87c27f13637dcdef30aeab1c73bbe8"
+  integrity sha512-qFWYDc9KMOHlRnCSSpX4usrjY//weYc0SGRvjDwf/fPBTzpMEYP1ClwNz7whyhauCm1EGc9f/G9X6Yu9jYTiEQ==
+
 assert@^1.1.1:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/assert/-/assert-1.5.0.tgz#55c109aaf6e0aefdb3dc4b71240c70bf574b18eb"

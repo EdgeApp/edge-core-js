@@ -1,5 +1,6 @@
 // @flow
 
+import { makeAssertLog } from 'assert-log'
 import { add } from 'biggystring'
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
@@ -9,10 +10,8 @@ import {
   type EdgeCurrencyWallet,
   makeFakeEdgeWorld
 } from '../../../../src/index.js'
-import { makeAssertLog } from '../../../assert-log.js'
 import { expectRejection } from '../../../expect-rejection.js'
 import { fakeUser } from '../../../fake/fake-user.js'
-import { snooze } from '../../../snooze.js'
 
 const contextOptions = { apiKey: '', appId: '' }
 
@@ -49,7 +48,7 @@ describe('currency wallets', function() {
 
     await wallet.renameWallet('Another Name')
     assert.equal(wallet.name, 'Another Name')
-    log.assert(['Another Name'])
+    log.assert('Another Name')
   })
 
   it('has publicWalletInfo', async function() {
@@ -62,47 +61,46 @@ describe('currency wallets', function() {
   })
 
   it('triggers callbacks', async function() {
-    const throttleBug = 10 // Lines with this delay only exist as a temporary hack
-    const throttleSnooze = 50
-    const log = makeAssertLog(true)
+    const log = makeAssertLog()
     const [wallet, config] = await makeFakeCurrencyWallet()
 
     // Subscribe to the wallet:
-    wallet.on('newTransactions', txs =>
+    wallet.on('newTransactions', txs => {
       log('new', txs.map(tx => tx.txid).join(' '))
-    )
-    wallet.on('transactionsChanged', txs =>
+    })
+    wallet.on('transactionsChanged', txs => {
       log('changed', txs.map(tx => tx.txid).join(' '))
-    )
-    wallet.watch('balances', balances =>
-      log('balances', JSON.stringify(balances).replace(/"/g, ''))
-    )
-    wallet.watch('blockHeight', blockHeight => log('blockHeight', blockHeight))
-    wallet.watch('syncRatio', syncRatio => log('syncRatio', syncRatio))
+    })
+    wallet.watch('balances', balances => {
+      log('balances', balances)
+    })
+    wallet.watch('blockHeight', blockHeight => {
+      log('blockHeight', blockHeight)
+    })
+    wallet.watch('syncRatio', syncRatio => {
+      log('syncRatio', syncRatio)
+    })
 
     // Test property watchers:
-    log.assert([])
+    log.assert()
     expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '0' })
 
     await config.changeUserSettings({ tokenBalance: 30 })
-    await snooze(throttleBug)
-    log.assert(['balances {FAKE:0,TOKEN:30}'])
+    await log.waitFor(1).assert('balances { FAKE: "0", TOKEN: "30" }')
     expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '30' })
 
     await config.changeUserSettings({ blockHeight: 200 })
-    await snooze(throttleBug)
-    log.assert(['blockHeight 200'])
-    assert.equal(wallet.getBlockHeight(), 200)
+    await log.waitFor(1).assert('blockHeight 200')
     expect(wallet.blockHeight).to.equal(200)
+    assert.equal(wallet.getBlockHeight(), 200)
 
     await config.changeUserSettings({ progress: 0.123456789 })
-    await snooze(throttleBug)
+    await log.waitFor(1).assert('syncRatio 0.123456789')
     expect(wallet.syncRatio).to.equal(0.123456789)
-    log.assert(['syncRatio 0.123456789'])
 
     await config.changeUserSettings({ balance: 1234567890 })
-    await snooze(throttleBug)
-    log.assert(['balances {FAKE:1234567890,TOKEN:30}'])
+    await log.waitFor(1).assert('balances { FAKE: "1234567890", TOKEN: "30" }')
+    expect(wallet.balances).to.deep.equal({ FAKE: '1234567890', TOKEN: '30' })
 
     // New transactions:
     await config.changeUserSettings({
@@ -111,34 +109,30 @@ describe('currency wallets', function() {
         b: { nativeAmount: '100' }
       }
     })
-    log.assert(['new a b'])
+    log.assert('new a b')
 
     // Should not trigger:
-    await snooze(throttleSnooze)
     await config.changeUserSettings({ txs: {} })
-    log.assert([])
+    log.assert()
 
     // Changed transactions:
-    await snooze(throttleSnooze)
     await config.changeUserSettings({
       txs: {
         a: { nativeAmount: '2' },
         c: { nativeAmount: '200' }
       }
     })
-    log.assert(['changed a', 'new c'])
+    await log.waitFor(2).assert('changed a', 'new c')
 
     // New transaction:
-    await snooze(throttleSnooze)
     await config.changeUserSettings({ txs: { d: { nativeAmount: '200' } } })
-    log.assert(['new d'])
+    await log.waitFor(1).assert('new d')
 
     // Changes should be batched due to throttling:
     await config.changeUserSettings({ txs: { e: { nativeAmount: '200' } } })
     await config.changeUserSettings({ txs: { f: { nativeAmount: '200' } } })
     await config.changeUserSettings({ txs: { g: { nativeAmount: '200' } } })
-    await snooze(throttleSnooze)
-    log.assert(['new e f g'])
+    await log.waitFor(1).assert('new e f g')
   })
 
   it('handles tokens', async function() {
