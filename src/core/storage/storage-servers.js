@@ -1,6 +1,6 @@
 // @flow
 
-import { type EdgeIo, NetworkError } from '../../types/types.js'
+import { type EdgeIo, type EdgeLog, NetworkError } from '../../types/types.js'
 
 const syncServers = [
   'https://git3.airbitz.co',
@@ -13,14 +13,22 @@ const syncServers = [
  */
 export function syncRequest(
   io: EdgeIo,
+  log: EdgeLog,
   method: string,
   uri: string,
   body: Object
 ) {
-  return syncRequestInner(io, method, uri, body, 0)
+  return syncRequestInner(io, log, method, uri, body, 0)
 }
 
-function syncRequestInner(io, method, path, body, serverIndex) {
+function syncRequestInner(
+  io: EdgeIo,
+  log: EdgeLog,
+  method: string,
+  path: string,
+  body: Object,
+  serverIndex: number
+) {
   const opts: Object = {
     method: method,
     headers: {
@@ -33,7 +41,7 @@ function syncRequestInner(io, method, path, body, serverIndex) {
   }
 
   const uri = syncServers[serverIndex] + path
-  io.console.info(`${method} ${uri}`)
+  log(`${method} ${uri}`)
   return io
     .fetch(uri, opts)
     .then(
@@ -49,7 +57,7 @@ function syncRequestInner(io, method, path, body, serverIndex) {
     )
     .catch(e => {
       if (serverIndex + 1 < syncServers.length) {
-        return syncRequestInner(io, method, path, body, serverIndex + 1)
+        return syncRequestInner(io, log, method, path, body, serverIndex + 1)
       } else {
         throw e
       }

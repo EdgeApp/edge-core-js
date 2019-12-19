@@ -53,10 +53,10 @@ export function syncStorageWallet(
   ai: ApiInput,
   walletId: string
 ): Promise<string[]> {
-  const { dispatch, io, state } = ai.props
+  const { dispatch, io, log, state } = ai.props
   const { paths, status } = state.storageWallets[walletId]
 
-  return syncRepo(io, paths, { ...status }).then(({ changes, status }) => {
+  return syncRepo(io, log, paths, { ...status }).then(({ changes, status }) => {
     dispatch({
       type: 'STORAGE_WALLET_SYNCED',
       payload: { id: walletId, changes: Object.keys(changes), status }

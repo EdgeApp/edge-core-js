@@ -33,7 +33,7 @@ function makeThrottledTxCallback(
   callback: (txArray: EdgeTransaction[]) => mixed
 ) {
   const walletId = input.props.id
-  const { console } = input.props.io
+  const { log } = input.props
 
   let delayCallback = false
   let lastCallbackTime = 0
@@ -41,7 +41,7 @@ function makeThrottledTxCallback(
 
   return (txArray: EdgeTransaction[]) => {
     if (delayCallback) {
-      console.info(`throttledTxCallback delay, walletId: ${walletId}`)
+      log(`throttledTxCallback delay, walletId: ${walletId}`)
       pendingTxs.push(...txArray)
     } else {
       const now = Date.now()
@@ -49,7 +49,7 @@ function makeThrottledTxCallback(
         lastCallbackTime = now
         callback(txArray)
       } else {
-        console.info(`throttledTxCallback delay, walletId: ${walletId}`)
+        log(`throttledTxCallback delay, walletId: ${walletId}`)
         delayCallback = true
         pendingTxs = txArray
         setTimeout(() => {

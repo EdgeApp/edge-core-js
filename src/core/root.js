@@ -11,6 +11,7 @@ import {
   type EdgeNativeIo
 } from '../types/types.js'
 import { type RootAction } from './actions.js'
+import { makeLog } from './log/log.js'
 import { watchPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
@@ -66,6 +67,7 @@ export async function makeContext(
   const closePlugins = watchPlugins(io, nativeIo, pluginsInit, redux.dispatch)
 
   // Start the pixie tree:
+  const log = makeLog(io, 'edge-core')
   const mirror = { output: {} }
   const closePixie = attachPixie(
     redux,
@@ -79,6 +81,7 @@ export async function makeContext(
           redux.dispatch({ type: 'CLOSE' })
         },
         io,
+        log,
         onError: error => {
           if (mirror.output.context && mirror.output.context.api) {
             emit(mirror.output.context.api, 'error', error)
@@ -86,7 +89,7 @@ export async function makeContext(
         }
       })
     ),
-    e => console.error(e),
+    e => log.error(e),
     output => (mirror.output = output)
   )
 

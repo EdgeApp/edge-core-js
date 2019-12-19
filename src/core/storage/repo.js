@@ -9,7 +9,7 @@ import {
 } from 'disklet'
 import { base16 } from 'rfc4648'
 
-import { type EdgeIo } from '../../types/types.js'
+import { type EdgeIo, type EdgeLog } from '../../types/types.js'
 import { sha256 } from '../../util/crypto/crypto.js'
 import { base58 } from '../../util/encoding.js'
 import { encryptDisklet } from './encrypt-disklet.js'
@@ -90,6 +90,7 @@ export function saveChanges(
  */
 export function syncRepo(
   io: EdgeIo,
+  log: EdgeLog,
   paths: StorageWalletPaths,
   status: StorageWalletStatus
 ): Promise<SyncResult> {
@@ -116,7 +117,7 @@ export function syncRepo(
     }
 
     // Make the request:
-    return syncRequest(io, method, path, request).then(reply => {
+    return syncRequest(io, log, method, path, request).then(reply => {
       const { changes = {}, hash } = reply
 
       // Save the incoming changes into our `data` folder:

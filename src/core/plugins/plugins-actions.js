@@ -66,12 +66,13 @@ export function watchPlugins(
       if (!initOptions) continue
 
       // Figure out what kind of object this is:
+      const log = makeLog(io, pluginName)
       try {
         if (typeof plugin === 'function') {
           const opts: EdgeCorePluginOptions = {
             initOptions: typeof initOptions === 'object' ? initOptions : {},
             io,
-            log: makeLog(io, pluginName),
+            log,
             nativeIo,
             pluginDisklet: navigateDisklet(io.disklet, 'plugins/' + pluginName)
           }
@@ -85,7 +86,7 @@ export function watchPlugins(
         }
       } catch (error) {
         // Show the error but keep going:
-        io.console.error(error)
+        log(error)
       }
     }
 
