@@ -155,18 +155,22 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
   watcher(input: AccountInput) {
     let lastState
-    let lastWallets
+    // let lastWallets
     let lastExchangeState
 
     return () => {
       const { selfState, selfOutput } = input.props
       if (selfState == null || selfOutput == null) return
 
+      // TODO: Remove this once update detection is reliable:
+      if (selfOutput.api != null) update(selfOutput.api)
+
       // General account state:
       if (lastState !== selfState) {
         lastState = selfState
         if (selfOutput.api != null) {
-          update(selfOutput.api)
+          // TODO: Put this back once we solve the race condition:
+          // update(selfOutput.api)
           for (const pluginName in selfOutput.api.currencyConfig) {
             update(selfOutput.api.currencyConfig[pluginName])
           }
@@ -177,10 +181,11 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       }
 
       // Wallet list:
-      if (lastWallets !== input.props.output.currency.wallets) {
-        lastWallets = input.props.output.currency.wallets
-        if (selfOutput.api != null) update(selfOutput.api)
-      }
+      // TODO: Why don't we always detect `currencyWallets` updates?
+      // if (lastWallets !== input.props.output.currency.wallets) {
+      //   lastWallets = input.props.output.currency.wallets
+      //   if (selfOutput.api != null) update(selfOutput.api)
+      // }
 
       // Exchange:
       if (lastExchangeState !== input.props.state.exchangeCache) {
