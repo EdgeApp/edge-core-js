@@ -13,7 +13,7 @@ export const brokenExchangePlugin: EdgeRatePlugin = {
     displayName: 'BrokenExchange'
   },
 
-  fetchRates(pairs) {
+  fetchRates(pairs: EdgeRateHint[]) {
     throw new Error('boom!')
   }
 }

@@ -3,21 +3,29 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { type EdgeLobby, makeFakeEdgeWorld } from '../../../src/index.js'
+import {
+  type EdgeAccount,
+  type EdgeFakeWorld,
+  type EdgeLobby,
+  makeFakeEdgeWorld
+} from '../../../src/index.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
 
-async function simulateRemoteApproval(world, lobbyId: string) {
+async function simulateRemoteApproval(
+  world: EdgeFakeWorld,
+  lobbyId: string
+): Promise<void> {
   const context = await world.makeEdgeContext(contextOptions)
   const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
   const lobby: EdgeLobby = await account.fetchLobby(lobbyId)
   const { loginRequest } = lobby
-  if (!loginRequest) throw new Error('No login request')
+  if (loginRequest == null) throw new Error('No login request')
   expect(loginRequest.appId).equals('test-child')
 
-  return loginRequest.approve()
+  await loginRequest.approve()
 }
 
 describe('edge login', function() {
@@ -29,11 +37,11 @@ describe('edge login', function() {
       cleanDevice: true
     })
 
-    const account = await new Promise((resolve, reject) => {
+    const account: EdgeAccount = await new Promise((resolve, reject) => {
       context.on('login', account => resolve(account))
       context.on('loginError', ({ error }) => reject(error))
 
-      return context
+      context
         .requestEdgeLogin({ displayName: 'test suite' })
         .then(pending => simulateRemoteApproval(world, pending.id))
         .catch(reject)

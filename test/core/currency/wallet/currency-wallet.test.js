@@ -27,7 +27,7 @@ async function makeFakeCurrencyWallet(): Promise<
 
   // Wait for the wallet to load:
   const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
-  if (!walletInfo) throw new Error('Broken test account')
+  if (walletInfo == null) throw new Error('Broken test account')
   const wallet = await account.waitForCurrencyWallet(walletInfo.id)
   const config = account.currencyConfig.fakecoin
   return [wallet, config]

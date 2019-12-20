@@ -10,7 +10,7 @@ describe('SNRP calculation', function() {
   const salt = new Uint8Array(32)
   const saltHex = base16.stringify(salt)
 
-  it('basic functionality', async function() {
+  it('basic functionality', function() {
     // Typical desktop with JS + V8:
     expect(calcSnrpForTarget(salt, 32, 2000)).deep.equals({
       salt_hex: saltHex,

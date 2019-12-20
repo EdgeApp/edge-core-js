@@ -8,7 +8,7 @@ import { expect } from 'chai'
 export function expectRejection(
   promise: Promise<mixed>,
   message?: string
-): Promise<mixed> {
+): Promise<void> {
   return promise.then(
     ok => {
       throw new Error('Expecting this promise to reject')

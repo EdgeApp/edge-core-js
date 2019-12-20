@@ -4,14 +4,21 @@ import { makeAssertLog } from 'assert-log'
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { type EdgeAccount, makeFakeEdgeWorld } from '../../../src/index.js'
+import {
+  type EdgeAccount,
+  type EdgeWalletInfoFull,
+  makeFakeEdgeWorld
+} from '../../../src/index.js'
 import { expectRejection } from '../../expect-rejection.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const plugins = { fakecoin: true }
 const contextOptions = { apiKey: '', appId: '', plugins }
 
-function findWallet(walletInfos, type) {
+function findWallet(
+  walletInfos: EdgeWalletInfoFull[],
+  type: string
+): EdgeWalletInfoFull | void {
   return walletInfos.find(info => info.type === type)
 }
 
@@ -35,7 +42,7 @@ describe('account', function() {
 
     const { allKeys } = account
     const accountRepo = findWallet(allKeys, 'account-repo:co.airbitz.wallet')
-    if (!accountRepo) throw new Error('Missing repo')
+    if (accountRepo == null) throw new Error('Missing repo')
     assert.equal(accountRepo.keys.syncKey, fakeUser.syncKey)
     assert(findWallet(allKeys, 'account-repo:blah') == null)
   })
@@ -51,7 +58,7 @@ describe('account', function() {
     }
     const id = await account.createWallet('account-repo:blah', keys)
     const info = account.allKeys.find(info => info.id === id)
-    if (!info) throw new Error('Missing key info')
+    if (info == null) throw new Error('Missing key info')
     assert.deepEqual(info.keys, keys)
   })
 
@@ -62,7 +69,7 @@ describe('account', function() {
 
     const id = await account.createWallet('wallet:fakecoin')
     const info = account.allKeys.find(info => info.id === id)
-    if (!info) throw new Error('Missing key info')
+    if (info == null) throw new Error('Missing key info')
     assert.equal(info.keys.fakeKey, 'FakePrivateKey')
   })
 
@@ -206,7 +213,7 @@ describe('account', function() {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const fakecoinWallet = account.getFirstWalletInfo('wallet:fakecoin')
-    if (!fakecoinWallet) throw new Error('Missing wallet')
+    if (fakecoinWallet == null) throw new Error('Missing wallet')
 
     // We should be able to split another type:
     expect(
@@ -216,7 +223,7 @@ describe('account', function() {
     // Do the split:
     await account.splitWalletInfo(fakecoinWallet.id, 'wallet:tulipcoin')
     const tulipWallet = account.getFirstWalletInfo('wallet:tulipcoin')
-    if (!tulipWallet) throw new Error('Missing wallet')
+    if (tulipWallet == null) throw new Error('Missing wallet')
 
     // Check the keys:
     expect(fakecoinWallet.keys.dataKey).equals(tulipWallet.keys.dataKey)
@@ -264,7 +271,7 @@ describe('account', function() {
         '0xbe8b70e1ae1200b0b8825bc027a4420b84bfd29ed6174d10d4470352ce2d4351'
     })
     const info = account.allKeys.find(info => info.id === id)
-    if (!info) throw new Error('Missing key info')
+    if (info == null) throw new Error('Missing key info')
     expect(info.keys.ethereumAddress).equals(
       '0x3b441e6D24Fd429e5A1F7EBd311F52aded6C4E89'
     )

@@ -24,7 +24,7 @@ describe('edge login lobby', function() {
 
     const decrypted = decryptLobbyReply(
       keypair,
-      encryptLobbyReply(io, pubkey, testReply)
+      encryptLobbyReply(io, Uint8Array.from(pubkey), testReply)
     )
     expect(decrypted).deep.equals(testReply)
   })
