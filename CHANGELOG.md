@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.16.17 (2019-12-19)
+
+- Work around a balance update bug.
+- Add a `hidden` wallet state.
+
 ## 0.16.16 (2019-12-12)
 
 - Generate TypeScript type definitions from the public Flow types.
