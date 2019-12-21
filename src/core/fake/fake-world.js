@@ -92,8 +92,8 @@ export function makeFakeWorld(
       return out
     },
 
-    async goOffline(offline?: boolean): Promise<mixed> {
-      fakeFetch.offline = offline || offline == null
+    async goOffline(offline: boolean = true): Promise<mixed> {
+      fakeFetch.offline = offline
     },
 
     async dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser> {

@@ -1,5 +1,11 @@
 // @flow
 
+import {
+  type EdgeFetchFunction,
+  type EdgeFetchOptions,
+  type EdgeFetchResponse
+} from '../../types/types.js'
+
 type FakeRequest = {
   body: Object | null,
   method: string,
@@ -63,14 +69,19 @@ function findRoute(method, path) {
 /**
  * Returns a fake fetch function bound to a fake DB instance.
  */
-export function makeFakeFetch(db: Object): typeof fetch {
-  const out: any = function fetch(uri, opts = {}) {
+export function makeFakeFetch(
+  db: Object
+): EdgeFetchFunction & { offline: boolean } {
+  function fetch(
+    uri: string,
+    opts: EdgeFetchOptions = {}
+  ): Promise<EdgeFetchResponse> {
     try {
       if (out.offline) throw new Error('Fake network error')
 
-      const req = {
+      const req: FakeRequest = {
         method: opts.method || 'GET',
-        body: opts.body ? JSON.parse(opts.body) : null,
+        body: typeof opts.body === 'string' ? JSON.parse(opts.body) : null,
         path: uri.replace(new RegExp('https?://[^/]*'), '')
       }
 
@@ -92,5 +103,7 @@ export function makeFakeFetch(db: Object): typeof fetch {
       return Promise.reject(e)
     }
   }
+
+  const out = Object.assign(fetch, { offline: false })
   return out
 }

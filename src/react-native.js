@@ -10,6 +10,7 @@ import {
   type EdgeContextOptions,
   type EdgeFakeUser,
   type EdgeFakeWorld,
+  type EdgeFetchOptions,
   type EdgeLoginMessages,
   type EdgeNativeIo,
   NetworkError
@@ -96,12 +97,12 @@ export async function fetchLoginMessages(
   }
 
   const uri = 'https://auth.airbitz.co/api/v2/messages'
-  const opts: RequestOptions = {
+  const opts: EdgeFetchOptions = {
     method: 'POST',
     headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: 'Token ' + apiKey
+      'content-type': 'application/json',
+      accept: 'application/json',
+      authorization: 'Token ' + apiKey
     },
     body: JSON.stringify({ loginIds: Object.keys(loginMap) })
   }

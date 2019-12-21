@@ -1,6 +1,7 @@
 // @flow
 
 import {
+  type EdgeFetchOptions,
   NetworkError,
   ObsoleteApiError,
   OtpError,
@@ -52,12 +53,12 @@ export function authRequest(
   const { state, io, log } = ai.props
   const { apiKey, uri } = state.login.server
 
-  const opts: RequestOptions = {
+  const opts: EdgeFetchOptions = {
     method: method,
     headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Authorization: `Token ${
+      'content-type': 'application/json',
+      accept: 'application/json',
+      authorization: `Token ${
         apiKey === '' ? '4248c1bf41e53b840a5fdb2c872dd3ade525e66d' : apiKey
       }`
     }
