@@ -77,7 +77,7 @@ async function approveLoginRequest(
     loginStash
   }
   return sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
-    let timeout
+    let timeout: TimeoutID | void
     const accountApi = ai.props.output.accounts[accountId].api
     if (accountApi != null) {
       accountApi.on('close', () => {
@@ -86,11 +86,11 @@ async function approveLoginRequest(
     }
 
     timeout = setTimeout(() => {
-      timeout = null
+      timeout = undefined
       syncAccount(ai, accountId)
         .then(() => {
           timeout = setTimeout(() => {
-            timeout = null
+            timeout = undefined
             syncAccount(ai, accountId).catch(e => ai.props.onError(e))
           }, 20000)
         })

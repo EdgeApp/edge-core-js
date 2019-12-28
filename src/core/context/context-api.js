@@ -38,7 +38,7 @@ import { EdgeInternalStuff } from './internal-api.js'
 export function makeContextApi(ai: ApiInput) {
   const appId = ai.props.state.login.appId
   const $internalStuff = new EdgeInternalStuff(ai)
-  let pauseTimer
+  let pauseTimer: TimeoutID | void
 
   const out: EdgeContext = {
     on: onMethod,

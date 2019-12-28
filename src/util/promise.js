@@ -25,8 +25,8 @@ export function timeout<T>(
   ms: number,
   error: Error = new Error(`Timeout of ${ms}ms exceeded`)
 ): Promise<T> {
-  const timeout = new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(error), ms)
+  const timeout: Promise<T> = new Promise((resolve, reject) => {
+    const timer: TimeoutID = setTimeout(() => reject(error), ms)
     const onDone = () => clearTimeout(timer)
     promise.then(onDone, onDone)
   })
@@ -40,18 +40,18 @@ export function timeout<T>(
  * first promise that resolves.
  * If all promises reject, rejects an array of errors.
  */
-export function fuzzyTimeout<Type>(
-  promises: Promise<Type>[],
+export function fuzzyTimeout<T>(
+  promises: Promise<T>[],
   timeoutMs: number
-): Promise<Type[]> {
+): Promise<T[]> {
   return new Promise((resolve, reject) => {
     let done = false
-    const results = []
-    const failures = []
+    const results: T[] = []
+    const failures: any[] = []
 
     // Set up the timer:
-    let timer = setTimeout(() => {
-      timer = null
+    let timer: TimeoutID | void = setTimeout(() => {
+      timer = undefined
       if (results.length > 0) {
         done = true
         resolve(results)
