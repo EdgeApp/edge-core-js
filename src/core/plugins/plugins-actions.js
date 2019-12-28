@@ -5,6 +5,7 @@ import { type Dispatch } from 'redux'
 
 import {
   type EdgeCorePlugin,
+  type EdgeCorePluginOptions,
   type EdgeCorePlugins,
   type EdgeCorePluginsInit,
   type EdgeIo,
@@ -12,6 +13,7 @@ import {
   type EdgePluginMap
 } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
+import { makeLog } from '../log/log.js'
 
 type PluginsAddedWatcher = (plugins: EdgeCorePlugins) => mixed
 type PluginsLockedWatcher = () => mixed
@@ -64,11 +66,13 @@ export function watchPlugins(
       if (!initOptions) continue
 
       // Figure out what kind of object this is:
+      const log = makeLog(io, pluginName)
       try {
         if (typeof plugin === 'function') {
-          const opts = {
+          const opts: EdgeCorePluginOptions = {
             initOptions: typeof initOptions === 'object' ? initOptions : {},
             io,
+            log,
             nativeIo,
             pluginDisklet: navigateDisklet(io.disklet, 'plugins/' + pluginName)
           }
@@ -82,7 +86,7 @@ export function watchPlugins(
         }
       } catch (error) {
         // Show the error but keep going:
-        io.console.error(error)
+        log(error)
       }
     }
 

@@ -83,7 +83,7 @@ export async function loginPassword(
   password: string,
   otpKey: string | void
 ) {
-  const { io } = ai.props
+  const { log } = ai.props
   let stashTree = getStash(ai, username)
 
   try {
@@ -92,7 +92,7 @@ export async function loginPassword(
 
     // Since we logged in offline, update the stash in the background:
     // TODO: If the user provides an OTP token, add that to the stash.
-    syncLogin(ai, loginTree, loginTree).catch(e => io.console.warn(e))
+    syncLogin(ai, loginTree, loginTree).catch(e => log.warn(e))
 
     return loginTree
   } catch (e) {

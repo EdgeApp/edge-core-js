@@ -21,7 +21,7 @@ export async function fetchSwapQuote(
   accountId: string,
   request: EdgeSwapRequest
 ): Promise<EdgeSwapQuote> {
-  const { io } = ai.props
+  const { log } = ai.props
 
   const account = ai.props.state.accounts[accountId]
   const { swapSettings, userSettings } = account
@@ -37,7 +37,7 @@ export async function fetchSwapQuote(
   return fuzzyTimeout(promises, 20000).then(
     quotes => {
       if (quotes.length < 1) throw new Error('No swap providers enabled')
-      io.console.info(
+      log(
         `${promises.length} swap quotes requested, ${
           quotes.length
         } resolved: ${JSON.stringify(quotes, null, 2)}`
@@ -67,7 +67,7 @@ export async function fetchSwapQuote(
     },
     errors => {
       if (errors.length < 1) throw new Error('No swap providers enabled')
-      io.console.info(
+      log(
         `All ${promises.length} swap quotes rejected: ${JSON.stringify(
           errors.map(error => {
             const { name, message } = error

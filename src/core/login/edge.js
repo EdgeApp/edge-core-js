@@ -53,7 +53,7 @@ async function onReply(
 ): Promise<void> {
   subscription.unsubscribe()
   const stashTree = reply.loginStash
-  const { io } = ai.props
+  const { log } = ai.props
 
   emit(ai.props.output.context.api, 'loginStart', {
     username: stashTree.username
@@ -68,7 +68,7 @@ async function onReply(
   // The Airbitz mobile will sometimes send the pin2Key in base58
   // instead of base64 due to an unfortunate bug. Fix that:
   if (child.pin2Key != null && child.pin2Key.slice(-1) !== '=') {
-    io.console.warn('Fixing base58 pin2Key')
+    log.warn('Fixing base58 pin2Key')
     child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
   }
   await saveStash(ai, stashTree)

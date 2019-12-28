@@ -23,7 +23,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
     }
 
     function dispatchPairs(pairs: ExchangePair[], source: string) {
-      input.props.io.console.info(`Exchange rates updated (${source})`)
+      input.props.log(`Exchange rates updated (${source})`)
       if (pairs.length > 0) {
         input.props.dispatch({
           type: 'EXCHANGE_PAIRS_FETCHED',
@@ -59,7 +59,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
             else dispatchPairs(pairs, pluginName)
           })
           .catch(error => {
-            input.props.io.console.info(
+            input.props.log(
               `Rate provider ${pluginName} failed: ${String(error)}`
             )
           })

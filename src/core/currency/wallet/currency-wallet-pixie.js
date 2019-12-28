@@ -17,6 +17,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeWalletInfo
 } from '../../../types/types.js'
+import { makeLog } from '../../log/log.js'
 import {
   getCurrencyPlugin,
   getCurrencyTools
@@ -110,6 +111,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       // Start the engine:
       const engine = await plugin.makeCurrencyEngine(mergedWalletInfo, {
         callbacks: makeCurrencyWalletCallbacks(input),
+        log: makeLog(
+          input.props.io,
+          `${plugin.currencyInfo.currencyCode}-${walletInfo.id.slice(0, 2)}`
+        ),
         walletLocalDisklet,
         walletLocalEncryptedDisklet,
         userSettings
@@ -182,7 +187,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       return {
         update() {
-          const { id } = input.props
+          const { id, log } = input.props
           if (
             !input.props.selfOutput ||
             !input.props.selfOutput.api ||
@@ -195,7 +200,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
           const { engine } = input.props.selfOutput
           if (engine != null && startupPromise == null) {
-            input.props.io.console.info(`${id} startEngine`)
+            log(`${id} startEngine`)
             input.props.dispatch({
               type: 'CURRENCY_ENGINE_STARTED',
               payload: { walletId: id }
@@ -209,12 +214,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         },
 
         destroy() {
-          const { id } = input.props
+          const { id, log } = input.props
           if (!input.props.selfOutput) return
 
           const { engine } = input.props.selfOutput
           if (engine != null && startupPromise != null) {
-            input.props.io.console.info(`${id} killEngine`)
+            log(`${id} killEngine`)
 
             // Wait for `startEngine` to finish if that is still going:
             startupPromise

@@ -49,7 +49,7 @@ export function authRequest(
   path: string,
   body?: {}
 ) {
-  const { state, io } = ai.props
+  const { state, io, log } = ai.props
   const { apiKey, uri } = state.login.server
 
   const opts: RequestOptions = {
@@ -72,9 +72,7 @@ export function authRequest(
     io.fetch(fullUri, opts).then(
       response => {
         const time = Date.now() - start
-        io.console.info(
-          `${method} ${fullUri} returned ${response.status} in ${time}ms`
-        )
+        log(`${method} ${fullUri} returned ${response.status} in ${time}ms`)
         return response.json().then(parseReply, jsonError => {
           throw new Error('Non-JSON reply, HTTP status ' + response.status)
         })

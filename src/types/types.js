@@ -48,13 +48,6 @@ export type EdgePluginMap<Value> = {
 // Node.js randomBytes function:
 export type EdgeRandomFunction = (bytes: number) => Uint8Array
 
-// The only subset of `Console` that Edge core uses:
-export type EdgeConsole = {
-  error(...data: any[]): void,
-  info(...data: any[]): void,
-  warn(...data: any[]): void
-}
-
 // The scrypt function Edge expects:
 export type EdgeScryptFunction = (
   data: Uint8Array,
@@ -76,12 +69,26 @@ export type EdgeIo = {
   +scrypt: EdgeScryptFunction,
 
   // Local io:
-  +console: EdgeConsole,
   +disklet: Disklet,
-
-  // Networking:
   +fetch: typeof fetch,
+
+  // Deprecated:
+  // eslint-disable-next-line no-use-before-define
+  +console: EdgeConsole,
   +WebSocket: typeof WebSocket
+}
+
+// logging -------------------------------------------------------------
+
+export type EdgeLogMethod = (...args: any[]) => void
+
+/**
+ * Logs a message. Call `log(message)` for normal information messages,
+ * or `log.warn(message)` / `log.error(message)` for something more severe.
+ */
+export type EdgeLog = EdgeLogMethod & {
+  +warn: EdgeLogMethod,
+  +error: EdgeLogMethod
 }
 
 // plugins -------------------------------------------------------------
@@ -101,6 +108,7 @@ export type EdgeCorePluginOptions = {
 
   // Access to the world outside the plugin:
   io: EdgeIo,
+  log: EdgeLog, // Plugin-scoped logging
   nativeIo: EdgeNativeIo, // Only filled in on React Native
   pluginDisklet: Disklet // Plugin-scoped local storage
 }
@@ -361,6 +369,7 @@ export type EdgeCurrencyEngineCallbacks = {
 
 export type EdgeCurrencyEngineOptions = {
   callbacks: EdgeCurrencyEngineCallbacks,
+  log: EdgeLog, // Wallet-scoped logging
   walletLocalDisklet: Disklet,
   walletLocalEncryptedDisklet: Disklet,
   userSettings: JsonObject | void
@@ -1035,6 +1044,13 @@ export type EdgeFakeWorld = {
 // ---------------------------------------------------------------------
 // deprecated types
 // ---------------------------------------------------------------------
+
+// The only subset of `Console` that Edge core uses:
+export type EdgeConsole = {
+  error(...data: any[]): void,
+  info(...data: any[]): void,
+  warn(...data: any[]): void
+}
 
 export type EdgeBitcoinPrivateKeyOptions = {
   format?: string,

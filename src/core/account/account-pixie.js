@@ -62,7 +62,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       async update() {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const accountId = input.props.id
-        const io = input.props.io
+        const { log } = input.props
         const { accountWalletInfos } = input.props.selfState
 
         const loadAllFiles = async () => {
@@ -75,20 +75,20 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         try {
           // Wait for the currency plugins (should already be loaded by now):
           await waitForPlugins(ai)
-          io.console.info('Login: currency plugins exist')
+          log('Login: currency plugins exist')
 
           // Start the repo:
           await Promise.all(
             accountWalletInfos.map(info => addStorageWallet(ai, info))
           )
-          io.console.info('Login: synced account repos')
+          log('Login: synced account repos')
 
           await loadAllFiles()
-          io.console.info('Login: loaded files')
+          log('Login: loaded files')
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))
-          io.console.info('Login: complete')
+          log('Login: complete')
         } catch (error) {
           input.props.dispatch({
             type: 'ACCOUNT_LOAD_FAILED',

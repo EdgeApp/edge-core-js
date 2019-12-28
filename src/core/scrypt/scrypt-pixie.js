@@ -115,7 +115,7 @@ export function calcSnrpForTarget(
 
 export const scrypt: TamePixie<RootProps> = combinePixies({
   makeSnrp: (input: PixieInput<RootProps>) => () => {
-    const { io } = input.props
+    const { io, log } = input.props
     let benchmark: Promise<number>
 
     function makeSnrp(targetMs: number) {
@@ -135,7 +135,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
       // Calculate an SNRP value:
       return benchmark.then(benchMs => {
         const snrp = calcSnrpForTarget(io.random(32), benchMs, targetMs)
-        io.console.info(
+        log(
           `snrp for ${targetMs}ms target: ${snrp.n} ${snrp.r} ${snrp.p} based on ${benchMs}ms benchmark`
         )
         return snrp
@@ -147,7 +147,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
   },
 
   timeScrypt: (input: PixieInput<RootProps>) => () => {
-    const { io } = input.props
+    const { io, log } = input.props
 
     // Find the best timer on this platform:
     const getTime =
@@ -165,12 +165,10 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
     ): Promise<{ hash: Uint8Array, time: number }> {
       const salt = base16.parse(snrp.salt_hex)
       const startTime = getTime()
-      io.console.info(`starting scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p}`)
+      log(`starting scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p}`)
       return io.scrypt(data, salt, snrp.n, snrp.r, snrp.p, dklen).then(hash => {
         const time = getTime() - startTime
-        io.console.info(
-          `finished scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p} in ${time}ms`
-        )
+        log(`finished scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p} in ${time}ms`)
         return { hash, time }
       })
     }
