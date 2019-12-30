@@ -84,11 +84,13 @@ export function makeContextApi(ai: ApiInput) {
       pin?: string,
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
+      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
+
       return createLogin(ai, username, {
         password,
         pin
       }).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'newAccount', opts || {})
+        return makeAccount(ai, appId, loginTree, 'newAccount', opts)
       })
     },
 
@@ -97,6 +99,8 @@ export function makeContextApi(ai: ApiInput) {
       loginKey: string,
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
+      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
+
       const stashTree = getStash(ai, username)
       const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
 
@@ -105,7 +109,7 @@ export function makeContextApi(ai: ApiInput) {
         ai.props.onError(e)
       )
 
-      return makeAccount(ai, appId, loginTree, 'keyLogin', opts || {})
+      return makeAccount(ai, appId, loginTree, 'keyLogin', opts)
     },
 
     async loginWithPassword(
@@ -113,10 +117,11 @@ export function makeContextApi(ai: ApiInput) {
       password: string,
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
-      const { otp } = opts || {} // opts can be `null`
+      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
+      const { otp } = opts
 
       return loginPassword(ai, username, password, otp).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'passwordLogin', opts || {})
+        return makeAccount(ai, appId, loginTree, 'passwordLogin', opts)
       })
     },
 
@@ -133,10 +138,11 @@ export function makeContextApi(ai: ApiInput) {
       pin: string,
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
-      const { otp } = opts || {} // opts can be `null`
+      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
+      const { otp } = opts
 
       return loginPin2(ai, appId, username, pin, otp).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'pinLogin', opts || {})
+        return makeAccount(ai, appId, loginTree, 'pinLogin', opts)
       })
     },
 
@@ -155,7 +161,8 @@ export function makeContextApi(ai: ApiInput) {
       answers: string[],
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
-      const { otp } = opts || {} // opts can be `null`
+      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
+      const { otp } = opts
 
       return loginRecovery2(
         ai,
@@ -164,7 +171,7 @@ export function makeContextApi(ai: ApiInput) {
         answers,
         otp
       ).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'recoveryLogin', opts || {})
+        return makeAccount(ai, appId, loginTree, 'recoveryLogin', opts)
       })
     },
 
