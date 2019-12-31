@@ -102,16 +102,14 @@ export function requestEdgeLogin(
   }
 
   return makeLobby(ai, request).then(lobby => {
-    const subscription = lobby.subscribe(
-      reply => {
-        try {
-          onReply(ai, subscription, reply, appId, opts)
-        } catch (e) {
-          emit(ai.props.output.context.api, 'loginError', { e })
-        }
-      },
-      error => emit(ai.props.output.context.api, 'loginError', { error })
-    )
+    function handleError(error: any): void {
+      emit(ai.props.output.context.api, 'loginError', { error })
+    }
+    function handleReply(reply: mixed): void {
+      onReply(ai, subscription, reply, appId, opts).catch(handleError)
+    }
+    const subscription = lobby.subscribe(handleReply, handleError)
+
     return new PendingEdgeLogin(ai, lobby.lobbyId, subscription)
   })
 }
