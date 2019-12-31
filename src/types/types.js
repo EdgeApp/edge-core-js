@@ -114,6 +114,9 @@ export type EdgeIo = {
   +disklet: Disklet,
   +fetch: EdgeFetchFunction,
 
+  // This is only present if the platform has some way to avoid CORS:
+  +fetchCors?: EdgeFetchFunction,
+
   // Deprecated:
   // eslint-disable-next-line no-use-before-define
   +console: EdgeConsole,
