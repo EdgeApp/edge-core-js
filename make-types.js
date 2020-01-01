@@ -7,7 +7,7 @@ const eslint = require('eslint')
 function jsToTs(code) {
   const output = code
     // Change `+x` to `readonly x`:
-    .replace(/(\n *)\+([_a-zA-Z]+)/g, '$1readonly $2')
+    .replace(/(\n *)\+(\[?[_a-zA-Z]+)/g, '$1readonly $2')
     // Fix differently-named types:
     .replace(/\bmixed\b/g, 'unknown')
     .replace(/\| void\b/g, '| undefined')

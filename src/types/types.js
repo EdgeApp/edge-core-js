@@ -33,7 +33,7 @@ export type JsonObject = {
 
 /** A collection of unknown extra methods exposed by a plugin. */
 export type EdgeOtherMethods = {
-  [name: string]: any
+  +[name: string]: any
 }
 
 /** We frequently index things by pluginId, so provide a helper. */

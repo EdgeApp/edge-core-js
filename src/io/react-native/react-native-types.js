@@ -13,11 +13,11 @@ import {
 } from '../../types/types.js'
 
 export type ClientIo = {
-  console: EdgeConsole,
-  disklet: Disklet,
+  +console: EdgeConsole,
+  +disklet: Disklet,
 
-  entropy: string, // base64
-  scrypt: EdgeScryptFunction
+  +entropy: string, // base64
+  +scrypt: EdgeScryptFunction
 }
 
 export type WorkerApi = {
