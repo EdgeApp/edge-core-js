@@ -5,6 +5,7 @@ import {
   type EdgeFetchOptions,
   type EdgeFetchResponse
 } from '../../types/types.js'
+import { type SimpleResponse, wrapResponse } from '../../util/fetch-response.js'
 
 type FakeRequest = {
   body: Object | null,
@@ -12,32 +13,8 @@ type FakeRequest = {
   path: string
 }
 
-export class FakeResponse {
-  body: string
-  status: number
-  ok: boolean
-
-  constructor(body: string = '', opts: { status?: number } = {}) {
-    this.body = body
-    this.status = opts.status || 200
-    this.ok = this.status >= 200 && this.status < 300
-  }
-
-  json() {
-    try {
-      return Promise.resolve(JSON.parse(this.body))
-    } catch (e) {
-      return Promise.reject(e)
-    }
-  }
-
-  text() {
-    return Promise.resolve(this.body)
-  }
-}
-
 // The db is passed as `this`.
-type Handler = (req: FakeRequest) => FakeResponse | void
+type Handler = (req: FakeRequest) => SimpleResponse | void
 
 const routes: Array<{ method: string, path: RegExp, handler: Handler }> = []
 
@@ -58,7 +35,7 @@ export function addRoute(method: string, path: string, ...handlers: Handler[]) {
 /**
  * Finds all matching handlers in the routing table.
  */
-function findRoute(method, path) {
+function findRoute(method, path): Handler[] {
   return routes
     .filter(route => {
       return route.method === method && route.path.test(path)
@@ -89,7 +66,7 @@ export function makeFakeFetch(
       for (const handler of handlers) {
         const out = handler.call(db, req)
         if (out != null) {
-          return Promise.resolve(out)
+          return Promise.resolve(wrapResponse(out))
         }
       }
       const body = {
@@ -97,7 +74,7 @@ export function makeFakeFetch(
         message: `Unknown API endpoint ${req.path}`
       }
       return Promise.resolve(
-        new FakeResponse(JSON.stringify(body), { status: 404 })
+        wrapResponse({ body: JSON.stringify(body), status: 404 })
       )
     } catch (e) {
       return Promise.reject(e)

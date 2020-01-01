@@ -1,7 +1,7 @@
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { filterObject, softCat } from '../../util/util.js'
 import { loginCreateColumns } from './fake-db.js'
-import { addRoute, FakeResponse } from './fake-fetch.js'
+import { addRoute } from './fake-fetch.js'
 
 const OTP_RESET_TOKEN = 'Super secret reset token'
 
@@ -25,7 +25,7 @@ function makeResponse(results) {
   if (results != null) {
     reply.results = results
   }
-  return new FakeResponse(JSON.stringify(reply))
+  return { body: JSON.stringify(reply) }
 }
 
 function makeErrorResponse(code, message = '', status = 500) {
@@ -33,7 +33,7 @@ function makeErrorResponse(code, message = '', status = 500) {
     status_code: code,
     message: message || 'Server error'
   }
-  return new FakeResponse(JSON.stringify(body), { status })
+  return { body: JSON.stringify(body), status }
 }
 
 function makeOtpErrorResponse(status = 500) {
@@ -44,7 +44,7 @@ function makeOtpErrorResponse(status = 500) {
       otp_reset_auth: OTP_RESET_TOKEN
     }
   }
-  return new FakeResponse(JSON.stringify(body), { status })
+  return { body: JSON.stringify(body), status }
 }
 
 // Authentication middleware: ----------------------------------------------
@@ -505,7 +505,7 @@ addRoute('POST', '/api/v2/lobby/.*', function(req) {
 addRoute('GET', '/api/v2/lobby/.*', function(req) {
   const pubkey = req.path.split('/')[4]
   if (this.db.lobbies[pubkey] == null) {
-    return new FakeResponse(`Cannot find lobby "${pubkey}"`, { status: 404 })
+    return { body: `Cannot find lobby "${pubkey}"`, status: 404 }
   }
   return makeResponse(this.db.lobbies[pubkey])
 })
@@ -544,7 +544,7 @@ function storeRoute(req) {
 
   const repo = this.repos[syncKey]
   if (repo == null) {
-    return new FakeResponse('Cannot find repo ' + syncKey, { status: 404 })
+    return { body: 'Cannot find repo ' + syncKey, status: 404 }
   }
 
   switch (req.method) {
@@ -553,16 +553,16 @@ function storeRoute(req) {
       for (const change of Object.keys(changes)) {
         repo[change] = changes[change]
       }
-      return new FakeResponse(
-        JSON.stringify({
+      return {
+        body: JSON.stringify({
           changes: repo,
           hash: '1111111111111111111111111111111111111111'
         })
-      )
+      }
     }
 
     case 'GET':
-      return new FakeResponse(JSON.stringify({ changes: repo }))
+      return { body: JSON.stringify({ changes: repo }) }
   }
 }
 
