@@ -49,7 +49,7 @@ export function authRequest(
   method: string,
   path: string,
   body?: {}
-) {
+): Promise<any> {
   const { state, io, log } = ai.props
   const { apiKey, serverUri } = state.login
 
@@ -69,20 +69,18 @@ export function authRequest(
 
   const start = Date.now()
   const fullUri = serverUri + path
-  return timeout(
-    io.fetch(fullUri, opts).then(
-      response => {
-        const time = Date.now() - start
-        log(`${method} ${fullUri} returned ${response.status} in ${time}ms`)
-        return response.json().then(parseReply, jsonError => {
-          throw new Error('Non-JSON reply, HTTP status ' + response.status)
-        })
-      },
-      networkError => {
-        throw new NetworkError(`Could not reach the auth server: ${path}`)
-      }
-    ),
-    30000,
-    new NetworkError('Could not reach the auth server: timeout')
+  return timeout(io.fetch(fullUri, opts), 30000).then(
+    response => {
+      const time = Date.now() - start
+      log(`${method} ${fullUri} returned ${response.status} in ${time}ms`)
+      return response.json().then(parseReply, jsonError => {
+        throw new Error('Non-JSON reply, HTTP status ' + response.status)
+      })
+    },
+    networkError => {
+      const time = Date.now() - start
+      log(`${method} ${fullUri} failed in ${time}ms, ${String(networkError)}`)
+      throw new NetworkError(`Could not reach the auth server: ${path}`)
+    }
   )
 }
