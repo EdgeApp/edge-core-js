@@ -1,5 +1,18 @@
 # edge-core-js
 
+## 0.16.18 (2020-01-02)
+
+- Type updates:
+  - Deprecate `EdgeIo.console`.
+  - Supply our own types for `EdgeIo.fetch`, which clarify our supported feature set.
+  - Fix `EdgeOtherMethods` to be read-only.
+- New features:
+  - Pass a `log` method to plugins and engines.
+  - Add an `EdgeIo.fetchCors` method on platforms that support it.
+- Fixes:
+  - Fix Edge login network error handling.
+  - Use the `log` method internally, which changes our message format.
+
 ## 0.16.17 (2019-12-19)
 
 - Work around a balance update bug.
