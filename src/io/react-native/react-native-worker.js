@@ -13,7 +13,13 @@ import {
   makeContext,
   makeFakeWorld
 } from '../../core/core.js'
-import { type EdgeIo, type EdgeNativeIo } from '../../types/types.js'
+import {
+  type EdgeFetchOptions,
+  type EdgeFetchResponse,
+  type EdgeIo,
+  type EdgeNativeIo
+} from '../../types/types.js'
+import { wrapResponse } from '../../util/fetch-response.js'
 import { type ClientIo, type WorkerApi } from './react-native-types.js'
 
 const body = document.body
@@ -43,11 +49,22 @@ function makeIo(nativeIo: EdgeNativeIo): EdgeIo {
     console,
     disklet,
 
-    fetch: (...args) => window.fetch(...args),
-    WebSocket: window.WebSocket,
-
     random: bytes => csprng.generate(bytes),
-    scrypt
+    scrypt,
+
+    // Networking:
+    fetch(uri: string, opts?: EdgeFetchOptions): Promise<EdgeFetchResponse> {
+      return window.fetch(uri, opts)
+    },
+
+    fetchCors(
+      uri: string,
+      opts: EdgeFetchOptions = {}
+    ): Promise<EdgeFetchResponse> {
+      return clientIo.fetchCors(uri, opts).then(wrapResponse)
+    },
+
+    WebSocket: window.WebSocket
   }
 }
 

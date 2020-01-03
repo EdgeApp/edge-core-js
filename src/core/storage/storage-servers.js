@@ -1,6 +1,11 @@
 // @flow
 
-import { type EdgeIo, type EdgeLog, NetworkError } from '../../types/types.js'
+import {
+  type EdgeFetchOptions,
+  type EdgeIo,
+  type EdgeLog,
+  NetworkError
+} from '../../types/types.js'
 
 const syncServers = [
   'https://git3.airbitz.co',
@@ -29,11 +34,11 @@ function syncRequestInner(
   body: Object,
   serverIndex: number
 ) {
-  const opts: Object = {
+  const opts: EdgeFetchOptions = {
     method: method,
     headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json'
+      'content-type': 'application/json',
+      accept: 'application/json'
     }
   }
   if (method !== 'GET') {

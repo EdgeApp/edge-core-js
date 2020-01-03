@@ -3,7 +3,11 @@
 import { makeLocalStorageDisklet } from 'disklet'
 
 import { fakeConsole } from '../../core/fake/fake-io.js'
-import { type EdgeIo } from '../../types/types.js'
+import {
+  type EdgeFetchOptions,
+  type EdgeFetchResponse,
+  type EdgeIo
+} from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 
 /**
@@ -36,7 +40,9 @@ export function makeBrowserIo(): EdgeIo {
     }),
 
     // Networking:
-    fetch: (...rest) => window.fetch(...rest),
+    fetch(uri: string, opts?: EdgeFetchOptions): Promise<EdgeFetchResponse> {
+      return window.fetch(uri, opts)
+    },
     WebSocket: window.WebSocket
   }
 }

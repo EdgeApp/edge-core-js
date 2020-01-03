@@ -8,16 +8,21 @@ import {
   type EdgeContextOptions,
   type EdgeFakeUser,
   type EdgeFakeWorld,
+  type EdgeFetchOptions,
   type EdgeNativeIo,
   type EdgeScryptFunction
 } from '../../types/types.js'
+import { type SimpleResponse } from '../../util/fetch-response.js'
 
 export type ClientIo = {
   +console: EdgeConsole,
   +disklet: Disklet,
 
   +entropy: string, // base64
-  +scrypt: EdgeScryptFunction
+  +scrypt: EdgeScryptFunction,
+
+  // Networking:
+  fetchCors(url: string, opts: EdgeFetchOptions): Promise<SimpleResponse>
 }
 
 export type WorkerApi = {
