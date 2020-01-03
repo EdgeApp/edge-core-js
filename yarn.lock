@@ -6249,10 +6249,10 @@ yallist@^3.0.0, yallist@^3.0.2, yallist@^3.0.3:
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-3.1.1.tgz#dbb7daf9bfd8bac9ab45ebf602b8cbad0d5d08fd"
   integrity sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==
 
-yaob@^0.3.5:
-  version "0.3.5"
-  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.5.tgz#838035a8488a2b0f1b6117db171730bdcb57a75a"
-  integrity sha512-b2r4f4r+nDZKLfDCYHCubQNe/V7SLlzLrfufYwik9FC5yiSlzTc074wQpo1Q418fhiJvfUMP74HubOEkVWgZTA==
+yaob@^0.3.6:
+  version "0.3.6"
+  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.6.tgz#84f9970d2e3629e041a791d1dea41f8a5387e91f"
+  integrity sha512-MGfSGsmQsRgWM62vPn+7NjSeU70EH78aZg5uXhLGAw94C7nMDxKJaamozTTGuiF4cwp8bsoM4cOhiDogk23INg==
   dependencies:
     rfc4648 "^1.1.0"
 

@@ -81,7 +81,7 @@
     "scrypt-js": "^2.0.3",
     "utf8": "^3.0.0",
     "ws": "^5.1.1",
-    "yaob": "^0.3.5"
+    "yaob": "^0.3.6"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
