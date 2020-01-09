@@ -47,13 +47,24 @@ export function totp(
   return hotp(base32.parse(secret, { loose: true }), now / 30, 6)
 }
 
-export function checkTotp(secret: string, otp: string): boolean {
-  const now = Date.now() / 1000
-  return (
-    otp === totp(secret, now - 1) ||
-    otp === totp(secret, now) ||
-    otp === totp(secret, now + 1)
-  )
+export function checkTotp(
+  secret: string,
+  otp: string,
+  opts: { now?: number, spread?: number } = {}
+): boolean {
+  const { now = Date.now() / 1000, spread = 1 } = opts
+  const index = now / 30
+  const secretBytes = base32.parse(secret, { loose: true })
+
+  // Try the middle:
+  if (otp === hotp(secretBytes, index, 6)) return true
+
+  // Spiral outwards:
+  for (let i = 1; i <= spread; ++i) {
+    if (otp === hotp(secretBytes, index - i, 6)) return true
+    if (otp === hotp(secretBytes, index + i, 6)) return true
+  }
+  return false
 }
 
 export function fixOtpKey(secret: string) {
