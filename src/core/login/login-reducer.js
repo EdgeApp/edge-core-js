@@ -9,19 +9,23 @@ import { type RootState } from '../root-reducer.js'
 import { type LoginStash, type WalletInfoMap } from './login-types.js'
 import { getPin2Key } from './pin2.js'
 import { getRecovery2Key } from './recovery2.js'
-import { type LoginServerState, server } from './server/login-server-reducer.js'
 
 export type LoginStashMap = { [username: string]: LoginStash }
 
 export type LoginState = {
+  +apiKey: string,
   +appId: string,
-  +server: LoginServerState,
+  +serverUri: string,
   +stashes: LoginStashMap,
   +localUsers: EdgeUserInfo[],
   +walletInfos: WalletInfoMap
 }
 
 export const login = buildReducer({
+  apiKey(state = '', action: RootAction): string {
+    return action.type === 'INIT' ? action.payload.apiKey : state
+  },
+
   appId(state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.appId : state
   },
@@ -46,7 +50,9 @@ export const login = buildReducer({
     }
   ),
 
-  server,
+  serverUri(state = '', action: RootAction): string {
+    return action.type === 'INIT' ? action.payload.authServer : state
+  },
 
   stashes(state = {}, action: RootAction): LoginStashMap {
     switch (action.type) {
