@@ -44,7 +44,7 @@ export function parseReply(json: Object) {
   }
 }
 
-export function authRequest(
+export function loginFetch(
   ai: ApiInput,
   method: string,
   path: string,

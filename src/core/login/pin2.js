@@ -7,7 +7,7 @@ import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
-import { authRequest } from './authServer.js'
+import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
 import {
   type LoginKit,
@@ -47,7 +47,7 @@ async function fetchLoginKey(
     pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
     otp
   }
-  const reply = await authRequest(ai, 'POST', '/v2/login', request)
+  const reply = await loginFetch(ai, 'POST', '/v2/login', request)
   if (reply.pin2Box == null) {
     throw new Error('Missing data for PIN v2 login')
   }

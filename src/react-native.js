@@ -3,7 +3,7 @@
 import { makeReactNativeDisklet } from 'disklet'
 import React from 'react'
 
-import { parseReply } from './core/login/authServer.js'
+import { parseReply } from './core/login/login-fetch.js'
 import { EdgeCoreBridge } from './io/react-native/react-native-webview.js'
 import {
   type EdgeContext,

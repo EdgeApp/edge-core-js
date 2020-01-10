@@ -5,8 +5,8 @@ import { base64 } from 'rfc4648'
 import { type EdgeWalletInfo, errorNames } from '../../types/types.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { type ApiInput } from '../root-pixie.js'
-import { authRequest } from './authServer.js'
 import { makeKeysKit } from './keys.js'
+import { loginFetch } from './login-fetch.js'
 import { fixUsername, hashUsername } from './login-selectors.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 import { saveStash } from './loginStore.js'
@@ -27,7 +27,7 @@ export function usernameAvailable(ai: ApiInput, username: string) {
     const request = {
       userId: base64.stringify(userId)
     }
-    return authRequest(ai, 'POST', '/v2/login', request)
+    return loginFetch(ai, 'POST', '/v2/login', request)
       .then(reply => false) // It's not available if we can hit it!
       .catch(e => {
         if (e.name !== errorNames.UsernameError) throw e
@@ -137,7 +137,7 @@ export function createLogin(
 
     const request = {}
     request.data = kit.server
-    return authRequest(ai, 'POST', kit.serverPath, request).then(reply =>
+    return loginFetch(ai, 'POST', kit.serverPath, request).then(reply =>
       saveStash(ai, kit.stash).then(() => kit.login)
     )
   })

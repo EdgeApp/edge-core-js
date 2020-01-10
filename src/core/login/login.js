@@ -12,13 +12,13 @@ import { totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import { filterObject, softCat } from '../../util/util.js'
 import { type ApiInput } from '../root-pixie.js'
-import { authRequest } from './authServer.js'
 import {
   fixWalletInfo,
   makeAccountType,
   makeKeyInfo,
   mergeKeyInfos
 } from './keys.js'
+import { loginFetch } from './login-fetch.js'
 import { getStash, hashUsername } from './login-selectors.js'
 import {
   type LoginKit,
@@ -309,7 +309,7 @@ export function applyKit(ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
   const stashTree = getStash(ai, loginTree.username)
   const request: Object = makeAuthJson(login)
   request.data = kit.server
-  return authRequest(ai, serverMethod, serverPath, request).then(reply => {
+  return loginFetch(ai, serverMethod, serverPath, request).then(reply => {
     const newLoginTree = updateTree(
       loginTree,
       login => login.loginId === loginId,
@@ -372,7 +372,7 @@ export function syncLogin(
 
   const stashTree = getStash(ai, loginTree.username)
   const request = makeAuthJson(login)
-  return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
+  return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
     const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
     const newLoginTree = makeLoginTree(
       newStashTree,
@@ -417,7 +417,7 @@ export async function resetOtp(
     userId: base64.stringify(await hashUsername(ai, username)),
     otpResetAuth: resetToken
   }
-  return authRequest(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
+  return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
     // The server returns dates as ISO 8601 formatted strings:
     return new Date(reply.otpResetDate)
   })
@@ -438,7 +438,7 @@ export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
   const request = {
     loginIds: Object.keys(loginMap)
   }
-  return authRequest(ai, 'POST', '/v2/messages', request).then(reply => {
+  return loginFetch(ai, 'POST', '/v2/messages', request).then(reply => {
     const out = {}
     for (const message of reply) {
       const username = loginMap[message.loginId]

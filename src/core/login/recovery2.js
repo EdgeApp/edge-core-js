@@ -7,7 +7,7 @@ import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
-import { authRequest } from './authServer.js'
+import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
 import {
   type LoginKit,
@@ -45,7 +45,7 @@ async function fetchLoginKey(
     recovery2Auth: recovery2Auth(recovery2Key, answers),
     otp
   }
-  const reply = await authRequest(ai, 'POST', '/v2/login', request)
+  const reply = await loginFetch(ai, 'POST', '/v2/login', request)
   if (reply.recovery2Box == null) {
     throw new Error('Missing data for recovery v2 login')
   }
@@ -104,7 +104,7 @@ export function getQuestions2(
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null
   }
-  return authRequest(ai, 'POST', '/v2/login', request).then(reply => {
+  return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
     // Recovery login:
     const question2Box = reply.question2Box
     if (question2Box == null) {
@@ -194,5 +194,5 @@ export function makeRecovery2Kit(
 export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices(
   ai: ApiInput
 ) {
-  return authRequest(ai, 'POST', '/v1/questions', {})
+  return loginFetch(ai, 'POST', '/v1/questions', {})
 }

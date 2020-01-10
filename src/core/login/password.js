@@ -6,7 +6,7 @@ import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
-import { authRequest } from './authServer.js'
+import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash, hashUsername } from './login-selectors.js'
 import {
   type LoginKit,
@@ -60,7 +60,7 @@ async function fetchLoginKey(
     passwordAuth: base64.stringify(passwordAuth),
     otp
   }
-  const reply = await authRequest(ai, 'POST', '/v2/login', request)
+  const reply = await loginFetch(ai, 'POST', '/v2/login', request)
   if (reply.passwordBox == null || reply.passwordKeySnrp == null) {
     throw new Error('Missing data for online password login')
   }

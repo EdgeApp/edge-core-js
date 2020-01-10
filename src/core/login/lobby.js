@@ -8,7 +8,7 @@ import { type JsonBox, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
 import { base58, utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
-import { authRequest } from './authServer.js'
+import { loginFetch } from './login-fetch.js'
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
@@ -137,7 +137,7 @@ class ObservableLobby {
 function pollLobby(watcher: ObservableLobby) {
   const { ai, lobbyId, keypair, onReply, onError } = watcher
 
-  return authRequest(ai, 'GET', '/v2/lobby/' + lobbyId, {})
+  return loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
     .then(reply => {
       // Process any new replies that have arrived on the server:
       while (watcher.replyCount < reply.replies.length) {
@@ -180,7 +180,7 @@ export function makeLobby(
   const request = {
     data: lobbyRequest
   }
-  return authRequest(ai, 'PUT', '/v2/lobby/' + lobbyId, request).then(reply => {
+  return loginFetch(ai, 'PUT', '/v2/lobby/' + lobbyId, request).then(reply => {
     return new ObservableLobby(ai, lobbyId, keypair, period)
   })
 }
@@ -190,7 +190,7 @@ export function makeLobby(
  * @return A promise of the lobby request JSON.
  */
 export function fetchLobbyRequest(ai: ApiInput, lobbyId: string) {
-  return authRequest(ai, 'GET', '/v2/lobby/' + lobbyId, {}).then(reply => {
+  return loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {}).then(reply => {
     const lobbyRequest = reply.request
 
     // Verify the public key:
@@ -223,7 +223,7 @@ export function sendLobbyReply(
   const request = {
     data: encryptLobbyReply(io, pubkey, replyData)
   }
-  return authRequest(ai, 'POST', '/v2/lobby/' + lobbyId, request).then(
+  return loginFetch(ai, 'POST', '/v2/lobby/' + lobbyId, request).then(
     reply => null
   )
 }
