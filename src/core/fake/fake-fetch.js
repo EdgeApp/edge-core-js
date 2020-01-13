@@ -7,10 +7,11 @@ import {
 } from '../../types/types.js'
 import { type SimpleResponse, wrapResponse } from '../../util/fetch-response.js'
 
-type FakeRequest = {
-  body: Object | null,
+export type FakeRequest = {
+  body: any,
   method: string,
-  path: string
+  path: string,
+  login: any // Maybe added by middleware
 }
 
 // The db is passed as `this`.
@@ -58,15 +59,16 @@ export function makeFakeFetch(
 
       const req: FakeRequest = {
         method: opts.method || 'GET',
-        body: typeof opts.body === 'string' ? JSON.parse(opts.body) : null,
-        path: uri.replace(new RegExp('https?://[^/]*'), '')
+        body: typeof opts.body === 'string' ? JSON.parse(opts.body) : undefined,
+        path: uri.replace(new RegExp('https?://[^/]*'), ''),
+        login: undefined
       }
 
       const handlers = findRoute(req.method, req.path)
       for (const handler of handlers) {
-        const out = handler.call(db, req)
-        if (out != null) {
-          return Promise.resolve(wrapResponse(out))
+        const response = handler.call(db, req)
+        if (response != null) {
+          return Promise.resolve(wrapResponse(response))
         }
       }
       const body = {
