@@ -10,7 +10,7 @@ import {
 import { base16 } from 'rfc4648'
 
 import { type EdgeIo, type EdgeLog } from '../../types/types.js'
-import { sha256 } from '../../util/crypto/crypto.js'
+import { sha256 } from '../../util/crypto/hashes.js'
 import { base58 } from '../../util/encoding.js'
 import { encryptDisklet } from './encrypt-disklet.js'
 import {

@@ -1,10 +1,10 @@
 // @flow
 
 import aesjs from 'aes-js'
-import hashjs from 'hash.js'
 import { base16, base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
+import { sha256 } from './hashes.js'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 
@@ -47,10 +47,7 @@ export function decrypt(box: JsonBox, key: Uint8Array): Uint8Array {
   const hashStart = dataStart + dataSize + 1 + footerSize
 
   // Verify SHA-256 checksum:
-  const hash = hashjs
-    .sha256()
-    .update(raw.subarray(0, hashStart))
-    .digest()
+  const hash = sha256(raw.subarray(0, hashStart))
   const hashSize = hash.length
   for (let i = 0; i < hashSize; ++i) {
     if (raw[hashStart + i] !== hash[i]) {
@@ -119,10 +116,7 @@ export function encrypt(
   }
 
   // SHA-256 checksum:
-  const hash = hashjs
-    .sha256()
-    .update(raw.subarray(0, hashStart))
-    .digest()
+  const hash = sha256(raw.subarray(0, hashStart))
   for (let i = 0; i < hashSize; ++i) {
     raw[hashStart + i] = hash[i]
   }
@@ -141,21 +135,4 @@ export function encrypt(
     iv_hex: base16.stringify(iv),
     data_base64: base64.stringify(ciphertext)
   }
-}
-
-export function hmacSha256(data: Uint8Array, key: Uint8Array): Uint8Array {
-  const hmac = hashjs.hmac(hashjs.sha256, key)
-  return hmac.update(data).digest()
-}
-
-export function hmacSha512(data: Uint8Array, key: Uint8Array): Uint8Array {
-  const hmac = hashjs.hmac(hashjs.sha512, key)
-  return hmac.update(data).digest()
-}
-
-export function sha256(data: Uint8Array): Uint8Array {
-  return hashjs
-    .sha256()
-    .update(data)
-    .digest()
 }

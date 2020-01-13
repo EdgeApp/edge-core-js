@@ -1,7 +1,8 @@
 // @flow
 
-import hashjs from 'hash.js'
 import { base32 } from 'rfc4648'
+
+import { hmacSha1 } from './hashes.js'
 
 export function numberToBe64(number: number): Uint8Array {
   const high = Math.floor(number / 4294967296)
@@ -15,11 +16,6 @@ export function numberToBe64(number: number): Uint8Array {
     (number >> 8) & 0xff,
     number & 0xff
   ])
-}
-
-export function hmacSha1(data: Uint8Array, key: Uint8Array) {
-  const hmac = hashjs.hmac(hashjs.sha1, key)
-  return hmac.update(data).digest()
 }
 
 /**
