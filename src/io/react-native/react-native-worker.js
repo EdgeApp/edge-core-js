@@ -23,8 +23,13 @@ import { makeFetchResponse } from '../../util/http/http-to-fetch.js'
 import { type ClientIo, type WorkerApi } from './react-native-types.js'
 
 const body = document.body
-if (body != null && /debug=true/.test(window.location)) {
-  const update = () => {
+
+/**
+ * Gently pulse the background color in debug mode,
+ * to show that code is loaded & running.
+ */
+if (body != null && /debug=true/.test(window.location.search)) {
+  const update = (): void => {
     const wave = Math.abs(((Date.now() / 2000) % 2) - 1)
     const color = 0x40 + 0x80 * wave
     body.style.backgroundColor = `rgb(${color}, ${color}, ${color})`
@@ -81,7 +86,7 @@ const workerApi: WorkerApi = bridgifyObject({
 /**
  * Legacy WebView support.
  */
-function oldSendRoot() {
+function oldSendRoot(): void {
   if (window.originalPostMessage != null) {
     const reactPostMessage = window.postMessage
     window.postMessage = window.originalPostMessage

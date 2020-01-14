@@ -42,11 +42,11 @@ function fetchCors(
     const xhr = new window.XMLHttpRequest()
 
     // Event handlers:
-    function handleError() {
+    function handleError(): void {
       reject(new NetworkError(`Could not reach ${uri}`))
     }
 
-    function handleLoad() {
+    function handleLoad(): void {
       const headers = xhr.getAllResponseHeaders()
       resolve({
         body: xhr.response,
@@ -71,7 +71,7 @@ function fetchCors(
 export function makeClientIo(): Promise<ClientIo> {
   return new Promise((resolve, reject) => {
     randomBytes(32, (error, base64String) => {
-      if (error) return reject(error)
+      if (error != null) return reject(error)
 
       const out: ClientIo = {
         // Crypto:

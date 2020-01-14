@@ -2,7 +2,7 @@
 
 import '../../client-side.js'
 
-import React, { Component } from 'react'
+import React, { type Node, Component } from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
 import RNFS from 'react-native-fs'
 import { WebView } from 'react-native-webview'
@@ -14,14 +14,14 @@ import { type WorkerApi } from './react-native-types.js'
 
 type Props = {
   debug?: boolean,
-  onError(e: Object): mixed,
+  onError(e: any): mixed,
   onLoad(nativeIo: EdgeNativeIo, root: WorkerApi): Promise<mixed>,
   nativeIo?: EdgeNativeIo
 }
 
 type WebViewCallbacks = {
-  handleMessage: Function,
-  setRef: Function
+  handleMessage: (event: any) => void,
+  setRef: (element: WebView) => void
 }
 
 /**
@@ -41,8 +41,8 @@ function makeOuterWebViewBridge<Root>(
   let gatedRoot: Root | void
   let webview: WebView | void
 
-  // Gate the root object on the webview being ready:
-  const tryReleasingRoot = () => {
+  // Gate the root object on the WebView being ready:
+  function tryReleasingRoot(): void {
     if (gatedRoot != null && webview != null) {
       onRoot(gatedRoot)
       gatedRoot = undefined
@@ -50,7 +50,7 @@ function makeOuterWebViewBridge<Root>(
   }
 
   // Feed incoming messages into the YAOB bridge (if any):
-  const handleMessage = event => {
+  function handleMessage(event: any): void {
     const message = JSON.parse(event.nativeEvent.data)
     if (debug != null) console.info(`${debug} →`, message)
 
@@ -59,7 +59,7 @@ function makeOuterWebViewBridge<Root>(
     if (
       bridge != null &&
       message.events != null &&
-      message.events.find(event => event.localId === 0)
+      message.events.find(event => event.localId === 0) != null
     ) {
       bridge.close(new Error('edge-core: The WebView has been unmounted.'))
       bridge = undefined
@@ -95,8 +95,8 @@ function makeOuterWebViewBridge<Root>(
     bridge.handleMessage(message)
   }
 
-  // Listen for the webview component to mount:
-  const setRef = element => {
+  // Listen for the WebView component to mount:
+  function setRef(element: WebView): void {
     webview = element
     tryReleasingRoot()
   }
@@ -116,7 +116,7 @@ export class EdgeCoreBridge extends Component<Props> {
 
     // Set up the native IO objects:
     const nativeIoPromise = makeClientIo().then(coreIo => {
-      const bridgedIo = { 'edge-core': coreIo }
+      const bridgedIo: EdgeNativeIo = { 'edge-core': coreIo }
       for (const n in nativeIo) {
         bridgedIo[n] = bridgifyObject(nativeIo[n])
       }
@@ -134,7 +134,7 @@ export class EdgeCoreBridge extends Component<Props> {
     )
   }
 
-  render() {
+  render(): Node {
     let uri =
       Platform.OS === 'android'
         ? 'file:///android_asset/edge-core/index.html'

@@ -6,6 +6,7 @@ import {
   type EdgeBalances,
   type EdgeCurrencyCodeOptions,
   type EdgeCurrencyInfo,
+  type EdgePasswordRules,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull
 } from './types/types.js'
@@ -35,7 +36,7 @@ shareData(AccountSync.prototype, 'AccountSync')
 /**
  * Verifies that a password meets our suggested rules.
  */
-export function checkPasswordRules(password: string) {
+export function checkPasswordRules(password: string): EdgePasswordRules {
   const tooShort = password.length < 10
   const noNumber = !/[0-9]/.test(password)
   const noLowerCase = !/[a-z]/.test(password)
@@ -74,10 +75,12 @@ export class CurrencyWalletSync {
 
   getBalance(opts: EdgeCurrencyCodeOptions = {}): string {
     const { currencyCode = this.currencyInfo.currencyCode } = opts
-    return this.balances[currencyCode] || '0'
+    const balance = this.balances[currencyCode]
+    if (balance == null) return '0'
+    return balance
   }
 
-  getBlockHeight() {
+  getBlockHeight(): number {
     return this.blockHeight
   }
 

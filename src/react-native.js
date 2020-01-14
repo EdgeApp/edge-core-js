@@ -1,7 +1,7 @@
 // @flow
 
 import { makeReactNativeDisklet } from 'disklet'
-import React from 'react'
+import React, { type Node } from 'react'
 
 import { parseReply } from './core/login/login-fetch.js'
 import { EdgeCoreBridge } from './io/react-native/react-native-webview.js'
@@ -20,7 +20,7 @@ import { timeout } from './util/promise.js'
 export { makeFakeIo } from './core/fake/fake-io.js'
 export * from './types/types.js'
 
-function onErrorDefault(e: any): mixed {
+function onErrorDefault(e: any): void {
   console.error(e)
 }
 
@@ -30,17 +30,17 @@ export function MakeEdgeContext(props: {
   onError?: (e: any) => mixed,
   onLoad: (context: EdgeContext) => mixed,
   options: EdgeContextOptions
-}) {
-  const { onError = onErrorDefault, onLoad } = props
+}): Node {
+  const { debug, nativeIo, onError = onErrorDefault, onLoad } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeEdgeContext')
   }
 
   return (
     <EdgeCoreBridge
-      debug={props.debug}
-      nativeIo={props.nativeIo}
-      onError={error => onError(error)}
+      debug={debug}
+      nativeIo={nativeIo}
+      onError={onError}
       onLoad={(nativeIo, root) =>
         root.makeEdgeContext(nativeIo, props.options).then(onLoad)
       }
@@ -54,17 +54,17 @@ export function MakeFakeEdgeWorld(props: {
   onError?: (e: any) => mixed,
   onLoad: (world: EdgeFakeWorld) => mixed,
   users?: EdgeFakeUser[]
-}) {
-  const { onError = onErrorDefault, onLoad } = props
+}): Node {
+  const { debug, nativeIo, onError = onErrorDefault, onLoad } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeFakeEdgeWorld')
   }
 
   return (
     <EdgeCoreBridge
-      debug={props.debug}
-      nativeIo={props.nativeIo}
-      onError={error => onError(error)}
+      debug={debug}
+      nativeIo={nativeIo}
+      onError={onError}
       onLoad={(nativeIo, root) =>
         root.makeFakeEdgeWorld(nativeIo, props.users).then(onLoad)
       }
@@ -118,10 +118,10 @@ export async function fetchLoginMessages(
 
     return response.json().then(json => {
       const reply = parseReply(json)
-      const out = {}
+      const out: EdgeLoginMessages = {}
       for (const message of reply) {
         const username = loginMap[message.loginId]
-        if (username) out[username] = message
+        if (username != null) out[username] = message
       }
       return out
     })
