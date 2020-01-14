@@ -3,7 +3,7 @@
 import { type Disklet, type DiskletFolder, downgradeDisklet } from 'disklet'
 
 import { type EdgeIo } from '../../types/types.js'
-import { hmacSha256 } from '../../util/crypto/crypto.js'
+import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { base58, utf8 } from '../../util/encoding.js'
 import { type RootState } from '../root-reducer.js'
 import { encryptDisklet } from './encrypt-disklet.js'

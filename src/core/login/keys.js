@@ -9,7 +9,8 @@ import {
   type EdgeWalletInfo,
   type JsonObject
 } from '../../types/types.js'
-import { encrypt, hmacSha256 } from '../../util/crypto/crypto.js'
+import { encrypt } from '../../util/crypto/crypto.js'
+import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { utf8 } from '../../util/encoding.js'
 import { changeWalletStates } from '../account/account-files.js'
 import { waitForCurrencyWallet } from '../currency/currency-selectors.js'

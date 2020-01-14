@@ -6,7 +6,8 @@
 import { base64 } from 'rfc4648'
 
 import { type EdgeLoginMessages } from '../../types/types.js'
-import { decrypt, hmacSha256 } from '../../util/crypto/crypto.js'
+import { decrypt } from '../../util/crypto/crypto.js'
+import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import { filterObject, softCat } from '../../util/util.js'

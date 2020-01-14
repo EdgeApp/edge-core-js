@@ -51,7 +51,7 @@ export function authRequest(
   body?: {}
 ) {
   const { state, io, log } = ai.props
-  const { apiKey, uri } = state.login.server
+  const { apiKey, serverUri } = state.login
 
   const opts: EdgeFetchOptions = {
     method: method,
@@ -68,7 +68,7 @@ export function authRequest(
   }
 
   const start = Date.now()
-  const fullUri = uri + path
+  const fullUri = serverUri + path
   return timeout(
     io.fetch(fullUri, opts).then(
       response => {

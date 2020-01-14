@@ -1,7 +1,8 @@
 // @flow
 
-import hashjs from 'hash.js'
 import { base32 } from 'rfc4648'
+
+import { hmacSha1 } from './hashes.js'
 
 export function numberToBe64(number: number): Uint8Array {
   const high = Math.floor(number / 4294967296)
@@ -15,11 +16,6 @@ export function numberToBe64(number: number): Uint8Array {
     (number >> 8) & 0xff,
     number & 0xff
   ])
-}
-
-export function hmacSha1(data: Uint8Array, key: Uint8Array) {
-  const hmac = hashjs.hmac(hashjs.sha1, key)
-  return hmac.update(data).digest()
 }
 
 /**
@@ -51,13 +47,24 @@ export function totp(
   return hotp(base32.parse(secret, { loose: true }), now / 30, 6)
 }
 
-export function checkTotp(secret: string, otp: string): boolean {
-  const now = Date.now() / 1000
-  return (
-    otp === totp(secret, now - 1) ||
-    otp === totp(secret, now) ||
-    otp === totp(secret, now + 1)
-  )
+export function checkTotp(
+  secret: string,
+  otp: string,
+  opts: { now?: number, spread?: number } = {}
+): boolean {
+  const { now = Date.now() / 1000, spread = 1 } = opts
+  const index = now / 30
+  const secretBytes = base32.parse(secret, { loose: true })
+
+  // Try the middle:
+  if (otp === hotp(secretBytes, index, 6)) return true
+
+  // Spiral outwards:
+  for (let i = 1; i <= spread; ++i) {
+    if (otp === hotp(secretBytes, index - i, 6)) return true
+    if (otp === hotp(secretBytes, index + i, 6)) return true
+  }
+  return false
 }
 
 export function fixOtpKey(secret: string) {

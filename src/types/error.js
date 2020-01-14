@@ -137,13 +137,17 @@ export class OtpError extends Error {
   resetToken: string | void
   resetDate: Date | void
 
-  constructor(resultsJson: any = {}, message: string = 'Invalid OTP token') {
+  constructor(resultsJson: any, message: string = 'Invalid OTP token') {
     super(message)
     this.name = this.type = errorNames.OtpError
-    this.resetToken = resultsJson.otp_reset_auth
-    if (resultsJson.otp_timeout_date != null) {
+    if (resultsJson != null) {
+      if (typeof resultsJson.otp_reset_auth === 'string') {
+        this.resetToken = resultsJson.otp_reset_auth
+      }
       // The server returns dates as ISO 8601 formatted strings:
-      this.resetDate = new Date(resultsJson.otp_timeout_date)
+      if (typeof resultsJson.otp_timeout_date === 'string') {
+        this.resetDate = new Date(resultsJson.otp_timeout_date)
+      }
     }
   }
 }
@@ -162,12 +166,14 @@ export class OtpError extends Error {
 export class PasswordError extends Error {
   name: string
   type: string // deprecated
-  wait: number // seconds
+  wait: number | void // seconds
 
-  constructor(resultsJson: any = {}, message: string = 'Invalid password') {
+  constructor(resultsJson: any, message: string = 'Invalid password') {
     super(message)
     this.name = this.type = errorNames.PasswordError
-    this.wait = resultsJson.wait_seconds
+    if (resultsJson != null && typeof resultsJson.wait_seconds === 'number') {
+      this.wait = resultsJson.wait_seconds
+    }
   }
 }
 

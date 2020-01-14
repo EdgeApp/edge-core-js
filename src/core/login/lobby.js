@@ -4,13 +4,8 @@ import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
-import {
-  type JsonBox,
-  decrypt,
-  encrypt,
-  hmacSha256,
-  sha256
-} from '../../util/crypto/crypto.js'
+import { type JsonBox, decrypt, encrypt } from '../../util/crypto/crypto.js'
+import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
 import { base58, utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
 import { authRequest } from './authServer.js'
