@@ -9,7 +9,7 @@ import { utf8 } from '../../../src/util/encoding.js'
 
 describe('hotp', function() {
   it('converts numbers to bytes', function() {
-    const cases = [
+    const cases: Array<[number, string]> = [
       // Powers of 2, plus 1:
       [1, '0000000000000001'],
       [257, '0000000000000101'],
@@ -36,7 +36,7 @@ describe('hotp', function() {
       [-9007199254740992, 'FFE0000000000000']
     ]
     for (const [number, hex] of cases) {
-      expect(base16.stringify(numberToBe64(number))).equals(hex)
+      expect(numberToBe64(number)).deep.equals(base16.parse(hex))
     }
   })
 
