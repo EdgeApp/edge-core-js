@@ -1,6 +1,9 @@
 import { StoreEnhancer } from 'redux'
 import { Bridge } from 'yaob'
 
+import { NativeBridge } from './io/react-native/native-bridge'
+import { EdgeCorePlugins } from './types/types'
+
 interface EnhancerOptions {
   name?: string
 }
@@ -13,12 +16,12 @@ declare global {
      * Plugins call this to register themselves with the core.
      * We call `lockEdgeCorePlugins` ourselves on React Native.
      */
-    addEdgeCorePlugins?: (plugins: any) => void
+    addEdgeCorePlugins?: (plugins: EdgeCorePlugins) => void
 
     /**
      * Native code calls this bridge to pass back results from IO methods.
      */
-    nativeBridge: any
+    nativeBridge: NativeBridge
 
     /**
      * Native code calls this bridge to pass in messages from React Native.

@@ -77,13 +77,13 @@ const asState = asObject({
  * Currency plugin transaction engine.
  */
 class FakeCurrencyEngine {
-  _walletId: string
-  callbacks: EdgeCurrencyEngineCallbacks
-  running: boolean
-  state: State
+  private readonly walletId: string
+  private readonly callbacks: EdgeCurrencyEngineCallbacks
+  private running: boolean
+  private readonly state: State
 
   constructor(walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
-    this._walletId = walletInfo.id
+    this.walletId = walletInfo.id
     this.callbacks = opts.callbacks
     this.running = false
     this.state = {
@@ -95,10 +95,10 @@ class FakeCurrencyEngine {
       txs: {}
     }
     // Fire initial callbacks:
-    this._updateState(this.state)
+    this.updateState(this.state)
   }
 
-  _updateState(settings: Partial<State>): void {
+  private updateState(settings: Partial<State>): void {
     const state = this.state
     const {
       onAddressesChecked = nop,
@@ -148,7 +148,7 @@ class FakeCurrencyEngine {
           ...blankTx,
           ...settings.txs[txid],
           txid,
-          walletId: this._walletId
+          walletId: this.walletId
         }
         const oldTx = state.txs[txid]
 
@@ -163,7 +163,7 @@ class FakeCurrencyEngine {
   }
 
   async changeUserSettings(settings: JsonObject): Promise<void> {
-    await this._updateState(asState(settings))
+    await this.updateState(asState(settings))
   }
 
   // Keys:
@@ -295,7 +295,7 @@ class FakeCurrencyEngine {
       ourReceiveAddresses: [],
       signedTx: '',
       txid: 'spend',
-      walletId: this._walletId
+      walletId: this.walletId
     })
   }
 

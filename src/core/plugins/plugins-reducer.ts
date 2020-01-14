@@ -50,12 +50,9 @@ export const plugins = (
           continue
         }
 
-        // @ts-expect-error - Flow doesn't see the refinement here:
-        if (plugin.currencyInfo != null) out.currency[pluginId] = plugin
-        // @ts-expect-error
-        if (plugin.rateInfo != null) out.rate[pluginId] = plugin
-        // @ts-expect-error
-        if (plugin.swapInfo != null) out.swap[pluginId] = plugin
+        if ('currencyInfo' in plugin) out.currency[pluginId] = plugin
+        if ('rateInfo' in plugin) out.rate[pluginId] = plugin
+        if ('swapInfo' in plugin) out.swap[pluginId] = plugin
       }
       return out
     }
