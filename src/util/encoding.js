@@ -6,25 +6,11 @@ const base58Codec = baseX(
   '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 )
 
-function assertString(text) {
-  if (typeof text !== 'string') {
-    throw new Error('Input is not a string')
-  }
-}
-
-function assertData(data) {
-  if (typeof data === 'string' || data.length == null) {
-    throw new Error('Input is not data')
-  }
-}
-
 export const base58 = {
   parse(text: string): Uint8Array {
-    assertString(text)
     return base58Codec.decode(text)
   },
   stringify(data: Uint8Array | number[]): string {
-    assertData(data)
     return base58Codec.encode(data)
   }
 }
@@ -51,8 +37,6 @@ export const utf8 = {
   },
 
   stringify(data: Uint8Array | number[]): string {
-    assertData(data)
-
     // Some of our data contains terminating null bytes due to an old bug.
     // We need to filter that out here:
     const length = data[data.length - 1] === 0 ? data.length - 1 : data.length
