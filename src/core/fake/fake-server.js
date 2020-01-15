@@ -1,15 +1,16 @@
 // @flow
 
 import { checkTotp } from '../../util/crypto/hotp.js'
+import { utf8 } from '../../util/encoding.js'
+import { type FetchServer } from '../../util/http/http-to-fetch.js'
 import { type HttpResponse } from '../../util/http/http-types.js'
-import { filterObject, softCat } from '../../util/util.js'
+import { addHiddenProperties, filterObject, softCat } from '../../util/util.js'
 import {
   type DbLogin,
   type FakeDb,
   loginCreateColumns,
   makeLoginReply
 } from './fake-db.js'
-import { type FakeRequest, addRoute } from './fake-fetch.js'
 import {
   jsonResponse,
   loginResponse,
@@ -20,6 +21,29 @@ import {
 } from './fake-responses.js'
 
 const OTP_RESET_TOKEN = 'Super secret reset token'
+
+type FakeRequest = {
+  body: any,
+  method: string,
+  path: string,
+  login: DbLogin // Maybe added by middleware
+}
+
+// The db is passed as `this`.
+type Handler = (request: FakeRequest) => HttpResponse | void
+
+const routes: Array<{ method: string, path: RegExp, handler: Handler }> = []
+
+function addRoute(method: string, path: string, ...handlers: Handler[]) {
+  for (let i = 0; i < handlers.length; i++) {
+    const handler = handlers[i]
+    routes.push({
+      method,
+      path: new RegExp(`^${path}$`),
+      handler
+    })
+  }
+}
 
 // Authentication middleware: ----------------------------------------------
 
@@ -618,3 +642,36 @@ function storeRoute(req: FakeRequest): HttpResponse | void {
 
 addRoute('GET', '/api/v2/store/.*', storeRoute)
 addRoute('POST', '/api/v2/store/.*', storeRoute)
+
+/**
+ * Binds the fake server to a particular db instance.
+ */
+export function makeFakeServer(db: FakeDb): FetchServer & { offline: boolean } {
+  const serveRequest: FetchServer = request => {
+    if (out.offline) throw new Error('Fake network error')
+
+    // Translate the request:
+    const { body, method, path } = request
+    const json =
+      body.byteLength > 0
+        ? JSON.parse(utf8.stringify(new Uint8Array(body)))
+        : {}
+    const noLogin: any = undefined
+    const fakeRequest = { ...request, body: json, login: noLogin }
+
+    // Run the relevant routes:
+    for (const route of routes) {
+      if (route.method === method && route.path.test(path)) {
+        const response: HttpResponse = route.handler.call(db, fakeRequest)
+        if (response != null) return Promise.resolve(response)
+      }
+    }
+    const response = statusResponse(
+      statusCodes.notFound,
+      `Unknown API endpoint ${request.path}`
+    )
+    return Promise.resolve(response)
+  }
+  const out = addHiddenProperties(serveRequest, { offline: false })
+  return out
+}

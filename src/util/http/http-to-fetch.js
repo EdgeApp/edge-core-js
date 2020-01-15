@@ -1,11 +1,50 @@
 // @flow
 
 import {
+  type EdgeFetchFunction,
   type EdgeFetchHeaders,
+  type EdgeFetchOptions,
   type EdgeFetchResponse
 } from '../../types/types.js'
 import { utf8 } from '../encoding.js'
-import { type HttpHeaders, type HttpResponse } from './http-types.js'
+import {
+  type HttpHeaders,
+  type HttpRequest,
+  type HttpResponse,
+  type Server
+} from './http-types.js'
+
+// The specific server type `makeFetch` expects:
+export type FetchRequest = HttpRequest & {
+  +body: ArrayBuffer
+}
+
+export type FetchServer = Server<FetchRequest>
+
+/**
+ * Wraps a simple request / response function in the fetch API.
+ */
+export function makeFetch(server: FetchServer): EdgeFetchFunction {
+  return function fetch(
+    uri: string,
+    opts: EdgeFetchOptions = {}
+  ): Promise<EdgeFetchResponse> {
+    try {
+      const { body = new ArrayBuffer(0), method = 'GET', headers = {} } = opts
+
+      const request: FetchRequest = {
+        method,
+        path: uri.replace(new RegExp('https?://[^/]*'), ''),
+        version: 'HTTP/1.1',
+        headers,
+        body: typeof body === 'string' ? getArrayBuffer(utf8.parse(body)) : body
+      }
+      return server(request).then(makeFetchResponse)
+    } catch (e) {
+      return Promise.reject(e)
+    }
+  }
+}
 
 /**
  * Turns a simple response into a fetch-style Response object.
@@ -60,4 +99,13 @@ function makeFetchHeaders(headers: HttpHeaders): EdgeFetchHeaders {
     }
   }
   return out
+}
+
+/**
+ * Grabs the ArrayBuffer backing a TypedArray, making a copy if needed.
+ */
+function getArrayBuffer(view: Uint8Array): ArrayBuffer {
+  return view.byteOffset === 0 && view.byteLength === view.buffer.byteLength
+    ? view.buffer
+    : view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength)
 }

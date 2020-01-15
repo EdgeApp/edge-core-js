@@ -1,7 +1,5 @@
 // @flow
 
-import './fake-server.js'
-
 import { makeMemoryDisklet } from 'disklet'
 import { base16, base64 } from 'rfc4648'
 import { bridgifyObject, close } from 'yaob'
@@ -17,13 +15,14 @@ import {
   type EdgeNativeIo
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
+import { makeFetch } from '../../util/http/http-to-fetch.js'
 import { getInternalStuff } from '../context/internal-api.js'
 import { applyLoginReply } from '../login/login.js'
 import { makeContext } from '../root.js'
 import { makeRepoPaths, saveChanges } from '../storage/repo.js'
 import { FakeDb } from './fake-db.js'
-import { makeFakeFetch } from './fake-fetch.js'
 import { fakeConsole } from './fake-io.js'
+import { makeFakeServer } from './fake-server.js'
 
 async function saveUser(io: EdgeIo, user: EdgeFakeUser) {
   const { loginId, loginKey, username } = user
@@ -61,7 +60,7 @@ export function makeFakeWorld(
   users: EdgeFakeUser[]
 ): EdgeFakeWorld {
   const fakeDb = new FakeDb()
-  const fakeFetch = makeFakeFetch(fakeDb)
+  const fakeServer = makeFakeServer(fakeDb)
   for (const user of users) fakeDb.setupFakeUser(user)
 
   const contexts: EdgeContext[] = []
@@ -79,7 +78,7 @@ export function makeFakeWorld(
         ...io,
         console: fakeConsole,
         disklet: makeMemoryDisklet(),
-        fetch: fakeFetch
+        fetch: makeFetch(fakeServer)
       }
 
       // Populate the stashes:
@@ -93,7 +92,7 @@ export function makeFakeWorld(
     },
 
     async goOffline(offline: boolean = true): Promise<mixed> {
-      fakeFetch.offline = offline
+      fakeServer.offline = offline
     },
 
     async dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser> {
