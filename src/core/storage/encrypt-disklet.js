@@ -4,7 +4,7 @@ import { type ArrayLike, type Disklet, type DiskletListing } from 'disklet'
 import { bridgifyObject } from 'yaob'
 
 import { type EdgeIo } from '../../types/types.js'
-import { decrypt, encrypt } from '../../util/crypto/crypto.js'
+import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { utf8 } from '../../util/encoding.js'
 
 export function encryptDisklet(
@@ -25,7 +25,10 @@ export function encryptDisklet(
     },
 
     getText(path: string): Promise<string> {
-      return this.getData(path).then(data => utf8.stringify(data))
+      return disklet
+        .getText(path)
+        .then(text => JSON.parse(text))
+        .then(json => decryptText(json, dataKey))
     },
 
     list(path?: string): Promise<DiskletListing> {

@@ -6,7 +6,7 @@
 import { base64 } from 'rfc4648'
 
 import { type EdgeLoginMessages } from '../../types/types.js'
-import { decrypt } from '../../util/crypto/crypto.js'
+import { decrypt, decryptText } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
@@ -189,7 +189,7 @@ function makeLoginTreeInner(
     login.pin2Key = base64.parse(stash.pin2Key)
   }
   if (stash.pin2TextBox != null) {
-    login.pin = utf8.stringify(decrypt(stash.pin2TextBox, loginKey))
+    login.pin = decryptText(stash.pin2TextBox, loginKey)
   }
 
   // Recovery v2:
@@ -205,7 +205,7 @@ function makeLoginTreeInner(
     const rootKey = decrypt(rootKeyBox, loginKey)
     const infoKey = hmacSha256(rootKey, utf8.parse('infoKey'))
     const keys = {
-      mnemonic: utf8.stringify(decrypt(mnemonicBox, infoKey)),
+      mnemonic: decryptText(mnemonicBox, infoKey),
       rootKey: base64.stringify(rootKey)
     }
     legacyKeys.push(makeKeyInfo('wallet:bitid', keys, rootKey))
@@ -225,7 +225,7 @@ function makeLoginTreeInner(
   // Keys:
   const stashKeyBoxes = stash.keyBoxes != null ? stash.keyBoxes : []
   const keyInfos = stashKeyBoxes.map(box =>
-    JSON.parse(utf8.stringify(decrypt(box, loginKey)))
+    JSON.parse(decryptText(box, loginKey))
   )
 
   login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos]).map(walletInfo =>

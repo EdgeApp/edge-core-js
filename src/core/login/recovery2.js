@@ -2,7 +2,7 @@
 
 import { base64 } from 'rfc4648'
 
-import { decrypt, encrypt } from '../../util/crypto/crypto.js'
+import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
@@ -112,8 +112,7 @@ export function getQuestions2(
     }
 
     // Decrypt the questions:
-    const questions = decrypt(question2Box, recovery2Key)
-    return JSON.parse(utf8.stringify(questions))
+    return JSON.parse(decryptText(question2Box, recovery2Key))
   })
 }
 
