@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.16.19 (2020-01-16)
+
+- Record auth server failures in the log.
+
 ## 0.16.18 (2020-01-02)
 
 - Type updates:
