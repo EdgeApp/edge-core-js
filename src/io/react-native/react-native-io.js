@@ -7,9 +7,9 @@ import { bridgifyObject } from 'yaob'
 
 import { type EdgeFetchOptions, NetworkError } from '../../types/types.js'
 import {
-  type SimpleHeaders,
-  type SimpleResponse
-} from '../../util/fetch-response.js'
+  type HttpHeaders,
+  type HttpResponse
+} from '../../util/http/http-types.js'
 import { type ClientIo } from './react-native-types.js'
 
 const randomBytes = NativeModules.RNRandomBytes.randomBytes
@@ -17,10 +17,10 @@ const randomBytes = NativeModules.RNRandomBytes.randomBytes
 /**
  * Turns XMLHttpRequest headers into a more JSON-like structure.
  */
-function extractHeaders(headers: string): SimpleHeaders {
+function extractHeaders(headers: string): HttpHeaders {
   const pairs = headers.split('\r\n')
 
-  const out: SimpleHeaders = {}
+  const out: HttpHeaders = {}
   for (const pair of pairs) {
     const index = pair.indexOf(': ')
     if (index < 0) continue
@@ -35,7 +35,7 @@ function extractHeaders(headers: string): SimpleHeaders {
 function fetchCors(
   uri: string,
   opts: EdgeFetchOptions = {}
-): Promise<SimpleResponse> {
+): Promise<HttpResponse> {
   const { body, headers = {}, method = 'GET' } = opts
 
   return new Promise((resolve, reject) => {

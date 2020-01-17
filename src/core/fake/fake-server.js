@@ -1,7 +1,7 @@
 // @flow
 
 import { checkTotp } from '../../util/crypto/hotp.js'
-import { type SimpleResponse } from '../../util/fetch-response.js'
+import { type HttpResponse } from '../../util/http/http-types.js'
 import { filterObject, softCat } from '../../util/util.js'
 import { loginCreateColumns } from './fake-db.js'
 import { type FakeRequest, addRoute } from './fake-fetch.js'
@@ -549,7 +549,7 @@ addRoute('POST', '/api/v2/messages', function(req: FakeRequest) {
 
 // sync: -------------------------------------------------------------------
 
-function storeRoute(req: FakeRequest): SimpleResponse | void {
+function storeRoute(req: FakeRequest): HttpResponse | void {
   const elements = req.path.split('/')
   const syncKey = elements[4]
   // const hash = elements[5]

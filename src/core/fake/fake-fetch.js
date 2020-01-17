@@ -5,7 +5,8 @@ import {
   type EdgeFetchOptions,
   type EdgeFetchResponse
 } from '../../types/types.js'
-import { type SimpleResponse, wrapResponse } from '../../util/fetch-response.js'
+import { makeFetchResponse } from '../../util/http/http-to-fetch.js'
+import { type HttpResponse } from '../../util/http/http-types.js'
 import { statusCodes, statusResponse } from './fake-responses.js'
 
 export type FakeRequest = {
@@ -16,7 +17,7 @@ export type FakeRequest = {
 }
 
 // The db is passed as `this`.
-type Handler = (req: FakeRequest) => SimpleResponse | void
+type Handler = (req: FakeRequest) => HttpResponse | void
 
 const routes: Array<{ method: string, path: RegExp, handler: Handler }> = []
 
@@ -69,14 +70,14 @@ export function makeFakeFetch(
       for (const handler of handlers) {
         const response = handler.call(db, req)
         if (response != null) {
-          return Promise.resolve(wrapResponse(response))
+          return Promise.resolve(makeFetchResponse(response))
         }
       }
       const response = statusResponse(
         statusCodes.notFound,
         `Unknown API endpoint ${req.path}`
       )
-      return Promise.resolve(wrapResponse(response))
+      return Promise.resolve(makeFetchResponse(response))
     } catch (e) {
       return Promise.reject(e)
     }

@@ -1,9 +1,9 @@
 // @flow
 
 import {
-  type SimpleHeaders,
-  type SimpleResponse
-} from '../../util/fetch-response.js'
+  type HttpHeaders,
+  type HttpResponse
+} from '../../util/http/http-types.js'
 
 type LoginStatusCode = { code: number, httpStatus: number, message: string }
 
@@ -95,12 +95,12 @@ export const statusCodes = {
 }
 
 /**
- * Construct a SimpleResponse object with a JSON body.
+ * Construct an HttpResponse object with a JSON body.
  */
 export function jsonResponse(
   body: any,
-  opts: { status?: number, headers?: SimpleHeaders } = {}
-): SimpleResponse {
+  opts: { status?: number, headers?: HttpHeaders } = {}
+): HttpResponse {
   const { status = 200, headers = {} } = opts
   return {
     status,
@@ -115,7 +115,7 @@ export function jsonResponse(
 export function statusResponse(
   statusCode: LoginStatusCode = statusCodes.success,
   message?: string
-): SimpleResponse {
+): HttpResponse {
   const { code, httpStatus } = statusCode
   if (message == null) message = statusCode.message
 
@@ -126,7 +126,7 @@ export function statusResponse(
 /**
  * A success response, with payload.
  */
-export function loginResponse<Payload>(payload: Payload): SimpleResponse {
+export function loginResponse<Payload>(payload: Payload): HttpResponse {
   const { code, httpStatus, message } = statusCodes.success
   const body = { status_code: code, message, results: payload }
   return jsonResponse(body, { status: httpStatus })
@@ -138,7 +138,7 @@ export function loginResponse<Payload>(payload: Payload): SimpleResponse {
 export function otpErrorResponse(
   otpResetToken: string,
   otpResetDate?: Date
-): SimpleResponse {
+): HttpResponse {
   const { code, httpStatus, message } = statusCodes.invalidOtp
   const body = {
     status_code: code,
@@ -155,7 +155,7 @@ export function otpErrorResponse(
 /**
  * A password failure, with timeout.
  */
-export function passwordErrorResponse(wait: number): SimpleResponse {
+export function passwordErrorResponse(wait: number): HttpResponse {
   const { code, httpStatus, message } = statusCodes.invalidPassword
   const body = {
     status_code: code,

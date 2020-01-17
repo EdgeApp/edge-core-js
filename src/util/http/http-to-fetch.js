@@ -3,27 +3,20 @@
 import {
   type EdgeFetchHeaders,
   type EdgeFetchResponse
-} from '../types/types.js'
-import { utf8 } from './encoding.js'
-
-export type SimpleHeaders = { [header: string]: string }
-
-export type SimpleResponse = {
-  body?: string | ArrayBuffer,
-  headers?: SimpleHeaders,
-  status?: number
-}
+} from '../../types/types.js'
+import { utf8 } from '../encoding.js'
+import { type HttpHeaders, type HttpResponse } from './http-types.js'
 
 /**
  * Turns a simple response into a fetch-style Response object.
  */
-export function wrapResponse(response: SimpleResponse): EdgeFetchResponse {
+export function makeFetchResponse(response: HttpResponse): EdgeFetchResponse {
   const { body = '', headers = {}, status = 200 } = response
   // Use a promise wrapper to make all exceptions async:
   const bodyPromise = Promise.resolve(body)
 
   const out: EdgeFetchResponse = {
-    headers: wrapHeaders(headers),
+    headers: makeFetchHeaders(headers),
     ok: status >= 200 && status < 300,
     status,
 
@@ -49,7 +42,7 @@ export function wrapResponse(response: SimpleResponse): EdgeFetchResponse {
 /**
  * Turns a simple key-value map into a fetch-style Headers object.
  */
-function wrapHeaders(headers: SimpleHeaders): EdgeFetchHeaders {
+function makeFetchHeaders(headers: HttpHeaders): EdgeFetchHeaders {
   const out: EdgeFetchHeaders = {
     forEach(callback, thisArg) {
       Object.keys(headers).forEach(name =>
