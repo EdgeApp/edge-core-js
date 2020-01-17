@@ -6,12 +6,10 @@ import {
 } from '../types/types.js'
 import { utf8 } from './encoding.js'
 
-export type SimpleBody = ArrayBuffer | string
-
 export type SimpleHeaders = { [header: string]: string }
 
 export type SimpleResponse = {
-  body?: SimpleBody | Promise<SimpleBody>,
+  body?: string | ArrayBuffer,
   headers?: SimpleHeaders,
   status?: number
 }
@@ -21,7 +19,8 @@ export type SimpleResponse = {
  */
 export function wrapResponse(response: SimpleResponse): EdgeFetchResponse {
   const { body = '', headers = {}, status = 200 } = response
-  const bodyPromise: Promise<SimpleBody> = Promise.resolve(body)
+  // Use a promise wrapper to make all exceptions async:
+  const bodyPromise = Promise.resolve(body)
 
   const out: EdgeFetchResponse = {
     headers: wrapHeaders(headers),
