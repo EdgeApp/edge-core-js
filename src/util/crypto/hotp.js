@@ -24,7 +24,11 @@ export function numberToBe64(number: number): Uint8Array {
  * @param {*} counter The counter, C, from rfc4226
  * @param {*} digits The number of digits to generate
  */
-export function hotp(secret: Uint8Array, counter: number, digits: number) {
+export function hotp(
+  secret: Uint8Array,
+  counter: number,
+  digits: number
+): string {
   const hmac = hmacSha1(numberToBe64(counter), secret)
 
   const offset = hmac[19] & 0xf
@@ -39,6 +43,9 @@ export function hotp(secret: Uint8Array, counter: number, digits: number) {
   return (padding + text).slice(-digits)
 }
 
+/**
+ * Generates an HOTP code based on the current time.
+ */
 export function totp(
   secret: string | void,
   now: number = Date.now() / 1000
@@ -47,6 +54,10 @@ export function totp(
   return hotp(base32.parse(secret, { loose: true }), now / 30, 6)
 }
 
+/**
+ * Validates a TOTP code based on the current time,
+ * within an adjustable range.
+ */
 export function checkTotp(
   secret: string,
   otp: string,
@@ -67,6 +78,6 @@ export function checkTotp(
   return false
 }
 
-export function fixOtpKey(secret: string) {
+export function fixOtpKey(secret: string): string {
   return base32.stringify(base32.parse(secret, { loose: true }))
 }

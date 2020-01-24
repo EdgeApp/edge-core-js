@@ -6,6 +6,7 @@ import {
   type EdgeFetchResponse
 } from '../../types/types.js'
 import { type SimpleResponse, wrapResponse } from '../../util/fetch-response.js'
+import { statusCodes, statusResponse } from './fake-responses.js'
 
 export type FakeRequest = {
   body: any,
@@ -71,13 +72,11 @@ export function makeFakeFetch(
           return Promise.resolve(wrapResponse(response))
         }
       }
-      const body = {
-        status_code: 1,
-        message: `Unknown API endpoint ${req.path}`
-      }
-      return Promise.resolve(
-        wrapResponse({ body: JSON.stringify(body), status: 404 })
+      const response = statusResponse(
+        statusCodes.notFound,
+        `Unknown API endpoint ${req.path}`
       )
+      return Promise.resolve(wrapResponse(response))
     } catch (e) {
       return Promise.reject(e)
     }

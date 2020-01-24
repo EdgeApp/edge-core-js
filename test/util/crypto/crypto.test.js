@@ -1,15 +1,19 @@
 // @flow
 
-import { assert } from 'chai'
+import { expect } from 'chai'
 import { describe, it } from 'mocha'
 import { base16 } from 'rfc4648'
 
 import { makeFakeIo } from '../../../src/index.js'
-import { decrypt, encrypt } from '../../../src/util/crypto/crypto.js'
+import {
+  decrypt,
+  decryptText,
+  encrypt
+} from '../../../src/util/crypto/crypto.js'
 import { utf8 } from '../../../src/util/encoding.js'
 
 describe('encryption', function() {
-  it('decrypt existing data', function() {
+  it('decrypts existing data', function() {
     const key = base16.parse(
       '002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393'
     )
@@ -20,16 +24,16 @@ describe('encryption', function() {
       iv_hex: '96a4cd52670c13df9712fdc1b564d44b'
     }
 
-    assert.deepEqual('payload', utf8.stringify(decrypt(box, key)))
+    expect(decrypt(box, key)).deep.equals(utf8.parse('payload'))
   })
 
-  it('round-trip data', function() {
+  it('round-trips data', function() {
     const io = makeFakeIo()
     const key = base16.parse(
       '002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393'
     )
-    const data = utf8.parse('payload')
+    const data = utf8.parse('payload\0')
     const box = encrypt(io, data, key)
-    assert.deepEqual('payload', utf8.stringify(decrypt(box, key)))
+    expect(decryptText(box, key)).equals('payload')
   })
 })

@@ -4,7 +4,7 @@ import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
-import { type JsonBox, decrypt, encrypt } from '../../util/crypto/crypto.js'
+import { type JsonBox, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
 import { base58, utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -61,7 +61,7 @@ export function decryptLobbyReply(
 ): mixed {
   const pubkey = base64.parse(lobbyReply.publicKey)
   const sharedKey = deriveSharedKey(keypair, pubkey)
-  return JSON.parse(utf8.stringify(decrypt(lobbyReply.box, sharedKey)))
+  return JSON.parse(decryptText(lobbyReply.box, sharedKey))
 }
 
 /**

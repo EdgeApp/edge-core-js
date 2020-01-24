@@ -1,53 +1,20 @@
 // @flow
 
 import { checkTotp } from '../../util/crypto/hotp.js'
+import { type SimpleResponse } from '../../util/fetch-response.js'
 import { filterObject, softCat } from '../../util/util.js'
 import { loginCreateColumns } from './fake-db.js'
 import { type FakeRequest, addRoute } from './fake-fetch.js'
+import {
+  jsonResponse,
+  loginResponse,
+  otpErrorResponse,
+  passwordErrorResponse,
+  statusCodes,
+  statusResponse
+} from './fake-responses.js'
 
 const OTP_RESET_TOKEN = 'Super secret reset token'
-
-const errorCodes = {
-  success: 0,
-  error: 1,
-  accountExists: 2,
-  noAccount: 3,
-  invalidPassword: 4,
-  invalidAnswers: 5,
-  invalidApiKey: 6,
-  invalidOtp: 8,
-  conflict: 10,
-  obsolete: 1000
-}
-
-function makeResponse(results) {
-  const reply: any = {
-    status_code: 0
-  }
-  if (results != null) {
-    reply.results = results
-  }
-  return { body: JSON.stringify(reply) }
-}
-
-function makeErrorResponse(code, message = '', status = 500) {
-  const body = {
-    status_code: code,
-    message: message || 'Server error'
-  }
-  return { body: JSON.stringify(body), status }
-}
-
-function makeOtpErrorResponse(status = 500) {
-  const body = {
-    status_code: errorCodes.invalidOtp,
-    message: 'OTP error',
-    results: {
-      otp_reset_auth: OTP_RESET_TOKEN
-    }
-  }
-  return { body: JSON.stringify(body), status }
-}
 
 // Authentication middleware: ----------------------------------------------
 
@@ -59,15 +26,15 @@ function authHandler1(req: FakeRequest) {
   if (req.body.l1 != null && req.body.lp1 != null) {
     const login = this.findLoginId(req.body.l1)
     if (login == null) {
-      return makeErrorResponse(errorCodes.noAccount)
+      return statusResponse(statusCodes.noAccount)
     }
     if (req.body.lp1 !== login.passwordAuth) {
-      return makeErrorResponse(errorCodes.invalidPassword)
+      return passwordErrorResponse(0)
     }
     req.login = login
     return
   }
-  return makeErrorResponse(errorCodes.error, 'Missing credentials')
+  return statusResponse(statusCodes.invalidRequest)
 }
 
 /**
@@ -78,13 +45,13 @@ function authHandler(req: FakeRequest) {
   if (req.body.loginId != null && req.body.loginAuth != null) {
     const login = this.findLoginId(req.body.loginId)
     if (login == null) {
-      return makeErrorResponse(errorCodes.noAccount)
+      return statusResponse(statusCodes.noAccount)
     }
     if (req.body.loginAuth !== login.loginAuth) {
-      return makeErrorResponse(errorCodes.invalidPassword)
+      return passwordErrorResponse(0)
     }
     if (login.otpKey && !checkTotp(login.otpKey, req.body.otp)) {
-      return makeOtpErrorResponse()
+      return otpErrorResponse(OTP_RESET_TOKEN)
     }
     req.login = login
     return
@@ -94,13 +61,13 @@ function authHandler(req: FakeRequest) {
   if (req.body.userId != null && req.body.passwordAuth != null) {
     const login = this.findLoginId(req.body.userId)
     if (login == null) {
-      return makeErrorResponse(errorCodes.noAccount)
+      return statusResponse(statusCodes.noAccount)
     }
     if (req.body.passwordAuth !== login.passwordAuth) {
-      return makeErrorResponse(errorCodes.invalidPassword)
+      return passwordErrorResponse(0)
     }
     if (login.otpKey && !checkTotp(login.otpKey, req.body.otp)) {
-      return makeOtpErrorResponse()
+      return otpErrorResponse(OTP_RESET_TOKEN)
     }
     req.login = login
     return
@@ -110,13 +77,13 @@ function authHandler(req: FakeRequest) {
   if (req.body.pin2Id != null && req.body.pin2Auth != null) {
     const login = this.findPin2Id(req.body.pin2Id)
     if (login == null) {
-      return makeErrorResponse(errorCodes.noAccount)
+      return statusResponse(statusCodes.noAccount)
     }
     if (req.body.pin2Auth !== login.pin2Auth) {
-      return makeErrorResponse(errorCodes.invalidPassword)
+      return passwordErrorResponse(0)
     }
     if (login.otpKey && !checkTotp(login.otpKey, req.body.otp)) {
-      return makeOtpErrorResponse()
+      return otpErrorResponse(OTP_RESET_TOKEN)
     }
     req.login = login
     return
@@ -126,39 +93,43 @@ function authHandler(req: FakeRequest) {
   if (req.body.recovery2Id != null && req.body.recovery2Auth != null) {
     const login = this.findRecovery2Id(req.body.recovery2Id)
     if (login == null) {
-      return makeErrorResponse(errorCodes.noAccount)
+      return statusResponse(statusCodes.noAccount)
     }
     const serverAuth = login.recovery2Auth
     const clientAuth = req.body.recovery2Auth
     if (clientAuth.length !== serverAuth.length) {
-      return makeErrorResponse(errorCodes.invalidAnswers)
+      return passwordErrorResponse(0)
     }
     for (let i = 0; i < clientAuth.length; ++i) {
       if (clientAuth[i] !== serverAuth[i]) {
-        return makeErrorResponse(errorCodes.invalidAnswers)
+        return passwordErrorResponse(0)
       }
     }
     if (login.otpKey && !checkTotp(login.otpKey, req.body.otp)) {
-      return makeOtpErrorResponse()
+      return otpErrorResponse(OTP_RESET_TOKEN)
     }
     req.login = login
     return
   }
-  return makeErrorResponse(errorCodes.error, 'Missing credentials')
+
+  return statusResponse(statusCodes.invalidRequest)
 }
 
 // Account lifetime v1: ----------------------------------------------------
 
 addRoute('POST', '/api/v1/account/available', function(req: FakeRequest) {
-  if (this.findLoginId(req.body.l1)) {
-    return makeErrorResponse(errorCodes.accountExists)
+  if (typeof req.body.l1 !== 'string') {
+    return statusResponse(statusCodes.invalidRequest)
   }
-  return makeResponse()
+  if (this.findLoginId(req.body.l1)) {
+    return statusResponse(statusCodes.accountExists)
+  }
+  return statusResponse(statusCodes.success, 'Account available')
 })
 
 addRoute('POST', '/api/v1/account/create', function(req: FakeRequest) {
   if (this.findLoginId(req.body.l1)) {
-    return makeErrorResponse(errorCodes.accountExists)
+    return statusResponse(statusCodes.accountExists)
   }
 
   const carePackage = JSON.parse(req.body.care_package)
@@ -174,13 +145,13 @@ addRoute('POST', '/api/v1/account/create', function(req: FakeRequest) {
   })
   this.repos[req.body.repo_account_key] = {}
 
-  return makeResponse()
+  return statusResponse(statusCodes.created, 'Account created')
 })
 
 addRoute('POST', '/api/v1/account/activate', authHandler1, function(
   req: FakeRequest
 ) {
-  return makeResponse()
+  return statusResponse(statusCodes.success, 'Account activated')
 })
 
 // Login v1: ---------------------------------------------------------------
@@ -188,10 +159,10 @@ addRoute('POST', '/api/v1/account/activate', authHandler1, function(
 addRoute('POST', '/api/v1/account/carepackage/get', function(req: FakeRequest) {
   const login = this.findLoginId(req.body.l1)
   if (login == null) {
-    return makeErrorResponse(errorCodes.noAccount)
+    return statusResponse(statusCodes.noAccount)
   }
 
-  return makeResponse({
+  return loginResponse({
     care_package: JSON.stringify({
       SNRP2: login.passwordKeySnrp
     })
@@ -211,17 +182,23 @@ addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function(
   if (req.login.rootKeyBox != null) {
     results.rootKeyBox = req.login.rootKeyBox
   }
-  return makeResponse(results)
+  return loginResponse(results)
 })
 
 addRoute('POST', '/api/v1/otp/reset', function(req: FakeRequest) {
   const login = this.findLoginId(req.body.l1)
   if (!login || req.body.otp_reset_auth !== OTP_RESET_TOKEN) {
-    return makeErrorResponse(errorCodes.invalidOtp)
+    return statusResponse(statusCodes.invalidPassword)
+  }
+  if (login.otpTimeout == null || login.otpKey == null) {
+    return statusResponse(
+      statusCodes.invalidRequest,
+      'OTP not setup for this account.'
+    )
   }
   const resetDate = new Date(Date.now() + 1000 * login.otpTimeout)
   login.otpResetDate = resetDate.toISOString()
-  return makeResponse()
+  return statusResponse(statusCodes.success, 'Reset requested')
 })
 
 // PIN login v1: -----------------------------------------------------------
@@ -230,14 +207,14 @@ addRoute('POST', '/api/v1/account/pinpackage/update', authHandler1, function(
   req: FakeRequest
 ) {
   this.db.pinKeyBox = JSON.parse(req.body.pin_package)
-  return makeResponse()
+  return statusResponse()
 })
 
 addRoute('POST', '/api/v1/account/pinpackage/get', function(req: FakeRequest) {
   if (this.db.pinKeyBox == null) {
-    return makeErrorResponse(errorCodes.noAccount)
+    return statusResponse(statusCodes.noAccount)
   }
-  return makeResponse({
+  return loginResponse({
     pin_package: JSON.stringify(this.db.pinKeyBox)
   })
 })
@@ -248,13 +225,13 @@ addRoute('POST', '/api/v1/wallet/create', authHandler1, function(
   req: FakeRequest
 ) {
   this.repos[req.body.repo_wallet_key] = {}
-  return makeResponse()
+  return statusResponse(statusCodes.created, 'Wallet created')
 })
 
 addRoute('POST', '/api/v1/wallet/activate', authHandler1, function(
   req: FakeRequest
 ) {
-  return makeResponse()
+  return statusResponse(statusCodes.success, 'Wallet updated')
 })
 
 // login v2: ---------------------------------------------------------------
@@ -266,18 +243,18 @@ addRoute(
     if (req.body.userId != null && req.body.passwordAuth == null) {
       const login = this.findLoginId(req.body.userId)
       if (login == null) {
-        return makeErrorResponse(errorCodes.noAccount)
+        return statusResponse(statusCodes.noAccount)
       }
-      return makeResponse({
+      return loginResponse({
         passwordAuthSnrp: login.passwordAuthSnrp
       })
     }
     if (req.body.recovery2Id != null && req.body.recovery2Auth == null) {
       const login = this.findRecovery2Id(req.body.recovery2Id)
       if (login == null) {
-        return makeErrorResponse(errorCodes.noAccount)
+        return statusResponse(statusCodes.noAccount)
       }
-      return makeResponse({
+      return loginResponse({
         question2Box: login.question2Box
       })
     }
@@ -285,17 +262,17 @@ addRoute(
   },
   authHandler,
   function(req: FakeRequest) {
-    return makeResponse(this.makeReply(req.login))
+    return loginResponse(this.makeReply(req.login))
   }
 )
 
 addRoute('POST', '/api/v2/login/create', function(req: FakeRequest) {
   const data = req.body.data
   if (data.appId == null || data.loginId == null) {
-    return makeErrorResponse(errorCodes.error)
+    return statusResponse(statusCodes.invalidRequest)
   }
   if (this.db.logins.find(login => login.loginId === data.loginId)) {
-    return makeErrorResponse(errorCodes.accountExists)
+    return statusResponse(statusCodes.accountExists)
   }
 
   // Set up repos:
@@ -315,23 +292,20 @@ addRoute('POST', '/api/v2/login/create', function(req: FakeRequest) {
       login => login.parent === req.login.loginId && login.appId === data.appId
     )
     if (appIdExists) {
-      return makeErrorResponse(
-        errorCodes.conflict,
-        'A login with the same appId already exists'
-      )
+      return statusResponse(statusCodes.invalidAppId)
     }
 
     row.parent = req.login.loginId
   }
   this.db.logins.push(row)
 
-  return makeResponse()
+  return statusResponse(statusCodes.created, 'Account created')
 })
 
 addRoute('POST', '/api/v2/login/keys', authHandler, function(req: FakeRequest) {
   const data = req.body.data
   if (data.keyBoxes == null) {
-    return makeErrorResponse(errorCodes.error)
+    return statusResponse(statusCodes.invalidRequest)
   }
 
   // Set up repos:
@@ -343,20 +317,20 @@ addRoute('POST', '/api/v2/login/keys', authHandler, function(req: FakeRequest) {
 
   req.login.keyBoxes = softCat(req.login.keyBoxes, data.keyBoxes)
 
-  return makeResponse()
+  return statusResponse()
 })
 
 addRoute('POST', '/api/v2/login/otp', authHandler, function(req: FakeRequest) {
   const data = req.body.data
   if (data.otpKey == null || data.otpTimeout == null) {
-    return makeErrorResponse(errorCodes.error)
+    return statusResponse(statusCodes.invalidRequest)
   }
 
   req.login.otpKey = data.otpKey
   req.login.otpTimeout = data.otpTimeout
   req.login.otpResetDate = undefined
 
-  return makeResponse()
+  return statusResponse()
 })
 
 addRoute(
@@ -366,22 +340,22 @@ addRoute(
     if (req.body.userId != null && req.body.otpResetAuth != null) {
       const login = this.findLoginId(req.body.userId)
       if (login == null) {
-        return makeErrorResponse(errorCodes.noAccount)
+        return statusResponse(statusCodes.noAccount)
       }
       if (req.body.otpResetAuth !== OTP_RESET_TOKEN) {
-        return makeErrorResponse(errorCodes.invalidPassword)
+        return passwordErrorResponse(0)
       }
       if (login.otpKey == null || login.otpTimeout == null) {
-        return makeErrorResponse(
-          errorCodes.error,
-          'OTP is not enabled on this account'
+        return statusResponse(
+          statusCodes.invalidRequest,
+          'OTP not setup for this account.'
         )
       }
       if (login.otpResetDate == null) {
         const resetDate = new Date(Date.now() + 1000 * login.otpTimeout)
         login.otpResetDate = resetDate.toISOString()
       }
-      return makeResponse({
+      return loginResponse({
         otpResetDate: login.otpResetDate
       })
     }
@@ -392,7 +366,7 @@ addRoute(
     req.login.otpTimeout = undefined
     req.login.otpResetDate = undefined
 
-    return makeResponse()
+    return statusResponse()
   }
 )
 
@@ -405,7 +379,7 @@ addRoute('DELETE', '/api/v2/login/password', authHandler, function(
   req.login.passwordBox = undefined
   req.login.passwordKeySnrp = undefined
 
-  return makeResponse()
+  return statusResponse()
 })
 
 addRoute('POST', '/api/v2/login/password', authHandler, function(
@@ -419,7 +393,7 @@ addRoute('POST', '/api/v2/login/password', authHandler, function(
     data.passwordBox == null ||
     data.passwordKeySnrp == null
   ) {
-    return makeErrorResponse(errorCodes.error)
+    return statusResponse(statusCodes.invalidRequest)
   }
 
   req.login.passwordAuth = data.passwordAuth
@@ -428,7 +402,7 @@ addRoute('POST', '/api/v2/login/password', authHandler, function(
   req.login.passwordBox = data.passwordBox
   req.login.passwordKeySnrp = data.passwordKeySnrp
 
-  return makeResponse()
+  return statusResponse()
 })
 
 addRoute('DELETE', '/api/v2/login/pin2', authHandler, function(
@@ -440,7 +414,7 @@ addRoute('DELETE', '/api/v2/login/pin2', authHandler, function(
   req.login.pin2KeyBox = undefined
   req.login.pin2TextBox = undefined
 
-  return makeResponse()
+  return statusResponse()
 })
 
 addRoute('POST', '/api/v2/login/pin2', authHandler, function(req: FakeRequest) {
@@ -459,7 +433,7 @@ addRoute('POST', '/api/v2/login/pin2', authHandler, function(req: FakeRequest) {
     data.pin2TextBox != null
 
   if (!enablingPin && !disablingPin) {
-    return makeErrorResponse(errorCodes.error)
+    return statusResponse(statusCodes.invalidRequest)
   }
 
   req.login.pin2Auth = data.pin2Auth
@@ -468,7 +442,7 @@ addRoute('POST', '/api/v2/login/pin2', authHandler, function(req: FakeRequest) {
   req.login.pin2KeyBox = data.pin2KeyBox
   req.login.pin2TextBox = data.pin2TextBox
 
-  return makeResponse()
+  return statusResponse()
 })
 
 addRoute('DELETE', '/api/v2/login/recovery2', authHandler, function(
@@ -480,7 +454,7 @@ addRoute('DELETE', '/api/v2/login/recovery2', authHandler, function(
   req.login.recovery2Id = undefined
   req.login.recovery2KeyBox = undefined
 
-  return makeResponse()
+  return statusResponse()
 })
 
 addRoute('POST', '/api/v2/login/recovery2', authHandler, function(
@@ -494,7 +468,7 @@ addRoute('POST', '/api/v2/login/recovery2', authHandler, function(
     data.recovery2Id == null ||
     data.recovery2KeyBox == null
   ) {
-    return makeErrorResponse(errorCodes.error)
+    return statusResponse(statusCodes.invalidRequest)
   }
 
   req.login.question2Box = data.question2Box
@@ -503,35 +477,55 @@ addRoute('POST', '/api/v2/login/recovery2', authHandler, function(
   req.login.recovery2Id = data.recovery2Id
   req.login.recovery2KeyBox = data.recovery2KeyBox
 
-  return makeResponse()
+  return statusResponse()
 })
 
 // lobby: ------------------------------------------------------------------
 
 addRoute('PUT', '/api/v2/lobby/.*', function(req: FakeRequest) {
-  const pubkey = req.path.split('/')[4]
-  this.db.lobbies[pubkey] = { request: req.body.data, replies: [] }
-  return makeResponse()
+  const lobbyId = req.path.split('/')[4]
+  const lobby = this.db.lobbies[lobbyId]
+  if (lobby != null) {
+    return statusResponse(
+      statusCodes.accountExists,
+      `Lobby ${lobbyId} already exists.`
+    )
+  }
+
+  this.db.lobbies[lobbyId] = { request: req.body.data, replies: [] }
+  return statusResponse()
 })
 
 addRoute('POST', '/api/v2/lobby/.*', function(req: FakeRequest) {
-  const pubkey = req.path.split('/')[4]
-  this.db.lobbies[pubkey].replies.push(req.body.data)
-  return makeResponse()
+  const lobbyId = req.path.split('/')[4]
+  const lobby = this.db.lobbies[lobbyId]
+  if (lobby == null) {
+    return statusResponse(statusCodes.noLobby, `Cannot find lobby ${lobbyId}`)
+  }
+
+  lobby.replies.push(req.body.data)
+  return statusResponse()
 })
 
 addRoute('GET', '/api/v2/lobby/.*', function(req: FakeRequest) {
-  const pubkey = req.path.split('/')[4]
-  if (this.db.lobbies[pubkey] == null) {
-    return { body: `Cannot find lobby "${pubkey}"`, status: 404 }
+  const lobbyId = req.path.split('/')[4]
+  const lobby = this.db.lobbies[lobbyId]
+  if (lobby == null) {
+    return statusResponse(statusCodes.noLobby, `Cannot find lobby ${lobbyId}`)
   }
-  return makeResponse(this.db.lobbies[pubkey])
+
+  return loginResponse(lobby)
 })
 
 addRoute('DELETE', '/api/v2/lobby/.*', function(req: FakeRequest) {
-  const pubkey = req.path.split('/')[4]
-  delete this.db.lobbies[pubkey]
-  return makeResponse()
+  const lobbyId = req.path.split('/')[4]
+  const lobby = this.db.lobbies[lobbyId]
+  if (lobby == null) {
+    return statusResponse(statusCodes.noLobby, `Cannot find lobby ${lobbyId}`)
+  }
+
+  delete this.db.lobbies[lobbyId]
+  return statusResponse()
 })
 
 // messages: ---------------------------------------------------------------
@@ -550,19 +544,20 @@ addRoute('POST', '/api/v2/messages', function(req: FakeRequest) {
       })
     }
   }
-  return makeResponse(out)
+  return loginResponse(out)
 })
 
 // sync: -------------------------------------------------------------------
 
-function storeRoute(req: FakeRequest) {
+function storeRoute(req: FakeRequest): SimpleResponse | void {
   const elements = req.path.split('/')
   const syncKey = elements[4]
   // const hash = elements[5]
 
   const repo = this.repos[syncKey]
   if (repo == null) {
-    return { body: 'Cannot find repo ' + syncKey, status: 404 }
+    // This is not the auth server, so we have a different format:
+    return jsonResponse({ msg: 'Hash not found' }, { status: 404 })
   }
 
   switch (req.method) {
@@ -571,16 +566,14 @@ function storeRoute(req: FakeRequest) {
       for (const change of Object.keys(changes)) {
         repo[change] = changes[change]
       }
-      return {
-        body: JSON.stringify({
-          changes: repo,
-          hash: '1111111111111111111111111111111111111111'
-        })
-      }
+      return jsonResponse({
+        changes: repo,
+        hash: '1111111111111111111111111111111111111111'
+      })
     }
 
     case 'GET':
-      return { body: JSON.stringify({ changes: repo }) }
+      return jsonResponse({ changes: repo })
   }
 }
 

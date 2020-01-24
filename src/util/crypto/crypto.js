@@ -4,6 +4,7 @@ import aesjs from 'aes-js'
 import { base16, base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
+import { utf8 } from '../encoding.js'
 import { sha256 } from './hashes.js'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
@@ -12,6 +13,18 @@ export type JsonBox = {
   encryptionType: number,
   data_base64: string,
   iv_hex: string
+}
+
+/**
+ * Some of our data contains terminating null bytes due to an old bug,
+ * so this function handles text decryption as a special case.
+ */
+export function decryptText(box: JsonBox, key: Uint8Array): string {
+  const data = decrypt(box, key)
+  if (data[data.length - 1] === 0) {
+    return utf8.stringify(data.subarray(0, -1))
+  }
+  return utf8.stringify(data)
 }
 
 /**
