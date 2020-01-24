@@ -13,12 +13,13 @@ export type LoginReply = {
   loginId: string,
 
   // 2-factor:
+  otpKey?: string,
   otpResetDate?: string,
   otpTimeout?: number,
 
   // Offline password logins:
   passwordAuthBox?: JsonBox,
-  passwordAuthSnrp?: JsonBox,
+  passwordAuthSnrp?: JsonSnrp,
   passwordBox?: JsonBox,
   passwordKeySnrp?: JsonSnrp,
 

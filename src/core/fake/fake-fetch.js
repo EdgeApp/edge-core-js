@@ -7,13 +7,14 @@ import {
 } from '../../types/types.js'
 import { makeFetchResponse } from '../../util/http/http-to-fetch.js'
 import { type HttpResponse } from '../../util/http/http-types.js'
+import { type DbLogin, type FakeDb } from './fake-db.js'
 import { statusCodes, statusResponse } from './fake-responses.js'
 
 export type FakeRequest = {
   body: any,
   method: string,
   path: string,
-  login: any // Maybe added by middleware
+  login: DbLogin // Maybe added by middleware
 }
 
 // The db is passed as `this`.
@@ -50,7 +51,7 @@ function findRoute(method, path): Handler[] {
  * Returns a fake fetch function bound to a fake DB instance.
  */
 export function makeFakeFetch(
-  db: Object
+  db: FakeDb
 ): EdgeFetchFunction & { offline: boolean } {
   function fetch(
     uri: string,
@@ -59,11 +60,12 @@ export function makeFakeFetch(
     try {
       if (out.offline) throw new Error('Fake network error')
 
+      const noLogin: any = undefined
       const req: FakeRequest = {
         method: opts.method || 'GET',
         body: typeof opts.body === 'string' ? JSON.parse(opts.body) : undefined,
         path: uri.replace(new RegExp('https?://[^/]*'), ''),
-        login: undefined
+        login: noLogin
       }
 
       const handlers = findRoute(req.method, req.path)

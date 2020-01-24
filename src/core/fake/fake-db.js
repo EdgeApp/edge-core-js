@@ -1,45 +1,98 @@
 // @flow
 
 import { type EdgeFakeUser } from '../../types/types.js'
+import { type JsonBox } from '../../util/crypto/crypto.js'
 import { filterObject } from '../../util/util.js'
+import { type LobbyReply, type LobbyRequest } from '../login/lobby.js'
+import { type LoginReply } from '../login/login-types.js'
+import { type JsonSnrp } from '../scrypt/scrypt-pixie.js'
 
-// The information the server returns on every login:
-export const loginReplyColumns = [
+export type DbLobby = {
+  expires: string, // date
+  request: LobbyRequest,
+  replies: LobbyReply[]
+}
+
+export type DbLogin = {
+  // Identity:
+  appId: string,
+  loginId: string, // base64
+  parent?: string, // loginId
+  parentBox?: JsonBox,
+
+  // Key login:
+  loginAuth?: string, // base64
+  loginAuthBox?: JsonBox,
+
+  // Password login:
+  passwordAuth?: string,
+  passwordAuthBox?: JsonBox,
+  passwordAuthSnrp?: JsonSnrp,
+  passwordBox?: JsonBox,
+  passwordKeySnrp?: JsonSnrp,
+
+  // PIN v2:
+  pin2Id?: string, // base64
+  pin2Auth?: string, // base64
+  pin2Box?: JsonBox,
+  pin2KeyBox?: JsonBox,
+  pin2TextBox?: JsonBox,
+
+  // Login Recovery v2:
+  recovery2Id?: string, // base64
+  recovery2Auth?: string[],
+  recovery2Box?: JsonBox,
+  recovery2KeyBox?: JsonBox,
+  question2Box?: JsonBox,
+
+  // OTP goodies:
+  otpKey?: string,
+  otpResetDate?: string, // date
+  otpTimeout?: number,
+
+  // Keys and assorted goodies:
+  keyBoxes: JsonBox[],
+  mnemonicBox?: JsonBox,
+  rootKeyBox?: JsonBox,
+  syncKeyBox?: JsonBox
+}
+
+export type DbRepo = { [path: string]: JsonBox }
+
+type DbLoginDump = DbLogin & { children?: DbLoginDump[] }
+
+// The database just includes these fields:
+const loginDbColumns = [
   // Identity:
   'appId',
-  'loginAuthBox',
   'loginId',
   // Login methods:
-  'otpKey',
-  'otpResetDate',
-  'otpTimeout',
+  'loginAuth',
+  'loginAuthBox',
+  'passwordAuth',
   'passwordAuthBox',
   'passwordAuthSnrp',
   'passwordBox',
   'passwordKeySnrp',
+  'pin2Auth',
   'pin2Box',
+  'pin2Id',
   'pin2KeyBox',
   'pin2TextBox',
-  'question2Box',
+  'recovery2Auth',
   'recovery2Box',
+  'recovery2Id',
   'recovery2KeyBox',
+  'question2Box',
+  'otpKey',
+  'otpResetDate',
+  'otpTimeout',
   // Resources:
   'keyBoxes',
   'mnemonicBox',
   'parentBox',
   'rootKeyBox',
-  'syncKeyBox'
-]
-
-// The database includes extra columns used for authentication:
-export const loginDbColumns = [
-  ...loginReplyColumns,
-  'loginAuth',
-  'passwordAuth',
-  'pin2Auth',
-  'pin2Id',
-  'recovery2Auth',
-  'recovery2Id',
+  'syncKeyBox',
   // Legacy:
   'pinBox',
   'pinId',
@@ -55,44 +108,45 @@ export const loginCreateColumns: string[] = loginDbColumns.filter(
  * Emulates the Airbitz login server database.
  */
 export class FakeDb {
-  db: {
-    lobbies: { [lobbyId: string]: Object },
-    logins: Object[]
-  }
-
-  repos: { [syncKey: string]: Object }
+  lobbies: { [lobbyId: string]: DbLobby }
+  logins: DbLogin[]
+  pinKeyBox: JsonBox | void
+  repos: { [syncKey: string]: DbRepo }
 
   constructor() {
-    this.db = { lobbies: {}, logins: [] }
+    this.lobbies = {}
+    this.logins = []
+    this.pinKeyBox = undefined
     this.repos = {}
   }
 
-  findLoginId(loginId: string) {
-    if (loginId == null) return
-    return this.db.logins.find(login => login.loginId === loginId)
+  getLoginById(loginId: string): DbLogin | void {
+    return this.logins.find(login => login.loginId === loginId)
   }
 
-  findPin2Id(pin2Id: string) {
-    return this.db.logins.find(login => login.pin2Id === pin2Id)
+  getLoginByPin2Id(pin2Id: string): DbLogin | void {
+    return this.logins.find(login => login.pin2Id === pin2Id)
   }
 
-  findRecovery2Id(recovery2Id: string) {
-    return this.db.logins.find(login => login.recovery2Id === recovery2Id)
+  getLoginByRecovery2Id(recovery2Id: string): DbLogin | void {
+    return this.logins.find(login => login.recovery2Id === recovery2Id)
   }
 
-  makeReply(login: Object) {
-    const reply = filterObject(login, loginReplyColumns)
-    reply.children = this.db.logins
-      .filter(child => child.parent === login.loginId)
-      .map(child => this.makeReply(child))
-    return reply
+  getLoginsByParent(parent: DbLogin): DbLogin[] {
+    return this.logins.filter(child => child.parent === parent.loginId)
   }
 
-  setupFakeLogin(user: Object, parent: string | null) {
+  insertLogin(login: DbLogin): void {
+    this.logins.push(login)
+  }
+
+  // Dumping & restoration --------------------------------------------
+
+  setupFakeLogin(user: DbLoginDump, parent: string | void): void {
     // Fill in the database row for this login:
     const row = filterObject(user, loginDbColumns)
     row.parent = parent
-    this.db.logins.push(row)
+    this.insertLogin(row)
 
     // Recurse into our children:
     if (user.children != null) {
@@ -102,8 +156,8 @@ export class FakeDb {
     }
   }
 
-  setupFakeUser(user: EdgeFakeUser) {
-    this.setupFakeLogin(user.server, null)
+  setupFakeUser(user: EdgeFakeUser): void {
+    this.setupFakeLogin(user.server, undefined)
 
     // Create fake repos:
     for (const syncKey of Object.keys(user.repos)) {
@@ -111,11 +165,51 @@ export class FakeDb {
     }
   }
 
-  dumpLogin(login: Object) {
-    const out = filterObject(login, loginDbColumns)
-    out.children = this.db.logins
-      .filter(child => child.parent === login.loginId)
-      .map(child => this.dumpLogin(child))
+  dumpLogin(login: DbLogin): DbLoginDump {
+    const out: DbLoginDump = filterObject(login, loginDbColumns)
+    out.children = this.getLoginsByParent(login).map(child =>
+      this.dumpLogin(child)
+    )
     return out
+  }
+}
+
+/**
+ * Recursively builds up a login reply tree,
+ * which the server sends back in response to a v2 login request.
+ */
+export function makeLoginReply(db: FakeDb, login: DbLogin): LoginReply {
+  const children = db
+    .getLoginsByParent(login)
+    .map(child => makeLoginReply(db, child))
+
+  return {
+    // Identity:
+    appId: login.appId,
+    loginId: login.loginId,
+    parentBox: login.parentBox,
+
+    // Login methods:
+    loginAuthBox: login.loginAuthBox,
+    passwordAuthBox: login.passwordAuthBox,
+    passwordAuthSnrp: login.passwordAuthSnrp,
+    passwordBox: login.passwordBox,
+    passwordKeySnrp: login.passwordKeySnrp,
+    pin2Box: login.pin2Box,
+    pin2KeyBox: login.pin2KeyBox,
+    pin2TextBox: login.pin2TextBox,
+    question2Box: login.question2Box,
+    recovery2Box: login.recovery2Box,
+    recovery2KeyBox: login.recovery2KeyBox,
+    otpKey: login.otpKey,
+    otpResetDate: login.otpResetDate,
+    otpTimeout: login.otpTimeout,
+
+    // Resources:
+    keyBoxes: login.keyBoxes,
+    mnemonicBox: login.mnemonicBox,
+    rootKeyBox: login.rootKeyBox,
+    syncKeyBox: login.syncKeyBox,
+    children
   }
 }

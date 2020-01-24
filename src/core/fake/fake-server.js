@@ -3,7 +3,12 @@
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { type HttpResponse } from '../../util/http/http-types.js'
 import { filterObject, softCat } from '../../util/util.js'
-import { loginCreateColumns } from './fake-db.js'
+import {
+  type DbLogin,
+  type FakeDb,
+  loginCreateColumns,
+  makeLoginReply
+} from './fake-db.js'
 import { type FakeRequest, addRoute } from './fake-fetch.js'
 import {
   jsonResponse,
@@ -22,9 +27,11 @@ const OTP_RESET_TOKEN = 'Super secret reset token'
  * Verifies that the request contains valid v1 authentication.
  */
 function authHandler1(req: FakeRequest) {
+  const db: FakeDb = this
+
   // Password login:
   if (req.body.l1 != null && req.body.lp1 != null) {
-    const login = this.findLoginId(req.body.l1)
+    const login = db.getLoginById(req.body.l1)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
@@ -41,9 +48,11 @@ function authHandler1(req: FakeRequest) {
  * Verifies that the request contains valid v2 authentication.
  */
 function authHandler(req: FakeRequest) {
+  const db: FakeDb = this
+
   // Token login:
   if (req.body.loginId != null && req.body.loginAuth != null) {
-    const login = this.findLoginId(req.body.loginId)
+    const login = db.getLoginById(req.body.loginId)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
@@ -59,7 +68,7 @@ function authHandler(req: FakeRequest) {
 
   // Password login:
   if (req.body.userId != null && req.body.passwordAuth != null) {
-    const login = this.findLoginId(req.body.userId)
+    const login = db.getLoginById(req.body.userId)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
@@ -75,7 +84,7 @@ function authHandler(req: FakeRequest) {
 
   // PIN2 login:
   if (req.body.pin2Id != null && req.body.pin2Auth != null) {
-    const login = this.findPin2Id(req.body.pin2Id)
+    const login = db.getLoginByPin2Id(req.body.pin2Id)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
@@ -91,13 +100,13 @@ function authHandler(req: FakeRequest) {
 
   // Recovery2 login:
   if (req.body.recovery2Id != null && req.body.recovery2Auth != null) {
-    const login = this.findRecovery2Id(req.body.recovery2Id)
+    const login = db.getLoginByRecovery2Id(req.body.recovery2Id)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
     const serverAuth = login.recovery2Auth
     const clientAuth = req.body.recovery2Auth
-    if (clientAuth.length !== serverAuth.length) {
+    if (serverAuth == null || clientAuth.length !== serverAuth.length) {
       return passwordErrorResponse(0)
     }
     for (let i = 0; i < clientAuth.length; ++i) {
@@ -118,32 +127,35 @@ function authHandler(req: FakeRequest) {
 // Account lifetime v1: ----------------------------------------------------
 
 addRoute('POST', '/api/v1/account/available', function(req: FakeRequest) {
+  const db: FakeDb = this
   if (typeof req.body.l1 !== 'string') {
     return statusResponse(statusCodes.invalidRequest)
   }
-  if (this.findLoginId(req.body.l1)) {
+  if (db.getLoginById(req.body.l1)) {
     return statusResponse(statusCodes.accountExists)
   }
   return statusResponse(statusCodes.success, 'Account available')
 })
 
 addRoute('POST', '/api/v1/account/create', function(req: FakeRequest) {
-  if (this.findLoginId(req.body.l1)) {
+  const db: FakeDb = this
+  if (typeof req.body.l1 === 'string' && db.getLoginById(req.body.l1)) {
     return statusResponse(statusCodes.accountExists)
   }
 
   const carePackage = JSON.parse(req.body.care_package)
   const loginPackage = JSON.parse(req.body.login_package)
-  this.db.logins.push({
+  db.insertLogin({
     appId: '',
     loginId: req.body.l1,
     passwordAuth: req.body.lp1,
     passwordKeySnrp: carePackage.SNRP2,
     passwordAuthBox: loginPackage.ELP1,
     passwordBox: loginPackage.EMK_LP2,
-    syncKeyBox: loginPackage.ESyncKey
+    syncKeyBox: loginPackage.ESyncKey,
+    keyBoxes: []
   })
-  this.repos[req.body.repo_account_key] = {}
+  db.repos[req.body.repo_account_key] = {}
 
   return statusResponse(statusCodes.created, 'Account created')
 })
@@ -157,7 +169,11 @@ addRoute('POST', '/api/v1/account/activate', authHandler1, function(
 // Login v1: ---------------------------------------------------------------
 
 addRoute('POST', '/api/v1/account/carepackage/get', function(req: FakeRequest) {
-  const login = this.findLoginId(req.body.l1)
+  const db: FakeDb = this
+  if (typeof req.body.l1 !== 'string') {
+    return statusResponse(statusCodes.invalidRequest)
+  }
+  const login = db.getLoginById(req.body.l1)
   if (login == null) {
     return statusResponse(statusCodes.noAccount)
   }
@@ -186,17 +202,22 @@ addRoute('POST', '/api/v1/account/loginpackage/get', authHandler1, function(
 })
 
 addRoute('POST', '/api/v1/otp/reset', function(req: FakeRequest) {
-  const login = this.findLoginId(req.body.l1)
+  const db: FakeDb = this
+  if (typeof req.body.l1 !== 'string') {
+    return statusResponse(statusCodes.invalidRequest)
+  }
+  const login = db.getLoginById(req.body.l1)
   if (!login || req.body.otp_reset_auth !== OTP_RESET_TOKEN) {
     return statusResponse(statusCodes.invalidPassword)
   }
-  if (login.otpTimeout == null || login.otpKey == null) {
+  const { otpKey, otpTimeout } = login
+  if (otpKey == null || otpTimeout == null) {
     return statusResponse(
       statusCodes.invalidRequest,
       'OTP not setup for this account.'
     )
   }
-  const resetDate = new Date(Date.now() + 1000 * login.otpTimeout)
+  const resetDate = new Date(Date.now() + 1000 * otpTimeout)
   login.otpResetDate = resetDate.toISOString()
   return statusResponse(statusCodes.success, 'Reset requested')
 })
@@ -206,16 +227,18 @@ addRoute('POST', '/api/v1/otp/reset', function(req: FakeRequest) {
 addRoute('POST', '/api/v1/account/pinpackage/update', authHandler1, function(
   req: FakeRequest
 ) {
-  this.db.pinKeyBox = JSON.parse(req.body.pin_package)
+  const db: FakeDb = this
+  db.pinKeyBox = JSON.parse(req.body.pin_package)
   return statusResponse()
 })
 
 addRoute('POST', '/api/v1/account/pinpackage/get', function(req: FakeRequest) {
-  if (this.db.pinKeyBox == null) {
+  const db: FakeDb = this
+  if (db.pinKeyBox == null) {
     return statusResponse(statusCodes.noAccount)
   }
   return loginResponse({
-    pin_package: JSON.stringify(this.db.pinKeyBox)
+    pin_package: JSON.stringify(db.pinKeyBox)
   })
 })
 
@@ -224,7 +247,8 @@ addRoute('POST', '/api/v1/account/pinpackage/get', function(req: FakeRequest) {
 addRoute('POST', '/api/v1/wallet/create', authHandler1, function(
   req: FakeRequest
 ) {
-  this.repos[req.body.repo_wallet_key] = {}
+  const db: FakeDb = this
+  db.repos[req.body.repo_wallet_key] = {}
   return statusResponse(statusCodes.created, 'Wallet created')
 })
 
@@ -240,8 +264,9 @@ addRoute(
   'POST',
   '/api/v2/login',
   function(req: FakeRequest) {
+    const db: FakeDb = this
     if (req.body.userId != null && req.body.passwordAuth == null) {
-      const login = this.findLoginId(req.body.userId)
+      const login = db.getLoginById(req.body.userId)
       if (login == null) {
         return statusResponse(statusCodes.noAccount)
       }
@@ -250,7 +275,7 @@ addRoute(
       })
     }
     if (req.body.recovery2Id != null && req.body.recovery2Auth == null) {
-      const login = this.findRecovery2Id(req.body.recovery2Id)
+      const login = db.getLoginByRecovery2Id(req.body.recovery2Id)
       if (login == null) {
         return statusResponse(statusCodes.noAccount)
       }
@@ -262,47 +287,49 @@ addRoute(
   },
   authHandler,
   function(req: FakeRequest) {
-    return loginResponse(this.makeReply(req.login))
+    const db: FakeDb = this
+    return loginResponse(makeLoginReply(db, req.login))
   }
 )
 
 addRoute('POST', '/api/v2/login/create', function(req: FakeRequest) {
+  const db: FakeDb = this
   const data = req.body.data
   if (data.appId == null || data.loginId == null) {
     return statusResponse(statusCodes.invalidRequest)
   }
-  if (this.db.logins.find(login => login.loginId === data.loginId)) {
+  if (db.getLoginById(data.loginId) != null) {
     return statusResponse(statusCodes.accountExists)
   }
 
   // Set up repos:
   if (data.newSyncKeys != null) {
     for (const syncKey of data.newSyncKeys) {
-      this.repos[syncKey] = {}
+      db.repos[syncKey] = {}
     }
   }
 
   // Set up login object:
-  const row = filterObject(data, loginCreateColumns)
+  const row: DbLogin = filterObject(data, loginCreateColumns)
   if (req.body.loginId != null || req.body.userId != null) {
     const e = authHandler.call(this, req)
     if (e) return e
 
-    const appIdExists = this.db.logins.find(
-      login => login.parent === req.login.loginId && login.appId === data.appId
-    )
+    const children = db.getLoginsByParent(req.login)
+    const appIdExists = children.find(child => child.appId === data.appId)
     if (appIdExists) {
       return statusResponse(statusCodes.invalidAppId)
     }
 
     row.parent = req.login.loginId
   }
-  this.db.logins.push(row)
+  db.insertLogin(row)
 
   return statusResponse(statusCodes.created, 'Account created')
 })
 
 addRoute('POST', '/api/v2/login/keys', authHandler, function(req: FakeRequest) {
+  const db: FakeDb = this
   const data = req.body.data
   if (data.keyBoxes == null) {
     return statusResponse(statusCodes.invalidRequest)
@@ -311,7 +338,7 @@ addRoute('POST', '/api/v2/login/keys', authHandler, function(req: FakeRequest) {
   // Set up repos:
   if (data.newSyncKeys != null) {
     for (const syncKey of data.newSyncKeys) {
-      this.repos[syncKey] = {}
+      db.repos[syncKey] = {}
     }
   }
 
@@ -337,22 +364,24 @@ addRoute(
   'DELETE',
   '/api/v2/login/otp',
   function(req: FakeRequest) {
+    const db: FakeDb = this
     if (req.body.userId != null && req.body.otpResetAuth != null) {
-      const login = this.findLoginId(req.body.userId)
+      const login = db.getLoginById(req.body.userId)
       if (login == null) {
         return statusResponse(statusCodes.noAccount)
       }
       if (req.body.otpResetAuth !== OTP_RESET_TOKEN) {
         return passwordErrorResponse(0)
       }
-      if (login.otpKey == null || login.otpTimeout == null) {
+      const { otpKey, otpTimeout } = login
+      if (otpKey == null || otpTimeout == null) {
         return statusResponse(
           statusCodes.invalidRequest,
           'OTP not setup for this account.'
         )
       }
       if (login.otpResetDate == null) {
-        const resetDate = new Date(Date.now() + 1000 * login.otpTimeout)
+        const resetDate = new Date(Date.now() + 1000 * otpTimeout)
         login.otpResetDate = resetDate.toISOString()
       }
       return loginResponse({
@@ -483,8 +512,9 @@ addRoute('POST', '/api/v2/login/recovery2', authHandler, function(
 // lobby: ------------------------------------------------------------------
 
 addRoute('PUT', '/api/v2/lobby/.*', function(req: FakeRequest) {
+  const db: FakeDb = this
   const lobbyId = req.path.split('/')[4]
-  const lobby = this.db.lobbies[lobbyId]
+  const lobby = db.lobbies[lobbyId]
   if (lobby != null) {
     return statusResponse(
       statusCodes.accountExists,
@@ -492,13 +522,18 @@ addRoute('PUT', '/api/v2/lobby/.*', function(req: FakeRequest) {
     )
   }
 
-  this.db.lobbies[lobbyId] = { request: req.body.data, replies: [] }
+  const { data } = req.body
+  const { timeout = 600 } = data
+  const expires = new Date(Date.now() + 1000 * timeout).toISOString()
+
+  db.lobbies[lobbyId] = { request: data, replies: [], expires }
   return statusResponse()
 })
 
 addRoute('POST', '/api/v2/lobby/.*', function(req: FakeRequest) {
+  const db: FakeDb = this
   const lobbyId = req.path.split('/')[4]
-  const lobby = this.db.lobbies[lobbyId]
+  const lobby = db.lobbies[lobbyId]
   if (lobby == null) {
     return statusResponse(statusCodes.noLobby, `Cannot find lobby ${lobbyId}`)
   }
@@ -508,8 +543,9 @@ addRoute('POST', '/api/v2/lobby/.*', function(req: FakeRequest) {
 })
 
 addRoute('GET', '/api/v2/lobby/.*', function(req: FakeRequest) {
+  const db: FakeDb = this
   const lobbyId = req.path.split('/')[4]
-  const lobby = this.db.lobbies[lobbyId]
+  const lobby = db.lobbies[lobbyId]
   if (lobby == null) {
     return statusResponse(statusCodes.noLobby, `Cannot find lobby ${lobbyId}`)
   }
@@ -518,24 +554,26 @@ addRoute('GET', '/api/v2/lobby/.*', function(req: FakeRequest) {
 })
 
 addRoute('DELETE', '/api/v2/lobby/.*', function(req: FakeRequest) {
+  const db: FakeDb = this
   const lobbyId = req.path.split('/')[4]
-  const lobby = this.db.lobbies[lobbyId]
+  const lobby = db.lobbies[lobbyId]
   if (lobby == null) {
     return statusResponse(statusCodes.noLobby, `Cannot find lobby ${lobbyId}`)
   }
 
-  delete this.db.lobbies[lobbyId]
+  delete db.lobbies[lobbyId]
   return statusResponse()
 })
 
 // messages: ---------------------------------------------------------------
 
 addRoute('POST', '/api/v2/messages', function(req: FakeRequest) {
+  const db: FakeDb = this
   const { loginIds } = req.body
 
   const out = []
   for (const loginId of loginIds) {
-    const login = this.findLoginId(loginId)
+    const login = db.getLoginById(loginId)
     if (login) {
       out.push({
         loginId,
@@ -550,11 +588,12 @@ addRoute('POST', '/api/v2/messages', function(req: FakeRequest) {
 // sync: -------------------------------------------------------------------
 
 function storeRoute(req: FakeRequest): HttpResponse | void {
+  const db: FakeDb = this
   const elements = req.path.split('/')
   const syncKey = elements[4]
   // const hash = elements[5]
 
-  const repo = this.repos[syncKey]
+  const repo = db.repos[syncKey]
   if (repo == null) {
     // This is not the auth server, so we have a different format:
     return jsonResponse({ msg: 'Hash not found' }, { status: 404 })
