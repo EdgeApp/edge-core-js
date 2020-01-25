@@ -56,7 +56,7 @@ export async function syncRequestInner(
   if (method !== 'GET') opts.body = JSON.stringify(body)
 
   // Do the fetch, translating the raw network error into our format:
-  const uri = server + path
+  const uri = `${server}${path}`
   const start = Date.now()
   const response = await io.fetch(uri, opts).catch(networkError => {
     const time = Date.now() - start

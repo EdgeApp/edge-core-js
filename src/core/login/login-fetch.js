@@ -73,13 +73,13 @@ export function loginFetch(
   }
 
   const start = Date.now()
-  const fullUri = serverUri + path
+  const fullUri = `${serverUri}${path}`
   return timeout(io.fetch(fullUri, opts), 30000).then(
     response => {
       const time = Date.now() - start
       log(`${method} ${fullUri} returned ${response.status} in ${time}ms`)
-      return response.json().then(parseReply, jsonError => {
-        throw new Error('Non-JSON reply, HTTP status ' + response.status)
+      return response.json().then(parseReply, () => {
+        throw new Error(`Non-JSON reply, HTTP status ${response.status}`)
       })
     },
     networkError => {

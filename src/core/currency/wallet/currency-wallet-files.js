@@ -205,7 +205,7 @@ function loadFiatFile(
       const file = JSON.parse(text)
       return file.fiat
         ? file.fiat
-        : 'iso:' + currencyFromNumber(('000' + file.num).slice(-3)).code
+        : `iso:${currencyFromNumber(`000${file.num}`.slice(-3)).code}`
     })
     .catch(e => 'iso:USD')
     .then((fiatCurrencyCode: string) => {

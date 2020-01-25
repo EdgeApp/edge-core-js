@@ -117,7 +117,7 @@ export function makeCurrencyWalletCallbacks(
 
     onBalanceChanged(currencyCode: string, balance: string) {
       pushUpdate({
-        id: walletId + '==' + currencyCode,
+        id: `${walletId}==${currencyCode}`,
         action: 'onBalanceChanged',
         updateFunc: () => {
           input.props.dispatch({
@@ -154,7 +154,7 @@ export function makeCurrencyWalletCallbacks(
           typeof tx.ourReceiveAddresses !== 'object'
         ) {
           input.props.onError(
-            new Error('Plugin sent bogus tx: ' + JSON.stringify(tx, null, 2))
+            new Error(`Plugin sent bogus tx: ${JSON.stringify(tx, null, 2)}`)
           )
           return
         }
