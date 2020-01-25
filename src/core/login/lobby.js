@@ -29,14 +29,14 @@ export type LobbyRequest = {
   replies?: LobbyReply[]
 }
 
-export type LobbySubscription = { unsubscribe(): mixed }
+export type LobbySubscription = { unsubscribe(): void }
 
 // Use this to subscribe to lobby events:
 export type LobbyInstance = {
   lobbyId: string,
   subscribe(
-    onReply: (reply: mixed) => mixed,
-    onError: (e: Error) => mixed
+    onReply: (reply: mixed) => void,
+    onError: (e: Error) => void
   ): LobbySubscription
 }
 
@@ -98,8 +98,8 @@ class ObservableLobby {
   timeout: TimeoutID | void
 
   // Callbacks:
-  onError: ((e: Error) => mixed) | void
-  onReply: ((reply: mixed) => mixed) | void
+  onError: ((e: Error) => void) | void
+  onReply: ((reply: mixed) => void) | void
 
   constructor(ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
     this.ai = ai
@@ -115,7 +115,7 @@ class ObservableLobby {
     this.onReply = undefined
   }
 
-  subscribe(onReply: (reply: mixed) => mixed, onError: (e: Error) => mixed) {
+  subscribe(onReply: (reply: mixed) => void, onError: (e: Error) => void) {
     this.onReply = onReply
     this.onError = onError
     this.replyCount = 0

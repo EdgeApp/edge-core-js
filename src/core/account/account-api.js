@@ -107,8 +107,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       lockdown()
       return storageWalletApi.localDisklet
     },
-    async sync(): Promise<mixed> {
-      return storageWalletApi.sync()
+    async sync(): Promise<void> {
+      await storageWalletApi.sync()
     },
 
     // Basic login information:
@@ -160,9 +160,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     recoveryLogin: loginType === 'recoveryLogin',
 
     // Change or create credentials:
-    async changePassword(password: string): Promise<mixed> {
+    async changePassword(password: string): Promise<void> {
       lockdown()
-      return changePassword(ai, accountId, password).then(() => {})
+      await changePassword(ai, accountId, password)
     },
     async changePin(opts: {
       pin?: string, // We keep the existing PIN if unspecified
@@ -206,17 +206,17 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // Remove credentials:
-    async deletePassword(): Promise<mixed> {
+    async deletePassword(): Promise<void> {
       lockdown()
-      return deletePassword(ai, accountId).then(() => {})
+      await deletePassword(ai, accountId)
     },
-    async deletePin(): Promise<mixed> {
+    async deletePin(): Promise<void> {
       lockdown()
-      return deletePin(ai, accountId).then(() => {})
+      await deletePin(ai, accountId)
     },
-    async deleteRecovery(): Promise<mixed> {
+    async deleteRecovery(): Promise<void> {
       lockdown()
-      return deleteRecovery(ai, accountId).then(() => {})
+      await deleteRecovery(ai, accountId)
     },
 
     // OTP:
@@ -230,17 +230,17 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       const { loginTree } = selfState()
       return loginTree.otpResetDate
     },
-    async cancelOtpReset(): Promise<mixed> {
+    async cancelOtpReset(): Promise<void> {
       lockdown()
-      return cancelOtpReset(ai, accountId).then(() => {})
+      await cancelOtpReset(ai, accountId)
     },
-    async enableOtp(timeout: number = 7 * 24 * 60 * 60): Promise<mixed> {
+    async enableOtp(timeout: number = 7 * 24 * 60 * 60): Promise<void> {
       lockdown()
-      return enableOtp(ai, accountId, timeout).then(() => {})
+      await enableOtp(ai, accountId, timeout)
     },
-    async disableOtp(): Promise<mixed> {
+    async disableOtp(): Promise<void> {
       lockdown()
-      return disableOtp(ai, accountId).then(() => {})
+      await disableOtp(ai, accountId)
     },
 
     // Edge login approval:
@@ -250,7 +250,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // Login management:
-    async logout(): Promise<mixed> {
+    async logout(): Promise<void> {
       ai.props.dispatch({ type: 'LOGOUT', payload: { accountId } })
     },
 
@@ -260,8 +260,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         ? ai.props.state.accounts[accountId].allWalletInfosClean
         : ai.props.state.accounts[accountId].allWalletInfosFull
     },
-    async changeWalletStates(walletStates: EdgeWalletStates): Promise<mixed> {
-      return changeWalletStates(ai, accountId, walletStates)
+    async changeWalletStates(walletStates: EdgeWalletStates): Promise<void> {
+      await changeWalletStates(ai, accountId, walletStates)
     },
     async createWallet(walletType: string, keys?: JsonObject): Promise<string> {
       const { login, loginTree } = selfState()

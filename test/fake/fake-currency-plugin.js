@@ -139,7 +139,7 @@ class FakeCurrencyEngine {
     }
   }
 
-  async changeUserSettings(settings: JsonObject): Promise<mixed> {
+  async changeUserSettings(settings: JsonObject): Promise<void> {
     await this._updateState(settings)
   }
 
@@ -153,15 +153,15 @@ class FakeCurrencyEngine {
   }
 
   // Engine state
-  startEngine(): Promise<mixed> {
+  startEngine(): Promise<void> {
     return Promise.resolve()
   }
 
-  killEngine(): Promise<mixed> {
+  killEngine(): Promise<void> {
     return Promise.resolve()
   }
 
-  resyncBlockchain(): Promise<mixed> {
+  resyncBlockchain(): Promise<void> {
     return Promise.resolve()
   }
 
@@ -203,11 +203,11 @@ class FakeCurrencyEngine {
   }
 
   // Tokens
-  enableTokens(tokens: string[]): Promise<mixed> {
+  enableTokens(tokens: string[]): Promise<void> {
     return Promise.resolve()
   }
 
-  disableTokens(tokens: string[]): Promise<mixed> {
+  disableTokens(tokens: string[]): Promise<void> {
     return Promise.resolve()
   }
 
@@ -215,7 +215,7 @@ class FakeCurrencyEngine {
     return Promise.resolve(['TOKEN'])
   }
 
-  addCustomToken(token: EdgeTokenInfo): Promise<mixed> {
+  addCustomToken(token: EdgeTokenInfo): Promise<void> {
     return Promise.resolve()
   }
 
@@ -273,7 +273,7 @@ class FakeCurrencyEngine {
     return Promise.resolve(transaction)
   }
 
-  saveTx(transaction: EdgeTransaction): Promise<mixed> {
+  saveTx(transaction: EdgeTransaction): Promise<void> {
     return Promise.resolve()
   }
 }

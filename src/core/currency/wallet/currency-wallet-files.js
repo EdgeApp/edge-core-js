@@ -141,19 +141,19 @@ function getTxFile(
 export function renameCurrencyWallet(
   input: CurrencyWalletInput,
   name: string | null
-): Promise<mixed> {
+): Promise<void> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
   return getStorageWalletFolder(state, walletId)
     .file(WALLET_NAME_FILE)
     .setText(JSON.stringify({ walletName: name }))
-    .then(() =>
+    .then(() => {
       dispatch({
         type: 'CURRENCY_WALLET_NAME_CHANGED',
         payload: { name, walletId }
       })
-    )
+    })
 }
 
 /**
@@ -162,7 +162,7 @@ export function renameCurrencyWallet(
 export function setCurrencyWalletFiat(
   input: CurrencyWalletInput,
   fiatCurrencyCode: string
-): Promise<mixed> {
+): Promise<void> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
@@ -173,12 +173,12 @@ export function setCurrencyWalletFiat(
   return getStorageWalletFolder(state, walletId)
     .file(CURRENCY_FILE)
     .setText(JSON.stringify({ fiat: fiatCurrencyCode }))
-    .then(() =>
+    .then(() => {
       dispatch({
         type: 'CURRENCY_WALLET_FIAT_CHANGED',
         payload: { fiatCurrencyCode, walletId }
       })
-    )
+    })
 }
 
 /**

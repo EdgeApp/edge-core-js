@@ -167,7 +167,7 @@ export async function changeWalletStates(
   ai: ApiInput,
   accountId: string,
   newStates: EdgeWalletStates
-) {
+): Promise<void> {
   const { accountWalletInfo, walletStates } = ai.props.state.accounts[accountId]
 
   // Find the changes between the new states and the old states:
@@ -220,7 +220,7 @@ export async function changePluginUserSettings(
   accountId: string,
   pluginId: string,
   userSettings: JsonObject
-) {
+): Promise<void> {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const file = getStorageWalletFolder(
     ai.props.state,
@@ -252,7 +252,7 @@ export async function changeSwapSettings(
   accountId: string,
   pluginId: string,
   swapSettings: SwapSettings
-) {
+): Promise<void> {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const file = getStorageWalletFolder(
     ai.props.state,

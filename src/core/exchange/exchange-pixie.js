@@ -79,7 +79,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
     }
 
     return {
-      update(props: RootProps): Promise<mixed> | void {
+      update(props: RootProps): void {
         // Kick off the initial fetch if we don't already have one running
         // and the plugins are ready:
         if (!started && props.state.plugins.locked) {

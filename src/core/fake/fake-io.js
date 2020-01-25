@@ -2,16 +2,16 @@
 
 import { makeMemoryDisklet } from 'disklet'
 
-import { type EdgeIo } from '../../types/types.js'
+import { type EdgeConsole, type EdgeIo } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 
 /**
  * Silences all logging.
  */
-export const fakeConsole = {
-  info: () => {},
-  warn: () => {},
-  error: () => {}
+export const fakeConsole: EdgeConsole = {
+  info() {},
+  warn() {},
+  error() {}
 }
 
 /**

@@ -103,8 +103,8 @@ export function makeCurrencyWalletApi(
     get localDisklet(): Disklet {
       return storageWalletApi.localDisklet
     },
-    async sync(): Promise<mixed> {
-      return storageWalletApi.sync()
+    async sync(): Promise<void> {
+      await storageWalletApi.sync()
     },
 
     // Wallet keys:
@@ -120,8 +120,8 @@ export function makeCurrencyWalletApi(
     get name(): string | null {
       return input.props.selfState.name
     },
-    async renameWallet(name: string): Promise<mixed> {
-      return renameCurrencyWallet(input, name).then(() => {})
+    async renameWallet(name: string): Promise<void> {
+      await renameCurrencyWallet(input, name)
     },
 
     // Currency info:
@@ -155,8 +155,8 @@ export function makeCurrencyWalletApi(
     get fiatCurrencyCode(): string {
       return input.props.selfState.fiat
     },
-    async setFiatCurrencyCode(fiatCurrencyCode: string): Promise<mixed> {
-      return setCurrencyWalletFiat(input, fiatCurrencyCode).then(() => {})
+    async setFiatCurrencyCode(fiatCurrencyCode: string): Promise<void> {
+      await setCurrencyWalletFiat(input, fiatCurrencyCode)
     },
 
     // Chain state:
@@ -173,16 +173,16 @@ export function makeCurrencyWalletApi(
     },
 
     // Running state:
-    async startEngine(): Promise<mixed> {
-      return engine.startEngine()
+    async startEngine(): Promise<void> {
+      await engine.startEngine()
     },
 
-    async stopEngine(): Promise<mixed> {
-      return engine.killEngine()
+    async stopEngine(): Promise<void> {
+      await engine.killEngine()
     },
 
     // Tokens:
-    async changeEnabledTokens(currencyCodes: string[]): Promise<mixed> {
+    async changeEnabledTokens(currencyCodes: string[]): Promise<void> {
       const enabled = await engine.getEnabledTokens()
       await engine.disableTokens(
         enabled.filter(currencyCode => currencyCodes.indexOf(currencyCode) < 0)
@@ -192,21 +192,21 @@ export function makeCurrencyWalletApi(
       )
     },
 
-    async enableTokens(tokens: string[]): Promise<mixed> {
-      return engine.enableTokens(tokens)
+    async enableTokens(tokens: string[]): Promise<void> {
+      await engine.enableTokens(tokens)
     },
 
-    async disableTokens(tokens: string[]): Promise<mixed> {
-      return engine.disableTokens(tokens)
+    async disableTokens(tokens: string[]): Promise<void> {
+      await engine.disableTokens(tokens)
     },
 
     async getEnabledTokens(): Promise<string[]> {
       return engine.getEnabledTokens()
     },
 
-    async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<mixed> {
+    async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<void> {
       ai.props.dispatch({ type: 'ADDED_CUSTOM_TOKEN', payload: tokenInfo })
-      return engine.addCustomToken(tokenInfo)
+      await engine.addCustomToken(tokenInfo)
     },
 
     // Transactions:
@@ -364,13 +364,13 @@ export function makeCurrencyWalletApi(
 
     async saveReceiveAddress(
       receiveAddress: EdgeReceiveAddress
-    ): Promise<mixed> {
+    ): Promise<void> {
       // TODO: Address metadata
     },
 
     async lockReceiveAddress(
       receiveAddress: EdgeReceiveAddress
-    ): Promise<mixed> {
+    ): Promise<void> {
       // TODO: Address metadata
     },
 
@@ -395,16 +395,16 @@ export function makeCurrencyWalletApi(
       return engine.broadcastTx(tx)
     },
 
-    async saveTx(tx: EdgeTransaction): Promise<mixed> {
-      return engine.saveTx(tx)
+    async saveTx(tx: EdgeTransaction): Promise<void> {
+      await engine.saveTx(tx)
     },
 
-    async resyncBlockchain(): Promise<mixed> {
+    async resyncBlockchain(): Promise<void> {
       ai.props.dispatch({
         type: 'CURRENCY_ENGINE_CLEARED',
         payload: { walletId: input.props.id }
       })
-      return engine.resyncBlockchain()
+      await engine.resyncBlockchain()
     },
 
     async dumpData(): Promise<EdgeDataDump> {
@@ -426,8 +426,8 @@ export function makeCurrencyWalletApi(
       txid: string,
       currencyCode: string,
       metadata: EdgeMetadata
-    ): Promise<mixed> {
-      return setCurrencyWalletTxMetadata(
+    ): Promise<void> {
+      await setCurrencyWalletTxMetadata(
         input,
         txid,
         currencyCode,
