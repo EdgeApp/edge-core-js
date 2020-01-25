@@ -136,17 +136,18 @@ export class EdgeCoreBridge extends React.Component<Props> {
   }
 
   render(): React.Node {
+    const { debug = false } = this.props
     let uri =
       Platform.OS === 'android'
         ? 'file:///android_asset/edge-core/index.html'
         : `file://${RNFS.MainBundlePath}/edge-core/index.html`
-    if (this.props.debug) {
+    if (debug) {
       uri += '?debug=true'
       console.log(`edge core at ${uri}`)
     }
 
     return (
-      <View style={this.props.debug ? styles.debug : styles.hidden}>
+      <View style={debug ? styles.debug : styles.hidden}>
         <WebView
           allowFileAccess
           onMessage={this.callbacks.handleMessage}
