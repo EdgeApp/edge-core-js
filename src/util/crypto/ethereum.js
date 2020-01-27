@@ -9,7 +9,7 @@ import { type EthereumTransaction } from '../../types/types.js'
  * This function needs to live inside the webpack bundle
  * to produce the right `Buffer` type.
  */
-function hexToBuffer(hex: string) {
+function hexToBuffer(hex: string): Buffer {
   return Buffer.from(hex.replace(/^0x/, ''), 'hex')
 }
 

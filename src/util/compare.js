@@ -1,6 +1,6 @@
 // @flow
 
-const TYPED_ARRAYS = {
+const TYPED_ARRAYS: { [name: string]: boolean } = {
   '[object Float32Array]': true,
   '[object Float64Array]': true,
   '[object Int16Array]': true,
@@ -15,7 +15,7 @@ const TYPED_ARRAYS = {
 /**
  * Compares two objects that are already known to have a common `[[Class]]`.
  */
-function compareObjects(a: any, b: any, type) {
+function compareObjects(a: any, b: any, type: string): boolean {
   // User-created objects:
   if (type === '[object Object]') {
     const proto = Object.getPrototypeOf(a)
@@ -68,7 +68,7 @@ function compareObjects(a: any, b: any, type) {
 /**
  * Returns true if two Javascript values are equal in value.
  */
-export function compare<A, B>(a: A, b: B): boolean {
+export function compare(a: any, b: any): boolean {
   if (a === b) return true
 
   // Fast path for primitives:

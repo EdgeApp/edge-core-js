@@ -6,12 +6,11 @@
  */
 export function anyPromise<T>(promises: Promise<T>[]): Promise<T> {
   return new Promise((resolve, reject) => {
-    let pending = promises.length
+    let failed = 0
     for (const promise of promises) {
-      promise.then(
-        value => resolve(value),
-        error => --pending || reject(error)
-      )
+      promise.then(resolve, error => {
+        if (++failed >= promises.length) reject(error)
+      })
     }
   })
 }
@@ -25,12 +24,19 @@ export function timeout<T>(
   ms: number,
   error: Error = new Error(`Timeout of ${ms}ms exceeded`)
 ): Promise<T> {
-  const timeout: Promise<T> = new Promise((resolve, reject) => {
-    const timer: TimeoutID = setTimeout(() => reject(error), ms)
-    const onDone = () => clearTimeout(timer)
-    promise.then(onDone, onDone)
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(error), ms)
+    promise.then(
+      ok => {
+        resolve(ok)
+        clearTimeout(timer)
+      },
+      error => {
+        reject(error)
+        clearTimeout(timer)
+      }
+    )
   })
-  return Promise.race([promise, timeout])
 }
 
 /**
@@ -58,7 +64,7 @@ export function fuzzyTimeout<T>(
       }
     }, timeoutMs)
 
-    function checkEnd() {
+    function checkEnd(): void {
       const allDone = results.length + failures.length === promises.length
       if (allDone && timer != null) {
         clearTimeout(timer)

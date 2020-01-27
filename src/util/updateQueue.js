@@ -13,15 +13,15 @@ type UpdateQueue = {
 }
 
 const updateQueue: UpdateQueue[] = []
-let timeOut
+let timeout: TimeoutID | void
 
-export function enableTestMode() {
+export function enableTestMode(): void {
   QUEUE_JOBS_PER_RUN = 99
   QUEUE_RUN_DELAY = 1
 }
 
-export function pushUpdate(update: UpdateQueue) {
-  if (!updateQueue.length) {
+export function pushUpdate(update: UpdateQueue): void {
+  if (updateQueue.length <= 0) {
     startQueue()
   }
   let didUpdate = false
@@ -37,7 +37,7 @@ export function pushUpdate(update: UpdateQueue) {
   }
 }
 
-export function removeIdFromQueue(id: string) {
+export function removeIdFromQueue(id: string): void {
   for (let i = 0; i < updateQueue.length; i++) {
     const update = updateQueue[i]
     if (id === update.id) {
@@ -45,24 +45,19 @@ export function removeIdFromQueue(id: string) {
       break
     }
   }
-  if (!updateQueue.length) {
-    clearTimeout(timeOut)
+  if (updateQueue.length <= 0 && timeout != null) {
+    clearTimeout(timeout)
   }
 }
 
-function startQueue() {
-  timeOut = setTimeout(() => {
-    const numJobs =
-      QUEUE_JOBS_PER_RUN < updateQueue.length
-        ? QUEUE_JOBS_PER_RUN
-        : updateQueue.length
+function startQueue(): void {
+  timeout = setTimeout(() => {
+    const numJobs = Math.min(QUEUE_JOBS_PER_RUN, updateQueue.length)
     for (let i = 0; i < numJobs; i++) {
-      if (updateQueue.length) {
-        const u = updateQueue.shift()
-        u.updateFunc()
-      }
+      const u = updateQueue.shift()
+      if (u != null) u.updateFunc()
     }
-    if (updateQueue.length) {
+    if (updateQueue.length > 0) {
       startQueue()
     }
   }, QUEUE_RUN_DELAY)
