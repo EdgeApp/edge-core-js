@@ -251,6 +251,7 @@ export type EdgeCurrencyInfo = {
   addressExplorer: string,
   blockExplorer?: string,
   transactionExplorer: string,
+  xpubExplorer?: string,
 
   // Images:
   symbolImage?: string,
