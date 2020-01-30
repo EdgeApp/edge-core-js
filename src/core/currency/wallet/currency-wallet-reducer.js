@@ -49,7 +49,7 @@ export type MergedTransaction = {
 
 export type CurrencyWalletState = {
   +accountId: string,
-  +pluginName: string,
+  +pluginId: string,
 
   +currencyInfo: EdgeCurrencyInfo,
   +displayPrivateSeed: string | null,
@@ -92,7 +92,7 @@ const currencyWallet = buildReducer({
     throw new Error(`Cannot find account for walletId ${next.id}`)
   },
 
-  pluginName: memoizeReducer(
+  pluginId: memoizeReducer(
     next => next.root.login.walletInfos[next.id].type,
     next => next.root.plugins.currency,
     (walletType: string, plugins): string => {

@@ -38,7 +38,7 @@ export type EdgeOtherMethods = {
 
 /** We frequently index things by pluginId, so provide a helper. */
 export type EdgePluginMap<Value> = {
-  [pluginName: string]: Value
+  [pluginId: string]: Value
 }
 
 // ---------------------------------------------------------------------
@@ -229,7 +229,8 @@ type EdgeObjectTemplate = Array<
 export type EdgeCurrencyInfo = {
   // Basic currency information:
   displayName: string,
-  pluginName: string,
+  +pluginId?: string, // Mandatory in next breaking version
+  pluginName: string, // Deprecated for pluginId
   walletType: string,
 
   // Native token information:
@@ -621,7 +622,8 @@ export type EdgeCurrencyWallet = {
 
 export type EdgeSwapInfo = {
   +displayName: string,
-  +pluginName: string,
+  +pluginId?: string, // Mandatory in next breaking version
+  +pluginName: string, // Deprecated for pluginId
 
   +quoteUri?: string, // The quoteId would be appended to this
   +supportEmail: string
@@ -648,7 +650,8 @@ export type EdgeSwapPluginQuote = {
   +networkFee: EdgeNetworkFee,
   +destinationAddress: string,
 
-  +pluginName: string,
+  +pluginId?: string, // Mandatory in next breaking version
+  +pluginName: string, // Deprecated for pluginId
   +expirationDate?: Date,
   +quoteId?: string,
 
@@ -680,7 +683,8 @@ export type EdgeRateHint = {
 }
 
 export type EdgeRateInfo = {
-  +displayName: string
+  +displayName: string,
+  +pluginId?: string // Mandatory in next breaking version
 }
 
 export type EdgeRatePair = {
@@ -780,6 +784,7 @@ export type EdgeSwapConfig = {
 
 export type EdgeSwapQuote = EdgeSwapPluginQuote & {
   +isEstimate: boolean, // No longer optional at this point
+  +pluginId: string,
   +quoteUri?: string
 }
 

@@ -32,8 +32,8 @@ export function addEdgeCorePlugins(plugins: EdgeCorePlugins): mixed {
   }
 
   // Save the new plugins:
-  for (const pluginName in plugins) {
-    allPlugins[pluginName] = plugins[pluginName]
+  for (const pluginId in plugins) {
+    allPlugins[pluginId] = plugins[pluginId]
   }
 
   // Update already-booted contexts:
@@ -60,13 +60,13 @@ export function watchPlugins(
   const pluginsAdded = plugins => {
     const out: EdgePluginMap<EdgeCorePlugin> = {}
 
-    for (const pluginName in plugins) {
-      const plugin = plugins[pluginName]
-      const initOptions = pluginsInit[pluginName]
+    for (const pluginId in plugins) {
+      const plugin = plugins[pluginId]
+      const initOptions = pluginsInit[pluginId]
       if (!initOptions) continue
 
       // Figure out what kind of object this is:
-      const log = makeLog(io, pluginName)
+      const log = makeLog(io, pluginId)
       try {
         if (typeof plugin === 'function') {
           const opts: EdgeCorePluginOptions = {
@@ -74,11 +74,11 @@ export function watchPlugins(
             io,
             log,
             nativeIo,
-            pluginDisklet: navigateDisklet(io.disklet, 'plugins/' + pluginName)
+            pluginDisklet: navigateDisklet(io.disklet, 'plugins/' + pluginId)
           }
-          out[pluginName] = plugin(opts)
+          out[pluginId] = plugin(opts)
         } else if (typeof plugin === 'object' && plugin != null) {
-          out[pluginName] = plugin
+          out[pluginId] = plugin
         } else {
           throw new TypeError(
             `Plugins must be functions or objects, got ${typeof plugin}`

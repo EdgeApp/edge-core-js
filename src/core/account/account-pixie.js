@@ -171,11 +171,11 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         if (selfOutput.api != null) {
           // TODO: Put this back once we solve the race condition:
           // update(selfOutput.api)
-          for (const pluginName in selfOutput.api.currencyConfig) {
-            update(selfOutput.api.currencyConfig[pluginName])
+          for (const pluginId in selfOutput.api.currencyConfig) {
+            update(selfOutput.api.currencyConfig[pluginId])
           }
-          for (const pluginName in selfOutput.api.swapConfig) {
-            update(selfOutput.api.swapConfig[pluginName])
+          for (const pluginId in selfOutput.api.swapConfig) {
+            update(selfOutput.api.swapConfig[pluginId])
           }
         }
       }

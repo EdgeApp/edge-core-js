@@ -28,9 +28,11 @@ export async function fetchSwapQuote(
   const swapPlugins = ai.props.state.plugins.swap
 
   const promises: Promise<EdgeSwapPluginQuote>[] = []
-  for (const n in swapPlugins) {
-    if (swapPluginEnabled(swapSettings, n)) {
-      promises.push(swapPlugins[n].fetchSwapQuote(request, userSettings[n]))
+  for (const pluginId in swapPlugins) {
+    if (swapPluginEnabled(swapSettings[pluginId])) {
+      promises.push(
+        swapPlugins[pluginId].fetchSwapQuote(request, userSettings[pluginId])
+      )
     }
   }
 
@@ -52,7 +54,8 @@ export async function fetchSwapQuote(
       }
 
       // Cobble together a URI:
-      const { swapInfo } = swapPlugins[bestQuote.pluginName]
+      const { pluginId = bestQuote.pluginName } = bestQuote
+      const { swapInfo } = swapPlugins[pluginId]
       let quoteUri
       if (bestQuote.quoteId != null && swapInfo.quoteUri != null) {
         quoteUri = swapInfo.quoteUri + bestQuote.quoteId
@@ -60,7 +63,12 @@ export async function fetchSwapQuote(
 
       const { isEstimate = true } = bestQuote
       // $FlowFixMe - Flow wrongly thinks isEstimate might be undefined here:
-      const out: EdgeSwapQuote = { ...bestQuote, quoteUri, isEstimate }
+      const out: EdgeSwapQuote = {
+        ...bestQuote,
+        isEstimate,
+        pluginId,
+        quoteUri
+      }
       bridgifyObject(out)
 
       return out

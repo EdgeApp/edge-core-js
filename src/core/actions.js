@@ -53,7 +53,7 @@ export type RootAction =
       type: 'ACCOUNT_PLUGIN_SETTINGS_CHANGED',
       payload: {
         accountId: string,
-        pluginName: string,
+        pluginId: string,
         userSettings: JsonObject
       }
     }
@@ -71,7 +71,7 @@ export type RootAction =
       type: 'ACCOUNT_SWAP_SETTINGS_CHANGED',
       payload: {
         accountId: string,
-        pluginName: string,
+        pluginId: string,
         swapSettings: SwapSettings
       }
     }
@@ -176,7 +176,7 @@ export type RootAction =
       // Called when the core finishes loading currency tools:
       type: 'CURRENCY_TOOLS_LOADED',
       payload: {
-        pluginName: string,
+        pluginId: string,
         tools: Promise<EdgeCurrencyTools>
       }
     }

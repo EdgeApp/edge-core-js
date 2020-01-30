@@ -207,12 +207,14 @@ export class SameCurrencyError extends Error {
  */
 export class SwapAboveLimitError extends Error {
   name: string
-  +pluginName: string
+  +pluginId: string
+  +pluginName: string // Deprecated for pluginId
   +nativeMax: string
 
   constructor(swapInfo: EdgeSwapInfo, nativeMax: string) {
     super('Amount is too high')
     this.name = errorNames.SwapAboveLimitError
+    this.pluginId = swapInfo.pluginName
     this.pluginName = swapInfo.pluginName
     this.nativeMax = nativeMax
   }
@@ -224,12 +226,14 @@ export class SwapAboveLimitError extends Error {
  */
 export class SwapBelowLimitError extends Error {
   name: string
-  +pluginName: string
+  +pluginId: string
+  +pluginName: string // Deprecated for pluginId
   +nativeMin: string
 
   constructor(swapInfo: EdgeSwapInfo, nativeMin: string) {
     super('Amount is too low')
     this.name = errorNames.SwapBelowLimitError
+    this.pluginId = swapInfo.pluginName
     this.pluginName = swapInfo.pluginName
     this.nativeMin = nativeMin
   }
@@ -240,7 +244,8 @@ export class SwapBelowLimitError extends Error {
  */
 export class SwapCurrencyError extends Error {
   name: string
-  +pluginName: string
+  +pluginId: string
+  +pluginName: string // Deprecated for pluginId
   +fromCurrency: string
   +toCurrency: string
 
@@ -253,6 +258,7 @@ export class SwapCurrencyError extends Error {
       `${swapInfo.displayName} does not support ${fromCurrency} to ${toCurrency}`
     )
     this.name = errorNames.SwapCurrencyError
+    this.pluginId = swapInfo.pluginName
     this.pluginName = swapInfo.pluginName
     this.fromCurrency = fromCurrency
     this.toCurrency = toCurrency
@@ -274,13 +280,15 @@ type SwapPermissionReason =
  */
 export class SwapPermissionError extends Error {
   name: string
-  +pluginName: string
+  +pluginId: string
+  +pluginName: string // Deprecated for pluginId
   +reason: SwapPermissionReason | void
 
   constructor(swapInfo: EdgeSwapInfo, reason?: SwapPermissionReason) {
     if (reason != null) super(reason)
     else super('You are not allowed to make this trade')
     this.name = errorNames.SwapPermissionError
+    this.pluginId = swapInfo.pluginName
     this.pluginName = swapInfo.pluginName
     this.reason = reason
   }

@@ -34,8 +34,8 @@ export const exchange: TamePixie<RootProps> = filterPixie(
 
     function doFetch() {
       // Quit early if there is nothing to do:
-      const pluginNames = Object.keys(input.props.state.plugins.rate)
-      if (pluginNames.length === 0) return
+      const pluginIds = Object.keys(input.props.state.plugins.rate)
+      if (pluginIds.length === 0) return
 
       const hintPairs = gatherHints()
 
@@ -51,21 +51,21 @@ export const exchange: TamePixie<RootProps> = filterPixie(
       // Initiate all requests:
       let finishedPairs: number = 0
       const timestamp = Date.now() / 1000
-      const promises = pluginNames.map(pluginName => {
-        const plugin = input.props.state.plugins.rate[pluginName]
-        return fetchPluginRates(plugin, hintPairs, pluginName, timestamp)
+      const promises = pluginIds.map(pluginId => {
+        const plugin = input.props.state.plugins.rate[pluginId]
+        return fetchPluginRates(plugin, hintPairs, pluginId, timestamp)
           .then(pairs => {
             if (wait) waitingPairs = [...waitingPairs, ...pairs]
-            else dispatchPairs(pairs, pluginName)
+            else dispatchPairs(pairs, pluginId)
           })
           .catch(error => {
             input.props.log(
-              `Rate provider ${pluginName} failed: ${String(error)}`
+              `Rate provider ${pluginId} failed: ${String(error)}`
             )
           })
           .then(() => {
             // There is no need to keep waiting if all plugins are done:
-            if (wait && ++finishedPairs >= pluginNames.length) {
+            if (wait && ++finishedPairs >= pluginIds.length) {
               clearTimeout(waitTimeout)
               sendWaitingPairs(true)
             }

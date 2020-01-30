@@ -66,8 +66,8 @@ export const currency = buildReducer({
     (state: RootState) => state.plugins.currency,
     (plugins: EdgePluginMap<EdgeCurrencyPlugin>) => {
       const out: EdgeCurrencyInfo[] = []
-      for (const pluginName in plugins) {
-        out.push(plugins[pluginName].currencyInfo)
+      for (const pluginId in plugins) {
+        out.push(plugins[pluginId].currencyInfo)
       }
       return out
     }

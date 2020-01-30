@@ -13,6 +13,7 @@ import {
 
 const swapInfo: EdgeSwapInfo = {
   displayName: 'Fake Swapper',
+  pluginId: 'fakeswap',
   pluginName: 'fakeswap',
 
   supportEmail: 'support@fakeswap'
