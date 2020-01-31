@@ -788,6 +788,10 @@ export type EdgeSwapQuote = EdgeSwapPluginQuote & {
   +quoteUri?: string
 }
 
+export type EdgeSwapRequestOptions = {
+  preferPluginId?: string
+}
+
 // edge login ----------------------------------------------------------
 
 export type EdgeLoginRequest = {
@@ -913,7 +917,10 @@ export type EdgeAccount = {
   ): Promise<string>,
 
   // Swapping:
-  fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>,
+  fetchSwapQuote(
+    request: EdgeSwapRequest,
+    opts?: EdgeSwapRequestOptions
+  ): Promise<EdgeSwapQuote>,
 
   // Deprecated names:
   // eslint-disable-next-line no-use-before-define

@@ -17,6 +17,7 @@ import {
   type EdgeSwapConfig,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
+  type EdgeSwapRequestOptions,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
   type EthereumTransaction,
@@ -338,8 +339,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)
     },
 
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
-      return fetchSwapQuote(ai, accountId, request)
+    async fetchSwapQuote(
+      request: EdgeSwapRequest,
+      opts?: EdgeSwapRequestOptions
+    ): Promise<EdgeSwapQuote> {
+      return fetchSwapQuote(ai, accountId, request, opts)
     },
 
     // Deprecated names:

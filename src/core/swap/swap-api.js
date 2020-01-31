@@ -9,6 +9,7 @@ import {
   type EdgeSwapPluginQuote,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
+  type EdgeSwapRequestOptions,
   errorNames
 } from '../../types/types.js'
 import { fuzzyTimeout } from '../../util/promise.js'
@@ -21,7 +22,8 @@ import { type ApiInput } from '../root-pixie.js'
 export async function fetchSwapQuote(
   ai: ApiInput,
   accountId: string,
-  request: EdgeSwapRequest
+  request: EdgeSwapRequest,
+  opts?: EdgeSwapRequestOptions
 ): Promise<EdgeSwapQuote> {
   const { log } = ai.props
 
@@ -46,7 +48,7 @@ export async function fetchSwapQuote(
       )
 
       // Find the cheapest price:
-      const bestQuote = pickBestQuote(quotes)
+      const bestQuote = pickBestQuote(quotes, opts)
 
       // Close unused quotes:
       for (const quote of quotes) {
@@ -71,8 +73,17 @@ export async function fetchSwapQuote(
 /**
  * Picks the best quote out of the available choices.
  */
-function pickBestQuote(quotes: EdgeSwapPluginQuote[]): EdgeSwapPluginQuote {
+function pickBestQuote(
+  quotes: EdgeSwapPluginQuote[],
+  opts: EdgeSwapRequestOptions = {}
+): EdgeSwapPluginQuote {
+  const { preferPluginId } = opts
+
   return quotes.reduce((a, b) => {
+    // Always return quotes from the preferred provider:
+    if (a.pluginName === preferPluginId) return a
+    if (b.pluginName === preferPluginId) return b
+
     // Prioritize accurate quotes over estimates:
     const { isEstimate: aIsEstimate = true } = a
     const { isEstimate: bIsEstimate = true } = b
