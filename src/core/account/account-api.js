@@ -23,6 +23,7 @@ import {
   type JsonObject
 } from '../../types/types.js'
 import { signEthereumTransaction } from '../../util/crypto/ethereum.js'
+import { signRequestTransaction } from '../../util/crypto/request.js'
 import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
@@ -262,6 +263,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async changeWalletStates(walletStates: EdgeWalletStates): Promise<mixed> {
       return changeWalletStates(ai, accountId, walletStates)
     },
+
     async createWallet(walletType: string, keys?: JsonObject): Promise<string> {
       const { login, loginTree } = selfState()
 
@@ -272,7 +274,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       }
 
       const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
+
       const kit = makeKeysKit(ai, login, walletInfo)
+
       return applyKit(ai, loginTree, kit).then(() => walletInfo.id)
     },
     getFirstWalletInfo: AccountSync.prototype.getFirstWalletInfo,
@@ -336,6 +340,23 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         throw new Error('Cannot find the requested private key in the account')
       }
       return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)
+    },
+
+    async signRequestTransaction(
+      walletId: string,
+      transaction: any
+    ): Promise<string> {
+      ai.props.log('Edge is signing: ', transaction)
+      const { allWalletInfosFull } = selfState()
+      const walletInfo = allWalletInfosFull.find(info => info.id === walletId)
+      if (
+        walletInfo == null ||
+        walletInfo.keys == null ||
+        typeof walletInfo.keys.ethereumKey !== 'string'
+      ) {
+        throw new Error('Cannot find the requested private key in the account')
+      }
+      return signRequestTransaction(walletInfo.keys.ethereumKey, transaction)
     },
 
     async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {

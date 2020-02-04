@@ -906,6 +906,7 @@ export type EdgeAccount = {
     walletId: string,
     transaction: EthereumTransaction
   ): Promise<string>,
+  signRequestTransaction(walletId: string, transaction: any): Promise<string>,
 
   // Swapping:
   fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>,
