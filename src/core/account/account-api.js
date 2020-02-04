@@ -352,6 +352,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       if (
         walletInfo == null ||
         walletInfo.keys == null ||
+        // TODO should we use a "requestKey" ?
         typeof walletInfo.keys.ethereumKey !== 'string'
       ) {
         throw new Error('Cannot find the requested private key in the account')
