@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.16.21 (2020-02-05)
+
+- Deprecate `pluginName` fields in favor of `pluginId`, which is a less confusing name.
+- Add a way to pass a preferred plugin to `fetchSwapQuote`.
+
 ## 0.16.20 (2020-01-28)
 
 - Add `EdgeCurrencyInfo.xpubExplorer`.
