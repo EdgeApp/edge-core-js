@@ -15,9 +15,9 @@ export function findCurrencyPlugin(
   plugins: EdgePluginMap<EdgeCurrencyPlugin>,
   walletType: string
 ): string | void {
-  for (const pluginName in plugins) {
-    const { currencyInfo } = plugins[pluginName]
-    if (walletType === currencyInfo.walletType) return pluginName
+  for (const pluginId in plugins) {
+    const { currencyInfo } = plugins[pluginId]
+    if (walletType === currencyInfo.walletType) return pluginId
   }
 }
 
@@ -28,13 +28,13 @@ export function getCurrencyPlugin(
   state: RootState,
   walletType: string
 ): EdgeCurrencyPlugin {
-  const pluginName = findCurrencyPlugin(state.plugins.currency, walletType)
-  if (pluginName == null) {
+  const pluginId = findCurrencyPlugin(state.plugins.currency, walletType)
+  if (pluginId == null) {
     throw new Error(
       `Cannot find a currency plugin for wallet type ${walletType}`
     )
   }
-  return state.plugins.currency[pluginName]
+  return state.plugins.currency[pluginId]
 }
 
 /**
@@ -47,15 +47,15 @@ export function getCurrencyTools(
 ): Promise<EdgeCurrencyTools> {
   const { dispatch, state } = ai.props
 
-  const pluginName = findCurrencyPlugin(state.plugins.currency, walletType)
-  if (pluginName == null) {
+  const pluginId = findCurrencyPlugin(state.plugins.currency, walletType)
+  if (pluginId == null) {
     throw new Error(
       `Cannot find a currency plugin for wallet type ${walletType}`
     )
   }
 
   // Already loaded / loading:
-  const tools = state.plugins.currencyTools[pluginName]
+  const tools = state.plugins.currencyTools[pluginId]
   if (tools != null) return tools
 
   // Never touched, so start the load:
@@ -63,7 +63,7 @@ export function getCurrencyTools(
   const promise = plugin.makeCurrencyTools()
   dispatch({
     type: 'CURRENCY_TOOLS_LOADED',
-    payload: { pluginName, tools: promise }
+    payload: { pluginId, tools: promise }
   })
   return promise
 }
@@ -78,14 +78,14 @@ export function waitForPlugins(ai: ApiInput) {
     if (!locked) return
 
     const missingPlugins: string[] = []
-    for (const pluginName in init) {
+    for (const pluginId in init) {
       if (
-        !!init[pluginName] &&
-        props.state.plugins.currency[pluginName] == null &&
-        props.state.plugins.rate[pluginName] == null &&
-        props.state.plugins.swap[pluginName] == null
+        !!init[pluginId] &&
+        props.state.plugins.currency[pluginId] == null &&
+        props.state.plugins.rate[pluginId] == null &&
+        props.state.plugins.swap[pluginId] == null
       ) {
-        missingPlugins.push(pluginName)
+        missingPlugins.push(pluginId)
       }
     }
     if (missingPlugins.length > 0) {

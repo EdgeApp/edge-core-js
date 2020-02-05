@@ -17,6 +17,7 @@ import {
   type EdgeSwapConfig,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
+  type EdgeSwapRequestOptions,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
   type EthereumTransaction,
@@ -61,14 +62,14 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
   // Plugin config API's:
   const currencyConfigs: EdgePluginMap<EdgeCurrencyConfig> = {}
-  for (const pluginName in ai.props.state.plugins.currency) {
-    const api = new CurrencyConfig(ai, accountId, pluginName)
-    currencyConfigs[pluginName] = api
+  for (const pluginId in ai.props.state.plugins.currency) {
+    const api = new CurrencyConfig(ai, accountId, pluginId)
+    currencyConfigs[pluginId] = api
   }
   const swapConfigs: EdgePluginMap<EdgeSwapConfig> = {}
-  for (const pluginName in ai.props.state.plugins.swap) {
-    const api = new SwapConfig(ai, accountId, pluginName)
-    swapConfigs[pluginName] = api
+  for (const pluginId in ai.props.state.plugins.swap) {
+    const api = new SwapConfig(ai, accountId, pluginId)
+    swapConfigs[pluginId] = api
   }
 
   // Specialty API's:
@@ -338,8 +339,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)
     },
 
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
-      return fetchSwapQuote(ai, accountId, request)
+    async fetchSwapQuote(
+      request: EdgeSwapRequest,
+      opts?: EdgeSwapRequestOptions
+    ): Promise<EdgeSwapQuote> {
+      return fetchSwapQuote(ai, accountId, request, opts)
     },
 
     // Deprecated names:

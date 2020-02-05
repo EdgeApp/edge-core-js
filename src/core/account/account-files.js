@@ -218,7 +218,7 @@ export async function changeWalletStates(
 export async function changePluginUserSettings(
   ai: ApiInput,
   accountId: string,
-  pluginName: string,
+  pluginId: string,
   userSettings: JsonObject
 ) {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
@@ -230,7 +230,7 @@ export async function changePluginUserSettings(
   // Write the new state to disk:
   const json: PluginSettingsFile = await getJson(file)
   json.userSettings = { ...ai.props.state.accounts[accountId].userSettings }
-  json.userSettings[pluginName] = userSettings
+  json.userSettings[pluginId] = userSettings
   await file.setText(JSON.stringify(json))
 
   // Update Redux:
@@ -238,7 +238,7 @@ export async function changePluginUserSettings(
     type: 'ACCOUNT_PLUGIN_SETTINGS_CHANGED',
     payload: {
       accountId,
-      pluginName,
+      pluginId,
       userSettings: { ...userSettings }
     }
   })
@@ -250,7 +250,7 @@ export async function changePluginUserSettings(
 export async function changeSwapSettings(
   ai: ApiInput,
   accountId: string,
-  pluginName: string,
+  pluginId: string,
   swapSettings: SwapSettings
 ) {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
@@ -262,13 +262,13 @@ export async function changeSwapSettings(
   // Write the new state to disk:
   const json: PluginSettingsFile = await getJson(file)
   json.swapSettings = { ...ai.props.state.accounts[accountId].swapSettings }
-  json.swapSettings[pluginName] = swapSettings
+  json.swapSettings[pluginId] = swapSettings
   await file.setText(JSON.stringify(json))
 
   // Update Redux:
   ai.props.dispatch({
     type: 'ACCOUNT_SWAP_SETTINGS_CHANGED',
-    payload: { accountId, pluginName, swapSettings }
+    payload: { accountId, pluginId, swapSettings }
   })
 }
 

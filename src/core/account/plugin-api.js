@@ -24,17 +24,17 @@ import { swapPluginEnabled } from './account-selectors.js'
 export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   _ai: ApiInput
   _accountId: string
-  _pluginName: string
+  _pluginId: string
 
   otherMethods: EdgeOtherMethods
 
-  constructor(ai: ApiInput, accountId: string, pluginName: string) {
+  constructor(ai: ApiInput, accountId: string, pluginId: string) {
     super()
     this._ai = ai
     this._accountId = accountId
-    this._pluginName = pluginName
+    this._pluginId = pluginId
 
-    const { otherMethods } = ai.props.state.plugins.currency[pluginName]
+    const { otherMethods } = ai.props.state.plugins.currency[pluginId]
     if (otherMethods != null) {
       bridgifyObject(otherMethods)
       this.otherMethods = otherMethods
@@ -44,19 +44,19 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   }
 
   get currencyInfo(): EdgeCurrencyInfo {
-    return this._ai.props.state.plugins.currency[this._pluginName].currencyInfo
+    return this._ai.props.state.plugins.currency[this._pluginId].currencyInfo
   }
 
   get userSettings(): JsonObject {
     const selfState = this._ai.props.state.accounts[this._accountId]
-    return selfState.userSettings[this._pluginName]
+    return selfState.userSettings[this._pluginId]
   }
 
   async changeUserSettings(settings: JsonObject): Promise<mixed> {
     await changePluginUserSettings(
       this._ai,
       this._accountId,
-      this._pluginName,
+      this._pluginId,
       settings
     )
   }
@@ -74,42 +74,42 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
 export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
   _ai: ApiInput
   _accountId: string
-  _pluginName: string
+  _pluginId: string
 
-  constructor(ai: ApiInput, accountId: string, pluginName: string) {
+  constructor(ai: ApiInput, accountId: string, pluginId: string) {
     super()
     this._ai = ai
     this._accountId = accountId
-    this._pluginName = pluginName
+    this._pluginId = pluginId
   }
 
   get enabled(): boolean {
     const account = this._ai.props.state.accounts[this._accountId]
-    return swapPluginEnabled(account.swapSettings, this._pluginName)
+    return swapPluginEnabled(account.swapSettings[this._pluginId])
   }
 
   get needsActivation(): boolean {
-    const plugin = this._ai.props.state.plugins.swap[this._pluginName]
+    const plugin = this._ai.props.state.plugins.swap[this._pluginId]
     if (plugin.checkSettings == null) return false
 
     const selfState = this._ai.props.state.accounts[this._accountId]
-    const settings = selfState.userSettings[this._pluginName] || {}
+    const settings = selfState.userSettings[this._pluginId] || {}
     return !!plugin.checkSettings(settings).needsActivation
   }
 
   get swapInfo(): EdgeSwapInfo {
-    return this._ai.props.state.plugins.swap[this._pluginName].swapInfo
+    return this._ai.props.state.plugins.swap[this._pluginId].swapInfo
   }
 
   get userSettings(): JsonObject {
     const selfState = this._ai.props.state.accounts[this._accountId]
-    return selfState.userSettings[this._pluginName]
+    return selfState.userSettings[this._pluginId]
   }
 
   async changeEnabled(enabled: boolean): Promise<mixed> {
     const account = this._ai.props.state.accounts[this._accountId]
-    return changeSwapSettings(this._ai, this._accountId, this._pluginName, {
-      ...account.swapSettings[this._pluginName],
+    return changeSwapSettings(this._ai, this._accountId, this._pluginId, {
+      ...account.swapSettings[this._pluginId],
       enabled
     })
   }
@@ -118,7 +118,7 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     await changePluginUserSettings(
       this._ai,
       this._accountId,
-      this._pluginName,
+      this._pluginId,
       settings
     )
   }

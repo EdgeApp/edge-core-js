@@ -241,9 +241,9 @@ const account = buildReducer({
         return action.payload.swapSettings
 
       case 'ACCOUNT_SWAP_SETTINGS_CHANGED': {
-        const { pluginName, swapSettings } = action.payload
+        const { pluginId, swapSettings } = action.payload
         const out = { ...state }
-        out[pluginName] = swapSettings
+        out[pluginId] = swapSettings
         return out
       }
     }
@@ -253,9 +253,9 @@ const account = buildReducer({
   userSettings(state = {}, action: RootAction): EdgePluginMap<JsonObject> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED': {
-        const { pluginName, userSettings } = action.payload
+        const { pluginId, userSettings } = action.payload
         const out = { ...state }
-        out[pluginName] = userSettings
+        out[pluginId] = userSettings
         return out
       }
 

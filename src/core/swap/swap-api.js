@@ -4,9 +4,12 @@ import { div, gt, lt } from 'biggystring'
 import { bridgifyObject } from 'yaob'
 
 import {
+  type EdgePluginMap,
+  type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
+  type EdgeSwapRequestOptions,
   errorNames
 } from '../../types/types.js'
 import { fuzzyTimeout } from '../../util/promise.js'
@@ -19,7 +22,8 @@ import { type ApiInput } from '../root-pixie.js'
 export async function fetchSwapQuote(
   ai: ApiInput,
   accountId: string,
-  request: EdgeSwapRequest
+  request: EdgeSwapRequest,
+  opts?: EdgeSwapRequestOptions
 ): Promise<EdgeSwapQuote> {
   const { log } = ai.props
 
@@ -27,93 +31,99 @@ export async function fetchSwapQuote(
   const { swapSettings, userSettings } = account
   const swapPlugins = ai.props.state.plugins.swap
 
-  const promises: Promise<EdgeSwapPluginQuote>[] = []
-  for (const n in swapPlugins) {
-    if (swapPluginEnabled(swapSettings, n)) {
-      promises.push(swapPlugins[n].fetchSwapQuote(request, userSettings[n]))
-    }
-  }
+  // Invoke all the active swap plugins:
+  const promises = Object.keys(swapPlugins)
+    .filter(pluginId => swapPluginEnabled(swapSettings[pluginId]))
+    .map(pluginId =>
+      swapPlugins[pluginId].fetchSwapQuote(request, userSettings[pluginId])
+    )
+  if (promises.length < 1) throw new Error('No swap providers enabled')
 
+  // Wait for the results, with error handling:
   return fuzzyTimeout(promises, 20000).then(
     quotes => {
-      if (quotes.length < 1) throw new Error('No swap providers enabled')
       log(
-        `${promises.length} swap quotes requested, ${
-          quotes.length
-        } resolved: ${JSON.stringify(quotes, null, 2)}`
+        `${promises.length} swap quotes requested, ${quotes.length} resolved:`,
+        ...quotes
       )
 
       // Find the cheapest price:
-      const bestQuote = quotes.reduce(pickQuote)
+      const bestQuote = pickBestQuote(quotes, opts)
 
       // Close unused quotes:
       for (const quote of quotes) {
-        if (quote !== bestQuote) quote.close()
+        if (quote !== bestQuote) quote.close().catch(() => undefined)
       }
-
-      // Cobble together a URI:
-      const { swapInfo } = swapPlugins[bestQuote.pluginName]
-      let quoteUri
-      if (bestQuote.quoteId != null && swapInfo.quoteUri != null) {
-        quoteUri = swapInfo.quoteUri + bestQuote.quoteId
-      }
-
-      const { isEstimate = true } = bestQuote
-      // $FlowFixMe - Flow wrongly thinks isEstimate might be undefined here:
-      const out: EdgeSwapQuote = { ...bestQuote, quoteUri, isEstimate }
-      bridgifyObject(out)
-
-      return out
+      return bridgifyObject(upgradeQuote(bestQuote, swapPlugins))
     },
     errors => {
-      if (errors.length < 1) throw new Error('No swap providers enabled')
       log(
-        `All ${promises.length} swap quotes rejected: ${JSON.stringify(
-          errors.map(error => {
-            const { name, message } = error
-            return { name, message, ...error }
-          }),
-          null,
-          2
-        )}`
+        `All ${promises.length} swap quotes rejected:`,
+        ...errors.map(error => {
+          const { name, message } = error
+          return { name, message, ...error }
+        })
       )
 
-      let bestError = errors[0]
-      for (let i = 1; i < errors.length; ++i) {
-        bestError = pickError(bestError, errors[i])
-      }
-      throw bestError
+      throw pickBestError(errors)
     }
   )
 }
 
 /**
- * Picks the best quote out of two choices.
+ * Picks the best quote out of the available choices.
  */
-function pickQuote(
-  a: EdgeSwapPluginQuote,
-  b: EdgeSwapPluginQuote
+function pickBestQuote(
+  quotes: EdgeSwapPluginQuote[],
+  opts: EdgeSwapRequestOptions = {}
 ): EdgeSwapPluginQuote {
-  const { isEstimate: aIsEstimate = true } = a
-  const { isEstimate: bIsEstimate = true } = b
+  const { preferPluginId } = opts
 
-  // Prioritize accurate quotes over estimates:
-  if (aIsEstimate && !bIsEstimate) return b
-  if (!aIsEstimate && bIsEstimate) return a
+  return quotes.reduce((a, b) => {
+    // Always return quotes from the preferred provider:
+    if (a.pluginName === preferPluginId) return a
+    if (b.pluginName === preferPluginId) return b
 
-  // Prefer cheaper quotes:
-  return gt(
-    div(b.toNativeAmount, b.fromNativeAmount),
-    div(a.toNativeAmount, a.fromNativeAmount)
-  )
-    ? b
-    : a
+    // Prioritize accurate quotes over estimates:
+    const { isEstimate: aIsEstimate = true } = a
+    const { isEstimate: bIsEstimate = true } = b
+    if (aIsEstimate && !bIsEstimate) return b
+    if (!aIsEstimate && bIsEstimate) return a
+
+    // Prefer the best rate:
+    const aRate = div(a.toNativeAmount, a.fromNativeAmount)
+    const bRate = div(b.toNativeAmount, b.fromNativeAmount)
+    return gt(bRate, aRate) ? b : a
+  })
+}
+
+/**
+ * Picks the best error out of the available choices.
+ */
+function pickBestError(errors: any[]): any {
+  return errors.reduce((a, b) => {
+    // Return the highest-ranked error:
+    const diff = rankError(a) - rankError(b)
+    if (diff > 0) return a
+    if (diff < 0) return b
+
+    // Same ranking, so use amounts to distinguish:
+    if (a.name === errorNames.SwapBelowLimitError) {
+      return lt(a.nativeMin, b.nativeMin) ? a : b
+    }
+    if (a.name === errorNames.SwapAboveLimitError) {
+      return gt(a.nativeMax, b.nativeMax) ? a : b
+    }
+
+    // Otherwise, just pick one:
+    return a
+  })
 }
 
 /**
  * Ranks different error codes by priority.
  */
-function rankError(error: Object) {
+function rankError(error: any) {
   if (error.name === errorNames.InsufficientFundsError) return 5
   if (error.name === errorNames.PendingFundsError) return 5
   if (error.name === errorNames.SwapBelowLimitError) return 4
@@ -124,22 +134,21 @@ function rankError(error: Object) {
 }
 
 /**
- * Picks the best error out of two choices.
+ * Turns a raw quote from the plugins into something the GUI expects.
  */
-function pickError(a: Object, b: Object): Object {
-  // Return the highest-ranked error:
-  const diff = rankError(a) - rankError(b)
-  if (diff > 0) return a
-  if (diff < 0) return b
+function upgradeQuote(
+  quote: EdgeSwapPluginQuote,
+  swapPlugins: EdgePluginMap<EdgeSwapPlugin>
+): EdgeSwapQuote {
+  const { isEstimate = true, pluginId = quote.pluginName } = quote
+  const { swapInfo } = swapPlugins[pluginId]
 
-  // Same ranking, so use amounts to distinguish:
-  if (a.name === errorNames.SwapBelowLimitError) {
-    return lt(a.nativeMin, b.nativeMin) ? a : b
-  }
-  if (a.name === errorNames.SwapAboveLimitError) {
-    return gt(a.nativeMax, b.nativeMax) ? a : b
+  // Cobble together a URI:
+  let quoteUri
+  if (quote.quoteId != null && swapInfo.quoteUri != null) {
+    quoteUri = swapInfo.quoteUri + quote.quoteId
   }
 
-  // Otherwise, just pick one:
-  return a
+  // $FlowFixMe - Flow wrongly thinks isEstimate might be undefined here:
+  return { ...quote, isEstimate, pluginId, quoteUri }
 }

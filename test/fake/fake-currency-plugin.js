@@ -27,6 +27,7 @@ export const fakeCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'FAKE',
   displayName: 'Fake Coin',
+  pluginId: 'fakecoin',
   pluginName: 'fakecoin',
   denominations: [
     { multiplier: '10', name: 'SMALL' },

@@ -79,8 +79,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
       await addStorageWallet(ai, walletInfo)
       const { selfState, state } = input.props
-      const { accountId, pluginName } = selfState
-      const userSettings = state.accounts[accountId].userSettings[pluginName]
+      const { accountId, pluginId } = selfState
+      const userSettings = state.accounts[accountId].userSettings[pluginId]
 
       const walletLocalDisklet = getStorageWalletLocalDisklet(
         state,
@@ -294,8 +294,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       }
 
       // Update engine settings:
-      const { accountId, pluginName } = selfState
-      const userSettings = state.accounts[accountId].userSettings[pluginName]
+      const { accountId, pluginId } = selfState
+      const userSettings = state.accounts[accountId].userSettings[pluginId]
       if (lastSettings !== userSettings) {
         lastSettings = userSettings
         const engine = selfOutput.engine

@@ -42,14 +42,14 @@ export const plugins = (
         rate: { ...state.rate },
         swap: { ...state.swap }
       }
-      for (const pluginName in action.payload) {
-        const plugin = action.payload[pluginName]
+      for (const pluginId in action.payload) {
+        const plugin = action.payload[pluginId]
         // $FlowFixMe - Flow doesn't see the type refinement here:
-        if (plugin.currencyInfo != null) out.currency[pluginName] = plugin
+        if (plugin.currencyInfo != null) out.currency[pluginId] = plugin
         // $FlowFixMe
-        if (plugin.rateInfo != null) out.rate[pluginName] = plugin
+        if (plugin.rateInfo != null) out.rate[pluginId] = plugin
         // $FlowFixMe
-        if (plugin.swapInfo != null) out.swap[pluginName] = plugin
+        if (plugin.swapInfo != null) out.swap[pluginId] = plugin
       }
       return out
     }
@@ -57,7 +57,7 @@ export const plugins = (
       return { ...state, locked: true }
     case 'CURRENCY_TOOLS_LOADED': {
       const currencyTools = { ...state.currencyTools }
-      currencyTools[action.payload.pluginName] = action.payload.tools
+      currencyTools[action.payload.pluginId] = action.payload.tools
       return { ...state, currencyTools }
     }
     case 'INIT':

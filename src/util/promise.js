@@ -36,8 +36,8 @@ export function timeout<T>(
 /**
  * Waits for a collection of promises.
  * Returns all the promises that manage to resolve within the timeout.
- * If no promises mange to resolve within the timeout, returns the
- * first promise that resolves.
+ * If no promises mange to resolve within the timeout,
+ * returns the first promise that resolves.
  * If all promises reject, rejects an array of errors.
  */
 export function fuzzyTimeout<T>(
