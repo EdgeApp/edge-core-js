@@ -755,13 +755,18 @@ export type EdgeRateCacheEvents = {
   update: mixed
 }
 
+export type EdgeConvertCurrencyOpts = {
+  biases: { [name: string]: number }
+}
+
 export type EdgeRateCache = {
   +on: Subscriber<EdgeRateCacheEvents>,
 
   convertCurrency(
     fromCurrency: string,
     toCurrency: string,
-    amount: number
+    amount?: number,
+    opts?: EdgeConvertCurrencyOpts
   ): Promise<number>
 }
 
