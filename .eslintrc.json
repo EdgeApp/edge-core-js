@@ -13,6 +13,7 @@
     "simple-import-sort"
   ],
   "rules": {
+    "@typescript-eslint/promise-function-async": "off",
     "flowtype/array-style-complex-type": ["error", "verbose"],
     "flowtype/array-style-simple-type": ["error", "shorthand"],
     "no-var": "error",
