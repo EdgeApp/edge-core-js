@@ -4,7 +4,6 @@ import { type Disklet } from 'disklet'
 import { Bridgeable, bridgifyObject, close, emit, update } from 'yaob'
 
 import { type EdgeContext } from '../../types/types.js'
-import { authRequest } from '../login/authServer.js'
 import {
   type LobbyInstance,
   type LobbyRequest,
@@ -12,6 +11,7 @@ import {
   makeLobby,
   sendLobbyReply
 } from '../login/lobby.js'
+import { loginFetch } from '../login/login-fetch.js'
 import { hashUsername } from '../login/login-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { type SyncResult, makeRepoPaths, syncRepo } from '../storage/repo.js'
@@ -79,7 +79,7 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
   }
 
   authRequest(method: string, path: string, body?: {}) {
-    return authRequest(this._ai, method, path, body)
+    return loginFetch(this._ai, method, path, body)
   }
 
   hashUsername(username: string): Promise<Uint8Array> {

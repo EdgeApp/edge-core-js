@@ -19,7 +19,7 @@ import {
   type EdgeIo,
   type EdgeNativeIo
 } from '../../types/types.js'
-import { wrapResponse } from '../../util/fetch-response.js'
+import { makeFetchResponse } from '../../util/http/http-to-fetch.js'
 import { type ClientIo, type WorkerApi } from './react-native-types.js'
 
 const body = document.body
@@ -61,7 +61,7 @@ function makeIo(nativeIo: EdgeNativeIo): EdgeIo {
       uri: string,
       opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
-      return clientIo.fetchCors(uri, opts).then(wrapResponse)
+      return clientIo.fetchCors(uri, opts).then(makeFetchResponse)
     },
 
     WebSocket: window.WebSocket

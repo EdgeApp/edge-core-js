@@ -12,7 +12,7 @@ import {
   type EdgeNativeIo,
   type EdgeScryptFunction
 } from '../../types/types.js'
-import { type SimpleResponse } from '../../util/fetch-response.js'
+import { type HttpResponse } from '../../util/http/http-types.js'
 
 export type ClientIo = {
   +console: EdgeConsole,
@@ -22,7 +22,7 @@ export type ClientIo = {
   +scrypt: EdgeScryptFunction,
 
   // Networking:
-  fetchCors(url: string, opts: EdgeFetchOptions): Promise<SimpleResponse>
+  fetchCors(url: string, opts: EdgeFetchOptions): Promise<HttpResponse>
 }
 
 export type WorkerApi = {
