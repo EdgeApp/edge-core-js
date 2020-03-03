@@ -11,5 +11,6 @@
 
     "strict": true
   },
-  "exclude": ["node_modules", "notes", "lib"]
+  "exclude": [],
+  "include": ["lib/types"]
 }

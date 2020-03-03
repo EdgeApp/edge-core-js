@@ -39,7 +39,7 @@
   "main": "./index.js",
   "module": "./lib/index.js",
   "browser": "./lib/browser.js",
-  "types": "./lib/types/types.d.ts",
+  "types": "./lib/index.d.ts",
   "scripts": {
     "build.lib": "sucrase ./src -q -d ./lib -t flow,jsx",
     "build.react-native": "webpack",
