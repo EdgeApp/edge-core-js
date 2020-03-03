@@ -110,13 +110,11 @@ export const loginCreateColumns: string[] = loginDbColumns.filter(
 export class FakeDb {
   lobbies: { [lobbyId: string]: DbLobby }
   logins: DbLogin[]
-  pinKeyBox: JsonBox | void
   repos: { [syncKey: string]: DbRepo }
 
   constructor() {
     this.lobbies = {}
     this.logins = []
-    this.pinKeyBox = undefined
     this.repos = {}
   }
 
