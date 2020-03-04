@@ -16,7 +16,6 @@ import {
   changePluginUserSettings,
   changeSwapSettings
 } from './account-files.js'
-import { swapPluginEnabled } from './account-selectors.js'
 
 /**
  * Access to an individual currency plugin's methods.
@@ -84,8 +83,10 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
   }
 
   get enabled(): boolean {
-    const account = this._ai.props.state.accounts[this._accountId]
-    return swapPluginEnabled(account.swapSettings[this._pluginId])
+    const { swapSettings } = this._ai.props.state.accounts[this._accountId]
+    const { enabled = true } =
+      swapSettings[this._pluginId] != null ? swapSettings[this._pluginId] : {}
+    return enabled
   }
 
   get needsActivation(): boolean {

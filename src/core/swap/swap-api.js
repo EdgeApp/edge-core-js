@@ -13,7 +13,6 @@ import {
   errorNames
 } from '../../types/types.js'
 import { fuzzyTimeout } from '../../util/promise.js'
-import { swapPluginEnabled } from '../account/account-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 
 /**
@@ -23,8 +22,9 @@ export async function fetchSwapQuote(
   ai: ApiInput,
   accountId: string,
   request: EdgeSwapRequest,
-  opts?: EdgeSwapRequestOptions
+  opts: EdgeSwapRequestOptions = {}
 ): Promise<EdgeSwapQuote> {
+  const { plugins: pluginOpts = {}, preferPluginId } = opts
   const { log } = ai.props
 
   const account = ai.props.state.accounts[accountId]
@@ -32,11 +32,22 @@ export async function fetchSwapQuote(
   const swapPlugins = ai.props.state.plugins.swap
 
   // Invoke all the active swap plugins:
-  const promises = Object.keys(swapPlugins)
-    .filter(pluginId => swapPluginEnabled(swapSettings[pluginId]))
-    .map(pluginId =>
-      swapPlugins[pluginId].fetchSwapQuote(request, userSettings[pluginId])
+  const promises: Promise<EdgeSwapPluginQuote>[] = []
+  for (const pluginId of Object.keys(swapPlugins)) {
+    // Grab options:
+    const { enabled = true } =
+      swapSettings[pluginId] != null ? swapSettings[pluginId] : {}
+    const { disabled = false, promoCode } =
+      pluginOpts[pluginId] != null ? pluginOpts[pluginId] : {}
+
+    // Start request:
+    if (!enabled || disabled) continue
+    promises.push(
+      swapPlugins[pluginId].fetchSwapQuote(request, userSettings[pluginId], {
+        promoCode
+      })
     )
+  }
   if (promises.length < 1) throw new Error('No swap providers enabled')
 
   // Wait for the results, with error handling:
@@ -48,7 +59,7 @@ export async function fetchSwapQuote(
       )
 
       // Find the cheapest price:
-      const bestQuote = pickBestQuote(quotes, opts)
+      const bestQuote = pickBestQuote(quotes, preferPluginId)
 
       // Close unused quotes:
       for (const quote of quotes) {
@@ -75,10 +86,8 @@ export async function fetchSwapQuote(
  */
 function pickBestQuote(
   quotes: EdgeSwapPluginQuote[],
-  opts: EdgeSwapRequestOptions = {}
+  preferPluginId: string | void
 ): EdgeSwapPluginQuote {
-  const { preferPluginId } = opts
-
   return quotes.reduce((a, b) => {
     // Always return quotes from the preferred provider:
     if (a.pluginName === preferPluginId) return a

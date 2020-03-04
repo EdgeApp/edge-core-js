@@ -669,7 +669,8 @@ export type EdgeSwapPlugin = {
   checkSettings?: (userSettings: JsonObject) => EdgeSwapPluginStatus,
   fetchSwapQuote(
     request: EdgeSwapRequest,
-    userSettings: JsonObject | void
+    userSettings: JsonObject | void,
+    opts: { promoCode?: string }
   ): Promise<EdgeSwapPluginQuote>
 }
 
@@ -794,7 +795,11 @@ export type EdgeSwapQuote = EdgeSwapPluginQuote & {
 }
 
 export type EdgeSwapRequestOptions = {
-  preferPluginId?: string
+  preferPluginId?: string,
+  plugins?: EdgePluginMap<{
+    disabled?: boolean,
+    promoCode?: string
+  }>
 }
 
 // edge login ----------------------------------------------------------
