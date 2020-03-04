@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.16.23 (2020-03-03)
+
+- Quick re-publish to fix Flow bug in previous release.
+
 ## 0.16.22 (2020-03-03)
 
 - Fix the TypeScript type definitions.
