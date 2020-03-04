@@ -1,3 +1,5 @@
+// @flow
+
 import {
   type EdgeContext,
   type EdgeContextOptions,
@@ -46,7 +48,7 @@ export const MakeFakeEdgeWorld = (props: {
   debug?: boolean,
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
-  onLoad: (context: EdgeContext) => mixed,
+  onLoad: (context: EdgeFakeWorld) => mixed,
   users: EdgeFakeUser[]
 }): any => hack // React element
 
