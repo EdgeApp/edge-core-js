@@ -132,14 +132,15 @@ function pickBestError(errors: any[]): any {
 /**
  * Ranks different error codes by priority.
  */
-function rankError(error: any) {
-  if (error.name === errorNames.InsufficientFundsError) return 5
-  if (error.name === errorNames.PendingFundsError) return 5
-  if (error.name === errorNames.SwapBelowLimitError) return 4
-  if (error.name === errorNames.SwapAboveLimitError) return 3
-  if (error.name === errorNames.SwapPermissionError) return 2
-  if (error.name === errorNames.SwapCurrencyError) return 1
-  return 0
+function rankError(error: any): number {
+  if (error == null) return 0
+  if (error.name === errorNames.InsufficientFundsError) return 6
+  if (error.name === errorNames.PendingFundsError) return 6
+  if (error.name === errorNames.SwapBelowLimitError) return 5
+  if (error.name === errorNames.SwapAboveLimitError) return 4
+  if (error.name === errorNames.SwapPermissionError) return 3
+  if (error.name === errorNames.SwapCurrencyError) return 2
+  return 1
 }
 
 /**
