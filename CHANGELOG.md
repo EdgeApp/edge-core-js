@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.16.22 (2020-03-03)
+
+- Fix the TypeScript type definitions.
+- Add a way to prioritize different exchange-rate plugins.
+- Add a way to pass promotion codes & disable swap providers on-the-fly while quoting.
+
 ## 0.16.21 (2020-02-05)
 
 - Deprecate `pluginName` fields in favor of `pluginId`, which is a less confusing name.
