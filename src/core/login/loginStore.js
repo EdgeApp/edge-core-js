@@ -15,7 +15,7 @@ import { type LoginStash } from './login-types.js'
 
 export type FileInfo = {
   file: DiskletFile,
-  json: Object
+  json: any
 }
 
 function loginsFolder(ai: ApiInput) {

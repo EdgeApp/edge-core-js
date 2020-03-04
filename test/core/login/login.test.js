@@ -164,9 +164,9 @@ describe('otp', function() {
     await account.enableOtp()
 
     // Cannot log in remotely:
-    await remote.loginWithPIN(fakeUser.username, fakeUser.pin).catch(e => {
-      expect(e.name).equals(errorNames.OtpError)
-      return context.requestOtpReset(fakeUser.username, e.resetToken)
+    await remote.loginWithPIN(fakeUser.username, fakeUser.pin).catch(error => {
+      expect(error.name).equals(errorNames.OtpError)
+      return context.requestOtpReset(fakeUser.username, error.resetToken)
     })
 
     // Can log in remotely with the token:

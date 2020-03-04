@@ -22,6 +22,7 @@ import {
   type JsonObject,
   InsufficientFundsError
 } from '../../src/index.js'
+import { compare } from '../../src/util/compare.js'
 
 export const fakeCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
@@ -80,7 +81,7 @@ class FakeCurrencyEngine {
     this._updateState(this.state)
   }
 
-  _updateState(settings: State): mixed {
+  _updateState(settings: State): void {
     const state = this.state
     const {
       onAddressesChecked = nop,
@@ -117,7 +118,7 @@ class FakeCurrencyEngine {
     if (typeof settings.txs === 'object' && settings.txs != null) {
       const changes: EdgeTransaction[] = []
       for (const txid in settings.txs) {
-        const newTx = {
+        const newTx: EdgeTransaction = {
           blockHeight: 0,
           date: 0,
           nativeAmount: '0',
@@ -128,26 +129,18 @@ class FakeCurrencyEngine {
         }
         const oldTx = state.txs[txid]
 
-        let changed = false
-        if (oldTx != null) {
-          for (const item in newTx) {
-            if (oldTx[item] !== newTx[item]) changed = true
-          }
-        } else {
-          changed = true
-        }
-        if (changed) {
+        if (oldTx == null || !compare(oldTx, newTx)) {
           changes.push(newTx)
           state.txs[txid] = newTx
         }
       }
 
-      if (changes.length) onTransactionsChanged(changes)
+      if (changes.length > 0) onTransactionsChanged(changes)
     }
   }
 
   async changeUserSettings(settings: JsonObject): Promise<mixed> {
-    return this._updateState(settings)
+    await this._updateState(settings)
   }
 
   // Keys:
@@ -236,6 +229,7 @@ class FakeCurrencyEngine {
   }
 
   addGapLimitAddresses(addresses: string[]): void {}
+
   isAddressUsed(address: string): boolean {
     return address === 'fakeaddress'
   }

@@ -19,15 +19,13 @@ export function scrypt(
   dklen: number
 ): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
-    const callback = (error, progress, key) => {
-      if (error) return reject(error)
-      if (key) return resolve(key)
-    }
-
     // The scrypt library will crash if it gets a Uint8Array > 64 bytes:
     const copy = []
     for (let i = 0; i < data.length; ++i) copy[i] = data[i]
 
-    scryptJs(copy, salt, n, r, p, dklen, callback)
+    scryptJs(copy, salt, n, r, p, dklen, (error, progress, key) => {
+      if (error != null) return reject(error)
+      if (key != null) return resolve(key)
+    })
   })
 }

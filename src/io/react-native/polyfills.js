@@ -3,7 +3,7 @@
 /**
  * Object.assign
  */
-function assign(out: any) {
+function assign(out: any): any {
   if (out == null) {
     throw new TypeError('Cannot convert undefined or null to object')
   }
@@ -25,9 +25,9 @@ function assign(out: any) {
 /**
  * Array.fill
  */
-function fill(value: any, start?: number, end?: number) {
+function fill(value: any, start?: number, end?: number): any[] {
   const length = this.length
-  function clamp(endpoint: number) {
+  function clamp(endpoint: number): number {
     return endpoint < 0
       ? Math.max(length + endpoint, 0)
       : Math.min(endpoint, length)
@@ -47,7 +47,7 @@ function fill(value: any, start?: number, end?: number) {
 function find(
   test: (value: any, i: number, array: any[]) => boolean,
   testThis?: any
-) {
+): any {
   for (let i = 0; i < this.length; ++i) {
     const value = this[i]
     if (test.call(testThis, value, i, this)) {
@@ -59,14 +59,14 @@ function find(
 /**
  * Array.includes
  */
-function includes(target: any) {
+function includes(target: any): boolean {
   return Array.prototype.indexOf.call(this, target) >= 0
 }
 
 /**
  * Adds a non-enumerable method to an object.
  */
-function safeAdd(object: any, name: string, value: any) {
+function safeAdd(object: any, name: string, value: any): void {
   if (typeof object[name] !== 'function') {
     Object.defineProperty(object, name, {
       configurable: true,

@@ -1083,7 +1083,10 @@ export type EdgeContext = {
   changePaused(
     paused: boolean,
     opts?: { secondsDelay?: number }
-  ): Promise<mixed>
+  ): Promise<mixed>,
+
+  // Deprecated API's:
+  pinExists(username: string): Promise<boolean>
 }
 
 // ---------------------------------------------------------------------
@@ -1094,8 +1097,8 @@ export type EdgeFakeUser = {
   username: string,
   loginId: string,
   loginKey: string,
-  repos: { [repo: string]: { [path: string]: JsonObject } },
-  server: JsonObject
+  repos: { [repo: string]: { [path: string]: any /* JsonBox */ } },
+  server: any /* DbLogin & { children?: DbLogin[] } */
 }
 
 export type EdgeFakeWorld = {
