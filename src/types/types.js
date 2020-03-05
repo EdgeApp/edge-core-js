@@ -796,10 +796,11 @@ export type EdgeSwapQuote = EdgeSwapPluginQuote & {
 
 export type EdgeSwapRequestOptions = {
   preferPluginId?: string,
-  plugins?: EdgePluginMap<{
-    disabled?: boolean,
-    promoCode?: string
-  }>
+  disabled: EdgePluginMap<true>,
+  promoCodes: EdgePluginMap<string>,
+
+  // Deprecated:
+  plugins?: EdgePluginMap<{ disabled?: boolean, promoCode?: string }>
 }
 
 // edge login ----------------------------------------------------------
