@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.16.24 (2020-03-04)
+
+- Simplify the API for providing plugin swap promo codes.
+
 ## 0.16.23 (2020-03-03)
 
 - Quick re-publish to fix Flow bug in previous release.
