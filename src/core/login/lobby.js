@@ -4,7 +4,7 @@ import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
-import { type JsonBox, decryptText, encrypt } from '../../util/crypto/crypto.js'
+import { type EdgeBox, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
 import { base58, utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -18,7 +18,7 @@ type Keypair = Object
 // The JSON structure placed in the lobby as a reply:
 export type LobbyReply = {
   publicKey: string,
-  box: JsonBox
+  box: EdgeBox
 }
 
 // The JSON structure placed in the lobby as a request:

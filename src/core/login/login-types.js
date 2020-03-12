@@ -1,15 +1,15 @@
 // @flow
 
 import { type EdgeWalletInfo } from '../../types/types.js'
-import { type JsonBox } from '../../util/crypto/crypto.js'
-import { type JsonSnrp } from '../scrypt/scrypt-pixie.js'
+import { type EdgeBox } from '../../util/crypto/crypto.js'
+import { type EdgeSnrp } from '../scrypt/scrypt-pixie.js'
 
 /**
  * Data sent back by the auth server.
  */
 export type LoginReply = {
   appId: string,
-  loginAuthBox?: JsonBox,
+  loginAuthBox?: EdgeBox,
   loginId: string,
 
   // 2-factor:
@@ -18,28 +18,28 @@ export type LoginReply = {
   otpTimeout?: number,
 
   // Offline password logins:
-  passwordAuthBox?: JsonBox,
-  passwordAuthSnrp?: JsonSnrp,
-  passwordBox?: JsonBox,
-  passwordKeySnrp?: JsonSnrp,
+  passwordAuthBox?: EdgeBox,
+  passwordAuthSnrp?: EdgeSnrp,
+  passwordBox?: EdgeBox,
+  passwordKeySnrp?: EdgeSnrp,
 
   // PIN login:
-  pin2Box?: JsonBox,
-  pin2KeyBox?: JsonBox,
-  pin2TextBox?: JsonBox,
+  pin2Box?: EdgeBox,
+  pin2KeyBox?: EdgeBox,
+  pin2TextBox?: EdgeBox,
 
   // Recovery login:
-  question2Box?: JsonBox,
-  recovery2Box?: JsonBox,
-  recovery2KeyBox?: JsonBox,
+  question2Box?: EdgeBox,
+  recovery2Box?: EdgeBox,
+  recovery2KeyBox?: EdgeBox,
 
   // Resources:
   children?: LoginReply[],
-  keyBoxes?: JsonBox[],
-  mnemonicBox?: JsonBox,
-  parentBox?: JsonBox,
-  rootKeyBox?: JsonBox,
-  syncKeyBox?: JsonBox
+  keyBoxes?: EdgeBox[],
+  mnemonicBox?: EdgeBox,
+  parentBox?: EdgeBox,
+  rootKeyBox?: EdgeBox,
+  syncKeyBox?: EdgeBox
 }
 
 /**
@@ -48,7 +48,7 @@ export type LoginReply = {
 export type LoginStash = {
   // Basic account info:
   appId?: string, // Not actually optional
-  loginAuthBox?: JsonBox,
+  loginAuthBox?: EdgeBox,
   loginId?: string, // Not actually optional
   userId?: string,
   username?: string,
@@ -59,25 +59,25 @@ export type LoginStash = {
   otpTimeout?: number,
 
   // Offline password logins:
-  passwordAuthBox?: JsonBox,
-  passwordAuthSnrp?: JsonSnrp,
-  passwordBox?: JsonBox,
-  passwordKeySnrp?: JsonSnrp,
+  passwordAuthBox?: EdgeBox,
+  passwordAuthSnrp?: EdgeSnrp,
+  passwordBox?: EdgeBox,
+  passwordKeySnrp?: EdgeSnrp,
 
   // PIN login:
   pin2Key?: string,
-  pin2TextBox?: JsonBox,
+  pin2TextBox?: EdgeBox,
 
   // Recovery login:
   recovery2Key?: string,
 
   // Resources:
   children?: LoginStash[],
-  keyBoxes?: JsonBox[],
-  mnemonicBox?: JsonBox,
-  parentBox?: JsonBox,
-  rootKeyBox?: JsonBox,
-  syncKeyBox?: JsonBox
+  keyBoxes?: EdgeBox[],
+  mnemonicBox?: EdgeBox,
+  parentBox?: EdgeBox,
+  rootKeyBox?: EdgeBox,
+  syncKeyBox?: EdgeBox
 }
 
 // Login data decrypted into memory.

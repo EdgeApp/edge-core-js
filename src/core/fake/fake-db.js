@@ -1,11 +1,11 @@
 // @flow
 
 import { type EdgeFakeUser } from '../../types/types.js'
-import { type JsonBox } from '../../util/crypto/crypto.js'
+import { type EdgeBox } from '../../util/crypto/crypto.js'
 import { filterObject } from '../../util/util.js'
 import { type LobbyReply, type LobbyRequest } from '../login/lobby.js'
 import { type LoginReply } from '../login/login-types.js'
-import { type JsonSnrp } from '../scrypt/scrypt-pixie.js'
+import { type EdgeSnrp } from '../scrypt/scrypt-pixie.js'
 
 export type DbLobby = {
   expires: string, // date
@@ -18,32 +18,32 @@ export type DbLogin = {
   appId: string,
   loginId: string, // base64
   parent?: string, // loginId
-  parentBox?: JsonBox,
+  parentBox?: EdgeBox,
 
   // Key login:
   loginAuth?: string, // base64
-  loginAuthBox?: JsonBox,
+  loginAuthBox?: EdgeBox,
 
   // Password login:
   passwordAuth?: string,
-  passwordAuthBox?: JsonBox,
-  passwordAuthSnrp?: JsonSnrp,
-  passwordBox?: JsonBox,
-  passwordKeySnrp?: JsonSnrp,
+  passwordAuthBox?: EdgeBox,
+  passwordAuthSnrp?: EdgeSnrp,
+  passwordBox?: EdgeBox,
+  passwordKeySnrp?: EdgeSnrp,
 
   // PIN v2:
   pin2Id?: string, // base64
   pin2Auth?: string, // base64
-  pin2Box?: JsonBox,
-  pin2KeyBox?: JsonBox,
-  pin2TextBox?: JsonBox,
+  pin2Box?: EdgeBox,
+  pin2KeyBox?: EdgeBox,
+  pin2TextBox?: EdgeBox,
 
   // Login Recovery v2:
   recovery2Id?: string, // base64
   recovery2Auth?: string[],
-  recovery2Box?: JsonBox,
-  recovery2KeyBox?: JsonBox,
-  question2Box?: JsonBox,
+  recovery2Box?: EdgeBox,
+  recovery2KeyBox?: EdgeBox,
+  question2Box?: EdgeBox,
 
   // OTP goodies:
   otpKey?: string,
@@ -51,13 +51,13 @@ export type DbLogin = {
   otpTimeout?: number,
 
   // Keys and assorted goodies:
-  keyBoxes: JsonBox[],
-  mnemonicBox?: JsonBox,
-  rootKeyBox?: JsonBox,
-  syncKeyBox?: JsonBox
+  keyBoxes: EdgeBox[],
+  mnemonicBox?: EdgeBox,
+  rootKeyBox?: EdgeBox,
+  syncKeyBox?: EdgeBox
 }
 
-export type DbRepo = { [path: string]: JsonBox }
+export type DbRepo = { [path: string]: EdgeBox }
 
 type DbLoginDump = DbLogin & { children?: DbLoginDump[] }
 

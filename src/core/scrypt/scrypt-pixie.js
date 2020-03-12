@@ -11,7 +11,7 @@ import { base16 } from 'rfc4648'
 import { utf8 } from '../../util/encoding.js'
 import { type RootProps } from '../root-pixie.js'
 
-export type JsonSnrp = {
+export type EdgeSnrp = {
   salt_hex: string,
   n: number,
   r: number,
@@ -19,10 +19,10 @@ export type JsonSnrp = {
 }
 
 export type ScryptOutput = {
-  +makeSnrp: (targetMs: number) => Promise<JsonSnrp>,
+  +makeSnrp: (targetMs: number) => Promise<EdgeSnrp>,
   +timeScrypt: (
     data: Uint8Array,
-    snrp: JsonSnrp,
+    snrp: EdgeSnrp,
     dklen?: number
   ) => Promise<{ hash: Uint8Array, time: number }>
 }
@@ -44,7 +44,7 @@ export function calcSnrpForTarget(
   salt: Uint8Array,
   benchMs: number,
   targetMs: number
-): JsonSnrp {
+): EdgeSnrp {
   const snrp = {
     salt_hex: base16.stringify(salt),
     n: 16384,
@@ -160,7 +160,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
     // Performs an scrypt calculation, recording the elapsed time:
     function timeScrypt(
       data: Uint8Array,
-      snrp: JsonSnrp,
+      snrp: EdgeSnrp,
       dklen: number = 32
     ): Promise<{ hash: Uint8Array, time: number }> {
       const salt = base16.parse(snrp.salt_hex)

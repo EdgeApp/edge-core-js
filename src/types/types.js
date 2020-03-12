@@ -1098,7 +1098,7 @@ export type EdgeFakeUser = {
   username: string,
   loginId: string,
   loginKey: string,
-  repos: { [repo: string]: { [path: string]: any /* JsonBox */ } },
+  repos: { [repo: string]: { [path: string]: any /* EdgeBox */ } },
   server: any /* DbLogin & { children?: DbLogin[] } */
 }
 
