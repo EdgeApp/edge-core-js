@@ -5,7 +5,7 @@ import { base32 } from 'rfc4648'
 import { hmacSha1 } from './hashes.js'
 
 export function numberToBe64(number: number): Uint8Array {
-  const high = Math.floor(number / 4294967296)
+  const high = Math.floor(number / 0x100000000)
   return new Uint8Array([
     (high >> 24) & 0xff,
     (high >> 16) & 0xff,
