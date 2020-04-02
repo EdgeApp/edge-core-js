@@ -9,7 +9,7 @@ import { sha256 } from './hashes.js'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 
-export type JsonBox = {
+export type EdgeBox = {
   encryptionType: number,
   data_base64: string,
   iv_hex: string
@@ -19,7 +19,7 @@ export type JsonBox = {
  * Some of our data contains terminating null bytes due to an old bug,
  * so this function handles text decryption as a special case.
  */
-export function decryptText(box: JsonBox, key: Uint8Array): string {
+export function decryptText(box: EdgeBox, key: Uint8Array): string {
   const data = decrypt(box, key)
   if (data[data.length - 1] === 0) {
     return utf8.stringify(data.subarray(0, -1))
@@ -31,7 +31,7 @@ export function decryptText(box: JsonBox, key: Uint8Array): string {
  * @param box an Airbitz JSON encryption box
  * @param key a key, as an ArrayBuffer
  */
-export function decrypt(box: JsonBox, key: Uint8Array): Uint8Array {
+export function decrypt(box: EdgeBox, key: Uint8Array): Uint8Array {
   // Check JSON:
   if (box.encryptionType !== 0) {
     throw new Error('Unknown encryption type')
@@ -92,7 +92,7 @@ export function encrypt(
   io: EdgeIo,
   data: Uint8Array,
   key: Uint8Array
-): JsonBox {
+): EdgeBox {
   // Calculate sizes and locations:
   const headerSize = io.random(1)[0] & 0x1f
   const dataStart = 1 + headerSize + 4

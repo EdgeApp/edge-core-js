@@ -345,7 +345,7 @@ export function applyKits(
   ai: ApiInput,
   loginTree: LoginTree,
   kits: LoginKit[]
-): Promise<mixed> {
+): Promise<void> {
   if (!kits.length) return Promise.resolve()
 
   const [first, ...rest] = kits
@@ -354,10 +354,13 @@ export function applyKits(
   )
 }
 
-export async function syncAccount(ai: ApiInput, accountId: string) {
+export async function syncAccount(
+  ai: ApiInput,
+  accountId: string
+): Promise<void> {
   if (ai.props.state.accounts[accountId] == null) return
   const { login, loginTree } = ai.props.state.accounts[accountId]
-  return syncLogin(ai, loginTree, login)
+  await syncLogin(ai, loginTree, login)
 }
 
 /**

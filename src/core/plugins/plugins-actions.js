@@ -15,8 +15,8 @@ import {
 import { type RootAction } from '../actions.js'
 import { makeLog } from '../log/log.js'
 
-type PluginsAddedWatcher = (plugins: EdgeCorePlugins) => mixed
-type PluginsLockedWatcher = () => mixed
+type PluginsAddedWatcher = (plugins: EdgeCorePlugins) => void
+type PluginsLockedWatcher = () => void
 
 const allPlugins: EdgeCorePlugins = {}
 let allPluginsLocked: boolean = false
@@ -26,7 +26,7 @@ const onPluginsLocked: PluginsLockedWatcher[] = []
 /**
  * Adds plugins to the core.
  */
-export function addEdgeCorePlugins(plugins: EdgeCorePlugins): mixed {
+export function addEdgeCorePlugins(plugins: EdgeCorePlugins): void {
   if (allPluginsLocked) {
     throw new Error('The Edge core plugin list has already been locked')
   }
@@ -43,7 +43,7 @@ export function addEdgeCorePlugins(plugins: EdgeCorePlugins): mixed {
 /**
  * Finalizes the core plugin list, so no further plugins are expected.
  */
-export function lockEdgeCorePlugins(): mixed {
+export function lockEdgeCorePlugins(): void {
   allPluginsLocked = true
   for (const f of onPluginsLocked) f()
 }

@@ -35,7 +35,7 @@ function getJsonFiles(folder: DiskletFolder): Promise<FileInfo[]> {
 /**
  * Removes any login stash that may be stored for the given username.
  */
-export function removeStash(ai: ApiInput, username: string): Promise<mixed> {
+export function removeStash(ai: ApiInput, username: string): Promise<void> {
   const fixedName = fixUsername(username)
   return getJsonFiles(loginsFolder(ai))
     .then(files => files.find(file => file.json.username === fixedName))
@@ -51,7 +51,7 @@ export function removeStash(ai: ApiInput, username: string): Promise<mixed> {
 /**
  * Saves a login stash tree to the folder.
  */
-export function saveStash(ai: ApiInput, stashTree: LoginStash): Promise<mixed> {
+export function saveStash(ai: ApiInput, stashTree: LoginStash): Promise<void> {
   if (stashTree.appId !== '') {
     throw new Error('Cannot save a login without an appId.')
   }
@@ -69,7 +69,7 @@ export function saveStash(ai: ApiInput, stashTree: LoginStash): Promise<mixed> {
   return loginsFolder(ai)
     .file(filename)
     .setText(JSON.stringify(stashTree))
-    .then(() =>
+    .then(() => {
       ai.props.dispatch({ type: 'LOGIN_STASH_SAVED', payload: stashTree })
-    )
+    })
 }

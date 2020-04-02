@@ -4,7 +4,7 @@ import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
 
 import { type EdgeIo } from '../../types/types.js'
-import { type JsonBox, decryptText, encrypt } from '../../util/crypto/crypto.js'
+import { type EdgeBox, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
 import { base58, utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -18,7 +18,7 @@ type Keypair = Object
 // The JSON structure placed in the lobby as a reply:
 export type LobbyReply = {
   publicKey: string,
-  box: JsonBox
+  box: EdgeBox
 }
 
 // The JSON structure placed in the lobby as a request:
@@ -29,14 +29,14 @@ export type LobbyRequest = {
   replies?: LobbyReply[]
 }
 
-export type LobbySubscription = { unsubscribe(): mixed }
+export type LobbySubscription = { unsubscribe(): void }
 
 // Use this to subscribe to lobby events:
 export type LobbyInstance = {
   lobbyId: string,
   subscribe(
-    onReply: (reply: mixed) => mixed,
-    onError: (e: Error) => mixed
+    onReply: (reply: mixed) => void,
+    onError: (e: Error) => void
   ): LobbySubscription
 }
 
@@ -98,8 +98,8 @@ class ObservableLobby {
   timeout: TimeoutID | void
 
   // Callbacks:
-  onError: ((e: Error) => mixed) | void
-  onReply: ((reply: mixed) => mixed) | void
+  onError: ((e: Error) => void) | void
+  onReply: ((reply: mixed) => void) | void
 
   constructor(ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
     this.ai = ai
@@ -115,7 +115,7 @@ class ObservableLobby {
     this.onReply = undefined
   }
 
-  subscribe(onReply: (reply: mixed) => mixed, onError: (e: Error) => mixed) {
+  subscribe(onReply: (reply: mixed) => void, onError: (e: Error) => void) {
     this.onReply = onReply
     this.onError = onError
     this.replyCount = 0

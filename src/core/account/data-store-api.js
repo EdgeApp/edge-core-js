@@ -37,12 +37,12 @@ export function makeDataStoreApi(
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
 
   const out: EdgeDataStore = {
-    async deleteItem(storeId: string, itemId: string): Promise<mixed> {
+    async deleteItem(storeId: string, itemId: string): Promise<void> {
       const file = getPluginFile(ai, accountWalletInfo, storeId, itemId)
       await file.delete()
     },
 
-    async deleteStore(storeId: string): Promise<mixed> {
+    async deleteStore(storeId: string): Promise<void> {
       const folder = getPluginFolder(ai, accountWalletInfo, storeId)
       await folder.delete()
     },
@@ -82,7 +82,7 @@ export function makeDataStoreApi(
       storeId: string,
       itemId: string,
       value: string
-    ): Promise<mixed> {
+    ): Promise<void> {
       // Set up the plugin folder, if needed:
       const folder = getPluginFolder(ai, accountWalletInfo, storeId)
       const storeIdFile = folder.file('Name.json')
@@ -107,11 +107,11 @@ export function makeDataStoreApi(
 
 export function makePluginDataApi(dataStore: EdgeDataStore): EdgePluginData {
   const out: EdgePluginData = {
-    deleteItem(pluginId: string, itemId: string): Promise<mixed> {
+    deleteItem(pluginId: string, itemId: string): Promise<void> {
       return dataStore.deleteItem(pluginId, itemId)
     },
 
-    deletePlugin(pluginId: string): Promise<mixed> {
+    deletePlugin(pluginId: string): Promise<void> {
       return dataStore.deleteStore(pluginId)
     },
 
@@ -127,7 +127,7 @@ export function makePluginDataApi(dataStore: EdgeDataStore): EdgePluginData {
       return dataStore.getItem(pluginId, itemId)
     },
 
-    setItem(pluginId: string, itemId: string, value: string): Promise<mixed> {
+    setItem(pluginId: string, itemId: string, value: string): Promise<void> {
       return dataStore.setItem(pluginId, itemId, value)
     }
   }

@@ -54,7 +54,7 @@ async function approveLoginRequest(
   appId: string,
   lobbyId: string,
   lobbyJson: LobbyRequest
-): Promise<mixed> {
+): Promise<void> {
   const { loginTree, username } = ai.props.state.accounts[accountId]
 
   // Ensure that the login object & account repo exist:
@@ -76,7 +76,7 @@ async function approveLoginRequest(
     loginKey: base64.stringify(requestedLogin.loginKey),
     loginStash
   }
-  return sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
+  await sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
     let timeout: TimeoutID | void
     const accountApi = ai.props.output.accounts[accountId].api
     if (accountApi != null) {
@@ -122,7 +122,7 @@ export async function makeLobbyApi(
       appId,
       displayName,
       displayImageUrl,
-      approve(): Promise<mixed> {
+      approve(): Promise<void> {
         return approveLoginRequest(ai, accountId, appId, lobbyId, lobbyJson)
       }
     }

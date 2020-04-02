@@ -28,7 +28,7 @@ export function makeStorageWalletApi(ai: ApiInput, walletInfo: EdgeWalletInfo) {
       return getStorageWalletLocalDisklet(ai.props.state, id)
     },
 
-    async sync(): Promise<mixed> {
+    async sync(): Promise<void> {
       await syncStorageWallet(ai, id)
     }
   }

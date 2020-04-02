@@ -13,9 +13,9 @@ import {
 
 const hack: any = null
 
-export const addEdgeCorePlugins = (plugins: EdgeCorePlugins): mixed => hack
-export const lockEdgeCorePlugins = (): mixed => hack
-export const closeEdge = (): mixed => hack
+export const addEdgeCorePlugins = (plugins: EdgeCorePlugins): void => hack
+export const lockEdgeCorePlugins = (): void => hack
+export const closeEdge = (): void => hack
 export const makeFakeIo = (): EdgeIo => hack
 
 /**

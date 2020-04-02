@@ -22,7 +22,7 @@ export type RootOutput = {
 
 // Props passed to the root pixie:
 export type RootProps = {
-  +close: () => mixed,
+  +close: () => void,
   +dispatch: Dispatch<RootAction>,
   +io: EdgeIo,
   +log: EdgeLog,

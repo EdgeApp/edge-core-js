@@ -46,7 +46,7 @@ export function makeContextApi(ai: ApiInput) {
 
     appId,
 
-    async close(): Promise<mixed> {
+    async close(): Promise<void> {
       ai.props.close()
     },
 
@@ -62,7 +62,7 @@ export function makeContextApi(ai: ApiInput) {
       return Object.keys(ai.props.state.login.stashes)
     },
 
-    async deleteLocalAccount(username: string): Promise<mixed> {
+    async deleteLocalAccount(username: string): Promise<void> {
       // Safety check:
       const fixedName = fixUsername(username)
       for (const accountId of ai.props.state.accountIds) {
@@ -207,7 +207,10 @@ export function makeContextApi(ai: ApiInput) {
       return ai.props.state.paused
     },
 
-    async changePaused(paused: boolean, opts = {}): Promise<mixed> {
+    async changePaused(
+      paused: boolean,
+      opts: { secondsDelay?: number } = {}
+    ): Promise<void> {
       const { secondsDelay = 0 } = opts
 
       // If a timer is already running, stop that:

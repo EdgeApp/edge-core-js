@@ -525,7 +525,7 @@ export type EdgeCurrencyWallet = {
   +publicWalletInfo: EdgeWalletInfo,
   +disklet: Disklet,
   +localDisklet: Disklet,
-  sync(): Promise<mixed>,
+  sync(): Promise<void>,
 
   // Wallet keys:
   +displayPrivateSeed: string | null,
@@ -533,11 +533,11 @@ export type EdgeCurrencyWallet = {
 
   // Wallet name:
   +name: string | null,
-  renameWallet(name: string): Promise<mixed>,
+  renameWallet(name: string): Promise<void>,
 
   // Fiat currency option:
   +fiatCurrencyCode: string,
-  setFiatCurrencyCode(fiatCurrencyCode: string): Promise<mixed>,
+  setFiatCurrencyCode(fiatCurrencyCode: string): Promise<void>,
 
   // Currency info:
   +currencyInfo: EdgeCurrencyInfo,
@@ -556,15 +556,15 @@ export type EdgeCurrencyWallet = {
   +syncRatio: number,
 
   // Running state:
-  startEngine(): Promise<mixed>,
-  stopEngine(): Promise<mixed>,
+  startEngine(): Promise<void>,
+  stopEngine(): Promise<void>,
 
   // Token management:
-  changeEnabledTokens(currencyCodes: string[]): Promise<mixed>,
-  enableTokens(tokens: string[]): Promise<mixed>,
-  disableTokens(tokens: string[]): Promise<mixed>,
+  changeEnabledTokens(currencyCodes: string[]): Promise<void>,
+  enableTokens(tokens: string[]): Promise<void>,
+  disableTokens(tokens: string[]): Promise<void>,
   getEnabledTokens(): Promise<string[]>,
-  addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
+  addCustomToken(token: EdgeTokenInfo): Promise<void>,
 
   // Transaction history:
   getNumTransactions(opts?: EdgeCurrencyCodeOptions): Promise<number>,
@@ -576,27 +576,27 @@ export type EdgeCurrencyWallet = {
   getReceiveAddress(
     opts?: EdgeCurrencyCodeOptions
   ): Promise<EdgeReceiveAddress>,
-  saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
-  lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<mixed>,
+  saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,
+  lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,
 
   // Sending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   signTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
-  saveTx(tx: EdgeTransaction): Promise<mixed>,
+  saveTx(tx: EdgeTransaction): Promise<void>,
   sweepPrivateKeys(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   saveTxMetadata(
     txid: string,
     currencyCode: string,
     metadata: EdgeMetadata
-  ): Promise<mixed>,
+  ): Promise<void>,
   getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
   getPaymentProtocolInfo(
     paymentProtocolUrl: string
   ): Promise<EdgePaymentProtocolInfo>,
 
   // Wallet management:
-  resyncBlockchain(): Promise<mixed>,
+  resyncBlockchain(): Promise<void>,
   dumpData(): Promise<EdgeDataDump>,
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
@@ -656,7 +656,7 @@ export type EdgeSwapPluginQuote = {
   +quoteId?: string,
 
   approve(): Promise<EdgeTransaction>,
-  close(): Promise<mixed>
+  close(): Promise<void>
 }
 
 export type EdgeSwapPluginStatus = {
@@ -731,7 +731,7 @@ export type EdgeCurrencyConfig = {
   +otherMethods: EdgeOtherMethods,
   +userSettings: JsonObject | void,
 
-  changeUserSettings(settings: JsonObject): Promise<mixed>,
+  changeUserSettings(settings: JsonObject): Promise<void>,
   importKey(userInput: string): Promise<JsonObject>
 }
 
@@ -784,8 +784,8 @@ export type EdgeSwapConfig = {
   +swapInfo: EdgeSwapInfo,
   +userSettings: JsonObject | void,
 
-  changeEnabled(enabled: boolean): Promise<mixed>,
-  changeUserSettings(settings: JsonObject): Promise<mixed>
+  changeEnabled(enabled: boolean): Promise<void>,
+  changeUserSettings(settings: JsonObject): Promise<void>
 }
 
 export type EdgeSwapQuote = EdgeSwapPluginQuote & {
@@ -807,7 +807,7 @@ export type EdgeSwapRequestOptions = {
 
 export type EdgeLoginRequest = {
   +appId: string,
-  approve(): Promise<mixed>,
+  approve(): Promise<void>,
 
   +displayName: string,
   +displayImageUrl: string | void
@@ -821,14 +821,14 @@ export type EdgeLobby = {
 // storage -------------------------------------------------------------
 
 export type EdgeDataStore = {
-  deleteItem(storeId: string, itemId: string): Promise<mixed>,
-  deleteStore(storeId: string): Promise<mixed>,
+  deleteItem(storeId: string, itemId: string): Promise<void>,
+  deleteStore(storeId: string): Promise<void>,
 
   listItemIds(storeId: string): Promise<string[]>,
   listStoreIds(): Promise<string[]>,
 
   getItem(storeId: string, itemId: string): Promise<string>,
-  setItem(storeId: string, itemId: string, value: string): Promise<mixed>
+  setItem(storeId: string, itemId: string, value: string): Promise<void>
 }
 
 // account -------------------------------------------------------------
@@ -847,7 +847,7 @@ export type EdgeAccount = {
   +type: string,
   +disklet: Disklet,
   +localDisklet: Disklet,
-  sync(): Promise<mixed>,
+  sync(): Promise<void>,
 
   // Basic login information:
   +appId: string,
@@ -871,7 +871,7 @@ export type EdgeAccount = {
   +recoveryLogin: boolean,
 
   // Change or create credentials:
-  changePassword(password: string): Promise<mixed>,
+  changePassword(password: string): Promise<void>,
   changePin(opts: {
     pin?: string, // We keep the existing PIN if unspecified
     enableLogin?: boolean // We default to true if unspecified
@@ -883,26 +883,26 @@ export type EdgeAccount = {
   checkPin(pin: string): Promise<boolean>,
 
   // Remove credentials:
-  deletePassword(): Promise<mixed>,
-  deletePin(): Promise<mixed>,
-  deleteRecovery(): Promise<mixed>,
+  deletePassword(): Promise<void>,
+  deletePin(): Promise<void>,
+  deleteRecovery(): Promise<void>,
 
   // OTP:
   +otpKey: string | void, // OTP is enabled if this exists
   +otpResetDate: string | void, // A reset is requested if this exists
-  cancelOtpReset(): Promise<mixed>,
-  disableOtp(): Promise<mixed>,
-  enableOtp(timeout?: number): Promise<mixed>,
+  cancelOtpReset(): Promise<void>,
+  disableOtp(): Promise<void>,
+  enableOtp(timeout?: number): Promise<void>,
 
   // Edge login approval:
   fetchLobby(lobbyId: string): Promise<EdgeLobby>,
 
   // Login management:
-  logout(): Promise<mixed>,
+  logout(): Promise<void>,
 
   // Master wallet list:
   +allKeys: EdgeWalletInfoFull[],
-  changeWalletStates(walletStates: EdgeWalletStates): Promise<mixed>,
+  changeWalletStates(walletStates: EdgeWalletStates): Promise<void>,
   createWallet(type: string, keys?: JsonObject): Promise<string>,
   getFirstWalletInfo(type: string): EdgeWalletInfo | void,
   getWalletInfo(id: string): EdgeWalletInfo | void,
@@ -1016,7 +1016,7 @@ export type EdgeContextEvents = {
 export type EdgeContext = {
   +on: Subscriber<EdgeContextEvents>,
   +watch: Subscriber<EdgeContext>,
-  close(): Promise<mixed>,
+  close(): Promise<void>,
 
   +appId: string,
 
@@ -1024,7 +1024,7 @@ export type EdgeContext = {
   localUsers: EdgeUserInfo[],
   fixUsername(username: string): string,
   listUsernames(): Promise<string[]>,
-  deleteLocalAccount(username: string): Promise<mixed>,
+  deleteLocalAccount(username: string): Promise<void>,
 
   // Account creation:
   usernameAvailable(username: string): Promise<boolean>,
@@ -1084,7 +1084,7 @@ export type EdgeContext = {
   changePaused(
     paused: boolean,
     opts?: { secondsDelay?: number }
-  ): Promise<mixed>,
+  ): Promise<void>,
 
   // Deprecated API's:
   pinExists(username: string): Promise<boolean>
@@ -1098,18 +1098,18 @@ export type EdgeFakeUser = {
   username: string,
   loginId: string,
   loginKey: string,
-  repos: { [repo: string]: { [path: string]: any /* JsonBox */ } },
+  repos: { [repo: string]: { [path: string]: any /* EdgeBox */ } },
   server: any /* DbLogin & { children?: DbLogin[] } */
 }
 
 export type EdgeFakeWorld = {
-  close(): Promise<mixed>,
+  close(): Promise<void>,
 
   makeEdgeContext(
     opts: EdgeContextOptions & { cleanDevice?: boolean }
   ): Promise<EdgeContext>,
 
-  goOffline(offline?: boolean): Promise<mixed>,
+  goOffline(offline?: boolean): Promise<void>,
   dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser>
 }
 
@@ -1135,12 +1135,12 @@ export type EdgeCreatePrivateKeyOptions =
   | JsonObject
 
 export type EdgePluginData = {
-  deleteItem(pluginId: string, itemId: string): Promise<mixed>,
-  deletePlugin(pluginId: string): Promise<mixed>,
+  deleteItem(pluginId: string, itemId: string): Promise<void>,
+  deletePlugin(pluginId: string): Promise<void>,
 
   listItemIds(pluginId: string): Promise<string[]>,
   listPluginIds(): Promise<string[]>,
 
   getItem(pluginId: string, itemId: string): Promise<string>,
-  setItem(pluginId: string, itemId: string, value: string): Promise<mixed>
+  setItem(pluginId: string, itemId: string, value: string): Promise<void>
 }

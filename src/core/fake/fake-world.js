@@ -91,7 +91,7 @@ export function makeFakeWorld(
       return out
     },
 
-    async goOffline(offline: boolean = true): Promise<mixed> {
+    async goOffline(offline: boolean = true): Promise<void> {
       fakeServer.offline = offline
     },
 

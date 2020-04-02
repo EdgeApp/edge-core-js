@@ -36,8 +36,8 @@ class EdgeLobby extends Bridgeable<
   constructor(lobby: LobbyInstance) {
     super()
     this._lobby = lobby
-    this._onError = () => {}
-    this._onRepliesChanged = () => {}
+    this._onError = () => undefined
+    this._onRepliesChanged = () => undefined
     this._replies = []
 
     const { unsubscribe } = lobby.subscribe(
