@@ -7,8 +7,8 @@ import { base16, base64 } from 'rfc4648'
 import { scrypt } from '../../../src/util/crypto/scrypt.js'
 import { utf8 } from '../../../src/util/encoding.js'
 
-describe('scrypt', function() {
-  it('match a known userId', async function() {
+describe('scrypt', function () {
+  it('match a known userId', async function () {
     const password = utf8.parse('william test')
     const salt = base16.parse(
       'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b'

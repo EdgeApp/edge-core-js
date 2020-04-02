@@ -77,8 +77,8 @@ function addPairs(pairs: ExchangePair[]): RootAction {
   return { type: 'EXCHANGE_PAIRS_FETCHED', payload: pairs }
 }
 
-describe('exchange cache reducer', function() {
-  it('add currency pairs', function() {
+describe('exchange cache reducer', function () {
+  it('add currency pairs', function () {
     const pairs = makePairs()
 
     // Add the first currency pair:
@@ -92,7 +92,7 @@ describe('exchange cache reducer', function() {
     assert.deepEqual(state.exchangeCache.rates.routes, routes)
   })
 
-  it('preserve ordering', function() {
+  it('preserve ordering', function () {
     const pairs = makePairs()
 
     // Add a middle currency , with adjustments:
@@ -108,7 +108,7 @@ describe('exchange cache reducer', function() {
     assert.deepEqual(state.exchangeCache.rates.pairs, expected)
   })
 
-  it('find the shortest route', function() {
+  it('find the shortest route', function () {
     const pairs = makePairs()
     const state = reducer(undefined, addPairs(pairs))
 
@@ -126,7 +126,7 @@ describe('exchange cache reducer', function() {
     )
   })
 
-  it('find a route using the preferred exchange', function() {
+  it('find a route using the preferred exchange', function () {
     const pairs = makePairs()
     const state = reducer(undefined, addPairs(pairs))
 
@@ -138,7 +138,7 @@ describe('exchange cache reducer', function() {
     )
   })
 
-  it('find the freshest route', function() {
+  it('find the freshest route', function () {
     const pairs = makePairs()
     const state = reducer(undefined, addPairs(pairs))
 
@@ -148,7 +148,7 @@ describe('exchange cache reducer', function() {
     )
   })
 
-  it('missing routes return zero', function() {
+  it('missing routes return zero', function () {
     const pairs = makePairs()
     const state = reducer(undefined, addPairs(pairs))
 
@@ -159,8 +159,8 @@ describe('exchange cache reducer', function() {
   })
 })
 
-describe('exchange pixie', function() {
-  it('fetches exchange rates', async function() {
+describe('exchange pixie', function () {
+  it('fetches exchange rates', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,

@@ -15,8 +15,8 @@ const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
 const contextOptions = { apiKey: '', appId: '' }
 
-describe('edge login lobby', function() {
-  it('round-trip data', function() {
+describe('edge login lobby', function () {
+  it('round-trip data', function () {
     const io = makeFakeIo()
     const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
     const pubkey = keypair.getPublic().encodeCompressed()
@@ -29,7 +29,7 @@ describe('edge login lobby', function() {
     expect(decrypted).deep.equals(testReply)
   })
 
-  it('lobby ping-pong', async function() {
+  it('lobby ping-pong', async function () {
     const world = await makeFakeEdgeWorld()
     const context1 = await world.makeEdgeContext(contextOptions)
     const context2 = await world.makeEdgeContext(contextOptions)

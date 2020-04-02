@@ -12,8 +12,8 @@ import {
 } from '../../../src/util/crypto/crypto.js'
 import { utf8 } from '../../../src/util/encoding.js'
 
-describe('encryption', function() {
-  it('decrypts existing data', function() {
+describe('encryption', function () {
+  it('decrypts existing data', function () {
     const key = base16.parse(
       '002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393'
     )
@@ -27,7 +27,7 @@ describe('encryption', function() {
     expect(decrypt(box, key)).deep.equals(utf8.parse('payload'))
   })
 
-  it('round-trips data', function() {
+  it('round-trips data', function () {
     const io = makeFakeIo()
     const key = base16.parse(
       '002688cc350a5333a87fa622eacec626c3d1c0ebf9f3793de3885fa254d7e393'

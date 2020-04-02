@@ -8,8 +8,8 @@ import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
 
-describe('plugin data API', function() {
-  it('stores data', async function() {
+describe('plugin data API', function () {
+  it('stores data', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)

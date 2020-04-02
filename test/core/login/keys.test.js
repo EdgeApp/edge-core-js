@@ -12,8 +12,8 @@ import {
 const ID_1 = 'PPptx6SBfwGXM+FZURMvYnsOfHpIKZBbqXTCbYmFd44='
 const ID_2 = 'y14MYFMP6vnip2hUBP7aqB6Ut0d4UNqHV9a/2vgE9eQ='
 
-describe('mergeKeyInfos', function() {
-  it('merge separate keys', function() {
+describe('mergeKeyInfos', function () {
+  it('merge separate keys', function () {
     const key1 = { id: ID_1, type: 'foo', keys: { a: 1 } }
     const key2 = { id: ID_2, type: 'bar', keys: { a: 2 } }
     const out = mergeKeyInfos([key1, key2])
@@ -23,7 +23,7 @@ describe('mergeKeyInfos', function() {
     assert.deepEqual(out[1], key2)
   })
 
-  it('merge overlapping keys', function() {
+  it('merge overlapping keys', function () {
     const key1 = { id: ID_1, type: 'foo', keys: { a: 1 } }
     const key2 = { id: ID_1, type: 'foo', keys: { b: 2 } }
     const key3 = { id: ID_1, type: 'foo', keys: { a: 1, b: 2 } }
@@ -35,7 +35,7 @@ describe('mergeKeyInfos', function() {
     assert.deepEqual(key2.keys, { b: 2 })
   })
 
-  it('merge conflicting types', function() {
+  it('merge conflicting types', function () {
     assert.throws(() =>
       mergeKeyInfos([
         { id: ID_1, type: 'foo', keys: { a: 1 } },
@@ -44,7 +44,7 @@ describe('mergeKeyInfos', function() {
     )
   })
 
-  it('merge conflicting keys', function() {
+  it('merge conflicting keys', function () {
     assert.throws(() =>
       mergeKeyInfos([
         { id: ID_1, type: 'foo', keys: { a: 1 } },
@@ -54,8 +54,8 @@ describe('mergeKeyInfos', function() {
   })
 })
 
-describe('fixWalletInfo', function() {
-  it('handles legacy keys', function() {
+describe('fixWalletInfo', function () {
+  it('handles legacy keys', function () {
     expect(
       fixWalletInfo({
         id: 'id',
@@ -81,7 +81,7 @@ describe('fixWalletInfo', function() {
     })
   })
 
-  it('leaves modern formats unchanged', function() {
+  it('leaves modern formats unchanged', function () {
     expect(
       fixWalletInfo({
         id: 'id',
@@ -112,8 +112,8 @@ describe('fixWalletInfo', function() {
   })
 })
 
-describe('splitWalletInfo', function() {
-  it('handles bitcoin to bitcoin cash', function() {
+describe('splitWalletInfo', function () {
+  it('handles bitcoin to bitcoin cash', function () {
     expect(
       makeSplitWalletInfo(
         fixWalletInfo({
@@ -139,7 +139,7 @@ describe('splitWalletInfo', function() {
     })
   })
 
-  it('handles bitcoin cash to bitcoin', function() {
+  it('handles bitcoin cash to bitcoin', function () {
     expect(
       makeSplitWalletInfo(
         {

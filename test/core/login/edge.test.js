@@ -28,8 +28,8 @@ async function simulateRemoteApproval(
   await loginRequest.approve()
 }
 
-describe('edge login', function() {
-  it('request', async function() {
+describe('edge login', function () {
+  it('request', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
@@ -51,7 +51,7 @@ describe('edge login', function() {
     return context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
-  it('cancel', async function() {
+  it('cancel', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 

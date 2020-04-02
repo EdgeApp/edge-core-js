@@ -7,8 +7,8 @@ import { base16 } from 'rfc4648'
 import { hmacSha256, sha256 } from '../../../src/util/crypto/hashes.js'
 import { utf8 } from '../../../src/util/encoding.js'
 
-describe('hashes', function() {
-  it('hmac-sha256', function() {
+describe('hashes', function () {
+  it('hmac-sha256', function () {
     const data = utf8.parse('The quick brown fox jumps over the lazy dog')
     const key = utf8.parse('key')
     const expected =
@@ -17,7 +17,7 @@ describe('hashes', function() {
     assert.equal(expected, base16.stringify(hmacSha256(data, key)))
   })
 
-  it('sha256', function() {
+  it('sha256', function () {
     const data = utf8.parse('This is a test')
     const expected =
       'C7BE1ED902FB8DD4D48997C6452F5D7E509FBCDBE2808B16BCF4EDCE4C07D14E'

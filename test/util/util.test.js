@@ -5,8 +5,8 @@ import { describe, it } from 'mocha'
 
 import { mergeDeeply } from '../../src/util/util.js'
 
-describe('utilities', function() {
-  it('mergeDeeply', function() {
+describe('utilities', function () {
+  it('mergeDeeply', function () {
     const a = {
       x: 1,
       y: { a: -1, c: 4 }

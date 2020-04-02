@@ -22,8 +22,8 @@ function findWallet(
   return walletInfos.find(info => info.type === type)
 }
 
-describe('account', function() {
-  it('calls callbacks', async function() {
+describe('account', function () {
+  it('calls callbacks', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -35,7 +35,7 @@ describe('account', function() {
     log.assert('called')
   })
 
-  it('find repo', async function() {
+  it('find repo', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -47,7 +47,7 @@ describe('account', function() {
     assert(findWallet(allKeys, 'account-repo:blah') == null)
   })
 
-  it('attach repo', async function() {
+  it('attach repo', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -62,7 +62,7 @@ describe('account', function() {
     assert.deepEqual(info.keys, keys)
   })
 
-  it('create wallet', async function() {
+  it('create wallet', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -73,7 +73,7 @@ describe('account', function() {
     assert.equal(info.keys.fakeKey, 'FakePrivateKey')
   })
 
-  it('create currency wallet', async function() {
+  it('create currency wallet', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account: EdgeAccount = await context.loginWithPIN(
@@ -89,7 +89,7 @@ describe('account', function() {
     assert.equal(wallet.fiatCurrencyCode, 'iso:JPY')
   })
 
-  it('list keys', async function() {
+  it('list keys', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -106,7 +106,7 @@ describe('account', function() {
     expect(allAppIds).deep.equals([[''], [''], [''], ['test-child']])
   })
 
-  it('list active wallet ids', async function() {
+  it('list active wallet ids', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -118,7 +118,7 @@ describe('account', function() {
     ])
   })
 
-  it('change currency plugin settings', async function() {
+  it('change currency plugin settings', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -136,7 +136,7 @@ describe('account', function() {
     expect(config2.userSettings).deep.equals(settings)
   })
 
-  it('change swap plugin settings', async function() {
+  it('change swap plugin settings', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
@@ -165,7 +165,7 @@ describe('account', function() {
     expect(config1.needsActivation).equals(false)
   })
 
-  it('disable swap plugin', async function() {
+  it('disable swap plugin', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
@@ -187,7 +187,7 @@ describe('account', function() {
     expect(config2.enabled).equals(true)
   })
 
-  it('change key state', async function() {
+  it('change key state', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -207,7 +207,7 @@ describe('account', function() {
     assert.equal(allKeys[2].archived, true)
   })
 
-  it('split wallet', async function() {
+  it('split wallet', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -243,7 +243,7 @@ describe('account', function() {
     )
   })
 
-  it('hides keys', async function() {
+  it('hides keys', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       ...contextOptions,
@@ -277,7 +277,7 @@ describe('account', function() {
     )
   })
 
-  it('logout', async function() {
+  it('logout', async function () {
     const log = makeAssertLog()
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)

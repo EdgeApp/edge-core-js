@@ -10,8 +10,8 @@ export function snooze(ms: number): Promise<number> {
   return new Promise(resolve => setTimeout(() => resolve(ms), ms))
 }
 
-describe('promise', function() {
-  it('fuzzyTimeout resolves', async function() {
+describe('promise', function () {
+  it('fuzzyTimeout resolves', async function () {
     expect(await fuzzyTimeout([snooze(1), snooze(20)], 10)).deep.equals([1])
     expect(await fuzzyTimeout([snooze(1), snooze(2)], 10)).deep.equals([1, 2])
     expect(await fuzzyTimeout([snooze(20), snooze(30)], 10)).deep.equals([20])

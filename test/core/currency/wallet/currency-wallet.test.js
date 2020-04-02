@@ -33,15 +33,15 @@ async function makeFakeCurrencyWallet(): Promise<
   return [wallet, config]
 }
 
-describe('currency wallets', function() {
-  it('can be created', async function() {
+describe('currency wallets', function () {
+  it('can be created', async function () {
     const [wallet] = await makeFakeCurrencyWallet()
     expect(wallet.name).equals('Fake Wallet')
     expect(wallet.displayPrivateSeed).equals('xpriv')
     expect(wallet.displayPublicSeed).equals('xpub')
   })
 
-  it('can be renamed', async function() {
+  it('can be renamed', async function () {
     const log = makeAssertLog()
     const [wallet] = await makeFakeCurrencyWallet()
     wallet.watch('name', name => log(name))
@@ -51,7 +51,7 @@ describe('currency wallets', function() {
     log.assert('Another Name')
   })
 
-  it('has publicWalletInfo', async function() {
+  it('has publicWalletInfo', async function () {
     const [wallet] = await makeFakeCurrencyWallet()
     expect(wallet.publicWalletInfo).deep.equals({
       id: 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=',
@@ -60,7 +60,7 @@ describe('currency wallets', function() {
     })
   })
 
-  it('triggers callbacks', async function() {
+  it('triggers callbacks', async function () {
     const log = makeAssertLog()
     const [wallet, config] = await makeFakeCurrencyWallet()
 
@@ -135,7 +135,7 @@ describe('currency wallets', function() {
     await log.waitFor(1).assert('new e f g')
   })
 
-  it('handles tokens', async function() {
+  it('handles tokens', async function () {
     const [wallet, config] = await makeFakeCurrencyWallet()
     await config.changeUserSettings({
       txs: {
@@ -161,7 +161,7 @@ describe('currency wallets', function() {
     })
   })
 
-  it('get max spendable', async function() {
+  it('get max spendable', async function () {
     const [wallet, config] = await makeFakeCurrencyWallet()
     await config.changeUserSettings({ balance: 50 })
 
@@ -185,7 +185,7 @@ describe('currency wallets', function() {
     )
   })
 
-  it('converts number formats', async function() {
+  it('converts number formats', async function () {
     const [wallet] = await makeFakeCurrencyWallet()
     expect(await wallet.denominationToNative('0.1', 'SMALL')).equals('1')
     expect(await wallet.denominationToNative('0.1', 'FAKE')).equals('10')

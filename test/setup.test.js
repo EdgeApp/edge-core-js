@@ -9,7 +9,7 @@ import {
 } from '../src/index.js'
 import { allPlugins } from './fake/fake-plugins.js'
 
-afterEach(function() {
+afterEach(function () {
   closeEdge()
 })
 

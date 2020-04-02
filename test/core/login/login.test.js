@@ -9,22 +9,22 @@ import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
 
-describe('username', function() {
-  it('normalize spaces and capitalization', async function() {
+describe('username', function () {
+  it('normalize spaces and capitalization', async function () {
     const world = await makeFakeEdgeWorld()
     const context = await world.makeEdgeContext(contextOptions)
 
     assert.equal('test test', context.fixUsername('  TEST TEST  '))
   })
 
-  it('reject invalid characters', async function() {
+  it('reject invalid characters', async function () {
     const world = await makeFakeEdgeWorld()
     const context = await world.makeEdgeContext(contextOptions)
 
     assert.throws(() => context.fixUsername('テスト'))
   })
 
-  it('list usernames in local storage', async function() {
+  it('list usernames in local storage', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -40,7 +40,7 @@ describe('username', function() {
     ])
   })
 
-  it('remove username from local storage', async function() {
+  it('remove username from local storage', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -49,7 +49,7 @@ describe('username', function() {
     expect(await context.listUsernames()).has.lengthOf(0)
   })
 
-  it('cannot remove logged-in users', async function() {
+  it('cannot remove logged-in users', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -61,8 +61,8 @@ describe('username', function() {
   })
 })
 
-describe('appId', function() {
-  it('can log into unknown apps', async function() {
+describe('appId', function () {
+  it('can log into unknown apps', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext({
       apiKey: '',
@@ -72,8 +72,8 @@ describe('appId', function() {
   })
 })
 
-describe('creation', function() {
-  it('username available', async function() {
+describe('creation', function () {
+  it('username available', async function () {
     const world = await makeFakeEdgeWorld()
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -81,7 +81,7 @@ describe('creation', function() {
     assert(available)
   })
 
-  it('username not available', async function() {
+  it('username not available', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -89,7 +89,7 @@ describe('creation', function() {
     assert(!available)
   })
 
-  it('password-less account', async function() {
+  it('password-less account', async function () {
     this.timeout(1000)
     const world = await makeFakeEdgeWorld()
     const contextOptions = { apiKey: '', appId: 'test' }
@@ -112,7 +112,7 @@ describe('creation', function() {
     ])
   })
 
-  it('create account', async function() {
+  it('create account', async function () {
     this.timeout(15000)
     const world = await makeFakeEdgeWorld()
     const contextOptions = { apiKey: '', appId: 'test' }
@@ -140,8 +140,8 @@ describe('creation', function() {
   })
 })
 
-describe('otp', function() {
-  it('local login works', async function() {
+describe('otp', function () {
+  it('local login works', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -155,7 +155,7 @@ describe('otp', function() {
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
-  it('remote login fails', async function() {
+  it('remote login fails', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const remote = await world.makeEdgeContext(contextOptions)
@@ -185,8 +185,8 @@ describe('otp', function() {
   })
 })
 
-describe('password', function() {
-  it('login offline', async function() {
+describe('password', function () {
+  it('login offline', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     await world.goOffline()
@@ -195,13 +195,13 @@ describe('password', function() {
     await expectRejection(context.loginWithPIN(fakeUser.username, fakeUser.pin))
   })
 
-  it('login online', async function() {
+  it('login online', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     return context.loginWithPassword(fakeUser.username, fakeUser.password)
   })
 
-  it('change', async function() {
+  it('change', async function () {
     this.timeout(15000)
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
@@ -214,7 +214,7 @@ describe('password', function() {
     return remote.loginWithPassword(fakeUser.username, longPassword)
   })
 
-  it('check good', async function() {
+  it('check good', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -223,7 +223,7 @@ describe('password', function() {
     assert(ok)
   })
 
-  it('check bad', async function() {
+  it('check bad', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -232,7 +232,7 @@ describe('password', function() {
     assert(!ok)
   })
 
-  it('delete', async function() {
+  it('delete', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -245,8 +245,8 @@ describe('password', function() {
   })
 })
 
-describe('pin', function() {
-  it('exists', async function() {
+describe('pin', function () {
+  it('exists', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -254,7 +254,7 @@ describe('pin', function() {
     assert(exists)
   })
 
-  it('does not exist', async function() {
+  it('does not exist', async function () {
     const world = await makeFakeEdgeWorld()
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -262,13 +262,13 @@ describe('pin', function() {
     assert(!exists)
   })
 
-  it('login', async function() {
+  it('login', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
-  it('changes', async function() {
+  it('changes', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -280,7 +280,7 @@ describe('pin', function() {
     return remote.loginWithPIN(fakeUser.username, '4321')
   })
 
-  it('enable / disable', async function() {
+  it('enable / disable', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -311,7 +311,7 @@ describe('pin', function() {
     await context.loginWithPIN(fakeUser.username, '4321')
   })
 
-  it('check', async function() {
+  it('check', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -320,7 +320,7 @@ describe('pin', function() {
     expect(await account.checkPin(fakeUser.pin + '!')).equals(false)
   })
 
-  it('delete', async function() {
+  it('delete', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -330,8 +330,8 @@ describe('pin', function() {
   })
 })
 
-describe('recovery2', function() {
-  it('get local key', async function() {
+describe('recovery2', function () {
+  it('get local key', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -339,7 +339,7 @@ describe('recovery2', function() {
     assert.equal(recovery2Key, fakeUser.recovery2Key)
   })
 
-  it('get questions', async function() {
+  it('get questions', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -354,7 +354,7 @@ describe('recovery2', function() {
     }
   })
 
-  it('login', async function() {
+  it('login', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -365,7 +365,7 @@ describe('recovery2', function() {
     )
   })
 
-  it('change', async function() {
+  it('change', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -387,7 +387,7 @@ describe('recovery2', function() {
     ])
   })
 
-  it('delete', async function() {
+  it('delete', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
 
