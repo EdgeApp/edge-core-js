@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.16.25 (2020-04-04)
+
+- Prioritize swap providers with active promo codes.
+
 ## 0.16.24 (2020-03-04)
 
 - Simplify the API for providing plugin swap promo codes.
