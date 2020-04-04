@@ -66,7 +66,7 @@ export async function fetchSwapQuote(
       )
 
       // Find the cheapest price:
-      const bestQuote = pickBestQuote(quotes, preferPluginId)
+      const bestQuote = pickBestQuote(quotes, preferPluginId, promoCodes)
 
       // Close unused quotes:
       for (const quote of quotes) {
@@ -93,12 +93,19 @@ export async function fetchSwapQuote(
  */
 function pickBestQuote(
   quotes: EdgeSwapPluginQuote[],
-  preferPluginId: string | void
+  preferPluginId: string | void,
+  promoCodes: EdgePluginMap<string>
 ): EdgeSwapPluginQuote {
   return quotes.reduce((a, b) => {
     // Always return quotes from the preferred provider:
     if (a.pluginName === preferPluginId) return a
     if (b.pluginName === preferPluginId) return b
+
+    // Prioritize providers with active promo codes:
+    const aHasPromo = promoCodes[a.pluginName] != null
+    const bHasPromo = promoCodes[b.pluginName] != null
+    if (aHasPromo && !bHasPromo) return b
+    if (!aHasPromo && bHasPromo) return a
 
     // Prioritize accurate quotes over estimates:
     const { isEstimate: aIsEstimate = true } = a
