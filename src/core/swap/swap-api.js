@@ -98,12 +98,12 @@ function pickBestQuote(
 ): EdgeSwapPluginQuote {
   return quotes.reduce((a, b) => {
     // Always return quotes from the preferred provider:
-    if (a.pluginName === preferPluginId) return a
-    if (b.pluginName === preferPluginId) return b
+    if (a.pluginId === preferPluginId) return a
+    if (b.pluginId === preferPluginId) return b
 
     // Prioritize providers with active promo codes:
-    const aHasPromo = promoCodes[a.pluginName] != null
-    const bHasPromo = promoCodes[b.pluginName] != null
+    const aHasPromo = promoCodes[a.pluginId] != null
+    const bHasPromo = promoCodes[b.pluginId] != null
     if (aHasPromo && !bHasPromo) return b
     if (!aHasPromo && bHasPromo) return a
 
@@ -164,7 +164,7 @@ function upgradeQuote(
   quote: EdgeSwapPluginQuote,
   swapPlugins: EdgePluginMap<EdgeSwapPlugin>
 ): EdgeSwapQuote {
-  const { isEstimate = true, pluginId = quote.pluginName } = quote
+  const { isEstimate = true, pluginId } = quote
   const { swapInfo } = swapPlugins[pluginId]
 
   // Cobble together a URI:
