@@ -27,16 +27,6 @@ export async function fetchSwapQuote(
   const { preferPluginId, disabled = {}, promoCodes = {} } = opts
   const { log } = ai.props
 
-  // Upgrade deprecated options:
-  if (opts.plugins != null) {
-    for (const id of Object.keys(opts.plugins)) {
-      if (opts.plugins[id].disabled) disabled[id] = true
-      if (opts.plugins[id].promoCode != null) {
-        promoCodes[id] = opts.plugins[id].promoCode
-      }
-    }
-  }
-
   const account = ai.props.state.accounts[accountId]
   const { swapSettings, userSettings } = account
   const swapPlugins = ai.props.state.plugins.swap
