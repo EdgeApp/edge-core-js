@@ -930,8 +930,7 @@ export type EdgeAccount = {
   ): Promise<EdgeSwapQuote>,
 
   // Deprecated names:
-  +exchangeCache: EdgeRateCache,
-  getExchangeQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>
+  +exchangeCache: EdgeRateCache
 }
 
 // ---------------------------------------------------------------------

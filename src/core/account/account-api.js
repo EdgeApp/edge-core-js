@@ -23,7 +23,6 @@ import {
   type JsonObject
 } from '../../types/types.js'
 import { signEthereumTransaction } from '../../util/crypto/ethereum.js'
-import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
 import {
@@ -347,10 +346,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     // Deprecated names:
     get exchangeCache(): EdgeRateCache {
       return rateCache
-    },
-    async getExchangeQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
-      deprecate('EdgeAccount.getExchangeQuote', 'EdgeAccount.fetchSwapQuote')
-      return this.fetchSwapQuote(request)
     }
   }
   bridgifyObject(out)
