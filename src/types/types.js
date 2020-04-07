@@ -618,11 +618,14 @@ export type EdgeCurrencyWallet = {
 // swap plugin
 // ---------------------------------------------------------------------
 
+/**
+ * Static data about a swap plugin.
+ */
 export type EdgeSwapInfo = {
   +pluginId: string,
   +displayName: string,
 
-  +quoteUri?: string, // The quoteId would be appended to this
+  +orderUri?: string, // The orderId would be appended to this
   +supportEmail: string
 }
 
@@ -640,18 +643,29 @@ export type EdgeSwapRequest = {
   quoteFor: 'from' | 'to'
 }
 
-export type EdgeSwapPluginQuote = {
-  +isEstimate?: boolean, // Defaults to true. Edge prefers true quotes (not estimates) where possible.
+/**
+ * If the user approves a quote, the plugin performs the transaction
+ * and returns this as the result.
+ */
+export type EdgeSwapResult = {
+  +orderId?: string,
+  +destinationAddress?: string,
+  +transaction: EdgeTransaction
+}
+
+/**
+ * If a provider can satisfy a request, what is their price?
+ */
+export type EdgeSwapQuote = {
+  +isEstimate: boolean,
   +fromNativeAmount: string,
   +toNativeAmount: string,
   +networkFee: EdgeNetworkFee,
-  +destinationAddress: string,
 
   +pluginId: string,
   +expirationDate?: Date,
-  +quoteId?: string,
 
-  approve(): Promise<EdgeTransaction>,
+  approve(): Promise<EdgeSwapResult>,
   close(): Promise<void>
 }
 
@@ -667,7 +681,7 @@ export type EdgeSwapPlugin = {
     request: EdgeSwapRequest,
     userSettings: JsonObject | void,
     opts: { promoCode?: string }
-  ): Promise<EdgeSwapPluginQuote>
+  ): Promise<EdgeSwapQuote>
 }
 
 // ---------------------------------------------------------------------
@@ -782,12 +796,6 @@ export type EdgeSwapConfig = {
 
   changeEnabled(enabled: boolean): Promise<void>,
   changeUserSettings(settings: JsonObject): Promise<void>
-}
-
-export type EdgeSwapQuote = EdgeSwapPluginQuote & {
-  +isEstimate: boolean, // No longer optional at this point
-  +pluginId: string,
-  +quoteUri?: string
 }
 
 export type EdgeSwapRequestOptions = {

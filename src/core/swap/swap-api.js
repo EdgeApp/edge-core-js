@@ -5,8 +5,6 @@ import { bridgifyObject } from 'yaob'
 
 import {
   type EdgePluginMap,
-  type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeSwapRequestOptions,
@@ -32,7 +30,7 @@ export async function fetchSwapQuote(
   const swapPlugins = ai.props.state.plugins.swap
 
   // Invoke all the active swap plugins:
-  const promises: Promise<EdgeSwapPluginQuote>[] = []
+  const promises: Promise<EdgeSwapQuote>[] = []
   for (const pluginId of Object.keys(swapPlugins)) {
     const { enabled = true } =
       swapSettings[pluginId] != null ? swapSettings[pluginId] : {}
@@ -62,7 +60,7 @@ export async function fetchSwapQuote(
       for (const quote of quotes) {
         if (quote !== bestQuote) quote.close().catch(() => undefined)
       }
-      return bridgifyObject(upgradeQuote(bestQuote, swapPlugins))
+      return bridgifyObject(bestQuote)
     },
     errors => {
       log(
@@ -82,10 +80,10 @@ export async function fetchSwapQuote(
  * Picks the best quote out of the available choices.
  */
 function pickBestQuote(
-  quotes: EdgeSwapPluginQuote[],
+  quotes: EdgeSwapQuote[],
   preferPluginId: string | void,
   promoCodes: EdgePluginMap<string>
-): EdgeSwapPluginQuote {
+): EdgeSwapQuote {
   return quotes.reduce((a, b) => {
     // Always return quotes from the preferred provider:
     if (a.pluginId === preferPluginId) return a
@@ -145,24 +143,4 @@ function rankError(error: any): number {
   if (error.name === errorNames.SwapPermissionError) return 3
   if (error.name === errorNames.SwapCurrencyError) return 2
   return 1
-}
-
-/**
- * Turns a raw quote from the plugins into something the GUI expects.
- */
-function upgradeQuote(
-  quote: EdgeSwapPluginQuote,
-  swapPlugins: EdgePluginMap<EdgeSwapPlugin>
-): EdgeSwapQuote {
-  const { isEstimate = true, pluginId } = quote
-  const { swapInfo } = swapPlugins[pluginId]
-
-  // Cobble together a URI:
-  let quoteUri
-  if (quote.quoteId != null && swapInfo.quoteUri != null) {
-    quoteUri = swapInfo.quoteUri + quote.quoteId
-  }
-
-  // $FlowFixMe - Flow wrongly thinks isEstimate might be undefined here:
-  return { ...quote, isEstimate, pluginId, quoteUri }
 }
