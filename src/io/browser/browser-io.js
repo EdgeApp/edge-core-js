@@ -20,9 +20,6 @@ export function makeBrowserIo(): EdgeIo {
   if (window.crypto == null || window.crypto.getRandomValues == null) {
     throw new Error('No secure random number generator in this browser')
   }
-  if (window.WebSocket == null) {
-    throw new Error('No `WebSocket` object')
-  }
 
   return {
     // Crypto:
@@ -42,7 +39,6 @@ export function makeBrowserIo(): EdgeIo {
     // Networking:
     fetch(uri: string, opts?: EdgeFetchOptions): Promise<EdgeFetchResponse> {
       return window.fetch(uri, opts)
-    },
-    WebSocket: window.WebSocket
+    }
   }
 }

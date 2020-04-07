@@ -67,9 +67,7 @@ function makeIo(nativeIo: EdgeNativeIo): EdgeIo {
       opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
       return clientIo.fetchCors(uri, opts).then(makeFetchResponse)
-    },
-
-    WebSocket: window.WebSocket
+    }
   }
 }
 

@@ -119,8 +119,7 @@ export type EdgeIo = {
 
   // Deprecated:
   // eslint-disable-next-line no-use-before-define
-  +console: EdgeConsole,
-  +WebSocket: typeof WebSocket
+  +console: EdgeConsole
 }
 
 // logging -------------------------------------------------------------
