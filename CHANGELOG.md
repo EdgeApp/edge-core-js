@@ -1,5 +1,26 @@
 # edge-core-js
 
+## 0.17.0 (2020-04-08)
+
+This is a breaking release to address some issues in the swap API.
+
+This release also renames all `pluginName` instances to `pluginId`. This affects all plugin types, but the core contains compatibility code so old currency plugins continue working (but not for rate or swap plugins, which are easier to just upgrade).
+
+- Breaking changes to the swap API:
+  - Return a new `EdgeSwapResult` structure from `EdgeSwapQuote.approve`. This now contains the `destinationAddress` and `orderId` that used to exist on the `EdgeSwapQuote` type.
+  - Merge the `EdgeSwapPluginQuote` and `EdgeSwapQuote` types into one.
+    - The `EdgeSwapQuote.isEstimate` flag is no longer optional, but must be `true` or `false`.
+    - Remove `EdgeSwapQuote.quoteUri`. Just concatenate `EdgeSwapInfo.orderUri` with `EdgeSwapResult.orderId` to get this.
+  - Rename `EdgeSwapInfo.quoteUri` to `orderUri`.
+  - Remove the deprecated `plugins` option from `EdgeSwapRequestOptions`.
+
+- Other breaking changes:
+  - Remove deprecated `EdgeAccount.currencyTools`. Use `EdgeAccount.currencyConfig`.
+  - Remove deprecated `EdgeAccount.exchangeTools`. Use `EdgeAccount.swapConfig`.
+  - Remove deprecated `EdgeAccount.getExchangeQuote`. Use `EdgeAccount.fetchSwapQuote`.
+  - Remove deprecated `EdgeAccount.pluginData`. Use `EdgeAccount.dataStore`.
+  - Remove deprecated `EdgeIo.WebSocket`.
+
 ## 0.16.25 (2020-04-04)
 
 - Prioritize swap providers with active promo codes.
