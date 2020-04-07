@@ -48,7 +48,7 @@
     "fix": "npm run lint -- --fix",
     "flow": "flow",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
-    "precommit": "lint-staged --no-stash && flow && npm test && npm run prepare",
+    "precommit": "lint-staged && flow && npm test && npm run prepare",
     "prepare": "npm-run-all clean -p build.*",
     "test": "mocha -r sucrase/register 'test/**/*.test.js'"
   },
@@ -108,7 +108,7 @@
     "eslint-plugin-standard": ">=4.0.0",
     "flow-bin": "^0.89.0",
     "husky": ">=3.0.0",
-    "lint-staged": ">=9.0.0",
+    "lint-staged": "^10.1.2",
     "mocha": "^6.2.0",
     "npm-run-all": "^4.1.5",
     "prettier": ">=1.0.0",
