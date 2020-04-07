@@ -345,12 +345,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // Deprecated names:
-    get currencyTools(): EdgePluginMap<EdgeCurrencyConfig> {
-      return currencyConfigs
-    },
-    get exchangeTools(): EdgePluginMap<EdgeSwapConfig> {
-      return swapConfigs
-    },
     get exchangeCache(): EdgeRateCache {
       return rateCache
     },

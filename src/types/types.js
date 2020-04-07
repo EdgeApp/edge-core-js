@@ -931,8 +931,6 @@ export type EdgeAccount = {
 
   // Deprecated names:
   +exchangeCache: EdgeRateCache,
-  +currencyTools: EdgePluginMap<EdgeCurrencyConfig>,
-  +exchangeTools: EdgePluginMap<EdgeSwapConfig>,
   getExchangeQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>
 }
 
