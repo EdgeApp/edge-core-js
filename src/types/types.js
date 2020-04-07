@@ -930,8 +930,6 @@ export type EdgeAccount = {
   ): Promise<EdgeSwapQuote>,
 
   // Deprecated names:
-  // eslint-disable-next-line no-use-before-define
-  +pluginData: EdgePluginData,
   +exchangeCache: EdgeRateCache,
   +currencyTools: EdgePluginMap<EdgeCurrencyConfig>,
   +exchangeTools: EdgePluginMap<EdgeSwapConfig>,
@@ -1129,14 +1127,3 @@ export type EdgeBitcoinPrivateKeyOptions = {
 export type EdgeCreatePrivateKeyOptions =
   | EdgeBitcoinPrivateKeyOptions
   | JsonObject
-
-export type EdgePluginData = {
-  deleteItem(pluginId: string, itemId: string): Promise<void>,
-  deletePlugin(pluginId: string): Promise<void>,
-
-  listItemIds(pluginId: string): Promise<string[]>,
-  listPluginIds(): Promise<string[]>,
-
-  getItem(pluginId: string, itemId: string): Promise<string>,
-  setItem(pluginId: string, itemId: string, value: string): Promise<void>
-}
