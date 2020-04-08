@@ -119,8 +119,7 @@ export type EdgeIo = {
 
   // Deprecated:
   // eslint-disable-next-line no-use-before-define
-  +console: EdgeConsole,
-  +WebSocket: typeof WebSocket
+  +console: EdgeConsole
 }
 
 // logging -------------------------------------------------------------
@@ -228,9 +227,8 @@ type EdgeObjectTemplate = Array<
 
 export type EdgeCurrencyInfo = {
   // Basic currency information:
+  +pluginId: string,
   displayName: string,
-  +pluginId?: string, // Mandatory in next breaking version
-  pluginName: string, // Deprecated for pluginId
   walletType: string,
 
   // Native token information:
@@ -620,12 +618,14 @@ export type EdgeCurrencyWallet = {
 // swap plugin
 // ---------------------------------------------------------------------
 
+/**
+ * Static data about a swap plugin.
+ */
 export type EdgeSwapInfo = {
+  +pluginId: string,
   +displayName: string,
-  +pluginId?: string, // Mandatory in next breaking version
-  +pluginName: string, // Deprecated for pluginId
 
-  +quoteUri?: string, // The quoteId would be appended to this
+  +orderUri?: string, // The orderId would be appended to this
   +supportEmail: string
 }
 
@@ -643,19 +643,29 @@ export type EdgeSwapRequest = {
   quoteFor: 'from' | 'to'
 }
 
-export type EdgeSwapPluginQuote = {
-  +isEstimate?: boolean, // Defaults to true. Edge prefers true quotes (not estimates) where possible.
+/**
+ * If the user approves a quote, the plugin performs the transaction
+ * and returns this as the result.
+ */
+export type EdgeSwapResult = {
+  +orderId?: string,
+  +destinationAddress?: string,
+  +transaction: EdgeTransaction
+}
+
+/**
+ * If a provider can satisfy a request, what is their price?
+ */
+export type EdgeSwapQuote = {
+  +isEstimate: boolean,
   +fromNativeAmount: string,
   +toNativeAmount: string,
   +networkFee: EdgeNetworkFee,
-  +destinationAddress: string,
 
-  +pluginId?: string, // Mandatory in next breaking version
-  +pluginName: string, // Deprecated for pluginId
+  +pluginId: string,
   +expirationDate?: Date,
-  +quoteId?: string,
 
-  approve(): Promise<EdgeTransaction>,
+  approve(): Promise<EdgeSwapResult>,
   close(): Promise<void>
 }
 
@@ -671,7 +681,7 @@ export type EdgeSwapPlugin = {
     request: EdgeSwapRequest,
     userSettings: JsonObject | void,
     opts: { promoCode?: string }
-  ): Promise<EdgeSwapPluginQuote>
+  ): Promise<EdgeSwapQuote>
 }
 
 // ---------------------------------------------------------------------
@@ -684,8 +694,8 @@ export type EdgeRateHint = {
 }
 
 export type EdgeRateInfo = {
-  +displayName: string,
-  +pluginId?: string // Mandatory in next breaking version
+  +pluginId: string,
+  +displayName: string
 }
 
 export type EdgeRatePair = {
@@ -788,19 +798,10 @@ export type EdgeSwapConfig = {
   changeUserSettings(settings: JsonObject): Promise<void>
 }
 
-export type EdgeSwapQuote = EdgeSwapPluginQuote & {
-  +isEstimate: boolean, // No longer optional at this point
-  +pluginId: string,
-  +quoteUri?: string
-}
-
 export type EdgeSwapRequestOptions = {
   preferPluginId?: string,
   disabled: EdgePluginMap<true>,
-  promoCodes: EdgePluginMap<string>,
-
-  // Deprecated:
-  plugins?: EdgePluginMap<{ disabled?: boolean, promoCode?: string }>
+  promoCodes: EdgePluginMap<string>
 }
 
 // edge login ----------------------------------------------------------
@@ -934,12 +935,7 @@ export type EdgeAccount = {
   ): Promise<EdgeSwapQuote>,
 
   // Deprecated names:
-  // eslint-disable-next-line no-use-before-define
-  +pluginData: EdgePluginData,
-  +exchangeCache: EdgeRateCache,
-  +currencyTools: EdgePluginMap<EdgeCurrencyConfig>,
-  +exchangeTools: EdgePluginMap<EdgeSwapConfig>,
-  getExchangeQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote>
+  +exchangeCache: EdgeRateCache
 }
 
 // ---------------------------------------------------------------------
@@ -1133,14 +1129,3 @@ export type EdgeBitcoinPrivateKeyOptions = {
 export type EdgeCreatePrivateKeyOptions =
   | EdgeBitcoinPrivateKeyOptions
   | JsonObject
-
-export type EdgePluginData = {
-  deleteItem(pluginId: string, itemId: string): Promise<void>,
-  deletePlugin(pluginId: string): Promise<void>,
-
-  listItemIds(pluginId: string): Promise<string[]>,
-  listPluginIds(): Promise<string[]>,
-
-  getItem(pluginId: string, itemId: string): Promise<string>,
-  setItem(pluginId: string, itemId: string, value: string): Promise<void>
-}

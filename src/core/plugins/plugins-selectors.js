@@ -77,13 +77,14 @@ export function waitForPlugins(ai: ApiInput) {
     const { init, locked } = props.state.plugins
     if (!locked) return
 
+    const { currency, rate, swap } = props.state.plugins
     const missingPlugins: string[] = []
     for (const pluginId in init) {
       if (
         !!init[pluginId] &&
-        props.state.plugins.currency[pluginId] == null &&
-        props.state.plugins.rate[pluginId] == null &&
-        props.state.plugins.swap[pluginId] == null
+        currency[pluginId] == null &&
+        rate[pluginId] == null &&
+        swap[pluginId] == null
       ) {
         missingPlugins.push(pluginId)
       }
@@ -94,6 +95,13 @@ export function waitForPlugins(ai: ApiInput) {
           missingPlugins.join(', ')
       )
     }
+
+    // Upgrade deprecated pluginName field for currency plugins:
+    for (const pluginId of Object.keys(currency)) {
+      const typeHack: any = currency[pluginId].currencyInfo
+      if (typeHack.pluginName != null) typeHack.pluginId = pluginId
+    }
+
     return true
   })
 }

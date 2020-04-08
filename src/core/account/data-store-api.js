@@ -3,7 +3,7 @@
 import { mapFiles, mapFolders } from 'disklet'
 import { bridgifyObject } from 'yaob'
 
-import { type EdgeDataStore, type EdgePluginData } from '../../types/types.js'
+import { type EdgeDataStore } from '../../types/types.js'
 import { type ApiInput } from '../root-pixie.js'
 import {
   getStorageWalletFolder,
@@ -98,37 +98,6 @@ export function makeDataStoreApi(
       // Set up the actual item:
       const file = getPluginFile(ai, accountWalletInfo, storeId, itemId)
       await file.setText(JSON.stringify({ key: itemId, data: value }))
-    }
-  }
-  bridgifyObject(out)
-
-  return out
-}
-
-export function makePluginDataApi(dataStore: EdgeDataStore): EdgePluginData {
-  const out: EdgePluginData = {
-    deleteItem(pluginId: string, itemId: string): Promise<void> {
-      return dataStore.deleteItem(pluginId, itemId)
-    },
-
-    deletePlugin(pluginId: string): Promise<void> {
-      return dataStore.deleteStore(pluginId)
-    },
-
-    listItemIds(pluginId: string): Promise<string[]> {
-      return dataStore.listItemIds(pluginId)
-    },
-
-    listPluginIds(): Promise<string[]> {
-      return dataStore.listStoreIds()
-    },
-
-    getItem(pluginId: string, itemId: string): Promise<string> {
-      return dataStore.getItem(pluginId, itemId)
-    },
-
-    setItem(pluginId: string, itemId: string, value: string): Promise<void> {
-      return dataStore.setItem(pluginId, itemId, value)
     }
   }
   bridgifyObject(out)

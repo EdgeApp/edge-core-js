@@ -148,7 +148,7 @@ describe('account', function () {
     expect(account1.swapConfig).has.keys('fakeswap')
 
     const config1 = account1.swapConfig.fakeswap
-    expect(config1.swapInfo.pluginName).equals('fakeswap')
+    expect(config1.swapInfo.pluginId).equals('fakeswap')
     expect(config1.needsActivation).equals(true)
     expect(config1.userSettings).equals(undefined)
 

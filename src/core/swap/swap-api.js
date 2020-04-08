@@ -5,8 +5,6 @@ import { bridgifyObject } from 'yaob'
 
 import {
   type EdgePluginMap,
-  type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeSwapRequestOptions,
@@ -27,22 +25,12 @@ export async function fetchSwapQuote(
   const { preferPluginId, disabled = {}, promoCodes = {} } = opts
   const { log } = ai.props
 
-  // Upgrade deprecated options:
-  if (opts.plugins != null) {
-    for (const id of Object.keys(opts.plugins)) {
-      if (opts.plugins[id].disabled) disabled[id] = true
-      if (opts.plugins[id].promoCode != null) {
-        promoCodes[id] = opts.plugins[id].promoCode
-      }
-    }
-  }
-
   const account = ai.props.state.accounts[accountId]
   const { swapSettings, userSettings } = account
   const swapPlugins = ai.props.state.plugins.swap
 
   // Invoke all the active swap plugins:
-  const promises: Promise<EdgeSwapPluginQuote>[] = []
+  const promises: Promise<EdgeSwapQuote>[] = []
   for (const pluginId of Object.keys(swapPlugins)) {
     const { enabled = true } =
       swapSettings[pluginId] != null ? swapSettings[pluginId] : {}
@@ -72,7 +60,7 @@ export async function fetchSwapQuote(
       for (const quote of quotes) {
         if (quote !== bestQuote) quote.close().catch(() => undefined)
       }
-      return bridgifyObject(upgradeQuote(bestQuote, swapPlugins))
+      return bridgifyObject(bestQuote)
     },
     errors => {
       log(
@@ -92,18 +80,18 @@ export async function fetchSwapQuote(
  * Picks the best quote out of the available choices.
  */
 function pickBestQuote(
-  quotes: EdgeSwapPluginQuote[],
+  quotes: EdgeSwapQuote[],
   preferPluginId: string | void,
   promoCodes: EdgePluginMap<string>
-): EdgeSwapPluginQuote {
+): EdgeSwapQuote {
   return quotes.reduce((a, b) => {
     // Always return quotes from the preferred provider:
-    if (a.pluginName === preferPluginId) return a
-    if (b.pluginName === preferPluginId) return b
+    if (a.pluginId === preferPluginId) return a
+    if (b.pluginId === preferPluginId) return b
 
     // Prioritize providers with active promo codes:
-    const aHasPromo = promoCodes[a.pluginName] != null
-    const bHasPromo = promoCodes[b.pluginName] != null
+    const aHasPromo = promoCodes[a.pluginId] != null
+    const bHasPromo = promoCodes[b.pluginId] != null
     if (aHasPromo && !bHasPromo) return b
     if (!aHasPromo && bHasPromo) return a
 
@@ -155,24 +143,4 @@ function rankError(error: any): number {
   if (error.name === errorNames.SwapPermissionError) return 3
   if (error.name === errorNames.SwapCurrencyError) return 2
   return 1
-}
-
-/**
- * Turns a raw quote from the plugins into something the GUI expects.
- */
-function upgradeQuote(
-  quote: EdgeSwapPluginQuote,
-  swapPlugins: EdgePluginMap<EdgeSwapPlugin>
-): EdgeSwapQuote {
-  const { isEstimate = true, pluginId = quote.pluginName } = quote
-  const { swapInfo } = swapPlugins[pluginId]
-
-  // Cobble together a URI:
-  let quoteUri
-  if (quote.quoteId != null && swapInfo.quoteUri != null) {
-    quoteUri = swapInfo.quoteUri + quote.quoteId
-  }
-
-  // $FlowFixMe - Flow wrongly thinks isEstimate might be undefined here:
-  return { ...quote, isEstimate, pluginId, quoteUri }
 }

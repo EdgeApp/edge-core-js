@@ -11,7 +11,6 @@ import {
   type EdgeCurrencyWallet,
   type EdgeDataStore,
   type EdgeLobby,
-  type EdgePluginData,
   type EdgePluginMap,
   type EdgeRateCache,
   type EdgeSwapConfig,
@@ -24,7 +23,6 @@ import {
   type JsonObject
 } from '../../types/types.js'
 import { signEthereumTransaction } from '../../util/crypto/ethereum.js'
-import { deprecate } from '../../util/deprecate.js'
 import { base58 } from '../../util/encoding.js'
 import { makeExchangeCache } from '../exchange/exchange-api.js'
 import {
@@ -48,7 +46,7 @@ import { type ApiInput } from '../root-pixie.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
 import { fetchSwapQuote } from '../swap/swap-api.js'
 import { changeWalletStates } from './account-files.js'
-import { makeDataStoreApi, makePluginDataApi } from './data-store-api.js'
+import { makeDataStoreApi } from './data-store-api.js'
 import { makeLobbyApi } from './lobby-api.js'
 import { CurrencyConfig, SwapConfig } from './plugin-api.js'
 
@@ -75,7 +73,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
   // Specialty API's:
   const rateCache = makeExchangeCache(ai)
   const dataStore = makeDataStoreApi(ai, accountId)
-  const pluginData = makePluginDataApi(dataStore)
   const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
 
   function lockdown() {
@@ -347,21 +344,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // Deprecated names:
-    get currencyTools(): EdgePluginMap<EdgeCurrencyConfig> {
-      return currencyConfigs
-    },
-    get exchangeTools(): EdgePluginMap<EdgeSwapConfig> {
-      return swapConfigs
-    },
     get exchangeCache(): EdgeRateCache {
       return rateCache
-    },
-    get pluginData(): EdgePluginData {
-      return pluginData
-    },
-    async getExchangeQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
-      deprecate('EdgeAccount.getExchangeQuote', 'EdgeAccount.fetchSwapQuote')
-      return this.fetchSwapQuote(request)
     }
   }
   bridgifyObject(out)

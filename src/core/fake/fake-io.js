@@ -39,33 +39,9 @@ function fakeFetch() {
 }
 
 /**
- * TODO: WebSocket mock.
- */
-class FakeWebSocket {
-  constructor(url: string) {
-    this.url = url
-  }
-
-  +url: string
-  close(code?: number, reason?: string): void {}
-  send(data: string | ArrayBuffer): void {}
-
-  static CONNECTING: 0
-  static OPEN: 1
-  static CLOSING: 2
-  static CLOSED: 3
-}
-FakeWebSocket.CONNECTING = 0
-FakeWebSocket.OPEN = 1
-FakeWebSocket.CLOSING = 2
-FakeWebSocket.CLOSED = 3
-
-/**
  * Creates a simulated io context object.
  */
 export function makeFakeIo(): EdgeIo {
-  const flowHack: any = FakeWebSocket
-
   const out: EdgeIo = {
     // Crypto:
     random: makeFakeRandom(),
@@ -76,8 +52,7 @@ export function makeFakeIo(): EdgeIo {
     disklet: makeMemoryDisklet(),
 
     // Networking:
-    fetch: fakeFetch,
-    WebSocket: flowHack
+    fetch: fakeFetch
   }
   return out
 }

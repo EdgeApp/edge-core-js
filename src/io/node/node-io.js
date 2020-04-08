@@ -3,7 +3,6 @@
 import crypto from 'crypto'
 import { makeNodeDisklet } from 'disklet'
 import fetch from 'node-fetch'
-import WebSocket from 'ws'
 
 import { type EdgeIo } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
@@ -27,7 +26,6 @@ export function makeNodeIo(path: string): EdgeIo {
 
     // Networking:
     fetch,
-    fetchCors: fetch,
-    WebSocket
+    fetchCors: fetch
   }
 }

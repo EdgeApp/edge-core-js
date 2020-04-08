@@ -10,6 +10,7 @@ import { fakeSwapPlugin } from './fake-swap-plugin.js'
 
 export const brokenExchangePlugin: EdgeRatePlugin = {
   rateInfo: {
+    pluginId: 'broken-exchange',
     displayName: 'BrokenExchange'
   },
 
@@ -20,6 +21,7 @@ export const brokenExchangePlugin: EdgeRatePlugin = {
 
 const fakeExchangePlugin: EdgeRatePlugin = {
   rateInfo: {
+    pluginId: 'fake-exchange',
     displayName: 'FakeExchange'
   },
 
