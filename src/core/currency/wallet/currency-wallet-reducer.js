@@ -308,7 +308,7 @@ export const currencyWalletReducer = filterReducer(
       action.payload != null &&
       action.payload.walletId === next.id
       ? action
-      : { type: 'UPDATE_PROPS' }
+      : { type: 'UPDATE_NEXT' }
   }
 )
 

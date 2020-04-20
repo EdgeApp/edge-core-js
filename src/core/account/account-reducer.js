@@ -281,6 +281,6 @@ export const accountReducer = filterReducer(
       return action
     }
 
-    return { type: 'PROPS_UPDATE' }
+    return { type: 'UPDATE_NEXT' }
   }
 )
