@@ -1,6 +1,11 @@
 // @flow
 
-import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
+import {
+  type FatReducer,
+  buildReducer,
+  filterReducer,
+  memoizeReducer
+} from 'redux-keto'
 
 import {
   type EdgeBalances,
@@ -81,7 +86,11 @@ export type CurrencyWalletNext = {
   +self: CurrencyWalletState
 }
 
-const currencyWallet = buildReducer({
+const currencyWalletInner: FatReducer<
+  CurrencyWalletState,
+  RootAction,
+  CurrencyWalletNext
+> = buildReducer({
   accountId(state, action, next: CurrencyWalletNext): string {
     if (state) return state
     for (const accountId in next.root.accounts) {
@@ -301,8 +310,12 @@ export function sortTxs(txidHashes: TxidHashes, newHashes: TxidHashes) {
   return { sortedList, txidHashes }
 }
 
-export const currencyWalletReducer = filterReducer(
-  currencyWallet,
+export const currencyWalletReducer: FatReducer<
+  CurrencyWalletState,
+  RootAction,
+  CurrencyWalletNext
+> = filterReducer(
+  currencyWalletInner,
   (action: RootAction, next: CurrencyWalletNext) => {
     return /^CURRENCY_/.test(action.type) &&
       action.payload != null &&

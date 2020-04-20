@@ -1,6 +1,11 @@
 // @flow
 
-import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
+import {
+  type FatReducer,
+  buildReducer,
+  filterReducer,
+  memoizeReducer
+} from 'redux-keto'
 
 import {
   type EdgePluginMap,
@@ -62,7 +67,11 @@ export type AccountNext = {
   +self: AccountState
 }
 
-const account = buildReducer({
+const accountInner: FatReducer<
+  AccountState,
+  RootAction,
+  AccountNext
+> = buildReducer({
   accountWalletInfo: memoizeReducer(
     (next: AccountNext) => next.self.appId,
     (next: AccountNext) => next.self.login,
@@ -266,21 +275,22 @@ const account = buildReducer({
   }
 })
 
-export const accountReducer = filterReducer(
-  account,
-  (action: RootAction, next: AccountNext) => {
-    if (
-      /^ACCOUNT_/.test(action.type) &&
-      action.payload != null &&
-      action.payload.accountId === next.id
-    ) {
-      return action
-    }
-
-    if (action.type === 'LOGIN' && next.root.lastAccountId === next.id) {
-      return action
-    }
-
-    return { type: 'UPDATE_NEXT' }
+export const accountReducer: FatReducer<
+  AccountState,
+  RootAction,
+  AccountNext
+> = filterReducer(accountInner, (action: RootAction, next: AccountNext) => {
+  if (
+    /^ACCOUNT_/.test(action.type) &&
+    action.payload != null &&
+    action.payload.accountId === next.id
+  ) {
+    return action
   }
-)
+
+  if (action.type === 'LOGIN' && next.root.lastAccountId === next.id) {
+    return action
+  }
+
+  return { type: 'UPDATE_NEXT' }
+})

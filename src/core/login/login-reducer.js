@@ -1,6 +1,6 @@
 // @flow
 
-import { buildReducer, memoizeReducer } from 'redux-keto'
+import { type FatReducer, buildReducer, memoizeReducer } from 'redux-keto'
 
 import { type EdgeUserInfo } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
@@ -21,7 +21,11 @@ export type LoginState = {
   +walletInfos: WalletInfoFullMap
 }
 
-export const login = buildReducer({
+export const login: FatReducer<
+  LoginState,
+  RootAction,
+  RootState
+> = buildReducer({
   apiKey(state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.apiKey : state
   },

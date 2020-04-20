@@ -1,6 +1,11 @@
 // @flow
 
-import { buildReducer, mapReducer, memoizeReducer } from 'redux-keto'
+import {
+  type FatReducer,
+  buildReducer,
+  mapReducer,
+  memoizeReducer
+} from 'redux-keto'
 
 import {
   type EdgeCurrencyInfo,
@@ -22,7 +27,11 @@ export type CurrencyState = {
   +wallets: { [walletId: string]: CurrencyWalletState }
 }
 
-export const currency = buildReducer({
+export const currency: FatReducer<
+  CurrencyState,
+  RootAction,
+  RootState
+> = buildReducer({
   currencyWalletIds(state, action, next: RootState): string[] {
     // Optimize the common case:
     if (next.accountIds.length === 1) {
