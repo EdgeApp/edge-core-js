@@ -7,6 +7,7 @@ import {
   type EdgeCurrencyInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
+  type EdgeWalletInfoFull,
   type JsonObject
 } from '../../../types/types.js'
 import { type RootAction } from '../../actions.js'
@@ -67,7 +68,7 @@ export type CurrencyWalletState = {
   +height: number,
   +name: string | null,
   +nameLoaded: boolean,
-  +walletInfo: EdgeWalletInfo,
+  +walletInfo: EdgeWalletInfoFull,
   +publicWalletInfo: EdgeWalletInfo | null,
   +txids: string[],
   +txs: { [txid: string]: MergedTransaction },

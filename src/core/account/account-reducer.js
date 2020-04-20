@@ -16,7 +16,7 @@ import {
   getAllWalletInfos,
   makeAccountType
 } from '../login/keys.js'
-import { type LoginTree, type WalletInfoMap } from '../login/login-types.js'
+import { type LoginTree, type WalletInfoFullMap } from '../login/login-types.js'
 import { makeLoginTree } from '../login/login.js'
 import { findCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type RootState } from '../root-reducer.js'
@@ -38,7 +38,7 @@ export type AccountState = {
   +hiddenWalletIds: string[],
   +keysLoaded: boolean,
   +legacyWalletInfos: EdgeWalletInfo[],
-  +walletInfos: WalletInfoMap,
+  +walletInfos: WalletInfoFullMap,
   +walletStates: EdgeWalletStates,
 
   // Login stuff:
@@ -180,7 +180,7 @@ const account = buildReducer({
 
   walletInfos: memoizeReducer(
     (next: AccountNext) => next.self.allWalletInfosFull,
-    (walletInfos: EdgeWalletInfoFull[]): WalletInfoMap => {
+    (walletInfos: EdgeWalletInfoFull[]): WalletInfoFullMap => {
       const out = {}
       for (const info of walletInfos) {
         out[info.id] = info

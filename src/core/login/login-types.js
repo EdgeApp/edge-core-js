@@ -1,6 +1,9 @@
 // @flow
 
-import { type EdgeWalletInfo } from '../../types/types.js'
+import {
+  type EdgeWalletInfo,
+  type EdgeWalletInfoFull
+} from '../../types/types.js'
 import { type EdgeBox } from '../../util/crypto/crypto.js'
 import { type EdgeSnrp } from '../scrypt/scrypt-pixie.js'
 
@@ -116,4 +119,4 @@ export type LoginKit = {
   stash: LoginStash
 }
 
-export type WalletInfoMap = { [walletId: string]: EdgeWalletInfo }
+export type WalletInfoFullMap = { [walletId: string]: EdgeWalletInfoFull }

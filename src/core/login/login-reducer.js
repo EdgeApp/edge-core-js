@@ -6,7 +6,7 @@ import { type EdgeUserInfo } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
 import { type RootAction } from '../actions.js'
 import { type RootState } from '../root-reducer.js'
-import { type LoginStash, type WalletInfoMap } from './login-types.js'
+import { type LoginStash, type WalletInfoFullMap } from './login-types.js'
 import { getPin2Key } from './pin2.js'
 import { getRecovery2Key } from './recovery2.js'
 
@@ -18,7 +18,7 @@ export type LoginState = {
   +serverUri: string,
   +stashes: LoginStashMap,
   +localUsers: EdgeUserInfo[],
-  +walletInfos: WalletInfoMap
+  +walletInfos: WalletInfoFullMap
 }
 
 export const login = buildReducer({
@@ -89,7 +89,7 @@ export const login = buildReducer({
     return state
   },
 
-  walletInfos(state, action: RootAction, next: RootState): WalletInfoMap {
+  walletInfos(state, action: RootAction, next: RootState): WalletInfoFullMap {
     // Optimize the common case:
     if (next.accountIds.length === 1) {
       const id = next.accountIds[0]
