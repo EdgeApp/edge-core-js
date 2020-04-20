@@ -196,7 +196,7 @@ const account = buildReducer({
       : state
   },
 
-  appId(state, action: RootAction): string {
+  appId(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.appId : state
   },
 
@@ -210,7 +210,7 @@ const account = buildReducer({
     (appId, loginTree): LoginTree => findAppLogin(loginTree, appId)
   ),
 
-  loginKey(state, action: RootAction): Uint8Array {
+  loginKey(state = new Uint8Array(0), action: RootAction): Uint8Array {
     return action.type === 'LOGIN' ? action.payload.loginKey : state
   },
 
@@ -223,15 +223,15 @@ const account = buildReducer({
       makeLoginTree(stashTree, loginKey, rootLogin ? '' : appId)
   ),
 
-  loginType(state, action: RootAction): string {
+  loginType(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.loginType : state
   },
 
-  rootLogin(state, action: RootAction): boolean {
+  rootLogin(state = true, action: RootAction): boolean {
     return action.type === 'LOGIN' ? action.payload.rootLogin : state
   },
 
-  username(state, action: RootAction): string {
+  username(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
   },
 
