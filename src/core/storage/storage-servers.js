@@ -16,55 +16,56 @@ const syncServers = [
 /**
  * Fetches some resource from a sync server.
  */
-export function syncRequest(
+export async function syncRequest(
   io: EdgeIo,
   log: EdgeLog,
   method: string,
   uri: string,
   body: any
-) {
-  return syncRequestInner(io, log, method, uri, body, 0)
+): Promise<any> {
+  const start = Math.floor(Math.random() * syncServers.length)
+
+  async function loop(i: number): Promise<any> {
+    const server = syncServers[(start + i) % syncServers.length]
+    const promise = syncRequestInner(io, log, method, uri, body, server)
+    return i < syncServers.length ? promise.catch(() => loop(i + 1)) : promise
+  }
+  return loop(0)
 }
 
-function syncRequestInner(
+export async function syncRequestInner(
   io: EdgeIo,
   log: EdgeLog,
   method: string,
   path: string,
   body: any,
-  serverIndex: number
-) {
+  server: string
+): Promise<any> {
   const opts: EdgeFetchOptions = {
-    method: method,
+    method,
     headers: {
       'content-type': 'application/json',
       accept: 'application/json'
     }
   }
-  if (method !== 'GET') {
-    opts.body = JSON.stringify(body)
-  }
+  if (method !== 'GET') opts.body = JSON.stringify(body)
 
-  const uri = syncServers[serverIndex] + path
-  log(`${method} ${uri}`)
-  return io
-    .fetch(uri, opts)
-    .then(
-      response =>
-        response.json().catch(jsonError => {
-          throw new Error(
-            `Non-JSON reply, HTTP status ${response.status}, ${path}`
-          )
-        }),
-      networkError => {
-        throw new NetworkError('Could not reach the sync server')
-      }
-    )
-    .catch(e => {
-      if (serverIndex + 1 < syncServers.length) {
-        return syncRequestInner(io, log, method, path, body, serverIndex + 1)
-      } else {
-        throw e
-      }
-    })
+  // Do the fetch, translating the raw network error into our format:
+  const uri = server + path
+  const start = Date.now()
+  const response = await io.fetch(uri, opts).catch(networkError => {
+    const time = Date.now() - start
+    const message = `${method} ${server} failed in ${time}ms, ${String(
+      networkError
+    )}`
+    log(message)
+    throw new NetworkError(message)
+  })
+  const time = Date.now() - start
+
+  // Log our result and return its contents:
+  const message = `${method} ${server} returned ${response.status} in ${time}ms`
+  log(message)
+  if (!response.ok) throw new NetworkError(message)
+  return response.json()
 }
