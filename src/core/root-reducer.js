@@ -1,6 +1,6 @@
 // @flow
 
-import { buildReducer, mapReducer } from 'redux-keto'
+import { type BuiltReducer, buildReducer, mapReducer } from 'redux-keto'
 
 import { type AccountState, accountReducer } from './account/account-reducer.js'
 import { type RootAction } from './actions.js'
@@ -31,7 +31,7 @@ export type RootState = {
   +storageWallets: StorageWalletsState
 }
 
-export const reducer = buildReducer({
+export const reducer: BuiltReducer<RootState, RootAction> = buildReducer({
   accountCount(state = 0, action: RootAction): number {
     return action.type === 'LOGIN' ? state + 1 : state
   },

@@ -4855,10 +4855,10 @@ readdirp@^2.2.1:
     micromatch "^3.1.10"
     readable-stream "^2.0.2"
 
-redux-keto@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.2.tgz#15c18d61fec5e76e3d0d3f02767a996fee4ff622"
-  integrity sha512-ZSCnq/8bHW/LmXLKn0v770av4lQG2S56LMpeW8ebQHY3LwHuVyilSd0XewCwYl37ZIN11t7AxHWFj+Fso9l7NA==
+redux-keto@^0.3.3:
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.3.tgz#db31fbfcbab11784cd2992d7ce204f6e50807969"
+  integrity sha512-JRbMmmhFHLXCl2J3Hb8zCTdM5O0jtY70mRnh/83xArCWeuWQoJK8adzUXiw9egEi//e7ti1Y/FzJlYbZYOSn8A==
 
 redux-pixies@^0.3.6:
   version "0.3.6"

@@ -1,6 +1,11 @@
 // @flow
 
-import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
+import {
+  type FatReducer,
+  buildReducer,
+  filterReducer,
+  memoizeReducer
+} from 'redux-keto'
 
 import {
   type EdgePluginMap,
@@ -16,7 +21,7 @@ import {
   getAllWalletInfos,
   makeAccountType
 } from '../login/keys.js'
-import { type LoginTree, type WalletInfoMap } from '../login/login-types.js'
+import { type LoginTree, type WalletInfoFullMap } from '../login/login-types.js'
 import { makeLoginTree } from '../login/login.js'
 import { findCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type RootState } from '../root-reducer.js'
@@ -38,7 +43,7 @@ export type AccountState = {
   +hiddenWalletIds: string[],
   +keysLoaded: boolean,
   +legacyWalletInfos: EdgeWalletInfo[],
-  +walletInfos: WalletInfoMap,
+  +walletInfos: WalletInfoFullMap,
   +walletStates: EdgeWalletStates,
 
   // Login stuff:
@@ -62,7 +67,11 @@ export type AccountNext = {
   +self: AccountState
 }
 
-const account = buildReducer({
+const accountInner: FatReducer<
+  AccountState,
+  RootAction,
+  AccountNext
+> = buildReducer({
   accountWalletInfo: memoizeReducer(
     (next: AccountNext) => next.self.appId,
     (next: AccountNext) => next.self.login,
@@ -180,7 +189,7 @@ const account = buildReducer({
 
   walletInfos: memoizeReducer(
     (next: AccountNext) => next.self.allWalletInfosFull,
-    (walletInfos: EdgeWalletInfoFull[]): WalletInfoMap => {
+    (walletInfos: EdgeWalletInfoFull[]): WalletInfoFullMap => {
       const out = {}
       for (const info of walletInfos) {
         out[info.id] = info
@@ -196,7 +205,7 @@ const account = buildReducer({
       : state
   },
 
-  appId(state, action: RootAction): string {
+  appId(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.appId : state
   },
 
@@ -210,7 +219,7 @@ const account = buildReducer({
     (appId, loginTree): LoginTree => findAppLogin(loginTree, appId)
   ),
 
-  loginKey(state, action: RootAction): Uint8Array {
+  loginKey(state = new Uint8Array(0), action: RootAction): Uint8Array {
     return action.type === 'LOGIN' ? action.payload.loginKey : state
   },
 
@@ -223,15 +232,15 @@ const account = buildReducer({
       makeLoginTree(stashTree, loginKey, rootLogin ? '' : appId)
   ),
 
-  loginType(state, action: RootAction): string {
+  loginType(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.loginType : state
   },
 
-  rootLogin(state, action: RootAction): boolean {
+  rootLogin(state = true, action: RootAction): boolean {
     return action.type === 'LOGIN' ? action.payload.rootLogin : state
   },
 
-  username(state, action: RootAction): string {
+  username(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
   },
 
@@ -266,21 +275,22 @@ const account = buildReducer({
   }
 })
 
-export const accountReducer = filterReducer(
-  account,
-  (action: RootAction, next: AccountNext) => {
-    if (
-      /^ACCOUNT_/.test(action.type) &&
-      action.payload != null &&
-      action.payload.accountId === next.id
-    ) {
-      return action
-    }
-
-    if (action.type === 'LOGIN' && next.root.lastAccountId === next.id) {
-      return action
-    }
-
-    return { type: 'PROPS_UPDATE' }
+export const accountReducer: FatReducer<
+  AccountState,
+  RootAction,
+  AccountNext
+> = filterReducer(accountInner, (action: RootAction, next: AccountNext) => {
+  if (
+    /^ACCOUNT_/.test(action.type) &&
+    action.payload != null &&
+    action.payload.accountId === next.id
+  ) {
+    return action
   }
-)
+
+  if (action.type === 'LOGIN' && next.root.lastAccountId === next.id) {
+    return action
+  }
+
+  return { type: 'UPDATE_NEXT' }
+})

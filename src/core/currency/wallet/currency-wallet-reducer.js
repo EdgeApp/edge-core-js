@@ -1,12 +1,18 @@
 // @flow
 
-import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
+import {
+  type FatReducer,
+  buildReducer,
+  filterReducer,
+  memoizeReducer
+} from 'redux-keto'
 
 import {
   type EdgeBalances,
   type EdgeCurrencyInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
+  type EdgeWalletInfoFull,
   type JsonObject
 } from '../../../types/types.js'
 import { type RootAction } from '../../actions.js'
@@ -67,7 +73,7 @@ export type CurrencyWalletState = {
   +height: number,
   +name: string | null,
   +nameLoaded: boolean,
-  +walletInfo: EdgeWalletInfo,
+  +walletInfo: EdgeWalletInfoFull,
   +publicWalletInfo: EdgeWalletInfo | null,
   +txids: string[],
   +txs: { [txid: string]: MergedTransaction },
@@ -80,7 +86,11 @@ export type CurrencyWalletNext = {
   +self: CurrencyWalletState
 }
 
-const currencyWallet = buildReducer({
+const currencyWalletInner: FatReducer<
+  CurrencyWalletState,
+  RootAction,
+  CurrencyWalletNext
+> = buildReducer({
   accountId(state, action, next: CurrencyWalletNext): string {
     if (state) return state
     for (const accountId in next.root.accounts) {
@@ -300,14 +310,18 @@ export function sortTxs(txidHashes: TxidHashes, newHashes: TxidHashes) {
   return { sortedList, txidHashes }
 }
 
-export const currencyWalletReducer = filterReducer(
-  currencyWallet,
+export const currencyWalletReducer: FatReducer<
+  CurrencyWalletState,
+  RootAction,
+  CurrencyWalletNext
+> = filterReducer(
+  currencyWalletInner,
   (action: RootAction, next: CurrencyWalletNext) => {
     return /^CURRENCY_/.test(action.type) &&
       action.payload != null &&
       action.payload.walletId === next.id
       ? action
-      : { type: 'UPDATE_PROPS' }
+      : { type: 'UPDATE_NEXT' }
   }
 )
 

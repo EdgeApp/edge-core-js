@@ -297,3 +297,7 @@ export type RootAction =
         status: StorageWalletStatus
       }
     }
+  | {
+      // Dummy action to propagate `next` changes.
+      type: 'UPDATE_NEXT'
+    }
