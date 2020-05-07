@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.17.1 (2020-05-07)
+
+- Use constant-time comparisons for encryption & decryption.
+- Upgrade redux-keto dependency & fix uncovered type errors.
+- Improve git server error messages & rotation logic.
+
 ## 0.17.0 (2020-04-08)
 
 This is a breaking release to address some issues in the swap API.
