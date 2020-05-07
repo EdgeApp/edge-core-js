@@ -6,6 +6,7 @@ import { base16, base64 } from 'rfc4648'
 import { type EdgeIo } from '../../types/types.js'
 import { utf8 } from '../encoding.js'
 import { sha256 } from './hashes.js'
+import { verifyData } from './verify.js'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
 
@@ -42,42 +43,31 @@ export function decrypt(box: EdgeBox, key: Uint8Array): Uint8Array {
   // Decrypt:
   const cipher = new AesCbc(key, iv)
   const raw = cipher.decrypt(ciphertext)
-  // Alternative using node.js crypto:
-  // const decipher = crypto.createDecipheriv('AES-256-CBC', key, iv);
-  // let x = decipher.update(box.data_base64, 'base64', 'hex')
-  // x += decipher.final('hex')
-  // const data = base16.parse(x)
 
-  // Calculate field locations:
+  // Calculate data locations:
+  const headerStart = 1
   const headerSize = raw[0]
+  const dataStart = headerStart + headerSize + 4
   const dataSize =
-    (raw[1 + headerSize] << 24) |
-    (raw[2 + headerSize] << 16) |
-    (raw[3 + headerSize] << 8) |
-    raw[4 + headerSize]
-  const dataStart = 1 + headerSize + 4
-  const footerSize = raw[dataStart + dataSize]
-  const hashStart = dataStart + dataSize + 1 + footerSize
+    (raw[dataStart - 4] << 24) |
+    (raw[dataStart - 3] << 16) |
+    (raw[dataStart - 2] << 8) |
+    raw[dataStart - 1]
+  const footerStart = dataStart + dataSize + 1
+  const footerSize = raw[footerStart - 1]
+  const hashStart = footerStart + footerSize
+  const paddingStart = hashStart + 32
 
   // Verify SHA-256 checksum:
   const hash = sha256(raw.subarray(0, hashStart))
-  const hashSize = hash.length
-  for (let i = 0; i < hashSize; ++i) {
-    if (raw[hashStart + i] !== hash[i]) {
-      throw new Error('Invalid checksum')
-    }
+  if (!verifyData(hash, raw.subarray(hashStart, paddingStart))) {
+    throw new Error('Invalid checksum')
   }
 
   // Verify pkcs7 padding:
-  const paddingStart = hashStart + hashSize
-  const paddingSize = raw.length - paddingStart
-  if (paddingSize <= 0) {
-    throw new Error('Missing PKCS7 padding')
-  }
-  for (let i = paddingStart; i < raw.length; ++i) {
-    if (raw[i] !== paddingSize) {
-      throw new Error('Invalid PKCS7 padding')
-    }
+  const padding = pkcs7(paddingStart)
+  if (!verifyData(padding, raw.subarray(paddingStart))) {
+    throw new Error('Invalid PKCS7 padding')
   }
 
   // Return the payload:
@@ -93,51 +83,38 @@ export function encrypt(
   data: Uint8Array,
   key: Uint8Array
 ): EdgeBox {
-  // Calculate sizes and locations:
+  // Calculate data locations:
+  const headerStart = 1
   const headerSize = io.random(1)[0] & 0x1f
-  const dataStart = 1 + headerSize + 4
+  const dataStart = headerStart + headerSize + 4
   const dataSize = data.length
   const footerStart = dataStart + dataSize + 1
   const footerSize = io.random(1)[0] & 0x1f
   const hashStart = footerStart + footerSize
-  const hashSize = 32
-  const paddingStart = hashStart + hashSize
-  const paddingSize = 16 - (paddingStart & 0xf)
-  const raw = new Uint8Array(paddingStart + paddingSize)
+  const paddingStart = hashStart + 32
 
-  // Random header:
-  const header = io.random(headerSize)
+  // Initialize the buffer with padding:
+  const padding = pkcs7(paddingStart)
+  const raw = new Uint8Array(paddingStart + padding.length)
+  raw.set(padding, paddingStart)
+
+  // Add header:
   raw[0] = headerSize
-  for (let i = 0; i < headerSize; ++i) {
-    raw[1 + i] = header[i]
-  }
+  raw.set(io.random(headerSize), headerStart)
 
-  // Payload data:
-  raw[1 + headerSize] = (dataSize >> 24) & 0xff
-  raw[2 + headerSize] = (dataSize >> 16) & 0xff
-  raw[3 + headerSize] = (dataSize >> 8) & 0xff
-  raw[4 + headerSize] = dataSize & 0xff
-  for (let i = 0; i < dataSize; ++i) {
-    raw[dataStart + i] = data[i]
-  }
+  // Add payload:
+  raw[dataStart - 4] = (dataSize >> 24) & 0xff
+  raw[dataStart - 3] = (dataSize >> 16) & 0xff
+  raw[dataStart - 2] = (dataSize >> 8) & 0xff
+  raw[dataStart - 1] = dataSize & 0xff
+  raw.set(data, dataStart)
 
-  // Random footer:
-  const footer = io.random(footerSize)
-  raw[dataStart + dataSize] = footerSize
-  for (let i = 0; i < footerSize; ++i) {
-    raw[footerStart + i] = footer[i]
-  }
+  // Add footer:
+  raw[footerStart - 1] = footerSize
+  raw.set(io.random(footerSize), footerStart)
 
-  // SHA-256 checksum:
-  const hash = sha256(raw.subarray(0, hashStart))
-  for (let i = 0; i < hashSize; ++i) {
-    raw[hashStart + i] = hash[i]
-  }
-
-  // Add PKCS7 padding:
-  for (let i = 0; i < paddingSize; ++i) {
-    raw[paddingStart + i] = paddingSize
-  }
+  // Add SHA-256 checksum:
+  raw.set(sha256(raw.subarray(0, hashStart)), hashStart)
 
   // Encrypt to JSON:
   const iv = io.random(16)
@@ -148,4 +125,14 @@ export function encrypt(
     iv_hex: base16.stringify(iv),
     data_base64: base64.stringify(ciphertext)
   }
+}
+
+/**
+ * Generates the pkcs7 padding data that should be appended to
+ * data of a particular length.
+ */
+function pkcs7(length: number): Uint8Array {
+  const out = new Uint8Array(16 - (length & 0xf))
+  for (let i = 0; i < out.length; ++i) out[i] = out.length
+  return out
 }
