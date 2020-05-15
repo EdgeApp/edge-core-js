@@ -2,6 +2,7 @@
 
 import {
   type Cleaner,
+  asBoolean,
   asMap,
   asNumber,
   asObject,
@@ -9,7 +10,7 @@ import {
   asString
 } from 'cleaners'
 
-import { type EdgeMetadata } from '../../../types/types.js'
+import { type EdgeMetadata, type EdgeTxSwap } from '../../../types/types.js'
 
 /**
  * The on-disk metadata format,
@@ -58,6 +59,26 @@ export function unpackMetadata(
 
   return { ...clean, amountFiat: exchangeAmount[walletFiat] }
 }
+
+export const asTxSwap: Cleaner<EdgeTxSwap> = asObject({
+  orderId: asOptional(asString),
+  orderUri: asOptional(asString),
+  isEstimate: asBoolean,
+
+  // The EdgeSwapInfo from the swap plugin:
+  plugin: asObject({
+    pluginId: asString,
+    displayName: asString,
+    supportEmail: asOptional(asString)
+  }),
+
+  // Address information:
+  payoutAddress: asString,
+  payoutCurrencyCode: asString,
+  payoutNativeAmount: asString,
+  payoutWalletId: asString,
+  refundAddress: asOptional(asString)
+})
 
 const asDiskMetadata: Cleaner<DiskMetadata> = asObject({
   bizId: asOptional(asNumber),

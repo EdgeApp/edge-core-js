@@ -32,7 +32,11 @@ import { type ApiInput } from '../../root-pixie.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks.js'
-import { packMetadata, unpackMetadata } from './currency-wallet-cleaners.js'
+import {
+  asTxSwap,
+  packMetadata,
+  unpackMetadata
+} from './currency-wallet-cleaners.js'
 import {
   exportTransactionsToCSVInner,
   exportTransactionsToQBOInner
@@ -386,6 +390,7 @@ export function makeCurrencyWalletApi(
         networkFeeOption = 'standard',
         customNetworkFee,
         metadata,
+        swapData,
         otherParams
       } = spendInfo
 
@@ -441,6 +446,7 @@ export function makeCurrencyWalletApi(
       })
       tx.spendTargets = savedTargets
       if (metadata != null) tx.metadata = metadata
+      if (swapData != null) tx.swapData = asTxSwap(swapData)
       return tx
     },
 
@@ -617,6 +623,8 @@ export function combineTxWithFile(
         uniqueIdentifier: payee.tag
       }))
     }
+
+    if (file.swap != null) out.swapData = asTxSwap(file.swap)
   }
 
   return out

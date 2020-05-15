@@ -5,7 +5,8 @@ import { type DiskletFile, type DiskletFolder, mapFiles } from 'disklet'
 
 import {
   type EdgeCurrencyEngineCallbacks,
-  type EdgeTransaction
+  type EdgeTransaction,
+  type EdgeTxSwap
 } from '../../../types/types.js'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobby-api.js'
@@ -43,7 +44,8 @@ export type TransactionFile = {
     amount: string,
     currency: string,
     tag?: string
-  }>
+  }>,
+  swap?: EdgeTxSwap
 }
 
 export type LegacyTransactionFile = {
@@ -520,7 +522,7 @@ export function setupNewTxMetadata(
 ): Promise<void> {
   const { dispatch, selfState, state, id: walletId } = input.props
   const { currencyInfo, fiat = 'iso:USD' } = selfState
-  const { currencyCode, spendTargets, txid } = tx
+  const { currencyCode, spendTargets, swapData, txid } = tx
 
   const creationDate = Date.now() / 1000
 
@@ -549,7 +551,8 @@ export function setupNewTxMetadata(
     txid,
     internal: true,
     creationDate,
-    currencies: {}
+    currencies: {},
+    swap: swapData
   }
   json.currencies[currencyCode] = { metadata, nativeAmount }
 

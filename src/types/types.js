@@ -279,6 +279,26 @@ export type EdgeNetworkFee = {
   +nativeAmount: string
 }
 
+export type EdgeTxSwap = {
+  orderId?: string,
+  orderUri?: string,
+  isEstimate: boolean,
+
+  // The EdgeSwapInfo from the swap plugin:
+  plugin: {
+    pluginId: string,
+    displayName: string,
+    supportEmail?: string
+  },
+
+  // Address information:
+  payoutAddress: string,
+  payoutCurrencyCode: string,
+  payoutNativeAmount: string,
+  payoutWalletId: string,
+  refundAddress?: string
+}
+
 export type EdgeTransaction = {
   // Amounts:
   currencyCode: string,
@@ -305,6 +325,7 @@ export type EdgeTransaction = {
     +publicAddress: string,
     +uniqueIdentifier?: string
   }>,
+  swapData?: EdgeTxSwap,
   wallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
   otherParams?: JsonObject
 }
@@ -337,6 +358,7 @@ export type EdgeSpendInfo = {
 
   // Core:
   metadata?: EdgeMetadata,
+  swapData?: EdgeTxSwap,
   otherParams?: JsonObject
 }
 

@@ -9,6 +9,7 @@ import {
   type EdgeCurrencyConfig,
   type EdgeCurrencyWallet,
   type EdgeMetadata,
+  type EdgeTxSwap,
   makeFakeEdgeWorld
 } from '../../../../src/index.js'
 import { expectRejection } from '../../../expect-rejection.js'
@@ -219,6 +220,19 @@ describe('currency wallets', function () {
     })
 
     const metadata: EdgeMetadata = { name: 'me' }
+    const swapData: EdgeTxSwap = {
+      orderId: '1234',
+      isEstimate: true,
+      plugin: {
+        pluginId: 'fakeswap',
+        displayName: 'Fake Swap',
+        supportEmail: undefined
+      },
+      payoutAddress: 'get it here',
+      payoutCurrencyCode: 'TOKEN',
+      payoutNativeAmount: '1',
+      payoutWalletId: wallet.id
+    }
     let tx = await wallet.makeSpend({
       currencyCode: 'FAKE',
       spendTargets: [
@@ -227,7 +241,8 @@ describe('currency wallets', function () {
           publicAddress: 'somewhere'
         }
       ],
-      metadata
+      metadata,
+      swapData
     })
     tx = await wallet.signTx(tx)
     await wallet.broadcastTx(tx)
@@ -253,6 +268,11 @@ describe('currency wallets', function () {
         uniqueIdentifier: undefined
       }
     ])
+    expect(txs[0].swapData).deep.equals({
+      orderUri: undefined,
+      refundAddress: undefined,
+      ...swapData
+    })
   })
 
   it('can update metadata', async function () {
