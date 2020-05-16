@@ -517,7 +517,7 @@ function fixMetadata(metadata: EdgeMetadata, fiat: string) {
 export function combineTxWithFile(
   input: CurrencyWalletInput,
   tx: MergedTransaction,
-  file: TransactionFile,
+  file: TransactionFile | void,
   currencyCode: string
 ): EdgeTransaction {
   const wallet = input.props.selfOutput.api
