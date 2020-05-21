@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.17.2 (2020-05-21)
+
+- Prioritize the `wazirx` rate plugin when available.
+
 ## 0.17.1 (2020-05-07)
 
 - Use constant-time comparisons for encryption & decryption.
