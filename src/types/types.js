@@ -260,11 +260,17 @@ export type EdgeCurrencyInfo = {
 // spending ------------------------------------------------------------
 
 export type EdgeMetadata = {
-  name?: string,
-  category?: string,
-  notes?: string,
-  amountFiat?: number,
   bizId?: number,
+  category?: string,
+  exchangeAmount?: { [fiatCurrencyCode: string]: number },
+  name?: string,
+  notes?: string,
+
+  // Deprecated. Use exchangeAmount instead:
+  amountFiat?: number,
+
+  // Deprecated. The core has never actually written this to disk,
+  // but deleting this type definition would break the GUI:
   miscJson?: string
 }
 
