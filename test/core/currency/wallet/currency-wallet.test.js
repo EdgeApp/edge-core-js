@@ -173,13 +173,23 @@ describe('currency wallets', function () {
 
     await wallet.makeSpend({
       currencyCode: 'FAKE',
-      spendTargets: [{ nativeAmount: maxSpendable }]
+      spendTargets: [
+        {
+          nativeAmount: maxSpendable,
+          publicAddress: 'somewhere'
+        }
+      ]
     })
 
     await expectRejection(
       wallet.makeSpend({
         currencyCode: 'FAKE',
-        spendTargets: [{ nativeAmount: add(maxSpendable, '1') }]
+        spendTargets: [
+          {
+            nativeAmount: add(maxSpendable, '1'),
+            publicAddress: 'somewhere'
+          }
+        ]
       }),
       'InsufficientFundsError: Insufficient funds'
     )

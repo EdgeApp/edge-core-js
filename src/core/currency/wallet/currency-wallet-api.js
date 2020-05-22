@@ -20,6 +20,7 @@ import {
   type EdgePaymentProtocolInfo,
   type EdgeReceiveAddress,
   type EdgeSpendInfo,
+  type EdgeSpendTarget,
   type EdgeTokenInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
@@ -376,7 +377,43 @@ export function makeCurrencyWalletApi(
     },
 
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-      return engine.makeSpend(spendInfo)
+      const { currencyInfo } = input.props.selfState
+      const {
+        currencyCode = currencyInfo.currencyCode,
+        privateKeys,
+        spendTargets = [],
+        noUnconfirmed = false,
+        networkFeeOption = 'standard',
+        customNetworkFee,
+        metadata,
+        otherParams
+      } = spendInfo
+
+      const cleanTargets: EdgeSpendTarget[] = []
+      for (const target of spendTargets) {
+        const { publicAddress, nativeAmount = '0', otherParams } = target
+        if (publicAddress == null) continue
+        cleanTargets.push({ publicAddress, nativeAmount, otherParams })
+      }
+
+      if (cleanTargets.length === 0) {
+        throw new TypeError('The spend has no destination')
+      }
+      if (privateKeys != null) {
+        throw new TypeError('Only sweepPrivateKeys takes private keys')
+      }
+
+      const tx = await engine.makeSpend({
+        currencyCode,
+        spendTargets: cleanTargets,
+        noUnconfirmed,
+        networkFeeOption,
+        customNetworkFee,
+        metadata,
+        otherParams
+      })
+      if (metadata != null) tx.metadata = metadata
+      return tx
     },
 
     async sweepPrivateKeys(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
