@@ -391,9 +391,29 @@ export function makeCurrencyWalletApi(
 
       const cleanTargets: EdgeSpendTarget[] = []
       for (const target of spendTargets) {
-        const { publicAddress, nativeAmount = '0', otherParams } = target
+        const { publicAddress, nativeAmount = '0', otherParams = {} } = target
         if (publicAddress == null) continue
-        cleanTargets.push({ publicAddress, nativeAmount, otherParams })
+
+        // Handle legacy spenders:
+        let { uniqueIdentifier } = target
+        if (
+          uniqueIdentifier == null &&
+          typeof otherParams.uniqueIdentifier === 'string'
+        ) {
+          uniqueIdentifier = otherParams.uniqueIdentifier
+        }
+
+        // Support legacy currency plugins:
+        if (uniqueIdentifier != null) {
+          otherParams.uniqueIdentifier = uniqueIdentifier
+        }
+
+        cleanTargets.push({
+          publicAddress,
+          nativeAmount,
+          uniqueIdentifier,
+          otherParams
+        })
       }
 
       if (cleanTargets.length === 0) {

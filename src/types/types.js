@@ -306,6 +306,7 @@ export type EdgeTransaction = {
 export type EdgeSpendTarget = {
   nativeAmount?: string,
   publicAddress?: string,
+  uniqueIdentifier?: string,
   otherParams?: JsonObject
 }
 
