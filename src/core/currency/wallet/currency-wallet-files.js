@@ -3,10 +3,7 @@
 import { number as currencyFromNumber } from 'currency-codes'
 import { type DiskletFile, type DiskletFolder, mapFiles } from 'disklet'
 
-import {
-  type EdgeCurrencyEngineCallbacks,
-  type EdgeMetadata
-} from '../../../types/types.js'
+import { type EdgeCurrencyEngineCallbacks } from '../../../types/types.js'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobby-api.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
@@ -19,6 +16,7 @@ import {
 } from '../../storage/storage-selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
+import { type DiskMetadata } from './currency-wallet-cleaners.js'
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
 import {
   type MergedTransaction,
@@ -35,13 +33,7 @@ export type TransactionFile = {
   creationDate: number,
   currencies: {
     [currencyCode: string]: {
-      metadata: {
-        bizId?: number,
-        category?: string,
-        exchangeAmount?: { [fiatCurrencyCode: string]: number },
-        name?: string,
-        notes?: string
-      },
+      metadata: DiskMetadata,
       nativeAmount?: string,
       providerFeeSent?: string
     }
@@ -457,7 +449,7 @@ export function setCurrencyWalletTxMetadata(
   input: CurrencyWalletInput,
   txid: string,
   currencyCode: string,
-  metadata: EdgeMetadata,
+  metadata: DiskMetadata,
   fakeCallbacks: EdgeCurrencyEngineCallbacks
 ): Promise<void> {
   const walletId = input.props.id
@@ -555,7 +547,7 @@ export function setupNewTxMetadata(
       )
     const nativeAmount = tx.nativeAmount[currency]
 
-    const metadata = { exchangeAmount: {} }
+    const metadata: DiskMetadata = { exchangeAmount: {} }
     metadata.exchangeAmount[fiatCurrency] = rate * Number(nativeAmount)
     json.currencies[currency] = { metadata, nativeAmount }
   }

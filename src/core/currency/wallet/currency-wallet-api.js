@@ -25,12 +25,13 @@ import {
   type EdgeWalletInfo,
   type JsonObject
 } from '../../../types/types.js'
-import { filterObject, mergeDeeply } from '../../../util/util.js'
+import { mergeDeeply } from '../../../util/util.js'
 import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
 import { type ApiInput } from '../../root-pixie.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks.js'
+import { packMetadata, unpackMetadata } from './currency-wallet-cleaners.js'
 import {
   exportTransactionsToCSVInner,
   exportTransactionsToQBOInner
@@ -431,7 +432,7 @@ export function makeCurrencyWalletApi(
         input,
         txid,
         currencyCode,
-        fixMetadata(metadata, input.props.selfState.fiat),
+        packMetadata(metadata, input.props.selfState.fiat),
         fakeCallbacks
       )
     },
@@ -497,23 +498,6 @@ export function makeCurrencyWalletApi(
   return out
 }
 
-function fixMetadata(metadata: EdgeMetadata, fiat: string) {
-  const out = filterObject(metadata, [
-    'bizId',
-    'category',
-    'exchangeAmount',
-    'name',
-    'notes'
-  ])
-
-  if (metadata.amountFiat != null) {
-    if (out.exchangeAmount == null) out.exchangeAmount = {}
-    out.exchangeAmount[fiat] = metadata.amountFiat
-  }
-
-  return out
-}
-
 export function combineTxWithFile(
   input: CurrencyWalletInput,
   tx: MergedTransaction,
@@ -540,41 +524,23 @@ export function combineTxWithFile(
     nativeAmount: tx.nativeAmount[currencyCode],
     networkFee: tx.networkFee[currencyCode],
     currencyCode,
-    wallet
+    wallet,
+    metadata: {}
   }
 
-  // These are our fallback values:
-  const fallback = {
-    providerFeeSent: 0,
-    metadata: {
-      name: '',
-      category: '',
-      notes: '',
-      bizId: 0,
-      amountFiat: 0,
-      exchangeAmount: {}
-    }
-  }
+  // If we have a file, use it to override the defaults:
+  if (file != null) {
+    if (file.creationDate < out.date) out.date = file.creationDate
 
-  const merged = file
-    ? mergeDeeply(
-        fallback,
-        file.currencies[walletCurrency],
-        file.currencies[currencyCode]
-      )
-    : fallback
-
-  if (file && file.creationDate < out.date) out.date = file.creationDate
-  out.metadata = merged.metadata
-  if (
-    merged.metadata &&
-    merged.metadata.exchangeAmount &&
-    merged.metadata.exchangeAmount[walletFiat]
-  ) {
-    out.metadata.amountFiat = merged.metadata.exchangeAmount[walletFiat]
-    if (out.metadata && out.metadata.amountFiat.toString().includes('e')) {
-      // Corrupt amountFiat that exceeds a number that JS can cleanly represent without exponents. Set to 0
-      out.metadata.amountFiat = 0
+    const merged = mergeDeeply(
+      file.currencies[walletCurrency],
+      file.currencies[currencyCode]
+    )
+    if (merged.metadata != null) {
+      out.metadata = {
+        ...out.metadata,
+        ...unpackMetadata(merged.metadata, walletFiat)
+      }
     }
   }
 
