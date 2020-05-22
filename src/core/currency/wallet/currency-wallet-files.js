@@ -37,7 +37,13 @@ export type TransactionFile = {
       nativeAmount?: string,
       providerFeeSent?: string
     }
-  }
+  },
+  payees?: Array<{
+    address: string,
+    amount: string,
+    currency: string,
+    tag?: string
+  }>
 }
 
 export type LegacyTransactionFile = {
@@ -514,7 +520,7 @@ export function setupNewTxMetadata(
 ): Promise<void> {
   const { dispatch, selfState, state, id: walletId } = input.props
   const { currencyInfo, fiat = 'iso:USD' } = selfState
-  const { currencyCode, txid } = tx
+  const { currencyCode, spendTargets, txid } = tx
 
   const creationDate = Date.now() / 1000
 
@@ -546,6 +552,16 @@ export function setupNewTxMetadata(
     currencies: {}
   }
   json.currencies[currencyCode] = { metadata, nativeAmount }
+
+  // Set up payees:
+  if (spendTargets != null) {
+    json.payees = spendTargets.map(target => ({
+      currency: target.currencyCode,
+      address: target.publicAddress,
+      amount: target.nativeAmount,
+      tag: target.uniqueIdentifier
+    }))
+  }
 
   // Save the new file:
   const { diskletFile, fileName, txidHash } = getTxFile(

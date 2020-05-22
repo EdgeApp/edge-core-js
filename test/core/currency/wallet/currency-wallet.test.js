@@ -245,6 +245,14 @@ describe('currency wallets', function () {
       amountFiat: 1.5,
       ...metadata
     })
+    expect(txs[0].spendTargets).deep.equals([
+      {
+        currencyCode: 'FAKE',
+        nativeAmount: '50',
+        publicAddress: 'somewhere',
+        uniqueIdentifier: undefined
+      }
+    ])
   })
 
   it('can update metadata', async function () {

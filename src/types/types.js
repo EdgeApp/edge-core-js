@@ -299,6 +299,12 @@ export type EdgeTransaction = {
 
   // Core:
   metadata?: EdgeMetadata,
+  spendTargets?: Array<{
+    +currencyCode: string,
+    +nativeAmount: string,
+    +publicAddress: string,
+    +uniqueIdentifier?: string
+  }>,
   wallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
   otherParams?: JsonObject
 }

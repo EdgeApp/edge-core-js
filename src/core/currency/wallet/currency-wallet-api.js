@@ -390,6 +390,7 @@ export function makeCurrencyWalletApi(
       } = spendInfo
 
       const cleanTargets: EdgeSpendTarget[] = []
+      const savedTargets = []
       for (const target of spendTargets) {
         const { publicAddress, nativeAmount = '0', otherParams = {} } = target
         if (publicAddress == null) continue
@@ -414,6 +415,12 @@ export function makeCurrencyWalletApi(
           uniqueIdentifier,
           otherParams
         })
+        savedTargets.push({
+          currencyCode,
+          publicAddress,
+          nativeAmount,
+          uniqueIdentifier
+        })
       }
 
       if (cleanTargets.length === 0) {
@@ -432,6 +439,7 @@ export function makeCurrencyWalletApi(
         metadata,
         otherParams
       })
+      tx.spendTargets = savedTargets
       if (metadata != null) tx.metadata = metadata
       return tx
     },
@@ -599,6 +607,15 @@ export function combineTxWithFile(
         ...out.metadata,
         ...unpackMetadata(merged.metadata, walletFiat)
       }
+    }
+
+    if (file.payees != null) {
+      out.spendTargets = file.payees.map(payee => ({
+        currencyCode: payee.currency,
+        nativeAmount: payee.amount,
+        publicAddress: payee.address,
+        uniqueIdentifier: payee.tag
+      }))
     }
   }
 
