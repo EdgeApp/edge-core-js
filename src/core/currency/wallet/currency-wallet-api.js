@@ -455,6 +455,7 @@ export function makeCurrencyWalletApi(
 
     async saveTx(tx: EdgeTransaction): Promise<void> {
       await engine.saveTx(tx)
+      fakeCallbacks.onTransactionsChanged([tx])
     },
 
     async resyncBlockchain(): Promise<void> {

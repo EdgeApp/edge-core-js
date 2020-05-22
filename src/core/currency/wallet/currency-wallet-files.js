@@ -19,7 +19,7 @@ import {
 } from '../../storage/storage-selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
-import { type DiskMetadata } from './currency-wallet-cleaners.js'
+import { type DiskMetadata, packMetadata } from './currency-wallet-cleaners.js'
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
 import { type TxFileNames } from './currency-wallet-reducer.js'
 
@@ -532,7 +532,10 @@ export function setupNewTxMetadata(
   const exchangeAmount = rate * Number(nativeAmount)
 
   // Set up metadata:
-  const metadata: DiskMetadata = { exchangeAmount: {} }
+  const metadata: DiskMetadata =
+    tx.metadata != null
+      ? packMetadata(tx.metadata, fiat)
+      : { exchangeAmount: {} }
   metadata.exchangeAmount[fiat] = exchangeAmount
 
   // Basic file template:

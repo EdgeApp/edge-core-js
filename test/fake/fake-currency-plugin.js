@@ -260,7 +260,7 @@ class FakeCurrencyEngine {
       otherParams: {},
       ourReceiveAddresses: [],
       signedTx: '',
-      txid: ''
+      txid: 'spend'
     })
   }
 

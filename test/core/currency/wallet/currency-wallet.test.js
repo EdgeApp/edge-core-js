@@ -8,6 +8,7 @@ import { describe, it } from 'mocha'
 import {
   type EdgeCurrencyConfig,
   type EdgeCurrencyWallet,
+  type EdgeMetadata,
   makeFakeEdgeWorld
 } from '../../../../src/index.js'
 import { expectRejection } from '../../../expect-rejection.js'
@@ -205,25 +206,66 @@ describe('currency wallets', function () {
     expect(await wallet.nativeToDenomination('10', 'TOKEN')).equals('0.01')
   })
 
-  // it('can have metadata', function () {
-  //   const store = makeFakeCurrencyStore()
-  //
-  //   return makeFakeCurrencyWallet(store).then(wallet => {
-  //     const tx = { txid: 'a', metadata: { name: 'me' } }
-  //     store.dispatch({
-  //       type: 'SET_TXS',
-  //       payload: [{ txid: 'a', nativeAmount: '25' }]
-  //     })
-  //     return wallet.saveTx(tx).then(() =>
-  //       wallet.getTransactions({}).then(txs => {
-  //         assert.equal(txs.length, 1)
-  //         assert.strictEqual(txs[0].metadata.name, tx.metadata.name)
-  //         assert.strictEqual(txs[0].metadata.amountFiat, 0.75)
-  //         assert.strictEqual(txs[0].amountSatoshi, 25)
-  //         assert.strictEqual(txs[0].nativeAmount, '25')
-  //         return null
-  //       })
-  //     )
-  //   })
-  // })
+  it('can save metadata at spend time', async function () {
+    const log = makeAssertLog()
+    const [wallet, config] = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({ balance: 100 }) // Spending balance
+
+    // Subscribe to new transactions:
+    wallet.on('newTransactions', txs => {
+      const { txid, metadata = {} } = tx
+      const { name = '' } = metadata
+      log('new', txs.map(tx => `${txid} ${name}`).join(' '))
+    })
+
+    const metadata: EdgeMetadata = { name: 'me' }
+    let tx = await wallet.makeSpend({
+      currencyCode: 'FAKE',
+      spendTargets: [
+        {
+          nativeAmount: '50',
+          publicAddress: 'somewhere'
+        }
+      ],
+      metadata
+    })
+    tx = await wallet.signTx(tx)
+    await wallet.broadcastTx(tx)
+    await wallet.saveTx(tx)
+    await log.waitFor(1).assert('new spend me')
+
+    const txs = await wallet.getTransactions({})
+    expect(txs.length).equals(1)
+    expect(txs[0].nativeAmount).equals('50')
+    expect(txs[0].metadata).deep.equals({
+      bizId: undefined,
+      category: undefined,
+      notes: undefined,
+      exchangeAmount: { 'iso:USD': 1.5 },
+      amountFiat: 1.5,
+      ...metadata
+    })
+  })
+
+  it('can update metadata', async function () {
+    const [wallet, config] = await makeFakeCurrencyWallet()
+
+    const metadata: EdgeMetadata = {
+      name: 'me',
+      amountFiat: 0.75
+    }
+    await config.changeUserSettings({ txs: { a: { nativeAmount: '25' } } })
+    await wallet.saveTxMetadata('a', 'FAKE', metadata)
+
+    const txs = await wallet.getTransactions({})
+    expect(txs.length).equals(1)
+    expect(txs[0].nativeAmount).equals('25')
+    expect(txs[0].metadata).deep.equals({
+      bizId: undefined,
+      category: undefined,
+      notes: undefined,
+      exchangeAmount: { 'iso:USD': 0.75 },
+      ...metadata
+    })
+  })
 })
