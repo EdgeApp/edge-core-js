@@ -159,44 +159,51 @@ export function makeCurrencyWalletCallbacks(
           return
         }
       }
+
+      // Grab stuff from redux:
       const { state } = input.props
-      const existingTxs = input.props.selfState.txs
-      const txidHashes = {}
-      const files = input.props.selfState.files || {}
-      const fileNames = input.props.selfState.fileNames || []
+      const {
+        fileNames,
+        fileNamesLoaded,
+        txs: reduxTxs
+      } = input.props.selfState
       const defaultCurrency = input.props.selfState.currencyInfo.currencyCode
+
+      const txidHashes = {}
       const changed = []
       const created = []
-      for (const rawTx of txs) {
-        const tx = mergeTx(rawTx, defaultCurrency, existingTxs[rawTx.txid])
-        const txid = tx.txid
-        // If we already have it in the list, make sure something about it has changed:
-        if (compare(tx, existingTxs[txid])) continue
+      for (const tx of txs) {
+        const { txid } = tx
 
+        // Verify that something has changed:
+        const reduxTx = mergeTx(tx, defaultCurrency, reduxTxs[txid])
+        if (compare(reduxTx, reduxTxs[txid])) continue
+
+        // Ensure the transaction has metadata:
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
-        const isNew = !fileNames[txidHash]
-        const decryptedMetadata = files[txidHash]
-        const combinedTx = combineTxWithFile(
-          input,
-          tx,
-          decryptedMetadata,
-          rawTx.currencyCode
-        )
+        const isNew = fileNamesLoaded && fileNames[txidHash] == null
         if (isNew) {
           setupNewTxMetadata(input, tx).catch(e => input.props.onError(e))
-          created.push(combinedTx)
-        } else if (decryptedMetadata) {
-          changed.push(combinedTx)
         }
+
+        // Build the final transaction to show the user:
+        const { files } = input.props.selfState
+        const combinedTx = combineTxWithFile(
+          input,
+          reduxTx,
+          files[txidHash],
+          tx.currencyCode
+        )
+        if (isNew) created.push(combinedTx)
+        else if (files[txidHash] != null) changed.push(combinedTx)
         txidHashes[txidHash] = combinedTx.date
       }
-      // Side Effect
+
+      // Tell everyone who cares:
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_TXS',
         payload: { txs, walletId, txidHashes }
       })
-
-      // Call the callbacks:
       if (changed.length) throtteldOnTxChanged(changed)
       if (created.length) throttledOnNewTx(created)
     },

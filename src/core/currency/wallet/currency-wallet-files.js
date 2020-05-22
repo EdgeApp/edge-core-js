@@ -3,7 +3,10 @@
 import { number as currencyFromNumber } from 'currency-codes'
 import { type DiskletFile, type DiskletFolder, mapFiles } from 'disklet'
 
-import { type EdgeCurrencyEngineCallbacks } from '../../../types/types.js'
+import {
+  type EdgeCurrencyEngineCallbacks,
+  type EdgeTransaction
+} from '../../../types/types.js'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobby-api.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
@@ -18,10 +21,7 @@ import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
 import { type DiskMetadata } from './currency-wallet-cleaners.js'
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
-import {
-  type MergedTransaction,
-  type TxFileNames
-} from './currency-wallet-reducer.js'
+import { type TxFileNames } from './currency-wallet-reducer.js'
 
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
 const WALLET_NAME_FILE = 'WalletName.json'
@@ -510,21 +510,30 @@ export function setCurrencyWalletTxMetadata(
  */
 export function setupNewTxMetadata(
   input: CurrencyWalletInput,
-  tx: MergedTransaction
+  tx: EdgeTransaction
 ): Promise<void> {
-  const walletId = input.props.id
-  const { dispatch, state } = input.props
+  const { dispatch, selfState, state, id: walletId } = input.props
+  const { currencyInfo, fiat = 'iso:USD' } = selfState
+  const { currencyCode, txid } = tx
 
-  const txid = tx.txid
   const creationDate = Date.now() / 1000
-  const { diskletFile, fileName, txidHash } = getTxFile(
-    state,
-    walletId,
-    creationDate,
-    txid
-  )
-  const currencyInfo = input.props.selfState.currencyInfo
-  const fiatCurrency: string = input.props.selfState.fiat || 'iso:USD'
+
+  // Calculate the exchange rate:
+  const rate =
+    getExchangeRate(state, currencyCode, fiat, () => 1) /
+    parseFloat(
+      getCurrencyMultiplier(
+        [currencyInfo],
+        input.props.state.currency.customTokens,
+        currencyCode
+      )
+    )
+  const nativeAmount = tx.nativeAmount
+  const exchangeAmount = rate * Number(nativeAmount)
+
+  // Set up metadata:
+  const metadata: DiskMetadata = { exchangeAmount: {} }
+  metadata.exchangeAmount[fiat] = exchangeAmount
 
   // Basic file template:
   const json: TransactionFile = {
@@ -533,26 +542,15 @@ export function setupNewTxMetadata(
     creationDate,
     currencies: {}
   }
-
-  // Set up exchange-rate metadata:
-  for (const currency of Object.keys(tx.nativeAmount)) {
-    const rate =
-      getExchangeRate(state, currency, fiatCurrency, () => 1) /
-      parseFloat(
-        getCurrencyMultiplier(
-          [currencyInfo],
-          input.props.state.currency.customTokens,
-          currency
-        )
-      )
-    const nativeAmount = tx.nativeAmount[currency]
-
-    const metadata: DiskMetadata = { exchangeAmount: {} }
-    metadata.exchangeAmount[fiatCurrency] = rate * Number(nativeAmount)
-    json.currencies[currency] = { metadata, nativeAmount }
-  }
+  json.currencies[currencyCode] = { metadata, nativeAmount }
 
   // Save the new file:
+  const { diskletFile, fileName, txidHash } = getTxFile(
+    state,
+    walletId,
+    creationDate,
+    txid
+  )
   dispatch({
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { creationDate, fileName, json, txid, txidHash, walletId }
