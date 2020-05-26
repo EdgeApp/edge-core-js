@@ -20,17 +20,23 @@ import {
   type EdgePaymentProtocolInfo,
   type EdgeReceiveAddress,
   type EdgeSpendInfo,
+  type EdgeSpendTarget,
   type EdgeTokenInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type JsonObject
 } from '../../../types/types.js'
-import { filterObject, mergeDeeply } from '../../../util/util.js'
+import { mergeDeeply } from '../../../util/util.js'
 import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
 import { type ApiInput } from '../../root-pixie.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks.js'
+import {
+  asTxSwap,
+  packMetadata,
+  unpackMetadata
+} from './currency-wallet-cleaners.js'
 import {
   exportTransactionsToCSVInner,
   exportTransactionsToQBOInner
@@ -375,7 +381,73 @@ export function makeCurrencyWalletApi(
     },
 
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-      return engine.makeSpend(spendInfo)
+      const { currencyInfo } = input.props.selfState
+      const {
+        currencyCode = currencyInfo.currencyCode,
+        privateKeys,
+        spendTargets = [],
+        noUnconfirmed = false,
+        networkFeeOption = 'standard',
+        customNetworkFee,
+        metadata,
+        swapData,
+        otherParams
+      } = spendInfo
+
+      const cleanTargets: EdgeSpendTarget[] = []
+      const savedTargets = []
+      for (const target of spendTargets) {
+        const { publicAddress, nativeAmount = '0', otherParams = {} } = target
+        if (publicAddress == null) continue
+
+        // Handle legacy spenders:
+        let { uniqueIdentifier } = target
+        if (
+          uniqueIdentifier == null &&
+          typeof otherParams.uniqueIdentifier === 'string'
+        ) {
+          uniqueIdentifier = otherParams.uniqueIdentifier
+        }
+
+        // Support legacy currency plugins:
+        if (uniqueIdentifier != null) {
+          otherParams.uniqueIdentifier = uniqueIdentifier
+        }
+
+        cleanTargets.push({
+          publicAddress,
+          nativeAmount,
+          uniqueIdentifier,
+          otherParams
+        })
+        savedTargets.push({
+          currencyCode,
+          publicAddress,
+          nativeAmount,
+          uniqueIdentifier
+        })
+      }
+
+      if (cleanTargets.length === 0) {
+        throw new TypeError('The spend has no destination')
+      }
+      if (privateKeys != null) {
+        throw new TypeError('Only sweepPrivateKeys takes private keys')
+      }
+
+      const tx = await engine.makeSpend({
+        currencyCode,
+        spendTargets: cleanTargets,
+        noUnconfirmed,
+        networkFeeOption,
+        customNetworkFee,
+        metadata,
+        otherParams
+      })
+      tx.spendTargets = savedTargets
+      if (metadata != null) tx.metadata = metadata
+      if (swapData != null) tx.swapData = asTxSwap(swapData)
+      return tx
     },
 
     async sweepPrivateKeys(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
@@ -397,6 +469,7 @@ export function makeCurrencyWalletApi(
 
     async saveTx(tx: EdgeTransaction): Promise<void> {
       await engine.saveTx(tx)
+      fakeCallbacks.onTransactionsChanged([tx])
     },
 
     async resyncBlockchain(): Promise<void> {
@@ -431,7 +504,7 @@ export function makeCurrencyWalletApi(
         input,
         txid,
         currencyCode,
-        fixMetadata(metadata, input.props.selfState.fiat),
+        packMetadata(metadata, input.props.selfState.fiat),
         fakeCallbacks
       )
     },
@@ -497,27 +570,10 @@ export function makeCurrencyWalletApi(
   return out
 }
 
-function fixMetadata(metadata: EdgeMetadata, fiat: string) {
-  const out = filterObject(metadata, [
-    'bizId',
-    'category',
-    'exchangeAmount',
-    'name',
-    'notes'
-  ])
-
-  if (metadata.amountFiat != null) {
-    if (out.exchangeAmount == null) out.exchangeAmount = {}
-    out.exchangeAmount[fiat] = metadata.amountFiat
-  }
-
-  return out
-}
-
 export function combineTxWithFile(
   input: CurrencyWalletInput,
   tx: MergedTransaction,
-  file: TransactionFile,
+  file: TransactionFile | void,
   currencyCode: string
 ): EdgeTransaction {
   const wallet = input.props.selfOutput.api
@@ -540,42 +596,35 @@ export function combineTxWithFile(
     nativeAmount: tx.nativeAmount[currencyCode],
     networkFee: tx.networkFee[currencyCode],
     currencyCode,
-    wallet
+    wallet,
+    metadata: {}
   }
 
-  // These are our fallback values:
-  const fallback = {
-    providerFeeSent: 0,
-    metadata: {
-      name: '',
-      category: '',
-      notes: '',
-      bizId: 0,
-      amountFiat: 0,
-      exchangeAmount: {}
-    }
-  }
+  // If we have a file, use it to override the defaults:
+  if (file != null) {
+    if (file.creationDate < out.date) out.date = file.creationDate
 
-  const merged = file
-    ? mergeDeeply(
-        fallback,
-        file.currencies[walletCurrency],
-        file.currencies[currencyCode]
-      )
-    : fallback
-
-  if (file && file.creationDate < out.date) out.date = file.creationDate
-  out.metadata = merged.metadata
-  if (
-    merged.metadata &&
-    merged.metadata.exchangeAmount &&
-    merged.metadata.exchangeAmount[walletFiat]
-  ) {
-    out.metadata.amountFiat = merged.metadata.exchangeAmount[walletFiat]
-    if (out.metadata && out.metadata.amountFiat.toString().includes('e')) {
-      // Corrupt amountFiat that exceeds a number that JS can cleanly represent without exponents. Set to 0
-      out.metadata.amountFiat = 0
+    const merged = mergeDeeply(
+      file.currencies[walletCurrency],
+      file.currencies[currencyCode]
+    )
+    if (merged.metadata != null) {
+      out.metadata = {
+        ...out.metadata,
+        ...unpackMetadata(merged.metadata, walletFiat)
+      }
     }
+
+    if (file.payees != null) {
+      out.spendTargets = file.payees.map(payee => ({
+        currencyCode: payee.currency,
+        nativeAmount: payee.amount,
+        publicAddress: payee.address,
+        uniqueIdentifier: payee.tag
+      }))
+    }
+
+    if (file.swap != null) out.swapData = asTxSwap(file.swap)
   }
 
   return out

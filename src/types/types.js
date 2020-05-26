@@ -260,17 +260,43 @@ export type EdgeCurrencyInfo = {
 // spending ------------------------------------------------------------
 
 export type EdgeMetadata = {
-  name?: string,
-  category?: string,
-  notes?: string,
-  amountFiat?: number,
   bizId?: number,
+  category?: string,
+  exchangeAmount?: { [fiatCurrencyCode: string]: number },
+  name?: string,
+  notes?: string,
+
+  // Deprecated. Use exchangeAmount instead:
+  amountFiat?: number,
+
+  // Deprecated. The core has never actually written this to disk,
+  // but deleting this type definition would break the GUI:
   miscJson?: string
 }
 
 export type EdgeNetworkFee = {
   +currencyCode: string,
   +nativeAmount: string
+}
+
+export type EdgeTxSwap = {
+  orderId?: string,
+  orderUri?: string,
+  isEstimate: boolean,
+
+  // The EdgeSwapInfo from the swap plugin:
+  plugin: {
+    pluginId: string,
+    displayName: string,
+    supportEmail?: string
+  },
+
+  // Address information:
+  payoutAddress: string,
+  payoutCurrencyCode: string,
+  payoutNativeAmount: string,
+  payoutWalletId: string,
+  refundAddress?: string
 }
 
 export type EdgeTransaction = {
@@ -293,6 +319,13 @@ export type EdgeTransaction = {
 
   // Core:
   metadata?: EdgeMetadata,
+  spendTargets?: Array<{
+    +currencyCode: string,
+    +nativeAmount: string,
+    +publicAddress: string,
+    +uniqueIdentifier?: string
+  }>,
+  swapData?: EdgeTxSwap,
   wallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
   otherParams?: JsonObject
 }
@@ -300,6 +333,7 @@ export type EdgeTransaction = {
 export type EdgeSpendTarget = {
   nativeAmount?: string,
   publicAddress?: string,
+  uniqueIdentifier?: string,
   otherParams?: JsonObject
 }
 
@@ -324,6 +358,7 @@ export type EdgeSpendInfo = {
 
   // Core:
   metadata?: EdgeMetadata,
+  swapData?: EdgeTxSwap,
   otherParams?: JsonObject
 }
 

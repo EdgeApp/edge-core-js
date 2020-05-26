@@ -6,6 +6,7 @@ import {
   type EdgeCurrencyTools,
   type EdgePluginMap,
   type EdgeTokenInfo,
+  type EdgeTransaction,
   type EdgeWalletInfo,
   type EdgeWalletStates,
   type JsonObject
@@ -13,7 +14,8 @@ import {
 import { type SwapSettings } from './account/account-reducer.js'
 import {
   type TxFileJsons,
-  type TxFileNames
+  type TxFileNames,
+  type TxidHashes
 } from './currency/wallet/currency-wallet-reducer.js'
 import { type ExchangePair } from './exchange/exchange-reducer.js'
 import { type LoginStash } from './login/login-types.js'
@@ -131,9 +133,9 @@ export type RootAction =
       // Called when a currency engine fires the onTransactionsChanged callback.
       type: 'CURRENCY_ENGINE_CHANGED_TXS',
       payload: {
-        txs: any[],
+        txs: EdgeTransaction[],
         walletId: string,
-        txidHashes: any
+        txidHashes: TxidHashes
       }
     }
   | {
