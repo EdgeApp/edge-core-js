@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.17.3 (2020-05-26)
+
+- Save transaction metadata with spends.
+- Save an `EdgeTransaction.spendTargets` list with every spend.
+- Save an optional `EdgeTransaction.swapData` field with swap transactions.
+
 ## 0.17.2 (2020-05-21)
 
 - Prioritize the `wazirx` rate plugin when available.
