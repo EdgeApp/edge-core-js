@@ -219,6 +219,7 @@ describe('currency wallets', function () {
       log('new', txs.map(tx => `${txid} ${name}`).join(' '))
     })
 
+    // Perform the spend:
     const metadata: EdgeMetadata = { name: 'me' }
     const swapData: EdgeTxSwap = {
       orderId: '1234',
@@ -247,8 +248,9 @@ describe('currency wallets', function () {
     tx = await wallet.signTx(tx)
     await wallet.broadcastTx(tx)
     await wallet.saveTx(tx)
-    await log.waitFor(1).assert('new spend me')
 
+    // Validate the result:
+    await log.waitFor(1).assert('new spend me')
     const txs = await wallet.getTransactions({})
     expect(txs.length).equals(1)
     expect(txs[0].nativeAmount).equals('50')
@@ -268,6 +270,7 @@ describe('currency wallets', function () {
         uniqueIdentifier: undefined
       }
     ])
+    expect(txs[0].txSecret).equals('open sesame')
     expect(txs[0].swapData).deep.equals({
       orderUri: undefined,
       refundAddress: undefined,

@@ -265,6 +265,7 @@ class FakeCurrencyEngine {
   }
 
   signTx(transaction: EdgeTransaction): Promise<EdgeTransaction> {
+    transaction.txSecret = 'open sesame'
     return Promise.resolve(transaction)
   }
 

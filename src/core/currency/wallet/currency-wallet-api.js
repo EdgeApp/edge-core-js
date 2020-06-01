@@ -625,6 +625,7 @@ export function combineTxWithFile(
     }
 
     if (file.swap != null) out.swapData = asTxSwap(file.swap)
+    if (typeof file.secret === 'string') out.txSecret = file.secret
   }
 
   return out
