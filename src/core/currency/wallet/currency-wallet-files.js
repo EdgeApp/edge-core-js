@@ -45,6 +45,7 @@ export type TransactionFile = {
     currency: string,
     tag?: string
   }>,
+  secret?: string,
   swap?: EdgeTxSwap
 }
 
@@ -565,6 +566,7 @@ export function setupNewTxMetadata(
       tag: target.uniqueIdentifier
     }))
   }
+  if (typeof tx.txSecret === 'string') json.secret = tx.txSecret
 
   // Save the new file:
   const { diskletFile, fileName, txidHash } = getTxFile(

@@ -325,6 +325,7 @@ export type EdgeTransaction = {
     +publicAddress: string,
     +uniqueIdentifier?: string
   }>,
+  txSecret?: string, // Monero decryption key
   swapData?: EdgeTxSwap,
   wallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
   otherParams?: JsonObject
