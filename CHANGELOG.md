@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.17.4 (2020-06-02)
+
+- Save the decryption keys for Monero spends (requires a matching Monero plugin change).
+- Replace git2.airbitz.co with git1.edge.app in the sync server list.
+
 ## 0.17.3 (2020-05-26)
 
 - Save transaction metadata with spends.
