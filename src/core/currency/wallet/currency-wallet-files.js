@@ -279,8 +279,11 @@ export async function loadTxFiles(
   const fileNames = input.props.selfState.fileNames
   const walletFiat = input.props.selfState.fiat
 
-  const getFiles = (folderName, cb) =>
-    Promise.all(
+  async function getFiles(
+    folderName: string,
+    cb: (json: any, txidHash: string) => void
+  ): Promise<void> {
+    await Promise.all(
       txIdHashes.map(txidHash =>
         folder
           .folder(folderName)
@@ -290,13 +293,14 @@ export async function loadTxFiles(
           .catch(e => null)
       )
     )
+  }
 
   const out = {}
-  await getFiles('Transactions', (json, txidHash) => {
+  await getFiles('Transactions', (json: any, txidHash: string) => {
     if (!json.state || !json.state.malleableTxId) return
     out[txidHash] = fixLegacyFile(json, walletCurrency, walletFiat)
   })
-  await getFiles('transaction', (json, txidHash) => {
+  await getFiles('transaction', (json: any, txidHash: string) => {
     if (!json.txid) return
     out[txidHash] = json
   })

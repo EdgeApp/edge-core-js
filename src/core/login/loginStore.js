@@ -18,7 +18,7 @@ export type FileInfo = {
   json: any
 }
 
-function loginsFolder(ai: ApiInput) {
+function loginsFolder(ai: ApiInput): DiskletFolder {
   const folder = downgradeDisklet(ai.props.io.disklet)
   return folder.folder('logins')
 }

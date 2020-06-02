@@ -11,7 +11,7 @@ import { encryptDisklet } from './encrypt-disklet.js'
 export function getStorageWalletLastChanges(
   state: RootState,
   walletId: string
-) {
+): string[] {
   return state.storageWallets[walletId].lastChanges
 }
 
@@ -45,7 +45,7 @@ export function hashStorageWalletFilename(
   state: RootState,
   walletId: string,
   data: string
-) {
+): string {
   const dataKey = state.storageWallets[walletId].paths.dataKey
   return base58.stringify(hmacSha256(utf8.parse(data), dataKey))
 }

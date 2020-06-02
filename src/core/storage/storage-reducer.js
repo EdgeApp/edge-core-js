@@ -1,7 +1,7 @@
 // @flow
 
 import { type Disklet } from 'disklet'
-import { combineReducers } from 'redux'
+import { type Reducer, combineReducers } from 'redux'
 
 import { type RootAction } from '../actions.js'
 
@@ -32,7 +32,10 @@ export type StorageWalletsState = { [id: string]: StorageWalletState }
 /**
  * Individual repo reducer.
  */
-const storageWalletReducer = combineReducers({
+const storageWalletReducer: Reducer<
+  StorageWalletState,
+  RootAction
+> = combineReducers({
   lastChanges(state = [], action: RootAction): string[] {
     if (action.type === 'STORAGE_WALLET_SYNCED') {
       const { changes } = action.payload
@@ -69,15 +72,15 @@ export const storageWallets = function storageWalletsReducer(
   switch (action.type) {
     case 'STORAGE_WALLET_ADDED': {
       const { id, initialState } = action.payload
-      const out = { ...state }
-      out[id] = storageWalletReducer(initialState, { type: '' })
+      const out: StorageWalletsState = { ...state }
+      out[id] = storageWalletReducer(initialState, { type: 'UPDATE_NEXT' })
       return out
     }
 
     case 'STORAGE_WALLET_SYNCED': {
       const { id } = action.payload
       if (state[id] != null) {
-        const out = { ...state }
+        const out: StorageWalletsState = { ...state }
         out[id] = storageWalletReducer(state[id], action)
         return out
       }

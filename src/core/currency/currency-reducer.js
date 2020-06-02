@@ -32,7 +32,7 @@ export const currency: FatReducer<
   RootAction,
   RootState
 > = buildReducer({
-  currencyWalletIds(state, action, next: RootState): string[] {
+  currencyWalletIds(state, action: RootAction, next: RootState): string[] {
     // Optimize the common case:
     if (next.accountIds.length === 1) {
       const id = next.accountIds[0]

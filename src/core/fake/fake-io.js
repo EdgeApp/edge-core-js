@@ -2,7 +2,12 @@
 
 import { makeMemoryDisklet } from 'disklet'
 
-import { type EdgeConsole, type EdgeIo } from '../../types/types.js'
+import {
+  type EdgeConsole,
+  type EdgeFetchFunction,
+  type EdgeIo,
+  type EdgeRandomFunction
+} from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 
 /**
@@ -17,7 +22,7 @@ export const fakeConsole: EdgeConsole = {
 /**
  * Generates deterministic "random" data for unit-testing.
  */
-function makeFakeRandom() {
+function makeFakeRandom(): EdgeRandomFunction {
   let seed = 0
 
   return (bytes: number) => {
@@ -34,7 +39,7 @@ function makeFakeRandom() {
   }
 }
 
-function fakeFetch() {
+const fakeFetch: EdgeFetchFunction = () => {
   return Promise.reject(new Error('Fake network error'))
 }
 

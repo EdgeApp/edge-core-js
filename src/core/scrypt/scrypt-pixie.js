@@ -31,12 +31,15 @@ export type ScryptOutput = {
  * Prevents a function from running in parallel.
  * The currently-running operation must finish before the new one starts.
  */
-function serialize(f) {
-  let nextTask = Promise.resolve()
-  return function serialize(...rest) {
-    const onDone = () => f.apply(this, rest)
-    nextTask = nextTask.then(onDone, onDone)
-    return nextTask
+function serialize<A: any[], R>(
+  f: (...args: A) => Promise<R>
+): (...args: A) => Promise<R> {
+  let lastTask: Promise<mixed> = Promise.resolve()
+  return function serialize(...args: A): Promise<R> {
+    const onDone = (): Promise<R> => f.apply(this, args)
+    const out = lastTask.then(onDone, onDone)
+    lastTask = out
+    return out
   }
 }
 
@@ -118,7 +121,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
     const { io, log } = input.props
     let benchmark: Promise<number>
 
-    function makeSnrp(targetMs: number) {
+    function makeSnrp(targetMs: number): Promise<EdgeSnrp> {
       // Run the benchmark if needed:
       if (benchmark == null) {
         benchmark = input.props.output.scrypt

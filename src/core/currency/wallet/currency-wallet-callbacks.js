@@ -31,7 +31,7 @@ let throttleRateLimitMs = 5000
 function makeThrottledTxCallback(
   input: CurrencyWalletInput,
   callback: (txArray: EdgeTransaction[]) => mixed
-) {
+): (txs: EdgeTransaction[]) => void {
   const walletId = input.props.id
   const { log } = input.props
 
@@ -215,11 +215,11 @@ export function makeCurrencyWalletCallbacks(
 /**
  * Monitors a currency wallet for changes and fires appropriate callbacks.
  */
-export function watchCurrencyWallet(input: CurrencyWalletInput) {
+export function watchCurrencyWallet(input: CurrencyWalletInput): void {
   const walletId = input.props.id
 
   let lastChanges
-  function checkChangesLoop(props: CurrencyWalletProps) {
+  function checkChangesLoop(props: CurrencyWalletProps): void {
     // Check for data changes:
     const changes = getStorageWalletLastChanges(props.state, walletId)
     if (changes !== lastChanges) {

@@ -11,7 +11,7 @@ export async function enableOtp(
   ai: ApiInput,
   accountId: string,
   otpTimeout: number
-) {
+): Promise<void> {
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const otpKey =
@@ -40,7 +40,10 @@ export async function enableOtp(
   await applyKit(ai, loginTree, kit)
 }
 
-export async function disableOtp(ai: ApiInput, accountId: string) {
+export async function disableOtp(
+  ai: ApiInput,
+  accountId: string
+): Promise<void> {
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const kit: LoginKit = {
@@ -61,7 +64,10 @@ export async function disableOtp(ai: ApiInput, accountId: string) {
   await applyKit(ai, loginTree, kit)
 }
 
-export async function cancelOtpReset(ai: ApiInput, accountId: string) {
+export async function cancelOtpReset(
+  ai: ApiInput,
+  accountId: string
+): Promise<void> {
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const kit: LoginKit = {

@@ -108,7 +108,7 @@ export async function makeLobbyApi(
   lobbyId: string
 ): Promise<EdgeLobby> {
   // Look up the lobby on the server:
-  const lobbyJson: LobbyRequest = await fetchLobbyRequest(ai, lobbyId)
+  const lobbyJson = await fetchLobbyRequest(ai, lobbyId)
 
   // If the lobby has a login request, set up that API:
   let loginRequest: EdgeLoginRequest | void

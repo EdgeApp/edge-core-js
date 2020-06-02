@@ -40,11 +40,15 @@ function cloneNode<Node: {}, Output>(
  * Returns the login that satisfies the given predicate,
  * or undefined if nothing matches.
  */
-export function searchTree(node: any, predicate: (node: any) => boolean) {
+export function searchTree<T>(
+  node: T,
+  predicate: (node: T) => boolean
+): T | void {
   if (predicate(node)) return node
 
-  if (node.children != null) {
-    for (const child of node.children) {
+  const flowHack: any = node
+  if (flowHack.children != null) {
+    for (const child of flowHack.children) {
       const out = searchTree(child, predicate)
       if (out != null) return out
     }
@@ -73,7 +77,11 @@ function updateTree<Node: { +children?: any[] }, Output>(
   return clone(node, children)
 }
 
-function applyLoginReplyInner(stash, loginKey, loginReply) {
+function applyLoginReplyInner(
+  stash: LoginStash,
+  loginKey: Uint8Array,
+  loginReply: LoginReply
+): LoginStash {
   // Copy common items:
   const out: LoginStash = filterObject(loginReply, [
     'appId',
@@ -278,7 +286,10 @@ export function makeLoginTree(
  * Prepares a login stash for edge login,
  * stripping out any information that the target app is not allowed to see.
  */
-export function sanitizeLoginStash(stashTree: LoginStash, appId: string) {
+export function sanitizeLoginStash(
+  stashTree: LoginStash,
+  appId: string
+): LoginStash {
   return updateTree(
     stashTree,
     stash => stash.appId === appId,
@@ -300,7 +311,11 @@ export function sanitizeLoginStash(stashTree: LoginStash, appId: string) {
  * and the on-disk stash. A login kit contains all three elements,
  * and this function knows how to apply them all.
  */
-export function applyKit(ai: ApiInput, loginTree: LoginTree, kit: LoginKit) {
+export function applyKit(
+  ai: ApiInput,
+  loginTree: LoginTree,
+  kit: LoginKit
+): Promise<LoginTree> {
   const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
   if (!login) throw new Error('Cannot apply kit: missing login')
@@ -442,7 +457,7 @@ export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
     loginIds: Object.keys(loginMap)
   }
   return loginFetch(ai, 'POST', '/v2/messages', request).then(reply => {
-    const out = {}
+    const out: EdgeLoginMessages = {}
     for (const message of reply) {
       const username = loginMap[message.loginId]
       if (username) out[username] = message

@@ -64,7 +64,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         const { log } = input.props
         const { accountWalletInfos } = input.props.selfState
 
-        const loadAllFiles = async () => {
+        async function loadAllFiles(): Promise<void> {
           await Promise.all([
             reloadPluginSettings(ai, accountId),
             loadAllWalletStates(ai, accountId)
@@ -107,7 +107,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       let stopped: boolean = false
       let timeout: TimeoutID | void
 
-      async function doSync() {
+      async function doSync(): Promise<void> {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const accountId = input.props.id
         const { accountWalletInfos } = input.props.selfState

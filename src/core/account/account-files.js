@@ -1,6 +1,6 @@
 // @flow
 
-import { type DiskletFile, mapFiles } from 'disklet'
+import { type DiskletFile, type DiskletFolder, mapFiles } from 'disklet'
 import { base16, base64 } from 'rfc4648'
 
 import {
@@ -24,10 +24,15 @@ type PluginSettingsFile = {
   swapSettings?: EdgePluginMap<SwapSettings>
 }
 
+type LoadedWalletList = {
+  walletInfos: EdgeWalletInfo[],
+  walletStates: EdgeWalletStates
+}
+
 /**
  * Returns true if `Object.assign(a, b)` would alter `a`.
  */
-function different(a, b) {
+function different(a: any, b: any): boolean {
   for (const key of Object.keys(b)) {
     if (a[key] !== b[key]) {
       return true
@@ -40,7 +45,7 @@ function different(a, b) {
  * Returns `value` if it is an object,
  * otherwise returns an empty fallback object.
  */
-function getObject(value) {
+function getObject(value: any): any {
   if (value == null && typeof value !== 'object') return {}
   return value
 }
@@ -52,7 +57,7 @@ function getJson(file: DiskletFile, fallback: any = {}): Promise<any> {
     .catch(e => fallback)
 }
 
-function getJsonFiles(folder) {
+function getJsonFiles(folder: DiskletFolder): Promise<any[]> {
   return mapFiles(folder, (file, name) =>
     file
       .getText()
@@ -64,12 +69,7 @@ function getJsonFiles(folder) {
 /**
  * Loads the legacy wallet list from the account folder.
  */
-function loadWalletList(
-  folder
-): Promise<{
-  walletInfos: EdgeWalletInfo[],
-  walletStates: EdgeWalletStates
-}> {
+function loadWalletList(folder: DiskletFolder): Promise<LoadedWalletList> {
   return getJsonFiles(folder.folder('Wallets')).then(files => {
     const walletInfos = []
     const walletStates = {}
@@ -104,7 +104,7 @@ function loadWalletList(
 /**
  * Loads the modern key state list from the account folder.
  */
-function loadWalletStates(folder): Promise<EdgeWalletStates> {
+function loadWalletStates(folder: DiskletFolder): Promise<EdgeWalletStates> {
   return getJsonFiles(folder.folder('Keys')).then(files => {
     const keyStates = {}
 
@@ -275,7 +275,10 @@ export async function changeSwapSettings(
 /**
  * Loads the settings for all the currency plugins within an account.
  */
-export async function reloadPluginSettings(ai: ApiInput, accountId: string) {
+export async function reloadPluginSettings(
+  ai: ApiInput,
+  accountId: string
+): Promise<void> {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const file = getStorageWalletFolder(
     ai.props.state,
