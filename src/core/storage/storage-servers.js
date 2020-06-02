@@ -8,8 +8,8 @@ import {
 } from '../../types/types.js'
 
 const syncServers = [
+  'https://git1.edge.app',
   'https://git3.airbitz.co',
-  'https://git2.airbitz.co',
   'https://git4.edge.app'
 ]
 
