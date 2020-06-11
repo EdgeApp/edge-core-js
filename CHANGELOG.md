@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.17.5 (2020-06-11)
+
+- Expose an `EdgeAccount.rootLoginId`.
+
 ## 0.17.4 (2020-06-02)
 
 - Save the decryption keys for Monero spends (requires a matching Monero plugin change).
