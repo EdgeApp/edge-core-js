@@ -1,6 +1,7 @@
 // @flow
 
 import { type Disklet } from 'disklet'
+import { base64 } from 'rfc4648'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { AccountSync } from '../../client-side.js'
@@ -125,6 +126,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return login.recovery2Key != null
         ? base58.stringify(login.recovery2Key)
         : undefined
+    },
+    get rootLoginId(): string {
+      lockdown()
+      return base58.stringify(base64.parse(loginTree.loginId))
     },
     get username(): string {
       if (!username) throw new Error('Missing username')

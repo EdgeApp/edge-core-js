@@ -23,6 +23,35 @@ function findWallet(
 }
 
 describe('account', function () {
+  it('has basic information', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    expect(account.appId).equals('')
+    expect(account.loggedIn).equals(true)
+    expect(account.rootLoginId).deep.equals(
+      'BTnpEn7pabDXbcv7VxnKBDsn4CVSwLRA25J8U84qmg4h'
+    )
+    expect(account.username).equals('js test 0')
+  })
+
+  it('has basic information for child apps', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser])
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      appId: 'test-child-child'
+    })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    expect(account.appId).equals('test-child-child')
+    expect(account.loggedIn).equals(true)
+    expect(account.rootLoginId).deep.equals(
+      'BTnpEn7pabDXbcv7VxnKBDsn4CVSwLRA25J8U84qmg4h'
+    )
+    expect(account.username).equals('js test 0')
+  })
+
   it('calls callbacks', async function () {
     const world = await makeFakeEdgeWorld([fakeUser])
     const context = await world.makeEdgeContext(contextOptions)
