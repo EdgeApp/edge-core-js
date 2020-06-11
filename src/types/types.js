@@ -803,7 +803,7 @@ export type EdgeRateCacheEvents = {
 }
 
 export type EdgeConvertCurrencyOpts = {
-  biases: { [name: string]: number }
+  biases?: { [name: string]: number }
 }
 
 export type EdgeRateCache = {
@@ -836,8 +836,8 @@ export type EdgeSwapConfig = {
 
 export type EdgeSwapRequestOptions = {
   preferPluginId?: string,
-  disabled: EdgePluginMap<true>,
-  promoCodes: EdgePluginMap<string>
+  disabled?: EdgePluginMap<true>,
+  promoCodes?: EdgePluginMap<string>
 }
 
 // edge login ----------------------------------------------------------
