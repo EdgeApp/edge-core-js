@@ -891,6 +891,7 @@ export type EdgeAccount = {
   +loggedIn: boolean,
   +loginKey: string,
   +recoveryKey: string | void, // For email backup
+  +rootLoginId: string,
   +username: string,
 
   // Special-purpose API's:
