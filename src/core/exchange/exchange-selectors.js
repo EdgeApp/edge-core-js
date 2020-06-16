@@ -36,7 +36,7 @@ function searchRoutes(
   fromCurrency: string,
   parentRate: ExchangeRate,
   blacklist: { [currency: string]: true }
-) {
+): void {
   // If we reach our target, we are done:
   if (fromCurrency === search.toCurrency) {
     search.bestRate = parentRate

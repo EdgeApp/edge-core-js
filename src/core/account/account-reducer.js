@@ -109,7 +109,6 @@ const accountInner: FatReducer<
     ): EdgeWalletInfoFull[] => {
       const values = getAllWalletInfos(login, legacyWalletInfos)
       const { walletInfos, appIdMap } = values
-      const getLast = array => array[array.length - 1]
 
       return walletInfos.map(info => ({
         appId: getLast(appIdMap[info.id]),
@@ -294,3 +293,7 @@ export const accountReducer: FatReducer<
 
   return { type: 'UPDATE_NEXT' }
 })
+
+function getLast<T>(array: T[]): T {
+  return array[array.length - 1]
+}

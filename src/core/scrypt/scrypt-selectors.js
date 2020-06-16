@@ -21,7 +21,7 @@ export function scrypt(
   ai: ApiInput,
   data: Uint8Array | string,
   snrp: EdgeSnrp
-) {
+): Promise<Uint8Array> {
   if (typeof data === 'string') data = utf8.parse(data)
 
   return ai.props.output.scrypt.timeScrypt(data, snrp).then(value => value.hash)

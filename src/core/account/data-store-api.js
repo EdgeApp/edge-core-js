@@ -1,28 +1,45 @@
 // @flow
 
-import { mapFiles, mapFolders } from 'disklet'
+import {
+  type DiskletFile,
+  type DiskletFolder,
+  mapFiles,
+  mapFolders
+} from 'disklet'
 import { bridgifyObject } from 'yaob'
 
-import { type EdgeDataStore } from '../../types/types.js'
+import { type EdgeDataStore, type EdgeWalletInfo } from '../../types/types.js'
 import { type ApiInput } from '../root-pixie.js'
 import {
   getStorageWalletFolder,
   hashStorageWalletFilename
 } from '../storage/storage-selectors.js'
 
-function getPluginsFolder(ai, accountWalletInfo) {
+function getPluginsFolder(
+  ai: ApiInput,
+  accountWalletInfo: EdgeWalletInfo
+): DiskletFolder {
   const folder = getStorageWalletFolder(ai.props.state, accountWalletInfo.id)
   return folder.folder('Plugins')
 }
 
-function getPluginFolder(ai, accountWalletInfo, storeId) {
+function getPluginFolder(
+  ai: ApiInput,
+  accountWalletInfo: EdgeWalletInfo,
+  storeId: string
+): DiskletFolder {
   const folder = getPluginsFolder(ai, accountWalletInfo)
   return folder.folder(
     hashStorageWalletFilename(ai.props.state, accountWalletInfo.id, storeId)
   )
 }
 
-function getPluginFile(ai, accountWalletInfo, storeId, itemId) {
+function getPluginFile(
+  ai: ApiInput,
+  accountWalletInfo: EdgeWalletInfo,
+  storeId: string,
+  itemId: string
+): DiskletFile {
   const folder = getPluginFolder(ai, accountWalletInfo, storeId)
   return folder.file(
     hashStorageWalletFilename(ai.props.state, accountWalletInfo.id, itemId) +

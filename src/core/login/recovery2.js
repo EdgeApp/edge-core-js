@@ -11,18 +11,19 @@ import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
 import {
   type LoginKit,
+  type LoginReply,
   type LoginStash,
   type LoginTree
 } from './login-types.js'
 import { applyKit, applyLoginReply, makeLoginTree } from './login.js'
 import { saveStash } from './loginStore.js'
 
-function recovery2Id(recovery2Key: Uint8Array, username: string) {
+function recovery2Id(recovery2Key: Uint8Array, username: string): Uint8Array {
   const data = utf8.parse(fixUsername(username))
   return hmacSha256(data, recovery2Key)
 }
 
-function recovery2Auth(recovery2Key, answers) {
+function recovery2Auth(recovery2Key: Uint8Array, answers: string[]): string[] {
   return answers.map(answer => {
     const data = utf8.parse(answer)
     return base64.stringify(hmacSha256(data, recovery2Key))
@@ -39,7 +40,7 @@ async function fetchLoginKey(
   username: string,
   answers: string[],
   otp: string | void
-) {
+): Promise<{ loginKey: Uint8Array, loginReply: LoginReply }> {
   const request = {
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
     recovery2Auth: recovery2Auth(recovery2Key, answers),
@@ -58,7 +59,7 @@ async function fetchLoginKey(
 /**
  * Returns a copy of the recovery key if one exists on the local device.
  */
-export function getRecovery2Key(stashTree: LoginStash) {
+export function getRecovery2Key(stashTree: LoginStash): Uint8Array | void {
   if (stashTree.recovery2Key != null) {
     return base64.parse(stashTree.recovery2Key)
   }
@@ -74,7 +75,7 @@ export async function loginRecovery2(
   username: string,
   answers: string[],
   otpKey: string | void
-) {
+): Promise<LoginTree> {
   let stashTree = getStash(ai, username)
   const { loginKey, loginReply } = await fetchLoginKey(
     ai,
@@ -99,7 +100,7 @@ export function getQuestions2(
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string
-) {
+): Promise<string[]> {
   const request = {
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username))
     // "otp": null
@@ -121,14 +122,17 @@ export async function changeRecovery(
   accountId: string,
   questions: string[],
   answers: string[]
-) {
+): Promise<void> {
   const { loginTree, username } = ai.props.state.accounts[accountId]
 
   const kit = makeRecovery2Kit(ai, loginTree, username, questions, answers)
   await applyKit(ai, loginTree, kit)
 }
 
-export async function deleteRecovery(ai: ApiInput, accountId: string) {
+export async function deleteRecovery(
+  ai: ApiInput,
+  accountId: string
+): Promise<void> {
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const kit = {
@@ -191,8 +195,6 @@ export function makeRecovery2Kit(
   }
 }
 
-export const listRecoveryQuestionChoices = function listRecoveryQuestionChoices(
-  ai: ApiInput
-) {
+export function listRecoveryQuestionChoices(ai: ApiInput): Promise<string[]> {
   return loginFetch(ai, 'POST', '/v1/questions', {})
 }

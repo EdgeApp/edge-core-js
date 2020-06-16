@@ -244,7 +244,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       let stopped: boolean = false
       let timeout: TimeoutID | void
 
-      async function doSync() {
+      async function doSync(): Promise<void> {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const { id } = input.props
 

@@ -67,7 +67,7 @@ export function makeCurrencyWalletApi(
   plugin: EdgeCurrencyPlugin,
   engine: EdgeCurrencyEngine,
   publicWalletInfo: EdgeWalletInfo
-) {
+): EdgeCurrencyWallet {
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
   const { walletInfo } = input.props.selfState
 
@@ -81,7 +81,7 @@ export function makeCurrencyWalletApi(
     bridgifyObject(otherMethods)
   }
 
-  function lockdown() {
+  function lockdown(): void {
     if (ai.props.state.hideKeys) {
       throw new Error('Not available when `hideKeys` is enabled')
     }
@@ -262,7 +262,10 @@ export function makeCurrencyWalletApi(
       })
       // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
       // slice, verify txs in files, if some are dropped and missing, do it again recursively
-      const getBulkTx = async (index: number, out: any = []) => {
+      const getBulkTx = async (
+        index: number,
+        out: EdgeTransaction[] = []
+      ): Promise<EdgeTransaction[]> => {
         // if the output is already filled up or we're at the end of the list of transactions
         if (out.length === startEntries || index >= sortedTransactions.length) {
           return out

@@ -57,7 +57,7 @@ export function watchPlugins(
   pluginsInit: EdgeCorePluginsInit,
   dispatch: Dispatch<RootAction>
 ): () => mixed {
-  const pluginsAdded = plugins => {
+  function pluginsAdded(plugins: EdgeCorePlugins): void {
     const out: EdgePluginMap<EdgeCorePlugin> = {}
 
     for (const pluginId in plugins) {
@@ -93,7 +93,7 @@ export function watchPlugins(
     dispatch({ type: 'CORE_PLUGINS_ADDED', payload: out })
   }
 
-  const pluginsLocked = () => {
+  function pluginsLocked(): void {
     dispatch({ type: 'CORE_PLUGINS_LOCKED', payload: pluginsInit })
   }
 

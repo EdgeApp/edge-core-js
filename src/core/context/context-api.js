@@ -35,7 +35,7 @@ import {
 import { type ApiInput } from '../root-pixie.js'
 import { EdgeInternalStuff } from './internal-api.js'
 
-export function makeContextApi(ai: ApiInput) {
+export function makeContextApi(ai: ApiInput): EdgeContext {
   const appId = ai.props.state.login.appId
   const $internalStuff = new EdgeInternalStuff(ai)
   let pauseTimer: TimeoutID | void

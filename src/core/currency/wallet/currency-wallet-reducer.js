@@ -91,7 +91,7 @@ const currencyWalletInner: FatReducer<
   RootAction,
   CurrencyWalletNext
 > = buildReducer({
-  accountId(state, action, next: CurrencyWalletNext): string {
+  accountId(state, action: RootAction, next: CurrencyWalletNext): string {
     if (state) return state
     for (const accountId in next.root.accounts) {
       const account = next.root.accounts[accountId]
@@ -112,7 +112,11 @@ const currencyWalletInner: FatReducer<
     }
   ),
 
-  currencyInfo(state, action, next: CurrencyWalletNext): EdgeCurrencyInfo {
+  currencyInfo(
+    state,
+    action: RootAction,
+    next: CurrencyWalletNext
+  ): EdgeCurrencyInfo {
     if (state) return state
     return getCurrencyPlugin(next.root, next.self.walletInfo.type).currencyInfo
   },
@@ -282,7 +286,7 @@ const currencyWalletInner: FatReducer<
     return state
   },
 
-  walletInfo(state, action, next: CurrencyWalletNext) {
+  walletInfo(state, action: RootAction, next: CurrencyWalletNext) {
     return next.root.login.walletInfos[next.id]
   },
 
@@ -293,7 +297,13 @@ const currencyWalletInner: FatReducer<
   }
 })
 
-export function sortTxs(txidHashes: TxidHashes, newHashes: TxidHashes) {
+export function sortTxs(
+  txidHashes: TxidHashes,
+  newHashes: TxidHashes
+): {
+  sortedList: string[],
+  txidHashes: TxidHashes
+} {
   for (const newTxidHash in newHashes) {
     const newTime = newHashes[newTxidHash]
     if (!txidHashes[newTxidHash] || newTime < txidHashes[newTxidHash]) {

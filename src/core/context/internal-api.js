@@ -60,7 +60,7 @@ class EdgeLobby extends Bridgeable<
     return this._replies
   }
 
-  close() {
+  close(): void {
     this._unsubscribe()
     close(this)
   }
@@ -78,7 +78,7 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
     this._ai = ai
   }
 
-  authRequest(method: string, path: string, body?: {}) {
+  authRequest(method: string, path: string, body?: {}): Promise<any> {
     return loginFetch(this._ai, method, path, body)
   }
 
@@ -86,21 +86,24 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
     return hashUsername(this._ai, username)
   }
 
-  async makeLobby(lobbyRequest: LobbyRequest, period: number = 1000) {
+  async makeLobby(
+    lobbyRequest: LobbyRequest,
+    period: number = 1000
+  ): Promise<EdgeLobby> {
     const lobby = await makeLobby(this._ai, lobbyRequest, period)
     return new EdgeLobby(lobby)
   }
 
-  fetchLobbyRequest(lobbyId: string) {
+  fetchLobbyRequest(lobbyId: string): Promise<LobbyRequest> {
     return fetchLobbyRequest(this._ai, lobbyId)
   }
 
-  sendLobbyReply(
+  async sendLobbyReply(
     lobbyId: string,
     lobbyRequest: LobbyRequest,
     replyData: mixed
-  ) {
-    return sendLobbyReply(this._ai, lobbyId, lobbyRequest, replyData)
+  ): Promise<void> {
+    await sendLobbyReply(this._ai, lobbyId, lobbyRequest, replyData)
   }
 
   async syncRepo(syncKey: Uint8Array): Promise<SyncResult> {

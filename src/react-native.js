@@ -102,7 +102,7 @@ export async function fetchLoginMessages(
     headers: {
       'content-type': 'application/json',
       accept: 'application/json',
-      authorization: 'Token ' + apiKey
+      authorization: `Token ${apiKey}`
     },
     body: JSON.stringify({ loginIds: Object.keys(loginMap) })
   }

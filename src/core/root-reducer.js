@@ -63,7 +63,7 @@ export const reducer: BuiltReducer<RootState, RootAction> = buildReducer({
   },
 
   lastAccountId(state, action: RootAction, next: RootState): string {
-    return 'login' + next.accountCount.toString()
+    return `login${next.accountCount}`
   },
 
   paused(state = false, action: RootAction): boolean {

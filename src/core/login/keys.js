@@ -22,11 +22,14 @@ import { type AppIdMap, type LoginKit, type LoginTree } from './login-types.js'
 /**
  * Returns the first keyInfo with a matching type.
  */
-export function findFirstKey(keyInfos: EdgeWalletInfo[], type: string) {
+export function findFirstKey(
+  keyInfos: EdgeWalletInfo[],
+  type: string
+): EdgeWalletInfo | void {
   return keyInfos.find(info => info.type === type)
 }
 
-export function makeAccountType(appId: string) {
+export function makeAccountType(appId: string): string {
   return appId === ''
     ? 'account-repo:co.airbitz.wallet'
     : `account-repo:${appId}`
@@ -36,7 +39,11 @@ export function makeAccountType(appId: string) {
  * Assembles the key metadata structure that is encrypted within a keyBox.
  * @param idKey Used to derive the wallet id. It's usually `dataKey`.
  */
-export function makeKeyInfo(type: string, keys: JsonObject, idKey: Uint8Array) {
+export function makeKeyInfo(
+  type: string,
+  keys: JsonObject,
+  idKey: Uint8Array
+): EdgeWalletInfo {
   return {
     id: base64.stringify(hmacSha256(utf8.parse(type), idKey)),
     type,
@@ -51,7 +58,7 @@ export function makeStorageKeyInfo(
   ai: ApiInput,
   type: string,
   keys: JsonObject = {}
-) {
+): EdgeWalletInfo {
   const { io } = ai.props
   if (keys.dataKey == null) keys.dataKey = base64.stringify(io.random(32))
   if (keys.syncKey == null) keys.syncKey = base64.stringify(io.random(20))
@@ -93,7 +100,7 @@ export function makeKeysKit(
 /**
  * Flattens an array of key structures, removing duplicates.
  */
-export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]) {
+export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
   const out = []
   const ids = {} // Maps ID's to output array indexes
 
@@ -138,7 +145,10 @@ export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]) {
 export function getAllWalletInfos(
   login: LoginTree,
   legacyWalletInfos: EdgeWalletInfo[] = []
-) {
+): {
+  appIdMap: AppIdMap,
+  walletInfos: EdgeWalletInfo[]
+} {
   const appIdMap: AppIdMap = {}
   const walletInfos: EdgeWalletInfo[] = []
 
@@ -149,7 +159,7 @@ export function getAllWalletInfos(
     else appIdMap[info.id].push(login.appId)
   }
 
-  function getAllWalletInfosLoop(login: LoginTree) {
+  function getAllWalletInfosLoop(login: LoginTree): void {
     // Add our own walletInfos:
     for (const info of login.keyInfos) {
       walletInfos.push(info)
@@ -297,7 +307,7 @@ export async function createCurrencyWallet(
   accountId: string,
   walletType: string,
   opts: EdgeCreateCurrencyWalletOptions
-) {
+): Promise<EdgeCurrencyWallet> {
   const { login, loginTree } = ai.props.state.accounts[accountId]
 
   // Make the keys:
@@ -329,7 +339,7 @@ export async function createCurrencyWallet(
   return wallet
 }
 
-async function protectBchWallet(wallet: EdgeCurrencyWallet) {
+async function protectBchWallet(wallet: EdgeCurrencyWallet): Promise<void> {
   // Create a UTXO which can be spend only on the ABC network
   const spendInfoSplit = {
     currencyCode: 'BCH',
@@ -374,7 +384,7 @@ export async function splitWalletInfo(
   accountId: string,
   walletId: string,
   newWalletType: string
-) {
+): Promise<string> {
   const selfState = ai.props.state.accounts[accountId]
   const { allWalletInfosFull, login, loginTree } = selfState
 

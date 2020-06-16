@@ -5,20 +5,20 @@ import jsoncsv from 'json-csv'
 
 import { type EdgeTransaction } from '../../../types/types.js'
 
-function padZero(val: string) {
+function padZero(val: string): string {
   if (val.length === 1) {
     return '0' + val
   }
   return val
 }
 
-function escapeOFXString(str: string) {
+function escapeOFXString(str: string): string {
   str = str.replace(/&/g, '&amp;')
   str = str.replace(/>/g, '&gt;')
   return str.replace(/</g, '&lt;')
 }
 
-function exportOfxHeader(inputObj: any) {
+function exportOfxHeader(inputObj: any): string {
   let out = ''
   for (const key of Object.keys(inputObj)) {
     let element = inputObj[key]
@@ -32,7 +32,7 @@ function exportOfxHeader(inputObj: any) {
   return out
 }
 
-function exportOfxBody(inputObj: any) {
+function exportOfxBody(inputObj: any): string {
   let out = ''
   for (const key of Object.keys(inputObj)) {
     let element = inputObj[key]
@@ -56,7 +56,7 @@ function exportOfxBody(inputObj: any) {
   return out
 }
 
-function exportOfx(header: any, body: any) {
+function exportOfx(header: any, body: any): string {
   let out = exportOfxHeader(header) + '\n'
   out += '<OFX>\n'
   out += exportOfxBody(body)
@@ -99,7 +99,7 @@ export function exportTransactionsToQBOInner(
   const STMTTRN = []
   const now = makeOfxDate(dateNow / 1000)
 
-  for (const edgeTx: EdgeTransaction of edgeTransactions) {
+  for (const edgeTx of edgeTransactions) {
     const TRNAMT: string = denom
       ? div(edgeTx.nativeAmount, denom, 18)
       : edgeTx.nativeAmount
@@ -220,7 +220,7 @@ export async function exportTransactionsToCSVInner(
     const networkFeeField = 'AMT_NETWORK_FEES_' + currencyCode
     const items = []
 
-    for (const edgeTx: EdgeTransaction of edgeTransactions) {
+    for (const edgeTx of edgeTransactions) {
       const amount: string = denom
         ? div(edgeTx.nativeAmount, denom, 18)
         : edgeTx.nativeAmount

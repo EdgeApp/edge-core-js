@@ -71,11 +71,11 @@ export function loadRepoStatus(
  * This function ignores folder-level deletes and overwrites,
  * but those can't happen under the current rules anyhow.
  */
-export function saveChanges(
+export async function saveChanges(
   disklet: Disklet,
   changes: { [path: string]: any }
-) {
-  return Promise.all(
+): Promise<void> {
+  await Promise.all(
     Object.keys(changes).map(path => {
       const json = changes[path]
       return json != null
@@ -101,7 +101,7 @@ export function syncRepo(
     file.getText().then(text => ({ file, name, json: JSON.parse(text) }))
   ).then(ourChanges => {
     // If we have local changes, we need to bundle those:
-    const request = {}
+    const request: { changes?: { [path: string]: any } } = {}
     if (ourChanges.length > 0) {
       request.changes = {}
       for (const change of ourChanges) {
@@ -111,9 +111,9 @@ export function syncRepo(
     const method = request.changes ? 'POST' : 'GET'
 
     // Calculate the URI:
-    let path = '/api/v2/store/' + base16.stringify(syncKey).toLowerCase()
+    let path = `/api/v2/store/${base16.stringify(syncKey).toLowerCase()}`
     if (status.lastHash != null) {
-      path += '/' + status.lastHash
+      path += `/${status.lastHash}`
     }
 
     // Make the request:

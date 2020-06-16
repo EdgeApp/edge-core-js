@@ -2,7 +2,7 @@
 
 import { type Disklet } from 'disklet'
 
-import { type EdgeWalletInfo } from '../../types/types.js'
+import { type EdgeWalletInfo, type JsonObject } from '../../types/types.js'
 import { type ApiInput } from '../root-pixie.js'
 import { syncStorageWallet } from './storage-actions.js'
 import {
@@ -10,7 +10,19 @@ import {
   getStorageWalletLocalDisklet
 } from './storage-selectors.js'
 
-export function makeStorageWalletApi(ai: ApiInput, walletInfo: EdgeWalletInfo) {
+export type EdgeStorageWallet = {
+  +id: string,
+  +keys: JsonObject,
+  +type: string,
+  +disklet: Disklet,
+  +localDisklet: Disklet,
+  sync(): Promise<void>
+}
+
+export function makeStorageWalletApi(
+  ai: ApiInput,
+  walletInfo: EdgeWalletInfo
+): EdgeStorageWallet {
   const { id, type, keys } = walletInfo
 
   return {
