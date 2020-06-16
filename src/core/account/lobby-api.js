@@ -19,7 +19,7 @@ type AppIdInfo = {
   displayImageUrl?: string
 }
 
-const infoServerUri = 'https://info1.edgesecure.co:8444'
+const infoServerUri = 'https://info1.edge.app'
 
 /**
  * Translate an appId into a user-presentable icon and string.
