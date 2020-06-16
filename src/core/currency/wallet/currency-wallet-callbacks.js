@@ -181,7 +181,9 @@ export function makeCurrencyWalletCallbacks(
 
         // Ensure the transaction has metadata:
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
-        const isNew = fileNamesLoaded && fileNames[txidHash] == null
+        const isNew =
+          tx.spendTargets != null ||
+          (fileNamesLoaded && fileNames[txidHash] == null)
         if (isNew) {
           setupNewTxMetadata(input, tx).catch(e => input.props.onError(e))
         }
