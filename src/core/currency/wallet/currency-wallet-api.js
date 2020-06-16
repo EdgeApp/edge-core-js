@@ -46,7 +46,8 @@ import {
   loadTxFiles,
   renameCurrencyWallet,
   setCurrencyWalletFiat,
-  setCurrencyWalletTxMetadata
+  setCurrencyWalletTxMetadata,
+  setupNewTxMetadata
 } from './currency-wallet-files.js'
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
 import { type MergedTransaction } from './currency-wallet-reducer.js'
@@ -471,6 +472,7 @@ export function makeCurrencyWalletApi(
     },
 
     async saveTx(tx: EdgeTransaction): Promise<void> {
+      await setupNewTxMetadata(input, tx)
       await engine.saveTx(tx)
       fakeCallbacks.onTransactionsChanged([tx])
     },
