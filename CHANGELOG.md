@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.17.6 (2020-06-16)
+
+- Fix type annotations on some optional parameters that were accidentally marked as mandatory.
+- Work around an issue in edge-currency-bitcoin that prevented spends from saving metadata.
+
 ## 0.17.5 (2020-06-11)
 
 - Expose an `EdgeAccount.rootLoginId`.
