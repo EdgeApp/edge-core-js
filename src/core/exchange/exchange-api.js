@@ -11,9 +11,10 @@ import { getExchangeRate } from './exchange-selectors.js'
 
 const biasDefaults = {
   nomics: 0.1,
-  coincap: -0.1,
-  coinbase: -0.2,
-  wazirx: -0.3
+  coincap: -0.05,
+  coinbase: -0.1,
+  coinmonitor: -0.2,
+  wazirx: -0.15
 }
 
 /**
