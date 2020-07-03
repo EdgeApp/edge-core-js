@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.17.7 (2020-07-03)
+
+- Update info server URI
+- Add bias for Coinmonitor exchange rate provider
+
 ## 0.17.6 (2020-06-16)
 
 - Fix type annotations on some optional parameters that were accidentally marked as mandatory.
