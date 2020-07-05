@@ -307,6 +307,9 @@ export type EdgeTransaction = {
   // Fees:
   networkFee: string,
   parentNetworkFee?: string,
+  networkFeeOption?: string, // 'high' | 'standard' | 'low' | 'custom'
+  requestedCustomFee?: string, // the entire fee as a string like "1 sat/byte" or "21000 gas limit 2 gas price"
+  feeRateUsed?: string, // the entire fee as a string like "2 sat/byte" or "21000 gas limit 2 gas price"
 
   // Confirmation status:
   blockHeight: number,
