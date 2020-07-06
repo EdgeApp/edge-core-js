@@ -30,7 +30,12 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
 
   // Save the stash:
   const stash = applyLoginReply(
-    { appId: '', otpKey: server.otpKey, username: fixUsername(username) },
+    {
+      appId: '',
+      loginId: '',
+      otpKey: server.otpKey,
+      username: fixUsername(username)
+    },
     base64.parse(loginKey),
     server
   )

@@ -50,9 +50,9 @@ export type LoginReply = {
  */
 export type LoginStash = {
   // Basic account info:
-  appId?: string, // Not actually optional
+  appId: string,
   loginAuthBox?: EdgeBox,
-  loginId?: string, // Not actually optional
+  loginId: string,
   userId?: string,
   username?: string,
 
@@ -116,7 +116,7 @@ export type LoginKit = {
   server?: any,
   serverMethod?: string,
   serverPath: string,
-  stash: LoginStash
+  stash: $Shape<LoginStash>
 }
 
 export type WalletInfoFullMap = { [walletId: string]: EdgeWalletInfoFull }
