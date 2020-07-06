@@ -12,6 +12,7 @@ import {
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
+const quiet = { onLog() {} }
 
 async function simulateRemoteApproval(
   world: EdgeFakeWorld,
@@ -30,7 +31,7 @@ async function simulateRemoteApproval(
 
 describe('edge login', function () {
   it('request', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
       appId: 'test-child',
@@ -52,7 +53,7 @@ describe('edge login', function () {
   })
 
   it('cancel', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
     const opts = { displayName: 'test suite' }

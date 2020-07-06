@@ -11,6 +11,7 @@ import { makeFakeEdgeWorld } from '../../../src/index.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
+const quiet = { onLog() {} }
 
 // A hypothetical collection of currency pairs.
 // The fiat currencies would start with `iso:` in a real exchange-rate cache.
@@ -161,7 +162,7 @@ describe('exchange cache reducer', function () {
 
 describe('exchange pixie', function () {
   it('fetches exchange rates', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
       plugins: { 'broken-exchange': true, 'fake-exchange': true }

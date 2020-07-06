@@ -7,10 +7,11 @@ import { makeFakeEdgeWorld } from '../../../src/index.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
+const quiet = { onLog() {} }
 
 describe('data store API', function () {
   it('stores data', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 

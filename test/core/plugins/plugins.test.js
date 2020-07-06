@@ -8,10 +8,11 @@ import { expectRejection } from '../../expect-rejection.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
+const quiet = { onLog() {} }
 
 describe('plugins system', function () {
   it('adds plugins', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
       plugins: {
@@ -29,7 +30,7 @@ describe('plugins system', function () {
   })
 
   it('cannot log in with broken plugins', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
       plugins: {

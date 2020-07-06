@@ -9,17 +9,18 @@ import { makeFakeEdgeWorld } from '../../../src/index.js'
 import { fakeUser, fakeUserDump } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
+const quiet = { onLog() {} }
 
 describe('context', function () {
   it('lists usernames', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
     expect(await context.listUsernames()).deep.equals(['js test 0'])
   })
 
   it('dumps fake users', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
