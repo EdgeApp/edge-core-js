@@ -16,8 +16,7 @@ import {
 import {
   type EdgeFetchOptions,
   type EdgeFetchResponse,
-  type EdgeIo,
-  type EdgeNativeIo
+  type EdgeIo
 } from '../../types/types.js'
 import { makeFetchResponse } from '../../util/http/http-to-fetch.js'
 import { type ClientIo, type WorkerApi } from './react-native-types.js'
@@ -42,9 +41,8 @@ if (body != null && /debug=true/.test(window.location.search)) {
 window.addEdgeCorePlugins = addEdgeCorePlugins
 window.lockEdgeCorePlugins = lockEdgeCorePlugins
 
-function makeIo(nativeIo: EdgeNativeIo): EdgeIo {
-  const clientIo: ClientIo = nativeIo['edge-core']
-  const { console, disklet, entropy, scrypt } = clientIo
+function makeIo(clientIo: ClientIo): EdgeIo {
+  const { disklet, entropy, scrypt } = clientIo
   const csprng = new HmacDRBG({
     hash: hashjs.sha256,
     entropy: base64.parse(entropy)
@@ -73,11 +71,19 @@ function makeIo(nativeIo: EdgeNativeIo): EdgeIo {
 
 const workerApi: WorkerApi = bridgifyObject({
   makeEdgeContext(nativeIo, opts) {
-    return makeContext(makeIo(nativeIo), nativeIo, opts)
+    const clientIo: ClientIo = nativeIo['edge-core']
+    const { onLog } = clientIo
+
+    return makeContext({ io: makeIo(clientIo), nativeIo, onLog }, opts)
   },
 
   makeFakeEdgeWorld(nativeIo, users = []) {
-    return Promise.resolve(makeFakeWorld(makeIo(nativeIo), nativeIo, users))
+    const clientIo: ClientIo = nativeIo['edge-core']
+    const { onLog } = clientIo
+
+    return Promise.resolve(
+      makeFakeWorld({ io: makeIo(clientIo), nativeIo, onLog }, users)
+    )
   }
 })
 

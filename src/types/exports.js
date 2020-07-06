@@ -6,9 +6,11 @@ import {
   type EdgeCorePlugins,
   type EdgeFakeUser,
   type EdgeFakeWorld,
+  type EdgeFakeWorldOptions,
   type EdgeIo,
   type EdgeLoginMessages,
-  type EdgeNativeIo
+  type EdgeNativeIo,
+  type EdgeOnLog
 } from './types.js'
 
 const hack: any = null
@@ -27,7 +29,8 @@ export const makeEdgeContext = (
 ): Promise<EdgeContext> => hack
 
 export const makeFakeEdgeWorld = (
-  users?: EdgeFakeUser[]
+  users?: EdgeFakeUser[],
+  opts?: EdgeFakeWorldOptions
 ): Promise<EdgeFakeWorld> => hack
 
 /**
@@ -38,6 +41,7 @@ export const MakeEdgeContext = (props: {
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
   onLoad: (context: EdgeContext) => mixed,
+  onLog?: EdgeOnLog,
   options: EdgeContextOptions
 }): any => hack // React element
 
@@ -49,6 +53,7 @@ export const MakeFakeEdgeWorld = (props: {
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
   onLoad: (context: EdgeFakeWorld) => mixed,
+  onLog?: EdgeOnLog,
   users: EdgeFakeUser[]
 }): any => hack // React element
 

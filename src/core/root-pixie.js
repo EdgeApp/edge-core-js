@@ -3,7 +3,7 @@
 import { type Dispatch } from 'redux'
 import { type PixieInput, type TamePixie, combinePixies } from 'redux-pixies'
 
-import { type EdgeIo, type EdgeLog } from '../types/types.js'
+import { type EdgeIo, type EdgeLog, type EdgeOnLog } from '../types/types.js'
 import { type AccountOutput, accounts } from './account/account-pixie.js'
 import { type RootAction } from './actions.js'
 import { type ContextOutput, context } from './context/context-pixie.js'
@@ -27,6 +27,7 @@ export type RootProps = {
   +io: EdgeIo,
   +log: EdgeLog,
   +onError: (e: Error) => mixed,
+  +onLog: EdgeOnLog,
   +output: RootOutput,
   +state: RootState
 }

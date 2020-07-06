@@ -3,20 +3,20 @@
 import { type Disklet } from 'disklet'
 
 import {
-  type EdgeConsole,
   type EdgeContext,
   type EdgeContextOptions,
   type EdgeFakeUser,
   type EdgeFakeWorld,
   type EdgeFetchOptions,
   type EdgeNativeIo,
+  type EdgeOnLog,
   type EdgeScryptFunction
 } from '../../types/types.js'
 import { type HttpResponse } from '../../util/http/http-types.js'
 
 export type ClientIo = {
-  +console: EdgeConsole,
   +disklet: Disklet,
+  +onLog: EdgeOnLog,
 
   +entropy: string, // base64
   +scrypt: EdgeScryptFunction,

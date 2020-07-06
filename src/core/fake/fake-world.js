@@ -11,17 +11,16 @@ import {
   type EdgeContextOptions,
   type EdgeFakeUser,
   type EdgeFakeWorld,
-  type EdgeIo,
-  type EdgeNativeIo
+  type EdgeIo
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
 import { makeFetch } from '../../util/http/http-to-fetch.js'
 import { getInternalStuff } from '../context/internal-api.js'
 import { applyLoginReply } from '../login/login.js'
+import { type PluginIos } from '../plugins/plugins-actions.js'
 import { makeContext } from '../root.js'
 import { makeRepoPaths, saveChanges } from '../storage/repo.js'
 import { FakeDb } from './fake-db.js'
-import { fakeConsole } from './fake-io.js'
 import { makeFakeServer } from './fake-server.js'
 
 async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
@@ -55,10 +54,10 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
  * Creates a fake Edge server for unit testing.
  */
 export function makeFakeWorld(
-  io: EdgeIo,
-  nativeIo: EdgeNativeIo,
+  ios: PluginIos,
   users: EdgeFakeUser[]
 ): EdgeFakeWorld {
+  const { io, nativeIo, onLog } = ios
   const fakeDb = new FakeDb()
   const fakeServer = makeFakeServer(fakeDb)
   for (const user of users) fakeDb.setupFakeUser(user)
@@ -76,7 +75,6 @@ export function makeFakeWorld(
     ): Promise<EdgeContext> {
       const fakeIo = {
         ...io,
-        console: fakeConsole,
         disklet: makeMemoryDisklet(),
         fetch: makeFetch(fakeServer)
       }
@@ -86,7 +84,7 @@ export function makeFakeWorld(
         await Promise.all(users.map(async user => saveUser(fakeIo, user)))
       }
 
-      const out = await makeContext(fakeIo, nativeIo, opts)
+      const out = await makeContext({ io: fakeIo, nativeIo, onLog }, opts)
       contexts.push(out)
       return out
     },

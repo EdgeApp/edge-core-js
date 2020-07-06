@@ -1,25 +1,18 @@
 // @flow
 
 import {
-  type EdgeIo,
+  type EdgeConsole,
   type EdgeLog,
-  type EdgeLogMethod
+  type EdgeLogEvent,
+  type EdgeLogMethod,
+  type EdgeOnLog
 } from '../../types/types.js'
 import { addHiddenProperties } from '../../util/util.js'
 
-type EdgeLogType = 'info' | 'warn' | 'error'
-
-type EdgeLogEvent = {
-  type: EdgeLogType,
-  time: Date,
-  sender: string,
-  message: string
-}
-
 function makeLogMethod(
-  io: EdgeIo,
-  type: EdgeLogType,
-  sender: string
+  onLog: EdgeOnLog,
+  type: $PropertyType<EdgeLogEvent, 'type'>,
+  source: string
 ): EdgeLogMethod {
   return function log() {
     let message = ''
@@ -29,17 +22,35 @@ function makeLogMethod(
       message += typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)
     }
 
-    const entry: EdgeLogEvent = { type, time: new Date(), sender, message }
-    const prettyDate = entry.time
-      .toISOString()
-      .replace(/.*(\d\d-\d\d)T(\d\d:\d\d:\d\d).*/, '$1 $2')
-    io.console.info(`${prettyDate} ${entry.sender}: ${entry.message}`)
+    onLog({ message, source, time: new Date(), type })
   }
 }
 
-export function makeLog(io: EdgeIo, sender: string): EdgeLog {
-  return addHiddenProperties(makeLogMethod(io, 'info', sender), {
-    warn: makeLogMethod(io, 'warn', sender),
-    error: makeLogMethod(io, 'error', sender)
+export function defaultOnLog(event: EdgeLogEvent) {
+  const prettyDate = event.time
+    .toISOString()
+    .replace(/.*(\d\d-\d\d)T(\d\d:\d\d:\d\d).*/, '$1 $2')
+  console.info(`${prettyDate} ${event.source}: ${event.message}`)
+}
+
+export function makeLog(onLog: EdgeOnLog, source: string): EdgeLog {
+  return addHiddenProperties(makeLogMethod(onLog, 'info', source), {
+    warn: makeLogMethod(onLog, 'warn', source),
+    error: makeLogMethod(onLog, 'error', source)
   })
+}
+
+export function makeLegacyConsole(onLog: EdgeOnLog): EdgeConsole {
+  const log = makeLog(onLog, 'console')
+  return {
+    info(...args) {
+      return log(...args)
+    },
+    error(...args) {
+      return log.error(...args)
+    },
+    warn(...args) {
+      return log.warn(...args)
+    }
+  }
 }

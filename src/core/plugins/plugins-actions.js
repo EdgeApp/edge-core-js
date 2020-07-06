@@ -9,11 +9,18 @@ import {
   type EdgeCorePlugins,
   type EdgeCorePluginsInit,
   type EdgeIo,
+  type EdgeLogEvent,
   type EdgeNativeIo,
   type EdgePluginMap
 } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
 import { makeLog } from '../log/log.js'
+
+export type PluginIos = {
+  io: EdgeIo,
+  nativeIo: EdgeNativeIo,
+  onLog(event: EdgeLogEvent): void
+}
 
 type PluginsAddedWatcher = (plugins: EdgeCorePlugins) => void
 type PluginsLockedWatcher = () => void
@@ -52,11 +59,12 @@ export function lockEdgeCorePlugins(): void {
  * Subscribes a context object to the core plugin list.
  */
 export function watchPlugins(
-  io: EdgeIo,
-  nativeIo: EdgeNativeIo,
+  ios: PluginIos,
   pluginsInit: EdgeCorePluginsInit,
   dispatch: Dispatch<RootAction>
 ): () => mixed {
+  const { io, nativeIo, onLog } = ios
+
   function pluginsAdded(plugins: EdgeCorePlugins): void {
     const out: EdgePluginMap<EdgeCorePlugin> = {}
 
@@ -66,7 +74,7 @@ export function watchPlugins(
       if (!initOptions) continue
 
       // Figure out what kind of object this is:
-      const log = makeLog(io, pluginId)
+      const log = makeLog(onLog, pluginId)
       try {
         if (typeof plugin === 'function') {
           const opts: EdgeCorePluginOptions = {

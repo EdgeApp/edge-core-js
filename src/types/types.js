@@ -135,6 +135,19 @@ export type EdgeLog = EdgeLogMethod & {
   +error: EdgeLogMethod
 }
 
+/**
+ * The EdgeLog function stringifies its arguments and adds
+ * some extra information to form this event type.
+ */
+export type EdgeLogEvent = {
+  message: string,
+  source: string,
+  time: Date,
+  type: 'info' | 'warn' | 'error'
+}
+
+export type EdgeOnLog = (event: EdgeLogEvent) => void
+
 // plugins -------------------------------------------------------------
 
 /**
@@ -1002,6 +1015,10 @@ export type EdgeContextOptions = {
   appId: string,
   authServer?: string,
   hideKeys?: boolean,
+
+  // Intercepts all console logging:
+  onLog?: EdgeOnLog,
+
   path?: string, // Only used on node.js
   plugins?: EdgeCorePluginsInit
 }
@@ -1131,6 +1148,10 @@ export type EdgeContext = {
 // ---------------------------------------------------------------------
 // fake mode
 // ---------------------------------------------------------------------
+
+export type EdgeFakeWorldOptions = {
+  onLog?: EdgeOnLog
+}
 
 export type EdgeFakeUser = {
   username: string,
