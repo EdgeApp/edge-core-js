@@ -11,6 +11,8 @@ import {
 } from '../../../src/core/login/lobby.js'
 import { makeFakeEdgeWorld, makeFakeIo } from '../../../src/index.js'
 
+const quiet = { onLog() {} }
+
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
 const contextOptions = { apiKey: '', appId: '' }
@@ -30,7 +32,7 @@ describe('edge login lobby', function () {
   })
 
   it('lobby ping-pong', async function () {
-    const world = await makeFakeEdgeWorld()
+    const world = await makeFakeEdgeWorld([], quiet)
     const context1 = await world.makeEdgeContext(contextOptions)
     const context2 = await world.makeEdgeContext(contextOptions)
     const i1 = getInternalStuff(context1)

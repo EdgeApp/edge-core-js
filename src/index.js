@@ -3,12 +3,14 @@
 import { makeLocalBridge } from 'yaob'
 
 import { makeContext, makeFakeWorld } from './core/core.js'
+import { defaultOnLog } from './core/log/log.js'
 import { makeNodeIo } from './io/node/node-io.js'
 import {
   type EdgeContext,
   type EdgeContextOptions,
   type EdgeFakeUser,
-  type EdgeFakeWorld
+  type EdgeFakeWorld,
+  type EdgeFakeWorldOptions
 } from './types/types.js'
 
 export { makeNodeIo }
@@ -23,16 +25,19 @@ export * from './types/types.js'
 export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
-  const { path = './edge' } = opts
-  return makeContext(makeNodeIo(path), {}, opts)
+  const { onLog = defaultOnLog, path = './edge' } = opts
+  return makeContext({ io: makeNodeIo(path), nativeIo: {}, onLog }, opts)
 }
 
 export function makeFakeEdgeWorld(
-  users: EdgeFakeUser[] = []
+  users: EdgeFakeUser[] = [],
+  opts?: EdgeFakeWorldOptions = {}
 ): Promise<EdgeFakeWorld> {
+  const { onLog = defaultOnLog } = opts
   return Promise.resolve(
-    makeLocalBridge(makeFakeWorld(makeNodeIo('.'), {}, users), {
-      cloneMessage: message => JSON.parse(JSON.stringify(message))
-    })
+    makeLocalBridge(
+      makeFakeWorld({ io: makeNodeIo('.'), nativeIo: {}, onLog }, users),
+      { cloneMessage: message => JSON.parse(JSON.stringify(message)) }
+    )
   )
 }

@@ -3,21 +3,11 @@
 import { makeMemoryDisklet } from 'disklet'
 
 import {
-  type EdgeConsole,
   type EdgeFetchFunction,
   type EdgeIo,
   type EdgeRandomFunction
 } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
-
-/**
- * Silences all logging.
- */
-export const fakeConsole: EdgeConsole = {
-  info() {},
-  warn() {},
-  error() {}
-}
 
 /**
  * Generates deterministic "random" data for unit-testing.
@@ -53,7 +43,7 @@ export function makeFakeIo(): EdgeIo {
     scrypt,
 
     // Local io:
-    console: fakeConsole,
+    console,
     disklet: makeMemoryDisklet(),
 
     // Networking:

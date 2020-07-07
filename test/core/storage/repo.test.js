@@ -12,6 +12,7 @@ import { fakeUser } from '../../fake/fake-user.js'
 const contextOptions = { apiKey: '', appId: '' }
 const dataKey = base64.parse(fakeUser.loginKey)
 const syncKey = base64.parse(fakeUser.syncKey)
+const quiet = { onLog() {} }
 
 describe('repo', function () {
   it('read file', async function () {
@@ -41,7 +42,7 @@ describe('repo', function () {
   })
 
   it('repo-to-repo sync', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context1 = await world.makeEdgeContext(contextOptions)
     const context2 = await world.makeEdgeContext(contextOptions)
     const i1 = getInternalStuff(context1)

@@ -4,15 +4,10 @@ import { type StoreEnhancer, compose, createStore } from 'redux'
 import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import {
-  type EdgeContext,
-  type EdgeContextOptions,
-  type EdgeIo,
-  type EdgeNativeIo
-} from '../types/types.js'
+import { type EdgeContext, type EdgeContextOptions } from '../types/types.js'
 import { type RootAction } from './actions.js'
-import { makeLog } from './log/log.js'
-import { watchPlugins } from './plugins/plugins-actions.js'
+import { makeLegacyConsole, makeLog } from './log/log.js'
+import { type PluginIos, watchPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
 
@@ -29,10 +24,10 @@ const composeEnhancers =
  * Redux store, and tree of background workers.
  */
 export async function makeContext(
-  io: EdgeIo,
-  nativeIo: EdgeNativeIo,
+  ios: PluginIos,
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
+  const { io, onLog } = ios
   const {
     apiKey,
     appId = '',
@@ -64,10 +59,10 @@ export async function makeContext(
   })
 
   // Subscribe to new plugins:
-  const closePlugins = watchPlugins(io, nativeIo, pluginsInit, redux.dispatch)
+  const closePlugins = watchPlugins(ios, pluginsInit, redux.dispatch)
 
   // Start the pixie tree:
-  const log = makeLog(io, 'edge-core')
+  const log = makeLog(onLog, 'edge-core')
   const mirror = { output: {} }
   const closePixie = attachPixie(
     redux,
@@ -80,13 +75,14 @@ export async function makeContext(
           closePlugins()
           redux.dispatch({ type: 'CLOSE' })
         },
-        io,
+        io: { ...io, console: makeLegacyConsole(onLog) },
         log,
         onError: error => {
           if (mirror.output.context && mirror.output.context.api) {
             emit(mirror.output.context.api, 'error', error)
           }
-        }
+        },
+        onLog
       })
     ),
     e => log.error(e),

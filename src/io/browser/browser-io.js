@@ -2,7 +2,6 @@
 
 import { makeLocalStorageDisklet } from 'disklet'
 
-import { fakeConsole } from '../../core/fake/fake-io.js'
 import {
   type EdgeFetchOptions,
   type EdgeFetchResponse,
@@ -31,7 +30,7 @@ export function makeBrowserIo(): EdgeIo {
     scrypt,
 
     // Local io:
-    console: typeof console !== 'undefined' ? console : fakeConsole,
+    console,
     disklet: makeLocalStorageDisklet(window.localStorage, {
       prefix: 'airbitz'
     }),

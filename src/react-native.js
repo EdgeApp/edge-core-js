@@ -3,6 +3,7 @@
 import { makeReactNativeDisklet } from 'disklet'
 import React, { type Node } from 'react'
 
+import { defaultOnLog } from './core/log/log.js'
 import { parseReply } from './core/login/login-fetch.js'
 import { EdgeCoreBridge } from './io/react-native/react-native-webview.js'
 import {
@@ -13,6 +14,7 @@ import {
   type EdgeFetchOptions,
   type EdgeLoginMessages,
   type EdgeNativeIo,
+  type EdgeOnLog,
   NetworkError
 } from './types/types.js'
 import { timeout } from './util/promise.js'
@@ -29,9 +31,16 @@ export function MakeEdgeContext(props: {
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
   onLoad: (context: EdgeContext) => mixed,
+  onLog?: EdgeOnLog,
   options: EdgeContextOptions
 }): Node {
-  const { debug, nativeIo, onError = onErrorDefault, onLoad } = props
+  const {
+    debug,
+    nativeIo,
+    onError = onErrorDefault,
+    onLoad,
+    onLog = defaultOnLog
+  } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeEdgeContext')
   }
@@ -44,6 +53,7 @@ export function MakeEdgeContext(props: {
       onLoad={(nativeIo, root) =>
         root.makeEdgeContext(nativeIo, props.options).then(onLoad)
       }
+      onLog={onLog}
     />
   )
 }
@@ -53,9 +63,16 @@ export function MakeFakeEdgeWorld(props: {
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
   onLoad: (world: EdgeFakeWorld) => mixed,
+  onLog?: EdgeOnLog,
   users?: EdgeFakeUser[]
 }): Node {
-  const { debug, nativeIo, onError = onErrorDefault, onLoad } = props
+  const {
+    debug,
+    nativeIo,
+    onError = onErrorDefault,
+    onLoad,
+    onLog = defaultOnLog
+  } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeFakeEdgeWorld')
   }
@@ -68,6 +85,7 @@ export function MakeFakeEdgeWorld(props: {
       onLoad={(nativeIo, root) =>
         root.makeFakeEdgeWorld(nativeIo, props.users).then(onLoad)
       }
+      onLog={onLog}
     />
   )
 }

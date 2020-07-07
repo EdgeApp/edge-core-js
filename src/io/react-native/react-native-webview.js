@@ -8,7 +8,7 @@ import RNFS from 'react-native-fs'
 import { WebView } from 'react-native-webview'
 import { Bridge, bridgifyObject, onMethod } from 'yaob'
 
-import { type EdgeNativeIo } from '../../types/types.js'
+import { type EdgeLogEvent, type EdgeNativeIo } from '../../types/types.js'
 import { makeClientIo } from './react-native-io.js'
 import { type WorkerApi } from './react-native-types.js'
 
@@ -16,6 +16,7 @@ type Props = {
   debug?: boolean,
   onError(e: any): mixed,
   onLoad(nativeIo: EdgeNativeIo, root: WorkerApi): Promise<mixed>,
+  onLog(event: EdgeLogEvent): void,
   nativeIo?: EdgeNativeIo
 }
 
@@ -112,10 +113,10 @@ export class EdgeCoreBridge extends Component<Props> {
 
   constructor(props: Props) {
     super(props)
-    const { nativeIo = {}, debug = false } = props
+    const { nativeIo = {}, onLog, debug = false } = props
 
     // Set up the native IO objects:
-    const nativeIoPromise = makeClientIo().then(coreIo => {
+    const nativeIoPromise = makeClientIo(onLog).then(coreIo => {
       const bridgedIo: EdgeNativeIo = { 'edge-core': coreIo }
       for (const n in nativeIo) {
         bridgedIo[n] = bridgifyObject(nativeIo[n])

@@ -14,6 +14,7 @@ import { fakeUser } from '../../fake/fake-user.js'
 
 const plugins = { fakecoin: true }
 const contextOptions = { apiKey: '', appId: '', plugins }
+const quiet = { onLog() {} }
 
 function findWallet(
   walletInfos: EdgeWalletInfoFull[],
@@ -24,7 +25,7 @@ function findWallet(
 
 describe('account', function () {
   it('has basic information', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -37,7 +38,7 @@ describe('account', function () {
   })
 
   it('has basic information for child apps', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
       appId: 'test-child-child'
@@ -53,7 +54,7 @@ describe('account', function () {
   })
 
   it('calls callbacks', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -65,7 +66,7 @@ describe('account', function () {
   })
 
   it('find repo', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -77,7 +78,7 @@ describe('account', function () {
   })
 
   it('attach repo', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -92,7 +93,7 @@ describe('account', function () {
   })
 
   it('create wallet', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -103,7 +104,7 @@ describe('account', function () {
   })
 
   it('create currency wallet', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account: EdgeAccount = await context.loginWithPIN(
       fakeUser.username,
@@ -119,7 +120,7 @@ describe('account', function () {
   })
 
   it('list keys', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -136,7 +137,7 @@ describe('account', function () {
   })
 
   it('list active wallet ids', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -148,7 +149,7 @@ describe('account', function () {
   })
 
   it('change currency plugin settings', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -166,7 +167,7 @@ describe('account', function () {
   })
 
   it('change swap plugin settings', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
       plugins: { fakeswap: true }
@@ -195,7 +196,7 @@ describe('account', function () {
   })
 
   it('disable swap plugin', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
       plugins: { fakeswap: true }
@@ -217,7 +218,7 @@ describe('account', function () {
   })
 
   it('change key state', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -237,7 +238,7 @@ describe('account', function () {
   })
 
   it('split wallet', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
@@ -273,7 +274,7 @@ describe('account', function () {
   })
 
   it('hides keys', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
       hideKeys: true
@@ -308,7 +309,7 @@ describe('account', function () {
 
   it('logout', async function () {
     const log = makeAssertLog()
-    const world = await makeFakeEdgeWorld([fakeUser])
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 

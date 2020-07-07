@@ -16,11 +16,12 @@ import { expectRejection } from '../../../expect-rejection.js'
 import { fakeUser } from '../../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
+const quiet = { onLog() {} }
 
 async function makeFakeCurrencyWallet(): Promise<
   [EdgeCurrencyWallet, EdgeCurrencyConfig]
 > {
-  const world = await makeFakeEdgeWorld([fakeUser])
+  const world = await makeFakeEdgeWorld([fakeUser], quiet)
   const context = await world.makeEdgeContext({
     ...contextOptions,
     plugins: { fakecoin: true, 'fake-exchange': true }
