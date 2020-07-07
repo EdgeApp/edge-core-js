@@ -6,7 +6,8 @@ import { type DiskletFile, type DiskletFolder, mapFiles } from 'disklet'
 import {
   type EdgeCurrencyEngineCallbacks,
   type EdgeTransaction,
-  type EdgeTxSwap
+  type EdgeTxSwap,
+  type JsonObject
 } from '../../../types/types.js'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobby-api.js'
@@ -39,6 +40,8 @@ export type TransactionFile = {
       providerFeeSent?: string
     }
   },
+  feeRequested?: 'high' | 'standard' | 'low' | JsonObject,
+  feeUsed?: JsonObject,
   payees?: Array<{
     address: string,
     amount: string,
@@ -560,6 +563,15 @@ export function setupNewTxMetadata(
     swap: swapData
   }
   json.currencies[currencyCode] = { metadata, nativeAmount }
+
+  // Set up the fee metadata:
+  if (tx.networkFeeOption != null) {
+    json.feeRequested =
+      tx.networkFeeOption === 'custom'
+        ? tx.requestedCustomFee
+        : tx.networkFeeOption
+  }
+  json.feeUsed = tx.feeRateUsed
 
   // Set up payees:
   if (spendTargets != null) {
