@@ -248,7 +248,7 @@ export type RootAction =
         authServer: string,
         hideKeys: boolean,
         pluginsInit: EdgeCorePluginsInit,
-        stashes: { [path: string]: any }
+        stashes: LoginStash[]
       }
     }
   | {

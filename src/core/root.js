@@ -1,5 +1,6 @@
 // @flow
 
+import { justFiles } from 'disklet'
 import { type StoreEnhancer, compose, createStore } from 'redux'
 import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
@@ -7,6 +8,7 @@ import { emit } from 'yaob'
 import { type EdgeContext, type EdgeContextOptions } from '../types/types.js'
 import { type RootAction } from './actions.js'
 import { makeLegacyConsole, makeLog } from './log/log.js'
+import { type LoginStash } from './login/login-types.js'
 import { type PluginIos, watchPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
@@ -41,12 +43,11 @@ export async function makeContext(
   }
 
   // Load the login stashes from disk:
-  const stashes = {}
-  const listing = await io.disklet.list('logins')
-  const files = Object.keys(listing).filter(path => listing[path] === 'file')
-  for (const path of files) {
+  const stashes: LoginStash[] = []
+  const paths = await io.disklet.list('logins').then(justFiles)
+  for (const path of paths) {
     try {
-      stashes[path] = JSON.parse(await io.disklet.getText(path))
+      stashes.push(JSON.parse(await io.disklet.getText(path)))
     } catch (e) {}
   }
 

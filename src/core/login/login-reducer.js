@@ -64,11 +64,10 @@ export const login: FatReducer<
         const out: LoginStashMap = {}
 
         // Extract the usernames from the top-level objects:
-        for (const filename of Object.keys(action.payload.stashes)) {
-          const json = action.payload.stashes[filename]
-          if (json && json.username && json.loginId) {
-            const { username } = json
-            out[username] = json
+        for (const stash of action.payload.stashes) {
+          if (stash.username != null) {
+            const { username } = stash
+            out[username] = stash
           }
         }
 
