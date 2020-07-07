@@ -436,7 +436,7 @@ export function makeCurrencyWalletApi(
         throw new TypeError('Only sweepPrivateKeys takes private keys')
       }
 
-      const tx = await engine.makeSpend({
+      const tx: EdgeTransaction = await engine.makeSpend({
         currencyCode,
         spendTargets: cleanTargets,
         noUnconfirmed,
@@ -445,9 +445,12 @@ export function makeCurrencyWalletApi(
         metadata,
         otherParams
       })
+      tx.networkFeeOption = networkFeeOption
+      tx.requestedCustomFee = customNetworkFee
       tx.spendTargets = savedTargets
       if (metadata != null) tx.metadata = metadata
       if (swapData != null) tx.swapData = asTxSwap(swapData)
+
       return tx
     },
 
@@ -616,6 +619,16 @@ export function combineTxWithFile(
         ...unpackMetadata(merged.metadata, walletFiat)
       }
     }
+
+    if (file.feeRequested != null) {
+      if (typeof file.feeRequested === 'string') {
+        out.networkFeeOption = file.feeRequested
+      } else {
+        out.networkFeeOption = 'custom'
+        out.requestedCustomFee = file.feeRequested
+      }
+    }
+    out.feeRateUsed = file.feeUsed
 
     if (file.payees != null) {
       out.spendTargets = file.payees.map(payee => ({

@@ -243,7 +243,8 @@ describe('currency wallets', function () {
         }
       ],
       metadata,
-      swapData
+      swapData,
+      networkFeeOption: 'high'
     })
     tx = await wallet.signTx(tx)
     await wallet.broadcastTx(tx)
@@ -262,6 +263,7 @@ describe('currency wallets', function () {
       amountFiat: 1.5,
       ...metadata
     })
+    expect(txs[0].networkFeeOption).deep.equals('high')
     expect(txs[0].spendTargets).deep.equals([
       {
         currencyCode: 'FAKE',
@@ -270,12 +272,12 @@ describe('currency wallets', function () {
         uniqueIdentifier: undefined
       }
     ])
-    expect(txs[0].txSecret).equals('open sesame')
     expect(txs[0].swapData).deep.equals({
       orderUri: undefined,
       refundAddress: undefined,
       ...swapData
     })
+    expect(txs[0].txSecret).equals('open sesame')
   })
 
   it('can update metadata', async function () {

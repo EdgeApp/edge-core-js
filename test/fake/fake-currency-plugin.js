@@ -257,6 +257,7 @@ class FakeCurrencyEngine {
       date: 0,
       nativeAmount: total,
       networkFee: '0',
+      feeRateUsed: { fakePrice: 0 },
       otherParams: {},
       ourReceiveAddresses: [],
       signedTx: '',

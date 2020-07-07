@@ -317,16 +317,21 @@ export type EdgeTransaction = {
   signedTx: string,
   ourReceiveAddresses: string[],
 
-  // Core:
-  metadata?: EdgeMetadata,
+  // Spend-specific metadata:
+  networkFeeOption?: 'high' | 'standard' | 'low' | 'custom',
+  requestedCustomFee?: JsonObject,
+  feeRateUsed?: JsonObject,
   spendTargets?: Array<{
     +currencyCode: string,
     +nativeAmount: string,
     +publicAddress: string,
     +uniqueIdentifier?: string
   }>,
-  txSecret?: string, // Monero decryption key
   swapData?: EdgeTxSwap,
+  txSecret?: string, // Monero decryption key
+
+  // Core:
+  metadata?: EdgeMetadata,
   wallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
   otherParams?: JsonObject
 }
@@ -354,7 +359,7 @@ export type EdgeSpendInfo = {
 
   // Options:
   noUnconfirmed?: boolean,
-  networkFeeOption?: string, // 'high' | 'standard' | 'low' | 'custom',
+  networkFeeOption?: 'high' | 'standard' | 'low' | 'custom',
   customNetworkFee?: JsonObject, // Some kind of currency-specific JSON
 
   // Core:
