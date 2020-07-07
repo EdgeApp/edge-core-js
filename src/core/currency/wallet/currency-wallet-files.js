@@ -40,8 +40,8 @@ export type TransactionFile = {
       providerFeeSent?: string
     }
   },
-  feeRequested?: 'high' | 'standard' | 'low' | JsonObject,
-  feeUsed?: JsonObject,
+  feeRateRequested?: 'high' | 'standard' | 'low' | JsonObject,
+  feeRateUsed?: JsonObject,
   payees?: Array<{
     address: string,
     amount: string,
@@ -566,12 +566,12 @@ export function setupNewTxMetadata(
 
   // Set up the fee metadata:
   if (tx.networkFeeOption != null) {
-    json.feeRequested =
+    json.feeRateRequested =
       tx.networkFeeOption === 'custom'
         ? tx.requestedCustomFee
         : tx.networkFeeOption
   }
-  json.feeUsed = tx.feeRateUsed
+  json.feeRateUsed = tx.feeRateUsed
 
   // Set up payees:
   if (spendTargets != null) {

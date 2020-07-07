@@ -620,15 +620,15 @@ export function combineTxWithFile(
       }
     }
 
-    if (file.feeRequested != null) {
-      if (typeof file.feeRequested === 'string') {
-        out.networkFeeOption = file.feeRequested
+    if (file.feeRateRequested != null) {
+      if (typeof file.feeRateRequested === 'string') {
+        out.networkFeeOption = file.feeRateRequested
       } else {
         out.networkFeeOption = 'custom'
-        out.requestedCustomFee = file.feeRequested
+        out.requestedCustomFee = file.feeRateRequested
       }
     }
-    out.feeRateUsed = file.feeUsed
+    out.feeRateUsed = file.feeRateUsed
 
     if (file.payees != null) {
       out.spendTargets = file.payees.map(payee => ({

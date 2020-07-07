@@ -263,7 +263,8 @@ describe('currency wallets', function () {
       amountFiat: 1.5,
       ...metadata
     })
-    expect(txs[0].networkFeeOption).deep.equals('high')
+    expect(txs[0].networkFeeOption).equals('high')
+    expect(txs[0].feeRateUsed).deep.equals({ fakePrice: 0 })
     expect(txs[0].spendTargets).deep.equals([
       {
         currencyCode: 'FAKE',
