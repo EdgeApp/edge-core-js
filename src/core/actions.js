@@ -18,7 +18,7 @@ import {
   type TxidHashes
 } from './currency/wallet/currency-wallet-reducer.js'
 import { type ExchangePair } from './exchange/exchange-reducer.js'
-import { type LoginStash } from './login/login-types.js'
+import { type LoginStash } from './login/login-stash.js'
 import {
   type StorageWalletState,
   type StorageWalletStatus
@@ -248,7 +248,7 @@ export type RootAction =
         authServer: string,
         hideKeys: boolean,
         pluginsInit: EdgeCorePluginsInit,
-        stashes: { [path: string]: any }
+        stashes: LoginStash[]
       }
     }
   | {

@@ -9,10 +9,10 @@ import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
+import { type LoginStash, saveStash } from './login-stash.js'
 import {
   type LoginKit,
   type LoginReply,
-  type LoginStash,
   type LoginTree
 } from './login-types.js'
 import {
@@ -21,7 +21,6 @@ import {
   makeLoginTree,
   searchTree
 } from './login.js'
-import { saveStash } from './loginStore.js'
 
 function pin2Id(pin2Key: Uint8Array, username: string): Uint8Array {
   const data = utf8.parse(fixUsername(username))

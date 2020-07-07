@@ -20,13 +20,12 @@ import {
 } from './keys.js'
 import { loginFetch } from './login-fetch.js'
 import { getStash, hashUsername } from './login-selectors.js'
+import { type LoginStash, saveStash } from './login-stash.js'
 import {
   type LoginKit,
   type LoginReply,
-  type LoginStash,
   type LoginTree
 } from './login-types.js'
-import { saveStash } from './loginStore.js'
 
 function cloneNode<Node: {}, Output>(
   node: Node,

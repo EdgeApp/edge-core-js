@@ -6,6 +6,7 @@ import {
 } from '../../types/types.js'
 import { type EdgeBox } from '../../util/crypto/crypto.js'
 import { type EdgeSnrp } from '../scrypt/scrypt-pixie.js'
+import { type LoginStash } from './login-stash.js'
 
 /**
  * Data sent back by the auth server.
@@ -38,44 +39,6 @@ export type LoginReply = {
 
   // Resources:
   children?: LoginReply[],
-  keyBoxes?: EdgeBox[],
-  mnemonicBox?: EdgeBox,
-  parentBox?: EdgeBox,
-  rootKeyBox?: EdgeBox,
-  syncKeyBox?: EdgeBox
-}
-
-/**
- * The login data we store on disk.
- */
-export type LoginStash = {
-  // Basic account info:
-  appId?: string, // Not actually optional
-  loginAuthBox?: EdgeBox,
-  loginId?: string, // Not actually optional
-  userId?: string,
-  username?: string,
-
-  // 2-factor:
-  otpKey?: string,
-  otpResetDate?: string,
-  otpTimeout?: number,
-
-  // Offline password logins:
-  passwordAuthBox?: EdgeBox,
-  passwordAuthSnrp?: EdgeSnrp,
-  passwordBox?: EdgeBox,
-  passwordKeySnrp?: EdgeSnrp,
-
-  // PIN login:
-  pin2Key?: string,
-  pin2TextBox?: EdgeBox,
-
-  // Recovery login:
-  recovery2Key?: string,
-
-  // Resources:
-  children?: LoginStash[],
   keyBoxes?: EdgeBox[],
   mnemonicBox?: EdgeBox,
   parentBox?: EdgeBox,
@@ -116,7 +79,7 @@ export type LoginKit = {
   server?: any,
   serverMethod?: string,
   serverPath: string,
-  stash: LoginStash
+  stash: $Shape<LoginStash>
 }
 
 export type WalletInfoFullMap = { [walletId: string]: EdgeWalletInfoFull }

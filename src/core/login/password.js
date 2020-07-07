@@ -8,14 +8,13 @@ import { type ApiInput } from '../root-pixie.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash, hashUsername } from './login-selectors.js'
+import { type LoginStash, saveStash } from './login-stash.js'
 import {
   type LoginKit,
   type LoginReply,
-  type LoginStash,
   type LoginTree
 } from './login-types.js'
 import { applyKit, applyLoginReply, makeLoginTree, syncLogin } from './login.js'
-import { saveStash } from './loginStore.js'
 
 export const passwordAuthSnrp = userIdSnrp
 

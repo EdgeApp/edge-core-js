@@ -7,6 +7,7 @@ import { emit } from 'yaob'
 import { type EdgeContext, type EdgeContextOptions } from '../types/types.js'
 import { type RootAction } from './actions.js'
 import { makeLegacyConsole, makeLog } from './log/log.js'
+import { loadStashes } from './login/login-stash.js'
 import { type PluginIos, watchPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
 import { type RootState, reducer } from './root-reducer.js'
@@ -35,20 +36,14 @@ export async function makeContext(
     hideKeys = false,
     plugins: pluginsInit = {}
   } = opts
+  const log = makeLog(onLog, 'edge-core')
 
   if (apiKey == null) {
     throw new Error('No API key provided')
   }
 
   // Load the login stashes from disk:
-  const stashes = {}
-  const listing = await io.disklet.list('logins')
-  const files = Object.keys(listing).filter(path => listing[path] === 'file')
-  for (const path of files) {
-    try {
-      stashes[path] = JSON.parse(await io.disklet.getText(path))
-    } catch (e) {}
-  }
+  const stashes = await loadStashes(io.disklet, log)
 
   // Start Redux:
   const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
@@ -62,7 +57,6 @@ export async function makeContext(
   const closePlugins = watchPlugins(ios, pluginsInit, redux.dispatch)
 
   // Start the pixie tree:
-  const log = makeLog(onLog, 'edge-core')
   const mirror = { output: {} }
   const closePixie = attachPixie(
     redux,
