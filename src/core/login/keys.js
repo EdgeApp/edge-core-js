@@ -346,7 +346,8 @@ async function protectBchWallet(wallet: EdgeCurrencyWallet): Promise<void> {
     spendTargets: [
       {
         nativeAmount: '1000',
-        otherParams: { script: { type: 'replayProtection' } }
+        otherParams: { script: { type: 'replayProtection' } },
+        publicAddress: ''
       }
     ],
     metadata: {},
