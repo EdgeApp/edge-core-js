@@ -8,12 +8,13 @@ import { type EdgeWalletInfo } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loadRepoStatus, makeRepoPaths, syncRepo } from './repo.js'
+import { type StorageWalletStatus } from './storage-reducer.js'
 
 export async function addStorageWallet(
   ai: ApiInput,
   walletInfo: EdgeWalletInfo
 ): Promise<void> {
-  const { dispatch, io, onError } = ai.props
+  const { dispatch, io } = ai.props
 
   const dataKey = base64.parse(walletInfo.keys.dataKey)
   const syncKey = base64.parse(walletInfo.keys.syncKey)
@@ -25,7 +26,7 @@ export async function addStorageWallet(
   )
   bridgifyObject(localDisklet)
 
-  const status = await loadRepoStatus(paths)
+  const status: StorageWalletStatus = await loadRepoStatus(paths)
   dispatch({
     type: 'STORAGE_WALLET_ADDED',
     payload: {
@@ -41,8 +42,17 @@ export async function addStorageWallet(
 
   // If we have already done a sync, let this one run in the background:
   const syncPromise = syncStorageWallet(ai, walletInfo.id)
-  if (status.lastSync) syncPromise.catch(e => onError(e))
-  else await syncPromise
+  if (status.lastSync) {
+    syncPromise.catch(error => {
+      const { syncKey } = walletInfo.keys
+      const { lastHash } = status
+      ai.props.log.error(
+        `Could not sync ${syncKey} with last hash ${String(lastHash)}: ${String(
+          error
+        )}`
+      )
+    })
+  } else await syncPromise
 }
 
 export function syncStorageWallet(
