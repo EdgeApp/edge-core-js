@@ -1,5 +1,7 @@
 // @flow
 
+import { asDate, asObject, asOptional, asString } from 'cleaners'
+
 import type { EdgeSwapInfo } from './types.js'
 
 /*
@@ -135,26 +137,62 @@ export class OtpError extends Error {
   name: string
   +type: string // deprecated
   +loginId: string | void
-  +resetToken: string | void
+  +reason: 'ip' | 'otp'
   +resetDate: Date | void
+  +resetToken: string | void
+  +voucherId: string | void
+  +voucherAuth: string | void
+  +voucherActivates: Date | void
 
-  constructor(resultsJson: any, message: string = 'Invalid OTP token') {
+  constructor(resultsJson: mixed, message: string = 'Invalid OTP token') {
     super(message)
     this.name = this.type = errorNames.OtpError
-    if (resultsJson != null) {
-      if (typeof resultsJson.login_id === 'string') {
-        this.loginId = resultsJson.login_id
+    this.reason = 'otp'
+
+    try {
+      const reply = asOtpErrorResults(resultsJson)
+
+      // This should usually be present:
+      if (reply.login_id != null) {
+        this.loginId = reply.login_id
       }
-      if (typeof resultsJson.otp_reset_auth === 'string') {
-        this.resetToken = resultsJson.otp_reset_auth
+
+      // Use this to request an OTP reset (if enabled):
+      if (reply.otp_reset_auth != null) {
+        this.resetToken = reply.otp_reset_auth
       }
-      // The server returns dates as ISO 8601 formatted strings:
-      if (typeof resultsJson.otp_timeout_date === 'string') {
-        this.resetDate = new Date(resultsJson.otp_timeout_date)
+
+      // We might also get a different reason:
+      if (reply.reason === 'ip') this.reason = 'ip'
+
+      // Set if an OTP reset has already been requested:
+      if (reply.otp_timeout_date != null) {
+        this.resetDate = new Date(reply.otp_timeout_date)
       }
-    }
+
+      // We might also get a login voucher:
+      if (
+        reply.voucher_id != null &&
+        reply.voucher_auth != null &&
+        reply.voucher_activates != null
+      ) {
+        this.voucherId = reply.voucher_id
+        this.voucherAuth = reply.voucher_auth
+        this.voucherActivates = reply.voucher_activates
+      }
+    } catch (e) {}
   }
 }
+
+const asOtpErrorResults = asObject({
+  login_id: asOptional(asString),
+  otp_reset_auth: asOptional(asString),
+  otp_timeout_date: asOptional(asDate),
+  reason: asOptional(asString),
+  voucher_activates: asOptional(asDate),
+  voucher_auth: asOptional(asString),
+  voucher_id: asOptional(asString)
+})
 
 /**
  * The provided authentication is incorrect.
