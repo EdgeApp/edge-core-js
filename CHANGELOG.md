@@ -1,5 +1,15 @@
 # edge-core-js
 
+## 0.17.8 (2020-07-08)
+
+- Allow the user to pass an `onLog` callback to the context constructor
+  - This allows our CLI to silence the core and supports more flexibilty in GUI log handling
+- Apply cleaners to the login stashes as well as remove some legacy disklet API usage
+- Support date filters for `getTransactions`
+- Save fee information in the spend metadata
+- Send sync failures to the logs, not the UI
+- Fix BSV replay protection feature broken by commit 11e752d8
+
 ## 0.17.7 (2020-07-03)
 
 - Update info server URI
