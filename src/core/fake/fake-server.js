@@ -471,6 +471,7 @@ const messagesRoute: ApiServer = pickMethod({
         out.push({
           loginId,
           otpResetPending: !!login.otpResetDate,
+          pendingVouchers: [],
           recovery2Corrupt: false
         })
       }
