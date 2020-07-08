@@ -29,7 +29,7 @@ export function makeEdgeContext(
 
 export function makeFakeEdgeWorld(
   users: EdgeFakeUser[] = [],
-  opts?: EdgeFakeWorldOptions = {}
+  opts: EdgeFakeWorldOptions = {}
 ): Promise<EdgeFakeWorld> {
   const { onLog = defaultOnLog } = opts
   return Promise.resolve(

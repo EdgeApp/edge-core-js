@@ -6,6 +6,7 @@ import {
   type EdgeCreateCurrencyWalletOptions,
   type EdgeCurrencyWallet,
   type EdgeMetadata,
+  type EdgeSpendInfo,
   type EdgeWalletInfo,
   type JsonObject
 } from '../../types/types.js'
@@ -341,7 +342,7 @@ export async function createCurrencyWallet(
 
 async function protectBchWallet(wallet: EdgeCurrencyWallet): Promise<void> {
   // Create a UTXO which can be spend only on the ABC network
-  const spendInfoSplit = {
+  const spendInfoSplit: EdgeSpendInfo = {
     currencyCode: 'BCH',
     spendTargets: [
       {
@@ -360,7 +361,7 @@ async function protectBchWallet(wallet: EdgeCurrencyWallet): Promise<void> {
 
   // Taint the rest of the wallet using the UTXO from before
   const { publicAddress } = await wallet.getReceiveAddress()
-  const spendInfoTaint = {
+  const spendInfoTaint: EdgeSpendInfo = {
     currencyCode: 'BCH',
     spendTargets: [{ publicAddress, nativeAmount: '0' }],
     metadata: {},

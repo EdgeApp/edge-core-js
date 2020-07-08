@@ -26,7 +26,7 @@ function makeLogMethod(
   }
 }
 
-export function defaultOnLog(event: EdgeLogEvent) {
+export function defaultOnLog(event: EdgeLogEvent): void {
   const prettyDate = event.time
     .toISOString()
     .replace(/.*(\d\d-\d\d)T(\d\d:\d\d:\d\d).*/, '$1 $2')
