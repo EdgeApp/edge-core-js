@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.17.9 (2020-07-10)
+
+- Restore sync failure messages in the UI
+
 ## 0.17.8 (2020-07-08)
 
 - Allow the user to pass an `onLog` callback to the context constructor
