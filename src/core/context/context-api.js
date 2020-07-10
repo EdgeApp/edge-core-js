@@ -187,7 +187,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     async requestEdgeLogin(
-      opts: EdgeEdgeLoginOptions
+      opts?: EdgeEdgeLoginOptions
     ): Promise<EdgePendingEdgeLogin> {
       return requestEdgeLogin(ai, appId, opts)
     },

@@ -1091,7 +1091,7 @@ export type EdgeContext = {
   ): Promise<EdgeAccount>,
 
   // Edge login:
-  requestEdgeLogin(opts: EdgeEdgeLoginOptions): Promise<EdgePendingEdgeLogin>,
+  requestEdgeLogin(opts?: EdgeEdgeLoginOptions): Promise<EdgePendingEdgeLogin>,
 
   // Fingerprint login:
   loginWithKey(
