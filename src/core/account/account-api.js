@@ -33,7 +33,8 @@ import {
   makeStorageKeyInfo,
   splitWalletInfo
 } from '../login/keys.js'
-import { applyKit } from '../login/login.js'
+import { loginFetch } from '../login/login-fetch.js'
+import { applyKit, makeAuthJson } from '../login/login.js'
 import { cancelOtpReset, disableOtp, enableOtp } from '../login/otp.js'
 import {
   changePassword,
@@ -57,7 +58,7 @@ import { CurrencyConfig, SwapConfig } from './plugin-api.js'
  */
 export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
   const selfState = (): AccountState => ai.props.state.accounts[accountId]
-  const { accountWalletInfo, loginType, loginTree } = selfState()
+  const { accountWalletInfo, loginType, loginTree, login } = selfState()
   const { username } = loginTree
 
   // Plugin config API's:
@@ -249,6 +250,20 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async disableOtp(): Promise<void> {
       lockdown()
       await disableOtp(ai, accountId)
+    },
+
+    // 2fa bypass voucher approval / rejection:
+    async approveVoucher(voucherId: string): Promise<void> {
+      await loginFetch(ai, 'POST', '/v2/voucher/approve', {
+        ...makeAuthJson(login),
+        data: { voucherId }
+      })
+    },
+    async rejectVoucher(voucherId: string): Promise<void> {
+      await loginFetch(ai, 'POST', '/v2/voucher/reject', {
+        ...makeAuthJson(login),
+        data: { voucherId }
+      })
     },
 
     // Edge login approval:

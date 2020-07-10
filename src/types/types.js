@@ -952,6 +952,10 @@ export type EdgeAccount = {
   disableOtp(): Promise<void>,
   enableOtp(timeout?: number): Promise<void>,
 
+  // 2fa bypass voucher approval / rejection:
+  approveVoucher(voucherId: string): Promise<void>,
+  rejectVoucher(voucherId: string): Promise<void>,
+
   // Edge login approval:
   fetchLobby(lobbyId: string): Promise<EdgeLobby>,
 
