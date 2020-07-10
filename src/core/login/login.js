@@ -18,7 +18,7 @@ import {
   mergeKeyInfos
 } from './keys.js'
 import { loginFetch } from './login-fetch.js'
-import { getStash, hashUsername } from './login-selectors.js'
+import { getStash } from './login-selectors.js'
 import { type LoginStash, saveStash } from './login-stash.js'
 import {
   type LoginKit,
@@ -419,22 +419,4 @@ export function makeAuthJson(login: LoginTree): any {
     }
   }
   throw new Error('No server authentication methods available')
-}
-
-/**
- * Requests an OTP reset.
- */
-export async function resetOtp(
-  ai: ApiInput,
-  username: string,
-  resetToken: string
-): Promise<Date> {
-  const request = {
-    userId: base64.stringify(await hashUsername(ai, username)),
-    otpResetAuth: resetToken
-  }
-  return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
-    // The server returns dates as ISO 8601 formatted strings:
-    return new Date(reply.otpResetDate)
-  })
 }

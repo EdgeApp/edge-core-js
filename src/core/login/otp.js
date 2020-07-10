@@ -1,10 +1,12 @@
 // @flow
 
-import { base32 } from 'rfc4648'
+import { base32, base64 } from 'rfc4648'
 
 import { fixOtpKey } from '../../util/crypto/hotp.js'
 import { applyKit } from '../login/login.js'
 import { type ApiInput } from '../root-pixie.js'
+import { loginFetch } from './login-fetch.js'
+import { hashUsername } from './login-selectors.js'
 import { type LoginKit } from './login-types.js'
 
 export async function enableOtp(
@@ -85,4 +87,22 @@ export async function cancelOtpReset(
     loginId: loginTree.loginId
   }
   await applyKit(ai, loginTree, kit)
+}
+
+/**
+ * Requests an OTP reset.
+ */
+export async function resetOtp(
+  ai: ApiInput,
+  username: string,
+  resetToken: string
+): Promise<Date> {
+  const request = {
+    userId: base64.stringify(await hashUsername(ai, username)),
+    otpResetAuth: resetToken
+  }
+  return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
+    // The server returns dates as ISO 8601 formatted strings:
+    return new Date(reply.otpResetDate)
+  })
 }
