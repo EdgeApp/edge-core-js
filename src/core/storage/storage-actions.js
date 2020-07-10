@@ -14,7 +14,7 @@ export async function addStorageWallet(
   ai: ApiInput,
   walletInfo: EdgeWalletInfo
 ): Promise<void> {
-  const { dispatch, io } = ai.props
+  const { dispatch, io, onError } = ai.props
 
   const dataKey = base64.parse(walletInfo.keys.dataKey)
   const syncKey = base64.parse(walletInfo.keys.syncKey)
@@ -51,6 +51,7 @@ export async function addStorageWallet(
           error
         )}`
       )
+      onError(error)
     })
   } else await syncPromise
 }
