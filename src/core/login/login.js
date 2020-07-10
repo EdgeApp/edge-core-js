@@ -5,7 +5,6 @@
 
 import { base64 } from 'rfc4648'
 
-import { type EdgeLoginMessages } from '../../types/types.js'
 import { decrypt, decryptText } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { totp } from '../../util/crypto/hotp.js'
@@ -437,30 +436,5 @@ export async function resetOtp(
   return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
     // The server returns dates as ISO 8601 formatted strings:
     return new Date(reply.otpResetDate)
-  })
-}
-
-/**
- * Fetches any login-related messages for all the users on this device.
- */
-export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
-  const stashes = ai.props.state.login.stashes
-
-  const loginMap: { [loginId: string]: string } = {} // loginId -> username
-  for (const username of Object.keys(stashes)) {
-    const loginId = stashes[username].loginId
-    if (loginId) loginMap[loginId] = username
-  }
-
-  const request = {
-    loginIds: Object.keys(loginMap)
-  }
-  return loginFetch(ai, 'POST', '/v2/messages', request).then(reply => {
-    const out: EdgeLoginMessages = {}
-    for (const message of reply) {
-      const username = loginMap[message.loginId]
-      if (username) out[username] = message
-    }
-    return out
   })
 }

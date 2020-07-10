@@ -16,14 +16,10 @@ import { base58 } from '../../util/encoding.js'
 import { findAppLogin, makeAccount } from '../account/account-init.js'
 import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
+import { fetchLoginMessages } from '../login/login-messages.js'
 import { getStash } from '../login/login-selectors.js'
 import { removeStash } from '../login/login-stash.js'
-import {
-  fetchLoginMessages,
-  makeLoginTree,
-  resetOtp,
-  syncLogin
-} from '../login/login.js'
+import { makeLoginTree, resetOtp, syncLogin } from '../login/login.js'
 import { loginPassword } from '../login/password.js'
 import { getPin2Key, loginPin2 } from '../login/pin2.js'
 import {
