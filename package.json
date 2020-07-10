@@ -24,6 +24,10 @@
     "Kevin Sullivan <kevin@edge.app>",
     "Allen Hujsak <allen@edge.app>"
   ],
+  "main": "./index.js",
+  "module": "./lib/index.js",
+  "browser": "./lib/browser.js",
+  "types": "./lib/index.d.ts",
   "files": [
     "/CHANGELOG.md",
     "/index.js.flow",
@@ -36,10 +40,6 @@
     "/types.js.flow",
     "/types.js"
   ],
-  "main": "./index.js",
-  "module": "./lib/index.js",
-  "browser": "./lib/browser.js",
-  "types": "./lib/index.d.ts",
   "scripts": {
     "build.lib": "sucrase ./src -q -d ./lib -t flow,jsx",
     "build.react-native": "webpack",
