@@ -325,6 +325,17 @@ export async function serverLogin(
     await loginFetch(ai, 'POST', '/v2/login', {
       ...serverAuth,
       otp: getStashOtp(stash, opts)
+    }).catch(error => {
+      // Save the username if we get an OTP error:
+      if (
+        error.name === 'OtpError' &&
+        error.loginId != null &&
+        stash.loginId === ''
+      ) {
+        stash.loginId = error.loginId
+        saveStash(ai, stashTree)
+      }
+      throw error
     })
   )
 

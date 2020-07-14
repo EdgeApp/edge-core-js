@@ -134,6 +134,7 @@ export class ObsoleteApiError extends Error {
 export class OtpError extends Error {
   name: string
   +type: string // deprecated
+  +loginId: string | void
   +resetToken: string | void
   +resetDate: Date | void
 
@@ -141,6 +142,9 @@ export class OtpError extends Error {
     super(message)
     this.name = this.type = errorNames.OtpError
     if (resultsJson != null) {
+      if (typeof resultsJson.loginId === 'string') {
+        this.loginId = resultsJson.loginId
+      }
       if (typeof resultsJson.otp_reset_auth === 'string') {
         this.resetToken = resultsJson.otp_reset_auth
       }
