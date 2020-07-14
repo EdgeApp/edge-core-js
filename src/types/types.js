@@ -769,7 +769,8 @@ export type EdgeRatePlugin = {
 // ---------------------------------------------------------------------
 
 export type EdgeAccountOptions = {
-  otp?: string
+  otpKey?: string, // The OTP secret
+  otp?: string // The 6-digit OTP, or (deprecated) the OTP secret
 }
 
 // currencies ----------------------------------------------------------
