@@ -46,11 +46,7 @@ export function hotp(
 /**
  * Generates an HOTP code based on the current time.
  */
-export function totp(
-  secret: string | void,
-  now: number = Date.now() / 1000
-): string | void {
-  if (secret == null) return
+export function totp(secret: string, now: number = Date.now() / 1000): string {
   return hotp(base32.parse(secret, { loose: true }), now / 30, 6)
 }
 

@@ -8,7 +8,7 @@ import { type RootAction } from '../actions.js'
 import { type RootState } from '../root-reducer.js'
 import { type LoginStash } from './login-stash.js'
 import { type WalletInfoFullMap } from './login-types.js'
-import { getPin2Key } from './pin2.js'
+import { findPin2Stash } from './pin2.js'
 import { getRecovery2Key } from './recovery2.js'
 
 export type LoginStashMap = { [username: string]: LoginStash }
@@ -42,10 +42,10 @@ export const login: FatReducer<
       const out = []
       for (const username in stashes) {
         const stash = stashes[username]
-        const pin2Key = getPin2Key(stash, appId)
+        const pin2Stash = findPin2Stash(stash, appId)
         const recovery2Key = getRecovery2Key(stash)
         out.push({
-          pinLoginEnabled: pin2Key.pin2Key != null,
+          pinLoginEnabled: pin2Stash != null,
           recovery2Key:
             recovery2Key != null ? base58.stringify(recovery2Key) : undefined,
           username

@@ -2,25 +2,17 @@
 
 import { base64 } from 'rfc4648'
 
+import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
-import { totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
-import { type LoginStash, saveStash } from './login-stash.js'
-import {
-  type LoginKit,
-  type LoginReply,
-  type LoginTree
-} from './login-types.js'
-import {
-  applyKits,
-  applyLoginReply,
-  makeLoginTree,
-  searchTree
-} from './login.js'
+import { type LoginStash } from './login-stash.js'
+import { type LoginKit, type LoginTree } from './login-types.js'
+import { applyKits, searchTree, serverLogin } from './login.js'
+import { getLoginOtp } from './otp.js'
 
 function pin2Id(pin2Key: Uint8Array, username: string): Uint8Array {
   const data = utf8.parse(fixUsername(username))
@@ -32,45 +24,15 @@ function pin2Auth(pin2Key: Uint8Array, pin: string): Uint8Array {
 }
 
 /**
- * Fetches and decrypts the loginKey from the server.
- * @return Promise<{loginKey, loginReply}>
- */
-async function fetchLoginKey(
-  ai: ApiInput,
-  pin2Key: Uint8Array,
-  username: string,
-  pin: string,
-  otp: string | void
-): Promise<{ loginKey: Uint8Array, loginReply: LoginReply }> {
-  const request = {
-    pin2Id: base64.stringify(pin2Id(pin2Key, username)),
-    pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
-    otp
-  }
-  const reply = await loginFetch(ai, 'POST', '/v2/login', request)
-  if (reply.pin2Box == null) {
-    throw new Error('Missing data for PIN v2 login')
-  }
-  return {
-    loginKey: decrypt(reply.pin2Box, pin2Key),
-    loginReply: reply
-  }
-}
-
-/**
  * Returns a copy of the PIN login key if one exists on the local device.
  */
-export function getPin2Key(
+export function findPin2Stash(
   stashTree: LoginStash,
   appId: string
-): { pin2Key?: Uint8Array, appId?: string } {
-  const stash =
-    stashTree.pin2Key != null
-      ? stashTree
-      : searchTree(stashTree, stash => stash.appId === appId)
-  return stash != null && stash.pin2Key != null
-    ? { pin2Key: base64.parse(stash.pin2Key), appId: stash.appId }
-    : { pin2Key: undefined, appId: undefined }
+): LoginStash | void {
+  if (stashTree.pin2Key != null) return stashTree
+  const stash = searchTree(stashTree, stash => stash.appId === appId)
+  if (stash != null && stash.pin2Key != null) return stash
 }
 
 /**
@@ -82,25 +44,27 @@ export async function loginPin2(
   appId: string,
   username: string,
   pin: string,
-  otpKey: string | void
+  opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  let stashTree = getStash(ai, username)
-  const { pin2Key, appId: appIdFound } = getPin2Key(stashTree, appId)
-  if (pin2Key == null) {
+  // Find the stash to use:
+  const stashTree = getStash(ai, username)
+  const stash = findPin2Stash(stashTree, appId)
+  if (stash == null || stash.pin2Key == null) {
     throw new Error('PIN login is not enabled for this account on this device')
   }
-  const { loginKey, loginReply } = await fetchLoginKey(
-    ai,
-    pin2Key,
-    username,
-    pin,
-    totp(otpKey || stashTree.otpKey)
-  )
-  stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-  await saveStash(ai, stashTree)
 
-  // Capture the PIN into the login tree:
-  return makeLoginTree(stashTree, loginKey, appIdFound)
+  // Request:
+  const pin2Key = base64.parse(stash.pin2Key)
+  const request = {
+    pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+    pin2Auth: base64.stringify(pin2Auth(pin2Key, pin))
+  }
+  return serverLogin(ai, stashTree, stash, opts, request, reply => {
+    if (reply.pin2Box == null) {
+      throw new Error('Missing data for PIN v2 login')
+    }
+    return Promise.resolve(decrypt(reply.pin2Box, pin2Key))
+  })
 }
 
 export async function changePin(
@@ -144,12 +108,21 @@ export async function checkPin2(
   const { appId, username } = login
   if (!username) return false
 
+  // Find the stash to use:
   const stashTree = getStash(ai, username)
-  const { pin2Key } = getPin2Key(stashTree, appId)
-  if (pin2Key == null) {
+  const stash = findPin2Stash(stashTree, appId)
+  if (stash == null || stash.pin2Key == null) {
     throw new Error('No PIN set locally for this account')
   }
-  return fetchLoginKey(ai, pin2Key, username, pin, totp(stashTree.otpKey)).then(
+
+  // Try a login:
+  const pin2Key = base64.parse(stash.pin2Key)
+  const request = {
+    pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+    pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
+    otp: getLoginOtp(login)
+  }
+  return loginFetch(ai, 'POST', '/v2/login', request).then(
     good => true,
     bad => false
   )
