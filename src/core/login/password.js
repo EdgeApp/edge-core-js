@@ -3,7 +3,7 @@
 import { base64 } from 'rfc4648'
 
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
-import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { loginFetch } from './login-fetch.js'
@@ -103,7 +103,6 @@ export async function loginPassword(
       totp(otpKey || stashTree.otpKey)
     )
     stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-    if (otpKey) stashTree.otpKey = fixOtpKey(otpKey)
     await saveStash(ai, stashTree)
     return makeLoginTree(stashTree, loginKey)
   }

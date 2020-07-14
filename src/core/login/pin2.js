@@ -4,7 +4,7 @@ import { base64 } from 'rfc4648'
 
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
-import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
@@ -97,7 +97,6 @@ export async function loginPin2(
     totp(otpKey || stashTree.otpKey)
   )
   stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-  if (otpKey) stashTree.otpKey = fixOtpKey(otpKey)
   await saveStash(ai, stashTree)
 
   // Capture the PIN into the login tree:
