@@ -81,6 +81,7 @@ function applyLoginReplyInner(
   // Copy common items:
   const out: LoginStash = filterObject(loginReply, [
     'appId',
+    'created',
     'loginId',
     'loginAuthBox',
     'userId',
@@ -172,6 +173,7 @@ function makeLoginTreeInner(
     throw new Error('No loginId provided')
   }
   login.appId = stash.appId
+  login.created = stash.created
   login.loginId = stash.loginId
   login.loginKey = loginKey
   login.otpKey = stash.otpKey

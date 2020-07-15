@@ -10,6 +10,7 @@ import { type LoginStash } from './login-stash.js'
 export type LoginTree = {
   // Identity:
   appId: string,
+  created?: Date,
   loginId: string,
   loginKey: Uint8Array,
   userId: string,

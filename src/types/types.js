@@ -912,6 +912,7 @@ export type EdgeAccount = {
   +recoveryKey: string | void, // For email backup
   +rootLoginId: string,
   +username: string,
+  +created: Date | void, // Not always known
 
   // Special-purpose API's:
   +currencyConfig: EdgePluginMap<EdgeCurrencyConfig>,
