@@ -18,7 +18,7 @@ import {
   mergeKeyInfos
 } from './keys.js'
 import { loginFetch } from './login-fetch.js'
-import { type LoginReply } from './login-reply.js'
+import { type LoginReply, asLoginReply } from './login-reply.js'
 import { getStash } from './login-selectors.js'
 import { type LoginStash, saveStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
@@ -319,10 +319,12 @@ export async function serverLogin(
   serverAuth: {},
   decrypt: (reply: LoginReply) => Promise<Uint8Array>
 ): Promise<LoginTree> {
-  const loginReply = await loginFetch(ai, 'POST', '/v2/login', {
-    ...serverAuth,
-    otp: getStashOtp(stash, opts)
-  })
+  const loginReply = asLoginReply(
+    await loginFetch(ai, 'POST', '/v2/login', {
+      ...serverAuth,
+      otp: getStashOtp(stash, opts)
+    })
+  )
 
   // Try decrypting the reply:
   const loginKey = await decrypt(loginReply)

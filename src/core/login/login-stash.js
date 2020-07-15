@@ -3,6 +3,7 @@
 import {
   type Cleaner,
   asArray,
+  asDate,
   asNumber,
   asObject,
   asOptional,
@@ -22,36 +23,38 @@ import { fixUsername } from './login-selectors.js'
  * The login data we store on disk.
  */
 export type LoginStash = {
-  // Basic account info:
+  // Identity:
   appId: string,
-  loginAuthBox?: EdgeBox,
   loginId: string,
   userId?: string,
   username?: string,
 
   // 2-factor:
   otpKey?: string,
-  otpResetDate?: string,
+  otpResetDate?: Date,
   otpTimeout?: number,
 
-  // Offline password logins:
+  // Return logins:
+  loginAuthBox?: EdgeBox,
+  parentBox?: EdgeBox,
+
+  // Password login:
   passwordAuthBox?: EdgeBox,
   passwordAuthSnrp?: EdgeSnrp,
   passwordBox?: EdgeBox,
   passwordKeySnrp?: EdgeSnrp,
 
-  // PIN login:
+  // PIN v2 login:
   pin2Key?: string,
   pin2TextBox?: EdgeBox,
 
-  // Recovery login:
+  // Recovery v2 login:
   recovery2Key?: string,
 
-  // Resources:
+  // Keys and assorted goodies:
   children?: LoginStash[],
   keyBoxes?: EdgeBox[],
   mnemonicBox?: EdgeBox,
-  parentBox?: EdgeBox,
   rootKeyBox?: EdgeBox,
   syncKeyBox?: EdgeBox
 }
@@ -129,36 +132,38 @@ export async function saveStash(
 }
 
 const asLoginStash: Cleaner<LoginStash> = asObject({
-  // Basic account info:
+  // Identity:
   appId: asString,
-  loginAuthBox: asOptional(asEdgeBox),
   loginId: asString,
   userId: asOptional(asString),
   username: asOptional(asString),
 
   // 2-factor:
   otpKey: asOptional(asString),
-  otpResetDate: asOptional(asString),
+  otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
 
-  // Offline password logins:
+  // Return logins:
+  loginAuthBox: asOptional(asEdgeBox),
+  parentBox: asOptional(asEdgeBox),
+
+  // Password login:
   passwordAuthBox: asOptional(asEdgeBox),
   passwordAuthSnrp: asOptional(asEdgeSnrp),
   passwordBox: asOptional(asEdgeBox),
   passwordKeySnrp: asOptional(asEdgeSnrp),
 
-  // PIN login:
+  // PIN v2 login:
   pin2Key: asOptional(asString),
   pin2TextBox: asOptional(asEdgeBox),
 
-  // Recovery login:
+  // Recovery v2 login:
   recovery2Key: asOptional(asString),
 
-  // Resources:
+  // Keys and assorted goodies:
   children: asOptional(asArray(raw => asLoginStash(raw))),
   keyBoxes: asOptional(asArray(asEdgeBox)),
   mnemonicBox: asOptional(asEdgeBox),
-  parentBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
   syncKeyBox: asOptional(asEdgeBox)
 })

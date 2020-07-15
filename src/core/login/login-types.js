@@ -8,8 +8,8 @@ import { type LoginStash } from './login-stash.js'
 
 // Login data decrypted into memory.
 export type LoginTree = {
+  // Identity:
   appId: string,
-  loginAuth?: Uint8Array,
   loginId: string,
   loginKey: Uint8Array,
   userId: string,
@@ -17,18 +17,19 @@ export type LoginTree = {
 
   // 2-factor:
   otpKey?: string,
-  otpResetDate?: string,
+  otpResetDate?: Date,
   otpTimeout?: number,
 
   // Login methods:
+  loginAuth?: Uint8Array,
   passwordAuth?: Uint8Array,
   pin?: string,
   pin2Key?: Uint8Array,
   recovery2Key?: Uint8Array,
 
   // Resources:
-  keyInfos: EdgeWalletInfo[],
-  children: LoginTree[]
+  children: LoginTree[],
+  keyInfos: EdgeWalletInfo[]
 }
 
 export type AppIdMap = { [walletId: string]: string[] }

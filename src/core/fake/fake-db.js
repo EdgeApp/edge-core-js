@@ -200,7 +200,8 @@ export function makeLoginReply(db: FakeDb, login: DbLogin): LoginReply {
     recovery2Box: login.recovery2Box,
     recovery2KeyBox: login.recovery2KeyBox,
     otpKey: login.otpKey,
-    otpResetDate: login.otpResetDate,
+    otpResetDate:
+      login.otpResetDate != null ? new Date(login.otpResetDate) : undefined,
     otpTimeout: login.otpTimeout,
 
     // Resources:
