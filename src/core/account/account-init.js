@@ -91,7 +91,7 @@ export async function makeAccount(
   appId: string,
   loginTree: LoginTree,
   loginType: LoginType,
-  opts: EdgeAccountOptions = {}
+  opts: EdgeAccountOptions
 ): Promise<EdgeAccount> {
   const { pauseWallets = false } = opts
   const { log } = ai.props
