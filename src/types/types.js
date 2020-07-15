@@ -993,7 +993,7 @@ export type EdgeAccount = {
 
   // OTP:
   +otpKey: string | void, // OTP is enabled if this exists
-  +otpResetDate: string | void, // A reset is requested if this exists
+  +otpResetDate: Date | void, // A reset is requested if this exists
   cancelOtpReset(): Promise<void>,
   disableOtp(): Promise<void>,
   enableOtp(timeout?: number): Promise<void>,

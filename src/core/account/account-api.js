@@ -241,12 +241,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       const { loginTree } = selfState()
       return loginTree.otpTimeout != null ? loginTree.otpKey : undefined
     },
-    get otpResetDate(): string | void {
+    get otpResetDate(): Date | void {
       lockdown()
       const { loginTree } = selfState()
-      if (loginTree.otpResetDate != null) {
-        return loginTree.otpResetDate.toISOString()
-      }
+      return loginTree.otpResetDate
     },
     async cancelOtpReset(): Promise<void> {
       lockdown()
