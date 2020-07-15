@@ -18,13 +18,10 @@ import {
   mergeKeyInfos
 } from './keys.js'
 import { loginFetch } from './login-fetch.js'
+import { type LoginReply } from './login-reply.js'
 import { getStash } from './login-selectors.js'
 import { type LoginStash, saveStash } from './login-stash.js'
-import {
-  type LoginKit,
-  type LoginReply,
-  type LoginTree
-} from './login-types.js'
+import { type LoginKit, type LoginTree } from './login-types.js'
 import { getLoginOtp, getStashOtp } from './otp.js'
 
 function cloneNode<Node: {}, Output>(

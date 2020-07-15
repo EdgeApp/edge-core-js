@@ -4,7 +4,7 @@ import { type EdgeFakeUser } from '../../types/types.js'
 import { type EdgeBox } from '../../util/crypto/crypto.js'
 import { filterObject } from '../../util/util.js'
 import { type LobbyReply, type LobbyRequest } from '../login/lobby.js'
-import { type LoginReply } from '../login/login-types.js'
+import { type LoginReply } from '../login/login-reply.js'
 import { type EdgeSnrp } from '../scrypt/scrypt-pixie.js'
 
 export type DbLobby = {
