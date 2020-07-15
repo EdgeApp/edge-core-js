@@ -2,20 +2,16 @@
 
 import { base64 } from 'rfc4648'
 
+import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
-import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
-import { type LoginStash, saveStash } from './login-stash.js'
-import {
-  type LoginKit,
-  type LoginReply,
-  type LoginTree
-} from './login-types.js'
-import { applyKit, applyLoginReply, makeLoginTree } from './login.js'
+import { type LoginStash } from './login-stash.js'
+import { type LoginKit, type LoginTree } from './login-types.js'
+import { applyKit, serverLogin } from './login.js'
 
 function recovery2Id(recovery2Key: Uint8Array, username: string): Uint8Array {
   const data = utf8.parse(fixUsername(username))
@@ -27,32 +23,6 @@ function recovery2Auth(recovery2Key: Uint8Array, answers: string[]): string[] {
     const data = utf8.parse(answer)
     return base64.stringify(hmacSha256(data, recovery2Key))
   })
-}
-
-/**
- * Fetches and decrypts the loginKey from the server.
- * @return Promise<{loginKey, loginReply}>
- */
-async function fetchLoginKey(
-  ai: ApiInput,
-  recovery2Key: Uint8Array,
-  username: string,
-  answers: string[],
-  otp: string | void
-): Promise<{ loginKey: Uint8Array, loginReply: LoginReply }> {
-  const request = {
-    recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
-    recovery2Auth: recovery2Auth(recovery2Key, answers),
-    otp
-  }
-  const reply = await loginFetch(ai, 'POST', '/v2/login', request)
-  if (reply.recovery2Box == null) {
-    throw new Error('Missing data for recovery v2 login')
-  }
-  return {
-    loginKey: decrypt(reply.recovery2Box, recovery2Key),
-    loginReply: reply
-  }
 }
 
 /**
@@ -73,20 +43,21 @@ export async function loginRecovery2(
   recovery2Key: Uint8Array,
   username: string,
   answers: string[],
-  otpKey: string | void
+  opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  let stashTree = getStash(ai, username)
-  const { loginKey, loginReply } = await fetchLoginKey(
-    ai,
-    recovery2Key,
-    username,
-    answers,
-    totp(otpKey || stashTree.otpKey)
-  )
-  stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-  if (otpKey) stashTree.otpKey = fixOtpKey(otpKey)
-  await saveStash(ai, stashTree)
-  return makeLoginTree(stashTree, loginKey)
+  const stashTree = getStash(ai, username)
+
+  // Request:
+  const request = {
+    recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
+    recovery2Auth: recovery2Auth(recovery2Key, answers)
+  }
+  return serverLogin(ai, stashTree, stashTree, opts, request, reply => {
+    if (reply.recovery2Box == null) {
+      throw new Error('Missing data for recovery v2 login')
+    }
+    return Promise.resolve(decrypt(reply.recovery2Box, recovery2Key))
+  })
 }
 
 /**

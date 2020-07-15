@@ -5,10 +5,9 @@
 
 import { base64 } from 'rfc4648'
 
-import { type EdgeLoginMessages } from '../../types/types.js'
+import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, decryptText } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
-import { totp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import { filterObject, softCat } from '../../util/util.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -19,13 +18,11 @@ import {
   mergeKeyInfos
 } from './keys.js'
 import { loginFetch } from './login-fetch.js'
-import { getStash, hashUsername } from './login-selectors.js'
+import { type LoginReply, asLoginReply } from './login-reply.js'
+import { getStash } from './login-selectors.js'
 import { type LoginStash, saveStash } from './login-stash.js'
-import {
-  type LoginKit,
-  type LoginReply,
-  type LoginTree
-} from './login-types.js'
+import { type LoginKit, type LoginTree } from './login-types.js'
+import { getLoginOtp, getStashOtp } from './otp.js'
 
 function cloneNode<Node: {}, Output>(
   node: Node,
@@ -306,6 +303,39 @@ export function sanitizeLoginStash(
 }
 
 /**
+ * Logs a user in, using the auth server to retrieve information.
+ * The various login methods (password / PIN / recovery, etc.) share
+ * common logic, which all lives in here.
+ *
+ * The things tha differ between the methods are the server payloads
+ * and the decryption steps, so this function accepts those two things
+ * as parameters, plus the ordinary login options.
+ */
+export async function serverLogin(
+  ai: ApiInput,
+  stashTree: LoginStash,
+  stash: LoginStash,
+  opts: EdgeAccountOptions,
+  serverAuth: {},
+  decrypt: (reply: LoginReply) => Promise<Uint8Array>
+): Promise<LoginTree> {
+  const loginReply = asLoginReply(
+    await loginFetch(ai, 'POST', '/v2/login', {
+      ...serverAuth,
+      otp: getStashOtp(stash, opts)
+    })
+  )
+
+  // Try decrypting the reply:
+  const loginKey = await decrypt(loginReply)
+
+  // Save the latest data:
+  stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+  await saveStash(ai, stashTree)
+  return makeLoginTree(stashTree, loginKey, stash.appId)
+}
+
+/**
  * Changing a login involves updating the server, the in-memory login,
  * and the on-disk stash. A login kit contains all three elements,
  * and this function knows how to apply them all.
@@ -409,58 +439,15 @@ export function makeAuthJson(login: LoginTree): any {
     return {
       loginId: login.loginId,
       loginAuth: base64.stringify(login.loginAuth),
-      otp: totp(login.otpKey)
+      otp: getLoginOtp(login)
     }
   }
   if (login.passwordAuth != null) {
     return {
       userId: login.userId,
       passwordAuth: base64.stringify(login.passwordAuth),
-      otp: totp(login.otpKey)
+      otp: getLoginOtp(login)
     }
   }
   throw new Error('No server authentication methods available')
-}
-
-/**
- * Requests an OTP reset.
- */
-export async function resetOtp(
-  ai: ApiInput,
-  username: string,
-  resetToken: string
-): Promise<Date> {
-  const request = {
-    userId: base64.stringify(await hashUsername(ai, username)),
-    otpResetAuth: resetToken
-  }
-  return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
-    // The server returns dates as ISO 8601 formatted strings:
-    return new Date(reply.otpResetDate)
-  })
-}
-
-/**
- * Fetches any login-related messages for all the users on this device.
- */
-export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
-  const stashes = ai.props.state.login.stashes
-
-  const loginMap: { [loginId: string]: string } = {} // loginId -> username
-  for (const username of Object.keys(stashes)) {
-    const loginId = stashes[username].loginId
-    if (loginId) loginMap[loginId] = username
-  }
-
-  const request = {
-    loginIds: Object.keys(loginMap)
-  }
-  return loginFetch(ai, 'POST', '/v2/messages', request).then(reply => {
-    const out: EdgeLoginMessages = {}
-    for (const message of reply) {
-      const username = loginMap[message.loginId]
-      if (username) out[username] = message
-    }
-    return out
-  })
 }

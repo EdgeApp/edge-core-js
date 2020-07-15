@@ -91,7 +91,7 @@ async function onReply(
 export function requestEdgeLogin(
   ai: ApiInput,
   appId: string,
-  opts: EdgeEdgeLoginOptions
+  opts: EdgeEdgeLoginOptions = {}
 ): Promise<EdgePendingEdgeLogin> {
   const request = {
     loginRequest: {

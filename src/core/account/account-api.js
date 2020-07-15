@@ -231,7 +231,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     get otpResetDate(): string | void {
       lockdown()
       const { loginTree } = selfState()
-      return loginTree.otpResetDate
+      if (loginTree.otpResetDate != null) {
+        return loginTree.otpResetDate.toISOString()
+      }
     },
     async cancelOtpReset(): Promise<void> {
       lockdown()

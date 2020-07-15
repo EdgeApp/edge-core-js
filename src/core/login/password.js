@@ -2,19 +2,13 @@
 
 import { base64 } from 'rfc4648'
 
+import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
-import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
-import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash, hashUsername } from './login-selectors.js'
-import { type LoginStash, saveStash } from './login-stash.js'
-import {
-  type LoginKit,
-  type LoginReply,
-  type LoginTree
-} from './login-types.js'
-import { applyKit, applyLoginReply, makeLoginTree, syncLogin } from './login.js'
+import { type LoginKit, type LoginTree } from './login-types.js'
+import { applyKit, makeLoginTree, serverLogin, syncLogin } from './login.js'
 
 export const passwordAuthSnrp = userIdSnrp
 
@@ -25,50 +19,61 @@ function makeHashInput(username: string, password: string): string {
 /**
  * Extracts the loginKey from the login stash.
  */
-async function extractLoginKey(
+async function loginPasswordOffline(
   ai: ApiInput,
-  stash: LoginStash,
   username: string,
-  password: string
-): Promise<Uint8Array> {
-  const { passwordBox, passwordKeySnrp } = stash
+  password: string,
+  opts: EdgeAccountOptions
+): Promise<LoginTree> {
+  const stashTree = getStash(ai, username)
+
+  const { passwordBox, passwordKeySnrp } = stashTree
   if (passwordBox == null || passwordKeySnrp == null) {
     throw new Error('Missing data for offline password login')
   }
   const up = makeHashInput(username, password)
   const passwordKey = await scrypt(ai, up, passwordKeySnrp)
-  return decrypt(passwordBox, passwordKey)
+  const loginKey = decrypt(passwordBox, passwordKey)
+  const loginTree = makeLoginTree(stashTree, loginKey)
+
+  // Since we logged in offline, update the stash in the background:
+  // TODO: If the user provides an OTP token, add that to the stash.
+  const { log } = ai.props
+  syncLogin(ai, loginTree, loginTree).catch(e => log.warn(e))
+
+  return loginTree
 }
 
 /**
  * Fetches the loginKey from the server.
  */
-async function fetchLoginKey(
+async function loginPasswordOnline(
   ai: ApiInput,
   username: string,
   password: string,
-  otp: string | void
-): Promise<{ loginKey: Uint8Array, loginReply: LoginReply }> {
-  const up = makeHashInput(username, password)
+  opts: EdgeAccountOptions
+): Promise<LoginTree> {
+  const stashTree = getStash(ai, username)
 
+  // Request:
+  const up = makeHashInput(username, password)
   const [userId, passwordAuth] = await Promise.all([
     hashUsername(ai, username),
     scrypt(ai, up, passwordAuthSnrp)
   ])
   const request = {
     userId: base64.stringify(userId),
-    passwordAuth: base64.stringify(passwordAuth),
-    otp
+    passwordAuth: base64.stringify(passwordAuth)
   }
-  const reply = await loginFetch(ai, 'POST', '/v2/login', request)
-  if (reply.passwordBox == null || reply.passwordKeySnrp == null) {
-    throw new Error('Missing data for online password login')
-  }
-  const passwordKey = await scrypt(ai, up, reply.passwordKeySnrp)
-  return {
-    loginKey: decrypt(reply.passwordBox, passwordKey),
-    loginReply: reply
-  }
+  return serverLogin(ai, stashTree, stashTree, opts, request, reply => {
+    const { passwordBox, passwordKeySnrp } = reply
+    if (passwordBox == null || passwordKeySnrp == null) {
+      throw new Error('Missing data for online password login')
+    }
+    return scrypt(ai, up, passwordKeySnrp).then(passwordKey =>
+      decrypt(passwordBox, passwordKey)
+    )
+  })
 }
 
 /**
@@ -81,32 +86,11 @@ export async function loginPassword(
   ai: ApiInput,
   username: string,
   password: string,
-  otpKey: string | void
+  opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  const { log } = ai.props
-  let stashTree = getStash(ai, username)
-
-  try {
-    const loginKey = await extractLoginKey(ai, stashTree, username, password)
-    const loginTree = makeLoginTree(stashTree, loginKey)
-
-    // Since we logged in offline, update the stash in the background:
-    // TODO: If the user provides an OTP token, add that to the stash.
-    syncLogin(ai, loginTree, loginTree).catch(e => log.warn(e))
-
-    return loginTree
-  } catch (e) {
-    const { loginKey, loginReply } = await fetchLoginKey(
-      ai,
-      username,
-      password,
-      totp(otpKey || stashTree.otpKey)
-    )
-    stashTree = applyLoginReply(stashTree, loginKey, loginReply)
-    if (otpKey) stashTree.otpKey = fixOtpKey(otpKey)
-    await saveStash(ai, stashTree)
-    return makeLoginTree(stashTree, loginKey)
-  }
+  return loginPasswordOffline(ai, username, password, opts).catch(() =>
+    loginPasswordOnline(ai, username, password, opts)
+  )
 }
 
 export async function changePassword(
