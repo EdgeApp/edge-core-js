@@ -6,6 +6,35 @@ import {
 } from '../../types/types.js'
 import { type LoginStash } from './login-stash.js'
 
+/**
+ * Data sent to authenticate with the login server.
+ */
+export type LoginRequest = {
+  // The request payload:
+  data?: any,
+
+  // Common fields for all login methods:
+  otp?: string,
+  voucherId?: string,
+  voucherAuth?: string,
+
+  // Auth key login:
+  loginId?: string,
+  loginAuth?: string,
+
+  // Password login:
+  userId?: string,
+  passwordAuth?: string,
+
+  // PIN login:
+  pin2Id?: string,
+  pin2Auth?: string,
+
+  // Recovery login:
+  recovery2Id?: string,
+  recovery2Auth?: string[]
+}
+
 // Login data decrypted into memory.
 export type LoginTree = {
   // Identity:

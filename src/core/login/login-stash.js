@@ -34,6 +34,8 @@ export type LoginStash = {
   otpKey?: string,
   otpResetDate?: Date,
   otpTimeout?: number,
+  voucherId?: string,
+  voucherAuth?: string,
 
   // Return logins:
   loginAuthBox?: EdgeBox,
@@ -144,6 +146,8 @@ const asLoginStash: Cleaner<LoginStash> = asObject({
   otpKey: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
+  voucherId: asOptional(asString),
+  voucherAuth: asOptional(asString),
 
   // Return logins:
   loginAuthBox: asOptional(asEdgeBox),
