@@ -14,6 +14,7 @@ export type LoginRequest = {
   data?: any,
 
   // Common fields for all login methods:
+  deviceDescription?: string,
   otp?: string,
   voucherId?: string,
   voucherAuth?: string,

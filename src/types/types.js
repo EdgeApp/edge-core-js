@@ -1022,6 +1022,9 @@ export type EdgeContextOptions = {
   authServer?: string,
   hideKeys?: boolean,
 
+  // A string to describe this phone or app:
+  deviceDescription?: string,
+
   // Intercepts all console logging:
   onLog?: EdgeOnLog,
 

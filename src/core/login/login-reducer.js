@@ -16,6 +16,7 @@ export type LoginStashMap = { [username: string]: LoginStash }
 export type LoginState = {
   +apiKey: string,
   +appId: string,
+  +deviceDescription: string | null,
   +serverUri: string,
   +stashes: LoginStashMap,
   +localUsers: EdgeUserInfo[],
@@ -33,6 +34,10 @@ export const login: FatReducer<
 
   appId(state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.appId : state
+  },
+
+  deviceDescription(state = null, action: RootAction): string | null {
+    return action.type === 'INIT' ? action.payload.deviceDescription : state
   },
 
   localUsers: memoizeReducer(

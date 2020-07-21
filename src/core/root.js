@@ -33,6 +33,7 @@ export async function makeContext(
     apiKey,
     appId = '',
     authServer = 'https://auth.airbitz.co/api',
+    deviceDescription = null,
     hideKeys = false,
     plugins: pluginsInit = {}
   } = opts
@@ -50,7 +51,15 @@ export async function makeContext(
   const redux = createStore(reducer, enhancers)
   redux.dispatch({
     type: 'INIT',
-    payload: { apiKey, appId, authServer, hideKeys, pluginsInit, stashes }
+    payload: {
+      apiKey,
+      appId,
+      authServer,
+      deviceDescription,
+      hideKeys,
+      pluginsInit,
+      stashes
+    }
   })
 
   // Subscribe to new plugins:

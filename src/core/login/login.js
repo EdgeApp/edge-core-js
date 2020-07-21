@@ -325,12 +325,15 @@ export async function serverLogin(
   serverAuth: LoginRequest,
   decrypt: (reply: LoginReply) => Promise<Uint8Array>
 ): Promise<LoginTree> {
+  const { deviceDescription } = ai.props.state.login
+
   const request: LoginRequest = {
     otp: getStashOtp(stash, opts),
     voucherId: stash.voucherId,
     voucherAuth: stash.voucherAuth,
     ...serverAuth
   }
+  if (deviceDescription != null) request.deviceDescription = deviceDescription
 
   const loginReply = asLoginReply(
     await loginFetch(ai, 'POST', '/v2/login', request).catch(error => {
