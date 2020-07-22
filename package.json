@@ -94,7 +94,7 @@
     "assert-log": "^0.2.1",
     "babel-eslint": ">=10.0.0",
     "babel-loader": "^8.0.5",
-    "babel-plugin-transform-fake-error-class": "^0.1.0",
+    "babel-plugin-transform-fake-error-class": "^1.0.0",
     "chai": "^4.2.0",
     "eslint": ">=6.2.2",
     "eslint-config-standard-kit": ">=0.14.2",
