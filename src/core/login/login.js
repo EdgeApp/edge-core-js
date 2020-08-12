@@ -81,6 +81,7 @@ function applyLoginReplyInner(
   // Copy common items:
   const out: LoginStash = filterObject(loginReply, [
     'appId',
+    'created',
     'loginId',
     'loginAuthBox',
     'userId',
@@ -172,6 +173,7 @@ function makeLoginTreeInner(
     throw new Error('No loginId provided')
   }
   login.appId = stash.appId
+  login.created = stash.created
   login.loginId = stash.loginId
   login.loginKey = loginKey
   login.otpKey = stash.otpKey
@@ -323,6 +325,17 @@ export async function serverLogin(
     await loginFetch(ai, 'POST', '/v2/login', {
       ...serverAuth,
       otp: getStashOtp(stash, opts)
+    }).catch(error => {
+      // Save the username if we get an OTP error:
+      if (
+        error.name === 'OtpError' &&
+        error.loginId != null &&
+        stash.loginId === ''
+      ) {
+        stash.loginId = error.loginId
+        saveStash(ai, stashTree)
+      }
+      throw error
     })
   )
 

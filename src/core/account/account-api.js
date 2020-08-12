@@ -136,6 +136,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       if (!username) throw new Error('Missing username')
       return username
     },
+    get created(): Date | void {
+      return selfState().login.created
+    },
 
     // Speciality API's:
     get currencyConfig(): EdgePluginMap<EdgeCurrencyConfig> {

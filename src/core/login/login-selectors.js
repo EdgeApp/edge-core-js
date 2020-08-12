@@ -15,7 +15,8 @@ export function getStash(ai: ApiInput, username: string): LoginStash {
   const fixedName = fixUsername(username)
   const { stashes } = ai.props.state.login
 
-  return stashes[fixedName] || { username: fixedName, appId: '' }
+  if (stashes[fixedName] != null) return stashes[fixedName]
+  return { username: fixedName, appId: '', loginId: '' }
 }
 
 // Hashed username cache:

@@ -17,7 +17,9 @@ import { type EdgeSnrp, asEdgeSnrp } from '../scrypt/scrypt-pixie.js'
  * Data sent back by the auth server.
  */
 export type LoginReply = {
+  // Identity:
   appId: string,
+  created?: Date,
   loginId: string,
 
   // 2-factor:
@@ -56,6 +58,7 @@ export type LoginReply = {
 export const asLoginReply: Cleaner<LoginReply> = asObject({
   // Identity:
   appId: asString,
+  created: asOptional(asDate),
   loginId: asString,
 
   // 2-factor:

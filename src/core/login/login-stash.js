@@ -25,6 +25,7 @@ import { fixUsername } from './login-selectors.js'
 export type LoginStash = {
   // Identity:
   appId: string,
+  created?: Date,
   loginId: string,
   userId?: string,
   username?: string,
@@ -134,6 +135,7 @@ export async function saveStash(
 const asLoginStash: Cleaner<LoginStash> = asObject({
   // Identity:
   appId: asString,
+  created: asOptional(asDate),
   loginId: asString,
   userId: asOptional(asString),
   username: asOptional(asString),
