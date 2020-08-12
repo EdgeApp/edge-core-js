@@ -138,6 +138,7 @@ export function loginResponse<Payload>(
  * An OTP failure response.
  */
 export function otpErrorResponse(
+  loginId: string,
   otpResetToken: string,
   otpResetDate?: Date
 ): Promise<HttpResponse> {
@@ -146,6 +147,7 @@ export function otpErrorResponse(
     status_code: code,
     message,
     results: {
+      login_id: loginId,
       otp_reset_auth: otpResetToken,
       otp_timeout_date:
         otpResetDate != null ? otpResetDate.toISOString() : undefined

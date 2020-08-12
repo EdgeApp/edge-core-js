@@ -159,20 +159,27 @@ describe('otp', function () {
   it('remote login fails', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
-    const remote = await world.makeEdgeContext(contextOptions)
+    const remote = await world.makeEdgeContext({
+      ...contextOptions,
+      cleanDevice: true
+    })
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    await account.disableOtp()
-    await account.enableOtp()
 
     // Cannot log in remotely:
-    await remote.loginWithPIN(fakeUser.username, fakeUser.pin).catch(error => {
-      expect(error.name).equals(errorNames.OtpError)
-      return context.requestOtpReset(fakeUser.username, error.resetToken)
-    })
+    await remote.loginWithPassword(fakeUser.username, fakeUser.password).then(
+      () => {
+        throw new Error('First-time 2fa logins should fail')
+      },
+      error => {
+        expect(error.name).equals(errorNames.OtpError)
+        expect(remote.localUsers.length).equals(1)
+        return context.requestOtpReset(fakeUser.username, error.resetToken)
+      }
+    )
 
     // Can log in remotely with the token:
-    await remote.loginWithPIN(fakeUser.username, fakeUser.pin, {
-      otp: account.otpKey
+    await remote.loginWithPassword(fakeUser.username, fakeUser.password, {
+      otpKey: account.otpKey
     })
 
     // Verify that a reset has been requested:
