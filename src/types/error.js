@@ -142,8 +142,8 @@ export class OtpError extends Error {
     super(message)
     this.name = this.type = errorNames.OtpError
     if (resultsJson != null) {
-      if (typeof resultsJson.loginId === 'string') {
-        this.loginId = resultsJson.loginId
+      if (typeof resultsJson.login_id === 'string') {
+        this.loginId = resultsJson.login_id
       }
       if (typeof resultsJson.otp_reset_auth === 'string') {
         this.resetToken = resultsJson.otp_reset_auth

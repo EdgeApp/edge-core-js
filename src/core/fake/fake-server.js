@@ -68,7 +68,7 @@ const withLogin2 = (
       return passwordErrorResponse(0)
     }
     if (login.otpKey && !checkTotp(login.otpKey, json.otp)) {
-      return otpErrorResponse(OTP_RESET_TOKEN)
+      return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
@@ -83,7 +83,7 @@ const withLogin2 = (
       return passwordErrorResponse(0)
     }
     if (login.otpKey && !checkTotp(login.otpKey, json.otp)) {
-      return otpErrorResponse(OTP_RESET_TOKEN)
+      return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
@@ -98,7 +98,7 @@ const withLogin2 = (
       return passwordErrorResponse(0)
     }
     if (login.otpKey && !checkTotp(login.otpKey, json.otp)) {
-      return otpErrorResponse(OTP_RESET_TOKEN)
+      return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
@@ -120,7 +120,7 @@ const withLogin2 = (
       }
     }
     if (login.otpKey && !checkTotp(login.otpKey, json.otp)) {
-      return otpErrorResponse(OTP_RESET_TOKEN)
+      return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
