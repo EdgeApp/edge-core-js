@@ -1,5 +1,13 @@
 # edge-core-js
 
+## 0.17.10 (2020-08-17)
+
+- (feature) Allow users to pass 6-digit OTP codes directly. This means `EdgeAccountOptions.otp` is deprecated for passing the secret. Use `EdgeAccountOptions.otpKey` to pass the secret, or `EdgeAccountOptions.otp` to pass the 6-digit code.
+- (feature) Save usernames for first-time logins that fail 2fa.
+- (feature) Save & return the account creation date as `EdgeAccount.created`.
+- (fix) Harden server response parsing.
+- (fix) Upgrade many dev dependencies.
+
 ## 0.17.9 (2020-07-10)
 
 - Restore sync failure messages in the UI
