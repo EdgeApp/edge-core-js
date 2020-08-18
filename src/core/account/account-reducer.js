@@ -278,21 +278,24 @@ export const accountReducer: FatReducer<
   AccountState,
   RootAction,
   AccountNext
-> = filterReducer(accountInner, (action: RootAction, next: AccountNext) => {
-  if (
-    /^ACCOUNT_/.test(action.type) &&
-    action.payload != null &&
-    action.payload.accountId === next.id
-  ) {
-    return action
-  }
+> = filterReducer(
+  accountInner,
+  (action: RootAction, next: AccountNext): RootAction => {
+    if (
+      /^ACCOUNT_/.test(action.type) &&
+      action.payload != null &&
+      action.payload.accountId === next.id
+    ) {
+      return action
+    }
 
-  if (action.type === 'LOGIN' && next.root.lastAccountId === next.id) {
-    return action
-  }
+    if (action.type === 'LOGIN' && next.root.lastAccountId === next.id) {
+      return action
+    }
 
-  return { type: 'UPDATE_NEXT' }
-})
+    return { type: 'UPDATE_NEXT' }
+  }
+)
 
 function getLast<T>(array: T[]): T {
   return array[array.length - 1]

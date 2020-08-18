@@ -339,7 +339,7 @@ async function getLegacyFileNames(
     legacyMap = JSON.parse(text)
   } catch (e) {}
 
-  const missingLegacyFiles = []
+  const missingLegacyFiles: string[] = []
   for (let i = 0; i < legacyFileNames.length; i++) {
     const fileName = legacyFileNames[i]
     const fileNameMap = legacyMap[fileName]

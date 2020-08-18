@@ -115,7 +115,7 @@ export function exportTransactionsToQBOInner(
   denom: string | null,
   dateNow: number
 ): string {
-  const STMTTRN = []
+  const STMTTRN: any[] = []
   const now = makeOfxDate(dateNow / 1000)
 
   for (const edgeTx of edgeTransactions) {
@@ -237,7 +237,7 @@ export async function exportTransactionsToCSVInner(
   return new Promise((resolve, reject) => {
     const currencyField = 'AMT_' + currencyCode
     const networkFeeField = 'AMT_NETWORK_FEES_' + currencyCode
-    const items = []
+    const items: any[] = []
 
     for (const edgeTx of edgeTransactions) {
       const amount: string = denom

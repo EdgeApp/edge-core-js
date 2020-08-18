@@ -5,7 +5,10 @@
 
 import { base64 } from 'rfc4648'
 
-import { type EdgeAccountOptions } from '../../types/types.js'
+import {
+  type EdgeAccountOptions,
+  type EdgeWalletInfo
+} from '../../types/types.js'
 import { decrypt, decryptText } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { utf8 } from '../../util/encoding.js'
@@ -207,7 +210,7 @@ function makeLoginTreeInner(
     login.recovery2Key = base64.parse(stash.recovery2Key)
   }
 
-  const legacyKeys = []
+  const legacyKeys: EdgeWalletInfo[] = []
 
   // BitID wallet:
   const { mnemonicBox, rootKeyBox } = stash

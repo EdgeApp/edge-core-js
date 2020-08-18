@@ -326,7 +326,7 @@ export const currencyWalletReducer: FatReducer<
   CurrencyWalletNext
 > = filterReducer(
   currencyWalletInner,
-  (action: RootAction, next: CurrencyWalletNext) => {
+  (action: RootAction, next: CurrencyWalletNext): RootAction => {
     return /^CURRENCY_/.test(action.type) &&
       action.payload != null &&
       action.payload.walletId === next.id

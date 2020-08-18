@@ -1,5 +1,6 @@
 // @flow
 
+import { type EdgeLoginMessage } from '../../types/types.js'
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import {
@@ -464,7 +465,7 @@ const messagesRoute: ApiServer = pickMethod({
     const { db, json } = request
     const { loginIds } = json
 
-    const out = []
+    const out: EdgeLoginMessage[] = []
     for (const loginId of loginIds) {
       const login = db.getLoginById(loginId)
       if (login) {

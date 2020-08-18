@@ -26,7 +26,7 @@ function assign(out: any): any {
  * Array.fill
  */
 function fill(value: any, start?: number, end?: number): any[] {
-  const length = this.length
+  const length: number = this.length
   function clamp(endpoint: number): number {
     return endpoint < 0
       ? Math.max(length + endpoint, 0)
