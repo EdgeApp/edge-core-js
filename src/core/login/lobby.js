@@ -49,7 +49,10 @@ function deriveSharedKey(keypair: Keypair, pubkey: Uint8Array): Uint8Array {
     .toArray('be')
 
   // From NIST.SP.800-56Ar2 section 5.8.1:
-  return hmacSha256([0, 0, 0, 1, ...secretX], utf8.parse('dataKey'))
+  return hmacSha256(
+    Uint8Array.from([0, 0, 0, 1, ...secretX]),
+    utf8.parse('dataKey')
+  )
 }
 
 /**
@@ -172,7 +175,7 @@ export function makeLobby(
 ): Promise<LobbyInstance> {
   const { io } = ai.props
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
-  const pubkey = keypair.getPublic().encodeCompressed()
+  const pubkey = Uint8Array.from(keypair.getPublic().encodeCompressed())
   if (lobbyRequest.timeout == null) {
     lobbyRequest.timeout = 600
   }

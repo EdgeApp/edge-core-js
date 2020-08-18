@@ -25,7 +25,7 @@ export function scrypt(
 
     scryptJs(copy, salt, n, r, p, dklen, (error, progress, key) => {
       if (error != null) return reject(error)
-      if (key != null) return resolve(key)
+      if (key != null) return resolve(Uint8Array.from(key))
     })
   })
 }
