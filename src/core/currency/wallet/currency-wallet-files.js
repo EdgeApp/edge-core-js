@@ -234,9 +234,8 @@ function loadNameFile(
     .getText()
     .then(text => JSON.parse(text).walletName)
     .catch(async e => {
-      // The wallet info does happen to have full data, so this works:
-      const fullWalletInfo: any = input.props.selfState.walletInfo
-      const name = await fetchBackupName(input, fullWalletInfo.appIds || [])
+      const { appIds = [] } = input.props.selfState.walletInfo
+      const name = await fetchBackupName(input, appIds)
       if (name != null) await renameCurrencyWallet(input, name)
       return name
     })
