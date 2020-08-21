@@ -2,7 +2,7 @@
 
 import '../../client-side.js'
 
-import React, { type Node, Component } from 'react'
+import * as React from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
 import RNFS from 'react-native-fs'
 import { WebView } from 'react-native-webview'
@@ -108,7 +108,7 @@ function makeOuterWebViewBridge<Root>(
 /**
  * Launches the Edge core worker in a WebView and returns its API.
  */
-export class EdgeCoreBridge extends Component<Props> {
+export class EdgeCoreBridge extends React.Component<Props> {
   callbacks: WebViewCallbacks
 
   constructor(props: Props) {
@@ -135,7 +135,7 @@ export class EdgeCoreBridge extends Component<Props> {
     )
   }
 
-  render(): Node {
+  render(): React.Node {
     let uri =
       Platform.OS === 'android'
         ? 'file:///android_asset/edge-core/index.html'
