@@ -49,5 +49,5 @@ export interface EdgeCoreWebViewProps {
   onMessage?: (event: EdgeCoreMessageEvent) => void
   onScriptError?: (event: EdgeCoreScriptError) => void
 }
-export type EdgeCoreWebView = React.ComponentType<EdgeCoreWebViewProps>
+export type EdgeCoreWebView = React.ComponentClass<EdgeCoreWebViewProps>
 export type EdgeCoreWebViewRef = React.Component<EdgeCoreWebViewProps>

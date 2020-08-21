@@ -20,7 +20,7 @@ export interface DbLobby {
 /**
  * A login object stored in the fake database.
  */
-export type DbLogin = $Diff<LoginDump, { children: unknown }>
+export type DbLogin = Omit<LoginDump, 'children'>
 
 /**
  * A sync repo stored in the fake database.
@@ -91,7 +91,7 @@ export class FakeDb {
 
     // Create fake repos:
     for (const syncKey of Object.keys(user.repos)) {
-      this.repos[syncKey] = { ...user.repos[syncKey] }
+      this.repos[syncKey] = { ...user.repos[syncKey] } as any
     }
   }
 

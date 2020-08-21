@@ -47,6 +47,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       ai.props.close()
     },
 
+    // @ts-expect-error: This isn't supposed to be here:
     $internalStuff,
 
     fixUsername,

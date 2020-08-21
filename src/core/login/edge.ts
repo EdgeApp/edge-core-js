@@ -20,6 +20,10 @@ export interface LobbyLoginPayload {
   loginStash: LoginStash
 }
 
+type WritablePendingEdgeLogin = {
+  -readonly [P in keyof EdgePendingEdgeLogin]: EdgePendingEdgeLogin[P]
+}
+
 export const asLobbyLoginPayload: Cleaner<LobbyLoginPayload> = asObject({
   appId: asString,
   loginKey: asBase64,
@@ -122,7 +126,7 @@ export async function requestEdgeLogin(
     })
   ]
 
-  const out = {
+  const out: WritablePendingEdgeLogin = {
     id: lobby.lobbyId,
     cancelRequest,
     watch: watchMethod,

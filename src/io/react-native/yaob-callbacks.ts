@@ -78,6 +78,7 @@ export function makeYaobCallbacks<Root>(
 
       // Use our inside knowledge of YAOB to directly
       // subscribe to the root object appearing:
+      // @ts-expect-error
       onMethod.call(bridge._state, 'root', root => {
         gatedRoot = root
         tryReleasingRoot()

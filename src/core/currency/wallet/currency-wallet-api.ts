@@ -65,7 +65,7 @@ const fakeMetadata = {
 }
 
 // The EdgeTransaction.spendTargets type, but non-null:
-type SavedSpendTargets = EdgeTransaction['spendTargets'] & any[]
+type SavedSpendTargets = EdgeTransaction['spendTargets']
 
 /**
  * Creates an `EdgeCurrencyWallet` API object.
@@ -646,6 +646,7 @@ export function combineTxWithFile(
     txid: tx.txid,
     otherParams: { ...tx.otherParams, unfilteredIndex },
 
+    // @ts-expect-error Deprecated & removed:
     amountSatoshi: Number(tx.nativeAmount[currencyCode] ?? '0'),
     nativeAmount: tx.nativeAmount[currencyCode] ?? '0',
     networkFee: tx.networkFee[currencyCode] ?? '0',

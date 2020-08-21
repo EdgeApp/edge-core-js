@@ -41,8 +41,9 @@ export function addHiddenProperties<O extends {}, P extends {}>(
     Object.defineProperty(object, name, {
       writable: true,
       configurable: true,
+      // @ts-expect-error
       value: properties[name]
     })
   }
-  return object
+  return object as O & P
 }

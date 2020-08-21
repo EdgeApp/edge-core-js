@@ -9,7 +9,7 @@ import { CLIENT_FILE_NAME, clientFile } from './context/client-file'
 import { filterLogs, LogBackend, makeLog } from './log/log'
 import { loadStashes } from './login/login-stash'
 import { PluginIos, watchPlugins } from './plugins/plugins-actions'
-import { rootPixie, RootProps } from './root-pixie'
+import { RootOutput, rootPixie, RootProps } from './root-pixie'
 import { defaultLogSettings, reducer, RootState } from './root-reducer'
 
 let allContexts: EdgeContext[] = []
@@ -98,7 +98,7 @@ export async function makeContext(
   const syncClient = await makeSyncClient({ log, fetch: io.fetch })
 
   // Start the pixie tree:
-  const mirror = { output: {} }
+  const mirror: { output: RootOutput } = { output: {} as any }
   const closePixie = attachPixie(
     redux,
     filterPixie(

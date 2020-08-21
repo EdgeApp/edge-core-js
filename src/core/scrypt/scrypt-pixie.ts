@@ -22,7 +22,7 @@ function serialize<A extends any[], R>(
   f: (...args: A) => Promise<R>
 ): (...args: A) => Promise<R> {
   let lastTask: Promise<unknown> = Promise.resolve()
-  return function serialize(...args: A): Promise<R> {
+  return function serialize(this: any, ...args: A): Promise<R> {
     const onDone = (): Promise<R> => f.apply(this, args)
     const out = lastTask.then(onDone, onDone)
     lastTask = out

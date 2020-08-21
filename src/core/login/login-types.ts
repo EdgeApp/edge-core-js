@@ -51,7 +51,7 @@ export interface AppIdMap {
 export interface LoginKit {
   loginId: Uint8Array
   login: Partial<LoginTree>
-  server?: unknown
+  server?: object
   serverMethod?: string
   serverPath: string
   stash: Partial<LoginStash>

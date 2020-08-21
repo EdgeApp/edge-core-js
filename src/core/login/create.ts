@@ -14,7 +14,7 @@ import { ApiInput } from '../root-pixie'
 import { makeKeysKit } from './keys'
 import { loginFetch } from './login-fetch'
 import { fixUsername, hashUsername } from './login-selectors'
-import { saveStash } from './login-stash'
+import { LoginStash, saveStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 import { makeUsernameKit } from './login-username'
 import { makePasswordKit } from './password'
@@ -167,6 +167,6 @@ export async function createLogin(
   await loginFetch(ai, 'POST', kit.serverPath, request)
 
   kit.stash.lastLogin = now
-  await saveStash(ai, kit.stash)
-  return kit.login
+  await saveStash(ai, kit.stash as LoginStash)
+  return kit.login as LoginTree
 }

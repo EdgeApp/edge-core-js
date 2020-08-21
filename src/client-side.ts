@@ -10,7 +10,7 @@ import {
  * Client-side EdgeAccount methods.
  */
 export class AccountSync {
-  readonly allKeys: EdgeWalletInfoFull[]
+  readonly allKeys!: EdgeWalletInfoFull[]
 
   getFirstWalletInfo(type: string): EdgeWalletInfo | undefined {
     const out: EdgeWalletInfoFull | undefined = this.allKeys.find(
