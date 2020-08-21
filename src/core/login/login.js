@@ -21,7 +21,11 @@ import { loginFetch } from './login-fetch.js'
 import { type LoginReply, asLoginReply } from './login-reply.js'
 import { getStash } from './login-selectors.js'
 import { type LoginStash, saveStash } from './login-stash.js'
-import { type LoginKit, type LoginTree } from './login-types.js'
+import {
+  type LoginKit,
+  type LoginRequest,
+  type LoginTree
+} from './login-types.js'
 import { getLoginOtp, getStashOtp } from './otp.js'
 
 function cloneNode<Node: {}, Output>(
@@ -318,21 +322,33 @@ export async function serverLogin(
   stashTree: LoginStash,
   stash: LoginStash,
   opts: EdgeAccountOptions,
-  serverAuth: {},
+  serverAuth: LoginRequest,
   decrypt: (reply: LoginReply) => Promise<Uint8Array>
 ): Promise<LoginTree> {
+  const { deviceDescription } = ai.props.state.login
+
+  const request: LoginRequest = {
+    otp: getStashOtp(stash, opts),
+    voucherId: stash.voucherId,
+    voucherAuth: stash.voucherAuth,
+    ...serverAuth
+  }
+  if (deviceDescription != null) request.deviceDescription = deviceDescription
+
   const loginReply = asLoginReply(
-    await loginFetch(ai, 'POST', '/v2/login', {
-      ...serverAuth,
-      otp: getStashOtp(stash, opts)
-    }).catch(error => {
-      // Save the username if we get an OTP error:
+    await loginFetch(ai, 'POST', '/v2/login', request).catch(error => {
+      // Save the username / voucher if we get an OTP error:
       if (
         error.name === 'OtpError' &&
         error.loginId != null &&
-        stash.loginId === ''
+        // We have never seen this user before:
+        (stash.loginId === '' ||
+          // We got a voucher:
+          (error.voucherId != null && error.voucherAuth != null))
       ) {
         stash.loginId = error.loginId
+        stash.voucherId = error.voucherId
+        stash.voucherAuth = error.voucherAuth
         saveStash(ai, stashTree)
       }
       throw error
@@ -447,7 +463,7 @@ export function syncLogin(
 /**
  * Sets up a login v2 server authorization JSON.
  */
-export function makeAuthJson(login: LoginTree): any {
+export function makeAuthJson(login: LoginTree): LoginRequest {
   if (login.loginAuth != null) {
     return {
       loginId: login.loginId,

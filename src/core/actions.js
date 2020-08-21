@@ -246,6 +246,7 @@ export type RootAction =
         apiKey: string,
         appId: string,
         authServer: string,
+        deviceDescription: string | null,
         hideKeys: boolean,
         pluginsInit: EdgeCorePluginsInit,
         stashes: LoginStash[]

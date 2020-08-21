@@ -952,6 +952,10 @@ export type EdgeAccount = {
   disableOtp(): Promise<void>,
   enableOtp(timeout?: number): Promise<void>,
 
+  // 2fa bypass voucher approval / rejection:
+  approveVoucher(voucherId: string): Promise<void>,
+  rejectVoucher(voucherId: string): Promise<void>,
+
   // Edge login approval:
   fetchLobby(lobbyId: string): Promise<EdgeLobby>,
 
@@ -1018,6 +1022,9 @@ export type EdgeContextOptions = {
   authServer?: string,
   hideKeys?: boolean,
 
+  // A string to describe this phone or app:
+  deviceDescription?: string,
+
   // Intercepts all console logging:
   onLog?: EdgeOnLog,
 
@@ -1033,11 +1040,24 @@ export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
   displayName?: string
 }
 
+export type EdgePendingVoucher = {
+  voucherId: string,
+  activates: Date,
+  created: Date,
+  deviceDescription?: string,
+  ip: string,
+  ipDescription: string
+}
+
+export type EdgeLoginMessage = {
+  loginId: string,
+  otpResetPending: boolean,
+  pendingVouchers: EdgePendingVoucher[],
+  recovery2Corrupt: boolean
+}
+
 export type EdgeLoginMessages = {
-  [username: string]: {
-    otpResetPending: boolean,
-    recovery2Corrupt: boolean
-  }
+  [username: string]: EdgeLoginMessage
 }
 
 export type EdgePasswordRules = {
