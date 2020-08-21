@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.17.11 (2020-08-21)
+
+- (feature) Add a login voucher system. When a new device tries to log into an account with 2-factor security, the server can issue a voucher along with the `OtpError`. Existing devices with the 2-factor token can then log in and either approve or deny the voucher using `EdgeAccount.approveVoucher` or `EdgeAccount.rejectVoucher`. The `EdgeLoginMessages` type also includes a list of pending vouchers now.
+- (chore) Upgrade to hash.js v1.1.7 and redux-keto v0.3.4.
+
 ## 0.17.10 (2020-08-17)
 
 - (feature) Allow users to pass 6-digit OTP codes directly. This means `EdgeAccountOptions.otp` is deprecated for passing the secret. Use `EdgeAccountOptions.otpKey` to pass the secret, or `EdgeAccountOptions.otp` to pass the 6-digit code.
