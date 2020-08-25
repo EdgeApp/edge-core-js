@@ -22,6 +22,7 @@ describe('context', function () {
 
     expect(context.localUsers).deep.equals([
       {
+        keyLoginEnabled: true,
         pinLoginEnabled: true,
         recovery2Key: 'NVADGXzb5Zc55PYXVVT7GRcXPnY9NZJUjiZK8aQnidc',
         username: 'js test 0'

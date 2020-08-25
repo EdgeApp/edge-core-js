@@ -75,6 +75,7 @@ describe('creation', function () {
 
     expect(context.localUsers).deep.equals([
       {
+        keyLoginEnabled: true,
         pinLoginEnabled: true,
         recovery2Key: undefined,
         username: 'some fancy user'

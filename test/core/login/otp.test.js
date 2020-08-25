@@ -45,6 +45,16 @@ describe('otp', function () {
       }
     )
 
+    // The login fails, but the username still appears:
+    expect(remote.localUsers).deep.equals([
+      {
+        keyLoginEnabled: false,
+        pinLoginEnabled: false,
+        recovery2Key: undefined,
+        username: 'js test 0'
+      }
+    ])
+
     // Can log in remotely with the token:
     await remote.loginWithPassword(fakeUser.username, fakeUser.password, {
       otpKey: account.otpKey
