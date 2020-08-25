@@ -3,64 +3,12 @@
 import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { errorNames, makeFakeEdgeWorld } from '../../../src/index.js'
+import { makeFakeEdgeWorld } from '../../../src/index.js'
 import { expectRejection } from '../../expect-rejection.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
 const quiet = { onLog() {} }
-
-describe('username', function () {
-  it('normalize spaces and capitalization', async function () {
-    const world = await makeFakeEdgeWorld([], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-
-    assert.equal('test test', context.fixUsername('  TEST TEST  '))
-  })
-
-  it('reject invalid characters', async function () {
-    const world = await makeFakeEdgeWorld()
-    const context = await world.makeEdgeContext(contextOptions)
-
-    assert.throws(() => context.fixUsername('テスト'))
-  })
-
-  it('list usernames in local storage', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-
-    const list = await context.listUsernames()
-    assert.deepEqual(list, ['js test 0'])
-
-    expect(context.localUsers).deep.equals([
-      {
-        pinLoginEnabled: true,
-        recovery2Key: 'NVADGXzb5Zc55PYXVVT7GRcXPnY9NZJUjiZK8aQnidc',
-        username: 'js test 0'
-      }
-    ])
-  })
-
-  it('remove username from local storage', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-
-    expect(await context.listUsernames()).has.lengthOf(1)
-    await context.deleteLocalAccount(fakeUser.username)
-    expect(await context.listUsernames()).has.lengthOf(0)
-  })
-
-  it('cannot remove logged-in users', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-
-    await expectRejection(
-      context.deleteLocalAccount(fakeUser.username),
-      'Error: Cannot remove logged-in user'
-    )
-  })
-})
 
 describe('appId', function () {
   it('can log into unknown apps', async function () {
@@ -138,58 +86,6 @@ describe('creation', function () {
       remote.loginWithPassword(username, password),
       context.loginWithKey(username, account.loginKey)
     ])
-  })
-})
-
-describe('otp', function () {
-  it('local login works', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    expect(account.otpKey != null).equals(true)
-    await account.disableOtp()
-    expect(account.otpKey == null).equals(true)
-    await account.enableOtp()
-    expect(account.otpKey != null).equals(true)
-
-    // Can still log in locally:
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-  })
-
-  it('remote login fails', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-    const remote = await world.makeEdgeContext({
-      ...contextOptions,
-      cleanDevice: true
-    })
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-
-    // Cannot log in remotely:
-    await remote.loginWithPassword(fakeUser.username, fakeUser.password).then(
-      () => {
-        throw new Error('First-time 2fa logins should fail')
-      },
-      error => {
-        expect(error.name).equals(errorNames.OtpError)
-        expect(remote.localUsers.length).equals(1)
-        return context.requestOtpReset(fakeUser.username, error.resetToken)
-      }
-    )
-
-    // Can log in remotely with the token:
-    await remote.loginWithPassword(fakeUser.username, fakeUser.password, {
-      otpKey: account.otpKey
-    })
-
-    // Verify that a reset has been requested:
-    const messages1 = await context.fetchLoginMessages()
-    expect(messages1['js test 0'].otpResetPending).equals(true)
-
-    // Cancel the reset:
-    await account.cancelOtpReset()
-    const messages2 = await context.fetchLoginMessages()
-    expect(messages2['js test 0'].otpResetPending).equals(false)
   })
 })
 
