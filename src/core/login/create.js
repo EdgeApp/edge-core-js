@@ -62,7 +62,6 @@ export function makeCreateKit(
     appId,
     loginId: '',
     loginKey,
-    userId: '',
     children: [],
     keyInfos: []
   }

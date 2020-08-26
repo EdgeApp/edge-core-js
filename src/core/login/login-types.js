@@ -43,7 +43,7 @@ export type LoginTree = {
   created?: Date,
   loginId: string,
   loginKey: Uint8Array,
-  userId: string,
+  userId?: string,
   username?: string,
 
   // 2-factor:

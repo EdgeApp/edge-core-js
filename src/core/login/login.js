@@ -163,38 +163,43 @@ function makeLoginTreeInner(
   stash: LoginStash,
   loginKey: Uint8Array
 ): LoginTree {
-  const login = {}
+  const {
+    appId,
+    created,
+    loginId,
+    otpKey,
+    otpResetDate,
+    otpTimeout,
+    userId,
+    username,
+    children: stashChildren = [],
+    keyBoxes = []
+  } = stash
 
-  if (stash.username != null) {
-    login.username = stash.username
+  const login: LoginTree = {
+    appId,
+    created,
+    loginId,
+    otpKey,
+    otpResetDate,
+    otpTimeout,
+    userId,
+    username,
+    loginKey,
+    children: [],
+    keyInfos: []
   }
 
-  // Identity:
-  if (stash.appId == null) {
-    throw new Error('No appId provided')
-  }
+  // Server authentication:
   if (stash.loginAuthBox != null) {
     login.loginAuth = decrypt(stash.loginAuthBox, loginKey)
   }
-  if (stash.loginId == null) {
-    throw new Error('No loginId provided')
-  }
-  login.appId = stash.appId
-  login.created = stash.created
-  login.loginId = stash.loginId
-  login.loginKey = loginKey
-  login.otpKey = stash.otpKey
-  login.otpResetDate = stash.otpResetDate
-  login.otpTimeout = stash.otpTimeout
-
-  // Password:
-  if (stash.userId != null) {
-    login.userId = stash.userId
-  } else if (stash.passwordAuthBox != null) {
-    login.userId = login.loginId
-  }
   if (stash.passwordAuthBox != null) {
+    if (login.userId == null) login.userId = loginId
     login.passwordAuth = decrypt(stash.passwordAuthBox, loginKey)
+  }
+  if (login.loginAuth == null && login.passwordAuth == null) {
+    throw new Error('No server authentication methods on login')
   }
 
   // PIN v2:
@@ -236,17 +241,12 @@ function makeLoginTreeInner(
   }
 
   // Keys:
-  const stashKeyBoxes = stash.keyBoxes != null ? stash.keyBoxes : []
-  const keyInfos = stashKeyBoxes.map(box =>
-    JSON.parse(decryptText(box, loginKey))
-  )
-
+  const keyInfos = keyBoxes.map(box => JSON.parse(decryptText(box, loginKey)))
   login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos]).map(walletInfo =>
     fixWalletInfo(walletInfo)
   )
 
   // Recurse into children:
-  const stashChildren = stash.children != null ? stash.children : []
   login.children = stashChildren.map(child => {
     if (!child.parentBox) {
       throw new Error('Key integrity violation: No parentBox on child login.')
@@ -254,11 +254,6 @@ function makeLoginTreeInner(
     const childKey = decrypt(child.parentBox, loginKey)
     return makeLoginTreeInner(child, childKey)
   })
-
-  // Integrity check:
-  if (login.loginAuth == null && login.passwordAuth == null) {
-    throw new Error('No server authentication methods on login')
-  }
 
   return login
 }
