@@ -15,7 +15,6 @@ import {
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
 import { makeFetch } from '../../util/http/http-to-fetch.js'
-import { getInternalStuff } from '../context/internal-api.js'
 import { applyLoginReply } from '../login/login.js'
 import { type PluginIos } from '../plugins/plugins-actions.js'
 import { makeContext } from '../root.js'
@@ -32,6 +31,7 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
   const stash = applyLoginReply(
     {
       appId: '',
+      lastLogin: user.lastLogin,
       loginId: '',
       otpKey: server.otpKey,
       username: fixUsername(username)
@@ -102,13 +102,7 @@ export function makeFakeWorld(
       if (account.appId !== '') {
         throw new Error('Only root logins are dumpable.')
       }
-
-      // Hash the username:
-      const context = await out.makeEdgeContext({ appId: '', apiKey: '' })
-      const internal = getInternalStuff(context)
-      const loginId = base64.stringify(
-        await internal.hashUsername(account.username)
-      )
+      const loginId = base64.stringify(base58.parse(account.rootLoginId))
 
       // Find the data on the server:
       const login = fakeDb.getLoginById(loginId)
@@ -124,6 +118,7 @@ export function makeFakeWorld(
       for (const syncKey of syncKeys) repos[syncKey] = fakeDb.repos[syncKey]
 
       return {
+        lastLogin: account.lastLogin,
         loginId,
         loginKey: base64.stringify(base58.parse(account.loginKey)),
         repos,

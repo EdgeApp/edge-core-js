@@ -2,7 +2,11 @@
 
 import { base64 } from 'rfc4648'
 
-import { type EdgeWalletInfo, errorNames } from '../../types/types.js'
+import {
+  type EdgeAccountOptions,
+  type EdgeWalletInfo,
+  errorNames
+} from '../../types/types.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeKeysKit } from './keys.js'
@@ -60,6 +64,7 @@ export function makeCreateKit(
 
   const dummyLogin: LoginTree = {
     appId,
+    lastLogin: new Date(),
     loginId: '',
     loginKey,
     children: [],
@@ -128,9 +133,11 @@ export function makeCreateKit(
 export function createLogin(
   ai: ApiInput,
   username: string,
+  accountOpts: EdgeAccountOptions,
   opts: LoginCreateOpts
 ): Promise<LoginTree> {
   const fixedName = fixUsername(username)
+  const { now = new Date() } = accountOpts
 
   return makeCreateKit(ai, undefined, '', fixedName, opts).then(kit => {
     kit.login.username = fixedName
@@ -139,8 +146,9 @@ export function createLogin(
 
     const request = {}
     request.data = kit.server
-    return loginFetch(ai, 'POST', kit.serverPath, request).then(reply =>
-      saveStash(ai, kit.stash).then(() => kit.login)
-    )
+    return loginFetch(ai, 'POST', kit.serverPath, request).then(reply => {
+      kit.stash.lastLogin = now
+      return saveStash(ai, kit.stash).then(() => kit.login)
+    })
   })
 }

@@ -25,6 +25,7 @@ describe('otp', function () {
   })
 
   it('remote login fails', async function () {
+    const now = new Date()
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
     const remote = await world.makeEdgeContext({
@@ -34,21 +35,24 @@ describe('otp', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     // Cannot log in remotely:
-    await remote.loginWithPassword(fakeUser.username, fakeUser.password).then(
-      () => {
-        throw new Error('First-time 2fa logins should fail')
-      },
-      error => {
-        expect(error.name).equals(errorNames.OtpError)
-        expect(remote.localUsers.length).equals(1)
-        return context.requestOtpReset(fakeUser.username, error.resetToken)
-      }
-    )
+    await remote
+      .loginWithPassword(fakeUser.username, fakeUser.password, { now })
+      .then(
+        () => {
+          throw new Error('First-time 2fa logins should fail')
+        },
+        error => {
+          expect(error.name).equals(errorNames.OtpError)
+          expect(remote.localUsers.length).equals(1)
+          return context.requestOtpReset(fakeUser.username, error.resetToken)
+        }
+      )
 
     // The login fails, but the username still appears:
     expect(remote.localUsers).deep.equals([
       {
         keyLoginEnabled: false,
+        lastLogin: now,
         pinLoginEnabled: false,
         recovery2Key: undefined,
         username: 'js test 0'

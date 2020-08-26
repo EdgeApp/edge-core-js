@@ -63,6 +63,7 @@ describe('creation', function () {
 
   it('create account', async function () {
     this.timeout(15000)
+    const now = new Date()
     const world = await makeFakeEdgeWorld([], quiet)
     const contextOptions = { apiKey: '', appId: 'test' }
     const context = await world.makeEdgeContext(contextOptions)
@@ -71,11 +72,14 @@ describe('creation', function () {
     const password = 'some fancy password'
     const pin = '0218'
 
-    const account = await context.createAccount(username, password, pin)
+    const account = await context.createAccount(username, password, pin, {
+      now
+    })
 
     expect(context.localUsers).deep.equals([
       {
         keyLoginEnabled: true,
+        lastLogin: now,
         pinLoginEnabled: true,
         recovery2Key: undefined,
         username: 'some fancy user'

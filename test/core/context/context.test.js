@@ -23,6 +23,7 @@ describe('context', function () {
     expect(context.localUsers).deep.equals([
       {
         keyLoginEnabled: true,
+        lastLogin: fakeUser.lastLogin,
         pinLoginEnabled: true,
         recovery2Key: 'NVADGXzb5Zc55PYXVVT7GRcXPnY9NZJUjiZK8aQnidc',
         username: 'js test 0'
@@ -53,7 +54,11 @@ describe('context', function () {
   it('dumps fake users', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const account = await context.loginWithPIN(
+      fakeUser.username,
+      fakeUser.pin,
+      { now: fakeUser.lastLogin }
+    )
 
     // We should not dump this new guy's repos:
     await context.createAccount('dummy', undefined, '1111')

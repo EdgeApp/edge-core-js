@@ -26,6 +26,7 @@ export type LoginStash = {
   // Identity:
   appId: string,
   created?: Date,
+  lastLogin?: Date,
   loginId: string,
   userId?: string,
   username?: string,
@@ -138,6 +139,7 @@ const asLoginStash: Cleaner<LoginStash> = asObject({
   // Identity:
   appId: asString,
   created: asOptional(asDate),
+  lastLogin: asOptional(asDate),
   loginId: asString,
   userId: asOptional(asString),
   username: asOptional(asString),

@@ -107,6 +107,7 @@ function applyLoginReplyInner(
   ])
 
   // Preserve client-only data:
+  if (stash.lastLogin != null) out.lastLogin = stash.lastLogin
   if (stash.username != null) out.username = stash.username
   if (stash.userId != null) out.userId = stash.userId
 
@@ -166,6 +167,7 @@ function makeLoginTreeInner(
   const {
     appId,
     created,
+    lastLogin = new Date(),
     loginId,
     otpKey,
     otpResetDate,
@@ -179,6 +181,7 @@ function makeLoginTreeInner(
   const login: LoginTree = {
     appId,
     created,
+    lastLogin,
     loginId,
     otpKey,
     otpResetDate,
@@ -323,6 +326,7 @@ export async function serverLogin(
   serverAuth: LoginRequest,
   decrypt: (reply: LoginReply) => Promise<Uint8Array>
 ): Promise<LoginTree> {
+  const { now = new Date() } = opts
   const { deviceDescription } = ai.props.state.login
 
   const request: LoginRequest = {
@@ -347,6 +351,7 @@ export async function serverLogin(
         stash.loginId = error.loginId
         stash.voucherId = error.voucherId
         stash.voucherAuth = error.voucherAuth
+        stashTree.lastLogin = now
         saveStash(ai, stashTree)
       }
       throw error
@@ -358,6 +363,7 @@ export async function serverLogin(
 
   // Save the latest data:
   stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+  stashTree.lastLogin = now
   await saveStash(ai, stashTree)
   return makeLoginTree(stashTree, loginKey, stash.appId)
 }

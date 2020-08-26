@@ -769,6 +769,7 @@ export type EdgeRatePlugin = {
 // ---------------------------------------------------------------------
 
 export type EdgeAccountOptions = {
+  now?: Date, // The current time, if different from `new Date()`
   otpKey?: string, // The OTP secret
   otp?: string // The 6-digit OTP, or (deprecated) the OTP secret
 }
@@ -907,12 +908,13 @@ export type EdgeAccount = {
 
   // Basic login information:
   +appId: string,
+  +created: Date | void, // Not always known
+  +lastLogin: Date,
   +loggedIn: boolean,
   +loginKey: string,
   +recoveryKey: string | void, // For email backup
   +rootLoginId: string,
   +username: string,
-  +created: Date | void, // Not always known
 
   // Special-purpose API's:
   +currencyConfig: EdgePluginMap<EdgeCurrencyConfig>,
@@ -1076,6 +1078,7 @@ export type EdgePendingEdgeLogin = {
 
 export type EdgeUserInfo = {
   keyLoginEnabled: boolean,
+  lastLogin?: Date,
   pinLoginEnabled: boolean,
   recovery2Key?: string,
   username: string
@@ -1178,6 +1181,7 @@ export type EdgeFakeWorldOptions = {
 
 export type EdgeFakeUser = {
   username: string,
+  lastLogin?: Date,
   loginId: string,
   loginKey: string,
   repos: { [repo: string]: { [path: string]: any /* EdgeBox */ } },
