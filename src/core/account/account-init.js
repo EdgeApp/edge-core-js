@@ -10,7 +10,7 @@ import {
 } from '../login/keys.js'
 import { type LoginTree } from '../login/login-types.js'
 import { applyKit, searchTree } from '../login/login.js'
-import { type ApiInput } from '../root-pixie.js'
+import { type ApiInput, type RootProps } from '../root-pixie.js'
 
 function checkLogin(login: LoginTree): void {
   if (login == null || login.loginKey == null) {
@@ -128,12 +128,14 @@ export function waitForAccount(
   ai: ApiInput,
   accountId: string
 ): Promise<EdgeAccount> {
-  const out: any = ai.waitFor(props => {
-    const selfState = props.state.accounts[accountId]
-    if (selfState.loadFailure != null) throw selfState.loadFailure
+  const out: Promise<EdgeAccount> = ai.waitFor(
+    (props: RootProps): EdgeAccount | void => {
+      const selfState = props.state.accounts[accountId]
+      if (selfState.loadFailure != null) throw selfState.loadFailure
 
-    const selfOutput = props.output.accounts[accountId]
-    if (selfOutput != null && selfOutput.api != null) return selfOutput.api
-  })
+      const selfOutput = props.output.accounts[accountId]
+      if (selfOutput != null && selfOutput.api != null) return selfOutput.api
+    }
+  )
   return out
 }

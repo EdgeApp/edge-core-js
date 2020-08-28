@@ -102,7 +102,7 @@ export function makeKeysKit(
  * Flattens an array of key structures, removing duplicates.
  */
 export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
-  const out = []
+  const out: EdgeWalletInfo[] = []
   const ids = {} // Maps ID's to output array indexes
 
   for (const keyInfo of keyInfos) {

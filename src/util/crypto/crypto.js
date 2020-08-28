@@ -47,7 +47,7 @@ export function decrypt(box: EdgeBox, key: Uint8Array): Uint8Array {
 
   // Decrypt:
   const cipher = new AesCbc(key, iv)
-  const raw = cipher.decrypt(ciphertext)
+  const raw: Uint8Array = cipher.decrypt(ciphertext)
 
   // Calculate data locations:
   const headerStart = 1

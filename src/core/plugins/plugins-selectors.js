@@ -5,7 +5,7 @@ import {
   type EdgeCurrencyTools,
   type EdgePluginMap
 } from '../../types/types.js'
-import { type ApiInput } from '../root-pixie.js'
+import { type ApiInput, type RootProps } from '../root-pixie.js'
 import { type RootState } from '../root-reducer.js'
 
 /**
@@ -73,7 +73,7 @@ export function getCurrencyTools(
  * then validates that all plugins are present.
  */
 export async function waitForPlugins(ai: ApiInput): Promise<void> {
-  await ai.waitFor(props => {
+  await ai.waitFor((props: RootProps): true | void => {
     const { init, locked } = props.state.plugins
     if (!locked) return
 

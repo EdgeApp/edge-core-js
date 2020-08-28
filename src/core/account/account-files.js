@@ -71,7 +71,7 @@ function getJsonFiles(folder: DiskletFolder): Promise<any[]> {
  */
 function loadWalletList(folder: DiskletFolder): Promise<LoadedWalletList> {
   return getJsonFiles(folder.folder('Wallets')).then(files => {
-    const walletInfos = []
+    const walletInfos: EdgeWalletInfo[] = []
     const walletStates = {}
 
     files.forEach(file => {
@@ -129,16 +129,18 @@ export async function loadAllWalletStates(
   const selfState = ai.props.state.accounts[accountId]
   const { accountWalletInfo, accountWalletInfos } = selfState
 
+  const lists: Promise<LoadedWalletList[]> = Promise.all(
+    accountWalletInfos.map(info =>
+      loadWalletList(getStorageWalletFolder(ai.props.state, info.id))
+    )
+  )
+
   // Read files from all repos:
   const [newStates, legacyLists] = await Promise.all([
     loadWalletStates(
       getStorageWalletFolder(ai.props.state, accountWalletInfo.id)
     ),
-    Promise.all(
-      accountWalletInfos.map(info =>
-        loadWalletList(getStorageWalletFolder(ai.props.state, info.id))
-      )
-    )
+    lists
   ])
 
   // Merge all that information together:

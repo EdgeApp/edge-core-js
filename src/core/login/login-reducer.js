@@ -44,7 +44,7 @@ export const login: FatReducer<
     (next: RootState) => next.login.appId,
     (next: RootState) => next.login.stashes,
     (appId: string, stashes: LoginStashMap): EdgeUserInfo[] => {
-      const out = []
+      const out: EdgeUserInfo[] = []
       for (const username in stashes) {
         const stash = stashes[username]
         const pin2Stash = findPin2Stash(stash, appId)

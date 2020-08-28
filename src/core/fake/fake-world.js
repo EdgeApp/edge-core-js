@@ -112,7 +112,7 @@ export function makeFakeWorld(
 
       // Find the data on the server:
       const login = fakeDb.getLoginById(loginId)
-      if (!login) throw new Error(`Cannot find user ${account.username}`)
+      if (login == null) throw new Error(`Cannot find user ${account.username}`)
 
       // Figure out which repos to use:
       const syncKeys = account.allKeys

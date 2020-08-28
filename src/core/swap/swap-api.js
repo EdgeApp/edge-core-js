@@ -62,7 +62,7 @@ export async function fetchSwapQuote(
       }
       return bridgifyObject(bestQuote)
     },
-    errors => {
+    (errors: any[]) => {
       log(
         `All ${promises.length} swap quotes rejected:`,
         ...errors.map(error => {

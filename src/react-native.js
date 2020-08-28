@@ -1,7 +1,7 @@
 // @flow
 
 import { makeReactNativeDisklet } from 'disklet'
-import React, { type Node } from 'react'
+import * as React from 'react'
 
 import { defaultOnLog } from './core/log/log.js'
 import { parseReply } from './core/login/login-fetch.js'
@@ -33,7 +33,7 @@ export function MakeEdgeContext(props: {
   onLoad: (context: EdgeContext) => mixed,
   onLog?: EdgeOnLog,
   options: EdgeContextOptions
-}): Node {
+}): React.Node {
   const {
     debug,
     nativeIo,
@@ -65,7 +65,7 @@ export function MakeFakeEdgeWorld(props: {
   onLoad: (world: EdgeFakeWorld) => mixed,
   onLog?: EdgeOnLog,
   users?: EdgeFakeUser[]
-}): Node {
+}): React.Node {
   const {
     debug,
     nativeIo,

@@ -170,8 +170,8 @@ export function makeCurrencyWalletCallbacks(
       const defaultCurrency = input.props.selfState.currencyInfo.currencyCode
 
       const txidHashes = {}
-      const changed = []
-      const created = []
+      const changed: EdgeTransaction[] = []
+      const created: EdgeTransaction[] = []
       for (const tx of txs) {
         const { txid } = tx
 
