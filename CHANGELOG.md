@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.17.12 (2020-08-31)
+
+- (feature) Add a `keyLoginEnabled` flag to `EdgeUserInfo`.
+- (feature) Add a `lastLogin` date to `EdgeUserInfo` and `EdgeAccount`.
+
 ## 0.17.11 (2020-08-21)
 
 - (feature) Add a login voucher system. When a new device tries to log into an account with 2-factor security, the server can issue a voucher along with the `OtpError`. Existing devices with the 2-factor token can then log in and either approve or deny the voucher using `EdgeAccount.approveVoucher` or `EdgeAccount.rejectVoucher`. The `EdgeLoginMessages` type also includes a list of pending vouchers now.
