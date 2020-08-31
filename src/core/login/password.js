@@ -7,6 +7,7 @@ import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { fixUsername, getStash, hashUsername } from './login-selectors.js'
+import { saveStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 import { applyKit, makeLoginTree, serverLogin, syncLogin } from './login.js'
 
@@ -25,6 +26,7 @@ async function loginPasswordOffline(
   password: string,
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
+  const { now = new Date() } = opts
   const stashTree = getStash(ai, username)
 
   const { passwordBox, passwordKeySnrp } = stashTree
@@ -35,6 +37,8 @@ async function loginPasswordOffline(
   const passwordKey = await scrypt(ai, up, passwordKeySnrp)
   const loginKey = decrypt(passwordBox, passwordKey)
   const loginTree = makeLoginTree(stashTree, loginKey)
+  stashTree.lastLogin = now
+  saveStash(ai, stashTree)
 
   // Since we logged in offline, update the stash in the background:
   // TODO: If the user provides an OTP token, add that to the stash.

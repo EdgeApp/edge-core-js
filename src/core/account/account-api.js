@@ -115,6 +115,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     get appId(): string {
       return selfState().login.appId
     },
+    get created(): Date | void {
+      return selfState().login.created
+    },
+    get lastLogin(): Date {
+      return selfState().login.lastLogin
+    },
     get loggedIn(): boolean {
       return selfState() != null
     },
@@ -136,9 +142,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     get username(): string {
       if (!username) throw new Error('Missing username')
       return username
-    },
-    get created(): Date | void {
-      return selfState().login.created
     },
 
     // Speciality API's:

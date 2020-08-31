@@ -31,6 +31,7 @@ const info = {
 
 export const fakeUserDump: EdgeFakeUser = {
   username: 'js test 0',
+  lastLogin: new Date('2020-01-01'),
   loginKey: 'GfkdeJm4b4WUYNhQqWcI5e0J/e6wra+QUxmichsaCfA=',
   loginId: 'm3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=',
   repos: {

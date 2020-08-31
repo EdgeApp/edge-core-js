@@ -18,7 +18,7 @@ import { createLogin, usernameAvailable } from '../login/create.js'
 import { requestEdgeLogin } from '../login/edge.js'
 import { fetchLoginMessages } from '../login/login-messages.js'
 import { getStash } from '../login/login-selectors.js'
-import { removeStash } from '../login/login-stash.js'
+import { removeStash, saveStash } from '../login/login-stash.js'
 import { makeLoginTree, syncLogin } from '../login/login.js'
 import { resetOtp } from '../login/otp.js'
 import { loginPassword } from '../login/password.js'
@@ -83,12 +83,11 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     ): Promise<EdgeAccount> {
       if (opts == null) opts = {} // opts can be `null`, not just `undefined`
 
-      return createLogin(ai, username, {
-        password,
-        pin
-      }).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'newAccount', opts)
-      })
+      return createLogin(ai, username, opts, { password, pin }).then(
+        loginTree => {
+          return makeAccount(ai, appId, loginTree, 'newAccount', opts)
+        }
+      )
     },
 
     async loginWithKey(
@@ -97,9 +96,12 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       opts?: EdgeAccountOptions
     ): Promise<EdgeAccount> {
       if (opts == null) opts = {} // opts can be `null`, not just `undefined`
+      const { now = new Date() } = opts
 
       const stashTree = getStash(ai, username)
       const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
+      stashTree.lastLogin = now
+      saveStash(ai, stashTree)
 
       // Since we logged in offline, update the stash in the background:
       syncLogin(ai, loginTree, findAppLogin(loginTree, appId)).catch(e =>

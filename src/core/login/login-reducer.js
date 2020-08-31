@@ -8,6 +8,7 @@ import { type RootAction } from '../actions.js'
 import { type RootState } from '../root-reducer.js'
 import { type LoginStash } from './login-stash.js'
 import { type WalletInfoFullMap } from './login-types.js'
+import { searchTree } from './login.js'
 import { findPin2Stash } from './pin2.js'
 import { getRecovery2Key } from './recovery2.js'
 
@@ -46,10 +47,18 @@ export const login: FatReducer<
     (appId: string, stashes: LoginStashMap): EdgeUserInfo[] => {
       const out: EdgeUserInfo[] = []
       for (const username in stashes) {
-        const stash = stashes[username]
-        const pin2Stash = findPin2Stash(stash, appId)
-        const recovery2Key = getRecovery2Key(stash)
+        const stashTree = stashes[username]
+        const stash = searchTree(stashTree, stash => stash.appId === appId)
+
+        const keyLoginEnabled =
+          stash != null &&
+          (stash.passwordAuthBox != null || stash.loginAuthBox != null)
+        const pin2Stash = findPin2Stash(stashTree, appId)
+        const recovery2Key = getRecovery2Key(stashTree)
+
         out.push({
+          keyLoginEnabled,
+          lastLogin: stashTree.lastLogin,
           pinLoginEnabled: pin2Stash != null,
           recovery2Key:
             recovery2Key != null ? base58.stringify(recovery2Key) : undefined,

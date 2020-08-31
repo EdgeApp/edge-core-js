@@ -54,6 +54,7 @@ async function onReply(
   subscription.unsubscribe()
   const stashTree = reply.loginStash
   const { log } = ai.props
+  const { now = new Date() } = opts
 
   emit(ai.props.output.context.api, 'loginStart', {
     username: stashTree.username
@@ -71,6 +72,7 @@ async function onReply(
     log.warn('Fixing base58 pin2Key')
     child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
   }
+  stashTree.lastLogin = now
   await saveStash(ai, stashTree)
 
   // This is almost guaranteed to blow up spectacularly:
