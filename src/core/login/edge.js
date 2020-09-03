@@ -5,7 +5,7 @@ import { Bridgeable, close, emit } from 'yaob'
 import { type Unsubscribe } from 'yavent'
 
 import {
-  type EdgeEdgeLoginOptions,
+  type EdgeAccountOptions,
   type EdgePendingEdgeLogin
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
@@ -50,7 +50,7 @@ async function onReply(
   ai: ApiInput,
   reply: any,
   appId: string,
-  opts: EdgeEdgeLoginOptions
+  opts: EdgeAccountOptions
 ): Promise<void> {
   const stashTree = asLoginStash(reply.loginStash)
   const { log } = ai.props
@@ -101,14 +101,10 @@ async function onReply(
 export function requestEdgeLogin(
   ai: ApiInput,
   appId: string,
-  opts: EdgeEdgeLoginOptions = {}
+  opts: EdgeAccountOptions = {}
 ): Promise<EdgePendingEdgeLogin> {
   const request = {
-    loginRequest: {
-      appId,
-      displayImageUrl: opts.displayImageUrl,
-      displayName: opts.displayName
-    }
+    loginRequest: { appId }
   }
 
   return makeLobby(ai, request).then(lobby => {

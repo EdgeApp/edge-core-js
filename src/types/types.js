@@ -1069,12 +1069,6 @@ export type EdgeRecoveryQuestionChoice = {
 
 // parameters ----------------------------------------------------------
 
-export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
-  // Deprecated. The info server handles these now:
-  displayImageUrl?: string,
-  displayName?: string
-}
-
 export type EdgeLoginMessage = {
   loginId: string,
   otpResetPending: boolean,
@@ -1142,7 +1136,7 @@ export type EdgeContext = {
   ): Promise<EdgeAccount>,
 
   // Edge login:
-  requestEdgeLogin(opts?: EdgeEdgeLoginOptions): Promise<EdgePendingEdgeLogin>,
+  requestEdgeLogin(opts?: EdgeAccountOptions): Promise<EdgePendingEdgeLogin>,
 
   // Fingerprint login:
   loginWithKey(
@@ -1248,3 +1242,5 @@ export type EdgeBitcoinPrivateKeyOptions = {
 export type EdgeCreatePrivateKeyOptions =
   | EdgeBitcoinPrivateKeyOptions
   | JsonObject
+
+export type EdgeEdgeLoginOptions = EdgeAccountOptions
