@@ -62,7 +62,8 @@ export const login: FatReducer<
           pinLoginEnabled: pin2Stash != null,
           recovery2Key:
             recovery2Key != null ? base58.stringify(recovery2Key) : undefined,
-          username
+          username,
+          voucherId: stash != null ? stash.voucherId : undefined
         })
       }
       return out

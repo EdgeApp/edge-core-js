@@ -150,7 +150,10 @@ export function otpErrorResponse(
       login_id: loginId,
       otp_reset_auth: otpResetToken,
       otp_timeout_date:
-        otpResetDate != null ? otpResetDate.toISOString() : undefined
+        otpResetDate != null ? otpResetDate.toISOString() : undefined,
+      voucher_id: 'test-voucher-id',
+      voucher_auth: 'FJ42A===',
+      voucher_activates: new Date('2100-01-01')
     }
   }
   return jsonResponse(body, { status: httpStatus })

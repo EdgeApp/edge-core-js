@@ -1082,7 +1082,8 @@ export type EdgeUserInfo = {
   lastLogin?: Date,
   pinLoginEnabled: boolean,
   recovery2Key?: string,
-  username: string
+  username: string,
+  voucherId?: string
 }
 
 // context -------------------------------------------------------------
