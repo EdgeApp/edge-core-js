@@ -12,6 +12,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeDataStore,
   type EdgeLobby,
+  type EdgePendingVoucher,
   type EdgePluginMap,
   type EdgeRateCache,
   type EdgeSwapConfig,
@@ -256,6 +257,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // 2fa bypass voucher approval / rejection:
+    get pendingVouchers(): EdgePendingVoucher[] {
+      const { login } = selfState()
+      return login.pendingVouchers
+    },
     async approveVoucher(voucherId: string): Promise<void> {
       return changeVoucherStatus(ai, loginTree, login, {
         approvedVouchers: [voucherId]

@@ -1,6 +1,9 @@
 // @flow
 
+import { type Cleaner, asDate, asObject, asOptional, asString } from 'cleaners'
+
 import {
+  type EdgePendingVoucher,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull
 } from '../../types/types.js'
@@ -51,6 +54,7 @@ export type LoginTree = {
   otpKey?: string,
   otpResetDate?: Date,
   otpTimeout?: number,
+  pendingVouchers: EdgePendingVoucher[],
 
   // Login methods:
   loginAuth?: Uint8Array,
@@ -76,3 +80,12 @@ export type LoginKit = {
 }
 
 export type WalletInfoFullMap = { [walletId: string]: EdgeWalletInfoFull }
+
+export const asPendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
+  voucherId: asString,
+  activates: asDate,
+  created: asDate,
+  ip: asString,
+  ipDescription: asString,
+  deviceDescription: asOptional(asString)
+})

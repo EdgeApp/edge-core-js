@@ -67,6 +67,7 @@ export function makeCreateKit(
     lastLogin: new Date(),
     loginId: '',
     loginKey,
+    pendingVouchers: [],
     children: [],
     keyInfos: []
   }
