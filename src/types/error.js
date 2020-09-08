@@ -171,15 +171,11 @@ export class OtpError extends Error {
       }
 
       // We might also get a login voucher:
-      if (
-        reply.voucher_id != null &&
-        reply.voucher_auth != null &&
-        reply.voucher_activates != null
-      ) {
-        this.voucherId = reply.voucher_id
-        this.voucherAuth = reply.voucher_auth
+      if (reply.voucher_activates != null) {
         this.voucherActivates = reply.voucher_activates
       }
+      if (reply.voucher_auth != null) this.voucherAuth = reply.voucher_auth
+      if (reply.voucher_id != null) this.voucherId = reply.voucher_id
     } catch (e) {}
   }
 }
