@@ -82,7 +82,8 @@ describe('creation', function () {
         lastLogin: now,
         pinLoginEnabled: true,
         recovery2Key: undefined,
-        username: 'some fancy user'
+        username: 'some fancy user',
+        voucherId: undefined
       }
     ])
 

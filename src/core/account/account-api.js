@@ -12,6 +12,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeDataStore,
   type EdgeLobby,
+  type EdgePendingVoucher,
   type EdgePluginMap,
   type EdgeRateCache,
   type EdgeSwapConfig,
@@ -33,8 +34,7 @@ import {
   makeStorageKeyInfo,
   splitWalletInfo
 } from '../login/keys.js'
-import { loginFetch } from '../login/login-fetch.js'
-import { applyKit, makeAuthJson } from '../login/login.js'
+import { applyKit } from '../login/login.js'
 import { cancelOtpReset, disableOtp, enableOtp } from '../login/otp.js'
 import {
   changePassword,
@@ -43,6 +43,7 @@ import {
 } from '../login/password.js'
 import { changePin, checkPin2, deletePin } from '../login/pin2.js'
 import { changeRecovery, deleteRecovery } from '../login/recovery2.js'
+import { changeVoucherStatus } from '../login/vouchers.js'
 import { getCurrencyTools } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeStorageWalletApi } from '../storage/storage-api.js'
@@ -256,16 +257,18 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // 2fa bypass voucher approval / rejection:
+    get pendingVouchers(): EdgePendingVoucher[] {
+      const { login } = selfState()
+      return login.pendingVouchers
+    },
     async approveVoucher(voucherId: string): Promise<void> {
-      await loginFetch(ai, 'POST', '/v2/voucher/approve', {
-        ...makeAuthJson(login),
-        data: { voucherId }
+      return changeVoucherStatus(ai, loginTree, login, {
+        approvedVouchers: [voucherId]
       })
     },
     async rejectVoucher(voucherId: string): Promise<void> {
-      await loginFetch(ai, 'POST', '/v2/voucher/reject', {
-        ...makeAuthJson(login),
-        data: { voucherId }
+      return changeVoucherStatus(ai, loginTree, login, {
+        rejectedVouchers: [voucherId]
       })
     },
 

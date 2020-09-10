@@ -4,7 +4,6 @@ import {
   type Cleaner,
   asArray,
   asBoolean,
-  asDate,
   asObject,
   asOptional,
   asString
@@ -12,11 +11,11 @@ import {
 
 import {
   type EdgeLoginMessage,
-  type EdgeLoginMessages,
-  type EdgePendingVoucher
+  type EdgeLoginMessages
 } from '../../types/types.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
+import { asPendingVoucher } from './login-types.js'
 
 /**
  * Fetches any login-related messages for all the users on this device.
@@ -42,15 +41,6 @@ export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
     return out
   })
 }
-
-const asPendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
-  voucherId: asString,
-  activates: asDate,
-  created: asDate,
-  ip: asString,
-  ipDescription: asString,
-  deviceDescription: asOptional(asString)
-})
 
 const asLoginMessage: Cleaner<EdgeLoginMessage> = asObject({
   loginId: asString,

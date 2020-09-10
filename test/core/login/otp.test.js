@@ -55,7 +55,8 @@ describe('otp', function () {
         lastLogin: now,
         pinLoginEnabled: false,
         recovery2Key: undefined,
-        username: 'js test 0'
+        username: 'js test 0',
+        voucherId: 'test-voucher-id'
       }
     ])
 

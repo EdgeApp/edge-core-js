@@ -203,6 +203,7 @@ export function makeLoginReply(db: FakeDb, login: DbLogin): LoginReply {
     otpResetDate:
       login.otpResetDate != null ? new Date(login.otpResetDate) : undefined,
     otpTimeout: login.otpTimeout,
+    pendingVouchers: [],
 
     // Resources:
     keyBoxes: login.keyBoxes,

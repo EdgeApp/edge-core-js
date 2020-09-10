@@ -10,8 +10,10 @@ import {
   asString
 } from 'cleaners'
 
+import { type EdgePendingVoucher } from '../../types/types.js'
 import { type EdgeBox, asEdgeBox } from '../../util/crypto/crypto.js'
 import { type EdgeSnrp, asEdgeSnrp } from '../scrypt/scrypt-pixie.js'
+import { asPendingVoucher } from './login-types.js'
 
 /**
  * Data sent back by the auth server.
@@ -26,6 +28,7 @@ export type LoginReply = {
   otpKey?: string,
   otpResetDate?: Date,
   otpTimeout?: number,
+  pendingVouchers: EdgePendingVoucher[],
 
   // Return logins:
   loginAuthBox?: EdgeBox,
@@ -65,6 +68,7 @@ export const asLoginReply: Cleaner<LoginReply> = asObject({
   otpKey: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
+  pendingVouchers: asOptional(asArray(asPendingVoucher), []),
 
   // Return logins:
   loginAuthBox: asOptional(asEdgeBox),

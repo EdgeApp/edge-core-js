@@ -12,12 +12,13 @@ import {
 import { type Disklet, justFiles } from 'disklet'
 import { base64 } from 'rfc4648'
 
-import { type EdgeLog } from '../../types/types.js'
+import { type EdgeLog, type EdgePendingVoucher } from '../../types/types.js'
 import { type EdgeBox, asEdgeBox } from '../../util/crypto/crypto.js'
 import { base58 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
 import { type EdgeSnrp, asEdgeSnrp } from '../scrypt/scrypt-pixie.js'
 import { fixUsername } from './login-selectors.js'
+import { asPendingVoucher } from './login-types.js'
 
 /**
  * The login data we store on disk.
@@ -35,6 +36,7 @@ export type LoginStash = {
   otpKey?: string,
   otpResetDate?: Date,
   otpTimeout?: number,
+  pendingVouchers: EdgePendingVoucher[],
   voucherId?: string,
   voucherAuth?: string,
 
@@ -148,6 +150,7 @@ const asLoginStash: Cleaner<LoginStash> = asObject({
   otpKey: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
+  pendingVouchers: asOptional(asArray(asPendingVoucher), []),
   voucherId: asOptional(asString),
   voucherAuth: asOptional(asString),
 

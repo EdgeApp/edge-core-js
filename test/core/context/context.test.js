@@ -26,7 +26,8 @@ describe('context', function () {
         lastLogin: fakeUser.lastLogin,
         pinLoginEnabled: true,
         recovery2Key: 'NVADGXzb5Zc55PYXVVT7GRcXPnY9NZJUjiZK8aQnidc',
-        username: 'js test 0'
+        username: 'js test 0',
+        voucherId: undefined
       }
     ])
   })

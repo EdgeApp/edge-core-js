@@ -34,6 +34,7 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
       lastLogin: user.lastLogin,
       loginId: '',
       otpKey: server.otpKey,
+      pendingVouchers: [],
       username: fixUsername(username)
     },
     base64.parse(loginKey),

@@ -774,6 +774,15 @@ export type EdgeAccountOptions = {
   otp?: string // The 6-digit OTP, or (deprecated) the OTP secret
 }
 
+export type EdgePendingVoucher = {
+  voucherId: string,
+  activates: Date,
+  created: Date,
+  deviceDescription?: string,
+  ip: string,
+  ipDescription: string
+}
+
 // currencies ----------------------------------------------------------
 
 export type EdgeCreateCurrencyWalletOptions = {
@@ -955,6 +964,7 @@ export type EdgeAccount = {
   enableOtp(timeout?: number): Promise<void>,
 
   // 2fa bypass voucher approval / rejection:
+  +pendingVouchers: EdgePendingVoucher[],
   approveVoucher(voucherId: string): Promise<void>,
   rejectVoucher(voucherId: string): Promise<void>,
 
@@ -1042,15 +1052,6 @@ export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
   displayName?: string
 }
 
-export type EdgePendingVoucher = {
-  voucherId: string,
-  activates: Date,
-  created: Date,
-  deviceDescription?: string,
-  ip: string,
-  ipDescription: string
-}
-
 export type EdgeLoginMessage = {
   loginId: string,
   otpResetPending: boolean,
@@ -1081,7 +1082,8 @@ export type EdgeUserInfo = {
   lastLogin?: Date,
   pinLoginEnabled: boolean,
   recovery2Key?: string,
-  username: string
+  username: string,
+  voucherId?: string
 }
 
 // context -------------------------------------------------------------
