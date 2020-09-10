@@ -1,5 +1,12 @@
 # edge-core-js
 
+## 0.17.13 (2020-09-10)
+
+- (fix) Switch to the new voucher endpoint.
+- (fix) Always return `OtpError.voucherId` when available.
+- (feature) Expose an `EdgeAccount.pendingVouchers` field.
+- (feature) Expose as `EdgeUserInfo.voucherId` field.
+
 ## 0.17.12 (2020-08-31)
 
 - (feature) Add a `keyLoginEnabled` flag to `EdgeUserInfo`.
