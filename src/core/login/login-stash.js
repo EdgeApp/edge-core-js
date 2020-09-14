@@ -137,7 +137,7 @@ export async function saveStash(
   dispatch({ type: 'LOGIN_STASH_SAVED', payload: stashTree })
 }
 
-const asLoginStash: Cleaner<LoginStash> = asObject({
+export const asLoginStash: Cleaner<LoginStash> = asObject({
   // Identity:
   appId: asString,
   created: asOptional(asDate),
