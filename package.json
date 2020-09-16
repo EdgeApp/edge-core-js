@@ -74,7 +74,7 @@
     "hash.js": "^1.1.7",
     "hmac-drbg": "^1.0.1",
     "json-csv": "^1.5.0",
-    "node-fetch": "^2.0.0",
+    "node-fetch": "^2.6.1",
     "redux": "^3.6.0",
     "redux-keto": "^0.3.4",
     "redux-pixies": "^0.3.6",
