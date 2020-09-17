@@ -456,7 +456,11 @@ export function syncLogin(
   const stashTree = getStash(ai, loginTree.username)
   const request = makeAuthJson(login)
   return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
-    const newStashTree = applyLoginReply(stashTree, login.loginKey, reply)
+    const newStashTree = applyLoginReply(
+      stashTree,
+      login.loginKey,
+      asLoginReply(reply)
+    )
     const newLoginTree = makeLoginTree(
       newStashTree,
       login.loginKey,

@@ -11,7 +11,7 @@ import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { type ApiInput } from '../root-pixie.js'
 import { type LobbySubscription, makeLobby } from './lobby.js'
-import { saveStash } from './login-stash.js'
+import { asLoginStash, saveStash } from './login-stash.js'
 import { makeLoginTree, searchTree, syncLogin } from './login.js'
 
 /**
@@ -52,7 +52,7 @@ async function onReply(
   opts: EdgeEdgeLoginOptions
 ): Promise<void> {
   subscription.unsubscribe()
-  const stashTree = reply.loginStash
+  const stashTree = asLoginStash(reply.loginStash)
   const { log } = ai.props
   const { now = new Date() } = opts
 
@@ -68,9 +68,10 @@ async function onReply(
 
   // The Airbitz mobile will sometimes send the pin2Key in base58
   // instead of base64 due to an unfortunate bug. Fix that:
-  if (child.pin2Key != null && child.pin2Key.slice(-1) !== '=') {
+  const { pin2Key } = child
+  if (pin2Key != null && pin2Key.slice(-1) !== '=') {
     log.warn('Fixing base58 pin2Key')
-    child.pin2Key = base64.stringify(base58.parse(child.pin2Key))
+    child.pin2Key = base64.stringify(base58.parse(pin2Key))
   }
   stashTree.lastLogin = now
   await saveStash(ai, stashTree)
