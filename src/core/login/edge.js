@@ -11,6 +11,7 @@ import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { type ApiInput } from '../root-pixie.js'
 import { type LobbySubscription, makeLobby } from './lobby.js'
+import { getStash } from './login-selectors.js'
 import { asLoginStash, saveStash } from './login-stash.js'
 import { makeLoginTree, searchTree, syncLogin } from './login.js'
 
@@ -56,14 +57,22 @@ async function onReply(
   const { log } = ai.props
   const { now = new Date() } = opts
 
-  emit(ai.props.output.context.api, 'loginStart', {
-    username: stashTree.username
-  })
+  const { username } = stashTree
+  if (username == null) throw new Error('No username in reply')
+  emit(ai.props.output.context.api, 'loginStart', { username })
 
   // Find the appropriate child:
   const child = searchTree(stashTree, stash => stash.appId === appId)
   if (child == null) {
     throw new Error(`Cannot find requested appId: "${appId}"`)
+  }
+
+  // Rescue any existing vouchers:
+  const oldStashTree = getStash(ai, username)
+  const oldStash = searchTree(oldStashTree, stash => stash.appId === appId)
+  if (oldStash != null) {
+    child.voucherId = oldStash.voucherId
+    child.voucherAuth = oldStash.voucherAuth
   }
 
   // The Airbitz mobile will sometimes send the pin2Key in base58

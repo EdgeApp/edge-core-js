@@ -387,7 +387,7 @@ export function applyKit(
   if (!loginTree.username) throw new Error('Cannot apply kit: missing username')
 
   const stashTree = getStash(ai, loginTree.username)
-  const request = makeAuthJson(login)
+  const request = makeAuthJson(stashTree, login)
   request.data = kit.server
   return loginFetch(ai, serverMethod, serverPath, request).then(reply => {
     const newLoginTree = updateTree(
@@ -454,7 +454,7 @@ export function syncLogin(
   if (!loginTree.username) throw new Error('Cannot sync: missing username')
 
   const stashTree = getStash(ai, loginTree.username)
-  const request = makeAuthJson(login)
+  const request = makeAuthJson(stashTree, login)
   return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
     const newStashTree = applyLoginReply(
       stashTree,
@@ -474,19 +474,30 @@ export function syncLogin(
 /**
  * Sets up a login v2 server authorization JSON.
  */
-export function makeAuthJson(login: LoginTree): LoginRequest {
+export function makeAuthJson(
+  stashTree: LoginStash,
+  login: LoginTree
+): LoginRequest {
+  const stash = searchTree(stashTree, stash => stash.appId === login.appId)
+  const { voucherAuth, voucherId } =
+    stash != null ? stash : { voucherAuth: undefined, voucherId: undefined }
+
   if (login.loginAuth != null) {
     return {
       loginId: login.loginId,
       loginAuth: base64.stringify(login.loginAuth),
-      otp: getLoginOtp(login)
+      otp: getLoginOtp(login),
+      voucherAuth,
+      voucherId
     }
   }
   if (login.passwordAuth != null) {
     return {
       userId: login.userId,
       passwordAuth: base64.stringify(login.passwordAuth),
-      otp: getLoginOtp(login)
+      otp: getLoginOtp(login),
+      voucherAuth,
+      voucherId
     }
   }
   throw new Error('No server authentication methods available')
