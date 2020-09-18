@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.17.14 (2020-09-18)
+
+- (fix) Don't crash when using a barcode to log into accounts with pending OTP resets.
+- (fix) Correctly expire any vouchers on the device while doing a barcode login.
+- (fix) Upgrade to node-fetch v2.6.1.
+
 ## 0.17.13 (2020-09-10)
 
 - (fix) Switch to the new voucher endpoint.
