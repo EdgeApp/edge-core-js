@@ -26,7 +26,7 @@ export async function changeVoucherStatus(
 
   const stashTree = getStash(ai, loginTree.username)
   const reply = await loginFetch(ai, 'POST', '/v2/login/vouchers', {
-    ...makeAuthJson(login),
+    ...makeAuthJson(stashTree, login),
     data: vouchers
   })
   const newStashTree = applyLoginReply(
