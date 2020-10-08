@@ -463,6 +463,7 @@ export type EdgeCurrencyEngineCallbacks = {
   +onTransactionsChanged: (transactions: EdgeTransaction[]) => void,
   +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
   +onAddressesChecked: (progressRatio: number) => void,
+  +onAddressChanged: () => void,
   +onTxidsChanged: (txids: EdgeTxidMap) => void
 }
 
@@ -563,6 +564,7 @@ export type EdgeReceiveAddress = EdgeFreshAddress & {
 export type EdgeCurrencyWalletEvents = {
   close: void,
   newTransactions: EdgeTransaction[],
+  addressChanged: void,
   transactionsChanged: EdgeTransaction[]
 }
 
