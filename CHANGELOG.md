@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.17.15 (2020-10-08)
+
+- (feature) Add onAddressChanged callback
+  - This allows a plugin to inform the GUI of address or account name updates (e.g. when an EOS account becomes activated)
+
 ## 0.17.14 (2020-09-18)
 
 - (fix) Don't crash when using a barcode to log into accounts with pending OTP resets.
