@@ -209,7 +209,9 @@ export function makeCurrencyWalletCallbacks(
       if (changed.length) throtteldOnTxChanged(changed)
       if (created.length) throttledOnNewTx(created)
     },
-
+    onAddressChanged() {
+      emit(input.props.selfOutput.api, 'addressChanged')
+    },
     onTxidsChanged() {}
   }
 }
