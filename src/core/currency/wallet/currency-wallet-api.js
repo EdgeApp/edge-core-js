@@ -390,6 +390,7 @@ export function makeCurrencyWalletApi(
         noUnconfirmed = false,
         networkFeeOption = 'standard',
         customNetworkFee,
+        rbfTxid,
         metadata,
         swapData,
         otherParams
@@ -442,6 +443,7 @@ export function makeCurrencyWalletApi(
         noUnconfirmed,
         networkFeeOption,
         customNetworkFee,
+        rbfTxid,
         metadata,
         otherParams
       })
