@@ -1,5 +1,12 @@
 # edge-core-js
 
+## 0.17.16 (2020-11-11)
+
+- (feature) RBF Transaction Support
+  - Adds new `rbfTxid` optional string to `EdgeSpendInfo` type definition
+  - Adds new `rbfTxid` to the returned `EdgeTransaction` object in `makeSpend` on `EdgeCurrencyWallet` objects
+- Include sync keys in the logs
+
 ## 0.17.15 (2020-10-08)
 
 - (feature) Add onAddressChanged callback
