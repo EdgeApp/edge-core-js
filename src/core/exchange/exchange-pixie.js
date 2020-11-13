@@ -13,13 +13,39 @@ export const exchange: TamePixie<RootProps> = filterPixie(
     let timeout: TimeoutID | void
 
     function gatherHints(): EdgeRateHint[] {
-      // TODO: Grab this off the list of loaded wallet currency types & fiats:
-      return [
-        { fromCurrency: 'BTC', toCurrency: 'iso:EUR' },
-        { fromCurrency: 'BTC', toCurrency: 'iso:USD' },
-        { fromCurrency: 'ETH', toCurrency: 'iso:EUR' },
-        { fromCurrency: 'ETH', toCurrency: 'iso:USD' }
-      ]
+      const rateHints: EdgeRateHint[] = []
+      const wallets = input.props.state.currency.wallets
+      if (Object.keys(wallets).length === 0)
+        return [
+          { fromCurrency: 'BTC', toCurrency: 'iso:EUR' },
+          { fromCurrency: 'BTC', toCurrency: 'iso:USD' },
+          { fromCurrency: 'ETH', toCurrency: 'iso:EUR' },
+          { fromCurrency: 'ETH', toCurrency: 'iso:USD' },
+          { fromCurrency: 'BCH', toCurrency: 'iso:EUR' },
+          { fromCurrency: 'BCH', toCurrency: 'iso:USD' }
+        ]
+      for (const wallet in wallets) {
+        const fiat = wallets[wallet].fiat
+        for (const cc in wallets[wallet].balances) {
+          const currencyPair = { fromCurrency: cc, toCurrency: fiat }
+          if (rateHints.length === 0) {
+            rateHints.push(currencyPair)
+          } else {
+            let uniquePair = true
+            for (const hint of rateHints) {
+              if (
+                hint.fromCurrency === currencyPair.fromCurrency &&
+                hint.toCurrency === currencyPair.toCurrency
+              ) {
+                uniquePair = false
+                break
+              }
+            }
+            if (uniquePair) rateHints.push(currencyPair)
+          }
+        }
+      }
+      return rateHints
     }
 
     function dispatchPairs(pairs: ExchangePair[], source: string): void {
