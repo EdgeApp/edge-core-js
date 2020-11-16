@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.17.17 (2020-11-15)
+
+- (feature) Identify enabled currency and fiat pairs to pass to exchange rate plugins
+
 ## 0.17.16 (2020-11-11)
 
 - (feature) RBF Transaction Support
