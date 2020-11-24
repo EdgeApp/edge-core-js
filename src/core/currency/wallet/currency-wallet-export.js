@@ -24,6 +24,48 @@ export function dateFilter(
   return out
 }
 
+export function searchStringFilter(
+  txs: EdgeTransaction[],
+  opts: EdgeGetTransactionsOptions
+): EdgeTransaction[] {
+  const { searchString } = opts
+
+  let out = txs
+  if (searchString != null && searchString !== '') {
+    out = out.filter(tx => {
+      if (tx.metadata != null) {
+        const { category = '', name = '', notes = '' } = tx.metadata
+        if (
+          category.indexOf(searchString) >= 0 ||
+          name.indexOf(searchString) >= 0 ||
+          notes.indexOf(searchString) >= 0
+        )
+          return true
+      }
+      if (tx.swapData != null && tx.swapData.plugin != null) {
+        const { displayName = '', pluginId = '' } = tx.swapData.plugin
+        if (
+          displayName.indexOf(searchString) >= 0 ||
+          pluginId.indexOf(searchString) >= 0
+        )
+          return true
+      }
+      if (tx.spendTargets != null) {
+        for (const target of tx.spendTargets) {
+          const { publicAddress = '', uniqueIdentifier = '' } = target
+          if (
+            publicAddress.indexOf(searchString) >= 0 ||
+            uniqueIdentifier.indexOf(searchString) >= 0
+          )
+            return true
+        }
+      }
+      if (tx.txid.indexOf(searchString) >= 0) return true
+    })
+  }
+  return out
+}
+
 function padZero(val: string): string {
   if (val.length === 1) {
     return '0' + val

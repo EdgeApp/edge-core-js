@@ -40,7 +40,8 @@ import {
 import {
   dateFilter,
   exportTransactionsToCSVInner,
-  exportTransactionsToQBOInner
+  exportTransactionsToQBOInner,
+  searchStringFilter
 } from './currency-wallet-export.js'
 import {
   type TransactionFile,
@@ -315,7 +316,7 @@ export function makeCurrencyWalletApi(
       }
 
       const out: EdgeTransaction[] = await getBulkTx(startIndex)
-      return dateFilter(out, opts)
+      return searchStringFilter(dateFilter(out, opts), opts)
     },
 
     async exportTransactionsToQBO(
