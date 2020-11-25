@@ -32,21 +32,22 @@ export function searchStringFilter(
 
   let out = txs
   if (searchString != null && searchString !== '') {
+    const lowerCaseSearchString = searchString.toLowerCase()
     out = out.filter(tx => {
       if (tx.metadata != null) {
         const { category = '', name = '', notes = '' } = tx.metadata
         if (
-          category.indexOf(searchString) >= 0 ||
-          name.indexOf(searchString) >= 0 ||
-          notes.indexOf(searchString) >= 0
+          category.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
+          name.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
+          notes.toLowerCase().indexOf(lowerCaseSearchString) >= 0
         )
           return true
       }
       if (tx.swapData != null && tx.swapData.plugin != null) {
         const { displayName = '', pluginId = '' } = tx.swapData.plugin
         if (
-          displayName.indexOf(searchString) >= 0 ||
-          pluginId.indexOf(searchString) >= 0
+          displayName.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
+          pluginId.toLowerCase().indexOf(lowerCaseSearchString) >= 0
         )
           return true
       }
@@ -54,13 +55,13 @@ export function searchStringFilter(
         for (const target of tx.spendTargets) {
           const { publicAddress = '', uniqueIdentifier = '' } = target
           if (
-            publicAddress.indexOf(searchString) >= 0 ||
-            uniqueIdentifier.indexOf(searchString) >= 0
+            publicAddress.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
+            uniqueIdentifier.toLowerCase().indexOf(lowerCaseSearchString) >= 0
           )
             return true
         }
       }
-      if (tx.txid.indexOf(searchString) >= 0) return true
+      if (tx.txid.toLowerCase().indexOf(lowerCaseSearchString) >= 0) return true
     })
   }
   return out
