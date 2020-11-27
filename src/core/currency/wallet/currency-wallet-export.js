@@ -33,13 +33,31 @@ export function searchStringFilter(
   let out = txs
   if (searchString != null && searchString !== '') {
     const lowerCaseSearchString = searchString.toLowerCase()
+    const noSeparatorsSearchString = searchString
+      .replace('.', '')
+      .replace(',', '')
     out = out.filter(tx => {
+      if (!/[A-Za-z]/.test(searchString)) {
+        if (tx.nativeAmount.indexOf(noSeparatorsSearchString) >= 0) return true
+      }
       if (tx.metadata != null) {
-        const { category = '', name = '', notes = '' } = tx.metadata
+        const {
+          category = '',
+          name = '',
+          notes = '',
+          exchangeAmount = {}
+        } = tx.metadata
         if (
           category.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
           name.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-          notes.toLowerCase().indexOf(lowerCaseSearchString) >= 0
+          notes.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
+          (tx.wallet != null &&
+            exchangeAmount[tx.wallet.fiatCurrencyCode] &&
+            exchangeAmount[tx.wallet.fiatCurrencyCode]
+              .toString()
+              .replace('.', '')
+              .replace(',', '')
+              .indexOf(noSeparatorsSearchString) >= 0)
         )
           return true
       }
@@ -58,6 +76,12 @@ export function searchStringFilter(
             publicAddress.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
             uniqueIdentifier.toLowerCase().indexOf(lowerCaseSearchString) >= 0
           )
+            return true
+        }
+      }
+      if (tx.ourReceiveAddresses.length > 0) {
+        for (const address of tx.ourReceiveAddresses) {
+          if (address.toLowerCase().indexOf(lowerCaseSearchString) >= 0)
             return true
         }
       }
