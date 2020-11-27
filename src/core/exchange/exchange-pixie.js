@@ -6,6 +6,12 @@ import { type EdgeRateHint, type EdgeRatePlugin } from '../../types/types.js'
 import { type RootProps } from '../root-pixie.js'
 import { type ExchangePair } from './exchange-reducer.js'
 
+const savedRateHints: EdgeRateHint[] = []
+
+export function addHint(fromCurrency: string, toCurrency: string) {
+  savedRateHints.push({ fromCurrency, toCurrency })
+}
+
 export const exchange: TamePixie<RootProps> = filterPixie(
   (input: PixieInput<RootProps>) => {
     let started: boolean = false
@@ -13,7 +19,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
     let timeout: TimeoutID | void
 
     function gatherHints(): EdgeRateHint[] {
-      const rateHints: EdgeRateHint[] = []
+      const rateHints: EdgeRateHint[] = [...savedRateHints]
       const wallets = input.props.state.currency.wallets
       if (Object.keys(wallets).length === 0)
         return [
