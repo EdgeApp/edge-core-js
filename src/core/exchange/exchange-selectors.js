@@ -1,6 +1,7 @@
 // @flow
 
 import { type RootState } from '../root-reducer.js'
+import { addHint } from './exchange-pixie.js'
 import { type ExchangePair, type ExchangeRoutes } from './exchange-reducer.js'
 
 export type GetPairCost = (
@@ -102,6 +103,8 @@ export function getExchangeRate(
   // Only search if the endpoints exist:
   if (search.routes[fromCurrency] && search.routes[toCurrency]) {
     searchRoutes(search, fromCurrency, { rate: 1, cost: 0 }, {})
+  } else {
+    addHint(fromCurrency, toCurrency)
   }
 
   return search.bestRate.rate
