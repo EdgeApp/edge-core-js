@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.17.18 (2020-11-27)
+
+- (feature) Add ability to filter `getTransactions()` with `searchString` option
+- (feature) Add requested currency pair to rateHints if it cannot be served by searchRoutes()
+
 ## 0.17.17 (2020-11-15)
 
 - (feature) Identify enabled currency and fiat pairs to pass to exchange rate plugins
