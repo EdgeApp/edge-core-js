@@ -8,9 +8,21 @@ import {
 } from '../../types/types.js'
 
 const syncServers = [
-  'https://git1.edge.app',
-  'https://git3.airbitz.co',
-  'https://git4.edge.app'
+  'https://sync-x1a1.edgetest.app',
+  'https://sync-x1a2.edgetest.app',
+  'https://sync-x1a3.edgetest.app',
+  'https://sync-x1a4.edgetest.app',
+  'https://sync-x1a5.edgetest.app',
+  'https://sync-x1a6.edgetest.app',
+  'https://sync-x1b1.edgetest.app',
+  'https://sync-x1b2.edgetest.app',
+  'https://sync-x1b3.edgetest.app',
+  'https://sync-x1b4.edgetest.app',
+  'https://sync-x1b5.edgetest.app',
+  'https://sync-x1b6.edgetest.app'
+  // 'https://git1.edge.app',
+  // 'https://git3.airbitz.co',
+  // 'https://git4.edge.app'
 ]
 
 type SyncReply = {
