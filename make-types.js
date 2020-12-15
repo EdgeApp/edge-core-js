@@ -11,6 +11,7 @@ function jsToTs(code) {
     // Fix differently-named types:
     .replace(/\bmixed\b/g, 'unknown')
     .replace(/\| void\b/g, '| undefined')
+    .replace(/: void\b/g, ': undefined')
     // Fix `import type` syntax:
     .replace(/\bimport type\b/g, 'import')
     .replace(/\btype ([_a-zA-Z]+)( *[,\n}])/g, '$1$2')

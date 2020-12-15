@@ -86,6 +86,7 @@ export function searchStringFilter(
         }
       }
       if (tx.txid.toLowerCase().indexOf(lowerCaseSearchString) >= 0) return true
+      return false
     })
   }
   return out
