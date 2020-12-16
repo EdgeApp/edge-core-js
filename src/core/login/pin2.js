@@ -7,11 +7,11 @@ import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
+import { applyKits, searchTree, serverLogin } from './login.js'
 import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
 import { type LoginStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
-import { applyKits, searchTree, serverLogin } from './login.js'
 import { getLoginOtp } from './otp.js'
 
 function pin2Id(pin2Key: Uint8Array, username: string): Uint8Array {

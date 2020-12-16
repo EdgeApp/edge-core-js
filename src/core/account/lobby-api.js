@@ -9,8 +9,8 @@ import {
   fetchLobbyRequest,
   sendLobbyReply
 } from '../login/lobby.js'
-import { getStash } from '../login/login-selectors.js'
 import { sanitizeLoginStash, syncAccount } from '../login/login.js'
+import { getStash } from '../login/login-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { ensureAccountExists, findAppLogin } from './account-init.js'
 

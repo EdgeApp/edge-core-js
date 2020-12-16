@@ -8,8 +8,8 @@ import {
   makeKeysKit,
   makeStorageKeyInfo
 } from '../login/keys.js'
-import { type LoginTree } from '../login/login-types.js'
 import { applyKit, searchTree } from '../login/login.js'
+import { type LoginTree } from '../login/login-types.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 
 function checkLogin(login: LoginTree): void {
