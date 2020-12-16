@@ -105,7 +105,6 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.20.6",
     "eslint-plugin-simple-import-sort": "^6.0.1",
-    "eslint-plugin-standard": "^4.0.1",
     "flow-bin": "^0.89.0",
     "husky": "^4.3.0",
     "lint-staged": "^10.2.11",
