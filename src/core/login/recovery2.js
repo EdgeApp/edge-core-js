@@ -7,11 +7,11 @@ import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
+import { applyKit, serverLogin } from './login.js'
 import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
 import { type LoginStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
-import { applyKit, serverLogin } from './login.js'
 
 function recovery2Id(recovery2Key: Uint8Array, username: string): Uint8Array {
   const data = utf8.parse(fixUsername(username))

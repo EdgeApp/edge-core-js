@@ -6,10 +6,10 @@ import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
+import { applyKit, makeLoginTree, serverLogin, syncLogin } from './login.js'
 import { fixUsername, getStash, hashUsername } from './login-selectors.js'
 import { saveStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
-import { applyKit, makeLoginTree, serverLogin, syncLogin } from './login.js'
 
 export const passwordAuthSnrp = userIdSnrp
 

@@ -11,9 +11,9 @@ import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { type ApiInput } from '../root-pixie.js'
 import { type LobbySubscription, makeLobby } from './lobby.js'
+import { makeLoginTree, searchTree, syncLogin } from './login.js'
 import { getStash } from './login-selectors.js'
 import { asLoginStash, saveStash } from './login-stash.js'
-import { makeLoginTree, searchTree, syncLogin } from './login.js'
 
 /**
  * The public API for edge login requests.

@@ -34,7 +34,7 @@ export function makeFetch(server: FetchServer): EdgeFetchFunction {
 
       const request: FetchRequest = {
         method,
-        path: uri.replace(new RegExp('https?://[^/]*'), ''),
+        path: uri.replace(/https?:\/\/[^/]*/, ''),
         version: 'HTTP/1.1',
         headers,
         body: typeof body === 'string' ? getArrayBuffer(utf8.parse(body)) : body

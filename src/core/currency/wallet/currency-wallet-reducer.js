@@ -188,9 +188,9 @@ const currencyWalletInner: FatReducer<
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
         const { txFileNames } = action.payload
         const newTxidHashes = {}
-        Object.keys(txFileNames).map(txidHash => {
+        for (const txidHash of Object.keys(txFileNames)) {
           newTxidHashes[txidHash] = txFileNames[txidHash].creationDate
-        })
+        }
         return sortTxs(txidHashes, newTxidHashes)
       }
     }

@@ -21,8 +21,8 @@ import {
   getAllWalletInfos,
   makeAccountType
 } from '../login/keys.js'
-import { type LoginTree, type WalletInfoFullMap } from '../login/login-types.js'
 import { makeLoginTree } from '../login/login.js'
+import { type LoginTree, type WalletInfoFullMap } from '../login/login-types.js'
 import { findCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type RootState } from '../root-reducer.js'
 import { findAppLogin } from './account-init.js'
