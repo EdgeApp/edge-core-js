@@ -9,7 +9,7 @@ import {
   type EdgeAccountOptions,
   type EdgeWalletInfo
 } from '../../types/types.js'
-import { decrypt, decryptText } from '../../util/crypto/crypto.js'
+import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { utf8 } from '../../util/encoding.js'
 import { filterObject, softCat } from '../../util/util.js'
@@ -340,7 +340,7 @@ export async function serverLogin(
   }
   if (deviceDescription != null) request.deviceDescription = deviceDescription
 
-  const loginReply = asLoginReply(
+  let loginReply = asLoginReply(
     await loginFetch(ai, 'POST', '/v2/login', request).catch(error => {
       // Save the username / voucher if we get an OTP error:
       if (
@@ -363,6 +363,24 @@ export async function serverLogin(
 
   // Try decrypting the reply:
   const loginKey = await decrypt(loginReply)
+
+  // Ensure the account has secret-key login enabled:
+  if (loginReply.loginAuthBox == null) {
+    const { io } = ai.props
+    const loginAuth = io.random(32)
+    const loginAuthBox = encrypt(io, loginAuth, loginKey)
+    const request: LoginRequest = {
+      ...serverAuth,
+      otp: getStashOtp(stash, opts),
+      data: {
+        loginAuth: base64.stringify(loginAuth),
+        loginAuthBox
+      }
+    }
+    loginReply = asLoginReply(
+      await loginFetch(ai, 'POST', '/v2/login/secret', request)
+    )
+  }
 
   // Save the latest data:
   stashTree = applyLoginReply(stashTree, loginKey, loginReply)

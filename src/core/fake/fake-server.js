@@ -423,6 +423,36 @@ const asMaybeRecovery2Payload = asMaybe(
   })
 )
 
+const secretRoute: ApiServer = withLogin2(
+  pickMethod({
+    POST: request => {
+      const { db, json, login } = request
+      const clean = asMaybeSecretPayload(json.data)
+      if (clean == null) return statusResponse(statusCodes.invalidRequest)
+
+      // Do a quick sanity check:
+      if (login.loginAuth != null) {
+        return statusResponse(
+          statusCodes.conflict,
+          'The secret-key login is already configured'
+        )
+      }
+
+      login.loginAuth = clean.loginAuth
+      login.loginAuthBox = clean.loginAuthBox
+
+      return loginResponse(makeLoginReply(db, login))
+    }
+  })
+)
+
+const asMaybeSecretPayload = asMaybe(
+  asObject({
+    loginAuthBox: asEdgeBox,
+    loginAuth: asString // asBase64
+  })
+)
+
 // lobby: ------------------------------------------------------------------
 
 type LobbyIdRequest = ApiRequest & { lobbyId: string }
@@ -552,6 +582,7 @@ const urls: ApiServer = pickPath({
   '/api/v2/login/password/?': password2Route,
   '/api/v2/login/pin2/?': pin2Route,
   '/api/v2/login/recovery2/?': recovery2Route,
+  '/api/v2/login/secret/?': secretRoute,
   '/api/v2/messages/?': messagesRoute,
 
   // Lobby server endpoints:
