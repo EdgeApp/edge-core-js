@@ -17,6 +17,7 @@ import {
   type EdgeGetTransactionsOptions,
   type EdgeMetadata,
   type EdgeParsedUri,
+  type EdgeParseUriOptions,
   type EdgePaymentProtocolInfo,
   type EdgeReceiveAddress,
   type EdgeSpendInfo,
@@ -551,11 +552,14 @@ export function makeCurrencyWalletApi(
       return getMax('0', add(balance, '1'))
     },
 
-    async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
+    async parseUri(
+      uri: string,
+      currencyOptions?: string | EdgeParseUriOptions
+    ): Promise<EdgeParsedUri> {
       const tools = await getCurrencyTools(ai, walletInfo.type)
       return tools.parseUri(
         uri,
-        currencyCode,
+        currencyOptions,
         input.props.state.currency.customTokens
       )
     },

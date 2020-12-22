@@ -524,6 +524,12 @@ export type EdgeCurrencyEngine = {
 
 // currency plugin -----------------------------------------------------
 
+export type EdgeParseUriOptions = {
+  currencyCode?: string,
+  customTokens?: EdgeMetaToken[],
+  fromFio?: boolean
+}
+
 export type EdgeCurrencyTools = {
   // Keys:
   +importPrivateKey?: (key: string, opts?: JsonObject) => Promise<JsonObject>,
@@ -534,7 +540,7 @@ export type EdgeCurrencyTools = {
   // URIs:
   parseUri(
     uri: string,
-    currencyCode?: string,
+    currencyOptions?: string | EdgeParseUriOptions,
     customTokens?: EdgeMetaToken[]
   ): Promise<EdgeParsedUri>,
   encodeUri(obj: EdgeEncodeUri, customTokens?: EdgeMetaToken[]): Promise<string>
@@ -661,7 +667,10 @@ export type EdgeCurrencyWallet = {
   exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
 
   // URI handling:
-  parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri>,
+  parseUri(
+    uri: string,
+    currencyOptions?: string | EdgeParseUriOptions
+  ): Promise<EdgeParsedUri>,
   encodeUri(obj: EdgeEncodeUri): Promise<string>,
 
   +otherMethods: EdgeOtherMethods,
