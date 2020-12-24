@@ -1,6 +1,16 @@
 // @flow
 
+import {
+  asArray,
+  asEither,
+  asMaybe,
+  asNone,
+  asObject,
+  asString
+} from 'cleaners'
+
 import { type EdgeLoginMessage } from '../../types/types.js'
+import { asEdgeBox } from '../../util/crypto/crypto.js'
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import {
@@ -15,6 +25,7 @@ import {
   type Server
 } from '../../util/http/http-types.js'
 import { addHiddenProperties, filterObject, softCat } from '../../util/util.js'
+import { asEdgeSnrp } from '../scrypt/scrypt-pixie.js'
 import {
   type DbLobby,
   type DbLogin,
@@ -301,25 +312,27 @@ const password2Route: ApiServer = withLogin2(
 
     POST: request => {
       const { json, login } = request
-      const { data } = json
-      if (
-        data.passwordAuth == null ||
-        data.passwordAuthBox == null ||
-        data.passwordAuthSnrp == null ||
-        data.passwordBox == null ||
-        data.passwordKeySnrp == null
-      ) {
-        return statusResponse(statusCodes.invalidRequest)
-      }
+      const clean = asMaybePasswordPayload(json.data)
+      if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-      login.passwordAuth = data.passwordAuth
-      login.passwordAuthBox = data.passwordAuthBox
-      login.passwordAuthSnrp = data.passwordAuthSnrp
-      login.passwordBox = data.passwordBox
-      login.passwordKeySnrp = data.passwordKeySnrp
+      login.passwordAuth = clean.passwordAuth
+      login.passwordAuthBox = clean.passwordAuthBox
+      login.passwordAuthSnrp = clean.passwordAuthSnrp
+      login.passwordBox = clean.passwordBox
+      login.passwordKeySnrp = clean.passwordKeySnrp
 
       return statusResponse()
     }
+  })
+)
+
+const asMaybePasswordPayload = asMaybe(
+  asObject({
+    passwordAuth: asString,
+    passwordAuthBox: asEdgeBox,
+    passwordAuthSnrp: asEdgeSnrp,
+    passwordBox: asEdgeBox,
+    passwordKeySnrp: asEdgeSnrp
   })
 )
 
@@ -338,33 +351,37 @@ const pin2Route: ApiServer = withLogin2(
 
     POST: request => {
       const { json, login } = request
-      const { data } = json
+      const clean = asMaybePin2Payload(json.data)
+      if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-      const enablingPin =
-        data.pin2Auth != null &&
-        data.pin2Box != null &&
-        data.pin2Id != null &&
-        data.pin2KeyBox != null
-      const disablingPin =
-        data.pin2Auth == null &&
-        data.pin2Box == null &&
-        data.pin2Id == null &&
-        data.pin2KeyBox == null &&
-        data.pin2TextBox != null
-
-      if (!enablingPin && !disablingPin) {
-        return statusResponse(statusCodes.invalidRequest)
-      }
-
-      login.pin2Auth = data.pin2Auth
-      login.pin2Box = data.pin2Box
-      login.pin2Id = data.pin2Id
-      login.pin2KeyBox = data.pin2KeyBox
-      login.pin2TextBox = data.pin2TextBox
+      login.pin2Auth = clean.pin2Auth
+      login.pin2Box = clean.pin2Box
+      login.pin2Id = clean.pin2Id
+      login.pin2KeyBox = clean.pin2KeyBox
+      login.pin2TextBox = clean.pin2TextBox
 
       return statusResponse()
     }
   })
+)
+
+const asMaybePin2Payload = asMaybe(
+  asEither(
+    asObject({
+      pin2Id: asString,
+      pin2Auth: asString, // asBase64
+      pin2Box: asEdgeBox,
+      pin2KeyBox: asEdgeBox,
+      pin2TextBox: asEdgeBox
+    }),
+    asObject({
+      pin2Id: asNone,
+      pin2Auth: asNone,
+      pin2Box: asNone,
+      pin2KeyBox: asNone,
+      pin2TextBox: asEdgeBox
+    })
+  )
 )
 
 const recovery2Route: ApiServer = withLogin2(
@@ -382,25 +399,57 @@ const recovery2Route: ApiServer = withLogin2(
 
     POST: request => {
       const { json, login } = request
-      const { data } = json
-      if (
-        data.question2Box == null ||
-        data.recovery2Auth == null ||
-        data.recovery2Box == null ||
-        data.recovery2Id == null ||
-        data.recovery2KeyBox == null
-      ) {
-        return statusResponse(statusCodes.invalidRequest)
-      }
+      const clean = asMaybeRecovery2Payload(json.data)
+      if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-      login.question2Box = data.question2Box
-      login.recovery2Auth = data.recovery2Auth
-      login.recovery2Box = data.recovery2Box
-      login.recovery2Id = data.recovery2Id
-      login.recovery2KeyBox = data.recovery2KeyBox
+      login.question2Box = clean.question2Box
+      login.recovery2Auth = clean.recovery2Auth
+      login.recovery2Box = clean.recovery2Box
+      login.recovery2Id = clean.recovery2Id
+      login.recovery2KeyBox = clean.recovery2KeyBox
 
       return statusResponse()
     }
+  })
+)
+
+const asMaybeRecovery2Payload = asMaybe(
+  asObject({
+    recovery2Id: asString,
+    recovery2Auth: asArray(asString), // asBase64
+    recovery2Box: asEdgeBox,
+    recovery2KeyBox: asEdgeBox,
+    question2Box: asEdgeBox
+  })
+)
+
+const secretRoute: ApiServer = withLogin2(
+  pickMethod({
+    POST: request => {
+      const { db, json, login } = request
+      const clean = asMaybeSecretPayload(json.data)
+      if (clean == null) return statusResponse(statusCodes.invalidRequest)
+
+      // Do a quick sanity check:
+      if (login.loginAuth != null) {
+        return statusResponse(
+          statusCodes.conflict,
+          'The secret-key login is already configured'
+        )
+      }
+
+      login.loginAuth = clean.loginAuth
+      login.loginAuthBox = clean.loginAuthBox
+
+      return loginResponse(makeLoginReply(db, login))
+    }
+  })
+)
+
+const asMaybeSecretPayload = asMaybe(
+  asObject({
+    loginAuthBox: asEdgeBox,
+    loginAuth: asString // asBase64
   })
 )
 
@@ -533,6 +582,7 @@ const urls: ApiServer = pickPath({
   '/api/v2/login/password/?': password2Route,
   '/api/v2/login/pin2/?': pin2Route,
   '/api/v2/login/recovery2/?': recovery2Route,
+  '/api/v2/login/secret/?': secretRoute,
   '/api/v2/messages/?': messagesRoute,
 
   // Lobby server endpoints:

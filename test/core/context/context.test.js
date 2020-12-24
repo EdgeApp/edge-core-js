@@ -61,10 +61,18 @@ describe('context', function () {
       { now: fakeUser.lastLogin }
     )
 
-    // We should not dump this new guy's repos:
+    // The dump should not include this new guy's repos:
     await context.createAccount('dummy', undefined, '1111')
 
+    // Do the dump:
     const dump = await world.dumpFakeUser(account)
+
+    // The PIN login upgrades the account, so the dump will have extra stuff:
+    expect(dump.server.loginAuthBox != null).equals(true)
+    expect(dump.server.loginAuth != null).equals(true)
+    delete dump.server.loginAuthBox
+    delete dump.server.loginAuth
+
     // require('fs').writeFileSync('./fake-user.json', JSON.stringify(dump))
     expect(dump).deep.equals(fakeUserDump)
   })
