@@ -58,19 +58,20 @@ export async function syncRequestInner(
   // Do the fetch, translating the raw network error into our format:
   const uri = `${server}${path}`
   const start = Date.now()
-  const response = await io.fetch(uri, opts).catch(networkError => {
+  const response = await io.fetch(uri, opts).catch(error => {
     const time = Date.now() - start
-    const message = `${method} ${server} failed in ${time}ms, ${String(
-      networkError
-    )}`
-    log(message)
+    const message = `${method} ${server} failed in ${time}ms, ${String(error)}`
+    log.error(message)
     throw new NetworkError(message)
   })
   const time = Date.now() - start
+  const message = `${method} ${uri} returned ${response.status} in ${time}ms`
 
   // Log our result and return its contents:
-  const message = `${method} ${uri} returned ${response.status} in ${time}ms`
+  if (!response.ok) {
+    log.error(message)
+    throw new NetworkError(message)
+  }
   log(message)
-  if (!response.ok) throw new NetworkError(message)
   return response.json()
 }

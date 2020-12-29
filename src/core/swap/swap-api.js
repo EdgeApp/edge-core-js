@@ -48,7 +48,7 @@ export async function fetchSwapQuote(
   // Wait for the results, with error handling:
   return fuzzyTimeout(promises, 20000).then(
     quotes => {
-      log(
+      log.warn(
         `${promises.length} swap quotes requested, ${quotes.length} resolved:`,
         ...quotes
       )
@@ -63,7 +63,7 @@ export async function fetchSwapQuote(
       return bridgifyObject(bestQuote)
     },
     (errors: any[]) => {
-      log(
+      log.warn(
         `All ${promises.length} swap quotes rejected:`,
         ...errors.map(error => {
           const { name, message } = error

@@ -74,20 +74,20 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         try {
           // Wait for the currency plugins (should already be loaded by now):
           await waitForPlugins(ai)
-          log('Login: currency plugins exist')
+          log.warn('Login: currency plugins exist')
 
           // Start the repo:
           await Promise.all(
             accountWalletInfos.map(info => addStorageWallet(ai, info))
           )
-          log('Login: synced account repos')
+          log.warn('Login: synced account repos')
 
           await loadAllFiles()
-          log('Login: loaded files')
+          log.warn('Login: loaded files')
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))
-          log('Login: complete')
+          log.warn('Login: complete')
         } catch (error) {
           input.props.dispatch({
             type: 'ACCOUNT_LOAD_FAILED',
