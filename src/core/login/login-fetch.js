@@ -77,14 +77,16 @@ export function loginFetch(
   return timeout(io.fetch(fullUri, opts), 30000).then(
     response => {
       const time = Date.now() - start
-      log(`${method} ${fullUri} returned ${response.status} in ${time}ms`)
+      log.warn(`${method} ${fullUri} returned ${response.status} in ${time}ms`)
       return response.json().then(parseReply, () => {
         throw new Error(`Non-JSON reply, HTTP status ${response.status}`)
       })
     },
     networkError => {
       const time = Date.now() - start
-      log(`${method} ${fullUri} failed in ${time}ms, ${String(networkError)}`)
+      log.error(
+        `${method} ${fullUri} failed in ${time}ms, ${String(networkError)}`
+      )
       throw new NetworkError(`Could not reach the auth server: ${path}`)
     }
   )

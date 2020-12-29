@@ -63,14 +63,14 @@ export async function syncRequestInner(
     const message = `${method} ${server} failed in ${time}ms, ${String(
       networkError
     )}`
-    log(message)
+    log.warn(message)
     throw new NetworkError(message)
   })
   const time = Date.now() - start
 
   // Log our result and return its contents:
   const message = `${method} ${uri} returned ${response.status} in ${time}ms`
-  log(message)
+  log.warn(message)
   if (!response.ok) throw new NetworkError(message)
   return response.json()
 }

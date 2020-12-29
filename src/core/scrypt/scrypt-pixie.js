@@ -143,7 +143,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
       // Calculate an SNRP value:
       return benchmark.then(benchMs => {
         const snrp = calcSnrpForTarget(io.random(32), benchMs, targetMs)
-        log(
+        log.warn(
           `snrp for ${targetMs}ms target: ${snrp.n} ${snrp.r} ${snrp.p} based on ${benchMs}ms benchmark`
         )
         return snrp
@@ -173,10 +173,12 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
     ): Promise<{ hash: Uint8Array, time: number }> {
       const salt = base16.parse(snrp.salt_hex)
       const startTime = getTime()
-      log(`starting scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p}`)
+      log.warn(`starting scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p}`)
       return io.scrypt(data, salt, snrp.n, snrp.r, snrp.p, dklen).then(hash => {
         const time = getTime() - startTime
-        log(`finished scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p} in ${time}ms`)
+        log.warn(
+          `finished scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p} in ${time}ms`
+        )
         return { hash, time }
       })
     }

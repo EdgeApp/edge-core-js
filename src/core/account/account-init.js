@@ -95,10 +95,10 @@ export async function makeAccount(
   opts: EdgeAccountOptions = {}
 ): Promise<EdgeAccount> {
   const { log } = ai.props
-  log(`Login: decrypted keys for user ${loginTree.loginId}`)
+  log.warn(`Login: decrypted keys for user ${loginTree.loginId}`)
 
   return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
-    log('Login: account exists for appId')
+    log.warn('Login: account exists for appId')
     const { username } = loginTree
     if (!username) throw new Error('Cannot log in: missing username')
 

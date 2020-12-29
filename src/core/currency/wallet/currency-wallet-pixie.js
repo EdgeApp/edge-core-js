@@ -200,7 +200,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
           const { engine } = input.props.selfOutput
           if (engine != null && startupPromise == null) {
-            log(`${id} startEngine`)
+            log.warn(`${id} startEngine`)
             input.props.dispatch({
               type: 'CURRENCY_ENGINE_STARTED',
               payload: { walletId: id }
@@ -219,7 +219,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
           const { engine } = input.props.selfOutput
           if (engine != null && startupPromise != null) {
-            log(`${id} killEngine`)
+            log.warn(`${id} killEngine`)
 
             // Wait for `startEngine` to finish if that is still going:
             startupPromise

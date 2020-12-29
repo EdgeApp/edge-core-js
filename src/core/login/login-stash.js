@@ -78,7 +78,7 @@ export async function loadStashes(
     try {
       out.push(asLoginStash(JSON.parse(await disklet.getText(path))))
     } catch (error) {
-      log.warn(`Could not load ${path}: ${String(error)}`)
+      log.error(`Could not load ${path}: ${String(error)}`)
     }
   }
   return out
