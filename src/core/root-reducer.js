@@ -2,6 +2,7 @@
 
 import { type BuiltReducer, buildReducer, mapReducer } from 'redux-keto'
 
+import { type EdgeLogSettings } from './../types/types.js'
 import { type AccountState, accountReducer } from './account/account-reducer.js'
 import { type RootAction } from './actions.js'
 import { type CurrencyState, currency } from './currency/currency-reducer.js'
@@ -22,6 +23,7 @@ export type RootState = {
   +accounts: { [accountId: string]: AccountState },
   +hideKeys: boolean,
   +lastAccountId: string,
+  +logSettings: EdgeLogSettings,
 
   +currency: CurrencyState,
   +exchangeCache: ExchangeState,
@@ -64,6 +66,13 @@ export const reducer: BuiltReducer<RootState, RootAction> = buildReducer({
 
   lastAccountId(state, action: RootAction, next: RootState): string {
     return `login${next.accountCount}`
+  },
+
+  logSettings(
+    state = { sources: {}, defaultLogLevel: 'warn' },
+    action
+  ): EdgeLogSettings {
+    return action.type === 'CHANGE_LOG_SETTINGS' ? action.payload : state
   },
 
   paused(state = false, action: RootAction): boolean {

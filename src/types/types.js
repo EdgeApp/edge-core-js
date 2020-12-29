@@ -135,6 +135,13 @@ export type EdgeLog = EdgeLogMethod & {
   +error: EdgeLogMethod
 }
 
+export type EdgeLogType = 'info' | 'warn' | 'error'
+
+export type EdgeLogSettings = {
+  sources: { [pluginName: string]: EdgeLogType },
+  defaultLogLevel: EdgeLogType | 'silent'
+}
+
 /**
  * The EdgeLog function stringifies its arguments and adds
  * some extra information to form this event type.
@@ -143,7 +150,7 @@ export type EdgeLogEvent = {
   message: string,
   source: string,
   time: Date,
-  type: 'info' | 'warn' | 'error'
+  type: EdgeLogType
 }
 
 export type EdgeOnLog = (event: EdgeLogEvent) => void
@@ -1171,6 +1178,9 @@ export type EdgeContext = {
     paused: boolean,
     opts?: { secondsDelay?: number }
   ): Promise<void>,
+
+  +logSettings: EdgeLogSettings,
+  changeLogSettings(settings: EdgeLogSettings): Promise<void>,
 
   // Deprecated API's:
   pinExists(username: string): Promise<boolean>

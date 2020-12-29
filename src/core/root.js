@@ -4,7 +4,11 @@ import { type StoreEnhancer, compose, createStore } from 'redux'
 import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import { type EdgeContext, type EdgeContextOptions } from '../types/types.js'
+import {
+  type EdgeContext,
+  type EdgeContextOptions,
+  type EdgeLogEvent
+} from '../types/types.js'
 import { type RootAction } from './actions.js'
 import { makeLegacyConsole, makeLog } from './log/log.js'
 import { loadStashes } from './login/login-stash.js'
@@ -28,7 +32,7 @@ export async function makeContext(
   ios: PluginIos,
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
-  const { io, onLog } = ios
+  const { io } = ios
   const {
     apiKey,
     appId = '',
@@ -38,6 +42,30 @@ export async function makeContext(
     plugins: pluginsInit = {}
   } = opts
   const log = makeLog(onLog, 'edge-core')
+
+  function onLog(event: EdgeLogEvent) {
+    const logSettings =
+      redux != null
+        ? redux.getState().logSettings
+        : { sources: {}, defaultLogLevel: 'warn' }
+    const { sources, defaultLogLevel } = logSettings
+
+    if (defaultLogLevel === 'silent') return
+    const logLevel =
+      sources[event.source] != null ? sources[event.source] : defaultLogLevel
+
+    switch (event.type) {
+      case 'info':
+        if (logLevel === 'info') ios.onLog(event)
+        break
+      case 'warn':
+        if (logLevel === 'info' || logLevel === 'warn') ios.onLog(event)
+        break
+      case 'error':
+        ios.onLog(event)
+        break
+    }
+  }
 
   if (apiKey == null) {
     throw new Error('No API key provided')
@@ -63,7 +91,11 @@ export async function makeContext(
   })
 
   // Subscribe to new plugins:
-  const closePlugins = watchPlugins(ios, pluginsInit, redux.dispatch)
+  const closePlugins = watchPlugins(
+    { ...ios, onLog },
+    pluginsInit,
+    redux.dispatch
+  )
 
   // Start the pixie tree:
   const mirror = { output: {} }

@@ -9,6 +9,7 @@ import {
   type EdgeContext,
   type EdgeEdgeLoginOptions,
   type EdgeLoginMessages,
+  type EdgeLogSettings,
   type EdgePendingEdgeLogin,
   type EdgeUserInfo
 } from '../../types/types.js'
@@ -226,6 +227,17 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           ai.props.dispatch({ type: 'PAUSE', payload: paused })
         }, secondsDelay * 1000)
       }
+    },
+
+    get logSettings(): EdgeLogSettings {
+      return ai.props.state.logSettings
+        ? ai.props.state.logSettings
+        : { sources: {}, defaultLogLevel: 'warn' }
+    },
+
+    async changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void> {
+      const newSettings = { ...ai.props.state.logSettings, ...settings }
+      ai.props.dispatch({ type: 'CHANGE_LOG_SETTINGS', payload: newSettings })
     },
 
     // Deprecated API's:
