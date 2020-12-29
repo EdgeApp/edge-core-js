@@ -4,13 +4,18 @@ import { type StoreEnhancer, compose, createStore } from 'redux'
 import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import { type EdgeContext, type EdgeContextOptions } from '../types/types.js'
+import {
+  type EdgeContext,
+  type EdgeContextOptions,
+  type EdgeLogEvent,
+  type EdgeLogSettings
+} from '../types/types.js'
 import { type RootAction } from './actions.js'
 import { makeLegacyConsole, makeLog } from './log/log.js'
 import { loadStashes } from './login/login-stash.js'
 import { type PluginIos, watchPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
-import { type RootState, reducer } from './root-reducer.js'
+import { type RootState, defaultLogSettings, reducer } from './root-reducer.js'
 
 let allContexts: EdgeContext[] = []
 
@@ -28,16 +33,41 @@ export async function makeContext(
   ios: PluginIos,
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
-  const { io, onLog } = ios
+  const { io } = ios
   const {
     apiKey,
     appId = '',
     authServer = 'https://auth.airbitz.co/api',
     deviceDescription = null,
     hideKeys = false,
+    logSettings = {},
     plugins: pluginsInit = {}
   } = opts
+  const initialLogSettings: EdgeLogSettings = {
+    ...defaultLogSettings,
+    ...logSettings
+  }
   const log = makeLog(onLog, 'edge-core')
+
+  function onLog(event: EdgeLogEvent) {
+    const { sources, defaultLogLevel } =
+      redux != null ? redux.getState().logSettings : initialLogSettings
+
+    const logLevel =
+      sources[event.source] != null ? sources[event.source] : defaultLogLevel
+
+    switch (event.type) {
+      case 'info':
+        if (logLevel === 'info') ios.onLog(event)
+        break
+      case 'warn':
+        if (logLevel === 'info' || logLevel === 'warn') ios.onLog(event)
+        break
+      case 'error':
+        if (logLevel !== 'silent') ios.onLog(event)
+        break
+    }
+  }
 
   if (apiKey == null) {
     throw new Error('No API key provided')
@@ -57,13 +87,18 @@ export async function makeContext(
       authServer,
       deviceDescription,
       hideKeys,
+      logSettings: initialLogSettings,
       pluginsInit,
       stashes
     }
   })
 
   // Subscribe to new plugins:
-  const closePlugins = watchPlugins(ios, pluginsInit, redux.dispatch)
+  const closePlugins = watchPlugins(
+    { ...ios, onLog },
+    pluginsInit,
+    redux.dispatch
+  )
 
   // Start the pixie tree:
   const mirror = { output: {} }
