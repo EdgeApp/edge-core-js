@@ -9,7 +9,8 @@ import { type ExchangePair } from './exchange-reducer.js'
 const savedRateHints: EdgeRateHint[] = []
 
 export function addHint(fromCurrency: string, toCurrency: string) {
-  savedRateHints.push({ fromCurrency, toCurrency })
+  if (isNewPair(fromCurrency, toCurrency, savedRateHints))
+    savedRateHints.push({ fromCurrency, toCurrency })
 }
 
 export const exchange: TamePixie<RootProps> = filterPixie(
@@ -33,22 +34,8 @@ export const exchange: TamePixie<RootProps> = filterPixie(
       for (const wallet in wallets) {
         const fiat = wallets[wallet].fiat
         for (const cc in wallets[wallet].balances) {
-          const currencyPair = { fromCurrency: cc, toCurrency: fiat }
-          if (rateHints.length === 0) {
-            rateHints.push(currencyPair)
-          } else {
-            let uniquePair = true
-            for (const hint of rateHints) {
-              if (
-                hint.fromCurrency === currencyPair.fromCurrency &&
-                hint.toCurrency === currencyPair.toCurrency
-              ) {
-                uniquePair = false
-                break
-              }
-            }
-            if (uniquePair) rateHints.push(currencyPair)
-          }
+          if (isNewPair(cc, fiat, rateHints))
+            rateHints.push({ fromCurrency: cc, toCurrency: fiat })
         }
       }
       return rateHints
@@ -162,4 +149,16 @@ function fetchPluginRates(
   } catch (error) {
     return Promise.reject(error)
   }
+}
+
+function isNewPair(
+  fromCurrency: string,
+  toCurrency: string,
+  pairs: Object[]
+): boolean {
+  for (const pair of pairs) {
+    if (pair.fromCurrency === fromCurrency && pair.toCurrency === toCurrency)
+      return false
+  }
+  return true
 }

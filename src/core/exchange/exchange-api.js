@@ -10,6 +10,7 @@ import { type ApiInput } from '../root-pixie.js'
 import { getExchangeRate } from './exchange-selectors.js'
 
 const biasDefaults = {
+  edgeRates: 0.15,
   nomics: 0.1,
   coincap: -0.05,
   coinbase: -0.1,
