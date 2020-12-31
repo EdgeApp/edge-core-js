@@ -1,5 +1,12 @@
 # edge-core-js
 
+## 0.17.19 (2020-12-31)
+
+- Upgrade Airbitz accounts with secret-key login
+- Filter duplicates from rateHints
+- Add low priority edgeRates bias
+- Update linting
+
 ## 0.17.18 (2020-11-27)
 
 - (feature) Add ability to filter `getTransactions()` with `searchString` option
