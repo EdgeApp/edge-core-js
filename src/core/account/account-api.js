@@ -355,7 +355,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       walletId: string,
       transaction: EthereumTransaction
     ): Promise<string> {
-      ai.props.log('Edge is signing: ', transaction)
+      ai.props.log.warn('Edge is signing: ', transaction)
       const { allWalletInfosFull } = selfState()
       const walletInfo = allWalletInfosFull.find(info => info.id === walletId)
       if (

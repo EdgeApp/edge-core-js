@@ -84,7 +84,9 @@ export function loginFetch(
     },
     networkError => {
       const time = Date.now() - start
-      log(`${method} ${fullUri} failed in ${time}ms, ${String(networkError)}`)
+      log.error(
+        `${method} ${fullUri} failed in ${time}ms, ${String(networkError)}`
+      )
       throw new NetworkError(`Could not reach the auth server: ${path}`)
     }
   )

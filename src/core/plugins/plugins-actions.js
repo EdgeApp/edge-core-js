@@ -94,7 +94,7 @@ export function watchPlugins(
         }
       } catch (error) {
         // Show the error but keep going:
-        log(error)
+        log.error(error)
       }
     }
 

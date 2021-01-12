@@ -4,6 +4,7 @@ import {
   type EdgeCorePlugin,
   type EdgeCorePluginsInit,
   type EdgeCurrencyTools,
+  type EdgeLogSettings,
   type EdgePluginMap,
   type EdgeTokenInfo,
   type EdgeTransaction,
@@ -81,6 +82,10 @@ export type RootAction =
       // Somebody just added a custom token type to the wallet.
       type: 'ADDED_CUSTOM_TOKEN',
       payload: EdgeTokenInfo
+    }
+  | {
+      type: 'CHANGE_LOG_SETTINGS',
+      payload: EdgeLogSettings
     }
   | {
       // Shuts down the context and all its objects.
@@ -248,6 +253,7 @@ export type RootAction =
         authServer: string,
         deviceDescription: string | null,
         hideKeys: boolean,
+        logSettings: EdgeLogSettings,
         pluginsInit: EdgeCorePluginsInit,
         stashes: LoginStash[]
       }

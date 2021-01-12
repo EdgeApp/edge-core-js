@@ -43,7 +43,7 @@ async function loginPasswordOffline(
   // Since we logged in offline, update the stash in the background:
   // TODO: If the user provides an OTP token, add that to the stash.
   const { log } = ai.props
-  syncLogin(ai, loginTree, loginTree).catch(e => log.warn(e))
+  syncLogin(ai, loginTree, loginTree).catch(e => log.error(e))
 
   return loginTree
 }

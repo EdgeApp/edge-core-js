@@ -12,6 +12,7 @@ function jsToTs(code) {
     .replace(/\bmixed\b/g, 'unknown')
     .replace(/\| void\b/g, '| undefined')
     .replace(/: void\b/g, ': undefined')
+    .replace(/\$Shape</g, 'Partial<')
     // Fix `import type` syntax:
     .replace(/\bimport type\b/g, 'import')
     .replace(/\btype ([_a-zA-Z]+)( *[,\n}])/g, '$1$2')
