@@ -438,8 +438,8 @@ export type EdgeParsedUri = {
 
 export type EdgeEncodeUri = {
   publicAddress: string,
-  segwitAddress?: string,
-  legacyAddress?: string,
+  segwitAddress?: string, // Deprecated. Use publicAddress instead.
+  legacyAddress?: string, // Deprecated. Use publicAddress instead.
   nativeAmount?: string,
   label?: string,
   message?: string,
