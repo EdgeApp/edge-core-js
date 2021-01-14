@@ -29,6 +29,12 @@ export async function fetchSwapQuote(
   const { swapSettings, userSettings } = account
   const swapPlugins = ai.props.state.plugins.swap
 
+  log.warn('Requesting swap quotes for: ', {
+    ...request,
+    fromWallet: request.fromWallet.id,
+    toWallet: request.toWallet.id
+  })
+
   // Invoke all the active swap plugins:
   const promises: Promise<EdgeSwapQuote>[] = []
   for (const pluginId of Object.keys(swapPlugins)) {
@@ -38,9 +44,20 @@ export async function fetchSwapQuote(
     // Start request:
     if (!enabled || disabled[pluginId]) continue
     promises.push(
-      swapPlugins[pluginId].fetchSwapQuote(request, userSettings[pluginId], {
-        promoCode: promoCodes[pluginId]
-      })
+      swapPlugins[pluginId]
+        .fetchSwapQuote(request, userSettings[pluginId], {
+          promoCode: promoCodes[pluginId]
+        })
+        .then(
+          quote => {
+            log.warn(`${pluginId} gave swap quote:`, quote)
+            return quote
+          },
+          error => {
+            log.warn(`${pluginId} gave swap error: ${String(error)}`)
+            throw error
+          }
+        )
     )
   }
   if (promises.length < 1) throw new Error('No swap providers enabled')
@@ -49,8 +66,7 @@ export async function fetchSwapQuote(
   return fuzzyTimeout(promises, 20000).then(
     quotes => {
       log.warn(
-        `${promises.length} swap quotes requested, ${quotes.length} resolved:`,
-        ...quotes
+        `${promises.length} swap quotes requested, ${quotes.length} resolved.`
       )
 
       // Find the cheapest price:
@@ -63,14 +79,7 @@ export async function fetchSwapQuote(
       return bridgifyObject(bestQuote)
     },
     (errors: any[]) => {
-      log.warn(
-        `All ${promises.length} swap quotes rejected:`,
-        ...errors.map(error => {
-          const { name, message } = error
-          return { name, message, ...error }
-        })
-      )
-
+      log.warn(`All ${promises.length} swap quotes rejected.`)
       throw pickBestError(errors)
     }
   )
