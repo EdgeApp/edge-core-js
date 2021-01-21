@@ -3,6 +3,7 @@
 import { type PixieInput, type TamePixie, filterPixie } from 'redux-pixies'
 
 import { type EdgeRateHint, type EdgeRatePlugin } from '../../types/types.js'
+import { makePeriodicTask } from '../../util/periodic-task.js'
 import { type RootProps } from '../root-pixie.js'
 import { type ExchangePair } from './exchange-reducer.js'
 
@@ -15,10 +16,6 @@ export function addHint(fromCurrency: string, toCurrency: string) {
 
 export const exchange: TamePixie<RootProps> = filterPixie(
   (input: PixieInput<RootProps>) => {
-    let started: boolean = false
-    let stopped: boolean = false
-    let timeout: TimeoutID | void
-
     function gatherHints(): EdgeRateHint[] {
       const rateHints: EdgeRateHint[] = [...savedRateHints]
       const wallets = input.props.state.currency.wallets
@@ -51,7 +48,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
       }
     }
 
-    function doFetch(): void {
+    async function doFetch(): Promise<void> {
       // Quit early if there is nothing to do:
       const pluginIds = Object.keys(input.props.state.plugins.rate)
       if (pluginIds.length === 0) return
@@ -92,24 +89,23 @@ export const exchange: TamePixie<RootProps> = filterPixie(
       })
 
       // Wait for everyone to finish before doing another round:
-      Promise.all(promises).then(() => {
-        if (!stopped) timeout = setTimeout(doFetch, 30 * 1000)
-      })
+      await Promise.all(promises)
     }
+
+    // We don't report errors here, since the `doFetch` function does that:
+    const task = makePeriodicTask(doFetch, 30 * 1000)
 
     return {
       update(props: RootProps): void {
         // Kick off the initial fetch if we don't already have one running
         // and the plugins are ready:
-        if (!started && props.state.plugins.locked) {
-          started = true
-          doFetch()
+        if (props.state.plugins.locked) {
+          task.start()
         }
       },
 
       destroy() {
-        stopped = true
-        if (timeout != null) clearTimeout(timeout)
+        task.stop()
       }
     }
   },
