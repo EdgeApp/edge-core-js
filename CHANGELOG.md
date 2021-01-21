@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.17.20 (2021-01-21)
+
+- Add an `EdgeContextOptions.logSettings` property to control logging verbosity, along with an `EdgeContext.changeLogSettings` method.
+- Deprecate the `EdgeEncodeUri.legacyAddress` and `EdgeEncodeUri.segwitAddress` parameters. Just pass the address in `EdgeEncodeUri.publicAddress`, regardless of format.
+- Update the swap logging to give more information about failed quotes.
+
 ## 0.17.19 (2020-12-31)
 
 - Upgrade Airbitz accounts with secret-key login
