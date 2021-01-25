@@ -464,28 +464,27 @@ export async function syncAccount(
 /**
  * Refreshes a login with data from the server.
  */
-export function syncLogin(
+export async function syncLogin(
   ai: ApiInput,
   loginTree: LoginTree,
   login: LoginTree
 ): Promise<LoginTree> {
-  if (!loginTree.username) throw new Error('Cannot sync: missing username')
-
+  if (loginTree.username == null) {
+    throw new Error('Cannot sync: missing username')
+  }
   const stashTree = getStash(ai, loginTree.username)
+  const stash = searchTree(stashTree, stash => stash.appId === login.appId)
+  if (stash == null) {
+    throw new Error('Cannot sync: missing on-disk data')
+  }
   const request = makeAuthJson(stashTree, login)
-  return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
-    const newStashTree = applyLoginReply(
-      stashTree,
-      login.loginKey,
-      asLoginReply(reply)
-    )
-    const newLoginTree = makeLoginTree(
-      newStashTree,
-      login.loginKey,
-      login.appId
-    )
+  const opts: EdgeAccountOptions = {
+    // Avoid updating the lastLogin date:
+    now: stashTree.lastLogin
+  }
 
-    return saveStash(ai, newStashTree).then(() => newLoginTree)
+  return await serverLogin(ai, stashTree, stash, opts, request, async () => {
+    return login.loginKey
   })
 }
 

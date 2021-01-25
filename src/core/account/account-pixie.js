@@ -11,6 +11,8 @@ import {
 import { close, emit, update } from 'yaob'
 
 import { type EdgeAccount, type EdgeCurrencyWallet } from '../../types/types.js'
+import { makePeriodicTask } from '../../util/periodic-task.js'
+import { syncAccount } from '../login/login.js'
 import { waitForPlugins } from '../plugins/plugins-selectors.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 import {
@@ -103,49 +105,46 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
   // Starts & stops the sync timer for this account:
   syncTimer: filterPixie(
     (input: AccountInput) => {
-      let started: boolean = false
-      let stopped: boolean = false
-      let timeout: TimeoutID | void
-
-      async function doSync(): Promise<void> {
+      async function doDataSync(): Promise<void> {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const accountId = input.props.id
         const { accountWalletInfos } = input.props.selfState
 
-        try {
-          if (input.props.state.accounts[accountId] == null) return
-          const changeLists = await Promise.all(
-            accountWalletInfos.map(info => syncStorageWallet(ai, info.id))
-          )
-          const changes: string[] = [].concat(...changeLists)
-          if (changes.length) {
-            await Promise.all([
-              reloadPluginSettings(ai, accountId),
-              loadAllWalletStates(ai, accountId)
-            ])
-          }
-        } catch (e) {
-          // We don't report sync failures, since that could be annoying.
+        if (input.props.state.accounts[accountId] == null) return
+        const changeLists = await Promise.all(
+          accountWalletInfos.map(info => syncStorageWallet(ai, info.id))
+        )
+        const changes: string[] = [].concat(...changeLists)
+        if (changes.length) {
+          await Promise.all([
+            reloadPluginSettings(ai, accountId),
+            loadAllWalletStates(ai, accountId)
+          ])
         }
-
-        if (!stopped) timeout = setTimeout(doSync, 30 * 1000)
       }
+
+      async function doLoginSync(): Promise<void> {
+        const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+        const accountId = input.props.id
+        await syncAccount(ai, accountId)
+      }
+
+      // We don't report sync failures, since that could be annoying:
+      const dataTask = makePeriodicTask(doDataSync, 30 * 1000)
+      const loginTask = makePeriodicTask(doLoginSync, 30 * 1000)
 
       return {
         update() {
-          if (
-            !started &&
-            input.props.selfOutput &&
-            input.props.selfOutput.api
-          ) {
-            started = true
-            doSync()
+          // Start once the EdgeAccount API exists:
+          if (input.props.selfOutput && input.props.selfOutput.api) {
+            dataTask.start()
+            loginTask.start()
           }
         },
 
         destroy() {
-          stopped = true
-          if (timeout != null) clearTimeout(timeout)
+          dataTask.stop()
+          loginTask.stop()
         }
       }
     },

@@ -17,6 +17,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeWalletInfo
 } from '../../../types/types.js'
+import { makePeriodicTask } from '../../../util/periodic-task.js'
 import { makeLog } from '../../log/log.js'
 import {
   getCurrencyPlugin,
@@ -240,39 +241,30 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
   syncTimer: filterPixie(
     (input: CurrencyWalletInput) => {
-      let started: boolean = false
-      let stopped: boolean = false
-      let timeout: TimeoutID | void
-
       async function doSync(): Promise<void> {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const { id } = input.props
-
-        try {
-          syncStorageWallet(ai, id)
-        } catch (e) {
-          // We don't report sync failures, since that could be annoying.
-        }
-        if (!stopped) timeout = setTimeout(doSync, 30 * 1000)
+        await syncStorageWallet(ai, id)
       }
+
+      // We don't report sync failures, since that could be annoying:
+      const task = makePeriodicTask(doSync, 30 * 1000)
 
       return {
         update() {
           const { id } = input.props
+          // Start once the wallet has loaded & finished its initial sync:
           if (
-            !started &&
             input.props.selfOutput &&
             input.props.state.storageWallets[id] &&
             input.props.state.storageWallets[id].status.lastSync
           ) {
-            started = true
-            doSync()
+            task.start()
           }
         },
 
         destroy() {
-          stopped = true
-          if (timeout != null) clearTimeout(timeout)
+          task.stop()
         }
       }
     },

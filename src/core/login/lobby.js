@@ -7,6 +7,10 @@ import { type EdgeIo } from '../../types/types.js'
 import { type EdgeBox, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
 import { base58, utf8 } from '../../util/encoding.js'
+import {
+  type PeriodicTask,
+  makePeriodicTask
+} from '../../util/periodic-task.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
 
@@ -89,33 +93,38 @@ export function encryptLobbyReply(
  * allowing clients to subscribe to lobby reply messages.
  */
 class ObservableLobby {
-  // Lobby access:
-  ai: ApiInput
   lobbyId: string
-  keypair: Keypair
-  period: number
-
-  // State:
-  done: boolean
   replyCount: number
-  timeout: TimeoutID | void
+  task: PeriodicTask
 
   // Callbacks:
   onError: ((e: Error) => void) | void
   onReply: ((reply: mixed) => void) | void
 
   constructor(ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
-    this.ai = ai
-    this.lobbyId = lobbyId
-    this.keypair = keypair
-    this.period = period
+    const pollLobby = async () => {
+      const reply = await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
 
-    this.done = false
-    this.replyCount = 0
-    this.timeout = undefined
+      // Process any new replies that have arrived on the server:
+      while (this.replyCount < reply.replies.length) {
+        const lobbyReply = reply.replies[this.replyCount]
+        const decrypted = decryptLobbyReply(keypair, lobbyReply)
+        const { onReply } = this
+        if (onReply != null) onReply(decrypted)
+        ++this.replyCount
+      }
+    }
 
     this.onError = undefined
     this.onReply = undefined
+    this.lobbyId = lobbyId
+    this.replyCount = 0
+    this.task = makePeriodicTask(pollLobby, period, {
+      onError: error => {
+        const { onError } = this
+        if (onError != null && error instanceof Error) onError(error)
+      }
+    })
   }
 
   subscribe(
@@ -125,43 +134,11 @@ class ObservableLobby {
     this.onReply = onReply
     this.onError = onError
     this.replyCount = 0
-    this.done = false
-    pollLobby(this)
-
-    const subscription = {
-      unsubscribe: () => {
-        this.done = true
-        if (this.timeout != null) {
-          clearTimeout(this.timeout)
-        }
-      }
+    this.task.start()
+    return {
+      unsubscribe: () => this.task.stop()
     }
-    return subscription
   }
-}
-
-function pollLobby(watcher: ObservableLobby): void {
-  const { ai, lobbyId, keypair, onReply, onError } = watcher
-
-  loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
-    .then(reply => {
-      // Process any new replies that have arrived on the server:
-      while (watcher.replyCount < reply.replies.length) {
-        const lobbyReply = reply.replies[watcher.replyCount]
-        if (onReply) {
-          onReply(decryptLobbyReply(keypair, lobbyReply))
-        }
-        ++watcher.replyCount
-      }
-
-      // Schedule another poll:
-      if (!watcher.done) {
-        watcher.timeout = setTimeout(() => pollLobby(watcher), watcher.period)
-      }
-    })
-    .catch(e => {
-      if (onError) onError(e)
-    })
 }
 
 /**
