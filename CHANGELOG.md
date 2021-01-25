@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.17.21 (2021-01-25)
+
+- Periodically perform a re-login to sync logged-in account credentials with the server.
+- Fix a bug that would prevent the `EdgeContext.logSettings` property from updating.
+
 ## 0.17.20 (2021-01-21)
 
 - Add an `EdgeContextOptions.logSettings` property to control logging verbosity, along with an `EdgeContext.changeLogSettings` method.
