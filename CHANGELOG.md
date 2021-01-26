@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.17.22 (2021-01-26)
+
+- Update `EdgeCurrencyEngine` to allow `getFreshAddres`, `addGapLimitAddresses`, and `isAddressUsed` to return promises.
+
 ## 0.17.21 (2021-01-25)
 
 - Periodically perform a re-login to sync logged-in account credentials with the server.
