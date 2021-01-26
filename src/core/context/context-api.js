@@ -138,15 +138,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       return makeAccount(ai, appId, loginTree, 'pinLogin', opts)
     },
 
-    async getRecovery2Key(username: string): Promise<string> {
-      const loginStash = getStash(ai, username)
-      const recovery2Key = getRecovery2Key(loginStash)
-      if (recovery2Key == null) {
-        throw new Error('No recovery key stored locally.')
-      }
-      return base58.stringify(recovery2Key)
-    },
-
     async loginWithRecovery2(
       recovery2Key: string,
       username: string,
@@ -233,6 +224,15 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     // Deprecated API's:
+    async getRecovery2Key(username: string): Promise<string> {
+      const loginStash = getStash(ai, username)
+      const recovery2Key = getRecovery2Key(loginStash)
+      if (recovery2Key == null) {
+        throw new Error('No recovery key stored locally.')
+      }
+      return base58.stringify(recovery2Key)
+    },
+
     pinExists(username: string): Promise<boolean> {
       return this.pinLoginEnabled(username)
     }

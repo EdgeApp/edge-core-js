@@ -1174,7 +1174,6 @@ export type EdgeContext = {
   ): Promise<EdgeAccount>,
 
   // Recovery2 login:
-  getRecovery2Key(username: string): Promise<string>,
   loginWithRecovery2(
     recovery2Key: string,
     username: string,
@@ -1199,10 +1198,12 @@ export type EdgeContext = {
     opts?: { secondsDelay?: number }
   ): Promise<void>,
 
+  // Logging options:
   +logSettings: EdgeLogSettings,
   changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void>,
 
   // Deprecated API's:
+  getRecovery2Key(username: string): Promise<string>,
   pinExists(username: string): Promise<boolean>
 }
 
