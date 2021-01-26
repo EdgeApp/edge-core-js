@@ -414,34 +414,34 @@ async function loadTxFileNames(
 /**
  * Loads address metadata files.
  */
-function loadAddressFiles(
+async function loadAddressFiles(
   input: CurrencyWalletInput,
   folder: DiskletFolder
 ): Promise<string[]> {
   // Actually load the files:
-  const oldFiles = mapFiles(folder.folder('Addresses'), file =>
-    file
-      .getText()
-      .then(text => JSON.parse(text))
-      .catch(e => null)
+  const oldFiles: LegacyAddressFile[] = await mapFiles(
+    folder.folder('Addresses'),
+    file =>
+      file
+        .getText()
+        .then(text => JSON.parse(text))
+        .catch(e => null)
   )
 
   // Save the results to our state:
-  return oldFiles.then((oldFiles: LegacyAddressFile[]) => {
-    const out: string[] = []
-    for (const json of oldFiles) {
-      if (json == null || !json.state || !json.meta) continue
-      const address = json.address
-      if (!address || json.state.recycleable) continue
-      out.push(address)
-    }
+  const out: string[] = []
+  for (const json of oldFiles) {
+    if (json == null || !json.state || !json.meta) continue
+    const address = json.address
+    if (!address || json.state.recycleable) continue
+    out.push(address)
+  }
 
-    // Load these addresses into the engine:
-    const engine = input.props.selfOutput.engine
-    if (engine) engine.addGapLimitAddresses(out)
+  // Load these addresses into the engine:
+  const engine = input.props.selfOutput.engine
+  if (engine) await engine.addGapLimitAddresses(out)
 
-    return out
-  })
+  return out
 }
 
 /**

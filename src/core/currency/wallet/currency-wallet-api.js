@@ -359,7 +359,7 @@ export function makeCurrencyWalletApi(
     async getReceiveAddress(
       opts: EdgeCurrencyCodeOptions = {}
     ): Promise<EdgeReceiveAddress> {
-      const freshAddress = engine.getFreshAddress(opts)
+      const freshAddress = await engine.getFreshAddress(opts)
       const receiveAddress: EdgeReceiveAddress = {
         metadata: fakeMetadata,
         nativeAmount: '0',
