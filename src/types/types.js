@@ -511,9 +511,11 @@ export type EdgeCurrencyEngine = {
   getTokenStatus(token: string): boolean,
 
   // Addresses:
-  getFreshAddress(opts: EdgeCurrencyCodeOptions): EdgeFreshAddress,
-  addGapLimitAddresses(addresses: string[]): void,
-  isAddressUsed(address: string): boolean,
+  getFreshAddress(
+    opts: EdgeCurrencyCodeOptions
+  ): Promise<EdgeFreshAddress> | EdgeFreshAddress,
+  addGapLimitAddresses(addresses: string[]): Promise<void> | void,
+  isAddressUsed(address: string): Promise<boolean> | boolean,
 
   // Spending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
