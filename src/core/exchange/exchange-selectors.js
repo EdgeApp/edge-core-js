@@ -78,6 +78,28 @@ function searchRoutes(
   }
 }
 
+function isFiatCode(currencyCode: string): boolean {
+  return /^iso:/.test(currencyCode)
+}
+
+/**
+ * Create routes to USD if no deep routes to fiat exist. Helpful for hard
+ * coded crypto/crypto exchange rates.
+ */
+function createDeepFiatRoutes(
+  search: ExchangeSearch,
+  fromCurrency: string
+): void {
+  const newHints = []
+  for (const fromRoute of Object.keys(search.routes[fromCurrency])) {
+    for (const deepRoute of Object.keys(search.routes[fromRoute])) {
+      if (isFiatCode(deepRoute)) return
+      newHints.push({ fromCurrency: fromRoute, toCurrency: 'iso:USD' })
+    }
+  }
+  newHints.forEach(hint => addHint(hint.fromCurrency, hint.toCurrency))
+}
+
 /**
  * Looks up the best available exchange rate.
  * @param {*} getPairCost a function that assigns scores to currency pairs.
@@ -103,6 +125,7 @@ export function getExchangeRate(
   // Only search if the endpoints exist:
   if (search.routes[fromCurrency] && search.routes[toCurrency]) {
     searchRoutes(search, fromCurrency, { rate: 1, cost: 0 }, {})
+    if (!isFiatCode(fromCurrency)) createDeepFiatRoutes(search, fromCurrency)
   } else {
     addHint(fromCurrency, toCurrency)
   }

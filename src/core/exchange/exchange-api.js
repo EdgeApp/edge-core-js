@@ -15,7 +15,8 @@ const biasDefaults = {
   coincap: -0.05,
   coinbase: -0.1,
   coinmonitor: -0.2,
-  wazirx: -0.15
+  wazirx: -0.15,
+  constantRate: -0.25
 }
 
 /**
