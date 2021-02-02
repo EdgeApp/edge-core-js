@@ -32,14 +32,39 @@ export function searchStringFilter(
 
   let out = txs
   if (searchString != null && searchString !== '') {
-    const lowerCaseSearchString = searchString.toLowerCase()
-    const noSeparatorsSearchString = searchString
+    // Sanitize search string
+    let cleanString = searchString
+      .toLowerCase()
       .replace('.', '')
       .replace(',', '')
-    out = out.filter(tx => {
-      if (!/[A-Za-z]/.test(searchString)) {
-        if (tx.nativeAmount.indexOf(noSeparatorsSearchString) >= 0) return true
+    // Remove leading zeroes
+    for (let i = 0; i < cleanString.length; i++) {
+      if (cleanString[i] !== '0') {
+        cleanString = cleanString.substring(i)
+        break
       }
+    }
+
+    function checkNullTypeAndIndex(value: string | number): boolean {
+      if (
+        value == null ||
+        (typeof value !== 'string' && typeof value !== 'number')
+      )
+        return false
+      if (
+        value
+          .toString()
+          .toLowerCase()
+          .replace('.', '')
+          .replace(',', '')
+          .indexOf(cleanString) < 0
+      )
+        return false
+      return true
+    }
+
+    out = out.filter(tx => {
+      if (checkNullTypeAndIndex(tx.nativeAmount)) return true
       if (tx.metadata != null) {
         const {
           category = '',
@@ -48,24 +73,19 @@ export function searchStringFilter(
           exchangeAmount = {}
         } = tx.metadata
         if (
-          category.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-          name.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-          notes.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
+          checkNullTypeAndIndex(category) ||
+          checkNullTypeAndIndex(name) ||
+          checkNullTypeAndIndex(notes) ||
           (tx.wallet != null &&
-            exchangeAmount[tx.wallet.fiatCurrencyCode] &&
-            exchangeAmount[tx.wallet.fiatCurrencyCode]
-              .toString()
-              .replace('.', '')
-              .replace(',', '')
-              .indexOf(noSeparatorsSearchString) >= 0)
+            checkNullTypeAndIndex(exchangeAmount[tx.wallet.fiatCurrencyCode]))
         )
           return true
       }
       if (tx.swapData != null && tx.swapData.plugin != null) {
         const { displayName = '', pluginId = '' } = tx.swapData.plugin
         if (
-          displayName.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-          pluginId.toLowerCase().indexOf(lowerCaseSearchString) >= 0
+          checkNullTypeAndIndex(displayName) ||
+          checkNullTypeAndIndex(pluginId)
         )
           return true
       }
@@ -73,19 +93,18 @@ export function searchStringFilter(
         for (const target of tx.spendTargets) {
           const { publicAddress = '', uniqueIdentifier = '' } = target
           if (
-            publicAddress.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-            uniqueIdentifier.toLowerCase().indexOf(lowerCaseSearchString) >= 0
+            checkNullTypeAndIndex(publicAddress) ||
+            checkNullTypeAndIndex(uniqueIdentifier)
           )
             return true
         }
       }
       if (tx.ourReceiveAddresses.length > 0) {
         for (const address of tx.ourReceiveAddresses) {
-          if (address.toLowerCase().indexOf(lowerCaseSearchString) >= 0)
-            return true
+          if (checkNullTypeAndIndex(address)) return true
         }
       }
-      if (tx.txid.toLowerCase().indexOf(lowerCaseSearchString) >= 0) return true
+      if (checkNullTypeAndIndex(tx.txid)) return true
       return false
     })
   }
