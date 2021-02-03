@@ -5,6 +5,11 @@
 
 import { base64 } from 'rfc4648'
 
+import { asLoginPayload } from '../../types/server-cleaners.js'
+import {
+  type LoginPayload,
+  type LoginRequest
+} from '../../types/server-types.js'
 import {
   type EdgeAccountOptions,
   type EdgeWalletInfo
@@ -21,14 +26,9 @@ import {
   mergeKeyInfos
 } from './keys.js'
 import { loginFetch } from './login-fetch.js'
-import { type LoginPayload, asLoginPayload } from './login-reply.js'
 import { getStash } from './login-selectors.js'
 import { type LoginStash, saveStash } from './login-stash.js'
-import {
-  type LoginKit,
-  type LoginRequest,
-  type LoginTree
-} from './login-types.js'
+import { type LoginKit, type LoginTree } from './login-types.js'
 import { getLoginOtp, getStashOtp } from './otp.js'
 
 function cloneNode<Node: {}, Output>(

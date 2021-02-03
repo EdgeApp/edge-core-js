@@ -5,6 +5,7 @@ import { base16, base64 } from 'rfc4648'
 import { bridgifyObject, close } from 'yaob'
 
 import { fixUsername } from '../../client-side.js'
+import { asLoginPayload } from '../../types/server-cleaners.js'
 import {
   type EdgeAccount,
   type EdgeContext,
@@ -16,7 +17,6 @@ import {
 import { base58 } from '../../util/encoding.js'
 import { makeFetch } from '../../util/http/http-to-fetch.js'
 import { applyLoginPayload } from '../login/login.js'
-import { asLoginPayload } from '../login/login-reply.js'
 import { type PluginIos } from '../plugins/plugins-actions.js'
 import { makeContext } from '../root.js'
 import { makeRepoPaths, saveChanges } from '../storage/repo.js'

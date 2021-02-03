@@ -3,8 +3,9 @@
 import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
 
+import { type LobbyReply, type LobbyRequest } from '../../types/server-types.js'
 import { type EdgeIo } from '../../types/types.js'
-import { type EdgeBox, decryptText, encrypt } from '../../util/crypto/crypto.js'
+import { decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
 import { base58, utf8 } from '../../util/encoding.js'
 import {
@@ -18,20 +19,6 @@ const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
 
 type Keypair = Object
-
-// The JSON structure placed in the lobby as a reply:
-export type LobbyReply = {
-  publicKey: string,
-  box: EdgeBox
-}
-
-// The JSON structure placed in the lobby as a request:
-export type LobbyRequest = {
-  timeout?: number,
-  publicKey?: string,
-  loginRequest?: { appId: string },
-  replies?: LobbyReply[]
-}
 
 export type LobbySubscription = { unsubscribe(): void }
 

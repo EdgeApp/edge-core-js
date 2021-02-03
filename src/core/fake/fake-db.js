@@ -1,11 +1,14 @@
 // @flow
 
+import {
+  type EdgeBox,
+  type EdgeSnrp,
+  type LobbyReply,
+  type LobbyRequest,
+  type LoginPayload
+} from '../../types/server-types.js'
 import { type EdgeFakeUser } from '../../types/types.js'
-import { type EdgeBox } from '../../util/crypto/crypto.js'
 import { filterObject } from '../../util/util.js'
-import { type LobbyReply, type LobbyRequest } from '../login/lobby.js'
-import { type LoginPayload } from '../login/login-reply.js'
-import { type EdgeSnrp } from '../scrypt/scrypt-pixie.js'
 
 export type DbLobby = {
   expires: string, // date

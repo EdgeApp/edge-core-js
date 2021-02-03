@@ -1,8 +1,8 @@
 // @flow
 
+import { type EdgeSnrp } from '../../types/server-types.js'
 import { utf8 } from '../../util/encoding.js'
 import { type ApiInput } from '../root-pixie.js'
-import { type EdgeSnrp } from './scrypt-pixie.js'
 
 /**
  * Computes an SNRP value.

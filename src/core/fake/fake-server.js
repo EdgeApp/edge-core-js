@@ -1,16 +1,15 @@
 // @flow
 
-import {
-  asArray,
-  asEither,
-  asMaybe,
-  asNone,
-  asObject,
-  asString
-} from 'cleaners'
+import { asEither, asMaybe } from 'cleaners'
 
+import {
+  asPasswordPayload,
+  asPin2DisablePayload,
+  asPin2EnablePayload,
+  asRecovery2Payload,
+  asSecretPayload
+} from '../../types/server-cleaners.js'
 import { type EdgeLoginMessage } from '../../types/types.js'
-import { asEdgeBox } from '../../util/crypto/crypto.js'
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import {
@@ -25,7 +24,6 @@ import {
   type Server
 } from '../../util/http/http-types.js'
 import { addHiddenProperties, filterObject, softCat } from '../../util/util.js'
-import { asEdgeSnrp } from '../scrypt/scrypt-pixie.js'
 import {
   type DbLobby,
   type DbLogin,
@@ -326,15 +324,7 @@ const password2Route: ApiServer = withLogin2(
   })
 )
 
-const asMaybePasswordPayload = asMaybe(
-  asObject({
-    passwordAuth: asString,
-    passwordAuthBox: asEdgeBox,
-    passwordAuthSnrp: asEdgeSnrp,
-    passwordBox: asEdgeBox,
-    passwordKeySnrp: asEdgeSnrp
-  })
-)
+const asMaybePasswordPayload = asMaybe(asPasswordPayload)
 
 const pin2Route: ApiServer = withLogin2(
   pickMethod({
@@ -366,22 +356,7 @@ const pin2Route: ApiServer = withLogin2(
 )
 
 const asMaybePin2Payload = asMaybe(
-  asEither(
-    asObject({
-      pin2Id: asString,
-      pin2Auth: asString, // asBase64
-      pin2Box: asEdgeBox,
-      pin2KeyBox: asEdgeBox,
-      pin2TextBox: asEdgeBox
-    }),
-    asObject({
-      pin2Id: asNone,
-      pin2Auth: asNone,
-      pin2Box: asNone,
-      pin2KeyBox: asNone,
-      pin2TextBox: asEdgeBox
-    })
-  )
+  asEither(asPin2DisablePayload, asPin2EnablePayload)
 )
 
 const recovery2Route: ApiServer = withLogin2(
@@ -413,15 +388,7 @@ const recovery2Route: ApiServer = withLogin2(
   })
 )
 
-const asMaybeRecovery2Payload = asMaybe(
-  asObject({
-    recovery2Id: asString,
-    recovery2Auth: asArray(asString), // asBase64
-    recovery2Box: asEdgeBox,
-    recovery2KeyBox: asEdgeBox,
-    question2Box: asEdgeBox
-  })
-)
+const asMaybeRecovery2Payload = asMaybe(asRecovery2Payload)
 
 const secretRoute: ApiServer = withLogin2(
   pickMethod({
@@ -446,12 +413,7 @@ const secretRoute: ApiServer = withLogin2(
   })
 )
 
-const asMaybeSecretPayload = asMaybe(
-  asObject({
-    loginAuthBox: asEdgeBox,
-    loginAuth: asString // asBase64
-  })
-)
+const asMaybeSecretPayload = asMaybe(asSecretPayload)
 
 // lobby: ------------------------------------------------------------------
 

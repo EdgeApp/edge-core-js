@@ -1,6 +1,5 @@
 // @flow
 
-import { asNumber, asObject, asString } from 'cleaners'
 import {
   type PixieInput,
   type TamePixie,
@@ -9,19 +8,9 @@ import {
 } from 'redux-pixies'
 import { base16 } from 'rfc4648'
 
+import { type EdgeSnrp } from '../../types/server-types.js'
 import { utf8 } from '../../util/encoding.js'
 import { type RootProps } from '../root-pixie.js'
-
-/**
- * Edge-format scrypt parameters.
- */
-export const asEdgeSnrp = asObject({
-  salt_hex: asString,
-  n: asNumber,
-  r: asNumber,
-  p: asNumber
-})
-export type EdgeSnrp = $Call<typeof asEdgeSnrp, any>
 
 export type ScryptOutput = {
   +makeSnrp: (targetMs: number) => Promise<EdgeSnrp>,

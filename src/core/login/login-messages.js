@@ -1,21 +1,9 @@
 // @flow
 
-import {
-  type Cleaner,
-  asArray,
-  asBoolean,
-  asObject,
-  asOptional,
-  asString
-} from 'cleaners'
-
-import {
-  type EdgeLoginMessage,
-  type EdgeLoginMessages
-} from '../../types/types.js'
+import { asMessagesPayload } from '../../types/server-cleaners.js'
+import { type EdgeLoginMessages } from '../../types/types.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
-import { asPendingVoucher } from './login-types.js'
 
 /**
  * Fetches any login-related messages for all the users on this device.
@@ -41,12 +29,3 @@ export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
     return out
   })
 }
-
-const asLoginMessage: Cleaner<EdgeLoginMessage> = asObject({
-  loginId: asString,
-  otpResetPending: asOptional(asBoolean, false),
-  pendingVouchers: asOptional(asArray(asPendingVoucher), []),
-  recovery2Corrupt: asOptional(asBoolean, false)
-})
-
-const asMessagesPayload = asArray(asLoginMessage)

@@ -3,10 +3,10 @@
 import { type Disklet } from 'disklet'
 import { Bridgeable, bridgifyObject, close, emit, update } from 'yaob'
 
+import { type LobbyRequest } from '../../types/server-types.js'
 import { type EdgeContext } from '../../types/types.js'
 import {
   type LobbyInstance,
-  type LobbyRequest,
   fetchLobbyRequest,
   makeLobby,
   sendLobbyReply

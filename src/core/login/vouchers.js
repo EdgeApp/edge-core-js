@@ -1,9 +1,9 @@
 // @flow
 
+import { asLoginPayload } from '../../types/server-cleaners.js'
 import { type ApiInput } from '../root-pixie.js'
 import { applyLoginPayload, makeAuthJson } from './login.js'
 import { loginFetch } from './login-fetch.js'
-import { asLoginPayload } from './login-reply.js'
 import { getStash } from './login-selectors.js'
 import { saveStash } from './login-stash.js'
 import { type LoginTree } from './login-types.js'
