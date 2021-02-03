@@ -337,13 +337,19 @@ export async function exportTransactionsToCSVInner(
         networkFeeField,
         txid: edgeTx.txid,
         ourReceiveAddresses: edgeTx.ourReceiveAddresses,
-        version: 1
+        version: 1,
+        currencyCode
       }
       items.push(csvTx)
     }
 
     const options = {
       fields: [
+        {
+          name: 'currencyCode',
+          label: 'CURRENCY_CODE',
+          quoted: true
+        },
         {
           name: 'date',
           label: 'DATE',
