@@ -3,10 +3,12 @@
 import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
 
+import { asLobbyPayload } from '../../types/server-cleaners.js'
 import { type LobbyReply, type LobbyRequest } from '../../types/server-types.js'
 import { type EdgeIo } from '../../types/types.js'
 import { decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
+import { verifyData } from '../../util/crypto/verify.js'
 import { base58, utf8 } from '../../util/encoding.js'
 import {
   type PeriodicTask,
@@ -14,6 +16,11 @@ import {
 } from '../../util/periodic-task.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
+
+/**
+ * A `LobbyRequest` without its key.
+ */
+export type PartialLobbyRequest = $Shape<LobbyRequest>
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
@@ -90,11 +97,13 @@ class ObservableLobby {
 
   constructor(ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
     const pollLobby = async () => {
-      const reply = await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
+      const clean = asLobbyPayload(
+        await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
+      )
 
       // Process any new replies that have arrived on the server:
-      while (this.replyCount < reply.replies.length) {
-        const lobbyReply = reply.replies[this.replyCount]
+      while (this.replyCount < clean.replies.length) {
+        const lobbyReply = clean.replies[this.replyCount]
         const decrypted = decryptLobbyReply(keypair, lobbyReply)
         const { onReply } = this
         if (onReply != null) onReply(decrypted)
@@ -132,51 +141,49 @@ class ObservableLobby {
  * Creates a new lobby on the auth server holding the given request.
  * @return A lobby watcher object that will check for incoming replies.
  */
-export function makeLobby(
+export async function makeLobby(
   ai: ApiInput,
-  lobbyRequest: LobbyRequest,
+  lobbyRequest: PartialLobbyRequest,
   period: number = 1000
 ): Promise<LobbyInstance> {
   const { io } = ai.props
+  const { loginRequest, timeout = 600 } = lobbyRequest
+
+  // Create the keys:
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
   const pubkey = Uint8Array.from(keypair.getPublic().encodeCompressed())
-  if (lobbyRequest.timeout == null) {
-    lobbyRequest.timeout = 600
-  }
-  lobbyRequest.publicKey = base64.stringify(pubkey)
-
   const lobbyId = base58.stringify(sha256(sha256(pubkey)).slice(0, 10))
 
-  const request = {
-    data: lobbyRequest
+  const payload: LobbyRequest = {
+    loginRequest,
+    publicKey: base64.stringify(pubkey),
+    timeout
   }
-  return loginFetch(ai, 'PUT', '/v2/lobby/' + lobbyId, request).then(reply => {
-    return new ObservableLobby(ai, lobbyId, keypair, period)
-  })
+  await loginFetch(ai, 'PUT', '/v2/lobby/' + lobbyId, { data: payload })
+  return new ObservableLobby(ai, lobbyId, keypair, period)
 }
 
 /**
  * Fetches a lobby request from the auth server.
  * @return A promise of the lobby request JSON.
  */
-export function fetchLobbyRequest(
+export async function fetchLobbyRequest(
   ai: ApiInput,
   lobbyId: string
 ): Promise<LobbyRequest> {
-  return loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {}).then(reply => {
-    const lobbyRequest = reply.request
+  const clean = asLobbyPayload(
+    await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
+  )
 
-    // Verify the public key:
-    const pubkey = base64.parse(lobbyRequest.publicKey)
-    const checksum = sha256(sha256(pubkey))
-    base58.parse(lobbyId).forEach((value, index) => {
-      if (value !== checksum[index]) {
-        throw new Error('Lobby ECDH integrity error')
-      }
-    })
+  // Verify the public key:
+  const pubkey = base64.parse(clean.request.publicKey)
+  const checksum = sha256(sha256(pubkey))
+  const idBytes = base58.parse(lobbyId)
+  if (!verifyData(idBytes, checksum.subarray(0, idBytes.length))) {
+    throw new Error('Lobby ECDH integrity error')
+  }
 
-    return lobbyRequest
-  })
+  return clean.request
 }
 
 /**
@@ -193,8 +200,6 @@ export async function sendLobbyReply(
     throw new TypeError('The lobby data does not have a public key')
   }
   const pubkey = base64.parse(lobbyRequest.publicKey)
-  const request = {
-    data: encryptLobbyReply(io, pubkey, replyData)
-  }
-  await loginFetch(ai, 'POST', '/v2/lobby/' + lobbyId, request)
+  const payload = encryptLobbyReply(io, pubkey, replyData)
+  await loginFetch(ai, 'POST', '/v2/lobby/' + lobbyId, { data: payload })
 }

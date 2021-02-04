@@ -16,6 +16,9 @@ import { base64 } from 'rfc4648'
 import {
   type EdgeBox,
   type EdgeSnrp,
+  type LobbyPayload,
+  type LobbyReply,
+  type LobbyRequest,
   type LoginPayload,
   type PasswordPayload,
   type Pin2DisablePayload,
@@ -154,3 +157,23 @@ export const asMessagesPayload: Cleaner<EdgeLoginMessage[]> = asArray(
     recovery2Corrupt: asOptional(asBoolean, false)
   })
 )
+
+// ---------------------------------------------------------------------
+// lobby subsystem
+// ---------------------------------------------------------------------
+
+export const asLobbyRequest: Cleaner<LobbyRequest> = asObject({
+  publicKey: asString,
+  loginRequest: asOptional(asObject({ appId: asString })),
+  timeout: asOptional(asNumber)
+})
+
+export const asLobbyReply: Cleaner<LobbyReply> = asObject({
+  publicKey: asString,
+  box: asEdgeBox
+})
+
+export const asLobbyPayload: Cleaner<LobbyPayload> = asObject({
+  request: asLobbyRequest,
+  replies: asArray(asLobbyReply)
+})

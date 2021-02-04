@@ -147,16 +147,28 @@ export type LoginPayload = {
 // lobby subsystem
 // ---------------------------------------------------------------------
 
-// The JSON structure placed in the lobby as a reply:
+/**
+ * The barcode creator uploads this request.
+ */
+export type LobbyRequest = {
+  loginRequest?: { appId: string },
+  publicKey: string, // base64
+  timeout?: number
+}
+
+/**
+ * The barcode scanner sends this reply (if the user approves).
+ */
 export type LobbyReply = {
   publicKey: string,
   box: EdgeBox
 }
 
-// The JSON structure placed in the lobby as a request:
-export type LobbyRequest = {
-  timeout?: number,
-  publicKey?: string,
-  loginRequest?: { appId: string },
-  replies?: LobbyReply[]
+/**
+ * The server holds the request & replies for each lobby ID,
+ * and returns them in this format.
+ */
+export type LobbyPayload = {
+  request: LobbyRequest,
+  replies: LobbyReply[]
 }

@@ -7,6 +7,7 @@ import { type LobbyRequest } from '../../types/server-types.js'
 import { type EdgeContext } from '../../types/types.js'
 import {
   type LobbyInstance,
+  type PartialLobbyRequest,
   fetchLobbyRequest,
   makeLobby,
   sendLobbyReply
@@ -87,7 +88,7 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
   }
 
   async makeLobby(
-    lobbyRequest: LobbyRequest,
+    lobbyRequest: PartialLobbyRequest,
     period: number = 1000
   ): Promise<EdgeLobby> {
     const lobby = await makeLobby(this._ai, lobbyRequest, period)
