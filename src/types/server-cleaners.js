@@ -9,7 +9,8 @@ import {
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  asUnknown
 } from 'cleaners'
 import { base64 } from 'rfc4648'
 
@@ -20,6 +21,8 @@ import {
   type LobbyReply,
   type LobbyRequest,
   type LoginPayload,
+  type LoginRequest,
+  type LoginResponse,
   type PasswordPayload,
   type Pin2DisablePayload,
   type Pin2EnablePayload,
@@ -56,6 +59,49 @@ export const asPendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
   ip: asString,
   ipDescription: asString,
   deviceDescription: asOptional(asString)
+})
+
+// ---------------------------------------------------------------------
+// top-level request & response bodies
+// ---------------------------------------------------------------------
+
+/**
+ * Data sent to authenticate with the login server.
+ */
+export const asLoginRequest: Cleaner<LoginRequest> = asObject({
+  // The request payload:
+  data: asUnknown,
+
+  // Common fields for all login methods:
+  deviceDescription: asOptional(asString),
+  otp: asOptional(asString),
+  voucherId: asOptional(asString),
+  voucherAuth: asOptional(asString),
+
+  // Secret-key login:
+  loginId: asOptional(asString),
+  loginAuth: asOptional(asString),
+
+  // Password login:
+  userId: asOptional(asString),
+  passwordAuth: asOptional(asString),
+
+  // PIN login:
+  pin2Id: asOptional(asString),
+  pin2Auth: asOptional(asString),
+
+  // Recovery login:
+  recovery2Id: asOptional(asString),
+  recovery2Auth: asOptional(asArray(asString))
+})
+
+export const asLoginResponse: Cleaner<LoginResponse> = asObject({
+  // The response payload:
+  results: asOptional(asUnknown),
+
+  // What type of response is this (success or failure)?:
+  status_code: asNumber,
+  message: asString
 })
 
 // ---------------------------------------------------------------------

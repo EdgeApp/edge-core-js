@@ -30,7 +30,7 @@ export type EdgeSnrp = {
  */
 export type LoginRequest = {
   // The request payload:
-  data?: any,
+  data?: mixed,
 
   // Common fields for all login methods:
   deviceDescription?: string,
@@ -38,7 +38,7 @@ export type LoginRequest = {
   voucherId?: string,
   voucherAuth?: string,
 
-  // Auth key login:
+  // Secret-key login:
   loginId?: string,
   loginAuth?: string,
 
@@ -53,6 +53,15 @@ export type LoginRequest = {
   // Recovery login:
   recovery2Id?: string,
   recovery2Auth?: string[]
+}
+
+export type LoginResponse = {
+  // The response payload:
+  results?: mixed,
+
+  // What type of response is this (success or failure)?:
+  status_code: number,
+  message: string
 }
 
 // ---------------------------------------------------------------------

@@ -3,6 +3,7 @@
 import { asEither, asMaybe } from 'cleaners'
 
 import {
+  asLoginRequest,
   asPasswordPayload,
   asPin2DisablePayload,
   asPin2EnablePayload,
@@ -67,60 +68,72 @@ const withLogin2 = (
   fallback: ApiServer = handleMissingCredentials
 ): ApiServer => request => {
   const { db, json } = request
+  const clean = asLoginRequest(json)
+  const {
+    loginAuth,
+    loginId,
+    otp = '',
+    passwordAuth,
+    pin2Auth,
+    pin2Id,
+    recovery2Auth,
+    recovery2Id,
+    userId
+  } = clean
 
   // Token login:
-  if (json.loginId != null && json.loginAuth != null) {
-    const login = db.getLoginById(json.loginId)
+  if (loginId != null && loginAuth != null) {
+    const login = db.getLoginById(loginId)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (json.loginAuth !== login.loginAuth) {
+    if (loginAuth !== login.loginAuth) {
       return passwordErrorResponse(0)
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, json.otp)) {
+    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
 
   // Password login:
-  if (json.userId != null && json.passwordAuth != null) {
-    const login = db.getLoginById(json.userId)
+  if (userId != null && passwordAuth != null) {
+    const login = db.getLoginById(userId)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (json.passwordAuth !== login.passwordAuth) {
+    if (passwordAuth !== login.passwordAuth) {
       return passwordErrorResponse(0)
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, json.otp)) {
+    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
 
   // PIN2 login:
-  if (json.pin2Id != null && json.pin2Auth != null) {
-    const login = db.getLoginByPin2Id(json.pin2Id)
+  if (pin2Id != null && pin2Auth != null) {
+    const login = db.getLoginByPin2Id(pin2Id)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (json.pin2Auth !== login.pin2Auth) {
+    if (pin2Auth !== login.pin2Auth) {
       return passwordErrorResponse(0)
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, json.otp)) {
+    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
 
   // Recovery2 login:
-  if (json.recovery2Id != null && json.recovery2Auth != null) {
-    const login = db.getLoginByRecovery2Id(json.recovery2Id)
+  if (recovery2Id != null && recovery2Auth != null) {
+    const login = db.getLoginByRecovery2Id(recovery2Id)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
     const serverAuth = login.recovery2Auth
-    const clientAuth = json.recovery2Auth
+    const clientAuth = recovery2Auth
     if (serverAuth == null || clientAuth.length !== serverAuth.length) {
       return passwordErrorResponse(0)
     }
@@ -129,7 +142,7 @@ const withLogin2 = (
         return passwordErrorResponse(0)
       }
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, json.otp)) {
+    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
@@ -150,8 +163,11 @@ const loginRoute: ApiServer = pickMethod({
     // Fallback version:
     request => {
       const { db, json } = request
-      if (json.userId != null && json.passwordAuth == null) {
-        const login = db.getLoginById(json.userId)
+      const clean = asLoginRequest(json)
+      const { userId, passwordAuth, recovery2Id, recovery2Auth } = clean
+
+      if (userId != null && passwordAuth == null) {
+        const login = db.getLoginById(userId)
         if (login == null) {
           return statusResponse(statusCodes.noAccount)
         }
@@ -159,8 +175,8 @@ const loginRoute: ApiServer = pickMethod({
           passwordAuthSnrp: login.passwordAuthSnrp
         })
       }
-      if (json.recovery2Id != null && json.recovery2Auth == null) {
-        const login = db.getLoginByRecovery2Id(json.recovery2Id)
+      if (recovery2Id != null && recovery2Auth == null) {
+        const login = db.getLoginByRecovery2Id(recovery2Id)
         if (login == null) {
           return statusResponse(statusCodes.noAccount)
         }
