@@ -72,7 +72,7 @@ export type AppIdMap = { [walletId: string]: string[] }
 
 export type LoginKit = {
   loginId: string,
-  login: any,
+  login: $Shape<LoginTree>,
   server?: any,
   serverMethod?: string,
   serverPath: string,

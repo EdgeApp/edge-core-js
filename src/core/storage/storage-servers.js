@@ -30,7 +30,7 @@ export async function syncRequest(
 ): Promise<SyncReply> {
   const start = Math.floor(Math.random() * syncServers.length)
 
-  async function loop(i: number): Promise<any> {
+  async function loop(i: number): Promise<SyncReply> {
     const server = syncServers[(start + i) % syncServers.length]
     const promise = syncRequestInner(io, log, method, uri, body, server)
     return i < syncServers.length ? promise.catch(() => loop(i + 1)) : promise

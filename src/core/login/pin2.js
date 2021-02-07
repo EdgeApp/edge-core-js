@@ -236,8 +236,7 @@ export function makeDeletePin2Kits(loginTree: LoginTree): LoginKit[] {
  * Creates the data needed to delete a PIN from a login.
  */
 export function makeDeletePin2Kit(login: LoginTree): LoginKit {
-  // Flow complains about these fields being `undefined`:
-  const out: any = {
+  return {
     serverMethod: 'DELETE',
     serverPath: '/v2/login/pin2',
     server: undefined,
@@ -249,5 +248,4 @@ export function makeDeletePin2Kit(login: LoginTree): LoginKit {
     },
     loginId: login.loginId
   }
-  return out
 }

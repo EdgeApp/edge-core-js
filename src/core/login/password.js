@@ -146,16 +146,14 @@ export async function deletePassword(
       passwordKeySnrp: undefined
     },
     login: {
-      passwordAuthSnrp: undefined,
-      passwordBox: undefined,
-      passwordKeySnrp: undefined
+      passwordAuth: undefined
     },
     loginId: loginTree.loginId
   }
   // Only remove `passwordAuth` if we have another way to get in:
   if (loginTree.loginAuth != null) {
     kit.stash.passwordAuthBox = undefined
-    kit.login.passwordAuthBox = undefined
+    kit.login.passwordAuth = undefined
   }
   await applyKit(ai, loginTree, kit)
 }
