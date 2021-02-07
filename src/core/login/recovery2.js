@@ -2,6 +2,10 @@
 
 import { base64 } from 'rfc4648'
 
+import {
+  asQuestionChoicesPayload,
+  asStartRecoveryPayload
+} from '../../types/server-cleaners.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
@@ -76,8 +80,7 @@ export function getQuestions2(
     // "otp": null
   }
   return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
-    // Recovery login:
-    const question2Box = reply.question2Box
+    const { question2Box } = asStartRecoveryPayload(reply)
     if (question2Box == null) {
       throw new Error('Login has no recovery questions')
     }
@@ -165,6 +168,10 @@ export function makeRecovery2Kit(
   }
 }
 
-export function listRecoveryQuestionChoices(ai: ApiInput): Promise<string[]> {
-  return loginFetch(ai, 'POST', '/v1/questions', {})
+export async function listRecoveryQuestionChoices(
+  ai: ApiInput
+): Promise<string[]> {
+  return asQuestionChoicesPayload(
+    await loginFetch(ai, 'POST', '/v1/questions', {})
+  )
 }

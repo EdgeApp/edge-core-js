@@ -12,7 +12,7 @@ import {
 import { timeout } from '../../util/promise.js'
 import { type ApiInput } from '../root-pixie.js'
 
-export function parseReply(json: mixed): any {
+export function parseReply(json: mixed): mixed {
   const clean = asLoginResponse(json)
 
   switch (clean.status_code) {
@@ -50,7 +50,7 @@ export function loginFetch(
   method: string,
   path: string,
   body?: any
-): Promise<any> {
+): Promise<mixed> {
   const { state, io, log } = ai.props
   const { apiKey, serverUri } = state.login
 

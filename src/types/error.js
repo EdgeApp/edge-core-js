@@ -1,6 +1,6 @@
 // @flow
 
-import { asDate, asObject, asOptional, asString } from 'cleaners'
+import { asDate, asNumber, asObject, asOptional, asString } from 'cleaners'
 
 import type { EdgeSwapInfo } from './types.js'
 
@@ -206,14 +206,20 @@ export class PasswordError extends Error {
   +type: string // deprecated
   +wait: number | void // seconds
 
-  constructor(resultsJson: any, message: string = 'Invalid password') {
+  constructor(resultsJson: mixed, message: string = 'Invalid password') {
     super(message)
     this.name = this.type = errorNames.PasswordError
-    if (resultsJson != null && typeof resultsJson.wait_seconds === 'number') {
-      this.wait = resultsJson.wait_seconds
-    }
+
+    try {
+      const clean = asPasswordErrorPayload(resultsJson)
+      this.wait = clean.wait_seconds
+    } catch (e) {}
   }
 }
+
+const asPasswordErrorPayload = asObject({
+  wait_seconds: asOptional(asNumber)
+})
 
 /**
  * Trying to spend funds that are not yet confirmed.

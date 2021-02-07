@@ -2,6 +2,7 @@
 
 import { base32, base64 } from 'rfc4648'
 
+import { asOtpResetPayload } from '../../types/server-cleaners.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { applyKit } from '../login/login.js'
@@ -126,7 +127,7 @@ export async function resetOtp(
     otpResetAuth: resetToken
   }
   return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
-    // The server returns dates as ISO 8601 formatted strings:
-    return new Date(reply.otpResetDate)
+    const { otpResetDate } = asOtpResetPayload(reply)
+    return otpResetDate
   })
 }

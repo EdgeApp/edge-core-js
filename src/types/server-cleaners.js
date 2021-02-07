@@ -23,11 +23,13 @@ import {
   type LoginPayload,
   type LoginRequest,
   type LoginResponse,
+  type OtpResetPayload,
   type PasswordPayload,
   type Pin2DisablePayload,
   type Pin2EnablePayload,
   type Recovery2Payload,
-  type SecretPayload
+  type SecretPayload,
+  type StartRecoveryPayload
 } from './server-types.js'
 import { type EdgeLoginMessage, type EdgePendingVoucher } from './types.js'
 
@@ -203,6 +205,16 @@ export const asMessagesPayload: Cleaner<EdgeLoginMessage[]> = asArray(
     recovery2Corrupt: asOptional(asBoolean, false)
   })
 )
+
+export const asOtpResetPayload: Cleaner<OtpResetPayload> = asObject({
+  otpResetDate: asDate
+})
+
+export const asStartRecoveryPayload: Cleaner<StartRecoveryPayload> = asObject({
+  question2Box: asEdgeBox
+})
+
+export const asQuestionChoicesPayload: Cleaner<string[]> = asArray(asString)
 
 // ---------------------------------------------------------------------
 // lobby subsystem

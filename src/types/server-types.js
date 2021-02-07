@@ -152,6 +152,14 @@ export type LoginPayload = {
   syncKeyBox?: EdgeBox
 }
 
+export type OtpResetPayload = {
+  otpResetDate: Date
+}
+
+export type StartRecoveryPayload = {
+  question2Box: EdgeBox
+}
+
 // ---------------------------------------------------------------------
 // lobby subsystem
 // ---------------------------------------------------------------------
