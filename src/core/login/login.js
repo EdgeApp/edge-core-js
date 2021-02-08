@@ -21,7 +21,7 @@ import {
   mergeKeyInfos
 } from './keys.js'
 import { loginFetch } from './login-fetch.js'
-import { type LoginReply, asLoginReply } from './login-reply.js'
+import { type LoginPayload, asLoginPayload } from './login-reply.js'
 import { getStash } from './login-selectors.js'
 import { type LoginStash, saveStash } from './login-stash.js'
 import {
@@ -80,10 +80,10 @@ function updateTree<Node: { +children?: any[] }, Output>(
   return clone(node, children)
 }
 
-function applyLoginReplyInner(
+function applyLoginPayloadInner(
   stash: LoginStash,
   loginKey: Uint8Array,
-  loginReply: LoginReply
+  loginReply: LoginPayload
 ): LoginStash {
   // Copy common items:
   const out: LoginStash = filterObject(loginReply, [
@@ -139,7 +139,7 @@ function applyLoginReplyInner(
     }
     const childKey = decrypt(child.parentBox, loginKey)
     const childStash = stashChildren[index] != null ? stashChildren[index] : {}
-    return applyLoginReplyInner(childStash, childKey, child)
+    return applyLoginPayloadInner(childStash, childKey, child)
   })
 
   return out
@@ -149,15 +149,15 @@ function applyLoginReplyInner(
  * Updates the given login stash object with fields from the auth server.
  * TODO: We don't trust the auth server 100%, so be picky about what we copy.
  */
-export function applyLoginReply(
+export function applyLoginPayload(
   stashTree: LoginStash,
   loginKey: Uint8Array,
-  loginReply: LoginReply
+  loginReply: LoginPayload
 ): LoginStash {
   return updateTree(
     stashTree,
     stash => stash.appId === loginReply.appId,
-    stash => applyLoginReplyInner(stash, loginKey, loginReply)
+    stash => applyLoginPayloadInner(stash, loginKey, loginReply)
   )
 }
 
@@ -327,7 +327,7 @@ export async function serverLogin(
   stash: LoginStash,
   opts: EdgeAccountOptions,
   serverAuth: LoginRequest,
-  decrypt: (reply: LoginReply) => Promise<Uint8Array>
+  decrypt: (reply: LoginPayload) => Promise<Uint8Array>
 ): Promise<LoginTree> {
   const { now = new Date() } = opts
   const { deviceDescription } = ai.props.state.login
@@ -340,7 +340,7 @@ export async function serverLogin(
   }
   if (deviceDescription != null) request.deviceDescription = deviceDescription
 
-  let loginReply = asLoginReply(
+  let loginReply = asLoginPayload(
     await loginFetch(ai, 'POST', '/v2/login', request).catch(error => {
       // Save the username / voucher if we get an OTP error:
       if (
@@ -377,13 +377,13 @@ export async function serverLogin(
         loginAuthBox
       }
     }
-    loginReply = asLoginReply(
+    loginReply = asLoginPayload(
       await loginFetch(ai, 'POST', '/v2/login/secret', request)
     )
   }
 
   // Save the latest data:
-  stashTree = applyLoginReply(stashTree, loginKey, loginReply)
+  stashTree = applyLoginPayload(stashTree, loginKey, loginReply)
   stashTree.lastLogin = now
   await saveStash(ai, stashTree)
   return makeLoginTree(stashTree, loginKey, stash.appId)

@@ -1,12 +1,12 @@
 // @flow
 
-import { type ApiInput } from '../root-pixie'
-import { applyLoginReply, makeAuthJson } from './login'
-import { loginFetch } from './login-fetch'
-import { asLoginReply } from './login-reply'
-import { getStash } from './login-selectors'
-import { saveStash } from './login-stash'
-import { type LoginTree } from './login-types'
+import { type ApiInput } from '../root-pixie.js'
+import { applyLoginPayload, makeAuthJson } from './login.js'
+import { loginFetch } from './login-fetch.js'
+import { asLoginPayload } from './login-reply.js'
+import { getStash } from './login-selectors.js'
+import { saveStash } from './login-stash.js'
+import { type LoginTree } from './login-types.js'
 
 /**
  * Approves or rejects vouchers on the server.
@@ -29,10 +29,10 @@ export async function changeVoucherStatus(
     ...makeAuthJson(stashTree, login),
     data: vouchers
   })
-  const newStashTree = applyLoginReply(
+  const newStashTree = applyLoginPayload(
     stashTree,
     login.loginKey,
-    asLoginReply(reply)
+    asLoginPayload(reply)
   )
   return saveStash(ai, newStashTree)
 }

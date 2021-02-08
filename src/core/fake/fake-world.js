@@ -15,8 +15,8 @@ import {
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
 import { makeFetch } from '../../util/http/http-to-fetch.js'
-import { applyLoginReply } from '../login/login.js'
-import { asLoginReply } from '../login/login-reply.js'
+import { applyLoginPayload } from '../login/login.js'
+import { asLoginPayload } from '../login/login-reply.js'
 import { type PluginIos } from '../plugins/plugins-actions.js'
 import { makeContext } from '../root.js'
 import { makeRepoPaths, saveChanges } from '../storage/repo.js'
@@ -27,7 +27,7 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
   const { loginId, loginKey, username } = user
 
   // Save the stash:
-  const stash = applyLoginReply(
+  const stash = applyLoginPayload(
     {
       appId: '',
       lastLogin: user.lastLogin,
@@ -36,7 +36,7 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
       username: fixUsername(username)
     },
     base64.parse(loginKey),
-    asLoginReply(user.server)
+    asLoginPayload(user.server)
   )
   const path = `logins/${base58.stringify(base64.parse(loginId))}.json`
   await io.disklet.setText(path, JSON.stringify(stash))

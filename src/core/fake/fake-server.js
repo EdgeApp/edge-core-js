@@ -32,7 +32,7 @@ import {
   type DbRepo,
   type FakeDb,
   loginCreateColumns,
-  makeLoginReply
+  makeLoginPayload
 } from './fake-db.js'
 import {
   jsonResponse,
@@ -147,7 +147,7 @@ const loginRoute: ApiServer = pickMethod({
     // Authenticated version:
     request => {
       const { db, login } = request
-      return loginResponse(makeLoginReply(db, login))
+      return loginResponse(makeLoginPayload(db, login))
     },
     // Fallback version:
     request => {
@@ -441,7 +441,7 @@ const secretRoute: ApiServer = withLogin2(
       login.loginAuth = clean.loginAuth
       login.loginAuthBox = clean.loginAuthBox
 
-      return loginResponse(makeLoginReply(db, login))
+      return loginResponse(makeLoginPayload(db, login))
     }
   })
 )

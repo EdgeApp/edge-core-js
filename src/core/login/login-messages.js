@@ -34,7 +34,7 @@ export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
   }
   return loginFetch(ai, 'POST', '/v2/messages', request).then(reply => {
     const out: EdgeLoginMessages = {}
-    for (const message of asLoginMessagesReply(reply)) {
+    for (const message of asMessagesPayload(reply)) {
       const username = loginMap[message.loginId]
       if (username != null) out[username] = message
     }
@@ -49,4 +49,4 @@ const asLoginMessage: Cleaner<EdgeLoginMessage> = asObject({
   recovery2Corrupt: asOptional(asBoolean, false)
 })
 
-const asLoginMessagesReply = asArray(asLoginMessage)
+const asMessagesPayload = asArray(asLoginMessage)

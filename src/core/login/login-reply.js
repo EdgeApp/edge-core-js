@@ -18,7 +18,7 @@ import { asPendingVoucher } from './login-types.js'
 /**
  * Data sent back by the auth server.
  */
-export type LoginReply = {
+export type LoginPayload = {
   // Identity:
   appId: string,
   created?: Date,
@@ -51,14 +51,14 @@ export type LoginReply = {
   recovery2KeyBox?: EdgeBox,
 
   // Resources:
-  children?: LoginReply[],
+  children?: LoginPayload[],
   keyBoxes?: EdgeBox[],
   mnemonicBox?: EdgeBox,
   rootKeyBox?: EdgeBox,
   syncKeyBox?: EdgeBox
 }
 
-export const asLoginReply: Cleaner<LoginReply> = asObject({
+export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   // Identity:
   appId: asString,
   created: asOptional(asDate),
@@ -91,7 +91,7 @@ export const asLoginReply: Cleaner<LoginReply> = asObject({
   recovery2KeyBox: asOptional(asEdgeBox),
 
   // Keys and assorted goodies:
-  children: asOptional(asArray(raw => asLoginReply(raw))),
+  children: asOptional(asArray(raw => asLoginPayload(raw))),
   keyBoxes: asOptional(asArray(asEdgeBox)),
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
