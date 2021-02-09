@@ -265,12 +265,17 @@ export function makeCurrencyWalletApi(
       })
       // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
       // slice, verify txs in files, if some are dropped and missing, do it again recursively
+      let searchedTxs = 0
       const getBulkTx = async (
         index: number,
         out: EdgeTransaction[] = []
       ): Promise<EdgeTransaction[]> => {
         // if the output is already filled up or we're at the end of the list of transactions
-        if (out.length === startEntries || index >= sortedTransactions.length) {
+        if (
+          out.length === startEntries ||
+          index >= sortedTransactions.length ||
+          searchedTxs >= sortedTransactions.length
+        ) {
           return out
         }
         // entries left to find = number of entries we're looking for minus the current output length
@@ -291,6 +296,7 @@ export function makeCurrencyWalletApi(
         // give txs the unfilteredIndex
 
         for (const txidHash of slicedTransactions) {
+          searchedTxs++
           const file = files[txidHash]
           if (file == null) continue
           const tempTx = txs[file.txid]
@@ -308,7 +314,10 @@ export function makeCurrencyWalletApi(
             unfilteredIndex: mappedUnfilteredIndexes[txidHash]
           }
           // add this tx / file to the output
-          out.push(combineTxWithFile(input, tx, file, currencyCode))
+          const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
+          if (searchStringFilter(dateFilter([edgeTx], opts), opts).length === 0)
+            continue
+          out.push(edgeTx)
         }
         // continue until the required tx number loaded
         const res = await getBulkTx(index + entriesLeft, out)
@@ -316,7 +325,7 @@ export function makeCurrencyWalletApi(
       }
 
       const out: EdgeTransaction[] = await getBulkTx(startIndex)
-      return searchStringFilter(dateFilter(out, opts), opts)
+      return out
     },
 
     async exportTransactionsToQBO(
