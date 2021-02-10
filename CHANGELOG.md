@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.17.23 (2021-02-10)
+
+- Ensure all crypto to crypto exchange rates have a route to USD
+- Add currency code column to CSV exports
+
 ## 0.17.22 (2021-01-26)
 
 - Update `EdgeCurrencyEngine` to allow `getFreshAddres`, `addGapLimitAddresses`, and `isAddressUsed` to return promises.
