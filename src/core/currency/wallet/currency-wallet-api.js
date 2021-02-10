@@ -266,25 +266,18 @@ export function makeCurrencyWalletApi(
       // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
       // slice, verify txs in files, if some are dropped and missing, do it again recursively
       let searchedTxs = 0
-      const getBulkTx = async (
-        index: number,
-        out: EdgeTransaction[] = []
-      ): Promise<EdgeTransaction[]> => {
-        // if the output is already filled up or we're at the end of the list of transactions
-        if (
-          out.length === startEntries ||
-          index >= sortedTransactions.length ||
-          searchedTxs >= sortedTransactions.length
-        ) {
-          return out
-        }
-        // entries left to find = number of entries we're looking for minus the current output length
-        const entriesLeft = startEntries - out.length
+      let counter = 0
+      const out: EdgeTransaction[] = []
+      while (searchedTxs < startEntries) {
         // take a slice from sorted transactions that begins at current index and goes until however many are left
         const slicedTransactions = sortedTransactions.slice(
-          index,
-          index + entriesLeft
+          startIndex + startEntries * counter,
+          startIndex + startEntries * (counter + 1)
         )
+
+        // break loop if slicing starts beyond length of array
+        if (slicedTransactions.length === 0) break
+
         // filter the transactions
         const missingTxIdHashes = slicedTransactions.filter(txidHash => {
           // remove any that do not have a file
@@ -296,7 +289,6 @@ export function makeCurrencyWalletApi(
         // give txs the unfilteredIndex
 
         for (const txidHash of slicedTransactions) {
-          searchedTxs++
           const file = files[txidHash]
           if (file == null) continue
           const tempTx = txs[file.txid]
@@ -318,13 +310,10 @@ export function makeCurrencyWalletApi(
           if (searchStringFilter(edgeTx, opts) && dateFilter(edgeTx, opts)) {
             out.push(edgeTx)
           }
+          searchedTxs++
         }
-        // continue until the required tx number loaded
-        const res = await getBulkTx(index + entriesLeft, out)
-        return res
+        counter++
       }
-
-      const out: EdgeTransaction[] = await getBulkTx(startIndex)
       return out
     },
 
