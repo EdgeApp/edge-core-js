@@ -315,9 +315,9 @@ export function makeCurrencyWalletApi(
           }
           // add this tx / file to the output
           const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
-          if (searchStringFilter(dateFilter([edgeTx], opts), opts).length === 0)
-            continue
-          out.push(edgeTx)
+          if (searchStringFilter(edgeTx, opts) && dateFilter(edgeTx, opts)) {
+            out.push(edgeTx)
+          }
         }
         // continue until the required tx number loaded
         const res = await getBulkTx(index + entriesLeft, out)
