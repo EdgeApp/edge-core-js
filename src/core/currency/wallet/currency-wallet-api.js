@@ -608,6 +608,7 @@ export function combineTxWithFile(
     amountSatoshi: Number(tx.nativeAmount[currencyCode]),
     nativeAmount: tx.nativeAmount[currencyCode],
     networkFee: tx.networkFee[currencyCode],
+    parentNetworkFee: tx.networkFee[walletCurrency],
     currencyCode,
     wallet,
     metadata: {}

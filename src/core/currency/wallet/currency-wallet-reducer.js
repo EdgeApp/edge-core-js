@@ -372,5 +372,9 @@ export function mergeTx(
   out.networkFee[currencyCode] =
     tx.networkFee != null ? tx.networkFee.toString() : '0'
 
+  if (tx.parentNetworkFee != null) {
+    out.networkFee[defaultCurrency] = String(tx.parentNetworkFee)
+  }
+
   return out
 }
