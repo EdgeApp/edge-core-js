@@ -13,6 +13,7 @@ import {
   makeFakeEdgeWorld
 } from '../../../../src/index.js'
 import { expectRejection } from '../../../expect-rejection.js'
+import { walletTxs } from '../../../fake/fake-transactions.js'
 import { fakeUser } from '../../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
@@ -162,6 +163,39 @@ describe('currency wallets', function () {
       // $FlowFixMe legacy support code
       assert.strictEqual(txs[0].amountSatoshi, 200)
     })
+  })
+
+  it('search transactions', async function () {
+    const [wallet, config] = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({
+      txs: walletTxs
+    })
+
+    await wallet.getTransactions({ currencyCode: 'BTC' }).then(txs => {
+      assert.equal(txs.length, 13)
+      assert.equal(txs[0].txid, 'a')
+      assert.strictEqual(txs[0].nativeAmount, '644350')
+    })
+
+    await wallet
+      .getTransactions({ currencyCode: 'BTC', searchString: 'sideshift' })
+      .then(txs => {
+        assert.equal(txs.length, 3)
+        assert.equal(txs[0].txid, 'k')
+        assert.strictEqual(txs[0].nativeAmount, '-371258')
+      })
+
+    await wallet
+      .getTransactions({
+        currencyCode: 'BTC',
+        startDate: new Date(1199145601000),
+        endDate: new Date(1612546887000)
+      })
+      .then(txs => {
+        assert.equal(txs.length, 8)
+        assert.equal(txs[0].txid, 'f')
+        assert.strictEqual(txs[0].nativeAmount, '-3300')
+      })
   })
 
   it('get max spendable', async function () {

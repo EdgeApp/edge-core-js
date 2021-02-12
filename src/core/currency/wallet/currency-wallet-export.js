@@ -9,87 +9,94 @@ import {
 } from '../../../types/types.js'
 
 export function dateFilter(
-  txs: EdgeTransaction[],
+  tx: EdgeTransaction,
   opts: EdgeGetTransactionsOptions
-): EdgeTransaction[] {
-  const { startDate, endDate } = opts
+): boolean {
+  const { startDate = -Infinity, endDate = Date.now() } = opts
 
-  let out = txs
-  if (startDate != null) {
-    out = out.filter(tx => 1000 * tx.date >= startDate.valueOf())
-  }
-  if (endDate != null) {
-    out = out.filter(tx => 1000 * tx.date < endDate.valueOf())
-  }
-  return out
+  if (tx.date * 1000 >= startDate && tx.date * 1000 < endDate) return true
+  return false
 }
 
 export function searchStringFilter(
-  txs: EdgeTransaction[],
+  tx: EdgeTransaction,
   opts: EdgeGetTransactionsOptions
-): EdgeTransaction[] {
+): boolean {
   const { searchString } = opts
 
-  let out = txs
   if (searchString != null && searchString !== '') {
-    const lowerCaseSearchString = searchString.toLowerCase()
-    const noSeparatorsSearchString = searchString
+    // Sanitize search string
+    let cleanString = searchString
+      .toLowerCase()
       .replace('.', '')
       .replace(',', '')
-    out = out.filter(tx => {
-      if (!/[A-Za-z]/.test(searchString)) {
-        if (tx.nativeAmount.indexOf(noSeparatorsSearchString) >= 0) return true
+    // Remove leading zeroes
+    for (let i = 0; i < cleanString.length; i++) {
+      if (cleanString[i] !== '0') {
+        cleanString = cleanString.substring(i)
+        break
       }
-      if (tx.metadata != null) {
-        const {
-          category = '',
-          name = '',
-          notes = '',
-          exchangeAmount = {}
-        } = tx.metadata
+    }
+
+    function checkNullTypeAndIndex(value: string | number): boolean {
+      if (
+        value == null ||
+        (typeof value !== 'string' && typeof value !== 'number')
+      )
+        return false
+      if (
+        value
+          .toString()
+          .toLowerCase()
+          .replace('.', '')
+          .replace(',', '')
+          .indexOf(cleanString) < 0
+      )
+        return false
+      return true
+    }
+
+    if (checkNullTypeAndIndex(tx.nativeAmount)) return true
+    if (tx.metadata != null) {
+      const {
+        category = '',
+        name = '',
+        notes = '',
+        exchangeAmount = {}
+      } = tx.metadata
+      if (
+        checkNullTypeAndIndex(category) ||
+        checkNullTypeAndIndex(name) ||
+        checkNullTypeAndIndex(notes) ||
+        (tx.wallet != null &&
+          checkNullTypeAndIndex(exchangeAmount[tx.wallet.fiatCurrencyCode]))
+      )
+        return true
+    }
+    if (tx.swapData != null && tx.swapData.plugin != null) {
+      const { displayName = '', pluginId = '' } = tx.swapData.plugin
+      if (checkNullTypeAndIndex(displayName) || checkNullTypeAndIndex(pluginId))
+        return true
+    }
+    if (tx.spendTargets != null) {
+      for (const target of tx.spendTargets) {
+        const { publicAddress = '', uniqueIdentifier = '' } = target
         if (
-          category.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-          name.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-          notes.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-          (tx.wallet != null &&
-            exchangeAmount[tx.wallet.fiatCurrencyCode] &&
-            exchangeAmount[tx.wallet.fiatCurrencyCode]
-              .toString()
-              .replace('.', '')
-              .replace(',', '')
-              .indexOf(noSeparatorsSearchString) >= 0)
+          checkNullTypeAndIndex(publicAddress) ||
+          checkNullTypeAndIndex(uniqueIdentifier)
         )
           return true
       }
-      if (tx.swapData != null && tx.swapData.plugin != null) {
-        const { displayName = '', pluginId = '' } = tx.swapData.plugin
-        if (
-          displayName.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-          pluginId.toLowerCase().indexOf(lowerCaseSearchString) >= 0
-        )
-          return true
+    }
+    if (tx.ourReceiveAddresses.length > 0) {
+      for (const address of tx.ourReceiveAddresses) {
+        if (checkNullTypeAndIndex(address)) return true
       }
-      if (tx.spendTargets != null) {
-        for (const target of tx.spendTargets) {
-          const { publicAddress = '', uniqueIdentifier = '' } = target
-          if (
-            publicAddress.toLowerCase().indexOf(lowerCaseSearchString) >= 0 ||
-            uniqueIdentifier.toLowerCase().indexOf(lowerCaseSearchString) >= 0
-          )
-            return true
-        }
-      }
-      if (tx.ourReceiveAddresses.length > 0) {
-        for (const address of tx.ourReceiveAddresses) {
-          if (address.toLowerCase().indexOf(lowerCaseSearchString) >= 0)
-            return true
-        }
-      }
-      if (tx.txid.toLowerCase().indexOf(lowerCaseSearchString) >= 0) return true
-      return false
-    })
+    }
+    if (checkNullTypeAndIndex(tx.txid)) return true
+    return false
   }
-  return out
+  return true
 }
 
 function padZero(val: string): string {

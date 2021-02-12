@@ -24,6 +24,8 @@ import {
 } from '../../src/index.js'
 import { compare } from '../../src/util/compare.js'
 
+const GENESIS_BLOCK = 1231006505000
+
 export const fakeCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'FAKE',
@@ -119,7 +121,7 @@ class FakeCurrencyEngine {
       for (const txid in settings.txs) {
         const newTx: EdgeTransaction = {
           blockHeight: 0,
-          date: 0,
+          date: GENESIS_BLOCK,
           nativeAmount: '0',
           networkFee: '0',
           ourReceiveAddresses: [],
@@ -254,7 +256,7 @@ class FakeCurrencyEngine {
     return Promise.resolve({
       blockHeight: 0,
       currencyCode,
-      date: 0,
+      date: GENESIS_BLOCK,
       nativeAmount: total,
       networkFee: '0',
       feeRateUsed: { fakePrice: 0 },
