@@ -69,14 +69,13 @@ async function loginPasswordOnline(
     userId: base64.stringify(userId),
     passwordAuth: base64.stringify(passwordAuth)
   }
-  return serverLogin(ai, stashTree, stashTree, opts, request, reply => {
+  return serverLogin(ai, stashTree, stashTree, opts, request, async reply => {
     const { passwordBox, passwordKeySnrp } = reply
     if (passwordBox == null || passwordKeySnrp == null) {
       throw new Error('Missing data for online password login')
     }
-    return scrypt(ai, up, passwordKeySnrp).then(passwordKey =>
-      decrypt(passwordBox, passwordKey)
-    )
+    const passwordKey = await scrypt(ai, up, passwordKeySnrp)
+    return decrypt(passwordBox, passwordKey)
   })
 }
 

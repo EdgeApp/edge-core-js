@@ -27,7 +27,7 @@ export function findAppLogin(loginTree: LoginTree, appId: string): LoginTree {
 /**
  * Creates a child login under the provided login, with the given appId.
  */
-function createChildLogin(
+async function createChildLogin(
   ai: ApiInput,
   loginTree: LoginTree,
   login: LoginTree,
@@ -42,16 +42,15 @@ function createChildLogin(
   if (wantRepo) {
     opts.keyInfo = makeStorageKeyInfo(ai, makeAccountType(appId))
   }
-  return makeCreateKit(ai, login, appId, username, opts).then(kit => {
-    const parentKit = {
-      serverPath: kit.serverPath,
-      server: kit.server || {},
-      login: { children: [kit.login] },
-      stash: { children: [kit.stash] },
-      loginId: login.loginId
-    }
-    return applyKit(ai, loginTree, parentKit)
-  })
+  const kit = await makeCreateKit(ai, login, appId, username, opts)
+  const parentKit = {
+    serverPath: kit.serverPath,
+    server: kit.server || {},
+    login: { children: [kit.login] },
+    stash: { children: [kit.stash] },
+    loginId: login.loginId
+  }
+  return applyKit(ai, loginTree, parentKit)
 }
 
 /**
@@ -59,7 +58,7 @@ function createChildLogin(
  * @return A `Promise`, which will resolve to a loginTree that does have
  * the requested account.
  */
-export function ensureAccountExists(
+export async function ensureAccountExists(
   ai: ApiInput,
   loginTree: LoginTree,
   appId: string
@@ -81,7 +80,7 @@ export function ensureAccountExists(
   }
 
   // Everything is fine, so do nothing:
-  return Promise.resolve(loginTree)
+  return loginTree
 }
 
 /**
@@ -97,28 +96,27 @@ export async function makeAccount(
   const { log } = ai.props
   log.warn(`Login: decrypted keys for user ${loginTree.loginId}`)
 
-  return ensureAccountExists(ai, loginTree, appId).then(loginTree => {
-    log.warn('Login: account exists for appId')
-    const { username } = loginTree
-    if (!username) throw new Error('Cannot log in: missing username')
+  loginTree = await ensureAccountExists(ai, loginTree, appId)
+  log.warn('Login: account exists for appId')
+  const { username } = loginTree
+  if (!username) throw new Error('Cannot log in: missing username')
 
-    // Add the login to redux:
-    const rootLogin = loginTree.loginKey != null
-    ai.props.dispatch({
-      type: 'LOGIN',
-      payload: {
-        appId,
-        username,
-        loginKey: rootLogin
-          ? loginTree.loginKey
-          : findAppLogin(loginTree, appId).loginKey,
-        rootLogin,
-        loginType
-      }
-    })
-
-    return waitForAccount(ai, ai.props.state.lastAccountId)
+  // Add the login to redux:
+  const rootLogin = loginTree.loginKey != null
+  ai.props.dispatch({
+    type: 'LOGIN',
+    payload: {
+      appId,
+      username,
+      loginKey: rootLogin
+        ? loginTree.loginKey
+        : findAppLogin(loginTree, appId).loginKey,
+      rootLogin,
+      loginType
+    }
   })
+
+  return waitForAccount(ai, ai.props.state.lastAccountId)
 }
 
 /**

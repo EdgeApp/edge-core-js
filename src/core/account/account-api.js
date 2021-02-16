@@ -303,7 +303,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
       const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
       const kit = makeKeysKit(ai, login, walletInfo)
-      return applyKit(ai, loginTree, kit).then(() => walletInfo.id)
+      await applyKit(ai, loginTree, kit)
+      return walletInfo.id
     },
     getFirstWalletInfo: AccountSync.prototype.getFirstWalletInfo,
     getWalletInfo: AccountSync.prototype.getWalletInfo,

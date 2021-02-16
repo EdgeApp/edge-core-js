@@ -131,7 +131,7 @@ export function makeCreateKit(
 /**
  * Creates a new login on the auth server.
  */
-export function createLogin(
+export async function createLogin(
   ai: ApiInput,
   username: string,
   accountOpts: EdgeAccountOptions,
@@ -140,16 +140,16 @@ export function createLogin(
   const fixedName = fixUsername(username)
   const { now = new Date() } = accountOpts
 
-  return makeCreateKit(ai, undefined, '', fixedName, opts).then(kit => {
-    kit.login.username = fixedName
-    kit.stash.username = fixedName
-    kit.login.userId = kit.login.loginId
+  const kit = await makeCreateKit(ai, undefined, '', fixedName, opts)
+  kit.login.username = fixedName
+  kit.stash.username = fixedName
+  kit.login.userId = kit.login.loginId
 
-    const request = {}
-    request.data = kit.server
-    return loginFetch(ai, 'POST', kit.serverPath, request).then(reply => {
-      kit.stash.lastLogin = now
-      return saveStash(ai, kit.stash).then(() => kit.login)
-    })
-  })
+  const request = {}
+  request.data = kit.server
+  await loginFetch(ai, 'POST', kit.serverPath, request)
+
+  kit.stash.lastLogin = now
+  await saveStash(ai, kit.stash)
+  return kit.login
 }

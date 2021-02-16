@@ -59,11 +59,11 @@ export async function loginPin2(
     pin2Id: base64.stringify(pin2Id(pin2Key, username)),
     pin2Auth: base64.stringify(pin2Auth(pin2Key, pin))
   }
-  return serverLogin(ai, stashTree, stash, opts, request, reply => {
+  return serverLogin(ai, stashTree, stash, opts, request, async reply => {
     if (reply.pin2Box == null) {
       throw new Error('Missing data for PIN v2 login')
     }
-    return Promise.resolve(decrypt(reply.pin2Box, pin2Key))
+    return decrypt(reply.pin2Box, pin2Key)
   })
 }
 
@@ -84,13 +84,14 @@ export async function changePin(
 
   // We cannot enable PIN login if we don't know the PIN:
   if (pin == null) {
-    if (!enableLogin) {
-      // But we can disable PIN login by just deleting it entirely:
-      return applyKits(ai, loginTree, makeDeletePin2Kits(loginTree))
+    if (enableLogin) {
+      throw new Error(
+        'Please change your PIN in the settings area above before enabling.'
+      )
     }
-    throw new Error(
-      'Please change your PIN in the settings area above before enabling.'
-    )
+    // But we can disable PIN login by just deleting it entirely:
+    await applyKits(ai, loginTree, makeDeletePin2Kits(loginTree))
+    return
   }
 
   const kits = makeChangePin2Kits(ai, loginTree, username, pin, enableLogin)
