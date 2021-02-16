@@ -3,7 +3,10 @@
 import { asEither, asMaybe } from 'cleaners'
 
 import {
+  asKeysCreatePayload,
+  asLoginCreatePayload,
   asLoginRequest,
+  asOtpPayload,
   asPasswordPayload,
   asPin2DisablePayload,
   asPin2EnablePayload,
@@ -24,13 +27,12 @@ import {
   type HttpResponse,
   type Server
 } from '../../util/http/http-types.js'
-import { addHiddenProperties, filterObject, softCat } from '../../util/util.js'
+import { addHiddenProperties, softCat } from '../../util/util.js'
 import {
   type DbLobby,
   type DbLogin,
   type DbRepo,
   type FakeDb,
-  loginCreateColumns,
   makeLoginPayload
 } from './fake-db.js'
 import {
@@ -194,27 +196,41 @@ function createLogin(
   login?: DbLogin
 ): Promise<HttpResponse> {
   const { db, json } = request
-  const { data } = json
-  if (data.appId == null || data.loginId == null) {
+  const clean = asMaybeLoginCreatePayload(json.data)
+  const keys = asMaybeKeysCreatePayload(json.data)
+  const secret = asMaybeSecretPayload(json.data)
+  if (clean == null || keys == null || secret == null) {
     return statusResponse(statusCodes.invalidRequest)
   }
-  if (db.getLoginById(data.loginId) != null) {
+  if (db.getLoginById(clean.loginId) != null) {
     return statusResponse(statusCodes.accountExists)
   }
 
   // Set up repos:
-  if (data.newSyncKeys != null) {
-    for (const syncKey of data.newSyncKeys) {
-      db.repos[syncKey] = {}
-    }
+  if (keys == null) return statusResponse(statusCodes.invalidRequest)
+  for (const syncKey of keys.newSyncKeys) {
+    db.repos[syncKey] = {}
   }
 
-  // Set up login object:
-  const row: DbLogin = filterObject(data, loginCreateColumns)
+  // Start building the new database row:
+  const row: DbLogin = {
+    // Required fields:
+    ...clean,
+    ...secret,
+    keyBoxes: keys.keyBoxes,
+
+    // Optional fields:
+    ...asMaybeOtpPayload(json.data),
+    ...asMaybePasswordPayload(json.data),
+    ...asMaybePin2Payload(json.data),
+    ...asMaybeRecovery2Payload(json.data)
+  }
+
+  // Set up the parent/child relationship:
   if (login != null) {
     const children = db.getLoginsByParent(login)
     const appIdExists =
-      children.find(child => child.appId === data.appId) != null
+      children.find(child => child.appId === clean.appId) != null
     if (appIdExists) {
       return statusResponse(statusCodes.invalidAppId)
     }
@@ -224,6 +240,8 @@ function createLogin(
 
   return statusResponse(statusCodes.created, 'Account created')
 }
+
+const asMaybeLoginCreatePayload = asMaybe(asLoginCreatePayload)
 
 const create2Route: ApiServer = pickMethod({
   POST: withLogin2(
@@ -236,35 +254,30 @@ const keysRoute: ApiServer = withLogin2(
   pickMethod({
     POST: request => {
       const { db, json, login } = request
-      const { data } = json
-      if (data.keyBoxes == null) {
-        return statusResponse(statusCodes.invalidRequest)
-      }
+      const clean = asMaybeKeysCreatePayload(json.data)
+      if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       // Set up repos:
-      if (data.newSyncKeys != null) {
-        for (const syncKey of data.newSyncKeys) {
-          db.repos[syncKey] = {}
-        }
+      for (const syncKey of clean.newSyncKeys) {
+        db.repos[syncKey] = {}
       }
-
-      login.keyBoxes = softCat(login.keyBoxes, data.keyBoxes)
+      login.keyBoxes = softCat(login.keyBoxes, clean.keyBoxes)
 
       return statusResponse()
     }
   })
 )
 
+const asMaybeKeysCreatePayload = asMaybe(asKeysCreatePayload)
+
 const otp2Route: ApiServer = pickMethod({
   POST: withLogin2(request => {
     const { json, login } = request
-    const { data } = json
-    if (data.otpKey == null || data.otpTimeout == null) {
-      return statusResponse(statusCodes.invalidRequest)
-    }
+    const clean = asMaybeOtpPayload(json.data)
+    if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-    login.otpKey = data.otpKey
-    login.otpTimeout = data.otpTimeout
+    login.otpKey = clean.otpKey
+    login.otpTimeout = clean.otpTimeout
     login.otpResetDate = undefined
 
     return statusResponse()
@@ -310,6 +323,8 @@ const otp2Route: ApiServer = pickMethod({
     }
   )
 })
+
+const asMaybeOtpPayload = asMaybe(asOtpPayload)
 
 const password2Route: ApiServer = withLogin2(
   pickMethod({

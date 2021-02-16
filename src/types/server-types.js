@@ -68,6 +68,33 @@ export type LoginResponse = {
 // request payloads
 // ---------------------------------------------------------------------
 
+export type LoginCreatePayload = {
+  appId: string,
+  loginId: string, // base64
+  parentBox?: EdgeBox
+
+  // The creation payload can also include fields
+  // from any of these other types, so the server should try
+  // those cleaners one-by-one and incorporate the ones that work:
+  // ...KeyCreatePayload
+  // ...OtpPayload
+  // ...PasswordPayload
+  // ...Pin2EnablePayload
+  // ...Pin2DisablePayload
+  // ...Recovery2Payload
+  // ...SecretPayload
+}
+
+export type KeysCreatePayload = {
+  keyBoxes: EdgeBox[],
+  newSyncKeys: string[]
+}
+
+export type OtpPayload = {
+  otpTimeout: number, // seconds
+  otpKey: string
+}
+
 export type PasswordPayload = {
   passwordAuth: string,
   passwordAuthBox: EdgeBox,
@@ -104,6 +131,16 @@ export type SecretPayload = {
   loginAuthBox: EdgeBox,
   loginAuth: string
 }
+
+export type LoginRequestPayload =
+  | KeysCreatePayload
+  | LoginCreatePayload
+  | OtpPayload
+  | PasswordPayload
+  | Pin2DisablePayload
+  | Pin2EnablePayload
+  | Recovery2Payload
+  | SecretPayload
 
 // ---------------------------------------------------------------------
 // response payloads

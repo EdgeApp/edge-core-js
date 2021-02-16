@@ -102,11 +102,6 @@ const loginDbColumns = [
   'pinKeyBox'
 ]
 
-// The v2 account creation endpoint doesn't accept legacy keys:
-export const loginCreateColumns: string[] = loginDbColumns.filter(
-  item => ['mnemonicBox', 'rootKeyBox', 'syncKeyBox'].indexOf(item) < 0
-)
-
 /**
  * Emulates the Airbitz login server database.
  */

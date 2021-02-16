@@ -17,12 +17,15 @@ import { base64 } from 'rfc4648'
 import {
   type EdgeBox,
   type EdgeSnrp,
+  type KeysCreatePayload,
   type LobbyPayload,
   type LobbyReply,
   type LobbyRequest,
+  type LoginCreatePayload,
   type LoginPayload,
   type LoginRequest,
   type LoginResponse,
+  type OtpPayload,
   type OtpResetPayload,
   type PasswordPayload,
   type Pin2DisablePayload,
@@ -109,6 +112,22 @@ export const asLoginResponse: Cleaner<LoginResponse> = asObject({
 // ---------------------------------------------------------------------
 // request payloads
 // ---------------------------------------------------------------------
+
+export const asKeysCreatePayload: Cleaner<KeysCreatePayload> = asObject({
+  keyBoxes: asOptional(asArray(asEdgeBox), []),
+  newSyncKeys: asOptional(asArray(asString), [])
+})
+
+export const asLoginCreatePayload: Cleaner<LoginCreatePayload> = asObject({
+  appId: asString,
+  loginId: asString, // base64
+  parentBox: asOptional(asEdgeBox)
+})
+
+export const asOtpPayload: Cleaner<OtpPayload> = asObject({
+  otpTimeout: asOptional(asNumber, 7 * 24 * 60 * 60), // seconds
+  otpKey: asString
+})
 
 export const asPasswordPayload: Cleaner<PasswordPayload> = asObject({
   passwordAuth: asString,

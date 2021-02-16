@@ -8,7 +8,8 @@ import { base64 } from 'rfc4648'
 import { asLoginPayload } from '../../types/server-cleaners.js'
 import {
   type LoginPayload,
-  type LoginRequest
+  type LoginRequest,
+  type SecretPayload
 } from '../../types/server-types.js'
 import {
   type EdgeAccountOptions,
@@ -369,13 +370,14 @@ export async function serverLogin(
     const { io } = ai.props
     const loginAuth = io.random(32)
     const loginAuthBox = encrypt(io, loginAuth, loginKey)
+    const data: SecretPayload = {
+      loginAuth: base64.stringify(loginAuth),
+      loginAuthBox
+    }
     const request: LoginRequest = {
       ...serverAuth,
       otp: getStashOtp(stash, opts),
-      data: {
-        loginAuth: base64.stringify(loginAuth),
-        loginAuthBox
-      }
+      data
     }
     loginReply = asLoginPayload(
       await loginFetch(ai, 'POST', '/v2/login/secret', request)

@@ -3,6 +3,7 @@
 import { base32, base64 } from 'rfc4648'
 
 import { asOtpResetPayload } from '../../types/server-cleaners.js'
+import { type OtpPayload } from '../../types/server-types.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { applyKit } from '../login/login.js'
@@ -46,12 +47,13 @@ export async function enableOtp(
       ? fixOtpKey(loginTree.otpKey)
       : base32.stringify(ai.props.io.random(10))
 
+  const server: OtpPayload = {
+    otpKey,
+    otpTimeout
+  }
   const kit: LoginKit = {
     serverPath: '/v2/login/otp',
-    server: {
-      otpKey,
-      otpTimeout
-    },
+    server,
     stash: {
       otpKey,
       otpResetDate: undefined,
@@ -96,13 +98,18 @@ export async function cancelOtpReset(
   accountId: string
 ): Promise<void> {
   const { loginTree } = ai.props.state.accounts[accountId]
+  const { otpTimeout, otpKey } = loginTree
+  if (otpTimeout == null || otpKey == null) {
+    throw new Error('Cannot cancel 2FA reset: 2FA is not enabled.')
+  }
 
+  const server: OtpPayload = {
+    otpTimeout,
+    otpKey
+  }
   const kit: LoginKit = {
     serverPath: '/v2/login/otp',
-    server: {
-      otpTimeout: loginTree.otpTimeout,
-      otpKey: loginTree.otpKey
-    },
+    server,
     stash: {
       otpResetDate: undefined
     },

@@ -1,6 +1,7 @@
 // @flow
 
 import { asLoginResponse } from '../../types/server-cleaners.js'
+import { type LoginRequest } from '../../types/server-types.js'
 import {
   type EdgeFetchOptions,
   NetworkError,
@@ -49,7 +50,7 @@ export function loginFetch(
   ai: ApiInput,
   method: string,
   path: string,
-  body?: any
+  body?: LoginRequest
 ): Promise<mixed> {
   const { state, io, log } = ai.props
   const { apiKey, serverUri } = state.login

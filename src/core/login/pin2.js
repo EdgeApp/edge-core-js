@@ -2,6 +2,11 @@
 
 import { base64 } from 'rfc4648'
 
+import {
+  type LoginRequest,
+  type Pin2DisablePayload,
+  type Pin2EnablePayload
+} from '../../types/server-types.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
@@ -118,7 +123,7 @@ export async function checkPin2(
 
   // Try a login:
   const pin2Key = base64.parse(stash.pin2Key)
-  const request = {
+  const request: LoginRequest = {
     pin2Id: base64.stringify(pin2Id(pin2Key, username)),
     pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
     otp: getLoginOtp(login)
@@ -180,15 +185,16 @@ export function makeChangePin2Kit(
     const pin2Box = encrypt(io, login.loginKey, pin2Key)
     const pin2KeyBox = encrypt(io, pin2Key, login.loginKey)
 
+    const server: Pin2EnablePayload = {
+      pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+      pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
+      pin2Box,
+      pin2KeyBox,
+      pin2TextBox
+    }
     return {
       serverPath: '/v2/login/pin2',
-      server: {
-        pin2Id: base64.stringify(pin2Id(pin2Key, username)),
-        pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
-        pin2Box,
-        pin2KeyBox,
-        pin2TextBox
-      },
+      server,
       stash: {
         pin2Key: base64.stringify(pin2Key),
         pin2TextBox
@@ -200,11 +206,16 @@ export function makeChangePin2Kit(
       loginId: login.loginId
     }
   } else {
+    const server: Pin2DisablePayload = {
+      pin2Id: undefined,
+      pin2Auth: undefined,
+      pin2Box: undefined,
+      pin2KeyBox: undefined,
+      pin2TextBox
+    }
     return {
       serverPath: '/v2/login/pin2',
-      server: {
-        pin2TextBox
-      },
+      server,
       stash: {
         pin2Key: undefined,
         pin2TextBox

@@ -2,6 +2,7 @@
 
 import { base64 } from 'rfc4648'
 
+import { type PasswordPayload } from '../../types/server-types.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -188,15 +189,17 @@ export function makePasswordKit(
       { passwordKeySnrp, passwordBox },
       { passwordAuth, passwordAuthBox }
     ] = values
+
+    const server: PasswordPayload = {
+      passwordAuth: base64.stringify(passwordAuth),
+      passwordAuthSnrp, // TODO: Use this on the other side
+      passwordKeySnrp,
+      passwordBox,
+      passwordAuthBox
+    }
     return {
       serverPath: '/v2/login/password',
-      server: {
-        passwordAuth: base64.stringify(passwordAuth),
-        passwordAuthSnrp, // TODO: Use this on the other side
-        passwordKeySnrp,
-        passwordBox,
-        passwordAuthBox
-      },
+      server,
       stash: {
         passwordKeySnrp,
         passwordBox,
