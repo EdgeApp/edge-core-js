@@ -365,8 +365,14 @@ export async function serverLogin(
   // Try decrypting the reply:
   const loginKey = await decrypt(loginReply)
 
+  // Save the latest data:
+  stashTree = applyLoginPayload(stashTree, loginKey, loginReply)
+  stashTree.lastLogin = now
+  await saveStash(ai, stashTree)
+
   // Ensure the account has secret-key login enabled:
   if (loginReply.loginAuthBox == null) {
+    const { stash, stashTree } = getStashById(ai, loginReply.loginId)
     const { io } = ai.props
     const loginAuth = io.random(32)
     const loginAuthBox = encrypt(io, loginAuth, loginKey)
@@ -382,12 +388,9 @@ export async function serverLogin(
     loginReply = asLoginPayload(
       await loginFetch(ai, 'POST', '/v2/login/secret', request)
     )
+    await saveStash(ai, applyLoginPayload(stashTree, loginKey, loginReply))
   }
 
-  // Save the latest data:
-  stashTree = applyLoginPayload(stashTree, loginKey, loginReply)
-  stashTree.lastLogin = now
-  await saveStash(ai, stashTree)
   return makeLoginTree(stashTree, loginKey, stash.appId)
 }
 
