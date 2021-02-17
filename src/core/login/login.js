@@ -27,7 +27,7 @@ import {
   mergeKeyInfos
 } from './keys.js'
 import { loginFetch } from './login-fetch.js'
-import { getStash } from './login-selectors.js'
+import { getStashById } from './login-selectors.js'
 import { type LoginStash, saveStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 import { getLoginOtp, getStashOtp } from './otp.js'
@@ -404,9 +404,8 @@ export async function applyKit(
   const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
   if (!login) throw new Error('Cannot apply kit: missing login')
-  if (!loginTree.username) throw new Error('Cannot apply kit: missing username')
 
-  const stashTree = getStash(ai, loginTree.username)
+  const { stashTree } = getStashById(ai, loginId)
   const request = makeAuthJson(stashTree, login)
   request.data = kit.server
   await loginFetch(ai, serverMethod, serverPath, request)
@@ -468,14 +467,8 @@ export async function syncLogin(
   loginTree: LoginTree,
   login: LoginTree
 ): Promise<LoginTree> {
-  if (loginTree.username == null) {
-    throw new Error('Cannot sync: missing username')
-  }
-  const stashTree = getStash(ai, loginTree.username)
-  const stash = searchTree(stashTree, stash => stash.appId === login.appId)
-  if (stash == null) {
-    throw new Error('Cannot sync: missing on-disk data')
-  }
+  const { stashTree, stash } = getStashById(ai, login.loginId)
+
   const request = makeAuthJson(stashTree, login)
   const opts: EdgeAccountOptions = {
     // Avoid updating the lastLogin date:

@@ -4,7 +4,7 @@ import { asLoginPayload } from '../../types/server-cleaners.js'
 import { type ApiInput } from '../root-pixie.js'
 import { applyLoginPayload, makeAuthJson } from './login.js'
 import { loginFetch } from './login-fetch.js'
-import { getStash } from './login-selectors.js'
+import { getStashById } from './login-selectors.js'
 import { saveStash } from './login-stash.js'
 import { type LoginTree } from './login-types.js'
 
@@ -20,11 +20,7 @@ export async function changeVoucherStatus(
     rejectedVouchers?: string[]
   }
 ): Promise<void> {
-  if (loginTree.username == null) {
-    throw new Error('Cannot sync: missing username')
-  }
-
-  const stashTree = getStash(ai, loginTree.username)
+  const { stashTree } = getStashById(ai, loginTree.loginId)
   const reply = await loginFetch(ai, 'POST', '/v2/login/vouchers', {
     ...makeAuthJson(stashTree, login),
     data: vouchers
