@@ -9,7 +9,7 @@ import {
   makeStorageKeyInfo
 } from '../login/keys.js'
 import { applyKit, searchTree } from '../login/login.js'
-import { type LoginTree } from '../login/login-types.js'
+import { type LoginTree, type LoginType } from '../login/login-types.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 
 function checkLogin(login: LoginTree): void {
@@ -90,7 +90,7 @@ export async function makeAccount(
   ai: ApiInput,
   appId: string,
   loginTree: LoginTree,
-  loginType: string = '',
+  loginType: LoginType,
   opts: EdgeAccountOptions = {}
 ): Promise<EdgeAccount> {
   const { log } = ai.props

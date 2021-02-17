@@ -22,7 +22,11 @@ import {
   makeAccountType
 } from '../login/keys.js'
 import { makeLoginTree } from '../login/login.js'
-import { type LoginTree, type WalletInfoFullMap } from '../login/login-types.js'
+import {
+  type LoginTree,
+  type LoginType,
+  type WalletInfoFullMap
+} from '../login/login-types.js'
 import { findCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type RootState } from '../root-reducer.js'
 import { findAppLogin } from './account-init.js'
@@ -52,7 +56,7 @@ export type AccountState = {
   +login: LoginTree,
   +loginKey: Uint8Array,
   +loginTree: LoginTree,
-  +loginType: string,
+  +loginType: LoginType,
   +rootLogin: boolean, // True if the loginKey is for the root
   +username: string,
 
@@ -231,7 +235,7 @@ const accountInner: FatReducer<
       makeLoginTree(stashTree, loginKey, rootLogin ? '' : appId)
   ),
 
-  loginType(state = '', action: RootAction): string {
+  loginType(state = 'newAccount', action: RootAction): LoginType {
     return action.type === 'LOGIN' ? action.payload.loginType : state
   },
 
