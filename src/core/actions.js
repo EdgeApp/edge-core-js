@@ -20,6 +20,7 @@ import {
 } from './currency/wallet/currency-wallet-reducer.js'
 import { type ExchangePair } from './exchange/exchange-reducer.js'
 import { type LoginStash } from './login/login-stash.js'
+import { type LoginType } from './login/login-types.js'
 import {
   type StorageWalletState,
   type StorageWalletStatus
@@ -264,7 +265,7 @@ export type RootAction =
       payload: {
         appId: string,
         loginKey: Uint8Array,
-        loginType: string,
+        loginType: LoginType,
         rootLogin: boolean,
         username: string
       }

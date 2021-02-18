@@ -394,7 +394,7 @@ export async function serverLogin(
  * and the on-disk stash. A login kit contains all three elements,
  * and this function knows how to apply them all.
  */
-export function applyKit(
+export async function applyKit(
   ai: ApiInput,
   loginTree: LoginTree,
   kit: LoginKit
@@ -407,31 +407,31 @@ export function applyKit(
   const stashTree = getStash(ai, loginTree.username)
   const request = makeAuthJson(stashTree, login)
   request.data = kit.server
-  return loginFetch(ai, serverMethod, serverPath, request).then(reply => {
-    const newLoginTree = updateTree(
-      loginTree,
-      login => login.loginId === loginId,
-      login => ({
-        ...login,
-        ...kit.login,
-        children: softCat(login.children, kit.login.children),
-        keyInfos: mergeKeyInfos(softCat(login.keyInfos, kit.login.keyInfos))
-      })
-    )
+  await loginFetch(ai, serverMethod, serverPath, request)
+  const newLoginTree = updateTree(
+    loginTree,
+    login => login.loginId === loginId,
+    login => ({
+      ...login,
+      ...kit.login,
+      children: softCat(login.children, kit.login.children),
+      keyInfos: mergeKeyInfos(softCat(login.keyInfos, kit.login.keyInfos))
+    })
+  )
 
-    const newStashTree = updateTree(
-      stashTree,
-      stash => stash.loginId === loginId,
-      stash => ({
-        ...stash,
-        ...kit.stash,
-        children: softCat(stash.children, kit.stash.children),
-        keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
-      })
-    )
+  const newStashTree = updateTree(
+    stashTree,
+    stash => stash.loginId === loginId,
+    stash => ({
+      ...stash,
+      ...kit.stash,
+      children: softCat(stash.children, kit.stash.children),
+      keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
+    })
+  )
+  await saveStash(ai, newStashTree)
 
-    return saveStash(ai, newStashTree).then(() => newLoginTree)
-  })
+  return newLoginTree
 }
 
 /**
@@ -439,17 +439,14 @@ export function applyKit(
  * We can't use `Promise.all`, since `applyKit` doesn't handle
  * parallelism correctly.
  */
-export function applyKits(
+export async function applyKits(
   ai: ApiInput,
   loginTree: LoginTree,
   kits: LoginKit[]
 ): Promise<void> {
-  if (!kits.length) return Promise.resolve()
-
-  const [first, ...rest] = kits
-  return applyKit(ai, loginTree, first).then(loginTree =>
-    applyKits(ai, loginTree, rest)
-  )
+  for (const kit of kits) {
+    await applyKit(ai, loginTree, kit)
+  }
 }
 
 export async function syncAccount(

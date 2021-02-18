@@ -16,6 +16,7 @@ import {
 import { base58 } from '../../util/encoding.js'
 import { makeFetch } from '../../util/http/http-to-fetch.js'
 import { applyLoginReply } from '../login/login.js'
+import { asLoginReply } from '../login/login-reply.js'
 import { type PluginIos } from '../plugins/plugins-actions.js'
 import { makeContext } from '../root.js'
 import { makeRepoPaths, saveChanges } from '../storage/repo.js'
@@ -24,8 +25,6 @@ import { makeFakeServer } from './fake-server.js'
 
 async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
   const { loginId, loginKey, username } = user
-  // JsonObject doesn't match LoginReply:
-  const server: any = user.server
 
   // Save the stash:
   const stash = applyLoginReply(
@@ -33,12 +32,11 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
       appId: '',
       lastLogin: user.lastLogin,
       loginId: '',
-      otpKey: server.otpKey,
       pendingVouchers: [],
       username: fixUsername(username)
     },
     base64.parse(loginKey),
-    server
+    asLoginReply(user.server)
   )
   const path = `logins/${base58.stringify(base64.parse(loginId))}.json`
   await io.disklet.setText(path, JSON.stringify(stash))

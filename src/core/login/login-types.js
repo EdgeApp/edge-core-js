@@ -68,11 +68,19 @@ export type LoginTree = {
   keyInfos: EdgeWalletInfo[]
 }
 
+export type LoginType =
+  | 'edgeLogin'
+  | 'keyLogin'
+  | 'newAccount'
+  | 'passwordLogin'
+  | 'pinLogin'
+  | 'recoveryLogin'
+
 export type AppIdMap = { [walletId: string]: string[] }
 
 export type LoginKit = {
   loginId: string,
-  login: any,
+  login: $Shape<LoginTree>,
   server?: any,
   serverMethod?: string,
   serverPath: string,

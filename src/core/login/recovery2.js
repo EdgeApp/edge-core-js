@@ -52,11 +52,11 @@ export async function loginRecovery2(
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
     recovery2Auth: recovery2Auth(recovery2Key, answers)
   }
-  return serverLogin(ai, stashTree, stashTree, opts, request, reply => {
+  return serverLogin(ai, stashTree, stashTree, opts, request, async reply => {
     if (reply.recovery2Box == null) {
       throw new Error('Missing data for recovery v2 login')
     }
-    return Promise.resolve(decrypt(reply.recovery2Box, recovery2Key))
+    return decrypt(reply.recovery2Box, recovery2Key)
   })
 }
 

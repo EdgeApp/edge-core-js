@@ -7,8 +7,7 @@ import { emit } from 'yaob'
 import {
   type EdgeContext,
   type EdgeContextOptions,
-  type EdgeLogEvent,
-  type EdgeLogSettings
+  type EdgeLogEvent
 } from '../types/types.js'
 import { type RootAction } from './actions.js'
 import { makeLegacyConsole, makeLog } from './log/log.js'
@@ -43,15 +42,17 @@ export async function makeContext(
     logSettings = {},
     plugins: pluginsInit = {}
   } = opts
-  const initialLogSettings: EdgeLogSettings = {
-    ...defaultLogSettings,
-    ...logSettings
+  if (apiKey == null) {
+    throw new Error('No API key provided')
   }
-  const log = makeLog(onLog, 'edge-core')
 
+  // Create a redux store:
+  const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
+  const redux = createStore(reducer, enhancers)
+
+  // Create a log wrapper, using the settings from redux:
   function onLog(event: EdgeLogEvent) {
-    const { sources, defaultLogLevel } =
-      redux != null ? redux.getState().logSettings : initialLogSettings
+    const { sources, defaultLogLevel } = redux.getState().logSettings
 
     const logLevel =
       sources[event.source] != null ? sources[event.source] : defaultLogLevel
@@ -68,17 +69,10 @@ export async function makeContext(
         break
     }
   }
-
-  if (apiKey == null) {
-    throw new Error('No API key provided')
-  }
+  const log = makeLog(onLog, 'edge-core')
 
   // Load the login stashes from disk:
   const stashes = await loadStashes(io.disklet, log)
-
-  // Start Redux:
-  const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
-  const redux = createStore(reducer, enhancers)
   redux.dispatch({
     type: 'INIT',
     payload: {
@@ -87,7 +81,7 @@ export async function makeContext(
       authServer,
       deviceDescription,
       hideKeys,
-      logSettings: initialLogSettings,
+      logSettings: { ...defaultLogSettings, ...logSettings },
       pluginsInit,
       stashes
     }

@@ -69,14 +69,13 @@ async function loginPasswordOnline(
     userId: base64.stringify(userId),
     passwordAuth: base64.stringify(passwordAuth)
   }
-  return serverLogin(ai, stashTree, stashTree, opts, request, reply => {
+  return serverLogin(ai, stashTree, stashTree, opts, request, async reply => {
     const { passwordBox, passwordKeySnrp } = reply
     if (passwordBox == null || passwordKeySnrp == null) {
       throw new Error('Missing data for online password login')
     }
-    return scrypt(ai, up, passwordKeySnrp).then(passwordKey =>
-      decrypt(passwordBox, passwordKey)
-    )
+    const passwordKey = await scrypt(ai, up, passwordKeySnrp)
+    return decrypt(passwordBox, passwordKey)
   })
 }
 
@@ -146,16 +145,14 @@ export async function deletePassword(
       passwordKeySnrp: undefined
     },
     login: {
-      passwordAuthSnrp: undefined,
-      passwordBox: undefined,
-      passwordKeySnrp: undefined
+      passwordAuth: undefined
     },
     loginId: loginTree.loginId
   }
   // Only remove `passwordAuth` if we have another way to get in:
   if (loginTree.loginAuth != null) {
     kit.stash.passwordAuthBox = undefined
-    kit.login.passwordAuthBox = undefined
+    kit.login.passwordAuth = undefined
   }
   await applyKit(ai, loginTree, kit)
 }

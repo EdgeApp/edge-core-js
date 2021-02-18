@@ -84,11 +84,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     ): Promise<EdgeAccount> {
       if (opts == null) opts = {} // opts can be `null`, not just `undefined`
 
-      return createLogin(ai, username, opts, { password, pin }).then(
-        loginTree => {
-          return makeAccount(ai, appId, loginTree, 'newAccount', opts)
-        }
-      )
+      const loginTree = await createLogin(ai, username, opts, { password, pin })
+      return makeAccount(ai, appId, loginTree, 'newAccount', opts)
     },
 
     async loginWithKey(
@@ -119,9 +116,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     ): Promise<EdgeAccount> {
       if (opts == null) opts = {} // opts can be `null`, not just `undefined`
 
-      return loginPassword(ai, username, password, opts).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'passwordLogin', opts)
-      })
+      const loginTree = await loginPassword(ai, username, password, opts)
+      return makeAccount(ai, appId, loginTree, 'passwordLogin', opts)
     },
 
     checkPasswordRules,
@@ -138,9 +134,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     ): Promise<EdgeAccount> {
       if (opts == null) opts = {} // opts can be `null`, not just `undefined`
 
-      return loginPin2(ai, appId, username, pin, opts).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'pinLogin', opts)
-      })
+      const loginTree = await loginPin2(ai, appId, username, pin, opts)
+      return makeAccount(ai, appId, loginTree, 'pinLogin', opts)
     },
 
     async getRecovery2Key(username: string): Promise<string> {
@@ -160,15 +155,14 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     ): Promise<EdgeAccount> {
       if (opts == null) opts = {} // opts can be `null`, not just `undefined`
 
-      return loginRecovery2(
+      const loginTree = await loginRecovery2(
         ai,
         base58.parse(recovery2Key),
         username,
         answers,
         opts
-      ).then(loginTree => {
-        return makeAccount(ai, appId, loginTree, 'recoveryLogin', opts)
-      })
+      )
+      return makeAccount(ai, appId, loginTree, 'recoveryLogin', opts)
     },
 
     async fetchRecovery2Questions(
