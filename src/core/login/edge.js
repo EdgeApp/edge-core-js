@@ -12,7 +12,7 @@ import { makeAccount } from '../account/account-init.js'
 import { type ApiInput } from '../root-pixie.js'
 import { type LobbySubscription, makeLobby } from './lobby.js'
 import { makeLoginTree, searchTree, syncLogin } from './login.js'
-import { getStash } from './login-selectors.js'
+import { getStashById } from './login-selectors.js'
 import { asLoginStash, saveStash } from './login-stash.js'
 
 /**
@@ -68,12 +68,11 @@ async function onReply(
   }
 
   // Rescue any existing vouchers:
-  const oldStashTree = getStash(ai, username)
-  const oldStash = searchTree(oldStashTree, stash => stash.appId === appId)
-  if (oldStash != null) {
-    child.voucherId = oldStash.voucherId
-    child.voucherAuth = oldStash.voucherAuth
-  }
+  try {
+    const old = getStashById(ai, child.loginId)
+    child.voucherId = old.stash.voucherId
+    child.voucherAuth = old.stash.voucherAuth
+  } catch (error) {}
 
   // The Airbitz mobile will sometimes send the pin2Key in base58
   // instead of base64 due to an unfortunate bug. Fix that:

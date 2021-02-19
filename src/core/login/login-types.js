@@ -56,4 +56,13 @@ export type LoginKit = {
   stash: $Shape<LoginStash>
 }
 
+/**
+ * A stash for a specific child account,
+ * along with its containing tree.
+ */
+export type StashLeaf = {
+  stash: LoginStash,
+  stashTree: LoginStash
+}
+
 export type WalletInfoFullMap = { [walletId: string]: EdgeWalletInfoFull }

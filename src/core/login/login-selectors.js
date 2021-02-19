@@ -3,7 +3,9 @@
 import { fixUsername } from '../../client-side.js'
 import { type ApiInput } from '../root-pixie.js'
 import { scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
+import { searchTree } from './login.js'
 import { type LoginStash } from './login-stash.js'
+import { type StashLeaf } from './login-types.js'
 
 export { fixUsername }
 
@@ -17,6 +19,16 @@ export function getStash(ai: ApiInput, username: string): LoginStash {
 
   if (stashes[fixedName] != null) return stashes[fixedName]
   return { username: fixedName, appId: '', loginId: '', pendingVouchers: [] }
+}
+
+export function getStashById(ai: ApiInput, loginId: string): StashLeaf {
+  const { stashes } = ai.props.state.login
+  for (const username of Object.keys(stashes)) {
+    const stashTree = stashes[username]
+    const stash = searchTree(stashTree, stash => stash.loginId === loginId)
+    if (stash != null) return { stashTree, stash }
+  }
+  throw new Error(`Cannot find stash ${loginId}`)
 }
 
 // Hashed username cache:
