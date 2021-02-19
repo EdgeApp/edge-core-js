@@ -1,5 +1,14 @@
 # edge-core-js
 
+## 0.17.24 (2021-02-19)
+
+- Fix the `parentNetworkFee` field missing in certain `EdgeTransaction` instances.
+- Fix missing transactions while searching.
+- Perform more data validation on network requests.
+- Fix a bug that would prevent login vouchers from working on Airbitz accounts with 2fa turned on.
+- Expose periodic 2fa errors through the context's `error` event.
+- Add an `EdgeAccount.repairOtp` method.
+
 ## 0.17.23 (2021-02-10)
 
 - Ensure all crypto to crypto exchange rates have a route to USD
