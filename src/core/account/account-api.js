@@ -35,7 +35,12 @@ import {
   splitWalletInfo
 } from '../login/keys.js'
 import { applyKit } from '../login/login.js'
-import { cancelOtpReset, disableOtp, enableOtp } from '../login/otp.js'
+import {
+  cancelOtpReset,
+  disableOtp,
+  enableOtp,
+  repairOtp
+} from '../login/otp.js'
 import {
   changePassword,
   checkPassword,
@@ -254,6 +259,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async disableOtp(): Promise<void> {
       lockdown()
       await disableOtp(ai, accountId)
+    },
+    async repairOtp(otpKey: string): Promise<void> {
+      lockdown()
+      await repairOtp(ai, accountId, otpKey)
     },
 
     // 2fa bypass voucher approval / rejection:

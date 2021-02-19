@@ -131,7 +131,14 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
       // We don't report sync failures, since that could be annoying:
       const dataTask = makePeriodicTask(doDataSync, 30 * 1000)
-      const loginTask = makePeriodicTask(doLoginSync, 30 * 1000)
+      const loginTask = makePeriodicTask(doLoginSync, 30 * 1000, {
+        onError(error) {
+          // Only send OTP errors to the GUI:
+          if (error instanceof Error && error.name === 'OtpError') {
+            input.props.onError(error)
+          }
+        }
+      })
 
       return {
         update() {

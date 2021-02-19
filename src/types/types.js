@@ -974,6 +974,7 @@ export type EdgeAccount = {
   cancelOtpReset(): Promise<void>,
   disableOtp(): Promise<void>,
   enableOtp(timeout?: number): Promise<void>,
+  repairOtp(otpKey: string): Promise<void>,
 
   // 2fa bypass voucher approval / rejection:
   +pendingVouchers: EdgePendingVoucher[],

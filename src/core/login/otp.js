@@ -6,10 +6,10 @@ import { asOtpResetPayload } from '../../types/server-cleaners.js'
 import { type OtpPayload } from '../../types/server-types.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
-import { applyKit } from '../login/login.js'
+import { applyKit, searchTree, serverLogin } from '../login/login.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
-import { hashUsername } from './login-selectors.js'
+import { getStash, hashUsername } from './login-selectors.js'
 import { type LoginStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 
@@ -136,5 +136,44 @@ export async function resetOtp(
   return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
     const { otpResetDate } = asOtpResetPayload(reply)
     return otpResetDate
+  })
+}
+
+/**
+ * If the device doesn't have the right OTP key,
+ * this can prevent most things from working.
+ * Let the user provide an updated key, and present that to the server.
+ * If the key works, the server will let us in & resolve the issue.
+ */
+export async function repairOtp(
+  ai: ApiInput,
+  accountId: string,
+  otpKey: string
+): Promise<void> {
+  if (ai.props.state.accounts[accountId] == null) return
+  const { login, loginTree } = ai.props.state.accounts[accountId]
+
+  if (loginTree.username == null || login.passwordAuth == null) {
+    throw new Error('Cannot sync: missing username')
+  }
+  const stashTree = getStash(ai, loginTree.username)
+  const stash = searchTree(stashTree, stash => stash.appId === login.appId)
+  if (stash == null) {
+    throw new Error('Cannot sync: missing on-disk data')
+  }
+  if (login.passwordAuth == null) {
+    throw new Error('Cannot repair OTP: There is no password on this account')
+  }
+  const request = {
+    userId: login.userId,
+    passwordAuth: base64.stringify(login.passwordAuth),
+    otp: totp(otpKey)
+  }
+  const opts: EdgeAccountOptions = {
+    // Avoid updating the lastLogin date:
+    now: stashTree.lastLogin
+  }
+  await serverLogin(ai, stashTree, stash, opts, request, async () => {
+    return login.loginKey
   })
 }
