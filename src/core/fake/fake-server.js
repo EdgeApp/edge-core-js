@@ -1,16 +1,19 @@
 // @flow
 
-import {
-  asArray,
-  asEither,
-  asMaybe,
-  asNone,
-  asObject,
-  asString
-} from 'cleaners'
+import { asEither, asMaybe } from 'cleaners'
 
+import {
+  asKeysCreatePayload,
+  asLoginCreatePayload,
+  asLoginRequest,
+  asOtpPayload,
+  asPasswordPayload,
+  asPin2DisablePayload,
+  asPin2EnablePayload,
+  asRecovery2Payload,
+  asSecretPayload
+} from '../../types/server-cleaners.js'
 import { type EdgeLoginMessage } from '../../types/types.js'
-import { asEdgeBox } from '../../util/crypto/crypto.js'
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { utf8 } from '../../util/encoding.js'
 import {
@@ -24,15 +27,13 @@ import {
   type HttpResponse,
   type Server
 } from '../../util/http/http-types.js'
-import { addHiddenProperties, filterObject, softCat } from '../../util/util.js'
-import { asEdgeSnrp } from '../scrypt/scrypt-pixie.js'
+import { addHiddenProperties, softCat } from '../../util/util.js'
 import {
   type DbLobby,
   type DbLogin,
   type DbRepo,
   type FakeDb,
-  loginCreateColumns,
-  makeLoginReply
+  makeLoginPayload
 } from './fake-db.js'
 import {
   jsonResponse,
@@ -69,60 +70,72 @@ const withLogin2 = (
   fallback: ApiServer = handleMissingCredentials
 ): ApiServer => request => {
   const { db, json } = request
+  const clean = asLoginRequest(json)
+  const {
+    loginAuth,
+    loginId,
+    otp = '',
+    passwordAuth,
+    pin2Auth,
+    pin2Id,
+    recovery2Auth,
+    recovery2Id,
+    userId
+  } = clean
 
   // Token login:
-  if (json.loginId != null && json.loginAuth != null) {
-    const login = db.getLoginById(json.loginId)
+  if (loginId != null && loginAuth != null) {
+    const login = db.getLoginById(loginId)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (json.loginAuth !== login.loginAuth) {
+    if (loginAuth !== login.loginAuth) {
       return passwordErrorResponse(0)
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, json.otp)) {
+    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
 
   // Password login:
-  if (json.userId != null && json.passwordAuth != null) {
-    const login = db.getLoginById(json.userId)
+  if (userId != null && passwordAuth != null) {
+    const login = db.getLoginById(userId)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (json.passwordAuth !== login.passwordAuth) {
+    if (passwordAuth !== login.passwordAuth) {
       return passwordErrorResponse(0)
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, json.otp)) {
+    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
 
   // PIN2 login:
-  if (json.pin2Id != null && json.pin2Auth != null) {
-    const login = db.getLoginByPin2Id(json.pin2Id)
+  if (pin2Id != null && pin2Auth != null) {
+    const login = db.getLoginByPin2Id(pin2Id)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (json.pin2Auth !== login.pin2Auth) {
+    if (pin2Auth !== login.pin2Auth) {
       return passwordErrorResponse(0)
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, json.otp)) {
+    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
   }
 
   // Recovery2 login:
-  if (json.recovery2Id != null && json.recovery2Auth != null) {
-    const login = db.getLoginByRecovery2Id(json.recovery2Id)
+  if (recovery2Id != null && recovery2Auth != null) {
+    const login = db.getLoginByRecovery2Id(recovery2Id)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
     const serverAuth = login.recovery2Auth
-    const clientAuth = json.recovery2Auth
+    const clientAuth = recovery2Auth
     if (serverAuth == null || clientAuth.length !== serverAuth.length) {
       return passwordErrorResponse(0)
     }
@@ -131,7 +144,7 @@ const withLogin2 = (
         return passwordErrorResponse(0)
       }
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, json.otp)) {
+    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
     return server({ ...request, login })
@@ -147,13 +160,16 @@ const loginRoute: ApiServer = pickMethod({
     // Authenticated version:
     request => {
       const { db, login } = request
-      return loginResponse(makeLoginReply(db, login))
+      return loginResponse(makeLoginPayload(db, login))
     },
     // Fallback version:
     request => {
       const { db, json } = request
-      if (json.userId != null && json.passwordAuth == null) {
-        const login = db.getLoginById(json.userId)
+      const clean = asLoginRequest(json)
+      const { userId, passwordAuth, recovery2Id, recovery2Auth } = clean
+
+      if (userId != null && passwordAuth == null) {
+        const login = db.getLoginById(userId)
         if (login == null) {
           return statusResponse(statusCodes.noAccount)
         }
@@ -161,8 +177,8 @@ const loginRoute: ApiServer = pickMethod({
           passwordAuthSnrp: login.passwordAuthSnrp
         })
       }
-      if (json.recovery2Id != null && json.recovery2Auth == null) {
-        const login = db.getLoginByRecovery2Id(json.recovery2Id)
+      if (recovery2Id != null && recovery2Auth == null) {
+        const login = db.getLoginByRecovery2Id(recovery2Id)
         if (login == null) {
           return statusResponse(statusCodes.noAccount)
         }
@@ -180,27 +196,41 @@ function createLogin(
   login?: DbLogin
 ): Promise<HttpResponse> {
   const { db, json } = request
-  const { data } = json
-  if (data.appId == null || data.loginId == null) {
+  const clean = asMaybeLoginCreatePayload(json.data)
+  const keys = asMaybeKeysCreatePayload(json.data)
+  const secret = asMaybeSecretPayload(json.data)
+  if (clean == null || keys == null || secret == null) {
     return statusResponse(statusCodes.invalidRequest)
   }
-  if (db.getLoginById(data.loginId) != null) {
+  if (db.getLoginById(clean.loginId) != null) {
     return statusResponse(statusCodes.accountExists)
   }
 
   // Set up repos:
-  if (data.newSyncKeys != null) {
-    for (const syncKey of data.newSyncKeys) {
-      db.repos[syncKey] = {}
-    }
+  if (keys == null) return statusResponse(statusCodes.invalidRequest)
+  for (const syncKey of keys.newSyncKeys) {
+    db.repos[syncKey] = {}
   }
 
-  // Set up login object:
-  const row: DbLogin = filterObject(data, loginCreateColumns)
+  // Start building the new database row:
+  const row: DbLogin = {
+    // Required fields:
+    ...clean,
+    ...secret,
+    keyBoxes: keys.keyBoxes,
+
+    // Optional fields:
+    ...asMaybeOtpPayload(json.data),
+    ...asMaybePasswordPayload(json.data),
+    ...asMaybePin2Payload(json.data),
+    ...asMaybeRecovery2Payload(json.data)
+  }
+
+  // Set up the parent/child relationship:
   if (login != null) {
     const children = db.getLoginsByParent(login)
     const appIdExists =
-      children.find(child => child.appId === data.appId) != null
+      children.find(child => child.appId === clean.appId) != null
     if (appIdExists) {
       return statusResponse(statusCodes.invalidAppId)
     }
@@ -210,6 +240,8 @@ function createLogin(
 
   return statusResponse(statusCodes.created, 'Account created')
 }
+
+const asMaybeLoginCreatePayload = asMaybe(asLoginCreatePayload)
 
 const create2Route: ApiServer = pickMethod({
   POST: withLogin2(
@@ -222,35 +254,30 @@ const keysRoute: ApiServer = withLogin2(
   pickMethod({
     POST: request => {
       const { db, json, login } = request
-      const { data } = json
-      if (data.keyBoxes == null) {
-        return statusResponse(statusCodes.invalidRequest)
-      }
+      const clean = asMaybeKeysCreatePayload(json.data)
+      if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       // Set up repos:
-      if (data.newSyncKeys != null) {
-        for (const syncKey of data.newSyncKeys) {
-          db.repos[syncKey] = {}
-        }
+      for (const syncKey of clean.newSyncKeys) {
+        db.repos[syncKey] = {}
       }
-
-      login.keyBoxes = softCat(login.keyBoxes, data.keyBoxes)
+      login.keyBoxes = softCat(login.keyBoxes, clean.keyBoxes)
 
       return statusResponse()
     }
   })
 )
 
+const asMaybeKeysCreatePayload = asMaybe(asKeysCreatePayload)
+
 const otp2Route: ApiServer = pickMethod({
   POST: withLogin2(request => {
     const { json, login } = request
-    const { data } = json
-    if (data.otpKey == null || data.otpTimeout == null) {
-      return statusResponse(statusCodes.invalidRequest)
-    }
+    const clean = asMaybeOtpPayload(json.data)
+    if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-    login.otpKey = data.otpKey
-    login.otpTimeout = data.otpTimeout
+    login.otpKey = clean.otpKey
+    login.otpTimeout = clean.otpTimeout
     login.otpResetDate = undefined
 
     return statusResponse()
@@ -297,6 +324,8 @@ const otp2Route: ApiServer = pickMethod({
   )
 })
 
+const asMaybeOtpPayload = asMaybe(asOtpPayload)
+
 const password2Route: ApiServer = withLogin2(
   pickMethod({
     DELETE: request => {
@@ -326,15 +355,7 @@ const password2Route: ApiServer = withLogin2(
   })
 )
 
-const asMaybePasswordPayload = asMaybe(
-  asObject({
-    passwordAuth: asString,
-    passwordAuthBox: asEdgeBox,
-    passwordAuthSnrp: asEdgeSnrp,
-    passwordBox: asEdgeBox,
-    passwordKeySnrp: asEdgeSnrp
-  })
-)
+const asMaybePasswordPayload = asMaybe(asPasswordPayload)
 
 const pin2Route: ApiServer = withLogin2(
   pickMethod({
@@ -366,22 +387,7 @@ const pin2Route: ApiServer = withLogin2(
 )
 
 const asMaybePin2Payload = asMaybe(
-  asEither(
-    asObject({
-      pin2Id: asString,
-      pin2Auth: asString, // asBase64
-      pin2Box: asEdgeBox,
-      pin2KeyBox: asEdgeBox,
-      pin2TextBox: asEdgeBox
-    }),
-    asObject({
-      pin2Id: asNone,
-      pin2Auth: asNone,
-      pin2Box: asNone,
-      pin2KeyBox: asNone,
-      pin2TextBox: asEdgeBox
-    })
-  )
+  asEither(asPin2DisablePayload, asPin2EnablePayload)
 )
 
 const recovery2Route: ApiServer = withLogin2(
@@ -413,15 +419,7 @@ const recovery2Route: ApiServer = withLogin2(
   })
 )
 
-const asMaybeRecovery2Payload = asMaybe(
-  asObject({
-    recovery2Id: asString,
-    recovery2Auth: asArray(asString), // asBase64
-    recovery2Box: asEdgeBox,
-    recovery2KeyBox: asEdgeBox,
-    question2Box: asEdgeBox
-  })
-)
+const asMaybeRecovery2Payload = asMaybe(asRecovery2Payload)
 
 const secretRoute: ApiServer = withLogin2(
   pickMethod({
@@ -441,17 +439,12 @@ const secretRoute: ApiServer = withLogin2(
       login.loginAuth = clean.loginAuth
       login.loginAuthBox = clean.loginAuthBox
 
-      return loginResponse(makeLoginReply(db, login))
+      return loginResponse(makeLoginPayload(db, login))
     }
   })
 )
 
-const asMaybeSecretPayload = asMaybe(
-  asObject({
-    loginAuthBox: asEdgeBox,
-    loginAuth: asString // asBase64
-  })
-)
+const asMaybeSecretPayload = asMaybe(asSecretPayload)
 
 // lobby: ------------------------------------------------------------------
 

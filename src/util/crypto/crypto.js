@@ -1,25 +1,15 @@
 // @flow
 
 import aesjs from 'aes-js'
-import { asNumber, asObject, asString } from 'cleaners'
 import { base16, base64 } from 'rfc4648'
 
+import { type EdgeBox } from '../../types/server-types.js'
 import { type EdgeIo } from '../../types/types.js'
 import { utf8 } from '../encoding.js'
 import { sha256 } from './hashes.js'
 import { verifyData } from './verify.js'
 
 const AesCbc = aesjs.ModeOfOperation.cbc
-
-/**
- * Edge-format encrypted data.
- */
-export const asEdgeBox = asObject({
-  encryptionType: asNumber,
-  data_base64: asString,
-  iv_hex: asString
-})
-export type EdgeBox = $Call<typeof asEdgeBox, any>
 
 /**
  * Some of our data contains terminating null bytes due to an old bug,

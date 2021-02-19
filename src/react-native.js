@@ -6,6 +6,7 @@ import * as React from 'react'
 import { defaultOnLog } from './core/log/log.js'
 import { parseReply } from './core/login/login-fetch.js'
 import { EdgeCoreBridge } from './io/react-native/react-native-webview.js'
+import { asMessagesPayload } from './types/server-cleaners.js'
 import {
   type EdgeContext,
   type EdgeContextOptions,
@@ -135,9 +136,9 @@ export async function fetchLoginMessages(
     }
 
     return response.json().then(json => {
-      const reply = parseReply(json)
+      const clean = asMessagesPayload(parseReply(json))
       const out: EdgeLoginMessages = {}
-      for (const message of reply) {
+      for (const message of clean) {
         const username = loginMap[message.loginId]
         if (username != null) out[username] = message
       }

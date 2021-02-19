@@ -3,6 +3,10 @@
 import { base64 } from 'rfc4648'
 
 import {
+  type LoginCreatePayload,
+  type LoginRequestPayload
+} from '../../types/server-types.js'
+import {
   type EdgeAccountOptions,
   type EdgeWalletInfo,
   errorNames
@@ -92,19 +96,24 @@ export function makeCreateKit(
   return Promise.all([loginId, passwordKit]).then(values => {
     const [loginIdRaw, passwordKit] = values
     const loginId = base64.stringify(loginIdRaw)
+    const passwordServer: LoginRequestPayload | void = passwordKit.server
+    const pin2Server: LoginRequestPayload | void = pin2Kit.server
+    const keysServer: LoginRequestPayload | void = keysKit.server
+
+    const server: LoginCreatePayload = {
+      appId,
+      loginAuth: base64.stringify(loginAuth),
+      loginAuthBox,
+      loginId,
+      parentBox,
+      ...passwordServer,
+      ...pin2Server,
+      ...keysServer
+    }
     return {
       loginId,
       serverPath: '/v2/login/create',
-      server: {
-        appId,
-        loginAuth: base64.stringify(loginAuth),
-        loginAuthBox,
-        loginId,
-        parentBox,
-        ...passwordKit.server,
-        ...pin2Kit.server,
-        ...keysKit.server
-      },
+      server,
       stash: {
         appId,
         loginAuthBox,

@@ -1,5 +1,7 @@
 // @flow
 
+import { asLoginResponse } from '../../types/server-cleaners.js'
+import { type LoginRequest } from '../../types/server-types.js'
 import {
   type EdgeFetchOptions,
   NetworkError,
@@ -11,10 +13,12 @@ import {
 import { timeout } from '../../util/promise.js'
 import { type ApiInput } from '../root-pixie.js'
 
-export function parseReply(json: any): any {
-  switch (json.status_code) {
+export function parseReply(json: mixed): mixed {
+  const clean = asLoginResponse(json)
+
+  switch (clean.status_code) {
     case 0: // Success
-      return json.results
+      return clean.results
 
     case 2: // Account exists
       throw new UsernameError('Account already exists on server')
@@ -24,28 +28,21 @@ export function parseReply(json: any): any {
 
     case 4: // Invalid password
     case 5: // Invalid answers
-      throw new PasswordError(json.results)
+      throw new PasswordError(clean.results)
 
     case 6: // Invalid API key
       throw new Error('Invalid API key')
 
     case 8: // Invalid OTP
-      throw new OtpError(json.results)
+      throw new OtpError(clean.results)
 
     case 1000: // Endpoint obsolete
       throw new ObsoleteApiError()
 
     case 1: // Error
     case 7: // Pin expired
-    default: {
-      const message: string =
-        typeof json.message === 'string'
-          ? json.message
-          : typeof json.detail === 'string'
-          ? json.detail
-          : JSON.stringify(json)
-      throw new Error(`Server error: ${message}`)
-    }
+    default:
+      throw new Error(`Server error: ${clean.message}`)
   }
 }
 
@@ -53,8 +50,8 @@ export function loginFetch(
   ai: ApiInput,
   method: string,
   path: string,
-  body?: any
-): Promise<any> {
+  body?: LoginRequest
+): Promise<mixed> {
   const { state, io, log } = ai.props
   const { apiKey, serverUri } = state.login
 
@@ -79,7 +76,7 @@ export function loginFetch(
       const time = Date.now() - start
       log(`${method} ${fullUri} returned ${response.status} in ${time}ms`)
       return response.json().then(parseReply, () => {
-        throw new Error(`Non-JSON reply, HTTP status ${response.status}`)
+        throw new Error(`Invalid reply JSON, HTTP status ${response.status}`)
       })
     },
     networkError => {

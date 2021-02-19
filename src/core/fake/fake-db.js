@@ -1,11 +1,14 @@
 // @flow
 
+import {
+  type EdgeBox,
+  type EdgeSnrp,
+  type LobbyReply,
+  type LobbyRequest,
+  type LoginPayload
+} from '../../types/server-types.js'
 import { type EdgeFakeUser } from '../../types/types.js'
-import { type EdgeBox } from '../../util/crypto/crypto.js'
 import { filterObject } from '../../util/util.js'
-import { type LobbyReply, type LobbyRequest } from '../login/lobby.js'
-import { type LoginReply } from '../login/login-reply.js'
-import { type EdgeSnrp } from '../scrypt/scrypt-pixie.js'
 
 export type DbLobby = {
   expires: string, // date
@@ -99,11 +102,6 @@ const loginDbColumns = [
   'pinKeyBox'
 ]
 
-// The v2 account creation endpoint doesn't accept legacy keys:
-export const loginCreateColumns: string[] = loginDbColumns.filter(
-  item => ['mnemonicBox', 'rootKeyBox', 'syncKeyBox'].indexOf(item) < 0
-)
-
 /**
  * Emulates the Airbitz login server database.
  */
@@ -176,10 +174,10 @@ export class FakeDb {
  * Recursively builds up a login reply tree,
  * which the server sends back in response to a v2 login request.
  */
-export function makeLoginReply(db: FakeDb, login: DbLogin): LoginReply {
+export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
   const children = db
     .getLoginsByParent(login)
-    .map(child => makeLoginReply(db, child))
+    .map(child => makeLoginPayload(db, child))
 
   return {
     // Identity:
