@@ -746,7 +746,7 @@ export type EdgeSwapPlugin = {
   fetchSwapQuote(
     request: EdgeSwapRequest,
     userSettings: JsonObject | void,
-    opts: { promoCode?: string }
+    opts: { promoCode?: string, metadata?: EdgeMetadata }
   ): Promise<EdgeSwapQuote>
 }
 
@@ -877,6 +877,7 @@ export type EdgeSwapConfig = {
 
 export type EdgeSwapRequestOptions = {
   preferPluginId?: string,
+  metadata?: EdgeMetadata,
   disabled?: EdgePluginMap<true>,
   promoCodes?: EdgePluginMap<string>
 }

@@ -22,7 +22,7 @@ export async function fetchSwapQuote(
   request: EdgeSwapRequest,
   opts: EdgeSwapRequestOptions = {}
 ): Promise<EdgeSwapQuote> {
-  const { preferPluginId, disabled = {}, promoCodes = {} } = opts
+  const { preferPluginId, disabled = {}, metadata, promoCodes = {} } = opts
   const { log } = ai.props
 
   const account = ai.props.state.accounts[accountId]
@@ -46,6 +46,7 @@ export async function fetchSwapQuote(
     promises.push(
       swapPlugins[pluginId]
         .fetchSwapQuote(request, userSettings[pluginId], {
+          metadata,
           promoCode: promoCodes[pluginId]
         })
         .then(
