@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.17.25 (2021-02-27)
+
+- Load all supported currency pairs at launch to improve exchange rate loading. List is replaced by enabled wallets once the wallets are loaded.
+
 ## 0.17.24 (2021-02-19)
 
 - Fix the `parentNetworkFee` field missing in certain `EdgeTransaction` instances.
