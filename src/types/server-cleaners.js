@@ -123,7 +123,7 @@ export const asLoginCreatePayload: Cleaner<LoginCreatePayload> = asObject({
   appId: asString,
   loginId: asString, // base64
   parentBox: asOptional(asEdgeBox)
-})
+}).withRest
 
 export const asOtpPayload: Cleaner<OtpPayload> = asObject({
   otpTimeout: asOptional(asNumber, 7 * 24 * 60 * 60), // seconds
@@ -259,9 +259,9 @@ export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> = asArray
 
 export const asLobbyRequest: Cleaner<LobbyRequest> = asObject({
   publicKey: asString,
-  loginRequest: asOptional(asObject({ appId: asString })),
+  loginRequest: asOptional(asObject({ appId: asString }).withRest),
   timeout: asOptional(asNumber)
-})
+}).withRest
 
 export const asLobbyReply: Cleaner<LobbyReply> = asObject({
   publicKey: asString,
