@@ -196,9 +196,9 @@ function createLogin(
   login?: DbLogin
 ): Promise<HttpResponse> {
   const { db, json } = request
-  const clean = asMaybeLoginCreatePayload(json.data)
-  const keys = asMaybeKeysCreatePayload(json.data)
-  const secret = asMaybeSecretPayload(json.data)
+  const clean = asMaybe(asLoginCreatePayload)(json.data)
+  const keys = asMaybe(asKeysCreatePayload)(json.data)
+  const secret = asMaybe(asSecretPayload)(json.data)
   if (clean == null || keys == null || secret == null) {
     return statusResponse(statusCodes.invalidRequest)
   }
@@ -220,10 +220,10 @@ function createLogin(
     keyBoxes: keys.keyBoxes,
 
     // Optional fields:
-    ...asMaybeOtpPayload(json.data),
-    ...asMaybePasswordPayload(json.data),
-    ...asMaybePin2Payload(json.data),
-    ...asMaybeRecovery2Payload(json.data)
+    ...asMaybe(asOtpPayload)(json.data),
+    ...asMaybe(asPasswordPayload)(json.data),
+    ...asMaybe(asPin2Payload)(json.data),
+    ...asMaybe(asRecovery2Payload)(json.data)
   }
 
   // Set up the parent/child relationship:
@@ -241,8 +241,6 @@ function createLogin(
   return statusResponse(statusCodes.created, 'Account created')
 }
 
-const asMaybeLoginCreatePayload = asMaybe(asLoginCreatePayload)
-
 const create2Route: ApiServer = pickMethod({
   POST: withLogin2(
     request => createLogin(request, request.login),
@@ -254,7 +252,7 @@ const keysRoute: ApiServer = withLogin2(
   pickMethod({
     POST: request => {
       const { db, json, login } = request
-      const clean = asMaybeKeysCreatePayload(json.data)
+      const clean = asMaybe(asKeysCreatePayload)(json.data)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       // Set up repos:
@@ -268,12 +266,10 @@ const keysRoute: ApiServer = withLogin2(
   })
 )
 
-const asMaybeKeysCreatePayload = asMaybe(asKeysCreatePayload)
-
 const otp2Route: ApiServer = pickMethod({
   POST: withLogin2(request => {
     const { json, login } = request
-    const clean = asMaybeOtpPayload(json.data)
+    const clean = asMaybe(asOtpPayload)(json.data)
     if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
     login.otpKey = clean.otpKey
@@ -324,8 +320,6 @@ const otp2Route: ApiServer = pickMethod({
   )
 })
 
-const asMaybeOtpPayload = asMaybe(asOtpPayload)
-
 const password2Route: ApiServer = withLogin2(
   pickMethod({
     DELETE: request => {
@@ -341,7 +335,7 @@ const password2Route: ApiServer = withLogin2(
 
     POST: request => {
       const { json, login } = request
-      const clean = asMaybePasswordPayload(json.data)
+      const clean = asMaybe(asPasswordPayload)(json.data)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       login.passwordAuth = clean.passwordAuth
@@ -354,8 +348,6 @@ const password2Route: ApiServer = withLogin2(
     }
   })
 )
-
-const asMaybePasswordPayload = asMaybe(asPasswordPayload)
 
 const pin2Route: ApiServer = withLogin2(
   pickMethod({
@@ -372,7 +364,7 @@ const pin2Route: ApiServer = withLogin2(
 
     POST: request => {
       const { json, login } = request
-      const clean = asMaybePin2Payload(json.data)
+      const clean = asMaybe(asPin2Payload)(json.data)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       login.pin2Auth = clean.pin2Auth
@@ -386,9 +378,7 @@ const pin2Route: ApiServer = withLogin2(
   })
 )
 
-const asMaybePin2Payload = asMaybe(
-  asEither(asPin2DisablePayload, asPin2EnablePayload)
-)
+const asPin2Payload = asEither(asPin2DisablePayload, asPin2EnablePayload)
 
 const recovery2Route: ApiServer = withLogin2(
   pickMethod({
@@ -405,7 +395,7 @@ const recovery2Route: ApiServer = withLogin2(
 
     POST: request => {
       const { json, login } = request
-      const clean = asMaybeRecovery2Payload(json.data)
+      const clean = asMaybe(asRecovery2Payload)(json.data)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       login.question2Box = clean.question2Box
@@ -419,13 +409,11 @@ const recovery2Route: ApiServer = withLogin2(
   })
 )
 
-const asMaybeRecovery2Payload = asMaybe(asRecovery2Payload)
-
 const secretRoute: ApiServer = withLogin2(
   pickMethod({
     POST: request => {
       const { db, json, login } = request
-      const clean = asMaybeSecretPayload(json.data)
+      const clean = asMaybe(asSecretPayload)(json.data)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       // Do a quick sanity check:
@@ -443,8 +431,6 @@ const secretRoute: ApiServer = withLogin2(
     }
   })
 )
-
-const asMaybeSecretPayload = asMaybe(asSecretPayload)
 
 // lobby: ------------------------------------------------------------------
 
