@@ -197,9 +197,8 @@ function createLogin(
 ): Promise<HttpResponse> {
   const { db, json } = request
   const clean = asMaybe(asLoginCreatePayload)(json.data)
-  const keys = asMaybe(asKeysCreatePayload)(json.data)
   const secret = asMaybe(asSecretPayload)(json.data)
-  if (clean == null || keys == null || secret == null) {
+  if (clean == null || secret == null) {
     return statusResponse(statusCodes.invalidRequest)
   }
   if (db.getLoginById(clean.loginId) != null) {
@@ -207,7 +206,8 @@ function createLogin(
   }
 
   // Set up repos:
-  if (keys == null) return statusResponse(statusCodes.invalidRequest)
+  const emptyKeys = { newSyncKeys: [], keyBoxes: [] }
+  const keys = asMaybe(asKeysCreatePayload, emptyKeys)(json.data)
   for (const syncKey of keys.newSyncKeys) {
     db.repos[syncKey] = {}
   }

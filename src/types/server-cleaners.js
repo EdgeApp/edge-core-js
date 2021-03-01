@@ -115,7 +115,7 @@ export const asLoginResponse: Cleaner<LoginResponse> = asObject({
 // ---------------------------------------------------------------------
 
 export const asKeysCreatePayload: Cleaner<KeysCreatePayload> = asObject({
-  keyBoxes: asOptional(asArray(asEdgeBox), []),
+  keyBoxes: asArray(asEdgeBox),
   newSyncKeys: asOptional(asArray(asString), [])
 })
 
