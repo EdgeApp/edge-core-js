@@ -1058,6 +1058,12 @@ export type EdgeContextOptions = {
   plugins?: EdgeCorePluginsInit
 }
 
+export type EdgeRecoveryQuestionChoice = {
+  category: 'address' | 'must' | 'numeric' | 'recovery2' | 'string',
+  min_length: number,
+  question: string
+}
+
 // parameters ----------------------------------------------------------
 
 export type EdgeEdgeLoginOptions = EdgeAccountOptions & {
@@ -1170,7 +1176,8 @@ export type EdgeContext = {
     recovery2Key: string,
     username: string
   ): Promise<string[]>,
-  listRecoveryQuestionChoices(): Promise<string[]>,
+  // Really returns EdgeRecoveryQuestionChoice[]:
+  listRecoveryQuestionChoices(): Promise<any>,
 
   // OTP stuff:
   requestOtpReset(username: string, otpResetToken: string): Promise<Date>,

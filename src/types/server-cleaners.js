@@ -30,6 +30,7 @@ import {
   type PasswordPayload,
   type Pin2DisablePayload,
   type Pin2EnablePayload,
+  type QuestionChoicesPayload,
   type Recovery2Payload,
   type SecretPayload,
   type StartRecoveryPayload
@@ -233,7 +234,24 @@ export const asStartRecoveryPayload: Cleaner<StartRecoveryPayload> = asObject({
   question2Box: asEdgeBox
 })
 
-export const asQuestionChoicesPayload: Cleaner<string[]> = asArray(asString)
+export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> = asArray(
+  asObject({
+    min_length: asNumber,
+    category: raw => {
+      const clean = asString(raw)
+      switch (clean) {
+        case 'address':
+        case 'must':
+        case 'numeric':
+        case 'recovery2':
+        case 'string':
+          return clean
+      }
+      throw new TypeError('Invalid question category')
+    },
+    question: asString
+  })
+)
 
 // ---------------------------------------------------------------------
 // lobby subsystem
