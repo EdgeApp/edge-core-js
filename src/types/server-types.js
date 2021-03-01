@@ -1,6 +1,9 @@
 // @flow
 
-import { type EdgePendingVoucher } from './types.js'
+import {
+  type EdgePendingVoucher,
+  type EdgeRecoveryQuestionChoice
+} from './types.js'
 
 /**
  * Edge-format encrypted data.
@@ -196,6 +199,8 @@ export type OtpResetPayload = {
 export type StartRecoveryPayload = {
   question2Box: EdgeBox
 }
+
+export type QuestionChoicesPayload = EdgeRecoveryQuestionChoice[]
 
 // ---------------------------------------------------------------------
 // lobby subsystem

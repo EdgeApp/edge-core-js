@@ -11,6 +11,7 @@ import {
   type EdgeLoginMessages,
   type EdgeLogSettings,
   type EdgePendingEdgeLogin,
+  type EdgeRecoveryQuestionChoice,
   type EdgeUserInfo
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
@@ -172,7 +173,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       return getQuestions2(ai, base58.parse(recovery2Key), username)
     },
 
-    async listRecoveryQuestionChoices(): Promise<string[]> {
+    async listRecoveryQuestionChoices(): Promise<EdgeRecoveryQuestionChoice[]> {
       return listRecoveryQuestionChoices(ai)
     },
 

@@ -7,7 +7,10 @@ import {
   asStartRecoveryPayload
 } from '../../types/server-cleaners.js'
 import { type Recovery2Payload } from '../../types/server-types.js'
-import { type EdgeAccountOptions } from '../../types/types.js'
+import {
+  type EdgeAccountOptions,
+  type EdgeRecoveryQuestionChoice
+} from '../../types/types.js'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { utf8 } from '../../util/encoding.js'
@@ -172,7 +175,7 @@ export function makeRecovery2Kit(
 
 export async function listRecoveryQuestionChoices(
   ai: ApiInput
-): Promise<string[]> {
+): Promise<EdgeRecoveryQuestionChoice[]> {
   return asQuestionChoicesPayload(
     await loginFetch(ai, 'POST', '/v1/questions', {})
   )
