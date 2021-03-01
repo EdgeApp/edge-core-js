@@ -786,6 +786,9 @@ export type EdgeAccountOptions = {
   otp?: string // The 6-digit OTP, or (deprecated) the OTP secret
 }
 
+/**
+ * A pending request to log in from a new device.
+ */
 export type EdgePendingVoucher = {
   voucherId: string,
   activates: Date,

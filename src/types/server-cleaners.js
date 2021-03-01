@@ -25,6 +25,7 @@ import {
   type LoginPayload,
   type LoginRequest,
   type LoginResponse,
+  type MessagesPayload,
   type OtpPayload,
   type OtpResetPayload,
   type PasswordPayload,
@@ -35,12 +36,59 @@ import {
   type SecretPayload,
   type StartRecoveryPayload
 } from './server-types.js'
-import { type EdgeLoginMessage, type EdgePendingVoucher } from './types.js'
+import {
+  type EdgeLoginMessage,
+  type EdgePendingVoucher,
+  type EdgeRecoveryQuestionChoice
+} from './types.js'
 
 /**
  * A string of base64-encoded binary data.
  */
 export const asBase64: Cleaner<Uint8Array> = raw => base64.parse(asString(raw))
+
+// ---------------------------------------------------------------------
+// public Edge types
+// ---------------------------------------------------------------------
+
+export const asEdgePendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
+  voucherId: asString,
+  activates: asDate,
+  created: asDate,
+  ip: asString,
+  ipDescription: asString,
+  deviceDescription: asOptional(asString)
+})
+
+const asEdgeLoginMessage: Cleaner<EdgeLoginMessage> = asObject({
+  loginId: asString,
+  otpResetPending: asOptional(asBoolean, false),
+  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
+  recovery2Corrupt: asOptional(asBoolean, false)
+})
+
+const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> = asObject(
+  {
+    min_length: asNumber,
+    category: raw => {
+      const clean = asString(raw)
+      switch (clean) {
+        case 'address':
+        case 'must':
+        case 'numeric':
+        case 'recovery2':
+        case 'string':
+          return clean
+      }
+      throw new TypeError('Invalid question category')
+    },
+    question: asString
+  }
+)
+
+// ---------------------------------------------------------------------
+// internal Edge types
+// ---------------------------------------------------------------------
 
 export const asEdgeBox: Cleaner<EdgeBox> = asObject({
   encryptionType: asNumber,
@@ -55,25 +103,10 @@ export const asEdgeSnrp: Cleaner<EdgeSnrp> = asObject({
   p: asNumber
 })
 
-/**
- * A pending request to log in from a new device.
- */
-export const asPendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
-  voucherId: asString,
-  activates: asDate,
-  created: asDate,
-  ip: asString,
-  ipDescription: asString,
-  deviceDescription: asOptional(asString)
-})
-
 // ---------------------------------------------------------------------
 // top-level request & response bodies
 // ---------------------------------------------------------------------
 
-/**
- * Data sent to authenticate with the login server.
- */
 export const asLoginRequest: Cleaner<LoginRequest> = asObject({
   // The request payload:
   data: asUnknown,
@@ -171,9 +204,6 @@ export const asSecretPayload: Cleaner<SecretPayload> = asObject({
 // response payloads
 // ---------------------------------------------------------------------
 
-/**
- * Data sent back by the login server.
- */
 export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   // Identity:
   appId: asString,
@@ -184,7 +214,7 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   otpKey: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
-  pendingVouchers: asOptional(asArray(asPendingVoucher), []),
+  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
 
   // Return logins:
   loginAuthBox: asOptional(asEdgeBox),
@@ -206,7 +236,7 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   recovery2Box: asOptional(asEdgeBox),
   recovery2KeyBox: asOptional(asEdgeBox),
 
-  // Keys and assorted goodies:
+  // Resources:
   children: asOptional(asArray(raw => asLoginPayload(raw))),
   keyBoxes: asOptional(asArray(asEdgeBox)),
   mnemonicBox: asOptional(asEdgeBox),
@@ -214,44 +244,21 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   syncKeyBox: asOptional(asEdgeBox)
 })
 
-/**
- * Account status information sent back by the login server.
- */
-export const asMessagesPayload: Cleaner<EdgeLoginMessage[]> = asArray(
-  asObject({
-    loginId: asString,
-    otpResetPending: asOptional(asBoolean, false),
-    pendingVouchers: asOptional(asArray(asPendingVoucher), []),
-    recovery2Corrupt: asOptional(asBoolean, false)
-  })
+export const asMessagesPayload: Cleaner<MessagesPayload> = asArray(
+  asEdgeLoginMessage
 )
 
 export const asOtpResetPayload: Cleaner<OtpResetPayload> = asObject({
   otpResetDate: asDate
 })
 
+export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> = asArray(
+  asEdgeRecoveryQuestionChoice
+)
+
 export const asStartRecoveryPayload: Cleaner<StartRecoveryPayload> = asObject({
   question2Box: asEdgeBox
 })
-
-export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> = asArray(
-  asObject({
-    min_length: asNumber,
-    category: raw => {
-      const clean = asString(raw)
-      switch (clean) {
-        case 'address':
-        case 'must':
-        case 'numeric':
-        case 'recovery2':
-        case 'string':
-          return clean
-      }
-      throw new TypeError('Invalid question category')
-    },
-    question: asString
-  })
-)
 
 // ---------------------------------------------------------------------
 // lobby subsystem

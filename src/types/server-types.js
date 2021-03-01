@@ -1,9 +1,14 @@
 // @flow
 
 import {
+  type EdgeLoginMessage,
   type EdgePendingVoucher,
   type EdgeRecoveryQuestionChoice
 } from './types.js'
+
+// ---------------------------------------------------------------------
+// internal Edge types
+// ---------------------------------------------------------------------
 
 /**
  * Edge-format encrypted data.
@@ -71,6 +76,11 @@ export type LoginResponse = {
 // request payloads
 // ---------------------------------------------------------------------
 
+export type KeysCreatePayload = {
+  keyBoxes: EdgeBox[],
+  newSyncKeys: string[]
+}
+
 export type LoginCreatePayload = {
   appId: string,
   loginId: string, // base64
@@ -86,11 +96,6 @@ export type LoginCreatePayload = {
   // ...Pin2DisablePayload
   // ...Recovery2Payload
   // ...SecretPayload
-}
-
-export type KeysCreatePayload = {
-  keyBoxes: EdgeBox[],
-  newSyncKeys: string[]
 }
 
 export type OtpPayload = {
@@ -150,7 +155,7 @@ export type LoginRequestPayload =
 // ---------------------------------------------------------------------
 
 /**
- * Data sent back by the auth server.
+ * Data sent back upon successful login.
  */
 export type LoginPayload = {
   // Identity:
@@ -192,15 +197,29 @@ export type LoginPayload = {
   syncKeyBox?: EdgeBox
 }
 
+/**
+ * Account status information sent back by the login server.
+ */
+export type MessagesPayload = EdgeLoginMessage[]
+
+/**
+ * Returned when requesting a 2fa reset.
+ */
 export type OtpResetPayload = {
   otpResetDate: Date
 }
 
+/**
+ * A list of recovery questions the user can pick from.
+ */
+export type QuestionChoicesPayload = EdgeRecoveryQuestionChoice[]
+
+/**
+ * Returned when fetching the recovery questions for an account.
+ */
 export type StartRecoveryPayload = {
   question2Box: EdgeBox
 }
-
-export type QuestionChoicesPayload = EdgeRecoveryQuestionChoice[]
 
 // ---------------------------------------------------------------------
 // lobby subsystem

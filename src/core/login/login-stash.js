@@ -14,8 +14,8 @@ import { base64 } from 'rfc4648'
 
 import {
   asEdgeBox,
-  asEdgeSnrp,
-  asPendingVoucher
+  asEdgePendingVoucher,
+  asEdgeSnrp
 } from '../../types/server-cleaners.js'
 import { type EdgeBox, type EdgeSnrp } from '../../types/server-types.js'
 import { type EdgeLog, type EdgePendingVoucher } from '../../types/types.js'
@@ -153,7 +153,7 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   otpKey: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
-  pendingVouchers: asOptional(asArray(asPendingVoucher), []),
+  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
   voucherId: asOptional(asString),
   voucherAuth: asOptional(asString),
 
