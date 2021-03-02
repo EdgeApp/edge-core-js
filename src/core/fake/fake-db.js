@@ -9,7 +9,13 @@ import {
   asString
 } from 'cleaners'
 
-import { asEdgeBox, asEdgeSnrp } from '../../types/server-cleaners.js'
+import {
+  asBase64,
+  asEdgeBox,
+  asEdgeSnrp,
+  asRecovery2Auth,
+  makeLoginJson
+} from '../../types/server-cleaners.js'
 import {
   type EdgeBox,
   type EdgeLobbyReply,
@@ -33,7 +39,7 @@ export type DbLogin = {
   parentBox?: EdgeBox,
 
   // Key login:
-  loginAuth?: string, // base64
+  loginAuth?: Uint8Array,
   loginAuthBox?: EdgeBox,
 
   // Password login:
@@ -45,14 +51,14 @@ export type DbLogin = {
 
   // PIN v2:
   pin2Id?: string, // base64
-  pin2Auth?: string, // base64
+  pin2Auth?: Uint8Array,
   pin2Box?: EdgeBox,
   pin2KeyBox?: EdgeBox,
   pin2TextBox?: EdgeBox,
 
   // Login Recovery v2:
   recovery2Id?: string, // base64
-  recovery2Auth?: string[],
+  recovery2Auth?: Uint8Array[],
   recovery2Box?: EdgeBox,
   recovery2KeyBox?: EdgeBox,
   question2Box?: EdgeBox,
@@ -87,7 +93,7 @@ export const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   // pendingVouchers: asOptional(asArray(asPendingVoucher), []),
 
   // Return logins:
-  loginAuth: asOptional(asString),
+  loginAuth: asOptional(asBase64),
   loginAuthBox: asOptional(asEdgeBox),
   parentBox: asOptional(asEdgeBox),
 
@@ -100,14 +106,14 @@ export const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
 
   // PIN v2 login:
   pin2Id: asOptional(asString),
-  pin2Auth: asOptional(asString),
+  pin2Auth: asOptional(asBase64),
   pin2Box: asOptional(asEdgeBox),
   pin2KeyBox: asOptional(asEdgeBox),
   pin2TextBox: asOptional(asEdgeBox),
 
   // Recovery v2 login:
   recovery2Id: asOptional(asString),
-  recovery2Auth: asOptional(asArray(asString)),
+  recovery2Auth: asOptional(asRecovery2Auth),
   question2Box: asOptional(asEdgeBox),
   recovery2Box: asOptional(asEdgeBox),
   recovery2KeyBox: asOptional(asEdgeBox),
@@ -186,8 +192,7 @@ export class FakeDb {
 
   dumpLogin(login: DbLogin): DbLoginDump {
     const { parent, ...rest } = login
-    // Delete `undefined` entries:
-    const out = JSON.parse(JSON.stringify(rest))
+    const out = JSON.parse(makeLoginJson(rest))
     out.children = this.getLoginsByParent(login).map(child =>
       this.dumpLogin(child)
     )

@@ -26,10 +26,13 @@ function recovery2Id(recovery2Key: Uint8Array, username: string): Uint8Array {
   return hmacSha256(data, recovery2Key)
 }
 
-function recovery2Auth(recovery2Key: Uint8Array, answers: string[]): string[] {
+function recovery2Auth(
+  recovery2Key: Uint8Array,
+  answers: string[]
+): Uint8Array[] {
   return answers.map(answer => {
     const data = utf8.parse(answer)
-    return base64.stringify(hmacSha256(data, recovery2Key))
+    return hmacSha256(data, recovery2Key)
   })
 }
 

@@ -61,11 +61,11 @@ export type LoginRequestBody = {
   deviceDescription?: string,
   otp?: string,
   voucherId?: string,
-  voucherAuth?: string,
+  voucherAuth?: Uint8Array,
 
   // Secret-key login:
   loginId?: string,
-  loginAuth?: string,
+  loginAuth?: Uint8Array,
 
   // Password login:
   userId?: string,
@@ -73,11 +73,11 @@ export type LoginRequestBody = {
 
   // PIN login:
   pin2Id?: string,
-  pin2Auth?: string,
+  pin2Auth?: Uint8Array,
 
   // Recovery login:
   recovery2Id?: string,
-  recovery2Auth?: string[],
+  recovery2Auth?: Uint8Array[],
 
   // Messages:
   loginIds?: string[],
@@ -120,7 +120,7 @@ export type ChangePasswordPayload = {
 
 export type ChangePin2Payload = {
   pin2Id?: string,
-  pin2Auth?: string,
+  pin2Auth?: Uint8Array,
   pin2Box?: EdgeBox,
   pin2KeyBox?: EdgeBox,
   pin2TextBox: EdgeBox
@@ -128,7 +128,7 @@ export type ChangePin2Payload = {
 
 export type ChangeRecovery2Payload = {
   recovery2Id: string,
-  recovery2Auth: string[],
+  recovery2Auth: Uint8Array[],
   recovery2Box: EdgeBox,
   recovery2KeyBox: EdgeBox,
   question2Box: EdgeBox
@@ -136,7 +136,7 @@ export type ChangeRecovery2Payload = {
 
 export type ChangeSecretPayload = {
   loginAuthBox: EdgeBox,
-  loginAuth: string
+  loginAuth: Uint8Array
 }
 
 export type ChangeVouchersPayload = {

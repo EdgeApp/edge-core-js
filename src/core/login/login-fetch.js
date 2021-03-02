@@ -1,6 +1,9 @@
 // @flow
 
-import { asLoginResponseBody } from '../../types/server-cleaners.js'
+import {
+  asLoginResponseBody,
+  makeLoginJson
+} from '../../types/server-cleaners.js'
 import { type LoginRequestBody } from '../../types/server-types.js'
 import {
   type EdgeFetchOptions,
@@ -66,7 +69,7 @@ export function loginFetch(
     }
   }
   if (method !== 'GET') {
-    opts.body = JSON.stringify(body)
+    opts.body = makeLoginJson(body)
   }
 
   const start = Date.now()

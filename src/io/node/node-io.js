@@ -16,7 +16,7 @@ export function makeNodeIo(path: string): EdgeIo {
   return {
     // Crypto:
     random(bytes: number) {
-      return crypto.randomBytes(bytes)
+      return Uint8Array.from(crypto.randomBytes(bytes))
     },
     scrypt,
 

@@ -102,7 +102,7 @@ export function makeCreateKit(
 
     const server: CreateLoginPayload = {
       appId,
-      loginAuth: base64.stringify(loginAuth),
+      loginAuth,
       loginAuthBox,
       loginId,
       parentBox,

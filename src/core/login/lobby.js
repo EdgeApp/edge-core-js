@@ -3,7 +3,7 @@
 import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
 
-import { asLobbyPayload } from '../../types/server-cleaners.js'
+import { asLobbyPayload, makeLoginJson } from '../../types/server-cleaners.js'
 import {
   type EdgeLobbyReply,
   type EdgeLobbyRequest
@@ -81,7 +81,7 @@ export function encryptLobbyReply(
   const sharedKey = deriveSharedKey(keypair, pubkey)
   return {
     publicKey: base64.stringify(keypair.getPublic().encodeCompressed()),
-    box: encrypt(io, utf8.parse(JSON.stringify(replyData)), sharedKey)
+    box: encrypt(io, utf8.parse(makeLoginJson(replyData)), sharedKey)
   }
 }
 

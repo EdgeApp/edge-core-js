@@ -5,7 +5,7 @@ import { base16, base64 } from 'rfc4648'
 import { bridgifyObject, close } from 'yaob'
 
 import { fixUsername } from '../../client-side.js'
-import { asLoginPayload } from '../../types/server-cleaners.js'
+import { asLoginPayload, makeLoginJson } from '../../types/server-cleaners.js'
 import {
   type EdgeAccount,
   type EdgeContext,
@@ -39,7 +39,7 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
     asLoginPayload(user.server)
   )
   const path = `logins/${base58.stringify(base64.parse(loginId))}.json`
-  await io.disklet.setText(path, JSON.stringify(stash))
+  await io.disklet.setText(path, makeLoginJson(stash))
 
   // Save the repos:
   await Promise.all(

@@ -41,6 +41,19 @@ import {
   type EdgeRecoveryQuestionChoice
 } from './types.js'
 
+export function makeLoginJson(value: mixed, spaces: number = 0): string {
+  return JSON.stringify(
+    value,
+    (key, value) => {
+      if (value instanceof Uint8Array) {
+        return base64.stringify(value)
+      }
+      return value
+    },
+    spaces
+  )
+}
+
 /**
  * A string of base64-encoded binary data.
  */
@@ -113,6 +126,11 @@ export const asEdgeLobbyReply: Cleaner<EdgeLobbyReply> = asObject({
   box: asEdgeBox
 })
 
+/**
+ * An array of base64-encoded hashed recovery answers.
+ */
+export const asRecovery2Auth: Cleaner<Uint8Array[]> = asArray(asBase64)
+
 // ---------------------------------------------------------------------
 // top-level request & response bodies
 // ---------------------------------------------------------------------
@@ -125,11 +143,11 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
   deviceDescription: asOptional(asString),
   otp: asOptional(asString),
   voucherId: asOptional(asString),
-  voucherAuth: asOptional(asString),
+  voucherAuth: asOptional(asBase64),
 
   // Secret-key login:
   loginId: asOptional(asString),
-  loginAuth: asOptional(asString),
+  loginAuth: asOptional(asBase64),
 
   // Password login:
   userId: asOptional(asString),
@@ -137,11 +155,11 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
 
   // PIN login:
   pin2Id: asOptional(asString),
-  pin2Auth: asOptional(asString),
+  pin2Auth: asOptional(asBase64),
 
   // Recovery login:
   recovery2Id: asOptional(asString),
-  recovery2Auth: asOptional(asArray(asString)),
+  recovery2Auth: asOptional(asRecovery2Auth),
 
   // Messages:
   loginIds: asOptional(asArray(asString)),
@@ -186,7 +204,7 @@ export const asChangePasswordPayload: Cleaner<ChangePasswordPayload> = asObject(
 
 export const asChangePin2Payload: Cleaner<ChangePin2Payload> = asObject({
   pin2Id: asOptional(asString),
-  pin2Auth: asOptional(asString), // asBase64
+  pin2Auth: asOptional(asBase64),
   pin2Box: asOptional(asEdgeBox),
   pin2KeyBox: asOptional(asEdgeBox),
   pin2TextBox: asEdgeBox
@@ -195,7 +213,7 @@ export const asChangePin2Payload: Cleaner<ChangePin2Payload> = asObject({
 export const asChangeRecovery2Payload: Cleaner<ChangeRecovery2Payload> = asObject(
   {
     recovery2Id: asString,
-    recovery2Auth: asArray(asString), // asBase64
+    recovery2Auth: asRecovery2Auth,
     recovery2Box: asEdgeBox,
     recovery2KeyBox: asEdgeBox,
     question2Box: asEdgeBox
@@ -204,7 +222,7 @@ export const asChangeRecovery2Payload: Cleaner<ChangeRecovery2Payload> = asObjec
 
 export const asChangeSecretPayload: Cleaner<ChangeSecretPayload> = asObject({
   loginAuthBox: asEdgeBox,
-  loginAuth: asString // asBase64
+  loginAuth: asBase64
 })
 
 export const asChangeVouchersPayload: Cleaner<ChangeVouchersPayload> = asObject(

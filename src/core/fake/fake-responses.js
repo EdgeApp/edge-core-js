@@ -1,5 +1,6 @@
 // @flow
 
+import { makeLoginJson } from '../../types/server-cleaners.js'
 import {
   type HttpHeaders,
   type HttpResponse
@@ -105,7 +106,7 @@ export function jsonResponse(
   return Promise.resolve({
     status,
     headers: { 'content-type': 'application/json', ...headers },
-    body: JSON.stringify(body)
+    body: makeLoginJson(body)
   })
 }
 
@@ -152,7 +153,7 @@ export function otpErrorResponse(
       otp_timeout_date:
         otpResetDate != null ? otpResetDate.toISOString() : undefined,
       voucher_id: 'test-voucher-id',
-      voucher_auth: 'FJ42A===',
+      voucher_auth: 'AAAAAA==',
       voucher_activates: new Date('2100-01-01')
     }
   }

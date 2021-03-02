@@ -376,10 +376,7 @@ export async function serverLogin(
     const { io } = ai.props
     const loginAuth = io.random(32)
     const loginAuthBox = encrypt(io, loginAuth, loginKey)
-    const data: ChangeSecretPayload = {
-      loginAuth: base64.stringify(loginAuth),
-      loginAuthBox
-    }
+    const data: ChangeSecretPayload = { loginAuth, loginAuthBox }
     const request: LoginRequestBody = {
       ...serverAuth,
       otp: getStashOtp(stash, opts),
@@ -497,7 +494,7 @@ export function makeAuthJson(
   if (login.loginAuth != null) {
     return {
       loginId: login.loginId,
-      loginAuth: base64.stringify(login.loginAuth),
+      loginAuth: login.loginAuth,
       otp: getLoginOtp(login),
       voucherAuth,
       voucherId

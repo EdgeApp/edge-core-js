@@ -17,6 +17,7 @@ import {
 } from '../../types/server-cleaners.js'
 import { type EdgeLoginMessage } from '../../types/types.js'
 import { checkTotp } from '../../util/crypto/hotp.js'
+import { verifyData } from '../../util/crypto/verify.js'
 import { utf8 } from '../../util/encoding.js'
 import {
   pickMethod,
@@ -93,7 +94,7 @@ const withLogin2 = (
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (loginAuth !== login.loginAuth) {
+    if (login.loginAuth == null || !verifyData(loginAuth, login.loginAuth)) {
       return passwordErrorResponse(0)
     }
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
@@ -123,7 +124,7 @@ const withLogin2 = (
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (pin2Auth !== login.pin2Auth) {
+    if (login.pin2Auth == null || !verifyData(pin2Auth, login.pin2Auth)) {
       return passwordErrorResponse(0)
     }
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
@@ -144,7 +145,7 @@ const withLogin2 = (
       return passwordErrorResponse(0)
     }
     for (let i = 0; i < clientAuth.length; ++i) {
-      if (clientAuth[i] !== serverAuth[i]) {
+      if (!verifyData(clientAuth[i], serverAuth[i])) {
         return passwordErrorResponse(0)
       }
     }
