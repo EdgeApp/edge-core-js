@@ -1,7 +1,7 @@
 // @flow
 
-import { asLoginResponse } from '../../types/server-cleaners.js'
-import { type LoginRequest } from '../../types/server-types.js'
+import { asLoginResponseBody } from '../../types/server-cleaners.js'
+import { type LoginRequestBody } from '../../types/server-types.js'
 import {
   type EdgeFetchOptions,
   NetworkError,
@@ -14,7 +14,7 @@ import { timeout } from '../../util/promise.js'
 import { type ApiInput } from '../root-pixie.js'
 
 export function parseReply(json: mixed): mixed {
-  const clean = asLoginResponse(json)
+  const clean = asLoginResponseBody(json)
 
   switch (clean.status_code) {
     case 0: // Success
@@ -50,7 +50,7 @@ export function loginFetch(
   ai: ApiInput,
   method: string,
   path: string,
-  body?: LoginRequest
+  body?: LoginRequestBody
 ): Promise<mixed> {
   const { state, io, log } = ai.props
   const { apiKey, serverUri } = state.login

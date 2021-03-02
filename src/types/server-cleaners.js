@@ -23,8 +23,8 @@ import {
   type LobbyPayload,
   type LoginCreatePayload,
   type LoginPayload,
-  type LoginRequest,
-  type LoginResponse,
+  type LoginRequestBody,
+  type LoginResponseBody,
   type MessagesPayload,
   type OtpPayload,
   type OtpResetPayload,
@@ -118,7 +118,7 @@ export const asEdgeLobbyReply: Cleaner<EdgeLobbyReply> = asObject({
 // top-level request & response bodies
 // ---------------------------------------------------------------------
 
-export const asLoginRequest: Cleaner<LoginRequest> = asObject({
+export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
   // The request payload:
   data: asUnknown,
 
@@ -145,7 +145,7 @@ export const asLoginRequest: Cleaner<LoginRequest> = asObject({
   recovery2Auth: asOptional(asArray(asString))
 })
 
-export const asLoginResponse: Cleaner<LoginResponse> = asObject({
+export const asLoginResponseBody: Cleaner<LoginResponseBody> = asObject({
   // The response payload:
   results: asOptional(asUnknown),
 

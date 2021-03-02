@@ -5,7 +5,7 @@ import { Bridgeable, bridgifyObject, close, emit, update } from 'yaob'
 
 import {
   type EdgeLobbyRequest,
-  type LoginRequest
+  type LoginRequestBody
 } from '../../types/server-types.js'
 import { type EdgeContext } from '../../types/types.js'
 import {
@@ -82,7 +82,11 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
     this._ai = ai
   }
 
-  authRequest(method: string, path: string, body?: LoginRequest): Promise<any> {
+  authRequest(
+    method: string,
+    path: string,
+    body?: LoginRequestBody
+  ): Promise<any> {
     return loginFetch(this._ai, method, path, body)
   }
 

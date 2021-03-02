@@ -53,7 +53,7 @@ export type EdgeLobbyReply = {
 /**
  * Data sent to authenticate with the login server.
  */
-export type LoginRequest = {
+export type LoginRequestBody = {
   // The request payload:
   data?: mixed,
 
@@ -80,7 +80,7 @@ export type LoginRequest = {
   recovery2Auth?: string[]
 }
 
-export type LoginResponse = {
+export type LoginResponseBody = {
   // The response payload:
   results?: mixed,
 

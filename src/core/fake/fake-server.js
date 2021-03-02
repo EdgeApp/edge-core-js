@@ -5,7 +5,7 @@ import { asEither, asMaybe } from 'cleaners'
 import {
   asKeysCreatePayload,
   asLoginCreatePayload,
-  asLoginRequest,
+  asLoginRequestBody,
   asOtpPayload,
   asPasswordPayload,
   asPin2DisablePayload,
@@ -70,7 +70,7 @@ const withLogin2 = (
   fallback: ApiServer = handleMissingCredentials
 ): ApiServer => request => {
   const { db, json } = request
-  const clean = asLoginRequest(json)
+  const clean = asLoginRequestBody(json)
   const {
     loginAuth,
     loginId,
@@ -165,7 +165,7 @@ const loginRoute: ApiServer = pickMethod({
     // Fallback version:
     request => {
       const { db, json } = request
-      const clean = asLoginRequest(json)
+      const clean = asLoginRequestBody(json)
       const { userId, passwordAuth, recovery2Id, recovery2Auth } = clean
 
       if (userId != null && passwordAuth == null) {

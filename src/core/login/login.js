@@ -8,7 +8,7 @@ import { base64 } from 'rfc4648'
 import { asLoginPayload } from '../../types/server-cleaners.js'
 import {
   type LoginPayload,
-  type LoginRequest,
+  type LoginRequestBody,
   type SecretPayload
 } from '../../types/server-types.js'
 import {
@@ -327,13 +327,13 @@ export async function serverLogin(
   stashTree: LoginStash,
   stash: LoginStash,
   opts: EdgeAccountOptions,
-  serverAuth: LoginRequest,
+  serverAuth: LoginRequestBody,
   decrypt: (reply: LoginPayload) => Promise<Uint8Array>
 ): Promise<LoginTree> {
   const { now = new Date() } = opts
   const { deviceDescription } = ai.props.state.login
 
-  const request: LoginRequest = {
+  const request: LoginRequestBody = {
     otp: getStashOtp(stash, opts),
     voucherId: stash.voucherId,
     voucherAuth: stash.voucherAuth,
@@ -380,7 +380,7 @@ export async function serverLogin(
       loginAuth: base64.stringify(loginAuth),
       loginAuthBox
     }
-    const request: LoginRequest = {
+    const request: LoginRequestBody = {
       ...serverAuth,
       otp: getStashOtp(stash, opts),
       data
@@ -489,7 +489,7 @@ export async function syncLogin(
 export function makeAuthJson(
   stashTree: LoginStash,
   login: LoginTree
-): LoginRequest {
+): LoginRequestBody {
   const stash = searchTree(stashTree, stash => stash.appId === login.appId)
   const { voucherAuth, voucherId } =
     stash != null ? stash : { voucherAuth: undefined, voucherId: undefined }

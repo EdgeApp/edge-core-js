@@ -3,7 +3,7 @@
 import { base64 } from 'rfc4648'
 
 import {
-  type LoginRequest,
+  type LoginRequestBody,
   type Pin2DisablePayload,
   type Pin2EnablePayload
 } from '../../types/server-types.js'
@@ -123,7 +123,7 @@ export async function checkPin2(
 
   // Try a login:
   const pin2Key = base64.parse(stash.pin2Key)
-  const request: LoginRequest = {
+  const request: LoginRequestBody = {
     pin2Id: base64.stringify(pin2Id(pin2Key, username)),
     pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
     otp: getLoginOtp(login)
