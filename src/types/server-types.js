@@ -93,34 +93,12 @@ export type LoginResponseBody = {
 // request payloads
 // ---------------------------------------------------------------------
 
-export type KeysCreatePayload = {
-  keyBoxes: EdgeBox[],
-  newSyncKeys: string[]
-}
-
-export type LoginCreatePayload = {
-  appId: string,
-  loginId: string, // base64
-  parentBox?: EdgeBox
-
-  // The creation payload can also include fields
-  // from any of these other types, so the server should try
-  // those cleaners one-by-one and incorporate the ones that work:
-  // ...KeyCreatePayload
-  // ...OtpPayload
-  // ...PasswordPayload
-  // ...Pin2EnablePayload
-  // ...Pin2DisablePayload
-  // ...Recovery2Payload
-  // ...SecretPayload
-}
-
-export type OtpPayload = {
+export type ChangeOtpPayload = {
   otpTimeout: number, // seconds
   otpKey: string
 }
 
-export type PasswordPayload = {
+export type ChangePasswordPayload = {
   passwordAuth: string,
   passwordAuthBox: EdgeBox,
   passwordAuthSnrp: EdgeSnrp,
@@ -128,23 +106,15 @@ export type PasswordPayload = {
   passwordKeySnrp: EdgeSnrp
 }
 
-export type Pin2DisablePayload = {
-  pin2Id: void,
-  pin2Auth: void,
-  pin2Box: void,
-  pin2KeyBox: void,
+export type ChangePin2Payload = {
+  pin2Id?: string,
+  pin2Auth?: string,
+  pin2Box?: EdgeBox,
+  pin2KeyBox?: EdgeBox,
   pin2TextBox: EdgeBox
 }
 
-export type Pin2EnablePayload = {
-  pin2Id: string,
-  pin2Auth: string,
-  pin2Box: EdgeBox,
-  pin2KeyBox: EdgeBox,
-  pin2TextBox: EdgeBox
-}
-
-export type Recovery2Payload = {
+export type ChangeRecovery2Payload = {
   recovery2Id: string,
   recovery2Auth: string[],
   recovery2Box: EdgeBox,
@@ -152,20 +122,40 @@ export type Recovery2Payload = {
   question2Box: EdgeBox
 }
 
-export type SecretPayload = {
+export type ChangeSecretPayload = {
   loginAuthBox: EdgeBox,
   loginAuth: string
 }
 
+export type CreateKeysPayload = {
+  keyBoxes: EdgeBox[],
+  newSyncKeys: string[]
+}
+
+export type CreateLoginPayload = {
+  appId: string,
+  loginId: string, // base64
+  parentBox?: EdgeBox
+
+  // The creation payload can also include fields
+  // from any of these other types, so the server should try
+  // those cleaners one-by-one and incorporate the ones that work:
+  // ...ChangeOtpPayload
+  // ...ChangePasswordPayload
+  // ...ChangePin2Payload
+  // ...ChangeRecovery2Payload
+  // ...ChangeSecretPayload
+  // ...CreateKeysPayload
+}
+
 export type LoginRequestPayload =
-  | KeysCreatePayload
-  | LoginCreatePayload
-  | OtpPayload
-  | PasswordPayload
-  | Pin2DisablePayload
-  | Pin2EnablePayload
-  | Recovery2Payload
-  | SecretPayload
+  | ChangeOtpPayload
+  | ChangePasswordPayload
+  | ChangePin2Payload
+  | ChangeRecovery2Payload
+  | ChangeSecretPayload
+  | CreateKeysPayload
+  | CreateLoginPayload
 
 // ---------------------------------------------------------------------
 // response payloads

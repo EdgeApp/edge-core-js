@@ -3,7 +3,7 @@
 import { base32, base64 } from 'rfc4648'
 
 import { asOtpResetPayload } from '../../types/server-cleaners.js'
-import { type OtpPayload } from '../../types/server-types.js'
+import { type ChangeOtpPayload } from '../../types/server-types.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { applyKit, searchTree, serverLogin } from '../login/login.js'
@@ -47,7 +47,7 @@ export async function enableOtp(
       ? fixOtpKey(loginTree.otpKey)
       : base32.stringify(ai.props.io.random(10))
 
-  const server: OtpPayload = {
+  const server: ChangeOtpPayload = {
     otpKey,
     otpTimeout
   }
@@ -103,7 +103,7 @@ export async function cancelOtpReset(
     throw new Error('Cannot cancel 2FA reset: 2FA is not enabled.')
   }
 
-  const server: OtpPayload = {
+  const server: ChangeOtpPayload = {
     otpTimeout,
     otpKey
   }

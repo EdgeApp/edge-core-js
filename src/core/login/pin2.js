@@ -3,9 +3,8 @@
 import { base64 } from 'rfc4648'
 
 import {
-  type LoginRequestBody,
-  type Pin2DisablePayload,
-  type Pin2EnablePayload
+  type ChangePin2Payload,
+  type LoginRequestBody
 } from '../../types/server-types.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
@@ -185,7 +184,7 @@ export function makeChangePin2Kit(
     const pin2Box = encrypt(io, login.loginKey, pin2Key)
     const pin2KeyBox = encrypt(io, pin2Key, login.loginKey)
 
-    const server: Pin2EnablePayload = {
+    const server: ChangePin2Payload = {
       pin2Id: base64.stringify(pin2Id(pin2Key, username)),
       pin2Auth: base64.stringify(pin2Auth(pin2Key, pin)),
       pin2Box,
@@ -206,7 +205,7 @@ export function makeChangePin2Kit(
       loginId: login.loginId
     }
   } else {
-    const server: Pin2DisablePayload = {
+    const server: ChangePin2Payload = {
       pin2Id: undefined,
       pin2Auth: undefined,
       pin2Box: undefined,

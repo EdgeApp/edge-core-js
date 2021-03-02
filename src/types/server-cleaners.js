@@ -5,7 +5,6 @@ import {
   asArray,
   asBoolean,
   asDate,
-  asNone,
   asNumber,
   asObject,
   asOptional,
@@ -15,25 +14,24 @@ import {
 import { base64 } from 'rfc4648'
 
 import {
+  type ChangeOtpPayload,
+  type ChangePasswordPayload,
+  type ChangePin2Payload,
+  type ChangeRecovery2Payload,
+  type ChangeSecretPayload,
+  type CreateKeysPayload,
+  type CreateLoginPayload,
   type EdgeBox,
   type EdgeLobbyReply,
   type EdgeLobbyRequest,
   type EdgeSnrp,
-  type KeysCreatePayload,
   type LobbyPayload,
-  type LoginCreatePayload,
   type LoginPayload,
   type LoginRequestBody,
   type LoginResponseBody,
   type MessagesPayload,
-  type OtpPayload,
   type OtpResetPayload,
-  type PasswordPayload,
-  type Pin2DisablePayload,
-  type Pin2EnablePayload,
   type QuestionChoicesPayload,
-  type Recovery2Payload,
-  type SecretPayload,
   type StartRecoveryPayload
 } from './server-types.js'
 import {
@@ -158,58 +156,54 @@ export const asLoginResponseBody: Cleaner<LoginResponseBody> = asObject({
 // request payloads
 // ---------------------------------------------------------------------
 
-export const asKeysCreatePayload: Cleaner<KeysCreatePayload> = asObject({
-  keyBoxes: asArray(asEdgeBox),
-  newSyncKeys: asOptional(asArray(asString), [])
-})
-
-export const asLoginCreatePayload: Cleaner<LoginCreatePayload> = asObject({
-  appId: asString,
-  loginId: asString, // base64
-  parentBox: asOptional(asEdgeBox)
-}).withRest
-
-export const asOtpPayload: Cleaner<OtpPayload> = asObject({
+export const asChangeOtpPayload: Cleaner<ChangeOtpPayload> = asObject({
   otpTimeout: asOptional(asNumber, 7 * 24 * 60 * 60), // seconds
   otpKey: asString
 })
 
-export const asPasswordPayload: Cleaner<PasswordPayload> = asObject({
-  passwordAuth: asString,
-  passwordAuthBox: asEdgeBox,
-  passwordAuthSnrp: asEdgeSnrp,
-  passwordBox: asEdgeBox,
-  passwordKeySnrp: asEdgeSnrp
-})
+export const asChangePasswordPayload: Cleaner<ChangePasswordPayload> = asObject(
+  {
+    passwordAuth: asString,
+    passwordAuthBox: asEdgeBox,
+    passwordAuthSnrp: asEdgeSnrp,
+    passwordBox: asEdgeBox,
+    passwordKeySnrp: asEdgeSnrp
+  }
+)
 
-export const asPin2DisablePayload: Cleaner<Pin2DisablePayload> = asObject({
-  pin2Id: asNone,
-  pin2Auth: asNone,
-  pin2Box: asNone,
-  pin2KeyBox: asNone,
+export const asChangePin2Payload: Cleaner<ChangePin2Payload> = asObject({
+  pin2Id: asOptional(asString),
+  pin2Auth: asOptional(asString), // asBase64
+  pin2Box: asOptional(asEdgeBox),
+  pin2KeyBox: asOptional(asEdgeBox),
   pin2TextBox: asEdgeBox
 })
 
-export const asPin2EnablePayload: Cleaner<Pin2EnablePayload> = asObject({
-  pin2Id: asString,
-  pin2Auth: asString, // asBase64
-  pin2Box: asEdgeBox,
-  pin2KeyBox: asEdgeBox,
-  pin2TextBox: asEdgeBox
-})
+export const asChangeRecovery2Payload: Cleaner<ChangeRecovery2Payload> = asObject(
+  {
+    recovery2Id: asString,
+    recovery2Auth: asArray(asString), // asBase64
+    recovery2Box: asEdgeBox,
+    recovery2KeyBox: asEdgeBox,
+    question2Box: asEdgeBox
+  }
+)
 
-export const asRecovery2Payload: Cleaner<Recovery2Payload> = asObject({
-  recovery2Id: asString,
-  recovery2Auth: asArray(asString), // asBase64
-  recovery2Box: asEdgeBox,
-  recovery2KeyBox: asEdgeBox,
-  question2Box: asEdgeBox
-})
-
-export const asSecretPayload: Cleaner<SecretPayload> = asObject({
+export const asChangeSecretPayload: Cleaner<ChangeSecretPayload> = asObject({
   loginAuthBox: asEdgeBox,
   loginAuth: asString // asBase64
 })
+
+export const asCreateKeysPayload: Cleaner<CreateKeysPayload> = asObject({
+  keyBoxes: asArray(asEdgeBox),
+  newSyncKeys: asOptional(asArray(asString), [])
+})
+
+export const asCreateLoginPayload: Cleaner<CreateLoginPayload> = asObject({
+  appId: asString,
+  loginId: asString, // base64
+  parentBox: asOptional(asEdgeBox)
+}).withRest
 
 // ---------------------------------------------------------------------
 // response payloads

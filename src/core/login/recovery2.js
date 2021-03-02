@@ -6,7 +6,7 @@ import {
   asQuestionChoicesPayload,
   asStartRecoveryPayload
 } from '../../types/server-cleaners.js'
-import { type Recovery2Payload } from '../../types/server-types.js'
+import { type ChangeRecovery2Payload } from '../../types/server-types.js'
 import {
   type EdgeAccountOptions,
   type EdgeRecoveryQuestionChoice
@@ -153,7 +153,7 @@ export function makeRecovery2Kit(
   const recovery2Box = encrypt(io, login.loginKey, recovery2Key)
   const recovery2KeyBox = encrypt(io, recovery2Key, login.loginKey)
 
-  const server: Recovery2Payload = {
+  const server: ChangeRecovery2Payload = {
     recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
     recovery2Auth: recovery2Auth(recovery2Key, answers),
     recovery2Box,

@@ -7,9 +7,9 @@ import { base64 } from 'rfc4648'
 
 import { asLoginPayload } from '../../types/server-cleaners.js'
 import {
+  type ChangeSecretPayload,
   type LoginPayload,
-  type LoginRequestBody,
-  type SecretPayload
+  type LoginRequestBody
 } from '../../types/server-types.js'
 import {
   type EdgeAccountOptions,
@@ -376,7 +376,7 @@ export async function serverLogin(
     const { io } = ai.props
     const loginAuth = io.random(32)
     const loginAuthBox = encrypt(io, loginAuth, loginKey)
-    const data: SecretPayload = {
+    const data: ChangeSecretPayload = {
       loginAuth: base64.stringify(loginAuth),
       loginAuthBox
     }
