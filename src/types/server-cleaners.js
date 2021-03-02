@@ -16,11 +16,11 @@ import { base64 } from 'rfc4648'
 
 import {
   type EdgeBox,
+  type EdgeLobbyReply,
+  type EdgeLobbyRequest,
   type EdgeSnrp,
   type KeysCreatePayload,
   type LobbyPayload,
-  type LobbyReply,
-  type LobbyRequest,
   type LoginCreatePayload,
   type LoginPayload,
   type LoginRequest,
@@ -101,6 +101,17 @@ export const asEdgeSnrp: Cleaner<EdgeSnrp> = asObject({
   n: asNumber,
   r: asNumber,
   p: asNumber
+})
+
+export const asEdgeLobbyRequest: Cleaner<EdgeLobbyRequest> = asObject({
+  publicKey: asString,
+  loginRequest: asOptional(asObject({ appId: asString }).withRest),
+  timeout: asOptional(asNumber)
+}).withRest
+
+export const asEdgeLobbyReply: Cleaner<EdgeLobbyReply> = asObject({
+  publicKey: asString,
+  box: asEdgeBox
 })
 
 // ---------------------------------------------------------------------
@@ -204,6 +215,11 @@ export const asSecretPayload: Cleaner<SecretPayload> = asObject({
 // response payloads
 // ---------------------------------------------------------------------
 
+export const asLobbyPayload: Cleaner<LobbyPayload> = asObject({
+  request: asEdgeLobbyRequest,
+  replies: asArray(asEdgeLobbyReply)
+})
+
 export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   // Identity:
   appId: asString,
@@ -258,24 +274,4 @@ export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> = asArray
 
 export const asStartRecoveryPayload: Cleaner<StartRecoveryPayload> = asObject({
   question2Box: asEdgeBox
-})
-
-// ---------------------------------------------------------------------
-// lobby subsystem
-// ---------------------------------------------------------------------
-
-export const asLobbyRequest: Cleaner<LobbyRequest> = asObject({
-  publicKey: asString,
-  loginRequest: asOptional(asObject({ appId: asString }).withRest),
-  timeout: asOptional(asNumber)
-}).withRest
-
-export const asLobbyReply: Cleaner<LobbyReply> = asObject({
-  publicKey: asString,
-  box: asEdgeBox
-})
-
-export const asLobbyPayload: Cleaner<LobbyPayload> = asObject({
-  request: asLobbyRequest,
-  replies: asArray(asLobbyReply)
 })

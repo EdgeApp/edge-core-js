@@ -2,9 +2,9 @@
 
 import {
   type EdgeBox,
+  type EdgeLobbyReply,
+  type EdgeLobbyRequest,
   type EdgeSnrp,
-  type LobbyReply,
-  type LobbyRequest,
   type LoginPayload
 } from '../../types/server-types.js'
 import { type EdgeFakeUser } from '../../types/types.js'
@@ -12,8 +12,8 @@ import { filterObject } from '../../util/util.js'
 
 export type DbLobby = {
   expires: string, // date
-  request: LobbyRequest,
-  replies: LobbyReply[]
+  request: EdgeLobbyRequest,
+  replies: EdgeLobbyReply[]
 }
 
 export type DbLogin = {

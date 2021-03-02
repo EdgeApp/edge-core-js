@@ -29,6 +29,23 @@ export type EdgeSnrp = {
   p: number
 }
 
+/**
+ * The barcode creator uploads this request.
+ */
+export type EdgeLobbyRequest = {
+  loginRequest?: { appId: string },
+  publicKey: string, // base64
+  timeout?: number
+}
+
+/**
+ * The barcode scanner sends this reply (if the user approves).
+ */
+export type EdgeLobbyReply = {
+  publicKey: string,
+  box: EdgeBox
+}
+
 // ---------------------------------------------------------------------
 // top-level request & response bodies
 // ---------------------------------------------------------------------
@@ -155,6 +172,14 @@ export type LoginRequestPayload =
 // ---------------------------------------------------------------------
 
 /**
+ * Data sent back when looking up a login barcode.
+ */
+export type LobbyPayload = {
+  request: EdgeLobbyRequest,
+  replies: EdgeLobbyReply[]
+}
+
+/**
  * Data sent back upon successful login.
  */
 export type LoginPayload = {
@@ -219,34 +244,4 @@ export type QuestionChoicesPayload = EdgeRecoveryQuestionChoice[]
  */
 export type StartRecoveryPayload = {
   question2Box: EdgeBox
-}
-
-// ---------------------------------------------------------------------
-// lobby subsystem
-// ---------------------------------------------------------------------
-
-/**
- * The barcode creator uploads this request.
- */
-export type LobbyRequest = {
-  loginRequest?: { appId: string },
-  publicKey: string, // base64
-  timeout?: number
-}
-
-/**
- * The barcode scanner sends this reply (if the user approves).
- */
-export type LobbyReply = {
-  publicKey: string,
-  box: EdgeBox
-}
-
-/**
- * The server holds the request & replies for each lobby ID,
- * and returns them in this format.
- */
-export type LobbyPayload = {
-  request: LobbyRequest,
-  replies: LobbyReply[]
 }
