@@ -77,7 +77,19 @@ export type LoginRequestBody = {
 
   // Recovery login:
   recovery2Id?: string,
-  recovery2Auth?: string[]
+  recovery2Auth?: string[],
+
+  // Messages:
+  loginIds?: string[],
+
+  // OTP reset:
+  otpResetAuth?: string,
+
+  // Legacy:
+  l1?: string,
+  lp1?: string,
+  lra1?: string,
+  recoveryAuth?: string // lra1
 }
 
 export type LoginResponseBody = {

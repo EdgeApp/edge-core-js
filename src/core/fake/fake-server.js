@@ -1,6 +1,6 @@
 // @flow
 
-import { asMaybe } from 'cleaners'
+import { asMap, asMaybe, asObject } from 'cleaners'
 
 import {
   asChangeOtpPayload,
@@ -10,6 +10,9 @@ import {
   asChangeSecretPayload,
   asCreateKeysPayload,
   asCreateLoginPayload,
+  asEdgeBox,
+  asEdgeLobbyReply,
+  asEdgeLobbyRequest,
   asLoginRequestBody
 } from '../../types/server-cleaners.js'
 import { type EdgeLoginMessage } from '../../types/types.js'
@@ -47,10 +50,11 @@ const OTP_RESET_TOKEN = 'Super secret reset token'
 
 type ApiRequest = HttpRequest & {
   +db: FakeDb,
-  +json: any
+  +json: mixed
 }
 type LoginRequest = ApiRequest & {
-  +login: DbLogin
+  +login: DbLogin,
+  +payload: mixed
 }
 
 type ApiServer = Server<ApiRequest>
@@ -71,6 +75,7 @@ const withLogin2 = (
   const { db, json } = request
   const clean = asLoginRequestBody(json)
   const {
+    data: payload,
     loginAuth,
     loginId,
     otp = '',
@@ -94,7 +99,7 @@ const withLogin2 = (
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
-    return server({ ...request, login })
+    return server({ ...request, login, payload })
   }
 
   // Password login:
@@ -109,7 +114,7 @@ const withLogin2 = (
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
-    return server({ ...request, login })
+    return server({ ...request, login, payload })
   }
 
   // PIN2 login:
@@ -124,7 +129,7 @@ const withLogin2 = (
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
-    return server({ ...request, login })
+    return server({ ...request, login, payload })
   }
 
   // Recovery2 login:
@@ -146,7 +151,7 @@ const withLogin2 = (
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
-    return server({ ...request, login })
+    return server({ ...request, login, payload })
   }
 
   return fallback(request)
@@ -195,18 +200,23 @@ function createLogin(
   login?: DbLogin
 ): Promise<HttpResponse> {
   const { db, json } = request
-  const clean = asMaybe(asCreateLoginPayload)(json.data)
-  const secret = asMaybe(asChangeSecretPayload)(json.data)
+
+  const body = asMaybe(asLoginRequestBody)(json)
+  if (body == null) return statusResponse(statusCodes.invalidRequest)
+  const clean = asMaybe(asCreateLoginPayload)(body.data)
+  const secret = asMaybe(asChangeSecretPayload)(clean)
   if (clean == null || secret == null) {
     return statusResponse(statusCodes.invalidRequest)
   }
+
+  // Do not re-create accounts:
   if (db.getLoginById(clean.loginId) != null) {
     return statusResponse(statusCodes.accountExists)
   }
 
   // Set up repos:
   const emptyKeys = { newSyncKeys: [], keyBoxes: [] }
-  const keys = asMaybe(asCreateKeysPayload, emptyKeys)(json.data)
+  const keys = asMaybe(asCreateKeysPayload, emptyKeys)(clean)
   for (const syncKey of keys.newSyncKeys) {
     db.repos[syncKey] = {}
   }
@@ -219,10 +229,10 @@ function createLogin(
     keyBoxes: keys.keyBoxes,
 
     // Optional fields:
-    ...asMaybe(asChangeOtpPayload)(json.data),
-    ...asMaybe(asChangePasswordPayload)(json.data),
-    ...asMaybe(asChangePin2Payload)(json.data),
-    ...asMaybe(asChangeRecovery2Payload)(json.data)
+    ...asMaybe(asChangeOtpPayload)(clean),
+    ...asMaybe(asChangePasswordPayload)(clean),
+    ...asMaybe(asChangePin2Payload)(clean),
+    ...asMaybe(asChangeRecovery2Payload)(clean)
   }
 
   // Set up the parent/child relationship:
@@ -250,8 +260,8 @@ const create2Route: ApiServer = pickMethod({
 const keysRoute: ApiServer = withLogin2(
   pickMethod({
     POST: request => {
-      const { db, json, login } = request
-      const clean = asMaybe(asCreateKeysPayload)(json.data)
+      const { db, login, payload } = request
+      const clean = asMaybe(asCreateKeysPayload)(payload)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       // Set up repos:
@@ -267,8 +277,8 @@ const keysRoute: ApiServer = withLogin2(
 
 const otp2Route: ApiServer = pickMethod({
   POST: withLogin2(request => {
-    const { json, login } = request
-    const clean = asMaybe(asChangeOtpPayload)(json.data)
+    const { login, payload } = request
+    const clean = asMaybe(asChangeOtpPayload)(payload)
     if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
     login.otpKey = clean.otpKey
@@ -291,14 +301,15 @@ const otp2Route: ApiServer = pickMethod({
     // Fallback version:
     request => {
       const { db, json } = request
-      if (json.userId == null || json.otpResetAuth == null) {
+      const clean = asLoginRequestBody(json)
+      if (clean.userId == null || clean.otpResetAuth == null) {
         return statusResponse(statusCodes.invalidRequest)
       }
-      const login = db.getLoginById(json.userId)
+      const login = db.getLoginById(clean.userId)
       if (login == null) {
         return statusResponse(statusCodes.noAccount)
       }
-      if (json.otpResetAuth !== OTP_RESET_TOKEN) {
+      if (clean.otpResetAuth !== OTP_RESET_TOKEN) {
         return passwordErrorResponse(0)
       }
       const { otpKey, otpTimeout } = login
@@ -333,8 +344,8 @@ const password2Route: ApiServer = withLogin2(
     },
 
     POST: request => {
-      const { json, login } = request
-      const clean = asMaybe(asChangePasswordPayload)(json.data)
+      const { login, payload } = request
+      const clean = asMaybe(asChangePasswordPayload)(payload)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       login.passwordAuth = clean.passwordAuth
@@ -362,8 +373,8 @@ const pin2Route: ApiServer = withLogin2(
     },
 
     POST: request => {
-      const { json, login } = request
-      const clean = asMaybe(asChangePin2Payload)(json.data)
+      const { login, payload } = request
+      const clean = asMaybe(asChangePin2Payload)(payload)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       login.pin2Auth = clean.pin2Auth
@@ -391,8 +402,8 @@ const recovery2Route: ApiServer = withLogin2(
     },
 
     POST: request => {
-      const { json, login } = request
-      const clean = asMaybe(asChangeRecovery2Payload)(json.data)
+      const { login, payload } = request
+      const clean = asMaybe(asChangeRecovery2Payload)(payload)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       login.question2Box = clean.question2Box
@@ -409,8 +420,8 @@ const recovery2Route: ApiServer = withLogin2(
 const secretRoute: ApiServer = withLogin2(
   pickMethod({
     POST: request => {
-      const { db, json, login } = request
-      const clean = asMaybe(asChangeSecretPayload)(json.data)
+      const { db, login, payload } = request
+      const clean = asMaybe(asChangeSecretPayload)(payload)
       if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
       // Do a quick sanity check:
@@ -457,18 +468,29 @@ const lobbyRoute: ApiServer = pickMethod({
       ),
     request => {
       const { db, json, lobbyId } = request
-      const { data } = json
-      const { timeout = 600 } = data
+
+      const body = asMaybe(asLoginRequestBody)(json)
+      if (body == null) return statusResponse(statusCodes.invalidRequest)
+      const clean = asMaybe(asEdgeLobbyRequest)(body.data)
+      if (clean == null) return statusResponse(statusCodes.invalidRequest)
+
+      const { timeout = 600 } = clean
       const expires = new Date(Date.now() + 1000 * timeout).toISOString()
 
-      db.lobbies[lobbyId] = { request: data, replies: [], expires }
+      db.lobbies[lobbyId] = { request: clean, replies: [], expires }
       return statusResponse()
     }
   ),
 
   POST: withLobby(request => {
     const { json, lobby } = request
-    lobby.replies.push(json.data)
+
+    const body = asMaybe(asLoginRequestBody)(json)
+    if (body == null) return statusResponse(statusCodes.invalidRequest)
+    const clean = asMaybe(asEdgeLobbyReply)(body.data)
+    if (clean == null) return statusResponse(statusCodes.invalidRequest)
+
+    lobby.replies.push(clean)
     return statusResponse()
   }),
 
@@ -489,7 +511,11 @@ const lobbyRoute: ApiServer = pickMethod({
 const messagesRoute: ApiServer = pickMethod({
   POST: request => {
     const { db, json } = request
-    const { loginIds } = json
+    const clean = asMaybe(asLoginRequestBody)(json)
+    if (clean == null || clean.loginIds == null) {
+      return statusResponse(statusCodes.invalidRequest)
+    }
+    const { loginIds } = clean
 
     const out: EdgeLoginMessage[] = []
     for (const loginId of loginIds) {
@@ -535,7 +561,7 @@ const storeRoute: ApiServer = withRepo(
 
     POST: request => {
       const { json, repo } = request
-      const { changes } = json
+      const { changes } = asStoreBody(json)
       for (const change of Object.keys(changes)) {
         repo[change] = changes[change]
       }
@@ -546,6 +572,10 @@ const storeRoute: ApiServer = withRepo(
     }
   })
 )
+
+const asStoreBody = asObject({
+  changes: asMap(asEdgeBox)
+})
 
 // router: -----------------------------------------------------------------
 

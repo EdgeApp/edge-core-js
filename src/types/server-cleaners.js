@@ -141,7 +141,19 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
 
   // Recovery login:
   recovery2Id: asOptional(asString),
-  recovery2Auth: asOptional(asArray(asString))
+  recovery2Auth: asOptional(asArray(asString)),
+
+  // Messages:
+  loginIds: asOptional(asArray(asString)),
+
+  // OTP reset:
+  otpResetAuth: asOptional(asString),
+
+  // Legacy:
+  l1: asOptional(asString),
+  lp1: asOptional(asString),
+  lra1: asOptional(asString),
+  recoveryAuth: asOptional(asString) // lra1
 })
 
 export const asLoginResponseBody: Cleaner<LoginResponseBody> = asObject({
