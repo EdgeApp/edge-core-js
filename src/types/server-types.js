@@ -127,6 +127,11 @@ export type ChangeSecretPayload = {
   loginAuth: string
 }
 
+export type ChangeVouchersPayload = {
+  approvedVouchers?: string[],
+  rejectedVouchers?: string[]
+}
+
 export type CreateKeysPayload = {
   keyBoxes: EdgeBox[],
   newSyncKeys: string[]
@@ -154,6 +159,7 @@ export type LoginRequestPayload =
   | ChangePin2Payload
   | ChangeRecovery2Payload
   | ChangeSecretPayload
+  | ChangeVouchersPayload
   | CreateKeysPayload
   | CreateLoginPayload
 

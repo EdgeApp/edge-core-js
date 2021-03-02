@@ -19,6 +19,7 @@ import {
   type ChangePin2Payload,
   type ChangeRecovery2Payload,
   type ChangeSecretPayload,
+  type ChangeVouchersPayload,
   type CreateKeysPayload,
   type CreateLoginPayload,
   type EdgeBox,
@@ -193,6 +194,13 @@ export const asChangeSecretPayload: Cleaner<ChangeSecretPayload> = asObject({
   loginAuthBox: asEdgeBox,
   loginAuth: asString // asBase64
 })
+
+export const asChangeVouchersPayload: Cleaner<ChangeVouchersPayload> = asObject(
+  {
+    approvedVouchers: asOptional(asArray(asString)),
+    rejectedVouchers: asOptional(asArray(asString))
+  }
+)
 
 export const asCreateKeysPayload: Cleaner<CreateKeysPayload> = asObject({
   keyBoxes: asArray(asEdgeBox),
