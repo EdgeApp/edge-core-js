@@ -40,30 +40,24 @@ describe('edge login lobby', function () {
     const testRequest = { loginRequest: { appId: 'some.test.app' } }
     const testReply = { testReply: 'This is a reply' }
 
-    return new Promise((resolve, reject) => {
-      // Use 10 ms polling to really speed up the test:
-      i1.makeLobby(testRequest, 10)
-        .then(lobby => {
-          lobby.on('error', reject)
-          lobby.watch('replies', (replies: mixed[]) => {
-            if (replies.length === 0) return
-            lobby.close()
-            expect(replies[0]).deep.equals(testReply)
-            resolve()
-          })
-
-          return i2
-            .fetchLobbyRequest(lobby.lobbyId)
-            .then(request => {
-              expect(request).to.deep.include(testRequest)
-              return i2.sendLobbyReply(lobby.lobbyId, request, testReply)
-            })
-            .catch(error => {
-              lobby.close()
-              reject(error)
-            })
-        })
-        .catch(reject)
+    // Use 10 ms polling to really speed up the test:
+    const lobby = await i1.makeLobby(testRequest, 10)
+    const out = new Promise((resolve, reject) => {
+      lobby.on('error', reject)
+      lobby.watch('replies', (replies: mixed[]) => {
+        if (replies.length === 0) return
+        expect(replies[0]).deep.equals(testReply)
+        resolve()
+      })
     })
+
+    try {
+      const request = await i2.fetchLobbyRequest(lobby.lobbyId)
+      expect(request).to.deep.include(testRequest)
+      await i2.sendLobbyReply(lobby.lobbyId, request, testReply)
+      await out
+    } finally {
+      lobby.close()
+    }
   })
 })
