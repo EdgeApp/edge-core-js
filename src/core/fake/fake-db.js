@@ -1,19 +1,34 @@
 // @flow
 
 import {
+  type Cleaner,
+  asArray,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
+
+import {
+  asBase64,
+  asEdgeBox,
+  asEdgeSnrp,
+  asRecovery2Auth,
+  makeLoginJson
+} from '../../types/server-cleaners.js'
+import {
   type EdgeBox,
+  type EdgeLobbyReply,
+  type EdgeLobbyRequest,
   type EdgeSnrp,
-  type LobbyReply,
-  type LobbyRequest,
   type LoginPayload
 } from '../../types/server-types.js'
 import { type EdgeFakeUser } from '../../types/types.js'
-import { filterObject } from '../../util/util.js'
 
 export type DbLobby = {
   expires: string, // date
-  request: LobbyRequest,
-  replies: LobbyReply[]
+  request: EdgeLobbyRequest,
+  replies: EdgeLobbyReply[]
 }
 
 export type DbLogin = {
@@ -24,7 +39,7 @@ export type DbLogin = {
   parentBox?: EdgeBox,
 
   // Key login:
-  loginAuth?: string, // base64
+  loginAuth?: Uint8Array,
   loginAuthBox?: EdgeBox,
 
   // Password login:
@@ -36,14 +51,14 @@ export type DbLogin = {
 
   // PIN v2:
   pin2Id?: string, // base64
-  pin2Auth?: string, // base64
+  pin2Auth?: Uint8Array,
   pin2Box?: EdgeBox,
   pin2KeyBox?: EdgeBox,
   pin2TextBox?: EdgeBox,
 
   // Login Recovery v2:
   recovery2Id?: string, // base64
-  recovery2Auth?: string[],
+  recovery2Auth?: Uint8Array[],
   recovery2Box?: EdgeBox,
   recovery2KeyBox?: EdgeBox,
   question2Box?: EdgeBox,
@@ -64,43 +79,57 @@ export type DbRepo = { [path: string]: EdgeBox }
 
 type DbLoginDump = DbLogin & { children?: DbLoginDump[] }
 
-// The database just includes these fields:
-const loginDbColumns = [
+export const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   // Identity:
-  'appId',
-  'loginId',
-  // Login methods:
-  'loginAuth',
-  'loginAuthBox',
-  'passwordAuth',
-  'passwordAuthBox',
-  'passwordAuthSnrp',
-  'passwordBox',
-  'passwordKeySnrp',
-  'pin2Auth',
-  'pin2Box',
-  'pin2Id',
-  'pin2KeyBox',
-  'pin2TextBox',
-  'recovery2Auth',
-  'recovery2Box',
-  'recovery2Id',
-  'recovery2KeyBox',
-  'question2Box',
-  'otpKey',
-  'otpResetDate',
-  'otpTimeout',
-  // Resources:
-  'keyBoxes',
-  'mnemonicBox',
-  'parentBox',
-  'rootKeyBox',
-  'syncKeyBox',
-  // Legacy:
-  'pinBox',
-  'pinId',
-  'pinKeyBox'
-]
+  appId: asString,
+  // created: asOptional(asDate),
+  loginId: asString,
+  parent: asOptional(asString),
+
+  // 2-factor:
+  otpKey: asOptional(asString),
+  otpResetDate: asOptional(asString), // asDate
+  otpTimeout: asOptional(asNumber),
+  // pendingVouchers: asOptional(asArray(asPendingVoucher), []),
+
+  // Return logins:
+  loginAuth: asOptional(asBase64),
+  loginAuthBox: asOptional(asEdgeBox),
+  parentBox: asOptional(asEdgeBox),
+
+  // Password login:
+  passwordAuth: asOptional(asString),
+  passwordAuthBox: asOptional(asEdgeBox),
+  passwordAuthSnrp: asOptional(asEdgeSnrp),
+  passwordBox: asOptional(asEdgeBox),
+  passwordKeySnrp: asOptional(asEdgeSnrp),
+
+  // PIN v2 login:
+  pin2Id: asOptional(asString),
+  pin2Auth: asOptional(asBase64),
+  pin2Box: asOptional(asEdgeBox),
+  pin2KeyBox: asOptional(asEdgeBox),
+  pin2TextBox: asOptional(asEdgeBox),
+
+  // Recovery v2 login:
+  recovery2Id: asOptional(asString),
+  recovery2Auth: asOptional(asRecovery2Auth),
+  question2Box: asOptional(asEdgeBox),
+  recovery2Box: asOptional(asEdgeBox),
+  recovery2KeyBox: asOptional(asEdgeBox),
+
+  // Keys and assorted goodies:
+  children: asOptional(asArray(raw => asDbLoginDump(raw))),
+  keyBoxes: asOptional(asArray(asEdgeBox), []),
+  mnemonicBox: asOptional(asEdgeBox),
+  rootKeyBox: asOptional(asEdgeBox),
+  syncKeyBox: asOptional(asEdgeBox),
+
+  // Obsolete:
+  pinBox: asOptional(asEdgeBox),
+  pinId: asOptional(asString),
+  pinKeyBox: asOptional(asEdgeBox)
+})
 
 /**
  * Emulates the Airbitz login server database.
@@ -140,7 +169,7 @@ export class FakeDb {
 
   setupFakeLogin(user: DbLoginDump, parent: string | void): void {
     // Fill in the database row for this login:
-    const row = filterObject(user, loginDbColumns)
+    const row = asDbLoginDump(user)
     row.parent = parent
     this.insertLogin(row)
 
@@ -162,7 +191,8 @@ export class FakeDb {
   }
 
   dumpLogin(login: DbLogin): DbLoginDump {
-    const out: DbLoginDump = filterObject(login, loginDbColumns)
+    const { parent, ...rest } = login
+    const out = JSON.parse(makeLoginJson(rest))
     out.children = this.getLoginsByParent(login).map(child =>
       this.dumpLogin(child)
     )

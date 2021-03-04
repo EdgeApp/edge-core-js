@@ -199,6 +199,7 @@ export const fakeUserDump: EdgeFakeUser = {
                 'mLsk9qk63Ds3otupOcQwCvDgfzmn9koQ1tBNyBDGGDYvbVmD6gS/hZuresxTpX2DHWNVQC25Y5sISRvbCO1jWuImv8JuT9rCp7aWd+fTgdY='
             },
             loginId: 'aE08nXKAftS37IQiOx7ccRrCkh8fLLiRbw5CnG26bbc=',
+            keyBoxes: [],
             parentBox: {
               encryptionType: 0,
               iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',

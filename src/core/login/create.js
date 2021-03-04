@@ -3,7 +3,7 @@
 import { base64 } from 'rfc4648'
 
 import {
-  type LoginCreatePayload,
+  type CreateLoginPayload,
   type LoginRequestPayload
 } from '../../types/server-types.js'
 import {
@@ -100,9 +100,9 @@ export function makeCreateKit(
     const pin2Server: LoginRequestPayload | void = pin2Kit.server
     const keysServer: LoginRequestPayload | void = keysKit.server
 
-    const server: LoginCreatePayload = {
+    const server: CreateLoginPayload = {
       appId,
-      loginAuth: base64.stringify(loginAuth),
+      loginAuth,
       loginAuthBox,
       loginId,
       parentBox,

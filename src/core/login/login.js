@@ -7,9 +7,9 @@ import { base64 } from 'rfc4648'
 
 import { asLoginPayload } from '../../types/server-cleaners.js'
 import {
+  type ChangeSecretPayload,
   type LoginPayload,
-  type LoginRequest,
-  type SecretPayload
+  type LoginRequestBody
 } from '../../types/server-types.js'
 import {
   type EdgeAccountOptions,
@@ -327,13 +327,13 @@ export async function serverLogin(
   stashTree: LoginStash,
   stash: LoginStash,
   opts: EdgeAccountOptions,
-  serverAuth: LoginRequest,
+  serverAuth: LoginRequestBody,
   decrypt: (reply: LoginPayload) => Promise<Uint8Array>
 ): Promise<LoginTree> {
   const { now = new Date() } = opts
   const { deviceDescription } = ai.props.state.login
 
-  const request: LoginRequest = {
+  const request: LoginRequestBody = {
     otp: getStashOtp(stash, opts),
     voucherId: stash.voucherId,
     voucherAuth: stash.voucherAuth,
@@ -376,11 +376,8 @@ export async function serverLogin(
     const { io } = ai.props
     const loginAuth = io.random(32)
     const loginAuthBox = encrypt(io, loginAuth, loginKey)
-    const data: SecretPayload = {
-      loginAuth: base64.stringify(loginAuth),
-      loginAuthBox
-    }
-    const request: LoginRequest = {
+    const data: ChangeSecretPayload = { loginAuth, loginAuthBox }
+    const request: LoginRequestBody = {
       ...serverAuth,
       otp: getStashOtp(stash, opts),
       data
@@ -489,7 +486,7 @@ export async function syncLogin(
 export function makeAuthJson(
   stashTree: LoginStash,
   login: LoginTree
-): LoginRequest {
+): LoginRequestBody {
   const stash = searchTree(stashTree, stash => stash.appId === login.appId)
   const { voucherAuth, voucherId } =
     stash != null ? stash : { voucherAuth: undefined, voucherId: undefined }
@@ -497,7 +494,7 @@ export function makeAuthJson(
   if (login.loginAuth != null) {
     return {
       loginId: login.loginId,
-      loginAuth: base64.stringify(login.loginAuth),
+      loginAuth: login.loginAuth,
       otp: getLoginOtp(login),
       voucherAuth,
       voucherId

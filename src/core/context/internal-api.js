@@ -4,8 +4,8 @@ import { type Disklet } from 'disklet'
 import { Bridgeable, bridgifyObject, close, emit, update } from 'yaob'
 
 import {
-  type LobbyRequest,
-  type LoginRequest
+  type EdgeLobbyRequest,
+  type LoginRequestBody
 } from '../../types/server-types.js'
 import { type EdgeContext } from '../../types/types.js'
 import {
@@ -82,7 +82,11 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
     this._ai = ai
   }
 
-  authRequest(method: string, path: string, body?: LoginRequest): Promise<any> {
+  authRequest(
+    method: string,
+    path: string,
+    body?: LoginRequestBody
+  ): Promise<any> {
     return loginFetch(this._ai, method, path, body)
   }
 
@@ -98,13 +102,13 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
     return new EdgeLobby(lobby)
   }
 
-  fetchLobbyRequest(lobbyId: string): Promise<LobbyRequest> {
+  fetchLobbyRequest(lobbyId: string): Promise<EdgeLobbyRequest> {
     return fetchLobbyRequest(this._ai, lobbyId)
   }
 
   async sendLobbyReply(
     lobbyId: string,
-    lobbyRequest: LobbyRequest,
+    lobbyRequest: EdgeLobbyRequest,
     replyData: mixed
   ): Promise<void> {
     await sendLobbyReply(this._ai, lobbyId, lobbyRequest, replyData)

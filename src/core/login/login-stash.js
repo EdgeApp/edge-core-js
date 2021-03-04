@@ -13,9 +13,11 @@ import { type Disklet, justFiles } from 'disklet'
 import { base64 } from 'rfc4648'
 
 import {
+  asBase64,
   asEdgeBox,
+  asEdgePendingVoucher,
   asEdgeSnrp,
-  asPendingVoucher
+  makeLoginJson
 } from '../../types/server-cleaners.js'
 import { type EdgeBox, type EdgeSnrp } from '../../types/server-types.js'
 import { type EdgeLog, type EdgePendingVoucher } from '../../types/types.js'
@@ -41,7 +43,7 @@ export type LoginStash = {
   otpTimeout?: number,
   pendingVouchers: EdgePendingVoucher[],
   voucherId?: string,
-  voucherAuth?: string,
+  voucherAuth?: Uint8Array,
 
   // Return logins:
   loginAuthBox?: EdgeBox,
@@ -134,7 +136,7 @@ export async function saveStash(
   }
   await io.disklet.setText(
     `logins/${base58.stringify(loginId)}.json`,
-    JSON.stringify(stashTree)
+    makeLoginJson(stashTree)
   )
 
   dispatch({ type: 'LOGIN_STASH_SAVED', payload: stashTree })
@@ -153,9 +155,9 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   otpKey: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
-  pendingVouchers: asOptional(asArray(asPendingVoucher), []),
+  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
   voucherId: asOptional(asString),
-  voucherAuth: asOptional(asString),
+  voucherAuth: asOptional(asBase64),
 
   // Return logins:
   loginAuthBox: asOptional(asEdgeBox),

@@ -1,6 +1,7 @@
 // @flow
 
 import { asLoginPayload } from '../../types/server-cleaners.js'
+import { type ChangeVouchersPayload } from '../../types/server-types.js'
 import { type ApiInput } from '../root-pixie.js'
 import { applyLoginPayload, makeAuthJson } from './login.js'
 import { loginFetch } from './login-fetch.js'
@@ -15,10 +16,7 @@ export async function changeVoucherStatus(
   ai: ApiInput,
   loginTree: LoginTree,
   login: LoginTree,
-  vouchers: {
-    approvedVouchers?: string[],
-    rejectedVouchers?: string[]
-  }
+  vouchers: ChangeVouchersPayload
 ): Promise<void> {
   const { stashTree } = getStashById(ai, loginTree.loginId)
   const reply = await loginFetch(ai, 'POST', '/v2/login/vouchers', {

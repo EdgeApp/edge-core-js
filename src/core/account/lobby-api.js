@@ -3,7 +3,7 @@
 import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
-import { type LobbyRequest } from '../../types/server-types.js'
+import { type EdgeLobbyRequest } from '../../types/server-types.js'
 import { type EdgeLobby, type EdgeLoginRequest } from '../../types/types.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import { sanitizeLoginStash, syncAccount } from '../login/login.js'
@@ -52,7 +52,7 @@ async function approveLoginRequest(
   accountId: string,
   appId: string,
   lobbyId: string,
-  lobbyJson: LobbyRequest
+  lobbyJson: EdgeLobbyRequest
 ): Promise<void> {
   const { loginTree, username } = ai.props.state.accounts[accountId]
 

@@ -3,8 +3,11 @@
 import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
 
-import { asLobbyPayload } from '../../types/server-cleaners.js'
-import { type LobbyReply, type LobbyRequest } from '../../types/server-types.js'
+import { asLobbyPayload, makeLoginJson } from '../../types/server-cleaners.js'
+import {
+  type EdgeLobbyReply,
+  type EdgeLobbyRequest
+} from '../../types/server-types.js'
 import { type EdgeIo } from '../../types/types.js'
 import { decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
@@ -20,7 +23,7 @@ import { loginFetch } from './login-fetch.js'
 /**
  * A `LobbyRequest` without its key.
  */
-export type PartialLobbyRequest = $Shape<LobbyRequest>
+export type PartialLobbyRequest = $Shape<EdgeLobbyRequest>
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
@@ -58,7 +61,7 @@ function deriveSharedKey(keypair: Keypair, pubkey: Uint8Array): Uint8Array {
  */
 export function decryptLobbyReply(
   keypair: Keypair,
-  lobbyReply: LobbyReply
+  lobbyReply: EdgeLobbyReply
 ): mixed {
   const pubkey = base64.parse(lobbyReply.publicKey)
   const sharedKey = deriveSharedKey(keypair, pubkey)
@@ -73,12 +76,12 @@ export function encryptLobbyReply(
   io: EdgeIo,
   pubkey: Uint8Array,
   replyData: mixed
-): LobbyReply {
+): EdgeLobbyReply {
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
   const sharedKey = deriveSharedKey(keypair, pubkey)
   return {
     publicKey: base64.stringify(keypair.getPublic().encodeCompressed()),
-    box: encrypt(io, utf8.parse(JSON.stringify(replyData)), sharedKey)
+    box: encrypt(io, utf8.parse(makeLoginJson(replyData)), sharedKey)
   }
 }
 
@@ -154,7 +157,7 @@ export async function makeLobby(
   const pubkey = Uint8Array.from(keypair.getPublic().encodeCompressed())
   const lobbyId = base58.stringify(sha256(sha256(pubkey)).slice(0, 10))
 
-  const payload: LobbyRequest = {
+  const payload: EdgeLobbyRequest = {
     loginRequest,
     publicKey: base64.stringify(pubkey),
     timeout
@@ -170,7 +173,7 @@ export async function makeLobby(
 export async function fetchLobbyRequest(
   ai: ApiInput,
   lobbyId: string
-): Promise<LobbyRequest> {
+): Promise<EdgeLobbyRequest> {
   const clean = asLobbyPayload(
     await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
   )
@@ -192,7 +195,7 @@ export async function fetchLobbyRequest(
 export async function sendLobbyReply(
   ai: ApiInput,
   lobbyId: string,
-  lobbyRequest: LobbyRequest,
+  lobbyRequest: EdgeLobbyRequest,
   replyData: mixed
 ): Promise<void> {
   const { io } = ai.props
