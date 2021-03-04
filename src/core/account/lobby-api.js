@@ -1,10 +1,10 @@
 // @flow
 
-import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
 import { type EdgeLobbyRequest } from '../../types/server-types.js'
 import { type EdgeLobby, type EdgeLoginRequest } from '../../types/types.js'
+import { type LobbyLoginPayload } from '../login/edge.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import { sanitizeLoginStash, syncAccount } from '../login/login.js'
 import { getStash } from '../login/login-selectors.js'
@@ -70,9 +70,9 @@ async function approveLoginRequest(
   const loginStash = sanitizeLoginStash(stashTree, appId)
 
   // Send the reply:
-  const replyData = {
+  const replyData: LobbyLoginPayload = {
     appId,
-    loginKey: base64.stringify(requestedLogin.loginKey),
+    loginKey: requestedLogin.loginKey,
     loginStash
   }
   await sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {

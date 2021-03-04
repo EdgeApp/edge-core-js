@@ -7,6 +7,7 @@ import {
   type EdgeAccount,
   type EdgeFakeWorld,
   type EdgeLobby,
+  type EdgePendingEdgeLogin,
   makeFakeEdgeWorld
 } from '../../../src/index.js'
 import { fakeUser } from '../../fake/fake-user.js'
@@ -30,7 +31,7 @@ async function simulateRemoteApproval(
 }
 
 describe('edge login', function () {
-  it('request', async function () {
+  it('works with context callbacks', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
@@ -47,6 +48,33 @@ describe('edge login', function () {
         .then(pending => simulateRemoteApproval(world, pending.id))
         .catch(reject)
     })
+    expect(account.appId).equals('test-child')
+
+    return context.loginWithPIN(fakeUser.username, fakeUser.pin)
+  })
+
+  it('works with local events', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      appId: 'test-child',
+      cleanDevice: true
+    })
+
+    const pending: EdgePendingEdgeLogin = await context.requestEdgeLogin({
+      displayName: 'test suite'
+    })
+    const out = new Promise((resolve, reject) => {
+      pending.watch('state', state => {
+        if (state === 'done' && pending.account != null) {
+          resolve(pending.account)
+        }
+        if (state === 'error') reject(pending.error)
+      })
+    })
+
+    await simulateRemoteApproval(world, pending.id)
+    const account = await out
     expect(account.appId).equals('test-child')
 
     return context.loginWithPIN(fakeUser.username, fakeUser.pin)

@@ -1089,9 +1089,36 @@ export type EdgePasswordRules = {
   passed: boolean
 }
 
+/**
+ * A barcode login request.
+ *
+ * The process begins by showing the user a QR code with the request id,
+ * in the format `edge://edge/${id}`.
+ *
+ * Once the user sends their response, the state will move from "pending"
+ * to "started" and the "username" property will hold the received username.
+ *
+ * Once the login finishes, the state will move from "started" to "done",
+ * and the "account" property will hold the new account object.
+ *
+ * Otherwise, if something goes wrong, the state will move from "started"
+ * to "error", and the "error" property will hold the error.
+ *
+ * Calling "cancelRequest" stops the process and sets the state to "closed".
+ * This method is only callable in the "pending" and "started" states.
+ *
+ * Use the `watch('state', callback)` method to subscribe to state changes.
+ */
 export type EdgePendingEdgeLogin = {
+  +watch: Subscriber<EdgePendingEdgeLogin>,
   +id: string,
-  cancelRequest(): void
+
+  +state: 'pending' | 'started' | 'done' | 'error' | 'closed',
+  +username?: string, // Set in the "started" state
+  +account?: EdgeAccount, // Set in the "done" state
+  +error?: mixed, // Set in the "error" state
+
+  cancelRequest(): Promise<void>
 }
 
 export type EdgeUserInfo = {
@@ -1108,6 +1135,8 @@ export type EdgeUserInfo = {
 export type EdgeContextEvents = {
   close: void,
   error: Error,
+
+  // Deprecated:
   login: EdgeAccount,
   loginStart: { username: string },
   loginError: { error: Error }
