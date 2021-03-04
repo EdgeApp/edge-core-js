@@ -2,6 +2,7 @@
 
 import { base64 } from 'rfc4648'
 import { Bridgeable, close, emit } from 'yaob'
+import { type Unsubscribe } from 'yavent'
 
 import {
   type EdgeEdgeLoginOptions,
@@ -10,7 +11,7 @@ import {
 import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { type ApiInput } from '../root-pixie.js'
-import { type LobbySubscription, makeLobby } from './lobby.js'
+import { makeLobby } from './lobby.js'
 import { makeLoginTree, searchTree, syncLogin } from './login.js'
 import { getStashById } from './login-selectors.js'
 import { asLoginStash, saveStash } from './login-stash.js'
@@ -22,12 +23,12 @@ class PendingEdgeLogin extends Bridgeable<EdgePendingEdgeLogin> {
   id: string
   cancelRequest: () => void
 
-  constructor(ai: ApiInput, lobbyId: string, subscription: LobbySubscription) {
+  constructor(ai: ApiInput, lobbyId: string, cleanups: Unsubscribe[]) {
     super()
     this.id = lobbyId
     this.cancelRequest = () => {
       close(this)
-      subscription.unsubscribe()
+      cleanups.forEach(f => f())
     }
 
     // If the login starts, close this object:
@@ -47,12 +48,10 @@ class PendingEdgeLogin extends Bridgeable<EdgePendingEdgeLogin> {
  */
 async function onReply(
   ai: ApiInput,
-  subscription: LobbySubscription,
   reply: any,
   appId: string,
   opts: EdgeEdgeLoginOptions
 ): Promise<void> {
-  subscription.unsubscribe()
   const stashTree = asLoginStash(reply.loginStash)
   const { log } = ai.props
   const { now = new Date() } = opts
@@ -117,10 +116,15 @@ export function requestEdgeLogin(
       emit(ai.props.output.context.api, 'loginError', { error })
     }
     function handleReply(reply: mixed): void {
-      onReply(ai, subscription, reply, appId, opts).catch(handleError)
+      cleanups.forEach(f => f())
+      onReply(ai, reply, appId, opts).catch(handleError)
     }
-    const subscription = lobby.subscribe(handleReply, handleError)
+    const cleanups = [
+      lobby.close,
+      lobby.on('error', handleError),
+      lobby.on('reply', handleReply)
+    ]
 
-    return new PendingEdgeLogin(ai, lobby.lobbyId, subscription)
+    return new PendingEdgeLogin(ai, lobby.lobbyId, cleanups)
   })
 }
