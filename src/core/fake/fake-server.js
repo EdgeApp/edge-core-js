@@ -244,7 +244,7 @@ function createLogin(
     if (appIdExists) {
       return statusResponse(statusCodes.invalidAppId)
     }
-    row.parent = login.loginId
+    row.parentId = login.loginId
   }
   db.insertLogin(row)
 

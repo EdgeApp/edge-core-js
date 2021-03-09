@@ -193,18 +193,17 @@ export type LobbyPayload = {
 export type LoginPayload = {
   // Identity:
   appId: string,
-  created?: Date,
+  created?: Date, // Not actually optional
   loginId: string,
 
-  // 2-factor:
+  // Nested logins:
+  children?: LoginPayload[],
+  parentBox?: EdgeBox,
+
+  // 2-factor login:
   otpKey?: string,
   otpResetDate?: Date,
   otpTimeout?: number,
-  pendingVouchers: EdgePendingVoucher[],
-
-  // Return logins:
-  loginAuthBox?: EdgeBox,
-  parentBox?: EdgeBox,
 
   // Password login:
   passwordAuthBox?: EdgeBox,
@@ -222,8 +221,13 @@ export type LoginPayload = {
   recovery2Box?: EdgeBox,
   recovery2KeyBox?: EdgeBox,
 
+  // Secret-key login:
+  loginAuthBox?: EdgeBox,
+
+  // Voucher login:
+  pendingVouchers: EdgePendingVoucher[],
+
   // Resources:
-  children?: LoginPayload[],
   keyBoxes?: EdgeBox[],
   mnemonicBox?: EdgeBox,
   rootKeyBox?: EdgeBox,

@@ -258,15 +258,14 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   created: asOptional(asDate),
   loginId: asString,
 
-  // 2-factor:
+  // Nested logins:
+  children: asOptional(asArray(raw => asLoginPayload(raw))),
+  parentBox: asOptional(asEdgeBox),
+
+  // 2-factor login:
   otpKey: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
-  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
-
-  // Return logins:
-  loginAuthBox: asOptional(asEdgeBox),
-  parentBox: asOptional(asEdgeBox),
 
   // Password login:
   passwordAuthBox: asOptional(asEdgeBox),
@@ -284,8 +283,13 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   recovery2Box: asOptional(asEdgeBox),
   recovery2KeyBox: asOptional(asEdgeBox),
 
+  // Secret-key login:
+  loginAuthBox: asOptional(asEdgeBox),
+
+  // Voucher login:
+  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
+
   // Resources:
-  children: asOptional(asArray(raw => asLoginPayload(raw))),
   keyBoxes: asOptional(asArray(asEdgeBox)),
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),

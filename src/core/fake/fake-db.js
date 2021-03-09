@@ -25,22 +25,32 @@ import {
 } from '../../types/server-types.js'
 import { type EdgeFakeUser } from '../../types/types.js'
 
+/**
+ * A barcode-login lobby stored in the fake database.
+ */
 export type DbLobby = {
   expires: string, // date
   request: EdgeLobbyRequest,
   replies: EdgeLobbyReply[]
 }
 
+/**
+ * A login object stored in the fake database.
+ */
 export type DbLogin = {
   // Identity:
   appId: string,
+  // created?: Date,
   loginId: string, // base64
-  parent?: string, // loginId
-  parentBox?: EdgeBox,
 
-  // Key login:
-  loginAuth?: Uint8Array,
-  loginAuthBox?: EdgeBox,
+  // Nested logins:
+  parentBox?: EdgeBox,
+  parentId?: string, // loginId
+
+  // 2-factor login:
+  otpKey?: string,
+  otpResetDate?: string, // date
+  otpTimeout?: number,
 
   // Password login:
   passwordAuth?: string,
@@ -49,32 +59,34 @@ export type DbLogin = {
   passwordBox?: EdgeBox,
   passwordKeySnrp?: EdgeSnrp,
 
-  // PIN v2:
+  // PIN v2 login:
   pin2Id?: string, // base64
   pin2Auth?: Uint8Array,
   pin2Box?: EdgeBox,
   pin2KeyBox?: EdgeBox,
   pin2TextBox?: EdgeBox,
 
-  // Login Recovery v2:
+  // Recovery v2 login:
   recovery2Id?: string, // base64
   recovery2Auth?: Uint8Array[],
   recovery2Box?: EdgeBox,
   recovery2KeyBox?: EdgeBox,
   question2Box?: EdgeBox,
 
-  // OTP goodies:
-  otpKey?: string,
-  otpResetDate?: string, // date
-  otpTimeout?: number,
+  // Secret-key login:
+  loginAuth?: Uint8Array,
+  loginAuthBox?: EdgeBox,
 
-  // Keys and assorted goodies:
+  // Resources:
   keyBoxes: EdgeBox[],
   mnemonicBox?: EdgeBox,
   rootKeyBox?: EdgeBox,
   syncKeyBox?: EdgeBox
 }
 
+/**
+ * A sync repo stored in the fake database.
+ */
 export type DbRepo = { [path: string]: EdgeBox }
 
 type DbLoginDump = DbLogin & { children?: DbLoginDump[] }
@@ -84,18 +96,17 @@ export const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   appId: asString,
   // created: asOptional(asDate),
   loginId: asString,
-  parent: asOptional(asString),
 
-  // 2-factor:
+  // Nested logins:
+  children: asOptional(asArray(raw => asDbLoginDump(raw))),
+  parentBox: asOptional(asEdgeBox),
+  parentId: asOptional(asString),
+
+  // 2-factor login:
   otpKey: asOptional(asString),
   otpResetDate: asOptional(asString), // asDate
   otpTimeout: asOptional(asNumber),
   // pendingVouchers: asOptional(asArray(asPendingVoucher), []),
-
-  // Return logins:
-  loginAuth: asOptional(asBase64),
-  loginAuthBox: asOptional(asEdgeBox),
-  parentBox: asOptional(asEdgeBox),
 
   // Password login:
   passwordAuth: asOptional(asString),
@@ -118,8 +129,11 @@ export const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   recovery2Box: asOptional(asEdgeBox),
   recovery2KeyBox: asOptional(asEdgeBox),
 
+  // Secret-key login:
+  loginAuth: asOptional(asBase64),
+  loginAuthBox: asOptional(asEdgeBox),
+
   // Keys and assorted goodies:
-  children: asOptional(asArray(raw => asDbLoginDump(raw))),
   keyBoxes: asOptional(asArray(asEdgeBox), []),
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
@@ -158,7 +172,7 @@ export class FakeDb {
   }
 
   getLoginsByParent(parent: DbLogin): DbLogin[] {
-    return this.logins.filter(child => child.parent === parent.loginId)
+    return this.logins.filter(child => child.parentId === parent.loginId)
   }
 
   insertLogin(login: DbLogin): void {
@@ -167,10 +181,10 @@ export class FakeDb {
 
   // Dumping & restoration --------------------------------------------
 
-  setupFakeLogin(user: DbLoginDump, parent: string | void): void {
+  setupFakeLogin(user: DbLoginDump, parentId: string | void): void {
     // Fill in the database row for this login:
     const row = asDbLoginDump(user)
-    row.parent = parent
+    row.parentId = parentId
     this.insertLogin(row)
 
     // Recurse into our children:
@@ -191,7 +205,7 @@ export class FakeDb {
   }
 
   dumpLogin(login: DbLogin): DbLoginDump {
-    const { parent, ...rest } = login
+    const { parentId, ...rest } = login
     const out = JSON.parse(makeLoginJson(rest))
     out.children = this.getLoginsByParent(login).map(child =>
       this.dumpLogin(child)
@@ -212,11 +226,14 @@ export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
   return {
     // Identity:
     appId: login.appId,
+    // created: new Date(),
     loginId: login.loginId,
+
+    // Nested logins:
+    children,
     parentBox: login.parentBox,
 
     // Login methods:
-    loginAuthBox: login.loginAuthBox,
     passwordAuthBox: login.passwordAuthBox,
     passwordAuthSnrp: login.passwordAuthSnrp,
     passwordBox: login.passwordBox,
@@ -232,12 +249,12 @@ export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
       login.otpResetDate != null ? new Date(login.otpResetDate) : undefined,
     otpTimeout: login.otpTimeout,
     pendingVouchers: [],
+    loginAuthBox: login.loginAuthBox,
 
     // Resources:
     keyBoxes: login.keyBoxes,
     mnemonicBox: login.mnemonicBox,
     rootKeyBox: login.rootKeyBox,
-    syncKeyBox: login.syncKeyBox,
-    children
+    syncKeyBox: login.syncKeyBox
   }
 }
