@@ -487,7 +487,7 @@ export function makeCurrencyWalletApi(
     },
 
     async dumpData(): Promise<EdgeDataDump> {
-      return engine.dumpData()
+      return await engine.dumpData()
     },
 
     async getPaymentProtocolInfo(
