@@ -168,7 +168,7 @@ class FakeCurrencyEngine {
     return Promise.resolve()
   }
 
-  dumpData(): EdgeDataDump {
+  async dumpData(): Promise<EdgeDataDump> {
     return {
       walletId: 'xxx',
       walletType: fakeCurrencyInfo.walletType,
@@ -227,13 +227,15 @@ class FakeCurrencyEngine {
   }
 
   // Addresses:
-  getFreshAddress(opts: EdgeCurrencyCodeOptions): EdgeFreshAddress {
+  async getFreshAddress(
+    opts: EdgeCurrencyCodeOptions
+  ): Promise<EdgeFreshAddress> {
     return { publicAddress: 'fakeaddress' }
   }
 
-  addGapLimitAddresses(addresses: string[]): void {}
+  async addGapLimitAddresses(addresses: string[]): Promise<void> {}
 
-  isAddressUsed(address: string): boolean {
+  async isAddressUsed(address: string): Promise<boolean> {
     return address === 'fakeaddress'
   }
 
