@@ -232,6 +232,10 @@ export function makeCurrencyWalletApi(
       const currencyCode = opts.currencyCode || defaultCurrency
 
       let state = input.props.selfState
+
+      if (state.txids.length !== (await this.getNumTransactions(opts)))
+        state.gotTxs[currencyCode] = false
+
       if (!state.gotTxs[currencyCode]) {
         const txs = await engine.getTransactions({
           currencyCode: opts.currencyCode
