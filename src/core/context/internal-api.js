@@ -2,6 +2,7 @@
 
 import { type Disklet } from 'disklet'
 import { Bridgeable, bridgifyObject, close, emit, update } from 'yaob'
+import { type Unsubscribe } from 'yavent'
 
 import {
   type EdgeLobbyRequest,
@@ -32,28 +33,17 @@ class EdgeLobby extends Bridgeable<
   { error: Error }
 > {
   _lobby: LobbyInstance
-  _onError: Function
-  _onRepliesChanged: Function
-  _replies: mixed[]
-  _unsubscribe: Function
+  _cleanups: Unsubscribe[]
 
   constructor(lobby: LobbyInstance) {
     super()
     this._lobby = lobby
-    this._onError = () => undefined
-    this._onRepliesChanged = () => undefined
-    this._replies = []
 
-    const { unsubscribe } = lobby.subscribe(
-      (reply: mixed) => {
-        this._replies = [...this._replies, reply]
-        update(this)
-      },
-      (e: Error) => {
-        emit(this, 'error', e)
-      }
-    )
-    this._unsubscribe = unsubscribe
+    this._cleanups = [
+      lobby.close,
+      lobby.on('reply', reply => update(this, 'replies')),
+      lobby.on('error', error => emit(this, 'error', error))
+    ]
   }
 
   get lobbyId(): string {
@@ -61,11 +51,11 @@ class EdgeLobby extends Bridgeable<
   }
 
   get replies(): mixed[] {
-    return this._replies
+    return this._lobby.replies
   }
 
   close(): void {
-    this._unsubscribe()
+    this._cleanups.forEach(f => f())
     close(this)
   }
 }

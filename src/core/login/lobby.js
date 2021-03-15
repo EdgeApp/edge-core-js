@@ -2,6 +2,7 @@
 
 import elliptic from 'elliptic'
 import { base64 } from 'rfc4648'
+import { type Events, type OnEvents, makeEvents } from 'yavent'
 
 import { asLobbyPayload, makeLoginJson } from '../../types/server-cleaners.js'
 import {
@@ -13,10 +14,7 @@ import { decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
 import { verifyData } from '../../util/crypto/verify.js'
 import { base58, utf8 } from '../../util/encoding.js'
-import {
-  type PeriodicTask,
-  makePeriodicTask
-} from '../../util/periodic-task.js'
+import { makePeriodicTask } from '../../util/periodic-task.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
 
@@ -30,15 +28,18 @@ const secp256k1 = new EC('secp256k1')
 
 type Keypair = Object
 
-export type LobbySubscription = { unsubscribe(): void }
+type LobbyEvents = {
+  error: mixed,
+  reply: mixed
+}
 
 // Use this to subscribe to lobby events:
 export type LobbyInstance = {
-  lobbyId: string,
-  subscribe(
-    onReply: (reply: mixed) => void,
-    onError: (e: Error) => void
-  ): LobbySubscription
+  +close: () => void,
+  +on: OnEvents<LobbyEvents>,
+
+  +replies: mixed[],
+  +lobbyId: string
 }
 
 /**
@@ -86,61 +87,6 @@ export function encryptLobbyReply(
 }
 
 /**
- * Approximates the proposed ES `Observable` interface,
- * allowing clients to subscribe to lobby reply messages.
- */
-class ObservableLobby {
-  lobbyId: string
-  replyCount: number
-  task: PeriodicTask
-
-  // Callbacks:
-  onError: ((e: Error) => void) | void
-  onReply: ((reply: mixed) => void) | void
-
-  constructor(ai: ApiInput, lobbyId: string, keypair: Keypair, period: number) {
-    const pollLobby = async () => {
-      const clean = asLobbyPayload(
-        await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
-      )
-
-      // Process any new replies that have arrived on the server:
-      while (this.replyCount < clean.replies.length) {
-        const lobbyReply = clean.replies[this.replyCount]
-        const decrypted = decryptLobbyReply(keypair, lobbyReply)
-        const { onReply } = this
-        if (onReply != null) onReply(decrypted)
-        ++this.replyCount
-      }
-    }
-
-    this.onError = undefined
-    this.onReply = undefined
-    this.lobbyId = lobbyId
-    this.replyCount = 0
-    this.task = makePeriodicTask(pollLobby, period, {
-      onError: error => {
-        const { onError } = this
-        if (onError != null && error instanceof Error) onError(error)
-      }
-    })
-  }
-
-  subscribe(
-    onReply: (reply: mixed) => void,
-    onError: (e: Error) => void
-  ): LobbySubscription {
-    this.onReply = onReply
-    this.onError = onError
-    this.replyCount = 0
-    this.task.start()
-    return {
-      unsubscribe: () => this.task.stop()
-    }
-  }
-}
-
-/**
  * Creates a new lobby on the auth server holding the given request.
  * @return A lobby watcher object that will check for incoming replies.
  */
@@ -150,7 +96,7 @@ export async function makeLobby(
   period: number = 1000
 ): Promise<LobbyInstance> {
   const { io } = ai.props
-  const { loginRequest, timeout = 600 } = lobbyRequest
+  const { timeout = 10 * 60 } = lobbyRequest
 
   // Create the keys:
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
@@ -158,12 +104,37 @@ export async function makeLobby(
   const lobbyId = base58.stringify(sha256(sha256(pubkey)).slice(0, 10))
 
   const payload: EdgeLobbyRequest = {
-    loginRequest,
+    ...lobbyRequest,
     publicKey: base64.stringify(pubkey),
     timeout
   }
-  await loginFetch(ai, 'PUT', '/v2/lobby/' + lobbyId, { data: payload })
-  return new ObservableLobby(ai, lobbyId, keypair, period)
+  await loginFetch(ai, 'PUT', `/v2/lobby/${lobbyId}`, { data: payload })
+
+  // Create the task:
+  const [on, emit]: Events<LobbyEvents> = makeEvents()
+  const replies = []
+  const pollLobby = async () => {
+    const clean = asLobbyPayload(
+      await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
+    )
+
+    // Process any new replies that have arrived on the server:
+    while (replies.length < clean.replies.length) {
+      const newReply = clean.replies[replies.length]
+      const fixedReply = decryptLobbyReply(keypair, newReply)
+      emit('reply', fixedReply)
+      replies.push(fixedReply)
+    }
+  }
+  const task = makePeriodicTask(pollLobby, period, {
+    onError(error) {
+      emit('error', error)
+    }
+  })
+  task.start()
+
+  // Create the return object:
+  return { close: task.stop, lobbyId, on, replies }
 }
 
 /**

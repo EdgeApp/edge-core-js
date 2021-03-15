@@ -7,7 +7,6 @@ import {
   type EdgeAccount,
   type EdgeAccountOptions,
   type EdgeContext,
-  type EdgeEdgeLoginOptions,
   type EdgeLoginMessages,
   type EdgeLogSettings,
   type EdgePendingEdgeLogin,
@@ -178,7 +177,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     async requestEdgeLogin(
-      opts?: EdgeEdgeLoginOptions
+      opts?: EdgeAccountOptions
     ): Promise<EdgePendingEdgeLogin> {
       return requestEdgeLogin(ai, appId, opts)
     },

@@ -80,7 +80,8 @@
     "redux-pixies": "^0.3.6",
     "rfc4648": "^1.4.0",
     "scrypt-js": "^2.0.3",
-    "yaob": "^0.3.6"
+    "yaob": "^0.3.6",
+    "yavent": "^0.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
