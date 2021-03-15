@@ -98,11 +98,7 @@ export type EdgeIo = {
   +fetch: EdgeFetchFunction,
 
   // This is only present if the platform has some way to avoid CORS:
-  +fetchCors?: EdgeFetchFunction,
-
-  // Deprecated:
-  // eslint-disable-next-line no-use-before-define
-  +console: EdgeConsole
+  +fetchCors?: EdgeFetchFunction
 }
 
 // logging -------------------------------------------------------------
@@ -1290,13 +1286,6 @@ export type EdgeFakeWorld = {
 // ---------------------------------------------------------------------
 // deprecated types
 // ---------------------------------------------------------------------
-
-// The only subset of `Console` that Edge core uses:
-export type EdgeConsole = {
-  error(...data: any[]): void,
-  info(...data: any[]): void,
-  warn(...data: any[]): void
-}
 
 export type EdgeBitcoinPrivateKeyOptions = {
   format?: string,
