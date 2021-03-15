@@ -1296,5 +1296,3 @@ export type EdgeBitcoinPrivateKeyOptions = {
 export type EdgeCreatePrivateKeyOptions =
   | EdgeBitcoinPrivateKeyOptions
   | JsonObject
-
-export type EdgeEdgeLoginOptions = EdgeAccountOptions
