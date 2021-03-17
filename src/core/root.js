@@ -71,6 +71,27 @@ export async function makeContext(
   }
   const log = makeLog(onLog, 'edge-core')
 
+  // Retrieve rate hint cache
+  let rateHintCache = []
+  try {
+    rateHintCache = JSON.parse(await io.disklet.getText('rateHintCache.txt'))
+    log.warn('Read rateHintCache.txt success')
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // Failure is ok if file doesn't exist
+      try {
+        await io.disklet.setText('rateHintCache.txt', JSON.stringify([]))
+        log.warn('Create rateHintCache.txt success')
+      } catch (error) {
+        log.error('Create rateHintCache.txt failure', error.message)
+        throw error
+      }
+    } else {
+      log.error('Read rateHintCache.txt error', error.message)
+      throw error
+    }
+  }
+
   // Load the login stashes from disk:
   const stashes = await loadStashes(io.disklet, log)
   redux.dispatch({
@@ -83,6 +104,7 @@ export async function makeContext(
       hideKeys,
       logSettings: { ...defaultLogSettings, ...logSettings },
       pluginsInit,
+      rateHintCache,
       stashes
     }
   })

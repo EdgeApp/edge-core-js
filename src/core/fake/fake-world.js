@@ -88,6 +88,11 @@ export function makeFakeWorld(
         await Promise.all(users.map(async user => saveUser(fakeIo, user)))
       }
 
+      fakeIo.disklet.setText(
+        'rateHintCache.txt',
+        JSON.stringify([{ fromCurrency: 'FAKE', toCurrency: 'TOKEN' }])
+      )
+
       const out = await makeContext({ io: fakeIo, nativeIo, onLog }, opts)
       contexts.push(out)
       return out
