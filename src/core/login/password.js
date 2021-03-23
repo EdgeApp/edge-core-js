@@ -12,7 +12,7 @@ import { fixUsername, getStash, hashUsername } from './login-selectors.js'
 import { saveStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 
-export const passwordAuthSnrp = userIdSnrp
+const passwordAuthSnrp = userIdSnrp
 
 function makeHashInput(username: string, password: string): string {
   return fixUsername(username) + password
