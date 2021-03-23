@@ -168,8 +168,10 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
   otpResetAuth: asOptional(asString),
 
   // Legacy:
+  did: asOptional(asString),
   l1: asOptional(asString),
   lp1: asOptional(asString),
+  lpin1: asOptional(asBase64),
   lra1: asOptional(asString),
   recoveryAuth: asOptional(asString) // lra1
 })

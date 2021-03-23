@@ -86,8 +86,10 @@ export type LoginRequestBody = {
   otpResetAuth?: string,
 
   // Legacy:
+  did?: string,
   l1?: string,
   lp1?: string,
+  lpin1?: Uint8Array,
   lra1?: string,
   recoveryAuth?: string // lra1
 }
