@@ -52,7 +52,7 @@ function makeIo(clientIo: ClientIo): EdgeIo {
     console,
     disklet,
 
-    random: bytes => csprng.generate(bytes),
+    random: bytes => Uint8Array.from(csprng.generate(bytes)),
     scrypt,
 
     // Networking:
