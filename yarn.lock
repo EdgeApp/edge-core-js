@@ -1904,10 +1904,10 @@ clean-stack@^2.0.0:
   resolved "https://registry.yarnpkg.com/clean-stack/-/clean-stack-2.2.0.tgz#ee8472dbb129e727b31e8a10a427dee9dfe4008b"
   integrity sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
 
-cleaners@^0.3.7:
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.7.tgz#b8fa056a430974d1125a1bb523ee128a6763fbfd"
-  integrity sha512-pRzWeIOXnbgJa211YAHjU1zW1kFMCdftJrB6DJC98nRAcd5XepWy0sAmvZ3kuh1g0y9gukRNSCli0+8aVNhwRg==
+cleaners@^0.3.8:
+  version "0.3.8"
+  resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.8.tgz#87f97daea68b5fde04284eb265de09a9b46de65f"
+  integrity sha512-/Udp5zxPQ/SqZwsfdCHHnlqgTvEuO4ejDFG2Ut6zHr/qXT5IHdbGXGh6yXWRynvDPEUdhafvArLEgErX8N6dDA==
 
 cli-cursor@^3.1.0:
   version "3.1.0"
