@@ -1,11 +1,10 @@
 // @flow
 
+import { uncleaner } from 'cleaners'
 import { base64 } from 'rfc4648'
 
-import {
-  type ChangePin2Payload,
-  type LoginRequestBody
-} from '../../types/server-types.js'
+import { asChangePin2Payload } from '../../types/server-cleaners.js'
+import { type LoginRequestBody } from '../../types/server-types.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
@@ -17,6 +16,8 @@ import { fixUsername, getStash } from './login-selectors.js'
 import { type LoginStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 import { getLoginOtp } from './otp.js'
+
+const wasChangePin2Payload = uncleaner(asChangePin2Payload)
 
 function pin2Id(pin2Key: Uint8Array, username: string): Uint8Array {
   const data = utf8.parse(fixUsername(username))
@@ -184,16 +185,15 @@ export function makeChangePin2Kit(
     const pin2Box = encrypt(io, login.loginKey, pin2Key)
     const pin2KeyBox = encrypt(io, pin2Key, login.loginKey)
 
-    const server: ChangePin2Payload = {
-      pin2Id: base64.stringify(pin2Id(pin2Key, username)),
-      pin2Auth: pin2Auth(pin2Key, pin),
-      pin2Box,
-      pin2KeyBox,
-      pin2TextBox
-    }
     return {
       serverPath: '/v2/login/pin2',
-      server,
+      server: wasChangePin2Payload({
+        pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+        pin2Auth: pin2Auth(pin2Key, pin),
+        pin2Box,
+        pin2KeyBox,
+        pin2TextBox
+      }),
       stash: {
         pin2Key: base64.stringify(pin2Key),
         pin2TextBox
@@ -205,16 +205,15 @@ export function makeChangePin2Kit(
       loginId: login.loginId
     }
   } else {
-    const server: ChangePin2Payload = {
-      pin2Id: undefined,
-      pin2Auth: undefined,
-      pin2Box: undefined,
-      pin2KeyBox: undefined,
-      pin2TextBox
-    }
     return {
       serverPath: '/v2/login/pin2',
-      server,
+      server: wasChangePin2Payload({
+        pin2Id: undefined,
+        pin2Auth: undefined,
+        pin2Box: undefined,
+        pin2KeyBox: undefined,
+        pin2TextBox
+      }),
       stash: {
         pin2Key: undefined,
         pin2TextBox

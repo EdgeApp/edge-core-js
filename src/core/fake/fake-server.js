@@ -1,6 +1,6 @@
 // @flow
 
-import { asMap, asMaybe, asObject } from 'cleaners'
+import { asMap, asMaybe, asObject, uncleaner } from 'cleaners'
 
 import {
   asChangeOtpPayload,
@@ -13,7 +13,13 @@ import {
   asEdgeBox,
   asEdgeLobbyReply,
   asEdgeLobbyRequest,
-  asLoginRequestBody
+  asLobbyPayload,
+  asLoginPayload,
+  asLoginRequestBody,
+  asMessagesPayload,
+  asOtpResetPayload,
+  asRecovery2InfoPayload,
+  asUsernameInfoPayload
 } from '../../types/server-cleaners.js'
 import { type EdgeLoginMessage } from '../../types/types.js'
 import { checkTotp } from '../../util/crypto/hotp.js'
@@ -31,6 +37,7 @@ import {
   type Server
 } from '../../util/http/http-types.js'
 import { addHiddenProperties, softCat } from '../../util/util.js'
+import { userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import {
   type DbLobby,
   type DbLogin,
@@ -46,6 +53,13 @@ import {
   statusCodes,
   statusResponse
 } from './fake-responses.js'
+
+const wasLobbyPayload = uncleaner(asLobbyPayload)
+const wasLoginPayload = uncleaner(asLoginPayload)
+const wasMessagesPayload = uncleaner(asMessagesPayload)
+const wasOtpResetPayload = uncleaner(asOtpResetPayload)
+const wasRecovery2InfoPayload = uncleaner(asRecovery2InfoPayload)
+const wasUsernameInfoPayload = uncleaner(asUsernameInfoPayload)
 
 const OTP_RESET_TOKEN = 'Super secret reset token'
 
@@ -165,7 +179,7 @@ const loginRoute: ApiServer = pickMethod({
     // Authenticated version:
     request => {
       const { db, login } = request
-      return payloadResponse(makeLoginPayload(db, login))
+      return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
     },
     // Fallback version:
     request => {
@@ -178,18 +192,19 @@ const loginRoute: ApiServer = pickMethod({
         if (login == null) {
           return statusResponse(statusCodes.noAccount)
         }
-        return payloadResponse({
-          passwordAuthSnrp: login.passwordAuthSnrp
-        })
+        const { passwordAuthSnrp = userIdSnrp } = login
+        return payloadResponse(wasUsernameInfoPayload({ passwordAuthSnrp }))
       }
       if (recovery2Id != null && recovery2Auth == null) {
         const login = db.getLoginByRecovery2Id(recovery2Id)
         if (login == null) {
           return statusResponse(statusCodes.noAccount)
         }
-        return payloadResponse({
-          question2Box: login.question2Box
-        })
+        const { question2Box } = login
+        if (question2Box == null) {
+          return statusResponse(statusCodes.noAccount)
+        }
+        return payloadResponse(wasRecovery2InfoPayload({ question2Box }))
       }
       return statusResponse(statusCodes.invalidRequest)
     }
@@ -323,9 +338,9 @@ const otp2Route: ApiServer = pickMethod({
       if (login.otpResetDate == null) {
         login.otpResetDate = new Date(Date.now() + 1000 * otpTimeout)
       }
-      return payloadResponse({
-        otpResetDate: login.otpResetDate
-      })
+      return payloadResponse(
+        wasOtpResetPayload({ otpResetDate: login.otpResetDate })
+      )
     }
   )
 })
@@ -435,7 +450,7 @@ const secretRoute: ApiServer = withLogin2(
       login.loginAuth = clean.loginAuth
       login.loginAuthBox = clean.loginAuthBox
 
-      return payloadResponse(makeLoginPayload(db, login))
+      return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
     }
   })
 )
@@ -496,7 +511,7 @@ const lobbyRoute: ApiServer = pickMethod({
 
   GET: withLobby(request => {
     const { lobby } = request
-    return payloadResponse(lobby)
+    return payloadResponse(wasLobbyPayload(lobby))
   }),
 
   DELETE: withLobby(request => {
@@ -529,7 +544,7 @@ const messagesRoute: ApiServer = pickMethod({
         })
       }
     }
-    return payloadResponse(out)
+    return payloadResponse(wasMessagesPayload(out))
   }
 })
 

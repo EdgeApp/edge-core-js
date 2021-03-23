@@ -1,11 +1,12 @@
 // @flow
 
+import { uncleaner } from 'cleaners'
 import { base64 } from 'rfc4648'
 
 import {
-  type CreateLoginPayload,
-  type LoginRequestPayload
-} from '../../types/server-types.js'
+  asChangeSecretPayload,
+  asCreateLoginPayload
+} from '../../types/server-cleaners.js'
 import {
   type EdgeAccountOptions,
   type EdgeWalletInfo,
@@ -20,6 +21,9 @@ import { saveStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 import { makePasswordKit } from './password.js'
 import { makeChangePin2Kit } from './pin2.js'
+
+const wasChangeSecretPayload = uncleaner(asChangeSecretPayload)
+const wasCreateLoginPayload = uncleaner(asCreateLoginPayload)
 
 export type LoginCreateOpts = {
   keyInfo?: EdgeWalletInfo,
@@ -63,8 +67,6 @@ export function makeCreateKit(
   const loginId =
     parentLogin != null ? io.random(32) : hashUsername(ai, username)
   const loginKey = io.random(32)
-  const loginAuth = io.random(32)
-  const loginAuthBox = encrypt(io, loginAuth, loginKey)
 
   const dummyLogin: LoginTree = {
     appId,
@@ -92,28 +94,33 @@ export function makeCreateKit(
   const keysKit =
     opts.keyInfo != null ? makeKeysKit(ai, dummyLogin, opts.keyInfo) : {}
 
+  // Secret-key login:
+  const loginAuth = io.random(32)
+  const loginAuthBox = encrypt(io, loginAuth, loginKey)
+  const secretServer = wasChangeSecretPayload({
+    loginAuth,
+    loginAuthBox
+  })
+
   // Bundle everything:
   return Promise.all([loginId, passwordKit]).then(values => {
     const [loginIdRaw, passwordKit] = values
     const loginId = base64.stringify(loginIdRaw)
-    const passwordServer: LoginRequestPayload | void = passwordKit.server
-    const pin2Server: LoginRequestPayload | void = pin2Kit.server
-    const keysServer: LoginRequestPayload | void = keysKit.server
 
-    const server: CreateLoginPayload = {
-      appId,
-      loginAuth,
-      loginAuthBox,
-      loginId,
-      parentBox,
-      ...passwordServer,
-      ...pin2Server,
-      ...keysServer
-    }
     return {
       loginId,
       serverPath: '/v2/login/create',
-      server,
+      server: {
+        ...wasCreateLoginPayload({
+          appId,
+          loginId,
+          parentBox
+        }),
+        ...keysKit.server,
+        ...passwordKit.server,
+        ...pin2Kit.server,
+        ...secretServer
+      },
       stash: {
         appId,
         loginAuthBox,

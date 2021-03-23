@@ -1,10 +1,18 @@
 // @flow
 
-import { makeLoginJson } from '../../types/server-cleaners.js'
+import { uncleaner } from 'cleaners'
+
+import {
+  asOtpErrorPayload,
+  asPasswordErrorPayload
+} from '../../types/server-cleaners.js'
 import {
   type HttpHeaders,
   type HttpResponse
 } from '../../util/http/http-types.js'
+
+const wasOtpErrorPayload = uncleaner(asOtpErrorPayload)
+const wasPasswordErrorPayload = uncleaner(asPasswordErrorPayload)
 
 type LoginStatusCode = { code: number, httpStatus: number, message: string }
 
@@ -106,7 +114,7 @@ export function jsonResponse(
   return Promise.resolve({
     status,
     headers: { 'content-type': 'application/json', ...headers },
-    body: makeLoginJson(body)
+    body: JSON.stringify(body)
   })
 }
 
@@ -144,15 +152,14 @@ export function otpErrorResponse(
   otpResetDate?: Date
 ): Promise<HttpResponse> {
   return payloadResponse(
-    {
+    wasOtpErrorPayload({
       login_id: loginId,
       otp_reset_auth: otpResetToken,
-      otp_timeout_date:
-        otpResetDate != null ? otpResetDate.toISOString() : undefined,
+      otp_timeout_date: otpResetDate,
       voucher_id: 'test-voucher-id',
-      voucher_auth: 'AAAAAA==',
+      voucher_auth: Uint8Array.from([0, 0, 0, 0]),
       voucher_activates: new Date('2100-01-01')
-    },
+    }),
     statusCodes.invalidOtp
   )
 }
@@ -162,9 +169,9 @@ export function otpErrorResponse(
  */
 export function passwordErrorResponse(wait: number): Promise<HttpResponse> {
   return payloadResponse(
-    {
+    wasPasswordErrorPayload({
       wait_seconds: wait
-    },
+    }),
     statusCodes.invalidPassword
   )
 }

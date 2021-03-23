@@ -167,16 +167,6 @@ export type CreateLoginPayload = {
   // ...CreateKeysPayload
 }
 
-export type LoginRequestPayload =
-  | ChangeOtpPayload
-  | ChangePasswordPayload
-  | ChangePin2Payload
-  | ChangeRecovery2Payload
-  | ChangeSecretPayload
-  | ChangeVouchersPayload
-  | CreateKeysPayload
-  | CreateLoginPayload
-
 // ---------------------------------------------------------------------
 // response payloads
 // ---------------------------------------------------------------------
@@ -250,7 +240,7 @@ export type OtpErrorPayload = {
   otp_timeout_date?: Date,
   reason?: string,
   voucher_activates?: Date,
-  voucher_auth?: string,
+  voucher_auth?: Uint8Array,
   voucher_id?: string
 }
 

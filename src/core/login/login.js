@@ -3,11 +3,14 @@
  */
 // @flow
 
+import { uncleaner } from 'cleaners'
 import { base64 } from 'rfc4648'
 
-import { asLoginPayload } from '../../types/server-cleaners.js'
 import {
-  type ChangeSecretPayload,
+  asChangeSecretPayload,
+  asLoginPayload
+} from '../../types/server-cleaners.js'
+import {
   type LoginPayload,
   type LoginRequestBody
 } from '../../types/server-types.js'
@@ -31,6 +34,8 @@ import { getStashById } from './login-selectors.js'
 import { type LoginStash, saveStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 import { getLoginOtp, getStashOtp } from './otp.js'
+
+const wasChangeSecretPayload = uncleaner(asChangeSecretPayload)
 
 function cloneNode<Node: {}, Output>(
   node: Node,
@@ -376,11 +381,10 @@ export async function serverLogin(
     const { io } = ai.props
     const loginAuth = io.random(32)
     const loginAuthBox = encrypt(io, loginAuth, loginKey)
-    const data: ChangeSecretPayload = { loginAuth, loginAuthBox }
     const request: LoginRequestBody = {
       ...serverAuth,
       otp: getStashOtp(stash, opts),
-      data
+      data: wasChangeSecretPayload({ loginAuth, loginAuthBox })
     }
     loginReply = asLoginPayload(
       await loginFetch(ai, 'POST', '/v2/login/secret', request)

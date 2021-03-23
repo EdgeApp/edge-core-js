@@ -45,19 +45,6 @@ import {
   type EdgeRecoveryQuestionChoice
 } from './types.js'
 
-export function makeLoginJson(value: mixed, spaces: number = 0): string {
-  return JSON.stringify(
-    value,
-    (key, value) => {
-      if (value instanceof Uint8Array) {
-        return base64.stringify(value)
-      }
-      return value
-    },
-    spaces
-  )
-}
-
 /**
  * A string of base64-encoded binary data.
  */
@@ -315,7 +302,7 @@ export const asOtpErrorPayload: Cleaner<OtpErrorPayload> = asObject({
   otp_timeout_date: asOptional(asDate),
   reason: asOptional(asString),
   voucher_activates: asOptional(asDate),
-  voucher_auth: asOptional(asString),
+  voucher_auth: asOptional(asBase64),
   voucher_id: asOptional(asString)
 })
 

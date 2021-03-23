@@ -1,5 +1,7 @@
 // @flow
 
+import { base64 } from 'rfc4648'
+
 import { asOtpErrorPayload, asPasswordErrorPayload } from './server-cleaners.js'
 import type { EdgeSwapInfo } from './types.js'
 
@@ -140,7 +142,7 @@ export class OtpError extends Error {
   +resetDate: Date | void
   +resetToken: string | void
   +voucherId: string | void
-  +voucherAuth: string | void
+  +voucherAuth: string | void // base64, to avoid a breaking change
   +voucherActivates: Date | void
 
   constructor(resultsJson: mixed, message: string = 'Invalid OTP token') {
@@ -173,7 +175,9 @@ export class OtpError extends Error {
       if (reply.voucher_activates != null) {
         this.voucherActivates = reply.voucher_activates
       }
-      if (reply.voucher_auth != null) this.voucherAuth = reply.voucher_auth
+      if (reply.voucher_auth != null) {
+        this.voucherAuth = base64.stringify(reply.voucher_auth)
+      }
       if (reply.voucher_id != null) this.voucherId = reply.voucher_id
     } catch (e) {}
   }
