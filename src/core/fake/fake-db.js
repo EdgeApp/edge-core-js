@@ -7,15 +7,15 @@ import {
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  uncleaner
 } from 'cleaners'
 
 import {
   asBase64,
   asEdgeBox,
   asEdgeSnrp,
-  asRecovery2Auth,
-  makeLoginJson
+  asRecovery2Auth
 } from '../../types/server-cleaners.js'
 import {
   type EdgeBox,
@@ -90,18 +90,21 @@ export type DbLogin = {
  */
 export type DbRepo = { [path: string]: EdgeBox }
 
-type DbLoginDump = DbLogin & { children?: DbLoginDump[] }
+type DbLoginDump = DbLogin & { children: DbLoginDump[] }
 
-export const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
+const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   // Identity:
   appId: asString,
   // created: asOptional(asDate),
   loginId: asString,
 
   // Nested logins:
-  children: asOptional(asArray(raw => asDbLoginDump(raw))),
+  children: asOptional(
+    asArray(raw => asDbLoginDump(raw)),
+    []
+  ),
   parentBox: asOptional(asEdgeBox),
-  parentId: asOptional(asString),
+  parentId: (): string | void => undefined,
 
   // 2-factor login:
   otpKey: asOptional(asString),
@@ -145,6 +148,7 @@ export const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   pinId: asOptional(asString),
   pinKeyBox: asOptional(asEdgeBox)
 })
+const wasDbLoginDump = uncleaner(asDbLoginDump)
 
 /**
  * Emulates the Airbitz login server database.
@@ -182,22 +186,16 @@ export class FakeDb {
 
   // Dumping & restoration --------------------------------------------
 
-  setupFakeLogin(user: DbLoginDump, parentId: string | void): void {
-    // Fill in the database row for this login:
-    const row = asDbLoginDump(user)
-    row.parentId = parentId
-    this.insertLogin(row)
-
-    // Recurse into our children:
-    if (user.children != null) {
-      for (const child of user.children) {
-        this.setupFakeLogin(child, user.loginId)
+  setupFakeUser(user: EdgeFakeUser): void {
+    const setupLogin = (clean: DbLoginDump): void => {
+      const { children, ...rest } = clean
+      this.insertLogin(rest)
+      for (const child of children) {
+        child.parentId = clean.loginId
+        setupLogin(child)
       }
     }
-  }
-
-  setupFakeUser(user: EdgeFakeUser): void {
-    this.setupFakeLogin(user.server, undefined)
+    setupLogin(asDbLoginDump(user.server))
 
     // Create fake repos:
     for (const syncKey of Object.keys(user.repos)) {
@@ -205,13 +203,12 @@ export class FakeDb {
     }
   }
 
-  dumpLogin(login: DbLogin): DbLoginDump {
-    const { parentId, ...rest } = login
-    const out = JSON.parse(makeLoginJson(rest))
-    out.children = this.getLoginsByParent(login).map(child =>
-      this.dumpLogin(child)
-    )
-    return out
+  dumpLogin(login: DbLogin): mixed {
+    const makeTree = (login: DbLogin): DbLoginDump => ({
+      ...login,
+      children: this.getLoginsByParent(login).map(login => makeTree(login))
+    })
+    return wasDbLoginDump(makeTree(login))
   }
 }
 

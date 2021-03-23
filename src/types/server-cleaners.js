@@ -4,6 +4,7 @@ import {
   type Cleaner,
   asArray,
   asBoolean,
+  asCodec,
   asDate,
   asNumber,
   asObject,
@@ -60,7 +61,10 @@ export function makeLoginJson(value: mixed, spaces: number = 0): string {
 /**
  * A string of base64-encoded binary data.
  */
-export const asBase64: Cleaner<Uint8Array> = raw => base64.parse(asString(raw))
+export const asBase64: Cleaner<Uint8Array> = asCodec(
+  raw => base64.parse(asString(raw)),
+  clean => base64.stringify(clean)
+)
 
 // ---------------------------------------------------------------------
 // public Edge types
