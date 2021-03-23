@@ -4,7 +4,7 @@ import { base64 } from 'rfc4648'
 
 import {
   asQuestionChoicesPayload,
-  asStartRecoveryPayload
+  asRecovery2InfoPayload
 } from '../../types/server-cleaners.js'
 import { type ChangeRecovery2Payload } from '../../types/server-types.js'
 import {
@@ -87,7 +87,7 @@ export function getQuestions2(
     // "otp": null
   }
   return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
-    const { question2Box } = asStartRecoveryPayload(reply)
+    const { question2Box } = asRecovery2InfoPayload(reply)
     if (question2Box == null) {
       throw new Error('Login has no recovery questions')
     }

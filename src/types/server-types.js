@@ -256,6 +256,19 @@ export type QuestionChoicesPayload = EdgeRecoveryQuestionChoice[]
 /**
  * Returned when fetching the recovery questions for an account.
  */
-export type StartRecoveryPayload = {
+export type Recovery2InfoPayload = {
   question2Box: EdgeBox
+}
+
+/**
+ * Returned when fetching the password hashing options for an account.
+ */
+export type UsernameInfoPayload = {
+  // Password login:
+  passwordAuthSnrp?: EdgeSnrp,
+
+  // Recovery v1 login:
+  questionBox?: EdgeBox,
+  questionKeySnrp?: EdgeSnrp,
+  recoveryAuthSnrp?: EdgeSnrp
 }

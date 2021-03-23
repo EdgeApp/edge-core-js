@@ -33,7 +33,8 @@ import {
   type MessagesPayload,
   type OtpResetPayload,
   type QuestionChoicesPayload,
-  type StartRecoveryPayload
+  type Recovery2InfoPayload,
+  type UsernameInfoPayload
 } from './server-types.js'
 import {
   type EdgeLoginMessage,
@@ -310,6 +311,16 @@ export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> = asArray
   asEdgeRecoveryQuestionChoice
 )
 
-export const asStartRecoveryPayload: Cleaner<StartRecoveryPayload> = asObject({
+export const asRecovery2InfoPayload: Cleaner<Recovery2InfoPayload> = asObject({
   question2Box: asEdgeBox
+})
+
+export const asUsernameInfoPayload: Cleaner<UsernameInfoPayload> = asObject({
+  // Password login:
+  passwordAuthSnrp: asOptional(asEdgeSnrp),
+
+  // Recovery v1 login:
+  questionBox: asOptional(asEdgeBox),
+  questionKeySnrp: asOptional(asEdgeSnrp),
+  recoveryAuthSnrp: asOptional(asEdgeSnrp)
 })
