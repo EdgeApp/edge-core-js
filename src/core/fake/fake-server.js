@@ -40,9 +40,9 @@ import {
 } from './fake-db.js'
 import {
   jsonResponse,
-  loginResponse,
   otpErrorResponse,
   passwordErrorResponse,
+  payloadResponse,
   statusCodes,
   statusResponse
 } from './fake-responses.js'
@@ -165,7 +165,7 @@ const loginRoute: ApiServer = pickMethod({
     // Authenticated version:
     request => {
       const { db, login } = request
-      return loginResponse(makeLoginPayload(db, login))
+      return payloadResponse(makeLoginPayload(db, login))
     },
     // Fallback version:
     request => {
@@ -178,7 +178,7 @@ const loginRoute: ApiServer = pickMethod({
         if (login == null) {
           return statusResponse(statusCodes.noAccount)
         }
-        return loginResponse({
+        return payloadResponse({
           passwordAuthSnrp: login.passwordAuthSnrp
         })
       }
@@ -187,7 +187,7 @@ const loginRoute: ApiServer = pickMethod({
         if (login == null) {
           return statusResponse(statusCodes.noAccount)
         }
-        return loginResponse({
+        return payloadResponse({
           question2Box: login.question2Box
         })
       }
@@ -323,7 +323,7 @@ const otp2Route: ApiServer = pickMethod({
       if (login.otpResetDate == null) {
         login.otpResetDate = new Date(Date.now() + 1000 * otpTimeout)
       }
-      return loginResponse({
+      return payloadResponse({
         otpResetDate: login.otpResetDate
       })
     }
@@ -435,7 +435,7 @@ const secretRoute: ApiServer = withLogin2(
       login.loginAuth = clean.loginAuth
       login.loginAuthBox = clean.loginAuthBox
 
-      return loginResponse(makeLoginPayload(db, login))
+      return payloadResponse(makeLoginPayload(db, login))
     }
   })
 )
@@ -496,7 +496,7 @@ const lobbyRoute: ApiServer = pickMethod({
 
   GET: withLobby(request => {
     const { lobby } = request
-    return loginResponse(lobby)
+    return payloadResponse(lobby)
   }),
 
   DELETE: withLobby(request => {
@@ -529,7 +529,7 @@ const messagesRoute: ApiServer = pickMethod({
         })
       }
     }
-    return loginResponse(out)
+    return payloadResponse(out)
   }
 })
 
