@@ -321,8 +321,7 @@ const otp2Route: ApiServer = pickMethod({
         )
       }
       if (login.otpResetDate == null) {
-        const resetDate = new Date(Date.now() + 1000 * otpTimeout)
-        login.otpResetDate = resetDate.toISOString()
+        login.otpResetDate = new Date(Date.now() + 1000 * otpTimeout)
       }
       return loginResponse({
         otpResetDate: login.otpResetDate

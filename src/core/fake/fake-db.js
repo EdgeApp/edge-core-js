@@ -3,6 +3,7 @@
 import {
   type Cleaner,
   asArray,
+  asDate,
   asNumber,
   asObject,
   asOptional,
@@ -49,7 +50,7 @@ export type DbLogin = {
 
   // 2-factor login:
   otpKey?: string,
-  otpResetDate?: string, // date
+  otpResetDate?: Date,
   otpTimeout?: number,
 
   // Password login:
@@ -104,7 +105,7 @@ export const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
 
   // 2-factor login:
   otpKey: asOptional(asString),
-  otpResetDate: asOptional(asString), // asDate
+  otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
   // pendingVouchers: asOptional(asArray(asPendingVoucher), []),
 
