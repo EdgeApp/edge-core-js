@@ -6,6 +6,7 @@ import {
   type EdgeCurrencyTools,
   type EdgeLogSettings,
   type EdgePluginMap,
+  type EdgeRateHint,
   type EdgeTokenInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
@@ -255,6 +256,7 @@ export type RootAction =
         deviceDescription: string | null,
         hideKeys: boolean,
         logSettings: EdgeLogSettings,
+        rateHintCache: EdgeRateHint[],
         pluginsInit: EdgeCorePluginsInit,
         stashes: LoginStash[]
       }
@@ -310,4 +312,9 @@ export type RootAction =
   | {
       // Dummy action to propagate `next` changes.
       type: 'UPDATE_NEXT'
+    }
+  | {
+      // Fires when there are new rate hints to add to the cache
+      type: 'UPDATE_RATE_HINT_CACHE',
+      payload: { rateHintCache: EdgeRateHint[] }
     }

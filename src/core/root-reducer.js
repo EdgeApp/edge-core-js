@@ -2,10 +2,11 @@
 
 import { type BuiltReducer, buildReducer, mapReducer } from 'redux-keto'
 
-import { type EdgeLogSettings } from './../types/types.js'
+import { type EdgeLogSettings, type EdgeRateHint } from './../types/types.js'
 import { type AccountState, accountReducer } from './account/account-reducer.js'
 import { type RootAction } from './actions.js'
 import { type CurrencyState, currency } from './currency/currency-reducer.js'
+import { DEFAULT_RATE_HINTS } from './exchange/exchange-pixie'
 import {
   type ExchangeState,
   exchangeCache
@@ -30,7 +31,8 @@ export type RootState = {
   +login: LoginState,
   +paused: boolean,
   +plugins: PluginsState,
-  +storageWallets: StorageWalletsState
+  +storageWallets: StorageWalletsState,
+  rateHintCache: EdgeRateHint[]
 }
 
 export const defaultLogSettings: EdgeLogSettings = {
@@ -81,6 +83,15 @@ export const reducer: BuiltReducer<RootState, RootAction> = buildReducer({
         return action.payload.logSettings
       case 'CHANGE_LOG_SETTINGS':
         return action.payload
+    }
+    return state
+  },
+
+  rateHintCache(state = DEFAULT_RATE_HINTS, action): EdgeRateHint[] {
+    switch (action.type) {
+      case 'INIT':
+      case 'UPDATE_RATE_HINT_CACHE':
+        return action.payload.rateHintCache
     }
     return state
   },
