@@ -22,14 +22,13 @@ export const exchange: TamePixie<RootProps> = filterPixie(
         currency: { wallets }
       } = input.props.state
 
-      if (Object.keys(wallets).length > 0)
-        for (const wallet in wallets) {
-          const fiat = wallets[wallet].fiat
-          for (const cc in wallets[wallet].balances) {
-            if (isNewPair(cc, fiat, savedRateHints))
-              savedRateHints.push({ fromCurrency: cc, toCurrency: fiat })
-          }
+      for (const walletId of Object.keys(wallets)) {
+        const fiat = wallets[walletId].fiat
+        for (const cc of Object.keys(wallets[walletId].balances)) {
+          if (isNewPair(cc, fiat, savedRateHints))
+            savedRateHints.push({ fromCurrency: cc, toCurrency: fiat })
         }
+      }
 
       // No hints in memory or in cache, return defaults
       if (savedRateHints.length === 0 && rateHintCache.length === 0) {
@@ -48,7 +47,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
         )
         if (newHints.length > 0) {
           await input.props.io.disklet.setText(
-            'rateHintCache.txt',
+            'rateHintCache.json',
             JSON.stringify(rateHintCache.concat(newHints))
           )
           input.props.dispatch({
@@ -57,10 +56,10 @@ export const exchange: TamePixie<RootProps> = filterPixie(
               rateHintCache: rateHintCache.concat(newHints)
             }
           })
-          input.props.log.warn('Update rateHintCache.txt success')
+          input.props.log('Update rateHintCache.json success')
         }
       } catch (error) {
-        input.props.log.error('Update rateHintCache.txt error', error)
+        input.props.log.error('Update rateHintCache.json error', error)
         input.props.onError(new Error('Failed to write rateHintCache'))
       }
       return savedRateHints
