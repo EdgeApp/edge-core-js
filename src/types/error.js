@@ -80,11 +80,10 @@ export class InsufficientFundsError extends Error {
  */
 export class NetworkError extends Error {
   name: string
-  +type: string // deprecated
 
   constructor(message: string = 'Cannot reach the network') {
     super(message)
-    this.name = this.type = 'NetworkError'
+    this.name = 'NetworkError'
   }
 }
 
@@ -105,11 +104,10 @@ export class NoAmountSpecifiedError extends Error {
  */
 export class ObsoleteApiError extends Error {
   name: string
-  +type: string // deprecated
 
   constructor(message: string = 'The application is too old. Please upgrade.') {
     super(message)
-    this.name = this.type = 'ObsoleteApiError'
+    this.name = 'ObsoleteApiError'
   }
 }
 
@@ -125,7 +123,6 @@ export class ObsoleteApiError extends Error {
  */
 export class OtpError extends Error {
   name: string
-  +type: string // deprecated
   +loginId: string | void
   +reason: 'ip' | 'otp'
   +resetDate: Date | void
@@ -136,7 +133,7 @@ export class OtpError extends Error {
 
   constructor(resultsJson: mixed, message: string = 'Invalid OTP token') {
     super(message)
-    this.name = this.type = 'OtpError'
+    this.name = 'OtpError'
     this.reason = 'otp'
 
     try {
@@ -185,12 +182,11 @@ export class OtpError extends Error {
  */
 export class PasswordError extends Error {
   name: string
-  +type: string // deprecated
   +wait: number | void // seconds
 
   constructor(resultsJson: mixed, message: string = 'Invalid password') {
     super(message)
-    this.name = this.type = 'PasswordError'
+    this.name = 'PasswordError'
 
     try {
       const clean = asPasswordErrorPayload(resultsJson)
@@ -330,11 +326,10 @@ export class SwapPermissionError extends Error {
  */
 export class UsernameError extends Error {
   name: string
-  +type: string // deprecated
 
   constructor(message: string = 'Invalid username') {
     super(message)
-    this.name = this.type = 'UsernameError'
+    this.name = 'UsernameError'
   }
 }
 
