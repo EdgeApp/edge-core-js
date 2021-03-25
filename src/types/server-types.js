@@ -242,10 +242,30 @@ export type LoginPayload = {
 export type MessagesPayload = EdgeLoginMessage[]
 
 /**
+ * Returned when the 2fa authentication fails.
+ */
+export type OtpErrorPayload = {
+  login_id?: string,
+  otp_reset_auth?: string,
+  otp_timeout_date?: Date,
+  reason?: string,
+  voucher_activates?: Date,
+  voucher_auth?: string,
+  voucher_id?: string
+}
+
+/**
  * Returned when requesting a 2fa reset.
  */
 export type OtpResetPayload = {
   otpResetDate: Date
+}
+
+/**
+ * Returned when the password authentication fails.
+ */
+export type PasswordErrorPayload = {
+  wait_seconds?: number
 }
 
 /**

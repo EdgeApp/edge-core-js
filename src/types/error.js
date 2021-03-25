@@ -1,7 +1,6 @@
 // @flow
 
-import { asDate, asNumber, asObject, asOptional, asString } from 'cleaners'
-
+import { asOtpErrorPayload, asPasswordErrorPayload } from './server-cleaners.js'
 import type { EdgeSwapInfo } from './types.js'
 
 /*
@@ -150,7 +149,7 @@ export class OtpError extends Error {
     this.reason = 'otp'
 
     try {
-      const reply = asOtpErrorResults(resultsJson)
+      const reply = asOtpErrorPayload(resultsJson)
 
       // This should usually be present:
       if (reply.login_id != null) {
@@ -180,16 +179,6 @@ export class OtpError extends Error {
   }
 }
 
-const asOtpErrorResults = asObject({
-  login_id: asOptional(asString),
-  otp_reset_auth: asOptional(asString),
-  otp_timeout_date: asOptional(asDate),
-  reason: asOptional(asString),
-  voucher_activates: asOptional(asDate),
-  voucher_auth: asOptional(asString),
-  voucher_id: asOptional(asString)
-})
-
 /**
  * The provided authentication is incorrect.
  *
@@ -216,10 +205,6 @@ export class PasswordError extends Error {
     } catch (e) {}
   }
 }
-
-const asPasswordErrorPayload = asObject({
-  wait_seconds: asOptional(asNumber)
-})
 
 /**
  * Trying to spend funds that are not yet confirmed.

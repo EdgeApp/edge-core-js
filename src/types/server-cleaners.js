@@ -31,7 +31,9 @@ import {
   type LoginRequestBody,
   type LoginResponseBody,
   type MessagesPayload,
+  type OtpErrorPayload,
   type OtpResetPayload,
+  type PasswordErrorPayload,
   type QuestionChoicesPayload,
   type Recovery2InfoPayload,
   type UsernameInfoPayload
@@ -303,8 +305,22 @@ export const asMessagesPayload: Cleaner<MessagesPayload> = asArray(
   asEdgeLoginMessage
 )
 
+export const asOtpErrorPayload: Cleaner<OtpErrorPayload> = asObject({
+  login_id: asOptional(asString),
+  otp_reset_auth: asOptional(asString),
+  otp_timeout_date: asOptional(asDate),
+  reason: asOptional(asString),
+  voucher_activates: asOptional(asDate),
+  voucher_auth: asOptional(asString),
+  voucher_id: asOptional(asString)
+})
+
 export const asOtpResetPayload: Cleaner<OtpResetPayload> = asObject({
   otpResetDate: asDate
+})
+
+export const asPasswordErrorPayload: Cleaner<PasswordErrorPayload> = asObject({
+  wait_seconds: asOptional(asNumber)
 })
 
 export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> = asArray(
