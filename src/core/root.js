@@ -75,13 +75,13 @@ export async function makeContext(
   let rateHintCache = []
   try {
     rateHintCache = JSON.parse(await io.disklet.getText('rateHintCache.json'))
-    log.warn('Read rateHintCache.json success')
+    log('Read rateHintCache.json success')
   } catch (error) {
     if (error.code === 'ENOENT') {
       // Failure is ok if file doesn't exist
       try {
         await io.disklet.setText('rateHintCache.json', JSON.stringify([]))
-        log.warn('Create rateHintCache.json success')
+        log('Create rateHintCache.json success')
       } catch (error) {
         log.error('Create rateHintCache.json failure', error.message)
         throw error
