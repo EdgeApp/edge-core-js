@@ -48,7 +48,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
         )
         if (newHints.length > 0) {
           await input.props.io.disklet.setText(
-            'rateHintCache.txt',
+            'rateHintCache.json',
             JSON.stringify(rateHintCache.concat(newHints))
           )
           input.props.dispatch({
@@ -57,10 +57,10 @@ export const exchange: TamePixie<RootProps> = filterPixie(
               rateHintCache: rateHintCache.concat(newHints)
             }
           })
-          input.props.log.warn('Update rateHintCache.txt success')
+          input.props.log.warn('Update rateHintCache.json success')
         }
       } catch (error) {
-        input.props.log.error('Update rateHintCache.txt error', error)
+        input.props.log.error('Update rateHintCache.json error', error)
         input.props.onError(new Error('Failed to write rateHintCache'))
       }
       return savedRateHints

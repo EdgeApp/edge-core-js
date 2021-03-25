@@ -93,7 +93,7 @@ export function makeFakeWorld(
       }
 
       fakeIo.disklet.setText(
-        'rateHintCache.txt',
+        'rateHintCache.json',
         JSON.stringify([{ fromCurrency: 'FAKE', toCurrency: 'TOKEN' }])
       )
 
