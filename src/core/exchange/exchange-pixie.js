@@ -22,14 +22,13 @@ export const exchange: TamePixie<RootProps> = filterPixie(
         currency: { wallets }
       } = input.props.state
 
-      if (Object.keys(wallets).length > 0)
-        for (const wallet in wallets) {
-          const fiat = wallets[wallet].fiat
-          for (const cc in wallets[wallet].balances) {
-            if (isNewPair(cc, fiat, savedRateHints))
-              savedRateHints.push({ fromCurrency: cc, toCurrency: fiat })
-          }
+      for (const walletId of Object.keys(wallets)) {
+        const fiat = wallets[walletId].fiat
+        for (const cc of Object.keys(wallets[walletId].balances)) {
+          if (isNewPair(cc, fiat, savedRateHints))
+            savedRateHints.push({ fromCurrency: cc, toCurrency: fiat })
         }
+      }
 
       // No hints in memory or in cache, return defaults
       if (savedRateHints.length === 0 && rateHintCache.length === 0) {
