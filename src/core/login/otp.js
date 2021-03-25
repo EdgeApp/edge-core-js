@@ -1,9 +1,12 @@
 // @flow
 
+import { uncleaner } from 'cleaners'
 import { base32, base64 } from 'rfc4648'
 
-import { asOtpResetPayload } from '../../types/server-cleaners.js'
-import { type ChangeOtpPayload } from '../../types/server-types.js'
+import {
+  asChangeOtpPayload,
+  asOtpResetPayload
+} from '../../types/server-cleaners.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
 import { applyKit, searchTree, serverLogin } from '../login/login.js'
@@ -12,6 +15,8 @@ import { loginFetch } from './login-fetch.js'
 import { getStash, hashUsername } from './login-selectors.js'
 import { type LoginStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
+
+const wasChangeOtpPayload = uncleaner(asChangeOtpPayload)
 
 /**
  * Gets the current OTP for a logged-in account.
@@ -47,13 +52,12 @@ export async function enableOtp(
       ? fixOtpKey(loginTree.otpKey)
       : base32.stringify(ai.props.io.random(10))
 
-  const server: ChangeOtpPayload = {
-    otpKey,
-    otpTimeout
-  }
   const kit: LoginKit = {
     serverPath: '/v2/login/otp',
-    server,
+    server: wasChangeOtpPayload({
+      otpKey,
+      otpTimeout
+    }),
     stash: {
       otpKey,
       otpResetDate: undefined,
@@ -103,13 +107,12 @@ export async function cancelOtpReset(
     throw new Error('Cannot cancel 2FA reset: 2FA is not enabled.')
   }
 
-  const server: ChangeOtpPayload = {
-    otpTimeout,
-    otpKey
-  }
   const kit: LoginKit = {
     serverPath: '/v2/login/otp',
-    server,
+    server: wasChangeOtpPayload({
+      otpTimeout,
+      otpKey
+    }),
     stash: {
       otpResetDate: undefined
     },

@@ -1,15 +1,18 @@
 // @flow
 
+import { uncleaner } from 'cleaners'
 import { bridgifyObject } from 'yaob'
 
 import { type EdgeLobbyRequest } from '../../types/server-types.js'
 import { type EdgeLobby, type EdgeLoginRequest } from '../../types/types.js'
-import { type LobbyLoginPayload } from '../login/edge.js'
+import { asLobbyLoginPayload } from '../login/edge.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import { sanitizeLoginStash, syncAccount } from '../login/login.js'
 import { getStash } from '../login/login-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { ensureAccountExists, findAppLogin } from './account-init.js'
+
+const wasLobbyLoginPayload = uncleaner(asLobbyLoginPayload)
 
 type AppIdInfo = {
   displayName: string,
@@ -70,11 +73,11 @@ async function approveLoginRequest(
   const loginStash = sanitizeLoginStash(stashTree, appId)
 
   // Send the reply:
-  const replyData: LobbyLoginPayload = {
+  const replyData = wasLobbyLoginPayload({
     appId,
     loginKey: requestedLogin.loginKey,
     loginStash
-  }
+  })
   await sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
     let timeout: TimeoutID | void
     const accountApi = ai.props.output.accounts[accountId].api

@@ -4,6 +4,7 @@ import {
   type Cleaner,
   asArray,
   asBoolean,
+  asCodec,
   asDate,
   asNumber,
   asObject,
@@ -31,9 +32,12 @@ import {
   type LoginRequestBody,
   type LoginResponseBody,
   type MessagesPayload,
+  type OtpErrorPayload,
   type OtpResetPayload,
+  type PasswordErrorPayload,
   type QuestionChoicesPayload,
-  type StartRecoveryPayload
+  type Recovery2InfoPayload,
+  type UsernameInfoPayload
 } from './server-types.js'
 import {
   type EdgeLoginMessage,
@@ -41,23 +45,13 @@ import {
   type EdgeRecoveryQuestionChoice
 } from './types.js'
 
-export function makeLoginJson(value: mixed, spaces: number = 0): string {
-  return JSON.stringify(
-    value,
-    (key, value) => {
-      if (value instanceof Uint8Array) {
-        return base64.stringify(value)
-      }
-      return value
-    },
-    spaces
-  )
-}
-
 /**
  * A string of base64-encoded binary data.
  */
-export const asBase64: Cleaner<Uint8Array> = raw => base64.parse(asString(raw))
+export const asBase64: Cleaner<Uint8Array> = asCodec(
+  raw => base64.parse(asString(raw)),
+  clean => base64.stringify(clean)
+)
 
 // ---------------------------------------------------------------------
 // public Edge types
@@ -168,8 +162,10 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
   otpResetAuth: asOptional(asString),
 
   // Legacy:
+  did: asOptional(asString),
   l1: asOptional(asString),
   lp1: asOptional(asString),
+  lpin1: asOptional(asBase64),
   lra1: asOptional(asString),
   recoveryAuth: asOptional(asString) // lra1
 })
@@ -258,15 +254,14 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   created: asOptional(asDate),
   loginId: asString,
 
-  // 2-factor:
+  // Nested logins:
+  children: asOptional(asArray(raw => asLoginPayload(raw))),
+  parentBox: asOptional(asEdgeBox),
+
+  // 2-factor login:
   otpKey: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
-  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
-
-  // Return logins:
-  loginAuthBox: asOptional(asEdgeBox),
-  parentBox: asOptional(asEdgeBox),
 
   // Password login:
   passwordAuthBox: asOptional(asEdgeBox),
@@ -284,8 +279,13 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   recovery2Box: asOptional(asEdgeBox),
   recovery2KeyBox: asOptional(asEdgeBox),
 
+  // Secret-key login:
+  loginAuthBox: asOptional(asEdgeBox),
+
+  // Voucher login:
+  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
+
   // Resources:
-  children: asOptional(asArray(raw => asLoginPayload(raw))),
   keyBoxes: asOptional(asArray(asEdgeBox)),
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
@@ -296,14 +296,38 @@ export const asMessagesPayload: Cleaner<MessagesPayload> = asArray(
   asEdgeLoginMessage
 )
 
+export const asOtpErrorPayload: Cleaner<OtpErrorPayload> = asObject({
+  login_id: asOptional(asString),
+  otp_reset_auth: asOptional(asString),
+  otp_timeout_date: asOptional(asDate),
+  reason: asOptional(asString),
+  voucher_activates: asOptional(asDate),
+  voucher_auth: asOptional(asBase64),
+  voucher_id: asOptional(asString)
+})
+
 export const asOtpResetPayload: Cleaner<OtpResetPayload> = asObject({
   otpResetDate: asDate
+})
+
+export const asPasswordErrorPayload: Cleaner<PasswordErrorPayload> = asObject({
+  wait_seconds: asOptional(asNumber)
 })
 
 export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> = asArray(
   asEdgeRecoveryQuestionChoice
 )
 
-export const asStartRecoveryPayload: Cleaner<StartRecoveryPayload> = asObject({
+export const asRecovery2InfoPayload: Cleaner<Recovery2InfoPayload> = asObject({
   question2Box: asEdgeBox
+})
+
+export const asUsernameInfoPayload: Cleaner<UsernameInfoPayload> = asObject({
+  // Password login:
+  passwordAuthSnrp: asOptional(asEdgeSnrp),
+
+  // Recovery v1 login:
+  questionBox: asOptional(asEdgeBox),
+  questionKeySnrp: asOptional(asEdgeSnrp),
+  recoveryAuthSnrp: asOptional(asEdgeSnrp)
 })

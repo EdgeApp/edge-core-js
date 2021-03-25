@@ -86,8 +86,10 @@ export type LoginRequestBody = {
   otpResetAuth?: string,
 
   // Legacy:
+  did?: string,
   l1?: string,
   lp1?: string,
+  lpin1?: Uint8Array,
   lra1?: string,
   recoveryAuth?: string // lra1
 }
@@ -165,16 +167,6 @@ export type CreateLoginPayload = {
   // ...CreateKeysPayload
 }
 
-export type LoginRequestPayload =
-  | ChangeOtpPayload
-  | ChangePasswordPayload
-  | ChangePin2Payload
-  | ChangeRecovery2Payload
-  | ChangeSecretPayload
-  | ChangeVouchersPayload
-  | CreateKeysPayload
-  | CreateLoginPayload
-
 // ---------------------------------------------------------------------
 // response payloads
 // ---------------------------------------------------------------------
@@ -193,18 +185,17 @@ export type LobbyPayload = {
 export type LoginPayload = {
   // Identity:
   appId: string,
-  created?: Date,
+  created?: Date, // Not actually optional
   loginId: string,
 
-  // 2-factor:
+  // Nested logins:
+  children?: LoginPayload[],
+  parentBox?: EdgeBox,
+
+  // 2-factor login:
   otpKey?: string,
   otpResetDate?: Date,
   otpTimeout?: number,
-  pendingVouchers: EdgePendingVoucher[],
-
-  // Return logins:
-  loginAuthBox?: EdgeBox,
-  parentBox?: EdgeBox,
 
   // Password login:
   passwordAuthBox?: EdgeBox,
@@ -222,8 +213,13 @@ export type LoginPayload = {
   recovery2Box?: EdgeBox,
   recovery2KeyBox?: EdgeBox,
 
+  // Secret-key login:
+  loginAuthBox?: EdgeBox,
+
+  // Voucher login:
+  pendingVouchers: EdgePendingVoucher[],
+
   // Resources:
-  children?: LoginPayload[],
   keyBoxes?: EdgeBox[],
   mnemonicBox?: EdgeBox,
   rootKeyBox?: EdgeBox,
@@ -236,10 +232,30 @@ export type LoginPayload = {
 export type MessagesPayload = EdgeLoginMessage[]
 
 /**
+ * Returned when the 2fa authentication fails.
+ */
+export type OtpErrorPayload = {
+  login_id?: string,
+  otp_reset_auth?: string,
+  otp_timeout_date?: Date,
+  reason?: string,
+  voucher_activates?: Date,
+  voucher_auth?: Uint8Array,
+  voucher_id?: string
+}
+
+/**
  * Returned when requesting a 2fa reset.
  */
 export type OtpResetPayload = {
   otpResetDate: Date
+}
+
+/**
+ * Returned when the password authentication fails.
+ */
+export type PasswordErrorPayload = {
+  wait_seconds?: number
 }
 
 /**
@@ -250,6 +266,19 @@ export type QuestionChoicesPayload = EdgeRecoveryQuestionChoice[]
 /**
  * Returned when fetching the recovery questions for an account.
  */
-export type StartRecoveryPayload = {
+export type Recovery2InfoPayload = {
   question2Box: EdgeBox
+}
+
+/**
+ * Returned when fetching the password hashing options for an account.
+ */
+export type UsernameInfoPayload = {
+  // Password login:
+  passwordAuthSnrp?: EdgeSnrp,
+
+  // Recovery v1 login:
+  questionBox?: EdgeBox,
+  questionKeySnrp?: EdgeSnrp,
+  recoveryAuthSnrp?: EdgeSnrp
 }

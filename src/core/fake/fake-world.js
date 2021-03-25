@@ -1,11 +1,12 @@
 // @flow
 
+import { uncleaner } from 'cleaners'
 import { makeMemoryDisklet } from 'disklet'
 import { base16, base64 } from 'rfc4648'
 import { bridgifyObject, close } from 'yaob'
 
 import { fixUsername } from '../../client-side.js'
-import { asLoginPayload, makeLoginJson } from '../../types/server-cleaners.js'
+import { asLoginPayload } from '../../types/server-cleaners.js'
 import {
   type EdgeAccount,
   type EdgeContext,
@@ -17,11 +18,14 @@ import {
 import { base58 } from '../../util/encoding.js'
 import { makeFetch } from '../../util/http/http-to-fetch.js'
 import { applyLoginPayload } from '../login/login.js'
+import { asLoginStash } from '../login/login-stash.js'
 import { type PluginIos } from '../plugins/plugins-actions.js'
 import { makeContext } from '../root.js'
 import { makeRepoPaths, saveChanges } from '../storage/repo.js'
 import { FakeDb } from './fake-db.js'
 import { makeFakeServer } from './fake-server.js'
+
+const wasLoginStash = uncleaner(asLoginStash)
 
 async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
   const { loginId, loginKey, username } = user
@@ -39,7 +43,7 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
     asLoginPayload(user.server)
   )
   const path = `logins/${base58.stringify(base64.parse(loginId))}.json`
-  await io.disklet.setText(path, makeLoginJson(stash))
+  await io.disklet.setText(path, JSON.stringify(wasLoginStash(stash)))
 
   // Save the repos:
   await Promise.all(

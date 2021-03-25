@@ -1,12 +1,13 @@
 // @flow
 
+import { uncleaner } from 'cleaners'
 import { base64 } from 'rfc4648'
 
 import {
+  asChangeRecovery2Payload,
   asQuestionChoicesPayload,
-  asStartRecoveryPayload
+  asRecovery2InfoPayload
 } from '../../types/server-cleaners.js'
-import { type ChangeRecovery2Payload } from '../../types/server-types.js'
 import {
   type EdgeAccountOptions,
   type EdgeRecoveryQuestionChoice
@@ -20,6 +21,8 @@ import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
 import { type LoginStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
+
+const wasChangeRecovery2Payload = uncleaner(asChangeRecovery2Payload)
 
 function recovery2Id(recovery2Key: Uint8Array, username: string): Uint8Array {
   const data = utf8.parse(fixUsername(username))
@@ -87,7 +90,7 @@ export function getQuestions2(
     // "otp": null
   }
   return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
-    const { question2Box } = asStartRecoveryPayload(reply)
+    const { question2Box } = asRecovery2InfoPayload(reply)
     if (question2Box == null) {
       throw new Error('Login has no recovery questions')
     }
@@ -156,16 +159,15 @@ export function makeRecovery2Kit(
   const recovery2Box = encrypt(io, login.loginKey, recovery2Key)
   const recovery2KeyBox = encrypt(io, recovery2Key, login.loginKey)
 
-  const server: ChangeRecovery2Payload = {
-    recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
-    recovery2Auth: recovery2Auth(recovery2Key, answers),
-    recovery2Box,
-    recovery2KeyBox,
-    question2Box
-  }
   return {
     serverPath: '/v2/login/recovery2',
-    server,
+    server: wasChangeRecovery2Payload({
+      recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
+      recovery2Auth: recovery2Auth(recovery2Key, answers),
+      recovery2Box,
+      recovery2KeyBox,
+      question2Box
+    }),
     stash: {
       recovery2Key: base64.stringify(recovery2Key)
     },

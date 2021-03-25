@@ -1,8 +1,9 @@
 // @flow
 
+import { uncleaner } from 'cleaners'
 import { base64 } from 'rfc4648'
 
-import { type ChangePasswordPayload } from '../../types/server-types.js'
+import { asChangePasswordPayload } from '../../types/server-cleaners.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { decrypt, encrypt } from '../../util/crypto/crypto.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -12,7 +13,8 @@ import { fixUsername, getStash, hashUsername } from './login-selectors.js'
 import { saveStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 
-export const passwordAuthSnrp = userIdSnrp
+const wasChangePasswordPayload = uncleaner(asChangePasswordPayload)
+const passwordAuthSnrp = userIdSnrp
 
 function makeHashInput(username: string, password: string): string {
   return fixUsername(username) + password
@@ -190,16 +192,15 @@ export function makePasswordKit(
       { passwordAuth, passwordAuthBox }
     ] = values
 
-    const server: ChangePasswordPayload = {
-      passwordAuth: base64.stringify(passwordAuth),
-      passwordAuthSnrp, // TODO: Use this on the other side
-      passwordKeySnrp,
-      passwordBox,
-      passwordAuthBox
-    }
     return {
       serverPath: '/v2/login/password',
-      server,
+      server: wasChangePasswordPayload({
+        passwordAuth: base64.stringify(passwordAuth),
+        passwordAuthSnrp, // TODO: Use this on the other side
+        passwordKeySnrp,
+        passwordBox,
+        passwordAuthBox
+      }),
       stash: {
         passwordKeySnrp,
         passwordBox,

@@ -1,8 +1,10 @@
 // @flow
 
+import { uncleaner } from 'cleaners'
+
 import {
-  asLoginResponseBody,
-  makeLoginJson
+  asLoginRequestBody,
+  asLoginResponseBody
 } from '../../types/server-cleaners.js'
 import { type LoginRequestBody } from '../../types/server-types.js'
 import {
@@ -15,6 +17,8 @@ import {
 } from '../../types/types.js'
 import { timeout } from '../../util/promise.js'
 import { type ApiInput } from '../root-pixie.js'
+
+const wasLoginRequestBody = uncleaner(asLoginRequestBody)
 
 export function parseReply(json: mixed): mixed {
   const clean = asLoginResponseBody(json)
@@ -68,8 +72,8 @@ export function loginFetch(
       }`
     }
   }
-  if (method !== 'GET') {
-    opts.body = makeLoginJson(body)
+  if (method !== 'GET' && body != null) {
+    opts.body = JSON.stringify(wasLoginRequestBody(body))
   }
 
   const start = Date.now()

@@ -70,8 +70,11 @@ describe('context', function () {
     // The PIN login upgrades the account, so the dump will have extra stuff:
     expect(dump.server.loginAuthBox != null).equals(true)
     expect(dump.server.loginAuth != null).equals(true)
-    delete dump.server.loginAuthBox
-    delete dump.server.loginAuth
+    dump.server.loginAuthBox = undefined
+    dump.server.loginAuth = undefined
+
+    // Get rid of extra `undefined` fields:
+    dump.server = JSON.parse(JSON.stringify(dump.server))
 
     // require('fs').writeFileSync('./fake-user.json', JSON.stringify(dump))
     expect(dump).deep.equals(fakeUserDump)

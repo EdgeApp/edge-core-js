@@ -1,6 +1,5 @@
 // @flow
 
-import { type LoginRequestPayload } from '../../types/server-types.js'
 import {
   type EdgePendingVoucher,
   type EdgeWalletInfo,
@@ -50,7 +49,7 @@ export type AppIdMap = { [walletId: string]: string[] }
 export type LoginKit = {
   loginId: string,
   login: $Shape<LoginTree>,
-  server?: LoginRequestPayload,
+  server?: mixed,
   serverMethod?: string,
   serverPath: string,
   stash: $Shape<LoginStash>

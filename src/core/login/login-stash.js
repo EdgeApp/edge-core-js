@@ -7,7 +7,8 @@ import {
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  uncleaner
 } from 'cleaners'
 import { type Disklet, justFiles } from 'disklet'
 import { base64 } from 'rfc4648'
@@ -16,8 +17,7 @@ import {
   asBase64,
   asEdgeBox,
   asEdgePendingVoucher,
-  asEdgeSnrp,
-  makeLoginJson
+  asEdgeSnrp
 } from '../../types/server-cleaners.js'
 import { type EdgeBox, type EdgeSnrp } from '../../types/server-types.js'
 import { type EdgeLog, type EdgePendingVoucher } from '../../types/types.js'
@@ -136,7 +136,7 @@ export async function saveStash(
   }
   await io.disklet.setText(
     `logins/${base58.stringify(loginId)}.json`,
-    makeLoginJson(stashTree)
+    JSON.stringify(wasLoginStash(stashTree))
   )
 
   dispatch({ type: 'LOGIN_STASH_SAVED', payload: stashTree })
@@ -183,3 +183,4 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   rootKeyBox: asOptional(asEdgeBox),
   syncKeyBox: asOptional(asEdgeBox)
 })
+const wasLoginStash = uncleaner(asLoginStash)
