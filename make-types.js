@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
-const babel = require('@babel/core')
 const { makeNodeDisklet } = require('disklet')
 const eslint = require('eslint')
+const path = require('path')
+const { promisify } = require('util')
+const webpack = require('webpack')
 
 function jsToTs(code) {
   const output = code
@@ -39,15 +41,31 @@ async function main() {
   )
 
   // Transpile error classes to plain Javascript for use by core plugins:
-  const errorFile = await disklet.getText('src/types/error.js', 'utf8')
-  const errorJs = babel.transformSync(errorFile, {
-    presets: ['@babel/preset-flow'],
-    plugins: [
-      '@babel/plugin-transform-modules-commonjs',
-      'babel-plugin-transform-fake-error-class'
-    ]
-  }).code
-  await disklet.setText('types.js', errorJs)
+  await promisify(webpack)({
+    entry: './src/types/types.js',
+    externals: ['cleaners', 'rfc4648'],
+    mode: 'production',
+    module: {
+      rules: [
+        {
+          test: /\.js$/,
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-flow'],
+              plugins: ['babel-plugin-transform-fake-error-class']
+            }
+          }
+        }
+      ]
+    },
+    optimization: { minimize: false },
+    output: {
+      filename: 'types.js',
+      libraryTarget: 'commonjs',
+      path: path.resolve(__dirname)
+    }
+  })
 
   // Transpile Flow types to Typescript:
   for (const file of files) {
