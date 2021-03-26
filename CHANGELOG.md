@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.17.28 (2021-03-25)
+
+- Fix a code-packaging error in the previous release.
+
 ## 0.17.27 (2021-03-25)
 
 - Improve the `EdgePendingEdgeLogin` API.
