@@ -1,5 +1,15 @@
 # edge-core-js
 
+## 0.17.27 (2021-03-25)
+
+- Improve the `EdgePendingEdgeLogin` API.
+  - Add a `state` field to track the progress of the barcode login.
+  - Add other fields to hold the outcome of the barcode login.
+  - Add a `watch` method to track changes to these fields.
+- Allow `EdgeCurrencyEngine.dumpData` to return a promise.
+- Cache exchange-rate hints from all local accounts to speed up initial rates query.
+- Validate incoming & outgoing network requests even more thoroughly.
+
 ## 0.17.26 (2021-02-28)
 
 - Fix the `EdgeContext.listRecoveryQuestionChoices` method.
