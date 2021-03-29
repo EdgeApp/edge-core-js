@@ -2,17 +2,19 @@
 
 import { makeLocalStorageDisklet } from 'disklet'
 
+import { fakeErrorReporter } from '../../core/fake/fake-io.js'
 import {
   type EdgeFetchOptions,
   type EdgeFetchResponse,
-  type EdgeIo
+  type EdgeIo,
+  type ErrorReporter
 } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 
 /**
  * Extracts the io functions we need from the browser.
  */
-export function makeBrowserIo(): EdgeIo {
+export function makeBrowserIo(errorReporter?: ErrorReporter): EdgeIo {
   if (typeof window === 'undefined') {
     throw new Error('No `window` object')
   }
@@ -34,6 +36,7 @@ export function makeBrowserIo(): EdgeIo {
     disklet: makeLocalStorageDisklet(window.localStorage, {
       prefix: 'airbitz'
     }),
+    errorReporter: errorReporter ?? fakeErrorReporter,
 
     // Networking:
     fetch(uri: string, opts?: EdgeFetchOptions): Promise<EdgeFetchResponse> {

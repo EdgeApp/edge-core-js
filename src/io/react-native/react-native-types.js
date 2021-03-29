@@ -10,13 +10,15 @@ import {
   type EdgeFetchOptions,
   type EdgeNativeIo,
   type EdgeOnLog,
-  type EdgeScryptFunction
+  type EdgeScryptFunction,
+  type ErrorReporter
 } from '../../types/types.js'
 import { type HttpResponse } from '../../util/http/http-types.js'
 
 export type ClientIo = {
   +disklet: Disklet,
   +onLog: EdgeOnLog,
+  +errorReporter: ErrorReporter,
 
   +entropy: string, // base64
   +scrypt: EdgeScryptFunction,

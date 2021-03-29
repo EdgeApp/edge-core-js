@@ -5,7 +5,8 @@ import { makeMemoryDisklet } from 'disklet'
 import {
   type EdgeFetchFunction,
   type EdgeIo,
-  type EdgeRandomFunction
+  type EdgeRandomFunction,
+  type ErrorReporter
 } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 
@@ -33,6 +34,11 @@ const fakeFetch: EdgeFetchFunction = () => {
   return Promise.reject(new Error('Fake network error'))
 }
 
+export const fakeErrorReporter: ErrorReporter = {
+  notify: () => {},
+  leaveBreadcrumb: () => {}
+}
+
 /**
  * Creates a simulated io context object.
  */
@@ -45,6 +51,7 @@ export function makeFakeIo(): EdgeIo {
     // Local io:
     console,
     disklet: makeMemoryDisklet(),
+    errorReporter: fakeErrorReporter,
 
     // Networking:
     fetch: fakeFetch

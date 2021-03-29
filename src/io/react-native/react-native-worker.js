@@ -42,7 +42,7 @@ window.addEdgeCorePlugins = addEdgeCorePlugins
 window.lockEdgeCorePlugins = lockEdgeCorePlugins
 
 function makeIo(clientIo: ClientIo): EdgeIo {
-  const { disklet, entropy, scrypt } = clientIo
+  const { disklet, entropy, scrypt, errorReporter } = clientIo
   const csprng = new HmacDRBG({
     hash: hashjs.sha256,
     entropy: base64.parse(entropy)
@@ -51,6 +51,7 @@ function makeIo(clientIo: ClientIo): EdgeIo {
   return {
     console,
     disklet,
+    errorReporter,
 
     random: bytes => csprng.generate(bytes),
     scrypt,

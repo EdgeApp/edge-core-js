@@ -8,7 +8,11 @@ import RNFS from 'react-native-fs'
 import { WebView } from 'react-native-webview'
 import { Bridge, bridgifyObject, onMethod } from 'yaob'
 
-import { type EdgeLogEvent, type EdgeNativeIo } from '../../types/types.js'
+import {
+  type EdgeLogEvent,
+  type EdgeNativeIo,
+  type ErrorReporter
+} from '../../types/types.js'
 import { makeClientIo } from './react-native-io.js'
 import { type WorkerApi } from './react-native-types.js'
 
@@ -105,6 +109,11 @@ function makeOuterWebViewBridge<Root>(
   return { handleMessage, setRef }
 }
 
+const fakeErrorReporter: ErrorReporter = {
+  notify: () => {},
+  leaveBreadcrumb: () => {}
+}
+
 /**
  * Launches the Edge core worker in a WebView and returns its API.
  */
@@ -115,8 +124,10 @@ export class EdgeCoreBridge extends React.Component<Props> {
     super(props)
     const { nativeIo = {}, onLog, debug = false } = props
 
+    const errorReporter = nativeIo.errorReporter ?? fakeErrorReporter
+
     // Set up the native IO objects:
-    const nativeIoPromise = makeClientIo(onLog).then(coreIo => {
+    const nativeIoPromise = makeClientIo(onLog, errorReporter).then(coreIo => {
       const bridgedIo: EdgeNativeIo = { 'edge-core': coreIo }
       for (const n in nativeIo) {
         bridgedIo[n] = bridgifyObject(nativeIo[n])

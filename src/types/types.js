@@ -101,6 +101,21 @@ export type EdgeFetchFunction = (
 ) => Promise<EdgeFetchResponse>
 
 /**
+ * Give plugins access to error reporting in GUI
+ */
+export type NotifyError = (error: Error, metadata: Object) => void
+
+export type LeaveBreadcrumb = (
+  message: string,
+  metadata: { [key: string]: any }
+) => void
+
+export type ErrorReporter = {
+  +notify: NotifyError,
+  +leaveBreadcrumb: LeaveBreadcrumb
+}
+
+/**
  * Access to platform-specific resources.
  * The core never talks to the outside world on its own,
  * but always goes through this object.
@@ -113,6 +128,7 @@ export type EdgeIo = {
   // Local io:
   +disklet: Disklet,
   +fetch: EdgeFetchFunction,
+  +errorReporter: ErrorReporter,
 
   // This is only present if the platform has some way to avoid CORS:
   +fetchCors?: EdgeFetchFunction,

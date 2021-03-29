@@ -8,6 +8,7 @@ import { bridgifyObject } from 'yaob'
 import {
   type EdgeFetchOptions,
   type EdgeOnLog,
+  type ErrorReporter,
   NetworkError
 } from '../../types/types.js'
 import {
@@ -72,7 +73,10 @@ function fetchCors(
   })
 }
 
-export function makeClientIo(onLog: EdgeOnLog): Promise<ClientIo> {
+export function makeClientIo(
+  onLog: EdgeOnLog,
+  errorReporter: ErrorReporter
+): Promise<ClientIo> {
   return new Promise((resolve, reject) => {
     randomBytes(32, (error, base64String) => {
       if (error != null) return reject(error)
@@ -85,6 +89,7 @@ export function makeClientIo(onLog: EdgeOnLog): Promise<ClientIo> {
         // Local IO:
         disklet: bridgifyObject(makeReactNativeDisklet()),
         onLog,
+        errorReporter,
 
         // Networking:
         fetchCors

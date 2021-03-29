@@ -4,7 +4,8 @@ import crypto from 'crypto'
 import { makeNodeDisklet } from 'disklet'
 import fetch from 'node-fetch'
 
-import { type EdgeIo } from '../../types/types.js'
+import { fakeErrorReporter } from '../../core/fake/fake-io.js'
+import { type EdgeIo, type ErrorReporter } from '../../types/types.js'
 import { scrypt } from '../../util/crypto/scrypt.js'
 
 /**
@@ -12,7 +13,10 @@ import { scrypt } from '../../util/crypto/scrypt.js'
  *
  * @param {string} path Location where data should be written to disk.
  */
-export function makeNodeIo(path: string): EdgeIo {
+export function makeNodeIo(
+  path: string,
+  errorReporter?: ErrorReporter
+): EdgeIo {
   return {
     // Crypto:
     random(bytes: number) {
@@ -23,6 +27,7 @@ export function makeNodeIo(path: string): EdgeIo {
     // Local io:
     console,
     disklet: makeNodeDisklet(path),
+    errorReporter: errorReporter ?? fakeErrorReporter,
 
     // Networking:
     fetch,
