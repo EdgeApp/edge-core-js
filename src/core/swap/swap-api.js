@@ -8,7 +8,12 @@ import {
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeSwapRequestOptions,
-  errorNames
+  asMaybeInsufficientFundsError,
+  asMaybePendingFundsError,
+  asMaybeSwapAboveLimitError,
+  asMaybeSwapBelowLimitError,
+  asMaybeSwapCurrencyError,
+  asMaybeSwapPermissionError
 } from '../../types/types.js'
 import { fuzzyTimeout } from '../../util/promise.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -120,7 +125,7 @@ function pickBestQuote(
 /**
  * Picks the best error out of the available choices.
  */
-function pickBestError(errors: any[]): any {
+function pickBestError(errors: mixed[]): mixed {
   return errors.reduce((a, b) => {
     // Return the highest-ranked error:
     const diff = rankError(a) - rankError(b)
@@ -128,11 +133,15 @@ function pickBestError(errors: any[]): any {
     if (diff < 0) return b
 
     // Same ranking, so use amounts to distinguish:
-    if (a.name === errorNames.SwapBelowLimitError) {
-      return lt(a.nativeMin, b.nativeMin) ? a : b
+    const aBelow = asMaybeSwapBelowLimitError(a)
+    const bBelow = asMaybeSwapBelowLimitError(b)
+    if (aBelow != null && bBelow != null) {
+      return lt(aBelow.nativeMin, bBelow.nativeMin) ? aBelow : bBelow
     }
-    if (a.name === errorNames.SwapAboveLimitError) {
-      return gt(a.nativeMax, b.nativeMax) ? a : b
+    const aAbove = asMaybeSwapAboveLimitError(a)
+    const bAbove = asMaybeSwapAboveLimitError(b)
+    if (aAbove != null && bAbove != null) {
+      return gt(aAbove.nativeMax, bAbove.nativeMax) ? aAbove : bAbove
     }
 
     // Otherwise, just pick one:
@@ -143,13 +152,13 @@ function pickBestError(errors: any[]): any {
 /**
  * Ranks different error codes by priority.
  */
-function rankError(error: any): number {
+function rankError(error: mixed): number {
   if (error == null) return 0
-  if (error.name === errorNames.InsufficientFundsError) return 6
-  if (error.name === errorNames.PendingFundsError) return 6
-  if (error.name === errorNames.SwapBelowLimitError) return 5
-  if (error.name === errorNames.SwapAboveLimitError) return 4
-  if (error.name === errorNames.SwapPermissionError) return 3
-  if (error.name === errorNames.SwapCurrencyError) return 2
+  if (asMaybeInsufficientFundsError(error) != null) return 6
+  if (asMaybePendingFundsError(error) != null) return 6
+  if (asMaybeSwapBelowLimitError(error) != null) return 5
+  if (asMaybeSwapAboveLimitError(error) != null) return 4
+  if (asMaybeSwapPermissionError(error) != null) return 3
+  if (asMaybeSwapCurrencyError(error) != null) return 2
   return 1
 }

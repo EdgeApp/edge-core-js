@@ -1,5 +1,6 @@
 // @flow
 
+import { type Cleaner } from 'cleaners'
 import { base64 } from 'rfc4648'
 
 import { asOtpErrorPayload, asPasswordErrorPayload } from './server-cleaners.js'
@@ -45,7 +46,7 @@ export class DustSpendError extends Error {
 
   constructor(message: string = 'Please send a larger amount') {
     super(message)
-    this.name = errorNames.DustSpendError
+    this.name = 'DustSpendError'
   }
 }
 
@@ -69,7 +70,7 @@ export class InsufficientFundsError extends Error {
     }
 
     super(message)
-    this.name = errorNames.InsufficientFundsError
+    this.name = 'InsufficientFundsError'
     if (currencyCode != null) this.currencyCode = currencyCode
   }
 }
@@ -83,7 +84,7 @@ export class NetworkError extends Error {
 
   constructor(message: string = 'Cannot reach the network') {
     super(message)
-    this.name = this.type = errorNames.NetworkError
+    this.name = this.type = 'NetworkError'
   }
 }
 
@@ -95,7 +96,7 @@ export class NoAmountSpecifiedError extends Error {
 
   constructor(message: string = 'Unable to create zero-amount transaction.') {
     super(message)
-    this.name = errorNames.NoAmountSpecifiedError
+    this.name = 'NoAmountSpecifiedError'
   }
 }
 
@@ -108,7 +109,7 @@ export class ObsoleteApiError extends Error {
 
   constructor(message: string = 'The application is too old. Please upgrade.') {
     super(message)
-    this.name = this.type = errorNames.ObsoleteApiError
+    this.name = this.type = 'ObsoleteApiError'
   }
 }
 
@@ -135,7 +136,7 @@ export class OtpError extends Error {
 
   constructor(resultsJson: mixed, message: string = 'Invalid OTP token') {
     super(message)
-    this.name = this.type = errorNames.OtpError
+    this.name = this.type = 'OtpError'
     this.reason = 'otp'
 
     try {
@@ -189,7 +190,7 @@ export class PasswordError extends Error {
 
   constructor(resultsJson: mixed, message: string = 'Invalid password') {
     super(message)
-    this.name = this.type = errorNames.PasswordError
+    this.name = this.type = 'PasswordError'
 
     try {
       const clean = asPasswordErrorPayload(resultsJson)
@@ -206,7 +207,7 @@ export class PendingFundsError extends Error {
 
   constructor(message: string = 'Not enough confirmed funds') {
     super(message)
-    this.name = errorNames.PendingFundsError
+    this.name = 'PendingFundsError'
   }
 }
 
@@ -218,7 +219,7 @@ export class SameCurrencyError extends Error {
 
   constructor(message: string = 'Wallets can not be the same currency') {
     super(message)
-    this.name = errorNames.SameCurrencyError
+    this.name = 'SameCurrencyError'
   }
 }
 
@@ -230,7 +231,7 @@ export class SpendToSelfError extends Error {
 
   constructor(message: string = 'Spending to self') {
     super(message)
-    this.name = errorNames.SpendToSelfError
+    this.name = 'SpendToSelfError'
   }
 }
 
@@ -245,7 +246,7 @@ export class SwapAboveLimitError extends Error {
 
   constructor(swapInfo: EdgeSwapInfo, nativeMax: string) {
     super('Amount is too high')
-    this.name = errorNames.SwapAboveLimitError
+    this.name = 'SwapAboveLimitError'
     this.pluginId = swapInfo.pluginId
     this.nativeMax = nativeMax
   }
@@ -262,7 +263,7 @@ export class SwapBelowLimitError extends Error {
 
   constructor(swapInfo: EdgeSwapInfo, nativeMin: string) {
     super('Amount is too low')
-    this.name = errorNames.SwapBelowLimitError
+    this.name = 'SwapBelowLimitError'
     this.pluginId = swapInfo.pluginId
     this.nativeMin = nativeMin
   }
@@ -285,7 +286,7 @@ export class SwapCurrencyError extends Error {
     super(
       `${swapInfo.displayName} does not support ${fromCurrency} to ${toCurrency}`
     )
-    this.name = errorNames.SwapCurrencyError
+    this.name = 'SwapCurrencyError'
     this.pluginId = swapInfo.pluginId
     this.fromCurrency = fromCurrency
     this.toCurrency = toCurrency
@@ -313,7 +314,7 @@ export class SwapPermissionError extends Error {
   constructor(swapInfo: EdgeSwapInfo, reason?: SwapPermissionReason) {
     if (reason != null) super(reason)
     else super('You are not allowed to make this trade')
-    this.name = errorNames.SwapPermissionError
+    this.name = 'SwapPermissionError'
     this.pluginId = swapInfo.pluginId
     this.reason = reason
   }
@@ -333,6 +334,61 @@ export class UsernameError extends Error {
 
   constructor(message: string = 'Invalid username') {
     super(message)
-    this.name = this.type = errorNames.UsernameError
+    this.name = this.type = 'UsernameError'
   }
 }
+
+function asMaybeError<T>(name: string): Cleaner<T | void> {
+  return function asError(raw) {
+    if (raw instanceof Error && raw.name === name) {
+      const typeHack: any = raw
+      return typeHack
+    }
+  }
+}
+
+export const asMaybeDustSpendError: Cleaner<DustSpendError | void> = asMaybeError(
+  'DustSpendError'
+)
+export const asMaybeInsufficientFundsError: Cleaner<InsufficientFundsError | void> = asMaybeError(
+  'InsufficientFundsError'
+)
+export const asMaybeNetworkError: Cleaner<NetworkError | void> = asMaybeError(
+  'NetworkError'
+)
+export const asMaybeNoAmountSpecifiedError: Cleaner<NoAmountSpecifiedError | void> = asMaybeError(
+  'NoAmountSpecifiedError'
+)
+export const asMaybeObsoleteApiError: Cleaner<ObsoleteApiError | void> = asMaybeError(
+  'ObsoleteApiError'
+)
+export const asMaybeOtpError: Cleaner<OtpError | void> = asMaybeError(
+  'OtpError'
+)
+export const asMaybePasswordError: Cleaner<PasswordError | void> = asMaybeError(
+  'PasswordError'
+)
+export const asMaybePendingFundsError: Cleaner<PendingFundsError | void> = asMaybeError(
+  'PendingFundsError'
+)
+export const asMaybeSameCurrencyError: Cleaner<SameCurrencyError | void> = asMaybeError(
+  'SameCurrencyError'
+)
+export const asMaybeSpendToSelfError: Cleaner<SpendToSelfError | void> = asMaybeError(
+  'SpendToSelfError'
+)
+export const asMaybeSwapAboveLimitError: Cleaner<SwapAboveLimitError | void> = asMaybeError(
+  'SwapAboveLimitError'
+)
+export const asMaybeSwapBelowLimitError: Cleaner<SwapBelowLimitError | void> = asMaybeError(
+  'SwapBelowLimitError'
+)
+export const asMaybeSwapCurrencyError: Cleaner<SwapCurrencyError | void> = asMaybeError(
+  'SwapCurrencyError'
+)
+export const asMaybeSwapPermissionError: Cleaner<SwapPermissionError | void> = asMaybeError(
+  'SwapPermissionError'
+)
+export const asMaybeUsernameError: Cleaner<UsernameError | void> = asMaybeError(
+  'UsernameError'
+)
