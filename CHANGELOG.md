@@ -1,5 +1,11 @@
 # edge-core-js
 
+## 0.17.29 (2021-03-29)
+
+- Fix an error which was causing all new 2FA-protected logins to fail.
+- Add cleaners for all core error types, such as `asMaybeOtpError`. These provide a type-safe way to identify different error objects that may have been thrown.
+- Deprecate the old `errorNames` table.
+
 ## 0.17.28 (2021-03-25)
 
 - Fix a code-packaging error in the previous release.
