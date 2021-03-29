@@ -22,19 +22,19 @@ import type { EdgeSwapInfo } from './types.js'
 export const errorNames = {
   DustSpendError: 'DustSpendError',
   InsufficientFundsError: 'InsufficientFundsError',
-  SpendToSelfError: 'SpendToSelfError',
   NetworkError: 'NetworkError',
+  NoAmountSpecifiedError: 'NoAmountSpecifiedError',
   ObsoleteApiError: 'ObsoleteApiError',
   OtpError: 'OtpError',
   PasswordError: 'PasswordError',
   PendingFundsError: 'PendingFundsError',
   SameCurrencyError: 'SameCurrencyError',
+  SpendToSelfError: 'SpendToSelfError',
   SwapAboveLimitError: 'SwapAboveLimitError',
   SwapBelowLimitError: 'SwapBelowLimitError',
   SwapCurrencyError: 'SwapCurrencyError',
   SwapPermissionError: 'SwapPermissionError',
-  UsernameError: 'UsernameError',
-  NoAmountSpecifiedError: 'NoAmountSpecifiedError'
+  UsernameError: 'UsernameError'
 }
 
 /**
@@ -75,14 +75,15 @@ export class InsufficientFundsError extends Error {
 }
 
 /**
- * Trying to spend to an address of the source wallet
+ * Could not reach the server at all.
  */
-export class SpendToSelfError extends Error {
+export class NetworkError extends Error {
   name: string
+  +type: string // deprecated
 
-  constructor(message: string = 'Spending to self') {
+  constructor(message: string = 'Cannot reach the network') {
     super(message)
-    this.name = errorNames.SpendToSelfError
+    this.name = this.type = errorNames.NetworkError
   }
 }
 
@@ -95,19 +96,6 @@ export class NoAmountSpecifiedError extends Error {
   constructor(message: string = 'Unable to create zero-amount transaction.') {
     super(message)
     this.name = errorNames.NoAmountSpecifiedError
-  }
-}
-
-/**
- * Could not reach the server at all.
- */
-export class NetworkError extends Error {
-  name: string
-  +type: string // deprecated
-
-  constructor(message: string = 'Cannot reach the network') {
-    super(message)
-    this.name = this.type = errorNames.NetworkError
   }
 }
 
@@ -151,34 +139,34 @@ export class OtpError extends Error {
     this.reason = 'otp'
 
     try {
-      const reply = asOtpErrorPayload(resultsJson)
+      const clean = asOtpErrorPayload(resultsJson)
 
       // This should usually be present:
-      if (reply.login_id != null) {
-        this.loginId = reply.login_id
+      if (clean.login_id != null) {
+        this.loginId = clean.login_id
       }
 
       // Use this to request an OTP reset (if enabled):
-      if (reply.otp_reset_auth != null) {
-        this.resetToken = reply.otp_reset_auth
+      if (clean.otp_reset_auth != null) {
+        this.resetToken = clean.otp_reset_auth
       }
 
       // We might also get a different reason:
-      if (reply.reason === 'ip') this.reason = 'ip'
+      if (clean.reason === 'ip') this.reason = 'ip'
 
       // Set if an OTP reset has already been requested:
-      if (reply.otp_timeout_date != null) {
-        this.resetDate = new Date(reply.otp_timeout_date)
+      if (clean.otp_timeout_date != null) {
+        this.resetDate = new Date(clean.otp_timeout_date)
       }
 
       // We might also get a login voucher:
-      if (reply.voucher_activates != null) {
-        this.voucherActivates = reply.voucher_activates
+      if (clean.voucher_activates != null) {
+        this.voucherActivates = clean.voucher_activates
       }
-      if (reply.voucher_auth != null) {
-        this.voucherAuth = base64.stringify(reply.voucher_auth)
+      if (clean.voucher_auth != null) {
+        this.voucherAuth = base64.stringify(clean.voucher_auth)
       }
-      if (reply.voucher_id != null) this.voucherId = reply.voucher_id
+      if (clean.voucher_id != null) this.voucherId = clean.voucher_id
     } catch (e) {}
   }
 }
@@ -231,6 +219,18 @@ export class SameCurrencyError extends Error {
   constructor(message: string = 'Wallets can not be the same currency') {
     super(message)
     this.name = errorNames.SameCurrencyError
+  }
+}
+
+/**
+ * Trying to spend to an address of the source wallet
+ */
+export class SpendToSelfError extends Error {
+  name: string
+
+  constructor(message: string = 'Spending to self') {
+    super(message)
+    this.name = errorNames.SpendToSelfError
   }
 }
 
