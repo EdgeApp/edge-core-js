@@ -16,7 +16,8 @@ import {
 } from '../../types/server-types.js'
 import {
   type EdgeAccountOptions,
-  type EdgeWalletInfo
+  type EdgeWalletInfo,
+  asMaybeOtpError
 } from '../../types/types.js'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
@@ -347,19 +348,23 @@ export async function serverLogin(
   if (deviceDescription != null) request.deviceDescription = deviceDescription
 
   let loginReply = asLoginPayload(
-    await loginFetch(ai, 'POST', '/v2/login', request).catch(error => {
+    await loginFetch(ai, 'POST', '/v2/login', request).catch((error: mixed) => {
       // Save the username / voucher if we get an OTP error:
+      const otpError = asMaybeOtpError(error)
       if (
-        error.name === 'OtpError' &&
-        error.loginId != null &&
+        otpError != null &&
         // We have never seen this user before:
-        (stash.loginId === '' ||
+        ((stash.loginId === '' && otpError.loginId != null) ||
           // We got a voucher:
-          (error.voucherId != null && error.voucherAuth != null))
+          (otpError.voucherId != null && otpError.voucherAuth != null))
       ) {
-        stash.loginId = error.loginId
-        stash.voucherId = error.voucherId
-        stash.voucherAuth = error.voucherAuth
+        if (otpError.loginId != null) {
+          stash.loginId = otpError.loginId
+        }
+        if (otpError.voucherAuth != null) {
+          stash.voucherId = otpError.voucherId
+          stash.voucherAuth = base64.parse(otpError.voucherAuth)
+        }
         stashTree.lastLogin = now
         saveStash(ai, stashTree)
       }

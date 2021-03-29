@@ -10,7 +10,11 @@ import {
 } from 'redux-pixies'
 import { close, emit, update } from 'yaob'
 
-import { type EdgeAccount, type EdgeCurrencyWallet } from '../../types/types.js'
+import {
+  type EdgeAccount,
+  type EdgeCurrencyWallet,
+  asMaybeOtpError
+} from '../../types/types.js'
 import { makePeriodicTask } from '../../util/periodic-task.js'
 import { syncAccount } from '../login/login.js'
 import { waitForPlugins } from '../plugins/plugins-selectors.js'
@@ -134,9 +138,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       const loginTask = makePeriodicTask(doLoginSync, 30 * 1000, {
         onError(error) {
           // Only send OTP errors to the GUI:
-          if (error instanceof Error && error.name === 'OtpError') {
-            input.props.onError(error)
-          }
+          const otpError = asMaybeOtpError(error)
+          if (otpError != null) input.props.onError(otpError)
         }
       })
 

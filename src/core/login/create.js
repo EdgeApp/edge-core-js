@@ -10,7 +10,7 @@ import {
 import {
   type EdgeAccountOptions,
   type EdgeWalletInfo,
-  errorNames
+  asMaybeUsernameError
 } from '../../types/types.js'
 import { encrypt } from '../../util/crypto/crypto.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -44,9 +44,9 @@ export function usernameAvailable(
     }
     return loginFetch(ai, 'POST', '/v2/login', request)
       .then(reply => false) // It's not available if we can hit it!
-      .catch(e => {
-        if (e.name !== errorNames.UsernameError) throw e
-        return true
+      .catch((error: mixed) => {
+        if (asMaybeUsernameError(error) != null) return true
+        throw error
       })
   })
 }

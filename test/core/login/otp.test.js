@@ -3,7 +3,8 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { errorNames, makeFakeEdgeWorld } from '../../../src/index.js'
+import { makeFakeEdgeWorld } from '../../../src/index.js'
+import { asMaybeOtpError } from '../../../src/types/types.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
@@ -41,10 +42,14 @@ describe('otp', function () {
         () => {
           throw new Error('First-time 2fa logins should fail')
         },
-        error => {
-          expect(error.name).equals(errorNames.OtpError)
+        (error: mixed) => {
           expect(remote.localUsers.length).equals(1)
-          return context.requestOtpReset(fakeUser.username, error.resetToken)
+          const otpError = asMaybeOtpError(error)
+          if (otpError == null) throw new Error('Expected an OtpError')
+          if (otpError.resetToken == null) {
+            throw new Error('Expected an OtpError.resetToken')
+          }
+          return context.requestOtpReset(fakeUser.username, otpError.resetToken)
         }
       )
 
