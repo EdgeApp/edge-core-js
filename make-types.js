@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
+const { babel } = require('@rollup/plugin-babel')
 const { makeNodeDisklet } = require('disklet')
 const eslint = require('eslint')
-const path = require('path')
-const { promisify } = require('util')
-const webpack = require('webpack')
+const { rollup } = require('rollup')
 
 function jsToTs(code) {
   const output = code
@@ -41,31 +40,23 @@ async function main() {
   )
 
   // Transpile error classes to plain Javascript for use by core plugins:
-  await promisify(webpack)({
-    entry: './src/types/types.js',
-    externals: ['cleaners', 'rfc4648'],
-    mode: 'production',
-    module: {
-      rules: [
-        {
-          test: /\.js$/,
-          use: {
-            loader: 'babel-loader',
-            options: {
-              presets: ['@babel/preset-flow'],
-              plugins: ['babel-plugin-transform-fake-error-class']
-            }
-          }
-        }
-      ]
-    },
-    optimization: { minimize: false },
-    output: {
-      filename: 'types.js',
-      libraryTarget: 'commonjs',
-      path: path.resolve(__dirname)
-    }
+  const bundle = await rollup({
+    external: ['cleaners', 'rfc4648'],
+    input: './src/types/types.js',
+    plugins: [
+      babel({
+        babelHelpers: 'bundled',
+        babelrc: false,
+        plugins: ['babel-plugin-transform-fake-error-class'],
+        presets: ['@babel/preset-flow']
+      })
+    ]
   })
+  await bundle.write({
+    file: './types.js',
+    format: 'cjs'
+  })
+  await bundle.close()
 
   // Transpile Flow types to Typescript:
   for (const file of files) {

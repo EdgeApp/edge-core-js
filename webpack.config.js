@@ -1,4 +1,5 @@
 const path = require('path')
+const webpack = require('webpack')
 
 // Set this to false for easier debugging:
 const production = true
@@ -32,5 +33,17 @@ module.exports = {
     filename: 'lib/react-native/edge-core.js',
     path: path.resolve(__dirname)
   },
-  performance: { hints: false }
+  plugins: [
+    new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),
+    new webpack.ProvidePlugin({ process: ['process'] })
+  ],
+  performance: { hints: false },
+  resolve: {
+    fallback: {
+      assert: require.resolve('assert/'),
+      buffer: require.resolve('buffer/'),
+      stream: require.resolve('stream-browserify')
+    }
+  },
+  target: ['web', 'es5']
 }
