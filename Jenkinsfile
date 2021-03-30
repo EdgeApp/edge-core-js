@@ -6,6 +6,8 @@ pipeline {
   options {
     timestamps()
     skipDefaultCheckout true
+    overrideIndexTriggers false
+    buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '7', numToKeepStr: '10')
   }
   triggers {
     pollSCM('H/5 * * * *')
