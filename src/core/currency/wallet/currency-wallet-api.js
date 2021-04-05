@@ -345,11 +345,18 @@ export function makeCurrencyWalletApi(
           ? opts.currencyCode
           : input.props.selfState.currencyInfo.currencyCode
       const denom = opts && opts.denomination ? opts.denomination : null
+      const denomObj = denom
+        ? plugin.currencyInfo.denominations.find(
+            edgeDenom => edgeDenom.multiplier === denom
+          )
+        : null
+      const denomName = denomObj ? denomObj.name : null
       const csv: string = await exportTransactionsToCSVInner(
         txs,
         currencyCode,
         this.fiatCurrencyCode,
-        denom
+        denom,
+        denomName
       )
       return csv
     },

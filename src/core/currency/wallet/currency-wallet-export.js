@@ -307,7 +307,8 @@ export async function exportTransactionsToCSVInner(
   edgeTransactions: EdgeTransaction[],
   currencyCode: string,
   fiatCurrencyCode: string,
-  denom: string | null
+  denom: string | null,
+  denomName: string | null
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const currencyField = 'AMT_' + currencyCode
@@ -345,7 +346,8 @@ export async function exportTransactionsToCSVInner(
         txid: edgeTx.txid,
         ourReceiveAddresses: edgeTx.ourReceiveAddresses,
         version: 1,
-        currencyCode
+        currencyCode,
+        denomName: denomName ?? ''
       }
       items.push(csvTx)
     }
@@ -375,6 +377,11 @@ export async function exportTransactionsToCSVInner(
         {
           name: 'amount',
           label: currencyField,
+          quoted: true
+        },
+        {
+          name: 'denomName',
+          label: 'DENOMINATION',
           quoted: true
         },
         {
