@@ -113,7 +113,7 @@ export class EdgeCoreBridge extends React.Component<Props> {
 
   constructor(props: Props) {
     super(props)
-    const { nativeIo = {}, onLog, debug = false } = props
+    const { debug = false, nativeIo = {}, onError, onLoad, onLog } = props
 
     // Set up the native IO objects:
     const nativeIoPromise = makeClientIo(onLog).then(coreIo => {
@@ -128,8 +128,8 @@ export class EdgeCoreBridge extends React.Component<Props> {
     this.callbacks = makeOuterWebViewBridge(
       (root: WorkerApi) => {
         nativeIoPromise
-          .then(nativeIo => props.onLoad(nativeIo, root))
-          .catch(error => props.onError(error))
+          .then(nativeIo => onLoad(nativeIo, root))
+          .catch(error => onError(error))
       },
       debug ? 'edge-core' : undefined
     )

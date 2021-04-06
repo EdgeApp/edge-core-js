@@ -10,10 +10,13 @@ import { asMessagesPayload } from './types/server-cleaners.js'
 import {
   type EdgeContext,
   type EdgeContextOptions,
+  type EdgeCorePluginsInit,
   type EdgeFakeUser,
   type EdgeFakeWorld,
+  type EdgeFakeWorldOptions,
   type EdgeFetchOptions,
   type EdgeLoginMessages,
+  type EdgeLogSettings,
   type EdgeNativeIo,
   type EdgeOnLog,
   NetworkError
@@ -27,24 +30,39 @@ function onErrorDefault(e: any): void {
   console.error(e)
 }
 
+let warningShown = false
+
 export function MakeEdgeContext(props: {
   debug?: boolean,
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
   onLoad: (context: EdgeContext) => mixed,
+
+  // Deprecated. Just pass options like `apiKey` as normal props:
+  options?: EdgeContextOptions,
+
+  // EdgeContextOptions:
+  apiKey?: string,
+  appId?: string,
+  authServer?: string,
+  deviceDescription?: string,
+  hideKeys?: boolean,
+  logSettings?: $Shape<EdgeLogSettings>,
   onLog?: EdgeOnLog,
-  options: EdgeContextOptions
+  plugins?: EdgeCorePluginsInit
 }): React.Node {
-  const {
-    debug,
-    nativeIo,
-    onError = onErrorDefault,
-    onLoad,
-    onLog = defaultOnLog
-  } = props
+  const { debug, nativeIo, onError = onErrorDefault, onLoad, ...rest } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeEdgeContext')
   }
+  if (props.options != null && !warningShown) {
+    warningShown = true
+    console.warn(
+      'The MakeEdgeContext options prop is deprecated - just pass the context options as normal props.'
+    )
+  }
+  const options = { ...props.options, ...rest }
+  const { onLog = defaultOnLog } = options
 
   return (
     <EdgeCoreBridge
@@ -52,21 +70,22 @@ export function MakeEdgeContext(props: {
       nativeIo={nativeIo}
       onError={onError}
       onLoad={(nativeIo, root) =>
-        root.makeEdgeContext(nativeIo, props.options).then(onLoad)
+        root.makeEdgeContext(nativeIo, options).then(onLoad)
       }
       onLog={onLog}
     />
   )
 }
 
-export function MakeFakeEdgeWorld(props: {
-  debug?: boolean,
-  nativeIo?: EdgeNativeIo,
-  onError?: (e: any) => mixed,
-  onLoad: (world: EdgeFakeWorld) => mixed,
-  onLog?: EdgeOnLog,
-  users?: EdgeFakeUser[]
-}): React.Node {
+export function MakeFakeEdgeWorld(
+  props: EdgeFakeWorldOptions & {
+    debug?: boolean,
+    nativeIo?: EdgeNativeIo,
+    onError?: (e: any) => mixed,
+    onLoad: (world: EdgeFakeWorld) => mixed,
+    users?: EdgeFakeUser[]
+  }
+): React.Node {
   const {
     debug,
     nativeIo,

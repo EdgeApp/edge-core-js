@@ -4,11 +4,13 @@ import {
   type EdgeContext,
   type EdgeContextOptions,
   type EdgeCorePlugins,
+  type EdgeCorePluginsInit,
   type EdgeFakeUser,
   type EdgeFakeWorld,
   type EdgeFakeWorldOptions,
   type EdgeIo,
   type EdgeLoginMessages,
+  type EdgeLogSettings,
   type EdgeNativeIo,
   type EdgeOnLog
 } from './types.js'
@@ -41,8 +43,19 @@ export const MakeEdgeContext = (props: {
   nativeIo?: EdgeNativeIo,
   onError?: (e: any) => mixed,
   onLoad: (context: EdgeContext) => mixed,
+
+  // Deprecated. Just pass options like `apiKey` as normal props:
+  options?: EdgeContextOptions,
+
+  // EdgeContextOptions:
+  apiKey?: string,
+  appId?: string,
+  authServer?: string,
+  deviceDescription?: string,
+  hideKeys?: boolean,
+  logSettings?: $Shape<EdgeLogSettings>,
   onLog?: EdgeOnLog,
-  options: EdgeContextOptions
+  plugins?: EdgeCorePluginsInit
 }): any => hack // React element
 
 /**
