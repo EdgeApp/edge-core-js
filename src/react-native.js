@@ -2,6 +2,7 @@
 
 import { makeReactNativeDisklet } from 'disklet'
 import * as React from 'react'
+import { bridgifyObject } from 'yaob'
 
 import { defaultOnLog } from './core/log/log.js'
 import { parseReply } from './core/login/login-fetch.js'
@@ -67,12 +68,17 @@ export function MakeEdgeContext(props: {
   return (
     <EdgeCoreBridge
       debug={debug}
-      nativeIo={nativeIo}
       onError={onError}
-      onLoad={(nativeIo, root) =>
-        root.makeEdgeContext(nativeIo, options).then(onLoad)
+      onLoad={(clientIo, root) =>
+        root
+          .makeEdgeContext(
+            clientIo,
+            bridgifyNativeIo(nativeIo),
+            bridgifyObject({ onLog }),
+            options
+          )
+          .then(onLoad)
       }
-      onLog={onLog}
     />
   )
 }
@@ -100,14 +106,27 @@ export function MakeFakeEdgeWorld(
   return (
     <EdgeCoreBridge
       debug={debug}
-      nativeIo={nativeIo}
       onError={onError}
-      onLoad={(nativeIo, root) =>
-        root.makeFakeEdgeWorld(nativeIo, props.users).then(onLoad)
+      onLoad={(clientIo, root) =>
+        root
+          .makeFakeEdgeWorld(
+            clientIo,
+            bridgifyNativeIo(nativeIo),
+            bridgifyObject({ onLog }),
+            props.users
+          )
+          .then(onLoad)
       }
-      onLog={onLog}
     />
   )
+}
+
+function bridgifyNativeIo(nativeIo: EdgeNativeIo = {}): EdgeNativeIo {
+  const out: EdgeNativeIo = {}
+  for (const key of Object.keys(nativeIo)) {
+    out[key] = bridgifyObject(nativeIo[key])
+  }
+  return out
 }
 
 /**

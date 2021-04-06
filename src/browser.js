@@ -24,7 +24,7 @@ export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
   const { onLog = defaultOnLog } = opts
-  return makeContext({ io: makeBrowserIo(), nativeIo: {}, onLog }, opts)
+  return makeContext({ io: makeBrowserIo(), nativeIo: {} }, { onLog }, opts)
 }
 
 export function makeFakeEdgeWorld(
@@ -33,6 +33,6 @@ export function makeFakeEdgeWorld(
 ): Promise<EdgeFakeWorld> {
   const { onLog = defaultOnLog } = opts
   return Promise.resolve(
-    makeFakeWorld({ io: makeBrowserIo(), nativeIo: {}, onLog }, users)
+    makeFakeWorld({ io: makeBrowserIo(), nativeIo: {} }, { onLog }, users)
   )
 }

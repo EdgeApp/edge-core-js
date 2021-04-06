@@ -2,6 +2,7 @@
 
 import { type Disklet } from 'disklet'
 
+import { type LogBackend } from '../../core/log/log.js'
 import {
   type EdgeContext,
   type EdgeContextOptions,
@@ -9,14 +10,12 @@ import {
   type EdgeFakeWorld,
   type EdgeFetchOptions,
   type EdgeNativeIo,
-  type EdgeOnLog,
   type EdgeScryptFunction
 } from '../../types/types.js'
 import { type HttpResponse } from '../../util/http/http-types.js'
 
 export type ClientIo = {
   +disklet: Disklet,
-  +onLog: EdgeOnLog,
 
   +entropy: string, // base64
   +scrypt: EdgeScryptFunction,
@@ -27,12 +26,16 @@ export type ClientIo = {
 
 export type WorkerApi = {
   makeEdgeContext(
+    clientIo: ClientIo,
     nativeIo: EdgeNativeIo,
+    logBackend: LogBackend,
     opts: EdgeContextOptions
   ): Promise<EdgeContext>,
 
   makeFakeEdgeWorld(
+    clientIo: ClientIo,
     nativeIo: EdgeNativeIo,
+    logBackend: LogBackend,
     users?: EdgeFakeUser[]
   ): Promise<EdgeFakeWorld>
 }

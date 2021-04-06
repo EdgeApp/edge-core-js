@@ -26,7 +26,7 @@ export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
   const { onLog = defaultOnLog, path = './edge' } = opts
-  return makeContext({ io: makeNodeIo(path), nativeIo: {}, onLog }, opts)
+  return makeContext({ io: makeNodeIo(path), nativeIo: {} }, { onLog }, opts)
 }
 
 export function makeFakeEdgeWorld(
@@ -36,7 +36,7 @@ export function makeFakeEdgeWorld(
   const { onLog = defaultOnLog } = opts
   return Promise.resolve(
     makeLocalBridge(
-      makeFakeWorld({ io: makeNodeIo('.'), nativeIo: {}, onLog }, users),
+      makeFakeWorld({ io: makeNodeIo('.'), nativeIo: {} }, { onLog }, users),
       { cloneMessage: message => JSON.parse(JSON.stringify(message)) }
     )
   )

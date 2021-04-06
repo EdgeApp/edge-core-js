@@ -17,6 +17,7 @@ import {
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
 import { makeFetch } from '../../util/http/http-to-fetch.js'
+import { type LogBackend } from '../log/log.js'
 import { applyLoginPayload } from '../login/login.js'
 import { asLoginStash } from '../login/login-stash.js'
 import { type PluginIos } from '../plugins/plugins-actions.js'
@@ -63,9 +64,10 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
  */
 export function makeFakeWorld(
   ios: PluginIos,
+  logBackend: LogBackend,
   users: EdgeFakeUser[]
 ): EdgeFakeWorld {
-  const { io, nativeIo, onLog } = ios
+  const { io, nativeIo } = ios
   const fakeDb = new FakeDb()
   const fakeServer = makeFakeServer(fakeDb)
   for (const user of users) fakeDb.setupFakeUser(user)
@@ -95,10 +97,9 @@ export function makeFakeWorld(
         JSON.stringify([{ fromCurrency: 'FAKE', toCurrency: 'TOKEN' }])
       )
 
-      const out = await makeContext(
-        { io: fakeIo, nativeIo, onLog },
-        { ...opts }
-      )
+      const out = await makeContext({ io: fakeIo, nativeIo }, logBackend, {
+        ...opts
+      })
       contexts.push(out)
       return out
     },

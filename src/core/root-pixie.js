@@ -3,12 +3,13 @@
 import { type Dispatch } from 'redux'
 import { type PixieInput, type TamePixie, combinePixies } from 'redux-pixies'
 
-import { type EdgeIo, type EdgeLog, type EdgeOnLog } from '../types/types.js'
+import { type EdgeIo, type EdgeLog } from '../types/types.js'
 import { type AccountOutput, accounts } from './account/account-pixie.js'
 import { type RootAction } from './actions.js'
 import { type ContextOutput, context } from './context/context-pixie.js'
 import { type CurrencyOutput, currency } from './currency/currency-pixie.js'
 import { exchange } from './exchange/exchange-pixie.js'
+import { type LogBackend } from './log/log.js'
 import { type RootState } from './root-reducer.js'
 import { type ScryptOutput, scrypt } from './scrypt/scrypt-pixie.js'
 
@@ -26,8 +27,8 @@ export type RootProps = {
   +dispatch: Dispatch<RootAction>,
   +io: EdgeIo,
   +log: EdgeLog,
+  +logBackend: LogBackend,
   +onError: (e: Error) => mixed,
-  +onLog: EdgeOnLog,
   +output: RootOutput,
   +state: RootState
 }

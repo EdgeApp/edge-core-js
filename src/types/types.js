@@ -136,6 +136,10 @@ export type EdgeLogEvent = {
   type: EdgeLogType
 }
 
+/**
+ * Receives log messages.
+ * The app should implement this function and pass it to the context.
+ */
 export type EdgeOnLog = (event: EdgeLogEvent) => void
 
 // plugins -------------------------------------------------------------
