@@ -302,11 +302,7 @@ export type EdgeMetadata = {
   notes?: string,
 
   // Deprecated. Use exchangeAmount instead:
-  amountFiat?: number,
-
-  // Deprecated. The core has never actually written this to disk,
-  // but deleting this type definition would break the GUI:
-  miscJson?: string
+  amountFiat?: number
 }
 
 export type EdgeNetworkFee = {
@@ -453,8 +449,6 @@ export type EdgeParsedUri = {
 
 export type EdgeEncodeUri = {
   publicAddress: string,
-  segwitAddress?: string, // Deprecated. Use publicAddress instead.
-  legacyAddress?: string, // Deprecated. Use publicAddress instead.
   nativeAmount?: string,
   label?: string,
   message?: string,

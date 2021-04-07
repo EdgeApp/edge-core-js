@@ -517,14 +517,9 @@ export function makeCurrencyWalletApi(
       )
     },
 
-    async encodeUri(obj: EdgeEncodeUri): Promise<string> {
-      const { legacyAddress, segwitAddress } = obj
-      const copy = { ...obj }
-      if (segwitAddress != null) copy.publicAddress = segwitAddress
-      if (legacyAddress != null) copy.publicAddress = legacyAddress
-
+    async encodeUri(options: EdgeEncodeUri): Promise<string> {
       const tools = await getCurrencyTools(ai, walletInfo.type)
-      return tools.encodeUri(copy, input.props.state.currency.customTokens)
+      return tools.encodeUri(options, input.props.state.currency.customTokens)
     },
 
     otherMethods
