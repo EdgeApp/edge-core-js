@@ -23,16 +23,24 @@ export * from './types/types.js'
 export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
-  const { onLog = defaultOnLog } = opts
-  return makeContext({ io: makeBrowserIo(), nativeIo: {} }, { onLog }, opts)
+  const { crashReporter, onLog = defaultOnLog } = opts
+  return makeContext(
+    { io: makeBrowserIo(), nativeIo: {} },
+    { crashReporter, onLog },
+    opts
+  )
 }
 
 export function makeFakeEdgeWorld(
   users: EdgeFakeUser[] = [],
   opts: EdgeFakeWorldOptions = {}
 ): Promise<EdgeFakeWorld> {
-  const { onLog = defaultOnLog } = opts
+  const { crashReporter, onLog = defaultOnLog } = opts
   return Promise.resolve(
-    makeFakeWorld({ io: makeBrowserIo(), nativeIo: {} }, { onLog }, users)
+    makeFakeWorld(
+      { io: makeBrowserIo(), nativeIo: {} },
+      { crashReporter, onLog },
+      users
+    )
   )
 }

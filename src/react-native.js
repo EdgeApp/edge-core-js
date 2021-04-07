@@ -4,7 +4,7 @@ import { makeReactNativeDisklet } from 'disklet'
 import * as React from 'react'
 import { bridgifyObject } from 'yaob'
 
-import { defaultOnLog } from './core/log/log.js'
+import { type LogBackend, defaultOnLog } from './core/log/log.js'
 import { parseReply } from './core/login/login-fetch.js'
 import { EdgeCoreBridge } from './io/react-native/react-native-webview.js'
 import { asMessagesPayload } from './types/server-cleaners.js'
@@ -12,6 +12,7 @@ import {
   type EdgeContext,
   type EdgeContextOptions,
   type EdgeCorePluginsInit,
+  type EdgeCrashReporter,
   type EdgeFakeUser,
   type EdgeFakeWorld,
   type EdgeFakeWorldOptions,
@@ -46,6 +47,7 @@ export function MakeEdgeContext(props: {
   apiKey?: string,
   appId?: string,
   authServer?: string,
+  crashReporter?: EdgeCrashReporter,
   deviceDescription?: string,
   hideKeys?: boolean,
   logSettings?: $Shape<EdgeLogSettings>,
@@ -63,7 +65,7 @@ export function MakeEdgeContext(props: {
     )
   }
   const options = { ...props.options, ...rest }
-  const { onLog = defaultOnLog } = options
+  const { crashReporter, onLog = defaultOnLog } = options
 
   return (
     <EdgeCoreBridge
@@ -74,7 +76,7 @@ export function MakeEdgeContext(props: {
           .makeEdgeContext(
             clientIo,
             bridgifyNativeIo(nativeIo),
-            bridgifyObject({ onLog }),
+            bridgifyLogBackend({ crashReporter, onLog }),
             options
           )
           .then(onLoad)
@@ -93,6 +95,7 @@ export function MakeFakeEdgeWorld(
   }
 ): React.Node {
   const {
+    crashReporter,
     debug,
     nativeIo,
     onError = onErrorDefault,
@@ -112,7 +115,7 @@ export function MakeFakeEdgeWorld(
           .makeFakeEdgeWorld(
             clientIo,
             bridgifyNativeIo(nativeIo),
-            bridgifyObject({ onLog }),
+            bridgifyLogBackend({ crashReporter, onLog }),
             props.users
           )
           .then(onLoad)
@@ -127,6 +130,11 @@ function bridgifyNativeIo(nativeIo: EdgeNativeIo = {}): EdgeNativeIo {
     out[key] = bridgifyObject(nativeIo[key])
   }
   return out
+}
+
+function bridgifyLogBackend(backend: LogBackend): LogBackend {
+  if (backend.crashReporter) bridgifyObject(backend.crashReporter)
+  return bridgifyObject(backend)
 }
 
 /**

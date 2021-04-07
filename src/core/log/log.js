@@ -2,6 +2,7 @@
 
 import {
   type EdgeConsole,
+  type EdgeCrashReporter,
   type EdgeLog,
   type EdgeLogEvent,
   type EdgeLogMethod,
@@ -11,6 +12,7 @@ import {
 import { addHiddenProperties } from '../../util/util.js'
 
 export type LogBackend = {
+  crashReporter?: EdgeCrashReporter,
   onLog: EdgeOnLog
 }
 
@@ -64,9 +66,27 @@ export function filterLogs(
 }
 
 export function makeLog(backend: LogBackend, source: string): EdgeLog {
-  const { onLog } = backend
+  const { onLog, crashReporter } = backend
 
   return addHiddenProperties(makeLogMethod(onLog, 'info', source), {
+    breadcrumb(message, metadata) {
+      const time = new Date()
+      if (crashReporter != null) {
+        crashReporter.logBreadcrumb({ message, metadata, source, time })
+      } else {
+        message = `${message} ${JSON.stringify(metadata, null, 2)}`
+        onLog({ message, source, time, type: 'warn' })
+      }
+    },
+    crash(error, metadata) {
+      const time = new Date()
+      if (crashReporter != null) {
+        crashReporter.logCrash({ error, metadata, source, time })
+      } else {
+        const message = `${String(error)} ${JSON.stringify(metadata, null, 2)}`
+        onLog({ message, source, time, type: 'error' })
+      }
+    },
     warn: makeLogMethod(onLog, 'warn', source),
     error: makeLogMethod(onLog, 'error', source)
   })

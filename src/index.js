@@ -25,18 +25,26 @@ export * from './types/types.js'
 export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
-  const { onLog = defaultOnLog, path = './edge' } = opts
-  return makeContext({ io: makeNodeIo(path), nativeIo: {} }, { onLog }, opts)
+  const { crashReporter, onLog = defaultOnLog, path = './edge' } = opts
+  return makeContext(
+    { io: makeNodeIo(path), nativeIo: {} },
+    { crashReporter, onLog },
+    opts
+  )
 }
 
 export function makeFakeEdgeWorld(
   users: EdgeFakeUser[] = [],
   opts: EdgeFakeWorldOptions = {}
 ): Promise<EdgeFakeWorld> {
-  const { onLog = defaultOnLog } = opts
+  const { crashReporter, onLog = defaultOnLog } = opts
   return Promise.resolve(
     makeLocalBridge(
-      makeFakeWorld({ io: makeNodeIo('.'), nativeIo: {} }, { onLog }, users),
+      makeFakeWorld(
+        { io: makeNodeIo('.'), nativeIo: {} },
+        { crashReporter, onLog },
+        users
+      ),
       { cloneMessage: message => JSON.parse(JSON.stringify(message)) }
     )
   )
