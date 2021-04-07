@@ -38,9 +38,7 @@ export type RootState = {
 }
 
 export const defaultLogSettings: EdgeLogSettings = {
-  sources: {
-    'edge-core': 'info'
-  },
+  sources: {},
   defaultLogLevel: 'warn'
 }
 
