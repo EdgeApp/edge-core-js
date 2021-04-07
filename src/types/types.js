@@ -645,8 +645,6 @@ export type EdgeCurrencyWallet = {
   // Wallet management:
   resyncBlockchain(): Promise<void>,
   dumpData(): Promise<EdgeDataDump>,
-  getDisplayPrivateSeed(): string | null,
-  getDisplayPublicSeed(): string | null,
 
   // URI handling:
   parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri>,
@@ -658,7 +656,9 @@ export type EdgeCurrencyWallet = {
   exportTransactionsToQBO(opts: EdgeGetTransactionsOptions): Promise<string>,
   exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
   getBalance(opts?: EdgeCurrencyCodeOptions): string,
-  getBlockHeight(): number
+  getBlockHeight(): number,
+  getDisplayPrivateSeed(): string | null,
+  getDisplayPublicSeed(): string | null
 }
 
 // ---------------------------------------------------------------------
