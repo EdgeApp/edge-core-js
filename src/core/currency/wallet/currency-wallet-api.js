@@ -37,12 +37,7 @@ import {
   packMetadata,
   unpackMetadata
 } from './currency-wallet-cleaners.js'
-import {
-  dateFilter,
-  exportTransactionsToCSVInner,
-  exportTransactionsToQBOInner,
-  searchStringFilter
-} from './currency-wallet-export.js'
+import { dateFilter, searchStringFilter } from './currency-wallet-export.js'
 import {
   type TransactionFile,
   loadTxFiles,
@@ -317,43 +312,6 @@ export function makeCurrencyWalletApi(
         counter++
       }
       return out
-    },
-
-    async exportTransactionsToQBO(
-      opts: EdgeGetTransactionsOptions
-    ): Promise<string> {
-      const txs: EdgeTransaction[] = await this.getTransactions(opts)
-      const currencyCode =
-        opts && opts.currencyCode
-          ? opts.currencyCode
-          : input.props.selfState.currencyInfo.currencyCode
-      const denom = opts && opts.denomination ? opts.denomination : null
-      const qbo: string = exportTransactionsToQBOInner(
-        txs,
-        currencyCode,
-        this.fiatCurrencyCode,
-        denom,
-        Date.now()
-      )
-      return qbo
-    },
-
-    async exportTransactionsToCSV(
-      opts: EdgeGetTransactionsOptions
-    ): Promise<string> {
-      const txs: EdgeTransaction[] = await this.getTransactions(opts)
-      const currencyCode =
-        opts && opts.currencyCode
-          ? opts.currencyCode
-          : input.props.selfState.currencyInfo.currencyCode
-      const denom = opts && opts.denomination ? opts.denomination : null
-      const csv: string = await exportTransactionsToCSVInner(
-        txs,
-        currencyCode,
-        this.fiatCurrencyCode,
-        denom
-      )
-      return csv
     },
 
     async getReceiveAddress(

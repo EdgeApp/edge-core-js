@@ -685,8 +685,6 @@ export type EdgeCurrencyWallet = {
   +otherMethods: EdgeOtherMethods,
 
   // Deprecated API's:
-  exportTransactionsToQBO(opts: EdgeGetTransactionsOptions): Promise<string>,
-  exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
   getBalance(opts?: EdgeCurrencyCodeOptions): string,
   getBlockHeight(): number,
   getDisplayPrivateSeed(): string | null,
