@@ -169,11 +169,7 @@ describe('exchange pixie', function () {
     })
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    const rate = await account.exchangeCache.convertCurrency(
-      'BTC',
-      'iso:EUR',
-      1
-    )
+    const rate = await account.rateCache.convertCurrency('BTC', 'iso:EUR', 1)
     return assert(rate > 2274 && rate < 2277)
   })
 })

@@ -245,8 +245,8 @@ describe('recovery2', function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
-    const recovery2Key = await context.getRecovery2Key(fakeUser.username)
-    assert.equal(recovery2Key, fakeUser.recovery2Key)
+    const [user] = context.localUsers
+    assert.equal(user.recovery2Key, fakeUser.recovery2Key)
   })
 
   it('get questions', async function () {
