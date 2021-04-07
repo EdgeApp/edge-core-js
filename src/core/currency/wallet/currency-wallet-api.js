@@ -4,7 +4,6 @@ import { add, div, lte, mul, sub } from 'biggystring'
 import { type Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
-import { CurrencyWalletSync } from '../../../client-side.js'
 import {
   type EdgeBalances,
   type EdgeCurrencyCodeOptions,
@@ -528,19 +527,7 @@ export function makeCurrencyWalletApi(
       return tools.encodeUri(copy, input.props.state.currency.customTokens)
     },
 
-    otherMethods,
-
-    // Deprecated API's:
-    getBalance: CurrencyWalletSync.prototype.getBalance,
-    getBlockHeight: CurrencyWalletSync.prototype.getBlockHeight,
-    getDisplayPrivateSeed: CurrencyWalletSync.prototype.getDisplayPrivateSeed,
-    getDisplayPublicSeed: CurrencyWalletSync.prototype.getDisplayPublicSeed,
-    async startEngine(): Promise<void> {
-      return out.changePaused(false)
-    },
-    async stopEngine(): Promise<void> {
-      return out.changePaused(true)
-    }
+    otherMethods
   }
   bridgifyObject(out)
 

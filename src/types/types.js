@@ -682,15 +682,7 @@ export type EdgeCurrencyWallet = {
   parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri>,
   encodeUri(obj: EdgeEncodeUri): Promise<string>,
 
-  +otherMethods: EdgeOtherMethods,
-
-  // Deprecated API's:
-  getBalance(opts?: EdgeCurrencyCodeOptions): string,
-  getBlockHeight(): number,
-  getDisplayPrivateSeed(): string | null,
-  getDisplayPublicSeed(): string | null,
-  startEngine(): Promise<void>,
-  stopEngine(): Promise<void>
+  +otherMethods: EdgeOtherMethods
 }
 
 // ---------------------------------------------------------------------

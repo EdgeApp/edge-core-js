@@ -104,7 +104,6 @@ describe('currency wallets', function () {
     await config.changeUserSettings({ blockHeight: 200 })
     await log.waitFor(1).assert('blockHeight 200')
     expect(wallet.blockHeight).to.equal(200)
-    assert.equal(wallet.getBlockHeight(), 200)
 
     await config.changeUserSettings({ progress: 0.123456789 })
     await log.waitFor(1).assert('syncRatio 0.123456789')
