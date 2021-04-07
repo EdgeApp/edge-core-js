@@ -96,12 +96,6 @@ export async function waitForPlugins(ai: ApiInput): Promise<void> {
       )
     }
 
-    // Upgrade deprecated pluginName field for currency plugins:
-    for (const pluginId of Object.keys(currency)) {
-      const typeHack: any = currency[pluginId].currencyInfo
-      if (typeHack.pluginName != null) typeHack.pluginId = pluginId
-    }
-
     return true
   })
 }
