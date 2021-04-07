@@ -121,14 +121,12 @@ function applyLoginPayloadInner(
 
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
-    const pin2Key = decrypt(loginReply.pin2KeyBox, loginKey)
-    out.pin2Key = base64.stringify(pin2Key)
+    out.pin2Key = decrypt(loginReply.pin2KeyBox, loginKey)
   }
 
   // Store the recovery key unencrypted:
   if (loginReply.recovery2KeyBox != null) {
-    const recovery2Key = decrypt(loginReply.recovery2KeyBox, loginKey)
-    out.recovery2Key = base64.stringify(recovery2Key)
+    out.recovery2Key = decrypt(loginReply.recovery2KeyBox, loginKey)
   }
 
   // Keys (we could be more picky about this):
@@ -216,17 +214,13 @@ function makeLoginTreeInner(
   }
 
   // PIN v2:
-  if (stash.pin2Key != null) {
-    login.pin2Key = base64.parse(stash.pin2Key)
-  }
+  login.pin2Key = stash.pin2Key
   if (stash.pin2TextBox != null) {
     login.pin = decryptText(stash.pin2TextBox, loginKey)
   }
 
   // Recovery v2:
-  if (stash.recovery2Key != null) {
-    login.recovery2Key = base64.parse(stash.recovery2Key)
-  }
+  login.recovery2Key = stash.recovery2Key
 
   const legacyKeys: EdgeWalletInfo[] = []
 

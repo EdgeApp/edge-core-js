@@ -59,7 +59,7 @@ export async function loginPin2(
   }
 
   // Request:
-  const pin2Key = base64.parse(stash.pin2Key)
+  const { pin2Key } = stash
   const request = {
     pin2Id: base64.stringify(pin2Id(pin2Key, username)),
     pin2Auth: pin2Auth(pin2Key, pin)
@@ -122,7 +122,7 @@ export async function checkPin2(
   }
 
   // Try a login:
-  const pin2Key = base64.parse(stash.pin2Key)
+  const { pin2Key } = stash
   const request: LoginRequestBody = {
     pin2Id: base64.stringify(pin2Id(pin2Key, username)),
     pin2Auth: pin2Auth(pin2Key, pin),
@@ -195,7 +195,7 @@ export function makeChangePin2Kit(
         pin2TextBox
       }),
       stash: {
-        pin2Key: base64.stringify(pin2Key),
+        pin2Key,
         pin2TextBox
       },
       login: {

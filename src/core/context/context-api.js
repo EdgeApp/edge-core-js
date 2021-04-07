@@ -26,7 +26,6 @@ import { loginPassword } from '../login/password.js'
 import { findPin2Stash, loginPin2 } from '../login/pin2.js'
 import {
   getQuestions2,
-  getRecovery2Key,
   listRecoveryQuestionChoices,
   loginRecovery2
 } from '../login/recovery2.js'
@@ -226,7 +225,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     // Deprecated API's:
     async getRecovery2Key(username: string): Promise<string> {
       const loginStash = getStash(ai, username)
-      const recovery2Key = getRecovery2Key(loginStash)
+      const { recovery2Key } = loginStash
       if (recovery2Key == null) {
         throw new Error('No recovery key stored locally.')
       }

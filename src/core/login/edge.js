@@ -1,7 +1,6 @@
 // @flow
 
 import { type Cleaner, asObject, asString } from 'cleaners'
-import { base64 } from 'rfc4648'
 import { bridgifyObject, close, emit, update, watchMethod } from 'yaob'
 
 import { asBase64 } from '../../types/server-cleaners.js'
@@ -10,7 +9,6 @@ import {
   type EdgeAccountOptions,
   type EdgePendingEdgeLogin
 } from '../../types/types.js'
-import { base58 } from '../../util/encoding.js'
 import { makeAccount } from '../account/account-init.js'
 import { type ApiInput } from '../root-pixie.js'
 import { makeLobby } from './lobby.js'
@@ -39,7 +37,6 @@ async function unpackAccount(
   appId: string,
   opts: EdgeAccountOptions
 ): Promise<EdgeAccount> {
-  const { log } = ai.props
   const { now = new Date() } = opts
   const { loginKey, loginStash: stashTree } = payload
 
@@ -56,13 +53,6 @@ async function unpackAccount(
     child.voucherAuth = old.stash.voucherAuth
   } catch (error) {}
 
-  // The Airbitz mobile will sometimes send the pin2Key in base58
-  // instead of base64 due to an unfortunate bug. Fix that:
-  const { pin2Key } = child
-  if (pin2Key != null && pin2Key.slice(-1) !== '=') {
-    log.warn('Fixing base58 pin2Key')
-    child.pin2Key = base64.stringify(base58.parse(pin2Key))
-  }
   stashTree.lastLogin = now
   await saveStash(ai, stashTree)
 
