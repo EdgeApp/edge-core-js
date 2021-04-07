@@ -381,11 +381,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       opts?: EdgeSwapRequestOptions
     ): Promise<EdgeSwapQuote> {
       return fetchSwapQuote(ai, accountId, request, opts)
-    },
-
-    // Deprecated names:
-    get exchangeCache(): EdgeRateCache {
-      return rateCache
     }
   }
   bridgifyObject(out)
