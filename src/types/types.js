@@ -1221,11 +1221,7 @@ export type EdgeContext = {
 
   // Logging options:
   +logSettings: EdgeLogSettings,
-  changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void>,
-
-  // Deprecated API's:
-  getRecovery2Key(username: string): Promise<string>,
-  pinExists(username: string): Promise<boolean>
+  changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void>
 }
 
 // ---------------------------------------------------------------------

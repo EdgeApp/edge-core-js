@@ -211,20 +211,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void> {
       const newSettings = { ...ai.props.state.logSettings, ...settings }
       ai.props.dispatch({ type: 'CHANGE_LOG_SETTINGS', payload: newSettings })
-    },
-
-    // Deprecated API's:
-    async getRecovery2Key(username: string): Promise<string> {
-      const loginStash = getStash(ai, username)
-      const { recovery2Key } = loginStash
-      if (recovery2Key == null) {
-        throw new Error('No recovery key stored locally.')
-      }
-      return base58.stringify(recovery2Key)
-    },
-
-    pinExists(username: string): Promise<boolean> {
-      return this.pinLoginEnabled(username)
     }
   }
   bridgifyObject(out)
