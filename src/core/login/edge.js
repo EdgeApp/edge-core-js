@@ -1,7 +1,7 @@
 // @flow
 
 import { type Cleaner, asObject, asString } from 'cleaners'
-import { bridgifyObject, close, emit, update, watchMethod } from 'yaob'
+import { bridgifyObject, close, update, watchMethod } from 'yaob'
 
 import { asBase64 } from '../../types/server-cleaners.js'
 import {
@@ -83,7 +83,6 @@ export async function requestEdgeLogin(
     out.error = error
     update(out)
     close(out)
-    emit(ai.props.output.context.api, 'loginError', { error })
   }
 
   async function handleReply(reply: mixed): Promise<void> {
@@ -97,7 +96,6 @@ export async function requestEdgeLogin(
     out.state = 'started'
     out.username = username
     update(out)
-    emit(ai.props.output.context.api, 'loginStart', { username })
 
     // Log in:
     const account = await unpackAccount(ai, payload, appId, opts)
@@ -105,7 +103,6 @@ export async function requestEdgeLogin(
     out.account = account
     update(out)
     close(out)
-    emit(ai.props.output.context.api, 'login', account)
   }
 
   async function cancelRequest(): Promise<void> {

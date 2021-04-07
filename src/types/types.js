@@ -1153,12 +1153,7 @@ export type EdgeUserInfo = {
 
 export type EdgeContextEvents = {
   close: void,
-  error: Error,
-
-  // Deprecated:
-  login: EdgeAccount,
-  loginStart: { username: string },
-  loginError: { error: Error }
+  error: Error
 }
 
 export type EdgeContext = {
