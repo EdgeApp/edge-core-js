@@ -1213,6 +1213,19 @@ export type EdgeFakeWorldOptions = {
   onLog?: EdgeOnLog
 }
 
+export type EdgeFakeContextOptions = {
+  // EdgeContextOptions:
+  apiKey: string,
+  appId: string,
+  deviceDescription?: string,
+  hideKeys?: boolean,
+  logSettings?: $Shape<EdgeLogSettings>,
+  plugins?: EdgeCorePluginsInit,
+
+  // Fake device options:
+  cleanDevice?: boolean
+}
+
 export type EdgeFakeUser = {
   username: string,
   lastLogin?: Date,
@@ -1225,9 +1238,7 @@ export type EdgeFakeUser = {
 export type EdgeFakeWorld = {
   close(): Promise<void>,
 
-  makeEdgeContext(
-    opts: EdgeContextOptions & { cleanDevice?: boolean }
-  ): Promise<EdgeContext>,
+  makeEdgeContext(opts: EdgeFakeContextOptions): Promise<EdgeContext>,
 
   goOffline(offline?: boolean): Promise<void>,
   dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser>

@@ -10,7 +10,7 @@ import { asLoginPayload } from '../../types/server-cleaners.js'
 import {
   type EdgeAccount,
   type EdgeContext,
-  type EdgeContextOptions,
+  type EdgeFakeContextOptions,
   type EdgeFakeUser,
   type EdgeFakeWorld,
   type EdgeIo
@@ -78,9 +78,7 @@ export function makeFakeWorld(
       close(out)
     },
 
-    async makeEdgeContext(
-      opts: EdgeContextOptions & { cleanDevice?: boolean }
-    ): Promise<EdgeContext> {
+    async makeEdgeContext(opts: EdgeFakeContextOptions): Promise<EdgeContext> {
       const fakeIo = {
         ...io,
         disklet: makeMemoryDisklet(),
@@ -97,7 +95,10 @@ export function makeFakeWorld(
         JSON.stringify([{ fromCurrency: 'FAKE', toCurrency: 'TOKEN' }])
       )
 
-      const out = await makeContext({ io: fakeIo, nativeIo, onLog }, opts)
+      const out = await makeContext(
+        { io: fakeIo, nativeIo, onLog },
+        { ...opts }
+      )
       contexts.push(out)
       return out
     },
