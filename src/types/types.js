@@ -645,12 +645,6 @@ export type EdgeCurrencyWallet = {
   // Wallet management:
   resyncBlockchain(): Promise<void>,
   dumpData(): Promise<EdgeDataDump>,
-  getDisplayPrivateSeed(): string | null,
-  getDisplayPublicSeed(): string | null,
-
-  // Data exports:
-  exportTransactionsToQBO(opts: EdgeGetTransactionsOptions): Promise<string>,
-  exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
 
   // URI handling:
   parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri>,
@@ -659,8 +653,12 @@ export type EdgeCurrencyWallet = {
   +otherMethods: EdgeOtherMethods,
 
   // Deprecated API's:
+  exportTransactionsToQBO(opts: EdgeGetTransactionsOptions): Promise<string>,
+  exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
   getBalance(opts?: EdgeCurrencyCodeOptions): string,
-  getBlockHeight(): number
+  getBlockHeight(): number,
+  getDisplayPrivateSeed(): string | null,
+  getDisplayPublicSeed(): string | null
 }
 
 // ---------------------------------------------------------------------
@@ -1174,7 +1172,6 @@ export type EdgeContext = {
   ): Promise<EdgeAccount>,
 
   // Recovery2 login:
-  getRecovery2Key(username: string): Promise<string>,
   loginWithRecovery2(
     recovery2Key: string,
     username: string,
@@ -1199,10 +1196,12 @@ export type EdgeContext = {
     opts?: { secondsDelay?: number }
   ): Promise<void>,
 
+  // Logging options:
   +logSettings: EdgeLogSettings,
   changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void>,
 
   // Deprecated API's:
+  getRecovery2Key(username: string): Promise<string>,
   pinExists(username: string): Promise<boolean>
 }
 

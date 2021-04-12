@@ -3,6 +3,7 @@
 import {
   type Cleaner,
   asArray,
+  asCodec,
   asDate,
   asNumber,
   asObject,
@@ -56,11 +57,11 @@ export type LoginStash = {
   passwordKeySnrp?: EdgeSnrp,
 
   // PIN v2 login:
-  pin2Key?: string,
+  pin2Key?: Uint8Array,
   pin2TextBox?: EdgeBox,
 
   // Recovery v2 login:
-  recovery2Key?: string,
+  recovery2Key?: Uint8Array,
 
   // Keys and assorted goodies:
   children?: LoginStash[],
@@ -170,11 +171,20 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   passwordKeySnrp: asOptional(asEdgeSnrp),
 
   // PIN v2 login:
-  pin2Key: asOptional(asString),
+  pin2Key: asOptional(
+    asCodec(
+      // Legacy Airbitz can wrongly send this in base58 for Edge login:
+      raw => {
+        const clean = asString(raw)
+        return raw.slice(-1) !== '=' ? base58.parse(clean) : base64.parse(clean)
+      },
+      clean => base64.stringify(clean)
+    )
+  ),
   pin2TextBox: asOptional(asEdgeBox),
 
   // Recovery v2 login:
-  recovery2Key: asOptional(asString),
+  recovery2Key: asOptional(asBase64),
 
   // Keys and assorted goodies:
   children: asOptional(asArray(raw => asLoginStash(raw))),

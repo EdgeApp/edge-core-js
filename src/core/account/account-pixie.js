@@ -56,7 +56,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           update(input.props.selfOutput.api)
           close(input.props.selfOutput.api)
           close(input.props.selfOutput.api.dataStore)
-          close(input.props.selfOutput.api.exchangeCache)
+          close(input.props.selfOutput.api.rateCache)
           const currencies = input.props.selfOutput.api.currencyConfig
           for (const n of Object.keys(currencies)) close(currencies[n])
           const swaps = input.props.selfOutput.api.swapConfig
@@ -199,7 +199,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       if (lastExchangeState !== input.props.state.exchangeCache) {
         lastExchangeState = input.props.state.exchangeCache
         if (selfOutput.api != null) {
-          emit(selfOutput.api.exchangeCache, 'update', undefined)
+          emit(selfOutput.api.rateCache, 'update', undefined)
         }
       }
     }

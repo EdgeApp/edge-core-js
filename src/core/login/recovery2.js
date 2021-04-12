@@ -19,7 +19,6 @@ import { type ApiInput } from '../root-pixie.js'
 import { applyKit, serverLogin } from './login.js'
 import { loginFetch } from './login-fetch.js'
 import { fixUsername, getStash } from './login-selectors.js'
-import { type LoginStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 
 const wasChangeRecovery2Payload = uncleaner(asChangeRecovery2Payload)
@@ -37,15 +36,6 @@ function recovery2Auth(
     const data = utf8.parse(answer)
     return hmacSha256(data, recovery2Key)
   })
-}
-
-/**
- * Returns a copy of the recovery key if one exists on the local device.
- */
-export function getRecovery2Key(stashTree: LoginStash): Uint8Array | void {
-  if (stashTree.recovery2Key != null) {
-    return base64.parse(stashTree.recovery2Key)
-  }
 }
 
 /**
@@ -169,7 +159,7 @@ export function makeRecovery2Kit(
       question2Box
     }),
     stash: {
-      recovery2Key: base64.stringify(recovery2Key)
+      recovery2Key
     },
     login: {
       recovery2Key
