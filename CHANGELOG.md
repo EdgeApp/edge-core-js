@@ -1,5 +1,15 @@
 # edge-core-js
 
+## 0.17.30 (2021-04-12)
+
+- Deprecate several methods:
+  - `EdgeContext.getRecovery2Key` - Use `EdgeUserInfo.recovery2Key` instead.
+  - `EdgeCurrencyWallet.exportTransactionsToCSV` - Moved to edge-react-gui project.
+  - `EdgeCurrencyWallet.exportTransactionsToQBO` - Moved to edge-react-gui project.
+  - `EdgeCurrencyWallet.getDisplayPrivateSeed` - Use `EdgeCurrencyWallet.displayPrivateSeed` instead.
+  - `EdgeCurrencyWallet.getDisplayPublicSeed` - Use `EdgeCurrencyWallet.displayPublicSeed` instead.
+- Upgrade build scripts to use Webpack 5.
+
 ## 0.17.29 (2021-03-29)
 
 - Fix an error which was causing all new 2FA-protected logins to fail.
