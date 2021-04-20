@@ -6,18 +6,15 @@ import * as React from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
 import RNFS from 'react-native-fs'
 import { WebView } from 'react-native-webview'
-import { Bridge, bridgifyObject, onMethod } from 'yaob'
+import { Bridge, onMethod } from 'yaob'
 
-import { type EdgeLogEvent, type EdgeNativeIo } from '../../types/types.js'
 import { makeClientIo } from './react-native-io.js'
-import { type WorkerApi } from './react-native-types.js'
+import { type ClientIo, type WorkerApi } from './react-native-types.js'
 
 type Props = {
   debug?: boolean,
   onError(e: any): mixed,
-  onLoad(nativeIo: EdgeNativeIo, root: WorkerApi): Promise<mixed>,
-  onLog(event: EdgeLogEvent): void,
-  nativeIo?: EdgeNativeIo
+  onLoad(clientIo: ClientIo, root: WorkerApi): Promise<mixed>
 }
 
 type WebViewCallbacks = {
@@ -113,23 +110,17 @@ export class EdgeCoreBridge extends React.Component<Props> {
 
   constructor(props: Props) {
     super(props)
-    const { nativeIo = {}, onLog, debug = false } = props
+    const { debug = false, onError, onLoad } = props
 
     // Set up the native IO objects:
-    const nativeIoPromise = makeClientIo(onLog).then(coreIo => {
-      const bridgedIo: EdgeNativeIo = { 'edge-core': coreIo }
-      for (const n in nativeIo) {
-        bridgedIo[n] = bridgifyObject(nativeIo[n])
-      }
-      return bridgedIo
-    })
+    const clientIoPromise = makeClientIo()
 
     // Set up the YAOB bridge:
     this.callbacks = makeOuterWebViewBridge(
       (root: WorkerApi) => {
-        nativeIoPromise
-          .then(nativeIo => props.onLoad(nativeIo, root))
-          .catch(error => props.onError(error))
+        clientIoPromise
+          .then(nativeIo => onLoad(nativeIo, root))
+          .catch(error => onError(error))
       },
       debug ? 'edge-core' : undefined
     )

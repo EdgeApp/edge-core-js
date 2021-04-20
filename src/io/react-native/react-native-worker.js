@@ -70,19 +70,13 @@ function makeIo(clientIo: ClientIo): EdgeIo {
 }
 
 const workerApi: WorkerApi = bridgifyObject({
-  makeEdgeContext(nativeIo, opts) {
-    const clientIo: ClientIo = nativeIo['edge-core']
-    const { onLog } = clientIo
-
-    return makeContext({ io: makeIo(clientIo), nativeIo, onLog }, opts)
+  makeEdgeContext(clientIo, nativeIo, logBackend, opts) {
+    return makeContext({ io: makeIo(clientIo), nativeIo }, logBackend, opts)
   },
 
-  makeFakeEdgeWorld(nativeIo, users = []) {
-    const clientIo: ClientIo = nativeIo['edge-core']
-    const { onLog } = clientIo
-
+  makeFakeEdgeWorld(clientIo, nativeIo, logBackend, users = []) {
     return Promise.resolve(
-      makeFakeWorld({ io: makeIo(clientIo), nativeIo, onLog }, users)
+      makeFakeWorld({ io: makeIo(clientIo), nativeIo }, logBackend, users)
     )
   }
 })

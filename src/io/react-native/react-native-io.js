@@ -5,11 +5,7 @@ import { NativeModules } from 'react-native'
 import { scrypt } from 'react-native-fast-crypto'
 import { bridgifyObject } from 'yaob'
 
-import {
-  type EdgeFetchOptions,
-  type EdgeOnLog,
-  NetworkError
-} from '../../types/types.js'
+import { type EdgeFetchOptions, NetworkError } from '../../types/types.js'
 import {
   type HttpHeaders,
   type HttpResponse
@@ -72,7 +68,7 @@ function fetchCors(
   })
 }
 
-export function makeClientIo(onLog: EdgeOnLog): Promise<ClientIo> {
+export function makeClientIo(): Promise<ClientIo> {
   return new Promise((resolve, reject) => {
     randomBytes(32, (error, base64String) => {
       if (error != null) return reject(error)
@@ -84,7 +80,6 @@ export function makeClientIo(onLog: EdgeOnLog): Promise<ClientIo> {
 
         // Local IO:
         disklet: bridgifyObject(makeReactNativeDisklet()),
-        onLog,
 
         // Networking:
         fetchCors

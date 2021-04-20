@@ -25,14 +25,16 @@ export type RootState = {
   +hideKeys: boolean,
   +lastAccountId: string,
   +logSettings: EdgeLogSettings,
+  +paused: boolean,
+  +rateHintCache: EdgeRateHint[],
+  +ready: boolean,
 
+  // Children reducers:
   +currency: CurrencyState,
   +exchangeCache: ExchangeState,
   +login: LoginState,
-  +paused: boolean,
   +plugins: PluginsState,
-  +storageWallets: StorageWalletsState,
-  rateHintCache: EdgeRateHint[]
+  +storageWallets: StorageWalletsState
 }
 
 export const defaultLogSettings: EdgeLogSettings = {
@@ -87,6 +89,10 @@ export const reducer: BuiltReducer<RootState, RootAction> = buildReducer({
     return state
   },
 
+  paused(state = false, action: RootAction): boolean {
+    return action.type === 'PAUSE' ? action.payload : state
+  },
+
   rateHintCache(state = DEFAULT_RATE_HINTS, action): EdgeRateHint[] {
     switch (action.type) {
       case 'INIT':
@@ -96,8 +102,8 @@ export const reducer: BuiltReducer<RootState, RootAction> = buildReducer({
     return state
   },
 
-  paused(state = false, action: RootAction): boolean {
-    return action.type === 'PAUSE' ? action.payload : state
+  ready(state = false, action: RootAction): boolean {
+    return action.type === 'INIT' ? true : state
   },
 
   currency,

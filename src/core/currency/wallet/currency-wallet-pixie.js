@@ -113,7 +113,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const engine = await plugin.makeCurrencyEngine(mergedWalletInfo, {
         callbacks: makeCurrencyWalletCallbacks(input),
         log: makeLog(
-          input.props.onLog,
+          input.props.logBackend,
           `${plugin.currencyInfo.currencyCode}-${walletInfo.id.slice(0, 2)}`
         ),
         walletLocalDisklet,

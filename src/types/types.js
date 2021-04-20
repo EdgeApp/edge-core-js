@@ -110,10 +110,19 @@ export type EdgeIo = {
 export type EdgeLogMethod = (...args: any[]) => void
 
 /**
- * Logs a message. Call `log(message)` for normal information messages,
+ * Logs a message.
+ *
+ * Call `log(message)` for normal information messages,
  * or `log.warn(message)` / `log.error(message)` for something more severe.
+ * To record crash information, use `log.crash(error, json)` for errors,
+ * and `log.breadcrumb(message, json)` for data leading up to crashes.
  */
 export type EdgeLog = EdgeLogMethod & {
+  // Crash logging:
+  +breadcrumb: (message: string, metadata: JsonObject) => void,
+  +crash: (error: mixed, metadata: JsonObject) => void,
+
+  // Message logging:
   +warn: EdgeLogMethod,
   +error: EdgeLogMethod
 }
@@ -136,6 +145,33 @@ export type EdgeLogEvent = {
   type: EdgeLogType
 }
 
+export type EdgeBreadcrumbEvent = {
+  message: string,
+  metadata: JsonObject,
+  source: string,
+  time: Date
+}
+
+export type EdgeCrashEvent = {
+  error: mixed,
+  metadata: JsonObject,
+  source: string,
+  time: Date
+}
+
+/**
+ * Receives crash reports.
+ * The app should implement this interface and pass it to the context.
+ */
+export type EdgeCrashReporter = {
+  logBreadcrumb(breadcrumb: EdgeBreadcrumbEvent): void,
+  logCrash(crash: EdgeCrashEvent): void
+}
+
+/**
+ * Receives log messages.
+ * The app should implement this function and pass it to the context.
+ */
 export type EdgeOnLog = (event: EdgeLogEvent) => void
 
 // plugins -------------------------------------------------------------
@@ -1031,6 +1067,9 @@ export type EdgeContextOptions = {
   authServer?: string,
   hideKeys?: boolean,
 
+  // Intercepts crash reports:
+  crashReporter?: EdgeCrashReporter,
+
   // A string to describe this phone or app:
   deviceDescription?: string,
 
@@ -1210,7 +1249,21 @@ export type EdgeContext = {
 // ---------------------------------------------------------------------
 
 export type EdgeFakeWorldOptions = {
+  crashReporter?: EdgeCrashReporter,
   onLog?: EdgeOnLog
+}
+
+export type EdgeFakeContextOptions = {
+  // EdgeContextOptions:
+  apiKey: string,
+  appId: string,
+  deviceDescription?: string,
+  hideKeys?: boolean,
+  logSettings?: $Shape<EdgeLogSettings>,
+  plugins?: EdgeCorePluginsInit,
+
+  // Fake device options:
+  cleanDevice?: boolean
 }
 
 export type EdgeFakeUser = {
@@ -1225,9 +1278,7 @@ export type EdgeFakeUser = {
 export type EdgeFakeWorld = {
   close(): Promise<void>,
 
-  makeEdgeContext(
-    opts: EdgeContextOptions & { cleanDevice?: boolean }
-  ): Promise<EdgeContext>,
+  makeEdgeContext(opts: EdgeFakeContextOptions): Promise<EdgeContext>,
 
   goOffline(offline?: boolean): Promise<void>,
   dumpFakeUser(account: EdgeAccount): Promise<EdgeFakeUser>

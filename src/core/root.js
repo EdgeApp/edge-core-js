@@ -4,13 +4,14 @@ import { type StoreEnhancer, compose, createStore } from 'redux'
 import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import {
-  type EdgeContext,
-  type EdgeContextOptions,
-  type EdgeLogEvent
-} from '../types/types.js'
+import { type EdgeContext, type EdgeContextOptions } from '../types/types.js'
 import { type RootAction } from './actions.js'
-import { makeLegacyConsole, makeLog } from './log/log.js'
+import {
+  type LogBackend,
+  filterLogs,
+  makeLegacyConsole,
+  makeLog
+} from './log/log.js'
 import { loadStashes } from './login/login-stash.js'
 import { type PluginIos, watchPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
@@ -30,6 +31,7 @@ const composeEnhancers =
  */
 export async function makeContext(
   ios: PluginIos,
+  logBackend: LogBackend,
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
   const { io } = ios
@@ -39,9 +41,9 @@ export async function makeContext(
     authServer = 'https://auth.airbitz.co/api',
     deviceDescription = null,
     hideKeys = false,
-    logSettings = {},
     plugins: pluginsInit = {}
   } = opts
+  const logSettings = { ...defaultLogSettings, ...opts.logSettings }
   if (apiKey == null) {
     throw new Error('No API key provided')
   }
@@ -51,25 +53,11 @@ export async function makeContext(
   const redux = createStore(reducer, enhancers)
 
   // Create a log wrapper, using the settings from redux:
-  function onLog(event: EdgeLogEvent) {
-    const { sources, defaultLogLevel } = redux.getState().logSettings
-
-    const logLevel =
-      sources[event.source] != null ? sources[event.source] : defaultLogLevel
-
-    switch (event.type) {
-      case 'info':
-        if (logLevel === 'info') ios.onLog(event)
-        break
-      case 'warn':
-        if (logLevel === 'info' || logLevel === 'warn') ios.onLog(event)
-        break
-      case 'error':
-        if (logLevel !== 'silent') ios.onLog(event)
-        break
-    }
-  }
-  const log = makeLog(onLog, 'edge-core')
+  logBackend = filterLogs(logBackend, () => {
+    const state = redux.getState()
+    return state.ready ? state.logSettings : logSettings
+  })
+  const log = makeLog(logBackend, 'edge-core')
 
   // Retrieve rate hint cache
   let rateHintCache = []
@@ -102,7 +90,7 @@ export async function makeContext(
       authServer,
       deviceDescription,
       hideKeys,
-      logSettings: { ...defaultLogSettings, ...logSettings },
+      logSettings,
       pluginsInit,
       rateHintCache,
       stashes
@@ -111,7 +99,8 @@ export async function makeContext(
 
   // Subscribe to new plugins:
   const closePlugins = watchPlugins(
-    { ...ios, onLog },
+    ios,
+    logBackend,
     pluginsInit,
     redux.dispatch
   )
@@ -129,14 +118,14 @@ export async function makeContext(
           closePlugins()
           redux.dispatch({ type: 'CLOSE' })
         },
-        io: { ...io, console: makeLegacyConsole(onLog) },
+        io: { ...io, console: makeLegacyConsole(logBackend) },
         log,
+        logBackend,
         onError: error => {
           if (mirror.output.context && mirror.output.context.api) {
             emit(mirror.output.context.api, 'error', error)
           }
-        },
-        onLog
+        }
       })
     ),
     e => log.error(e),

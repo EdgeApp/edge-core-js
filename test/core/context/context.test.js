@@ -90,7 +90,7 @@ describe('username', function () {
   })
 
   it('reject invalid characters', async function () {
-    const world = await makeFakeEdgeWorld()
+    const world = await makeFakeEdgeWorld([], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
     expect(() => context.fixUsername('テスト')).to.throw()
