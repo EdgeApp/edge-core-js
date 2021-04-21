@@ -222,9 +222,15 @@ const currencyWalletInner: FatReducer<
   },
 
   syncRatio(state = 0, action: RootAction): number {
-    return action.type === 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO'
-      ? action.payload.ratio
-      : state
+    switch (action.type) {
+      case 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO': {
+        return action.payload.ratio
+      }
+      case 'CURRENCY_ENGINE_CLEARED': {
+        return 0
+      }
+    }
+    return state
   },
 
   balances(state = {}, action: RootAction): EdgeBalances {
