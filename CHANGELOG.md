@@ -1,5 +1,12 @@
 # edge-core-js
 
+## 0.17.31 (2021-04-22)
+
+- Add `crash` and `breadcrumb` methods to `EdgeLog` for crash reporting.
+- Deprecate the `options` prop on the `MakeEdgeContext` React Native component.
+  - Just pass any context options as normal props.
+- Reset the wallet sync ratio as part of a resync.
+
 ## 0.17.30 (2021-04-12)
 
 - Deprecate several methods:
