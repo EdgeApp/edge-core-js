@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.17.32 (2021-04-28)
+
+- Enable safari10 option in webpack minimizer to fix stuck loading screens on iOS 10
+
 ## 0.17.31 (2021-04-22)
 
 - Add `crash` and `breadcrumb` methods to `EdgeLog` for crash reporting.
