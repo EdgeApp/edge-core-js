@@ -1,5 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
+const TerserPlugin = require('terser-webpack-plugin')
 
 // Set this to false for easier debugging:
 const production = true
@@ -29,6 +30,17 @@ module.exports = {
       }
     ]
   },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          safari10: true
+        }
+      })
+    ]
+  },
+
   output: {
     filename: 'lib/react-native/edge-core.js',
     path: path.resolve(__dirname)
