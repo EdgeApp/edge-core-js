@@ -67,10 +67,12 @@ type State = {
  */
 class FakeCurrencyEngine {
   callbacks: EdgeCurrencyEngineCallbacks
+  running: boolean
   state: State
 
   constructor(walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
     this.callbacks = opts.callbacks
+    this.running = false
     this.state = {
       balance: 0,
       tokenBalance: 0,
@@ -154,12 +156,12 @@ class FakeCurrencyEngine {
   }
 
   // Engine state
-  startEngine(): Promise<void> {
-    return Promise.resolve()
+  async startEngine(): Promise<void> {
+    this.running = true
   }
 
-  killEngine(): Promise<void> {
-    return Promise.resolve()
+  async killEngine(): Promise<void> {
+    this.running = false
   }
 
   resyncBlockchain(): Promise<void> {
@@ -170,7 +172,7 @@ class FakeCurrencyEngine {
     return {
       walletId: 'xxx',
       walletType: fakeCurrencyInfo.walletType,
-      data: {}
+      data: { fakeEngine: { running: this.running } }
     }
   }
 

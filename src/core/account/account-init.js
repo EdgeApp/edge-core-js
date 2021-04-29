@@ -93,6 +93,7 @@ export async function makeAccount(
   loginType: LoginType,
   opts: EdgeAccountOptions = {}
 ): Promise<EdgeAccount> {
+  const { pauseWallets = false } = opts
   const { log } = ai.props
   log.warn(`Login: decrypted keys for user ${loginTree.loginId}`)
 
@@ -111,6 +112,7 @@ export async function makeAccount(
       loginKey: rootLogin
         ? loginTree.loginKey
         : findAppLogin(loginTree, appId).loginKey,
+      pauseWallets,
       rootLogin,
       loginType
     }

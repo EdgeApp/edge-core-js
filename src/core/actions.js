@@ -190,6 +190,13 @@ export type RootAction =
       }
     }
   | {
+      type: 'CURRENCY_WALLET_CHANGED_PAUSED',
+      payload: {
+        paused: boolean,
+        walletId: string
+      }
+    }
+  | {
       // Called when a currency wallet receives a new name.
       type: 'CURRENCY_WALLET_FIAT_CHANGED',
       payload: {
@@ -268,6 +275,7 @@ export type RootAction =
         appId: string,
         loginKey: Uint8Array,
         loginType: LoginType,
+        pauseWallets: boolean,
         rootLogin: boolean,
         username: string
       }

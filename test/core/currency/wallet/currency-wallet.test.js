@@ -20,7 +20,9 @@ import { fakeUser } from '../../../fake/fake-user.js'
 const contextOptions = { apiKey: '', appId: '' }
 const quiet = { onLog() {} }
 
-async function makeFakeCurrencyWallet(): Promise<{
+async function makeFakeCurrencyWallet(
+  pauseWallets?: boolean
+): Promise<{
   config: EdgeCurrencyConfig,
   context: EdgeContext,
   wallet: EdgeCurrencyWallet
@@ -30,7 +32,9 @@ async function makeFakeCurrencyWallet(): Promise<{
     ...contextOptions,
     plugins: { fakecoin: true, 'fake-exchange': true }
   })
-  const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+  const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin, {
+    pauseWallets
+  })
 
   // Wait for the wallet to load:
   const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
@@ -46,6 +50,7 @@ describe('currency wallets', function () {
     expect(wallet.name).equals('Fake Wallet')
     expect(wallet.displayPrivateSeed).equals('xpriv')
     expect(wallet.displayPublicSeed).equals('xpub')
+    expect(wallet.paused).equals(false)
   })
 
   it('can be renamed', async function () {
@@ -339,5 +344,33 @@ describe('currency wallets', function () {
       exchangeAmount: { 'iso:USD': 0.75 },
       ...metadata
     })
+  })
+
+  it('can be paused and un-paused', async function () {
+    const { wallet, context } = await makeFakeCurrencyWallet(true)
+    const isEngineRunning = async () => {
+      const dump = await wallet.dumpData()
+      return dump.data.fakeEngine.running
+    }
+
+    // We should start paused:
+    expect(wallet.paused).equals(true)
+    expect(await isEngineRunning()).equals(false)
+
+    // Unpausing should start the engine:
+    await wallet.changePaused(false)
+    expect(wallet.paused).equals(false)
+    expect(await isEngineRunning()).equals(true)
+
+    // Pausing should stop the engine:
+    await wallet.changePaused(true)
+    expect(wallet.paused).equals(true)
+    expect(await isEngineRunning()).equals(false)
+
+    // Pausing the context should keep the engine off:
+    await context.changePaused(true)
+    await wallet.changePaused(false)
+    expect(wallet.paused).equals(false)
+    expect(await isEngineRunning()).equals(false)
   })
 })
