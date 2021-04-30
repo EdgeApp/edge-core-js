@@ -1,5 +1,15 @@
 // @flow
 
+import {
+  type Cleaner,
+  asBoolean,
+  asCodec,
+  asMaybe,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
 import { type DiskletFile, type DiskletFolder, mapFiles } from 'disklet'
 import { base16, base64 } from 'rfc4648'
 
@@ -28,6 +38,19 @@ type LoadedWalletList = {
   walletInfos: EdgeWalletInfo[],
   walletStates: EdgeWalletStates
 }
+
+const asBase16: Cleaner<Uint8Array> = asCodec(
+  raw => base16.parse(asString(raw)),
+  clean => base16.stringify(clean)
+)
+
+const asLegacyWalletFile = asObject({
+  SortIndex: asOptional(asNumber, 0),
+  Archived: asOptional(asBoolean, false),
+  BitcoinSeed: asBase16,
+  MK: asBase16,
+  SyncKey: asBase16
+}).withRest
 
 /**
  * Returns true if `Object.assign(a, b)` would alter `a`.
@@ -69,36 +92,35 @@ function getJsonFiles(folder: DiskletFolder): Promise<any[]> {
 /**
  * Loads the legacy wallet list from the account folder.
  */
-function loadWalletList(folder: DiskletFolder): Promise<LoadedWalletList> {
-  return getJsonFiles(folder.folder('Wallets')).then(files => {
-    const walletInfos: EdgeWalletInfo[] = []
-    const walletStates = {}
+async function loadWalletList(
+  folder: DiskletFolder
+): Promise<LoadedWalletList> {
+  const files = await getJsonFiles(folder.folder('Wallets'))
 
-    files.forEach(file => {
-      const { SortIndex, Archived, BitcoinSeed, MK, SyncKey } = file.json
+  const walletInfos: EdgeWalletInfo[] = []
+  const walletStates = {}
+  for (const file of files) {
+    const clean = asMaybe(asLegacyWalletFile)(file.json)
+    if (clean == null) continue
 
-      const dataKey = base16.parse(MK)
-      const bitcoinKey = base16.parse(BitcoinSeed)
-      const syncKey = base16.parse(SyncKey)
-      const keys = {
-        bitcoinKey: base64.stringify(bitcoinKey),
-        dataKey: base64.stringify(dataKey),
-        format: 'bip32',
-        syncKey: base64.stringify(syncKey)
-      }
+    const keys = {
+      bitcoinKey: base64.stringify(clean.BitcoinSeed),
+      dataKey: base64.stringify(clean.MK),
+      format: 'bip32',
+      syncKey: base64.stringify(clean.SyncKey)
+    }
 
-      const keyInfo = makeKeyInfo('wallet:bitcoin', keys, dataKey)
-      walletInfos.push(keyInfo)
-      walletStates[keyInfo.id] = {
-        sortIndex: SortIndex,
-        archived: Archived,
-        deleted: false,
-        hidden: false
-      }
-    })
+    const keyInfo = makeKeyInfo('wallet:bitcoin', keys, clean.MK)
+    walletInfos.push(keyInfo)
+    walletStates[keyInfo.id] = {
+      sortIndex: clean.SortIndex,
+      archived: clean.Archived,
+      deleted: false,
+      hidden: false
+    }
+  }
 
-    return { walletInfos, walletStates }
-  })
+  return { walletInfos, walletStates }
 }
 
 /**
