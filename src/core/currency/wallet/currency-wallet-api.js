@@ -182,12 +182,14 @@ export function makeCurrencyWalletApi(
     },
 
     // Running state:
-    async startEngine(): Promise<void> {
-      await engine.startEngine()
+    get paused(): boolean {
+      return input.props.selfState.paused
     },
-
-    async stopEngine(): Promise<void> {
-      await engine.killEngine()
+    async changePaused(paused: boolean): Promise<void> {
+      input.props.dispatch({
+        type: 'CURRENCY_WALLET_CHANGED_PAUSED',
+        payload: { walletId: input.props.id, paused }
+      })
     },
 
     // Tokens:
@@ -574,7 +576,13 @@ export function makeCurrencyWalletApi(
     getBalance: CurrencyWalletSync.prototype.getBalance,
     getBlockHeight: CurrencyWalletSync.prototype.getBlockHeight,
     getDisplayPrivateSeed: CurrencyWalletSync.prototype.getDisplayPrivateSeed,
-    getDisplayPublicSeed: CurrencyWalletSync.prototype.getDisplayPublicSeed
+    getDisplayPublicSeed: CurrencyWalletSync.prototype.getDisplayPublicSeed,
+    async startEngine(): Promise<void> {
+      return out.changePaused(false)
+    },
+    async stopEngine(): Promise<void> {
+      return out.changePaused(true)
+    }
   }
   bridgifyObject(out)
 

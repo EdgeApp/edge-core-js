@@ -236,7 +236,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         }
       }
     },
-    props => (props.state.paused ? undefined : props)
+    props => (props.state.paused || props.selfState.paused ? undefined : props)
   ),
 
   syncTimer: filterPixie(
@@ -268,7 +268,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         }
       }
     },
-    props => (props.state.paused ? undefined : props)
+    props => (props.state.paused || props.selfState.paused ? undefined : props)
   ),
 
   watcher(input: CurrencyWalletInput) {

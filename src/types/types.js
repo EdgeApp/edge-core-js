@@ -639,8 +639,8 @@ export type EdgeCurrencyWallet = {
   +syncRatio: number,
 
   // Running state:
-  startEngine(): Promise<void>,
-  stopEngine(): Promise<void>,
+  +paused: boolean,
+  changePaused(paused: boolean): Promise<void>,
 
   // Token management:
   changeEnabledTokens(currencyCodes: string[]): Promise<void>,
@@ -694,7 +694,9 @@ export type EdgeCurrencyWallet = {
   getBalance(opts?: EdgeCurrencyCodeOptions): string,
   getBlockHeight(): number,
   getDisplayPrivateSeed(): string | null,
-  getDisplayPublicSeed(): string | null
+  getDisplayPublicSeed(): string | null,
+  startEngine(): Promise<void>,
+  stopEngine(): Promise<void>
 }
 
 // ---------------------------------------------------------------------
@@ -800,7 +802,8 @@ export type EdgeRatePlugin = {
 export type EdgeAccountOptions = {
   now?: Date, // The current time, if different from `new Date()`
   otpKey?: string, // The OTP secret
-  otp?: string // The 6-digit OTP, or (deprecated) the OTP secret
+  otp?: string, // The 6-digit OTP, or (deprecated) the OTP secret
+  pauseWallets?: boolean // True to start wallets in the paused state
 }
 
 /**

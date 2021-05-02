@@ -49,6 +49,7 @@ export type AccountState = {
   +legacyWalletInfos: EdgeWalletInfo[],
   +walletInfos: WalletInfoFullMap,
   +walletStates: EdgeWalletStates,
+  +pauseWallets: boolean,
 
   // Login stuff:
   +appId: string, // Copy of the context appId
@@ -206,6 +207,10 @@ const accountInner: FatReducer<
       action.type === 'ACCOUNT_KEYS_LOADED'
       ? action.payload.walletStates
       : state
+  },
+
+  pauseWallets(state: boolean = false, action: RootAction): boolean {
+    return action.type === 'LOGIN' ? action.payload.pauseWallets : state
   },
 
   appId(state = '', action: RootAction): string {

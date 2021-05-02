@@ -6,6 +6,7 @@ import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
+  type EdgeContext,
   type EdgeCurrencyConfig,
   type EdgeCurrencyWallet,
   type EdgeMetadata,
@@ -19,35 +20,42 @@ import { fakeUser } from '../../../fake/fake-user.js'
 const contextOptions = { apiKey: '', appId: '' }
 const quiet = { onLog() {} }
 
-async function makeFakeCurrencyWallet(): Promise<
-  [EdgeCurrencyWallet, EdgeCurrencyConfig]
-> {
+async function makeFakeCurrencyWallet(
+  pauseWallets?: boolean
+): Promise<{
+  config: EdgeCurrencyConfig,
+  context: EdgeContext,
+  wallet: EdgeCurrencyWallet
+}> {
   const world = await makeFakeEdgeWorld([fakeUser], quiet)
   const context = await world.makeEdgeContext({
     ...contextOptions,
     plugins: { fakecoin: true, 'fake-exchange': true }
   })
-  const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+  const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin, {
+    pauseWallets
+  })
 
   // Wait for the wallet to load:
   const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
   if (walletInfo == null) throw new Error('Broken test account')
   const wallet = await account.waitForCurrencyWallet(walletInfo.id)
   const config = account.currencyConfig.fakecoin
-  return [wallet, config]
+  return { config, context, wallet }
 }
 
 describe('currency wallets', function () {
   it('can be created', async function () {
-    const [wallet] = await makeFakeCurrencyWallet()
+    const { wallet } = await makeFakeCurrencyWallet()
     expect(wallet.name).equals('Fake Wallet')
     expect(wallet.displayPrivateSeed).equals('xpriv')
     expect(wallet.displayPublicSeed).equals('xpub')
+    expect(wallet.paused).equals(false)
   })
 
   it('can be renamed', async function () {
     const log = makeAssertLog()
-    const [wallet] = await makeFakeCurrencyWallet()
+    const { wallet } = await makeFakeCurrencyWallet()
     wallet.watch('name', name => log(name))
 
     await wallet.renameWallet('Another Name')
@@ -56,7 +64,7 @@ describe('currency wallets', function () {
   })
 
   it('has publicWalletInfo', async function () {
-    const [wallet] = await makeFakeCurrencyWallet()
+    const { wallet } = await makeFakeCurrencyWallet()
     expect(wallet.publicWalletInfo).deep.equals({
       id: 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=',
       keys: { fakeAddress: 'FakePublicAddress' },
@@ -66,7 +74,7 @@ describe('currency wallets', function () {
 
   it('triggers callbacks', async function () {
     const log = makeAssertLog()
-    const [wallet, config] = await makeFakeCurrencyWallet()
+    const { wallet, config } = await makeFakeCurrencyWallet()
 
     // Subscribe to the wallet:
     wallet.on('newTransactions', txs => {
@@ -140,7 +148,7 @@ describe('currency wallets', function () {
   })
 
   it('handles tokens', async function () {
-    const [wallet, config] = await makeFakeCurrencyWallet()
+    const { wallet, config } = await makeFakeCurrencyWallet()
     await config.changeUserSettings({
       txs: {
         a: { currencyCode: 'FAKE', nativeAmount: '2' },
@@ -166,7 +174,7 @@ describe('currency wallets', function () {
   })
 
   it('search transactions', async function () {
-    const [wallet, config] = await makeFakeCurrencyWallet()
+    const { wallet, config } = await makeFakeCurrencyWallet()
     await config.changeUserSettings({
       txs: walletTxs
     })
@@ -199,7 +207,7 @@ describe('currency wallets', function () {
   })
 
   it('get max spendable', async function () {
-    const [wallet, config] = await makeFakeCurrencyWallet()
+    const { wallet, config } = await makeFakeCurrencyWallet()
     await config.changeUserSettings({ balance: 50 })
 
     const maxSpendable = await wallet.getMaxSpendable({
@@ -233,7 +241,7 @@ describe('currency wallets', function () {
   })
 
   it('converts number formats', async function () {
-    const [wallet] = await makeFakeCurrencyWallet()
+    const { wallet } = await makeFakeCurrencyWallet()
     expect(await wallet.denominationToNative('0.1', 'SMALL')).equals('1')
     expect(await wallet.denominationToNative('0.1', 'FAKE')).equals('10')
     expect(await wallet.denominationToNative('0.1', 'TOKEN')).equals('100')
@@ -244,7 +252,7 @@ describe('currency wallets', function () {
 
   it('can save metadata at spend time', async function () {
     const log = makeAssertLog()
-    const [wallet, config] = await makeFakeCurrencyWallet()
+    const { wallet, config } = await makeFakeCurrencyWallet()
     await config.changeUserSettings({ balance: 100 }) // Spending balance
 
     // Subscribe to new transactions:
@@ -317,7 +325,7 @@ describe('currency wallets', function () {
   })
 
   it('can update metadata', async function () {
-    const [wallet, config] = await makeFakeCurrencyWallet()
+    const { wallet, config } = await makeFakeCurrencyWallet()
 
     const metadata: EdgeMetadata = {
       name: 'me',
@@ -336,5 +344,33 @@ describe('currency wallets', function () {
       exchangeAmount: { 'iso:USD': 0.75 },
       ...metadata
     })
+  })
+
+  it('can be paused and un-paused', async function () {
+    const { wallet, context } = await makeFakeCurrencyWallet(true)
+    const isEngineRunning = async () => {
+      const dump = await wallet.dumpData()
+      return dump.data.fakeEngine.running
+    }
+
+    // We should start paused:
+    expect(wallet.paused).equals(true)
+    expect(await isEngineRunning()).equals(false)
+
+    // Unpausing should start the engine:
+    await wallet.changePaused(false)
+    expect(wallet.paused).equals(false)
+    expect(await isEngineRunning()).equals(true)
+
+    // Pausing should stop the engine:
+    await wallet.changePaused(true)
+    expect(wallet.paused).equals(true)
+    expect(await isEngineRunning()).equals(false)
+
+    // Pausing the context should keep the engine off:
+    await context.changePaused(true)
+    await wallet.changePaused(false)
+    expect(wallet.paused).equals(false)
+    expect(await isEngineRunning()).equals(false)
   })
 })

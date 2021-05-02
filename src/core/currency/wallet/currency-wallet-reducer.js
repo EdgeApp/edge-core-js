@@ -57,6 +57,8 @@ export type CurrencyWalletState = {
   +accountId: string,
   +pluginId: string,
 
+  +paused: boolean,
+
   +currencyInfo: EdgeCurrencyInfo,
   +displayPrivateSeed: string | null,
   +displayPublicSeed: string | null,
@@ -111,6 +113,18 @@ const currencyWalletInner: FatReducer<
       return out
     }
   ),
+
+  paused(
+    state: boolean | void,
+    action: RootAction,
+    next: CurrencyWalletNext
+  ): boolean {
+    return state == null
+      ? next.root.accounts[next.self.accountId].pauseWallets
+      : action.type === 'CURRENCY_WALLET_CHANGED_PAUSED'
+      ? action.payload.paused
+      : state
+  },
 
   currencyInfo(
     state,
