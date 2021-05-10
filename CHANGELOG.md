@@ -1,5 +1,12 @@
 # edge-core-js
 
+## 0.17.33 (2021-05-10)
+
+- Add a `paused` flag to `EdgeCurrencyWallet`, and a matching `changePaused` method.
+- Deprecate `EdgeCurrencyWallet.startEngine` - Use `EdgeCurrencyWallet.changePaused(false)` instead.
+- Deprecate `EdgeCurrencyWallet.stopEngine` - Use `EdgeCurrencyWallet.changePaused(true)` instead.
+- Clean legacy Airbitz wallet files to prevent potential crashes at login.
+
 ## 0.17.32 (2021-04-28)
 
 - Enable safari10 option in webpack minimizer to fix stuck loading screens on iOS 10
