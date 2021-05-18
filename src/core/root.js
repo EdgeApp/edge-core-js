@@ -1,5 +1,6 @@
 // @flow
 
+import { justFiles } from 'disklet'
 import { type StoreEnhancer, compose, createStore } from 'redux'
 import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
@@ -61,23 +62,15 @@ export async function makeContext(
 
   // Retrieve rate hint cache
   let rateHintCache = []
-  try {
+  if (justFiles(await io.disklet.list()).includes('rateHintCache.json')) {
     rateHintCache = JSON.parse(await io.disklet.getText('rateHintCache.json'))
     log('Read rateHintCache.json success')
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      // Failure is ok if file doesn't exist
-      try {
-        await io.disklet.setText('rateHintCache.json', JSON.stringify([]))
-        log('Create rateHintCache.json success')
-      } catch (error) {
-        log.error('Create rateHintCache.json failure', error.message)
-        throw error
-      }
-    } else {
-      log.error('Read rateHintCache.json error', error.message)
-      throw error
-    }
+  } else {
+    await io.disklet.setText(
+      'rateHintCache.json',
+      JSON.stringify(rateHintCache)
+    )
+    log('Create rateHintCache.json success')
   }
 
   // Load the login stashes from disk:
