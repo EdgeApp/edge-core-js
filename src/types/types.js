@@ -493,16 +493,16 @@ export type EdgeCurrencyEngineOptions = {
 }
 
 export type EdgeCurrencyEngine = {
-  changeUserSettings(settings: JsonObject): Promise<mixed>,
+  changeUserSettings(settings: JsonObject): Promise<void>,
 
   // Keys:
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
 
   // Engine status:
-  startEngine(): Promise<mixed>,
-  killEngine(): Promise<mixed>,
-  resyncBlockchain(): Promise<mixed>,
+  startEngine(): Promise<void>,
+  killEngine(): Promise<void>,
+  resyncBlockchain(): Promise<void>,
   dumpData(): EdgeDataDump | Promise<EdgeDataDump>,
 
   // Chain state:
@@ -513,10 +513,10 @@ export type EdgeCurrencyEngine = {
   getTxids?: () => EdgeTxidMap,
 
   // Tokens:
-  enableTokens(tokens: string[]): Promise<mixed>,
-  disableTokens(tokens: string[]): Promise<mixed>,
+  enableTokens(tokens: string[]): Promise<void>,
+  disableTokens(tokens: string[]): Promise<void>,
   getEnabledTokens(): Promise<string[]>,
-  addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
+  addCustomToken(token: EdgeTokenInfo): Promise<void>,
   getTokenStatus(token: string): boolean,
 
   // Addresses:
@@ -530,7 +530,7 @@ export type EdgeCurrencyEngine = {
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   signTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
-  saveTx(transaction: EdgeTransaction): Promise<mixed>,
+  saveTx(transaction: EdgeTransaction): Promise<void>,
   +sweepPrivateKeys?: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
   +getPaymentProtocolInfo?: (
     paymentProtocolUrl: string
