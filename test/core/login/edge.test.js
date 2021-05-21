@@ -4,7 +4,6 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
-  type EdgeAccount,
   type EdgeFakeWorld,
   type EdgeLobby,
   type EdgePendingEdgeLogin,
@@ -31,28 +30,6 @@ async function simulateRemoteApproval(
 }
 
 describe('edge login', function () {
-  it('works with context callbacks', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext({
-      ...contextOptions,
-      appId: 'test-child',
-      cleanDevice: true
-    })
-
-    const account: EdgeAccount = await new Promise((resolve, reject) => {
-      context.on('login', account => resolve(account))
-      context.on('loginError', ({ error }) => reject(error))
-
-      context
-        .requestEdgeLogin({ displayName: 'test suite' })
-        .then(pending => simulateRemoteApproval(world, pending.id))
-        .catch(reject)
-    })
-    expect(account.appId).equals('test-child')
-
-    return context.loginWithPIN(fakeUser.username, fakeUser.pin)
-  })
-
   it('works with local events', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({

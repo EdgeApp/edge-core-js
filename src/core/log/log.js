@@ -1,7 +1,6 @@
 // @flow
 
 import {
-  type EdgeConsole,
   type EdgeCrashReporter,
   type EdgeLog,
   type EdgeLogEvent,
@@ -90,19 +89,4 @@ export function makeLog(backend: LogBackend, source: string): EdgeLog {
     warn: makeLogMethod(onLog, 'warn', source),
     error: makeLogMethod(onLog, 'error', source)
   })
-}
-
-export function makeLegacyConsole(backend: LogBackend): EdgeConsole {
-  const log = makeLog(backend, 'console')
-  return {
-    info(...args) {
-      return log(...args)
-    },
-    error(...args) {
-      return log.error(...args)
-    },
-    warn(...args) {
-      return log.warn(...args)
-    }
-  }
 }

@@ -79,10 +79,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       username: string,
       password?: string,
       pin?: string,
-      opts?: EdgeAccountOptions
+      opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
-      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
-
       const loginTree = await createLogin(ai, username, opts, { password, pin })
       return makeAccount(ai, appId, loginTree, 'newAccount', opts)
     },
@@ -90,9 +88,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async loginWithKey(
       username: string,
       loginKey: string,
-      opts?: EdgeAccountOptions
+      opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
-      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
       const { now = new Date() } = opts
 
       const stashTree = getStash(ai, username)
@@ -111,10 +108,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async loginWithPassword(
       username: string,
       password: string,
-      opts?: EdgeAccountOptions
+      opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
-      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
-
       const loginTree = await loginPassword(ai, username, password, opts)
       return makeAccount(ai, appId, loginTree, 'passwordLogin', opts)
     },
@@ -129,10 +124,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async loginWithPIN(
       username: string,
       pin: string,
-      opts?: EdgeAccountOptions
+      opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
-      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
-
       const loginTree = await loginPin2(ai, appId, username, pin, opts)
       return makeAccount(ai, appId, loginTree, 'pinLogin', opts)
     },
@@ -141,10 +134,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       recovery2Key: string,
       username: string,
       answers: string[],
-      opts?: EdgeAccountOptions
+      opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
-      if (opts == null) opts = {} // opts can be `null`, not just `undefined`
-
       const loginTree = await loginRecovery2(
         ai,
         base58.parse(recovery2Key),
@@ -220,20 +211,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void> {
       const newSettings = { ...ai.props.state.logSettings, ...settings }
       ai.props.dispatch({ type: 'CHANGE_LOG_SETTINGS', payload: newSettings })
-    },
-
-    // Deprecated API's:
-    async getRecovery2Key(username: string): Promise<string> {
-      const loginStash = getStash(ai, username)
-      const { recovery2Key } = loginStash
-      if (recovery2Key == null) {
-        throw new Error('No recovery key stored locally.')
-      }
-      return base58.stringify(recovery2Key)
-    },
-
-    pinExists(username: string): Promise<boolean> {
-      return this.pinLoginEnabled(username)
     }
   }
   bridgifyObject(out)

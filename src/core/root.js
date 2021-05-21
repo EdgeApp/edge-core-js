@@ -6,12 +6,7 @@ import { emit } from 'yaob'
 
 import { type EdgeContext, type EdgeContextOptions } from '../types/types.js'
 import { type RootAction } from './actions.js'
-import {
-  type LogBackend,
-  filterLogs,
-  makeLegacyConsole,
-  makeLog
-} from './log/log.js'
+import { type LogBackend, filterLogs, makeLog } from './log/log.js'
 import { loadStashes } from './login/login-stash.js'
 import { type PluginIos, watchPlugins } from './plugins/plugins-actions.js'
 import { type RootProps, rootPixie } from './root-pixie.js'
@@ -118,7 +113,7 @@ export async function makeContext(
           closePlugins()
           redux.dispatch({ type: 'CLOSE' })
         },
-        io: { ...io, console: makeLegacyConsole(logBackend) },
+        io,
         log,
         logBackend,
         onError: error => {

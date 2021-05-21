@@ -4,7 +4,6 @@ import { add, div, lte, mul, sub } from 'biggystring'
 import { type Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
-import { CurrencyWalletSync } from '../../../client-side.js'
 import {
   type EdgeBalances,
   type EdgeCurrencyCodeOptions,
@@ -37,12 +36,7 @@ import {
   packMetadata,
   unpackMetadata
 } from './currency-wallet-cleaners.js'
-import {
-  dateFilter,
-  exportTransactionsToCSVInner,
-  exportTransactionsToQBOInner,
-  searchStringFilter
-} from './currency-wallet-export.js'
+import { dateFilter, searchStringFilter } from './currency-wallet-export.js'
 import {
   type TransactionFile,
   loadTxFiles,
@@ -319,43 +313,6 @@ export function makeCurrencyWalletApi(
       return out
     },
 
-    async exportTransactionsToQBO(
-      opts: EdgeGetTransactionsOptions
-    ): Promise<string> {
-      const txs: EdgeTransaction[] = await this.getTransactions(opts)
-      const currencyCode =
-        opts && opts.currencyCode
-          ? opts.currencyCode
-          : input.props.selfState.currencyInfo.currencyCode
-      const denom = opts && opts.denomination ? opts.denomination : null
-      const qbo: string = exportTransactionsToQBOInner(
-        txs,
-        currencyCode,
-        this.fiatCurrencyCode,
-        denom,
-        Date.now()
-      )
-      return qbo
-    },
-
-    async exportTransactionsToCSV(
-      opts: EdgeGetTransactionsOptions
-    ): Promise<string> {
-      const txs: EdgeTransaction[] = await this.getTransactions(opts)
-      const currencyCode =
-        opts && opts.currencyCode
-          ? opts.currencyCode
-          : input.props.selfState.currencyInfo.currencyCode
-      const denom = opts && opts.denomination ? opts.denomination : null
-      const csv: string = await exportTransactionsToCSVInner(
-        txs,
-        currencyCode,
-        this.fiatCurrencyCode,
-        denom
-      )
-      return csv
-    },
-
     async getReceiveAddress(
       opts: EdgeCurrencyCodeOptions = {}
     ): Promise<EdgeReceiveAddress> {
@@ -560,29 +517,12 @@ export function makeCurrencyWalletApi(
       )
     },
 
-    async encodeUri(obj: EdgeEncodeUri): Promise<string> {
-      const { legacyAddress, segwitAddress } = obj
-      const copy = { ...obj }
-      if (segwitAddress != null) copy.publicAddress = segwitAddress
-      if (legacyAddress != null) copy.publicAddress = legacyAddress
-
+    async encodeUri(options: EdgeEncodeUri): Promise<string> {
       const tools = await getCurrencyTools(ai, walletInfo.type)
-      return tools.encodeUri(copy, input.props.state.currency.customTokens)
+      return tools.encodeUri(options, input.props.state.currency.customTokens)
     },
 
-    otherMethods,
-
-    // Deprecated API's:
-    getBalance: CurrencyWalletSync.prototype.getBalance,
-    getBlockHeight: CurrencyWalletSync.prototype.getBlockHeight,
-    getDisplayPrivateSeed: CurrencyWalletSync.prototype.getDisplayPrivateSeed,
-    getDisplayPublicSeed: CurrencyWalletSync.prototype.getDisplayPublicSeed,
-    async startEngine(): Promise<void> {
-      return out.changePaused(false)
-    },
-    async stopEngine(): Promise<void> {
-      return out.changePaused(true)
-    }
+    otherMethods
   }
   bridgifyObject(out)
 

@@ -3,9 +3,6 @@
 import { shareData } from 'yaob'
 
 import {
-  type EdgeBalances,
-  type EdgeCurrencyCodeOptions,
-  type EdgeCurrencyInfo,
   type EdgePasswordRules,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull
@@ -66,37 +63,6 @@ export function checkPasswordRules(password: string): EdgePasswordRules {
   }
 }
 shareData({ checkPasswordRules })
-
-/**
- * Client-side EdgeCurrencyWallet methods.
- */
-export class CurrencyWalletSync {
-  +balances: EdgeBalances
-  +blockHeight: number
-  +currencyInfo: EdgeCurrencyInfo
-  +displayPrivateSeed: string | null
-  +displayPublicSeed: string | null
-
-  getBalance(opts: EdgeCurrencyCodeOptions = {}): string {
-    const { currencyCode = this.currencyInfo.currencyCode } = opts
-    const balance = this.balances[currencyCode]
-    if (balance == null) return '0'
-    return balance
-  }
-
-  getBlockHeight(): number {
-    return this.blockHeight
-  }
-
-  getDisplayPrivateSeed(): string | null {
-    return this.displayPrivateSeed
-  }
-
-  getDisplayPublicSeed(): string | null {
-    return this.displayPublicSeed
-  }
-}
-shareData(CurrencyWalletSync.prototype, 'CurrencyWalletSync')
 
 /**
  * Normalizes a username, and checks for invalid characters.

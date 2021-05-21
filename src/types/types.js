@@ -98,11 +98,7 @@ export type EdgeIo = {
   +fetch: EdgeFetchFunction,
 
   // This is only present if the platform has some way to avoid CORS:
-  +fetchCors?: EdgeFetchFunction,
-
-  // Deprecated:
-  // eslint-disable-next-line no-use-before-define
-  +console: EdgeConsole
+  +fetchCors?: EdgeFetchFunction
 }
 
 // logging -------------------------------------------------------------
@@ -130,7 +126,7 @@ export type EdgeLog = EdgeLogMethod & {
 export type EdgeLogType = 'info' | 'warn' | 'error'
 
 export type EdgeLogSettings = {
-  sources: { [pluginName: string]: EdgeLogType },
+  sources: { [pluginId: string]: EdgeLogType },
   defaultLogLevel: EdgeLogType | 'silent'
 }
 
@@ -306,11 +302,7 @@ export type EdgeMetadata = {
   notes?: string,
 
   // Deprecated. Use exchangeAmount instead:
-  amountFiat?: number,
-
-  // Deprecated. The core has never actually written this to disk,
-  // but deleting this type definition would break the GUI:
-  miscJson?: string
+  amountFiat?: number
 }
 
 export type EdgeNetworkFee = {
@@ -457,8 +449,6 @@ export type EdgeParsedUri = {
 
 export type EdgeEncodeUri = {
   publicAddress: string,
-  segwitAddress?: string, // Deprecated. Use publicAddress instead.
-  legacyAddress?: string, // Deprecated. Use publicAddress instead.
   nativeAmount?: string,
   label?: string,
   message?: string,
@@ -503,16 +493,16 @@ export type EdgeCurrencyEngineOptions = {
 }
 
 export type EdgeCurrencyEngine = {
-  changeUserSettings(settings: JsonObject): Promise<mixed>,
+  changeUserSettings(settings: JsonObject): Promise<void>,
 
   // Keys:
   getDisplayPrivateSeed(): string | null,
   getDisplayPublicSeed(): string | null,
 
   // Engine status:
-  startEngine(): Promise<mixed>,
-  killEngine(): Promise<mixed>,
-  resyncBlockchain(): Promise<mixed>,
+  startEngine(): Promise<void>,
+  killEngine(): Promise<void>,
+  resyncBlockchain(): Promise<void>,
   dumpData(): EdgeDataDump | Promise<EdgeDataDump>,
 
   // Chain state:
@@ -523,10 +513,10 @@ export type EdgeCurrencyEngine = {
   getTxids?: () => EdgeTxidMap,
 
   // Tokens:
-  enableTokens(tokens: string[]): Promise<mixed>,
-  disableTokens(tokens: string[]): Promise<mixed>,
+  enableTokens(tokens: string[]): Promise<void>,
+  disableTokens(tokens: string[]): Promise<void>,
   getEnabledTokens(): Promise<string[]>,
-  addCustomToken(token: EdgeTokenInfo): Promise<mixed>,
+  addCustomToken(token: EdgeTokenInfo): Promise<void>,
   getTokenStatus(token: string): boolean,
 
   // Addresses:
@@ -540,7 +530,7 @@ export type EdgeCurrencyEngine = {
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   signTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
-  saveTx(transaction: EdgeTransaction): Promise<mixed>,
+  saveTx(transaction: EdgeTransaction): Promise<void>,
   +sweepPrivateKeys?: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
   +getPaymentProtocolInfo?: (
     paymentProtocolUrl: string
@@ -686,17 +676,7 @@ export type EdgeCurrencyWallet = {
   parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri>,
   encodeUri(obj: EdgeEncodeUri): Promise<string>,
 
-  +otherMethods: EdgeOtherMethods,
-
-  // Deprecated API's:
-  exportTransactionsToQBO(opts: EdgeGetTransactionsOptions): Promise<string>,
-  exportTransactionsToCSV(opts: EdgeGetTransactionsOptions): Promise<string>,
-  getBalance(opts?: EdgeCurrencyCodeOptions): string,
-  getBlockHeight(): number,
-  getDisplayPrivateSeed(): string | null,
-  getDisplayPublicSeed(): string | null,
-  startEngine(): Promise<void>,
-  stopEngine(): Promise<void>
+  +otherMethods: EdgeOtherMethods
 }
 
 // ---------------------------------------------------------------------
@@ -993,7 +973,7 @@ export type EdgeAccount = {
 
   // OTP:
   +otpKey: string | void, // OTP is enabled if this exists
-  +otpResetDate: string | void, // A reset is requested if this exists
+  +otpResetDate: Date | void, // A reset is requested if this exists
   cancelOtpReset(): Promise<void>,
   disableOtp(): Promise<void>,
   enableOtp(timeout?: number): Promise<void>,
@@ -1041,10 +1021,7 @@ export type EdgeAccount = {
   fetchSwapQuote(
     request: EdgeSwapRequest,
     opts?: EdgeSwapRequestOptions
-  ): Promise<EdgeSwapQuote>,
-
-  // Deprecated names:
-  +exchangeCache: EdgeRateCache
+  ): Promise<EdgeSwapQuote>
 }
 
 // ---------------------------------------------------------------------
@@ -1157,12 +1134,7 @@ export type EdgeUserInfo = {
 
 export type EdgeContextEvents = {
   close: void,
-  error: Error,
-
-  // Deprecated:
-  login: EdgeAccount,
-  loginStart: { username: string },
-  loginError: { error: Error }
+  error: Error
 }
 
 export type EdgeContext = {
@@ -1240,11 +1212,7 @@ export type EdgeContext = {
 
   // Logging options:
   +logSettings: EdgeLogSettings,
-  changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void>,
-
-  // Deprecated API's:
-  getRecovery2Key(username: string): Promise<string>,
-  pinExists(username: string): Promise<boolean>
+  changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void>
 }
 
 // ---------------------------------------------------------------------
@@ -1291,13 +1259,6 @@ export type EdgeFakeWorld = {
 // deprecated types
 // ---------------------------------------------------------------------
 
-// The only subset of `Console` that Edge core uses:
-export type EdgeConsole = {
-  error(...data: any[]): void,
-  info(...data: any[]): void,
-  warn(...data: any[]): void
-}
-
 export type EdgeBitcoinPrivateKeyOptions = {
   format?: string,
   coinType?: number,
@@ -1307,5 +1268,3 @@ export type EdgeBitcoinPrivateKeyOptions = {
 export type EdgeCreatePrivateKeyOptions =
   | EdgeBitcoinPrivateKeyOptions
   | JsonObject
-
-export type EdgeEdgeLoginOptions = EdgeAccountOptions
