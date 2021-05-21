@@ -15,6 +15,8 @@ import {
   type EdgeOnLog
 } from './types.js'
 
+export * from './types.js'
+
 const hack: any = null
 
 export const addEdgeCorePlugins = (plugins: EdgeCorePlugins): void => hack

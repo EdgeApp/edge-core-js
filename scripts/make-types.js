@@ -1,9 +1,7 @@
 // Run as `node -r sucrase/register scripts/make-types.js`
 
-import { babel } from '@rollup/plugin-babel'
 import { makeNodeDisklet } from 'disklet'
 import eslint from 'eslint'
-import { rollup } from 'rollup'
 
 function jsToTs(code) {
   const output = code
@@ -34,29 +32,6 @@ const files = [
 
 async function main() {
   const disklet = makeNodeDisklet('.')
-  await disklet.setText(
-    'lib/types/index.ts',
-    "export * from './types'\n" + "export * from './exports'\n"
-  )
-
-  // Transpile error classes to plain Javascript for use by core plugins:
-  const bundle = await rollup({
-    external: ['cleaners', 'rfc4648'],
-    input: './src/types/types.js',
-    plugins: [
-      babel({
-        babelHelpers: 'bundled',
-        babelrc: false,
-        plugins: ['babel-plugin-transform-fake-error-class'],
-        presets: ['@babel/preset-flow']
-      })
-    ]
-  })
-  await bundle.write({
-    file: './types.js',
-    format: 'cjs'
-  })
-  await bundle.close()
 
   // Transpile Flow types to Typescript:
   for (const file of files) {
