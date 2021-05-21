@@ -1,9 +1,9 @@
-#!/usr/bin/env node
+// Run as `node -r sucrase/register scripts/make-types.js`
 
-const { babel } = require('@rollup/plugin-babel')
-const { makeNodeDisklet } = require('disklet')
-const eslint = require('eslint')
-const { rollup } = require('rollup')
+import { babel } from '@rollup/plugin-babel'
+import { makeNodeDisklet } from 'disklet'
+import eslint from 'eslint'
+import { rollup } from 'rollup'
 
 function jsToTs(code) {
   const output = code

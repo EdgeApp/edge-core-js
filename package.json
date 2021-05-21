@@ -43,7 +43,7 @@
   "scripts": {
     "build.lib": "sucrase ./src -q -d ./lib -t flow,jsx",
     "build.react-native": "webpack",
-    "build.types": "node ./make-types.js; tsc",
+    "build.types": "node -r sucrase/register ./scripts/make-types.js && tsc",
     "clean": "rimraf lib",
     "fix": "npm run lint -- --fix",
     "flow": "flow",
