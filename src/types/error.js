@@ -20,24 +20,6 @@ import type { EdgeSwapInfo } from './types.js'
  * since the program has basically crashed at that point.
  */
 
-export const errorNames = {
-  DustSpendError: 'DustSpendError',
-  InsufficientFundsError: 'InsufficientFundsError',
-  NetworkError: 'NetworkError',
-  NoAmountSpecifiedError: 'NoAmountSpecifiedError',
-  ObsoleteApiError: 'ObsoleteApiError',
-  OtpError: 'OtpError',
-  PasswordError: 'PasswordError',
-  PendingFundsError: 'PendingFundsError',
-  SameCurrencyError: 'SameCurrencyError',
-  SpendToSelfError: 'SpendToSelfError',
-  SwapAboveLimitError: 'SwapAboveLimitError',
-  SwapBelowLimitError: 'SwapBelowLimitError',
-  SwapCurrencyError: 'SwapCurrencyError',
-  SwapPermissionError: 'SwapPermissionError',
-  UsernameError: 'UsernameError'
-}
-
 /**
  * Trying to spend an uneconomically small amount of money.
  */
