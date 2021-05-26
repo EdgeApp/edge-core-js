@@ -1,5 +1,40 @@
 # edge-core-js
 
+## 0.18.0 (2021-05-25)
+
+This is a breaking release to remove various deprecated features that have accumulated.
+
+- Remove several methods and properties:
+  - `EdgeAccount.exchangeCache` - Use `EdgeAccount.rateCache` instead.
+  - `EdgeContext.getRecovery2Key` - Use `EdgeUserInfo.recovery2Key` instead.
+  - `EdgeContext.pinExists` - Use `EdgeUserInfo.pinLoginEnabled` instead.
+  - `EdgeContext.on('login')` - Use `EdgePendingEdgeLogin.watch('account')` instead.
+  - `EdgeContext.on('loginError')` - Use `EdgePendingEdgeLogin.watch('error')` instead.
+  - `EdgeContext.on('loginStart')` - Use `EdgePendingEdgeLogin.watch('username')` instead.
+  - `EdgeCurrencyWallet.exportTransactionsToCSV` - Moved to edge-react-gui project.
+  - `EdgeCurrencyWallet.exportTransactionsToQBO` - Moved to edge-react-gui project.
+  - `EdgeCurrencyWallet.getBalance` - Use `EdgeCurrencyWallet.balance` instead.
+  - `EdgeCurrencyWallet.getBlockHeight` - Use `EdgeCurrencyWallet.blockHeight` instead.
+  - `EdgeCurrencyWallet.getDisplayPrivateSeed` - Use `EdgeCurrencyWallet.displayPrivateSeed` instead.
+  - `EdgeCurrencyWallet.getDisplayPublicSeed` - Use `EdgeCurrencyWallet.displayPublicSeed` instead.
+  - `EdgeCurrencyWallet.startEngine` - Use `EdgeCurrencyWallet.changePaused(false)` instead.
+  - `EdgeCurrencyWallet.stopEngine` - Use `EdgeCurrencyWallet.changePaused(true)` instead.
+  - `EdgeEncodeUri.legacyAddress` - Use `EdgeEncodeUri.publicAddress` instead.
+  - `EdgeEncodeUri.segwitAddress` - Use `EdgeEncodeUri.publicAddress` instead.
+- Remove the `options` prop on the `MakeEdgeContext` React Native component.
+  - Just pass any context options as normal props.
+- Remove the `type` property from all error classes, as well as the global `errorNames` table.
+  - Use the new error-identification methods, such as `asMaybePasswordError`, to determine if an error is a specific type.
+- Stop allowing `null` in places where we expect an `EdgeAccountOptions` object.
+  - Just pass `undefined` if this parameter isn't used.
+- Return the `EdgeAccount.otpResetDate` as a `Date` object.
+
+The following changes affect Edge core plugins:
+
+- Remove `EdgeIo.console` - Use `EdgeCorePluginOptions.log` instead.
+- Define `EdgeCurrencyEngine` methods to return `Promise<void>` instead of `Promise<mixed>`.
+- The core will no longer upgrade `pluginName` to `pluginId` for legacy currency plugins.
+
 ## 0.17.33 (2021-05-10)
 
 - Add a `paused` flag to `EdgeCurrencyWallet`, and a matching `changePaused` method.
