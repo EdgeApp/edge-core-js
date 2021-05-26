@@ -6,7 +6,7 @@ import { type EdgeLogSettings, type EdgeRateHint } from './../types/types.js'
 import { type AccountState, accountReducer } from './account/account-reducer.js'
 import { type RootAction } from './actions.js'
 import { type CurrencyState, currency } from './currency/currency-reducer.js'
-import { DEFAULT_RATE_HINTS } from './exchange/exchange-pixie'
+import { DEFAULT_RATE_HINTS } from './exchange/exchange-pixie.js'
 import {
   type ExchangeState,
   exchangeCache
