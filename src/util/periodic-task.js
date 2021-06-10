@@ -1,7 +1,17 @@
 // @flow
 
+type PeriodicTaskOptions = {
+  // Handles any errors that the task throws or rejects with:
+  onError?: (error: mixed) => void
+}
+
+type StartOptions = {
+  // True to start in the waiting state, skipping the first run:
+  wait?: boolean
+}
+
 export type PeriodicTask = {
-  start(): void,
+  start(opts?: StartOptions): void,
   stop(): void,
 
   // True once start is called, false after stop is called:
@@ -14,9 +24,7 @@ export type PeriodicTask = {
 export function makePeriodicTask(
   task: () => Promise<void> | void,
   msGap: number,
-  opts: {
-    onError?: (error: mixed) => void
-  } = {}
+  opts: PeriodicTaskOptions = {}
 ): PeriodicTask {
   const { onError = (e: mixed) => {} } = opts
 
@@ -24,7 +32,7 @@ export function makePeriodicTask(
   // The `running` flag will be true in the running state,
   // and `timeout` will have a value in the waiting state.
   let running = false
-  let timeout: $Call<typeof setTimeout, () => void, number> | void
+  let timeout: TimeoutID | void
 
   function run(): void {
     timeout = undefined
@@ -42,9 +50,9 @@ export function makePeriodicTask(
   const out = {
     started: false,
 
-    start(): void {
+    start(opts: StartOptions = {}): void {
       out.started = true
-      if (!running && timeout == null) run()
+      if (!running && timeout == null) opts.wait ? wait() : run()
     },
 
     stop(): void {

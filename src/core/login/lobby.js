@@ -131,7 +131,7 @@ export async function makeLobby(
       emit('error', error)
     }
   })
-  task.start()
+  task.start({ wait: false })
 
   // Create the return object:
   return { close: task.stop, lobbyId, on, replies }
