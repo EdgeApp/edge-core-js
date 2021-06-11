@@ -127,7 +127,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
         // Kick off the initial fetch if we don't already have one running
         // and the plugins are ready:
         if (props.state.plugins.locked) {
-          task.start()
+          task.start({ wait: false })
         }
       },
 

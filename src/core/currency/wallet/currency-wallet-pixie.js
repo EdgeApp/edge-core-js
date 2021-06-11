@@ -259,7 +259,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             input.props.state.storageWallets[id] &&
             input.props.state.storageWallets[id].status.lastSync
           ) {
-            task.start()
+            task.start({ wait: true })
           }
         },
 
