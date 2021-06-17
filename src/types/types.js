@@ -349,6 +349,7 @@ export type EdgeTransaction = {
   ourReceiveAddresses: string[],
 
   // Spend-specific metadata:
+  deviceDescription?: string,
   networkFeeOption?: 'high' | 'standard' | 'low' | 'custom',
   requestedCustomFee?: JsonObject,
   feeRateUsed?: JsonObject,

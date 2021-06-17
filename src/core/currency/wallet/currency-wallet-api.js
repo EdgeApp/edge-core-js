@@ -410,6 +410,8 @@ export function makeCurrencyWalletApi(
       tx.spendTargets = savedTargets
       if (metadata != null) tx.metadata = metadata
       if (swapData != null) tx.swapData = asTxSwap(swapData)
+      if (input.props.state.login.deviceDescription != null)
+        tx.deviceDescription = input.props.state.login.deviceDescription
 
       return tx
     },
@@ -596,6 +598,8 @@ export function combineTxWithFile(
 
     if (file.swap != null) out.swapData = asTxSwap(file.swap)
     if (typeof file.secret === 'string') out.txSecret = file.secret
+    if (file.deviceDescription != null)
+      out.deviceDescription = file.deviceDescription
   }
 
   return out

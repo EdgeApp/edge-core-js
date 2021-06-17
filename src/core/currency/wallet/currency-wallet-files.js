@@ -40,6 +40,7 @@ export type TransactionFile = {
       providerFeeSent?: string
     }
   },
+  deviceDescription?: string,
   feeRateRequested?: 'high' | 'standard' | 'low' | JsonObject,
   feeRateUsed?: JsonObject,
   payees?: Array<{
@@ -582,6 +583,8 @@ export function setupNewTxMetadata(
     }))
   }
   if (typeof tx.txSecret === 'string') json.secret = tx.txSecret
+  if (tx.deviceDescription != null)
+    json.deviceDescription = tx.deviceDescription
 
   // Save the new file:
   const { diskletFile, fileName, txidHash } = getTxFile(

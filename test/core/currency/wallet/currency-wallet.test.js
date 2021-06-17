@@ -17,7 +17,7 @@ import { expectRejection } from '../../../expect-rejection.js'
 import { walletTxs } from '../../../fake/fake-transactions.js'
 import { fakeUser } from '../../../fake/fake-user.js'
 
-const contextOptions = { apiKey: '', appId: '' }
+const contextOptions = { apiKey: '', appId: '', deviceDescription: 'iphone12' }
 const quiet = { onLog() {} }
 
 async function makeFakeCurrencyWallet(
@@ -321,6 +321,7 @@ describe('currency wallets', function () {
       ...swapData
     })
     expect(txs[0].txSecret).equals('open sesame')
+    expect(txs[0].deviceDescription).equals('iphone12')
   })
 
   it('can update metadata', async function () {
