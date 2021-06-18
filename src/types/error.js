@@ -34,7 +34,9 @@ export class DustSpendError extends Error {
 
 type InsufficientFundsErrorOpts = {
   // The currency we need more of:
-  currencyCode?: string
+  currencyCode?: string,
+  // If we don't have enough funds for a token send:
+  networkFee?: string
 }
 
 /**
@@ -43,6 +45,7 @@ type InsufficientFundsErrorOpts = {
 export class InsufficientFundsError extends Error {
   name: string
   +currencyCode: string | void
+  +networkFee: string | void
 
   constructor(opts: string | InsufficientFundsErrorOpts = {}) {
     if (typeof opts === 'string') {
@@ -54,9 +57,10 @@ export class InsufficientFundsError extends Error {
         this.currencyCode = opts
       }
     } else {
-      const { currencyCode } = opts
+      const { currencyCode, networkFee } = opts
       super(`Insufficient ${currencyCode ?? 'funds'}`)
       this.currencyCode = currencyCode
+      this.networkFee = networkFee
     }
     this.name = 'InsufficientFundsError'
   }
