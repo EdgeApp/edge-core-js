@@ -1,5 +1,14 @@
 # edge-core-js
 
+## 0.18.1 (2021-06-18)
+
+### Added
+- Save the device description on sent transactions.
+- Add an optional `InsufficientFundsError.networkFee` field.
+
+### Fixed
+- Avoid performing back-to-back initial syncs.
+
 ## 0.18.0 (2021-05-25)
 
 This is a breaking release to remove various deprecated features that have accumulated.
@@ -244,7 +253,6 @@ This release also renames all `pluginName` instances to `pluginId`. This affects
     - Remove `EdgeSwapQuote.quoteUri`. Just concatenate `EdgeSwapInfo.orderUri` with `EdgeSwapResult.orderId` to get this.
   - Rename `EdgeSwapInfo.quoteUri` to `orderUri`.
   - Remove the deprecated `plugins` option from `EdgeSwapRequestOptions`.
-
 - Other breaking changes:
   - Remove deprecated `EdgeAccount.currencyTools`. Use `EdgeAccount.currencyConfig`.
   - Remove deprecated `EdgeAccount.exchangeTools`. Use `EdgeAccount.swapConfig`.
