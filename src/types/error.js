@@ -32,28 +32,37 @@ export class DustSpendError extends Error {
   }
 }
 
+type InsufficientFundsErrorOpts = {
+  // The currency we need more of:
+  currencyCode?: string,
+  // If we don't have enough funds for a token send:
+  networkFee?: string
+}
+
 /**
  * Trying to spend more money than the wallet contains.
  */
 export class InsufficientFundsError extends Error {
   name: string
   +currencyCode: string | void
+  +networkFee: string | void
 
-  constructor(currencyCode?: string) {
-    let message
-    if (currencyCode == null) {
-      message = 'Insufficient funds'
-    } else if (currencyCode.length > 5) {
+  constructor(opts: string | InsufficientFundsErrorOpts = {}) {
+    if (typeof opts === 'string') {
       // Some plugins pass a message instead of a currency code:
-      message = currencyCode
-      currencyCode = undefined
+      if (opts.length > 5) {
+        super(opts)
+      } else {
+        super(`Insufficient ${opts}`)
+        this.currencyCode = opts
+      }
     } else {
-      message = `Insufficient ${currencyCode}`
+      const { currencyCode, networkFee } = opts
+      super(`Insufficient ${currencyCode ?? 'funds'}`)
+      this.currencyCode = currencyCode
+      this.networkFee = networkFee
     }
-
-    super(message)
     this.name = 'InsufficientFundsError'
-    if (currencyCode != null) this.currencyCode = currencyCode
   }
 }
 
