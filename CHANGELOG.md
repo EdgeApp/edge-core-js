@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.18.2 (2021-06-21)
+
+- Replace nullish coalescing operator with ternary
+
 ## 0.18.1 (2021-06-18)
 
 ### Added
