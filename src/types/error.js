@@ -58,7 +58,7 @@ export class InsufficientFundsError extends Error {
       }
     } else {
       const { currencyCode, networkFee } = opts
-      super(`Insufficient ${currencyCode != null ? currencyCode : 'funds'}`)
+      super(`Insufficient ${currencyCode ?? 'funds'}`)
       this.currencyCode = currencyCode
       this.networkFee = networkFee
     }

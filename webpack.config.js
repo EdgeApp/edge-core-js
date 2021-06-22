@@ -11,6 +11,8 @@ const babelOptions = {
     : ['@babel/preset-flow', '@babel/preset-react'],
   plugins: [
     ['@babel/plugin-transform-for-of', { assumeArray: true }],
+    '@babel/plugin-proposal-nullish-coalescing-operator',
+    '@babel/plugin-proposal-optional-chaining',
     '@babel/plugin-transform-runtime',
     'babel-plugin-transform-fake-error-class'
   ],
