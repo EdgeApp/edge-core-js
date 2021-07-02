@@ -1,0 +1,27 @@
+name: Workflow Sync
+
+on:
+  push:
+    branches:
+      - main
+  # schedule:
+  #   - cron: 0 0 * * *
+  # 
+
+jobs:
+  sync:
+    name: Sync Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetching Local Repository
+        uses: actions/checkout@master
+      - name: File Sync
+        uses: kbrashears5/github-action-file-sync@v2.0.0
+        with:
+          REPOSITORIES: |
+            EdgeApp/edge-conventions
+            EdgeApp/edge-sync-server
+          FILES: |
+            .github/workflows/pr-checks.yml=.github/workflows/pr-checks.yml
+            .github/workflows/pr-rebase.yml=.github/workflows/pr-rebase.yml
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
