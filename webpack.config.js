@@ -27,6 +27,13 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
         use: { loader: 'babel-loader', options: babelOptions }
+      },
+      {
+        include: path.resolve(__dirname, 'node_modules/buffer/index.js'),
+        use: {
+          loader: 'babel-loader',
+          options: { presets: ['@babel/preset-env'] }
+        }
       }
     ]
   },
@@ -40,7 +47,6 @@ module.exports = {
       })
     ]
   },
-
   output: {
     filename: 'lib/react-native/edge-core.js',
     path: path.resolve(__dirname)
