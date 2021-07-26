@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.18.3 (2021-07-26)
+
+- fixed: Fix the React Native WebView bundle to work on really old devices.
+
 ## 0.18.2 (2021-06-21)
 
 - Replace nullish coalescing operator with ternary
