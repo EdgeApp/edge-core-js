@@ -553,9 +553,9 @@ export function combineTxWithFile(
     txid: tx.txid,
     otherParams: { ...tx.otherParams, unfilteredIndex },
 
-    amountSatoshi: Number(tx.nativeAmount[currencyCode]),
-    nativeAmount: tx.nativeAmount[currencyCode],
-    networkFee: tx.networkFee[currencyCode],
+    amountSatoshi: Number(tx.nativeAmount[currencyCode] ?? '0'),
+    nativeAmount: tx.nativeAmount[currencyCode] ?? '0',
+    networkFee: tx.networkFee[currencyCode] ?? '0',
     parentNetworkFee: tx.networkFee[walletCurrency],
     currencyCode,
     wallet,
