@@ -5,20 +5,6 @@ const TerserPlugin = require('terser-webpack-plugin')
 // Set this to false for easier debugging:
 const production = true
 
-const babelOptions = {
-  presets: production
-    ? ['@babel/preset-env', '@babel/preset-flow', '@babel/preset-react']
-    : ['@babel/preset-flow', '@babel/preset-react'],
-  plugins: [
-    ['@babel/plugin-transform-for-of', { assumeArray: true }],
-    '@babel/plugin-proposal-nullish-coalescing-operator',
-    '@babel/plugin-proposal-optional-chaining',
-    '@babel/plugin-transform-runtime',
-    'babel-plugin-transform-fake-error-class'
-  ],
-  cacheDirectory: true
-}
-
 module.exports = {
   devtool: 'source-map',
   entry: './src/io/react-native/react-native-worker.js',
@@ -28,7 +14,23 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        use: { loader: 'babel-loader', options: babelOptions }
+        use: production
+          ? {
+              loader: 'babel-loader',
+              options: {
+                presets: ['@babel/preset-env', '@babel/preset-flow'],
+                plugins: [
+                  ['@babel/plugin-transform-for-of', { assumeArray: true }],
+                  '@babel/plugin-transform-runtime',
+                  'babel-plugin-transform-fake-error-class'
+                ],
+                cacheDirectory: true
+              }
+            }
+          : {
+              loader: '@sucrase/webpack-loader',
+              options: { transforms: ['flow'] }
+            }
       },
       {
         include: path.resolve(__dirname, 'node_modules/buffer/index.js'),
