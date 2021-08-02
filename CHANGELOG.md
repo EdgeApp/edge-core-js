@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.18.4 (2021-08-02)
+
+- fixed: Ensure that transactions never have `undefined` as a `nativeAmount`.
+- fixed: Change the WebPack build settings to allow easier debugging.
+
 ## 0.18.3 (2021-07-26)
 
 - fixed: Fix the React Native WebView bundle to work on really old devices.
