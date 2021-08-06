@@ -94,7 +94,7 @@ const currencyWalletInner: FatReducer<
   CurrencyWalletNext
 > = buildReducer({
   accountId(state, action: RootAction, next: CurrencyWalletNext): string {
-    if (state) return state
+    if (state != null) return state
     for (const accountId in next.root.accounts) {
       const account = next.root.accounts[accountId]
       for (const walletId in account.walletInfos) {

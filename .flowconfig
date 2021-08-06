@@ -10,5 +10,6 @@
 [libs]
 
 [lints]
+sketchy-null=error
 
 [options]

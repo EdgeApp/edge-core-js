@@ -224,8 +224,7 @@ export function makeCurrencyWalletApi(
     async getTransactions(
       opts: EdgeGetTransactionsOptions = {}
     ): Promise<EdgeTransaction[]> {
-      const defaultCurrency = plugin.currencyInfo.currencyCode
-      const currencyCode = opts.currencyCode || defaultCurrency
+      const { currencyCode = plugin.currencyInfo.currencyCode } = opts
 
       let state = input.props.selfState
       if (!state.gotTxs[currencyCode]) {

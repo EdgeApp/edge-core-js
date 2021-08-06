@@ -34,25 +34,28 @@ export function makePeriodicTask(
   let running = false
   let timeout: TimeoutID | void
 
-  function run(): void {
+  function startRunning(): void {
     timeout = undefined
     if (!out.started) return
     running = true
-    new Promise(resolve => resolve(task())).catch(onError).then(wait, wait)
+    new Promise(resolve => resolve(task()))
+      .catch(onError)
+      .then(startWaiting, startWaiting)
   }
 
-  function wait(): void {
+  function startWaiting(): void {
     running = false
     if (!out.started) return
-    timeout = setTimeout(run, msGap)
+    timeout = setTimeout(startRunning, msGap)
   }
 
   const out = {
     started: false,
 
     start(opts: StartOptions = {}): void {
+      const { wait = false } = opts
       out.started = true
-      if (!running && timeout == null) opts.wait ? wait() : run()
+      if (!running && timeout == null) wait ? startWaiting() : startRunning()
     },
 
     stop(): void {

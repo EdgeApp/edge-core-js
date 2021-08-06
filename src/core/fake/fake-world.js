@@ -81,6 +81,7 @@ export function makeFakeWorld(
     },
 
     async makeEdgeContext(opts: EdgeFakeContextOptions): Promise<EdgeContext> {
+      const { cleanDevice = false } = opts
       const fakeIo = {
         ...io,
         disklet: makeMemoryDisklet(),
@@ -88,7 +89,7 @@ export function makeFakeWorld(
       }
 
       // Populate the stashes:
-      if (!opts.cleanDevice) {
+      if (!cleanDevice) {
         await Promise.all(users.map(async user => saveUser(fakeIo, user)))
       }
 
