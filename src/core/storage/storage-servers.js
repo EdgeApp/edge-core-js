@@ -1,5 +1,8 @@
 // @flow
 
+import { asEither, asMaybe, asNull, asObject } from 'cleaners'
+
+import { asEdgeBox } from '../../types/server-cleaners.js'
 import {
   type EdgeFetchOptions,
   type EdgeIo,
@@ -42,6 +45,8 @@ export async function syncRequest(
 ): Promise<SyncReply> {
   const start = Math.floor(Math.random() * syncServers.length)
 
+  log.warn(`starting sync request loop over servers`)
+
   async function loop(i: number): Promise<SyncReply> {
     const server = syncServers[(start + i) % syncServers.length]
     const promise = syncRequestInner(io, log, method, uri, body, server)
@@ -70,6 +75,10 @@ export async function syncRequestInner(
   // Do the fetch, translating the raw network error into our format:
   const uri = `${server}${path}`
   const start = Date.now()
+
+  // TESTING ONLY
+  logExtra(log, start, method, uri, body)
+
   const response = await io.fetch(uri, opts).catch(error => {
     const time = Date.now() - start
     const message = `${method} ${server} failed in ${time}ms, ${String(error)}`
@@ -86,4 +95,54 @@ export async function syncRequestInner(
   }
   log(message)
   return response.json()
+}
+
+// TESTING ONLY
+type ChangeSummary = {
+  [key: string]: string | null
+}
+function logExtra(
+  log: EdgeLog,
+  start: number,
+  method: string,
+  uri: string,
+  body: any
+): void {
+  log.warn(`logging extra sync server stuff`)
+
+  const bodyCleaned = asMaybe(
+    asObject({
+      changes: asObject(asEither(asNull, asEdgeBox))
+    })
+  )(body)
+
+  if (bodyCleaned == null) {
+    log.warn(
+      `logging extra returned early because body doesn't match cleaner:${JSON.stringify(
+        body
+      )}`
+    )
+    return
+  }
+
+  const changeSummary: ChangeSummary = {}
+
+  for (const [key, value] of Object.entries(bodyCleaned.changes)) {
+    if (value === null) {
+      changeSummary[key] = null
+    }
+    if (value !== null) {
+      // $FlowFixMe
+      const data = value.data_base64
+      changeSummary[key] = data.slice(0, Math.min(8, data.length))
+    }
+  }
+
+  log.warn(
+    `${method} ${uri} at ${start} with ${JSON.stringify(
+      changeSummary,
+      null,
+      2
+    )}`
+  )
 }
