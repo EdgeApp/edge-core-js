@@ -316,7 +316,7 @@ export async function createCurrencyWallet(
   let keys
   if (opts.keys != null) {
     keys = opts.keys
-  } else if (opts.importText) {
+  } else if (opts.importText != null) {
     if (tools.importPrivateKey == null) {
       throw new Error('This wallet does not support importing keys')
     }
@@ -332,8 +332,8 @@ export async function createCurrencyWallet(
   await applyKit(ai, loginTree, kit)
   const wallet = await waitForCurrencyWallet(ai, walletInfo.id)
 
-  if (opts.name) await wallet.renameWallet(opts.name)
-  if (opts.fiatCurrencyCode) {
+  if (opts.name != null) await wallet.renameWallet(opts.name)
+  if (opts.fiatCurrencyCode != null) {
     await wallet.setFiatCurrencyCode(opts.fiatCurrencyCode)
   }
 
@@ -444,7 +444,7 @@ export async function splitWalletInfo(
     const wallet = await waitForCurrencyWallet(ai, newWalletInfo.id)
     const oldWallet = ai.props.output.currency.wallets[walletId].api
     if (oldWallet) {
-      if (oldWallet.name) await wallet.renameWallet(oldWallet.name)
+      if (oldWallet.name != null) await wallet.renameWallet(oldWallet.name)
       if (oldWallet.fiatCurrencyCode) {
         await wallet.setFiatCurrencyCode(oldWallet.fiatCurrencyCode)
       }

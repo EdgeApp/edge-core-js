@@ -85,7 +85,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
       // Gather pairs for up to five seconds, then send what we have:
       let wait: boolean = true
       let waitingPairs: ExchangePair[] = []
-      function sendWaitingPairs(done?: boolean): void {
+      function sendWaitingPairs(done: boolean = false): void {
         wait = false
         dispatchPairs(waitingPairs, done ? 'complete' : 'some pending')
       }

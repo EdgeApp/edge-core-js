@@ -97,7 +97,7 @@ export const login: FatReducer<
 
       case 'LOGIN_STASH_SAVED': {
         const { username } = action.payload
-        if (!username) throw new Error('Missing username')
+        if (username == null) throw new Error('Missing username')
 
         const out = { ...state }
         out[username] = action.payload

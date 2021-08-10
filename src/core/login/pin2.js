@@ -112,7 +112,7 @@ export async function checkPin2(
   pin: string
 ): Promise<boolean> {
   const { appId, username } = login
-  if (!username) return false
+  if (username == null) return false
 
   // Find the stash to use:
   const stashTree = getStash(ai, username)
