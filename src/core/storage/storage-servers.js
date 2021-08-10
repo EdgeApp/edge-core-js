@@ -45,8 +45,6 @@ export async function syncRequest(
 ): Promise<SyncReply> {
   const start = Math.floor(Math.random() * syncServers.length)
 
-  log.warn(`starting sync request loop over servers`)
-
   async function loop(i: number): Promise<SyncReply> {
     const server = syncServers[(start + i) % syncServers.length]
     const promise = syncRequestInner(io, log, method, uri, body, server)
@@ -76,8 +74,9 @@ export async function syncRequestInner(
   const uri = `${server}${path}`
   const start = Date.now()
 
-  // TESTING ONLY
-  logExtra(log, start, method, uri, body)
+  // <TESTING ONLY>
+  logExtra(log, method, uri, body, 'request')
+  // </TESTING ONLY>
 
   const response = await io.fetch(uri, opts).catch(error => {
     const time = Date.now() - start
@@ -94,21 +93,32 @@ export async function syncRequestInner(
     throw new NetworkError(message)
   }
   log(message)
-  return response.json()
+
+  // <TESTING ONLY>
+  const responseBody = await response.json()
+  logExtra(log, method, uri, responseBody, 'response')
+  // </TESTING ONLY>
+
+  return responseBody
 }
 
-// TESTING ONLY
+// <TESTING ONLY>
 type ChangeSummary = {
   [key: string]: string | null
 }
 function logExtra(
   log: EdgeLog,
-  start: number,
   method: string,
   uri: string,
-  body: any
+  body: any,
+  messageType: 'request' | 'response'
 ): void {
-  log.warn(`logging extra sync server stuff`)
+  const logStart = `${method} ${uri} ${messageType}`
+
+  if (method === 'GET') {
+    log.warn(logStart)
+    return
+  }
 
   const bodyCleaned = asMaybe(
     asObject({
@@ -117,11 +127,7 @@ function logExtra(
   )(body)
 
   if (bodyCleaned == null) {
-    log.warn(
-      `logging extra returned early because body doesn't match cleaner:${JSON.stringify(
-        body
-      )}`
-    )
+    log.warn(`${logStart} body: ${JSON.stringify(body)}`)
     return
   }
 
@@ -139,10 +145,7 @@ function logExtra(
   }
 
   log.warn(
-    `${method} ${uri} at ${start} with ${JSON.stringify(
-      changeSummary,
-      null,
-      2
-    )}`
+    `${logStart} changeSummary: ${JSON.stringify(changeSummary, null, 2)}`
   )
 }
+// </TESTING ONLY>
