@@ -75,7 +75,7 @@ export async function syncRequestInner(
   const start = Date.now()
 
   // <TESTING ONLY>
-  logExtra(log, method, uri, body, 'request')
+  logExtra(log, 'request', method, uri, body)
   // </TESTING ONLY>
 
   const response = await io.fetch(uri, opts).catch(error => {
@@ -96,7 +96,7 @@ export async function syncRequestInner(
 
   // <TESTING ONLY>
   const responseBody = await response.json()
-  logExtra(log, method, uri, responseBody, 'response')
+  logExtra(log, 'response', method, uri, responseBody)
   // </TESTING ONLY>
 
   return responseBody
@@ -108,17 +108,12 @@ type ChangeSummary = {
 }
 function logExtra(
   log: EdgeLog,
+  messageType: 'request' | 'response',
   method: string,
   uri: string,
-  body: any,
-  messageType: 'request' | 'response'
+  body: any
 ): void {
   const logStart = `${method} ${uri} ${messageType}`
-
-  if (method === 'GET') {
-    log.warn(logStart)
-    return
-  }
 
   const bodyCleaned = asMaybe(
     asObject({
