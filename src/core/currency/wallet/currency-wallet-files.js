@@ -402,8 +402,17 @@ async function loadTxFileNames(
   await mapFiles(folder.folder('transaction'), (file, fileName) => {
     const prefix = fileName.split('.json')[0]
     const split: string[] = prefix.split('-')
-    const [creationDate, txidHash] = split
-    txFileNames[txidHash] = { creationDate: parseInt(creationDate), fileName }
+    const [creationDatePart, txidHash] = split
+    const creationDate = parseInt(creationDatePart)
+
+    // Create entry in the txFileNames for the txidHash if it doesn't exist
+    // or the creation date is older than the existing one
+    if (
+      txFileNames[txidHash] == null ||
+      creationDate < txFileNames[txidHash].creationDate
+    ) {
+      txFileNames[txidHash] = { creationDate, fileName }
+    }
   })
 
   dispatch({
