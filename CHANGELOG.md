@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.18.5 (2021-08-17)
+
+- fixed: If multiple metadata files exist for a single transaction, always load the oldest one.
+
 ## 0.18.4 (2021-08-02)
 
 - fixed: Ensure that transactions never have `undefined` as a `nativeAmount`.
