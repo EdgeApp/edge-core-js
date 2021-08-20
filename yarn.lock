@@ -1727,6 +1727,11 @@ cleaners@^0.3.8:
   resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.8.tgz#87f97daea68b5fde04284eb265de09a9b46de65f"
   integrity sha512-/Udp5zxPQ/SqZwsfdCHHnlqgTvEuO4ejDFG2Ut6zHr/qXT5IHdbGXGh6yXWRynvDPEUdhafvArLEgErX8N6dDA==
 
+cleaners@^0.3.9:
+  version "0.3.9"
+  resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.9.tgz#e9d2b7ebbbf62c0ae9f7bf1f1cf0aa5544acb3fa"
+  integrity sha512-DAddE949KDyTFcb6LdVpEd4BBHa55wNfm63tE0AYT2hDZyg0IR6lwOqjPhP/6GwF1z9FWeKqjw20T27/UHjM+Q==
+
 cli-cursor@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/cli-cursor/-/cli-cursor-3.1.0.tgz#264305a7ae490d1d03bf0c9ba7c925d1753af307"
@@ -1872,6 +1877,13 @@ create-hmac@^1.1.4:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
+cross-fetch@^3.1.4:
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/cross-fetch/-/cross-fetch-3.1.4.tgz#9723f3a3a247bf8b89039f3a380a9244e8fa2f39"
+  integrity sha512-1eAtFWdIubi6T4XPy6ei9iUFoKpUkIF971QLN8lIvvvwueI65+Nw5haMNKUwfJxabqlIIDODJKGrQ66gxC0PbQ==
+  dependencies:
+    node-fetch "2.6.1"
+
 cross-spawn@^6.0.5:
   version "6.0.5"
   resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-6.0.5.tgz#4a5ec7c64dfae22c3a14124dbacdee846d80cbc4"
@@ -1999,6 +2011,14 @@ drbg.js@^1.0.1:
     browserify-aes "^1.0.6"
     create-hash "^1.1.2"
     create-hmac "^1.1.4"
+
+edge-sync-client@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.0.tgz#4db5b00e15330f7f23295f41e7838fb69d448634"
+  integrity sha512-s0rjQU/+CYaswdN2xFHNQYjCFYTcJxARV12OXnk/o4czT9JZBw7yui/+3Uskhb4gT/NlIZUPm/vHzWzltTi65A==
+  dependencies:
+    cleaners "^0.3.9"
+    cross-fetch "^3.1.4"
 
 electron-to-chromium@^1.3.723:
   version "1.3.736"
@@ -3461,7 +3481,7 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-node-fetch@^2.6.1:
+node-fetch@2.6.1, node-fetch@^2.6.1:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
   integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
