@@ -592,6 +592,21 @@ const asStoreBody = asObject({
   changes: asMap(asEdgeBox)
 })
 
+// info: -------------------------------------------------------------------
+
+const infoRoute: ApiServer = pickMethod({
+  GET: request => {
+    return jsonResponse({
+      infoServers: ['https://info-fake1.edge.app'],
+      syncServers: [
+        'https://sync-fake1.edge.app',
+        'https://sync-fake2.edge.app',
+        'https://sync-fake3.edge.app'
+      ]
+    })
+  }
+})
+
 // router: -----------------------------------------------------------------
 
 const urls: ApiServer = pickPath({
@@ -610,7 +625,10 @@ const urls: ApiServer = pickPath({
   '/api/v2/lobby/[^/]+/?': lobbyRoute,
 
   // Sync server endpoints:
-  '/api/v2/store/[^/]+/?': storeRoute
+  '/api/v2/store/[^/]+/?': storeRoute,
+
+  // Info server endpoints:
+  '/v1/edgeServers': infoRoute
 })
 
 // Wrap a better 404 error handler around the server:

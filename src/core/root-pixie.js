@@ -1,5 +1,6 @@
 // @flow
 
+import { type SyncClient } from 'edge-sync-client'
 import { type Dispatch } from 'redux'
 import { type PixieInput, type TamePixie, combinePixies } from 'redux-pixies'
 
@@ -30,7 +31,8 @@ export type RootProps = {
   +logBackend: LogBackend,
   +onError: (e: Error) => mixed,
   +output: RootOutput,
-  +state: RootState
+  +state: RootState,
+  +syncClient: SyncClient
 }
 
 export type ApiInput = PixieInput<RootProps>

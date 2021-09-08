@@ -1,5 +1,6 @@
 // @flow
 
+import { makeSyncClient } from 'edge-sync-client'
 import { type StoreEnhancer, compose, createStore } from 'redux'
 import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
@@ -100,6 +101,10 @@ export async function makeContext(
     redux.dispatch
   )
 
+  // Create sync client:
+  const typeHack: any = io.fetch
+  const syncClient = await makeSyncClient({ log, fetch: typeHack })
+
   // Start the pixie tree:
   const mirror = { output: {} }
   const closePixie = attachPixie(
@@ -120,7 +125,8 @@ export async function makeContext(
           if (mirror.output.context && mirror.output.context.api) {
             emit(mirror.output.context.api, 'error', error)
           }
-        }
+        },
+        syncClient
       })
     ),
     e => log.error(e),

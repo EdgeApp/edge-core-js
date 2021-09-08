@@ -7,9 +7,10 @@ import {
   mergeDisklets,
   navigateDisklet
 } from 'disklet'
+import { type SyncClient } from 'edge-sync-client'
 import { base16 } from 'rfc4648'
 
-import { type EdgeIo, type EdgeLog } from '../../types/types.js'
+import { type EdgeIo } from '../../types/types.js'
 import { sha256 } from '../../util/crypto/hashes.js'
 import { base58 } from '../../util/encoding.js'
 import { encryptDisklet } from './encrypt-disklet.js'
@@ -17,7 +18,6 @@ import {
   type StorageWalletPaths,
   type StorageWalletStatus
 } from './storage-reducer.js'
-import { syncRequest } from './storage-servers.js'
 
 export type SyncResult = {
   changes: { [path: string]: any },
@@ -89,8 +89,7 @@ export async function saveChanges(
  * Synchronizes the local store with the remote server.
  */
 export function syncRepo(
-  io: EdgeIo,
-  log: EdgeLog,
+  syncClient: SyncClient,
   paths: StorageWalletPaths,
   status: StorageWalletStatus
 ): Promise<SyncResult> {
@@ -99,41 +98,39 @@ export function syncRepo(
 
   return mapAllFiles(changesFolder, (file, name) =>
     file.getText().then(text => ({ file, name, json: JSON.parse(text) }))
-  ).then(ourChanges => {
-    // If we have local changes, we need to bundle those:
-    const request: { changes?: { [path: string]: any } } = {}
-    if (ourChanges.length > 0) {
-      request.changes = {}
-      for (const change of ourChanges) {
-        request.changes[change.name] = change.json
-      }
-    }
-    const method = request.changes ? 'POST' : 'GET'
+  ).then(async ourChanges => {
+    const syncKeyEncoded = base16.stringify(syncKey).toLowerCase()
 
-    // Calculate the URI:
-    let path = `/api/v2/store/${base16.stringify(syncKey).toLowerCase()}`
-    if (status.lastHash != null) {
-      path += `/${status.lastHash}`
-    }
+    // Send a read request if no changes present locally, otherwise bundle the
+    // changes with the a update request.
+    const reply = await (() => {
+      // Read the repo if no changes present locally.
+      if (ourChanges.length === 0) {
+        return syncClient.readRepo(syncKeyEncoded, status.lastHash)
+      }
+
+      // Write local changes to the repo.
+      const changes: { [name: string]: any } = {}
+      for (const change of ourChanges) {
+        changes[change.name] = change.json
+      }
+      return syncClient.updateRepo(syncKeyEncoded, status.lastHash, { changes })
+    })()
 
     // Make the request:
-    return syncRequest(io, log, method, path, request).then(reply => {
-      const { changes = {}, hash } = reply
+    const { changes = {}, hash } = reply
 
-      // Save the incoming changes into our `data` folder:
-      return saveChanges(dataDisklet, changes)
-        .then(
-          // Delete any changed keys (since the upload is done):
-          () => Promise.all(ourChanges.map(change => change.file.delete()))
-        )
-        .then(() => {
-          // Update the repo status:
-          status.lastSync = Date.now() / 1000
-          if (hash != null) status.lastHash = hash
-          return paths.baseDisklet
-            .setText('status.json', JSON.stringify(status))
-            .then(() => ({ status, changes }))
-        })
-    })
+    // Save the incoming changes into our `data` folder:
+    await saveChanges(dataDisklet, changes)
+
+    // Delete any changed keys (since the upload is done):
+    await Promise.all(ourChanges.map(change => change.file.delete()))
+
+    // Update the repo status:
+    status.lastSync = Date.now() / 1000
+    if (hash != null) status.lastHash = hash
+    return paths.baseDisklet
+      .setText('status.json', JSON.stringify(status))
+      .then(() => ({ status, changes }))
   })
 }
