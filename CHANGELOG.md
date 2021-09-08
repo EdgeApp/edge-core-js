@@ -1,5 +1,9 @@
 # edge-core-js
 
+## 0.18.6 (2021-09-08)
+
+- changed: Use edge-sync-client to retrieve the list of sync servers instead of a hard-coded list.
+
 ## 0.18.5 (2021-08-17)
 
 - fixed: If multiple metadata files exist for a single transaction, always load the oldest one.
