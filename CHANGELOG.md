@@ -1,5 +1,10 @@
 # edge-core-js
 
+## 0.18.7 (2021-09-10)
+
+- fixed: Limit the number of documents uploaded to the sync server in one request.
+- fixed: Upgrade to edge-sync-client v0.2.1, which improves the sync-server retry logic.
+
 ## 0.18.6 (2021-09-08)
 
 - changed: Use edge-sync-client to retrieve the list of sync servers instead of a hard-coded list.
@@ -23,12 +28,9 @@
 
 ## 0.18.1 (2021-06-18)
 
-### Added
-- Save the device description on sent transactions.
-- Add an optional `InsufficientFundsError.networkFee` field.
-
-### Fixed
-- Avoid performing back-to-back initial syncs.
+- added: Save the device description on sent transactions.
+- added: Add an optional `InsufficientFundsError.networkFee` field.
+- fixed: Avoid performing back-to-back initial syncs.
 
 ## 0.18.0 (2021-05-25)
 
