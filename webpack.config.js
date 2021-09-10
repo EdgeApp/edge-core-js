@@ -3,7 +3,7 @@ const webpack = require('webpack')
 const TerserPlugin = require('terser-webpack-plugin')
 
 // Set this to false for easier debugging:
-const production = true
+const production = false
 
 module.exports = {
   devtool: 'source-map',

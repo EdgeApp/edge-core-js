@@ -56,4 +56,38 @@ describe('repo', function () {
     await i2.syncRepo(syncKey)
     expect(await disklet2.getText('a/b.json')).equals(payload)
   })
+
+  it('large repo-to-repo sync', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context1 = await world.makeEdgeContext(contextOptions)
+    const context2 = await world.makeEdgeContext(contextOptions)
+    const i1 = getInternalStuff(context1)
+    const i2 = getInternalStuff(context2)
+    const disklet1 = await i1.getRepoDisklet(syncKey, dataKey)
+    const disklet2 = await i2.getRepoDisklet(syncKey, dataKey)
+
+    const files = Array.from({ length: 333 }, (_, i) => `a/${i}.txt`)
+    await Promise.all(
+      files.map(async file => disklet1.setText(file, `${file} content`))
+    )
+
+    async function fullSync(internal) {
+      let i: number = 0
+      while (true) {
+        const response = await internal.syncRepo(syncKey)
+        const j = Object.keys(response.changes).length
+        if (j === i) break
+        i = j
+      }
+    }
+
+    await fullSync(i1)
+    await fullSync(i2)
+
+    await Promise.all(
+      files.map(async file => {
+        expect(await disklet2.getText(file)).equals(`${file} content`)
+      })
+    )
+  })
 })
