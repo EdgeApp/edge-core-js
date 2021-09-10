@@ -2012,10 +2012,10 @@ drbg.js@^1.0.1:
     create-hash "^1.1.2"
     create-hmac "^1.1.4"
 
-edge-sync-client@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.0.tgz#4db5b00e15330f7f23295f41e7838fb69d448634"
-  integrity sha512-s0rjQU/+CYaswdN2xFHNQYjCFYTcJxARV12OXnk/o4czT9JZBw7yui/+3Uskhb4gT/NlIZUPm/vHzWzltTi65A==
+edge-sync-client@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.1.tgz#92836214f5b550f60f8e77a613d8e4d664026147"
+  integrity sha512-A7BqsyKXGw31QrsAy+FvAjmSpErZj68bGDAYcq6uPAvqMCeIpjAe5DSmVjAOoLDqIHKud1QmysIpvw94S9XxhQ==
   dependencies:
     cleaners "^0.3.9"
     cross-fetch "^3.1.4"
