@@ -48,6 +48,9 @@ async function main() {
       'Conversion to TypeScript failed. Please run `npx eslint --no-ignore lib/types/*.ts` to see errors.'
     )
   }
+
+  // Create an entry file for `edge-core-js/types`:
+  await disklet.setText('types.d.ts', "export * from './lib/types';\n")
 }
 
 main().catch(e => {

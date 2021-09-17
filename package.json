@@ -46,6 +46,7 @@
     "/package.json",
     "/README.md",
     "/src/types/*",
+    "/types.d.ts",
     "/types.js.flow",
     "/types.js",
     "/types.mjs"
