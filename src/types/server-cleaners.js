@@ -10,7 +10,8 @@ import {
   asObject,
   asOptional,
   asString,
-  asUnknown
+  asUnknown,
+  asValue
 } from 'cleaners'
 import { base64 } from 'rfc4648'
 
@@ -76,18 +77,7 @@ const asEdgeLoginMessage: Cleaner<EdgeLoginMessage> = asObject({
 const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> = asObject(
   {
     min_length: asNumber,
-    category: raw => {
-      const clean = asString(raw)
-      switch (clean) {
-        case 'address':
-        case 'must':
-        case 'numeric':
-        case 'recovery2':
-        case 'string':
-          return clean
-      }
-      throw new TypeError('Invalid question category')
-    },
+    category: asValue('address', 'must', 'numeric', 'recovery2', 'string'),
     question: asString
   }
 )
