@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.18.8 (2021-09-17)
+
+- Upgrade cleaners to v0.3.11
+- fixed: Restore Webpack production mode
+
 ## 0.18.7 (2021-09-10)
 
 - fixed: Limit the number of documents uploaded to the sync server in one request.
