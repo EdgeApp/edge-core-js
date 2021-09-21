@@ -1,8 +1,12 @@
 # edge-core-js
 
+## v0.18.9 (2021-09-21)
+
+- fixed: Allow `import 'edge-core-js/types'` to work in TypeScript.
+
 ## v0.18.8 (2021-09-17)
 
-- Upgrade cleaners to v0.3.11
+- changed: Upgrade cleaners to v0.3.11
 - fixed: Restore Webpack production mode
 
 ## 0.18.7 (2021-09-10)
