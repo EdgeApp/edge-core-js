@@ -62,6 +62,7 @@
     "lint": "eslint .",
     "precommit": "lint-staged && flow && npm test && npm run prepare",
     "prepare": "husky install && npm-run-all clean -p build.*",
+    "prepare.dev": "EDGE_MODE=development npm-run-all clean -p build.*",
     "test": "mocha -r sucrase/register 'test/**/*.test.js'"
   },
   "lint-staged": {
