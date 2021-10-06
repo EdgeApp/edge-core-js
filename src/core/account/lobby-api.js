@@ -12,7 +12,7 @@ import {
 import { asLobbyLoginPayload } from '../login/edge.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import { sanitizeLoginStash, syncAccount } from '../login/login.js'
-import { getStash } from '../login/login-selectors.js'
+import { getStashById } from '../login/login-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { ensureAccountExists, findAppLogin } from './account-init.js'
 
@@ -61,7 +61,7 @@ async function approveLoginRequest(
   lobbyId: string,
   lobbyJson: EdgeLobbyRequest
 ): Promise<void> {
-  const { loginTree, username } = ai.props.state.accounts[accountId]
+  const { loginTree } = ai.props.state.accounts[accountId]
 
   // Ensure that the login object & account repo exist:
   await syncAccount(ai, accountId)
@@ -73,7 +73,7 @@ async function approveLoginRequest(
   }
 
   // Create a sanitized login stash object:
-  const stashTree = getStash(ai, username)
+  const { stashTree } = getStashById(ai, loginTree.loginId)
   const loginStash = sanitizeLoginStash(stashTree, appId)
 
   // Send the reply:

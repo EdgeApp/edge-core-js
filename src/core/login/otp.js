@@ -9,10 +9,10 @@ import {
 } from '../../types/server-cleaners.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
 import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
-import { applyKit, searchTree, serverLogin } from '../login/login.js'
+import { applyKit, serverLogin } from '../login/login.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
-import { getStash, hashUsername } from './login-selectors.js'
+import { getStashById, hashUsername } from './login-selectors.js'
 import { type LoginStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
 
@@ -154,16 +154,9 @@ export async function repairOtp(
   otpKey: string
 ): Promise<void> {
   if (ai.props.state.accounts[accountId] == null) return
-  const { login, loginTree } = ai.props.state.accounts[accountId]
+  const { login } = ai.props.state.accounts[accountId]
 
-  if (loginTree.username == null || login.passwordAuth == null) {
-    throw new Error('Cannot sync: missing username')
-  }
-  const stashTree = getStash(ai, loginTree.username)
-  const stash = searchTree(stashTree, stash => stash.appId === login.appId)
-  if (stash == null) {
-    throw new Error('Cannot sync: missing on-disk data')
-  }
+  const { stashTree, stash } = getStashById(ai, login.loginId)
   if (login.passwordAuth == null) {
     throw new Error('Cannot repair OTP: There is no password on this account')
   }
