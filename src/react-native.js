@@ -133,7 +133,7 @@ function bridgifyNativeIo(nativeIo: EdgeNativeIo = {}): EdgeNativeIo {
 }
 
 function bridgifyLogBackend(backend: LogBackend): LogBackend {
-  if (backend.crashReporter) bridgifyObject(backend.crashReporter)
+  if (backend.crashReporter != null) bridgifyObject(backend.crashReporter)
   return bridgifyObject(backend)
 }
 

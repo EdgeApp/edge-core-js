@@ -406,7 +406,7 @@ export async function applyKit(
 ): Promise<LoginTree> {
   const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
-  if (!login) throw new Error('Cannot apply kit: missing login')
+  if (login == null) throw new Error('Cannot apply kit: missing login')
 
   const { stashTree } = getStashById(ai, loginId)
   const request = makeAuthJson(stashTree, login)
