@@ -38,14 +38,6 @@ import { getLoginOtp, getStashOtp } from './otp.js'
 
 const wasChangeSecretPayload = uncleaner(asChangeSecretPayload)
 
-function cloneNode<Node: {}, Output>(
-  node: Node,
-  children: Output[] | void
-): Output {
-  const out: any = { ...node, children }
-  return out
-}
-
 /**
  * Returns the login that satisfies the given predicate,
  * or undefined if nothing matches.
@@ -66,16 +58,16 @@ export function searchTree<T>(
 }
 
 /**
- * Replaces a node within a tree.
- * The `clone` callback is called for each unmodified node.
- * The `predicate` callback is used to find the target node.
- * The `update` callback is called on the target.
+ * Walks a tree, building a new tree.
+ * The `predicate` callback returns true when we reach the node to replace,
+ * and the `update` callback replaces that node.
+ * The `clone` callback updates the `children` on the non-replaced nodes.
  */
 function updateTree<Node: { +children?: any[] }, Output>(
   node: Node,
   predicate: (node: Node) => boolean,
   update: (node: Node) => Output,
-  clone: (node: Node, children: Output[] | void) => Output = cloneNode
+  clone: (node: Node, children: Output[]) => Output
 ): Output {
   if (predicate(node)) return update(node)
 
@@ -162,7 +154,8 @@ export function applyLoginPayload(
   return updateTree(
     stashTree,
     stash => stash.appId === loginReply.appId,
-    stash => applyLoginPayloadInner(stash, loginKey, loginReply)
+    stash => applyLoginPayloadInner(stash, loginKey, loginReply),
+    (stash, children) => ({ ...stash, children })
   )
 }
 
@@ -283,7 +276,7 @@ export function makeLoginTree(
         'appId',
         'loginId'
       ])
-      login.children = children != null ? children : []
+      login.children = children
       return login
     }
   )
@@ -420,7 +413,8 @@ export async function applyKit(
       ...kit.login,
       children: softCat(login.children, kit.login.children),
       keyInfos: mergeKeyInfos(softCat(login.keyInfos, kit.login.keyInfos))
-    })
+    }),
+    (login, children) => ({ ...login, children })
   )
 
   const newStashTree = updateTree(
@@ -431,7 +425,8 @@ export async function applyKit(
       ...kit.stash,
       children: softCat(stash.children, kit.stash.children),
       keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
-    })
+    }),
+    (stash, children) => ({ ...stash, children })
   )
   await saveStash(ai, newStashTree)
 
