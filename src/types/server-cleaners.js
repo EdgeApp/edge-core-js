@@ -243,6 +243,7 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   appId: asString,
   created: asOptional(asDate),
   loginId: asString,
+  userId: asOptional(asString),
 
   // Nested logins:
   children: asOptional(asArray(raw => asLoginPayload(raw))),

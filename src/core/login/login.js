@@ -22,7 +22,7 @@ import {
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { utf8 } from '../../util/encoding.js'
-import { filterObject, softCat } from '../../util/util.js'
+import { softCat } from '../../util/util.js'
 import { type ApiInput } from '../root-pixie.js'
 import {
   fixWalletInfo,
@@ -84,27 +84,47 @@ function applyLoginPayloadInner(
   loginKey: Uint8Array,
   loginReply: LoginPayload
 ): LoginStash {
-  // Copy common items:
-  const out: LoginStash = filterObject(loginReply, [
-    'appId',
-    'created',
-    'loginId',
-    'loginAuthBox',
-    'userId',
-    'otpKey',
-    'otpResetDate',
-    'otpTimeout',
-    'pendingVouchers',
-    'parentBox',
-    'passwordAuthBox',
-    'passwordAuthSnrp',
-    'passwordBox',
-    'passwordKeySnrp',
-    'pin2TextBox',
-    'mnemonicBox',
-    'rootKeyBox',
-    'syncKeyBox'
-  ])
+  const {
+    appId,
+    created,
+    loginId,
+    loginAuthBox,
+    userId,
+    otpKey,
+    otpResetDate,
+    otpTimeout,
+    pendingVouchers,
+    parentBox,
+    passwordAuthBox,
+    passwordAuthSnrp,
+    passwordBox,
+    passwordKeySnrp,
+    pin2TextBox,
+    mnemonicBox,
+    rootKeyBox,
+    syncKeyBox
+  } = loginReply
+
+  const out: LoginStash = {
+    appId,
+    created,
+    loginId,
+    loginAuthBox,
+    userId,
+    otpKey,
+    otpResetDate,
+    otpTimeout,
+    pendingVouchers,
+    parentBox,
+    passwordAuthBox,
+    passwordAuthSnrp,
+    passwordBox,
+    passwordKeySnrp,
+    pin2TextBox,
+    mnemonicBox,
+    rootKeyBox,
+    syncKeyBox
+  }
 
   // Preserve client-only data:
   if (stash.lastLogin != null) out.lastLogin = stash.lastLogin
@@ -270,14 +290,30 @@ export function makeLoginTree(
     stashTree,
     stash => stash.appId === appId,
     stash => makeLoginTreeInner(stash, loginKey),
-    (stash, children) => {
-      const login: LoginTree = filterObject(stash, [
-        'username',
-        'appId',
-        'loginId'
-      ])
-      login.children = children
-      return login
+    (stash, children): LoginTree => {
+      const {
+        appId,
+        lastLogin = new Date(),
+        loginId,
+        pendingVouchers,
+        username
+      } = stash
+
+      // Hack: The types say this must be present,
+      // but we don't actually have a root key for child logins.
+      // This affects everybody, so fixing it will be quite hard:
+      const loginKey: any = undefined
+
+      return {
+        appId,
+        children,
+        keyInfos: [],
+        lastLogin,
+        loginId,
+        loginKey,
+        pendingVouchers,
+        username
+      }
     }
   )
 }
@@ -294,14 +330,15 @@ export function sanitizeLoginStash(
     stashTree,
     stash => stash.appId === appId,
     stash => stash,
-    (stash, children) => {
-      const login: LoginStash = filterObject(stash, [
-        'username',
-        'appId',
-        'loginId'
-      ])
-      login.children = children
-      return login
+    (stash, children): LoginStash => {
+      const { appId, loginId, username } = stash
+      return {
+        appId,
+        children,
+        loginId,
+        pendingVouchers: [],
+        username
+      }
     }
   )
 }

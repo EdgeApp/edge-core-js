@@ -187,6 +187,7 @@ export type LoginPayload = {
   appId: string,
   created?: Date, // Not actually optional
   loginId: string,
+  userId?: string,
 
   // Nested logins:
   children?: LoginPayload[],
