@@ -1,5 +1,7 @@
 // @flow
 
+import { type ReturnType } from '../types/types.js' // @ts-delete
+
 type PeriodicTaskOptions = {
   // Handles any errors that the task throws or rejects with:
   onError?: (error: mixed) => void
@@ -32,7 +34,7 @@ export function makePeriodicTask(
   // The `running` flag will be true in the running state,
   // and `timeout` will have a value in the waiting state.
   let running = false
-  let timeout: TimeoutID | void
+  let timeout: ReturnType<typeof setTimeout> | void
 
   function startRunning(): void {
     timeout = undefined

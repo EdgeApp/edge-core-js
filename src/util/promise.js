@@ -1,5 +1,7 @@
 // @flow
 
+import { type ReturnType } from '../types/types.js' // @ts-delete
+
 /**
  * Waits for the first successful promise.
  * If no promise succeeds, returns the last failure.
@@ -56,7 +58,7 @@ export function fuzzyTimeout<T>(
     const failures: any[] = []
 
     // Set up the timer:
-    let timer: TimeoutID | void = setTimeout(() => {
+    let timer: ReturnType<typeof setTimeout> | void = setTimeout(() => {
       timer = undefined
       if (results.length > 0) {
         done = true

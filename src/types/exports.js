@@ -12,7 +12,8 @@ import {
   type EdgeLoginMessages,
   type EdgeLogSettings,
   type EdgeNativeIo,
-  type EdgeOnLog
+  type EdgeOnLog,
+  type Partial // @ts-delete
 } from './types.js'
 
 export * from './types.js'
@@ -55,7 +56,7 @@ export const MakeEdgeContext = (props: {
   authServer?: string,
   deviceDescription?: string,
   hideKeys?: boolean,
-  logSettings?: $Shape<EdgeLogSettings>,
+  logSettings?: Partial<EdgeLogSettings>,
   onLog?: EdgeOnLog,
   plugins?: EdgeCorePluginsInit
 }): any => hack // React element

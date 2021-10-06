@@ -1,5 +1,7 @@
 // @flow
 
+import { type ReturnType } from '../types/types.js' // @ts-delete
+
 // How often to run jobs from the queue
 let QUEUE_RUN_DELAY = 500
 
@@ -13,7 +15,7 @@ type UpdateQueue = {
 }
 
 const updateQueue: UpdateQueue[] = []
-let timeout: TimeoutID | void
+let timeout: ReturnType<typeof setTimeout> | void
 
 export function enableTestMode(): void {
   QUEUE_JOBS_PER_RUN = 99

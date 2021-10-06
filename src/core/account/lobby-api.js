@@ -4,7 +4,11 @@ import { uncleaner } from 'cleaners'
 import { bridgifyObject } from 'yaob'
 
 import { type EdgeLobbyRequest } from '../../types/server-types.js'
-import { type EdgeLobby, type EdgeLoginRequest } from '../../types/types.js'
+import {
+  type EdgeLobby,
+  type EdgeLoginRequest,
+  type ReturnType // @ts-delete
+} from '../../types/types.js'
 import { asLobbyLoginPayload } from '../login/edge.js'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby.js'
 import { sanitizeLoginStash, syncAccount } from '../login/login.js'
@@ -79,7 +83,7 @@ async function approveLoginRequest(
     loginStash
   })
   await sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
-    let timeout: TimeoutID | void
+    let timeout: ReturnType<typeof setTimeout> | void
     const accountApi = ai.props.output.accounts[accountId].api
     if (accountApi != null) {
       accountApi.on('close', () => {

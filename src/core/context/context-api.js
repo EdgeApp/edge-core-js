@@ -11,7 +11,8 @@ import {
   type EdgeLogSettings,
   type EdgePendingEdgeLogin,
   type EdgeRecoveryQuestionChoice,
-  type EdgeUserInfo
+  type EdgeUserInfo,
+  type ReturnType // @ts-delete
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
 import { findAppLogin, makeAccount } from '../account/account-init.js'
@@ -35,7 +36,7 @@ import { EdgeInternalStuff } from './internal-api.js'
 export function makeContextApi(ai: ApiInput): EdgeContext {
   const appId = ai.props.state.login.appId
   const $internalStuff = new EdgeInternalStuff(ai)
-  let pauseTimer: TimeoutID | void
+  let pauseTimer: ReturnType<typeof setTimeout> | void
 
   const out: EdgeContext = {
     on: onMethod,

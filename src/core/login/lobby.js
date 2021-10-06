@@ -9,7 +9,10 @@ import {
   type EdgeLobbyReply,
   type EdgeLobbyRequest
 } from '../../types/server-types.js'
-import { type EdgeIo } from '../../types/types.js'
+import {
+  type EdgeIo,
+  type Partial // @ts-delete
+} from '../../types/types.js'
 import { decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256, sha256 } from '../../util/crypto/hashes.js'
 import { verifyData } from '../../util/crypto/verify.js'
@@ -17,11 +20,6 @@ import { base58, utf8 } from '../../util/encoding.js'
 import { makePeriodicTask } from '../../util/periodic-task.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
-
-/**
- * A `LobbyRequest` without its key.
- */
-export type PartialLobbyRequest = $Shape<EdgeLobbyRequest>
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
@@ -92,7 +90,7 @@ export function encryptLobbyReply(
  */
 export async function makeLobby(
   ai: ApiInput,
-  lobbyRequest: PartialLobbyRequest,
+  lobbyRequest: Partial<EdgeLobbyRequest>,
   period: number = 1000
 ): Promise<LobbyInstance> {
   const { io } = ai.props
