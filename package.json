@@ -60,10 +60,11 @@
     "fix": "npm run lint -- --fix",
     "flow": "flow",
     "lint": "eslint .",
-    "precommit": "lint-staged && flow && npm test && npm run prepare",
+    "precommit": "lint-staged && flow && npm-run-all test prepare",
     "prepare": "husky install && npm-run-all clean -p build.*",
     "prepare.dev": "EDGE_MODE=development npm-run-all clean -p build.*",
-    "test": "mocha -r sucrase/register 'test/**/*.test.js'"
+    "test": "mocha -r sucrase/register 'test/**/*.test.js'",
+    "verify": "flow && npm-run-all lint prepare test"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "eslint"
