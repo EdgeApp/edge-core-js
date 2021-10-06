@@ -122,17 +122,16 @@ export async function saveStash(
   stashTree: LoginStash
 ): Promise<void> {
   const { dispatch, io } = ai.props
-  if (stashTree.appId !== '') {
+  const { appId, username } = stashTree
+  const loginId = base64.parse(stashTree.loginId)
+
+  if (appId !== '') {
     throw new Error('Cannot save a login without an appId.')
   }
-  if (stashTree.loginId == null) {
-    throw new Error('Cannot save a login without a loginId.')
-  }
-  if (stashTree.username == null) {
+  if (username == null) {
     throw new Error('Cannot save a login without a username.')
   }
-  const loginId = base64.parse(stashTree.loginId)
-  if (loginId.length !== 32) {
+  if (loginId == null || loginId.length !== 32) {
     throw new Error('Invalid loginId')
   }
   await io.disklet.setText(
