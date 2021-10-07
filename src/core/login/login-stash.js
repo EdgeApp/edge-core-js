@@ -15,6 +15,7 @@ import { type Disklet, justFiles } from 'disklet'
 import { base64 } from 'rfc4648'
 
 import {
+  asBase32,
   asBase64,
   asEdgeBox,
   asEdgePendingVoucher,
@@ -39,7 +40,7 @@ export type LoginStash = {
   username?: string,
 
   // 2-factor:
-  otpKey?: string,
+  otpKey?: Uint8Array,
   otpResetDate?: Date,
   otpTimeout?: number,
   pendingVouchers: EdgePendingVoucher[],
@@ -152,7 +153,7 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   username: asOptional(asString),
 
   // 2-factor:
-  otpKey: asOptional(asString),
+  otpKey: asOptional(asBase32),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
   pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),

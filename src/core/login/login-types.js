@@ -19,7 +19,7 @@ export type LoginTree = {
   username?: string,
 
   // 2-factor:
-  otpKey?: string,
+  otpKey?: Uint8Array,
   otpResetDate?: Date,
   otpTimeout?: number,
   pendingVouchers: EdgePendingVoucher[],

@@ -13,7 +13,7 @@ import {
   asUnknown,
   asValue
 } from 'cleaners'
-import { base16, base64 } from 'rfc4648'
+import { base16, base32, base64 } from 'rfc4648'
 
 import {
   type ChangeOtpPayload,
@@ -52,6 +52,14 @@ import {
 export const asBase16: Cleaner<Uint8Array> = asCodec(
   raw => base16.parse(asString(raw)),
   clean => base16.stringify(clean).toLowerCase()
+)
+
+/**
+ * A string of base32-encoded binary data.
+ */
+export const asBase32: Cleaner<Uint8Array> = asCodec(
+  raw => base32.parse(asString(raw), { loose: true }),
+  clean => base32.stringify(clean, { pad: false })
 )
 
 /**
@@ -183,7 +191,7 @@ export const asLoginResponseBody: Cleaner<LoginResponseBody> = asObject({
 
 export const asChangeOtpPayload: Cleaner<ChangeOtpPayload> = asObject({
   otpTimeout: asOptional(asNumber, 7 * 24 * 60 * 60), // seconds
-  otpKey: asString
+  otpKey: asBase32
 })
 
 export const asChangePasswordPayload: Cleaner<ChangePasswordPayload> = asObject(
@@ -258,7 +266,7 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   parentBox: asOptional(asEdgeBox),
 
   // 2-factor login:
-  otpKey: asOptional(asString),
+  otpKey: asOptional(asBase32),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
 

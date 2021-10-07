@@ -12,6 +12,7 @@ import {
 } from 'cleaners'
 
 import {
+  asBase32,
   asBase64,
   asEdgeBox,
   asEdgeSnrp,
@@ -49,7 +50,7 @@ export type DbLogin = {
   parentId?: string, // loginId
 
   // 2-factor login:
-  otpKey?: string,
+  otpKey?: Uint8Array,
   otpResetDate?: Date,
   otpTimeout?: number,
 
@@ -107,7 +108,7 @@ const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   parentId: (): string | void => undefined,
 
   // 2-factor login:
-  otpKey: asOptional(asString),
+  otpKey: asOptional(asBase32),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
   // pendingVouchers: asOptional(asArray(asPendingVoucher), []),

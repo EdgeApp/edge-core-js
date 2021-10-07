@@ -109,7 +109,7 @@ export type LoginResponseBody = {
 
 export type ChangeOtpPayload = {
   otpTimeout: number, // seconds
-  otpKey: string
+  otpKey: Uint8Array
 }
 
 export type ChangePasswordPayload = {
@@ -194,7 +194,7 @@ export type LoginPayload = {
   parentBox?: EdgeBox,
 
   // 2-factor login:
-  otpKey?: string,
+  otpKey?: Uint8Array,
   otpResetDate?: Date,
   otpTimeout?: number,
 

@@ -127,7 +127,7 @@ export const fakeUserDump: EdgeFakeUser = {
       encryptionType: 0,
       iv_hex: '59309614b12c169af977681e01d6ad8b'
     },
-    otpKey: 'He110==',
+    otpKey: 'HELLO',
     passwordAuth: '5dd0xXRq1tN7JF0aGwmXf9kaExbZyMyIKBWGc0hIACc=',
     pin2Auth: 'shzN/UzE4byBpHWlFka9fkZ9n+NWRiESqJ6hnso8CQI=',
     pin2Id: 'X8iNgUh49p8B5FZNAsaTk0nXTtbOzWI5Eo91zUvJgd0=',
