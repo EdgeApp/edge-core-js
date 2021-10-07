@@ -1,10 +1,14 @@
 // @flow
 
+import { uncleaner } from 'cleaners'
 import elliptic from 'elliptic'
-import { base64 } from 'rfc4648'
 import { type Events, type OnEvents, makeEvents } from 'yavent'
 
-import { asLobbyPayload } from '../../types/server-cleaners.js'
+import {
+  asEdgeLobbyReply,
+  asEdgeLobbyRequest,
+  asLobbyPayload
+} from '../../types/server-cleaners.js'
 import {
   type EdgeLobbyReply,
   type EdgeLobbyRequest
@@ -24,7 +28,10 @@ import { loginFetch } from './login-fetch.js'
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
 
-type Keypair = Object
+const wasEdgeLobbyReply = uncleaner(asEdgeLobbyReply)
+const wasEdgeLobbyRequest = uncleaner(asEdgeLobbyRequest)
+
+type KeyPair = elliptic.ec.KeyPair
 
 type LobbyEvents = {
   error: mixed,
@@ -43,7 +50,7 @@ export type LobbyInstance = {
 /**
  * Derives a shared secret from the given secret key and public key.
  */
-function deriveSharedKey(keypair: Keypair, pubkey: Uint8Array): Uint8Array {
+function deriveSharedKey(keypair: KeyPair, pubkey: Uint8Array): Uint8Array {
   const secretX = keypair
     .derive(secp256k1.keyFromPublic(pubkey).getPublic())
     .toArray('be')
@@ -59,11 +66,11 @@ function deriveSharedKey(keypair: Keypair, pubkey: Uint8Array): Uint8Array {
  * Decrypts a lobby reply using the request's secret key.
  */
 export function decryptLobbyReply(
-  keypair: Keypair,
+  keypair: KeyPair,
   lobbyReply: EdgeLobbyReply
 ): mixed {
-  const pubkey = base64.parse(lobbyReply.publicKey)
-  const sharedKey = deriveSharedKey(keypair, pubkey)
+  const { publicKey } = lobbyReply
+  const sharedKey = deriveSharedKey(keypair, publicKey)
   return JSON.parse(decryptText(lobbyReply.box, sharedKey))
 }
 
@@ -73,13 +80,13 @@ export function decryptLobbyReply(
  */
 export function encryptLobbyReply(
   io: EdgeIo,
-  pubkey: Uint8Array,
+  publicKey: Uint8Array,
   replyData: mixed
 ): EdgeLobbyReply {
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
-  const sharedKey = deriveSharedKey(keypair, pubkey)
+  const sharedKey = deriveSharedKey(keypair, publicKey)
   return {
-    publicKey: base64.stringify(keypair.getPublic().encodeCompressed()),
+    publicKey: Uint8Array.from(keypair.getPublic().encodeCompressed()),
     box: encrypt(io, utf8.parse(JSON.stringify(replyData)), sharedKey)
   }
 }
@@ -98,22 +105,20 @@ export async function makeLobby(
 
   // Create the keys:
   const keypair = secp256k1.genKeyPair({ entropy: io.random(32) })
-  const pubkey = Uint8Array.from(keypair.getPublic().encodeCompressed())
-  const lobbyId = base58.stringify(sha256(sha256(pubkey)).slice(0, 10))
+  const publicKey = Uint8Array.from(keypair.getPublic().encodeCompressed())
+  const lobbyId = base58.stringify(sha256(sha256(publicKey)).slice(0, 10))
 
-  const payload: EdgeLobbyRequest = {
-    ...lobbyRequest,
-    publicKey: base64.stringify(pubkey),
-    timeout
+  const request = {
+    data: wasEdgeLobbyRequest({ ...lobbyRequest, publicKey, timeout })
   }
-  await loginFetch(ai, 'PUT', `/v2/lobby/${lobbyId}`, { data: payload })
+  await loginFetch(ai, 'PUT', `/v2/lobby/${lobbyId}`, request)
 
   // Create the task:
   const [on, emit]: Events<LobbyEvents> = makeEvents()
   const replies = []
   const pollLobby = async () => {
     const clean = asLobbyPayload(
-      await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
+      await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId)
     )
 
     // Process any new replies that have arrived on the server:
@@ -144,12 +149,12 @@ export async function fetchLobbyRequest(
   lobbyId: string
 ): Promise<EdgeLobbyRequest> {
   const clean = asLobbyPayload(
-    await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId, {})
+    await loginFetch(ai, 'GET', '/v2/lobby/' + lobbyId)
   )
 
   // Verify the public key:
-  const pubkey = base64.parse(clean.request.publicKey)
-  const checksum = sha256(sha256(pubkey))
+  const { publicKey } = clean.request
+  const checksum = sha256(sha256(publicKey))
   const idBytes = base58.parse(lobbyId)
   if (!verifyData(idBytes, checksum.subarray(0, idBytes.length))) {
     throw new Error('Lobby ECDH integrity error')
@@ -168,10 +173,10 @@ export async function sendLobbyReply(
   replyData: mixed
 ): Promise<void> {
   const { io } = ai.props
-  if (lobbyRequest.publicKey == null) {
-    throw new TypeError('The lobby data does not have a public key')
+  const { publicKey } = lobbyRequest
+
+  const request = {
+    data: wasEdgeLobbyReply(encryptLobbyReply(io, publicKey, replyData))
   }
-  const pubkey = base64.parse(lobbyRequest.publicKey)
-  const payload = encryptLobbyReply(io, pubkey, replyData)
-  await loginFetch(ai, 'POST', '/v2/lobby/' + lobbyId, { data: payload })
+  await loginFetch(ai, 'POST', '/v2/lobby/' + lobbyId, request)
 }

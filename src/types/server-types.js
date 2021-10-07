@@ -34,7 +34,7 @@ export type EdgeSnrp = {
  */
 export type EdgeLobbyRequest = {
   loginRequest?: { appId: string },
-  publicKey: string, // base64
+  publicKey: Uint8Array,
   timeout?: number
 }
 
@@ -42,7 +42,7 @@ export type EdgeLobbyRequest = {
  * The barcode scanner sends this reply (if the user approves).
  */
 export type EdgeLobbyReply = {
-  publicKey: string,
+  publicKey: Uint8Array,
   box: EdgeBox
 }
 

@@ -100,13 +100,13 @@ export const asEdgeSnrp: Cleaner<EdgeSnrp> = asObject({
 })
 
 export const asEdgeLobbyRequest: Cleaner<EdgeLobbyRequest> = asObject({
-  publicKey: asString,
   loginRequest: asOptional(asObject({ appId: asString }).withRest),
+  publicKey: asBase64,
   timeout: asOptional(asNumber)
 }).withRest
 
 export const asEdgeLobbyReply: Cleaner<EdgeLobbyReply> = asObject({
-  publicKey: asString,
+  publicKey: asBase64,
   box: asEdgeBox
 })
 
