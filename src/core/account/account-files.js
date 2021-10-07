@@ -1,18 +1,10 @@
 // @flow
 
-import {
-  type Cleaner,
-  asBoolean,
-  asCodec,
-  asMaybe,
-  asNumber,
-  asObject,
-  asOptional,
-  asString
-} from 'cleaners'
+import { asBoolean, asMaybe, asNumber, asObject, asOptional } from 'cleaners'
 import { type DiskletFile, type DiskletFolder, mapFiles } from 'disklet'
-import { base16, base64 } from 'rfc4648'
+import { base64 } from 'rfc4648'
 
+import { asBase16 } from '../../types/server-cleaners.js'
 import {
   type EdgePluginMap,
   type EdgeWalletInfo,
@@ -38,11 +30,6 @@ type LoadedWalletList = {
   walletInfos: EdgeWalletInfo[],
   walletStates: EdgeWalletStates
 }
-
-const asBase16: Cleaner<Uint8Array> = asCodec(
-  raw => base16.parse(asString(raw)),
-  clean => base16.stringify(clean)
-)
 
 const asLegacyWalletFile = asObject({
   SortIndex: asOptional(asNumber, 0),

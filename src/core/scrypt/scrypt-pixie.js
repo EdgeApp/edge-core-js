@@ -43,7 +43,7 @@ export function calcSnrpForTarget(
   targetMs: number
 ): EdgeSnrp {
   const snrp = {
-    salt_hex: base16.stringify(salt),
+    salt_hex: salt,
     n: 16384,
     r: 8,
     p: 1
@@ -120,8 +120,9 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
       if (benchmark == null) {
         benchmark = input.props.output.scrypt
           .timeScrypt(utf8.parse('1reallyJunkiePasswordToCheck'), {
-            salt_hex:
-              'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b',
+            salt_hex: base16.parse(
+              'b5865ffb9fa7b3bfe4b2384d47ce831ee22a4a9d5c34c7ef7d21467cc758f81b'
+            ),
             n: 16384,
             r: 8,
             p: 1
@@ -160,7 +161,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
       snrp: EdgeSnrp,
       dklen: number = 32
     ): Promise<{ hash: Uint8Array, time: number }> {
-      const salt = base16.parse(snrp.salt_hex)
+      const salt = snrp.salt_hex
       const startTime = getTime()
       log(`starting scrypt n=${snrp.n} r=${snrp.r} p=${snrp.p}`)
       return io.scrypt(data, salt, snrp.n, snrp.r, snrp.p, dklen).then(hash => {

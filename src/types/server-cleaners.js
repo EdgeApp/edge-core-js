@@ -13,7 +13,7 @@ import {
   asUnknown,
   asValue
 } from 'cleaners'
-import { base64 } from 'rfc4648'
+import { base16, base64 } from 'rfc4648'
 
 import {
   type ChangeOtpPayload,
@@ -45,6 +45,14 @@ import {
   type EdgePendingVoucher,
   type EdgeRecoveryQuestionChoice
 } from './types.js'
+
+/**
+ * A string of hex-encoded binary data.
+ */
+export const asBase16: Cleaner<Uint8Array> = asCodec(
+  raw => base16.parse(asString(raw)),
+  clean => base16.stringify(clean).toLowerCase()
+)
 
 /**
  * A string of base64-encoded binary data.
@@ -93,7 +101,7 @@ export const asEdgeBox: Cleaner<EdgeBox> = asObject({
 })
 
 export const asEdgeSnrp: Cleaner<EdgeSnrp> = asObject({
-  salt_hex: asString,
+  salt_hex: asBase16,
   n: asNumber,
   r: asNumber,
   p: asNumber

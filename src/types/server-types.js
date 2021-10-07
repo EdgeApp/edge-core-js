@@ -23,7 +23,7 @@ export type EdgeBox = {
  * Edge-format scrypt parameters.
  */
 export type EdgeSnrp = {
-  salt_hex: string,
+  salt_hex: Uint8Array,
   n: number,
   r: number,
   p: number
