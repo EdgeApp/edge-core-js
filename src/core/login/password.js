@@ -70,7 +70,7 @@ async function loginPasswordOnline(
   ])
   const request = {
     userId: base64.stringify(userId),
-    passwordAuth: base64.stringify(passwordAuth)
+    passwordAuth
   }
   return serverLogin(ai, stashTree, stashTree, opts, request, async reply => {
     const { passwordBox, passwordKeySnrp } = reply
@@ -195,7 +195,7 @@ export function makePasswordKit(
     return {
       serverPath: '/v2/login/password',
       server: wasChangePasswordPayload({
-        passwordAuth: base64.stringify(passwordAuth),
+        passwordAuth,
         passwordAuthSnrp, // TODO: Use this on the other side
         passwordKeySnrp,
         passwordBox,

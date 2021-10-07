@@ -55,7 +55,7 @@ export type DbLogin = {
   otpTimeout?: number,
 
   // Password login:
-  passwordAuth?: string,
+  passwordAuth?: Uint8Array,
   passwordAuthBox?: EdgeBox,
   passwordAuthSnrp?: EdgeSnrp,
   passwordBox?: EdgeBox,
@@ -114,7 +114,7 @@ const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   // pendingVouchers: asOptional(asArray(asPendingVoucher), []),
 
   // Password login:
-  passwordAuth: asOptional(asString),
+  passwordAuth: asOptional(asBase64),
   passwordAuthBox: asOptional(asEdgeBox),
   passwordAuthSnrp: asOptional(asEdgeSnrp),
   passwordBox: asOptional(asEdgeBox),

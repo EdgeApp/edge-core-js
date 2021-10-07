@@ -151,7 +151,7 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
 
   // Password login:
   userId: asOptional(asString),
-  passwordAuth: asOptional(asString),
+  passwordAuth: asOptional(asBase64),
 
   // PIN login:
   pin2Id: asOptional(asString),
@@ -170,10 +170,10 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
   // Legacy:
   did: asOptional(asString),
   l1: asOptional(asString),
-  lp1: asOptional(asString),
+  lp1: asOptional(asBase64),
   lpin1: asOptional(asBase64),
-  lra1: asOptional(asString),
-  recoveryAuth: asOptional(asString) // lra1
+  lra1: asOptional(asBase64),
+  recoveryAuth: asOptional(asBase64) // lra1
 })
 
 export const asLoginResponseBody: Cleaner<LoginResponseBody> = asObject({
@@ -196,7 +196,7 @@ export const asChangeOtpPayload: Cleaner<ChangeOtpPayload> = asObject({
 
 export const asChangePasswordPayload: Cleaner<ChangePasswordPayload> = asObject(
   {
-    passwordAuth: asString,
+    passwordAuth: asBase64,
     passwordAuthBox: asEdgeBox,
     passwordAuthSnrp: asEdgeSnrp,
     passwordBox: asEdgeBox,

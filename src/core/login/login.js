@@ -526,19 +526,20 @@ export function makeAuthJson(
   const { voucherAuth, voucherId } =
     stash != null ? stash : { voucherAuth: undefined, voucherId: undefined }
 
-  if (login.loginAuth != null) {
+  const { loginId, userId, loginAuth, passwordAuth } = login
+  if (loginAuth != null) {
     return {
-      loginId: login.loginId,
-      loginAuth: login.loginAuth,
+      loginId,
+      loginAuth,
       otp: getLoginOtp(login),
       voucherAuth,
       voucherId
     }
   }
-  if (login.passwordAuth != null) {
+  if (passwordAuth != null && userId != null) {
     return {
-      userId: login.userId,
-      passwordAuth: base64.stringify(login.passwordAuth),
+      userId,
+      passwordAuth,
       otp: getLoginOtp(login),
       voucherAuth,
       voucherId

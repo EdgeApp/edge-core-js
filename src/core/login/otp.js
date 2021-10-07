@@ -152,14 +152,15 @@ export async function repairOtp(
 ): Promise<void> {
   if (ai.props.state.accounts[accountId] == null) return
   const { login } = ai.props.state.accounts[accountId]
+  const { userId, passwordAuth } = login
 
   const { stashTree, stash } = getStashById(ai, login.loginId)
-  if (login.passwordAuth == null) {
+  if (passwordAuth == null || userId == null) {
     throw new Error('Cannot repair OTP: There is no password on this account')
   }
   const request = {
-    userId: login.userId,
-    passwordAuth: base64.stringify(login.passwordAuth),
+    userId,
+    passwordAuth,
     otp: totp(otpKey)
   }
   const opts: EdgeAccountOptions = {

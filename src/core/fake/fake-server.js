@@ -120,7 +120,10 @@ const withLogin2 = (
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (passwordAuth !== login.passwordAuth) {
+    if (
+      login.passwordAuth == null ||
+      !verifyData(passwordAuth, login.passwordAuth)
+    ) {
       return passwordErrorResponse(0)
     }
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {

@@ -69,7 +69,7 @@ export type LoginRequestBody = {
 
   // Password login:
   userId?: string,
-  passwordAuth?: string,
+  passwordAuth?: Uint8Array,
 
   // PIN login:
   pin2Id?: string,
@@ -88,10 +88,10 @@ export type LoginRequestBody = {
   // Legacy:
   did?: string,
   l1?: string,
-  lp1?: string,
+  lp1?: Uint8Array,
   lpin1?: Uint8Array,
-  lra1?: string,
-  recoveryAuth?: string // lra1
+  lra1?: Uint8Array,
+  recoveryAuth?: Uint8Array // lra1
 }
 
 export type LoginResponseBody = {
@@ -113,7 +113,7 @@ export type ChangeOtpPayload = {
 }
 
 export type ChangePasswordPayload = {
-  passwordAuth: string,
+  passwordAuth: Uint8Array,
   passwordAuthBox: EdgeBox,
   passwordAuthSnrp: EdgeSnrp,
   passwordBox: EdgeBox,
