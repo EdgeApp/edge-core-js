@@ -29,7 +29,7 @@ import {
   asRecovery2InfoPayload,
   asUsernameInfoPayload
 } from '../../types/server-cleaners.js'
-import { type EdgeLoginMessage } from '../../types/types.js'
+import { type MessagesPayload } from '../../types/server-types.js'
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { verifyData } from '../../util/crypto/verify.js'
 import { utf8 } from '../../util/encoding.js'
@@ -532,7 +532,7 @@ const messagesRoute: ApiServer = pickMethod({
     }
     const { loginIds } = clean
 
-    const out: EdgeLoginMessage[] = []
+    const out: MessagesPayload = []
     for (const loginId of loginIds) {
       const login = db.getLoginById(loginId)
       if (login != null) {

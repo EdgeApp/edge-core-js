@@ -144,7 +144,7 @@ export function payloadResponse(
  * An OTP failure response.
  */
 export function otpErrorResponse(
-  loginId: string,
+  loginId: Uint8Array,
   otpResetToken: string,
   otpResetDate?: Date
 ): Promise<HttpResponse> {

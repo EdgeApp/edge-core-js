@@ -114,7 +114,7 @@ export class ObsoleteApiError extends Error {
  */
 export class OtpError extends Error {
   name: string
-  +loginId: string | void
+  +loginId: string | void // base64, to avoid a breaking change
   +reason: 'ip' | 'otp'
   +resetDate: Date | void
   +resetToken: string | void
@@ -132,7 +132,7 @@ export class OtpError extends Error {
 
       // This should usually be present:
       if (clean.login_id != null) {
-        this.loginId = clean.login_id
+        this.loginId = base64.stringify(clean.login_id)
       }
 
       // Use this to request an OTP reset (if enabled):

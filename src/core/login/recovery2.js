@@ -1,7 +1,6 @@
 // @flow
 
 import { uncleaner } from 'cleaners'
-import { base64 } from 'rfc4648'
 
 import {
   asChangeRecovery2Payload,
@@ -53,7 +52,7 @@ export async function loginRecovery2(
 
   // Request:
   const request = {
-    recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
+    recovery2Id: recovery2Id(recovery2Key, username),
     recovery2Auth: recovery2Auth(recovery2Key, answers)
   }
   return serverLogin(ai, stashTree, stashTree, opts, request, async reply => {
@@ -76,7 +75,7 @@ export function getQuestions2(
   username: string
 ): Promise<string[]> {
   const request = {
-    recovery2Id: base64.stringify(recovery2Id(recovery2Key, username))
+    recovery2Id: recovery2Id(recovery2Key, username)
     // "otp": null
   }
   return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
@@ -152,7 +151,7 @@ export function makeRecovery2Kit(
   return {
     serverPath: '/v2/login/recovery2',
     server: wasChangeRecovery2Payload({
-      recovery2Id: base64.stringify(recovery2Id(recovery2Key, username)),
+      recovery2Id: recovery2Id(recovery2Key, username),
       recovery2Auth: recovery2Auth(recovery2Key, answers),
       recovery2Box,
       recovery2KeyBox,

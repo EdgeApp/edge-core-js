@@ -35,8 +35,8 @@ export type LoginStash = {
   appId: string,
   created?: Date,
   lastLogin?: Date,
-  loginId: string,
-  userId?: string,
+  loginId: Uint8Array,
+  userId?: Uint8Array,
   username?: string,
 
   // 2-factor:
@@ -123,8 +123,7 @@ export async function saveStash(
   stashTree: LoginStash
 ): Promise<void> {
   const { dispatch, io } = ai.props
-  const { appId, username } = stashTree
-  const loginId = base64.parse(stashTree.loginId)
+  const { appId, loginId, username } = stashTree
 
   if (appId !== '') {
     throw new Error('Cannot save a login without an appId.')
@@ -148,8 +147,8 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   appId: asString,
   created: asOptional(asDate),
   lastLogin: asOptional(asDate),
-  loginId: asString,
-  userId: asOptional(asString),
+  loginId: asBase64,
+  userId: asOptional(asBase64),
   username: asOptional(asString),
 
   // 2-factor:

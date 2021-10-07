@@ -1,7 +1,6 @@
 // @flow
 
 import {
-  type EdgeLoginMessage,
   type EdgePendingVoucher,
   type EdgeRecoveryQuestionChoice
 } from './types.js'
@@ -64,30 +63,30 @@ export type LoginRequestBody = {
   voucherAuth?: Uint8Array,
 
   // Secret-key login:
-  loginId?: string,
+  loginId?: Uint8Array,
   loginAuth?: Uint8Array,
 
   // Password login:
-  userId?: string,
+  userId?: Uint8Array,
   passwordAuth?: Uint8Array,
 
   // PIN login:
-  pin2Id?: string,
+  pin2Id?: Uint8Array,
   pin2Auth?: Uint8Array,
 
   // Recovery login:
-  recovery2Id?: string,
+  recovery2Id?: Uint8Array,
   recovery2Auth?: Uint8Array[],
 
   // Messages:
-  loginIds?: string[],
+  loginIds?: Uint8Array[],
 
   // OTP reset:
   otpResetAuth?: string,
 
   // Legacy:
   did?: string,
-  l1?: string,
+  l1?: Uint8Array,
   lp1?: Uint8Array,
   lpin1?: Uint8Array,
   lra1?: Uint8Array,
@@ -121,7 +120,7 @@ export type ChangePasswordPayload = {
 }
 
 export type ChangePin2Payload = {
-  pin2Id?: string,
+  pin2Id?: Uint8Array,
   pin2Auth?: Uint8Array,
   pin2Box?: EdgeBox,
   pin2KeyBox?: EdgeBox,
@@ -129,7 +128,7 @@ export type ChangePin2Payload = {
 }
 
 export type ChangeRecovery2Payload = {
-  recovery2Id: string,
+  recovery2Id: Uint8Array,
   recovery2Auth: Uint8Array[],
   recovery2Box: EdgeBox,
   recovery2KeyBox: EdgeBox,
@@ -153,7 +152,7 @@ export type CreateKeysPayload = {
 
 export type CreateLoginPayload = {
   appId: string,
-  loginId: string, // base64
+  loginId: Uint8Array,
   parentBox?: EdgeBox
 
   // The creation payload can also include fields
@@ -186,8 +185,8 @@ export type LoginPayload = {
   // Identity:
   appId: string,
   created?: Date, // Not actually optional
-  loginId: string,
-  userId?: string,
+  loginId: Uint8Array,
+  userId?: Uint8Array,
 
   // Nested logins:
   children?: LoginPayload[],
@@ -230,13 +229,18 @@ export type LoginPayload = {
 /**
  * Account status information sent back by the login server.
  */
-export type MessagesPayload = EdgeLoginMessage[]
+export type MessagesPayload = Array<{
+  loginId: Uint8Array,
+  otpResetPending: boolean,
+  pendingVouchers: EdgePendingVoucher[],
+  recovery2Corrupt: boolean
+}>
 
 /**
  * Returned when the 2fa authentication fails.
  */
 export type OtpErrorPayload = {
-  login_id?: string,
+  login_id?: Uint8Array,
   otp_reset_auth?: string,
   otp_timeout_date?: Date,
   reason?: string,

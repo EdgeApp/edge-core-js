@@ -1,6 +1,9 @@
 // @flow
 
+import { base64 } from 'rfc4648'
+
 import { fixUsername } from '../../client-side.js'
+import { verifyData } from '../../util/crypto/verify.js'
 import { type ApiInput } from '../root-pixie.js'
 import { scrypt, userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import { searchTree } from './login.js'
@@ -18,17 +21,24 @@ export function getStash(ai: ApiInput, username: string): LoginStash {
   const { stashes } = ai.props.state.login
 
   if (stashes[fixedName] != null) return stashes[fixedName]
-  return { username: fixedName, appId: '', loginId: '', pendingVouchers: [] }
+  return {
+    username: fixedName,
+    appId: '',
+    loginId: new Uint8Array(0),
+    pendingVouchers: []
+  }
 }
 
-export function getStashById(ai: ApiInput, loginId: string): StashLeaf {
+export function getStashById(ai: ApiInput, loginId: Uint8Array): StashLeaf {
   const { stashes } = ai.props.state.login
   for (const username of Object.keys(stashes)) {
     const stashTree = stashes[username]
-    const stash = searchTree(stashTree, stash => stash.loginId === loginId)
+    const stash = searchTree(stashTree, stash =>
+      verifyData(stash.loginId, loginId)
+    )
     if (stash != null) return { stashTree, stash }
   }
-  throw new Error(`Cannot find stash ${loginId}`)
+  throw new Error(`Cannot find stash ${base64.stringify(loginId)}`)
 }
 
 // Hashed username cache:

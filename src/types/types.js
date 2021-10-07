@@ -913,9 +913,9 @@ export type EdgeAccount = {
   +created: Date | void, // Not always known
   +lastLogin: Date,
   +loggedIn: boolean,
-  +loginKey: string,
-  +recoveryKey: string | void, // For email backup
-  +rootLoginId: string,
+  +loginKey: string, // base58
+  +recoveryKey: string | void, // base58, for email backup
+  +rootLoginId: string, // base58
   +username: string,
 
   // Special-purpose API's:
@@ -1048,7 +1048,7 @@ export type EdgeRecoveryQuestionChoice = {
 // parameters ----------------------------------------------------------
 
 export type EdgeLoginMessage = {
-  loginId: string,
+  loginId: string, // base64
   otpResetPending: boolean,
   pendingVouchers: EdgePendingVoucher[],
   recovery2Corrupt: boolean
@@ -1103,7 +1103,7 @@ export type EdgeUserInfo = {
   keyLoginEnabled: boolean,
   lastLogin?: Date,
   pinLoginEnabled: boolean,
-  recovery2Key?: string,
+  recovery2Key?: string, // base58
   username: string,
   voucherId?: string
 }
@@ -1218,8 +1218,8 @@ export type EdgeFakeContextOptions = {
 export type EdgeFakeUser = {
   username: string,
   lastLogin?: Date,
-  loginId: string,
-  loginKey: string,
+  loginId: string, // base64
+  loginKey: string, // base64
   repos: { [repo: string]: { [path: string]: any /* EdgeBox */ } },
   server: any /* DbLogin & { children?: DbLogin[] } */
 }

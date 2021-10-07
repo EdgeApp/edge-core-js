@@ -26,6 +26,7 @@ import {
   type LoginPayload
 } from '../../types/server-types.js'
 import { type EdgeFakeUser } from '../../types/types.js'
+import { verifyData } from '../../util/crypto/verify.js'
 
 /**
  * A barcode-login lobby stored in the fake database.
@@ -43,11 +44,11 @@ export type DbLogin = {
   // Identity:
   appId: string,
   // created?: Date,
-  loginId: string, // base64
+  loginId: Uint8Array,
 
   // Nested logins:
   parentBox?: EdgeBox,
-  parentId?: string, // loginId
+  parentId?: Uint8Array, // loginId
 
   // 2-factor login:
   otpKey?: Uint8Array,
@@ -62,14 +63,14 @@ export type DbLogin = {
   passwordKeySnrp?: EdgeSnrp,
 
   // PIN v2 login:
-  pin2Id?: string, // base64
+  pin2Id?: Uint8Array, // base64
   pin2Auth?: Uint8Array,
   pin2Box?: EdgeBox,
   pin2KeyBox?: EdgeBox,
   pin2TextBox?: EdgeBox,
 
   // Recovery v2 login:
-  recovery2Id?: string, // base64
+  recovery2Id?: Uint8Array, // base64
   recovery2Auth?: Uint8Array[],
   recovery2Box?: EdgeBox,
   recovery2KeyBox?: EdgeBox,
@@ -97,7 +98,7 @@ const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   // Identity:
   appId: asString,
   // created: asOptional(asDate),
-  loginId: asString,
+  loginId: asBase64,
 
   // Nested logins:
   children: asOptional(
@@ -105,7 +106,7 @@ const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
     []
   ),
   parentBox: asOptional(asEdgeBox),
-  parentId: (): string | void => undefined,
+  parentId: (): Uint8Array | void => undefined,
 
   // 2-factor login:
   otpKey: asOptional(asBase32),
@@ -121,14 +122,14 @@ const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
   passwordKeySnrp: asOptional(asEdgeSnrp),
 
   // PIN v2 login:
-  pin2Id: asOptional(asString),
+  pin2Id: asOptional(asBase64),
   pin2Auth: asOptional(asBase64),
   pin2Box: asOptional(asEdgeBox),
   pin2KeyBox: asOptional(asEdgeBox),
   pin2TextBox: asOptional(asEdgeBox),
 
   // Recovery v2 login:
-  recovery2Id: asOptional(asString),
+  recovery2Id: asOptional(asBase64),
   recovery2Auth: asOptional(asRecovery2Auth),
   question2Box: asOptional(asEdgeBox),
   recovery2Box: asOptional(asEdgeBox),
@@ -165,16 +166,21 @@ export class FakeDb {
     this.repos = {}
   }
 
-  getLoginById(loginId: string): DbLogin | void {
-    return this.logins.find(login => login.loginId === loginId)
+  getLoginById(loginId: Uint8Array): DbLogin | void {
+    return this.logins.find(login => verifyData(login.loginId, loginId))
   }
 
-  getLoginByPin2Id(pin2Id: string): DbLogin | void {
-    return this.logins.find(login => login.pin2Id === pin2Id)
+  getLoginByPin2Id(pin2Id: Uint8Array): DbLogin | void {
+    return this.logins.find(
+      login => login.pin2Id != null && verifyData(login.pin2Id, pin2Id)
+    )
   }
 
-  getLoginByRecovery2Id(recovery2Id: string): DbLogin | void {
-    return this.logins.find(login => login.recovery2Id === recovery2Id)
+  getLoginByRecovery2Id(recovery2Id: Uint8Array): DbLogin | void {
+    return this.logins.find(
+      login =>
+        login.recovery2Id != null && verifyData(login.recovery2Id, recovery2Id)
+    )
   }
 
   getLoginsByParent(parent: DbLogin): DbLogin[] {

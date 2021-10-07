@@ -1,7 +1,6 @@
 // @flow
 
 import { uncleaner } from 'cleaners'
-import { base64 } from 'rfc4648'
 
 import {
   asChangeSecretPayload,
@@ -40,7 +39,7 @@ export function usernameAvailable(
 ): Promise<boolean> {
   return hashUsername(ai, username).then(userId => {
     const request = {
-      userId: base64.stringify(userId)
+      userId
     }
     return loginFetch(ai, 'POST', '/v2/login', request)
       .then(reply => false) // It's not available if we can hit it!
@@ -71,7 +70,7 @@ export function makeCreateKit(
   const dummyLogin: LoginTree = {
     appId,
     lastLogin: new Date(),
-    loginId: '',
+    loginId: new Uint8Array(0),
     loginKey,
     pendingVouchers: [],
     children: [],
@@ -104,8 +103,7 @@ export function makeCreateKit(
 
   // Bundle everything:
   return Promise.all([loginId, passwordKit]).then(values => {
-    const [loginIdRaw, passwordKit] = values
-    const loginId = base64.stringify(loginIdRaw)
+    const [loginId, passwordKit] = values
 
     return {
       loginId,

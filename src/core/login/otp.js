@@ -1,7 +1,7 @@
 // @flow
 
 import { uncleaner } from 'cleaners'
-import { base32, base64 } from 'rfc4648'
+import { base32 } from 'rfc4648'
 
 import {
   asChangeOtpPayload,
@@ -130,7 +130,7 @@ export async function resetOtp(
   resetToken: string
 ): Promise<Date> {
   const request = {
-    userId: base64.stringify(await hashUsername(ai, username)),
+    userId: await hashUsername(ai, username),
     otpResetAuth: resetToken
   }
   return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
