@@ -24,6 +24,13 @@ export type EdgePluginMap<Value> = {
   [pluginId: string]: Value
 }
 
+/** Same as the TypeScript `Partial` utility. */
+export type Partial<T> = $Rest<T, { ... }> // @ts-delete
+
+/** Same as the TypeScript `ReturnType` utility. */
+type ReturnHelper = <R>(f: (...a: any[]) => R) => R // @ts-delete
+export type ReturnType<F> = $Call<ReturnHelper, F> // @ts-delete
+
 // ---------------------------------------------------------------------
 // io types
 // ---------------------------------------------------------------------
@@ -1056,7 +1063,7 @@ export type EdgeContextOptions = {
 
   // Intercepts all console logging:
   onLog?: EdgeOnLog,
-  logSettings?: $Shape<EdgeLogSettings>,
+  logSettings?: Partial<EdgeLogSettings>,
 
   path?: string, // Only used on node.js
   plugins?: EdgeCorePluginsInit
@@ -1213,7 +1220,7 @@ export type EdgeContext = {
 
   // Logging options:
   +logSettings: EdgeLogSettings,
-  changeLogSettings(settings: $Shape<EdgeLogSettings>): Promise<void>
+  changeLogSettings(settings: Partial<EdgeLogSettings>): Promise<void>
 }
 
 // ---------------------------------------------------------------------
@@ -1231,7 +1238,7 @@ export type EdgeFakeContextOptions = {
   appId: string,
   deviceDescription?: string,
   hideKeys?: boolean,
-  logSettings?: $Shape<EdgeLogSettings>,
+  logSettings?: Partial<EdgeLogSettings>,
   plugins?: EdgeCorePluginsInit,
 
   // Fake device options:

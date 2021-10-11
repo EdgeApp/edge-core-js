@@ -29,26 +29,28 @@ import { makeFakeServer } from './fake-server.js'
 const wasLoginStash = uncleaner(asLoginStash)
 
 async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
-  const { loginId, loginKey, username } = user
+  const { lastLogin, loginId, repos, server } = user
+  const loginKey = base64.parse(user.loginKey)
+  const username = fixUsername(user.username)
 
   // Save the stash:
   const stash = applyLoginPayload(
     {
       appId: '',
-      lastLogin: user.lastLogin,
-      loginId: '',
+      lastLogin,
+      loginId,
       pendingVouchers: [],
-      username: fixUsername(username)
+      username
     },
-    base64.parse(loginKey),
-    asLoginPayload(user.server)
+    loginKey,
+    asLoginPayload(server)
   )
   const path = `logins/${base58.stringify(base64.parse(loginId))}.json`
   await io.disklet.setText(path, JSON.stringify(wasLoginStash(stash)))
 
   // Save the repos:
   await Promise.all(
-    Object.keys(user.repos).map(async syncKey => {
+    Object.keys(repos).map(async syncKey => {
       const paths = makeRepoPaths(io, base16.parse(syncKey), new Uint8Array(0))
       await saveChanges(paths.dataDisklet, user.repos[syncKey])
       await paths.baseDisklet.setText(

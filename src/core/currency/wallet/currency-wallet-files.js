@@ -449,7 +449,7 @@ async function loadAddressFiles(
 
   // Load these addresses into the engine:
   const engine = input.props.selfOutput.engine
-  if (engine) await engine.addGapLimitAddresses(out)
+  if (engine != null) await engine.addGapLimitAddresses(out)
 
   return out
 }

@@ -11,13 +11,14 @@ function jsToTs(code) {
     .replace(/\bmixed\b/g, 'unknown')
     .replace(/\| void\b/g, '| undefined')
     .replace(/: void\b/g, ': undefined')
-    .replace(/\$Shape</g, 'Partial<')
     // Fix `import type` syntax:
     .replace(/\bimport type\b/g, 'import')
     .replace(/\btype ([_a-zA-Z0-9]+)( *[,\n}])/g, '$1$2')
     // We aren't JS anymore:
     .replace(/\/\/ @flow/, '')
     .replace(/'(\.[^']*)\.js'/, "'$1'")
+    // Delete shims:
+    .replace(/.*\/\/ @ts-delete/g, '')
 
   return output
 }

@@ -1,5 +1,6 @@
 /flow-typed/npm/
 /lib/
+/types.d.ts
 /types.js
 /types.js.flow
 /types.mjs

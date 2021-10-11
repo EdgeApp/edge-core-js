@@ -21,6 +21,7 @@ import {
   type EdgeLogSettings,
   type EdgeNativeIo,
   type EdgeOnLog,
+  type Partial, // @ts-delete
   NetworkError
 } from './types/types.js'
 import { timeout } from './util/promise.js'
@@ -50,7 +51,7 @@ export function MakeEdgeContext(props: {
   crashReporter?: EdgeCrashReporter,
   deviceDescription?: string,
   hideKeys?: boolean,
-  logSettings?: $Shape<EdgeLogSettings>,
+  logSettings?: Partial<EdgeLogSettings>,
   onLog?: EdgeOnLog,
   plugins?: EdgeCorePluginsInit
 }): React.Node {
@@ -133,7 +134,7 @@ function bridgifyNativeIo(nativeIo: EdgeNativeIo = {}): EdgeNativeIo {
 }
 
 function bridgifyLogBackend(backend: LogBackend): LogBackend {
-  if (backend.crashReporter) bridgifyObject(backend.crashReporter)
+  if (backend.crashReporter != null) bridgifyObject(backend.crashReporter)
   return bridgifyObject(backend)
 }
 

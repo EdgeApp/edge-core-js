@@ -22,7 +22,7 @@ import {
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
 import { utf8 } from '../../util/encoding.js'
-import { filterObject, softCat } from '../../util/util.js'
+import { softCat } from '../../util/util.js'
 import { type ApiInput } from '../root-pixie.js'
 import {
   fixWalletInfo,
@@ -37,14 +37,6 @@ import { type LoginKit, type LoginTree } from './login-types.js'
 import { getLoginOtp, getStashOtp } from './otp.js'
 
 const wasChangeSecretPayload = uncleaner(asChangeSecretPayload)
-
-function cloneNode<Node: {}, Output>(
-  node: Node,
-  children: Output[] | void
-): Output {
-  const out: any = { ...node, children }
-  return out
-}
 
 /**
  * Returns the login that satisfies the given predicate,
@@ -66,16 +58,16 @@ export function searchTree<T>(
 }
 
 /**
- * Replaces a node within a tree.
- * The `clone` callback is called for each unmodified node.
- * The `predicate` callback is used to find the target node.
- * The `update` callback is called on the target.
+ * Walks a tree, building a new tree.
+ * The `predicate` callback returns true when we reach the node to replace,
+ * and the `update` callback replaces that node.
+ * The `clone` callback updates the `children` on the non-replaced nodes.
  */
 function updateTree<Node: { +children?: any[] }, Output>(
   node: Node,
   predicate: (node: Node) => boolean,
   update: (node: Node) => Output,
-  clone: (node: Node, children: Output[] | void) => Output = cloneNode
+  clone: (node: Node, children: Output[]) => Output
 ): Output {
   if (predicate(node)) return update(node)
 
@@ -92,27 +84,47 @@ function applyLoginPayloadInner(
   loginKey: Uint8Array,
   loginReply: LoginPayload
 ): LoginStash {
-  // Copy common items:
-  const out: LoginStash = filterObject(loginReply, [
-    'appId',
-    'created',
-    'loginId',
-    'loginAuthBox',
-    'userId',
-    'otpKey',
-    'otpResetDate',
-    'otpTimeout',
-    'pendingVouchers',
-    'parentBox',
-    'passwordAuthBox',
-    'passwordAuthSnrp',
-    'passwordBox',
-    'passwordKeySnrp',
-    'pin2TextBox',
-    'mnemonicBox',
-    'rootKeyBox',
-    'syncKeyBox'
-  ])
+  const {
+    appId,
+    created,
+    loginId,
+    loginAuthBox,
+    userId,
+    otpKey,
+    otpResetDate,
+    otpTimeout,
+    pendingVouchers,
+    parentBox,
+    passwordAuthBox,
+    passwordAuthSnrp,
+    passwordBox,
+    passwordKeySnrp,
+    pin2TextBox,
+    mnemonicBox,
+    rootKeyBox,
+    syncKeyBox
+  } = loginReply
+
+  const out: LoginStash = {
+    appId,
+    created,
+    loginId,
+    loginAuthBox,
+    userId,
+    otpKey,
+    otpResetDate,
+    otpTimeout,
+    pendingVouchers,
+    parentBox,
+    passwordAuthBox,
+    passwordAuthSnrp,
+    passwordBox,
+    passwordKeySnrp,
+    pin2TextBox,
+    mnemonicBox,
+    rootKeyBox,
+    syncKeyBox
+  }
 
   // Preserve client-only data:
   if (stash.lastLogin != null) out.lastLogin = stash.lastLogin
@@ -162,7 +174,8 @@ export function applyLoginPayload(
   return updateTree(
     stashTree,
     stash => stash.appId === loginReply.appId,
-    stash => applyLoginPayloadInner(stash, loginKey, loginReply)
+    stash => applyLoginPayloadInner(stash, loginKey, loginReply),
+    (stash, children) => ({ ...stash, children })
   )
 }
 
@@ -277,14 +290,30 @@ export function makeLoginTree(
     stashTree,
     stash => stash.appId === appId,
     stash => makeLoginTreeInner(stash, loginKey),
-    (stash, children) => {
-      const login: LoginTree = filterObject(stash, [
-        'username',
-        'appId',
-        'loginId'
-      ])
-      login.children = children != null ? children : []
-      return login
+    (stash, children): LoginTree => {
+      const {
+        appId,
+        lastLogin = new Date(),
+        loginId,
+        pendingVouchers,
+        username
+      } = stash
+
+      // Hack: The types say this must be present,
+      // but we don't actually have a root key for child logins.
+      // This affects everybody, so fixing it will be quite hard:
+      const loginKey: any = undefined
+
+      return {
+        appId,
+        children,
+        keyInfos: [],
+        lastLogin,
+        loginId,
+        loginKey,
+        pendingVouchers,
+        username
+      }
     }
   )
 }
@@ -301,14 +330,15 @@ export function sanitizeLoginStash(
     stashTree,
     stash => stash.appId === appId,
     stash => stash,
-    (stash, children) => {
-      const login: LoginStash = filterObject(stash, [
-        'username',
-        'appId',
-        'loginId'
-      ])
-      login.children = children
-      return login
+    (stash, children): LoginStash => {
+      const { appId, loginId, username } = stash
+      return {
+        appId,
+        children,
+        loginId,
+        pendingVouchers: [],
+        username
+      }
     }
   )
 }
@@ -406,7 +436,7 @@ export async function applyKit(
 ): Promise<LoginTree> {
   const { loginId, serverMethod = 'POST', serverPath } = kit
   const login = searchTree(loginTree, login => login.loginId === loginId)
-  if (!login) throw new Error('Cannot apply kit: missing login')
+  if (login == null) throw new Error('Cannot apply kit: missing login')
 
   const { stashTree } = getStashById(ai, loginId)
   const request = makeAuthJson(stashTree, login)
@@ -420,7 +450,8 @@ export async function applyKit(
       ...kit.login,
       children: softCat(login.children, kit.login.children),
       keyInfos: mergeKeyInfos(softCat(login.keyInfos, kit.login.keyInfos))
-    })
+    }),
+    (login, children) => ({ ...login, children })
   )
 
   const newStashTree = updateTree(
@@ -431,7 +462,8 @@ export async function applyKit(
       ...kit.stash,
       children: softCat(stash.children, kit.stash.children),
       keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
-    })
+    }),
+    (stash, children) => ({ ...stash, children })
   )
   await saveStash(ai, newStashTree)
 

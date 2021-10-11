@@ -36,7 +36,9 @@ export const context: TamePixie<RootProps> = combinePixies({
         lastLocalUsers = ai.props.state.login.localUsers
         lastPaused = ai.props.state.paused
         lastLogSettings = ai.props.state.logSettings
-        if (ai.props.output.context.api) update(ai.props.output.context.api)
+        if (ai.props.output.context.api != null) {
+          update(ai.props.output.context.api)
+        }
       }
     }
   }

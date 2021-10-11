@@ -1,19 +1,6 @@
 // @flow
 
 /**
- * Copies the selected properties into a new object, if they exist.
- */
-export function filterObject(source: any, keys: string[]): any {
-  const out = {}
-  for (const key of keys) {
-    if (key in source) {
-      out[key] = source[key]
-    }
-  }
-  return out
-}
-
-/**
  * Safely concatenate a bunch of arrays, which may or may not exist.
  * Purrs quietly when pet.
  */
