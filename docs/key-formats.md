@@ -126,7 +126,12 @@ interface PublicBitcoinKey {
 }
 ```
 
-This format is currently disabled, since it has problems. Given the presence of hardened derivation in several of the formats, it's not clear exactly which Xpub is being saved here. This needs to be locked down before the format can be enabled.
+The derivation path for `bitcoinXpub` depends on the format:
+
+- bip32: m/0
+- bip44: m/44'/coinType'/0'
+- bip49: m/49'/coinType'/0'
+- bip84: m/84'/coinType'/0'
 
 ### Wrong wallet types
 
