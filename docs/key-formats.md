@@ -49,7 +49,7 @@ The private key format is as follows:
 
 ```typescript
 interface PrivateBitcoinKey extends PrivateStorageKey {
-  bitcoinKey: string,
+  bitcoinKey: string, // Other names are possible
   format?: 'bip32' | 'bip44' | 'bip49' | 'bip84',
   coinType?: number
 }
@@ -60,7 +60,7 @@ The field `bitcoinKey` either contains:
 - A mnemonic string according to BIP 39
 - A 256-bit base64 encoded integer (legacy)
 
-The `bitcoinKey` should be decoded using either BIP 39 or base64 to yield the wallet seed entropy. From there, BIP 32 specifies how to derive wallet keys using some path determined by `format` and `coinType`.
+The `bitcoinKey` should be decoded using either BIP 39 or base64 to yield the wallet seed entropy. From there, BIP 32 specifies how to derive wallet keys using some path determined by `format` and `coinType`. The name `bitcoinKey` only applies to Bitcoin wallets; other coins use other names for this field.
 
 - bip32
   - Receiving & change branch: m/0/0/n
@@ -78,7 +78,9 @@ The `bitcoinKey` should be decoded using either BIP 39 or base64 to yield the wa
   - Change branch: m/84'/coinType'/0'/1/n
   - Script: segwit p2wpkh
 
-If `format` or `coinType` are missing, the wallet uses a default format of bip32 and a default coin type of 0.
+If `format` is missing, the wallet uses a default of bip32.
+
+If the `coinType` is missing, the default is 0 for Bitcoin. Other coins use different defaults for `coinType`.
 
 ### Other Bitcoin-derived coins
 
