@@ -1,6 +1,14 @@
 // @flow
 
 import { asMap, asMaybe, asObject, uncleaner } from 'cleaners'
+import {
+  type FetchRequest,
+  type HttpRequest,
+  type HttpResponse,
+  type Serverlet,
+  pickMethod,
+  pickPath
+} from 'serverlet'
 
 import {
   asChangeOtpPayload,
@@ -25,17 +33,6 @@ import { type EdgeLoginMessage } from '../../types/types.js'
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { verifyData } from '../../util/crypto/verify.js'
 import { utf8 } from '../../util/encoding.js'
-import {
-  pickMethod,
-  pickPath,
-  pickServer
-} from '../../util/http/http-routing.js'
-import { type FetchServer } from '../../util/http/http-to-fetch.js'
-import {
-  type HttpRequest,
-  type HttpResponse,
-  type Server
-} from '../../util/http/http-types.js'
 import { addHiddenProperties, softCat } from '../../util/util.js'
 import { userIdSnrp } from '../scrypt/scrypt-selectors.js'
 import {
@@ -72,8 +69,8 @@ type LoginRequest = ApiRequest & {
   +payload: mixed
 }
 
-type ApiServer = Server<ApiRequest>
-type LoginServer = Server<LoginRequest>
+type ApiServer = Serverlet<ApiRequest>
+type LoginServer = Serverlet<LoginRequest>
 
 // Authentication middleware: ----------------------------------------------
 
@@ -459,12 +456,12 @@ const secretRoute: ApiServer = withLogin2(
 
 type LobbyIdRequest = ApiRequest & { lobbyId: string }
 
-const handleMissingLobby: Server<LobbyIdRequest> = request =>
+const handleMissingLobby: Serverlet<LobbyIdRequest> = request =>
   statusResponse(statusCodes.noLobby, `Cannot find lobby ${request.lobbyId}`)
 
 const withLobby = (
-  server: Server<LobbyIdRequest & { lobby: DbLobby }>,
-  fallback: Server<LobbyIdRequest> = handleMissingLobby
+  server: Serverlet<LobbyIdRequest & { lobby: DbLobby }>,
+  fallback: Serverlet<LobbyIdRequest> = handleMissingLobby
 ): ApiServer => request => {
   const { db, path } = request
   const lobbyId = path.split('/')[4]
@@ -552,7 +549,7 @@ const messagesRoute: ApiServer = pickMethod({
 
 type RepoRequest = ApiRequest & { repo: DbRepo }
 
-const withRepo = (server: Server<RepoRequest>): ApiServer => request => {
+const withRepo = (server: Serverlet<RepoRequest>): ApiServer => request => {
   const { db, path } = request
   const elements = path.split('/')
   const syncKey = elements[4]
@@ -609,44 +606,45 @@ const infoRoute: ApiServer = pickMethod({
 
 // router: -----------------------------------------------------------------
 
-const urls: ApiServer = pickPath({
-  // Login v2 endpoints:
-  '/api/v2/login/?': loginRoute,
-  '/api/v2/login/create/?': create2Route,
-  '/api/v2/login/keys/?': keysRoute,
-  '/api/v2/login/otp/?': otp2Route,
-  '/api/v2/login/password/?': password2Route,
-  '/api/v2/login/pin2/?': pin2Route,
-  '/api/v2/login/recovery2/?': recovery2Route,
-  '/api/v2/login/secret/?': secretRoute,
-  '/api/v2/messages/?': messagesRoute,
+const urls: ApiServer = pickPath(
+  {
+    // Login v2 endpoints:
+    '/api/v2/login/?': loginRoute,
+    '/api/v2/login/create/?': create2Route,
+    '/api/v2/login/keys/?': keysRoute,
+    '/api/v2/login/otp/?': otp2Route,
+    '/api/v2/login/password/?': password2Route,
+    '/api/v2/login/pin2/?': pin2Route,
+    '/api/v2/login/recovery2/?': recovery2Route,
+    '/api/v2/login/secret/?': secretRoute,
+    '/api/v2/messages/?': messagesRoute,
 
-  // Lobby server endpoints:
-  '/api/v2/lobby/[^/]+/?': lobbyRoute,
+    // Lobby server endpoints:
+    '/api/v2/lobby/[^/]+/?': lobbyRoute,
 
-  // Sync server endpoints:
-  '/api/v2/store/[^/]+/?': storeRoute,
+    // Sync server endpoints:
+    '/api/v2/store/[^/]+/?': storeRoute,
 
-  // Info server endpoints:
-  '/v1/edgeServers': infoRoute
-})
-
-// Wrap a better 404 error handler around the server:
-const server: ApiServer = pickServer(urls, request =>
-  statusResponse(statusCodes.notFound, `Unknown API endpoint ${request.path}`)
+    // Info server endpoints:
+    '/v1/edgeServers': infoRoute
+  },
+  request =>
+    statusResponse(statusCodes.notFound, `Unknown API endpoint ${request.path}`)
 )
 
 /**
  * Binds the fake server to a particular db instance.
  */
-export function makeFakeServer(db: FakeDb): FetchServer & { offline: boolean } {
-  const serveRequest: FetchServer = request => {
+export function makeFakeServer(
+  db: FakeDb
+): Serverlet<FetchRequest> & { offline: boolean } {
+  const serveRequest: Serverlet<FetchRequest> = request => {
     if (out.offline) throw new Error('Fake network error')
     const json =
       request.body.byteLength > 0
         ? JSON.parse(utf8.stringify(new Uint8Array(request.body)))
         : undefined
-    return server({ ...request, db, json })
+    return urls({ ...request, db, json })
   }
   const out = addHiddenProperties(serveRequest, { offline: false })
   return out

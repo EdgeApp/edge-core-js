@@ -4219,6 +4219,11 @@ serialize-javascript@^5.0.1:
   dependencies:
     randombytes "^2.1.0"
 
+serverlet@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/serverlet/-/serverlet-0.1.0.tgz#8e6c1eb0c9564c488cb8ac67de0b79b2421bd77a"
+  integrity sha512-A7ZQDzvuY3KCI5vJ8sCzmyf2B6B6ArxlmYCcGL+jZi8VPwuWgG/fJRmPHdqdIG5YSPmHs9r3N/g3yXH3hE3pLw==
+
 set-blocking@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/set-blocking/-/set-blocking-2.0.0.tgz#045f9782d011ae9a6803ddd382b24392b3d890f7"

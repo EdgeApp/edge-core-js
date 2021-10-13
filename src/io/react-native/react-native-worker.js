@@ -5,6 +5,7 @@ import './polyfills.js'
 import hashjs from 'hash.js'
 import HmacDRBG from 'hmac-drbg'
 import { base64 } from 'rfc4648'
+import { makeFetchResponse } from 'serverlet'
 import { Bridge, bridgifyObject } from 'yaob'
 
 import {
@@ -18,7 +19,6 @@ import {
   type EdgeFetchResponse,
   type EdgeIo
 } from '../../types/types.js'
-import { makeFetchResponse } from '../../util/http/http-to-fetch.js'
 import { type ClientIo, type WorkerApi } from './react-native-types.js'
 
 const body = document.body
