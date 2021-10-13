@@ -17,6 +17,7 @@ import { type YaobCallbacks, makeYaobCallbacks } from './yaob-callbacks.js'
 
 type Props = {
   allowDebugging?: boolean,
+  coreServerUrl?: string,
   debug?: boolean,
   onError(e: any): mixed,
   onLoad(clientIo: ClientIo, root: WorkerApi): Promise<mixed>
@@ -45,13 +46,20 @@ export class EdgeCoreBridge extends React.Component<Props> {
   }
 
   render(): React.Node {
-    const { allowDebugging = false, debug = false, onError } = this.props
+    const {
+      allowDebugging = false,
+      coreServerUrl,
+      debug = false,
+      onError
+    } = this.props
 
     return (
       <NativeWebView
         ref={this.callbacks.setRef}
         allowDebugging={debug || allowDebugging}
-        source={debug ? 'http://localhost:8080/edge-core.js' : null}
+        source={
+          coreServerUrl ?? debug ? 'http://localhost:8080/edge-core.js' : null
+        }
         style={{ opacity: 0, position: 'absolute', height: 1, width: 1 }}
         onMessage={this.callbacks.handleMessage}
         onScriptError={event => {

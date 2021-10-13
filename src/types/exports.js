@@ -51,6 +51,9 @@ interface CommonProps {
   // since the `debug` prop also activates Chrome debugging.
   allowDebugging?: boolean;
 
+  // Changes the location we load the core JS bundle from.
+  coreServerUrl?: string;
+
   // Enable core debugging.
   // You must call `yarn start` in the edge-core-js project for this to work:
   debug?: boolean;

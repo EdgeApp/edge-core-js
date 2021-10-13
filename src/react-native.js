@@ -33,6 +33,7 @@ let warningShown = false
 export function MakeEdgeContext(props: EdgeContextProps): React.Node {
   const {
     allowDebugging,
+    coreServerUrl,
     debug,
     nativeIo,
     pluginUris = [],
@@ -55,6 +56,7 @@ export function MakeEdgeContext(props: EdgeContextProps): React.Node {
   return (
     <EdgeCoreBridge
       allowDebugging={allowDebugging}
+      coreServerUrl={coreServerUrl}
       debug={debug}
       onError={onError}
       onLoad={(clientIo, root) =>
@@ -75,6 +77,7 @@ export function MakeEdgeContext(props: EdgeContextProps): React.Node {
 export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): React.Node {
   const {
     allowDebugging,
+    coreServerUrl,
     crashReporter,
     debug,
     nativeIo,
@@ -91,6 +94,7 @@ export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): React.Node {
   return (
     <EdgeCoreBridge
       allowDebugging={allowDebugging}
+      coreServerUrl={coreServerUrl}
       debug={debug}
       onError={onError}
       onLoad={(clientIo, root) =>
