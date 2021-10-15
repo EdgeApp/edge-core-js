@@ -3,6 +3,7 @@
 import { uncleaner } from 'cleaners'
 import { makeMemoryDisklet } from 'disklet'
 import { base16, base64 } from 'rfc4648'
+import { makeFetchFunction } from 'serverlet'
 import { bridgifyObject, close } from 'yaob'
 
 import { fixUsername } from '../../client-side.js'
@@ -16,7 +17,6 @@ import {
   type EdgeIo
 } from '../../types/types.js'
 import { base58 } from '../../util/encoding.js'
-import { makeFetch } from '../../util/http/http-to-fetch.js'
 import { type LogBackend } from '../log/log.js'
 import { applyLoginPayload } from '../login/login.js'
 import { asLoginStash } from '../login/login-stash.js'
@@ -87,7 +87,7 @@ export function makeFakeWorld(
       const fakeIo = {
         ...io,
         disklet: makeMemoryDisklet(),
-        fetch: makeFetch(fakeServer)
+        fetch: makeFetchFunction(fakeServer)
       }
 
       // Populate the stashes:

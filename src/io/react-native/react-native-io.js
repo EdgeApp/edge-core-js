@@ -3,13 +3,10 @@
 import { makeReactNativeDisklet } from 'disklet'
 import { NativeModules } from 'react-native'
 import { scrypt } from 'react-native-fast-crypto'
+import { type HttpHeaders, type HttpResponse } from 'serverlet'
 import { bridgifyObject } from 'yaob'
 
 import { type EdgeFetchOptions, NetworkError } from '../../types/types.js'
-import {
-  type HttpHeaders,
-  type HttpResponse
-} from '../../util/http/http-types.js'
 import { type ClientIo } from './react-native-types.js'
 
 const randomBytes = NativeModules.RNRandomBytes.randomBytes

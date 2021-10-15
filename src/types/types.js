@@ -1,6 +1,12 @@
 // @flow
 
 import { type Disklet } from 'disklet'
+import {
+  type FetchFunction,
+  type FetchHeaders,
+  type FetchOptions,
+  type FetchResponse
+} from 'serverlet'
 import { type Subscriber } from 'yaob'
 
 export * from './error.js'
@@ -48,47 +54,11 @@ export type EdgeScryptFunction = (
   dklen: number
 ) => Promise<Uint8Array>
 
-/**
- * The subset of the `fetch` options we guarantee to support.
- */
-export type EdgeFetchOptions = {
-  method?: string,
-  body?: ArrayBuffer | string,
-  headers?: { [header: string]: string }
-}
-
-/**
- * The subset of the `Headers` DOM object we guarantee to support.
- */
-export type EdgeFetchHeaders = {
-  forEach(
-    callback: (value: string, name: string, self: EdgeFetchHeaders) => void,
-    thisArg?: any
-  ): void,
-  get(name: string): string | null,
-  has(name: string): boolean
-}
-
-/**
- * The subset of the `Response` DOM object we guarantee to support.
- */
-export type EdgeFetchResponse = {
-  +headers: EdgeFetchHeaders,
-  +ok: boolean,
-  +status: number,
-  arrayBuffer(): Promise<ArrayBuffer>,
-  json(): Promise<any>,
-  text(): Promise<string>
-}
-
-/**
- * The subset of the `fetch` DOM function we guarantee to support,
- * especially if we have to emulate `fetch` in weird environments.
- */
-export type EdgeFetchFunction = (
-  uri: string,
-  opts?: EdgeFetchOptions
-) => Promise<EdgeFetchResponse>
+// The subset of the fetch function Edge expects:
+export type EdgeFetchOptions = FetchOptions
+export type EdgeFetchHeaders = FetchHeaders
+export type EdgeFetchResponse = FetchResponse
+export type EdgeFetchFunction = FetchFunction
 
 /**
  * Access to platform-specific resources.

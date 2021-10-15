@@ -1,6 +1,7 @@
 // @flow
 
 import { type Disklet } from 'disklet'
+import { type HttpResponse } from 'serverlet'
 
 import { type LogBackend } from '../../core/log/log.js'
 import {
@@ -12,7 +13,6 @@ import {
   type EdgeNativeIo,
   type EdgeScryptFunction
 } from '../../types/types.js'
-import { type HttpResponse } from '../../util/http/http-types.js'
 
 export type ClientIo = {
   +disklet: Disklet,

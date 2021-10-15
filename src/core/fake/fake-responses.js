@@ -1,15 +1,12 @@
 // @flow
 
 import { uncleaner } from 'cleaners'
+import { type HttpHeaders, type HttpResponse } from 'serverlet'
 
 import {
   asOtpErrorPayload,
   asPasswordErrorPayload
 } from '../../types/server-cleaners.js'
-import {
-  type HttpHeaders,
-  type HttpResponse
-} from '../../util/http/http-types.js'
 
 const wasOtpErrorPayload = uncleaner(asOtpErrorPayload)
 const wasPasswordErrorPayload = uncleaner(asPasswordErrorPayload)
