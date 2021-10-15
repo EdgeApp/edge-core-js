@@ -76,7 +76,7 @@
     "cleaners": "^0.3.11",
     "currency-codes": "^1.1.2",
     "disklet": "^0.4.5",
-    "edge-sync-client": "^0.2.1",
+    "edge-sync-client": "^0.2.3",
     "elliptic": "^6.4.0",
     "ethereumjs-tx": "^1.3.7",
     "ethereumjs-util": "^5.2.0",

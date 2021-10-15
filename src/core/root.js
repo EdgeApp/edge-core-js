@@ -102,8 +102,7 @@ export async function makeContext(
   )
 
   // Create sync client:
-  const typeHack: any = io.fetch
-  const syncClient = await makeSyncClient({ log, fetch: typeHack })
+  const syncClient = await makeSyncClient({ log, fetch: io.fetch })
 
   // Start the pixie tree:
   const mirror = { output: {} }

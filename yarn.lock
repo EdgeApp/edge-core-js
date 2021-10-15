@@ -2007,13 +2007,17 @@ drbg.js@^1.0.1:
     create-hash "^1.1.2"
     create-hmac "^1.1.4"
 
-edge-sync-client@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.1.tgz#92836214f5b550f60f8e77a613d8e4d664026147"
-  integrity sha512-A7BqsyKXGw31QrsAy+FvAjmSpErZj68bGDAYcq6uPAvqMCeIpjAe5DSmVjAOoLDqIHKud1QmysIpvw94S9XxhQ==
+edge-sync-client@^0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.3.tgz#016543af4f11bb0d6c75b9e0bea3c178f4fc9cb8"
+  integrity sha512-YwCoxVC0659vg2qpxYGADYTgSOvNwosCuesE2N7rghB0BicLrJGYBc/TrPjC3zRuO0gKXLc/5SM4o2Y4Yy+LAw==
   dependencies:
+    base-x "^1.0.4"
     cleaners "^0.3.9"
     cross-fetch "^3.1.4"
+    hash.js "^1.1.7"
+    rfc4648 "^1.5.0"
+    serverlet "^0.1.0"
 
 electron-to-chromium@^1.3.723:
   version "1.3.736"
@@ -4075,10 +4079,10 @@ reusify@^1.0.4:
   resolved "https://registry.yarnpkg.com/reusify/-/reusify-1.0.4.tgz#90da382b1e126efc02146e90845a88db12925d76"
   integrity sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==
 
-rfc4648@^1.1.0, rfc4648@^1.3.0, rfc4648@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-1.4.0.tgz#c75b2856ad2e2d588b6ddb985d556f1f7f2a2abd"
-  integrity sha512-3qIzGhHlMHA6PoT6+cdPKZ+ZqtxkIvg8DZGKA5z6PQ33/uuhoJ+Ws/D/J9rXW6gXodgH8QYlz2UCl+sdUDmNIg==
+rfc4648@^1.1.0, rfc4648@^1.3.0, rfc4648@^1.4.0, rfc4648@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-1.5.0.tgz#1ba940ec1649685ec4d88788dc57fb8e18855055"
+  integrity sha512-FA6W9lDNeX8WbMY31io1xWg+TpZCbeDKsBo0ocwACZiWnh9TUAyk9CCuBQuOPmYnwwdEQZmraQ2ZK7yJsxErBg==
 
 rimraf@^3.0.2:
   version "3.0.2"
