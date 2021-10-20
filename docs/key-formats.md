@@ -49,7 +49,7 @@ The private key format is as follows:
 
 ```typescript
 interface PrivateBitcoinKey extends PrivateStorageKey {
-  bitcoinKey: string,
+  bitcoinKey: string, // Other names are possible
   format?: 'bip32' | 'bip44' | 'bip49' | 'bip84',
   coinType?: number
 }
@@ -60,7 +60,7 @@ The field `bitcoinKey` either contains:
 - A mnemonic string according to BIP 39
 - A 256-bit base64 encoded integer (legacy)
 
-The `bitcoinKey` should be decoded using either BIP 39 or base64 to yield the wallet seed entropy. From there, BIP 32 specifies how to derive wallet keys using some path determined by `format` and `coinType`.
+The `bitcoinKey` should be decoded using either BIP 39 or base64 to yield the wallet seed entropy. From there, BIP 32 specifies how to derive wallet keys using some path determined by `format` and `coinType`. The name `bitcoinKey` only applies to Bitcoin wallets; other coins use other names for this field.
 
 - bip32
   - Receiving & change branch: m/0/0/n
@@ -78,7 +78,9 @@ The `bitcoinKey` should be decoded using either BIP 39 or base64 to yield the wa
   - Change branch: m/84'/coinType'/0'/1/n
   - Script: segwit p2wpkh
 
-If `format` or `coinType` are missing, the wallet uses a default format of bip32 and a default coin type of 0.
+If `format` is missing, the wallet uses a default of bip32.
+
+If the `coinType` is missing, the default is 0 for Bitcoin. Other coins use different defaults for `coinType`.
 
 ### Other Bitcoin-derived coins
 
@@ -124,7 +126,12 @@ interface PublicBitcoinKey {
 }
 ```
 
-This format is currently disabled, since it has problems. Given the presence of hardened derivation in several of the formats, it's not clear exactly which Xpub is being saved here. This needs to be locked down before the format can be enabled.
+The derivation path for `bitcoinXpub` depends on the format:
+
+- bip32: m/0
+- bip44: m/44'/coinType'/0'
+- bip49: m/49'/coinType'/0'
+- bip84: m/84'/coinType'/0'
 
 ### Wrong wallet types
 
@@ -176,7 +183,7 @@ interface PublicEthereumKey {
 }
 ```
 
-The `ethereumKey` field is a 256-bit base16 encoded number. It may or may not have a `0x` prefix in front.
+The `ethereumKey` field is either a 256-bit base16 encoded number, or a 12-word mnemonic seed. It may or may not have a `0x` prefix in front.
 
 ## wallet:monero
 
