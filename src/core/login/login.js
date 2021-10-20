@@ -21,6 +21,7 @@ import {
 } from '../../types/types.js'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
+import { verifyData } from '../../util/crypto/verify.js'
 import { utf8 } from '../../util/encoding.js'
 import { softCat } from '../../util/util.js'
 import { type ApiInput } from '../root-pixie.js'
@@ -378,12 +379,12 @@ export async function serverLogin(
       if (
         otpError != null &&
         // We have never seen this user before:
-        ((stash.loginId === '' && otpError.loginId != null) ||
+        ((stash.loginId.length === 0 && otpError.loginId != null) ||
           // We got a voucher:
           (otpError.voucherId != null && otpError.voucherAuth != null))
       ) {
         if (otpError.loginId != null) {
-          stash.loginId = otpError.loginId
+          stash.loginId = base64.parse(otpError.loginId)
         }
         if (otpError.voucherAuth != null) {
           stash.voucherId = otpError.voucherId
@@ -435,7 +436,9 @@ export async function applyKit(
   kit: LoginKit
 ): Promise<LoginTree> {
   const { loginId, serverMethod = 'POST', serverPath } = kit
-  const login = searchTree(loginTree, login => login.loginId === loginId)
+  const login = searchTree(loginTree, login =>
+    verifyData(login.loginId, loginId)
+  )
   if (login == null) throw new Error('Cannot apply kit: missing login')
 
   const { stashTree } = getStashById(ai, loginId)
@@ -444,7 +447,7 @@ export async function applyKit(
   await loginFetch(ai, serverMethod, serverPath, request)
   const newLoginTree = updateTree(
     loginTree,
-    login => login.loginId === loginId,
+    login => verifyData(login.loginId, loginId),
     login => ({
       ...login,
       ...kit.login,
@@ -456,7 +459,7 @@ export async function applyKit(
 
   const newStashTree = updateTree(
     stashTree,
-    stash => stash.loginId === loginId,
+    stash => verifyData(stash.loginId, loginId),
     stash => ({
       ...stash,
       ...kit.stash,
@@ -526,19 +529,20 @@ export function makeAuthJson(
   const { voucherAuth, voucherId } =
     stash != null ? stash : { voucherAuth: undefined, voucherId: undefined }
 
-  if (login.loginAuth != null) {
+  const { loginId, userId, loginAuth, passwordAuth } = login
+  if (loginAuth != null) {
     return {
-      loginId: login.loginId,
-      loginAuth: login.loginAuth,
+      loginId,
+      loginAuth,
       otp: getLoginOtp(login),
       voucherAuth,
       voucherId
     }
   }
-  if (login.passwordAuth != null) {
+  if (passwordAuth != null && userId != null) {
     return {
-      userId: login.userId,
-      passwordAuth: base64.stringify(login.passwordAuth),
+      userId,
+      passwordAuth,
       otp: getLoginOtp(login),
       voucherAuth,
       voucherId

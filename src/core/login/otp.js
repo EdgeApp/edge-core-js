@@ -1,14 +1,14 @@
 // @flow
 
 import { uncleaner } from 'cleaners'
-import { base32, base64 } from 'rfc4648'
+import { base32 } from 'rfc4648'
 
 import {
   asChangeOtpPayload,
   asOtpResetPayload
 } from '../../types/server-cleaners.js'
 import { type EdgeAccountOptions } from '../../types/types.js'
-import { fixOtpKey, totp } from '../../util/crypto/hotp.js'
+import { totp } from '../../util/crypto/hotp.js'
 import { applyKit, serverLogin } from '../login/login.js'
 import { type ApiInput } from '../root-pixie.js'
 import { loginFetch } from './login-fetch.js'
@@ -32,12 +32,13 @@ export function getStashOtp(
   stash: LoginStash,
   opts: EdgeAccountOptions
 ): string | void {
-  const { otp, otpKey = stash.otpKey } = opts
+  const { otp, otpKey } = opts
   if (otp != null) {
     if (/[0-9]+/.test(otp) && otp.length < 16) return otp
-    return totp(otp)
+    return totp(base32.parse(otp, { loose: true }))
   }
-  if (otpKey != null) return totp(otpKey)
+  if (otpKey != null) return totp(base32.parse(otpKey, { loose: true }))
+  if (stash.otpKey != null) return totp(stash.otpKey)
 }
 
 export async function enableOtp(
@@ -46,11 +47,7 @@ export async function enableOtp(
   otpTimeout: number
 ): Promise<void> {
   const { loginTree } = ai.props.state.accounts[accountId]
-
-  const otpKey =
-    loginTree.otpKey != null
-      ? fixOtpKey(loginTree.otpKey)
-      : base32.stringify(ai.props.io.random(10))
+  const { otpKey = ai.props.io.random(10) } = loginTree
 
   const kit: LoginKit = {
     serverPath: '/v2/login/otp',
@@ -133,7 +130,7 @@ export async function resetOtp(
   resetToken: string
 ): Promise<Date> {
   const request = {
-    userId: base64.stringify(await hashUsername(ai, username)),
+    userId: await hashUsername(ai, username),
     otpResetAuth: resetToken
   }
   return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
@@ -151,18 +148,19 @@ export async function resetOtp(
 export async function repairOtp(
   ai: ApiInput,
   accountId: string,
-  otpKey: string
+  otpKey: Uint8Array
 ): Promise<void> {
   if (ai.props.state.accounts[accountId] == null) return
   const { login } = ai.props.state.accounts[accountId]
+  const { userId, passwordAuth } = login
 
   const { stashTree, stash } = getStashById(ai, login.loginId)
-  if (login.passwordAuth == null) {
+  if (passwordAuth == null || userId == null) {
     throw new Error('Cannot repair OTP: There is no password on this account')
   }
   const request = {
-    userId: login.userId,
-    passwordAuth: base64.stringify(login.passwordAuth),
+    userId,
+    passwordAuth,
     otp: totp(otpKey)
   }
   const opts: EdgeAccountOptions = {

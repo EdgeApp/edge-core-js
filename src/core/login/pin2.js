@@ -1,7 +1,6 @@
 // @flow
 
 import { uncleaner } from 'cleaners'
-import { base64 } from 'rfc4648'
 
 import { asChangePin2Payload } from '../../types/server-cleaners.js'
 import { type LoginRequestBody } from '../../types/server-types.js'
@@ -61,7 +60,7 @@ export async function loginPin2(
   // Request:
   const { pin2Key } = stash
   const request = {
-    pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+    pin2Id: pin2Id(pin2Key, username),
     pin2Auth: pin2Auth(pin2Key, pin)
   }
   return serverLogin(ai, stashTree, stash, opts, request, async reply => {
@@ -124,7 +123,7 @@ export async function checkPin2(
   // Try a login:
   const { pin2Key } = stash
   const request: LoginRequestBody = {
-    pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+    pin2Id: pin2Id(pin2Key, username),
     pin2Auth: pin2Auth(pin2Key, pin),
     otp: getLoginOtp(login)
   }
@@ -188,7 +187,7 @@ export function makeChangePin2Kit(
     return {
       serverPath: '/v2/login/pin2',
       server: wasChangePin2Payload({
-        pin2Id: base64.stringify(pin2Id(pin2Key, username)),
+        pin2Id: pin2Id(pin2Key, username),
         pin2Auth: pin2Auth(pin2Key, pin),
         pin2Box,
         pin2KeyBox,

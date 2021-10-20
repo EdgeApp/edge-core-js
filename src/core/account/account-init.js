@@ -1,5 +1,7 @@
 // @flow
 
+import { base64 } from 'rfc4648'
+
 import { type EdgeAccount, type EdgeAccountOptions } from '../../types/types.js'
 import { type LoginCreateOpts, makeCreateKit } from '../login/create.js'
 import {
@@ -95,7 +97,9 @@ export async function makeAccount(
 ): Promise<EdgeAccount> {
   const { pauseWallets = false } = opts
   const { log } = ai.props
-  log.warn(`Login: decrypted keys for user ${loginTree.loginId}`)
+  log.warn(
+    `Login: decrypted keys for user ${base64.stringify(loginTree.loginId)}`
+  )
 
   loginTree = await ensureAccountExists(ai, loginTree, appId)
   log.warn('Login: account exists for appId')

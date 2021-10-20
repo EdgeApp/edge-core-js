@@ -13,13 +13,13 @@ export type LoginTree = {
   appId: string,
   created?: Date,
   lastLogin: Date,
-  loginId: string,
+  loginId: Uint8Array,
   loginKey: Uint8Array,
-  userId?: string,
+  userId?: Uint8Array,
   username?: string,
 
   // 2-factor:
-  otpKey?: string,
+  otpKey?: Uint8Array,
   otpResetDate?: Date,
   otpTimeout?: number,
   pendingVouchers: EdgePendingVoucher[],
@@ -47,7 +47,7 @@ export type LoginType =
 export type AppIdMap = { [walletId: string]: string[] }
 
 export type LoginKit = {
-  loginId: string,
+  loginId: Uint8Array,
   login: $Shape<LoginTree>,
   server?: mixed,
   serverMethod?: string,

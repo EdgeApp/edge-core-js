@@ -2,6 +2,7 @@
 
 import { makeReactNativeDisklet } from 'disklet'
 import * as React from 'react'
+import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
 import { type LogBackend, defaultOnLog } from './core/log/log.js'
@@ -186,8 +187,10 @@ export async function fetchLoginMessages(
       const clean = asMessagesPayload(parseReply(json))
       const out: EdgeLoginMessages = {}
       for (const message of clean) {
-        const username = loginMap[message.loginId]
-        if (username != null) out[username] = message
+        const { loginId, ...rest } = message
+        const id = base64.stringify(loginId)
+        const username = loginMap[id]
+        if (username != null) out[username] = { ...rest, loginId: id }
       }
       return out
     })

@@ -13,7 +13,7 @@ import {
   asUnknown,
   asValue
 } from 'cleaners'
-import { base64 } from 'rfc4648'
+import { base16, base32, base64 } from 'rfc4648'
 
 import {
   type ChangeOtpPayload,
@@ -41,10 +41,25 @@ import {
   type UsernameInfoPayload
 } from './server-types.js'
 import {
-  type EdgeLoginMessage,
   type EdgePendingVoucher,
   type EdgeRecoveryQuestionChoice
 } from './types.js'
+
+/**
+ * A string of hex-encoded binary data.
+ */
+export const asBase16: Cleaner<Uint8Array> = asCodec(
+  raw => base16.parse(asString(raw)),
+  clean => base16.stringify(clean).toLowerCase()
+)
+
+/**
+ * A string of base32-encoded binary data.
+ */
+export const asBase32: Cleaner<Uint8Array> = asCodec(
+  raw => base32.parse(asString(raw), { loose: true }),
+  clean => base32.stringify(clean, { pad: false })
+)
 
 /**
  * A string of base64-encoded binary data.
@@ -67,13 +82,6 @@ export const asEdgePendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
   deviceDescription: asOptional(asString)
 })
 
-const asEdgeLoginMessage: Cleaner<EdgeLoginMessage> = asObject({
-  loginId: asString,
-  otpResetPending: asOptional(asBoolean, false),
-  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
-  recovery2Corrupt: asOptional(asBoolean, false)
-})
-
 const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> = asObject(
   {
     min_length: asNumber,
@@ -93,20 +101,20 @@ export const asEdgeBox: Cleaner<EdgeBox> = asObject({
 })
 
 export const asEdgeSnrp: Cleaner<EdgeSnrp> = asObject({
-  salt_hex: asString,
+  salt_hex: asBase16,
   n: asNumber,
   r: asNumber,
   p: asNumber
 })
 
 export const asEdgeLobbyRequest: Cleaner<EdgeLobbyRequest> = asObject({
-  publicKey: asString,
   loginRequest: asOptional(asObject({ appId: asString }).withRest),
+  publicKey: asBase64,
   timeout: asOptional(asNumber)
 }).withRest
 
 export const asEdgeLobbyReply: Cleaner<EdgeLobbyReply> = asObject({
-  publicKey: asString,
+  publicKey: asBase64,
   box: asEdgeBox
 })
 
@@ -130,34 +138,34 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
   voucherAuth: asOptional(asBase64),
 
   // Secret-key login:
-  loginId: asOptional(asString),
+  loginId: asOptional(asBase64),
   loginAuth: asOptional(asBase64),
 
   // Password login:
-  userId: asOptional(asString),
-  passwordAuth: asOptional(asString),
+  userId: asOptional(asBase64),
+  passwordAuth: asOptional(asBase64),
 
   // PIN login:
-  pin2Id: asOptional(asString),
+  pin2Id: asOptional(asBase64),
   pin2Auth: asOptional(asBase64),
 
   // Recovery login:
-  recovery2Id: asOptional(asString),
+  recovery2Id: asOptional(asBase64),
   recovery2Auth: asOptional(asRecovery2Auth),
 
   // Messages:
-  loginIds: asOptional(asArray(asString)),
+  loginIds: asOptional(asArray(asBase64)),
 
   // OTP reset:
   otpResetAuth: asOptional(asString),
 
   // Legacy:
   did: asOptional(asString),
-  l1: asOptional(asString),
-  lp1: asOptional(asString),
+  l1: asOptional(asBase64),
+  lp1: asOptional(asBase64),
   lpin1: asOptional(asBase64),
-  lra1: asOptional(asString),
-  recoveryAuth: asOptional(asString) // lra1
+  lra1: asOptional(asBase64),
+  recoveryAuth: asOptional(asBase64) // lra1
 })
 
 export const asLoginResponseBody: Cleaner<LoginResponseBody> = asObject({
@@ -175,12 +183,12 @@ export const asLoginResponseBody: Cleaner<LoginResponseBody> = asObject({
 
 export const asChangeOtpPayload: Cleaner<ChangeOtpPayload> = asObject({
   otpTimeout: asOptional(asNumber, 7 * 24 * 60 * 60), // seconds
-  otpKey: asString
+  otpKey: asBase32
 })
 
 export const asChangePasswordPayload: Cleaner<ChangePasswordPayload> = asObject(
   {
-    passwordAuth: asString,
+    passwordAuth: asBase64,
     passwordAuthBox: asEdgeBox,
     passwordAuthSnrp: asEdgeSnrp,
     passwordBox: asEdgeBox,
@@ -189,7 +197,7 @@ export const asChangePasswordPayload: Cleaner<ChangePasswordPayload> = asObject(
 )
 
 export const asChangePin2Payload: Cleaner<ChangePin2Payload> = asObject({
-  pin2Id: asOptional(asString),
+  pin2Id: asOptional(asBase64),
   pin2Auth: asOptional(asBase64),
   pin2Box: asOptional(asEdgeBox),
   pin2KeyBox: asOptional(asEdgeBox),
@@ -198,7 +206,7 @@ export const asChangePin2Payload: Cleaner<ChangePin2Payload> = asObject({
 
 export const asChangeRecovery2Payload: Cleaner<ChangeRecovery2Payload> = asObject(
   {
-    recovery2Id: asString,
+    recovery2Id: asBase64,
     recovery2Auth: asRecovery2Auth,
     recovery2Box: asEdgeBox,
     recovery2KeyBox: asEdgeBox,
@@ -225,7 +233,7 @@ export const asCreateKeysPayload: Cleaner<CreateKeysPayload> = asObject({
 
 export const asCreateLoginPayload: Cleaner<CreateLoginPayload> = asObject({
   appId: asString,
-  loginId: asString, // base64
+  loginId: asBase64,
   parentBox: asOptional(asEdgeBox)
 }).withRest
 
@@ -242,15 +250,15 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   // Identity:
   appId: asString,
   created: asOptional(asDate),
-  loginId: asString,
-  userId: asOptional(asString),
+  loginId: asBase64,
+  userId: asOptional(asBase64),
 
   // Nested logins:
   children: asOptional(asArray(raw => asLoginPayload(raw))),
   parentBox: asOptional(asEdgeBox),
 
   // 2-factor login:
-  otpKey: asOptional(asString),
+  otpKey: asOptional(asBase32),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
 
@@ -284,11 +292,16 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
 })
 
 export const asMessagesPayload: Cleaner<MessagesPayload> = asArray(
-  asEdgeLoginMessage
+  asObject({
+    loginId: asBase64,
+    otpResetPending: asOptional(asBoolean, false),
+    pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
+    recovery2Corrupt: asOptional(asBoolean, false)
+  })
 )
 
 export const asOtpErrorPayload: Cleaner<OtpErrorPayload> = asObject({
-  login_id: asOptional(asString),
+  login_id: asOptional(asBase64),
   otp_reset_auth: asOptional(asString),
   otp_timeout_date: asOptional(asDate),
   reason: asOptional(asString),

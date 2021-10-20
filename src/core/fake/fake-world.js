@@ -29,7 +29,8 @@ import { makeFakeServer } from './fake-server.js'
 const wasLoginStash = uncleaner(asLoginStash)
 
 async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
-  const { lastLogin, loginId, repos, server } = user
+  const { lastLogin, repos, server } = user
+  const loginId = base64.parse(user.loginId)
   const loginKey = base64.parse(user.loginKey)
   const username = fixUsername(user.username)
 
@@ -45,7 +46,7 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
     loginKey,
     asLoginPayload(server)
   )
-  const path = `logins/${base58.stringify(base64.parse(loginId))}.json`
+  const path = `logins/${base58.stringify(loginId)}.json`
   await io.disklet.setText(path, JSON.stringify(wasLoginStash(stash)))
 
   // Save the repos:
@@ -115,7 +116,7 @@ export function makeFakeWorld(
       if (account.appId !== '') {
         throw new Error('Only root logins are dumpable.')
       }
-      const loginId = base64.stringify(base58.parse(account.rootLoginId))
+      const loginId = base58.parse(account.rootLoginId)
 
       // Find the data on the server:
       const login = fakeDb.getLoginById(loginId)
@@ -132,7 +133,7 @@ export function makeFakeWorld(
 
       return {
         lastLogin: account.lastLogin,
-        loginId,
+        loginId: base64.stringify(loginId),
         loginKey: base64.stringify(base58.parse(account.loginKey)),
         repos,
         server: fakeDb.dumpLogin(login),

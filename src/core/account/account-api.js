@@ -1,7 +1,7 @@
 // @flow
 
 import { type Disklet } from 'disklet'
-import { base64 } from 'rfc4648'
+import { base32 } from 'rfc4648'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { AccountSync } from '../../client-side.js'
@@ -143,7 +143,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
     get rootLoginId(): string {
       lockdown()
-      return base58.stringify(base64.parse(loginTree.loginId))
+      return base58.stringify(loginTree.loginId)
     },
     get username(): string {
       if (username == null) throw new Error('Missing username')
@@ -239,7 +239,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     get otpKey(): string | void {
       lockdown()
       const { loginTree } = selfState()
-      return loginTree.otpTimeout != null ? loginTree.otpKey : undefined
+      return loginTree.otpKey != null
+        ? base32.stringify(loginTree.otpKey, { pad: false })
+        : undefined
     },
     get otpResetDate(): Date | void {
       lockdown()
@@ -260,7 +262,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
     async repairOtp(otpKey: string): Promise<void> {
       lockdown()
-      await repairOtp(ai, accountId, otpKey)
+      await repairOtp(ai, accountId, base32.parse(otpKey, { loose: true }))
     },
 
     // 2fa bypass voucher approval / rejection:

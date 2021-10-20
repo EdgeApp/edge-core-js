@@ -1,7 +1,5 @@
 // @flow
 
-import { base32 } from 'rfc4648'
-
 import { hmacSha1 } from './hashes.js'
 
 export function numberToBe64(number: number): Uint8Array {
@@ -46,8 +44,11 @@ export function hotp(
 /**
  * Generates an HOTP code based on the current time.
  */
-export function totp(secret: string, now: number = Date.now() / 1000): string {
-  return hotp(base32.parse(secret, { loose: true }), now / 30, 6)
+export function totp(
+  secret: Uint8Array,
+  now: number = Date.now() / 1000
+): string {
+  return hotp(secret, now / 30, 6)
 }
 
 /**
@@ -55,25 +56,20 @@ export function totp(secret: string, now: number = Date.now() / 1000): string {
  * within an adjustable range.
  */
 export function checkTotp(
-  secret: string,
+  secret: Uint8Array,
   otp: string,
   opts: { now?: number, spread?: number } = {}
 ): boolean {
   const { now = Date.now() / 1000, spread = 1 } = opts
   const index = now / 30
-  const secretBytes = base32.parse(secret, { loose: true })
 
   // Try the middle:
-  if (otp === hotp(secretBytes, index, 6)) return true
+  if (otp === hotp(secret, index, 6)) return true
 
   // Spiral outwards:
   for (let i = 1; i <= spread; ++i) {
-    if (otp === hotp(secretBytes, index - i, 6)) return true
-    if (otp === hotp(secretBytes, index + i, 6)) return true
+    if (otp === hotp(secret, index - i, 6)) return true
+    if (otp === hotp(secret, index + i, 6)) return true
   }
   return false
-}
-
-export function fixOtpKey(secret: string): string {
-  return base32.stringify(base32.parse(secret, { loose: true }))
 }
