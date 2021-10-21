@@ -56,6 +56,7 @@ export const fakeUserDump: EdgeFakeUser = {
   },
   server: {
     appId: '',
+    created: '2016-06-02T18:05:54.000Z',
     loginId: 'm3HF2amNoP0kV4n4Md5vilUYj6l+j7Rlx7VLtuFppFI=',
     otpTimeout: 100,
     passwordAuthBox: {
@@ -153,6 +154,7 @@ export const fakeUserDump: EdgeFakeUser = {
     children: [
       {
         appId: 'test-child',
+        created: '2017-03-16T22:07:27.000Z',
         loginAuthBox: {
           encryptionType: 0,
           iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',
@@ -192,6 +194,7 @@ export const fakeUserDump: EdgeFakeUser = {
         children: [
           {
             appId: 'test-child-child',
+            created: '2017-03-29T00:24:52.000Z',
             loginAuthBox: {
               encryptionType: 0,
               iv_hex: '03125dd427c6e1680b3a25bcaf6e29d0',

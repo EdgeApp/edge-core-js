@@ -184,7 +184,7 @@ export type LobbyPayload = {
 export type LoginPayload = {
   // Identity:
   appId: string,
-  created?: Date, // Not actually optional
+  created: Date,
   loginId: Uint8Array,
   userId?: Uint8Array,
 

@@ -22,7 +22,7 @@ import { type EdgeBox, type EdgeSnrp } from './server-types.js'
 export type LoginDump = {
   // Identity:
   appId: string,
-  // created: Date,
+  created: Date,
   loginId: Uint8Array,
 
   // Nested logins:
@@ -84,7 +84,7 @@ export type FakeUser = {
 export const asLoginDump: Cleaner<LoginDump> = asObject({
   // Identity:
   appId: asString,
-  // created: asOptional(asDate),
+  created: raw => (raw == null ? new Date() : asDate(raw)),
   loginId: asBase64,
 
   // Nested logins:

@@ -107,7 +107,7 @@ export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
   return {
     // Identity:
     appId: login.appId,
-    // created: new Date(),
+    created: login.created,
     loginId: login.loginId,
 
     // Nested logins:
@@ -126,8 +126,7 @@ export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
     recovery2Box: login.recovery2Box,
     recovery2KeyBox: login.recovery2KeyBox,
     otpKey: login.otpKey,
-    otpResetDate:
-      login.otpResetDate != null ? new Date(login.otpResetDate) : undefined,
+    otpResetDate: login.otpResetDate,
     otpTimeout: login.otpTimeout,
     pendingVouchers: [],
     loginAuthBox: login.loginAuthBox,
