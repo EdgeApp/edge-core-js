@@ -65,6 +65,6 @@ describe('edge login', function () {
     const pendingLogin = await context.requestEdgeLogin(opts)
 
     // All we can verify here is that cancel is a callable method:
-    pendingLogin.cancelRequest()
+    pendingLogin.cancelRequest().catch(() => {})
   })
 })

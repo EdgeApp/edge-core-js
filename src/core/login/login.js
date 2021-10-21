@@ -414,7 +414,7 @@ export async function serverLogin(
           stash.voucherAuth = base64.parse(otpError.voucherAuth)
         }
         stashTree.lastLogin = now
-        saveStash(ai, stashTree)
+        saveStash(ai, stashTree).catch(() => {})
       }
       throw error
     })
