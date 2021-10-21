@@ -211,7 +211,7 @@ export function makeCurrencyWalletCallbacks(
       if (created.length) throttledOnNewTx(created)
     },
     onAddressChanged() {
-      emit(input.props.selfOutput.api, 'addressChanged')
+      emit(input.props.selfOutput.api, 'addressChanged', undefined)
     },
     onWcNewContractCall(payload: JsonObject) {
       emit(input.props.selfOutput.api, 'wcNewContractCall', payload)

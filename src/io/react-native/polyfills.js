@@ -32,8 +32,8 @@ function fill(value: any, start?: number, end?: number): any[] {
       ? Math.max(length + endpoint, 0)
       : Math.min(endpoint, length)
   }
-  const first = clamp(start != null ? start : 0)
-  const last = clamp(end != null ? end : length)
+  const first = start != null ? clamp(start) : 0
+  const last = end != null ? clamp(end) : length
 
   for (let i = first; i < last; ++i) {
     this[i] = value

@@ -240,8 +240,10 @@ export async function changePluginUserSettings(
 
   // Write the new state to disk:
   const json: PluginSettingsFile = await getJson(file)
-  json.userSettings = { ...ai.props.state.accounts[accountId].userSettings }
-  json.userSettings[pluginId] = userSettings
+  json.userSettings = {
+    ...ai.props.state.accounts[accountId].userSettings,
+    [pluginId]: userSettings
+  }
   await file.setText(JSON.stringify(json))
 
   // Update Redux:
@@ -272,8 +274,10 @@ export async function changeSwapSettings(
 
   // Write the new state to disk:
   const json: PluginSettingsFile = await getJson(file)
-  json.swapSettings = { ...ai.props.state.accounts[accountId].swapSettings }
-  json.swapSettings[pluginId] = swapSettings
+  json.swapSettings = {
+    ...ai.props.state.accounts[accountId].swapSettings,
+    [pluginId]: swapSettings
+  }
   await file.setText(JSON.stringify(json))
 
   // Update Redux:
