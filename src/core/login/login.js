@@ -292,7 +292,7 @@ function makeLoginTreeInner(
 
   // Recurse into children:
   login.children = stashChildren.map(child => {
-    if (!child.parentBox) {
+    if (child.parentBox == null) {
       throw new Error('Key integrity violation: No parentBox on child login.')
     }
     const childKey = decrypt(child.parentBox, loginKey)

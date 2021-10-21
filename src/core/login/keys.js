@@ -169,10 +169,8 @@ export function getAllWalletInfos(
     }
 
     // Add our children's walletInfos:
-    if (login.children) {
-      for (const child of login.children) {
-        getAllWalletInfosLoop(child)
-      }
+    for (const child of login.children) {
+      getAllWalletInfosLoop(child)
     }
   }
   getAllWalletInfosLoop(login)
@@ -235,7 +233,7 @@ export function fixWalletInfo(walletInfo: EdgeWalletInfo): EdgeWalletInfo {
     'wallet:zcoin': { format: 'bip32', coinType: 136 }
   }
 
-  if (defaults[type]) {
+  if (defaults[type] != null) {
     return {
       id,
       keys: { ...defaults[type], ...keys },
@@ -266,7 +264,7 @@ export function makeSplitWalletInfo(
   newWalletType: string
 ): EdgeWalletInfo {
   const { id, type, keys } = walletInfo
-  if (!keys.dataKey || !keys.syncKey) {
+  if (keys.dataKey == null || keys.syncKey == null) {
     throw new Error(`Wallet ${id} is not a splittable type`)
   }
 
@@ -394,7 +392,7 @@ export async function splitWalletInfo(
   const walletInfo = allWalletInfosFull.find(
     walletInfo => walletInfo.id === walletId
   )
-  if (!walletInfo) throw new Error(`Invalid wallet id ${walletId}`)
+  if (walletInfo == null) throw new Error(`Invalid wallet id ${walletId}`)
 
   // Handle BCH / BTC+segwit special case:
   if (
@@ -413,7 +411,7 @@ export async function splitWalletInfo(
     walletInfo.type === 'wallet:bitcoincash'
   if (needsProtection) {
     const oldWallet = ai.props.output.currency.wallets[walletId].api
-    if (!oldWallet) throw new Error('Missing Wallet')
+    if (oldWallet == null) throw new Error('Missing Wallet')
     await protectBchWallet(oldWallet)
   }
 
@@ -422,7 +420,7 @@ export async function splitWalletInfo(
   const existingWalletInfo = allWalletInfosFull.find(
     walletInfo => walletInfo.id === newWalletInfo.id
   )
-  if (existingWalletInfo) {
+  if (existingWalletInfo != null) {
     if (existingWalletInfo.archived || existingWalletInfo.deleted) {
       // Simply undelete the existing wallet:
       const walletInfos = {}
@@ -443,9 +441,9 @@ export async function splitWalletInfo(
   try {
     const wallet = await waitForCurrencyWallet(ai, newWalletInfo.id)
     const oldWallet = ai.props.output.currency.wallets[walletId].api
-    if (oldWallet) {
+    if (oldWallet != null) {
       if (oldWallet.name != null) await wallet.renameWallet(oldWallet.name)
-      if (oldWallet.fiatCurrencyCode) {
+      if (oldWallet.fiatCurrencyCode != null) {
         await wallet.setFiatCurrencyCode(oldWallet.fiatCurrencyCode)
       }
     }
@@ -467,7 +465,7 @@ export async function listSplittableWalletTypes(
   const walletInfo = allWalletInfosFull.find(
     walletInfo => walletInfo.id === walletId
   )
-  if (!walletInfo) throw new Error(`Invalid wallet id ${walletId}`)
+  if (walletInfo == null) throw new Error(`Invalid wallet id ${walletId}`)
 
   // Get the list of available types:
   const tools = await getCurrencyTools(ai, walletInfo.type)
@@ -482,7 +480,7 @@ export async function listSplittableWalletTypes(
     )
     // We can split the wallet if it doesn't exist, or is deleted:
     return (
-      !existingWalletInfo ||
+      existingWalletInfo == null ||
       existingWalletInfo.archived ||
       existingWalletInfo.deleted
     )

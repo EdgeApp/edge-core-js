@@ -157,10 +157,8 @@ export function makeChangePin2Kits(
     makeChangePin2Kit(ai, loginTree, username, pin, enableLogin)
   ]
 
-  if (loginTree.children) {
-    for (const child of loginTree.children) {
-      out.push(...makeChangePin2Kits(ai, child, username, pin, enableLogin))
-    }
+  for (const child of loginTree.children) {
+    out.push(...makeChangePin2Kits(ai, child, username, pin, enableLogin))
   }
 
   return out
@@ -232,10 +230,8 @@ export function makeChangePin2Kit(
 export function makeDeletePin2Kits(loginTree: LoginTree): LoginKit[] {
   const out: LoginKit[] = [makeDeletePin2Kit(loginTree)]
 
-  if (loginTree.children) {
-    for (const child of loginTree.children) {
-      out.push(...makeDeletePin2Kits(child))
-    }
+  for (const child of loginTree.children) {
+    out.push(...makeDeletePin2Kits(child))
   }
 
   return out
