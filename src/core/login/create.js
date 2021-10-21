@@ -55,7 +55,7 @@ export function usernameAvailable(
  */
 export function makeCreateKit(
   ai: ApiInput,
-  parentLogin?: LoginTree,
+  parentLogin: LoginTree | void,
   appId: string,
   username: string,
   opts: LoginCreateOpts

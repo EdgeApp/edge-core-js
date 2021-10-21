@@ -4,7 +4,10 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 import { base64 } from 'rfc4648'
 
-import { getInternalStuff } from '../../../src/core/context/internal-api.js'
+import {
+  type EdgeInternalStuff,
+  getInternalStuff
+} from '../../../src/core/context/internal-api.js'
 import { makeRepoPaths } from '../../../src/core/storage/repo.js'
 import { makeFakeEdgeWorld, makeFakeIo } from '../../../src/index.js'
 import { fakeUser } from '../../fake/fake-user.js'
@@ -71,7 +74,7 @@ describe('repo', function () {
       files.map(async file => disklet1.setText(file, `${file} content`))
     )
 
-    async function fullSync(internal) {
+    async function fullSync(internal: EdgeInternalStuff): Promise<void> {
       let i: number = 0
       while (true) {
         const response = await internal.syncRepo(syncKey)

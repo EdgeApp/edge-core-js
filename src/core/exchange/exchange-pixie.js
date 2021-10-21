@@ -9,7 +9,7 @@ import { type ExchangePair } from './exchange-reducer.js'
 
 const savedRateHints: EdgeRateHint[] = []
 
-export function addHint(fromCurrency: string, toCurrency: string) {
+export function addHint(fromCurrency: string, toCurrency: string): void {
   if (isNewPair(fromCurrency, toCurrency, savedRateHints))
     savedRateHints.push({ fromCurrency, toCurrency })
 }
@@ -177,7 +177,7 @@ function fetchPluginRates(
 function isNewPair(
   fromCurrency: string,
   toCurrency: string,
-  pairs: Object[]
+  pairs: Array<{ fromCurrency: string, toCurrency: string }>
 ): boolean {
   for (const pair of pairs) {
     if (pair.fromCurrency === fromCurrency && pair.toCurrency === toCurrency)

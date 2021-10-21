@@ -43,7 +43,7 @@ export function filterLogs(
   backend: LogBackend,
   getSettings: () => EdgeLogSettings
 ): LogBackend {
-  function onLog(event: EdgeLogEvent) {
+  function onLog(event: EdgeLogEvent): void {
     const { sources, defaultLogLevel } = getSettings()
 
     const logLevel =
