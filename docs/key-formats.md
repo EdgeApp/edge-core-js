@@ -50,7 +50,7 @@ The private key format is as follows:
 ```typescript
 interface PrivateBitcoinKey extends PrivateStorageKey {
   bitcoinKey: string, // Other names are possible
-  format?: 'bip32' | 'bip44' | 'bip49' | 'bip84',
+  format?: 'bip32' | 'bip44' | 'bip49',
   coinType?: number
 }
 ```
@@ -70,13 +70,14 @@ The `bitcoinKey` should be decoded using either BIP 39 or base64 to yield the wa
   - Change branch: m/44'/coinType'/0'/1/n
   - Script: p2pkh
 - bip49
-  - Receiving branch: m/49'/coinType'/0'/0/n
-  - Change branch: m/49'/coinType'/0'/1/n
-  - Script: segwit p2wpkh embedded in p2sh
-- bip84
-  - Receiving branch: m/84'/coinType'/0'/0/n
-  - Change branch: m/84'/coinType'/0'/1/n
-  - Script: segwit p2wpkh
+  - Compatibility branch:
+    - Receiving branch: m/49'/coinType'/0'/0/n
+    - Change branch: m/49'/coinType'/0'/1/n
+    - Script: segwit p2wpkh embedded in p2sh
+  - Native segwit branch:
+    - Receiving branch: m/84'/coinType'/0'/0/n
+    - Change branch: m/84'/coinType'/0'/1/n
+    - Script: segwit p2wpkh
 
 If `format` is missing, the wallet uses a default of bip32.
 
@@ -118,20 +119,48 @@ This currently happens in the core, but should move to the Bitcoin plugin.
 
 ### Public keys
 
+The public key format includes one or more extended public keys, as defined by the BIP32 specification:
+
 ```typescript
 interface PublicBitcoinKey {
-  bitcoinXpub: string,
-  format?: 'bip32' | 'bip44' | 'bip49' | 'bip84',
-  coinType?: number
+  publicKeys: {
+    bip32?: string
+    bip44?: string
+    bip49?: string
+    bip84?: string
+  }
 }
 ```
 
-The derivation path for `bitcoinXpub` depends on the format:
+Each of these public keys are optional, and wallets should search for funds on whichever keys are present (in any combination). Keys are serialized using the base58 "xpub" format defined in the BIP32 specification. This format includes additional metadata (version bytes, depth, fingerprint, and child number), which wallets should ignore when reading these keys. Only the checksum, chain code, and public key are relevant for wallets reading these keys. Nevertheless, wallets writing these keys should try to include the proper metadata where possible.
 
-- bip32: m/0
-- bip44: m/44'/coinType'/0'
-- bip49: m/49'/coinType'/0'
-- bip84: m/84'/coinType'/0'
+To search for funds, wallets should use the following derivation paths and script formats:
+
+- bip32
+  - Receiving & change branch: publicKey/0/n
+  - Script: p2pkh
+- bip44
+  - Receiving branch: publicKey/0/n
+  - Change branch: publicKey/1/n
+  - Script: p2pkh
+- bip49
+  - Receiving branch: publicKey/0/n
+  - Change branch: publicKey/1/n
+  - Script: segwit p2wpkh embedded in p2sh
+- bip84:
+  - Receiving branch: publicKey/0/n
+  - Change branch: publicKey/1/n
+  - Script: segwit p2wpkh
+
+To convert a private key into a public key, wallets should use the following derivation paths:
+
+- format === 'bip32':
+  - emit a 'bip32' entry derived as m/0
+- format === 'bip44'
+  - emit a 'bip44' entry derived as m/44'/coinType'/0'
+- format === 'bip49'
+  - emit a 'bip49' entry derived as m/49'/coinType'/0'
+  - emit a 'bip84' entry derived as m/84'/coinType'/0'
 
 ### Wrong wallet types
 
