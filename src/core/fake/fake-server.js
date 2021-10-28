@@ -216,6 +216,7 @@ function createLogin(
   login?: DbLogin
 ): Promise<HttpResponse> {
   const { db, json } = request
+  const date = new Date()
 
   const body = asMaybe(asLoginRequestBody)(json)
   if (body == null) return statusResponse(statusCodes.invalidRequest)
@@ -242,6 +243,7 @@ function createLogin(
     // Required fields:
     ...clean,
     ...secret,
+    created: date,
     keyBoxes: keys.keyBoxes,
 
     // Optional fields:

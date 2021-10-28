@@ -249,7 +249,7 @@ export const asLobbyPayload: Cleaner<LobbyPayload> = asObject({
 export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   // Identity:
   appId: asString,
-  created: asOptional(asDate),
+  created: asDate,
   loginId: asBase64,
   userId: asOptional(asBase64),
 

@@ -1,31 +1,12 @@
 // @flow
 
-import {
-  type Cleaner,
-  asArray,
-  asDate,
-  asNumber,
-  asObject,
-  asOptional,
-  asString,
-  uncleaner
-} from 'cleaners'
-
-import {
-  asBase32,
-  asBase64,
-  asEdgeBox,
-  asEdgeSnrp,
-  asRecovery2Auth
-} from '../../types/server-cleaners.js'
+import { type FakeUser, type LoginDump } from '../../types/fake-types.js'
 import {
   type EdgeBox,
   type EdgeLobbyReply,
   type EdgeLobbyRequest,
-  type EdgeSnrp,
   type LoginPayload
 } from '../../types/server-types.js'
-import { type EdgeFakeUser } from '../../types/types.js'
 import { verifyData } from '../../util/crypto/verify.js'
 
 /**
@@ -40,117 +21,12 @@ export type DbLobby = {
 /**
  * A login object stored in the fake database.
  */
-export type DbLogin = {
-  // Identity:
-  appId: string,
-  // created?: Date,
-  loginId: Uint8Array,
-
-  // Nested logins:
-  parentBox?: EdgeBox,
-  parentId?: Uint8Array, // loginId
-
-  // 2-factor login:
-  otpKey?: Uint8Array,
-  otpResetDate?: Date,
-  otpTimeout?: number,
-
-  // Password login:
-  passwordAuth?: Uint8Array,
-  passwordAuthBox?: EdgeBox,
-  passwordAuthSnrp?: EdgeSnrp,
-  passwordBox?: EdgeBox,
-  passwordKeySnrp?: EdgeSnrp,
-
-  // PIN v2 login:
-  pin2Id?: Uint8Array, // base64
-  pin2Auth?: Uint8Array,
-  pin2Box?: EdgeBox,
-  pin2KeyBox?: EdgeBox,
-  pin2TextBox?: EdgeBox,
-
-  // Recovery v2 login:
-  recovery2Id?: Uint8Array, // base64
-  recovery2Auth?: Uint8Array[],
-  recovery2Box?: EdgeBox,
-  recovery2KeyBox?: EdgeBox,
-  question2Box?: EdgeBox,
-
-  // Secret-key login:
-  loginAuth?: Uint8Array,
-  loginAuthBox?: EdgeBox,
-
-  // Resources:
-  keyBoxes: EdgeBox[],
-  mnemonicBox?: EdgeBox,
-  rootKeyBox?: EdgeBox,
-  syncKeyBox?: EdgeBox
-}
+export type DbLogin = $Diff<LoginDump, { children: mixed }>
 
 /**
  * A sync repo stored in the fake database.
  */
 export type DbRepo = { [path: string]: EdgeBox }
-
-type DbLoginDump = DbLogin & { children: DbLoginDump[] }
-
-const asDbLoginDump: Cleaner<DbLoginDump> = asObject({
-  // Identity:
-  appId: asString,
-  // created: asOptional(asDate),
-  loginId: asBase64,
-
-  // Nested logins:
-  children: asOptional(
-    asArray(raw => asDbLoginDump(raw)),
-    []
-  ),
-  parentBox: asOptional(asEdgeBox),
-  parentId: (): Uint8Array | void => undefined,
-
-  // 2-factor login:
-  otpKey: asOptional(asBase32),
-  otpResetDate: asOptional(asDate),
-  otpTimeout: asOptional(asNumber),
-  // pendingVouchers: asOptional(asArray(asPendingVoucher), []),
-
-  // Password login:
-  passwordAuth: asOptional(asBase64),
-  passwordAuthBox: asOptional(asEdgeBox),
-  passwordAuthSnrp: asOptional(asEdgeSnrp),
-  passwordBox: asOptional(asEdgeBox),
-  passwordKeySnrp: asOptional(asEdgeSnrp),
-
-  // PIN v2 login:
-  pin2Id: asOptional(asBase64),
-  pin2Auth: asOptional(asBase64),
-  pin2Box: asOptional(asEdgeBox),
-  pin2KeyBox: asOptional(asEdgeBox),
-  pin2TextBox: asOptional(asEdgeBox),
-
-  // Recovery v2 login:
-  recovery2Id: asOptional(asBase64),
-  recovery2Auth: asOptional(asRecovery2Auth),
-  question2Box: asOptional(asEdgeBox),
-  recovery2Box: asOptional(asEdgeBox),
-  recovery2KeyBox: asOptional(asEdgeBox),
-
-  // Secret-key login:
-  loginAuth: asOptional(asBase64),
-  loginAuthBox: asOptional(asEdgeBox),
-
-  // Keys and assorted goodies:
-  keyBoxes: asOptional(asArray(asEdgeBox), []),
-  mnemonicBox: asOptional(asEdgeBox),
-  rootKeyBox: asOptional(asEdgeBox),
-  syncKeyBox: asOptional(asEdgeBox),
-
-  // Obsolete:
-  pinBox: asOptional(asEdgeBox),
-  pinId: asOptional(asString),
-  pinKeyBox: asOptional(asEdgeBox)
-})
-const wasDbLoginDump = uncleaner(asDbLoginDump)
 
 /**
  * Emulates the Airbitz login server database.
@@ -193,16 +69,16 @@ export class FakeDb {
 
   // Dumping & restoration --------------------------------------------
 
-  setupFakeUser(user: EdgeFakeUser): void {
-    const setupLogin = (clean: DbLoginDump): void => {
-      const { children, ...rest } = clean
+  setupFakeUser(user: FakeUser): void {
+    const setupLogin = (dump: LoginDump): void => {
+      const { children, ...rest } = dump
       this.insertLogin(rest)
       for (const child of children) {
-        child.parentId = clean.loginId
+        child.parentId = dump.loginId
         setupLogin(child)
       }
     }
-    setupLogin(asDbLoginDump(user.server))
+    setupLogin(user.server)
 
     // Create fake repos:
     for (const syncKey of Object.keys(user.repos)) {
@@ -210,12 +86,12 @@ export class FakeDb {
     }
   }
 
-  dumpLogin(login: DbLogin): mixed {
-    const makeTree = (login: DbLogin): DbLoginDump => ({
+  dumpLogin(login: DbLogin): LoginDump {
+    const makeTree = (login: DbLogin): LoginDump => ({
       ...login,
       children: this.getLoginsByParent(login).map(login => makeTree(login))
     })
-    return wasDbLoginDump(makeTree(login))
+    return makeTree(login)
   }
 }
 
@@ -231,7 +107,7 @@ export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
   return {
     // Identity:
     appId: login.appId,
-    // created: new Date(),
+    created: login.created,
     loginId: login.loginId,
 
     // Nested logins:
@@ -250,8 +126,7 @@ export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
     recovery2Box: login.recovery2Box,
     recovery2KeyBox: login.recovery2KeyBox,
     otpKey: login.otpKey,
-    otpResetDate:
-      login.otpResetDate != null ? new Date(login.otpResetDate) : undefined,
+    otpResetDate: login.otpResetDate,
     otpTimeout: login.otpTimeout,
     pendingVouchers: [],
     loginAuthBox: login.loginAuthBox,

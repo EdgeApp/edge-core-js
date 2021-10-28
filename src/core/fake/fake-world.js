@@ -7,6 +7,12 @@ import { makeFetchFunction } from 'serverlet'
 import { bridgifyObject, close } from 'yaob'
 
 import { fixUsername } from '../../client-side.js'
+import {
+  type FakeUser,
+  asFakeUser,
+  asFakeUsers,
+  asLoginDump
+} from '../../types/fake-types.js'
 import { asLoginPayload } from '../../types/server-cleaners.js'
 import {
   type EdgeAccount,
@@ -27,11 +33,11 @@ import { FakeDb } from './fake-db.js'
 import { makeFakeServer } from './fake-server.js'
 
 const wasLoginStash = uncleaner(asLoginStash)
+const wasLoginDump = uncleaner(asLoginDump)
+const wasFakeUser = uncleaner(asFakeUser)
 
-async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
-  const { lastLogin, repos, server } = user
-  const loginId = base64.parse(user.loginId)
-  const loginKey = base64.parse(user.loginKey)
+async function saveUser(io: EdgeIo, user: FakeUser): Promise<void> {
+  const { lastLogin, loginId, loginKey, repos, server } = user
   const username = fixUsername(user.username)
 
   // Save the stash:
@@ -44,7 +50,7 @@ async function saveUser(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
       username
     },
     loginKey,
-    asLoginPayload(server)
+    asLoginPayload(wasLoginDump(server))
   )
   const path = `logins/${base58.stringify(loginId)}.json`
   await io.disklet.setText(path, JSON.stringify(wasLoginStash(stash)))
@@ -73,7 +79,10 @@ export function makeFakeWorld(
   const { io, nativeIo } = ios
   const fakeDb = new FakeDb()
   const fakeServer = makeFakeServer(fakeDb)
-  for (const user of users) fakeDb.setupFakeUser(user)
+
+  // Populate the fake database:
+  const cleanUsers = asFakeUsers(users)
+  for (const user of cleanUsers) fakeDb.setupFakeUser(user)
 
   const contexts: EdgeContext[] = []
 
@@ -91,9 +100,9 @@ export function makeFakeWorld(
         fetch: makeFetchFunction(fakeServer)
       }
 
-      // Populate the stashes:
+      // Populate the fake disk:
       if (!cleanDevice) {
-        await Promise.all(users.map(async user => saveUser(fakeIo, user)))
+        await Promise.all(cleanUsers.map(async user => saveUser(fakeIo, user)))
       }
 
       fakeIo.disklet.setText(
@@ -131,14 +140,14 @@ export function makeFakeWorld(
       const repos = {}
       for (const syncKey of syncKeys) repos[syncKey] = fakeDb.repos[syncKey]
 
-      return {
+      return wasFakeUser({
         lastLogin: account.lastLogin,
-        loginId: base64.stringify(loginId),
-        loginKey: base64.stringify(base58.parse(account.loginKey)),
+        loginId,
+        loginKey: base58.parse(account.loginKey),
         repos,
         server: fakeDb.dumpLogin(login),
         username: account.username
-      }
+      })
     }
   }
   bridgifyObject(out)

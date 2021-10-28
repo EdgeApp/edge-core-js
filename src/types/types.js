@@ -1215,13 +1215,17 @@ export type EdgeFakeContextOptions = {
   cleanDevice?: boolean
 }
 
+/**
+ * A block of JSON data that can be used to save & restore a user
+ * on the fake unit-testing server.
+ */
 export type EdgeFakeUser = {
   username: string,
   lastLogin?: Date,
   loginId: string, // base64
   loginKey: string, // base64
-  repos: { [repo: string]: { [path: string]: any /* EdgeBox */ } },
-  server: any /* DbLogin & { children?: DbLogin[] } */
+  repos: { [repo: string]: { [path: string]: any /* asEdgeBox */ } },
+  server: any // asLoginDump
 }
 
 export type EdgeFakeWorld = {
