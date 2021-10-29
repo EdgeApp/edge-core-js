@@ -404,6 +404,13 @@ export type EdgeTokenInfo = {
 export type EdgeTxidMap = { [txid: string]: number }
 
 // URI -----------------------------------------------------------------
+export type WalletConnect = {
+  uri: string,
+  topic: string,
+  version?: string,
+  bridge?: string,
+  key?: string
+}
 
 export type EdgeParsedUri = {
   token?: EdgeMetaToken,
@@ -422,7 +429,8 @@ export type EdgeParsedUri = {
   uniqueIdentifier?: string, // Ripple payment id
   bitidPaymentAddress?: string, // Experimental
   bitidKycProvider?: string, // Experimental
-  bitidKycRequest?: string // Experimental
+  bitidKycRequest?: string, // Experimental
+  walletConnect?: WalletConnect
 }
 
 export type EdgeEncodeUri = {
@@ -459,7 +467,8 @@ export type EdgeCurrencyEngineCallbacks = {
   +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
   +onAddressesChecked: (progressRatio: number) => void,
   +onAddressChanged: () => void,
-  +onTxidsChanged: (txids: EdgeTxidMap) => void
+  +onTxidsChanged: (txids: EdgeTxidMap) => void,
+  +onWcNewContractCall: (payload: Object) => void
 }
 
 export type EdgeCurrencyEngineOptions = {
@@ -470,6 +479,7 @@ export type EdgeCurrencyEngineOptions = {
   userSettings: JsonObject | void
 }
 
+// NOTE: This is an "instance". Call makeEngine, get this thing below. Core wraps ECE with an EdgeCurWallet
 export type EdgeCurrencyEngine = {
   changeUserSettings(settings: JsonObject): Promise<void>,
 
@@ -520,6 +530,8 @@ export type EdgeCurrencyEngine = {
 
 // currency plugin -----------------------------------------------------
 
+// NOTE: There are actual files with EdgeCurrencyEngine/Plugin/Tools, containing the actual implementation of those things.
+// Wallet is just a wrapper that the core handles. Code is only added for things where account is a context
 export type EdgeCurrencyTools = {
   // Keys:
   +importPrivateKey?: (key: string, opts?: JsonObject) => Promise<JsonObject>,
@@ -529,7 +541,8 @@ export type EdgeCurrencyTools = {
 
   // URIs:
   parseUri(
-    uri: string,
+    // NOTE: extend this. All this is existing functionality to serve to us here from gui
+    uri: string, // wc:,,...
     currencyCode?: string,
     customTokens?: EdgeMetaToken[]
   ): Promise<EdgeParsedUri>,
@@ -566,7 +579,8 @@ export type EdgeCurrencyWalletEvents = {
 }
 
 export type EdgeCurrencyWallet = {
-  +on: Subscriber<EdgeCurrencyWalletEvents>,
+  // NOTE: "extends" an engine. Wraps everything into a CONTEXT
+  +on: Subscriber<EdgeCurrencyWalletEvents>, // NOTE: Subscribe to changes
   +watch: Subscriber<EdgeCurrencyWallet>,
 
   // Data store:
@@ -634,9 +648,10 @@ export type EdgeCurrencyWallet = {
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   signTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction>,
-  saveTx(tx: EdgeTransaction): Promise<void>,
+  saveTx(tx: EdgeTransaction): Promise<void>, // NOTE: Exists on the core and engine. From the outside, only see the wallet// NOTE: this is saved locally
   sweepPrivateKeys(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   saveTxMetadata(
+    // NOTE: Saved on server
     txid: string,
     currencyCode: string,
     metadata: EdgeMetadata
@@ -651,7 +666,7 @@ export type EdgeCurrencyWallet = {
   dumpData(): Promise<EdgeDataDump>,
 
   // URI handling:
-  parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri>,
+  parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri>, // NOTE: area of interest. Call this method on a wallet from react-gui
   encodeUri(obj: EdgeEncodeUri): Promise<string>,
 
   +otherMethods: EdgeOtherMethods
