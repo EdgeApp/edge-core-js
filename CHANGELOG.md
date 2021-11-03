@@ -1,5 +1,12 @@
 # edge-core-js
 
+## v0.18.10 (2021-11-02)
+
+- added: Implement TypeScript utilities in Flow
+- added: Wallet Connect types and onWcNewContractCall callback
+- updated: Ethereum, Bitcoin, and Bitcoin xpub documentation
+- fixed: Type-safety and null checks
+
 ## v0.18.9 (2021-09-21)
 
 - fixed: Allow `import 'edge-core-js/types'` to work in TypeScript.
