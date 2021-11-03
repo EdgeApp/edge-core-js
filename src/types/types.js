@@ -404,6 +404,13 @@ export type EdgeTokenInfo = {
 export type EdgeTxidMap = { [txid: string]: number }
 
 // URI -----------------------------------------------------------------
+export type WalletConnect = {
+  uri: string,
+  topic: string,
+  version?: string,
+  bridge?: string,
+  key?: string
+}
 
 export type EdgeParsedUri = {
   token?: EdgeMetaToken,
@@ -422,7 +429,8 @@ export type EdgeParsedUri = {
   uniqueIdentifier?: string, // Ripple payment id
   bitidPaymentAddress?: string, // Experimental
   bitidKycProvider?: string, // Experimental
-  bitidKycRequest?: string // Experimental
+  bitidKycRequest?: string, // Experimental
+  walletConnect?: WalletConnect
 }
 
 export type EdgeEncodeUri = {
@@ -459,7 +467,8 @@ export type EdgeCurrencyEngineCallbacks = {
   +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
   +onAddressesChecked: (progressRatio: number) => void,
   +onAddressChanged: () => void,
-  +onTxidsChanged: (txids: EdgeTxidMap) => void
+  +onTxidsChanged: (txids: EdgeTxidMap) => void,
+  +onWcNewContractCall: (payload: Object) => void
 }
 
 export type EdgeCurrencyEngineOptions = {
@@ -562,7 +571,8 @@ export type EdgeCurrencyWalletEvents = {
   close: void,
   newTransactions: EdgeTransaction[],
   addressChanged: void,
-  transactionsChanged: EdgeTransaction[]
+  transactionsChanged: EdgeTransaction[],
+  wcNewContractCall: Object
 }
 
 export type EdgeCurrencyWallet = {
