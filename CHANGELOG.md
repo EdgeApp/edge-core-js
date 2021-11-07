@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.18.11 (2021-11-07)
+
+- fixed: onWcNewContractCall callback type
+- fixed: Bitcoin and Bitcoin xpub documentation
+
 ## v0.18.10 (2021-11-02)
 
 - added: Implement TypeScript utilities in Flow
