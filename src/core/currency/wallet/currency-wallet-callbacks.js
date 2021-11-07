@@ -5,7 +5,8 @@ import { emit } from 'yaob'
 
 import {
   type EdgeCurrencyEngineCallbacks,
-  type EdgeTransaction
+  type EdgeTransaction,
+  type JsonObject
 } from '../../../types/types.js'
 import { compare } from '../../../util/compare.js'
 import { enableTestMode, pushUpdate } from '../../../util/updateQueue.js'
@@ -212,7 +213,7 @@ export function makeCurrencyWalletCallbacks(
     onAddressChanged() {
       emit(input.props.selfOutput.api, 'addressChanged')
     },
-    onWcNewContractCall(payload: Object) {
+    onWcNewContractCall(payload: JsonObject) {
       emit(input.props.selfOutput.api, 'wcNewContractCall', payload)
     },
     onTxidsChanged() {}
