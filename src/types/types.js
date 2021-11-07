@@ -468,7 +468,7 @@ export type EdgeCurrencyEngineCallbacks = {
   +onAddressesChecked: (progressRatio: number) => void,
   +onAddressChanged: () => void,
   +onTxidsChanged: (txids: EdgeTxidMap) => void,
-  +onWcNewContractCall: (payload: Object) => void
+  +onWcNewContractCall: (payload: JsonObject) => void
 }
 
 export type EdgeCurrencyEngineOptions = {
@@ -572,7 +572,7 @@ export type EdgeCurrencyWalletEvents = {
   newTransactions: EdgeTransaction[],
   addressChanged: void,
   transactionsChanged: EdgeTransaction[],
-  wcNewContractCall: Object
+  wcNewContractCall: JsonObject
 }
 
 export type EdgeCurrencyWallet = {
