@@ -85,6 +85,8 @@ function applyLoginPayloadInner(
   loginKey: Uint8Array,
   loginReply: LoginPayload
 ): LoginStash {
+  const { children: stashChildren = [] } = stash
+
   const {
     appId,
     created,
@@ -101,6 +103,8 @@ function applyLoginPayloadInner(
     passwordBox,
     passwordKeySnrp,
     pin2TextBox,
+    children = [],
+    keyBoxes = [],
     mnemonicBox,
     rootKeyBox,
     syncKeyBox
@@ -122,6 +126,7 @@ function applyLoginPayloadInner(
     passwordBox,
     passwordKeySnrp,
     pin2TextBox,
+    keyBoxes, // We should be more picky about these
     mnemonicBox,
     rootKeyBox,
     syncKeyBox
@@ -142,23 +147,41 @@ function applyLoginPayloadInner(
     out.recovery2Key = decrypt(loginReply.recovery2KeyBox, loginKey)
   }
 
-  // Keys (we could be more picky about this):
-  out.keyBoxes = loginReply.keyBoxes != null ? loginReply.keyBoxes : []
+  // Sort children oldest to newest:
+  children.sort((a, b) => a.created.valueOf() - b.created.valueOf())
 
   // Recurse into children:
-  const stashChildren = stash.children != null ? stash.children : []
-  const replyChildren = loginReply.children != null ? loginReply.children : []
-  if (stashChildren.length > replyChildren.length) {
-    throw new Error('The server has lost children!')
-  }
-  out.children = replyChildren.map((child, index) => {
-    if (!child.parentBox) {
+  out.children = children.map(child => {
+    const { appId, loginId, parentBox } = child
+
+    // Read the decryption key:
+    if (parentBox == null) {
       throw new Error('Key integrity violation: No parentBox on child login.')
     }
-    const childKey = decrypt(child.parentBox, loginKey)
-    const childStash = stashChildren[index] != null ? stashChildren[index] : {}
+    const childKey = decrypt(parentBox, loginKey)
+
+    // Find a stash to merge with:
+    const existingChild = stashChildren.find(child =>
+      verifyData(child.loginId, loginId)
+    )
+    const childStash = existingChild ?? {
+      appId,
+      loginId,
+      pendingVouchers: []
+    }
+
     return applyLoginPayloadInner(childStash, childKey, child)
   })
+
+  // Check for missing children:
+  for (const { loginId } of stashChildren) {
+    const replyChild = children.find(child =>
+      verifyData(child.loginId, loginId)
+    )
+    if (replyChild == null) {
+      throw new Error('The server has lost children!')
+    }
+  }
 
   return out
 }
