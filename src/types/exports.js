@@ -46,8 +46,23 @@ declare export function makeFakeEdgeWorld(
 // ---------------------------------------------------------------------
 
 interface CommonProps {
+  // Allows the Chrome debugger to attach to the Android WebView.
+  // This is mainly useful for debugging plugins,
+  // since the `debug` prop also activates Chrome debugging.
+  allowDebugging?: boolean;
+
+  // Enable core debugging.
+  // You must call `yarn start` in the edge-core-js project for this to work:
   debug?: boolean;
+
+  // React Native modules to pass over the bridge to the plugins:
   nativeIo?: EdgeNativeIo;
+
+  // Extra JavaScript files to load into the core as plugins.
+  // Relative URL's resolve to the app's default asset location:
+  pluginUris?: string[];
+
+  // Called if something goes wrong when starting the core:
   onError?: (e: any) => mixed;
 }
 

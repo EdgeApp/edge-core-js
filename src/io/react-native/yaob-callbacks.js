@@ -2,12 +2,17 @@
 
 import '../../client-side.js'
 
-import { type WebView, type WebViewMessageEvent } from 'react-native-webview'
+import { findNodeHandle, UIManager } from 'react-native'
 import { Bridge, onMethod } from 'yaob'
 
+import {
+  type EdgeCoreMessageEvent,
+  type EdgeCoreWebView
+} from './react-native-types.js'
+
 export type YaobCallbacks = {
-  handleMessage: (event: WebViewMessageEvent) => void,
-  setRef: (element: WebView | null) => void
+  handleMessage: (event: EdgeCoreMessageEvent) => void,
+  setRef: (element: EdgeCoreWebView | null) => void
 }
 
 /**
@@ -25,7 +30,7 @@ export function makeYaobCallbacks<Root>(
 ): YaobCallbacks {
   let bridge: Bridge | void
   let gatedRoot: Root | void
-  let webview: WebView | null = null
+  let webview: EdgeCoreWebView | null = null
 
   // Gate the root object on the WebView being ready:
   function tryReleasingRoot(): void {
@@ -36,8 +41,8 @@ export function makeYaobCallbacks<Root>(
   }
 
   // Feed incoming messages into the YAOB bridge (if any):
-  function handleMessage(event: WebViewMessageEvent): void {
-    const message = JSON.parse(event.nativeEvent.data)
+  function handleMessage(event: EdgeCoreMessageEvent): void {
+    const message = JSON.parse(event.nativeEvent.message)
     if (debug != null) console.info(`${debug} →`, message)
 
     // This is a terrible hack. We are using our inside knowledge
@@ -59,13 +64,23 @@ export function makeYaobCallbacks<Root>(
           if (debug != null) console.info(`${debug} ←`, message)
           if (webview == null) return
 
-          const js = `if (window.bridge != null) {${
+          const js = `if (window.reactBridge != null) {${
             firstMessage
-              ? 'window.gotFirstMessage = true;'
-              : 'window.gotFirstMessage && '
-          } window.bridge.handleMessage(${JSON.stringify(message)})}`
+              ? 'window.reactBridge.inSync = true;'
+              : 'window.reactBridge.inSync && '
+          } window.reactBridge.handleMessage(${JSON.stringify(message)})}`
           firstMessage = false
-          webview.injectJavaScript(js)
+
+          if (webview.runJs == null) {
+            // Android version:
+            UIManager.dispatchViewManagerCommand(
+              findNodeHandle(webview),
+              'runJs',
+              [js]
+            )
+          } else {
+            webview.runJs(js)
+          }
         }
       })
 
@@ -82,7 +97,7 @@ export function makeYaobCallbacks<Root>(
   }
 
   // Listen for the WebView component to mount:
-  function setRef(element: WebView | null): void {
+  function setRef(element: EdgeCoreWebView | null): void {
     webview = element
     tryReleasingRoot()
   }

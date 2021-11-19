@@ -4,18 +4,21 @@ import '../../client-side.js'
 
 import { makeReactNativeDisklet } from 'disklet'
 import * as React from 'react'
-import { NativeModules, Platform, StyleSheet, View } from 'react-native'
+import { NativeModules, requireNativeComponent } from 'react-native'
 import { scrypt } from 'react-native-fast-crypto'
-import RNFS from 'react-native-fs'
-import { WebView } from 'react-native-webview'
 import { type HttpHeaders, type HttpResponse } from 'serverlet'
 import { bridgifyObject } from 'yaob'
 
 import { type EdgeFetchOptions, NetworkError } from '../../types/types.js'
-import { type ClientIo, type WorkerApi } from './react-native-types.js'
+import {
+  type ClientIo,
+  type EdgeCoreWebView,
+  type WorkerApi
+} from './react-native-types.js'
 import { type YaobCallbacks, makeYaobCallbacks } from './yaob-callbacks.js'
 
 type Props = {
+  allowDebugging?: boolean,
   debug?: boolean,
   onError(e: any): mixed,
   onLoad(clientIo: ClientIo, root: WorkerApi): Promise<mixed>
@@ -29,7 +32,7 @@ export class EdgeCoreBridge extends React.Component<Props> {
 
   constructor(props: Props) {
     super(props)
-    const { debug = false, onError, onLoad } = props
+    const { onError, onLoad } = props
 
     // Set up the native IO objects:
     const clientIoPromise = new Promise((resolve, reject) => {
@@ -52,41 +55,36 @@ export class EdgeCoreBridge extends React.Component<Props> {
     })
 
     // Set up the YAOB bridge:
-    this.callbacks = makeYaobCallbacks(
-      (root: WorkerApi) => {
-        clientIoPromise
-          .then(nativeIo => onLoad(nativeIo, root))
-          .catch(error => onError(error))
-      },
-      debug ? 'edge-core' : undefined
-    )
+    this.callbacks = makeYaobCallbacks((root: WorkerApi) => {
+      clientIoPromise
+        .then(nativeIo => onLoad(nativeIo, root))
+        .catch(error => onError(error))
+    })
   }
 
   render(): React.Node {
-    const { debug = false } = this.props
-    let uri =
-      Platform.OS === 'android'
-        ? 'file:///android_asset/edge-core/index.html'
-        : `file://${RNFS.MainBundlePath}/edge-core/index.html`
-    if (debug) {
-      uri += '?debug=true'
-      console.log(`edge core at ${uri}`)
-    }
+    const { allowDebugging = false, debug = false, onError } = this.props
 
     return (
-      <View style={debug ? styles.debug : styles.hidden}>
-        <WebView
-          allowFileAccess
-          onMessage={this.callbacks.handleMessage}
-          originWhitelist={['file://*']}
-          ref={this.callbacks.setRef}
-          source={{ uri }}
-        />
-      </View>
+      <NativeWebView
+        ref={this.callbacks.setRef}
+        allowDebugging={debug || allowDebugging}
+        source={debug ? 'http://localhost:8080/edge-core.js' : null}
+        style={{ opacity: 0, position: 'absolute', height: 1, width: 1 }}
+        onMessage={this.callbacks.handleMessage}
+        onScriptError={event => {
+          if (onError != null) {
+            onError(new Error(`Cannot load "${event.nativeEvent.source}"`))
+          }
+        }}
+      />
     )
   }
 }
 
+const NativeWebView: Class<EdgeCoreWebView> = requireNativeComponent(
+  'EdgeCoreWebView'
+)
 const { randomBytes } = NativeModules.RNRandomBytes
 
 /**
@@ -142,14 +140,3 @@ function fetchCors(
     xhr.send(body)
   })
 }
-
-const styles = StyleSheet.create({
-  debug: {
-    alignSelf: 'center',
-    position: 'absolute',
-    height: 10,
-    width: 10,
-    top: 50
-  },
-  hidden: { position: 'absolute', height: 0, width: 0 }
-})

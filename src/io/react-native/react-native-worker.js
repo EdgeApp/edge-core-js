@@ -21,25 +21,49 @@ import {
 } from '../../types/types.js'
 import { type ClientIo, type WorkerApi } from './react-native-types.js'
 
-const body = document.body
+// Set up the bridge:
+const reactBridge =
+  window.edgeCore != null
+    ? new Bridge({
+        sendMessage(message) {
+          window.edgeCore.postMessage(JSON.stringify(message))
+        }
+      })
+    : new Bridge({
+        sendMessage(message) {
+          window.webkit.messageHandlers.edgeCore.postMessage([
+            'postMessage',
+            [JSON.stringify(message)]
+          ])
+        }
+      })
 
-/**
- * Gently pulse the background color in debug mode,
- * to show that code is loaded & running.
- */
-if (body != null && /debug=true/.test(window.location.search)) {
-  const update = (): void => {
-    const wave = Math.abs(((Date.now() / 2000) % 2) - 1)
-    const color = 0x40 + 0x80 * wave
-    body.style.backgroundColor = `rgb(${color}, ${color}, ${color})`
-
-    setTimeout(update, 100)
-  }
-  update()
-}
-
+// Set up global objects:
 window.addEdgeCorePlugins = addEdgeCorePlugins
-window.lockEdgeCorePlugins = lockEdgeCorePlugins
+window.reactBridge = reactBridge
+
+function loadPlugins(pluginUris: string[]): void {
+  const { head } = window.document
+  if (head == null || pluginUris.length === 0) {
+    lockEdgeCorePlugins()
+    return
+  }
+
+  let loaded: number = 0
+  const handleLoad = () => {
+    if (++loaded >= pluginUris.length) lockEdgeCorePlugins()
+  }
+
+  for (const uri of pluginUris) {
+    const script = document.createElement('script')
+    script.addEventListener('error', handleLoad)
+    script.addEventListener('load', handleLoad)
+    script.charset = 'utf-8'
+    script.defer = true
+    script.src = uri
+    head.appendChild(script)
+  }
+}
 
 function makeIo(clientIo: ClientIo): EdgeIo {
   const { disklet, entropy, scrypt } = clientIo
@@ -69,42 +93,18 @@ function makeIo(clientIo: ClientIo): EdgeIo {
   }
 }
 
+// Send the root object:
 const workerApi: WorkerApi = bridgifyObject({
-  makeEdgeContext(clientIo, nativeIo, logBackend, opts) {
+  makeEdgeContext(clientIo, nativeIo, logBackend, pluginUris, opts) {
+    loadPlugins(pluginUris)
     return makeContext({ io: makeIo(clientIo), nativeIo }, logBackend, opts)
   },
 
-  makeFakeEdgeWorld(clientIo, nativeIo, logBackend, users = []) {
+  makeFakeEdgeWorld(clientIo, nativeIo, logBackend, pluginUris, users = []) {
+    loadPlugins(pluginUris)
     return Promise.resolve(
       makeFakeWorld({ io: makeIo(clientIo), nativeIo }, logBackend, users)
     )
   }
 })
-
-/**
- * Legacy WebView support.
- */
-function oldSendRoot(): void {
-  if (window.originalPostMessage != null) {
-    const reactPostMessage = window.postMessage
-    window.postMessage = window.originalPostMessage
-    window.bridge = new Bridge({
-      sendMessage: message => reactPostMessage(JSON.stringify(message))
-    })
-    window.bridge.sendRoot(workerApi)
-  } else {
-    setTimeout(oldSendRoot, 100)
-  }
-}
-
-// Start the object bridge:
-if (window.ReactNativeWebView != null) {
-  window.bridge = new Bridge({
-    sendMessage(message) {
-      window.ReactNativeWebView.postMessage(JSON.stringify(message))
-    }
-  })
-  window.bridge.sendRoot(workerApi)
-} else {
-  oldSendRoot()
-}
+reactBridge.sendRoot(workerApi)

@@ -16,7 +16,6 @@ import {
 
 export type ClientIo = {
   +disklet: Disklet,
-
   +entropy: string, // base64
   +scrypt: EdgeScryptFunction,
 
@@ -29,6 +28,7 @@ export type WorkerApi = {
     clientIo: ClientIo,
     nativeIo: EdgeNativeIo,
     logBackend: LogBackend,
+    pluginUris: string[],
     opts: EdgeContextOptions
   ): Promise<EdgeContext>,
 
@@ -36,6 +36,28 @@ export type WorkerApi = {
     clientIo: ClientIo,
     nativeIo: EdgeNativeIo,
     logBackend: LogBackend,
+    pluginUris: string[],
     users?: EdgeFakeUser[]
   ): Promise<EdgeFakeWorld>
+}
+
+export type EdgeCoreMessageEvent = {
+  nativeEvent: { message: string }
+}
+
+export type EdgeCoreScriptError = {
+  nativeEvent: { source: string }
+}
+
+declare export class EdgeCoreWebView
+  extends
+    React$Component<{|
+      allowDebugging?: boolean,
+      source: string | null,
+      style?: any,
+      onMessage?: (event: EdgeCoreMessageEvent) => void,
+      onScriptError?: (event: EdgeCoreScriptError) => void
+    |}> {
+  // This does not exist on Android, which uses a different mechanism:
+  runJs?: (js: string) => void;
 }
