@@ -348,7 +348,7 @@ describe('currency wallets', function () {
 
   it('can be paused and un-paused', async function () {
     const { wallet, context } = await makeFakeCurrencyWallet(true)
-    const isEngineRunning = async () => {
+    const isEngineRunning = async (): Promise<boolean> => {
       const dump = await wallet.dumpData()
       return dump.data.fakeEngine.running
     }

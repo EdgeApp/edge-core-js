@@ -149,18 +149,17 @@ async function deepListWithLimit(
   path: string = '',
   limit: number = CHANGESET_MAX_ENTRIES
 ): Promise<string[]> {
-  return await disklet.list(path).then(async list => {
-    const paths = Object.keys(list).filter(path => list[path] === 'file')
-    const folders = Object.keys(list).filter(path => list[path] === 'folder')
+  const list = await disklet.list(path)
+  const paths = Object.keys(list).filter(path => list[path] === 'file')
+  const folders = Object.keys(list).filter(path => list[path] === 'folder')
 
-    // Loop over folders to get subpaths
-    for (const folder of folders) {
-      if (paths.length >= limit) break
-      const remaining = limit - paths.length
-      const subpaths = await deepListWithLimit(disklet, folder, remaining)
-      paths.push(...subpaths.slice(0, remaining))
-    }
+  // Loop over folders to get subpaths
+  for (const folder of folders) {
+    if (paths.length >= limit) break
+    const remaining = limit - paths.length
+    const subpaths = await deepListWithLimit(disklet, folder, remaining)
+    paths.push(...subpaths.slice(0, remaining))
+  }
 
-    return paths
-  })
+  return paths
 }

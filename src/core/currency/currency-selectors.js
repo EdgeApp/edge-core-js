@@ -53,9 +53,8 @@ export function waitForCurrencyWallet(
       }
 
       // Return the error if one exists:
-      if (props.state.currency.wallets[walletId].engineFailure) {
-        throw props.state.currency.wallets[walletId].engineFailure
-      }
+      const { engineFailure } = props.state.currency.wallets[walletId]
+      if (engineFailure != null) throw engineFailure
 
       // Return the API if that exists:
       if (props.output.currency.wallets[walletId]) {

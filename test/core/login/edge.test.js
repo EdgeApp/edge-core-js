@@ -4,6 +4,7 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
+  type EdgeAccount,
   type EdgeFakeWorld,
   type EdgeLobby,
   type EdgePendingEdgeLogin,
@@ -41,7 +42,7 @@ describe('edge login', function () {
     const pending: EdgePendingEdgeLogin = await context.requestEdgeLogin({
       displayName: 'test suite'
     })
-    const out = new Promise((resolve, reject) => {
+    const out: Promise<EdgeAccount> = new Promise((resolve, reject) => {
       pending.watch('state', state => {
         if (state === 'done' && pending.account != null) {
           resolve(pending.account)
@@ -65,6 +66,6 @@ describe('edge login', function () {
     const pendingLogin = await context.requestEdgeLogin(opts)
 
     // All we can verify here is that cancel is a callable method:
-    pendingLogin.cancelRequest()
+    pendingLogin.cancelRequest().catch(() => {})
   })
 })

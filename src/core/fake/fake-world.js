@@ -53,7 +53,9 @@ async function saveUser(io: EdgeIo, user: FakeUser): Promise<void> {
     asLoginPayload(wasLoginDump(server))
   )
   const path = `logins/${base58.stringify(loginId)}.json`
-  await io.disklet.setText(path, JSON.stringify(wasLoginStash(stash)))
+  await io.disklet
+    .setText(path, JSON.stringify(wasLoginStash(stash)))
+    .catch(() => {})
 
   // Save the repos:
   await Promise.all(
@@ -104,11 +106,6 @@ export function makeFakeWorld(
       if (!cleanDevice) {
         await Promise.all(cleanUsers.map(async user => saveUser(fakeIo, user)))
       }
-
-      fakeIo.disklet.setText(
-        'rateHintCache.json',
-        JSON.stringify([{ fromCurrency: 'FAKE', toCurrency: 'TOKEN' }])
-      )
 
       const out = await makeContext({ io: fakeIo, nativeIo }, logBackend, {
         ...opts

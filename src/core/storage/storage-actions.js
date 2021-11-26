@@ -42,7 +42,7 @@ export async function addStorageWallet(
 
   // If we have already done a sync, let this one run in the background:
   const syncPromise = syncStorageWallet(ai, walletInfo.id)
-  if (status.lastSync) {
+  if (status.lastSync > 0) {
     syncPromise.catch(error => {
       const { syncKey } = walletInfo.keys
       const { lastHash } = status

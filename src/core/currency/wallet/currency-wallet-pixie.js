@@ -232,6 +232,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
                   payload: { walletId: id }
                 })
               )
+              .catch(() => {})
           }
         }
       }

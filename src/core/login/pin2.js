@@ -157,10 +157,8 @@ export function makeChangePin2Kits(
     makeChangePin2Kit(ai, loginTree, username, pin, enableLogin)
   ]
 
-  if (loginTree.children) {
-    for (const child of loginTree.children) {
-      out.push(...makeChangePin2Kits(ai, child, username, pin, enableLogin))
-    }
+  for (const child of loginTree.children) {
+    out.push(...makeChangePin2Kits(ai, child, username, pin, enableLogin))
   }
 
   return out
@@ -180,9 +178,9 @@ export function makeChangePin2Kit(
   const pin2TextBox = encrypt(io, utf8.parse(pin), login.loginKey)
 
   if (enableLogin) {
-    const pin2Key = login.pin2Key || io.random(32)
-    const pin2Box = encrypt(io, login.loginKey, pin2Key)
-    const pin2KeyBox = encrypt(io, pin2Key, login.loginKey)
+    const { loginId, loginKey, pin2Key = io.random(32) } = login
+    const pin2Box = encrypt(io, loginKey, pin2Key)
+    const pin2KeyBox = encrypt(io, pin2Key, loginKey)
 
     return {
       serverPath: '/v2/login/pin2',
@@ -201,7 +199,7 @@ export function makeChangePin2Kit(
         pin2Key,
         pin
       },
-      loginId: login.loginId
+      loginId
     }
   } else {
     return {
@@ -232,10 +230,8 @@ export function makeChangePin2Kit(
 export function makeDeletePin2Kits(loginTree: LoginTree): LoginKit[] {
   const out: LoginKit[] = [makeDeletePin2Kit(loginTree)]
 
-  if (loginTree.children) {
-    for (const child of loginTree.children) {
-      out.push(...makeDeletePin2Kits(child))
-    }
+  for (const child of loginTree.children) {
+    out.push(...makeDeletePin2Kits(child))
   }
 
   return out

@@ -1,5 +1,6 @@
 // @flow
 
+import { type EdgeRateHint } from '../../types/types.js'
 import { type RootState } from '../root-reducer.js'
 import { addHint } from './exchange-pixie.js'
 import { type ExchangePair, type ExchangeRoutes } from './exchange-reducer.js'
@@ -90,7 +91,7 @@ function createDeepFiatRoutes(
   search: ExchangeSearch,
   fromCurrency: string
 ): void {
-  const newHints = []
+  const newHints: EdgeRateHint[] = []
   for (const fromRoute of Object.keys(search.routes[fromCurrency])) {
     for (const deepRoute of Object.keys(search.routes[fromRoute])) {
       if (isFiatCode(deepRoute)) return

@@ -55,7 +55,7 @@ export function usernameAvailable(
  */
 export function makeCreateKit(
   ai: ApiInput,
-  parentLogin?: LoginTree,
+  parentLogin: LoginTree | void,
   appId: string,
   username: string,
   opts: LoginCreateOpts
@@ -159,8 +159,7 @@ export async function createLogin(
   kit.stash.username = fixedName
   kit.login.userId = kit.login.loginId
 
-  const request = {}
-  request.data = kit.server
+  const request = { data: kit.server }
   await loginFetch(ai, 'POST', kit.serverPath, request)
 
   kit.stash.lastLogin = now

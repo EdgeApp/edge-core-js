@@ -139,14 +139,14 @@ export function makeRecovery2Kit(
     throw new TypeError('Answers must be an array of strings')
   }
 
-  const recovery2Key = login.recovery2Key || io.random(32)
+  const { loginId, loginKey, recovery2Key = io.random(32) } = login
   const question2Box = encrypt(
     io,
     utf8.parse(JSON.stringify(questions)),
     recovery2Key
   )
-  const recovery2Box = encrypt(io, login.loginKey, recovery2Key)
-  const recovery2KeyBox = encrypt(io, recovery2Key, login.loginKey)
+  const recovery2Box = encrypt(io, loginKey, recovery2Key)
+  const recovery2KeyBox = encrypt(io, recovery2Key, loginKey)
 
   return {
     serverPath: '/v2/login/recovery2',
@@ -163,7 +163,7 @@ export function makeRecovery2Kit(
     login: {
       recovery2Key
     },
-    loginId: login.loginId
+    loginId
   }
 }
 

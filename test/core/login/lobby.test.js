@@ -42,7 +42,7 @@ describe('edge login lobby', function () {
 
     // Use 10 ms polling to really speed up the test:
     const lobby = await i1.makeLobby(testRequest, 10)
-    const out = new Promise((resolve, reject) => {
+    const out: Promise<void> = new Promise((resolve, reject) => {
       lobby.on('error', reject)
       lobby.watch('replies', (replies: mixed[]) => {
         if (replies.length === 0) return

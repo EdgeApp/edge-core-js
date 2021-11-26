@@ -5,7 +5,11 @@ import { type StoreEnhancer, compose, createStore } from 'redux'
 import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import { type EdgeContext, type EdgeContextOptions } from '../types/types.js'
+import {
+  type EdgeContext,
+  type EdgeContextOptions,
+  type EdgeRateHint
+} from '../types/types.js'
 import { type RootAction } from './actions.js'
 import { type LogBackend, filterLogs, makeLog } from './log/log.js'
 import { loadStashes } from './login/login-stash.js'
@@ -55,26 +59,11 @@ export async function makeContext(
   })
   const log = makeLog(logBackend, 'edge-core')
 
-  // Retrieve rate hint cache
-  let rateHintCache = []
-  try {
-    rateHintCache = JSON.parse(await io.disklet.getText('rateHintCache.json'))
-    log('Read rateHintCache.json success')
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      // Failure is ok if file doesn't exist
-      try {
-        await io.disklet.setText('rateHintCache.json', JSON.stringify([]))
-        log('Create rateHintCache.json success')
-      } catch (error) {
-        log.error('Create rateHintCache.json failure', error.message)
-        throw error
-      }
-    } else {
-      log.error('Read rateHintCache.json error', error.message)
-      throw error
-    }
-  }
+  // Load the rate hint cache from disk:
+  const rateHintCache: EdgeRateHint[] = await io.disklet
+    .getText('rateHintCache.json')
+    .then(text => JSON.parse(text))
+    .catch(() => [])
 
   // Load the login stashes from disk:
   const stashes = await loadStashes(io.disklet, log)
@@ -121,7 +110,10 @@ export async function makeContext(
         log,
         logBackend,
         onError: error => {
-          if (mirror.output.context && mirror.output.context.api) {
+          if (
+            mirror.output.context != null &&
+            mirror.output.context.api != null
+          ) {
             emit(mirror.output.context.api, 'error', error)
           }
         },
@@ -141,6 +133,6 @@ export async function makeContext(
  * We use this for unit testing, to kill all core contexts.
  */
 export function closeEdge(): void {
-  for (const context of allContexts) context.close()
+  for (const context of allContexts) context.close().catch(() => {})
   allContexts = []
 }
