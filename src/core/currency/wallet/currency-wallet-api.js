@@ -14,6 +14,7 @@ import {
   type EdgeDataDump,
   type EdgeEncodeUri,
   type EdgeGetTransactionsOptions,
+  type EdgeMemoRules,
   type EdgeMetadata,
   type EdgeParsedUri,
   type EdgePaymentProtocolInfo,
@@ -133,6 +134,11 @@ export function makeCurrencyWalletApi(
     // Currency info:
     get currencyInfo(): EdgeCurrencyInfo {
       return plugin.currencyInfo
+    },
+    async validateMemo(memo: string): Promise<EdgeMemoRules> {
+      const tools = await getCurrencyTools(ai, walletInfo.type)
+      if (tools.validateMemo == null) return { passed: true }
+      return await tools.validateMemo(memo)
     },
     async nativeToDenomination(
       nativeAmount: string,

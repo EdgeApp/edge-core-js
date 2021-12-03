@@ -253,6 +253,9 @@ export type EdgeCurrencyInfo = {
   customFeeTemplate?: EdgeObjectTemplate, // Indicates custom fee support
   customTokenTemplate?: EdgeObjectTemplate, // Indicates custom token support
   requiredConfirmations?: number,
+  memoMaxLength?: number, // Max number of text characters, if supported
+  memoMaxValue?: string, // Max numerical value, if supported
+  memoType?: 'text' | 'number' | 'other', // undefined means no memo support
 
   // Configuration options:
   defaultSettings: JsonObject,
@@ -535,6 +538,13 @@ export type EdgeCurrencyEngine = {
 
 // currency plugin -----------------------------------------------------
 
+export type EdgeMemoRules = {
+  passed: boolean,
+  tooLarge?: boolean, // Too large numerically
+  tooLong?: boolean, // Too many characters
+  invalidCharacters?: boolean // Wrong character types
+}
+
 export type EdgeCurrencyTools = {
   // Keys:
   +importPrivateKey?: (key: string, opts?: JsonObject) => Promise<JsonObject>,
@@ -548,7 +558,13 @@ export type EdgeCurrencyTools = {
     currencyCode?: string,
     customTokens?: EdgeMetaToken[]
   ): Promise<EdgeParsedUri>,
-  encodeUri(obj: EdgeEncodeUri, customTokens?: EdgeMetaToken[]): Promise<string>
+  encodeUri(
+    obj: EdgeEncodeUri,
+    customTokens?: EdgeMetaToken[]
+  ): Promise<string>,
+
+  // Transaction memos:
+  +validateMemo?: (memo: string) => Promise<EdgeMemoRules>
 }
 
 export type EdgeCurrencyPlugin = {
@@ -608,6 +624,7 @@ export type EdgeCurrencyWallet = {
 
   // Currency info:
   +currencyInfo: EdgeCurrencyInfo,
+  validateMemo(memo: string): Promise<EdgeMemoRules>,
   nativeToDenomination(
     nativeAmount: string,
     currencyCode: string
