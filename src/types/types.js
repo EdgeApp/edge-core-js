@@ -242,6 +242,7 @@ export type EdgeCurrencyInfo = {
   +pluginId: string,
   displayName: string,
   walletType: string,
+  memoMaxLength?: number,
 
   // Native token information:
   currencyCode: string,
@@ -377,6 +378,11 @@ export type EdgeSpendInfo = {
   swapData?: EdgeTxSwap,
   otherParams?: JsonObject
 }
+
+export type MemoValidationResult =
+  | 'valid'
+  | 'invalidCharacter'
+  | 'maxLengthExceeded'
 
 // query data ----------------------------------------------------------
 
@@ -542,7 +548,13 @@ export type EdgeCurrencyTools = {
     currencyCode?: string,
     customTokens?: EdgeMetaToken[]
   ): Promise<EdgeParsedUri>,
-  encodeUri(obj: EdgeEncodeUri, customTokens?: EdgeMetaToken[]): Promise<string>
+  encodeUri(
+    obj: EdgeEncodeUri,
+    customTokens?: EdgeMetaToken[]
+  ): Promise<string>,
+
+  // Memos
+  validateMemo?: (memoStr: string) => MemoValidationResult
 }
 
 export type EdgeCurrencyPlugin = {
