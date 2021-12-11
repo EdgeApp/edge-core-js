@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.18.12 (2021-12-10)
+
+- fixed: Gracefully handle errors while reading the exchange-rate hint cache.
+- fixed: Correctly match server-returned children with their on-disk stash entries. This produces more accurate errors if the server loses a child.
+
 ## v0.18.11 (2021-11-07)
 
 - fixed: onWcNewContractCall callback type
