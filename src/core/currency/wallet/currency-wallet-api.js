@@ -131,6 +131,10 @@ export function makeCurrencyWalletApi(
     get currencyInfo(): EdgeCurrencyInfo {
       return plugin.currencyInfo
     },
+    async validateMemo(memo: string) {
+      const tools = await getCurrencyTools(ai, walletInfo.type)
+      if (tools.validateMemo != null) await tools.validateMemo(memo)
+    },
     async nativeToDenomination(
       nativeAmount: string,
       currencyCode: string
@@ -360,30 +364,27 @@ export function makeCurrencyWalletApi(
         if (publicAddress == null) continue
 
         // Handle legacy spenders:
-        let { uniqueIdentifier } = target
-        if (
-          uniqueIdentifier == null &&
-          typeof otherParams.uniqueIdentifier === 'string'
-        ) {
-          uniqueIdentifier = otherParams.uniqueIdentifier
+        let { memo = target.uniqueIdentifier } = target
+        if (memo == null && typeof otherParams.uniqueIdentifier === 'string') {
+          memo = otherParams.uniqueIdentifier
         }
 
         // Support legacy currency plugins:
-        if (uniqueIdentifier != null) {
-          otherParams.uniqueIdentifier = uniqueIdentifier
+        if (memo != null) {
+          otherParams.uniqueIdentifier = memo
         }
 
         cleanTargets.push({
           publicAddress,
           nativeAmount,
-          uniqueIdentifier,
+          memo,
           otherParams
         })
         savedTargets.push({
           currencyCode,
           publicAddress,
           nativeAmount,
-          uniqueIdentifier
+          memo
         })
       }
 

@@ -242,7 +242,6 @@ export type EdgeCurrencyInfo = {
   +pluginId: string,
   displayName: string,
   walletType: string,
-  memoMaxLength?: number,
 
   // Native token information:
   currencyCode: string,
@@ -254,6 +253,8 @@ export type EdgeCurrencyInfo = {
   customFeeTemplate?: EdgeObjectTemplate, // Indicates custom fee support
   customTokenTemplate?: EdgeObjectTemplate, // Indicates custom token support
   requiredConfirmations?: number,
+  memoType?: 'text' | 'number' | 'other',
+  memoLengthHint?: number,
 
   // Configuration options:
   defaultSettings: JsonObject,
@@ -333,9 +334,10 @@ export type EdgeTransaction = {
   feeRateUsed?: JsonObject,
   spendTargets?: Array<{
     +currencyCode: string,
+    +memo?: string | JsonObject,
     +nativeAmount: string,
     +publicAddress: string,
-    +uniqueIdentifier?: string
+    +uniqueIdentifier?: string // Deprecated, use memo
   }>,
   swapData?: EdgeTxSwap,
   txSecret?: string, // Monero decryption key
@@ -347,10 +349,11 @@ export type EdgeTransaction = {
 }
 
 export type EdgeSpendTarget = {
+  memo?: string | JsonObject,
   nativeAmount?: string,
+  otherParams?: JsonObject,
   publicAddress?: string,
-  uniqueIdentifier?: string,
-  otherParams?: JsonObject
+  uniqueIdentifier?: string // Deprecated, use memo
 }
 
 export type EdgePaymentProtocolInfo = {
@@ -378,11 +381,6 @@ export type EdgeSpendInfo = {
   swapData?: EdgeTxSwap,
   otherParams?: JsonObject
 }
-
-export type MemoValidationResult =
-  | 'valid'
-  | 'invalidCharacter'
-  | 'maxLengthExceeded'
 
 // query data ----------------------------------------------------------
 
@@ -554,7 +552,7 @@ export type EdgeCurrencyTools = {
   ): Promise<string>,
 
   // Memos
-  validateMemo?: (memoStr: string) => MemoValidationResult
+  +validateMemo?: (memo: string) => Promise<void>
 }
 
 export type EdgeCurrencyPlugin = {
@@ -614,6 +612,7 @@ export type EdgeCurrencyWallet = {
 
   // Currency info:
   +currencyInfo: EdgeCurrencyInfo,
+  validateMemo(memo: string): Promise<void>, // note: onSubmit for the memo modal
   nativeToDenomination(
     nativeAmount: string,
     currencyCode: string

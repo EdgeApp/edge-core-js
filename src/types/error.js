@@ -66,6 +66,52 @@ export class InsufficientFundsError extends Error {
   }
 }
 
+type AllowedCharType = 'numeric' | 'alpha-numeric'
+
+/**
+ * Text contains invalid character.
+ */
+export class InvalidCharError extends Error {
+  name: string
+  +allowedChars: AllowedCharType | void
+
+  constructor(
+    message: string = 'Invalid characters entered.',
+    allowedChars?: AllowedCharType
+  ) {
+    if (allowedChars != null)
+      super(`Only ${allowedChars} characters are allowed.`)
+    else super()
+    this.name = 'InvalidCharError'
+  }
+}
+
+/**
+ * Text exceeds max length.
+ */
+export class MaxLengthError extends Error {
+  name: string
+
+  constructor(message: string = 'Max input length exceeded.') {
+    super(message)
+    this.name = 'MaxLengthError'
+  }
+}
+
+/**
+ * Text exceeds maximum value.
+ */
+export class MaxValue extends Error {
+  name: string
+  +maxValue: string | void
+
+  constructor(message: string = 'Max value exceeded.', maxValue?: string) {
+    if (maxValue != null) super(`Max value ${maxValue} exceeded`)
+    else super(message)
+    this.name = 'MaxLengthError'
+  }
+}
+
 /**
  * Could not reach the server at all.
  */
