@@ -21,7 +21,7 @@ const quiet = { onLog() {} }
  * Returns the OTP reset token & voucher ID associated with the failure.
  */
 async function setupOtpFailure(
-  opts: { now: Date } = {}
+  opts: { appId?: string, now?: Date } = {}
 ): Promise<{
   // Logged-in device:
   account: EdgeAccount,
@@ -31,12 +31,13 @@ async function setupOtpFailure(
   resetToken: string,
   voucherId: string
 }> {
-  const { now = new Date() } = opts
+  const { appId = '', now = new Date() } = opts
 
   const world = await makeFakeEdgeWorld([fakeUser], quiet)
-  const context = await world.makeEdgeContext(contextOptions)
+  const context = await world.makeEdgeContext({ ...contextOptions, appId })
   const remote = await world.makeEdgeContext({
     ...contextOptions,
+    appId,
     cleanDevice: true
   })
   const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -155,5 +156,28 @@ describe('otp', function () {
     await expectRejection(
       remote.loginWithPassword(fakeUser.username, fakeUser.password)
     )
+  })
+
+  it('vouchers can be approved with appId', async function () {
+    const { account, context, remote, voucherId } = await setupOtpFailure({
+      appId: 'test-child'
+    })
+
+    // The voucher should appear in the messages:
+    const messages1 = await context.fetchLoginMessages()
+    expect(messages1['js test 0'].pendingVouchers.length).equals(1)
+    expect(messages1['js test 0'].pendingVouchers[0].voucherId).equals(
+      voucherId
+    )
+
+    // Approve the voucher:
+    await account.approveVoucher(voucherId)
+
+    // The voucher should not appear in the messages:
+    const messages2 = await context.fetchLoginMessages()
+    expect(messages2['js test 0'].pendingVouchers.length).equals(0)
+
+    // Remote login should work now:
+    await remote.loginWithPassword(fakeUser.username, fakeUser.password)
   })
 })

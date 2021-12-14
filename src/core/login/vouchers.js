@@ -21,11 +21,10 @@ const wasChangeVouchersPayload = uncleaner(asChangeVouchersPayload)
  */
 export async function changeVoucherStatus(
   ai: ApiInput,
-  loginTree: LoginTree,
   login: LoginTree,
   vouchers: ChangeVouchersPayload
 ): Promise<void> {
-  const { stashTree } = getStashById(ai, loginTree.loginId)
+  const { stashTree } = getStashById(ai, login.loginId)
   const reply = await loginFetch(ai, 'POST', '/v2/login/vouchers', {
     ...makeAuthJson(stashTree, login),
     data: wasChangeVouchersPayload(vouchers)

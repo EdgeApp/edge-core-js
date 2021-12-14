@@ -64,7 +64,7 @@ import { CurrencyConfig, SwapConfig } from './plugin-api.js'
  */
 export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
   const selfState = (): AccountState => ai.props.state.accounts[accountId]
-  const { accountWalletInfo, loginType, loginTree, login } = selfState()
+  const { accountWalletInfo, loginType, loginTree } = selfState()
   const { username } = loginTree
 
   // Plugin config API's:
@@ -271,12 +271,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return login.pendingVouchers
     },
     async approveVoucher(voucherId: string): Promise<void> {
-      return changeVoucherStatus(ai, loginTree, login, {
+      return changeVoucherStatus(ai, loginTree, {
         approvedVouchers: [voucherId]
       })
     },
     async rejectVoucher(voucherId: string): Promise<void> {
-      return changeVoucherStatus(ai, loginTree, login, {
+      return changeVoucherStatus(ai, loginTree, {
         rejectedVouchers: [voucherId]
       })
     },
