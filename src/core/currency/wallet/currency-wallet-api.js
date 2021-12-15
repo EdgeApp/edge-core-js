@@ -56,6 +56,9 @@ const fakeMetadata = {
   notes: ''
 }
 
+// The EdgeTransaction.spendTargets type, but non-null:
+type SavedSpendTargets = $ElementType<EdgeTransaction, 'spendTargets'> & any[]
+
 /**
  * Creates an `EdgeCurrencyWallet` API object.
  */
@@ -354,36 +357,35 @@ export function makeCurrencyWalletApi(
       } = spendInfo
 
       const cleanTargets: EdgeSpendTarget[] = []
-      const savedTargets = []
+      const savedTargets: SavedSpendTargets = []
       for (const target of spendTargets) {
         const { publicAddress, nativeAmount = '0', otherParams = {} } = target
         if (publicAddress == null) continue
 
         // Handle legacy spenders:
-        let { uniqueIdentifier } = target
-        if (
-          uniqueIdentifier == null &&
-          typeof otherParams.uniqueIdentifier === 'string'
-        ) {
-          uniqueIdentifier = otherParams.uniqueIdentifier
+        let { memo = target.uniqueIdentifier } = target
+        if (memo == null && typeof otherParams.uniqueIdentifier === 'string') {
+          memo = otherParams.uniqueIdentifier
         }
 
         // Support legacy currency plugins:
-        if (uniqueIdentifier != null) {
-          otherParams.uniqueIdentifier = uniqueIdentifier
+        if (memo != null) {
+          otherParams.uniqueIdentifier = memo
         }
 
         cleanTargets.push({
-          publicAddress,
+          memo,
           nativeAmount,
-          uniqueIdentifier,
-          otherParams
+          otherParams,
+          publicAddress,
+          uniqueIdentifier: memo
         })
         savedTargets.push({
           currencyCode,
-          publicAddress,
+          memo,
           nativeAmount,
-          uniqueIdentifier
+          publicAddress,
+          uniqueIdentifier: memo
         })
       }
 
@@ -589,6 +591,7 @@ export function combineTxWithFile(
     if (file.payees != null) {
       out.spendTargets = file.payees.map(payee => ({
         currencyCode: payee.currency,
+        memo: payee.tag,
         nativeAmount: payee.amount,
         publicAddress: payee.address,
         uniqueIdentifier: payee.tag

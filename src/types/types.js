@@ -332,9 +332,12 @@ export type EdgeTransaction = {
   feeRateUsed?: JsonObject,
   spendTargets?: Array<{
     +currencyCode: string,
+    +memo: string | void,
     +nativeAmount: string,
     +publicAddress: string,
-    +uniqueIdentifier?: string
+
+    // Deprecated:
+    uniqueIdentifier: string | void // Use memo instead.
   }>,
   swapData?: EdgeTxSwap,
   txSecret?: string, // Monero decryption key
@@ -346,10 +349,13 @@ export type EdgeTransaction = {
 }
 
 export type EdgeSpendTarget = {
+  memo?: string,
   nativeAmount?: string,
+  otherParams?: JsonObject,
   publicAddress?: string,
-  uniqueIdentifier?: string,
-  otherParams?: JsonObject
+
+  // Deprecated:
+  uniqueIdentifier?: string // Use memo instead.
 }
 
 export type EdgePaymentProtocolInfo = {

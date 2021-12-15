@@ -311,6 +311,7 @@ describe('currency wallets', function () {
     expect(txs[0].spendTargets).deep.equals([
       {
         currencyCode: 'FAKE',
+        memo: 'hello',
         nativeAmount: '50',
         publicAddress: 'somewhere',
         uniqueIdentifier: 'hello'

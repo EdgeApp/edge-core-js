@@ -47,6 +47,7 @@ export const walletTxs = {
     spendTargets: [
       {
         currencyCode: 'BTC',
+        memo: '',
         nativeAmount: '52920',
         publicAddress: '3Lo3Xb786vseKyDoW9zZkPM2U7yYJTSnsg',
         uniqueIdentifier: ''
@@ -99,6 +100,7 @@ export const walletTxs = {
     spendTargets: [
       {
         currencyCode: 'BTC',
+        memo: '',
         nativeAmount: '49450',
         publicAddress: '3GmuFtW7Gmgj9biBQqPBU19Wq7wgscYWzK',
         uniqueIdentifier: ''
@@ -208,6 +210,7 @@ export const walletTxs = {
     spendTargets: [
       {
         currencyCode: 'BTC',
+        memo: '',
         nativeAmount: '54650',
         publicAddress: '3EmNhuDuweZ7jyKQqqzBZd1smp9sbiWps2',
         uniqueIdentifier: ''
@@ -242,6 +245,7 @@ export const walletTxs = {
     spendTargets: [
       {
         currencyCode: 'BTC',
+        memo: '',
         nativeAmount: '29700',
         publicAddress: '3Htnzqa1JL8EGkGpZRkyyQFrCd544jLYt4',
         uniqueIdentifier: ''
