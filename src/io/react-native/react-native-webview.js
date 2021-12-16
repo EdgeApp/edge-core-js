@@ -5,7 +5,7 @@ import '../../client-side.js'
 import * as React from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
 import RNFS from 'react-native-fs'
-import { WebView } from 'react-native-webview'
+import { type WebViewMessageEvent, WebView } from 'react-native-webview'
 import { Bridge, onMethod } from 'yaob'
 
 import { makeClientIo } from './react-native-io.js'
@@ -18,8 +18,8 @@ type Props = {
 }
 
 type WebViewCallbacks = {
-  handleMessage: (event: any) => void,
-  setRef: (element: WebView) => void
+  handleMessage: (event: WebViewMessageEvent) => void,
+  setRef: (element: WebView | null) => void
 }
 
 /**
@@ -37,7 +37,7 @@ function makeOuterWebViewBridge<Root>(
 ): WebViewCallbacks {
   let bridge: Bridge | void
   let gatedRoot: Root | void
-  let webview: WebView | void
+  let webview: WebView | null = null
 
   // Gate the root object on the WebView being ready:
   function tryReleasingRoot(): void {
@@ -48,7 +48,7 @@ function makeOuterWebViewBridge<Root>(
   }
 
   // Feed incoming messages into the YAOB bridge (if any):
-  function handleMessage(event: any): void {
+  function handleMessage(event: WebViewMessageEvent): void {
     const message = JSON.parse(event.nativeEvent.data)
     if (debug != null) console.info(`${debug} →`, message)
 
@@ -94,7 +94,7 @@ function makeOuterWebViewBridge<Root>(
   }
 
   // Listen for the WebView component to mount:
-  function setRef(element: WebView): void {
+  function setRef(element: WebView | null): void {
     webview = element
     tryReleasingRoot()
   }
