@@ -8,21 +8,15 @@ import { bridgifyObject } from 'yaob'
 import { type LogBackend, defaultOnLog } from './core/log/log.js'
 import { parseReply } from './core/login/login-fetch.js'
 import { EdgeCoreBridge } from './io/react-native/react-native-webview.js'
+import {
+  type EdgeContextProps,
+  type EdgeFakeWorldProps
+} from './types/exports.js'
 import { asMessagesPayload } from './types/server-cleaners.js'
 import {
-  type EdgeContext,
-  type EdgeContextOptions,
-  type EdgeCorePluginsInit,
-  type EdgeCrashReporter,
-  type EdgeFakeUser,
-  type EdgeFakeWorld,
-  type EdgeFakeWorldOptions,
   type EdgeFetchOptions,
   type EdgeLoginMessages,
-  type EdgeLogSettings,
   type EdgeNativeIo,
-  type EdgeOnLog,
-  type Partial, // @ts-delete
   NetworkError
 } from './types/types.js'
 import { timeout } from './util/promise.js'
@@ -36,26 +30,7 @@ function onErrorDefault(e: any): void {
 
 let warningShown = false
 
-export function MakeEdgeContext(props: {
-  debug?: boolean,
-  nativeIo?: EdgeNativeIo,
-  onError?: (e: any) => mixed,
-  onLoad: (context: EdgeContext) => mixed,
-
-  // Deprecated. Just pass options like `apiKey` as normal props:
-  options?: EdgeContextOptions,
-
-  // EdgeContextOptions:
-  apiKey?: string,
-  appId?: string,
-  authServer?: string,
-  crashReporter?: EdgeCrashReporter,
-  deviceDescription?: string,
-  hideKeys?: boolean,
-  logSettings?: Partial<EdgeLogSettings>,
-  onLog?: EdgeOnLog,
-  plugins?: EdgeCorePluginsInit
-}): React.Node {
+export function MakeEdgeContext(props: EdgeContextProps): React.Node {
   const { debug, nativeIo, onError = onErrorDefault, onLoad, ...rest } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeEdgeContext')
@@ -87,15 +62,7 @@ export function MakeEdgeContext(props: {
   )
 }
 
-export function MakeFakeEdgeWorld(
-  props: EdgeFakeWorldOptions & {
-    debug?: boolean,
-    nativeIo?: EdgeNativeIo,
-    onError?: (e: any) => mixed,
-    onLoad: (world: EdgeFakeWorld) => mixed,
-    users?: EdgeFakeUser[]
-  }
-): React.Node {
+export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): React.Node {
   const {
     crashReporter,
     debug,

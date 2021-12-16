@@ -5,6 +5,7 @@ import {
   type EdgeContextOptions,
   type EdgeCorePlugins,
   type EdgeCorePluginsInit,
+  type EdgeCrashReporter,
   type EdgeFakeUser,
   type EdgeFakeWorld,
   type EdgeFakeWorldOptions,
@@ -44,33 +45,37 @@ declare export function makeFakeEdgeWorld(
 // react-native
 // ---------------------------------------------------------------------
 
-type EdgeContextProps = {
-  debug?: boolean,
-  nativeIo?: EdgeNativeIo,
-  onError?: (e: any) => mixed,
-  onLoad: (context: EdgeContext) => mixed,
-
-  // Deprecated. Just pass options like `apiKey` as normal props:
-  options?: EdgeContextOptions,
-
-  // EdgeContextOptions:
-  apiKey?: string,
-  appId?: string,
-  authServer?: string,
-  deviceDescription?: string,
-  hideKeys?: boolean,
-  logSettings?: Partial<EdgeLogSettings>,
-  onLog?: EdgeOnLog,
-  plugins?: EdgeCorePluginsInit
+interface CommonProps {
+  debug?: boolean;
+  nativeIo?: EdgeNativeIo;
+  onError?: (e: any) => mixed;
 }
 
-type EdgeFakeWorldProps = {
-  debug?: boolean,
-  nativeIo?: EdgeNativeIo,
-  onError?: (e: any) => mixed,
-  onLoad: (context: EdgeFakeWorld) => mixed,
-  onLog?: EdgeOnLog,
-  users: EdgeFakeUser[]
+export interface EdgeContextProps extends CommonProps {
+  onLoad: (context: EdgeContext) => mixed;
+
+  // Deprecated. Just pass options like `apiKey` as normal props:
+  options?: EdgeContextOptions;
+
+  // EdgeContextOptions:
+  apiKey?: string;
+  appId?: string;
+  authServer?: string;
+  crashReporter?: EdgeCrashReporter;
+  deviceDescription?: string;
+  hideKeys?: boolean;
+  logSettings?: Partial<EdgeLogSettings>;
+  onLog?: EdgeOnLog;
+  plugins?: EdgeCorePluginsInit;
+}
+
+export interface EdgeFakeWorldProps extends CommonProps {
+  onLoad: (world: EdgeFakeWorld) => mixed;
+  users?: EdgeFakeUser[];
+
+  // EdgeFakeWorldOptions:
+  crashReporter?: EdgeCrashReporter;
+  onLog?: EdgeOnLog;
 }
 
 /**
