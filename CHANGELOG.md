@@ -1,5 +1,12 @@
 # edge-core-js
 
+## v0.18.13 (2021-12-17)
+
+- added: `EdgeSpendTarget.memo`, which is a renamed version of `EdgeSpendTarget.uniqueIdentifier`.
+- added: `EdgeCurrencyInfo.memoType`, `EdgeCurrencyInfo.memoMaxLength`, `EdgeCurrencyInfo.memoMaxValue`. Use these to learn which currencies support memos.
+- added: `EdgeCurrencyTools.validateMemo` & `EdgeCurrencyWallet.validateMemo`. Use these to check memos for validity before sending.
+- deprecated: `EdgeSpendTarget.uniqueIdentifier`. Use `EdgeSpendTarget.memo` instead.
+
 ## v0.18.12 (2021-12-10)
 
 - fixed: Gracefully handle errors while reading the exchange-rate hint cache.
