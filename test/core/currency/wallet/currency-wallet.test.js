@@ -280,6 +280,7 @@ describe('currency wallets', function () {
       currencyCode: 'FAKE',
       spendTargets: [
         {
+          uniqueIdentifier: 'hello',
           nativeAmount: '50',
           publicAddress: 'somewhere'
         }
@@ -310,9 +311,10 @@ describe('currency wallets', function () {
     expect(txs[0].spendTargets).deep.equals([
       {
         currencyCode: 'FAKE',
+        memo: 'hello',
         nativeAmount: '50',
         publicAddress: 'somewhere',
-        uniqueIdentifier: undefined
+        uniqueIdentifier: 'hello'
       }
     ])
     expect(txs[0].swapData).deep.equals({

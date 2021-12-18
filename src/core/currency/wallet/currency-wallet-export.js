@@ -77,11 +77,8 @@ export function searchStringFilter(
     }
     if (tx.spendTargets != null) {
       for (const target of tx.spendTargets) {
-        const { publicAddress = '', uniqueIdentifier = '' } = target
-        if (
-          checkNullTypeAndIndex(publicAddress) ||
-          checkNullTypeAndIndex(uniqueIdentifier)
-        )
+        const { publicAddress = '', memo = '' } = target
+        if (checkNullTypeAndIndex(publicAddress) || checkNullTypeAndIndex(memo))
           return true
       }
     }

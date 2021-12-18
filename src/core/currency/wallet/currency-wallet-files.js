@@ -588,7 +588,7 @@ export function setupNewTxMetadata(
       currency: target.currencyCode,
       address: target.publicAddress,
       amount: target.nativeAmount,
-      tag: target.uniqueIdentifier
+      tag: target.memo
     }))
   }
   if (typeof tx.txSecret === 'string') json.secret = tx.txSecret
