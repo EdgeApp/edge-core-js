@@ -1,6 +1,5 @@
 // @flow
 
-import { type Disklet } from 'disklet'
 import { type HttpResponse } from 'serverlet'
 
 import { type LogBackend } from '../../core/log/log.js'
@@ -15,7 +14,6 @@ import {
 } from '../../types/types.js'
 
 export type ClientIo = {
-  +disklet: Disklet,
   +entropy: string, // base64
   +scrypt: EdgeScryptFunction,
 

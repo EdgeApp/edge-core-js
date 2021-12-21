@@ -19,27 +19,40 @@ import {
   type EdgeFetchResponse,
   type EdgeIo
 } from '../../types/types.js'
+import { makeNativeBridge } from './native-bridge.js'
 import { type ClientIo, type WorkerApi } from './react-native-types.js'
 
-// Set up the bridge:
-const reactBridge =
+// Set up the bridges:
+const [nativeBridge, reactBridge] =
   window.edgeCore != null
-    ? new Bridge({
-        sendMessage(message) {
-          window.edgeCore.postMessage(JSON.stringify(message))
-        }
-      })
-    : new Bridge({
-        sendMessage(message) {
-          window.webkit.messageHandlers.edgeCore.postMessage([
-            'postMessage',
-            [JSON.stringify(message)]
-          ])
-        }
-      })
+    ? [
+        makeNativeBridge((id, name, args) => {
+          window.edgeCore.call(id, name, JSON.stringify(args))
+        }),
+        new Bridge({
+          sendMessage(message) {
+            window.edgeCore.postMessage(JSON.stringify(message))
+          }
+        })
+      ]
+    : [
+        makeNativeBridge((id, name, args) => {
+          window.webkit.messageHandlers.edgeCore.postMessage([id, name, args])
+        }),
+        new Bridge({
+          sendMessage(message) {
+            window.webkit.messageHandlers.edgeCore.postMessage([
+              0,
+              'postMessage',
+              [JSON.stringify(message)]
+            ])
+          }
+        })
+      ]
 
 // Set up global objects:
 window.addEdgeCorePlugins = addEdgeCorePlugins
+window.nativeBridge = nativeBridge
 window.reactBridge = reactBridge
 
 function loadPlugins(pluginUris: string[]): void {
@@ -66,7 +79,7 @@ function loadPlugins(pluginUris: string[]): void {
 }
 
 function makeIo(clientIo: ClientIo): EdgeIo {
-  const { disklet, entropy, scrypt } = clientIo
+  const { entropy, scrypt } = clientIo
   const csprng = new HmacDRBG({
     hash: hashjs.sha256,
     entropy: base64.parse(entropy)
@@ -74,7 +87,32 @@ function makeIo(clientIo: ClientIo): EdgeIo {
 
   return {
     console,
-    disklet,
+    disklet: {
+      delete(path) {
+        return nativeBridge.call('diskletDelete', normalizePath(path))
+      },
+      getData(path) {
+        return nativeBridge
+          .call('diskletGetData', normalizePath(path))
+          .then((data: string) => base64.parse(data))
+      },
+      getText(path) {
+        return nativeBridge.call('diskletGetText', normalizePath(path))
+      },
+      list(path = '') {
+        return nativeBridge.call('diskletList', normalizePath(path))
+      },
+      setData(path, data: any) {
+        return nativeBridge.call(
+          'diskletSetData',
+          normalizePath(path),
+          base64.stringify(data)
+        )
+      },
+      setText(path, text) {
+        return nativeBridge.call('diskletSetText', normalizePath(path), text)
+      }
+    },
 
     random: bytes => csprng.generate(bytes),
     scrypt,
@@ -91,6 +129,29 @@ function makeIo(clientIo: ClientIo): EdgeIo {
       return clientIo.fetchCors(uri, opts).then(makeFetchResponse)
     }
   }
+}
+
+/**
+ * Interprets a path as a series of folder lookups,
+ * handling special components like `.` and `..`.
+ */
+export function normalizePath(path: string): string {
+  if (/^\//.test(path)) throw new Error('Absolute paths are not supported')
+  const parts = path.split('/')
+
+  // Shift down good elements, dropping bad ones:
+  let i = 0 // Read index
+  let j = 0 // Write index
+  while (i < parts.length) {
+    const part = parts[i++]
+    if (part === '..') j--
+    else if (part !== '.' && part !== '') parts[j++] = part
+
+    if (j < 0) throw new Error('Path would escape folder')
+  }
+
+  // Array items from 0 to j are the path:
+  return parts.slice(0, j).join('/')
 }
 
 // Send the root object:

@@ -2,7 +2,6 @@
 
 import '../../client-side.js'
 
-import { makeReactNativeDisklet } from 'disklet'
 import * as React from 'react'
 import { NativeModules, requireNativeComponent } from 'react-native'
 import { scrypt } from 'react-native-fast-crypto'
@@ -43,9 +42,6 @@ export class EdgeCoreBridge extends React.Component<Props> {
           // Crypto:
           entropy: base64String,
           scrypt,
-
-          // Local IO:
-          disklet: bridgifyObject(makeReactNativeDisklet()),
 
           // Networking:
           fetchCors
