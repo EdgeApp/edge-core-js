@@ -14,7 +14,6 @@ import {
 } from '../../types/types.js'
 
 export type ClientIo = {
-  +entropy: string, // base64
   +scrypt: EdgeScryptFunction,
 
   // Networking:

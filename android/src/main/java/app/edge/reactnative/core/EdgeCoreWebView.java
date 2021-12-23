@@ -10,6 +10,7 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import java.io.IOException;
+import java.security.SecureRandom;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -134,6 +135,14 @@ class EdgeCoreWebView extends WebView {
       case "diskletSetText":
         mDisklet.setText(args.getString(0), args.getString(1));
         promise.resolve(null);
+        break;
+      case "randomBytes":
+        {
+          SecureRandom sr = new SecureRandom();
+          byte[] entropy = new byte[args.getInt(0)];
+          sr.nextBytes(entropy);
+          promise.resolve(Base64.encodeToString(entropy, Base64.NO_WRAP));
+        }
         break;
       default:
         promise.reject("No method " + name);

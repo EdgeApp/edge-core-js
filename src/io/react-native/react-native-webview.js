@@ -3,7 +3,7 @@
 import '../../client-side.js'
 
 import * as React from 'react'
-import { NativeModules, requireNativeComponent } from 'react-native'
+import { requireNativeComponent } from 'react-native'
 import { scrypt } from 'react-native-fast-crypto'
 import { type HttpHeaders, type HttpResponse } from 'serverlet'
 import { bridgifyObject } from 'yaob'
@@ -34,27 +34,17 @@ export class EdgeCoreBridge extends React.Component<Props> {
     const { onError, onLoad } = props
 
     // Set up the native IO objects:
-    const clientIoPromise = new Promise((resolve, reject) => {
-      randomBytes(32, (error, base64String) => {
-        if (error != null) return reject(error)
+    const clientIo: ClientIo = bridgifyObject({
+      // Crypto:
+      scrypt,
 
-        const out: ClientIo = {
-          // Crypto:
-          entropy: base64String,
-          scrypt,
-
-          // Networking:
-          fetchCors
-        }
-        resolve(bridgifyObject(out))
-      })
+      // Networking:
+      fetchCors
     })
 
     // Set up the YAOB bridge:
     this.callbacks = makeYaobCallbacks((root: WorkerApi) => {
-      clientIoPromise
-        .then(nativeIo => onLoad(nativeIo, root))
-        .catch(error => onError(error))
+      onLoad(clientIo, root).catch(onError)
     })
   }
 
@@ -81,7 +71,6 @@ export class EdgeCoreBridge extends React.Component<Props> {
 const NativeWebView: Class<EdgeCoreWebView> = requireNativeComponent(
   'EdgeCoreWebView'
 )
-const { randomBytes } = NativeModules.RNRandomBytes
 
 /**
  * Turns XMLHttpRequest headers into a more JSON-like structure.

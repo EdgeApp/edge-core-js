@@ -78,11 +78,11 @@ function loadPlugins(pluginUris: string[]): void {
   }
 }
 
-function makeIo(clientIo: ClientIo): EdgeIo {
-  const { entropy, scrypt } = clientIo
+async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
+  const { scrypt } = clientIo
   const csprng = new HmacDRBG({
     hash: hashjs.sha256,
-    entropy: base64.parse(entropy)
+    entropy: base64.parse(await nativeBridge.call('randomBytes', 32))
   })
 
   return {
@@ -156,16 +156,22 @@ export function normalizePath(path: string): string {
 
 // Send the root object:
 const workerApi: WorkerApi = bridgifyObject({
-  makeEdgeContext(clientIo, nativeIo, logBackend, pluginUris, opts) {
+  async makeEdgeContext(clientIo, nativeIo, logBackend, pluginUris, opts) {
     loadPlugins(pluginUris)
-    return makeContext({ io: makeIo(clientIo), nativeIo }, logBackend, opts)
+    const io = await makeIo(clientIo)
+    return makeContext({ io, nativeIo }, logBackend, opts)
   },
 
-  makeFakeEdgeWorld(clientIo, nativeIo, logBackend, pluginUris, users = []) {
+  async makeFakeEdgeWorld(
+    clientIo,
+    nativeIo,
+    logBackend,
+    pluginUris,
+    users = []
+  ) {
     loadPlugins(pluginUris)
-    return Promise.resolve(
-      makeFakeWorld({ io: makeIo(clientIo), nativeIo }, logBackend, users)
-    )
+    const io = await makeIo(clientIo)
+    return makeFakeWorld({ io, nativeIo }, logBackend, users)
   }
 })
 reactBridge.sendRoot(workerApi)

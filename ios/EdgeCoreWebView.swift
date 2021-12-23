@@ -139,6 +139,14 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
       try disklet.setText(path: path, text: text)
       return promise.resolve(nil)
     }
+    if name == "randomBytes", let size = args[0] as? Int {
+      if let entropy = NSMutableData(length: size),
+        SecRandomCopyBytes(kSecRandomDefault, size, entropy.mutableBytes) == errSecSuccess
+      {
+        return promise.resolve(entropy.base64EncodedString())
+      }
+      return promise.reject("Could not obtain secure entropy")
+    }
     return promise.reject("No method \(name)")
   }
 
