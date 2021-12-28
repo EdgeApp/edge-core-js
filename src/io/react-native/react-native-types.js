@@ -9,13 +9,10 @@ import {
   type EdgeFakeUser,
   type EdgeFakeWorld,
   type EdgeFetchOptions,
-  type EdgeNativeIo,
-  type EdgeScryptFunction
+  type EdgeNativeIo
 } from '../../types/types.js'
 
 export type ClientIo = {
-  +scrypt: EdgeScryptFunction,
-
   // Networking:
   fetchCors(url: string, opts: EdgeFetchOptions): Promise<HttpResponse>
 }

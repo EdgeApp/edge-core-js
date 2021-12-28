@@ -4,7 +4,6 @@ import '../../client-side.js'
 
 import * as React from 'react'
 import { requireNativeComponent } from 'react-native'
-import { scrypt } from 'react-native-fast-crypto'
 import { type HttpHeaders, type HttpResponse } from 'serverlet'
 import { bridgifyObject } from 'yaob'
 
@@ -35,9 +34,6 @@ export class EdgeCoreBridge extends React.Component<Props> {
 
     // Set up the native IO objects:
     const clientIo: ClientIo = bridgifyObject({
-      // Crypto:
-      scrypt,
-
       // Networking:
       fetchCors
     })

@@ -17,11 +17,17 @@ Pod::Spec.new do |s|
     :tag => "v#{s.version}"
   }
   s.source_files =
+    "android/src/main/cpp/scrypt/crypto_scrypt.c",
+    "android/src/main/cpp/scrypt/crypto_scrypt.h",
+    "android/src/main/cpp/scrypt/sha256.c",
+    "android/src/main/cpp/scrypt/sha256.h",
+    "android/src/main/cpp/scrypt/sysendian.h",
     "ios/Disklet.swift",
     "ios/edge-core-js-Bridging-Header.h",
     "ios/EdgeCoreWebView.swift",
     "ios/EdgeCoreWebViewManager.m",
     "ios/EdgeCoreWebViewManager.swift"
+
   s.resource_bundles = {
     "edge-core-js" => "android/src/main/assets/edge-core-js/edge-core.js"
   }

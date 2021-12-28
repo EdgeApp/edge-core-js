@@ -144,6 +144,9 @@ class EdgeCoreWebView extends WebView {
           promise.resolve(Base64.encodeToString(entropy, Base64.NO_WRAP));
         }
         break;
+      case "scrypt":
+        new ScryptThread(args, promise).start();
+        break;
       default:
         promise.reject("No method " + name);
     }
@@ -169,5 +172,38 @@ class EdgeCoreWebView extends WebView {
             + "')\"></script>"
             + "</head><body></body></html>";
     loadDataWithBaseURL(BASE_URL, html, "text/html", null, null);
+  }
+
+  private class ScryptThread extends Thread {
+    JSONArray args;
+    PendingCall promise;
+
+    ScryptThread(JSONArray args, PendingCall promise) {
+      super("scrypt");
+      this.args = args;
+      this.promise = promise;
+    }
+
+    public void run() {
+      try {
+        byte[] data = Base64.decode(args.getString(0), Base64.DEFAULT);
+        byte[] salt = Base64.decode(args.getString(1), Base64.DEFAULT);
+        int n = args.getInt(2);
+        int r = args.getInt(3);
+        int p = args.getInt(4);
+        int dklen = args.getInt(5);
+        byte[] out = scrypt(data, salt, n, r, p, dklen);
+        if (out == null) promise.reject("Failed scrypt");
+        else promise.resolve(Base64.encodeToString(out, Base64.NO_WRAP));
+      } catch (JSONException error) {
+        promise.reject(error.getMessage());
+      }
+    }
+  }
+
+  private native byte[] scrypt(byte[] data, byte[] salt, int n, int r, int p, int dklen);
+
+  static {
+    System.loadLibrary("edge-core-jni");
   }
 }

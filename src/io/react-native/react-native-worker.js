@@ -79,7 +79,6 @@ function loadPlugins(pluginUris: string[]): void {
 }
 
 async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
-  const { scrypt } = clientIo
   const csprng = new HmacDRBG({
     hash: hashjs.sha256,
     entropy: base64.parse(await nativeBridge.call('randomBytes', 32))
@@ -115,7 +114,19 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
     },
 
     random: bytes => csprng.generate(bytes),
-    scrypt,
+    scrypt(data, salt, n, r, p, dklen) {
+      return nativeBridge
+        .call(
+          'scrypt',
+          base64.stringify(data),
+          base64.stringify(salt),
+          n,
+          r,
+          p,
+          dklen
+        )
+        .then((data: string) => base64.parse(data))
+    },
 
     // Networking:
     fetch(uri: string, opts?: EdgeFetchOptions): Promise<EdgeFetchResponse> {

@@ -147,6 +147,27 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
       }
       return promise.reject("Could not obtain secure entropy")
     }
+    if name == "scrypt",
+      let data64 = args[0] as? String,
+      let salt64 = args[1] as? String,
+      let n = args[2] as? UInt64,
+      let r = args[3] as? UInt32,
+      let p = args[4] as? UInt32,
+      let dklen = args[5] as? Int,
+      let data = NSData.init(base64Encoded: data64),
+      let salt = NSData.init(base64Encoded: salt64),
+      let out = NSMutableData(length: dklen)
+    {
+      if crypto_scrypt(
+        data.bytes.bindMemory(to: UInt8.self, capacity: data.length), data.length,
+        salt.bytes.bindMemory(to: UInt8.self, capacity: salt.length), salt.length,
+        n, r, p,
+        out.mutableBytes.bindMemory(to: UInt8.self, capacity: dklen), dklen
+      ) != 0 {
+        return promise.reject("Failed scrypt")
+      }
+      return promise.resolve(out.base64EncodedString())
+    }
     return promise.reject("No method \(name)")
   }
 
