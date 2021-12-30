@@ -68,22 +68,25 @@ type LoginRequest = ApiRequest & {
   +login: DbLogin,
   +payload: mixed
 }
-
-type ApiServer = Serverlet<ApiRequest>
-type LoginServer = Serverlet<LoginRequest>
+type LobbyIdRequest = ApiRequest & {
+  +lobbyId: string
+}
+type RepoRequest = ApiRequest & {
+  +repo: DbRepo
+}
 
 // Authentication middleware: ----------------------------------------------
 
-const handleMissingCredentials: ApiServer = request =>
+const handleMissingCredentials: Serverlet<ApiRequest> = request =>
   statusResponse(statusCodes.invalidRequest)
 
 /**
  * Verifies that the request contains valid v2 authentication.
  */
 const withLogin2 = (
-  server: LoginServer,
-  fallback: ApiServer = handleMissingCredentials
-): ApiServer => request => {
+  server: Serverlet<LoginRequest>,
+  fallback: Serverlet<ApiRequest> = handleMissingCredentials
+): Serverlet<ApiRequest> => request => {
   const { db, json } = request
   const clean = asLoginRequestBody(json)
   const {
@@ -174,42 +177,40 @@ const withLogin2 = (
 
 // login v2: ---------------------------------------------------------------
 
-const loginRoute: ApiServer = pickMethod({
-  POST: withLogin2(
-    // Authenticated version:
-    request => {
-      const { db, login } = request
-      return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
-    },
-    // Fallback version:
-    request => {
-      const { db, json } = request
-      const clean = asLoginRequestBody(json)
-      const { userId, passwordAuth, recovery2Id, recovery2Auth } = clean
+const loginRoute = withLogin2(
+  // Authenticated version:
+  request => {
+    const { db, login } = request
+    return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
+  },
+  // Fallback version:
+  request => {
+    const { db, json } = request
+    const clean = asLoginRequestBody(json)
+    const { userId, passwordAuth, recovery2Id, recovery2Auth } = clean
 
-      if (userId != null && passwordAuth == null) {
-        const login = db.getLoginById(userId)
-        if (login == null) {
-          return statusResponse(statusCodes.noAccount)
-        }
-        const { passwordAuthSnrp = userIdSnrp } = login
-        return payloadResponse(wasUsernameInfoPayload({ passwordAuthSnrp }))
+    if (userId != null && passwordAuth == null) {
+      const login = db.getLoginById(userId)
+      if (login == null) {
+        return statusResponse(statusCodes.noAccount)
       }
-      if (recovery2Id != null && recovery2Auth == null) {
-        const login = db.getLoginByRecovery2Id(recovery2Id)
-        if (login == null) {
-          return statusResponse(statusCodes.noAccount)
-        }
-        const { question2Box } = login
-        if (question2Box == null) {
-          return statusResponse(statusCodes.noAccount)
-        }
-        return payloadResponse(wasRecovery2InfoPayload({ question2Box }))
-      }
-      return statusResponse(statusCodes.invalidRequest)
+      const { passwordAuthSnrp = userIdSnrp } = login
+      return payloadResponse(wasUsernameInfoPayload({ passwordAuthSnrp }))
     }
-  )
-})
+    if (recovery2Id != null && recovery2Auth == null) {
+      const login = db.getLoginByRecovery2Id(recovery2Id)
+      if (login == null) {
+        return statusResponse(statusCodes.noAccount)
+      }
+      const { question2Box } = login
+      if (question2Box == null) {
+        return statusResponse(statusCodes.noAccount)
+      }
+      return payloadResponse(wasRecovery2InfoPayload({ question2Box }))
+    }
+    return statusResponse(statusCodes.invalidRequest)
+  }
+)
 
 function createLogin(
   request: ApiRequest,
@@ -268,198 +269,172 @@ function createLogin(
   return statusResponse(statusCodes.created, 'Account created')
 }
 
-const create2Route: ApiServer = pickMethod({
-  POST: withLogin2(
-    request => createLogin(request, request.login),
-    request => createLogin(request)
-  )
-})
-
-const keysRoute: ApiServer = withLogin2(
-  pickMethod({
-    POST: request => {
-      const { db, login, payload } = request
-      const clean = asMaybe(asCreateKeysPayload)(payload)
-      if (clean == null) return statusResponse(statusCodes.invalidRequest)
-
-      // Set up repos:
-      for (const syncKey of clean.newSyncKeys) {
-        db.repos[syncKey] = {}
-      }
-      login.keyBoxes = softCat(login.keyBoxes, clean.keyBoxes)
-
-      return statusResponse()
-    }
-  })
+const createLoginRoute = withLogin2(
+  request => createLogin(request, request.login),
+  request => createLogin(request)
 )
 
-const otp2Route: ApiServer = pickMethod({
-  POST: withLogin2(request => {
-    const { login, payload } = request
-    const clean = asMaybe(asChangeOtpPayload)(payload)
-    if (clean == null) return statusResponse(statusCodes.invalidRequest)
+const addKeysRoute = withLogin2(request => {
+  const { db, login, payload } = request
+  const clean = asMaybe(asCreateKeysPayload)(payload)
+  if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-    login.otpKey = clean.otpKey
-    login.otpTimeout = clean.otpTimeout
+  // Set up repos:
+  for (const syncKey of clean.newSyncKeys) {
+    db.repos[syncKey] = {}
+  }
+  login.keyBoxes = softCat(login.keyBoxes, clean.keyBoxes)
+
+  return statusResponse()
+})
+
+const changeOtpRoute = withLogin2(request => {
+  const { login, payload } = request
+  const clean = asMaybe(asChangeOtpPayload)(payload)
+  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+
+  login.otpKey = clean.otpKey
+  login.otpTimeout = clean.otpTimeout
+  login.otpResetDate = undefined
+
+  return statusResponse()
+})
+
+const deleteOtpRoute = withLogin2(
+  // Authenticated version:
+  request => {
+    const { login } = request
+    login.otpKey = undefined
+    login.otpTimeout = undefined
     login.otpResetDate = undefined
 
     return statusResponse()
-  }),
-
-  DELETE: withLogin2(
-    // Authenticated version:
-    request => {
-      const { login } = request
-      login.otpKey = undefined
-      login.otpTimeout = undefined
-      login.otpResetDate = undefined
-
-      return statusResponse()
-    },
-    // Fallback version:
-    request => {
-      const { db, json } = request
-      const clean = asLoginRequestBody(json)
-      if (clean.userId == null || clean.otpResetAuth == null) {
-        return statusResponse(statusCodes.invalidRequest)
-      }
-      const login = db.getLoginById(clean.userId)
-      if (login == null) {
-        return statusResponse(statusCodes.noAccount)
-      }
-      if (clean.otpResetAuth !== OTP_RESET_TOKEN) {
-        return passwordErrorResponse(0)
-      }
-      const { otpKey, otpTimeout } = login
-      if (otpKey == null || otpTimeout == null) {
-        return statusResponse(
-          statusCodes.invalidRequest,
-          'OTP not setup for this account.'
-        )
-      }
-      if (login.otpResetDate == null) {
-        login.otpResetDate = new Date(Date.now() + 1000 * otpTimeout)
-      }
-      return payloadResponse(
-        wasOtpResetPayload({ otpResetDate: login.otpResetDate })
+  },
+  // Fallback version:
+  request => {
+    const { db, json } = request
+    const clean = asLoginRequestBody(json)
+    if (clean.userId == null || clean.otpResetAuth == null) {
+      return statusResponse(statusCodes.invalidRequest)
+    }
+    const login = db.getLoginById(clean.userId)
+    if (login == null) {
+      return statusResponse(statusCodes.noAccount)
+    }
+    if (clean.otpResetAuth !== OTP_RESET_TOKEN) {
+      return passwordErrorResponse(0)
+    }
+    const { otpKey, otpTimeout } = login
+    if (otpKey == null || otpTimeout == null) {
+      return statusResponse(
+        statusCodes.invalidRequest,
+        'OTP not setup for this account.'
       )
     }
-  )
+    if (login.otpResetDate == null) {
+      login.otpResetDate = new Date(Date.now() + 1000 * otpTimeout)
+    }
+    return payloadResponse(
+      wasOtpResetPayload({ otpResetDate: login.otpResetDate })
+    )
+  }
+)
+
+const deletePasswordRoute = withLogin2(request => {
+  const { login } = request
+  login.passwordAuth = undefined
+  login.passwordAuthBox = undefined
+  login.passwordAuthSnrp = undefined
+  login.passwordBox = undefined
+  login.passwordKeySnrp = undefined
+
+  return statusResponse()
 })
 
-const password2Route: ApiServer = withLogin2(
-  pickMethod({
-    DELETE: request => {
-      const { login } = request
-      login.passwordAuth = undefined
-      login.passwordAuthBox = undefined
-      login.passwordAuthSnrp = undefined
-      login.passwordBox = undefined
-      login.passwordKeySnrp = undefined
+const changePasswordRoute = withLogin2(request => {
+  const { login, payload } = request
+  const clean = asMaybe(asChangePasswordPayload)(payload)
+  if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-      return statusResponse()
-    },
+  login.passwordAuth = clean.passwordAuth
+  login.passwordAuthBox = clean.passwordAuthBox
+  login.passwordAuthSnrp = clean.passwordAuthSnrp
+  login.passwordBox = clean.passwordBox
+  login.passwordKeySnrp = clean.passwordKeySnrp
 
-    POST: request => {
-      const { login, payload } = request
-      const clean = asMaybe(asChangePasswordPayload)(payload)
-      if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  return statusResponse()
+})
 
-      login.passwordAuth = clean.passwordAuth
-      login.passwordAuthBox = clean.passwordAuthBox
-      login.passwordAuthSnrp = clean.passwordAuthSnrp
-      login.passwordBox = clean.passwordBox
-      login.passwordKeySnrp = clean.passwordKeySnrp
+const deletePin2Route = withLogin2(request => {
+  const { login } = request
+  login.pin2Auth = undefined
+  login.pin2Box = undefined
+  login.pin2Id = undefined
+  login.pin2KeyBox = undefined
+  login.pin2TextBox = undefined
 
-      return statusResponse()
-    }
-  })
-)
+  return statusResponse()
+})
 
-const pin2Route: ApiServer = withLogin2(
-  pickMethod({
-    DELETE: request => {
-      const { login } = request
-      login.pin2Auth = undefined
-      login.pin2Box = undefined
-      login.pin2Id = undefined
-      login.pin2KeyBox = undefined
-      login.pin2TextBox = undefined
+const changePin2Route = withLogin2(request => {
+  const { login, payload } = request
+  const clean = asMaybe(asChangePin2Payload)(payload)
+  if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-      return statusResponse()
-    },
+  login.pin2Auth = clean.pin2Auth
+  login.pin2Box = clean.pin2Box
+  login.pin2Id = clean.pin2Id
+  login.pin2KeyBox = clean.pin2KeyBox
+  login.pin2TextBox = clean.pin2TextBox
 
-    POST: request => {
-      const { login, payload } = request
-      const clean = asMaybe(asChangePin2Payload)(payload)
-      if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  return statusResponse()
+})
 
-      login.pin2Auth = clean.pin2Auth
-      login.pin2Box = clean.pin2Box
-      login.pin2Id = clean.pin2Id
-      login.pin2KeyBox = clean.pin2KeyBox
-      login.pin2TextBox = clean.pin2TextBox
+const deleteRecovery2Route = withLogin2(request => {
+  const { login } = request
+  login.question2Box = undefined
+  login.recovery2Auth = undefined
+  login.recovery2Box = undefined
+  login.recovery2Id = undefined
+  login.recovery2KeyBox = undefined
 
-      return statusResponse()
-    }
-  })
-)
+  return statusResponse()
+})
 
-const recovery2Route: ApiServer = withLogin2(
-  pickMethod({
-    DELETE: request => {
-      const { login } = request
-      login.question2Box = undefined
-      login.recovery2Auth = undefined
-      login.recovery2Box = undefined
-      login.recovery2Id = undefined
-      login.recovery2KeyBox = undefined
+const changeRecovery2Route = withLogin2(request => {
+  const { login, payload } = request
+  const clean = asMaybe(asChangeRecovery2Payload)(payload)
+  if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-      return statusResponse()
-    },
+  login.question2Box = clean.question2Box
+  login.recovery2Auth = clean.recovery2Auth
+  login.recovery2Box = clean.recovery2Box
+  login.recovery2Id = clean.recovery2Id
+  login.recovery2KeyBox = clean.recovery2KeyBox
 
-    POST: request => {
-      const { login, payload } = request
-      const clean = asMaybe(asChangeRecovery2Payload)(payload)
-      if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  return statusResponse()
+})
 
-      login.question2Box = clean.question2Box
-      login.recovery2Auth = clean.recovery2Auth
-      login.recovery2Box = clean.recovery2Box
-      login.recovery2Id = clean.recovery2Id
-      login.recovery2KeyBox = clean.recovery2KeyBox
+const secretRoute = withLogin2(request => {
+  const { db, login, payload } = request
+  const clean = asMaybe(asChangeSecretPayload)(payload)
+  if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-      return statusResponse()
-    }
-  })
-)
+  // Do a quick sanity check:
+  if (login.loginAuth != null) {
+    return statusResponse(
+      statusCodes.conflict,
+      'The secret-key login is already configured'
+    )
+  }
 
-const secretRoute: ApiServer = withLogin2(
-  pickMethod({
-    POST: request => {
-      const { db, login, payload } = request
-      const clean = asMaybe(asChangeSecretPayload)(payload)
-      if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  login.loginAuth = clean.loginAuth
+  login.loginAuthBox = clean.loginAuthBox
 
-      // Do a quick sanity check:
-      if (login.loginAuth != null) {
-        return statusResponse(
-          statusCodes.conflict,
-          'The secret-key login is already configured'
-        )
-      }
-
-      login.loginAuth = clean.loginAuth
-      login.loginAuthBox = clean.loginAuthBox
-
-      return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
-    }
-  })
-)
+  return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
+})
 
 // lobby: ------------------------------------------------------------------
-
-type LobbyIdRequest = ApiRequest & { lobbyId: string }
 
 const handleMissingLobby: Serverlet<LobbyIdRequest> = request =>
   statusResponse(statusCodes.noLobby, `Cannot find lobby ${request.lobbyId}`)
@@ -467,7 +442,7 @@ const handleMissingLobby: Serverlet<LobbyIdRequest> = request =>
 const withLobby = (
   server: Serverlet<LobbyIdRequest & { lobby: DbLobby }>,
   fallback: Serverlet<LobbyIdRequest> = handleMissingLobby
-): ApiServer => request => {
+): Serverlet<ApiRequest> => request => {
   const { db, path } = request
   const lobbyId = path.split('/')[4]
   const lobby = db.lobbies[lobbyId]
@@ -476,85 +451,81 @@ const withLobby = (
     : fallback({ ...request, lobbyId })
 }
 
-const lobbyRoute: ApiServer = pickMethod({
-  PUT: withLobby(
-    request =>
-      statusResponse(
-        statusCodes.accountExists,
-        `Lobby ${request.lobbyId} already exists.`
-      ),
-    request => {
-      const { db, json, lobbyId } = request
-
-      const body = asMaybe(asLoginRequestBody)(json)
-      if (body == null) return statusResponse(statusCodes.invalidRequest)
-      const clean = asMaybe(asEdgeLobbyRequest)(body.data)
-      if (clean == null) return statusResponse(statusCodes.invalidRequest)
-
-      const { timeout = 600 } = clean
-      const expires = new Date(Date.now() + 1000 * timeout).toISOString()
-
-      db.lobbies[lobbyId] = { request: clean, replies: [], expires }
-      return statusResponse()
-    }
-  ),
-
-  POST: withLobby(request => {
-    const { json, lobby } = request
+const createLobbyRoute = withLobby(
+  request =>
+    statusResponse(
+      statusCodes.accountExists,
+      `Lobby ${request.lobbyId} already exists.`
+    ),
+  request => {
+    const { db, json, lobbyId } = request
 
     const body = asMaybe(asLoginRequestBody)(json)
     if (body == null) return statusResponse(statusCodes.invalidRequest)
-    const clean = asMaybe(asEdgeLobbyReply)(body.data)
+    const clean = asMaybe(asEdgeLobbyRequest)(body.data)
     if (clean == null) return statusResponse(statusCodes.invalidRequest)
 
-    lobby.replies.push(clean)
-    return statusResponse()
-  }),
+    const { timeout = 600 } = clean
+    const expires = new Date(Date.now() + 1000 * timeout).toISOString()
 
-  GET: withLobby(request => {
-    const { lobby } = request
-    return payloadResponse(wasLobbyPayload(lobby))
-  }),
-
-  DELETE: withLobby(request => {
-    const { db, lobbyId } = request
-    delete db.lobbies[lobbyId]
+    db.lobbies[lobbyId] = { request: clean, replies: [], expires }
     return statusResponse()
-  })
+  }
+)
+
+const updateLobbyRoute = withLobby(request => {
+  const { json, lobby } = request
+
+  const body = asMaybe(asLoginRequestBody)(json)
+  if (body == null) return statusResponse(statusCodes.invalidRequest)
+  const clean = asMaybe(asEdgeLobbyReply)(body.data)
+  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+
+  lobby.replies.push(clean)
+  return statusResponse()
+})
+
+const getLobbyRoute = withLobby(request => {
+  const { lobby } = request
+  return payloadResponse(wasLobbyPayload(lobby))
+})
+
+const deleteLobbyRoute = withLobby(request => {
+  const { db, lobbyId } = request
+  delete db.lobbies[lobbyId]
+  return statusResponse()
 })
 
 // messages: ---------------------------------------------------------------
 
-const messagesRoute: ApiServer = pickMethod({
-  POST: request => {
-    const { db, json } = request
-    const clean = asMaybe(asLoginRequestBody)(json)
-    if (clean == null || clean.loginIds == null) {
-      return statusResponse(statusCodes.invalidRequest)
-    }
-    const { loginIds } = clean
-
-    const out: MessagesPayload = []
-    for (const loginId of loginIds) {
-      const login = db.getLoginById(loginId)
-      if (login != null) {
-        out.push({
-          loginId,
-          otpResetPending: login.otpResetDate != null,
-          pendingVouchers: [],
-          recovery2Corrupt: false
-        })
-      }
-    }
-    return payloadResponse(wasMessagesPayload(out))
+const messagesRoute: Serverlet<ApiRequest> = request => {
+  const { db, json } = request
+  const clean = asMaybe(asLoginRequestBody)(json)
+  if (clean == null || clean.loginIds == null) {
+    return statusResponse(statusCodes.invalidRequest)
   }
-})
+  const { loginIds } = clean
+
+  const out: MessagesPayload = []
+  for (const loginId of loginIds) {
+    const login = db.getLoginById(loginId)
+    if (login != null) {
+      out.push({
+        loginId,
+        otpResetPending: login.otpResetDate != null,
+        pendingVouchers: [],
+        recovery2Corrupt: false
+      })
+    }
+  }
+  return payloadResponse(wasMessagesPayload(out))
+}
 
 // sync: -------------------------------------------------------------------
 
-type RepoRequest = ApiRequest & { repo: DbRepo }
-
-const withRepo = (server: Serverlet<RepoRequest>): ApiServer => request => {
+const withRepo = (
+  server: Serverlet<RepoRequest>
+): Serverlet<ApiRequest> => request => {
   const { db, path } = request
   const elements = path.split('/')
   const syncKey = elements[4]
@@ -569,26 +540,22 @@ const withRepo = (server: Serverlet<RepoRequest>): ApiServer => request => {
   return server({ ...request, repo })
 }
 
-const storeRoute: ApiServer = withRepo(
-  pickMethod({
-    GET: request => {
-      const { repo } = request
-      return jsonResponse({ changes: repo })
-    },
+const storeReadRoute = withRepo(request => {
+  const { repo } = request
+  return jsonResponse({ changes: repo })
+})
 
-    POST: request => {
-      const { json, repo } = request
-      const { changes } = asStoreBody(json)
-      for (const change of Object.keys(changes)) {
-        repo[change] = changes[change]
-      }
-      return jsonResponse({
-        changes: repo,
-        hash: '1111111111111111111111111111111111111111'
-      })
-    }
+const storeUpdateRoute = withRepo(request => {
+  const { json, repo } = request
+  const { changes } = asStoreBody(json)
+  for (const change of Object.keys(changes)) {
+    repo[change] = changes[change]
+  }
+  return jsonResponse({
+    changes: repo,
+    hash: '1111111111111111111111111111111111111111'
   })
-)
+})
 
 const asStoreBody = asObject({
   changes: asMap(asEdgeBox)
@@ -596,42 +563,78 @@ const asStoreBody = asObject({
 
 // info: -------------------------------------------------------------------
 
-const infoRoute: ApiServer = pickMethod({
-  GET: request => {
-    return jsonResponse({
-      infoServers: ['https://info-fake1.edge.app'],
-      syncServers: [
-        'https://sync-fake1.edge.app',
-        'https://sync-fake2.edge.app',
-        'https://sync-fake3.edge.app'
-      ]
-    })
-  }
-})
+const infoRoute: Serverlet<ApiRequest> = request => {
+  return jsonResponse({
+    infoServers: ['https://info-fake1.edge.app'],
+    syncServers: [
+      'https://sync-fake1.edge.app',
+      'https://sync-fake2.edge.app',
+      'https://sync-fake3.edge.app'
+    ]
+  })
+}
 
 // router: -----------------------------------------------------------------
 
-const urls: ApiServer = pickPath(
+const urls: Serverlet<ApiRequest> = pickPath(
   {
     // Login v2 endpoints:
-    '/api/v2/login/?': loginRoute,
-    '/api/v2/login/create/?': create2Route,
-    '/api/v2/login/keys/?': keysRoute,
-    '/api/v2/login/otp/?': otp2Route,
-    '/api/v2/login/password/?': password2Route,
-    '/api/v2/login/pin2/?': pin2Route,
-    '/api/v2/login/recovery2/?': recovery2Route,
-    '/api/v2/login/secret/?': secretRoute,
-    '/api/v2/messages/?': messagesRoute,
+    '/api/v2/login/?': pickMethod({
+      GET: loginRoute,
+      POST: loginRoute
+    }),
+    '/api/v2/login/create/?': pickMethod({
+      POST: createLoginRoute,
+      PUT: createLoginRoute
+    }),
+    '/api/v2/login/keys/?': pickMethod({
+      POST: addKeysRoute
+    }),
+    '/api/v2/login/otp/?': pickMethod({
+      DELETE: deleteOtpRoute,
+      POST: changeOtpRoute,
+      PUT: changeOtpRoute
+    }),
+    '/api/v2/login/password/?': pickMethod({
+      DELETE: deletePasswordRoute,
+      POST: changePasswordRoute,
+      PUT: changePasswordRoute
+    }),
+    '/api/v2/login/pin2/?': pickMethod({
+      DELETE: deletePin2Route,
+      POST: changePin2Route,
+      PUT: changePin2Route
+    }),
+    '/api/v2/login/recovery2/?': pickMethod({
+      DELETE: deleteRecovery2Route,
+      POST: changeRecovery2Route,
+      PUT: changeRecovery2Route
+    }),
+    '/api/v2/login/secret/?': pickMethod({
+      POST: secretRoute
+    }),
+    '/api/v2/messages/?': pickMethod({
+      POST: messagesRoute
+    }),
 
     // Lobby server endpoints:
-    '/api/v2/lobby/[^/]+/?': lobbyRoute,
+    '/api/v2/lobby/[^/]+/?': pickMethod({
+      DELETE: deleteLobbyRoute,
+      GET: getLobbyRoute,
+      POST: updateLobbyRoute,
+      PUT: createLobbyRoute
+    }),
 
     // Sync server endpoints:
-    '/api/v2/store/[^/]+/?': storeRoute,
+    '/api/v2/store/[^/]+/?': pickMethod({
+      GET: storeReadRoute,
+      POST: storeUpdateRoute
+    }),
 
     // Info server endpoints:
-    '/v1/edgeServers': infoRoute
+    '/v1/edgeServers': pickMethod({
+      GET: infoRoute
+    })
   },
   request =>
     statusResponse(statusCodes.notFound, `Unknown API endpoint ${request.path}`)
