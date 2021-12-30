@@ -29,7 +29,10 @@ import {
   asRecovery2InfoPayload,
   asUsernameInfoPayload
 } from '../../types/server-cleaners.js'
-import { type MessagesPayload } from '../../types/server-types.js'
+import {
+  type LoginRequestBody,
+  type MessagesPayload
+} from '../../types/server-types.js'
 import { checkTotp } from '../../util/crypto/hotp.js'
 import { verifyData } from '../../util/crypto/verify.js'
 import { utf8 } from '../../util/encoding.js'
@@ -60,22 +63,34 @@ const wasUsernameInfoPayload = uncleaner(asUsernameInfoPayload)
 
 const OTP_RESET_TOKEN = 'Super secret reset token'
 
-type ApiRequest = HttpRequest & {
+type DbRequest = HttpRequest & {
   +db: FakeDb,
   +json: mixed
 }
-type LoginRequest = ApiRequest & {
-  +login: DbLogin,
+type ApiRequest = DbRequest & {
+  +body: LoginRequestBody,
   +payload: mixed
+}
+type LoginRequest = ApiRequest & {
+  +login: DbLogin
 }
 type LobbyIdRequest = ApiRequest & {
   +lobbyId: string
 }
-type RepoRequest = ApiRequest & {
+type RepoRequest = DbRequest & {
   +repo: DbRepo
 }
 
 // Authentication middleware: ----------------------------------------------
+
+const withApiKey = (
+  server: Serverlet<ApiRequest>
+): Serverlet<DbRequest> => async request => {
+  const { json } = request
+  const body = asMaybe(asLoginRequestBody)(json)
+  if (body == null) return statusResponse(statusCodes.invalidRequest)
+  return await server({ ...request, body, payload: body.data })
+}
 
 const handleMissingCredentials: Serverlet<ApiRequest> = request =>
   statusResponse(statusCodes.invalidRequest)
@@ -87,10 +102,8 @@ const withLogin2 = (
   server: Serverlet<LoginRequest>,
   fallback: Serverlet<ApiRequest> = handleMissingCredentials
 ): Serverlet<ApiRequest> => request => {
-  const { db, json } = request
-  const clean = asLoginRequestBody(json)
+  const { db, body } = request
   const {
-    data: payload,
     loginAuth,
     loginId,
     otp = '',
@@ -100,7 +113,7 @@ const withLogin2 = (
     recovery2Auth,
     recovery2Id,
     userId
-  } = clean
+  } = body
 
   // Token login:
   if (loginId != null && loginAuth != null) {
@@ -114,7 +127,7 @@ const withLogin2 = (
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
-    return server({ ...request, login, payload })
+    return server({ ...request, login })
   }
 
   // Password login:
@@ -132,7 +145,7 @@ const withLogin2 = (
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
-    return server({ ...request, login, payload })
+    return server({ ...request, login })
   }
 
   // PIN2 login:
@@ -147,7 +160,7 @@ const withLogin2 = (
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
-    return server({ ...request, login, payload })
+    return server({ ...request, login })
   }
 
   // Recovery2 login:
@@ -169,7 +182,7 @@ const withLogin2 = (
     if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
       return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
     }
-    return server({ ...request, login, payload })
+    return server({ ...request, login })
   }
 
   return fallback(request)
@@ -525,7 +538,7 @@ const messagesRoute: Serverlet<ApiRequest> = request => {
 
 const withRepo = (
   server: Serverlet<RepoRequest>
-): Serverlet<ApiRequest> => request => {
+): Serverlet<DbRequest> => request => {
   const { db, path } = request
   const elements = path.split('/')
   const syncKey = elements[4]
@@ -563,7 +576,7 @@ const asStoreBody = asObject({
 
 // info: -------------------------------------------------------------------
 
-const infoRoute: Serverlet<ApiRequest> = request => {
+const infoRoute: Serverlet<DbRequest> = request => {
   return jsonResponse({
     infoServers: ['https://info-fake1.edge.app'],
     syncServers: [
@@ -576,53 +589,53 @@ const infoRoute: Serverlet<ApiRequest> = request => {
 
 // router: -----------------------------------------------------------------
 
-const urls: Serverlet<ApiRequest> = pickPath(
+const urls: Serverlet<DbRequest> = pickPath(
   {
     // Login v2 endpoints:
     '/api/v2/login/?': pickMethod({
-      GET: loginRoute,
-      POST: loginRoute
+      GET: withApiKey(loginRoute),
+      POST: withApiKey(loginRoute)
     }),
     '/api/v2/login/create/?': pickMethod({
-      POST: createLoginRoute,
-      PUT: createLoginRoute
+      POST: withApiKey(createLoginRoute),
+      PUT: withApiKey(createLoginRoute)
     }),
     '/api/v2/login/keys/?': pickMethod({
-      POST: addKeysRoute
+      POST: withApiKey(addKeysRoute)
     }),
     '/api/v2/login/otp/?': pickMethod({
-      DELETE: deleteOtpRoute,
-      POST: changeOtpRoute,
-      PUT: changeOtpRoute
+      DELETE: withApiKey(deleteOtpRoute),
+      POST: withApiKey(changeOtpRoute),
+      PUT: withApiKey(changeOtpRoute)
     }),
     '/api/v2/login/password/?': pickMethod({
-      DELETE: deletePasswordRoute,
-      POST: changePasswordRoute,
-      PUT: changePasswordRoute
+      DELETE: withApiKey(deletePasswordRoute),
+      POST: withApiKey(changePasswordRoute),
+      PUT: withApiKey(changePasswordRoute)
     }),
     '/api/v2/login/pin2/?': pickMethod({
-      DELETE: deletePin2Route,
-      POST: changePin2Route,
-      PUT: changePin2Route
+      DELETE: withApiKey(deletePin2Route),
+      POST: withApiKey(changePin2Route),
+      PUT: withApiKey(changePin2Route)
     }),
     '/api/v2/login/recovery2/?': pickMethod({
-      DELETE: deleteRecovery2Route,
-      POST: changeRecovery2Route,
-      PUT: changeRecovery2Route
+      DELETE: withApiKey(deleteRecovery2Route),
+      POST: withApiKey(changeRecovery2Route),
+      PUT: withApiKey(changeRecovery2Route)
     }),
     '/api/v2/login/secret/?': pickMethod({
-      POST: secretRoute
+      POST: withApiKey(secretRoute)
     }),
     '/api/v2/messages/?': pickMethod({
-      POST: messagesRoute
+      POST: withApiKey(messagesRoute)
     }),
 
     // Lobby server endpoints:
     '/api/v2/lobby/[^/]+/?': pickMethod({
-      DELETE: deleteLobbyRoute,
-      GET: getLobbyRoute,
-      POST: updateLobbyRoute,
-      PUT: createLobbyRoute
+      DELETE: withApiKey(deleteLobbyRoute),
+      GET: withApiKey(getLobbyRoute),
+      POST: withApiKey(updateLobbyRoute),
+      PUT: withApiKey(createLobbyRoute)
     }),
 
     // Sync server endpoints:
@@ -651,7 +664,7 @@ export function makeFakeServer(
     const json =
       request.body.byteLength > 0
         ? JSON.parse(utf8.stringify(new Uint8Array(request.body)))
-        : undefined
+        : {}
     return urls({ ...request, db, json })
   }
   const out = addHiddenProperties(serveRequest, { offline: false })
