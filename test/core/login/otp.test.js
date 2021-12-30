@@ -9,6 +9,7 @@ import {
   type EdgeContext,
   asMaybeOtpError
 } from '../../../src/types/types.js'
+import { expectRejection } from '../../expect-rejection.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
@@ -117,5 +118,42 @@ describe('otp', function () {
     await account.cancelOtpReset()
     const messages2 = await context.fetchLoginMessages()
     expect(messages2['js test 0'].otpResetPending).equals(false)
+  })
+
+  it('vouchers can be approved', async function () {
+    const { account, context, remote, voucherId } = await setupOtpFailure()
+
+    // The voucher should appear in the messages:
+    const messages1 = await context.fetchLoginMessages()
+    expect(messages1['js test 0'].pendingVouchers.length).equals(1)
+    expect(messages1['js test 0'].pendingVouchers[0].voucherId).equals(
+      voucherId
+    )
+
+    // Approve the voucher:
+    await account.approveVoucher(voucherId)
+
+    // The voucher should not appear in the messages:
+    const messages2 = await context.fetchLoginMessages()
+    expect(messages2['js test 0'].pendingVouchers.length).equals(0)
+
+    // Remote login should work now:
+    await remote.loginWithPassword(fakeUser.username, fakeUser.password)
+  })
+
+  it('vouchers can be rejected', async function () {
+    const { account, context, remote, voucherId } = await setupOtpFailure()
+
+    // Reject the voucher:
+    await account.rejectVoucher(voucherId)
+
+    // The voucher should not appear in the messages:
+    const messages2 = await context.fetchLoginMessages()
+    expect(messages2['js test 0'].pendingVouchers.length).equals(0)
+
+    // Remote login should not work:
+    await expectRejection(
+      remote.loginWithPassword(fakeUser.username, fakeUser.password)
+    )
   })
 })

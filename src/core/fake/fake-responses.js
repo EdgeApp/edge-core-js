@@ -3,6 +3,7 @@
 import { uncleaner } from 'cleaners'
 import { type HttpHeaders, type HttpResponse } from 'serverlet'
 
+import { type VoucherDump } from '../../types/fake-types.js'
 import {
   asOtpErrorPayload,
   asPasswordErrorPayload
@@ -147,19 +148,20 @@ export function payloadResponse(
 export function otpErrorResponse(
   login: DbLogin,
   opts: {
-    reason?: 'ip' | 'otp'
+    reason?: 'ip' | 'otp',
+    voucher?: VoucherDump
   } = {}
 ): Promise<HttpResponse> {
-  const { reason = 'otp' } = opts
+  const { reason = 'otp', voucher } = opts
   return payloadResponse(
     wasOtpErrorPayload({
       login_id: login.loginId,
       otp_reset_auth: login.otpResetAuth,
       otp_timeout_date: login.otpResetDate,
       reason,
-      voucher_id: 'test-voucher-id',
-      voucher_auth: Uint8Array.from([0, 0, 0, 0]),
-      voucher_activates: new Date('2100-01-01')
+      voucher_auth: voucher?.voucherAuth,
+      voucher_activates: voucher?.activates,
+      voucher_id: voucher?.voucherId
     }),
     statusCodes.invalidOtp
   )

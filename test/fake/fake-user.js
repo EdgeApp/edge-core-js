@@ -151,6 +151,7 @@ export const fakeUserDump: EdgeFakeUser = {
       encryptionType: 0,
       iv_hex: 'd882620a197f11c244457ccf5ae804da'
     },
+    vouchers: [],
     children: [
       {
         appId: 'test-child',
@@ -191,6 +192,7 @@ export const fakeUserDump: EdgeFakeUser = {
         loginAuth: 'cfNNeN4xPQK7+2/j8xSyF/xm5NVTDOZkzacwO1FTaKw=',
         pin2Auth: 'i5LBqVNDTMU60rQLfjOiEatR5P/xzRS9mmdfk8TQdrM=',
         pin2Id: 'oEfMhgYiGLM0JGcrxA3FgACSURA9QIkb+yanM8Euiqo=',
+        vouchers: [],
         children: [
           {
             appId: 'test-child-child',
@@ -210,6 +212,7 @@ export const fakeUserDump: EdgeFakeUser = {
                 'nT3OFKzf/hsIZOZhG6BtPwL1z9wkZk5KolB9MH02FITQQOvQ0pPZtf0Es5rj9TCrJM3VUSJ4AjPh8NGzgyY6q8qr/mKI158pyqeDai+IeL4='
             },
             loginAuth: 'bqqKPbbmpcBS1185JjzNFRRYPjkkIG8aCLujRMdqng==',
+            vouchers: [],
             children: []
           }
         ]

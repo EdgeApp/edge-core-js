@@ -7,7 +7,8 @@ import {
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  asValue
 } from 'cleaners'
 
 import {
@@ -18,6 +19,23 @@ import {
   asRecovery2Auth
 } from './server-cleaners.js'
 import { type EdgeBox, type EdgeSnrp } from './server-types.js'
+
+export type VoucherDump = {
+  // Identity:
+  loginId: Uint8Array,
+  voucherAuth: Uint8Array,
+  voucherId: string,
+
+  // Login capability:
+  created: Date,
+  activates: Date, // Automatically becomes approved on this date
+  status: 'pending' | 'approved' | 'rejected',
+
+  // Information about the login:
+  ip: string,
+  ipDescription: string,
+  deviceDescription: string | void
+}
 
 export type LoginDump = {
   // Identity:
@@ -66,6 +84,7 @@ export type LoginDump = {
   mnemonicBox?: EdgeBox,
   rootKeyBox?: EdgeBox,
   syncKeyBox?: EdgeBox,
+  vouchers: VoucherDump[],
 
   // Obsolete:
   pinBox?: EdgeBox,
@@ -81,6 +100,23 @@ export type FakeUser = {
   server: LoginDump,
   username: string
 }
+
+export const asVoucherDump = asObject({
+  // Identity:
+  loginId: asBase64,
+  voucherAuth: asBase64,
+  voucherId: asString,
+
+  // Login capability:
+  created: asDate,
+  activates: asDate, // Automatically becomes approved on this date
+  status: asValue('pending', 'approved', 'rejected'),
+
+  // Information about the login:
+  ip: asString,
+  ipDescription: asString,
+  deviceDescription: asOptional(asString)
+})
 
 export const asLoginDump: Cleaner<LoginDump> = asObject({
   // Identity:
@@ -101,7 +137,6 @@ export const asLoginDump: Cleaner<LoginDump> = asObject({
   otpResetAuth: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
-  // pendingVouchers: asOptional(asArray(asPendingVoucher), []),
 
   // Password login:
   passwordAuth: asOptional(asBase64),
@@ -133,6 +168,7 @@ export const asLoginDump: Cleaner<LoginDump> = asObject({
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
   syncKeyBox: asOptional(asEdgeBox),
+  vouchers: asOptional(asArray(asVoucherDump), []),
 
   // Obsolete:
   pinBox: asOptional(asEdgeBox),

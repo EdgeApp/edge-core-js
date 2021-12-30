@@ -10,12 +10,14 @@ import {
   pickPath
 } from 'serverlet'
 
+import { type VoucherDump } from '../../types/fake-types.js'
 import {
   asChangeOtpPayload,
   asChangePasswordPayload,
   asChangePin2Payload,
   asChangeRecovery2Payload,
   asChangeSecretPayload,
+  asChangeVouchersPayload,
   asCreateKeysPayload,
   asCreateLoginPayload,
   asEdgeBox,
@@ -43,7 +45,8 @@ import {
   type DbLogin,
   type DbRepo,
   type FakeDb,
-  makeLoginPayload
+  makeLoginPayload,
+  makePendingVouchers
 } from './fake-db.js'
 import {
   jsonResponse,
@@ -94,7 +97,7 @@ const withValidOtp: (
   server: Serverlet<LoginRequest>
 ) => Serverlet<LoginRequest> = server => async request => {
   const { body, login } = request
-  const { otp } = body
+  const { otp, voucherAuth, voucherId } = body
 
   // Deactivated OTP is fine:
   const { otpKey } = login
@@ -105,9 +108,36 @@ const withValidOtp: (
     return await server(request)
   }
 
+  // An approved voucher is good:
+  if (voucherAuth != null && voucherId != null) {
+    const voucher = login.vouchers.find(
+      voucher => voucher.voucherId === voucherId
+    )
+    if (
+      voucher != null &&
+      voucher.status === 'approved' &&
+      verifyData(voucherAuth, voucher.voucherAuth)
+    ) {
+      return await server(request)
+    }
+  }
+
   login.otpResetAuth = 'Super secret reset token'
-  return otpErrorResponse(login)
+  const voucher: VoucherDump = {
+    activates: new Date('2020-01-01T00:00:00Z'),
+    created: new Date('2020-01-08T00:00:00Z'),
+    deviceDescription: 'A phone',
+    ip: 'localhost',
+    ipDescription: 'here',
+    loginId: login.loginId,
+    status: 'pending',
+    voucherAuth: Uint8Array.from([0xaa, 0xbb]),
+    voucherId: `voucher-${login.vouchers.length}`
+  }
+  login.vouchers.push(voucher)
+  return otpErrorResponse(login, { voucher })
 }
+
 const handleMissingCredentials: Serverlet<ApiRequest> = request =>
   statusResponse(statusCodes.invalidRequest)
 
@@ -262,6 +292,7 @@ function createLogin(
     ...secret,
     created: date,
     keyBoxes: keys.keyBoxes,
+    vouchers: [],
 
     // Optional fields:
     ...asMaybe(asChangeOtpPayload)(clean),
@@ -451,6 +482,26 @@ const secretRoute = withLogin2(request => {
   return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
 })
 
+export const vouchersRoute = withLogin2(async request => {
+  const { db, login, payload } = request
+  const clean = asMaybe(asChangeVouchersPayload)(payload)
+  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  const { approvedVouchers = [], rejectedVouchers = [] } = clean
+
+  // Let's get our tasks organized:
+  const table: { [id: string]: 'approved' | 'rejected' } = {}
+  for (const id of approvedVouchers) table[id] = 'approved'
+  for (const id of rejectedVouchers) table[id] = 'rejected'
+
+  // Grab all the rows:
+  for (const voucher of login.vouchers) {
+    if (table[voucher.voucherId] == null) continue
+    voucher.status = table[voucher.voucherId]
+  }
+
+  return payloadResponse(wasLoginPayload(await makeLoginPayload(db, login)))
+})
+
 // lobby: ------------------------------------------------------------------
 
 const handleMissingLobby: Serverlet<LobbyIdRequest> = request =>
@@ -530,7 +581,7 @@ const messagesRoute: Serverlet<ApiRequest> = request => {
       out.push({
         loginId,
         otpResetPending: login.otpResetDate != null,
-        pendingVouchers: [],
+        pendingVouchers: makePendingVouchers(login),
         recovery2Corrupt: false
       })
     }
@@ -629,6 +680,9 @@ const urls: Serverlet<DbRequest> = pickPath(
     }),
     '/api/v2/login/secret/?': pickMethod({
       POST: withApiKey(secretRoute)
+    }),
+    '/api/v2/login/vouchers/?': pickMethod({
+      POST: withApiKey(vouchersRoute)
     }),
     '/api/v2/messages/?': pickMethod({
       POST: withApiKey(messagesRoute)
