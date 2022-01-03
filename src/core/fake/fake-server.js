@@ -61,8 +61,6 @@ const wasOtpResetPayload = uncleaner(asOtpResetPayload)
 const wasRecovery2InfoPayload = uncleaner(asRecovery2InfoPayload)
 const wasUsernameInfoPayload = uncleaner(asUsernameInfoPayload)
 
-const OTP_RESET_TOKEN = 'Super secret reset token'
-
 type DbRequest = HttpRequest & {
   +db: FakeDb,
   +json: mixed
@@ -92,6 +90,24 @@ const withApiKey = (
   return await server({ ...request, body, payload: body.data })
 }
 
+const withValidOtp: (
+  server: Serverlet<LoginRequest>
+) => Serverlet<LoginRequest> = server => async request => {
+  const { body, login } = request
+  const { otp } = body
+
+  // Deactivated OTP is fine:
+  const { otpKey } = login
+  if (otpKey == null) return await server(request)
+
+  // A valid OTP is good:
+  if (otp != null && checkTotp(otpKey, otp, { spread: 2 })) {
+    return await server(request)
+  }
+
+  login.otpResetAuth = 'Super secret reset token'
+  return otpErrorResponse(login)
+}
 const handleMissingCredentials: Serverlet<ApiRequest> = request =>
   statusResponse(statusCodes.invalidRequest)
 
@@ -106,7 +122,6 @@ const withLogin2 = (
   const {
     loginAuth,
     loginId,
-    otp = '',
     passwordAuth,
     pin2Auth,
     pin2Id,
@@ -124,10 +139,7 @@ const withLogin2 = (
     if (login.loginAuth == null || !verifyData(loginAuth, login.loginAuth)) {
       return passwordErrorResponse(0)
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
-      return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
-    }
-    return server({ ...request, login })
+    return withValidOtp(server)({ ...request, login })
   }
 
   // Password login:
@@ -142,10 +154,7 @@ const withLogin2 = (
     ) {
       return passwordErrorResponse(0)
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
-      return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
-    }
-    return server({ ...request, login })
+    return withValidOtp(server)({ ...request, login })
   }
 
   // PIN2 login:
@@ -157,10 +166,7 @@ const withLogin2 = (
     if (login.pin2Auth == null || !verifyData(pin2Auth, login.pin2Auth)) {
       return passwordErrorResponse(0)
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
-      return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
-    }
-    return server({ ...request, login })
+    return withValidOtp(server)({ ...request, login })
   }
 
   // Recovery2 login:
@@ -179,10 +185,7 @@ const withLogin2 = (
         return passwordErrorResponse(0)
       }
     }
-    if (login.otpKey != null && !checkTotp(login.otpKey, otp)) {
-      return otpErrorResponse(login.loginId, OTP_RESET_TOKEN)
-    }
-    return server({ ...request, login })
+    return withValidOtp(server)({ ...request, login })
   }
 
   return fallback(request)
@@ -318,8 +321,9 @@ const deleteOtpRoute = withLogin2(
   request => {
     const { login } = request
     login.otpKey = undefined
-    login.otpTimeout = undefined
+    login.otpResetAuth = undefined
     login.otpResetDate = undefined
+    login.otpTimeout = undefined
 
     return statusResponse()
   },
@@ -334,7 +338,7 @@ const deleteOtpRoute = withLogin2(
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
-    if (clean.otpResetAuth !== OTP_RESET_TOKEN) {
+    if (clean.otpResetAuth !== login.otpResetAuth) {
       return passwordErrorResponse(0)
     }
     const { otpKey, otpTimeout } = login

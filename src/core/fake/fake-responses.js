@@ -7,6 +7,7 @@ import {
   asOtpErrorPayload,
   asPasswordErrorPayload
 } from '../../types/server-cleaners.js'
+import { type DbLogin } from './fake-db.js'
 
 const wasOtpErrorPayload = uncleaner(asOtpErrorPayload)
 const wasPasswordErrorPayload = uncleaner(asPasswordErrorPayload)
@@ -144,15 +145,18 @@ export function payloadResponse(
  * An OTP failure response.
  */
 export function otpErrorResponse(
-  loginId: Uint8Array,
-  otpResetToken: string,
-  otpResetDate?: Date
+  login: DbLogin,
+  opts: {
+    reason?: 'ip' | 'otp'
+  } = {}
 ): Promise<HttpResponse> {
+  const { reason = 'otp' } = opts
   return payloadResponse(
     wasOtpErrorPayload({
-      login_id: loginId,
-      otp_reset_auth: otpResetToken,
-      otp_timeout_date: otpResetDate,
+      login_id: login.loginId,
+      otp_reset_auth: login.otpResetAuth,
+      otp_timeout_date: login.otpResetDate,
+      reason,
       voucher_id: 'test-voucher-id',
       voucher_auth: Uint8Array.from([0, 0, 0, 0]),
       voucher_activates: new Date('2100-01-01')

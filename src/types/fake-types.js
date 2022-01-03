@@ -31,6 +31,7 @@ export type LoginDump = {
 
   // 2-factor login:
   otpKey?: Uint8Array,
+  otpResetAuth?: string,
   otpResetDate?: Date,
   otpTimeout?: number,
 
@@ -97,6 +98,7 @@ export const asLoginDump: Cleaner<LoginDump> = asObject({
 
   // 2-factor login:
   otpKey: asOptional(asBase32),
+  otpResetAuth: asOptional(asString),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
   // pendingVouchers: asOptional(asArray(asPendingVoucher), []),
