@@ -523,6 +523,7 @@ export type EdgeCurrencyEngine = {
   isAddressUsed(address: string): Promise<boolean> | boolean,
 
   // Spending:
+  getMaxSpendable?: (spendInfo: EdgeSpendInfo) => Promise<string>,
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   signTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
   broadcastTx(transaction: EdgeTransaction): Promise<EdgeTransaction>,
