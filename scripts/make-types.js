@@ -9,9 +9,15 @@ function jsToTs(code) {
     .replace(/(\n *)\+(\[?[_a-zA-Z0-9]+)/g, '$1readonly $2')
 
     // Fix differently-named types:
+    .replace(/\bdeclare export var\b/g, 'export declare const')
+    .replace(/\bdeclare export\b/g, 'export declare')
     .replace(/\bmixed\b/g, 'unknown')
     .replace(/\| void\b/g, '| undefined')
     .replace(/: void\b/g, ': undefined')
+    .replace(
+      /\bReact\$StatelessFunctionalComponent<(\w+)>/g,
+      '(props: $1) => any'
+    )
 
     // Fix `import type` syntax:
     .replace(/\bimport type\b/g, 'import')
