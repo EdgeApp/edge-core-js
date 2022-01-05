@@ -211,10 +211,12 @@ export type EdgeDenomination = {
 }
 
 export type EdgeMetaToken = {
+  contractAddress?: string,
+
+  // Display only:!!!
   currencyCode: string,
   currencyName: string,
   denominations: EdgeDenomination[],
-  contractAddress?: string,
   symbolImage?: string
 }
 
@@ -240,10 +242,10 @@ type EdgeObjectTemplate = Array<
 export type EdgeCurrencyInfo = {
   // Basic currency information:
   +pluginId: string,
-  displayName: string,
+  displayName: string, // Name for the chain
   walletType: string,
 
-  // Native token information:
+  // Native token information, Display only !!!!:
   currencyCode: string,
   denominations: EdgeDenomination[],
 
@@ -286,6 +288,7 @@ export type EdgeMetadata = {
 }
 
 export type EdgeNetworkFee = {
+  tokenId: EdgeTokenId, // The core can synthesize this?
   +currencyCode: string,
   +nativeAmount: string
 }
@@ -311,6 +314,8 @@ export type EdgeTxSwap = {
 }
 
 export type EdgeTransaction = {
+  tokenId: EdgeTokenId, // The core can synthesize this?
+
   // Amounts:
   currencyCode: string,
   nativeAmount: string,
@@ -371,7 +376,8 @@ export type EdgePaymentProtocolInfo = {
 
 export type EdgeSpendInfo = {
   // Basic information:
-  currencyCode?: string,
+  tokenId: EdgeTokenId,
+  currencyCode?: string, // DEPRECATED, DO NOT USE!!!!
   privateKeys?: string[],
   spendTargets: EdgeSpendTarget[],
 
@@ -457,7 +463,8 @@ export type EdgeCurrencyCodeOptions = {
 }
 
 export type EdgeGetTransactionsOptions = {
-  currencyCode?: string,
+  tokenId: EdgeTokenId,
+  currencyCode?: string, // Depreacted
   startIndex?: number,
   startEntries?: number,
   startDate?: Date,
@@ -473,7 +480,8 @@ export type EdgeGetTransactionsOptions = {
 export type EdgeCurrencyEngineCallbacks = {
   +onBlockHeightChanged: (blockHeight: number) => void,
   +onTransactionsChanged: (transactions: EdgeTransaction[]) => void,
-  +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
+  +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void, // Deprecated. Use onTokenBalanceChanged.
+  +onTokenBalanceChanged: (tokenId: EdgeTokenId, nativeBalance: string) => void,
   +onAddressesChecked: (progressRatio: number) => void,
   +onAddressChanged: () => void,
   +onTxidsChanged: (txids: EdgeTxidMap) => void,
@@ -503,8 +511,8 @@ export type EdgeCurrencyEngine = {
 
   // Chain state:
   getBlockHeight(): number,
-  getBalance(opts: EdgeCurrencyCodeOptions): string,
-  getNumTransactions(opts: EdgeCurrencyCodeOptions): number,
+  getBalance(opts: EdgeCurrencyCodeOptions): string, // DEPRECATED
+  getNumTransactions(opts: EdgeCurrencyCodeOptions | EdgeTokenId): number,
   getTransactions(opts: EdgeGetTransactionsOptions): Promise<EdgeTransaction[]>,
   getTxids?: () => EdgeTxidMap,
 
@@ -517,7 +525,7 @@ export type EdgeCurrencyEngine = {
 
   // Addresses:
   getFreshAddress(
-    opts: EdgeCurrencyCodeOptions
+    opts: EdgeCurrencyCodeOptions // DEPRECATED
   ): Promise<EdgeFreshAddress> | EdgeFreshAddress,
   addGapLimitAddresses(addresses: string[]): Promise<void> | void,
   isAddressUsed(address: string): Promise<boolean> | boolean,
@@ -635,7 +643,8 @@ export type EdgeCurrencyWallet = {
   ): Promise<string>,
 
   // Chain state:
-  +balances: EdgeBalances,
+  +balances: { [currencyCode: string]: string },
+  +tokenBalances: Array<EdgeTokenId & { nativeAmount: string }>,
   +blockHeight: number,
   +syncRatio: number,
 
@@ -643,7 +652,7 @@ export type EdgeCurrencyWallet = {
   +paused: boolean,
   changePaused(paused: boolean): Promise<void>,
 
-  // Token management:
+  // Token management: DEPRECATED, to be replaced:
   changeEnabledTokens(currencyCodes: string[]): Promise<void>,
   enableTokens(tokens: string[]): Promise<void>,
   disableTokens(tokens: string[]): Promise<void>,
@@ -651,14 +660,16 @@ export type EdgeCurrencyWallet = {
   addCustomToken(token: EdgeTokenInfo): Promise<void>,
 
   // Transaction history:
-  getNumTransactions(opts?: EdgeCurrencyCodeOptions): Promise<number>,
+  getNumTransactions(
+    opts?: EdgeCurrencyCodeOptions | EdgeTokenId
+  ): Promise<number>,
   getTransactions(
     opts?: EdgeGetTransactionsOptions
   ): Promise<EdgeTransaction[]>,
 
   // Addresses:
   getReceiveAddress(
-    opts?: EdgeCurrencyCodeOptions
+    opts?: EdgeCurrencyCodeOptions // Nope
   ): Promise<EdgeReceiveAddress>,
   saveReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,
   lockReceiveAddress(receiveAddress: EdgeReceiveAddress): Promise<void>,
@@ -671,7 +682,7 @@ export type EdgeCurrencyWallet = {
   sweepPrivateKeys(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction>,
   saveTxMetadata(
     txid: string,
-    currencyCode: string,
+    currencyCode: string, // Will not do anything
     metadata: EdgeMetadata
   ): Promise<void>,
   getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string>,
@@ -705,18 +716,33 @@ export type EdgeSwapInfo = {
   +supportEmail: string
 }
 
+// CoinId
+// CurrencyId
+// TokenId
+// TokenType
+// WalletType
+
+export type EdgeTokenId = {
+  pluginId: string,
+  contractId?: string
+}
+
 export type EdgeSwapRequest = {
   // Where?
   fromWallet: EdgeCurrencyWallet,
   toWallet: EdgeCurrencyWallet,
 
   // What?
-  fromCurrencyCode: string,
-  toCurrencyCode: string,
+  fromTokenId: EdgeTokenId,
+  toTokenId: EdgeTokenId,
 
   // How much?
   nativeAmount: string,
-  quoteFor: 'from' | 'to'
+  quoteFor: 'from' | 'to',
+
+  // Deprecated. Use CurrencyId:
+  fromCurrencyCode: string,
+  toCurrencyCode: string
 }
 
 /**
