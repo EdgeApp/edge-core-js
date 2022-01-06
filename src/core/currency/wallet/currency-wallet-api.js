@@ -484,6 +484,9 @@ export function makeCurrencyWalletApi(
     },
 
     async getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string> {
+      if (typeof engine.getMaxSpendable === 'function') {
+        return await engine.getMaxSpendable(spendInfo)
+      }
       const { currencyCode, networkFeeOption, customNetworkFee } = spendInfo
       const balance = engine.getBalance({ currencyCode })
 
