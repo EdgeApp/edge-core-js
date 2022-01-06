@@ -717,7 +717,7 @@ export type EdgeSwapRequest = {
 
   // How much?
   nativeAmount: string,
-  quoteFor: 'from' | 'to'
+  quoteFor: 'from' | 'max' | 'to'
 }
 
 /**
