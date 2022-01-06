@@ -7,6 +7,7 @@ import {
   type EdgeLobbyRequest,
   type LoginPayload
 } from '../../types/server-types.js'
+import { type EdgePendingVoucher } from '../../types/types.js'
 import { verifyData } from '../../util/crypto/verify.js'
 
 /**
@@ -128,7 +129,7 @@ export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
     otpKey: login.otpKey,
     otpResetDate: login.otpResetDate,
     otpTimeout: login.otpTimeout,
-    pendingVouchers: [],
+    pendingVouchers: makePendingVouchers(login),
     loginAuthBox: login.loginAuthBox,
 
     // Resources:
@@ -137,4 +138,17 @@ export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
     rootKeyBox: login.rootKeyBox,
     syncKeyBox: login.syncKeyBox
   }
+}
+
+export function makePendingVouchers(login: DbLogin): EdgePendingVoucher[] {
+  return login.vouchers
+    .filter(voucher => voucher.status === 'pending')
+    .map(voucher => ({
+      activates: voucher.activates,
+      created: voucher.created,
+      deviceDescription: voucher.deviceDescription,
+      ip: voucher.ip,
+      ipDescription: voucher.ipDescription,
+      voucherId: voucher.voucherId
+    }))
 }
