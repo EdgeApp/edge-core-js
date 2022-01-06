@@ -1,5 +1,11 @@
 # edge-core-js
 
+## v0.18.14 (2021-01-06)
+
+- fixed: Allow logins with an appId to approve or reject vouchers.
+- added: Allow maximum swaps by passing "max" to `EdgeSwapRequest.quoteFor`.
+- added: Add an `EdgeCurrencyEngine.getMaxSpendable` method for native max-spend calculations.
+
 ## v0.18.13 (2021-12-17)
 
 - added: `EdgeSpendTarget.memo`, which is a renamed version of `EdgeSpendTarget.uniqueIdentifier`.
