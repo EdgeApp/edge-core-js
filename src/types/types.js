@@ -499,7 +499,7 @@ export type EdgeCurrencyEngine = {
   startEngine(): Promise<void>,
   killEngine(): Promise<void>,
   resyncBlockchain(): Promise<void>,
-  dumpData(): EdgeDataDump | Promise<EdgeDataDump>,
+  dumpData(): Promise<EdgeDataDump>,
 
   // Chain state:
   getBlockHeight(): number,
@@ -516,11 +516,9 @@ export type EdgeCurrencyEngine = {
   getTokenStatus(token: string): boolean,
 
   // Addresses:
-  getFreshAddress(
-    opts: EdgeCurrencyCodeOptions
-  ): Promise<EdgeFreshAddress> | EdgeFreshAddress,
-  addGapLimitAddresses(addresses: string[]): Promise<void> | void,
-  isAddressUsed(address: string): Promise<boolean> | boolean,
+  getFreshAddress(opts: EdgeCurrencyCodeOptions): Promise<EdgeFreshAddress>,
+  addGapLimitAddresses(addresses: string[]): Promise<void>,
+  isAddressUsed(address: string): Promise<boolean>,
 
   // Spending:
   getMaxSpendable?: (spendInfo: EdgeSpendInfo) => Promise<string>,
