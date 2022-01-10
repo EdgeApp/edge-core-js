@@ -31,7 +31,15 @@ function onErrorDefault(e: any): void {
 let warningShown = false
 
 export function MakeEdgeContext(props: EdgeContextProps): React.Node {
-  const { debug, nativeIo, onError = onErrorDefault, onLoad, ...rest } = props
+  const {
+    allowDebugging,
+    debug,
+    nativeIo,
+    pluginUris = [],
+    onError = onErrorDefault,
+    onLoad,
+    ...rest
+  } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeEdgeContext')
   }
@@ -46,6 +54,7 @@ export function MakeEdgeContext(props: EdgeContextProps): React.Node {
 
   return (
     <EdgeCoreBridge
+      allowDebugging={allowDebugging}
       debug={debug}
       onError={onError}
       onLoad={(clientIo, root) =>
@@ -54,6 +63,7 @@ export function MakeEdgeContext(props: EdgeContextProps): React.Node {
             clientIo,
             bridgifyNativeIo(nativeIo),
             bridgifyLogBackend({ crashReporter, onLog }),
+            pluginUris,
             options
           )
           .then(onLoad)
@@ -64,9 +74,12 @@ export function MakeEdgeContext(props: EdgeContextProps): React.Node {
 
 export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): React.Node {
   const {
+    allowDebugging,
     crashReporter,
     debug,
     nativeIo,
+    pluginUris = [],
+
     onError = onErrorDefault,
     onLoad,
     onLog = defaultOnLog
@@ -77,6 +90,7 @@ export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): React.Node {
 
   return (
     <EdgeCoreBridge
+      allowDebugging={allowDebugging}
       debug={debug}
       onError={onError}
       onLoad={(clientIo, root) =>
@@ -85,6 +99,7 @@ export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): React.Node {
             clientIo,
             bridgifyNativeIo(nativeIo),
             bridgifyLogBackend({ crashReporter, onLog }),
+            pluginUris,
             props.users
           )
           .then(onLoad)

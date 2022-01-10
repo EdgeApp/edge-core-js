@@ -19,41 +19,114 @@ import {
   type EdgeFetchResponse,
   type EdgeIo
 } from '../../types/types.js'
+import { makeNativeBridge } from './native-bridge.js'
 import { type ClientIo, type WorkerApi } from './react-native-types.js'
 
-const body = document.body
+// Set up the bridges:
+const [nativeBridge, reactBridge] =
+  window.edgeCore != null
+    ? [
+        makeNativeBridge((id, name, args) => {
+          window.edgeCore.call(id, name, JSON.stringify(args))
+        }),
+        new Bridge({
+          sendMessage(message) {
+            window.edgeCore.postMessage(JSON.stringify(message))
+          }
+        })
+      ]
+    : [
+        makeNativeBridge((id, name, args) => {
+          window.webkit.messageHandlers.edgeCore.postMessage([id, name, args])
+        }),
+        new Bridge({
+          sendMessage(message) {
+            window.webkit.messageHandlers.edgeCore.postMessage([
+              0,
+              'postMessage',
+              [JSON.stringify(message)]
+            ])
+          }
+        })
+      ]
 
-/**
- * Gently pulse the background color in debug mode,
- * to show that code is loaded & running.
- */
-if (body != null && /debug=true/.test(window.location.search)) {
-  const update = (): void => {
-    const wave = Math.abs(((Date.now() / 2000) % 2) - 1)
-    const color = 0x40 + 0x80 * wave
-    body.style.backgroundColor = `rgb(${color}, ${color}, ${color})`
+// Set up global objects:
+window.addEdgeCorePlugins = addEdgeCorePlugins
+window.nativeBridge = nativeBridge
+window.reactBridge = reactBridge
 
-    setTimeout(update, 100)
+function loadPlugins(pluginUris: string[]): void {
+  const { head } = window.document
+  if (head == null || pluginUris.length === 0) {
+    lockEdgeCorePlugins()
+    return
   }
-  update()
+
+  let loaded: number = 0
+  const handleLoad = () => {
+    if (++loaded >= pluginUris.length) lockEdgeCorePlugins()
+  }
+
+  for (const uri of pluginUris) {
+    const script = document.createElement('script')
+    script.addEventListener('error', handleLoad)
+    script.addEventListener('load', handleLoad)
+    script.charset = 'utf-8'
+    script.defer = true
+    script.src = uri
+    head.appendChild(script)
+  }
 }
 
-window.addEdgeCorePlugins = addEdgeCorePlugins
-window.lockEdgeCorePlugins = lockEdgeCorePlugins
-
-function makeIo(clientIo: ClientIo): EdgeIo {
-  const { disklet, entropy, scrypt } = clientIo
+async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
   const csprng = new HmacDRBG({
     hash: hashjs.sha256,
-    entropy: base64.parse(entropy)
+    entropy: base64.parse(await nativeBridge.call('randomBytes', 32))
   })
 
   return {
     console,
-    disklet,
+    disklet: {
+      delete(path) {
+        return nativeBridge.call('diskletDelete', normalizePath(path))
+      },
+      getData(path) {
+        return nativeBridge
+          .call('diskletGetData', normalizePath(path))
+          .then((data: string) => base64.parse(data))
+      },
+      getText(path) {
+        return nativeBridge.call('diskletGetText', normalizePath(path))
+      },
+      list(path = '') {
+        return nativeBridge.call('diskletList', normalizePath(path))
+      },
+      setData(path, data: any) {
+        return nativeBridge.call(
+          'diskletSetData',
+          normalizePath(path),
+          base64.stringify(data)
+        )
+      },
+      setText(path, text) {
+        return nativeBridge.call('diskletSetText', normalizePath(path), text)
+      }
+    },
 
     random: bytes => csprng.generate(bytes),
-    scrypt,
+    scrypt(data, salt, n, r, p, dklen) {
+      return nativeBridge
+        .call(
+          'scrypt',
+          base64.stringify(data),
+          base64.stringify(salt),
+          n,
+          r,
+          p,
+          dklen
+        )
+        .then((data: string) => base64.parse(data))
+    },
 
     // Networking:
     fetch(uri: string, opts?: EdgeFetchOptions): Promise<EdgeFetchResponse> {
@@ -69,42 +142,47 @@ function makeIo(clientIo: ClientIo): EdgeIo {
   }
 }
 
+/**
+ * Interprets a path as a series of folder lookups,
+ * handling special components like `.` and `..`.
+ */
+export function normalizePath(path: string): string {
+  if (/^\//.test(path)) throw new Error('Absolute paths are not supported')
+  const parts = path.split('/')
+
+  // Shift down good elements, dropping bad ones:
+  let i = 0 // Read index
+  let j = 0 // Write index
+  while (i < parts.length) {
+    const part = parts[i++]
+    if (part === '..') j--
+    else if (part !== '.' && part !== '') parts[j++] = part
+
+    if (j < 0) throw new Error('Path would escape folder')
+  }
+
+  // Array items from 0 to j are the path:
+  return parts.slice(0, j).join('/')
+}
+
+// Send the root object:
 const workerApi: WorkerApi = bridgifyObject({
-  makeEdgeContext(clientIo, nativeIo, logBackend, opts) {
-    return makeContext({ io: makeIo(clientIo), nativeIo }, logBackend, opts)
+  async makeEdgeContext(clientIo, nativeIo, logBackend, pluginUris, opts) {
+    loadPlugins(pluginUris)
+    const io = await makeIo(clientIo)
+    return makeContext({ io, nativeIo }, logBackend, opts)
   },
 
-  makeFakeEdgeWorld(clientIo, nativeIo, logBackend, users = []) {
-    return Promise.resolve(
-      makeFakeWorld({ io: makeIo(clientIo), nativeIo }, logBackend, users)
-    )
+  async makeFakeEdgeWorld(
+    clientIo,
+    nativeIo,
+    logBackend,
+    pluginUris,
+    users = []
+  ) {
+    loadPlugins(pluginUris)
+    const io = await makeIo(clientIo)
+    return makeFakeWorld({ io, nativeIo }, logBackend, users)
   }
 })
-
-/**
- * Legacy WebView support.
- */
-function oldSendRoot(): void {
-  if (window.originalPostMessage != null) {
-    const reactPostMessage = window.postMessage
-    window.postMessage = window.originalPostMessage
-    window.bridge = new Bridge({
-      sendMessage: message => reactPostMessage(JSON.stringify(message))
-    })
-    window.bridge.sendRoot(workerApi)
-  } else {
-    setTimeout(oldSendRoot, 100)
-  }
-}
-
-// Start the object bridge:
-if (window.ReactNativeWebView != null) {
-  window.bridge = new Bridge({
-    sendMessage(message) {
-      window.ReactNativeWebView.postMessage(JSON.stringify(message))
-    }
-  })
-  window.bridge.sendRoot(workerApi)
-} else {
-  oldSendRoot()
-}
+reactBridge.sendRoot(workerApi)

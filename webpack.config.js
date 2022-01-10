@@ -1,21 +1,43 @@
+const { exec } = require('child_process')
 const path = require('path')
-const webpack = require('webpack')
 const TerserPlugin = require('terser-webpack-plugin')
+const webpack = require('webpack')
 
-// Use "yarn prepare.dev" to make a debug-friendly build:
-const production = process.env.EDGE_MODE !== 'development'
+// Use "yarn prepare.dev" to make a debug-friendly static build:
+const debug =
+  process.env.WEBPACK_SERVE || process.env.EDGE_MODE === 'development'
+
+// Try exposing our socket to adb (errors are fine):
+if (process.env.WEBPACK_SERVE) {
+  console.log('adb reverse tcp:8080 tcp:8080')
+  exec('adb reverse tcp:8080 tcp:8080', () => {})
+}
+
+const bundlePath = path.resolve(
+  __dirname,
+  'android/src/main/assets/edge-core-js'
+)
 
 module.exports = {
-  devtool: 'source-map',
+  devtool: debug ? 'source-map' : undefined,
+  devServer: {
+    allowedHosts: 'all',
+    hot: false,
+    static: bundlePath
+  },
   entry: './src/io/react-native/react-native-worker.js',
-  mode: production ? 'production' : 'development',
+  mode: debug ? 'development' : 'production',
   module: {
     rules: [
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        use: production
+        use: debug
           ? {
+              loader: '@sucrase/webpack-loader',
+              options: { transforms: ['flow'] }
+            }
+          : {
               loader: 'babel-loader',
               options: {
                 presets: ['@babel/preset-env', '@babel/preset-flow'],
@@ -26,10 +48,6 @@ module.exports = {
                 ],
                 cacheDirectory: true
               }
-            }
-          : {
-              loader: '@sucrase/webpack-loader',
-              options: { transforms: ['flow'] }
             }
       },
       {
@@ -42,17 +60,11 @@ module.exports = {
     ]
   },
   optimization: {
-    minimizer: [
-      new TerserPlugin({
-        terserOptions: {
-          safari10: true
-        }
-      })
-    ]
+    minimizer: [new TerserPlugin({ terserOptions: { safari10: true } })]
   },
   output: {
-    filename: 'lib/react-native/edge-core.js',
-    path: path.resolve(__dirname)
+    filename: 'edge-core.js',
+    path: bundlePath
   },
   plugins: [
     new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),

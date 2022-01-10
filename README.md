@@ -16,7 +16,9 @@ To quickly get up and running with the UI for account creation, login, and manag
 
 ## Setup
 
-Just use `npm install --save edge-core-js` to add this library to your project.
+Add this library to your project using `npm install --save edge-core-js`.
+
+### Node.js & Browsers
 
 To create an `EdgeContext` object, which provides various methods for logging in and creating account, do something like this:
 
@@ -45,32 +47,47 @@ addEdgeCorePlugins(currencyPlugins)
 lockEdgeCorePlugins()
 ```
 
-The above code sample works for Node.js. For the browser and React Native, plugins load using a `<script>` tag. The `lockEdgeCorePlugins` is necessary on all platforms, and must happen before login can proceed.
+If the core seems to hang forever when logging in, you probably forgot to call `lockEdgeCorePlugins`.
+
+Please note that edge-core-js uses modern JavaScript syntax features such as `async`, so you may need to run the library through [Babel](https://babeljs.io/) if you plan to run it in a browser. Node 10+ supports these features natively.
 
 ### React Native
 
-This library has React Native support. Starting at version 0.15.0, however, it achieves this support by running most of its logic inside a WebView component. This has several important advantages, including better performance, but it makes integration quite complicated. We are in the process of simplifying and documenting the necessary steps. In the mean time, please refer to the [edge-react-gui](https://github.com/EdgeApp/edge-react-gui) project for an example of what this integration looks like.
+Edge-core-js directly supports React Native v0.60+ with autolinking. Simply add edge-core-js to your application, and React Native will link the necessary native modules & assets.
 
-### Platform Requirements
+To create an `EdgeContext` object, you need to mount a component:
 
-This library uses modern Javascript syntax features from ES 2018. While these work fine in recent browsers, React Native, and Node 10+, you might need to run this library through [Babel](https://babeljs.io/) if you care about older systems.
+```jsx
+<MakeEdgeContext
+  // Get this from our support team:
+  apiKey="..."
+  appId="com.your-app"
 
-On the other hand, this library avoids modern run-time features from ES 2015 or later, so you don't need to provide polyfills. The only features we use from ES 2015 or later are:
+  // Configure currencies and swap providers you want to use:
+  plugins={{
+    'bitcoin': true
+  }}
+  pluginUris={[
+    "edge-currency-plugins.js",
+    "edge-exchange-plugins.js"
+  ]}
 
-- `Object.assign`
-- `Promise`
-- `Uint8Array`
+  // Called when the core is done loading:
+  onLoad={edgeContext => {}}
+  onError={error => {}}
+/>
+```
 
-If you want to run in the browser, you must also have:
+The core itself runs inside a hidden WebView, which this `MakeEdgeContext` component mounts & manages.
 
-- `fetch`
-- `localStorage`
-- `Window.crypto.getRandomNumbers`
+The core creates a `<script>` tag for each source file in the `pluginUris` array. For this to work, you need to add these plugin files to your app's native asset bundle, which is located at `/android/app/src/main/assets/` on Android. For iOS, drag these files into the "Resources" section of your Xcode project.
+
+To debug the core, run `yarn start` inside the edge-core-js project, and then pass a `debug={true}` property to the `MakeEdgeContext` component. This tells the WebView to load the core from a local development server.
 
 ## Contributing
 
-Run `yarn` to download dependencies and build the library, then run `yarn test` to run the unit tests, and `yarn flow` to check for type errors.
+Run `yarn` to download dependencies, and then run `yarn prepare` to build the library.
 
-All sources are in the [JavaScript Standard Style](http://standardjs.com/) + [Prettier](https://prettier.io/). We check files prior to each commit, so if you have formatting issues, you can run `yarn fix` to fix them automatically.
+Use `yarn verify` to run all our code-quality tools. All sources are in the [JavaScript Standard Style](http://standardjs.com/) + [Prettier](https://prettier.io/). We check files prior to each commit, so if you have formatting issues, you can run `yarn fix` to fix them automatically.
 
 If you use Visual Studio Code, consider installing the [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) extension. This will give you nice error highlighting as you work, along with quick fixes for formatting issues.
