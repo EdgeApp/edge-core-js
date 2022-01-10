@@ -1,5 +1,18 @@
 # edge-core-js
 
+## v0.19.0 (2022-01-11)
+
+This release completely changes the way React Native works, both to improve performance and to make integration and debugging much easier.
+
+- changed: Simplify the React Native integration to "just work".
+  - Stop depending on external libraries such as react-native-fast-crypto, react-native-randombytes, or react-native-webview.
+  - Use React Native auto-linking to integrate all native code, HTML, and Javascript needed to run the core.
+  - Accept core plugins via a `pluginUris` prop to `MakeEdgeContext` or `MakeFakeEdgeWorld`.
+  - Allow core debugging by running `yarn start` in this repo to start a dev server, and then setting the `debug` prop to true.
+  - Accept an `allowDebugging` prop on Android to enable WebView debugging in general (useful for debugging plugins).
+- changed: Require `EdgeCurrencyEngine` methods to return promises.
+- changed: Mark methods as `readonly` in the TypeScript definitions, to match what Flow was already doing.
+
 ## v0.18.14 (2021-01-06)
 
 - fixed: Allow logins with an appId to approve or reject vouchers.
