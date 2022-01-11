@@ -508,7 +508,7 @@ export type EdgeCurrencyEngine = {
   +getTransactions: (
     opts: EdgeGetTransactionsOptions
   ) => Promise<EdgeTransaction[]>,
-  getTxids?: () => EdgeTxidMap,
+  +getTxids?: () => EdgeTxidMap,
 
   // Tokens:
   +enableTokens: (tokens: string[]) => Promise<void>,
@@ -525,7 +525,7 @@ export type EdgeCurrencyEngine = {
   +isAddressUsed: (address: string) => Promise<boolean>,
 
   // Spending:
-  getMaxSpendable?: (spendInfo: EdgeSpendInfo) => Promise<string>,
+  +getMaxSpendable?: (spendInfo: EdgeSpendInfo) => Promise<string>,
   +makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
   +signTx: (transaction: EdgeTransaction) => Promise<EdgeTransaction>,
   +broadcastTx: (transaction: EdgeTransaction) => Promise<EdgeTransaction>,
@@ -758,7 +758,7 @@ export type EdgeSwapPluginStatus = {
 export type EdgeSwapPlugin = {
   +swapInfo: EdgeSwapInfo,
 
-  checkSettings?: (userSettings: JsonObject) => EdgeSwapPluginStatus,
+  +checkSettings?: (userSettings: JsonObject) => EdgeSwapPluginStatus,
   +fetchSwapQuote: (
     request: EdgeSwapRequest,
     userSettings: JsonObject | void,
