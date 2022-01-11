@@ -81,12 +81,16 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
 
       let promise = PendingCall(
         resolve: { result in
-          self.runJs(
-            js: "window.nativeBridge.resolve(\(id), \(self.stringify(result)))")
+          DispatchQueue.main.async {
+            self.runJs(
+              js: "window.nativeBridge.resolve(\(id), \(self.stringify(result)))")
+          }
         },
         reject: { message in
-          self.runJs(
-            js: "window.nativeBridge.reject(\(id), \(self.stringify(message)))")
+          DispatchQueue.main.async {
+            self.runJs(
+              js: "window.nativeBridge.reject(\(id), \(self.stringify(message)))")
+          }
         })
 
       return queue.async {
