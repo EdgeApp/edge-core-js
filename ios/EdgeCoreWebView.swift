@@ -23,14 +23,12 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
 
   // view api --------------------------------------------------------------
 
-  override func didMoveToWindow() {
-    if let webView = self.webView {
-      webView.configuration.userContentController
-        .removeScriptMessageHandler(forName: "edgeCore")
-      webView.removeFromSuperview()
-      self.webView = nil
-    }
-    if window == nil { return }
+  required init?(coder: NSCoder) {
+    return nil
+  }
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
 
     // Set up our native bridge:
     let configuration = WKWebViewConfiguration()
@@ -50,6 +48,16 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
   override func layoutSubviews() {
     super.layoutSubviews()
     webView?.frame = bounds
+  }
+
+  override func removeFromSuperview() {
+    super.removeFromSuperview()
+    if let webView = self.webView {
+      webView.configuration.userContentController
+        .removeScriptMessageHandler(forName: "edgeCore")
+      webView.removeFromSuperview()
+      self.webView = nil
+    }
   }
 
   // callbacks -------------------------------------------------------------
@@ -176,7 +184,7 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
   }
 
   func handleMessage(
-    _ name: String, args args: NSArray
+    _ name: String, args: NSArray
   ) {
     if name == "postMessage", let message = args[0] as? String {
       onMessage?(["message": message])
