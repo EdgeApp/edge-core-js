@@ -1,5 +1,11 @@
 # edge-core-js
 
+## v0.19.1 (2022-01-14)
+
+- changed: Write files atomically on Android, so out-of-disk and other errors do not lead to data corruption.
+- fixed: Upgrade edge-sync-client, so info server errors are no longer fatal.
+- fixed: Do not destroy the core WebView when opening Safari links on iOS.
+
 ## v0.19.0 (2022-01-11)
 
 This release completely changes the way React Native works, both to improve performance and to make integration and debugging much easier.
