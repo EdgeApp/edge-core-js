@@ -1,8 +1,7 @@
 package app.edge.reactnative.core;
 
-import java.io.ByteArrayOutputStream;
+import android.util.AtomicFile;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -22,13 +21,13 @@ public class Disklet {
   }
 
   public byte[] getData(String path) throws IOException {
-    File file = new File(mBase, path);
-    return readFile(file);
+    AtomicFile file = new AtomicFile(new File(mBase, path));
+    return file.readFully();
   }
 
   public String getText(String path) throws IOException {
-    File file = new File(mBase, path);
-    byte[] data = readFile(file);
+    AtomicFile file = new AtomicFile(new File(mBase, path));
+    byte[] data = file.readFully();
     return new String(data, StandardCharsets.UTF_8);
   }
 
@@ -70,29 +69,21 @@ public class Disklet {
     if (file.isDirectory()) {
       for (File child : file.listFiles()) deepDelete(child);
     }
-    file.delete();
-  }
-
-  private byte[] readFile(File file) throws IOException {
-    try (FileInputStream stream = new FileInputStream(file)) {
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-      int size;
-      byte[] data = new byte[4096];
-      while ((size = stream.read(data)) > 0) {
-        out.write(data, 0, size);
-      }
-
-      return out.toByteArray();
-    }
+    new AtomicFile(file).delete();
   }
 
   private void writeFile(File file, byte[] data) throws IOException {
     File parent = file.getParentFile();
     if (!parent.exists()) parent.mkdirs();
 
-    try (FileOutputStream stream = new FileOutputStream(file)) {
+    AtomicFile atomicFile = new AtomicFile(file);
+    FileOutputStream stream = atomicFile.startWrite();
+    try {
       stream.write(data);
+      atomicFile.finishWrite(stream);
+    } catch (IOException e) {
+      atomicFile.failWrite(stream);
+      throw e;
     }
   }
 }
