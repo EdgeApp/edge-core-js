@@ -2268,10 +2268,10 @@ drbg.js@^1.0.1:
     create-hash "^1.1.2"
     create-hmac "^1.1.4"
 
-edge-sync-client@^0.2.3:
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.3.tgz#016543af4f11bb0d6c75b9e0bea3c178f4fc9cb8"
-  integrity sha512-YwCoxVC0659vg2qpxYGADYTgSOvNwosCuesE2N7rghB0BicLrJGYBc/TrPjC3zRuO0gKXLc/5SM4o2Y4Yy+LAw==
+edge-sync-client@^0.2.6:
+  version "0.2.6"
+  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.6.tgz#4425e14edd0f85f41a0ebe702e0e27274111cc90"
+  integrity sha512-UNaxgXD87QJDEMYRs6fycOj1+Tt2WNPpNPcm4O4l2JCtPdqSHbjSHfGruS5/VWq5nGYPGX1boH15ekaLYCqo0w==
   dependencies:
     base-x "^1.0.4"
     cleaners "^0.3.9"
