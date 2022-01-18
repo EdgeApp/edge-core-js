@@ -590,10 +590,12 @@ export function setupNewTxMetadata(
       amount: target.nativeAmount,
       tag: target.memo
     }))
+
+    // Only write device description if it's a spend
+    if (tx.deviceDescription != null)
+      json.deviceDescription = tx.deviceDescription
   }
   if (typeof tx.txSecret === 'string') json.secret = tx.txSecret
-  if (tx.deviceDescription != null)
-    json.deviceDescription = tx.deviceDescription
 
   // Save the new file:
   const { diskletFile, fileName, txidHash } = getTxFile(
