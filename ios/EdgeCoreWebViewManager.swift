@@ -1,4 +1,5 @@
 @objc(EdgeCoreWebViewManager) class EdgeCoreWebViewManager: RCTViewManager {
+  override static func requiresMainQueueSetup() -> Bool { return false }
   override func view() -> UIView! { return EdgeCoreWebView() }
 
   @objc var onMessage: RCTDirectEventBlock?
