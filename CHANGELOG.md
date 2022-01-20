@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.2 (2022-01-20)
+
+- fix: Only write the `deviceDescription` on sent transactions.
+- fix: Add a native `requiresMainQueueSetup` method to silence a warning on iOS.
+
 ## v0.19.1 (2022-01-14)
 
 - changed: Write files atomically on Android, so out-of-disk and other errors do not lead to data corruption.
