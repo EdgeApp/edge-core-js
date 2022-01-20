@@ -10,6 +10,7 @@ import {
 import {
   type EdgeBalances,
   type EdgeCurrencyInfo,
+  type EdgeStakingStatus,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull,
@@ -76,6 +77,7 @@ export type CurrencyWalletState = {
   +nameLoaded: boolean,
   +publicWalletInfo: EdgeWalletInfo | null,
   +sortedTransactions: SortedTransactions,
+  +stakingStatus: EdgeStakingStatus,
   +syncRatio: number,
   +txids: string[],
   +txs: { [txid: string]: MergedTransaction },
@@ -270,6 +272,15 @@ const currencyWalletInner: FatReducer<
 
   nameLoaded(state = false, action: RootAction): boolean {
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ? true : state
+  },
+
+  stakingStatus(
+    state: EdgeStakingStatus = { stakedAmounts: [] },
+    action: RootAction
+  ): EdgeStakingStatus {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_STAKING'
+      ? action.payload.stakingStatus
+      : state
   },
 
   txids: memoizeReducer(

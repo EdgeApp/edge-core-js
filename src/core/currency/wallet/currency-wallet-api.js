@@ -21,6 +21,7 @@ import {
   type EdgeReceiveAddress,
   type EdgeSpendInfo,
   type EdgeSpendTarget,
+  type EdgeStakingStatus,
   type EdgeTokenInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
@@ -444,6 +445,10 @@ export function makeCurrencyWalletApi(
       await setupNewTxMetadata(input, tx)
       await engine.saveTx(tx)
       fakeCallbacks.onTransactionsChanged([tx])
+    },
+
+    get stakingStatus(): EdgeStakingStatus {
+      return input.props.selfState.stakingStatus
     },
 
     async resyncBlockchain(): Promise<void> {

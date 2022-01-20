@@ -403,6 +403,37 @@ export type EdgeFreshAddress = {
   legacyAddress?: string
 }
 
+/**
+ * Balances, unlock dates, and other information about staked funds.
+ *
+ * The currency engine is responsible for keeping this up to date.
+ * For instance, if the user submits a transaction to unlock funds,
+ * the engine should update this data once it detects that transaction,
+ * and then again once the funds actually unlock some time later.
+ *
+ * As with wallet balances, this data may not be reliable until the
+ * `syncRatio` hits 1.
+ */
+export type EdgeStakingStatus = {
+  // Funds can be in various stages of being locked or unlocked,
+  // so each row can describe a single batch of locked coins.
+  // Adding together the rows in this array should give the
+  // total amount of locked-up funds in the wallet:
+  stakedAmounts: Array<{
+    nativeAmount: string,
+
+    // Maybe these funds are not the chain's parent currency:
+    // tokenId?: string,
+
+    // Maybe these funds are being unlocked?
+    unlockDate?: Date,
+
+    // Feel free to add other weird coin states here.
+    // We can standardize them later if they are common:
+    otherParams?: JsonObject
+  }>
+}
+
 export type EdgeTokenInfo = {
   currencyCode: string,
   currencyName: string,
@@ -476,6 +507,7 @@ export type EdgeCurrencyEngineCallbacks = {
   +onAddressesChecked: (progressRatio: number) => void,
   +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
   +onBlockHeightChanged: (blockHeight: number) => void,
+  +onStakingStatusChanged: (status: EdgeStakingStatus) => void,
   +onTransactionsChanged: (transactions: EdgeTransaction[]) => void,
   +onTxidsChanged: (txids: EdgeTxidMap) => void,
   +onWcNewContractCall: (payload: JsonObject) => void
@@ -535,6 +567,9 @@ export type EdgeCurrencyEngine = {
   +getPaymentProtocolInfo?: (
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>,
+
+  // Staking:
+  +getStakingStatus?: () => Promise<EdgeStakingStatus>,
 
   // Escape hatch:
   +otherMethods?: EdgeOtherMethods
@@ -685,6 +720,9 @@ export type EdgeCurrencyWallet = {
   +getPaymentProtocolInfo: (
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>,
+
+  // Staking:
+  +stakingStatus: EdgeStakingStatus,
 
   // Wallet management:
   +resyncBlockchain: () => Promise<void>,

@@ -142,6 +142,14 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
         payload: { height, walletId: input.props.id }
       })
+      if (engine.getStakingStatus != null) {
+        engine.getStakingStatus().then(stakingStatus => {
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_CHANGED_STAKING',
+            payload: { stakingStatus, walletId: input.props.id }
+          })
+        })
+      }
     } catch (e) {
       input.props.onError(e)
       input.props.dispatch({ type: 'CURRENCY_ENGINE_FAILED', payload: e })

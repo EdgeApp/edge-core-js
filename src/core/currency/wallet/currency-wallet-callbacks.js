@@ -5,6 +5,7 @@ import { emit } from 'yaob'
 
 import {
   type EdgeCurrencyEngineCallbacks,
+  type EdgeStakingStatus,
   type EdgeTransaction,
   type JsonObject
 } from '../../../types/types.js'
@@ -137,6 +138,19 @@ export function makeCurrencyWalletCallbacks(
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
             payload: { height, walletId }
+          })
+        }
+      })
+    },
+
+    onStakingStatusChanged(stakingStatus: EdgeStakingStatus) {
+      pushUpdate({
+        id: walletId,
+        action: 'onStakingStatusChanged',
+        updateFunc: () => {
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_CHANGED_STAKING',
+            payload: { stakingStatus, walletId }
           })
         }
       })

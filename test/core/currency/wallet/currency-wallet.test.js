@@ -89,6 +89,9 @@ describe('currency wallets', function () {
     wallet.watch('blockHeight', blockHeight => {
       log('blockHeight', blockHeight)
     })
+    wallet.watch('stakingStatus', stakingStatus => {
+      log('stakingStatus', stakingStatus.stakedAmounts[0].nativeAmount)
+    })
     wallet.watch('syncRatio', syncRatio => {
       log('syncRatio', syncRatio)
     })
@@ -96,6 +99,9 @@ describe('currency wallets', function () {
     // Test property watchers:
     log.assert()
     expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '0' })
+    expect(wallet.stakingStatus).deep.equals({
+      stakedAmounts: [{ nativeAmount: '0' }]
+    })
 
     await config.changeUserSettings({ tokenBalance: 30 })
     await log.waitFor(1).assert('balances { FAKE: "0", TOKEN: "30" }')
@@ -112,6 +118,12 @@ describe('currency wallets', function () {
     await config.changeUserSettings({ balance: 1234567890 })
     await log.waitFor(1).assert('balances { FAKE: "1234567890", TOKEN: "30" }')
     expect(wallet.balances).to.deep.equal({ FAKE: '1234567890', TOKEN: '30' })
+
+    await config.changeUserSettings({ stakedBalance: 543 })
+    await log.waitFor(1).assert('stakingStatus 543')
+    expect(wallet.stakingStatus).deep.equals({
+      stakedAmounts: [{ nativeAmount: '543' }]
+    })
 
     // New transactions:
     await config.changeUserSettings({
