@@ -1,5 +1,11 @@
 # edge-core-js
 
+## v0.19.3 (2022-01-21)
+
+- fix: Correctly select swaps with the best price.
+- fix: Correctly prefer swap plugins with active promo codes.
+- changed: Add more logging to the swap procedure.
+
 ## v0.19.2 (2022-01-20)
 
 - fix: Only write the `deviceDescription` on sent transactions.
