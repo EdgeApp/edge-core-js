@@ -95,8 +95,9 @@ export async function fetchSwapQuote(
 
 /**
  * Picks the best quote out of the available choices.
+ * Exported so we can unit-test it.
  */
-function pickBestQuote(
+export function pickBestQuote(
   quotes: EdgeSwapQuote[],
   preferPluginId: string | void,
   promoCodes: EdgePluginMap<string>
