@@ -1,6 +1,6 @@
 // @flow
 
-import { div, gt, lt } from 'biggystring'
+import { gt, lt } from 'biggystring'
 import { bridgifyObject } from 'yaob'
 
 import {
@@ -120,9 +120,9 @@ export function pickBestQuote(
     if (!aIsEstimate && bIsEstimate) return a
 
     // Prefer the best rate:
-    const aRate = div(a.toNativeAmount, a.fromNativeAmount)
-    const bRate = div(b.toNativeAmount, b.fromNativeAmount)
-    return gt(bRate, aRate) ? b : a
+    const aRate = Number(a.toNativeAmount) / Number(a.fromNativeAmount)
+    const bRate = Number(b.toNativeAmount) / Number(b.fromNativeAmount)
+    return bRate > aRate ? b : a
   })
 }
 
