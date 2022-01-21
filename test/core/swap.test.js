@@ -64,4 +64,11 @@ describe('swap', function () {
     const quote = pickBestQuote(quotes, 'switchain', {})
     expect(quote.pluginId).equals('switchain')
   })
+
+  it('picks the swap provider with an active promo code', function () {
+    const quote = pickBestQuote(quotes, undefined, {
+      switchain: 'deal10'
+    })
+    expect(quote.pluginId).equals('switchain')
+  })
 })

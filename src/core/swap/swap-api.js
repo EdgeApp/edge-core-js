@@ -110,8 +110,8 @@ export function pickBestQuote(
     // Prioritize providers with active promo codes:
     const aHasPromo = promoCodes[a.pluginId] != null
     const bHasPromo = promoCodes[b.pluginId] != null
-    if (aHasPromo && !bHasPromo) return b
-    if (!aHasPromo && bHasPromo) return a
+    if (aHasPromo && !bHasPromo) return a
+    if (!aHasPromo && bHasPromo) return b
 
     // Prioritize accurate quotes over estimates:
     const { isEstimate: aIsEstimate = true } = a
