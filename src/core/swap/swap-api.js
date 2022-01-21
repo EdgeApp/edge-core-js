@@ -34,11 +34,15 @@ export async function fetchSwapQuote(
   const { swapSettings, userSettings } = account
   const swapPlugins = ai.props.state.plugins.swap
 
-  log.warn('Requesting swap quotes for: ', {
-    ...request,
-    fromWallet: request.fromWallet.id,
-    toWallet: request.toWallet.id
-  })
+  log.warn(
+    'Requesting swap quotes for: ',
+    {
+      ...request,
+      fromWallet: request.fromWallet.id,
+      toWallet: request.toWallet.id
+    },
+    { preferPluginId, promoCodes }
+  )
 
   // Invoke all the active swap plugins:
   const promises: Promise<EdgeSwapQuote>[] = []
@@ -70,12 +74,11 @@ export async function fetchSwapQuote(
   // Wait for the results, with error handling:
   return fuzzyTimeout(promises, 20000).then(
     quotes => {
-      log.warn(
-        `${promises.length} swap quotes requested, ${quotes.length} resolved.`
-      )
-
       // Find the cheapest price:
       const bestQuote = pickBestQuote(quotes, preferPluginId, promoCodes)
+      log.warn(
+        `${promises.length} swap quotes requested, ${quotes.length} resolved, picked ${bestQuote.pluginId}.`
+      )
 
       // Close unused quotes:
       for (const quote of quotes) {
@@ -92,8 +95,9 @@ export async function fetchSwapQuote(
 
 /**
  * Picks the best quote out of the available choices.
+ * Exported so we can unit-test it.
  */
-function pickBestQuote(
+export function pickBestQuote(
   quotes: EdgeSwapQuote[],
   preferPluginId: string | void,
   promoCodes: EdgePluginMap<string>
@@ -106,8 +110,8 @@ function pickBestQuote(
     // Prioritize providers with active promo codes:
     const aHasPromo = promoCodes[a.pluginId] != null
     const bHasPromo = promoCodes[b.pluginId] != null
-    if (aHasPromo && !bHasPromo) return b
-    if (!aHasPromo && bHasPromo) return a
+    if (aHasPromo && !bHasPromo) return a
+    if (!aHasPromo && bHasPromo) return b
 
     // Prioritize accurate quotes over estimates:
     const { isEstimate: aIsEstimate = true } = a
