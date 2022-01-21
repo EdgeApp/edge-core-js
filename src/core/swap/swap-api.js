@@ -34,11 +34,15 @@ export async function fetchSwapQuote(
   const { swapSettings, userSettings } = account
   const swapPlugins = ai.props.state.plugins.swap
 
-  log.warn('Requesting swap quotes for: ', {
-    ...request,
-    fromWallet: request.fromWallet.id,
-    toWallet: request.toWallet.id
-  })
+  log.warn(
+    'Requesting swap quotes for: ',
+    {
+      ...request,
+      fromWallet: request.fromWallet.id,
+      toWallet: request.toWallet.id
+    },
+    { preferPluginId, promoCodes }
+  )
 
   // Invoke all the active swap plugins:
   const promises: Promise<EdgeSwapQuote>[] = []
@@ -70,12 +74,11 @@ export async function fetchSwapQuote(
   // Wait for the results, with error handling:
   return fuzzyTimeout(promises, 20000).then(
     quotes => {
-      log.warn(
-        `${promises.length} swap quotes requested, ${quotes.length} resolved.`
-      )
-
       // Find the cheapest price:
       const bestQuote = pickBestQuote(quotes, preferPluginId, promoCodes)
+      log.warn(
+        `${promises.length} swap quotes requested, ${quotes.length} resolved, picked ${bestQuote.pluginId}.`
+      )
 
       // Close unused quotes:
       for (const quote of quotes) {
