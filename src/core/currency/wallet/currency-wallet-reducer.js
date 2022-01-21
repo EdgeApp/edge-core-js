@@ -59,6 +59,7 @@ export type CurrencyWalletState = {
 
   +paused: boolean,
 
+  +balances: EdgeBalances,
   +currencyInfo: EdgeCurrencyInfo,
   +displayPrivateSeed: string | null,
   +displayPublicSeed: string | null,
@@ -66,20 +67,19 @@ export type CurrencyWalletState = {
   +engineStarted: boolean,
   +fiat: string,
   +fiatLoaded: boolean,
-  +files: TxFileJsons,
   +fileNames: TxFileNames,
   +fileNamesLoaded: boolean,
-  +sortedTransactions: SortedTransactions,
-  +syncRatio: number,
-  +balances: EdgeBalances,
+  +files: TxFileJsons,
+  +gotTxs: { [currencyCode: string]: boolean },
   +height: number,
   +name: string | null,
   +nameLoaded: boolean,
-  +walletInfo: EdgeWalletInfoFull,
   +publicWalletInfo: EdgeWalletInfo | null,
+  +sortedTransactions: SortedTransactions,
+  +syncRatio: number,
   +txids: string[],
   +txs: { [txid: string]: MergedTransaction },
-  +gotTxs: { [currencyCode: string]: boolean }
+  +walletInfo: EdgeWalletInfoFull
 }
 
 export type CurrencyWalletNext = {

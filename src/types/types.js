@@ -413,6 +413,7 @@ export type EdgeTokenInfo = {
 export type EdgeTxidMap = { [txid: string]: number }
 
 // URI -----------------------------------------------------------------
+
 export type WalletConnect = {
   uri: string,
   topic: string,
@@ -471,11 +472,11 @@ export type EdgeGetTransactionsOptions = {
 // engine --------------------------------------------------------------
 
 export type EdgeCurrencyEngineCallbacks = {
+  +onAddressChanged: () => void,
+  +onAddressesChecked: (progressRatio: number) => void,
+  +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
   +onBlockHeightChanged: (blockHeight: number) => void,
   +onTransactionsChanged: (transactions: EdgeTransaction[]) => void,
-  +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
-  +onAddressesChecked: (progressRatio: number) => void,
-  +onAddressChanged: () => void,
   +onTxidsChanged: (txids: EdgeTxidMap) => void,
   +onWcNewContractCall: (payload: JsonObject) => void
 }
