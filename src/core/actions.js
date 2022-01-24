@@ -14,7 +14,7 @@ import {
   type EdgeWalletStates,
   type JsonObject
 } from '../types/types.js'
-import { type SwapSettings } from './account/account-reducer.js'
+import { type SwapSettings } from './account/account-cleaners.js'
 import {
   type TxFileJsons,
   type TxFileNames,
