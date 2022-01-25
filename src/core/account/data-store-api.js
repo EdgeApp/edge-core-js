@@ -1,98 +1,91 @@
 // @flow
 
-import {
-  type DiskletFile,
-  type DiskletFolder,
-  mapFiles,
-  mapFolders
-} from 'disklet'
+import { asObject, asString } from 'cleaners'
+import { justFiles, justFolders } from 'disklet'
 import { bridgifyObject } from 'yaob'
 
-import { type EdgeDataStore, type EdgeWalletInfo } from '../../types/types.js'
+import { type EdgeDataStore } from '../../types/types.js'
+import { makeJsonFile } from '../../util/file-helpers.js'
 import { type ApiInput } from '../root-pixie.js'
 import {
-  getStorageWalletFolder,
+  getStorageWalletDisklet,
   hashStorageWalletFilename
 } from '../storage/storage-selectors.js'
 
-function getPluginsFolder(
-  ai: ApiInput,
-  accountWalletInfo: EdgeWalletInfo
-): DiskletFolder {
-  const folder = getStorageWalletFolder(ai.props.state, accountWalletInfo.id)
-  return folder.folder('Plugins')
-}
+/**
+ * Each data store folder has a "Name.json" file with this format.
+ */
+const storeIdFile = makeJsonFile(
+  asObject({
+    name: asString
+  })
+)
 
-function getPluginFolder(
-  ai: ApiInput,
-  accountWalletInfo: EdgeWalletInfo,
-  storeId: string
-): DiskletFolder {
-  const folder = getPluginsFolder(ai, accountWalletInfo)
-  return folder.folder(
-    hashStorageWalletFilename(ai.props.state, accountWalletInfo.id, storeId)
-  )
-}
-
-function getPluginFile(
-  ai: ApiInput,
-  accountWalletInfo: EdgeWalletInfo,
-  storeId: string,
-  itemId: string
-): DiskletFile {
-  const folder = getPluginFolder(ai, accountWalletInfo, storeId)
-  return folder.file(
-    hashStorageWalletFilename(ai.props.state, accountWalletInfo.id, itemId) +
-      '.json'
-  )
-}
+/**
+ * The items saved in a data store have this format.
+ */
+const storeItemFile = makeJsonFile(
+  asObject({
+    key: asString,
+    data: asString
+  })
+)
 
 export function makeDataStoreApi(
   ai: ApiInput,
   accountId: string
 ): EdgeDataStore {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
+  const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
+
+  // Path manipulation:
+  const hashName = (data: string): string =>
+    hashStorageWalletFilename(ai.props.state, accountWalletInfo.id, data)
+  const getStorePath = (storeId: string): string =>
+    `Plugins/${hashName(storeId)}`
+  const getItemPath = (storeId: string, itemId: string): string =>
+    `${getStorePath(storeId)}/${hashName(itemId)}.json`
 
   const out: EdgeDataStore = {
     async deleteItem(storeId: string, itemId: string): Promise<void> {
-      const file = getPluginFile(ai, accountWalletInfo, storeId, itemId)
-      await file.delete()
+      await disklet.delete(getItemPath(storeId, itemId))
     },
 
     async deleteStore(storeId: string): Promise<void> {
-      const folder = getPluginFolder(ai, accountWalletInfo, storeId)
-      await folder.delete()
+      await disklet.delete(getStorePath(storeId))
     },
 
     async listItemIds(storeId: string): Promise<string[]> {
-      const folder = getPluginFolder(ai, accountWalletInfo, storeId)
-
-      const itemIds = await mapFiles(folder, file =>
-        file
-          .getText()
-          .then(text => JSON.parse(text).key)
-          .catch(e => undefined)
+      const itemIds: string[] = []
+      const paths = justFiles(await disklet.list(getStorePath(storeId)))
+      await Promise.all(
+        paths.map(async path => {
+          const clean = await storeItemFile.load(disklet, path)
+          if (clean != null) itemIds.push(clean.key)
+        })
       )
-      return itemIds.filter(itemId => typeof itemId === 'string')
+      return itemIds
     },
 
     async listStoreIds(): Promise<string[]> {
-      const folder = getPluginsFolder(ai, accountWalletInfo)
-
-      const storeIds = await mapFolders(folder, folder =>
-        folder
-          .file('Name.json')
-          .getText()
-          .then(text => JSON.parse(text).name)
-          .catch(e => undefined)
+      const storeIds: string[] = []
+      const paths = justFolders(await disklet.list('Plugins'))
+      await Promise.all(
+        paths.map(async path => {
+          const clean = await storeIdFile.load(disklet, `${path}/Name.json`)
+          if (clean != null) storeIds.push(clean.name)
+        })
       )
-      return storeIds.filter(storeId => typeof storeId === 'string')
+      return storeIds
     },
 
     async getItem(storeId: string, itemId: string): Promise<string> {
-      const file = getPluginFile(ai, accountWalletInfo, storeId, itemId)
-      const text = await file.getText()
-      return JSON.parse(text).data
+      const clean = await storeItemFile.load(
+        disklet,
+        getItemPath(storeId, itemId)
+      )
+      if (clean == null) throw new Error(`No item named "${itemId}"`)
+      return clean.data
     },
 
     async setItem(
@@ -101,20 +94,19 @@ export function makeDataStoreApi(
       value: string
     ): Promise<void> {
       // Set up the plugin folder, if needed:
-      const folder = getPluginFolder(ai, accountWalletInfo, storeId)
-      const storeIdFile = folder.file('Name.json')
-      try {
-        const text = await storeIdFile.getText()
-        if (JSON.parse(text).name !== storeId) {
-          throw new Error(`Warning: folder name doesn't match for ${storeId}`)
-        }
-      } catch (e) {
-        await storeIdFile.setText(JSON.stringify({ name: storeId }))
+      const namePath = `${getStorePath(storeId)}/Name.json`
+      const clean = await storeIdFile.load(disklet, namePath)
+      if (clean == null) {
+        await storeIdFile.save(disklet, namePath, { name: storeId })
+      } else if (clean.name !== storeId) {
+        throw new Error(`Warning: folder name doesn't match for ${storeId}`)
       }
 
       // Set up the actual item:
-      const file = getPluginFile(ai, accountWalletInfo, storeId, itemId)
-      await file.setText(JSON.stringify({ key: itemId, data: value }))
+      await storeItemFile.save(disklet, getItemPath(storeId, itemId), {
+        key: itemId,
+        data: value
+      })
     }
   }
   bridgifyObject(out)

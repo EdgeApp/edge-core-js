@@ -36,7 +36,10 @@ describe('data store API', function () {
 
     // Delete an item:
     await account.dataStore.deleteItem(storeId, 'username')
-    await expectRejection(account.dataStore.getItem(storeId, 'username'))
+    await expectRejection(
+      account.dataStore.getItem(storeId, 'username'),
+      'Error: No item named "username"'
+    )
     expect(await account.dataStore.listItemIds(storeId)).deep.equals([
       'password'
     ])
