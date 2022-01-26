@@ -1,6 +1,6 @@
 // @flow
 
-import { type Disklet, type DiskletFolder, downgradeDisklet } from 'disklet'
+import { type Disklet } from 'disklet'
 
 import { type EdgeIo } from '../../types/types.js'
 import { hmacSha256 } from '../../util/crypto/hashes.js'
@@ -48,20 +48,4 @@ export function hashStorageWalletFilename(
 ): string {
   const dataKey = state.storageWallets[walletId].paths.dataKey
   return base58.stringify(hmacSha256(utf8.parse(data), dataKey))
-}
-
-// deprecated:
-
-export function getStorageWalletFolder(
-  state: RootState,
-  walletId: string
-): DiskletFolder {
-  return downgradeDisklet(state.storageWallets[walletId].paths.disklet)
-}
-
-export function getStorageWalletLocalFolder(
-  state: RootState,
-  walletId: string
-): DiskletFolder {
-  return downgradeDisklet(state.storageWallets[walletId].localDisklet)
 }
