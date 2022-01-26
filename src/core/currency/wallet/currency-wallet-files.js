@@ -16,7 +16,7 @@ import { type RootState } from '../../root-reducer.js'
 import {
   getStorageWalletDisklet,
   getStorageWalletFolder,
-  getStorageWalletLocalFolder,
+  getStorageWalletLocalDisklet,
   hashStorageWalletFilename
 } from '../../storage/storage-selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
@@ -24,9 +24,9 @@ import { combineTxWithFile } from './currency-wallet-api.js'
 import {
   type DiskMetadata,
   type LegacyAddressFile,
-  type LegacyMapFile,
   type LegacyTransactionFile,
   type TransactionFile,
+  asLegacyMapFile,
   asWalletFiatFile,
   asWalletNameFile,
   packMetadata
@@ -38,6 +38,7 @@ const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
 const WALLET_NAME_FILE = 'WalletName.json'
 const CURRENCY_FILE = 'Currency.json'
 
+const legacyMapFile = makeJsonFile(asLegacyMapFile)
 const walletFiatFile = makeJsonFile(asWalletFiatFile)
 const walletNameFile = makeJsonFile(asWalletNameFile)
 
@@ -251,21 +252,18 @@ async function getLegacyFileNames(
   walletId: string,
   folder: DiskletFolder
 ): Promise<TxFileNames> {
-  const newFormatFileNames: TxFileNames = {}
-  // Get the non encrypted folder
-  const localFolder = getStorageWalletLocalFolder(state, walletId)
-  const fixedNamesFile = localFolder.file(LEGACY_MAP_FILE)
+  // Load the cache, if it exists:
+  const localDisklet = getStorageWalletLocalDisklet(state, walletId)
+  const legacyMap =
+    (await legacyMapFile.load(localDisklet, LEGACY_MAP_FILE)) ?? {}
+
+  // Get the real legacy file names:
   const legacyFileNames: string[] = []
-  let legacyMap: LegacyMapFile = {}
   try {
-    // Get the real legacy file names
     await mapFiles(folder, (file, name) => legacyFileNames.push(name))
   } catch (e) {}
-  try {
-    const text = await fixedNamesFile.getText()
-    legacyMap = JSON.parse(text)
-  } catch (e) {}
 
+  const newFormatFileNames: TxFileNames = {}
   const missingLegacyFiles: string[] = []
   for (let i = 0; i < legacyFileNames.length; i++) {
     const fileName = legacyFileNames[i]
@@ -300,9 +298,9 @@ async function getLegacyFileNames(
   if (convertFileNames.length) {
     await Promise.all(convertFileNames)
     // Cache the new results
-    try {
-      await fixedNamesFile.setText(JSON.stringify(legacyMap))
-    } catch (e) {}
+    await legacyMapFile
+      .save(localDisklet, LEGACY_MAP_FILE, legacyMap)
+      .catch(() => {})
   }
   return newFormatFileNames
 }

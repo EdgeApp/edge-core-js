@@ -17,6 +17,7 @@ import {
   type EdgeTxSwap,
   type JsonObject
 } from '../../../types/types.js'
+import { asJsonObject } from '../../../util/file-helpers.js'
 
 /**
  * The on-disk metadata format,
@@ -107,7 +108,7 @@ export type LegacyAddressFile = {
 /**
  * An on-disk cache to quickly map Airbitz filenames to their dates.
  */
-export type LegacyMapFile = {
+type LegacyMapFile = {
   [fileName: string]: { timestamp: number, txidHash: string }
 }
 
@@ -173,6 +174,24 @@ const asDiskMetadata: Cleaner<DiskMetadata> = asObject({
   exchangeAmount: asOptional(asMap(asNumber), {}),
   name: asOptional(asString),
   notes: asOptional(asString)
+})
+
+export const asLegacyMapFile: Cleaner<LegacyMapFile> = asMap(
+  asObject({
+    timestamp: asNumber,
+    txidHash: asString
+  })
+)
+
+/**
+ * Public keys cached in the wallet's local storage.
+ */
+export const asPublicKeyFile = asObject({
+  walletInfo: asObject({
+    id: asString,
+    keys: asJsonObject,
+    type: asString
+  })
 })
 
 export const asWalletFiatFile = asObject({

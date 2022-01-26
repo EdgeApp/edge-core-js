@@ -17,6 +17,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeWalletInfo
 } from '../../../types/types.js'
+import { makeJsonFile } from '../../../util/file-helpers.js'
 import { makePeriodicTask } from '../../../util/periodic-task.js'
 import { makeLog } from '../../log/log.js'
 import {
@@ -37,6 +38,7 @@ import {
   makeCurrencyWalletCallbacks,
   watchCurrencyWallet
 } from './currency-wallet-callbacks.js'
+import { asPublicKeyFile } from './currency-wallet-cleaners.js'
 import { loadAllFiles } from './currency-wallet-files.js'
 import { type CurrencyWalletState } from './currency-wallet-reducer.js'
 
@@ -55,6 +57,7 @@ export type CurrencyWalletProps = RootProps & {
 export type CurrencyWalletInput = PixieInput<CurrencyWalletProps>
 
 const PUBLIC_KEY_CACHE = 'publicKey.json'
+const publicKeyFile = makeJsonFile(asPublicKeyFile)
 
 export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Looks up the currency plugin for this wallet:
@@ -315,20 +318,8 @@ async function getPublicWalletInfo(
   tools: EdgeCurrencyTools
 ): Promise<EdgeWalletInfo> {
   // Try to load the cache:
-  try {
-    const publicKeyCache = await disklet
-      .getText(PUBLIC_KEY_CACHE)
-      .then(text => JSON.parse(text))
-    if (
-      publicKeyCache != null &&
-      publicKeyCache.walletInfo != null &&
-      publicKeyCache.walletInfo.keys != null &&
-      publicKeyCache.walletInfo.id === walletInfo.id &&
-      publicKeyCache.walletInfo.type === walletInfo.type
-    ) {
-      return publicKeyCache.walletInfo
-    }
-  } catch (e) {}
+  const publicKeyCache = await publicKeyFile.load(disklet, PUBLIC_KEY_CACHE)
+  if (publicKeyCache != null) return publicKeyCache.walletInfo
 
   // Derive the public keys:
   let publicKeys = {}
@@ -343,10 +334,9 @@ async function getPublicWalletInfo(
 
   // Save the cache if it's not empty:
   if (Object.keys(publicKeys).length > 0) {
-    await disklet.setText(
-      PUBLIC_KEY_CACHE,
-      JSON.stringify({ walletInfo: publicWalletInfo })
-    )
+    await publicKeyFile.save(disklet, PUBLIC_KEY_CACHE, {
+      walletInfo: publicWalletInfo
+    })
   }
 
   return publicWalletInfo
