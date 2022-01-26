@@ -84,28 +84,27 @@ function getTxFile(
 /**
  * Changes a wallet's name.
  */
-export function renameCurrencyWallet(
+export async function renameCurrencyWallet(
   input: CurrencyWalletInput,
   name: string | null
 ): Promise<void> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
 
-  return getStorageWalletFolder(state, walletId)
+  await getStorageWalletFolder(state, walletId)
     .file(WALLET_NAME_FILE)
     .setText(JSON.stringify({ walletName: name }))
-    .then(() => {
-      dispatch({
-        type: 'CURRENCY_WALLET_NAME_CHANGED',
-        payload: { name, walletId }
-      })
-    })
+
+  dispatch({
+    type: 'CURRENCY_WALLET_NAME_CHANGED',
+    payload: { name, walletId }
+  })
 }
 
 /**
  * Changes a wallet's fiat currency code.
  */
-export function setCurrencyWalletFiat(
+export async function setCurrencyWalletFiat(
   input: CurrencyWalletInput,
   fiatCurrencyCode: string
 ): Promise<void> {
@@ -116,28 +115,27 @@ export function setCurrencyWalletFiat(
     throw new TypeError('Fiat currency codes must start with `iso:`')
   }
 
-  return getStorageWalletFolder(state, walletId)
+  await getStorageWalletFolder(state, walletId)
     .file(CURRENCY_FILE)
     .setText(JSON.stringify({ fiat: fiatCurrencyCode }))
-    .then(() => {
-      dispatch({
-        type: 'CURRENCY_WALLET_FIAT_CHANGED',
-        payload: { fiatCurrencyCode, walletId }
-      })
-    })
+
+  dispatch({
+    type: 'CURRENCY_WALLET_FIAT_CHANGED',
+    payload: { fiatCurrencyCode, walletId }
+  })
 }
 
 /**
  * Loads the wallet fiat currency file.
  */
-function loadFiatFile(
+async function loadFiatFile(
   input: CurrencyWalletInput,
   folder: DiskletFolder
 ): Promise<void> {
   const walletId = input.props.id
   const { dispatch } = input.props
 
-  return folder
+  const fiatCurrencyCode: string = await folder
     .file(CURRENCY_FILE)
     .getText()
     .then(text => {
@@ -147,25 +145,24 @@ function loadFiatFile(
         : `iso:${currencyFromNumber(`000${file.num}`.slice(-3)).code}`
     })
     .catch(e => 'iso:USD')
-    .then((fiatCurrencyCode: string) => {
-      dispatch({
-        type: 'CURRENCY_WALLET_FIAT_CHANGED',
-        payload: { fiatCurrencyCode, walletId }
-      })
-    })
+
+  dispatch({
+    type: 'CURRENCY_WALLET_FIAT_CHANGED',
+    payload: { fiatCurrencyCode, walletId }
+  })
 }
 
 /**
  * Loads the wallet name file.
  */
-function loadNameFile(
+async function loadNameFile(
   input: CurrencyWalletInput,
   folder: DiskletFolder
 ): Promise<void> {
   const walletId = input.props.id
   const { dispatch } = input.props
 
-  return folder
+  const name: string | null = await folder
     .file(WALLET_NAME_FILE)
     .getText()
     .then(text => JSON.parse(text).walletName)
@@ -175,21 +172,20 @@ function loadNameFile(
       if (name != null) await renameCurrencyWallet(input, name)
       return name
     })
-    .then((name: string | null) => {
-      dispatch({
-        type: 'CURRENCY_WALLET_NAME_CHANGED',
-        payload: {
-          name: typeof name === 'string' ? name : null,
-          walletId
-        }
-      })
-    })
+
+  dispatch({
+    type: 'CURRENCY_WALLET_NAME_CHANGED',
+    payload: {
+      name: typeof name === 'string' ? name : null,
+      walletId
+    }
+  })
 }
 
 /**
  * If a wallet has no name file, try to pick a name based on the appId.
  */
-function fetchBackupName(
+async function fetchBackupName(
   input: CurrencyWalletInput,
   appIds: string[]
 ): Promise<string | null> {
@@ -200,7 +196,7 @@ function fetchBackupName(
     }
   }
 
-  return Promise.resolve(null)
+  return null
 }
 
 /**
@@ -405,7 +401,7 @@ export async function loadAllFiles(input: CurrencyWalletInput): Promise<void> {
 /**
  * Changes a wallet's metadata.
  */
-export function setCurrencyWalletTxMetadata(
+export async function setCurrencyWalletTxMetadata(
   input: CurrencyWalletInput,
   txid: string,
   currencyCode: string,
@@ -459,16 +455,15 @@ export function setCurrencyWalletTxMetadata(
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { creationDate, fileName, json, txid, txidHash, walletId }
   })
-  return diskletFile.setText(JSON.stringify(json)).then(() => {
-    const callbackTx = combineTxWithFile(input, tx, json, currencyCode)
-    fakeCallbacks.onTransactionsChanged([callbackTx])
-  })
+  await diskletFile.setText(JSON.stringify(json))
+  const callbackTx = combineTxWithFile(input, tx, json, currencyCode)
+  fakeCallbacks.onTransactionsChanged([callbackTx])
 }
 
 /**
  * Sets up metadata for an incoming transaction.
  */
-export function setupNewTxMetadata(
+export async function setupNewTxMetadata(
   input: CurrencyWalletInput,
   tx: EdgeTransaction
 ): Promise<void> {
@@ -543,5 +538,5 @@ export function setupNewTxMetadata(
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { creationDate, fileName, json, txid, txidHash, walletId }
   })
-  return diskletFile.setText(JSON.stringify(json)).then(() => undefined)
+  await diskletFile.setText(JSON.stringify(json))
 }
