@@ -145,7 +145,7 @@ export function unpackMetadata(
   return { ...clean, amountFiat: exchangeAmount[walletFiat] }
 }
 
-export const asTxSwap: Cleaner<EdgeTxSwap> = asObject({
+export const asEdgeTxSwap: Cleaner<EdgeTxSwap> = asObject({
   orderId: asOptional(asString),
   orderUri: asOptional(asString),
   isEstimate: asBoolean,

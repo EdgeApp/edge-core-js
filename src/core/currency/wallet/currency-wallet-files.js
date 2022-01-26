@@ -209,7 +209,7 @@ function fetchBackupName(
 export async function loadTxFiles(
   input: CurrencyWalletInput,
   txIdHashes: string[]
-): Promise<{ [txidHash: string]: any }> {
+): Promise<{ [txidHash: string]: TransactionFile }> {
   const walletId = input.props.id
   const folder = getStorageWalletFolder(input.props.state, walletId)
   const { dispatch } = input.props

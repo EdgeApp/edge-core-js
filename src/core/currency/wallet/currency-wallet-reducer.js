@@ -22,6 +22,7 @@ import {
   getCurrencyPlugin
 } from '../../plugins/plugins-selectors.js'
 import { type RootState } from '../../root-reducer.js'
+import { type TransactionFile } from './currency-wallet-cleaners.js'
 
 /** Maps from txid hash to file creation date & path. */
 export type TxFileNames = {
@@ -32,7 +33,7 @@ export type TxFileNames = {
 }
 
 /** Maps from txid hash to file contents (in JSON). */
-export type TxFileJsons = { [txidHash: string]: any }
+export type TxFileJsons = { [txidHash: string]: TransactionFile }
 
 /** Maps from txid hash to creation date. */
 export type TxidHashes = { [txidHash: string]: number }
