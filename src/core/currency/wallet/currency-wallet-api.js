@@ -34,13 +34,13 @@ import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks.js'
 import {
+  type TransactionFile,
   asTxSwap,
   packMetadata,
   unpackMetadata
 } from './currency-wallet-cleaners.js'
 import { dateFilter, searchStringFilter } from './currency-wallet-export.js'
 import {
-  type TransactionFile,
   loadTxFiles,
   renameCurrencyWallet,
   setCurrencyWalletFiat,

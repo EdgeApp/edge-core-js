@@ -10,7 +10,11 @@ import {
   asString
 } from 'cleaners'
 
-import { type EdgeMetadata, type EdgeTxSwap } from '../../../types/types.js'
+import {
+  type EdgeMetadata,
+  type EdgeTxSwap,
+  type JsonObject
+} from '../../../types/types.js'
 
 /**
  * The on-disk metadata format,
@@ -22,6 +26,87 @@ export type DiskMetadata = {
   exchangeAmount: { [fiatCurrencyCode: string]: number },
   name?: string,
   notes?: string
+}
+
+/**
+ * The on-disk transaction format.
+ */
+export type TransactionFile = {
+  txid: string,
+  internal: boolean,
+  creationDate: number,
+  currencies: {
+    [currencyCode: string]: {
+      metadata: DiskMetadata,
+      nativeAmount?: string,
+      providerFeeSent?: string
+    }
+  },
+  deviceDescription?: string,
+  feeRateRequested?: 'high' | 'standard' | 'low' | JsonObject,
+  feeRateUsed?: JsonObject,
+  payees?: Array<{
+    address: string,
+    amount: string,
+    currency: string,
+    tag?: string
+  }>,
+  secret?: string,
+  swap?: EdgeTxSwap
+}
+
+/**
+ * The Airbitz on-disk transaction format.
+ */
+export type LegacyTransactionFile = {
+  airbitzFeeWanted: number,
+  meta: {
+    amountFeeAirBitzSatoshi: number,
+    balance: number,
+    fee: number,
+
+    // Metadata:
+    amountCurrency: number,
+    bizId: number,
+    category: string,
+    name: string,
+    notes: string,
+
+    // Obsolete/moved fields:
+    attributes: number,
+    amountSatoshi: number,
+    amountFeeMinersSatoshi: number,
+    airbitzFee: number
+  },
+  ntxid: string,
+  state: {
+    creationDate: number,
+    internal: boolean,
+    malleableTxId: string
+  }
+}
+
+/**
+ * The Airbitz on-disk address format.
+ */
+export type LegacyAddressFile = {
+  seq: number, // index
+  address: string,
+  state: {
+    recycleable: boolean,
+    creationDate: number
+  },
+  meta: {
+    amountSatoshi: number // requestAmount
+    // TODO: Normal EdgeMetadata
+  }
+}
+
+/**
+ * An on-disk cache to quickly map Airbitz filenames to their dates.
+ */
+export type LegacyMapFile = {
+  [fileName: string]: { timestamp: number, txidHash: string }
 }
 
 /**
