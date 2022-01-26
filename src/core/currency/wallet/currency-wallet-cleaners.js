@@ -3,7 +3,9 @@
 import {
   type Cleaner,
   asBoolean,
+  asEither,
   asMap,
+  asNull,
   asNumber,
   asObject,
   asOptional,
@@ -171,4 +173,13 @@ const asDiskMetadata: Cleaner<DiskMetadata> = asObject({
   exchangeAmount: asOptional(asMap(asNumber), {}),
   name: asOptional(asString),
   notes: asOptional(asString)
+})
+
+export const asWalletFiatFile = asObject({
+  fiat: asOptional(asString),
+  num: asOptional(asNumber)
+})
+
+export const asWalletNameFile = asObject({
+  walletName: asEither(asString, asNull)
 })
