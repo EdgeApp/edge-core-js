@@ -10,6 +10,7 @@ import {
 import {
   type EdgeBalances,
   type EdgeCurrencyInfo,
+  type EdgeStakingStatus,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull,
@@ -59,6 +60,7 @@ export type CurrencyWalletState = {
 
   +paused: boolean,
 
+  +balances: EdgeBalances,
   +currencyInfo: EdgeCurrencyInfo,
   +displayPrivateSeed: string | null,
   +displayPublicSeed: string | null,
@@ -66,20 +68,20 @@ export type CurrencyWalletState = {
   +engineStarted: boolean,
   +fiat: string,
   +fiatLoaded: boolean,
-  +files: TxFileJsons,
   +fileNames: TxFileNames,
   +fileNamesLoaded: boolean,
-  +sortedTransactions: SortedTransactions,
-  +syncRatio: number,
-  +balances: EdgeBalances,
+  +files: TxFileJsons,
+  +gotTxs: { [currencyCode: string]: boolean },
   +height: number,
   +name: string | null,
   +nameLoaded: boolean,
-  +walletInfo: EdgeWalletInfoFull,
   +publicWalletInfo: EdgeWalletInfo | null,
+  +sortedTransactions: SortedTransactions,
+  +stakingStatus: EdgeStakingStatus,
+  +syncRatio: number,
   +txids: string[],
   +txs: { [txid: string]: MergedTransaction },
-  +gotTxs: { [currencyCode: string]: boolean }
+  +walletInfo: EdgeWalletInfoFull
 }
 
 export type CurrencyWalletNext = {
@@ -270,6 +272,15 @@ const currencyWalletInner: FatReducer<
 
   nameLoaded(state = false, action: RootAction): boolean {
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ? true : state
+  },
+
+  stakingStatus(
+    state: EdgeStakingStatus = { stakedAmounts: [] },
+    action: RootAction
+  ): EdgeStakingStatus {
+    return action.type === 'CURRENCY_ENGINE_CHANGED_STAKING'
+      ? action.payload.stakingStatus
+      : state
   },
 
   txids: memoizeReducer(

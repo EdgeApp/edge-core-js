@@ -7,6 +7,7 @@ import {
   type EdgeLogSettings,
   type EdgePluginMap,
   type EdgeRateHint,
+  type EdgeStakingStatus,
   type EdgeTokenInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
@@ -126,6 +127,14 @@ export type RootAction =
         displayPublicSeed: string | null,
         displayPrivateSeed: string | null,
         walletId: string
+      }
+    }
+  | {
+      // Called when a currency engine fires the onStakingStatusChanged callback.
+      type: 'CURRENCY_ENGINE_CHANGED_STAKING',
+      payload: {
+        walletId: string,
+        stakingStatus: EdgeStakingStatus
       }
     }
   | {

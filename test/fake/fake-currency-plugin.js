@@ -1,6 +1,7 @@
 // @flow
 
 import { add, lt } from 'biggystring'
+import { asMap, asNumber, asObject, asOptional } from 'cleaners'
 
 import {
   type EdgeCreatePrivateKeyOptions,
@@ -16,10 +17,12 @@ import {
   type EdgeGetTransactionsOptions,
   type EdgeParsedUri,
   type EdgeSpendInfo,
+  type EdgeStakingStatus,
   type EdgeTokenInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type JsonObject,
+  type Partial, // @ts-delete
   InsufficientFundsError
 } from '../../src/index.js'
 import { compare } from '../../src/util/compare.js'
@@ -56,11 +59,21 @@ const nop: Function = () => {}
 
 type State = {
   balance: number,
+  stakedBalance: number,
   tokenBalance: number,
   blockHeight: number,
   progress: number,
   txs: { [txid: string]: EdgeTransaction }
 }
+
+const asState = asObject({
+  balance: asOptional(asNumber),
+  stakedBalance: asOptional(asNumber),
+  tokenBalance: asOptional(asNumber),
+  blockHeight: asOptional(asNumber),
+  progress: asOptional(asNumber),
+  txs: asOptional(asMap((raw: any) => raw))
+})
 
 /**
  * Currency plugin transaction engine.
@@ -75,6 +88,7 @@ class FakeCurrencyEngine {
     this.running = false
     this.state = {
       balance: 0,
+      stakedBalance: 0,
       tokenBalance: 0,
       blockHeight: 0,
       progress: 0,
@@ -84,41 +98,50 @@ class FakeCurrencyEngine {
     this._updateState(this.state)
   }
 
-  _updateState(settings: State): void {
+  _updateState(settings: Partial<State>): void {
     const state = this.state
     const {
       onAddressesChecked = nop,
       onBalanceChanged = nop,
       onBlockHeightChanged = nop,
+      onStakingStatusChanged = nop,
       onTransactionsChanged = nop
     } = this.callbacks
 
     // Address callback:
-    if (typeof settings.progress === 'number') {
+    if (settings.progress != null) {
       state.progress = settings.progress
       onAddressesChecked(state.progress)
     }
 
     // Balance callback:
-    if (typeof settings.balance === 'number') {
+    if (settings.balance != null) {
       state.balance = settings.balance
       onBalanceChanged('FAKE', state.balance.toString())
     }
 
+    // Staking status callback:
+    if (settings.stakedBalance != null) {
+      state.stakedBalance = settings.stakedBalance
+      onStakingStatusChanged({
+        stakedAmounts: [{ nativeAmount: String(state.stakedBalance) }]
+      })
+    }
+
     // Token balance callback:
-    if (typeof settings.tokenBalance === 'number') {
+    if (settings.tokenBalance != null) {
       state.tokenBalance = settings.tokenBalance
       onBalanceChanged('TOKEN', state.tokenBalance.toString())
     }
 
     // Block height callback:
-    if (typeof settings.blockHeight === 'number') {
+    if (settings.blockHeight != null) {
       state.blockHeight = settings.blockHeight
       onBlockHeightChanged(state.blockHeight)
     }
 
     // Transactions callback:
-    if (typeof settings.txs === 'object' && settings.txs != null) {
+    if (settings.txs != null) {
       const changes: EdgeTransaction[] = []
       for (const txid in settings.txs) {
         const newTx: EdgeTransaction = {
@@ -143,7 +166,7 @@ class FakeCurrencyEngine {
   }
 
   async changeUserSettings(settings: JsonObject): Promise<void> {
-    await this._updateState(settings)
+    await this._updateState(asState(settings))
   }
 
   // Keys:
@@ -224,6 +247,13 @@ class FakeCurrencyEngine {
 
   getTokenStatus(token: string): boolean {
     return token === 'TOKEN'
+  }
+
+  // Staking:
+  async getStakingStatus(): Promise<EdgeStakingStatus> {
+    return {
+      stakedAmounts: [{ nativeAmount: String(this.state.stakedBalance) }]
+    }
   }
 
   // Addresses:
