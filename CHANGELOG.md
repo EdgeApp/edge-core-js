@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.4 (2022-01-28)
+
+- added: `EdgeCurrencyWallet.stakingStatus`, along with matching engine methods for returning and updating this.
+- fixed: Removed unnecessary C++ compiler flags.
+
 ## v0.19.3 (2022-01-21)
 
 - fix: Correctly select swaps with the best price.
