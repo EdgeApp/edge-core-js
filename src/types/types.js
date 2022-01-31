@@ -317,7 +317,7 @@ export type EdgeCurrencyInfo = {
 
   // Deprecated:
   defaultSettings: JsonObject, // The default user settings are `{}`
-  metaTokens: EdgeMetaToken[], // Use `EdgeCurrencyPlugins.getBuiltinTokens`
+  metaTokens: EdgeMetaToken[], // Use `EdgeCurrencyPlugin.getBuiltinTokens`
   symbolImage?: string, // The GUI handles this now
   symbolImageDarkMono?: string // The GUI handles this now
 }
