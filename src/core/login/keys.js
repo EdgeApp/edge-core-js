@@ -318,7 +318,7 @@ export async function createCurrencyWallet(
     if (tools.importPrivateKey == null) {
       throw new Error('This wallet does not support importing keys')
     }
-    keys = await tools.importPrivateKey(opts.importText)
+    keys = await tools.importPrivateKey(opts.importText, opts.keyOptions)
   } else {
     keys = await tools.createPrivateKey(walletType, opts.keyOptions)
   }
