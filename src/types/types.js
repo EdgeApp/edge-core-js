@@ -878,7 +878,10 @@ export type EdgeCurrencyConfig = {
   +userSettings: JsonObject | void,
 
   +changeUserSettings: (settings: JsonObject) => Promise<void>,
-  +importKey: (userInput: string) => Promise<JsonObject>
+  +importKey: (
+    userInput: string,
+    opts?: { keyOptions?: JsonObject }
+  ) => Promise<JsonObject>
 }
 
 export type EthereumTransaction = {
