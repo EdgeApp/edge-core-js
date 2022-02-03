@@ -217,6 +217,33 @@ export type EdgeDenomination = {
 }
 
 /**
+ * Information used to display a token or currency to the user.
+ */
+export type EdgeToken = {
+  // The short code used on exchanges, such as "BTC":
+  currencyCode: string,
+
+  // How many decimal places to shift the native amount.
+  // The first item in this array is always the default for exchanges:
+  denominations: EdgeDenomination[],
+
+  // The full marketing name, such as "Bitcoin":
+  displayName: string,
+
+  // Each currency plugin decides what this contains,
+  // such as a contract address.
+  // The primary currency for a network, such as BTC or ETH,
+  // will set this field to `undefined`:
+  networkLocation: JsonObject | void
+}
+
+export type EdgeTokenMap = {
+  // Each currency plugin decides how to generate this ID,
+  // such as by using the contract address:
+  [tokenId: string]: EdgeToken
+}
+
+/**
  * Available tokens stored in the `EdgeCurrencyInfo`,
  * or parsed out of URI's.
  */
