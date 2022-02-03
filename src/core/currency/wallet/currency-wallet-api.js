@@ -23,6 +23,7 @@ import {
   type EdgeSpendTarget,
   type EdgeStakingStatus,
   type EdgeTokenInfo,
+  type EdgeTokenMap,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type JsonObject
@@ -201,6 +202,13 @@ export function makeCurrencyWalletApi(
     },
 
     // Tokens:
+    get enabledTokens(): EdgeTokenMap {
+      return {}
+    },
+
+    async changeEnabledTokenIds(tokenIds: string[]): Promise<void> {},
+
+    // Deprecated tokens:
     async changeEnabledTokens(currencyCodes: string[]): Promise<void> {
       const enabled = await engine.getEnabledTokens()
       await engine.disableTokens(

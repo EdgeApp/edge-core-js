@@ -638,6 +638,10 @@ export type EdgeCurrencyTools = {
   +derivePublicKey: (walletInfo: EdgeWalletInfo) => Promise<JsonObject>,
   +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => string[],
 
+  // Derives a tokenId string from a token's network information,
+  // such as its contract address:
+  +getTokenId?: (networkLocation: JsonObject) => Promise<string>,
+
   // URIs:
   +parseUri: (
     uri: string,
@@ -730,11 +734,11 @@ export type EdgeCurrencyWallet = {
   +changePaused: (paused: boolean) => Promise<void>,
 
   // Token management:
-  +changeEnabledTokens: (currencyCodes: string[]) => Promise<void>,
-  +enableTokens: (tokens: string[]) => Promise<void>,
-  +disableTokens: (tokens: string[]) => Promise<void>,
-  +getEnabledTokens: () => Promise<string[]>,
-  +addCustomToken: (token: EdgeTokenInfo) => Promise<void>,
+  // This map also includes the default currency, such as ETH or BTC,
+  // with a blank tokenId:
+  +enabledTokens: EdgeTokenMap,
+  // Available tokens can be found in `EdgeCurrencyConfig`:
+  +changeEnabledTokenIds: (tokenIds: string[]) => Promise<void>,
 
   // Transaction history:
   +getNumTransactions: (opts?: EdgeCurrencyCodeOptions) => Promise<number>,
@@ -776,7 +780,14 @@ export type EdgeCurrencyWallet = {
   +parseUri: (uri: string, currencyCode?: string) => Promise<EdgeParsedUri>,
   +encodeUri: (obj: EdgeEncodeUri) => Promise<string>,
 
-  +otherMethods: EdgeOtherMethods
+  +otherMethods: EdgeOtherMethods,
+
+  // Deprecated:
+  +addCustomToken: (token: EdgeTokenInfo) => Promise<void>,
+  +changeEnabledTokens: (currencyCodes: string[]) => Promise<void>,
+  +disableTokens: (tokens: string[]) => Promise<void>,
+  +enableTokens: (tokens: string[]) => Promise<void>,
+  +getEnabledTokens: () => Promise<string[]>
 }
 
 // ---------------------------------------------------------------------
@@ -918,6 +929,13 @@ export type EdgeCurrencyConfig = {
   +watch: Subscriber<EdgeCurrencyConfig>,
 
   +currencyInfo: EdgeCurrencyInfo,
+
+  // Tokens:
+  +builtinTokens: EdgeTokenMap,
+  +customTokens: EdgeTokenMap,
+  +addCustomToken: (token: EdgeToken) => Promise<string>,
+  +changeCustomToken: (tokenId: string, token: EdgeToken) => Promise<void>,
+  +removeCustomToken: (tokenId: string) => Promise<void>,
 
   // User settings for this plugin:
   +userSettings: JsonObject | void,
