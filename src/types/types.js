@@ -566,6 +566,7 @@ export type EdgeCurrencyEngineOptions = {
 
   // User settings:
   customTokens: EdgeTokenMap,
+  enabledTokenIds: string[],
   userSettings: JsonObject | void
 }
 
@@ -593,9 +594,7 @@ export type EdgeCurrencyEngine = {
 
   // Tokens:
   +changeCustomTokens?: (tokens: EdgeTokenMap) => Promise<void>,
-  +enableTokens: (tokens: string[]) => Promise<void>,
-  +disableTokens: (tokens: string[]) => Promise<void>,
-  +getEnabledTokens: () => Promise<string[]>,
+  +changeEnabledTokenIds?: (tokenIds: string[]) => Promise<void>,
 
   // Addresses:
   +getFreshAddress: (
@@ -622,6 +621,9 @@ export type EdgeCurrencyEngine = {
   +otherMethods?: EdgeOtherMethods,
 
   // Deprecated:
+  +enableTokens: (tokens: string[]) => Promise<void>,
+  +disableTokens: (tokens: string[]) => Promise<void>,
+  +getEnabledTokens: () => Promise<string[]>,
   +addCustomToken: (token: EdgeTokenInfo & EdgeToken) => Promise<void>,
   +getTokenStatus: (token: string) => boolean
 }
@@ -743,10 +745,10 @@ export type EdgeCurrencyWallet = {
   +changePaused: (paused: boolean) => Promise<void>,
 
   // Token management:
-  +changeEnabledTokens: (currencyCodes: string[]) => Promise<void>,
-  +enableTokens: (tokens: string[]) => Promise<void>,
-  +disableTokens: (tokens: string[]) => Promise<void>,
-  +getEnabledTokens: () => Promise<string[]>,
+  // Available tokens can be found in `EdgeCurrencyConfig`.
+  // This list is allowed to include missing or deleted `tokenIds`:
+  +enabledTokenIds: string[],
+  +changeEnabledTokenIds: (tokenIds: string[]) => Promise<void>,
 
   // Transaction history:
   +getNumTransactions: (opts?: EdgeCurrencyCodeOptions) => Promise<number>,
@@ -791,6 +793,10 @@ export type EdgeCurrencyWallet = {
   +otherMethods: EdgeOtherMethods,
 
   // Deprecated:
+  +changeEnabledTokens: (currencyCodes: string[]) => Promise<void>,
+  +disableTokens: (tokens: string[]) => Promise<void>,
+  +enableTokens: (tokens: string[]) => Promise<void>,
+  +getEnabledTokens: () => Promise<string[]>,
   +addCustomToken: (token: EdgeTokenInfo) => Promise<void>
 }
 

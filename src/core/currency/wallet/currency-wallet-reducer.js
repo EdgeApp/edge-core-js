@@ -16,10 +16,12 @@ import {
   type EdgeWalletInfoFull,
   type JsonObject
 } from '../../../types/types.js'
+import { compare } from '../../../util/compare.js'
 import { type RootAction } from '../../actions.js'
 import { findCurrencyPluginId } from '../../plugins/plugins-selectors.js'
 import { type RootState } from '../../root-reducer.js'
 import { type TransactionFile } from './currency-wallet-cleaners.js'
+import { currencyCodesToTokenIds } from './enabled-tokens.js'
 
 /** Maps from txid hash to file creation date & path. */
 export type TxFileNames = {
@@ -62,6 +64,8 @@ export type CurrencyWalletState = {
   +currencyInfo: EdgeCurrencyInfo,
   +displayPrivateSeed: string | null,
   +displayPublicSeed: string | null,
+  +enabledTokenIds: string[],
+  +enabledTokens: string[],
   +engineFailure: Error | null,
   +engineStarted: boolean,
   +fiat: string,
@@ -144,6 +148,26 @@ const currencyWalletInner: FatReducer<
     return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
       ? action.payload.displayPublicSeed
       : state
+  },
+
+  enabledTokenIds: memoizeReducer(
+    (next: CurrencyWalletNext) =>
+      next.root.accounts[next.self.accountId].builtinTokens[next.self.pluginId],
+    (next: CurrencyWalletNext) =>
+      next.root.accounts[next.self.accountId].customTokens[next.self.pluginId],
+    (next: CurrencyWalletNext) => next.self.currencyInfo,
+    (next: CurrencyWalletNext) => next.self.enabledTokens,
+    currencyCodesToTokenIds
+  ),
+
+  enabledTokens(state = [], action: RootAction): string[] {
+    if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
+      const { currencyCodes } = action.payload
+      // Check for actual changes:
+      currencyCodes.sort((a, b) => (a === b ? 0 : a > b ? 1 : -1))
+      if (!compare(currencyCodes, state)) return currencyCodes
+    }
+    return state
   },
 
   engineFailure(state = null, action: RootAction): Error | null {

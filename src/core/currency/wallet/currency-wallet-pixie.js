@@ -81,6 +81,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         input.props.io
       )
 
+      // Derive the public keys:
       const tools = await getCurrencyTools(ai, pluginId)
       const publicWalletInfo = await getPublicWalletInfo(
         walletInfo,
@@ -112,6 +113,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
         // User settings:
         customTokens: accountState.customTokens[pluginId] ?? {},
+        enabledTokenIds: input.props.walletState.enabledTokenIds,
         userSettings: accountState.userSettings[pluginId] ?? {}
       })
       input.props.dispatch({
@@ -278,6 +280,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     let lastState
     let lastSettings: JsonObject = {}
     let lastTokens: EdgeTokenMap = {}
+    let lastEnabledTokens: string[] = []
 
     return async () => {
       const { state, walletState, walletOutput } = input.props
@@ -317,6 +320,28 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         }
       }
       lastTokens = customTokens
+
+      // Update enabled tokens:
+      const { enabledTokens } = walletState
+      if (lastEnabledTokens !== enabledTokens && engine != null) {
+        if (engine.changeEnabledTokenIds != null) {
+          await engine
+            .changeEnabledTokenIds(walletState.enabledTokenIds)
+            .catch(e => input.props.onError(e))
+        } else {
+          await engine
+            .disableTokens(
+              lastEnabledTokens.filter(code => enabledTokens.indexOf(code) < 0)
+            )
+            .catch(e => input.props.onError(e))
+          await engine
+            .enableTokens(
+              enabledTokens.filter(code => lastEnabledTokens.indexOf(code) < 0)
+            )
+            .catch(e => input.props.onError(e))
+        }
+      }
+      lastEnabledTokens = enabledTokens
     }
   }
 })

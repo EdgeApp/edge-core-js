@@ -24,6 +24,7 @@ import {
   type DiskMetadata,
   type LegacyTransactionFile,
   type TransactionFile,
+  asEnabledTokensFile,
   asLegacyAddressFile,
   asLegacyMapFile,
   asLegacyTransactionFile,
@@ -35,16 +36,36 @@ import {
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
 import { type TxFileNames } from './currency-wallet-reducer.js'
 
+const CURRENCY_FILE = 'Currency.json'
+const ENABLED_TOKENS_FILE = 'EnabledTokens.json'
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
 const WALLET_NAME_FILE = 'WalletName.json'
-const CURRENCY_FILE = 'Currency.json'
 
+const enabledTokensFile = makeJsonFile(asEnabledTokensFile)
 const legacyAddressFile = makeJsonFile(asLegacyAddressFile)
 const legacyMapFile = makeJsonFile(asLegacyMapFile)
 const legacyTransactionFile = makeJsonFile(asLegacyTransactionFile)
 const transactionFile = makeJsonFile(asTransactionFile)
 const walletFiatFile = makeJsonFile(asWalletFiatFile)
 const walletNameFile = makeJsonFile(asWalletNameFile)
+
+/**
+ * Updates the enabled tokens on a wallet.
+ */
+export async function changeEnabledTokens(
+  input: CurrencyWalletInput,
+  currencyCodes: string[]
+): Promise<void> {
+  const { dispatch, state, walletId } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
+
+  await enabledTokensFile.save(disklet, ENABLED_TOKENS_FILE, currencyCodes)
+
+  dispatch({
+    type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+    payload: { walletId: input.props.walletId, currencyCodes }
+  })
+}
 
 /**
  * Converts a LegacyTransactionFile to a TransactionFile.
@@ -131,6 +152,23 @@ export async function setCurrencyWalletFiat(
   dispatch({
     type: 'CURRENCY_WALLET_FIAT_CHANGED',
     payload: { fiatCurrencyCode, walletId }
+  })
+}
+
+async function loadEnabledTokensFile(
+  input: CurrencyWalletInput
+): Promise<void> {
+  const { dispatch, state, walletId } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
+
+  const clean = await enabledTokensFile.load(disklet, ENABLED_TOKENS_FILE)
+  if (clean == null) return
+
+  // Future currencyCode to tokenId logic will live here.
+
+  dispatch({
+    type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+    payload: { walletId: input.props.walletId, currencyCodes: clean }
   })
 }
 
@@ -348,6 +386,7 @@ async function loadAddressFiles(input: CurrencyWalletInput): Promise<void> {
  * Updates the wallet in response to data syncs.
  */
 export async function loadAllFiles(input: CurrencyWalletInput): Promise<void> {
+  await loadEnabledTokensFile(input)
   await loadFiatFile(input)
   await loadNameFile(input)
   await loadTxFileNames(input)
