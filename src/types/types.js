@@ -454,23 +454,23 @@ export type WalletConnect = {
 }
 
 export type EdgeParsedUri = {
-  token?: EdgeMetaToken,
-  privateKeys?: string[],
-  publicAddress?: string,
-  legacyAddress?: string,
-  segwitAddress?: string,
-  nativeAmount?: string,
-  currencyCode?: string,
-  metadata?: EdgeMetadata,
-  bitIDURI?: string,
-  bitIDDomain?: string,
   bitIDCallbackUri?: string,
-  paymentProtocolUrl?: string,
-  returnUri?: string,
-  uniqueIdentifier?: string, // Ripple payment id
-  bitidPaymentAddress?: string, // Experimental
+  bitIDDomain?: string,
   bitidKycProvider?: string, // Experimental
   bitidKycRequest?: string, // Experimental
+  bitidPaymentAddress?: string, // Experimental
+  bitIDURI?: string,
+  currencyCode?: string,
+  legacyAddress?: string,
+  metadata?: EdgeMetadata,
+  nativeAmount?: string,
+  paymentProtocolUrl?: string,
+  privateKeys?: string[],
+  publicAddress?: string,
+  returnUri?: string,
+  segwitAddress?: string,
+  token?: EdgeMetaToken,
+  uniqueIdentifier?: string, // Ripple payment id
   walletConnect?: WalletConnect
 }
 
