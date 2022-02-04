@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.5 (2022-02-04)
+
+- changed: Send the optional `keyOptions` parameter through the `importKey` methods.
+- fixed: Remove JCenter from the Android build file.
+
 ## v0.19.4 (2022-01-28)
 
 - added: `EdgeCurrencyWallet.stakingStatus`, along with matching engine methods for returning and updating this.
@@ -7,14 +12,14 @@
 
 ## v0.19.3 (2022-01-21)
 
-- fix: Correctly select swaps with the best price.
-- fix: Correctly prefer swap plugins with active promo codes.
+- fixed: Correctly select swaps with the best price.
+- fixed: Correctly prefer swap plugins with active promo codes.
 - changed: Add more logging to the swap procedure.
 
 ## v0.19.2 (2022-01-20)
 
-- fix: Only write the `deviceDescription` on sent transactions.
-- fix: Add a native `requiresMainQueueSetup` method to silence a warning on iOS.
+- fixed: Only write the `deviceDescription` on sent transactions.
+- fixed: Add a native `requiresMainQueueSetup` method to silence a warning on iOS.
 
 ## v0.19.1 (2022-01-14)
 
