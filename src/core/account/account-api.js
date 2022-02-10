@@ -63,8 +63,8 @@ import { CurrencyConfig, SwapConfig } from './plugin-api.js'
  * Creates an unwrapped account API object around an account state object.
  */
 export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
-  const selfState = (): AccountState => ai.props.state.accounts[accountId]
-  const { accountWalletInfo, loginType, loginTree } = selfState()
+  const accountState = (): AccountState => ai.props.state.accounts[accountId]
+  const { accountWalletInfo, loginType, loginTree } = accountState()
   const { username } = loginTree
 
   // Plugin config API's:
@@ -119,24 +119,24 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     // Basic login information:
     get appId(): string {
-      return selfState().login.appId
+      return accountState().login.appId
     },
     get created(): Date | void {
-      return selfState().login.created
+      return accountState().login.created
     },
     get lastLogin(): Date {
-      return selfState().login.lastLogin
+      return accountState().login.lastLogin
     },
     get loggedIn(): boolean {
-      return selfState() != null
+      return accountState() != null
     },
     get loginKey(): string {
       lockdown()
-      return base58.stringify(selfState().login.loginKey)
+      return base58.stringify(accountState().login.loginKey)
     },
     get recoveryKey(): string | void {
       lockdown()
-      const { login } = selfState()
+      const { login } = accountState()
       return login.recovery2Key != null
         ? base58.stringify(login.recovery2Key)
         : undefined
@@ -166,7 +166,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     // What login method was used?
     get edgeLogin(): boolean {
-      const { loginTree } = selfState()
+      const { loginTree } = accountState()
       return loginTree.loginKey == null
     },
     keyLogin: loginType === 'keyLogin',
@@ -187,7 +187,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       lockdown()
       const { pin, enableLogin } = opts
       return changePin(ai, accountId, pin, enableLogin).then(() => {
-        const { login } = selfState()
+        const { login } = accountState()
         return login.pin2Key ? base58.stringify(login.pin2Key) : ''
       })
     },
@@ -197,7 +197,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     ): Promise<string> {
       lockdown()
       return changeRecovery(ai, accountId, questions, answers).then(() => {
-        const { loginTree } = selfState()
+        const { loginTree } = accountState()
         if (!loginTree.recovery2Key) {
           throw new Error('Missing recoveryKey')
         }
@@ -208,12 +208,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     // Verify existing credentials:
     async checkPassword(password: string): Promise<boolean> {
       lockdown()
-      const { loginTree } = selfState()
+      const { loginTree } = accountState()
       return checkPassword(ai, loginTree, password)
     },
     async checkPin(pin: string): Promise<boolean> {
       lockdown()
-      const { login, loginTree } = selfState()
+      const { login, loginTree } = accountState()
 
       // Try to check the PIN locally, then fall back on the server:
       return login.pin != null
@@ -238,14 +238,14 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     // OTP:
     get otpKey(): string | void {
       lockdown()
-      const { loginTree } = selfState()
+      const { loginTree } = accountState()
       return loginTree.otpKey != null
         ? base32.stringify(loginTree.otpKey, { pad: false })
         : undefined
     },
     get otpResetDate(): Date | void {
       lockdown()
-      const { loginTree } = selfState()
+      const { loginTree } = accountState()
       return loginTree.otpResetDate
     },
     async cancelOtpReset(): Promise<void> {
@@ -267,7 +267,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     // 2fa bypass voucher approval / rejection:
     get pendingVouchers(): EdgePendingVoucher[] {
-      const { login } = selfState()
+      const { login } = accountState()
       return login.pendingVouchers
     },
     async approveVoucher(voucherId: string): Promise<void> {
@@ -302,7 +302,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       await changeWalletStates(ai, accountId, walletStates)
     },
     async createWallet(walletType: string, keys?: JsonObject): Promise<string> {
-      const { login, loginTree } = selfState()
+      const { login, loginTree } = accountState()
 
       if (keys == null) {
         // Use the currency plugin to create the keys:
@@ -366,7 +366,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       transaction: EthereumTransaction
     ): Promise<string> {
       ai.props.log.warn('Edge is signing: ', transaction)
-      const { allWalletInfosFull } = selfState()
+      const { allWalletInfosFull } = accountState()
       const walletInfo = allWalletInfosFull.find(info => info.id === walletId)
       if (
         walletInfo == null ||

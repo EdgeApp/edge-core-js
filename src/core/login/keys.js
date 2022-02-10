@@ -391,8 +391,8 @@ export async function splitWalletInfo(
   walletId: string,
   newWalletType: string
 ): Promise<string> {
-  const selfState = ai.props.state.accounts[accountId]
-  const { allWalletInfosFull, login, loginTree } = selfState
+  const accountState = ai.props.state.accounts[accountId]
+  const { allWalletInfosFull, login, loginTree } = accountState
 
   // Find the wallet we are going to split:
   const walletInfo = allWalletInfosFull.find(

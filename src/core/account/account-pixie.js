@@ -29,20 +29,20 @@ import { type AccountState } from './account-reducer.js'
 import { loadBuiltinTokens } from './custom-tokens.js'
 
 export type AccountOutput = {
-  +api: EdgeAccount,
+  +accountApi: EdgeAccount,
   +currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
 }
 
 export type AccountProps = RootProps & {
-  +id: string,
-  +selfState: AccountState,
-  +selfOutput: AccountOutput
+  +accountId: string,
+  +accountState: AccountState,
+  +accountOutput: AccountOutput
 }
 
 export type AccountInput = PixieInput<AccountProps>
 
 const accountPixie: TamePixie<AccountProps> = combinePixies({
-  api(input: AccountInput) {
+  accountApi(input: AccountInput) {
     return {
       destroy() {
         // The Pixie library stops updating props after destruction,
@@ -51,25 +51,25 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         hack.state = { accounts: {} }
 
         if (
-          input.props.selfOutput != null &&
-          input.props.selfOutput.api != null
+          input.props.accountOutput != null &&
+          input.props.accountOutput.accountApi != null
         ) {
-          update(input.props.selfOutput.api)
-          close(input.props.selfOutput.api)
-          close(input.props.selfOutput.api.dataStore)
-          close(input.props.selfOutput.api.rateCache)
-          const currencies = input.props.selfOutput.api.currencyConfig
+          update(input.props.accountOutput.accountApi)
+          close(input.props.accountOutput.accountApi)
+          close(input.props.accountOutput.accountApi.dataStore)
+          close(input.props.accountOutput.accountApi.rateCache)
+          const currencies = input.props.accountOutput.accountApi.currencyConfig
           for (const n of Object.keys(currencies)) close(currencies[n])
-          const swaps = input.props.selfOutput.api.swapConfig
+          const swaps = input.props.accountOutput.accountApi.swapConfig
           for (const n of Object.keys(swaps)) close(swaps[n])
         }
       },
 
       async update() {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-        const accountId = input.props.id
+        const { accountId } = input.props
         const { log } = input.props
-        const { accountWalletInfos } = input.props.selfState
+        const { accountWalletInfos } = input.props.accountState
 
         async function loadAllFiles(): Promise<void> {
           await Promise.all([
@@ -113,8 +113,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     (input: AccountInput) => {
       async function doDataSync(): Promise<void> {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-        const accountId = input.props.id
-        const { accountWalletInfos } = input.props.selfState
+        const { accountId } = input.props
+        const { accountWalletInfos } = input.props.accountState
 
         if (input.props.state.accounts[accountId] == null) return
         const changeLists = await Promise.all(
@@ -131,7 +131,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
       async function doLoginSync(): Promise<void> {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-        const accountId = input.props.id
+        const { accountId } = input.props
         await syncAccount(ai, accountId)
       }
 
@@ -148,7 +148,10 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       return {
         update() {
           // Start once the EdgeAccount API exists:
-          if (input.props.selfOutput && input.props.selfOutput.api) {
+          if (
+            input.props.accountOutput &&
+            input.props.accountOutput.accountApi
+          ) {
             dataTask.start({ wait: true })
             loginTask.start({ wait: true })
           }
@@ -169,23 +172,27 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     let lastExchangeState
 
     return () => {
-      const { selfState, selfOutput } = input.props
-      if (selfState == null || selfOutput == null) return
+      const { accountState, accountOutput } = input.props
+      if (accountState == null || accountOutput == null) return
 
       // TODO: Remove this once update detection is reliable:
-      if (selfOutput.api != null) update(selfOutput.api)
+      if (accountOutput.accountApi != null) update(accountOutput.accountApi)
 
       // General account state:
-      if (lastState !== selfState) {
-        lastState = selfState
-        if (selfOutput.api != null) {
+      if (lastState !== accountState) {
+        lastState = accountState
+        if (accountOutput.accountApi != null) {
           // TODO: Put this back once we solve the race condition:
-          // update(selfOutput.api)
-          for (const pluginId of Object.keys(selfOutput.api.currencyConfig)) {
-            update(selfOutput.api.currencyConfig[pluginId])
+          // update(accountOutput.accountApi)
+          for (const pluginId of Object.keys(
+            accountOutput.accountApi.currencyConfig
+          )) {
+            update(accountOutput.accountApi.currencyConfig[pluginId])
           }
-          for (const pluginId of Object.keys(selfOutput.api.swapConfig)) {
-            update(selfOutput.api.swapConfig[pluginId])
+          for (const pluginId of Object.keys(
+            accountOutput.accountApi.swapConfig
+          )) {
+            update(accountOutput.accountApi.swapConfig[pluginId])
           }
         }
       }
@@ -194,14 +201,14 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       // TODO: Why don't we always detect `currencyWallets` updates?
       // if (lastWallets !== input.props.output.currency.wallets) {
       //   lastWallets = input.props.output.currency.wallets
-      //   if (selfOutput.api != null) update(selfOutput.api)
+      //   if (accountOutput.accountApi != null) update(accountOutput.accountApi)
       // }
 
       // Exchange:
       if (lastExchangeState !== input.props.state.exchangeCache) {
         lastExchangeState = input.props.state.exchangeCache
-        if (selfOutput.api != null) {
-          emit(selfOutput.api.rateCache, 'update', undefined)
+        if (accountOutput.accountApi != null) {
+          emit(accountOutput.accountApi.rateCache, 'update', undefined)
         }
       }
     }
@@ -211,13 +218,16 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     let lastActiveWalletIds
 
     return () => {
-      const { activeWalletIds } = input.props.selfState
+      const { activeWalletIds } = input.props.accountState
       let dirty = lastActiveWalletIds !== activeWalletIds
       lastActiveWalletIds = activeWalletIds
 
       let lastOut = {}
-      if (input.props.selfOutput && input.props.selfOutput.currencyWallets) {
-        lastOut = input.props.selfOutput.currencyWallets
+      if (
+        input.props.accountOutput &&
+        input.props.accountOutput.currencyWallets
+      ) {
+        lastOut = input.props.accountOutput.currencyWallets
       }
 
       const out = {}
@@ -240,10 +250,10 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 export const accounts: TamePixie<RootProps> = mapPixie(
   accountPixie,
   (props: RootProps) => props.state.accountIds,
-  (props: RootProps, id: string): AccountProps => ({
+  (props: RootProps, accountId: string): AccountProps => ({
     ...props,
-    id,
-    selfState: props.state.accounts[id],
-    selfOutput: props.output.accounts[id]
+    accountId,
+    accountState: props.state.accounts[accountId],
+    accountOutput: props.output.accounts[accountId]
   })
 )
