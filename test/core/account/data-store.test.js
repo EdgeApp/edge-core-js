@@ -4,6 +4,7 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { makeFakeEdgeWorld } from '../../../src/index.js'
+import { expectRejection } from '../../expect-rejection.js'
 import { fakeUser } from '../../fake/fake-user.js'
 
 const contextOptions = { apiKey: '', appId: '' }
@@ -35,6 +36,10 @@ describe('data store API', function () {
 
     // Delete an item:
     await account.dataStore.deleteItem(storeId, 'username')
+    await expectRejection(
+      account.dataStore.getItem(storeId, 'username'),
+      'Error: No item named "username"'
+    )
     expect(await account.dataStore.listItemIds(storeId)).deep.equals([
       'password'
     ])
