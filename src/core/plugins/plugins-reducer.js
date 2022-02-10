@@ -42,7 +42,7 @@ export const plugins = (
         rate: { ...state.rate },
         swap: { ...state.swap }
       }
-      for (const pluginId in action.payload) {
+      for (const pluginId of Object.keys(action.payload)) {
         const plugin = action.payload[pluginId]
         // $FlowFixMe - Flow doesn't see the type refinement here:
         if (plugin.currencyInfo != null) out.currency[pluginId] = plugin

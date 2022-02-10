@@ -69,12 +69,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
   // Plugin config API's:
   const currencyConfigs: EdgePluginMap<EdgeCurrencyConfig> = {}
-  for (const pluginId in ai.props.state.plugins.currency) {
+  for (const pluginId of Object.keys(ai.props.state.plugins.currency)) {
     const api = new CurrencyConfig(ai, accountId, pluginId)
     currencyConfigs[pluginId] = api
   }
   const swapConfigs: EdgePluginMap<EdgeSwapConfig> = {}
-  for (const pluginId in ai.props.state.plugins.swap) {
+  for (const pluginId of Object.keys(ai.props.state.plugins.swap)) {
     const api = new SwapConfig(ai, accountId, pluginId)
     swapConfigs[pluginId] = api
   }

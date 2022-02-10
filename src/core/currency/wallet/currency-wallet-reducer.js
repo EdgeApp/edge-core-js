@@ -98,9 +98,9 @@ const currencyWalletInner: FatReducer<
 > = buildReducer({
   accountId(state, action: RootAction, next: CurrencyWalletNext): string {
     if (state != null) return state
-    for (const accountId in next.root.accounts) {
+    for (const accountId of Object.keys(next.root.accounts)) {
       const account = next.root.accounts[accountId]
-      for (const walletId in account.walletInfos) {
+      for (const walletId of Object.keys(account.walletInfos)) {
         if (walletId === next.id) return accountId
       }
     }
@@ -336,7 +336,7 @@ export function sortTxs(
   sortedList: string[],
   txidHashes: TxidHashes
 } {
-  for (const newTxidHash in newHashes) {
+  for (const newTxidHash of Object.keys(newHashes)) {
     const newTime = newHashes[newTxidHash]
     if (!txidHashes[newTxidHash] || newTime < txidHashes[newTxidHash]) {
       txidHashes[newTxidHash] = newTime

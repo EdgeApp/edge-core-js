@@ -12,12 +12,7 @@ function assign(out: any): any {
   for (let i = 1; i < arguments.length; ++i) {
     const from = arguments[i]
     if (from == null) continue
-
-    for (const key in from) {
-      if (Object.prototype.hasOwnProperty.call(from, key)) {
-        out[key] = from[key]
-      }
-    }
+    for (const key of Object.keys(from)) out[key] = from[key]
   }
   return out
 }

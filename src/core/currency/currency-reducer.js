@@ -75,7 +75,7 @@ export const currency: FatReducer<
     (state: RootState) => state.plugins.currency,
     (plugins: EdgePluginMap<EdgeCurrencyPlugin>) => {
       const out: EdgeCurrencyInfo[] = []
-      for (const pluginId in plugins) {
+      for (const pluginId of Object.keys(plugins)) {
         out.push(plugins[pluginId].currencyInfo)
       }
       return out

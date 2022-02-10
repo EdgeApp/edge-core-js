@@ -143,7 +143,7 @@ class FakeCurrencyEngine {
     // Transactions callback:
     if (settings.txs != null) {
       const changes: EdgeTransaction[] = []
-      for (const txid in settings.txs) {
+      for (const txid of Object.keys(settings.txs)) {
         const newTx: EdgeTransaction = {
           blockHeight: 0,
           date: GENESIS_BLOCK,
