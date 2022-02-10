@@ -212,20 +212,18 @@ export async function loadTxFiles(
   const out: { [filename: string]: TransactionFile } = {}
   await Promise.all(
     txIdHashes.map(async txidHash => {
-      const clean = await legacyTransactionFile.load(
-        disklet,
-        `Transactions/${fileNames[txidHash].fileName}`
-      )
+      if (fileNames[txidHash] == null) return
+      const path = `Transactions/${fileNames[txidHash].fileName}`
+      const clean = await legacyTransactionFile.load(disklet, path)
       if (clean == null) return
       out[txidHash] = fixLegacyFile(clean, walletCurrency, walletFiat)
     })
   )
   await Promise.all(
     txIdHashes.map(async txidHash => {
-      const clean = await transactionFile.load(
-        disklet,
-        `transaction/${fileNames[txidHash].fileName}`
-      )
+      if (fileNames[txidHash] == null) return
+      const path = `transaction/${fileNames[txidHash].fileName}`
+      const clean = await transactionFile.load(disklet, path)
       if (clean == null) return
       out[txidHash] = clean
     })
