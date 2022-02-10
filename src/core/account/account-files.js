@@ -104,8 +104,8 @@ export async function loadAllWalletStates(
   ai: ApiInput,
   accountId: string
 ): Promise<void> {
-  const selfState = ai.props.state.accounts[accountId]
-  const { accountWalletInfo, accountWalletInfos } = selfState
+  const accountState = ai.props.state.accounts[accountId]
+  const { accountWalletInfo, accountWalletInfos } = accountState
 
   // Read legacy files from all Airbitz repos:
   const legacyLists: LoadedWalletList[] = await Promise.all(
