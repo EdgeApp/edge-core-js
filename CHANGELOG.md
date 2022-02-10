@@ -1,5 +1,11 @@
 # edge-core-js
 
+## v0.19.6 (2022-02-10)
+
+- changed: Add comments and improve organization in the public types file.
+- changed: Use cleaners to load & save many files for additional safety.
+- fixed: Improve wallet start-up performance by loading fewer files.
+
 ## v0.19.5 (2022-02-04)
 
 - changed: Send the optional `keyOptions` parameter through the `importKey` methods.
