@@ -2,15 +2,24 @@
 
 import {
   type Cleaner,
+  asArray,
   asBoolean,
+  asEither,
   asMap,
+  asNull,
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  asValue
 } from 'cleaners'
 
-import { type EdgeMetadata, type EdgeTxSwap } from '../../../types/types.js'
+import {
+  type EdgeMetadata,
+  type EdgeTxSwap,
+  type JsonObject
+} from '../../../types/types.js'
+import { asJsonObject } from '../../../util/file-helpers.js'
 
 /**
  * The on-disk metadata format,
@@ -22,6 +31,87 @@ export type DiskMetadata = {
   exchangeAmount: { [fiatCurrencyCode: string]: number },
   name?: string,
   notes?: string
+}
+
+/**
+ * The on-disk transaction format.
+ */
+export type TransactionFile = {
+  txid: string,
+  internal: boolean,
+  creationDate: number,
+  currencies: {
+    [currencyCode: string]: {
+      metadata: DiskMetadata,
+      nativeAmount?: string,
+      providerFeeSent?: string
+    }
+  },
+  deviceDescription?: string,
+  feeRateRequested?: 'high' | 'standard' | 'low' | JsonObject,
+  feeRateUsed?: JsonObject,
+  payees?: Array<{
+    address: string,
+    amount: string,
+    currency: string,
+    tag?: string
+  }>,
+  secret?: string,
+  swap?: EdgeTxSwap
+}
+
+/**
+ * The Airbitz on-disk transaction format.
+ */
+export type LegacyTransactionFile = {
+  airbitzFeeWanted: number,
+  meta: {
+    amountFeeAirBitzSatoshi: number,
+    balance: number,
+    fee: number,
+
+    // Metadata:
+    amountCurrency: number,
+    bizId: number,
+    category: string,
+    name: string,
+    notes: string,
+
+    // Obsolete/moved fields:
+    attributes: number,
+    amountSatoshi: number,
+    amountFeeMinersSatoshi: number,
+    airbitzFee: number
+  },
+  ntxid: string,
+  state: {
+    creationDate: number,
+    internal: boolean,
+    malleableTxId: string
+  }
+}
+
+/**
+ * The Airbitz on-disk address format.
+ */
+type LegacyAddressFile = {
+  seq: number, // index
+  address: string,
+  state: {
+    recycleable: boolean,
+    creationDate: number
+  },
+  meta: {
+    amountSatoshi: number // requestAmount
+    // TODO: Normal EdgeMetadata
+  }
+}
+
+/**
+ * An on-disk cache to quickly map Airbitz filenames to their dates.
+ */
+type LegacyMapFile = {
+  [fileName: string]: { timestamp: number, txidHash: string }
 }
 
 /**
@@ -60,7 +150,13 @@ export function unpackMetadata(
   return { ...clean, amountFiat: exchangeAmount[walletFiat] }
 }
 
-export const asTxSwap: Cleaner<EdgeTxSwap> = asObject({
+const asFeeRate: Cleaner<'high' | 'standard' | 'low'> = asValue(
+  'high',
+  'standard',
+  'low'
+)
+
+export const asEdgeTxSwap: Cleaner<EdgeTxSwap> = asObject({
   orderId: asOptional(asString),
   orderUri: asOptional(asString),
   isEstimate: asBoolean,
@@ -86,4 +182,100 @@ const asDiskMetadata: Cleaner<DiskMetadata> = asObject({
   exchangeAmount: asOptional(asMap(asNumber), {}),
   name: asOptional(asString),
   notes: asOptional(asString)
+})
+
+export const asTransactionFile: Cleaner<TransactionFile> = asObject({
+  txid: asString,
+  internal: asBoolean,
+  creationDate: asNumber,
+  currencies: asMap(
+    asObject({
+      metadata: asDiskMetadata,
+      nativeAmount: asOptional(asString),
+      providerFeeSent: asOptional(asString)
+    })
+  ),
+  deviceDescription: asOptional(asString),
+  feeRateRequested: asOptional(asEither(asFeeRate, asJsonObject)),
+  feeRateUsed: asOptional(asJsonObject),
+  payees: asOptional(
+    asArray(
+      asObject({
+        address: asString,
+        amount: asString,
+        currency: asString,
+        tag: asOptional(asString)
+      })
+    )
+  ),
+  secret: asOptional(asString),
+  swap: asOptional(asEdgeTxSwap)
+})
+
+export const asLegacyTransactionFile = asObject({
+  airbitzFeeWanted: asNumber,
+  meta: asObject({
+    amountFeeAirBitzSatoshi: asNumber,
+    balance: asNumber,
+    fee: asNumber,
+
+    // Metadata:
+    amountCurrency: asNumber,
+    bizId: asNumber,
+    category: asString,
+    name: asString,
+    notes: asString,
+
+    // Obsolete/moved fields:
+    attributes: asNumber,
+    amountSatoshi: asNumber,
+    amountFeeMinersSatoshi: asNumber,
+    airbitzFee: asNumber
+  }),
+  ntxid: asString,
+  state: asObject({
+    creationDate: asNumber,
+    internal: asBoolean,
+    malleableTxId: asString
+  })
+})
+
+export const asLegacyAddressFile: Cleaner<LegacyAddressFile> = asObject({
+  seq: asNumber, // index
+  address: asString,
+  state: asObject({
+    recycleable: asOptional(asBoolean, true),
+    creationDate: asOptional(asNumber, 0)
+  }),
+  meta: asObject({
+    amountSatoshi: asOptional(asNumber, 0) // requestAmount
+    // TODO: Normal EdgeMetadata
+  }).withRest
+})
+
+export const asLegacyMapFile: Cleaner<LegacyMapFile> = asMap(
+  asObject({
+    timestamp: asNumber,
+    txidHash: asString
+  })
+)
+
+/**
+ * Public keys cached in the wallet's local storage.
+ */
+export const asPublicKeyFile = asObject({
+  walletInfo: asObject({
+    id: asString,
+    keys: asJsonObject,
+    type: asString
+  })
+})
+
+export const asWalletFiatFile = asObject({
+  fiat: asOptional(asString),
+  num: asOptional(asNumber)
+})
+
+export const asWalletNameFile = asObject({
+  walletName: asEither(asString, asNull)
 })

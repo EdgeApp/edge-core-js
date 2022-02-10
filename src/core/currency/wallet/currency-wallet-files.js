@@ -1,27 +1,37 @@
 // @flow
 
 import { number as currencyFromNumber } from 'currency-codes'
-import { type DiskletFile, type DiskletFolder, mapFiles } from 'disklet'
+import { type Disklet, justFiles, navigateDisklet } from 'disklet'
 
 import {
   type EdgeCurrencyEngineCallbacks,
-  type EdgeTransaction,
-  type EdgeTxSwap,
-  type JsonObject
+  type EdgeTransaction
 } from '../../../types/types.js'
+import { makeJsonFile } from '../../../util/file-helpers.js'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobby-api.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
 import { type ApiInput } from '../../root-pixie.js'
 import { type RootState } from '../../root-reducer.js'
 import {
-  getStorageWalletFolder,
-  getStorageWalletLocalFolder,
+  getStorageWalletDisklet,
+  getStorageWalletLocalDisklet,
   hashStorageWalletFilename
 } from '../../storage/storage-selectors.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { combineTxWithFile } from './currency-wallet-api.js'
-import { type DiskMetadata, packMetadata } from './currency-wallet-cleaners.js'
+import {
+  type DiskMetadata,
+  type LegacyTransactionFile,
+  type TransactionFile,
+  asLegacyAddressFile,
+  asLegacyMapFile,
+  asLegacyTransactionFile,
+  asTransactionFile,
+  asWalletFiatFile,
+  asWalletNameFile,
+  packMetadata
+} from './currency-wallet-cleaners.js'
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
 import { type TxFileNames } from './currency-wallet-reducer.js'
 
@@ -29,75 +39,12 @@ const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
 const WALLET_NAME_FILE = 'WalletName.json'
 const CURRENCY_FILE = 'Currency.json'
 
-export type TransactionFile = {
-  txid: string,
-  internal: boolean,
-  creationDate: number,
-  currencies: {
-    [currencyCode: string]: {
-      metadata: DiskMetadata,
-      nativeAmount?: string,
-      providerFeeSent?: string
-    }
-  },
-  deviceDescription?: string,
-  feeRateRequested?: 'high' | 'standard' | 'low' | JsonObject,
-  feeRateUsed?: JsonObject,
-  payees?: Array<{
-    address: string,
-    amount: string,
-    currency: string,
-    tag?: string
-  }>,
-  secret?: string,
-  swap?: EdgeTxSwap
-}
-
-export type LegacyTransactionFile = {
-  airbitzFeeWanted: number,
-  meta: {
-    amountFeeAirBitzSatoshi: number,
-    balance: number,
-    fee: number,
-
-    // Metadata:
-    amountCurrency: number,
-    bizId: number,
-    category: string,
-    name: string,
-    notes: string,
-
-    // Obsolete/moved fields:
-    attributes: number,
-    amountSatoshi: number,
-    amountFeeMinersSatoshi: number,
-    airbitzFee: number
-  },
-  ntxid: string,
-  state: {
-    creationDate: number,
-    internal: boolean,
-    malleableTxId: string
-  }
-}
-
-export type LegacyAddressFile = {
-  seq: number, // index
-  address: string,
-  state: {
-    recycleable: boolean,
-    creationDate: number
-  },
-  meta: {
-    amountSatoshi: number // requestAmount
-    // TODO: Normal EdgeMetadata
-  }
-}
-
-// Cache used to quickly look up creation dates for legacy files.
-export type LegacyMapFile = {
-  [fileName: string]: { timestamp: number, txidHash: string }
-}
+const legacyAddressFile = makeJsonFile(asLegacyAddressFile)
+const legacyMapFile = makeJsonFile(asLegacyMapFile)
+const legacyTransactionFile = makeJsonFile(asLegacyTransactionFile)
+const transactionFile = makeJsonFile(asTransactionFile)
+const walletFiatFile = makeJsonFile(asWalletFiatFile)
+const walletNameFile = makeJsonFile(asWalletNameFile)
 
 /**
  * Converts a LegacyTransactionFile to a TransactionFile.
@@ -129,19 +76,15 @@ function fixLegacyFile(
   return out
 }
 
-function getTxFile(
+function getTxFileName(
   state: RootState,
   keyId: string,
   creationDate: number,
   txid: string
-): { diskletFile: DiskletFile, fileName: string, txidHash: string } {
+): { fileName: string, txidHash: string } {
   const txidHash: string = hashStorageWalletFilename(state, keyId, txid)
-  const fileName: string = `${creationDate.toFixed(0)}-${txidHash}.json`
   return {
-    diskletFile: getStorageWalletFolder(state, keyId)
-      .folder('transaction')
-      .file(fileName),
-    fileName,
+    fileName: `${creationDate.toFixed(0)}-${txidHash}.json`,
     txidHash
   }
 }
@@ -149,123 +92,107 @@ function getTxFile(
 /**
  * Changes a wallet's name.
  */
-export function renameCurrencyWallet(
+export async function renameCurrencyWallet(
   input: CurrencyWalletInput,
   name: string | null
 ): Promise<void> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
 
-  return getStorageWalletFolder(state, walletId)
-    .file(WALLET_NAME_FILE)
-    .setText(JSON.stringify({ walletName: name }))
-    .then(() => {
-      dispatch({
-        type: 'CURRENCY_WALLET_NAME_CHANGED',
-        payload: { name, walletId }
-      })
-    })
+  await walletNameFile.save(disklet, WALLET_NAME_FILE, {
+    walletName: name
+  })
+
+  dispatch({
+    type: 'CURRENCY_WALLET_NAME_CHANGED',
+    payload: { name, walletId }
+  })
 }
 
 /**
  * Changes a wallet's fiat currency code.
  */
-export function setCurrencyWalletFiat(
+export async function setCurrencyWalletFiat(
   input: CurrencyWalletInput,
   fiatCurrencyCode: string
 ): Promise<void> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
 
   if (!/^iso:/.test(fiatCurrencyCode)) {
     throw new TypeError('Fiat currency codes must start with `iso:`')
   }
 
-  return getStorageWalletFolder(state, walletId)
-    .file(CURRENCY_FILE)
-    .setText(JSON.stringify({ fiat: fiatCurrencyCode }))
-    .then(() => {
-      dispatch({
-        type: 'CURRENCY_WALLET_FIAT_CHANGED',
-        payload: { fiatCurrencyCode, walletId }
-      })
-    })
+  await walletFiatFile.save(disklet, CURRENCY_FILE, {
+    fiat: fiatCurrencyCode,
+    num: undefined
+  })
+
+  dispatch({
+    type: 'CURRENCY_WALLET_FIAT_CHANGED',
+    payload: { fiatCurrencyCode, walletId }
+  })
 }
 
 /**
  * Loads the wallet fiat currency file.
  */
-function loadFiatFile(
-  input: CurrencyWalletInput,
-  folder: DiskletFolder
-): Promise<void> {
+async function loadFiatFile(input: CurrencyWalletInput): Promise<void> {
   const walletId = input.props.id
-  const { dispatch } = input.props
+  const { dispatch, state } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
 
-  return folder
-    .file(CURRENCY_FILE)
-    .getText()
-    .then(text => {
-      const file = JSON.parse(text)
-      return file.fiat
-        ? file.fiat
-        : `iso:${currencyFromNumber(`000${file.num}`.slice(-3)).code}`
-    })
-    .catch(e => 'iso:USD')
-    .then((fiatCurrencyCode: string) => {
-      dispatch({
-        type: 'CURRENCY_WALLET_FIAT_CHANGED',
-        payload: { fiatCurrencyCode, walletId }
-      })
-    })
+  const clean = await walletFiatFile.load(disklet, CURRENCY_FILE)
+  let fiatCurrencyCode = 'iso:USD'
+  if (clean != null) {
+    if (clean.fiat != null) {
+      fiatCurrencyCode = clean.fiat
+    } else if (clean.num != null) {
+      fiatCurrencyCode = `iso:${
+        currencyFromNumber(`000${clean.num}`.slice(-3)).code
+      }`
+    }
+  }
+
+  dispatch({
+    type: 'CURRENCY_WALLET_FIAT_CHANGED',
+    payload: { fiatCurrencyCode, walletId }
+  })
 }
 
 /**
  * Loads the wallet name file.
  */
-function loadNameFile(
-  input: CurrencyWalletInput,
-  folder: DiskletFolder
-): Promise<void> {
+async function loadNameFile(input: CurrencyWalletInput): Promise<void> {
   const walletId = input.props.id
-  const { dispatch } = input.props
+  const { dispatch, state } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
 
-  return folder
-    .file(WALLET_NAME_FILE)
-    .getText()
-    .then(text => JSON.parse(text).walletName)
-    .catch(async e => {
-      const { appIds = [] } = input.props.selfState.walletInfo
-      const name = await fetchBackupName(input, appIds)
-      if (name != null) await renameCurrencyWallet(input, name)
-      return name
-    })
-    .then((name: string | null) => {
-      dispatch({
-        type: 'CURRENCY_WALLET_NAME_CHANGED',
-        payload: {
-          name: typeof name === 'string' ? name : null,
-          walletId
-        }
-      })
-    })
-}
+  const clean = await walletNameFile.load(disklet, WALLET_NAME_FILE)
+  let name: string | null = null
+  if (clean == null || clean.walletName == null) {
+    // If a wallet has no name file, try to pick a name based on the appId:
+    const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+    const { appIds = [] } = input.props.selfState.walletInfo
 
-/**
- * If a wallet has no name file, try to pick a name based on the appId.
- */
-function fetchBackupName(
-  input: CurrencyWalletInput,
-  appIds: string[]
-): Promise<string | null> {
-  const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-  for (const appId of appIds) {
-    if (appId !== '') {
-      return fetchAppIdInfo(ai, appId).then(info => info.displayName)
+    const appId = appIds.find(appId => appId !== '')
+    if (appId != null) {
+      const { displayName } = await fetchAppIdInfo(ai, appId)
+      name = displayName
     }
+  } else {
+    name = clean.walletName
   }
 
-  return Promise.resolve(null)
+  dispatch({
+    type: 'CURRENCY_WALLET_NAME_CHANGED',
+    payload: {
+      name: typeof name === 'string' ? name : null,
+      walletId
+    }
+  })
 }
 
 /**
@@ -274,39 +201,35 @@ function fetchBackupName(
 export async function loadTxFiles(
   input: CurrencyWalletInput,
   txIdHashes: string[]
-): Promise<{ [txidHash: string]: any }> {
+): Promise<{ [txidHash: string]: TransactionFile }> {
   const walletId = input.props.id
-  const folder = getStorageWalletFolder(input.props.state, walletId)
+  const disklet = getStorageWalletDisklet(input.props.state, walletId)
   const { dispatch } = input.props
   const walletCurrency = input.props.selfState.currencyInfo.currencyCode
   const fileNames = input.props.selfState.fileNames
   const walletFiat = input.props.selfState.fiat
 
-  async function getFiles(
-    folderName: string,
-    cb: (json: any, txidHash: string) => void
-  ): Promise<void> {
-    await Promise.all(
-      txIdHashes.map(txidHash =>
-        folder
-          .folder(folderName)
-          .file(fileNames[txidHash].fileName)
-          .getText()
-          .then(text => cb(JSON.parse(text), txidHash))
-          .catch(e => null)
+  const out: { [filename: string]: TransactionFile } = {}
+  await Promise.all(
+    txIdHashes.map(async txidHash => {
+      const clean = await legacyTransactionFile.load(
+        disklet,
+        `Transactions/${fileNames[txidHash].fileName}`
       )
-    )
-  }
-
-  const out = {}
-  await getFiles('Transactions', (json: any, txidHash: string) => {
-    if (!json.state || !json.state.malleableTxId) return
-    out[txidHash] = fixLegacyFile(json, walletCurrency, walletFiat)
-  })
-  await getFiles('transaction', (json: any, txidHash: string) => {
-    if (!json.txid) return
-    out[txidHash] = json
-  })
+      if (clean == null) return
+      out[txidHash] = fixLegacyFile(clean, walletCurrency, walletFiat)
+    })
+  )
+  await Promise.all(
+    txIdHashes.map(async txidHash => {
+      const clean = await transactionFile.load(
+        disklet,
+        `transaction/${fileNames[txidHash].fileName}`
+      )
+      if (clean == null) return
+      out[txidHash] = clean
+    })
+  )
 
   dispatch({
     type: 'CURRENCY_WALLET_FILES_LOADED',
@@ -323,23 +246,17 @@ export async function loadTxFiles(
 async function getLegacyFileNames(
   state: RootState,
   walletId: string,
-  folder: DiskletFolder
+  disklet: Disklet
 ): Promise<TxFileNames> {
-  const newFormatFileNames: TxFileNames = {}
-  // Get the non encrypted folder
-  const localFolder = getStorageWalletLocalFolder(state, walletId)
-  const fixedNamesFile = localFolder.file(LEGACY_MAP_FILE)
-  const legacyFileNames: string[] = []
-  let legacyMap: LegacyMapFile = {}
-  try {
-    // Get the real legacy file names
-    await mapFiles(folder, (file, name) => legacyFileNames.push(name))
-  } catch (e) {}
-  try {
-    const text = await fixedNamesFile.getText()
-    legacyMap = JSON.parse(text)
-  } catch (e) {}
+  // Load the cache, if it exists:
+  const localDisklet = getStorageWalletLocalDisklet(state, walletId)
+  const legacyMap =
+    (await legacyMapFile.load(localDisklet, LEGACY_MAP_FILE)) ?? {}
 
+  // Get the real legacy file names:
+  const legacyFileNames = justFiles(await disklet.list())
+
+  const newFormatFileNames: TxFileNames = {}
   const missingLegacyFiles: string[] = []
   for (let i = 0; i < legacyFileNames.length; i++) {
     const fileName = legacyFileNames[i]
@@ -352,31 +269,22 @@ async function getLegacyFileNames(
       missingLegacyFiles.push(fileName)
     }
   }
-  const convertFileNames = missingLegacyFiles.map(legacyFileName =>
-    folder
-      .file(legacyFileName)
-      .getText()
-      .then(txText => {
-        const legacyFile = JSON.parse(txText)
-        const { creationDate, malleableTxId } = legacyFile.state
-        const fileName = legacyFileName
-        const txidHash = hashStorageWalletFilename(
-          state,
-          walletId,
-          malleableTxId
-        )
-        newFormatFileNames[txidHash] = { creationDate, fileName }
-        legacyMap[fileName] = { timestamp: creationDate, txidHash }
-      })
-      .catch(e => null)
-  )
+  const convertFileNames = missingLegacyFiles.map(async legacyFileName => {
+    const clean = await legacyTransactionFile.load(disklet, legacyFileName)
+    if (clean == null) return
+    const { creationDate, malleableTxId } = clean.state
+    const fileName = legacyFileName
+    const txidHash = hashStorageWalletFilename(state, walletId, malleableTxId)
+    newFormatFileNames[txidHash] = { creationDate, fileName }
+    legacyMap[fileName] = { timestamp: creationDate, txidHash }
+  })
 
   if (convertFileNames.length) {
     await Promise.all(convertFileNames)
     // Cache the new results
-    try {
-      await fixedNamesFile.setText(JSON.stringify(legacyMap))
-    } catch (e) {}
+    await legacyMapFile
+      .save(localDisklet, LEGACY_MAP_FILE, legacyMap)
+      .catch(() => {})
   }
   return newFormatFileNames
 }
@@ -384,22 +292,21 @@ async function getLegacyFileNames(
 /**
  * Loads transaction metadata file names.
  */
-async function loadTxFileNames(
-  input: CurrencyWalletInput,
-  folder: DiskletFolder
-): Promise<void> {
+async function loadTxFileNames(input: CurrencyWalletInput): Promise<void> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
 
   // Legacy transactions files:
   const txFileNames: TxFileNames = await getLegacyFileNames(
     state,
     walletId,
-    folder.folder('Transactions')
+    navigateDisklet(disklet, 'Transactions')
   )
 
   // New transactions files:
-  await mapFiles(folder.folder('transaction'), (file, fileName) => {
+  const listing = await navigateDisklet(disklet, 'transaction').list()
+  for (const fileName of justFiles(listing)) {
     const prefix = fileName.split('.json')[0]
     const split: string[] = prefix.split('-')
     const [creationDatePart, txidHash] = split
@@ -413,7 +320,7 @@ async function loadTxFileNames(
     ) {
       txFileNames[txidHash] = { creationDate, fileName }
     }
-  })
+  }
 
   dispatch({
     type: 'CURRENCY_WALLET_FILE_NAMES_LOADED',
@@ -424,53 +331,42 @@ async function loadTxFileNames(
 /**
  * Loads address metadata files.
  */
-async function loadAddressFiles(
-  input: CurrencyWalletInput,
-  folder: DiskletFolder
-): Promise<string[]> {
-  // Actually load the files:
-  const oldFiles: LegacyAddressFile[] = await mapFiles(
-    folder.folder('Addresses'),
-    file =>
-      file
-        .getText()
-        .then(text => JSON.parse(text))
-        .catch(e => null)
-  )
+async function loadAddressFiles(input: CurrencyWalletInput): Promise<void> {
+  const walletId = input.props.id
+  const { state } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
 
   // Save the results to our state:
   const out: string[] = []
-  for (const json of oldFiles) {
-    if (json == null || !json.state || !json.meta) continue
-    const address = json.address
-    if (!address || json.state.recycleable) continue
-    out.push(address)
-  }
+  const paths = justFiles(await disklet.list('Addresses'))
+  await Promise.all(
+    paths.map(async path => {
+      const clean = await legacyAddressFile.load(disklet, path)
+      if (clean == null) return
+      if (clean.address === '' || clean.state.recycleable) return
+      out.push(clean.address)
+    })
+  )
 
   // Load these addresses into the engine:
   const engine = input.props.selfOutput.engine
   if (engine != null) await engine.addGapLimitAddresses(out)
-
-  return out
 }
 
 /**
  * Updates the wallet in response to data syncs.
  */
 export async function loadAllFiles(input: CurrencyWalletInput): Promise<void> {
-  const walletId = input.props.id
-  const folder = getStorageWalletFolder(input.props.state, walletId)
-
-  await loadFiatFile(input, folder)
-  await loadNameFile(input, folder)
-  await loadTxFileNames(input, folder)
-  await loadAddressFiles(input, folder)
+  await loadFiatFile(input)
+  await loadNameFile(input)
+  await loadTxFileNames(input)
+  await loadAddressFiles(input)
 }
 
 /**
  * Changes a wallet's metadata.
  */
-export function setCurrencyWalletTxMetadata(
+export async function setCurrencyWalletTxMetadata(
   input: CurrencyWalletInput,
   txid: string,
   currencyCode: string,
@@ -479,6 +375,7 @@ export function setCurrencyWalletTxMetadata(
 ): Promise<void> {
   const walletId = input.props.id
   const { dispatch, state } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
 
   // Find the tx:
   const tx = input.props.selfState.txs[txid]
@@ -502,7 +399,7 @@ export function setCurrencyWalletTxMetadata(
     oldFile == null ? Date.now() / 1000 : oldFile.creationDate
 
   // Set up the new file:
-  const { diskletFile, fileName, txidHash } = getTxFile(
+  const { fileName, txidHash } = getTxFileName(
     state,
     walletId,
     creationDate,
@@ -524,22 +421,22 @@ export function setCurrencyWalletTxMetadata(
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { creationDate, fileName, json, txid, txidHash, walletId }
   })
-  return diskletFile.setText(JSON.stringify(json)).then(() => {
-    const callbackTx = combineTxWithFile(input, tx, json, currencyCode)
-    fakeCallbacks.onTransactionsChanged([callbackTx])
-  })
+  await transactionFile.save(disklet, 'transaction/' + fileName, json)
+  const callbackTx = combineTxWithFile(input, tx, json, currencyCode)
+  fakeCallbacks.onTransactionsChanged([callbackTx])
 }
 
 /**
  * Sets up metadata for an incoming transaction.
  */
-export function setupNewTxMetadata(
+export async function setupNewTxMetadata(
   input: CurrencyWalletInput,
   tx: EdgeTransaction
 ): Promise<void> {
   const { dispatch, selfState, state, id: walletId } = input.props
   const { currencyInfo, fiat = 'iso:USD' } = selfState
   const { currencyCode, spendTargets, swapData, txid } = tx
+  const disklet = getStorageWalletDisklet(state, walletId)
 
   const creationDate = Date.now() / 1000
 
@@ -598,7 +495,7 @@ export function setupNewTxMetadata(
   if (typeof tx.txSecret === 'string') json.secret = tx.txSecret
 
   // Save the new file:
-  const { diskletFile, fileName, txidHash } = getTxFile(
+  const { fileName, txidHash } = getTxFileName(
     state,
     walletId,
     creationDate,
@@ -608,5 +505,5 @@ export function setupNewTxMetadata(
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { creationDate, fileName, json, txid, txidHash, walletId }
   })
-  return diskletFile.setText(JSON.stringify(json)).then(() => undefined)
+  await transactionFile.save(disklet, 'transaction/' + fileName, json)
 }

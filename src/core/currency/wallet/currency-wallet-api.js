@@ -34,13 +34,13 @@ import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks.js'
 import {
-  asTxSwap,
+  type TransactionFile,
+  asEdgeTxSwap,
   packMetadata,
   unpackMetadata
 } from './currency-wallet-cleaners.js'
 import { dateFilter, searchStringFilter } from './currency-wallet-export.js'
 import {
-  type TransactionFile,
   loadTxFiles,
   renameCurrencyWallet,
   setCurrencyWalletFiat,
@@ -417,7 +417,7 @@ export function makeCurrencyWalletApi(
       tx.requestedCustomFee = customNetworkFee
       tx.spendTargets = savedTargets
       if (metadata != null) tx.metadata = metadata
-      if (swapData != null) tx.swapData = asTxSwap(swapData)
+      if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
       if (input.props.state.login.deviceDescription != null)
         tx.deviceDescription = input.props.state.login.deviceDescription
 
@@ -612,7 +612,7 @@ export function combineTxWithFile(
       }))
     }
 
-    if (file.swap != null) out.swapData = asTxSwap(file.swap)
+    if (file.swap != null) out.swapData = asEdgeTxSwap(file.swap)
     if (typeof file.secret === 'string') out.txSecret = file.secret
     if (file.deviceDescription != null)
       out.deviceDescription = file.deviceDescription
