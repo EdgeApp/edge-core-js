@@ -63,7 +63,7 @@ export function waitForCurrencyWallet(
 
       // Return the API if that exists:
       if (props.output.currency.wallets[walletId]) {
-        return props.output.currency.wallets[walletId].api
+        return props.output.currency.wallets[walletId].walletApi
       }
     }
   )

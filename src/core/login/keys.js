@@ -416,7 +416,7 @@ export async function splitWalletInfo(
     newWalletType === 'wallet:bitcoinsv' &&
     walletInfo.type === 'wallet:bitcoincash'
   if (needsProtection) {
-    const oldWallet = ai.props.output.currency.wallets[walletId].api
+    const oldWallet = ai.props.output.currency.wallets[walletId].walletApi
     if (oldWallet == null) throw new Error('Missing Wallet')
     await protectBchWallet(oldWallet)
   }
@@ -446,7 +446,7 @@ export async function splitWalletInfo(
   // In the future we should clone the repo instead:
   try {
     const wallet = await waitForCurrencyWallet(ai, newWalletInfo.id)
-    const oldWallet = ai.props.output.currency.wallets[walletId].api
+    const oldWallet = ai.props.output.currency.wallets[walletId].walletApi
     if (oldWallet != null) {
       if (oldWallet.name != null) await wallet.renameWallet(oldWallet.name)
       if (oldWallet.fiatCurrencyCode != null) {

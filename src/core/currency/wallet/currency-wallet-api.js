@@ -76,7 +76,7 @@ export function makeCurrencyWalletApi(
   publicWalletInfo: EdgeWalletInfo
 ): EdgeCurrencyWallet {
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-  const { accountId, pluginId, walletInfo } = input.props.selfState
+  const { accountId, pluginId, walletInfo } = input.props.walletState
 
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
@@ -123,15 +123,15 @@ export function makeCurrencyWalletApi(
     // Wallet keys:
     get displayPrivateSeed(): string | null {
       lockdown()
-      return input.props.selfState.displayPrivateSeed
+      return input.props.walletState.displayPrivateSeed
     },
     get displayPublicSeed(): string | null {
-      return input.props.selfState.displayPublicSeed
+      return input.props.walletState.displayPublicSeed
     },
 
     // Wallet name:
     get name(): string | null {
-      return input.props.selfState.name
+      return input.props.walletState.name
     },
     async renameWallet(name: string): Promise<void> {
       await renameCurrencyWallet(input, name)
@@ -171,7 +171,7 @@ export function makeCurrencyWalletApi(
 
     // Fiat currency option:
     get fiatCurrencyCode(): string {
-      return input.props.selfState.fiat
+      return input.props.walletState.fiat
     },
     async setFiatCurrencyCode(fiatCurrencyCode: string): Promise<void> {
       await setCurrencyWalletFiat(input, fiatCurrencyCode)
@@ -179,25 +179,25 @@ export function makeCurrencyWalletApi(
 
     // Chain state:
     get balances(): EdgeBalances {
-      return input.props.selfState.balances
+      return input.props.walletState.balances
     },
 
     get blockHeight(): number {
-      return input.props.selfState.height
+      return input.props.walletState.height
     },
 
     get syncRatio(): number {
-      return input.props.selfState.syncRatio
+      return input.props.walletState.syncRatio
     },
 
     // Running state:
     get paused(): boolean {
-      return input.props.selfState.paused
+      return input.props.walletState.paused
     },
     async changePaused(paused: boolean): Promise<void> {
       input.props.dispatch({
         type: 'CURRENCY_WALLET_CHANGED_PAUSED',
-        payload: { walletId: input.props.id, paused }
+        payload: { walletId: input.props.walletId, paused }
       })
     },
 
@@ -246,7 +246,7 @@ export function makeCurrencyWalletApi(
     ): Promise<EdgeTransaction[]> {
       const { currencyCode = plugin.currencyInfo.currencyCode } = opts
 
-      let state = input.props.selfState
+      let state = input.props.walletState
       if (!state.gotTxs[currencyCode]) {
         const txs = await engine.getTransactions({
           currencyCode: opts.currencyCode
@@ -255,11 +255,11 @@ export function makeCurrencyWalletApi(
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_GOT_TXS',
           payload: {
-            walletId: input.props.id,
+            walletId: input.props.walletId,
             currencyCode
           }
         })
-        state = input.props.selfState
+        state = input.props.walletState
       }
 
       // Txid array of all txs
@@ -359,7 +359,7 @@ export function makeCurrencyWalletApi(
     },
 
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-      const { currencyInfo } = input.props.selfState
+      const { currencyInfo } = input.props.walletState
       const {
         currencyCode = currencyInfo.currencyCode,
         privateKeys,
@@ -458,13 +458,13 @@ export function makeCurrencyWalletApi(
     },
 
     get stakingStatus(): EdgeStakingStatus {
-      return input.props.selfState.stakingStatus
+      return input.props.walletState.stakingStatus
     },
 
     async resyncBlockchain(): Promise<void> {
       ai.props.dispatch({
         type: 'CURRENCY_ENGINE_CLEARED',
-        payload: { walletId: input.props.id }
+        payload: { walletId: input.props.walletId }
       })
       await engine.resyncBlockchain()
     },
@@ -493,7 +493,7 @@ export function makeCurrencyWalletApi(
         input,
         txid,
         currencyCode,
-        packMetadata(metadata, input.props.selfState.fiat),
+        packMetadata(metadata, input.props.walletState.fiat),
         fakeCallbacks
       )
     },
@@ -569,9 +569,9 @@ export function combineTxWithFile(
   file: TransactionFile | void,
   currencyCode: string
 ): EdgeTransaction {
-  const wallet = input.props.selfOutput.api
-  const walletCurrency = input.props.selfState.currencyInfo.currencyCode
-  const walletFiat = input.props.selfState.fiat
+  const wallet = input.props.walletOutput.walletApi
+  const walletCurrency = input.props.walletState.currencyInfo.currencyCode
+  const walletFiat = input.props.walletState.fiat
 
   const flowHack: any = tx
   const { unfilteredIndex } = flowHack

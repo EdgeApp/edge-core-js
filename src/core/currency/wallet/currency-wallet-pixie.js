@@ -43,15 +43,15 @@ import { loadAllFiles } from './currency-wallet-files.js'
 import { type CurrencyWalletState } from './currency-wallet-reducer.js'
 
 export type CurrencyWalletOutput = {
-  +api: EdgeCurrencyWallet | void,
+  +walletApi: EdgeCurrencyWallet | void,
   +plugin: EdgeCurrencyPlugin | void,
   +engine: EdgeCurrencyEngine | void
 }
 
 export type CurrencyWalletProps = RootProps & {
-  +id: string,
-  +selfState: CurrencyWalletState,
-  +selfOutput: CurrencyWalletOutput
+  +walletId: string,
+  +walletState: CurrencyWalletState,
+  +walletOutput: CurrencyWalletOutput
 }
 
 export type CurrencyWalletInput = PixieInput<CurrencyWalletProps>
@@ -63,28 +63,28 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Looks up the currency plugin for this wallet:
   plugin: (input: CurrencyWalletInput) => () => {
     // There are still race conditions where this can happen:
-    if (input.props.selfOutput && input.props.selfOutput.plugin) return
+    if (input.props.walletOutput && input.props.walletOutput.plugin) return
 
-    const walletInfo = input.props.selfState.walletInfo
+    const walletInfo = input.props.walletState.walletInfo
     const plugin = getCurrencyPlugin(input.props.state, walletInfo.type)
     input.onOutput(plugin)
   },
 
   // Creates the engine for this wallet:
   engine: (input: CurrencyWalletInput) => async () => {
-    if (!input.props.selfOutput) return
-    const walletId = input.props.id
+    if (!input.props.walletOutput) return
+    const { walletId } = input.props
 
-    const walletInfo = input.props.selfState.walletInfo
-    const plugin = input.props.selfOutput.plugin
+    const walletInfo = input.props.walletState.walletInfo
+    const plugin = input.props.walletOutput.plugin
     if (!plugin) return
 
     try {
       // Start the data sync:
       const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
       await addStorageWallet(ai, walletInfo)
-      const { selfState, state } = input.props
-      const { accountId, pluginId } = selfState
+      const { walletState, state } = input.props
+      const { accountId, pluginId } = walletState
       const userSettings = state.accounts[accountId].userSettings[pluginId]
 
       const walletLocalDisklet = getStorageWalletLocalDisklet(
@@ -172,19 +172,19 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   },
 
   // Creates the API object:
-  api: (input: CurrencyWalletInput) => () => {
+  walletApi: (input: CurrencyWalletInput) => () => {
     if (
-      !input.props.selfOutput ||
-      !input.props.selfOutput.plugin ||
-      !input.props.selfOutput.engine ||
-      !input.props.selfState.publicWalletInfo ||
-      !input.props.selfState.nameLoaded
+      !input.props.walletOutput ||
+      !input.props.walletOutput.plugin ||
+      !input.props.walletOutput.engine ||
+      !input.props.walletState.publicWalletInfo ||
+      !input.props.walletState.nameLoaded
     ) {
       return
     }
 
-    const { plugin, engine } = input.props.selfOutput
-    const { publicWalletInfo } = input.props.selfState
+    const { plugin, engine } = input.props.walletOutput
+    const { publicWalletInfo } = input.props.walletState
     const currencyWalletApi = makeCurrencyWalletApi(
       input,
       plugin,
@@ -203,23 +203,23 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       return {
         update() {
-          const { id, log } = input.props
+          const { log, walletId } = input.props
           if (
-            !input.props.selfOutput ||
-            !input.props.selfOutput.api ||
-            !input.props.selfState.fiatLoaded ||
-            !input.props.selfState.fileNamesLoaded ||
-            input.props.selfState.engineStarted
+            !input.props.walletOutput ||
+            !input.props.walletOutput.walletApi ||
+            !input.props.walletState.fiatLoaded ||
+            !input.props.walletState.fileNamesLoaded ||
+            input.props.walletState.engineStarted
           ) {
             return
           }
 
-          const { engine } = input.props.selfOutput
+          const { engine } = input.props.walletOutput
           if (engine != null && startupPromise == null) {
-            log(`${id} startEngine`)
+            log(`${walletId} startEngine`)
             input.props.dispatch({
               type: 'CURRENCY_ENGINE_STARTED',
-              payload: { walletId: id }
+              payload: { walletId }
             })
 
             // Turn synchronous errors into promise rejections:
@@ -230,12 +230,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         },
 
         destroy() {
-          const { id, log } = input.props
-          if (!input.props.selfOutput) return
+          const { log, walletId } = input.props
+          if (!input.props.walletOutput) return
 
-          const { engine } = input.props.selfOutput
+          const { engine } = input.props.walletOutput
           if (engine != null && startupPromise != null) {
-            log(`${id} killEngine`)
+            log(`${walletId} killEngine`)
 
             // Wait for `startEngine` to finish if that is still going:
             startupPromise
@@ -244,7 +244,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
               .then(() =>
                 input.props.dispatch({
                   type: 'CURRENCY_ENGINE_STOPPED',
-                  payload: { walletId: id }
+                  payload: { walletId }
                 })
               )
               .catch(() => {})
@@ -252,15 +252,16 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         }
       }
     },
-    props => (props.state.paused || props.selfState.paused ? undefined : props)
+    props =>
+      props.state.paused || props.walletState.paused ? undefined : props
   ),
 
   syncTimer: filterPixie(
     (input: CurrencyWalletInput) => {
       async function doSync(): Promise<void> {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-        const { id } = input.props
-        await syncStorageWallet(ai, id)
+        const { walletId } = input.props
+        await syncStorageWallet(ai, walletId)
       }
 
       // We don't report sync failures, since that could be annoying:
@@ -268,12 +269,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       return {
         update() {
-          const { id } = input.props
+          const { walletId } = input.props
           // Start once the wallet has loaded & finished its initial sync:
           if (
-            input.props.selfOutput &&
-            input.props.state.storageWallets[id] &&
-            input.props.state.storageWallets[id].status.lastSync
+            input.props.walletOutput &&
+            input.props.state.storageWallets[walletId] &&
+            input.props.state.storageWallets[walletId].status.lastSync
           ) {
             task.start({ wait: true })
           }
@@ -284,7 +285,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         }
       }
     },
-    props => (props.state.paused || props.selfState.paused ? undefined : props)
+    props =>
+      props.state.paused || props.walletState.paused ? undefined : props
   ),
 
   watcher(input: CurrencyWalletInput) {
@@ -292,21 +294,21 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     let lastSettings
 
     return () => {
-      const { state, selfState, selfOutput } = input.props
-      if (selfState == null || selfOutput == null) return
+      const { state, walletState, walletOutput } = input.props
+      if (walletState == null || walletOutput == null) return
 
       // Update API object:
-      if (lastState !== selfState) {
-        lastState = selfState
-        if (selfOutput.api != null) update(selfOutput.api)
+      if (lastState !== walletState) {
+        lastState = walletState
+        if (walletOutput.walletApi != null) update(walletOutput.walletApi)
       }
 
       // Update engine settings:
-      const { accountId, pluginId } = selfState
+      const { accountId, pluginId } = walletState
       const userSettings = state.accounts[accountId].userSettings[pluginId]
       if (lastSettings !== userSettings) {
         lastSettings = userSettings
-        const engine = selfOutput.engine
+        const engine = walletOutput.engine
         if (engine != null) engine.changeUserSettings(userSettings || {})
       }
     }

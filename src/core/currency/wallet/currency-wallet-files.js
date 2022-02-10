@@ -96,8 +96,7 @@ export async function renameCurrencyWallet(
   input: CurrencyWalletInput,
   name: string | null
 ): Promise<void> {
-  const walletId = input.props.id
-  const { dispatch, state } = input.props
+  const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
   await walletNameFile.save(disklet, WALLET_NAME_FILE, {
@@ -117,8 +116,7 @@ export async function setCurrencyWalletFiat(
   input: CurrencyWalletInput,
   fiatCurrencyCode: string
 ): Promise<void> {
-  const walletId = input.props.id
-  const { dispatch, state } = input.props
+  const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
   if (!/^iso:/.test(fiatCurrencyCode)) {
@@ -140,8 +138,7 @@ export async function setCurrencyWalletFiat(
  * Loads the wallet fiat currency file.
  */
 async function loadFiatFile(input: CurrencyWalletInput): Promise<void> {
-  const walletId = input.props.id
-  const { dispatch, state } = input.props
+  const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
   const clean = await walletFiatFile.load(disklet, CURRENCY_FILE)
@@ -166,8 +163,7 @@ async function loadFiatFile(input: CurrencyWalletInput): Promise<void> {
  * Loads the wallet name file.
  */
 async function loadNameFile(input: CurrencyWalletInput): Promise<void> {
-  const walletId = input.props.id
-  const { dispatch, state } = input.props
+  const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
   const clean = await walletNameFile.load(disklet, WALLET_NAME_FILE)
@@ -175,7 +171,7 @@ async function loadNameFile(input: CurrencyWalletInput): Promise<void> {
   if (clean == null || clean.walletName == null) {
     // If a wallet has no name file, try to pick a name based on the appId:
     const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-    const { appIds = [] } = input.props.selfState.walletInfo
+    const { appIds = [] } = input.props.walletState.walletInfo
 
     const appId = appIds.find(appId => appId !== '')
     if (appId != null) {
@@ -202,12 +198,12 @@ export async function loadTxFiles(
   input: CurrencyWalletInput,
   txIdHashes: string[]
 ): Promise<{ [txidHash: string]: TransactionFile }> {
-  const walletId = input.props.id
+  const { walletId } = input.props
   const disklet = getStorageWalletDisklet(input.props.state, walletId)
   const { dispatch } = input.props
-  const walletCurrency = input.props.selfState.currencyInfo.currencyCode
-  const fileNames = input.props.selfState.fileNames
-  const walletFiat = input.props.selfState.fiat
+  const walletCurrency = input.props.walletState.currencyInfo.currencyCode
+  const fileNames = input.props.walletState.fileNames
+  const walletFiat = input.props.walletState.fiat
 
   const out: { [filename: string]: TransactionFile } = {}
   await Promise.all(
@@ -291,8 +287,7 @@ async function getLegacyFileNames(
  * Loads transaction metadata file names.
  */
 async function loadTxFileNames(input: CurrencyWalletInput): Promise<void> {
-  const walletId = input.props.id
-  const { dispatch, state } = input.props
+  const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
   // Legacy transactions files:
@@ -330,8 +325,7 @@ async function loadTxFileNames(input: CurrencyWalletInput): Promise<void> {
  * Loads address metadata files.
  */
 async function loadAddressFiles(input: CurrencyWalletInput): Promise<void> {
-  const walletId = input.props.id
-  const { state } = input.props
+  const { state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
   // Save the results to our state:
@@ -347,7 +341,7 @@ async function loadAddressFiles(input: CurrencyWalletInput): Promise<void> {
   )
 
   // Load these addresses into the engine:
-  const engine = input.props.selfOutput.engine
+  const engine = input.props.walletOutput.engine
   if (engine != null) await engine.addGapLimitAddresses(out)
 }
 
@@ -371,17 +365,16 @@ export async function setCurrencyWalletTxMetadata(
   metadata: DiskMetadata,
   fakeCallbacks: EdgeCurrencyEngineCallbacks
 ): Promise<void> {
-  const walletId = input.props.id
-  const { dispatch, state } = input.props
+  const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
   // Find the tx:
-  const tx = input.props.selfState.txs[txid]
+  const tx = input.props.walletState.txs[txid]
   if (!tx) {
     throw new Error(`Setting metatdata for missing tx ${txid}`)
   }
 
-  const files = input.props.selfState.files
+  const files = input.props.walletState.files
   // Get the txidHash for this txid
   let oldTxidHash = ''
   for (const hash of Object.keys(files)) {
@@ -392,7 +385,7 @@ export async function setCurrencyWalletTxMetadata(
   }
 
   // Load the old file:
-  const oldFile = input.props.selfState.files[oldTxidHash]
+  const oldFile = input.props.walletState.files[oldTxidHash]
   const creationDate =
     oldFile == null ? Date.now() / 1000 : oldFile.creationDate
 
@@ -431,8 +424,8 @@ export async function setupNewTxMetadata(
   input: CurrencyWalletInput,
   tx: EdgeTransaction
 ): Promise<void> {
-  const { dispatch, selfState, state, id: walletId } = input.props
-  const { accountId, fiat = 'iso:USD', pluginId } = selfState
+  const { dispatch, walletState, state, walletId } = input.props
+  const { accountId, fiat = 'iso:USD', pluginId } = walletState
   const { currencyCode, spendTargets, swapData, txid } = tx
   const disklet = getStorageWalletDisklet(state, walletId)
 

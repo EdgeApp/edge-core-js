@@ -34,8 +34,7 @@ function makeThrottledTxCallback(
   input: CurrencyWalletInput,
   callback: (txArray: EdgeTransaction[]) => mixed
 ): (txs: EdgeTransaction[]) => void {
-  const walletId = input.props.id
-  const { log } = input.props
+  const { log, walletId } = input.props
 
   let delayCallback = false
   let lastCallbackTime = 0
@@ -71,7 +70,7 @@ function makeThrottledTxCallback(
 export function makeCurrencyWalletCallbacks(
   input: CurrencyWalletInput
 ): EdgeCurrencyEngineCallbacks {
-  const walletId = input.props.id
+  const { walletId } = input.props
 
   // If this is a unit test, lower throttling to something testable:
   if (walletId === 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=') {
@@ -83,10 +82,10 @@ export function makeCurrencyWalletCallbacks(
     input,
     (txArray: EdgeTransaction[]) => {
       if (
-        input.props.selfOutput != null &&
-        input.props.selfOutput.api != null
+        input.props.walletOutput != null &&
+        input.props.walletOutput.walletApi != null
       ) {
-        emit(input.props.selfOutput.api, 'transactionsChanged', txArray)
+        emit(input.props.walletOutput.walletApi, 'transactionsChanged', txArray)
       }
     }
   )
@@ -95,10 +94,10 @@ export function makeCurrencyWalletCallbacks(
     input,
     (txArray: EdgeTransaction[]) => {
       if (
-        input.props.selfOutput != null &&
-        input.props.selfOutput.api != null
+        input.props.walletOutput != null &&
+        input.props.walletOutput.walletApi != null
       ) {
-        emit(input.props.selfOutput.api, 'newTransactions', txArray)
+        emit(input.props.walletOutput.walletApi, 'newTransactions', txArray)
       }
     }
   )
@@ -181,8 +180,8 @@ export function makeCurrencyWalletCallbacks(
         fileNames,
         fileNamesLoaded,
         txs: reduxTxs
-      } = input.props.selfState
-      const defaultCurrency = input.props.selfState.currencyInfo.currencyCode
+      } = input.props.walletState
+      const defaultCurrency = input.props.walletState.currencyInfo.currencyCode
 
       const txidHashes = {}
       const changed: EdgeTransaction[] = []
@@ -204,7 +203,7 @@ export function makeCurrencyWalletCallbacks(
         }
 
         // Build the final transaction to show the user:
-        const { files } = input.props.selfState
+        const { files } = input.props.walletState
         const combinedTx = combineTxWithFile(
           input,
           reduxTx,
@@ -225,10 +224,10 @@ export function makeCurrencyWalletCallbacks(
       if (created.length) throttledOnNewTx(created)
     },
     onAddressChanged() {
-      emit(input.props.selfOutput.api, 'addressChanged', undefined)
+      emit(input.props.walletOutput.walletApi, 'addressChanged', undefined)
     },
     onWcNewContractCall(payload: JsonObject) {
-      emit(input.props.selfOutput.api, 'wcNewContractCall', payload)
+      emit(input.props.walletOutput.walletApi, 'wcNewContractCall', payload)
     },
     onTxidsChanged() {}
   }
@@ -238,7 +237,7 @@ export function makeCurrencyWalletCallbacks(
  * Monitors a currency wallet for changes and fires appropriate callbacks.
  */
 export function watchCurrencyWallet(input: CurrencyWalletInput): void {
-  const walletId = input.props.id
+  const { walletId } = input.props
 
   let lastChanges
   function checkChangesLoop(props: CurrencyWalletProps): void {
