@@ -432,7 +432,7 @@ export async function setupNewTxMetadata(
   tx: EdgeTransaction
 ): Promise<void> {
   const { dispatch, selfState, state, id: walletId } = input.props
-  const { currencyInfo, fiat = 'iso:USD' } = selfState
+  const { fiat = 'iso:USD', pluginId } = selfState
   const { currencyCode, spendTargets, swapData, txid } = tx
   const disklet = getStorageWalletDisklet(state, walletId)
 
@@ -443,7 +443,7 @@ export async function setupNewTxMetadata(
     getExchangeRate(state, currencyCode, fiat, () => 1) /
     parseFloat(
       getCurrencyMultiplier(
-        [currencyInfo],
+        { [pluginId]: input.props.state.plugins.currency[pluginId] },
         input.props.state.currency.customTokens,
         currencyCode
       )

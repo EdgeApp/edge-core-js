@@ -29,7 +29,7 @@ import { compare } from '../../src/util/compare.js'
 
 const GENESIS_BLOCK = 1231006505000
 
-export const fakeCurrencyInfo: EdgeCurrencyInfo = {
+const fakeCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'FAKE',
   displayName: 'Fake Coin',
