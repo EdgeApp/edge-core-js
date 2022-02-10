@@ -8,7 +8,7 @@ import {
   type EdgePluginMap,
   type EdgeRateHint,
   type EdgeStakingStatus,
-  type EdgeTokenInfo,
+  type EdgeToken,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type EdgeWalletStates,
@@ -35,6 +35,16 @@ export type RootAction =
       payload: {
         accountId: string,
         walletStates: EdgeWalletStates
+      }
+    }
+  | {
+      // Somebody just added a custom token to the account.
+      type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
+      payload: {
+        accountId: string,
+        pluginId: string,
+        tokenId: string,
+        token: EdgeToken
       }
     }
   | {
@@ -80,11 +90,6 @@ export type RootAction =
         pluginId: string,
         swapSettings: SwapSettings
       }
-    }
-  | {
-      // Somebody just added a custom token type to the wallet.
-      type: 'ADDED_CUSTOM_TOKEN',
-      payload: EdgeTokenInfo
     }
   | {
       type: 'CHANGE_LOG_SETTINGS',

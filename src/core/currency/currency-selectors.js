@@ -3,14 +3,14 @@
 import {
   type EdgeCurrencyPlugin,
   type EdgeCurrencyWallet,
-  type EdgeMetaToken,
-  type EdgePluginMap
+  type EdgePluginMap,
+  type EdgeTokenMap
 } from '../../types/types.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 
 export function getCurrencyMultiplier(
   plugins: EdgePluginMap<EdgeCurrencyPlugin>,
-  metaTokens: EdgeMetaToken[],
+  customTokens: EdgeTokenMap = {},
   currencyCode: string
 ): string {
   const pluginIds = Object.keys(plugins)
@@ -34,7 +34,8 @@ export function getCurrencyMultiplier(
     }
   }
 
-  for (const token of metaTokens) {
+  for (const tokenId of Object.keys(customTokens)) {
+    const token = customTokens[tokenId]
     for (const denomination of token.denominations) {
       if (denomination.name === currencyCode) {
         return denomination.multiplier
