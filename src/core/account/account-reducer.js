@@ -9,6 +9,7 @@ import {
 
 import {
   type EdgePluginMap,
+  type EdgeTokenMap,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
@@ -59,6 +60,7 @@ export type AccountState = {
   +username: string,
 
   // Plugin stuff:
+  +customTokens: EdgePluginMap<EdgeTokenMap>,
   +swapSettings: EdgePluginMap<SwapSettings>,
   +userSettings: EdgePluginMap<JsonObject>
 }
@@ -247,6 +249,18 @@ const accountInner: FatReducer<
 
   username(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
+  },
+
+  customTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {
+    switch (action.type) {
+      case 'ACCOUNT_CUSTOM_TOKEN_ADDED': {
+        const { pluginId, tokenId, token } = action.payload
+        const { [pluginId]: oldList = {} } = state
+        const newList = { ...oldList, [tokenId]: token }
+        return { ...state, [pluginId]: newList }
+      }
+    }
+    return state
   },
 
   swapSettings(state = {}, action: RootAction): EdgePluginMap<SwapSettings> {
