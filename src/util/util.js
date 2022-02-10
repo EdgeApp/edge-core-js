@@ -39,7 +39,7 @@ export function addHiddenProperties<O: Object, P: Object>(
   object: O,
   properties: P
 ): O & P {
-  for (const name in properties) {
+  for (const name of Object.keys(properties)) {
     Object.defineProperty(object, name, {
       writable: true,
       configurable: true,

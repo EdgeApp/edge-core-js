@@ -29,7 +29,7 @@ import { compare } from '../../src/util/compare.js'
 
 const GENESIS_BLOCK = 1231006505000
 
-export const fakeCurrencyInfo: EdgeCurrencyInfo = {
+const fakeCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'FAKE',
   displayName: 'Fake Coin',
@@ -143,7 +143,7 @@ class FakeCurrencyEngine {
     // Transactions callback:
     if (settings.txs != null) {
       const changes: EdgeTransaction[] = []
-      for (const txid in settings.txs) {
+      for (const txid of Object.keys(settings.txs)) {
         const newTx: EdgeTransaction = {
           blockHeight: 0,
           date: GENESIS_BLOCK,

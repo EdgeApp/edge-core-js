@@ -15,10 +15,9 @@ export function findCurrencyPlugin(
   plugins: EdgePluginMap<EdgeCurrencyPlugin>,
   walletType: string
 ): string | void {
-  for (const pluginId in plugins) {
-    const { currencyInfo } = plugins[pluginId]
-    if (walletType === currencyInfo.walletType) return pluginId
-  }
+  return Object.keys(plugins).find(
+    pluginId => plugins[pluginId].currencyInfo.walletType === walletType
+  )
 }
 
 /**

@@ -45,7 +45,7 @@ export const login: FatReducer<
     (next: RootState) => next.login.stashes,
     (appId: string, stashes: LoginStashMap): EdgeUserInfo[] => {
       const out: EdgeUserInfo[] = []
-      for (const username in stashes) {
+      for (const username of Object.keys(stashes)) {
         const stashTree = stashes[username]
         const stash = searchTree(stashTree, stash => stash.appId === appId)
 

@@ -212,20 +212,18 @@ export async function loadTxFiles(
   const out: { [filename: string]: TransactionFile } = {}
   await Promise.all(
     txIdHashes.map(async txidHash => {
-      const clean = await legacyTransactionFile.load(
-        disklet,
-        `Transactions/${fileNames[txidHash].fileName}`
-      )
+      if (fileNames[txidHash] == null) return
+      const path = `Transactions/${fileNames[txidHash].fileName}`
+      const clean = await legacyTransactionFile.load(disklet, path)
       if (clean == null) return
       out[txidHash] = fixLegacyFile(clean, walletCurrency, walletFiat)
     })
   )
   await Promise.all(
     txIdHashes.map(async txidHash => {
-      const clean = await transactionFile.load(
-        disklet,
-        `transaction/${fileNames[txidHash].fileName}`
-      )
+      if (fileNames[txidHash] == null) return
+      const path = `transaction/${fileNames[txidHash].fileName}`
+      const clean = await transactionFile.load(disklet, path)
       if (clean == null) return
       out[txidHash] = clean
     })
@@ -434,7 +432,7 @@ export async function setupNewTxMetadata(
   tx: EdgeTransaction
 ): Promise<void> {
   const { dispatch, selfState, state, id: walletId } = input.props
-  const { currencyInfo, fiat = 'iso:USD' } = selfState
+  const { fiat = 'iso:USD', pluginId } = selfState
   const { currencyCode, spendTargets, swapData, txid } = tx
   const disklet = getStorageWalletDisklet(state, walletId)
 
@@ -445,7 +443,7 @@ export async function setupNewTxMetadata(
     getExchangeRate(state, currencyCode, fiat, () => 1) /
     parseFloat(
       getCurrencyMultiplier(
-        [currencyInfo],
+        { [pluginId]: input.props.state.plugins.currency[pluginId] },
         input.props.state.currency.customTokens,
         currencyCode
       )

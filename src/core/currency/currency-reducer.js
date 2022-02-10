@@ -1,18 +1,8 @@
 // @flow
 
-import {
-  type FatReducer,
-  buildReducer,
-  mapReducer,
-  memoizeReducer
-} from 'redux-keto'
+import { type FatReducer, buildReducer, mapReducer } from 'redux-keto'
 
-import {
-  type EdgeCurrencyInfo,
-  type EdgeCurrencyPlugin,
-  type EdgeMetaToken,
-  type EdgePluginMap
-} from '../../types/types.js'
+import { type EdgeMetaToken } from '../../types/types.js'
 import { type RootAction } from '../actions.js'
 import { type RootState } from '../root-reducer.js'
 import {
@@ -23,7 +13,6 @@ import {
 export type CurrencyState = {
   +currencyWalletIds: string[],
   +customTokens: EdgeMetaToken[],
-  +infos: EdgeCurrencyInfo[],
   +wallets: { [walletId: string]: CurrencyWalletState }
 }
 
@@ -70,17 +59,6 @@ export const currency: FatReducer<
     }
     return state
   },
-
-  infos: memoizeReducer(
-    (state: RootState) => state.plugins.currency,
-    (plugins: EdgePluginMap<EdgeCurrencyPlugin>) => {
-      const out: EdgeCurrencyInfo[] = []
-      for (const pluginId in plugins) {
-        out.push(plugins[pluginId].currencyInfo)
-      }
-      return out
-    }
-  ),
 
   wallets: mapReducer(
     currencyWalletReducer,

@@ -202,21 +202,45 @@ export type EdgeWalletStates = {
 // currency types
 // ---------------------------------------------------------------------
 
-// currency info -------------------------------------------------------
+// token info ----------------------------------------------------------
 
 export type EdgeDenomination = {
-  name: string,
+  // Multiply a display amount by this number to get the native amount.
+  // BTC would use "100000000", for instance:
   multiplier: string,
+
+  // A display name for this denomination, like "BTC", "bits", or "sats":
+  name: string,
+
+  // A prefix to add to the formatted number, like "₿", "ƀ", or "s":
   symbol?: string
 }
 
+/**
+ * Available tokens stored in the `EdgeCurrencyInfo`,
+ * or parsed out of URI's.
+ */
 export type EdgeMetaToken = {
   currencyCode: string,
   currencyName: string,
-  denominations: EdgeDenomination[],
   contractAddress?: string,
+
+  denominations: EdgeDenomination[],
   symbolImage?: string
 }
+
+/**
+ * Tokens passed to `addCustomToken`.
+ */
+export type EdgeTokenInfo = {
+  currencyCode: string,
+  currencyName: string,
+  contractAddress: string,
+
+  multiplier: string
+}
+
+// currency info -------------------------------------------------------
 
 type EdgeObjectTemplate = Array<
   | {
@@ -434,13 +458,6 @@ export type EdgeStakingStatus = {
   }>
 }
 
-export type EdgeTokenInfo = {
-  currencyCode: string,
-  currencyName: string,
-  contractAddress: string,
-  multiplier: string
-}
-
 export type EdgeTxidMap = { [txid: string]: number }
 
 // URI -----------------------------------------------------------------
@@ -454,23 +471,23 @@ export type WalletConnect = {
 }
 
 export type EdgeParsedUri = {
-  token?: EdgeMetaToken,
-  privateKeys?: string[],
-  publicAddress?: string,
-  legacyAddress?: string,
-  segwitAddress?: string,
-  nativeAmount?: string,
-  currencyCode?: string,
-  metadata?: EdgeMetadata,
-  bitIDURI?: string,
-  bitIDDomain?: string,
   bitIDCallbackUri?: string,
-  paymentProtocolUrl?: string,
-  returnUri?: string,
-  uniqueIdentifier?: string, // Ripple payment id
-  bitidPaymentAddress?: string, // Experimental
+  bitIDDomain?: string,
   bitidKycProvider?: string, // Experimental
   bitidKycRequest?: string, // Experimental
+  bitidPaymentAddress?: string, // Experimental
+  bitIDURI?: string,
+  currencyCode?: string,
+  legacyAddress?: string,
+  metadata?: EdgeMetadata,
+  nativeAmount?: string,
+  paymentProtocolUrl?: string,
+  privateKeys?: string[],
+  publicAddress?: string,
+  returnUri?: string,
+  segwitAddress?: string,
+  token?: EdgeMetaToken,
+  uniqueIdentifier?: string, // Ripple payment id
   walletConnect?: WalletConnect
 }
 
@@ -874,14 +891,17 @@ export type EdgeCurrencyConfig = {
   +watch: Subscriber<EdgeCurrencyConfig>,
 
   +currencyInfo: EdgeCurrencyInfo,
-  +otherMethods: EdgeOtherMethods,
-  +userSettings: JsonObject | void,
 
+  // User settings for this plugin:
+  +userSettings: JsonObject | void,
   +changeUserSettings: (settings: JsonObject) => Promise<void>,
+
+  // Utility methods:
   +importKey: (
     userInput: string,
     opts?: { keyOptions?: JsonObject }
-  ) => Promise<JsonObject>
+  ) => Promise<JsonObject>,
+  +otherMethods: EdgeOtherMethods
 }
 
 export type EthereumTransaction = {
