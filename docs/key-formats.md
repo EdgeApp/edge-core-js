@@ -38,10 +38,13 @@ All private key formats include the following two properties:
 interface PrivateStorageKey {
   dataKey: string // A 256-bit base64 encoded integer
   syncKey: string // A 160-bit base64 encoded integer
+  imported?: boolean
 }
 ```
 
 The `syncKey` uniquely identifies the wallet's Git repository on the Edge server, and the `dataKey` is the AES-256 encryption key for the data in that repository.
+
+The `imported` field should be `true` for keys that the user imported, and `false` for keys that the app generated randomly. The `imported` field is optional, and if it is missing, the keys were created before the app began recording this information.
 
 ## wallet:bitcoin
 
