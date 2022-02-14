@@ -1,6 +1,6 @@
 # Edge key formats
 
-The Edge account system makes it possible to backup and restore crypto-currency keys. These keys are *immutable* for safety, and there is no way to upgrade legacy keys. This means Edge support every key format customers have ever created and stored in our system, both now and for the rest of time. If changing a key format ever becomes necessary, the new format must coexist with the old format, and the wallet must be able to read both.
+The Edge account system makes it possible to backup and restore crypto-currency keys. These keys are _immutable_ for safety, and there is no way to upgrade legacy keys. This means Edge support every key format customers have ever created and stored in our system, both now and for the rest of time. If changing a key format ever becomes necessary, the new format must coexist with the old format, and the wallet must be able to read both.
 
 This creates enormous pressure to keep the key formats stable, simple, and documented. This file serves as documentation.
 
@@ -26,7 +26,7 @@ Edge would eventually like to have read-only wallets. For these wallets, we plan
 
 Not all wallets can operate with just public keys. Monero, in particular, has trouble with this. These wallets can skip implementing `derivePublicKeys`, in which case they will not be able to operate in read-only mode.
 
-Since Edge doesn't have this feature yet, the public key format is "work in progress". We *do* cache some element of these keys on disk for faster startup times, so the format needs to at least be semi-functional.
+Since Edge doesn't have this feature yet, the public key format is "work in progress". We _do_ cache some element of these keys on disk for faster startup times, so the format needs to at least be semi-functional.
 
 # Detailed key formats
 
@@ -36,12 +36,15 @@ All private key formats include the following two properties:
 
 ```typescript
 interface PrivateStorageKey {
-  dataKey: string, // A 256-bit base64 encoded integer
+  dataKey: string // A 256-bit base64 encoded integer
   syncKey: string // A 160-bit base64 encoded integer
+  imported?: boolean
 }
 ```
 
 The `syncKey` uniquely identifies the wallet's Git repository on the Edge server, and the `dataKey` is the AES-256 encryption key for the data in that repository.
+
+The `imported` field should be `true` for keys that the user imported, and `false` for keys that the app generated randomly. The `imported` field is optional, and if it is missing, the keys were created before the app began recording this information.
 
 ## wallet:bitcoin
 
@@ -49,8 +52,8 @@ The private key format is as follows:
 
 ```typescript
 interface PrivateBitcoinKey extends PrivateStorageKey {
-  bitcoinKey: string, // Other names are possible
-  format?: 'bip32' | 'bip44' | 'bip49',
+  bitcoinKey: string // Other names are possible
+  format?: 'bip32' | 'bip44' | 'bip49'
   coinType?: number
 }
 ```
@@ -87,27 +90,27 @@ If the `coinType` is missing, the default is 0 for Bitcoin. Other coins use diff
 
 Many Bitcoin-like coins use a format similar to `wallet:bitcoin`, with a different name for the `bitcoinKey` property and a different default `coinType`. Here is the chart:
 
-| Wallet type | Key name | Default coin type |
-|-------------|----------|-------------------|
-| `wallet:bitcoin` | `bitcoinKey` | 0 |
-| `wallet:bitcoin-testnet` | `bitcointestnetKey` | 1 |
-| `wallet:bitcoincash-testnet` | `bitcoincashtestnetKey` | 1? |
-| `wallet:bitcoincash` | `bitcoincashKey` | 145 |
-| `wallet:bitcoingold-testnet` | `bitcoingoldKey`? | 156? |
-| `wallet:bitcoingold` | `bitcoingoldKey` | 156 |
-| `wallet:bitcoinsv` | `bitcoinsvKey` | 145 |
-| `wallet:dash` | `dashKey` | 5 |
-| `wallet:digibyte` | `digibyteKey` | 20 |
-| `wallet:dogecoin` | `dogecoinKey` | 3 |
-| `wallet:eboost` | `eboostKey` | 2? |
-| `wallet:feathercoin` | `feathercoinKey` | 8 |
-| `wallet:groestlcoin` | `groestlcoinKey` | 17 |
-| `wallet:litecoin` | `litecoinKey` | 2 |
-| `wallet:qtum` | `qtumKey` | 2301 |
-| `wallet:smartcash` | `smartcashKey` | 224 |
-| `wallet:ufo` | `uniformfiscalobjectKey` | 202 |
-| `wallet:vertcoin` | `vertcoinKey` | 28 |
-| `wallet:zcoin` | `zcoinKey` | 136 |
+| Wallet type                  | Key name                 | Default coin type |
+| ---------------------------- | ------------------------ | ----------------- |
+| `wallet:bitcoin`             | `bitcoinKey`             | 0                 |
+| `wallet:bitcoin-testnet`     | `bitcointestnetKey`      | 1                 |
+| `wallet:bitcoincash-testnet` | `bitcoincashtestnetKey`  | 1?                |
+| `wallet:bitcoincash`         | `bitcoincashKey`         | 145               |
+| `wallet:bitcoingold-testnet` | `bitcoingoldKey`?        | 156?              |
+| `wallet:bitcoingold`         | `bitcoingoldKey`         | 156               |
+| `wallet:bitcoinsv`           | `bitcoinsvKey`           | 145               |
+| `wallet:dash`                | `dashKey`                | 5                 |
+| `wallet:digibyte`            | `digibyteKey`            | 20                |
+| `wallet:dogecoin`            | `dogecoinKey`            | 3                 |
+| `wallet:eboost`              | `eboostKey`              | 2?                |
+| `wallet:feathercoin`         | `feathercoinKey`         | 8                 |
+| `wallet:groestlcoin`         | `groestlcoinKey`         | 17                |
+| `wallet:litecoin`            | `litecoinKey`            | 2                 |
+| `wallet:qtum`                | `qtumKey`                | 2301              |
+| `wallet:smartcash`           | `smartcashKey`           | 224               |
+| `wallet:ufo`                 | `uniformfiscalobjectKey` | 202               |
+| `wallet:vertcoin`            | `vertcoinKey`            | 28                |
+| `wallet:zcoin`               | `zcoinKey`               | 136               |
 
 All coins default to bip32 if `format` is missing.
 
@@ -190,12 +193,12 @@ To fix this, the Edge core detects the following wallet types, deletes the `-bip
 
 ```typescript
 interface PrivateEosKey extends PrivateStorageKey {
-  eosOwnerKey: string, // base16
+  eosOwnerKey: string // base16
   eosKey: string // base16
 }
 
 interface PublicEosKey {
-  publicKey: string,
+  publicKey: string
   ownerPublicKey?: string
 }
 ```
@@ -218,15 +221,15 @@ The `ethereumKey` field is either a 256-bit base16 encoded number, or a 12-word 
 
 ```typescript
 interface PrivateMoneroKey extends PrivateStorageKey {
-  moneroKey: string, // mnemonic phrase
-  moneroSpendKeyPrivate: string,
+  moneroKey: string // mnemonic phrase
+  moneroSpendKeyPrivate: string
   moneroSpendKeyPublic: string
 }
 
 interface PublicMoneroKey {
-  moneroAddress: string,
-  moneroViewKeyPrivate: string,
-  moneroViewKeyPublic: string,
+  moneroAddress: string
+  moneroViewKeyPrivate: string
+  moneroViewKeyPublic: string
   moneroSpendKeyPublic: string
 }
 ```
