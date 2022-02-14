@@ -251,7 +251,7 @@ const accountInner: FatReducer<
     return action.type === 'LOGIN' ? action.payload.username : state
   },
 
-  customTokens(state = {}, action: RootAction): EdgePluginMap<SwapSettings> {
+  customTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {
     switch (action.type) {
       case 'ACCOUNT_CUSTOM_TOKEN_ADDED': {
         const { pluginId, tokenId, token } = action.payload

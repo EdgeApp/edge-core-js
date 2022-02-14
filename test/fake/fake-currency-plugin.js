@@ -18,7 +18,7 @@ import {
   type EdgeParsedUri,
   type EdgeSpendInfo,
   type EdgeStakingStatus,
-  type EdgeTokenInfo,
+  type EdgeToken,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type JsonObject,
@@ -241,7 +241,7 @@ class FakeCurrencyEngine {
     return Promise.resolve(['TOKEN'])
   }
 
-  addCustomToken(token: EdgeTokenInfo): Promise<void> {
+  addCustomToken(token: EdgeToken): Promise<void> {
     return Promise.resolve()
   }
 

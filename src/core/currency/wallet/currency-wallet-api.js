@@ -230,7 +230,7 @@ export function makeCurrencyWalletApi(
         type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
         payload: { accountId, pluginId, tokenId, token }
       })
-      await engine.addCustomToken(tokenInfo)
+      await engine.addCustomToken({ ...token, ...tokenInfo })
     },
 
     // Transactions:

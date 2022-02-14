@@ -591,7 +591,7 @@ export type EdgeCurrencyEngine = {
   +enableTokens: (tokens: string[]) => Promise<void>,
   +disableTokens: (tokens: string[]) => Promise<void>,
   +getEnabledTokens: () => Promise<string[]>,
-  +addCustomToken: (token: EdgeTokenInfo) => Promise<void>,
+  +addCustomToken: (token: EdgeTokenInfo & EdgeToken) => Promise<void>,
   +getTokenStatus: (token: string) => boolean,
 
   // Addresses:
