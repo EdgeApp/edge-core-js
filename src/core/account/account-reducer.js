@@ -29,8 +29,8 @@ import {
 } from '../login/login-types.js'
 import { findCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type RootState } from '../root-reducer.js'
-import { type SwapSettings } from './account-cleaners.js'
 import { findAppLogin } from './account-init.js'
+import { type SwapSettings } from './account-types.js'
 
 export type AccountState = {
   // Wallet stuff:

@@ -16,11 +16,11 @@ import {
   hashStorageWalletFilename
 } from '../storage/storage-selectors.js'
 import {
-  type SwapSettings,
   asLegacyWalletFile,
   asPluginSettingsFile,
   asWalletStateFile
 } from './account-cleaners.js'
+import { type SwapSettings } from './account-types.js'
 
 const legacyWalletFile = makeJsonFile(asLegacyWalletFile)
 const walletStateFile = makeJsonFile(asWalletStateFile)
