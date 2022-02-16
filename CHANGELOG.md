@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.7 (2022-02-15)
+
+- added: Include an `imported` flag with all new wallet keys, to indicate whether they were derived freshly or imported from user-entered data.
+- fixed: Do not hang forever if creating a currency engine fails.
+
 ## v0.19.6 (2022-02-10)
 
 - changed: Add comments and improve organization in the public types file.
