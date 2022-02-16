@@ -9,7 +9,6 @@ import {
   type EdgeCurrencyCodeOptions,
   type EdgeCurrencyEngine,
   type EdgeCurrencyInfo,
-  type EdgeCurrencyPlugin,
   type EdgeCurrencyWallet,
   type EdgeDataDump,
   type EdgeEncodeUri,
@@ -71,12 +70,12 @@ type SavedSpendTargets = $ElementType<EdgeTransaction, 'spendTargets'> & any[]
  */
 export function makeCurrencyWalletApi(
   input: CurrencyWalletInput,
-  plugin: EdgeCurrencyPlugin,
   engine: EdgeCurrencyEngine,
   publicWalletInfo: EdgeWalletInfo
 ): EdgeCurrencyWallet {
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
   const { accountId, pluginId, walletInfo } = input.props.walletState
+  const plugin = input.props.state.plugins.currency[pluginId]
 
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 

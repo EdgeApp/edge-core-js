@@ -12,7 +12,6 @@ import { update } from 'yaob'
 
 import {
   type EdgeCurrencyEngine,
-  type EdgeCurrencyPlugin,
   type EdgeCurrencyTools,
   type EdgeCurrencyWallet,
   type EdgeWalletInfo
@@ -20,10 +19,7 @@ import {
 import { makeJsonFile } from '../../../util/file-helpers.js'
 import { makePeriodicTask } from '../../../util/periodic-task.js'
 import { makeLog } from '../../log/log.js'
-import {
-  getCurrencyPlugin,
-  getCurrencyTools
-} from '../../plugins/plugins-selectors.js'
+import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
 import { type ApiInput, type RootProps } from '../../root-pixie.js'
 import {
   addStorageWallet,
@@ -44,7 +40,6 @@ import { type CurrencyWalletState } from './currency-wallet-reducer.js'
 
 export type CurrencyWalletOutput = {
   +walletApi: EdgeCurrencyWallet | void,
-  +plugin: EdgeCurrencyPlugin | void,
   +engine: EdgeCurrencyEngine | void
 }
 
@@ -60,33 +55,19 @@ const PUBLIC_KEY_CACHE = 'publicKey.json'
 const publicKeyFile = makeJsonFile(asPublicKeyFile)
 
 export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
-  // Looks up the currency plugin for this wallet:
-  plugin: (input: CurrencyWalletInput) => () => {
-    // There are still race conditions where this can happen:
-    if (input.props.walletOutput && input.props.walletOutput.plugin) return
-
-    const walletInfo = input.props.walletState.walletInfo
-    const plugin = getCurrencyPlugin(input.props.state, walletInfo.type)
-    input.onOutput(plugin)
-  },
-
   // Creates the engine for this wallet:
   engine: (input: CurrencyWalletInput) => async () => {
-    if (!input.props.walletOutput) return
-    const { walletId } = input.props
-
-    const walletInfo = input.props.walletState.walletInfo
-    const plugin = input.props.walletOutput.plugin
-    if (!plugin) return
+    const { state, walletId, walletState } = input.props
+    const { accountId, pluginId, walletInfo } = walletState
+    const plugin = state.plugins.currency[pluginId]
 
     try {
       // Start the data sync:
       const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
       await addStorageWallet(ai, walletInfo)
-      const { walletState, state } = input.props
-      const { accountId, pluginId } = walletState
-      const userSettings = state.accounts[accountId].userSettings[pluginId]
 
+      // Grab the freshly-synced repos:
+      const { state } = input.props
       const walletLocalDisklet = getStorageWalletLocalDisklet(
         state,
         walletInfo.id
@@ -122,7 +103,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         ),
         walletLocalDisklet,
         walletLocalEncryptedDisklet,
-        userSettings
+        userSettings: state.accounts[accountId].userSettings[pluginId]
       })
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
@@ -173,21 +154,14 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
   // Creates the API object:
   walletApi: (input: CurrencyWalletInput) => () => {
-    if (
-      !input.props.walletOutput ||
-      !input.props.walletOutput.plugin ||
-      !input.props.walletOutput.engine ||
-      !input.props.walletState.publicWalletInfo ||
-      !input.props.walletState.nameLoaded
-    ) {
-      return
-    }
+    const { walletOutput, walletState } = input.props
+    if (walletOutput == null) return
+    const { engine } = walletOutput
+    const { nameLoaded, publicWalletInfo } = walletState
+    if (engine == null || publicWalletInfo == null || !nameLoaded) return
 
-    const { plugin, engine } = input.props.walletOutput
-    const { publicWalletInfo } = input.props.walletState
     const currencyWalletApi = makeCurrencyWalletApi(
       input,
-      plugin,
       engine,
       publicWalletInfo
     )
