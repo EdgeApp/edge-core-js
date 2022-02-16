@@ -73,6 +73,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Creates the engine for this wallet:
   engine: (input: CurrencyWalletInput) => async () => {
     if (!input.props.selfOutput) return
+    const walletId = input.props.id
 
     const walletInfo = input.props.selfState.walletInfo
     const plugin = input.props.selfOutput.plugin
@@ -109,7 +110,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       }
       input.props.dispatch({
         type: 'CURRENCY_WALLET_PUBLIC_INFO',
-        payload: { walletInfo: publicWalletInfo, walletId: input.props.id }
+        payload: { walletInfo: publicWalletInfo, walletId }
       })
 
       // Start the engine:
@@ -126,9 +127,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
         payload: {
-          walletId: walletInfo.id,
           displayPrivateSeed: engine.getDisplayPrivateSeed(),
-          displayPublicSeed: engine.getDisplayPublicSeed()
+          displayPublicSeed: engine.getDisplayPublicSeed(),
+          walletId
         }
       })
       input.onOutput(engine)
@@ -139,23 +140,26 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const height = engine.getBlockHeight()
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-        payload: { balance, currencyCode, walletId: input.props.id }
+        payload: { balance, currencyCode, walletId }
       })
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
-        payload: { height, walletId: input.props.id }
+        payload: { height, walletId }
       })
       if (engine.getStakingStatus != null) {
         engine.getStakingStatus().then(stakingStatus => {
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_CHANGED_STAKING',
-            payload: { stakingStatus, walletId: input.props.id }
+            payload: { stakingStatus, walletId }
           })
         })
       }
-    } catch (e) {
-      input.props.onError(e)
-      input.props.dispatch({ type: 'CURRENCY_ENGINE_FAILED', payload: e })
+    } catch (error) {
+      input.props.onError(error)
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_FAILED',
+        payload: { error, walletId }
+      })
     }
 
     // Reload our data from disk:
