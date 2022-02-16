@@ -475,8 +475,8 @@ export async function listSplittableWalletTypes(
 
   // Get the list of available types:
   const tools = await getCurrencyTools(ai, walletInfo.type)
-  const types =
-    tools.getSplittableTypes != null ? tools.getSplittableTypes(walletInfo) : []
+  if (tools.getSplittableTypes == null) return []
+  const types = await tools.getSplittableTypes(walletInfo)
 
   // Filter out wallet types we have already split:
   return types.filter(type => {
