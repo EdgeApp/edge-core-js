@@ -6,12 +6,29 @@ import {
   type EdgePluginMap
 } from '../../types/types.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
-import { type RootState } from '../root-reducer.js'
 
 /**
- * Finds the currency plugin that can handle a particular wallet type.
+ * Finds the currency plugin that can handle a particular wallet type,
+ * or throws an error if there is none.
  */
-export function findCurrencyPlugin(
+export function findCurrencyPluginId(
+  plugins: EdgePluginMap<EdgeCurrencyPlugin>,
+  walletType: string
+): string {
+  const pluginId = maybeFindCurrencyPluginId(plugins, walletType)
+  if (pluginId == null) {
+    throw new Error(
+      `Cannot find a currency plugin for wallet type ${walletType}`
+    )
+  }
+  return pluginId
+}
+
+/**
+ * Finds the currency plugin that can handle a particular wallet type,
+ * or `undefined` if there is none.
+ */
+export function maybeFindCurrencyPluginId(
   plugins: EdgePluginMap<EdgeCurrencyPlugin>,
   walletType: string
 ): string | void {
@@ -21,44 +38,21 @@ export function findCurrencyPlugin(
 }
 
 /**
- * Finds the currency plugin that can handle a particular wallet type.
- */
-export function getCurrencyPlugin(
-  state: RootState,
-  walletType: string
-): EdgeCurrencyPlugin {
-  const pluginId = findCurrencyPlugin(state.plugins.currency, walletType)
-  if (pluginId == null) {
-    throw new Error(
-      `Cannot find a currency plugin for wallet type ${walletType}`
-    )
-  }
-  return state.plugins.currency[pluginId]
-}
-
-/**
  * Finds the currency tools for a particular wallet type,
  * loading them if needed.
  */
 export function getCurrencyTools(
   ai: ApiInput,
-  walletType: string
+  pluginId: string
 ): Promise<EdgeCurrencyTools> {
   const { dispatch, state } = ai.props
-
-  const pluginId = findCurrencyPlugin(state.plugins.currency, walletType)
-  if (pluginId == null) {
-    throw new Error(
-      `Cannot find a currency plugin for wallet type ${walletType}`
-    )
-  }
 
   // Already loaded / loading:
   const tools = state.plugins.currencyTools[pluginId]
   if (tools != null) return tools
 
   // Never touched, so start the load:
-  const plugin = getCurrencyPlugin(state, walletType)
+  const plugin = state.plugins.currency[pluginId]
   const promise = plugin.makeCurrencyTools()
   dispatch({
     type: 'CURRENCY_TOOLS_LOADED',

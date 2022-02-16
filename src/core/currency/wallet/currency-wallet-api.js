@@ -141,7 +141,7 @@ export function makeCurrencyWalletApi(
       return plugin.currencyInfo
     },
     async validateMemo(memo: string): Promise<EdgeMemoRules> {
-      const tools = await getCurrencyTools(ai, walletInfo.type)
+      const tools = await getCurrencyTools(ai, pluginId)
       if (tools.validateMemo == null) return { passed: true }
       return await tools.validateMemo(memo)
     },
@@ -535,7 +535,7 @@ export function makeCurrencyWalletApi(
     },
 
     async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
-      const tools = await getCurrencyTools(ai, walletInfo.type)
+      const tools = await getCurrencyTools(ai, pluginId)
       return tools.parseUri(
         uri,
         currencyCode,
@@ -546,7 +546,7 @@ export function makeCurrencyWalletApi(
     },
 
     async encodeUri(options: EdgeEncodeUri): Promise<string> {
-      const tools = await getCurrencyTools(ai, walletInfo.type)
+      const tools = await getCurrencyTools(ai, pluginId)
       return tools.encodeUri(
         options,
         makeMetaTokens(

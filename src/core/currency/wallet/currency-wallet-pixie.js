@@ -78,7 +78,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         input.props.io
       )
 
-      const tools = await getCurrencyTools(ai, walletInfo.type)
+      const tools = await getCurrencyTools(ai, pluginId)
       const publicWalletInfo = await getPublicWalletInfo(
         walletInfo,
         walletLocalDisklet,

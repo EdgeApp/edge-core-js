@@ -16,7 +16,11 @@ import { utf8 } from '../../util/encoding.js'
 import { changeWalletStates } from '../account/account-files.js'
 import { waitForCurrencyWallet } from '../currency/currency-selectors.js'
 import { applyKit } from '../login/login.js'
-import { getCurrencyTools } from '../plugins/plugins-selectors.js'
+import {
+  findCurrencyPluginId,
+  getCurrencyTools,
+  maybeFindCurrencyPluginId
+} from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { type AppIdMap, type LoginKit, type LoginTree } from './login-types.js'
 
@@ -308,9 +312,13 @@ export async function createCurrencyWallet(
   opts: EdgeCreateCurrencyWalletOptions
 ): Promise<EdgeCurrencyWallet> {
   const { login, loginTree } = ai.props.state.accounts[accountId]
+  const pluginId = findCurrencyPluginId(
+    ai.props.state.plugins.currency,
+    walletType
+  )
 
   // Make the keys:
-  const tools = await getCurrencyTools(ai, walletType)
+  const tools = await getCurrencyTools(ai, pluginId)
   let keys
   if (opts.keys != null) {
     keys = opts.keys
@@ -472,9 +480,14 @@ export async function listSplittableWalletTypes(
     walletInfo => walletInfo.id === walletId
   )
   if (walletInfo == null) throw new Error(`Invalid wallet id ${walletId}`)
+  const pluginId = maybeFindCurrencyPluginId(
+    ai.props.state.plugins.currency,
+    walletInfo.type
+  )
+  if (pluginId == null) return []
 
   // Get the list of available types:
-  const tools = await getCurrencyTools(ai, walletInfo.type)
+  const tools = await getCurrencyTools(ai, pluginId)
   if (tools.getSplittableTypes == null) return []
   const types = await tools.getSplittableTypes(walletInfo)
 

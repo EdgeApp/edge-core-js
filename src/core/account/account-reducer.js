@@ -28,7 +28,7 @@ import {
   type LoginType,
   type WalletInfoFullMap
 } from '../login/login-types.js'
-import { findCurrencyPlugin } from '../plugins/plugins-selectors.js'
+import { maybeFindCurrencyPluginId } from '../plugins/plugins-selectors.js'
 import { type RootState } from '../root-reducer.js'
 import { findAppLogin } from './account-init.js'
 import { type SwapSettings } from './account-types.js'
@@ -148,7 +148,8 @@ const accountInner: FatReducer<
       Object.keys(walletInfos)
         .filter(walletId => {
           const info = walletInfos[walletId]
-          return !info.deleted && findCurrencyPlugin(plugins, info.type) != null
+          const pluginId = maybeFindCurrencyPluginId(plugins, info.type)
+          return !info.deleted && pluginId != null
         })
         .sort((walletId1, walletId2) => {
           const info1 = walletInfos[walletId1]

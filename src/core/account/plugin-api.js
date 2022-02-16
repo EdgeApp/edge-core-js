@@ -77,7 +77,7 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
     userInput: string,
     opts: { keyOptions?: JsonObject } = {}
   ): Promise<JsonObject> {
-    const tools = await getCurrencyTools(this._ai, this.currencyInfo.walletType)
+    const tools = await getCurrencyTools(this._ai, this._pluginId)
 
     if (tools.importPrivateKey == null) {
       throw new Error('This wallet does not support importing keys')
