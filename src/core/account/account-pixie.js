@@ -50,26 +50,28 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         const hack: any = input.props
         hack.state = { accounts: {} }
 
-        if (
-          input.props.accountOutput != null &&
-          input.props.accountOutput.accountApi != null
-        ) {
-          update(input.props.accountOutput.accountApi)
-          close(input.props.accountOutput.accountApi)
-          close(input.props.accountOutput.accountApi.dataStore)
-          close(input.props.accountOutput.accountApi.rateCache)
-          const currencies = input.props.accountOutput.accountApi.currencyConfig
-          for (const n of Object.keys(currencies)) close(currencies[n])
-          const swaps = input.props.accountOutput.accountApi.swapConfig
-          for (const n of Object.keys(swaps)) close(swaps[n])
+        const { accountOutput } = input.props
+        if (accountOutput == null) return
+        const { accountApi } = accountOutput
+        if (accountApi == null) return
+
+        update(accountApi)
+        close(accountApi)
+        close(accountApi.dataStore)
+        close(accountApi.rateCache)
+        const { currencyConfig, swapConfig } = accountApi
+        for (const pluginId of Object.keys(currencyConfig)) {
+          close(currencyConfig[pluginId])
+        }
+        for (const pluginId of Object.keys(swapConfig)) {
+          close(swapConfig[pluginId])
         }
       },
 
       async update() {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-        const { accountId } = input.props
-        const { log } = input.props
-        const { accountWalletInfos } = input.props.accountState
+        const { accountId, accountState, log } = input.props
+        const { accountWalletInfos } = accountState
 
         async function loadAllFiles(): Promise<void> {
           await Promise.all([
@@ -113,8 +115,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     (input: AccountInput) => {
       async function doDataSync(): Promise<void> {
         const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-        const { accountId } = input.props
-        const { accountWalletInfos } = input.props.accountState
+        const { accountId, accountState } = input.props
+        const { accountWalletInfos } = accountState
 
         if (input.props.state.accounts[accountId] == null) return
         const changeLists = await Promise.all(
@@ -147,14 +149,14 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
       return {
         update() {
+          const { accountOutput } = input.props
+          if (accountOutput == null) return
+          const { accountApi } = accountOutput
+          if (accountApi == null) return
+
           // Start once the EdgeAccount API exists:
-          if (
-            input.props.accountOutput &&
-            input.props.accountOutput.accountApi
-          ) {
-            dataTask.start({ wait: true })
-            loginTask.start({ wait: true })
-          }
+          dataTask.start({ wait: true })
+          loginTask.start({ wait: true })
         },
 
         destroy() {
@@ -174,25 +176,23 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     return () => {
       const { accountState, accountOutput } = input.props
       if (accountState == null || accountOutput == null) return
+      const { accountApi } = accountOutput
 
       // TODO: Remove this once update detection is reliable:
-      if (accountOutput.accountApi != null) update(accountOutput.accountApi)
+      if (accountApi != null) update(accountApi)
 
       // General account state:
       if (lastState !== accountState) {
         lastState = accountState
-        if (accountOutput.accountApi != null) {
+        if (accountApi != null) {
           // TODO: Put this back once we solve the race condition:
-          // update(accountOutput.accountApi)
-          for (const pluginId of Object.keys(
-            accountOutput.accountApi.currencyConfig
-          )) {
-            update(accountOutput.accountApi.currencyConfig[pluginId])
+          // update(accountApi)
+          const { currencyConfig, swapConfig } = accountApi
+          for (const pluginId of Object.keys(currencyConfig)) {
+            update(currencyConfig[pluginId])
           }
-          for (const pluginId of Object.keys(
-            accountOutput.accountApi.swapConfig
-          )) {
-            update(accountOutput.accountApi.swapConfig[pluginId])
+          for (const pluginId of Object.keys(swapConfig)) {
+            update(swapConfig[pluginId])
           }
         }
       }
@@ -207,8 +207,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       // Exchange:
       if (lastExchangeState !== input.props.state.exchangeCache) {
         lastExchangeState = input.props.state.exchangeCache
-        if (accountOutput.accountApi != null) {
-          emit(accountOutput.accountApi.rateCache, 'update', undefined)
+        if (accountApi != null) {
+          emit(accountApi.rateCache, 'update', undefined)
         }
       }
     }
@@ -218,28 +218,22 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     let lastActiveWalletIds
 
     return () => {
-      const { activeWalletIds } = input.props.accountState
+      const { accountOutput, accountState } = input.props
+      const { activeWalletIds } = accountState
       let dirty = lastActiveWalletIds !== activeWalletIds
       lastActiveWalletIds = activeWalletIds
 
       let lastOut = {}
-      if (
-        input.props.accountOutput &&
-        input.props.accountOutput.currencyWallets
-      ) {
-        lastOut = input.props.accountOutput.currencyWallets
+      if (accountOutput != null && accountOutput.currencyWallets != null) {
+        lastOut = accountOutput.currencyWallets
       }
 
       const out = {}
+      const { wallets } = input.props.output.currency
       for (const walletId of activeWalletIds) {
-        if (
-          input.props.output.currency.wallets[walletId] != null &&
-          input.props.output.currency.wallets[walletId].walletApi != null
-        ) {
-          const api = input.props.output.currency.wallets[walletId].walletApi
-          if (api !== lastOut[walletId]) dirty = true
-          out[walletId] = api
-        }
+        const api = wallets?.[walletId]?.walletApi
+        if (api !== lastOut[walletId]) dirty = true
+        out[walletId] = api
       }
 
       if (dirty) input.onOutput(out)
