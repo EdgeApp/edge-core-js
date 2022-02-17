@@ -46,7 +46,9 @@ const fakeCurrencyInfo: EdgeCurrencyInfo = {
     {
       currencyCode: 'TOKEN',
       currencyName: 'Fake Token',
-      denominations: [{ multiplier: '1000', name: 'TOKEN' }]
+      denominations: [{ multiplier: '1000', name: 'TOKEN' }],
+      contractAddress:
+        '0XF98103E9217F099208569D295C1B276F1821348636C268C854BB2A086E0037CD'
     }
   ],
 

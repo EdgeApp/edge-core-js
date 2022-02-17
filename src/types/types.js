@@ -308,19 +308,17 @@ export type EdgeCurrencyInfo = {
   memoMaxValue?: string, // Max numerical value, if supported
   memoType?: 'text' | 'number' | 'other', // undefined means no memo support
 
-  // Configuration options:
-  defaultSettings: JsonObject,
-  metaTokens: EdgeMetaToken[],
-
   // Explorers:
   addressExplorer: string,
   blockExplorer?: string,
   transactionExplorer: string,
   xpubExplorer?: string,
 
-  // Images:
-  symbolImage?: string,
-  symbolImageDarkMono?: string
+  // Deprecated:
+  defaultSettings: JsonObject, // The default user settings are `{}`
+  metaTokens: EdgeMetaToken[], // Use `EdgeCurrencyPlugins.getBuiltinTokens`
+  symbolImage?: string, // The GUI handles this now
+  symbolImageDarkMono?: string // The GUI handles this now
 }
 
 // spending ------------------------------------------------------------
@@ -656,6 +654,7 @@ export type EdgeCurrencyTools = {
 export type EdgeCurrencyPlugin = {
   +currencyInfo: EdgeCurrencyInfo,
 
+  +getBuiltinTokens?: () => Promise<EdgeTokenMap>,
   +makeCurrencyTools: () => Promise<EdgeCurrencyTools>,
   +makeCurrencyEngine: (
     walletInfo: EdgeWalletInfo,
@@ -918,6 +917,10 @@ export type EdgeCurrencyConfig = {
   +watch: Subscriber<EdgeCurrencyConfig>,
 
   +currencyInfo: EdgeCurrencyInfo,
+
+  // Tokens:
+  +builtinTokens: EdgeTokenMap,
+  +customTokens: EdgeTokenMap,
 
   // User settings for this plugin:
   +userSettings: JsonObject | void,

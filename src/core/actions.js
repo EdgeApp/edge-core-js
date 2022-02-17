@@ -9,6 +9,7 @@ import {
   type EdgeRateHint,
   type EdgeStakingStatus,
   type EdgeToken,
+  type EdgeTokenMap,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type EdgeWalletStates,
@@ -29,6 +30,15 @@ import {
 } from './storage/storage-reducer.js'
 
 export type RootAction =
+  | {
+      // The account fires this when the user sorts or archives wallets.
+      type: 'ACCOUNT_BUILTIN_TOKENS_LOADED',
+      payload: {
+        accountId: string,
+        pluginId: string,
+        tokens: EdgeTokenMap
+      }
+    }
   | {
       // The account fires this when the user sorts or archives wallets.
       type: 'ACCOUNT_CHANGED_WALLET_STATES',

@@ -60,6 +60,7 @@ export type AccountState = {
   +username: string,
 
   // Plugin stuff:
+  +builtinTokens: EdgePluginMap<EdgeTokenMap>,
   +customTokens: EdgePluginMap<EdgeTokenMap>,
   +swapSettings: EdgePluginMap<SwapSettings>,
   +userSettings: EdgePluginMap<JsonObject>
@@ -249,6 +250,16 @@ const accountInner: FatReducer<
 
   username(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
+  },
+
+  builtinTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {
+    switch (action.type) {
+      case 'ACCOUNT_BUILTIN_TOKENS_LOADED': {
+        const { pluginId, tokens } = action.payload
+        return { ...state, [pluginId]: tokens }
+      }
+    }
+    return state
   },
 
   customTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {

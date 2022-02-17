@@ -6,6 +6,7 @@ import { assert, expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
+  type EdgeAccount,
   type EdgeContext,
   type EdgeCurrencyConfig,
   type EdgeCurrencyWallet,
@@ -20,13 +21,16 @@ import { fakeUser } from '../../../fake/fake-user.js'
 const contextOptions = { apiKey: '', appId: '', deviceDescription: 'iphone12' }
 const quiet = { onLog() {} }
 
-async function makeFakeCurrencyWallet(
-  pauseWallets?: boolean
-): Promise<{
+type Fixture = {
+  account: EdgeAccount,
   config: EdgeCurrencyConfig,
   context: EdgeContext,
   wallet: EdgeCurrencyWallet
-}> {
+}
+
+async function makeFakeCurrencyWallet(
+  pauseWallets?: boolean
+): Promise<Fixture> {
   const world = await makeFakeEdgeWorld([fakeUser], quiet)
   const context = await world.makeEdgeContext({
     ...contextOptions,
@@ -41,7 +45,7 @@ async function makeFakeCurrencyWallet(
   if (walletInfo == null) throw new Error('Broken test account')
   const wallet = await account.waitForCurrencyWallet(walletInfo.id)
   const config = account.currencyConfig.fakecoin
-  return { config, context, wallet }
+  return { account, config, context, wallet }
 }
 
 describe('currency wallets', function () {
@@ -158,8 +162,9 @@ describe('currency wallets', function () {
     await log.waitFor(1).assert('new e f g')
   })
 
-  it('handles tokens', async function () {
-    const { wallet, config } = await makeFakeCurrencyWallet()
+  it('handles token balances', async function () {
+    const fixture: Fixture = await makeFakeCurrencyWallet()
+    const { wallet, config } = fixture
     await config.changeUserSettings({
       txs: {
         a: { currencyCode: 'FAKE', nativeAmount: '2' },
@@ -181,6 +186,51 @@ describe('currency wallets', function () {
       assert.strictEqual(txs[0].nativeAmount, '200')
       // $FlowFixMe legacy support code
       assert.strictEqual(txs[0].amountSatoshi, 200)
+    })
+  })
+
+  it('exposes builtin tokens', async function () {
+    const { account } = await makeFakeCurrencyWallet()
+
+    const config = account.currencyConfig.fakecoin
+    expect(config.builtinTokens).deep.equals({
+      f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd: {
+        currencyCode: 'TOKEN',
+        displayName: 'Fake Token',
+        denominations: [{ multiplier: '1000', name: 'TOKEN' }],
+        networkLocation: {
+          contractAddress:
+            '0XF98103E9217F099208569D295C1B276F1821348636C268C854BB2A086E0037CD'
+        }
+      }
+    })
+  })
+
+  it('exposes custom tokens', async function () {
+    const log = makeAssertLog()
+    const { account, wallet } = await makeFakeCurrencyWallet()
+    const config = account.currencyConfig.fakecoin
+
+    config.watch('customTokens', () => log('customTokens changed'))
+    await wallet.addCustomToken({
+      currencyCode: 'CUSTOM',
+      currencyName: 'Custom Token',
+      contractAddress:
+        '0X7CD5885327FD60E825D67D32F9D22B018227A208AA3C4819DA15B36B5D5869D3',
+      multiplier: '1000'
+    })
+    log.assert('customTokens changed')
+
+    expect(config.customTokens).deep.equals({
+      '7cd5885327fd60e825d67d32f9d22b018227a208aa3c4819da15b36b5d5869d3': {
+        currencyCode: 'CUSTOM',
+        displayName: 'Custom Token',
+        denominations: [{ multiplier: '1000', name: 'CUSTOM' }],
+        networkLocation: {
+          contractAddress:
+            '0X7CD5885327FD60E825D67D32F9D22B018227A208AA3C4819DA15B36B5D5869D3'
+        }
+      }
     })
   })
 

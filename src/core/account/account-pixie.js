@@ -26,6 +26,7 @@ import {
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
 import { type AccountState } from './account-reducer.js'
+import { loadBuiltinTokens } from './custom-tokens.js'
 
 export type AccountOutput = {
   +api: EdgeAccount,
@@ -80,6 +81,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         try {
           // Wait for the currency plugins (should already be loaded by now):
           await waitForPlugins(ai)
+          await loadBuiltinTokens(ai, accountId)
           log.warn('Login: currency plugins exist')
 
           // Start the repo:
