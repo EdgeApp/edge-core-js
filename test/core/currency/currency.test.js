@@ -16,9 +16,9 @@ describe('currency selectors', function () {
   }
 
   it('find currency multiplier', function () {
-    expect(getCurrencyMultiplier(plugins, [], 'SMALL')).equals('10')
-    expect(getCurrencyMultiplier(plugins, [], 'FAKE')).equals('100')
-    expect(getCurrencyMultiplier(plugins, [], 'TOKEN')).equals('1000')
-    expect(getCurrencyMultiplier(plugins, [], '-error-')).equals('1')
+    expect(getCurrencyMultiplier(plugins, {}, 'SMALL')).equals('10')
+    expect(getCurrencyMultiplier(plugins, {}, 'FAKE')).equals('100')
+    expect(getCurrencyMultiplier(plugins, {}, 'TOKEN')).equals('1000')
+    expect(getCurrencyMultiplier(plugins, {}, '-error-')).equals('1')
   })
 })

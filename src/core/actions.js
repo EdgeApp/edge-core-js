@@ -8,13 +8,14 @@ import {
   type EdgePluginMap,
   type EdgeRateHint,
   type EdgeStakingStatus,
-  type EdgeTokenInfo,
+  type EdgeToken,
+  type EdgeTokenMap,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type EdgeWalletStates,
   type JsonObject
 } from '../types/types.js'
-import { type SwapSettings } from './account/account-cleaners.js'
+import { type SwapSettings } from './account/account-types.js'
 import {
   type TxFileJsons,
   type TxFileNames,
@@ -31,10 +32,29 @@ import {
 export type RootAction =
   | {
       // The account fires this when the user sorts or archives wallets.
+      type: 'ACCOUNT_BUILTIN_TOKENS_LOADED',
+      payload: {
+        accountId: string,
+        pluginId: string,
+        tokens: EdgeTokenMap
+      }
+    }
+  | {
+      // The account fires this when the user sorts or archives wallets.
       type: 'ACCOUNT_CHANGED_WALLET_STATES',
       payload: {
         accountId: string,
         walletStates: EdgeWalletStates
+      }
+    }
+  | {
+      // Somebody just added a custom token to the account.
+      type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
+      payload: {
+        accountId: string,
+        pluginId: string,
+        tokenId: string,
+        token: EdgeToken
       }
     }
   | {
@@ -80,11 +100,6 @@ export type RootAction =
         pluginId: string,
         swapSettings: SwapSettings
       }
-    }
-  | {
-      // Somebody just added a custom token type to the wallet.
-      type: 'ADDED_CUSTOM_TOKEN',
-      payload: EdgeTokenInfo
     }
   | {
       type: 'CHANGE_LOG_SETTINGS',

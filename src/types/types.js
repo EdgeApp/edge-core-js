@@ -217,6 +217,33 @@ export type EdgeDenomination = {
 }
 
 /**
+ * Information used to display a token or currency to the user.
+ */
+export type EdgeToken = {
+  // The short code used on exchanges, such as "BTC":
+  currencyCode: string,
+
+  // How many decimal places to shift the native amount.
+  // The first item in this array is always the default for exchanges:
+  denominations: EdgeDenomination[],
+
+  // The full marketing name, such as "Bitcoin":
+  displayName: string,
+
+  // Each currency plugin decides what this contains,
+  // such as a contract address.
+  // The primary currency for a network, such as BTC or ETH,
+  // will set this field to `undefined`:
+  networkLocation: JsonObject | void
+}
+
+export type EdgeTokenMap = {
+  // Each currency plugin decides how to generate this ID,
+  // such as by using the contract address:
+  [tokenId: string]: EdgeToken
+}
+
+/**
  * Available tokens stored in the `EdgeCurrencyInfo`,
  * or parsed out of URI's.
  */
@@ -281,19 +308,17 @@ export type EdgeCurrencyInfo = {
   memoMaxValue?: string, // Max numerical value, if supported
   memoType?: 'text' | 'number' | 'other', // undefined means no memo support
 
-  // Configuration options:
-  defaultSettings: JsonObject,
-  metaTokens: EdgeMetaToken[],
-
   // Explorers:
   addressExplorer: string,
   blockExplorer?: string,
   transactionExplorer: string,
   xpubExplorer?: string,
 
-  // Images:
-  symbolImage?: string,
-  symbolImageDarkMono?: string
+  // Deprecated:
+  defaultSettings: JsonObject, // The default user settings are `{}`
+  metaTokens: EdgeMetaToken[], // Use `EdgeCurrencyPlugins.getBuiltinTokens`
+  symbolImage?: string, // The GUI handles this now
+  symbolImageDarkMono?: string // The GUI handles this now
 }
 
 // spending ------------------------------------------------------------
@@ -564,7 +589,7 @@ export type EdgeCurrencyEngine = {
   +enableTokens: (tokens: string[]) => Promise<void>,
   +disableTokens: (tokens: string[]) => Promise<void>,
   +getEnabledTokens: () => Promise<string[]>,
-  +addCustomToken: (token: EdgeTokenInfo) => Promise<void>,
+  +addCustomToken: (token: EdgeTokenInfo & EdgeToken) => Promise<void>,
   +getTokenStatus: (token: string) => boolean,
 
   // Addresses:
@@ -629,6 +654,7 @@ export type EdgeCurrencyTools = {
 export type EdgeCurrencyPlugin = {
   +currencyInfo: EdgeCurrencyInfo,
 
+  +getBuiltinTokens?: () => Promise<EdgeTokenMap>,
   +makeCurrencyTools: () => Promise<EdgeCurrencyTools>,
   +makeCurrencyEngine: (
     walletInfo: EdgeWalletInfo,
@@ -891,6 +917,10 @@ export type EdgeCurrencyConfig = {
   +watch: Subscriber<EdgeCurrencyConfig>,
 
   +currencyInfo: EdgeCurrencyInfo,
+
+  // Tokens:
+  +builtinTokens: EdgeTokenMap,
+  +customTokens: EdgeTokenMap,
 
   // User settings for this plugin:
   +userSettings: JsonObject | void,

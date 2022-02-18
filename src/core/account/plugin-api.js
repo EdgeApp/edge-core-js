@@ -8,6 +8,7 @@ import {
   type EdgeOtherMethods,
   type EdgeSwapConfig,
   type EdgeSwapInfo,
+  type EdgeTokenMap,
   type JsonObject
 } from '../../types/types.js'
 import { getCurrencyTools } from '../plugins/plugins-selectors.js'
@@ -44,6 +45,18 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
 
   get currencyInfo(): EdgeCurrencyInfo {
     return this._ai.props.state.plugins.currency[this._pluginId].currencyInfo
+  }
+
+  get builtinTokens(): EdgeTokenMap {
+    const { state } = this._ai.props
+    const { _accountId: accountId, _pluginId: pluginId } = this
+    return state.accounts[accountId].builtinTokens[pluginId]
+  }
+
+  get customTokens(): EdgeTokenMap {
+    const { state } = this._ai.props
+    const { _accountId: accountId, _pluginId: pluginId } = this
+    return state.accounts[accountId].customTokens[pluginId]
   }
 
   get userSettings(): JsonObject {

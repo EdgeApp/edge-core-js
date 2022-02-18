@@ -9,6 +9,7 @@ import {
 
 import {
   type EdgePluginMap,
+  type EdgeTokenMap,
   type EdgeWalletInfo,
   type EdgeWalletInfoFull,
   type EdgeWalletStates,
@@ -29,8 +30,8 @@ import {
 } from '../login/login-types.js'
 import { findCurrencyPlugin } from '../plugins/plugins-selectors.js'
 import { type RootState } from '../root-reducer.js'
-import { type SwapSettings } from './account-cleaners.js'
 import { findAppLogin } from './account-init.js'
+import { type SwapSettings } from './account-types.js'
 
 export type AccountState = {
   // Wallet stuff:
@@ -59,6 +60,8 @@ export type AccountState = {
   +username: string,
 
   // Plugin stuff:
+  +builtinTokens: EdgePluginMap<EdgeTokenMap>,
+  +customTokens: EdgePluginMap<EdgeTokenMap>,
   +swapSettings: EdgePluginMap<SwapSettings>,
   +userSettings: EdgePluginMap<JsonObject>
 }
@@ -247,6 +250,28 @@ const accountInner: FatReducer<
 
   username(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
+  },
+
+  builtinTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {
+    switch (action.type) {
+      case 'ACCOUNT_BUILTIN_TOKENS_LOADED': {
+        const { pluginId, tokens } = action.payload
+        return { ...state, [pluginId]: tokens }
+      }
+    }
+    return state
+  },
+
+  customTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {
+    switch (action.type) {
+      case 'ACCOUNT_CUSTOM_TOKEN_ADDED': {
+        const { pluginId, tokenId, token } = action.payload
+        const { [pluginId]: oldList = {} } = state
+        const newList = { ...oldList, [tokenId]: token }
+        return { ...state, [pluginId]: newList }
+      }
+    }
+    return state
   },
 
   swapSettings(state = {}, action: RootAction): EdgePluginMap<SwapSettings> {

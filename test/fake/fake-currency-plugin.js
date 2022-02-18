@@ -18,7 +18,7 @@ import {
   type EdgeParsedUri,
   type EdgeSpendInfo,
   type EdgeStakingStatus,
-  type EdgeTokenInfo,
+  type EdgeToken,
   type EdgeTransaction,
   type EdgeWalletInfo,
   type JsonObject,
@@ -46,7 +46,9 @@ const fakeCurrencyInfo: EdgeCurrencyInfo = {
     {
       currencyCode: 'TOKEN',
       currencyName: 'Fake Token',
-      denominations: [{ multiplier: '1000', name: 'TOKEN' }]
+      denominations: [{ multiplier: '1000', name: 'TOKEN' }],
+      contractAddress:
+        '0XF98103E9217F099208569D295C1B276F1821348636C268C854BB2A086E0037CD'
     }
   ],
 
@@ -241,7 +243,7 @@ class FakeCurrencyEngine {
     return Promise.resolve(['TOKEN'])
   }
 
-  addCustomToken(token: EdgeTokenInfo): Promise<void> {
+  addCustomToken(token: EdgeToken): Promise<void> {
     return Promise.resolve()
   }
 

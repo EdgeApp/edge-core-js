@@ -1,6 +1,7 @@
 // @flow
 
 import {
+  type Cleaner,
   asBoolean,
   asMap,
   asNumber,
@@ -10,10 +11,20 @@ import {
 } from 'cleaners'
 
 import { asBase16 } from '../../types/server-cleaners.js'
-import {
-  type ReturnType // @ts-delete
-} from '../../types/types.js'
 import { asJsonObject } from '../../util/file-helpers.js'
+import { type SwapSettings } from './account-types.js'
+
+// ---------------------------------------------------------------------
+// building-block types
+// ---------------------------------------------------------------------
+
+const asSwapSettings: Cleaner<SwapSettings> = asObject({
+  enabled: asOptional(asBoolean, true)
+}).withRest
+
+// ---------------------------------------------------------------------
+// file types
+// ---------------------------------------------------------------------
 
 /**
  * An Airbitz Bitcoin wallet, which includes the private key & state.
@@ -36,14 +47,6 @@ export const asWalletStateFile = asObject({
   hidden: asOptional(asBoolean),
   sortIndex: asOptional(asNumber)
 })
-
-/**
- * Swap plugin settings.
- */
-const asSwapSettings = asObject({
-  enabled: asOptional(asBoolean, true)
-}).withRest
-export type SwapSettings = ReturnType<typeof asSwapSettings>
 
 /**
  * Stores settings for currency and swap plugins.

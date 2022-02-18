@@ -28,6 +28,11 @@ import {
   type JsonObject
 } from '../../../types/types.js'
 import { mergeDeeply } from '../../../util/util.js'
+import {
+  contractToTokenId,
+  makeMetaTokens,
+  upgradeTokenInfo
+} from '../../account/custom-tokens.js'
 import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
 import { type ApiInput } from '../../root-pixie.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
@@ -71,7 +76,7 @@ export function makeCurrencyWalletApi(
   publicWalletInfo: EdgeWalletInfo
 ): EdgeCurrencyWallet {
   const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
-  const { walletInfo } = input.props.selfState
+  const { accountId, pluginId, walletInfo } = input.props.selfState
 
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
@@ -147,7 +152,7 @@ export function makeCurrencyWalletApi(
     ): Promise<string> {
       const multiplier = getCurrencyMultiplier(
         input.props.state.plugins.currency,
-        input.props.state.currency.customTokens,
+        input.props.state.accounts[accountId].customTokens[pluginId],
         currencyCode
       )
       return div(nativeAmount, multiplier, multiplier.length)
@@ -158,7 +163,7 @@ export function makeCurrencyWalletApi(
     ): Promise<string> {
       const multiplier = getCurrencyMultiplier(
         input.props.state.plugins.currency,
-        input.props.state.currency.customTokens,
+        input.props.state.accounts[accountId].customTokens[pluginId],
         currencyCode
       )
       return mul(denominatedAmount, multiplier)
@@ -220,8 +225,13 @@ export function makeCurrencyWalletApi(
     },
 
     async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<void> {
-      ai.props.dispatch({ type: 'ADDED_CUSTOM_TOKEN', payload: tokenInfo })
-      await engine.addCustomToken(tokenInfo)
+      const token = upgradeTokenInfo(tokenInfo)
+      const tokenId = contractToTokenId(tokenInfo.contractAddress)
+      ai.props.dispatch({
+        type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
+        payload: { accountId, pluginId, tokenId, token }
+      })
+      await engine.addCustomToken({ ...token, ...tokenInfo })
     },
 
     // Transactions:
@@ -530,13 +540,20 @@ export function makeCurrencyWalletApi(
       return tools.parseUri(
         uri,
         currencyCode,
-        input.props.state.currency.customTokens
+        makeMetaTokens(
+          input.props.state.accounts[accountId].customTokens[pluginId]
+        )
       )
     },
 
     async encodeUri(options: EdgeEncodeUri): Promise<string> {
       const tools = await getCurrencyTools(ai, walletInfo.type)
-      return tools.encodeUri(options, input.props.state.currency.customTokens)
+      return tools.encodeUri(
+        options,
+        makeMetaTokens(
+          input.props.state.accounts[accountId].customTokens[pluginId]
+        )
+      )
     },
 
     otherMethods
