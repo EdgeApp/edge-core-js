@@ -266,6 +266,10 @@ const accountInner: FatReducer<
 
   customTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {
     switch (action.type) {
+      case 'ACCOUNT_CUSTOM_TOKENS_LOADED': {
+        const { customTokens } = action.payload
+        return customTokens
+      }
       case 'ACCOUNT_CUSTOM_TOKEN_ADDED': {
         const { pluginId, tokenId, token } = action.payload
         const oldList = state[pluginId] ?? {}

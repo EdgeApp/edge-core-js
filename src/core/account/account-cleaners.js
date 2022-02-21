@@ -2,6 +2,7 @@
 
 import {
   type Cleaner,
+  asArray,
   asBoolean,
   asMap,
   asNumber,
@@ -11,12 +12,26 @@ import {
 } from 'cleaners'
 
 import { asBase16 } from '../../types/server-cleaners.js'
+import { type EdgeDenomination, type EdgeToken } from '../../types/types.js'
 import { asJsonObject } from '../../util/file-helpers.js'
 import { type SwapSettings } from './account-types.js'
 
 // ---------------------------------------------------------------------
 // building-block types
 // ---------------------------------------------------------------------
+
+const asEdgeDenomination: Cleaner<EdgeDenomination> = asObject({
+  multiplier: asString,
+  name: asString,
+  symbol: asOptional(asString)
+})
+
+const asEdgeToken: Cleaner<EdgeToken> = asObject({
+  currencyCode: asString,
+  denominations: asArray(asEdgeDenomination),
+  displayName: asString,
+  networkLocation: asOptional(asJsonObject)
+})
 
 const asSwapSettings: Cleaner<SwapSettings> = asObject({
   enabled: asOptional(asBoolean, true)
@@ -58,3 +73,25 @@ export const asPluginSettingsFile = asObject({
   // Swap plugins:
   swapSettings: asOptional(asMap(asSwapSettings), {})
 }).withRest
+
+/**
+ * The settings file managed by the GUI.
+ */
+export const asGuiSettingsFile = asObject({
+  customTokens: asArray(
+    asObject({
+      contractAddress: asString,
+      currencyCode: asString,
+      currencyName: asString,
+      denomination: asString,
+      denominations: asArray(asEdgeDenomination),
+      isVisible: asOptional(asBoolean, true),
+      multiplier: asString,
+      walletType: asOptional(asString, 'wallet:ethereum')
+    })
+  )
+})
+
+export const asCustomTokensFile = asObject({
+  customTokens: asObject(asObject(asEdgeToken))
+})

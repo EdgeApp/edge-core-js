@@ -13,9 +13,12 @@ import { close, emit, update } from 'yaob'
 import {
   type EdgeAccount,
   type EdgeCurrencyWallet,
+  type EdgePluginMap,
+  type EdgeTokenMap,
   asMaybeOtpError
 } from '../../types/types.js'
 import { makePeriodicTask } from '../../util/periodic-task.js'
+import { snooze } from '../../util/snooze.js'
 import { syncAccount } from '../login/login.js'
 import { waitForPlugins } from '../plugins/plugins-selectors.js'
 import { type RootProps, toApiInput } from '../root-pixie.js'
@@ -26,7 +29,11 @@ import {
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
 import { type AccountState } from './account-reducer.js'
-import { loadBuiltinTokens } from './custom-tokens.js'
+import {
+  loadBuiltinTokens,
+  loadCustomTokens,
+  saveCustomTokens
+} from './custom-tokens.js'
 
 export type AccountOutput = {
   +accountApi: EdgeAccount,
@@ -75,8 +82,9 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
         async function loadAllFiles(): Promise<void> {
           await Promise.all([
-            reloadPluginSettings(ai, accountId),
-            loadAllWalletStates(ai, accountId)
+            loadAllWalletStates(ai, accountId),
+            loadCustomTokens(ai, accountId),
+            reloadPluginSettings(ai, accountId)
           ])
         }
 
@@ -166,6 +174,30 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     },
     props => (props.state.paused ? undefined : props)
   ),
+
+  /**
+   * Watches for changes to the token state, and writes those to disk.
+   *
+   * The pixie system ensures that multiple `update` calls will not occur
+   * at once. This way, if the GUI makes dozens of calls to `addCustomToken`,
+   * we will consolidate those down to a single write to disk.
+   */
+  tokenSaver(input: AccountInput) {
+    let lastTokens: EdgePluginMap<EdgeTokenMap> | void
+
+    return async function update() {
+      const { accountId, accountState } = input.props
+
+      const { customTokens } = accountState
+      if (customTokens !== lastTokens && lastTokens != null) {
+        await saveCustomTokens(toApiInput(input), accountId).catch(error =>
+          input.props.onError(error)
+        )
+        await snooze(10) // Rate limiting
+      }
+      lastTokens = customTokens
+    }
+  },
 
   watcher(input: AccountInput) {
     let lastState

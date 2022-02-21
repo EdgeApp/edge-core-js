@@ -67,6 +67,14 @@ export type RootAction =
       }
     }
   | {
+      // We have just read the custom tokens from disk.
+      type: 'ACCOUNT_CUSTOM_TOKENS_LOADED',
+      payload: {
+        accountId: string,
+        customTokens: EdgePluginMap<EdgeTokenMap>
+      }
+    }
+  | {
       // The account fires this when it loads its keys from disk.
       type: 'ACCOUNT_KEYS_LOADED',
       payload: {

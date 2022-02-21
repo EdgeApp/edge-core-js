@@ -4,11 +4,8 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { fuzzyTimeout } from '../../src/util/promise.js'
+import { snooze } from '../../src/util/snooze.js'
 import { expectRejection } from '../expect-rejection.js'
-
-export function snooze(ms: number): Promise<number> {
-  return new Promise(resolve => setTimeout(() => resolve(ms), ms))
-}
 
 describe('promise', function () {
   it('fuzzyTimeout resolves', async function () {
