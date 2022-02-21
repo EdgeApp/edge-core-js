@@ -20,7 +20,7 @@ import { makeJsonFile } from '../../../util/file-helpers.js'
 import { makePeriodicTask } from '../../../util/periodic-task.js'
 import { makeLog } from '../../log/log.js'
 import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
-import { type ApiInput, type RootProps } from '../../root-pixie.js'
+import { type RootProps, toApiInput } from '../../root-pixie.js'
 import {
   addStorageWallet,
   syncStorageWallet
@@ -63,7 +63,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
     try {
       // Start the data sync:
-      const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+      const ai = toApiInput(input)
       await addStorageWallet(ai, walletInfo)
 
       // Grab the freshly-synced repos:
@@ -153,16 +153,18 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   },
 
   // Creates the API object:
-  walletApi: (input: CurrencyWalletInput) => () => {
+  walletApi: (input: CurrencyWalletInput) => async () => {
     const { walletOutput, walletState } = input.props
     if (walletOutput == null) return
     const { engine } = walletOutput
-    const { nameLoaded, publicWalletInfo } = walletState
+    const { nameLoaded, pluginId, publicWalletInfo } = walletState
     if (engine == null || publicWalletInfo == null || !nameLoaded) return
+    const tools = await getCurrencyTools(toApiInput(input), pluginId)
 
     const currencyWalletApi = makeCurrencyWalletApi(
       input,
       engine,
+      tools,
       publicWalletInfo
     )
     input.onOutput(currencyWalletApi)
@@ -233,9 +235,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   syncTimer: filterPixie(
     (input: CurrencyWalletInput) => {
       async function doSync(): Promise<void> {
-        const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const { walletId } = input.props
-        await syncStorageWallet(ai, walletId)
+        await syncStorageWallet(toApiInput(input), walletId)
       }
 
       // We don't report sync failures, since that could be annoying:

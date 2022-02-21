@@ -18,7 +18,7 @@ import {
 import { makePeriodicTask } from '../../util/periodic-task.js'
 import { syncAccount } from '../login/login.js'
 import { waitForPlugins } from '../plugins/plugins-selectors.js'
-import { type ApiInput, type RootProps } from '../root-pixie.js'
+import { type RootProps, toApiInput } from '../root-pixie.js'
 import {
   addStorageWallet,
   syncStorageWallet
@@ -69,7 +69,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       },
 
       async update() {
-        const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+        const ai = toApiInput(input)
         const { accountId, accountState, log } = input.props
         const { accountWalletInfos } = accountState
 
@@ -114,7 +114,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
   syncTimer: filterPixie(
     (input: AccountInput) => {
       async function doDataSync(): Promise<void> {
-        const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+        const ai = toApiInput(input)
         const { accountId, accountState } = input.props
         const { accountWalletInfos } = accountState
 
@@ -132,9 +132,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       }
 
       async function doLoginSync(): Promise<void> {
-        const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const { accountId } = input.props
-        await syncAccount(ai, accountId)
+        await syncAccount(toApiInput(input), accountId)
       }
 
       // We don't report sync failures, since that could be annoying:

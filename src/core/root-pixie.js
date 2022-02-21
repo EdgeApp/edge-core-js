@@ -37,6 +37,12 @@ export type RootProps = {
 
 export type ApiInput = PixieInput<RootProps>
 
+/**
+ * Downstream pixies take props that extend from `RootProps`,
+ * so this casts those back down if necessary.
+ */
+export const toApiInput = (input: PixieInput<any>): ApiInput => input
+
 export const rootPixie: TamePixie<RootProps> = combinePixies({
   accounts,
   context,

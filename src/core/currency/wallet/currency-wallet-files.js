@@ -11,7 +11,7 @@ import { makeJsonFile } from '../../../util/file-helpers.js'
 import { mergeDeeply } from '../../../util/util.js'
 import { fetchAppIdInfo } from '../../account/lobby-api.js'
 import { getExchangeRate } from '../../exchange/exchange-selectors.js'
-import { type ApiInput } from '../../root-pixie.js'
+import { toApiInput } from '../../root-pixie.js'
 import { type RootState } from '../../root-reducer.js'
 import {
   getStorageWalletDisklet,
@@ -170,12 +170,11 @@ async function loadNameFile(input: CurrencyWalletInput): Promise<void> {
   let name: string | null = null
   if (clean == null || clean.walletName == null) {
     // If a wallet has no name file, try to pick a name based on the appId:
-    const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
     const { appIds = [] } = input.props.walletState.walletInfo
 
     const appId = appIds.find(appId => appId !== '')
     if (appId != null) {
-      const { displayName } = await fetchAppIdInfo(ai, appId)
+      const { displayName } = await fetchAppIdInfo(toApiInput(input), appId)
       name = displayName
     }
   } else {
