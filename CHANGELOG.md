@@ -1,5 +1,15 @@
 # edge-core-js
 
+## v0.19.8 (2022-02-21)
+
+- added: Define a new `EdgeToken` type and make that available as `EdgeCurrencyConfig.builtinTokens` and `EdgeCurrencyConfig.customTokens`.
+- added: Define a new `EdgeCurrencyPlugin.getBuiltinTokens` method, and use that to populate `EdgeCurrencyConfig.builtinTokens` when available.
+- added: Pass `EdgeToken` fields to `EdgeCurrencyEngine.addCustomToken`, along with the existing `EdgeMetaToken` fields.
+- deprecated: `EdgeCurrencyInfo.defaultSettings`
+- deprecated: `EdgeCurrencyInfo.metaTokens`
+- deprecated: `EdgeCurrencyInfo.symbolImage`
+- deprecated: `EdgeCurrencyInfo.symbolImageDarkMono`
+
 ## v0.19.7 (2022-02-15)
 
 - added: Include an `imported` flag with all new wallet keys, to indicate whether they were derived freshly or imported from user-entered data.
