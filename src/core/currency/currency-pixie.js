@@ -17,11 +17,11 @@ export const currency: TamePixie<RootProps> = combinePixies({
   wallets: mapPixie(
     walletPixie,
     (props: RootProps) => props.state.currency.currencyWalletIds,
-    (props: RootProps, id: string): CurrencyWalletProps => ({
+    (props: RootProps, walletId: string): CurrencyWalletProps => ({
       ...props,
-      id,
-      selfState: props.state.currency.wallets[id],
-      selfOutput: props.output.currency.wallets[id]
+      walletId,
+      walletState: props.state.currency.wallets[walletId],
+      walletOutput: props.output.currency.wallets[walletId]
     })
   )
 })

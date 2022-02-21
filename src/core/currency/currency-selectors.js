@@ -53,7 +53,7 @@ export function waitForCurrencyWallet(
   const out: Promise<EdgeCurrencyWallet> = ai.waitFor(
     (props: RootProps): EdgeCurrencyWallet | void => {
       // If the wallet id doesn't even exist, bail out:
-      if (!props.state.currency.wallets[walletId]) {
+      if (props.state.currency.wallets[walletId] == null) {
         throw new Error(`Wallet id ${walletId} does not exist in this account`)
       }
 
@@ -62,8 +62,8 @@ export function waitForCurrencyWallet(
       if (engineFailure != null) throw engineFailure
 
       // Return the API if that exists:
-      if (props.output.currency.wallets[walletId]) {
-        return props.output.currency.wallets[walletId].api
+      if (props.output.currency.wallets[walletId] != null) {
+        return props.output.currency.wallets[walletId].walletApi
       }
     }
   )

@@ -634,7 +634,9 @@ export type EdgeCurrencyTools = {
     opts?: JsonObject
   ) => Promise<JsonObject>,
   +derivePublicKey: (walletInfo: EdgeWalletInfo) => Promise<JsonObject>,
-  +getSplittableTypes?: (walletInfo: EdgeWalletInfo) => string[],
+  +getSplittableTypes?: (
+    walletInfo: EdgeWalletInfo
+  ) => string[] | Promise<string[]>,
 
   // URIs:
   +parseUri: (

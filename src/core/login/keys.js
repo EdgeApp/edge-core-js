@@ -16,7 +16,11 @@ import { utf8 } from '../../util/encoding.js'
 import { changeWalletStates } from '../account/account-files.js'
 import { waitForCurrencyWallet } from '../currency/currency-selectors.js'
 import { applyKit } from '../login/login.js'
-import { getCurrencyTools } from '../plugins/plugins-selectors.js'
+import {
+  findCurrencyPluginId,
+  getCurrencyTools,
+  maybeFindCurrencyPluginId
+} from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import { type AppIdMap, type LoginKit, type LoginTree } from './login-types.js'
 
@@ -308,9 +312,13 @@ export async function createCurrencyWallet(
   opts: EdgeCreateCurrencyWalletOptions
 ): Promise<EdgeCurrencyWallet> {
   const { login, loginTree } = ai.props.state.accounts[accountId]
+  const pluginId = findCurrencyPluginId(
+    ai.props.state.plugins.currency,
+    walletType
+  )
 
   // Make the keys:
-  const tools = await getCurrencyTools(ai, walletType)
+  const tools = await getCurrencyTools(ai, pluginId)
   let keys
   if (opts.keys != null) {
     keys = opts.keys
@@ -391,8 +399,8 @@ export async function splitWalletInfo(
   walletId: string,
   newWalletType: string
 ): Promise<string> {
-  const selfState = ai.props.state.accounts[accountId]
-  const { allWalletInfosFull, login, loginTree } = selfState
+  const accountState = ai.props.state.accounts[accountId]
+  const { allWalletInfosFull, login, loginTree } = accountState
 
   // Find the wallet we are going to split:
   const walletInfo = allWalletInfosFull.find(
@@ -416,7 +424,7 @@ export async function splitWalletInfo(
     newWalletType === 'wallet:bitcoinsv' &&
     walletInfo.type === 'wallet:bitcoincash'
   if (needsProtection) {
-    const oldWallet = ai.props.output.currency.wallets[walletId].api
+    const oldWallet = ai.props.output.currency.wallets[walletId].walletApi
     if (oldWallet == null) throw new Error('Missing Wallet')
     await protectBchWallet(oldWallet)
   }
@@ -446,7 +454,7 @@ export async function splitWalletInfo(
   // In the future we should clone the repo instead:
   try {
     const wallet = await waitForCurrencyWallet(ai, newWalletInfo.id)
-    const oldWallet = ai.props.output.currency.wallets[walletId].api
+    const oldWallet = ai.props.output.currency.wallets[walletId].walletApi
     if (oldWallet != null) {
       if (oldWallet.name != null) await wallet.renameWallet(oldWallet.name)
       if (oldWallet.fiatCurrencyCode != null) {
@@ -472,11 +480,16 @@ export async function listSplittableWalletTypes(
     walletInfo => walletInfo.id === walletId
   )
   if (walletInfo == null) throw new Error(`Invalid wallet id ${walletId}`)
+  const pluginId = maybeFindCurrencyPluginId(
+    ai.props.state.plugins.currency,
+    walletInfo.type
+  )
+  if (pluginId == null) return []
 
   // Get the list of available types:
-  const tools = await getCurrencyTools(ai, walletInfo.type)
-  const types =
-    tools.getSplittableTypes != null ? tools.getSplittableTypes(walletInfo) : []
+  const tools = await getCurrencyTools(ai, pluginId)
+  if (tools.getSplittableTypes == null) return []
+  const types = await tools.getSplittableTypes(walletInfo)
 
   // Filter out wallet types we have already split:
   return types.filter(type => {

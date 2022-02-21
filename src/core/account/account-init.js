@@ -138,11 +138,13 @@ export function waitForAccount(
 ): Promise<EdgeAccount> {
   const out: Promise<EdgeAccount> = ai.waitFor(
     (props: RootProps): EdgeAccount | void => {
-      const selfState = props.state.accounts[accountId]
-      if (selfState.loadFailure != null) throw selfState.loadFailure
+      const accountState = props.state.accounts[accountId]
+      if (accountState.loadFailure != null) throw accountState.loadFailure
 
-      const selfOutput = props.output.accounts[accountId]
-      if (selfOutput != null && selfOutput.api != null) return selfOutput.api
+      const accountOutput = props.output.accounts[accountId]
+      if (accountOutput != null && accountOutput.accountApi != null) {
+        return accountOutput.accountApi
+      }
     }
   )
   return out

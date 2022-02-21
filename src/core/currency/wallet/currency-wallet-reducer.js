@@ -17,10 +17,7 @@ import {
   type JsonObject
 } from '../../../types/types.js'
 import { type RootAction } from '../../actions.js'
-import {
-  findCurrencyPlugin,
-  getCurrencyPlugin
-} from '../../plugins/plugins-selectors.js'
+import { findCurrencyPluginId } from '../../plugins/plugins-selectors.js'
 import { type RootState } from '../../root-reducer.js'
 import { type TransactionFile } from './currency-wallet-cleaners.js'
 
@@ -111,9 +108,7 @@ const currencyWalletInner: FatReducer<
     next => next.root.login.walletInfos[next.id].type,
     next => next.root.plugins.currency,
     (walletType: string, plugins): string => {
-      const out = findCurrencyPlugin(plugins, walletType)
-      if (out == null) throw new Error(`Bad wallet type ${walletType}`)
-      return out
+      return findCurrencyPluginId(plugins, walletType)
     }
   ),
 
@@ -135,7 +130,8 @@ const currencyWalletInner: FatReducer<
     next: CurrencyWalletNext
   ): EdgeCurrencyInfo {
     if (state) return state
-    return getCurrencyPlugin(next.root, next.self.walletInfo.type).currencyInfo
+    const { pluginId } = next.self
+    return next.root.plugins.currency[pluginId].currencyInfo
   },
 
   displayPrivateSeed(state = null, action: RootAction): string | null {

@@ -60,8 +60,8 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   }
 
   get userSettings(): JsonObject {
-    const selfState = this._ai.props.state.accounts[this._accountId]
-    return selfState.userSettings[this._pluginId]
+    const accountState = this._ai.props.state.accounts[this._accountId]
+    return accountState.userSettings[this._pluginId]
   }
 
   async changeUserSettings(settings: JsonObject): Promise<void> {
@@ -77,7 +77,7 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
     userInput: string,
     opts: { keyOptions?: JsonObject } = {}
   ): Promise<JsonObject> {
-    const tools = await getCurrencyTools(this._ai, this.currencyInfo.walletType)
+    const tools = await getCurrencyTools(this._ai, this._pluginId)
 
     if (tools.importPrivateKey == null) {
       throw new Error('This wallet does not support importing keys')
@@ -110,8 +110,8 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     const plugin = this._ai.props.state.plugins.swap[this._pluginId]
     if (plugin.checkSettings == null) return false
 
-    const selfState = this._ai.props.state.accounts[this._accountId]
-    const settings = selfState.userSettings[this._pluginId] || {}
+    const accountState = this._ai.props.state.accounts[this._accountId]
+    const settings = accountState.userSettings[this._pluginId] || {}
     return !!plugin.checkSettings(settings).needsActivation
   }
 
@@ -120,8 +120,8 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
   }
 
   get userSettings(): JsonObject {
-    const selfState = this._ai.props.state.accounts[this._accountId]
-    return selfState.userSettings[this._pluginId]
+    const accountState = this._ai.props.state.accounts[this._accountId]
+    return accountState.userSettings[this._pluginId]
   }
 
   async changeEnabled(enabled: boolean): Promise<void> {

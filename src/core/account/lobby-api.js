@@ -84,7 +84,7 @@ async function approveLoginRequest(
   })
   await sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
     let timeout: ReturnType<typeof setTimeout> | void
-    const accountApi = ai.props.output.accounts[accountId].api
+    const accountApi = ai.props.output.accounts[accountId].accountApi
     if (accountApi != null) {
       accountApi.on('close', () => {
         if (timeout != null) clearTimeout(timeout)
