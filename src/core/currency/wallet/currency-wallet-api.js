@@ -226,11 +226,19 @@ export function makeCurrencyWalletApi(
     async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<void> {
       const token = upgradeTokenInfo(tokenInfo)
       const tokenId = contractToTokenId(tokenInfo.contractAddress)
+
+      // Ask the plugin to validate this:
+      if (tools.getTokenId != null) {
+        await tools.getTokenId(token)
+      } else {
+        // This is not ideal, since the pixie will add it too:
+        await engine.addCustomToken({ ...token, ...tokenInfo })
+      }
+
       ai.props.dispatch({
         type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
         payload: { accountId, pluginId, tokenId, token }
       })
-      await engine.addCustomToken({ ...token, ...tokenInfo })
     },
 
     // Transactions:

@@ -15,6 +15,7 @@ import {
   type EdgeWalletStates,
   type JsonObject
 } from '../../types/types.js'
+import { compare } from '../../util/compare.js'
 import { ethereumKeyToAddress } from '../../util/crypto/ethereum.js'
 import { type RootAction } from '../actions.js'
 import {
@@ -267,8 +268,22 @@ const accountInner: FatReducer<
     switch (action.type) {
       case 'ACCOUNT_CUSTOM_TOKEN_ADDED': {
         const { pluginId, tokenId, token } = action.payload
-        const { [pluginId]: oldList = {} } = state
+        const oldList = state[pluginId] ?? {}
+
+        // Has anything changed?
+        if (compare(oldList[tokenId], token)) return state
+
         const newList = { ...oldList, [tokenId]: token }
+        return { ...state, [pluginId]: newList }
+      }
+      case 'ACCOUNT_CUSTOM_TOKEN_REMOVED': {
+        const { pluginId, tokenId } = action.payload
+        const oldList = state[pluginId] ?? {}
+
+        // Has anything changed?
+        if (oldList[tokenId] == null) return state
+
+        const { [tokenId]: unused, ...newList } = oldList
         return { ...state, [pluginId]: newList }
       }
     }

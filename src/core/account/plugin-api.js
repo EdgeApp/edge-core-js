@@ -8,6 +8,7 @@ import {
   type EdgeOtherMethods,
   type EdgeSwapConfig,
   type EdgeSwapInfo,
+  type EdgeToken,
   type EdgeTokenMap,
   type JsonObject
 } from '../../types/types.js'
@@ -17,6 +18,7 @@ import {
   changePluginUserSettings,
   changeSwapSettings
 } from './account-files.js'
+import { getTokenId } from './custom-tokens.js'
 
 /**
  * Access to an individual currency plugin's methods.
@@ -57,6 +59,41 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
     const { state } = this._ai.props
     const { _accountId: accountId, _pluginId: pluginId } = this
     return state.accounts[accountId].customTokens[pluginId]
+  }
+
+  async addCustomToken(token: EdgeToken): Promise<string> {
+    const { _accountId: accountId, _ai: ai, _pluginId: pluginId } = this
+    const tokenId = await getTokenId(ai, pluginId, token)
+
+    ai.props.dispatch({
+      type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
+      payload: { accountId, pluginId, tokenId, token }
+    })
+    return tokenId
+  }
+
+  async changeCustomToken(tokenId: string, token: EdgeToken): Promise<void> {
+    const { _accountId: accountId, _ai: ai, _pluginId: pluginId } = this
+    const newTokenId = await getTokenId(ai, pluginId, token)
+    if (newTokenId !== tokenId) {
+      throw new Error(
+        `The tokenId would change from ${tokenId} to ${newTokenId}`
+      )
+    }
+
+    ai.props.dispatch({
+      type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
+      payload: { accountId, pluginId, tokenId, token }
+    })
+  }
+
+  async removeCustomToken(tokenId: string): Promise<void> {
+    const { _accountId: accountId, _ai: ai, _pluginId: pluginId } = this
+
+    ai.props.dispatch({
+      type: 'ACCOUNT_CUSTOM_TOKEN_REMOVED',
+      payload: { accountId, pluginId, tokenId }
+    })
   }
 
   get userSettings(): JsonObject {

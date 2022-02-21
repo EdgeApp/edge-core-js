@@ -14,10 +14,13 @@ import {
   type EdgeCurrencyEngine,
   type EdgeCurrencyTools,
   type EdgeCurrencyWallet,
-  type EdgeWalletInfo
+  type EdgeTokenMap,
+  type EdgeWalletInfo,
+  type JsonObject
 } from '../../../types/types.js'
 import { makeJsonFile } from '../../../util/file-helpers.js'
 import { makePeriodicTask } from '../../../util/periodic-task.js'
+import { makeTokenInfo } from '../../account/custom-tokens.js'
 import { makeLog } from '../../log/log.js'
 import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
 import { type RootProps, toApiInput } from '../../root-pixie.js'
@@ -95,15 +98,21 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       })
 
       // Start the engine:
+      const accountState = state.accounts[accountId]
       const engine = await plugin.makeCurrencyEngine(mergedWalletInfo, {
         callbacks: makeCurrencyWalletCallbacks(input),
+
+        // Wallet-scoped IO objects:
         log: makeLog(
           input.props.logBackend,
           `${plugin.currencyInfo.currencyCode}-${walletInfo.id.slice(0, 2)}`
         ),
         walletLocalDisklet,
         walletLocalEncryptedDisklet,
-        userSettings: state.accounts[accountId].userSettings[pluginId]
+
+        // User settings:
+        customTokens: accountState.customTokens[pluginId] ?? {},
+        userSettings: accountState.userSettings[pluginId] ?? {}
       })
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
@@ -267,26 +276,45 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
   watcher(input: CurrencyWalletInput) {
     let lastState
-    let lastSettings
+    let lastSettings: JsonObject = {}
+    let lastTokens: EdgeTokenMap = {}
 
     return () => {
       const { state, walletState, walletOutput } = input.props
       if (walletState == null || walletOutput == null) return
       const { engine, walletApi } = walletOutput
       const { accountId, pluginId } = walletState
+      const accountState = state.accounts[accountId]
 
       // Update API object:
-      if (lastState !== walletState) {
-        lastState = walletState
-        if (walletApi != null) update(walletApi)
+      if (lastState !== walletState && walletApi != null) {
+        update(walletApi)
       }
+      lastState = walletState
 
       // Update engine settings:
-      const userSettings = state.accounts[accountId].userSettings[pluginId]
-      if (lastSettings !== userSettings) {
-        lastSettings = userSettings
-        if (engine != null) engine.changeUserSettings(userSettings ?? {})
+      const userSettings = accountState.userSettings[pluginId] ?? lastSettings
+      if (lastSettings !== userSettings && engine != null) {
+        engine.changeUserSettings(userSettings)
       }
+      lastSettings = userSettings
+
+      // Update the custom tokens:
+      const customTokens = accountState.customTokens[pluginId] ?? lastTokens
+      if (lastTokens !== customTokens && engine != null) {
+        if (engine.changeCustomTokens != null) {
+          engine.changeCustomTokens(customTokens)
+        } else {
+          for (const tokenId of Object.keys(customTokens)) {
+            const token = customTokens[tokenId]
+            if (token === lastTokens[tokenId]) continue
+            const tokenInfo = makeTokenInfo(token)
+            if (tokenInfo == null) continue
+            engine.addCustomToken({ ...tokenInfo, ...token })
+          }
+        }
+      }
+      lastTokens = customTokens
     }
   }
 })
