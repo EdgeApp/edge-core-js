@@ -232,6 +232,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       const { wallets } = input.props.output.currency
       for (const walletId of activeWalletIds) {
         const api = wallets?.[walletId]?.walletApi
+        if (api == null) continue
         if (api !== lastOut[walletId]) dirty = true
         out[walletId] = api
       }
