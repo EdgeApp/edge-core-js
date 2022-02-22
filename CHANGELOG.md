@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.9 (2022-02-22)
+
+- fixed: Stop adding `undefined` entries to `EdgeAccount.currencyWallets`.
+
 ## v0.19.8 (2022-02-21)
 
 - added: Define a new `EdgeToken` type and make that available as `EdgeCurrencyConfig.builtinTokens` and `EdgeCurrencyConfig.customTokens`.
