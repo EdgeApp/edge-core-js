@@ -31,7 +31,7 @@ import {
 
 export type RootAction =
   | {
-      // The account fires this when the user sorts or archives wallets.
+      // A currency plugin has returned its builtin tokens.
       type: 'ACCOUNT_BUILTIN_TOKENS_LOADED',
       payload: {
         accountId: string,
@@ -48,7 +48,7 @@ export type RootAction =
       }
     }
   | {
-      // Somebody just added a custom token to the account.
+      // Somebody just added or changed a custom token.
       type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
       payload: {
         accountId: string,
