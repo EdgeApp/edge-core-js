@@ -301,6 +301,7 @@ export type EdgeCurrencyInfo = {
   // Chain information:
   canAdjustFees?: boolean, // Defaults to true
   canImportKeys?: boolean, // Defaults to false
+  canReplaceByFee?: boolean, // Defaults to false
   customFeeTemplate?: EdgeObjectTemplate, // Indicates custom fee support
   customTokenTemplate?: EdgeObjectTemplate, // Indicates custom token support
   requiredConfirmations?: number,
