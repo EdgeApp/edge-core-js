@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.10 (2022-03-02)
+
+- added: `EdgeCurrencyInfo.canReplaceByFee`.
+- changed: Make `denominationToNative` and `nativeToDenomination` only look at the currencies available on the current wallet.
+
 ## v0.19.9 (2022-02-22)
 
 - fixed: Stop adding `undefined` entries to `EdgeAccount.currencyWallets`.
