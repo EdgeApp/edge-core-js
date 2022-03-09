@@ -38,7 +38,7 @@ export async function makeContext(
   const {
     apiKey,
     appId = '',
-    authServer = 'https://auth.airbitz.co/api',
+    authServer = 'https://auth2.edge.app/api',
     deviceDescription = null,
     hideKeys = false,
     plugins: pluginsInit = {}
