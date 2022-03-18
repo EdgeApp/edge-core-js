@@ -66,7 +66,7 @@ const merge = (sync, plug) => {
         s++
       } else {
         // Merge
-        plugMap[ss.txid].merged = true
+        if (plugMap[ss.txid]) plugMap[ss.txid].merged = true
         s++
       }
     } else {
@@ -76,7 +76,14 @@ const merge = (sync, plug) => {
         p++
       } else {
         // Merge
-        syncMap[pp.txid].merged = true
+        if (syncMap[pp.txid]) {
+          syncMap[pp.txid].merged = true
+        } else {
+          // No sync entry. Just use plugin entry
+          // TODO: Create sync file entry
+          out[o++] = pp
+          p++
+        }
         p++
       }
     }
