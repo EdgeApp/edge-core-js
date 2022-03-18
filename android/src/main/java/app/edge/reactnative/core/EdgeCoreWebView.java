@@ -5,6 +5,7 @@ import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import androidx.annotation.NonNull;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.ThemedReactContext;
@@ -34,10 +35,8 @@ class EdgeCoreWebView extends WebView {
 
   public void runJs(final String js) {
     post(
-        new Runnable() {
-          public void run() {
-            evaluateJavascript(js.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"), null);
-          }
+        () -> {
+          evaluateJavascript(js.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"), null);
         });
   }
 
@@ -75,14 +74,11 @@ class EdgeCoreWebView extends WebView {
       PendingCall promise = new PendingCall(id);
 
       mPool.execute(
-          new Runnable() {
-            @Override
-            public void run() {
-              try {
-                handleCall(name, new JSONArray(args), promise);
-              } catch (Throwable error) {
-                promise.reject(error.getMessage());
-              }
+          () -> {
+            try {
+              handleCall(name, new JSONArray(args), promise);
+            } catch (Throwable error) {
+              promise.reject(error.getMessage());
             }
           });
     }
@@ -106,7 +102,7 @@ class EdgeCoreWebView extends WebView {
 
   // utilities -------------------------------------------------------------
 
-  private void handleCall(String name, JSONArray args, PendingCall promise)
+  private void handleCall(@NonNull String name, JSONArray args, PendingCall promise)
       throws IOException, JSONException {
     switch (name) {
       case "diskletDelete":
@@ -186,6 +182,7 @@ class EdgeCoreWebView extends WebView {
       runJs("window.nativeBridge.reject(" + mId + "," + stringify(message) + ")");
     }
 
+    @NonNull
     private String stringify(Object raw) {
       JSONArray array = new JSONArray();
       array.put(raw);
