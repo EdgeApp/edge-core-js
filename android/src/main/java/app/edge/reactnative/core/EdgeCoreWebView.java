@@ -11,12 +11,15 @@ import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 class EdgeCoreWebView extends WebView {
   private static final String BASE_URL = "file:///android_asset/";
+  private final ExecutorService mPool = Executors.newCachedThreadPool();
   private final ThemedReactContext mContext;
   private final Disklet mDisklet;
 
@@ -68,23 +71,20 @@ class EdgeCoreWebView extends WebView {
 
   class JsMethods {
     @JavascriptInterface
-    public void call(final int id, String name, String args) {
-      PendingCall promise =
-          new PendingCall() {
-            public void resolve(Object value) {
-              runJs("window.nativeBridge.resolve(" + id + "," + stringify(value) + ")");
-            }
+    public void call(int id, String name, String args) {
+      PendingCall promise = new PendingCall(id);
 
-            public void reject(String message) {
-              runJs("window.nativeBridge.reject(" + id + "," + stringify(message) + ")");
+      mPool.execute(
+          new Runnable() {
+            @Override
+            public void run() {
+              try {
+                handleCall(name, new JSONArray(args), promise);
+              } catch (Throwable error) {
+                promise.reject(error.getMessage());
+              }
             }
-          };
-
-      try {
-        handleCall(name, new JSONArray(args), promise);
-      } catch (Throwable error) {
-        promise.reject(error.getMessage());
-      }
+          });
     }
 
     @JavascriptInterface
@@ -105,12 +105,6 @@ class EdgeCoreWebView extends WebView {
   }
 
   // utilities -------------------------------------------------------------
-
-  private interface PendingCall {
-    void resolve(Object value);
-
-    void reject(String message);
-  }
 
   private void handleCall(String name, JSONArray args, PendingCall promise)
       throws IOException, JSONException {
@@ -145,18 +139,21 @@ class EdgeCoreWebView extends WebView {
         }
         break;
       case "scrypt":
-        new ScryptThread(args, promise).start();
+        {
+          byte[] data = Base64.decode(args.getString(0), Base64.DEFAULT);
+          byte[] salt = Base64.decode(args.getString(1), Base64.DEFAULT);
+          int n = args.getInt(2);
+          int r = args.getInt(3);
+          int p = args.getInt(4);
+          int dklen = args.getInt(5);
+          byte[] out = scrypt(data, salt, n, r, p, dklen);
+          if (out == null) promise.reject("Failed scrypt");
+          else promise.resolve(Base64.encodeToString(out, Base64.NO_WRAP));
+        }
         break;
       default:
         promise.reject("No method " + name);
     }
-  }
-
-  private String stringify(Object raw) {
-    JSONArray array = new JSONArray();
-    array.put(raw);
-    String out = array.toString();
-    return out.substring(1, out.length() - 1);
   }
 
   private void visitPage() {
@@ -174,30 +171,26 @@ class EdgeCoreWebView extends WebView {
     loadDataWithBaseURL(BASE_URL, html, "text/html", null, null);
   }
 
-  private class ScryptThread extends Thread {
-    JSONArray args;
-    PendingCall promise;
+  private class PendingCall {
+    private final int mId;
 
-    ScryptThread(JSONArray args, PendingCall promise) {
-      super("scrypt");
-      this.args = args;
-      this.promise = promise;
+    PendingCall(int id) {
+      mId = id;
     }
 
-    public void run() {
-      try {
-        byte[] data = Base64.decode(args.getString(0), Base64.DEFAULT);
-        byte[] salt = Base64.decode(args.getString(1), Base64.DEFAULT);
-        int n = args.getInt(2);
-        int r = args.getInt(3);
-        int p = args.getInt(4);
-        int dklen = args.getInt(5);
-        byte[] out = scrypt(data, salt, n, r, p, dklen);
-        if (out == null) promise.reject("Failed scrypt");
-        else promise.resolve(Base64.encodeToString(out, Base64.NO_WRAP));
-      } catch (JSONException error) {
-        promise.reject(error.getMessage());
-      }
+    public void resolve(Object value) {
+      runJs("window.nativeBridge.resolve(" + mId + "," + stringify(value) + ")");
+    }
+
+    public void reject(String message) {
+      runJs("window.nativeBridge.reject(" + mId + "," + stringify(message) + ")");
+    }
+
+    private String stringify(Object raw) {
+      JSONArray array = new JSONArray();
+      array.put(raw);
+      String out = array.toString();
+      return out.substring(1, out.length() - 1);
     }
   }
 
