@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.11 (2022-03-18)
+
+- changed: Perform React Native disk accesses on their own threads.
+
 ## v0.19.10 (2022-03-02)
 
 - added: `EdgeCurrencyInfo.canReplaceByFee`.
