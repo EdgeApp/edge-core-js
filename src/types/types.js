@@ -103,7 +103,7 @@ export type EdgeLog = EdgeLogMethod & {
 export type EdgeLogType = 'info' | 'warn' | 'error'
 
 export type EdgeLogSettings = {
-  sources: { [pluginId: string]: EdgeLogType },
+  sources: { [pluginId: string]: EdgeLogType | 'silent' },
   defaultLogLevel: EdgeLogType | 'silent'
 }
 
