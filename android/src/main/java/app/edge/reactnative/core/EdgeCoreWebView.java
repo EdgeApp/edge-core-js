@@ -32,12 +32,13 @@ class EdgeCoreWebView extends WebView {
     visitPage();
   }
 
-  public void runJs(final String js) {
+  public void runJs(String js) {
+    final String clean = js.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029");
     post(
         new Runnable() {
           @Override
           public void run() {
-            evaluateJavascript(js.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"), null);
+            evaluateJavascript(clean, null);
           }
         });
   }
