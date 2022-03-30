@@ -35,6 +35,7 @@ class EdgeCoreWebView extends WebView {
   public void runJs(final String js) {
     post(
         new Runnable() {
+          @Override
           public void run() {
             evaluateJavascript(js.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"), null);
           }
@@ -71,8 +72,8 @@ class EdgeCoreWebView extends WebView {
 
   class JsMethods {
     @JavascriptInterface
-    public void call(int id, String name, String args) {
-      PendingCall promise = new PendingCall(id);
+    public void call(int id, final String name, final String args) {
+      final PendingCall promise = new PendingCall(id);
 
       mPool.execute(
           new Runnable() {
