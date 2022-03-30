@@ -32,5 +32,5 @@ Pod::Spec.new do |s|
     "edge-core-js" => "android/src/main/assets/edge-core-js/edge-core.js"
   }
 
-  s.dependency "React"
+  s.dependency "React-Core"
 end
