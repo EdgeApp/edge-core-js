@@ -71,16 +71,11 @@ export function makeYaobCallbacks<Root>(
           } window.reactBridge.handleMessage(${JSON.stringify(message)})}`
           firstMessage = false
 
-          if (webview.runJs == null) {
-            // Android version:
-            UIManager.dispatchViewManagerCommand(
-              findNodeHandle(webview),
-              'runJs',
-              [js]
-            )
-          } else {
-            webview.runJs(js)
-          }
+          UIManager.dispatchViewManagerCommand(
+            findNodeHandle(webview),
+            'runJs',
+            [js]
+          )
         }
       })
 
