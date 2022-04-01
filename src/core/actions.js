@@ -58,6 +58,23 @@ export type RootAction =
       }
     }
   | {
+      // Somebody just removed a custom token.
+      type: 'ACCOUNT_CUSTOM_TOKEN_REMOVED',
+      payload: {
+        accountId: string,
+        pluginId: string,
+        tokenId: string
+      }
+    }
+  | {
+      // We have just read the custom tokens from disk.
+      type: 'ACCOUNT_CUSTOM_TOKENS_LOADED',
+      payload: {
+        accountId: string,
+        customTokens: EdgePluginMap<EdgeTokenMap>
+      }
+    }
+  | {
       // The account fires this when it loads its keys from disk.
       type: 'ACCOUNT_KEYS_LOADED',
       payload: {

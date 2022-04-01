@@ -317,7 +317,7 @@ export type EdgeCurrencyInfo = {
 
   // Deprecated:
   defaultSettings: JsonObject, // The default user settings are `{}`
-  metaTokens: EdgeMetaToken[], // Use `EdgeCurrencyPlugins.getBuiltinTokens`
+  metaTokens: EdgeMetaToken[], // Use `EdgeCurrencyPlugin.getBuiltinTokens`
   symbolImage?: string, // The GUI handles this now
   symbolImageDarkMono?: string // The GUI handles this now
 }
@@ -558,9 +558,14 @@ export type EdgeCurrencyEngineCallbacks = {
 
 export type EdgeCurrencyEngineOptions = {
   callbacks: EdgeCurrencyEngineCallbacks,
-  log: EdgeLog, // Wallet-scoped logging
+
+  // Wallet-scoped IO objects:
+  log: EdgeLog,
   walletLocalDisklet: Disklet,
   walletLocalEncryptedDisklet: Disklet,
+
+  // User settings:
+  customTokens: EdgeTokenMap,
   userSettings: JsonObject | void
 }
 
@@ -587,11 +592,10 @@ export type EdgeCurrencyEngine = {
   +getTxids?: () => EdgeTxidMap,
 
   // Tokens:
+  +changeCustomTokens?: (tokens: EdgeTokenMap) => Promise<void>,
   +enableTokens: (tokens: string[]) => Promise<void>,
   +disableTokens: (tokens: string[]) => Promise<void>,
   +getEnabledTokens: () => Promise<string[]>,
-  +addCustomToken: (token: EdgeTokenInfo & EdgeToken) => Promise<void>,
-  +getTokenStatus: (token: string) => boolean,
 
   // Addresses:
   +getFreshAddress: (
@@ -615,7 +619,11 @@ export type EdgeCurrencyEngine = {
   +getStakingStatus?: () => Promise<EdgeStakingStatus>,
 
   // Escape hatch:
-  +otherMethods?: EdgeOtherMethods
+  +otherMethods?: EdgeOtherMethods,
+
+  // Deprecated:
+  +addCustomToken: (token: EdgeTokenInfo & EdgeToken) => Promise<void>,
+  +getTokenStatus: (token: string) => boolean
 }
 
 // currency plugin -----------------------------------------------------
@@ -638,6 +646,9 @@ export type EdgeCurrencyTools = {
   +getSplittableTypes?: (
     walletInfo: EdgeWalletInfo
   ) => string[] | Promise<string[]>,
+
+  // Derives a tokenId string from a token's network information:
+  +getTokenId?: (token: EdgeToken) => Promise<string>,
 
   // URIs:
   +parseUri: (
@@ -736,7 +747,6 @@ export type EdgeCurrencyWallet = {
   +enableTokens: (tokens: string[]) => Promise<void>,
   +disableTokens: (tokens: string[]) => Promise<void>,
   +getEnabledTokens: () => Promise<string[]>,
-  +addCustomToken: (token: EdgeTokenInfo) => Promise<void>,
 
   // Transaction history:
   +getNumTransactions: (opts?: EdgeCurrencyCodeOptions) => Promise<number>,
@@ -778,7 +788,10 @@ export type EdgeCurrencyWallet = {
   +parseUri: (uri: string, currencyCode?: string) => Promise<EdgeParsedUri>,
   +encodeUri: (obj: EdgeEncodeUri) => Promise<string>,
 
-  +otherMethods: EdgeOtherMethods
+  +otherMethods: EdgeOtherMethods,
+
+  // Deprecated:
+  +addCustomToken: (token: EdgeTokenInfo) => Promise<void>
 }
 
 // ---------------------------------------------------------------------
@@ -924,6 +937,9 @@ export type EdgeCurrencyConfig = {
   // Tokens:
   +builtinTokens: EdgeTokenMap,
   +customTokens: EdgeTokenMap,
+  +addCustomToken: (token: EdgeToken) => Promise<string>,
+  +changeCustomToken: (tokenId: string, token: EdgeToken) => Promise<void>,
+  +removeCustomToken: (tokenId: string) => Promise<void>,
 
   // User settings for this plugin:
   +userSettings: JsonObject | void,

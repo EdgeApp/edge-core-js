@@ -9,6 +9,7 @@ import {
   type EdgeCurrencyCodeOptions,
   type EdgeCurrencyEngine,
   type EdgeCurrencyInfo,
+  type EdgeCurrencyTools,
   type EdgeCurrencyWallet,
   type EdgeDataDump,
   type EdgeEncodeUri,
@@ -32,8 +33,7 @@ import {
   makeMetaTokens,
   upgradeTokenInfo
 } from '../../account/custom-tokens.js'
-import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
-import { type ApiInput } from '../../root-pixie.js'
+import { toApiInput } from '../../root-pixie.js'
 import { makeStorageWalletApi } from '../../storage/storage-api.js'
 import { getCurrencyMultiplier } from '../currency-selectors.js'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks.js'
@@ -71,9 +71,10 @@ type SavedSpendTargets = $ElementType<EdgeTransaction, 'spendTargets'> & any[]
 export function makeCurrencyWalletApi(
   input: CurrencyWalletInput,
   engine: EdgeCurrencyEngine,
+  tools: EdgeCurrencyTools,
   publicWalletInfo: EdgeWalletInfo
 ): EdgeCurrencyWallet {
-  const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+  const ai = toApiInput(input)
   const { accountId, pluginId, walletInfo } = input.props.walletState
   const plugin = input.props.state.plugins.currency[pluginId]
 
@@ -141,7 +142,6 @@ export function makeCurrencyWalletApi(
       return plugin.currencyInfo
     },
     async validateMemo(memo: string): Promise<EdgeMemoRules> {
-      const tools = await getCurrencyTools(ai, pluginId)
       if (tools.validateMemo == null) return { passed: true }
       return await tools.validateMemo(memo)
     },
@@ -226,11 +226,19 @@ export function makeCurrencyWalletApi(
     async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<void> {
       const token = upgradeTokenInfo(tokenInfo)
       const tokenId = contractToTokenId(tokenInfo.contractAddress)
+
+      // Ask the plugin to validate this:
+      if (tools.getTokenId != null) {
+        await tools.getTokenId(token)
+      } else {
+        // This is not ideal, since the pixie will add it too:
+        await engine.addCustomToken({ ...token, ...tokenInfo })
+      }
+
       ai.props.dispatch({
         type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
         payload: { accountId, pluginId, tokenId, token }
       })
-      await engine.addCustomToken({ ...token, ...tokenInfo })
     },
 
     // Transactions:
@@ -535,7 +543,6 @@ export function makeCurrencyWalletApi(
     },
 
     async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
-      const tools = await getCurrencyTools(ai, pluginId)
       return tools.parseUri(
         uri,
         currencyCode,
@@ -546,7 +553,6 @@ export function makeCurrencyWalletApi(
     },
 
     async encodeUri(options: EdgeEncodeUri): Promise<string> {
-      const tools = await getCurrencyTools(ai, pluginId)
       return tools.encodeUri(
         options,
         makeMetaTokens(

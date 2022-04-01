@@ -14,13 +14,16 @@ import {
   type EdgeCurrencyEngine,
   type EdgeCurrencyTools,
   type EdgeCurrencyWallet,
-  type EdgeWalletInfo
+  type EdgeTokenMap,
+  type EdgeWalletInfo,
+  type JsonObject
 } from '../../../types/types.js'
 import { makeJsonFile } from '../../../util/file-helpers.js'
 import { makePeriodicTask } from '../../../util/periodic-task.js'
+import { makeTokenInfo } from '../../account/custom-tokens.js'
 import { makeLog } from '../../log/log.js'
 import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
-import { type ApiInput, type RootProps } from '../../root-pixie.js'
+import { type RootProps, toApiInput } from '../../root-pixie.js'
 import {
   addStorageWallet,
   syncStorageWallet
@@ -63,7 +66,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
     try {
       // Start the data sync:
-      const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
+      const ai = toApiInput(input)
       await addStorageWallet(ai, walletInfo)
 
       // Grab the freshly-synced repos:
@@ -95,15 +98,21 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       })
 
       // Start the engine:
+      const accountState = state.accounts[accountId]
       const engine = await plugin.makeCurrencyEngine(mergedWalletInfo, {
         callbacks: makeCurrencyWalletCallbacks(input),
+
+        // Wallet-scoped IO objects:
         log: makeLog(
           input.props.logBackend,
           `${plugin.currencyInfo.currencyCode}-${walletInfo.id.slice(0, 2)}`
         ),
         walletLocalDisklet,
         walletLocalEncryptedDisklet,
-        userSettings: state.accounts[accountId].userSettings[pluginId]
+
+        // User settings:
+        customTokens: accountState.customTokens[pluginId] ?? {},
+        userSettings: accountState.userSettings[pluginId] ?? {}
       })
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
@@ -153,16 +162,18 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   },
 
   // Creates the API object:
-  walletApi: (input: CurrencyWalletInput) => () => {
+  walletApi: (input: CurrencyWalletInput) => async () => {
     const { walletOutput, walletState } = input.props
     if (walletOutput == null) return
     const { engine } = walletOutput
-    const { nameLoaded, publicWalletInfo } = walletState
+    const { nameLoaded, pluginId, publicWalletInfo } = walletState
     if (engine == null || publicWalletInfo == null || !nameLoaded) return
+    const tools = await getCurrencyTools(toApiInput(input), pluginId)
 
     const currencyWalletApi = makeCurrencyWalletApi(
       input,
       engine,
+      tools,
       publicWalletInfo
     )
     input.onOutput(currencyWalletApi)
@@ -233,9 +244,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   syncTimer: filterPixie(
     (input: CurrencyWalletInput) => {
       async function doSync(): Promise<void> {
-        const ai: ApiInput = (input: any) // Safe, since input extends ApiInput
         const { walletId } = input.props
-        await syncStorageWallet(ai, walletId)
+        await syncStorageWallet(toApiInput(input), walletId)
       }
 
       // We don't report sync failures, since that could be annoying:
@@ -266,26 +276,45 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
   watcher(input: CurrencyWalletInput) {
     let lastState
-    let lastSettings
+    let lastSettings: JsonObject = {}
+    let lastTokens: EdgeTokenMap = {}
 
     return () => {
       const { state, walletState, walletOutput } = input.props
       if (walletState == null || walletOutput == null) return
       const { engine, walletApi } = walletOutput
       const { accountId, pluginId } = walletState
+      const accountState = state.accounts[accountId]
 
       // Update API object:
-      if (lastState !== walletState) {
-        lastState = walletState
-        if (walletApi != null) update(walletApi)
+      if (lastState !== walletState && walletApi != null) {
+        update(walletApi)
       }
+      lastState = walletState
 
       // Update engine settings:
-      const userSettings = state.accounts[accountId].userSettings[pluginId]
-      if (lastSettings !== userSettings) {
-        lastSettings = userSettings
-        if (engine != null) engine.changeUserSettings(userSettings ?? {})
+      const userSettings = accountState.userSettings[pluginId] ?? lastSettings
+      if (lastSettings !== userSettings && engine != null) {
+        engine.changeUserSettings(userSettings)
       }
+      lastSettings = userSettings
+
+      // Update the custom tokens:
+      const customTokens = accountState.customTokens[pluginId] ?? lastTokens
+      if (lastTokens !== customTokens && engine != null) {
+        if (engine.changeCustomTokens != null) {
+          engine.changeCustomTokens(customTokens)
+        } else {
+          for (const tokenId of Object.keys(customTokens)) {
+            const token = customTokens[tokenId]
+            if (token === lastTokens[tokenId]) continue
+            const tokenInfo = makeTokenInfo(token)
+            if (tokenInfo == null) continue
+            engine.addCustomToken({ ...tokenInfo, ...token })
+          }
+        }
+      }
+      lastTokens = customTokens
     }
   }
 })

@@ -3,12 +3,26 @@
 import { asMaybe, asObject, asString } from 'cleaners'
 
 import {
+  type EdgeCurrencyEngine,
   type EdgeMetaToken,
+  type EdgePluginMap,
   type EdgeToken,
   type EdgeTokenInfo,
   type EdgeTokenMap
 } from '../../types/types.js'
+import { makeJsonFile } from '../../util/file-helpers.js'
+import {
+  getCurrencyTools,
+  maybeFindCurrencyPluginId
+} from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
+import { getStorageWalletDisklet } from '../storage/storage-selectors.js'
+import { asCustomTokensFile, asGuiSettingsFile } from './account-cleaners.js'
+
+const customTokensFile = makeJsonFile(asCustomTokensFile)
+const guiSettingsFile = makeJsonFile(asGuiSettingsFile)
+const CUSTOM_TOKENS_FILE = 'CustomTokens.json'
+const GUI_SETTINGS_FILE = 'Settings.json'
 
 /**
  * The `networkLocation` field is untyped,
@@ -19,6 +33,45 @@ const asMaybeContractLocation = asMaybe(
     contractAddress: asString
   })
 )
+
+/**
+ * We need to validate the token before we can add it.
+ *
+ * If the plugin has a `getTokenId` method, just use that.
+ *
+ * Otherwise, we need to call `EdgeCurrencyEngine.addCustomToken`
+ * to validate the contract address, and then guess the tokenId from that.
+ */
+export async function getTokenId(
+  ai: ApiInput,
+  pluginId: string,
+  token: EdgeToken
+): Promise<string> {
+  // The normal code path:
+  const tools = await getCurrencyTools(ai, pluginId)
+  if (tools.getTokenId != null) {
+    return await tools.getTokenId(token)
+  }
+
+  // Find an engine (any engine) to validate our token:
+  const engine = findEngine(ai, pluginId)
+  if (engine == null) {
+    throw new Error(
+      'A wallet must exist before adding tokens to a legacy currency plugin'
+    )
+  }
+
+  // Validate the token:
+  const tokenInfo = makeTokenInfo(token)
+  if (tokenInfo == null) {
+    throw new Error(
+      'A token must have a contract address to be added to a legacy currency plugin'
+    )
+  }
+  engine.addCustomToken({ ...tokenInfo, ...token })
+
+  return contractToTokenId(tokenInfo.contractAddress)
+}
 
 export function contractToTokenId(contractAddress: string): string {
   return contractAddress.toLowerCase().replace(/^0x/, '')
@@ -70,6 +123,19 @@ export function makeMetaTokens(tokens: EdgeTokenMap = {}): EdgeMetaToken[] {
   return out
 }
 
+export function makeTokenInfo(token: EdgeToken): EdgeTokenInfo | void {
+  const { currencyCode, displayName, denominations, networkLocation } = token
+  const cleanLocation = asMaybeContractLocation(networkLocation)
+  if (cleanLocation == null) return
+
+  return {
+    currencyCode,
+    currencyName: displayName,
+    multiplier: denominations[0].multiplier,
+    contractAddress: cleanLocation.contractAddress
+  }
+}
+
 export async function loadBuiltinTokens(
   ai: ApiInput,
   accountId: string
@@ -90,4 +156,88 @@ export async function loadBuiltinTokens(
       })
     })
   )
+}
+
+function findEngine(ai: ApiInput, pluginId: string): EdgeCurrencyEngine | void {
+  for (const walletId of Object.keys(ai.props.state.currency.wallets)) {
+    const walletOutput = ai.props.output.currency.wallets[walletId]
+    if (
+      walletOutput != null &&
+      walletOutput.engine != null &&
+      ai.props.state.currency.wallets[walletId].pluginId === pluginId
+    ) {
+      return walletOutput.engine
+    }
+  }
+}
+
+async function loadGuiTokens(
+  ai: ApiInput,
+  accountId: string
+): EdgePluginMap<EdgeTokenMap> {
+  const { state } = ai.props
+  const { accountWalletInfo } = state.accounts[accountId]
+  const disklet = getStorageWalletDisklet(state, accountWalletInfo.id)
+
+  const file = await guiSettingsFile.load(disklet, GUI_SETTINGS_FILE)
+  if (file == null) return {}
+
+  const out: EdgePluginMap<EdgeTokenMap> = {}
+  for (const guiToken of file.customTokens) {
+    if (!guiToken.isVisible) continue
+
+    // Find the plugin:
+    const pluginId = maybeFindCurrencyPluginId(
+      state.plugins.currency,
+      guiToken.walletType
+    )
+    if (pluginId == null) continue
+    if (out[pluginId] == null) out[pluginId] = {}
+
+    // Add it to the list:
+    const tokenId = contractToTokenId(guiToken.contractAddress)
+    out[pluginId][tokenId] = {
+      currencyCode: guiToken.currencyCode,
+      denominations: guiToken.denominations,
+      displayName: guiToken.currencyName,
+      networkLocation: {
+        contractAddress: guiToken.contractAddress
+      }
+    }
+  }
+  return out
+}
+
+export async function loadCustomTokens(
+  ai: ApiInput,
+  accountId: string
+): Promise<EdgePluginMap<EdgeTokenMap>> {
+  const { dispatch, state } = ai.props
+  const { accountWalletInfo } = state.accounts[accountId]
+  const disklet = getStorageWalletDisklet(state, accountWalletInfo.id)
+
+  // Load the file:
+  const file = await customTokensFile.load(disklet, CUSTOM_TOKENS_FILE)
+  if (file == null) return loadGuiTokens(ai, accountId)
+  const { customTokens } = file
+
+  dispatch({
+    type: 'ACCOUNT_CUSTOM_TOKENS_LOADED',
+    payload: { accountId, customTokens }
+  })
+  return customTokens
+}
+
+export async function saveCustomTokens(
+  ai: ApiInput,
+  accountId: string
+): Promise<void> {
+  const { state } = ai.props
+  const { accountWalletInfo } = state.accounts[accountId]
+  const disklet = getStorageWalletDisklet(state, accountWalletInfo.id)
+  const { customTokens } = ai.props.state.accounts[accountId]
+
+  // Refresh the file:
+  const file = await customTokensFile.load(disklet, CUSTOM_TOKENS_FILE)
+  customTokensFile.save(disklet, CUSTOM_TOKENS_FILE, { ...file, customTokens })
 }
