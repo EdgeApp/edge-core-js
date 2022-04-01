@@ -341,7 +341,7 @@ async function loadAddressFiles(input: CurrencyWalletInput): Promise<void> {
   )
 
   // Load these addresses into the engine:
-  const engine = input.props.walletOutput.engine
+  const engine = input.props.walletOutput?.engine
   if (engine != null) await engine.addGapLimitAddresses(out)
 }
 

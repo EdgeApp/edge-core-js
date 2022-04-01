@@ -32,11 +32,13 @@ class EdgeCoreWebView extends WebView {
     visitPage();
   }
 
-  public void runJs(final String js) {
+  public void runJs(String js) {
+    final String clean = js.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029");
     post(
         new Runnable() {
+          @Override
           public void run() {
-            evaluateJavascript(js.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"), null);
+            evaluateJavascript(clean, null);
           }
         });
   }
@@ -71,8 +73,8 @@ class EdgeCoreWebView extends WebView {
 
   class JsMethods {
     @JavascriptInterface
-    public void call(int id, String name, String args) {
-      PendingCall promise = new PendingCall(id);
+    public void call(int id, final String name, final String args) {
+      final PendingCall promise = new PendingCall(id);
 
       mPool.execute(
           new Runnable() {

@@ -51,7 +51,4 @@ declare export class EdgeCoreWebView
       style?: any,
       onMessage?: (event: EdgeCoreMessageEvent) => void,
       onScriptError?: (event: EdgeCoreScriptError) => void
-    |}> {
-  // This does not exist on Android, which uses a different mechanism:
-  runJs?: (js: string) => void;
-}
+    |}> {}
