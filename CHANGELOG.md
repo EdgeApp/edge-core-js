@@ -1,5 +1,13 @@
 # edge-core-js
 
+## v0.19.12 (2022-04-01)
+
+- fixed: Avoid an internal crash on logout while reloading addresses.
+- fixed: Make our code compatible with older Java versions again.
+- fixed: Use the correct React dependency in the iOS podspec.
+- changed: Allow individual log sources to be set to `silent`.
+- changed: Move some string manipulations off of the main Java thread.
+
 ## v0.19.11 (2022-03-18)
 
 - changed: Perform React Native disk accesses on their own threads.
