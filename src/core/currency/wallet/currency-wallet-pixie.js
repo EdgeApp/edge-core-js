@@ -279,7 +279,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     let lastSettings: JsonObject = {}
     let lastTokens: EdgeTokenMap = {}
 
-    return () => {
+    return async () => {
       const { state, walletState, walletOutput } = input.props
       if (walletState == null || walletOutput == null) return
       const { engine, walletApi } = walletOutput
@@ -310,7 +310,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             if (token === lastTokens[tokenId]) continue
             const tokenInfo = makeTokenInfo(token)
             if (tokenInfo == null) continue
-            engine.addCustomToken({ ...tokenInfo, ...token })
+            await engine
+              .addCustomToken({ ...tokenInfo, ...token })
+              .catch(e => input.props.onError(e))
           }
         }
       }
