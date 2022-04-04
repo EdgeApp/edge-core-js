@@ -234,6 +234,32 @@ describe('currency wallets', function () {
     })
   })
 
+  it('enables tokens', async function () {
+    const log = makeAssertLog()
+    const { wallet } = await makeFakeCurrencyWallet()
+    const tokenId =
+      'f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd'
+
+    wallet.watch('enabledTokenIds', ids => log(ids.join(', ')))
+    expect(wallet.enabledTokenIds).deep.equals([])
+
+    // New API:
+    await wallet.changeEnabledTokenIds([tokenId])
+    expect(wallet.enabledTokenIds).deep.equals([tokenId])
+    log.assert(tokenId)
+
+    // Legacy API:
+    await wallet.enableTokens(['OOPS', 'MISSING'])
+    expect(await wallet.getEnabledTokens()).deep.equals([
+      'MISSING',
+      'OOPS',
+      'TOKEN'
+    ])
+
+    // The last update hand missing ID's, but an update still occurs:
+    log.assert(tokenId)
+  })
+
   it('search transactions', async function () {
     const { wallet, config } = await makeFakeCurrencyWallet()
     await config.changeUserSettings({

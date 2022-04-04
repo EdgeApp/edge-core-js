@@ -238,6 +238,13 @@ export type RootAction =
       }
     }
   | {
+      type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+      payload: {
+        currencyCodes: string[],
+        walletId: string
+      }
+    }
+  | {
       // Called when a currency wallet receives a new name.
       type: 'CURRENCY_WALLET_FIAT_CHANGED',
       payload: {

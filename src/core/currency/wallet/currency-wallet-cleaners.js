@@ -114,6 +114,10 @@ type LegacyMapFile = {
   [fileName: string]: { timestamp: number, txidHash: string }
 }
 
+// ---------------------------------------------------------------------
+// building-block cleaners
+// ---------------------------------------------------------------------
+
 /**
  * Turns user-provided metadata into its on-disk format.
  */
@@ -183,6 +187,18 @@ const asDiskMetadata: Cleaner<DiskMetadata> = asObject({
   name: asOptional(asString),
   notes: asOptional(asString)
 })
+
+// ---------------------------------------------------------------------
+// file cleaners
+// ---------------------------------------------------------------------
+
+/**
+ * This uses currency codes, since we cannot break the data on disk.
+ * To fix this one day, we can either migrate to a new file name,
+ * or we can use `asEither` to switch between this format
+ * and some new format based on token ID's.
+ */
+export const asEnabledTokensFile: Cleaner<string[]> = asArray(asString)
 
 export const asTransactionFile: Cleaner<TransactionFile> = asObject({
   txid: asString,

@@ -45,6 +45,7 @@ import {
 } from './currency-wallet-cleaners.js'
 import { dateFilter, searchStringFilter } from './currency-wallet-export.js'
 import {
+  changeEnabledTokens,
   loadTxFiles,
   renameCurrencyWallet,
   setCurrencyWalletFiat,
@@ -53,6 +54,7 @@ import {
 } from './currency-wallet-files.js'
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
 import { type MergedTransaction } from './currency-wallet-reducer.js'
+import { tokenIdsToCurrencyCodes } from './enabled-tokens.js'
 
 const fakeMetadata = {
   bizId: 0,
@@ -201,26 +203,48 @@ export function makeCurrencyWalletApi(
     },
 
     // Tokens:
+    get enabledTokenIds(): string[] {
+      return input.props.walletState.enabledTokenIds
+    },
+
+    async changeEnabledTokenIds(tokenIds: string[]): Promise<void> {
+      const { currencyInfo } = input.props.walletState
+      const accountState = input.props.state.accounts[accountId]
+      const { builtinTokens, customTokens } = accountState
+      const currencyCodes = tokenIdsToCurrencyCodes(
+        builtinTokens[pluginId],
+        customTokens[pluginId],
+        currencyInfo,
+        tokenIds
+      )
+      await changeEnabledTokens(input, currencyCodes)
+    },
+
+    // Deprecated tokens:
     async changeEnabledTokens(currencyCodes: string[]): Promise<void> {
-      const enabled = await engine.getEnabledTokens()
-      await engine.disableTokens(
-        enabled.filter(currencyCode => currencyCodes.indexOf(currencyCode) < 0)
-      )
-      await engine.enableTokens(
-        currencyCodes.filter(currencyCode => enabled.indexOf(currencyCode) < 0)
-      )
+      await changeEnabledTokens(input, currencyCodes)
     },
 
-    async enableTokens(tokens: string[]): Promise<void> {
-      await engine.enableTokens(tokens)
+    async enableTokens(currencyCodes: string[]): Promise<void> {
+      await changeEnabledTokens(input, [
+        ...input.props.walletState.enabledTokens.filter(
+          code => currencyCodes.indexOf(code) < 0
+        ),
+        ...currencyCodes
+      ])
     },
 
-    async disableTokens(tokens: string[]): Promise<void> {
-      await engine.disableTokens(tokens)
+    async disableTokens(currencyCodes: string[]): Promise<void> {
+      await changeEnabledTokens(
+        input,
+        input.props.walletState.enabledTokens.filter(
+          code => currencyCodes.indexOf(code) < 0
+        )
+      )
     },
 
     async getEnabledTokens(): Promise<string[]> {
-      return engine.getEnabledTokens()
+      return input.props.walletState.enabledTokens
     },
 
     async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<void> {
