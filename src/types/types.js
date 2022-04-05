@@ -724,6 +724,7 @@ export type EdgeCurrencyWallet = {
   +setFiatCurrencyCode: (fiatCurrencyCode: string) => Promise<void>,
 
   // Currency info:
+  +currencyConfig: EdgeCurrencyConfig, // eslint-disable-line no-use-before-define
   +currencyInfo: EdgeCurrencyInfo,
   +validateMemo: (memo: string) => Promise<EdgeMemoRules>,
   +nativeToDenomination: (

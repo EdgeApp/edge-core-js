@@ -7,6 +7,7 @@ import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 import {
   type EdgeBalances,
   type EdgeCurrencyCodeOptions,
+  type EdgeCurrencyConfig,
   type EdgeCurrencyEngine,
   type EdgeCurrencyInfo,
   type EdgeCurrencyTools,
@@ -140,6 +141,10 @@ export function makeCurrencyWalletApi(
     },
 
     // Currency info:
+    get currencyConfig(): EdgeCurrencyConfig {
+      const { accountApi } = input.props.output.accounts[accountId]
+      return accountApi.currencyConfig[pluginId]
+    },
     get currencyInfo(): EdgeCurrencyInfo {
       return plugin.currencyInfo
     },
