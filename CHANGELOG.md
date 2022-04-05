@@ -1,5 +1,30 @@
 # edge-core-js
 
+## v0.19.13 (2022-04-05)
+
+- added: `EdgeCurrencyWallet.currencyConfig`.
+- changed: Save custom tokens to disk.
+  - added: `EdgeCurrencyConfig.addCustomToken`.
+  - added: `EdgeCurrencyConfig.changeCustomToken`.
+  - added: `EdgeCurrencyConfig.removeCustomToken`.
+  - deprecated: `EdgeCurrencyWallet.addCustomToken`.
+- changed: Save enabled tokens to disk.
+  - added: `EdgeCurrencyWallet.changeEnabledTokenIds`
+  - added: `EdgeCurrencyWallet.enabledTokenIds`
+  - deprecated: `EdgeCurrencyWallet.changeEnabledTokens`
+  - deprecated: `EdgeCurrencyWallet.disableTokens`
+  - deprecated: `EdgeCurrencyWallet.enableTokens`
+  - deprecated: `EdgeCurrencyWallet.getEnabledTokens`
+- changed: Update the token API for currency plugins. Plugins should implement the new methods, then turn the old methods to no-ops.
+  - added: Optional `EdgeCurrencyEngine.changeCustomTokens`
+  - added: Optional `EdgeCurrencyEngine.changeEnabledTokenIds`
+  - added: Optional `EdgeCurrencyTools.getTokenId`
+  - deprecated: `EdgeCurrencyEngine.addCustomToken`
+  - deprecated: `EdgeCurrencyEngine.disableTokens`
+  - deprecated: `EdgeCurrencyEngine.enableTokens`
+  - deprecated: `EdgeCurrencyEngine.getEnabledTokens`
+  - deprecated: `EdgeCurrencyEngine.getTokenStatus`
+
 ## v0.19.12 (2022-04-01)
 
 - fixed: Avoid an internal crash on logout while reloading addresses.
