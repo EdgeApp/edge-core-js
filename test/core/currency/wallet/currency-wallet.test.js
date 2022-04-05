@@ -76,6 +76,11 @@ describe('currency wallets', function () {
     })
   })
 
+  it('has the right currencyConfig object', async function () {
+    const { account, wallet } = await makeFakeCurrencyWallet()
+    expect(account.currencyConfig.fakecoin).equals(wallet.currencyConfig)
+  })
+
   it('triggers callbacks', async function () {
     const log = makeAssertLog()
     const { wallet, config } = await makeFakeCurrencyWallet()
@@ -190,9 +195,8 @@ describe('currency wallets', function () {
   })
 
   it('exposes builtin tokens', async function () {
-    const { account } = await makeFakeCurrencyWallet()
+    const { config } = await makeFakeCurrencyWallet()
 
-    const config = account.currencyConfig.fakecoin
     expect(config.builtinTokens).deep.equals({
       f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd: {
         currencyCode: 'TOKEN',
@@ -208,8 +212,7 @@ describe('currency wallets', function () {
 
   it('exposes custom tokens', async function () {
     const log = makeAssertLog()
-    const { account, wallet } = await makeFakeCurrencyWallet()
-    const config = account.currencyConfig.fakecoin
+    const { config, wallet } = await makeFakeCurrencyWallet()
 
     config.watch('customTokens', () => log('customTokens changed'))
     await wallet.addCustomToken({
