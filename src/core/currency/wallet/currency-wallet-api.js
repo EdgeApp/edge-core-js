@@ -55,7 +55,7 @@ import {
 } from './currency-wallet-files.js'
 import { type CurrencyWalletInput } from './currency-wallet-pixie.js'
 import { type MergedTransaction } from './currency-wallet-reducer.js'
-import { tokenIdsToCurrencyCodes } from './enabled-tokens.js'
+import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens.js'
 
 const fakeMetadata = {
   bizId: 0,
@@ -231,20 +231,19 @@ export function makeCurrencyWalletApi(
     },
 
     async enableTokens(currencyCodes: string[]): Promise<void> {
-      await changeEnabledTokens(input, [
-        ...input.props.walletState.enabledTokens.filter(
-          code => currencyCodes.indexOf(code) < 0
-        ),
-        ...currencyCodes
-      ])
+      await changeEnabledTokens(
+        input,
+        uniqueStrings([
+          ...input.props.walletState.enabledTokens,
+          ...currencyCodes
+        ])
+      )
     },
 
     async disableTokens(currencyCodes: string[]): Promise<void> {
       await changeEnabledTokens(
         input,
-        input.props.walletState.enabledTokens.filter(
-          code => currencyCodes.indexOf(code) < 0
-        )
+        uniqueStrings(input.props.walletState.enabledTokens, currencyCodes)
       )
     },
 

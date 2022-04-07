@@ -46,3 +46,20 @@ export function tokenIdsToCurrencyCodes(
   }
   return out
 }
+
+/**
+ * Returns the unique items of an array,
+ * optionally removing the items in `omit`.
+ */
+export function uniqueStrings(array: string[], omit: string[] = []): string[] {
+  const table: { [key: string]: true } = {}
+  for (const item of omit) table[item] = true
+
+  const out: string[] = []
+  for (const item of array) {
+    if (table[item]) continue
+    table[item] = true
+    out.push(item)
+  }
+  return out
+}

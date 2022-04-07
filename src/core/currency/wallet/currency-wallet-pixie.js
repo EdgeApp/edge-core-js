@@ -40,6 +40,7 @@ import {
 import { asPublicKeyFile } from './currency-wallet-cleaners.js'
 import { loadAllFiles } from './currency-wallet-files.js'
 import { type CurrencyWalletState } from './currency-wallet-reducer.js'
+import { uniqueStrings } from './enabled-tokens.js'
 
 export type CurrencyWalletOutput = {
   +walletApi: EdgeCurrencyWallet | void,
@@ -330,14 +331,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             .catch(e => input.props.onError(e))
         } else {
           await engine
-            .disableTokens(
-              lastEnabledTokens.filter(code => enabledTokens.indexOf(code) < 0)
-            )
+            .disableTokens(uniqueStrings(lastEnabledTokens, enabledTokens))
             .catch(e => input.props.onError(e))
           await engine
-            .enableTokens(
-              enabledTokens.filter(code => lastEnabledTokens.indexOf(code) < 0)
-            )
+            .enableTokens(uniqueStrings(enabledTokens, lastEnabledTokens))
             .catch(e => input.props.onError(e))
         }
       }
