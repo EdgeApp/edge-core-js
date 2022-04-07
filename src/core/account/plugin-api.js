@@ -20,6 +20,8 @@ import {
 } from './account-files.js'
 import { getTokenId } from './custom-tokens.js'
 
+const emptyTokens: EdgeTokenMap = {}
+
 /**
  * Access to an individual currency plugin's methods.
  */
@@ -58,7 +60,7 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
   get customTokens(): EdgeTokenMap {
     const { state } = this._ai.props
     const { _accountId: accountId, _pluginId: pluginId } = this
-    return state.accounts[accountId].customTokens[pluginId]
+    return state.accounts[accountId].customTokens[pluginId] ?? emptyTokens
   }
 
   async addCustomToken(token: EdgeToken): Promise<string> {
