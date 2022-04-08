@@ -12,6 +12,7 @@ import {
   type EdgeTokenMap,
   type JsonObject
 } from '../../types/types.js'
+import { uniqueStrings } from '../currency/wallet/enabled-tokens.js'
 import { getCurrencyTools } from '../plugins/plugins-selectors.js'
 import { type ApiInput } from '../root-pixie.js'
 import {
@@ -76,17 +77,46 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
 
   async changeCustomToken(tokenId: string, token: EdgeToken): Promise<void> {
     const { _accountId: accountId, _ai: ai, _pluginId: pluginId } = this
-    const newTokenId = await getTokenId(ai, pluginId, token)
-    if (newTokenId !== tokenId) {
-      throw new Error(
-        `The tokenId would change from ${tokenId} to ${newTokenId}`
-      )
+    const oldToken =
+      ai.props.state.accounts[accountId].customTokens[pluginId][tokenId]
+    if (oldToken == null) {
+      throw new Error(`There is no token with id "${tokenId}"`)
     }
-
+    const newTokenId = await getTokenId(ai, pluginId, token)
     ai.props.dispatch({
       type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
-      payload: { accountId, pluginId, tokenId, token }
+      payload: { accountId, pluginId, tokenId: newTokenId, token }
     })
+
+    // Do we need to tweak enabled tokens?
+    if (oldToken.currencyCode !== token.currencyCode) {
+      const { wallets } = ai.props.state.currency
+      for (const walletId of Object.keys(wallets)) {
+        const walletState = wallets[walletId]
+        if (walletState.accountId !== accountId) continue
+
+        // We rely on redux to check for actual differences,
+        // and to trigger the matching disk & engine updates if needed:
+        ai.props.dispatch({
+          type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+          payload: {
+            walletId,
+            currencyCodes: uniqueStrings(
+              [...walletState.enabledTokens, token.currencyCode],
+              [oldToken.currencyCode]
+            )
+          }
+        })
+      }
+    }
+
+    // Remove the old token if the tokenId changed:
+    if (newTokenId !== tokenId) {
+      ai.props.dispatch({
+        type: 'ACCOUNT_CUSTOM_TOKEN_REMOVED',
+        payload: { accountId, pluginId, tokenId }
+      })
+    }
   }
 
   async removeCustomToken(tokenId: string): Promise<void> {
