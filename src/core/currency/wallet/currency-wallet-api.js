@@ -46,7 +46,6 @@ import {
 } from './currency-wallet-cleaners.js'
 import { dateFilter, searchStringFilter } from './currency-wallet-export.js'
 import {
-  changeEnabledTokens,
   loadTxFiles,
   renameCurrencyWallet,
   setCurrencyWalletFiat,
@@ -213,38 +212,61 @@ export function makeCurrencyWalletApi(
     },
 
     async changeEnabledTokenIds(tokenIds: string[]): Promise<void> {
-      const { currencyInfo } = input.props.walletState
-      const accountState = input.props.state.accounts[accountId]
-      const { builtinTokens, customTokens } = accountState
-      const currencyCodes = tokenIdsToCurrencyCodes(
-        builtinTokens[pluginId],
-        customTokens[pluginId],
-        currencyInfo,
-        tokenIds
-      )
-      await changeEnabledTokens(input, currencyCodes)
+      const { dispatch, state, walletId, walletState } = input.props
+      const { builtinTokens, customTokens } = state.accounts[accountId]
+      const { currencyInfo } = walletState
+
+      dispatch({
+        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+        payload: {
+          walletId,
+          currencyCodes: uniqueStrings(
+            tokenIdsToCurrencyCodes(
+              builtinTokens[pluginId],
+              customTokens[pluginId],
+              currencyInfo,
+              tokenIds
+            )
+          )
+        }
+      })
     },
 
     // Deprecated tokens:
     async changeEnabledTokens(currencyCodes: string[]): Promise<void> {
-      await changeEnabledTokens(input, currencyCodes)
+      const { dispatch, walletId } = input.props
+
+      dispatch({
+        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+        payload: { walletId, currencyCodes: uniqueStrings(currencyCodes) }
+      })
     },
 
     async enableTokens(currencyCodes: string[]): Promise<void> {
-      await changeEnabledTokens(
-        input,
-        uniqueStrings([
-          ...input.props.walletState.enabledTokens,
-          ...currencyCodes
-        ])
-      )
+      const { dispatch, walletId, walletState } = input.props
+
+      dispatch({
+        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+        payload: {
+          walletId,
+          currencyCodes: uniqueStrings([
+            ...walletState.enabledTokens,
+            ...currencyCodes
+          ])
+        }
+      })
     },
 
     async disableTokens(currencyCodes: string[]): Promise<void> {
-      await changeEnabledTokens(
-        input,
-        uniqueStrings(input.props.walletState.enabledTokens, currencyCodes)
-      )
+      const { dispatch, walletId, walletState } = input.props
+
+      dispatch({
+        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+        payload: {
+          walletId,
+          currencyCodes: uniqueStrings(walletState.enabledTokens, currencyCodes)
+        }
+      })
     },
 
     async getEnabledTokens(): Promise<string[]> {

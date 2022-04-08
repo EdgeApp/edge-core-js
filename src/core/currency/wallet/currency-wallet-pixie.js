@@ -20,6 +20,7 @@ import {
 } from '../../../types/types.js'
 import { makeJsonFile } from '../../../util/file-helpers.js'
 import { makePeriodicTask } from '../../../util/periodic-task.js'
+import { snooze } from '../../../util/snooze.js'
 import { makeTokenInfo } from '../../account/custom-tokens.js'
 import { makeLog } from '../../log/log.js'
 import { getCurrencyTools } from '../../plugins/plugins-selectors.js'
@@ -38,8 +39,11 @@ import {
   watchCurrencyWallet
 } from './currency-wallet-callbacks.js'
 import { asPublicKeyFile } from './currency-wallet-cleaners.js'
-import { loadAllFiles } from './currency-wallet-files.js'
-import { type CurrencyWalletState } from './currency-wallet-reducer.js'
+import { changeEnabledTokens, loadAllFiles } from './currency-wallet-files.js'
+import {
+  type CurrencyWalletState,
+  initialEnabledTokens
+} from './currency-wallet-reducer.js'
 import { uniqueStrings } from './enabled-tokens.js'
 
 export type CurrencyWalletOutput = {
@@ -277,11 +281,33 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       props.state.paused || props.walletState.paused ? undefined : props
   ),
 
+  /**
+   * Watches for changes to the token state, and writes those to disk.
+   *
+   * The pixie system ensures that multiple `update` calls will not occur
+   * at once. This way, if the GUI makes dozens of quick token changes,
+   * we will consolidate those down to a single write to disk.
+   */
+  tokenSaver(input: CurrencyWalletInput) {
+    let lastEnabledTokens: string[] = initialEnabledTokens
+
+    return async function update() {
+      const { enabledTokens } = input.props.walletState
+      if (enabledTokens !== lastEnabledTokens && enabledTokens != null) {
+        await changeEnabledTokens(input, enabledTokens).catch(error =>
+          input.props.onError(error)
+        )
+        await snooze(100) // Rate limiting
+      }
+      lastEnabledTokens = enabledTokens
+    }
+  },
+
   watcher(input: CurrencyWalletInput) {
     let lastState
     let lastSettings: JsonObject = {}
     let lastTokens: EdgeTokenMap = {}
-    let lastEnabledTokens: string[] = []
+    let lastEnabledTokens: string[] = initialEnabledTokens
 
     return async () => {
       const { state, walletState, walletOutput } = input.props

@@ -92,6 +92,8 @@ export type CurrencyWalletNext = {
   +self: CurrencyWalletState
 }
 
+export const initialEnabledTokens: string[] = []
+
 const currencyWalletInner: FatReducer<
   CurrencyWalletState,
   RootAction,
@@ -160,7 +162,10 @@ const currencyWalletInner: FatReducer<
     currencyCodesToTokenIds
   ),
 
-  enabledTokens(state = [], action: RootAction): string[] {
+  enabledTokens(
+    state: string[] = initialEnabledTokens,
+    action: RootAction
+  ): string[] {
     if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
       const { currencyCodes } = action.payload
       // Check for actual changes:

@@ -193,7 +193,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         await saveCustomTokens(toApiInput(input), accountId).catch(error =>
           input.props.onError(error)
         )
-        await snooze(10) // Rate limiting
+        await snooze(100) // Rate limiting
       }
       lastTokens = customTokens
     }
