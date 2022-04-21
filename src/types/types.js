@@ -232,8 +232,8 @@ export type EdgeToken = {
 
   // Each currency plugin decides what this contains,
   // such as a contract address.
-  // The primary currency for a network, such as BTC or ETH,
-  // will set this field to `undefined`:
+  // This may be `undefined` for special built-in tokens
+  // such as staking balances.
   networkLocation: JsonObject | void
 }
 

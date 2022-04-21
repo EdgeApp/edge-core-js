@@ -27,12 +27,8 @@ export function currencyCodesToTokenIds(
 
   const out: string[] = []
   for (const currencyCode of currencyCodes) {
-    if (currencyCode === currencyInfo.currencyCode) {
-      out.push('')
-    } else {
-      const tokenId = customIds[currencyCode] ?? builtinIds[currencyCode]
-      if (tokenId != null) out.push(tokenId)
-    }
+    const tokenId = customIds[currencyCode] ?? builtinIds[currencyCode]
+    if (tokenId != null) out.push(tokenId)
   }
   return out
 }
@@ -45,12 +41,8 @@ export function tokenIdsToCurrencyCodes(
 ): string[] {
   const out: string[] = []
   for (const tokenId of tokenIds) {
-    if (tokenId === '') {
-      out.push(currencyInfo.currencyCode)
-    } else {
-      const token = customTokens[tokenId] ?? builtinTokens[tokenId]
-      if (token != null) out.push(token.currencyCode)
-    }
+    const token = customTokens[tokenId] ?? builtinTokens[tokenId]
+    if (token != null) out.push(token.currencyCode)
   }
   return out
 }
