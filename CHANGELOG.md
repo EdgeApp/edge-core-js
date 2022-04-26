@@ -1,5 +1,11 @@
 # edge-core-js
 
+## v0.19.14 (2022-04-26)
+
+- fixed: Never return `undefined` for `EdgeCurrencyConfig.customTokens`.
+- fixed: Handle token edits that change the `tokenId` or `currencyCode`.
+- removed: Do not treat parent currencies as tokens. This logic was unused, so update the documentation.
+
 ## v0.19.13 (2022-04-05)
 
 - added: `EdgeCurrencyWallet.currencyConfig`.
