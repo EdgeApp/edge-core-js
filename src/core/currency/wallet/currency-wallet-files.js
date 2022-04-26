@@ -56,15 +56,10 @@ export async function changeEnabledTokens(
   input: CurrencyWalletInput,
   currencyCodes: string[]
 ): Promise<void> {
-  const { dispatch, state, walletId } = input.props
+  const { state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
   await enabledTokensFile.save(disklet, ENABLED_TOKENS_FILE, currencyCodes)
-
-  dispatch({
-    type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-    payload: { walletId: input.props.walletId, currencyCodes }
-  })
 }
 
 /**
