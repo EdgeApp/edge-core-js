@@ -61,6 +61,7 @@ export type AccountState = {
   +username: string,
 
   // Plugin stuff:
+  +allTokens: EdgePluginMap<EdgeTokenMap>,
   +builtinTokens: EdgePluginMap<EdgeTokenMap>,
   +customTokens: EdgePluginMap<EdgeTokenMap>,
   +swapSettings: EdgePluginMap<SwapSettings>,
@@ -252,6 +253,39 @@ const accountInner: FatReducer<
 
   username(state = '', action: RootAction): string {
     return action.type === 'LOGIN' ? action.payload.username : state
+  },
+
+  allTokens(
+    state: EdgePluginMap<EdgeTokenMap> = {},
+    action: RootAction,
+    next: AccountNext,
+    prev: AccountNext
+  ): EdgePluginMap<EdgeTokenMap> {
+    const { builtinTokens, customTokens } = next.self
+
+    // Roll our own `memoizeReducer` implementation,
+    // so we can minimize our diff as much as possible:
+    if (
+      prev.self == null ||
+      builtinTokens !== prev.self.builtinTokens ||
+      customTokens !== prev.self.customTokens
+    ) {
+      const out = { ...state }
+      for (const pluginId of Object.keys(next.root.plugins.currency)) {
+        if (
+          prev.self == null ||
+          builtinTokens[pluginId] !== prev.self.builtinTokens[pluginId] ||
+          customTokens[pluginId] !== prev.self.customTokens[pluginId]
+        ) {
+          out[pluginId] = {
+            ...customTokens[pluginId],
+            ...builtinTokens[pluginId]
+          }
+        }
+      }
+      return out
+    }
+    return state
   },
 
   builtinTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {

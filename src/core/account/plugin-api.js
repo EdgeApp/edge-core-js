@@ -52,6 +52,12 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
     return this._ai.props.state.plugins.currency[this._pluginId].currencyInfo
   }
 
+  get allTokens(): EdgeTokenMap {
+    const { state } = this._ai.props
+    const { _accountId: accountId, _pluginId: pluginId } = this
+    return state.accounts[accountId].allTokens[pluginId]
+  }
+
   get builtinTokens(): EdgeTokenMap {
     const { state } = this._ai.props
     const { _accountId: accountId, _pluginId: pluginId } = this

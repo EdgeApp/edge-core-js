@@ -942,6 +942,7 @@ export type EdgeCurrencyConfig = {
   +currencyInfo: EdgeCurrencyInfo,
 
   // Tokens:
+  +allTokens: EdgeTokenMap,
   +builtinTokens: EdgeTokenMap,
   +customTokens: EdgeTokenMap,
   +addCustomToken: (token: EdgeToken) => Promise<string>,
