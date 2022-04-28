@@ -52,6 +52,12 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
     return this._ai.props.state.plugins.currency[this._pluginId].currencyInfo
   }
 
+  get allTokens(): EdgeTokenMap {
+    const { state } = this._ai.props
+    const { _accountId: accountId, _pluginId: pluginId } = this
+    return state.accounts[accountId].allTokens[pluginId]
+  }
+
   get builtinTokens(): EdgeTokenMap {
     const { state } = this._ai.props
     const { _accountId: accountId, _pluginId: pluginId } = this
@@ -93,7 +99,13 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
       const { wallets } = ai.props.state.currency
       for (const walletId of Object.keys(wallets)) {
         const walletState = wallets[walletId]
-        if (walletState.accountId !== accountId) continue
+        if (
+          walletState.accountId !== accountId ||
+          walletState.pluginId !== pluginId ||
+          walletState.enabledTokens.indexOf(oldToken.currencyCode) < 0
+        ) {
+          continue
+        }
 
         // We rely on redux to check for actual differences,
         // and to trigger the matching disk & engine updates if needed:

@@ -235,6 +235,11 @@ describe('currency wallets', function () {
         }
       }
     })
+
+    expect(config.allTokens).deep.equals({
+      ...config.customTokens,
+      ...config.builtinTokens
+    })
   })
 
   it('enables tokens', async function () {
