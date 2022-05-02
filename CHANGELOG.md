@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.15 (2022-05-02)
+
+- added: `EdgeCurrencyConfig.allTokens`.
+- fixed: Do not erroneously enable tokens when editing their currency codes.
+
 ## v0.19.14 (2022-04-26)
 
 - fixed: Never return `undefined` for `EdgeCurrencyConfig.customTokens`.
