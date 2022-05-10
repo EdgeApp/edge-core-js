@@ -897,6 +897,14 @@ export type EdgeRatePlugin = {
   +fetchRates: (hints: EdgeRateHint[]) => Promise<EdgeRatePair[]>
 }
 
+// -----------------------------------------------------------------------------
+// other plugin
+// -----------------------------------------------------------------------------
+
+export type EdgeOtherPlugin<Api> = {
+  +getOtherMethods: () => Promise<Api>
+}
+
 // ---------------------------------------------------------------------
 // account
 // ---------------------------------------------------------------------
@@ -1160,7 +1168,10 @@ export type EdgeAccount = {
   +fetchSwapQuote: (
     request: EdgeSwapRequest,
     opts?: EdgeSwapRequestOptions
-  ) => Promise<EdgeSwapQuote>
+  ) => Promise<EdgeSwapQuote>,
+
+  // Other Plugins
+  +getOtherPlugin: (pluginId: string) => Promise<EdgeOtherPlugin<any>>
 }
 
 // ---------------------------------------------------------------------
@@ -1171,6 +1182,7 @@ export type EdgeCorePlugin =
   | EdgeCurrencyPlugin
   | EdgeRatePlugin
   | EdgeSwapPlugin
+  | EdgeOtherPlugin<any>
 
 type EdgeCorePluginFactory = (env: EdgeCorePluginOptions) => EdgeCorePlugin
 

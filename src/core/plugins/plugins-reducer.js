@@ -4,6 +4,7 @@ import {
   type EdgeCorePluginsInit,
   type EdgeCurrencyPlugin,
   type EdgeCurrencyTools,
+  type EdgeOtherPlugin,
   type EdgePluginMap,
   type EdgeRatePlugin,
   type EdgeSwapPlugin
@@ -17,6 +18,7 @@ export type PluginsState = {
   +currency: EdgePluginMap<EdgeCurrencyPlugin>,
   +rate: EdgePluginMap<EdgeRatePlugin>,
   +swap: EdgePluginMap<EdgeSwapPlugin>,
+  +other: EdgePluginMap<EdgeOtherPlugin<any>>,
 
   +currencyTools: EdgePluginMap<Promise<EdgeCurrencyTools>>
 }
@@ -27,6 +29,7 @@ const initialState: PluginsState = {
   currency: {},
   rate: {},
   swap: {},
+  other: {},
   currencyTools: {}
 }
 
@@ -40,7 +43,8 @@ export const plugins = (
         ...state,
         currency: { ...state.currency },
         rate: { ...state.rate },
-        swap: { ...state.swap }
+        swap: { ...state.swap },
+        other: { ...state.other }
       }
       for (const pluginId of Object.keys(action.payload)) {
         const plugin = action.payload[pluginId]
@@ -50,6 +54,8 @@ export const plugins = (
         if (plugin.rateInfo != null) out.rate[pluginId] = plugin
         // $FlowFixMe
         if (plugin.swapInfo != null) out.swap[pluginId] = plugin
+        // $FlowFixMe
+        if (plugin.getOtherMethods != null) out.other[pluginId] = plugin
       }
       return out
     }

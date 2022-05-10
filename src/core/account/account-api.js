@@ -12,6 +12,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeDataStore,
   type EdgeLobby,
+  type EdgeOtherPlugin,
   type EdgePendingVoucher,
   type EdgePluginMap,
   type EdgeRateCache,
@@ -390,6 +391,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       opts?: EdgeSwapRequestOptions
     ): Promise<EdgeSwapQuote> {
       return fetchSwapQuote(ai, accountId, request, opts)
+    },
+
+    async getOtherPlugin<T>(pluginId: string): Promise<EdgeOtherPlugin<T>> {
+      return ai.props.state.plugins.other[pluginId]
     }
   }
   bridgifyObject(out)

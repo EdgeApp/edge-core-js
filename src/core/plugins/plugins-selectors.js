@@ -70,14 +70,15 @@ export async function waitForPlugins(ai: ApiInput): Promise<void> {
     const { init, locked } = props.state.plugins
     if (!locked) return
 
-    const { currency, rate, swap } = props.state.plugins
+    const { currency, rate, swap, other } = props.state.plugins
     const missingPlugins: string[] = []
     for (const pluginId in init) {
       if (
         !!init[pluginId] &&
         currency[pluginId] == null &&
         rate[pluginId] == null &&
-        swap[pluginId] == null
+        swap[pluginId] == null &&
+        other[pluginId] == null
       ) {
         missingPlugins.push(pluginId)
       }
