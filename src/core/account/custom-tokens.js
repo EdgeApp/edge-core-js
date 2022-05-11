@@ -68,7 +68,7 @@ export async function getTokenId(
       'A token must have a contract address to be added to a legacy currency plugin'
     )
   }
-  engine.addCustomToken({ ...tokenInfo, ...token })
+  await engine.addCustomToken({ ...tokenInfo, ...token })
 
   return contractToTokenId(tokenInfo.contractAddress)
 }
