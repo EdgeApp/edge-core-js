@@ -211,21 +211,27 @@ async function loadGuiTokens(
 export async function loadCustomTokens(
   ai: ApiInput,
   accountId: string
-): Promise<EdgePluginMap<EdgeTokenMap>> {
+): Promise<void> {
   const { dispatch, state } = ai.props
   const { accountWalletInfo } = state.accounts[accountId]
   const disklet = getStorageWalletDisklet(state, accountWalletInfo.id)
 
   // Load the file:
   const file = await customTokensFile.load(disklet, CUSTOM_TOKENS_FILE)
-  if (file == null) return loadGuiTokens(ai, accountId)
-  const { customTokens } = file
+  if (file != null) {
+    const { customTokens } = file
+    dispatch({
+      type: 'ACCOUNT_CUSTOM_TOKENS_LOADED',
+      payload: { accountId, customTokens }
+    })
+  }
 
+  // Fall back on the legacy file:
+  const customTokens = await loadGuiTokens(ai, accountId)
   dispatch({
     type: 'ACCOUNT_CUSTOM_TOKENS_LOADED',
     payload: { accountId, customTokens }
   })
-  return customTokens
 }
 
 export async function saveCustomTokens(
