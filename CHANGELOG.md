@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.16 (2022-05-16)
+
+- fixed: Correctly load tokens from the legacy settings file.
+- fixed: Correctly report errors when adding invalid custom tokens.
+
 ## v0.19.15 (2022-05-02)
 
 - added: `EdgeCurrencyConfig.allTokens`.
