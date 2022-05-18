@@ -224,14 +224,14 @@ export async function loadCustomTokens(
       type: 'ACCOUNT_CUSTOM_TOKENS_LOADED',
       payload: { accountId, customTokens }
     })
+  } else {
+    // Fall back on the legacy file:
+    const customTokens = await loadGuiTokens(ai, accountId)
+    dispatch({
+      type: 'ACCOUNT_CUSTOM_TOKENS_LOADED',
+      payload: { accountId, customTokens }
+    })
   }
-
-  // Fall back on the legacy file:
-  const customTokens = await loadGuiTokens(ai, accountId)
-  dispatch({
-    type: 'ACCOUNT_CUSTOM_TOKENS_LOADED',
-    payload: { accountId, customTokens }
-  })
 }
 
 export async function saveCustomTokens(
