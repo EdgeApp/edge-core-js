@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.17 (2022-05-18)
+
+- fixed: Correctly load custom tokens (regression from last release).
+
 ## v0.19.16 (2022-05-16)
 
 - fixed: Correctly load tokens from the legacy settings file.
