@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.18 (2022-05-19)
+
+- fixed: Do not uselessly re-save the custom tokens on every login.
+
 ## v0.19.17 (2022-05-18)
 
 - fixed: Correctly load custom tokens (regression from last release).
