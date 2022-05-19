@@ -28,7 +28,7 @@ import {
 } from '../storage/storage-actions.js'
 import { makeAccountApi } from './account-api.js'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files.js'
-import { type AccountState } from './account-reducer.js'
+import { type AccountState, initialCustomTokens } from './account-reducer.js'
 import {
   loadBuiltinTokens,
   loadCustomTokens,
@@ -183,13 +183,13 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
    * we will consolidate those down to a single write to disk.
    */
   tokenSaver(input: AccountInput) {
-    let lastTokens: EdgePluginMap<EdgeTokenMap> | void
+    let lastTokens: EdgePluginMap<EdgeTokenMap> = initialCustomTokens
 
     return async function update() {
       const { accountId, accountState } = input.props
 
       const { customTokens } = accountState
-      if (customTokens !== lastTokens && lastTokens != null) {
+      if (customTokens !== lastTokens && lastTokens !== initialCustomTokens) {
         await saveCustomTokens(toApiInput(input), accountId).catch(error =>
           input.props.onError(error)
         )
