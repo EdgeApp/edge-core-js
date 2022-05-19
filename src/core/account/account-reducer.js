@@ -74,6 +74,8 @@ export type AccountNext = {
   +self: AccountState
 }
 
+export const initialCustomTokens: EdgePluginMap<EdgeTokenMap> = {}
+
 const accountInner: FatReducer<
   AccountState,
   RootAction,
@@ -298,7 +300,10 @@ const accountInner: FatReducer<
     return state
   },
 
-  customTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {
+  customTokens(
+    state = initialCustomTokens,
+    action: RootAction
+  ): EdgePluginMap<EdgeTokenMap> {
     switch (action.type) {
       case 'ACCOUNT_CUSTOM_TOKENS_LOADED': {
         const { customTokens } = action.payload
