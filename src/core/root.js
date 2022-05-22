@@ -44,6 +44,13 @@ export async function makeContext(
     plugins: pluginsInit = {}
   } = opts
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
+
+  if (
+    !authServer.endsWith('.edge.app') &&
+    !authServer.endsWith('.edgetest.app')
+  ) {
+    throw new Error(`Invalid login server passed to makeContext: ${authServer}`)
+  }
   if (apiKey == null) {
     throw new Error('No API key provided')
   }
