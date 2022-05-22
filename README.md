@@ -8,7 +8,7 @@ This library implements the Edge login system. It runs inside a client applicati
 
 ## Documentation
 
-We have documentation at https://developer.airbitz.co/javascript/, but our [Flow types](./src/types/types.js) are the best, most up-to-date reference for what this library contains.
+Currently the [Flow/typescript types](./src/types/types.js) are the most up-to-date reference for what this library contains.
 
 ## Account Management UI
 
