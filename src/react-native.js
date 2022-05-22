@@ -145,7 +145,7 @@ export async function fetchLoginMessages(
     } catch (e) {}
   }
 
-  const uri = 'https://auth.airbitz.co/api/v2/messages'
+  const uri = 'https://login.edge.app/api/v2/messages'
   const opts: EdgeFetchOptions = {
     method: 'POST',
     headers: {

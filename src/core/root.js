@@ -38,7 +38,7 @@ export async function makeContext(
   const {
     apiKey,
     appId = '',
-    authServer = 'https://auth.airbitz.co/api',
+    authServer = 'https://login.edge.app',
     deviceDescription = null,
     hideKeys = false,
     plugins: pluginsInit = {}
@@ -48,6 +48,7 @@ export async function makeContext(
     throw new Error('No API key provided')
   }
 
+  const loginServerUri = authServer + '/api'
   // Create a redux store:
   const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
   const redux = createStore(reducer, enhancers)
@@ -72,7 +73,7 @@ export async function makeContext(
     payload: {
       apiKey,
       appId,
-      authServer,
+      authServer: loginServerUri,
       deviceDescription,
       hideKeys,
       logSettings,
