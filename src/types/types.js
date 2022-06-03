@@ -549,11 +549,13 @@ export type EdgeCurrencyEngineCallbacks = {
   +onAddressChanged: () => void,
   +onAddressesChecked: (progressRatio: number) => void,
   +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
-  +onBlockHeightChanged: (blockHeight: number) => void,
   +onStakingStatusChanged: (status: EdgeStakingStatus) => void,
   +onTransactionsChanged: (transactions: EdgeTransaction[]) => void,
   +onTxidsChanged: (txids: EdgeTxidMap) => void,
-  +onWcNewContractCall: (payload: JsonObject) => void
+  +onWcNewContractCall: (payload: JsonObject) => void,
+
+  // Deprecated
+  +onBlockHeightChanged: (blockHeight: number) => void
 }
 
 export type EdgeCurrencyEngineOptions = {
