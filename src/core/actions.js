@@ -17,6 +17,7 @@ import {
 } from '../types/types.js'
 import { type SwapSettings } from './account/account-types.js'
 import {
+  type MergedTransaction,
   type TxFileJsons,
   type TxFileNames,
   type TxidHashes
@@ -121,6 +122,14 @@ export type RootAction =
   | {
       type: 'CHANGE_LOG_SETTINGS',
       payload: EdgeLogSettings
+    }
+  | {
+      // Called when the core needs to change a specific tx.
+      // DEPRECATE: After all currency plugins implement new Confirmations API
+      type: 'CHANGE_MERGE_TX',
+      payload: {
+        tx: MergedTransaction
+      }
     }
   | {
       // Shuts down the context and all its objects.

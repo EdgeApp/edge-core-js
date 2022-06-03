@@ -21,7 +21,7 @@ import {
   type CurrencyWalletInput,
   type CurrencyWalletProps
 } from './currency-wallet-pixie.js'
-import { mergeTx } from './currency-wallet-reducer.js'
+import { type MergedTransaction, mergeTx } from './currency-wallet-reducer.js'
 
 let throttleRateLimitMs = 5000
 
@@ -129,11 +129,56 @@ export function makeCurrencyWalletCallbacks(
       })
     },
 
+    // DEPRECATE: After all currency plugins implement new Confirmations API
     onBlockHeightChanged(height: number) {
       pushUpdate({
         id: walletId,
         action: 'onBlockHeightChanged',
         updateFunc: () => {
+          // Update transaction confirmation status
+          const { txs: reduxTxs } = input.props.walletState
+          const txsHack: any = Object.values(reduxTxs)
+          const reduxTxsArray: MergedTransaction[] = txsHack
+          for (const reduxTx of reduxTxsArray) {
+            if (
+              reduxTx.confirmations !== 'confirmed' &&
+              reduxTx.confirmations !== 'dropped'
+            ) {
+              const {
+                requiredConfirmations
+              } = input.props.walletState.currencyInfo
+              const { height } = input.props.walletState
+
+              reduxTx.confirmations = validateConfirmations(
+                reduxTx,
+                height,
+                requiredConfirmations
+              )
+
+              // Recreate the EdgeTransaction object
+              const txidHash = hashStorageWalletFilename(
+                input.props.state,
+                walletId,
+                reduxTx.txid
+              )
+              const { files } = input.props.walletState
+              const changedTx = combineTxWithFile(
+                input,
+                reduxTx,
+                files[txidHash],
+                reduxTx.currencyCode
+              )
+
+              // Dispatch event to update the redux transaction object
+              input.props.dispatch({
+                type: 'CHANGE_MERGE_TX',
+                payload: { tx: reduxTx }
+              })
+              // Dispatch event to update the EdgeTransaction object
+              throtteldOnTxChanged([changedTx])
+            }
+          }
+
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
             payload: { height, walletId }
@@ -188,6 +233,18 @@ export function makeCurrencyWalletCallbacks(
       const created: EdgeTransaction[] = []
       for (const tx of txs) {
         const { txid } = tx
+
+        // DEPRECATE: After all currency plugins implement new Confirmations API
+        if (tx.confirmations == null) {
+          const { requiredConfirmations } = input.props.walletState.currencyInfo
+          const { height } = input.props.walletState
+
+          tx.confirmations = validateConfirmations(
+            tx,
+            height,
+            requiredConfirmations
+          )
+        }
 
         // Verify that something has changed:
         const reduxTx = mergeTx(tx, defaultCurrency, reduxTxs[txid])
@@ -256,4 +313,28 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
       })
   }
   checkChangesLoop(input.props)
+}
+
+const validateConfirmations = (
+  tx: EdgeTransaction | MergedTransaction,
+  blockHeight: number,
+  requiredConfirmations: number = 1 // Default confirmation rule is 1 block
+): $PropertyType<EdgeTransaction, 'confirmations'> => {
+  // If tx block height is 0, this means it's not yet mined in a block,
+  // so block confirmations is 0.
+  const blockConfirmations =
+    tx.blockHeight === 0 ? 0 : 1 + blockHeight - tx.blockHeight
+  /*
+  A negative number of block confirmations means the wallet's block 
+  height has not caught up with the transaction's block height, or the
+  transaction is mined in a block which is apart of an chain fork.
+  Either way, the transaction is considered unconfirmed.
+  */
+  const confirmations =
+    blockConfirmations >= requiredConfirmations
+      ? 'confirmed'
+      : blockConfirmations <= 0
+      ? 'unconfirmed'
+      : blockConfirmations
+  return confirmations
 }
