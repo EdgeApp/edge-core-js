@@ -633,6 +633,7 @@ export function combineTxWithFile(
 
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
+    confirmations: tx.confirmations,
     blockHeight: tx.blockHeight,
     date: tx.date,
     ourReceiveAddresses: tx.ourReceiveAddresses,

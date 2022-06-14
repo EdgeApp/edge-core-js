@@ -43,6 +43,8 @@ export type SortedTransactions = {
 }
 
 export type MergedTransaction = {
+  confirmations: $PropertyType<EdgeTransaction, 'confirmations'>,
+  currencyCode: string,
   blockHeight: number,
   date: number,
   ourReceiveAddresses: string[],
@@ -320,6 +322,12 @@ const currencyWalletInner: FatReducer<
     next: CurrencyWalletNext
   ): { [txid: string]: MergedTransaction } {
     switch (action.type) {
+      case 'CHANGE_MERGE_TX': {
+        const { tx } = action.payload
+        const out = { ...state }
+        out[tx.txid] = tx
+        return out
+      }
       case 'CURRENCY_ENGINE_CHANGED_TXS': {
         const { txs } = action.payload
         const defaultCurrency = next.self.currencyInfo.currencyCode
@@ -393,6 +401,8 @@ export const currencyWalletReducer: FatReducer<
 )
 
 const defaultTx: MergedTransaction = {
+  confirmations: 'unconfirmed',
+  currencyCode: '',
   blockHeight: 0,
   date: 0,
   ourReceiveAddresses: [],
@@ -411,7 +421,11 @@ export function mergeTx(
   defaultCurrency: string,
   oldTx: MergedTransaction = defaultTx
 ): MergedTransaction {
+  const currencyCode =
+    tx.currencyCode != null ? tx.currencyCode : defaultCurrency
   const out = {
+    confirmations: tx.confirmations ?? 'unconfirmed',
+    currencyCode,
     blockHeight: tx.blockHeight,
     date: tx.date,
     ourReceiveAddresses: tx.ourReceiveAddresses,
@@ -423,8 +437,6 @@ export function mergeTx(
     networkFee: { ...oldTx.networkFee }
   }
 
-  const currencyCode =
-    tx.currencyCode != null ? tx.currencyCode : defaultCurrency
   out.nativeAmount[currencyCode] = tx.nativeAmount
   out.networkFee[currencyCode] =
     tx.networkFee != null ? tx.networkFee.toString() : '0'

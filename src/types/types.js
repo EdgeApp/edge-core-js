@@ -304,7 +304,7 @@ export type EdgeCurrencyInfo = {
   canReplaceByFee?: boolean, // Defaults to false
   customFeeTemplate?: EdgeObjectTemplate, // Indicates custom fee support
   customTokenTemplate?: EdgeObjectTemplate, // Indicates custom token support
-  requiredConfirmations?: number,
+  requiredConfirmations?: number, // Block confirmations required for a tx
   memoMaxLength?: number, // Max number of text characters, if supported
   memoMaxValue?: string, // Max numerical value, if supported
   memoType?: 'text' | 'number' | 'other', // undefined means no memo support
@@ -370,6 +370,7 @@ export type EdgeTransaction = {
   parentNetworkFee?: string,
 
   // Confirmation status:
+  confirmations?: 'confirmed' | 'unconfirmed' | 'dropped' | number,
   blockHeight: number,
   date: number,
 
@@ -549,11 +550,13 @@ export type EdgeCurrencyEngineCallbacks = {
   +onAddressChanged: () => void,
   +onAddressesChecked: (progressRatio: number) => void,
   +onBalanceChanged: (currencyCode: string, nativeBalance: string) => void,
-  +onBlockHeightChanged: (blockHeight: number) => void,
   +onStakingStatusChanged: (status: EdgeStakingStatus) => void,
   +onTransactionsChanged: (transactions: EdgeTransaction[]) => void,
   +onTxidsChanged: (txids: EdgeTxidMap) => void,
-  +onWcNewContractCall: (payload: JsonObject) => void
+  +onWcNewContractCall: (payload: JsonObject) => void,
+
+  // Deprecated
+  +onBlockHeightChanged: (blockHeight: number) => void
 }
 
 export type EdgeCurrencyEngineOptions = {
