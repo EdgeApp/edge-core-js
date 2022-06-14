@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.19 (2022-06-13)
+
+- added: New Confirmations API on `EdgeTransaction` type
+
 ## v0.19.18 (2022-05-19)
 
 - fixed: Do not uselessly re-save the custom tokens on every login.
