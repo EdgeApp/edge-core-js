@@ -235,7 +235,10 @@ export function makeCurrencyWalletCallbacks(
         const { txid } = tx
 
         // DEPRECATE: After all currency plugins implement new Confirmations API
-        if (tx.confirmations == null) {
+        if (
+          tx.confirmations !== 'confirmed' &&
+          tx.confirmations !== 'dropped'
+        ) {
           const { requiredConfirmations } = input.props.walletState.currencyInfo
           const { height } = input.props.walletState
 
