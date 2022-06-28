@@ -673,7 +673,7 @@ export function combineTxWithFile(
         out.requestedCustomFee = file.feeRateRequested
       }
     }
-    out.feeRateUsed = file.feeRateUsed
+    out.feeRateUsed = tx.feeRateUsed ?? file.feeRateUsed
 
     if (file.payees != null) {
       out.spendTargets = file.payees.map(payee => ({

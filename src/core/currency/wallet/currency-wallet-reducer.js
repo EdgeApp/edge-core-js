@@ -51,7 +51,7 @@ export type MergedTransaction = {
   signedTx: string,
   txid: string,
   otherParams?: JsonObject,
-
+  feeRateUsed?: JsonObject,
   nativeAmount: { [currencyCode: string]: string },
   networkFee: { [currencyCode: string]: string }
 }
@@ -432,7 +432,7 @@ export function mergeTx(
     signedTx: tx.signedTx,
     txid: tx.txid,
     otherParams: tx.otherParams,
-
+    feeRateUsed: oldTx.feeRateUsed ?? tx.feeRateUsed,
     nativeAmount: { ...oldTx.nativeAmount },
     networkFee: { ...oldTx.networkFee }
   }
