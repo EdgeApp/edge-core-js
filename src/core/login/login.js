@@ -135,7 +135,7 @@ function applyLoginPayloadInner(
   // Preserve client-only data:
   if (stash.lastLogin != null) out.lastLogin = stash.lastLogin
   if (stash.username != null) out.username = stash.username
-  if (stash.userId != null) out.userId = stash.userId
+  if (stash.userId != null && out.userId == null) out.userId = stash.userId
 
   // Store the pin key unencrypted:
   if (loginReply.pin2KeyBox != null) {
