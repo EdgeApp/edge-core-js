@@ -53,7 +53,7 @@ export function usernameAvailable(
 /**
  * Assembles all the data needed to create a new login.
  */
-export function makeCreateKit(
+export async function makeCreateKit(
   ai: ApiInput,
   parentLogin: LoginTree | void,
   appId: string,
@@ -64,7 +64,7 @@ export function makeCreateKit(
 
   // Figure out login identity:
   const loginId =
-    parentLogin != null ? io.random(32) : hashUsername(ai, username)
+    parentLogin != null ? io.random(32) : await hashUsername(ai, username)
   const loginKey = io.random(32)
 
   const dummyLogin: LoginTree = {
@@ -84,7 +84,7 @@ export function makeCreateKit(
       : undefined
   const passwordKit =
     opts.password != null
-      ? makePasswordKit(ai, dummyLogin, username, opts.password)
+      ? await makePasswordKit(ai, dummyLogin, username, opts.password)
       : {}
   const pin2Kit =
     opts.pin != null
@@ -102,44 +102,40 @@ export function makeCreateKit(
   })
 
   // Bundle everything:
-  return Promise.all([loginId, passwordKit]).then(values => {
-    const [loginId, passwordKit] = values
-
-    return {
+  return {
+    loginId,
+    serverPath: '/v2/login/create',
+    server: {
+      ...wasCreateLoginPayload({
+        appId,
+        loginId,
+        parentBox
+      }),
+      ...keysKit.server,
+      ...passwordKit.server,
+      ...pin2Kit.server,
+      ...secretServer
+    },
+    stash: {
+      appId,
+      loginAuthBox,
       loginId,
-      serverPath: '/v2/login/create',
-      server: {
-        ...wasCreateLoginPayload({
-          appId,
-          loginId,
-          parentBox
-        }),
-        ...keysKit.server,
-        ...passwordKit.server,
-        ...pin2Kit.server,
-        ...secretServer
-      },
-      stash: {
-        appId,
-        loginAuthBox,
-        loginId,
-        parentBox,
-        ...passwordKit.stash,
-        ...pin2Kit.stash,
-        ...keysKit.stash
-      },
-      login: {
-        appId,
-        loginAuth,
-        loginId,
-        loginKey,
-        keyInfos: [],
-        ...passwordKit.login,
-        ...pin2Kit.login,
-        ...keysKit.login
-      }
+      parentBox,
+      ...passwordKit.stash,
+      ...pin2Kit.stash,
+      ...keysKit.stash
+    },
+    login: {
+      appId,
+      loginAuth,
+      loginId,
+      loginKey,
+      keyInfos: [],
+      ...passwordKit.login,
+      ...pin2Kit.login,
+      ...keysKit.login
     }
-  })
+  }
 }
 
 /**
