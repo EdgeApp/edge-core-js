@@ -21,6 +21,7 @@ import {
   type ChangePin2Payload,
   type ChangeRecovery2Payload,
   type ChangeSecretPayload,
+  type ChangeUsernamePayload,
   type ChangeVouchersPayload,
   type CreateKeysPayload,
   type CreateLoginPayload,
@@ -219,6 +220,13 @@ export const asChangeSecretPayload: Cleaner<ChangeSecretPayload> = asObject({
   loginAuth: asBase64
 })
 
+export const asChangeUsernamePayload: Cleaner<ChangeUsernamePayload> = asObject(
+  {
+    userId: asBase64,
+    userTextBox: asEdgeBox
+  }
+)
+
 export const asChangeVouchersPayload: Cleaner<ChangeVouchersPayload> = asObject(
   {
     approvedVouchers: asOptional(asArray(asString)),
@@ -251,7 +259,6 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   appId: asString,
   created: asDate,
   loginId: asBase64,
-  userId: asOptional(asBase64),
 
   // Nested logins:
   children: asOptional(asArray(raw => asLoginPayload(raw))),
@@ -280,6 +287,10 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
 
   // Secret-key login:
   loginAuthBox: asOptional(asEdgeBox),
+
+  // Username:
+  userId: asOptional(asBase64),
+  userTextBox: asOptional(asEdgeBox),
 
   // Voucher login:
   pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),

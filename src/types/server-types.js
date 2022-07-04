@@ -140,6 +140,11 @@ export type ChangeSecretPayload = {
   loginAuth: Uint8Array
 }
 
+export type ChangeUsernamePayload = {
+  userId: Uint8Array,
+  userTextBox: EdgeBox
+}
+
 export type ChangeVouchersPayload = {
   approvedVouchers?: string[],
   rejectedVouchers?: string[]
@@ -186,7 +191,6 @@ export type LoginPayload = {
   appId: string,
   created: Date,
   loginId: Uint8Array,
-  userId?: Uint8Array,
 
   // Nested logins:
   children?: LoginPayload[],
@@ -215,6 +219,10 @@ export type LoginPayload = {
 
   // Secret-key login:
   loginAuthBox?: EdgeBox,
+
+  // Username:
+  userId?: Uint8Array,
+  userTextBox?: EdgeBox,
 
   // Voucher login:
   pendingVouchers: EdgePendingVoucher[],
