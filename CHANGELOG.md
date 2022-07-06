@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.21 (2022-06-22)
+
+- added: New `deleteRemoteAccount` function to the `EdgeAccount` object
+
 ## v0.19.20 (2022-06-22)
 
 - fixed: Loosen constraint for checking tx confirmation status in 'getTransaction' and Make the condition identical to the condition in onBlockHeightChanged.
