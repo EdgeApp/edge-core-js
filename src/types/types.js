@@ -1127,6 +1127,7 @@ export type EdgeAccount = {
   +fetchLobby: (lobbyId: string) => Promise<EdgeLobby>,
 
   // Login management:
+  +deleteRemoteAccount: () => Promise<void>,
   +logout: () => Promise<void>,
 
   // Master wallet list:

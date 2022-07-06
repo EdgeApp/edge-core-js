@@ -35,6 +35,7 @@ import {
   splitWalletInfo
 } from '../login/keys.js'
 import { applyKit } from '../login/login.js'
+import { deleteLogin } from '../login/login-delete.js'
 import {
   cancelOtpReset,
   disableOtp,
@@ -291,6 +292,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // Login management:
+    async deleteRemoteAccount(): Promise<void> {
+      const { loginTree } = accountState()
+      await deleteLogin(ai, loginTree)
+    },
     async logout(): Promise<void> {
       ai.props.dispatch({ type: 'LOGOUT', payload: { accountId } })
     },
