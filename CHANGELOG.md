@@ -4,7 +4,7 @@
 
 - upgrade: yaob dependency to include error serialization fix
 
-## v0.19.21 (2022-06-22)
+## v0.19.21 (2022-07-05)
 
 - added: New `deleteRemoteAccount` function to the `EdgeAccount` object
 
