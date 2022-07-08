@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.22 (2022-07-08)
+
+- upgrade: yaob dependency to include error serialization fix
+
 ## v0.19.21 (2022-06-22)
 
 - added: New `deleteRemoteAccount` function to the `EdgeAccount` object
