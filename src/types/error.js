@@ -224,35 +224,49 @@ export class SpendToSelfError extends Error {
 
 /**
  * Trying to swap an amount that is either too low or too high.
- * @param nativeMax the maximum supported amount, in the "from" currency.
+ * @param nativeMax the maximum supported amount, in the currency specified
+ * by the direction (defaults to "from" currency)
  */
 export class SwapAboveLimitError extends Error {
   name: string
   +pluginId: string
   +nativeMax: string
+  +direction: 'from' | 'to'
 
-  constructor(swapInfo: EdgeSwapInfo, nativeMax: string) {
+  constructor(
+    swapInfo: EdgeSwapInfo,
+    nativeMax: string,
+    direction: 'from' | 'to' = 'from'
+  ) {
     super('Amount is too high')
     this.name = 'SwapAboveLimitError'
     this.pluginId = swapInfo.pluginId
     this.nativeMax = nativeMax
+    this.direction = direction
   }
 }
 
 /**
  * Trying to swap an amount that is either too low or too high.
- * @param nativeMin the minimum supported amount, in the "from" currency.
+ * @param nativeMin the minimum supported amount, in the currency specified
+ * by the direction (defaults to "from" currency)
  */
 export class SwapBelowLimitError extends Error {
   name: string
   +pluginId: string
   +nativeMin: string
+  +direction: 'from' | 'to'
 
-  constructor(swapInfo: EdgeSwapInfo, nativeMin: string) {
+  constructor(
+    swapInfo: EdgeSwapInfo,
+    nativeMin: string,
+    direction: 'from' | 'to' = 'from'
+  ) {
     super('Amount is too low')
     this.name = 'SwapBelowLimitError'
     this.pluginId = swapInfo.pluginId
     this.nativeMin = nativeMin
+    this.direction = direction
   }
 }
 
