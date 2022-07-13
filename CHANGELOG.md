@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.23 (2022-07-13)
+
+- added: Add optional from/to parameter to min and max swap errors
+
 ## v0.19.22 (2022-07-08)
 
 - upgrade: yaob dependency to include error serialization fix
