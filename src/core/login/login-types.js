@@ -15,8 +15,6 @@ export type LoginTree = {
   lastLogin: Date,
   loginId: Uint8Array,
   loginKey: Uint8Array,
-  userId?: Uint8Array,
-  username?: string,
 
   // 2-factor:
   otpKey?: Uint8Array,
@@ -30,6 +28,10 @@ export type LoginTree = {
   pin?: string,
   pin2Key?: Uint8Array,
   recovery2Key?: Uint8Array,
+
+  // Username:
+  userId?: Uint8Array,
+  username?: string,
 
   // Resources:
   children: LoginTree[],

@@ -18,6 +18,7 @@ import { loginFetch } from './login-fetch.js'
 import { fixUsername, hashUsername } from './login-selectors.js'
 import { saveStash } from './login-stash.js'
 import { type LoginKit, type LoginTree } from './login-types.js'
+import { makeUsernameKit } from './login-username.js'
 import { makePasswordKit } from './password.js'
 import { makeChangePin2Kit } from './pin2.js'
 
@@ -53,7 +54,7 @@ export function usernameAvailable(
 /**
  * Assembles all the data needed to create a new login.
  */
-export function makeCreateKit(
+export async function makeCreateKit(
   ai: ApiInput,
   parentLogin: LoginTree | void,
   appId: string,
@@ -63,8 +64,7 @@ export function makeCreateKit(
   const { io } = ai.props
 
   // Figure out login identity:
-  const loginId =
-    parentLogin != null ? io.random(32) : hashUsername(ai, username)
+  const loginId = io.random(32)
   const loginKey = io.random(32)
 
   const dummyLogin: LoginTree = {
@@ -82,15 +82,15 @@ export function makeCreateKit(
     parentLogin != null
       ? encrypt(io, loginKey, parentLogin.loginKey)
       : undefined
-  const passwordKit =
+  const passwordKit: LoginKit =
     opts.password != null
-      ? makePasswordKit(ai, dummyLogin, username, opts.password)
+      ? await makePasswordKit(ai, dummyLogin, username, opts.password)
       : {}
-  const pin2Kit =
+  const pin2Kit: LoginKit =
     opts.pin != null
       ? makeChangePin2Kit(ai, dummyLogin, username, opts.pin, true)
       : {}
-  const keysKit =
+  const keysKit: LoginKit =
     opts.keyInfo != null ? makeKeysKit(ai, dummyLogin, opts.keyInfo) : {}
 
   // Secret-key login:
@@ -101,45 +101,48 @@ export function makeCreateKit(
     loginAuthBox
   })
 
-  // Bundle everything:
-  return Promise.all([loginId, passwordKit]).then(values => {
-    const [loginId, passwordKit] = values
+  // Top-level username:
+  const usernameKit: LoginKit =
+    parentLogin == null ? await makeUsernameKit(ai, dummyLogin, username) : {}
 
-    return {
+  // Bundle everything:
+  return {
+    loginId,
+    serverPath: '/v2/login/create',
+    server: {
+      ...wasCreateLoginPayload({
+        appId,
+        loginId,
+        parentBox
+      }),
+      ...keysKit.server,
+      ...passwordKit.server,
+      ...pin2Kit.server,
+      ...secretServer,
+      ...usernameKit.server
+    },
+    stash: {
+      appId,
+      loginAuthBox,
       loginId,
-      serverPath: '/v2/login/create',
-      server: {
-        ...wasCreateLoginPayload({
-          appId,
-          loginId,
-          parentBox
-        }),
-        ...keysKit.server,
-        ...passwordKit.server,
-        ...pin2Kit.server,
-        ...secretServer
-      },
-      stash: {
-        appId,
-        loginAuthBox,
-        loginId,
-        parentBox,
-        ...passwordKit.stash,
-        ...pin2Kit.stash,
-        ...keysKit.stash
-      },
-      login: {
-        appId,
-        loginAuth,
-        loginId,
-        loginKey,
-        keyInfos: [],
-        ...passwordKit.login,
-        ...pin2Kit.login,
-        ...keysKit.login
-      }
+      parentBox,
+      ...passwordKit.stash,
+      ...pin2Kit.stash,
+      ...keysKit.stash,
+      ...usernameKit.stash
+    },
+    login: {
+      appId,
+      loginAuth,
+      loginId,
+      loginKey,
+      keyInfos: [],
+      ...passwordKit.login,
+      ...pin2Kit.login,
+      ...keysKit.login,
+      ...usernameKit.login
     }
-  })
+  }
 }
 
 /**
@@ -155,10 +158,6 @@ export async function createLogin(
   const { now = new Date() } = accountOpts
 
   const kit = await makeCreateKit(ai, undefined, '', fixedName, opts)
-  kit.login.username = fixedName
-  kit.stash.username = fixedName
-  kit.login.userId = kit.login.loginId
-
   const request = { data: kit.server }
   await loginFetch(ai, 'POST', kit.serverPath, request)
 

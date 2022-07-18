@@ -78,6 +78,10 @@ export type LoginDump = {
   loginAuth?: Uint8Array,
   loginAuthBox?: EdgeBox,
 
+  // Username:
+  userId?: Uint8Array,
+  userTextBox?: EdgeBox,
+
   // Resources:
   children: LoginDump[],
   keyBoxes: EdgeBox[],
@@ -162,6 +166,10 @@ export const asLoginDump: Cleaner<LoginDump> = asObject({
   // Secret-key login:
   loginAuth: asOptional(asBase64),
   loginAuthBox: asOptional(asEdgeBox),
+
+  // Username:
+  userId: asOptional(asBase64),
+  userTextBox: asOptional(asEdgeBox),
 
   // Keys and assorted goodies:
   keyBoxes: asOptional(asArray(asEdgeBox), []),

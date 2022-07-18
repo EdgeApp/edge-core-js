@@ -17,6 +17,7 @@ import {
   asChangePin2Payload,
   asChangeRecovery2Payload,
   asChangeSecretPayload,
+  asChangeUsernamePayload,
   asChangeVouchersPayload,
   asCreateKeysPayload,
   asCreateLoginPayload,
@@ -174,7 +175,7 @@ const withLogin2 = (
 
   // Password login:
   if (userId != null && passwordAuth != null) {
-    const login = db.getLoginById(userId)
+    const login = db.getLoginByUserId(userId)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }
@@ -236,7 +237,7 @@ const loginRoute = withLogin2(
     const { userId, passwordAuth, recovery2Id, recovery2Auth } = clean
 
     if (userId != null && passwordAuth == null) {
-      const login = db.getLoginById(userId)
+      const login = db.getLoginByUserId(userId)
       if (login == null) {
         return statusResponse(statusCodes.noAccount)
       }
@@ -298,7 +299,8 @@ function createLogin(
     ...asMaybe(asChangeOtpPayload)(clean),
     ...asMaybe(asChangePasswordPayload)(clean),
     ...asMaybe(asChangePin2Payload)(clean),
-    ...asMaybe(asChangeRecovery2Payload)(clean)
+    ...asMaybe(asChangeRecovery2Payload)(clean),
+    ...asMaybe(asChangeUsernamePayload)(clean)
   }
 
   // Set up the parent/child relationship:
@@ -365,7 +367,7 @@ const deleteOtpRoute = withLogin2(
     if (clean.userId == null || clean.otpResetAuth == null) {
       return statusResponse(statusCodes.invalidRequest)
     }
-    const login = db.getLoginById(clean.userId)
+    const login = db.getLoginByUserId(clean.userId)
     if (login == null) {
       return statusResponse(statusCodes.noAccount)
     }

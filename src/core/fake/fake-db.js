@@ -47,6 +47,14 @@ export class FakeDb {
     return this.logins.find(login => verifyData(login.loginId, loginId))
   }
 
+  getLoginByUserId(userId: Uint8Array): DbLogin | void {
+    return this.logins.find(login =>
+      login.userId == null
+        ? verifyData(login.loginId, userId)
+        : verifyData(login.userId, userId)
+    )
+  }
+
   getLoginByPin2Id(pin2Id: Uint8Array): DbLogin | void {
     return this.logins.find(
       login => login.pin2Id != null && verifyData(login.pin2Id, pin2Id)
@@ -131,6 +139,10 @@ export function makeLoginPayload(db: FakeDb, login: DbLogin): LoginPayload {
     otpTimeout: login.otpTimeout,
     pendingVouchers: makePendingVouchers(login),
     loginAuthBox: login.loginAuthBox,
+
+    // Username:
+    userId: login.userId,
+    userTextBox: login.userTextBox,
 
     // Resources:
     keyBoxes: login.keyBoxes,

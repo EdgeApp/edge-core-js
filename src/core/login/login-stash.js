@@ -148,8 +148,6 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   created: asOptional(asDate),
   lastLogin: asOptional(asDate),
   loginId: asBase64,
-  userId: asOptional(asBase64),
-  username: asOptional(asString),
 
   // 2-factor:
   otpKey: asOptional(asBase32),
@@ -184,6 +182,10 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
 
   // Recovery v2 login:
   recovery2Key: asOptional(asBase64),
+
+  // Username:
+  userId: asOptional(asBase64),
+  username: asOptional(asString),
 
   // Keys and assorted goodies:
   children: asOptional(asArray(raw => asLoginStash(raw))),
