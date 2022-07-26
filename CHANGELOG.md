@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.24 (2022-07-26)
+
+- fixed: Upgrade edge-sync-client to include patch
+
 ## v0.19.23 (2022-07-13)
 
 - added: Add optional from/to parameter to min and max swap errors
