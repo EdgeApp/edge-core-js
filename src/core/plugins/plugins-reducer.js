@@ -44,6 +44,14 @@ export const plugins = (
       }
       for (const pluginId of Object.keys(action.payload)) {
         const plugin = action.payload[pluginId]
+
+        // Don't stop loading the bundle if plugin(s) fail to load. Some plugins may rely on advanced features
+        // that aren't locally available so we can skip loading those but should continue and load what we can.
+        if (plugin == null) {
+          out.init = { ...out.init, [pluginId]: false }
+          continue
+        }
+
         // $FlowFixMe - Flow doesn't see the type refinement here:
         if (plugin.currencyInfo != null) out.currency[pluginId] = plugin
         // $FlowFixMe
