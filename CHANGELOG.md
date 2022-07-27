@@ -1,7 +1,12 @@
 # edge-core-js
 
+## v0.19.25 (2022-07-27)
+
+- changed: Allow individual plugins to resist being loaded by returning `undefined` instead of an `EdgeCurrencyPlugin` object.
+
 ## v0.19.24 (2022-07-26)
 
+- changed: Randomly generate loginIds so recycled usernames don't cause conflicts
 - fixed: Upgrade edge-sync-client to include patch
 
 ## v0.19.23 (2022-07-13)
