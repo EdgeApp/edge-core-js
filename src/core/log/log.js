@@ -25,7 +25,9 @@ function makeLogMethod(
     for (let i = 0; i < arguments.length; ++i) {
       const arg = arguments[i]
       if (i > 0) message += ' '
-      message += typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)
+      if (typeof arg === 'string') message += arg
+      else if (arg instanceof Error) message += String(arg)
+      else message += JSON.stringify(arg, null, 2)
     }
 
     onLog({ message, source, time: new Date(), type })
