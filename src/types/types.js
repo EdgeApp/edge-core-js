@@ -430,6 +430,7 @@ export type EdgeSpendInfo = {
   noUnconfirmed?: boolean,
   networkFeeOption?: 'high' | 'standard' | 'low' | 'custom',
   customNetworkFee?: JsonObject, // Some kind of currency-specific JSON
+  pendingTxs?: EdgeTransaction[],
   rbfTxid?: string,
   skipChecks?: boolean,
 
