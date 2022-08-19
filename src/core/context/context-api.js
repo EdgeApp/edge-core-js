@@ -35,6 +35,7 @@ import { EdgeInternalStuff } from './internal-api.js'
 
 export function makeContextApi(ai: ApiInput): EdgeContext {
   const appId = ai.props.state.login.appId
+  const clientId = base58.stringify(ai.props.state.login.clientId)
   const $internalStuff = new EdgeInternalStuff(ai)
   let pauseTimer: ReturnType<typeof setTimeout> | void
 
@@ -43,6 +44,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     watch: watchMethod,
 
     appId,
+    clientId,
 
     async close(): Promise<void> {
       ai.props.close()

@@ -1288,6 +1288,7 @@ export type EdgeContext = {
   +close: () => Promise<void>,
 
   +appId: string,
+  +clientId: string, // Unique ID for each app installation
 
   // Local user management:
   localUsers: EdgeUserInfo[],

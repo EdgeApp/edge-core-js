@@ -13,6 +13,17 @@ const contextOptions = { apiKey: '', appId: '' }
 const quiet = { onLog() {} }
 
 describe('context', function () {
+  it('has basic properties', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      appId: 'test'
+    })
+
+    expect(context.appId).equals('test')
+    expect(context.clientId).match(/[0-9a-zA-Z]+/)
+  })
+
   it('list usernames in local storage', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)

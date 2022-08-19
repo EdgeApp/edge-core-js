@@ -16,12 +16,15 @@ export type LoginStashMap = { [username: string]: LoginStash }
 export type LoginState = {
   +apiKey: string,
   +appId: string,
+  +clientId: Uint8Array,
   +deviceDescription: string | null,
   +serverUri: string,
   +stashes: LoginStashMap,
   +localUsers: EdgeUserInfo[],
   +walletInfos: WalletInfoFullMap
 }
+
+const dummyClientId = new Uint8Array(0)
 
 export const login: FatReducer<
   LoginState,
@@ -34,6 +37,10 @@ export const login: FatReducer<
 
   appId(state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.appId : state
+  },
+
+  clientId(state = dummyClientId, action: RootAction): Uint8Array {
+    return action.type === 'INIT' ? action.payload.clientId : state
   },
 
   deviceDescription(state = null, action: RootAction): string | null {
