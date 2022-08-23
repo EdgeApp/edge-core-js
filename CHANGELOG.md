@@ -1,5 +1,11 @@
 # edge-core-js
 
+## v0.19.26 (2022-08-19)
+
+- added: `EdgeContext.clientId`.
+- added: `EdgeSpendInfo.pendingTxs` and `EdgeSpendInfo.skipChecks` flags.
+- fixed: Show useful information when logging errors, instead of just `{}`.
+
 ## v0.19.25 (2022-07-27)
 
 - changed: Allow individual plugins to resist being loaded by returning `undefined` instead of an `EdgeCurrencyPlugin` object.
