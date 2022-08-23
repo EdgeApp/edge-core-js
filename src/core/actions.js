@@ -317,6 +317,7 @@ export type RootAction =
         apiKey: string,
         appId: string,
         authServer: string,
+        clientId: Uint8Array,
         deviceDescription: string | null,
         hideKeys: boolean,
         logSettings: EdgeLogSettings,

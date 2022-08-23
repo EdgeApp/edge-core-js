@@ -11,6 +11,7 @@ import {
   type EdgeRateHint
 } from '../types/types.js'
 import { type RootAction } from './actions.js'
+import { CLIENT_FILE_NAME, clientFile } from './context/client-file.js'
 import { type LogBackend, filterLogs, makeLog } from './log/log.js'
 import { loadStashes } from './login/login-stash.js'
 import { type PluginIos, watchPlugins } from './plugins/plugins-actions.js'
@@ -59,6 +60,13 @@ export async function makeContext(
   })
   const log = makeLog(logBackend, 'edge-core')
 
+  // Load the clientId from disk:
+  let clientInfo = await clientFile.load(io.disklet, CLIENT_FILE_NAME)
+  if (clientInfo == null) {
+    clientInfo = { clientId: io.random(16) }
+    await clientFile.save(io.disklet, CLIENT_FILE_NAME, clientInfo)
+  }
+
   // Load the rate hint cache from disk:
   const rateHintCache: EdgeRateHint[] = await io.disklet
     .getText('rateHintCache.json')
@@ -73,6 +81,7 @@ export async function makeContext(
       apiKey,
       appId,
       authServer,
+      clientId: clientInfo.clientId,
       deviceDescription,
       hideKeys,
       logSettings,
