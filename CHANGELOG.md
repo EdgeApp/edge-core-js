@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.27 (2022-08-25)
+
+- fixed: Correctly pass `EdgeSpendInfo.skipChecks` to the currency plugin.
+
 ## v0.19.26 (2022-08-19)
 
 - added: `EdgeContext.clientId`.
