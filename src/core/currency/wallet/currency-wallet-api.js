@@ -420,6 +420,7 @@ export function makeCurrencyWalletApi(
       const {
         currencyCode = currencyInfo.currencyCode,
         privateKeys,
+        skipChecks,
         spendTargets = [],
         noUnconfirmed = false,
         networkFeeOption = 'standard',
@@ -472,6 +473,7 @@ export function makeCurrencyWalletApi(
 
       const tx: EdgeTransaction = await engine.makeSpend({
         currencyCode,
+        skipChecks,
         spendTargets: cleanTargets,
         noUnconfirmed,
         networkFeeOption,
