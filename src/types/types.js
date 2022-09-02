@@ -307,7 +307,7 @@ export type EdgeCurrencyInfo = {
   requiredConfirmations?: number, // Block confirmations required for a tx
   memoMaxLength?: number, // Max number of text characters, if supported
   memoMaxValue?: string, // Max numerical value, if supported
-  memoType?: 'text' | 'number' | 'other', // undefined means no memo support
+  memoType?: 'text' | 'number' | 'hex' | 'other', // undefined means no memo support
 
   // Explorers:
   addressExplorer: string,
