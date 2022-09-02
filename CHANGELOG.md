@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.28 (2022-09-02)
+
+- added: `hex` option for memoType
+
 ## v0.19.27 (2022-08-25)
 
 - fixed: Correctly pass `EdgeSpendInfo.skipChecks` to the currency plugin.
