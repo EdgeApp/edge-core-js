@@ -35,6 +35,7 @@ describe('context', function () {
       {
         keyLoginEnabled: true,
         lastLogin: fakeUser.lastLogin,
+        loginId: 'BTnpEn7pabDXbcv7VxnKBDsn4CVSwLRA25J8U84qmg4h',
         pinLoginEnabled: true,
         recovery2Key: 'NVADGXzb5Zc55PYXVVT7GRcXPnY9NZJUjiZK8aQnidc',
         username: 'js test 0',
