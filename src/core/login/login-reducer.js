@@ -65,6 +65,7 @@ export const login: FatReducer<
         out.push({
           keyLoginEnabled,
           lastLogin: stashTree.lastLogin,
+          loginId: base58.stringify(stashTree.loginId),
           pinLoginEnabled: pin2Stash != null,
           recovery2Key:
             recovery2Key != null ? base58.stringify(recovery2Key) : undefined,

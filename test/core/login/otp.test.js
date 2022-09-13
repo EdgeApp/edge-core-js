@@ -89,6 +89,7 @@ describe('otp', function () {
       {
         keyLoginEnabled: false,
         lastLogin: now,
+        loginId: 'BTnpEn7pabDXbcv7VxnKBDsn4CVSwLRA25J8U84qmg4h',
         pinLoginEnabled: false,
         recovery2Key: undefined,
         username: 'js test 0',

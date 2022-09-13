@@ -80,6 +80,7 @@ describe('creation', function () {
       {
         keyLoginEnabled: true,
         lastLogin: now,
+        loginId: account.rootLoginId,
         pinLoginEnabled: true,
         recovery2Key: undefined,
         username: 'some fancy user',
