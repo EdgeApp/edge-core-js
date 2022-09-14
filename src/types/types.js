@@ -845,6 +845,10 @@ export type EdgeSwapResult = {
   +transaction: EdgeTransaction
 }
 
+export type EdgeSwapApproveOptions = {
+  metadata?: EdgeMetadata
+}
+
 /**
  * If a provider can satisfy a request, what is their price?
  */
@@ -857,7 +861,7 @@ export type EdgeSwapQuote = {
   +pluginId: string,
   +expirationDate?: Date,
 
-  +approve: () => Promise<EdgeSwapResult>,
+  +approve: (opts?: EdgeSwapApproveOptions) => Promise<EdgeSwapResult>,
   +close: () => Promise<void>
 }
 
