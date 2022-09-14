@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.29 (2022-09-13)
+
+- added: Include the `loginId` in `EdgeContext.localUsers`.
+- added: Accept an optional metadata parameter to `EdgeSwapQuote.approve`.
+
 ## v0.19.28 (2022-09-02)
 
 - added: `hex` option for memoType
