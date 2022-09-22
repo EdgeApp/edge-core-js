@@ -428,7 +428,8 @@ export function makeCurrencyWalletApi(
         rbfTxid,
         metadata,
         swapData,
-        otherParams
+        otherParams,
+        pendingTxs
       } = spendInfo
 
       const cleanTargets: EdgeSpendTarget[] = []
@@ -480,7 +481,8 @@ export function makeCurrencyWalletApi(
         customNetworkFee,
         rbfTxid,
         metadata,
-        otherParams
+        otherParams,
+        pendingTxs
       })
       tx.networkFeeOption = networkFeeOption
       tx.requestedCustomFee = customNetworkFee
