@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.30 (2022-09-22)
+
+- fixed: Correctly pass `EdgeSpendInfo.pendingTxs` to the currency plugin.
+
 ## v0.19.29 (2022-09-13)
 
 - added: Include the `loginId` in `EdgeContext.localUsers`.
