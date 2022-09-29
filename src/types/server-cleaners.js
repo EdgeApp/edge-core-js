@@ -315,7 +315,7 @@ export const asOtpErrorPayload: Cleaner<OtpErrorPayload> = asObject({
   login_id: asOptional(asBase64),
   otp_reset_auth: asOptional(asString),
   otp_timeout_date: asOptional(asDate),
-  reason: asOptional(asString),
+  reason: asOptional(asValue('ip', 'otp'), 'otp'),
   voucher_activates: asOptional(asDate),
   voucher_auth: asOptional(asBase64),
   voucher_id: asOptional(asString)

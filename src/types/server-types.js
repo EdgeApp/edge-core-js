@@ -248,10 +248,19 @@ export type MessagesPayload = Array<{
  * Returned when the 2fa authentication fails.
  */
 export type OtpErrorPayload = {
+  // This should usually be present:
   login_id?: Uint8Array,
+
+  // Use this to request an OTP reset (if enabled):
   otp_reset_auth?: string,
+
+  // Set if an OTP reset has already been requested:
   otp_timeout_date?: Date,
-  reason?: string,
+
+  // We might also get a different reason:
+  reason: 'ip' | 'otp',
+
+  // We might also get a login voucher:
   voucher_activates?: Date,
   voucher_auth?: Uint8Array,
   voucher_id?: string

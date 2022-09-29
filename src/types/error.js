@@ -1,6 +1,6 @@
 // @flow
 
-import { type Cleaner } from 'cleaners'
+import { type Cleaner, asMaybe } from 'cleaners'
 import { base64 } from 'rfc4648'
 
 import { asOtpErrorPayload, asPasswordErrorPayload } from './server-cleaners.js'
@@ -127,36 +127,22 @@ export class OtpError extends Error {
     this.name = 'OtpError'
     this.reason = 'otp'
 
-    try {
-      const clean = asOtpErrorPayload(resultsJson)
+    const clean = asMaybe(asOtpErrorPayload)(resultsJson)
+    if (clean == null) return
 
-      // This should usually be present:
-      if (clean.login_id != null) {
-        this.loginId = base64.stringify(clean.login_id)
-      }
+    if (clean.login_id != null) {
+      this.loginId = base64.stringify(clean.login_id)
+    }
 
-      // Use this to request an OTP reset (if enabled):
-      if (clean.otp_reset_auth != null) {
-        this.resetToken = clean.otp_reset_auth
-      }
+    this.resetToken = clean.otp_reset_auth
+    this.reason = clean.reason
+    this.resetDate = clean.otp_timeout_date
 
-      // We might also get a different reason:
-      if (clean.reason === 'ip') this.reason = 'ip'
-
-      // Set if an OTP reset has already been requested:
-      if (clean.otp_timeout_date != null) {
-        this.resetDate = new Date(clean.otp_timeout_date)
-      }
-
-      // We might also get a login voucher:
-      if (clean.voucher_activates != null) {
-        this.voucherActivates = clean.voucher_activates
-      }
-      if (clean.voucher_auth != null) {
-        this.voucherAuth = base64.stringify(clean.voucher_auth)
-      }
-      if (clean.voucher_id != null) this.voucherId = clean.voucher_id
-    } catch (e) {}
+    this.voucherActivates = clean.voucher_activates
+    if (clean.voucher_auth != null) {
+      this.voucherAuth = base64.stringify(clean.voucher_auth)
+    }
+    this.voucherId = clean.voucher_id
   }
 }
 
@@ -179,10 +165,10 @@ export class PasswordError extends Error {
     super(message)
     this.name = 'PasswordError'
 
-    try {
-      const clean = asPasswordErrorPayload(resultsJson)
-      this.wait = clean.wait_seconds
-    } catch (e) {}
+    const clean = asMaybe(asPasswordErrorPayload)(resultsJson)
+    if (clean == null) return
+
+    this.wait = clean.wait_seconds
   }
 }
 
