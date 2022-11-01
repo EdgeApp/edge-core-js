@@ -4,6 +4,7 @@ import { add, div, lte, mul, sub } from 'biggystring'
 import { type Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
+import { upgradeCurrencyCode } from '../../../types/type-helpers.js'
 import {
   type EdgeBalances,
   type EdgeCurrencyCodeOptions,
@@ -416,9 +417,7 @@ export function makeCurrencyWalletApi(
     },
 
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-      const { currencyInfo } = input.props.walletState
       const {
-        currencyCode = currencyInfo.currencyCode,
         privateKeys,
         skipChecks,
         spendTargets = [],
@@ -432,6 +431,15 @@ export function makeCurrencyWalletApi(
         pendingTxs
       } = spendInfo
 
+      // Figure out which asset this is:
+      const { currencyCode, tokenId } = upgradeCurrencyCode({
+        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+        currencyInfo: plugin.currencyInfo,
+        currencyCode: spendInfo.currencyCode,
+        tokenId: spendInfo.tokenId
+      })
+
+      // Check the spend targets:
       const cleanTargets: EdgeSpendTarget[] = []
       const savedTargets: SavedSpendTargets = []
       for (const target of spendTargets) {
@@ -458,6 +466,7 @@ export function makeCurrencyWalletApi(
         })
         savedTargets.push({
           currencyCode,
+          tokenId,
           memo,
           nativeAmount,
           publicAddress,
@@ -474,6 +483,7 @@ export function makeCurrencyWalletApi(
 
       const tx: EdgeTransaction = await engine.makeSpend({
         currencyCode,
+        tokenId,
         skipChecks,
         spendTargets: cleanTargets,
         noUnconfirmed,

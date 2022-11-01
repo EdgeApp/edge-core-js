@@ -4,7 +4,8 @@ import { type Cleaner, asMaybe } from 'cleaners'
 import { base64 } from 'rfc4648'
 
 import { asOtpErrorPayload, asPasswordErrorPayload } from './server-cleaners.js'
-import type { EdgeSwapInfo } from './types.js'
+import { upgradeCurrencyCode } from './type-helpers.js'
+import type { EdgeSwapInfo, EdgeSwapRequest } from './types.js'
 
 /*
  * These are errors the core knows about.
@@ -264,19 +265,58 @@ export class SwapCurrencyError extends Error {
   +pluginId: string
   +fromCurrency: string
   +toCurrency: string
+  +fromTokenId: string | void
+  +toTokenId: string | void
 
   constructor(
     swapInfo: EdgeSwapInfo,
-    fromCurrency: string,
-    toCurrency: string
+    // Passing currency codes is deprecated:
+    request: string | EdgeSwapRequest,
+    toCurrency?: string
   ) {
-    super(
-      `${swapInfo.displayName} does not support ${fromCurrency} to ${toCurrency}`
-    )
-    this.name = 'SwapCurrencyError'
-    this.pluginId = swapInfo.pluginId
-    this.fromCurrency = fromCurrency
-    this.toCurrency = toCurrency
+    // Backwards-compatible currency code extraction:
+    if (typeof request === 'string') {
+      toCurrency = toCurrency ?? 'unknown' // This keeps the types happy
+      super(
+        `${swapInfo.displayName} does not support ${request} to ${toCurrency}`
+      )
+      this.name = 'SwapCurrencyError'
+      this.pluginId = swapInfo.pluginId
+      this.fromCurrency = request
+      this.toCurrency = toCurrency
+    } else {
+      const from = upgradeCurrencyCode({
+        allTokens: request.fromWallet.currencyConfig.allTokens,
+        currencyInfo: request.fromWallet.currencyInfo,
+        currencyCode: request.fromCurrencyCode,
+        tokenId: request.fromTokenId
+      })
+      const to = upgradeCurrencyCode({
+        allTokens: request.toWallet.currencyConfig.allTokens,
+        currencyInfo: request.toWallet.currencyInfo,
+        currencyCode: request.toCurrencyCode,
+        tokenId: request.toTokenId
+      })
+
+      const fromString: string =
+        from.tokenId == null
+          ? from.currencyCode
+          : `${from.currencyCode} (${from.tokenId})`
+      const toString: string =
+        to.tokenId == null
+          ? to.currencyCode
+          : `${to.currencyCode} (${to.tokenId})`
+
+      super(
+        `${swapInfo.displayName} does not support ${fromString} to ${toString}`
+      )
+      this.name = 'SwapCurrencyError'
+      this.pluginId = swapInfo.pluginId
+      this.fromCurrency = from.currencyCode
+      this.fromTokenId = from.tokenId
+      this.toCurrency = to.currencyCode
+      this.toTokenId = to.tokenId
+    }
   }
 }
 
