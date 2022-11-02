@@ -35,10 +35,6 @@ export const fakeSwapPlugin: EdgeSwapPlugin = {
     }
 
     // We don't actually support any currencies:
-    throw new SwapCurrencyError(
-      swapInfo,
-      request.fromCurrencyCode,
-      request.toCurrencyCode
-    )
+    throw new SwapCurrencyError(swapInfo, request)
   }
 }

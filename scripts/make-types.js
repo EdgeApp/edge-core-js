@@ -37,9 +37,10 @@ const files = [
   { js: 'src/types/error.js', ts: 'lib/types/error.ts' },
   { js: 'src/types/exports.js', ts: 'lib/types/exports.ts' },
   { js: 'src/types/fake-types.js', ts: 'lib/types/fake-types.ts' },
-  { js: 'src/types/types.js', ts: 'lib/types/types.ts' },
+  { js: 'src/types/server-cleaners.js', ts: 'lib/types/server-cleaners.ts' },
   { js: 'src/types/server-types.js', ts: 'lib/types/server-types.ts' },
-  { js: 'src/types/server-cleaners.js', ts: 'lib/types/server-cleaners.ts' }
+  { js: 'src/types/type-helpers.js', ts: 'lib/types/type-helpers.ts' },
+  { js: 'src/types/types.js', ts: 'lib/types/types.ts' }
 ]
 
 async function main() {

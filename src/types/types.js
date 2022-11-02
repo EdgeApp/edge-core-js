@@ -422,7 +422,8 @@ export type EdgePaymentProtocolInfo = {
 
 export type EdgeSpendInfo = {
   // Basic information:
-  currencyCode?: string,
+  currencyCode?: string, // Deprecated
+  tokenId?: string,
   privateKeys?: string[],
   spendTargets: EdgeSpendTarget[],
 
@@ -827,12 +828,16 @@ export type EdgeSwapRequest = {
   toWallet: EdgeCurrencyWallet,
 
   // What?
-  fromCurrencyCode: string,
-  toCurrencyCode: string,
+  fromTokenId?: string,
+  toTokenId?: string,
 
   // How much?
   nativeAmount: string,
-  quoteFor: 'from' | 'max' | 'to'
+  quoteFor: 'from' | 'max' | 'to',
+
+  // Deprecated. Use the tokenId instead:
+  fromCurrencyCode?: string,
+  toCurrencyCode?: string
 }
 
 /**
