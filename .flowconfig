@@ -1,8 +1,9 @@
 [ignore]
 <PROJECT_ROOT>/lib/.*
-.*/node_modules/react-native/.*
-.*/node_modules/react-native-fs/.*
 .*/node_modules/metro-bundler/.*
+.*/node_modules/react-native-fs/.*
+.*/node_modules/react-native/.*
+.*/node_modules/resolve/.*
 .*/node_modules/webpack-cli/.*
 
 [include]
