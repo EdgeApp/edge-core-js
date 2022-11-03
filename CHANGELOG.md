@@ -1,5 +1,16 @@
 # edge-core-js
 
+## v0.19.31 (2022-11-02)
+
+- added: Specifying token spends by their ID, instead of their imprecise currency code:
+  - `EdgeSpendInfo.tokenId`
+  - `EdgeSwapRequest.fromTokenId`
+  - `EdgeSwapRequest.toTokenId`
+- deprecated: Spending tokens by their currency code.
+  - `EdgeSpendInfo.currencyCode`
+  - `EdgeSwapRequest.fromCurrencyCode`
+  - `EdgeSwapRequest.toCurrencyCode`
+
 ## v0.19.30 (2022-09-22)
 
 - fixed: Correctly pass `EdgeSpendInfo.pendingTxs` to the currency plugin.
