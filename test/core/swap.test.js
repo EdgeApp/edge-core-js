@@ -4,12 +4,15 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { pickBestQuote } from '../../src/core/swap/swap-api.js'
-import { type EdgeSwapQuote } from '../../src/index.js'
+import { type EdgeSwapQuote, type EdgeSwapRequest } from '../../src/index.js'
 
 const typeHack: any = {}
 
+const request: EdgeSwapRequest = typeHack
+
 const quotes: EdgeSwapQuote[] = [
   {
+    request,
     fromNativeAmount: '51734472727286000',
     toNativeAmount: '347987',
     networkFee: {
@@ -25,6 +28,7 @@ const quotes: EdgeSwapQuote[] = [
     close: async () => undefined
   },
   {
+    request,
     isEstimate: false,
     fromNativeAmount: '51734472727286000',
     toNativeAmount: '321913.5410141837507493644',
@@ -38,6 +42,7 @@ const quotes: EdgeSwapQuote[] = [
     close: async () => undefined
   },
   {
+    request,
     fromNativeAmount: '51734472727286000',
     toNativeAmount: '327854',
     networkFee: {

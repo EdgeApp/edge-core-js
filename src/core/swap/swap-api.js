@@ -106,6 +106,8 @@ export async function fetchSwapQuote(
       for (const quote of quotes) {
         if (quote !== bestQuote) quote.close().catch(() => undefined)
       }
+      // $FlowFixMe - Here for backwards compatibility:
+      bestQuote.request = request
       return bridgifyObject(bestQuote)
     },
     (errors: any[]) => {

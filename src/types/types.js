@@ -858,6 +858,8 @@ export type EdgeSwapApproveOptions = {
  * If a provider can satisfy a request, what is their price?
  */
 export type EdgeSwapQuote = {
+  +request: EdgeSwapRequest,
+
   +isEstimate: boolean,
   +fromNativeAmount: string,
   +toNativeAmount: string,
