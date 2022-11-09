@@ -67,7 +67,7 @@ const fakeMetadata = {
 }
 
 // The EdgeTransaction.spendTargets type, but non-null:
-type SavedSpendTargets = $ElementType<EdgeTransaction, 'spendTargets'> & any[]
+type SavedSpendTargets = $PropertyType<EdgeTransaction, 'spendTargets'> & any[]
 
 /**
  * Creates an `EdgeCurrencyWallet` API object.
@@ -455,7 +455,6 @@ export function makeCurrencyWalletApi(
         })
         savedTargets.push({
           currencyCode,
-          tokenId,
           memo,
           nativeAmount,
           publicAddress,

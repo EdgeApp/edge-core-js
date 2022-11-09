@@ -43,7 +43,7 @@ export const defaultLogSettings: EdgeLogSettings = {
 }
 
 export const reducer: BuiltReducer<RootState, RootAction> = buildReducer({
-  accountCount(state = 0, action: RootAction): number {
+  accountCount(state: number = 0, action: RootAction): number {
     return action.type === 'LOGIN' ? state + 1 : state
   },
 

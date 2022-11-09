@@ -18,43 +18,42 @@ describe('confirmations API', function () {
       `Expected tx with blockHeight of ${tx.blockHeight} to be ${expected} at network blockHeight ${netBlockHeight} with ${required} required confs`
     ).equals(expected)
   }
-  const loop = (start: number, end: number, fn: (v: number) => void) => {
-    for (let i = start; i <= end; ++i) {
-      fn(i)
-    }
-  }
 
   it('correctly resolves to unconfirmed', function () {
     const txBlockHeight = 0
-    loop(1, 100, blockHeight => {
-      loop(1, 10, required => {
+    for (let blockHeight = 1; blockHeight <= 100; ++blockHeight) {
+      for (let required = 1; required <= 10; ++required) {
         helper(txBlockHeight, blockHeight, required, 'unconfirmed')
-      })
-    })
+      }
+    }
   })
   it('correctly resolves to confirmed', function () {
-    loop(0, 10, required => {
-      loop(100, 100 + required, blockHeight => {
+    for (let required = 0; required <= 10; ++required) {
+      for (
+        let blockHeight = 100;
+        blockHeight <= 100 + required;
+        ++blockHeight
+      ) {
         const txBlockHeight = blockHeight - Math.max(0, required - 1) // Subtract 1 because same blockHeights counts as 1 conf
         helper(txBlockHeight, blockHeight, required, 'confirmed')
-      })
-    })
+      }
+    }
   })
   it('correctly resolves to syncing', function () {
     const txBlockHeight = 1000
-    loop(-1, 100, blockHeight => {
-      loop(0, 10, required => {
+    for (let blockHeight = -1; blockHeight <= 100; ++blockHeight) {
+      for (let required = 0; required <= 10; ++required) {
         helper(0, blockHeight, required, 'unconfirmed')
         helper(txBlockHeight, blockHeight, required, 'syncing')
-      })
-    })
+      }
+    }
   })
   it('correctly resolves to dropped', function () {
     const txBlockHeight = -1
-    loop(-1, 100, blockHeight => {
-      loop(0, 10, required => {
+    for (let blockHeight = -1; blockHeight <= 100; ++blockHeight) {
+      for (let required = 0; required <= 10; ++required) {
         helper(txBlockHeight, blockHeight, required, 'dropped')
-      })
-    })
+      }
+    }
   })
 })

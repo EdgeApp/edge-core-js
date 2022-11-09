@@ -1,6 +1,10 @@
 // @flow
 
-import { type ArrayLike, type Disklet, type DiskletListing } from 'disklet'
+import {
+  type ArrayLike, // @ts-delete
+  type Disklet,
+  type DiskletListing
+} from 'disklet'
 import { bridgifyObject } from 'yaob'
 
 import { asEdgeBox } from '../../types/server-cleaners.js'
