@@ -380,7 +380,10 @@ export function makeCurrencyWalletApi(
           }
           // add this tx / file to the output
           const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
-          if (searchStringFilter(edgeTx, opts) && dateFilter(edgeTx, opts)) {
+          if (
+            searchStringFilter(ai, edgeTx, opts) &&
+            dateFilter(edgeTx, opts)
+          ) {
             out.push(edgeTx)
           }
           searchedTxs++
@@ -638,7 +641,7 @@ export function combineTxWithFile(
   file: TransactionFile | void,
   currencyCode: string
 ): EdgeTransaction {
-  const wallet = input.props.walletOutput.walletApi
+  const walletId = input.props.walletId
   const walletCurrency = input.props.walletState.currencyInfo.currencyCode
   const walletFiat = input.props.walletState.fiat
 
@@ -660,7 +663,7 @@ export function combineTxWithFile(
     networkFee: tx.networkFee[currencyCode] ?? '0',
     parentNetworkFee: tx.networkFee[walletCurrency],
     currencyCode,
-    wallet,
+    walletId,
     metadata: {}
   }
 

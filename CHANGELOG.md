@@ -1,5 +1,10 @@
 # edge-core-js
 
+## Unreleased
+
+- added: `EdgeTransaction.walletId`.
+- deprecated: `EdgeTransaction.wallet`. Use `EdgeTransaction.walletId` instead.
+
 ## v0.19.31 (2022-11-02)
 
 - added: Specifying token spends by their ID, instead of their imprecise currency code:

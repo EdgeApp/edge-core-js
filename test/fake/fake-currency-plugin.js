@@ -81,11 +81,13 @@ const asState = asObject({
  * Currency plugin transaction engine.
  */
 class FakeCurrencyEngine {
+  _walletId: string
   callbacks: EdgeCurrencyEngineCallbacks
   running: boolean
   state: State
 
   constructor(walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
+    this._walletId = walletInfo.id
     this.callbacks = opts.callbacks
     this.running = false
     this.state = {
@@ -299,7 +301,8 @@ class FakeCurrencyEngine {
       otherParams: {},
       ourReceiveAddresses: [],
       signedTx: '',
-      txid: 'spend'
+      txid: 'spend',
+      walletId: this._walletId
     })
   }
 
