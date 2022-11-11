@@ -13,6 +13,63 @@ const contextOptions = { apiKey: '', appId: '' }
 const quiet = { onLog() {} }
 
 describe('context', function () {
+  it('check valid login server override login2.edge.app', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      authServer: 'https://login2.edge.app/app',
+      appId: 'test'
+    })
+
+    expect(context.appId).equals('test')
+    expect(context.clientId).match(/[0-9a-zA-Z]+/)
+  })
+  it('check valid login server override login2.edgetest.app', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      authServer: 'https://login2.edgetest.app/app',
+      appId: 'test'
+    })
+
+    expect(context.appId).equals('test')
+    expect(context.clientId).match(/[0-9a-zA-Z]+/)
+  })
+  it('check valid login server override localhost', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      authServer: 'https://localhost/app',
+      appId: 'test'
+    })
+
+    expect(context.appId).equals('test')
+    expect(context.clientId).match(/[0-9a-zA-Z]+/)
+  })
+  it('check valid login server override localhost:8080', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      authServer: 'https://localhost:8080/app',
+      appId: 'test'
+    })
+
+    expect(context.appId).equals('test')
+    expect(context.clientId).match(/[0-9a-zA-Z]+/)
+  })
+  it('check invalid login server override hacker.com', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world
+      .makeEdgeContext({
+        ...contextOptions,
+        authServer: 'https://login.hacker.com/app',
+        appId: 'test'
+      })
+      .catch(e => e.message)
+
+    expect(context).equals('Invalid Login Server')
+  })
+
   it('has basic properties', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({

@@ -20,6 +20,8 @@ import { type RootState, defaultLogSettings, reducer } from './root-reducer.js'
 
 let allContexts: EdgeContext[] = []
 
+const ACCEPTED_SERVER_DOMAINS = ['edge.app', 'edgetest.app', 'localhost']
+
 const composeEnhancers =
   typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
     ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'core' })
@@ -39,7 +41,7 @@ export async function makeContext(
   const {
     apiKey,
     appId = '',
-    authServer = 'https://auth.airbitz.co/api',
+    authServer = 'https://login.edge.app/api',
     deviceDescription = null,
     hideKeys = false,
     plugins: pluginsInit = {}
@@ -47,6 +49,14 @@ export async function makeContext(
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
   if (apiKey == null) {
     throw new Error('No API key provided')
+  }
+
+  const dnsName = authServer.split('//')[1].split('/')[0].split(':')[0]
+  const validDns = ACCEPTED_SERVER_DOMAINS.some(domain =>
+    dnsName.endsWith(domain)
+  )
+  if (!validDns) {
+    throw new Error('Invalid Login Server')
   }
 
   // Create a redux store:
