@@ -1,8 +1,10 @@
 # edge-core-js
 
-## Unreleased
+## v0.19.32 (2022-11-14)
 
 - added: `EdgeTransaction.walletId`.
+- added: Add the swap request to the quote object as `EdgeSwapQuote.request`.
+- changed: Change login server to login.edge.app, and filter which domains we allow.
 - deprecated: `EdgeTransaction.wallet`. Use `EdgeTransaction.walletId` instead.
 
 ## v0.19.31 (2022-11-02)
