@@ -4,6 +4,7 @@ import {
   type EdgeGetTransactionsOptions,
   type EdgeTransaction
 } from '../../../types/types.js'
+import { type ApiInput } from '../../root-pixie.js'
 
 export function dateFilter(
   tx: EdgeTransaction,
@@ -16,9 +17,11 @@ export function dateFilter(
 }
 
 export function searchStringFilter(
+  ai: ApiInput,
   tx: EdgeTransaction,
   opts: EdgeGetTransactionsOptions
 ): boolean {
+  const currencyState = ai.props.state.currency
   const { searchString } = opts
 
   if (searchString != null && searchString !== '') {
@@ -61,12 +64,14 @@ export function searchStringFilter(
         notes = '',
         exchangeAmount = {}
       } = tx.metadata
+      const txCurrencyWalletState =
+        tx.walletId != null ? currencyState.wallets[tx.walletId] : undefined
       if (
         checkNullTypeAndIndex(category) ||
         checkNullTypeAndIndex(name) ||
         checkNullTypeAndIndex(notes) ||
-        (tx.wallet != null &&
-          checkNullTypeAndIndex(exchangeAmount[tx.wallet.fiatCurrencyCode]))
+        (txCurrencyWalletState != null &&
+          checkNullTypeAndIndex(exchangeAmount[txCurrencyWalletState.fiat]))
       )
         return true
     }

@@ -398,8 +398,11 @@ export type EdgeTransaction = {
 
   // Core:
   metadata?: EdgeMetadata,
-  wallet?: EdgeCurrencyWallet, // eslint-disable-line no-use-before-define
-  otherParams?: JsonObject
+  walletId: string,
+  otherParams?: JsonObject,
+
+  // Deprecated:
+  wallet?: EdgeCurrencyWallet // eslint-disable-line no-use-before-define
 }
 
 export type EdgeSpendTarget = {
