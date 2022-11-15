@@ -15,8 +15,8 @@ function jsToTs(code) {
     .replace(/\| void\b/g, '| undefined')
     .replace(/: void\b/g, ': undefined')
     .replace(
-      /\bReact\$StatelessFunctionalComponent<(\w+)>/g,
-      '(props: $1) => any'
+      /\bReact\$ComponentType<Props>/g,
+      '(props: Props) => { type: any, props: any, key: string | number | null }'
     )
 
     // Fix `import type` syntax:

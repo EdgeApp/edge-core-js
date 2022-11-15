@@ -7,12 +7,12 @@ import { Bridge, onMethod } from 'yaob'
 
 import {
   type EdgeCoreMessageEvent,
-  type EdgeCoreWebView
+  type EdgeCoreWebViewRef
 } from './react-native-types.js'
 
 export type YaobCallbacks = {
   handleMessage: (event: EdgeCoreMessageEvent) => void,
-  setRef: (element: EdgeCoreWebView | null) => void
+  setRef: (element: EdgeCoreWebViewRef | null) => void
 }
 
 /**
@@ -30,7 +30,7 @@ export function makeYaobCallbacks<Root>(
 ): YaobCallbacks {
   let bridge: Bridge | void
   let gatedRoot: Root | void
-  let webview: EdgeCoreWebView | null = null
+  let webview: EdgeCoreWebViewRef | null = null
 
   // Gate the root object on the WebView being ready:
   function tryReleasingRoot(): void {
@@ -92,7 +92,7 @@ export function makeYaobCallbacks<Root>(
   }
 
   // Listen for the WebView component to mount:
-  function setRef(element: EdgeCoreWebView | null): void {
+  function setRef(element: EdgeCoreWebViewRef | null): void {
     webview = element
     tryReleasingRoot()
   }

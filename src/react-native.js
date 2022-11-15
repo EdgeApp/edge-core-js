@@ -30,7 +30,7 @@ function onErrorDefault(error: any): void {
 
 let warningShown = false
 
-export function MakeEdgeContext(props: EdgeContextProps): React.Node {
+export function MakeEdgeContext(props: EdgeContextProps): React$Element<any> {
   const {
     allowDebugging,
     debug,
@@ -72,7 +72,9 @@ export function MakeEdgeContext(props: EdgeContextProps): React.Node {
   )
 }
 
-export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): React.Node {
+export function MakeFakeEdgeWorld(
+  props: EdgeFakeWorldProps
+): React$Element<any> {
   const {
     allowDebugging,
     crashReporter,
