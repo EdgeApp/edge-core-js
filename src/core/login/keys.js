@@ -8,6 +8,7 @@ import {
   type EdgeMetadata,
   type EdgeSpendInfo,
   type EdgeWalletInfo,
+  type EdgeWalletStates,
   type JsonObject
 } from '../../types/types.js'
 import { encrypt } from '../../util/crypto/crypto.js'
@@ -107,7 +108,7 @@ export function makeKeysKit(
  */
 export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
   const out: EdgeWalletInfo[] = []
-  const ids = {} // Maps ID's to output array indexes
+  const ids: { [id: string]: number } = {} // Maps ID's to output array indexes
 
   for (const keyInfo of keyInfos) {
     const { id, type, keys } = keyInfo
@@ -198,7 +199,7 @@ export function fixWalletInfo(walletInfo: EdgeWalletInfo): EdgeWalletInfo {
   const { id, keys, type } = walletInfo
 
   // Wallet types we need to fix:
-  const defaults = {
+  const defaults: { [type: string]: JsonObject } = {
     // BTC:
     'wallet:bitcoin-bip44': { format: 'bip44', coinType: 0 },
     'wallet:bitcoin-bip49': { format: 'bip49', coinType: 0 },
@@ -286,7 +287,7 @@ export function makeSplitWalletInfo(
   // Fix the keys:
   const networkName = type.replace(/wallet:/, '').replace('-', '')
   const newNetworkName = newWalletType.replace(/wallet:/, '').replace('-', '')
-  const newKeys = {}
+  const newKeys: JsonObject = {}
   for (const key of Object.keys(keys)) {
     if (key === networkName + 'Key') {
       newKeys[newNetworkName + 'Key'] = keys[key]
@@ -437,7 +438,7 @@ export async function splitWalletInfo(
   if (existingWalletInfo != null) {
     if (existingWalletInfo.archived || existingWalletInfo.deleted) {
       // Simply undelete the existing wallet:
-      const walletInfos = {}
+      const walletInfos: EdgeWalletStates = {}
       walletInfos[newWalletInfo.id] = { archived: false, deleted: false }
       await changeWalletStates(ai, accountId, walletInfos)
       return walletInfo.id

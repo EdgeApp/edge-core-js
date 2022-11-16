@@ -50,7 +50,7 @@ export function makeYaobCallbacks<Root>(
     if (
       bridge != null &&
       message.events != null &&
-      message.events.find(event => event.localId === 0) != null
+      message.events.find((event: any) => event.localId === 0) != null
     ) {
       bridge.close(new Error('edge-core: The WebView has been unmounted.'))
       bridge = undefined

@@ -304,7 +304,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   },
 
   watcher(input: CurrencyWalletInput) {
-    let lastState
+    let lastState: CurrencyWalletState | void
     let lastSettings: JsonObject = {}
     let lastTokens: EdgeTokenMap = {}
     let lastEnabledTokens: string[] = initialEnabledTokens

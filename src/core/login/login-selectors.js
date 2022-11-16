@@ -42,7 +42,7 @@ export function getStashById(ai: ApiInput, loginId: Uint8Array): StashLeaf {
 }
 
 // Hashed username cache:
-const userIdCache = {}
+const userIdCache: { [username: string]: Promise<Uint8Array> } = {}
 
 /**
  * Hashes a username into a userId.

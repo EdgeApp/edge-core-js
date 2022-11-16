@@ -19,6 +19,7 @@ import {
 } from '../../types/types.js'
 import { makePeriodicTask } from '../../util/periodic-task.js'
 import { snooze } from '../../util/snooze.js'
+import { type ExchangeState } from '../exchange/exchange-reducer.js'
 import { syncAccount } from '../login/login.js'
 import { waitForPlugins } from '../plugins/plugins-selectors.js'
 import { type RootProps, toApiInput } from '../root-pixie.js'
@@ -201,9 +202,9 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
   },
 
   watcher(input: AccountInput) {
-    let lastState
+    let lastState: AccountState | void
     // let lastWallets
-    let lastExchangeState
+    let lastExchangeState: ExchangeState | void
 
     return () => {
       const { accountState, accountOutput } = input.props
@@ -247,7 +248,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
   },
 
   currencyWallets(input: AccountInput) {
-    let lastActiveWalletIds
+    let lastActiveWalletIds: string[]
 
     return () => {
       const { accountOutput, accountState } = input.props

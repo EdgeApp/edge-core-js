@@ -63,7 +63,7 @@ function loadPlugins(pluginUris: string[]): void {
   }
 
   let loaded: number = 0
-  const handleLoad = () => {
+  const handleLoad = (): void => {
     if (++loaded >= pluginUris.length) lockEdgeCorePlugins()
   }
 
