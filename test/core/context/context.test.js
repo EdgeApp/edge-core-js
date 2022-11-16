@@ -5,6 +5,7 @@ import '../../fake/fake-plugins.js'
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
+import { validateServer } from '../../../src/core/root.js'
 import { makeFakeEdgeWorld } from '../../../src/index.js'
 import { expectRejection } from '../../expect-rejection.js'
 import { fakeUser, fakeUserDump } from '../../fake/fake-user.js'
@@ -13,61 +14,36 @@ const contextOptions = { apiKey: '', appId: '' }
 const quiet = { onLog() {} }
 
 describe('context', function () {
-  it('check valid login server override login2.edge.app', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext({
-      ...contextOptions,
-      authServer: 'https://login2.edge.app/app',
-      appId: 'test'
-    })
-
-    expect(context.appId).equals('test')
-    expect(context.clientId).match(/[0-9a-zA-Z]+/)
+  it('accepts valid login server overrides', function () {
+    for (const server of [
+      'https://login.edge.app/app',
+      'https://login2.edge.app/app',
+      'https://login-test.edge.app',
+      'https://login-test.edge.app/app',
+      'https://edgetest.app',
+      'https://login.edgetest.app',
+      'http://localhost',
+      'http://localhost/app',
+      'https://localhost/app',
+      'http://localhost:8080/app'
+    ]) {
+      validateServer(server)
+    }
   })
-  it('check valid login server override login2.edgetest.app', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext({
-      ...contextOptions,
-      authServer: 'https://login2.edgetest.app/app',
-      appId: 'test'
-    })
 
-    expect(context.appId).equals('test')
-    expect(context.clientId).match(/[0-9a-zA-Z]+/)
-  })
-  it('check valid login server override localhost', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext({
-      ...contextOptions,
-      authServer: 'https://localhost/app',
-      appId: 'test'
-    })
-
-    expect(context.appId).equals('test')
-    expect(context.clientId).match(/[0-9a-zA-Z]+/)
-  })
-  it('check valid login server override localhost:8080', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext({
-      ...contextOptions,
-      authServer: 'https://localhost:8080/app',
-      appId: 'test'
-    })
-
-    expect(context.appId).equals('test')
-    expect(context.clientId).match(/[0-9a-zA-Z]+/)
-  })
-  it('check invalid login server override hacker.com', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world
-      .makeEdgeContext({
-        ...contextOptions,
-        authServer: 'https://login.hacker.com/app',
-        appId: 'test'
-      })
-      .catch(e => e.message)
-
-    expect(context).equals('Invalid Login Server')
+  it('rejects invalid login server overrides', function () {
+    for (const server of [
+      'https://login.hacker.com/app',
+      'https://login.not-edge.app/app',
+      'https://edge.app:fun@hacker.com/app',
+      'https://login.edgetes.app/app',
+      'http://login.edge.app/app',
+      'ftp://login.edge.app'
+    ]) {
+      expect(() => validateServer(server)).to.throw(
+        'Only *.edge.app or localhost are valid login domain names'
+      )
+    }
   })
 
   it('has basic properties', async function () {

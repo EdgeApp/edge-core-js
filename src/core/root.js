@@ -20,8 +20,6 @@ import { type RootState, defaultLogSettings, reducer } from './root-reducer.js'
 
 let allContexts: EdgeContext[] = []
 
-const ACCEPTED_SERVER_DOMAINS = ['edge.app', 'edgetest.app', 'localhost']
-
 const composeEnhancers =
   typeof window === 'object' &&
   window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ != null
@@ -52,13 +50,7 @@ export async function makeContext(
     throw new Error('No API key provided')
   }
 
-  const dnsName = authServer.split('//')[1].split('/')[0].split(':')[0]
-  const validDns = ACCEPTED_SERVER_DOMAINS.some(domain =>
-    dnsName.endsWith(domain)
-  )
-  if (!validDns) {
-    throw new Error('Invalid Login Server')
-  }
+  validateServer(authServer)
 
   // Create a redux store:
   const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
@@ -152,4 +144,23 @@ export async function makeContext(
 export function closeEdge(): void {
   for (const context of allContexts) context.close().catch(() => {})
   allContexts = []
+}
+
+/**
+ * We only accept *.edge.app or localhost as valid domain names.
+ */
+export function validateServer(server: string): void {
+  const url = new URL(server)
+
+  if (url.protocol === 'http:') {
+    if (url.hostname === 'localhost') return
+  }
+  if (url.protocol === 'https:') {
+    if (url.hostname === 'localhost') return
+    if (/^([A-Za-z0-9_-]+\.)*edge(test)?\.app$/.test(url.hostname)) return
+  }
+
+  throw new Error(
+    `Only *.edge.app or localhost are valid login domain names, not ${url.hostname}`
+  )
 }
