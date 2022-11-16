@@ -24,7 +24,7 @@ import { timeout } from './util/promise.js'
 export { makeFakeIo } from './core/fake/fake-io.js'
 export * from './types/types.js'
 
-function onErrorDefault(error: any): void {
+function defaultOnError(error: any): void {
   console.error(error)
 }
 
@@ -32,25 +32,34 @@ let warningShown = false
 
 export function MakeEdgeContext(props: EdgeContextProps): React$Element<any> {
   const {
+    options,
     allowDebugging,
+    crashReporter = options?.crashReporter,
     debug,
     nativeIo,
     pluginUris = [],
-    onError = onErrorDefault,
+    onError = defaultOnError,
     onLoad,
-    ...rest
+    onLog = options?.onLog ?? defaultOnLog,
+
+    // Inner context options:
+    apiKey = options?.apiKey ?? '',
+    appId = options?.appId ?? '',
+    authServer = options?.authServer,
+    deviceDescription = options?.deviceDescription,
+    hideKeys = options?.hideKeys,
+    logSettings = options?.logSettings,
+    plugins = options?.plugins
   } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeEdgeContext')
   }
-  if (props.options != null && !warningShown) {
+  if (options != null && !warningShown) {
     warningShown = true
     console.warn(
       'The MakeEdgeContext options prop is deprecated - just pass the context options as normal props.'
     )
   }
-  const options = { ...props.options, ...rest }
-  const { crashReporter, onLog = defaultOnLog } = options
 
   return (
     <EdgeCoreBridge
@@ -64,7 +73,15 @@ export function MakeEdgeContext(props: EdgeContextProps): React$Element<any> {
             bridgifyNativeIo(nativeIo),
             bridgifyLogBackend({ crashReporter, onLog }),
             pluginUris,
-            options
+            {
+              apiKey,
+              appId,
+              authServer,
+              deviceDescription,
+              hideKeys,
+              logSettings,
+              plugins
+            }
           )
           .then(onLoad)
       }
@@ -82,7 +99,7 @@ export function MakeFakeEdgeWorld(
     nativeIo,
     pluginUris = [],
 
-    onError = onErrorDefault,
+    onError = defaultOnError,
     onLoad,
     onLog = defaultOnLog
   } = props

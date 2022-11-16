@@ -72,15 +72,17 @@ export interface EdgeContextProps extends CommonProps {
   // Deprecated. Just pass options like `apiKey` as normal props:
   options?: EdgeContextOptions;
 
+  // EdgeFakeWorldOptions:
+  crashReporter?: EdgeCrashReporter;
+  onLog?: EdgeOnLog;
+
   // EdgeContextOptions:
   apiKey?: string;
   appId?: string;
   authServer?: string;
-  crashReporter?: EdgeCrashReporter;
   deviceDescription?: string;
   hideKeys?: boolean;
   logSettings?: Partial<EdgeLogSettings>;
-  onLog?: EdgeOnLog;
   plugins?: EdgeCorePluginsInit;
 }
 
