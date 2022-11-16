@@ -284,10 +284,14 @@ export function makeCurrencyWalletCallbacks(
       if (created.length > 0) throttledOnNewTx(created)
     },
     onAddressChanged() {
-      emit(input.props.walletOutput.walletApi, 'addressChanged', undefined)
+      if (input.props.walletOutput.walletApi != null) {
+        emit(input.props.walletOutput.walletApi, 'addressChanged', undefined)
+      }
     },
     onWcNewContractCall(payload: JsonObject) {
-      emit(input.props.walletOutput.walletApi, 'wcNewContractCall', payload)
+      if (input.props.walletOutput.walletApi != null) {
+        emit(input.props.walletOutput.walletApi, 'wcNewContractCall', payload)
+      }
     },
     onTxidsChanged() {}
   }

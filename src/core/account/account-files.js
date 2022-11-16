@@ -26,6 +26,8 @@ const legacyWalletFile = makeJsonFile(asLegacyWalletFile)
 const walletStateFile = makeJsonFile(asWalletStateFile)
 const pluginSettingsFile = makeJsonFile(asPluginSettingsFile)
 
+const emptySettings = asPluginSettingsFile({})
+
 const PLUGIN_SETTINGS_FILE = 'PluginSettings.json'
 
 type LoadedWalletList = {
@@ -203,7 +205,9 @@ export async function changePluginUserSettings(
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
   // Write the new state to disk:
-  const clean = await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)
+  const clean =
+    (await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)) ??
+    emptySettings
   await pluginSettingsFile.save(disklet, PLUGIN_SETTINGS_FILE, {
     ...clean,
     userSettings: {
@@ -236,7 +240,9 @@ export async function changeSwapSettings(
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
   // Write the new state to disk:
-  const clean = await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)
+  const clean =
+    (await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)) ??
+    emptySettings
   await pluginSettingsFile.save(disklet, PLUGIN_SETTINGS_FILE, {
     ...clean,
     swapSettings: {
