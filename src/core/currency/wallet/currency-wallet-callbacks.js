@@ -328,7 +328,7 @@ const validateConfirmations = (
   const blockConfirmations =
     tx.blockHeight === 0 ? 0 : 1 + blockHeight - tx.blockHeight
   /*
-  A negative number of block confirmations means the wallet's block 
+  A negative number of block confirmations means the wallet's block
   height has not caught up with the transaction's block height, or the
   transaction is mined in a block which is apart of an chain fork.
   Either way, the transaction is considered unconfirmed.
