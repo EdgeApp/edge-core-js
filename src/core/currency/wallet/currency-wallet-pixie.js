@@ -185,7 +185,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     )
     input.onOutput(currencyWalletApi)
 
-    return stopUpdates
+    return await stopUpdates
   },
 
   // Starts & stops the engine for this wallet:
@@ -325,7 +325,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       // Update engine settings:
       const userSettings = accountState.userSettings[pluginId] ?? lastSettings
       if (lastSettings !== userSettings && engine != null) {
-        engine.changeUserSettings(userSettings)
+        await engine.changeUserSettings(userSettings)
       }
       lastSettings = userSettings
 
@@ -333,7 +333,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const customTokens = accountState.customTokens[pluginId] ?? lastTokens
       if (lastTokens !== customTokens && engine != null) {
         if (engine.changeCustomTokens != null) {
-          engine.changeCustomTokens(customTokens)
+          await engine.changeCustomTokens(customTokens)
         } else {
           for (const tokenId of Object.keys(customTokens)) {
             const token = customTokens[tokenId]

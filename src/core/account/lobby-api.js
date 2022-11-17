@@ -82,27 +82,26 @@ async function approveLoginRequest(
     loginKey: requestedLogin.loginKey,
     loginStash
   })
-  await sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
-    let timeout: ReturnType<typeof setTimeout> | void
-    const accountApi = ai.props.output.accounts[accountId].accountApi
-    if (accountApi != null) {
-      accountApi.on('close', () => {
-        if (timeout != null) clearTimeout(timeout)
-      })
-    }
+  await sendLobbyReply(ai, lobbyId, lobbyJson, replyData)
+  let timeout: ReturnType<typeof setTimeout> | void
+  const accountApi = ai.props.output.accounts[accountId].accountApi
+  if (accountApi != null) {
+    accountApi.on('close', () => {
+      if (timeout != null) clearTimeout(timeout)
+    })
+  }
 
-    timeout = setTimeout(() => {
-      timeout = undefined
-      syncAccount(ai, accountId)
-        .then(() => {
-          timeout = setTimeout(() => {
-            timeout = undefined
-            syncAccount(ai, accountId).catch(e => ai.props.onError(e))
-          }, 20000)
-        })
-        .catch(e => ai.props.onError(e))
-    }, 10000)
-  })
+  timeout = setTimeout(() => {
+    timeout = undefined
+    syncAccount(ai, accountId)
+      .then(() => {
+        timeout = setTimeout(() => {
+          timeout = undefined
+          syncAccount(ai, accountId).catch(e => ai.props.onError(e))
+        }, 20000)
+      })
+      .catch(e => ai.props.onError(e))
+  }, 10000)
 }
 
 /**

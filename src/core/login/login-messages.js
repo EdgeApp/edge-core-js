@@ -10,7 +10,9 @@ import { loginFetch } from './login-fetch.js'
 /**
  * Fetches any login-related messages for all the users on this device.
  */
-export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
+export async function fetchLoginMessages(
+  ai: ApiInput
+): Promise<EdgeLoginMessages> {
   const stashes = ai.props.state.login.stashes
 
   const loginMap: { [loginId: string]: string } = {} // loginId -> username
@@ -26,14 +28,13 @@ export function fetchLoginMessages(ai: ApiInput): Promise<EdgeLoginMessages> {
   const request = {
     loginIds
   }
-  return loginFetch(ai, 'POST', '/v2/messages', request).then(reply => {
-    const out: EdgeLoginMessages = {}
-    for (const message of asMessagesPayload(reply)) {
-      const { loginId, ...rest } = message
-      const id = base64.stringify(loginId)
-      const username = loginMap[id]
-      if (username != null) out[username] = { ...rest, loginId: id }
-    }
-    return out
-  })
+  const reply = await loginFetch(ai, 'POST', '/v2/messages', request)
+  const out: EdgeLoginMessages = {}
+  for (const message of asMessagesPayload(reply)) {
+    const { loginId, ...rest } = message
+    const id = base64.stringify(loginId)
+    const username = loginMap[id]
+    if (username != null) out[username] = { ...rest, loginId: id }
+  }
+  return out
 }

@@ -133,10 +133,9 @@ export async function resetOtp(
     userId: await hashUsername(ai, username),
     otpResetAuth: resetToken
   }
-  return loginFetch(ai, 'DELETE', '/v2/login/otp', request).then(reply => {
-    const { otpResetDate } = asOtpResetPayload(reply)
-    return otpResetDate
-  })
+  const reply = await loginFetch(ai, 'DELETE', '/v2/login/otp', request)
+  const { otpResetDate } = asOtpResetPayload(reply)
+  return otpResetDate
 }
 
 /**

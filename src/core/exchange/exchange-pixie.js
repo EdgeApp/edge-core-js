@@ -143,35 +143,30 @@ export const exchange: TamePixie<RootProps> = filterPixie(
  * Fetching exchange rates can fail in exciting ways,
  * so performs a fetch with maximum paranoia.
  */
-function fetchPluginRates(
+async function fetchPluginRates(
   plugin: EdgeRatePlugin,
   hintPairs: EdgeRateHint[],
   source: string,
   timestamp: number
 ): Promise<ExchangePair[]> {
-  try {
-    return plugin.fetchRates(hintPairs).then(pairs =>
-      pairs.map(pair => {
-        const { fromCurrency, toCurrency, rate } = pair
-        if (
-          typeof fromCurrency !== 'string' ||
-          typeof toCurrency !== 'string' ||
-          typeof rate !== 'number'
-        ) {
-          throw new TypeError('Invalid data format')
-        }
-        return {
-          fromCurrency,
-          toCurrency,
-          rate,
-          source,
-          timestamp
-        }
-      })
-    )
-  } catch (error) {
-    return Promise.reject(error)
-  }
+  const pairs = await plugin.fetchRates(hintPairs)
+  return pairs.map(pair => {
+    const { fromCurrency, toCurrency, rate } = pair
+    if (
+      typeof fromCurrency !== 'string' ||
+      typeof toCurrency !== 'string' ||
+      typeof rate !== 'number'
+    ) {
+      throw new TypeError('Invalid data format')
+    }
+    return {
+      fromCurrency,
+      toCurrency,
+      rate,
+      source,
+      timestamp
+    }
+  })
 }
 
 function isNewPair(

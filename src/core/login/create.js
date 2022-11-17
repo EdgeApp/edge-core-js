@@ -34,21 +34,20 @@ export type LoginCreateOpts = {
 /**
  * Determines whether or not a username is available.
  */
-export function usernameAvailable(
+export async function usernameAvailable(
   ai: ApiInput,
   username: string
 ): Promise<boolean> {
-  return hashUsername(ai, username).then(userId => {
-    const request = {
-      userId
-    }
-    return loginFetch(ai, 'POST', '/v2/login', request)
-      .then(reply => false) // It's not available if we can hit it!
-      .catch((error: mixed) => {
-        if (asMaybeUsernameError(error) != null) return true
-        throw error
-      })
-  })
+  const userId = await hashUsername(ai, username)
+  const request = {
+    userId
+  }
+  return loginFetch(ai, 'POST', '/v2/login', request)
+    .then(reply => false) // It's not available if we can hit it!
+    .catch((error: mixed) => {
+      if (asMaybeUsernameError(error) != null) return true
+      throw error
+    })
 }
 
 /**

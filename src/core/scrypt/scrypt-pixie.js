@@ -115,7 +115,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
     const { io, log } = input.props
     let benchmark: Promise<number>
 
-    function makeSnrp(targetMs: number): Promise<EdgeSnrp> {
+    async function makeSnrp(targetMs: number): Promise<EdgeSnrp> {
       // Run the benchmark if needed:
       if (benchmark == null) {
         benchmark = input.props.output.scrypt
@@ -131,13 +131,12 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
       }
 
       // Calculate an SNRP value:
-      return benchmark.then(benchMs => {
-        const snrp = calcSnrpForTarget(io.random(32), benchMs, targetMs)
-        log(
-          `snrp for ${targetMs}ms target: ${snrp.n} ${snrp.r} ${snrp.p} based on ${benchMs}ms benchmark`
-        )
-        return snrp
-      })
+      const benchMs = await benchmark
+      const snrp = calcSnrpForTarget(io.random(32), benchMs, targetMs)
+      log(
+        `snrp for ${targetMs}ms target: ${snrp.n} ${snrp.r} ${snrp.p} based on ${benchMs}ms benchmark`
+      )
+      return snrp
     }
 
     input.onOutput(makeSnrp)

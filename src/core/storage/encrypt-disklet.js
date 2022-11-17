@@ -18,18 +18,16 @@ export function encryptDisklet(
       return disklet.delete(path)
     },
 
-    getData(path: string): Promise<Uint8Array> {
-      return disklet
-        .getText(path)
-        .then(text => asEdgeBox(JSON.parse(text)))
-        .then(box => decrypt(box, dataKey))
+    async getData(path: string): Promise<Uint8Array> {
+      const text = await disklet.getText(path)
+      const box = asEdgeBox(JSON.parse(text))
+      return decrypt(box, dataKey)
     },
 
-    getText(path: string): Promise<string> {
-      return disklet
-        .getText(path)
-        .then(text => asEdgeBox(JSON.parse(text)))
-        .then(box => decryptText(box, dataKey))
+    async getText(path: string): Promise<string> {
+      const text = await disklet.getText(path)
+      const box = asEdgeBox(JSON.parse(text))
+      return decryptText(box, dataKey)
     },
 
     list(path?: string): Promise<DiskletListing> {

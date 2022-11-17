@@ -135,9 +135,8 @@ export async function syncRepo(
   // Update the repo status:
   status.lastSync = Date.now() / 1000
   if (hash != null) status.lastHash = hash
-  return await paths.baseDisklet
-    .setText('status.json', JSON.stringify(status))
-    .then(() => ({ status, changes }))
+  await paths.baseDisklet.setText('status.json', JSON.stringify(status))
+  return { status, changes }
 }
 
 /**
