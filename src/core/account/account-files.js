@@ -120,9 +120,10 @@ export async function loadAllWalletStates(
   )
 
   // Merge all that information together:
-  const legacyWalletInfos: EdgeWalletInfo[] = [].concat(
-    ...legacyLists.map(files => files.walletInfos)
-  )
+  const legacyWalletInfos: EdgeWalletInfo[] = []
+  for (const files of legacyLists) {
+    legacyWalletInfos.push(...files.walletInfos)
+  }
   const legacyWalletStates: EdgeWalletStates[] = legacyLists.map(
     files => files.walletStates
   )

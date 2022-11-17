@@ -26,10 +26,11 @@ export const currency: FatReducer<
       return next.accounts[id].activeWalletIds
     }
 
-    const allIds = next.accountIds.map(
-      accountId => next.accounts[accountId].activeWalletIds
-    )
-    return [].concat(...allIds)
+    const out: string[] = []
+    for (const accountId of next.accountIds) {
+      out.push(...next.accounts[accountId].activeWalletIds)
+    }
+    return out
   },
 
   wallets: mapReducer(
