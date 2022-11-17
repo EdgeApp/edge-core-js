@@ -600,8 +600,8 @@ export function makeCurrencyWalletApi(
             networkFeeOption,
             customNetworkFee
           })
-          .then(good => getMax(mid, max))
-          .catch(bad => getMax(min, mid))
+          .then(() => getMax(mid, max))
+          .catch(() => getMax(min, mid))
       }
 
       return getMax('0', add(balance, '1'))

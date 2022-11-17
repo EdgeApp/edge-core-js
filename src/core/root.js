@@ -140,7 +140,7 @@ export async function makeContext(
         syncClient
       })
     ),
-    e => log.error(e),
+    error => log.error(error),
     output => (mirror.output = output)
   )
 

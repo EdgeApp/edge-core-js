@@ -43,8 +43,8 @@ export async function fetchAppIdInfo(
     if (appName == null) throw new Error(`No appName in appId lookup response.`)
 
     return { displayImageUrl: imageUrl, displayName: appName }
-  } catch (e) {
-    ai.props.onError(e)
+  } catch (error) {
+    ai.props.onError(error)
 
     // If we can't find the info, just show the appId as a fallback:
     return { displayName: appId }
@@ -97,10 +97,10 @@ async function approveLoginRequest(
       .then(() => {
         timeout = setTimeout(() => {
           timeout = undefined
-          syncAccount(ai, accountId).catch(e => ai.props.onError(e))
+          syncAccount(ai, accountId).catch(error => ai.props.onError(error))
         }, 20000)
       })
-      .catch(e => ai.props.onError(e))
+      .catch(error => ai.props.onError(error))
   }, 10000)
 }
 

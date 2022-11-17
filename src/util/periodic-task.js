@@ -28,7 +28,7 @@ export function makePeriodicTask(
   msGap: number,
   opts: PeriodicTaskOptions = {}
 ): PeriodicTask {
-  const { onError = (e: mixed) => {} } = opts
+  const { onError = () => {} } = opts
 
   // A started task will keep bouncing between running & waiting.
   // The `running` flag will be true in the running state,

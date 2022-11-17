@@ -63,7 +63,7 @@ interface CommonProps {
   pluginUris?: string[];
 
   // Called if something goes wrong when starting the core:
-  onError?: (e: any) => mixed;
+  onError?: (error: any) => mixed;
 }
 
 export interface EdgeContextProps extends CommonProps {

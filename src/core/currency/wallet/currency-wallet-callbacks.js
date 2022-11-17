@@ -259,7 +259,9 @@ export function makeCurrencyWalletCallbacks(
           tx.spendTargets != null ||
           (fileNamesLoaded && fileNames[txidHash] == null)
         if (isNew) {
-          setupNewTxMetadata(input, tx).catch(e => input.props.onError(e))
+          setupNewTxMetadata(input, tx).catch(error =>
+            input.props.onError(error)
+          )
         }
 
         // Build the final transaction to show the user:
@@ -305,14 +307,14 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
     const changes = getStorageWalletLastChanges(props.state, walletId)
     if (changes !== lastChanges) {
       lastChanges = changes
-      loadAllFiles(input).catch(e => input.props.onError(e))
+      loadAllFiles(input).catch(error => input.props.onError(error))
     }
 
     input
       .nextProps()
       .then(checkChangesLoop)
-      .catch(e => {
-        if (!isPixieShutdownError(e)) input.props.onError(e)
+      .catch(error => {
+        if (!isPixieShutdownError(error)) input.props.onError(error)
       })
   }
   checkChangesLoop(input.props)

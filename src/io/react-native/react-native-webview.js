@@ -18,7 +18,7 @@ import { type YaobCallbacks, makeYaobCallbacks } from './yaob-callbacks.js'
 type Props = {
   allowDebugging?: boolean,
   debug?: boolean,
-  onError(e: any): mixed,
+  onError(error: any): mixed,
   onLoad(clientIo: ClientIo, root: WorkerApi): Promise<mixed>
 }
 

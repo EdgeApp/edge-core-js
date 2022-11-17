@@ -29,7 +29,7 @@ export type RootProps = {
   +io: EdgeIo,
   +log: EdgeLog,
   +logBackend: LogBackend,
-  +onError: (e: Error) => mixed,
+  +onError: (error: Error) => mixed,
   +output: RootOutput,
   +state: RootState,
   +syncClient: SyncClient

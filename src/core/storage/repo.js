@@ -59,7 +59,7 @@ export function loadRepoStatus(
   return paths.baseDisklet
     .getText('status.json')
     .then(text => ({ lastSync: 0, ...JSON.parse(text) }))
-    .catch(e => fallback)
+    .catch(() => fallback)
 }
 
 /**

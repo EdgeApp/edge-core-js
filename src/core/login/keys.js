@@ -461,8 +461,8 @@ export async function splitWalletInfo(
         await wallet.setFiatCurrencyCode(oldWallet.fiatCurrencyCode)
       }
     }
-  } catch (e) {
-    ai.props.onError(e)
+  } catch (error) {
+    ai.props.onError(error)
   }
 
   return newWalletInfo.id
