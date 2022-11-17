@@ -26,7 +26,9 @@ function checkLogin(login: LoginTree): void {
 
 export function findAppLogin(loginTree: LoginTree, appId: string): LoginTree {
   const out = searchTree(loginTree, login => login.appId === appId)
-  if (!out) throw new Error(`Internal error: cannot find login for ${appId}`)
+  if (out == null) {
+    throw new Error(`Internal error: cannot find login for ${appId}`)
+  }
   return out
 }
 

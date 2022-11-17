@@ -288,7 +288,7 @@ async function getLegacyFileNames(
     const fileName = legacyFileNames[i]
     const fileNameMap = legacyMap[fileName]
     // If we haven't converted it, then open the legacy file and convert it to the new format
-    if (fileNameMap) {
+    if (fileNameMap != null) {
       const { timestamp, txidHash } = fileNameMap
       newFormatFileNames[txidHash] = { creationDate: timestamp, fileName }
     } else {
@@ -305,7 +305,7 @@ async function getLegacyFileNames(
     legacyMap[fileName] = { timestamp: creationDate, txidHash }
   })
 
-  if (convertFileNames.length) {
+  if (convertFileNames.length > 0) {
     await Promise.all(convertFileNames)
     // Cache the new results
     await legacyMapFile
@@ -403,7 +403,7 @@ export async function setCurrencyWalletTxMetadata(
 
   // Find the tx:
   const tx = input.props.walletState.txs[txid]
-  if (!tx) {
+  if (tx == null) {
     throw new Error(`Setting metatdata for missing tx ${txid}`)
   }
 

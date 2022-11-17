@@ -23,7 +23,8 @@ let allContexts: EdgeContext[] = []
 const ACCEPTED_SERVER_DOMAINS = ['edge.app', 'edgetest.app', 'localhost']
 
 const composeEnhancers =
-  typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
+  typeof window === 'object' &&
+  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ != null
     ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'core' })
     : compose
 

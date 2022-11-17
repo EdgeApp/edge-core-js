@@ -163,7 +163,7 @@ export async function changeWalletStates(
 
   // If there are no changes, do nothing:
   const walletIds = Object.keys(toWrite)
-  if (!walletIds.length) return
+  if (walletIds.length < 1) return
 
   await Promise.all(
     walletIds.map(async walletId => {

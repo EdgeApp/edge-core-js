@@ -202,7 +202,7 @@ export function makeCurrencyWalletCallbacks(
 
     onTransactionsChanged(txs: EdgeTransaction[]) {
       // Sanity-check incoming transactions:
-      if (!txs) return
+      if (txs == null) return
       for (const tx of txs) {
         if (
           typeof tx.txid !== 'string' ||
@@ -280,8 +280,8 @@ export function makeCurrencyWalletCallbacks(
         type: 'CURRENCY_ENGINE_CHANGED_TXS',
         payload: { txs, walletId, txidHashes }
       })
-      if (changed.length) throtteldOnTxChanged(changed)
-      if (created.length) throttledOnNewTx(created)
+      if (changed.length > 0) throtteldOnTxChanged(changed)
+      if (created.length > 0) throttledOnNewTx(created)
     },
     onAddressChanged() {
       emit(input.props.walletOutput.walletApi, 'addressChanged', undefined)

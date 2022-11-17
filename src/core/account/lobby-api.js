@@ -40,7 +40,7 @@ export async function fetchAppIdInfo(
     }
 
     const { appName, imageUrl } = await response.json()
-    if (!appName) throw new Error(`No appName in appId lookup response.`)
+    if (appName == null) throw new Error(`No appName in appId lookup response.`)
 
     return { displayImageUrl: imageUrl, displayName: appName }
   } catch (e) {
@@ -68,7 +68,7 @@ async function approveLoginRequest(
 
   const newLoginTree = await ensureAccountExists(ai, loginTree, appId)
   const requestedLogin = findAppLogin(newLoginTree, appId)
-  if (!requestedLogin) {
+  if (requestedLogin == null) {
     throw new Error('Failed to create the requested login object')
   }
 

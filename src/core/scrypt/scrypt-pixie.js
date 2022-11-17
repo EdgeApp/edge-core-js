@@ -149,7 +149,7 @@ export const scrypt: TamePixie<RootProps> = combinePixies({
     // Find the best timer on this platform:
     const getTime =
       typeof window !== 'undefined' &&
-      window.performance &&
+      window.performance != null &&
       typeof window.performance.now === 'function'
         ? () => window.performance.now()
         : () => Date.now()
