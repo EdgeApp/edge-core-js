@@ -130,10 +130,7 @@ export async function makeContext(
         log,
         logBackend,
         onError: error => {
-          if (
-            mirror.output.context != null &&
-            mirror.output.context.api != null
-          ) {
+          if (mirror.output.context?.api != null) {
             emit(mirror.output.context.api, 'error', error)
           }
         },

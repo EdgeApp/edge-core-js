@@ -81,10 +81,7 @@ export function makeCurrencyWalletCallbacks(
   const throtteldOnTxChanged = makeThrottledTxCallback(
     input,
     (txArray: EdgeTransaction[]) => {
-      if (
-        input.props.walletOutput != null &&
-        input.props.walletOutput.walletApi != null
-      ) {
+      if (input.props.walletOutput?.walletApi != null) {
         emit(input.props.walletOutput.walletApi, 'transactionsChanged', txArray)
       }
     }
@@ -93,10 +90,7 @@ export function makeCurrencyWalletCallbacks(
   const throttledOnNewTx = makeThrottledTxCallback(
     input,
     (txArray: EdgeTransaction[]) => {
-      if (
-        input.props.walletOutput != null &&
-        input.props.walletOutput.walletApi != null
-      ) {
+      if (input.props.walletOutput?.walletApi != null) {
         emit(input.props.walletOutput.walletApi, 'newTransactions', txArray)
       }
     }

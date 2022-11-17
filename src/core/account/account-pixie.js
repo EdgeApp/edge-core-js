@@ -256,7 +256,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       lastActiveWalletIds = activeWalletIds
 
       let lastOut: { [walletId: string]: EdgeCurrencyWallet } = {}
-      if (accountOutput != null && accountOutput.currencyWallets != null) {
+      if (accountOutput?.currencyWallets != null) {
         lastOut = accountOutput.currencyWallets
       }
 

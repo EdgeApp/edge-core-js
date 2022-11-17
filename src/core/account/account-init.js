@@ -144,7 +144,7 @@ export function waitForAccount(
       if (accountState.loadFailure != null) throw accountState.loadFailure
 
       const accountOutput = props.output.accounts[accountId]
-      if (accountOutput != null && accountOutput.accountApi != null) {
+      if (accountOutput?.accountApi != null) {
         return accountOutput.accountApi
       }
     }
