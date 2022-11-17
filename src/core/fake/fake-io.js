@@ -43,7 +43,6 @@ export function makeFakeIo(): EdgeIo {
     scrypt,
 
     // Local io:
-    console,
     disklet: makeMemoryDisklet(),
 
     // Networking:

@@ -63,6 +63,7 @@ export function watchPlugins(
   dispatch: Dispatch<RootAction>
 ): () => mixed {
   const { io, nativeIo } = ios
+  const legacyIo = { ...io, console }
 
   function pluginsAdded(plugins: EdgeCorePlugins): void {
     const out: EdgePluginMap<EdgeCorePlugin> = {}
@@ -78,7 +79,7 @@ export function watchPlugins(
         if (typeof plugin === 'function') {
           const opts: EdgeCorePluginOptions = {
             initOptions: typeof initOptions === 'object' ? initOptions : {},
-            io,
+            io: legacyIo,
             log,
             nativeIo,
             pluginDisklet: navigateDisklet(io.disklet, 'plugins/' + pluginId)

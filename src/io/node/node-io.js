@@ -21,7 +21,6 @@ export function makeNodeIo(path: string): EdgeIo {
     scrypt,
 
     // Local io:
-    console,
     disklet: makeNodeDisklet(path),
 
     // Networking:

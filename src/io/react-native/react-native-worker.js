@@ -85,7 +85,6 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
   })
 
   return {
-    console,
     disklet: {
       delete(path) {
         return nativeBridge.call('diskletDelete', normalizePath(path))
