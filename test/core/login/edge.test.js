@@ -39,9 +39,7 @@ describe('edge login', function () {
       cleanDevice: true
     })
 
-    const pending: EdgePendingEdgeLogin = await context.requestEdgeLogin({
-      displayName: 'test suite'
-    })
+    const pending: EdgePendingEdgeLogin = await context.requestEdgeLogin()
     const out: Promise<EdgeAccount> = new Promise((resolve, reject) => {
       pending.watch('state', state => {
         if (state === 'done' && pending.account != null) {
@@ -62,8 +60,7 @@ describe('edge login', function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
-    const opts = { displayName: 'test suite' }
-    const pendingLogin = await context.requestEdgeLogin(opts)
+    const pendingLogin = await context.requestEdgeLogin()
 
     // All we can verify here is that cancel is a callable method:
     pendingLogin.cancelRequest().catch(() => {})

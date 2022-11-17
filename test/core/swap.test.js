@@ -19,10 +19,8 @@ const quotes: EdgeSwapQuote[] = [
       currencyCode: 'ETH',
       nativeAmount: '3492187272714000'
     },
-    destinationAddress: '3PPDPQUptVHpQxJNK1UcHX8SPCXBSf4rxf',
     pluginId: 'changenow',
     expirationDate: new Date('2022-01-21T04:35:22.033Z'),
-    quoteId: '9ddc6773080029',
     isEstimate: false,
     approve: async () => typeHack,
     close: async () => undefined
@@ -49,10 +47,8 @@ const quotes: EdgeSwapQuote[] = [
       currencyCode: 'ETH',
       nativeAmount: '3492187272714000'
     },
-    destinationAddress: '3PPDPQUptVHpQxJNK1UcHX8SPCXBSf4rxf',
     pluginId: 'godex',
     expirationDate: new Date('2022-01-21T04:53:22.097Z'),
-    quoteId: '61ea3791b72d9',
     isEstimate: false,
     approve: async () => typeHack,
     close: async () => undefined
