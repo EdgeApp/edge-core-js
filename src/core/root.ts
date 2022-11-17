@@ -4,7 +4,7 @@ import { attachPixie, filterPixie, ReduxProps } from 'redux-pixies'
 import { emit } from 'yaob'
 
 import { EdgeContext, EdgeContextOptions, EdgeRateHint } from '../types/types'
-import { RootAction } from './actions'
+import { Dispatch } from './actions'
 import { CLIENT_FILE_NAME, clientFile } from './context/client-file'
 import { filterLogs, LogBackend, makeLog } from './log/log'
 import { loadStashes } from './login/login-stash'
@@ -103,7 +103,7 @@ export async function makeContext(
     redux,
     filterPixie(
       rootPixie,
-      (props: ReduxProps<RootState, RootAction>): RootProps => ({
+      (props: ReduxProps<RootState, Dispatch>): RootProps => ({
         ...props,
         close() {
           closePixie()

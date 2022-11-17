@@ -1,9 +1,4 @@
-import {
-  buildReducer,
-  FatReducer,
-  filterReducer,
-  memoizeReducer
-} from 'redux-keto'
+import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
   EdgePluginMap,
@@ -67,11 +62,7 @@ export interface AccountNext {
 
 export const initialCustomTokens: EdgePluginMap<EdgeTokenMap> = {}
 
-const accountInner: FatReducer<
-  AccountState,
-  RootAction,
-  AccountNext
-> = buildReducer({
+const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   accountWalletInfo: memoizeReducer(
     (next: AccountNext) => next.self.appId,
     (next: AccountNext) => next.self.login,
@@ -368,28 +359,28 @@ const accountInner: FatReducer<
   }
 })
 
-export const accountReducer: FatReducer<
+export const accountReducer = filterReducer<
   AccountState,
   RootAction,
-  AccountNext
-> = filterReducer(
-  accountInner,
-  (action: RootAction, next: AccountNext): RootAction => {
-    if (
-      /^ACCOUNT_/.test(action.type) &&
-      action.payload != null &&
-      action.payload.accountId === next.id
-    ) {
-      return action
-    }
-
-    if (action.type === 'LOGIN' && next.root.lastAccountId === next.id) {
-      return action
-    }
-
-    return { type: 'UPDATE_NEXT' }
+  AccountNext,
+  RootAction
+>(accountInner, (action, next) => {
+  if (
+    /^ACCOUNT_/.test(action.type) &&
+    'payload' in action &&
+    typeof action.payload === 'object' &&
+    'accountId' in action.payload &&
+    action.payload.accountId === next.id
+  ) {
+    return action
   }
-)
+
+  if (action.type === 'LOGIN' && next.root.lastAccountId === next.id) {
+    return action
+  }
+
+  return { type: 'UPDATE_NEXT' }
+})
 
 function getLast<T>(array: T[]): T {
   return array[array.length - 1]

@@ -1,4 +1,4 @@
-import { combineReducers, Reducer } from 'redux'
+import { combineReducers } from 'redux'
 
 import { RootAction } from '../actions'
 
@@ -89,9 +89,6 @@ function rates(
   return state
 }
 
-export const exchangeCache: Reducer<
-  ExchangeState,
-  RootAction
-> = combineReducers({
+export const exchangeCache = combineReducers<ExchangeState, RootAction>({
   rates
 })

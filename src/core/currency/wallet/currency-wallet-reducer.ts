@@ -1,9 +1,4 @@
-import {
-  buildReducer,
-  FatReducer,
-  filterReducer,
-  memoizeReducer
-} from 'redux-keto'
+import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
   EdgeBalances,
@@ -99,11 +94,11 @@ export interface CurrencyWalletNext {
 
 export const initialEnabledTokens: string[] = []
 
-const currencyWalletInner: FatReducer<
+const currencyWalletInner = buildReducer<
   CurrencyWalletState,
   RootAction,
   CurrencyWalletNext
-> = buildReducer({
+>({
   accountId(state, action: RootAction, next: CurrencyWalletNext): string {
     if (state != null) return state
     for (const accountId of Object.keys(next.root.accounts)) {
@@ -401,20 +396,20 @@ export function sortTxs(
   return { sortedList, txidHashes }
 }
 
-export const currencyWalletReducer: FatReducer<
+export const currencyWalletReducer = filterReducer<
   CurrencyWalletState,
   RootAction,
-  CurrencyWalletNext
-> = filterReducer(
-  currencyWalletInner,
-  (action: RootAction, next: CurrencyWalletNext): RootAction => {
-    return /^CURRENCY_/.test(action.type) &&
-      action.payload != null &&
-      action.payload.walletId === next.id
-      ? action
-      : { type: 'UPDATE_NEXT' }
-  }
-)
+  CurrencyWalletNext,
+  RootAction
+>(currencyWalletInner, (action, next) => {
+  return /^CURRENCY_/.test(action.type) &&
+    'payload' in action &&
+    typeof action.payload === 'object' &&
+    'walletId' in action.payload &&
+    action.payload.walletId === next.id
+    ? action
+    : { type: 'UPDATE_NEXT' }
+})
 
 const defaultTx: MergedTransaction = {
   confirmations: 'unconfirmed',

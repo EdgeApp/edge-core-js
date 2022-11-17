@@ -1,4 +1,4 @@
-import { buildReducer, FatReducer, mapReducer } from 'redux-keto'
+import { buildReducer, mapReducer } from 'redux-keto'
 
 import { RootAction } from '../actions'
 import { RootState } from '../root-reducer'
@@ -12,11 +12,7 @@ export interface CurrencyState {
   readonly wallets: { [walletId: string]: CurrencyWalletState }
 }
 
-export const currency: FatReducer<
-  CurrencyState,
-  RootAction,
-  RootState
-> = buildReducer({
+export const currency = buildReducer<CurrencyState, RootAction, RootState>({
   currencyWalletIds(state, action: RootAction, next: RootState): string[] {
     // Optimize the common case:
     if (next.accountIds.length === 1) {

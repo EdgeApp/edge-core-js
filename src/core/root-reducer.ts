@@ -1,4 +1,4 @@
-import { buildReducer, BuiltReducer, mapReducer } from 'redux-keto'
+import { buildReducer, mapReducer } from 'redux-keto'
 
 import { EdgeLogSettings, EdgeRateHint } from './../types/types'
 import { accountReducer, AccountState } from './account/account-reducer'
@@ -34,7 +34,7 @@ export const defaultLogSettings: EdgeLogSettings = {
   defaultLogLevel: 'warn'
 }
 
-export const reducer: BuiltReducer<RootState, RootAction> = buildReducer({
+export const reducer = buildReducer<RootState, RootAction, RootState>({
   accountCount(state: number = 0, action: RootAction): number {
     return action.type === 'LOGIN' ? state + 1 : state
   },

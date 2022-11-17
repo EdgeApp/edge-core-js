@@ -1,10 +1,9 @@
 import { SyncClient } from 'edge-sync-client'
-import { Dispatch } from 'redux'
-import { combinePixies, PixieInput, TamePixie } from 'redux-pixies'
+import { combinePixies, PixieInput, ReduxProps, TamePixie } from 'redux-pixies'
 
 import { EdgeIo, EdgeLog } from '../types/types'
 import { AccountOutput, accounts } from './account/account-pixie'
-import { RootAction } from './actions'
+import { Dispatch } from './actions'
 import { context, ContextOutput } from './context/context-pixie'
 import { currency, CurrencyOutput } from './currency/currency-pixie'
 import { exchange } from './exchange/exchange-pixie'
@@ -21,15 +20,13 @@ export interface RootOutput {
 }
 
 // Props passed to the root pixie:
-export interface RootProps {
+export interface RootProps extends ReduxProps<RootState, Dispatch> {
   readonly close: () => void
-  readonly dispatch: Dispatch<RootAction>
   readonly io: EdgeIo
   readonly log: EdgeLog
   readonly logBackend: LogBackend
   readonly onError: (error: Error) => unknown
   readonly output: RootOutput
-  readonly state: RootState
   readonly syncClient: SyncClient
 }
 

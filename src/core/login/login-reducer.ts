@@ -1,4 +1,4 @@
-import { buildReducer, FatReducer, memoizeReducer } from 'redux-keto'
+import { buildReducer, memoizeReducer } from 'redux-keto'
 
 import { EdgeUserInfo } from '../../types/types'
 import { base58 } from '../../util/encoding'
@@ -26,11 +26,7 @@ export interface LoginState {
 
 const dummyClientId = new Uint8Array(0)
 
-export const login: FatReducer<
-  LoginState,
-  RootAction,
-  RootState
-> = buildReducer({
+export const login = buildReducer<LoginState, RootAction, RootState>({
   apiKey(state = '', action: RootAction): string {
     return action.type === 'INIT' ? action.payload.apiKey : state
   },

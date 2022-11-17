@@ -391,3 +391,5 @@ export type RootAction =
       type: 'UPDATE_RATE_HINT_CACHE'
       payload: { rateHintCache: EdgeRateHint[] }
     }
+
+export type Dispatch = (action: RootAction) => RootAction
