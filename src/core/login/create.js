@@ -69,11 +69,17 @@ export async function makeCreateKit(
   const dummyLogin: LoginTree = {
     appId,
     lastLogin: new Date(),
-    loginId: new Uint8Array(0),
+    loginId,
     loginKey,
     pendingVouchers: [],
     children: [],
     keyInfos: []
+  }
+  const dummyKit: LoginKit = {
+    login: {},
+    loginId,
+    serverPath: '/v2/login',
+    stash: {}
   }
 
   // Set up login methods:
@@ -84,13 +90,13 @@ export async function makeCreateKit(
   const passwordKit: LoginKit =
     opts.password != null
       ? await makePasswordKit(ai, dummyLogin, username, opts.password)
-      : {}
+      : dummyKit
   const pin2Kit: LoginKit =
     opts.pin != null
       ? makeChangePin2Kit(ai, dummyLogin, username, opts.pin, true)
-      : {}
+      : dummyKit
   const keysKit: LoginKit =
-    opts.keyInfo != null ? makeKeysKit(ai, dummyLogin, opts.keyInfo) : {}
+    opts.keyInfo != null ? makeKeysKit(ai, dummyLogin, opts.keyInfo) : dummyKit
 
   // Secret-key login:
   const loginAuth = io.random(32)
@@ -102,7 +108,9 @@ export async function makeCreateKit(
 
   // Top-level username:
   const usernameKit: LoginKit =
-    parentLogin == null ? await makeUsernameKit(ai, dummyLogin, username) : {}
+    parentLogin == null
+      ? await makeUsernameKit(ai, dummyLogin, username)
+      : dummyKit
 
   // Bundle everything:
   return {
