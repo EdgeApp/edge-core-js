@@ -168,11 +168,11 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
       keysLoaded ? ids.filter(id => walletInfos[id].hidden) : []
   ),
 
-  keysLoaded(state = false, action: RootAction): boolean {
+  keysLoaded(state = false, action): boolean {
     return action.type === 'ACCOUNT_KEYS_LOADED' ? true : state
   },
 
-  legacyWalletInfos(state = [], action: RootAction): EdgeWalletInfo[] {
+  legacyWalletInfos(state = [], action): EdgeWalletInfo[] {
     return action.type === 'ACCOUNT_KEYS_LOADED'
       ? action.payload.legacyWalletInfos
       : state
@@ -189,22 +189,22 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     }
   ),
 
-  walletStates(state = {}, action: RootAction): EdgeWalletStates {
+  walletStates(state = {}, action): EdgeWalletStates {
     return action.type === 'ACCOUNT_CHANGED_WALLET_STATES' ||
       action.type === 'ACCOUNT_KEYS_LOADED'
       ? action.payload.walletStates
       : state
   },
 
-  pauseWallets(state: boolean = false, action: RootAction): boolean {
+  pauseWallets(state = false, action): boolean {
     return action.type === 'LOGIN' ? action.payload.pauseWallets : state
   },
 
-  appId(state = '', action: RootAction): string {
+  appId(state = '', action): string {
     return action.type === 'LOGIN' ? action.payload.appId : state
   },
 
-  loadFailure(state = null, action: RootAction): Error | null {
+  loadFailure(state = null, action): Error | null {
     return action.type === 'ACCOUNT_LOAD_FAILED' ? action.payload.error : state
   },
 
@@ -214,7 +214,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     (appId, loginTree): LoginTree => findAppLogin(loginTree, appId)
   ),
 
-  loginKey(state = new Uint8Array(0), action: RootAction): Uint8Array {
+  loginKey(state = new Uint8Array(0), action): Uint8Array {
     return action.type === 'LOGIN' ? action.payload.loginKey : state
   },
 
@@ -227,24 +227,19 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
       makeLoginTree(stashTree, loginKey, rootLogin ? '' : appId)
   ),
 
-  loginType(state = 'newAccount', action: RootAction): LoginType {
+  loginType(state = 'newAccount', action): LoginType {
     return action.type === 'LOGIN' ? action.payload.loginType : state
   },
 
-  rootLogin(state = true, action: RootAction): boolean {
+  rootLogin(state = true, action): boolean {
     return action.type === 'LOGIN' ? action.payload.rootLogin : state
   },
 
-  username(state = '', action: RootAction): string {
+  username(state = '', action): string {
     return action.type === 'LOGIN' ? action.payload.username : state
   },
 
-  allTokens(
-    state: EdgePluginMap<EdgeTokenMap> = {},
-    action: RootAction,
-    next: AccountNext,
-    prev: AccountNext
-  ): EdgePluginMap<EdgeTokenMap> {
+  allTokens(state = {}, action, next, prev): EdgePluginMap<EdgeTokenMap> {
     const { builtinTokens, customTokens } = next.self
 
     // Roll our own `memoizeReducer` implementation,
@@ -272,7 +267,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return state
   },
 
-  builtinTokens(state = {}, action: RootAction): EdgePluginMap<EdgeTokenMap> {
+  builtinTokens(state = {}, action): EdgePluginMap<EdgeTokenMap> {
     switch (action.type) {
       case 'ACCOUNT_BUILTIN_TOKENS_LOADED': {
         const { pluginId, tokens } = action.payload
@@ -284,7 +279,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
 
   customTokens(
     state = initialCustomTokens,
-    action: RootAction
+    action
   ): EdgePluginMap<EdgeTokenMap> {
     switch (action.type) {
       case 'ACCOUNT_CUSTOM_TOKENS_LOADED': {
@@ -315,10 +310,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return state
   },
 
-  alwaysEnabledTokenIds(
-    state: EdgePluginMap<string[]> = {},
-    action: RootAction
-  ): EdgePluginMap<string[]> {
+  alwaysEnabledTokenIds(state = {}, action): EdgePluginMap<string[]> {
     switch (action.type) {
       case 'ACCOUNT_ALWAYS_ENABLED_TOKENS_CHANGED': {
         const { pluginId, tokenIds } = action.payload
@@ -328,7 +320,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return state
   },
 
-  swapSettings(state = {}, action: RootAction): EdgePluginMap<SwapSettings> {
+  swapSettings(state = {}, action): EdgePluginMap<SwapSettings> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
         return action.payload.swapSettings
@@ -343,7 +335,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return state
   },
 
-  userSettings(state = {}, action: RootAction): EdgePluginMap<JsonObject> {
+  userSettings(state = {}, action): EdgePluginMap<JsonObject> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED': {
         const { pluginId, userSettings } = action.payload

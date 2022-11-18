@@ -27,19 +27,19 @@ export interface LoginState {
 const dummyClientId = new Uint8Array(0)
 
 export const login = buildReducer<LoginState, RootAction, RootState>({
-  apiKey(state = '', action: RootAction): string {
+  apiKey(state = '', action): string {
     return action.type === 'INIT' ? action.payload.apiKey : state
   },
 
-  appId(state = '', action: RootAction): string {
+  appId(state = '', action): string {
     return action.type === 'INIT' ? action.payload.appId : state
   },
 
-  clientId(state = dummyClientId, action: RootAction): Uint8Array {
+  clientId(state = dummyClientId, action): Uint8Array {
     return action.type === 'INIT' ? action.payload.clientId : state
   },
 
-  deviceDescription(state = null, action: RootAction): string | null {
+  deviceDescription(state = null, action): string | null {
     return action.type === 'INIT' ? action.payload.deviceDescription : state
   },
 
@@ -73,11 +73,11 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
     }
   ),
 
-  serverUri(state = '', action: RootAction): string {
+  serverUri(state = '', action): string {
     return action.type === 'INIT' ? action.payload.authServer : state
   },
 
-  stashes(state = {}, action: RootAction): LoginStashMap {
+  stashes(state = {}, action): LoginStashMap {
     switch (action.type) {
       case 'INIT': {
         const out: LoginStashMap = {}
@@ -111,7 +111,7 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
     return state
   },
 
-  walletInfos(state, action: RootAction, next: RootState): WalletInfoFullMap {
+  walletInfos(state, action, next: RootState): WalletInfoFullMap {
     // Optimize the common case:
     if (next.accountIds.length === 1) {
       const id = next.accountIds[0]

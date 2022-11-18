@@ -35,11 +35,11 @@ export const defaultLogSettings: EdgeLogSettings = {
 }
 
 export const reducer = buildReducer<RootState, RootAction, RootState>({
-  accountCount(state: number = 0, action: RootAction): number {
+  accountCount(state = 0, action): number {
     return action.type === 'LOGIN' ? state + 1 : state
   },
 
-  accountIds(state = [], action: RootAction, next: RootState): string[] {
+  accountIds(state = [], action, next): string[] {
     switch (action.type) {
       case 'LOGIN':
         return [...state, next.lastAccountId]
@@ -59,13 +59,13 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
     return state
   },
 
-  accounts: mapReducer(accountReducer, (next: RootState) => next.accountIds),
+  accounts: mapReducer(accountReducer, next => next.accountIds),
 
-  hideKeys(state = true, action: RootAction): boolean {
+  hideKeys(state = true, action): boolean {
     return action.type === 'INIT' ? action.payload.hideKeys : state
   },
 
-  lastAccountId(state, action: RootAction, next: RootState): string {
+  lastAccountId(state, action, next): string {
     return `login${next.accountCount}`
   },
 
@@ -79,7 +79,7 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
     return state
   },
 
-  paused(state = false, action: RootAction): boolean {
+  paused(state = false, action): boolean {
     return action.type === 'PAUSE' ? action.payload : state
   },
 
@@ -92,7 +92,7 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
     return state
   },
 
-  ready(state = false, action: RootAction): boolean {
+  ready(state = false, action): boolean {
     return action.type === 'INIT' ? true : state
   },
 

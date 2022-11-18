@@ -13,7 +13,7 @@ export interface CurrencyState {
 }
 
 export const currency = buildReducer<CurrencyState, RootAction, RootState>({
-  currencyWalletIds(state, action: RootAction, next: RootState): string[] {
+  currencyWalletIds(state, action, next): string[] {
     // Optimize the common case:
     if (next.accountIds.length === 1) {
       const id = next.accountIds[0]
