@@ -91,7 +91,7 @@
     "hmac-drbg": "^1.0.1",
     "node-fetch": "^2.6.1",
     "redux": "^4.2.0",
-    "redux-keto": "^0.3.4",
+    "redux-keto": "^0.3.5",
     "redux-pixies": "^0.3.6",
     "rfc4648": "^1.4.0",
     "scrypt-js": "^2.0.3",

@@ -4632,10 +4632,10 @@ rechoir@^0.7.0:
   dependencies:
     resolve "^1.9.0"
 
-redux-keto@^0.3.4:
-  version "0.3.4"
-  resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.4.tgz#1bf78a36736dc181dd419b10e57116dea17fa3a5"
-  integrity sha512-16q/QujMkv+zdsVRExJuGbl6grXZLoRakBbQR5E9DmEAPIeJoXtjmc6L3bCMUVjBfF+0XFQyJDZwjhS2guh+ng==
+redux-keto@^0.3.5:
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.5.tgz#dc87f93483d134d0dc3693dc052374901c6f9a69"
+  integrity sha512-TcFK6zefcBMRjRGBEjmQOGjG7nLxKsKUY8ZPbm/qHLlP9HPXZFhJI1TB5uTuRka0l3JP7yyhn1qMGhsRyM/djg==
 
 redux-pixies@^0.3.6:
   version "0.3.6"
