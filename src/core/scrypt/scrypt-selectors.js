@@ -17,14 +17,15 @@ export function makeSnrp(
 /**
  * Performs an scrypt derivation.
  */
-export function scrypt(
+export async function scrypt(
   ai: ApiInput,
   data: Uint8Array | string,
   snrp: EdgeSnrp
 ): Promise<Uint8Array> {
   if (typeof data === 'string') data = utf8.parse(data)
 
-  return ai.props.output.scrypt.timeScrypt(data, snrp).then(value => value.hash)
+  const value = await ai.props.output.scrypt.timeScrypt(data, snrp)
+  return value.hash
 }
 
 export const userIdSnrp: EdgeSnrp = {

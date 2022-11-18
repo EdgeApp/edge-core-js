@@ -66,7 +66,7 @@ async function main() {
   await disklet.setText('types.d.ts', "export * from './lib/types';\n")
 }
 
-main().catch(e => {
-  console.error(e)
+main().catch(error => {
+  console.error(error)
   process.exit(1)
 })

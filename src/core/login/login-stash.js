@@ -106,7 +106,7 @@ export async function removeStash(
     try {
       const stash = asLoginStash(JSON.parse(await io.disklet.getText(path)))
       if (stash.username === fixedName) await io.disklet.delete(path)
-    } catch (e) {}
+    } catch (error) {}
   }
 
   dispatch({

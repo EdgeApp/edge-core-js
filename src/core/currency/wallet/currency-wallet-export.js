@@ -75,7 +75,7 @@ export function searchStringFilter(
       )
         return true
     }
-    if (tx.swapData != null && tx.swapData.plugin != null) {
+    if (tx.swapData != null) {
       const { displayName = '', pluginId = '' } = tx.swapData.plugin
       if (checkNullTypeAndIndex(displayName) || checkNullTypeAndIndex(pluginId))
         return true

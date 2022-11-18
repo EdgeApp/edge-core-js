@@ -124,7 +124,10 @@ export function getExchangeRate(
   }
 
   // Only search if the endpoints exist:
-  if (search.routes[fromCurrency] && search.routes[toCurrency]) {
+  if (
+    search.routes[fromCurrency] != null &&
+    search.routes[toCurrency] != null
+  ) {
     searchRoutes(search, fromCurrency, { rate: 1, cost: 0 }, {})
     if (!isFiatCode(fromCurrency)) createDeepFiatRoutes(search, fromCurrency)
   } else {

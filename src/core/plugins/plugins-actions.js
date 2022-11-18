@@ -71,7 +71,7 @@ export function watchPlugins(
       const plugin = plugins[pluginId]
       const log = makeLog(logBackend, pluginId)
       const initOptions = pluginsInit[pluginId]
-      if (!initOptions) continue
+      if (initOptions === false || initOptions == null) continue
 
       // Figure out what kind of object this is:
       try {

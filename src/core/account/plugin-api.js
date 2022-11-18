@@ -192,8 +192,8 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     if (plugin.checkSettings == null) return false
 
     const accountState = this._ai.props.state.accounts[this._accountId]
-    const settings = accountState.userSettings[this._pluginId] || {}
-    return !!plugin.checkSettings(settings).needsActivation
+    const settings = accountState.userSettings[this._pluginId] ?? {}
+    return plugin.checkSettings(settings).needsActivation ?? false
   }
 
   get swapInfo(): EdgeSwapInfo {

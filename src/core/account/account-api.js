@@ -190,23 +190,21 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     }): Promise<string> {
       lockdown()
       const { pin, enableLogin } = opts
-      return changePin(ai, accountId, pin, enableLogin).then(() => {
-        const { login } = accountState()
-        return login.pin2Key ? base58.stringify(login.pin2Key) : ''
-      })
+      await changePin(ai, accountId, pin, enableLogin)
+      const { login } = accountState()
+      return login.pin2Key != null ? base58.stringify(login.pin2Key) : ''
     },
     async changeRecovery(
       questions: string[],
       answers: string[]
     ): Promise<string> {
       lockdown()
-      return changeRecovery(ai, accountId, questions, answers).then(() => {
-        const { loginTree } = accountState()
-        if (!loginTree.recovery2Key) {
-          throw new Error('Missing recoveryKey')
-        }
-        return base58.stringify(loginTree.recovery2Key)
-      })
+      await changeRecovery(ai, accountId, questions, answers)
+      const { loginTree } = accountState()
+      if (loginTree.recovery2Key == null) {
+        throw new Error('Missing recoveryKey')
+      }
+      return base58.stringify(loginTree.recovery2Key)
     },
 
     // Verify existing credentials:

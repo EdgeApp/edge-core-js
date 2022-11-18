@@ -160,7 +160,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     }
 
     // Reload our data from disk:
-    loadAllFiles(input).catch(e => input.props.onError(e))
+    loadAllFiles(input).catch(error => input.props.onError(error))
 
     // Fire callbacks when our state changes:
     watchCurrencyWallet(input)
@@ -185,7 +185,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     )
     input.onOutput(currencyWalletApi)
 
-    return stopUpdates
+    return await stopUpdates
   },
 
   // Starts & stops the engine for this wallet:
@@ -217,7 +217,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             // Turn synchronous errors into promise rejections:
             startupPromise = Promise.resolve()
               .then(() => engine.startEngine())
-              .catch(e => input.props.onError(e))
+              .catch(error => input.props.onError(error))
           }
         },
 
@@ -232,7 +232,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             // Wait for `startEngine` to finish if that is still going:
             startupPromise
               .then(() => engine.killEngine())
-              .catch(e => input.props.onError(e))
+              .catch(error => input.props.onError(error))
               .then(() =>
                 input.props.dispatch({
                   type: 'CURRENCY_ENGINE_STOPPED',
@@ -325,7 +325,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       // Update engine settings:
       const userSettings = accountState.userSettings[pluginId] ?? lastSettings
       if (lastSettings !== userSettings && engine != null) {
-        engine.changeUserSettings(userSettings)
+        await engine.changeUserSettings(userSettings)
       }
       lastSettings = userSettings
 
@@ -333,7 +333,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const customTokens = accountState.customTokens[pluginId] ?? lastTokens
       if (lastTokens !== customTokens && engine != null) {
         if (engine.changeCustomTokens != null) {
-          engine.changeCustomTokens(customTokens)
+          await engine.changeCustomTokens(customTokens)
         } else {
           for (const tokenId of Object.keys(customTokens)) {
             const token = customTokens[tokenId]
@@ -342,7 +342,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             if (tokenInfo == null) continue
             await engine
               .addCustomToken({ ...tokenInfo, ...token })
-              .catch(e => input.props.onError(e))
+              .catch(error => input.props.onError(error))
           }
         }
       }
@@ -354,14 +354,14 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         if (engine.changeEnabledTokenIds != null) {
           await engine
             .changeEnabledTokenIds(walletState.enabledTokenIds)
-            .catch(e => input.props.onError(e))
+            .catch(error => input.props.onError(error))
         } else {
           await engine
             .disableTokens(uniqueStrings(lastEnabledTokens, enabledTokens))
-            .catch(e => input.props.onError(e))
+            .catch(error => input.props.onError(error))
           await engine
             .enableTokens(uniqueStrings(enabledTokens, lastEnabledTokens))
-            .catch(e => input.props.onError(e))
+            .catch(error => input.props.onError(error))
         }
       }
       lastEnabledTokens = enabledTokens
@@ -385,7 +385,7 @@ async function getPublicWalletInfo(
   let publicKeys = {}
   try {
     publicKeys = await tools.derivePublicKey(walletInfo)
-  } catch (e) {}
+  } catch (error) {}
   const publicWalletInfo = {
     id: walletInfo.id,
     type: walletInfo.type,

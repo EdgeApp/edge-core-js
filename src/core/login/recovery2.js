@@ -69,7 +69,7 @@ export async function loginRecovery2(
  * @param recovery2Key an ArrayBuffer recovery key
  * @param Question array promise
  */
-export function getQuestions2(
+export async function getQuestions2(
   ai: ApiInput,
   recovery2Key: Uint8Array,
   username: string
@@ -78,15 +78,14 @@ export function getQuestions2(
     recovery2Id: recovery2Id(recovery2Key, username)
     // "otp": null
   }
-  return loginFetch(ai, 'POST', '/v2/login', request).then(reply => {
-    const { question2Box } = asRecovery2InfoPayload(reply)
-    if (question2Box == null) {
-      throw new Error('Login has no recovery questions')
-    }
+  const reply = await loginFetch(ai, 'POST', '/v2/login', request)
+  const { question2Box } = asRecovery2InfoPayload(reply)
+  if (question2Box == null) {
+    throw new Error('Login has no recovery questions')
+  }
 
-    // Decrypt the questions:
-    return JSON.parse(decryptText(question2Box, recovery2Key))
-  })
+  // Decrypt the questions:
+  return JSON.parse(decryptText(question2Box, recovery2Key))
 }
 
 export async function changeRecovery(

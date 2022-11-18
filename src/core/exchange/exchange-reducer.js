@@ -32,8 +32,8 @@ function addRoute(
   to: string,
   pair: number
 ): void {
-  if (!routes[from]) routes[from] = {}
-  if (!routes[from][to]) routes[from][to] = []
+  if (routes[from] == null) routes[from] = {}
+  if (routes[from][to] == null) routes[from][to] = []
   routes[from][to].push(pair)
 }
 

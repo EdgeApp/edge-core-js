@@ -17,7 +17,7 @@ export function ethereumKeyToAddress(key: string): string {
   try {
     const addressBytes = privateToAddress(hexToBuffer(key))
     return toChecksumAddress(addressBytes.toString('hex'))
-  } catch (e) {
+  } catch (error) {
     return 'invalid_private_key'
   }
 }

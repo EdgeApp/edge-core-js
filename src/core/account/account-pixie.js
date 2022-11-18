@@ -130,8 +130,9 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         const changeLists = await Promise.all(
           accountWalletInfos.map(info => syncStorageWallet(ai, info.id))
         )
-        const changes: string[] = [].concat(...changeLists)
-        if (changes.length) {
+        const changes: string[] = []
+        for (const list of changeLists) changes.push(...list)
+        if (changes.length > 0) {
           await Promise.all([
             reloadPluginSettings(ai, accountId),
             loadAllWalletStates(ai, accountId)
@@ -255,7 +256,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       lastActiveWalletIds = activeWalletIds
 
       let lastOut: { [walletId: string]: EdgeCurrencyWallet } = {}
-      if (accountOutput != null && accountOutput.currencyWallets != null) {
+      if (accountOutput?.currencyWallets != null) {
         lastOut = accountOutput.currencyWallets
       }
 

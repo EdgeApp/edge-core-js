@@ -162,8 +162,7 @@ function findEngine(ai: ApiInput, pluginId: string): EdgeCurrencyEngine | void {
   for (const walletId of Object.keys(ai.props.state.currency.wallets)) {
     const walletOutput = ai.props.output.currency.wallets[walletId]
     if (
-      walletOutput != null &&
-      walletOutput.engine != null &&
+      walletOutput?.engine != null &&
       ai.props.state.currency.wallets[walletId].pluginId === pluginId
     ) {
       return walletOutput.engine

@@ -90,10 +90,12 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       delete(path) {
         return nativeBridge.call('diskletDelete', normalizePath(path))
       },
-      getData(path) {
-        return nativeBridge
-          .call('diskletGetData', normalizePath(path))
-          .then((data: string) => base64.parse(data))
+      async getData(path) {
+        const data: string = await nativeBridge.call(
+          'diskletGetData',
+          normalizePath(path)
+        )
+        return base64.parse(data)
       },
       getText(path) {
         return nativeBridge.call('diskletGetText', normalizePath(path))
@@ -114,18 +116,18 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
     },
 
     random: bytes => csprng.generate(bytes),
-    scrypt(data, salt, n, r, p, dklen) {
-      return nativeBridge
-        .call(
-          'scrypt',
-          base64.stringify(data),
-          base64.stringify(salt),
-          n,
-          r,
-          p,
-          dklen
-        )
-        .then((data: string) => base64.parse(data))
+
+    async scrypt(data, salt, n, r, p, dklen) {
+      const hash: string = await nativeBridge.call(
+        'scrypt',
+        base64.stringify(data),
+        base64.stringify(salt),
+        n,
+        r,
+        p,
+        dklen
+      )
+      return base64.parse(hash)
     },
 
     // Networking:

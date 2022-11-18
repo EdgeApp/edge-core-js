@@ -24,8 +24,8 @@ import { timeout } from './util/promise.js'
 export { makeFakeIo } from './core/fake/fake-io.js'
 export * from './types/types.js'
 
-function onErrorDefault(e: any): void {
-  console.error(e)
+function onErrorDefault(error: any): void {
+  console.error(error)
 }
 
 let warningShown = false
@@ -142,7 +142,7 @@ export async function fetchLoginMessages(
       const { username, loginId } = JSON.parse(text)
       if (loginId == null || username == null) continue
       loginMap[loginId] = username
-    } catch (e) {}
+    } catch (error) {}
   }
 
   const uri = 'https://login.edge.app/api/v2/messages'

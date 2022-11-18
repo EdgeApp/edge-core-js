@@ -23,7 +23,8 @@ let allContexts: EdgeContext[] = []
 const ACCEPTED_SERVER_DOMAINS = ['edge.app', 'edgetest.app', 'localhost']
 
 const composeEnhancers =
-  typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
+  typeof window === 'object' &&
+  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ != null
     ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'core' })
     : compose
 
@@ -129,17 +130,14 @@ export async function makeContext(
         log,
         logBackend,
         onError: error => {
-          if (
-            mirror.output.context != null &&
-            mirror.output.context.api != null
-          ) {
+          if (mirror.output.context?.api != null) {
             emit(mirror.output.context.api, 'error', error)
           }
         },
         syncClient
       })
     ),
-    e => log.error(e),
+    error => log.error(error),
     output => (mirror.output = output)
   )
 

@@ -130,7 +130,7 @@ export function makeFakeWorld(
 
       // Figure out which repos to use:
       const syncKeys = account.allKeys
-        .filter(info => info.keys != null && info.keys.syncKey != null)
+        .filter(info => info.keys?.syncKey != null)
         .map(info =>
           base16.stringify(base64.parse(info.keys.syncKey)).toLowerCase()
         )

@@ -40,11 +40,11 @@ export async function fetchAppIdInfo(
     }
 
     const { appName, imageUrl } = await response.json()
-    if (!appName) throw new Error(`No appName in appId lookup response.`)
+    if (appName == null) throw new Error(`No appName in appId lookup response.`)
 
     return { displayImageUrl: imageUrl, displayName: appName }
-  } catch (e) {
-    ai.props.onError(e)
+  } catch (error) {
+    ai.props.onError(error)
 
     // If we can't find the info, just show the appId as a fallback:
     return { displayName: appId }
@@ -68,7 +68,7 @@ async function approveLoginRequest(
 
   const newLoginTree = await ensureAccountExists(ai, loginTree, appId)
   const requestedLogin = findAppLogin(newLoginTree, appId)
-  if (!requestedLogin) {
+  if (requestedLogin == null) {
     throw new Error('Failed to create the requested login object')
   }
 
@@ -82,27 +82,26 @@ async function approveLoginRequest(
     loginKey: requestedLogin.loginKey,
     loginStash
   })
-  await sendLobbyReply(ai, lobbyId, lobbyJson, replyData).then(() => {
-    let timeout: ReturnType<typeof setTimeout> | void
-    const accountApi = ai.props.output.accounts[accountId].accountApi
-    if (accountApi != null) {
-      accountApi.on('close', () => {
-        if (timeout != null) clearTimeout(timeout)
-      })
-    }
+  await sendLobbyReply(ai, lobbyId, lobbyJson, replyData)
+  let timeout: ReturnType<typeof setTimeout> | void
+  const accountApi = ai.props.output.accounts[accountId].accountApi
+  if (accountApi != null) {
+    accountApi.on('close', () => {
+      if (timeout != null) clearTimeout(timeout)
+    })
+  }
 
-    timeout = setTimeout(() => {
-      timeout = undefined
-      syncAccount(ai, accountId)
-        .then(() => {
-          timeout = setTimeout(() => {
-            timeout = undefined
-            syncAccount(ai, accountId).catch(e => ai.props.onError(e))
-          }, 20000)
-        })
-        .catch(e => ai.props.onError(e))
-    }, 10000)
-  })
+  timeout = setTimeout(() => {
+    timeout = undefined
+    syncAccount(ai, accountId)
+      .then(() => {
+        timeout = setTimeout(() => {
+          timeout = undefined
+          syncAccount(ai, accountId).catch(error => ai.props.onError(error))
+        }, 20000)
+      })
+      .catch(error => ai.props.onError(error))
+  }, 10000)
 }
 
 /**

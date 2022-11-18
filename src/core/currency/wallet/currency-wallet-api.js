@@ -354,7 +354,7 @@ export function makeCurrencyWalletApi(
         // filter the transactions
         const missingTxIdHashes = slicedTransactions.filter(txidHash => {
           // remove any that do not have a file
-          return !files[txidHash]
+          return files[txidHash] == null
         })
         // load files into state
         const missingFiles = await loadTxFiles(input, missingTxIdHashes)
@@ -367,9 +367,9 @@ export function makeCurrencyWalletApi(
           const tempTx = txs[file.txid]
           // skip irrelevant transactions - txs that are not in the files (dropped)
           if (
-            !tempTx ||
-            (!tempTx.nativeAmount[currencyCode] &&
-              !tempTx.networkFee[currencyCode])
+            tempTx == null ||
+            (tempTx.nativeAmount[currencyCode] == null &&
+              tempTx.networkFee[currencyCode] == null)
           ) {
             // exit block if there is no transaction or no amount / no fee
             continue
@@ -509,10 +509,8 @@ export function makeCurrencyWalletApi(
     },
 
     async sweepPrivateKeys(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-      if (!engine.sweepPrivateKeys) {
-        return Promise.reject(
-          new Error('Sweeping this currency is not supported.')
-        )
+      if (engine.sweepPrivateKeys == null) {
+        throw new Error('Sweeping this currency is not supported.')
       }
       return engine.sweepPrivateKeys(spendInfo)
     },
@@ -550,7 +548,7 @@ export function makeCurrencyWalletApi(
     async getPaymentProtocolInfo(
       paymentProtocolUrl: string
     ): Promise<EdgePaymentProtocolInfo> {
-      if (!engine.getPaymentProtocolInfo) {
+      if (engine.getPaymentProtocolInfo == null) {
         throw new Error(
           "'getPaymentProtocolInfo' is not implemented on wallets of this type"
         )
@@ -602,8 +600,8 @@ export function makeCurrencyWalletApi(
             networkFeeOption,
             customNetworkFee
           })
-          .then(good => getMax(mid, max))
-          .catch(bad => getMax(min, mid))
+          .then(() => getMax(mid, max))
+          .catch(() => getMax(min, mid))
       }
 
       return getMax('0', add(balance, '1'))

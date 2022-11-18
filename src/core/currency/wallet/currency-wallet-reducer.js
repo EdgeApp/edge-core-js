@@ -137,7 +137,7 @@ const currencyWalletInner: FatReducer<
     action: RootAction,
     next: CurrencyWalletNext
   ): EdgeCurrencyInfo {
-    if (state) return state
+    if (state != null) return state
     const { pluginId } = next.self
     return next.root.plugins.currency[pluginId].currencyInfo
   },
@@ -252,7 +252,10 @@ const currencyWalletInner: FatReducer<
       }
       case 'CURRENCY_WALLET_FILE_CHANGED': {
         const { fileName, creationDate, txidHash } = action.payload
-        if (!state[txidHash] || creationDate < state[txidHash].creationDate) {
+        if (
+          state[txidHash] == null ||
+          creationDate < state[txidHash].creationDate
+        ) {
           state[txidHash] = { creationDate, fileName }
         }
         return state
@@ -371,7 +374,7 @@ export function sortTxs(
 } {
   for (const newTxidHash of Object.keys(newHashes)) {
     const newTime = newHashes[newTxidHash]
-    if (!txidHashes[newTxidHash] || newTime < txidHashes[newTxidHash]) {
+    if (txidHashes[newTxidHash] == null || newTime < txidHashes[newTxidHash]) {
       txidHashes[newTxidHash] = newTime
     }
   }

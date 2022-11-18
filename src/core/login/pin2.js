@@ -36,7 +36,7 @@ export function findPin2Stash(
 ): LoginStash | void {
   if (stashTree.pin2Key != null) return stashTree
   const stash = searchTree(stashTree, stash => stash.appId === appId)
-  if (stash != null && stash.pin2Key != null) return stash
+  if (stash?.pin2Key != null) return stash
 }
 
 /**

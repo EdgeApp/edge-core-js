@@ -101,8 +101,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       saveStash(ai, stashTree).catch(() => {})
 
       // Since we logged in offline, update the stash in the background:
-      syncLogin(ai, loginTree, findAppLogin(loginTree, appId)).catch(e =>
-        ai.props.onError(e)
+      syncLogin(ai, loginTree, findAppLogin(loginTree, appId)).catch(error =>
+        ai.props.onError(error)
       )
 
       return makeAccount(ai, appId, loginTree, 'keyLogin', opts)
