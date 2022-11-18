@@ -90,7 +90,7 @@
     "hash.js": "^1.1.7",
     "hmac-drbg": "^1.0.1",
     "node-fetch": "^2.6.1",
-    "redux": "^3.6.0",
+    "redux": "^4.2.0",
     "redux-keto": "^0.3.4",
     "redux-pixies": "^0.3.6",
     "rfc4648": "^1.4.0",
