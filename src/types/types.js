@@ -457,7 +457,10 @@ export type EdgeDataDump = {
 export type EdgeFreshAddress = {
   publicAddress: string,
   segwitAddress?: string,
-  legacyAddress?: string
+  legacyAddress?: string,
+  nativeBalance?: string,
+  segwitNativeBalance?: string,
+  legacyNativeBalance?: string
 }
 
 /**
@@ -550,6 +553,10 @@ export type EdgeGetTransactionsOptions = {
   denomination?: string
 }
 
+export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
+  forceIndex?: number
+}
+
 // engine --------------------------------------------------------------
 
 export type EdgeCurrencyEngineCallbacks = {
@@ -607,7 +614,7 @@ export type EdgeCurrencyEngine = {
 
   // Addresses:
   +getFreshAddress: (
-    opts: EdgeCurrencyCodeOptions
+    opts: EdgeGetReceiveAddressOptions
   ) => Promise<EdgeFreshAddress>,
   +addGapLimitAddresses: (addresses: string[]) => Promise<void>,
   +isAddressUsed: (address: string) => Promise<boolean>,
@@ -768,7 +775,7 @@ export type EdgeCurrencyWallet = {
 
   // Addresses:
   +getReceiveAddress: (
-    opts?: EdgeCurrencyCodeOptions
+    opts?: EdgeGetReceiveAddressOptions
   ) => Promise<EdgeReceiveAddress>,
   +saveReceiveAddress: (receiveAddress: EdgeReceiveAddress) => Promise<void>,
   +lockReceiveAddress: (receiveAddress: EdgeReceiveAddress) => Promise<void>,
