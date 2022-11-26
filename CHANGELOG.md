@@ -1,5 +1,14 @@
 # edge-core-js
 
+## v0.19.33 (2022-11-25)
+
+- added: New options for getReceiveAddress
+- change: Upgrade biggystring to 4.0.0
+- change: Increase BCH replay protection transaction value amount
+- change: Upgrade redux to 4.2.0
+- change: Upgrade redux-keto to 0.3.5
+- fix: Login server override testing
+
 ## v0.19.32 (2022-11-14)
 
 - added: `EdgeTransaction.walletId`.
