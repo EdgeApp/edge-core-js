@@ -15,6 +15,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeDataDump,
   type EdgeEncodeUri,
+  type EdgeGetReceiveAddressOptions,
   type EdgeGetTransactionsOptions,
   type EdgeMemoRules,
   type EdgeMetadata,
@@ -394,15 +395,13 @@ export function makeCurrencyWalletApi(
     },
 
     async getReceiveAddress(
-      opts: EdgeCurrencyCodeOptions = {}
+      opts: EdgeGetReceiveAddressOptions = {}
     ): Promise<EdgeReceiveAddress> {
       const freshAddress = await engine.getFreshAddress(opts)
       const receiveAddress: EdgeReceiveAddress = {
-        metadata: fakeMetadata,
+        ...freshAddress,
         nativeAmount: '0',
-        publicAddress: freshAddress.publicAddress,
-        legacyAddress: freshAddress.legacyAddress,
-        segwitAddress: freshAddress.segwitAddress
+        metadata: fakeMetadata
       }
       return receiveAddress
     },

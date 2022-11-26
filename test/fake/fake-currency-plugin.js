@@ -14,6 +14,7 @@ import {
   type EdgeCurrencyTools,
   type EdgeDataDump,
   type EdgeFreshAddress,
+  type EdgeGetReceiveAddressOptions,
   type EdgeGetTransactionsOptions,
   type EdgeParsedUri,
   type EdgeSpendInfo,
@@ -262,7 +263,7 @@ class FakeCurrencyEngine {
 
   // Addresses:
   async getFreshAddress(
-    opts: EdgeCurrencyCodeOptions
+    opts: EdgeGetReceiveAddressOptions
   ): Promise<EdgeFreshAddress> {
     return { publicAddress: 'fakeaddress' }
   }
