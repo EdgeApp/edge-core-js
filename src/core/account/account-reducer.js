@@ -199,7 +199,7 @@ const accountInner: FatReducer<
   walletInfos: memoizeReducer(
     (next: AccountNext) => next.self.allWalletInfosFull,
     (walletInfos: EdgeWalletInfoFull[]): WalletInfoFullMap => {
-      const out = {}
+      const out: WalletInfoFullMap = {}
       for (const info of walletInfos) {
         out[info.id] = info
       }

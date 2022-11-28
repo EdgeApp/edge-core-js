@@ -72,15 +72,17 @@ export interface EdgeContextProps extends CommonProps {
   // Deprecated. Just pass options like `apiKey` as normal props:
   options?: EdgeContextOptions;
 
+  // EdgeFakeWorldOptions:
+  crashReporter?: EdgeCrashReporter;
+  onLog?: EdgeOnLog;
+
   // EdgeContextOptions:
   apiKey?: string;
   appId?: string;
   authServer?: string;
-  crashReporter?: EdgeCrashReporter;
   deviceDescription?: string;
   hideKeys?: boolean;
   logSettings?: Partial<EdgeLogSettings>;
-  onLog?: EdgeOnLog;
   plugins?: EdgeCorePluginsInit;
 }
 
@@ -94,14 +96,20 @@ export interface EdgeFakeWorldProps extends CommonProps {
 }
 
 /**
+ * We don't want this library to depend on `@types/react`,
+ * since that isn't relevant for our Node or browser builds.
+ */
+type ComponentType<Props> = React$ComponentType<Props>
+
+/**
  * React Native component for creating an EdgeContext.
  */
-declare export var MakeEdgeContext: React$StatelessFunctionalComponent<EdgeContextProps>
+declare export var MakeEdgeContext: ComponentType<EdgeContextProps>
 
 /**
  * React Native component for creating an EdgeFakeWorld for testing.
  */
-declare export var MakeFakeEdgeWorld: React$StatelessFunctionalComponent<EdgeFakeWorldProps>
+declare export var MakeFakeEdgeWorld: ComponentType<EdgeFakeWorldProps>
 
 /**
  * React Native function for getting login alerts without a context:

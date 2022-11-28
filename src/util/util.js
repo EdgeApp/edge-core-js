@@ -14,7 +14,7 @@ export function softCat<T>(...lists: Array<T[] | void>): T[] {
  * preferring the items from later objects.
  */
 export function mergeDeeply(...objects: any[]): any {
-  const out = {}
+  const out: any = {}
 
   for (const o of objects) {
     if (o == null) continue

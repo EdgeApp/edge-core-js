@@ -134,7 +134,7 @@ export function makeFakeWorld(
         .map(info =>
           base16.stringify(base64.parse(info.keys.syncKey)).toLowerCase()
         )
-      const repos = {}
+      const repos: $PropertyType<EdgeFakeUser, 'repos'> = {}
       for (const syncKey of syncKeys) repos[syncKey] = fakeDb.repos[syncKey]
 
       return wasFakeUser({

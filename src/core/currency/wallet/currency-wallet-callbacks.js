@@ -21,7 +21,11 @@ import {
   type CurrencyWalletInput,
   type CurrencyWalletProps
 } from './currency-wallet-pixie.js'
-import { type MergedTransaction, mergeTx } from './currency-wallet-reducer.js'
+import {
+  type MergedTransaction,
+  type TxidHashes,
+  mergeTx
+} from './currency-wallet-reducer.js'
 
 let throttleRateLimitMs = 5000
 
@@ -222,7 +226,7 @@ export function makeCurrencyWalletCallbacks(
       } = input.props.walletState
       const defaultCurrency = input.props.walletState.currencyInfo.currencyCode
 
-      const txidHashes = {}
+      const txidHashes: TxidHashes = {}
       const changed: EdgeTransaction[] = []
       const created: EdgeTransaction[] = []
       for (const tx of txs) {
@@ -280,10 +284,14 @@ export function makeCurrencyWalletCallbacks(
       if (created.length > 0) throttledOnNewTx(created)
     },
     onAddressChanged() {
-      emit(input.props.walletOutput.walletApi, 'addressChanged', undefined)
+      if (input.props.walletOutput.walletApi != null) {
+        emit(input.props.walletOutput.walletApi, 'addressChanged', undefined)
+      }
     },
     onWcNewContractCall(payload: JsonObject) {
-      emit(input.props.walletOutput.walletApi, 'wcNewContractCall', payload)
+      if (input.props.walletOutput.walletApi != null) {
+        emit(input.props.walletOutput.walletApi, 'wcNewContractCall', payload)
+      }
     },
     onTxidsChanged() {}
   }
@@ -295,7 +303,7 @@ export function makeCurrencyWalletCallbacks(
 export function watchCurrencyWallet(input: CurrencyWalletInput): void {
   const { walletId } = input.props
 
-  let lastChanges
+  let lastChanges: string[]
   function checkChangesLoop(props: CurrencyWalletProps): void {
     // Check for data changes:
     const changes = getStorageWalletLastChanges(props.state, walletId)

@@ -26,6 +26,8 @@ const legacyWalletFile = makeJsonFile(asLegacyWalletFile)
 const walletStateFile = makeJsonFile(asWalletStateFile)
 const pluginSettingsFile = makeJsonFile(asPluginSettingsFile)
 
+const emptySettings = asPluginSettingsFile({})
+
 const PLUGIN_SETTINGS_FILE = 'PluginSettings.json'
 
 type LoadedWalletList = {
@@ -50,7 +52,7 @@ function different(a: any, b: any): boolean {
  */
 async function loadWalletList(disklet: Disklet): Promise<LoadedWalletList> {
   const walletInfos: EdgeWalletInfo[] = []
-  const walletStates = {}
+  const walletStates: EdgeWalletStates = {}
   const paths = justFiles(await disklet.list('Wallets'))
   await Promise.all(
     paths.map(async path => {
@@ -151,7 +153,7 @@ export async function changeWalletStates(
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
   // Find the changes between the new states and the old states:
-  const toWrite = {}
+  const toWrite: EdgeWalletStates = {}
   for (const id of Object.keys(newStates)) {
     if (walletStates[id] == null) {
       // We don't have this id, so everything is new:
@@ -203,7 +205,9 @@ export async function changePluginUserSettings(
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
   // Write the new state to disk:
-  const clean = await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)
+  const clean =
+    (await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)) ??
+    emptySettings
   await pluginSettingsFile.save(disklet, PLUGIN_SETTINGS_FILE, {
     ...clean,
     userSettings: {
@@ -236,7 +240,9 @@ export async function changeSwapSettings(
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
   // Write the new state to disk:
-  const clean = await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)
+  const clean =
+    (await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)) ??
+    emptySettings
   await pluginSettingsFile.save(disklet, PLUGIN_SETTINGS_FILE, {
     ...clean,
     swapSettings: {

@@ -231,7 +231,7 @@ const currencyWalletInner: FatReducer<
       }
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
         const { txFileNames } = action.payload
-        const newTxidHashes = {}
+        const newTxidHashes: { [txid: string]: number } = {}
         for (const txidHash of Object.keys(txFileNames)) {
           newTxidHashes[txidHash] = txFileNames[txidHash].creationDate
         }
@@ -412,8 +412,7 @@ const defaultTx: MergedTransaction = {
   signedTx: '',
   txid: '',
   nativeAmount: {},
-  networkFee: {},
-  providerFee: {}
+  networkFee: {}
 }
 
 /**

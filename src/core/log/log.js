@@ -6,7 +6,8 @@ import {
   type EdgeLogEvent,
   type EdgeLogMethod,
   type EdgeLogSettings,
-  type EdgeOnLog
+  type EdgeOnLog,
+  type JsonObject
 } from '../../types/types.js'
 import { addHiddenProperties } from '../../util/util.js'
 
@@ -70,7 +71,7 @@ export function makeLog(backend: LogBackend, source: string): EdgeLog {
   const { onLog, crashReporter } = backend
 
   return addHiddenProperties(makeLogMethod(onLog, 'info', source), {
-    breadcrumb(message, metadata) {
+    breadcrumb(message: string, metadata: JsonObject) {
       const time = new Date()
       if (crashReporter != null) {
         crashReporter.logBreadcrumb({ message, metadata, source, time })
@@ -79,7 +80,7 @@ export function makeLog(backend: LogBackend, source: string): EdgeLog {
         onLog({ message, source, time, type: 'warn' })
       }
     },
-    crash(error, metadata) {
+    crash(error: mixed, metadata: JsonObject) {
       const time = new Date()
       if (crashReporter != null) {
         crashReporter.logCrash({ error, metadata, source, time })

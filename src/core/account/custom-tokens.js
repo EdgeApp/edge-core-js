@@ -173,7 +173,7 @@ function findEngine(ai: ApiInput, pluginId: string): EdgeCurrencyEngine | void {
 async function loadGuiTokens(
   ai: ApiInput,
   accountId: string
-): EdgePluginMap<EdgeTokenMap> {
+): Promise<EdgePluginMap<EdgeTokenMap>> {
   const { state } = ai.props
   const { accountWalletInfo } = state.accounts[accountId]
   const disklet = getStorageWalletDisklet(state, accountWalletInfo.id)
@@ -244,5 +244,8 @@ export async function saveCustomTokens(
 
   // Refresh the file:
   const file = await customTokensFile.load(disklet, CUSTOM_TOKENS_FILE)
-  customTokensFile.save(disklet, CUSTOM_TOKENS_FILE, { ...file, customTokens })
+  await customTokensFile.save(disklet, CUSTOM_TOKENS_FILE, {
+    ...file,
+    customTokens
+  })
 }

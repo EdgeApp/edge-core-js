@@ -44,7 +44,7 @@ export class EdgeCoreBridge extends React.Component<Props> {
     })
   }
 
-  render(): React.Node {
+  render(): React$Element<any> {
     const { allowDebugging = false, debug = false, onError } = this.props
 
     return (
@@ -64,9 +64,7 @@ export class EdgeCoreBridge extends React.Component<Props> {
   }
 }
 
-const NativeWebView: Class<EdgeCoreWebView> = requireNativeComponent(
-  'EdgeCoreWebView'
-)
+const NativeWebView: EdgeCoreWebView = requireNativeComponent('EdgeCoreWebView')
 
 /**
  * Turns XMLHttpRequest headers into a more JSON-like structure.

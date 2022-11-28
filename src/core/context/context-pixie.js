@@ -3,7 +3,11 @@
 import { type TamePixie, combinePixies, stopUpdates } from 'redux-pixies'
 import { close, update } from 'yaob'
 
-import { type EdgeContext } from '../../types/types.js'
+import {
+  type EdgeContext,
+  type EdgeLogSettings,
+  type EdgeUserInfo
+} from '../../types/types.js'
 import { type ApiInput, type RootProps } from '../root-pixie.js'
 import { makeContextApi } from './context-api.js'
 
@@ -25,7 +29,9 @@ export const context: TamePixie<RootProps> = combinePixies({
   },
 
   watcher(ai: ApiInput) {
-    let lastLocalUsers, lastPaused, lastLogSettings
+    let lastLocalUsers: EdgeUserInfo[] | void
+    let lastPaused: boolean | void
+    let lastLogSettings: EdgeLogSettings | void
 
     return () => {
       if (

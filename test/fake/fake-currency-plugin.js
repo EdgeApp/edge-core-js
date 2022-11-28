@@ -58,8 +58,6 @@ const fakeCurrencyInfo: EdgeCurrencyInfo = {
   transactionExplorer: 'https://edge.app'
 }
 
-const nop: Function = () => {}
-
 type State = {
   balance: number,
   stakedBalance: number,
@@ -149,14 +147,11 @@ class FakeCurrencyEngine {
     if (settings.txs != null) {
       const changes: EdgeTransaction[] = []
       for (const txid of Object.keys(settings.txs)) {
-        const newTx: EdgeTransaction = {
-          blockHeight: 0,
-          date: GENESIS_BLOCK,
-          nativeAmount: '0',
-          networkFee: '0',
-          ourReceiveAddresses: [],
+        const newTx = {
+          ...blankTx,
           ...settings.txs[txid],
-          txid
+          txid,
+          walletId: this._walletId
         }
         const oldTx = state.txs[txid]
 
@@ -369,4 +364,18 @@ export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
   makeCurrencyTools(): Promise<EdgeCurrencyTools> {
     return Promise.resolve(new FakeCurrencyTools())
   }
+}
+
+function nop(...args: mixed[]): void {}
+
+const blankTx: EdgeTransaction = {
+  blockHeight: 0,
+  currencyCode: 'FAKE',
+  date: GENESIS_BLOCK,
+  nativeAmount: '0',
+  networkFee: '0',
+  ourReceiveAddresses: [],
+  signedTx: '',
+  txid: '',
+  walletId: ''
 }

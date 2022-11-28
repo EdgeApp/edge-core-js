@@ -122,7 +122,7 @@ export const login: FatReducer<
       return next.accounts[id].walletInfos
     }
 
-    const out = {}
+    const out: WalletInfoFullMap = {}
     for (const accountId of next.accountIds) {
       const account = next.accounts[accountId]
       for (const id of Object.keys(account.walletInfos)) {

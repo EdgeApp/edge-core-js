@@ -1,7 +1,7 @@
 // @flow
 
 import { makeSyncClient } from 'edge-sync-client'
-import { type StoreEnhancer, compose, createStore } from 'redux'
+import { createStore } from 'redux'
 import { type ReduxProps, attachPixie, filterPixie } from 'redux-pixies'
 import { emit } from 'yaob'
 
@@ -20,11 +20,10 @@ import { type RootState, defaultLogSettings, reducer } from './root-reducer.js'
 
 let allContexts: EdgeContext[] = []
 
-const composeEnhancers =
-  typeof window === 'object' &&
-  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ != null
-    ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'core' })
-    : compose
+const enhancer =
+  typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION__ != null
+    ? window.__REDUX_DEVTOOLS_EXTENSION__({ name: 'core' })
+    : undefined
 
 /**
  * Creates the root object for the entire core state machine.
@@ -53,8 +52,7 @@ export async function makeContext(
   validateServer(authServer)
 
   // Create a redux store:
-  const enhancers: StoreEnhancer<RootState, RootAction> = composeEnhancers()
-  const redux = createStore(reducer, enhancers)
+  const redux = createStore(reducer, enhancer)
 
   // Create a log wrapper, using the settings from redux:
   logBackend = filterLogs(logBackend, () => {

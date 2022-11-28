@@ -76,7 +76,7 @@ function fixLegacyFile(
     internal: file.state.internal,
     txid: file.state.malleableTxId
   }
-  const exchangeAmount = {}
+  const exchangeAmount: { [currencyCode: string]: number } = {}
   exchangeAmount[walletFiat] = file.meta.amountCurrency
   out.currencies[walletCurrency] = {
     metadata: {

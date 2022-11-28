@@ -30,7 +30,6 @@ export function makeBrowserIo(): EdgeIo {
     scrypt,
 
     // Local io:
-    console,
     disklet: makeLocalStorageDisklet(window.localStorage, {
       prefix: 'airbitz'
     }),

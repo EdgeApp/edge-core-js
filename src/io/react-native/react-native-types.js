@@ -1,5 +1,6 @@
 // @flow
 
+import * as React from 'react'
 import { type HttpResponse } from 'serverlet'
 
 import { type LogBackend } from '../../core/log/log.js'
@@ -43,12 +44,12 @@ export type EdgeCoreScriptError = {
   nativeEvent: { source: string }
 }
 
-declare export class EdgeCoreWebView
-  extends
-    React$Component<{|
-      allowDebugging?: boolean,
-      source: string | null,
-      style?: any,
-      onMessage?: (event: EdgeCoreMessageEvent) => void,
-      onScriptError?: (event: EdgeCoreScriptError) => void
-    |}> {}
+export type EdgeCoreWebViewProps = {|
+  allowDebugging?: boolean,
+  source: string | null,
+  style?: any,
+  onMessage?: (event: EdgeCoreMessageEvent) => void,
+  onScriptError?: (event: EdgeCoreScriptError) => void
+|}
+export type EdgeCoreWebView = React.ComponentType<EdgeCoreWebViewProps>
+export type EdgeCoreWebViewRef = React.Component<EdgeCoreWebViewProps>

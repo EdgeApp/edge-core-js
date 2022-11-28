@@ -483,7 +483,7 @@ export async function applyKit(
   const newStashTree = updateTree(
     stashTree,
     stash => verifyData(stash.loginId, loginId),
-    stash => ({
+    (stash): LoginStash => ({
       ...stash,
       ...kit.stash,
       children: softCat(stash.children, kit.stash.children),

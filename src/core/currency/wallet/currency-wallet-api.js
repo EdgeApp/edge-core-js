@@ -333,7 +333,7 @@ export function makeCurrencyWalletApi(
       // some may have been dropped by the blockchain
       const sortedTransactions = state.sortedTransactions.sortedList
       // create map of tx id hashes to their order (cardinality)
-      const mappedUnfilteredIndexes = {}
+      const mappedUnfilteredIndexes: { [txid: string]: number } = {}
       sortedTransactions.forEach((item, index) => {
         mappedUnfilteredIndexes[item] = index
       })
