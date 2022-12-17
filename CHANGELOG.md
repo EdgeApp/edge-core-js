@@ -1,13 +1,17 @@
 # edge-core-js
 
+## v0.19.34 (2022-12-16)
+
+- fixed: Export more accurate TypeScript definitions for our React Native components.
+
 ## v0.19.33 (2022-11-25)
 
 - added: New options for getReceiveAddress
-- change: Upgrade biggystring to 4.0.0
-- change: Increase BCH replay protection transaction value amount
-- change: Upgrade redux to 4.2.0
-- change: Upgrade redux-keto to 0.3.5
-- fix: Login server override testing
+- changed: Upgrade biggystring to 4.0.0
+- changed: Increase BCH replay protection transaction value amount
+- changed: Upgrade redux to 4.2.0
+- changed: Upgrade redux-keto to 0.3.5
+- fixed: Login server override testing
 
 ## v0.19.32 (2022-11-14)
 
