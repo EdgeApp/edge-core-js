@@ -81,7 +81,9 @@ export async function fetchSwapQuote(
         })
         .then(
           quote => {
-            log.warn(`${pluginId} gave swap quote:`, quote)
+            const { fromWallet, toWallet, ...request } = quote.request ?? {}
+            const cleaned = { ...quote, request }
+            log.warn(`${pluginId} gave swap quote:`, cleaned)
             return quote
           },
           error => {
