@@ -982,6 +982,10 @@ export type EdgeCurrencyConfig = {
   +changeCustomToken: (tokenId: string, token: EdgeToken) => Promise<void>,
   +removeCustomToken: (tokenId: string) => Promise<void>,
 
+  // Always-enabled tokens:
+  +alwaysEnabledTokenIds: string[],
+  +changeAlwaysEnabledTokenIds: (tokenIds: string[]) => Promise<void>,
+
   // User settings for this plugin:
   +userSettings: JsonObject | void,
   +changeUserSettings: (settings: JsonObject) => Promise<void>,

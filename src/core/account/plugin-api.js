@@ -22,6 +22,7 @@ import {
 import { getTokenId } from './custom-tokens.js'
 
 const emptyTokens: EdgeTokenMap = {}
+const emptyTokenIds: string[] = []
 
 /**
  * Access to an individual currency plugin's methods.
@@ -137,6 +138,23 @@ export class CurrencyConfig extends Bridgeable<EdgeCurrencyConfig> {
     ai.props.dispatch({
       type: 'ACCOUNT_CUSTOM_TOKEN_REMOVED',
       payload: { accountId, pluginId, tokenId }
+    })
+  }
+
+  get alwaysEnabledTokenIds(): string[] {
+    const { state } = this._ai.props
+    const { _accountId: accountId, _pluginId: pluginId } = this
+    return (
+      state.accounts[accountId].alwaysEnabledTokenIds[pluginId] ?? emptyTokenIds
+    )
+  }
+
+  async changeAlwaysEnabledTokenIds(tokenIds: string[]): Promise<void> {
+    const { _accountId: accountId, _ai: ai, _pluginId: pluginId } = this
+
+    ai.props.dispatch({
+      type: 'ACCOUNT_ALWAYS_ENABLED_TOKENS_CHANGED',
+      payload: { accountId, pluginId, tokenIds }
     })
   }
 

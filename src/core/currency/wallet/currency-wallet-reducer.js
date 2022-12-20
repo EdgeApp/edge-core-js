@@ -21,7 +21,7 @@ import { type RootAction } from '../../actions.js'
 import { findCurrencyPluginId } from '../../plugins/plugins-selectors.js'
 import { type RootState } from '../../root-reducer.js'
 import { type TransactionFile } from './currency-wallet-cleaners.js'
-import { currencyCodesToTokenIds } from './enabled-tokens.js'
+import { currencyCodesToTokenIds, uniqueStrings } from './enabled-tokens.js'
 
 /** Maps from txid hash to file creation date & path. */
 export type TxFileNames = {
@@ -62,6 +62,7 @@ export type CurrencyWalletState = {
 
   +paused: boolean,
 
+  +allEnabledTokenIds: string[],
   +balances: EdgeBalances,
   +currencyInfo: EdgeCurrencyInfo,
   +displayPrivateSeed: string | null,
@@ -111,6 +112,16 @@ const currencyWalletInner: FatReducer<
     }
     throw new Error(`Cannot find account for walletId ${next.id}`)
   },
+
+  allEnabledTokenIds: memoizeReducer(
+    (next: CurrencyWalletNext) =>
+      next.root.accounts[next.self.accountId].alwaysEnabledTokenIds[
+        next.self.pluginId
+      ],
+    (next: CurrencyWalletNext) => next.self.enabledTokenIds,
+    (alwaysEnabledTokenIds = [], enabledTokenIds = []) =>
+      uniqueStrings([...alwaysEnabledTokenIds, ...enabledTokenIds])
+  ),
 
   pluginId: memoizeReducer(
     next => next.root.login.walletInfos[next.id].type,

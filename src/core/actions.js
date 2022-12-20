@@ -32,6 +32,15 @@ import {
 
 export type RootAction =
   | {
+      // Fired when somebody changes the always-enabled token list:
+      type: 'ACCOUNT_ALWAYS_ENABLED_TOKENS_CHANGED',
+      payload: {
+        accountId: string,
+        pluginId: string,
+        tokenIds: string[]
+      }
+    }
+  | {
       // A currency plugin has returned its builtin tokens.
       type: 'ACCOUNT_BUILTIN_TOKENS_LOADED',
       payload: {

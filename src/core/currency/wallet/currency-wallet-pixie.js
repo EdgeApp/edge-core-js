@@ -44,7 +44,7 @@ import {
   type CurrencyWalletState,
   initialEnabledTokens
 } from './currency-wallet-reducer.js'
-import { uniqueStrings } from './enabled-tokens.js'
+import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens.js'
 
 export type CurrencyWalletOutput = {
   +walletApi: EdgeCurrencyWallet | void,
@@ -118,7 +118,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
         // User settings:
         customTokens: accountState.customTokens[pluginId] ?? {},
-        enabledTokenIds: input.props.walletState.enabledTokenIds,
+        enabledTokenIds: input.props.walletState.allEnabledTokenIds,
         userSettings: accountState.userSettings[pluginId] ?? {}
       })
       input.props.dispatch({
@@ -310,7 +310,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     let lastState: CurrencyWalletState | void
     let lastSettings: JsonObject = {}
     let lastTokens: EdgeTokenMap = {}
-    let lastEnabledTokens: string[] = initialEnabledTokens
+    let lastEnabledTokenIds: string[] = initialEnabledTokens
 
     return async () => {
       const { state, walletState, walletOutput } = input.props
@@ -352,22 +352,34 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       lastTokens = customTokens
 
       // Update enabled tokens:
-      const { enabledTokens } = walletState
-      if (lastEnabledTokens !== enabledTokens && engine != null) {
+      const { allEnabledTokenIds } = walletState
+      if (lastEnabledTokenIds !== allEnabledTokenIds && engine != null) {
         if (engine.changeEnabledTokenIds != null) {
           await engine
-            .changeEnabledTokenIds(walletState.enabledTokenIds)
+            .changeEnabledTokenIds(allEnabledTokenIds)
             .catch(error => input.props.onError(error))
         } else {
+          const removed = tokenIdsToCurrencyCodes(
+            accountState.builtinTokens[pluginId],
+            accountState.customTokens[pluginId],
+            walletState.currencyInfo,
+            uniqueStrings(lastEnabledTokenIds, allEnabledTokenIds)
+          )
+          const added = tokenIdsToCurrencyCodes(
+            accountState.builtinTokens[pluginId],
+            accountState.customTokens[pluginId],
+            walletState.currencyInfo,
+            uniqueStrings(allEnabledTokenIds, lastEnabledTokenIds)
+          )
           await engine
-            .disableTokens(uniqueStrings(lastEnabledTokens, enabledTokens))
+            .disableTokens(removed)
             .catch(error => input.props.onError(error))
           await engine
-            .enableTokens(uniqueStrings(enabledTokens, lastEnabledTokens))
+            .enableTokens(added)
             .catch(error => input.props.onError(error))
         }
       }
-      lastEnabledTokens = enabledTokens
+      lastEnabledTokenIds = allEnabledTokenIds
     }
   }
 })

@@ -264,7 +264,22 @@ describe('currency wallets', function () {
       'TOKEN'
     ])
 
-    // The last update hand missing ID's, but an update still occurs:
+    // The last update had missing ID's, but an update still occurs:
+    log.assert(tokenId)
+  })
+
+  it('supports always-enabled tokens', async function () {
+    const log = makeAssertLog()
+    const { config } = await makeFakeCurrencyWallet()
+    const tokenId =
+      'f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd'
+
+    config.watch('alwaysEnabledTokenIds', ids => log(ids.join(', ')))
+    expect(config.alwaysEnabledTokenIds).deep.equals([])
+
+    // Change the config object:
+    await config.changeAlwaysEnabledTokenIds([tokenId])
+    expect(config.alwaysEnabledTokenIds).deep.equals([tokenId])
     log.assert(tokenId)
   })
 

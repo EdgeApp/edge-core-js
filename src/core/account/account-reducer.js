@@ -64,6 +64,7 @@ export type AccountState = {
   +allTokens: EdgePluginMap<EdgeTokenMap>,
   +builtinTokens: EdgePluginMap<EdgeTokenMap>,
   +customTokens: EdgePluginMap<EdgeTokenMap>,
+  +alwaysEnabledTokenIds: EdgePluginMap<string[]>,
   +swapSettings: EdgePluginMap<SwapSettings>,
   +userSettings: EdgePluginMap<JsonObject>
 }
@@ -328,6 +329,19 @@ const accountInner: FatReducer<
 
         const { [tokenId]: unused, ...newList } = oldList
         return { ...state, [pluginId]: newList }
+      }
+    }
+    return state
+  },
+
+  alwaysEnabledTokenIds(
+    state: EdgePluginMap<string[]> = {},
+    action: RootAction
+  ): EdgePluginMap<string[]> {
+    switch (action.type) {
+      case 'ACCOUNT_ALWAYS_ENABLED_TOKENS_CHANGED': {
+        const { pluginId, tokenIds } = action.payload
+        return { ...state, [pluginId]: tokenIds }
       }
     }
     return state
