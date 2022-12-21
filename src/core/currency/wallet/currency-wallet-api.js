@@ -521,6 +521,12 @@ export function makeCurrencyWalletApi(
       return engine.sweepPrivateKeys(spendInfo)
     },
 
+    // Accelerating:
+    async accelerate(tx: EdgeTransaction): Promise<EdgeTransaction | null> {
+      if (engine.accelerate == null) return null
+      return await engine.accelerate(tx)
+    },
+
     // Staking:
     get stakingStatus(): EdgeStakingStatus {
       return input.props.walletState.stakingStatus

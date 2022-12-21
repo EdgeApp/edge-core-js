@@ -630,6 +630,9 @@ export type EdgeCurrencyEngine = {
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>,
 
+  // Accelerating:
+  +accelerate?: (tx: EdgeTransaction) => Promise<EdgeTransaction | null>,
+
   // Staking:
   +getStakingStatus?: () => Promise<EdgeStakingStatus>,
 
@@ -795,6 +798,9 @@ export type EdgeCurrencyWallet = {
   ) => Promise<void>,
   +signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>,
   +sweepPrivateKeys: (edgeSpendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
+
+  // Accelerating:
+  +accelerate: (tx: EdgeTransaction) => Promise<EdgeTransaction | null>,
 
   // Staking:
   +stakingStatus: EdgeStakingStatus,
