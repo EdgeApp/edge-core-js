@@ -327,21 +327,25 @@ const validateConfirmations = (
   blockHeight: number,
   requiredConfirmations: number = 1 // Default confirmation rule is 1 block
 ): $PropertyType<EdgeTransaction, 'confirmations'> => {
-  // If tx block height is 0, this means it's not yet mined in a block,
-  // so block confirmations is 0.
+  // If tx block height is ≤0, this means it's not yet mined in a block,
+  // so block confirmations is 0 (unconfirmed) or -1 (dropped).
   const blockConfirmations =
-    tx.blockHeight === 0 ? 0 : 1 + blockHeight - tx.blockHeight
+    tx.blockHeight <= 0 ? tx.blockHeight : 1 + blockHeight - tx.blockHeight
+
   /*
   A negative number of block confirmations means the wallet's block
   height has not caught up with the transaction's block height, or the
   transaction is mined in a block which is apart of an chain fork.
   Either way, the transaction is considered unconfirmed.
   */
-  const confirmations =
+  const confirmations: $PropertyType<EdgeTransaction, 'confirmations'> =
     blockConfirmations >= requiredConfirmations
       ? 'confirmed'
-      : blockConfirmations <= 0
+      : blockConfirmations === 0
       ? 'unconfirmed'
+      : blockConfirmations < 0
+      ? 'dropped'
       : blockConfirmations
+
   return confirmations
 }
