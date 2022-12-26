@@ -1,9 +1,12 @@
 # edge-core-js
 
+## v0.19.36 (2022-12-26)
+
+- added: Accelerate Transaction API
+
 ## v0.19.35 (2022-12-20)
 
 - fixed: Clean swap quotes before logging to prevent circular reference error
-
 
 ## v0.19.34 (2022-12-16)
 
