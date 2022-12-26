@@ -630,6 +630,9 @@ export type EdgeCurrencyEngine = {
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>,
 
+  // Accelerating:
+  +accelerate?: (tx: EdgeTransaction) => Promise<EdgeTransaction | null>,
+
   // Staking:
   +getStakingStatus?: () => Promise<EdgeStakingStatus>,
 
@@ -719,13 +722,13 @@ export type EdgeCurrencyWallet = {
   +watch: Subscriber<EdgeCurrencyWallet>,
 
   // Data store:
+  +disklet: Disklet,
   +id: string,
   +keys: JsonObject,
-  +type: string,
-  +publicWalletInfo: EdgeWalletInfo,
-  +disklet: Disklet,
   +localDisklet: Disklet,
+  +publicWalletInfo: EdgeWalletInfo,
   +sync: () => Promise<void>,
+  +type: string,
 
   // Wallet keys:
   +displayPrivateSeed: string | null,
@@ -742,15 +745,15 @@ export type EdgeCurrencyWallet = {
   // Currency info:
   +currencyConfig: EdgeCurrencyConfig, // eslint-disable-line no-use-before-define
   +currencyInfo: EdgeCurrencyInfo,
-  +validateMemo: (memo: string) => Promise<EdgeMemoRules>,
-  +nativeToDenomination: (
-    nativeAmount: string,
-    currencyCode: string
-  ) => Promise<string>,
   +denominationToNative: (
     denominatedAmount: string,
     currencyCode: string
   ) => Promise<string>,
+  +nativeToDenomination: (
+    nativeAmount: string,
+    currencyCode: string
+  ) => Promise<string>,
+  +validateMemo: (memo: string) => Promise<EdgeMemoRules>,
 
   // Chain state:
   +balances: EdgeBalances,
@@ -758,14 +761,14 @@ export type EdgeCurrencyWallet = {
   +syncRatio: number,
 
   // Running state:
-  +paused: boolean,
   +changePaused: (paused: boolean) => Promise<void>,
+  +paused: boolean,
 
   // Token management:
   // Available tokens can be found in `EdgeCurrencyConfig`.
   // This list is allowed to include missing or deleted `tokenIds`:
-  +enabledTokenIds: string[],
   +changeEnabledTokenIds: (tokenIds: string[]) => Promise<void>,
+  +enabledTokenIds: string[],
 
   // Transaction history:
   +getNumTransactions: (opts?: EdgeCurrencyCodeOptions) => Promise<number>,
@@ -777,44 +780,48 @@ export type EdgeCurrencyWallet = {
   +getReceiveAddress: (
     opts?: EdgeGetReceiveAddressOptions
   ) => Promise<EdgeReceiveAddress>,
-  +saveReceiveAddress: (receiveAddress: EdgeReceiveAddress) => Promise<void>,
   +lockReceiveAddress: (receiveAddress: EdgeReceiveAddress) => Promise<void>,
+  +saveReceiveAddress: (receiveAddress: EdgeReceiveAddress) => Promise<void>,
 
   // Sending:
-  +makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
-  +signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>,
   +broadcastTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>,
+  +getMaxSpendable: (spendInfo: EdgeSpendInfo) => Promise<string>,
+  +getPaymentProtocolInfo: (
+    paymentProtocolUrl: string
+  ) => Promise<EdgePaymentProtocolInfo>,
+  +makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
   +saveTx: (tx: EdgeTransaction) => Promise<void>,
-  +sweepPrivateKeys: (edgeSpendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
   +saveTxMetadata: (
     txid: string,
     currencyCode: string,
     metadata: EdgeMetadata
   ) => Promise<void>,
-  +getMaxSpendable: (spendInfo: EdgeSpendInfo) => Promise<string>,
-  +getPaymentProtocolInfo: (
-    paymentProtocolUrl: string
-  ) => Promise<EdgePaymentProtocolInfo>,
+  +signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>,
+  +sweepPrivateKeys: (edgeSpendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>,
+
+  // Accelerating:
+  +accelerate: (tx: EdgeTransaction) => Promise<EdgeTransaction | null>,
 
   // Staking:
   +stakingStatus: EdgeStakingStatus,
 
   // Wallet management:
-  +resyncBlockchain: () => Promise<void>,
   +dumpData: () => Promise<EdgeDataDump>,
+  +resyncBlockchain: () => Promise<void>,
 
   // URI handling:
-  +parseUri: (uri: string, currencyCode?: string) => Promise<EdgeParsedUri>,
   +encodeUri: (obj: EdgeEncodeUri) => Promise<string>,
+  +parseUri: (uri: string, currencyCode?: string) => Promise<EdgeParsedUri>,
 
+  // Generic:
   +otherMethods: EdgeOtherMethods,
 
   // Deprecated:
+  +addCustomToken: (token: EdgeTokenInfo) => Promise<void>,
   +changeEnabledTokens: (currencyCodes: string[]) => Promise<void>,
   +disableTokens: (tokens: string[]) => Promise<void>,
   +enableTokens: (tokens: string[]) => Promise<void>,
-  +getEnabledTokens: () => Promise<string[]>,
-  +addCustomToken: (token: EdgeTokenInfo) => Promise<void>
+  +getEnabledTokens: () => Promise<string[]>
 }
 
 // ---------------------------------------------------------------------

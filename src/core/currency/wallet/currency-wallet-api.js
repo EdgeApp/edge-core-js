@@ -103,25 +103,25 @@ export function makeCurrencyWalletApi(
     watch: watchMethod,
 
     // Data store:
+    get disklet(): Disklet {
+      return storageWalletApi.disklet
+    },
     get id(): string {
       return storageWalletApi.id
-    },
-    get type(): string {
-      return storageWalletApi.type
     },
     get keys(): JsonObject {
       lockdown()
       return storageWalletApi.keys
     },
-    publicWalletInfo,
-    get disklet(): Disklet {
-      return storageWalletApi.disklet
-    },
     get localDisklet(): Disklet {
       return storageWalletApi.localDisklet
     },
+    publicWalletInfo,
     async sync(): Promise<void> {
       await storageWalletApi.sync()
+    },
+    get type(): string {
+      return storageWalletApi.type
     },
 
     // Wallet keys:
@@ -141,6 +141,14 @@ export function makeCurrencyWalletApi(
       await renameCurrencyWallet(input, name)
     },
 
+    // Fiat currency option:
+    get fiatCurrencyCode(): string {
+      return input.props.walletState.fiat
+    },
+    async setFiatCurrencyCode(fiatCurrencyCode: string): Promise<void> {
+      await setCurrencyWalletFiat(input, fiatCurrencyCode)
+    },
+
     // Currency info:
     get currencyConfig(): EdgeCurrencyConfig {
       const { accountApi } = input.props.output.accounts[accountId]
@@ -148,21 +156,6 @@ export function makeCurrencyWalletApi(
     },
     get currencyInfo(): EdgeCurrencyInfo {
       return plugin.currencyInfo
-    },
-    async validateMemo(memo: string): Promise<EdgeMemoRules> {
-      if (tools.validateMemo == null) return { passed: true }
-      return await tools.validateMemo(memo)
-    },
-    async nativeToDenomination(
-      nativeAmount: string,
-      currencyCode: string
-    ): Promise<string> {
-      const multiplier = getCurrencyMultiplier(
-        { [pluginId]: input.props.state.plugins.currency[pluginId] },
-        input.props.state.accounts[accountId].customTokens[pluginId],
-        currencyCode
-      )
-      return div(nativeAmount, multiplier, multiplier.length)
     },
     async denominationToNative(
       denominatedAmount: string,
@@ -175,44 +168,45 @@ export function makeCurrencyWalletApi(
       )
       return mul(denominatedAmount, multiplier)
     },
-
-    // Fiat currency option:
-    get fiatCurrencyCode(): string {
-      return input.props.walletState.fiat
+    async nativeToDenomination(
+      nativeAmount: string,
+      currencyCode: string
+    ): Promise<string> {
+      const multiplier = getCurrencyMultiplier(
+        { [pluginId]: input.props.state.plugins.currency[pluginId] },
+        input.props.state.accounts[accountId].customTokens[pluginId],
+        currencyCode
+      )
+      return div(nativeAmount, multiplier, multiplier.length)
     },
-    async setFiatCurrencyCode(fiatCurrencyCode: string): Promise<void> {
-      await setCurrencyWalletFiat(input, fiatCurrencyCode)
+    async validateMemo(memo: string): Promise<EdgeMemoRules> {
+      if (tools.validateMemo == null) return { passed: true }
+      return await tools.validateMemo(memo)
     },
 
     // Chain state:
     get balances(): EdgeBalances {
       return input.props.walletState.balances
     },
-
     get blockHeight(): number {
       return input.props.walletState.height
     },
-
     get syncRatio(): number {
       return input.props.walletState.syncRatio
     },
 
     // Running state:
-    get paused(): boolean {
-      return input.props.walletState.paused
-    },
     async changePaused(paused: boolean): Promise<void> {
       input.props.dispatch({
         type: 'CURRENCY_WALLET_CHANGED_PAUSED',
         payload: { walletId: input.props.walletId, paused }
       })
     },
-
-    // Tokens:
-    get enabledTokenIds(): string[] {
-      return input.props.walletState.enabledTokenIds
+    get paused(): boolean {
+      return input.props.walletState.paused
     },
 
+    // Tokens:
     async changeEnabledTokenIds(tokenIds: string[]): Promise<void> {
       const { dispatch, state, walletId, walletState } = input.props
       const { builtinTokens, customTokens } = state.accounts[accountId]
@@ -234,72 +228,16 @@ export function makeCurrencyWalletApi(
       })
     },
 
-    // Deprecated tokens:
-    async changeEnabledTokens(currencyCodes: string[]): Promise<void> {
-      const { dispatch, walletId } = input.props
-
-      dispatch({
-        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: { walletId, currencyCodes: uniqueStrings(currencyCodes) }
-      })
+    get enabledTokenIds(): string[] {
+      return input.props.walletState.enabledTokenIds
     },
 
-    async enableTokens(currencyCodes: string[]): Promise<void> {
-      const { dispatch, walletId, walletState } = input.props
-
-      dispatch({
-        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: {
-          walletId,
-          currencyCodes: uniqueStrings([
-            ...walletState.enabledTokens,
-            ...currencyCodes
-          ])
-        }
-      })
-    },
-
-    async disableTokens(currencyCodes: string[]): Promise<void> {
-      const { dispatch, walletId, walletState } = input.props
-
-      dispatch({
-        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: {
-          walletId,
-          currencyCodes: uniqueStrings(walletState.enabledTokens, currencyCodes)
-        }
-      })
-    },
-
-    async getEnabledTokens(): Promise<string[]> {
-      return input.props.walletState.enabledTokens
-    },
-
-    async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<void> {
-      const token = upgradeTokenInfo(tokenInfo)
-      const tokenId = contractToTokenId(tokenInfo.contractAddress)
-
-      // Ask the plugin to validate this:
-      if (tools.getTokenId != null) {
-        await tools.getTokenId(token)
-      } else {
-        // This is not ideal, since the pixie will add it too:
-        await engine.addCustomToken({ ...token, ...tokenInfo })
-      }
-
-      ai.props.dispatch({
-        type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
-        payload: { accountId, pluginId, tokenId, token }
-      })
-    },
-
-    // Transactions:
+    // Transactions history:
     async getNumTransactions(
       opts: EdgeCurrencyCodeOptions = {}
     ): Promise<number> {
       return engine.getNumTransactions(opts)
     },
-
     async getTransactions(
       opts: EdgeGetTransactionsOptions = {}
     ): Promise<EdgeTransaction[]> {
@@ -394,6 +332,7 @@ export function makeCurrencyWalletApi(
       return out
     },
 
+    // Addresses:
     async getReceiveAddress(
       opts: EdgeGetReceiveAddressOptions = {}
     ): Promise<EdgeReceiveAddress> {
@@ -405,19 +344,67 @@ export function makeCurrencyWalletApi(
       }
       return receiveAddress
     },
-
+    async lockReceiveAddress(
+      receiveAddress: EdgeReceiveAddress
+    ): Promise<void> {
+      // TODO: Address metadata
+    },
     async saveReceiveAddress(
       receiveAddress: EdgeReceiveAddress
     ): Promise<void> {
       // TODO: Address metadata
     },
 
-    async lockReceiveAddress(
-      receiveAddress: EdgeReceiveAddress
-    ): Promise<void> {
-      // TODO: Address metadata
+    // Sending:
+    async broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
+      return engine.broadcastTx(tx)
     },
+    async getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string> {
+      if (typeof engine.getMaxSpendable === 'function') {
+        return await engine.getMaxSpendable(spendInfo)
+      }
+      const { currencyCode, networkFeeOption, customNetworkFee } = spendInfo
+      const balance = engine.getBalance({ currencyCode })
 
+      // Copy all the spend targets, setting the amounts to 0
+      // but keeping all other information so we can get accurate fees:
+      const spendTargets = spendInfo.spendTargets.map(spendTarget => {
+        return { ...spendTarget, nativeAmount: '0' }
+      })
+
+      // The range of possible values includes `min`, but not `max`.
+      function getMax(min: string, max: string): Promise<string> {
+        const diff = sub(max, min)
+        if (lte(diff, '1')) {
+          return Promise.resolve(min)
+        }
+        const mid = add(min, div(diff, '2'))
+
+        // Try the average:
+        spendTargets[0].nativeAmount = mid
+        return engine
+          .makeSpend({
+            currencyCode,
+            spendTargets,
+            networkFeeOption,
+            customNetworkFee
+          })
+          .then(() => getMax(mid, max))
+          .catch(() => getMax(min, mid))
+      }
+
+      return getMax('0', add(balance, '1'))
+    },
+    async getPaymentProtocolInfo(
+      paymentProtocolUrl: string
+    ): Promise<EdgePaymentProtocolInfo> {
+      if (engine.getPaymentProtocolInfo == null) {
+        throw new Error(
+          "'getPaymentProtocolInfo' is not implemented on wallets of this type"
+        )
+      }
+      return engine.getPaymentProtocolInfo(paymentProtocolUrl)
+    },
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
       const {
         privateKeys,
@@ -506,55 +493,11 @@ export function makeCurrencyWalletApi(
 
       return tx
     },
-
-    async sweepPrivateKeys(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-      if (engine.sweepPrivateKeys == null) {
-        throw new Error('Sweeping this currency is not supported.')
-      }
-      return engine.sweepPrivateKeys(spendInfo)
-    },
-
-    async signTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
-      return engine.signTx(tx)
-    },
-
-    async broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
-      return engine.broadcastTx(tx)
-    },
-
     async saveTx(tx: EdgeTransaction): Promise<void> {
       await setupNewTxMetadata(input, tx)
       await engine.saveTx(tx)
       fakeCallbacks.onTransactionsChanged([tx])
     },
-
-    get stakingStatus(): EdgeStakingStatus {
-      return input.props.walletState.stakingStatus
-    },
-
-    async resyncBlockchain(): Promise<void> {
-      ai.props.dispatch({
-        type: 'CURRENCY_ENGINE_CLEARED',
-        payload: { walletId: input.props.walletId }
-      })
-      await engine.resyncBlockchain()
-    },
-
-    async dumpData(): Promise<EdgeDataDump> {
-      return await engine.dumpData()
-    },
-
-    async getPaymentProtocolInfo(
-      paymentProtocolUrl: string
-    ): Promise<EdgePaymentProtocolInfo> {
-      if (engine.getPaymentProtocolInfo == null) {
-        throw new Error(
-          "'getPaymentProtocolInfo' is not implemented on wallets of this type"
-        )
-      }
-      return engine.getPaymentProtocolInfo(paymentProtocolUrl)
-    },
-
     async saveTxMetadata(
       txid: string,
       currencyCode: string,
@@ -568,44 +511,48 @@ export function makeCurrencyWalletApi(
         fakeCallbacks
       )
     },
-
-    async getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string> {
-      if (typeof engine.getMaxSpendable === 'function') {
-        return await engine.getMaxSpendable(spendInfo)
+    async signTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
+      return engine.signTx(tx)
+    },
+    async sweepPrivateKeys(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+      if (engine.sweepPrivateKeys == null) {
+        throw new Error('Sweeping this currency is not supported.')
       }
-      const { currencyCode, networkFeeOption, customNetworkFee } = spendInfo
-      const balance = engine.getBalance({ currencyCode })
-
-      // Copy all the spend targets, setting the amounts to 0
-      // but keeping all other information so we can get accurate fees:
-      const spendTargets = spendInfo.spendTargets.map(spendTarget => {
-        return { ...spendTarget, nativeAmount: '0' }
-      })
-
-      // The range of possible values includes `min`, but not `max`.
-      function getMax(min: string, max: string): Promise<string> {
-        const diff = sub(max, min)
-        if (lte(diff, '1')) {
-          return Promise.resolve(min)
-        }
-        const mid = add(min, div(diff, '2'))
-
-        // Try the average:
-        spendTargets[0].nativeAmount = mid
-        return engine
-          .makeSpend({
-            currencyCode,
-            spendTargets,
-            networkFeeOption,
-            customNetworkFee
-          })
-          .then(() => getMax(mid, max))
-          .catch(() => getMax(min, mid))
-      }
-
-      return getMax('0', add(balance, '1'))
+      return engine.sweepPrivateKeys(spendInfo)
     },
 
+    // Accelerating:
+    async accelerate(tx: EdgeTransaction): Promise<EdgeTransaction | null> {
+      if (engine.accelerate == null) return null
+      return await engine.accelerate(tx)
+    },
+
+    // Staking:
+    get stakingStatus(): EdgeStakingStatus {
+      return input.props.walletState.stakingStatus
+    },
+
+    // Wallet management:
+    async dumpData(): Promise<EdgeDataDump> {
+      return await engine.dumpData()
+    },
+    async resyncBlockchain(): Promise<void> {
+      ai.props.dispatch({
+        type: 'CURRENCY_ENGINE_CLEARED',
+        payload: { walletId: input.props.walletId }
+      })
+      await engine.resyncBlockchain()
+    },
+
+    // URI handling:
+    async encodeUri(options: EdgeEncodeUri): Promise<string> {
+      return tools.encodeUri(
+        options,
+        makeMetaTokens(
+          input.props.state.accounts[accountId].customTokens[pluginId]
+        )
+      )
+    },
     async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
       return tools.parseUri(
         uri,
@@ -616,16 +563,63 @@ export function makeCurrencyWalletApi(
       )
     },
 
-    async encodeUri(options: EdgeEncodeUri): Promise<string> {
-      return tools.encodeUri(
-        options,
-        makeMetaTokens(
-          input.props.state.accounts[accountId].customTokens[pluginId]
-        )
-      )
-    },
+    // Generic:
+    otherMethods,
 
-    otherMethods
+    // Deprecated:
+    async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<void> {
+      const token = upgradeTokenInfo(tokenInfo)
+      const tokenId = contractToTokenId(tokenInfo.contractAddress)
+
+      // Ask the plugin to validate this:
+      if (tools.getTokenId != null) {
+        await tools.getTokenId(token)
+      } else {
+        // This is not ideal, since the pixie will add it too:
+        await engine.addCustomToken({ ...token, ...tokenInfo })
+      }
+
+      ai.props.dispatch({
+        type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
+        payload: { accountId, pluginId, tokenId, token }
+      })
+    },
+    async changeEnabledTokens(currencyCodes: string[]): Promise<void> {
+      const { dispatch, walletId } = input.props
+
+      dispatch({
+        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+        payload: { walletId, currencyCodes: uniqueStrings(currencyCodes) }
+      })
+    },
+    async enableTokens(currencyCodes: string[]): Promise<void> {
+      const { dispatch, walletId, walletState } = input.props
+
+      dispatch({
+        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+        payload: {
+          walletId,
+          currencyCodes: uniqueStrings([
+            ...walletState.enabledTokens,
+            ...currencyCodes
+          ])
+        }
+      })
+    },
+    async disableTokens(currencyCodes: string[]): Promise<void> {
+      const { dispatch, walletId, walletState } = input.props
+
+      dispatch({
+        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
+        payload: {
+          walletId,
+          currencyCodes: uniqueStrings(walletState.enabledTokens, currencyCodes)
+        }
+      })
+    },
+    async getEnabledTokens(): Promise<string[]> {
+      return input.props.walletState.enabledTokens
+    }
   }
   bridgifyObject(out)
 
