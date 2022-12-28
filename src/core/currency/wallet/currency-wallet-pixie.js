@@ -394,7 +394,15 @@ async function getPublicWalletInfo(
 ): Promise<EdgeWalletInfo> {
   // Try to load the cache:
   const publicKeyCache = await publicKeyFile.load(disklet, PUBLIC_KEY_CACHE)
-  if (publicKeyCache != null) return publicKeyCache.walletInfo
+  if (publicKeyCache != null) {
+    // Return it if it needs not to be upgraded (re-derived):
+    if (
+      tools.checkPublicKey == null ||
+      (await tools.checkPublicKey(publicKeyCache.walletInfo.keys))
+    ) {
+      return publicKeyCache.walletInfo
+    }
+  }
 
   // Derive the public keys:
   let publicKeys = {}
