@@ -5,7 +5,6 @@ import { bridgifyObject } from 'yaob'
 
 import { upgradeCurrencyCode } from '../../types/type-helpers.js'
 import {
-  type EdgePluginMap,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeSwapRequestOptions,
@@ -28,7 +27,7 @@ export async function fetchSwapQuote(
   request: EdgeSwapRequest,
   opts: EdgeSwapRequestOptions = {}
 ): Promise<EdgeSwapQuote> {
-  const { preferPluginId, disabled = {}, promoCodes = {} } = opts
+  const { disabled = {}, preferPluginId, promoCodes = {} } = opts
   const { log } = ai.props
 
   const account = ai.props.state.accounts[accountId]
@@ -99,7 +98,7 @@ export async function fetchSwapQuote(
   return fuzzyTimeout(promises, 20000).then(
     quotes => {
       // Find the cheapest price:
-      const bestQuote = pickBestQuote(quotes, preferPluginId, promoCodes)
+      const bestQuote = pickBestQuote(quotes, opts)
       log.warn(
         `${promises.length} swap quotes requested, ${quotes.length} resolved, picked ${bestQuote.pluginId}.`
       )
@@ -110,6 +109,9 @@ export async function fetchSwapQuote(
       }
       // $FlowFixMe - Here for backwards compatibility:
       bestQuote.request = request
+      // $FlowFixMe - Here for backwards compatibility:
+      bestQuote.swapInfo = swapPlugins[bestQuote.pluginId].swapInfo
+
       return bridgifyObject(bestQuote)
     },
     (errors: any[]) => {
@@ -123,21 +125,40 @@ export async function fetchSwapQuote(
  * Picks the best quote out of the available choices.
  * Exported so we can unit-test it.
  */
+
 export function pickBestQuote(
   quotes: EdgeSwapQuote[],
-  preferPluginId: string | void,
-  promoCodes: EdgePluginMap<string>
+  opts: EdgeSwapRequestOptions
 ): EdgeSwapQuote {
+  const { preferPluginId, preferType, promoCodes } = opts
   return quotes.reduce((a, b) => {
+    // Prioritize transfer plugin:
+    if (a.pluginId === 'transfer') return a
+    if (b.pluginId === 'transfer') return b
+
     // Always return quotes from the preferred provider:
     if (a.pluginId === preferPluginId) return a
     if (b.pluginId === preferPluginId) return b
 
+    // Prefer based on plugin type but always allow `transfer` plugins:
+    if (preferType != null) {
+      const aMatchesType =
+        (a.swapInfo.isDex === true && preferType === 'DEX') ||
+        (a.swapInfo.isDex !== true && preferType === 'CEX')
+      const bMatchesType =
+        (b.swapInfo.isDex === true && preferType === 'DEX') ||
+        (b.swapInfo.isDex !== true && preferType === 'CEX')
+      if (aMatchesType && !bMatchesType) return a
+      if (!aMatchesType && bMatchesType) return b
+    }
+
     // Prioritize providers with active promo codes:
-    const aHasPromo = promoCodes[a.pluginId] != null
-    const bHasPromo = promoCodes[b.pluginId] != null
-    if (aHasPromo && !bHasPromo) return a
-    if (!aHasPromo && bHasPromo) return b
+    if (promoCodes != null) {
+      const aHasPromo = promoCodes[a.pluginId] != null
+      const bHasPromo = promoCodes[b.pluginId] != null
+      if (aHasPromo && !bHasPromo) return a
+      if (!aHasPromo && bHasPromo) return b
+    }
 
     // Prioritize accurate quotes over estimates:
     const { isEstimate: aIsEstimate = true } = a
