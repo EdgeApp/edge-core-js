@@ -829,12 +829,15 @@ export type EdgeCurrencyWallet = {
 // swap plugin
 // ---------------------------------------------------------------------
 
+export type EdgeSwapPluginType = 'DEX' | 'CEX'
+
 /**
  * Static data about a swap plugin.
  */
 export type EdgeSwapInfo = {
   +pluginId: string,
   +displayName: string,
+  +isDex?: boolean,
 
   +orderUri?: string, // The orderId would be appended to this
   +supportEmail: string
@@ -876,6 +879,7 @@ export type EdgeSwapApproveOptions = {
  * If a provider can satisfy a request, what is their price?
  */
 export type EdgeSwapQuote = {
+  +swapInfo: EdgeSwapInfo,
   +request: EdgeSwapRequest,
 
   +isEstimate: boolean,
@@ -1054,6 +1058,7 @@ export type EdgeSwapConfig = {
 
 export type EdgeSwapRequestOptions = {
   preferPluginId?: string,
+  preferType?: EdgeSwapPluginType,
   disabled?: EdgePluginMap<true>,
   promoCodes?: EdgePluginMap<string>
 }
