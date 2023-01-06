@@ -1,5 +1,14 @@
 # edge-core-js
 
+## v0.19.37 (2023-01-06)
+
+- added: Always-enabled tokens. The currency engine checks these for balances and transactions, but they do not appear in the per-wallet enabled token lists.
+  - `EdgeCurrencyConfig.alwaysEnabledTokenIds`
+  - `EdgeCurrencyConfig.changeAlwaysEnabledTokenIds`
+- added: `EdgeCurrencyTools.checkPublicKey`, which provides a mechanism for currency plugins to refresh their cached public keys if necessary.
+- added: `EdgeSwapInfo.isDex` and `EdgeSwapRequestOptions.preferType`, to always prefer DEX swaps over centralized swaps.
+- changed: Always select the "transfer" plugin if it returns a quote, regardless of price.
+
 ## v0.19.36 (2022-12-26)
 
 - added: Accelerate Transaction API
