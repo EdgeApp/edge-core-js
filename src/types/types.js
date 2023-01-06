@@ -658,7 +658,7 @@ export type EdgeMemoRules = {
 
 export type EdgeCurrencyTools = {
   // Keys:
-  +importPrivateKey?: (key: string, opts?: JsonObject) => Promise<JsonObject>,
+  +checkPublicKey?: (publicKey: JsonObject) => Promise<boolean>,
   +createPrivateKey: (
     walletType: string,
     opts?: JsonObject
@@ -667,6 +667,7 @@ export type EdgeCurrencyTools = {
   +getSplittableTypes?: (
     walletInfo: EdgeWalletInfo
   ) => string[] | Promise<string[]>,
+  +importPrivateKey?: (key: string, opts?: JsonObject) => Promise<JsonObject>,
 
   // Derives a tokenId string from a token's network information:
   +getTokenId?: (token: EdgeToken) => Promise<string>,
