@@ -5,6 +5,7 @@ import '../../client-side.js'
 import { findNodeHandle, UIManager } from 'react-native'
 import { Bridge, onMethod } from 'yaob'
 
+import { hideProperties } from '../hidden-properties.js'
 import {
   type EdgeCoreMessageEvent,
   type EdgeCoreWebViewRef
@@ -60,6 +61,7 @@ export function makeYaobCallbacks<Root>(
     if (bridge == null) {
       let firstMessage = true
       bridge = new Bridge({
+        hideProperties,
         sendMessage: message => {
           if (debug != null) console.info(`${debug} ←`, message)
           if (webview == null) return
