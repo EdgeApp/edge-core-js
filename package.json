@@ -1,6 +1,6 @@
 {
   "name": "edge-core-js",
-  "version": "0.19.38",
+  "version": "0.19.39",
   "description": "Edge account & wallet management library",
   "keywords": [
     "bitcoin",
@@ -41,15 +41,15 @@
   "types": "./lib/exports.d.ts",
   "files": [
     "/android/build.gradle",
-    "/android/src/*",
+    "/android/src/",
     "/CHANGELOG.md",
     "/edge-core-js.podspec",
-    "/ios/*",
-    "/lib/*",
+    "/ios/",
+    "/lib/",
     "/LICENSE",
     "/package.json",
     "/README.md",
-    "/src/types/*",
+    "/src/types/",
     "/types.d.ts",
     "/types.js.flow",
     "/types.js",

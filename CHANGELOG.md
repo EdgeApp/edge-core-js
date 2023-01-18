@@ -1,6 +1,10 @@
 # edge-core-js
 
-## v0.19.38 (2023-01-06)
+## v0.19.39 (2023-01-17)
+
+- fixed: Re-publish with missing files.
+
+## v0.19.38 (2023-01-17)
 
 - changed: Make sensitive account & wallet properties, like keys, non-enumerable.
 - changed: Use the pluginId as the wallet logging prefix, instead of the currency code.
