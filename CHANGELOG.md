@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.38 (2023-01-06)
+
+- changed: Make sensitive account & wallet properties, like keys, non-enumerable.
+- changed: Use the pluginId as the wallet logging prefix, instead of the currency code.
+
 ## v0.19.37 (2023-01-06)
 
 - added: Always-enabled tokens. The currency engine checks these for balances and transactions, but they do not appear in the per-wallet enabled token lists.
