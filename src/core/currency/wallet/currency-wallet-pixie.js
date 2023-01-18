@@ -111,7 +111,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         // Wallet-scoped IO objects:
         log: makeLog(
           input.props.logBackend,
-          `${plugin.currencyInfo.currencyCode}-${walletInfo.id.slice(0, 2)}`
+          `${pluginId}-${walletInfo.id.slice(0, 2)}`
         ),
         walletLocalDisklet,
         walletLocalEncryptedDisklet,
