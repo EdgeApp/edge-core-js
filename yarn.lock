@@ -5804,10 +5804,10 @@ yaml@^1.10.0:
   resolved "https://registry.yarnpkg.com/yaml/-/yaml-1.10.0.tgz#3b593add944876077d4d683fee01081bd9fff31e"
   integrity sha512-yr2icI4glYaNG+KWONODapy2/jDdMSDnrONSjblABjD9B4Z5LgiircSt8m8sRZFNi08kG9Sm0uSHtEmP3zaEGg==
 
-yaob@^0.3.8:
-  version "0.3.8"
-  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.8.tgz#a359fd092dbf42d07f82eb2fb0b00bdb87f1c4cc"
-  integrity sha512-6ocTmk7fVAB7TOc8ot7sdt5o+UK3d8qtDtd61IBIVe++V1xGmhP3Y8FYOCrzmo6ywzGJPaDS66orZIwnw5NwEw==
+yaob@^0.3.9:
+  version "0.3.9"
+  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.9.tgz#1f445f13daf92cc5dbc92665c1692c9d0e53c452"
+  integrity sha512-SquvHf0O1GuQGNnSVjcdzD2LWxqcCU1Y6+QZ3xEEaej1VQPXCvkTPLmC5eWXc474WcmPCY4pwgi65dQ5xPbjCg==
   dependencies:
     rfc4648 "^1.1.0"
 
