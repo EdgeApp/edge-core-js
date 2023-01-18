@@ -4,6 +4,7 @@ import { makeLocalBridge } from 'yaob'
 
 import { makeContext, makeFakeWorld } from './core/core.js'
 import { defaultOnLog } from './core/log/log.js'
+import { hideProperties } from './io/hidden-properties.js'
 import { makeNodeIo } from './io/node/node-io.js'
 import {
   type EdgeContext,
@@ -45,7 +46,10 @@ export function makeFakeEdgeWorld(
         { crashReporter, onLog },
         users
       ),
-      { cloneMessage: message => JSON.parse(JSON.stringify(message)) }
+      {
+        cloneMessage: message => JSON.parse(JSON.stringify(message)),
+        hideProperties
+      }
     )
   )
 }
