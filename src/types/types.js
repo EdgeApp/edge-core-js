@@ -370,7 +370,7 @@ export type EdgeTransaction = {
   parentNetworkFee?: string,
 
   // Confirmation status:
-  confirmations?: 'confirmed' | 'unconfirmed' | 'dropped' | number,
+  confirmations?: 'confirmed' | 'unconfirmed' | 'syncing' | 'dropped' | number,
   blockHeight: number,
   date: number,
 
