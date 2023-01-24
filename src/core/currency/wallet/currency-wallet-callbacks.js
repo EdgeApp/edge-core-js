@@ -322,7 +322,7 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
   checkChangesLoop(input.props)
 }
 
-const validateConfirmations = (
+export const validateConfirmations = (
   tx: EdgeTransaction | MergedTransaction,
   blockHeight: number,
   requiredConfirmations: number = 1 // Default confirmation rule is 1 block
