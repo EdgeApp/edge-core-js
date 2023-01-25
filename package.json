@@ -70,7 +70,7 @@
     "prepare": "husky install && npm-run-all clean -p build.*",
     "start": "webpack serve",
     "test": "mocha -r sucrase/register 'test/**/*.test.ts'",
-    "types": "# tsc",
+    "types": "tsc",
     "verify": "npm-run-all lint types prepare test"
   },
   "lint-staged": {
