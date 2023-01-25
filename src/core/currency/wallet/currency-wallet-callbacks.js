@@ -322,30 +322,31 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
   checkChangesLoop(input.props)
 }
 
-const validateConfirmations = (
+export const validateConfirmations = (
   tx: EdgeTransaction | MergedTransaction,
   blockHeight: number,
   requiredConfirmations: number = 1 // Default confirmation rule is 1 block
 ): $PropertyType<EdgeTransaction, 'confirmations'> => {
-  // If tx block height is ≤0, this means it's not yet mined in a block,
-  // so block confirmations is 0 (unconfirmed) or -1 (dropped).
-  const blockConfirmations =
-    tx.blockHeight <= 0 ? tx.blockHeight : 1 + blockHeight - tx.blockHeight
-
-  /*
-  A negative number of block confirmations means the wallet's block
-  height has not caught up with the transaction's block height, or the
-  transaction is mined in a block which is apart of an chain fork.
-  Either way, the transaction is considered unconfirmed.
-  */
-  const confirmations: $PropertyType<EdgeTransaction, 'confirmations'> =
-    blockConfirmations >= requiredConfirmations
-      ? 'confirmed'
-      : blockConfirmations === 0
-      ? 'unconfirmed'
-      : blockConfirmations < 0
-      ? 'dropped'
-      : blockConfirmations
-
-  return confirmations
+  // If the transaction has a blockHeight >0, then it has been mined in a block
+  if (tx.blockHeight > 0) {
+    // Add 1 to the diff because there is 1 confirmation if the tx and network
+    // block heights are equal:
+    const blockConfirmations = 1 + blockHeight - tx.blockHeight
+    // Negative confirmations mean the network blockHeight hasn't caught up:
+    if (blockConfirmations <= 0) {
+      return 'syncing'
+    }
+    // Return confirmed if it meets the minimum:
+    if (blockConfirmations >= requiredConfirmations) {
+      return 'confirmed'
+    }
+    // Otherwise, return the number of confirmations:
+    return blockConfirmations
+  }
+  // Historically, tx.blockHeight === -1 has meant the transaction has been dropped
+  if (tx.blockHeight < 0) {
+    return 'dropped'
+  }
+  // Historically, tx.blockHeight === 0 has meant unconfirmed in our API.
+  return 'unconfirmed'
 }
