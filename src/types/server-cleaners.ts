@@ -1,3 +1,4 @@
+import type { Cleaner } from 'cleaners'
 import {
   asArray,
   asBoolean,
@@ -8,12 +9,11 @@ import {
   asOptional,
   asString,
   asUnknown,
-  asValue,
-  Cleaner
+  asValue
 } from 'cleaners'
 import { base16, base32, base64 } from 'rfc4648'
 
-import {
+import type {
   ChangeOtpPayload,
   ChangePasswordPayload,
   ChangePin2Payload,
@@ -39,7 +39,7 @@ import {
   Recovery2InfoPayload,
   UsernameInfoPayload
 } from './server-types'
-import { EdgePendingVoucher, EdgeRecoveryQuestionChoice } from './types'
+import type { EdgePendingVoucher, EdgeRecoveryQuestionChoice } from './types'
 
 /**
  * A string of hex-encoded binary data.

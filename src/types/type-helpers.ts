@@ -1,4 +1,4 @@
-import { EdgeCurrencyInfo, EdgeTokenMap } from './types'
+import type { EdgeCurrencyInfo, EdgeTokenMap } from './types'
 
 /**
  * Translates a currency code to a tokenId,

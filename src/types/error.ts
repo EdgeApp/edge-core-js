@@ -1,9 +1,10 @@
-import { asMaybe, Cleaner } from 'cleaners'
+import type { Cleaner } from 'cleaners'
+import { asMaybe } from 'cleaners'
 import { base64 } from 'rfc4648'
 
 import { asOtpErrorPayload, asPasswordErrorPayload } from './server-cleaners'
 import { upgradeCurrencyCode } from './type-helpers'
-import { EdgeSwapInfo, EdgeSwapRequest } from './types'
+import type { EdgeSwapInfo, EdgeSwapRequest } from './types'
 
 /*
  * These are errors the core knows about.

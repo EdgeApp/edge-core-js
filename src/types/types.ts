@@ -1,11 +1,11 @@
-import { Disklet } from 'disklet'
-import {
+import type { Disklet } from 'disklet'
+import type {
   FetchFunction,
   FetchHeaders,
   FetchOptions,
   FetchResponse
 } from 'serverlet'
-import { Subscriber } from 'yaob'
+import type { Subscriber } from 'yaob'
 
 export * from './error'
 

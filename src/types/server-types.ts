@@ -1,4 +1,4 @@
-import { EdgePendingVoucher, EdgeRecoveryQuestionChoice } from './types'
+import type { EdgePendingVoucher, EdgeRecoveryQuestionChoice } from './types'
 
 // ---------------------------------------------------------------------
 // internal Edge types

@@ -1,3 +1,4 @@
+import type { Cleaner } from 'cleaners'
 import {
   asArray,
   asDate,
@@ -5,8 +6,7 @@ import {
   asObject,
   asOptional,
   asString,
-  asValue,
-  Cleaner
+  asValue
 } from 'cleaners'
 
 import {
@@ -16,7 +16,7 @@ import {
   asEdgeSnrp,
   asRecovery2Auth
 } from './server-cleaners'
-import { EdgeBox, EdgeSnrp } from './server-types'
+import type { EdgeBox, EdgeSnrp } from './server-types'
 
 export interface VoucherDump {
   // Identity:
@@ -103,7 +103,7 @@ export interface FakeUser {
   username: string
 }
 
-export const asVoucherDump = asObject({
+export const asVoucherDump: Cleaner<VoucherDump> = asObject({
   // Identity:
   loginId: asBase64,
   voucherAuth: asBase64,
