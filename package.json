@@ -1,6 +1,6 @@
 {
   "name": "edge-core-js",
-  "version": "0.19.39",
+  "version": "0.19.40",
   "description": "Edge account & wallet management library",
   "keywords": [
     "bitcoin",

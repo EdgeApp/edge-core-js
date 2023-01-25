@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.40 (2023-01-24)
+
+- Added: New 'syncing' to confirmations API
+- Fixed: Bug in `validateConfirmations` function incorrectly inferring a transaction as 'dropped'
+
 ## v0.19.39 (2023-01-17)
 
 - fixed: Re-publish with missing files.
