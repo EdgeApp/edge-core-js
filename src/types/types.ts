@@ -28,10 +28,6 @@ export interface EdgePluginMap<Value> {
   [pluginId: string]: Value
 }
 
-/** Same as the TypeScript `Partial` utility. */
-
-/** Same as the TypeScript `ReturnType` utility. */
-
 // ---------------------------------------------------------------------
 // io types
 // ---------------------------------------------------------------------
