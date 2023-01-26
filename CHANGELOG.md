@@ -1,9 +1,13 @@
 # edge-core-js
 
+## v0.19.41 (2023-01-26)
+
+- changed: Convert source code to TypeScript internally. No changes should be visible externally, aside from some file locations.
+
 ## v0.19.40 (2023-01-24)
 
-- Added: New 'syncing' to confirmations API
-- Fixed: Bug in `validateConfirmations` function incorrectly inferring a transaction as 'dropped'
+- added: New 'syncing' to confirmations API
+- fixed: Bug in `validateConfirmations` function incorrectly inferring a transaction as 'dropped'
 
 ## v0.19.39 (2023-01-17)
 
