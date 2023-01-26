@@ -1,16 +1,14 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "declarationDir": "lib",
-    "emitDeclarationOnly": true,
+    "noEmit": true,
 
     "esModuleInterop": true,
+    "jsx": "react",
     "module": "es2015",
     "moduleResolution": "node",
     "target": "es2015",
 
     "strict": true
   },
-  "exclude": [],
-  "include": ["lib/types"]
+  "exclude": ["lib"]
 }

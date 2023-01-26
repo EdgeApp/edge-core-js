@@ -18,6 +18,18 @@ const bundlePath = path.resolve(
   'android/src/main/assets/edge-core-js'
 )
 
+const babelOptions = {
+  presets: debug
+    ? ['@babel/preset-typescript', '@babel/preset-react']
+    : ['@babel/preset-env', '@babel/preset-typescript', '@babel/preset-react'],
+  plugins: [
+    ['@babel/plugin-transform-for-of', { assumeArray: true }],
+    '@babel/plugin-transform-runtime',
+    'babel-plugin-transform-fake-error-class'
+  ],
+  cacheDirectory: true
+}
+
 module.exports = {
   devtool: debug ? 'source-map' : undefined,
   devServer: {
@@ -25,29 +37,21 @@ module.exports = {
     hot: false,
     static: bundlePath
   },
-  entry: './src/io/react-native/react-native-worker.js',
+  entry: './src/io/react-native/react-native-worker.ts',
   mode: debug ? 'development' : 'production',
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.ts$/,
         exclude: /node_modules/,
         use: debug
           ? {
               loader: '@sucrase/webpack-loader',
-              options: { transforms: ['flow'] }
+              options: { transforms: ['typescript'] }
             }
           : {
               loader: 'babel-loader',
-              options: {
-                presets: ['@babel/preset-env', '@babel/preset-flow'],
-                plugins: [
-                  ['@babel/plugin-transform-for-of', { assumeArray: true }],
-                  '@babel/plugin-transform-runtime',
-                  'babel-plugin-transform-fake-error-class'
-                ],
-                cacheDirectory: true
-              }
+              options: babelOptions
             }
       },
       {
@@ -72,6 +76,7 @@ module.exports = {
   ],
   performance: { hints: false },
   resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
     fallback: {
       assert: require.resolve('assert/'),
       buffer: require.resolve('buffer/'),
