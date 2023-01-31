@@ -192,6 +192,9 @@ export function makeCurrencyWalletApi(
     get syncRatio(): number {
       return input.props.walletState.syncRatio
     },
+    get unactivatedTokenIds(): string[] {
+      return input.props.walletState.unactivatedTokenIds
+    },
 
     // Running state:
     async changePaused(paused: boolean): Promise<void> {

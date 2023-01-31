@@ -328,9 +328,11 @@ export interface EdgeMetadata {
   amountFiat?: number
 }
 
-export interface EdgeNetworkFee {
-  readonly currencyCode: string
+// Would prefer a better name than EdgeNetworkFee2 but can't think of one
+export interface EdgeNetworkFee2 {
   readonly nativeAmount: string
+  readonly currencyPluginId: string
+  readonly tokenId?: string
 }
 
 export interface EdgeTxSwap {
@@ -552,6 +554,24 @@ export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
   forceIndex?: number
 }
 
+export interface EdgeEngineGetActivationAssetsOptions {
+  // All wallets in the users account. This allows the engine to choose
+  // which wallets can fulfill this activation request
+  currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
+
+  // If null, activate parent wallet:
+  activateTokenIds?: string[]
+}
+
+export interface EdgeEngineActivationOptions {
+  // If null, activate parent wallet:
+  activateTokenIds?: string[]
+
+  // Wallet if the user is paying with a different currency:
+  paymentWallet?: EdgeCurrencyWallet
+  paymentTokenId?: string
+}
+
 // engine --------------------------------------------------------------
 
 export interface EdgeCurrencyEngineCallbacks {
@@ -564,6 +584,7 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
   readonly onTransactionsChanged: (transactions: EdgeTransaction[]) => void
   readonly onTxidsChanged: (txids: EdgeTxidMap) => void
+  readonly onUnactivatedTokenIdsChanged: (unactivatedTokenIds: string[]) => void
   readonly onWcNewContractCall: (payload: JsonObject) => void
 
   // Deprecated
@@ -609,6 +630,13 @@ export interface EdgeCurrencyEngine {
   // Tokens:
   readonly changeCustomTokens?: (tokens: EdgeTokenMap) => Promise<void>
   readonly changeEnabledTokenIds?: (tokenIds: string[]) => Promise<void>
+  readonly engineGetActivationAssets?: (
+    options: EdgeEngineGetActivationAssetsOptions
+  ) => Promise<EdgeGetActivationAssetsResults>
+
+  readonly engineActivateWallet?: (
+    options: EdgeEngineActivationOptions
+  ) => Promise<EdgeActivationQuote>
 
   // Addresses:
   readonly getFreshAddress: (
@@ -725,6 +753,51 @@ export interface EdgeCurrencyWalletEvents {
   wcNewContractCall: JsonObject
 }
 
+export interface EdgeGetActivationAssetsOptions {
+  activateWalletId: string
+  // If null, activate parent wallet:
+  activateTokenIds?: string[]
+}
+
+export interface EdgeGetActivationAssetsResults {
+  assetOptions: Array<{
+    paymentWalletId?: string // If walletId is present, use MUST activate with this wallet
+    currencyPluginId: string
+    tokenId?: string
+  }>
+}
+
+export interface EdgeActivationOptions {
+  activateWalletId: string
+  // If null, activate parent wallet:
+  activateTokenIds?: string[]
+
+  // Wallet if the user is paying with a different currency:
+  paymentWalletId?: string
+  paymentTokenId?: string
+}
+
+export interface EdgeActivationApproveOptions {
+  metadata?: EdgeMetadata
+}
+
+export interface EdgeActivationResult {
+  readonly transactions: EdgeTransaction[]
+}
+
+export interface EdgeActivationQuote {
+  readonly paymentWalletId: string
+  readonly paymentTokenId?: string
+
+  readonly fromNativeAmount: string
+  readonly networkFee: EdgeNetworkFee2
+
+  readonly approve: (
+    opts?: EdgeActivationApproveOptions
+  ) => Promise<EdgeActivationResult>
+  close: () => Promise<void>
+}
+
 export interface EdgeCurrencyWallet {
   readonly on: Subscriber<EdgeCurrencyWalletEvents>
   readonly watch: Subscriber<EdgeCurrencyWallet>
@@ -767,6 +840,7 @@ export interface EdgeCurrencyWallet {
   readonly balances: EdgeBalances
   readonly blockHeight: number
   readonly syncRatio: number
+  readonly unactivatedTokenIds: string[]
 
   // Running state:
   readonly changePaused: (paused: boolean) => Promise<void>
@@ -1223,6 +1297,12 @@ export interface EdgeAccount {
   readonly waitForCurrencyWallet: (
     walletId: string
   ) => Promise<EdgeCurrencyWallet>
+  readonly getActivationAssets: (
+    options: EdgeGetActivationAssetsOptions
+  ) => Promise<EdgeGetActivationAssetsResults>
+  readonly activateWallet: (
+    options: EdgeActivationOptions
+  ) => Promise<EdgeActivationQuote>
 
   // Web compatibility:
   readonly signEthereumTransaction: (
@@ -1486,6 +1566,11 @@ export interface EdgeFakeWorld {
 // ---------------------------------------------------------------------
 // deprecated types
 // ---------------------------------------------------------------------
+
+export interface EdgeNetworkFee {
+  readonly currencyCode: string
+  readonly nativeAmount: string
+}
 
 export interface EdgeBitcoinPrivateKeyOptions {
   format?: string
