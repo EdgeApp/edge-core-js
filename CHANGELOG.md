@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.42 (2023-02-02)
+
+- added: Support for token activation
+
 ## v0.19.41 (2023-01-26)
 
 - changed: Convert source code to TypeScript internally. No changes should be visible externally, aside from some file locations.
