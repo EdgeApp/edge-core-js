@@ -83,6 +83,7 @@ export interface CurrencyWalletState {
   readonly syncRatio: number
   readonly txids: string[]
   readonly txs: { [txid: string]: MergedTransaction }
+  readonly unactivatedTokenIds: string[]
   readonly walletInfo: EdgeWalletInfoFull
 }
 
@@ -333,7 +334,18 @@ const currencyWalletInner = buildReducer<
       case 'CURRENCY_ENGINE_CLEARED':
         return {}
     }
+    return state
+  },
 
+  unactivatedTokenIds(state = [], action): string[] {
+    switch (action.type) {
+      case 'CURRENCY_ENGINE_CHANGED_UNACTIVATED_TOKEN_IDS': {
+        return action.payload.unactivatedTokenIds
+      }
+      case 'CURRENCY_ENGINE_CLEARED': {
+        return []
+      }
+    }
     return state
   },
 

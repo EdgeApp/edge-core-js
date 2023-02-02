@@ -5,10 +5,14 @@ import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 import { AccountSync } from '../../client-side'
 import {
   EdgeAccount,
+  EdgeActivationOptions,
+  EdgeActivationQuote,
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyConfig,
   EdgeCurrencyWallet,
   EdgeDataStore,
+  EdgeGetActivationAssetsOptions,
+  EdgeGetActivationAssetsResults,
   EdgeLobby,
   EdgePendingVoucher,
   EdgePluginMap,
@@ -362,6 +366,55 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         const unsubscribe = this.watch('currencyWallets', check)
         check()
       })
+    },
+
+    async getActivationAssets({
+      activateWalletId,
+      activateTokenIds
+    }: EdgeGetActivationAssetsOptions): Promise<EdgeGetActivationAssetsResults> {
+      const { currencyWallets } = ai.props.output.accounts[accountId]
+      const walletOutput = ai.props.output.currency.wallets[activateWalletId]
+      const { engine } = walletOutput
+
+      if (engine == null)
+        throw new Error(`Invalid wallet: ${activateWalletId} not found`)
+
+      if (engine.engineGetActivationAssets == null)
+        throw new Error(
+          `getActivationAssets unsupported by walletId ${activateWalletId}`
+        )
+
+      return await engine.engineGetActivationAssets({
+        currencyWallets,
+        activateTokenIds
+      })
+    },
+
+    async activateWallet({
+      activateWalletId,
+      activateTokenIds,
+      paymentWalletId,
+      paymentTokenId
+    }: EdgeActivationOptions): Promise<EdgeActivationQuote> {
+      const { currencyWallets } = ai.props.output.accounts[accountId]
+      const walletOutput = ai.props.output.currency.wallets[activateWalletId]
+      const { engine } = walletOutput
+      const paymentWallet = currencyWallets[paymentWalletId ?? '']
+
+      if (engine == null)
+        throw new Error(`Invalid wallet: ${activateWalletId} not found`)
+
+      if (engine.engineActivateWallet == null)
+        throw new Error(
+          `activateWallet unsupported by walletId ${activateWalletId}`
+        )
+
+      const out = await engine.engineActivateWallet({
+        activateTokenIds,
+        paymentTokenId,
+        paymentWallet
+      })
+      return bridgifyObject(out)
     },
 
     async signEthereumTransaction(

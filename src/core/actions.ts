@@ -313,6 +313,14 @@ export type RootAction =
       }
     }
   | {
+      // Called when a currency engine fires the onAddressChecked callback.
+      type: 'CURRENCY_ENGINE_CHANGED_UNACTIVATED_TOKEN_IDS'
+      payload: {
+        unactivatedTokenIds: string[]
+        walletId: string
+      }
+    }
+  | {
       // Fired when we fetch exchange pairs from some server.
       type: 'EXCHANGE_PAIRS_FETCHED'
       payload: ExchangePair[]

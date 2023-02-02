@@ -112,6 +112,19 @@ export function makeCurrencyWalletCallbacks(
       })
     },
 
+    onUnactivatedTokenIdsChanged(unactivatedTokenIds: string[]) {
+      pushUpdate({
+        id: walletId,
+        action: 'onUnactivatedTokenIdsChanged',
+        updateFunc: () => {
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_CHANGED_UNACTIVATED_TOKEN_IDS',
+            payload: { unactivatedTokenIds, walletId }
+          })
+        }
+      })
+    },
+
     onBalanceChanged(currencyCode: string, balance: string) {
       pushUpdate({
         id: `${walletId}==${currencyCode}`,
