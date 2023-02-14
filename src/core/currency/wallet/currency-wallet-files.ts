@@ -205,8 +205,8 @@ async function loadNameFile(input: CurrencyWalletInput): Promise<void> {
 
     const appId = appIds.find(appId => appId !== '')
     if (appId != null) {
-      const { displayName } = await fetchAppIdInfo(toApiInput(input), appId)
-      name = displayName
+      const { appName } = await fetchAppIdInfo(toApiInput(input), appId)
+      name = appName
     }
   } else {
     name = clean.walletName
