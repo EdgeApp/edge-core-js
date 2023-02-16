@@ -1,5 +1,5 @@
-import { uncleaner } from 'cleaners'
-import { bridgifyObject } from 'yaob'
+import { asObject, asOptional, asString, uncleaner } from 'cleaners'
+import { bridgifyObject, close } from 'yaob'
 
 import { EdgeLobbyRequest } from '../../types/server-types'
 import { EdgeLobby, EdgeLoginRequest } from '../../types/types'
@@ -13,9 +13,20 @@ import { ensureAccountExists, findAppLogin } from './account-init'
 const wasLobbyLoginPayload = uncleaner(asLobbyLoginPayload)
 
 interface AppIdInfo {
-  displayName: string
-  displayImageUrl?: string
+  appName: string
+  darkImageUrl?: string
+  lightImageUrl?: string
+
+  // Deprecated. Newer servers will return dark & light images:
+  imageUrl?: string
 }
+
+const asAppIdInfo = asObject<AppIdInfo>({
+  appName: asString,
+  darkImageUrl: asOptional(asString),
+  lightImageUrl: asOptional(asString),
+  imageUrl: asOptional(asString)
+})
 
 const infoServerUri = 'https://info1.edge.app'
 
@@ -29,19 +40,23 @@ export async function fetchAppIdInfo(
   try {
     const url = `${infoServerUri}/v1/appIdInfo/${appId}`
     const response = await ai.props.io.fetch(url)
+    if (response.status === 404) {
+      return { appName: appId }
+    }
     if (!response.ok) {
       throw new Error(`Fetching ${url} returned ${response.status}`)
     }
+    const clean = asAppIdInfo(await response.json())
 
-    const { appName, imageUrl } = await response.json()
-    if (appName == null) throw new Error(`No appName in appId lookup response.`)
+    // Upgrade legacy responses:
+    if (clean.lightImageUrl == null) clean.lightImageUrl = clean.imageUrl
+    if (clean.darkImageUrl == null) clean.darkImageUrl = clean.imageUrl
 
-    return { displayImageUrl: imageUrl, displayName: appName }
+    return clean
   } catch (error: any) {
+    // Log failures, but still return the appId as a fallback:
     ai.props.onError(error)
-
-    // If we can't find the info, just show the appId as a fallback:
-    return { displayName: appId }
+    return { appName: appId }
   }
 }
 
@@ -112,20 +127,13 @@ export async function makeLobbyApi(
   // If the lobby has a login request, set up that API:
   let loginRequest: EdgeLoginRequest | undefined
   if (lobbyJson.loginRequest != null) {
-    const { appId } = lobbyJson.loginRequest
-    if (typeof appId !== 'string') throw new TypeError('Invalid login request')
-    const { displayName, displayImageUrl } = await fetchAppIdInfo(ai, appId)
-
-    // Make the API:
-    loginRequest = {
-      appId,
-      displayName,
-      displayImageUrl,
-      approve(): Promise<void> {
-        return approveLoginRequest(ai, accountId, appId, lobbyId, lobbyJson)
-      }
-    }
-    bridgifyObject(loginRequest)
+    loginRequest = await unpackLoginRequest(
+      ai,
+      accountId,
+      lobbyId,
+      lobbyJson,
+      lobbyJson.loginRequest.appId
+    )
   }
 
   const out: EdgeLobby = {
@@ -133,5 +141,36 @@ export async function makeLobbyApi(
   }
   bridgifyObject(out)
 
+  return out
+}
+
+async function unpackLoginRequest(
+  ai: ApiInput,
+  accountId: string,
+  lobbyId: string,
+  lobbyJson: EdgeLobbyRequest,
+  appId: string
+): Promise<EdgeLoginRequest> {
+  const info = await fetchAppIdInfo(ai, appId)
+
+  // Make the API:
+  const out: EdgeLoginRequest = {
+    appId,
+    displayName: info.appName,
+    displayImageDarkUrl: info.darkImageUrl,
+    displayImageLightUrl: info.lightImageUrl,
+
+    approve(): Promise<void> {
+      return approveLoginRequest(ai, accountId, appId, lobbyId, lobbyJson)
+    },
+
+    async close(): Promise<void> {
+      close(out)
+    },
+
+    // Deprecated:
+    displayImageUrl: info.lightImageUrl
+  }
+  bridgifyObject(out)
   return out
 }

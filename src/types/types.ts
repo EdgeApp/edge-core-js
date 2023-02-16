@@ -1162,10 +1162,16 @@ export interface EdgeSwapRequestOptions {
 
 export interface EdgeLoginRequest {
   readonly appId: string
-  readonly approve: () => Promise<void>
 
   readonly displayName: string
-  readonly displayImageUrl: string | undefined
+  readonly displayImageDarkUrl?: string
+  readonly displayImageLightUrl?: string
+
+  readonly approve: () => Promise<void>
+  readonly close: () => Promise<void>
+
+  // Deprecated. Use the dark & light images instead:
+  readonly displayImageUrl?: string
 }
 
 export interface EdgeLobby {
