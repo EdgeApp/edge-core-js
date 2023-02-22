@@ -110,11 +110,14 @@ describe('account', function () {
     )
 
     const wallet = await account.createCurrencyWallet('wallet:fakecoin', {
-      name: 'test wallet',
-      fiatCurrencyCode: 'iso:JPY'
+      fiatCurrencyCode: 'iso:JPY',
+      migratedFromWalletId: 'asdf',
+      name: 'test wallet'
     })
     assert.equal(wallet.name, 'test wallet')
     assert.equal(wallet.fiatCurrencyCode, 'iso:JPY')
+    const walletInfo = account.allKeys.find(info => info.id === wallet.id)
+    assert.equal(walletInfo?.migratedFromWalletId, 'asdf')
   })
 
   it('list keys', async function () {

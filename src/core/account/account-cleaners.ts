@@ -58,6 +58,7 @@ export const asWalletStateFile = asObject({
   archived: asOptional(asBoolean),
   deleted: asOptional(asBoolean),
   hidden: asOptional(asBoolean),
+  migratedFromWalletId: asOptional(asString),
   sortIndex: asOptional(asNumber)
 })
 

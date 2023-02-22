@@ -177,6 +177,7 @@ export type EdgeWalletInfoFull = EdgeWalletInfo & {
   archived: boolean
   deleted: boolean
   hidden: boolean
+  migratedFromWalletId?: string
   sortIndex: number
 }
 
@@ -184,6 +185,7 @@ export interface EdgeWalletState {
   archived?: boolean
   deleted?: boolean
   hidden?: boolean
+  migratedFromWalletId?: string
   sortIndex?: number
 }
 
@@ -1064,6 +1066,9 @@ export interface EdgeCreateCurrencyWalletOptions {
 
   // Used to copy wallet keys between accounts:
   keys?: JsonObject
+
+  // Set if we are sweeping one wallet into another:
+  migratedFromWalletId?: string
 }
 
 export interface EdgeCurrencyConfig {
