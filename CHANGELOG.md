@@ -1,5 +1,12 @@
 # edge-core-js
 
+## v0.19.43 (2023-02-23)
+
+- added: Provide login request images for both dark & light mode apps as `EdgeLoginRequest.displayImageDarkUrl` and `EdgeLoginRequest.displayImageDarkUrl`.
+- added: `EdgeFakeContextOptions.allowNetworkAccess`, which allows non-Edge traffic to pass through to the real network.
+- added: `EdgeWalletInfoFull.migratedFromWalletId`, which can be saved when sweeping funds from an old wallet to a new wallet.
+- deprecated: `EdgeLoginRequest.displayImageUrl`. Use the new dark or light mode images instead.
+
 ## v0.19.42 (2023-02-02)
 
 - added: Support for token activation
