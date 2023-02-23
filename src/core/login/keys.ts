@@ -343,6 +343,14 @@ export async function createCurrencyWallet(
   await applyKit(ai, loginTree, kit)
   const wallet = await waitForCurrencyWallet(ai, walletInfo.id)
 
+  // Write ancillary files to disk:
+  if (opts.migratedFromWalletId != null) {
+    await changeWalletStates(ai, accountId, {
+      [walletInfo.id]: {
+        migratedFromWalletId: opts.migratedFromWalletId
+      }
+    })
+  }
   if (opts.name != null) await wallet.renameWallet(opts.name)
   if (opts.fiatCurrencyCode != null) {
     await wallet.setFiatCurrencyCode(opts.fiatCurrencyCode)
@@ -437,7 +445,11 @@ export async function splitWalletInfo(
     if (existingWalletInfo.archived || existingWalletInfo.deleted) {
       // Simply undelete the existing wallet:
       const walletInfos: EdgeWalletStates = {}
-      walletInfos[newWalletInfo.id] = { archived: false, deleted: false }
+      walletInfos[newWalletInfo.id] = {
+        archived: false,
+        deleted: false,
+        migratedFromWalletId: undefined
+      }
       await changeWalletStates(ai, accountId, walletInfos)
       return walletInfo.id
     }
