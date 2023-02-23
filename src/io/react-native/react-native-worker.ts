@@ -13,6 +13,7 @@ import {
   makeFakeWorld
 } from '../../core/core'
 import { EdgeFetchOptions, EdgeFetchResponse, EdgeIo } from '../../types/types'
+import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
 import { ClientIo, WorkerApi } from './react-native-types'
 
@@ -24,6 +25,7 @@ const [nativeBridge, reactBridge] =
           window.edgeCore.call(id, name, JSON.stringify(args))
         }),
         new Bridge({
+          hideProperties,
           sendMessage(message) {
             window.edgeCore.postMessage(JSON.stringify(message))
           }
@@ -34,6 +36,7 @@ const [nativeBridge, reactBridge] =
           window.webkit.messageHandlers.edgeCore.postMessage([id, name, args])
         }),
         new Bridge({
+          hideProperties,
           sendMessage(message) {
             window.webkit.messageHandlers.edgeCore.postMessage([
               0,
