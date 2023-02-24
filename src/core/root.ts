@@ -4,6 +4,7 @@ import { attachPixie, filterPixie, ReduxProps } from 'redux-pixies'
 import { emit } from 'yaob'
 
 import { EdgeContext, EdgeContextOptions, EdgeRateHint } from '../types/types'
+import { validateServer } from '../util/validateServer'
 import { Dispatch } from './actions'
 import { CLIENT_FILE_NAME, clientFile } from './context/client-file'
 import { filterLogs, LogBackend, makeLog } from './log/log'
@@ -136,23 +137,4 @@ export async function makeContext(
 export function closeEdge(): void {
   for (const context of allContexts) context.close().catch(() => {})
   allContexts = []
-}
-
-/**
- * We only accept *.edge.app or localhost as valid domain names.
- */
-export function validateServer(server: string): void {
-  const url = new URL(server)
-
-  if (url.protocol === 'http:') {
-    if (url.hostname === 'localhost') return
-  }
-  if (url.protocol === 'https:') {
-    if (url.hostname === 'localhost') return
-    if (/^([A-Za-z0-9_-]+\.)*edge(test)?\.app$/.test(url.hostname)) return
-  }
-
-  throw new Error(
-    `Only *.edge.app or localhost are valid login domain names, not ${url.hostname}`
-  )
 }
