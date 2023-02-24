@@ -1546,6 +1546,10 @@ export interface EdgeFakeContextOptions {
   logSettings?: Partial<EdgeLogSettings>
   plugins?: EdgeCorePluginsInit
 
+  // Allows core plugins to access the real network except for the
+  // login and sync servers, which remain emulated:
+  allowNetworkAccess?: boolean
+
   // Fake device options:
   cleanDevice?: boolean
 }
