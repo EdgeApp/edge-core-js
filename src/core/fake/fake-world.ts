@@ -18,9 +18,11 @@ import {
   EdgeFakeContextOptions,
   EdgeFakeUser,
   EdgeFakeWorld,
+  EdgeFetchFunction,
   EdgeIo
 } from '../../types/types'
 import { base58 } from '../../util/encoding'
+import { validateServer } from '../../util/validateServer'
 import { LogBackend } from '../log/log'
 import { applyLoginPayload } from '../login/login'
 import { asLoginStash } from '../login/login-stash'
@@ -93,11 +95,24 @@ export function makeFakeWorld(
     },
 
     async makeEdgeContext(opts: EdgeFakeContextOptions): Promise<EdgeContext> {
-      const { cleanDevice = false } = opts
+      const { allowNetworkAccess = false, cleanDevice = false } = opts
+
+      const fakeFetch = makeFetchFunction(fakeServer)
+      const fetch: EdgeFetchFunction = !allowNetworkAccess
+        ? fakeFetch
+        : (uri, opts) => {
+            try {
+              validateServer(uri) // Throws for non-Edge servers.
+            } catch (e) {
+              return io.fetch(uri, opts)
+            }
+            return fakeFetch(uri, opts)
+          }
+
       const fakeIo = {
         ...io,
         disklet: makeMemoryDisklet(),
-        fetch: makeFetchFunction(fakeServer)
+        fetch
       }
 
       // Populate the fake disk:
