@@ -95,7 +95,7 @@
     "redux-pixies": "^0.3.6",
     "rfc4648": "^1.4.0",
     "scrypt-js": "^2.0.3",
-    "serverlet": "^0.1.0",
+    "serverlet": "^0.1.2",
     "yaob": "^0.3.9",
     "yavent": "^0.1.3"
   },
