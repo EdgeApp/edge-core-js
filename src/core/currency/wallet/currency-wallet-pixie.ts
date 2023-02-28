@@ -152,7 +152,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           })
           .catch(error => input.props.onError(error))
       }
-    } catch (error: any) {
+    } catch (raw: unknown) {
+      const error = raw instanceof Error ? raw : new Error(String(raw))
       input.props.onError(error)
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_FAILED',

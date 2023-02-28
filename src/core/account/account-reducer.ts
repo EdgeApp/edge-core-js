@@ -25,6 +25,7 @@ export interface AccountState {
   readonly accountWalletInfos: EdgeWalletInfo[]
   readonly allWalletInfosFull: EdgeWalletInfoFull[]
   readonly allWalletInfosClean: EdgeWalletInfoFull[]
+  readonly currencyWalletErrors: { [walletId: string]: Error }
   readonly currencyWalletIds: string[]
   readonly activeWalletIds: string[]
   readonly archivedWalletIds: string[]
@@ -126,6 +127,20 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
         return { ...info, keys }
       })
   ),
+
+  currencyWalletErrors(state = {}, action, next, prev) {
+    const { activeWalletIds } = next.self
+    const walletStates = next.root.currency.wallets
+    let dirty = activeWalletIds !== prev.self?.activeWalletIds
+
+    const out: { [walletId: string]: Error } = {}
+    for (const id of activeWalletIds) {
+      const failure = walletStates[id].engineFailure
+      if (failure != null) out[id] = failure
+      if (out[id] !== state[id]) dirty = true
+    }
+    return dirty ? out : state
+  },
 
   currencyWalletIds: memoizeReducer(
     (next: AccountNext) => next.self.walletInfos,

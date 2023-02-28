@@ -1301,6 +1301,7 @@ export interface EdgeAccount {
   readonly archivedWalletIds: string[]
   readonly hiddenWalletIds: string[]
   readonly currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
+  readonly currencyWalletErrors: { [walletId: string]: Error }
   readonly createCurrencyWallet: (
     type: string,
     opts?: EdgeCreateCurrencyWalletOptions
@@ -1308,6 +1309,9 @@ export interface EdgeAccount {
   readonly waitForCurrencyWallet: (
     walletId: string
   ) => Promise<EdgeCurrencyWallet>
+  readonly waitForAllWallets: () => Promise<void>
+
+  // Token & wallet activation:
   readonly getActivationAssets: (
     options: EdgeGetActivationAssetsOptions
   ) => Promise<EdgeGetActivationAssetsResults>
