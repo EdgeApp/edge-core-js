@@ -32,7 +32,7 @@ async function makeFakeCurrencyWallet(
   const world = await makeFakeEdgeWorld([fakeUser], quiet)
   const context = await world.makeEdgeContext({
     ...contextOptions,
-    plugins: { fakecoin: true, 'fake-exchange': true }
+    plugins: { 'broken-engine': true, 'fake-exchange': true, fakecoin: true }
   })
   const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin, {
     pauseWallets
@@ -483,5 +483,29 @@ describe('currency wallets', function () {
     await wallet.changePaused(false)
     expect(wallet.paused).equals(false)
     expect(await isEngineRunning()).equals(false)
+  })
+
+  it('expose engine failures', async function () {
+    const { account } = await makeFakeCurrencyWallet()
+
+    // Creation fails:
+    await expectRejection(
+      account.createCurrencyWallet('wallet:broken'),
+      "SyntaxError: I can't do this"
+    )
+
+    // The keys exist, but not the wallet:
+    const info = account.getFirstWalletInfo('wallet:broken')
+    if (info == null) throw new Error('No wallet info')
+    expect(account.currencyWallets[info.id]).equals(undefined)
+
+    // We can get the error various ways:
+    const error = account.currencyWalletErrors[info.id]
+    expect(error).instanceOf(Error)
+    expect(error.message).equals("I can't do this")
+    await expectRejection(
+      account.waitForCurrencyWallet(info.id),
+      "SyntaxError: I can't do this"
+    )
   })
 })

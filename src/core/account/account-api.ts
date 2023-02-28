@@ -348,6 +348,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     get currencyWallets(): { [walletId: string]: EdgeCurrencyWallet } {
       return ai.props.output.accounts[accountId].currencyWallets
     },
+    get currencyWalletErrors(): { [walletId: string]: Error } {
+      return ai.props.state.accounts[accountId].currencyWalletErrors
+    },
     async createCurrencyWallet(
       type: string,
       opts: EdgeCreateCurrencyWalletOptions = {}
@@ -355,15 +358,29 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return await createCurrencyWallet(ai, accountId, type, opts)
     },
     async waitForCurrencyWallet(walletId: string): Promise<EdgeCurrencyWallet> {
-      return await new Promise(resolve => {
+      return await new Promise((resolve, reject) => {
         const check = (): void => {
           const wallet = this.currencyWallets[walletId]
           if (wallet != null) {
             resolve(wallet)
-            unsubscribe()
+            cleanup()
+          }
+          const error = this.currencyWalletErrors[walletId]
+          if (error != null) {
+            reject(error)
+            cleanup()
           }
         }
-        const unsubscribe = this.watch('currencyWallets', check)
+
+        const cleanup = (): void => {
+          for (const cleanup of cleanups) cleanup()
+        }
+
+        const cleanups = [
+          this.watch('currencyWallets', check),
+          this.watch('currencyWalletErrors', check)
+        ]
+
         check()
       })
     },

@@ -1301,6 +1301,7 @@ export interface EdgeAccount {
   readonly archivedWalletIds: string[]
   readonly hiddenWalletIds: string[]
   readonly currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
+  readonly currencyWalletErrors: { [walletId: string]: Error }
   readonly createCurrencyWallet: (
     type: string,
     opts?: EdgeCreateCurrencyWalletOptions

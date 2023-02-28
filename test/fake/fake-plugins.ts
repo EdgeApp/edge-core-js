@@ -1,4 +1,5 @@
 import { EdgeRateHint, EdgeRatePair, EdgeRatePlugin } from '../../src/index'
+import { brokenEnginePlugin } from './fake-broken-engine'
 import { fakeCurrencyPlugin } from './fake-currency-plugin'
 import { fakeSwapPlugin } from './fake-swap-plugin'
 
@@ -42,6 +43,7 @@ export const allPlugins = {
     throw new Error('Expect to fail')
   },
   'broken-exchange': () => brokenExchangePlugin,
+  'broken-engine': brokenEnginePlugin,
   'fake-exchange': fakeExchangePlugin,
   fakecoin: fakeCurrencyPlugin,
   fakeswap: fakeSwapPlugin
