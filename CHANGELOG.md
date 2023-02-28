@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.19.44 (2023-02-28)
+
+- added: `EdgeAccount.currencyEngineErrors` - these are set for wallets that fail to load.
+- added: `EdgeAccount.waitForAllWallets()` - resolves once all wallets have either loaded or failed (but balances may still be syncing).
+
 ## v0.19.43 (2023-02-23)
 
 - added: Provide login request images for both dark & light mode apps as `EdgeLoginRequest.displayImageDarkUrl` and `EdgeLoginRequest.displayImageDarkUrl`.
