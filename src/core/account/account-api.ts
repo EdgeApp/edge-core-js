@@ -384,6 +384,29 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         check()
       })
     },
+    async waitForAllWallets(): Promise<void> {
+      return await new Promise((resolve, reject) => {
+        const check = (): void => {
+          const busyWallet = this.activeWalletIds.find(
+            id =>
+              this.currencyWallets[id] == null &&
+              this.currencyWalletErrors[id] == null
+          )
+          if (busyWallet == null) {
+            for (const cleanup of cleanups) cleanup()
+            resolve()
+          }
+        }
+
+        const cleanups = [
+          this.watch('activeWalletIds', check),
+          this.watch('currencyWallets', check),
+          this.watch('currencyWalletErrors', check)
+        ]
+
+        check()
+      })
+    },
 
     async getActivationAssets({
       activateWalletId,

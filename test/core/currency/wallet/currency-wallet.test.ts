@@ -507,5 +507,8 @@ describe('currency wallets', function () {
       account.waitForCurrencyWallet(info.id),
       "SyntaxError: I can't do this"
     )
+
+    // Loading is complete, even though we have an error:
+    await account.waitForAllWallets()
   })
 })

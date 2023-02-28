@@ -1309,6 +1309,9 @@ export interface EdgeAccount {
   readonly waitForCurrencyWallet: (
     walletId: string
   ) => Promise<EdgeCurrencyWallet>
+  readonly waitForAllWallets: () => Promise<void>
+
+  // Token & wallet activation:
   readonly getActivationAssets: (
     options: EdgeGetActivationAssetsOptions
   ) => Promise<EdgeGetActivationAssetsResults>
