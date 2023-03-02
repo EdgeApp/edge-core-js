@@ -40,7 +40,7 @@ describe('plugins system', function () {
     })
     return await expectRejection(
       context.loginWithPIN(fakeUser.username, fakeUser.pin),
-      'Error: The following plugins are missing or failed to load: broken-plugin, missing-plugin'
+      'Error: The following plugins are missing or failed to load: missing-plugin'
     )
   })
 })

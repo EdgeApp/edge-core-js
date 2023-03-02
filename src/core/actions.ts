@@ -145,7 +145,7 @@ export type RootAction =
   | {
       // Called when new plugins become available.
       type: 'CORE_PLUGINS_ADDED'
-      payload: EdgePluginMap<EdgeCorePlugin>
+      payload: EdgePluginMap<EdgeCorePlugin | undefined>
     }
   | {
       // Called when the plugin list becomes final.
