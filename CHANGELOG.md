@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.45 (2023-03-02)
+
+- fixed: Update `denominationToNative` and `nativeToDenomination` to look at `allTokens`, instead of the legacy token lists.
+
 ## v0.19.44 (2023-02-28)
 
 - added: `EdgeAccount.currencyEngineErrors` - these are set for wallets that fail to load.
