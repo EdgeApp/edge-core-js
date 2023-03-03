@@ -462,13 +462,15 @@ export async function setupNewTxMetadata(
 
   const creationDate = Date.now() / 1000
 
+  const plugin = input.props.state.plugins.currency[pluginId]
+
   // Calculate the exchange rate:
   const rate =
     getExchangeRate(state, currencyCode, fiat, () => 1) /
     parseFloat(
       getCurrencyMultiplier(
-        { [pluginId]: input.props.state.plugins.currency[pluginId] },
-        input.props.state.accounts[accountId].customTokens[pluginId],
+        plugin,
+        input.props.state.accounts[accountId].allTokens[pluginId],
         currencyCode
       )
     )
