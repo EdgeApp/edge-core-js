@@ -633,10 +633,11 @@ export interface EdgeCurrencyEngine {
   // Tokens:
   readonly changeCustomTokens?: (tokens: EdgeTokenMap) => Promise<void>
   readonly changeEnabledTokenIds?: (tokenIds: string[]) => Promise<void>
+
+  // Asset activation:
   readonly engineGetActivationAssets?: (
     options: EdgeEngineGetActivationAssetsOptions
   ) => Promise<EdgeGetActivationAssetsResults>
-
   readonly engineActivateWallet?: (
     options: EdgeEngineActivationOptions
   ) => Promise<EdgeActivationQuote>
@@ -673,11 +674,11 @@ export interface EdgeCurrencyEngine {
   readonly otherMethods?: EdgeOtherMethods
 
   // Deprecated:
-  readonly enableTokens: (tokens: string[]) => Promise<void>
-  readonly disableTokens: (tokens: string[]) => Promise<void>
-  readonly getEnabledTokens: () => Promise<string[]>
-  readonly addCustomToken: (token: EdgeTokenInfo & EdgeToken) => Promise<void>
-  readonly getTokenStatus: (token: string) => boolean
+  readonly enableTokens?: (tokens: string[]) => Promise<void>
+  readonly disableTokens?: (tokens: string[]) => Promise<void>
+  readonly getEnabledTokens?: () => Promise<string[]>
+  readonly addCustomToken?: (token: EdgeTokenInfo & EdgeToken) => Promise<void>
+  readonly getTokenStatus?: (token: string) => boolean
 }
 
 // currency plugin -----------------------------------------------------

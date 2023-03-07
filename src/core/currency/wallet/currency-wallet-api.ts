@@ -576,9 +576,11 @@ export function makeCurrencyWalletApi(
       // Ask the plugin to validate this:
       if (tools.getTokenId != null) {
         await tools.getTokenId(token)
-      } else {
+      } else if (engine.addCustomToken != null) {
         // This is not ideal, since the pixie will add it too:
         await engine.addCustomToken({ ...token, ...tokenInfo })
+      } else {
+        throw new Error(`${pluginId} doesn't support tokens`)
       }
 
       ai.props.dispatch({
