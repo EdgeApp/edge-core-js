@@ -513,6 +513,7 @@ export interface EdgeParsedUri {
   bitidPaymentAddress?: string // Experimental
   bitIDURI?: string
   currencyCode?: string
+  expireDate?: Date
   legacyAddress?: string
   metadata?: EdgeMetadata
   nativeAmount?: string
