@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.46 (2023-03-07)
+
+- added: Add `expireDate` to `EdgeParsedUri`
+
 ## v0.19.45 (2023-03-02)
 
 - fixed: Update `denominationToNative` and `nativeToDenomination` to look at `allTokens`, instead of the legacy token lists.
