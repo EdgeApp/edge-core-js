@@ -9,6 +9,7 @@ interface StartOptions {
 }
 
 export interface PeriodicTask {
+  setDelay: (milliseconds: number) => void
   start: (opts?: StartOptions) => void
   stop: () => void
 
@@ -49,6 +50,10 @@ export function makePeriodicTask(
 
   const out = {
     started: false,
+
+    setDelay(milliseconds: number): void {
+      msGap = milliseconds
+    },
 
     start(opts: StartOptions = {}): void {
       const { wait = false } = opts
