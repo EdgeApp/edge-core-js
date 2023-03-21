@@ -15,6 +15,7 @@ import {
   EdgeCurrencyWallet,
   EdgeTokenMap,
   EdgeWalletInfo,
+  EdgeWalletInfoFull,
   JsonObject
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
@@ -92,11 +93,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         walletLocalDisklet,
         tools
       )
-      const mergedWalletInfo = {
-        id: walletInfo.id,
-        type: walletInfo.type,
-        keys: { ...walletInfo.keys, ...publicWalletInfo.keys }
-      }
+      const privateWalletInfo = await preparePrivateWalletInfo(
+        walletInfo,
+        publicWalletInfo
+      )
       input.props.dispatch({
         type: 'CURRENCY_WALLET_PUBLIC_INFO',
         payload: { walletInfo: publicWalletInfo, walletId }
@@ -104,7 +104,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       // Start the engine:
       const accountState = state.accounts[accountId]
-      const engine = await plugin.makeCurrencyEngine(mergedWalletInfo, {
+      const engine = await plugin.makeCurrencyEngine(privateWalletInfo, {
         callbacks: makeCurrencyWalletCallbacks(input),
 
         // Wallet-scoped IO objects:
@@ -123,7 +123,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
         payload: {
-          displayPrivateSeed: engine.getDisplayPrivateSeed(),
+          displayPrivateSeed: engine.getDisplayPrivateSeed(
+            privateWalletInfo.keys
+          ),
           displayPublicSeed: engine.getDisplayPublicSeed(),
           walletId
         }
@@ -430,4 +432,20 @@ async function getPublicWalletInfo(
   }
 
   return publicWalletInfo
+}
+
+/**
+ * Gets private wallet info from the merging the full info with the public
+ * wallet info.
+ */
+export async function preparePrivateWalletInfo(
+  walletInfo: EdgeWalletInfoFull,
+  publicWalletInfo: EdgeWalletInfo
+): Promise<EdgeWalletInfo> {
+  const privateWalletInfo: EdgeWalletInfo = {
+    id: walletInfo.id,
+    type: walletInfo.type,
+    keys: { ...walletInfo.keys, ...publicWalletInfo.keys }
+  }
+  return privateWalletInfo
 }

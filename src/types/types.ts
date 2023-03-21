@@ -612,7 +612,7 @@ export interface EdgeCurrencyEngine {
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
 
   // Keys:
-  readonly getDisplayPrivateSeed: () => string | null
+  readonly getDisplayPrivateSeed: (privateKeys: JsonObject) => string | null
   readonly getDisplayPublicSeed: () => string | null
 
   // Engine status:
@@ -652,7 +652,10 @@ export interface EdgeCurrencyEngine {
   // Spending:
   readonly getMaxSpendable?: (spendInfo: EdgeSpendInfo) => Promise<string>
   readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
-  readonly signTx: (transaction: EdgeTransaction) => Promise<EdgeTransaction>
+  readonly signTx: (
+    transaction: EdgeTransaction,
+    privateKeys: JsonObject
+  ) => Promise<EdgeTransaction>
   readonly broadcastTx: (
     transaction: EdgeTransaction
   ) => Promise<EdgeTransaction>

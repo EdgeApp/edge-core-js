@@ -514,7 +514,9 @@ export function makeCurrencyWalletApi(
       )
     },
     async signTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
-      return await engine.signTx(tx)
+      const privateKeys = walletInfo.keys
+
+      return await engine.signTx(tx, { privateKeys })
     },
     async sweepPrivateKeys(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
       if (engine.sweepPrivateKeys == null) {
