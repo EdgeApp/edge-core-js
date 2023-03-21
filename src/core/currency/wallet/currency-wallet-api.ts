@@ -20,6 +20,7 @@ import {
   EdgeParsedUri,
   EdgePaymentProtocolInfo,
   EdgeReceiveAddress,
+  EdgeSignMessageOptions,
   EdgeSpendInfo,
   EdgeSpendTarget,
   EdgeStakingStatus,
@@ -534,6 +535,16 @@ export function makeCurrencyWalletApi(
         packMetadata(metadata, input.props.walletState.fiat),
         fakeCallbacks
       )
+    },
+    async signMessage(
+      message: string,
+      opts: EdgeSignMessageOptions = {}
+    ): Promise<string> {
+      if (engine.signMessage == null) {
+        throw new Error(`${pluginId} doesn't support signing messages`)
+      }
+      const privateKeys = walletInfo.keys
+      return await engine.signMessage(message, privateKeys, opts)
     },
     async signTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
       const privateKeys = walletInfo.keys

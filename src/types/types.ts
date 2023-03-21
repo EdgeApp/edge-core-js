@@ -584,6 +584,10 @@ export interface EdgeEnginePrivateKeyOptions {
   privateKeys?: JsonObject
 }
 
+export interface EdgeSignMessageOptions {
+  otherParams?: JsonObject
+}
+
 // engine --------------------------------------------------------------
 
 export interface EdgeCurrencyEngineCallbacks {
@@ -683,6 +687,13 @@ export interface EdgeCurrencyEngine {
   readonly getPaymentProtocolInfo?: (
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>
+
+  // Signing:
+  readonly signMessage?: (
+    message: string,
+    privateKeys: JsonObject,
+    opts: EdgeSignMessageOptions
+  ) => Promise<string>
 
   // Accelerating:
   readonly accelerate?: (tx: EdgeTransaction) => Promise<EdgeTransaction | null>
@@ -912,6 +923,12 @@ export interface EdgeCurrencyWallet {
   readonly sweepPrivateKeys: (
     edgeSpendInfo: EdgeSpendInfo
   ) => Promise<EdgeTransaction>
+
+  // Signing:
+  readonly signMessage: (
+    message: string,
+    opts?: EdgeSignMessageOptions
+  ) => Promise<string>
 
   // Accelerating:
   readonly accelerate: (tx: EdgeTransaction) => Promise<EdgeTransaction | null>
