@@ -79,6 +79,10 @@ export function makeCurrencyWalletApi(
   const ai = toApiInput(input)
   const { accountId, pluginId, walletInfo } = input.props.walletState
   const plugin = input.props.state.plugins.currency[pluginId]
+  const {
+    unsafeBroadcastTx = false,
+    unsafeMakeSpend = false
+  } = plugin.currencyInfo
 
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
@@ -360,11 +364,17 @@ export function makeCurrencyWalletApi(
 
     // Sending:
     async broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
-      return await engine.broadcastTx(tx)
+      // Only provide wallet info if currency requires it:
+      const privateKeys = unsafeBroadcastTx ? walletInfo.keys : undefined
+
+      return await engine.broadcastTx(tx, { privateKeys })
     },
     async getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string> {
       if (typeof engine.getMaxSpendable === 'function') {
-        return await engine.getMaxSpendable(spendInfo)
+        // Only provide wallet info if currency requires it:
+        const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
+
+        return await engine.getMaxSpendable(spendInfo, { privateKeys })
       }
       const { currencyCode, networkFeeOption, customNetworkFee } = spendInfo
       const balance = engine.getBalance({ currencyCode })
@@ -385,13 +395,20 @@ export function makeCurrencyWalletApi(
 
         // Try the average:
         spendTargets[0].nativeAmount = mid
+
+        // Only provide wallet info if currency requires it:
+        const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
+
         return engine
-          .makeSpend({
-            currencyCode,
-            spendTargets,
-            networkFeeOption,
-            customNetworkFee
-          })
+          .makeSpend(
+            {
+              currencyCode,
+              spendTargets,
+              networkFeeOption,
+              customNetworkFee
+            },
+            { privateKeys }
+          )
           .then(() => getMax(mid, max))
           .catch(() => getMax(min, mid))
       }
@@ -410,7 +427,6 @@ export function makeCurrencyWalletApi(
     },
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
       const {
-        privateKeys,
         skipChecks,
         spendTargets = [],
         noUnconfirmed = false,
@@ -468,23 +484,29 @@ export function makeCurrencyWalletApi(
       if (cleanTargets.length === 0) {
         throw new TypeError('The spend has no destination')
       }
-      if (privateKeys != null) {
+      if (spendInfo.privateKeys != null) {
         throw new TypeError('Only sweepPrivateKeys takes private keys')
       }
 
-      const tx: EdgeTransaction = await engine.makeSpend({
-        currencyCode,
-        tokenId,
-        skipChecks,
-        spendTargets: cleanTargets,
-        noUnconfirmed,
-        networkFeeOption,
-        customNetworkFee,
-        rbfTxid,
-        metadata,
-        otherParams,
-        pendingTxs
-      })
+      // Only provide wallet info if currency requires it:
+      const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
+
+      const tx: EdgeTransaction = await engine.makeSpend(
+        {
+          currencyCode,
+          tokenId,
+          skipChecks,
+          spendTargets: cleanTargets,
+          noUnconfirmed,
+          networkFeeOption,
+          customNetworkFee,
+          rbfTxid,
+          metadata,
+          otherParams,
+          pendingTxs
+        },
+        { privateKeys }
+      )
       tx.networkFeeOption = networkFeeOption
       tx.requestedCustomFee = customNetworkFee
       tx.spendTargets = savedTargets

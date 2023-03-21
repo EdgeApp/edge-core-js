@@ -310,6 +310,10 @@ export interface EdgeCurrencyInfo {
   transactionExplorer: string
   xpubExplorer?: string
 
+  // Flags:
+  unsafeBroadcastTx?: boolean
+  unsafeMakeSpend?: boolean
+
   // Deprecated:
   defaultSettings: JsonObject // The default user settings are `{}`
   metaTokens: EdgeMetaToken[] // Use `EdgeCurrencyPlugin.getBuiltinTokens`
@@ -575,6 +579,10 @@ export interface EdgeEngineGetActivationAssetsOptions {
   activateTokenIds?: string[]
 }
 
+export interface EdgeEnginePrivateKeyOptions {
+  privateKeys?: JsonObject
+}
+
 // engine --------------------------------------------------------------
 
 export interface EdgeCurrencyEngineCallbacks {
@@ -650,14 +658,21 @@ export interface EdgeCurrencyEngine {
   readonly isAddressUsed: (address: string) => Promise<boolean>
 
   // Spending:
-  readonly getMaxSpendable?: (spendInfo: EdgeSpendInfo) => Promise<string>
-  readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
+  readonly getMaxSpendable?: (
+    spendInfo: EdgeSpendInfo,
+    opts?: EdgeEnginePrivateKeyOptions
+  ) => Promise<string>
+  readonly makeSpend: (
+    spendInfo: EdgeSpendInfo,
+    opts?: EdgeEnginePrivateKeyOptions
+  ) => Promise<EdgeTransaction>
   readonly signTx: (
     transaction: EdgeTransaction,
     privateKeys: JsonObject
   ) => Promise<EdgeTransaction>
   readonly broadcastTx: (
-    transaction: EdgeTransaction
+    transaction: EdgeTransaction,
+    opts?: EdgeEnginePrivateKeyOptions
   ) => Promise<EdgeTransaction>
   readonly saveTx: (transaction: EdgeTransaction) => Promise<void>
   readonly sweepPrivateKeys?: (
