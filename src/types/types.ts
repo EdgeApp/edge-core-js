@@ -313,6 +313,7 @@ export interface EdgeCurrencyInfo {
   // Flags:
   unsafeBroadcastTx?: boolean
   unsafeMakeSpend?: boolean
+  unsafeSyncNetwork?: boolean
 
   // Deprecated:
   defaultSettings: JsonObject // The default user settings are `{}`
@@ -627,6 +628,7 @@ export interface EdgeCurrencyEngine {
   readonly startEngine: () => Promise<void>
   readonly killEngine: () => Promise<void>
   readonly resyncBlockchain: () => Promise<void>
+  readonly syncNetwork?: (opts: EdgeEnginePrivateKeyOptions) => Promise<number>
   readonly dumpData: () => Promise<EdgeDataDump>
 
   // Chain state:

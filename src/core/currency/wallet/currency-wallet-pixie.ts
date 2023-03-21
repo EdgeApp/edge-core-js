@@ -19,7 +19,7 @@ import {
   JsonObject
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
-import { makePeriodicTask } from '../../../util/periodic-task'
+import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
 import { snooze } from '../../../util/snooze'
 import { makeTokenInfo } from '../../account/custom-tokens'
 import { makeLog } from '../../log/log'
@@ -201,10 +201,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   engineStarted: filterPixie(
     (input: CurrencyWalletInput) => {
       let startupPromise: Promise<unknown> | undefined
+      let syncNetworkTask: PeriodicTask
 
       return {
         update() {
           const { log, walletId, walletOutput, walletState } = input.props
+          const { currencyInfo, walletInfo, publicWalletInfo } = walletState
           if (walletOutput == null) return
           const { engine, walletApi } = walletOutput
           if (
@@ -227,6 +229,29 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             startupPromise = Promise.resolve()
               .then(() => engine.startEngine())
               .catch(error => input.props.onError(error))
+
+            // Setup syncNetwork routine if defined by the currency engine:
+            if (engine.syncNetwork != null) {
+              // Get the private keys if required by the engine:
+              const requiresPrivateKeys =
+                currencyInfo.unsafeSyncNetwork === true &&
+                publicWalletInfo != null
+              const privateKeys = requiresPrivateKeys ? walletInfo : undefined
+              const doNetworkSync = async (): Promise<void> => {
+                if (engine.syncNetwork != null) {
+                  const delay = await engine.syncNetwork({ privateKeys })
+                  syncNetworkTask.setDelay(delay)
+                } else {
+                  syncNetworkTask.stop()
+                }
+              }
+              syncNetworkTask = makePeriodicTask(doNetworkSync, 10000, {
+                onError: err => {
+                  log.error(err)
+                }
+              })
+              syncNetworkTask.start({ wait: false })
+            }
           }
         },
 
@@ -249,6 +274,11 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
                 })
               )
               .catch(() => {})
+          }
+
+          // Stop the syncNetwork routine if it was setup:
+          if (syncNetworkTask != null) {
+            syncNetworkTask.stop()
           }
         }
       }
