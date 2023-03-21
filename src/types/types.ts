@@ -557,15 +557,6 @@ export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
   forceIndex?: number
 }
 
-export interface EdgeEngineGetActivationAssetsOptions {
-  // All wallets in the users account. This allows the engine to choose
-  // which wallets can fulfill this activation request
-  currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
-
-  // If null, activate parent wallet:
-  activateTokenIds?: string[]
-}
-
 export interface EdgeEngineActivationOptions {
   // If null, activate parent wallet:
   activateTokenIds?: string[]
@@ -573,6 +564,15 @@ export interface EdgeEngineActivationOptions {
   // Wallet if the user is paying with a different currency:
   paymentWallet?: EdgeCurrencyWallet
   paymentTokenId?: string
+}
+
+export interface EdgeEngineGetActivationAssetsOptions {
+  // All wallets in the users account. This allows the engine to choose
+  // which wallets can fulfill this activation request
+  currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
+
+  // If null, activate parent wallet:
+  activateTokenIds?: string[]
 }
 
 // engine --------------------------------------------------------------
