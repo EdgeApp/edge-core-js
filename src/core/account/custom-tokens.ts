@@ -58,6 +58,9 @@ export async function getTokenId(
       'A wallet must exist before adding tokens to a legacy currency plugin'
     )
   }
+  if (engine.addCustomToken == null) {
+    throw new Error(`${pluginId} doesn't support tokens`)
+  }
 
   // Validate the token:
   const tokenInfo = makeTokenInfo(token)

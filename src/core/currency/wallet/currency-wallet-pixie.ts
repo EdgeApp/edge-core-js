@@ -336,7 +336,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       if (lastTokens !== customTokens && engine != null) {
         if (engine.changeCustomTokens != null) {
           await engine.changeCustomTokens(customTokens)
-        } else {
+        } else if (engine.addCustomToken != null) {
           for (const tokenId of Object.keys(customTokens)) {
             const token = customTokens[tokenId]
             if (token === lastTokens[tokenId]) continue
@@ -346,7 +346,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
               .addCustomToken({ ...tokenInfo, ...token })
               .catch(error => input.props.onError(error))
           }
-        }
+        } // else { no token support }
       }
       lastTokens = customTokens
 
@@ -357,7 +357,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           await engine
             .changeEnabledTokenIds(allEnabledTokenIds)
             .catch(error => input.props.onError(error))
-        } else {
+        } else if (
+          engine.disableTokens != null &&
+          engine.enableTokens != null
+        ) {
           const removed = tokenIdsToCurrencyCodes(
             accountState.builtinTokens[pluginId],
             accountState.customTokens[pluginId],
@@ -376,7 +379,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           await engine
             .enableTokens(added)
             .catch(error => input.props.onError(error))
-        }
+        } // else { no token support }
       }
       lastEnabledTokenIds = allEnabledTokenIds
     }
