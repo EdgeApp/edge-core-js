@@ -1,3 +1,4 @@
+import { asMaybe } from 'cleaners'
 import { Disklet } from 'disklet'
 import {
   combinePixies,
@@ -36,7 +37,7 @@ import {
   makeCurrencyWalletCallbacks,
   watchCurrencyWallet
 } from './currency-wallet-callbacks'
-import { asPublicKeyFile } from './currency-wallet-cleaners'
+import { asIntegerString, asPublicKeyFile } from './currency-wallet-cleaners'
 import { changeEnabledTokens, loadAllFiles } from './currency-wallet-files'
 import {
   CurrencyWalletState,
@@ -131,12 +132,16 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       // Grab initial state:
       const { currencyCode } = plugin.currencyInfo
-      const balance = engine.getBalance({ currencyCode })
+      const balance = asMaybe(asIntegerString)(
+        engine.getBalance({ currencyCode })
+      )
+      if (balance != null) {
+        input.props.dispatch({
+          type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
+          payload: { balance, currencyCode, walletId }
+        })
+      }
       const height = engine.getBlockHeight()
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-        payload: { balance, currencyCode, walletId }
-      })
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
         payload: { height, walletId }

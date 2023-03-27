@@ -182,6 +182,14 @@ const asDiskMetadata: Cleaner<DiskMetadata> = asObject({
   notes: asOptional(asString)
 })
 
+export function asIntegerString(raw: unknown): string {
+  const clean = asString(raw)
+  if (!/^\d+$/.test(clean)) {
+    throw new Error('Expected an integer string')
+  }
+  return clean
+}
+
 // ---------------------------------------------------------------------
 // file cleaners
 // ---------------------------------------------------------------------

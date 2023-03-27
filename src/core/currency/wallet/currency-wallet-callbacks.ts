@@ -1,3 +1,4 @@
+import { asMaybe } from 'cleaners'
 import { isPixieShutdownError } from 'redux-pixies'
 import { emit } from 'yaob'
 
@@ -14,6 +15,7 @@ import {
   hashStorageWalletFilename
 } from '../../storage/storage-selectors'
 import { combineTxWithFile } from './currency-wallet-api'
+import { asIntegerString } from './currency-wallet-cleaners'
 import { loadAllFiles, setupNewTxMetadata } from './currency-wallet-files'
 import {
   CurrencyWalletInput,
@@ -126,13 +128,22 @@ export function makeCurrencyWalletCallbacks(
     },
 
     onBalanceChanged(currencyCode: string, balance: string) {
+      const clean = asMaybe(asIntegerString)(balance)
+      if (clean == null) {
+        input.props.onError(
+          new Error(
+            `Plugin sent bogus balance for ${currencyCode}: "${balance}"`
+          )
+        )
+        return
+      }
       pushUpdate({
         id: `${walletId}==${currencyCode}`,
         action: 'onBalanceChanged',
         updateFunc: () => {
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-            payload: { balance, currencyCode, walletId }
+            payload: { balance: clean, currencyCode, walletId }
           })
         }
       })
