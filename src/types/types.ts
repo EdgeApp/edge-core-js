@@ -310,6 +310,11 @@ export interface EdgeCurrencyInfo {
   transactionExplorer: string
   xpubExplorer?: string
 
+  // Flags:
+  unsafeBroadcastTx?: boolean
+  unsafeMakeSpend?: boolean
+  unsafeSyncNetwork?: boolean
+
   // Deprecated:
   defaultSettings: JsonObject // The default user settings are `{}`
   metaTokens: EdgeMetaToken[] // Use `EdgeCurrencyPlugin.getBuiltinTokens`
@@ -557,6 +562,15 @@ export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
   forceIndex?: number
 }
 
+export interface EdgeEngineActivationOptions {
+  // If null, activate parent wallet:
+  activateTokenIds?: string[]
+
+  // Wallet if the user is paying with a different currency:
+  paymentWallet?: EdgeCurrencyWallet
+  paymentTokenId?: string
+}
+
 export interface EdgeEngineGetActivationAssetsOptions {
   // All wallets in the users account. This allows the engine to choose
   // which wallets can fulfill this activation request
@@ -566,13 +580,12 @@ export interface EdgeEngineGetActivationAssetsOptions {
   activateTokenIds?: string[]
 }
 
-export interface EdgeEngineActivationOptions {
-  // If null, activate parent wallet:
-  activateTokenIds?: string[]
+export interface EdgeEnginePrivateKeyOptions {
+  privateKeys?: JsonObject
+}
 
-  // Wallet if the user is paying with a different currency:
-  paymentWallet?: EdgeCurrencyWallet
-  paymentTokenId?: string
+export interface EdgeSignMessageOptions {
+  otherParams?: JsonObject
 }
 
 // engine --------------------------------------------------------------
@@ -612,13 +625,14 @@ export interface EdgeCurrencyEngine {
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
 
   // Keys:
-  readonly getDisplayPrivateSeed: () => string | null
+  readonly getDisplayPrivateSeed: (privateKeys: JsonObject) => string | null
   readonly getDisplayPublicSeed: () => string | null
 
   // Engine status:
   readonly startEngine: () => Promise<void>
   readonly killEngine: () => Promise<void>
   readonly resyncBlockchain: () => Promise<void>
+  readonly syncNetwork?: (opts: EdgeEnginePrivateKeyOptions) => Promise<number>
   readonly dumpData: () => Promise<EdgeDataDump>
 
   // Chain state:
@@ -650,11 +664,21 @@ export interface EdgeCurrencyEngine {
   readonly isAddressUsed: (address: string) => Promise<boolean>
 
   // Spending:
-  readonly getMaxSpendable?: (spendInfo: EdgeSpendInfo) => Promise<string>
-  readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
-  readonly signTx: (transaction: EdgeTransaction) => Promise<EdgeTransaction>
+  readonly getMaxSpendable?: (
+    spendInfo: EdgeSpendInfo,
+    opts?: EdgeEnginePrivateKeyOptions
+  ) => Promise<string>
+  readonly makeSpend: (
+    spendInfo: EdgeSpendInfo,
+    opts?: EdgeEnginePrivateKeyOptions
+  ) => Promise<EdgeTransaction>
+  readonly signTx: (
+    transaction: EdgeTransaction,
+    privateKeys: JsonObject
+  ) => Promise<EdgeTransaction>
   readonly broadcastTx: (
-    transaction: EdgeTransaction
+    transaction: EdgeTransaction,
+    opts?: EdgeEnginePrivateKeyOptions
   ) => Promise<EdgeTransaction>
   readonly saveTx: (transaction: EdgeTransaction) => Promise<void>
   readonly sweepPrivateKeys?: (
@@ -663,6 +687,13 @@ export interface EdgeCurrencyEngine {
   readonly getPaymentProtocolInfo?: (
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>
+
+  // Signing:
+  readonly signMessage?: (
+    message: string,
+    privateKeys: JsonObject,
+    opts: EdgeSignMessageOptions
+  ) => Promise<string>
 
   // Accelerating:
   readonly accelerate?: (tx: EdgeTransaction) => Promise<EdgeTransaction | null>
@@ -892,6 +923,12 @@ export interface EdgeCurrencyWallet {
   readonly sweepPrivateKeys: (
     edgeSpendInfo: EdgeSpendInfo
   ) => Promise<EdgeTransaction>
+
+  // Signing:
+  readonly signMessage: (
+    message: string,
+    opts?: EdgeSignMessageOptions
+  ) => Promise<string>
 
   // Accelerating:
   readonly accelerate: (tx: EdgeTransaction) => Promise<EdgeTransaction | null>
