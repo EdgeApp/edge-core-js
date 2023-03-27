@@ -236,7 +236,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
               const requiresPrivateKeys =
                 currencyInfo.unsafeSyncNetwork === true &&
                 publicWalletInfo != null
-              const privateKeys = requiresPrivateKeys ? walletInfo : undefined
+              const privateKeys = requiresPrivateKeys
+                ? walletInfo.keys
+                : undefined
               const doNetworkSync = async (): Promise<void> => {
                 if (engine.syncNetwork != null) {
                   const delay = await engine.syncNetwork({ privateKeys })
