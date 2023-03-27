@@ -1,5 +1,11 @@
 # edge-core-js
 
+## v0.19.47 (2023-03-27)
+
+- added: Pass private keys to `EdgeCurrencyEngine.signTx` and similar functions.
+- changed: Only accept base-10 integer balances from currency engines, and ignore all other balance strings.
+- removed: Make deprecated token methods optional on `EdgeCurrencyEngine`, so they can be removed.
+
 ## v0.19.46 (2023-03-07)
 
 - added: Add `expireDate` to `EdgeParsedUri`
