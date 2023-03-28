@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.48 (2023-03-27)
+
+- fixed: Passing only the private keys to `EdgeEnginePrivateKeyOptions['privateKeys']` for `syncNetwork`, instead of the entire `EdgeWalletInfo`
+
 ## v0.19.47 (2023-03-27)
 
 - added: Pass private keys to `EdgeCurrencyEngine.signTx` and similar functions.
