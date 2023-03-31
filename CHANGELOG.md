@@ -1,5 +1,9 @@
 # edge-core-js
 
+## Unreleased
+
+- fixed: Incorrectly formed `privateKeys` argument for `signTx` call to the engine
+
 ## v0.19.48 (2023-03-27)
 
 - fixed: Passing only the private keys to `EdgeEnginePrivateKeyOptions['privateKeys']` for `syncNetwork`, instead of the entire `EdgeWalletInfo`
