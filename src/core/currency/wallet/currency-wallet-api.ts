@@ -680,22 +680,23 @@ export function combineTxWithFile(
 
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
-    confirmations: tx.confirmations,
     blockHeight: tx.blockHeight,
+    confirmations: tx.confirmations,
+    currencyCode,
     date: tx.date,
-    ourReceiveAddresses: tx.ourReceiveAddresses,
-    signedTx: tx.signedTx,
-    txid: tx.txid,
-    otherParams: { ...tx.otherParams, unfilteredIndex },
-
-    // @ts-expect-error Deprecated & removed:
-    amountSatoshi: Number(tx.nativeAmount[currencyCode] ?? '0'),
+    metadata: {},
+    isSend: tx.isSend,
     nativeAmount: tx.nativeAmount[currencyCode] ?? '0',
     networkFee: tx.networkFee[currencyCode] ?? '0',
+    otherParams: { ...tx.otherParams, unfilteredIndex },
+    ourReceiveAddresses: tx.ourReceiveAddresses,
     parentNetworkFee: tx.networkFee[walletCurrency],
-    currencyCode,
+    signedTx: tx.signedTx,
+    txid: tx.txid,
     walletId,
-    metadata: {}
+
+    // @ts-expect-error Deprecated & removed:
+    amountSatoshi: Number(tx.nativeAmount[currencyCode] ?? '0')
   }
 
   // If we have a file, use it to override the defaults:

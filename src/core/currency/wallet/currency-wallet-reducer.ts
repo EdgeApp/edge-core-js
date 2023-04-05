@@ -1,3 +1,4 @@
+import { lt } from 'biggystring'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
@@ -40,14 +41,15 @@ export interface SortedTransactions {
 }
 
 export interface MergedTransaction {
+  blockHeight: number
   confirmations: EdgeTransaction['confirmations']
   currencyCode: string
-  blockHeight: number
   date: number
+  isSend: boolean
+  otherParams?: JsonObject
   ourReceiveAddresses: string[]
   signedTx: string
   txid: string
-  otherParams?: JsonObject
 
   nativeAmount: { [currencyCode: string]: string }
   networkFee: { [currencyCode: string]: string }
@@ -406,10 +408,11 @@ export const currencyWalletReducer = filterReducer<
 })
 
 const defaultTx: MergedTransaction = {
+  blockHeight: 0,
   confirmations: 'unconfirmed',
   currencyCode: '',
-  blockHeight: 0,
   date: 0,
+  isSend: false,
   ourReceiveAddresses: [],
   signedTx: '',
   txid: '',
@@ -425,17 +428,21 @@ export function mergeTx(
   defaultCurrency: string,
   oldTx: MergedTransaction = defaultTx
 ): MergedTransaction {
-  const currencyCode =
-    tx.currencyCode != null ? tx.currencyCode : defaultCurrency
+  const {
+    currencyCode = defaultCurrency,
+    isSend = lt(tx.nativeAmount, '0')
+  } = tx
+
   const out = {
+    blockHeight: tx.blockHeight,
     confirmations: tx.confirmations ?? 'unconfirmed',
     currencyCode,
-    blockHeight: tx.blockHeight,
     date: tx.date,
+    otherParams: tx.otherParams,
     ourReceiveAddresses: tx.ourReceiveAddresses,
     signedTx: tx.signedTx,
+    isSend,
     txid: tx.txid,
-    otherParams: tx.otherParams,
 
     nativeAmount: { ...oldTx.nativeAmount },
     networkFee: { ...oldTx.networkFee }
