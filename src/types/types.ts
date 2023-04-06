@@ -398,6 +398,14 @@ export interface EdgeTransaction {
   swapData?: EdgeTxSwap
   txSecret?: string // Monero decryption key
 
+  /**
+   * True if the user themselves signed & sent this transaction.
+   * This will not be true for transactions created by other users,
+   * smart contracts, assets becoming unstaked, or anything else automatic.
+   * A send doesn't necessarily spend money, although it often does.
+   */
+  isSend: boolean
+
   // Core:
   metadata?: EdgeMetadata
   walletId: string
