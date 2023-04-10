@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.20.0 (2023-04-10)
+
+- changed: Removed private keys from `walletInfo` for `makeCurrencyEngine`
+- added: Add an `EdgeTransaction.isSend` flag.
+
 ## v0.19.49 (2023-03-30)
 
 - fixed: Incorrectly formed `privateKeys` argument for `signTx` call to the engine
