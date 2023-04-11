@@ -1228,20 +1228,6 @@ export interface EdgeCurrencyConfig {
   readonly otherMethods: EdgeOtherMethods
 }
 
-export interface EthereumTransaction {
-  chainId: number // Not part of raw data, but needed for signing
-  nonce: string
-  gasPrice: string
-  gasLimit: string
-  to: string
-  value: string
-  data: string
-  // The transaction is unsigned, so these are not present:
-  v?: string
-  r?: string
-  s?: string
-}
-
 // rates ---------------------------------------------------------------
 
 export interface EdgeRateCacheEvents {
@@ -1448,12 +1434,6 @@ export interface EdgeAccount {
   readonly activateWallet: (
     options: EdgeActivationOptions
   ) => Promise<EdgeActivationQuote>
-
-  // Web compatibility:
-  readonly signEthereumTransaction: (
-    walletId: string,
-    transaction: EthereumTransaction
-  ) => Promise<string>
 
   // Swapping:
   readonly fetchSwapQuote: (
