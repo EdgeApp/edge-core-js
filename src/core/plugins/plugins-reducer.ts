@@ -3,7 +3,6 @@ import {
   EdgeCurrencyPlugin,
   EdgeCurrencyTools,
   EdgePluginMap,
-  EdgeRatePlugin,
   EdgeSwapPlugin
 } from '../../types/types'
 import { RootAction } from '../actions'
@@ -13,7 +12,6 @@ export interface PluginsState {
   readonly locked: boolean
 
   readonly currency: EdgePluginMap<EdgeCurrencyPlugin>
-  readonly rate: EdgePluginMap<EdgeRatePlugin>
   readonly swap: EdgePluginMap<EdgeSwapPlugin>
 
   readonly currencyTools: EdgePluginMap<Promise<EdgeCurrencyTools>>
@@ -23,7 +21,6 @@ const initialState: PluginsState = {
   init: {},
   locked: false,
   currency: {},
-  rate: {},
   swap: {},
   currencyTools: {}
 }
@@ -37,7 +34,6 @@ export const plugins = (
       const out = {
         ...state,
         currency: { ...state.currency },
-        rate: { ...state.rate },
         swap: { ...state.swap }
       }
       for (const pluginId of Object.keys(action.payload)) {
@@ -51,7 +47,6 @@ export const plugins = (
         }
 
         if ('currencyInfo' in plugin) out.currency[pluginId] = plugin
-        if ('rateInfo' in plugin) out.rate[pluginId] = plugin
         if ('swapInfo' in plugin) out.swap[pluginId] = plugin
       }
       return out

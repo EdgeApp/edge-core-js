@@ -4,7 +4,6 @@ import {
   EdgeCurrencyTools,
   EdgeLogSettings,
   EdgePluginMap,
-  EdgeRateHint,
   EdgeStakingStatus,
   EdgeToken,
   EdgeTokenMap,
@@ -20,7 +19,6 @@ import {
   TxFileNames,
   TxidHashes
 } from './currency/wallet/currency-wallet-reducer'
-import { ExchangePair } from './exchange/exchange-reducer'
 import { LoginStash } from './login/login-stash'
 import { LoginType } from './login/login-types'
 import {
@@ -312,11 +310,6 @@ export type RootAction =
       }
     }
   | {
-      // Fired when we fetch exchange pairs from some server.
-      type: 'EXCHANGE_PAIRS_FETCHED'
-      payload: ExchangePair[]
-    }
-  | {
       // Initializes the redux store on context creation.
       type: 'INIT'
       payload: {
@@ -329,7 +322,6 @@ export type RootAction =
         deviceDescription: string | null
         hideKeys: boolean
         logSettings: EdgeLogSettings
-        rateHintCache: EdgeRateHint[]
         pluginsInit: EdgeCorePluginsInit
         skipBlockHeight: boolean
         stashes: LoginStash[]
@@ -387,11 +379,6 @@ export type RootAction =
   | {
       // Dummy action to propagate `next` changes.
       type: 'UPDATE_NEXT'
-    }
-  | {
-      // Fires when there are new rate hints to add to the cache
-      type: 'UPDATE_RATE_HINT_CACHE'
-      payload: { rateHintCache: EdgeRateHint[] }
     }
 
 export type Dispatch = (action: RootAction) => RootAction

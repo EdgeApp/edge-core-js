@@ -1204,32 +1204,6 @@ export interface EdgeSwapPlugin {
 }
 
 // ---------------------------------------------------------------------
-// rate plugin
-// ---------------------------------------------------------------------
-
-export interface EdgeRateHint {
-  fromCurrency: string
-  toCurrency: string
-}
-
-export interface EdgeRateInfo {
-  readonly pluginId: string
-  readonly displayName: string
-}
-
-export interface EdgeRatePair {
-  fromCurrency: string
-  toCurrency: string
-  rate: number
-}
-
-export interface EdgeRatePlugin {
-  readonly rateInfo: EdgeRateInfo
-
-  readonly fetchRates: (hints: EdgeRateHint[]) => Promise<EdgeRatePair[]>
-}
-
-// ---------------------------------------------------------------------
 // account
 // ---------------------------------------------------------------------
 
@@ -1559,10 +1533,7 @@ export interface EdgeAccount {
 // context types
 // ---------------------------------------------------------------------
 
-export type EdgeCorePlugin =
-  | EdgeCurrencyPlugin
-  | EdgeRatePlugin
-  | EdgeSwapPlugin
+export type EdgeCorePlugin = EdgeCurrencyPlugin | EdgeSwapPlugin
 
 type EdgeCorePluginFactory = (env: EdgeCorePluginOptions) => EdgeCorePlugin
 

@@ -456,7 +456,7 @@ export async function setupNewTxMetadata(
   const creationDate = Date.now() / 1000
 
   // Calculate the exchange rate:
-  const nativeAmount = tx.nativeAmount
+  const { nativeAmount } = tx
 
   // Set up metadata:
   const metadata: DiskMetadata =
