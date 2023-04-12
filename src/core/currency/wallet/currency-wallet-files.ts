@@ -8,7 +8,6 @@ import {
 import { makeJsonFile } from '../../../util/file-helpers'
 import { mergeDeeply } from '../../../util/util'
 import { fetchAppIdInfo } from '../../account/lobby-api'
-import { getExchangeRate } from '../../exchange/exchange-selectors'
 import { toApiInput } from '../../root-pixie'
 import { RootState } from '../../root-reducer'
 import {
@@ -16,7 +15,6 @@ import {
   getStorageWalletLocalDisklet,
   hashStorageWalletFilename
 } from '../../storage/storage-selectors'
-import { getCurrencyMultiplier } from '../currency-selectors'
 import { combineTxWithFile } from './currency-wallet-api'
 import {
   asEnabledTokensFile,
@@ -456,33 +454,20 @@ export async function setupNewTxMetadata(
   tx: EdgeTransaction
 ): Promise<void> {
   const { dispatch, walletState, state, walletId } = input.props
-  const { accountId, fiat = 'iso:USD', pluginId } = walletState
+  const { fiat = 'iso:USD' } = walletState
   const { currencyCode, spendTargets, swapData, txid } = tx
   const disklet = getStorageWalletDisklet(state, walletId)
 
   const creationDate = Date.now() / 1000
 
-  const plugin = input.props.state.plugins.currency[pluginId]
-
   // Calculate the exchange rate:
-  const rate =
-    getExchangeRate(state, currencyCode, fiat, () => 1) /
-    parseFloat(
-      getCurrencyMultiplier(
-        plugin,
-        input.props.state.accounts[accountId].allTokens[pluginId],
-        currencyCode
-      )
-    )
   const nativeAmount = tx.nativeAmount
-  const exchangeAmount = rate * Number(nativeAmount)
 
   // Set up metadata:
   const metadata: DiskMetadata =
     tx.metadata != null
       ? packMetadata(tx.metadata, fiat)
       : { exchangeAmount: {} }
-  metadata.exchangeAmount[fiat] = exchangeAmount
 
   // Basic file template:
   const json: TransactionFile = {

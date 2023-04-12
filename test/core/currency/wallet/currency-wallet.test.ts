@@ -408,11 +408,11 @@ describe('currency wallets', function () {
     expect(txs.length).equals(1)
     expect(txs[0].nativeAmount).equals('50')
     expect(txs[0].metadata).deep.equals({
+      amountFiat: undefined,
       bizId: undefined,
       category: undefined,
+      exchangeAmount: {},
       notes: undefined,
-      exchangeAmount: { 'iso:USD': 1.5 },
-      amountFiat: 1.5,
       ...metadata
     })
     expect(txs[0].networkFeeOption).equals('high')
