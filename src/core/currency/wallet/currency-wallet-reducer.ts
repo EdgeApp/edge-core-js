@@ -73,7 +73,6 @@ export interface CurrencyWalletState {
   readonly fiat: string
   readonly fiatLoaded: boolean
   readonly fileNames: TxFileNames
-  readonly fileNamesLoaded: boolean
   readonly files: TxFileJsons
   readonly gotTxs: { [currencyCode: string]: boolean }
   readonly height: number
@@ -262,10 +261,6 @@ const currencyWalletInner = buildReducer<
       }
     }
     return state
-  },
-
-  fileNamesLoaded(state = false, action): boolean {
-    return action.type === 'CURRENCY_WALLET_FILE_NAMES_LOADED' ? true : state
   },
 
   syncRatio(state = 0, action): number {

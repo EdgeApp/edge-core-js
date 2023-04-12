@@ -39,7 +39,14 @@ import {
   watchCurrencyWallet
 } from './currency-wallet-callbacks'
 import { asIntegerString, asPublicKeyFile } from './currency-wallet-cleaners'
-import { changeEnabledTokens, loadAllFiles } from './currency-wallet-files'
+import {
+  changeEnabledTokens,
+  loadAddressFiles,
+  loadEnabledTokensFile,
+  loadFiatFile,
+  loadNameFile,
+  loadTxFileNames
+} from './currency-wallet-files'
 import {
   CurrencyWalletState,
   initialEnabledTokens
@@ -68,6 +75,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     const { state, walletId, walletState } = input.props
     const { accountId, pluginId, walletInfo } = walletState
     const plugin = state.plugins.currency[pluginId]
+    const { currencyCode } = plugin.currencyInfo
 
     try {
       // Start the data sync:
@@ -85,6 +93,14 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         walletInfo.id,
         input.props.io
       )
+
+      // We need to know which tokens are enabled,
+      // so the engine can start in the right state:
+      await loadEnabledTokensFile(input)
+
+      // We need to know which transactions exist,
+      // since new transactions may come in from the network:
+      await loadTxFileNames(input)
 
       // Derive the public keys:
       const tools = await getCurrencyTools(ai, pluginId)
@@ -120,20 +136,17 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         enabledTokenIds: input.props.walletState.allEnabledTokenIds,
         userSettings: accountState.userSettings[pluginId] ?? {}
       })
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
-        payload: {
-          displayPrivateSeed: engine.getDisplayPrivateSeed(
-            privateWalletInfo.keys
-          ),
-          displayPublicSeed: engine.getDisplayPublicSeed(),
-          walletId
-        }
-      })
       input.onOutput(engine)
 
       // Grab initial state:
-      const { currencyCode } = plugin.currencyInfo
+      const displayPrivateSeed = engine.getDisplayPrivateSeed(
+        privateWalletInfo.keys
+      )
+      const displayPublicSeed = engine.getDisplayPublicSeed()
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
+        payload: { displayPrivateSeed, displayPublicSeed, walletId }
+      })
       const balance = asMaybe(asIntegerString)(
         engine.getBalance({ currencyCode })
       )
@@ -149,16 +162,21 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         payload: { height, walletId }
       })
       if (engine.getStakingStatus != null) {
-        engine
-          .getStakingStatus()
-          .then(stakingStatus => {
+        await engine.getStakingStatus().then(
+          stakingStatus => {
             input.props.dispatch({
               type: 'CURRENCY_ENGINE_CHANGED_STAKING',
               payload: { stakingStatus, walletId }
             })
-          })
-          .catch(error => input.props.onError(error))
+          },
+          error => input.props.onError(error)
+        )
       }
+
+      // Load remaining data from disk:
+      await loadFiatFile(input)
+      await loadNameFile(input)
+      await loadAddressFiles(input)
     } catch (raw: unknown) {
       const error = raw instanceof Error ? raw : new Error(String(raw))
       input.props.onError(error)
@@ -168,13 +186,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       })
     }
 
-    // Reload our data from disk:
-    loadAllFiles(input).catch(error => input.props.onError(error))
-
     // Fire callbacks when our state changes:
     watchCurrencyWallet(input)
 
-    return stopUpdates
+    return await stopUpdates
   },
 
   // Creates the API object:
@@ -212,7 +227,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           if (
             walletApi == null ||
             !walletState.fiatLoaded ||
-            !walletState.fileNamesLoaded ||
             walletState.engineStarted
           ) {
             return

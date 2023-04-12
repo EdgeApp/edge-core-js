@@ -16,7 +16,14 @@ import {
 } from '../../storage/storage-selectors'
 import { combineTxWithFile } from './currency-wallet-api'
 import { asIntegerString } from './currency-wallet-cleaners'
-import { loadAllFiles, setupNewTxMetadata } from './currency-wallet-files'
+import {
+  loadAddressFiles,
+  loadEnabledTokensFile,
+  loadFiatFile,
+  loadNameFile,
+  loadTxFileNames,
+  setupNewTxMetadata
+} from './currency-wallet-files'
 import {
   CurrencyWalletInput,
   CurrencyWalletProps
@@ -241,11 +248,7 @@ export function makeCurrencyWalletCallbacks(
 
       // Grab stuff from redux:
       const { state } = input.props
-      const {
-        fileNames,
-        fileNamesLoaded,
-        txs: reduxTxs
-      } = input.props.walletState
+      const { fileNames, txs: reduxTxs } = input.props.walletState
       const defaultCurrency = input.props.walletState.currencyInfo.currencyCode
 
       const txidHashes: TxidHashes = {}
@@ -275,9 +278,7 @@ export function makeCurrencyWalletCallbacks(
 
         // Ensure the transaction has metadata:
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
-        const isNew =
-          tx.spendTargets != null ||
-          (fileNamesLoaded && fileNames[txidHash] == null)
+        const isNew = tx.spendTargets != null || fileNames[txidHash] == null
         if (isNew) {
           setupNewTxMetadata(input, tx).catch(error =>
             input.props.onError(error)
@@ -326,22 +327,29 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
   const { walletId } = input.props
 
   let lastChanges: string[]
-  function checkChangesLoop(props: CurrencyWalletProps): void {
+  async function checkChanges(props: CurrencyWalletProps): Promise<void> {
     // Check for data changes:
     const changes = getStorageWalletLastChanges(props.state, walletId)
     if (changes !== lastChanges) {
       lastChanges = changes
-      loadAllFiles(input).catch(error => input.props.onError(error))
+      await loadEnabledTokensFile(input)
+      await loadFiatFile(input)
+      await loadNameFile(input)
+      await loadTxFileNames(input)
+      await loadAddressFiles(input)
     }
-
+  }
+  function checkChangesLoop(): void {
     input
       .nextProps()
-      .then(checkChangesLoop)
-      .catch(error => {
-        if (!isPixieShutdownError(error)) input.props.onError(error)
+      .then(checkChanges)
+      .then(checkChangesLoop, error => {
+        if (isPixieShutdownError(error)) return
+        input.props.onError(error)
+        checkChangesLoop()
       })
   }
-  checkChangesLoop(input.props)
+  checkChangesLoop()
 }
 
 export const validateConfirmations = (
