@@ -364,7 +364,8 @@ describe('currency wallets', function () {
     await config.changeUserSettings({ balance: 100 }) // Spending balance
 
     // Subscribe to new transactions:
-    wallet.on('newTransactions', txs => {
+    wallet.on('newTransactions', () => log('bad'))
+    wallet.on('transactionsChanged', txs => {
       const { txid, metadata = {} } = tx
       const { name = '' } = metadata
       log('new', txs.map(tx => `${txid} ${name}`).join(' '))

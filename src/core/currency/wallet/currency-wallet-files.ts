@@ -409,7 +409,9 @@ export async function setCurrencyWalletTxMetadata(
   // Load the old file:
   const oldFile = input.props.walletState.files[oldTxidHash]
   const creationDate =
-    oldFile == null ? Date.now() / 1000 : oldFile.creationDate
+    oldFile == null
+      ? Math.min(tx.date, Date.now() / 1000)
+      : oldFile.creationDate
 
   // Set up the new file:
   const { fileName, txidHash } = getTxFileName(

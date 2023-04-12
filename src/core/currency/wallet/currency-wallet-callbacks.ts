@@ -1,3 +1,4 @@
+import { lt } from 'biggystring'
 import { asMaybe } from 'cleaners'
 import { isPixieShutdownError } from 'redux-pixies'
 import { emit } from 'yaob'
@@ -244,6 +245,7 @@ export function makeCurrencyWalletCallbacks(
           )
           return
         }
+        if (tx.isSend == null) tx.isSend = lt(tx.nativeAmount, '0')
       }
 
       // Grab stuff from redux:
@@ -278,7 +280,7 @@ export function makeCurrencyWalletCallbacks(
 
         // Ensure the transaction has metadata:
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
-        const isNew = tx.spendTargets != null || fileNames[txidHash] == null
+        const isNew = tx.isSend ? false : fileNames[txidHash] == null
         if (isNew) {
           setupNewTxMetadata(input, tx).catch(error =>
             input.props.onError(error)
