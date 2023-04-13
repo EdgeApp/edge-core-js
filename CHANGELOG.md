@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.20.2 (2023-04-13)
+
+- fixed: Stop incorrectly writing metadata for sends. This should make editing metadata more stable.
+
 ## v0.20.1 (2023-04-12)
 
 - fixed: Remove check that spentTargets.length > 0 in makeSpend
