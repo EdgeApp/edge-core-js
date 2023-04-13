@@ -364,7 +364,8 @@ describe('currency wallets', function () {
     await config.changeUserSettings({ balance: 100 }) // Spending balance
 
     // Subscribe to new transactions:
-    wallet.on('newTransactions', txs => {
+    wallet.on('newTransactions', () => log('bad'))
+    wallet.on('transactionsChanged', txs => {
       const { txid, metadata = {} } = tx
       const { name = '' } = metadata
       log('new', txs.map(tx => `${txid} ${name}`).join(' '))
@@ -408,11 +409,11 @@ describe('currency wallets', function () {
     expect(txs.length).equals(1)
     expect(txs[0].nativeAmount).equals('50')
     expect(txs[0].metadata).deep.equals({
+      amountFiat: undefined,
       bizId: undefined,
       category: undefined,
+      exchangeAmount: {},
       notes: undefined,
-      exchangeAmount: { 'iso:USD': 1.5 },
-      amountFiat: 1.5,
       ...metadata
     })
     expect(txs[0].networkFeeOption).equals('high')
