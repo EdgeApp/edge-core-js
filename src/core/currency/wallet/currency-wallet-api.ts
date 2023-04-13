@@ -482,9 +482,6 @@ export function makeCurrencyWalletApi(
         })
       }
 
-      if (cleanTargets.length === 0) {
-        throw new TypeError('The spend has no destination')
-      }
       if (spendInfo.privateKeys != null) {
         throw new TypeError('Only sweepPrivateKeys takes private keys')
       }
