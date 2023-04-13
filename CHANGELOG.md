@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.19.50 (2023-04-12)
+
+- fixed: Remove check that spentTargets.length > 0 in makeSpend
+
 ## v0.19.49 (2023-03-30)
 
 - fixed: Incorrectly formed `privateKeys` argument for `signTx` call to the engine
