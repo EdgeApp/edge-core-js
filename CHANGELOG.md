@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.20.1 (2023-04-12)
+
+- fixed: Remove check that spentTargets.length > 0 in makeSpend
+
 ## v0.20.0 (2023-04-10)
 
 - changed: Removed private keys from `walletInfo` for `makeCurrencyEngine`
