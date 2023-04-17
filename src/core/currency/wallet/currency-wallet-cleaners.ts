@@ -177,7 +177,7 @@ export const asEdgeTxSwap: Cleaner<EdgeTxSwap> = asObject({
 const asDiskMetadata: Cleaner<DiskMetadata> = asObject({
   bizId: asOptional(asNumber),
   category: asOptional(asString),
-  exchangeAmount: asOptional(asMap(asNumber), {}),
+  exchangeAmount: asOptional(asMap(asNumber), () => ({})),
   name: asOptional(asString),
   notes: asOptional(asString)
 })

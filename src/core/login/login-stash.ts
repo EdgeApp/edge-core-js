@@ -151,7 +151,7 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   otpKey: asOptional(asBase32),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
-  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
+  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), () => []),
   voucherId: asOptional(asString),
   voucherAuth: asOptional(asBase64),
 

@@ -231,7 +231,7 @@ export const asChangeVouchersPayload: Cleaner<ChangeVouchersPayload> = asObject(
 
 export const asCreateKeysPayload: Cleaner<CreateKeysPayload> = asObject({
   keyBoxes: asArray(asEdgeBox),
-  newSyncKeys: asOptional(asArray(asString), [])
+  newSyncKeys: asOptional(asArray(asString), () => [])
 })
 
 export const asCreateLoginPayload: Cleaner<CreateLoginPayload> = asObject({
@@ -288,7 +288,7 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   userTextBox: asOptional(asEdgeBox),
 
   // Voucher login:
-  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
+  pendingVouchers: asOptional(asArray(asEdgePendingVoucher), () => []),
 
   // Resources:
   keyBoxes: asOptional(asArray(asEdgeBox)),
@@ -301,7 +301,7 @@ export const asMessagesPayload: Cleaner<MessagesPayload> = asArray(
   asObject({
     loginId: asBase64,
     otpResetPending: asOptional(asBoolean, false),
-    pendingVouchers: asOptional(asArray(asEdgePendingVoucher), []),
+    pendingVouchers: asOptional(asArray(asEdgePendingVoucher), () => []),
     recovery2Corrupt: asOptional(asBoolean, false)
   })
 )

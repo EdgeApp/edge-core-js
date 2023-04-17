@@ -129,7 +129,7 @@ export const asLoginDump: Cleaner<LoginDump> = asObject({
   // Nested logins:
   children: asOptional(
     asArray(raw => asLoginDump(raw)),
-    []
+    () => []
   ),
   parentBox: asOptional(asEdgeBox),
   parentId: (): Uint8Array | undefined => undefined,
@@ -170,11 +170,11 @@ export const asLoginDump: Cleaner<LoginDump> = asObject({
   userTextBox: asOptional(asEdgeBox),
 
   // Keys and assorted goodies:
-  keyBoxes: asOptional(asArray(asEdgeBox), []),
+  keyBoxes: asOptional(asArray(asEdgeBox), () => []),
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
   syncKeyBox: asOptional(asEdgeBox),
-  vouchers: asOptional(asArray(asVoucherDump), []),
+  vouchers: asOptional(asArray(asVoucherDump), () => []),
 
   // Obsolete:
   pinBox: asOptional(asEdgeBox),
