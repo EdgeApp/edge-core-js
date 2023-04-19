@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v0.21 (2023-04-19)
+
+- added: EdgeParsedUri.minNativeAmount
+
 ## v0.20.2 (2023-04-13)
 
 - fixed: Stop incorrectly writing metadata for sends. This should make editing metadata more stable.
