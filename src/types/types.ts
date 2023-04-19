@@ -529,6 +529,7 @@ export interface EdgeParsedUri {
   expireDate?: Date
   legacyAddress?: string
   metadata?: EdgeMetadata
+  minNativeAmount?: string
   nativeAmount?: string
   paymentProtocolUrl?: string
   privateKeys?: string[]
