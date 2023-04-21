@@ -1478,6 +1478,7 @@ export interface EdgeLoginMessage {
   otpResetPending: boolean
   pendingVouchers: EdgePendingVoucher[]
   recovery2Corrupt: boolean
+  username: string
 }
 
 export interface EdgeLoginMessages {

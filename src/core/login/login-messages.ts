@@ -32,7 +32,8 @@ export async function fetchLoginMessages(
     const { loginId, ...rest } = message
     const id = base64.stringify(loginId)
     const username = loginMap[id]
-    if (username != null) out[username] = { ...rest, loginId: id }
+    if (username == null) continue
+    out[username] = { ...rest, loginId: id, username }
   }
   return out
 }
