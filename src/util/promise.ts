@@ -47,30 +47,30 @@ export function timeout<T>(
 export function fuzzyTimeout<T>(
   promises: Array<Promise<T>>,
   timeoutMs: number
-): Promise<T[]> {
+): Promise<{ results: T[]; errors: unknown[] }> {
   return new Promise((resolve, reject) => {
     let done = false
     const results: T[] = []
-    const failures: any[] = []
+    const errors: unknown[] = []
 
     // Set up the timer:
     let timer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
       timer = undefined
       if (results.length > 0) {
         done = true
-        resolve(results)
+        resolve({ results, errors })
       }
     }, timeoutMs)
 
     function checkEnd(): void {
-      const allDone = results.length + failures.length === promises.length
+      const allDone = results.length + errors.length === promises.length
       if (allDone && timer != null) {
         clearTimeout(timer)
       }
       if (allDone || timer == null) {
         done = true
-        if (results.length > 0) resolve(results)
-        else reject(failures)
+        if (results.length > 0) resolve({ results, errors })
+        else reject(errors)
       }
     }
     checkEnd() // Handle empty lists
@@ -85,7 +85,7 @@ export function fuzzyTimeout<T>(
         },
         failure => {
           if (done) return
-          failures.push(failure)
+          errors.push(failure)
           checkEnd()
         }
       )

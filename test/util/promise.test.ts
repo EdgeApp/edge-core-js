@@ -7,16 +7,28 @@ import { expectRejection } from '../expect-rejection'
 
 describe('promise', function () {
   it('fuzzyTimeout resolves', async function () {
-    expect(await fuzzyTimeout([snooze(1), snooze(20)], 10)).deep.equals([1])
-    expect(await fuzzyTimeout([snooze(1), snooze(2)], 10)).deep.equals([1, 2])
-    expect(await fuzzyTimeout([snooze(20), snooze(30)], 10)).deep.equals([20])
+    expect(await fuzzyTimeout([snooze(1), snooze(20)], 10)).deep.equals({
+      results: [1],
+      errors: []
+    })
+    expect(await fuzzyTimeout([snooze(1), snooze(2)], 10)).deep.equals({
+      results: [1, 2],
+      errors: []
+    })
+    expect(await fuzzyTimeout([snooze(20), snooze(30)], 10)).deep.equals({
+      results: [20],
+      errors: []
+    })
 
-    const data = [snooze(1), Promise.reject(new Error()), snooze(1000)]
-    expect(await fuzzyTimeout(data, 10)).deep.equals([1])
+    const error = new Error('Expected')
+    const data = [snooze(1), Promise.reject(error), snooze(1000)]
+    expect(await fuzzyTimeout(data, 10)).deep.equals({
+      results: [1],
+      errors: [error]
+    })
 
-    const fail = Promise.reject(new Error('Expected'))
     await expectRejection(
-      fuzzyTimeout([fail, fail], 10),
+      fuzzyTimeout([Promise.reject(error), Promise.reject(error)], 10),
       'Error: Expected,Error: Expected'
     )
   })
