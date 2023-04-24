@@ -1,8 +1,12 @@
 # edge-core-js
 
-## v0.21 (2023-04-19)
+## v0.21.1 (2023-04-24)
 
-- added: EdgeParsedUri.minNativeAmount
+- added: Log any swap plugins that time out.
+
+## v0.21.0 (2023-04-19)
+
+- added: `EdgeParsedUri.minNativeAmount`. Note: This is not a breaking change, but we incorrectly updated the version number as if it were.
 
 ## v0.20.2 (2023-04-13)
 
