@@ -64,13 +64,15 @@ export async function fetchSwapQuote(
   )
 
   // Invoke all the active swap plugins:
+  const pendingIds = new Set<string>()
   const promises: Array<Promise<EdgeSwapQuote>> = []
   for (const pluginId of Object.keys(swapPlugins)) {
     const { enabled = true } =
       swapSettings[pluginId] != null ? swapSettings[pluginId] : {}
+    if (!enabled || disabled[pluginId]) continue
 
     // Start request:
-    if (!enabled || disabled[pluginId]) continue
+    pendingIds.add(pluginId)
     promises.push(
       swapPlugins[pluginId]
         .fetchSwapQuote(request, userSettings[pluginId], {
@@ -80,10 +82,12 @@ export async function fetchSwapQuote(
           quote => {
             const { fromWallet, toWallet, ...request } = quote.request ?? {}
             const cleaned = { ...quote, request }
+            pendingIds.delete(pluginId)
             log.warn(`${pluginId} gave swap quote:`, cleaned)
             return quote
           },
           error => {
+            pendingIds.delete(pluginId)
             log.warn(`${pluginId} gave swap error: ${String(error)}`)
             throw error
           }
@@ -95,6 +99,10 @@ export async function fetchSwapQuote(
   // Wait for the results, with error handling:
   return fuzzyTimeout(promises, 20000).then(
     quotes => {
+      for (const pluginId of pendingIds) {
+        log.warn(`${pluginId} gave swap timeout`)
+      }
+
       // Find the cheapest price:
       const bestQuote = pickBestQuote(quotes, opts)
       log.warn(
