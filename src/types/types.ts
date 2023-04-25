@@ -875,15 +875,10 @@ export interface EdgeCurrencyWallet {
   // Data store:
   readonly disklet: Disklet
   readonly id: string
-  readonly keys: JsonObject
   readonly localDisklet: Disklet
   readonly publicWalletInfo: EdgeWalletInfo
   readonly sync: () => Promise<void>
   readonly type: string
-
-  // Wallet keys:
-  readonly displayPrivateSeed: string | null
-  readonly displayPublicSeed: string | null
 
   // Wallet name:
   readonly name: string | null
@@ -999,6 +994,15 @@ export interface EdgeCurrencyWallet {
 
   /** @deprecated Read enabledTokenIds instead */
   readonly getEnabledTokens: () => Promise<string[]>
+
+  /** @deprecated Call `EdgeAccount.getDisplayPrivateKey` instead */
+  readonly displayPrivateSeed: string | null
+
+  /** @deprecated Call `EdgeAccount.getDisplayPublicKey` instead */
+  readonly displayPublicSeed: string | null
+
+  /** @deprecated Call `EdgeAccount.getRawPrivateKey` instead */
+  readonly keys: JsonObject
 }
 
 // ---------------------------------------------------------------------
@@ -1297,7 +1301,6 @@ export interface EdgeAccount {
 
   // Data store:
   readonly id: string
-  readonly keys: JsonObject
   readonly type: string
   readonly disklet: Disklet
   readonly localDisklet: Disklet
@@ -1420,6 +1423,9 @@ export interface EdgeAccount {
     request: EdgeSwapRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote>
+
+  /** @deprecated Use `EdgeAccount.getRawPrivateKey` */
+  readonly keys: JsonObject
 }
 
 // ---------------------------------------------------------------------
