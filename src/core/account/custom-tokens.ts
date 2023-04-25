@@ -159,7 +159,7 @@ export async function loadBuiltinTokens(
   )
 }
 
-function findEngine(
+export function findEngine(
   ai: ApiInput,
   pluginId: string
 ): EdgeCurrencyEngine | undefined {

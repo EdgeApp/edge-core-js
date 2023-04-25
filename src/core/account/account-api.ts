@@ -28,6 +28,7 @@ import {
 } from '../../types/types'
 import { signEthereumTransaction } from '../../util/crypto/ethereum'
 import { base58 } from '../../util/encoding'
+import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import { makeExchangeCache } from '../exchange/exchange-api'
 import {
   createCurrencyWallet,
@@ -52,6 +53,7 @@ import {
   getCurrencyTools
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
+import { makeLocalDisklet } from '../storage/repo'
 import { makeStorageWalletApi } from '../storage/storage-api'
 import { fetchSwapQuote } from '../swap/swap-api'
 import { changeWalletStates } from './account-files'
@@ -406,6 +408,45 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // ----------------------------------------------------------------
+    // Key access:
+    // ----------------------------------------------------------------
+
+    async getDisplayPrivateKey(walletId: string): Promise<string> {
+      const info = getRawPrivateKey(ai, accountId, walletId)
+
+      const { engine } = ai.props.output.currency.wallets[walletId]
+      if (engine == null) throw new Error('Wallet has not yet loaded')
+      const out = await engine.getDisplayPrivateSeed(info.keys)
+      if (out == null) throw new Error('The engine failed to return a key')
+      return out
+    },
+
+    async getDisplayPublicKey(walletId: string): Promise<string> {
+      const { engine } = ai.props.output.currency.wallets[walletId]
+      if (engine == null) throw new Error('Wallet has not yet loaded')
+      const out = await engine.getDisplayPublicSeed()
+      if (out == null) throw new Error('The engine failed to return a key')
+      return out
+    },
+
+    async getRawPrivateKey(walletId: string): Promise<JsonObject> {
+      return getRawPrivateKey(ai, accountId, walletId).keys
+    },
+
+    async getRawPublicKey(walletId: string): Promise<JsonObject> {
+      const info = getRawPrivateKey(ai, accountId, walletId)
+      const pluginId = findCurrencyPluginId(
+        ai.props.state.plugins.currency,
+        info.type
+      )
+      const tools = await getCurrencyTools(ai, pluginId)
+      const disklet = makeLocalDisklet(ai.props.io, walletId)
+      const publicInfo = await getPublicWalletInfo(info, disklet, tools)
+
+      return publicInfo.keys
+    },
+
+    // ----------------------------------------------------------------
     // Currency wallets:
     // ----------------------------------------------------------------
 
@@ -576,4 +617,17 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
   bridgifyObject(out)
 
   return out
+}
+
+function getRawPrivateKey(
+  ai: ApiInput,
+  accountId: string,
+  walletId: string
+): EdgeWalletInfoFull {
+  const infos = ai.props.state.accounts[accountId].allWalletInfosFull
+  const info = infos.find(key => key.id === walletId)
+  if (info == null) {
+    throw new Error(`Invalid wallet: ${walletId} not found`)
+  }
+  return info
 }

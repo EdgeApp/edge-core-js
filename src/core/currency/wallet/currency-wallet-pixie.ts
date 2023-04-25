@@ -442,7 +442,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 /**
  * Attempts to load/derive the wallet public keys.
  */
-async function getPublicWalletInfo(
+export async function getPublicWalletInfo(
   walletInfo: EdgeWalletInfo,
   disklet: Disklet,
   tools: EdgeCurrencyTools

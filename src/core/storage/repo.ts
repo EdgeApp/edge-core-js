@@ -1,6 +1,6 @@
 import { Disklet, mergeDisklets, navigateDisklet } from 'disklet'
 import { SyncClient } from 'edge-sync-client'
-import { base16 } from 'rfc4648'
+import { base16, base64 } from 'rfc4648'
 
 import { EdgeIo } from '../../types/types'
 import { sha256 } from '../../util/crypto/hashes'
@@ -13,6 +13,13 @@ const CHANGESET_MAX_ENTRIES = 100
 export interface SyncResult {
   changes: { [path: string]: any }
   status: StorageWalletStatus
+}
+
+export function makeLocalDisklet(io: EdgeIo, walletId: string): Disklet {
+  return navigateDisklet(
+    io.disklet,
+    'local/' + base58.stringify(base64.parse(walletId))
+  )
 }
 
 /**
