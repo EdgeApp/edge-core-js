@@ -98,7 +98,7 @@ export async function fetchSwapQuote(
 
   // Wait for the results, with error handling:
   return fuzzyTimeout(promises, 20000).then(
-    quotes => {
+    ({ results: quotes, errors }) => {
       for (const pluginId of pendingIds) {
         log.warn(`${pluginId} gave swap timeout`)
       }
@@ -106,7 +106,7 @@ export async function fetchSwapQuote(
       // Find the cheapest price:
       const bestQuote = pickBestQuote(quotes, opts)
       log.warn(
-        `${promises.length} swap quotes requested, ${quotes.length} resolved, picked ${bestQuote.pluginId}.`
+        `${promises.length} swap quotes requested, ${quotes.length} resolved, ${errors.length} failed, picked ${bestQuote.pluginId}.`
       )
 
       // Close unused quotes:
