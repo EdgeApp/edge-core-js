@@ -413,17 +413,41 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async getDisplayPrivateKey(walletId: string): Promise<string> {
       const info = getRawPrivateKey(ai, accountId, walletId)
+      const pluginId = findCurrencyPluginId(
+        ai.props.state.plugins.currency,
+        info.type
+      )
+      const tools = await getCurrencyTools(ai, pluginId)
+      if (tools.getDisplayPrivateKey != null) {
+        return await tools.getDisplayPrivateKey(info)
+      }
 
       const { engine } = ai.props.output.currency.wallets[walletId]
-      if (engine == null) throw new Error('Wallet has not yet loaded')
+      if (engine == null || engine.getDisplayPrivateSeed == null) {
+        throw new Error('Wallet has not yet loaded')
+      }
       const out = await engine.getDisplayPrivateSeed(info.keys)
       if (out == null) throw new Error('The engine failed to return a key')
       return out
     },
 
     async getDisplayPublicKey(walletId: string): Promise<string> {
+      const info = getRawPrivateKey(ai, accountId, walletId)
+      const pluginId = findCurrencyPluginId(
+        ai.props.state.plugins.currency,
+        info.type
+      )
+      const tools = await getCurrencyTools(ai, pluginId)
+      if (tools.getDisplayPublicKey != null) {
+        const disklet = makeLocalDisklet(ai.props.io, walletId)
+        const publicInfo = await getPublicWalletInfo(info, disklet, tools)
+        return await tools.getDisplayPublicKey(publicInfo)
+      }
+
       const { engine } = ai.props.output.currency.wallets[walletId]
-      if (engine == null) throw new Error('Wallet has not yet loaded')
+      if (engine == null || engine.getDisplayPublicSeed == null) {
+        throw new Error('Wallet has not yet loaded')
+      }
       const out = await engine.getDisplayPublicSeed()
       if (out == null) throw new Error('The engine failed to return a key')
       return out

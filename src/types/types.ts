@@ -641,10 +641,6 @@ export interface EdgeCurrencyEngineOptions {
 export interface EdgeCurrencyEngine {
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
 
-  // Keys:
-  readonly getDisplayPrivateSeed: (privateKeys: JsonObject) => string | null
-  readonly getDisplayPublicSeed: () => string | null
-
   // Engine status:
   readonly startEngine: () => Promise<void>
   readonly killEngine: () => Promise<void>
@@ -735,6 +731,12 @@ export interface EdgeCurrencyEngine {
 
   /** @deprecated No longer used */
   readonly getTokenStatus?: (token: string) => boolean
+
+  /** @deprecated Provide EdgeCurrencyTools.getDisplayPrivateKey: */
+  readonly getDisplayPrivateSeed?: (privateKeys: JsonObject) => string | null
+
+  /** @deprecated Provide EdgeCurrencyTools.getDisplayPublicKey: */
+  readonly getDisplayPublicSeed?: () => string | null
 }
 
 // currency plugin -----------------------------------------------------
@@ -753,9 +755,17 @@ export interface EdgeCurrencyTools {
     walletType: string,
     opts?: JsonObject
   ) => Promise<JsonObject>
-  readonly derivePublicKey: (walletInfo: EdgeWalletInfo) => Promise<JsonObject>
+  readonly derivePublicKey: (
+    privateWalletInfo: EdgeWalletInfo
+  ) => Promise<JsonObject>
+  readonly getDisplayPrivateKey?: (
+    privateWalletInfo: EdgeWalletInfo
+  ) => Promise<string>
+  readonly getDisplayPublicKey?: (
+    publicWalletInfo: EdgeWalletInfo
+  ) => Promise<string>
   readonly getSplittableTypes?: (
-    walletInfo: EdgeWalletInfo
+    publicWalletInfo: EdgeWalletInfo
   ) => string[] | Promise<string[]>
   readonly importPrivateKey?: (
     key: string,

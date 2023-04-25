@@ -139,10 +139,18 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       input.onOutput(engine)
 
       // Grab initial state:
-      const displayPrivateSeed = engine.getDisplayPrivateSeed(
-        privateWalletInfo.keys
-      )
-      const displayPublicSeed = engine.getDisplayPublicSeed()
+      const displayPrivateSeed =
+        tools.getDisplayPrivateKey != null
+          ? await tools.getDisplayPrivateKey(privateWalletInfo)
+          : engine.getDisplayPrivateSeed != null
+          ? engine.getDisplayPrivateSeed(privateWalletInfo.keys)
+          : null
+      const displayPublicSeed =
+        tools.getDisplayPublicKey != null
+          ? await tools.getDisplayPublicKey(publicWalletInfo)
+          : engine.getDisplayPublicSeed != null
+          ? engine.getDisplayPublicSeed()
+          : null
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
         payload: { displayPrivateSeed, displayPublicSeed, walletId }
