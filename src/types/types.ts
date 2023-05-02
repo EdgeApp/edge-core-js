@@ -1580,8 +1580,9 @@ export interface EdgeContext {
     recovery2Key: string,
     username: string
   ) => Promise<string[]>
-  // Really returns EdgeRecoveryQuestionChoice[]:
-  readonly listRecoveryQuestionChoices: () => Promise<any>
+  readonly listRecoveryQuestionChoices: () => Promise<
+    EdgeRecoveryQuestionChoice[]
+  >
 
   // OTP stuff:
   readonly requestOtpReset: (
