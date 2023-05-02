@@ -1,11 +1,14 @@
-import { navigateDisklet } from 'disklet'
 import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
 import { EdgeWalletInfo } from '../../types/types'
-import { base58 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
-import { loadRepoStatus, makeRepoPaths, syncRepo } from './repo'
+import {
+  loadRepoStatus,
+  makeLocalDisklet,
+  makeRepoPaths,
+  syncRepo
+} from './repo'
 import { StorageWalletStatus } from './storage-reducer'
 
 export async function addStorageWallet(
@@ -18,10 +21,7 @@ export async function addStorageWallet(
   const syncKey = base64.parse(walletInfo.keys.syncKey)
 
   const paths = makeRepoPaths(io, syncKey, dataKey)
-  const localDisklet = navigateDisklet(
-    io.disklet,
-    'local/' + base58.stringify(base64.parse(walletInfo.id))
-  )
+  const localDisklet = makeLocalDisklet(io, walletInfo.id)
   bridgifyObject(localDisklet)
 
   const status: StorageWalletStatus = await loadRepoStatus(paths)

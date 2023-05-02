@@ -76,7 +76,7 @@ const asState = asObject({
 /**
  * Currency plugin transaction engine.
  */
-class FakeCurrencyEngine {
+class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private readonly walletId: string
   private readonly callbacks: EdgeCurrencyEngineCallbacks
   private running: boolean
@@ -164,15 +164,6 @@ class FakeCurrencyEngine {
 
   async changeUserSettings(settings: JsonObject): Promise<void> {
     await this.updateState(asState(settings))
-  }
-
-  // Keys:
-  getDisplayPrivateSeed(): string | null {
-    return 'xpriv'
-  }
-
-  getDisplayPublicSeed(): string | null {
-    return 'xpub'
   }
 
   // Engine state
@@ -324,7 +315,7 @@ class FakeCurrencyEngine {
 /**
  * Currency plugin setup object.
  */
-class FakeCurrencyTools {
+class FakeCurrencyTools implements EdgeCurrencyTools {
   // Keys:
   createPrivateKey(
     walletType: string,
@@ -336,13 +327,25 @@ class FakeCurrencyTools {
     return Promise.resolve({ fakeKey: 'FakePrivateKey' })
   }
 
-  derivePublicKey(walletInfo: EdgeWalletInfo): Promise<JsonObject> {
-    return Promise.resolve({
-      fakeAddress: 'FakePublicAddress'
-    })
+  async derivePublicKey(
+    privateWalletInfo: EdgeWalletInfo
+  ): Promise<JsonObject> {
+    return { fakeAddress: 'FakePublicAddress' }
   }
 
-  getSplittableTypes(walletInfo: EdgeWalletInfo): string[] {
+  async getDisplayPrivateKey(
+    privateWalletInfo: EdgeWalletInfo
+  ): Promise<string> {
+    return 'xpriv'
+  }
+
+  async getDisplayPublicKey(
+    privateWalletInfo: EdgeWalletInfo
+  ): Promise<string> {
+    return 'xpub'
+  }
+
+  getSplittableTypes(publicWalletInfo: EdgeWalletInfo): string[] {
     return ['wallet:tulipcoin']
   }
 

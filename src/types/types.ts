@@ -315,11 +315,17 @@ export interface EdgeCurrencyInfo {
   unsafeMakeSpend?: boolean
   unsafeSyncNetwork?: boolean
 
-  // Deprecated:
-  defaultSettings: JsonObject // The default user settings are `{}`
-  metaTokens: EdgeMetaToken[] // Use `EdgeCurrencyPlugin.getBuiltinTokens`
-  symbolImage?: string // The GUI handles this now
-  symbolImageDarkMono?: string // The GUI handles this now
+  /** @deprecated The default user settings are always `{}` */
+  defaultSettings: JsonObject
+
+  /** @deprecated Use EdgeCurrencyPlugin.getBuiltinTokens instead */
+  metaTokens: EdgeMetaToken[]
+
+  /** @deprecated Unused. The GUI handles this now */
+  symbolImage?: string
+
+  /** @deprecated Unused. The GUI handles this now */
+  symbolImageDarkMono?: string
 }
 
 // spending ------------------------------------------------------------
@@ -331,7 +337,7 @@ export interface EdgeMetadata {
   name?: string
   notes?: string
 
-  // Deprecated. Use exchangeAmount instead:
+  /** @deprecated Use exchangeAmount instead */
   amountFiat?: number
 }
 
@@ -392,8 +398,8 @@ export interface EdgeTransaction {
     readonly nativeAmount: string
     readonly publicAddress: string
 
-    // Deprecated:
-    uniqueIdentifier: string | undefined // Use memo instead.
+    /** @deprecated Use memo instead */
+    uniqueIdentifier: string | undefined
   }>
   swapData?: EdgeTxSwap
   txSecret?: string // Monero decryption key
@@ -411,7 +417,7 @@ export interface EdgeTransaction {
   walletId: string
   otherParams?: JsonObject
 
-  // Deprecated:
+  /** @deprecated This will always be undefined */
   wallet?: EdgeCurrencyWallet // eslint-disable-line no-use-before-define
 }
 
@@ -421,7 +427,7 @@ export interface EdgeSpendTarget {
   otherParams?: JsonObject
   publicAddress?: string
 
-  // Deprecated:
+  /** @deprecated Use memo instead */
   uniqueIdentifier?: string // Use memo instead.
 }
 
@@ -435,7 +441,6 @@ export interface EdgePaymentProtocolInfo {
 
 export interface EdgeSpendInfo {
   // Basic information:
-  currencyCode?: string // Deprecated
   tokenId?: string
   privateKeys?: string[]
   spendTargets: EdgeSpendTarget[]
@@ -452,6 +457,9 @@ export interface EdgeSpendInfo {
   metadata?: EdgeMetadata
   swapData?: EdgeTxSwap
   otherParams?: JsonObject
+
+  /** @deprecated Use tokenId instead */
+  currencyCode?: string
 }
 
 // query data ----------------------------------------------------------
@@ -612,7 +620,7 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onUnactivatedTokenIdsChanged: (unactivatedTokenIds: string[]) => void
   readonly onWcNewContractCall: (payload: JsonObject) => void
 
-  // Deprecated
+  /** @deprecated onTransactionsChanged handles confirmation changes */
   readonly onBlockHeightChanged: (blockHeight: number) => void
 }
 
@@ -632,10 +640,6 @@ export interface EdgeCurrencyEngineOptions {
 
 export interface EdgeCurrencyEngine {
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
-
-  // Keys:
-  readonly getDisplayPrivateSeed: (privateKeys: JsonObject) => string | null
-  readonly getDisplayPublicSeed: () => string | null
 
   // Engine status:
   readonly startEngine: () => Promise<void>
@@ -713,12 +717,26 @@ export interface EdgeCurrencyEngine {
   // Escape hatch:
   readonly otherMethods?: EdgeOtherMethods
 
-  // Deprecated:
+  /** @deprecated Replaced by changeEnabledTokenIds */
   readonly enableTokens?: (tokens: string[]) => Promise<void>
+
+  /** @deprecated Replaced by changeEnabledTokenIds */
   readonly disableTokens?: (tokens: string[]) => Promise<void>
+
+  /** @deprecated No longer used */
   readonly getEnabledTokens?: () => Promise<string[]>
+
+  /** @deprecated Replaced by changeCustomTokens */
   readonly addCustomToken?: (token: EdgeTokenInfo & EdgeToken) => Promise<void>
+
+  /** @deprecated No longer used */
   readonly getTokenStatus?: (token: string) => boolean
+
+  /** @deprecated Provide EdgeCurrencyTools.getDisplayPrivateKey: */
+  readonly getDisplayPrivateSeed?: (privateKeys: JsonObject) => string | null
+
+  /** @deprecated Provide EdgeCurrencyTools.getDisplayPublicKey: */
+  readonly getDisplayPublicSeed?: () => string | null
 }
 
 // currency plugin -----------------------------------------------------
@@ -737,9 +755,17 @@ export interface EdgeCurrencyTools {
     walletType: string,
     opts?: JsonObject
   ) => Promise<JsonObject>
-  readonly derivePublicKey: (walletInfo: EdgeWalletInfo) => Promise<JsonObject>
+  readonly derivePublicKey: (
+    privateWalletInfo: EdgeWalletInfo
+  ) => Promise<JsonObject>
+  readonly getDisplayPrivateKey?: (
+    privateWalletInfo: EdgeWalletInfo
+  ) => Promise<string>
+  readonly getDisplayPublicKey?: (
+    publicWalletInfo: EdgeWalletInfo
+  ) => Promise<string>
   readonly getSplittableTypes?: (
-    walletInfo: EdgeWalletInfo
+    publicWalletInfo: EdgeWalletInfo
   ) => string[] | Promise<string[]>
   readonly importPrivateKey?: (
     key: string,
@@ -849,15 +875,10 @@ export interface EdgeCurrencyWallet {
   // Data store:
   readonly disklet: Disklet
   readonly id: string
-  readonly keys: JsonObject
   readonly localDisklet: Disklet
   readonly publicWalletInfo: EdgeWalletInfo
   readonly sync: () => Promise<void>
   readonly type: string
-
-  // Wallet keys:
-  readonly displayPrivateSeed: string | null
-  readonly displayPublicSeed: string | null
 
   // Wallet name:
   readonly name: string | null
@@ -959,12 +980,29 @@ export interface EdgeCurrencyWallet {
   // Generic:
   readonly otherMethods: EdgeOtherMethods
 
-  // Deprecated:
+  /** @deprecated Call EdgeCurrencyConfig.addCustomToken instead */
   readonly addCustomToken: (token: EdgeTokenInfo) => Promise<void>
+
+  /** @deprecated Call changeEnabledTokenIds instead */
   readonly changeEnabledTokens: (currencyCodes: string[]) => Promise<void>
+
+  /** @deprecated Call changeEnabledTokenIds instead */
   readonly disableTokens: (tokens: string[]) => Promise<void>
+
+  /** @deprecated Call changeEnabledTokenIds instead */
   readonly enableTokens: (tokens: string[]) => Promise<void>
+
+  /** @deprecated Read enabledTokenIds instead */
   readonly getEnabledTokens: () => Promise<string[]>
+
+  /** @deprecated Call `EdgeAccount.getDisplayPrivateKey` instead */
+  readonly displayPrivateSeed: string | null
+
+  /** @deprecated Call `EdgeAccount.getDisplayPublicKey` instead */
+  readonly displayPublicSeed: string | null
+
+  /** @deprecated Call `EdgeAccount.getRawPrivateKey` instead */
+  readonly keys: JsonObject
 }
 
 // ---------------------------------------------------------------------
@@ -998,8 +1036,10 @@ export interface EdgeSwapRequest {
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
 
-  // Deprecated. Use the tokenId instead:
+  /** @deprecated Use fromTokenId instead */
   fromCurrencyCode?: string
+
+  /** @deprecated Use toTokenId instead */
   toCurrencyCode?: string
 }
 
@@ -1223,7 +1263,7 @@ export interface EdgeLoginRequest {
   readonly approve: () => Promise<void>
   readonly close: () => Promise<void>
 
-  // Deprecated. Use the dark & light images instead:
+  /** @deprecated Use displayImageDarkUrl or displayImageLightUrl instead */
   readonly displayImageUrl?: string
 }
 
@@ -1261,7 +1301,6 @@ export interface EdgeAccount {
 
   // Data store:
   readonly id: string
-  readonly keys: JsonObject
   readonly type: string
   readonly disklet: Disklet
   readonly localDisklet: Disklet
@@ -1344,6 +1383,12 @@ export interface EdgeAccount {
     newWalletType: string
   ) => Promise<string>
 
+  // Key access:
+  readonly getDisplayPrivateKey: (walletId: string) => Promise<string>
+  readonly getDisplayPublicKey: (walletId: string) => Promise<string>
+  readonly getRawPrivateKey: (walletId: string) => Promise<JsonObject>
+  readonly getRawPublicKey: (walletId: string) => Promise<JsonObject>
+
   // Currency wallets:
   readonly activeWalletIds: string[]
   readonly archivedWalletIds: string[]
@@ -1378,6 +1423,9 @@ export interface EdgeAccount {
     request: EdgeSwapRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote>
+
+  /** @deprecated Use `EdgeAccount.getRawPrivateKey` */
+  readonly keys: JsonObject
 }
 
 // ---------------------------------------------------------------------
