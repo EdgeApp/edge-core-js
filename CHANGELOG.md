@@ -1,5 +1,17 @@
 # edge-core-js
 
+## v0.21.2 (2023-05-02)
+
+- added: `EdgeUserInfo.username`.
+- added: Provide `EdgeAccount` methods for reading public and private keys:
+  - `getDisplayPrivateKey`
+  - `getDisplayPublicKey`
+  - `getRawPrivateKey`
+  - `getRawPublicKey`
+- added: Matching `EdgeCurrencyTools` methods for getting display keys.
+- deprecated: `EdgeCurrencyEngine` methods for getting display keys.
+- deprecated: `EdgeAccount` and `EdgeCurrencyWallet` key properties.
+
 ## v0.21.1 (2023-04-24)
 
 - added: Log any swap plugins that time out.
