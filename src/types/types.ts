@@ -416,9 +416,6 @@ export interface EdgeTransaction {
   metadata?: EdgeMetadata
   walletId: string
   otherParams?: JsonObject
-
-  /** @deprecated This will always be undefined */
-  wallet?: EdgeCurrencyWallet // eslint-disable-line no-use-before-define
 }
 
 export interface EdgeSpendTarget {
