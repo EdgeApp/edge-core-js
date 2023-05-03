@@ -25,8 +25,7 @@ import {
   EdgeSpendTarget,
   EdgeStakingStatus,
   EdgeTransaction,
-  EdgeWalletInfo,
-  JsonObject
+  EdgeWalletInfo
 } from '../../../types/types'
 import { mergeDeeply } from '../../../util/util'
 import { makeMetaTokens } from '../../account/custom-tokens'
@@ -90,12 +89,6 @@ export function makeCurrencyWalletApi(
     bridgifyObject(otherMethods)
   }
 
-  function lockdown(): void {
-    if (ai.props.state.hideKeys) {
-      throw new Error('Not available when `hideKeys` is enabled')
-    }
-  }
-
   const out: EdgeCurrencyWallet = {
     on: onMethod,
     watch: watchMethod,
@@ -106,10 +99,6 @@ export function makeCurrencyWalletApi(
     },
     get id(): string {
       return storageWalletApi.id
-    },
-    get keys(): JsonObject {
-      lockdown()
-      return storageWalletApi.keys
     },
     get localDisklet(): Disklet {
       return storageWalletApi.localDisklet

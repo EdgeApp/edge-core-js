@@ -990,9 +990,6 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
-
-  /** @deprecated Call `EdgeAccount.getRawPrivateKey` instead */
-  readonly keys: JsonObject
 }
 
 // ---------------------------------------------------------------------
@@ -1413,9 +1410,6 @@ export interface EdgeAccount {
     request: EdgeSwapRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote>
-
-  /** @deprecated Use `EdgeAccount.getRawPrivateKey` */
-  readonly keys: JsonObject
 }
 
 // ---------------------------------------------------------------------

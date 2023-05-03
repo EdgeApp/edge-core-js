@@ -110,11 +110,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return storageWalletApi.type
     },
 
-    get keys(): JsonObject {
-      lockdown()
-      return storageWalletApi.keys
-    },
-
     get disklet(): Disklet {
       lockdown()
       return storageWalletApi.disklet
@@ -367,9 +362,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     // ----------------------------------------------------------------
 
     get allKeys(): EdgeWalletInfoFull[] {
-      return ai.props.state.hideKeys
-        ? ai.props.state.accounts[accountId].allWalletInfosClean
-        : ai.props.state.accounts[accountId].allWalletInfosFull
+      return ai.props.state.accounts[accountId].allWalletInfosClean
     },
 
     async changeWalletStates(walletStates: EdgeWalletStates): Promise<void> {
