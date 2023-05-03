@@ -248,20 +248,8 @@ describe('currency wallets', function () {
     wallet.watch('enabledTokenIds', ids => log(ids.join(', ')))
     expect(wallet.enabledTokenIds).deep.equals([])
 
-    // New API:
     await wallet.changeEnabledTokenIds([tokenId])
     expect(wallet.enabledTokenIds).deep.equals([tokenId])
-    log.assert(tokenId)
-
-    // Legacy API:
-    await wallet.enableTokens(['OOPS', 'MISSING'])
-    expect(await wallet.getEnabledTokens()).deep.equals([
-      'MISSING',
-      'OOPS',
-      'TOKEN'
-    ])
-
-    // The last update had missing ID's, but an update still occurs:
     log.assert(tokenId)
 
     // Missing token:

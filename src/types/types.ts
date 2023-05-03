@@ -740,14 +740,8 @@ export interface EdgeCurrencyEngine {
   /** @deprecated Replaced by changeEnabledTokenIds */
   readonly disableTokens?: (tokens: string[]) => Promise<void>
 
-  /** @deprecated No longer used */
-  readonly getEnabledTokens?: () => Promise<string[]>
-
   /** @deprecated Replaced by changeCustomTokens */
   readonly addCustomToken?: (token: EdgeTokenInfo & EdgeToken) => Promise<void>
-
-  /** @deprecated No longer used */
-  readonly getTokenStatus?: (token: string) => boolean
 
   /** @deprecated Provide EdgeCurrencyTools.getDisplayPrivateKey: */
   readonly getDisplayPrivateSeed?: (privateKeys: JsonObject) => string | null
@@ -996,21 +990,6 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
-
-  /** @deprecated Call EdgeCurrencyConfig.addCustomToken instead */
-  readonly addCustomToken: (token: EdgeTokenInfo) => Promise<void>
-
-  /** @deprecated Call changeEnabledTokenIds instead */
-  readonly changeEnabledTokens: (currencyCodes: string[]) => Promise<void>
-
-  /** @deprecated Call changeEnabledTokenIds instead */
-  readonly disableTokens: (tokens: string[]) => Promise<void>
-
-  /** @deprecated Call changeEnabledTokenIds instead */
-  readonly enableTokens: (tokens: string[]) => Promise<void>
-
-  /** @deprecated Read enabledTokenIds instead */
-  readonly getEnabledTokens: () => Promise<string[]>
 
   /** @deprecated Call `EdgeAccount.getDisplayPrivateKey` instead */
   readonly displayPrivateSeed: string | null

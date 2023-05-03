@@ -24,17 +24,12 @@ import {
   EdgeSpendInfo,
   EdgeSpendTarget,
   EdgeStakingStatus,
-  EdgeTokenInfo,
   EdgeTransaction,
   EdgeWalletInfo,
   JsonObject
 } from '../../../types/types'
 import { mergeDeeply } from '../../../util/util'
-import {
-  contractToTokenId,
-  makeMetaTokens,
-  upgradeTokenInfo
-} from '../../account/custom-tokens'
+import { makeMetaTokens } from '../../account/custom-tokens'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
@@ -583,64 +578,7 @@ export function makeCurrencyWalletApi(
     },
 
     // Generic:
-    otherMethods,
-
-    // Deprecated:
-    async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<void> {
-      const token = upgradeTokenInfo(tokenInfo)
-      const tokenId = contractToTokenId(tokenInfo.contractAddress)
-
-      // Ask the plugin to validate this:
-      if (tools.getTokenId != null) {
-        await tools.getTokenId(token)
-      } else if (engine.addCustomToken != null) {
-        // This is not ideal, since the pixie will add it too:
-        await engine.addCustomToken({ ...token, ...tokenInfo })
-      } else {
-        throw new Error(`${pluginId} doesn't support tokens`)
-      }
-
-      ai.props.dispatch({
-        type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
-        payload: { accountId, pluginId, tokenId, token }
-      })
-    },
-    async changeEnabledTokens(currencyCodes: string[]): Promise<void> {
-      const { dispatch, walletId } = input.props
-
-      dispatch({
-        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: { walletId, currencyCodes: uniqueStrings(currencyCodes) }
-      })
-    },
-    async enableTokens(currencyCodes: string[]): Promise<void> {
-      const { dispatch, walletId, walletState } = input.props
-
-      dispatch({
-        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: {
-          walletId,
-          currencyCodes: uniqueStrings([
-            ...walletState.enabledTokens,
-            ...currencyCodes
-          ])
-        }
-      })
-    },
-    async disableTokens(currencyCodes: string[]): Promise<void> {
-      const { dispatch, walletId, walletState } = input.props
-
-      dispatch({
-        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: {
-          walletId,
-          currencyCodes: uniqueStrings(walletState.enabledTokens, currencyCodes)
-        }
-      })
-    },
-    async getEnabledTokens(): Promise<string[]> {
-      return input.props.walletState.enabledTokens
-    }
+    otherMethods
   }
   bridgifyObject(out)
 
