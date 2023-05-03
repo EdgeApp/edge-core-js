@@ -122,15 +122,6 @@ export function makeCurrencyWalletApi(
       return storageWalletApi.type
     },
 
-    // Wallet keys:
-    get displayPrivateSeed(): string | null {
-      lockdown()
-      return input.props.walletState.displayPrivateSeed
-    },
-    get displayPublicSeed(): string | null {
-      return input.props.walletState.displayPublicSeed
-    },
-
     // Wallet name:
     get name(): string | null {
       return input.props.walletState.name

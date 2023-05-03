@@ -991,12 +991,6 @@ export interface EdgeCurrencyWallet {
   // Generic:
   readonly otherMethods: EdgeOtherMethods
 
-  /** @deprecated Call `EdgeAccount.getDisplayPrivateKey` instead */
-  readonly displayPrivateSeed: string | null
-
-  /** @deprecated Call `EdgeAccount.getDisplayPublicKey` instead */
-  readonly displayPublicSeed: string | null
-
   /** @deprecated Call `EdgeAccount.getRawPrivateKey` instead */
   readonly keys: JsonObject
 }

@@ -62,8 +62,6 @@ export interface CurrencyWalletState {
   readonly allEnabledTokenIds: string[]
   readonly balances: EdgeBalances
   readonly currencyInfo: EdgeCurrencyInfo
-  readonly displayPrivateSeed: string | null
-  readonly displayPublicSeed: string | null
   readonly enabledTokenIds: string[]
   readonly enabledTokens: string[]
   readonly engineFailure: Error | null
@@ -140,18 +138,6 @@ const currencyWalletInner = buildReducer<
     if (state != null) return state
     const { pluginId } = next.self
     return next.root.plugins.currency[pluginId].currencyInfo
-  },
-
-  displayPrivateSeed(state = null, action): string | null {
-    return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
-      ? action.payload.displayPrivateSeed
-      : state
-  },
-
-  displayPublicSeed(state = null, action): string | null {
-    return action.type === 'CURRENCY_ENGINE_CHANGED_SEEDS'
-      ? action.payload.displayPublicSeed
-      : state
   },
 
   enabledTokenIds: memoizeReducer(

@@ -15,7 +15,6 @@ import {
   EdgeCurrencyWallet,
   EdgeTokenMap,
   EdgeWalletInfo,
-  EdgeWalletInfoFull,
   JsonObject
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
@@ -109,10 +108,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         walletLocalDisklet,
         tools
       )
-      const privateWalletInfo = await preparePrivateWalletInfo(
-        walletInfo,
-        publicWalletInfo
-      )
       input.props.dispatch({
         type: 'CURRENCY_WALLET_PUBLIC_INFO',
         payload: { walletInfo: publicWalletInfo, walletId }
@@ -139,22 +134,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       input.onOutput(engine)
 
       // Grab initial state:
-      const displayPrivateSeed =
-        tools.getDisplayPrivateKey != null
-          ? await tools.getDisplayPrivateKey(privateWalletInfo)
-          : engine.getDisplayPrivateSeed != null
-          ? engine.getDisplayPrivateSeed(privateWalletInfo.keys)
-          : null
-      const displayPublicSeed =
-        tools.getDisplayPublicKey != null
-          ? await tools.getDisplayPublicKey(publicWalletInfo)
-          : engine.getDisplayPublicSeed != null
-          ? engine.getDisplayPublicSeed()
-          : null
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_SEEDS',
-        payload: { displayPrivateSeed, displayPublicSeed, walletId }
-      })
       const balance = asMaybe(asIntegerString)(
         engine.getBalance({ currencyCode })
       )
@@ -486,20 +465,4 @@ export async function getPublicWalletInfo(
   }
 
   return publicWalletInfo
-}
-
-/**
- * Gets private wallet info from the merging the full info with the public
- * wallet info.
- */
-export async function preparePrivateWalletInfo(
-  walletInfo: EdgeWalletInfoFull,
-  publicWalletInfo: EdgeWalletInfo
-): Promise<EdgeWalletInfo> {
-  const privateWalletInfo: EdgeWalletInfo = {
-    id: walletInfo.id,
-    type: walletInfo.type,
-    keys: { ...walletInfo.keys, ...publicWalletInfo.keys }
-  }
-  return privateWalletInfo
 }
