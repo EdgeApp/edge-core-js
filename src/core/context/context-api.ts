@@ -5,7 +5,7 @@ import {
   EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
-  EdgeLoginMessages,
+  EdgeLoginMessage,
   EdgeLogSettings,
   EdgePendingEdgeLogin,
   EdgeRecoveryQuestionChoice,
@@ -203,7 +203,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       return await resetOtp(ai, username, otpResetToken)
     },
 
-    async fetchLoginMessages(): Promise<EdgeLoginMessages> {
+    async fetchLoginMessages(): Promise<EdgeLoginMessage[]> {
       return await fetchLoginMessages(ai)
     },
 

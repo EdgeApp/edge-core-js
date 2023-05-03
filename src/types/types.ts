@@ -1458,10 +1458,6 @@ export interface EdgeLoginMessage {
   username: string
 }
 
-export interface EdgeLoginMessages {
-  [username: string]: EdgeLoginMessage
-}
-
 export interface EdgePasswordRules {
   secondsToCrack: number
   tooShort: boolean
@@ -1589,7 +1585,7 @@ export interface EdgeContext {
     username: string,
     otpResetToken: string
   ) => Promise<Date>
-  readonly fetchLoginMessages: () => Promise<EdgeLoginMessages>
+  readonly fetchLoginMessages: () => Promise<EdgeLoginMessage[]>
 
   // Background mode:
   readonly paused: boolean

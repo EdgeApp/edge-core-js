@@ -1,7 +1,7 @@
 import { base64 } from 'rfc4648'
 
 import { asMessagesPayload } from '../../types/server-cleaners'
-import { EdgeLoginMessages } from '../../types/types'
+import { EdgeLoginMessage } from '../../types/types'
 import { ApiInput } from '../root-pixie'
 import { loginFetch } from './login-fetch'
 
@@ -10,7 +10,7 @@ import { loginFetch } from './login-fetch'
  */
 export async function fetchLoginMessages(
   ai: ApiInput
-): Promise<EdgeLoginMessages> {
+): Promise<EdgeLoginMessage[]> {
   const { stashes } = ai.props.state.login
 
   const loginMap: { [loginId: string]: string } = {} // loginId -> username
@@ -26,13 +26,13 @@ export async function fetchLoginMessages(
     loginIds
   }
   const reply = await loginFetch(ai, 'POST', '/v2/messages', request)
-  const out: EdgeLoginMessages = {}
+  const out: EdgeLoginMessage[] = []
   for (const message of asMessagesPayload(reply)) {
     const { loginId, ...rest } = message
     const id = base64.stringify(loginId)
     const username = loginMap[id]
     if (username == null) continue
-    out[username] = { ...rest, loginId: id, username }
+    out.push({ ...rest, loginId: id, username })
   }
   return out
 }

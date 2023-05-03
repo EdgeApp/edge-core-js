@@ -8,7 +8,7 @@ import type {
   EdgeFakeWorld,
   EdgeFakeWorldOptions,
   EdgeIo,
-  EdgeLoginMessages,
+  EdgeLoginMessage,
   EdgeLogSettings,
   EdgeNativeIo,
   EdgeOnLog
@@ -110,4 +110,4 @@ export declare const MakeFakeEdgeWorld: ComponentType<EdgeFakeWorldProps>
 /**
  * React Native function for getting login alerts without a context:
  */
-export declare function fetchLoginMessages(apiKey: string): EdgeLoginMessages
+export declare function fetchLoginMessages(apiKey: string): EdgeLoginMessage[]
