@@ -1,6 +1,9 @@
 import { uncleaner } from 'cleaners'
 
-import { asChangePin2Payload } from '../../types/server-cleaners'
+import {
+  asChangePin2IdPayload,
+  asChangePin2Payload
+} from '../../types/server-cleaners'
 import { LoginRequestBody } from '../../types/server-types'
 import { ChangePinOptions, EdgeAccountOptions } from '../../types/types'
 import { decrypt, encrypt } from '../../util/crypto/crypto'
@@ -14,6 +17,7 @@ import { LoginStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 import { getLoginOtp } from './otp'
 
+const wasChangePin2IdPayload = uncleaner(asChangePin2IdPayload)
 const wasChangePin2Payload = uncleaner(asChangePin2Payload)
 
 function makePin2Id(pin2Key: Uint8Array, username: string): Uint8Array {
@@ -162,6 +166,28 @@ export function makeChangePin2Kits(
   }
 
   return out
+}
+
+/**
+ * Used when changing the username.
+ * This won't return anything if the PIN is missing.
+ */
+export function makeChangePin2IdKit(
+  login: LoginTree,
+  newUsername: string
+): LoginKit | undefined {
+  const { loginId, pin2Key } = login
+  if (pin2Key == null) return
+
+  return {
+    login: {},
+    loginId,
+    server: wasChangePin2IdPayload({
+      pin2Id: makePin2Id(pin2Key, newUsername)
+    }),
+    serverPath: '',
+    stash: {}
+  }
 }
 
 /**

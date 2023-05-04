@@ -1,6 +1,7 @@
 import { uncleaner } from 'cleaners'
 
 import {
+  asChangeRecovery2IdPayload,
   asChangeRecovery2Payload,
   asQuestionChoicesPayload,
   asRecovery2InfoPayload
@@ -18,6 +19,7 @@ import { loginFetch } from './login-fetch'
 import { getStashByUsername } from './login-selectors'
 import { LoginKit, LoginTree } from './login-types'
 
+const wasChangeRecovery2IdPayload = uncleaner(asChangeRecovery2IdPayload)
 const wasChangeRecovery2Payload = uncleaner(asChangeRecovery2Payload)
 
 function makeRecovery2Id(
@@ -127,6 +129,28 @@ export async function deleteRecovery(
     loginId: loginTree.loginId
   }
   await applyKit(ai, loginTree, kit)
+}
+
+/**
+ * Used when changing the username.
+ * This won't return anything if the recovery is missing.
+ */
+export function makeChangeRecovery2IdKit(
+  login: LoginTree,
+  newUsername: string
+): LoginKit | undefined {
+  const { loginId, recovery2Key } = login
+  if (recovery2Key == null) return
+
+  return {
+    login: {},
+    loginId,
+    server: wasChangeRecovery2IdPayload({
+      recovery2Id: makeRecovery2Id(recovery2Key, newUsername)
+    }),
+    serverPath: '',
+    stash: {}
+  }
 }
 
 /**

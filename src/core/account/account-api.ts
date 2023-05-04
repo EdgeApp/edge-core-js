@@ -2,7 +2,8 @@ import { Disklet } from 'disklet'
 import { base32 } from 'rfc4648'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
-import { AccountSync } from '../../client-side'
+import { ChangeUsernameOptions } from '../../browser'
+import { AccountSync, fixUsername } from '../../client-side'
 import {
   ChangePinOptions,
   EdgeAccount,
@@ -40,6 +41,7 @@ import {
 } from '../login/keys'
 import { applyKit } from '../login/login'
 import { deleteLogin } from '../login/login-delete'
+import { changeUsername } from '../login/login-username'
 import { cancelOtpReset, disableOtp, enableOtp, repairOtp } from '../login/otp'
 import {
   changePassword,
@@ -239,6 +241,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         throw new Error('Missing recoveryKey')
       }
       return base58.stringify(loginTree.recovery2Key)
+    },
+
+    async changeUsername(change: ChangeUsernameOptions): Promise<void> {
+      lockdown()
+      change.username = fixUsername(change.username)
+      await changeUsername(ai, accountId, change)
     },
 
     // ----------------------------------------------------------------
