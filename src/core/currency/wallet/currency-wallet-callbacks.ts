@@ -280,7 +280,7 @@ export function makeCurrencyWalletCallbacks(
 
         // Ensure the transaction has metadata:
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
-        const isNew = tx.isSend ? false : fileNames[txidHash] == null
+        const isNew = fileNames[txidHash] == null
         if (isNew) {
           setupNewTxMetadata(input, tx).catch(error =>
             input.props.onError(error)
