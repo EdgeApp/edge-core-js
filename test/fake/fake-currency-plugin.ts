@@ -1,5 +1,5 @@
 import { add, lt } from 'biggystring'
-import { asMap, asNumber, asObject, asOptional, asString } from 'cleaners'
+import { asNumber, asObject, asOptional, asString } from 'cleaners'
 
 import {
   EdgeCreatePrivateKeyOptions,
@@ -71,7 +71,7 @@ const asState = asObject({
   tokenBalance: asOptional(asNumber),
   blockHeight: asOptional(asNumber),
   progress: asOptional(asNumber),
-  txs: asOptional(asMap((raw: any) => raw))
+  txs: asOptional(asObject((raw: any) => raw))
 })
 
 /**

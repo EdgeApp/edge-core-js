@@ -2,7 +2,6 @@ import {
   asArray,
   asBoolean,
   asEither,
-  asMap,
   asNull,
   asNumber,
   asObject,
@@ -177,7 +176,7 @@ export const asEdgeTxSwap: Cleaner<EdgeTxSwap> = asObject({
 const asDiskMetadata: Cleaner<DiskMetadata> = asObject({
   bizId: asOptional(asNumber),
   category: asOptional(asString),
-  exchangeAmount: asOptional(asMap(asNumber), () => ({})),
+  exchangeAmount: asOptional(asObject(asNumber), () => ({})),
   name: asOptional(asString),
   notes: asOptional(asString)
 })
@@ -206,7 +205,7 @@ export const asTransactionFile: Cleaner<TransactionFile> = asObject({
   txid: asString,
   internal: asBoolean,
   creationDate: asNumber,
-  currencies: asMap(
+  currencies: asObject(
     asObject({
       metadata: asDiskMetadata,
       nativeAmount: asOptional(asString),
@@ -271,7 +270,7 @@ export const asLegacyAddressFile: Cleaner<LegacyAddressFile> = asObject({
   }).withRest
 })
 
-export const asLegacyMapFile: Cleaner<LegacyMapFile> = asMap(
+export const asLegacyMapFile: Cleaner<LegacyMapFile> = asObject(
   asObject({
     timestamp: asNumber,
     txidHash: asString

@@ -1,7 +1,6 @@
 import {
   asArray,
   asBoolean,
-  asMap,
   asNumber,
   asObject,
   asOptional,
@@ -67,10 +66,10 @@ export const asWalletStateFile = asObject({
  */
 export const asPluginSettingsFile = asObject({
   // Currency plugins:
-  userSettings: asOptional(asMap(asJsonObject), () => ({})),
+  userSettings: asOptional(asObject(asJsonObject), () => ({})),
 
   // Swap plugins:
-  swapSettings: asOptional(asMap(asSwapSettings), () => ({}))
+  swapSettings: asOptional(asObject(asSwapSettings), () => ({}))
 }).withRest
 
 /**
