@@ -49,11 +49,11 @@ async function makeFakeCurrencyWallet(
 
 describe('currency wallets', function () {
   it('can be created', async function () {
-    const { wallet } = await makeFakeCurrencyWallet()
+    const { account, wallet } = await makeFakeCurrencyWallet()
     expect(wallet.name).equals('Fake Wallet')
-    expect(wallet.displayPrivateSeed).equals('xpriv')
-    expect(wallet.displayPublicSeed).equals('xpub')
     expect(wallet.paused).equals(false)
+    expect(await account.getDisplayPrivateKey(wallet.id)).equals('xpriv')
+    expect(await account.getDisplayPublicKey(wallet.id)).equals('xpub')
   })
 
   it('can be renamed', async function () {
