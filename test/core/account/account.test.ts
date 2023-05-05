@@ -71,7 +71,7 @@ describe('account', function () {
     const { allKeys } = account
     const accountRepo = findWallet(allKeys, 'account-repo:co.airbitz.wallet')
     if (accountRepo == null) throw new Error('Missing repo')
-    assert.equal(accountRepo.keys.syncKey, fakeUser.syncKey)
+    assert.equal(accountRepo.id, 'JN4meEIJO05QhDMN3QZd48Qh7F1xHUpUmy2oEhg9DdY=')
     assert(findWallet(allKeys, 'account-repo:blah') == null)
   })
 
@@ -87,7 +87,7 @@ describe('account', function () {
     const id = await account.createWallet('account-repo:blah', keys)
     const info = account.allKeys.find(info => info.id === id)
     if (info == null) throw new Error('Missing key info')
-    assert.deepEqual(info.keys, keys)
+    assert.deepEqual(await account.getRawPrivateKey(id), keys)
   })
 
   it('create wallet', async function () {
@@ -98,7 +98,8 @@ describe('account', function () {
     const id = await account.createWallet('wallet:fakecoin')
     const info = account.allKeys.find(info => info.id === id)
     if (info == null) throw new Error('Missing key info')
-    assert.equal(info.keys.fakeKey, 'FakePrivateKey')
+    const keys = await account.getRawPrivateKey(id)
+    assert.equal(keys.fakeKey, 'FakePrivateKey')
   })
 
   it('create currency wallet', async function () {

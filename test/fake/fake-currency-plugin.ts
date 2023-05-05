@@ -1,5 +1,5 @@
 import { add, lt } from 'biggystring'
-import { asMap, asNumber, asObject, asOptional } from 'cleaners'
+import { asMap, asNumber, asObject, asOptional, asString } from 'cleaners'
 
 import {
   EdgeCreatePrivateKeyOptions,
@@ -18,6 +18,7 @@ import {
   EdgeSpendInfo,
   EdgeStakingStatus,
   EdgeToken,
+  EdgeTokenMap,
   EdgeTransaction,
   EdgeWalletInfo,
   InsufficientFundsError,
@@ -216,25 +217,13 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     )
   }
 
-  // Tokens
-  enableTokens(tokens: string[]): Promise<void> {
+  // Tokens:
+  changeCustomTokens(tokens: EdgeTokenMap): Promise<void> {
     return Promise.resolve()
   }
 
-  disableTokens(tokens: string[]): Promise<void> {
+  changeEnabledTokenIds(tokenIds: string[]): Promise<void> {
     return Promise.resolve()
-  }
-
-  getEnabledTokens(): Promise<string[]> {
-    return Promise.resolve(['TOKEN'])
-  }
-
-  addCustomToken(token: EdgeToken): Promise<void> {
-    return Promise.resolve()
-  }
-
-  getTokenStatus(token: string): boolean {
-    return token === 'TOKEN'
   }
 
   // Staking:
@@ -333,6 +322,11 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
     return { fakeAddress: 'FakePublicAddress' }
   }
 
+  async getTokenId(token: EdgeToken): Promise<string> {
+    const { contractAddress } = asNetworkLocation(token.networkLocation)
+    return contractAddress.toLowerCase().replace(/^0x/, '')
+  }
+
   async getDisplayPrivateKey(
     privateWalletInfo: EdgeWalletInfo
   ): Promise<string> {
@@ -373,6 +367,10 @@ export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
     return Promise.resolve(new FakeCurrencyTools())
   }
 }
+
+const asNetworkLocation = asObject({
+  contractAddress: asString
+})
 
 function nop(...args: unknown[]): void {}
 

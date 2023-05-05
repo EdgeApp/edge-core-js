@@ -9,6 +9,7 @@ import {
   EdgeCurrencyConfig,
   EdgeCurrencyWallet,
   EdgeMetadata,
+  EdgeToken,
   EdgeTxSwap,
   makeFakeEdgeWorld
 } from '../../../../src/index'
@@ -48,11 +49,11 @@ async function makeFakeCurrencyWallet(
 
 describe('currency wallets', function () {
   it('can be created', async function () {
-    const { wallet } = await makeFakeCurrencyWallet()
+    const { account, wallet } = await makeFakeCurrencyWallet()
     expect(wallet.name).equals('Fake Wallet')
-    expect(wallet.displayPrivateSeed).equals('xpriv')
-    expect(wallet.displayPublicSeed).equals('xpub')
     expect(wallet.paused).equals(false)
+    expect(await account.getDisplayPrivateKey(wallet.id)).equals('xpriv')
+    expect(await account.getDisplayPublicKey(wallet.id)).equals('xpub')
   })
 
   it('can be renamed', async function () {
@@ -210,28 +211,25 @@ describe('currency wallets', function () {
 
   it('exposes custom tokens', async function () {
     const log = makeAssertLog()
-    const { config, wallet } = await makeFakeCurrencyWallet()
+    const { config } = await makeFakeCurrencyWallet()
 
     config.watch('customTokens', () => log('customTokens changed'))
-    await wallet.addCustomToken({
-      currencyCode: 'CUSTOM',
-      currencyName: 'Custom Token',
-      contractAddress:
-        '0X7CD5885327FD60E825D67D32F9D22B018227A208AA3C4819DA15B36B5D5869D3',
-      multiplier: '1000'
-    })
-    log.assert('customTokens changed')
+    expect(config.customTokens).deep.equals({})
 
-    expect(config.customTokens).deep.equals({
-      '7cd5885327fd60e825d67d32f9d22b018227a208aa3c4819da15b36b5d5869d3': {
-        currencyCode: 'CUSTOM',
-        displayName: 'Custom Token',
-        denominations: [{ multiplier: '1000', name: 'CUSTOM' }],
-        networkLocation: {
-          contractAddress:
-            '0X7CD5885327FD60E825D67D32F9D22B018227A208AA3C4819DA15B36B5D5869D3'
-        }
+    const customToken: EdgeToken = {
+      currencyCode: 'CUSTOM',
+      displayName: 'Custom Token',
+      denominations: [{ multiplier: '1000', name: 'CUSTOM' }],
+      networkLocation: {
+        contractAddress:
+          '0X7CD5885327FD60E825D67D32F9D22B018227A208AA3C4819DA15B36B5D5869D3'
       }
+    }
+
+    await config.addCustomToken(customToken)
+    log.assert('customTokens changed')
+    expect(config.customTokens).deep.equals({
+      '7cd5885327fd60e825d67d32f9d22b018227a208aa3c4819da15b36b5d5869d3': customToken
     })
 
     expect(config.allTokens).deep.equals({
@@ -264,6 +262,10 @@ describe('currency wallets', function () {
 
     // The last update had missing ID's, but an update still occurs:
     log.assert(tokenId)
+
+    // Missing token:
+    await wallet.changeEnabledTokenIds([tokenId, 'nope'])
+    expect(wallet.enabledTokenIds).deep.equals([tokenId])
   })
 
   it('supports always-enabled tokens', async function () {
