@@ -4,8 +4,7 @@ import {
   asNumber,
   asObject,
   asOptional,
-  asString,
-  Cleaner
+  asString
 } from 'cleaners'
 
 import { asBase16 } from '../../types/server-cleaners'
@@ -17,20 +16,20 @@ import { SwapSettings } from './account-types'
 // building-block types
 // ---------------------------------------------------------------------
 
-const asEdgeDenomination: Cleaner<EdgeDenomination> = asObject({
+const asEdgeDenomination = asObject<EdgeDenomination>({
   multiplier: asString,
   name: asString,
   symbol: asOptional(asString)
 })
 
-const asEdgeToken: Cleaner<EdgeToken> = asObject({
+const asEdgeToken = asObject<EdgeToken>({
   currencyCode: asString,
   denominations: asArray(asEdgeDenomination),
   displayName: asString,
   networkLocation: asOptional(asJsonObject)
 })
 
-const asSwapSettings: Cleaner<SwapSettings> = asObject({
+const asSwapSettings = asObject<SwapSettings>({
   enabled: asOptional(asBoolean, true)
 }).withRest
 
