@@ -557,13 +557,21 @@ export interface EdgeCurrencyCodeOptions {
 
 export interface EdgeGetTransactionsOptions {
   currencyCode?: string
+
+  // Pagination:
   startIndex?: number
   startEntries?: number
+
+  // Filtering:
   startDate?: Date
   endDate?: Date
   searchString?: string
+
+  /** @deprecated Does nothing */
   returnIndex?: number
+  /** @deprecated Does nothing */
   returnEntries?: number
+  /** @deprecated Does nothing */
   denomination?: string
 }
 
@@ -649,7 +657,7 @@ export interface EdgeCurrencyEngine {
   readonly getBalance: (opts: EdgeCurrencyCodeOptions) => string
   readonly getNumTransactions: (opts: EdgeCurrencyCodeOptions) => number
   readonly getTransactions: (
-    opts: EdgeGetTransactionsOptions
+    opts: EdgeCurrencyCodeOptions
   ) => Promise<EdgeTransaction[]>
   readonly getTxids?: () => EdgeTxidMap
 
