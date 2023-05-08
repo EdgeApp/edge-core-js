@@ -297,7 +297,7 @@ export function makeCurrencyWalletCallbacks(
         )
         if (isNew) created.push(combinedTx)
         else if (files[txidHash] != null) changed.push(combinedTx)
-        txidHashes[txidHash] = combinedTx.date
+        txidHashes[txidHash] = { date: combinedTx.date, txid }
       }
 
       // Tell everyone who cares:
