@@ -32,12 +32,10 @@ export interface TxFileJsons {
 
 /** Maps from txid hash to creation date. */
 export interface TxidHashes {
-  [txidHash: string]: number
-}
-
-export interface SortedTransactions {
-  sortedList: string[]
-  txidHashes: TxidHashes
+  [txidHash: string]: {
+    date: number
+    txid?: string
+  }
 }
 
 export interface MergedTransaction {
@@ -79,10 +77,10 @@ export interface CurrencyWalletState {
   readonly name: string | null
   readonly nameLoaded: boolean
   readonly publicWalletInfo: EdgeWalletInfo | null
-  readonly sortedTransactions: SortedTransactions
+  readonly sortedTxidHashes: string[]
   readonly stakingStatus: EdgeStakingStatus
   readonly syncRatio: number
-  readonly txids: string[]
+  readonly txidHashes: TxidHashes
   readonly txs: { [txid: string]: MergedTransaction }
   readonly unactivatedTokenIds: string[]
   readonly walletInfo: EdgeWalletInfoFull
@@ -219,27 +217,6 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
-  sortedTransactions(
-    state = { txidHashes: {}, sortedList: [] },
-    action
-  ): SortedTransactions {
-    const { txidHashes } = state
-    switch (action.type) {
-      case 'CURRENCY_ENGINE_CHANGED_TXS': {
-        return sortTxs(txidHashes, action.payload.txidHashes)
-      }
-      case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
-        const { txFileNames } = action.payload
-        const newTxidHashes: { [txid: string]: number } = {}
-        for (const txidHash of Object.keys(txFileNames)) {
-          newTxidHashes[txidHash] = txFileNames[txidHash].creationDate
-        }
-        return sortTxs(txidHashes, newTxidHashes)
-      }
-    }
-    return state
-  },
-
   fileNames(state = {}, action): TxFileNames {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
@@ -300,16 +277,40 @@ const currencyWalletInner = buildReducer<
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ? true : state
   },
 
+  sortedTxidHashes: memoizeReducer(
+    next => next.self.txidHashes,
+    txidHashes =>
+      Object.keys(txidHashes).sort((txidHash1, txidHash2) => {
+        if (txidHashes[txidHash1].date > txidHashes[txidHash2].date) return -1
+        if (txidHashes[txidHash1].date < txidHashes[txidHash2].date) return 1
+        return 0
+      })
+  ),
+
   stakingStatus(state = { stakedAmounts: [] }, action): EdgeStakingStatus {
     return action.type === 'CURRENCY_ENGINE_CHANGED_STAKING'
       ? action.payload.stakingStatus
       : state
   },
 
-  txids: memoizeReducer(
-    next => next.self.txs,
-    (txs): string[] => Object.keys(txs)
-  ),
+  txidHashes(state = {}, action) {
+    switch (action.type) {
+      case 'CURRENCY_ENGINE_CHANGED_TXS': {
+        return mergeTxidHashes(state, action.payload.txidHashes)
+      }
+      case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
+        const { txFileNames } = action.payload
+        const newTxidHashes: TxidHashes = {}
+        for (const txidHash of Object.keys(txFileNames)) {
+          newTxidHashes[txidHash] = {
+            date: txFileNames[txidHash].creationDate
+          }
+        }
+        return mergeTxidHashes(state, newTxidHashes)
+      }
+    }
+    return state
+  },
 
   txs(state = {}, action, next): { [txid: string]: MergedTransaction } {
     switch (action.type) {
@@ -364,27 +365,20 @@ const currencyWalletInner = buildReducer<
   }
 })
 
-export function sortTxs(
-  txidHashes: TxidHashes,
-  newHashes: TxidHashes
-): {
-  sortedList: string[]
-  txidHashes: TxidHashes
-} {
-  for (const newTxidHash of Object.keys(newHashes)) {
-    const newTime = newHashes[newTxidHash]
-    if (txidHashes[newTxidHash] == null || newTime < txidHashes[newTxidHash]) {
-      txidHashes[newTxidHash] = newTime
-    }
+function mergeTxidHashes(a: TxidHashes, b: TxidHashes): TxidHashes {
+  const out: TxidHashes = { ...a }
+  for (const hash of Object.keys(b)) {
+    const oldItem = out[hash]
+    const newItem = b[hash]
+    out[hash] =
+      oldItem == null
+        ? newItem
+        : {
+            date: Math.min(newItem.date, oldItem.date),
+            txid: newItem.txid ?? oldItem.txid
+          }
   }
-  const sortedList: string[] = Object.keys(txidHashes).sort(
-    (txidHash1, txidHash2) => {
-      if (txidHashes[txidHash1] > txidHashes[txidHash2]) return -1
-      if (txidHashes[txidHash1] < txidHashes[txidHash2]) return 1
-      return 0
-    }
-  )
-  return { sortedList, txidHashes }
+  return out
 }
 
 export const currencyWalletReducer = filterReducer<

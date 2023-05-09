@@ -251,11 +251,10 @@ export function makeCurrencyWalletApi(
     ): Promise<EdgeTransaction[]> {
       const { currencyCode = plugin.currencyInfo.currencyCode } = opts
 
+      // Load transactions from the engine if necessary:
       let state = input.props.walletState
       if (!state.gotTxs[currencyCode]) {
-        const txs = await engine.getTransactions({
-          currencyCode: opts.currencyCode
-        })
+        const txs = await engine.getTransactions({ currencyCode })
         fakeCallbacks.onTransactionsChanged(txs)
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_GOT_TXS',
@@ -267,22 +266,27 @@ export function makeCurrencyWalletApi(
         state = input.props.walletState
       }
 
-      // Txid array of all txs
-      const txids = state.txids
-      // Merged tx data from metadata files and blockchain data
-      const txs = state.txs
+      const {
+        // All the files we have loaded from disk:
+        files,
+        // All the txid hashes we know about from either the engine or disk,
+        // sorted using the lowest available date.
+        // Some may not exist on disk, and some may not exist on chain:
+        sortedTxidHashes,
+        // Maps from txid hashes to original txids:
+        txidHashes,
+        // All the transactions we have from the engine:
+        txs
+      } = state
+      const txids = Object.keys(txs)
       const { startIndex = 0, startEntries = txids.length } = opts
-      // Decrypted metadata files
-      const files = state.files
-      // A sorted list of transaction based on chronological order
-      // these are tx id hashes merged between blockchain and cache some tx id hashes
-      // some may have been dropped by the blockchain
-      const sortedTransactions = state.sortedTransactions.sortedList
+
       // create map of tx id hashes to their order (cardinality)
       const mappedUnfilteredIndexes: { [txid: string]: number } = {}
-      sortedTransactions.forEach((item, index) => {
+      sortedTxidHashes.forEach((item, index) => {
         mappedUnfilteredIndexes[item] = index
       })
+
       // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
       // slice, verify txs in files, if some are dropped and missing, do it again recursively
       let searchedTxs = 0
@@ -290,7 +294,7 @@ export function makeCurrencyWalletApi(
       const out: EdgeTransaction[] = []
       while (searchedTxs < startEntries) {
         // take a slice from sorted transactions that begins at current index and goes until however many are left
-        const slicedTransactions = sortedTransactions.slice(
+        const slicedTransactions = sortedTxidHashes.slice(
           startIndex + startEntries * counter,
           startIndex + startEntries * (counter + 1)
         )
@@ -310,8 +314,9 @@ export function makeCurrencyWalletApi(
 
         for (const txidHash of slicedTransactions) {
           const file = files[txidHash]
-          if (file == null) continue
-          const tempTx = txs[file.txid]
+          const txid = file?.txid ?? txidHashes[txidHash]?.txid
+          if (txid == null) continue
+          const tempTx = txs[txid]
           // skip irrelevant transactions - txs that are not in the files (dropped)
           if (
             tempTx == null ||

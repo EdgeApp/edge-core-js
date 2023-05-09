@@ -8,10 +8,11 @@ export function dateFilter(
   tx: EdgeTransaction,
   opts: EdgeGetTransactionsOptions
 ): boolean {
-  const { startDate = -Infinity, endDate = Date.now() } = opts
+  const { startDate = new Date(0), endDate = new Date() } = opts
 
-  if (tx.date * 1000 >= startDate && tx.date * 1000 < endDate) return true
-  return false
+  return (
+    tx.date * 1000 >= startDate.valueOf() && tx.date * 1000 < endDate.valueOf()
+  )
 }
 
 export function searchStringFilter(
