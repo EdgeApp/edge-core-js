@@ -20,12 +20,15 @@ import { LoginKit, LoginTree } from './login-types'
 
 const wasChangeRecovery2Payload = uncleaner(asChangeRecovery2Payload)
 
-function recovery2Id(recovery2Key: Uint8Array, username: string): Uint8Array {
+function makeRecovery2Id(
+  recovery2Key: Uint8Array,
+  username: string
+): Uint8Array {
   const data = utf8.parse(fixUsername(username))
   return hmacSha256(data, recovery2Key)
 }
 
-function recovery2Auth(
+function makeRecovery2Auth(
   recovery2Key: Uint8Array,
   answers: string[]
 ): Uint8Array[] {
@@ -50,8 +53,8 @@ export async function loginRecovery2(
 
   // Request:
   const request = {
-    recovery2Id: recovery2Id(recovery2Key, username),
-    recovery2Auth: recovery2Auth(recovery2Key, answers)
+    recovery2Id: makeRecovery2Id(recovery2Key, username),
+    recovery2Auth: makeRecovery2Auth(recovery2Key, answers)
   }
   return await serverLogin(
     ai,
@@ -80,7 +83,7 @@ export async function getQuestions2(
   username: string
 ): Promise<string[]> {
   const request = {
-    recovery2Id: recovery2Id(recovery2Key, username)
+    recovery2Id: makeRecovery2Id(recovery2Key, username)
     // "otp": null
   }
   const reply = await loginFetch(ai, 'POST', '/v2/login', request)
@@ -155,8 +158,8 @@ export function makeRecovery2Kit(
   return {
     serverPath: '/v2/login/recovery2',
     server: wasChangeRecovery2Payload({
-      recovery2Id: recovery2Id(recovery2Key, username),
-      recovery2Auth: recovery2Auth(recovery2Key, answers),
+      recovery2Id: makeRecovery2Id(recovery2Key, username),
+      recovery2Auth: makeRecovery2Auth(recovery2Key, answers),
       recovery2Box,
       recovery2KeyBox,
       question2Box
