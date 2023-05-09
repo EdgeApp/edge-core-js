@@ -3,7 +3,11 @@
 ## v0.21.3 (2023-05-09)
 
 - fixed: Return transactions from getTransactions, even if they have no on-disk metadata
-- Remove deprecated methods in unit tests
+- changed: Remove deprecated methods in unit tests
+
+## v0.21.1-1 (2023-05-09)
+
+- fixed: Return transactions from getTransactions, even if they have no on-disk metadata
 
 ## v0.21.2 (2023-05-02)
 
