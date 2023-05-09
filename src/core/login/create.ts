@@ -60,6 +60,7 @@ export async function makeCreateKit(
   const { io } = ai.props
 
   // Figure out login identity:
+  const isRoot = parentLogin == null
   const loginId = io.random(32)
   const loginKey = io.random(32)
 
@@ -69,6 +70,7 @@ export async function makeCreateKit(
     lastLogin: new Date(),
     loginId,
     loginKey,
+    isRoot,
     pendingVouchers: [],
     children: [],
     keyInfos: []
@@ -94,7 +96,7 @@ export async function makeCreateKit(
   if (pin != null) {
     pin2Kit = makeChangePin2Kit(ai, login, username, pin, true)
   }
-  if (parentLogin == null) {
+  if (isRoot) {
     usernameKit = await makeUsernameKit(ai, login, username)
   }
 

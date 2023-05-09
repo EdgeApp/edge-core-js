@@ -216,6 +216,7 @@ function makeLoginTreeInner(
   const login: LoginTree = {
     appId,
     created,
+    isRoot: stash.parentBox == null,
     lastLogin,
     loginId,
     loginKey,
@@ -322,6 +323,7 @@ export function makeLoginTree(
       return {
         appId,
         children,
+        isRoot: stash.parentBox == null,
         keyInfos: [],
         lastLogin,
         loginId,

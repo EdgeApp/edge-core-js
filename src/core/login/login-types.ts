@@ -7,6 +7,8 @@ import { LoginStash } from './login-stash'
 
 // Login data decrypted into memory.
 export interface LoginTree {
+  isRoot: boolean
+
   // Identity:
   appId: string
   created?: Date
