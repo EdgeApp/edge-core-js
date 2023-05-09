@@ -2,7 +2,7 @@ import { uncleaner } from 'cleaners'
 
 import { asChangePin2Payload } from '../../types/server-cleaners'
 import { LoginRequestBody } from '../../types/server-types'
-import { EdgeAccountOptions } from '../../types/types'
+import { ChangePinOptions, EdgeAccountOptions } from '../../types/types'
 import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
@@ -72,12 +72,12 @@ export async function loginPin2(
 export async function changePin(
   ai: ApiInput,
   accountId: string,
-  pin: string | undefined,
-  enableLogin: boolean | undefined
+  opts: ChangePinOptions
 ): Promise<void> {
   const { loginTree, username } = ai.props.state.accounts[accountId]
 
   // Figure out defaults:
+  let { pin, enableLogin } = opts
   if (enableLogin == null) {
     enableLogin =
       loginTree.pin2Key != null || (pin != null && loginTree.pin == null)

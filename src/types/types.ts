@@ -1148,6 +1148,16 @@ export interface EdgePendingVoucher {
   ipDescription: string
 }
 
+// credentials ---------------------------------------------------------
+
+export interface ChangePinOptions {
+  /** Keeps the existing PIN if unspecified */
+  pin?: string
+
+  /** Defaults to true if unspecified */
+  enableLogin?: boolean
+}
+
 // currencies ----------------------------------------------------------
 
 export interface EdgeCreateCurrencyWalletOptions {
@@ -1342,10 +1352,7 @@ export interface EdgeAccount {
 
   // Change or create credentials:
   readonly changePassword: (password: string) => Promise<void>
-  readonly changePin: (opts: {
-    pin?: string // We keep the existing PIN if unspecified
-    enableLogin?: boolean // We default to true if unspecified
-  }) => Promise<string>
+  readonly changePin: (opts: ChangePinOptions) => Promise<string>
   readonly changeRecovery: (
     questions: string[],
     answers: string[]
