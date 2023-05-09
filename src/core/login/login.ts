@@ -2,20 +2,16 @@
  * Functions for working with login data in its on-disk format.
  */
 
-import { uncleaner } from 'cleaners'
 import { base64 } from 'rfc4648'
 
-import {
-  asChangeSecretPayload,
-  asLoginPayload
-} from '../../types/server-cleaners'
+import { asLoginPayload } from '../../types/server-cleaners'
 import { LoginPayload, LoginRequestBody } from '../../types/server-types'
 import {
   asMaybeOtpError,
   EdgeAccountOptions,
   EdgeWalletInfo
 } from '../../types/types'
-import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto'
+import { decrypt, decryptText } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { verifyData } from '../../util/crypto/verify'
 import { utf8 } from '../../util/encoding'
@@ -28,12 +24,11 @@ import {
   mergeKeyInfos
 } from './keys'
 import { loginFetch } from './login-fetch'
+import { makeSecretKit } from './login-secret'
 import { getStashById } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 import { getLoginOtp, getStashOtp } from './otp'
-
-const wasChangeSecretPayload = uncleaner(asChangeSecretPayload)
 
 /**
  * Returns the login that satisfies the given predicate,
@@ -223,13 +218,13 @@ function makeLoginTreeInner(
     created,
     lastLogin,
     loginId,
+    loginKey,
     otpKey,
     otpResetDate,
     otpTimeout,
     pendingVouchers,
     userId,
     username,
-    loginKey,
     children: [],
     keyInfos: []
   }
@@ -428,17 +423,16 @@ export async function serverLogin(
 
   // Ensure the account has secret-key login enabled:
   if (loginReply.loginAuthBox == null) {
-    const { stash, stashTree } = getStashById(ai, loginReply.loginId)
-    const { io } = ai.props
-    const loginAuth = io.random(32)
-    const loginAuthBox = encrypt(io, loginAuth, loginKey)
+    const { loginId } = loginReply
+    const { stash, stashTree } = getStashById(ai, loginId)
+    const secretKit = makeSecretKit(ai, { loginId, loginKey })
     const request: LoginRequestBody = {
       ...serverAuth,
       otp: getStashOtp(stash, opts),
-      data: wasChangeSecretPayload({ loginAuth, loginAuthBox })
+      data: secretKit.server
     }
     loginReply = asLoginPayload(
-      await loginFetch(ai, 'POST', '/v2/login/secret', request)
+      await loginFetch(ai, 'POST', secretKit.serverPath, request)
     )
     await saveStash(ai, applyLoginPayload(stashTree, loginKey, loginReply))
   }

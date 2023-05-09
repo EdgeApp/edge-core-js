@@ -1,9 +1,7 @@
 import { uncleaner } from 'cleaners'
 
-import {
-  asChangeSecretPayload,
-  asCreateLoginPayload
-} from '../../types/server-cleaners'
+import { asCreateLoginPayload } from '../../types/server-cleaners'
+import { EdgeBox } from '../../types/server-types'
 import {
   asMaybeUsernameError,
   EdgeAccountOptions,
@@ -13,6 +11,7 @@ import { encrypt } from '../../util/crypto/crypto'
 import { ApiInput } from '../root-pixie'
 import { makeKeysKit } from './keys'
 import { loginFetch } from './login-fetch'
+import { makeSecretKit } from './login-secret'
 import { fixUsername, hashUsername } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
@@ -20,7 +19,6 @@ import { makeUsernameKit } from './login-username'
 import { makePasswordKit } from './password'
 import { makeChangePin2Kit } from './pin2'
 
-const wasChangeSecretPayload = uncleaner(asChangeSecretPayload)
 const wasCreateLoginPayload = uncleaner(asCreateLoginPayload)
 
 export interface LoginCreateOpts {
@@ -58,13 +56,15 @@ export async function makeCreateKit(
   username: string,
   opts: LoginCreateOpts
 ): Promise<LoginKit> {
+  const { keyInfo, password, pin } = opts
   const { io } = ai.props
 
   // Figure out login identity:
   const loginId = io.random(32)
   const loginKey = io.random(32)
 
-  const dummyLogin: LoginTree = {
+  // Create the basic login object, but without any authentication methods:
+  const login: LoginTree = {
     appId,
     lastLogin: new Date(),
     loginId,
@@ -73,42 +73,30 @@ export async function makeCreateKit(
     children: [],
     keyInfos: []
   }
-  const dummyKit: LoginKit = {
-    login: {},
-    loginId,
-    serverPath: '/v2/login',
-    stash: {}
+
+  const secretKit = makeSecretKit(ai, login)
+  let keysKit: LoginKit | undefined
+  let parentBox: EdgeBox | undefined
+  let passwordKit: LoginKit | undefined
+  let pin2Kit: LoginKit | undefined
+  let usernameKit: LoginKit | undefined
+
+  // Set up optional login methods:
+  if (keyInfo != null) {
+    keysKit = makeKeysKit(ai, login, keyInfo)
   }
-
-  // Set up login methods:
-  const parentBox =
-    parentLogin != null
-      ? encrypt(io, loginKey, parentLogin.loginKey)
-      : undefined
-  const passwordKit: LoginKit =
-    opts.password != null
-      ? await makePasswordKit(ai, dummyLogin, username, opts.password)
-      : dummyKit
-  const pin2Kit: LoginKit =
-    opts.pin != null
-      ? makeChangePin2Kit(ai, dummyLogin, username, opts.pin, true)
-      : dummyKit
-  const keysKit: LoginKit =
-    opts.keyInfo != null ? makeKeysKit(ai, dummyLogin, opts.keyInfo) : dummyKit
-
-  // Secret-key login:
-  const loginAuth = io.random(32)
-  const loginAuthBox = encrypt(io, loginAuth, loginKey)
-  const secretServer = wasChangeSecretPayload({
-    loginAuth,
-    loginAuthBox
-  })
-
-  // Top-level username:
-  const usernameKit: LoginKit =
-    parentLogin == null
-      ? await makeUsernameKit(ai, dummyLogin, username)
-      : dummyKit
+  if (parentLogin != null) {
+    parentBox = encrypt(io, loginKey, parentLogin.loginKey)
+  }
+  if (password != null) {
+    passwordKit = await makePasswordKit(ai, login, username, password)
+  }
+  if (pin != null) {
+    pin2Kit = makeChangePin2Kit(ai, login, username, pin, true)
+  }
+  if (parentLogin == null) {
+    usernameKit = await makeUsernameKit(ai, login, username)
+  }
 
   // Bundle everything:
   return {
@@ -120,32 +108,32 @@ export async function makeCreateKit(
         loginId,
         parentBox
       }),
-      ...keysKit.server,
-      ...passwordKit.server,
-      ...pin2Kit.server,
-      ...secretServer,
-      ...usernameKit.server
+      ...keysKit?.server,
+      ...passwordKit?.server,
+      ...pin2Kit?.server,
+      ...secretKit.server,
+      ...usernameKit?.server
     },
     stash: {
       appId,
-      loginAuthBox,
       loginId,
       parentBox,
-      ...passwordKit.stash,
-      ...pin2Kit.stash,
-      ...keysKit.stash,
-      ...usernameKit.stash
+      ...keysKit?.stash,
+      ...passwordKit?.stash,
+      ...pin2Kit?.stash,
+      ...secretKit.stash,
+      ...usernameKit?.stash
     },
     login: {
       appId,
-      loginAuth,
       loginId,
       loginKey,
       keyInfos: [],
-      ...passwordKit.login,
-      ...pin2Kit.login,
-      ...keysKit.login,
-      ...usernameKit.login
+      ...keysKit?.login,
+      ...passwordKit?.login,
+      ...pin2Kit?.login,
+      ...secretKit.login,
+      ...usernameKit?.login
     }
   }
 }
