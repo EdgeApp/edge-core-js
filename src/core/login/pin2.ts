@@ -9,7 +9,7 @@ import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
 import { applyKits, searchTree, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
-import { fixUsername, getStashByUsername } from './login-selectors'
+import { getStashByUsername } from './login-selectors'
 import { LoginStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 import { getLoginOtp } from './otp'
@@ -17,8 +17,7 @@ import { getLoginOtp } from './otp'
 const wasChangePin2Payload = uncleaner(asChangePin2Payload)
 
 function makePin2Id(pin2Key: Uint8Array, username: string): Uint8Array {
-  const data = utf8.parse(fixUsername(username))
-  return hmacSha256(data, pin2Key)
+  return hmacSha256(utf8.parse(username), pin2Key)
 }
 
 function makePin2Auth(pin2Key: Uint8Array, pin: string): Uint8Array {

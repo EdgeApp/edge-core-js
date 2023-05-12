@@ -12,7 +12,7 @@ import { ApiInput } from '../root-pixie'
 import { makeKeysKit } from './keys'
 import { loginFetch } from './login-fetch'
 import { makeSecretKit } from './login-secret'
-import { fixUsername, hashUsername } from './login-selectors'
+import { hashUsername } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 import { makeUsernameKit } from './login-username'
@@ -147,10 +147,9 @@ export async function createLogin(
   accountOpts: EdgeAccountOptions,
   opts: LoginCreateOpts
 ): Promise<LoginTree> {
-  const fixedName = fixUsername(username)
   const { now = new Date() } = accountOpts
 
-  const kit = await makeCreateKit(ai, undefined, '', fixedName, opts)
+  const kit = await makeCreateKit(ai, undefined, '', username, opts)
   const request = { data: kit.server }
   await loginFetch(ai, 'POST', kit.serverPath, request)
 

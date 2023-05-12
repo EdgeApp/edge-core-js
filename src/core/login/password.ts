@@ -6,11 +6,7 @@ import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { ApiInput } from '../root-pixie'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors'
 import { applyKit, makeLoginTree, serverLogin, syncLogin } from './login'
-import {
-  fixUsername,
-  getStashByUsername,
-  hashUsername
-} from './login-selectors'
+import { getStashByUsername, hashUsername } from './login-selectors'
 import { saveStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 
@@ -18,7 +14,7 @@ const wasChangePasswordPayload = uncleaner(asChangePasswordPayload)
 const passwordAuthSnrp = userIdSnrp
 
 function makeHashInput(username: string, password: string): string {
-  return fixUsername(username) + password
+  return username + password
 }
 
 /**

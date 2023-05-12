@@ -61,10 +61,11 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     async deleteLocalAccount(username: string): Promise<void> {
+      username = fixUsername(username)
+
       // Safety check:
-      const fixedName = fixUsername(username)
       for (const accountId of ai.props.state.accountIds) {
-        if (ai.props.state.accounts[accountId].username === fixedName) {
+        if (ai.props.state.accounts[accountId].username === username) {
           throw new Error('Cannot remove logged-in user')
         }
       }
@@ -73,6 +74,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     async usernameAvailable(username: string): Promise<boolean> {
+      username = fixUsername(username)
       return await usernameAvailable(ai, username)
     },
 
@@ -82,6 +84,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       pin?: string,
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const loginTree = await createLogin(ai, username, opts, { password, pin })
       return await makeAccount(ai, appId, loginTree, 'newAccount', opts)
     },
@@ -91,6 +94,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       loginKey: string,
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const { now = new Date() } = opts
 
       const stashTree = getStashByUsername(ai, username)
@@ -111,6 +115,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       password: string,
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const loginTree = await loginPassword(ai, username, password, opts)
       return await makeAccount(ai, appId, loginTree, 'passwordLogin', opts)
     },
@@ -118,6 +123,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     checkPasswordRules,
 
     async pinLoginEnabled(username: string): Promise<boolean> {
+      username = fixUsername(username)
       const loginStash = getStashByUsername(ai, username)
       return findPin2Stash(loginStash, appId) != null
     },
@@ -127,6 +133,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       pin: string,
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const loginTree = await loginPin2(ai, appId, username, pin, opts)
       return await makeAccount(ai, appId, loginTree, 'pinLogin', opts)
     },
@@ -137,6 +144,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       answers: string[],
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const loginTree = await loginRecovery2(
         ai,
         base58.parse(recovery2Key),
@@ -151,6 +159,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       recovery2Key: string,
       username: string
     ): Promise<string[]> {
+      username = fixUsername(username)
       return await getQuestions2(ai, base58.parse(recovery2Key), username)
     },
 
@@ -168,6 +177,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       username: string,
       otpResetToken: string
     ): Promise<Date> {
+      username = fixUsername(username)
       return await resetOtp(ai, username, otpResetToken)
     },
 

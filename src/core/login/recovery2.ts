@@ -15,7 +15,7 @@ import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
 import { applyKit, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
-import { fixUsername, getStashByUsername } from './login-selectors'
+import { getStashByUsername } from './login-selectors'
 import { LoginKit, LoginTree } from './login-types'
 
 const wasChangeRecovery2Payload = uncleaner(asChangeRecovery2Payload)
@@ -24,8 +24,7 @@ function makeRecovery2Id(
   recovery2Key: Uint8Array,
   username: string
 ): Uint8Array {
-  const data = utf8.parse(fixUsername(username))
-  return hmacSha256(data, recovery2Key)
+  return hmacSha256(utf8.parse(username), recovery2Key)
 }
 
 function makeRecovery2Auth(
@@ -33,8 +32,7 @@ function makeRecovery2Auth(
   answers: string[]
 ): Uint8Array[] {
   return answers.map(answer => {
-    const data = utf8.parse(answer)
-    return hmacSha256(data, recovery2Key)
+    return hmacSha256(utf8.parse(answer), recovery2Key)
   })
 }
 
