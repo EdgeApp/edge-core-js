@@ -1319,10 +1319,12 @@ export interface EdgeAccount {
   readonly created: Date | undefined // Not always known
   readonly lastLogin: Date
   readonly loggedIn: boolean
-  readonly loginKey: string // base58
   readonly recoveryKey: string | undefined // base58, for email backup
   readonly rootLoginId: string // base58
   readonly username: string
+
+  /** Gets the base58 decryption key for biometric login */
+  readonly getLoginKey: () => Promise<string> // base58
 
   // Special-purpose API's:
   readonly currencyConfig: EdgePluginMap<EdgeCurrencyConfig>
@@ -1434,6 +1436,9 @@ export interface EdgeAccount {
 
   /** @deprecated Use `EdgeAccount.getRawPrivateKey` */
   readonly keys: JsonObject
+
+  /** @deprecated Use `EdgeAccount.getLoginKey` instead */
+  readonly loginKey: string
 }
 
 // ---------------------------------------------------------------------

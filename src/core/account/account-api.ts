@@ -140,6 +140,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return accountState().login.created
     },
 
+    async getLoginKey(): Promise<string> {
+      lockdown()
+      return base58.stringify(accountState().login.loginKey)
+    },
+
     get lastLogin(): Date {
       return accountState().login.lastLogin
     },
