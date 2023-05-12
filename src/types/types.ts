@@ -1557,12 +1557,11 @@ export interface EdgeContext {
   readonly close: () => Promise<void>
 
   readonly appId: string
-  readonly clientId: string // Unique ID for each app installation
+  readonly clientId: string // Unique base58 ID for each app installation
 
   // Local user management:
   localUsers: EdgeUserInfo[]
   readonly fixUsername: (username: string) => string
-  readonly listUsernames: () => Promise<string[]>
   readonly deleteLocalAccount: (username: string) => Promise<void>
 
   // Account creation:
@@ -1635,6 +1634,9 @@ export interface EdgeContext {
   readonly changeLogSettings: (
     settings: Partial<EdgeLogSettings>
   ) => Promise<void>
+
+  /** @deprecated Use `localUsers` instead. */
+  readonly listUsernames: () => Promise<string[]>
 }
 
 // ---------------------------------------------------------------------
