@@ -261,8 +261,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     (next: AccountNext) => next.self.rootLoginId,
     (next: AccountNext) => next.root.login.stashes,
     (rootLoginId, stashes) => {
-      for (const username of Object.keys(stashes)) {
-        const stash = stashes[username]
+      for (const stash of stashes) {
         if (verifyData(stash.loginId, rootLoginId)) return stash
       }
       throw new Error('There is no stash')

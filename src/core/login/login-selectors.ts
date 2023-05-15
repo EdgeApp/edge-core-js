@@ -13,8 +13,10 @@ import { StashLeaf } from './login-types'
  */
 export function getStashByUsername(ai: ApiInput, username: string): LoginStash {
   const { stashes } = ai.props.state.login
+  for (const stash of stashes) {
+    if (stash.username === username) return stash
+  }
 
-  if (stashes[username] != null) return stashes[username]
   return {
     username,
     appId: '',
@@ -25,8 +27,7 @@ export function getStashByUsername(ai: ApiInput, username: string): LoginStash {
 
 export function getStashById(ai: ApiInput, loginId: Uint8Array): StashLeaf {
   const { stashes } = ai.props.state.login
-  for (const username of Object.keys(stashes)) {
-    const stashTree = stashes[username]
+  for (const stashTree of stashes) {
     const stash = searchTree(stashTree, stash =>
       verifyData(stash.loginId, loginId)
     )

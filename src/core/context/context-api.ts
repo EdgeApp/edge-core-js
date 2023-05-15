@@ -57,7 +57,10 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     async listUsernames(): Promise<string[]> {
-      return Object.keys(ai.props.state.login.stashes)
+      const { stashes } = ai.props.state.login
+      return stashes
+        .map(stash => stash.username)
+        .filter((username): username is string => username != null)
     },
 
     async deleteLocalAccount(username: string): Promise<void> {

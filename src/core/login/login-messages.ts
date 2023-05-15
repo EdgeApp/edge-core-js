@@ -11,16 +11,15 @@ import { loginFetch } from './login-fetch'
 export async function fetchLoginMessages(
   ai: ApiInput
 ): Promise<EdgeLoginMessages> {
-  const stashes = ai.props.state.login.stashes
+  const { stashes } = ai.props.state.login
 
   const loginMap: { [loginId: string]: string } = {} // loginId -> username
   const loginIds: Uint8Array[] = []
-  for (const username of Object.keys(stashes)) {
-    const loginId = stashes[username].loginId
-    if (loginId != null) {
-      loginMap[base64.stringify(loginId)] = username
-      loginIds.push(loginId)
-    }
+  for (const stash of stashes) {
+    const { loginId, username } = stash
+    if (username == null) continue
+    loginMap[base64.stringify(loginId)] = username
+    loginIds.push(loginId)
   }
 
   const request = {
