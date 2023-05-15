@@ -38,12 +38,12 @@ export interface AccountState {
 
   // Login stuff:
   readonly appId: string // Copy of the context appId
+  readonly hasRootKey: boolean // True if the loginKey is for the root
   readonly loadFailure: Error | null // Failed to create API object.
   readonly login: LoginTree
   readonly loginKey: Uint8Array
   readonly loginTree: LoginTree
   readonly loginType: LoginType
-  readonly rootLogin: boolean // True if the loginKey is for the root
   readonly username: string
 
   // Plugin stuff:
@@ -219,6 +219,10 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return action.type === 'LOGIN' ? action.payload.appId : state
   },
 
+  hasRootKey(state = true, action): boolean {
+    return action.type === 'LOGIN' ? action.payload.hasRootKey : state
+  },
+
   loadFailure(state = null, action): Error | null {
     return action.type === 'ACCOUNT_LOAD_FAILED' ? action.payload.error : state
   },
@@ -236,18 +240,14 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   loginTree: memoizeReducer(
     (next: AccountNext) => next.self.appId,
     (next: AccountNext) => next.self.loginKey,
-    (next: AccountNext) => next.self.rootLogin,
+    (next: AccountNext) => next.self.hasRootKey,
     (next: AccountNext) => next.root.login.stashes[next.self.username],
-    (appId, loginKey, rootLogin, stashTree): LoginTree =>
-      makeLoginTree(stashTree, loginKey, rootLogin ? '' : appId)
+    (appId, loginKey, hasRootKey, stashTree): LoginTree =>
+      makeLoginTree(stashTree, loginKey, hasRootKey ? '' : appId)
   ),
 
   loginType(state = 'newAccount', action): LoginType {
     return action.type === 'LOGIN' ? action.payload.loginType : state
-  },
-
-  rootLogin(state = true, action): boolean {
-    return action.type === 'LOGIN' ? action.payload.rootLogin : state
   },
 
   username(state = '', action): string {
