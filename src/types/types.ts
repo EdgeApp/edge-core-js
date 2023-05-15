@@ -1319,10 +1319,12 @@ export interface EdgeAccount {
   readonly created: Date | undefined // Not always known
   readonly lastLogin: Date
   readonly loggedIn: boolean
-  readonly loginKey: string // base58
   readonly recoveryKey: string | undefined // base58, for email backup
   readonly rootLoginId: string // base58
   readonly username: string
+
+  /** Gets the base58 decryption key for biometric login */
+  readonly getLoginKey: () => Promise<string> // base58
 
   // Special-purpose API's:
   readonly currencyConfig: EdgePluginMap<EdgeCurrencyConfig>
@@ -1434,6 +1436,9 @@ export interface EdgeAccount {
 
   /** @deprecated Use `EdgeAccount.getRawPrivateKey` */
   readonly keys: JsonObject
+
+  /** @deprecated Use `EdgeAccount.getLoginKey` instead */
+  readonly loginKey: string
 }
 
 // ---------------------------------------------------------------------
@@ -1557,12 +1562,11 @@ export interface EdgeContext {
   readonly close: () => Promise<void>
 
   readonly appId: string
-  readonly clientId: string // Unique ID for each app installation
+  readonly clientId: string // Unique base58 ID for each app installation
 
   // Local user management:
   localUsers: EdgeUserInfo[]
   readonly fixUsername: (username: string) => string
-  readonly listUsernames: () => Promise<string[]>
   readonly deleteLocalAccount: (username: string) => Promise<void>
 
   // Account creation:
@@ -1635,6 +1639,9 @@ export interface EdgeContext {
   readonly changeLogSettings: (
     settings: Partial<EdgeLogSettings>
   ) => Promise<void>
+
+  /** @deprecated Use `localUsers` instead. */
+  readonly listUsernames: () => Promise<string[]>
 }
 
 // ---------------------------------------------------------------------
