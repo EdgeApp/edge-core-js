@@ -17,7 +17,7 @@ import { createLogin, usernameAvailable } from '../login/create'
 import { requestEdgeLogin } from '../login/edge'
 import { makeLoginTree, syncLogin } from '../login/login'
 import { fetchLoginMessages } from '../login/login-messages'
-import { getStash } from '../login/login-selectors'
+import { getStashByUsername } from '../login/login-selectors'
 import { removeStash, saveStash } from '../login/login-stash'
 import { resetOtp } from '../login/otp'
 import { loginPassword } from '../login/password'
@@ -93,7 +93,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     ): Promise<EdgeAccount> {
       const { now = new Date() } = opts
 
-      const stashTree = getStash(ai, username)
+      const stashTree = getStashByUsername(ai, username)
       const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
       stashTree.lastLogin = now
       saveStash(ai, stashTree).catch(() => {})
@@ -118,7 +118,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     checkPasswordRules,
 
     async pinLoginEnabled(username: string): Promise<boolean> {
-      const loginStash = getStash(ai, username)
+      const loginStash = getStashByUsername(ai, username)
       return findPin2Stash(loginStash, appId) != null
     },
 

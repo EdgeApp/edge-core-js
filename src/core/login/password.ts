@@ -6,7 +6,11 @@ import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { ApiInput } from '../root-pixie'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors'
 import { applyKit, makeLoginTree, serverLogin, syncLogin } from './login'
-import { fixUsername, getStash, hashUsername } from './login-selectors'
+import {
+  fixUsername,
+  getStashByUsername,
+  hashUsername
+} from './login-selectors'
 import { saveStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 
@@ -27,7 +31,7 @@ async function loginPasswordOffline(
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
   const { now = new Date() } = opts
-  const stashTree = getStash(ai, username)
+  const stashTree = getStashByUsername(ai, username)
 
   const { passwordBox, passwordKeySnrp } = stashTree
   if (passwordBox == null || passwordKeySnrp == null) {
@@ -57,7 +61,7 @@ async function loginPasswordOnline(
   password: string,
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  const stashTree = getStash(ai, username)
+  const stashTree = getStashByUsername(ai, username)
 
   // Request:
   const up = makeHashInput(username, password)

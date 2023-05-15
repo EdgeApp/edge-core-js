@@ -15,7 +15,7 @@ import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
 import { applyKit, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
-import { fixUsername, getStash } from './login-selectors'
+import { fixUsername, getStashByUsername } from './login-selectors'
 import { LoginKit, LoginTree } from './login-types'
 
 const wasChangeRecovery2Payload = uncleaner(asChangeRecovery2Payload)
@@ -49,7 +49,7 @@ export async function loginRecovery2(
   answers: string[],
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  const stashTree = getStash(ai, username)
+  const stashTree = getStashByUsername(ai, username)
 
   // Request:
   const request = {
