@@ -73,7 +73,10 @@ export async function changePin(
   accountId: string,
   opts: ChangePinOptions
 ): Promise<void> {
-  const { loginTree, username } = ai.props.state.accounts[accountId]
+  const accountState = ai.props.state.accounts[accountId]
+  const { loginTree } = accountState
+  const { username } = accountState.stashTree
+  if (username == null) throw new Error('PIN login requires a username')
 
   // Figure out defaults:
   let { pin, enableLogin } = opts

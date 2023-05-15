@@ -350,7 +350,7 @@ export type RootAction =
         loginKey: Uint8Array
         loginType: LoginType
         pauseWallets: boolean
-        username: string
+        rootLoginId: Uint8Array
       }
     }
   | {

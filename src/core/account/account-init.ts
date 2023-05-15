@@ -119,7 +119,7 @@ export async function makeAccount(
         : findAppLogin(loginTree, appId).loginKey,
       loginType,
       pauseWallets,
-      username
+      rootLoginId: loginTree.loginId
     }
   })
 

@@ -100,7 +100,10 @@ export async function changeRecovery(
   questions: string[],
   answers: string[]
 ): Promise<void> {
-  const { loginTree, username } = ai.props.state.accounts[accountId]
+  const accountState = ai.props.state.accounts[accountId]
+  const { loginTree } = accountState
+  const { username } = accountState.stashTree
+  if (username == null) throw new Error('Recovery login requires a username')
 
   const kit = makeRecovery2Kit(ai, loginTree, username, questions, answers)
   await applyKit(ai, loginTree, kit)

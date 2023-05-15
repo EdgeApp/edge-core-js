@@ -108,7 +108,10 @@ export async function changePassword(
   accountId: string,
   password: string
 ): Promise<void> {
-  const { loginTree, username } = ai.props.state.accounts[accountId]
+  const accountState = ai.props.state.accounts[accountId]
+  const { loginTree } = accountState
+  const { username } = accountState.stashTree
+  if (username == null) throw new Error('Password login requires a username')
 
   const kit = await makePasswordKit(ai, loginTree, username, password)
   await applyKit(ai, loginTree, kit)

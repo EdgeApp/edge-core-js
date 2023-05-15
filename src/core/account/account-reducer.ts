@@ -10,9 +10,11 @@ import {
 } from '../../types/types'
 import { compare } from '../../util/compare'
 import { ethereumKeyToAddress } from '../../util/crypto/ethereum'
+import { verifyData } from '../../util/crypto/verify'
 import { RootAction } from '../actions'
 import { findFirstKey, getAllWalletInfos, makeAccountType } from '../login/keys'
 import { makeLoginTree } from '../login/login'
+import { LoginStash } from '../login/login-stash'
 import { LoginTree, LoginType, WalletInfoFullMap } from '../login/login-types'
 import { maybeFindCurrencyPluginId } from '../plugins/plugins-selectors'
 import { RootState } from '../root-reducer'
@@ -44,7 +46,8 @@ export interface AccountState {
   readonly loginKey: Uint8Array
   readonly loginTree: LoginTree
   readonly loginType: LoginType
-  readonly username: string
+  readonly rootLoginId: Uint8Array
+  readonly stashTree: LoginStash
 
   // Plugin stuff:
   readonly allTokens: EdgePluginMap<EdgeTokenMap>
@@ -241,7 +244,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     (next: AccountNext) => next.self.appId,
     (next: AccountNext) => next.self.loginKey,
     (next: AccountNext) => next.self.hasRootKey,
-    (next: AccountNext) => next.root.login.stashes[next.self.username],
+    (next: AccountNext) => next.self.stashTree,
     (appId, loginKey, hasRootKey, stashTree): LoginTree =>
       makeLoginTree(stashTree, loginKey, hasRootKey ? '' : appId)
   ),
@@ -250,9 +253,21 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return action.type === 'LOGIN' ? action.payload.loginType : state
   },
 
-  username(state = '', action): string {
-    return action.type === 'LOGIN' ? action.payload.username : state
+  rootLoginId(state = new Uint8Array(0), action): Uint8Array {
+    return action.type === 'LOGIN' ? action.payload.rootLoginId : state
   },
+
+  stashTree: memoizeReducer(
+    (next: AccountNext) => next.self.rootLoginId,
+    (next: AccountNext) => next.root.login.stashes,
+    (rootLoginId, stashes) => {
+      for (const username of Object.keys(stashes)) {
+        const stash = stashes[username]
+        if (verifyData(stash.loginId, rootLoginId)) return stash
+      }
+      throw new Error('There is no stash')
+    }
+  ),
 
   allTokens(state = {}, action, next, prev): EdgePluginMap<EdgeTokenMap> {
     const { builtinTokens, customTokens } = next.self

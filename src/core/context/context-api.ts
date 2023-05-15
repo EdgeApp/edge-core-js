@@ -65,7 +65,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
       // Safety check:
       for (const accountId of ai.props.state.accountIds) {
-        if (ai.props.state.accounts[accountId].username === username) {
+        const accountState = ai.props.state.accounts[accountId]
+        if (accountState.stashTree.username === username) {
           throw new Error('Cannot remove logged-in user')
         }
       }
