@@ -154,11 +154,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return accountState() != null
     },
 
-    get loginKey(): string {
-      lockdown()
-      return base58.stringify(accountState().login.loginKey)
-    },
-
     get recoveryKey(): string | undefined {
       lockdown()
       const { login } = accountState()

@@ -86,10 +86,11 @@ describe('creation', function () {
       }
     ])
 
+    const loginKey = await account.getLoginKey()
     return await Promise.all([
       context.loginWithPIN(username, pin),
       remote.loginWithPassword(username, password),
-      context.loginWithKey(username, account.loginKey)
+      context.loginWithKey(username, loginKey)
     ])
   })
 })

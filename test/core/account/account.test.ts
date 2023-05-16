@@ -304,7 +304,7 @@ describe('account', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     // Sensitive properties don't work:
-    expect(() => account.loginKey).throw()
+    expect(() => account.recoveryKey).throw()
 
     // Changing credentials doesn't work:
     await expectRejection(

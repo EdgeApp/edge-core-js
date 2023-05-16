@@ -1416,9 +1416,6 @@ export interface EdgeAccount {
 
   /** @deprecated Use `EdgeAccount.getRawPrivateKey` */
   readonly keys: JsonObject
-
-  /** @deprecated Use `EdgeAccount.getLoginKey` instead */
-  readonly loginKey: string
 }
 
 // ---------------------------------------------------------------------
