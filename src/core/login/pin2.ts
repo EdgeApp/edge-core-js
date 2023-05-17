@@ -2,7 +2,7 @@ import { uncleaner } from 'cleaners'
 
 import { asChangePin2Payload } from '../../types/server-cleaners'
 import { LoginRequestBody } from '../../types/server-types'
-import { EdgeAccountOptions } from '../../types/types'
+import { ChangePinOptions, EdgeAccountOptions } from '../../types/types'
 import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
@@ -16,12 +16,12 @@ import { getLoginOtp } from './otp'
 
 const wasChangePin2Payload = uncleaner(asChangePin2Payload)
 
-function pin2Id(pin2Key: Uint8Array, username: string): Uint8Array {
+function makePin2Id(pin2Key: Uint8Array, username: string): Uint8Array {
   const data = utf8.parse(fixUsername(username))
   return hmacSha256(data, pin2Key)
 }
 
-function pin2Auth(pin2Key: Uint8Array, pin: string): Uint8Array {
+function makePin2Auth(pin2Key: Uint8Array, pin: string): Uint8Array {
   return hmacSha256(utf8.parse(pin), pin2Key)
 }
 
@@ -58,8 +58,8 @@ export async function loginPin2(
   // Request:
   const { pin2Key } = stash
   const request = {
-    pin2Id: pin2Id(pin2Key, username),
-    pin2Auth: pin2Auth(pin2Key, pin)
+    pin2Id: makePin2Id(pin2Key, username),
+    pin2Auth: makePin2Auth(pin2Key, pin)
   }
   return await serverLogin(ai, stashTree, stash, opts, request, async reply => {
     if (reply.pin2Box == null) {
@@ -72,12 +72,12 @@ export async function loginPin2(
 export async function changePin(
   ai: ApiInput,
   accountId: string,
-  pin: string | undefined,
-  enableLogin: boolean | undefined
+  opts: ChangePinOptions
 ): Promise<void> {
   const { loginTree, username } = ai.props.state.accounts[accountId]
 
   // Figure out defaults:
+  let { pin, enableLogin } = opts
   if (enableLogin == null) {
     enableLogin =
       loginTree.pin2Key != null || (pin != null && loginTree.pin == null)
@@ -121,8 +121,8 @@ export async function checkPin2(
   // Try a login:
   const { pin2Key } = stash
   const request: LoginRequestBody = {
-    pin2Id: pin2Id(pin2Key, username),
-    pin2Auth: pin2Auth(pin2Key, pin),
+    pin2Id: makePin2Id(pin2Key, username),
+    pin2Auth: makePin2Auth(pin2Key, pin),
     otp: getLoginOtp(login)
   }
   return await loginFetch(ai, 'POST', '/v2/login', request).then(
@@ -183,8 +183,8 @@ export function makeChangePin2Kit(
     return {
       serverPath: '/v2/login/pin2',
       server: wasChangePin2Payload({
-        pin2Id: pin2Id(pin2Key, username),
-        pin2Auth: pin2Auth(pin2Key, pin),
+        pin2Id: makePin2Id(pin2Key, username),
+        pin2Auth: makePin2Auth(pin2Key, pin),
         pin2Box,
         pin2KeyBox,
         pin2TextBox

@@ -4,6 +4,7 @@ import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { AccountSync } from '../../client-side'
 import {
+  ChangePinOptions,
   EdgeAccount,
   EdgeActivationOptions,
   EdgeActivationQuote,
@@ -220,13 +221,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       await changePassword(ai, accountId, password)
     },
 
-    async changePin(opts: {
-      pin?: string // We keep the existing PIN if unspecified
-      enableLogin?: boolean // We default to true if unspecified
-    }): Promise<string> {
+    async changePin(opts: ChangePinOptions): Promise<string> {
       lockdown()
-      const { pin, enableLogin } = opts
-      await changePin(ai, accountId, pin, enableLogin)
+      await changePin(ai, accountId, opts)
       const { login } = accountState()
       return login.pin2Key != null ? base58.stringify(login.pin2Key) : ''
     },

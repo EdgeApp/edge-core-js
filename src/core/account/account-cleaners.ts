@@ -1,12 +1,10 @@
 import {
   asArray,
   asBoolean,
-  asMap,
   asNumber,
   asObject,
   asOptional,
-  asString,
-  Cleaner
+  asString
 } from 'cleaners'
 
 import { asBase16 } from '../../types/server-cleaners'
@@ -18,20 +16,20 @@ import { SwapSettings } from './account-types'
 // building-block types
 // ---------------------------------------------------------------------
 
-const asEdgeDenomination: Cleaner<EdgeDenomination> = asObject({
+const asEdgeDenomination = asObject<EdgeDenomination>({
   multiplier: asString,
   name: asString,
   symbol: asOptional(asString)
 })
 
-const asEdgeToken: Cleaner<EdgeToken> = asObject({
+const asEdgeToken = asObject<EdgeToken>({
   currencyCode: asString,
   denominations: asArray(asEdgeDenomination),
   displayName: asString,
   networkLocation: asOptional(asJsonObject)
 })
 
-const asSwapSettings: Cleaner<SwapSettings> = asObject({
+const asSwapSettings = asObject<SwapSettings>({
   enabled: asOptional(asBoolean, true)
 }).withRest
 
@@ -67,10 +65,10 @@ export const asWalletStateFile = asObject({
  */
 export const asPluginSettingsFile = asObject({
   // Currency plugins:
-  userSettings: asOptional(asMap(asJsonObject), () => ({})),
+  userSettings: asOptional(asObject(asJsonObject), () => ({})),
 
   // Swap plugins:
-  swapSettings: asOptional(asMap(asSwapSettings), () => ({}))
+  swapSettings: asOptional(asObject(asSwapSettings), () => ({}))
 }).withRest
 
 /**

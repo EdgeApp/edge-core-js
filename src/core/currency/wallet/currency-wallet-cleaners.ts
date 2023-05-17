@@ -2,7 +2,6 @@ import {
   asArray,
   asBoolean,
   asEither,
-  asMap,
   asNull,
   asNumber,
   asObject,
@@ -154,7 +153,7 @@ const asFeeRate: Cleaner<'high' | 'standard' | 'low'> = asValue(
   'low'
 )
 
-export const asEdgeTxSwap: Cleaner<EdgeTxSwap> = asObject({
+export const asEdgeTxSwap = asObject<EdgeTxSwap>({
   orderId: asOptional(asString),
   orderUri: asOptional(asString),
   isEstimate: asBoolean,
@@ -174,10 +173,10 @@ export const asEdgeTxSwap: Cleaner<EdgeTxSwap> = asObject({
   refundAddress: asOptional(asString)
 })
 
-const asDiskMetadata: Cleaner<DiskMetadata> = asObject({
+const asDiskMetadata = asObject<DiskMetadata>({
   bizId: asOptional(asNumber),
   category: asOptional(asString),
-  exchangeAmount: asOptional(asMap(asNumber), () => ({})),
+  exchangeAmount: asOptional(asObject(asNumber), () => ({})),
   name: asOptional(asString),
   notes: asOptional(asString)
 })
@@ -200,13 +199,13 @@ export function asIntegerString(raw: unknown): string {
  * or we can use `asEither` to switch between this format
  * and some new format based on token ID's.
  */
-export const asEnabledTokensFile: Cleaner<string[]> = asArray(asString)
+export const asEnabledTokensFile = asArray<string>(asString)
 
-export const asTransactionFile: Cleaner<TransactionFile> = asObject({
+export const asTransactionFile = asObject<TransactionFile>({
   txid: asString,
   internal: asBoolean,
   creationDate: asNumber,
-  currencies: asMap(
+  currencies: asObject(
     asObject({
       metadata: asDiskMetadata,
       nativeAmount: asOptional(asString),
@@ -258,7 +257,7 @@ export const asLegacyTransactionFile = asObject({
   })
 })
 
-export const asLegacyAddressFile: Cleaner<LegacyAddressFile> = asObject({
+export const asLegacyAddressFile = asObject<LegacyAddressFile>({
   seq: asNumber, // index
   address: asString,
   state: asObject({
@@ -271,7 +270,7 @@ export const asLegacyAddressFile: Cleaner<LegacyAddressFile> = asObject({
   }).withRest
 })
 
-export const asLegacyMapFile: Cleaner<LegacyMapFile> = asMap(
+export const asLegacyMapFile: Cleaner<LegacyMapFile> = asObject(
   asObject({
     timestamp: asNumber,
     txidHash: asString

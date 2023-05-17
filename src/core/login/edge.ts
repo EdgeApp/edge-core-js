@@ -1,4 +1,4 @@
-import { asObject, asString, Cleaner } from 'cleaners'
+import { asObject, asString } from 'cleaners'
 import { bridgifyObject, close, update, watchMethod } from 'yaob'
 
 import { asBase64 } from '../../types/server-cleaners'
@@ -24,7 +24,7 @@ type WritablePendingEdgeLogin = {
   -readonly [P in keyof EdgePendingEdgeLogin]: EdgePendingEdgeLogin[P]
 }
 
-export const asLobbyLoginPayload: Cleaner<LobbyLoginPayload> = asObject({
+export const asLobbyLoginPayload = asObject<LobbyLoginPayload>({
   appId: asString,
   loginKey: asBase64,
   loginStash: asLoginStash

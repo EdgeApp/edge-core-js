@@ -191,7 +191,7 @@ export const asFakeUser: Cleaner<FakeUser> = asObject({
   username: asString
 })
 
-export const asFakeUsers: Cleaner<FakeUser[]> = asArray(asFakeUser)
+export const asFakeUsers = asArray<FakeUser>(asFakeUser)
 
 function asDateObject(raw: unknown): Date {
   if (raw instanceof Date) return raw

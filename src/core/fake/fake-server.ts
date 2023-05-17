@@ -1,4 +1,4 @@
-import { asMap, asMaybe, asObject, uncleaner } from 'cleaners'
+import { asMaybe, asObject, uncleaner } from 'cleaners'
 import {
   FetchRequest,
   HttpRequest,
@@ -625,7 +625,7 @@ const storeUpdateRoute = withRepo(request => {
 })
 
 const asStoreBody = asObject({
-  changes: asMap(asEdgeBox)
+  changes: asObject(asEdgeBox)
 })
 
 // info: -------------------------------------------------------------------
