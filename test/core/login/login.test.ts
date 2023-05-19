@@ -1,4 +1,4 @@
-import { assert, expect } from 'chai'
+import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { makeFakeEdgeWorld } from '../../../src/index'
@@ -25,7 +25,7 @@ describe('creation', function () {
     const context = await world.makeEdgeContext(contextOptions)
 
     const available = await context.usernameAvailable('unknown user')
-    assert(available)
+    expect(available).equals(true)
   })
 
   it('username not available', async function () {
@@ -33,7 +33,7 @@ describe('creation', function () {
     const context = await world.makeEdgeContext(contextOptions)
 
     const available = await context.usernameAvailable(fakeUser.username)
-    assert(!available)
+    expect(available).equals(false)
   })
 
   it('password-less account', async function () {
@@ -129,7 +129,7 @@ describe('password', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const ok = await account.checkPassword(fakeUser.password)
-    assert(ok)
+    expect(ok).equals(true)
   })
 
   it('check bad', async function () {
@@ -138,7 +138,7 @@ describe('password', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const ok = await account.checkPassword('wrong one')
-    assert(!ok)
+    expect(ok).equals(false)
   })
 
   it('delete', async function () {
@@ -160,7 +160,7 @@ describe('pin', function () {
     const context = await world.makeEdgeContext(contextOptions)
 
     const exists = await context.pinLoginEnabled(fakeUser.username)
-    assert(exists)
+    expect(exists).equals(true)
   })
 
   it('does not exist', async function () {
@@ -168,7 +168,7 @@ describe('pin', function () {
     const context = await world.makeEdgeContext(contextOptions)
 
     const exists = await context.pinLoginEnabled(fakeUser.username)
-    assert(!exists)
+    expect(exists).equals(false)
   })
 
   it('login', async function () {
@@ -245,7 +245,7 @@ describe('recovery2', function () {
     const context = await world.makeEdgeContext(contextOptions)
 
     const [user] = context.localUsers
-    assert.equal(user.recovery2Key, fakeUser.recovery2Key)
+    expect(user.recovery2Key).equals(fakeUser.recovery2Key)
   })
 
   it('get questions', async function () {
@@ -257,9 +257,9 @@ describe('recovery2', function () {
       fakeUser.username
     )
 
-    assert.equal(questions.length, fakeUser.recovery2Questions.length)
+    expect(questions.length).equals(fakeUser.recovery2Questions.length)
     for (let i = 0; i < questions.length; ++i) {
-      assert.equal(questions[i], fakeUser.recovery2Questions[i])
+      expect(questions[i]).equals(fakeUser.recovery2Questions[i])
     }
   })
 
