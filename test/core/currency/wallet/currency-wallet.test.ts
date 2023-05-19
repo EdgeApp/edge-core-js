@@ -284,6 +284,39 @@ describe('currency wallets', function () {
     log.assert(tokenId)
   })
 
+  it('paginates transactions', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({
+      txs: walletTxs
+    })
+
+    // Normal behavior:
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC',
+          startIndex: 3,
+          startEntries: 2
+        })
+      )
+    ).deep.equals(['d', 'e'])
+
+    // The API isn't useful when combining pagination with a search term
+    // or date range, since there is no way to know what `unfilteredIndex`
+    // to start with next. Also, does an empty list mean we are done,
+    // or just didn't find anything in this section?
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC',
+          searchString: 'sideshift',
+          startIndex: 2,
+          startEntries: 2
+        })
+      )
+    ).deep.equals([])
+  })
+
   it('search transactions', async function () {
     const { wallet, config } = await makeFakeCurrencyWallet()
     await config.changeUserSettings({
