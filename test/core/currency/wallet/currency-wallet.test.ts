@@ -10,6 +10,7 @@ import {
   EdgeCurrencyWallet,
   EdgeMetadata,
   EdgeToken,
+  EdgeTransaction,
   EdgeTxSwap,
   makeFakeEdgeWorld
 } from '../../../../src/index'
@@ -289,31 +290,46 @@ describe('currency wallets', function () {
       txs: walletTxs
     })
 
-    await wallet.getTransactions({ currencyCode: 'BTC' }).then(txs => {
-      expect(txs.length).equals(13)
-      expect(txs[0].txid).equals('a')
-      expect(txs[0].nativeAmount).equals('644350')
-    })
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC'
+        })
+      )
+    ).deep.equals([
+      'a',
+      'b',
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i',
+      'j',
+      'k',
+      'l',
+      'm'
+    ])
 
-    await wallet
-      .getTransactions({ currencyCode: 'BTC', searchString: 'sideshift' })
-      .then(txs => {
-        expect(txs.length).equals(3)
-        expect(txs[0].txid).equals('k')
-        expect(txs[0].nativeAmount).equals('-371258')
-      })
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC',
+          searchString: 'sideshift'
+        })
+      )
+    ).deep.equals(['k', 'l', 'm'])
 
-    await wallet
-      .getTransactions({
-        currencyCode: 'BTC',
-        startDate: new Date(1199145601000),
-        endDate: new Date(1612546887000)
-      })
-      .then(txs => {
-        expect(txs.length).equals(8)
-        expect(txs[0].txid).equals('f')
-        expect(txs[0].nativeAmount).equals('-3300')
-      })
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC',
+          startDate: new Date('2021-01-30'),
+          endDate: new Date('2021-02-05')
+        })
+      )
+    ).deep.equals(['g', 'h', 'i', 'j', 'k'])
   })
 
   it('get max spendable', async function () {
@@ -515,3 +531,7 @@ describe('currency wallets', function () {
     await account.waitForAllWallets()
   })
 })
+
+function justTxids(txs: EdgeTransaction[]): string[] {
+  return txs.map(tx => tx.txid)
+}
