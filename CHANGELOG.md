@@ -1,5 +1,12 @@
 # edge-core-js
 
+## v0.21.4 (2023-05-24)
+
+- added: `EdgeAccount.changeUsername`.
+- added: `EdgeAccount.getLoginKey`.
+- deprecated: `EdgeAccount.loginKey`. Use `EdgeAccount.getLoginKey` instead.
+- deprecated: `EdgeContext.listUsernames`. Use `EdgeContext.localUsers` instead.
+
 ## v0.21.3 (2023-05-09)
 
 - fixed: Return transactions from getTransactions, even if they have no on-disk metadata
