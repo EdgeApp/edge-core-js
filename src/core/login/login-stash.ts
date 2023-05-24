@@ -12,6 +12,7 @@ import {
 import { Disklet, justFiles } from 'disklet'
 import { base64 } from 'rfc4648'
 
+import { fixUsername } from '../../client-side'
 import {
   asBase32,
   asBase64,
@@ -23,7 +24,6 @@ import { EdgeBox, EdgeSnrp } from '../../types/server-types'
 import { EdgeLog, EdgePendingVoucher } from '../../types/types'
 import { base58 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
-import { fixUsername } from './login-selectors'
 
 /**
  * The login data we store on disk.
@@ -97,19 +97,18 @@ export async function removeStash(
   username: string
 ): Promise<void> {
   const { dispatch, io } = ai.props
-  const fixedName = fixUsername(username)
 
   const paths = await io.disklet.list('logins').then(justFiles)
   for (const path of paths) {
     try {
       const stash = asLoginStash(JSON.parse(await io.disklet.getText(path)))
-      if (stash.username === fixedName) await io.disklet.delete(path)
+      if (stash.username === username) await io.disklet.delete(path)
     } catch (error: any) {}
   }
 
   dispatch({
     type: 'LOGIN_STASH_DELETED',
-    payload: fixUsername(username)
+    payload: username
   })
 }
 
@@ -139,6 +138,8 @@ export async function saveStash(
 
   dispatch({ type: 'LOGIN_STASH_SAVED', payload: stashTree })
 }
+
+export const asUsername: Cleaner<string> = raw => fixUsername(asString(raw))
 
 export const asLoginStash: Cleaner<LoginStash> = asObject({
   // Identity:
@@ -183,7 +184,7 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
 
   // Username:
   userId: asOptional(asBase64),
-  username: asOptional(asString),
+  username: asOptional(asUsername),
 
   // Keys and assorted goodies:
   children: asOptional(asArray(raw => asLoginStash(raw))),

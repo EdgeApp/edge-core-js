@@ -1,6 +1,9 @@
 import { uncleaner } from 'cleaners'
 
-import { asChangePin2Payload } from '../../types/server-cleaners'
+import {
+  asChangePin2IdPayload,
+  asChangePin2Payload
+} from '../../types/server-cleaners'
 import { LoginRequestBody } from '../../types/server-types'
 import { ChangePinOptions, EdgeAccountOptions } from '../../types/types'
 import { decrypt, encrypt } from '../../util/crypto/crypto'
@@ -9,16 +12,16 @@ import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
 import { applyKits, searchTree, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
-import { fixUsername, getStash } from './login-selectors'
+import { getStashByUsername } from './login-selectors'
 import { LoginStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 import { getLoginOtp } from './otp'
 
+const wasChangePin2IdPayload = uncleaner(asChangePin2IdPayload)
 const wasChangePin2Payload = uncleaner(asChangePin2Payload)
 
 function makePin2Id(pin2Key: Uint8Array, username: string): Uint8Array {
-  const data = utf8.parse(fixUsername(username))
-  return hmacSha256(data, pin2Key)
+  return hmacSha256(utf8.parse(username), pin2Key)
 }
 
 function makePin2Auth(pin2Key: Uint8Array, pin: string): Uint8Array {
@@ -49,7 +52,7 @@ export async function loginPin2(
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
   // Find the stash to use:
-  const stashTree = getStash(ai, username)
+  const stashTree = getStashByUsername(ai, username)
   const stash = findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
     throw new Error('PIN login is not enabled for this account on this device')
@@ -74,7 +77,10 @@ export async function changePin(
   accountId: string,
   opts: ChangePinOptions
 ): Promise<void> {
-  const { loginTree, username } = ai.props.state.accounts[accountId]
+  const accountState = ai.props.state.accounts[accountId]
+  const { loginTree } = accountState
+  const { username } = accountState.stashTree
+  if (username == null) throw new Error('PIN login requires a username')
 
   // Figure out defaults:
   let { pin, enableLogin } = opts
@@ -112,7 +118,7 @@ export async function checkPin2(
   if (username == null) return false
 
   // Find the stash to use:
-  const stashTree = getStash(ai, username)
+  const stashTree = getStashByUsername(ai, username)
   const stash = findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
     throw new Error('No PIN set locally for this account')
@@ -160,6 +166,28 @@ export function makeChangePin2Kits(
   }
 
   return out
+}
+
+/**
+ * Used when changing the username.
+ * This won't return anything if the PIN is missing.
+ */
+export function makeChangePin2IdKit(
+  login: LoginTree,
+  newUsername: string
+): LoginKit | undefined {
+  const { loginId, pin2Key } = login
+  if (pin2Key == null) return
+
+  return {
+    login: {},
+    loginId,
+    server: wasChangePin2IdPayload({
+      pin2Id: makePin2Id(pin2Key, newUsername)
+    }),
+    serverPath: '',
+    stash: {}
+  }
 }
 
 /**

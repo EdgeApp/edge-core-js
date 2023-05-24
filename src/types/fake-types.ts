@@ -9,6 +9,7 @@ import {
   asValue
 } from 'cleaners'
 
+import { asUsername } from '../core/login/login-stash'
 import {
   asBase32,
   asBase64,
@@ -188,7 +189,7 @@ export const asFakeUser: Cleaner<FakeUser> = asObject({
   loginKey: asBase64,
   repos: asObject(asObject(asEdgeBox)),
   server: asLoginDump,
-  username: asString
+  username: asUsername
 })
 
 export const asFakeUsers = asArray<FakeUser>(asFakeUser)

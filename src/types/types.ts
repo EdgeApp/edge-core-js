@@ -1158,6 +1158,16 @@ export interface ChangePinOptions {
   enableLogin?: boolean
 }
 
+export interface ChangeUsernameOptions {
+  username: string
+
+  /**
+   * Changing the username requires passing the password, if present.
+   * If the account has no password, providing this will create one.
+   */
+  password?: string
+}
+
 // currencies ----------------------------------------------------------
 
 export interface EdgeCreateCurrencyWalletOptions {
@@ -1357,6 +1367,7 @@ export interface EdgeAccount {
     questions: string[],
     answers: string[]
   ) => Promise<string>
+  readonly changeUsername: (opts: ChangeUsernameOptions) => Promise<void>
 
   // Verify existing credentials:
   readonly checkPassword: (password: string) => Promise<boolean>

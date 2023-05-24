@@ -1,6 +1,7 @@
 import { uncleaner } from 'cleaners'
 
 import {
+  asChangeRecovery2IdPayload,
   asChangeRecovery2Payload,
   asQuestionChoicesPayload,
   asRecovery2InfoPayload
@@ -15,17 +16,17 @@ import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
 import { applyKit, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
-import { fixUsername, getStash } from './login-selectors'
+import { getStashByUsername } from './login-selectors'
 import { LoginKit, LoginTree } from './login-types'
 
+const wasChangeRecovery2IdPayload = uncleaner(asChangeRecovery2IdPayload)
 const wasChangeRecovery2Payload = uncleaner(asChangeRecovery2Payload)
 
 function makeRecovery2Id(
   recovery2Key: Uint8Array,
   username: string
 ): Uint8Array {
-  const data = utf8.parse(fixUsername(username))
-  return hmacSha256(data, recovery2Key)
+  return hmacSha256(utf8.parse(username), recovery2Key)
 }
 
 function makeRecovery2Auth(
@@ -33,8 +34,7 @@ function makeRecovery2Auth(
   answers: string[]
 ): Uint8Array[] {
   return answers.map(answer => {
-    const data = utf8.parse(answer)
-    return hmacSha256(data, recovery2Key)
+    return hmacSha256(utf8.parse(answer), recovery2Key)
   })
 }
 
@@ -49,7 +49,7 @@ export async function loginRecovery2(
   answers: string[],
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  const stashTree = getStash(ai, username)
+  const stashTree = getStashByUsername(ai, username)
 
   // Request:
   const request = {
@@ -102,7 +102,10 @@ export async function changeRecovery(
   questions: string[],
   answers: string[]
 ): Promise<void> {
-  const { loginTree, username } = ai.props.state.accounts[accountId]
+  const accountState = ai.props.state.accounts[accountId]
+  const { loginTree } = accountState
+  const { username } = accountState.stashTree
+  if (username == null) throw new Error('Recovery login requires a username')
 
   const kit = makeRecovery2Kit(ai, loginTree, username, questions, answers)
   await applyKit(ai, loginTree, kit)
@@ -126,6 +129,28 @@ export async function deleteRecovery(
     loginId: loginTree.loginId
   }
   await applyKit(ai, loginTree, kit)
+}
+
+/**
+ * Used when changing the username.
+ * This won't return anything if the recovery is missing.
+ */
+export function makeChangeRecovery2IdKit(
+  login: LoginTree,
+  newUsername: string
+): LoginKit | undefined {
+  const { loginId, recovery2Key } = login
+  if (recovery2Key == null) return
+
+  return {
+    login: {},
+    loginId,
+    server: wasChangeRecovery2IdPayload({
+      recovery2Id: makeRecovery2Id(recovery2Key, newUsername)
+    }),
+    serverPath: '',
+    stash: {}
+  }
 }
 
 /**

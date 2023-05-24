@@ -108,18 +108,18 @@ export async function makeAccount(
   if (username == null) throw new Error('Cannot log in: missing username')
 
   // Add the login to redux:
-  const rootLogin = loginTree.loginKey != null
+  const hasRootKey = loginTree.loginKey != null
   ai.props.dispatch({
     type: 'LOGIN',
     payload: {
       appId,
-      username,
-      loginKey: rootLogin
+      hasRootKey,
+      loginKey: hasRootKey
         ? loginTree.loginKey
         : findAppLogin(loginTree, appId).loginKey,
+      loginType,
       pauseWallets,
-      rootLogin,
-      loginType
+      rootLoginId: loginTree.loginId
     }
   })
 

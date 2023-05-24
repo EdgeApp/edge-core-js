@@ -216,6 +216,7 @@ function makeLoginTreeInner(
   const login: LoginTree = {
     appId,
     created,
+    isRoot: stash.parentBox == null,
     lastLogin,
     loginId,
     loginKey,
@@ -322,6 +323,7 @@ export function makeLoginTree(
       return {
         appId,
         children,
+        isRoot: stash.parentBox == null,
         keyInfos: [],
         lastLogin,
         loginId,
@@ -491,14 +493,16 @@ export async function applyKit(
 /**
  * Applies an array of kits to a login, one after another.
  * We can't use `Promise.all`, since `applyKit` doesn't handle
- * parallelism correctly.
+ * parallelism correctly. Also, we want to stop if there are errors
+ * (such as failing to change the root username).
  */
 export async function applyKits(
   ai: ApiInput,
   loginTree: LoginTree,
-  kits: LoginKit[]
+  kits: Array<LoginKit | undefined>
 ): Promise<void> {
   for (const kit of kits) {
+    if (kit == null) continue
     await applyKit(ai, loginTree, kit)
   }
 }

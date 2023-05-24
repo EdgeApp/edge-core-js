@@ -1,6 +1,5 @@
 import { base64 } from 'rfc4648'
 
-import { fixUsername } from '../../client-side'
 import { verifyData } from '../../util/crypto/verify'
 import { ApiInput } from '../root-pixie'
 import { scrypt, userIdSnrp } from '../scrypt/scrypt-selectors'
@@ -8,19 +7,18 @@ import { searchTree } from './login'
 import { LoginStash } from './login-stash'
 import { StashLeaf } from './login-types'
 
-export { fixUsername }
-
 /**
  * Finds the login stash for the given username.
  * Returns a default object if
  */
-export function getStash(ai: ApiInput, username: string): LoginStash {
-  const fixedName = fixUsername(username)
+export function getStashByUsername(ai: ApiInput, username: string): LoginStash {
   const { stashes } = ai.props.state.login
+  for (const stash of stashes) {
+    if (stash.username === username) return stash
+  }
 
-  if (stashes[fixedName] != null) return stashes[fixedName]
   return {
-    username: fixedName,
+    username,
     appId: '',
     loginId: new Uint8Array(0),
     pendingVouchers: []
@@ -29,8 +27,7 @@ export function getStash(ai: ApiInput, username: string): LoginStash {
 
 export function getStashById(ai: ApiInput, loginId: Uint8Array): StashLeaf {
   const { stashes } = ai.props.state.login
-  for (const username of Object.keys(stashes)) {
-    const stashTree = stashes[username]
+  for (const stashTree of stashes) {
     const stash = searchTree(stashTree, stash =>
       verifyData(stash.loginId, loginId)
     )
@@ -49,9 +46,8 @@ export function hashUsername(
   ai: ApiInput,
   username: string
 ): Promise<Uint8Array> {
-  const fixedName = fixUsername(username)
-  if (userIdCache[fixedName] == null) {
-    userIdCache[fixedName] = scrypt(ai, fixedName, userIdSnrp)
+  if (userIdCache[username] == null) {
+    userIdCache[username] = scrypt(ai, username, userIdSnrp)
   }
-  return userIdCache[fixedName]
+  return userIdCache[username]
 }

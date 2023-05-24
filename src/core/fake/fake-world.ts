@@ -4,7 +4,6 @@ import { base16, base64 } from 'rfc4648'
 import { makeFetchFunction } from 'serverlet'
 import { bridgifyObject, close } from 'yaob'
 
-import { fixUsername } from '../../client-side'
 import {
   asFakeUser,
   asFakeUsers,
@@ -37,8 +36,7 @@ const wasLoginDump = uncleaner(asLoginDump)
 const wasFakeUser = uncleaner(asFakeUser)
 
 async function saveUser(io: EdgeIo, user: FakeUser): Promise<void> {
-  const { lastLogin, loginId, loginKey, repos, server } = user
-  const username = fixUsername(user.username)
+  const { lastLogin, loginId, loginKey, repos, server, username } = user
 
   // Save the stash:
   const stash = applyLoginPayload(

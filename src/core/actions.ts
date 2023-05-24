@@ -346,11 +346,11 @@ export type RootAction =
       type: 'LOGIN'
       payload: {
         appId: string
+        hasRootKey: boolean
         loginKey: Uint8Array
         loginType: LoginType
         pauseWallets: boolean
-        rootLogin: boolean
-        username: string
+        rootLoginId: Uint8Array
       }
     }
   | {

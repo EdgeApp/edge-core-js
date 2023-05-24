@@ -114,12 +114,20 @@ export interface ChangePasswordPayload {
   passwordKeySnrp: EdgeSnrp
 }
 
+export interface ChangePin2IdPayload {
+  pin2Id: Uint8Array
+}
+
 export interface ChangePin2Payload {
   pin2Id?: Uint8Array
   pin2Auth?: Uint8Array
   pin2Box?: EdgeBox
   pin2KeyBox?: EdgeBox
   pin2TextBox: EdgeBox
+}
+
+export interface ChangeRecovery2IdPayload {
+  recovery2Id: Uint8Array
 }
 
 export interface ChangeRecovery2Payload {
@@ -138,6 +146,11 @@ export interface ChangeSecretPayload {
 export interface ChangeUsernamePayload {
   userId: Uint8Array
   userTextBox: EdgeBox
+
+  // Also includes fields from these payloads if the login methods exist:
+  // - ChangePasswordPayload
+  // - ChangePin2IdPayload
+  // - ChangeRecovery2IdPayload
 }
 
 export interface ChangeVouchersPayload {
@@ -163,6 +176,7 @@ export interface CreateLoginPayload {
   // ...ChangePin2Payload
   // ...ChangeRecovery2Payload
   // ...ChangeSecretPayload
+  // ...ChangeUsernamePayload
   // ...CreateKeysPayload
 }
 

@@ -10,9 +10,11 @@ import {
 } from '../../types/types'
 import { compare } from '../../util/compare'
 import { ethereumKeyToAddress } from '../../util/crypto/ethereum'
+import { verifyData } from '../../util/crypto/verify'
 import { RootAction } from '../actions'
 import { findFirstKey, getAllWalletInfos, makeAccountType } from '../login/keys'
 import { makeLoginTree } from '../login/login'
+import { LoginStash } from '../login/login-stash'
 import { LoginTree, LoginType, WalletInfoFullMap } from '../login/login-types'
 import { maybeFindCurrencyPluginId } from '../plugins/plugins-selectors'
 import { RootState } from '../root-reducer'
@@ -38,13 +40,14 @@ export interface AccountState {
 
   // Login stuff:
   readonly appId: string // Copy of the context appId
+  readonly hasRootKey: boolean // True if the loginKey is for the root
   readonly loadFailure: Error | null // Failed to create API object.
   readonly login: LoginTree
   readonly loginKey: Uint8Array
   readonly loginTree: LoginTree
   readonly loginType: LoginType
-  readonly rootLogin: boolean // True if the loginKey is for the root
-  readonly username: string
+  readonly rootLoginId: Uint8Array
+  readonly stashTree: LoginStash
 
   // Plugin stuff:
   readonly allTokens: EdgePluginMap<EdgeTokenMap>
@@ -219,6 +222,10 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return action.type === 'LOGIN' ? action.payload.appId : state
   },
 
+  hasRootKey(state = true, action): boolean {
+    return action.type === 'LOGIN' ? action.payload.hasRootKey : state
+  },
+
   loadFailure(state = null, action): Error | null {
     return action.type === 'ACCOUNT_LOAD_FAILED' ? action.payload.error : state
   },
@@ -236,23 +243,30 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   loginTree: memoizeReducer(
     (next: AccountNext) => next.self.appId,
     (next: AccountNext) => next.self.loginKey,
-    (next: AccountNext) => next.self.rootLogin,
-    (next: AccountNext) => next.root.login.stashes[next.self.username],
-    (appId, loginKey, rootLogin, stashTree): LoginTree =>
-      makeLoginTree(stashTree, loginKey, rootLogin ? '' : appId)
+    (next: AccountNext) => next.self.hasRootKey,
+    (next: AccountNext) => next.self.stashTree,
+    (appId, loginKey, hasRootKey, stashTree): LoginTree =>
+      makeLoginTree(stashTree, loginKey, hasRootKey ? '' : appId)
   ),
 
   loginType(state = 'newAccount', action): LoginType {
     return action.type === 'LOGIN' ? action.payload.loginType : state
   },
 
-  rootLogin(state = true, action): boolean {
-    return action.type === 'LOGIN' ? action.payload.rootLogin : state
+  rootLoginId(state = new Uint8Array(0), action): Uint8Array {
+    return action.type === 'LOGIN' ? action.payload.rootLoginId : state
   },
 
-  username(state = '', action): string {
-    return action.type === 'LOGIN' ? action.payload.username : state
-  },
+  stashTree: memoizeReducer(
+    (next: AccountNext) => next.self.rootLoginId,
+    (next: AccountNext) => next.root.login.stashes,
+    (rootLoginId, stashes) => {
+      for (const stash of stashes) {
+        if (verifyData(stash.loginId, rootLoginId)) return stash
+      }
+      throw new Error('There is no stash')
+    }
+  ),
 
   allTokens(state = {}, action, next, prev): EdgePluginMap<EdgeTokenMap> {
     const { builtinTokens, customTokens } = next.self

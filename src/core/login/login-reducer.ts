@@ -1,6 +1,7 @@
 import { buildReducer, memoizeReducer } from 'redux-keto'
 
 import { EdgeUserInfo } from '../../types/types'
+import { verifyData } from '../../util/crypto/verify'
 import { base58 } from '../../util/encoding'
 import { RootAction } from '../actions'
 import { RootState } from '../root-reducer'
@@ -9,17 +10,13 @@ import { LoginStash } from './login-stash'
 import { WalletInfoFullMap } from './login-types'
 import { findPin2Stash } from './pin2'
 
-export interface LoginStashMap {
-  [username: string]: LoginStash
-}
-
 export interface LoginState {
   readonly apiKey: string
   readonly appId: string
   readonly clientId: Uint8Array
   readonly deviceDescription: string | null
   readonly serverUri: string
-  readonly stashes: LoginStashMap
+  readonly stashes: LoginStash[]
   readonly localUsers: EdgeUserInfo[]
   readonly walletInfos: WalletInfoFullMap
 }
@@ -46,22 +43,22 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
   localUsers: memoizeReducer(
     (next: RootState) => next.login.appId,
     (next: RootState) => next.login.stashes,
-    (appId: string, stashes: LoginStashMap): EdgeUserInfo[] => {
+    (appId: string, stashes: LoginStash[]): EdgeUserInfo[] => {
       const out: EdgeUserInfo[] = []
-      for (const username of Object.keys(stashes)) {
-        const stashTree = stashes[username]
-        const stash = searchTree(stashTree, stash => stash.appId === appId)
+      for (const stashTree of stashes) {
+        const { lastLogin, loginId, recovery2Key, username } = stashTree
+        if (username == null) continue
 
+        const stash = searchTree(stashTree, stash => stash.appId === appId)
         const keyLoginEnabled =
           stash != null &&
           (stash.passwordAuthBox != null || stash.loginAuthBox != null)
         const pin2Stash = findPin2Stash(stashTree, appId)
-        const { recovery2Key } = stashTree
 
         out.push({
           keyLoginEnabled,
-          lastLogin: stashTree.lastLogin,
-          loginId: base58.stringify(stashTree.loginId),
+          lastLogin,
+          loginId: base58.stringify(loginId),
           pinLoginEnabled: pin2Stash != null,
           recovery2Key:
             recovery2Key != null ? base58.stringify(recovery2Key) : undefined,
@@ -77,34 +74,23 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
     return action.type === 'INIT' ? action.payload.authServer : state
   },
 
-  stashes(state = {}, action): LoginStashMap {
+  stashes(state = [], action): LoginStash[] {
     switch (action.type) {
       case 'INIT': {
-        const out: LoginStashMap = {}
-
-        // Extract the usernames from the top-level objects:
-        for (const stash of action.payload.stashes) {
-          if (stash.username != null) {
-            const { username } = stash
-            out[username] = stash
-          }
-        }
-
-        return out
+        return action.payload.stashes
       }
 
       case 'LOGIN_STASH_DELETED': {
-        const copy = { ...state }
-        delete copy[action.payload]
-        return copy
+        const username = action.payload
+        return state.filter(stashTree => stashTree.username !== username)
       }
 
       case 'LOGIN_STASH_SAVED': {
-        const { username } = action.payload
-        if (username == null) throw new Error('Missing username')
-
-        const out = { ...state }
-        out[username] = action.payload
+        const newStashTree = action.payload
+        const out = state.filter(
+          stashTree => !verifyData(stashTree.loginId, newStashTree.loginId)
+        )
+        out.unshift(newStashTree)
         return out
       }
     }

@@ -16,7 +16,9 @@ import { base16, base32, base64 } from 'rfc4648'
 import type {
   ChangeOtpPayload,
   ChangePasswordPayload,
+  ChangePin2IdPayload,
   ChangePin2Payload,
+  ChangeRecovery2IdPayload,
   ChangeRecovery2Payload,
   ChangeSecretPayload,
   ChangeUsernamePayload,
@@ -192,6 +194,10 @@ export const asChangePasswordPayload: Cleaner<ChangePasswordPayload> = asObject(
   }
 )
 
+export const asChangePin2IdPayload: Cleaner<ChangePin2IdPayload> = asObject({
+  pin2Id: asBase64
+})
+
 export const asChangePin2Payload: Cleaner<ChangePin2Payload> = asObject({
   pin2Id: asOptional(asBase64),
   pin2Auth: asOptional(asBase64),
@@ -199,6 +205,12 @@ export const asChangePin2Payload: Cleaner<ChangePin2Payload> = asObject({
   pin2KeyBox: asOptional(asEdgeBox),
   pin2TextBox: asEdgeBox
 })
+
+export const asChangeRecovery2IdPayload: Cleaner<ChangeRecovery2IdPayload> = asObject(
+  {
+    recovery2Id: asBase64
+  }
+)
 
 export const asChangeRecovery2Payload: Cleaner<ChangeRecovery2Payload> = asObject(
   {

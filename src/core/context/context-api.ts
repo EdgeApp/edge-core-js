@@ -17,7 +17,7 @@ import { createLogin, usernameAvailable } from '../login/create'
 import { requestEdgeLogin } from '../login/edge'
 import { makeLoginTree, syncLogin } from '../login/login'
 import { fetchLoginMessages } from '../login/login-messages'
-import { getStash } from '../login/login-selectors'
+import { getStashByUsername } from '../login/login-selectors'
 import { removeStash, saveStash } from '../login/login-stash'
 import { resetOtp } from '../login/otp'
 import { loginPassword } from '../login/password'
@@ -57,14 +57,19 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     async listUsernames(): Promise<string[]> {
-      return Object.keys(ai.props.state.login.stashes)
+      const { stashes } = ai.props.state.login
+      return stashes
+        .map(stash => stash.username)
+        .filter((username): username is string => username != null)
     },
 
     async deleteLocalAccount(username: string): Promise<void> {
+      username = fixUsername(username)
+
       // Safety check:
-      const fixedName = fixUsername(username)
       for (const accountId of ai.props.state.accountIds) {
-        if (ai.props.state.accounts[accountId].username === fixedName) {
+        const accountState = ai.props.state.accounts[accountId]
+        if (accountState.stashTree.username === username) {
           throw new Error('Cannot remove logged-in user')
         }
       }
@@ -73,6 +78,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     async usernameAvailable(username: string): Promise<boolean> {
+      username = fixUsername(username)
       return await usernameAvailable(ai, username)
     },
 
@@ -82,6 +88,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       pin?: string,
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const loginTree = await createLogin(ai, username, opts, { password, pin })
       return await makeAccount(ai, appId, loginTree, 'newAccount', opts)
     },
@@ -91,9 +98,10 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       loginKey: string,
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const { now = new Date() } = opts
 
-      const stashTree = getStash(ai, username)
+      const stashTree = getStashByUsername(ai, username)
       const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
       stashTree.lastLogin = now
       saveStash(ai, stashTree).catch(() => {})
@@ -111,6 +119,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       password: string,
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const loginTree = await loginPassword(ai, username, password, opts)
       return await makeAccount(ai, appId, loginTree, 'passwordLogin', opts)
     },
@@ -118,7 +127,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     checkPasswordRules,
 
     async pinLoginEnabled(username: string): Promise<boolean> {
-      const loginStash = getStash(ai, username)
+      username = fixUsername(username)
+      const loginStash = getStashByUsername(ai, username)
       return findPin2Stash(loginStash, appId) != null
     },
 
@@ -127,6 +137,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       pin: string,
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const loginTree = await loginPin2(ai, appId, username, pin, opts)
       return await makeAccount(ai, appId, loginTree, 'pinLogin', opts)
     },
@@ -137,6 +148,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       answers: string[],
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      username = fixUsername(username)
       const loginTree = await loginRecovery2(
         ai,
         base58.parse(recovery2Key),
@@ -151,6 +163,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       recovery2Key: string,
       username: string
     ): Promise<string[]> {
+      username = fixUsername(username)
       return await getQuestions2(ai, base58.parse(recovery2Key), username)
     },
 
@@ -168,6 +181,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       username: string,
       otpResetToken: string
     ): Promise<Date> {
+      username = fixUsername(username)
       return await resetOtp(ai, username, otpResetToken)
     },
 
