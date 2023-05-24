@@ -270,9 +270,7 @@ describe('currency wallets', function () {
 
   it('paginates transactions', async function () {
     const { wallet, config } = await makeFakeCurrencyWallet()
-    await config.changeUserSettings({
-      txs: walletTxs
-    })
+    await addDemoTransactions(config)
 
     // Normal behavior:
     expect(
@@ -297,11 +295,38 @@ describe('currency wallets', function () {
     ).deep.equals(['k', 'l'])
   })
 
+  it('streams transactions', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    const tokenId = await addDemoTransactions(config)
+
+    // Normal behavior:
+    const stream = wallet.streamTransactions({
+      batchSize: 2,
+      firstBatchSize: 3,
+      tokenId
+    })
+    checkIteratorResult(await stream.next(), ['a', 'b', 'c'])
+    checkIteratorResult(await stream.next(), ['d', 'e'])
+    checkIteratorResult(await stream.next(), ['f', 'g'])
+    checkIteratorResult(await stream.next(), ['h', 'i'])
+    checkIteratorResult(await stream.next(), ['j', 'k'])
+    checkIteratorResult(await stream.next(), ['l', 'm'])
+    checkIteratorResult(await stream.next())
+
+    // Searching:
+    const search = wallet.streamTransactions({
+      batchSize: 2,
+      searchString: 'sideshift',
+      tokenId
+    })
+    checkIteratorResult(await search.next(), ['k', 'l'])
+    checkIteratorResult(await search.next(), ['m'])
+    checkIteratorResult(await search.next())
+  })
+
   it('search transactions', async function () {
     const { wallet, config } = await makeFakeCurrencyWallet()
-    await config.changeUserSettings({
-      txs: walletTxs
-    })
+    await addDemoTransactions(config)
 
     expect(
       justTxids(
@@ -544,6 +569,43 @@ describe('currency wallets', function () {
     await account.waitForAllWallets()
   })
 })
+
+/**
+ * Adds demo transactions to the fake wallet.
+ * These demo transactions use the currency code "BTC",
+ * which is different from our fake mainnet code "FAKE",
+ * so we also create a custom token so these transactions can appear.
+ * @return The fake tokenId for "BTC".
+ */
+async function addDemoTransactions(
+  currencyConfig: EdgeCurrencyConfig
+): Promise<string> {
+  await currencyConfig.changeUserSettings({
+    txs: walletTxs
+  })
+
+  const tokenId = await currencyConfig.addCustomToken({
+    currencyCode: 'BTC',
+    denominations: [],
+    displayName: 'Bitcoin',
+    networkLocation: {
+      contractAddress: 'madeupcontract'
+    }
+  })
+  return tokenId
+}
+
+function checkIteratorResult(
+  result: IteratorResult<EdgeTransaction[]>,
+  txids?: string[]
+): void {
+  if (txids == null) {
+    expect(result.done).equals(true)
+  } else {
+    expect(result.done).equals(false)
+    expect(justTxids(result.value)).deep.equals(txids)
+  }
+}
 
 function justTxids(txs: EdgeTransaction[]): string[] {
   return txs.map(tx => tx.txid)

@@ -25,6 +25,7 @@ function tsToFlow(code: string): string {
     // Builtin types:
     .replace(/\b(\w+): ComponentType</g, '$1: React$ComponentType<')
     .replace(/\bPartial<(\w+)>/g, '$Rest<$1, { ... }>')
+    .replace(/\bAsyncIterableIterator\b/g, 'AsyncGenerator')
 
   return '// @flow\n\n' + fixed
 }
