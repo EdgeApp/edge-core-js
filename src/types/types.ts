@@ -1451,7 +1451,7 @@ export interface EdgeRecoveryQuestionChoice {
 // parameters ----------------------------------------------------------
 
 export interface EdgeCreateAccountOptions {
-  username: string
+  username?: string
   password?: string
   pin?: string
 }
@@ -1461,7 +1461,7 @@ export interface EdgeLoginMessage {
   otpResetPending: boolean
   pendingVouchers: EdgePendingVoucher[]
   recovery2Corrupt: boolean
-  username: string
+  username?: string
 }
 
 export interface EdgePasswordRules {
@@ -1511,7 +1511,7 @@ export interface EdgeUserInfo {
   loginId: string // base58
   pinLoginEnabled: boolean
   recovery2Key?: string // base58
-  username: string
+  username?: string
   voucherId?: string
 }
 
@@ -1548,9 +1548,9 @@ export interface EdgeContext {
 
   // Fingerprint login:
   readonly loginWithKey: (
-    username: string,
+    usernameOrLoginId: string,
     loginKey: string,
-    opts?: EdgeAccountOptions
+    opts?: EdgeAccountOptions & { useLoginId?: boolean }
   ) => Promise<EdgeAccount>
 
   // Password login:
@@ -1563,9 +1563,9 @@ export interface EdgeContext {
 
   // PIN login:
   readonly loginWithPIN: (
-    username: string,
+    usernameOrLoginId: string,
     pin: string,
-    opts?: EdgeAccountOptions
+    opts?: EdgeAccountOptions & { useLoginId?: boolean }
   ) => Promise<EdgeAccount>
 
   // Recovery2 login:

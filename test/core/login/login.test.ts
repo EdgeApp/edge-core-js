@@ -58,6 +58,34 @@ describe('creation', function () {
     ])
   })
 
+  it('username-less account', async function () {
+    this.timeout(1000)
+    const now = new Date()
+    const world = await makeFakeEdgeWorld([], quiet)
+    const contextOptions = { apiKey: '', appId: 'test' }
+    const context = await world.makeEdgeContext(contextOptions)
+
+    const account = await context.createAccount({
+      pin: fakeUser.pin,
+      now
+    })
+    expect(context.localUsers).deep.equals([
+      {
+        keyLoginEnabled: true,
+        lastLogin: now,
+        loginId: account.rootLoginId,
+        pinLoginEnabled: true,
+        recovery2Key: undefined,
+        username: undefined,
+        voucherId: undefined
+      }
+    ])
+
+    await context.loginWithPIN(account.rootLoginId, fakeUser.pin, {
+      useLoginId: true
+    })
+  })
+
   it('create account', async function () {
     this.timeout(15000)
     const now = new Date()

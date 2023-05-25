@@ -47,7 +47,6 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
       const out: EdgeUserInfo[] = []
       for (const stashTree of stashes) {
         const { lastLogin, loginId, recovery2Key, username } = stashTree
-        if (username == null) continue
 
         const stash = searchTree(stashTree, stash => stash.appId === appId)
         const keyLoginEnabled =

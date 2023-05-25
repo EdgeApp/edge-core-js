@@ -20,8 +20,12 @@ import { getLoginOtp } from './otp'
 const wasChangePin2IdPayload = uncleaner(asChangePin2IdPayload)
 const wasChangePin2Payload = uncleaner(asChangePin2Payload)
 
-function makePin2Id(pin2Key: Uint8Array, username: string): Uint8Array {
-  return hmacSha256(utf8.parse(username), pin2Key)
+function makePin2Id(
+  pin2Key: Uint8Array,
+  username: string | undefined
+): Uint8Array {
+  const data = username == null ? Uint8Array.from([0]) : utf8.parse(username)
+  return hmacSha256(data, pin2Key)
 }
 
 function makePin2Auth(pin2Key: Uint8Array, pin: string): Uint8Array {
@@ -51,9 +55,6 @@ export async function loginPin2(
   pin: string,
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  const { username } = stashTree
-  if (username == null) throw new Error('PIN login requires a username')
-
   const stash = findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
     throw new Error('PIN login is not enabled for this account on this device')
@@ -62,7 +63,7 @@ export async function loginPin2(
   // Request:
   const { pin2Key } = stash
   const request = {
-    pin2Id: makePin2Id(pin2Key, username),
+    pin2Id: makePin2Id(pin2Key, stashTree.username),
     pin2Auth: makePin2Auth(pin2Key, pin)
   }
   return await serverLogin(ai, stashTree, stash, opts, request, async reply => {
@@ -197,7 +198,7 @@ export function makeChangePin2IdKit(
 export function makeChangePin2Kit(
   ai: ApiInput,
   login: LoginTree,
-  username: string,
+  username: string | undefined,
   pin: string,
   enableLogin: boolean
 ): LoginKit {

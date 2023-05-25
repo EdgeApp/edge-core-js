@@ -18,7 +18,11 @@ import { createLogin, usernameAvailable } from '../login/create'
 import { requestEdgeLogin } from '../login/edge'
 import { makeLoginTree, syncLogin } from '../login/login'
 import { fetchLoginMessages } from '../login/login-messages'
-import { getEmptyStash, getStashByUsername } from '../login/login-selectors'
+import {
+  getEmptyStash,
+  getStashById,
+  getStashByUsername
+} from '../login/login-selectors'
 import { removeStash, saveStash } from '../login/login-stash'
 import { resetOtp } from '../login/otp'
 import { loginPassword } from '../login/password'
@@ -86,24 +90,27 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async createAccount(
       opts: EdgeCreateAccountOptions & EdgeAccountOptions
     ): Promise<EdgeAccount> {
-      let { username, password, pin } = opts
-      username = fixUsername(username)
-      const loginTree = await createLogin(ai, username, opts, { password, pin })
+      if (opts.username != null) {
+        opts.username = fixUsername(opts.username)
+      }
+      const loginTree = await createLogin(ai, opts, opts)
       return await makeAccount(ai, appId, loginTree, 'newAccount', opts)
     },
 
     async loginWithKey(
-      username: string,
+      usernameOrLoginId: string,
       loginKey: string,
-      opts: EdgeAccountOptions = {}
+      opts: EdgeAccountOptions & { useLoginId?: boolean } = {}
     ): Promise<EdgeAccount> {
-      username = fixUsername(username)
-      const { now = new Date() } = opts
+      const { now = new Date(), useLoginId = false } = opts
 
-      const stashTree = getStashByUsername(ai, username)
+      const stashTree = useLoginId
+        ? getStashById(ai, base58.parse(usernameOrLoginId)).stashTree
+        : getStashByUsername(ai, fixUsername(usernameOrLoginId))
       if (stashTree == null) {
         throw new Error('User does not exist on this device')
       }
+
       const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
       stashTree.lastLogin = now
       saveStash(ai, stashTree).catch(() => {})
@@ -145,15 +152,19 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     async loginWithPIN(
-      username: string,
+      usernameOrLoginId: string,
       pin: string,
-      opts: EdgeAccountOptions = {}
+      opts = {}
     ): Promise<EdgeAccount> {
-      username = fixUsername(username)
-      const stashTree = getStashByUsername(ai, username)
+      const { useLoginId = false } = opts
+
+      const stashTree = useLoginId
+        ? getStashById(ai, base58.parse(usernameOrLoginId)).stashTree
+        : getStashByUsername(ai, fixUsername(usernameOrLoginId))
       if (stashTree == null) {
         throw new Error('User does not exist on this device')
       }
+
       const loginTree = await loginPin2(ai, appId, stashTree, pin, opts)
       return await makeAccount(ai, appId, loginTree, 'pinLogin', opts)
     },

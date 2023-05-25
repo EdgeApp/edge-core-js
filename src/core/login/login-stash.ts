@@ -120,13 +120,10 @@ export async function saveStash(
   stashTree: LoginStash
 ): Promise<void> {
   const { dispatch, io } = ai.props
-  const { appId, loginId, username } = stashTree
+  const { appId, loginId } = stashTree
 
   if (appId !== '') {
     throw new Error('Cannot save a login without an appId.')
-  }
-  if (username == null) {
-    throw new Error('Cannot save a login without a username.')
   }
   if (loginId == null || loginId.length !== 32) {
     throw new Error('Invalid loginId')
