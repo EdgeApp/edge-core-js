@@ -46,11 +46,10 @@ describe('creation', function () {
     const questions = fakeUser.recovery2Questions
     const answers = fakeUser.recovery2Answers
 
-    const account = await context.createAccount(
+    const account = await context.createAccount({
       username,
-      undefined,
-      fakeUser.pin
-    )
+      pin: fakeUser.pin
+    })
     const recovery2Key = await account.changeRecovery(questions, answers)
 
     return await Promise.all([
@@ -70,7 +69,10 @@ describe('creation', function () {
     const password = 'some fancy password'
     const pin = '0218'
 
-    const account = await context.createAccount(username, password, pin, {
+    const account = await context.createAccount({
+      username,
+      password,
+      pin,
       now
     })
 

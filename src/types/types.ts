@@ -1450,6 +1450,12 @@ export interface EdgeRecoveryQuestionChoice {
 
 // parameters ----------------------------------------------------------
 
+export interface EdgeCreateAccountOptions {
+  username: string
+  password?: string
+  pin?: string
+}
+
 export interface EdgeLoginMessage {
   loginId: string // base64
   otpResetPending: boolean
@@ -1532,10 +1538,7 @@ export interface EdgeContext {
   // Account creation:
   readonly usernameAvailable: (username: string) => Promise<boolean>
   readonly createAccount: (
-    username: string,
-    password?: string,
-    pin?: string,
-    opts?: EdgeAccountOptions
+    opts: EdgeCreateAccountOptions & EdgeAccountOptions
   ) => Promise<EdgeAccount>
 
   // Edge login:

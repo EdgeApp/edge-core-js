@@ -5,6 +5,7 @@ import {
   EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
+  EdgeCreateAccountOptions,
   EdgeLoginMessage,
   EdgeLogSettings,
   EdgePendingEdgeLogin,
@@ -83,11 +84,9 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     async createAccount(
-      username: string,
-      password?: string,
-      pin?: string,
-      opts: EdgeAccountOptions = {}
+      opts: EdgeCreateAccountOptions & EdgeAccountOptions
     ): Promise<EdgeAccount> {
+      let { username, password, pin } = opts
       username = fixUsername(username)
       const loginTree = await createLogin(ai, username, opts, { password, pin })
       return await makeAccount(ai, appId, loginTree, 'newAccount', opts)
