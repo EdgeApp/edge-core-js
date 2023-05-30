@@ -23,37 +23,28 @@ function defaultOnError(error: any): void {
   console.error(error)
 }
 
-let warningShown = false
-
 export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
   const {
-    options,
     allowDebugging,
-    crashReporter = options?.crashReporter,
+    crashReporter,
     debug,
     nativeIo,
     pluginUris = [],
     onError = defaultOnError,
     onLoad,
-    onLog = options?.onLog ?? defaultOnLog,
+    onLog = defaultOnLog,
 
     // Inner context options:
-    apiKey = options?.apiKey ?? '',
-    appId = options?.appId ?? '',
-    authServer = options?.authServer,
-    deviceDescription = options?.deviceDescription,
-    hideKeys = options?.hideKeys,
-    logSettings = options?.logSettings,
-    plugins = options?.plugins
+    apiKey = '',
+    appId = '',
+    authServer,
+    deviceDescription,
+    hideKeys,
+    logSettings,
+    plugins
   } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeEdgeContext')
-  }
-  if (options != null && !warningShown) {
-    warningShown = true
-    console.warn(
-      'The MakeEdgeContext options prop is deprecated - just pass the context options as normal props.'
-    )
   }
 
   return (

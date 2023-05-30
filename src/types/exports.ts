@@ -66,9 +66,6 @@ interface CommonProps {
 export interface EdgeContextProps extends CommonProps {
   onLoad: (context: EdgeContext) => unknown
 
-  // Deprecated. Just pass options like `apiKey` as normal props:
-  options?: EdgeContextOptions
-
   // EdgeFakeWorldOptions:
   crashReporter?: EdgeCrashReporter
   onLog?: EdgeOnLog
