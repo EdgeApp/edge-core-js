@@ -1111,7 +1111,7 @@ export interface EdgeRatePlugin {
 export interface EdgeAccountOptions {
   now?: Date // The current time, if different from `new Date()`
   otpKey?: string // The OTP secret
-  otp?: string // The 6-digit OTP, or (deprecated) the OTP secret
+  otp?: string // The 6-digit OTP
   pauseWallets?: boolean // True to start wallets in the paused state
 }
 
