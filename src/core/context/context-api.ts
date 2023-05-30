@@ -21,7 +21,7 @@ import { getStashByUsername } from '../login/login-selectors'
 import { removeStash, saveStash } from '../login/login-stash'
 import { resetOtp } from '../login/otp'
 import { loginPassword } from '../login/password'
-import { findPin2Stash, loginPin2 } from '../login/pin2'
+import { loginPin2 } from '../login/pin2'
 import {
   getQuestions2,
   listRecoveryQuestionChoices,
@@ -128,8 +128,12 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
     async pinLoginEnabled(username: string): Promise<boolean> {
       username = fixUsername(username)
-      const loginStash = getStashByUsername(ai, username)
-      return findPin2Stash(loginStash, appId) != null
+      for (const userInfo of ai.props.state.login.localUsers) {
+        if (userInfo.username === username) {
+          return userInfo.pinLoginEnabled
+        }
+      }
+      return false
     },
 
     async loginWithPIN(
