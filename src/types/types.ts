@@ -1668,13 +1668,3 @@ export interface EdgeNetworkFee {
   readonly currencyCode: string
   readonly nativeAmount: string
 }
-
-export interface EdgeBitcoinPrivateKeyOptions {
-  format?: string
-  coinType?: number
-  account?: number
-}
-
-export type EdgeCreatePrivateKeyOptions =
-  | EdgeBitcoinPrivateKeyOptions
-  | JsonObject
