@@ -590,10 +590,7 @@ export function combineTxWithFile(
     parentNetworkFee: tx.networkFee[walletCurrency],
     signedTx: tx.signedTx,
     txid: tx.txid,
-    walletId,
-
-    // @ts-expect-error Deprecated & removed:
-    amountSatoshi: Number(tx.nativeAmount[currencyCode] ?? '0')
+    walletId
   }
 
   // If we have a file, use it to override the defaults:

@@ -137,7 +137,7 @@ describe('currency wallets', function () {
     // New transactions:
     await config.changeUserSettings({
       txs: {
-        a: { amountSatoshi: 1 },
+        a: { nativeAmount: '1' },
         b: { nativeAmount: '100' }
       }
     })
@@ -181,16 +181,12 @@ describe('currency wallets', function () {
       expect(txs.length).equals(1)
       expect(txs[0].txid).equals('a')
       expect(txs[0].nativeAmount).equals('2')
-      // @ts-expect-error legacy support code
-      expect(txs[0].amountSatoshi).equals(2)
     })
 
     await wallet.getTransactions({ currencyCode: 'TOKEN' }).then(txs => {
       expect(txs.length).equals(1)
       expect(txs[0].txid).equals('b')
       expect(txs[0].nativeAmount).equals('200')
-      // @ts-expect-error legacy support code
-      expect(txs[0].amountSatoshi).equals(200)
     })
   })
 
