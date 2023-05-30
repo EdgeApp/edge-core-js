@@ -583,13 +583,6 @@ export interface EdgeGetTransactionsOptions {
   startDate?: Date
   endDate?: Date
   searchString?: string
-
-  /** @deprecated Does nothing */
-  returnIndex?: number
-  /** @deprecated Does nothing */
-  returnEntries?: number
-  /** @deprecated Does nothing */
-  denomination?: string
 }
 
 export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
