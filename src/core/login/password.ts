@@ -6,8 +6,8 @@ import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { ApiInput } from '../root-pixie'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors'
 import { applyKit, makeLoginTree, serverLogin, syncLogin } from './login'
-import { getStashByUsername, hashUsername } from './login-selectors'
-import { saveStash } from './login-stash'
+import { hashUsername } from './login-selectors'
+import { LoginStash, saveStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 
 const wasChangePasswordPayload = uncleaner(asChangePasswordPayload)
@@ -22,15 +22,14 @@ function makeHashInput(username: string, password: string): string {
  */
 async function loginPasswordOffline(
   ai: ApiInput,
-  username: string,
+  stashTree: LoginStash,
   password: string,
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
   const { now = new Date() } = opts
-  const stashTree = getStashByUsername(ai, username)
 
-  const { passwordBox, passwordKeySnrp } = stashTree
-  if (passwordBox == null || passwordKeySnrp == null) {
+  const { passwordBox, passwordKeySnrp, username } = stashTree
+  if (passwordBox == null || passwordKeySnrp == null || username == null) {
     throw new Error('Missing data for offline password login')
   }
   const up = makeHashInput(username, password)
@@ -53,11 +52,12 @@ async function loginPasswordOffline(
  */
 async function loginPasswordOnline(
   ai: ApiInput,
-  username: string,
+  stashTree: LoginStash,
   password: string,
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  const stashTree = getStashByUsername(ai, username)
+  const { username } = stashTree
+  if (username == null) throw new Error('Password login requires a username')
 
   // Request:
   const up = makeHashInput(username, password)
@@ -94,12 +94,12 @@ async function loginPasswordOnline(
  */
 export async function loginPassword(
   ai: ApiInput,
-  username: string,
+  stashTree: LoginStash,
   password: string,
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  return await loginPasswordOffline(ai, username, password, opts).catch(() =>
-    loginPasswordOnline(ai, username, password, opts)
+  return await loginPasswordOffline(ai, stashTree, password, opts).catch(() =>
+    loginPasswordOnline(ai, stashTree, password, opts)
   )
 }
 

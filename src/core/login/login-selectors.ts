@@ -7,21 +7,25 @@ import { searchTree } from './login'
 import { LoginStash } from './login-stash'
 import { StashLeaf } from './login-types'
 
-/**
- * Finds the login stash for the given username.
- * Returns a default object if
- */
-export function getStashByUsername(ai: ApiInput, username: string): LoginStash {
-  const { stashes } = ai.props.state.login
-  for (const stash of stashes) {
-    if (stash.username === username) return stash
-  }
-
+export function getEmptyStash(username?: string): LoginStash {
   return {
     username,
     appId: '',
     loginId: new Uint8Array(0),
     pendingVouchers: []
+  }
+}
+
+/**
+ * Finds the login stash for the given username.
+ */
+export function getStashByUsername(
+  ai: ApiInput,
+  username: string
+): LoginStash | undefined {
+  const { stashes } = ai.props.state.login
+  for (const stash of stashes) {
+    if (stash.username === username) return stash
   }
 }
 

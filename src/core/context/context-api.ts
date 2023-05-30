@@ -17,7 +17,7 @@ import { createLogin, usernameAvailable } from '../login/create'
 import { requestEdgeLogin } from '../login/edge'
 import { makeLoginTree, syncLogin } from '../login/login'
 import { fetchLoginMessages } from '../login/login-messages'
-import { getStashByUsername } from '../login/login-selectors'
+import { getEmptyStash, getStashByUsername } from '../login/login-selectors'
 import { removeStash, saveStash } from '../login/login-stash'
 import { resetOtp } from '../login/otp'
 import { loginPassword } from '../login/password'
@@ -102,6 +102,9 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       const { now = new Date() } = opts
 
       const stashTree = getStashByUsername(ai, username)
+      if (stashTree == null) {
+        throw new Error('User does not exist on this device')
+      }
       const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
       stashTree.lastLogin = now
       saveStash(ai, stashTree).catch(() => {})
@@ -120,7 +123,13 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
       username = fixUsername(username)
-      const loginTree = await loginPassword(ai, username, password, opts)
+      const stashTree = getStashByUsername(ai, username)
+      const loginTree = await loginPassword(
+        ai,
+        stashTree ?? getEmptyStash(username),
+        password,
+        opts
+      )
       return await makeAccount(ai, appId, loginTree, 'passwordLogin', opts)
     },
 
@@ -142,7 +151,11 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
       username = fixUsername(username)
-      const loginTree = await loginPin2(ai, appId, username, pin, opts)
+      const stashTree = getStashByUsername(ai, username)
+      if (stashTree == null) {
+        throw new Error('User does not exist on this device')
+      }
+      const loginTree = await loginPin2(ai, appId, stashTree, pin, opts)
       return await makeAccount(ai, appId, loginTree, 'pinLogin', opts)
     },
 
@@ -153,10 +166,11 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
       username = fixUsername(username)
+      const stashTree = getStashByUsername(ai, username)
       const loginTree = await loginRecovery2(
         ai,
+        stashTree ?? getEmptyStash(username),
         base58.parse(recovery2Key),
-        username,
         answers,
         opts
       )
