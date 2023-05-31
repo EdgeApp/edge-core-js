@@ -301,10 +301,6 @@ describe('currency wallets', function () {
       )
     ).deep.equals(['d', 'e'])
 
-    // The API isn't useful when combining pagination with a search term
-    // or date range, since there is no way to know what `unfilteredIndex`
-    // to start with next. Also, does an empty list mean we are done,
-    // or just didn't find anything in this section?
     expect(
       justTxids(
         await wallet.getTransactions({
@@ -314,7 +310,7 @@ describe('currency wallets', function () {
           startEntries: 2
         })
       )
-    ).deep.equals([])
+    ).deep.equals(['k', 'l'])
   })
 
   it('search transactions', async function () {

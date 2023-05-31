@@ -576,8 +576,8 @@ export interface EdgeGetTransactionsOptions {
 
   /**
    * The number of entries to return.
-   * The actual number of returned entries may be lower
-   * if the search or date filters remove any transactions.
+   * Defaults to all transactions.
+   * We may return less than this when we reach the end.
    */
   startEntries?: number
 

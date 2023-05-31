@@ -278,69 +278,49 @@ export function makeCurrencyWalletApi(
         // All the transactions we have from the engine:
         txs
       } = state
-      const txids = Object.keys(txs)
-      const { startIndex = 0, startEntries = txids.length } = opts
+      const { startIndex = 0, startEntries = sortedTxidHashes.length } = opts
 
-      // create map of tx id hashes to their order (cardinality)
-      const mappedUnfilteredIndexes: { [txid: string]: number } = {}
-      sortedTxidHashes.forEach((item, index) => {
-        mappedUnfilteredIndexes[item] = index
-      })
-
-      // we need to make sure that after slicing, the total txs number is equal to opts.startEntries
-      // slice, verify txs in files, if some are dropped and missing, do it again recursively
-      let searchedTxs = 0
-      let counter = 0
+      // Iterate over the sorted transactions until we have enough output:
       const out: EdgeTransaction[] = []
-      while (searchedTxs < startEntries) {
-        // take a slice from sorted transactions that begins at current index and goes until however many are left
-        const slicedTransactions = sortedTxidHashes.slice(
-          startIndex + startEntries * counter,
-          startIndex + startEntries * (counter + 1)
-        )
-
-        // break loop if slicing starts beyond length of array
-        if (slicedTransactions.length === 0) break
-
-        // filter the transactions
-        const missingTxIdHashes = slicedTransactions.filter(txidHash => {
-          // remove any that do not have a file
-          return files[txidHash] == null
-        })
-        // load files into state
-        const missingFiles = await loadTxFiles(input, missingTxIdHashes)
-        Object.assign(files, missingFiles)
-        // give txs the unfilteredIndex
-
-        for (const txidHash of slicedTransactions) {
-          const file = files[txidHash]
-          const txid = file?.txid ?? txidHashes[txidHash]?.txid
-          if (txid == null) continue
-          const tempTx = txs[txid]
-          // skip irrelevant transactions - txs that are not in the files (dropped)
-          if (
-            tempTx == null ||
-            (tempTx.nativeAmount[currencyCode] == null &&
-              tempTx.networkFee[currencyCode] == null)
-          ) {
-            // exit block if there is no transaction or no amount / no fee
-            continue
-          }
-          const tx = {
-            ...tempTx,
-            unfilteredIndex: mappedUnfilteredIndexes[txidHash]
-          }
-          // add this tx / file to the output
-          const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
-          if (
-            searchStringFilter(ai, edgeTx, opts) &&
-            dateFilter(edgeTx, opts)
-          ) {
-            out.push(edgeTx)
-          }
-          searchedTxs++
+      for (
+        let i = startIndex, lastFile = startIndex;
+        i < sortedTxidHashes.length && out.length < startEntries;
+        ++i
+      ) {
+        // Load a batch of files if we need that:
+        if (i >= lastFile) {
+          const loadEnd = lastFile + startEntries
+          const missingTxIdHashes = sortedTxidHashes
+            .slice(lastFile, loadEnd)
+            .filter(txidHash => files[txidHash] == null)
+          const missingFiles = await loadTxFiles(input, missingTxIdHashes)
+          Object.assign(files, missingFiles)
+          lastFile = loadEnd
         }
-        counter++
+
+        const txidHash = sortedTxidHashes[i]
+        const file = files[txidHash]
+        const txid = file?.txid ?? txidHashes[txidHash]?.txid
+        if (txid == null) continue
+        const tx = txs[txid]
+
+        // Filter transactions based on the currency code:
+        if (
+          tx == null ||
+          (tx.nativeAmount[currencyCode] == null &&
+            tx.networkFee[currencyCode] == null)
+        ) {
+          continue
+        }
+
+        // add this tx / file to the output
+        const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
+        if (searchStringFilter(ai, edgeTx, opts) && dateFilter(edgeTx, opts)) {
+          out.push({
+            ...edgeTx,
+            otherParams: { ...edgeTx.otherParams, unfilteredIndex: i }
+          })
+        }
       }
       return out
     },
@@ -677,9 +657,6 @@ export function combineTxWithFile(
   const walletCurrency = input.props.walletState.currencyInfo.currencyCode
   const walletFiat = input.props.walletState.fiat
 
-  const flowHack: any = tx
-  const { unfilteredIndex } = flowHack
-
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
     blockHeight: tx.blockHeight,
@@ -690,7 +667,7 @@ export function combineTxWithFile(
     isSend: tx.isSend,
     nativeAmount: tx.nativeAmount[currencyCode] ?? '0',
     networkFee: tx.networkFee[currencyCode] ?? '0',
-    otherParams: { ...tx.otherParams, unfilteredIndex },
+    otherParams: { ...tx.otherParams },
     ourReceiveAddresses: tx.ourReceiveAddresses,
     parentNetworkFee: tx.networkFee[walletCurrency],
     signedTx: tx.signedTx,
