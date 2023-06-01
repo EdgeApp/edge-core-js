@@ -162,8 +162,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return base58.stringify(loginTree.loginId)
     },
 
-    get username(): string {
-      if (username == null) throw new Error('Missing username')
+    get username(): string | undefined {
       return username
     },
 

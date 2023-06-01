@@ -69,6 +69,7 @@ describe('creation', function () {
       pin: fakeUser.pin,
       now
     })
+    expect(account.username).equals(undefined)
     expect(context.localUsers).deep.equals([
       {
         keyLoginEnabled: true,
