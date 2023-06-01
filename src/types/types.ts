@@ -1299,7 +1299,7 @@ export interface EdgeAccount {
   readonly loggedIn: boolean
   readonly recoveryKey: string | undefined // base58, for email backup
   readonly rootLoginId: string // base58
-  readonly username: string
+  readonly username: string | undefined
 
   /** Gets the base58 decryption key for biometric login */
   readonly getLoginKey: () => Promise<string> // base58

@@ -101,7 +101,7 @@ export interface FakeUser {
   loginKey: Uint8Array
   repos: { [repo: string]: { [path: string]: EdgeBox } }
   server: LoginDump
-  username: string
+  username?: string
 }
 
 export const asVoucherDump: Cleaner<VoucherDump> = asObject({
@@ -189,7 +189,7 @@ export const asFakeUser: Cleaner<FakeUser> = asObject({
   loginKey: asBase64,
   repos: asObject(asObject(asEdgeBox)),
   server: asLoginDump,
-  username: asUsername
+  username: asOptional(asUsername)
 })
 
 export const asFakeUsers = asArray<FakeUser>(asFakeUser)
