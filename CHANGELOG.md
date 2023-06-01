@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v0.21.5 (2023-05-24)
+
+- deprecated: `EdgeContext.pinLoginEnabled`. Use `EdgeContext.localUsers` instead.
+- fixed: Correctly handle `startEntries` in `getTransactions`, by always returning the requested number of transactions.
+
 ## v0.21.4 (2023-05-24)
 
 - added: `EdgeAccount.changeUsername`.
