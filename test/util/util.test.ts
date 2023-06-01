@@ -1,4 +1,4 @@
-import { assert } from 'chai'
+import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { mergeDeeply } from '../../src/util/util'
@@ -14,7 +14,7 @@ describe('utilities', function () {
       z: 5
     }
 
-    assert.deepEqual(mergeDeeply(a, b), {
+    expect(mergeDeeply(a, b)).deep.equals({
       x: 1,
       y: { a: 2, b: 3, c: 4 },
       z: 5

@@ -1,4 +1,4 @@
-import { assert, expect } from 'chai'
+import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
@@ -16,9 +16,9 @@ describe('mergeKeyInfos', function () {
     const key2 = { id: ID_2, type: 'bar', keys: { a: 2 } }
     const out = mergeKeyInfos([key1, key2])
 
-    assert.equal(out.length, 2)
-    assert.deepEqual(out[0], key1)
-    assert.deepEqual(out[1], key2)
+    expect(out.length).equals(2)
+    expect(out[0]).deep.equals(key1)
+    expect(out[1]).deep.equals(key2)
   })
 
   it('merge overlapping keys', function () {
@@ -27,28 +27,28 @@ describe('mergeKeyInfos', function () {
     const key3 = { id: ID_1, type: 'foo', keys: { a: 1, b: 2 } }
     const out = mergeKeyInfos([key1, key2])
 
-    assert.equal(out.length, 1)
-    assert.deepEqual(out[0], key3)
-    assert.deepEqual(key1.keys, { a: 1 })
-    assert.deepEqual(key2.keys, { b: 2 })
+    expect(out.length).equals(1)
+    expect(out[0]).deep.equals(key3)
+    expect(key1.keys).deep.equals({ a: 1 })
+    expect(key2.keys).deep.equals({ b: 2 })
   })
 
   it('merge conflicting types', function () {
-    assert.throws(() =>
+    expect(() =>
       mergeKeyInfos([
         { id: ID_1, type: 'foo', keys: { a: 1 } },
         { id: ID_1, type: 'bar', keys: { b: 2 } }
       ])
-    )
+    ).throws('Key integrity violation')
   })
 
   it('merge conflicting keys', function () {
-    assert.throws(() =>
+    expect(() =>
       mergeKeyInfos([
         { id: ID_1, type: 'foo', keys: { a: 1 } },
         { id: ID_1, type: 'foo', keys: { a: 2 } }
       ])
-    )
+    ).throws('Key integrity violation')
   })
 })
 

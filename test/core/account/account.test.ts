@@ -1,5 +1,5 @@
 import { makeAssertLog } from 'assert-log'
-import { assert, expect } from 'chai'
+import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
@@ -71,8 +71,10 @@ describe('account', function () {
     const { allKeys } = account
     const accountRepo = findWallet(allKeys, 'account-repo:co.airbitz.wallet')
     if (accountRepo == null) throw new Error('Missing repo')
-    assert.equal(accountRepo.id, 'JN4meEIJO05QhDMN3QZd48Qh7F1xHUpUmy2oEhg9DdY=')
-    assert(findWallet(allKeys, 'account-repo:blah') == null)
+    expect(accountRepo.id).equals(
+      'JN4meEIJO05QhDMN3QZd48Qh7F1xHUpUmy2oEhg9DdY='
+    )
+    expect(findWallet(allKeys, 'account-repo:blah')).equals(undefined)
   })
 
   it('attach repo', async function () {
@@ -87,7 +89,7 @@ describe('account', function () {
     const id = await account.createWallet('account-repo:blah', keys)
     const info = account.allKeys.find(info => info.id === id)
     if (info == null) throw new Error('Missing key info')
-    assert.deepEqual(await account.getRawPrivateKey(id), keys)
+    expect(await account.getRawPrivateKey(id)).deep.equals(keys)
   })
 
   it('create wallet', async function () {
@@ -99,7 +101,7 @@ describe('account', function () {
     const info = account.allKeys.find(info => info.id === id)
     if (info == null) throw new Error('Missing key info')
     const keys = await account.getRawPrivateKey(id)
-    assert.equal(keys.fakeKey, 'FakePrivateKey')
+    expect(keys.fakeKey).equals('FakePrivateKey')
   })
 
   it('create currency wallet', async function () {
@@ -115,10 +117,10 @@ describe('account', function () {
       migratedFromWalletId: 'asdf',
       name: 'test wallet'
     })
-    assert.equal(wallet.name, 'test wallet')
-    assert.equal(wallet.fiatCurrencyCode, 'iso:JPY')
+    expect(wallet.name).equals('test wallet')
+    expect(wallet.fiatCurrencyCode).equals('iso:JPY')
     const walletInfo = account.allKeys.find(info => info.id === wallet.id)
-    assert.equal(walletInfo?.migratedFromWalletId, 'asdf')
+    expect(walletInfo?.migratedFromWalletId).equals('asdf')
   })
 
   it('list keys', async function () {
@@ -251,10 +253,10 @@ describe('account', function () {
       'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54=': { archived: true }
     })
     const allKeys = account.allKeys
-    assert.equal(allKeys[0].sortIndex, 1)
-    assert.equal(allKeys[1].deleted, true)
-    assert.equal(allKeys[2].sortIndex, 0)
-    assert.equal(allKeys[2].archived, true)
+    expect(allKeys[0].sortIndex).equals(1)
+    expect(allKeys[1].deleted).equals(true)
+    expect(allKeys[2].sortIndex).equals(0)
+    expect(allKeys[2].archived).equals(true)
   })
 
   it('split wallet', async function () {

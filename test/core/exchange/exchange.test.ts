@@ -1,4 +1,4 @@
-import { assert } from 'chai'
+import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { RootAction } from '../../../src/core/actions'
@@ -82,13 +82,13 @@ describe('exchange cache reducer', function () {
 
     // Add the first currency pair:
     let state = reducer(undefined, addPairs(pairs.slice(0, 1)))
-    assert.deepEqual(state.exchangeCache.rates.pairs, pairs.slice(0, 1))
+    expect(state.exchangeCache.rates.pairs).deep.equals(pairs.slice(0, 1))
 
     // Add the rest:
     state = reducer(state, addPairs(pairs.slice(1)))
-    assert.deepEqual(state.exchangeCache.rates.pairs, pairs)
-    assert.deepEqual(state.exchangeCache.rates.ids, ids)
-    assert.deepEqual(state.exchangeCache.rates.routes, routes)
+    expect(state.exchangeCache.rates.pairs).deep.equals(pairs)
+    expect(state.exchangeCache.rates.ids).deep.equals(ids)
+    expect(state.exchangeCache.rates.routes).deep.equals(routes)
   })
 
   it('preserve ordering', function () {
@@ -97,30 +97,23 @@ describe('exchange cache reducer', function () {
     // Add a middle currency , with adjustments:
     const easyPairs = [{ ...pairs[1], rate: 2400 }]
     let state = reducer(undefined, addPairs(easyPairs))
-    assert.deepEqual(state.exchangeCache.rates.pairs, easyPairs)
+    expect(state.exchangeCache.rates.pairs).deep.equals(easyPairs)
 
     // Add everything:
     const expected = [...pairs]
     expected[0] = pairs[1]
     expected[1] = pairs[0]
     state = reducer(state, addPairs(pairs))
-    assert.deepEqual(state.exchangeCache.rates.pairs, expected)
+    expect(state.exchangeCache.rates.pairs).deep.equals(expected)
   })
 
   it('find the shortest route', function () {
     const pairs = makePairs()
     const state = reducer(undefined, addPairs(pairs))
 
-    assert.equal(
-      getExchangeRate(state, 'BTC', 'BTC', () => 1),
-      1
-    )
-    assert.equal(
-      getExchangeRate(state, 'BTC', 'USD', () => 1),
-      2500
-    )
-    assert.equal(
-      getExchangeRate(state, 'JPY', 'USD', () => 1),
+    expect(getExchangeRate(state, 'BTC', 'BTC', () => 1)).equals(1)
+    expect(getExchangeRate(state, 'BTC', 'USD', () => 1)).equals(2500)
+    expect(getExchangeRate(state, 'JPY', 'USD', () => 1)).equals(
       (1 / 260000) * 2500 // 0.0096
     )
   })
@@ -129,10 +122,11 @@ describe('exchange cache reducer', function () {
     const pairs = makePairs()
     const state = reducer(undefined, addPairs(pairs))
 
-    assert.equal(
+    expect(
       getExchangeRate(state, 'JPY', 'USD', source =>
         source === 'complexSource' ? 1 : 10
-      ),
+      )
+    ).equals(
       ((1 / 260000) * 2600) / 1.1 // 0.0091
     )
   })
@@ -141,8 +135,7 @@ describe('exchange cache reducer', function () {
     const pairs = makePairs()
     const state = reducer(undefined, addPairs(pairs))
 
-    assert.equal(
-      getExchangeRate(state, 'BTC', 'EUR', (source, age) => age),
+    expect(getExchangeRate(state, 'BTC', 'EUR', (source, age) => age)).equals(
       2500 / 0.85 // 2941
     )
   })
@@ -151,10 +144,7 @@ describe('exchange cache reducer', function () {
     const pairs = makePairs()
     const state = reducer(undefined, addPairs(pairs))
 
-    assert.equal(
-      getExchangeRate(state, 'NONE', 'EUR', () => 1),
-      0
-    )
+    expect(getExchangeRate(state, 'NONE', 'EUR', () => 1)).equals(0)
   })
 })
 
@@ -168,6 +158,7 @@ describe('exchange pixie', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const rate = await account.rateCache.convertCurrency('BTC', 'iso:EUR', 1)
-    return assert(rate > 2274 && rate < 2277)
+    expect(rate).is.greaterThan(2274)
+    expect(rate).is.lessThan(2277)
   })
 })

@@ -1,6 +1,6 @@
 import { makeAssertLog } from 'assert-log'
 import { add } from 'biggystring'
-import { assert, expect } from 'chai'
+import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
@@ -10,6 +10,7 @@ import {
   EdgeCurrencyWallet,
   EdgeMetadata,
   EdgeToken,
+  EdgeTransaction,
   EdgeTxSwap,
   makeFakeEdgeWorld
 } from '../../../../src/index'
@@ -62,7 +63,7 @@ describe('currency wallets', function () {
     wallet.watch('name', name => log(name))
 
     await wallet.renameWallet('Another Name')
-    assert.equal(wallet.name, 'Another Name')
+    expect(wallet.name).equals('Another Name')
     log.assert('Another Name')
   })
 
@@ -177,19 +178,19 @@ describe('currency wallets', function () {
     })
 
     await wallet.getTransactions({}).then(txs => {
-      assert.equal(txs.length, 1)
-      assert.equal(txs[0].txid, 'a')
-      assert.strictEqual(txs[0].nativeAmount, '2')
+      expect(txs.length).equals(1)
+      expect(txs[0].txid).equals('a')
+      expect(txs[0].nativeAmount).equals('2')
       // @ts-expect-error legacy support code
-      assert.strictEqual(txs[0].amountSatoshi, 2)
+      expect(txs[0].amountSatoshi).equals(2)
     })
 
     await wallet.getTransactions({ currencyCode: 'TOKEN' }).then(txs => {
-      assert.equal(txs.length, 1)
-      assert.equal(txs[0].txid, 'b')
-      assert.strictEqual(txs[0].nativeAmount, '200')
+      expect(txs.length).equals(1)
+      expect(txs[0].txid).equals('b')
+      expect(txs[0].nativeAmount).equals('200')
       // @ts-expect-error legacy support code
-      assert.strictEqual(txs[0].amountSatoshi, 200)
+      expect(txs[0].amountSatoshi).equals(200)
     })
   })
 
@@ -283,37 +284,81 @@ describe('currency wallets', function () {
     log.assert(tokenId)
   })
 
+  it('paginates transactions', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({
+      txs: walletTxs
+    })
+
+    // Normal behavior:
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC',
+          startIndex: 3,
+          startEntries: 2
+        })
+      )
+    ).deep.equals(['d', 'e'])
+
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC',
+          searchString: 'sideshift',
+          startIndex: 2,
+          startEntries: 2
+        })
+      )
+    ).deep.equals(['k', 'l'])
+  })
+
   it('search transactions', async function () {
     const { wallet, config } = await makeFakeCurrencyWallet()
     await config.changeUserSettings({
       txs: walletTxs
     })
 
-    await wallet.getTransactions({ currencyCode: 'BTC' }).then(txs => {
-      assert.equal(txs.length, 13)
-      assert.equal(txs[0].txid, 'a')
-      assert.strictEqual(txs[0].nativeAmount, '644350')
-    })
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC'
+        })
+      )
+    ).deep.equals([
+      'a',
+      'b',
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i',
+      'j',
+      'k',
+      'l',
+      'm'
+    ])
 
-    await wallet
-      .getTransactions({ currencyCode: 'BTC', searchString: 'sideshift' })
-      .then(txs => {
-        assert.equal(txs.length, 3)
-        assert.equal(txs[0].txid, 'k')
-        assert.strictEqual(txs[0].nativeAmount, '-371258')
-      })
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC',
+          searchString: 'sideshift'
+        })
+      )
+    ).deep.equals(['k', 'l', 'm'])
 
-    await wallet
-      .getTransactions({
-        currencyCode: 'BTC',
-        startDate: new Date(1199145601000),
-        endDate: new Date(1612546887000)
-      })
-      .then(txs => {
-        assert.equal(txs.length, 8)
-        assert.equal(txs[0].txid, 'f')
-        assert.strictEqual(txs[0].nativeAmount, '-3300')
-      })
+    expect(
+      justTxids(
+        await wallet.getTransactions({
+          currencyCode: 'BTC',
+          startDate: new Date('2021-01-30'),
+          endDate: new Date('2021-02-05')
+        })
+      )
+    ).deep.equals(['g', 'h', 'i', 'j', 'k'])
   })
 
   it('get max spendable', async function () {
@@ -515,3 +560,7 @@ describe('currency wallets', function () {
     await account.waitForAllWallets()
   })
 })
+
+function justTxids(txs: EdgeTransaction[]): string[] {
+  return txs.map(tx => tx.txid)
+}
