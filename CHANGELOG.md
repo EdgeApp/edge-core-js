@@ -1,5 +1,36 @@
 # edge-core-js
 
+## v1.0.0 (2023-05-24)
+
+- changed: Convert `createAccount` to named parameters
+- changed: Return an array from `fetchLoginMessages`
+- changed: Fix the `listRecoveryQuestionChoices` return type
+- changed: Allow usernames to be `undefined`
+- removed: Ethereum hacks
+    - Ethereum address derivation.
+    - `EdgeAccount.signEthereumTransaction`
+- removed: Deprecated client-side token methods
+    - `EdgeCurrencyEngine.getEnabledTokens` (no longer used)
+    - `EdgeCurrencyEngine.getTokenStatus` (no longer used)
+    - `EdgeCurrencyWallet.addCustomToken`
+    - `EdgeCurrencyWallet.changeEnabledTokens`
+    - `EdgeCurrencyWallet.disableTokens`
+    - `EdgeCurrencyWallet.enableTokens`
+    - `EdgeCurrencyWallet.getEnabledTokens`
+- removed: Deprecated display-key properties
+    - `EdgeCurrencyWallet.displayPrivateSeed`
+    - `EdgeCurrencyWallet.displayPublicSeed`
+- removed: Deprecated `EdgeAccount.loginKey` property
+- removed: Deprecated `keys` properties on `EdgeAccount` and `EdgeCurrencyWallet`
+- removed: Deprecated `EdgeTransaction.amountSatoshi`
+- removed: Deprecated `options` prop from the `MakeEdgeContext` component.
+- removed: Unused `EdgeTransaction.wallet`
+- removed: Unused `getTransactions` parameters
+- removed: Unused type definitions
+    - `EdgeBitcoinPrivateKeyOptions`
+    - `EdgeCreatePrivateKeyOptions`
+- removed: No longer allow the OTP key to be passed as `EdgeAccountOptions.otp`. This parameter only accepts 6-digit OTP codes now. Pass the key as `EdgeAccountOptions.otpKey` instead.
+
 ## v0.21.5 (2023-05-24)
 
 - deprecated: `EdgeContext.pinLoginEnabled`. Use `EdgeContext.localUsers` instead.
