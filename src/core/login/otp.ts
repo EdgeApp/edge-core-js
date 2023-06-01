@@ -31,10 +31,7 @@ export function getStashOtp(
   opts: EdgeAccountOptions
 ): string | undefined {
   const { otp, otpKey } = opts
-  if (otp != null) {
-    if (/[0-9]+/.test(otp) && otp.length < 16) return otp
-    return totp(base32.parse(otp, { loose: true }))
-  }
+  if (otp != null) return otp
   if (otpKey != null) return totp(base32.parse(otpKey, { loose: true }))
   if (stash.otpKey != null) return totp(stash.otpKey)
 }

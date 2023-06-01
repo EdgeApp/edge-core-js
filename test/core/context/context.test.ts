@@ -72,7 +72,10 @@ describe('context', function () {
     )
 
     // The dump should not include this new guy's repos:
-    await context.createAccount('dummy', undefined, '1111')
+    await context.createAccount({
+      username: 'dummy',
+      pin: '1111'
+    })
 
     // Do the dump:
     const dump = await world.dumpFakeUser(account)

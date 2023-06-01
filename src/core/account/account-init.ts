@@ -37,15 +37,16 @@ async function createChildLogin(
   appId: string,
   wantRepo: boolean = true
 ): Promise<LoginTree> {
-  const { username } = loginTree
   checkLogin(login)
-  if (username == null) throw new Error('Cannot create child: missing username')
 
-  const opts: LoginCreateOpts = { pin: loginTree.pin }
+  const opts: LoginCreateOpts = {
+    pin: loginTree.pin,
+    username: loginTree.username
+  }
   if (wantRepo) {
     opts.keyInfo = makeStorageKeyInfo(ai, makeAccountType(appId))
   }
-  const kit = await makeCreateKit(ai, login, appId, username, opts)
+  const kit = await makeCreateKit(ai, login, appId, opts)
   const parentKit: LoginKit = {
     serverPath: kit.serverPath,
     server: kit.server,
@@ -104,8 +105,6 @@ export async function makeAccount(
 
   loginTree = await ensureAccountExists(ai, loginTree, appId)
   log.warn('Login: account exists for appId')
-  const { username } = loginTree
-  if (username == null) throw new Error('Cannot log in: missing username')
 
   // Add the login to redux:
   const hasRootKey = loginTree.loginKey != null

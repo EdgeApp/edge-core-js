@@ -23,8 +23,9 @@ const wasCreateLoginPayload = uncleaner(asCreateLoginPayload)
 
 export interface LoginCreateOpts {
   keyInfo?: EdgeWalletInfo
-  password?: string | undefined
-  pin?: string | undefined
+  password?: string
+  pin?: string
+  username?: string
 }
 
 /**
@@ -53,10 +54,9 @@ export async function makeCreateKit(
   ai: ApiInput,
   parentLogin: LoginTree | undefined,
   appId: string,
-  username: string,
   opts: LoginCreateOpts
 ): Promise<LoginKit> {
-  const { keyInfo, password, pin } = opts
+  const { keyInfo, password, pin, username } = opts
   const { io } = ai.props
 
   // Figure out login identity:
@@ -90,13 +90,13 @@ export async function makeCreateKit(
   if (parentLogin != null) {
     parentBox = encrypt(io, loginKey, parentLogin.loginKey)
   }
-  if (password != null) {
+  if (password != null && username != null) {
     passwordKit = await makePasswordKit(ai, login, username, password)
   }
   if (pin != null) {
     pin2Kit = makeChangePin2Kit(ai, login, username, pin, true)
   }
-  if (isRoot) {
+  if (isRoot && username != null) {
     usernameKit = await makeUsernameKit(ai, login, username)
   }
 
@@ -145,13 +145,12 @@ export async function makeCreateKit(
  */
 export async function createLogin(
   ai: ApiInput,
-  username: string,
   accountOpts: EdgeAccountOptions,
   opts: LoginCreateOpts
 ): Promise<LoginTree> {
   const { now = new Date() } = accountOpts
 
-  const kit = await makeCreateKit(ai, undefined, '', username, opts)
+  const kit = await makeCreateKit(ai, undefined, '', opts)
   const request = { data: kit.server }
   await loginFetch(ai, 'POST', kit.serverPath, request)
 

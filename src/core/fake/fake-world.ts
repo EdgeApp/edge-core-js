@@ -136,6 +136,7 @@ export function makeFakeWorld(
         throw new Error('Only root logins are dumpable.')
       }
       const loginId = base58.parse(account.rootLoginId)
+      const loginKey = base58.parse(await account.getLoginKey())
 
       // Find the data on the server:
       const login = fakeDb.getLoginById(loginId)
@@ -156,7 +157,7 @@ export function makeFakeWorld(
       return wasFakeUser({
         lastLogin: account.lastLogin,
         loginId,
-        loginKey: base58.parse(account.loginKey),
+        loginKey,
         repos,
         server: fakeDb.dumpLogin(login),
         username: account.username

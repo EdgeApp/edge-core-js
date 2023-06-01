@@ -74,19 +74,8 @@ export async function getTokenId(
   return contractToTokenId(tokenInfo.contractAddress)
 }
 
-export function contractToTokenId(contractAddress: string): string {
+function contractToTokenId(contractAddress: string): string {
   return contractAddress.toLowerCase().replace(/^0x/, '')
-}
-
-export function upgradeTokenInfo(info: EdgeTokenInfo): EdgeToken {
-  const { currencyCode, currencyName, contractAddress, multiplier } = info
-
-  return {
-    currencyCode,
-    denominations: [{ multiplier, name: currencyCode }],
-    displayName: currencyName,
-    networkLocation: { contractAddress }
-  }
 }
 
 function upgradeMetaTokens(metaTokens: EdgeMetaToken[]): EdgeTokenMap {

@@ -8,7 +8,7 @@ import type {
   EdgeFakeWorld,
   EdgeFakeWorldOptions,
   EdgeIo,
-  EdgeLoginMessages,
+  EdgeLoginMessage,
   EdgeLogSettings,
   EdgeNativeIo,
   EdgeOnLog
@@ -66,9 +66,6 @@ interface CommonProps {
 export interface EdgeContextProps extends CommonProps {
   onLoad: (context: EdgeContext) => unknown
 
-  // Deprecated. Just pass options like `apiKey` as normal props:
-  options?: EdgeContextOptions
-
   // EdgeFakeWorldOptions:
   crashReporter?: EdgeCrashReporter
   onLog?: EdgeOnLog
@@ -113,4 +110,4 @@ export declare const MakeFakeEdgeWorld: ComponentType<EdgeFakeWorldProps>
 /**
  * React Native function for getting login alerts without a context:
  */
-export declare function fetchLoginMessages(apiKey: string): EdgeLoginMessages
+export declare function fetchLoginMessages(apiKey: string): EdgeLoginMessage[]

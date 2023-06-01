@@ -10,7 +10,7 @@ import { EdgeContextProps, EdgeFakeWorldProps } from './types/exports'
 import { asMessagesPayload } from './types/server-cleaners'
 import {
   EdgeFetchOptions,
-  EdgeLoginMessages,
+  EdgeLoginMessage,
   EdgeNativeIo,
   NetworkError
 } from './types/types'
@@ -23,37 +23,28 @@ function defaultOnError(error: any): void {
   console.error(error)
 }
 
-let warningShown = false
-
 export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
   const {
-    options,
     allowDebugging,
-    crashReporter = options?.crashReporter,
+    crashReporter,
     debug,
     nativeIo,
     pluginUris = [],
     onError = defaultOnError,
     onLoad,
-    onLog = options?.onLog ?? defaultOnLog,
+    onLog = defaultOnLog,
 
     // Inner context options:
-    apiKey = options?.apiKey ?? '',
-    appId = options?.appId ?? '',
-    authServer = options?.authServer,
-    deviceDescription = options?.deviceDescription,
-    hideKeys = options?.hideKeys,
-    logSettings = options?.logSettings,
-    plugins = options?.plugins
+    apiKey = '',
+    appId = '',
+    authServer,
+    deviceDescription,
+    hideKeys,
+    logSettings,
+    plugins
   } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeEdgeContext')
-  }
-  if (options != null && !warningShown) {
-    warningShown = true
-    console.warn(
-      'The MakeEdgeContext options prop is deprecated - just pass the context options as normal props.'
-    )
   }
 
   return (
@@ -138,7 +129,7 @@ function bridgifyLogBackend(backend: LogBackend): LogBackend {
  */
 export async function fetchLoginMessages(
   apiKey: string
-): Promise<EdgeLoginMessages> {
+): Promise<EdgeLoginMessage[]> {
   const disklet = makeReactNativeDisklet()
 
   // Load the login stashes from disk:
@@ -179,13 +170,13 @@ export async function fetchLoginMessages(
 
     return response.json().then(json => {
       const clean = asMessagesPayload(parseReply(json))
-      const out: EdgeLoginMessages = {}
+      const out: EdgeLoginMessage[] = []
       for (const message of clean) {
         const { loginId, ...rest } = message
         const id = base64.stringify(loginId)
         const username = loginMap[id]
         if (username == null) continue
-        out[username] = { ...rest, loginId: id, username }
+        out.push({ ...rest, loginId: id, username })
       }
       return out
     })

@@ -416,9 +416,6 @@ export interface EdgeTransaction {
   metadata?: EdgeMetadata
   walletId: string
   otherParams?: JsonObject
-
-  /** @deprecated This will always be undefined */
-  wallet?: EdgeCurrencyWallet // eslint-disable-line no-use-before-define
 }
 
 export interface EdgeSpendTarget {
@@ -586,13 +583,6 @@ export interface EdgeGetTransactionsOptions {
   startDate?: Date
   endDate?: Date
   searchString?: string
-
-  /** @deprecated Does nothing */
-  returnIndex?: number
-  /** @deprecated Does nothing */
-  returnEntries?: number
-  /** @deprecated Does nothing */
-  denomination?: string
 }
 
 export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
@@ -743,14 +733,8 @@ export interface EdgeCurrencyEngine {
   /** @deprecated Replaced by changeEnabledTokenIds */
   readonly disableTokens?: (tokens: string[]) => Promise<void>
 
-  /** @deprecated No longer used */
-  readonly getEnabledTokens?: () => Promise<string[]>
-
   /** @deprecated Replaced by changeCustomTokens */
   readonly addCustomToken?: (token: EdgeTokenInfo & EdgeToken) => Promise<void>
-
-  /** @deprecated No longer used */
-  readonly getTokenStatus?: (token: string) => boolean
 
   /** @deprecated Provide EdgeCurrencyTools.getDisplayPrivateKey: */
   readonly getDisplayPrivateSeed?: (privateKeys: JsonObject) => string | null
@@ -999,30 +983,6 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
-
-  /** @deprecated Call EdgeCurrencyConfig.addCustomToken instead */
-  readonly addCustomToken: (token: EdgeTokenInfo) => Promise<void>
-
-  /** @deprecated Call changeEnabledTokenIds instead */
-  readonly changeEnabledTokens: (currencyCodes: string[]) => Promise<void>
-
-  /** @deprecated Call changeEnabledTokenIds instead */
-  readonly disableTokens: (tokens: string[]) => Promise<void>
-
-  /** @deprecated Call changeEnabledTokenIds instead */
-  readonly enableTokens: (tokens: string[]) => Promise<void>
-
-  /** @deprecated Read enabledTokenIds instead */
-  readonly getEnabledTokens: () => Promise<string[]>
-
-  /** @deprecated Call `EdgeAccount.getDisplayPrivateKey` instead */
-  readonly displayPrivateSeed: string | null
-
-  /** @deprecated Call `EdgeAccount.getDisplayPublicKey` instead */
-  readonly displayPublicSeed: string | null
-
-  /** @deprecated Call `EdgeAccount.getRawPrivateKey` instead */
-  readonly keys: JsonObject
 }
 
 // ---------------------------------------------------------------------
@@ -1144,7 +1104,7 @@ export interface EdgeRatePlugin {
 export interface EdgeAccountOptions {
   now?: Date // The current time, if different from `new Date()`
   otpKey?: string // The OTP secret
-  otp?: string // The 6-digit OTP, or (deprecated) the OTP secret
+  otp?: string // The 6-digit OTP
   pauseWallets?: boolean // True to start wallets in the paused state
 }
 
@@ -1229,20 +1189,6 @@ export interface EdgeCurrencyConfig {
     opts?: { keyOptions?: JsonObject }
   ) => Promise<JsonObject>
   readonly otherMethods: EdgeOtherMethods
-}
-
-export interface EthereumTransaction {
-  chainId: number // Not part of raw data, but needed for signing
-  nonce: string
-  gasPrice: string
-  gasLimit: string
-  to: string
-  value: string
-  data: string
-  // The transaction is unsigned, so these are not present:
-  v?: string
-  r?: string
-  s?: string
 }
 
 // rates ---------------------------------------------------------------
@@ -1452,23 +1398,11 @@ export interface EdgeAccount {
     options: EdgeActivationOptions
   ) => Promise<EdgeActivationQuote>
 
-  // Web compatibility:
-  readonly signEthereumTransaction: (
-    walletId: string,
-    transaction: EthereumTransaction
-  ) => Promise<string>
-
   // Swapping:
   readonly fetchSwapQuote: (
     request: EdgeSwapRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote>
-
-  /** @deprecated Use `EdgeAccount.getRawPrivateKey` */
-  readonly keys: JsonObject
-
-  /** @deprecated Use `EdgeAccount.getLoginKey` instead */
-  readonly loginKey: string
 }
 
 // ---------------------------------------------------------------------
@@ -1516,16 +1450,18 @@ export interface EdgeRecoveryQuestionChoice {
 
 // parameters ----------------------------------------------------------
 
+export interface EdgeCreateAccountOptions {
+  username?: string
+  password?: string
+  pin?: string
+}
+
 export interface EdgeLoginMessage {
   loginId: string // base64
   otpResetPending: boolean
   pendingVouchers: EdgePendingVoucher[]
   recovery2Corrupt: boolean
-  username: string
-}
-
-export interface EdgeLoginMessages {
-  [username: string]: EdgeLoginMessage
+  username?: string
 }
 
 export interface EdgePasswordRules {
@@ -1575,7 +1511,7 @@ export interface EdgeUserInfo {
   loginId: string // base58
   pinLoginEnabled: boolean
   recovery2Key?: string // base58
-  username: string
+  username?: string
   voucherId?: string
 }
 
@@ -1602,10 +1538,7 @@ export interface EdgeContext {
   // Account creation:
   readonly usernameAvailable: (username: string) => Promise<boolean>
   readonly createAccount: (
-    username: string,
-    password?: string,
-    pin?: string,
-    opts?: EdgeAccountOptions
+    opts: EdgeCreateAccountOptions & EdgeAccountOptions
   ) => Promise<EdgeAccount>
 
   // Edge login:
@@ -1615,9 +1548,9 @@ export interface EdgeContext {
 
   // Fingerprint login:
   readonly loginWithKey: (
-    username: string,
+    usernameOrLoginId: string,
     loginKey: string,
-    opts?: EdgeAccountOptions
+    opts?: EdgeAccountOptions & { useLoginId?: boolean }
   ) => Promise<EdgeAccount>
 
   // Password login:
@@ -1630,9 +1563,9 @@ export interface EdgeContext {
 
   // PIN login:
   readonly loginWithPIN: (
-    username: string,
+    usernameOrLoginId: string,
     pin: string,
-    opts?: EdgeAccountOptions
+    opts?: EdgeAccountOptions & { useLoginId?: boolean }
   ) => Promise<EdgeAccount>
 
   // Recovery2 login:
@@ -1646,15 +1579,16 @@ export interface EdgeContext {
     recovery2Key: string,
     username: string
   ) => Promise<string[]>
-  // Really returns EdgeRecoveryQuestionChoice[]:
-  readonly listRecoveryQuestionChoices: () => Promise<any>
+  readonly listRecoveryQuestionChoices: () => Promise<
+    EdgeRecoveryQuestionChoice[]
+  >
 
   // OTP stuff:
   readonly requestOtpReset: (
     username: string,
     otpResetToken: string
   ) => Promise<Date>
-  readonly fetchLoginMessages: () => Promise<EdgeLoginMessages>
+  readonly fetchLoginMessages: () => Promise<EdgeLoginMessage[]>
 
   // Background mode:
   readonly paused: boolean
@@ -1734,13 +1668,3 @@ export interface EdgeNetworkFee {
   readonly currencyCode: string
   readonly nativeAmount: string
 }
-
-export interface EdgeBitcoinPrivateKeyOptions {
-  format?: string
-  coinType?: number
-  account?: number
-}
-
-export type EdgeCreatePrivateKeyOptions =
-  | EdgeBitcoinPrivateKeyOptions
-  | JsonObject

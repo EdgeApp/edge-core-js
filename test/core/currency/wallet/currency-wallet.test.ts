@@ -137,7 +137,7 @@ describe('currency wallets', function () {
     // New transactions:
     await config.changeUserSettings({
       txs: {
-        a: { amountSatoshi: 1 },
+        a: { nativeAmount: '1' },
         b: { nativeAmount: '100' }
       }
     })
@@ -181,16 +181,12 @@ describe('currency wallets', function () {
       expect(txs.length).equals(1)
       expect(txs[0].txid).equals('a')
       expect(txs[0].nativeAmount).equals('2')
-      // @ts-expect-error legacy support code
-      expect(txs[0].amountSatoshi).equals(2)
     })
 
     await wallet.getTransactions({ currencyCode: 'TOKEN' }).then(txs => {
       expect(txs.length).equals(1)
       expect(txs[0].txid).equals('b')
       expect(txs[0].nativeAmount).equals('200')
-      // @ts-expect-error legacy support code
-      expect(txs[0].amountSatoshi).equals(200)
     })
   })
 
@@ -248,20 +244,8 @@ describe('currency wallets', function () {
     wallet.watch('enabledTokenIds', ids => log(ids.join(', ')))
     expect(wallet.enabledTokenIds).deep.equals([])
 
-    // New API:
     await wallet.changeEnabledTokenIds([tokenId])
     expect(wallet.enabledTokenIds).deep.equals([tokenId])
-    log.assert(tokenId)
-
-    // Legacy API:
-    await wallet.enableTokens(['OOPS', 'MISSING'])
-    expect(await wallet.getEnabledTokens()).deep.equals([
-      'MISSING',
-      'OOPS',
-      'TOKEN'
-    ])
-
-    // The last update had missing ID's, but an update still occurs:
     log.assert(tokenId)
 
     // Missing token:

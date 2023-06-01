@@ -25,10 +25,8 @@ import {
   EdgeSwapRequestOptions,
   EdgeWalletInfoFull,
   EdgeWalletStates,
-  EthereumTransaction,
   JsonObject
 } from '../../types/types'
-import { signEthereumTransaction } from '../../util/crypto/ethereum'
 import { base58 } from '../../util/encoding'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import { makeExchangeCache } from '../exchange/exchange-api'
@@ -112,11 +110,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return storageWalletApi.type
     },
 
-    get keys(): JsonObject {
-      lockdown()
-      return storageWalletApi.keys
-    },
-
     get disklet(): Disklet {
       lockdown()
       return storageWalletApi.disklet
@@ -154,11 +147,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     get loggedIn(): boolean {
       return accountState() != null
-    },
-
-    get loginKey(): string {
-      lockdown()
-      return base58.stringify(accountState().login.loginKey)
     },
 
     get recoveryKey(): string | undefined {
@@ -374,9 +362,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     // ----------------------------------------------------------------
 
     get allKeys(): EdgeWalletInfoFull[] {
-      return ai.props.state.hideKeys
-        ? ai.props.state.accounts[accountId].allWalletInfosClean
-        : ai.props.state.accounts[accountId].allWalletInfosFull
+      return ai.props.state.accounts[accountId].allWalletInfosClean
     },
 
     async changeWalletStates(walletStates: EdgeWalletStates): Promise<void> {
@@ -614,27 +600,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         paymentWallet
       })
       return bridgifyObject(out)
-    },
-
-    // ----------------------------------------------------------------
-    // Web compatibility:
-    // ----------------------------------------------------------------
-
-    async signEthereumTransaction(
-      walletId: string,
-      transaction: EthereumTransaction
-    ): Promise<string> {
-      ai.props.log.warn('Edge is signing: ', transaction)
-      const { allWalletInfosFull } = accountState()
-      const walletInfo = allWalletInfosFull.find(info => info.id === walletId)
-      if (
-        walletInfo == null ||
-        walletInfo.keys == null ||
-        typeof walletInfo.keys.ethereumKey !== 'string'
-      ) {
-        throw new Error('Cannot find the requested private key in the account')
-      }
-      return signEthereumTransaction(walletInfo.keys.ethereumKey, transaction)
     },
 
     // ----------------------------------------------------------------

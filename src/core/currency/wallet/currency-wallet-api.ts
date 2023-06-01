@@ -24,17 +24,11 @@ import {
   EdgeSpendInfo,
   EdgeSpendTarget,
   EdgeStakingStatus,
-  EdgeTokenInfo,
   EdgeTransaction,
-  EdgeWalletInfo,
-  JsonObject
+  EdgeWalletInfo
 } from '../../../types/types'
 import { mergeDeeply } from '../../../util/util'
-import {
-  contractToTokenId,
-  makeMetaTokens,
-  upgradeTokenInfo
-} from '../../account/custom-tokens'
+import { makeMetaTokens } from '../../account/custom-tokens'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
@@ -95,12 +89,6 @@ export function makeCurrencyWalletApi(
     bridgifyObject(otherMethods)
   }
 
-  function lockdown(): void {
-    if (ai.props.state.hideKeys) {
-      throw new Error('Not available when `hideKeys` is enabled')
-    }
-  }
-
   const out: EdgeCurrencyWallet = {
     on: onMethod,
     watch: watchMethod,
@@ -112,10 +100,6 @@ export function makeCurrencyWalletApi(
     get id(): string {
       return storageWalletApi.id
     },
-    get keys(): JsonObject {
-      lockdown()
-      return storageWalletApi.keys
-    },
     get localDisklet(): Disklet {
       return storageWalletApi.localDisklet
     },
@@ -125,15 +109,6 @@ export function makeCurrencyWalletApi(
     },
     get type(): string {
       return storageWalletApi.type
-    },
-
-    // Wallet keys:
-    get displayPrivateSeed(): string | null {
-      lockdown()
-      return input.props.walletState.displayPrivateSeed
-    },
-    get displayPublicSeed(): string | null {
-      return input.props.walletState.displayPublicSeed
     },
 
     // Wallet name:
@@ -583,64 +558,7 @@ export function makeCurrencyWalletApi(
     },
 
     // Generic:
-    otherMethods,
-
-    // Deprecated:
-    async addCustomToken(tokenInfo: EdgeTokenInfo): Promise<void> {
-      const token = upgradeTokenInfo(tokenInfo)
-      const tokenId = contractToTokenId(tokenInfo.contractAddress)
-
-      // Ask the plugin to validate this:
-      if (tools.getTokenId != null) {
-        await tools.getTokenId(token)
-      } else if (engine.addCustomToken != null) {
-        // This is not ideal, since the pixie will add it too:
-        await engine.addCustomToken({ ...token, ...tokenInfo })
-      } else {
-        throw new Error(`${pluginId} doesn't support tokens`)
-      }
-
-      ai.props.dispatch({
-        type: 'ACCOUNT_CUSTOM_TOKEN_ADDED',
-        payload: { accountId, pluginId, tokenId, token }
-      })
-    },
-    async changeEnabledTokens(currencyCodes: string[]): Promise<void> {
-      const { dispatch, walletId } = input.props
-
-      dispatch({
-        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: { walletId, currencyCodes: uniqueStrings(currencyCodes) }
-      })
-    },
-    async enableTokens(currencyCodes: string[]): Promise<void> {
-      const { dispatch, walletId, walletState } = input.props
-
-      dispatch({
-        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: {
-          walletId,
-          currencyCodes: uniqueStrings([
-            ...walletState.enabledTokens,
-            ...currencyCodes
-          ])
-        }
-      })
-    },
-    async disableTokens(currencyCodes: string[]): Promise<void> {
-      const { dispatch, walletId, walletState } = input.props
-
-      dispatch({
-        type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: {
-          walletId,
-          currencyCodes: uniqueStrings(walletState.enabledTokens, currencyCodes)
-        }
-      })
-    },
-    async getEnabledTokens(): Promise<string[]> {
-      return input.props.walletState.enabledTokens
-    }
+    otherMethods
   }
   bridgifyObject(out)
 
@@ -672,10 +590,7 @@ export function combineTxWithFile(
     parentNetworkFee: tx.networkFee[walletCurrency],
     signedTx: tx.signedTx,
     txid: tx.txid,
-    walletId,
-
-    // @ts-expect-error Deprecated & removed:
-    amountSatoshi: Number(tx.nativeAmount[currencyCode] ?? '0')
+    walletId
   }
 
   // If we have a file, use it to override the defaults:

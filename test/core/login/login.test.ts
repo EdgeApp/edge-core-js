@@ -46,17 +46,44 @@ describe('creation', function () {
     const questions = fakeUser.recovery2Questions
     const answers = fakeUser.recovery2Answers
 
-    const account = await context.createAccount(
+    const account = await context.createAccount({
       username,
-      undefined,
-      fakeUser.pin
-    )
+      pin: fakeUser.pin
+    })
     const recovery2Key = await account.changeRecovery(questions, answers)
 
     return await Promise.all([
       context.loginWithPIN(username, fakeUser.pin),
       remote.loginWithRecovery2(recovery2Key, username, answers)
     ])
+  })
+
+  it('username-less account', async function () {
+    this.timeout(1000)
+    const now = new Date()
+    const world = await makeFakeEdgeWorld([], quiet)
+    const contextOptions = { apiKey: '', appId: 'test' }
+    const context = await world.makeEdgeContext(contextOptions)
+
+    const account = await context.createAccount({
+      pin: fakeUser.pin,
+      now
+    })
+    expect(context.localUsers).deep.equals([
+      {
+        keyLoginEnabled: true,
+        lastLogin: now,
+        loginId: account.rootLoginId,
+        pinLoginEnabled: true,
+        recovery2Key: undefined,
+        username: undefined,
+        voucherId: undefined
+      }
+    ])
+
+    await context.loginWithPIN(account.rootLoginId, fakeUser.pin, {
+      useLoginId: true
+    })
   })
 
   it('create account', async function () {
@@ -70,7 +97,10 @@ describe('creation', function () {
     const password = 'some fancy password'
     const pin = '0218'
 
-    const account = await context.createAccount(username, password, pin, {
+    const account = await context.createAccount({
+      username,
+      password,
+      pin,
       now
     })
 
@@ -86,10 +116,11 @@ describe('creation', function () {
       }
     ])
 
+    const loginKey = await account.getLoginKey()
     return await Promise.all([
       context.loginWithPIN(username, pin),
       remote.loginWithPassword(username, password),
-      context.loginWithKey(username, account.loginKey)
+      context.loginWithKey(username, loginKey)
     ])
   })
 })

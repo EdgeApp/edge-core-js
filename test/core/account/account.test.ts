@@ -304,7 +304,7 @@ describe('account', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     // Sensitive properties don't work:
-    expect(() => account.loginKey).throw()
+    expect(() => account.recoveryKey).throw()
 
     // Changing credentials doesn't work:
     await expectRejection(
@@ -316,17 +316,6 @@ describe('account', function () {
     for (const info of account.allKeys) {
       expect(info.keys).deep.equals({})
     }
-
-    // Test ethereum address hack:
-    const id = await account.createWallet('wallet:ethereum', {
-      ethereumKey:
-        '0xbe8b70e1ae1200b0b8825bc027a4420b84bfd29ed6174d10d4470352ce2d4351'
-    })
-    const info = account.allKeys.find(info => info.id === id)
-    if (info == null) throw new Error('Missing key info')
-    expect(info.keys.ethereumAddress).equals(
-      '0x3b441e6D24Fd429e5A1F7EBd311F52aded6C4E89'
-    )
   })
 
   it('logout', async function () {

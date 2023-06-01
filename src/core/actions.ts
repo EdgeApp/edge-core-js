@@ -169,15 +169,6 @@ export type RootAction =
       }
     }
   | {
-      // Called when a currency engine returns the display private & public seeds.
-      type: 'CURRENCY_ENGINE_CHANGED_SEEDS'
-      payload: {
-        displayPublicSeed: string | null
-        displayPrivateSeed: string | null
-        walletId: string
-      }
-    }
-  | {
       // Called when a currency engine fires the onStakingStatusChanged callback.
       type: 'CURRENCY_ENGINE_CHANGED_STAKING'
       payload: {

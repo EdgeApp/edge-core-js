@@ -9,7 +9,6 @@ import {
   JsonObject
 } from '../../types/types'
 import { compare } from '../../util/compare'
-import { ethereumKeyToAddress } from '../../util/crypto/ethereum'
 import { verifyData } from '../../util/crypto/verify'
 import { RootAction } from '../actions'
 import { findFirstKey, getAllWalletInfos, makeAccountType } from '../login/keys'
@@ -121,14 +120,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   allWalletInfosClean: memoizeReducer(
     (next: AccountNext) => next.self.allWalletInfosFull,
     (walletInfos: EdgeWalletInfoFull[]): EdgeWalletInfoFull[] =>
-      walletInfos.map(info => {
-        const keys =
-          info.type === 'wallet:ethereum' &&
-          typeof info.keys.ethereumKey === 'string'
-            ? { ethereumAddress: ethereumKeyToAddress(info.keys.ethereumKey) }
-            : {}
-        return { ...info, keys }
-      })
+      walletInfos.map(info => ({ ...info, keys: {} }))
   ),
 
   currencyWalletErrors(state = {}, action, next, prev) {
