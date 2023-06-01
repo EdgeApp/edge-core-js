@@ -1,6 +1,10 @@
 # edge-core-js
 
-## v1.0.0 (2023-05-24)
+## v1.0.1 (2023-06-01)
+
+- fixed: Do not crash when accessing `EdgeAccount.username` on an account that has none.
+
+## v1.0.0 (2023-06-01)
 
 - changed: Convert `createAccount` to named parameters
 - changed: Return an array from `fetchLoginMessages`
