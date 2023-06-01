@@ -12,7 +12,7 @@ import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
 import { applyKits, searchTree, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
-import { getStashByUsername } from './login-selectors'
+import { getStashById } from './login-selectors'
 import { LoginStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 import { getLoginOtp } from './otp'
@@ -47,12 +47,13 @@ export function findPin2Stash(
 export async function loginPin2(
   ai: ApiInput,
   appId: string,
-  username: string,
+  stashTree: LoginStash,
   pin: string,
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  // Find the stash to use:
-  const stashTree = getStashByUsername(ai, username)
+  const { username } = stashTree
+  if (username == null) throw new Error('PIN login requires a username')
+
   const stash = findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
     throw new Error('PIN login is not enabled for this account on this device')
@@ -114,11 +115,11 @@ export async function checkPin2(
   login: LoginTree,
   pin: string
 ): Promise<boolean> {
-  const { appId, username } = login
+  const { appId, loginId, username } = login
   if (username == null) return false
 
   // Find the stash to use:
-  const stashTree = getStashByUsername(ai, username)
+  const { stashTree } = getStashById(ai, loginId)
   const stash = findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
     throw new Error('No PIN set locally for this account')

@@ -16,7 +16,7 @@ import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
 import { applyKit, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
-import { getStashByUsername } from './login-selectors'
+import { LoginStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 
 const wasChangeRecovery2IdPayload = uncleaner(asChangeRecovery2IdPayload)
@@ -44,12 +44,13 @@ function makeRecovery2Auth(
  */
 export async function loginRecovery2(
   ai: ApiInput,
+  stashTree: LoginStash,
   recovery2Key: Uint8Array,
-  username: string,
   answers: string[],
   opts: EdgeAccountOptions
 ): Promise<LoginTree> {
-  const stashTree = getStashByUsername(ai, username)
+  const { username } = stashTree
+  if (username == null) throw new Error('Recovery login requires a username')
 
   // Request:
   const request = {

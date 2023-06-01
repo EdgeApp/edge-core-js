@@ -1629,7 +1629,6 @@ export interface EdgeContext {
   ) => Promise<EdgeAccount>
 
   // PIN login:
-  readonly pinLoginEnabled: (username: string) => Promise<boolean>
   readonly loginWithPIN: (
     username: string,
     pin: string,
@@ -1672,6 +1671,9 @@ export interface EdgeContext {
 
   /** @deprecated Use `localUsers` instead. */
   readonly listUsernames: () => Promise<string[]>
+
+  /** @deprecated Use `localUsers` instead. */
+  readonly pinLoginEnabled: (username: string) => Promise<boolean>
 }
 
 // ---------------------------------------------------------------------
