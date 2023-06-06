@@ -1,14 +1,5 @@
 declare module 'aes-js'
 
-declare module 'base-x' {
-  export default function makeCodec(
-    alphabet: string
-  ): {
-    encode: (data: ArrayLike<number>) => string
-    decode: (base: string) => Uint8Array
-  }
-}
-
 declare module 'currency-codes'
 declare module 'ethereumjs-tx'
 declare module 'ethereumjs-util'
