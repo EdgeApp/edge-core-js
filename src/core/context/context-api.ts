@@ -41,7 +41,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
   const $internalStuff = new EdgeInternalStuff(ai)
   let pauseTimer: ReturnType<typeof setTimeout> | undefined
 
-  const out: EdgeContext = {
+  const out: EdgeContext & { $internalStuff: EdgeInternalStuff } = {
     on: onMethod,
     watch: watchMethod,
 
@@ -52,7 +52,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       ai.props.close()
     },
 
-    // @ts-expect-error: This isn't supposed to be here:
     $internalStuff,
 
     fixUsername,
