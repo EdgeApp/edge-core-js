@@ -347,7 +347,7 @@ export type RootAction =
   | {
       // Fires when we delete login data from disk.
       type: 'LOGIN_STASH_DELETED'
-      payload: string // username
+      payload: Uint8Array // loginId
     }
   | {
       // Fires when we write a login stash to disk.

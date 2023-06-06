@@ -22,6 +22,7 @@ import {
 } from '../../types/server-cleaners'
 import { EdgeBox, EdgeSnrp } from '../../types/server-types'
 import { EdgeLog, EdgePendingVoucher } from '../../types/types'
+import { verifyData } from '../../util/crypto/verify'
 import { base58 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
 
@@ -94,7 +95,7 @@ export async function loadStashes(
  */
 export async function removeStash(
   ai: ApiInput,
-  username: string
+  loginId: Uint8Array
 ): Promise<void> {
   const { dispatch, io } = ai.props
 
@@ -102,13 +103,13 @@ export async function removeStash(
   for (const path of paths) {
     try {
       const stash = asLoginStash(JSON.parse(await io.disklet.getText(path)))
-      if (stash.username === username) await io.disklet.delete(path)
+      if (verifyData(stash.loginId, loginId)) await io.disklet.delete(path)
     } catch (error: any) {}
   }
 
   dispatch({
     type: 'LOGIN_STASH_DELETED',
-    payload: username
+    payload: loginId
   })
 }
 

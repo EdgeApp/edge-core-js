@@ -80,8 +80,10 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
       }
 
       case 'LOGIN_STASH_DELETED': {
-        const username = action.payload
-        return state.filter(stashTree => stashTree.username !== username)
+        const loginId = action.payload
+        return state.filter(
+          stashTree => !verifyData(stashTree.loginId, loginId)
+        )
       }
 
       case 'LOGIN_STASH_SAVED': {
