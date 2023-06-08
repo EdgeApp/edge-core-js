@@ -94,7 +94,6 @@ export async function requestEdgeLogin(
     // Decode the reply:
     const payload = asLobbyLoginPayload(reply)
     const { username } = payload.loginStash
-    if (username == null) throw new Error('No username in reply')
     out.state = 'started'
     out.username = username
     update(out)
