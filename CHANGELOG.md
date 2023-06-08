@@ -1,5 +1,11 @@
 # edge-core-js
 
+## v1.1.0 (2023-06-08)
+
+- added: Add an `EdgeContext.forgetAccount` method.
+- deprecated: `EdgeContext.deleteLocalAccount`. Use `EdgeContext.forgetAccount` instead.
+- fixed: Do not throw a "No username in reply" error when logging into light accounts via barcode.
+
 ## v1.0.1 (2023-06-01)
 
 - fixed: Do not crash when accessing `EdgeAccount.username` on an account that has none.
