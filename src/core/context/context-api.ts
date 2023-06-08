@@ -12,6 +12,7 @@ import {
   EdgeRecoveryQuestionChoice,
   EdgeUserInfo
 } from '../../types/types'
+import { verifyData } from '../../util/crypto/verify'
 import { base58 } from '../../util/encoding'
 import { findAppLogin, makeAccount } from '../account/account-init'
 import { createLogin, usernameAvailable } from '../login/create'
@@ -41,7 +42,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
   const $internalStuff = new EdgeInternalStuff(ai)
   let pauseTimer: ReturnType<typeof setTimeout> | undefined
 
-  const out: EdgeContext = {
+  const out: EdgeContext & { $internalStuff: EdgeInternalStuff } = {
     on: onMethod,
     watch: watchMethod,
 
@@ -52,7 +53,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       ai.props.close()
     },
 
-    // @ts-expect-error: This isn't supposed to be here:
     $internalStuff,
 
     fixUsername,
@@ -70,16 +70,33 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
     async deleteLocalAccount(username: string): Promise<void> {
       username = fixUsername(username)
+      const stashTree = getStashByUsername(ai, username)
+      if (stashTree == null) return
+      const { loginId } = stashTree
 
       // Safety check:
       for (const accountId of ai.props.state.accountIds) {
         const accountState = ai.props.state.accounts[accountId]
-        if (accountState.stashTree.username === username) {
+        if (verifyData(accountState.stashTree.loginId, loginId)) {
           throw new Error('Cannot remove logged-in user')
         }
       }
 
-      return await removeStash(ai, username)
+      await removeStash(ai, loginId)
+    },
+
+    async forgetAccount(rootLoginId: string): Promise<void> {
+      const loginId = base58.parse(rootLoginId)
+
+      // Safety check:
+      for (const accountId of ai.props.state.accountIds) {
+        const accountState = ai.props.state.accounts[accountId]
+        if (verifyData(accountState.stashTree.loginId, loginId)) {
+          throw new Error('Cannot remove logged-in user')
+        }
+      }
+
+      await removeStash(ai, loginId)
     },
 
     async usernameAvailable(username: string): Promise<boolean> {

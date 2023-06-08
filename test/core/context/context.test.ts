@@ -2,8 +2,10 @@ import '../../fake/fake-plugins'
 
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
+import { base64 } from 'rfc4648'
 
 import { makeFakeEdgeWorld } from '../../../src/index'
+import { base58 } from '../../../src/util/encoding'
 import { expectRejection } from '../../expect-rejection'
 import { fakeUser, fakeUserDump } from '../../fake/fake-user'
 
@@ -46,9 +48,19 @@ describe('context', function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
-    expect(await context.listUsernames()).has.lengthOf(1)
+    expect(await context.localUsers).has.lengthOf(1)
     await context.deleteLocalAccount(fakeUser.username)
-    expect(await context.listUsernames()).has.lengthOf(0)
+    expect(await context.localUsers).has.lengthOf(0)
+  })
+
+  it('remove loginId from local storage', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+
+    const loginId = base58.stringify(base64.parse(fakeUser.loginId))
+    expect(await context.localUsers).has.lengthOf(1)
+    await context.forgetAccount(loginId)
+    expect(await context.localUsers).has.lengthOf(0)
   })
 
   it('cannot remove logged-in users', async function () {
@@ -56,8 +68,9 @@ describe('context', function () {
     const context = await world.makeEdgeContext(contextOptions)
     await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
+    const loginId = base58.stringify(base64.parse(fakeUser.loginId))
     await expectRejection(
-      context.deleteLocalAccount(fakeUser.username),
+      context.forgetAccount(loginId),
       'Error: Cannot remove logged-in user'
     )
   })

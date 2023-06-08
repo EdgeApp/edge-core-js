@@ -1532,16 +1532,16 @@ export interface EdgeContext {
 
   // Local user management:
   localUsers: EdgeUserInfo[]
-  readonly fixUsername: (username: string) => string
-  readonly deleteLocalAccount: (username: string) => Promise<void>
+  readonly forgetAccount: (rootLoginId: string) => Promise<void>
 
   // Account creation:
+  readonly fixUsername: (username: string) => string
   readonly usernameAvailable: (username: string) => Promise<boolean>
   readonly createAccount: (
     opts: EdgeCreateAccountOptions & EdgeAccountOptions
   ) => Promise<EdgeAccount>
 
-  // Edge login:
+  // Barcode login:
   readonly requestEdgeLogin: (
     opts?: EdgeAccountOptions
   ) => Promise<EdgePendingEdgeLogin>
@@ -1608,6 +1608,9 @@ export interface EdgeContext {
 
   /** @deprecated Use `localUsers` instead. */
   readonly pinLoginEnabled: (username: string) => Promise<boolean>
+
+  /** @deprecated Use `forgetAccount` instead. */
+  readonly deleteLocalAccount: (username: string) => Promise<void>
 }
 
 // ---------------------------------------------------------------------
