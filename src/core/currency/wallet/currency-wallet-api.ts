@@ -224,7 +224,12 @@ export function makeCurrencyWalletApi(
     async getTransactions(
       opts: EdgeGetTransactionsOptions = {}
     ): Promise<EdgeTransaction[]> {
-      const { currencyCode = plugin.currencyInfo.currencyCode } = opts
+      const {
+        currencyCode = plugin.currencyInfo.currencyCode,
+        endDate: beforeDate,
+        startDate: afterDate,
+        searchString
+      } = opts
 
       // Load transactions from the engine if necessary:
       let state = input.props.walletState
@@ -290,12 +295,12 @@ export function makeCurrencyWalletApi(
 
         // add this tx / file to the output
         const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
-        if (searchStringFilter(ai, edgeTx, opts) && dateFilter(edgeTx, opts)) {
-          out.push({
-            ...edgeTx,
-            otherParams: { ...edgeTx.otherParams, unfilteredIndex: i }
-          })
-        }
+        if (!searchStringFilter(ai, edgeTx, searchString)) continue
+        if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
+        out.push({
+          ...edgeTx,
+          otherParams: { ...edgeTx.otherParams, unfilteredIndex: i }
+        })
       }
       return out
     },
