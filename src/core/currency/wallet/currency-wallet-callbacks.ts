@@ -276,7 +276,7 @@ export function makeCurrencyWalletCallbacks(
 
         // Verify that something has changed:
         const reduxTx = mergeTx(tx, defaultCurrency, reduxTxs[txid])
-        if (compare(reduxTx, reduxTxs[txid])) continue
+        if (compare(reduxTx, reduxTxs[txid]) && tx.metadata == null) continue
 
         // Ensure the transaction has metadata:
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
