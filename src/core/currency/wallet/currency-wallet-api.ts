@@ -2,6 +2,11 @@ import { add, div, lte, mul, sub } from 'biggystring'
 import { Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
+import {
+  InternalWalletMethods,
+  InternalWalletStream,
+  streamTransactions
+} from '../../../client-side'
 import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
   EdgeBalances,
@@ -24,6 +29,7 @@ import {
   EdgeSpendInfo,
   EdgeSpendTarget,
   EdgeStakingStatus,
+  EdgeStreamTransactionOptions,
   EdgeTransaction,
   EdgeWalletInfo
 } from '../../../types/types'
@@ -89,7 +95,7 @@ export function makeCurrencyWalletApi(
     bridgifyObject(otherMethods)
   }
 
-  const out: EdgeCurrencyWallet = {
+  const out: EdgeCurrencyWallet & InternalWalletMethods = {
     on: onMethod,
     watch: watchMethod,
 
@@ -221,10 +227,23 @@ export function makeCurrencyWalletApi(
     ): Promise<number> {
       return engine.getNumTransactions(opts)
     },
-    async getTransactions(
-      opts: EdgeGetTransactionsOptions = {}
-    ): Promise<EdgeTransaction[]> {
-      const { currencyCode = plugin.currencyInfo.currencyCode } = opts
+
+    async $internalStreamTransactions(
+      opts: EdgeStreamTransactionOptions & { unfilteredStart?: number }
+    ): Promise<InternalWalletStream> {
+      const {
+        afterDate,
+        batchSize = 10,
+        beforeDate,
+        firstBatchSize = batchSize,
+        searchString,
+        tokenId,
+        unfilteredStart
+      } = opts
+      const { currencyCode } =
+        tokenId == null
+          ? this.currencyInfo
+          : this.currencyConfig.allTokens[tokenId]
 
       // Load transactions from the engine if necessary:
       let state = input.props.walletState
@@ -253,52 +272,101 @@ export function makeCurrencyWalletApi(
         // All the transactions we have from the engine:
         txs
       } = state
-      const { startIndex = 0, startEntries = sortedTxidHashes.length } = opts
 
-      // Iterate over the sorted transactions until we have enough output:
-      const out: EdgeTransaction[] = []
-      for (
-        let i = startIndex, lastFile = startIndex;
-        i < sortedTxidHashes.length && out.length < startEntries;
-        ++i
-      ) {
-        // Load a batch of files if we need that:
-        if (i >= lastFile) {
-          const loadEnd = lastFile + startEntries
-          const missingTxIdHashes = sortedTxidHashes
-            .slice(lastFile, loadEnd)
-            .filter(txidHash => files[txidHash] == null)
-          const missingFiles = await loadTxFiles(input, missingTxIdHashes)
-          Object.assign(files, missingFiles)
-          lastFile = loadEnd
+      let i = unfilteredStart ?? 0
+      let isFirst = true
+      let lastFile = 0
+      return bridgifyObject({
+        async next() {
+          const thisBatchSize = isFirst ? firstBatchSize : batchSize
+          const out: EdgeTransaction[] = []
+          while (i < sortedTxidHashes.length && out.length < thisBatchSize) {
+            // Load a batch of files if we need that:
+            if (i >= lastFile) {
+              const missingTxIdHashes = sortedTxidHashes
+                .slice(lastFile, lastFile + thisBatchSize)
+                .filter(txidHash => files[txidHash] == null)
+              const missingFiles = await loadTxFiles(input, missingTxIdHashes)
+              Object.assign(files, missingFiles)
+              lastFile = lastFile + thisBatchSize
+            }
+
+            const txidHash = sortedTxidHashes[i++]
+            const file = files[txidHash]
+            const txid = file?.txid ?? txidHashes[txidHash]?.txid
+            if (txid == null) continue
+            const tx = txs[txid]
+
+            // Filter transactions based on the currency code:
+            if (
+              tx == null ||
+              (tx.nativeAmount[currencyCode] == null &&
+                tx.networkFee[currencyCode] == null)
+            ) {
+              continue
+            }
+
+            // Filter transactions based on search criteria:
+            const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
+            if (!searchStringFilter(ai, edgeTx, searchString)) continue
+            if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
+
+            // Preserve the `getTransactions` hack if needed:
+            if (unfilteredStart != null) {
+              edgeTx.otherParams = { ...edgeTx.otherParams, unfilteredIndex: i }
+            }
+
+            out.push(edgeTx)
+          }
+
+          isFirst = false
+          return { done: out.length === 0, value: out }
         }
+      })
+    },
 
-        const txidHash = sortedTxidHashes[i]
-        const file = files[txidHash]
-        const txid = file?.txid ?? txidHashes[txidHash]?.txid
-        if (txid == null) continue
-        const tx = txs[txid]
+    async getTransactions(
+      opts: EdgeGetTransactionsOptions = {}
+    ): Promise<EdgeTransaction[]> {
+      const {
+        currencyCode = plugin.currencyInfo.currencyCode,
+        endDate: beforeDate,
+        startDate: afterDate,
+        searchString,
+        startEntries,
+        startIndex = 0
+      } = opts
+      const { tokenId } = upgradeCurrencyCode({
+        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+        currencyInfo: plugin.currencyInfo,
+        currencyCode
+      })
 
-        // Filter transactions based on the currency code:
-        if (
-          tx == null ||
-          (tx.nativeAmount[currencyCode] == null &&
-            tx.networkFee[currencyCode] == null)
-        ) {
-          continue
-        }
+      const stream = await out.$internalStreamTransactions({
+        unfilteredStart: startIndex,
+        batchSize: startEntries,
+        afterDate,
+        beforeDate,
+        searchString,
+        tokenId
+      })
 
-        // add this tx / file to the output
-        const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
-        if (searchStringFilter(ai, edgeTx, opts) && dateFilter(edgeTx, opts)) {
-          out.push({
-            ...edgeTx,
-            otherParams: { ...edgeTx.otherParams, unfilteredIndex: i }
-          })
+      // We have no length, so iterate to get everything:
+      if (startEntries == null) {
+        const out: EdgeTransaction[] = []
+        while (true) {
+          const batch = await stream.next()
+          if (batch.done) return out
+          out.push(...batch.value)
         }
       }
-      return out
+
+      // We have a length, so the first batch is all we need:
+      const batch = await stream.next()
+      return batch.value
     },
+
+    streamTransactions,
 
     // Addresses:
     async getReceiveAddress(

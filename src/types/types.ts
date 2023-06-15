@@ -585,6 +585,32 @@ export interface EdgeGetTransactionsOptions {
   searchString?: string
 }
 
+export interface EdgeStreamTransactionOptions {
+  /**
+   * The number of entries to return in each batch.
+   * Defaults to something reasonable, like 10.
+   */
+  batchSize?: number
+
+  /**
+   * The number entries to return on the first batch.
+   * Defaults to `batchSize`.
+   */
+  firstBatchSize?: number
+
+  /** Only return transactions newer than this date */
+  afterDate?: Date
+
+  /** Only return transactions older than this date */
+  beforeDate?: Date
+
+  /** Only return transactions matching this string */
+  searchString?: string
+
+  /** The token to query, or undefined for the main currency */
+  tokenId?: string
+}
+
 export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
   forceIndex?: number
 }
@@ -928,6 +954,9 @@ export interface EdgeCurrencyWallet {
   readonly getTransactions: (
     opts?: EdgeGetTransactionsOptions
   ) => Promise<EdgeTransaction[]>
+  readonly streamTransactions: (
+    opts?: EdgeStreamTransactionOptions
+  ) => AsyncIterableIterator<EdgeTransaction[]>
 
   // Addresses:
   readonly getReceiveAddress: (

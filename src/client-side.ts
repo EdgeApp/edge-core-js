@@ -1,10 +1,25 @@
-import { shareData } from 'yaob'
+import { close, shareData } from 'yaob'
 
 import {
   EdgePasswordRules,
+  EdgeStreamTransactionOptions,
+  EdgeTransaction,
   EdgeWalletInfo,
   EdgeWalletInfoFull
 } from './types/types'
+
+export interface InternalWalletStream {
+  next: () => Promise<{
+    done: boolean
+    value: EdgeTransaction[]
+  }>
+}
+
+export interface InternalWalletMethods {
+  $internalStreamTransactions: (
+    opts: EdgeStreamTransactionOptions & { unfilteredStart?: number }
+  ) => Promise<InternalWalletStream>
+}
 
 /**
  * Client-side EdgeAccount methods.
@@ -82,3 +97,47 @@ export function fixUsername(username: string): string {
   return out
 }
 shareData({ fixUsername })
+
+/**
+ * Synchronously constructs a transaction stream.
+ * This method creates a secret internal stream,
+ * which differs slightly from the AsyncIterableIterator protocol
+ * because of YAOB limitations.
+ * It then wraps the internal stream object with the correct API.
+ */
+export function streamTransactions(
+  this: InternalWalletMethods,
+  opts: EdgeStreamTransactionOptions = {}
+): AsyncIterableIterator<EdgeTransaction[]> {
+  let stream: InternalWalletStream | undefined
+  let streamClosed = false
+
+  const out: AsyncIterableIterator<EdgeTransaction[]> = {
+    next: async () => {
+      if (stream == null) stream = await this.$internalStreamTransactions(opts)
+      if (!streamClosed) {
+        const out = await stream.next()
+        if (!out.done) return out
+        close(stream)
+        streamClosed = true
+      }
+      return { done: true, value: undefined }
+    },
+
+    /**
+     * Closes the iterator early if the client doesn't want all the results.
+     * This is necessary to prevent memory leaks over the bridge.
+     */
+    return: async () => {
+      if (stream != null && !streamClosed) {
+        close(stream)
+        streamClosed = true
+      }
+      return { done: true, value: undefined }
+    },
+
+    [Symbol.asyncIterator]: () => out
+  }
+  return out
+}
+shareData({ streamTransactions }, 'CurrencyWalletSync')
