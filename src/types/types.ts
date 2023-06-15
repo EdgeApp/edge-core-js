@@ -568,6 +568,7 @@ export interface EdgeGetTransactionsOptions {
    * To reveal where a transaction lands in this secret list,
    * `getTransactions` inserts an `otherParams.unfilteredIndex` parameter,
    * which can be used as the starting point for subsequent queries.
+   * @deprecated Use `streamTransactions` if you need pagination.
    */
   startIndex?: number
 
@@ -575,6 +576,7 @@ export interface EdgeGetTransactionsOptions {
    * The number of entries to return.
    * Defaults to all transactions.
    * We may return less than this when we reach the end.
+   * @deprecated Use `streamTransactions` if you need pagination.
    */
   startEntries?: number
 

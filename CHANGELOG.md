@@ -1,5 +1,12 @@
 # edge-core-js
 
+## v1.2.0 (2023-06-15)
+
+- added: Add an `EdgeCurrencyWallet.streamTransactions` method.
+- deprecated: Pagination options for `getTransactions`. Use `streamTransactions` if you need pagination.
+- fixed: Add the correct URI to `changeUsername`, so it works.
+- fixed: Send a 'transactionsChanged' event when editing metadata.
+
 ## v1.1.0 (2023-06-08)
 
 - added: Add an `EdgeContext.forgetAccount` method.
