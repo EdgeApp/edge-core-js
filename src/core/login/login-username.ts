@@ -86,7 +86,7 @@ export async function makeChangeUsernameKit(
       ...recovery2Kit?.server,
       ...usernameKit?.server
     },
-    serverPath: '',
+    serverPath: '/v2/login/username',
     stash: {
       ...passwordKit?.stash,
       ...pin2Kit?.stash,
