@@ -47,7 +47,8 @@ const [nativeBridge, reactBridge] =
           hideProperties,
           sendMessage(message) {
             window.edgeCore.postMessage(JSON.stringify(message))
-          }
+          },
+          throttleMs: 500
         })
       ]
     : [
@@ -62,7 +63,8 @@ const [nativeBridge, reactBridge] =
               'postMessage',
               [JSON.stringify(message)]
             ])
-          }
+          },
+          throttleMs: 500
         })
       ]
 
