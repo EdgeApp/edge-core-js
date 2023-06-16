@@ -12,7 +12,9 @@ import { VoucherDump } from '../../types/fake-types'
 import {
   asChangeOtpPayload,
   asChangePasswordPayload,
+  asChangePin2IdPayload,
   asChangePin2Payload,
+  asChangeRecovery2IdPayload,
   asChangeRecovery2Payload,
   asChangeSecretPayload,
   asChangeUsernamePayload,
@@ -479,7 +481,99 @@ const secretRoute = withLogin2(request => {
   return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
 })
 
-export const vouchersRoute = withLogin2(async request => {
+const usernameRoute = withLogin2(async request => {
+  const { db, login, payload } = request
+
+  const cleanPassword = asMaybe(asChangePasswordPayload)(payload)
+  const cleanPin2 = asMaybe(asChangePin2IdPayload)(payload)
+  const cleanRecovery2 = asMaybe(asChangeRecovery2IdPayload)(payload)
+  const cleanUsername = asMaybe(asChangeUsernamePayload)(payload)
+
+  // Validate the payload selection:
+  if (login.passwordAuth != null && cleanPassword == null) {
+    return await statusResponse(
+      statusCodes.invalidRequest,
+      'Missing password payload'
+    )
+  }
+  if (login.pin2Auth != null && cleanPin2 == null) {
+    return await statusResponse(
+      statusCodes.invalidRequest,
+      'Missing pin2Id payload'
+    )
+  }
+  if (login.recovery2Auth != null && cleanRecovery2 == null) {
+    return await statusResponse(
+      statusCodes.invalidRequest,
+      'Missing recovery2Id payload'
+    )
+  }
+  if (login.parentBox == null && cleanUsername == null) {
+    return await statusResponse(
+      statusCodes.invalidRequest,
+      'Missing username payload'
+    )
+  }
+
+  // Do we have a password?
+  if (cleanPassword != null) {
+    login.passwordAuth = cleanPassword.passwordAuth
+    login.passwordAuthBox = cleanPassword.passwordAuthBox
+    login.passwordAuthSnrp = cleanPassword.passwordAuthSnrp
+    login.passwordBox = cleanPassword.passwordBox
+    login.passwordKeySnrp = cleanPassword.passwordKeySnrp
+  }
+
+  // Do we have a PIN?
+  if (cleanPin2 != null) {
+    if (login.pin2Auth == null) {
+      return await statusResponse(
+        statusCodes.invalidRequest,
+        'Login lacks pin2'
+      )
+    }
+    const existing = await db.getLoginByPin2Id(cleanPin2.pin2Id)
+    if (existing != null) {
+      return await statusResponse(statusCodes.conflict)
+    }
+    login.pin2Id = cleanPin2.pin2Id
+  }
+
+  // Do we have recovery?
+  if (cleanRecovery2 != null) {
+    if (login.recovery2Auth == null) {
+      return await statusResponse(
+        statusCodes.invalidRequest,
+        'Login lacks recovery2'
+      )
+    }
+    const existing = await db.getLoginByRecovery2Id(cleanRecovery2.recovery2Id)
+    if (existing != null) {
+      return await statusResponse(statusCodes.conflict)
+    }
+    login.recovery2Id = cleanRecovery2.recovery2Id
+  }
+
+  // Are we the root login?
+  if (cleanUsername != null) {
+    if (login.parentBox != null) {
+      return await statusResponse(
+        statusCodes.invalidRequest,
+        'Only top-level logins can have usernames'
+      )
+    }
+    const existing = await db.getLoginByUserId(cleanUsername.userId)
+    if (existing != null) {
+      return await statusResponse(statusCodes.conflict)
+    }
+    login.userId = cleanUsername.userId
+    login.userTextBox = cleanUsername.userTextBox
+  }
+
+  return await payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
+})
+
+const vouchersRoute = withLogin2(async request => {
   const { db, login, payload } = request
   const clean = asMaybe(asChangeVouchersPayload)(payload)
   if (clean == null) return await statusResponse(statusCodes.invalidRequest)
@@ -679,6 +773,9 @@ const urls: Serverlet<DbRequest> = pickPath(
     }),
     '/api/v2/login/secret/?': pickMethod({
       POST: withApiKey(secretRoute)
+    }),
+    '/api/v2/login/username/?': pickMethod({
+      POST: withApiKey(usernameRoute)
     }),
     '/api/v2/login/vouchers/?': pickMethod({
       POST: withApiKey(vouchersRoute)
