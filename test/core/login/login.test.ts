@@ -206,7 +206,11 @@ describe('pin', function () {
   it('login', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    // Although PIN login is enabled, we don't know the PIN in plain text
+    // because the fake user has a legacy setup:
+    expect(await account.getPin()).equals(undefined)
   })
 
   it('changes', async function () {
@@ -215,6 +219,7 @@ describe('pin', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.changePin({ pin: '4321' })
+    expect(await account.getPin()).equals('4321')
     await context.loginWithPIN(fakeUser.username, '4321')
 
     const remote = await world.makeEdgeContext(contextOptions)

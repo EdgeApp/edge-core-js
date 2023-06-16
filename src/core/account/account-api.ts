@@ -256,6 +256,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         : await checkPin2(ai, loginTree, pin)
     },
 
+    async getPin(): Promise<string | undefined> {
+      const { login, loginTree } = accountState()
+      return login.pin ?? loginTree.pin
+    },
+
     // ----------------------------------------------------------------
     // Remove credentials:
     // ----------------------------------------------------------------
