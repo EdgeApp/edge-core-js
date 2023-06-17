@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v1.3.0 (2023-06-16)
+
+- added: Add an `EdgeAccount.getPin` method.
+- fixed: Allow the `EdgeAccount.username` property to update after calling `changeUsername`.
+
 ## v1.2.0 (2023-06-15)
 
 - added: Add an `EdgeCurrencyWallet.streamTransactions` method.
