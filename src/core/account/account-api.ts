@@ -67,9 +67,16 @@ import { CurrencyConfig, SwapConfig } from './plugin-api'
  * Creates an unwrapped account API object around an account state object.
  */
 export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
-  const accountState = (): AccountState => ai.props.state.accounts[accountId]
-  const { accountWalletInfo, loginType, loginTree } = accountState()
-  const { username } = loginTree
+  // We don't want accountState to be undefined when we log out,
+  // so preserve a snapshot of our last state:
+  let lastState = ai.props.state.accounts[accountId]
+  const accountState = (): AccountState => {
+    const nextState = ai.props.state.accounts[accountId]
+    if (nextState != null) lastState = nextState
+    return lastState
+  }
+
+  const { accountWalletInfo, loginType } = accountState()
 
   // Plugin config API's:
   const currencyConfigs: EdgePluginMap<EdgeCurrencyConfig> = {}
@@ -146,7 +153,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     get loggedIn(): boolean {
-      return accountState() != null
+      return ai.props.state.accounts[accountId] != null
     },
 
     get recoveryKey(): string | undefined {
@@ -159,11 +166,13 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     get rootLoginId(): string {
       lockdown()
+      const { loginTree } = accountState()
       return base58.stringify(loginTree.loginId)
     },
 
     get username(): string | undefined {
-      return username
+      const { loginTree } = accountState()
+      return loginTree.username
     },
 
     // ----------------------------------------------------------------
@@ -328,12 +337,14 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     async approveVoucher(voucherId: string): Promise<void> {
+      const { loginTree } = accountState()
       return await changeVoucherStatus(ai, loginTree, {
         approvedVouchers: [voucherId]
       })
     },
 
     async rejectVoucher(voucherId: string): Promise<void> {
+      const { loginTree } = accountState()
       return await changeVoucherStatus(ai, loginTree, {
         rejectedVouchers: [voucherId]
       })

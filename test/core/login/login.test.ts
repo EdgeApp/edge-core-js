@@ -19,8 +19,8 @@ describe('appId', function () {
   })
 })
 
-describe('creation', function () {
-  it('username available', async function () {
+describe('username', function () {
+  it('available', async function () {
     const world = await makeFakeEdgeWorld([], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -28,7 +28,7 @@ describe('creation', function () {
     expect(available).equals(true)
   })
 
-  it('username not available', async function () {
+  it('not available', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -36,6 +36,26 @@ describe('creation', function () {
     expect(available).equals(false)
   })
 
+  it('changes', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    // This makes the test much faster:
+    await account.deletePassword()
+
+    // Change the username:
+    expect(account.username).equals('js test 0')
+    await account.changeUsername({ username: 'JS Test 1' })
+    expect(account.username).equals('js test 1')
+
+    // The context must update too:
+    const [userInfo] = context.localUsers
+    expect(userInfo.username).equals('js test 1')
+  })
+})
+
+describe('creation', function () {
   it('password-less account', async function () {
     this.timeout(1000)
     const world = await makeFakeEdgeWorld([], quiet)
