@@ -11,6 +11,32 @@ export interface YaobCallbacks {
   setRef: (element: EdgeCoreWebViewRef | null) => void
 }
 
+const DEBUG_SIZE = 240
+const CALLS_COUNT = 10
+let numCalls = 0
+const calls: number[] = []
+
+function trackCallbacks(debug: string, message: string): void {
+  const date = new Date().getTime()
+  const time = new Date(date).toISOString().split('T')[1]
+  calls[numCalls] = date
+  numCalls++
+
+  let callsPerSec = 0
+
+  if (numCalls >= 10) {
+    const prevDate = calls[numCalls - CALLS_COUNT]
+    const splitMs = date - prevDate
+    callsPerSec = CALLS_COUNT / (splitMs / 1000)
+  }
+
+  console.info(
+    `${time} cps=${callsPerSec.toFixed(3)} size=${
+      message.length
+    } ${debug} ${message.slice(0, DEBUG_SIZE)}`
+  )
+}
+
 /**
  * Sets up a YAOB bridge for use with a React Native WebView.
  * The returned callbacks should be passed to the `onMessage` and `ref`
@@ -22,7 +48,7 @@ export interface YaobCallbacks {
  */
 export function makeYaobCallbacks<Root>(
   onRoot: (root: Root) => unknown,
-  debug?: string
+  debug: string = 'YAOBCALLBACK'
 ): YaobCallbacks {
   let bridge: Bridge | undefined
   let gatedRoot: Root | undefined
@@ -39,7 +65,7 @@ export function makeYaobCallbacks<Root>(
   // Feed incoming messages into the YAOB bridge (if any):
   function handleMessage(event: EdgeCoreMessageEvent): void {
     const message = JSON.parse(event.nativeEvent.message)
-    if (debug != null) console.info(`${debug} →`, message)
+    if (debug != null) trackCallbacks(`${debug} →`, event.nativeEvent.message)
 
     // This is a terrible hack. We are using our inside knowledge
     // of YAOB's message format to determine when the client has restarted.
@@ -58,7 +84,10 @@ export function makeYaobCallbacks<Root>(
       bridge = new Bridge({
         hideProperties,
         sendMessage: message => {
-          if (debug != null) console.info(`${debug} ←`, message)
+          const msgText = JSON.stringify(message)
+
+          if (debug != null) trackCallbacks(`${debug} ←`, msgText)
+
           if (webview == null) return
 
           const js = `if (window.reactBridge != null) {${
