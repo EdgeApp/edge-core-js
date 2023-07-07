@@ -334,10 +334,16 @@ const currencyWalletInner = buildReducer<
   },
 
   gotTxs(state = {}, action): { [currencyCode: string]: boolean } {
-    if (action.type === 'CURRENCY_ENGINE_GOT_TXS') {
-      state[action.payload.currencyCode] = true
+    switch (action.type) {
+      case 'CURRENCY_ENGINE_GOT_TXS': {
+        const { currencyCode } = action.payload
+        return { ...state, [currencyCode]: true }
+      }
+      case 'CURRENCY_ENGINE_CLEARED':
+        return {}
+      default:
+        return state
     }
-    return state
   },
 
   walletInfo(state, action, next) {
