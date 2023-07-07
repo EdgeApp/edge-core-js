@@ -372,48 +372,40 @@ function asMaybeError<T>(name: string): Cleaner<T | undefined> {
   }
 }
 
-export const asMaybeDustSpendError: Cleaner<
-  DustSpendError | undefined
-> = asMaybeError('DustSpendError')
-export const asMaybeInsufficientFundsError: Cleaner<
-  InsufficientFundsError | undefined
-> = asMaybeError('InsufficientFundsError')
-export const asMaybeNetworkError: Cleaner<
-  NetworkError | undefined
-> = asMaybeError('NetworkError')
-export const asMaybeNoAmountSpecifiedError: Cleaner<
-  NoAmountSpecifiedError | undefined
-> = asMaybeError('NoAmountSpecifiedError')
-export const asMaybeObsoleteApiError: Cleaner<
-  ObsoleteApiError | undefined
-> = asMaybeError('ObsoleteApiError')
-export const asMaybeOtpError: Cleaner<OtpError | undefined> = asMaybeError(
-  'OtpError'
+export const asMaybeDustSpendError = asMaybeError<DustSpendError>(
+  'DustSpendError'
 )
-export const asMaybePasswordError: Cleaner<
-  PasswordError | undefined
-> = asMaybeError('PasswordError')
-export const asMaybePendingFundsError: Cleaner<
-  PendingFundsError | undefined
-> = asMaybeError('PendingFundsError')
-export const asMaybeSameCurrencyError: Cleaner<
-  SameCurrencyError | undefined
-> = asMaybeError('SameCurrencyError')
-export const asMaybeSpendToSelfError: Cleaner<
-  SpendToSelfError | undefined
-> = asMaybeError('SpendToSelfError')
-export const asMaybeSwapAboveLimitError: Cleaner<
-  SwapAboveLimitError | undefined
-> = asMaybeError('SwapAboveLimitError')
-export const asMaybeSwapBelowLimitError: Cleaner<
-  SwapBelowLimitError | undefined
-> = asMaybeError('SwapBelowLimitError')
-export const asMaybeSwapCurrencyError: Cleaner<
-  SwapCurrencyError | undefined
-> = asMaybeError('SwapCurrencyError')
-export const asMaybeSwapPermissionError: Cleaner<
-  SwapPermissionError | undefined
-> = asMaybeError('SwapPermissionError')
-export const asMaybeUsernameError: Cleaner<
-  UsernameError | undefined
-> = asMaybeError('UsernameError')
+export const asMaybeInsufficientFundsError = asMaybeError<InsufficientFundsError>(
+  'InsufficientFundsError'
+)
+export const asMaybeNetworkError = asMaybeError<NetworkError>('NetworkError')
+export const asMaybeNoAmountSpecifiedError = asMaybeError<NoAmountSpecifiedError>(
+  'NoAmountSpecifiedError'
+)
+export const asMaybeObsoleteApiError = asMaybeError<ObsoleteApiError>(
+  'ObsoleteApiError'
+)
+export const asMaybeOtpError = asMaybeError<OtpError>('OtpError')
+export const asMaybePasswordError = asMaybeError<PasswordError>('PasswordError')
+export const asMaybePendingFundsError = asMaybeError<PendingFundsError>(
+  'PendingFundsError'
+)
+export const asMaybeSameCurrencyError = asMaybeError<SameCurrencyError>(
+  'SameCurrencyError'
+)
+export const asMaybeSpendToSelfError = asMaybeError<SpendToSelfError>(
+  'SpendToSelfError'
+)
+export const asMaybeSwapAboveLimitError = asMaybeError<SwapAboveLimitError>(
+  'SwapAboveLimitError'
+)
+export const asMaybeSwapBelowLimitError = asMaybeError<SwapBelowLimitError>(
+  'SwapBelowLimitError'
+)
+export const asMaybeSwapCurrencyError = asMaybeError<SwapCurrencyError>(
+  'SwapCurrencyError'
+)
+export const asMaybeSwapPermissionError = asMaybeError<SwapPermissionError>(
+  'SwapPermissionError'
+)
+export const asMaybeUsernameError = asMaybeError<UsernameError>('UsernameError')
