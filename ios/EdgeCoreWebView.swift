@@ -8,6 +8,14 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
   @objc var onMessage: RCTDirectEventBlock?
   @objc var onScriptError: RCTDirectEventBlock?
 
+  @objc var allowDebugging: Bool = false {
+    didSet {
+      if #available(iOS 16.4, *) {
+        webView?.isInspectable = true
+      }
+    }
+  }
+
   @objc var source: String? {
     didSet { if source != oldValue { visitPage() } }
   }
