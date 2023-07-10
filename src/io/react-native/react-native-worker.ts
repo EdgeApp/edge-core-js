@@ -3,7 +3,6 @@ import './polyfills'
 import hashjs from 'hash.js'
 import HmacDRBG from 'hmac-drbg'
 import { base64 } from 'rfc4648'
-import { makeFetchResponse } from 'serverlet'
 import { Bridge, bridgifyObject } from 'yaob'
 
 import {
@@ -88,7 +87,7 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
     entropy: base64.parse(await nativeBridge.call('randomBytes', 32))
   })
 
-  return {
+  const io: EdgeIo = {
     disklet: {
       delete(path) {
         return nativeBridge.call('diskletDelete', normalizePath(path))
@@ -170,9 +169,11 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       uri: string,
       opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
-      return clientIo.fetchCors(uri, opts).then(makeFetchResponse)
+      return io.fetch(uri, opts)
     }
   }
+
+  return io
 }
 
 /**

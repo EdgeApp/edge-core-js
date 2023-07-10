@@ -65,7 +65,11 @@ export interface EdgeIo {
   readonly disklet: Disklet
   readonly fetch: EdgeFetchFunction
 
-  // This is only present if the platform has some way to avoid CORS:
+  /**
+   * This is only present if the platform has some way to avoid CORS.
+   *
+   * @deprecated Use `fetch` method on `EdgeIo` interface.
+   */
   readonly fetchCors?: EdgeFetchFunction
 }
 
