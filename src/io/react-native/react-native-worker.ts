@@ -13,9 +13,16 @@ import {
   makeFakeWorld
 } from '../../core/core'
 import { EdgeFetchOptions, EdgeFetchResponse, EdgeIo } from '../../types/types'
+import { asyncWaterfall } from '../../util/asyncWaterfall'
+import { shuffle } from '../../util/shuffle'
 import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
 import { ClientIo, WorkerApi } from './react-native-types'
+
+// Hard-coded CORS proxy server
+const PROXY_SERVER_URLS = ['https://cors1.edge.app', 'https://cors2.edge.app']
+// A map of domains that failed CORS and succeeded via the CORS proxy server
+const hostnameProxyWhitelist = new Map<string, true>()
 
 // Set up the bridges:
 const [nativeBridge, reactBridge] =
@@ -127,8 +134,36 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
     },
 
     // Networking:
-    fetch(uri: string, opts?: EdgeFetchOptions): Promise<EdgeFetchResponse> {
-      return window.fetch(uri, opts)
+    async fetch(
+      uri: string,
+      opts?: EdgeFetchOptions
+    ): Promise<EdgeFetchResponse> {
+      const { hostname } = new URL(uri)
+
+      // Proactively use fetchCorsProxy for any hostnames added to whitelist:
+      if (hostnameProxyWhitelist.get(hostname) === true) {
+        return await fetchCorsProxy(uri, opts ?? {})
+      }
+
+      try {
+        // Attempt regular fetch:
+        return await window.fetch(uri, opts)
+      } catch (error) {
+        // Fallback to edge-core-proxy server if this is a CORS error:
+        if (String(error) === 'TypeError: Load failed') {
+          try {
+            const response = await fetchCorsProxy(uri, opts)
+            hostnameProxyWhitelist.set(hostname, true)
+            return response
+          } catch (_) {
+            // Throw the error from the first fetch instead of the one from
+            // proxy server.
+            throw error
+          }
+        }
+        // Not a CORS error:
+        throw error
+      }
     },
 
     fetchCors(
@@ -184,3 +219,20 @@ const workerApi: WorkerApi = bridgifyObject({
   }
 })
 reactBridge.sendRoot(workerApi)
+
+const fetchCorsProxy = async (
+  uri: string,
+  opts: EdgeFetchOptions = {}
+): Promise<Response> => {
+  const shuffledUrls = shuffle([...PROXY_SERVER_URLS])
+  const tasks = shuffledUrls.map(proxyServerUrl => async () =>
+    await window.fetch(proxyServerUrl, {
+      ...opts,
+      headers: {
+        ...opts.headers,
+        'x-proxy-url': uri
+      }
+    })
+  )
+  return await asyncWaterfall(tasks)
+}
