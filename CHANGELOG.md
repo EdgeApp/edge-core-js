@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v1.3.1 (2023-07-11)
+
+- fixed: Enable WebView debugging on iOS 16.4+
+- fixed: Correctly return transactions after a resync.
+
 ## v1.3.0 (2023-06-16)
 
 - added: Add an `EdgeAccount.getPin` method.
