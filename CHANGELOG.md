@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v1.3.2 (2023-07-13)
+
+- Changed: Added a fallback to edge-cors-proxy server to `fetch` method on `EdgeIo`.
+
 ## v1.3.1 (2023-07-11)
 
 - fixed: Enable WebView debugging on iOS 16.4+
