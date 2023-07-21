@@ -135,13 +135,13 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
     // Networking:
     async fetch(
       uri: string,
-      opts?: EdgeFetchOptions
+      opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
       const { hostname } = new URL(uri)
 
       // Proactively use fetchCorsProxy for any hostnames added to whitelist:
       if (hostnameProxyWhitelist.get(hostname) === true) {
-        return await fetchCorsProxy(uri, opts ?? {})
+        return await fetchCorsProxy(uri, opts)
       }
 
       try {
@@ -223,7 +223,7 @@ reactBridge.sendRoot(workerApi)
 
 const fetchCorsProxy = async (
   uri: string,
-  opts: EdgeFetchOptions = {}
+  opts: EdgeFetchOptions
 ): Promise<Response> => {
   const shuffledUrls = shuffle([...PROXY_SERVER_URLS])
   const tasks = shuffledUrls.map(proxyServerUrl => async () =>
