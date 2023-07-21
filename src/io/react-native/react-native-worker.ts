@@ -150,13 +150,13 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
     ): Promise<EdgeFetchResponse> {
       const { hostname } = new URL(uri)
 
-      // Proactively use fetchCorsProxy for any hostnames added to whitelist:
-      if (hostnameProxyWhitelist.get(hostname) === true) {
-        return await fetchCorsProxy(uri, opts)
-      }
       // Proactively use bridgeFetch for any hostnames added to whitelist:
       if (hostnameBridgeProxyWhitelist.get(hostname) === true) {
         return await bridgeFetch(uri, opts)
+      }
+      // Proactively use fetchCorsProxy for any hostnames added to whitelist:
+      if (hostnameProxyWhitelist.get(hostname) === true) {
+        return await fetchCorsProxy(uri, opts)
       }
 
       try {
