@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v1.3.3 (2023-07-24)
+
+- changed: Add fallback to bridged `fetch` if request to edge-cors-proxy server fails
+
 ## v1.3.2 (2023-07-13)
 
 - Changed: Added a fallback to edge-cors-proxy server to `fetch` method on `EdgeIo`.
