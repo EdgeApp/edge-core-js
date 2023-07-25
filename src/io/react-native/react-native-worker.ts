@@ -21,10 +21,14 @@ import { ClientIo, WorkerApi } from './react-native-types'
 
 // Hard-coded CORS proxy server
 const PROXY_SERVER_URLS = ['https://cors1.edge.app', 'https://cors2.edge.app']
+// Only try CORS proxy/bridge techniques up to 5 times
+const MAX_CORS_FAILURE_COUNT = 5
 // A map of domains that failed CORS and succeeded via the CORS proxy server
 const hostnameProxyWhitelist = new Map<string, true>()
 // A map of domains that failed CORS and failed via the CORS proxy server and succeeded via native fetch
 const hostnameBridgeProxyWhitelist = new Map<string, true>()
+// A map of domains that failed all CORS techniques and should not re-attempt CORS techniques
+const hostnameCorsProxyBlacklist = new Map<string, number>()
 
 // Set up the bridges:
 const [nativeBridge, reactBridge] =
@@ -149,40 +153,46 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
       const { hostname } = new URL(uri)
+      const corsFailureCount = hostnameCorsProxyBlacklist.get(hostname) ?? 0
 
-      // Proactively use bridgeFetch for any hostnames added to whitelist:
-      if (hostnameBridgeProxyWhitelist.get(hostname) === true) {
-        return await bridgeFetch(uri, opts)
-      }
-      // Proactively use fetchCorsProxy for any hostnames added to whitelist:
-      if (hostnameProxyWhitelist.get(hostname) === true) {
-        return await fetchCorsProxy(uri, opts)
+      if (corsFailureCount < MAX_CORS_FAILURE_COUNT) {
+        // Proactively use bridgeFetch for any hostnames added to whitelist:
+        if (hostnameBridgeProxyWhitelist.get(hostname) === true) {
+          return await bridgeFetch(uri, opts)
+        }
+        // Proactively use fetchCorsProxy for any hostnames added to whitelist:
+        if (hostnameProxyWhitelist.get(hostname) === true) {
+          return await fetchCorsProxy(uri, opts)
+        }
       }
 
       try {
         // Attempt regular fetch:
         return await window.fetch(uri, opts)
       } catch (error) {
-        // Fallback to edge-core-proxy server if this is a CORS error:
-        if (String(error) === 'TypeError: Load failed') {
-          try {
-            const response = await fetchCorsProxy(uri, opts)
-            hostnameProxyWhitelist.set(hostname, true)
-            return response
-          } catch (_) {
-            // Fallback to bridge fetch if everything else fails
-            try {
-              const response = await bridgeFetch(uri, opts)
-              hostnameBridgeProxyWhitelist.set(hostname, true)
-              return response
-            } catch (_) {}
-            // Throw the error from the first fetch instead of the one from
-            // proxy server.
-            throw error
-          }
+        // If we exhaust attempts to use CORS-safe fetch, then throw the error:
+        if (corsFailureCount >= MAX_CORS_FAILURE_COUNT) {
+          throw error
         }
-        // Not a CORS error:
-        throw error
+
+        try {
+          const response = await fetchCorsProxy(uri, opts)
+          hostnameProxyWhitelist.set(hostname, true)
+          return response
+        } catch (_) {
+          // Fallback to bridge fetch if everything else fails
+          try {
+            const response = await bridgeFetch(uri, opts)
+            hostnameBridgeProxyWhitelist.set(hostname, true)
+            return response
+          } catch (_) {}
+          // We failed all CORS techniques, so track attempts
+          hostnameCorsProxyBlacklist.set(hostname, corsFailureCount + 1)
+
+          // Throw the error from the first fetch instead of the one from
+          // proxy server.
+          throw error
+        }
       }
     },
 
