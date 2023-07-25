@@ -21,10 +21,8 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
   }
 
   func runJs(js: String) {
-    let clean = js.replacingOccurrences(of: "\u{2028}", with: "\\u2028")
-      .replacingOccurrences(of: "\u{2029}", with: "\\u2029")
     webView?.evaluateJavaScript(
-      clean,
+      js,
       completionHandler: { result, error in return })
   }
 
@@ -224,7 +222,8 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
       ),
       let string = String(data: data, encoding: .utf8)
     {
-      return string
+      return string.replacingOccurrences(of: "\u{2028}", with: "\\u2028")
+        .replacingOccurrences(of: "\u{2029}", with: "\\u2029")
     }
     return "undefined"
   }

@@ -33,12 +33,11 @@ class EdgeCoreWebView extends WebView {
   }
 
   public void runJs(String js) {
-    final String clean = js.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029");
     post(
         new Runnable() {
           @Override
           public void run() {
-            evaluateJavascript(clean, null);
+            evaluateJavascript(js, null);
           }
         });
   }
@@ -192,7 +191,9 @@ class EdgeCoreWebView extends WebView {
       JSONArray array = new JSONArray();
       array.put(raw);
       String out = array.toString();
-      return out.substring(1, out.length() - 1);
+      return out.substring(1, out.length() - 1)
+          .replace("\u2028", "\\u2028")
+          .replace("\u2029", "\\u2029");
     }
   }
 
