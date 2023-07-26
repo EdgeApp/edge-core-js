@@ -61,11 +61,14 @@ export function makeYaobCallbacks<Root>(
           if (debug != null) console.info(`${debug} ←`, message)
           if (webview == null) return
 
+          const messageJs = JSON.stringify(message)
+            .replace(/\u2028/g, '\\u2028')
+            .replace(/\u2029/g, '\\u2029')
           const js = `if (window.reactBridge != null) {${
             firstMessage
               ? 'window.reactBridge.inSync = true;'
               : 'window.reactBridge.inSync && '
-          } window.reactBridge.handleMessage(${JSON.stringify(message)})}`
+          } window.reactBridge.handleMessage(${messageJs})}`
           firstMessage = false
 
           UIManager.dispatchViewManagerCommand(
