@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v1.3.4 (2023-07-26)
+
+- fixed: Escape bridge strings closer to serialization, for possibly better performance.
+- fixed: Fallback to CORS-safe fetch functions on all errors to fix inconsistency with error messages across platforms.
+
 ## v1.3.3 (2023-07-24)
 
 - changed: Add fallback to bridged `fetch` if request to edge-cors-proxy server fails
@@ -42,19 +47,19 @@
 - changed: Fix the `listRecoveryQuestionChoices` return type
 - changed: Allow usernames to be `undefined`
 - removed: Ethereum hacks
-    - Ethereum address derivation.
-    - `EdgeAccount.signEthereumTransaction`
+  - Ethereum address derivation.
+  - `EdgeAccount.signEthereumTransaction`
 - removed: Deprecated client-side token methods
-    - `EdgeCurrencyEngine.getEnabledTokens` (no longer used)
-    - `EdgeCurrencyEngine.getTokenStatus` (no longer used)
-    - `EdgeCurrencyWallet.addCustomToken`
-    - `EdgeCurrencyWallet.changeEnabledTokens`
-    - `EdgeCurrencyWallet.disableTokens`
-    - `EdgeCurrencyWallet.enableTokens`
-    - `EdgeCurrencyWallet.getEnabledTokens`
+  - `EdgeCurrencyEngine.getEnabledTokens` (no longer used)
+  - `EdgeCurrencyEngine.getTokenStatus` (no longer used)
+  - `EdgeCurrencyWallet.addCustomToken`
+  - `EdgeCurrencyWallet.changeEnabledTokens`
+  - `EdgeCurrencyWallet.disableTokens`
+  - `EdgeCurrencyWallet.enableTokens`
+  - `EdgeCurrencyWallet.getEnabledTokens`
 - removed: Deprecated display-key properties
-    - `EdgeCurrencyWallet.displayPrivateSeed`
-    - `EdgeCurrencyWallet.displayPublicSeed`
+  - `EdgeCurrencyWallet.displayPrivateSeed`
+  - `EdgeCurrencyWallet.displayPublicSeed`
 - removed: Deprecated `EdgeAccount.loginKey` property
 - removed: Deprecated `keys` properties on `EdgeAccount` and `EdgeCurrencyWallet`
 - removed: Deprecated `EdgeTransaction.amountSatoshi`
@@ -62,8 +67,8 @@
 - removed: Unused `EdgeTransaction.wallet`
 - removed: Unused `getTransactions` parameters
 - removed: Unused type definitions
-    - `EdgeBitcoinPrivateKeyOptions`
-    - `EdgeCreatePrivateKeyOptions`
+  - `EdgeBitcoinPrivateKeyOptions`
+  - `EdgeCreatePrivateKeyOptions`
 - removed: No longer allow the OTP key to be passed as `EdgeAccountOptions.otp`. This parameter only accepts 6-digit OTP codes now. Pass the key as `EdgeAccountOptions.otpKey` instead.
 
 ## v0.21.5 (2023-05-24)
