@@ -155,45 +155,59 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       const { hostname } = new URL(uri)
       const corsFailureCount = hostnameCorsProxyBlacklist.get(hostname) ?? 0
 
+      let doFetch = true
+      let doFetchCors = true
+
       if (corsFailureCount < MAX_CORS_FAILURE_COUNT) {
-        // Proactively use bridgeFetch for any hostnames added to whitelist:
         if (hostnameBridgeProxyWhitelist.get(hostname) === true) {
-          return await bridgeFetch(uri, opts)
-        }
-        // Proactively use fetchCorsProxy for any hostnames added to whitelist:
-        if (hostnameProxyWhitelist.get(hostname) === true) {
-          return await fetchCorsProxy(uri, opts)
+          // Proactively use bridgeFetch for any hostnames added to whitelist:
+          doFetch = false
+          doFetchCors = false
+        } else if (hostnameProxyWhitelist.get(hostname) === true) {
+          // Proactively use fetchCorsProxy for any hostnames added to whitelist:
+          doFetch = false
         }
       }
 
-      try {
-        // Attempt regular fetch:
-        return await window.fetch(uri, opts)
-      } catch (error) {
-        // If we exhaust attempts to use CORS-safe fetch, then throw the error:
-        if (corsFailureCount >= MAX_CORS_FAILURE_COUNT) {
-          throw error
+      let errorToThrow
+      if (doFetch) {
+        try {
+          // Attempt regular fetch:
+          return await window.fetch(uri, opts)
+        } catch (error) {
+          // If we exhaust attempts to use CORS-safe fetch, then throw the error:
+          if (corsFailureCount >= MAX_CORS_FAILURE_COUNT) {
+            throw error
+          }
+          errorToThrow = error
         }
+      }
 
+      if (doFetchCors) {
         try {
           const response = await fetchCorsProxy(uri, opts)
           hostnameProxyWhitelist.set(hostname, true)
           return response
-        } catch (_) {
-          // Fallback to bridge fetch if everything else fails
-          try {
-            const response = await bridgeFetch(uri, opts)
-            hostnameBridgeProxyWhitelist.set(hostname, true)
-            return response
-          } catch (_) {}
-          // We failed all CORS techniques, so track attempts
-          hostnameCorsProxyBlacklist.set(hostname, corsFailureCount + 1)
-
-          // Throw the error from the first fetch instead of the one from
-          // proxy server.
-          throw error
+        } catch (error) {
+          if (errorToThrow == null) errorToThrow = error
         }
       }
+
+      // Fallback to bridge fetch if everything else fails
+      try {
+        const response = await bridgeFetch(uri, opts)
+        hostnameBridgeProxyWhitelist.set(hostname, true)
+        return response
+      } catch (error) {
+        if (errorToThrow == null) errorToThrow = error
+      }
+
+      // We failed all CORS techniques, so track attempts
+      hostnameCorsProxyBlacklist.set(hostname, corsFailureCount + 1)
+
+      // Throw the error from the first fetch instead of the one from
+      // proxy server.
+      throw errorToThrow
     },
 
     fetchCors(
