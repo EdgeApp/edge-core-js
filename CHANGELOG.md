@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v1.3.5 (2023-07-26)
+
+- changed: Remove `fetch` fallback logic. No proxy servers will be used.
+- changed: The `fetchCors` method is no longer deprecated. Use this if CORS might be an issue. Do *not* use this for any secrets or credentials.
+
 ## v1.3.4 (2023-07-26)
 
 - fixed: Escape bridge strings closer to serialization, for possibly better performance.
@@ -7,11 +12,11 @@
 
 ## v1.3.3 (2023-07-24)
 
-- changed: Add fallback to bridged `fetch` if request to edge-cors-proxy server fails
+- changed: Add fallback to bridged `fetch` if request to edge-cors-proxy server fails.
 
 ## v1.3.2 (2023-07-13)
 
-- Changed: Added a fallback to edge-cors-proxy server to `fetch` method on `EdgeIo`.
+- changed: Added a fallback to edge-cors-proxy server to `fetch` method on `EdgeIo`.
 
 ## v1.3.1 (2023-07-11)
 
