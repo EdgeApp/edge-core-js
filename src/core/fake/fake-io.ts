@@ -44,7 +44,8 @@ export function makeFakeIo(): EdgeIo {
     disklet: makeMemoryDisklet(),
 
     // Networking:
-    fetch: fakeFetch
+    fetch: fakeFetch,
+    fetchCors: fakeFetch
   }
   return out
 }

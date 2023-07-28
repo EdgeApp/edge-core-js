@@ -66,11 +66,10 @@ export interface EdgeIo {
   readonly fetch: EdgeFetchFunction
 
   /**
-   * This is only present if the platform has some way to avoid CORS.
-   *
-   * @deprecated Use `fetch` method on `EdgeIo` interface.
+   * This is like `fetch`, but will try to avoid CORS limitations
+   * on platforms where that may be a problem.
    */
-  readonly fetchCors?: EdgeFetchFunction
+  readonly fetchCors: EdgeFetchFunction
 }
 
 // logging -------------------------------------------------------------

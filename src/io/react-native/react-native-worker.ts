@@ -13,20 +13,20 @@ import {
   makeFakeWorld
 } from '../../core/core'
 import { EdgeFetchOptions, EdgeFetchResponse, EdgeIo } from '../../types/types'
-import { asyncWaterfall } from '../../util/asyncWaterfall'
-import { shuffle } from '../../util/shuffle'
+import { fetchCorsProxy } from '../fetch-cors-proxy'
 import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
 import { ClientIo, WorkerApi } from './react-native-types'
 
-// Hard-coded CORS proxy server
-const PROXY_SERVER_URLS = ['https://cors1.edge.app', 'https://cors2.edge.app']
 // Only try CORS proxy/bridge techniques up to 5 times
 const MAX_CORS_FAILURE_COUNT = 5
+
 // A map of domains that failed CORS and succeeded via the CORS proxy server
-const hostnameProxyWhitelist = new Map<string, true>()
+const hostnameProxyWhitelist = new Set<string>()
+
 // A map of domains that failed CORS and failed via the CORS proxy server and succeeded via native fetch
-const hostnameBridgeProxyWhitelist = new Map<string, true>()
+const hostnameBridgeProxyWhitelist = new Set<string>()
+
 // A map of domains that failed all CORS techniques and should not re-attempt CORS techniques
 const hostnameCorsProxyBlacklist = new Map<string, number>()
 
@@ -150,6 +150,13 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
     // Networking:
     async fetch(
       uri: string,
+      opts?: EdgeFetchOptions
+    ): Promise<EdgeFetchResponse> {
+      return await window.fetch(uri, opts)
+    },
+
+    async fetchCors(
+      uri: string,
       opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
       const { hostname } = new URL(uri)
@@ -159,11 +166,11 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       let doFetchCors = true
 
       if (corsFailureCount < MAX_CORS_FAILURE_COUNT) {
-        if (hostnameBridgeProxyWhitelist.get(hostname) === true) {
+        if (hostnameBridgeProxyWhitelist.has(hostname)) {
           // Proactively use bridgeFetch for any hostnames added to whitelist:
           doFetch = false
           doFetchCors = false
-        } else if (hostnameProxyWhitelist.get(hostname) === true) {
+        } else if (hostnameProxyWhitelist.has(hostname)) {
           // Proactively use fetchCorsProxy for any hostnames added to whitelist:
           doFetch = false
         }
@@ -186,7 +193,7 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       if (doFetchCors) {
         try {
           const response = await fetchCorsProxy(uri, opts)
-          hostnameProxyWhitelist.set(hostname, true)
+          hostnameProxyWhitelist.add(hostname)
           return response
         } catch (error) {
           if (errorToThrow == null) errorToThrow = error
@@ -196,7 +203,7 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       // Fallback to bridge fetch if everything else fails
       try {
         const response = await bridgeFetch(uri, opts)
-        hostnameBridgeProxyWhitelist.set(hostname, true)
+        hostnameBridgeProxyWhitelist.add(hostname)
         return response
       } catch (error) {
         if (errorToThrow == null) errorToThrow = error
@@ -208,13 +215,6 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       // Throw the error from the first fetch instead of the one from
       // proxy server.
       throw errorToThrow
-    },
-
-    fetchCors(
-      uri: string,
-      opts: EdgeFetchOptions = {}
-    ): Promise<EdgeFetchResponse> {
-      return io.fetch(uri, opts)
     }
   }
 
@@ -265,20 +265,3 @@ const workerApi: WorkerApi = bridgifyObject({
   }
 })
 reactBridge.sendRoot(workerApi)
-
-const fetchCorsProxy = async (
-  uri: string,
-  opts: EdgeFetchOptions
-): Promise<Response> => {
-  const shuffledUrls = shuffle([...PROXY_SERVER_URLS])
-  const tasks = shuffledUrls.map(proxyServerUrl => async () =>
-    await window.fetch(proxyServerUrl, {
-      ...opts,
-      headers: {
-        ...opts.headers,
-        'x-proxy-url': uri
-      }
-    })
-  )
-  return await asyncWaterfall(tasks)
-}
