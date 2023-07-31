@@ -12,7 +12,13 @@ import {
   makeContext,
   makeFakeWorld
 } from '../../core/core'
-import { EdgeFetchOptions, EdgeFetchResponse, EdgeIo } from '../../types/types'
+import {
+  asMaybeNetworkError,
+  EdgeFetchOptions,
+  EdgeFetchResponse,
+  EdgeIo,
+  NetworkError
+} from '../../types/types'
 import { fetchCorsProxy } from '../fetch-cors-proxy'
 import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
@@ -193,10 +199,14 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       if (doFetchCors) {
         try {
           const response = await fetchCorsProxy(uri, opts)
+          if (response.status === 418) {
+            throw new NetworkError()
+          }
           hostnameProxyWhitelist.add(hostname)
           return response
         } catch (error) {
-          if (errorToThrow == null) errorToThrow = error
+          if (errorToThrow == null && asMaybeNetworkError(error) == null)
+            errorToThrow = error
         }
       }
 
