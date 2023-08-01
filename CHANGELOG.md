@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v1.3.6 (2023-08-01)
+
+- fixed: Interpret HTTP 418 responses from the CORS proxy as errors.
+
 ## v1.3.5 (2023-07-26)
 
 - changed: Remove `fetch` fallback logic. No proxy servers will be used.
