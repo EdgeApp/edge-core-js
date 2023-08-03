@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v1.3.7 (2023-08-03)
+
+- changed: Throttle the react-native bridge to 500ms. This will create some lag, but should improve overall performance.
+- changed: Move the Android namespace definition out of the `AndroidMaifest.xml` and into the `build.gradle` file.
+
 ## v1.3.6 (2023-08-01)
 
 - fixed: Interpret HTTP 418 responses from the CORS proxy as errors.
