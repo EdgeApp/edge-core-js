@@ -371,6 +371,20 @@ export interface EdgeTxSwap {
   refundAddress?: string
 }
 
+export type EdgeConfirmationState =
+  // More than `EdgeCurrencyInfo.requiredConfirmations`:
+  | 'confirmed'
+  // Dropped from the network without confirmations:
+  | 'dropped'
+  // We don't know the chain height yet:
+  | 'syncing'
+  // No confirmations yet:
+  | 'unconfirmed'
+  // Something between 1 and `requiredConfirmations`.
+  // Currency engines can always return a number,
+  // and the core will translate it into one of the other states:
+  | number
+
 export interface EdgeTransaction {
   // Amounts:
   currencyCode: string
@@ -381,7 +395,7 @@ export interface EdgeTransaction {
   parentNetworkFee?: string
 
   // Confirmation status:
-  confirmations?: 'confirmed' | 'unconfirmed' | 'syncing' | 'dropped' | number
+  confirmations?: EdgeConfirmationState
   blockHeight: number
   date: number
 
