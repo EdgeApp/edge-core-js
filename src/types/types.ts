@@ -1489,6 +1489,15 @@ export interface EdgeContextOptions {
 
   path?: string // Only used on node.js
   plugins?: EdgeCorePluginsInit
+
+  /**
+   * True to skip updating the `EdgeCurrencyWallet.blockHeight` property.
+   * This may improve performance by reducing bridge traffic,
+   * but there will be no way to query the overall chain height.
+   * The core will continue updating individual transactions
+   * as their confirmation status changes.
+   */
+  skipBlockHeight?: boolean
 }
 
 export interface EdgeRecoveryQuestionChoice {

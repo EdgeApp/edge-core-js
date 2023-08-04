@@ -20,6 +20,7 @@ export interface RootState {
   readonly paused: boolean
   readonly rateHintCache: EdgeRateHint[]
   readonly ready: boolean
+  readonly skipBlockHeight: boolean
 
   // Children reducers:
   readonly currency: CurrencyState
@@ -94,6 +95,10 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
 
   ready(state = false, action): boolean {
     return action.type === 'INIT' ? true : state
+  },
+
+  skipBlockHeight(state = false, action): boolean {
+    return action.type === 'INIT' ? action.payload.skipBlockHeight : state
   },
 
   currency,

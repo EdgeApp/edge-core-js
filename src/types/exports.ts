@@ -78,6 +78,7 @@ export interface EdgeContextProps extends CommonProps {
   hideKeys?: boolean
   logSettings?: Partial<EdgeLogSettings>
   plugins?: EdgeCorePluginsInit
+  skipBlockHeight?: boolean
 }
 
 export interface EdgeFakeWorldProps extends CommonProps {

@@ -329,6 +329,7 @@ export type RootAction =
         logSettings: EdgeLogSettings
         rateHintCache: EdgeRateHint[]
         pluginsInit: EdgeCorePluginsInit
+        skipBlockHeight: boolean
         stashes: LoginStash[]
       }
     }
