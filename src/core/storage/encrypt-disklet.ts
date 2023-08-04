@@ -33,10 +33,9 @@ export function encryptDisklet(
     },
 
     setData(path: string, data: ArrayLike<number>): Promise<unknown> {
-      const dataCast: any = data // Work around `Uint8Array.from` flow bug
       return disklet.setText(
         path,
-        JSON.stringify(encrypt(io, Uint8Array.from(dataCast), dataKey))
+        JSON.stringify(encrypt(io, Uint8Array.from(data), dataKey))
       )
     },
 
