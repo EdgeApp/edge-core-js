@@ -164,10 +164,9 @@ export function makeCurrencyWalletCallbacks(
         action: 'onBlockHeightChanged',
         updateFunc: () => {
           // Update transaction confirmation status
-          const { txs: reduxTxs } = input.props.walletState
-          const txsHack: any = Object.values(reduxTxs)
-          const reduxTxsArray: MergedTransaction[] = txsHack
-          for (const reduxTx of reduxTxsArray) {
+          const { txs } = input.props.walletState
+          for (const txid of Object.keys(txs)) {
+            const reduxTx = txs[txid]
             if (
               reduxTx.confirmations !== 'confirmed' &&
               reduxTx.confirmations !== 'dropped'

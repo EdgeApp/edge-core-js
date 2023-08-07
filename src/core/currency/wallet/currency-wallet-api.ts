@@ -175,7 +175,8 @@ export function makeCurrencyWalletApi(
       return input.props.walletState.balances
     },
     get blockHeight(): number {
-      return input.props.walletState.height
+      const { skipBlockHeight } = input.props.state
+      return skipBlockHeight ? 0 : input.props.walletState.height
     },
     get syncRatio(): number {
       return input.props.walletState.syncRatio

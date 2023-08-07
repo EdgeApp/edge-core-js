@@ -37,7 +37,8 @@ export async function makeContext(
     authServer = 'https://login.edge.app/api',
     deviceDescription = null,
     hideKeys = false,
-    plugins: pluginsInit = {}
+    plugins: pluginsInit = {},
+    skipBlockHeight = false
   } = opts
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
   if (apiKey == null) {
@@ -83,6 +84,7 @@ export async function makeContext(
       logSettings,
       pluginsInit,
       rateHintCache,
+      skipBlockHeight,
       stashes
     }
   })
