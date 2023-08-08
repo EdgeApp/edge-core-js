@@ -1093,6 +1093,17 @@ export interface EdgeSwapQuote {
   readonly request: EdgeSwapRequest
 
   readonly isEstimate: boolean
+
+  /**
+   * This quote may be partially fulfilled with remaining source funds left
+   * in wallet
+   */
+  readonly canBePartial?: boolean
+
+  /**
+   * Maximum amount of time this quote will take to be fulfilled (in seconds)
+   */
+  readonly maxFulfillmentSeconds?: number
   readonly fromNativeAmount: string
   readonly toNativeAmount: string
   readonly networkFee: EdgeNetworkFee
