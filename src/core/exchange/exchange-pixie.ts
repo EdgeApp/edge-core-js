@@ -56,7 +56,7 @@ export const exchange: TamePixie<RootProps> = filterPixie(
           })
           input.props.log('Update rateHintCache.json success')
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         input.props.log.error('Update rateHintCache.json error', error)
         input.props.onError(new Error('Failed to write rateHintCache'))
       }

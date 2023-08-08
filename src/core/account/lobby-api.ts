@@ -53,7 +53,7 @@ export async function fetchAppIdInfo(
     if (clean.darkImageUrl == null) clean.darkImageUrl = clean.imageUrl
 
     return clean
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log failures, but still return the appId as a fallback:
     ai.props.onError(error)
     return { appName: appId }

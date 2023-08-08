@@ -189,7 +189,7 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
         try {
           // Attempt regular fetch:
           return await window.fetch(uri, opts)
-        } catch (error) {
+        } catch (error: unknown) {
           // If we exhaust attempts to use CORS-safe fetch, then throw the error:
           if (corsFailureCount >= MAX_CORS_FAILURE_COUNT) {
             throw error
@@ -206,7 +206,7 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
           }
           hostnameProxyWhitelist.add(hostname)
           return response
-        } catch (error) {
+        } catch (error: unknown) {
           if (errorToThrow == null && asMaybeNetworkError(error) == null)
             errorToThrow = error
         }
@@ -217,7 +217,7 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
         const response = await bridgeFetch(uri, opts)
         hostnameBridgeProxyWhitelist.add(hostname)
         return response
-      } catch (error) {
+      } catch (error: unknown) {
         if (errorToThrow == null) errorToThrow = error
       }
 

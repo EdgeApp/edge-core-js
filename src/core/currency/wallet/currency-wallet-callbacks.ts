@@ -44,7 +44,7 @@ let throttleRateLimitMs = 5000
  */
 function makeThrottledTxCallback(
   input: CurrencyWalletInput,
-  callback: (txArray: EdgeTransaction[]) => unknown
+  callback: (txArray: EdgeTransaction[]) => void
 ): (txs: EdgeTransaction[]) => void {
   const { log, walletId } = input.props
 

@@ -25,7 +25,7 @@ export interface YaobCallbacks {
  * @param {*} debug Provide a message prefix to enable debugging.
  */
 export function makeYaobCallbacks<Root>(
-  onRoot: (root: Root) => unknown,
+  onRoot: (root: Root) => void,
   debug?: string
 ): YaobCallbacks {
   let bridge: Bridge | undefined

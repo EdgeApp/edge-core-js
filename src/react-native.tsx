@@ -19,7 +19,7 @@ import { timeout } from './util/promise'
 export { makeFakeIo } from './core/fake/fake-io'
 export * from './types/types'
 
-function defaultOnError(error: any): void {
+function defaultOnError(error: unknown): void {
   console.error(error)
 }
 
@@ -53,26 +53,25 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
       allowDebugging={allowDebugging}
       debug={debug}
       onError={onError}
-      onLoad={(clientIo, root) =>
-        root
-          .makeEdgeContext(
-            clientIo,
-            bridgifyNativeIo(nativeIo),
-            bridgifyLogBackend({ crashReporter, onLog }),
-            pluginUris,
-            {
-              apiKey,
-              appId,
-              authServer,
-              deviceDescription,
-              hideKeys,
-              logSettings,
-              plugins,
-              skipBlockHeight
-            }
-          )
-          .then(onLoad)
-      }
+      onLoad={async (clientIo, root) => {
+        const context = await root.makeEdgeContext(
+          clientIo,
+          bridgifyNativeIo(nativeIo),
+          bridgifyLogBackend({ crashReporter, onLog }),
+          pluginUris,
+          {
+            apiKey,
+            appId,
+            authServer,
+            deviceDescription,
+            hideKeys,
+            logSettings,
+            plugins,
+            skipBlockHeight
+          }
+        )
+        await onLoad(context)
+      }}
     />
   )
 }
@@ -98,17 +97,16 @@ export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): JSX.Element {
       allowDebugging={allowDebugging}
       debug={debug}
       onError={onError}
-      onLoad={(clientIo, root) =>
-        root
-          .makeFakeEdgeWorld(
-            clientIo,
-            bridgifyNativeIo(nativeIo),
-            bridgifyLogBackend({ crashReporter, onLog }),
-            pluginUris,
-            props.users
-          )
-          .then(onLoad)
-      }
+      onLoad={async (clientIo, root) => {
+        const fakeWorld = await root.makeFakeEdgeWorld(
+          clientIo,
+          bridgifyNativeIo(nativeIo),
+          bridgifyLogBackend({ crashReporter, onLog }),
+          pluginUris,
+          props.users
+        )
+        await onLoad(fakeWorld)
+      }}
     />
   )
 }
@@ -147,7 +145,7 @@ export async function fetchLoginMessages(
       const { username, loginId } = JSON.parse(text)
       if (loginId == null || username == null) continue
       loginMap[loginId] = username
-    } catch (error: any) {}
+    } catch (error: unknown) {}
   }
 
   const uri = 'https://login.edge.app/api/v2/messages'

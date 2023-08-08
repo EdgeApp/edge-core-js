@@ -219,7 +219,12 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   },
 
   loadFailure(state = null, action): Error | null {
-    return action.type === 'ACCOUNT_LOAD_FAILED' ? action.payload.error : state
+    if (action.type === 'ACCOUNT_LOAD_FAILED') {
+      const { error } = action.payload
+      if (error instanceof Error) return error
+      return new Error(String(error))
+    }
+    return state
   },
 
   login: memoizeReducer(

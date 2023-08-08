@@ -60,10 +60,15 @@ interface CommonProps {
   pluginUris?: string[]
 
   // Called if something goes wrong when starting the core:
+  // This will change to `(error: unknown) => void`
   onError?: (error: any) => unknown
 }
 
 export interface EdgeContextProps extends CommonProps {
+  /**
+   * Called once the core finishes loading.
+   * The return type will change to `=> void`
+   */
   onLoad: (context: EdgeContext) => unknown
 
   // EdgeFakeWorldOptions:
@@ -82,6 +87,10 @@ export interface EdgeContextProps extends CommonProps {
 }
 
 export interface EdgeFakeWorldProps extends CommonProps {
+  /**
+   * Called once the core finishes loading.
+   * The return type will change to `=> void`
+   */
   onLoad: (world: EdgeFakeWorld) => unknown
   users?: EdgeFakeUser[]
 

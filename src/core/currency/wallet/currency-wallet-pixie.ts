@@ -164,8 +164,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       await loadFiatFile(input)
       await loadNameFile(input)
       await loadAddressFiles(input)
-    } catch (raw: unknown) {
-      const error = raw instanceof Error ? raw : new Error(String(raw))
+    } catch (error: unknown) {
       input.props.onError(error)
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_FAILED',
@@ -249,8 +248,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
                 }
               }
               syncNetworkTask = makePeriodicTask(doNetworkSync, 10000, {
-                onError: err => {
-                  log.error(err)
+                onError: error => {
+                  log.error(error)
                 }
               })
               syncNetworkTask.start({ wait: false })
@@ -450,7 +449,7 @@ export async function getPublicWalletInfo(
   let publicKeys = {}
   try {
     publicKeys = await tools.derivePublicKey(walletInfo)
-  } catch (error: any) {}
+  } catch (error: unknown) {}
   const publicWalletInfo = {
     id: walletInfo.id,
     type: walletInfo.type,

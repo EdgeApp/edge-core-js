@@ -101,7 +101,7 @@ export function makeFakeWorld(
         : (uri, opts) => {
             try {
               validateServer(uri) // Throws for non-Edge servers.
-            } catch (e) {
+            } catch (error: unknown) {
               return io.fetch(uri, opts)
             }
             return fakeFetch(uri, opts)
