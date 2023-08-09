@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v1.4.0 (2023-08-08)
+
+- added: canBePartial and maxFulfillmentSeconds to EdgeSwapQuote
+
 ## v1.3.7 (2023-08-03)
 
 - changed: Throttle the react-native bridge to 500ms. This will create some lag, but should improve overall performance.
