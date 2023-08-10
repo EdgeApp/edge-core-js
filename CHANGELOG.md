@@ -3,6 +3,7 @@
 ## v1.4.0 (2023-08-08)
 
 - added: canBePartial and maxFulfillmentSeconds to EdgeSwapQuote
+- added: skipBlockHeight config option
 
 ## v1.3.7 (2023-08-03)
 
