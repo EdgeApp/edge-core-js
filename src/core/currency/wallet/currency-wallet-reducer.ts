@@ -4,6 +4,7 @@ import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 import {
   EdgeBalances,
   EdgeCurrencyInfo,
+  EdgeMemo,
   EdgeStakingStatus,
   EdgeTransaction,
   EdgeWalletInfo,
@@ -44,6 +45,7 @@ export interface MergedTransaction {
   currencyCode: string
   date: number
   isSend: boolean
+  memos: EdgeMemo[]
   otherParams?: JsonObject
   ourReceiveAddresses: string[]
   signedTx: string
@@ -397,6 +399,7 @@ const defaultTx: MergedTransaction = {
   currencyCode: '',
   date: 0,
   isSend: false,
+  memos: [],
   ourReceiveAddresses: [],
   signedTx: '',
   txid: '',
@@ -414,7 +417,8 @@ export function mergeTx(
 ): MergedTransaction {
   const {
     currencyCode = defaultCurrency,
-    isSend = lt(tx.nativeAmount, '0')
+    isSend = lt(tx.nativeAmount, '0'),
+    memos
   } = tx
 
   const out = {
@@ -422,6 +426,7 @@ export function mergeTx(
     confirmations: tx.confirmations ?? 'unconfirmed',
     currencyCode,
     date: tx.date,
+    memos,
     otherParams: tx.otherParams,
     ourReceiveAddresses: tx.ourReceiveAddresses,
     signedTx: tx.signedTx,

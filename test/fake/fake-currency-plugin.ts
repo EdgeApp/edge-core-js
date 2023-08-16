@@ -28,17 +28,21 @@ import { compare } from '../../src/util/compare'
 const GENESIS_BLOCK = 1231006505000
 
 const fakeCurrencyInfo: EdgeCurrencyInfo = {
-  // Basic currency information:
   currencyCode: 'FAKE',
   displayName: 'Fake Coin',
   pluginId: 'fakecoin',
+  walletType: 'wallet:fakecoin',
+
+  // Explorers:
+  addressExplorer: 'https://edge.app',
+  transactionExplorer: 'https://edge.app',
+
   denominations: [
     { multiplier: '10', name: 'SMALL' },
     { multiplier: '100', name: 'FAKE' }
   ],
-  walletType: 'wallet:fakecoin',
 
-  // Configuration options:
+  // Deprecated:
   defaultSettings: {},
   metaTokens: [
     {
@@ -49,10 +53,7 @@ const fakeCurrencyInfo: EdgeCurrencyInfo = {
         '0XF98103E9217F099208569D295C1B276F1821348636C268C854BB2A086E0037CD'
     }
   ],
-
-  // Explorers:
-  addressExplorer: 'https://edge.app',
-  transactionExplorer: 'https://edge.app'
+  memoType: 'text'
 }
 
 interface State {
@@ -269,6 +270,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
       date: GENESIS_BLOCK,
       feeRateUsed: { fakePrice: 0 },
       isSend: false,
+      memos: [],
       nativeAmount: total,
       networkFee: '0',
       otherParams: {},
@@ -375,6 +377,7 @@ const blankTx: EdgeTransaction = {
   currencyCode: 'FAKE',
   date: GENESIS_BLOCK,
   isSend: false,
+  memos: [],
   nativeAmount: '0',
   networkFee: '0',
   ourReceiveAddresses: [],
