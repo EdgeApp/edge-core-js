@@ -4,7 +4,11 @@ import { findNodeHandle, UIManager } from 'react-native'
 import { Bridge, onMethod } from 'yaob'
 
 import { hideProperties } from '../hidden-properties'
-import { EdgeCoreMessageEvent, EdgeCoreWebViewRef } from './react-native-types'
+import {
+  EdgeCoreMessageEvent,
+  EdgeCoreWebViewRef,
+  YAOB_THROTTLE_MS
+} from './react-native-types'
 
 export interface YaobCallbacks {
   handleMessage: (event: EdgeCoreMessageEvent) => void
@@ -76,7 +80,8 @@ export function makeYaobCallbacks<Root>(
             'runJs',
             [js]
           )
-        }
+        },
+        throttleMs: YAOB_THROTTLE_MS
       })
 
       // Use our inside knowledge of YAOB to directly
