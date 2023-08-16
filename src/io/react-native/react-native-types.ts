@@ -51,3 +51,6 @@ export interface EdgeCoreWebViewProps {
 }
 export type EdgeCoreWebView = React.ComponentClass<EdgeCoreWebViewProps>
 export type EdgeCoreWebViewRef = React.Component<EdgeCoreWebViewProps>
+
+// Throttle YAOB updates
+export const YAOB_THROTTLE_MS = 50

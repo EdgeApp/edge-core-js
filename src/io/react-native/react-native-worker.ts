@@ -22,7 +22,7 @@ import {
 import { fetchCorsProxy } from '../fetch-cors-proxy'
 import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
-import { ClientIo, WorkerApi } from './react-native-types'
+import { ClientIo, WorkerApi, YAOB_THROTTLE_MS } from './react-native-types'
 
 // Only try CORS proxy/bridge techniques up to 5 times
 const MAX_CORS_FAILURE_COUNT = 5
@@ -48,7 +48,7 @@ const [nativeBridge, reactBridge] =
           sendMessage(message) {
             window.edgeCore.postMessage(JSON.stringify(message))
           },
-          throttleMs: 500
+          throttleMs: YAOB_THROTTLE_MS
         })
       ]
     : [
@@ -64,7 +64,7 @@ const [nativeBridge, reactBridge] =
               [JSON.stringify(message)]
             ])
           },
-          throttleMs: 500
+          throttleMs: YAOB_THROTTLE_MS
         })
       ]
 
