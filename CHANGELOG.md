@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v1.4.1 (2023-08-16)
+
+- changed: Reduced YAOB throttle to 50ms and apply throttle to return bridge calls
+
 ## v1.4.0 (2023-08-08)
 
 - added: canBePartial and maxFulfillmentSeconds to EdgeSwapQuote
