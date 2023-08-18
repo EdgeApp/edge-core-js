@@ -82,7 +82,6 @@ export async function changePin(
   const accountState = ai.props.state.accounts[accountId]
   const { loginTree } = accountState
   const { username } = accountState.stashTree
-  if (username == null) throw new Error('PIN login requires a username')
 
   // Figure out defaults:
   let { pin, enableLogin } = opts
@@ -155,7 +154,7 @@ export async function deletePin(
 export function makeChangePin2Kits(
   ai: ApiInput,
   loginTree: LoginTree,
-  username: string,
+  username: string | undefined,
   pin: string,
   enableLogin: boolean
 ): LoginKit[] {
