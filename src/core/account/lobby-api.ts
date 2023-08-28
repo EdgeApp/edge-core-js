@@ -3,6 +3,7 @@ import { bridgifyObject, close } from 'yaob'
 
 import { EdgeLobbyRequest } from '../../types/server-types'
 import { EdgeLobby, EdgeLoginRequest } from '../../types/types'
+import { shuffle } from '../../util/shuffle'
 import { asLobbyLoginPayload } from '../login/edge'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby'
 import { sanitizeLoginStash, syncAccount } from '../login/login'
@@ -28,8 +29,6 @@ const asAppIdInfo = asObject<AppIdInfo>({
   imageUrl: asOptional(asString)
 })
 
-const infoServerUri = 'https://info1.edge.app'
-
 /**
  * Translate an appId into a user-presentable icon and string.
  */
@@ -38,6 +37,9 @@ export async function fetchAppIdInfo(
   appId: string
 ): Promise<AppIdInfo> {
   try {
+    const infoServerUri = shuffle(
+      ai.props.state.contextConfig.edgeServers.infoServers
+    )[0]
     const url = `${infoServerUri}/v1/appIdInfo/${appId}`
     const response = await ai.props.io.fetch(url)
     if (response.status === 404) {

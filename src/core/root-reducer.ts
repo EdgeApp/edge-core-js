@@ -3,6 +3,7 @@ import { buildReducer, mapReducer } from 'redux-keto'
 import { EdgeLogSettings, EdgeRateHint } from './../types/types'
 import { accountReducer, AccountState } from './account/account-reducer'
 import { RootAction } from './actions'
+import { contextConfig, ContextConfigState } from './context/context-reducer'
 import { currency, CurrencyState } from './currency/currency-reducer'
 import { DEFAULT_RATE_HINTS } from './exchange/exchange-pixie'
 import { exchangeCache, ExchangeState } from './exchange/exchange-reducer'
@@ -23,6 +24,7 @@ export interface RootState {
   readonly skipBlockHeight: boolean
 
   // Children reducers:
+  readonly contextConfig: ContextConfigState
   readonly currency: CurrencyState
   readonly exchangeCache: ExchangeState
   readonly login: LoginState
@@ -101,6 +103,7 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
     return action.type === 'INIT' ? action.payload.skipBlockHeight : state
   },
 
+  contextConfig,
   currency,
   exchangeCache,
   login,

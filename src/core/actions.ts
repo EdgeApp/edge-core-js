@@ -323,8 +323,8 @@ export type RootAction =
         apiKey: string
         appId: string
         authServer: string
-        infoServer: string | string[]
-        syncServer: string | string[]
+        infoServers: string[]
+        syncServers: string[]
         clientId: Uint8Array
         deviceDescription: string | null
         hideKeys: boolean
