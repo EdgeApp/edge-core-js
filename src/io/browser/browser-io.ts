@@ -65,7 +65,7 @@ export function makeBrowserIo(): EdgeIo {
         try {
           // Attempt regular fetch:
           return await window.fetch(uri, opts)
-        } catch (error) {
+        } catch (error: unknown) {
           // If we exhaust attempts to use CORS-safe fetch, then throw the error:
           if (corsFailureCount >= MAX_CORS_FAILURE_COUNT) {
             throw error
@@ -79,7 +79,7 @@ export function makeBrowserIo(): EdgeIo {
           const response = await fetchCorsProxy(uri, opts)
           hostnameProxyWhitelist.add(hostname)
           return response
-        } catch (error) {
+        } catch (error: unknown) {
           if (errorToThrow == null) errorToThrow = error
         }
       }

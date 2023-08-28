@@ -18,7 +18,7 @@ export function makeJsonFile<T>(cleaner: Cleaner<T>): JsonFile<T> {
     async load(disklet, path) {
       try {
         return cleaner(JSON.parse(await disklet.getText(path)))
-      } catch (error: any) {}
+      } catch (error: unknown) {}
     },
     async save(disklet, path, data) {
       await disklet.setText(path, JSON.stringify(wasData(data)))

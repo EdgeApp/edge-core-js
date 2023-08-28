@@ -96,7 +96,7 @@ export type RootAction =
       type: 'ACCOUNT_LOAD_FAILED'
       payload: {
         accountId: string
-        error: Error
+        error: unknown
       }
     }
   | {
@@ -211,7 +211,7 @@ export type RootAction =
       // Called when a currency engine dies at creation time.
       type: 'CURRENCY_ENGINE_FAILED'
       payload: {
-        error: Error
+        error: unknown
         walletId: string
       }
     }

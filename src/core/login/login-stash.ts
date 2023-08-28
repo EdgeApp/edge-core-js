@@ -83,7 +83,7 @@ export async function loadStashes(
   for (const path of paths) {
     try {
       out.push(asLoginStash(JSON.parse(await disklet.getText(path))))
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error(`Could not load ${path}: ${String(error)}`)
     }
   }
@@ -104,7 +104,7 @@ export async function removeStash(
     try {
       const stash = asLoginStash(JSON.parse(await io.disklet.getText(path)))
       if (verifyData(stash.loginId, loginId)) await io.disklet.delete(path)
-    } catch (error: any) {}
+    } catch (error: unknown) {}
   }
 
   dispatch({

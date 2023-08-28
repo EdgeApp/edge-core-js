@@ -53,7 +53,7 @@ async function unpackAccount(
     const old = getStashById(ai, child.loginId)
     child.voucherId = old.stash.voucherId
     child.voucherAuth = old.stash.voucherAuth
-  } catch (error: any) {}
+  } catch (error: unknown) {}
 
   stashTree.lastLogin = now
   await saveStash(ai, stashTree)

@@ -1588,7 +1588,7 @@ export interface EdgeUserInfo {
 
 export interface EdgeContextEvents {
   close: void
-  error: Error
+  error: any // Will change to `unknown`
 }
 
 export interface EdgeContext {

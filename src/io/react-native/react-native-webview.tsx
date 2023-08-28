@@ -12,8 +12,8 @@ import { makeYaobCallbacks, YaobCallbacks } from './yaob-callbacks'
 interface Props {
   allowDebugging?: boolean
   debug?: boolean
-  onError: (error: any) => unknown
-  onLoad: (clientIo: ClientIo, root: WorkerApi) => Promise<unknown>
+  onError: (error: unknown) => void
+  onLoad: (clientIo: ClientIo, root: WorkerApi) => Promise<void>
 }
 
 /**

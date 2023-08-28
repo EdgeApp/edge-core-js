@@ -102,7 +102,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))
           log.warn('Login: complete')
-        } catch (error: any) {
+        } catch (error: unknown) {
           input.props.dispatch({
             type: 'ACCOUNT_LOAD_FAILED',
             payload: { accountId, error }

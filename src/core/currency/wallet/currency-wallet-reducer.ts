@@ -161,9 +161,12 @@ const currencyWalletInner = buildReducer<
   },
 
   engineFailure(state = null, action): Error | null {
-    return action.type === 'CURRENCY_ENGINE_FAILED'
-      ? action.payload.error
-      : state
+    if (action.type === 'CURRENCY_ENGINE_FAILED') {
+      const { error } = action.payload
+      if (error instanceof Error) return error
+      return new Error(String(error))
+    }
+    return state
   },
 
   engineStarted(state = false, action): boolean {

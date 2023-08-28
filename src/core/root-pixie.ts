@@ -25,7 +25,7 @@ export interface RootProps extends ReduxProps<RootState, Dispatch> {
   readonly io: EdgeIo
   readonly log: EdgeLog
   readonly logBackend: LogBackend
-  readonly onError: (error: Error) => unknown
+  readonly onError: (error: unknown) => void
   readonly output: RootOutput
   readonly syncClient: SyncClient
 }

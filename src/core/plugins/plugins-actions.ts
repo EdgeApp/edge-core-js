@@ -59,7 +59,7 @@ export function watchPlugins(
   logBackend: LogBackend,
   pluginsInit: EdgeCorePluginsInit,
   dispatch: Dispatch<RootAction>
-): () => unknown {
+): () => void {
   const { io, nativeIo } = ios
   const legacyIo = { ...io, console }
 
@@ -90,7 +90,7 @@ export function watchPlugins(
             `Plugins must be functions or objects, got ${typeof plugin}`
           )
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Show the error but keep going:
         log.error(error)
       }
