@@ -79,6 +79,8 @@ export interface EdgeContextProps extends CommonProps {
   apiKey?: string
   appId?: string
   authServer?: string
+  infoServer?: string | string[]
+  syncServer?: string | string[]
   deviceDescription?: string
   hideKeys?: boolean
   logSettings?: Partial<EdgeLogSettings>
