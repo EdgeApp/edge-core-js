@@ -1,5 +1,10 @@
 # edge-core-js
 
+## v1.4.2 (2023-08-16)
+
+- fixed: Allow PIN changes on accounts without usernames.
+- changed: Change the `error` event type to `any`. This will become `unknown` in a future breaking release.
+
 ## v1.4.1 (2023-08-16)
 
 - changed: Reduced YAOB throttle to 50ms and apply throttle to return bridge calls
