@@ -381,6 +381,7 @@ export async function serverLogin(
   const { deviceDescription } = ai.props.state.login
 
   const request: LoginRequestBody = {
+    challengeId: opts.challengeId,
     otp: getStashOtp(stash, opts),
     voucherId: stash.voucherId,
     voucherAuth: stash.voucherAuth,

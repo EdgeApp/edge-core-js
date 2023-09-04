@@ -52,6 +52,7 @@ export interface LoginRequestBody {
   data?: unknown
 
   // Common fields for all login methods:
+  challengeId?: string
   deviceDescription?: string
   otp?: string
   voucherId?: string
@@ -183,6 +184,14 @@ export interface CreateLoginPayload {
 // ---------------------------------------------------------------------
 // response payloads
 // ---------------------------------------------------------------------
+
+/**
+ * Data sent back when logging in requires a CAPTCHA.
+ */
+export interface ChallengeErrorPayload {
+  challengeId: string
+  challengeUri: string
+}
 
 /**
  * Data sent back when looking up a login barcode.

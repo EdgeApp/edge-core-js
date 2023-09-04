@@ -1231,10 +1231,27 @@ export interface EdgeRatePlugin {
 // ---------------------------------------------------------------------
 
 export interface EdgeAccountOptions {
-  now?: Date // The current time, if different from `new Date()`
-  otpKey?: string // The OTP secret
-  otp?: string // The 6-digit OTP
-  pauseWallets?: boolean // True to start wallets in the paused state
+  /**
+   * If the login server returns a ChallengeError,
+   * the user needs to visit the challenge URL and answer the question.
+   * If the user succeeds, the challengeId will allow them to log in:
+   */
+  challengeId?: string
+
+  /**
+   * The current time, if different from `new Date()`.
+   * Useful for unit testing.
+   */
+  now?: Date
+
+  /** The user's OTP secret. */
+  otpKey?: string
+
+  /** A 6-digit OTP derived from the OTP secret. */
+  otp?: string
+
+  /** True to start wallets in the paused state. */
+  pauseWallets?: boolean
 }
 
 /**
