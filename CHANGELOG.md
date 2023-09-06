@@ -1,5 +1,9 @@
 # edge-core-js
 
+## v1.5.0 (2023-09-06)
+
+- added: New infoServer and syncServer options for EdgeContextOptions
+
 ## v1.4.2 (2023-08-16)
 
 - fixed: Allow PIN changes on accounts without usernames.
@@ -26,7 +30,7 @@
 ## v1.3.5 (2023-07-26)
 
 - changed: Remove `fetch` fallback logic. No proxy servers will be used.
-- changed: The `fetchCors` method is no longer deprecated. Use this if CORS might be an issue. Do *not* use this for any secrets or credentials.
+- changed: The `fetchCors` method is no longer deprecated. Use this if CORS might be an issue. Do _not_ use this for any secrets or credentials.
 
 ## v1.3.4 (2023-07-26)
 
