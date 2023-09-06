@@ -1486,6 +1486,8 @@ export interface EdgeContextOptions {
   apiKey: string
   appId: string
   authServer?: string
+  infoServer?: string | string[]
+  syncServer?: string | string[]
   hideKeys?: boolean
 
   // Intercepts crash reports:

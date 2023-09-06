@@ -35,17 +35,31 @@ export async function makeContext(
     apiKey,
     appId = '',
     authServer = 'https://login.edge.app/api',
+    infoServer = ['https://info-eu1.edge.app', 'https://info-us1.edge.app'],
+    syncServer = [
+      'https://sync-us1.edge.app',
+      'https://sync-us2.edge.app',
+      'https://sync-us3.edge.app',
+      'https://sync-us4.edge.app',
+      'https://sync-us5.edge.app',
+      'https://sync-us6.edge.app',
+      'https://sync-eu.edge.app'
+    ],
     deviceDescription = null,
     hideKeys = false,
     plugins: pluginsInit = {},
     skipBlockHeight = false
   } = opts
+  const infoServers = Array.isArray(infoServer) ? infoServer : [infoServer]
+  const syncServers = Array.isArray(syncServer) ? syncServer : [syncServer]
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
   if (apiKey == null) {
     throw new Error('No API key provided')
   }
 
   validateServer(authServer)
+  infoServers.map(server => validateServer(server))
+  syncServers.map(server => validateServer(server))
 
   // Create a redux store:
   const redux = createStore(reducer, enhancer)
@@ -78,6 +92,8 @@ export async function makeContext(
       apiKey,
       appId,
       authServer,
+      infoServers,
+      syncServers,
       clientId: clientInfo.clientId,
       deviceDescription,
       hideKeys,
@@ -98,7 +114,11 @@ export async function makeContext(
   )
 
   // Create sync client:
-  const syncClient = await makeSyncClient({ log, fetch: io.fetch })
+  const syncClient = await makeSyncClient({
+    log,
+    fetch: io.fetch,
+    edgeServers: { infoServers, syncServers }
+  })
 
   // Start the pixie tree:
   const mirror: { output: RootOutput } = { output: {} as any }

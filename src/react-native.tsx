@@ -40,9 +40,11 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
     authServer,
     deviceDescription,
     hideKeys,
+    infoServer,
     logSettings,
     plugins,
-    skipBlockHeight
+    skipBlockHeight,
+    syncServer
   } = props
   if (onLoad == null) {
     throw new TypeError('No onLoad passed to MakeEdgeContext')
@@ -65,9 +67,11 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
             authServer,
             deviceDescription,
             hideKeys,
+            infoServer,
             logSettings,
             plugins,
-            skipBlockHeight
+            skipBlockHeight,
+            syncServer
           }
         )
         await onLoad(context)
