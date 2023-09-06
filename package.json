@@ -83,7 +83,7 @@
     "cleaners": "^0.3.14",
     "currency-codes": "^1.1.2",
     "disklet": "^0.5.2",
-    "edge-sync-client": "^0.2.7",
+    "edge-sync-client": "^0.2.8",
     "elliptic": "^6.4.0",
     "hash.js": "^1.1.7",
     "hmac-drbg": "^1.0.1",

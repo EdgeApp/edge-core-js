@@ -2372,10 +2372,10 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-edge-sync-client@^0.2.7:
-  version "0.2.7"
-  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.7.tgz#57041f1a17565f24750803a99aaea517361fe9e1"
-  integrity sha512-ySWvsvHisg3e5gV/KBQymt0Fos1Nqupb6fbvxn5YXM5SmsOWz2iGRqocSc/Qxyd85WV7G/DjpJ8zWVqf0eUTrg==
+edge-sync-client@^0.2.8:
+  version "0.2.8"
+  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.8.tgz#150c9d97676b5ddd158efd38565de1be29e525bc"
+  integrity sha512-5iaVYvws4fEk9gSkijo98nh46wyT2D0YSAYzwAyM4v/oHu+tVa18WrdGC+aP4HZVcrsg/LzrLu/NX9JyTsW9Cw==
   dependencies:
     base-x "^1.0.4"
     cleaners "^0.3.9"
