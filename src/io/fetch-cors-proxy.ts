@@ -1,15 +1,12 @@
 import { EdgeFetchOptions } from '../types/types'
 import { asyncWaterfall } from '../util/asyncWaterfall'
-import { shuffle } from '../util/shuffle'
-
-// Hard-coded CORS proxy server
-const PROXY_SERVER_URLS = ['https://cors1.edge.app', 'https://cors2.edge.app']
+import { getEdgeServers } from './get-edge-server'
 
 export const fetchCorsProxy = async (
   uri: string,
   opts?: EdgeFetchOptions
 ): Promise<Response> => {
-  const shuffledUrls = shuffle([...PROXY_SERVER_URLS])
+  const shuffledUrls = getEdgeServers('corsServers')
   const tasks = shuffledUrls.map(proxyServerUrl => async () =>
     await window.fetch(proxyServerUrl, {
       ...opts,
