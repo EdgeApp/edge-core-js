@@ -1,5 +1,20 @@
 # edge-core-js
 
+## v1.6.0 (2023-09-11)
+
+- added: Currency-info support for multiple memos per transaction.
+  - added: `EdgeCurrencyInfo.memoOptions`, lists acceptable memo types.
+  - added: `EdgeCurrencyInfo.multipleMemos`, set if a currency supports multiple memos in the same transaction.
+  - deprecated: `EdgeCurrencyInfo.memoMaxLength`
+  - deprecated: `EdgeCurrencyInfo.memoMaxValue`
+  - deprecated: `EdgeCurrencyInfo.memoType`. Note: If it is not set correctly, legacy plugins will no longer receive memos. Some buggy plugins forgot to do this, so those plugins will stop receiving memos. This is not a breaking change, though, since this field was always mandatory.
+- added: Spending support for multiple memos.
+  - added: `EdgeSpendInfo.memos`
+  - deprecated: `EdgeSpendTarget.memo`
+- added: Transaction history support for on-chain memos.
+  - added: `EdgeTransaction.memos`
+  - deprecated: `EdgeTransaction.spendTargets.memo`
+
 ## v1.5.0 (2023-09-06)
 
 - added: New infoServer and syncServer options for EdgeContextOptions
