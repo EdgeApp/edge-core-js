@@ -56,6 +56,7 @@ import {
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { MergedTransaction } from './currency-wallet-reducer'
 import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
+import { upgradeMemos } from './upgrade-memos'
 
 const fakeMetadata = {
   bizId: 0,
@@ -400,6 +401,7 @@ export function makeCurrencyWalletApi(
       return await engine.broadcastTx(tx, { privateKeys })
     },
     async getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string> {
+      spendInfo = upgradeMemos(spendInfo, plugin.currencyInfo)
       if (typeof engine.getMaxSpendable === 'function') {
         // Only provide wallet info if currency requires it:
         const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
@@ -456,6 +458,7 @@ export function makeCurrencyWalletApi(
       return await engine.getPaymentProtocolInfo(paymentProtocolUrl)
     },
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+      spendInfo = upgradeMemos(spendInfo, plugin.currencyInfo)
       const {
         skipChecks,
         spendTargets = [],
@@ -481,19 +484,13 @@ export function makeCurrencyWalletApi(
       const cleanTargets: EdgeSpendTarget[] = []
       const savedTargets: SavedSpendTargets = []
       for (const target of spendTargets) {
-        const { publicAddress, nativeAmount = '0', otherParams = {} } = target
+        const {
+          memo,
+          publicAddress,
+          nativeAmount = '0',
+          otherParams = {}
+        } = target
         if (publicAddress == null) continue
-
-        // Handle legacy spenders:
-        let { memo = target.uniqueIdentifier } = target
-        if (memo == null && typeof otherParams.uniqueIdentifier === 'string') {
-          memo = otherParams.uniqueIdentifier
-        }
-
-        // Support legacy currency plugins:
-        if (memo != null) {
-          otherParams.uniqueIdentifier = memo
-        }
 
         cleanTargets.push({
           memo,
@@ -650,8 +647,9 @@ export function combineTxWithFile(
     confirmations: tx.confirmations,
     currencyCode,
     date: tx.date,
-    metadata: {},
     isSend: tx.isSend,
+    memos: tx.memos,
+    metadata: {},
     nativeAmount: tx.nativeAmount[currencyCode] ?? '0',
     networkFee: tx.networkFee[currencyCode] ?? '0',
     otherParams: { ...tx.otherParams },

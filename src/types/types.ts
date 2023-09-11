@@ -200,6 +200,52 @@ export interface EdgeWalletStates {
 // currency types
 // ---------------------------------------------------------------------
 
+/**
+ * Different currencies support different types of on-chain memos,
+ * so this structure describes the options that are available,
+ * along with the applicable limits.
+ */
+export type EdgeMemoOption =
+  | {
+      type: 'text'
+      hidden?: boolean
+      memoName?: string
+
+      /**  Maximum number of text characters */
+      maxLength?: number
+    }
+  | {
+      type: 'number'
+      hidden?: boolean
+      memoName?: string
+
+      /**
+       * Maximum numerical value.
+       * Numbers are passed as decimal strings.
+       */
+      maxValue?: string
+    }
+  | {
+      type: 'hex'
+      hidden?: boolean
+      memoName?: string
+
+      /** Number of hexadecimal bytes. */
+      maxBytes?: number
+      minBytes?: number
+    }
+
+export interface EdgeMemo {
+  type: 'text' | 'number' | 'hex'
+  value: string
+
+  /** Should we hide this from the user, such as for OP_RETURN? */
+  hidden?: boolean
+
+  /** What does the chain call this? Defaults to "memo". */
+  memoName?: string
+}
+
 // token info ----------------------------------------------------------
 
 export interface EdgeDenomination {
@@ -303,9 +349,15 @@ export interface EdgeCurrencyInfo {
   customFeeTemplate?: EdgeObjectTemplate // Indicates custom fee support
   customTokenTemplate?: EdgeObjectTemplate // Indicates custom token support
   requiredConfirmations?: number // Block confirmations required for a tx
-  memoMaxLength?: number // Max number of text characters, if supported
-  memoMaxValue?: string // Max numerical value, if supported
-  memoType?: 'text' | 'number' | 'hex' | 'other' // undefined means no memo support
+
+  /**
+   * Lists the types of memos this chain supports.
+   * A missing or empty list means no memo support.
+   */
+  memoOptions?: EdgeMemoOption[]
+
+  /** True if the transaction can have multiple memos at once: */
+  multipleMemos?: boolean
 
   // Explorers:
   addressExplorer: string
@@ -329,6 +381,15 @@ export interface EdgeCurrencyInfo {
 
   /** @deprecated Unused. The GUI handles this now */
   symbolImageDarkMono?: string
+
+  /** @deprecated Use memoOptions instead. */
+  memoMaxLength?: number // Max number of text characters, if supported
+
+  /** @deprecated Use memoOptions instead. */
+  memoMaxValue?: string // Max numerical value, if supported
+
+  /** @deprecated Use memoOptions instead. */
+  memoType?: 'text' | 'number' | 'hex' | 'other' // undefined means no memo support
 }
 
 // spending ------------------------------------------------------------
@@ -402,6 +463,7 @@ export interface EdgeTransaction {
   // Transaction info:
   txid: string
   signedTx: string
+  memos: EdgeMemo[]
   ourReceiveAddresses: string[]
 
   // Spend-specific metadata:
@@ -411,12 +473,14 @@ export interface EdgeTransaction {
   feeRateUsed?: JsonObject
   spendTargets?: Array<{
     readonly currencyCode: string
-    readonly memo: string | undefined
     readonly nativeAmount: string
     readonly publicAddress: string
 
-    /** @deprecated Use memo instead */
-    uniqueIdentifier: string | undefined
+    /** @deprecated Use `EdgeTransaction.memos` instead */
+    readonly memo: string | undefined
+
+    /** @deprecated Use `EdgeTransaction.memos` instead */
+    readonly uniqueIdentifier: string | undefined
   }>
   swapData?: EdgeTxSwap
   txSecret?: string // Monero decryption key
@@ -436,12 +500,14 @@ export interface EdgeTransaction {
 }
 
 export interface EdgeSpendTarget {
-  memo?: string
   nativeAmount?: string
   otherParams?: JsonObject
   publicAddress?: string
 
-  /** @deprecated Use memo instead */
+  /** @deprecated. Use `EdgeSpendInfo.memos` instead. */
+  memo?: string
+
+  /** @deprecated. Use `EdgeSpendInfo.memos` instead. */
   uniqueIdentifier?: string // Use memo instead.
 }
 
@@ -458,6 +524,7 @@ export interface EdgeSpendInfo {
   tokenId?: string
   privateKeys?: string[]
   spendTargets: EdgeSpendTarget[]
+  memos?: EdgeMemo[]
 
   // Options:
   noUnconfirmed?: boolean
@@ -790,6 +857,7 @@ export interface EdgeCurrencyEngine {
 
 // currency plugin -----------------------------------------------------
 
+/** @deprecated Use EdgeCurrencyInfo.memoOptions instead */
 export interface EdgeMemoRules {
   passed: boolean
   tooLarge?: boolean // Too large numerically
@@ -835,7 +903,7 @@ export interface EdgeCurrencyTools {
     customTokens?: EdgeMetaToken[]
   ) => Promise<string>
 
-  // Transaction memos:
+  /** @deprecated Use EdgeCurrencyInfo.memoOptions instead */
   readonly validateMemo?: (memo: string) => Promise<EdgeMemoRules>
 }
 
@@ -948,7 +1016,6 @@ export interface EdgeCurrencyWallet {
     nativeAmount: string,
     currencyCode: string
   ) => Promise<string>
-  readonly validateMemo: (memo: string) => Promise<EdgeMemoRules>
 
   // Chain state:
   readonly balances: EdgeBalances
@@ -1031,6 +1098,9 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
+
+  /** @deprecated Use EdgeCurrencyInfo.memoOptions instead */
+  readonly validateMemo: (memo: string) => Promise<EdgeMemoRules>
 }
 
 // ---------------------------------------------------------------------
