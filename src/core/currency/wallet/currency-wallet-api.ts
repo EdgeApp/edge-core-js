@@ -81,10 +81,8 @@ export function makeCurrencyWalletApi(
   const ai = toApiInput(input)
   const { accountId, pluginId, walletInfo } = input.props.walletState
   const plugin = input.props.state.plugins.currency[pluginId]
-  const {
-    unsafeBroadcastTx = false,
-    unsafeMakeSpend = false
-  } = plugin.currencyInfo
+  const { unsafeBroadcastTx = false, unsafeMakeSpend = false } =
+    plugin.currencyInfo
 
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
@@ -445,7 +443,7 @@ export function makeCurrencyWalletApi(
           .catch(() => getMax(min, mid))
       }
 
-      return getMax('0', add(balance, '1'))
+      return await getMax('0', add(balance, '1'))
     },
     async getPaymentProtocolInfo(
       paymentProtocolUrl: string

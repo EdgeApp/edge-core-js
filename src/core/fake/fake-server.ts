@@ -82,14 +82,14 @@ type RepoRequest = DbRequest & {
 
 // Authentication middleware: ----------------------------------------------
 
-const withApiKey = (
-  server: Serverlet<ApiRequest>
-): Serverlet<DbRequest> => async request => {
-  const { json } = request
-  const body = asMaybe(asLoginRequestBody)(json)
-  if (body == null) return await statusResponse(statusCodes.invalidRequest)
-  return await server({ ...request, body, payload: body.data })
-}
+const withApiKey =
+  (server: Serverlet<ApiRequest>): Serverlet<DbRequest> =>
+  async request => {
+    const { json } = request
+    const body = asMaybe(asLoginRequestBody)(json)
+    if (body == null) return await statusResponse(statusCodes.invalidRequest)
+    return await server({ ...request, body, payload: body.data })
+  }
 
 const withValidOtp: (
   server: Serverlet<LoginRequest>
@@ -142,82 +142,84 @@ const handleMissingCredentials: Serverlet<ApiRequest> = request =>
 /**
  * Verifies that the request contains valid v2 authentication.
  */
-const withLogin2 = (
-  server: Serverlet<LoginRequest>,
-  fallback: Serverlet<ApiRequest> = handleMissingCredentials
-): Serverlet<ApiRequest> => request => {
-  const { db, body } = request
-  const {
-    loginAuth,
-    loginId,
-    passwordAuth,
-    pin2Auth,
-    pin2Id,
-    recovery2Auth,
-    recovery2Id,
-    userId
-  } = body
+const withLogin2 =
+  (
+    server: Serverlet<LoginRequest>,
+    fallback: Serverlet<ApiRequest> = handleMissingCredentials
+  ): Serverlet<ApiRequest> =>
+  request => {
+    const { db, body } = request
+    const {
+      loginAuth,
+      loginId,
+      passwordAuth,
+      pin2Auth,
+      pin2Id,
+      recovery2Auth,
+      recovery2Id,
+      userId
+    } = body
 
-  // Token login:
-  if (loginId != null && loginAuth != null) {
-    const login = db.getLoginById(loginId)
-    if (login == null) {
-      return statusResponse(statusCodes.noAccount)
-    }
-    if (login.loginAuth == null || !verifyData(loginAuth, login.loginAuth)) {
-      return passwordErrorResponse(0)
-    }
-    return withValidOtp(server)({ ...request, login })
-  }
-
-  // Password login:
-  if (userId != null && passwordAuth != null) {
-    const login = db.getLoginByUserId(userId)
-    if (login == null) {
-      return statusResponse(statusCodes.noAccount)
-    }
-    if (
-      login.passwordAuth == null ||
-      !verifyData(passwordAuth, login.passwordAuth)
-    ) {
-      return passwordErrorResponse(0)
-    }
-    return withValidOtp(server)({ ...request, login })
-  }
-
-  // PIN2 login:
-  if (pin2Id != null && pin2Auth != null) {
-    const login = db.getLoginByPin2Id(pin2Id)
-    if (login == null) {
-      return statusResponse(statusCodes.noAccount)
-    }
-    if (login.pin2Auth == null || !verifyData(pin2Auth, login.pin2Auth)) {
-      return passwordErrorResponse(0)
-    }
-    return withValidOtp(server)({ ...request, login })
-  }
-
-  // Recovery2 login:
-  if (recovery2Id != null && recovery2Auth != null) {
-    const login = db.getLoginByRecovery2Id(recovery2Id)
-    if (login == null) {
-      return statusResponse(statusCodes.noAccount)
-    }
-    const serverAuth = login.recovery2Auth
-    const clientAuth = recovery2Auth
-    if (serverAuth == null || clientAuth.length !== serverAuth.length) {
-      return passwordErrorResponse(0)
-    }
-    for (let i = 0; i < clientAuth.length; ++i) {
-      if (!verifyData(clientAuth[i], serverAuth[i])) {
+    // Token login:
+    if (loginId != null && loginAuth != null) {
+      const login = db.getLoginById(loginId)
+      if (login == null) {
+        return statusResponse(statusCodes.noAccount)
+      }
+      if (login.loginAuth == null || !verifyData(loginAuth, login.loginAuth)) {
         return passwordErrorResponse(0)
       }
+      return withValidOtp(server)({ ...request, login })
     }
-    return withValidOtp(server)({ ...request, login })
-  }
 
-  return fallback(request)
-}
+    // Password login:
+    if (userId != null && passwordAuth != null) {
+      const login = db.getLoginByUserId(userId)
+      if (login == null) {
+        return statusResponse(statusCodes.noAccount)
+      }
+      if (
+        login.passwordAuth == null ||
+        !verifyData(passwordAuth, login.passwordAuth)
+      ) {
+        return passwordErrorResponse(0)
+      }
+      return withValidOtp(server)({ ...request, login })
+    }
+
+    // PIN2 login:
+    if (pin2Id != null && pin2Auth != null) {
+      const login = db.getLoginByPin2Id(pin2Id)
+      if (login == null) {
+        return statusResponse(statusCodes.noAccount)
+      }
+      if (login.pin2Auth == null || !verifyData(pin2Auth, login.pin2Auth)) {
+        return passwordErrorResponse(0)
+      }
+      return withValidOtp(server)({ ...request, login })
+    }
+
+    // Recovery2 login:
+    if (recovery2Id != null && recovery2Auth != null) {
+      const login = db.getLoginByRecovery2Id(recovery2Id)
+      if (login == null) {
+        return statusResponse(statusCodes.noAccount)
+      }
+      const serverAuth = login.recovery2Auth
+      const clientAuth = recovery2Auth
+      if (serverAuth == null || clientAuth.length !== serverAuth.length) {
+        return passwordErrorResponse(0)
+      }
+      for (let i = 0; i < clientAuth.length; ++i) {
+        if (!verifyData(clientAuth[i], serverAuth[i])) {
+          return passwordErrorResponse(0)
+        }
+      }
+      return withValidOtp(server)({ ...request, login })
+    }
+
+    return fallback(request)
+  }
 
 // login v2: ---------------------------------------------------------------
 
@@ -600,17 +602,19 @@ const vouchersRoute = withLogin2(async request => {
 const handleMissingLobby: Serverlet<LobbyIdRequest> = request =>
   statusResponse(statusCodes.noLobby, `Cannot find lobby ${request.lobbyId}`)
 
-const withLobby = (
-  server: Serverlet<LobbyIdRequest & { lobby: DbLobby }>,
-  fallback: Serverlet<LobbyIdRequest> = handleMissingLobby
-): Serverlet<ApiRequest> => request => {
-  const { db, path } = request
-  const lobbyId = path.split('/')[4]
-  const lobby = db.lobbies[lobbyId]
-  return lobby != null
-    ? server({ ...request, lobby, lobbyId })
-    : fallback({ ...request, lobbyId })
-}
+const withLobby =
+  (
+    server: Serverlet<LobbyIdRequest & { lobby: DbLobby }>,
+    fallback: Serverlet<LobbyIdRequest> = handleMissingLobby
+  ): Serverlet<ApiRequest> =>
+  request => {
+    const { db, path } = request
+    const lobbyId = path.split('/')[4]
+    const lobby = db.lobbies[lobbyId]
+    return lobby != null
+      ? server({ ...request, lobby, lobbyId })
+      : fallback({ ...request, lobbyId })
+  }
 
 const createLobbyRoute = withLobby(
   request =>
@@ -684,22 +688,22 @@ const messagesRoute: Serverlet<ApiRequest> = request => {
 
 // sync: -------------------------------------------------------------------
 
-const withRepo = (
-  server: Serverlet<RepoRequest>
-): Serverlet<DbRequest> => request => {
-  const { db, path } = request
-  const elements = path.split('/')
-  const syncKey = elements[4]
-  // const hash = elements[5]
+const withRepo =
+  (server: Serverlet<RepoRequest>): Serverlet<DbRequest> =>
+  request => {
+    const { db, path } = request
+    const elements = path.split('/')
+    const syncKey = elements[4]
+    // const hash = elements[5]
 
-  const repo = db.repos[syncKey]
-  if (repo == null) {
-    // This is not the auth server, so we have a different format:
-    return jsonResponse({ msg: 'Hash not found' }, { status: 404 })
+    const repo = db.repos[syncKey]
+    if (repo == null) {
+      // This is not the auth server, so we have a different format:
+      return jsonResponse({ msg: 'Hash not found' }, { status: 404 })
+    }
+
+    return server({ ...request, repo })
   }
-
-  return server({ ...request, repo })
-}
 
 const storeReadRoute = withRepo(request => {
   const { repo } = request

@@ -24,7 +24,8 @@ const emptyTokenIds: string[] = []
  */
 export class CurrencyConfig
   extends Bridgeable<EdgeCurrencyConfig>
-  implements EdgeCurrencyConfig {
+  implements EdgeCurrencyConfig
+{
   _ai: ApiInput
   _accountId: string
   _pluginId: string

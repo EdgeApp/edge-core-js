@@ -1,8 +1,8 @@
 import { EdgeCurrencyInfo, EdgeTokenMap } from '../../../types/types'
 
-function flipTokenMap(
-  tokens: EdgeTokenMap
-): { [currencyCode: string]: string } {
+function flipTokenMap(tokens: EdgeTokenMap): {
+  [currencyCode: string]: string
+} {
   const out: { [currencyCode: string]: string } = {}
   for (const tokenId of Object.keys(tokens)) {
     const token = tokens[tokenId]

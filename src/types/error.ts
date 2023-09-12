@@ -372,39 +372,31 @@ function asMaybeError<T>(name: string): Cleaner<T | undefined> {
   }
 }
 
-export const asMaybeDustSpendError = asMaybeError<DustSpendError>(
-  'DustSpendError'
-)
-export const asMaybeInsufficientFundsError = asMaybeError<InsufficientFundsError>(
-  'InsufficientFundsError'
-)
+export const asMaybeDustSpendError =
+  asMaybeError<DustSpendError>('DustSpendError')
+export const asMaybeInsufficientFundsError =
+  asMaybeError<InsufficientFundsError>('InsufficientFundsError')
 export const asMaybeNetworkError = asMaybeError<NetworkError>('NetworkError')
-export const asMaybeNoAmountSpecifiedError = asMaybeError<NoAmountSpecifiedError>(
-  'NoAmountSpecifiedError'
-)
-export const asMaybeObsoleteApiError = asMaybeError<ObsoleteApiError>(
-  'ObsoleteApiError'
-)
+export const asMaybeNoAmountSpecifiedError =
+  asMaybeError<NoAmountSpecifiedError>('NoAmountSpecifiedError')
+export const asMaybeObsoleteApiError =
+  asMaybeError<ObsoleteApiError>('ObsoleteApiError')
 export const asMaybeOtpError = asMaybeError<OtpError>('OtpError')
 export const asMaybePasswordError = asMaybeError<PasswordError>('PasswordError')
-export const asMaybePendingFundsError = asMaybeError<PendingFundsError>(
-  'PendingFundsError'
-)
-export const asMaybeSameCurrencyError = asMaybeError<SameCurrencyError>(
-  'SameCurrencyError'
-)
-export const asMaybeSpendToSelfError = asMaybeError<SpendToSelfError>(
-  'SpendToSelfError'
-)
+export const asMaybePendingFundsError =
+  asMaybeError<PendingFundsError>('PendingFundsError')
+export const asMaybeSameCurrencyError =
+  asMaybeError<SameCurrencyError>('SameCurrencyError')
+export const asMaybeSpendToSelfError =
+  asMaybeError<SpendToSelfError>('SpendToSelfError')
 export const asMaybeSwapAboveLimitError = asMaybeError<SwapAboveLimitError>(
   'SwapAboveLimitError'
 )
 export const asMaybeSwapBelowLimitError = asMaybeError<SwapBelowLimitError>(
   'SwapBelowLimitError'
 )
-export const asMaybeSwapCurrencyError = asMaybeError<SwapCurrencyError>(
-  'SwapCurrencyError'
-)
+export const asMaybeSwapCurrencyError =
+  asMaybeError<SwapCurrencyError>('SwapCurrencyError')
 export const asMaybeSwapPermissionError = asMaybeError<SwapPermissionError>(
   'SwapPermissionError'
 )

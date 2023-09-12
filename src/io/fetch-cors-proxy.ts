@@ -10,14 +10,15 @@ export const fetchCorsProxy = async (
   opts?: EdgeFetchOptions
 ): Promise<Response> => {
   const shuffledUrls = shuffle([...PROXY_SERVER_URLS])
-  const tasks = shuffledUrls.map(proxyServerUrl => async () =>
-    await window.fetch(proxyServerUrl, {
-      ...opts,
-      headers: {
-        ...opts?.headers,
-        'x-proxy-url': uri
-      }
-    })
+  const tasks = shuffledUrls.map(
+    proxyServerUrl => async () =>
+      await window.fetch(proxyServerUrl, {
+        ...opts,
+        headers: {
+          ...opts?.headers,
+          'x-proxy-url': uri
+        }
+      })
   )
   return await asyncWaterfall(tasks)
 }

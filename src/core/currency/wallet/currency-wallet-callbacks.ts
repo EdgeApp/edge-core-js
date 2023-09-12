@@ -171,9 +171,8 @@ export function makeCurrencyWalletCallbacks(
               reduxTx.confirmations !== 'confirmed' &&
               reduxTx.confirmations !== 'dropped'
             ) {
-              const {
-                requiredConfirmations
-              } = input.props.walletState.currencyInfo
+              const { requiredConfirmations } =
+                input.props.walletState.currencyInfo
               const { height } = input.props.walletState
 
               reduxTx.confirmations = validateConfirmations(

@@ -84,14 +84,8 @@ async function loadWalletStates(disklet: Disklet): Promise<EdgeWalletStates> {
     paths.map(async path => {
       const clean = await walletStateFile.load(disklet, path)
       if (clean == null) return
-      const {
-        id,
-        archived,
-        deleted,
-        hidden,
-        migratedFromWalletId,
-        sortIndex
-      } = clean
+      const { id, archived, deleted, hidden, migratedFromWalletId, sortIndex } =
+        clean
       out[id] = { archived, deleted, hidden, sortIndex, migratedFromWalletId }
     })
   )
@@ -172,13 +166,8 @@ export async function changeWalletStates(
 
   await Promise.all(
     walletIds.map(async walletId => {
-      const {
-        archived,
-        deleted,
-        hidden,
-        migratedFromWalletId,
-        sortIndex
-      } = toWrite[walletId]
+      const { archived, deleted, hidden, migratedFromWalletId, sortIndex } =
+        toWrite[walletId]
       const walletIdHash = hashStorageWalletFilename(
         ai.props.state,
         accountWalletInfo.id,

@@ -105,9 +105,11 @@ export interface EdgeFakeWorldProps extends CommonProps {
  * We don't want this library to depend on `@types/react`,
  * since that isn't relevant for our Node or browser builds.
  */
-type ComponentType<Props> = (
-  props: Props
-) => { type: any; props: any; key: string | number | null }
+type ComponentType<Props> = (props: Props) => {
+  type: any
+  props: any
+  key: string | number | null
+}
 
 /**
  * React Native component for creating an EdgeContext.

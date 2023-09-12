@@ -87,11 +87,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         state,
         walletInfo.id
       )
-      const walletLocalEncryptedDisklet = makeStorageWalletLocalEncryptedDisklet(
-        state,
-        walletInfo.id,
-        input.props.io
-      )
+      const walletLocalEncryptedDisklet =
+        makeStorageWalletLocalEncryptedDisklet(
+          state,
+          walletInfo.id,
+          input.props.io
+        )
 
       // We need to know which tokens are enabled,
       // so the engine can start in the right state:

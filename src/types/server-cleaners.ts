@@ -80,13 +80,12 @@ export const asEdgePendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
   deviceDescription: asOptional(asString)
 })
 
-const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> = asObject(
-  {
+const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> =
+  asObject({
     min_length: asNumber,
     category: asValue('address', 'must', 'numeric', 'recovery2', 'string'),
     question: asString
-  }
-)
+  })
 
 // ---------------------------------------------------------------------
 // internal Edge types
@@ -206,21 +205,19 @@ export const asChangePin2Payload: Cleaner<ChangePin2Payload> = asObject({
   pin2TextBox: asEdgeBox
 })
 
-export const asChangeRecovery2IdPayload: Cleaner<ChangeRecovery2IdPayload> = asObject(
-  {
+export const asChangeRecovery2IdPayload: Cleaner<ChangeRecovery2IdPayload> =
+  asObject({
     recovery2Id: asBase64
-  }
-)
+  })
 
-export const asChangeRecovery2Payload: Cleaner<ChangeRecovery2Payload> = asObject(
-  {
+export const asChangeRecovery2Payload: Cleaner<ChangeRecovery2Payload> =
+  asObject({
     recovery2Id: asBase64,
     recovery2Auth: asRecovery2Auth,
     recovery2Box: asEdgeBox,
     recovery2KeyBox: asEdgeBox,
     question2Box: asEdgeBox
-  }
-)
+  })
 
 export const asChangeSecretPayload: Cleaner<ChangeSecretPayload> = asObject({
   loginAuthBox: asEdgeBox,
@@ -336,9 +333,8 @@ export const asPasswordErrorPayload: Cleaner<PasswordErrorPayload> = asObject({
   wait_seconds: asOptional(asNumber)
 })
 
-export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> = asArray(
-  asEdgeRecoveryQuestionChoice
-)
+export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> =
+  asArray(asEdgeRecoveryQuestionChoice)
 
 export const asRecovery2InfoPayload: Cleaner<Recovery2InfoPayload> = asObject({
   question2Box: asEdgeBox
