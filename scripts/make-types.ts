@@ -3,9 +3,9 @@
 import { makeNodeDisklet } from 'disklet'
 import prettier from 'prettier'
 
-function tsToFlow(code: string): string {
+async function tsToFlow(code: string): Promise<string> {
   // First, use Prettier to add semicolons everywhere:
-  const formatted = prettier.format(code, {
+  const formatted = await prettier.format(code, {
     parser: 'typescript',
     semi: true
   })
@@ -42,7 +42,7 @@ async function main(): Promise<void> {
     const flowPath = path
       .replace('src/types/', 'lib/flow/')
       .replace('.ts', '.js')
-    const flowSource = tsToFlow(source)
+    const flowSource = await tsToFlow(source)
 
     await disklet.setText(flowPath, flowSource)
   }
