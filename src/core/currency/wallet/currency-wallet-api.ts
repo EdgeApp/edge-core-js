@@ -458,16 +458,17 @@ export function makeCurrencyWalletApi(
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
       spendInfo = upgradeMemos(spendInfo, plugin.currencyInfo)
       const {
+        customNetworkFee,
+        metadata,
+        networkFeeOption = 'standard',
+        noUnconfirmed = false,
+        otherParams,
+        pendingTxs,
+        rbfTxid,
+        memos,
         skipChecks,
         spendTargets = [],
-        noUnconfirmed = false,
-        networkFeeOption = 'standard',
-        customNetworkFee,
-        rbfTxid,
-        metadata,
-        swapData,
-        otherParams,
-        pendingTxs
+        swapData
       } = spendInfo
 
       // Figure out which asset this is:
@@ -516,16 +517,17 @@ export function makeCurrencyWalletApi(
       const tx: EdgeTransaction = await engine.makeSpend(
         {
           currencyCode,
-          tokenId,
+          customNetworkFee,
+          memos,
+          metadata,
+          networkFeeOption,
+          noUnconfirmed,
+          otherParams,
+          pendingTxs,
+          rbfTxid,
           skipChecks,
           spendTargets: cleanTargets,
-          noUnconfirmed,
-          networkFeeOption,
-          customNetworkFee,
-          rbfTxid,
-          metadata,
-          otherParams,
-          pendingTxs
+          tokenId
         },
         { privateKeys }
       )

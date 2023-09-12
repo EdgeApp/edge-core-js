@@ -226,7 +226,8 @@ describe('currency wallets', function () {
     await config.addCustomToken(customToken)
     log.assert('customTokens changed')
     expect(config.customTokens).deep.equals({
-      '7cd5885327fd60e825d67d32f9d22b018227a208aa3c4819da15b36b5d5869d3': customToken
+      '7cd5885327fd60e825d67d32f9d22b018227a208aa3c4819da15b36b5d5869d3':
+        customToken
     })
 
     expect(config.allTokens).deep.equals({
