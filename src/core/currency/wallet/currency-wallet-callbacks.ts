@@ -244,6 +244,7 @@ export function makeCurrencyWalletCallbacks(
           return
         }
         if (tx.isSend == null) tx.isSend = lt(tx.nativeAmount, '0')
+        if (tx.memos == null) tx.memos = []
       }
 
       // Grab stuff from redux:
