@@ -3,6 +3,7 @@ import { asMaybe } from 'cleaners'
 import { base64 } from 'rfc4648'
 
 import { asOtpErrorPayload, asPasswordErrorPayload } from './server-cleaners'
+import type { ChallengeErrorPayload } from './server-types'
 import { upgradeCurrencyCode } from './type-helpers'
 import type { EdgeSwapInfo, EdgeSwapRequest } from './types'
 
@@ -19,6 +20,34 @@ import type { EdgeSwapInfo, EdgeSwapRequest } from './types'
  * and the GUI should just show them with a stack trace & generic message,
  * since the program has basically crashed at that point.
  */
+
+/**
+ * Thrown when the login server requires a CAPTCHA.
+ *
+ * After showing the WebView with the challengeUri,
+ * pass the challengeId to the login method
+ * (such as loginWithPassword) to complete the login.
+ *
+ * The challengeUri web page will signal that it is done by navigating
+ * to a new location that ends with either /success or /failure,
+ * such as https://login.edge.app/challenge/success
+ * The login UI can use this as a signal to close the WebView.
+ */
+export class ChallengeError extends Error {
+  name: string
+  challengeId: string
+  challengeUri: string
+
+  constructor(
+    resultsJson: ChallengeErrorPayload,
+    message: string = 'Login requires a CAPTCHA'
+  ) {
+    super(message)
+    this.name = 'ChallengeError'
+    this.challengeId = resultsJson.challengeId
+    this.challengeUri = resultsJson.challengeUri
+  }
+}
 
 /**
  * Trying to spend an uneconomically small amount of money.
@@ -47,6 +76,7 @@ export class InsufficientFundsError extends Error {
   readonly currencyCode: string | undefined
   readonly networkFee: string | undefined
 
+  // Passing a string is deprecated
   constructor(opts: string | InsufficientFundsErrorOpts = {}) {
     if (typeof opts === 'string') {
       // Some plugins pass a message instead of a currency code:
@@ -372,6 +402,8 @@ function asMaybeError<T>(name: string): Cleaner<T | undefined> {
   }
 }
 
+export const asMaybeChallengeError =
+  asMaybeError<ChallengeError>('ChallengeError')
 export const asMaybeDustSpendError =
   asMaybeError<DustSpendError>('DustSpendError')
 export const asMaybeInsufficientFundsError =

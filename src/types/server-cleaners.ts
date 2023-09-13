@@ -14,6 +14,7 @@ import {
 import { base16, base32, base64 } from 'rfc4648'
 
 import type {
+  ChallengeErrorPayload,
   ChangeOtpPayload,
   ChangePasswordPayload,
   ChangePin2IdPayload,
@@ -129,6 +130,7 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
   data: asUnknown,
 
   // Common fields for all login methods:
+  challengeId: asOptional(asString),
   deviceDescription: asOptional(asString),
   otp: asOptional(asString),
   voucherId: asOptional(asString),
@@ -252,6 +254,13 @@ export const asCreateLoginPayload: Cleaner<CreateLoginPayload> = asObject({
 // ---------------------------------------------------------------------
 // response payloads
 // ---------------------------------------------------------------------
+
+export const asChallengeErrorPayload: Cleaner<ChallengeErrorPayload> = asObject(
+  {
+    challengeId: asString,
+    challengeUri: asString
+  }
+)
 
 export const asLobbyPayload: Cleaner<LobbyPayload> = asObject({
   request: asEdgeLobbyRequest,

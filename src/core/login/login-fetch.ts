@@ -1,11 +1,13 @@
-import { uncleaner } from 'cleaners'
+import { asMaybe, uncleaner } from 'cleaners'
 
 import {
+  asChallengeErrorPayload,
   asLoginRequestBody,
   asLoginResponseBody
 } from '../../types/server-cleaners'
 import { LoginRequestBody } from '../../types/server-types'
 import {
+  ChallengeError,
   EdgeFetchOptions,
   NetworkError,
   ObsoleteApiError,
@@ -46,8 +48,16 @@ export function parseReply(json: unknown): unknown {
 
     case 1: // Error
     case 7: // Pin expired
-    default:
+    case 9: // Invalid voucher
+    case 10: // Conflicting change
+    case 11: // Rate limiting
+    default: {
+      const results = asMaybe(asChallengeErrorPayload)(clean.results)
+      if (results != null) {
+        throw new ChallengeError(results)
+      }
       throw new Error(`Server error: ${clean.message}`)
+    }
   }
 }
 
