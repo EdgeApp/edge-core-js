@@ -1,5 +1,12 @@
 # edge-core-js
 
+## v1.7.0 (2023-09-12)
+
+- added: Add a `ChallengeError` and related types, which will allow the login server to request CAPTCHA validation.
+- fixed: Correctly pass `EdgeSpendTarget.memos` through to currency plugins.
+- fixed: Do not let `EdgeTransaction.memos` be undefined, even for legacy plugins.
+- fixed: Restore "0x" prefix support for legacy hex memos.
+
 ## v1.6.0 (2023-09-11)
 
 - added: Currency-info support for multiple memos per transaction.
