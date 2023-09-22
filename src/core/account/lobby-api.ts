@@ -6,7 +6,7 @@ import { EdgeLobby, EdgeLoginRequest } from '../../types/types'
 import { shuffle } from '../../util/shuffle'
 import { asLobbyLoginPayload } from '../login/edge'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby'
-import { sanitizeLoginStash, syncAccount } from '../login/login'
+import { sanitizeLoginStash, syncLogin } from '../login/login'
 import { getStashById } from '../login/login-selectors'
 import { ApiInput } from '../root-pixie'
 import { ensureAccountExists, findAppLogin } from './account-init'
@@ -72,10 +72,10 @@ async function approveLoginRequest(
   lobbyId: string,
   lobbyJson: EdgeLobbyRequest
 ): Promise<void> {
-  const { loginTree } = ai.props.state.accounts[accountId]
+  const { login, loginTree } = ai.props.state.accounts[accountId]
 
   // Ensure that the login object & account repo exist:
-  await syncAccount(ai, accountId)
+  await syncLogin(ai, loginTree, login)
 
   const newLoginTree = await ensureAccountExists(ai, loginTree, appId)
   const requestedLogin = findAppLogin(newLoginTree, appId)
@@ -104,11 +104,13 @@ async function approveLoginRequest(
 
   timeout = setTimeout(() => {
     timeout = undefined
-    syncAccount(ai, accountId)
+    syncLogin(ai, newLoginTree, requestedLogin)
       .then(() => {
         timeout = setTimeout(() => {
           timeout = undefined
-          syncAccount(ai, accountId).catch(error => ai.props.onError(error))
+          syncLogin(ai, newLoginTree, requestedLogin).catch(error =>
+            ai.props.onError(error)
+          )
         }, 20000)
       })
       .catch(error => ai.props.onError(error))

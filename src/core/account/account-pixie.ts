@@ -18,7 +18,7 @@ import {
 import { makePeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
 import { ExchangeState } from '../exchange/exchange-reducer'
-import { syncAccount } from '../login/login'
+import { syncLogin } from '../login/login'
 import { waitForPlugins } from '../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../root-pixie'
 import { addStorageWallet, syncStorageWallet } from '../storage/storage-actions'
@@ -137,8 +137,11 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       }
 
       async function doLoginSync(): Promise<void> {
+        const ai = toApiInput(input)
         const { accountId } = input.props
-        await syncAccount(toApiInput(input), accountId)
+        if (input.props.state.accounts[accountId] == null) return
+        const { login, loginTree } = input.props.state.accounts[accountId]
+        await syncLogin(ai, loginTree, login)
       }
 
       // We don't report sync failures, since that could be annoying:

@@ -510,15 +510,6 @@ export async function applyKits(
   }
 }
 
-export async function syncAccount(
-  ai: ApiInput,
-  accountId: string
-): Promise<void> {
-  if (ai.props.state.accounts[accountId] == null) return
-  const { login, loginTree } = ai.props.state.accounts[accountId]
-  await syncLogin(ai, loginTree, login)
-}
-
 /**
  * Refreshes a login with data from the server.
  */
