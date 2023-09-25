@@ -96,8 +96,8 @@ const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> =
 
 export const asEdgeBox: Cleaner<EdgeBox> = asObject({
   encryptionType: asNumber,
-  data_base64: asString,
-  iv_hex: asString
+  data_base64: asBase64,
+  iv_hex: asBase16
 })
 
 export const asEdgeSnrp: Cleaner<EdgeSnrp> = asObject({

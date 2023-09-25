@@ -9,8 +9,8 @@ import type { EdgePendingVoucher, EdgeRecoveryQuestionChoice } from './types'
  */
 export interface EdgeBox {
   encryptionType: number
-  data_base64: string
-  iv_hex: string
+  data_base64: Uint8Array
+  iv_hex: Uint8Array
 }
 
 /**
