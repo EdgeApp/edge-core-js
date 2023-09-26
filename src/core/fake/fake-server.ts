@@ -8,7 +8,11 @@ import {
   Serverlet
 } from 'serverlet'
 
-import { VoucherDump } from '../../types/fake-types'
+import {
+  EdgeRepoDump,
+  EdgeVoucherDump,
+  wasEdgeRepoDump
+} from '../../types/fake-types'
 import {
   asChangeOtpPayload,
   asChangePasswordPayload,
@@ -41,7 +45,6 @@ import { userIdSnrp } from '../scrypt/scrypt-selectors'
 import {
   DbLobby,
   DbLogin,
-  DbRepo,
   FakeDb,
   makeLoginPayload,
   makePendingVouchers
@@ -77,7 +80,7 @@ type LobbyIdRequest = ApiRequest & {
   readonly lobbyId: string
 }
 type RepoRequest = DbRequest & {
-  readonly repo: DbRepo
+  readonly repo: EdgeRepoDump
 }
 
 // Authentication middleware: ----------------------------------------------
@@ -121,7 +124,7 @@ const withValidOtp: (
   }
 
   login.otpResetAuth = 'Super secret reset token'
-  const voucher: VoucherDump = {
+  const voucher: EdgeVoucherDump = {
     activates: new Date('2020-01-01T00:00:00Z'),
     created: new Date('2020-01-08T00:00:00Z'),
     deviceDescription: 'A phone',
@@ -707,7 +710,7 @@ const withRepo =
 
 const storeReadRoute = withRepo(request => {
   const { repo } = request
-  return jsonResponse({ changes: repo })
+  return jsonResponse({ changes: wasEdgeRepoDump(repo) })
 })
 
 const storeUpdateRoute = withRepo(request => {
@@ -717,7 +720,7 @@ const storeUpdateRoute = withRepo(request => {
     repo[change] = changes[change]
   }
   return jsonResponse({
-    changes: repo,
+    changes: wasEdgeRepoDump(repo),
     hash: '1111111111111111111111111111111111111111'
   })
 })

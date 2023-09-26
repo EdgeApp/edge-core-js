@@ -1,7 +1,7 @@
 import { uncleaner } from 'cleaners'
 import { HttpHeaders, HttpResponse } from 'serverlet'
 
-import { VoucherDump } from '../../types/fake-types'
+import { EdgeVoucherDump } from '../../types/fake-types'
 import {
   asOtpErrorPayload,
   asPasswordErrorPayload
@@ -151,7 +151,7 @@ export function otpErrorResponse(
   login: DbLogin,
   opts: {
     reason?: 'ip' | 'otp'
-    voucher?: VoucherDump
+    voucher?: EdgeVoucherDump
   } = {}
 ): Promise<HttpResponse> {
   const { reason = 'otp', voucher } = opts

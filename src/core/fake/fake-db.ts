@@ -1,6 +1,5 @@
-import { FakeUser, LoginDump } from '../../types/fake-types'
+import { EdgeLoginDump, EdgeRepoDump } from '../../types/fake-types'
 import {
-  EdgeBox,
   EdgeLobbyReply,
   EdgeLobbyRequest,
   LoginPayload
@@ -20,14 +19,7 @@ export interface DbLobby {
 /**
  * A login object stored in the fake database.
  */
-export type DbLogin = Omit<LoginDump, 'children'>
-
-/**
- * A sync repo stored in the fake database.
- */
-export interface DbRepo {
-  [path: string]: EdgeBox
-}
+export type DbLogin = Omit<EdgeLoginDump, 'children'>
 
 /**
  * Emulates the Airbitz login server database.
@@ -35,7 +27,7 @@ export interface DbRepo {
 export class FakeDb {
   lobbies: { [lobbyId: string]: DbLobby }
   logins: DbLogin[]
-  repos: { [syncKey: string]: DbRepo }
+  repos: { [syncKey: string]: EdgeRepoDump }
 
   constructor() {
     this.lobbies = {}
@@ -78,25 +70,21 @@ export class FakeDb {
 
   // Dumping & restoration --------------------------------------------
 
-  setupFakeUser(user: FakeUser): void {
-    const setupLogin = (dump: LoginDump): void => {
-      const { children, ...rest } = dump
-      this.insertLogin(rest)
-      for (const child of children) {
-        child.parentId = dump.loginId
-        setupLogin(child)
-      }
-    }
-    setupLogin(user.server)
-
-    // Create fake repos:
-    for (const syncKey of Object.keys(user.repos)) {
-      this.repos[syncKey] = { ...user.repos[syncKey] }
+  setupLogin(dump: EdgeLoginDump): void {
+    const { children, ...rest } = dump
+    this.insertLogin(rest)
+    for (const child of children) {
+      child.parentId = dump.loginId
+      this.setupLogin(child)
     }
   }
 
-  dumpLogin(login: DbLogin): LoginDump {
-    const makeTree = (login: DbLogin): LoginDump => ({
+  setupRepo(syncKey: string, repo: EdgeRepoDump): void {
+    this.repos[syncKey] = repo
+  }
+
+  dumpLogin(login: DbLogin): EdgeLoginDump {
+    const makeTree = (login: DbLogin): EdgeLoginDump => ({
       ...login,
       children: this.getLoginsByParent(login).map(login => makeTree(login))
     })

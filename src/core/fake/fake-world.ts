@@ -1,14 +1,15 @@
-import { uncleaner } from 'cleaners'
 import { makeMemoryDisklet } from 'disklet'
 import { base16, base64 } from 'rfc4648'
 import { makeFetchFunction } from 'serverlet'
 import { bridgifyObject, close } from 'yaob'
 
+import { fixUsername } from '../../client-side'
 import {
-  asFakeUser,
-  asFakeUsers,
-  asLoginDump,
-  FakeUser
+  asEdgeLoginDump,
+  asEdgeRepoDump,
+  EdgeRepoDump,
+  wasEdgeLoginDump,
+  wasEdgeRepoDump
 } from '../../types/fake-types'
 import { asLoginPayload } from '../../types/server-cleaners'
 import {
@@ -24,19 +25,19 @@ import { base58 } from '../../util/encoding'
 import { validateServer } from '../../util/validateServer'
 import { LogBackend } from '../log/log'
 import { applyLoginPayload } from '../login/login'
-import { asLoginStash } from '../login/login-stash'
+import { wasLoginStash } from '../login/login-stash'
 import { PluginIos } from '../plugins/plugins-actions'
 import { makeContext } from '../root'
 import { makeRepoPaths, saveChanges } from '../storage/repo'
 import { FakeDb } from './fake-db'
 import { makeFakeServer } from './fake-server'
 
-const wasLoginStash = uncleaner(asLoginStash)
-const wasLoginDump = uncleaner(asLoginDump)
-const wasFakeUser = uncleaner(asFakeUser)
-
-async function saveUser(io: EdgeIo, user: FakeUser): Promise<void> {
-  const { lastLogin, loginId, loginKey, repos, server, username } = user
+async function saveLogin(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
+  const { lastLogin, server } = user
+  const loginId = base64.parse(user.loginId)
+  const loginKey = base64.parse(user.loginKey)
+  const username =
+    user.username == null ? undefined : fixUsername(user.username)
 
   // Save the stash:
   const stash = applyLoginPayload(
@@ -48,23 +49,26 @@ async function saveUser(io: EdgeIo, user: FakeUser): Promise<void> {
       username
     },
     loginKey,
-    asLoginPayload(wasLoginDump(server))
+    // The correct cleaner is `asEdgeLoginDump`,
+    // but the format is close enough that the other cleaner kinda fits:
+    asLoginPayload(server)
   )
   const path = `logins/${base58.stringify(loginId)}.json`
   await io.disklet
     .setText(path, JSON.stringify(wasLoginStash(stash)))
     .catch(() => {})
+}
 
-  // Save the repos:
-  await Promise.all(
-    Object.keys(repos).map(async syncKey => {
-      const paths = makeRepoPaths(io, base16.parse(syncKey), new Uint8Array(0))
-      await saveChanges(paths.dataDisklet, user.repos[syncKey])
-      await paths.baseDisklet.setText(
-        'status.json',
-        JSON.stringify({ lastSync: 1, lastHash: null })
-      )
-    })
+async function saveRepo(
+  io: EdgeIo,
+  syncKey: string,
+  repo: EdgeRepoDump
+): Promise<void> {
+  const paths = makeRepoPaths(io, base16.parse(syncKey), new Uint8Array(0))
+  await saveChanges(paths.dataDisklet, repo)
+  await paths.baseDisklet.setText(
+    'status.json',
+    JSON.stringify({ lastSync: 1, lastHash: null })
   )
 }
 
@@ -81,8 +85,12 @@ export function makeFakeWorld(
   const fakeServer = makeFakeServer(fakeDb)
 
   // Populate the fake database:
-  const cleanUsers = asFakeUsers(users)
-  for (const user of cleanUsers) fakeDb.setupFakeUser(user)
+  for (const user of users) {
+    fakeDb.setupLogin(asEdgeLoginDump(user.server))
+    for (const syncKey of Object.keys(user.repos)) {
+      fakeDb.setupRepo(syncKey, asEdgeRepoDump(user.repos[syncKey]))
+    }
+  }
 
   const contexts: EdgeContext[] = []
 
@@ -115,9 +123,12 @@ export function makeFakeWorld(
 
       // Populate the fake disk:
       if (!cleanDevice) {
-        await Promise.all(
-          cleanUsers.map(async user => await saveUser(fakeIo, user))
-        )
+        for (const user of users) {
+          await saveLogin(fakeIo, user)
+          for (const syncKey of Object.keys(user.repos)) {
+            await saveRepo(fakeIo, syncKey, asEdgeRepoDump(user.repos[syncKey]))
+          }
+        }
       }
 
       const out = await makeContext({ io: fakeIo, nativeIo }, logBackend, {
@@ -152,16 +163,18 @@ export function makeFakeWorld(
         )
       }
       const repos: EdgeFakeUser['repos'] = {}
-      for (const syncKey of syncKeys) repos[syncKey] = fakeDb.repos[syncKey]
+      for (const syncKey of syncKeys) {
+        repos[syncKey] = wasEdgeRepoDump(fakeDb.repos[syncKey])
+      }
 
-      return wasFakeUser({
+      return {
         lastLogin: account.lastLogin,
-        loginId,
-        loginKey,
+        loginId: base64.stringify(loginId),
+        loginKey: base64.stringify(loginKey),
         repos,
-        server: fakeDb.dumpLogin(login),
+        server: wasEdgeLoginDump(fakeDb.dumpLogin(login)),
         username: account.username
-      })
+      }
     }
   }
   bridgifyObject(out)

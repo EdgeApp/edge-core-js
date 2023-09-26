@@ -1804,12 +1804,14 @@ export interface EdgeFakeContextOptions {
  * on the fake unit-testing server.
  */
 export interface EdgeFakeUser {
-  username: string
+  username?: string
   lastLogin?: Date
   loginId: string // base64
   loginKey: string // base64
-  repos: { [repo: string]: { [path: string]: any /* asEdgeBox */ } }
-  server: any // asLoginDump
+  repos: {
+    [syncKey: string]: unknown // Cleaned with asEdgeRepoDump
+  }
+  server: unknown // Cleaned with asEdgeLoginDump
 }
 
 export interface EdgeFakeWorld {

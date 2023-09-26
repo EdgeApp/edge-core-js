@@ -6,10 +6,10 @@ import {
   asObject,
   asOptional,
   asString,
-  asValue
+  asValue,
+  uncleaner
 } from 'cleaners'
 
-import { asUsername } from '../core/login/login-stash'
 import {
   asBase32,
   asBase64,
@@ -19,7 +19,11 @@ import {
 } from './server-cleaners'
 import type { EdgeBox, EdgeSnrp } from './server-types'
 
-export interface VoucherDump {
+export interface EdgeRepoDump {
+  [key: string]: EdgeBox
+}
+
+export interface EdgeVoucherDump {
   // Identity:
   loginId: Uint8Array
   voucherAuth: Uint8Array
@@ -36,7 +40,7 @@ export interface VoucherDump {
   deviceDescription: string | undefined
 }
 
-export interface LoginDump {
+export interface EdgeLoginDump {
   // Identity:
   appId: string
   created: Date
@@ -82,12 +86,12 @@ export interface LoginDump {
   userTextBox?: EdgeBox
 
   // Resources:
-  children: LoginDump[]
+  children: EdgeLoginDump[]
   keyBoxes: EdgeBox[]
   mnemonicBox?: EdgeBox
   rootKeyBox?: EdgeBox
   syncKeyBox?: EdgeBox
-  vouchers: VoucherDump[]
+  vouchers: EdgeVoucherDump[]
 
   // Obsolete:
   pinBox?: EdgeBox
@@ -95,16 +99,9 @@ export interface LoginDump {
   pinKeyBox?: EdgeBox
 }
 
-export interface FakeUser {
-  lastLogin?: Date
-  loginId: Uint8Array
-  loginKey: Uint8Array
-  repos: { [repo: string]: { [path: string]: EdgeBox } }
-  server: LoginDump
-  username?: string
-}
+export const asEdgeRepoDump: Cleaner<EdgeRepoDump> = asObject(asEdgeBox)
 
-export const asVoucherDump: Cleaner<VoucherDump> = asObject({
+export const asEdgeVoucherDump: Cleaner<EdgeVoucherDump> = asObject({
   // Identity:
   loginId: asBase64,
   voucherAuth: asBase64,
@@ -121,15 +118,15 @@ export const asVoucherDump: Cleaner<VoucherDump> = asObject({
   deviceDescription: asOptional(asString)
 })
 
-export const asLoginDump: Cleaner<LoginDump> = asObject({
+export const asEdgeLoginDump: Cleaner<EdgeLoginDump> = asObject({
   // Identity:
   appId: asString,
-  created: raw => (raw == null ? new Date() : asDate(raw)),
+  created: asOptional(asDate, () => new Date()),
   loginId: asBase64,
 
   // Nested logins:
   children: asOptional(
-    asArray(raw => asLoginDump(raw)),
+    asArray(raw => asEdgeLoginDump(raw)),
     () => []
   ),
   parentBox: asOptional(asEdgeBox),
@@ -175,7 +172,7 @@ export const asLoginDump: Cleaner<LoginDump> = asObject({
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
   syncKeyBox: asOptional(asEdgeBox),
-  vouchers: asOptional(asArray(asVoucherDump), () => []),
+  vouchers: asOptional(asArray(asEdgeVoucherDump), () => []),
 
   // Obsolete:
   pinBox: asOptional(asEdgeBox),
@@ -183,18 +180,5 @@ export const asLoginDump: Cleaner<LoginDump> = asObject({
   pinKeyBox: asOptional(asEdgeBox)
 })
 
-export const asFakeUser: Cleaner<FakeUser> = asObject({
-  lastLogin: asOptional(asDateObject),
-  loginId: asBase64,
-  loginKey: asBase64,
-  repos: asObject(asObject(asEdgeBox)),
-  server: asLoginDump,
-  username: asOptional(asUsername)
-})
-
-export const asFakeUsers = asArray<FakeUser>(asFakeUser)
-
-function asDateObject(raw: unknown): Date {
-  if (raw instanceof Date) return raw
-  throw new TypeError('Expecting a Date')
-}
+export const wasEdgeLoginDump = uncleaner<EdgeLoginDump>(asEdgeLoginDump)
+export const wasEdgeRepoDump = uncleaner<EdgeRepoDump>(asEdgeRepoDump)
