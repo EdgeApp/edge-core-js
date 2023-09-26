@@ -1,4 +1,4 @@
-import { uncleaner } from 'cleaners'
+import { Cleaner, uncleaner } from 'cleaners'
 import { HttpHeaders, HttpResponse } from 'serverlet'
 
 import { EdgeVoucherDump } from '../../types/fake-types'
@@ -101,6 +101,24 @@ export const statusCodes = {
     code: 10,
     httpStatus: 401,
     message: 'A login with the same appId already exists'
+  }
+}
+
+export function cleanRequest<T>(
+  cleaner: Cleaner<T>,
+  raw: unknown
+): [T | undefined, HttpResponse] {
+  try {
+    const clean = cleaner(raw)
+    return [clean, { status: 200 }]
+  } catch (error) {
+    return [
+      undefined,
+      statusResponse(
+        statusCodes.invalidRequest,
+        `Invalid request: ${String(error)}`
+      )
+    ]
   }
 }
 
