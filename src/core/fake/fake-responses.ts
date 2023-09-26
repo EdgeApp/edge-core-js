@@ -110,13 +110,13 @@ export const statusCodes = {
 export function jsonResponse(
   body: unknown,
   opts: { status?: number; headers?: HttpHeaders } = {}
-): Promise<HttpResponse> {
+): HttpResponse {
   const { status = 200, headers = {} } = opts
-  return Promise.resolve({
+  return {
     status,
     headers: { 'content-type': 'application/json', ...headers },
     body: JSON.stringify(body)
-  })
+  }
 }
 
 /**
@@ -125,7 +125,7 @@ export function jsonResponse(
 export function statusResponse(
   statusCode: LoginStatusCode = statusCodes.success,
   message: string = statusCode.message
-): Promise<HttpResponse> {
+): HttpResponse {
   const { code, httpStatus } = statusCode
   const body = { status_code: code, message }
   return jsonResponse(body, { status: httpStatus })
@@ -138,7 +138,7 @@ export function payloadResponse(
   payload: unknown,
   statusCode: LoginStatusCode = statusCodes.success,
   message: string = statusCode.message
-): Promise<HttpResponse> {
+): HttpResponse {
   const { code, httpStatus } = statusCode
   const body = { status_code: code, message, results: payload }
   return jsonResponse(body, { status: httpStatus })
@@ -153,7 +153,7 @@ export function otpErrorResponse(
     reason?: 'ip' | 'otp'
     voucher?: EdgeVoucherDump
   } = {}
-): Promise<HttpResponse> {
+): HttpResponse {
   const { reason = 'otp', voucher } = opts
   return payloadResponse(
     wasOtpErrorPayload({
@@ -172,7 +172,7 @@ export function otpErrorResponse(
 /**
  * A password failure, with timeout.
  */
-export function passwordErrorResponse(wait: number): Promise<HttpResponse> {
+export function passwordErrorResponse(wait: number): HttpResponse {
   return payloadResponse(
     wasPasswordErrorPayload({
       wait_seconds: wait

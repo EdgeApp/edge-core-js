@@ -90,7 +90,7 @@ const withApiKey =
   async request => {
     const { json } = request
     const body = asMaybe(asLoginRequestBody)(json)
-    if (body == null) return await statusResponse(statusCodes.invalidRequest)
+    if (body == null) return statusResponse(statusCodes.invalidRequest)
     return await server({ ...request, body, payload: body.data })
   }
 
@@ -261,10 +261,7 @@ const loginRoute = withLogin2(
   }
 )
 
-function createLogin(
-  request: ApiRequest,
-  login?: DbLogin
-): Promise<HttpResponse> {
+function createLogin(request: ApiRequest, login?: DbLogin): HttpResponse {
   const { db, json } = request
   const date = new Date()
 
@@ -496,25 +493,22 @@ const usernameRoute = withLogin2(async request => {
 
   // Validate the payload selection:
   if (login.passwordAuth != null && cleanPassword == null) {
-    return await statusResponse(
+    return statusResponse(
       statusCodes.invalidRequest,
       'Missing password payload'
     )
   }
   if (login.pin2Auth != null && cleanPin2 == null) {
-    return await statusResponse(
-      statusCodes.invalidRequest,
-      'Missing pin2Id payload'
-    )
+    return statusResponse(statusCodes.invalidRequest, 'Missing pin2Id payload')
   }
   if (login.recovery2Auth != null && cleanRecovery2 == null) {
-    return await statusResponse(
+    return statusResponse(
       statusCodes.invalidRequest,
       'Missing recovery2Id payload'
     )
   }
   if (login.parentBox == null && cleanUsername == null) {
-    return await statusResponse(
+    return statusResponse(
       statusCodes.invalidRequest,
       'Missing username payload'
     )
@@ -532,14 +526,11 @@ const usernameRoute = withLogin2(async request => {
   // Do we have a PIN?
   if (cleanPin2 != null) {
     if (login.pin2Auth == null) {
-      return await statusResponse(
-        statusCodes.invalidRequest,
-        'Login lacks pin2'
-      )
+      return statusResponse(statusCodes.invalidRequest, 'Login lacks pin2')
     }
-    const existing = await db.getLoginByPin2Id(cleanPin2.pin2Id)
+    const existing = db.getLoginByPin2Id(cleanPin2.pin2Id)
     if (existing != null) {
-      return await statusResponse(statusCodes.conflict)
+      return statusResponse(statusCodes.conflict)
     }
     login.pin2Id = cleanPin2.pin2Id
   }
@@ -547,14 +538,11 @@ const usernameRoute = withLogin2(async request => {
   // Do we have recovery?
   if (cleanRecovery2 != null) {
     if (login.recovery2Auth == null) {
-      return await statusResponse(
-        statusCodes.invalidRequest,
-        'Login lacks recovery2'
-      )
+      return statusResponse(statusCodes.invalidRequest, 'Login lacks recovery2')
     }
-    const existing = await db.getLoginByRecovery2Id(cleanRecovery2.recovery2Id)
+    const existing = db.getLoginByRecovery2Id(cleanRecovery2.recovery2Id)
     if (existing != null) {
-      return await statusResponse(statusCodes.conflict)
+      return statusResponse(statusCodes.conflict)
     }
     login.recovery2Id = cleanRecovery2.recovery2Id
   }
@@ -562,26 +550,26 @@ const usernameRoute = withLogin2(async request => {
   // Are we the root login?
   if (cleanUsername != null) {
     if (login.parentBox != null) {
-      return await statusResponse(
+      return statusResponse(
         statusCodes.invalidRequest,
         'Only top-level logins can have usernames'
       )
     }
-    const existing = await db.getLoginByUserId(cleanUsername.userId)
+    const existing = db.getLoginByUserId(cleanUsername.userId)
     if (existing != null) {
-      return await statusResponse(statusCodes.conflict)
+      return statusResponse(statusCodes.conflict)
     }
     login.userId = cleanUsername.userId
     login.userTextBox = cleanUsername.userTextBox
   }
 
-  return await payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
+  return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
 })
 
 const vouchersRoute = withLogin2(async request => {
   const { db, login, payload } = request
   const clean = asMaybe(asChangeVouchersPayload)(payload)
-  if (clean == null) return await statusResponse(statusCodes.invalidRequest)
+  if (clean == null) return statusResponse(statusCodes.invalidRequest)
   const { approvedVouchers = [], rejectedVouchers = [] } = clean
 
   // Let's get our tasks organized:
@@ -595,9 +583,7 @@ const vouchersRoute = withLogin2(async request => {
     voucher.status = table[voucher.voucherId]
   }
 
-  return await payloadResponse(
-    wasLoginPayload(await makeLoginPayload(db, login))
-  )
+  return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
 })
 
 // lobby: ------------------------------------------------------------------
