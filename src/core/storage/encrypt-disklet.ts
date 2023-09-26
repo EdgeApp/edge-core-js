@@ -1,7 +1,7 @@
 import { Disklet, DiskletListing } from 'disklet'
 import { bridgifyObject } from 'yaob'
 
-import { asEdgeBox } from '../../types/server-cleaners'
+import { asEdgeBox, wasEdgeBox } from '../../types/server-cleaners'
 import { EdgeIo } from '../../types/types'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto'
 import { utf8 } from '../../util/encoding'
@@ -35,7 +35,7 @@ export function encryptDisklet(
     setData(path: string, data: ArrayLike<number>): Promise<unknown> {
       return disklet.setText(
         path,
-        JSON.stringify(encrypt(io, Uint8Array.from(data), dataKey))
+        JSON.stringify(wasEdgeBox(encrypt(io, Uint8Array.from(data), dataKey)))
       )
     },
 

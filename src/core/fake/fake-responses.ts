@@ -3,6 +3,7 @@ import { HttpHeaders, HttpResponse } from 'serverlet'
 
 import { EdgeVoucherDump } from '../../types/fake-types'
 import {
+  wasLoginResponseBody,
   wasOtpErrorPayload,
   wasPasswordErrorPayload
 } from '../../types/server-cleaners'
@@ -142,7 +143,10 @@ export function statusResponse(
   message: string = statusCode.message
 ): HttpResponse {
   const { code, httpStatus } = statusCode
-  const body = { status_code: code, message }
+  const body = wasLoginResponseBody({
+    status_code: code,
+    message
+  })
   return jsonResponse(body, { status: httpStatus })
 }
 
@@ -155,7 +159,11 @@ export function payloadResponse(
   message: string = statusCode.message
 ): HttpResponse {
   const { code, httpStatus } = statusCode
-  const body = { status_code: code, message, results: payload }
+  const body = wasLoginResponseBody({
+    status_code: code,
+    message,
+    results: payload
+  })
   return jsonResponse(body, { status: httpStatus })
 }
 

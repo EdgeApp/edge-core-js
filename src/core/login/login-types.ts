@@ -1,7 +1,10 @@
+import { asObject, asString, uncleaner } from 'cleaners'
+
 import {
   EdgePendingVoucher,
   EdgeWalletInfo,
-  EdgeWalletInfoFull
+  EdgeWalletInfoFull,
+  JsonObject
 } from '../../types/types'
 import { LoginStash } from './login-stash'
 
@@ -71,3 +74,11 @@ export interface StashLeaf {
 export interface WalletInfoFullMap {
   [walletId: string]: EdgeWalletInfoFull
 }
+
+export const asEdgeWalletInfo = asObject<EdgeWalletInfo>({
+  id: asString,
+  keys: (raw: any): JsonObject => raw,
+  type: asString
+})
+
+export const wasEdgeWalletInfo = uncleaner(asEdgeWalletInfo)

@@ -27,7 +27,7 @@ import { loginFetch } from './login-fetch'
 import { makeSecretKit } from './login-secret'
 import { getStashById } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
-import { LoginKit, LoginTree } from './login-types'
+import { asEdgeWalletInfo, LoginKit, LoginTree } from './login-types'
 import { getLoginOtp, getStashOtp } from './otp'
 
 /**
@@ -277,7 +277,9 @@ function makeLoginTreeInner(
   }
 
   // Keys:
-  const keyInfos = keyBoxes.map(box => JSON.parse(decryptText(box, loginKey)))
+  const keyInfos = keyBoxes.map(box =>
+    asEdgeWalletInfo(JSON.parse(decryptText(box, loginKey)))
+  )
   login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos]).map(walletInfo =>
     fixWalletInfo(walletInfo)
   )

@@ -1,3 +1,4 @@
+import { asObject, asString } from 'cleaners'
 import { makeReactNativeDisklet } from 'disklet'
 import * as React from 'react'
 import { base64 } from 'rfc4648'
@@ -128,6 +129,12 @@ function bridgifyLogBackend(backend: LogBackend): LogBackend {
   return bridgifyObject(backend)
 }
 
+/** Just the parts of LoginStash that `fetchLoginMessages` needs. */
+const asUsernameStash = asObject({
+  loginId: asString,
+  username: asString
+})
+
 /**
  * Fetches any login-related messages for all the users on this device.
  */
@@ -146,8 +153,7 @@ export async function fetchLoginMessages(
   )
   for (const text of files) {
     try {
-      const { username, loginId } = JSON.parse(text)
-      if (loginId == null || username == null) continue
+      const { username, loginId } = asUsernameStash(JSON.parse(text))
       loginMap[loginId] = username
     } catch (error: unknown) {}
   }

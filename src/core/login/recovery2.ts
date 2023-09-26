@@ -1,3 +1,5 @@
+import { asArray, asString, uncleaner } from 'cleaners'
+
 import {
   asQuestionChoicesPayload,
   asRecovery2InfoPayload,
@@ -89,7 +91,7 @@ export async function getQuestions2(
   }
 
   // Decrypt the questions:
-  return JSON.parse(decryptText(question2Box, recovery2Key))
+  return asQuestions(JSON.parse(decryptText(question2Box, recovery2Key)))
 }
 
 export async function changeRecovery(
@@ -170,7 +172,7 @@ export function makeRecovery2Kit(
   const { loginId, loginKey, recovery2Key = io.random(32) } = login
   const question2Box = encrypt(
     io,
-    utf8.parse(JSON.stringify(questions)),
+    utf8.parse(JSON.stringify(wasQuestions(questions))),
     recovery2Key
   )
   const recovery2Box = encrypt(io, loginKey, recovery2Key)
@@ -202,3 +204,6 @@ export async function listRecoveryQuestionChoices(
     await loginFetch(ai, 'POST', '/v1/questions', {})
   )
 }
+
+const asQuestions = asArray(asString)
+const wasQuestions = uncleaner(asQuestions)
