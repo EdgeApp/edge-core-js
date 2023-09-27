@@ -1,4 +1,4 @@
-import { asMaybe, asObject, uncleaner } from 'cleaners'
+import { asMaybe, asObject } from 'cleaners'
 import {
   FetchRequest,
   HttpRequest,
@@ -28,13 +28,13 @@ import {
   asEdgeBox,
   asEdgeLobbyReply,
   asEdgeLobbyRequest,
-  asLobbyPayload,
-  asLoginPayload,
   asLoginRequestBody,
-  asMessagesPayload,
-  asOtpResetPayload,
-  asRecovery2InfoPayload,
-  asUsernameInfoPayload
+  wasLobbyPayload,
+  wasLoginPayload,
+  wasMessagesPayload,
+  wasOtpResetPayload,
+  wasRecovery2InfoPayload,
+  wasUsernameInfoPayload
 } from '../../types/server-cleaners'
 import { LoginRequestBody, MessagesPayload } from '../../types/server-types'
 import { checkTotp } from '../../util/crypto/hotp'
@@ -58,13 +58,6 @@ import {
   statusCodes,
   statusResponse
 } from './fake-responses'
-
-const wasLobbyPayload = uncleaner(asLobbyPayload)
-const wasLoginPayload = uncleaner(asLoginPayload)
-const wasMessagesPayload = uncleaner(asMessagesPayload)
-const wasOtpResetPayload = uncleaner(asOtpResetPayload)
-const wasRecovery2InfoPayload = uncleaner(asRecovery2InfoPayload)
-const wasUsernameInfoPayload = uncleaner(asUsernameInfoPayload)
 
 type DbRequest = HttpRequest & {
   readonly db: FakeDb

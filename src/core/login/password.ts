@@ -1,6 +1,4 @@
-import { uncleaner } from 'cleaners'
-
-import { asChangePasswordPayload } from '../../types/server-cleaners'
+import { wasChangePasswordPayload } from '../../types/server-cleaners'
 import { EdgeAccountOptions } from '../../types/types'
 import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { ApiInput } from '../root-pixie'
@@ -10,7 +8,6 @@ import { hashUsername } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 
-const wasChangePasswordPayload = uncleaner(asChangePasswordPayload)
 const passwordAuthSnrp = userIdSnrp
 
 function makeHashInput(username: string, password: string): string {

@@ -1,10 +1,8 @@
-import { uncleaner } from 'cleaners'
-
 import {
-  asChangeRecovery2IdPayload,
-  asChangeRecovery2Payload,
   asQuestionChoicesPayload,
-  asRecovery2InfoPayload
+  asRecovery2InfoPayload,
+  wasChangeRecovery2IdPayload,
+  wasChangeRecovery2Payload
 } from '../../types/server-cleaners'
 import {
   EdgeAccountOptions,
@@ -18,9 +16,6 @@ import { applyKit, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
 import { LoginStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
-
-const wasChangeRecovery2IdPayload = uncleaner(asChangeRecovery2IdPayload)
-const wasChangeRecovery2Payload = uncleaner(asChangeRecovery2Payload)
 
 function makeRecovery2Id(
   recovery2Key: Uint8Array,

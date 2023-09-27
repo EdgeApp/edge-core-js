@@ -1,8 +1,6 @@
-import { uncleaner } from 'cleaners'
-
 import {
-  asChangePin2IdPayload,
-  asChangePin2Payload
+  wasChangePin2IdPayload,
+  wasChangePin2Payload
 } from '../../types/server-cleaners'
 import { LoginRequestBody } from '../../types/server-types'
 import { ChangePinOptions, EdgeAccountOptions } from '../../types/types'
@@ -16,9 +14,6 @@ import { getStashById } from './login-selectors'
 import { LoginStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 import { getLoginOtp } from './otp'
-
-const wasChangePin2IdPayload = uncleaner(asChangePin2IdPayload)
-const wasChangePin2Payload = uncleaner(asChangePin2Payload)
 
 function makePin2Id(
   pin2Key: Uint8Array,

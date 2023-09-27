@@ -1,6 +1,4 @@
-import { uncleaner } from 'cleaners'
-
-import { asCreateLoginPayload } from '../../types/server-cleaners'
+import { wasCreateLoginPayload } from '../../types/server-cleaners'
 import { EdgeBox } from '../../types/server-types'
 import {
   asMaybeUsernameError,
@@ -18,8 +16,6 @@ import { LoginKit, LoginTree } from './login-types'
 import { makeUsernameKit } from './login-username'
 import { makePasswordKit } from './password'
 import { makeChangePin2Kit } from './pin2'
-
-const wasCreateLoginPayload = uncleaner(asCreateLoginPayload)
 
 export interface LoginCreateOpts {
   keyInfo?: EdgeWalletInfo

@@ -1,15 +1,12 @@
-import { Cleaner, uncleaner } from 'cleaners'
+import { Cleaner } from 'cleaners'
 import { HttpHeaders, HttpResponse } from 'serverlet'
 
 import { EdgeVoucherDump } from '../../types/fake-types'
 import {
-  asOtpErrorPayload,
-  asPasswordErrorPayload
+  wasOtpErrorPayload,
+  wasPasswordErrorPayload
 } from '../../types/server-cleaners'
 import { DbLogin } from './fake-db'
-
-const wasOtpErrorPayload = uncleaner(asOtpErrorPayload)
-const wasPasswordErrorPayload = uncleaner(asPasswordErrorPayload)
 
 interface LoginStatusCode {
   code: number
