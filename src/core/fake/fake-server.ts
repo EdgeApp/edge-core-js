@@ -263,7 +263,7 @@ function createLogin(request: ApiRequest, login?: DbLogin): HttpResponse {
   if (body == null) return bodyError
   const [clean, cleanError] = cleanRequest(asCreateLoginPayload, body.data)
   if (clean == null) return cleanError
-  const [secret, secretError] = cleanRequest(asChangeSecretPayload, clean)
+  const [secret, secretError] = cleanRequest(asChangeSecretPayload, body.data)
   if (secret == null) return secretError
 
   // Do not re-create accounts:
@@ -272,8 +272,10 @@ function createLogin(request: ApiRequest, login?: DbLogin): HttpResponse {
   }
 
   // Set up repos:
-  const emptyKeys = { newSyncKeys: [], keyBoxes: [] }
-  const keys = asMaybe(asCreateKeysPayload, emptyKeys)(clean)
+  const keys = asMaybe(asCreateKeysPayload, () => ({
+    newSyncKeys: [],
+    keyBoxes: []
+  }))(body.data)
   for (const syncKey of keys.newSyncKeys) {
     db.repos[syncKey] = {}
   }
@@ -288,11 +290,11 @@ function createLogin(request: ApiRequest, login?: DbLogin): HttpResponse {
     vouchers: [],
 
     // Optional fields:
-    ...asMaybe(asChangeOtpPayload)(clean),
-    ...asMaybe(asChangePasswordPayload)(clean),
-    ...asMaybe(asChangePin2Payload)(clean),
-    ...asMaybe(asChangeRecovery2Payload)(clean),
-    ...asMaybe(asChangeUsernamePayload)(clean)
+    ...asMaybe(asChangeOtpPayload)(body.data),
+    ...asMaybe(asChangePasswordPayload)(body.data),
+    ...asMaybe(asChangePin2Payload)(body.data),
+    ...asMaybe(asChangeRecovery2Payload)(body.data),
+    ...asMaybe(asChangeUsernamePayload)(body.data)
   }
 
   // Set up the parent/child relationship:

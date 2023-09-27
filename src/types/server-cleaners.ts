@@ -251,7 +251,7 @@ export const asCreateLoginPayload: Cleaner<CreateLoginPayload> = asObject({
   appId: asString,
   loginId: asBase64,
   parentBox: asOptional(asEdgeBox)
-}).withRest
+})
 
 // ---------------------------------------------------------------------
 // response payloads
