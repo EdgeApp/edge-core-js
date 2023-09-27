@@ -1600,6 +1600,7 @@ export interface EdgeContextOptions {
   skipBlockHeight?: boolean
 }
 
+/** @deprecated The GUI provides its own localized strings now. */
 export interface EdgeRecoveryQuestionChoice {
   category: 'address' | 'must' | 'numeric' | 'recovery2' | 'string'
   min_length: number
@@ -1737,6 +1738,7 @@ export interface EdgeContext {
     recovery2Key: string,
     username: string
   ) => Promise<string[]>
+  /** @deprecated The GUI provides its own localized strings now. */
   readonly listRecoveryQuestionChoices: () => Promise<
     EdgeRecoveryQuestionChoice[]
   >

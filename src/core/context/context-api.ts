@@ -212,10 +212,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       return await getQuestions2(ai, base58.parse(recovery2Key), username)
     },
 
-    async listRecoveryQuestionChoices(): Promise<EdgeRecoveryQuestionChoice[]> {
-      return await listRecoveryQuestionChoices(ai)
-    },
-
     async requestEdgeLogin(
       opts?: EdgeAccountOptions
     ): Promise<EdgePendingEdgeLogin> {
@@ -271,6 +267,11 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async changeLogSettings(settings: Partial<EdgeLogSettings>): Promise<void> {
       const newSettings = { ...ai.props.state.logSettings, ...settings }
       ai.props.dispatch({ type: 'CHANGE_LOG_SETTINGS', payload: newSettings })
+    },
+
+    /** @deprecated The GUI provides its own localized strings now. */
+    async listRecoveryQuestionChoices(): Promise<EdgeRecoveryQuestionChoice[]> {
+      return await listRecoveryQuestionChoices(ai)
     }
   }
   bridgifyObject(out)

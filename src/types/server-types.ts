@@ -300,6 +300,7 @@ export interface PasswordErrorPayload {
 
 /**
  * A list of recovery questions the user can pick from.
+ * @deprecated The GUI provides its own localized strings now.
  */
 export type QuestionChoicesPayload = EdgeRecoveryQuestionChoice[]
 

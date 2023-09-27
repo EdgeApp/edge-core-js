@@ -81,6 +81,7 @@ export const asEdgePendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
   deviceDescription: asOptional(asString)
 })
 
+/** @deprecated The GUI provides its own localized strings now. */
 const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> =
   asObject({
     min_length: asNumber,
@@ -342,6 +343,7 @@ export const asPasswordErrorPayload: Cleaner<PasswordErrorPayload> = asObject({
   wait_seconds: asOptional(asNumber)
 })
 
+/** @deprecated The GUI provides its own localized strings now. */
 export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> =
   asArray(asEdgeRecoveryQuestionChoice)
 

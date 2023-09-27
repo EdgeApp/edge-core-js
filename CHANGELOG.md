@@ -1,5 +1,9 @@
 # edge-core-js
 
+## Unreleased
+
+- deprecated: `EdgeContext.listRecoveryQuestionChoices`. The GUI provides its own localized strings now.
+
 ## v1.7.0 (2023-09-12)
 
 - added: Add a `ChallengeError` and related types, which will allow the login server to request CAPTCHA validation.
