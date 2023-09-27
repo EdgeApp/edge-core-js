@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: Export cleaners for server types and testing data types.
 - deprecated: `EdgeContext.listRecoveryQuestionChoices`. The GUI provides its own localized strings now.
 
 ## v1.7.0 (2023-09-12)

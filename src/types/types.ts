@@ -8,6 +8,9 @@ import type {
 import type { Subscriber } from 'yaob'
 
 export * from './error'
+export * from './fake-types'
+export * from './server-cleaners'
+export * from './server-types'
 
 // ---------------------------------------------------------------------
 // helper types
