@@ -173,7 +173,7 @@ export const asLoginResponseBody: Cleaner<LoginResponseBody> = asObject({
   // The response payload:
   results: asOptional(asUnknown),
 
-  // What of response is this (success or failure)?:
+  // What type of response is this (success or failure)?:
   status_code: asNumber,
   message: asString
 })
@@ -353,6 +353,8 @@ export const asRecovery2InfoPayload: Cleaner<Recovery2InfoPayload> = asObject({
 })
 
 export const asUsernameInfoPayload: Cleaner<UsernameInfoPayload> = asObject({
+  loginId: asBase64,
+
   // Password login:
   passwordAuthSnrp: asOptional(asEdgeSnrp),
 

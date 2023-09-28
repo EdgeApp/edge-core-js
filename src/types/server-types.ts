@@ -315,6 +315,8 @@ export interface Recovery2InfoPayload {
  * Returned when fetching the password hashing options for an account.
  */
 export interface UsernameInfoPayload {
+  loginId: Uint8Array
+
   // Password login:
   passwordAuthSnrp?: EdgeSnrp
 

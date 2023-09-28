@@ -237,8 +237,10 @@ const loginRoute = withLogin2(
       if (login == null) {
         return statusResponse(statusCodes.noAccount)
       }
-      const { passwordAuthSnrp = userIdSnrp } = login
-      return payloadResponse(wasUsernameInfoPayload({ passwordAuthSnrp }))
+      const { loginId, passwordAuthSnrp = userIdSnrp } = login
+      return payloadResponse(
+        wasUsernameInfoPayload({ loginId, passwordAuthSnrp })
+      )
     }
     if (recovery2Id != null && recovery2Auth == null) {
       const login = db.getLoginByRecovery2Id(recovery2Id)
