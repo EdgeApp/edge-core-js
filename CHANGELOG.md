@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.8.0 (2023-10-02)
+
 - added: Export cleaners for server types and testing data types.
 - deprecated: `EdgeContext.listRecoveryQuestionChoices`. The GUI provides its own localized strings now.
 
