@@ -1,7 +1,5 @@
-import { uncleaner } from 'cleaners'
-
 import { ChangeUsernameOptions } from '../../browser'
-import { asChangeUsernamePayload } from '../../types/server-cleaners'
+import { wasChangeUsernamePayload } from '../../types/server-cleaners'
 import { encrypt } from '../../util/crypto/crypto'
 import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
@@ -11,8 +9,6 @@ import { LoginKit, LoginTree } from './login-types'
 import { makePasswordKit } from './password'
 import { makeChangePin2IdKit } from './pin2'
 import { makeChangeRecovery2IdKit } from './recovery2'
-
-const wasChangeUsernamePayload = uncleaner(asChangeUsernamePayload)
 
 export async function changeUsername(
   ai: ApiInput,

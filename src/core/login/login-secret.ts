@@ -1,11 +1,7 @@
-import { uncleaner } from 'cleaners'
-
-import { asChangeSecretPayload } from '../../types/server-cleaners'
+import { wasChangeSecretPayload } from '../../types/server-cleaners'
 import { encrypt } from '../../util/crypto/crypto'
 import { ApiInput } from '../root-pixie'
 import { LoginKit, LoginTree } from './login-types'
-
-const wasChangeSecretPayload = uncleaner(asChangeSecretPayload)
 
 export function makeSecretKit(
   ai: ApiInput,

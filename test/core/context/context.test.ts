@@ -93,17 +93,18 @@ describe('context', function () {
     // Do the dump:
     const dump = await world.dumpFakeUser(account)
 
-    // The PIN login upgrades the account, so the dump will have extra stuff:
-    expect(dump.server.loginAuthBox != null).equals(true)
-    expect(dump.server.loginAuth != null).equals(true)
-    dump.server.loginAuthBox = undefined
-    dump.server.loginAuth = undefined
-
     // Get rid of extra `undefined` fields:
-    dump.server = JSON.parse(JSON.stringify(dump.server))
+    const server = JSON.parse(JSON.stringify(dump.server))
+
+    // The PIN login upgrades the account, so the dump will have extra stuff:
+    expect(server.loginAuthBox != null).equals(true)
+    expect(server.loginAuth != null).equals(true)
+    delete server.loginAuthBox
+    delete server.loginAuth
+
+    expect({ ...dump, server }).deep.equals(fakeUserDump)
 
     // require('fs').writeFileSync('./fake-user.json', JSON.stringify(dump))
-    expect(dump).deep.equals(fakeUserDump)
   })
 })
 

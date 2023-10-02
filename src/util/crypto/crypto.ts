@@ -1,5 +1,4 @@
 import aesjs from 'aes-js'
-import { base16, base64 } from 'rfc4648'
 
 import { EdgeBox } from '../../types/server-types'
 import { EdgeIo } from '../../types/types'
@@ -30,8 +29,8 @@ export function decrypt(box: EdgeBox, key: Uint8Array): Uint8Array {
   if (box.encryptionType !== 0) {
     throw new Error('Unknown encryption type')
   }
-  const iv = base16.parse(box.iv_hex)
-  const ciphertext = base64.parse(box.data_base64)
+  const iv = box.iv_hex
+  const ciphertext = box.data_base64
 
   // Decrypt:
   const cipher = new AesCbc(key, iv)
@@ -115,8 +114,8 @@ export function encrypt(
   const ciphertext = cipher.encrypt(raw)
   return {
     encryptionType: 0,
-    iv_hex: base16.stringify(iv),
-    data_base64: base64.stringify(ciphertext)
+    iv_hex: iv,
+    data_base64: ciphertext
   }
 }
 

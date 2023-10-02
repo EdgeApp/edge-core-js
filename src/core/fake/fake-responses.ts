@@ -1,15 +1,13 @@
-import { uncleaner } from 'cleaners'
+import { Cleaner } from 'cleaners'
 import { HttpHeaders, HttpResponse } from 'serverlet'
 
-import { VoucherDump } from '../../types/fake-types'
+import { EdgeVoucherDump } from '../../types/fake-types'
 import {
-  asOtpErrorPayload,
-  asPasswordErrorPayload
+  wasLoginResponseBody,
+  wasOtpErrorPayload,
+  wasPasswordErrorPayload
 } from '../../types/server-cleaners'
 import { DbLogin } from './fake-db'
-
-const wasOtpErrorPayload = uncleaner(asOtpErrorPayload)
-const wasPasswordErrorPayload = uncleaner(asPasswordErrorPayload)
 
 interface LoginStatusCode {
   code: number
@@ -104,19 +102,37 @@ export const statusCodes = {
   }
 }
 
+export function cleanRequest<T>(
+  cleaner: Cleaner<T>,
+  raw: unknown
+): [T | undefined, HttpResponse] {
+  try {
+    const clean = cleaner(raw)
+    return [clean, { status: 200 }]
+  } catch (error) {
+    return [
+      undefined,
+      statusResponse(
+        statusCodes.invalidRequest,
+        `Invalid request: ${String(error)}`
+      )
+    ]
+  }
+}
+
 /**
  * Construct an HttpResponse object with a JSON body.
  */
 export function jsonResponse(
   body: unknown,
   opts: { status?: number; headers?: HttpHeaders } = {}
-): Promise<HttpResponse> {
+): HttpResponse {
   const { status = 200, headers = {} } = opts
-  return Promise.resolve({
+  return {
     status,
     headers: { 'content-type': 'application/json', ...headers },
     body: JSON.stringify(body)
-  })
+  }
 }
 
 /**
@@ -125,9 +141,12 @@ export function jsonResponse(
 export function statusResponse(
   statusCode: LoginStatusCode = statusCodes.success,
   message: string = statusCode.message
-): Promise<HttpResponse> {
+): HttpResponse {
   const { code, httpStatus } = statusCode
-  const body = { status_code: code, message }
+  const body = wasLoginResponseBody({
+    status_code: code,
+    message
+  })
   return jsonResponse(body, { status: httpStatus })
 }
 
@@ -138,9 +157,13 @@ export function payloadResponse(
   payload: unknown,
   statusCode: LoginStatusCode = statusCodes.success,
   message: string = statusCode.message
-): Promise<HttpResponse> {
+): HttpResponse {
   const { code, httpStatus } = statusCode
-  const body = { status_code: code, message, results: payload }
+  const body = wasLoginResponseBody({
+    status_code: code,
+    message,
+    results: payload
+  })
   return jsonResponse(body, { status: httpStatus })
 }
 
@@ -151,9 +174,9 @@ export function otpErrorResponse(
   login: DbLogin,
   opts: {
     reason?: 'ip' | 'otp'
-    voucher?: VoucherDump
+    voucher?: EdgeVoucherDump
   } = {}
-): Promise<HttpResponse> {
+): HttpResponse {
   const { reason = 'otp', voucher } = opts
   return payloadResponse(
     wasOtpErrorPayload({
@@ -172,7 +195,7 @@ export function otpErrorResponse(
 /**
  * A password failure, with timeout.
  */
-export function passwordErrorResponse(wait: number): Promise<HttpResponse> {
+export function passwordErrorResponse(wait: number): HttpResponse {
   return payloadResponse(
     wasPasswordErrorPayload({
       wait_seconds: wait

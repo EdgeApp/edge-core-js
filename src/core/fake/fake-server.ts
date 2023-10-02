@@ -1,4 +1,4 @@
-import { asMaybe, asObject, uncleaner } from 'cleaners'
+import { asMaybe, asObject } from 'cleaners'
 import {
   FetchRequest,
   HttpRequest,
@@ -8,7 +8,11 @@ import {
   Serverlet
 } from 'serverlet'
 
-import { VoucherDump } from '../../types/fake-types'
+import {
+  EdgeRepoDump,
+  EdgeVoucherDump,
+  wasEdgeRepoDump
+} from '../../types/fake-types'
 import {
   asChangeOtpPayload,
   asChangePasswordPayload,
@@ -24,13 +28,13 @@ import {
   asEdgeBox,
   asEdgeLobbyReply,
   asEdgeLobbyRequest,
-  asLobbyPayload,
-  asLoginPayload,
   asLoginRequestBody,
-  asMessagesPayload,
-  asOtpResetPayload,
-  asRecovery2InfoPayload,
-  asUsernameInfoPayload
+  wasLobbyPayload,
+  wasLoginPayload,
+  wasMessagesPayload,
+  wasOtpResetPayload,
+  wasRecovery2InfoPayload,
+  wasUsernameInfoPayload
 } from '../../types/server-cleaners'
 import { LoginRequestBody, MessagesPayload } from '../../types/server-types'
 import { checkTotp } from '../../util/crypto/hotp'
@@ -41,12 +45,12 @@ import { userIdSnrp } from '../scrypt/scrypt-selectors'
 import {
   DbLobby,
   DbLogin,
-  DbRepo,
   FakeDb,
   makeLoginPayload,
   makePendingVouchers
 } from './fake-db'
 import {
+  cleanRequest,
   jsonResponse,
   otpErrorResponse,
   passwordErrorResponse,
@@ -54,13 +58,6 @@ import {
   statusCodes,
   statusResponse
 } from './fake-responses'
-
-const wasLobbyPayload = uncleaner(asLobbyPayload)
-const wasLoginPayload = uncleaner(asLoginPayload)
-const wasMessagesPayload = uncleaner(asMessagesPayload)
-const wasOtpResetPayload = uncleaner(asOtpResetPayload)
-const wasRecovery2InfoPayload = uncleaner(asRecovery2InfoPayload)
-const wasUsernameInfoPayload = uncleaner(asUsernameInfoPayload)
 
 type DbRequest = HttpRequest & {
   readonly db: FakeDb
@@ -77,7 +74,7 @@ type LobbyIdRequest = ApiRequest & {
   readonly lobbyId: string
 }
 type RepoRequest = DbRequest & {
-  readonly repo: DbRepo
+  readonly repo: EdgeRepoDump
 }
 
 // Authentication middleware: ----------------------------------------------
@@ -86,8 +83,8 @@ const withApiKey =
   (server: Serverlet<ApiRequest>): Serverlet<DbRequest> =>
   async request => {
     const { json } = request
-    const body = asMaybe(asLoginRequestBody)(json)
-    if (body == null) return await statusResponse(statusCodes.invalidRequest)
+    const [body, bodyError] = cleanRequest(asLoginRequestBody, json)
+    if (body == null) return bodyError
     return await server({ ...request, body, payload: body.data })
   }
 
@@ -121,7 +118,7 @@ const withValidOtp: (
   }
 
   login.otpResetAuth = 'Super secret reset token'
-  const voucher: VoucherDump = {
+  const voucher: EdgeVoucherDump = {
     activates: new Date('2020-01-01T00:00:00Z'),
     created: new Date('2020-01-08T00:00:00Z'),
     deviceDescription: 'A phone',
@@ -240,8 +237,10 @@ const loginRoute = withLogin2(
       if (login == null) {
         return statusResponse(statusCodes.noAccount)
       }
-      const { passwordAuthSnrp = userIdSnrp } = login
-      return payloadResponse(wasUsernameInfoPayload({ passwordAuthSnrp }))
+      const { loginId, passwordAuthSnrp = userIdSnrp } = login
+      return payloadResponse(
+        wasUsernameInfoPayload({ loginId, passwordAuthSnrp })
+      )
     }
     if (recovery2Id != null && recovery2Auth == null) {
       const login = db.getLoginByRecovery2Id(recovery2Id)
@@ -258,20 +257,16 @@ const loginRoute = withLogin2(
   }
 )
 
-function createLogin(
-  request: ApiRequest,
-  login?: DbLogin
-): Promise<HttpResponse> {
+function createLogin(request: ApiRequest, login?: DbLogin): HttpResponse {
   const { db, json } = request
   const date = new Date()
 
-  const body = asMaybe(asLoginRequestBody)(json)
-  if (body == null) return statusResponse(statusCodes.invalidRequest)
-  const clean = asMaybe(asCreateLoginPayload)(body.data)
-  const secret = asMaybe(asChangeSecretPayload)(clean)
-  if (clean == null || secret == null) {
-    return statusResponse(statusCodes.invalidRequest)
-  }
+  const [body, bodyError] = cleanRequest(asLoginRequestBody, json)
+  if (body == null) return bodyError
+  const [clean, cleanError] = cleanRequest(asCreateLoginPayload, body.data)
+  if (clean == null) return cleanError
+  const [secret, secretError] = cleanRequest(asChangeSecretPayload, body.data)
+  if (secret == null) return secretError
 
   // Do not re-create accounts:
   if (db.getLoginById(clean.loginId) != null) {
@@ -279,8 +274,10 @@ function createLogin(
   }
 
   // Set up repos:
-  const emptyKeys = { newSyncKeys: [], keyBoxes: [] }
-  const keys = asMaybe(asCreateKeysPayload, emptyKeys)(clean)
+  const keys = asMaybe(asCreateKeysPayload, () => ({
+    newSyncKeys: [],
+    keyBoxes: []
+  }))(body.data)
   for (const syncKey of keys.newSyncKeys) {
     db.repos[syncKey] = {}
   }
@@ -295,11 +292,11 @@ function createLogin(
     vouchers: [],
 
     // Optional fields:
-    ...asMaybe(asChangeOtpPayload)(clean),
-    ...asMaybe(asChangePasswordPayload)(clean),
-    ...asMaybe(asChangePin2Payload)(clean),
-    ...asMaybe(asChangeRecovery2Payload)(clean),
-    ...asMaybe(asChangeUsernamePayload)(clean)
+    ...asMaybe(asChangeOtpPayload)(body.data),
+    ...asMaybe(asChangePasswordPayload)(body.data),
+    ...asMaybe(asChangePin2Payload)(body.data),
+    ...asMaybe(asChangeRecovery2Payload)(body.data),
+    ...asMaybe(asChangeUsernamePayload)(body.data)
   }
 
   // Set up the parent/child relationship:
@@ -324,8 +321,8 @@ const createLoginRoute = withLogin2(
 
 const addKeysRoute = withLogin2(request => {
   const { db, login, payload } = request
-  const clean = asMaybe(asCreateKeysPayload)(payload)
-  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  const [clean, cleanError] = cleanRequest(asCreateKeysPayload, payload)
+  if (clean == null) return cleanError
 
   // Set up repos:
   for (const syncKey of clean.newSyncKeys) {
@@ -338,8 +335,8 @@ const addKeysRoute = withLogin2(request => {
 
 const changeOtpRoute = withLogin2(request => {
   const { login, payload } = request
-  const clean = asMaybe(asChangeOtpPayload)(payload)
-  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  const [clean, cleanError] = cleanRequest(asChangeOtpPayload, payload)
+  if (clean == null) return cleanError
 
   login.otpKey = clean.otpKey
   login.otpTimeout = clean.otpTimeout
@@ -402,8 +399,8 @@ const deletePasswordRoute = withLogin2(request => {
 
 const changePasswordRoute = withLogin2(request => {
   const { login, payload } = request
-  const clean = asMaybe(asChangePasswordPayload)(payload)
-  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  const [clean, cleanError] = cleanRequest(asChangePasswordPayload, payload)
+  if (clean == null) return cleanError
 
   login.passwordAuth = clean.passwordAuth
   login.passwordAuthBox = clean.passwordAuthBox
@@ -427,8 +424,8 @@ const deletePin2Route = withLogin2(request => {
 
 const changePin2Route = withLogin2(request => {
   const { login, payload } = request
-  const clean = asMaybe(asChangePin2Payload)(payload)
-  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  const [clean, cleanError] = cleanRequest(asChangePin2Payload, payload)
+  if (clean == null) return cleanError
 
   login.pin2Auth = clean.pin2Auth
   login.pin2Box = clean.pin2Box
@@ -452,8 +449,8 @@ const deleteRecovery2Route = withLogin2(request => {
 
 const changeRecovery2Route = withLogin2(request => {
   const { login, payload } = request
-  const clean = asMaybe(asChangeRecovery2Payload)(payload)
-  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  const [clean, cleanError] = cleanRequest(asChangeRecovery2Payload, payload)
+  if (clean == null) return cleanError
 
   login.question2Box = clean.question2Box
   login.recovery2Auth = clean.recovery2Auth
@@ -466,8 +463,8 @@ const changeRecovery2Route = withLogin2(request => {
 
 const secretRoute = withLogin2(request => {
   const { db, login, payload } = request
-  const clean = asMaybe(asChangeSecretPayload)(payload)
-  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  const [clean, cleanError] = cleanRequest(asChangeSecretPayload, payload)
+  if (clean == null) return cleanError
 
   // Do a quick sanity check:
   if (login.loginAuth != null) {
@@ -493,25 +490,22 @@ const usernameRoute = withLogin2(async request => {
 
   // Validate the payload selection:
   if (login.passwordAuth != null && cleanPassword == null) {
-    return await statusResponse(
+    return statusResponse(
       statusCodes.invalidRequest,
       'Missing password payload'
     )
   }
   if (login.pin2Auth != null && cleanPin2 == null) {
-    return await statusResponse(
-      statusCodes.invalidRequest,
-      'Missing pin2Id payload'
-    )
+    return statusResponse(statusCodes.invalidRequest, 'Missing pin2Id payload')
   }
   if (login.recovery2Auth != null && cleanRecovery2 == null) {
-    return await statusResponse(
+    return statusResponse(
       statusCodes.invalidRequest,
       'Missing recovery2Id payload'
     )
   }
   if (login.parentBox == null && cleanUsername == null) {
-    return await statusResponse(
+    return statusResponse(
       statusCodes.invalidRequest,
       'Missing username payload'
     )
@@ -529,14 +523,11 @@ const usernameRoute = withLogin2(async request => {
   // Do we have a PIN?
   if (cleanPin2 != null) {
     if (login.pin2Auth == null) {
-      return await statusResponse(
-        statusCodes.invalidRequest,
-        'Login lacks pin2'
-      )
+      return statusResponse(statusCodes.invalidRequest, 'Login lacks pin2')
     }
-    const existing = await db.getLoginByPin2Id(cleanPin2.pin2Id)
+    const existing = db.getLoginByPin2Id(cleanPin2.pin2Id)
     if (existing != null) {
-      return await statusResponse(statusCodes.conflict)
+      return statusResponse(statusCodes.conflict)
     }
     login.pin2Id = cleanPin2.pin2Id
   }
@@ -544,14 +535,11 @@ const usernameRoute = withLogin2(async request => {
   // Do we have recovery?
   if (cleanRecovery2 != null) {
     if (login.recovery2Auth == null) {
-      return await statusResponse(
-        statusCodes.invalidRequest,
-        'Login lacks recovery2'
-      )
+      return statusResponse(statusCodes.invalidRequest, 'Login lacks recovery2')
     }
-    const existing = await db.getLoginByRecovery2Id(cleanRecovery2.recovery2Id)
+    const existing = db.getLoginByRecovery2Id(cleanRecovery2.recovery2Id)
     if (existing != null) {
-      return await statusResponse(statusCodes.conflict)
+      return statusResponse(statusCodes.conflict)
     }
     login.recovery2Id = cleanRecovery2.recovery2Id
   }
@@ -559,26 +547,26 @@ const usernameRoute = withLogin2(async request => {
   // Are we the root login?
   if (cleanUsername != null) {
     if (login.parentBox != null) {
-      return await statusResponse(
+      return statusResponse(
         statusCodes.invalidRequest,
         'Only top-level logins can have usernames'
       )
     }
-    const existing = await db.getLoginByUserId(cleanUsername.userId)
+    const existing = db.getLoginByUserId(cleanUsername.userId)
     if (existing != null) {
-      return await statusResponse(statusCodes.conflict)
+      return statusResponse(statusCodes.conflict)
     }
     login.userId = cleanUsername.userId
     login.userTextBox = cleanUsername.userTextBox
   }
 
-  return await payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
+  return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
 })
 
 const vouchersRoute = withLogin2(async request => {
   const { db, login, payload } = request
-  const clean = asMaybe(asChangeVouchersPayload)(payload)
-  if (clean == null) return await statusResponse(statusCodes.invalidRequest)
+  const [clean, cleanError] = cleanRequest(asChangeVouchersPayload, payload)
+  if (clean == null) return cleanError
   const { approvedVouchers = [], rejectedVouchers = [] } = clean
 
   // Let's get our tasks organized:
@@ -592,9 +580,7 @@ const vouchersRoute = withLogin2(async request => {
     voucher.status = table[voucher.voucherId]
   }
 
-  return await payloadResponse(
-    wasLoginPayload(await makeLoginPayload(db, login))
-  )
+  return payloadResponse(wasLoginPayload(makeLoginPayload(db, login)))
 })
 
 // lobby: ------------------------------------------------------------------
@@ -625,10 +611,10 @@ const createLobbyRoute = withLobby(
   request => {
     const { db, json, lobbyId } = request
 
-    const body = asMaybe(asLoginRequestBody)(json)
-    if (body == null) return statusResponse(statusCodes.invalidRequest)
-    const clean = asMaybe(asEdgeLobbyRequest)(body.data)
-    if (clean == null) return statusResponse(statusCodes.invalidRequest)
+    const [body, bodyError] = cleanRequest(asLoginRequestBody, json)
+    if (body == null) return bodyError
+    const [clean, cleanError] = cleanRequest(asEdgeLobbyRequest, body.data)
+    if (clean == null) return cleanError
 
     const { timeout = 600 } = clean
     const expires = new Date(Date.now() + 1000 * timeout).toISOString()
@@ -641,10 +627,10 @@ const createLobbyRoute = withLobby(
 const updateLobbyRoute = withLobby(request => {
   const { json, lobby } = request
 
-  const body = asMaybe(asLoginRequestBody)(json)
-  if (body == null) return statusResponse(statusCodes.invalidRequest)
-  const clean = asMaybe(asEdgeLobbyReply)(body.data)
-  if (clean == null) return statusResponse(statusCodes.invalidRequest)
+  const [body, bodyError] = cleanRequest(asLoginRequestBody, json)
+  if (body == null) return bodyError
+  const [clean, cleanError] = cleanRequest(asEdgeLobbyReply, body.data)
+  if (clean == null) return cleanError
 
   lobby.replies.push(clean)
   return statusResponse()
@@ -665,11 +651,11 @@ const deleteLobbyRoute = withLobby(request => {
 
 const messagesRoute: Serverlet<ApiRequest> = request => {
   const { db, json } = request
-  const clean = asMaybe(asLoginRequestBody)(json)
-  if (clean == null || clean.loginIds == null) {
-    return statusResponse(statusCodes.invalidRequest)
-  }
+  const [clean, cleanError] = cleanRequest(asLoginRequestBody, json)
+  if (clean == null) return cleanError
+
   const { loginIds } = clean
+  if (loginIds == null) return statusResponse(statusCodes.invalidRequest)
 
   const out: MessagesPayload = []
   for (const loginId of loginIds) {
@@ -707,7 +693,7 @@ const withRepo =
 
 const storeReadRoute = withRepo(request => {
   const { repo } = request
-  return jsonResponse({ changes: repo })
+  return jsonResponse({ changes: wasEdgeRepoDump(repo) })
 })
 
 const storeUpdateRoute = withRepo(request => {
@@ -717,7 +703,7 @@ const storeUpdateRoute = withRepo(request => {
     repo[change] = changes[change]
   }
   return jsonResponse({
-    changes: repo,
+    changes: wasEdgeRepoDump(repo),
     hash: '1111111111111111111111111111111111111111'
   })
 })

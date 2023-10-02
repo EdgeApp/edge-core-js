@@ -1,5 +1,6 @@
 import { base16, base64 } from 'rfc4648'
 
+import { wasCreateKeysPayload } from '../../types/server-cleaners'
 import {
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyWallet,
@@ -21,7 +22,7 @@ import {
   maybeFindCurrencyPluginId
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
-import { AppIdMap, LoginKit, LoginTree } from './login-types'
+import { AppIdMap, LoginKit, LoginTree, wasEdgeWalletInfo } from './login-types'
 
 /**
  * Returns the first keyInfo with a matching type.
@@ -82,7 +83,11 @@ export function makeKeysKit(
 ): LoginKit {
   const { io } = ai.props
   const keyBoxes = keyInfos.map(info =>
-    encrypt(io, utf8.parse(JSON.stringify(info)), login.loginKey)
+    encrypt(
+      io,
+      utf8.parse(JSON.stringify(wasEdgeWalletInfo(info))),
+      login.loginKey
+    )
   )
   const newSyncKeys: string[] = []
   for (const info of keyInfos) {
@@ -94,7 +99,7 @@ export function makeKeysKit(
 
   return {
     serverPath: '/v2/login/keys',
-    server: { keyBoxes, newSyncKeys },
+    server: wasCreateKeysPayload({ keyBoxes, newSyncKeys }),
     stash: { keyBoxes },
     login: { keyInfos },
     loginId: login.loginId

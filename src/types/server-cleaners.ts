@@ -9,7 +9,8 @@ import {
   asOptional,
   asString,
   asUnknown,
-  asValue
+  asValue,
+  uncleaner
 } from 'cleaners'
 import { base16, base32, base64 } from 'rfc4648'
 
@@ -81,6 +82,7 @@ export const asEdgePendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
   deviceDescription: asOptional(asString)
 })
 
+/** @deprecated The GUI provides its own localized strings now. */
 const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> =
   asObject({
     min_length: asNumber,
@@ -94,8 +96,8 @@ const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> =
 
 export const asEdgeBox: Cleaner<EdgeBox> = asObject({
   encryptionType: asNumber,
-  data_base64: asString,
-  iv_hex: asString
+  data_base64: asBase64,
+  iv_hex: asBase16
 })
 
 export const asEdgeSnrp: Cleaner<EdgeSnrp> = asObject({
@@ -171,7 +173,7 @@ export const asLoginResponseBody: Cleaner<LoginResponseBody> = asObject({
   // The response payload:
   results: asOptional(asUnknown),
 
-  // What of response is this (success or failure)?:
+  // What type of response is this (success or failure)?:
   status_code: asNumber,
   message: asString
 })
@@ -249,7 +251,7 @@ export const asCreateLoginPayload: Cleaner<CreateLoginPayload> = asObject({
   appId: asString,
   loginId: asBase64,
   parentBox: asOptional(asEdgeBox)
-}).withRest
+})
 
 // ---------------------------------------------------------------------
 // response payloads
@@ -342,6 +344,7 @@ export const asPasswordErrorPayload: Cleaner<PasswordErrorPayload> = asObject({
   wait_seconds: asOptional(asNumber)
 })
 
+/** @deprecated The GUI provides its own localized strings now. */
 export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> =
   asArray(asEdgeRecoveryQuestionChoice)
 
@@ -350,6 +353,8 @@ export const asRecovery2InfoPayload: Cleaner<Recovery2InfoPayload> = asObject({
 })
 
 export const asUsernameInfoPayload: Cleaner<UsernameInfoPayload> = asObject({
+  loginId: asBase64,
+
   // Password login:
   passwordAuthSnrp: asOptional(asEdgeSnrp),
 
@@ -358,3 +363,73 @@ export const asUsernameInfoPayload: Cleaner<UsernameInfoPayload> = asObject({
   questionKeySnrp: asOptional(asEdgeSnrp),
   recoveryAuthSnrp: asOptional(asEdgeSnrp)
 })
+
+// ---------------------------------------------------------------------
+// uncleaners
+// ---------------------------------------------------------------------
+
+// Common types:
+export const wasEdgeBox = uncleaner<EdgeBox>(asEdgeBox)
+export const wasEdgeLobbyReply = uncleaner<EdgeLobbyReply>(asEdgeLobbyReply)
+export const wasEdgeLobbyRequest =
+  uncleaner<EdgeLobbyRequest>(asEdgeLobbyRequest)
+
+// Top-level request / response bodies:
+export const wasLoginRequestBody =
+  uncleaner<LoginRequestBody>(asLoginRequestBody)
+export const wasLoginResponseBody =
+  uncleaner<LoginResponseBody>(asLoginResponseBody)
+
+// Request payloads:
+export const wasChangeOtpPayload =
+  uncleaner<ChangeOtpPayload>(asChangeOtpPayload)
+export const wasChangePasswordPayload = uncleaner<ChangePasswordPayload>(
+  asChangePasswordPayload
+)
+export const wasChangePin2IdPayload = uncleaner<ChangePin2IdPayload>(
+  asChangePin2IdPayload
+)
+export const wasChangePin2Payload =
+  uncleaner<ChangePin2Payload>(asChangePin2Payload)
+export const wasChangeRecovery2IdPayload = uncleaner<ChangeRecovery2IdPayload>(
+  asChangeRecovery2IdPayload
+)
+export const wasChangeRecovery2Payload = uncleaner<ChangeRecovery2Payload>(
+  asChangeRecovery2Payload
+)
+export const wasChangeSecretPayload = uncleaner<ChangeSecretPayload>(
+  asChangeSecretPayload
+)
+export const wasChangeUsernamePayload = uncleaner<ChangeUsernamePayload>(
+  asChangeUsernamePayload
+)
+export const wasChangeVouchersPayload = uncleaner<ChangeVouchersPayload>(
+  asChangeVouchersPayload
+)
+export const wasCreateKeysPayload =
+  uncleaner<CreateKeysPayload>(asCreateKeysPayload)
+export const wasCreateLoginPayload =
+  uncleaner<CreateLoginPayload>(asCreateLoginPayload)
+
+// Response payloads:
+export const wasChallengeErrorPayload = uncleaner<ChallengeErrorPayload>(
+  asChallengeErrorPayload
+)
+export const wasLobbyPayload = uncleaner<LobbyPayload>(asLobbyPayload)
+export const wasLoginPayload = uncleaner<LoginPayload>(asLoginPayload)
+export const wasMessagesPayload = uncleaner<MessagesPayload>(asMessagesPayload)
+export const wasOtpErrorPayload = uncleaner<OtpErrorPayload>(asOtpErrorPayload)
+export const wasOtpResetPayload = uncleaner<OtpResetPayload>(asOtpResetPayload)
+export const wasPasswordErrorPayload = uncleaner<PasswordErrorPayload>(
+  asPasswordErrorPayload
+)
+/** @deprecated The GUI provides its own localized strings now. */
+export const wasQuestionChoicesPayload = uncleaner<QuestionChoicesPayload>(
+  asQuestionChoicesPayload
+)
+export const wasRecovery2InfoPayload = uncleaner<Recovery2InfoPayload>(
+  asRecovery2InfoPayload
+)
+export const wasUsernameInfoPayload = uncleaner<UsernameInfoPayload>(
+  asUsernameInfoPayload
+)

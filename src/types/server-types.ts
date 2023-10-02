@@ -9,8 +9,8 @@ import type { EdgePendingVoucher, EdgeRecoveryQuestionChoice } from './types'
  */
 export interface EdgeBox {
   encryptionType: number
-  data_base64: string
-  iv_hex: string
+  data_base64: Uint8Array
+  iv_hex: Uint8Array
 }
 
 /**
@@ -300,6 +300,7 @@ export interface PasswordErrorPayload {
 
 /**
  * A list of recovery questions the user can pick from.
+ * @deprecated The GUI provides its own localized strings now.
  */
 export type QuestionChoicesPayload = EdgeRecoveryQuestionChoice[]
 
@@ -314,6 +315,8 @@ export interface Recovery2InfoPayload {
  * Returned when fetching the password hashing options for an account.
  */
 export interface UsernameInfoPayload {
+  loginId: Uint8Array
+
   // Password login:
   passwordAuthSnrp?: EdgeSnrp
 

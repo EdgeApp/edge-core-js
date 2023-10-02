@@ -1,8 +1,6 @@
-import { uncleaner } from 'cleaners'
-
 import {
-  asChangeVouchersPayload,
-  asLoginPayload
+  asLoginPayload,
+  wasChangeVouchersPayload
 } from '../../types/server-cleaners'
 import { ChangeVouchersPayload } from '../../types/server-types'
 import { ApiInput } from '../root-pixie'
@@ -11,8 +9,6 @@ import { loginFetch } from './login-fetch'
 import { getStashById } from './login-selectors'
 import { saveStash } from './login-stash'
 import { LoginTree } from './login-types'
-
-const wasChangeVouchersPayload = uncleaner(asChangeVouchersPayload)
 
 /**
  * Approves or rejects vouchers on the server.

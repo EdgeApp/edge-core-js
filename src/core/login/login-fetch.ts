@@ -1,9 +1,9 @@
-import { asMaybe, uncleaner } from 'cleaners'
+import { asMaybe } from 'cleaners'
 
 import {
   asChallengeErrorPayload,
-  asLoginRequestBody,
-  asLoginResponseBody
+  asLoginResponseBody,
+  wasLoginRequestBody
 } from '../../types/server-cleaners'
 import { LoginRequestBody } from '../../types/server-types'
 import {
@@ -17,8 +17,6 @@ import {
 } from '../../types/types'
 import { timeout } from '../../util/promise'
 import { ApiInput } from '../root-pixie'
-
-const wasLoginRequestBody = uncleaner(asLoginRequestBody)
 
 export function parseReply(json: unknown): unknown {
   const clean = asLoginResponseBody(json)

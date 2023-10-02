@@ -137,7 +137,7 @@ export async function saveStash(
   dispatch({ type: 'LOGIN_STASH_SAVED', payload: stashTree })
 }
 
-export const asUsername: Cleaner<string> = raw => fixUsername(asString(raw))
+const asUsername: Cleaner<string> = raw => fixUsername(asString(raw))
 
 export const asLoginStash: Cleaner<LoginStash> = asObject({
   // Identity:
@@ -191,4 +191,5 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   rootKeyBox: asOptional(asEdgeBox),
   syncKeyBox: asOptional(asEdgeBox)
 })
-const wasLoginStash = uncleaner(asLoginStash)
+
+export const wasLoginStash = uncleaner(asLoginStash)

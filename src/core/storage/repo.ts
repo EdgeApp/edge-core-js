@@ -1,7 +1,10 @@
 import { Disklet, mergeDisklets, navigateDisklet } from 'disklet'
+import type { EdgeBox as SyncEdgeBox } from 'edge-sync-client'
 import { SyncClient } from 'edge-sync-client'
 import { base16, base64 } from 'rfc4648'
 
+import { asEdgeBox, wasEdgeBox } from '../../types/server-cleaners'
+import { EdgeBox } from '../../types/server-types'
 import { EdgeIo } from '../../types/types'
 import { sha256 } from '../../util/crypto/hashes'
 import { base58 } from '../../util/encoding'
@@ -10,8 +13,12 @@ import { StorageWalletPaths, StorageWalletStatus } from './storage-reducer'
 
 const CHANGESET_MAX_ENTRIES = 100
 
+interface RepoChanges {
+  [path: string]: EdgeBox | null
+}
+
 export interface SyncResult {
-  changes: { [path: string]: any }
+  changes: RepoChanges
   status: StorageWalletStatus
 }
 
@@ -71,13 +78,13 @@ export function loadRepoStatus(
  */
 export async function saveChanges(
   disklet: Disklet,
-  changes: { [path: string]: any }
+  changes: RepoChanges
 ): Promise<void> {
   await Promise.all(
     Object.keys(changes).map(path => {
-      const json = changes[path]
-      return json != null
-        ? disklet.setText(path, JSON.stringify(json))
+      const box = changes[path]
+      return box != null
+        ? disklet.setText(path, JSON.stringify(wasEdgeBox(box)))
         : disklet.delete(path)
     })
   )
@@ -95,12 +102,12 @@ export async function syncRepo(
 
   const ourChanges: Array<{
     path: string
-    json: any
+    box: EdgeBox
   }> = await deepListWithLimit(changesDisklet).then(paths => {
     return Promise.all(
       paths.map(async path => ({
         path,
-        json: JSON.parse(await changesDisklet.getText(path))
+        box: asEdgeBox(JSON.parse(await changesDisklet.getText(path)))
       }))
     )
   })
@@ -116,15 +123,20 @@ export async function syncRepo(
     }
 
     // Write local changes to the repo.
-    const changes: { [name: string]: any } = {}
+    const changes: { [name: string]: SyncEdgeBox } = {}
     for (const change of ourChanges) {
-      changes[change.path] = change.json
+      changes[change.path] = wasEdgeBox(change.box)
     }
     return syncClient.updateRepo(syncKeyEncoded, status.lastHash, { changes })
   })()
 
   // Make the request:
-  const { changes = {}, hash } = reply
+  const { hash } = reply
+  const changes: RepoChanges = {}
+  for (const path of Object.keys(reply.changes ?? {})) {
+    const json = reply.changes[path]
+    changes[path] = json == null ? null : asEdgeBox(json)
+  }
 
   // Save the incoming changes into our `data` folder:
   await saveChanges(dataDisklet, changes)

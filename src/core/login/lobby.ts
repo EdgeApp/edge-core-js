@@ -1,11 +1,10 @@
-import { uncleaner } from 'cleaners'
 import elliptic from 'elliptic'
 import { Events, makeEvents, OnEvents } from 'yavent'
 
 import {
-  asEdgeLobbyReply,
-  asEdgeLobbyRequest,
-  asLobbyPayload
+  asLobbyPayload,
+  wasEdgeLobbyReply,
+  wasEdgeLobbyRequest
 } from '../../types/server-cleaners'
 import { EdgeLobbyReply, EdgeLobbyRequest } from '../../types/server-types'
 import { EdgeIo } from '../../types/types'
@@ -19,9 +18,6 @@ import { loginFetch } from './login-fetch'
 
 const EC = elliptic.ec
 const secp256k1 = new EC('secp256k1')
-
-const wasEdgeLobbyReply = uncleaner(asEdgeLobbyReply)
-const wasEdgeLobbyRequest = uncleaner(asEdgeLobbyRequest)
 
 type KeyPair = elliptic.ec.KeyPair
 

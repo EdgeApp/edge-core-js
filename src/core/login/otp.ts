@@ -1,9 +1,8 @@
-import { uncleaner } from 'cleaners'
 import { base32 } from 'rfc4648'
 
 import {
-  asChangeOtpPayload,
-  asOtpResetPayload
+  asOtpResetPayload,
+  wasChangeOtpPayload
 } from '../../types/server-cleaners'
 import { EdgeAccountOptions } from '../../types/types'
 import { totp } from '../../util/crypto/hotp'
@@ -13,8 +12,6 @@ import { loginFetch } from './login-fetch'
 import { getStashById, hashUsername } from './login-selectors'
 import { LoginStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
-
-const wasChangeOtpPayload = uncleaner(asChangeOtpPayload)
 
 /**
  * Gets the current OTP for a logged-in account.

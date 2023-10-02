@@ -8,6 +8,9 @@ import type {
 import type { Subscriber } from 'yaob'
 
 export * from './error'
+export * from './fake-types'
+export * from './server-cleaners'
+export * from './server-types'
 
 // ---------------------------------------------------------------------
 // helper types
@@ -1600,6 +1603,7 @@ export interface EdgeContextOptions {
   skipBlockHeight?: boolean
 }
 
+/** @deprecated The GUI provides its own localized strings now. */
 export interface EdgeRecoveryQuestionChoice {
   category: 'address' | 'must' | 'numeric' | 'recovery2' | 'string'
   min_length: number
@@ -1737,6 +1741,7 @@ export interface EdgeContext {
     recovery2Key: string,
     username: string
   ) => Promise<string[]>
+  /** @deprecated The GUI provides its own localized strings now. */
   readonly listRecoveryQuestionChoices: () => Promise<
     EdgeRecoveryQuestionChoice[]
   >
@@ -1802,12 +1807,14 @@ export interface EdgeFakeContextOptions {
  * on the fake unit-testing server.
  */
 export interface EdgeFakeUser {
-  username: string
+  username?: string
   lastLogin?: Date
   loginId: string // base64
   loginKey: string // base64
-  repos: { [repo: string]: { [path: string]: any /* asEdgeBox */ } }
-  server: any // asLoginDump
+  repos: {
+    [syncKey: string]: unknown // Cleaned with asEdgeRepoDump
+  }
+  server: unknown // Cleaned with asEdgeLoginDump
 }
 
 export interface EdgeFakeWorld {

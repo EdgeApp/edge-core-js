@@ -1,10 +1,10 @@
-import { uncleaner } from 'cleaners'
+import { asArray, asString, uncleaner } from 'cleaners'
 
 import {
-  asChangeRecovery2IdPayload,
-  asChangeRecovery2Payload,
   asQuestionChoicesPayload,
-  asRecovery2InfoPayload
+  asRecovery2InfoPayload,
+  wasChangeRecovery2IdPayload,
+  wasChangeRecovery2Payload
 } from '../../types/server-cleaners'
 import {
   EdgeAccountOptions,
@@ -18,9 +18,6 @@ import { applyKit, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
 import { LoginStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
-
-const wasChangeRecovery2IdPayload = uncleaner(asChangeRecovery2IdPayload)
-const wasChangeRecovery2Payload = uncleaner(asChangeRecovery2Payload)
 
 function makeRecovery2Id(
   recovery2Key: Uint8Array,
@@ -94,7 +91,7 @@ export async function getQuestions2(
   }
 
   // Decrypt the questions:
-  return JSON.parse(decryptText(question2Box, recovery2Key))
+  return asQuestions(JSON.parse(decryptText(question2Box, recovery2Key)))
 }
 
 export async function changeRecovery(
@@ -175,7 +172,7 @@ export function makeRecovery2Kit(
   const { loginId, loginKey, recovery2Key = io.random(32) } = login
   const question2Box = encrypt(
     io,
-    utf8.parse(JSON.stringify(questions)),
+    utf8.parse(JSON.stringify(wasQuestions(questions))),
     recovery2Key
   )
   const recovery2Box = encrypt(io, loginKey, recovery2Key)
@@ -207,3 +204,6 @@ export async function listRecoveryQuestionChoices(
     await loginFetch(ai, 'POST', '/v1/questions', {})
   )
 }
+
+const asQuestions = asArray(asString)
+const wasQuestions = uncleaner(asQuestions)
