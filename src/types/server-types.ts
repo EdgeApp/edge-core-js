@@ -55,6 +55,7 @@ export interface LoginRequestBody {
   challengeId?: string
   deviceDescription?: string
   otp?: string
+  syncToken?: string
   voucherId?: string
   voucherAuth?: Uint8Array
 
@@ -209,6 +210,7 @@ export interface LoginPayload {
   appId: string
   created: Date
   loginId: Uint8Array
+  syncToken?: string
 
   // Nested logins:
   children?: LoginPayload[]

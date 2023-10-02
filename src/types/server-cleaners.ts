@@ -135,6 +135,7 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
   challengeId: asOptional(asString),
   deviceDescription: asOptional(asString),
   otp: asOptional(asString),
+  syncToken: asOptional(asString),
   voucherId: asOptional(asString),
   voucherAuth: asOptional(asBase64),
 
@@ -274,6 +275,7 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   appId: asString,
   created: asDate,
   loginId: asBase64,
+  syncToken: asOptional(asString),
 
   // Nested logins:
   children: asOptional(asArray(raw => asLoginPayload(raw))),

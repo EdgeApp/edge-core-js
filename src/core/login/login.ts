@@ -2,6 +2,7 @@
  * Functions for working with login data in its on-disk format.
  */
 
+import { asBoolean } from 'cleaners'
 import { base64 } from 'rfc4648'
 
 import { asLoginPayload } from '../../types/server-cleaners'
@@ -98,7 +99,8 @@ function applyLoginPayloadInner(
     keyBoxes = [],
     mnemonicBox,
     rootKeyBox,
-    syncKeyBox
+    syncKeyBox,
+    syncToken
   } = loginReply
 
   const out: LoginStash = {
@@ -120,7 +122,8 @@ function applyLoginPayloadInner(
     keyBoxes, // We should be more picky about these
     mnemonicBox,
     rootKeyBox,
-    syncKeyBox
+    syncKeyBox,
+    syncToken
   }
 
   // Preserve client-only data:
@@ -520,6 +523,21 @@ export async function syncLogin(
 ): Promise<LoginTree> {
   const { stashTree, stash } = getStashById(ai, login.loginId)
 
+  // First, hit the fast endpoint to see if we even need to sync:
+  const { syncToken } = stash
+  if (syncToken != null) {
+    try {
+      const reply = await loginFetch(ai, 'POST', '/v2/sync', {
+        loginId: stash.loginId,
+        syncToken
+      })
+      if (asBoolean(reply)) return loginTree
+    } catch (error) {
+      // We can fall back on a full sync if we fail here.
+    }
+  }
+
+  // If we do need to sync, prepare for a full login:
   const request = makeAuthJson(stashTree, login)
   const opts: EdgeAccountOptions = {
     // Avoid updating the lastLogin date:
@@ -539,8 +557,11 @@ export function makeAuthJson(
   login: LoginTree
 ): LoginRequestBody {
   const stash = searchTree(stashTree, stash => stash.appId === login.appId)
-  const { voucherAuth, voucherId } =
-    stash != null ? stash : { voucherAuth: undefined, voucherId: undefined }
+  const { syncToken, voucherAuth, voucherId } = stash ?? {
+    syncToken: undefined,
+    voucherAuth: undefined,
+    voucherId: undefined
+  }
 
   const { loginId, userId, loginAuth, passwordAuth } = login
   if (loginAuth != null) {
@@ -548,6 +569,7 @@ export function makeAuthJson(
       loginId,
       loginAuth,
       otp: getLoginOtp(login),
+      syncToken,
       voucherAuth,
       voucherId
     }
@@ -557,6 +579,7 @@ export function makeAuthJson(
       userId,
       passwordAuth,
       otp: getLoginOtp(login),
+      syncToken,
       voucherAuth,
       voucherId
     }
