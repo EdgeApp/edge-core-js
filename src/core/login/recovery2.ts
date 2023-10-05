@@ -61,7 +61,7 @@ export async function loginRecovery2(
     opts,
     request,
     async reply => {
-      if (reply.recovery2Box == null) {
+      if (reply.recovery2Box == null || reply.recovery2Box === true) {
         throw new Error('Missing data for recovery v2 login')
       }
       return decrypt(reply.recovery2Box, recovery2Key)
