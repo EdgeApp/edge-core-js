@@ -62,7 +62,7 @@ export async function loginPin2(
     pin2Auth: makePin2Auth(pin2Key, pin)
   }
   return await serverLogin(ai, stashTree, stash, opts, request, async reply => {
-    if (reply.pin2Box == null) {
+    if (reply.pin2Box == null || reply.pin2Box === true) {
       throw new Error('Missing data for PIN v2 login')
     }
     return decrypt(reply.pin2Box, pin2Key)

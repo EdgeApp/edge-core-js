@@ -4,6 +4,7 @@ import {
   asBoolean,
   asCodec,
   asDate,
+  asEither,
   asNumber,
   asObject,
   asOptional,
@@ -135,6 +136,7 @@ export const asLoginRequestBody: Cleaner<LoginRequestBody> = asObject({
   challengeId: asOptional(asString),
   deviceDescription: asOptional(asString),
   otp: asOptional(asString),
+  syncToken: asOptional(asString),
   voucherId: asOptional(asString),
   voucherAuth: asOptional(asBase64),
 
@@ -269,35 +271,38 @@ export const asLobbyPayload: Cleaner<LobbyPayload> = asObject({
   replies: asArray(asEdgeLobbyReply)
 })
 
+const asTrue = asValue(true)
+
 export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   // Identity:
   appId: asString,
   created: asDate,
   loginId: asBase64,
+  syncToken: asOptional(asString),
 
   // Nested logins:
   children: asOptional(asArray(raw => asLoginPayload(raw))),
   parentBox: asOptional(asEdgeBox),
 
   // 2-factor login:
-  otpKey: asOptional(asBase32),
+  otpKey: asOptional(asEither(asTrue, asBase32)),
   otpResetDate: asOptional(asDate),
   otpTimeout: asOptional(asNumber),
 
   // Password login:
   passwordAuthBox: asOptional(asEdgeBox),
   passwordAuthSnrp: asOptional(asEdgeSnrp),
-  passwordBox: asOptional(asEdgeBox),
+  passwordBox: asOptional(asEither(asTrue, asEdgeBox)),
   passwordKeySnrp: asOptional(asEdgeSnrp),
 
   // PIN v2 login:
-  pin2Box: asOptional(asEdgeBox),
+  pin2Box: asOptional(asEither(asTrue, asEdgeBox)),
   pin2KeyBox: asOptional(asEdgeBox),
   pin2TextBox: asOptional(asEdgeBox),
 
   // Recovery v2 login:
   question2Box: asOptional(asEdgeBox),
-  recovery2Box: asOptional(asEdgeBox),
+  recovery2Box: asOptional(asEither(asTrue, asEdgeBox)),
   recovery2KeyBox: asOptional(asEdgeBox),
 
   // Secret-key login:

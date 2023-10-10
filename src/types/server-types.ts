@@ -55,6 +55,7 @@ export interface LoginRequestBody {
   challengeId?: string
   deviceDescription?: string
   otp?: string
+  syncToken?: string
   voucherId?: string
   voucherAuth?: Uint8Array
 
@@ -209,30 +210,31 @@ export interface LoginPayload {
   appId: string
   created: Date
   loginId: Uint8Array
+  syncToken?: string
 
   // Nested logins:
   children?: LoginPayload[]
   parentBox?: EdgeBox
 
   // 2-factor login:
-  otpKey?: Uint8Array
+  otpKey?: Uint8Array | true
   otpResetDate?: Date
   otpTimeout?: number
 
   // Password login:
   passwordAuthBox?: EdgeBox
   passwordAuthSnrp?: EdgeSnrp
-  passwordBox?: EdgeBox
+  passwordBox?: EdgeBox | true
   passwordKeySnrp?: EdgeSnrp
 
   // PIN v2 login:
-  pin2Box?: EdgeBox
+  pin2Box?: EdgeBox | true
   pin2KeyBox?: EdgeBox
   pin2TextBox?: EdgeBox
 
   // Recovery v2 login:
   question2Box?: EdgeBox
-  recovery2Box?: EdgeBox
+  recovery2Box?: EdgeBox | true
   recovery2KeyBox?: EdgeBox
 
   // Secret-key login:

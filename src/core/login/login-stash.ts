@@ -35,6 +35,7 @@ export interface LoginStash {
   created?: Date
   lastLogin?: Date
   loginId: Uint8Array
+  syncToken?: string
   userId?: Uint8Array
   username?: string
 

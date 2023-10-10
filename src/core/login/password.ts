@@ -74,7 +74,11 @@ async function loginPasswordOnline(
     request,
     async reply => {
       const { passwordBox, passwordKeySnrp } = reply
-      if (passwordBox == null || passwordKeySnrp == null) {
+      if (
+        passwordBox == null ||
+        passwordBox === true ||
+        passwordKeySnrp == null
+      ) {
         throw new Error('Missing data for online password login')
       }
       const passwordKey = await scrypt(ai, up, passwordKeySnrp)
