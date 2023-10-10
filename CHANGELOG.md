@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.9.0 (2023-10-10)
+
 - added: Support optimized login syncing, checking to see if our credentials are up-to-date before performing a periodic login.
 
 ## 1.8.0 (2023-10-02)
