@@ -1,6 +1,7 @@
 # edge-core-js
 
-## Unreleased
+## 1.10.0 (2023-10-10)
+
 - added: EdgeTxAction types to tag known smart contract trasaction types (swap, stake, etc)
 
 ## 1.9.0 (2023-10-10)
