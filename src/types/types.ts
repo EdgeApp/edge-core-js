@@ -249,6 +249,39 @@ export interface EdgeMemo {
   memoName?: string
 }
 
+export interface EdgeAssetAmount {
+  pluginId: string
+  tokenId?: string
+  nativeAmount?: string
+}
+
+export type EdgeTxActionSwapType =
+  | 'swap'
+  | 'swapOrderPost'
+  | 'swapOrderFill'
+  | 'swapOrderCancel'
+
+export interface EdgeTxActionSwap {
+  type: EdgeTxActionSwapType
+  orderId?: string
+  canBePartial?: boolean
+  sourceAsset: EdgeAssetAmount
+  destAsset: EdgeAssetAmount
+}
+
+export type EdgeTxActionStakeType =
+  | 'stake'
+  | 'stakeOrder'
+  | 'unstake'
+  | 'unstakeOrder'
+
+export interface EdgeTxActionStake {
+  type: EdgeTxActionStakeType
+  stakeAssets: EdgeAssetAmount[]
+}
+
+export type EdgeTxAction = EdgeTxActionSwap | EdgeTxActionStake
+
 // token info ----------------------------------------------------------
 
 export interface EdgeDenomination {
@@ -468,6 +501,7 @@ export interface EdgeTransaction {
   signedTx: string
   memos: EdgeMemo[]
   ourReceiveAddresses: string[]
+  action?: EdgeTxAction
 
   // Spend-specific metadata:
   deviceDescription?: string

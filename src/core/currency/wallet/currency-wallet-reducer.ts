@@ -7,6 +7,7 @@ import {
   EdgeMemo,
   EdgeStakingStatus,
   EdgeTransaction,
+  EdgeTxAction,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
   JsonObject
@@ -40,6 +41,7 @@ export interface TxidHashes {
 }
 
 export interface MergedTransaction {
+  action?: EdgeTxAction
   blockHeight: number
   confirmations: EdgeTransaction['confirmations']
   currencyCode: string
@@ -416,12 +418,14 @@ export function mergeTx(
   oldTx: MergedTransaction = defaultTx
 ): MergedTransaction {
   const {
+    action,
     currencyCode = defaultCurrency,
     isSend = lt(tx.nativeAmount, '0'),
     memos
   } = tx
 
   const out = {
+    action,
     blockHeight: tx.blockHeight,
     confirmations: tx.confirmations ?? 'unconfirmed',
     currencyCode,

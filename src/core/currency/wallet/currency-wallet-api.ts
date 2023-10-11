@@ -643,6 +643,7 @@ export function combineTxWithFile(
 
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
+    action: tx.action,
     blockHeight: tx.blockHeight,
     confirmations: tx.confirmations,
     currencyCode,
