@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { pickBestQuote } from '../../src/core/swap/swap-api'
+import { sortQuotes } from '../../src/core/swap/swap-api'
 import { EdgeSwapInfo, EdgeSwapQuote, EdgeSwapRequest } from '../../src/index'
 
 const typeHack: any = {}
@@ -77,32 +77,35 @@ const quotes: EdgeSwapQuote[] = [
 ]
 
 describe('swap', function () {
+  const getIds = (quotes: EdgeSwapQuote[]): string =>
+    quotes.map(quote => quote.pluginId).join(', ')
+
   it('picks the best quote', function () {
-    const quote = pickBestQuote(quotes, {})
-    expect(quote.pluginId).equals('changenow')
+    const sorted = sortQuotes(quotes, {})
+    expect(getIds(sorted)).equals('changenow, godex, thorchain, switchain')
   })
 
   it('picks the preferred swap provider', function () {
-    const quote = pickBestQuote(quotes, { preferPluginId: 'switchain' })
-    expect(quote.pluginId).equals('switchain')
+    const sorted = sortQuotes(quotes, { preferPluginId: 'switchain' })
+    expect(getIds(sorted)).equals('switchain, changenow, godex, thorchain')
   })
 
   it('picks the preferred swap type DEX', function () {
-    const quote = pickBestQuote(quotes, { preferType: 'DEX' })
-    expect(quote.pluginId).equals('thorchain')
+    const sorted = sortQuotes(quotes, { preferType: 'DEX' })
+    expect(getIds(sorted)).equals('thorchain, changenow, godex, switchain')
   })
 
   it('picks the preferred swap type CEX', function () {
-    const quote = pickBestQuote(quotes, { preferType: 'CEX' })
-    expect(quote.pluginId).equals('changenow')
+    const sorted = sortQuotes(quotes, { preferType: 'CEX' })
+    expect(getIds(sorted)).equals('changenow, godex, switchain, thorchain')
   })
 
   it('picks the swap provider with an active promo code', function () {
-    const quote = pickBestQuote(quotes, {
+    const sorted = sortQuotes(quotes, {
       promoCodes: {
         switchain: 'deal10'
       }
     })
-    expect(quote.pluginId).equals('switchain')
+    expect(getIds(sorted)).equals('switchain, changenow, godex, thorchain')
   })
 })
