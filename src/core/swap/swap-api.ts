@@ -1,5 +1,5 @@
 import { gt, lt } from 'biggystring'
-import { bridgifyObject } from 'yaob'
+import { bridgifyObject, close } from 'yaob'
 
 import { upgradeCurrencyCode } from '../../types/type-helpers'
 import {
@@ -9,6 +9,8 @@ import {
   asMaybeSwapBelowLimitError,
   asMaybeSwapCurrencyError,
   asMaybeSwapPermissionError,
+  EdgePluginMap,
+  EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapRequestOptions
@@ -111,20 +113,42 @@ export async function fetchSwapQuotes(
       )
 
       // Prepare quotes for the bridge:
-      return quotes.map(quote => {
-        // @ts-expect-error - Here for backwards compatibility:
-        quote.request = request
-        // @ts-expect-error - Here for backwards compatibility:
-        quote.swapInfo = swapPlugins[quote.pluginId].swapInfo
-
-        return bridgifyObject(quote)
-      })
+      return quotes.map(quote => wrapQuote(swapPlugins, request, quote))
     },
     (errors: unknown[]) => {
       log.warn(`All ${promises.length} swap quotes rejected.`)
       throw pickBestError(errors)
     }
   )
+}
+
+function wrapQuote(
+  swapPlugins: EdgePluginMap<EdgeSwapPlugin>,
+  request: EdgeSwapRequest,
+  quote: EdgeSwapQuote
+): EdgeSwapQuote {
+  const out = bridgifyObject<EdgeSwapQuote>({
+    canBePartial: quote.canBePartial,
+    expirationDate: quote.expirationDate,
+    fromNativeAmount: quote.fromNativeAmount,
+    isEstimate: quote.isEstimate,
+    maxFulfillmentSeconds: quote.maxFulfillmentSeconds,
+    networkFee: quote.networkFee,
+    pluginId: quote.pluginId,
+    request: quote.request ?? request,
+    swapInfo: quote.swapInfo ?? swapPlugins[quote.pluginId].swapInfo,
+    toNativeAmount: quote.toNativeAmount,
+
+    async approve(opts) {
+      return await quote.approve(opts)
+    },
+
+    async close() {
+      await quote.close()
+      close(out)
+    }
+  })
+  return out
 }
 
 /**
