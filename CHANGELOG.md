@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.11.0 (2023-10-18)
+
 - added: `EdgeAccount.fetchSwapQuotes`, to return all relevant quotes, and not just the best one.
 
 ## 1.10.0 (2023-10-10)
