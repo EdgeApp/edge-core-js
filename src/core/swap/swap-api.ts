@@ -1,5 +1,5 @@
 import { gt, lt } from 'biggystring'
-import { bridgifyObject } from 'yaob'
+import { bridgifyObject, close } from 'yaob'
 
 import { upgradeCurrencyCode } from '../../types/type-helpers'
 import {
@@ -9,6 +9,8 @@ import {
   asMaybeSwapBelowLimitError,
   asMaybeSwapCurrencyError,
   asMaybeSwapPermissionError,
+  EdgePluginMap,
+  EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapRequestOptions
@@ -17,14 +19,14 @@ import { fuzzyTimeout } from '../../util/promise'
 import { ApiInput } from '../root-pixie'
 
 /**
- * Fetch quotes from all plugins, and pick the best one.
+ * Fetch quotes from all plugins, and sorts the best ones to the front.
  */
-export async function fetchSwapQuote(
+export async function fetchSwapQuotes(
   ai: ApiInput,
   accountId: string,
   request: EdgeSwapRequest,
   opts: EdgeSwapRequestOptions = {}
-): Promise<EdgeSwapQuote> {
+): Promise<EdgeSwapQuote[]> {
   const { disabled = {}, preferPluginId, promoCodes = {} } = opts
   const { log } = ai.props
 
@@ -94,7 +96,6 @@ export async function fetchSwapQuote(
         )
     )
   }
-  if (promises.length < 1) throw new Error('No swap providers enabled')
 
   // Wait for the results, with error handling:
   return fuzzyTimeout(promises, 20000).then(
@@ -104,21 +105,15 @@ export async function fetchSwapQuote(
       }
 
       // Find the cheapest price:
-      const bestQuote = pickBestQuote(quotes, opts)
+      const sorted = sortQuotes(quotes, opts)
       log.warn(
-        `${promises.length} swap quotes requested, ${quotes.length} resolved, ${errors.length} failed, picked ${bestQuote.pluginId}.`
+        `${promises.length} swap quotes requested, ${quotes.length} resolved, ${
+          errors.length
+        } failed, sorted ${sorted.map(quote => quote.pluginId).join(', ')}.`
       )
 
-      // Close unused quotes:
-      for (const quote of quotes) {
-        if (quote !== bestQuote) quote.close().catch(() => undefined)
-      }
-      // @ts-expect-error - Here for backwards compatibility:
-      bestQuote.request = request
-      // @ts-expect-error - Here for backwards compatibility:
-      bestQuote.swapInfo = swapPlugins[bestQuote.pluginId].swapInfo
-
-      return bridgifyObject(bestQuote)
+      // Prepare quotes for the bridge:
+      return quotes.map(quote => wrapQuote(swapPlugins, request, quote))
     },
     (errors: unknown[]) => {
       log.warn(`All ${promises.length} swap quotes rejected.`)
@@ -127,24 +122,51 @@ export async function fetchSwapQuote(
   )
 }
 
-/**
- * Picks the best quote out of the available choices.
- * Exported so we can unit-test it.
- */
+function wrapQuote(
+  swapPlugins: EdgePluginMap<EdgeSwapPlugin>,
+  request: EdgeSwapRequest,
+  quote: EdgeSwapQuote
+): EdgeSwapQuote {
+  const out = bridgifyObject<EdgeSwapQuote>({
+    canBePartial: quote.canBePartial,
+    expirationDate: quote.expirationDate,
+    fromNativeAmount: quote.fromNativeAmount,
+    isEstimate: quote.isEstimate,
+    maxFulfillmentSeconds: quote.maxFulfillmentSeconds,
+    networkFee: quote.networkFee,
+    pluginId: quote.pluginId,
+    request: quote.request ?? request,
+    swapInfo: quote.swapInfo ?? swapPlugins[quote.pluginId].swapInfo,
+    toNativeAmount: quote.toNativeAmount,
 
-export function pickBestQuote(
+    async approve(opts) {
+      return await quote.approve(opts)
+    },
+
+    async close() {
+      await quote.close()
+      close(out)
+    }
+  })
+  return out
+}
+
+/**
+ * Sorts the best quotes first.
+ */
+export function sortQuotes(
   quotes: EdgeSwapQuote[],
   opts: EdgeSwapRequestOptions
-): EdgeSwapQuote {
+): EdgeSwapQuote[] {
   const { preferPluginId, preferType, promoCodes } = opts
-  return quotes.reduce((a, b) => {
+  return quotes.sort((a, b) => {
     // Prioritize transfer plugin:
-    if (a.pluginId === 'transfer') return a
-    if (b.pluginId === 'transfer') return b
+    if (a.pluginId === 'transfer') return -1
+    if (b.pluginId === 'transfer') return 1
 
     // Always return quotes from the preferred provider:
-    if (a.pluginId === preferPluginId) return a
-    if (b.pluginId === preferPluginId) return b
+    if (a.pluginId === preferPluginId) return -1
+    if (b.pluginId === preferPluginId) return 1
 
     // Prefer based on plugin but always allow `transfer` plugins:
     if (preferType != null) {
@@ -154,28 +176,30 @@ export function pickBestQuote(
       const bMatchesType =
         (b.swapInfo.isDex === true && preferType === 'DEX') ||
         (b.swapInfo.isDex !== true && preferType === 'CEX')
-      if (aMatchesType && !bMatchesType) return a
-      if (!aMatchesType && bMatchesType) return b
+      if (aMatchesType && !bMatchesType) return -1
+      if (!aMatchesType && bMatchesType) return 1
     }
 
     // Prioritize providers with active promo codes:
     if (promoCodes != null) {
       const aHasPromo = promoCodes[a.pluginId] != null
       const bHasPromo = promoCodes[b.pluginId] != null
-      if (aHasPromo && !bHasPromo) return a
-      if (!aHasPromo && bHasPromo) return b
+      if (aHasPromo && !bHasPromo) return -1
+      if (!aHasPromo && bHasPromo) return 1
     }
 
     // Prioritize accurate quotes over estimates:
     const { isEstimate: aIsEstimate = true } = a
     const { isEstimate: bIsEstimate = true } = b
-    if (aIsEstimate && !bIsEstimate) return b
-    if (!aIsEstimate && bIsEstimate) return a
+    if (!aIsEstimate && bIsEstimate) return -1
+    if (aIsEstimate && !bIsEstimate) return 1
 
     // Prefer the best rate:
     const aRate = Number(a.toNativeAmount) / Number(a.fromNativeAmount)
     const bRate = Number(b.toNativeAmount) / Number(b.fromNativeAmount)
-    return bRate > aRate ? b : a
+    if (aRate > bRate) return -1
+    if (bRate > aRate) return 1
+    return 0
   })
 }
 

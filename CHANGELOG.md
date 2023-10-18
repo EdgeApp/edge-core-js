@@ -1,8 +1,12 @@
 # edge-core-js
 
+## Unreleased
+
+- added: `EdgeAccount.fetchSwapQuotes`, to return all relevant quotes, and not just the best one.
+
 ## 1.10.0 (2023-10-10)
 
-- added: EdgeTxAction types to tag known smart contract trasaction types (swap, stake, etc)
+- added: `EdgeTransaction.action` to tag known smart contract transaction types (swap, stake, etc.).
 
 ## 1.9.0 (2023-10-10)
 

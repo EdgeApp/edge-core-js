@@ -1587,6 +1587,10 @@ export interface EdgeAccount {
     request: EdgeSwapRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote>
+  readonly fetchSwapQuotes: (
+    request: EdgeSwapRequest,
+    opts?: EdgeSwapRequestOptions
+  ) => Promise<EdgeSwapQuote[]>
 }
 
 // ---------------------------------------------------------------------

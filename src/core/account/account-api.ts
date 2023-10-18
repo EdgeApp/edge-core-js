@@ -56,7 +56,7 @@ import {
 import { ApiInput } from '../root-pixie'
 import { makeLocalDisklet } from '../storage/repo'
 import { makeStorageWalletApi } from '../storage/storage-api'
-import { fetchSwapQuote } from '../swap/swap-api'
+import { fetchSwapQuotes } from '../swap/swap-api'
 import { changeWalletStates } from './account-files'
 import { AccountState } from './account-reducer'
 import { makeDataStoreApi } from './data-store-api'
@@ -625,7 +625,28 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       request: EdgeSwapRequest,
       opts?: EdgeSwapRequestOptions
     ): Promise<EdgeSwapQuote> {
-      return await fetchSwapQuote(ai, accountId, request, opts)
+      const [bestQuote, ...otherQuotes] = await fetchSwapQuotes(
+        ai,
+        accountId,
+        request,
+        opts
+      )
+
+      // Close unused quotes:
+      for (const otherQuote of otherQuotes) {
+        otherQuote.close().catch(() => undefined)
+      }
+
+      // Return the front quote:
+      if (bestQuote == null) throw new Error('No swap providers enabled')
+      return bestQuote
+    },
+
+    async fetchSwapQuotes(
+      request: EdgeSwapRequest,
+      opts?: EdgeSwapRequestOptions
+    ): Promise<EdgeSwapQuote[]> {
+      return await fetchSwapQuotes(ai, accountId, request, opts)
     }
   }
   bridgifyObject(out)
