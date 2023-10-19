@@ -1602,7 +1602,9 @@ export type EdgeCorePlugin =
   | EdgeRatePlugin
   | EdgeSwapPlugin
 
-type EdgeCorePluginFactory = (env: EdgeCorePluginOptions) => EdgeCorePlugin
+export type EdgeCorePluginFactory = (
+  env: EdgeCorePluginOptions
+) => EdgeCorePlugin
 
 export type EdgeCorePlugins = EdgePluginMap<
   EdgeCorePlugin | EdgeCorePluginFactory
