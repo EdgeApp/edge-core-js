@@ -252,7 +252,7 @@ export interface EdgeMemo {
 export interface EdgeAssetAmount {
   pluginId: string
   tokenId?: string
-  nativeAmount?: string
+  nativeAmount: string
 }
 
 export type EdgeTxActionSwapType =
@@ -265,8 +265,10 @@ export interface EdgeTxActionSwap {
   type: EdgeTxActionSwapType
   orderId?: string
   canBePartial?: boolean
-  sourceAsset: EdgeAssetAmount
-  destAsset: EdgeAssetAmount
+  sourceAssetOrdered?: EdgeAssetAmount
+  sourceAssetFilled?: EdgeAssetAmount
+  destAssetOrdered?: EdgeAssetAmount
+  destAssetFilled?: EdgeAssetAmount
 }
 
 export type EdgeTxActionStakeType =
@@ -501,7 +503,7 @@ export interface EdgeTransaction {
   signedTx: string
   memos: EdgeMemo[]
   ourReceiveAddresses: string[]
-  action?: EdgeTxAction
+  actionInfo?: EdgeTxAction
 
   // Spend-specific metadata:
   deviceDescription?: string
