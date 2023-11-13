@@ -93,15 +93,15 @@ export class CurrencyConfig
       payload: { accountId, pluginId, tokenId: newTokenId, token }
     })
 
-    // Do we need to tweak enabled tokens?
-    if (oldToken.currencyCode !== token.currencyCode) {
+    if (newTokenId !== tokenId) {
+      // Enable the new token if the tokenId changed:
       const { wallets } = ai.props.state.currency
       for (const walletId of Object.keys(wallets)) {
         const walletState = wallets[walletId]
         if (
           walletState.accountId !== accountId ||
           walletState.pluginId !== pluginId ||
-          !walletState.enabledTokens.includes(oldToken.currencyCode)
+          !walletState.enabledTokenIds.includes(tokenId)
         ) {
           continue
         }
@@ -112,17 +112,15 @@ export class CurrencyConfig
           type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
           payload: {
             walletId,
-            currencyCodes: uniqueStrings(
-              [...walletState.enabledTokens, token.currencyCode],
-              [oldToken.currencyCode]
+            enabledTokenIds: uniqueStrings(
+              [...walletState.enabledTokenIds, newTokenId],
+              [tokenId]
             )
           }
         })
       }
-    }
 
-    // Remove the old token if the tokenId changed:
-    if (newTokenId !== tokenId) {
+      // Remove the old token if the tokenId changed:
       ai.props.dispatch({
         type: 'ACCOUNT_CUSTOM_TOKEN_REMOVED',
         payload: { accountId, pluginId, tokenId }

@@ -255,7 +255,7 @@ export type RootAction =
   | {
       type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED'
       payload: {
-        currencyCodes: string[]
+        enabledTokenIds: string[]
         walletId: string
       }
     }
@@ -292,6 +292,13 @@ export type RootAction =
       type: 'CURRENCY_WALLET_FILE_NAMES_LOADED'
       payload: {
         txFileNames: TxFileNames
+        walletId: string
+      }
+    }
+  | {
+      type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE'
+      payload: {
+        enabledTokenIds: string[]
         walletId: string
       }
     }

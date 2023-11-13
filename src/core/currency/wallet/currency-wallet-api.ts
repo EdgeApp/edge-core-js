@@ -55,7 +55,6 @@ import {
 } from './currency-wallet-files'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { MergedTransaction } from './currency-wallet-reducer'
-import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
 import { upgradeMemos } from './upgrade-memos'
 
 const fakeMetadata = {
@@ -197,23 +196,18 @@ export function makeCurrencyWalletApi(
 
     // Tokens:
     async changeEnabledTokenIds(tokenIds: string[]): Promise<void> {
-      const { dispatch, state, walletId, walletState } = input.props
-      const { builtinTokens, customTokens } = state.accounts[accountId]
-      const { currencyInfo } = walletState
+      const { dispatch, walletId, walletState } = input.props
+      const { accountId, pluginId } = walletState
+      const accountState = input.props.state.accounts[accountId]
+      const allTokens = accountState.allTokens[pluginId] ?? {}
+
+      const enabledTokenIds = tokenIds.filter(
+        tokenId => allTokens[tokenId] != null
+      )
 
       dispatch({
         type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-        payload: {
-          walletId,
-          currencyCodes: uniqueStrings(
-            tokenIdsToCurrencyCodes(
-              builtinTokens[pluginId],
-              customTokens[pluginId],
-              currencyInfo,
-              tokenIds
-            )
-          )
-        }
+        payload: { walletId, enabledTokenIds }
       })
     },
 

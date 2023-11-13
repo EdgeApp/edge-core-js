@@ -17,7 +17,7 @@ import { RootAction } from '../../actions'
 import { findCurrencyPluginId } from '../../plugins/plugins-selectors'
 import { RootState } from '../../root-reducer'
 import { TransactionFile } from './currency-wallet-cleaners'
-import { currencyCodesToTokenIds, uniqueStrings } from './enabled-tokens'
+import { uniqueStrings } from './enabled-tokens'
 
 /** Maps from txid hash to file creation date & path. */
 export interface TxFileNames {
@@ -67,7 +67,6 @@ export interface CurrencyWalletState {
   readonly balances: EdgeBalances
   readonly currencyInfo: EdgeCurrencyInfo
   readonly enabledTokenIds: string[]
-  readonly enabledTokens: string[]
   readonly engineFailure: Error | null
   readonly engineStarted: boolean
   readonly fiat: string
@@ -94,7 +93,7 @@ export interface CurrencyWalletNext {
   readonly self: CurrencyWalletState
 }
 
-export const initialEnabledTokens: string[] = []
+export const initialEnabledTokenIds: string[] = []
 
 const currencyWalletInner = buildReducer<
   CurrencyWalletState,
@@ -144,22 +143,13 @@ const currencyWalletInner = buildReducer<
     return next.root.plugins.currency[pluginId].currencyInfo
   },
 
-  enabledTokenIds: memoizeReducer(
-    next =>
-      next.root.accounts[next.self.accountId].builtinTokens[next.self.pluginId],
-    next =>
-      next.root.accounts[next.self.accountId].customTokens[next.self.pluginId],
-    next => next.self.currencyInfo,
-    next => next.self.enabledTokens,
-    currencyCodesToTokenIds
-  ),
-
-  enabledTokens(state = initialEnabledTokens, action): string[] {
-    if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
-      const { currencyCodes } = action.payload
-      // Check for actual changes:
-      currencyCodes.sort((a, b) => (a === b ? 0 : a > b ? 1 : -1))
-      if (!compare(currencyCodes, state)) return currencyCodes
+  enabledTokenIds(state = initialEnabledTokenIds, action): string[] {
+    if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
+      return action.payload.enabledTokenIds
+    } else if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
+      const { enabledTokenIds } = action.payload
+      const sorted = sortTokenIds(enabledTokenIds)
+      if (!compare(sorted, state)) return sorted
     }
     return state
   },
@@ -450,4 +440,8 @@ export function mergeTx(
   }
 
   return out
+}
+
+function sortTokenIds(tokenIds: string[]): string[] {
+  return tokenIds.sort((a, b) => (a === b ? 0 : a > b ? 1 : -1))
 }

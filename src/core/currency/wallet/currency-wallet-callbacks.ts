@@ -19,9 +19,9 @@ import { combineTxWithFile } from './currency-wallet-api'
 import { asIntegerString } from './currency-wallet-cleaners'
 import {
   loadAddressFiles,
-  loadEnabledTokensFile,
   loadFiatFile,
   loadNameFile,
+  loadTokensFile,
   loadTxFileNames,
   setupNewTxMetadata
 } from './currency-wallet-files'
@@ -333,7 +333,7 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
     const changes = getStorageWalletLastChanges(props.state, walletId)
     if (changes !== lastChanges) {
       lastChanges = changes
-      await loadEnabledTokensFile(input)
+      await loadTokensFile(input)
       await loadFiatFile(input)
       await loadNameFile(input)
       await loadTxFileNames(input)
