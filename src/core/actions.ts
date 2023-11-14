@@ -202,6 +202,15 @@ export type RootAction =
       }
     }
   | {
+      // Called when a currency engine fires the onNewTokens callback.
+      type: 'CURRENCY_ENGINE_DETECTED_TOKENS'
+      payload: {
+        detectedTokenIds: string[]
+        enablingTokenIds: string[]
+        walletId: string
+      }
+    }
+  | {
       type: 'CURRENCY_ENGINE_GOT_TXS'
       payload: {
         walletId: string

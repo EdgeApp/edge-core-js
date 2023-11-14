@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Accept an `onNewTokens` callback from `EdgeCurrencyEngine`.
+- added: Emit an `enabledDetectedTokens` event when auto-enabling tokens.
 - added: Expose auto-detected tokens as `EdgeCurrencyWallet.detectedTokenIds`.
 - changed: Save enabled tokens by their tokenId, not by their currency code.
 - fixed: Add missing `export` to the `EdgeCorePluginFactory` type definition.

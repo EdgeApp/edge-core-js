@@ -148,6 +148,12 @@ const currencyWalletInner = buildReducer<
   detectedTokenIds(state = initialTokenIds, action): string[] {
     if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
       return action.payload.detectedTokenIds
+    } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
+      const { detectedTokenIds } = action.payload
+      const mergedList = sortTokenIds(
+        uniqueStrings([...state, ...detectedTokenIds])
+      )
+      if (!compare(mergedList, state)) return mergedList
     } else if (action.type === 'CURRENCY_ENGINE_CLEARED') {
       return []
     }
@@ -161,6 +167,9 @@ const currencyWalletInner = buildReducer<
       const { enabledTokenIds } = action.payload
       const sorted = sortTokenIds(enabledTokenIds)
       if (!compare(sorted, state)) return sorted
+    } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
+      const { enablingTokenIds } = action.payload
+      return sortTokenIds(uniqueStrings([...state, ...enablingTokenIds]))
     }
     return state
   },

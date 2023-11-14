@@ -773,6 +773,7 @@ export interface EdgeCurrencyEngineCallbacks {
     currencyCode: string,
     nativeBalance: string
   ) => void
+  readonly onNewTokens: (tokenIds: string[]) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
   readonly onTransactionsChanged: (transactions: EdgeTransaction[]) => void
   readonly onTxidsChanged: (txids: EdgeTxidMap) => void
@@ -970,9 +971,10 @@ export type EdgeReceiveAddress = EdgeFreshAddress & {
 }
 
 export interface EdgeCurrencyWalletEvents {
-  close: void
-  newTransactions: EdgeTransaction[]
   addressChanged: void
+  close: void
+  enabledDetectedTokens: string[]
+  newTransactions: EdgeTransaction[]
   transactionsChanged: EdgeTransaction[]
   wcNewContractCall: JsonObject
 }
