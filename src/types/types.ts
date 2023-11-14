@@ -1070,6 +1070,9 @@ export interface EdgeCurrencyWallet {
   readonly changeEnabledTokenIds: (tokenIds: string[]) => Promise<void>
   readonly enabledTokenIds: string[]
 
+  /* Tokens detected on chain */
+  readonly detectedTokenIds: string[]
+
   // Transaction history:
   readonly getNumTransactions: (
     opts?: EdgeCurrencyCodeOptions

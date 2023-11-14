@@ -66,6 +66,7 @@ export interface CurrencyWalletState {
   readonly allEnabledTokenIds: string[]
   readonly balances: EdgeBalances
   readonly currencyInfo: EdgeCurrencyInfo
+  readonly detectedTokenIds: string[]
   readonly enabledTokenIds: string[]
   readonly engineFailure: Error | null
   readonly engineStarted: boolean
@@ -93,7 +94,8 @@ export interface CurrencyWalletNext {
   readonly self: CurrencyWalletState
 }
 
-export const initialEnabledTokenIds: string[] = []
+// Used for detectedTokenIds & enabledTokenIds:
+export const initialTokenIds: string[] = []
 
 const currencyWalletInner = buildReducer<
   CurrencyWalletState,
@@ -143,7 +145,16 @@ const currencyWalletInner = buildReducer<
     return next.root.plugins.currency[pluginId].currencyInfo
   },
 
-  enabledTokenIds(state = initialEnabledTokenIds, action): string[] {
+  detectedTokenIds(state = initialTokenIds, action): string[] {
+    if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
+      return action.payload.detectedTokenIds
+    } else if (action.type === 'CURRENCY_ENGINE_CLEARED') {
+      return []
+    }
+    return state
+  },
+
+  enabledTokenIds(state = initialTokenIds, action): string[] {
     if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
       return action.payload.enabledTokenIds
     } else if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {

@@ -46,10 +46,7 @@ import {
   loadTxFileNames,
   writeTokensFile
 } from './currency-wallet-files'
-import {
-  CurrencyWalletState,
-  initialEnabledTokenIds
-} from './currency-wallet-reducer'
+import { CurrencyWalletState, initialTokenIds } from './currency-wallet-reducer'
 import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
 
 export interface CurrencyWalletOutput {
@@ -331,16 +328,22 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
    * we will consolidate those down to a single write to disk.
    */
   tokenSaver(input: CurrencyWalletInput) {
-    let lastEnabledTokenIds: string[] = initialEnabledTokenIds
+    let lastDetectedTokenIds: string[] = initialTokenIds
+    let lastEnabledTokenIds: string[] = initialTokenIds
 
     return async function update() {
-      const { enabledTokenIds } = input.props.walletState
-      if (enabledTokenIds !== lastEnabledTokenIds && enabledTokenIds != null) {
-        await writeTokensFile(input, enabledTokenIds).catch(error =>
-          input.props.onError(error)
+      const { detectedTokenIds, enabledTokenIds } = input.props.walletState
+      const isChanged =
+        detectedTokenIds !== lastDetectedTokenIds ||
+        enabledTokenIds !== lastEnabledTokenIds
+      const isReady = detectedTokenIds != null && enabledTokenIds != null
+      if (isChanged && isReady) {
+        await writeTokensFile(input, detectedTokenIds, enabledTokenIds).catch(
+          error => input.props.onError(error)
         )
         await snooze(100) // Rate limiting
       }
+      lastDetectedTokenIds = detectedTokenIds
       lastEnabledTokenIds = enabledTokenIds
     }
   },
@@ -349,7 +352,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     let lastState: CurrencyWalletState | undefined
     let lastSettings: JsonObject = {}
     let lastTokens: EdgeTokenMap = {}
-    let lastEnabledTokenIds: string[] = initialEnabledTokenIds
+    let lastEnabledTokenIds: string[] = initialTokenIds
 
     return async () => {
       const { state, walletState, walletOutput } = input.props

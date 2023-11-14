@@ -202,7 +202,13 @@ export const asLegacyTokensFile = asArray<string>(asString)
  * Stores enabled tokenId's on disk.
  */
 export const asTokensFile = asObject({
-  enabledTokenIds: asArray(asString)
+  // All the tokens that the engine should check.
+  // This includes both manually-enabled tokens and auto-enabled tokens:
+  enabledTokenIds: asArray(asString),
+
+  // These tokenId's have been detected on-chain at least once.
+  // The user can still remove them from the enabled tokens list.
+  detectedTokenIds: asArray(asString)
 })
 
 export const asTransactionFile = asObject<TransactionFile>({

@@ -298,6 +298,7 @@ export type RootAction =
   | {
       type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE'
       payload: {
+        detectedTokenIds: string[]
         enabledTokenIds: string[]
         walletId: string
       }

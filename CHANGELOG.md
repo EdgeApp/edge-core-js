@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: Expose auto-detected tokens as `EdgeCurrencyWallet.detectedTokenIds`.
 - changed: Save enabled tokens by their tokenId, not by their currency code.
 - fixed: Add missing `export` to the `EdgeCorePluginFactory` type definition.
 

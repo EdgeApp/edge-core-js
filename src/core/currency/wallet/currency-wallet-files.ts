@@ -54,12 +54,16 @@ const walletNameFile = makeJsonFile(asWalletNameFile)
  */
 export async function writeTokensFile(
   input: CurrencyWalletInput,
+  detectedTokenIds: string[],
   enabledTokenIds: string[]
 ): Promise<void> {
   const { state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
-  await tokensFile.save(disklet, TOKENS_FILE, { enabledTokenIds })
+  await tokensFile.save(disklet, TOKENS_FILE, {
+    detectedTokenIds,
+    enabledTokenIds
+  })
 }
 
 /**
@@ -241,6 +245,7 @@ export async function loadTokensFile(
     type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
     payload: {
       walletId: input.props.walletId,
+      detectedTokenIds: [],
       enabledTokenIds: tokenIds
     }
   })

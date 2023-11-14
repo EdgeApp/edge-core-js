@@ -211,6 +211,10 @@ export function makeCurrencyWalletApi(
       })
     },
 
+    get detectedTokenIds(): string[] {
+      return input.props.walletState.detectedTokenIds
+    },
+
     get enabledTokenIds(): string[] {
       return input.props.walletState.enabledTokenIds
     },
