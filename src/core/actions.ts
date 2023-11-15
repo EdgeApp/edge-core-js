@@ -194,6 +194,14 @@ export type RootAction =
       }
     }
   | {
+      // Called when a currency engine fires the onAddressChecked callback.
+      type: 'CURRENCY_ENGINE_CHANGED_UNACTIVATED_TOKEN_IDS'
+      payload: {
+        unactivatedTokenIds: string[]
+        walletId: string
+      }
+    }
+  | {
       type: 'CURRENCY_ENGINE_GOT_TXS'
       payload: {
         walletId: string
@@ -301,14 +309,6 @@ export type RootAction =
       payload: {
         walletId: string
         walletInfo: EdgeWalletInfo
-      }
-    }
-  | {
-      // Called when a currency engine fires the onAddressChecked callback.
-      type: 'CURRENCY_ENGINE_CHANGED_UNACTIVATED_TOKEN_IDS'
-      payload: {
-        unactivatedTokenIds: string[]
-        walletId: string
       }
     }
   | {
