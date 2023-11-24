@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeAccount.createCurrencyWallets`, for creating multiple wallets at once.
+
 ## 1.12.0 (2023-11-30)
 
 - added: Accept an `onNewTokens` callback from `EdgeCurrencyEngine`.

@@ -1347,6 +1347,10 @@ export interface EdgeCreateCurrencyWalletOptions {
   migratedFromWalletId?: string
 }
 
+export type EdgeCreateCurrencyWallet = EdgeCreateCurrencyWalletOptions & {
+  walletType: string
+}
+
 export interface EdgeCurrencyConfig {
   readonly watch: Subscriber<EdgeCurrencyConfig>
 
@@ -1574,6 +1578,9 @@ export interface EdgeAccount {
     walletType: string,
     opts?: EdgeCreateCurrencyWalletOptions
   ) => Promise<EdgeCurrencyWallet>
+  readonly createCurrencyWallets: (
+    createWallets: EdgeCreateCurrencyWallet[]
+  ) => Promise<EdgeCurrencyWallet[]>
   readonly waitForCurrencyWallet: (
     walletId: string
   ) => Promise<EdgeCurrencyWallet>

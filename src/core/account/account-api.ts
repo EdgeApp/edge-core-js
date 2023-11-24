@@ -9,6 +9,7 @@ import {
   EdgeAccount,
   EdgeActivationOptions,
   EdgeActivationQuote,
+  EdgeCreateCurrencyWallet,
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyConfig,
   EdgeCurrencyWallet,
@@ -501,6 +502,29 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, opts)
       await applyKit(ai, loginTree, makeKeysKit(ai, login, [walletInfo]))
       return await finishWalletCreation(ai, accountId, walletInfo.id, opts)
+    },
+
+    async createCurrencyWallets(
+      createWallets: EdgeCreateCurrencyWallet[]
+    ): Promise<EdgeCurrencyWallet[]> {
+      const { login, loginTree } = accountState()
+
+      const walletInfos = await Promise.all(
+        createWallets.map(async opts => {
+          return await makeCurrencyWalletKeys(ai, opts.walletType, opts)
+        })
+      )
+      await applyKit(ai, loginTree, makeKeysKit(ai, login, walletInfos))
+      return await Promise.all(
+        walletInfos.map(async (info, i) => {
+          return await finishWalletCreation(
+            ai,
+            accountId,
+            info.id,
+            createWallets[i]
+          )
+        })
+      )
     },
 
     async waitForCurrencyWallet(walletId: string): Promise<EdgeCurrencyWallet> {
