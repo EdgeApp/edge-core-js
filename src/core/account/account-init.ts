@@ -35,8 +35,7 @@ async function createChildLogin(
   ai: ApiInput,
   loginTree: LoginTree,
   login: LoginTree,
-  appId: string,
-  wantRepo: boolean = true
+  appId: string
 ): Promise<LoginTree> {
   checkLogin(login)
 
@@ -44,12 +43,10 @@ async function createChildLogin(
     pin: loginTree.pin,
     username: loginTree.username
   }
-  if (wantRepo) {
-    opts.keyInfo = makeKeyInfo(
-      makeAccountType(appId),
-      wasEdgeStorageKeys(createStorageKeys(ai))
-    )
-  }
+  opts.keyInfo = makeKeyInfo(
+    makeAccountType(appId),
+    wasEdgeStorageKeys(createStorageKeys(ai))
+  )
   const kit = await makeCreateKit(ai, login, appId, opts)
   const parentKit: LoginKit = {
     serverPath: kit.serverPath,
@@ -76,7 +73,7 @@ export async function ensureAccountExists(
   // If there is no app login, make that:
   const login = searchTree(loginTree, login => login.appId === appId)
   if (login == null) {
-    return createChildLogin(ai, loginTree, loginTree, appId, true)
+    return createChildLogin(ai, loginTree, loginTree, appId)
   }
 
   // Otherwise, make the repo:
