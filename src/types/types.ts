@@ -468,6 +468,27 @@ export interface EdgeTxSwap {
   refundAddress?: string
 }
 
+export interface EdgeTxFiat {
+  orderId: string
+  orderUri?: string
+  isEstimate: boolean
+
+  fiatPlugin: {
+    providerId: string
+    providerDisplayName: string
+    supportEmail?: string
+  }
+
+  txType: 'buy' | 'sell' | 'sellNetworkFee'
+  payinAddress?: string
+  payoutAddress?: string
+  fiatCurrencyCode: string
+  cryptoPluginId: string
+  cryptoTokenId?: string
+  cryptoNativeAmount: string
+  walletId: string
+}
+
 export type EdgeConfirmationState =
   // More than `EdgeCurrencyInfo.requiredConfirmations`:
   | 'confirmed'
@@ -520,6 +541,7 @@ export interface EdgeTransaction {
     readonly uniqueIdentifier: string | undefined
   }>
   swapData?: EdgeTxSwap
+  fiatData?: EdgeTxFiat
   txSecret?: string // Monero decryption key
 
   /**
@@ -574,6 +596,7 @@ export interface EdgeSpendInfo {
   // Core:
   metadata?: EdgeMetadata
   swapData?: EdgeTxSwap
+  fiatData?: EdgeTxFiat
   otherParams?: JsonObject
 
   /** @deprecated Use tokenId instead */

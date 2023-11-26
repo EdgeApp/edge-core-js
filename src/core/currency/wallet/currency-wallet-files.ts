@@ -450,7 +450,7 @@ export async function setupNewTxMetadata(
 ): Promise<void> {
   const { dispatch, walletState, state, walletId } = input.props
   const { fiat = 'iso:USD' } = walletState
-  const { currencyCode, spendTargets, swapData, txid } = tx
+  const { currencyCode, fiatData, spendTargets, swapData, txid } = tx
   const disklet = getStorageWalletDisklet(state, walletId)
 
   const creationDate = Date.now() / 1000
@@ -472,7 +472,7 @@ export async function setupNewTxMetadata(
     currencies: {},
     swap: swapData
   }
-  json.currencies[currencyCode] = { metadata, nativeAmount }
+  json.currencies[currencyCode] = { metadata, nativeAmount, fiatData }
 
   // Set up the fee metadata:
   if (tx.networkFeeOption != null) {

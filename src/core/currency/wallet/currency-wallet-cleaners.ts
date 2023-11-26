@@ -2,6 +2,7 @@ import {
   asArray,
   asBoolean,
   asEither,
+  asMaybe,
   asNull,
   asNumber,
   asObject,
@@ -11,7 +12,12 @@ import {
   Cleaner
 } from 'cleaners'
 
-import { EdgeMetadata, EdgeTxSwap, JsonObject } from '../../../types/types'
+import {
+  EdgeMetadata,
+  EdgeTxFiat,
+  EdgeTxSwap,
+  JsonObject
+} from '../../../types/types'
 import { asJsonObject } from '../../../util/file-helpers'
 
 /**
@@ -35,6 +41,7 @@ export interface TransactionFile {
   creationDate: number
   currencies: {
     [currencyCode: string]: {
+      fiatData?: EdgeTxFiat
       metadata: DiskMetadata
       nativeAmount?: string
       providerFeeSent?: string
@@ -153,6 +160,26 @@ const asFeeRate: Cleaner<'high' | 'standard' | 'low'> = asValue(
   'low'
 )
 
+export const asEdgeTxFiat = asObject<EdgeTxFiat>({
+  orderId: asString,
+  orderUri: asOptional(asString),
+  isEstimate: asBoolean,
+
+  fiatPlugin: asObject({
+    providerId: asString,
+    providerDisplayName: asString,
+    supportEmail: asOptional(asString)
+  }),
+  txType: asValue('buy', 'sell', 'sellNetworkFee'),
+  payinAddress: asMaybe(asString),
+  payoutAddress: asMaybe(asString),
+  fiatCurrencyCode: asString,
+  cryptoPluginId: asString,
+  cryptoTokenId: asMaybe(asString),
+  cryptoNativeAmount: asString,
+  walletId: asString
+})
+
 export const asEdgeTxSwap = asObject<EdgeTxSwap>({
   orderId: asOptional(asString),
   orderUri: asOptional(asString),
@@ -207,6 +234,7 @@ export const asTransactionFile = asObject<TransactionFile>({
   creationDate: asNumber,
   currencies: asObject(
     asObject({
+      fiatData: asOptional(asEdgeTxFiat),
       metadata: asDiskMetadata,
       nativeAmount: asOptional(asString),
       providerFeeSent: asOptional(asString)

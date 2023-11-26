@@ -8,6 +8,8 @@ import {
   EdgeStakingStatus,
   EdgeTransaction,
   EdgeTxAction,
+  EdgeTxFiat,
+  EdgeTxSwap,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
   JsonObject
@@ -52,6 +54,8 @@ export interface MergedTransaction {
   ourReceiveAddresses: string[]
   signedTx: string
   txid: string
+  swapData?: EdgeTxSwap
+  fiatData?: EdgeTxFiat
 
   nativeAmount: { [currencyCode: string]: string }
   networkFee: { [currencyCode: string]: string }
@@ -424,7 +428,7 @@ export function mergeTx(
     memos
   } = tx
 
-  const out = {
+  const out: MergedTransaction = {
     action,
     blockHeight: tx.blockHeight,
     confirmations: tx.confirmations ?? 'unconfirmed',
@@ -447,6 +451,14 @@ export function mergeTx(
 
   if (tx.parentNetworkFee != null) {
     out.networkFee[defaultCurrency] = String(tx.parentNetworkFee)
+  }
+
+  if (tx.fiatData != null) {
+    out.fiatData = tx.fiatData
+  }
+
+  if (tx.swapData != null) {
+    out.swapData = tx.swapData
   }
 
   return out

@@ -40,6 +40,7 @@ import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
 import {
+  asEdgeTxFiat,
   asEdgeTxSwap,
   packMetadata,
   TransactionFile,
@@ -468,6 +469,7 @@ export function makeCurrencyWalletApi(
         memos,
         skipChecks,
         spendTargets = [],
+        fiatData,
         swapData
       } = spendInfo
 
@@ -536,6 +538,7 @@ export function makeCurrencyWalletApi(
       tx.spendTargets = savedTargets
       if (metadata != null) tx.metadata = metadata
       if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
+      if (fiatData != null) tx.fiatData = asEdgeTxFiat(fiatData)
       if (input.props.state.login.deviceDescription != null)
         tx.deviceDescription = input.props.state.login.deviceDescription
 
@@ -665,7 +668,7 @@ export function combineTxWithFile(
   if (file != null) {
     if (file.creationDate < out.date) out.date = file.creationDate
 
-    const merged = mergeDeeply(
+    const merged: TransactionFile['currencies']['currencyCode'] = mergeDeeply(
       file.currencies[walletCurrency],
       file.currencies[currencyCode]
     )
@@ -674,6 +677,10 @@ export function combineTxWithFile(
         ...out.metadata,
         ...unpackMetadata(merged.metadata, walletFiat)
       }
+    }
+
+    if (merged.fiatData != null) {
+      out.fiatData = merged.fiatData
     }
 
     if (file.feeRateRequested != null) {
