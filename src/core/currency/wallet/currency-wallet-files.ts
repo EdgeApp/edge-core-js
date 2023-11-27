@@ -3,7 +3,8 @@ import { Disklet, justFiles, navigateDisklet } from 'disklet'
 
 import {
   EdgeCurrencyEngineCallbacks,
-  EdgeTransaction
+  EdgeTransaction,
+  EdgeTxFiat
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
 import { mergeDeeply } from '../../../util/util'
@@ -384,8 +385,9 @@ export async function setCurrencyWalletTxMetadata(
   input: CurrencyWalletInput,
   txid: string,
   currencyCode: string,
+  fakeCallbacks: EdgeCurrencyEngineCallbacks,
   metadata: DiskMetadata,
-  fakeCallbacks: EdgeCurrencyEngineCallbacks
+  fiatData?: EdgeTxFiat
 ): Promise<void> {
   const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
@@ -427,7 +429,7 @@ export async function setCurrencyWalletTxMetadata(
     currencies: {}
   }
   newFile.currencies[currencyCode] = {
-    metadata
+    metadata: { ...metadata, ...fiatData }
   }
   const json = mergeDeeply(oldFile, newFile)
 

@@ -31,6 +31,7 @@ import {
   EdgeStakingStatus,
   EdgeStreamTransactionOptions,
   EdgeTransaction,
+  EdgeTxFiat,
   EdgeWalletInfo
 } from '../../../types/types'
 import { mergeDeeply } from '../../../util/util'
@@ -552,14 +553,16 @@ export function makeCurrencyWalletApi(
     async saveTxMetadata(
       txid: string,
       currencyCode: string,
-      metadata: EdgeMetadata
+      metadata?: EdgeMetadata,
+      fiatData?: EdgeTxFiat
     ): Promise<void> {
       await setCurrencyWalletTxMetadata(
         input,
         txid,
         currencyCode,
-        packMetadata(metadata, input.props.walletState.fiat),
-        fakeCallbacks
+        fakeCallbacks,
+        packMetadata(metadata ?? {}, input.props.walletState.fiat),
+        fiatData
       )
     },
     async signMessage(

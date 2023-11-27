@@ -1126,7 +1126,8 @@ export interface EdgeCurrencyWallet {
   readonly saveTxMetadata: (
     txid: string,
     currencyCode: string,
-    metadata: EdgeMetadata
+    metadata?: EdgeMetadata,
+    fiatData?: EdgeTxFiat
   ) => Promise<void>
   readonly signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly sweepPrivateKeys: (
