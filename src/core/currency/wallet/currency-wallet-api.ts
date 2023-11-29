@@ -40,6 +40,7 @@ import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
 import {
+  asEdgeTxAction,
   asEdgeTxSwap,
   packMetadata,
   TransactionFile,
@@ -472,6 +473,7 @@ export function makeCurrencyWalletApi(
         pendingTxs,
         rbfTxid,
         memos,
+        savedAction,
         skipChecks,
         spendTargets = [],
         swapData
@@ -545,6 +547,7 @@ export function makeCurrencyWalletApi(
       // Looks redundant but we want undefined or NULL to be coalesced into NULL
       if (tx.tokenId == null) tx.tokenId = null
       if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
+      if (savedAction != null) tx.savedAction = asEdgeTxAction(savedAction)
       if (input.props.state.login.deviceDescription != null)
         tx.deviceDescription = input.props.state.login.deviceDescription
 
@@ -688,7 +691,7 @@ export function combineTxWithFile(
   if (file != null) {
     if (file.creationDate < out.date) out.date = file.creationDate
 
-    const merged = mergeDeeply(
+    const merged: TransactionFile['currencies']['currencyCode'] = mergeDeeply(
       file.currencies[walletCurrency],
       file.currencies[currencyCode]
     )
@@ -696,6 +699,18 @@ export function combineTxWithFile(
       out.metadata = {
         ...out.metadata,
         ...unpackMetadata(merged.metadata, walletFiat)
+      }
+    }
+
+    const mergedTokens: TransactionFile['tokens']['tokenId'] = mergeDeeply(
+      file.tokens[PARENT_TOKEN_ID],
+      file.tokens[tokenId ?? PARENT_TOKEN_ID]
+    )
+
+    if (mergedTokens.savedAction != null) {
+      out.savedAction = {
+        ...out.savedAction,
+        ...mergedTokens.savedAction
       }
     }
 

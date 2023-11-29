@@ -505,6 +505,7 @@ export interface EdgeTransaction {
   memos: EdgeMemo[]
   ourReceiveAddresses: string[]
   action?: EdgeTxAction
+  savedAction?: EdgeTxAction
 
   // Spend-specific metadata:
   deviceDescription?: string
@@ -577,6 +578,7 @@ export interface EdgeSpendInfo {
   // Core:
   metadata?: EdgeMetadata
   swapData?: EdgeTxSwap
+  savedAction?: EdgeTxAction
   otherParams?: JsonObject
 
   /** @deprecated Use tokenId instead */
