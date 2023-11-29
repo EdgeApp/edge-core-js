@@ -145,34 +145,33 @@ const currencyWalletInner = buildReducer<
     return next.root.plugins.currency[pluginId].currencyInfo
   },
 
-  detectedTokenIds(state = initialTokenIds, action): string[] {
-    if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
-      return action.payload.detectedTokenIds
-    } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
-      const { detectedTokenIds } = action.payload
-      const mergedList = sortTokenIds(
-        uniqueStrings([...state, ...detectedTokenIds])
-      )
-      if (!compare(mergedList, state)) return mergedList
-    } else if (action.type === 'CURRENCY_ENGINE_CLEARED') {
-      return []
+  detectedTokenIds: sortStringsReducer(
+    (state = initialTokenIds, action): string[] => {
+      if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
+        return action.payload.detectedTokenIds
+      } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
+        const { detectedTokenIds } = action.payload
+        return uniqueStrings([...state, ...detectedTokenIds])
+      } else if (action.type === 'CURRENCY_ENGINE_CLEARED') {
+        return []
+      }
+      return state
     }
-    return state
-  },
+  ),
 
-  enabledTokenIds(state = initialTokenIds, action): string[] {
-    if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
-      return action.payload.enabledTokenIds
-    } else if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
-      const { enabledTokenIds } = action.payload
-      const sorted = sortTokenIds(enabledTokenIds)
-      if (!compare(sorted, state)) return sorted
-    } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
-      const { enablingTokenIds } = action.payload
-      return sortTokenIds(uniqueStrings([...state, ...enablingTokenIds]))
+  enabledTokenIds: sortStringsReducer(
+    (state = initialTokenIds, action): string[] => {
+      if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
+        return action.payload.enabledTokenIds
+      } else if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
+        return action.payload.enabledTokenIds
+      } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
+        const { enablingTokenIds } = action.payload
+        return uniqueStrings([...state, ...enablingTokenIds])
+      }
+      return state
     }
-    return state
-  },
+  ),
 
   engineFailure(state = null, action): Error | null {
     if (action.type === 'CURRENCY_ENGINE_FAILED') {
@@ -462,6 +461,18 @@ export function mergeTx(
   return out
 }
 
-function sortTokenIds(tokenIds: string[]): string[] {
-  return tokenIds.sort((a, b) => (a === b ? 0 : a > b ? 1 : -1))
+type StringsReducer = (
+  state: string[] | undefined,
+  action: RootAction
+) => string[]
+
+function sortStringsReducer(reducer: StringsReducer): StringsReducer {
+  return (state, action) => {
+    const out = reducer(state, action)
+    if (out === state) return state
+
+    out.sort((a, b) => (a === b ? 0 : a > b ? 1 : -1))
+    if (state == null || !compare(out, state)) return out
+    return state
+  }
 }
