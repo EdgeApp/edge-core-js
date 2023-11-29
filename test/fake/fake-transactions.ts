@@ -9,6 +9,7 @@ export const walletTxs = {
     nativeAmount: '644350',
     networkFee: '0',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       exchangeAmount: {
         'iso:USD': 304.8453034025
@@ -26,6 +27,7 @@ export const walletTxs = {
     nativeAmount: '-87522',
     networkFee: '34602',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       bizId: 0,
       category: 'Expense:',
@@ -60,6 +62,7 @@ export const walletTxs = {
     nativeAmount: '263044',
     networkFee: '0',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       exchangeAmount: {
         'iso:USD': 99.0848343576
@@ -77,6 +80,7 @@ export const walletTxs = {
     nativeAmount: '-55225',
     networkFee: '5775',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       bizId: 0,
       category: '',
@@ -111,6 +115,7 @@ export const walletTxs = {
     nativeAmount: '-69400',
     networkFee: '16500',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       exchangeAmount: {
         'iso:USD': -26.32298625
@@ -131,6 +136,7 @@ export const walletTxs = {
     nativeAmount: '-3300',
     networkFee: '3300',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       exchangeAmount: {
         'iso:USD': -1.2516693749999999
@@ -148,6 +154,7 @@ export const walletTxs = {
     nativeAmount: '70956',
     networkFee: '0',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       exchangeAmount: {
         'iso:USD': 25.971432197400002
@@ -165,6 +172,7 @@ export const walletTxs = {
     nativeAmount: '-166334',
     networkFee: '2304',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       exchangeAmount: {
         'iso:USD': -60.8818451311
@@ -182,6 +190,7 @@ export const walletTxs = {
     nativeAmount: '-56135',
     networkFee: '1485',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       bizId: 0,
       category: '',
@@ -216,6 +225,7 @@ export const walletTxs = {
     nativeAmount: '-49170',
     networkFee: '19470',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       bizId: 0,
       category: 'Expense:',
@@ -254,6 +264,7 @@ export const walletTxs = {
     nativeAmount: '-371258',
     networkFee: '23808',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       category: 'exchange:BTC to ETH',
       exchangeAmount: {
@@ -302,6 +313,7 @@ export const walletTxs = {
     nativeAmount: '-162035',
     networkFee: '14355',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       bizId: 0,
       category: 'Exchange:BTC to ETH',
@@ -352,6 +364,7 @@ export const walletTxs = {
     nativeAmount: '-100442',
     networkFee: '41172',
     currencyCode: 'BTC',
+    tokenId: 'madeupcontract',
     metadata: {
       bizId: 0,
       category: 'Exchange:BTC to LTC',

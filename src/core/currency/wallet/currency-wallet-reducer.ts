@@ -16,6 +16,7 @@ import { compare } from '../../../util/compare'
 import { RootAction } from '../../actions'
 import { findCurrencyPluginId } from '../../plugins/plugins-selectors'
 import { RootState } from '../../root-reducer'
+import { PARENT_TOKEN_ID } from './currency-wallet-api'
 import { TransactionFile } from './currency-wallet-cleaners'
 import { uniqueStrings } from './enabled-tokens'
 
@@ -52,9 +53,13 @@ export interface MergedTransaction {
   ourReceiveAddresses: string[]
   signedTx: string
   txid: string
-
-  nativeAmount: { [currencyCode: string]: string }
-  networkFee: { [currencyCode: string]: string }
+  tokenId: string | null
+  tokens: {
+    [tokenId: string]: {
+      nativeAmount: string
+      networkFee: string
+    }
+  }
 }
 
 export interface CurrencyWalletState {
@@ -408,14 +413,14 @@ const defaultTx: MergedTransaction = {
   blockHeight: 0,
   confirmations: 'unconfirmed',
   currencyCode: '',
+  tokenId: null,
   date: 0,
   isSend: false,
   memos: [],
   ourReceiveAddresses: [],
   signedTx: '',
   txid: '',
-  nativeAmount: {},
-  networkFee: {}
+  tokens: {}
 }
 
 /**
@@ -429,11 +434,12 @@ export function mergeTx(
   const {
     action,
     currencyCode = defaultCurrency,
+    tokenId,
     isSend = lt(tx.nativeAmount, '0'),
     memos
   } = tx
 
-  const out = {
+  const out: MergedTransaction = {
     action,
     blockHeight: tx.blockHeight,
     confirmations: tx.confirmations ?? 'unconfirmed',
@@ -445,17 +451,17 @@ export function mergeTx(
     signedTx: tx.signedTx,
     isSend,
     txid: tx.txid,
-
-    nativeAmount: { ...oldTx.nativeAmount },
-    networkFee: { ...oldTx.networkFee }
+    tokenId,
+    tokens: { ...oldTx.tokens }
   }
 
-  out.nativeAmount[currencyCode] = tx.nativeAmount
-  out.networkFee[currencyCode] =
-    tx.networkFee != null ? tx.networkFee.toString() : '0'
+  out.tokens[tokenId ?? PARENT_TOKEN_ID] = {
+    nativeAmount: tx.nativeAmount,
+    networkFee: tx.networkFee != null ? tx.networkFee.toString() : '0'
+  }
 
   if (tx.parentNetworkFee != null) {
-    out.networkFee[defaultCurrency] = String(tx.parentNetworkFee)
+    out.tokens[PARENT_TOKEN_ID].networkFee = String(tx.parentNetworkFee)
   }
 
   return out
