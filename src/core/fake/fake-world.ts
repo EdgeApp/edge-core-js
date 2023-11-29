@@ -61,10 +61,13 @@ async function saveLogin(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
 
 async function saveRepo(
   io: EdgeIo,
-  syncKey: string,
+  syncKey: Uint8Array,
   repo: EdgeRepoDump
 ): Promise<void> {
-  const paths = makeRepoPaths(io, base16.parse(syncKey), new Uint8Array(0))
+  const paths = makeRepoPaths(io, {
+    dataKey: new Uint8Array(0),
+    syncKey
+  })
   await saveChanges(paths.dataDisklet, repo)
   await paths.baseDisklet.setText(
     'status.json',
@@ -126,7 +129,11 @@ export function makeFakeWorld(
         for (const user of users) {
           await saveLogin(fakeIo, user)
           for (const syncKey of Object.keys(user.repos)) {
-            await saveRepo(fakeIo, syncKey, asEdgeRepoDump(user.repos[syncKey]))
+            await saveRepo(
+              fakeIo,
+              base16.parse(syncKey),
+              asEdgeRepoDump(user.repos[syncKey])
+            )
           }
         }
       }

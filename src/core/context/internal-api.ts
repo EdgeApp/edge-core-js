@@ -100,7 +100,7 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
 
   async syncRepo(syncKey: Uint8Array): Promise<SyncResult> {
     const { io, syncClient } = this._ai.props
-    const paths = makeRepoPaths(io, syncKey, new Uint8Array(0))
+    const paths = makeRepoPaths(io, { dataKey: new Uint8Array(0), syncKey })
     return await syncRepo(syncClient, paths, {
       lastSync: 0,
       lastHash: undefined
@@ -112,7 +112,7 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
     dataKey: Uint8Array
   ): Promise<Disklet> {
     const { io } = this._ai.props
-    const paths = makeRepoPaths(io, syncKey, dataKey)
+    const paths = makeRepoPaths(io, { dataKey, syncKey })
     bridgifyObject(paths.disklet)
     return paths.disklet
   }

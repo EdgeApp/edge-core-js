@@ -1,3 +1,4 @@
+import { asMaybe } from 'cleaners'
 import { base16, base64 } from 'rfc4648'
 
 import { wasCreateKeysPayload } from '../../types/server-cleaners'
@@ -19,6 +20,11 @@ import {
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
 import { AppIdMap, LoginKit, LoginTree, wasEdgeWalletInfo } from './login-types'
+import {
+  asEdgeStorageKeys,
+  createStorageKeys,
+  wasEdgeStorageKeys
+} from './storage-keys'
 
 /**
  * Returns the first keyInfo with a matching type.
@@ -43,30 +49,13 @@ export function makeAccountType(appId: string): string {
 export function makeKeyInfo(
   type: string,
   keys: JsonObject,
-  idKey: Uint8Array
+  idKey?: Uint8Array
 ): EdgeWalletInfo {
-  return {
-    id: base64.stringify(hmacSha256(utf8.parse(type), idKey)),
-    type,
-    keys
-  }
-}
-
-/**
- * Makes keys for accessing an encrypted Git repo.
- */
-export function makeStorageKeyInfo(
-  ai: ApiInput,
-  type: string,
-  keys: JsonObject = {}
-): EdgeWalletInfo {
-  const { io } = ai.props
-  if (keys.dataKey == null) keys.dataKey = base64.stringify(io.random(32))
-  if (keys.syncKey == null) keys.syncKey = base64.stringify(io.random(20))
-  if (typeof keys.dataKey !== 'string') {
-    throw new TypeError('Invalid dataKey type')
-  }
-  return makeKeyInfo(type, keys, base64.parse(keys.dataKey))
+  const hash = hmacSha256(
+    utf8.parse(type),
+    idKey ?? asEdgeStorageKeys(keys).dataKey
+  )
+  return { id: base64.stringify(hash), type, keys }
 }
 
 /**
@@ -85,12 +74,12 @@ export function makeKeysKit(
       login.loginKey
     )
   )
+
   const newSyncKeys: string[] = []
   for (const info of keyInfos) {
-    if (info.keys.syncKey != null) {
-      const data = base64.parse(info.keys.syncKey)
-      newSyncKeys.push(base16.stringify(data).toLowerCase())
-    }
+    const storageKeys = asMaybe(asEdgeStorageKeys)(info.keys)
+    if (storageKeys == null) continue
+    newSyncKeys.push(base16.stringify(storageKeys.syncKey).toLowerCase())
   }
 
   return {
@@ -264,23 +253,28 @@ export async function createCurrencyWallet(
   const tools = await getCurrencyTools(ai, pluginId)
   let keys
   if (opts.keys != null) {
-    keys = opts.keys
+    keys = {
+      ...wasEdgeStorageKeys(createStorageKeys(ai)),
+      ...opts.keys
+    }
   } else if (opts.importText != null) {
     if (tools.importPrivateKey == null) {
       throw new Error('This wallet does not support importing keys')
     }
     keys = {
+      ...wasEdgeStorageKeys(createStorageKeys(ai)),
       ...(await tools.importPrivateKey(opts.importText, opts.keyOptions)),
       imported: true
     }
   } else {
     keys = {
+      ...wasEdgeStorageKeys(createStorageKeys(ai)),
       ...(await tools.createPrivateKey(walletType, opts.keyOptions)),
       imported: false
     }
   }
 
-  const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
+  const walletInfo = makeKeyInfo(walletType, keys)
   const kit = makeKeysKit(ai, login, fixWalletInfo(walletInfo))
 
   // Add the keys to the login:

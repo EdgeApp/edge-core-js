@@ -30,11 +30,7 @@ import {
 import { base58 } from '../../util/encoding'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import { makeExchangeCache } from '../exchange/exchange-api'
-import {
-  createCurrencyWallet,
-  makeKeysKit,
-  makeStorageKeyInfo
-} from '../login/keys'
+import { createCurrencyWallet, makeKeyInfo, makeKeysKit } from '../login/keys'
 import { applyKit } from '../login/login'
 import { deleteLogin } from '../login/login-delete'
 import { changeUsername } from '../login/login-username'
@@ -47,6 +43,7 @@ import {
 import { changePin, checkPin2, deletePin } from '../login/pin2'
 import { changeRecovery, deleteRecovery } from '../login/recovery2'
 import { listSplittableWalletTypes, splitWalletInfo } from '../login/splitting'
+import { createStorageKeys, wasEdgeStorageKeys } from '../login/storage-keys'
 import { changeVoucherStatus } from '../login/vouchers'
 import {
   findCurrencyPluginId,
@@ -396,7 +393,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         keys = await tools.createPrivateKey(walletType)
       }
 
-      const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
+      const walletInfo = makeKeyInfo(walletType, {
+        ...wasEdgeStorageKeys(createStorageKeys(ai)),
+        ...keys
+      })
       const kit = makeKeysKit(ai, login, walletInfo)
       await applyKit(ai, loginTree, kit)
       return walletInfo.id

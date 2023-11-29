@@ -5,12 +5,13 @@ import { LoginCreateOpts, makeCreateKit } from '../login/create'
 import {
   findFirstKey,
   makeAccountType,
-  makeKeysKit,
-  makeStorageKeyInfo
+  makeKeyInfo,
+  makeKeysKit
 } from '../login/keys'
 import { applyKit, searchTree } from '../login/login'
 import { LoginStash } from '../login/login-stash'
 import { LoginKit, LoginTree, LoginType } from '../login/login-types'
+import { createStorageKeys, wasEdgeStorageKeys } from '../login/storage-keys'
 import { ApiInput, RootProps } from '../root-pixie'
 
 function checkLogin(login: LoginTree): void {
@@ -44,7 +45,10 @@ async function createChildLogin(
     username: loginTree.username
   }
   if (wantRepo) {
-    opts.keyInfo = makeStorageKeyInfo(ai, makeAccountType(appId))
+    opts.keyInfo = makeKeyInfo(
+      makeAccountType(appId),
+      wasEdgeStorageKeys(createStorageKeys(ai))
+    )
   }
   const kit = await makeCreateKit(ai, login, appId, opts)
   const parentKit: LoginKit = {
@@ -78,7 +82,10 @@ export async function ensureAccountExists(
   // Otherwise, make the repo:
   if (findFirstKey(login.keyInfos, accountType) == null) {
     checkLogin(login)
-    const keyInfo = makeStorageKeyInfo(ai, accountType)
+    const keyInfo = makeKeyInfo(
+      accountType,
+      wasEdgeStorageKeys(createStorageKeys(ai))
+    )
     const keysKit = makeKeysKit(ai, login, keyInfo)
     return applyKit(ai, loginTree, keysKit)
   }

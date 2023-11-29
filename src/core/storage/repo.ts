@@ -8,6 +8,7 @@ import { EdgeBox } from '../../types/server-types'
 import { EdgeIo } from '../../types/types'
 import { sha256 } from '../../util/crypto/hashes'
 import { base58 } from '../../util/encoding'
+import { EdgeStorageKeys } from '../login/storage-keys'
 import { encryptDisklet } from './encrypt-disklet'
 import { StorageWalletPaths, StorageWalletStatus } from './storage-reducer'
 
@@ -35,9 +36,9 @@ export function makeLocalDisklet(io: EdgeIo, walletId: string): Disklet {
  */
 export function makeRepoPaths(
   io: EdgeIo,
-  syncKey: Uint8Array,
-  dataKey: Uint8Array
+  storageKeys: EdgeStorageKeys
 ): StorageWalletPaths {
+  const { dataKey, syncKey } = storageKeys
   const baseDisklet = navigateDisklet(
     io.disklet,
     'repos/' + base58.stringify(sha256(sha256(syncKey)))

@@ -18,7 +18,7 @@ const quiet = { onLog() {} }
 describe('repo', function () {
   it('read file', async function () {
     const io = makeFakeIo()
-    const { disklet } = makeRepoPaths(io, syncKey, dataKey)
+    const { disklet } = makeRepoPaths(io, { syncKey, dataKey })
     const payload = '{"message":"Hello"}'
     const box = `{
       "encryptionType": 0,
@@ -35,7 +35,7 @@ describe('repo', function () {
 
   it('data round-trip', async function () {
     const io = makeFakeIo()
-    const { disklet } = makeRepoPaths(io, syncKey, dataKey)
+    const { disklet } = makeRepoPaths(io, { syncKey, dataKey })
     const payload = 'Test data'
 
     await disklet.setText('b.txt', payload)

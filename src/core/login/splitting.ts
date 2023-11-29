@@ -1,3 +1,4 @@
+import { asMaybe } from 'cleaners'
 import { base64 } from 'rfc4648'
 
 import {
@@ -19,6 +20,7 @@ import {
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
 import { makeKeysKit } from './keys'
+import { asEdgeStorageKeys, wasEdgeStorageKeys } from './storage-keys'
 
 export async function listSplittableWalletTypes(
   ai: ApiInput,
@@ -63,12 +65,13 @@ export function makeSplitWalletInfo(
   newWalletType: string
 ): EdgeWalletInfo {
   const { id, type, keys } = walletInfo
-  if (keys.dataKey == null || keys.syncKey == null) {
+
+  const cleanKeys = asMaybe(asEdgeStorageKeys)(keys)
+  if (cleanKeys == null) {
     throw new Error(`Wallet ${id} is not a splittable type`)
   }
 
-  const dataKey = base64.parse(keys.dataKey)
-  const syncKey = base64.parse(keys.syncKey)
+  const { dataKey, syncKey } = cleanKeys
   const xorKey = xorData(
     hmacSha256(utf8.parse(type), dataKey),
     hmacSha256(utf8.parse(newWalletType), dataKey)
@@ -81,21 +84,19 @@ export function makeSplitWalletInfo(
   // Fix the keys:
   const networkName = type.replace(/wallet:/, '').replace('-', '')
   const newNetworkName = newWalletType.replace(/wallet:/, '').replace('-', '')
-  const newKeys: JsonObject = {}
+  const newKeys: JsonObject = wasEdgeStorageKeys({
+    dataKey,
+    syncKey: newSyncKey
+  })
   for (const key of Object.keys(keys)) {
-    if (key === networkName + 'Key') {
-      newKeys[newNetworkName + 'Key'] = keys[key]
-    } else {
-      newKeys[key] = keys[key]
-    }
+    const newKey = key === networkName + 'Key' ? newNetworkName + 'Key' : key
+    if (newKeys[newKey] != null) continue
+    newKeys[newKey] = keys[key]
   }
 
   return {
     id: base64.stringify(newWalletId),
-    keys: {
-      ...newKeys,
-      syncKey: base64.stringify(newSyncKey)
-    },
+    keys: newKeys,
     type: newWalletType
   }
 }
