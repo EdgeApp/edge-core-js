@@ -15,8 +15,10 @@ import {
   EdgeAssetAction,
   EdgeAssetActionType,
   EdgeAssetAmount,
+  EdgeFiatAmount,
   EdgeMetadata,
   EdgeTxAction,
+  EdgeTxActionFiat,
   EdgeTxActionStake,
   EdgeTxActionSwap,
   EdgeTxSwap,
@@ -214,6 +216,11 @@ export const asEdgeAssetAmount = asObject<EdgeAssetAmount>({
   tokenId: asOptional(asString),
   nativeAmount: asOptional(asIntegerString)
 })
+export const asEdgeFiatAmount = asObject<EdgeFiatAmount>({
+  // core-js style fiat code including 'iso:'
+  fiatCurrencyCode: asString,
+  fiatAmount: asString
+})
 
 export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
   actionType: asValue('swap'),
@@ -228,7 +235,30 @@ export const asEdgeTxActionStake = asObject<EdgeTxActionStake>({
   stakeAssets: asArray(asEdgeAssetAmount)
 })
 
-export const asEdgeTxAction = asEither(asEdgeTxActionSwap, asEdgeTxActionStake)
+export const asEdgeTxActionFiat = asObject<EdgeTxActionFiat>({
+  actionType: asValue('fiat'),
+
+  orderId: asString,
+  orderUri: asOptional(asString),
+  isEstimate: asBoolean,
+
+  fiatPlugin: asObject({
+    providerId: asString,
+    providerDisplayName: asString,
+    supportEmail: asOptional(asString)
+  }),
+
+  payinAddress: asOptional(asString),
+  payoutAddress: asOptional(asString),
+  fiatAsset: asEdgeFiatAmount,
+  cryptoAsset: asEdgeAssetAmount
+})
+
+export const asEdgeTxAction: Cleaner<EdgeTxAction> = asEither(
+  asEdgeTxActionSwap,
+  asEdgeTxActionStake,
+  asEdgeTxActionFiat
+)
 
 export const asEdgeAssetActionType: Cleaner<EdgeAssetActionType> = asValue(
   'stake',
@@ -242,7 +272,10 @@ export const asEdgeAssetActionType: Cleaner<EdgeAssetActionType> = asValue(
   'swap',
   'swapOrderPost',
   'swapOrderFill',
-  'swapOrderCancel'
+  'swapOrderCancel',
+  'buy',
+  'sell',
+  'sellNetworkFee'
 )
 
 export const asEdgeAssetAction = asObject({

@@ -255,6 +255,12 @@ export interface EdgeAssetAmount {
   nativeAmount?: string
 }
 
+export interface EdgeFiatAmount {
+  // core-js style fiat code including 'iso:'
+  fiatCurrencyCode: string
+  fiatAmount: string
+}
+
 export interface EdgeTxActionSwap {
   actionType: 'swap'
   orderId?: string
@@ -268,7 +274,29 @@ export interface EdgeTxActionStake {
   stakeAssets: EdgeAssetAmount[]
 }
 
-export type EdgeTxAction = EdgeTxActionSwap | EdgeTxActionStake
+export interface EdgeTxActionFiat {
+  actionType: 'fiat'
+
+  orderId: string
+  orderUri?: string
+  isEstimate: boolean
+
+  fiatPlugin: {
+    providerId: string
+    providerDisplayName: string
+    supportEmail?: string
+  }
+
+  payinAddress?: string
+  payoutAddress?: string
+  fiatAsset: EdgeFiatAmount
+  cryptoAsset: EdgeAssetAmount
+}
+
+export type EdgeTxAction =
+  | EdgeTxActionSwap
+  | EdgeTxActionStake
+  | EdgeTxActionFiat
 
 export type EdgeAssetActionType =
   | 'stake'
@@ -283,6 +311,9 @@ export type EdgeAssetActionType =
   | 'swapOrderPost'
   | 'swapOrderFill'
   | 'swapOrderCancel'
+  | 'buy'
+  | 'sell'
+  | 'sellNetworkFee'
 
 export interface EdgeAssetAction {
   assetActionType: EdgeAssetActionType
