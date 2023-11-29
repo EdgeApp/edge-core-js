@@ -58,6 +58,7 @@ export interface MergedTransaction {
     [tokenId: string]: {
       nativeAmount: string
       networkFee: string
+      savedAction?: EdgeTxAction
     }
   }
 }
@@ -433,6 +434,7 @@ export function mergeTx(
 ): MergedTransaction {
   const {
     action,
+    savedAction,
     currencyCode = defaultCurrency,
     tokenId,
     isSend = lt(tx.nativeAmount, '0'),
@@ -457,7 +459,8 @@ export function mergeTx(
 
   out.tokens[tokenId ?? PARENT_TOKEN_ID] = {
     nativeAmount: tx.nativeAmount,
-    networkFee: tx.networkFee != null ? tx.networkFee.toString() : '0'
+    networkFee: tx.networkFee != null ? tx.networkFee.toString() : '0',
+    savedAction
   }
 
   if (tx.parentNetworkFee != null) {

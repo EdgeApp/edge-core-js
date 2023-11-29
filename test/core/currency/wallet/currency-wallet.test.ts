@@ -11,6 +11,7 @@ import {
   EdgeMetadata,
   EdgeToken,
   EdgeTransaction,
+  EdgeTxAction,
   EdgeTxSwap,
   makeFakeEdgeWorld
 } from '../../../../src/index'
@@ -435,6 +436,18 @@ describe('currency wallets', function () {
 
     // Perform the spend:
     const metadata: EdgeMetadata = { name: 'me' }
+    const savedAction: EdgeTxAction = {
+      type: 'swap',
+      orderId: 'myorderid',
+      canBePartial: false,
+      sourceAsset: {
+        pluginId: 'bitcoin'
+      },
+      destAsset: {
+        pluginId: 'ethereum',
+        tokenId: 'mytokenid'
+      }
+    }
     const swapData: EdgeTxSwap = {
       orderId: '1234',
       isEstimate: true,
@@ -458,6 +471,7 @@ describe('currency wallets', function () {
         }
       ],
       metadata,
+      savedAction,
       swapData,
       networkFeeOption: 'high'
     })
@@ -489,6 +503,18 @@ describe('currency wallets', function () {
         uniqueIdentifier: 'hello'
       }
     ])
+    expect(txs[0].savedAction).deep.equals({
+      type: 'swap',
+      orderId: 'myorderid',
+      canBePartial: false,
+      sourceAsset: {
+        pluginId: 'bitcoin'
+      },
+      destAsset: {
+        pluginId: 'ethereum',
+        tokenId: 'mytokenid'
+      }
+    })
     expect(txs[0].swapData).deep.equals({
       orderUri: undefined,
       refundAddress: undefined,
