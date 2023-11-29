@@ -172,8 +172,13 @@ describe('currency wallets', function () {
     const { wallet, config } = fixture
     await config.changeUserSettings({
       txs: {
-        a: { currencyCode: 'FAKE', nativeAmount: '2' },
-        b: { currencyCode: 'TOKEN', nativeAmount: '200' }
+        a: { currencyCode: 'FAKE', nativeAmount: '2', tokenId: null },
+        b: {
+          currencyCode: 'TOKEN',
+          nativeAmount: '200',
+          tokenId:
+            'f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd'
+        }
       }
     })
 

@@ -416,6 +416,7 @@ export async function setCurrencyWalletTxMetadata(
   input: CurrencyWalletInput,
   txid: string,
   currencyCode: string,
+  tokenId: string | null,
   metadata: DiskMetadata,
   fakeCallbacks: EdgeCurrencyEngineCallbacks
 ): Promise<void> {
@@ -469,7 +470,7 @@ export async function setCurrencyWalletTxMetadata(
     payload: { creationDate, fileName, json, txid, txidHash, walletId }
   })
   await transactionFile.save(disklet, 'transaction/' + fileName, json)
-  const callbackTx = combineTxWithFile(input, tx, json, currencyCode)
+  const callbackTx = combineTxWithFile(input, tx, json, currencyCode, tokenId)
   fakeCallbacks.onTransactionsChanged([callbackTx])
 }
 
