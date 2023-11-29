@@ -520,8 +520,22 @@ describe('currency wallets', function () {
       name: 'me',
       amountFiat: 0.75
     }
+    const savedAction: EdgeTxAction = {
+      type: 'swap',
+      orderId: 'myorderid',
+      canBePartial: false,
+      sourceAsset: {
+        pluginId: 'bitcoin'
+      },
+      destAsset: {
+        pluginId: 'ethereum',
+        tokenId: 'mytokenid'
+      }
+    }
+
     await config.changeUserSettings({ txs: { a: { nativeAmount: '25' } } })
     await wallet.saveTxMetadata('a', 'FAKE', metadata)
+    await wallet.saveTxAction('a', null, savedAction)
 
     const txs = await wallet.getTransactions({})
     expect(txs.length).equals(1)
@@ -532,6 +546,18 @@ describe('currency wallets', function () {
       notes: undefined,
       exchangeAmount: { 'iso:USD': 0.75 },
       ...metadata
+    })
+    expect(txs[0].savedAction).deep.equals({
+      type: 'swap',
+      orderId: 'myorderid',
+      canBePartial: false,
+      sourceAsset: {
+        pluginId: 'bitcoin'
+      },
+      destAsset: {
+        pluginId: 'ethereum',
+        tokenId: 'mytokenid'
+      }
     })
   })
 
