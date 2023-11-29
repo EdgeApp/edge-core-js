@@ -9,6 +9,7 @@ import {
 } from '../../../client-side'
 import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
+  EdgeAssetAction,
   EdgeBalances,
   EdgeCurrencyCodeOptions,
   EdgeCurrencyConfig,
@@ -31,6 +32,7 @@ import {
   EdgeStakingStatus,
   EdgeStreamTransactionOptions,
   EdgeTransaction,
+  EdgeTxAction,
   EdgeWalletInfo
 } from '../../../types/types'
 import { mergeDeeply } from '../../../util/util'
@@ -565,6 +567,28 @@ export function makeCurrencyWalletApi(
       await engine.saveTx(tx)
       fakeCallbacks.onTransactionsChanged([tx])
     },
+    async saveTxAction(
+      txid: string,
+      tokenId: string | null,
+      assetAction: EdgeAssetAction,
+      savedAction: EdgeTxAction
+    ): Promise<void> {
+      const { accountApi } = input.props.output.accounts[accountId]
+      const { allTokens, currencyInfo } = accountApi.currencyConfig[pluginId]
+      const { currencyCode } =
+        tokenId == null ? currencyInfo : allTokens[tokenId]
+
+      await setCurrencyWalletTxMetadata(
+        input,
+        txid,
+        currencyCode,
+        tokenId,
+        fakeCallbacks,
+        undefined,
+        assetAction,
+        savedAction
+      )
+    },
     async saveTxMetadata(
       txid: string,
       currencyCode: string,
@@ -584,8 +608,8 @@ export function makeCurrencyWalletApi(
         txid,
         currencyCode,
         tokenId,
-        packMetadata(metadata, input.props.walletState.fiat),
-        fakeCallbacks
+        fakeCallbacks,
+        packMetadata(metadata, input.props.walletState.fiat)
       )
     },
     async signMessage(

@@ -1118,6 +1118,13 @@ export interface EdgeCurrencyWallet {
   ) => Promise<EdgePaymentProtocolInfo>
   readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
   readonly saveTx: (tx: EdgeTransaction) => Promise<void>
+  readonly saveTxAction: (
+    txid: string,
+    tokenId: string | null,
+    assetAction: EdgeAssetAction,
+    savedAction: EdgeTxAction
+  ) => Promise<void>
+
   readonly saveTxMetadata: (
     txid: string,
     currencyCode: string,
