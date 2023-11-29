@@ -26,7 +26,7 @@ import { asMap, asTokenIdMap } from '../../../util/asMap'
 import { asJsonObject } from '../../../util/file-helpers'
 import { asEdgeMetadata } from './metadata'
 
-interface TransactionAsset {
+export interface TransactionAsset {
   assetAction?: EdgeAssetAction
   metadata: EdgeMetadata
   nativeAmount?: string

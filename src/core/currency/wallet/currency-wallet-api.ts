@@ -579,18 +579,36 @@ export function makeCurrencyWalletApi(
       fakeCallbacks.onTransactionsChanged([tx])
     },
 
+    async saveTxAction(opts): Promise<void> {
+      const { txid, tokenId, assetAction, savedAction } = opts
+      await setCurrencyWalletTxMetadata(
+        input,
+        txid,
+        tokenId,
+        fakeCallbacks,
+        undefined,
+        assetAction,
+        savedAction
+      )
+    },
+
     async saveTxMetadata(
       txid: string,
       currencyCode: string,
       metadata: EdgeMetadataChange
     ): Promise<void> {
+      const { tokenId = null } = upgradeCurrencyCode({
+        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+        currencyInfo: plugin.currencyInfo,
+        currencyCode
+      })
       upgradeMetadata(input, metadata)
       await setCurrencyWalletTxMetadata(
         input,
         txid,
-        currencyCode,
-        metadata,
-        fakeCallbacks
+        tokenId,
+        fakeCallbacks,
+        metadata
       )
     },
 

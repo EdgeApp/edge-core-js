@@ -557,8 +557,33 @@ describe('currency wallets', function () {
       name: 'me',
       amountFiat: 0.75
     }
+    const assetAction: EdgeAssetAction = {
+      assetActionType: 'swap'
+    }
+    const savedAction: EdgeTxAction = {
+      actionType: 'swap',
+      orderId: 'myorderid',
+      canBePartial: false,
+      sourceAsset: {
+        pluginId: 'bitcoin',
+        tokenId: undefined,
+        nativeAmount: '1234'
+      },
+      destAsset: {
+        pluginId: 'ethereum',
+        tokenId: 'mytokenid',
+        nativeAmount: '2345'
+      }
+    }
+
     await config.changeUserSettings({ txs: { a: { nativeAmount: '25' } } })
     await wallet.saveTxMetadata('a', 'FAKE', metadata)
+    await wallet.saveTxAction({
+      txid: 'a',
+      tokenId: null,
+      assetAction,
+      savedAction
+    })
 
     const txs = await wallet.getTransactions({})
     expect(txs.length).equals(1)
@@ -570,6 +595,8 @@ describe('currency wallets', function () {
       exchangeAmount: { 'iso:USD': 0.75 },
       ...metadata
     })
+    expect(txs[0].assetAction).deep.equals(assetAction)
+    expect(txs[0].savedAction).deep.equals(savedAction)
   })
 
   it('can delete metadata', async function () {

@@ -830,6 +830,13 @@ export interface EdgeEnginePrivateKeyOptions {
   privateKeys?: JsonObject
 }
 
+export interface EdgeSaveTxActionOptions {
+  txid: string
+  tokenId: EdgeTokenId
+  assetAction: EdgeAssetAction
+  savedAction: EdgeTxAction
+}
+
 export interface EdgeSignMessageOptions {
   otherParams?: JsonObject
 }
@@ -1184,6 +1191,7 @@ export interface EdgeCurrencyWallet {
   ) => Promise<EdgePaymentProtocolInfo>
   readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
   readonly saveTx: (tx: EdgeTransaction) => Promise<void>
+  readonly saveTxAction: (opts: EdgeSaveTxActionOptions) => Promise<void>
   readonly saveTxMetadata: (
     txid: string,
     currencyCode: string,
