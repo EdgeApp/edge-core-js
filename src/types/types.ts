@@ -1571,7 +1571,7 @@ export interface EdgeAccount {
   readonly currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
   readonly currencyWalletErrors: { [walletId: string]: Error }
   readonly createCurrencyWallet: (
-    type: string,
+    walletType: string,
     opts?: EdgeCreateCurrencyWalletOptions
   ) => Promise<EdgeCurrencyWallet>
   readonly waitForCurrencyWallet: (

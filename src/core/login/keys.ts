@@ -12,7 +12,6 @@ import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
 import { changeWalletStates } from '../account/account-files'
 import { waitForCurrencyWallet } from '../currency/currency-selectors'
-import { applyKit } from '../login/login'
 import {
   findCurrencyPluginId,
   getCurrencyTools
@@ -236,61 +235,72 @@ export function fixWalletInfo(walletInfo: EdgeWalletInfo): EdgeWalletInfo {
   return walletInfo
 }
 
-export async function createCurrencyWallet(
+export async function makeCurrencyWalletKeys(
   ai: ApiInput,
-  accountId: string,
   walletType: string,
   opts: EdgeCreateCurrencyWalletOptions
-): Promise<EdgeCurrencyWallet> {
-  const { login, loginTree } = ai.props.state.accounts[accountId]
+): Promise<EdgeWalletInfo> {
+  const { importText, keyOptions, keys } = opts
+
+  // Helper function to bundle up the keys:
+  function finalizeKeys(newKeys: object, imported?: boolean): EdgeWalletInfo {
+    if (imported != null) newKeys = { ...newKeys, imported }
+    return fixWalletInfo(
+      makeKeyInfo(walletType, {
+        ...wasEdgeStorageKeys(createStorageKeys(ai)),
+        ...newKeys
+      })
+    )
+  }
+
+  // If we have raw keys, just return those:
+  if (keys != null) return finalizeKeys(keys)
+
+  // Grab the currency tools:
   const pluginId = findCurrencyPluginId(
     ai.props.state.plugins.currency,
     walletType
   )
-
-  // Make the keys:
   const tools = await getCurrencyTools(ai, pluginId)
-  let keys
-  if (opts.keys != null) {
-    keys = {
-      ...wasEdgeStorageKeys(createStorageKeys(ai)),
-      ...opts.keys
-    }
-  } else if (opts.importText != null) {
+
+  // If we have text to import, use that:
+  if (importText != null) {
     if (tools.importPrivateKey == null) {
       throw new Error('This wallet does not support importing keys')
     }
-    keys = {
-      ...wasEdgeStorageKeys(createStorageKeys(ai)),
-      ...(await tools.importPrivateKey(opts.importText, opts.keyOptions)),
-      imported: true
-    }
-  } else {
-    keys = {
-      ...wasEdgeStorageKeys(createStorageKeys(ai)),
-      ...(await tools.createPrivateKey(walletType, opts.keyOptions)),
-      imported: false
-    }
+    return finalizeKeys(
+      await tools.importPrivateKey(importText, keyOptions),
+      true
+    )
   }
 
-  const walletInfo = makeKeyInfo(walletType, keys)
-  const kit = makeKeysKit(ai, login, [fixWalletInfo(walletInfo)])
+  // Derive fresh keys:
+  return finalizeKeys(
+    await tools.createPrivateKey(walletType, keyOptions),
+    false
+  )
+}
 
-  // Add the keys to the login:
-  await applyKit(ai, loginTree, kit)
-  const wallet = await waitForCurrencyWallet(ai, walletInfo.id)
+export async function finishWalletCreation(
+  ai: ApiInput,
+  accountId: string,
+  walletId: string,
+  opts: EdgeCreateCurrencyWalletOptions
+): Promise<EdgeCurrencyWallet> {
+  const { migratedFromWalletId, name, fiatCurrencyCode } = opts
+  const wallet = await waitForCurrencyWallet(ai, walletId)
 
   // Write ancillary files to disk:
-  if (opts.migratedFromWalletId != null) {
+  if (migratedFromWalletId != null) {
     await changeWalletStates(ai, accountId, {
-      [walletInfo.id]: {
-        migratedFromWalletId: opts.migratedFromWalletId
-      }
+      [walletId]: { migratedFromWalletId }
     })
   }
-  if (opts.name != null) await wallet.renameWallet(opts.name)
-  if (opts.fiatCurrencyCode != null) {
-    await wallet.setFiatCurrencyCode(opts.fiatCurrencyCode)
+  if (name != null) {
+    await wallet.renameWallet(name)
+  }
+  if (fiatCurrencyCode != null) {
+    await wallet.setFiatCurrencyCode(fiatCurrencyCode)
   }
 
   return wallet
