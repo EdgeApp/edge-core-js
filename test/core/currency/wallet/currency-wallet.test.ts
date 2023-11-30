@@ -437,6 +437,13 @@ describe('currency wallets', function () {
     // Perform the spend:
     const metadata: EdgeMetadata = { name: 'me' }
     const savedAction: EdgeTxAction = {
+      swapInfo: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: 'support@myemail.com'
+      },
+      payoutAddress: '0xpayoutaddress',
+      payoutWalletId: '0xwalletid',
       type: 'swap',
       orderId: 'myorderid',
       canBePartial: false,
@@ -504,6 +511,13 @@ describe('currency wallets', function () {
       }
     ])
     expect(txs[0].savedAction).deep.equals({
+      swapInfo: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: 'support@myemail.com'
+      },
+      payoutAddress: '0xpayoutaddress',
+      payoutWalletId: '0xwalletid',
       type: 'swap',
       orderId: 'myorderid',
       canBePartial: false,
@@ -532,6 +546,13 @@ describe('currency wallets', function () {
       amountFiat: 0.75
     }
     const savedAction: EdgeTxAction = {
+      swapInfo: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: 'support@myemail.com'
+      },
+      payoutAddress: '0xpayoutaddress',
+      payoutWalletId: '0xwalletid',
       type: 'swap',
       orderId: 'myorderid',
       canBePartial: false,
@@ -559,6 +580,13 @@ describe('currency wallets', function () {
       ...metadata
     })
     expect(txs[0].savedAction).deep.equals({
+      swapInfo: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: 'support@myemail.com'
+      },
+      payoutAddress: '0xpayoutaddress',
+      payoutWalletId: '0xwalletid',
       type: 'swap',
       orderId: 'myorderid',
       canBePartial: false,

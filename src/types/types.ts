@@ -268,11 +268,17 @@ export type EdgeTxActionSwapType =
   | 'swapOrderCancel'
 
 export interface EdgeTxActionSwap {
+  swapInfo: EdgeSwapInfo
+
   type: EdgeTxActionSwapType
   orderId?: string
+  orderUri?: string
+  isEstimate?: boolean
   canBePartial?: boolean
   sourceAsset: EdgeAssetAmount
   destAsset: EdgeAssetAmount
+  payoutAddress: string
+  payoutWalletId: string
 }
 
 export type EdgeTxActionStakeType =
@@ -1201,6 +1207,7 @@ export interface EdgeSwapInfo {
   readonly displayName: string
   readonly isDex?: boolean
 
+  /** @deprecated Use orderUri in EdgeTxAction */
   readonly orderUri?: string // The orderId would be appended to this
   readonly supportEmail: string
 }
@@ -1237,6 +1244,7 @@ export interface EdgeSwapResult {
 
 export interface EdgeSwapApproveOptions {
   metadata?: EdgeMetadata
+  savedAction?: EdgeTxAction
 }
 
 /**
