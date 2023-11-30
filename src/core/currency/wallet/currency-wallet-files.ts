@@ -17,10 +17,11 @@ import {
 } from '../../storage/storage-selectors'
 import { combineTxWithFile } from './currency-wallet-api'
 import {
-  asEnabledTokensFile,
   asLegacyAddressFile,
   asLegacyMapFile,
+  asLegacyTokensFile,
   asLegacyTransactionFile,
+  asTokensFile,
   asTransactionFile,
   asWalletFiatFile,
   asWalletNameFile,
@@ -31,16 +32,19 @@ import {
 } from './currency-wallet-cleaners'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { TxFileNames } from './currency-wallet-reducer'
+import { currencyCodesToTokenIds } from './enabled-tokens'
 
 const CURRENCY_FILE = 'Currency.json'
-const ENABLED_TOKENS_FILE = 'EnabledTokens.json'
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
+const LEGACY_TOKENS_FILE = 'EnabledTokens.json'
+const TOKENS_FILE = 'Tokens.json'
 const WALLET_NAME_FILE = 'WalletName.json'
 
-const enabledTokensFile = makeJsonFile(asEnabledTokensFile)
 const legacyAddressFile = makeJsonFile(asLegacyAddressFile)
 const legacyMapFile = makeJsonFile(asLegacyMapFile)
+const legacyTokensFile = makeJsonFile(asLegacyTokensFile)
 const legacyTransactionFile = makeJsonFile(asLegacyTransactionFile)
+const tokensFile = makeJsonFile(asTokensFile)
 const transactionFile = makeJsonFile(asTransactionFile)
 const walletFiatFile = makeJsonFile(asWalletFiatFile)
 const walletNameFile = makeJsonFile(asWalletNameFile)
@@ -48,14 +52,18 @@ const walletNameFile = makeJsonFile(asWalletNameFile)
 /**
  * Updates the enabled tokens on a wallet.
  */
-export async function changeEnabledTokens(
+export async function writeTokensFile(
   input: CurrencyWalletInput,
-  currencyCodes: string[]
+  detectedTokenIds: string[],
+  enabledTokenIds: string[]
 ): Promise<void> {
   const { state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
-  await enabledTokensFile.save(disklet, ENABLED_TOKENS_FILE, currencyCodes)
+  await tokensFile.save(disklet, TOKENS_FILE, {
+    detectedTokenIds,
+    enabledTokenIds
+  })
 }
 
 /**
@@ -146,23 +154,6 @@ export async function setCurrencyWalletFiat(
   })
 }
 
-export async function loadEnabledTokensFile(
-  input: CurrencyWalletInput
-): Promise<void> {
-  const { dispatch, state, walletId } = input.props
-  const disklet = getStorageWalletDisklet(state, walletId)
-
-  const clean = await enabledTokensFile.load(disklet, ENABLED_TOKENS_FILE)
-  if (clean == null) return
-
-  // Future currencyCode to tokenId logic will live here.
-
-  dispatch({
-    type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
-    payload: { walletId: input.props.walletId, currencyCodes: clean }
-  })
-}
-
 /**
  * Loads the wallet fiat currency file.
  */
@@ -215,6 +206,47 @@ export async function loadNameFile(input: CurrencyWalletInput): Promise<void> {
     payload: {
       name: typeof name === 'string' ? name : null,
       walletId
+    }
+  })
+}
+
+/**
+ * Load the enabled tokens file, with fallback to the legacy file.
+ */
+export async function loadTokensFile(
+  input: CurrencyWalletInput
+): Promise<void> {
+  const { dispatch, state, walletId } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
+
+  const clean = await tokensFile.load(disklet, TOKENS_FILE)
+  if (clean != null) {
+    dispatch({
+      type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
+      payload: { walletId: input.props.walletId, ...clean }
+    })
+    return
+  }
+
+  const legacyCurrencyCodes = await legacyTokensFile.load(
+    disklet,
+    LEGACY_TOKENS_FILE
+  )
+  const { accountId, currencyInfo, pluginId } = input.props.walletState
+  const accountState = input.props.state.accounts[accountId]
+  const tokenIds = currencyCodesToTokenIds(
+    accountState.builtinTokens[pluginId],
+    accountState.customTokens[pluginId],
+    currencyInfo,
+    legacyCurrencyCodes ?? []
+  )
+
+  dispatch({
+    type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
+    payload: {
+      walletId: input.props.walletId,
+      detectedTokenIds: [],
+      enabledTokenIds: tokenIds
     }
   })
 }

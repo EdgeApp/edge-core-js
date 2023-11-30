@@ -194,12 +194,22 @@ export function asIntegerString(raw: unknown): string {
 // ---------------------------------------------------------------------
 
 /**
- * This uses currency codes, since we cannot break the data on disk.
- * To fix this one day, we can either migrate to a new file name,
- * or we can use `asEither` to switch between this format
- * and some new format based on token ID's.
+ * Old core versions used currency codes instead of tokenId's.
  */
-export const asEnabledTokensFile = asArray<string>(asString)
+export const asLegacyTokensFile = asArray<string>(asString)
+
+/**
+ * Stores enabled tokenId's on disk.
+ */
+export const asTokensFile = asObject({
+  // All the tokens that the engine should check.
+  // This includes both manually-enabled tokens and auto-enabled tokens:
+  enabledTokenIds: asArray(asString),
+
+  // These tokenId's have been detected on-chain at least once.
+  // The user can still remove them from the enabled tokens list.
+  detectedTokenIds: asArray(asString)
+})
 
 export const asTransactionFile = asObject<TransactionFile>({
   txid: asString,

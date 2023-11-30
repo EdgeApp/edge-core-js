@@ -19,9 +19,9 @@ import { combineTxWithFile } from './currency-wallet-api'
 import { asIntegerString } from './currency-wallet-cleaners'
 import {
   loadAddressFiles,
-  loadEnabledTokensFile,
   loadFiatFile,
   loadNameFile,
+  loadTokensFile,
   loadTxFileNames,
   setupNewTxMetadata
 } from './currency-wallet-files'
@@ -34,6 +34,7 @@ import {
   mergeTx,
   TxidHashes
 } from './currency-wallet-reducer'
+import { uniqueStrings } from './enabled-tokens'
 
 let throttleRateLimitMs = 5000
 
@@ -118,6 +119,39 @@ export function makeCurrencyWalletCallbacks(
             type: 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO',
             payload: { ratio, walletId }
           })
+        }
+      })
+    },
+
+    onNewTokens(tokenIds: string[]) {
+      pushUpdate({
+        id: walletId,
+        action: 'onNewTokens',
+        updateFunc: () => {
+          // Before we update redux, figure out what's truly new:
+          const { detectedTokenIds, enabledTokenIds } = input.props.walletState
+          const enablingTokenIds = uniqueStrings(tokenIds, [
+            ...detectedTokenIds,
+            ...enabledTokenIds
+          ])
+
+          // Update redux:
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_DETECTED_TOKENS',
+            payload: {
+              detectedTokenIds: tokenIds,
+              enablingTokenIds,
+              walletId
+            }
+          })
+
+          // Fire an event to the GUI:
+          if (enablingTokenIds.length > 0) {
+            const walletApi = input.props?.walletOutput?.walletApi
+            if (walletApi != null) {
+              emit(walletApi, 'enabledDetectedTokens', enablingTokenIds)
+            }
+          }
         }
       })
     },
@@ -333,7 +367,7 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
     const changes = getStorageWalletLastChanges(props.state, walletId)
     if (changes !== lastChanges) {
       lastChanges = changes
-      await loadEnabledTokensFile(input)
+      await loadTokensFile(input)
       await loadFiatFile(input)
       await loadNameFile(input)
       await loadTxFileNames(input)

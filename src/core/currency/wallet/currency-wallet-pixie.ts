@@ -39,17 +39,14 @@ import {
 } from './currency-wallet-callbacks'
 import { asIntegerString, asPublicKeyFile } from './currency-wallet-cleaners'
 import {
-  changeEnabledTokens,
   loadAddressFiles,
-  loadEnabledTokensFile,
   loadFiatFile,
   loadNameFile,
-  loadTxFileNames
+  loadTokensFile,
+  loadTxFileNames,
+  writeTokensFile
 } from './currency-wallet-files'
-import {
-  CurrencyWalletState,
-  initialEnabledTokens
-} from './currency-wallet-reducer'
+import { CurrencyWalletState, initialTokenIds } from './currency-wallet-reducer'
 import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
 
 export interface CurrencyWalletOutput {
@@ -94,10 +91,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           input.props.io
         )
 
-      // We need to know which tokens are enabled,
-      // so the engine can start in the right state:
-      await loadEnabledTokensFile(input)
-
       // We need to know which transactions exist,
       // since new transactions may come in from the network:
       await loadTxFileNames(input)
@@ -113,6 +106,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         type: 'CURRENCY_WALLET_PUBLIC_INFO',
         payload: { walletInfo: publicWalletInfo, walletId }
       })
+
+      // We need to know which tokens are enabled,
+      // so the engine can start in the right state:
+      await loadTokensFile(input)
 
       // Start the engine:
       const accountState = state.accounts[accountId]
@@ -331,17 +328,23 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
    * we will consolidate those down to a single write to disk.
    */
   tokenSaver(input: CurrencyWalletInput) {
-    let lastEnabledTokens: string[] = initialEnabledTokens
+    let lastDetectedTokenIds: string[] = initialTokenIds
+    let lastEnabledTokenIds: string[] = initialTokenIds
 
     return async function update() {
-      const { enabledTokens } = input.props.walletState
-      if (enabledTokens !== lastEnabledTokens && enabledTokens != null) {
-        await changeEnabledTokens(input, enabledTokens).catch(error =>
-          input.props.onError(error)
+      const { detectedTokenIds, enabledTokenIds } = input.props.walletState
+      const isChanged =
+        detectedTokenIds !== lastDetectedTokenIds ||
+        enabledTokenIds !== lastEnabledTokenIds
+      const isReady = detectedTokenIds != null && enabledTokenIds != null
+      if (isChanged && isReady) {
+        await writeTokensFile(input, detectedTokenIds, enabledTokenIds).catch(
+          error => input.props.onError(error)
         )
         await snooze(100) // Rate limiting
       }
-      lastEnabledTokens = enabledTokens
+      lastDetectedTokenIds = detectedTokenIds
+      lastEnabledTokenIds = enabledTokenIds
     }
   },
 
@@ -349,7 +352,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     let lastState: CurrencyWalletState | undefined
     let lastSettings: JsonObject = {}
     let lastTokens: EdgeTokenMap = {}
-    let lastEnabledTokenIds: string[] = initialEnabledTokens
+    let lastEnabledTokenIds: string[] = initialTokenIds
 
     return async () => {
       const { state, walletState, walletOutput } = input.props

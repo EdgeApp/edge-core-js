@@ -17,7 +17,7 @@ import { RootAction } from '../../actions'
 import { findCurrencyPluginId } from '../../plugins/plugins-selectors'
 import { RootState } from '../../root-reducer'
 import { TransactionFile } from './currency-wallet-cleaners'
-import { currencyCodesToTokenIds, uniqueStrings } from './enabled-tokens'
+import { uniqueStrings } from './enabled-tokens'
 
 /** Maps from txid hash to file creation date & path. */
 export interface TxFileNames {
@@ -66,8 +66,8 @@ export interface CurrencyWalletState {
   readonly allEnabledTokenIds: string[]
   readonly balances: EdgeBalances
   readonly currencyInfo: EdgeCurrencyInfo
+  readonly detectedTokenIds: string[]
   readonly enabledTokenIds: string[]
-  readonly enabledTokens: string[]
   readonly engineFailure: Error | null
   readonly engineStarted: boolean
   readonly fiat: string
@@ -94,7 +94,8 @@ export interface CurrencyWalletNext {
   readonly self: CurrencyWalletState
 }
 
-export const initialEnabledTokens: string[] = []
+// Used for detectedTokenIds & enabledTokenIds:
+export const initialTokenIds: string[] = []
 
 const currencyWalletInner = buildReducer<
   CurrencyWalletState,
@@ -144,25 +145,33 @@ const currencyWalletInner = buildReducer<
     return next.root.plugins.currency[pluginId].currencyInfo
   },
 
-  enabledTokenIds: memoizeReducer(
-    next =>
-      next.root.accounts[next.self.accountId].builtinTokens[next.self.pluginId],
-    next =>
-      next.root.accounts[next.self.accountId].customTokens[next.self.pluginId],
-    next => next.self.currencyInfo,
-    next => next.self.enabledTokens,
-    currencyCodesToTokenIds
+  detectedTokenIds: sortStringsReducer(
+    (state = initialTokenIds, action): string[] => {
+      if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
+        return action.payload.detectedTokenIds
+      } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
+        const { detectedTokenIds } = action.payload
+        return uniqueStrings([...state, ...detectedTokenIds])
+      } else if (action.type === 'CURRENCY_ENGINE_CLEARED') {
+        return []
+      }
+      return state
+    }
   ),
 
-  enabledTokens(state = initialEnabledTokens, action): string[] {
-    if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
-      const { currencyCodes } = action.payload
-      // Check for actual changes:
-      currencyCodes.sort((a, b) => (a === b ? 0 : a > b ? 1 : -1))
-      if (!compare(currencyCodes, state)) return currencyCodes
+  enabledTokenIds: sortStringsReducer(
+    (state = initialTokenIds, action): string[] => {
+      if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
+        return action.payload.enabledTokenIds
+      } else if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
+        return action.payload.enabledTokenIds
+      } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
+        const { enablingTokenIds } = action.payload
+        return uniqueStrings([...state, ...enablingTokenIds])
+      }
+      return state
     }
-    return state
-  },
+  ),
 
   engineFailure(state = null, action): Error | null {
     if (action.type === 'CURRENCY_ENGINE_FAILED') {
@@ -450,4 +459,20 @@ export function mergeTx(
   }
 
   return out
+}
+
+type StringsReducer = (
+  state: string[] | undefined,
+  action: RootAction
+) => string[]
+
+function sortStringsReducer(reducer: StringsReducer): StringsReducer {
+  return (state, action) => {
+    const out = reducer(state, action)
+    if (out === state) return state
+
+    out.sort((a, b) => (a === b ? 0 : a > b ? 1 : -1))
+    if (state == null || !compare(out, state)) return out
+    return state
+  }
 }

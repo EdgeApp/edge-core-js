@@ -194,6 +194,23 @@ export type RootAction =
       }
     }
   | {
+      // Called when a currency engine fires the onAddressChecked callback.
+      type: 'CURRENCY_ENGINE_CHANGED_UNACTIVATED_TOKEN_IDS'
+      payload: {
+        unactivatedTokenIds: string[]
+        walletId: string
+      }
+    }
+  | {
+      // Called when a currency engine fires the onNewTokens callback.
+      type: 'CURRENCY_ENGINE_DETECTED_TOKENS'
+      payload: {
+        detectedTokenIds: string[]
+        enablingTokenIds: string[]
+        walletId: string
+      }
+    }
+  | {
       type: 'CURRENCY_ENGINE_GOT_TXS'
       payload: {
         walletId: string
@@ -247,7 +264,7 @@ export type RootAction =
   | {
       type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED'
       payload: {
-        currencyCodes: string[]
+        enabledTokenIds: string[]
         walletId: string
       }
     }
@@ -288,6 +305,14 @@ export type RootAction =
       }
     }
   | {
+      type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE'
+      payload: {
+        detectedTokenIds: string[]
+        enabledTokenIds: string[]
+        walletId: string
+      }
+    }
+  | {
       // Called when a currency wallet receives a new name.
       type: 'CURRENCY_WALLET_NAME_CHANGED'
       payload: {
@@ -301,14 +326,6 @@ export type RootAction =
       payload: {
         walletId: string
         walletInfo: EdgeWalletInfo
-      }
-    }
-  | {
-      // Called when a currency engine fires the onAddressChecked callback.
-      type: 'CURRENCY_ENGINE_CHANGED_UNACTIVATED_TOKEN_IDS'
-      payload: {
-        unactivatedTokenIds: string[]
-        walletId: string
       }
     }
   | {

@@ -47,13 +47,12 @@ export function tokenIdsToCurrencyCodes(
  * optionally removing the items in `omit`.
  */
 export function uniqueStrings(array: string[], omit: string[] = []): string[] {
-  const table: { [key: string]: true } = {}
-  for (const item of omit) table[item] = true
+  const table = new Set(omit)
 
   const out: string[] = []
   for (const item of array) {
-    if (table[item]) continue
-    table[item] = true
+    if (table.has(item)) continue
+    table.add(item)
     out.push(item)
   }
   return out
