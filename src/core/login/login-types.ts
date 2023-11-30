@@ -3,9 +3,9 @@ import { asObject, asString, uncleaner } from 'cleaners'
 import {
   EdgePendingVoucher,
   EdgeWalletInfo,
-  EdgeWalletInfoFull,
-  JsonObject
+  EdgeWalletInfoFull
 } from '../../types/types'
+import { asJsonObject } from '../../util/file-helpers'
 import { LoginStash } from './login-stash'
 
 // Login data decrypted into memory.
@@ -77,7 +77,7 @@ export interface WalletInfoFullMap {
 
 export const asEdgeWalletInfo = asObject<EdgeWalletInfo>({
   id: asString,
-  keys: (raw: any): JsonObject => raw,
+  keys: asJsonObject,
   type: asString
 })
 

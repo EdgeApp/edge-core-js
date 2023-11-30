@@ -1,10 +1,11 @@
+import { asObject, asOptional, asString } from 'cleaners'
+
 import {
   EdgeSwapInfo,
   EdgeSwapPlugin,
   EdgeSwapPluginStatus,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  JsonObject,
   SwapCurrencyError,
   SwapPermissionError
 } from '../../src/index'
@@ -16,19 +17,26 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: 'support@fakeswap'
 }
 
+const asFakeSwapSettings = asObject({
+  kycToken: asOptional(asString)
+})
+
 export const fakeSwapPlugin: EdgeSwapPlugin = {
   swapInfo,
 
-  checkSettings(userSettings: JsonObject): EdgeSwapPluginStatus {
-    return { needsActivation: typeof userSettings.kycToken !== 'string' }
+  checkSettings(userSettings: object): EdgeSwapPluginStatus {
+    const cleanSettings = asFakeSwapSettings(userSettings)
+    return { needsActivation: cleanSettings.kycToken == null }
   },
 
   fetchSwapQuote(
     request: EdgeSwapRequest,
-    userSettings: JsonObject = {}
+    userSettings: object = {}
   ): Promise<EdgeSwapQuote> {
+    const cleanSettings = asFakeSwapSettings(userSettings)
+
     // We need KYC:
-    if (typeof userSettings.kycToken !== 'string') {
+    if (cleanSettings.kycToken == null) {
       throw new SwapPermissionError(swapInfo, 'noVerification')
     }
 

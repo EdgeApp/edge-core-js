@@ -14,8 +14,7 @@ import {
   EdgeCurrencyTools,
   EdgeCurrencyWallet,
   EdgeTokenMap,
-  EdgeWalletInfo,
-  JsonObject
+  EdgeWalletInfo
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
 import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
@@ -350,7 +349,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
   watcher(input: CurrencyWalletInput) {
     let lastState: CurrencyWalletState | undefined
-    let lastSettings: JsonObject = {}
+    let lastSettings: object = {}
     let lastTokens: EdgeTokenMap = {}
     let lastEnabledTokenIds: string[] = initialTokenIds
 

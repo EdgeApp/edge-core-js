@@ -5,8 +5,7 @@ import { wasCreateKeysPayload } from '../../types/server-cleaners'
 import {
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyWallet,
-  EdgeWalletInfo,
-  JsonObject
+  EdgeWalletInfo
 } from '../../types/types'
 import { encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
@@ -48,7 +47,7 @@ export function makeAccountType(appId: string): string {
  */
 export function makeKeyInfo(
   type: string,
-  keys: JsonObject,
+  keys: object,
   idKey?: Uint8Array
 ): EdgeWalletInfo {
   const hash = hmacSha256(
@@ -187,7 +186,7 @@ export function fixWalletInfo(walletInfo: EdgeWalletInfo): EdgeWalletInfo {
   const { id, keys, type } = walletInfo
 
   // Wallet types we need to fix:
-  const defaults: { [type: string]: JsonObject } = {
+  const defaults: { [type: string]: object } = {
     // BTC:
     'wallet:bitcoin-bip44': { format: 'bip44', coinType: 0 },
     'wallet:bitcoin-bip49': { format: 'bip49', coinType: 0 },

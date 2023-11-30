@@ -6,8 +6,7 @@ import {
   EdgeMetadata,
   EdgeSpendInfo,
   EdgeWalletInfo,
-  EdgeWalletStates,
-  JsonObject
+  EdgeWalletStates
 } from '../../types/types'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
@@ -84,7 +83,7 @@ export function makeSplitWalletInfo(
   // Fix the keys:
   const networkName = type.replace(/wallet:/, '').replace('-', '')
   const newNetworkName = newWalletType.replace(/wallet:/, '').replace('-', '')
-  const newKeys: JsonObject = wasEdgeStorageKeys({
+  const newKeys: { [key: string]: unknown } = wasEdgeStorageKeys({
     dataKey,
     syncKey: newSyncKey
   })

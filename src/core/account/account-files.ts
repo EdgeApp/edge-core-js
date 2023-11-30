@@ -1,7 +1,7 @@
 import { Disklet, justFiles } from 'disklet'
 import { base64 } from 'rfc4648'
 
-import { EdgeWalletInfo, EdgeWalletStates, JsonObject } from '../../types/types'
+import { EdgeWalletInfo, EdgeWalletStates } from '../../types/types'
 import { makeJsonFile } from '../../util/file-helpers'
 import { makeKeyInfo } from '../login/keys'
 import { wasEdgeStorageKeys } from '../login/storage-keys'
@@ -200,7 +200,7 @@ export async function changePluginUserSettings(
   ai: ApiInput,
   accountId: string,
   pluginId: string,
-  userSettings: JsonObject
+  userSettings: object
 ): Promise<void> {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)

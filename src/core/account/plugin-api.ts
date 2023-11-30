@@ -7,8 +7,7 @@ import {
   EdgeSwapConfig,
   EdgeSwapInfo,
   EdgeToken,
-  EdgeTokenMap,
-  JsonObject
+  EdgeTokenMap
 } from '../../types/types'
 import { uniqueStrings } from '../currency/wallet/enabled-tokens'
 import { getCurrencyTools } from '../plugins/plugins-selectors'
@@ -154,12 +153,12 @@ export class CurrencyConfig
     })
   }
 
-  get userSettings(): JsonObject {
+  get userSettings(): object {
     const accountState = this._ai.props.state.accounts[this._accountId]
     return accountState.userSettings[this._pluginId]
   }
 
-  async changeUserSettings(settings: JsonObject): Promise<void> {
+  async changeUserSettings(settings: object): Promise<void> {
     await changePluginUserSettings(
       this._ai,
       this._accountId,
@@ -170,8 +169,8 @@ export class CurrencyConfig
 
   async importKey(
     userInput: string,
-    opts: { keyOptions?: JsonObject } = {}
-  ): Promise<JsonObject> {
+    opts: { keyOptions?: object } = {}
+  ): Promise<object> {
     const tools = await getCurrencyTools(this._ai, this._pluginId)
 
     if (tools.importPrivateKey == null) {
@@ -214,7 +213,7 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     return this._ai.props.state.plugins.swap[this._pluginId].swapInfo
   }
 
-  get userSettings(): JsonObject {
+  get userSettings(): object {
     const accountState = this._ai.props.state.accounts[this._accountId]
     return accountState.userSettings[this._pluginId]
   }
@@ -227,7 +226,7 @@ export class SwapConfig extends Bridgeable<EdgeSwapConfig> {
     })
   }
 
-  async changeUserSettings(settings: JsonObject): Promise<void> {
+  async changeUserSettings(settings: object): Promise<void> {
     await changePluginUserSettings(
       this._ai,
       this._accountId,

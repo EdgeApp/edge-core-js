@@ -9,8 +9,7 @@ import {
   EdgeTransaction,
   EdgeTxAction,
   EdgeWalletInfo,
-  EdgeWalletInfoFull,
-  JsonObject
+  EdgeWalletInfoFull
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
 import { RootAction } from '../../actions'
@@ -48,7 +47,7 @@ export interface MergedTransaction {
   date: number
   isSend: boolean
   memos: EdgeMemo[]
-  otherParams?: JsonObject
+  otherParams?: object
   ourReceiveAddresses: string[]
   signedTx: string
   txid: string

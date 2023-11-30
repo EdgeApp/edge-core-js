@@ -24,8 +24,7 @@ import {
   EdgeSwapRequest,
   EdgeSwapRequestOptions,
   EdgeWalletInfoFull,
-  EdgeWalletStates,
-  JsonObject
+  EdgeWalletStates
 } from '../../types/types'
 import { base58 } from '../../util/encoding'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
@@ -380,7 +379,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       await changeWalletStates(ai, accountId, walletStates)
     },
 
-    async createWallet(walletType: string, keys?: JsonObject): Promise<string> {
+    async createWallet(walletType: string, keys?: object): Promise<string> {
       const { login, loginTree } = accountState()
 
       if (keys == null) {
@@ -463,11 +462,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return out
     },
 
-    async getRawPrivateKey(walletId: string): Promise<JsonObject> {
+    async getRawPrivateKey(walletId: string): Promise<object> {
       return getRawPrivateKey(ai, accountId, walletId).keys
     },
 
-    async getRawPublicKey(walletId: string): Promise<JsonObject> {
+    async getRawPublicKey(walletId: string): Promise<object> {
       const info = getRawPrivateKey(ai, accountId, walletId)
       const pluginId = findCurrencyPluginId(
         ai.props.state.plugins.currency,

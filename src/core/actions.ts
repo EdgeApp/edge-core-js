@@ -10,8 +10,7 @@ import {
   EdgeTokenMap,
   EdgeTransaction,
   EdgeWalletInfo,
-  EdgeWalletStates,
-  JsonObject
+  EdgeWalletStates
 } from '../types/types'
 import { SwapSettings } from './account/account-types'
 import {
@@ -105,7 +104,7 @@ export type RootAction =
       payload: {
         accountId: string
         pluginId: string
-        userSettings: JsonObject
+        userSettings: object
       }
     }
   | {
@@ -113,7 +112,7 @@ export type RootAction =
       type: 'ACCOUNT_PLUGIN_SETTINGS_LOADED'
       payload: {
         accountId: string
-        userSettings: EdgePluginMap<JsonObject>
+        userSettings: EdgePluginMap<object>
         swapSettings: EdgePluginMap<SwapSettings>
       }
     }
