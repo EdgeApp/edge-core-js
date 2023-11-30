@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- added: EdgeTransaction.savedAction param
+- added: EdgeTransaction.tokenId param
+- added: EdgeCurrencyWallet.saveTxAction method to write an EdgeTxAction to a transaction
+- added: EdgeTxActionFiat type to EdgeTxAction for fiat exchange metadata
+
 ## 1.12.0 (2023-11-30)
 
 - added: Accept an `onNewTokens` callback from `EdgeCurrencyEngine`.
