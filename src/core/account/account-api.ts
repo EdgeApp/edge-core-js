@@ -396,7 +396,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         ...wasEdgeStorageKeys(createStorageKeys(ai)),
         ...keys
       })
-      const kit = makeKeysKit(ai, login, walletInfo)
+      const kit = makeKeysKit(ai, login, [walletInfo])
       await applyKit(ai, loginTree, kit)
       return walletInfo.id
     },

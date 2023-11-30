@@ -158,7 +158,7 @@ export async function splitWalletInfo(
   }
 
   // Add the keys to the login:
-  const kit = makeKeysKit(ai, login, newWalletInfo)
+  const kit = makeKeysKit(ai, login, [newWalletInfo])
   await applyKit(ai, loginTree, kit)
 
   // Try to copy metadata on a best-effort basis.

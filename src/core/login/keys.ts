@@ -63,7 +63,7 @@ export function makeKeyInfo(
 export function makeKeysKit(
   ai: ApiInput,
   login: LoginTree,
-  ...keyInfos: EdgeWalletInfo[]
+  keyInfos: EdgeWalletInfo[]
 ): LoginKit {
   const { io } = ai.props
   const keyBoxes = keyInfos.map(info =>
@@ -274,7 +274,7 @@ export async function createCurrencyWallet(
   }
 
   const walletInfo = makeKeyInfo(walletType, keys)
-  const kit = makeKeysKit(ai, login, fixWalletInfo(walletInfo))
+  const kit = makeKeysKit(ai, login, [fixWalletInfo(walletInfo)])
 
   // Add the keys to the login:
   await applyKit(ai, loginTree, kit)

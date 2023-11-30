@@ -86,7 +86,7 @@ export async function ensureAccountExists(
       accountType,
       wasEdgeStorageKeys(createStorageKeys(ai))
     )
-    const keysKit = makeKeysKit(ai, login, keyInfo)
+    const keysKit = makeKeysKit(ai, login, [keyInfo])
     return applyKit(ai, loginTree, keysKit)
   }
 

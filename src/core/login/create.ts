@@ -81,7 +81,7 @@ export async function makeCreateKit(
 
   // Set up optional login methods:
   if (keyInfo != null) {
-    keysKit = makeKeysKit(ai, login, keyInfo)
+    keysKit = makeKeysKit(ai, login, [keyInfo])
   }
   if (parentLogin != null) {
     parentBox = encrypt(io, loginKey, parentLogin.loginKey)
