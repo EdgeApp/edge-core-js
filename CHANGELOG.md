@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.12.0 (2023-11-30)
+
 - added: Accept an `onNewTokens` callback from `EdgeCurrencyEngine`.
 - added: Emit an `enabledDetectedTokens` event when auto-enabling tokens.
 - added: Expose auto-detected tokens as `EdgeCurrencyWallet.detectedTokenIds`.
