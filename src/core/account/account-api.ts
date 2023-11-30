@@ -32,10 +32,8 @@ import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import { makeExchangeCache } from '../exchange/exchange-api'
 import {
   createCurrencyWallet,
-  listSplittableWalletTypes,
   makeKeysKit,
-  makeStorageKeyInfo,
-  splitWalletInfo
+  makeStorageKeyInfo
 } from '../login/keys'
 import { applyKit } from '../login/login'
 import { deleteLogin } from '../login/login-delete'
@@ -48,6 +46,7 @@ import {
 } from '../login/password'
 import { changePin, checkPin2, deletePin } from '../login/pin2'
 import { changeRecovery, deleteRecovery } from '../login/recovery2'
+import { listSplittableWalletTypes, splitWalletInfo } from '../login/splitting'
 import { changeVoucherStatus } from '../login/vouchers'
 import {
   findCurrencyPluginId,
