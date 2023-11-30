@@ -15,6 +15,7 @@ import {
   EdgeAssetAmount,
   EdgeFiatAmount,
   EdgeMetadata,
+  EdgeSwapInfo,
   EdgeTxAction,
   EdgeTxActionFiat,
   EdgeTxActionFiatType,
@@ -228,12 +229,25 @@ export const asEdgeTxActionSwapType: Cleaner<EdgeTxActionSwapType> = asValue(
   'swapOrderCancel'
 )
 
+export const asEdgeSwapInfo = asObject<EdgeSwapInfo>({
+  pluginId: asString,
+  displayName: asString,
+  isDex: asOptional(asBoolean),
+  orderUri: asOptional(asString), // The orderId would be appended to this
+  supportEmail: asString
+})
+
 export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
+  swapInfo: asEdgeSwapInfo,
   type: asEdgeTxActionSwapType,
   orderId: asOptional(asString),
+  orderUri: asOptional(asString),
+  isEstimate: asOptional(asBoolean),
   canBePartial: asOptional(asBoolean),
   sourceAsset: asEdgeAssetAmount,
-  destAsset: asEdgeAssetAmount
+  destAsset: asEdgeAssetAmount,
+  payoutWalletId: asString,
+  payoutAddress: asString
 })
 
 export const asEdgeTxActionStakeType: Cleaner<EdgeTxActionStakeType> = asValue(
