@@ -7,6 +7,7 @@ import {
   EdgeRateHint,
   EdgeStakingStatus,
   EdgeToken,
+  EdgeTokenId,
   EdgeTokenMap,
   EdgeTransaction,
   EdgeWalletInfo,
@@ -213,7 +214,7 @@ export type RootAction =
       type: 'CURRENCY_ENGINE_GOT_TXS'
       payload: {
         walletId: string
-        currencyCode: string
+        tokenId: EdgeTokenId
       }
     }
   | {

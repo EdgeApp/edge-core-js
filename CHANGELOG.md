@@ -3,7 +3,9 @@
 ## Unreleased
 
 - added: `EdgeTokenId` type definition.
+- added: `EdgeTransaction.tokenId`.
 - added: Allow deleting metadata fields by passing `null` to `saveTxMetadata`.
+- deprecated: `EdgeTransaction.currencyCode`. Use `tokenId` instead.
 
 ## 1.13.1 (2023-12-06)
 

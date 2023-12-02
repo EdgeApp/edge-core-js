@@ -22,6 +22,7 @@ import {
   EdgeWalletInfo,
   InsufficientFundsError
 } from '../../src/index'
+import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 import { compare } from '../../src/util/compare'
 
 const GENESIS_BLOCK = 1231006505000
@@ -84,6 +85,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private readonly callbacks: EdgeCurrencyEngineCallbacks
   private running: boolean
   private readonly state: State
+  private allTokens: EdgeTokenMap = fakeTokens
 
   constructor(walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
     this.walletId = walletInfo.id
@@ -148,6 +150,11 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
       const changes: EdgeTransaction[] = []
       for (const txid of Object.keys(settings.txs)) {
         const incoming: Partial<EdgeTransaction> = settings.txs[txid]
+        const { tokenId = null } = upgradeCurrencyCode({
+          allTokens: this.allTokens,
+          currencyCode: incoming.currencyCode,
+          currencyInfo: fakeCurrencyInfo
+        })
         const newTx: EdgeTransaction = {
           blockHeight: 0,
           currencyCode: 'FAKE',
@@ -158,6 +165,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
           networkFee: '0',
           ourReceiveAddresses: [],
           signedTx: '',
+          tokenId,
           ...incoming,
           txid,
           walletId: this.walletId
@@ -230,6 +238,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
   // Tokens:
   changeCustomTokens(tokens: EdgeTokenMap): Promise<void> {
+    this.allTokens = { ...tokens, ...fakeTokens }
     return Promise.resolve()
   }
 
@@ -259,7 +268,9 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
   // Spending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-    const { currencyCode = 'FAKE', memos = [], spendTargets } = spendInfo
+    const { memos = [], spendTargets, tokenId = null } = spendInfo
+    const { currencyCode } =
+      tokenId == null ? fakeCurrencyInfo : this.allTokens[tokenId]
 
     // Check the spend targets:
     let total = '0'
@@ -270,7 +281,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     }
 
     // Check the balances:
-    if (lt(this.getBalance({ currencyCode }), total)) {
+    if (lt(this.getBalance({ tokenId }), total)) {
       return Promise.reject(new InsufficientFundsError())
     }
 
@@ -288,6 +299,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
       ourReceiveAddresses: [],
       signedTx: '',
       txid: 'spend',
+      tokenId,
       walletId: this.walletId
     })
   }

@@ -30,6 +30,7 @@ import {
   EdgeSpendTarget,
   EdgeStakingStatus,
   EdgeStreamTransactionOptions,
+  EdgeTokenId,
   EdgeTransaction,
   EdgeWalletInfo
 } from '../../../types/types'
@@ -228,7 +229,7 @@ export function makeCurrencyWalletApi(
         beforeDate,
         firstBatchSize = batchSize,
         searchString,
-        tokenId,
+        tokenId = null,
         unfilteredStart
       } = opts
       const { currencyCode } =
@@ -238,14 +239,14 @@ export function makeCurrencyWalletApi(
 
       // Load transactions from the engine if necessary:
       let state = input.props.walletState
-      if (!state.gotTxs[currencyCode]) {
+      if (!state.gotTxs.has(tokenId)) {
         const txs = await engine.getTransactions({ currencyCode })
         fakeCallbacks.onTransactionsChanged(txs)
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_GOT_TXS',
           payload: {
             walletId: input.props.walletId,
-            currencyCode
+            tokenId
           }
         })
         state = input.props.walletState
@@ -291,14 +292,13 @@ export function makeCurrencyWalletApi(
             // Filter transactions based on the currency code:
             if (
               tx == null ||
-              (tx.nativeAmount[currencyCode] == null &&
-                tx.networkFee[currencyCode] == null)
+              !(tx.nativeAmount.has(tokenId) || tx.networkFee.has(tokenId))
             ) {
               continue
             }
 
             // Filter transactions based on search criteria:
-            const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
+            const edgeTx = combineTxWithFile(input, tx, file, tokenId)
             if (!searchStringFilter(ai, edgeTx, searchString)) continue
             if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
 
@@ -629,10 +629,14 @@ export function combineTxWithFile(
   input: CurrencyWalletInput,
   tx: MergedTransaction,
   file: TransactionFile | undefined,
-  currencyCode: string
+  tokenId: EdgeTokenId
 ): EdgeTransaction {
   const walletId = input.props.walletId
-  const walletCurrency = input.props.walletState.currencyInfo.currencyCode
+  const { accountId, currencyInfo, pluginId } = input.props.walletState
+  const allTokens = input.props.state.accounts[accountId].allTokens[pluginId]
+
+  const { currencyCode } = tokenId == null ? currencyInfo : allTokens[tokenId]
+  const walletCurrency = currencyInfo.currencyCode
 
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
@@ -644,12 +648,13 @@ export function combineTxWithFile(
     isSend: tx.isSend,
     memos: tx.memos,
     metadata: {},
-    nativeAmount: tx.nativeAmount[currencyCode] ?? '0',
-    networkFee: tx.networkFee[currencyCode] ?? '0',
+    nativeAmount: tx.nativeAmount.get(tokenId) ?? '0',
+    networkFee: tx.networkFee.get(tokenId) ?? '0',
     otherParams: { ...tx.otherParams },
     ourReceiveAddresses: tx.ourReceiveAddresses,
-    parentNetworkFee: tx.networkFee[walletCurrency],
+    parentNetworkFee: tx.networkFee.get(null) ?? '0',
     signedTx: tx.signedTx,
+    tokenId,
     txid: tx.txid,
     walletId
   }
@@ -659,8 +664,12 @@ export function combineTxWithFile(
     if (file.creationDate < out.date) out.date = file.creationDate
 
     const metadata = mergeMetadata(
-      file.currencies.get(walletCurrency)?.metadata ?? {},
-      file.currencies.get(currencyCode)?.metadata ?? {}
+      file.tokens.get(null)?.metadata ??
+        file.currencies.get(walletCurrency)?.metadata ??
+        {},
+      file.tokens.get(tokenId)?.metadata ??
+        file.currencies.get(currencyCode)?.metadata ??
+        {}
     )
     metadata.amountFiat =
       metadata.exchangeAmount?.[input.props.walletState.fiat]

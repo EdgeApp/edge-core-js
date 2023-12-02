@@ -11,8 +11,8 @@ import {
   Cleaner
 } from 'cleaners'
 
-import { EdgeMetadata, EdgeTxSwap } from '../../../types/types'
-import { asMap } from '../../../util/asMap'
+import { EdgeMetadata, EdgeTokenId, EdgeTxSwap } from '../../../types/types'
+import { asMap, asTokenIdMap } from '../../../util/asMap'
 import { asJsonObject } from '../../../util/file-helpers'
 import { asEdgeMetadata } from './metadata'
 
@@ -30,6 +30,8 @@ export interface TransactionFile {
   internal: boolean
   creationDate: number
   currencies: Map<string, TransactionAsset>
+  tokens: Map<EdgeTokenId, TransactionAsset>
+
   deviceDescription?: string
   feeRateRequested?: 'high' | 'standard' | 'low' | object
   feeRateUsed?: object
@@ -168,6 +170,7 @@ export const asTransactionFile = asObject<TransactionFile>({
   internal: asBoolean,
   creationDate: asNumber,
   currencies: asMap(asTransactionAsset),
+  tokens: asOptional(asTokenIdMap(asTransactionAsset), () => new Map()),
   deviceDescription: asOptional(asString),
   feeRateRequested: asOptional(asEither(asFeeRate, asJsonObject)),
   feeRateUsed: asOptional(asJsonObject),

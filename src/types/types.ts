@@ -515,11 +515,14 @@ export type EdgeConfirmationState =
   | number
 
 export interface EdgeTransaction {
-  // Amounts:
-  currencyCode: string
-  nativeAmount: string
+  /**
+   * The asset used to query this transaction.
+   * The amounts and metadata will reflect the chosen asset.
+   */
+  tokenId: EdgeTokenId
 
-  // Fees:
+  // Amounts:
+  nativeAmount: string
   networkFee: string
   parentNetworkFee?: string
 
@@ -566,6 +569,9 @@ export interface EdgeTransaction {
   metadata?: EdgeMetadata
   walletId: string
   otherParams?: JsonObject
+
+  /** @deprecated Use tokenId instead */
+  currencyCode: string
 }
 
 export interface EdgeSpendTarget {

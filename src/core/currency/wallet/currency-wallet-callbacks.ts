@@ -3,6 +3,7 @@ import { asMaybe } from 'cleaners'
 import { isPixieShutdownError } from 'redux-pixies'
 import { emit } from 'yaob'
 
+import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
   EdgeCurrencyEngineCallbacks,
   EdgeStakingStatus,
@@ -225,7 +226,7 @@ export function makeCurrencyWalletCallbacks(
                 input,
                 reduxTx,
                 files[txidHash],
-                reduxTx.currencyCode
+                null
               )
 
               // Dispatch event to update the redux transaction object
@@ -260,6 +261,10 @@ export function makeCurrencyWalletCallbacks(
     },
 
     onTransactionsChanged(txs: EdgeTransaction[]) {
+      const { accountId, currencyInfo, pluginId } = input.props.walletState
+      const allTokens =
+        input.props.state.accounts[accountId].allTokens[pluginId]
+
       // Sanity-check incoming transactions:
       if (txs == null) return
       for (const tx of txs) {
@@ -278,12 +283,19 @@ export function makeCurrencyWalletCallbacks(
         }
         if (tx.isSend == null) tx.isSend = lt(tx.nativeAmount, '0')
         if (tx.memos == null) tx.memos = []
+        if (tx.tokenId === undefined) {
+          const { tokenId } = upgradeCurrencyCode({
+            allTokens,
+            currencyInfo,
+            currencyCode: tx.currencyCode
+          })
+          tx.tokenId = tokenId ?? null
+        }
       }
 
       // Grab stuff from redux:
       const { state } = input.props
       const { fileNames, txs: reduxTxs } = input.props.walletState
-      const defaultCurrency = input.props.walletState.currencyInfo.currencyCode
 
       const txidHashes: TxidHashes = {}
       const changed: EdgeTransaction[] = []
@@ -307,7 +319,7 @@ export function makeCurrencyWalletCallbacks(
         }
 
         // Verify that something has changed:
-        const reduxTx = mergeTx(tx, defaultCurrency, reduxTxs[txid])
+        const reduxTx = mergeTx(tx, reduxTxs[txid])
         if (compare(reduxTx, reduxTxs[txid]) && tx.metadata == null) continue
 
         // Ensure the transaction has metadata:
@@ -325,7 +337,7 @@ export function makeCurrencyWalletCallbacks(
           input,
           reduxTx,
           files[txidHash],
-          tx.currencyCode
+          tx.tokenId
         )
         if (isNew) created.push(combinedTx)
         else if (files[txidHash] != null) changed.push(combinedTx)

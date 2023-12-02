@@ -624,10 +624,6 @@ describe('currency wallets', function () {
 async function addDemoTransactions(
   currencyConfig: EdgeCurrencyConfig
 ): Promise<string> {
-  await currencyConfig.changeUserSettings({
-    txs: walletTxs
-  })
-
   const tokenId = await currencyConfig.addCustomToken({
     currencyCode: 'BTC',
     denominations: [],
@@ -636,6 +632,11 @@ async function addDemoTransactions(
       contractAddress: 'madeupcontract'
     }
   })
+
+  await currencyConfig.changeUserSettings({
+    txs: walletTxs
+  })
+
   return tokenId
 }
 
