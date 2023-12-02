@@ -207,16 +207,10 @@ export function asIntegerString(raw: unknown): string {
 // file cleaners
 // ---------------------------------------------------------------------
 
-export const asNumeralString = (raw: any): string => {
-  if (typeof raw !== 'string') throw new Error('Not type string')
-  if (isNaN(Number(raw))) throw new Error('Does not parse as a number')
-  return raw
-}
-
 export const asEdgeAssetAmount = asObject<EdgeAssetAmount>({
   pluginId: asString,
   tokenId: asOptional(asString),
-  nativeAmount: asOptional(asNumeralString)
+  nativeAmount: asOptional(asIntegerString)
 })
 
 export const asEdgeTxActionSwapType: Cleaner<EdgeTxActionSwapType> = asValue(

@@ -708,10 +708,7 @@ export function combineTxWithFile(
     )
 
     if (mergedTokens.savedAction != null) {
-      out.savedAction = {
-        ...out.savedAction,
-        ...mergedTokens.savedAction
-      }
+      out.savedAction = mergedTokens.savedAction
     }
 
     if (file.feeRateRequested != null) {

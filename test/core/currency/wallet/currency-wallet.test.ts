@@ -503,18 +503,7 @@ describe('currency wallets', function () {
         uniqueIdentifier: 'hello'
       }
     ])
-    expect(txs[0].savedAction).deep.equals({
-      type: 'swap',
-      orderId: 'myorderid',
-      canBePartial: false,
-      sourceAsset: {
-        pluginId: 'bitcoin'
-      },
-      destAsset: {
-        pluginId: 'ethereum',
-        tokenId: 'mytokenid'
-      }
-    })
+    expect(txs[0].savedAction).deep.equals(savedAction)
     expect(txs[0].swapData).deep.equals({
       orderUri: undefined,
       refundAddress: undefined,
