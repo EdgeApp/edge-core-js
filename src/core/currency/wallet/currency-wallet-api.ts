@@ -65,6 +65,8 @@ const fakeMetadata = {
   notes: ''
 }
 
+export const PARENT_TOKEN_ID = ''
+
 // The EdgeTransaction.spendTargets type, but non-null:
 type SavedSpendTargets = EdgeTransaction['spendTargets']
 
@@ -298,14 +300,20 @@ export function makeCurrencyWalletApi(
             // Filter transactions based on the currency code:
             if (
               tx == null ||
-              (tx.nativeAmount[currencyCode] == null &&
-                tx.networkFee[currencyCode] == null)
+              (tx.tokens[tokenId ?? PARENT_TOKEN_ID]?.nativeAmount == null &&
+                tx.tokens[tokenId ?? PARENT_TOKEN_ID]?.networkFee == null)
             ) {
               continue
             }
 
             // Filter transactions based on search criteria:
-            const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
+            const edgeTx = combineTxWithFile(
+              input,
+              tx,
+              file,
+              currencyCode,
+              tokenId ?? null
+            )
             if (!searchStringFilter(ai, edgeTx, searchString)) continue
             if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
 
@@ -533,6 +541,9 @@ export function makeCurrencyWalletApi(
       tx.requestedCustomFee = customNetworkFee
       tx.spendTargets = savedTargets
       if (metadata != null) tx.metadata = metadata
+
+      // Looks redundant but we want undefined or null to be coalesced into null
+      if (tx.tokenId == null) tx.tokenId = null
       if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
       if (input.props.state.login.deviceDescription != null)
         tx.deviceDescription = input.props.state.login.deviceDescription
@@ -549,10 +560,20 @@ export function makeCurrencyWalletApi(
       currencyCode: string,
       metadata: EdgeMetadata
     ): Promise<void> {
+      const { accountApi } = input.props.output.accounts[accountId]
+      const { allTokens, currencyInfo } = accountApi.currencyConfig[pluginId]
+
+      const { tokenId = null } = upgradeCurrencyCode({
+        allTokens,
+        currencyInfo,
+        currencyCode
+      })
+
       await setCurrencyWalletTxMetadata(
         input,
         txid,
         currencyCode,
+        tokenId,
         packMetadata(metadata, input.props.walletState.fiat),
         fakeCallbacks
       )
@@ -633,11 +654,14 @@ export function combineTxWithFile(
   input: CurrencyWalletInput,
   tx: MergedTransaction,
   file: TransactionFile | undefined,
-  currencyCode: string
+  currencyCode: string,
+  tokenId: string | null
 ): EdgeTransaction {
   const walletId = input.props.walletId
   const walletCurrency = input.props.walletState.currencyInfo.currencyCode
   const walletFiat = input.props.walletState.fiat
+  const token = tx.tokens[tokenId ?? PARENT_TOKEN_ID]
+  const parentToken = tx.tokens[PARENT_TOKEN_ID]
 
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
@@ -645,15 +669,16 @@ export function combineTxWithFile(
     blockHeight: tx.blockHeight,
     confirmations: tx.confirmations,
     currencyCode,
+    tokenId,
     date: tx.date,
     isSend: tx.isSend,
     memos: tx.memos,
     metadata: {},
-    nativeAmount: tx.nativeAmount[currencyCode] ?? '0',
-    networkFee: tx.networkFee[currencyCode] ?? '0',
+    nativeAmount: token?.nativeAmount ?? '0',
+    networkFee: token?.networkFee ?? '0',
     otherParams: { ...tx.otherParams },
     ourReceiveAddresses: tx.ourReceiveAddresses,
-    parentNetworkFee: tx.networkFee[walletCurrency],
+    parentNetworkFee: parentToken?.networkFee,
     signedTx: tx.signedTx,
     txid: tx.txid,
     walletId
