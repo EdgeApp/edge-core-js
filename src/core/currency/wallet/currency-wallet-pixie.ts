@@ -114,7 +114,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       // Start the engine:
       const accountState = state.accounts[accountId]
       const engine = await plugin.makeCurrencyEngine(publicWalletInfo, {
-        callbacks: makeCurrencyWalletCallbacks(input, accountId, pluginId),
+        callbacks: makeCurrencyWalletCallbacks(input),
 
         // Wallet-scoped IO objects:
         log: makeLog(

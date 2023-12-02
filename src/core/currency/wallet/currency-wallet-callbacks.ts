@@ -82,10 +82,9 @@ function makeThrottledTxCallback(
  * Returns a callback structure suitable for passing to a currency engine.
  */
 export function makeCurrencyWalletCallbacks(
-  input: CurrencyWalletInput,
-  accountId: string,
-  pluginId: string
+  input: CurrencyWalletInput
 ): EdgeCurrencyEngineCallbacks {
+  const { accountId, pluginId } = input.props.walletState
   const { accountApi } = input.props.output.accounts[accountId]
   const currencyConfig = accountApi.currencyConfig[pluginId]
 

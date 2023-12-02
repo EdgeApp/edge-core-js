@@ -87,7 +87,7 @@ export function makeCurrencyWalletApi(
 
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
-  const fakeCallbacks = makeCurrencyWalletCallbacks(input, accountId, pluginId)
+  const fakeCallbacks = makeCurrencyWalletCallbacks(input)
 
   let otherMethods = {}
   if (engine.otherMethods != null) {
@@ -542,7 +542,7 @@ export function makeCurrencyWalletApi(
       tx.spendTargets = savedTargets
       if (metadata != null) tx.metadata = metadata
 
-      // Looks redundant but we want undefined or NULL to be coalesced into NULL
+      // Looks redundant but we want undefined or null to be coalesced into null
       if (tx.tokenId == null) tx.tokenId = null
       if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
       if (input.props.state.login.deviceDescription != null)
