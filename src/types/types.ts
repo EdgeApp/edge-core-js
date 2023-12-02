@@ -255,32 +255,38 @@ export interface EdgeAssetAmount {
   nativeAmount?: string
 }
 
-export type EdgeTxActionSwapType =
-  | 'swap'
-  | 'swapOrderPost'
-  | 'swapOrderFill'
-  | 'swapOrderCancel'
-
 export interface EdgeTxActionSwap {
-  type: EdgeTxActionSwapType
+  actionType: 'swap'
   orderId?: string
   canBePartial?: boolean
   sourceAsset: EdgeAssetAmount
   destAsset: EdgeAssetAmount
 }
 
-export type EdgeTxActionStakeType =
-  | 'stake'
-  | 'stakeOrder'
-  | 'unstake'
-  | 'unstakeOrder'
-
 export interface EdgeTxActionStake {
-  type: EdgeTxActionStakeType
+  actionType: 'stake'
   stakeAssets: EdgeAssetAmount[]
 }
 
 export type EdgeTxAction = EdgeTxActionSwap | EdgeTxActionStake
+
+export type EdgeAssetActionType =
+  | 'stake'
+  | 'stakeOrder'
+  | 'unstake'
+  | 'unstakeOrder'
+  | 'stake'
+  | 'stakeOrder'
+  | 'unstake'
+  | 'unstakeOrder'
+  | 'swap'
+  | 'swapOrderPost'
+  | 'swapOrderFill'
+  | 'swapOrderCancel'
+
+export interface EdgeAssetAction {
+  assetActionType: EdgeAssetActionType
+}
 
 // token info ----------------------------------------------------------
 
@@ -504,7 +510,9 @@ export interface EdgeTransaction {
   signedTx: string
   memos: EdgeMemo[]
   ourReceiveAddresses: string[]
+  assetAction?: EdgeAssetAction
   chainAction?: EdgeTxAction
+  savedAction?: EdgeTxAction
 
   // Spend-specific metadata:
   deviceDescription?: string
@@ -577,6 +585,8 @@ export interface EdgeSpendInfo {
   // Core:
   metadata?: EdgeMetadata
   swapData?: EdgeTxSwap
+  assetAction?: EdgeAssetAction
+  savedAction?: EdgeTxAction
   otherParams?: JsonObject
 
   /** @deprecated Use tokenId instead */

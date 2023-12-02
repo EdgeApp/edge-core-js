@@ -15,7 +15,7 @@ import {
   getStorageWalletLocalDisklet,
   hashStorageWalletFilename
 } from '../../storage/storage-selectors'
-import { combineTxWithFile } from './currency-wallet-api'
+import { combineTxWithFile, PARENT_TOKEN_ID } from './currency-wallet-api'
 import {
   asLegacyAddressFile,
   asLegacyMapFile,
@@ -77,6 +77,7 @@ function fixLegacyFile(
   const out: TransactionFile = {
     creationDate: file.state.creationDate,
     currencies: {},
+    tokens: {},
     internal: file.state.internal,
     txid: file.state.malleableTxId
   }
@@ -92,6 +93,7 @@ function fixLegacyFile(
     },
     providerFeeSent: file.meta.amountFeeAirBitzSatoshi.toFixed()
   }
+  out.tokens[PARENT_TOKEN_ID] = {}
 
   return out
 }
@@ -457,7 +459,8 @@ export async function setCurrencyWalletTxMetadata(
     txid,
     internal: false,
     creationDate,
-    currencies: {}
+    currencies: {},
+    tokens: {}
   }
   newFile.currencies[currencyCode] = {
     metadata
@@ -483,7 +486,15 @@ export async function setupNewTxMetadata(
 ): Promise<void> {
   const { dispatch, walletState, state, walletId } = input.props
   const { fiat = 'iso:USD' } = walletState
-  const { currencyCode, spendTargets, swapData, txid } = tx
+  const {
+    currencyCode,
+    assetAction,
+    spendTargets,
+    savedAction,
+    swapData,
+    tokenId,
+    txid
+  } = tx
   const disklet = getStorageWalletDisklet(state, walletId)
 
   const creationDate = Date.now() / 1000
@@ -503,9 +514,14 @@ export async function setupNewTxMetadata(
     internal: true,
     creationDate,
     currencies: {},
+    tokens: {},
+    savedAction,
     swap: swapData
   }
   json.currencies[currencyCode] = { metadata, nativeAmount }
+  json.tokens[tokenId ?? PARENT_TOKEN_ID] = {
+    assetAction
+  }
 
   // Set up the fee metadata:
   if (tx.networkFeeOption != null) {

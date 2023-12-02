@@ -2,6 +2,7 @@ import { lt } from 'biggystring'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
+  EdgeAssetAction,
   EdgeBalances,
   EdgeCurrencyInfo,
   EdgeMemo,
@@ -43,6 +44,7 @@ export interface TxidHashes {
 
 export interface MergedTransaction {
   chainAction?: EdgeTxAction
+  savedAction?: EdgeTxAction
   blockHeight: number
   confirmations: EdgeTransaction['confirmations']
   currencyCode: string
@@ -58,6 +60,7 @@ export interface MergedTransaction {
     [tokenId: string]: {
       nativeAmount: string
       networkFee: string
+      assetAction?: EdgeAssetAction
     }
   }
 }
@@ -433,6 +436,7 @@ export function mergeTx(
 ): MergedTransaction {
   const {
     chainAction,
+    assetAction,
     currencyCode = defaultCurrency,
     tokenId,
     isSend = lt(tx.nativeAmount, '0'),
@@ -457,7 +461,8 @@ export function mergeTx(
 
   out.tokens[tokenId ?? PARENT_TOKEN_ID] = {
     nativeAmount: tx.nativeAmount,
-    networkFee: tx.networkFee != null ? tx.networkFee.toString() : '0'
+    networkFee: tx.networkFee != null ? tx.networkFee.toString() : '0',
+    assetAction
   }
 
   if (tx.parentNetworkFee != null) {
