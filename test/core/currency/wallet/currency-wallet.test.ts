@@ -547,18 +547,7 @@ describe('currency wallets', function () {
       exchangeAmount: { 'iso:USD': 0.75 },
       ...metadata
     })
-    expect(txs[0].savedAction).deep.equals({
-      type: 'swap',
-      orderId: 'myorderid',
-      canBePartial: false,
-      sourceAsset: {
-        pluginId: 'bitcoin'
-      },
-      destAsset: {
-        pluginId: 'ethereum',
-        tokenId: 'mytokenid'
-      }
-    })
+    expect(txs[0].savedAction).deep.equals(savedAction)
   })
 
   it('can be paused and un-paused', async function () {

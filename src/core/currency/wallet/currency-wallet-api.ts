@@ -566,13 +566,8 @@ export function makeCurrencyWalletApi(
     ): Promise<void> {
       const { accountApi } = input.props.output.accounts[accountId]
       const { allTokens, currencyInfo } = accountApi.currencyConfig[pluginId]
-
-      const { currencyCode } = upgradeCurrencyCode({
-        allTokens,
-        currencyInfo,
-        currencyCode: undefined,
-        tokenId: tokenId ?? undefined
-      })
+      const { currencyCode } =
+        tokenId == null ? currencyInfo : allTokens[tokenId]
 
       await setCurrencyWalletTxMetadata(
         input,
