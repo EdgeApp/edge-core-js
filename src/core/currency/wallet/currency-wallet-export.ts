@@ -73,6 +73,14 @@ export function searchStringFilter(
     if (checkNullTypeAndIndex(displayName) || checkNullTypeAndIndex(pluginId))
       return true
   }
+  const action = tx.savedAction ?? tx.chainAction
+
+  if (action != null) {
+    if (action.actionType === 'swap') {
+      const { pluginId = '' } = action.destAsset
+      if (checkNullTypeAndIndex(pluginId)) return true
+    }
+  }
   if (tx.spendTargets != null) {
     for (const target of tx.spendTargets) {
       const { publicAddress = '', memo = '' } = target

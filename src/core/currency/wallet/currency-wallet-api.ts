@@ -40,6 +40,8 @@ import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
 import {
+  asEdgeAssetAction,
+  asEdgeTxAction,
   asEdgeTxSwap,
   packMetadata,
   TransactionFile,
@@ -472,7 +474,9 @@ export function makeCurrencyWalletApi(
         pendingTxs,
         rbfTxid,
         memos,
+        assetAction,
         skipChecks,
+        savedAction,
         spendTargets = [],
         swapData
       } = spendInfo
@@ -545,6 +549,12 @@ export function makeCurrencyWalletApi(
       // Looks redundant but we want undefined or null to be coalesced into null
       if (tx.tokenId == null) tx.tokenId = null
       if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
+      try {
+        if (savedAction != null) tx.savedAction = asEdgeTxAction(savedAction)
+      } catch (e) {
+        console.log(String(e))
+      }
+      if (assetAction != null) tx.assetAction = asEdgeAssetAction(assetAction)
       if (input.props.state.login.deviceDescription != null)
         tx.deviceDescription = input.props.state.login.deviceDescription
 
@@ -688,7 +698,7 @@ export function combineTxWithFile(
   if (file != null) {
     if (file.creationDate < out.date) out.date = file.creationDate
 
-    const merged = mergeDeeply(
+    const merged: TransactionFile['currencies']['currencyCode'] = mergeDeeply(
       file.currencies[walletCurrency],
       file.currencies[currencyCode]
     )
@@ -697,6 +707,15 @@ export function combineTxWithFile(
         ...out.metadata,
         ...unpackMetadata(merged.metadata, walletFiat)
       }
+    }
+
+    const mergedTokens: TransactionFile['tokens']['tokenId'] = mergeDeeply(
+      file.tokens[PARENT_TOKEN_ID],
+      file.tokens[tokenId ?? PARENT_TOKEN_ID]
+    )
+
+    if (mergedTokens.assetAction != null) {
+      out.assetAction = mergedTokens.assetAction
     }
 
     if (file.feeRateRequested != null) {
@@ -720,6 +739,8 @@ export function combineTxWithFile(
     }
 
     if (file.swap != null) out.swapData = asEdgeTxSwap(file.swap)
+    if (file.savedAction != null)
+      out.savedAction = asEdgeTxAction(file.savedAction)
     if (typeof file.secret === 'string') out.txSecret = file.secret
     if (file.deviceDescription != null)
       out.deviceDescription = file.deviceDescription

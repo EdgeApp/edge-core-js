@@ -5,12 +5,14 @@ import { describe, it } from 'mocha'
 
 import {
   EdgeAccount,
+  EdgeAssetAction,
   EdgeContext,
   EdgeCurrencyConfig,
   EdgeCurrencyWallet,
   EdgeMetadata,
   EdgeToken,
   EdgeTransaction,
+  EdgeTxAction,
   EdgeTxSwap,
   makeFakeEdgeWorld
 } from '../../../../src/index'
@@ -435,6 +437,24 @@ describe('currency wallets', function () {
 
     // Perform the spend:
     const metadata: EdgeMetadata = { name: 'me' }
+    const assetAction: EdgeAssetAction = {
+      assetActionType: 'swap'
+    }
+    const savedAction: EdgeTxAction = {
+      actionType: 'swap',
+      orderId: 'myorderid',
+      canBePartial: false,
+      sourceAsset: {
+        pluginId: 'bitcoin',
+        tokenId: undefined,
+        nativeAmount: '1234'
+      },
+      destAsset: {
+        pluginId: 'ethereum',
+        tokenId: 'mytokenid',
+        nativeAmount: '2345'
+      }
+    }
     const swapData: EdgeTxSwap = {
       orderId: '1234',
       isEstimate: true,
@@ -458,6 +478,8 @@ describe('currency wallets', function () {
         }
       ],
       metadata,
+      assetAction,
+      savedAction,
       swapData,
       networkFeeOption: 'high'
     })
@@ -489,6 +511,8 @@ describe('currency wallets', function () {
         uniqueIdentifier: 'hello'
       }
     ])
+    expect(txs[0].assetAction).deep.equals(assetAction)
+    expect(txs[0].savedAction).deep.equals(savedAction)
     expect(txs[0].swapData).deep.equals({
       orderUri: undefined,
       refundAddress: undefined,
