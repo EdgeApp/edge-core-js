@@ -258,7 +258,6 @@ export const asEdgeTxActionFiat = asObject<EdgeTxActionFiat>({
   type: asEdgeTxActionFiatType,
 
   orderId: asString,
-  walletId: asString,
   orderUri: asOptional(asString),
   isEstimate: asBoolean,
 

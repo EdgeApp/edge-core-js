@@ -292,7 +292,6 @@ export interface EdgeTxActionFiat {
   type: EdgeTxActionFiatType
 
   orderId: string
-  walletId: string
   orderUri?: string
   isEstimate: boolean
 
