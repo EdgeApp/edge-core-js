@@ -266,6 +266,7 @@ export type EdgeTxActionSwapType =
   | 'swapOrderPost'
   | 'swapOrderFill'
   | 'swapOrderCancel'
+  | 'transfer'
 
 export interface EdgeTxActionSwap {
   swapInfo: EdgeSwapInfo
@@ -314,10 +315,20 @@ export interface EdgeTxActionFiat {
   cryptoAsset: EdgeAssetAmount
 }
 
+export type EdgeTxActionTokenApprovalType = 'tokenApproval'
+
+export interface EdgeTxActionTokenApproval {
+  type: EdgeTxActionTokenApprovalType
+  tokenApproved: EdgeAssetAmount
+  tokenContractAddress: string
+  contractAddress: string
+}
+
 export type EdgeTxAction =
   | EdgeTxActionSwap
   | EdgeTxActionStake
   | EdgeTxActionFiat
+  | EdgeTxActionTokenApproval
 
 // token info ----------------------------------------------------------
 

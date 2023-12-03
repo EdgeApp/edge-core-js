@@ -22,6 +22,7 @@ import {
   EdgeTxActionStakeType,
   EdgeTxActionSwap,
   EdgeTxActionSwapType,
+  EdgeTxActionTokenApproval,
   EdgeTxSwap,
   JsonObject
 } from '../../../types/types'
@@ -226,7 +227,8 @@ export const asEdgeTxActionSwapType: Cleaner<EdgeTxActionSwapType> = asValue(
   'swap',
   'swapOrderPost',
   'swapOrderFill',
-  'swapOrderCancel'
+  'swapOrderCancel',
+  'transfer'
 )
 
 export const asEdgeSwapInfo = asObject<EdgeSwapInfo>({
@@ -288,10 +290,18 @@ export const asEdgeTxActionFiat = asObject<EdgeTxActionFiat>({
   cryptoAsset: asEdgeAssetAmount
 })
 
+export const asEdgeTxActionTokenApproval = asObject<EdgeTxActionTokenApproval>({
+  type: asValue('tokenApproval'),
+  tokenApproved: asEdgeAssetAmount,
+  tokenContractAddress: asString,
+  contractAddress: asString
+})
+
 export const asEdgeTxAction: Cleaner<EdgeTxAction> = asEither(
   asEdgeTxActionSwap,
   asEdgeTxActionStake,
-  asEdgeTxActionFiat
+  asEdgeTxActionFiat,
+  asEdgeTxActionTokenApproval
 )
 
 /**
