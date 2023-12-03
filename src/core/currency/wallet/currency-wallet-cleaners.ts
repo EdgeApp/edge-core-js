@@ -247,7 +247,8 @@ export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
   sourceAsset: asEdgeAssetAmount,
   destAsset: asEdgeAssetAmount,
   payoutWalletId: asString,
-  payoutAddress: asString
+  payoutAddress: asString,
+  refundAddress: asOptional(asString)
 })
 
 export const asEdgeTxActionStakeType: Cleaner<EdgeTxActionStakeType> = asValue(

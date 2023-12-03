@@ -279,6 +279,7 @@ export interface EdgeTxActionSwap {
   destAsset: EdgeAssetAmount
   payoutAddress: string
   payoutWalletId: string
+  refundAddress?: string
 }
 
 export type EdgeTxActionStakeType =
