@@ -504,7 +504,7 @@ export interface EdgeTransaction {
   signedTx: string
   memos: EdgeMemo[]
   ourReceiveAddresses: string[]
-  action?: EdgeTxAction
+  chainAction?: EdgeTxAction
 
   // Spend-specific metadata:
   deviceDescription?: string
