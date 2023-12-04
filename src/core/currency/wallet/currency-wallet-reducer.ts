@@ -42,7 +42,7 @@ export interface TxidHashes {
 }
 
 export interface MergedTransaction {
-  action?: EdgeTxAction
+  chainAction?: EdgeTxAction
   blockHeight: number
   confirmations: EdgeTransaction['confirmations']
   date: number
@@ -433,8 +433,8 @@ export function mergeTx(
   const { isSend = lt(tx.nativeAmount, '0'), tokenId = null } = tx
 
   const out: MergedTransaction = {
-    action: tx.action,
     blockHeight: tx.blockHeight,
+    chainAction: tx.chainAction,
     confirmations: tx.confirmations ?? 'unconfirmed',
     date: tx.date,
     isSend,

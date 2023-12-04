@@ -536,7 +536,9 @@ export interface EdgeTransaction {
   signedTx: string
   memos: EdgeMemo[]
   ourReceiveAddresses: string[]
-  action?: EdgeTxAction
+
+  /** Plugin-provided action data for all assets in a transaction */
+  chainAction?: EdgeTxAction
 
   // Spend-specific metadata:
   deviceDescription?: string
