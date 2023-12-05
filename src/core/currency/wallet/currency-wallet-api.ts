@@ -35,7 +35,7 @@ import {
   EdgeTxAction,
   EdgeWalletInfo
 } from '../../../types/types'
-import { mergeDeeply } from '../../../util/util'
+import { mergeDeeply, mergeDeeplyNull } from '../../../util/util'
 import { makeMetaTokens } from '../../account/custom-tokens'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
@@ -718,10 +718,11 @@ export function combineTxWithFile(
   if (file != null) {
     if (file.creationDate < out.date) out.date = file.creationDate
 
-    const merged: TransactionFile['currencies']['currencyCode'] = mergeDeeply(
-      file.currencies[walletCurrency],
-      file.currencies[currencyCode]
-    )
+    const merged: TransactionFile['currencies']['currencyCode'] =
+      mergeDeeplyNull(
+        file.currencies[walletCurrency],
+        file.currencies[currencyCode]
+      )
     if (merged.metadata != null) {
       out.metadata = {
         ...out.metadata,

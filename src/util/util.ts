@@ -31,6 +31,34 @@ export function mergeDeeply(...objects: any[]): any {
 }
 
 /**
+ * Merges several Javascript objects deeply,
+ * preferring the items from later objects. Includes
+ * null as a valid to stomp on older data
+ */
+export function mergeDeeplyNull(...objects: any[]): any {
+  const out: any = {}
+
+  for (const o of objects) {
+    if (o === undefined) continue
+
+    for (const key of Object.keys(o)) {
+      if (o[key] === undefined) continue
+      if (o[key] === null) {
+        out[key] = null
+        continue
+      }
+
+      out[key] =
+        out[key] !== undefined && typeof o[key] === 'object'
+          ? mergeDeeplyNull(out[key], o[key])
+          : o[key]
+    }
+  }
+
+  return out
+}
+
+/**
  * Like `Object.assign`, but makes the properties non-enumerable.
  */
 export function addHiddenProperties<O extends {}, P extends {}>(

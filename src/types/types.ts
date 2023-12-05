@@ -485,13 +485,13 @@ export interface EdgeCurrencyInfo {
 
 export interface EdgeMetadata {
   bizId?: number
-  category?: string
+  category?: string | null
   exchangeAmount?: { [fiatCurrencyCode: string]: number }
-  name?: string
-  notes?: string
+  name?: string | null
+  notes?: string | null
 
   /** @deprecated Use exchangeAmount instead */
-  amountFiat?: number
+  amountFiat?: number | null
 }
 
 // Would prefer a better name than EdgeNetworkFee2 but can't think of one

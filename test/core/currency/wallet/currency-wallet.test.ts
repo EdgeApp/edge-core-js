@@ -589,6 +589,46 @@ describe('currency wallets', function () {
     expect(txs[0].savedAction).deep.equals(savedAction)
   })
 
+  it('can delete metadata', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+
+    const metadata: EdgeMetadata = {
+      bizId: 1234,
+      name: 'me',
+      amountFiat: 0.75,
+      category: 'expense:Foot Massage',
+      notes: 'Hello World'
+    }
+    const newMetadata: EdgeMetadata = {
+      bizId: 1234,
+      name: 'me',
+      amountFiat: 0.75,
+      category: null,
+      notes: null
+    }
+
+    await config.changeUserSettings({
+      txs: { a: { nativeAmount: '25', metadata } }
+    })
+
+    const txs = await wallet.getTransactions({})
+    expect(txs.length).equals(1)
+    expect(txs[0].nativeAmount).equals('25')
+    expect(txs[0].metadata).deep.equals({
+      exchangeAmount: { 'iso:USD': 0.75 },
+      ...metadata
+    })
+
+    await wallet.saveTxMetadata('a', 'FAKE', newMetadata)
+    const txs2 = await wallet.getTransactions({})
+    expect(txs2.length).equals(1)
+    expect(txs2[0].nativeAmount).equals('25')
+    expect(txs2[0].metadata).deep.equals({
+      exchangeAmount: { 'iso:USD': 0.75 },
+      ...newMetadata
+    })
+  })
+
   it('can be paused and un-paused', async function () {
     const { wallet, context } = await makeFakeCurrencyWallet(true)
     const isEngineRunning = async (): Promise<boolean> => {

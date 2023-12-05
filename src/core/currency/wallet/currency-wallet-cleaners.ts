@@ -34,10 +34,10 @@ import { asJsonObject } from '../../../util/file-helpers'
  */
 export interface DiskMetadata {
   bizId?: number
-  category?: string
+  category?: string | null
   exchangeAmount: { [fiatCurrencyCode: string]: number }
-  name?: string
-  notes?: string
+  name?: string | null
+  notes?: string | null
 }
 
 /**
@@ -132,6 +132,16 @@ interface LegacyMapFile {
 // ---------------------------------------------------------------------
 
 /**
+ * Like `asOptional`, but explicitly preserves `null`.
+ */
+function asNullable<T>(cleaner: Cleaner<T>): Cleaner<T | null | undefined> {
+  return raw => {
+    if (raw === undefined) return undefined
+    if (raw === null) return null
+    return cleaner(raw)
+  }
+}
+/**
  * Turns user-provided metadata into its on-disk format.
  */
 export function packMetadata(
@@ -195,10 +205,10 @@ export const asEdgeTxSwap = asObject<EdgeTxSwap>({
 
 const asDiskMetadata = asObject<DiskMetadata>({
   bizId: asOptional(asNumber),
-  category: asOptional(asString),
+  category: asNullable(asString),
   exchangeAmount: asOptional(asObject(asNumber), () => ({})),
-  name: asOptional(asString),
-  notes: asOptional(asString)
+  name: asNullable(asString),
+  notes: asNullable(asString)
 })
 
 export function asIntegerString(raw: unknown): string {

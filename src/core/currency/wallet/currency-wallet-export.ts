@@ -51,18 +51,13 @@ export function searchStringFilter(
 
   if (checkNullTypeAndIndex(tx.nativeAmount)) return true
   if (tx.metadata != null) {
-    const {
-      category = '',
-      name = '',
-      notes = '',
-      exchangeAmount = {}
-    } = tx.metadata
+    const { category, name, notes, exchangeAmount = {} } = tx.metadata
     const txCurrencyWalletState =
       tx.walletId != null ? currencyState.wallets[tx.walletId] : undefined
     if (
-      checkNullTypeAndIndex(category) ||
-      checkNullTypeAndIndex(name) ||
-      checkNullTypeAndIndex(notes) ||
+      checkNullTypeAndIndex(category ?? '') ||
+      checkNullTypeAndIndex(name ?? '') ||
+      checkNullTypeAndIndex(notes ?? '') ||
       (txCurrencyWalletState != null &&
         checkNullTypeAndIndex(exchangeAmount[txCurrencyWalletState.fiat]))
     )

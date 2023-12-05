@@ -8,7 +8,7 @@ import {
   EdgeTxAction
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
-import { mergeDeeply } from '../../../util/util'
+import { mergeDeeplyNull } from '../../../util/util'
 import { fetchAppIdInfo } from '../../account/lobby-api'
 import { toApiInput } from '../../root-pixie'
 import { RootState } from '../../root-reducer'
@@ -479,7 +479,7 @@ export async function setCurrencyWalletTxMetadata(
     }
   }
 
-  const json = mergeDeeply(oldFile, newFile)
+  const json = mergeDeeplyNull(oldFile, newFile)
 
   // Save the new file:
   dispatch({
