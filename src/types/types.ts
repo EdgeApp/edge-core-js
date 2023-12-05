@@ -268,10 +268,16 @@ export interface EdgeFiatAmount {
 
 export interface EdgeTxActionSwap {
   actionType: 'swap'
+  swapInfo: EdgeSwapInfo
   orderId?: string
+  orderUri?: string
+  isEstimate?: boolean
   canBePartial?: boolean
   sourceAsset: EdgeAssetAmount
   destAsset: EdgeAssetAmount
+  payoutAddress: string
+  payoutWalletId: string
+  refundAddress?: string
 }
 
 export interface EdgeTxActionStake {
@@ -1274,6 +1280,7 @@ export interface EdgeSwapInfo {
   readonly displayName: string
   readonly isDex?: boolean
 
+  /** @deprecated Use orderUri in EdgeTxAction */
   readonly orderUri?: string // The orderId would be appended to this
   readonly supportEmail: string
 }
@@ -1310,6 +1317,7 @@ export interface EdgeSwapResult {
 
 export interface EdgeSwapApproveOptions {
   metadata?: EdgeMetadata
+  savedAction?: EdgeTxAction
 }
 
 /**

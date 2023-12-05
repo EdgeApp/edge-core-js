@@ -77,8 +77,16 @@ export function searchStringFilter(
 
   if (action != null) {
     if (action.actionType === 'swap') {
-      const { pluginId = '' } = action.destAsset
-      if (checkNullTypeAndIndex(pluginId)) return true
+      const { pluginId: destPluginId } = action.destAsset
+      const { pluginId: sourcePluginId } = action.sourceAsset
+      const { displayName, supportEmail } = action.swapInfo
+      if (
+        checkNullTypeAndIndex(sourcePluginId) ||
+        checkNullTypeAndIndex(destPluginId) ||
+        checkNullTypeAndIndex(displayName) ||
+        checkNullTypeAndIndex(supportEmail)
+      )
+        return true
     }
   }
   if (tx.spendTargets != null) {
