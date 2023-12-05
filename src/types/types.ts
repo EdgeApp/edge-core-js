@@ -299,10 +299,18 @@ export interface EdgeTxActionFiat {
   cryptoAsset: EdgeAssetAmount
 }
 
+export interface EdgeTxActionTokenApproval {
+  actionType: 'tokenApproval'
+  tokenApproved: EdgeAssetAmount
+  tokenContractAddress: string
+  contractAddress: string
+}
+
 export type EdgeTxAction =
   | EdgeTxActionSwap
   | EdgeTxActionStake
   | EdgeTxActionFiat
+  | EdgeTxActionTokenApproval
 
 export type EdgeAssetActionType =
   | 'stake'
@@ -320,6 +328,8 @@ export type EdgeAssetActionType =
   | 'buy'
   | 'sell'
   | 'sellNetworkFee'
+  | 'tokenApproval'
+  | 'transfer'
 
 export interface EdgeAssetAction {
   assetActionType: EdgeAssetActionType
