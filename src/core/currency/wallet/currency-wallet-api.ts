@@ -21,7 +21,7 @@ import {
   EdgeGetReceiveAddressOptions,
   EdgeGetTransactionsOptions,
   EdgeMemoRules,
-  EdgeMetadata,
+  EdgeMetadataChange,
   EdgeParsedUri,
   EdgePaymentProtocolInfo,
   EdgeReceiveAddress,
@@ -537,10 +537,11 @@ export function makeCurrencyWalletApi(
       await engine.saveTx(tx)
       fakeCallbacks.onTransactionsChanged([tx])
     },
+
     async saveTxMetadata(
       txid: string,
       currencyCode: string,
-      metadata: EdgeMetadata
+      metadata: EdgeMetadataChange
     ): Promise<void> {
       upgradeMetadata(input, metadata)
       await setCurrencyWalletTxMetadata(
@@ -551,6 +552,7 @@ export function makeCurrencyWalletApi(
         fakeCallbacks
       )
     },
+
     async signMessage(
       message: string,
       opts: EdgeSignMessageOptions = {}

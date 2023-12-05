@@ -9,6 +9,7 @@ import {
   EdgeCurrencyConfig,
   EdgeCurrencyWallet,
   EdgeMetadata,
+  EdgeMetadataChange,
   EdgeToken,
   EdgeTransaction,
   EdgeTxSwap,
@@ -509,6 +510,51 @@ describe('currency wallets', function () {
       notes: undefined,
       exchangeAmount: { 'iso:USD': 0.75 },
       ...metadata
+    })
+  })
+
+  it('can delete metadata', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+
+    const metadata: EdgeMetadata = {
+      bizId: 1234,
+      name: 'me',
+      amountFiat: 0.75,
+      category: 'expense:Foot Massage',
+      notes: 'Hello World'
+    }
+
+    const updateMetadata: EdgeMetadataChange = {
+      bizId: 1234,
+      name: 'me',
+      amountFiat: 0.75,
+      category: null,
+      notes: null
+    }
+
+    const newMetadata = { ...updateMetadata }
+    newMetadata.category = undefined
+    newMetadata.notes = undefined
+
+    await config.changeUserSettings({
+      txs: { a: { nativeAmount: '25', metadata } }
+    })
+
+    const txs = await wallet.getTransactions({})
+    expect(txs.length).equals(1)
+    expect(txs[0].nativeAmount).equals('25')
+    expect(txs[0].metadata).deep.equals({
+      exchangeAmount: { 'iso:USD': 0.75 },
+      ...metadata
+    })
+
+    await wallet.saveTxMetadata('a', 'FAKE', updateMetadata)
+    const txs2 = await wallet.getTransactions({})
+    expect(txs2.length).equals(1)
+    expect(txs2[0].nativeAmount).equals('25')
+    expect(txs2[0].metadata).deep.equals({
+      exchangeAmount: { 'iso:USD': 0.75 },
+      ...newMetadata
     })
   })
 

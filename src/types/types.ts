@@ -449,6 +449,24 @@ export interface EdgeMetadata {
   amountFiat?: number
 }
 
+/**
+ * Like EdgeMetadata, but passing `null` will delete a saved value,
+ * while passing `undefined` will leave the value unchanged.
+ */
+export interface EdgeMetadataChange {
+  bizId?: number | null
+  category?: string | null
+  exchangeAmount?: { [fiatCurrencyCode: string]: number | null }
+  name?: string | null
+  notes?: string | null
+
+  /**
+   * @deprecated Use exchangeAmount instead.
+   * This will be saved as `exchangeAmount[wallet.fiatCurrencyCode]`
+   */
+  amountFiat?: number | null
+}
+
 // Would prefer a better name than EdgeNetworkFee2 but can't think of one
 export interface EdgeNetworkFee2 {
   readonly nativeAmount: string
@@ -1116,7 +1134,7 @@ export interface EdgeCurrencyWallet {
   readonly saveTxMetadata: (
     txid: string,
     currencyCode: string,
-    metadata: EdgeMetadata
+    metadata: EdgeMetadataChange
   ) => Promise<void>
   readonly signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly sweepPrivateKeys: (

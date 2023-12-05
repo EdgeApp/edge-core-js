@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Allow deleting metadata fields by passing `null` to `saveTxMetadata`.
+
 ## 1.13.1 (2023-12-06)
 
 - added: Extra cors servers to distribute load
