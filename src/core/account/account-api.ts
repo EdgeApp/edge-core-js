@@ -20,6 +20,7 @@ import {
   EdgePendingVoucher,
   EdgePluginMap,
   EdgeRateCache,
+  EdgeResult,
   EdgeSwapConfig,
   EdgeSwapQuote,
   EdgeSwapRequest,
@@ -506,24 +507,27 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async createCurrencyWallets(
       createWallets: EdgeCreateCurrencyWallet[]
-    ): Promise<EdgeCurrencyWallet[]> {
+    ): Promise<Array<EdgeResult<EdgeCurrencyWallet>>> {
       const { login, loginTree } = accountState()
 
+      // Create the keys:
       const walletInfos = await Promise.all(
-        createWallets.map(async opts => {
-          return await makeCurrencyWalletKeys(ai, opts.walletType, opts)
-        })
+        createWallets.map(
+          async opts => await makeCurrencyWalletKeys(ai, opts.walletType, opts)
+        )
       )
+
+      // Store the keys on the server:
       await applyKit(ai, loginTree, makeKeysKit(ai, login, walletInfos))
+
+      // Set up options:
       return await Promise.all(
-        walletInfos.map(async (info, i) => {
-          return await finishWalletCreation(
-            ai,
-            accountId,
-            info.id,
-            createWallets[i]
-          )
-        })
+        walletInfos.map(
+          async (info, i) =>
+            await catchResult(
+              finishWalletCreation(ai, accountId, info.id, createWallets[i])
+            )
+        )
       )
     },
 
@@ -680,4 +684,12 @@ function getRawPrivateKey(
     throw new Error(`Invalid wallet: ${walletId} not found`)
   }
   return info
+}
+
+async function catchResult<T>(promise: Promise<T>): Promise<EdgeResult<T>> {
+  try {
+    return { ok: true, result: await promise }
+  } catch (error) {
+    return { ok: false, error }
+  }
 }
