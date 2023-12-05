@@ -17,6 +17,7 @@ import {
   EdgeAssetAmount,
   EdgeFiatAmount,
   EdgeMetadata,
+  EdgeSwapInfo,
   EdgeTxAction,
   EdgeTxActionFiat,
   EdgeTxActionStake,
@@ -222,12 +223,26 @@ export const asEdgeFiatAmount = asObject<EdgeFiatAmount>({
   fiatAmount: asString
 })
 
+export const asEdgeSwapInfo = asObject<EdgeSwapInfo>({
+  pluginId: asString,
+  displayName: asString,
+  isDex: asOptional(asBoolean),
+  orderUri: asOptional(asString), // The orderId would be appended to this
+  supportEmail: asString
+})
+
 export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
   actionType: asValue('swap'),
+  swapInfo: asEdgeSwapInfo,
   orderId: asOptional(asString),
+  orderUri: asOptional(asString),
+  isEstimate: asOptional(asBoolean),
   canBePartial: asOptional(asBoolean),
   sourceAsset: asEdgeAssetAmount,
-  destAsset: asEdgeAssetAmount
+  destAsset: asEdgeAssetAmount,
+  payoutWalletId: asString,
+  payoutAddress: asString,
+  refundAddress: asOptional(asString)
 })
 
 export const asEdgeTxActionStake = asObject<EdgeTxActionStake>({
