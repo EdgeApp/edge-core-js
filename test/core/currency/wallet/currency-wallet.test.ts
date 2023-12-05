@@ -442,7 +442,19 @@ describe('currency wallets', function () {
     }
     const savedAction: EdgeTxAction = {
       actionType: 'swap',
+      swapInfo: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: 'support@myemail.com',
+        isDex: false,
+        orderUri: undefined
+      },
+      isEstimate: false,
+      payoutAddress: '0xpayoutaddress',
+      payoutWalletId: '0xwalletid',
+      refundAddress: undefined,
       orderId: 'myorderid',
+      orderUri: 'https://myplugin.com',
       canBePartial: false,
       sourceAsset: {
         pluginId: 'bitcoin',
@@ -534,7 +546,19 @@ describe('currency wallets', function () {
     }
     const savedAction: EdgeTxAction = {
       actionType: 'swap',
+      swapInfo: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: 'support@myemail.com',
+        isDex: false,
+        orderUri: undefined
+      },
+      isEstimate: false,
+      payoutAddress: '0xpayoutaddress',
+      payoutWalletId: '0xwalletid',
+      refundAddress: undefined,
       orderId: 'myorderid',
+      orderUri: 'https://myplugin.com',
       canBePartial: false,
       sourceAsset: {
         pluginId: 'bitcoin',
