@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.13.1 (2023-12-06)
+
+- added: Extra cors servers to distribute load
+
 ## 1.13.0 (2023-12-05)
 
 - added: `EdgeAccount.createCurrencyWallets`, for creating multiple wallets at once.
