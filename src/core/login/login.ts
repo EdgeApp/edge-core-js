@@ -30,6 +30,7 @@ import { getStashById } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
 import { asEdgeWalletInfo, LoginKit, LoginTree } from './login-types'
 import { getLoginOtp, getStashOtp } from './otp'
+import { wasEdgeStorageKeys } from './storage-keys'
 
 /**
  * Returns the login that satisfies the given predicate,
@@ -272,10 +273,7 @@ function makeLoginTreeInner(
   if (stash.syncKeyBox != null) {
     const syncKey = decrypt(stash.syncKeyBox, loginKey)
     const type = makeAccountType(login.appId)
-    const keys = {
-      syncKey: base64.stringify(syncKey),
-      dataKey: base64.stringify(loginKey)
-    }
+    const keys = wasEdgeStorageKeys({ dataKey: loginKey, syncKey })
     legacyKeys.push(makeKeyInfo(type, keys, loginKey))
   }
 

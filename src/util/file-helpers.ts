@@ -1,8 +1,6 @@
 import { Cleaner, uncleaner } from 'cleaners'
 import { Disklet } from 'disklet'
 
-import { JsonObject } from '../types/types'
-
 /**
  * A wrapper that knows how to load and save JSON files,
  * with parsing, stringifying, and cleaning.
@@ -30,7 +28,7 @@ export function makeJsonFile<T>(cleaner: Cleaner<T>): JsonFile<T> {
  * A cleaner for something that must be an object,
  * but we don't care about the keys inside:
  */
-export const asJsonObject: Cleaner<JsonObject> = raw => {
+export const asJsonObject: Cleaner<object> = raw => {
   if (raw == null || typeof raw !== 'object') {
     throw new TypeError('Expected a JSON object')
   }

@@ -21,6 +21,11 @@ export interface JsonObject {
   [name: string]: any // TODO: this needs to become `unknown`
 }
 
+/** When we return errors explicitly instead of throwing them */
+export type EdgeResult<T> =
+  | { ok: true; result: T }
+  | { ok: false; error: unknown }
+
 /** A collection of unknown extra methods exposed by a plugin. */
 export interface EdgeOtherMethods {
   readonly [name: string]: any
@@ -1347,6 +1352,10 @@ export interface EdgeCreateCurrencyWalletOptions {
   migratedFromWalletId?: string
 }
 
+export type EdgeCreateCurrencyWallet = EdgeCreateCurrencyWalletOptions & {
+  walletType: string
+}
+
 export interface EdgeCurrencyConfig {
   readonly watch: Subscriber<EdgeCurrencyConfig>
 
@@ -1571,9 +1580,12 @@ export interface EdgeAccount {
   readonly currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
   readonly currencyWalletErrors: { [walletId: string]: Error }
   readonly createCurrencyWallet: (
-    type: string,
+    walletType: string,
     opts?: EdgeCreateCurrencyWalletOptions
   ) => Promise<EdgeCurrencyWallet>
+  readonly createCurrencyWallets: (
+    createWallets: EdgeCreateCurrencyWallet[]
+  ) => Promise<Array<EdgeResult<EdgeCurrencyWallet>>>
   readonly waitForCurrencyWallet: (
     walletId: string
   ) => Promise<EdgeCurrencyWallet>

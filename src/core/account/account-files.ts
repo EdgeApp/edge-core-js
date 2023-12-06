@@ -1,9 +1,10 @@
 import { Disklet, justFiles } from 'disklet'
 import { base64 } from 'rfc4648'
 
-import { EdgeWalletInfo, EdgeWalletStates, JsonObject } from '../../types/types'
+import { EdgeWalletInfo, EdgeWalletStates } from '../../types/types'
 import { makeJsonFile } from '../../util/file-helpers'
 import { makeKeyInfo } from '../login/keys'
+import { wasEdgeStorageKeys } from '../login/storage-keys'
 import { ApiInput } from '../root-pixie'
 import {
   getStorageWalletDisklet,
@@ -54,10 +55,12 @@ async function loadWalletList(disklet: Disklet): Promise<LoadedWalletList> {
       if (clean == null) return
 
       const keys = {
+        ...wasEdgeStorageKeys({
+          dataKey: clean.MK,
+          syncKey: clean.SyncKey
+        }),
         bitcoinKey: base64.stringify(clean.BitcoinSeed),
-        dataKey: base64.stringify(clean.MK),
-        format: 'bip32',
-        syncKey: base64.stringify(clean.SyncKey)
+        format: 'bip32'
       }
 
       const keyInfo = makeKeyInfo('wallet:bitcoin', keys, clean.MK)
@@ -197,7 +200,7 @@ export async function changePluginUserSettings(
   ai: ApiInput,
   accountId: string,
   pluginId: string,
-  userSettings: JsonObject
+  userSettings: object
 ): Promise<void> {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)

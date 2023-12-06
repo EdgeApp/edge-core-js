@@ -5,12 +5,13 @@ import { LoginCreateOpts, makeCreateKit } from '../login/create'
 import {
   findFirstKey,
   makeAccountType,
-  makeKeysKit,
-  makeStorageKeyInfo
+  makeKeyInfo,
+  makeKeysKit
 } from '../login/keys'
 import { applyKit, searchTree } from '../login/login'
 import { LoginStash } from '../login/login-stash'
 import { LoginKit, LoginTree, LoginType } from '../login/login-types'
+import { createStorageKeys, wasEdgeStorageKeys } from '../login/storage-keys'
 import { ApiInput, RootProps } from '../root-pixie'
 
 function checkLogin(login: LoginTree): void {
@@ -34,8 +35,7 @@ async function createChildLogin(
   ai: ApiInput,
   loginTree: LoginTree,
   login: LoginTree,
-  appId: string,
-  wantRepo: boolean = true
+  appId: string
 ): Promise<LoginTree> {
   checkLogin(login)
 
@@ -43,9 +43,10 @@ async function createChildLogin(
     pin: loginTree.pin,
     username: loginTree.username
   }
-  if (wantRepo) {
-    opts.keyInfo = makeStorageKeyInfo(ai, makeAccountType(appId))
-  }
+  opts.keyInfo = makeKeyInfo(
+    makeAccountType(appId),
+    wasEdgeStorageKeys(createStorageKeys(ai))
+  )
   const kit = await makeCreateKit(ai, login, appId, opts)
   const parentKit: LoginKit = {
     serverPath: kit.serverPath,
@@ -72,14 +73,17 @@ export async function ensureAccountExists(
   // If there is no app login, make that:
   const login = searchTree(loginTree, login => login.appId === appId)
   if (login == null) {
-    return createChildLogin(ai, loginTree, loginTree, appId, true)
+    return createChildLogin(ai, loginTree, loginTree, appId)
   }
 
   // Otherwise, make the repo:
   if (findFirstKey(login.keyInfos, accountType) == null) {
     checkLogin(login)
-    const keyInfo = makeStorageKeyInfo(ai, accountType)
-    const keysKit = makeKeysKit(ai, login, keyInfo)
+    const keyInfo = makeKeyInfo(
+      accountType,
+      wasEdgeStorageKeys(createStorageKeys(ai))
+    )
+    const keysKit = makeKeysKit(ai, login, [keyInfo])
     return applyKit(ai, loginTree, keysKit)
   }
 

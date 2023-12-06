@@ -9,6 +9,7 @@ import {
   EdgeAccount,
   EdgeActivationOptions,
   EdgeActivationQuote,
+  EdgeCreateCurrencyWallet,
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyConfig,
   EdgeCurrencyWallet,
@@ -19,23 +20,21 @@ import {
   EdgePendingVoucher,
   EdgePluginMap,
   EdgeRateCache,
+  EdgeResult,
   EdgeSwapConfig,
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapRequestOptions,
   EdgeWalletInfoFull,
-  EdgeWalletStates,
-  JsonObject
+  EdgeWalletStates
 } from '../../types/types'
 import { base58 } from '../../util/encoding'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import { makeExchangeCache } from '../exchange/exchange-api'
 import {
-  createCurrencyWallet,
-  listSplittableWalletTypes,
-  makeKeysKit,
-  makeStorageKeyInfo,
-  splitWalletInfo
+  finishWalletCreation,
+  makeCurrencyWalletKeys,
+  makeKeysKit
 } from '../login/keys'
 import { applyKit } from '../login/login'
 import { deleteLogin } from '../login/login-delete'
@@ -48,6 +47,7 @@ import {
 } from '../login/password'
 import { changePin, checkPin2, deletePin } from '../login/pin2'
 import { changeRecovery, deleteRecovery } from '../login/recovery2'
+import { listSplittableWalletTypes, splitWalletInfo } from '../login/splitting'
 import { changeVoucherStatus } from '../login/vouchers'
 import {
   findCurrencyPluginId,
@@ -384,22 +384,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       await changeWalletStates(ai, accountId, walletStates)
     },
 
-    async createWallet(walletType: string, keys?: JsonObject): Promise<string> {
+    async createWallet(walletType: string, keys?: object): Promise<string> {
       const { login, loginTree } = accountState()
 
-      if (keys == null) {
-        // Use the currency plugin to create the keys:
-        const pluginId = findCurrencyPluginId(
-          ai.props.state.plugins.currency,
-          walletType
-        )
-        const tools = await getCurrencyTools(ai, pluginId)
-        keys = await tools.createPrivateKey(walletType)
-      }
-
-      const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
-      const kit = makeKeysKit(ai, login, walletInfo)
-      await applyKit(ai, loginTree, kit)
+      const walletInfo = await makeCurrencyWalletKeys(ai, walletType, { keys })
+      await applyKit(ai, loginTree, makeKeysKit(ai, login, [walletInfo]))
       return walletInfo.id
     },
 
@@ -464,11 +453,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return out
     },
 
-    async getRawPrivateKey(walletId: string): Promise<JsonObject> {
+    async getRawPrivateKey(walletId: string): Promise<object> {
       return getRawPrivateKey(ai, accountId, walletId).keys
     },
 
-    async getRawPublicKey(walletId: string): Promise<JsonObject> {
+    async getRawPublicKey(walletId: string): Promise<object> {
       const info = getRawPrivateKey(ai, accountId, walletId)
       const pluginId = findCurrencyPluginId(
         ai.props.state.plugins.currency,
@@ -506,10 +495,40 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     async createCurrencyWallet(
-      type: string,
+      walletType: string,
       opts: EdgeCreateCurrencyWalletOptions = {}
     ): Promise<EdgeCurrencyWallet> {
-      return await createCurrencyWallet(ai, accountId, type, opts)
+      const { login, loginTree } = accountState()
+
+      const walletInfo = await makeCurrencyWalletKeys(ai, walletType, opts)
+      await applyKit(ai, loginTree, makeKeysKit(ai, login, [walletInfo]))
+      return await finishWalletCreation(ai, accountId, walletInfo.id, opts)
+    },
+
+    async createCurrencyWallets(
+      createWallets: EdgeCreateCurrencyWallet[]
+    ): Promise<Array<EdgeResult<EdgeCurrencyWallet>>> {
+      const { login, loginTree } = accountState()
+
+      // Create the keys:
+      const walletInfos = await Promise.all(
+        createWallets.map(
+          async opts => await makeCurrencyWalletKeys(ai, opts.walletType, opts)
+        )
+      )
+
+      // Store the keys on the server:
+      await applyKit(ai, loginTree, makeKeysKit(ai, login, walletInfos))
+
+      // Set up options:
+      return await Promise.all(
+        walletInfos.map(
+          async (info, i) =>
+            await catchResult(
+              finishWalletCreation(ai, accountId, info.id, createWallets[i])
+            )
+        )
+      )
     },
 
     async waitForCurrencyWallet(walletId: string): Promise<EdgeCurrencyWallet> {
@@ -665,4 +684,12 @@ function getRawPrivateKey(
     throw new Error(`Invalid wallet: ${walletId} not found`)
   }
   return info
+}
+
+async function catchResult<T>(promise: Promise<T>): Promise<EdgeResult<T>> {
+  try {
+    return { ok: true, result: await promise }
+  } catch (error) {
+    return { ok: false, error }
+  }
 }

@@ -1,7 +1,7 @@
-import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
 import { EdgeWalletInfo } from '../../types/types'
+import { asEdgeStorageKeys } from '../login/storage-keys'
 import { ApiInput } from '../root-pixie'
 import {
   loadRepoStatus,
@@ -17,10 +17,8 @@ export async function addStorageWallet(
 ): Promise<void> {
   const { dispatch, io, onError } = ai.props
 
-  const dataKey = base64.parse(walletInfo.keys.dataKey)
-  const syncKey = base64.parse(walletInfo.keys.syncKey)
-
-  const paths = makeRepoPaths(io, syncKey, dataKey)
+  const storageKeys = asEdgeStorageKeys(walletInfo.keys)
+  const paths = makeRepoPaths(io, storageKeys)
   const localDisklet = makeLocalDisklet(io, walletInfo.id)
   bridgifyObject(localDisklet)
 

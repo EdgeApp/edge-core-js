@@ -5,8 +5,7 @@ import {
   EdgeTokenMap,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
-  EdgeWalletStates,
-  JsonObject
+  EdgeWalletStates
 } from '../../types/types'
 import { compare } from '../../util/compare'
 import { verifyData } from '../../util/crypto/verify'
@@ -54,7 +53,7 @@ export interface AccountState {
   readonly customTokens: EdgePluginMap<EdgeTokenMap>
   readonly alwaysEnabledTokenIds: EdgePluginMap<string[]>
   readonly swapSettings: EdgePluginMap<SwapSettings>
-  readonly userSettings: EdgePluginMap<JsonObject>
+  readonly userSettings: EdgePluginMap<object>
 }
 
 export interface AccountNext {
@@ -361,7 +360,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return state
   },
 
-  userSettings(state = {}, action): EdgePluginMap<JsonObject> {
+  userSettings(state = {}, action): EdgePluginMap<object> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED': {
         const { pluginId, userSettings } = action.payload

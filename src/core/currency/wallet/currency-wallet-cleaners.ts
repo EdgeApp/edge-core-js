@@ -11,7 +11,7 @@ import {
   Cleaner
 } from 'cleaners'
 
-import { EdgeMetadata, EdgeTxSwap, JsonObject } from '../../../types/types'
+import { EdgeMetadata, EdgeTxSwap } from '../../../types/types'
 import { asJsonObject } from '../../../util/file-helpers'
 
 /**
@@ -41,8 +41,8 @@ export interface TransactionFile {
     }
   }
   deviceDescription?: string
-  feeRateRequested?: 'high' | 'standard' | 'low' | JsonObject
-  feeRateUsed?: JsonObject
+  feeRateRequested?: 'high' | 'standard' | 'low' | object
+  feeRateUsed?: object
   payees?: Array<{
     address: string
     amount: string

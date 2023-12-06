@@ -1,6 +1,6 @@
 import { Disklet } from 'disklet'
 
-import { EdgeWalletInfo, JsonObject } from '../../types/types'
+import { EdgeWalletInfo } from '../../types/types'
 import { ApiInput } from '../root-pixie'
 import { syncStorageWallet } from './storage-actions'
 import {
@@ -10,7 +10,7 @@ import {
 
 export interface EdgeStorageWallet {
   readonly id: string
-  readonly keys: JsonObject
+  readonly keys: object
   readonly type: string
   readonly disklet: Disklet
   readonly localDisklet: Disklet

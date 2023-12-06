@@ -1,28 +1,28 @@
+import { asMaybe } from 'cleaners'
 import { base16, base64 } from 'rfc4648'
 
 import { wasCreateKeysPayload } from '../../types/server-cleaners'
 import {
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyWallet,
-  EdgeMetadata,
-  EdgeSpendInfo,
-  EdgeWalletInfo,
-  EdgeWalletStates,
-  JsonObject
+  EdgeWalletInfo
 } from '../../types/types'
 import { encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
 import { changeWalletStates } from '../account/account-files'
 import { waitForCurrencyWallet } from '../currency/currency-selectors'
-import { applyKit } from '../login/login'
 import {
   findCurrencyPluginId,
-  getCurrencyTools,
-  maybeFindCurrencyPluginId
+  getCurrencyTools
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
 import { AppIdMap, LoginKit, LoginTree, wasEdgeWalletInfo } from './login-types'
+import {
+  asEdgeStorageKeys,
+  createStorageKeys,
+  wasEdgeStorageKeys
+} from './storage-keys'
 
 /**
  * Returns the first keyInfo with a matching type.
@@ -46,31 +46,14 @@ export function makeAccountType(appId: string): string {
  */
 export function makeKeyInfo(
   type: string,
-  keys: JsonObject,
-  idKey: Uint8Array
+  keys: object,
+  idKey?: Uint8Array
 ): EdgeWalletInfo {
-  return {
-    id: base64.stringify(hmacSha256(utf8.parse(type), idKey)),
-    type,
-    keys
-  }
-}
-
-/**
- * Makes keys for accessing an encrypted Git repo.
- */
-export function makeStorageKeyInfo(
-  ai: ApiInput,
-  type: string,
-  keys: JsonObject = {}
-): EdgeWalletInfo {
-  const { io } = ai.props
-  if (keys.dataKey == null) keys.dataKey = base64.stringify(io.random(32))
-  if (keys.syncKey == null) keys.syncKey = base64.stringify(io.random(20))
-  if (typeof keys.dataKey !== 'string') {
-    throw new TypeError('Invalid dataKey type')
-  }
-  return makeKeyInfo(type, keys, base64.parse(keys.dataKey))
+  const hash = hmacSha256(
+    utf8.parse(type),
+    idKey ?? asEdgeStorageKeys(keys).dataKey
+  )
+  return { id: base64.stringify(hash), type, keys }
 }
 
 /**
@@ -79,7 +62,7 @@ export function makeStorageKeyInfo(
 export function makeKeysKit(
   ai: ApiInput,
   login: LoginTree,
-  ...keyInfos: EdgeWalletInfo[]
+  keyInfos: EdgeWalletInfo[]
 ): LoginKit {
   const { io } = ai.props
   const keyBoxes = keyInfos.map(info =>
@@ -89,12 +72,12 @@ export function makeKeysKit(
       login.loginKey
     )
   )
+
   const newSyncKeys: string[] = []
   for (const info of keyInfos) {
-    if (info.keys.syncKey != null) {
-      const data = base64.parse(info.keys.syncKey)
-      newSyncKeys.push(base16.stringify(data).toLowerCase())
-    }
+    const storageKeys = asMaybe(asEdgeStorageKeys)(info.keys)
+    if (storageKeys == null) continue
+    newSyncKeys.push(base16.stringify(storageKeys.syncKey).toLowerCase())
   }
 
   return {
@@ -202,7 +185,7 @@ export function fixWalletInfo(walletInfo: EdgeWalletInfo): EdgeWalletInfo {
   const { id, keys, type } = walletInfo
 
   // Wallet types we need to fix:
-  const defaults: { [type: string]: JsonObject } = {
+  const defaults: { [type: string]: object } = {
     // BTC:
     'wallet:bitcoin-bip44': { format: 'bip44', coinType: 0 },
     'wallet:bitcoin-bip49': { format: 'bip49', coinType: 0 },
@@ -252,272 +235,73 @@ export function fixWalletInfo(walletInfo: EdgeWalletInfo): EdgeWalletInfo {
   return walletInfo
 }
 
-/**
- * Combines two byte arrays via the XOR operation.
- */
-export function xorData(a: Uint8Array, b: Uint8Array): Uint8Array {
-  if (a.length !== b.length) {
-    throw new Error(`Array lengths do not match: ${a.length}, ${b.length}`)
-  }
-
-  const out = new Uint8Array(a.length)
-  for (let i = 0; i < a.length; ++i) {
-    out[i] = a[i] ^ b[i]
-  }
-  return out
-}
-
-export function makeSplitWalletInfo(
-  walletInfo: EdgeWalletInfo,
-  newWalletType: string
-): EdgeWalletInfo {
-  const { id, type, keys } = walletInfo
-  if (keys.dataKey == null || keys.syncKey == null) {
-    throw new Error(`Wallet ${id} is not a splittable type`)
-  }
-
-  const dataKey = base64.parse(keys.dataKey)
-  const syncKey = base64.parse(keys.syncKey)
-  const xorKey = xorData(
-    hmacSha256(utf8.parse(type), dataKey),
-    hmacSha256(utf8.parse(newWalletType), dataKey)
-  )
-
-  // Fix the id:
-  const newWalletId = xorData(base64.parse(id), xorKey)
-  const newSyncKey = xorData(syncKey, xorKey.subarray(0, syncKey.length))
-
-  // Fix the keys:
-  const networkName = type.replace(/wallet:/, '').replace('-', '')
-  const newNetworkName = newWalletType.replace(/wallet:/, '').replace('-', '')
-  const newKeys: JsonObject = {}
-  for (const key of Object.keys(keys)) {
-    if (key === networkName + 'Key') {
-      newKeys[newNetworkName + 'Key'] = keys[key]
-    } else {
-      newKeys[key] = keys[key]
-    }
-  }
-
-  return {
-    id: base64.stringify(newWalletId),
-    keys: {
-      ...newKeys,
-      syncKey: base64.stringify(newSyncKey)
-    },
-    type: newWalletType
-  }
-}
-
-export async function createCurrencyWallet(
+export async function makeCurrencyWalletKeys(
   ai: ApiInput,
-  accountId: string,
   walletType: string,
   opts: EdgeCreateCurrencyWalletOptions
-): Promise<EdgeCurrencyWallet> {
-  const { login, loginTree } = ai.props.state.accounts[accountId]
+): Promise<EdgeWalletInfo> {
+  const { importText, keyOptions, keys } = opts
+
+  // Helper function to bundle up the keys:
+  function finalizeKeys(newKeys: object, imported?: boolean): EdgeWalletInfo {
+    if (imported != null) newKeys = { ...newKeys, imported }
+    return fixWalletInfo(
+      makeKeyInfo(walletType, {
+        ...wasEdgeStorageKeys(createStorageKeys(ai)),
+        ...newKeys
+      })
+    )
+  }
+
+  // If we have raw keys, just return those:
+  if (keys != null) return finalizeKeys(keys)
+
+  // Grab the currency tools:
   const pluginId = findCurrencyPluginId(
     ai.props.state.plugins.currency,
     walletType
   )
-
-  // Make the keys:
   const tools = await getCurrencyTools(ai, pluginId)
-  let keys
-  if (opts.keys != null) {
-    keys = opts.keys
-  } else if (opts.importText != null) {
+
+  // If we have text to import, use that:
+  if (importText != null) {
     if (tools.importPrivateKey == null) {
       throw new Error('This wallet does not support importing keys')
     }
-    keys = {
-      ...(await tools.importPrivateKey(opts.importText, opts.keyOptions)),
-      imported: true
-    }
-  } else {
-    keys = {
-      ...(await tools.createPrivateKey(walletType, opts.keyOptions)),
-      imported: false
-    }
+    return finalizeKeys(
+      await tools.importPrivateKey(importText, keyOptions),
+      true
+    )
   }
 
-  const walletInfo = makeStorageKeyInfo(ai, walletType, keys)
-  const kit = makeKeysKit(ai, login, fixWalletInfo(walletInfo))
-
-  // Add the keys to the login:
-  await applyKit(ai, loginTree, kit)
-  const wallet = await waitForCurrencyWallet(ai, walletInfo.id)
-
-  // Write ancillary files to disk:
-  if (opts.migratedFromWalletId != null) {
-    await changeWalletStates(ai, accountId, {
-      [walletInfo.id]: {
-        migratedFromWalletId: opts.migratedFromWalletId
-      }
-    })
-  }
-  if (opts.name != null) await wallet.renameWallet(opts.name)
-  if (opts.fiatCurrencyCode != null) {
-    await wallet.setFiatCurrencyCode(opts.fiatCurrencyCode)
-  }
-
-  return wallet
+  // Derive fresh keys:
+  return finalizeKeys(
+    await tools.createPrivateKey(walletType, keyOptions),
+    false
+  )
 }
 
-async function protectBchWallet(wallet: EdgeCurrencyWallet): Promise<void> {
-  // Create a UTXO which can be spend only on the ABC network
-  const spendInfoSplit: EdgeSpendInfo = {
-    currencyCode: 'BCH',
-    spendTargets: [
-      {
-        nativeAmount: '10000',
-        otherParams: { script: { type: 'replayProtection' } },
-        publicAddress: ''
-      }
-    ],
-    metadata: {},
-    networkFeeOption: 'high'
-  }
-  const splitTx = await wallet.makeSpend(spendInfoSplit)
-  const signedSplitTx = await wallet.signTx(splitTx)
-  const broadcastedSplitTx = await wallet.broadcastTx(signedSplitTx)
-  await wallet.saveTx(broadcastedSplitTx)
-
-  // Taint the rest of the wallet using the UTXO from before
-  const { publicAddress } = await wallet.getReceiveAddress()
-  const spendInfoTaint: EdgeSpendInfo = {
-    currencyCode: 'BCH',
-    spendTargets: [{ publicAddress, nativeAmount: '0' }],
-    metadata: {},
-    networkFeeOption: 'high'
-  }
-  const maxAmount = await wallet.getMaxSpendable(spendInfoTaint)
-  spendInfoTaint.spendTargets[0].nativeAmount = maxAmount
-  const taintTx = await wallet.makeSpend(spendInfoTaint)
-  const signedTaintTx = await wallet.signTx(taintTx)
-  const broadcastedTaintTx = await wallet.broadcastTx(signedTaintTx)
-  await wallet.saveTx(broadcastedTaintTx)
-  const edgeMetadata: EdgeMetadata = {
-    name: 'Replay Protection Tx',
-    notes:
-      'This transaction is to protect your BCH wallet from unintentionally spending BSV funds. Please wait for the transaction to confirm before making additional transactions using this BCH wallet.'
-  }
-  await wallet.saveTxMetadata(broadcastedTaintTx.txid, 'BCH', edgeMetadata)
-}
-
-export async function splitWalletInfo(
+export async function finishWalletCreation(
   ai: ApiInput,
   accountId: string,
   walletId: string,
-  newWalletType: string
-): Promise<string> {
-  const accountState = ai.props.state.accounts[accountId]
-  const { allWalletInfosFull, login, loginTree } = accountState
+  opts: EdgeCreateCurrencyWalletOptions
+): Promise<EdgeCurrencyWallet> {
+  const { migratedFromWalletId, name, fiatCurrencyCode } = opts
+  const wallet = await waitForCurrencyWallet(ai, walletId)
 
-  // Find the wallet we are going to split:
-  const walletInfo = allWalletInfosFull.find(
-    walletInfo => walletInfo.id === walletId
-  )
-  if (walletInfo == null) throw new Error(`Invalid wallet id ${walletId}`)
-
-  // Handle BCH / BTC+segwit special case:
-  if (
-    newWalletType === 'wallet:bitcoincash' &&
-    walletInfo.type === 'wallet:bitcoin' &&
-    walletInfo.keys.format === 'bip49'
-  ) {
-    throw new Error(
-      'Cannot split segwit-format Bitcoin wallets to Bitcoin Cash'
-    )
+  // Write ancillary files to disk:
+  if (migratedFromWalletId != null) {
+    await changeWalletStates(ai, accountId, {
+      [walletId]: { migratedFromWalletId }
+    })
+  }
+  if (name != null) {
+    await wallet.renameWallet(name)
+  }
+  if (fiatCurrencyCode != null) {
+    await wallet.setFiatCurrencyCode(fiatCurrencyCode)
   }
 
-  // Handle BitcoinABC/SV replay protection:
-  const needsProtection =
-    newWalletType === 'wallet:bitcoinsv' &&
-    walletInfo.type === 'wallet:bitcoincash'
-  if (needsProtection) {
-    const oldWallet = ai.props.output.currency.wallets[walletId].walletApi
-    if (oldWallet == null) throw new Error('Missing Wallet')
-    await protectBchWallet(oldWallet)
-  }
-
-  // See if the wallet has already been split:
-  const newWalletInfo = makeSplitWalletInfo(walletInfo, newWalletType)
-  const existingWalletInfo = allWalletInfosFull.find(
-    walletInfo => walletInfo.id === newWalletInfo.id
-  )
-  if (existingWalletInfo != null) {
-    if (existingWalletInfo.archived || existingWalletInfo.deleted) {
-      // Simply undelete the existing wallet:
-      const walletInfos: EdgeWalletStates = {}
-      walletInfos[newWalletInfo.id] = {
-        archived: false,
-        deleted: false,
-        migratedFromWalletId: undefined
-      }
-      await changeWalletStates(ai, accountId, walletInfos)
-      return walletInfo.id
-    }
-    if (needsProtection) return newWalletInfo.id
-    throw new Error('This wallet has already been split')
-  }
-
-  // Add the keys to the login:
-  const kit = makeKeysKit(ai, login, newWalletInfo)
-  await applyKit(ai, loginTree, kit)
-
-  // Try to copy metadata on a best-effort basis.
-  // In the future we should clone the repo instead:
-  try {
-    const wallet = await waitForCurrencyWallet(ai, newWalletInfo.id)
-    const oldWallet = ai.props.output.currency.wallets[walletId].walletApi
-    if (oldWallet != null) {
-      if (oldWallet.name != null) await wallet.renameWallet(oldWallet.name)
-      if (oldWallet.fiatCurrencyCode != null) {
-        await wallet.setFiatCurrencyCode(oldWallet.fiatCurrencyCode)
-      }
-    }
-  } catch (error: unknown) {
-    ai.props.onError(error)
-  }
-
-  return newWalletInfo.id
-}
-
-export async function listSplittableWalletTypes(
-  ai: ApiInput,
-  accountId: string,
-  walletId: string
-): Promise<string[]> {
-  const { allWalletInfosFull } = ai.props.state.accounts[accountId]
-
-  // Find the wallet we are going to split:
-  const walletInfo = allWalletInfosFull.find(
-    walletInfo => walletInfo.id === walletId
-  )
-  if (walletInfo == null) throw new Error(`Invalid wallet id ${walletId}`)
-  const pluginId = maybeFindCurrencyPluginId(
-    ai.props.state.plugins.currency,
-    walletInfo.type
-  )
-  if (pluginId == null) return []
-
-  // Get the list of available types:
-  const tools = await getCurrencyTools(ai, pluginId)
-  if (tools.getSplittableTypes == null) return []
-  const types = await tools.getSplittableTypes(walletInfo)
-
-  // Filter out wallet types we have already split:
-  return types.filter(type => {
-    const newWalletInfo = makeSplitWalletInfo(walletInfo, type)
-    const existingWalletInfo = allWalletInfosFull.find(
-      walletInfo => walletInfo.id === newWalletInfo.id
-    )
-    // We can split the wallet if it doesn't exist, or is deleted:
-    return (
-      existingWalletInfo == null ||
-      existingWalletInfo.archived ||
-      existingWalletInfo.deleted
-    )
-  })
+  return wallet
 }

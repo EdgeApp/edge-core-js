@@ -20,8 +20,7 @@ import {
   EdgeTokenMap,
   EdgeTransaction,
   EdgeWalletInfo,
-  InsufficientFundsError,
-  JsonObject
+  InsufficientFundsError
 } from '../../src/index'
 import { compare } from '../../src/util/compare'
 
@@ -163,7 +162,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     }
   }
 
-  async changeUserSettings(settings: JsonObject): Promise<void> {
+  async changeUserSettings(settings: object): Promise<void> {
     await this.updateState(asState(settings))
   }
 
@@ -307,16 +306,14 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
  */
 class FakeCurrencyTools implements EdgeCurrencyTools {
   // Keys:
-  createPrivateKey(walletType: string, opts?: JsonObject): Promise<JsonObject> {
+  createPrivateKey(walletType: string, opts?: object): Promise<object> {
     if (walletType !== fakeCurrencyInfo.walletType) {
       throw new Error('Unsupported key type')
     }
     return Promise.resolve({ fakeKey: 'FakePrivateKey' })
   }
 
-  async derivePublicKey(
-    privateWalletInfo: EdgeWalletInfo
-  ): Promise<JsonObject> {
+  async derivePublicKey(privateWalletInfo: EdgeWalletInfo): Promise<object> {
     return { fakeAddress: 'FakePublicAddress' }
   }
 
