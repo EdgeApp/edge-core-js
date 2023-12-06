@@ -11,13 +11,13 @@ import {
   EdgeTxAction,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
-  JsonObject
+  JsonObject,
+  PARENT_TOKEN_ID
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
 import { RootAction } from '../../actions'
 import { findCurrencyPluginId } from '../../plugins/plugins-selectors'
 import { RootState } from '../../root-reducer'
-import { PARENT_TOKEN_ID } from './currency-wallet-api'
 import { TransactionFile } from './currency-wallet-cleaners'
 import { uniqueStrings } from './enabled-tokens'
 

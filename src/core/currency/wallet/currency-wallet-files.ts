@@ -5,7 +5,8 @@ import {
   EdgeAssetAction,
   EdgeCurrencyEngineCallbacks,
   EdgeTransaction,
-  EdgeTxAction
+  EdgeTxAction,
+  PARENT_TOKEN_ID
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
 import { mergeDeeplyNull } from '../../../util/util'
@@ -17,7 +18,7 @@ import {
   getStorageWalletLocalDisklet,
   hashStorageWalletFilename
 } from '../../storage/storage-selectors'
-import { combineTxWithFile, PARENT_TOKEN_ID } from './currency-wallet-api'
+import { combineTxWithFile } from './currency-wallet-api'
 import {
   asLegacyAddressFile,
   asLegacyMapFile,

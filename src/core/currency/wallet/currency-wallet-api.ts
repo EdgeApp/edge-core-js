@@ -33,7 +33,8 @@ import {
   EdgeStreamTransactionOptions,
   EdgeTransaction,
   EdgeTxAction,
-  EdgeWalletInfo
+  EdgeWalletInfo,
+  PARENT_TOKEN_ID
 } from '../../../types/types'
 import { mergeDeeply, mergeDeeplyNull } from '../../../util/util'
 import { makeMetaTokens } from '../../account/custom-tokens'
@@ -68,8 +69,6 @@ const fakeMetadata = {
   name: '',
   notes: ''
 }
-
-export const PARENT_TOKEN_ID = ''
 
 // The EdgeTransaction.spendTargets type, but non-null:
 type SavedSpendTargets = EdgeTransaction['spendTargets']
