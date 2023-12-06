@@ -3,7 +3,6 @@ import { asMaybe } from 'cleaners'
 import { isPixieShutdownError } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
   EdgeCurrencyEngineCallbacks,
   EdgeStakingStatus,
@@ -84,10 +83,6 @@ function makeThrottledTxCallback(
 export function makeCurrencyWalletCallbacks(
   input: CurrencyWalletInput
 ): EdgeCurrencyEngineCallbacks {
-  const { accountId, pluginId } = input.props.walletState
-  const { accountApi } = input.props.output.accounts[accountId]
-  const currencyConfig = accountApi.currencyConfig[pluginId]
-
   const { walletId } = input.props
 
   // If this is a unit test, lower throttling to something testable:
@@ -174,23 +169,23 @@ export function makeCurrencyWalletCallbacks(
       })
     },
 
-    onBalanceChanged(currencyCode: string, balance: string) {
+    onBalanceChanged(tokenId: string | null, balance: string) {
       const clean = asMaybe(asIntegerString)(balance)
       if (clean == null) {
         input.props.onError(
           new Error(
-            `Plugin sent bogus balance for ${currencyCode}: "${balance}"`
+            `Plugin sent bogus balance for ${String(tokenId)}: "${balance}"`
           )
         )
         return
       }
       pushUpdate({
-        id: `${walletId}==${currencyCode}`,
+        id: `${walletId}==${tokenId}`,
         action: 'onBalanceChanged',
         updateFunc: () => {
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-            payload: { balance: clean, currencyCode, walletId }
+            payload: { balance: clean, tokenId, walletId }
           })
         }
       })
@@ -285,17 +280,6 @@ export function makeCurrencyWalletCallbacks(
         }
         if (tx.isSend == null) tx.isSend = lt(tx.nativeAmount, '0')
         if (tx.memos == null) tx.memos = []
-
-        // In case the plugin doesn't fill in the tokenId, do it for them
-        if (tx.tokenId === undefined) {
-          const { allTokens, currencyInfo } = currencyConfig
-          const { tokenId } = upgradeCurrencyCode({
-            allTokens,
-            currencyInfo,
-            currencyCode: tx.currencyCode
-          })
-          tx.tokenId = tokenId ?? null
-        }
       }
 
       // Grab stuff from redux:

@@ -71,7 +71,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     const { state, walletId, walletState } = input.props
     const { accountId, pluginId, walletInfo } = walletState
     const plugin = state.plugins.currency[pluginId]
-    const { currencyCode } = plugin.currencyInfo
 
     try {
       // Start the data sync:
@@ -133,12 +132,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       // Grab initial state:
       const balance = asMaybe(asIntegerString)(
-        engine.getBalance({ currencyCode })
+        engine.getBalance({ tokenId: null })
       )
       if (balance != null) {
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-          payload: { balance, currencyCode, walletId }
+          payload: { balance, tokenId: null, walletId }
         })
       }
       const height = engine.getBlockHeight()

@@ -1,7 +1,6 @@
 import { gt, lt } from 'biggystring'
 import { bridgifyObject, close } from 'yaob'
 
-import { upgradeCurrencyCode } from '../../types/type-helpers'
 import {
   asMaybeInsufficientFundsError,
   asMaybePendingFundsError,
@@ -33,27 +32,6 @@ export async function fetchSwapQuotes(
   const account = ai.props.state.accounts[accountId]
   const { swapSettings, userSettings } = account
   const swapPlugins = ai.props.state.plugins.swap
-
-  // Upgrade legacy currency codes:
-  const from = upgradeCurrencyCode({
-    allTokens: request.fromWallet.currencyConfig.allTokens,
-    currencyInfo: request.fromWallet.currencyInfo,
-    currencyCode: request.fromCurrencyCode,
-    tokenId: request.fromTokenId
-  })
-  const to = upgradeCurrencyCode({
-    allTokens: request.toWallet.currencyConfig.allTokens,
-    currencyInfo: request.toWallet.currencyInfo,
-    currencyCode: request.toCurrencyCode,
-    tokenId: request.toTokenId
-  })
-  request = {
-    ...request,
-    fromTokenId: from.tokenId,
-    toTokenId: to.tokenId,
-    fromCurrencyCode: from.currencyCode,
-    toCurrencyCode: to.currencyCode
-  }
 
   log.warn(
     'Requesting swap quotes for: ',

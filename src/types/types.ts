@@ -257,7 +257,7 @@ export interface EdgeMemo {
 
 export interface EdgeAssetAmount {
   pluginId: string
-  tokenId?: string
+  tokenId: string | null
   nativeAmount?: string
 }
 
@@ -504,7 +504,7 @@ export interface EdgeMetadata {
 export interface EdgeNetworkFee2 {
   readonly nativeAmount: string
   readonly currencyPluginId: string
-  readonly tokenId?: string
+  readonly tokenId: string | null
 }
 
 export interface EdgeTxSwap {
@@ -573,7 +573,6 @@ export interface EdgeTransaction {
   requestedCustomFee?: JsonObject
   feeRateUsed?: JsonObject
   spendTargets?: Array<{
-    readonly currencyCode: string
     readonly nativeAmount: string
     readonly publicAddress: string
 
@@ -622,7 +621,7 @@ export interface EdgePaymentProtocolInfo {
 
 export interface EdgeSpendInfo {
   // Basic information:
-  tokenId?: string
+  tokenId: string | null
   privateKeys?: string[]
   spendTargets: EdgeSpendTarget[]
   memos?: EdgeMemo[]
@@ -641,9 +640,6 @@ export interface EdgeSpendInfo {
   assetAction?: EdgeAssetAction
   savedAction?: EdgeTxAction
   otherParams?: JsonObject
-
-  /** @deprecated Use tokenId instead */
-  currencyCode?: string
 }
 
 // query data ----------------------------------------------------------
@@ -744,7 +740,7 @@ export interface EdgeEncodeUri {
 // options -------------------------------------------------------------
 
 export interface EdgeCurrencyCodeOptions {
-  currencyCode?: string
+  tokenId: string | null
 }
 
 export interface EdgeGetTransactionsOptions {
@@ -768,7 +764,7 @@ export interface EdgeGetTransactionsOptions {
   startEntries?: number
 
   // Filtering:
-  currencyCode?: string
+  tokenId: string | null
   startDate?: Date
   endDate?: Date
   searchString?: string
@@ -797,7 +793,7 @@ export interface EdgeStreamTransactionOptions {
   searchString?: string
 
   /** The token to query, or undefined for the main currency */
-  tokenId?: string
+  tokenId: string | null
 }
 
 export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
@@ -836,7 +832,7 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onAddressChanged: () => void
   readonly onAddressesChecked: (progressRatio: number) => void
   readonly onBalanceChanged: (
-    currencyCode: string,
+    tokenId: string | null,
     nativeBalance: string
   ) => void
   readonly onNewTokens: (tokenIds: string[]) => void
@@ -1055,7 +1051,7 @@ export interface EdgeGetActivationAssetsResults {
   assetOptions: Array<{
     paymentWalletId?: string // If walletId is present, use MUST activate with this wallet
     currencyPluginId: string
-    tokenId?: string
+    tokenId: string | null
   }>
 }
 
@@ -1180,7 +1176,7 @@ export interface EdgeCurrencyWallet {
 
   readonly saveTxMetadata: (
     txid: string,
-    currencyCode: string,
+    tokenId: string | null,
     metadata: EdgeMetadata
   ) => Promise<void>
   readonly signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
@@ -1243,18 +1239,12 @@ export interface EdgeSwapRequest {
   toWallet: EdgeCurrencyWallet
 
   // What?
-  fromTokenId?: string
-  toTokenId?: string
+  fromTokenId: string | null
+  toTokenId: string | null
 
   // How much?
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
-
-  /** @deprecated Use fromTokenId instead */
-  fromCurrencyCode?: string
-
-  /** @deprecated Use toTokenId instead */
-  toCurrencyCode?: string
 }
 
 /**

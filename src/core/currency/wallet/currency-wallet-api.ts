@@ -7,7 +7,6 @@ import {
   InternalWalletStream,
   streamTransactions
 } from '../../../client-side'
-import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
   EdgeAssetAction,
   EdgeBalances,
@@ -226,7 +225,7 @@ export function makeCurrencyWalletApi(
 
     // Transactions history:
     async getNumTransactions(
-      opts: EdgeCurrencyCodeOptions = {}
+      opts: EdgeCurrencyCodeOptions = { tokenId: null }
     ): Promise<number> {
       return engine.getNumTransactions(opts)
     },
@@ -243,21 +242,22 @@ export function makeCurrencyWalletApi(
         tokenId,
         unfilteredStart
       } = opts
+      const allTokens =
+        input.props.state.accounts[accountId].allTokens[pluginId]
+
       const { currencyCode } =
-        tokenId == null
-          ? this.currencyInfo
-          : this.currencyConfig.allTokens[tokenId]
+        tokenId == null ? this.currencyInfo : allTokens[tokenId]
 
       // Load transactions from the engine if necessary:
       let state = input.props.walletState
-      if (!state.gotTxs[currencyCode]) {
-        const txs = await engine.getTransactions({ currencyCode })
+      if (!state.gotTxs[tokenId ?? PARENT_TOKEN_ID]) {
+        const txs = await engine.getTransactions({ tokenId })
         fakeCallbacks.onTransactionsChanged(txs)
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_GOT_TXS',
           payload: {
             walletId: input.props.walletId,
-            currencyCode
+            tokenId
           }
         })
         state = input.props.walletState
@@ -335,22 +335,16 @@ export function makeCurrencyWalletApi(
     },
 
     async getTransactions(
-      opts: EdgeGetTransactionsOptions = {}
+      opts: EdgeGetTransactionsOptions = { tokenId: null }
     ): Promise<EdgeTransaction[]> {
       const {
-        currencyCode = plugin.currencyInfo.currencyCode,
         endDate: beforeDate,
         startDate: afterDate,
         searchString,
         startEntries,
-        startIndex = 0
+        startIndex = 0,
+        tokenId
       } = opts
-      const { tokenId } = upgradeCurrencyCode({
-        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
-        currencyInfo: plugin.currencyInfo,
-        currencyCode
-      })
-
       const stream = await out.$internalStreamTransactions({
         unfilteredStart: startIndex,
         batchSize: startEntries,
@@ -379,7 +373,7 @@ export function makeCurrencyWalletApi(
 
     // Addresses:
     async getReceiveAddress(
-      opts: EdgeGetReceiveAddressOptions = {}
+      opts: EdgeGetReceiveAddressOptions = { tokenId: null }
     ): Promise<EdgeReceiveAddress> {
       const freshAddress = await engine.getFreshAddress(opts)
       const receiveAddress: EdgeReceiveAddress = {
@@ -415,8 +409,9 @@ export function makeCurrencyWalletApi(
 
         return await engine.getMaxSpendable(spendInfo, { privateKeys })
       }
-      const { currencyCode, networkFeeOption, customNetworkFee } = spendInfo
-      const balance = engine.getBalance({ currencyCode })
+      const { networkFeeOption, customNetworkFee, tokenId } = spendInfo
+
+      const balance = engine.getBalance({ tokenId })
 
       // Copy all the spend targets, setting the amounts to 0
       // but keeping all other information so we can get accurate fees:
@@ -441,10 +436,10 @@ export function makeCurrencyWalletApi(
         return engine
           .makeSpend(
             {
-              currencyCode,
               spendTargets,
               networkFeeOption,
-              customNetworkFee
+              customNetworkFee,
+              tokenId
             },
             { privateKeys }
           )
@@ -479,17 +474,11 @@ export function makeCurrencyWalletApi(
         skipChecks,
         savedAction,
         spendTargets = [],
-        swapData
+        swapData,
+        tokenId
       } = spendInfo
 
       // Figure out which asset this is:
-      const { currencyCode, tokenId } = upgradeCurrencyCode({
-        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
-        currencyInfo: plugin.currencyInfo,
-        currencyCode: spendInfo.currencyCode,
-        tokenId: spendInfo.tokenId
-      })
-
       // Check the spend targets:
       const cleanTargets: EdgeSpendTarget[] = []
       const savedTargets: SavedSpendTargets = []
@@ -510,7 +499,6 @@ export function makeCurrencyWalletApi(
           uniqueIdentifier: memo
         })
         savedTargets.push({
-          currencyCode,
           memo,
           nativeAmount,
           publicAddress,
@@ -527,7 +515,6 @@ export function makeCurrencyWalletApi(
 
       const tx: EdgeTransaction = await engine.makeSpend(
         {
-          currencyCode,
           customNetworkFee,
           memos,
           metadata,
@@ -586,17 +573,14 @@ export function makeCurrencyWalletApi(
     },
     async saveTxMetadata(
       txid: string,
-      currencyCode: string,
+      tokenId: string | null,
       metadata: EdgeMetadata
     ): Promise<void> {
       const { accountApi } = input.props.output.accounts[accountId]
       const { allTokens, currencyInfo } = accountApi.currencyConfig[pluginId]
 
-      const { tokenId = null } = upgradeCurrencyCode({
-        allTokens,
-        currencyInfo,
-        currencyCode
-      })
+      const { currencyCode } =
+        tokenId == null ? currencyInfo : allTokens[tokenId]
 
       await setCurrencyWalletTxMetadata(
         input,
@@ -750,7 +734,6 @@ export function combineTxWithFile(
 
     if (file.payees != null) {
       out.spendTargets = file.payees.map(payee => ({
-        currencyCode: payee.currency,
         memo: payee.tag,
         nativeAmount: payee.amount,
         publicAddress: payee.address,

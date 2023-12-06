@@ -21,7 +21,8 @@ import {
   EdgeTransaction,
   EdgeWalletInfo,
   InsufficientFundsError,
-  JsonObject
+  JsonObject,
+  PARENT_TOKEN_ID
 } from '../../src/index'
 import { compare } from '../../src/util/compare'
 
@@ -118,7 +119,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     // Balance callback:
     if (settings.balance != null) {
       state.balance = settings.balance
-      onBalanceChanged('FAKE', state.balance.toString())
+      onBalanceChanged(null, state.balance.toString())
     }
 
     // Staking status callback:
@@ -132,7 +133,10 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     // Token balance callback:
     if (settings.tokenBalance != null) {
       state.tokenBalance = settings.tokenBalance
-      onBalanceChanged('TOKEN', state.tokenBalance.toString())
+      onBalanceChanged(
+        'f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd',
+        state.tokenBalance.toString()
+      )
     }
 
     // Block height callback:
@@ -194,11 +198,11 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   }
 
   getBalance(opts: EdgeCurrencyCodeOptions): string {
-    const { currencyCode = 'FAKE' } = opts
-    switch (currencyCode) {
-      case 'FAKE':
+    const { tokenId } = opts
+    switch (tokenId ?? PARENT_TOKEN_ID) {
+      case PARENT_TOKEN_ID:
         return this.state.balance.toString()
-      case 'TOKEN':
+      case '0XF98103E9217F099208569D295C1B276F1821348636C268C854BB2A086E0037CD':
         return this.state.tokenBalance.toString()
       default:
         throw new Error('Unknown currency')
@@ -248,7 +252,9 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
   // Spending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-    const { currencyCode = 'FAKE', tokenId = null, spendTargets } = spendInfo
+    const { tokenId = null, spendTargets } = spendInfo
+
+    const currencyCode = tokenId == null ? 'FAKE' : 'TOKEN'
 
     // Check the spend targets:
     let total = '0'
@@ -259,7 +265,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     }
 
     // Check the balances:
-    if (lt(this.getBalance({ currencyCode }), total)) {
+    if (lt(this.getBalance({ tokenId }), total)) {
       return Promise.reject(new InsufficientFundsError())
     }
 

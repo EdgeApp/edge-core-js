@@ -65,7 +65,6 @@ export interface TransactionFile {
   payees?: Array<{
     address: string
     amount: string
-    currency: string
     tag?: string
   }>
   savedAction?: EdgeTxAction
@@ -225,7 +224,7 @@ export function asIntegerString(raw: unknown): string {
 
 export const asEdgeAssetAmount = asObject<EdgeAssetAmount>({
   pluginId: asString,
-  tokenId: asOptional(asString),
+  tokenId: asEither(asString, asNull),
   nativeAmount: asOptional(asIntegerString)
 })
 export const asEdgeFiatAmount = asObject<EdgeFiatAmount>({
@@ -355,7 +354,6 @@ export const asTransactionFile = asObject<TransactionFile>({
       asObject({
         address: asString,
         amount: asString,
-        currency: asString,
         tag: asOptional(asString)
       })
     )

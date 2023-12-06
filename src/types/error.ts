@@ -4,7 +4,6 @@ import { base64 } from 'rfc4648'
 
 import { asOtpErrorPayload, asPasswordErrorPayload } from './server-cleaners'
 import type { ChallengeErrorPayload } from './server-types'
-import { upgradeCurrencyCode } from './type-helpers'
 import type { EdgeSwapInfo, EdgeSwapRequest } from './types'
 
 /*
@@ -292,60 +291,28 @@ export class SwapBelowLimitError extends Error {
 export class SwapCurrencyError extends Error {
   name: string
   readonly pluginId: string
-  readonly fromCurrency: string
-  readonly toCurrency: string
-  readonly fromTokenId: string | undefined
-  readonly toTokenId: string | undefined
+  readonly fromTokenId: string | null
+  readonly toTokenId: string | null
 
-  constructor(
-    swapInfo: EdgeSwapInfo,
-    // Passing currency codes is deprecated:
-    request: string | EdgeSwapRequest,
-    toCurrency?: string
-  ) {
-    // Backwards-compatible currency code extraction:
-    if (typeof request === 'string') {
-      toCurrency = toCurrency ?? 'unknown' // This keeps the types happy
-      super(
-        `${swapInfo.displayName} does not support ${request} to ${toCurrency}`
-      )
-      this.name = 'SwapCurrencyError'
-      this.pluginId = swapInfo.pluginId
-      this.fromCurrency = request
-      this.toCurrency = toCurrency
-    } else {
-      const from = upgradeCurrencyCode({
-        allTokens: request.fromWallet.currencyConfig.allTokens,
-        currencyInfo: request.fromWallet.currencyInfo,
-        currencyCode: request.fromCurrencyCode,
-        tokenId: request.fromTokenId
-      })
-      const to = upgradeCurrencyCode({
-        allTokens: request.toWallet.currencyConfig.allTokens,
-        currencyInfo: request.toWallet.currencyInfo,
-        currencyCode: request.toCurrencyCode,
-        tokenId: request.toTokenId
-      })
+  constructor(swapInfo: EdgeSwapInfo, request: EdgeSwapRequest) {
+    const { fromWallet, toWallet, fromTokenId, toTokenId } = request
+    const {
+      currencyInfo: { pluginId: fromPluginId }
+    } = fromWallet.currencyConfig
+    const {
+      currencyInfo: { pluginId: toPluginId }
+    } = toWallet.currencyConfig
 
-      const fromString: string =
-        from.tokenId == null
-          ? from.currencyCode
-          : `${from.currencyCode} (${from.tokenId})`
-      const toString: string =
-        to.tokenId == null
-          ? to.currencyCode
-          : `${to.currencyCode} (${to.tokenId})`
+    const fromString: string = `${fromPluginId}:${String(fromTokenId)}`
+    const toString: string = `${toPluginId}:${String(toTokenId)}`
 
-      super(
-        `${swapInfo.displayName} does not support ${fromString} to ${toString}`
-      )
-      this.name = 'SwapCurrencyError'
-      this.pluginId = swapInfo.pluginId
-      this.fromCurrency = from.currencyCode
-      this.fromTokenId = from.tokenId
-      this.toCurrency = to.currencyCode
-      this.toTokenId = to.tokenId
-    }
+    super(
+      `${swapInfo.displayName} does not support ${fromString} to ${toString}`
+    )
+    this.name = 'SwapCurrencyError'
+    this.pluginId = swapInfo.pluginId
+    this.fromTokenId = fromTokenId
+    this.toTokenId = toTokenId
   }
 }
 

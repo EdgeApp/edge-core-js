@@ -262,10 +262,18 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
-  balances(state = {}, action): EdgeBalances {
+  balances(state = {}, action, next): EdgeBalances {
     if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
+      const { tokenId } = action.payload
+      const { currencyInfo, pluginId } = next.self
+      const { allTokens } = next.root.accounts[next.self.accountId]
+
+      const { currencyCode } =
+        tokenId == null ? currencyInfo : allTokens[pluginId][tokenId]
+
       const out = { ...state }
-      out[action.payload.currencyCode] = action.payload.balance
+
+      out[currencyCode] = action.payload.balance
       return out
     }
     return state
@@ -357,11 +365,11 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
-  gotTxs(state = {}, action): { [currencyCode: string]: boolean } {
+  gotTxs(state = {}, action): { [tokenId: string]: boolean } {
     switch (action.type) {
       case 'CURRENCY_ENGINE_GOT_TXS': {
-        const { currencyCode } = action.payload
-        return { ...state, [currencyCode]: true }
+        const { tokenId } = action.payload
+        return { ...state, [tokenId ?? PARENT_TOKEN_ID]: true }
       }
       case 'CURRENCY_ENGINE_CLEARED':
         return {}
