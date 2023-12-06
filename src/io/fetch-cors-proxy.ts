@@ -3,7 +3,12 @@ import { asyncWaterfall } from '../util/asyncWaterfall'
 import { shuffle } from '../util/shuffle'
 
 // Hard-coded CORS proxy server
-const PROXY_SERVER_URLS = ['https://cors1.edge.app', 'https://cors2.edge.app']
+const PROXY_SERVER_URLS = [
+  'https://cors1.edge.app',
+  'https://cors2.edge.app',
+  'https://cors3.edge.app',
+  'https://cors4.edge.app'
+]
 
 export const fetchCorsProxy = async (
   uri: string,
