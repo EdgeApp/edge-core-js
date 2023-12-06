@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.13.0 (2023-12-05)
+
 - added: `EdgeAccount.createCurrencyWallets`, for creating multiple wallets at once.
 
 ## 1.12.0 (2023-11-30)
