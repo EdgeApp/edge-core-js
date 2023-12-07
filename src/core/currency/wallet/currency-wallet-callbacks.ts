@@ -7,6 +7,7 @@ import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
   EdgeCurrencyEngineCallbacks,
   EdgeStakingStatus,
+  EdgeTokenId,
   EdgeTransaction
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
@@ -109,7 +110,7 @@ export function makeCurrencyWalletCallbacks(
     }
   )
 
-  return {
+  const out: EdgeCurrencyEngineCallbacks = {
     onAddressesChecked(ratio: number) {
       pushUpdate({
         id: walletId,
@@ -170,22 +171,39 @@ export function makeCurrencyWalletCallbacks(
     },
 
     onBalanceChanged(currencyCode: string, balance: string) {
+      const { accountId, currencyInfo, pluginId } = input.props.walletState
+      const allTokens =
+        input.props.state.accounts[accountId].allTokens[pluginId]
+
+      if (currencyCode === currencyInfo.currencyCode) {
+        out.onTokenBalanceChanged(null, balance)
+      } else {
+        const { tokenId } = upgradeCurrencyCode({
+          allTokens,
+          currencyInfo,
+          currencyCode
+        })
+        if (tokenId != null) out.onTokenBalanceChanged(tokenId, balance)
+      }
+    },
+
+    onTokenBalanceChanged(tokenId: EdgeTokenId, balance: string) {
       const clean = asMaybe(asIntegerString)(balance)
       if (clean == null) {
         input.props.onError(
           new Error(
-            `Plugin sent bogus balance for ${currencyCode}: "${balance}"`
+            `Plugin sent bogus balance for ${String(tokenId)}: "${balance}"`
           )
         )
         return
       }
       pushUpdate({
-        id: `${walletId}==${currencyCode}`,
-        action: 'onBalanceChanged',
+        id: `${walletId}==${tokenId}`,
+        action: 'onTokenBalanceChanged',
         updateFunc: () => {
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-            payload: { balance: clean, currencyCode, walletId }
+            payload: { balance: clean, tokenId, walletId }
           })
         }
       })
@@ -364,6 +382,7 @@ export function makeCurrencyWalletCallbacks(
     },
     onTxidsChanged() {}
   }
+  return out
 }
 
 /**

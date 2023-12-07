@@ -93,8 +93,8 @@ describe('currency wallets', function () {
     wallet.on('transactionsChanged', txs => {
       log('changed', txs.map(tx => tx.txid).join(' '))
     })
-    wallet.watch('balances', balances => {
-      log('balances', balances)
+    wallet.watch('balanceMap', balanceMap => {
+      log('balanceMap', Array.from(balanceMap.entries()))
     })
     wallet.watch('blockHeight', blockHeight => {
       log('blockHeight', blockHeight)
@@ -108,13 +108,21 @@ describe('currency wallets', function () {
 
     // Test property watchers:
     log.assert()
+    expect(Array.from(wallet.balanceMap.entries())).to.deep.equal([
+      [null, '0'],
+      ['badf00d5', '0']
+    ])
     expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '0' })
     expect(wallet.stakingStatus).deep.equals({
       stakedAmounts: [{ nativeAmount: '0' }]
     })
 
     await config.changeUserSettings({ tokenBalance: 30 })
-    await log.waitFor(1).assert('balances { FAKE: "0", TOKEN: "30" }')
+    await log.waitFor(1).assert(`balanceMap [[null, "0"], ["badf00d5", "30"]]`)
+    expect(Array.from(wallet.balanceMap.entries())).to.deep.equal([
+      [null, '0'],
+      ['badf00d5', '30']
+    ])
     expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '30' })
 
     await config.changeUserSettings({ blockHeight: 200 })
@@ -126,7 +134,13 @@ describe('currency wallets', function () {
     expect(wallet.syncRatio).to.equal(0.123456789)
 
     await config.changeUserSettings({ balance: 1234567890 })
-    await log.waitFor(1).assert('balances { FAKE: "1234567890", TOKEN: "30" }')
+    await log
+      .waitFor(1)
+      .assert(`balanceMap [[null, "1234567890"], ["badf00d5", "30"]]`)
+    expect(Array.from(wallet.balanceMap.entries())).to.deep.equal([
+      [null, '1234567890'],
+      ['badf00d5', '30']
+    ])
     expect(wallet.balances).to.deep.equal({ FAKE: '1234567890', TOKEN: '30' })
 
     await config.changeUserSettings({ stakedBalance: 543 })

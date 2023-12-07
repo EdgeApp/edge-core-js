@@ -107,7 +107,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     const state = this.state
     const {
       onAddressesChecked,
-      onBalanceChanged,
+      onTokenBalanceChanged,
       onBlockHeightChanged,
       onStakingStatusChanged,
       onTransactionsChanged
@@ -122,7 +122,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     // Balance callback:
     if (settings.balance != null) {
       state.balance = settings.balance
-      onBalanceChanged('FAKE', state.balance.toString())
+      onTokenBalanceChanged(null, state.balance.toString())
     }
 
     // Staking status callback:
@@ -136,7 +136,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     // Token balance callback:
     if (settings.tokenBalance != null) {
       state.tokenBalance = settings.tokenBalance
-      onBalanceChanged('TOKEN', state.tokenBalance.toString())
+      onTokenBalanceChanged('badf00d5', state.tokenBalance.toString())
     }
 
     // Block height callback:

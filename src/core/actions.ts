@@ -156,7 +156,7 @@ export type RootAction =
       type: 'CURRENCY_ENGINE_CHANGED_BALANCE'
       payload: {
         balance: string
-        currencyCode: string
+        tokenId: EdgeTokenId
         walletId: string
       }
     }

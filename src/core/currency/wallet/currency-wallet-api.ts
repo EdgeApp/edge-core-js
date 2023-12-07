@@ -9,6 +9,7 @@ import {
 } from '../../../client-side'
 import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
+  EdgeBalanceMap,
   EdgeBalances,
   EdgeCurrencyCodeOptions,
   EdgeCurrencyConfig,
@@ -165,6 +166,9 @@ export function makeCurrencyWalletApi(
     // Chain state:
     get balances(): EdgeBalances {
       return input.props.walletState.balances
+    },
+    get balanceMap(): EdgeBalanceMap {
+      return input.props.walletState.balanceMap
     },
     get blockHeight(): number {
       const { skipBlockHeight } = input.props.state

@@ -2,6 +2,7 @@ import { lt } from 'biggystring'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
+  EdgeBalanceMap,
   EdgeBalances,
   EdgeCurrencyInfo,
   EdgeMemo,
@@ -51,8 +52,8 @@ export interface MergedTransaction {
   ourReceiveAddresses: string[]
   signedTx: string
   txid: string
-  nativeAmount: Map<EdgeTokenId, string>
-  networkFee: Map<EdgeTokenId, string>
+  nativeAmount: EdgeBalanceMap
+  networkFee: EdgeBalanceMap
 }
 
 export interface CurrencyWalletState {
@@ -62,6 +63,7 @@ export interface CurrencyWalletState {
   readonly paused: boolean
 
   readonly allEnabledTokenIds: string[]
+  readonly balanceMap: EdgeBalanceMap
   readonly balances: EdgeBalances
   readonly currencyInfo: EdgeCurrencyInfo
   readonly detectedTokenIds: string[]
@@ -252,14 +254,32 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
-  balances(state = {}, action): EdgeBalances {
+  balanceMap(state = new Map(), action): Map<EdgeTokenId, string> {
     if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
-      const out = { ...state }
-      out[action.payload.currencyCode] = action.payload.balance
+      const { balance, tokenId } = action.payload
+      const out = new Map(state)
+      out.set(tokenId, balance)
       return out
     }
     return state
   },
+
+  balances: memoizeReducer(
+    next => next.self.balanceMap,
+    next => next.self.currencyInfo,
+    next =>
+      next.root.accounts[next.self.accountId].allTokens[next.self.pluginId],
+    (balanceMap, currencyInfo, allTokens) => {
+      const out: EdgeBalances = {}
+      for (const tokenId of balanceMap.keys()) {
+        const balance = balanceMap.get(tokenId)
+        const { currencyCode } =
+          tokenId == null ? currencyInfo : allTokens[tokenId]
+        if (balance != null) out[currencyCode] = balance
+      }
+      return out
+    }
+  ),
 
   height(state = 0, action): number {
     return action.type === 'CURRENCY_ENGINE_CHANGED_HEIGHT'

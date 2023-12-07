@@ -807,12 +807,12 @@ export interface EdgeSignMessageOptions {
 export interface EdgeCurrencyEngineCallbacks {
   readonly onAddressChanged: () => void
   readonly onAddressesChecked: (progressRatio: number) => void
-  readonly onBalanceChanged: (
-    currencyCode: string,
-    nativeBalance: string
-  ) => void
   readonly onNewTokens: (tokenIds: string[]) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
+  readonly onTokenBalanceChanged: (
+    tokenId: EdgeTokenId,
+    balance: string
+  ) => void
   readonly onTransactionsChanged: (transactions: EdgeTransaction[]) => void
   readonly onTxidsChanged: (txids: EdgeTxidMap) => void
   readonly onUnactivatedTokenIdsChanged: (unactivatedTokenIds: string[]) => void
@@ -820,6 +820,12 @@ export interface EdgeCurrencyEngineCallbacks {
 
   /** @deprecated onTransactionsChanged handles confirmation changes */
   readonly onBlockHeightChanged: (blockHeight: number) => void
+
+  /** @deprecated Use onTokenBalanceChanged instead */
+  readonly onBalanceChanged: (
+    currencyCode: string,
+    nativeBalance: string
+  ) => void
 }
 
 export interface EdgeCurrencyEngineOptions {
@@ -1003,6 +1009,8 @@ export interface EdgeBalances {
   [currencyCode: string]: string
 }
 
+export type EdgeBalanceMap = Map<EdgeTokenId, string>
+
 export type EdgeReceiveAddress = EdgeFreshAddress & {
   metadata: EdgeMetadata
   nativeAmount: string
@@ -1095,6 +1103,7 @@ export interface EdgeCurrencyWallet {
   ) => Promise<string>
 
   // Chain state:
+  readonly balanceMap: EdgeBalanceMap
   readonly balances: EdgeBalances
   readonly blockHeight: number
   readonly syncRatio: number
