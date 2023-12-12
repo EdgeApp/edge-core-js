@@ -822,8 +822,10 @@ export interface EdgeEngineActivationOptions {
   activateTokenIds?: string[]
 
   // Wallet if the user is paying with a different currency:
-  paymentWallet?: EdgeCurrencyWallet
-  paymentTokenId?: string
+  paymentInfo?: {
+    wallet: EdgeCurrencyWallet
+    tokenId: EdgeTokenId
+  }
 }
 
 export interface EdgeEngineGetActivationAssetsOptions {
@@ -1088,8 +1090,10 @@ export interface EdgeActivationOptions {
   activateTokenIds?: string[]
 
   // Wallet if the user is paying with a different currency:
-  paymentWalletId?: string
-  paymentTokenId?: string
+  paymentInfo?: {
+    walletId: string
+    tokenId: EdgeTokenId
+  }
 }
 
 export interface EdgeActivationApproveOptions {
