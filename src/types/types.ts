@@ -322,6 +322,12 @@ export interface EdgeToken {
   networkLocation: JsonObject | undefined
 }
 
+/**
+ * A normal tokenId (chosen by the currency plugin),
+ * or `null` to indicate the parent currency (such as "ETH").
+ */
+export type EdgeTokenId = string | null
+
 export interface EdgeTokenMap {
   // Each currency plugin decides how to generate this ID,
   // such as by using the contract address:
