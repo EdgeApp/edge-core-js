@@ -5,10 +5,12 @@
 - added: `EdgeCurrencyCodeOptions.tokenId`. This upgrades `getBalance`, `getNumTransactions`, and `getReceiveAddress`.
 - added: `EdgeCurrencyEngineCallbacks.onTokenBalanceChanged`, which is thew new balance-update callback.
 - added: `EdgeCurrencyWallet.balanceMap`, which reports balances by tokenId.
+- added: `EdgeParsedUri.tokenId`
 - added: `EdgeTokenId` type definition.
 - added: `EdgeTransaction.tokenId`.
 - added: Allow deleting metadata fields by passing `null` to `saveTxMetadata`.
 - deprecated: `EdgeCurrencyEngineCallbacks.onBalanceChanged`. Use `onTokenBalanceChanged` instead.
+- deprecated: `EdgeParsedUri.currencyCode`. Use `tokenId` instead.
 - deprecated: `EdgeTransaction.currencyCode`. Use `tokenId` instead.
 
 ## 1.13.1 (2023-12-06)

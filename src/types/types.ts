@@ -689,7 +689,6 @@ export interface EdgeParsedUri {
   bitidKycRequest?: string // Experimental
   bitidPaymentAddress?: string // Experimental
   bitIDURI?: string
-  currencyCode?: string
   expireDate?: Date
   legacyAddress?: string
   metadata?: EdgeMetadata
@@ -701,8 +700,12 @@ export interface EdgeParsedUri {
   returnUri?: string
   segwitAddress?: string
   token?: EdgeMetaToken
+  tokenId?: EdgeTokenId
   uniqueIdentifier?: string // Ripple payment id
   walletConnect?: WalletConnect
+
+  /** @deprecated Use tokenId instead */
+  currencyCode?: string
 }
 
 export interface EdgeEncodeUri {
