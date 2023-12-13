@@ -278,7 +278,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
     // Check the balances:
     if (lt(this.getBalance({ tokenId }), total)) {
-      return Promise.reject(new InsufficientFundsError())
+      return Promise.reject(new InsufficientFundsError({ tokenId }))
     }
 
     // TODO: Return a high-fidelity transaction

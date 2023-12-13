@@ -62,7 +62,7 @@ export class DustSpendError extends Error {
 
 interface InsufficientFundsErrorOpts {
   // The currency we need more of:
-  currencyCode?: string
+  tokenId: EdgeTokenId
   // If we don't have enough funds for a token send:
   networkFee?: string
 }
@@ -72,25 +72,15 @@ interface InsufficientFundsErrorOpts {
  */
 export class InsufficientFundsError extends Error {
   name: string
-  readonly currencyCode: string | undefined
+  readonly tokenId: EdgeTokenId
   readonly networkFee: string | undefined
 
   // Passing a string is deprecated
-  constructor(opts: string | InsufficientFundsErrorOpts = {}) {
-    if (typeof opts === 'string') {
-      // Some plugins pass a message instead of a currency code:
-      if (opts.length > 5) {
-        super(opts)
-      } else {
-        super(`Insufficient ${opts}`)
-        this.currencyCode = opts
-      }
-    } else {
-      const { currencyCode, networkFee } = opts
-      super(`Insufficient ${currencyCode ?? 'funds'}`)
-      this.currencyCode = currencyCode
-      this.networkFee = networkFee
-    }
+  constructor(opts: InsufficientFundsErrorOpts) {
+    const { tokenId = null, networkFee } = opts ?? {}
+    super(`Insufficient ${tokenId ?? 'funds'}`)
+    this.tokenId = tokenId
+    this.networkFee = networkFee
     this.name = 'InsufficientFundsError'
   }
 }
