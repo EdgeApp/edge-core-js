@@ -320,8 +320,10 @@ export type EdgeTxAction =
 
 export type EdgeAssetActionType =
   | 'stake'
+  | 'stakeNetworkFee'
   | 'stakeOrder'
   | 'unstake'
+  | 'unstakeNetworkFee'
   | 'unstakeOrder'
   | 'stake'
   | 'stakeOrder'
