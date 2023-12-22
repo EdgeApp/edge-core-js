@@ -273,8 +273,8 @@ export interface EdgeTxActionSwap {
   orderUri?: string
   isEstimate?: boolean
   canBePartial?: boolean
-  sourceAsset: EdgeAssetAmount
-  destAsset: EdgeAssetAmount
+  fromAsset: EdgeAssetAmount
+  toAsset: EdgeAssetAmount
   payoutAddress: string
   payoutWalletId: string
   refundAddress?: string

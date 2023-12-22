@@ -484,12 +484,12 @@ describe('currency wallets', function () {
       orderId: 'myorderid',
       orderUri: 'https://myplugin.com',
       canBePartial: false,
-      sourceAsset: {
+      fromAsset: {
         pluginId: 'bitcoin',
         tokenId: undefined,
         nativeAmount: '1234'
       },
-      destAsset: {
+      toAsset: {
         pluginId: 'ethereum',
         tokenId: 'mytokenid',
         nativeAmount: '2345'
@@ -588,12 +588,12 @@ describe('currency wallets', function () {
       orderId: 'myorderid',
       orderUri: 'https://myplugin.com',
       canBePartial: false,
-      sourceAsset: {
+      fromAsset: {
         pluginId: 'bitcoin',
         tokenId: undefined,
         nativeAmount: '1234'
       },
-      destAsset: {
+      toAsset: {
         pluginId: 'ethereum',
         tokenId: 'mytokenid',
         nativeAmount: '2345'

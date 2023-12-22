@@ -77,8 +77,8 @@ export function searchStringFilter(
 
   if (action != null) {
     if (action.actionType === 'swap') {
-      const { pluginId: destPluginId } = action.destAsset
-      const { pluginId: sourcePluginId } = action.sourceAsset
+      const { pluginId: destPluginId } = action.toAsset
+      const { pluginId: sourcePluginId } = action.fromAsset
       const { displayName, supportEmail } = action.swapInfo
       if (
         checkNullTypeAndIndex(sourcePluginId) ||
