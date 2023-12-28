@@ -2370,10 +2370,10 @@ csstype@^3.0.2:
   resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.0.2.tgz#ee5ff8f208c8cd613b389f7b222c9801ca62b3f7"
   integrity sha512-ofovWglpqoqbfLNOTBNZLSbMuGrblAf1efvvArGKOZMBrIoJeu5UsAipQolkijtyQx5MtAzT/J9IHj/CEY1mJw==
 
-currency-codes@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/currency-codes/-/currency-codes-1.1.2.tgz#60d334279f819d29605c1ff518ade17ad6681308"
-  integrity sha1-YNM0J5+BnSlgXB/1GK3hetZoEwg=
+currency-codes@^1.1.0:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/currency-codes/-/currency-codes-1.5.1.tgz#7ed12dc00be91414937c71855ff5ea6059b88d47"
+  integrity sha512-hqy8vtlIYKzO6pe2TE0V4/riZALIc7nhtE9cvxk5FDRCvfGplgzUvpTmZlMsyO+NeK5U41j+sQXJOo8l8v9kdg==
   dependencies:
     first-match "~0.0.1"
     nub "~0.0.0"

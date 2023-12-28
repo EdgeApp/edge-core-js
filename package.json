@@ -81,7 +81,7 @@
     "base-x": "^4.0.0",
     "biggystring": "^4.0.0",
     "cleaners": "^0.3.14",
-    "currency-codes": "^1.1.2",
+    "currency-codes": "^1.5.1",
     "disklet": "^0.5.2",
     "edge-sync-client": "^0.2.8",
     "elliptic": "^6.4.0",

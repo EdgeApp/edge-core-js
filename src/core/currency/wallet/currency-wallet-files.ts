@@ -167,9 +167,8 @@ export async function loadFiatFile(input: CurrencyWalletInput): Promise<void> {
     if (clean.fiat != null) {
       fiatCurrencyCode = clean.fiat
     } else if (clean.num != null) {
-      fiatCurrencyCode = `iso:${
-        currencyFromNumber(`000${clean.num}`.slice(-3)).code
-      }`
+      const code = currencyFromNumber(`000${clean.num}`.slice(-3))
+      if (code != null) fiatCurrencyCode = `iso:${code.code}`
     }
   }
 
