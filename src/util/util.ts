@@ -3,8 +3,8 @@
  * Purrs quietly when pet.
  */
 export function softCat<T>(...lists: Array<T[] | undefined>): T[] {
-  const flowHack: any = lists.filter(list => list != null)
-  return [].concat(...flowHack)
+  const out: T[] = []
+  return out.concat(...lists.filter((list): list is T[] => list != null))
 }
 
 /**
