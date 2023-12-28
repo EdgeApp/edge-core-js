@@ -430,20 +430,15 @@ export function mergeTx(
   tx: EdgeTransaction,
   oldTx: MergedTransaction | undefined
 ): MergedTransaction {
-  const {
-    action,
-    isSend = lt(tx.nativeAmount, '0'),
-    memos,
-    tokenId = null
-  } = tx
+  const { isSend = lt(tx.nativeAmount, '0'), tokenId = null } = tx
 
   const out: MergedTransaction = {
-    action,
+    action: tx.action,
     blockHeight: tx.blockHeight,
     confirmations: tx.confirmations ?? 'unconfirmed',
     date: tx.date,
     isSend,
-    memos,
+    memos: tx.memos,
     nativeAmount: new Map(oldTx?.nativeAmount ?? []),
     networkFee: new Map(oldTx?.networkFee ?? []),
     otherParams: tx.otherParams,

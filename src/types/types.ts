@@ -716,6 +716,9 @@ export interface EdgeEncodeUri {
 // options -------------------------------------------------------------
 
 export interface EdgeCurrencyCodeOptions {
+  tokenId?: string
+
+  /** @deprecated Use `tokenId` instead. */
   currencyCode?: string
 }
 
@@ -740,10 +743,13 @@ export interface EdgeGetTransactionsOptions {
   startEntries?: number
 
   // Filtering:
-  currencyCode?: string
   startDate?: Date
   endDate?: Date
   searchString?: string
+  tokenId?: string
+
+  /** @deprecated Use tokenId instead */
+  currencyCode?: string
 }
 
 export interface EdgeStreamTransactionOptions {

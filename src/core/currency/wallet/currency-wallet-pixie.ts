@@ -132,7 +132,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       // Grab initial state:
       const balance = asMaybe(asIntegerString)(
-        engine.getBalance({ currencyCode })
+        engine.getBalance({ currencyCode, tokenId: undefined })
       )
       if (balance != null) {
         input.props.dispatch({
