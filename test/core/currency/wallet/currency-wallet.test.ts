@@ -36,7 +36,7 @@ async function makeFakeCurrencyWallet(
   const world = await makeFakeEdgeWorld([fakeUser], quiet)
   const context = await world.makeEdgeContext({
     ...contextOptions,
-    plugins: { 'broken-engine': true, 'fake-exchange': true, fakecoin: true }
+    plugins: { 'broken-engine': true, fakecoin: true }
   })
   const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin, {
     pauseWallets

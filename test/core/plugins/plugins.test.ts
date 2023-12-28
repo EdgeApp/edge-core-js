@@ -14,8 +14,6 @@ describe('plugins system', function () {
     const context = await world.makeEdgeContext({
       ...contextOptions,
       plugins: {
-        'broken-exchange': true,
-        'fake-exchange': true,
         'missing-plugin': false,
         fakecoin: true,
         fakeswap: { apiKey: '' }
@@ -33,7 +31,6 @@ describe('plugins system', function () {
       ...contextOptions,
       plugins: {
         'broken-plugin': true,
-        'fake-exchange': true,
         'missing-plugin': true,
         fakeswap: false
       }

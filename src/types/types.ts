@@ -1327,32 +1327,6 @@ export interface EdgeSwapPlugin {
 }
 
 // ---------------------------------------------------------------------
-// rate plugin
-// ---------------------------------------------------------------------
-
-export interface EdgeRateHint {
-  fromCurrency: string
-  toCurrency: string
-}
-
-export interface EdgeRateInfo {
-  readonly pluginId: string
-  readonly displayName: string
-}
-
-export interface EdgeRatePair {
-  fromCurrency: string
-  toCurrency: string
-  rate: number
-}
-
-export interface EdgeRatePlugin {
-  readonly rateInfo: EdgeRateInfo
-
-  readonly fetchRates: (hints: EdgeRateHint[]) => Promise<EdgeRatePair[]>
-}
-
-// ---------------------------------------------------------------------
 // account
 // ---------------------------------------------------------------------
 
@@ -1467,28 +1441,6 @@ export interface EdgeCurrencyConfig {
   readonly otherMethods: EdgeOtherMethods
 }
 
-// rates ---------------------------------------------------------------
-
-export interface EdgeRateCacheEvents {
-  close: void
-  update: unknown
-}
-
-export interface EdgeConvertCurrencyOpts {
-  biases?: { [name: string]: number }
-}
-
-export interface EdgeRateCache {
-  readonly on: Subscriber<EdgeRateCacheEvents>
-
-  readonly convertCurrency: (
-    fromCurrency: string,
-    toCurrency: string,
-    amount?: number,
-    opts?: EdgeConvertCurrencyOpts
-  ) => Promise<number>
-}
-
 // swap ----------------------------------------------------------------
 
 /**
@@ -1579,7 +1531,6 @@ export interface EdgeAccount {
 
   // Special-purpose API's:
   readonly currencyConfig: EdgePluginMap<EdgeCurrencyConfig>
-  readonly rateCache: EdgeRateCache
   readonly swapConfig: EdgePluginMap<EdgeSwapConfig>
   readonly dataStore: EdgeDataStore
 
@@ -1690,10 +1641,7 @@ export interface EdgeAccount {
 // context types
 // ---------------------------------------------------------------------
 
-export type EdgeCorePlugin =
-  | EdgeCurrencyPlugin
-  | EdgeRatePlugin
-  | EdgeSwapPlugin
+export type EdgeCorePlugin = EdgeCurrencyPlugin | EdgeSwapPlugin
 
 export type EdgeCorePluginFactory = (
   env: EdgeCorePluginOptions

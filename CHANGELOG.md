@@ -3,6 +3,7 @@
 ## Unreleased
 
 - changed: Make `EdgeCurrencyInfo.defaultSettings` and `EdgeCurrencyInfo.metaTokens` optional.
+- removed: `EdgeAccount.rateCache` and related types, as well as the rate plugin concept.
 - removed: `EdgeContext.deleteLocalAccount`
 - removed: `EdgeContext.listUsernames`
 - removed: `EdgeContext.pinLoginEnabled`

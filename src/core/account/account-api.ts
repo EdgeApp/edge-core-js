@@ -19,7 +19,6 @@ import {
   EdgeLobby,
   EdgePendingVoucher,
   EdgePluginMap,
-  EdgeRateCache,
   EdgeResult,
   EdgeSwapConfig,
   EdgeSwapQuote,
@@ -30,7 +29,6 @@ import {
 } from '../../types/types'
 import { base58 } from '../../util/encoding'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
-import { makeExchangeCache } from '../exchange/exchange-api'
 import {
   finishWalletCreation,
   makeCurrencyWalletKeys,
@@ -91,7 +89,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
   }
 
   // Specialty API's:
-  const rateCache = makeExchangeCache(ai)
   const dataStore = makeDataStoreApi(ai, accountId)
   const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
 
@@ -185,10 +182,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     get swapConfig(): EdgePluginMap<EdgeSwapConfig> {
       return swapConfigs
-    },
-
-    get rateCache(): EdgeRateCache {
-      return rateCache
     },
 
     get dataStore(): EdgeDataStore {
