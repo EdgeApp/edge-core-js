@@ -73,7 +73,7 @@ export async function ensureAccountExists(
   // If there is no app login, make that:
   const login = searchTree(loginTree, login => login.appId === appId)
   if (login == null) {
-    return createChildLogin(ai, loginTree, loginTree, appId)
+    return await createChildLogin(ai, loginTree, loginTree, appId)
   }
 
   // Otherwise, make the repo:
@@ -84,7 +84,7 @@ export async function ensureAccountExists(
       wasEdgeStorageKeys(createStorageKeys(ai))
     )
     const keysKit = makeKeysKit(ai, login, [keyInfo])
-    return applyKit(ai, loginTree, keysKit)
+    return await applyKit(ai, loginTree, keysKit)
   }
 
   // Everything is fine, so do nothing:

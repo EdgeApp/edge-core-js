@@ -137,7 +137,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         ai.props.onError(error)
       )
 
-      return makeAccount(ai, appId, loginTree, 'keyLogin', opts)
+      return await makeAccount(ai, appId, loginTree, 'keyLogin', opts)
     },
 
     async loginWithPassword(

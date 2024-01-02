@@ -169,7 +169,7 @@ export async function fetchLoginMessages(
     body: JSON.stringify({ loginIds: Object.keys(loginMap) })
   }
 
-  return timeout(
+  return await timeout(
     window.fetch(uri, opts),
     30000,
     new NetworkError('Could not reach the auth server: timeout')

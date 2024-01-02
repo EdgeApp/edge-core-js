@@ -98,7 +98,7 @@ export async function fetchSwapQuotes(
   }
 
   // Wait for the results, with error handling:
-  return fuzzyTimeout(promises, 20000).then(
+  return await fuzzyTimeout(promises, 20000).then(
     ({ results: quotes, errors }) => {
       for (const pluginId of pendingIds) {
         log.warn(`${pluginId} gave swap timeout`)

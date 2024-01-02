@@ -109,7 +109,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           })
         }
 
-        return stopUpdates
+        return await stopUpdates
       }
     }
   },
