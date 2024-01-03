@@ -5,6 +5,7 @@ import { describe, it } from 'mocha'
 
 import {
   EdgeAccount,
+  EdgeAssetAction,
   EdgeContext,
   EdgeCurrencyConfig,
   EdgeCurrencyWallet,
@@ -12,11 +13,12 @@ import {
   EdgeMetadataChange,
   EdgeToken,
   EdgeTransaction,
+  EdgeTxAction,
   EdgeTxSwap,
   makeFakeEdgeWorld
 } from '../../../../src/index'
 import { expectRejection } from '../../../expect-rejection'
-import { walletTxs } from '../../../fake/fake-transactions'
+import { moreTxs, walletTxs } from '../../../fake/fake-transactions'
 import { fakeUser } from '../../../fake/fake-user'
 
 const contextOptions = { apiKey: '', appId: '', deviceDescription: 'iphone12' }
@@ -281,6 +283,27 @@ describe('currency wallets', function () {
     log.assert(tokenId)
   })
 
+  it('can set chainAssetAction', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await addDemoTransactions(config)
+
+    // Normal behavior:
+    let txs = await wallet.getTransactions({
+      tokenId: 'madeupcontract',
+      startIndex: 0,
+      startEntries: 1
+    })
+    expect(txs[0].chainAssetAction?.assetActionType).deep.equals('sell')
+
+    txs = await wallet.getTransactions({
+      startIndex: 0,
+      startEntries: 1
+    })
+    expect(txs[0].chainAssetAction?.assetActionType).deep.equals(
+      'sellNetworkFee'
+    )
+  })
+
   it('paginates transactions', async function () {
     const { wallet, config } = await makeFakeCurrencyWallet()
     await addDemoTransactions(config)
@@ -442,6 +465,24 @@ describe('currency wallets', function () {
 
     // Perform the spend:
     const metadata: EdgeMetadata = { name: 'me' }
+    const assetAction: EdgeAssetAction = {
+      assetActionType: 'swap'
+    }
+    const savedAction: EdgeTxAction = {
+      actionType: 'swap',
+      orderId: 'myorderid',
+      canBePartial: false,
+      sourceAsset: {
+        pluginId: 'bitcoin',
+        tokenId: undefined,
+        nativeAmount: '1234'
+      },
+      destAsset: {
+        pluginId: 'ethereum',
+        tokenId: 'mytokenid',
+        nativeAmount: '2345'
+      }
+    }
     const swapData: EdgeTxSwap = {
       orderId: '1234',
       isEstimate: true,
@@ -465,6 +506,8 @@ describe('currency wallets', function () {
         }
       ],
       metadata,
+      assetAction,
+      savedAction,
       swapData,
       networkFeeOption: 'high'
     })
@@ -496,6 +539,8 @@ describe('currency wallets', function () {
         uniqueIdentifier: 'hello'
       }
     ])
+    expect(txs[0].assetAction).deep.equals(assetAction)
+    expect(txs[0].savedAction).deep.equals(savedAction)
     expect(txs[0].swapData).deep.equals({
       orderUri: undefined,
       refundAddress: undefined,
@@ -649,6 +694,9 @@ async function addDemoTransactions(
 
   await currencyConfig.changeUserSettings({
     txs: walletTxs
+  })
+  await currencyConfig.changeUserSettings({
+    txs: moreTxs
   })
 
   return tokenId

@@ -260,32 +260,42 @@ export interface EdgeAssetAmount {
   nativeAmount?: string
 }
 
-export type EdgeTxActionSwapType =
-  | 'swap'
-  | 'swapOrderPost'
-  | 'swapOrderFill'
-  | 'swapOrderCancel'
-
 export interface EdgeTxActionSwap {
-  type: EdgeTxActionSwapType
+  actionType: 'swap'
   orderId?: string
   canBePartial?: boolean
   sourceAsset: EdgeAssetAmount
   destAsset: EdgeAssetAmount
 }
 
-export type EdgeTxActionStakeType =
-  | 'stake'
-  | 'stakeOrder'
-  | 'unstake'
-  | 'unstakeOrder'
-
 export interface EdgeTxActionStake {
-  type: EdgeTxActionStakeType
+  actionType: 'stake'
+  pluginId: string
   stakeAssets: EdgeAssetAmount[]
 }
 
 export type EdgeTxAction = EdgeTxActionSwap | EdgeTxActionStake
+
+export type EdgeAssetActionType =
+  | 'stake'
+  | 'stakeOrder'
+  | 'unstake'
+  | 'unstakeOrder'
+  | 'stake'
+  | 'stakeOrder'
+  | 'unstake'
+  | 'unstakeOrder'
+  | 'swap'
+  | 'swapOrderPost'
+  | 'swapOrderFill'
+  | 'swapOrderCancel'
+  | 'buy'
+  | 'sell'
+  | 'sellNetworkFee'
+
+export interface EdgeAssetAction {
+  assetActionType: EdgeAssetActionType
+}
 
 // token info ----------------------------------------------------------
 
@@ -537,8 +547,17 @@ export interface EdgeTransaction {
   memos: EdgeMemo[]
   ourReceiveAddresses: string[]
 
+  /** App-provided per-asset action data */
+  assetAction?: EdgeAssetAction
+
   /** Plugin-provided action data for all assets in a transaction */
   chainAction?: EdgeTxAction
+
+  /** Plugin-provided per-asset action data */
+  chainAssetAction?: EdgeAssetAction
+
+  /** App-provided action data for all assets in a transaction */
+  savedAction?: EdgeTxAction
 
   // Spend-specific metadata:
   deviceDescription?: string
@@ -612,6 +631,8 @@ export interface EdgeSpendInfo {
   skipChecks?: boolean
 
   // Core:
+  assetAction?: EdgeAssetAction
+  savedAction?: EdgeTxAction
   metadata?: EdgeMetadata
   swapData?: EdgeTxSwap
   otherParams?: JsonObject

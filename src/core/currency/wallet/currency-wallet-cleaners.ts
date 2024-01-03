@@ -11,12 +11,23 @@ import {
   Cleaner
 } from 'cleaners'
 
-import { EdgeMetadata, EdgeTokenId, EdgeTxSwap } from '../../../types/types'
+import {
+  EdgeAssetAction,
+  EdgeAssetActionType,
+  EdgeAssetAmount,
+  EdgeMetadata,
+  EdgeTokenId,
+  EdgeTxAction,
+  EdgeTxActionStake,
+  EdgeTxActionSwap,
+  EdgeTxSwap
+} from '../../../types/types'
 import { asMap, asTokenIdMap } from '../../../util/asMap'
 import { asJsonObject } from '../../../util/file-helpers'
 import { asEdgeMetadata } from './metadata'
 
 interface TransactionAsset {
+  assetAction?: EdgeAssetAction
   metadata: EdgeMetadata
   nativeAmount?: string
   providerFeeSent?: string
@@ -41,6 +52,7 @@ export interface TransactionFile {
     currency: string
     tag?: string
   }>
+  savedAction?: EdgeTxAction
   secret?: string
   swap?: EdgeTxSwap
 }
@@ -141,6 +153,47 @@ export function asIntegerString(raw: unknown): string {
 // file cleaners
 // ---------------------------------------------------------------------
 
+export const asEdgeAssetAmount = asObject<EdgeAssetAmount>({
+  pluginId: asString,
+  tokenId: asOptional(asString),
+  nativeAmount: asOptional(asIntegerString)
+})
+
+export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
+  actionType: asValue('swap'),
+  orderId: asOptional(asString),
+  canBePartial: asOptional(asBoolean),
+  sourceAsset: asEdgeAssetAmount,
+  destAsset: asEdgeAssetAmount
+})
+
+export const asEdgeTxActionStake = asObject<EdgeTxActionStake>({
+  actionType: asValue('stake'),
+  pluginId: asString,
+  stakeAssets: asArray(asEdgeAssetAmount)
+})
+
+export const asEdgeTxAction = asEither(asEdgeTxActionSwap, asEdgeTxActionStake)
+
+export const asEdgeAssetActionType: Cleaner<EdgeAssetActionType> = asValue(
+  'stake',
+  'stakeOrder',
+  'unstake',
+  'unstakeOrder',
+  'stake',
+  'stakeOrder',
+  'unstake',
+  'unstakeOrder',
+  'swap',
+  'swapOrderPost',
+  'swapOrderFill',
+  'swapOrderCancel'
+)
+
+export const asEdgeAssetAction = asObject({
+  assetActionType: asEdgeAssetActionType
+})
+
 /**
  * Old core versions used currency codes instead of tokenId's.
  */
@@ -184,6 +237,7 @@ export const asTransactionFile = asObject<TransactionFile>({
       })
     )
   ),
+  savedAction: asOptional(asEdgeTxAction),
   secret: asOptional(asString),
   swap: asOptional(asEdgeTxSwap)
 })

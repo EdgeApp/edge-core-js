@@ -488,7 +488,7 @@ export async function setupNewTxMetadata(
   tx: EdgeTransaction
 ): Promise<void> {
   const { dispatch, state, walletId } = input.props
-  const { spendTargets, swapData, tokenId, txid } = tx
+  const { assetAction, savedAction, spendTargets, swapData, tokenId, txid } = tx
   const disklet = getStorageWalletDisklet(state, walletId)
 
   const creationDate = Date.now() / 1000
@@ -502,9 +502,10 @@ export async function setupNewTxMetadata(
     creationDate,
     currencies: new Map(),
     tokens: new Map(),
+    savedAction,
     swap: swapData
   }
-  json.tokens.set(tokenId, { metadata, nativeAmount })
+  json.tokens.set(tokenId, { assetAction, metadata, nativeAmount })
 
   // Set up the fee metadata:
   if (tx.networkFeeOption != null) {
