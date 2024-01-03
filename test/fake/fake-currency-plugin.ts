@@ -101,11 +101,11 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private updateState(settings: Partial<State>): void {
     const state = this.state
     const {
-      onAddressesChecked = nop,
-      onBalanceChanged = nop,
-      onBlockHeightChanged = nop,
-      onStakingStatusChanged = nop,
-      onTransactionsChanged = nop
+      onAddressesChecked,
+      onBalanceChanged,
+      onBlockHeightChanged,
+      onStakingStatusChanged,
+      onTransactionsChanged
     } = this.callbacks
 
     // Address callback:
@@ -144,9 +144,18 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     if (settings.txs != null) {
       const changes: EdgeTransaction[] = []
       for (const txid of Object.keys(settings.txs)) {
-        const newTx = {
-          ...blankTx,
-          ...settings.txs[txid],
+        const incoming: Partial<EdgeTransaction> = settings.txs[txid]
+        const newTx: EdgeTransaction = {
+          blockHeight: 0,
+          currencyCode: 'FAKE',
+          date: GENESIS_BLOCK,
+          isSend: false,
+          memos: [],
+          nativeAmount: '0',
+          networkFee: '0',
+          ourReceiveAddresses: [],
+          signedTx: '',
+          ...incoming,
           txid,
           walletId: this.walletId
         }
@@ -247,7 +256,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
   // Spending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-    const { currencyCode = 'FAKE', spendTargets } = spendInfo
+    const { currencyCode = 'FAKE', memos = [], spendTargets } = spendInfo
 
     // Check the spend targets:
     let total = '0'
@@ -269,7 +278,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
       date: GENESIS_BLOCK,
       feeRateUsed: { fakePrice: 0 },
       isSend: false,
-      memos: [],
+      memos,
       nativeAmount: total,
       networkFee: '0',
       otherParams: {},
@@ -366,19 +375,3 @@ export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
 const asNetworkLocation = asObject({
   contractAddress: asString
 })
-
-function nop(...args: unknown[]): void {}
-
-const blankTx: EdgeTransaction = {
-  blockHeight: 0,
-  currencyCode: 'FAKE',
-  date: GENESIS_BLOCK,
-  isSend: false,
-  memos: [],
-  nativeAmount: '0',
-  networkFee: '0',
-  ourReceiveAddresses: [],
-  signedTx: '',
-  txid: '',
-  walletId: ''
-}
