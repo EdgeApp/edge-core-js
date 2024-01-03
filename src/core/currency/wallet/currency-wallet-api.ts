@@ -232,7 +232,7 @@ export function makeCurrencyWalletApi(
     },
 
     async $internalStreamTransactions(
-      opts: EdgeStreamTransactionOptions & { unfilteredStart?: number }
+      opts: EdgeStreamTransactionOptions
     ): Promise<InternalWalletStream> {
       const {
         afterDate,
@@ -240,8 +240,7 @@ export function makeCurrencyWalletApi(
         beforeDate,
         firstBatchSize = batchSize,
         searchString,
-        tokenId = null,
-        unfilteredStart
+        tokenId = null
       } = opts
       const { currencyCode } =
         tokenId == null
@@ -276,7 +275,7 @@ export function makeCurrencyWalletApi(
         txs
       } = state
 
-      let i = unfilteredStart ?? 0
+      let i = 0
       let isFirst = true
       let lastFile = 0
       return bridgifyObject({
@@ -313,11 +312,6 @@ export function makeCurrencyWalletApi(
             if (!searchStringFilter(ai, edgeTx, searchString)) continue
             if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
 
-            // Preserve the `getTransactions` hack if needed:
-            if (unfilteredStart != null) {
-              edgeTx.otherParams = { ...edgeTx.otherParams, unfilteredIndex: i }
-            }
-
             out.push(edgeTx)
           }
 
@@ -334,9 +328,7 @@ export function makeCurrencyWalletApi(
         currencyCode = plugin.currencyInfo.currencyCode,
         endDate: beforeDate,
         startDate: afterDate,
-        searchString,
-        startEntries,
-        startIndex = 0
+        searchString
       } = opts
       const { tokenId } = upgradeCurrencyCode({
         allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
@@ -346,8 +338,6 @@ export function makeCurrencyWalletApi(
       })
 
       const stream = await out.$internalStreamTransactions({
-        unfilteredStart: startIndex,
-        batchSize: startEntries,
         afterDate,
         beforeDate,
         searchString,
@@ -355,18 +345,12 @@ export function makeCurrencyWalletApi(
       })
 
       // We have no length, so iterate to get everything:
-      if (startEntries == null) {
-        const out: EdgeTransaction[] = []
-        while (true) {
-          const batch = await stream.next()
-          if (batch.done) return out
-          out.push(...batch.value)
-        }
+      const txs: EdgeTransaction[] = []
+      while (true) {
+        const batch = await stream.next()
+        if (batch.done) return txs
+        txs.push(...batch.value)
       }
-
-      // We have a length, so the first batch is all we need:
-      const batch = await stream.next()
-      return batch.value
     },
 
     streamTransactions,

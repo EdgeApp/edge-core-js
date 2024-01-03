@@ -289,45 +289,18 @@ describe('currency wallets', function () {
     // Normal behavior:
     let txs = await wallet.getTransactions({
       tokenId: 'madeupcontract',
-      startIndex: 0,
-      startEntries: 1
+      startDate: new Date(1612885126000),
+      endDate: new Date(1612885126001)
     })
     expect(txs[0].chainAssetAction?.assetActionType).deep.equals('sell')
 
     txs = await wallet.getTransactions({
-      startIndex: 0,
-      startEntries: 1
+      startDate: new Date(1612885126000),
+      endDate: new Date(1612885126001)
     })
     expect(txs[0].chainAssetAction?.assetActionType).deep.equals(
       'sellNetworkFee'
     )
-  })
-
-  it('paginates transactions', async function () {
-    const { wallet, config } = await makeFakeCurrencyWallet()
-    await addDemoTransactions(config)
-
-    // Normal behavior:
-    expect(
-      justTxids(
-        await wallet.getTransactions({
-          currencyCode: 'BTC',
-          startIndex: 3,
-          startEntries: 2
-        })
-      )
-    ).deep.equals(['d', 'e'])
-
-    expect(
-      justTxids(
-        await wallet.getTransactions({
-          currencyCode: 'BTC',
-          searchString: 'sideshift',
-          startIndex: 2,
-          startEntries: 2
-        })
-      )
-    ).deep.equals(['k', 'l'])
   })
 
   it('streams transactions', async function () {

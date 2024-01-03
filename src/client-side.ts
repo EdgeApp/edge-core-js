@@ -17,7 +17,7 @@ export interface InternalWalletStream {
 
 export interface InternalWalletMethods {
   $internalStreamTransactions: (
-    opts: EdgeStreamTransactionOptions & { unfilteredStart?: number }
+    opts: EdgeStreamTransactionOptions
   ) => Promise<InternalWalletStream>
 }
 

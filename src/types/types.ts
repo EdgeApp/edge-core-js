@@ -777,25 +777,6 @@ export interface EdgeCurrencyCodeOptions {
 }
 
 export interface EdgeGetTransactionsOptions {
-  /**
-   * The first transaction to return.
-   * Caution! This index is relative to an internal master list,
-   * which ignores all filters like `currencyCode`, `searchString`, or dates.
-   * To reveal where a transaction lands in this secret list,
-   * `getTransactions` inserts an `otherParams.unfilteredIndex` parameter,
-   * which can be used as the starting point for subsequent queries.
-   * @deprecated Use `streamTransactions` if you need pagination.
-   */
-  startIndex?: number
-
-  /**
-   * The number of entries to return.
-   * Defaults to all transactions.
-   * We may return less than this when we reach the end.
-   * @deprecated Use `streamTransactions` if you need pagination.
-   */
-  startEntries?: number
-
   // Filtering:
   startDate?: Date
   endDate?: Date
