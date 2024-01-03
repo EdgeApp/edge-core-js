@@ -211,16 +211,7 @@ describe('pin', function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
-    const exists = await context.pinLoginEnabled(fakeUser.username)
-    expect(exists).equals(true)
-  })
-
-  it('does not exist', async function () {
-    const world = await makeFakeEdgeWorld([], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-
-    const exists = await context.pinLoginEnabled(fakeUser.username)
-    expect(exists).equals(false)
+    expect(context.localUsers[0].pinLoginEnabled).equals(true)
   })
 
   it('login', async function () {
@@ -292,7 +283,7 @@ describe('pin', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     await account.deletePin()
-    expect(await context.pinLoginEnabled(fakeUser.username)).equals(false)
+    expect(context.localUsers[0].pinLoginEnabled).equals(false)
   })
 })
 

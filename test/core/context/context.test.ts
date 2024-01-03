@@ -28,9 +28,6 @@ describe('context', function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
-    const list = await context.listUsernames()
-    expect(list).deep.equals(['js test 0'])
-
     expect(context.localUsers).deep.equals([
       {
         keyLoginEnabled: true,
@@ -42,15 +39,6 @@ describe('context', function () {
         voucherId: undefined
       }
     ])
-  })
-
-  it('remove username from local storage', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-
-    expect(await context.localUsers).has.lengthOf(1)
-    await context.deleteLocalAccount(fakeUser.username)
-    expect(await context.localUsers).has.lengthOf(0)
   })
 
   it('remove loginId from local storage', async function () {

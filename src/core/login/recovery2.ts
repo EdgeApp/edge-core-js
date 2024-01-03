@@ -1,15 +1,11 @@
 import { asArray, asString, uncleaner } from 'cleaners'
 
 import {
-  asQuestionChoicesPayload,
   asRecovery2InfoPayload,
   wasChangeRecovery2IdPayload,
   wasChangeRecovery2Payload
 } from '../../types/server-cleaners'
-import {
-  EdgeAccountOptions,
-  EdgeRecoveryQuestionChoice
-} from '../../types/types'
+import { EdgeAccountOptions } from '../../types/types'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
@@ -195,14 +191,6 @@ export function makeRecovery2Kit(
     },
     loginId
   }
-}
-
-export async function listRecoveryQuestionChoices(
-  ai: ApiInput
-): Promise<EdgeRecoveryQuestionChoice[]> {
-  return asQuestionChoicesPayload(
-    await loginFetch(ai, 'POST', '/v1/questions', {})
-  )
 }
 
 const asQuestions = asArray(asString)

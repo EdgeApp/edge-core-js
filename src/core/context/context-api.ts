@@ -9,7 +9,6 @@ import {
   EdgeLoginMessage,
   EdgeLogSettings,
   EdgePendingEdgeLogin,
-  EdgeRecoveryQuestionChoice,
   EdgeUserInfo
 } from '../../types/types'
 import { verifyData } from '../../util/crypto/verify'
@@ -28,11 +27,7 @@ import { removeStash, saveStash } from '../login/login-stash'
 import { resetOtp } from '../login/otp'
 import { loginPassword } from '../login/password'
 import { loginPin2 } from '../login/pin2'
-import {
-  getQuestions2,
-  listRecoveryQuestionChoices,
-  loginRecovery2
-} from '../login/recovery2'
+import { getQuestions2, loginRecovery2 } from '../login/recovery2'
 import { ApiInput } from '../root-pixie'
 import { EdgeInternalStuff } from './internal-api'
 
@@ -59,30 +54,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
     get localUsers(): EdgeUserInfo[] {
       return ai.props.state.login.localUsers
-    },
-
-    async listUsernames(): Promise<string[]> {
-      const { stashes } = ai.props.state.login
-      return stashes
-        .map(stash => stash.username)
-        .filter((username): username is string => username != null)
-    },
-
-    async deleteLocalAccount(username: string): Promise<void> {
-      username = fixUsername(username)
-      const stashTree = getStashByUsername(ai, username)
-      if (stashTree == null) return
-      const { loginId } = stashTree
-
-      // Safety check:
-      for (const accountId of ai.props.state.accountIds) {
-        const accountState = ai.props.state.accounts[accountId]
-        if (verifyData(accountState.stashTree.loginId, loginId)) {
-          throw new Error('Cannot remove logged-in user')
-        }
-      }
-
-      await removeStash(ai, loginId)
     },
 
     async forgetAccount(rootLoginId: string): Promise<void> {
@@ -157,16 +128,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     },
 
     checkPasswordRules,
-
-    async pinLoginEnabled(username: string): Promise<boolean> {
-      username = fixUsername(username)
-      for (const userInfo of ai.props.state.login.localUsers) {
-        if (userInfo.username === username) {
-          return userInfo.pinLoginEnabled
-        }
-      }
-      return false
-    },
 
     async loginWithPIN(
       usernameOrLoginId: string,
@@ -267,11 +228,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async changeLogSettings(settings: Partial<EdgeLogSettings>): Promise<void> {
       const newSettings = { ...ai.props.state.logSettings, ...settings }
       ai.props.dispatch({ type: 'CHANGE_LOG_SETTINGS', payload: newSettings })
-    },
-
-    /** @deprecated The GUI provides its own localized strings now. */
-    async listRecoveryQuestionChoices(): Promise<EdgeRecoveryQuestionChoice[]> {
-      return await listRecoveryQuestionChoices(ai)
     }
   }
   bridgifyObject(out)

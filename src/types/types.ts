@@ -1790,13 +1790,6 @@ export interface EdgeContextOptions {
   skipBlockHeight?: boolean
 }
 
-/** @deprecated The GUI provides its own localized strings now. */
-export interface EdgeRecoveryQuestionChoice {
-  category: 'address' | 'must' | 'numeric' | 'recovery2' | 'string'
-  min_length: number
-  question: string
-}
-
 // parameters ----------------------------------------------------------
 
 export interface EdgeCreateAccountOptions {
@@ -1928,10 +1921,6 @@ export interface EdgeContext {
     recovery2Key: string,
     username: string
   ) => Promise<string[]>
-  /** @deprecated The GUI provides its own localized strings now. */
-  readonly listRecoveryQuestionChoices: () => Promise<
-    EdgeRecoveryQuestionChoice[]
-  >
 
   // OTP stuff:
   readonly requestOtpReset: (
@@ -1952,15 +1941,6 @@ export interface EdgeContext {
   readonly changeLogSettings: (
     settings: Partial<EdgeLogSettings>
   ) => Promise<void>
-
-  /** @deprecated Use `localUsers` instead. */
-  readonly listUsernames: () => Promise<string[]>
-
-  /** @deprecated Use `localUsers` instead. */
-  readonly pinLoginEnabled: (username: string) => Promise<boolean>
-
-  /** @deprecated Use `forgetAccount` instead. */
-  readonly deleteLocalAccount: (username: string) => Promise<void>
 }
 
 // ---------------------------------------------------------------------

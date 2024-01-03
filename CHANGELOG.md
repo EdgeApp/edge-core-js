@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- removed: `EdgeContext.deleteLocalAccount`
+- removed: `EdgeContext.listUsernames`
+- removed: `EdgeContext.pinLoginEnabled`
+- removed: `listRecoveryQuestionChoices` and related types.
+
 ## 1.14.0 (2024-01-04)
 
 - added: `EdgeCurrencyCodeOptions.tokenId`. This upgrades `getBalance`, `getNumTransactions`, and `getReceiveAddress`.

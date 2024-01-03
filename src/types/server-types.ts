@@ -1,4 +1,4 @@
-import type { EdgePendingVoucher, EdgeRecoveryQuestionChoice } from './types'
+import type { EdgePendingVoucher } from './types'
 
 // ---------------------------------------------------------------------
 // internal Edge types
@@ -299,12 +299,6 @@ export interface OtpResetPayload {
 export interface PasswordErrorPayload {
   wait_seconds?: number
 }
-
-/**
- * A list of recovery questions the user can pick from.
- * @deprecated The GUI provides its own localized strings now.
- */
-export type QuestionChoicesPayload = EdgeRecoveryQuestionChoice[]
 
 /**
  * Returned when fetching the recovery questions for an account.
