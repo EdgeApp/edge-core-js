@@ -157,9 +157,11 @@ export function asIntegerString(raw: unknown): string {
 // file cleaners
 // ---------------------------------------------------------------------
 
+export const asEdgeTokenId = asEither(asString, asNull)
+
 export const asEdgeAssetAmount = asObject<EdgeAssetAmount>({
   pluginId: asString,
-  tokenId: asOptional(asString, null),
+  tokenId: asEdgeTokenId,
   nativeAmount: asOptional(asIntegerString)
 })
 export const asEdgeFiatAmount = asObject<EdgeFiatAmount>({

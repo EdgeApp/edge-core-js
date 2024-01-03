@@ -256,7 +256,7 @@ export interface EdgeMemo {
 
 export interface EdgeAssetAmount {
   pluginId: string
-  tokenId?: EdgeTokenId
+  tokenId: EdgeTokenId
   nativeAmount?: string
 }
 
@@ -515,7 +515,7 @@ export interface EdgeMetadataChange {
 export interface EdgeNetworkFee2 {
   readonly nativeAmount: string
   readonly currencyPluginId: string
-  readonly tokenId?: EdgeTokenId
+  readonly tokenId: EdgeTokenId
 }
 
 export interface EdgeTxSwap {
@@ -593,7 +593,7 @@ export interface EdgeTransaction {
   requestedCustomFee?: JsonObject
   feeRateUsed?: JsonObject
   spendTargets?: Array<{
-    readonly currencyCode: string
+    readonly currencyCode: string // Saved for future reference
     readonly nativeAmount: string
     readonly publicAddress: string
 
@@ -645,7 +645,7 @@ export interface EdgePaymentProtocolInfo {
 
 export interface EdgeSpendInfo {
   // Basic information:
-  tokenId?: EdgeTokenId
+  tokenId: EdgeTokenId
   privateKeys?: string[]
   spendTargets: EdgeSpendTarget[]
   memos?: EdgeMemo[]
@@ -664,9 +664,6 @@ export interface EdgeSpendInfo {
   metadata?: EdgeMetadata
   swapData?: EdgeTxSwap
   otherParams?: JsonObject
-
-  /** @deprecated Use tokenId instead */
-  currencyCode?: string
 }
 
 // query data ----------------------------------------------------------
@@ -769,11 +766,8 @@ export interface EdgeEncodeUri {
 
 // options -------------------------------------------------------------
 
-export interface EdgeCurrencyCodeOptions {
-  tokenId?: EdgeTokenId
-
-  /** @deprecated Use `tokenId` instead. */
-  currencyCode?: string
+export interface EdgeTokenIdOptions {
+  tokenId: EdgeTokenId
 }
 
 export interface EdgeGetTransactionsOptions {
@@ -781,10 +775,7 @@ export interface EdgeGetTransactionsOptions {
   startDate?: Date
   endDate?: Date
   searchString?: string
-  tokenId?: EdgeTokenId
-
-  /** @deprecated Use tokenId instead */
-  currencyCode?: string
+  tokenId: EdgeTokenId
 }
 
 export interface EdgeStreamTransactionOptions {
@@ -810,16 +801,16 @@ export interface EdgeStreamTransactionOptions {
   searchString?: string
 
   /** The token to query, or undefined for the main currency */
-  tokenId?: EdgeTokenId
+  tokenId: EdgeTokenId
 }
 
-export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
+export type EdgeGetReceiveAddressOptions = EdgeTokenIdOptions & {
   forceIndex?: number
 }
 
 export interface EdgeEngineActivationOptions {
   // If null, activate parent wallet:
-  activateTokenIds?: string[]
+  activateTokenIds: EdgeTokenId[]
 
   // Wallet if the user is paying with a different currency:
   paymentInfo?: {
@@ -834,17 +825,11 @@ export interface EdgeEngineGetActivationAssetsOptions {
   currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
 
   // If null, activate parent wallet:
-  activateTokenIds?: string[]
+  activateTokenIds: EdgeTokenId[]
 }
 
 export interface EdgeEnginePrivateKeyOptions {
   privateKeys?: JsonObject
-}
-
-export interface EdgeSaveTxMetadataOptions {
-  txid: string
-  tokenId: EdgeTokenId
-  metadata: EdgeMetadataChange
 }
 
 export interface EdgeSaveTxActionOptions {
@@ -852,6 +837,12 @@ export interface EdgeSaveTxActionOptions {
   tokenId: EdgeTokenId
   assetAction: EdgeAssetAction
   savedAction: EdgeTxAction
+}
+
+export interface EdgeSaveTxMetadataOptions {
+  txid: string
+  tokenId: EdgeTokenId
+  metadata: EdgeMetadataChange
 }
 
 export interface EdgeSignMessageOptions {
@@ -910,10 +901,10 @@ export interface EdgeCurrencyEngine {
 
   // Chain state:
   readonly getBlockHeight: () => number
-  readonly getBalance: (opts: EdgeCurrencyCodeOptions) => string
-  readonly getNumTransactions: (opts: EdgeCurrencyCodeOptions) => number
+  readonly getBalance: (opts: EdgeTokenIdOptions) => string
+  readonly getNumTransactions: (opts: EdgeTokenIdOptions) => number
   readonly getTransactions: (
-    opts: EdgeCurrencyCodeOptions
+    opts: EdgeTokenIdOptions
   ) => Promise<EdgeTransaction[]>
   readonly getTxids?: () => EdgeTxidMap
 
@@ -1073,21 +1064,21 @@ export interface EdgeCurrencyWalletEvents {
 export interface EdgeGetActivationAssetsOptions {
   activateWalletId: string
   // If null, activate parent wallet:
-  activateTokenIds?: string[]
+  activateTokenIds: EdgeTokenId[]
 }
 
 export interface EdgeGetActivationAssetsResults {
   assetOptions: Array<{
     paymentWalletId?: string // If walletId is present, use MUST activate with this wallet
     currencyPluginId: string
-    tokenId?: EdgeTokenId
+    tokenId: EdgeTokenId
   }>
 }
 
 export interface EdgeActivationOptions {
   activateWalletId: string
   // If null, activate parent wallet:
-  activateTokenIds?: string[]
+  activateTokenIds: EdgeTokenId[]
 
   // Wallet if the user is paying with a different currency:
   paymentInfo?: {
@@ -1106,7 +1097,7 @@ export interface EdgeActivationResult {
 
 export interface EdgeActivationQuote {
   readonly paymentWalletId: string
-  readonly paymentTokenId?: string
+  readonly paymentTokenId: EdgeTokenId
 
   readonly fromNativeAmount: string
   readonly networkFee: EdgeNetworkFee2
@@ -1170,19 +1161,17 @@ export interface EdgeCurrencyWallet {
   readonly detectedTokenIds: string[]
 
   // Transaction history:
-  readonly getNumTransactions: (
-    opts?: EdgeCurrencyCodeOptions
-  ) => Promise<number>
+  readonly getNumTransactions: (opts: EdgeTokenIdOptions) => Promise<number>
   readonly getTransactions: (
-    opts?: EdgeGetTransactionsOptions
+    opts: EdgeGetTransactionsOptions
   ) => Promise<EdgeTransaction[]>
   readonly streamTransactions: (
-    opts?: EdgeStreamTransactionOptions
+    opts: EdgeStreamTransactionOptions
   ) => AsyncIterableIterator<EdgeTransaction[]>
 
   // Addresses:
   readonly getReceiveAddress: (
-    opts?: EdgeGetReceiveAddressOptions
+    opts: EdgeGetReceiveAddressOptions
   ) => Promise<EdgeReceiveAddress>
   readonly lockReceiveAddress: (
     receiveAddress: EdgeReceiveAddress
@@ -1258,18 +1247,12 @@ export interface EdgeSwapRequest {
   toWallet: EdgeCurrencyWallet
 
   // What?
-  fromTokenId?: EdgeTokenId
-  toTokenId?: EdgeTokenId
+  fromTokenId: EdgeTokenId
+  toTokenId: EdgeTokenId
 
   // How much?
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
-
-  /** @deprecated Use fromTokenId instead */
-  fromCurrencyCode?: string
-
-  /** @deprecated Use toTokenId instead */
-  toCurrencyCode?: string
 }
 
 /**

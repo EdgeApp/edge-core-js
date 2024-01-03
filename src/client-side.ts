@@ -107,7 +107,7 @@ shareData({ fixUsername })
  */
 export function streamTransactions(
   this: InternalWalletMethods,
-  opts: EdgeStreamTransactionOptions = {}
+  opts: EdgeStreamTransactionOptions
 ): AsyncIterableIterator<EdgeTransaction[]> {
   let stream: InternalWalletStream | undefined
   let streamClosed = false
