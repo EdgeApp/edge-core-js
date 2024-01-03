@@ -1024,14 +1024,6 @@ export interface EdgeCurrencyEngine {
 
 // currency plugin -----------------------------------------------------
 
-/** @deprecated Use EdgeCurrencyInfo.memoOptions instead */
-export interface EdgeMemoRules {
-  passed: boolean
-  tooLarge?: boolean // Too large numerically
-  tooLong?: boolean // Too many characters
-  invalidCharacters?: boolean // Wrong character types
-}
-
 export interface EdgeCurrencyTools {
   // Keys:
   readonly checkPublicKey?: (publicKey: JsonObject) => Promise<boolean>
@@ -1069,9 +1061,6 @@ export interface EdgeCurrencyTools {
     obj: EdgeEncodeUri,
     customTokens?: EdgeMetaToken[]
   ) => Promise<string>
-
-  /** @deprecated Use EdgeCurrencyInfo.memoOptions instead */
-  readonly validateMemo?: (memo: string) => Promise<EdgeMemoRules>
 }
 
 export interface EdgeCurrencyPlugin {
@@ -1273,9 +1262,6 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
-
-  /** @deprecated Use EdgeCurrencyInfo.memoOptions instead */
-  readonly validateMemo: (memo: string) => Promise<EdgeMemoRules>
 }
 
 // ---------------------------------------------------------------------

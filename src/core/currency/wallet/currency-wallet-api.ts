@@ -21,7 +21,6 @@ import {
   EdgeEncodeUri,
   EdgeGetReceiveAddressOptions,
   EdgeGetTransactionsOptions,
-  EdgeMemoRules,
   EdgeMetadataChange,
   EdgeParsedUri,
   EdgePaymentProtocolInfo,
@@ -162,10 +161,6 @@ export function makeCurrencyWalletApi(
         currencyCode
       )
       return div(nativeAmount, multiplier, multiplier.length)
-    },
-    async validateMemo(memo: string): Promise<EdgeMemoRules> {
-      if (tools.validateMemo == null) return { passed: true }
-      return await tools.validateMemo(memo)
     },
 
     // Chain state:
