@@ -256,7 +256,7 @@ export interface EdgeMemo {
 
 export interface EdgeAssetAmount {
   pluginId: string
-  tokenId?: string
+  tokenId?: EdgeTokenId
   nativeAmount?: string
 }
 
@@ -477,7 +477,7 @@ export interface EdgeMetadataChange {
 export interface EdgeNetworkFee2 {
   readonly nativeAmount: string
   readonly currencyPluginId: string
-  readonly tokenId?: string
+  readonly tokenId?: EdgeTokenId
 }
 
 export interface EdgeTxSwap {
@@ -596,7 +596,7 @@ export interface EdgePaymentProtocolInfo {
 
 export interface EdgeSpendInfo {
   // Basic information:
-  tokenId?: string
+  tokenId?: EdgeTokenId
   privateKeys?: string[]
   spendTargets: EdgeSpendTarget[]
   memos?: EdgeMemo[]
@@ -719,7 +719,7 @@ export interface EdgeEncodeUri {
 // options -------------------------------------------------------------
 
 export interface EdgeCurrencyCodeOptions {
-  tokenId?: string
+  tokenId?: EdgeTokenId
 
   /** @deprecated Use `tokenId` instead. */
   currencyCode?: string
@@ -749,7 +749,7 @@ export interface EdgeGetTransactionsOptions {
   startDate?: Date
   endDate?: Date
   searchString?: string
-  tokenId?: string
+  tokenId?: EdgeTokenId
 
   /** @deprecated Use tokenId instead */
   currencyCode?: string
@@ -778,7 +778,7 @@ export interface EdgeStreamTransactionOptions {
   searchString?: string
 
   /** The token to query, or undefined for the main currency */
-  tokenId?: string
+  tokenId?: EdgeTokenId
 }
 
 export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
@@ -1044,7 +1044,7 @@ export interface EdgeGetActivationAssetsResults {
   assetOptions: Array<{
     paymentWalletId?: string // If walletId is present, use MUST activate with this wallet
     currencyPluginId: string
-    tokenId?: string
+    tokenId?: EdgeTokenId
   }>
 }
 
@@ -1225,8 +1225,8 @@ export interface EdgeSwapRequest {
   toWallet: EdgeCurrencyWallet
 
   // What?
-  fromTokenId?: string
-  toTokenId?: string
+  fromTokenId?: EdgeTokenId
+  toTokenId?: EdgeTokenId
 
   // How much?
   nativeAmount: string

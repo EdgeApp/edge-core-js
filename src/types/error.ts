@@ -5,7 +5,7 @@ import { base64 } from 'rfc4648'
 import { asOtpErrorPayload, asPasswordErrorPayload } from './server-cleaners'
 import type { ChallengeErrorPayload } from './server-types'
 import { upgradeCurrencyCode } from './type-helpers'
-import type { EdgeSwapInfo, EdgeSwapRequest } from './types'
+import type { EdgeSwapInfo, EdgeSwapRequest, EdgeTokenId } from './types'
 
 /*
  * These are errors the core knows about.
@@ -294,8 +294,8 @@ export class SwapCurrencyError extends Error {
   readonly pluginId: string
   readonly fromCurrency: string
   readonly toCurrency: string
-  readonly fromTokenId: string | undefined
-  readonly toTokenId: string | undefined
+  readonly fromTokenId: EdgeTokenId | undefined
+  readonly toTokenId: EdgeTokenId | undefined
 
   constructor(
     swapInfo: EdgeSwapInfo,
@@ -342,9 +342,9 @@ export class SwapCurrencyError extends Error {
       this.name = 'SwapCurrencyError'
       this.pluginId = swapInfo.pluginId
       this.fromCurrency = from.currencyCode
-      this.fromTokenId = from.tokenId
+      this.fromTokenId = from.tokenId ?? null
       this.toCurrency = to.currencyCode
-      this.toTokenId = to.tokenId
+      this.toTokenId = to.tokenId ?? null
     }
   }
 }

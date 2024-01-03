@@ -1,4 +1,4 @@
-import type { EdgeCurrencyInfo, EdgeTokenMap } from './types'
+import type { EdgeCurrencyInfo, EdgeTokenId, EdgeTokenMap } from './types'
 
 /**
  * Translates a currency code to a tokenId,
@@ -8,14 +8,14 @@ export function upgradeCurrencyCode(opts: {
   allTokens: EdgeTokenMap
   currencyInfo: EdgeCurrencyInfo
   currencyCode?: string
-  tokenId?: string
-}): { currencyCode: string; tokenId?: string } {
+  tokenId?: EdgeTokenId
+}): { currencyCode: string; tokenId?: EdgeTokenId } {
   const { currencyInfo, allTokens } = opts
 
   // Find the tokenId:
   let tokenId = opts.tokenId
   if (
-    tokenId == null &&
+    tokenId === undefined &&
     opts.currencyCode != null &&
     opts.currencyCode !== currencyInfo.currencyCode
   ) {
