@@ -442,7 +442,10 @@ export interface EdgeMetadata {
   name?: string
   notes?: string
 
-  /** @deprecated Use exchangeAmount instead */
+  /**
+   * @deprecated Use exchangeAmount instead.
+   * This is a copy of `exchangeAmount[wallet.fiatCurrencyCode]`
+   */
   amountFiat?: number
 }
 

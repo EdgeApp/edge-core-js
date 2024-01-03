@@ -33,18 +33,12 @@ import {
   EdgeTransaction,
   EdgeWalletInfo
 } from '../../../types/types'
-import { mergeDeeply } from '../../../util/util'
 import { makeMetaTokens } from '../../account/custom-tokens'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
-import {
-  asEdgeTxSwap,
-  packMetadata,
-  TransactionFile,
-  unpackMetadata
-} from './currency-wallet-cleaners'
+import { asEdgeTxSwap, TransactionFile } from './currency-wallet-cleaners'
 import { dateFilter, searchStringFilter } from './currency-wallet-export'
 import {
   loadTxFiles,
@@ -55,6 +49,7 @@ import {
 } from './currency-wallet-files'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { MergedTransaction } from './currency-wallet-reducer'
+import { mergeMetadata, upgradeMetadata } from './metadata'
 import { upgradeMemos } from './upgrade-memos'
 
 const fakeMetadata = {
@@ -547,11 +542,12 @@ export function makeCurrencyWalletApi(
       currencyCode: string,
       metadata: EdgeMetadata
     ): Promise<void> {
+      upgradeMetadata(input, metadata)
       await setCurrencyWalletTxMetadata(
         input,
         txid,
         currencyCode,
-        packMetadata(metadata, input.props.walletState.fiat),
+        metadata,
         fakeCallbacks
       )
     },
@@ -635,7 +631,6 @@ export function combineTxWithFile(
 ): EdgeTransaction {
   const walletId = input.props.walletId
   const walletCurrency = input.props.walletState.currencyInfo.currencyCode
-  const walletFiat = input.props.walletState.fiat
 
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
@@ -661,16 +656,13 @@ export function combineTxWithFile(
   if (file != null) {
     if (file.creationDate < out.date) out.date = file.creationDate
 
-    const merged = mergeDeeply(
-      file.currencies[walletCurrency],
-      file.currencies[currencyCode]
+    const metadata = mergeMetadata(
+      file.currencies[walletCurrency]?.metadata ?? {},
+      file.currencies[currencyCode]?.metadata ?? {}
     )
-    if (merged.metadata != null) {
-      out.metadata = {
-        ...out.metadata,
-        ...unpackMetadata(merged.metadata, walletFiat)
-      }
-    }
+    metadata.amountFiat =
+      metadata.exchangeAmount?.[input.props.walletState.fiat]
+    out.metadata = metadata
 
     if (file.feeRateRequested != null) {
       if (typeof file.feeRateRequested === 'string') {

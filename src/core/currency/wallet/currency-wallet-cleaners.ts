@@ -13,18 +13,7 @@ import {
 
 import { EdgeMetadata, EdgeTxSwap } from '../../../types/types'
 import { asJsonObject } from '../../../util/file-helpers'
-
-/**
- * The on-disk metadata format,
- * which has a mandatory `exchangeAmount` table and no `amountFiat`.
- */
-export interface DiskMetadata {
-  bizId?: number
-  category?: string
-  exchangeAmount: { [fiatCurrencyCode: string]: number }
-  name?: string
-  notes?: string
-}
+import { asEdgeMetadata } from './metadata'
 
 /**
  * The on-disk transaction format.
@@ -35,7 +24,7 @@ export interface TransactionFile {
   creationDate: number
   currencies: {
     [currencyCode: string]: {
-      metadata: DiskMetadata
+      metadata: EdgeMetadata
       nativeAmount?: string
       providerFeeSent?: string
     }
@@ -111,42 +100,6 @@ interface LegacyMapFile {
 // building-block cleaners
 // ---------------------------------------------------------------------
 
-/**
- * Turns user-provided metadata into its on-disk format.
- */
-export function packMetadata(
-  raw: EdgeMetadata,
-  walletFiat: string
-): DiskMetadata {
-  const clean = asDiskMetadata(raw)
-
-  if (typeof raw.amountFiat === 'number') {
-    clean.exchangeAmount[walletFiat] = raw.amountFiat
-  }
-
-  return clean
-}
-
-/**
- * Turns on-disk metadata into the user-facing format.
- */
-export function unpackMetadata(
-  raw: DiskMetadata,
-  walletFiat: string
-): EdgeMetadata {
-  const clean = asDiskMetadata(raw)
-  const { exchangeAmount } = clean
-
-  // Delete corrupt amounts that exceed the Javascript number range:
-  for (const currency of Object.keys(exchangeAmount)) {
-    if (String(exchangeAmount[currency]).includes('e')) {
-      delete exchangeAmount[currency]
-    }
-  }
-
-  return { ...clean, amountFiat: exchangeAmount[walletFiat] }
-}
-
 const asFeeRate: Cleaner<'high' | 'standard' | 'low'> = asValue(
   'high',
   'standard',
@@ -171,14 +124,6 @@ export const asEdgeTxSwap = asObject<EdgeTxSwap>({
   payoutNativeAmount: asString,
   payoutWalletId: asString,
   refundAddress: asOptional(asString)
-})
-
-const asDiskMetadata = asObject<DiskMetadata>({
-  bizId: asOptional(asNumber),
-  category: asOptional(asString),
-  exchangeAmount: asOptional(asObject(asNumber), () => ({})),
-  name: asOptional(asString),
-  notes: asOptional(asString)
 })
 
 export function asIntegerString(raw: unknown): string {
@@ -217,7 +162,7 @@ export const asTransactionFile = asObject<TransactionFile>({
   creationDate: asNumber,
   currencies: asObject(
     asObject({
-      metadata: asDiskMetadata,
+      metadata: asEdgeMetadata,
       nativeAmount: asOptional(asString),
       providerFeeSent: asOptional(asString)
     })
