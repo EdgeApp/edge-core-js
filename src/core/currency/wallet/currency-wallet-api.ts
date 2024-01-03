@@ -55,7 +55,7 @@ import {
 } from './currency-wallet-files'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { MergedTransaction } from './currency-wallet-reducer'
-import { mergeMetadata, upgradeMetadata } from './metadata'
+import { mergeMetadata } from './metadata'
 import { upgradeMemos } from './upgrade-memos'
 
 const fakeMetadata = {
@@ -597,7 +597,7 @@ export function makeCurrencyWalletApi(
         currencyInfo: plugin.currencyInfo,
         currencyCode
       })
-      upgradeMetadata(input, metadata)
+
       await setCurrencyWalletTxMetadata(
         input,
         txid,
@@ -728,7 +728,7 @@ export function combineTxWithFile(
   if (file != null) {
     if (file.creationDate < out.date) out.date = file.creationDate
 
-    const metadata = mergeMetadata(
+    out.metadata = mergeMetadata(
       file.tokens.get(null)?.metadata ??
         file.currencies.get(walletCurrency)?.metadata ??
         {},
@@ -736,9 +736,6 @@ export function combineTxWithFile(
         file.currencies.get(currencyCode)?.metadata ??
         {}
     )
-    metadata.amountFiat =
-      metadata.exchangeAmount?.[input.props.walletState.fiat]
-    out.metadata = metadata
 
     if (file.feeRateRequested != null) {
       if (typeof file.feeRateRequested === 'string') {

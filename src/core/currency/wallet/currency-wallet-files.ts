@@ -35,7 +35,7 @@ import {
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { TxFileNames } from './currency-wallet-reducer'
 import { currencyCodesToTokenIds } from './enabled-tokens'
-import { mergeMetadata, upgradeMetadata } from './metadata'
+import { mergeMetadata } from './metadata'
 
 const CURRENCY_FILE = 'Currency.json'
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
@@ -498,7 +498,6 @@ export async function setupNewTxMetadata(
 
   const creationDate = Date.now() / 1000
   const { metadata = {}, nativeAmount } = tx
-  upgradeMetadata(input, metadata)
 
   // Basic file template:
   const json: TransactionFile = {

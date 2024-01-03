@@ -497,12 +497,6 @@ export interface EdgeMetadata {
   exchangeAmount?: { [fiatCurrencyCode: string]: number }
   name?: string
   notes?: string
-
-  /**
-   * @deprecated Use exchangeAmount instead.
-   * This is a copy of `exchangeAmount[wallet.fiatCurrencyCode]`
-   */
-  amountFiat?: number
 }
 
 /**
@@ -515,12 +509,6 @@ export interface EdgeMetadataChange {
   exchangeAmount?: { [fiatCurrencyCode: string]: number | null }
   name?: string | null
   notes?: string | null
-
-  /**
-   * @deprecated Use exchangeAmount instead.
-   * This will be saved as `exchangeAmount[wallet.fiatCurrencyCode]`
-   */
-  amountFiat?: number | null
 }
 
 // Would prefer a better name than EdgeNetworkFee2 but can't think of one

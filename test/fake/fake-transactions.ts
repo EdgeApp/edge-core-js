@@ -17,8 +17,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
     metadata: {
       exchangeAmount: {
         'iso:USD': 304.8453034025
-      },
-      amountFiat: 304.8453034025
+      }
     }
   },
   b: {
@@ -38,8 +37,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
         'iso:USD': 33
       },
       name: '',
-      notes: '',
-      amountFiat: 33
+      notes: ''
     },
     networkFeeOption: 'standard',
     feeRateUsed: {
@@ -68,8 +66,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
     metadata: {
       exchangeAmount: {
         'iso:USD': 99.0848343576
-      },
-      amountFiat: 99.0848343576
+      }
     }
   },
   d: {
@@ -89,8 +86,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
         'iso:USD': -22.40211237125
       },
       name: '',
-      notes: '',
-      amountFiat: -22.40211237125
+      notes: ''
     },
     networkFeeOption: 'standard',
     feeRateUsed: {
@@ -119,8 +115,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
     metadata: {
       exchangeAmount: {
         'iso:USD': -26.32298625
-      },
-      amountFiat: -26.32298625
+      }
     }
   },
   f: {
@@ -139,8 +134,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
     metadata: {
       exchangeAmount: {
         'iso:USD': -1.2516693749999999
-      },
-      amountFiat: -1.2516693749999999
+      }
     }
   },
   g: {
@@ -156,8 +150,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
     metadata: {
       exchangeAmount: {
         'iso:USD': 25.971432197400002
-      },
-      amountFiat: 25.971432197400002
+      }
     }
   },
   h: {
@@ -173,8 +166,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
     metadata: {
       exchangeAmount: {
         'iso:USD': -60.8818451311
-      },
-      amountFiat: -60.8818451311
+      }
     }
   },
   i: {
@@ -194,8 +186,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
         'iso:USD': -20.63407803925
       },
       name: '',
-      notes: '',
-      amountFiat: -20.63407803925
+      notes: ''
     },
     networkFeeOption: 'standard',
     feeRateUsed: {
@@ -228,8 +219,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
         'iso:USD': 10
       },
       name: '',
-      notes: '',
-      amountFiat: 10
+      notes: ''
     },
     networkFeeOption: 'standard',
     feeRateUsed: {
@@ -264,8 +254,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
       exchangeAmount: {
         'iso:USD': -128.5454651311
       },
-      name: 'SideShift.ai',
-      amountFiat: -128.5454651311
+      name: 'SideShift.ai'
     },
     networkFeeOption: 'high',
     feeRateUsed: {
@@ -316,8 +305,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
         'iso:USD': 54.88
       },
       name: 'SideShift.ai',
-      notes: '',
-      amountFiat: 54.88
+      notes: ''
     },
     networkFeeOption: 'high',
     feeRateUsed: {
@@ -368,8 +356,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
         'iso:USD': -31.8161636051
       },
       name: 'SideShift.ai',
-      notes: '',
-      amountFiat: -31.8161636051
+      notes: ''
     },
     networkFeeOption: 'high',
     feeRateUsed: {
@@ -419,8 +406,7 @@ export const moreTxs: { [txid: string]: EdgeTransaction } = {
     metadata: {
       exchangeAmount: {
         'iso:USD': 304.8453034025
-      },
-      amountFiat: 304.8453034025
+      }
     },
     memos: [],
     isSend: false,
