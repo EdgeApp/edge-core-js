@@ -474,10 +474,10 @@ export interface EdgeCurrencyInfo {
   unsafeSyncNetwork?: boolean
 
   /** @deprecated The default user settings are always `{}` */
-  defaultSettings: JsonObject
+  defaultSettings?: JsonObject
 
   /** @deprecated Use EdgeCurrencyPlugin.getBuiltinTokens instead */
-  metaTokens: EdgeMetaToken[]
+  metaTokens?: EdgeMetaToken[]
 
   /** @deprecated Use memoOptions instead. */
   memoMaxLength?: number // Max number of text characters, if supported

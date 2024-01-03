@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- changed: Make `EdgeCurrencyInfo.defaultSettings` and `EdgeCurrencyInfo.metaTokens` optional.
 - removed: `EdgeContext.deleteLocalAccount`
 - removed: `EdgeContext.listUsernames`
 - removed: `EdgeContext.pinLoginEnabled`
