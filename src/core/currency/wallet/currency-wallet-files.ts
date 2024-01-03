@@ -75,13 +75,13 @@ function fixLegacyFile(
 ): TransactionFile {
   const out: TransactionFile = {
     creationDate: file.state.creationDate,
-    currencies: {},
+    currencies: new Map(),
     internal: file.state.internal,
     txid: file.state.malleableTxId
   }
   const exchangeAmount: { [currencyCode: string]: number } = {}
   exchangeAmount[walletFiat] = file.meta.amountCurrency
-  out.currencies[walletCurrency] = {
+  out.currencies.set(walletCurrency, {
     metadata: {
       bizId: file.meta.bizId,
       category: file.meta.category,
@@ -90,7 +90,7 @@ function fixLegacyFile(
       notes: file.meta.notes
     },
     providerFeeSent: file.meta.amountFeeAirBitzSatoshi.toFixed()
-  }
+  })
 
   return out
 }
@@ -435,14 +435,17 @@ export async function setCurrencyWalletTxMetadata(
   const newFile: TransactionFile = {
     ...oldFile,
     creationDate,
-    currencies: { ...oldFile?.currencies },
+    currencies: new Map(oldFile?.currencies ?? []),
     internal: true,
     txid
   }
 
   // Make the change:
-  const assetData = { ...newFile.currencies[currencyCode] }
-  newFile.currencies[currencyCode] = assetData
+  const assetData = {
+    metadata: {},
+    ...newFile.currencies.get(currencyCode)
+  }
+  newFile.currencies.set(currencyCode, assetData)
   assetData.metadata = mergeMetadata(assetData.metadata ?? {}, metadata)
 
   // Save the new file:
@@ -481,10 +484,10 @@ export async function setupNewTxMetadata(
     txid,
     internal: true,
     creationDate,
-    currencies: {},
+    currencies: new Map(),
     swap: swapData
   }
-  json.currencies[currencyCode] = { metadata, nativeAmount }
+  json.currencies.set(currencyCode, { metadata, nativeAmount })
 
   // Set up the fee metadata:
   if (tx.networkFeeOption != null) {

@@ -12,8 +12,15 @@ import {
 } from 'cleaners'
 
 import { EdgeMetadata, EdgeTxSwap } from '../../../types/types'
+import { asMap } from '../../../util/asMap'
 import { asJsonObject } from '../../../util/file-helpers'
 import { asEdgeMetadata } from './metadata'
+
+interface TransactionAsset {
+  metadata: EdgeMetadata
+  nativeAmount?: string
+  providerFeeSent?: string
+}
 
 /**
  * The on-disk transaction format.
@@ -22,13 +29,7 @@ export interface TransactionFile {
   txid: string
   internal: boolean
   creationDate: number
-  currencies: {
-    [currencyCode: string]: {
-      metadata: EdgeMetadata
-      nativeAmount?: string
-      providerFeeSent?: string
-    }
-  }
+  currencies: Map<string, TransactionAsset>
   deviceDescription?: string
   feeRateRequested?: 'high' | 'standard' | 'low' | object
   feeRateUsed?: object
@@ -156,17 +157,17 @@ export const asTokensFile = asObject({
   detectedTokenIds: asArray(asString)
 })
 
+const asTransactionAsset = asObject<TransactionAsset>({
+  metadata: asEdgeMetadata,
+  nativeAmount: asOptional(asString),
+  providerFeeSent: asOptional(asString)
+})
+
 export const asTransactionFile = asObject<TransactionFile>({
   txid: asString,
   internal: asBoolean,
   creationDate: asNumber,
-  currencies: asObject(
-    asObject({
-      metadata: asEdgeMetadata,
-      nativeAmount: asOptional(asString),
-      providerFeeSent: asOptional(asString)
-    })
-  ),
+  currencies: asMap(asTransactionAsset),
   deviceDescription: asOptional(asString),
   feeRateRequested: asOptional(asEither(asFeeRate, asJsonObject)),
   feeRateUsed: asOptional(asJsonObject),

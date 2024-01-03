@@ -657,8 +657,8 @@ export function combineTxWithFile(
     if (file.creationDate < out.date) out.date = file.creationDate
 
     const metadata = mergeMetadata(
-      file.currencies[walletCurrency]?.metadata ?? {},
-      file.currencies[currencyCode]?.metadata ?? {}
+      file.currencies.get(walletCurrency)?.metadata ?? {},
+      file.currencies.get(currencyCode)?.metadata ?? {}
     )
     metadata.amountFiat =
       metadata.exchangeAmount?.[input.props.walletState.fiat]
