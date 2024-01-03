@@ -5,6 +5,8 @@
 - removed: `EdgeContext.deleteLocalAccount`
 - removed: `EdgeContext.listUsernames`
 - removed: `EdgeContext.pinLoginEnabled`
+- removed: `EdgeCurrencyInfo.symbolImage` and `symbolImageDarkMono`.
+- removed: `EdgeLoginRequest.displayImageUrl`
 - removed: `listRecoveryQuestionChoices` and related types.
 - removed: `validateMemo` methods and related types.
 

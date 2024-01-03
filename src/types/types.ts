@@ -479,12 +479,6 @@ export interface EdgeCurrencyInfo {
   /** @deprecated Use EdgeCurrencyPlugin.getBuiltinTokens instead */
   metaTokens: EdgeMetaToken[]
 
-  /** @deprecated Unused. The GUI handles this now */
-  symbolImage?: string
-
-  /** @deprecated Unused. The GUI handles this now */
-  symbolImageDarkMono?: string
-
   /** @deprecated Use memoOptions instead. */
   memoMaxLength?: number // Max number of text characters, if supported
 
@@ -1561,9 +1555,6 @@ export interface EdgeLoginRequest {
 
   readonly approve: () => Promise<void>
   readonly close: () => Promise<void>
-
-  /** @deprecated Use displayImageDarkUrl or displayImageLightUrl instead */
-  readonly displayImageUrl?: string
 }
 
 export interface EdgeLobby {
