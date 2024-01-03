@@ -159,7 +159,7 @@ export function asIntegerString(raw: unknown): string {
 
 export const asEdgeAssetAmount = asObject<EdgeAssetAmount>({
   pluginId: asString,
-  tokenId: asOptional(asString),
+  tokenId: asOptional(asString, null),
   nativeAmount: asOptional(asIntegerString)
 })
 export const asEdgeFiatAmount = asObject<EdgeFiatAmount>({
