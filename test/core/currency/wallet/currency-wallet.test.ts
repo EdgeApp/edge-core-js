@@ -572,7 +572,7 @@ describe('currency wallets', function () {
     }
 
     await config.changeUserSettings({ txs: { a: { nativeAmount: '25' } } })
-    await wallet.saveTxMetadata('a', 'FAKE', metadata)
+    await wallet.saveTxMetadata({ txid: 'a', tokenId: null, metadata })
     await wallet.saveTxAction({
       txid: 'a',
       tokenId: null,
@@ -616,16 +616,19 @@ describe('currency wallets', function () {
     expect(txs[0].nativeAmount).equals('25')
     expect(txs[0].metadata).deep.equals(metadata)
 
-    await wallet.saveTxMetadata('a', 'FAKE', {
-      bizId: 4321,
-      name: 'you',
-      exchangeAmount: {
-        'iso:USD': 0.77,
-        'iso:CAD': null
-      },
-
-      category: null,
-      notes: null
+    await wallet.saveTxMetadata({
+      txid: 'a',
+      tokenId: null,
+      metadata: {
+        bizId: 4321,
+        name: 'you',
+        exchangeAmount: {
+          'iso:USD': 0.77,
+          'iso:CAD': null
+        },
+        category: null,
+        notes: null
+      }
     })
     const txs2 = await wallet.getTransactions({})
     expect(txs2.length).equals(1)

@@ -21,10 +21,10 @@ import {
   EdgeEncodeUri,
   EdgeGetReceiveAddressOptions,
   EdgeGetTransactionsOptions,
-  EdgeMetadataChange,
   EdgeParsedUri,
   EdgePaymentProtocolInfo,
   EdgeReceiveAddress,
+  EdgeSaveTxMetadataOptions,
   EdgeSignMessageOptions,
   EdgeSpendInfo,
   EdgeSpendTarget,
@@ -571,16 +571,8 @@ export function makeCurrencyWalletApi(
       )
     },
 
-    async saveTxMetadata(
-      txid: string,
-      currencyCode: string,
-      metadata: EdgeMetadataChange
-    ): Promise<void> {
-      const { tokenId = null } = upgradeCurrencyCode({
-        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
-        currencyInfo: plugin.currencyInfo,
-        currencyCode
-      })
+    async saveTxMetadata(opts: EdgeSaveTxMetadataOptions): Promise<void> {
+      const { txid, tokenId, metadata } = opts
 
       await setCurrencyWalletTxMetadata(
         input,

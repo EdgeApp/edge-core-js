@@ -3,7 +3,6 @@ import { base64 } from 'rfc4648'
 
 import {
   EdgeCurrencyWallet,
-  EdgeMetadata,
   EdgeSpendInfo,
   EdgeWalletInfo,
   EdgeWalletStates
@@ -202,9 +201,13 @@ async function protectBchWallet(wallet: EdgeCurrencyWallet): Promise<void> {
   const { publicAddress } = await wallet.getReceiveAddress()
   const spendInfoTaint: EdgeSpendInfo = {
     currencyCode: 'BCH',
-    spendTargets: [{ publicAddress, nativeAmount: '0' }],
-    metadata: {},
-    networkFeeOption: 'high'
+    metadata: {
+      name: 'Replay Protection Tx',
+      notes:
+        'This transaction is to protect your BCH wallet from unintentionally spending BSV funds. Please wait for the transaction to confirm before making additional transactions using this BCH wallet.'
+    },
+    networkFeeOption: 'high',
+    spendTargets: [{ publicAddress, nativeAmount: '0' }]
   }
   const maxAmount = await wallet.getMaxSpendable(spendInfoTaint)
   spendInfoTaint.spendTargets[0].nativeAmount = maxAmount
@@ -212,12 +215,6 @@ async function protectBchWallet(wallet: EdgeCurrencyWallet): Promise<void> {
   const signedTaintTx = await wallet.signTx(taintTx)
   const broadcastedTaintTx = await wallet.broadcastTx(signedTaintTx)
   await wallet.saveTx(broadcastedTaintTx)
-  const edgeMetadata: EdgeMetadata = {
-    name: 'Replay Protection Tx',
-    notes:
-      'This transaction is to protect your BCH wallet from unintentionally spending BSV funds. Please wait for the transaction to confirm before making additional transactions using this BCH wallet.'
-  }
-  await wallet.saveTxMetadata(broadcastedTaintTx.txid, 'BCH', edgeMetadata)
 }
 
 /**
