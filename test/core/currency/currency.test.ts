@@ -5,12 +5,16 @@ import { getCurrencyMultiplier } from '../../../src/core/currency/currency-selec
 import { fakeCurrencyPlugin } from '../../fake/fake-currency-plugin'
 
 describe('currency selectors', function () {
-  it('find currency multiplier', function () {
-    expect(getCurrencyMultiplier(fakeCurrencyPlugin, {}, 'SMALL')).equals('10')
-    expect(getCurrencyMultiplier(fakeCurrencyPlugin, {}, 'FAKE')).equals('100')
-    expect(getCurrencyMultiplier(fakeCurrencyPlugin, {}, 'TOKEN')).equals(
-      '1000'
-    )
-    expect(getCurrencyMultiplier(fakeCurrencyPlugin, {}, '-error-')).equals('1')
+  it('find currency multiplier', async function () {
+    const { currencyInfo } = fakeCurrencyPlugin
+    const tokens =
+      fakeCurrencyPlugin.getBuiltinTokens != null
+        ? await fakeCurrencyPlugin.getBuiltinTokens()
+        : {}
+
+    expect(getCurrencyMultiplier(currencyInfo, tokens, 'SMALL')).equals('10')
+    expect(getCurrencyMultiplier(currencyInfo, tokens, 'FAKE')).equals('100')
+    expect(getCurrencyMultiplier(currencyInfo, tokens, 'TOKEN')).equals('1000')
+    expect(getCurrencyMultiplier(currencyInfo, tokens, '-error-')).equals('1')
   })
 })

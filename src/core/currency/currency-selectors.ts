@@ -1,37 +1,23 @@
 import {
-  EdgeCurrencyPlugin,
+  EdgeCurrencyInfo,
   EdgeCurrencyWallet,
   EdgeTokenMap
 } from '../../types/types'
 import { ApiInput, RootProps } from '../root-pixie'
 
-const getFromTokenMap = (
-  tokenMap: EdgeTokenMap,
-  currencyCode: string
-): string | undefined => {
-  for (const tokenId of Object.keys(tokenMap)) {
-    const token = tokenMap[tokenId]
-    for (const denomination of token.denominations) {
-      if (denomination.name === currencyCode) {
-        return denomination.multiplier
-      }
-    }
-  }
-}
-
 export function getCurrencyMultiplier(
-  plugin: EdgeCurrencyPlugin,
-  allTokens: EdgeTokenMap = {},
+  currencyInfo: EdgeCurrencyInfo,
+  allTokens: EdgeTokenMap,
   currencyCode: string
 ): string {
-  const info = plugin.currencyInfo
-  for (const denomination of info.denominations) {
+  for (const denomination of currencyInfo.denominations) {
     if (denomination.name === currencyCode) {
       return denomination.multiplier
     }
   }
 
-  for (const token of info.metaTokens) {
+  for (const tokenId of Object.keys(allTokens)) {
+    const token = allTokens[tokenId]
     for (const denomination of token.denominations) {
       if (denomination.name === currencyCode) {
         return denomination.multiplier
@@ -39,8 +25,6 @@ export function getCurrencyMultiplier(
     }
   }
 
-  const multiplier = getFromTokenMap(allTokens, currencyCode)
-  if (multiplier != null) return multiplier
   return '1'
 }
 

@@ -26,6 +26,17 @@ import { compare } from '../../src/util/compare'
 
 const GENESIS_BLOCK = 1231006505000
 
+const fakeTokens: EdgeTokenMap = {
+  badf00d5: {
+    currencyCode: 'TOKEN',
+    denominations: [{ multiplier: '1000', name: 'TOKEN' }],
+    displayName: 'Fake Token',
+    networkLocation: {
+      contractAddress: '0xBADF00D5'
+    }
+  }
+}
+
 const fakeCurrencyInfo: EdgeCurrencyInfo = {
   currencyCode: 'FAKE',
   displayName: 'Fake Coin',
@@ -43,15 +54,7 @@ const fakeCurrencyInfo: EdgeCurrencyInfo = {
 
   // Deprecated:
   defaultSettings: {},
-  metaTokens: [
-    {
-      currencyCode: 'TOKEN',
-      currencyName: 'Fake Token',
-      denominations: [{ multiplier: '1000', name: 'TOKEN' }],
-      contractAddress:
-        '0XF98103E9217F099208569D295C1B276F1821348636C268C854BB2A086E0037CD'
-    }
-  ],
+  metaTokens: [],
   memoType: 'text'
 }
 
@@ -359,6 +362,10 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
 
 export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
   currencyInfo: fakeCurrencyInfo,
+
+  getBuiltinTokens(): Promise<EdgeTokenMap> {
+    return Promise.resolve(fakeTokens)
+  },
 
   makeCurrencyEngine(
     walletInfo: EdgeWalletInfo,

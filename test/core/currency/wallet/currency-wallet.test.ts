@@ -194,13 +194,12 @@ describe('currency wallets', function () {
     const { config } = await makeFakeCurrencyWallet()
 
     expect(config.builtinTokens).deep.equals({
-      f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd: {
+      badf00d5: {
         currencyCode: 'TOKEN',
         displayName: 'Fake Token',
         denominations: [{ multiplier: '1000', name: 'TOKEN' }],
         networkLocation: {
-          contractAddress:
-            '0XF98103E9217F099208569D295C1B276F1821348636C268C854BB2A086E0037CD'
+          contractAddress: '0xBADF00D5'
         }
       }
     })
@@ -239,8 +238,7 @@ describe('currency wallets', function () {
   it('enables tokens', async function () {
     const log = makeAssertLog()
     const { wallet } = await makeFakeCurrencyWallet()
-    const tokenId =
-      'f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd'
+    const tokenId = 'badf00d5'
 
     wallet.watch('enabledTokenIds', ids => log(ids.join(', ')))
     expect(wallet.enabledTokenIds).deep.equals([])
@@ -257,8 +255,7 @@ describe('currency wallets', function () {
   it('supports always-enabled tokens', async function () {
     const log = makeAssertLog()
     const { config } = await makeFakeCurrencyWallet()
-    const tokenId =
-      'f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd'
+    const tokenId = 'badf00d5'
 
     config.watch('alwaysEnabledTokenIds', ids => log(ids.join(', ')))
     expect(config.alwaysEnabledTokenIds).deep.equals([])

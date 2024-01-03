@@ -143,9 +143,8 @@ export function makeCurrencyWalletApi(
       denominatedAmount: string,
       currencyCode: string
     ): Promise<string> {
-      const plugin = input.props.state.plugins.currency[pluginId]
       const multiplier = getCurrencyMultiplier(
-        plugin,
+        plugin.currencyInfo,
         input.props.state.accounts[accountId].allTokens[pluginId],
         currencyCode
       )
@@ -155,9 +154,8 @@ export function makeCurrencyWalletApi(
       nativeAmount: string,
       currencyCode: string
     ): Promise<string> {
-      const plugin = input.props.state.plugins.currency[pluginId]
       const multiplier = getCurrencyMultiplier(
-        plugin,
+        plugin.currencyInfo,
         input.props.state.accounts[accountId].allTokens[pluginId],
         currencyCode
       )
