@@ -1,6 +1,6 @@
 # edge-core-js
 
-## Unreleased
+## 2.0.0 (2024-01-04)
 
 - added: `EdgeCurrencyWallet.saveTxAction` to add/edit `EdgeTransaction.savedAction`
 - added: `EdgeTransaction.assetAction` & `EdgeSpendInfo.assetAction` for action info that is saved per token in a transaction.
