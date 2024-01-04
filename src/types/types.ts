@@ -260,32 +260,88 @@ export interface EdgeAssetAmount {
   nativeAmount?: string
 }
 
-export type EdgeTxActionSwapType =
-  | 'swap'
-  | 'swapOrderPost'
-  | 'swapOrderFill'
-  | 'swapOrderCancel'
-
-export interface EdgeTxActionSwap {
-  type: EdgeTxActionSwapType
-  orderId?: string
-  canBePartial?: boolean
-  sourceAsset: EdgeAssetAmount
-  destAsset: EdgeAssetAmount
+export interface EdgeFiatAmount {
+  // core-js style fiat code including 'iso:'
+  fiatCurrencyCode: string
+  fiatAmount: string
 }
 
-export type EdgeTxActionStakeType =
+export interface EdgeTxActionSwap {
+  actionType: 'swap'
+  swapInfo: EdgeSwapInfo
+  orderId?: string
+  orderUri?: string
+  isEstimate?: boolean
+  canBePartial?: boolean
+  fromAsset: EdgeAssetAmount
+  toAsset: EdgeAssetAmount
+  payoutAddress: string
+  payoutWalletId: string
+  refundAddress?: string
+}
+
+export interface EdgeTxActionStake {
+  actionType: 'stake'
+  pluginId: string
+  stakeAssets: EdgeAssetAmount[]
+}
+
+export interface EdgeTxActionFiat {
+  actionType: 'fiat'
+
+  orderId: string
+  orderUri?: string
+  isEstimate: boolean
+
+  fiatPlugin: {
+    providerId: string
+    providerDisplayName: string
+    supportEmail?: string
+  }
+
+  payinAddress?: string
+  payoutAddress?: string
+  fiatAsset: EdgeFiatAmount
+  cryptoAsset: EdgeAssetAmount
+}
+
+export interface EdgeTxActionTokenApproval {
+  actionType: 'tokenApproval'
+  tokenApproved: EdgeAssetAmount
+  tokenContractAddress: string
+  contractAddress: string
+}
+
+export type EdgeTxAction =
+  | EdgeTxActionSwap
+  | EdgeTxActionStake
+  | EdgeTxActionFiat
+  | EdgeTxActionTokenApproval
+
+export type EdgeAssetActionType =
+  | 'stake'
+  | 'stakeNetworkFee'
+  | 'stakeOrder'
+  | 'unstake'
+  | 'unstakeNetworkFee'
+  | 'unstakeOrder'
   | 'stake'
   | 'stakeOrder'
   | 'unstake'
   | 'unstakeOrder'
+  | 'swap'
+  | 'swapOrderPost'
+  | 'swapOrderFill'
+  | 'swapOrderCancel'
+  | 'buy'
+  | 'sell'
+  | 'sellNetworkFee'
+  | 'tokenApproval'
+  | 'transfer'
 
-export interface EdgeTxActionStake {
-  type: EdgeTxActionStakeType
-  stakeAssets: EdgeAssetAmount[]
+export interface EdgeAssetAction {
+  assetActionType: EdgeAssetActionType
 }
-
-export type EdgeTxAction = EdgeTxActionSwap | EdgeTxActionStake
 
 // token info ----------------------------------------------------------
 
@@ -536,7 +592,18 @@ export interface EdgeTransaction {
   signedTx: string
   memos: EdgeMemo[]
   ourReceiveAddresses: string[]
-  action?: EdgeTxAction
+
+  /** App-provided per-asset action data */
+  assetAction?: EdgeAssetAction
+
+  /** Plugin-provided action data for all assets in a transaction */
+  chainAction?: EdgeTxAction
+
+  /** Plugin-provided per-asset action data */
+  chainAssetAction?: EdgeAssetAction
+
+  /** App-provided action data for all assets in a transaction */
+  savedAction?: EdgeTxAction
 
   // Spend-specific metadata:
   deviceDescription?: string
@@ -610,6 +677,8 @@ export interface EdgeSpendInfo {
   skipChecks?: boolean
 
   // Core:
+  assetAction?: EdgeAssetAction
+  savedAction?: EdgeTxAction
   metadata?: EdgeMetadata
   swapData?: EdgeTxSwap
   otherParams?: JsonObject
@@ -805,6 +874,13 @@ export interface EdgeEngineGetActivationAssetsOptions {
 
 export interface EdgeEnginePrivateKeyOptions {
   privateKeys?: JsonObject
+}
+
+export interface EdgeSaveTxActionOptions {
+  txid: string
+  tokenId: EdgeTokenId
+  assetAction: EdgeAssetAction
+  savedAction: EdgeTxAction
 }
 
 export interface EdgeSignMessageOptions {
@@ -1161,6 +1237,7 @@ export interface EdgeCurrencyWallet {
   ) => Promise<EdgePaymentProtocolInfo>
   readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
   readonly saveTx: (tx: EdgeTransaction) => Promise<void>
+  readonly saveTxAction: (opts: EdgeSaveTxActionOptions) => Promise<void>
   readonly saveTxMetadata: (
     txid: string,
     currencyCode: string,
@@ -1215,6 +1292,7 @@ export interface EdgeSwapInfo {
   readonly displayName: string
   readonly isDex?: boolean
 
+  /** @deprecated Use orderUri in EdgeTxAction */
   readonly orderUri?: string // The orderId would be appended to this
   readonly supportEmail: string
 }
@@ -1251,6 +1329,7 @@ export interface EdgeSwapResult {
 
 export interface EdgeSwapApproveOptions {
   metadata?: EdgeMetadata
+  savedAction?: EdgeTxAction
 }
 
 /**

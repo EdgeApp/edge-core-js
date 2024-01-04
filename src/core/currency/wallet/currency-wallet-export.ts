@@ -73,6 +73,22 @@ export function searchStringFilter(
     if (checkNullTypeAndIndex(displayName) || checkNullTypeAndIndex(pluginId))
       return true
   }
+  const action = tx.savedAction ?? tx.chainAction
+
+  if (action != null) {
+    if (action.actionType === 'swap') {
+      const { pluginId: destPluginId } = action.toAsset
+      const { pluginId: sourcePluginId } = action.fromAsset
+      const { displayName, supportEmail } = action.swapInfo
+      if (
+        checkNullTypeAndIndex(sourcePluginId) ||
+        checkNullTypeAndIndex(destPluginId) ||
+        checkNullTypeAndIndex(displayName) ||
+        checkNullTypeAndIndex(supportEmail)
+      )
+        return true
+    }
+  }
   if (tx.spendTargets != null) {
     for (const target of tx.spendTargets) {
       const { publicAddress = '', memo = '' } = target

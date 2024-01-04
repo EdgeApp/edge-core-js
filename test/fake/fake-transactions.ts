@@ -11,6 +11,9 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
     nativeAmount: '644350',
     networkFee: '0',
     currencyCode: 'BTC',
+    chainAssetAction: {
+      assetActionType: 'sell'
+    },
     metadata: {
       exchangeAmount: {
         'iso:USD': 304.8453034025
@@ -395,5 +398,32 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
       payoutWalletId: 'aumm1+iQsXDXxiSYzuX8qToQpwQXX03CTVKomKPTLaQ=',
       refundAddress: '33eFPT8vFvgCHMijNR7LpqNZBMR2utcq1P'
     }
+  }
+}
+
+export const moreTxs: { [txid: string]: EdgeTransaction } = {
+  a: {
+    blockHeight: 669865,
+    date: 1612885126,
+    ourReceiveAddresses: ['37aHjJ1SJozk6FgUm3rdNwJXBwS97WRnNU'],
+    signedTx:
+      '01000000000101f711774fe678ad8fd0bf4052197e5124676307baef06f537a1749034848687b74f000000171600140d5748cc84b7eae99ffa0f5cbbb0b5cf435bada2ffffffff02fed409000000000017a914408b09851f3fd867a3684f61f6074daec18710a38716a2150a0000000017a91451ba419ef82db3fbac23b9a0cb14ff445d9fc678870247304402201c6fa0231dc8f78d0471e187481976648b21a758f620d54492f6b35b58e864ae02204cb3e03c9b3b4162b08b02b80c597cab2a2648a5a080aab14b30e4fedb68b49f01210336e179620850999b87ecaea54159ef42e8bb51e2da1fae499276bbb394b9fe8500000000',
+    txid: '83137fa6212eff80a819c58bd3d500e240603a2bec25dbb96dd29fe5f4b7f69b',
+    nativeAmount: '10',
+    networkFee: '0',
+    currencyCode: 'FAKE',
+    tokenId: null,
+    chainAssetAction: {
+      assetActionType: 'sellNetworkFee'
+    },
+    metadata: {
+      exchangeAmount: {
+        'iso:USD': 304.8453034025
+      },
+      amountFiat: 304.8453034025
+    },
+    memos: [],
+    isSend: false,
+    walletId: 'mywalletid'
   }
 }

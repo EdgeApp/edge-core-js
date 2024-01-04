@@ -40,7 +40,12 @@ import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
-import { asEdgeTxSwap, TransactionFile } from './currency-wallet-cleaners'
+import {
+  asEdgeAssetAction,
+  asEdgeTxAction,
+  asEdgeTxSwap,
+  TransactionFile
+} from './currency-wallet-cleaners'
 import { dateFilter, searchStringFilter } from './currency-wallet-export'
 import {
   loadTxFiles,
@@ -481,14 +486,16 @@ export function makeCurrencyWalletApi(
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
       spendInfo = upgradeMemos(spendInfo, plugin.currencyInfo)
       const {
+        assetAction,
         customNetworkFee,
+        memos,
         metadata,
         networkFeeOption = 'standard',
         noUnconfirmed = false,
         otherParams,
         pendingTxs,
         rbfTxid,
-        memos,
+        savedAction,
         skipChecks,
         spendTargets = [],
         swapData
@@ -559,6 +566,8 @@ export function makeCurrencyWalletApi(
       tx.spendTargets = savedTargets
       if (metadata != null) tx.metadata = metadata
       if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
+      if (savedAction != null) tx.savedAction = asEdgeTxAction(savedAction)
+      if (assetAction != null) tx.assetAction = asEdgeAssetAction(assetAction)
       if (input.props.state.login.deviceDescription != null)
         tx.deviceDescription = input.props.state.login.deviceDescription
 
@@ -570,18 +579,36 @@ export function makeCurrencyWalletApi(
       fakeCallbacks.onTransactionsChanged([tx])
     },
 
+    async saveTxAction(opts): Promise<void> {
+      const { txid, tokenId, assetAction, savedAction } = opts
+      await setCurrencyWalletTxMetadata(
+        input,
+        txid,
+        tokenId,
+        fakeCallbacks,
+        undefined,
+        assetAction,
+        savedAction
+      )
+    },
+
     async saveTxMetadata(
       txid: string,
       currencyCode: string,
       metadata: EdgeMetadataChange
     ): Promise<void> {
+      const { tokenId = null } = upgradeCurrencyCode({
+        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+        currencyInfo: plugin.currencyInfo,
+        currencyCode
+      })
       upgradeMetadata(input, metadata)
       await setCurrencyWalletTxMetadata(
         input,
         txid,
-        currencyCode,
-        metadata,
-        fakeCallbacks
+        tokenId,
+        fakeCallbacks,
+        metadata
       )
     },
 
@@ -682,7 +709,8 @@ export function combineTxWithFile(
 
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
-    action: tx.action,
+    chainAction: tx.chainAction,
+    chainAssetAction: tx.chainAssetAction.get(tokenId),
     blockHeight: tx.blockHeight,
     confirmations: tx.confirmations,
     currencyCode,
@@ -737,8 +765,11 @@ export function combineTxWithFile(
       }))
     }
 
-    if (file.swap != null) out.swapData = asEdgeTxSwap(file.swap)
-    if (typeof file.secret === 'string') out.txSecret = file.secret
+    const assetAction = file.tokens.get(tokenId)?.assetAction
+    if (assetAction != null) out.assetAction = assetAction
+    if (file.savedAction != null) out.savedAction = file.savedAction
+    if (file.swap != null) out.swapData = file.swap
+    if (file.secret != null) out.txSecret = file.secret
     if (file.deviceDescription != null)
       out.deviceDescription = file.deviceDescription
   }

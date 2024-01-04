@@ -11,12 +11,27 @@ import {
   Cleaner
 } from 'cleaners'
 
-import { EdgeMetadata, EdgeTokenId, EdgeTxSwap } from '../../../types/types'
+import {
+  EdgeAssetAction,
+  EdgeAssetActionType,
+  EdgeAssetAmount,
+  EdgeFiatAmount,
+  EdgeMetadata,
+  EdgeSwapInfo,
+  EdgeTokenId,
+  EdgeTxAction,
+  EdgeTxActionFiat,
+  EdgeTxActionStake,
+  EdgeTxActionSwap,
+  EdgeTxActionTokenApproval,
+  EdgeTxSwap
+} from '../../../types/types'
 import { asMap, asTokenIdMap } from '../../../util/asMap'
 import { asJsonObject } from '../../../util/file-helpers'
 import { asEdgeMetadata } from './metadata'
 
-interface TransactionAsset {
+export interface TransactionAsset {
+  assetAction?: EdgeAssetAction
   metadata: EdgeMetadata
   nativeAmount?: string
   providerFeeSent?: string
@@ -41,6 +56,7 @@ export interface TransactionFile {
     currency: string
     tag?: string
   }>
+  savedAction?: EdgeTxAction
   secret?: string
   swap?: EdgeTxSwap
 }
@@ -141,6 +157,102 @@ export function asIntegerString(raw: unknown): string {
 // file cleaners
 // ---------------------------------------------------------------------
 
+export const asEdgeAssetAmount = asObject<EdgeAssetAmount>({
+  pluginId: asString,
+  tokenId: asOptional(asString),
+  nativeAmount: asOptional(asIntegerString)
+})
+export const asEdgeFiatAmount = asObject<EdgeFiatAmount>({
+  // core-js style fiat code including 'iso:'
+  fiatCurrencyCode: asString,
+  fiatAmount: asString
+})
+
+export const asEdgeSwapInfo = asObject<EdgeSwapInfo>({
+  pluginId: asString,
+  displayName: asString,
+  isDex: asOptional(asBoolean),
+  orderUri: asOptional(asString), // The orderId would be appended to this
+  supportEmail: asString
+})
+
+export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
+  actionType: asValue('swap'),
+  swapInfo: asEdgeSwapInfo,
+  orderId: asOptional(asString),
+  orderUri: asOptional(asString),
+  isEstimate: asOptional(asBoolean),
+  canBePartial: asOptional(asBoolean),
+  fromAsset: asEdgeAssetAmount,
+  toAsset: asEdgeAssetAmount,
+  payoutWalletId: asString,
+  payoutAddress: asString,
+  refundAddress: asOptional(asString)
+})
+
+export const asEdgeTxActionStake = asObject<EdgeTxActionStake>({
+  actionType: asValue('stake'),
+  pluginId: asString,
+  stakeAssets: asArray(asEdgeAssetAmount)
+})
+
+export const asEdgeTxActionFiat = asObject<EdgeTxActionFiat>({
+  actionType: asValue('fiat'),
+
+  orderId: asString,
+  orderUri: asOptional(asString),
+  isEstimate: asBoolean,
+
+  fiatPlugin: asObject({
+    providerId: asString,
+    providerDisplayName: asString,
+    supportEmail: asOptional(asString)
+  }),
+
+  payinAddress: asOptional(asString),
+  payoutAddress: asOptional(asString),
+  fiatAsset: asEdgeFiatAmount,
+  cryptoAsset: asEdgeAssetAmount
+})
+
+export const asEdgeTxActionTokenApproval = asObject<EdgeTxActionTokenApproval>({
+  actionType: asValue('tokenApproval'),
+  tokenApproved: asEdgeAssetAmount,
+  tokenContractAddress: asString,
+  contractAddress: asString
+})
+
+export const asEdgeTxAction: Cleaner<EdgeTxAction> = asEither(
+  asEdgeTxActionSwap,
+  asEdgeTxActionStake,
+  asEdgeTxActionFiat,
+  asEdgeTxActionTokenApproval
+)
+
+export const asEdgeAssetActionType: Cleaner<EdgeAssetActionType> = asValue(
+  'stake',
+  'stakeOrder',
+  'unstake',
+  'unstakeOrder',
+  'stake',
+  'stakeOrder',
+  'unstake',
+  'unstakeOrder',
+  'swap',
+  'swapOrderPost',
+  'swapOrderFill',
+  'swapOrderCancel',
+  'buy',
+  'sell',
+  'sellNetworkFee',
+  'tokenApproval',
+  'transfer'
+)
+
+export const asEdgeAssetAction = asObject({
+  assetActionType: asEdgeAssetActionType
+})
+
 /**
  * Old core versions used currency codes instead of tokenId's.
  */
@@ -184,6 +296,7 @@ export const asTransactionFile = asObject<TransactionFile>({
       })
     )
   ),
+  savedAction: asOptional(asEdgeTxAction),
   secret: asOptional(asString),
   swap: asOptional(asEdgeTxSwap)
 })

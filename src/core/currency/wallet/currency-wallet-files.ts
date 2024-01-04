@@ -1,11 +1,13 @@
 import { number as currencyFromNumber } from 'currency-codes'
 import { Disklet, justFiles, navigateDisklet } from 'disklet'
 
-import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
+  EdgeAssetAction,
   EdgeCurrencyEngineCallbacks,
   EdgeMetadataChange,
-  EdgeTransaction
+  EdgeTokenId,
+  EdgeTransaction,
+  EdgeTxAction
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
 import { fetchAppIdInfo } from '../../account/lobby-api'
@@ -27,6 +29,7 @@ import {
   asWalletFiatFile,
   asWalletNameFile,
   LegacyTransactionFile,
+  TransactionAsset,
   TransactionFile
 } from './currency-wallet-cleaners'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
@@ -414,21 +417,19 @@ export async function loadAddressFiles(
 export async function setCurrencyWalletTxMetadata(
   input: CurrencyWalletInput,
   txid: string,
-  currencyCode: string,
-  metadataChange: EdgeMetadataChange,
-  fakeCallbacks: EdgeCurrencyEngineCallbacks
+  tokenId: EdgeTokenId,
+  fakeCallbacks: EdgeCurrencyEngineCallbacks,
+  metadataChange?: EdgeMetadataChange,
+  assetAction?: EdgeAssetAction,
+  savedAction?: EdgeTxAction
 ): Promise<void> {
   const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
-  // Upgrade the currency code:
+  // Find the currency code:
   const { accountId, currencyInfo, pluginId } = input.props.walletState
   const allTokens = input.props.state.accounts[accountId].allTokens[pluginId]
-  const { tokenId = null } = upgradeCurrencyCode({
-    allTokens,
-    currencyCode,
-    currencyInfo
-  })
+  const { currencyCode } = tokenId == null ? currencyInfo : allTokens[tokenId]
 
   // Find the tx:
   const tx = input.props.walletState.txs[txid]
@@ -453,7 +454,7 @@ export async function setCurrencyWalletTxMetadata(
   }
 
   // Migrate the asset data from currencyCode to tokenId:
-  const assetData = {
+  const assetData: TransactionAsset = {
     metadata: {},
     ...newFile.currencies.get(currencyCode),
     ...newFile.tokens.get(tokenId)
@@ -462,7 +463,11 @@ export async function setCurrencyWalletTxMetadata(
   newFile.currencies.delete(currencyCode)
 
   // Make the change:
-  assetData.metadata = mergeMetadata(assetData.metadata ?? {}, metadataChange)
+  if (metadataChange != null) {
+    assetData.metadata = mergeMetadata(assetData.metadata ?? {}, metadataChange)
+  }
+  if (assetAction != null) assetData.assetAction = assetAction
+  if (savedAction != null) newFile.savedAction = savedAction
 
   // Save the new file:
   const { fileName, txidHash } = getTxFileName(
@@ -488,7 +493,7 @@ export async function setupNewTxMetadata(
   tx: EdgeTransaction
 ): Promise<void> {
   const { dispatch, state, walletId } = input.props
-  const { spendTargets, swapData, tokenId, txid } = tx
+  const { assetAction, savedAction, spendTargets, swapData, tokenId, txid } = tx
   const disklet = getStorageWalletDisklet(state, walletId)
 
   const creationDate = Date.now() / 1000
@@ -502,9 +507,10 @@ export async function setupNewTxMetadata(
     creationDate,
     currencies: new Map(),
     tokens: new Map(),
+    savedAction,
     swap: swapData
   }
-  json.tokens.set(tokenId, { metadata, nativeAmount })
+  json.tokens.set(tokenId, { assetAction, metadata, nativeAmount })
 
   // Set up the fee metadata:
   if (tx.networkFeeOption != null) {
