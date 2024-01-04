@@ -1,4 +1,6 @@
-export const walletTxs = {
+import { EdgeTransaction } from '../../types'
+
+export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
   a: {
     blockHeight: 669865,
     date: 1612885126,
@@ -270,7 +272,9 @@ export const walletTxs = {
       {
         currencyCode: 'BTC',
         nativeAmount: '347450',
-        publicAddress: '3LydNJToQaDnsPf2uQ32AH8jgdRTo2mgdL'
+        publicAddress: '3LydNJToQaDnsPf2uQ32AH8jgdRTo2mgdL',
+        memo: undefined,
+        uniqueIdentifier: undefined
       }
     ],
     swapData: {
@@ -320,7 +324,9 @@ export const walletTxs = {
       {
         currencyCode: 'BTC',
         nativeAmount: '147680',
-        publicAddress: '3FNhvvv5xQ3JVKiNyo7Py9wMZ15GGgBUFv'
+        publicAddress: '3FNhvvv5xQ3JVKiNyo7Py9wMZ15GGgBUFv',
+        memo: undefined,
+        uniqueIdentifier: undefined
       }
     ],
     swapData: {
@@ -370,7 +376,9 @@ export const walletTxs = {
       {
         currencyCode: 'BTC',
         nativeAmount: '59270',
-        publicAddress: '3LgBrHJApTLyoD2PTaGNCP5YgrBtnyNVtA'
+        publicAddress: '3LgBrHJApTLyoD2PTaGNCP5YgrBtnyNVtA',
+        memo: undefined,
+        uniqueIdentifier: undefined
       }
     ],
     swapData: {

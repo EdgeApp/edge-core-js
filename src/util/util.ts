@@ -3,31 +3,8 @@
  * Purrs quietly when pet.
  */
 export function softCat<T>(...lists: Array<T[] | undefined>): T[] {
-  const flowHack: any = lists.filter(list => list != null)
-  return [].concat(...flowHack)
-}
-
-/**
- * Merges several Javascript objects deeply,
- * preferring the items from later objects.
- */
-export function mergeDeeply(...objects: any[]): any {
-  const out: any = {}
-
-  for (const o of objects) {
-    if (o == null) continue
-
-    for (const key of Object.keys(o)) {
-      if (o[key] == null) continue
-
-      out[key] =
-        out[key] != null && typeof o[key] === 'object'
-          ? mergeDeeply(out[key], o[key])
-          : o[key]
-    }
-  }
-
-  return out
+  const out: T[] = []
+  return out.concat(...lists.filter((list): list is T[] => list != null))
 }
 
 /**

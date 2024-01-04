@@ -9,6 +9,7 @@ import {
 } from '../../../client-side'
 import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
+  EdgeBalanceMap,
   EdgeBalances,
   EdgeCurrencyCodeOptions,
   EdgeCurrencyConfig,
@@ -21,7 +22,7 @@ import {
   EdgeGetReceiveAddressOptions,
   EdgeGetTransactionsOptions,
   EdgeMemoRules,
-  EdgeMetadata,
+  EdgeMetadataChange,
   EdgeParsedUri,
   EdgePaymentProtocolInfo,
   EdgeReceiveAddress,
@@ -30,21 +31,16 @@ import {
   EdgeSpendTarget,
   EdgeStakingStatus,
   EdgeStreamTransactionOptions,
+  EdgeTokenId,
   EdgeTransaction,
   EdgeWalletInfo
 } from '../../../types/types'
-import { mergeDeeply } from '../../../util/util'
 import { makeMetaTokens } from '../../account/custom-tokens'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
-import {
-  asEdgeTxSwap,
-  packMetadata,
-  TransactionFile,
-  unpackMetadata
-} from './currency-wallet-cleaners'
+import { asEdgeTxSwap, TransactionFile } from './currency-wallet-cleaners'
 import { dateFilter, searchStringFilter } from './currency-wallet-export'
 import {
   loadTxFiles,
@@ -55,6 +51,7 @@ import {
 } from './currency-wallet-files'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { MergedTransaction } from './currency-wallet-reducer'
+import { mergeMetadata, upgradeMetadata } from './metadata'
 import { upgradeMemos } from './upgrade-memos'
 
 const fakeMetadata = {
@@ -143,9 +140,8 @@ export function makeCurrencyWalletApi(
       denominatedAmount: string,
       currencyCode: string
     ): Promise<string> {
-      const plugin = input.props.state.plugins.currency[pluginId]
       const multiplier = getCurrencyMultiplier(
-        plugin,
+        plugin.currencyInfo,
         input.props.state.accounts[accountId].allTokens[pluginId],
         currencyCode
       )
@@ -155,9 +151,8 @@ export function makeCurrencyWalletApi(
       nativeAmount: string,
       currencyCode: string
     ): Promise<string> {
-      const plugin = input.props.state.plugins.currency[pluginId]
       const multiplier = getCurrencyMultiplier(
-        plugin,
+        plugin.currencyInfo,
         input.props.state.accounts[accountId].allTokens[pluginId],
         currencyCode
       )
@@ -171,6 +166,9 @@ export function makeCurrencyWalletApi(
     // Chain state:
     get balances(): EdgeBalances {
       return input.props.walletState.balances
+    },
+    get balanceMap(): EdgeBalanceMap {
+      return input.props.walletState.balanceMap
     },
     get blockHeight(): number {
       const { skipBlockHeight } = input.props.state
@@ -223,7 +221,14 @@ export function makeCurrencyWalletApi(
     async getNumTransactions(
       opts: EdgeCurrencyCodeOptions = {}
     ): Promise<number> {
-      return engine.getNumTransactions(opts)
+      const { currencyCode, tokenId } = upgradeCurrencyCode({
+        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+        currencyInfo: plugin.currencyInfo,
+        currencyCode: opts.currencyCode,
+        tokenId: opts.tokenId
+      })
+
+      return engine.getNumTransactions({ currencyCode, tokenId })
     },
 
     async $internalStreamTransactions(
@@ -235,7 +240,7 @@ export function makeCurrencyWalletApi(
         beforeDate,
         firstBatchSize = batchSize,
         searchString,
-        tokenId,
+        tokenId = null,
         unfilteredStart
       } = opts
       const { currencyCode } =
@@ -245,14 +250,14 @@ export function makeCurrencyWalletApi(
 
       // Load transactions from the engine if necessary:
       let state = input.props.walletState
-      if (!state.gotTxs[currencyCode]) {
+      if (!state.gotTxs.has(tokenId)) {
         const txs = await engine.getTransactions({ currencyCode })
         fakeCallbacks.onTransactionsChanged(txs)
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_GOT_TXS',
           payload: {
             walletId: input.props.walletId,
-            currencyCode
+            tokenId
           }
         })
         state = input.props.walletState
@@ -298,14 +303,13 @@ export function makeCurrencyWalletApi(
             // Filter transactions based on the currency code:
             if (
               tx == null ||
-              (tx.nativeAmount[currencyCode] == null &&
-                tx.networkFee[currencyCode] == null)
+              !(tx.nativeAmount.has(tokenId) || tx.networkFee.has(tokenId))
             ) {
               continue
             }
 
             // Filter transactions based on search criteria:
-            const edgeTx = combineTxWithFile(input, tx, file, currencyCode)
+            const edgeTx = combineTxWithFile(input, tx, file, tokenId)
             if (!searchStringFilter(ai, edgeTx, searchString)) continue
             if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
 
@@ -337,7 +341,8 @@ export function makeCurrencyWalletApi(
       const { tokenId } = upgradeCurrencyCode({
         allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
         currencyInfo: plugin.currencyInfo,
-        currencyCode
+        currencyCode,
+        tokenId: opts.tokenId
       })
 
       const stream = await out.$internalStreamTransactions({
@@ -370,7 +375,18 @@ export function makeCurrencyWalletApi(
     async getReceiveAddress(
       opts: EdgeGetReceiveAddressOptions = {}
     ): Promise<EdgeReceiveAddress> {
-      const freshAddress = await engine.getFreshAddress(opts)
+      const { currencyCode, tokenId } = upgradeCurrencyCode({
+        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+        currencyInfo: plugin.currencyInfo,
+        currencyCode: opts.currencyCode,
+        tokenId: opts.tokenId
+      })
+
+      const freshAddress = await engine.getFreshAddress({
+        forceIndex: opts.forceIndex,
+        currencyCode,
+        tokenId
+      })
       const receiveAddress: EdgeReceiveAddress = {
         ...freshAddress,
         nativeAmount: '0',
@@ -404,8 +420,16 @@ export function makeCurrencyWalletApi(
 
         return await engine.getMaxSpendable(spendInfo, { privateKeys })
       }
-      const { currencyCode, networkFeeOption, customNetworkFee } = spendInfo
-      const balance = engine.getBalance({ currencyCode })
+
+      // Figure out which asset this is:
+      const { networkFeeOption, customNetworkFee } = spendInfo
+      const { currencyCode, tokenId } = upgradeCurrencyCode({
+        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+        currencyInfo: plugin.currencyInfo,
+        currencyCode: spendInfo.currencyCode,
+        tokenId: spendInfo.tokenId
+      })
+      const balance = engine.getBalance({ currencyCode, tokenId })
 
       // Copy all the spend targets, setting the amounts to 0
       // but keeping all other information so we can get accurate fees:
@@ -431,6 +455,7 @@ export function makeCurrencyWalletApi(
           .makeSpend(
             {
               currencyCode,
+              tokenId,
               spendTargets,
               networkFeeOption,
               customNetworkFee
@@ -544,19 +569,22 @@ export function makeCurrencyWalletApi(
       await engine.saveTx(tx)
       fakeCallbacks.onTransactionsChanged([tx])
     },
+
     async saveTxMetadata(
       txid: string,
       currencyCode: string,
-      metadata: EdgeMetadata
+      metadata: EdgeMetadataChange
     ): Promise<void> {
+      upgradeMetadata(input, metadata)
       await setCurrencyWalletTxMetadata(
         input,
         txid,
         currencyCode,
-        packMetadata(metadata, input.props.walletState.fiat),
+        metadata,
         fakeCallbacks
       )
     },
+
     async signMessage(
       message: string,
       opts: EdgeSignMessageOptions = {}
@@ -612,13 +640,23 @@ export function makeCurrencyWalletApi(
       )
     },
     async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
-      return await tools.parseUri(
+      const parsedUri = await tools.parseUri(
         uri,
         currencyCode,
         makeMetaTokens(
           input.props.state.accounts[accountId].customTokens[pluginId]
         )
       )
+
+      if (parsedUri.tokenId === undefined) {
+        const { tokenId = null } = upgradeCurrencyCode({
+          allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+          currencyInfo: plugin.currencyInfo,
+          currencyCode: parsedUri.currencyCode ?? currencyCode
+        })
+        parsedUri.tokenId = tokenId
+      }
+      return parsedUri
     },
 
     // Generic:
@@ -633,11 +671,14 @@ export function combineTxWithFile(
   input: CurrencyWalletInput,
   tx: MergedTransaction,
   file: TransactionFile | undefined,
-  currencyCode: string
+  tokenId: EdgeTokenId
 ): EdgeTransaction {
   const walletId = input.props.walletId
-  const walletCurrency = input.props.walletState.currencyInfo.currencyCode
-  const walletFiat = input.props.walletState.fiat
+  const { accountId, currencyInfo, pluginId } = input.props.walletState
+  const allTokens = input.props.state.accounts[accountId].allTokens[pluginId]
+
+  const { currencyCode } = tokenId == null ? currencyInfo : allTokens[tokenId]
+  const walletCurrency = currencyInfo.currencyCode
 
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
@@ -649,12 +690,13 @@ export function combineTxWithFile(
     isSend: tx.isSend,
     memos: tx.memos,
     metadata: {},
-    nativeAmount: tx.nativeAmount[currencyCode] ?? '0',
-    networkFee: tx.networkFee[currencyCode] ?? '0',
+    nativeAmount: tx.nativeAmount.get(tokenId) ?? '0',
+    networkFee: tx.networkFee.get(tokenId) ?? '0',
     otherParams: { ...tx.otherParams },
     ourReceiveAddresses: tx.ourReceiveAddresses,
-    parentNetworkFee: tx.networkFee[walletCurrency],
+    parentNetworkFee: tx.networkFee.get(null) ?? '0',
     signedTx: tx.signedTx,
+    tokenId,
     txid: tx.txid,
     walletId
   }
@@ -663,16 +705,17 @@ export function combineTxWithFile(
   if (file != null) {
     if (file.creationDate < out.date) out.date = file.creationDate
 
-    const merged = mergeDeeply(
-      file.currencies[walletCurrency],
-      file.currencies[currencyCode]
+    const metadata = mergeMetadata(
+      file.tokens.get(null)?.metadata ??
+        file.currencies.get(walletCurrency)?.metadata ??
+        {},
+      file.tokens.get(tokenId)?.metadata ??
+        file.currencies.get(currencyCode)?.metadata ??
+        {}
     )
-    if (merged.metadata != null) {
-      out.metadata = {
-        ...out.metadata,
-        ...unpackMetadata(merged.metadata, walletFiat)
-      }
-    }
+    metadata.amountFiat =
+      metadata.exchangeAmount?.[input.props.walletState.fiat]
+    out.metadata = metadata
 
     if (file.feeRateRequested != null) {
       if (typeof file.feeRateRequested === 'string') {

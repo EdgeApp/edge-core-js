@@ -132,12 +132,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       // Grab initial state:
       const balance = asMaybe(asIntegerString)(
-        engine.getBalance({ currencyCode })
+        engine.getBalance({ currencyCode, tokenId: undefined })
       )
       if (balance != null) {
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-          payload: { balance, currencyCode, walletId }
+          payload: { balance, tokenId: null, walletId }
         })
       }
       const height = engine.getBlockHeight()

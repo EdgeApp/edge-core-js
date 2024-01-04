@@ -9,6 +9,7 @@ import {
   EdgeCurrencyConfig,
   EdgeCurrencyWallet,
   EdgeMetadata,
+  EdgeMetadataChange,
   EdgeToken,
   EdgeTransaction,
   EdgeTxSwap,
@@ -92,8 +93,8 @@ describe('currency wallets', function () {
     wallet.on('transactionsChanged', txs => {
       log('changed', txs.map(tx => tx.txid).join(' '))
     })
-    wallet.watch('balances', balances => {
-      log('balances', balances)
+    wallet.watch('balanceMap', balanceMap => {
+      log('balanceMap', Array.from(balanceMap.entries()))
     })
     wallet.watch('blockHeight', blockHeight => {
       log('blockHeight', blockHeight)
@@ -107,13 +108,21 @@ describe('currency wallets', function () {
 
     // Test property watchers:
     log.assert()
+    expect(Array.from(wallet.balanceMap.entries())).to.deep.equal([
+      [null, '0'],
+      ['badf00d5', '0']
+    ])
     expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '0' })
     expect(wallet.stakingStatus).deep.equals({
       stakedAmounts: [{ nativeAmount: '0' }]
     })
 
     await config.changeUserSettings({ tokenBalance: 30 })
-    await log.waitFor(1).assert('balances { FAKE: "0", TOKEN: "30" }')
+    await log.waitFor(1).assert(`balanceMap [[null, "0"], ["badf00d5", "30"]]`)
+    expect(Array.from(wallet.balanceMap.entries())).to.deep.equal([
+      [null, '0'],
+      ['badf00d5', '30']
+    ])
     expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '30' })
 
     await config.changeUserSettings({ blockHeight: 200 })
@@ -125,7 +134,13 @@ describe('currency wallets', function () {
     expect(wallet.syncRatio).to.equal(0.123456789)
 
     await config.changeUserSettings({ balance: 1234567890 })
-    await log.waitFor(1).assert('balances { FAKE: "1234567890", TOKEN: "30" }')
+    await log
+      .waitFor(1)
+      .assert(`balanceMap [[null, "1234567890"], ["badf00d5", "30"]]`)
+    expect(Array.from(wallet.balanceMap.entries())).to.deep.equal([
+      [null, '1234567890'],
+      ['badf00d5', '30']
+    ])
     expect(wallet.balances).to.deep.equal({ FAKE: '1234567890', TOKEN: '30' })
 
     await config.changeUserSettings({ stakedBalance: 543 })
@@ -194,13 +209,12 @@ describe('currency wallets', function () {
     const { config } = await makeFakeCurrencyWallet()
 
     expect(config.builtinTokens).deep.equals({
-      f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd: {
+      badf00d5: {
         currencyCode: 'TOKEN',
         displayName: 'Fake Token',
         denominations: [{ multiplier: '1000', name: 'TOKEN' }],
         networkLocation: {
-          contractAddress:
-            '0XF98103E9217F099208569D295C1B276F1821348636C268C854BB2A086E0037CD'
+          contractAddress: '0xBADF00D5'
         }
       }
     })
@@ -239,8 +253,7 @@ describe('currency wallets', function () {
   it('enables tokens', async function () {
     const log = makeAssertLog()
     const { wallet } = await makeFakeCurrencyWallet()
-    const tokenId =
-      'f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd'
+    const tokenId = 'badf00d5'
 
     wallet.watch('enabledTokenIds', ids => log(ids.join(', ')))
     expect(wallet.enabledTokenIds).deep.equals([])
@@ -257,8 +270,7 @@ describe('currency wallets', function () {
   it('supports always-enabled tokens', async function () {
     const log = makeAssertLog()
     const { config } = await makeFakeCurrencyWallet()
-    const tokenId =
-      'f98103e9217f099208569d295c1b276f1821348636c268c854bb2a086e0037cd'
+    const tokenId = 'badf00d5'
 
     config.watch('alwaysEnabledTokenIds', ids => log(ids.join(', ')))
     expect(config.alwaysEnabledTokenIds).deep.equals([])
@@ -515,6 +527,51 @@ describe('currency wallets', function () {
     })
   })
 
+  it('can delete metadata', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+
+    const metadata: EdgeMetadata = {
+      bizId: 1234,
+      name: 'me',
+      amountFiat: 0.75,
+      category: 'expense:Foot Massage',
+      notes: 'Hello World'
+    }
+
+    const updateMetadata: EdgeMetadataChange = {
+      bizId: 1234,
+      name: 'me',
+      amountFiat: 0.75,
+      category: null,
+      notes: null
+    }
+
+    const newMetadata = { ...updateMetadata }
+    newMetadata.category = undefined
+    newMetadata.notes = undefined
+
+    await config.changeUserSettings({
+      txs: { a: { nativeAmount: '25', metadata } }
+    })
+
+    const txs = await wallet.getTransactions({})
+    expect(txs.length).equals(1)
+    expect(txs[0].nativeAmount).equals('25')
+    expect(txs[0].metadata).deep.equals({
+      exchangeAmount: { 'iso:USD': 0.75 },
+      ...metadata
+    })
+
+    await wallet.saveTxMetadata('a', 'FAKE', updateMetadata)
+    const txs2 = await wallet.getTransactions({})
+    expect(txs2.length).equals(1)
+    expect(txs2[0].nativeAmount).equals('25')
+    expect(txs2[0].metadata).deep.equals({
+      exchangeAmount: { 'iso:USD': 0.75 },
+      ...newMetadata
+    })
+  })
+
   it('can be paused and un-paused', async function () {
     const { wallet, context } = await makeFakeCurrencyWallet(true)
     const isEngineRunning = async (): Promise<boolean> => {
@@ -581,10 +638,6 @@ describe('currency wallets', function () {
 async function addDemoTransactions(
   currencyConfig: EdgeCurrencyConfig
 ): Promise<string> {
-  await currencyConfig.changeUserSettings({
-    txs: walletTxs
-  })
-
   const tokenId = await currencyConfig.addCustomToken({
     currencyCode: 'BTC',
     denominations: [],
@@ -593,6 +646,11 @@ async function addDemoTransactions(
       contractAddress: 'madeupcontract'
     }
   })
+
+  await currencyConfig.changeUserSettings({
+    txs: walletTxs
+  })
+
   return tokenId
 }
 

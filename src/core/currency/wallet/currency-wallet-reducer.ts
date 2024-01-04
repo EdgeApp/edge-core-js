@@ -2,10 +2,12 @@ import { lt } from 'biggystring'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
+  EdgeBalanceMap,
   EdgeBalances,
   EdgeCurrencyInfo,
   EdgeMemo,
   EdgeStakingStatus,
+  EdgeTokenId,
   EdgeTransaction,
   EdgeTxAction,
   EdgeWalletInfo,
@@ -43,7 +45,6 @@ export interface MergedTransaction {
   action?: EdgeTxAction
   blockHeight: number
   confirmations: EdgeTransaction['confirmations']
-  currencyCode: string
   date: number
   isSend: boolean
   memos: EdgeMemo[]
@@ -51,9 +52,8 @@ export interface MergedTransaction {
   ourReceiveAddresses: string[]
   signedTx: string
   txid: string
-
-  nativeAmount: { [currencyCode: string]: string }
-  networkFee: { [currencyCode: string]: string }
+  nativeAmount: EdgeBalanceMap
+  networkFee: EdgeBalanceMap
 }
 
 export interface CurrencyWalletState {
@@ -63,6 +63,7 @@ export interface CurrencyWalletState {
   readonly paused: boolean
 
   readonly allEnabledTokenIds: string[]
+  readonly balanceMap: EdgeBalanceMap
   readonly balances: EdgeBalances
   readonly currencyInfo: EdgeCurrencyInfo
   readonly detectedTokenIds: string[]
@@ -73,7 +74,7 @@ export interface CurrencyWalletState {
   readonly fiatLoaded: boolean
   readonly fileNames: TxFileNames
   readonly files: TxFileJsons
-  readonly gotTxs: { [currencyCode: string]: boolean }
+  readonly gotTxs: Set<EdgeTokenId>
   readonly height: number
   readonly name: string | null
   readonly nameLoaded: boolean
@@ -253,14 +254,32 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
-  balances(state = {}, action): EdgeBalances {
+  balanceMap(state = new Map(), action): Map<EdgeTokenId, string> {
     if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
-      const out = { ...state }
-      out[action.payload.currencyCode] = action.payload.balance
+      const { balance, tokenId } = action.payload
+      const out = new Map(state)
+      out.set(tokenId, balance)
       return out
     }
     return state
   },
+
+  balances: memoizeReducer(
+    next => next.self.balanceMap,
+    next => next.self.currencyInfo,
+    next =>
+      next.root.accounts[next.self.accountId].allTokens[next.self.pluginId],
+    (balanceMap, currencyInfo, allTokens) => {
+      const out: EdgeBalances = {}
+      for (const tokenId of balanceMap.keys()) {
+        const balance = balanceMap.get(tokenId)
+        const { currencyCode } =
+          tokenId == null ? currencyInfo : allTokens[tokenId]
+        if (balance != null) out[currencyCode] = balance
+      }
+      return out
+    }
+  ),
 
   height(state = 0, action): number {
     return action.type === 'CURRENCY_ENGINE_CHANGED_HEIGHT'
@@ -323,10 +342,9 @@ const currencyWalletInner = buildReducer<
       }
       case 'CURRENCY_ENGINE_CHANGED_TXS': {
         const { txs } = action.payload
-        const defaultCurrency = next.self.currencyInfo.currencyCode
         const out = { ...state }
         for (const tx of txs) {
-          out[tx.txid] = mergeTx(tx, defaultCurrency, out[tx.txid])
+          out[tx.txid] = mergeTx(tx, out[tx.txid])
         }
         return out
       }
@@ -348,14 +366,16 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
-  gotTxs(state = {}, action): { [currencyCode: string]: boolean } {
+  gotTxs(state = new Set(), action): Set<EdgeTokenId> {
     switch (action.type) {
       case 'CURRENCY_ENGINE_GOT_TXS': {
-        const { currencyCode } = action.payload
-        return { ...state, [currencyCode]: true }
+        const { tokenId } = action.payload
+        const out = new Set(state)
+        out.add(tokenId)
+        return out
       }
       case 'CURRENCY_ENGINE_CLEARED':
-        return {}
+        return new Set()
       default:
         return state
     }
@@ -403,58 +423,33 @@ export const currencyWalletReducer = filterReducer<
     : { type: 'UPDATE_NEXT' }
 })
 
-const defaultTx: MergedTransaction = {
-  blockHeight: 0,
-  confirmations: 'unconfirmed',
-  currencyCode: '',
-  date: 0,
-  isSend: false,
-  memos: [],
-  ourReceiveAddresses: [],
-  signedTx: '',
-  txid: '',
-  nativeAmount: {},
-  networkFee: {}
-}
-
 /**
  * Merges a new incoming transaction with an existing transaction.
  */
 export function mergeTx(
   tx: EdgeTransaction,
-  defaultCurrency: string,
-  oldTx: MergedTransaction = defaultTx
+  oldTx: MergedTransaction | undefined
 ): MergedTransaction {
-  const {
-    action,
-    currencyCode = defaultCurrency,
-    isSend = lt(tx.nativeAmount, '0'),
-    memos
-  } = tx
+  const { isSend = lt(tx.nativeAmount, '0'), tokenId = null } = tx
 
-  const out = {
-    action,
+  const out: MergedTransaction = {
+    action: tx.action,
     blockHeight: tx.blockHeight,
     confirmations: tx.confirmations ?? 'unconfirmed',
-    currencyCode,
     date: tx.date,
-    memos,
+    isSend,
+    memos: tx.memos,
+    nativeAmount: new Map(oldTx?.nativeAmount ?? []),
+    networkFee: new Map(oldTx?.networkFee ?? []),
     otherParams: tx.otherParams,
     ourReceiveAddresses: tx.ourReceiveAddresses,
     signedTx: tx.signedTx,
-    isSend,
-    txid: tx.txid,
-
-    nativeAmount: { ...oldTx.nativeAmount },
-    networkFee: { ...oldTx.networkFee }
+    txid: tx.txid
   }
-
-  out.nativeAmount[currencyCode] = tx.nativeAmount
-  out.networkFee[currencyCode] =
-    tx.networkFee != null ? tx.networkFee.toString() : '0'
-
+  out.nativeAmount.set(tokenId, tx.nativeAmount)
+  out.networkFee.set(tokenId, tx.networkFee ?? '0')
   if (tx.parentNetworkFee != null) {
-    out.networkFee[defaultCurrency] = String(tx.parentNetworkFee)
+    out.networkFee.set(null, String(tx.parentNetworkFee))
   }
 
   return out

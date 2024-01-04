@@ -22,9 +22,21 @@ import {
   EdgeWalletInfo,
   InsufficientFundsError
 } from '../../src/index'
+import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 import { compare } from '../../src/util/compare'
 
 const GENESIS_BLOCK = 1231006505000
+
+const fakeTokens: EdgeTokenMap = {
+  badf00d5: {
+    currencyCode: 'TOKEN',
+    denominations: [{ multiplier: '1000', name: 'TOKEN' }],
+    displayName: 'Fake Token',
+    networkLocation: {
+      contractAddress: '0xBADF00D5'
+    }
+  }
+}
 
 const fakeCurrencyInfo: EdgeCurrencyInfo = {
   currencyCode: 'FAKE',
@@ -43,15 +55,7 @@ const fakeCurrencyInfo: EdgeCurrencyInfo = {
 
   // Deprecated:
   defaultSettings: {},
-  metaTokens: [
-    {
-      currencyCode: 'TOKEN',
-      currencyName: 'Fake Token',
-      denominations: [{ multiplier: '1000', name: 'TOKEN' }],
-      contractAddress:
-        '0XF98103E9217F099208569D295C1B276F1821348636C268C854BB2A086E0037CD'
-    }
-  ],
+  metaTokens: [],
   memoType: 'text'
 }
 
@@ -81,6 +85,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private readonly callbacks: EdgeCurrencyEngineCallbacks
   private running: boolean
   private readonly state: State
+  private allTokens: EdgeTokenMap = fakeTokens
 
   constructor(walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
     this.walletId = walletInfo.id
@@ -101,11 +106,11 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private updateState(settings: Partial<State>): void {
     const state = this.state
     const {
-      onAddressesChecked = nop,
-      onBalanceChanged = nop,
-      onBlockHeightChanged = nop,
-      onStakingStatusChanged = nop,
-      onTransactionsChanged = nop
+      onAddressesChecked,
+      onTokenBalanceChanged,
+      onBlockHeightChanged,
+      onStakingStatusChanged,
+      onTransactionsChanged
     } = this.callbacks
 
     // Address callback:
@@ -117,7 +122,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     // Balance callback:
     if (settings.balance != null) {
       state.balance = settings.balance
-      onBalanceChanged('FAKE', state.balance.toString())
+      onTokenBalanceChanged(null, state.balance.toString())
     }
 
     // Staking status callback:
@@ -131,7 +136,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     // Token balance callback:
     if (settings.tokenBalance != null) {
       state.tokenBalance = settings.tokenBalance
-      onBalanceChanged('TOKEN', state.tokenBalance.toString())
+      onTokenBalanceChanged('badf00d5', state.tokenBalance.toString())
     }
 
     // Block height callback:
@@ -144,9 +149,24 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     if (settings.txs != null) {
       const changes: EdgeTransaction[] = []
       for (const txid of Object.keys(settings.txs)) {
-        const newTx = {
-          ...blankTx,
-          ...settings.txs[txid],
+        const incoming: Partial<EdgeTransaction> = settings.txs[txid]
+        const { tokenId = null } = upgradeCurrencyCode({
+          allTokens: this.allTokens,
+          currencyCode: incoming.currencyCode,
+          currencyInfo: fakeCurrencyInfo
+        })
+        const newTx: EdgeTransaction = {
+          blockHeight: 0,
+          currencyCode: 'FAKE',
+          date: GENESIS_BLOCK,
+          isSend: false,
+          memos: [],
+          nativeAmount: '0',
+          networkFee: '0',
+          ourReceiveAddresses: [],
+          signedTx: '',
+          tokenId,
+          ...incoming,
           txid,
           walletId: this.walletId
         }
@@ -193,15 +213,11 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   }
 
   getBalance(opts: EdgeCurrencyCodeOptions): string {
-    const { currencyCode = 'FAKE' } = opts
-    switch (currencyCode) {
-      case 'FAKE':
-        return this.state.balance.toString()
-      case 'TOKEN':
-        return this.state.tokenBalance.toString()
-      default:
-        throw new Error('Unknown currency')
-    }
+    const { tokenId = null } = opts
+    if (tokenId == null) return this.state.balance.toString()
+    if (tokenId === 'badf00d5') this.state.tokenBalance.toString()
+    if (this.allTokens[tokenId] != null) return '0'
+    throw new Error('Unknown currency')
   }
 
   getNumTransactions(opts: EdgeCurrencyCodeOptions): number {
@@ -218,6 +234,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
   // Tokens:
   changeCustomTokens(tokens: EdgeTokenMap): Promise<void> {
+    this.allTokens = { ...tokens, ...fakeTokens }
     return Promise.resolve()
   }
 
@@ -247,7 +264,9 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
   // Spending:
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-    const { currencyCode = 'FAKE', spendTargets } = spendInfo
+    const { memos = [], spendTargets, tokenId = null } = spendInfo
+    const { currencyCode } =
+      tokenId == null ? fakeCurrencyInfo : this.allTokens[tokenId]
 
     // Check the spend targets:
     let total = '0'
@@ -258,7 +277,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     }
 
     // Check the balances:
-    if (lt(this.getBalance({ currencyCode }), total)) {
+    if (lt(this.getBalance({ tokenId }), total)) {
       return Promise.reject(new InsufficientFundsError())
     }
 
@@ -269,13 +288,14 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
       date: GENESIS_BLOCK,
       feeRateUsed: { fakePrice: 0 },
       isSend: false,
-      memos: [],
+      memos,
       nativeAmount: total,
       networkFee: '0',
       otherParams: {},
       ourReceiveAddresses: [],
       signedTx: '',
       txid: 'spend',
+      tokenId,
       walletId: this.walletId
     })
   }
@@ -351,6 +371,10 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
 export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
   currencyInfo: fakeCurrencyInfo,
 
+  getBuiltinTokens(): Promise<EdgeTokenMap> {
+    return Promise.resolve(fakeTokens)
+  },
+
   makeCurrencyEngine(
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
@@ -366,19 +390,3 @@ export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
 const asNetworkLocation = asObject({
   contractAddress: asString
 })
-
-function nop(...args: unknown[]): void {}
-
-const blankTx: EdgeTransaction = {
-  blockHeight: 0,
-  currencyCode: 'FAKE',
-  date: GENESIS_BLOCK,
-  isSend: false,
-  memos: [],
-  nativeAmount: '0',
-  networkFee: '0',
-  ourReceiveAddresses: [],
-  signedTx: '',
-  txid: '',
-  walletId: ''
-}

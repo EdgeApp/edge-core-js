@@ -11,19 +11,15 @@ import {
   Cleaner
 } from 'cleaners'
 
-import { EdgeMetadata, EdgeTxSwap } from '../../../types/types'
+import { EdgeMetadata, EdgeTokenId, EdgeTxSwap } from '../../../types/types'
+import { asMap, asTokenIdMap } from '../../../util/asMap'
 import { asJsonObject } from '../../../util/file-helpers'
+import { asEdgeMetadata } from './metadata'
 
-/**
- * The on-disk metadata format,
- * which has a mandatory `exchangeAmount` table and no `amountFiat`.
- */
-export interface DiskMetadata {
-  bizId?: number
-  category?: string
-  exchangeAmount: { [fiatCurrencyCode: string]: number }
-  name?: string
-  notes?: string
+interface TransactionAsset {
+  metadata: EdgeMetadata
+  nativeAmount?: string
+  providerFeeSent?: string
 }
 
 /**
@@ -33,13 +29,9 @@ export interface TransactionFile {
   txid: string
   internal: boolean
   creationDate: number
-  currencies: {
-    [currencyCode: string]: {
-      metadata: DiskMetadata
-      nativeAmount?: string
-      providerFeeSent?: string
-    }
-  }
+  currencies: Map<string, TransactionAsset>
+  tokens: Map<EdgeTokenId, TransactionAsset>
+
   deviceDescription?: string
   feeRateRequested?: 'high' | 'standard' | 'low' | object
   feeRateUsed?: object
@@ -111,42 +103,6 @@ interface LegacyMapFile {
 // building-block cleaners
 // ---------------------------------------------------------------------
 
-/**
- * Turns user-provided metadata into its on-disk format.
- */
-export function packMetadata(
-  raw: EdgeMetadata,
-  walletFiat: string
-): DiskMetadata {
-  const clean = asDiskMetadata(raw)
-
-  if (typeof raw.amountFiat === 'number') {
-    clean.exchangeAmount[walletFiat] = raw.amountFiat
-  }
-
-  return clean
-}
-
-/**
- * Turns on-disk metadata into the user-facing format.
- */
-export function unpackMetadata(
-  raw: DiskMetadata,
-  walletFiat: string
-): EdgeMetadata {
-  const clean = asDiskMetadata(raw)
-  const { exchangeAmount } = clean
-
-  // Delete corrupt amounts that exceed the Javascript number range:
-  for (const currency of Object.keys(exchangeAmount)) {
-    if (String(exchangeAmount[currency]).includes('e')) {
-      delete exchangeAmount[currency]
-    }
-  }
-
-  return { ...clean, amountFiat: exchangeAmount[walletFiat] }
-}
-
 const asFeeRate: Cleaner<'high' | 'standard' | 'low'> = asValue(
   'high',
   'standard',
@@ -171,14 +127,6 @@ export const asEdgeTxSwap = asObject<EdgeTxSwap>({
   payoutNativeAmount: asString,
   payoutWalletId: asString,
   refundAddress: asOptional(asString)
-})
-
-const asDiskMetadata = asObject<DiskMetadata>({
-  bizId: asOptional(asNumber),
-  category: asOptional(asString),
-  exchangeAmount: asOptional(asObject(asNumber), () => ({})),
-  name: asOptional(asString),
-  notes: asOptional(asString)
 })
 
 export function asIntegerString(raw: unknown): string {
@@ -211,17 +159,18 @@ export const asTokensFile = asObject({
   detectedTokenIds: asArray(asString)
 })
 
+const asTransactionAsset = asObject<TransactionAsset>({
+  metadata: asEdgeMetadata,
+  nativeAmount: asOptional(asString),
+  providerFeeSent: asOptional(asString)
+})
+
 export const asTransactionFile = asObject<TransactionFile>({
   txid: asString,
   internal: asBoolean,
   creationDate: asNumber,
-  currencies: asObject(
-    asObject({
-      metadata: asDiskMetadata,
-      nativeAmount: asOptional(asString),
-      providerFeeSent: asOptional(asString)
-    })
-  ),
+  currencies: asMap(asTransactionAsset),
+  tokens: asOptional(asTokenIdMap(asTransactionAsset), () => new Map()),
   deviceDescription: asOptional(asString),
   feeRateRequested: asOptional(asEither(asFeeRate, asJsonObject)),
   feeRateUsed: asOptional(asJsonObject),
