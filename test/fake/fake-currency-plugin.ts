@@ -2,7 +2,6 @@ import { add, lt } from 'biggystring'
 import { asNumber, asObject, asOptional, asString } from 'cleaners'
 
 import {
-  EdgeCurrencyCodeOptions,
   EdgeCurrencyEngine,
   EdgeCurrencyEngineCallbacks,
   EdgeCurrencyEngineOptions,
@@ -17,6 +16,7 @@ import {
   EdgeSpendInfo,
   EdgeStakingStatus,
   EdgeToken,
+  EdgeTokenIdOptions,
   EdgeTokenMap,
   EdgeTransaction,
   EdgeWalletInfo,
@@ -212,7 +212,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     return this.state.blockHeight
   }
 
-  getBalance(opts: EdgeCurrencyCodeOptions): string {
+  getBalance(opts: EdgeTokenIdOptions): string {
     const { tokenId = null } = opts
     if (tokenId == null) return this.state.balance.toString()
     if (tokenId === 'badf00d5') this.state.tokenBalance.toString()
@@ -220,7 +220,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     throw new Error('Unknown currency')
   }
 
-  getNumTransactions(opts: EdgeCurrencyCodeOptions): number {
+  getNumTransactions(opts: EdgeTokenIdOptions): number {
     return Object.keys(this.state.txs).length
   }
 
@@ -278,7 +278,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
     // Check the balances:
     if (lt(this.getBalance({ tokenId }), total)) {
-      return Promise.reject(new InsufficientFundsError())
+      return Promise.reject(new InsufficientFundsError({ tokenId }))
     }
 
     // TODO: Return a high-fidelity transaction

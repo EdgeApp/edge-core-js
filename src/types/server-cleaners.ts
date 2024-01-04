@@ -40,11 +40,10 @@ import type {
   OtpErrorPayload,
   OtpResetPayload,
   PasswordErrorPayload,
-  QuestionChoicesPayload,
   Recovery2InfoPayload,
   UsernameInfoPayload
 } from './server-types'
-import type { EdgePendingVoucher, EdgeRecoveryQuestionChoice } from './types'
+import type { EdgePendingVoucher } from './types'
 
 /**
  * A string of hex-encoded binary data.
@@ -82,14 +81,6 @@ export const asEdgePendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
   ipDescription: asString,
   deviceDescription: asOptional(asString)
 })
-
-/** @deprecated The GUI provides its own localized strings now. */
-const asEdgeRecoveryQuestionChoice: Cleaner<EdgeRecoveryQuestionChoice> =
-  asObject({
-    min_length: asNumber,
-    category: asValue('address', 'must', 'numeric', 'recovery2', 'string'),
-    question: asString
-  })
 
 // ---------------------------------------------------------------------
 // internal Edge types
@@ -349,10 +340,6 @@ export const asPasswordErrorPayload: Cleaner<PasswordErrorPayload> = asObject({
   wait_seconds: asOptional(asNumber)
 })
 
-/** @deprecated The GUI provides its own localized strings now. */
-export const asQuestionChoicesPayload: Cleaner<QuestionChoicesPayload> =
-  asArray(asEdgeRecoveryQuestionChoice)
-
 export const asRecovery2InfoPayload: Cleaner<Recovery2InfoPayload> = asObject({
   question2Box: asEdgeBox
 })
@@ -427,10 +414,6 @@ export const wasOtpErrorPayload = uncleaner<OtpErrorPayload>(asOtpErrorPayload)
 export const wasOtpResetPayload = uncleaner<OtpResetPayload>(asOtpResetPayload)
 export const wasPasswordErrorPayload = uncleaner<PasswordErrorPayload>(
   asPasswordErrorPayload
-)
-/** @deprecated The GUI provides its own localized strings now. */
-export const wasQuestionChoicesPayload = uncleaner<QuestionChoicesPayload>(
-  asQuestionChoicesPayload
 )
 export const wasRecovery2InfoPayload = uncleaner<Recovery2InfoPayload>(
   asRecovery2InfoPayload

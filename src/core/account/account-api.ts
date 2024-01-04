@@ -19,7 +19,6 @@ import {
   EdgeLobby,
   EdgePendingVoucher,
   EdgePluginMap,
-  EdgeRateCache,
   EdgeResult,
   EdgeSwapConfig,
   EdgeSwapQuote,
@@ -30,7 +29,6 @@ import {
 } from '../../types/types'
 import { base58 } from '../../util/encoding'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
-import { makeExchangeCache } from '../exchange/exchange-api'
 import {
   finishWalletCreation,
   makeCurrencyWalletKeys,
@@ -91,7 +89,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
   }
 
   // Specialty API's:
-  const rateCache = makeExchangeCache(ai)
   const dataStore = makeDataStoreApi(ai, accountId)
   const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
 
@@ -185,10 +182,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     get swapConfig(): EdgePluginMap<EdgeSwapConfig> {
       return swapConfigs
-    },
-
-    get rateCache(): EdgeRateCache {
-      return rateCache
     },
 
     get dataStore(): EdgeDataStore {
@@ -609,16 +602,13 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       })
     },
 
-    async activateWallet({
-      activateWalletId,
-      activateTokenIds,
-      paymentWalletId,
-      paymentTokenId
-    }: EdgeActivationOptions): Promise<EdgeActivationQuote> {
+    async activateWallet(
+      opts: EdgeActivationOptions
+    ): Promise<EdgeActivationQuote> {
+      const { activateWalletId, activateTokenIds, paymentInfo } = opts
       const { currencyWallets } = ai.props.output.accounts[accountId]
       const walletOutput = ai.props.output.currency.wallets[activateWalletId]
       const { engine } = walletOutput
-      const paymentWallet = currencyWallets[paymentWalletId ?? '']
 
       if (engine == null)
         throw new Error(`Invalid wallet: ${activateWalletId} not found`)
@@ -627,11 +617,22 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         throw new Error(
           `activateWallet unsupported by walletId ${activateWalletId}`
         )
+      const walletId = paymentInfo?.walletId
+      const wallet = currencyWallets[walletId ?? '']
+
+      if (wallet == null) {
+        throw new Error(`No wallet for walletId ${walletId}`)
+      }
 
       const out = await engine.engineActivateWallet({
         activateTokenIds,
-        paymentTokenId,
-        paymentWallet
+        paymentInfo:
+          paymentInfo != null
+            ? {
+                wallet,
+                tokenId: paymentInfo.tokenId
+              }
+            : undefined
       })
       return bridgifyObject(out)
     },

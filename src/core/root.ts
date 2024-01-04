@@ -3,7 +3,7 @@ import { createStore } from 'redux'
 import { attachPixie, filterPixie, ReduxProps } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import { EdgeContext, EdgeContextOptions, EdgeRateHint } from '../types/types'
+import { EdgeContext, EdgeContextOptions } from '../types/types'
 import { validateServer } from '../util/validateServer'
 import { Dispatch } from './actions'
 import { CLIENT_FILE_NAME, clientFile } from './context/client-file'
@@ -78,12 +78,6 @@ export async function makeContext(
     await clientFile.save(io.disklet, CLIENT_FILE_NAME, clientInfo)
   }
 
-  // Load the rate hint cache from disk:
-  const rateHintCache: EdgeRateHint[] = await io.disklet
-    .getText('rateHintCache.json')
-    .then(text => JSON.parse(text))
-    .catch(() => [])
-
   // Load the login stashes from disk:
   const stashes = await loadStashes(io.disklet, log)
   redux.dispatch({
@@ -99,7 +93,6 @@ export async function makeContext(
       hideKeys,
       logSettings,
       pluginsInit,
-      rateHintCache,
       skipBlockHeight,
       stashes
     }

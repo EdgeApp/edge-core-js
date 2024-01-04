@@ -170,10 +170,7 @@ async function unpackLoginRequest(
 
     async close(): Promise<void> {
       close(out)
-    },
-
-    // Deprecated:
-    displayImageUrl: info.lightImageUrl
+    }
   }
   bridgifyObject(out)
   return out

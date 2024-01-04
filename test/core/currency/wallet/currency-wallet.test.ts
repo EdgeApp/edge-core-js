@@ -10,7 +10,6 @@ import {
   EdgeCurrencyConfig,
   EdgeCurrencyWallet,
   EdgeMetadata,
-  EdgeMetadataChange,
   EdgeToken,
   EdgeTransaction,
   EdgeTxAction,
@@ -37,7 +36,7 @@ async function makeFakeCurrencyWallet(
   const world = await makeFakeEdgeWorld([fakeUser], quiet)
   const context = await world.makeEdgeContext({
     ...contextOptions,
-    plugins: { 'broken-engine': true, 'fake-exchange': true, fakecoin: true }
+    plugins: { 'broken-engine': true, fakecoin: true }
   })
   const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin, {
     pauseWallets
@@ -189,18 +188,18 @@ describe('currency wallets', function () {
     const { wallet, config } = fixture
     await config.changeUserSettings({
       txs: {
-        a: { currencyCode: 'FAKE', nativeAmount: '2' },
+        a: { tokenId: null, nativeAmount: '2' },
         b: { currencyCode: 'TOKEN', nativeAmount: '200' }
       }
     })
 
-    await wallet.getTransactions({}).then(txs => {
+    await wallet.getTransactions({ tokenId: null }).then(txs => {
       expect(txs.length).equals(1)
       expect(txs[0].txid).equals('a')
       expect(txs[0].nativeAmount).equals('2')
     })
 
-    await wallet.getTransactions({ currencyCode: 'TOKEN' }).then(txs => {
+    await wallet.getTransactions({ tokenId: 'badf00d5' }).then(txs => {
       expect(txs.length).equals(1)
       expect(txs[0].txid).equals('b')
       expect(txs[0].nativeAmount).equals('200')
@@ -290,45 +289,19 @@ describe('currency wallets', function () {
     // Normal behavior:
     let txs = await wallet.getTransactions({
       tokenId: 'madeupcontract',
-      startIndex: 0,
-      startEntries: 1
+      startDate: new Date(1612885126000),
+      endDate: new Date(1612885126001)
     })
     expect(txs[0].chainAssetAction?.assetActionType).deep.equals('sell')
 
     txs = await wallet.getTransactions({
-      startIndex: 0,
-      startEntries: 1
+      tokenId: null,
+      startDate: new Date(1612885126000),
+      endDate: new Date(1612885126001)
     })
     expect(txs[0].chainAssetAction?.assetActionType).deep.equals(
       'sellNetworkFee'
     )
-  })
-
-  it('paginates transactions', async function () {
-    const { wallet, config } = await makeFakeCurrencyWallet()
-    await addDemoTransactions(config)
-
-    // Normal behavior:
-    expect(
-      justTxids(
-        await wallet.getTransactions({
-          currencyCode: 'BTC',
-          startIndex: 3,
-          startEntries: 2
-        })
-      )
-    ).deep.equals(['d', 'e'])
-
-    expect(
-      justTxids(
-        await wallet.getTransactions({
-          currencyCode: 'BTC',
-          searchString: 'sideshift',
-          startIndex: 2,
-          startEntries: 2
-        })
-      )
-    ).deep.equals(['k', 'l'])
   })
 
   it('streams transactions', async function () {
@@ -367,7 +340,7 @@ describe('currency wallets', function () {
     expect(
       justTxids(
         await wallet.getTransactions({
-          currencyCode: 'BTC'
+          tokenId: 'madeupcontract'
         })
       )
     ).deep.equals([
@@ -389,7 +362,7 @@ describe('currency wallets', function () {
     expect(
       justTxids(
         await wallet.getTransactions({
-          currencyCode: 'BTC',
+          tokenId: 'madeupcontract',
           searchString: 'sideshift'
         })
       )
@@ -398,7 +371,7 @@ describe('currency wallets', function () {
     expect(
       justTxids(
         await wallet.getTransactions({
-          currencyCode: 'BTC',
+          tokenId: 'madeupcontract',
           startDate: new Date('2021-01-30'),
           endDate: new Date('2021-02-05')
         })
@@ -411,13 +384,13 @@ describe('currency wallets', function () {
     await config.changeUserSettings({ balance: 50 })
 
     const maxSpendable = await wallet.getMaxSpendable({
-      currencyCode: 'FAKE',
+      tokenId: null,
       spendTargets: [{}]
     })
     expect(maxSpendable).equals('50')
 
     await wallet.makeSpend({
-      currencyCode: 'FAKE',
+      tokenId: null,
       spendTargets: [
         {
           nativeAmount: maxSpendable,
@@ -428,7 +401,7 @@ describe('currency wallets', function () {
 
     await expectRejection(
       wallet.makeSpend({
-        currencyCode: 'FAKE',
+        tokenId: null,
         spendTargets: [
           {
             nativeAmount: add(maxSpendable, '1'),
@@ -486,7 +459,7 @@ describe('currency wallets', function () {
       canBePartial: false,
       fromAsset: {
         pluginId: 'bitcoin',
-        tokenId: undefined,
+        tokenId: null,
         nativeAmount: '1234'
       },
       toAsset: {
@@ -509,7 +482,7 @@ describe('currency wallets', function () {
       payoutWalletId: wallet.id
     }
     let tx = await wallet.makeSpend({
-      currencyCode: 'FAKE',
+      tokenId: null,
       spendTargets: [
         {
           uniqueIdentifier: 'hello',
@@ -529,11 +502,10 @@ describe('currency wallets', function () {
 
     // Validate the result:
     await log.waitFor(1).assert('new spend me')
-    const txs = await wallet.getTransactions({})
+    const txs = await wallet.getTransactions({ tokenId: null })
     expect(txs.length).equals(1)
     expect(txs[0].nativeAmount).equals('50')
     expect(txs[0].metadata).deep.equals({
-      amountFiat: undefined,
       bizId: undefined,
       category: undefined,
       exchangeAmount: {},
@@ -567,7 +539,7 @@ describe('currency wallets', function () {
 
     const metadata: EdgeMetadata = {
       name: 'me',
-      amountFiat: 0.75
+      exchangeAmount: { 'iso:USD': 0.75 }
     }
     const assetAction: EdgeAssetAction = {
       assetActionType: 'swap'
@@ -590,7 +562,7 @@ describe('currency wallets', function () {
       canBePartial: false,
       fromAsset: {
         pluginId: 'bitcoin',
-        tokenId: undefined,
+        tokenId: null,
         nativeAmount: '1234'
       },
       toAsset: {
@@ -601,7 +573,7 @@ describe('currency wallets', function () {
     }
 
     await config.changeUserSettings({ txs: { a: { nativeAmount: '25' } } })
-    await wallet.saveTxMetadata('a', 'FAKE', metadata)
+    await wallet.saveTxMetadata({ txid: 'a', tokenId: null, metadata })
     await wallet.saveTxAction({
       txid: 'a',
       tokenId: null,
@@ -609,14 +581,13 @@ describe('currency wallets', function () {
       savedAction
     })
 
-    const txs = await wallet.getTransactions({})
+    const txs = await wallet.getTransactions({ tokenId: null })
     expect(txs.length).equals(1)
     expect(txs[0].nativeAmount).equals('25')
     expect(txs[0].metadata).deep.equals({
       bizId: undefined,
       category: undefined,
       notes: undefined,
-      exchangeAmount: { 'iso:USD': 0.75 },
       ...metadata
     })
     expect(txs[0].assetAction).deep.equals(assetAction)
@@ -629,42 +600,46 @@ describe('currency wallets', function () {
     const metadata: EdgeMetadata = {
       bizId: 1234,
       name: 'me',
-      amountFiat: 0.75,
+      exchangeAmount: {
+        'iso:USD': 0.75,
+        'iso:CAD': 1.0
+      },
       category: 'expense:Foot Massage',
       notes: 'Hello World'
     }
-
-    const updateMetadata: EdgeMetadataChange = {
-      bizId: 1234,
-      name: 'me',
-      amountFiat: 0.75,
-      category: null,
-      notes: null
-    }
-
-    const newMetadata = { ...updateMetadata }
-    newMetadata.category = undefined
-    newMetadata.notes = undefined
 
     await config.changeUserSettings({
       txs: { a: { nativeAmount: '25', metadata } }
     })
 
-    const txs = await wallet.getTransactions({})
+    const txs = await wallet.getTransactions({ tokenId: null })
     expect(txs.length).equals(1)
     expect(txs[0].nativeAmount).equals('25')
-    expect(txs[0].metadata).deep.equals({
-      exchangeAmount: { 'iso:USD': 0.75 },
-      ...metadata
-    })
+    expect(txs[0].metadata).deep.equals(metadata)
 
-    await wallet.saveTxMetadata('a', 'FAKE', updateMetadata)
-    const txs2 = await wallet.getTransactions({})
+    await wallet.saveTxMetadata({
+      txid: 'a',
+      tokenId: null,
+      metadata: {
+        bizId: 4321,
+        name: 'you',
+        exchangeAmount: {
+          'iso:USD': 0.77,
+          'iso:CAD': null
+        },
+        category: null,
+        notes: null
+      }
+    })
+    const txs2 = await wallet.getTransactions({ tokenId: null })
     expect(txs2.length).equals(1)
     expect(txs2[0].nativeAmount).equals('25')
     expect(txs2[0].metadata).deep.equals({
-      exchangeAmount: { 'iso:USD': 0.75 },
-      ...newMetadata
+      bizId: 4321,
+      name: 'you',
+      exchangeAmount: { 'iso:USD': 0.77 },
+      category: undefined,
+      notes: undefined
     })
   })
 

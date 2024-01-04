@@ -9,7 +9,7 @@ export function upgradeCurrencyCode(opts: {
   currencyInfo: EdgeCurrencyInfo
   currencyCode?: string
   tokenId?: EdgeTokenId
-}): { currencyCode: string; tokenId?: EdgeTokenId } {
+}): { currencyCode: string; tokenId: EdgeTokenId } {
   const { currencyInfo, allTokens } = opts
 
   // Find the tokenId:
@@ -27,5 +27,5 @@ export function upgradeCurrencyCode(opts: {
   // Get the currency code:
   const { currencyCode } = tokenId == null ? currencyInfo : allTokens[tokenId]
 
-  return { currencyCode, tokenId }
+  return { currencyCode, tokenId: tokenId ?? null }
 }

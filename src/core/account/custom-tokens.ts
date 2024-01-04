@@ -138,7 +138,7 @@ export async function loadBuiltinTokens(
       const plugin = state.plugins.currency[pluginId]
       const tokens: EdgeTokenMap =
         plugin.getBuiltinTokens == null
-          ? upgradeMetaTokens(plugin.currencyInfo.metaTokens)
+          ? upgradeMetaTokens(plugin.currencyInfo.metaTokens ?? [])
           : await plugin.getBuiltinTokens()
       dispatch({
         type: 'ACCOUNT_BUILTIN_TOKENS_LOADED',

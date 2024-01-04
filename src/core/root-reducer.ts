@@ -1,12 +1,10 @@
 import { buildReducer, mapReducer } from 'redux-keto'
 
-import { EdgeLogSettings, EdgeRateHint } from './../types/types'
+import { EdgeLogSettings } from './../types/types'
 import { accountReducer, AccountState } from './account/account-reducer'
 import { RootAction } from './actions'
 import { contextConfig, ContextConfigState } from './context/context-reducer'
 import { currency, CurrencyState } from './currency/currency-reducer'
-import { DEFAULT_RATE_HINTS } from './exchange/exchange-pixie'
-import { exchangeCache, ExchangeState } from './exchange/exchange-reducer'
 import { login, LoginState } from './login/login-reducer'
 import { plugins, PluginsState } from './plugins/plugins-reducer'
 import { storageWallets, StorageWalletsState } from './storage/storage-reducer'
@@ -19,14 +17,12 @@ export interface RootState {
   readonly lastAccountId: string
   readonly logSettings: EdgeLogSettings
   readonly paused: boolean
-  readonly rateHintCache: EdgeRateHint[]
   readonly ready: boolean
   readonly skipBlockHeight: boolean
 
   // Children reducers:
   readonly contextConfig: ContextConfigState
   readonly currency: CurrencyState
-  readonly exchangeCache: ExchangeState
   readonly login: LoginState
   readonly plugins: PluginsState
   readonly storageWallets: StorageWalletsState
@@ -86,15 +82,6 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
     return action.type === 'PAUSE' ? action.payload : state
   },
 
-  rateHintCache(state = DEFAULT_RATE_HINTS, action): EdgeRateHint[] {
-    switch (action.type) {
-      case 'INIT':
-      case 'UPDATE_RATE_HINT_CACHE':
-        return action.payload.rateHintCache
-    }
-    return state
-  },
-
   ready(state = false, action): boolean {
     return action.type === 'INIT' ? true : state
   },
@@ -105,7 +92,6 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
 
   contextConfig,
   currency,
-  exchangeCache,
   login,
   plugins,
   storageWallets

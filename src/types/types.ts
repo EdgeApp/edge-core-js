@@ -256,7 +256,7 @@ export interface EdgeMemo {
 
 export interface EdgeAssetAmount {
   pluginId: string
-  tokenId?: EdgeTokenId
+  tokenId: EdgeTokenId
   nativeAmount?: string
 }
 
@@ -474,16 +474,10 @@ export interface EdgeCurrencyInfo {
   unsafeSyncNetwork?: boolean
 
   /** @deprecated The default user settings are always `{}` */
-  defaultSettings: JsonObject
+  defaultSettings?: JsonObject
 
   /** @deprecated Use EdgeCurrencyPlugin.getBuiltinTokens instead */
-  metaTokens: EdgeMetaToken[]
-
-  /** @deprecated Unused. The GUI handles this now */
-  symbolImage?: string
-
-  /** @deprecated Unused. The GUI handles this now */
-  symbolImageDarkMono?: string
+  metaTokens?: EdgeMetaToken[]
 
   /** @deprecated Use memoOptions instead. */
   memoMaxLength?: number // Max number of text characters, if supported
@@ -503,12 +497,6 @@ export interface EdgeMetadata {
   exchangeAmount?: { [fiatCurrencyCode: string]: number }
   name?: string
   notes?: string
-
-  /**
-   * @deprecated Use exchangeAmount instead.
-   * This is a copy of `exchangeAmount[wallet.fiatCurrencyCode]`
-   */
-  amountFiat?: number
 }
 
 /**
@@ -521,19 +509,13 @@ export interface EdgeMetadataChange {
   exchangeAmount?: { [fiatCurrencyCode: string]: number | null }
   name?: string | null
   notes?: string | null
-
-  /**
-   * @deprecated Use exchangeAmount instead.
-   * This will be saved as `exchangeAmount[wallet.fiatCurrencyCode]`
-   */
-  amountFiat?: number | null
 }
 
 // Would prefer a better name than EdgeNetworkFee2 but can't think of one
 export interface EdgeNetworkFee2 {
   readonly nativeAmount: string
   readonly currencyPluginId: string
-  readonly tokenId?: EdgeTokenId
+  readonly tokenId: EdgeTokenId
 }
 
 export interface EdgeTxSwap {
@@ -611,7 +593,7 @@ export interface EdgeTransaction {
   requestedCustomFee?: JsonObject
   feeRateUsed?: JsonObject
   spendTargets?: Array<{
-    readonly currencyCode: string
+    readonly currencyCode: string // Saved for future reference
     readonly nativeAmount: string
     readonly publicAddress: string
 
@@ -663,7 +645,7 @@ export interface EdgePaymentProtocolInfo {
 
 export interface EdgeSpendInfo {
   // Basic information:
-  tokenId?: EdgeTokenId
+  tokenId: EdgeTokenId
   privateKeys?: string[]
   spendTargets: EdgeSpendTarget[]
   memos?: EdgeMemo[]
@@ -682,9 +664,6 @@ export interface EdgeSpendInfo {
   metadata?: EdgeMetadata
   swapData?: EdgeTxSwap
   otherParams?: JsonObject
-
-  /** @deprecated Use tokenId instead */
-  currencyCode?: string
 }
 
 // query data ----------------------------------------------------------
@@ -787,41 +766,16 @@ export interface EdgeEncodeUri {
 
 // options -------------------------------------------------------------
 
-export interface EdgeCurrencyCodeOptions {
-  tokenId?: EdgeTokenId
-
-  /** @deprecated Use `tokenId` instead. */
-  currencyCode?: string
+export interface EdgeTokenIdOptions {
+  tokenId: EdgeTokenId
 }
 
 export interface EdgeGetTransactionsOptions {
-  /**
-   * The first transaction to return.
-   * Caution! This index is relative to an internal master list,
-   * which ignores all filters like `currencyCode`, `searchString`, or dates.
-   * To reveal where a transaction lands in this secret list,
-   * `getTransactions` inserts an `otherParams.unfilteredIndex` parameter,
-   * which can be used as the starting point for subsequent queries.
-   * @deprecated Use `streamTransactions` if you need pagination.
-   */
-  startIndex?: number
-
-  /**
-   * The number of entries to return.
-   * Defaults to all transactions.
-   * We may return less than this when we reach the end.
-   * @deprecated Use `streamTransactions` if you need pagination.
-   */
-  startEntries?: number
-
   // Filtering:
   startDate?: Date
   endDate?: Date
   searchString?: string
-  tokenId?: EdgeTokenId
-
-  /** @deprecated Use tokenId instead */
-  currencyCode?: string
+  tokenId: EdgeTokenId
 }
 
 export interface EdgeStreamTransactionOptions {
@@ -847,20 +801,22 @@ export interface EdgeStreamTransactionOptions {
   searchString?: string
 
   /** The token to query, or undefined for the main currency */
-  tokenId?: EdgeTokenId
+  tokenId: EdgeTokenId
 }
 
-export type EdgeGetReceiveAddressOptions = EdgeCurrencyCodeOptions & {
+export type EdgeGetReceiveAddressOptions = EdgeTokenIdOptions & {
   forceIndex?: number
 }
 
 export interface EdgeEngineActivationOptions {
   // If null, activate parent wallet:
-  activateTokenIds?: string[]
+  activateTokenIds: EdgeTokenId[]
 
   // Wallet if the user is paying with a different currency:
-  paymentWallet?: EdgeCurrencyWallet
-  paymentTokenId?: string
+  paymentInfo?: {
+    wallet: EdgeCurrencyWallet
+    tokenId: EdgeTokenId
+  }
 }
 
 export interface EdgeEngineGetActivationAssetsOptions {
@@ -869,7 +825,7 @@ export interface EdgeEngineGetActivationAssetsOptions {
   currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
 
   // If null, activate parent wallet:
-  activateTokenIds?: string[]
+  activateTokenIds: EdgeTokenId[]
 }
 
 export interface EdgeEnginePrivateKeyOptions {
@@ -881,6 +837,12 @@ export interface EdgeSaveTxActionOptions {
   tokenId: EdgeTokenId
   assetAction: EdgeAssetAction
   savedAction: EdgeTxAction
+}
+
+export interface EdgeSaveTxMetadataOptions {
+  txid: string
+  tokenId: EdgeTokenId
+  metadata: EdgeMetadataChange
 }
 
 export interface EdgeSignMessageOptions {
@@ -939,10 +901,10 @@ export interface EdgeCurrencyEngine {
 
   // Chain state:
   readonly getBlockHeight: () => number
-  readonly getBalance: (opts: EdgeCurrencyCodeOptions) => string
-  readonly getNumTransactions: (opts: EdgeCurrencyCodeOptions) => number
+  readonly getBalance: (opts: EdgeTokenIdOptions) => string
+  readonly getNumTransactions: (opts: EdgeTokenIdOptions) => number
   readonly getTransactions: (
-    opts: EdgeCurrencyCodeOptions
+    opts: EdgeTokenIdOptions
   ) => Promise<EdgeTransaction[]>
   readonly getTxids?: () => EdgeTxidMap
 
@@ -1024,14 +986,6 @@ export interface EdgeCurrencyEngine {
 
 // currency plugin -----------------------------------------------------
 
-/** @deprecated Use EdgeCurrencyInfo.memoOptions instead */
-export interface EdgeMemoRules {
-  passed: boolean
-  tooLarge?: boolean // Too large numerically
-  tooLong?: boolean // Too many characters
-  invalidCharacters?: boolean // Wrong character types
-}
-
 export interface EdgeCurrencyTools {
   // Keys:
   readonly checkPublicKey?: (publicKey: JsonObject) => Promise<boolean>
@@ -1069,9 +1023,6 @@ export interface EdgeCurrencyTools {
     obj: EdgeEncodeUri,
     customTokens?: EdgeMetaToken[]
   ) => Promise<string>
-
-  /** @deprecated Use EdgeCurrencyInfo.memoOptions instead */
-  readonly validateMemo?: (memo: string) => Promise<EdgeMemoRules>
 }
 
 export interface EdgeCurrencyPlugin {
@@ -1113,25 +1064,27 @@ export interface EdgeCurrencyWalletEvents {
 export interface EdgeGetActivationAssetsOptions {
   activateWalletId: string
   // If null, activate parent wallet:
-  activateTokenIds?: string[]
+  activateTokenIds: EdgeTokenId[]
 }
 
 export interface EdgeGetActivationAssetsResults {
   assetOptions: Array<{
     paymentWalletId?: string // If walletId is present, use MUST activate with this wallet
     currencyPluginId: string
-    tokenId?: EdgeTokenId
+    tokenId: EdgeTokenId
   }>
 }
 
 export interface EdgeActivationOptions {
   activateWalletId: string
   // If null, activate parent wallet:
-  activateTokenIds?: string[]
+  activateTokenIds: EdgeTokenId[]
 
   // Wallet if the user is paying with a different currency:
-  paymentWalletId?: string
-  paymentTokenId?: string
+  paymentInfo?: {
+    walletId: string
+    tokenId: EdgeTokenId
+  }
 }
 
 export interface EdgeActivationApproveOptions {
@@ -1144,7 +1097,7 @@ export interface EdgeActivationResult {
 
 export interface EdgeActivationQuote {
   readonly paymentWalletId: string
-  readonly paymentTokenId?: string
+  readonly paymentTokenId: EdgeTokenId
 
   readonly fromNativeAmount: string
   readonly networkFee: EdgeNetworkFee2
@@ -1208,19 +1161,17 @@ export interface EdgeCurrencyWallet {
   readonly detectedTokenIds: string[]
 
   // Transaction history:
-  readonly getNumTransactions: (
-    opts?: EdgeCurrencyCodeOptions
-  ) => Promise<number>
+  readonly getNumTransactions: (opts: EdgeTokenIdOptions) => Promise<number>
   readonly getTransactions: (
-    opts?: EdgeGetTransactionsOptions
+    opts: EdgeGetTransactionsOptions
   ) => Promise<EdgeTransaction[]>
   readonly streamTransactions: (
-    opts?: EdgeStreamTransactionOptions
+    opts: EdgeStreamTransactionOptions
   ) => AsyncIterableIterator<EdgeTransaction[]>
 
   // Addresses:
   readonly getReceiveAddress: (
-    opts?: EdgeGetReceiveAddressOptions
+    opts: EdgeGetReceiveAddressOptions
   ) => Promise<EdgeReceiveAddress>
   readonly lockReceiveAddress: (
     receiveAddress: EdgeReceiveAddress
@@ -1238,11 +1189,7 @@ export interface EdgeCurrencyWallet {
   readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
   readonly saveTx: (tx: EdgeTransaction) => Promise<void>
   readonly saveTxAction: (opts: EdgeSaveTxActionOptions) => Promise<void>
-  readonly saveTxMetadata: (
-    txid: string,
-    currencyCode: string,
-    metadata: EdgeMetadataChange
-  ) => Promise<void>
+  readonly saveTxMetadata: (opts: EdgeSaveTxMetadataOptions) => Promise<void>
   readonly signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly sweepPrivateKeys: (
     edgeSpendInfo: EdgeSpendInfo
@@ -1273,9 +1220,6 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
-
-  /** @deprecated Use EdgeCurrencyInfo.memoOptions instead */
-  readonly validateMemo: (memo: string) => Promise<EdgeMemoRules>
 }
 
 // ---------------------------------------------------------------------
@@ -1303,18 +1247,12 @@ export interface EdgeSwapRequest {
   toWallet: EdgeCurrencyWallet
 
   // What?
-  fromTokenId?: EdgeTokenId
-  toTokenId?: EdgeTokenId
+  fromTokenId: EdgeTokenId
+  toTokenId: EdgeTokenId
 
   // How much?
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
-
-  /** @deprecated Use fromTokenId instead */
-  fromCurrencyCode?: string
-
-  /** @deprecated Use toTokenId instead */
-  toCurrencyCode?: string
 }
 
 /**
@@ -1375,32 +1313,6 @@ export interface EdgeSwapPlugin {
     userSettings: JsonObject | undefined,
     opts: { promoCode?: string }
   ) => Promise<EdgeSwapQuote>
-}
-
-// ---------------------------------------------------------------------
-// rate plugin
-// ---------------------------------------------------------------------
-
-export interface EdgeRateHint {
-  fromCurrency: string
-  toCurrency: string
-}
-
-export interface EdgeRateInfo {
-  readonly pluginId: string
-  readonly displayName: string
-}
-
-export interface EdgeRatePair {
-  fromCurrency: string
-  toCurrency: string
-  rate: number
-}
-
-export interface EdgeRatePlugin {
-  readonly rateInfo: EdgeRateInfo
-
-  readonly fetchRates: (hints: EdgeRateHint[]) => Promise<EdgeRatePair[]>
 }
 
 // ---------------------------------------------------------------------
@@ -1518,28 +1430,6 @@ export interface EdgeCurrencyConfig {
   readonly otherMethods: EdgeOtherMethods
 }
 
-// rates ---------------------------------------------------------------
-
-export interface EdgeRateCacheEvents {
-  close: void
-  update: unknown
-}
-
-export interface EdgeConvertCurrencyOpts {
-  biases?: { [name: string]: number }
-}
-
-export interface EdgeRateCache {
-  readonly on: Subscriber<EdgeRateCacheEvents>
-
-  readonly convertCurrency: (
-    fromCurrency: string,
-    toCurrency: string,
-    amount?: number,
-    opts?: EdgeConvertCurrencyOpts
-  ) => Promise<number>
-}
-
 // swap ----------------------------------------------------------------
 
 /**
@@ -1575,9 +1465,6 @@ export interface EdgeLoginRequest {
 
   readonly approve: () => Promise<void>
   readonly close: () => Promise<void>
-
-  /** @deprecated Use displayImageDarkUrl or displayImageLightUrl instead */
-  readonly displayImageUrl?: string
 }
 
 export interface EdgeLobby {
@@ -1633,7 +1520,6 @@ export interface EdgeAccount {
 
   // Special-purpose API's:
   readonly currencyConfig: EdgePluginMap<EdgeCurrencyConfig>
-  readonly rateCache: EdgeRateCache
   readonly swapConfig: EdgePluginMap<EdgeSwapConfig>
   readonly dataStore: EdgeDataStore
 
@@ -1744,10 +1630,7 @@ export interface EdgeAccount {
 // context types
 // ---------------------------------------------------------------------
 
-export type EdgeCorePlugin =
-  | EdgeCurrencyPlugin
-  | EdgeRatePlugin
-  | EdgeSwapPlugin
+export type EdgeCorePlugin = EdgeCurrencyPlugin | EdgeSwapPlugin
 
 export type EdgeCorePluginFactory = (
   env: EdgeCorePluginOptions
@@ -1788,13 +1671,6 @@ export interface EdgeContextOptions {
    * as their confirmation status changes.
    */
   skipBlockHeight?: boolean
-}
-
-/** @deprecated The GUI provides its own localized strings now. */
-export interface EdgeRecoveryQuestionChoice {
-  category: 'address' | 'must' | 'numeric' | 'recovery2' | 'string'
-  min_length: number
-  question: string
 }
 
 // parameters ----------------------------------------------------------
@@ -1928,10 +1804,6 @@ export interface EdgeContext {
     recovery2Key: string,
     username: string
   ) => Promise<string[]>
-  /** @deprecated The GUI provides its own localized strings now. */
-  readonly listRecoveryQuestionChoices: () => Promise<
-    EdgeRecoveryQuestionChoice[]
-  >
 
   // OTP stuff:
   readonly requestOtpReset: (
@@ -1952,15 +1824,6 @@ export interface EdgeContext {
   readonly changeLogSettings: (
     settings: Partial<EdgeLogSettings>
   ) => Promise<void>
-
-  /** @deprecated Use `localUsers` instead. */
-  readonly listUsernames: () => Promise<string[]>
-
-  /** @deprecated Use `localUsers` instead. */
-  readonly pinLoginEnabled: (username: string) => Promise<boolean>
-
-  /** @deprecated Use `forgetAccount` instead. */
-  readonly deleteLocalAccount: (username: string) => Promise<void>
 }
 
 // ---------------------------------------------------------------------

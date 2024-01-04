@@ -17,7 +17,7 @@ export interface InternalWalletStream {
 
 export interface InternalWalletMethods {
   $internalStreamTransactions: (
-    opts: EdgeStreamTransactionOptions & { unfilteredStart?: number }
+    opts: EdgeStreamTransactionOptions
   ) => Promise<InternalWalletStream>
 }
 
@@ -107,7 +107,7 @@ shareData({ fixUsername })
  */
 export function streamTransactions(
   this: InternalWalletMethods,
-  opts: EdgeStreamTransactionOptions = {}
+  opts: EdgeStreamTransactionOptions
 ): AsyncIterableIterator<EdgeTransaction[]> {
   let stream: InternalWalletStream | undefined
   let streamClosed = false

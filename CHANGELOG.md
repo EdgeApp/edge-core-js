@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyWallet.saveTxAction` to add/edit `EdgeTransaction.savedAction`
+- added: `EdgeTransaction.assetAction` & `EdgeSpendInfo.assetAction` for action info that is saved per token in a transaction.
+- added: `EdgeTransaction.savedAction` & `EdgeSpendInfo.savedAction` as editable version of `chainAction`
+- added: `EdgeTxActionFiat` action type for fiat buy/sells
+- added: `EdgeTxActionTokenApproval` action type for token approval transactions
+- changed: Extend `EdgeTxActionSwap` to fully replace `EdgeSwapData`
+- changed: Make `EdgeCurrencyInfo.defaultSettings` and `EdgeCurrencyInfo.metaTokens` optional.
+- changed: Rename `EdgeTransaction.action` to `chainAction`
+- changed: Require `tokenId` to be null or string and eliminate `currencyCode` in `EdgeCurrencyWallet.getTransactions/getReceiveAddress`, `EdgeSpendInfo`, `EdgeSwapRequest`, `EdgeTxAction.EdgeAssetAmount`, `saveTxMetadata`
+- removed: `EdgeAccount.rateCache` and related types, as well as the rate plugin concept.
+- removed: `EdgeContext.deleteLocalAccount`
+- removed: `EdgeContext.listUsernames`
+- removed: `EdgeContext.pinLoginEnabled`
+- removed: `EdgeCurrencyInfo.symbolImage` and `symbolImageDarkMono`.
+- removed: `EdgeLoginRequest.displayImageUrl`
+- removed: `listRecoveryQuestionChoices` and related types.
+- removed: `validateMemo` methods and related types.
+
 ## 1.14.0 (2024-01-04)
 
 - added: `EdgeCurrencyCodeOptions.tokenId`. This upgrades `getBalance`, `getNumTransactions`, and `getReceiveAddress`.

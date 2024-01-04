@@ -6,7 +6,7 @@ import {
   stopUpdates,
   TamePixie
 } from 'redux-pixies'
-import { close, emit, update } from 'yaob'
+import { close, update } from 'yaob'
 
 import {
   asMaybeOtpError,
@@ -17,7 +17,6 @@ import {
 } from '../../types/types'
 import { makePeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
-import { ExchangeState } from '../exchange/exchange-reducer'
 import { syncLogin } from '../login/login'
 import { waitForPlugins } from '../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../root-pixie'
@@ -61,7 +60,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         update(accountApi)
         close(accountApi)
         close(accountApi.dataStore)
-        close(accountApi.rateCache)
         const { currencyConfig, swapConfig } = accountApi
         for (const pluginId of Object.keys(currencyConfig)) {
           close(currencyConfig[pluginId])
@@ -202,7 +200,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
   watcher(input: AccountInput) {
     let lastState: AccountState | undefined
     // let lastWallets
-    let lastExchangeState: ExchangeState | undefined
 
     return () => {
       const { accountState, accountOutput } = input.props
@@ -234,14 +231,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       //   lastWallets = input.props.output.currency.wallets
       //   if (accountOutput.accountApi != null) update(accountOutput.accountApi)
       // }
-
-      // Exchange:
-      if (lastExchangeState !== input.props.state.exchangeCache) {
-        lastExchangeState = input.props.state.exchangeCache
-        if (accountApi != null) {
-          emit(accountApi.rateCache, 'update', undefined)
-        }
-      }
     }
   },
 

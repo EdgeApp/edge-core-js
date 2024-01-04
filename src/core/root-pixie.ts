@@ -6,7 +6,6 @@ import { AccountOutput, accounts } from './account/account-pixie'
 import { Dispatch } from './actions'
 import { context, ContextOutput } from './context/context-pixie'
 import { currency, CurrencyOutput } from './currency/currency-pixie'
-import { exchange } from './exchange/exchange-pixie'
 import { LogBackend } from './log/log'
 import { RootState } from './root-reducer'
 import { scrypt, ScryptOutput } from './scrypt/scrypt-pixie'
@@ -42,6 +41,5 @@ export const rootPixie: TamePixie<RootProps> = combinePixies({
   accounts,
   context,
   currency,
-  exchange,
   scrypt
 })

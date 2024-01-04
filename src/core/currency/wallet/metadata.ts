@@ -1,7 +1,6 @@
 import { asNumber, asObject, asOptional, asString, Cleaner } from 'cleaners'
 
 import { EdgeMetadata, EdgeMetadataChange } from '../../../types/types'
-import { CurrencyWalletInput } from './currency-wallet-pixie'
 
 export const asEdgeMetadata: Cleaner<EdgeMetadata> = raw => {
   const clean = asDiskMetadata(raw)
@@ -42,19 +41,6 @@ export function mergeMetadata(
   if (over.notes !== null) out.notes = over.notes ?? under.notes
 
   return out
-}
-
-export function upgradeMetadata(
-  input: CurrencyWalletInput,
-  metadata: EdgeMetadata | EdgeMetadataChange
-): void {
-  const { fiat = 'iso:USD' } = input.props.walletState
-  if (metadata.amountFiat != null) {
-    metadata.exchangeAmount = {
-      ...metadata.exchangeAmount,
-      [fiat]: metadata.amountFiat
-    }
-  }
 }
 
 const asDiskMetadata = asObject({
