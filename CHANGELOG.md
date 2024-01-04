@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.14.0 (2024-01-04)
+
 - added: `EdgeCurrencyCodeOptions.tokenId`. This upgrades `getBalance`, `getNumTransactions`, and `getReceiveAddress`.
 - added: `EdgeCurrencyEngineCallbacks.onTokenBalanceChanged`, which is thew new balance-update callback.
 - added: `EdgeCurrencyWallet.balanceMap`, which reports balances by tokenId.
