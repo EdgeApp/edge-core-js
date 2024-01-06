@@ -50,6 +50,10 @@ function compareObjects(a: any, b: any, type: string): boolean {
     return a.getTime() === b.getTime()
   }
 
+  if (type === '[object Map]') {
+    return compareMap(a, b)
+  }
+
   // Typed arrays:
   if (TYPED_ARRAYS[type]) {
     if (a.length !== b.length) return false
@@ -63,6 +67,22 @@ function compareObjects(a: any, b: any, type: string): boolean {
   return false
 }
 
+/**
+ * Compare Maps
+ */
+function compareMap(map1: Map<any, any>, map2: Map<any, any>): boolean {
+  if (map1.size !== map2.size) {
+    return false
+  }
+
+  for (const [key, value] of map1) {
+    if (!map2.has(key) || map2.get(key) !== value) {
+      return false
+    }
+  }
+
+  return true
+}
 /**
  * Returns true if two Javascript values are equal in value.
  */
