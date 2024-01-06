@@ -529,6 +529,8 @@ export function makeCurrencyWalletApi(
       tx.networkFeeOption = networkFeeOption
       tx.requestedCustomFee = customNetworkFee
       tx.spendTargets = savedTargets
+      tx.currencyCode = upgradedCurrency.currencyCode
+      tx.tokenId = upgradedCurrency.tokenId
       if (metadata != null) tx.metadata = metadata
       if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
       if (savedAction != null) tx.savedAction = asEdgeTxAction(savedAction)
