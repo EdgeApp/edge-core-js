@@ -274,6 +274,7 @@ export const asTokensFile = asObject({
 })
 
 const asTransactionAsset = asObject<TransactionAsset>({
+  assetAction: asOptional(asEdgeAssetAction),
   metadata: asEdgeMetadata,
   nativeAmount: asOptional(asString),
   providerFeeSent: asOptional(asString)
