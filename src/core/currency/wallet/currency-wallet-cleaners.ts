@@ -232,6 +232,8 @@ export const asEdgeTxAction: Cleaner<EdgeTxAction> = asEither(
 )
 
 export const asEdgeAssetActionType: Cleaner<EdgeAssetActionType> = asValue(
+  'claim',
+  'claimOrder',
   'stake',
   'stakeNetworkFee',
   'stakeOrder',

@@ -319,6 +319,8 @@ export type EdgeTxAction =
   | EdgeTxActionTokenApproval
 
 export type EdgeAssetActionType =
+  | 'claim'
+  | 'claimOrder'
   | 'stake'
   | 'stakeNetworkFee'
   | 'stakeOrder'
