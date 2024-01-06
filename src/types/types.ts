@@ -325,11 +325,8 @@ export type EdgeAssetActionType =
   | 'unstake'
   | 'unstakeNetworkFee'
   | 'unstakeOrder'
-  | 'stake'
-  | 'stakeOrder'
-  | 'unstake'
-  | 'unstakeOrder'
   | 'swap'
+  | 'swapNetworkFee'
   | 'swapOrderPost'
   | 'swapOrderFill'
   | 'swapOrderCancel'
@@ -338,6 +335,7 @@ export type EdgeAssetActionType =
   | 'sellNetworkFee'
   | 'tokenApproval'
   | 'transfer'
+  | 'transferNetworkFee'
 
 export interface EdgeAssetAction {
   assetActionType: EdgeAssetActionType
