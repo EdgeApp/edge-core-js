@@ -1,5 +1,14 @@
 # edge-core-js
 
+## Unreleased
+
+## 2.0.1 (2024-01-08)
+
+- added: Missing asset action types (claim, claimOrder, swapNetworkFee, and transferNetworkFee).
+- fixed: Avoid superfluous property updates.
+- fixed: Correctly populate `tokenId` on `makeSpend` when using legacy currency plugins.
+- fixed: Correctly write `assetAction` to disk.
+
 ## 2.0.0 (2024-01-04)
 
 - added: `EdgeCurrencyWallet.saveTxAction` to add/edit `EdgeTransaction.savedAction`
