@@ -232,15 +232,16 @@ export const asEdgeTxAction: Cleaner<EdgeTxAction> = asEither(
 )
 
 export const asEdgeAssetActionType: Cleaner<EdgeAssetActionType> = asValue(
+  'claim',
+  'claimOrder',
   'stake',
+  'stakeNetworkFee',
   'stakeOrder',
   'unstake',
-  'unstakeOrder',
-  'stake',
-  'stakeOrder',
-  'unstake',
+  'unstakeNetworkFee',
   'unstakeOrder',
   'swap',
+  'swapNetworkFee',
   'swapOrderPost',
   'swapOrderFill',
   'swapOrderCancel',
@@ -248,7 +249,8 @@ export const asEdgeAssetActionType: Cleaner<EdgeAssetActionType> = asValue(
   'sell',
   'sellNetworkFee',
   'tokenApproval',
-  'transfer'
+  'transfer',
+  'transferNetworkFee'
 )
 
 export const asEdgeAssetAction = asObject({
@@ -274,6 +276,7 @@ export const asTokensFile = asObject({
 })
 
 const asTransactionAsset = asObject<TransactionAsset>({
+  assetAction: asOptional(asEdgeAssetAction),
   metadata: asEdgeMetadata,
   nativeAmount: asOptional(asString),
   providerFeeSent: asOptional(asString)
