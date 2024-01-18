@@ -1452,6 +1452,18 @@ export interface EdgeSwapRequestOptions {
   preferType?: EdgeSwapPluginType
   disabled?: EdgePluginMap<true>
   promoCodes?: EdgePluginMap<string>
+
+  /**
+   * If we have some quotes already, how long should we wait
+   * for stragglers before we give up? Defaults to 20000ms.
+   */
+  slowResponseMs?: number
+
+  /**
+   * If don't have any quotes yet, how long should we wait
+   * before we give up? Defaults to Infinity.
+   */
+  noResponseMs?: number
 }
 
 // edge login ----------------------------------------------------------

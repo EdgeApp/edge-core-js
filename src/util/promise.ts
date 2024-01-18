@@ -26,12 +26,12 @@ export function timeout<T>(
     const timer = setTimeout(() => reject(error), ms)
     promise.then(
       ok => {
-        resolve(ok)
         clearTimeout(timer)
+        resolve(ok)
       },
       error => {
-        reject(error)
         clearTimeout(timer)
+        reject(error)
       }
     )
   })
