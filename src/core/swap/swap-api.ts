@@ -14,7 +14,7 @@ import {
   EdgeSwapRequest,
   EdgeSwapRequestOptions
 } from '../../types/types'
-import { fuzzyTimeout } from '../../util/promise'
+import { fuzzyTimeout, timeout } from '../../util/promise'
 import { ApiInput } from '../root-pixie'
 
 /**
@@ -26,7 +26,13 @@ export async function fetchSwapQuotes(
   request: EdgeSwapRequest,
   opts: EdgeSwapRequestOptions = {}
 ): Promise<EdgeSwapQuote[]> {
-  const { disabled = {}, preferPluginId, promoCodes = {} } = opts
+  const {
+    disabled = {},
+    noResponseMs,
+    preferPluginId,
+    promoCodes = {},
+    slowResponseMs = 20000
+  } = opts
   const { log } = ai.props
 
   const account = ai.props.state.accounts[accountId]
@@ -76,7 +82,7 @@ export async function fetchSwapQuotes(
   }
 
   // Wait for the results, with error handling:
-  return await fuzzyTimeout(promises, 20000).then(
+  const promise = fuzzyTimeout(promises, slowResponseMs).then(
     ({ results: quotes, errors }) => {
       for (const pluginId of pendingIds) {
         log.warn(`${pluginId} gave swap timeout`)
@@ -98,6 +104,9 @@ export async function fetchSwapQuotes(
       throw pickBestError(errors)
     }
   )
+
+  if (noResponseMs == null) return await promise
+  return await timeout(promise, noResponseMs)
 }
 
 function wrapQuote(

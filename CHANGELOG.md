@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Make swap timeouts adjustable.
+
 ## 2.0.1 (2024-01-08)
 
 - added: Missing asset action types (claim, claimOrder, swapNetworkFee, and transferNetworkFee).
