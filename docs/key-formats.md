@@ -1,12 +1,12 @@
 # Edge key formats
 
-The Edge account system makes it possible to backup and restore crypto-currency keys. These keys are _immutable_ for safety, and there is no way to upgrade legacy keys. This means Edge support every key format customers have ever created and stored in our system, both now and for the rest of time. If changing a key format ever becomes necessary, the new format must coexist with the old format, and the wallet must be able to read both.
+The Edge account system makes it possible to backup and restore crypto-currency keys. These keys are _immutable_ for safety, and there is no way to upgrade legacy keys. This means Edge supports every key format customers have ever created and stored in our system, both now and for the rest of time. If changing a key format ever becomes necessary, the new format must coexist with the old format, and the wallet must be able to read both.
 
 This creates enormous pressure to keep the key formats stable, simple, and documented. This file serves as documentation.
 
 ## Splitting
 
-Every key has an associated wallet id. If an Edge account contains two keys with the same wallet id, the keys merge together. Missing properties are fine, but conflicting properties produce a a "key integrity violation" error. This error makes it impossible to log into the account, so it is critically important that keys never conflict.
+Every key has an associated wallet id. If an Edge account contains two keys with the same wallet id, the keys merge together. Missing properties are fine, but conflicting properties produce a "key integrity violation" error. This error makes it impossible to log into the account, so it is critically important that keys never conflict.
 
 To split a wallet that contains coins on multiple keys, Edge just makes a new wallet with a copy of the original keys. Since users can split wallets multiple times and in multiple directions, it is important that splitting something like a BTC wallet to BCH, and then splitting the BCH wallet back to BTC, produces the exact same keys that the BTC wallet started with. Otherwise, there will be a key integrity violation.
 
@@ -26,7 +26,7 @@ Edge would eventually like to have read-only wallets. For these wallets, we plan
 
 Not all wallets can operate with just public keys. Monero, in particular, has trouble with this. These wallets can skip implementing `derivePublicKeys`, in which case they will not be able to operate in read-only mode.
 
-Since Edge doesn't have this feature yet, the public key format is "work in progress". We _do_ cache some element of these keys on disk for faster startup times, so the format needs to at least be semi-functional.
+Since Edge doesn't have this feature yet, the public key format is "work in progress". We _do_ cache some elements of these keys on disk for faster startup times, so the format needs to at least be semi-functional.
 
 # Detailed key formats
 
