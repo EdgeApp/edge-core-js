@@ -388,20 +388,24 @@ export function makeCurrencyWalletApi(
     },
     async getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string> {
       spendInfo = upgradeMemos(spendInfo, plugin.currencyInfo)
-      if (typeof engine.getMaxSpendable === 'function') {
-        // Only provide wallet info if currency requires it:
-        const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
-
-        return await engine.getMaxSpendable(spendInfo, { privateKeys })
-      }
-
       // Figure out which asset this is:
-      const { networkFeeOption, customNetworkFee } = spendInfo
       const upgradedCurrency = upgradeCurrencyCode({
         allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
         currencyInfo: plugin.currencyInfo,
         tokenId: spendInfo.tokenId
       })
+
+      if (typeof engine.getMaxSpendable === 'function') {
+        // Only provide wallet info if currency requires it:
+        const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
+
+        return await engine.getMaxSpendable(
+          { ...spendInfo, ...upgradedCurrency },
+          { privateKeys }
+        )
+      }
+
+      const { networkFeeOption, customNetworkFee } = spendInfo
       const balance = engine.getBalance(upgradedCurrency)
 
       // Copy all the spend targets, setting the amounts to 0

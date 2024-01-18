@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: Make swap timeouts adjustable.
+- fixed: Provide a `currencyCode` fallback to `EdgeCurrencyEngine.getMaxSpendable`.
 
 ## 2.0.1 (2024-01-08)
 
