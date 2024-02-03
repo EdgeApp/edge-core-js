@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.1.1 (2024-02-02)
+
+- fixed: Token activation causing error and insufficient funds when used with core 1.x plugins
+
 ## 2.1.0 (2024-01-18)
 
 - added: Make swap timeouts adjustable.

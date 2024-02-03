@@ -596,10 +596,14 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
           `getActivationAssets unsupported by walletId ${activateWalletId}`
         )
 
-      return await engine.engineGetActivationAssets({
+      const out = await engine.engineGetActivationAssets({
         currencyWallets,
         activateTokenIds
       })
+
+      // Added for backward compatibility for plugins using core 1.x
+      out.assetOptions.forEach(asset => (asset.tokenId = asset.tokenId ?? null))
+      return out
     },
 
     async activateWallet(
@@ -632,8 +636,18 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
                 wallet,
                 tokenId: paymentInfo.tokenId
               }
-            : undefined
+            : undefined,
+
+        // Added for backward compatibility for plugins using core 1.x
+        // @ts-expect-error
+        paymentTokenId: paymentInfo?.tokenId,
+        paymentWallet: wallet
       })
+
+      // Added for backward compatibility for plugins using core 1.x
+      // @ts-expect-error
+      if (out.networkFee.tokenId === undefined) out.networkFee.tokenId = null
+
       return bridgifyObject(out)
     },
 
