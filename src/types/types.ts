@@ -1378,6 +1378,7 @@ export interface ChangeUsernameOptions {
 // currencies ----------------------------------------------------------
 
 export interface EdgeCreateCurrencyWalletOptions {
+  enabledTokenIds?: string[]
   fiatCurrencyCode?: string
   name?: string
 
