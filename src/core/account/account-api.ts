@@ -517,7 +517,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return await Promise.all(
         walletInfos.map(
           async (info, i) =>
-            await catchResult(
+            await makeEdgeResult(
               finishWalletCreation(ai, accountId, info.id, createWallets[i])
             )
         )
@@ -701,7 +701,7 @@ function getRawPrivateKey(
   return info
 }
 
-async function catchResult<T>(promise: Promise<T>): Promise<EdgeResult<T>> {
+async function makeEdgeResult<T>(promise: Promise<T>): Promise<EdgeResult<T>> {
   try {
     return { ok: true, result: await promise }
   } catch (error) {
