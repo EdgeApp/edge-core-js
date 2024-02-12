@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.2.0 (2024-02-12)
+
 - added: Accept an `enabledTokens` parameter to the `createCurrencyWallets` method.
 
 ## 2.1.1 (2024-02-02)
