@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Accept an `enabledTokens` parameter to the `createCurrencyWallets` method.
+
 ## 2.1.1 (2024-02-02)
 
 - fixed: Token activation causing error and insufficient funds when used with core 1.x plugins
