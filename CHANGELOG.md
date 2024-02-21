@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.2.1 (2024-02-21)
+
 - fixed: Correctly save `enabledTokenIds` when creating a new wallet.
 
 ## 2.2.0 (2024-02-12)
