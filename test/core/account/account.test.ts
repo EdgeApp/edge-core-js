@@ -115,12 +115,14 @@ describe('account', function () {
     const wallet = await account.createCurrencyWallet('wallet:fakecoin', {
       fiatCurrencyCode: 'iso:JPY',
       migratedFromWalletId: 'asdf',
-      name: 'test wallet'
+      name: 'test wallet',
+      enabledTokenIds: ['badf00d5']
     })
     expect(wallet.name).equals('test wallet')
     expect(wallet.fiatCurrencyCode).equals('iso:JPY')
     const walletInfo = account.allKeys.find(info => info.id === wallet.id)
     expect(walletInfo?.migratedFromWalletId).equals('asdf')
+    expect(wallet.enabledTokenIds).deep.equals(['badf00d5'])
   })
 
   it('list keys', async function () {

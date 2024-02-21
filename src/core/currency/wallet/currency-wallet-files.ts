@@ -235,23 +235,25 @@ export async function loadTokensFile(
     disklet,
     LEGACY_TOKENS_FILE
   )
-  const { accountId, currencyInfo, pluginId } = input.props.walletState
-  const accountState = input.props.state.accounts[accountId]
-  const tokenIds = currencyCodesToTokenIds(
-    accountState.builtinTokens[pluginId],
-    accountState.customTokens[pluginId],
-    currencyInfo,
-    legacyCurrencyCodes ?? []
-  )
+  if (legacyCurrencyCodes != null) {
+    const { accountId, currencyInfo, pluginId } = input.props.walletState
+    const accountState = input.props.state.accounts[accountId]
+    const tokenIds = currencyCodesToTokenIds(
+      accountState.builtinTokens[pluginId],
+      accountState.customTokens[pluginId],
+      currencyInfo,
+      legacyCurrencyCodes
+    )
 
-  dispatch({
-    type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
-    payload: {
-      walletId: input.props.walletId,
-      detectedTokenIds: [],
-      enabledTokenIds: tokenIds
-    }
-  })
+    dispatch({
+      type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
+      payload: {
+        walletId: input.props.walletId,
+        detectedTokenIds: [],
+        enabledTokenIds: tokenIds
+      }
+    })
+  }
 }
 
 /**
