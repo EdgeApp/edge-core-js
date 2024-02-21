@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Correctly save `enabledTokenIds` when creating a new wallet.
+
 ## 2.2.0 (2024-02-12)
 
 - added: Accept an `enabledTokens` parameter to the `createCurrencyWallets` method.
