@@ -35,7 +35,7 @@ export function addEdgeCorePlugins(plugins: EdgeCorePlugins): void {
   }
 
   // Save the new plugins:
-  for (const pluginId in plugins) {
+  for (const pluginId of Object.keys(plugins)) {
     allPlugins[pluginId] = plugins[pluginId]
   }
 
@@ -66,7 +66,7 @@ export function watchPlugins(
   function pluginsAdded(plugins: EdgeCorePlugins): void {
     const out: EdgePluginMap<EdgeCorePlugin> = {}
 
-    for (const pluginId in plugins) {
+    for (const pluginId of Object.keys(plugins)) {
       const plugin = plugins[pluginId]
       const log = makeLog(logBackend, pluginId)
       const initOptions = pluginsInit[pluginId]
