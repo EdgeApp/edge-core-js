@@ -33,11 +33,11 @@ export async function fetchSwapQuotes(
     promoCodes = {},
     slowResponseMs = 20000
   } = opts
-  const { log } = ai.props
+  const { log, state } = ai.props
 
-  const account = ai.props.state.accounts[accountId]
+  const account = state.accounts[accountId]
   const { swapSettings, userSettings } = account
-  const swapPlugins = ai.props.state.plugins.swap
+  const swapPlugins = state.plugins.swap
 
   log.warn(
     'Requesting swap quotes for: ',
@@ -62,6 +62,7 @@ export async function fetchSwapQuotes(
     promises.push(
       swapPlugins[pluginId]
         .fetchSwapQuote(request, userSettings[pluginId], {
+          infoPayload: state.infoCache.corePlugins?.[pluginId] ?? {},
           promoCode: promoCodes[pluginId]
         })
         .then(

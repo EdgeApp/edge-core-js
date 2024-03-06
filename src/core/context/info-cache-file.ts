@@ -11,7 +11,6 @@ export interface InfoCacheFile {
 export const INFO_CACHE_FILE_NAME = 'infoCache.json'
 
 export const asInfoCacheFile = asObject<InfoCacheFile>({
-  // date: asDate,
   corePlugins: asObject(asJsonObject),
   syncServers: asArray(asString)
 })

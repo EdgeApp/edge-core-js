@@ -163,8 +163,11 @@ export interface EdgeNativeIo {
  * All core plugins receive these options at creation time.
  */
 export interface EdgeCorePluginOptions {
-  // Load-time options (like API keys) passed into the context:
+  /** Load-time options (like API keys) passed into the context */
   initOptions: JsonObject
+
+  /** Data provided by the info server */
+  infoPayload: JsonObject
 
   // Access to the world outside the plugin:
   io: EdgeIo
@@ -1034,6 +1037,7 @@ export interface EdgeCurrencyPlugin {
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ) => Promise<EdgeCurrencyEngine>
+  readonly updateInfoPayload?: (infoPayload: JsonObject) => Promise<void>
 
   // Escape hatch:
   readonly otherMethods?: EdgeOtherMethods
@@ -1311,7 +1315,7 @@ export interface EdgeSwapPlugin {
   readonly fetchSwapQuote: (
     request: EdgeSwapRequest,
     userSettings: JsonObject | undefined,
-    opts: { promoCode?: string }
+    opts: { infoPayload: JsonObject; promoCode?: string }
   ) => Promise<EdgeSwapQuote>
 }
 

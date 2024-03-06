@@ -117,6 +117,7 @@ export async function makeContext(
   // Subscribe to new plugins:
   const closePlugins = watchPlugins(
     ios,
+    infoCache,
     logBackend,
     pluginsInit,
     redux.dispatch
