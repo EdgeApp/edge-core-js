@@ -621,8 +621,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         throw new Error(
           `activateWallet unsupported by walletId ${activateWalletId}`
         )
-      const walletId = paymentInfo?.walletId
-      const wallet = currencyWallets[walletId ?? '']
+      const walletId = paymentInfo?.walletId ?? ''
+      const wallet = currencyWallets[walletId]
 
       if (wallet == null) {
         throw new Error(`No wallet for walletId ${walletId}`)

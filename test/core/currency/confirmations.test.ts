@@ -10,10 +10,10 @@ describe('confirmations API', function () {
     required: number,
     expected: string
   ): void => {
-    const tx: any = { blockHeight: txBlockHeight }
+    const tx = { blockHeight: txBlockHeight }
     expect(
       validateConfirmations(tx, netBlockHeight, required),
-      `Expected tx with blockHeight of ${tx.blockHeight} to be ${expected} at network blockHeight ${netBlockHeight} with ${required} required confs`
+      `Expected tx with blockHeight of ${txBlockHeight} to be ${expected} at network blockHeight ${netBlockHeight} with ${required} required confs`
     ).equals(expected)
   }
 

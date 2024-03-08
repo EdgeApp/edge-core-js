@@ -43,9 +43,9 @@ export async function addStorageWallet(
       const { syncKey } = walletInfo.keys
       const { lastHash } = status
       ai.props.log.error(
-        `Could not sync ${syncKey} with last hash ${String(lastHash)}: ${String(
-          error
-        )}`
+        `Could not sync ${String(syncKey)} with last hash ${String(
+          lastHash
+        )}: ${String(error)}`
       )
       onError(error)
     })
