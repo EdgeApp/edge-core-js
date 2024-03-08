@@ -154,10 +154,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
       return {
         update() {
-          const { accountOutput } = input.props
-          if (accountOutput == null) return
-          const { accountApi } = accountOutput
-          if (accountApi == null) return
+          if (input.props.accountOutput?.accountApi == null) return
 
           // Start once the EdgeAccount API exists:
           dataTask.start({ wait: true })
