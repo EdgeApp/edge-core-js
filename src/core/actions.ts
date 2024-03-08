@@ -13,6 +13,7 @@ import {
   EdgeWalletStates
 } from '../types/types'
 import { SwapSettings } from './account/account-types'
+import { InfoCacheFile } from './context/info-cache-file'
 import {
   MergedTransaction,
   TxFileJsons,
@@ -327,12 +328,17 @@ export type RootAction =
       }
     }
   | {
+      type: 'INFO_CACHE_FETCHED'
+      payload: InfoCacheFile
+    }
+  | {
       // Initializes the redux store on context creation.
       type: 'INIT'
       payload: {
         apiKey: string
         appId: string
         authServer: string
+        infoCache: InfoCacheFile
         infoServers: string[]
         syncServers: string[]
         clientId: Uint8Array

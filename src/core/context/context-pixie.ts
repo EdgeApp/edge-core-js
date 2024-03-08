@@ -1,9 +1,21 @@
-import { combinePixies, stopUpdates, TamePixie } from 'redux-pixies'
+import {
+  combinePixies,
+  filterPixie,
+  stopUpdates,
+  TamePixie
+} from 'redux-pixies'
 import { close, update } from 'yaob'
 
 import { EdgeContext, EdgeLogSettings, EdgeUserInfo } from '../../types/types'
+import { makePeriodicTask } from '../../util/periodic-task'
+import { shuffle } from '../../util/shuffle'
 import { ApiInput, RootProps } from '../root-pixie'
 import { makeContextApi } from './context-api'
+import {
+  asInfoCacheFile,
+  INFO_CACHE_FILE_NAME,
+  infoCacheFile
+} from './info-cache-file'
 
 export interface ContextOutput {
   api: EdgeContext
@@ -41,5 +53,38 @@ export const context: TamePixie<RootProps> = combinePixies({
         }
       }
     }
-  }
+  },
+
+  infoFetcher: filterPixie(
+    (input: ApiInput) => {
+      async function doInfoSync(): Promise<void> {
+        const { dispatch, io } = input.props
+
+        const [infoServerUri] = shuffle(input.props.state.infoServers)
+        const response = await fetch(`${infoServerUri}/v1/coreRollup`, {
+          headers: { accept: 'application/json' }
+        })
+        if (!response.ok) return
+        const json = await response.json()
+
+        const infoCache = asInfoCacheFile(json)
+        dispatch({
+          type: 'INFO_CACHE_FETCHED',
+          payload: infoCache
+        })
+        await infoCacheFile.save(io.disklet, INFO_CACHE_FILE_NAME, infoCache)
+      }
+
+      const infoTask = makePeriodicTask(doInfoSync, 10 * 60 * 1000)
+      infoTask.start()
+
+      return {
+        update() {},
+        destroy() {
+          infoTask.stop()
+        }
+      }
+    },
+    props => (props.state.paused ? undefined : props)
+  )
 })

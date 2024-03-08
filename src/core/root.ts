@@ -7,6 +7,7 @@ import { EdgeContext, EdgeContextOptions } from '../types/types'
 import { validateServer } from '../util/validateServer'
 import { Dispatch } from './actions'
 import { CLIENT_FILE_NAME, clientFile } from './context/client-file'
+import { INFO_CACHE_FILE_NAME, infoCacheFile } from './context/info-cache-file'
 import { filterLogs, LogBackend, makeLog } from './log/log'
 import { loadStashes } from './login/login-stash'
 import { PluginIos, watchPlugins } from './plugins/plugins-actions'
@@ -81,21 +82,26 @@ export async function makeContext(
   })
   const log = makeLog(logBackend, 'edge-core')
 
-  // Load the clientId from disk:
-  let clientInfo = await clientFile.load(io.disklet, CLIENT_FILE_NAME)
+  let [clientInfo, infoCache = {}, stashes] = await Promise.all([
+    clientFile.load(io.disklet, CLIENT_FILE_NAME),
+    infoCacheFile.load(io.disklet, INFO_CACHE_FILE_NAME),
+    loadStashes(io.disklet, log)
+  ])
+
+  // Save the clientId if we don't have one:
   if (clientInfo == null) {
     clientInfo = { clientId: io.random(16) }
     await clientFile.save(io.disklet, CLIENT_FILE_NAME, clientInfo)
   }
 
   // Load the login stashes from disk:
-  const stashes = await loadStashes(io.disklet, log)
   redux.dispatch({
     type: 'INIT',
     payload: {
       apiKey,
       appId,
       authServer,
+      infoCache,
       infoServers,
       syncServers,
       clientId: clientInfo.clientId,
