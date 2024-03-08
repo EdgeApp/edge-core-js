@@ -7,8 +7,9 @@ export const asEdgeMetadata: Cleaner<EdgeMetadata> = raw => {
   const { exchangeAmount = {} } = clean
 
   // Delete corrupt amounts that exceed the Javascript number range:
-  for (const fiat of Object.keys(clean)) {
+  for (const fiat of Object.keys(exchangeAmount)) {
     if (String(exchangeAmount[fiat]).includes('e')) {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete exchangeAmount[fiat]
     }
   }

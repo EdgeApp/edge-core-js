@@ -173,7 +173,8 @@ export function makeFakeWorld(
       }
       const repos: EdgeFakeUser['repos'] = {}
       for (const syncKey of syncKeys) {
-        repos[syncKey] = wasEdgeRepoDump(fakeDb.repos[syncKey])
+        const repo = fakeDb.repos.get(syncKey)
+        if (repo != null) repos[syncKey] = wasEdgeRepoDump(repo)
       }
 
       return {

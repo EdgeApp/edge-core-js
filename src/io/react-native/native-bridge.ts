@@ -76,6 +76,7 @@ function makePendingList(): PendingList {
     grab(id) {
       const call = map[String(id)]
       if (call == null) return dummyCall
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete map[String(id)]
       return call
     }
