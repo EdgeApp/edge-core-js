@@ -35,23 +35,33 @@ export async function makeContext(
     apiKey,
     appId = '',
     authServer = 'https://login.edge.app/api',
-    infoServer = ['https://info-eu1.edge.app', 'https://info-us1.edge.app'],
-    syncServer = [
-      'https://sync-us1.edge.app',
-      'https://sync-us2.edge.app',
-      'https://sync-us3.edge.app',
-      'https://sync-us4.edge.app',
-      'https://sync-us5.edge.app',
-      'https://sync-us6.edge.app',
-      'https://sync-eu.edge.app'
-    ],
+    infoServer,
+    syncServer,
     deviceDescription = null,
     hideKeys = false,
     plugins: pluginsInit = {},
     skipBlockHeight = false
   } = opts
-  const infoServers = Array.isArray(infoServer) ? infoServer : [infoServer]
-  const syncServers = Array.isArray(syncServer) ? syncServer : [syncServer]
+  const infoServers =
+    typeof infoServer === 'string'
+      ? [infoServer]
+      : infoServer != null && infoServer.length > 0
+      ? infoServer
+      : ['https://info-eu1.edge.app', 'https://info-us1.edge.app']
+  const syncServers =
+    typeof syncServer === 'string'
+      ? [syncServer]
+      : syncServer != null && syncServer.length > 0
+      ? syncServer
+      : [
+          'https://sync-us1.edge.app',
+          'https://sync-us2.edge.app',
+          'https://sync-us3.edge.app',
+          'https://sync-us4.edge.app',
+          'https://sync-us5.edge.app',
+          'https://sync-us6.edge.app',
+          'https://sync-eu.edge.app'
+        ]
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
   if (apiKey == null) {
     throw new Error('No API key provided')
@@ -107,7 +117,7 @@ export async function makeContext(
   )
 
   // Create sync client:
-  const syncClient = await makeSyncClient({
+  const syncClient = makeSyncClient({
     log,
     fetch: io.fetch,
     edgeServers: { infoServers, syncServers }
