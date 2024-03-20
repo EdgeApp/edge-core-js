@@ -417,7 +417,11 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
 const shouldCoreDetermineConfirmations = (
   confirmations: EdgeConfirmationState | undefined
 ): boolean => {
-  return confirmations !== 'confirmed' && confirmations !== 'dropped'
+  return (
+    confirmations !== 'confirmed' &&
+    confirmations !== 'dropped' &&
+    confirmations !== 'failed'
+  )
 }
 
 export const determineConfirmations = (
