@@ -223,7 +223,7 @@ export function makeCurrencyWalletCallbacks(
                 input.props.walletState.currencyInfo
               const { height } = input.props.walletState
 
-              reduxTx.confirmations = validateConfirmations(
+              reduxTx.confirmations = determineConfirmations(
                 reduxTx,
                 height,
                 requiredConfirmations
@@ -325,7 +325,7 @@ export function makeCurrencyWalletCallbacks(
           const { requiredConfirmations } = input.props.walletState.currencyInfo
           const { height } = input.props.walletState
 
-          tx.confirmations = validateConfirmations(
+          tx.confirmations = determineConfirmations(
             tx,
             height,
             requiredConfirmations
@@ -413,7 +413,7 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
   checkChangesLoop()
 }
 
-export const validateConfirmations = (
+export const determineConfirmations = (
   tx: { blockHeight: number }, // Either EdgeTransaction or MergedTransaction
   blockHeight: number,
   requiredConfirmations: number = 1 // Default confirmation rule is 1 block

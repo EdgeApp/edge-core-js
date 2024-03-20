@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { validateConfirmations } from '../../../src/core/currency/wallet/currency-wallet-callbacks'
+import { determineConfirmations } from '../../../src/core/currency/wallet/currency-wallet-callbacks'
 
 describe('confirmations API', function () {
   const helper = (
@@ -12,7 +12,7 @@ describe('confirmations API', function () {
   ): void => {
     const tx = { blockHeight: txBlockHeight }
     expect(
-      validateConfirmations(tx, netBlockHeight, required),
+      determineConfirmations(tx, netBlockHeight, required),
       `Expected tx with blockHeight of ${txBlockHeight} to be ${expected} at network blockHeight ${netBlockHeight} with ${required} required confs`
     ).equals(expected)
   }
