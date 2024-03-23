@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 2.3.0 (2024-03-23)
+
+- added: `EdgeCorePluginOptions.infoPayload`, containing arbitrary JSON provided by the info server.
+- added: `EdgeCurrencyPlugin.updateInfoPayload`, called when we the core fetches a fresh payload from the info server.
+
 ## 2.2.1 (2024-02-21)
 
 - fixed: Correctly save `enabledTokenIds` when creating a new wallet.
