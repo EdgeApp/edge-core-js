@@ -25,14 +25,14 @@ export type DbLogin = Omit<EdgeLoginDump, 'children'>
  * Emulates the Airbitz login server database.
  */
 export class FakeDb {
-  lobbies: { [lobbyId: string]: DbLobby }
+  lobbies: Map<string, DbLobby>
   logins: DbLogin[]
-  repos: { [syncKey: string]: EdgeRepoDump }
+  repos: Map<string, EdgeRepoDump>
 
   constructor() {
-    this.lobbies = {}
+    this.lobbies = new Map()
     this.logins = []
-    this.repos = {}
+    this.repos = new Map()
   }
 
   getLoginById(loginId: Uint8Array): DbLogin | undefined {
@@ -80,7 +80,7 @@ export class FakeDb {
   }
 
   setupRepo(syncKey: string, repo: EdgeRepoDump): void {
-    this.repos[syncKey] = repo
+    this.repos.set(syncKey, repo)
   }
 
   dumpLogin(login: DbLogin): EdgeLoginDump {

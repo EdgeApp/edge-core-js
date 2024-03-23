@@ -30,11 +30,7 @@ import {
   CurrencyWalletInput,
   CurrencyWalletProps
 } from './currency-wallet-pixie'
-import {
-  MergedTransaction,
-  mergeTx,
-  TxidHashes
-} from './currency-wallet-reducer'
+import { mergeTx, TxidHashes } from './currency-wallet-reducer'
 import { uniqueStrings } from './enabled-tokens'
 
 let throttleRateLimitMs = 5000
@@ -198,7 +194,7 @@ export function makeCurrencyWalletCallbacks(
         return
       }
       pushUpdate({
-        id: `${walletId}==${tokenId}`,
+        id: `${walletId}==${String(tokenId)}`,
         action: 'onTokenBalanceChanged',
         updateFunc: () => {
           input.props.dispatch({
@@ -418,7 +414,7 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
 }
 
 export const validateConfirmations = (
-  tx: EdgeTransaction | MergedTransaction,
+  tx: { blockHeight: number }, // Either EdgeTransaction or MergedTransaction
   blockHeight: number,
   requiredConfirmations: number = 1 // Default confirmation rule is 1 block
 ): EdgeTransaction['confirmations'] => {

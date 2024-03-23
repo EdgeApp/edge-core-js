@@ -3,7 +3,7 @@ import { buildReducer, mapReducer } from 'redux-keto'
 import { EdgeLogSettings } from './../types/types'
 import { accountReducer, AccountState } from './account/account-reducer'
 import { RootAction } from './actions'
-import { contextConfig, ContextConfigState } from './context/context-reducer'
+import { InfoCacheFile } from './context/info-cache-file'
 import { currency, CurrencyState } from './currency/currency-reducer'
 import { login, LoginState } from './login/login-reducer'
 import { plugins, PluginsState } from './plugins/plugins-reducer'
@@ -14,14 +14,16 @@ export interface RootState {
   readonly accountIds: string[]
   readonly accounts: { [accountId: string]: AccountState }
   readonly hideKeys: boolean
+  readonly infoCache: InfoCacheFile
+  readonly infoServers: string[]
   readonly lastAccountId: string
   readonly logSettings: EdgeLogSettings
   readonly paused: boolean
   readonly ready: boolean
   readonly skipBlockHeight: boolean
+  readonly syncServers: string[]
 
   // Children reducers:
-  readonly contextConfig: ContextConfigState
   readonly currency: CurrencyState
   readonly login: LoginState
   readonly plugins: PluginsState
@@ -64,6 +66,20 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
     return action.type === 'INIT' ? action.payload.hideKeys : state
   },
 
+  infoCache(state = {}, action): InfoCacheFile {
+    switch (action.type) {
+      case 'INIT':
+        return action.payload.infoCache
+      case 'INFO_CACHE_FETCHED':
+        return action.payload
+    }
+    return state
+  },
+
+  infoServers(state = [], action): string[] {
+    return action.type === 'INIT' ? action.payload.infoServers : state
+  },
+
   lastAccountId(state, action, next): string {
     return `login${next.accountCount}`
   },
@@ -90,7 +106,10 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
     return action.type === 'INIT' ? action.payload.skipBlockHeight : state
   },
 
-  contextConfig,
+  syncServers(state = [], action): string[] {
+    return action.type === 'INIT' ? action.payload.syncServers : state
+  },
+
   currency,
   login,
   plugins,

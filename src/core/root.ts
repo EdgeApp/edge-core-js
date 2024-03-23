@@ -7,6 +7,7 @@ import { EdgeContext, EdgeContextOptions } from '../types/types'
 import { validateServer } from '../util/validateServer'
 import { Dispatch } from './actions'
 import { CLIENT_FILE_NAME, clientFile } from './context/client-file'
+import { INFO_CACHE_FILE_NAME, infoCacheFile } from './context/info-cache-file'
 import { filterLogs, LogBackend, makeLog } from './log/log'
 import { loadStashes } from './login/login-stash'
 import { PluginIos, watchPlugins } from './plugins/plugins-actions'
@@ -35,23 +36,33 @@ export async function makeContext(
     apiKey,
     appId = '',
     authServer = 'https://login.edge.app/api',
-    infoServer = ['https://info-eu1.edge.app', 'https://info-us1.edge.app'],
-    syncServer = [
-      'https://sync-us1.edge.app',
-      'https://sync-us2.edge.app',
-      'https://sync-us3.edge.app',
-      'https://sync-us4.edge.app',
-      'https://sync-us5.edge.app',
-      'https://sync-us6.edge.app',
-      'https://sync-eu.edge.app'
-    ],
+    infoServer,
+    syncServer,
     deviceDescription = null,
     hideKeys = false,
     plugins: pluginsInit = {},
     skipBlockHeight = false
   } = opts
-  const infoServers = Array.isArray(infoServer) ? infoServer : [infoServer]
-  const syncServers = Array.isArray(syncServer) ? syncServer : [syncServer]
+  const infoServers =
+    typeof infoServer === 'string'
+      ? [infoServer]
+      : infoServer != null && infoServer.length > 0
+      ? infoServer
+      : ['https://info-eu1.edge.app', 'https://info-us1.edge.app']
+  const syncServers =
+    typeof syncServer === 'string'
+      ? [syncServer]
+      : syncServer != null && syncServer.length > 0
+      ? syncServer
+      : [
+          'https://sync-us1.edge.app',
+          'https://sync-us2.edge.app',
+          'https://sync-us3.edge.app',
+          'https://sync-us4.edge.app',
+          'https://sync-us5.edge.app',
+          'https://sync-us6.edge.app',
+          'https://sync-eu.edge.app'
+        ]
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
   if (apiKey == null) {
     throw new Error('No API key provided')
@@ -71,21 +82,26 @@ export async function makeContext(
   })
   const log = makeLog(logBackend, 'edge-core')
 
-  // Load the clientId from disk:
-  let clientInfo = await clientFile.load(io.disklet, CLIENT_FILE_NAME)
+  let [clientInfo, infoCache = {}, stashes] = await Promise.all([
+    clientFile.load(io.disklet, CLIENT_FILE_NAME),
+    infoCacheFile.load(io.disklet, INFO_CACHE_FILE_NAME),
+    loadStashes(io.disklet, log)
+  ])
+
+  // Save the clientId if we don't have one:
   if (clientInfo == null) {
     clientInfo = { clientId: io.random(16) }
     await clientFile.save(io.disklet, CLIENT_FILE_NAME, clientInfo)
   }
 
   // Load the login stashes from disk:
-  const stashes = await loadStashes(io.disklet, log)
   redux.dispatch({
     type: 'INIT',
     payload: {
       apiKey,
       appId,
       authServer,
+      infoCache,
       infoServers,
       syncServers,
       clientId: clientInfo.clientId,
@@ -101,13 +117,14 @@ export async function makeContext(
   // Subscribe to new plugins:
   const closePlugins = watchPlugins(
     ios,
+    infoCache,
     logBackend,
     pluginsInit,
     redux.dispatch
   )
 
   // Create sync client:
-  const syncClient = await makeSyncClient({
+  const syncClient = makeSyncClient({
     log,
     fetch: io.fetch,
     edgeServers: { infoServers, syncServers }

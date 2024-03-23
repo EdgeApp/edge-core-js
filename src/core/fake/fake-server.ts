@@ -279,7 +279,7 @@ function createLogin(request: ApiRequest, login?: DbLogin): HttpResponse {
     keyBoxes: []
   }))(body.data)
   for (const syncKey of keys.newSyncKeys) {
-    db.repos[syncKey] = {}
+    db.repos.set(syncKey, {})
   }
 
   // Start building the new database row:
@@ -326,7 +326,7 @@ const addKeysRoute = withLogin2(request => {
 
   // Set up repos:
   for (const syncKey of clean.newSyncKeys) {
-    db.repos[syncKey] = {}
+    db.repos.set(syncKey, {})
   }
   login.keyBoxes = softCat(login.keyBoxes, clean.keyBoxes)
 
@@ -596,7 +596,7 @@ const withLobby =
   request => {
     const { db, path } = request
     const lobbyId = path.split('/')[4]
-    const lobby = db.lobbies[lobbyId]
+    const lobby = db.lobbies.get(lobbyId)
     return lobby != null
       ? server({ ...request, lobby, lobbyId })
       : fallback({ ...request, lobbyId })
@@ -619,7 +619,7 @@ const createLobbyRoute = withLobby(
     const { timeout = 600 } = clean
     const expires = new Date(Date.now() + 1000 * timeout).toISOString()
 
-    db.lobbies[lobbyId] = { request: clean, replies: [], expires }
+    db.lobbies.set(lobbyId, { request: clean, replies: [], expires })
     return statusResponse()
   }
 )
@@ -643,7 +643,7 @@ const getLobbyRoute = withLobby(request => {
 
 const deleteLobbyRoute = withLobby(request => {
   const { db, lobbyId } = request
-  delete db.lobbies[lobbyId]
+  db.lobbies.delete(lobbyId)
   return statusResponse()
 })
 
@@ -682,7 +682,7 @@ const withRepo =
     const syncKey = elements[4]
     // const hash = elements[5]
 
-    const repo = db.repos[syncKey]
+    const repo = db.repos.get(syncKey)
     if (repo == null) {
       // This is not the auth server, so we have a different format:
       return jsonResponse({ msg: 'Hash not found' }, { status: 404 })

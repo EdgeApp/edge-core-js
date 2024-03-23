@@ -11,6 +11,7 @@ import {
   EdgePluginMap
 } from '../../types/types'
 import { RootAction } from '../actions'
+import { InfoCacheFile } from '../context/info-cache-file'
 import { LogBackend, makeLog } from '../log/log'
 
 export interface PluginIos {
@@ -35,7 +36,7 @@ export function addEdgeCorePlugins(plugins: EdgeCorePlugins): void {
   }
 
   // Save the new plugins:
-  for (const pluginId in plugins) {
+  for (const pluginId of Object.keys(plugins)) {
     allPlugins[pluginId] = plugins[pluginId]
   }
 
@@ -56,6 +57,7 @@ export function lockEdgeCorePlugins(): void {
  */
 export function watchPlugins(
   ios: PluginIos,
+  infoCache: InfoCacheFile,
   logBackend: LogBackend,
   pluginsInit: EdgeCorePluginsInit,
   dispatch: Dispatch<RootAction>
@@ -66,7 +68,7 @@ export function watchPlugins(
   function pluginsAdded(plugins: EdgeCorePlugins): void {
     const out: EdgePluginMap<EdgeCorePlugin> = {}
 
-    for (const pluginId in plugins) {
+    for (const pluginId of Object.keys(plugins)) {
       const plugin = plugins[pluginId]
       const log = makeLog(logBackend, pluginId)
       const initOptions = pluginsInit[pluginId]
@@ -76,6 +78,7 @@ export function watchPlugins(
       try {
         if (typeof plugin === 'function') {
           const opts: EdgeCorePluginOptions = {
+            infoPayload: infoCache.corePlugins?.[pluginId] ?? {},
             initOptions: typeof initOptions === 'object' ? initOptions : {},
             io: legacyIo,
             log,

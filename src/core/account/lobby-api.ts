@@ -37,9 +37,7 @@ export async function fetchAppIdInfo(
   appId: string
 ): Promise<AppIdInfo> {
   try {
-    const infoServerUri = shuffle(
-      ai.props.state.contextConfig.edgeServers.infoServers
-    )[0]
+    const [infoServerUri] = shuffle(ai.props.state.infoServers)
     const url = `${infoServerUri}/v1/appIdInfo/${appId}`
     const response = await ai.props.io.fetch(url)
     if (response.status === 404) {
