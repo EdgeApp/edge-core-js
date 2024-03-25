@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.4.0 (2024-03-25)
+
 - added: New `'failed'` value to confirmations field on `EdgeTransactions`
 
 ## 2.3.0 (2024-03-23)
