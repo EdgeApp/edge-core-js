@@ -546,6 +546,9 @@ export type EdgeConfirmationState =
   | 'confirmed'
   // Dropped from the network without confirmations:
   | 'dropped'
+  // Confirmed, but failed on-chain execution (exceeded gas limit,
+  // smart-contract failure, etc):
+  | 'failed'
   // We don't know the chain height yet:
   | 'syncing'
   // No confirmations yet:

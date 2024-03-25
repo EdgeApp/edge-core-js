@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: New `'failed'` value to confirmations field on `EdgeTransactions`
+
 ## 2.3.0 (2024-03-23)
 
 - added: `EdgeCorePluginOptions.infoPayload`, containing arbitrary JSON provided by the info server.

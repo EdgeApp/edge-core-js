@@ -5,6 +5,7 @@ import { emit } from 'yaob'
 
 import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
+  EdgeConfirmationState,
   EdgeCurrencyEngineCallbacks,
   EdgeStakingStatus,
   EdgeTokenId,
@@ -215,15 +216,12 @@ export function makeCurrencyWalletCallbacks(
           const { txs } = input.props.walletState
           for (const txid of Object.keys(txs)) {
             const reduxTx = txs[txid]
-            if (
-              reduxTx.confirmations !== 'confirmed' &&
-              reduxTx.confirmations !== 'dropped'
-            ) {
+            if (shouldCoreDetermineConfirmations(reduxTx.confirmations)) {
               const { requiredConfirmations } =
                 input.props.walletState.currencyInfo
               const { height } = input.props.walletState
 
-              reduxTx.confirmations = validateConfirmations(
+              reduxTx.confirmations = determineConfirmations(
                 reduxTx,
                 height,
                 requiredConfirmations
@@ -318,14 +316,11 @@ export function makeCurrencyWalletCallbacks(
         const { txid } = tx
 
         // DEPRECATE: After all currency plugins implement new Confirmations API
-        if (
-          tx.confirmations !== 'confirmed' &&
-          tx.confirmations !== 'dropped'
-        ) {
+        if (shouldCoreDetermineConfirmations(tx.confirmations)) {
           const { requiredConfirmations } = input.props.walletState.currencyInfo
           const { height } = input.props.walletState
 
-          tx.confirmations = validateConfirmations(
+          tx.confirmations = determineConfirmations(
             tx,
             height,
             requiredConfirmations
@@ -413,7 +408,23 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
   checkChangesLoop()
 }
 
-export const validateConfirmations = (
+/**
+ * Returns true if the core needs to calculate the transaction's confirmation state,
+ * because it still depends on the current block height.
+ *
+ * @deprecated Remove once all currency plugins support the new confirmations API.
+ */
+const shouldCoreDetermineConfirmations = (
+  confirmations: EdgeConfirmationState | undefined
+): boolean => {
+  return (
+    confirmations !== 'confirmed' &&
+    confirmations !== 'dropped' &&
+    confirmations !== 'failed'
+  )
+}
+
+export const determineConfirmations = (
   tx: { blockHeight: number }, // Either EdgeTransaction or MergedTransaction
   blockHeight: number,
   requiredConfirmations: number = 1 // Default confirmation rule is 1 block
