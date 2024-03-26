@@ -419,7 +419,7 @@ export interface EdgeTokenInfo {
 
 // currency info -------------------------------------------------------
 
-type EdgeObjectTemplate = Array<
+export type EdgeObjectTemplate = Array<
   | {
       type: 'nativeAmount'
       key: string
