@@ -9,6 +9,7 @@ import { Dispatch } from './actions'
 import { CLIENT_FILE_NAME, clientFile } from './context/client-file'
 import { INFO_CACHE_FILE_NAME, infoCacheFile } from './context/info-cache-file'
 import { filterLogs, LogBackend, makeLog } from './log/log'
+import { loadAirbitzStashes } from './login/airbitz-stashes'
 import { loadStashes } from './login/login-stash'
 import { PluginIos, watchPlugins } from './plugins/plugins-actions'
 import { RootOutput, rootPixie, RootProps } from './root-pixie'
@@ -33,15 +34,16 @@ export async function makeContext(
 ): Promise<EdgeContext> {
   const { io } = ios
   const {
+    airbitzSupport = false,
     apiKey,
     appId = '',
     authServer = 'https://login.edge.app/api',
-    infoServer,
-    syncServer,
     deviceDescription = null,
     hideKeys = false,
+    infoServer,
     plugins: pluginsInit = {},
-    skipBlockHeight = false
+    skipBlockHeight = false,
+    syncServer
   } = opts
   const infoServers =
     typeof infoServer === 'string'
@@ -82,11 +84,27 @@ export async function makeContext(
   })
   const log = makeLog(logBackend, 'edge-core')
 
+  // Load the login stashes from disk:
   let [clientInfo, infoCache = {}, stashes] = await Promise.all([
     clientFile.load(io.disklet, CLIENT_FILE_NAME),
     infoCacheFile.load(io.disklet, INFO_CACHE_FILE_NAME),
     loadStashes(io.disklet, log)
   ])
+
+  // Load legacy stashes from disk
+  if (airbitzSupport) {
+    // Edge will write modern files to disk at login time,
+    // but it won't delete the legacy Airbitz data.
+    // Once this happens, we need to ignore the legacy files
+    // and just use the new files:
+    const avoidUsernames = new Set<string>()
+    for (const { username } of stashes) {
+      if (username != null) avoidUsernames.add(username)
+    }
+
+    const airbitzStashes = await loadAirbitzStashes(io, avoidUsernames)
+    stashes.push(...airbitzStashes)
+  }
 
   // Save the clientId if we don't have one:
   if (clientInfo == null) {
@@ -94,7 +112,7 @@ export async function makeContext(
     await clientFile.save(io.disklet, CLIENT_FILE_NAME, clientInfo)
   }
 
-  // Load the login stashes from disk:
+  // Write everything to redux:
   redux.dispatch({
     type: 'INIT',
     payload: {

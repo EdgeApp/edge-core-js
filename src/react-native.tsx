@@ -36,6 +36,7 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
     onLog = defaultOnLog,
 
     // Inner context options:
+    airbitzSupport = false,
     apiKey = '',
     appId = '',
     authServer,
@@ -63,6 +64,7 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
           bridgifyLogBackend({ crashReporter, onLog }),
           pluginUris,
           {
+            airbitzSupport,
             apiKey,
             appId,
             authServer,
