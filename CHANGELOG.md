@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Export the `EdgeObjectTemplate` type.
+
 ## 2.4.0 (2024-03-25)
 
 - added: New `'failed'` value to confirmations field on `EdgeTransactions`
