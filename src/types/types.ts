@@ -1874,6 +1874,9 @@ export interface EdgeFakeContextOptions {
 
   // Fake device options:
   cleanDevice?: boolean
+
+  /** Extra files to be saved on the fake device. */
+  extraFiles?: { [path: string]: string }
 }
 
 /**
