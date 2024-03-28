@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fixed: Export the `EdgeObjectTemplate` type.
+- fixed: TypeScript v5 compatibility.
 
 ## 2.4.0 (2024-03-25)
 

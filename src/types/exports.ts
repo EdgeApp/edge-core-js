@@ -108,7 +108,7 @@ export interface EdgeFakeWorldProps extends CommonProps {
 type ComponentType<Props> = (props: Props) => {
   type: any
   props: any
-  key: string | number | null
+  key: string | null
 }
 
 /**

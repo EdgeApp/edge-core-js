@@ -27,12 +27,14 @@
   "exports": {
     ".": {
       "import": "./lib/node/index.mjs",
-      "require": "./lib/node/index.js"
+      "require": "./lib/node/index.js",
+      "types": "./src/types/exports.ts"
     },
     "./package.json": "./package.json",
     "./types": {
       "import": "./types.mjs",
-      "require": "./types.js"
+      "require": "./types.js",
+      "types": "./src/types/types.ts"
     }
   },
   "main": "./lib/node/index.js",
