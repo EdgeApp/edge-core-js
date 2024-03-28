@@ -1683,6 +1683,9 @@ export interface EdgeContextOptions {
   path?: string // Only used on node.js
   plugins?: EdgeCorePluginsInit
 
+  /** True to load Airbitz user files from disk */
+  airbitzSupport?: boolean
+
   /**
    * True to skip updating the `EdgeCurrencyWallet.blockHeight` property.
    * This may improve performance by reducing bridge traffic,
@@ -1857,6 +1860,7 @@ export interface EdgeFakeWorldOptions {
 
 export interface EdgeFakeContextOptions {
   // EdgeContextOptions:
+  airbitzSupport?: boolean
   apiKey: string
   appId: string
   deviceDescription?: string
@@ -1870,6 +1874,9 @@ export interface EdgeFakeContextOptions {
 
   // Fake device options:
   cleanDevice?: boolean
+
+  /** Extra files to be saved on the fake device. */
+  extraFiles?: { [path: string]: string }
 }
 
 /**
