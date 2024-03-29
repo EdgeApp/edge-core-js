@@ -104,7 +104,11 @@ export function makeFakeWorld(
     },
 
     async makeEdgeContext(opts: EdgeFakeContextOptions): Promise<EdgeContext> {
-      const { allowNetworkAccess = false, cleanDevice = false } = opts
+      const {
+        allowNetworkAccess = false,
+        cleanDevice = false,
+        extraFiles = {}
+      } = opts
 
       const fakeFetch = makeFetchFunction(fakeServer)
       const fetch: EdgeFetchFunction = !allowNetworkAccess
@@ -135,6 +139,12 @@ export function makeFakeWorld(
               asEdgeRepoDump(user.repos[syncKey])
             )
           }
+        }
+      }
+
+      if (extraFiles != null) {
+        for (const path of Object.keys(extraFiles)) {
+          await fakeIo.disklet.setText(path, extraFiles[path])
         }
       }
 
