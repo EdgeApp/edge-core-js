@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.5.0 (2024-03-29)
+
 - added: `EdgeContextOptions.airbitzSupport`, for loading legacy Airbitz data from disk.
 - fixed: Export the `EdgeObjectTemplate` type.
 - fixed: TypeScript v5 compatibility.
