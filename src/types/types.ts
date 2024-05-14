@@ -421,12 +421,17 @@ export interface EdgeTokenInfo {
 
 export type EdgeObjectTemplate = Array<
   | {
+      // Displayed as a decimal number, but saved as an integer string.
+      // The multiplier gives the position of the display decimal point.
+      // This is only used for custom fees.
+      // It is *not* supported for custom tokens:
       type: 'nativeAmount'
       key: string
       displayName: string
       displayMultiplier: string
     }
   | {
+      // An integer, saved as a JavaScript `number` type:
       type: 'number'
       key: string
       displayName: string
