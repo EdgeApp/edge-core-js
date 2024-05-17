@@ -43,19 +43,20 @@ export interface TxidHashes {
 }
 
 export interface MergedTransaction {
+  blockHeight: number
   chainAction?: EdgeTxAction
   chainAssetAction: Map<EdgeTokenId, EdgeAssetAction>
-  blockHeight: number
   confirmations: EdgeTransaction['confirmations']
   date: number
+  feeRateUsed?: object
   isSend: boolean
   memos: EdgeMemo[]
+  nativeAmount: EdgeBalanceMap
+  networkFee: EdgeBalanceMap
   otherParams?: object
   ourReceiveAddresses: string[]
   signedTx: string
   txid: string
-  nativeAmount: EdgeBalanceMap
-  networkFee: EdgeBalanceMap
 }
 
 export interface CurrencyWalletState {
@@ -432,13 +433,17 @@ export function mergeTx(
   tx: EdgeTransaction,
   oldTx: MergedTransaction | undefined
 ): MergedTransaction {
-  const { isSend = lt(tx.nativeAmount, '0'), tokenId = null } = tx
+  const {
+    confirmations = 'unconfirmed',
+    isSend = lt(tx.nativeAmount, '0'),
+    tokenId = null
+  } = tx
 
   const out: MergedTransaction = {
-    chainAssetAction: new Map(oldTx?.chainAssetAction ?? []),
     blockHeight: tx.blockHeight,
     chainAction: tx.chainAction,
-    confirmations: tx.confirmations ?? 'unconfirmed',
+    chainAssetAction: new Map(oldTx?.chainAssetAction ?? []),
+    confirmations,
     date: tx.date,
     isSend,
     memos: tx.memos,
@@ -451,6 +456,9 @@ export function mergeTx(
   }
   out.nativeAmount.set(tokenId, tx.nativeAmount)
   out.networkFee.set(tokenId, tx.networkFee ?? '0')
+  if (tx.feeRateUsed != null) {
+    out.feeRateUsed = tx.feeRateUsed
+  }
   if (tx.parentNetworkFee != null) {
     out.networkFee.set(null, String(tx.parentNetworkFee))
   }
