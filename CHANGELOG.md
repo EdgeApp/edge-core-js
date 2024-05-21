@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 2.6.0 (2024-05-21)
+
+- added: Better documentation comments for the `EdgeObjectTemplate` types.
+- changed: Expose the `EdgeTransaction.feeRateUsed` provided by the engine, and only use the on-disk copy as a fallback.
+
 ## 2.5.0 (2024-03-29)
 
 - added: `EdgeContextOptions.airbitzSupport`, for loading legacy Airbitz data from disk.
