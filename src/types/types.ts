@@ -598,11 +598,13 @@ export interface EdgeTransaction {
   /** App-provided action data for all assets in a transaction */
   savedAction?: EdgeTxAction
 
+  /** This has the same format as the `customNetworkFee` */
+  feeRateUsed?: JsonObject
+
   // Spend-specific metadata:
   deviceDescription?: string
   networkFeeOption?: 'high' | 'standard' | 'low' | 'custom'
   requestedCustomFee?: JsonObject
-  feeRateUsed?: JsonObject
   spendTargets?: Array<{
     readonly currencyCode: string // Saved for future reference
     readonly nativeAmount: string

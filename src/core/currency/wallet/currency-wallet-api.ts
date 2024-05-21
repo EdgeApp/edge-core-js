@@ -677,6 +677,7 @@ export function combineTxWithFile(
     blockHeight: tx.blockHeight,
     confirmations: tx.confirmations,
     currencyCode,
+    feeRateUsed: tx.feeRateUsed,
     date: tx.date,
     isSend: tx.isSend,
     memos: tx.memos,
@@ -713,7 +714,9 @@ export function combineTxWithFile(
         out.requestedCustomFee = file.feeRateRequested
       }
     }
-    out.feeRateUsed = file.feeRateUsed
+    if (out.feeRateUsed == null) {
+      out.feeRateUsed = file.feeRateUsed
+    }
 
     if (file.payees != null) {
       out.spendTargets = file.payees.map(payee => ({
