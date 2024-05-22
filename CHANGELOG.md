@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Add missing Swift import statement.
+
 ## 2.6.0 (2024-05-21)
 
 - added: Better documentation comments for the `EdgeObjectTemplate` types.
