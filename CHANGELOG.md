@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.6.1 (2024-05-23)
+
 - fixed: Add missing Swift import statement.
 
 ## 2.6.0 (2024-05-21)
