@@ -1,3 +1,5 @@
+import WebKit
+
 class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
   let queue = DispatchQueue(label: "app.edge.reactnative.core")
   let disklet = Disklet()
