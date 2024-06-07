@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: New `enableRbf` field on `EdgeSpendInfo`
+- changed: Deprecated `rbfTxid` field on `EdgeSpendInfo`
 
 ## 2.6.1 (2024-05-23)
 

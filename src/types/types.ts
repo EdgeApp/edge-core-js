@@ -670,6 +670,7 @@ export interface EdgeSpendInfo {
   /** Enables RBF on chains where RBF is optional */
   enableRbf?: boolean
   pendingTxs?: EdgeTransaction[]
+  /** @deprecated Use EdgeCurrencyWallet.accelerate instead */
   rbfTxid?: string
   skipChecks?: boolean
 
