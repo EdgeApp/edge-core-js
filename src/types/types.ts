@@ -667,7 +667,10 @@ export interface EdgeSpendInfo {
   noUnconfirmed?: boolean
   networkFeeOption?: 'high' | 'standard' | 'low' | 'custom'
   customNetworkFee?: JsonObject // Some kind of currency-specific JSON
+  /** Enables RBF on chains where RBF is optional */
+  enableRbf?: boolean
   pendingTxs?: EdgeTransaction[]
+  /** @deprecated Use EdgeCurrencyWallet.accelerate instead */
   rbfTxid?: string
   skipChecks?: boolean
 

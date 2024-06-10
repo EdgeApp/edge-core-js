@@ -459,6 +459,7 @@ export function makeCurrencyWalletApi(
       const {
         assetAction,
         customNetworkFee,
+        enableRbf,
         memos,
         metadata,
         networkFeeOption = 'standard',
@@ -518,6 +519,7 @@ export function makeCurrencyWalletApi(
         {
           ...upgradedCurrency,
           customNetworkFee,
+          enableRbf,
           memos,
           metadata,
           networkFeeOption,
