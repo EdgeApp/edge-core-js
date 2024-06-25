@@ -893,6 +893,7 @@ export interface EdgeCurrencyEngineCallbacks {
 
 export interface EdgeCurrencyEngineOptions {
   callbacks: EdgeCurrencyEngineCallbacks
+  lightMode?: boolean // Flag indicating that the engine only needs to sync the balance and be able to spend
 
   // Wallet-scoped IO objects:
   log: EdgeLog

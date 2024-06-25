@@ -102,6 +102,7 @@ export const makeMemoryWalletInner = async (
     },
     customTokens: { ...config.customTokens },
     enabledTokenIds: [...Object.keys(config.allTokens)],
+    lightMode: true,
     log,
     userSettings: { ...(config.userSettings ?? {}) },
     walletLocalDisklet: makeMemoryDisklet(),
