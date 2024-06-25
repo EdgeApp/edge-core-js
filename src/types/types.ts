@@ -894,6 +894,9 @@ export interface EdgeCurrencyEngineCallbacks {
 export interface EdgeCurrencyEngineOptions {
   callbacks: EdgeCurrencyEngineCallbacks
 
+  /** True if we only need a balance and the ability to spend it. */
+  lightMode?: boolean
+
   // Wallet-scoped IO objects:
   log: EdgeLog
   walletLocalDisklet: Disklet
