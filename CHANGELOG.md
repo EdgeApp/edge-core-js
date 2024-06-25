@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: Add `makeMemoryWallet` method to ephemeral wallet objects that can query balances and spend funds
 - fixed: Correctly handle `null` fetch bodies on Android.
 
 ## 2.8.1 (2024-07-11)
