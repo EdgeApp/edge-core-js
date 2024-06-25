@@ -116,15 +116,6 @@ export const makeMemoryWalletInner = async (
 
   const privateKeys = { ...keys }
 
-  const syncNetwork = async (): Promise<void> => {
-    try {
-      syncNetworkTask.start({ wait: false })
-      await syncNetworkTask
-    } catch (error) {
-      syncNetwork().finally(() => {})
-    }
-  }
-
   let syncNetworkTask: PeriodicTask
   // Setup syncNetwork routine if defined by the currency engine:
   if (engine.syncNetwork != null) {
@@ -145,7 +136,6 @@ export const makeMemoryWalletInner = async (
       }
     })
     syncNetworkTask.start({ wait: false })
-    await syncNetworkTask
   }
 
   const out = bridgifyObject<EdgeMemoryWallet>({
@@ -166,9 +156,7 @@ export const makeMemoryWalletInner = async (
     },
     async startEngine() {
       await engine.startEngine()
-      if (engine.syncNetwork != null) {
-        syncNetwork().catch(() => {})
-      }
+      syncNetworkTask?.start({ wait: false })
     },
     async getMaxSpendable(spendInfo: EdgeSpendInfo) {
       return await getMaxSpendableInner(
@@ -198,6 +186,7 @@ export const makeMemoryWalletInner = async (
 
     async close() {
       log.warn('killing memory wallet')
+      syncNetworkTask?.stop()
       close(out)
       await engine.killEngine()
     }
