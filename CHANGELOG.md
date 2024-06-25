@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Add `makeMemoryWallet` method to ephemeral wallet objects that can query balances and spend funds
+
 ## 2.7.0 (2024-06-10)
 
 - added: New `enableRbf` field on `EdgeSpendInfo`
