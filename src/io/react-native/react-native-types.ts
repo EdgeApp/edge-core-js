@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { HttpResponse } from 'serverlet'
 
 import { LogBackend } from '../../core/log/log'
 import {
@@ -7,18 +6,11 @@ import {
   EdgeContextOptions,
   EdgeFakeUser,
   EdgeFakeWorld,
-  EdgeFetchOptions,
   EdgeNativeIo
 } from '../../types/types'
 
-export interface ClientIo {
-  // Networking:
-  fetchCors: (url: string, opts: EdgeFetchOptions) => Promise<HttpResponse>
-}
-
 export interface WorkerApi {
   makeEdgeContext: (
-    clientIo: ClientIo,
     nativeIo: EdgeNativeIo,
     logBackend: LogBackend,
     pluginUris: string[],
@@ -26,7 +18,6 @@ export interface WorkerApi {
   ) => Promise<EdgeContext>
 
   makeFakeEdgeWorld: (
-    clientIo: ClientIo,
     nativeIo: EdgeNativeIo,
     logBackend: LogBackend,
     pluginUris: string[],

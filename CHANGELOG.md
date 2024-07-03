@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Replace the CORS proxy servers with a fully native fallback on React Native.
+
 ## 2.7.0 (2024-06-10)
 
 - added: New `enableRbf` field on `EdgeSpendInfo`

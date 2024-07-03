@@ -57,9 +57,8 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
       allowDebugging={allowDebugging}
       debug={debug}
       onError={onError}
-      onLoad={async (clientIo, root) => {
+      onLoad={async root => {
         const context = await root.makeEdgeContext(
-          clientIo,
           bridgifyNativeIo(nativeIo),
           bridgifyLogBackend({ crashReporter, onLog }),
           pluginUris,
@@ -104,9 +103,8 @@ export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): JSX.Element {
       allowDebugging={allowDebugging}
       debug={debug}
       onError={onError}
-      onLoad={async (clientIo, root) => {
+      onLoad={async root => {
         const fakeWorld = await root.makeFakeEdgeWorld(
-          clientIo,
           bridgifyNativeIo(nativeIo),
           bridgifyLogBackend({ crashReporter, onLog }),
           pluginUris,
