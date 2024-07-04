@@ -40,6 +40,7 @@ const hostnameCorsProxyBlacklist = new Map<string, number>()
 const [nativeBridge, reactBridge] =
   window.edgeCore != null
     ? [
+        // Android:
         makeNativeBridge((id, name, args) => {
           window.edgeCore.call(id, name, JSON.stringify(args))
         }),
@@ -52,6 +53,7 @@ const [nativeBridge, reactBridge] =
         })
       ]
     : [
+        // iOS:
         makeNativeBridge((id, name, args) => {
           window.webkit.messageHandlers.edgeCore.postMessage([id, name, args])
         }),
