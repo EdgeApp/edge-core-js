@@ -17,7 +17,7 @@ class EdgeNative {
       do {
         try self.handleCall(name, args: args, promise: promise)
       } catch {
-        promise.reject("\(error)")
+        promise.reject(String(describing: error))
       }
     }
   }
@@ -61,6 +61,22 @@ class EdgeNative {
       return promise.resolve(nil)
     }
 
+    if name == "fetch",
+      let uri = args[0] as? String,
+      let method = args[1] as? String,
+      let headers = args[2] as? NSDictionary
+    {
+      let body = args[3] as? String
+      let bodyIsBase64 = args[4] as? Bool
+      return handleFetch(
+        uri: uri,
+        method: method,
+        headers: headers,
+        body: body ?? "",
+        bodyIsBase64: bodyIsBase64 ?? false,
+        promise: promise)
+    }
+
     if name == "randomBytes", let size = args[0] as? Int {
       if let entropy = NSMutableData(length: size),
         SecRandomCopyBytes(kSecRandomDefault, size, entropy.mutableBytes) == errSecSuccess
@@ -93,5 +109,75 @@ class EdgeNative {
     }
 
     return promise.reject("No method \(name)")
+  }
+
+  func handleFetch(
+    uri: String,
+    method: String,
+    headers: NSDictionary,
+    body: String,
+    bodyIsBase64: Bool,
+    promise: PendingCall
+  ) {
+    // Set up the HTTP connection:
+    guard let url = URL(string: uri) else {
+      return promise.reject("Invalid URL")
+    }
+    var request = URLRequest(url: url)
+    request.httpMethod = method
+
+    // Add the headers:
+    for (key, value) in headers {
+      if let keyString = key as? String,
+        let valueString = value as? String
+      {
+        request.setValue(valueString, forHTTPHeaderField: keyString)
+      }
+    }
+
+    // Add the body:
+    if body.count > 0 {
+      request.httpBody = bodyIsBase64 ? Data.init(base64Encoded: body) : body.data(using: .utf8)
+    }
+
+    // Set up the response callback:
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+      if let error = error {
+        return promise.reject("Native fetch: \(error)")
+      }
+
+      guard let httpResponse = response as? HTTPURLResponse else {
+        return promise.reject("Native fetch: Missing HTTPURLResponse")
+      }
+      let out = NSMutableDictionary()
+      out["status"] = httpResponse.statusCode
+
+      // Read the headers:
+      let headers = NSMutableDictionary()
+      for (key, value) in httpResponse.allHeaderFields {
+        if let keyString = key as? String,
+          let valueString = value as? String
+        {
+          headers[keyString] = value
+        }
+      }
+      out["headers"] = headers
+
+      // Read the body:
+      if let bodyData = data {
+        if let body = String(bytes: bodyData, encoding: .utf8) {
+          out["body"] = body
+          out["bodyIsBase64"] = false
+        } else {
+          out["body"] = bodyData.base64EncodedString()
+          out["bodyIsBase64"] = true
+        }
+      }
+
+      promise.resolve(out)
+    }
+
+    // Make the request:
+    task.resume()
   }
 }

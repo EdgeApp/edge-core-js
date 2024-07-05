@@ -6,6 +6,19 @@ interface NativeMethods {
   diskletSetData: (path: string, data64: string) => Promise<void>
   diskletSetText: (path: string, text: string) => Promise<void>
 
+  fetch: (
+    url: string,
+    method: string,
+    headers: { [name: string]: string },
+    body?: string,
+    bodyIsBase64?: boolean
+  ) => Promise<{
+    status: number
+    headers: { [name: string]: string }
+    body: string
+    bodyIsBase64: boolean
+  }>
+
   randomBytes: (size: number) => Promise<string> // base64
 
   scrypt: (
