@@ -1,5 +1,41 @@
+interface NativeMethods {
+  diskletDelete: (path: string) => Promise<void>
+  diskletGetData: (path: string) => Promise<string> // base64
+  diskletGetText: (path: string) => Promise<string>
+  diskletList: (path: string) => Promise<{ [path: string]: 'file' | 'folder' }>
+  diskletSetData: (path: string, data64: string) => Promise<void>
+  diskletSetText: (path: string, text: string) => Promise<void>
+
+  fetch: (
+    url: string,
+    method: string,
+    headers: { [name: string]: string },
+    body?: string,
+    bodyIsBase64?: boolean
+  ) => Promise<{
+    status: number
+    headers: { [name: string]: string }
+    body: string
+    bodyIsBase64: boolean
+  }>
+
+  randomBytes: (size: number) => Promise<string> // base64
+
+  scrypt: (
+    data64: string,
+    salt64: string,
+    n: number,
+    r: number,
+    p: number,
+    dklen: number
+  ) => Promise<string> // base64
+}
+
 export interface NativeBridge {
-  call: (name: string, ...args: unknown[]) => Promise<any>
+  call: <Name extends keyof NativeMethods>(
+    name: Name,
+    ...args: Parameters<NativeMethods[Name]>
+  ) => ReturnType<NativeMethods[Name]>
 
   // The native code uses this method to pass return values.
   resolve: (id: number, value: unknown) => void
@@ -14,9 +50,11 @@ export function makeNativeBridge(
   const list = makePendingList()
   return {
     call(name, ...args) {
-      return new Promise((resolve, reject) => {
+      const promise = new Promise((resolve, reject) => {
         doCall(list.add({ resolve, reject }), name, args)
       })
+      // TypeScript can't check our Java / Swift return values:
+      return promise as any
     },
     resolve(id, value) {
       list.grab(id).resolve(value)

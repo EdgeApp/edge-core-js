@@ -26,7 +26,9 @@ Pod::Spec.new do |s|
     "ios/edge-core-js-Bridging-Header.h",
     "ios/EdgeCoreWebView.swift",
     "ios/EdgeCoreWebViewManager.m",
-    "ios/EdgeCoreWebViewManager.swift"
+    "ios/EdgeCoreWebViewManager.swift",
+    "ios/EdgeNative.swift",
+    "ios/PendingCall.swift"
 
   s.resource_bundles = {
     "edge-core-js" => "android/src/main/assets/edge-core-js/edge-core.js"

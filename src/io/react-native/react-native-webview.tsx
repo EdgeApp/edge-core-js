@@ -2,18 +2,15 @@ import '../../client-side'
 
 import * as React from 'react'
 import { requireNativeComponent } from 'react-native'
-import { HttpHeaders, HttpResponse } from 'serverlet'
-import { bridgifyObject } from 'yaob'
 
-import { EdgeFetchOptions, NetworkError } from '../../types/types'
-import { ClientIo, EdgeCoreWebView, WorkerApi } from './react-native-types'
+import { EdgeCoreWebView, WorkerApi } from './react-native-types'
 import { makeYaobCallbacks, YaobCallbacks } from './yaob-callbacks'
 
 interface Props {
   allowDebugging?: boolean
   debug?: boolean
   onError: (error: unknown) => void
-  onLoad: (clientIo: ClientIo, root: WorkerApi) => Promise<void>
+  onLoad: (root: WorkerApi) => Promise<void>
 }
 
 /**
@@ -26,15 +23,9 @@ export class EdgeCoreBridge extends React.Component<Props> {
     super(props)
     const { onError, onLoad } = props
 
-    // Set up the native IO objects:
-    const clientIo: ClientIo = bridgifyObject({
-      // Networking:
-      fetchCors
-    })
-
     // Set up the YAOB bridge:
     this.callbacks = makeYaobCallbacks((root: WorkerApi) => {
-      onLoad(clientIo, root).catch(onError)
+      onLoad(root).catch(onError)
     })
   }
 
@@ -59,57 +50,3 @@ export class EdgeCoreBridge extends React.Component<Props> {
 }
 
 const NativeWebView: EdgeCoreWebView = requireNativeComponent('EdgeCoreWebView')
-
-/**
- * Turns XMLHttpRequest headers into a more JSON-like structure.
- */
-function extractHeaders(headers: string): HttpHeaders {
-  const pairs = headers.split('\r\n')
-
-  const out: HttpHeaders = {}
-  for (const pair of pairs) {
-    const index = pair.indexOf(': ')
-    if (index < 0) continue
-    out[pair.slice(0, index).toLowerCase()] = pair.slice(index + 2)
-  }
-  return out
-}
-
-/**
- * Fetches data from the React Native side, where CORS doesn't apply.
- */
-function fetchCors(
-  uri: string,
-  opts: EdgeFetchOptions = {}
-): Promise<HttpResponse> {
-  const { body, headers = {}, method = 'GET' } = opts
-
-  return new Promise((resolve, reject) => {
-    const xhr = new window.XMLHttpRequest()
-
-    // Event handlers:
-    function handleError(): void {
-      reject(new NetworkError(`Could not reach ${uri}`))
-    }
-
-    function handleLoad(): void {
-      const headers = xhr.getAllResponseHeaders()
-      resolve({
-        body: xhr.response,
-        headers: extractHeaders(headers == null ? '' : headers),
-        status: xhr.status
-      })
-    }
-
-    // Set up the request:
-    xhr.open(method, uri, true)
-    xhr.responseType = 'arraybuffer'
-    xhr.onerror = handleError
-    xhr.ontimeout = handleError
-    xhr.onload = handleLoad
-    for (const name of Object.keys(headers)) {
-      xhr.setRequestHeader(name, headers[name])
-    }
-    xhr.send(body)
-  })
-}

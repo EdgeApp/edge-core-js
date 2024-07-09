@@ -1,6 +1,6 @@
-import { EdgeFetchOptions } from '../types/types'
-import { asyncWaterfall } from '../util/asyncWaterfall'
-import { shuffle } from '../util/shuffle'
+import { EdgeFetchOptions } from '../../types/types'
+import { asyncWaterfall } from '../../util/asyncWaterfall'
+import { shuffle } from '../../util/shuffle'
 
 // Hard-coded CORS proxy server
 const PROXY_SERVER_URLS = [

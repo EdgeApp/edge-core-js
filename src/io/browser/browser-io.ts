@@ -2,7 +2,7 @@ import { makeLocalStorageDisklet } from 'disklet'
 
 import { EdgeFetchOptions, EdgeFetchResponse, EdgeIo } from '../../types/types'
 import { scrypt } from '../../util/crypto/scrypt'
-import { fetchCorsProxy } from '../fetch-cors-proxy'
+import { fetchCorsProxy } from './fetch-cors-proxy'
 
 // Only try CORS proxy/bridge techniques up to 5 times
 const MAX_CORS_FAILURE_COUNT = 5

@@ -13,33 +13,32 @@ import {
   makeFakeWorld
 } from '../../core/core'
 import {
-  asMaybeNetworkError,
+  EdgeFetchFunction,
   EdgeFetchOptions,
   EdgeFetchResponse,
-  EdgeIo,
-  NetworkError
+  EdgeIo
 } from '../../types/types'
-import { fetchCorsProxy } from '../fetch-cors-proxy'
 import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
-import { ClientIo, WorkerApi, YAOB_THROTTLE_MS } from './react-native-types'
+import { WorkerApi, YAOB_THROTTLE_MS } from './react-native-types'
 
-// Only try CORS proxy/bridge techniques up to 5 times
-const MAX_CORS_FAILURE_COUNT = 5
+// Tracks the status of different domains for the CORS bouncer:
+const hostnameCorsState = new Map<
+  string,
+  {
+    // The window.fetch worked:
+    windowSuccess: boolean
 
-// A map of domains that failed CORS and succeeded via the CORS proxy server
-const hostnameProxyWhitelist = new Set<string>()
-
-// A map of domains that failed CORS and failed via the CORS proxy server and succeeded via native fetch
-const hostnameBridgeProxyWhitelist = new Set<string>()
-
-// A map of domains that failed all CORS techniques and should not re-attempt CORS techniques
-const hostnameCorsProxyBlacklist = new Map<string, number>()
+    // The nativeFetch worked:
+    nativeSuccess: boolean
+  }
+>()
 
 // Set up the bridges:
 const [nativeBridge, reactBridge] =
   window.edgeCore != null
     ? [
+        // Android:
         makeNativeBridge((id, name, args) => {
           window.edgeCore.call(id, name, JSON.stringify(args))
         }),
@@ -52,6 +51,7 @@ const [nativeBridge, reactBridge] =
         })
       ]
     : [
+        // iOS:
         makeNativeBridge((id, name, args) => {
           window.webkit.messageHandlers.edgeCore.postMessage([id, name, args])
         }),
@@ -96,18 +96,30 @@ function loadPlugins(pluginUris: string[]): void {
   }
 }
 
-async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
+async function makeIo(): Promise<EdgeIo> {
   const csprng = new HmacDRBG({
     hash: hashjs.sha256,
     entropy: base64.parse(await nativeBridge.call('randomBytes', 32))
   })
 
-  const bridgeFetch = async (
-    uri: string,
-    opts: EdgeFetchOptions
-  ): Promise<EdgeFetchResponse> => {
-    const response = await clientIo.fetchCors(uri, opts)
-    return makeFetchResponse(response)
+  const nativeFetch: EdgeFetchFunction = async (uri, opts = {}) => {
+    const { method = 'GET', headers = {}, body } = opts
+    const response = await nativeBridge.call(
+      'fetch',
+      uri,
+      method,
+      headers,
+      body instanceof ArrayBuffer
+        ? base64.stringify(new Uint8Array(body))
+        : body,
+      body instanceof ArrayBuffer
+    )
+
+    return makeFetchResponse({
+      status: response.status,
+      headers: response.headers,
+      body: response.bodyIsBase64 ? base64.parse(response.body) : response.body
+    })
   }
 
   const io: EdgeIo = {
@@ -168,65 +180,33 @@ async function makeIo(clientIo: ClientIo): Promise<EdgeIo> {
       opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
       const { hostname } = new URL(uri)
-      const corsFailureCount = hostnameCorsProxyBlacklist.get(hostname) ?? 0
-
-      let doFetch = true
-      let doFetchCors = true
-
-      if (corsFailureCount < MAX_CORS_FAILURE_COUNT) {
-        if (hostnameBridgeProxyWhitelist.has(hostname)) {
-          // Proactively use bridgeFetch for any hostnames added to whitelist:
-          doFetch = false
-          doFetchCors = false
-        } else if (hostnameProxyWhitelist.has(hostname)) {
-          // Proactively use fetchCorsProxy for any hostnames added to whitelist:
-          doFetch = false
-        }
+      const state = hostnameCorsState.get(hostname) ?? {
+        windowSuccess: false,
+        nativeSuccess: false
+      }
+      if (!hostnameCorsState.has(hostname)) {
+        hostnameCorsState.set(hostname, state)
       }
 
-      let errorToThrow
-      if (doFetch) {
+      // If the native fetch worked,
+      // then we can guess that the server has a CORS problem,
+      // so don't even bother with `window.fetch`:
+      if (!state.nativeSuccess) {
         try {
-          // Attempt regular fetch:
-          return await window.fetch(uri, opts)
-        } catch (error: unknown) {
-          // If we exhaust attempts to use CORS-safe fetch, then throw the error:
-          if (corsFailureCount >= MAX_CORS_FAILURE_COUNT) {
-            throw error
-          }
-          errorToThrow = error
-        }
-      }
-
-      if (doFetchCors) {
-        try {
-          const response = await fetchCorsProxy(uri, opts)
-          if (response.status === 418) {
-            throw new NetworkError()
-          }
-          hostnameProxyWhitelist.add(hostname)
+          const response = await window.fetch(uri, opts)
+          state.windowSuccess = true
           return response
         } catch (error: unknown) {
-          if (errorToThrow == null && asMaybeNetworkError(error) == null)
-            errorToThrow = error
+          // If `window.fetch` has ever worked,
+          // then we know the server has the right CORS headers,
+          // so don't even bother with the native fallback:
+          if (state.windowSuccess) throw error
         }
       }
 
-      // Fallback to bridge fetch if everything else fails
-      try {
-        const response = await bridgeFetch(uri, opts)
-        hostnameBridgeProxyWhitelist.add(hostname)
-        return response
-      } catch (error: unknown) {
-        if (errorToThrow == null) errorToThrow = error
-      }
-
-      // We failed all CORS techniques, so track attempts
-      hostnameCorsProxyBlacklist.set(hostname, corsFailureCount + 1)
-
-      // Throw the error from the first fetch instead of the one from
-      // proxy server.
-      throw errorToThrow
+      const response = await nativeFetch(uri, opts)
+      state.nativeSuccess = true
+      return response
     }
   }
 
@@ -258,21 +238,15 @@ export function normalizePath(path: string): string {
 
 // Send the root object:
 const workerApi: WorkerApi = bridgifyObject({
-  async makeEdgeContext(clientIo, nativeIo, logBackend, pluginUris, opts) {
+  async makeEdgeContext(nativeIo, logBackend, pluginUris, opts) {
     loadPlugins(pluginUris)
-    const io = await makeIo(clientIo)
+    const io = await makeIo()
     return await makeContext({ io, nativeIo }, logBackend, opts)
   },
 
-  async makeFakeEdgeWorld(
-    clientIo,
-    nativeIo,
-    logBackend,
-    pluginUris,
-    users = []
-  ) {
+  async makeFakeEdgeWorld(nativeIo, logBackend, pluginUris, users = []) {
     loadPlugins(pluginUris)
-    const io = await makeIo(clientIo)
+    const io = await makeIo()
     return makeFakeWorld({ io, nativeIo }, logBackend, users)
   }
 })

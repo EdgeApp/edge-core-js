@@ -1,9 +1,9 @@
 #include <jni.h>
-#include <malloc.h>
+#include <alloca.h>
 #include "scrypt/crypto_scrypt.h"
 
 JNIEXPORT jbyteArray JNICALL
-Java_app_edge_reactnative_core_EdgeCoreWebView_scrypt(
+Java_app_edge_reactnative_core_EdgeNative_scrypt(
     JNIEnv *env,
     jobject self,
     jbyteArray data,
