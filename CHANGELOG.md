@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Filter transactions with empty (zero) nativeAmount and networkFee
+
 ## 2.8.0 (2024-07-09)
 
 - changed: Replace the CORS proxy servers with a fully native fallback on React Native.
