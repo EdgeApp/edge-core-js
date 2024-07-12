@@ -1,4 +1,4 @@
-import { add, div, lte, mul, sub } from 'biggystring'
+import { add, div, eq, lte, mul, sub } from 'biggystring'
 import { Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
@@ -297,10 +297,11 @@ export function makeCurrencyWalletApi(
             if (txid == null) continue
             const tx = txs[txid]
 
-            // Filter transactions based on the currency code:
+            // Filter transactions with zero amounts (nativeAmount/networkFee)
             if (
               tx == null ||
-              !(tx.nativeAmount.has(tokenId) || tx.networkFee.has(tokenId))
+              (eq(tx.nativeAmount.get(tokenId) ?? '0', '0') &&
+                eq(tx.networkFee.get(tokenId) ?? '0', '0'))
             ) {
               continue
             }
