@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.8.1 (2024-07-11)
+
 - fixed: Filter transactions with empty (zero) nativeAmount and networkFee
 
 ## 2.8.0 (2024-07-09)
