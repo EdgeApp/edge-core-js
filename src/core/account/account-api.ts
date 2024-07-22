@@ -17,6 +17,7 @@ import {
   EdgeGetActivationAssetsOptions,
   EdgeGetActivationAssetsResults,
   EdgeLobby,
+  EdgeMemoryWallet,
   EdgePendingVoucher,
   EdgePluginMap,
   EdgeResult,
@@ -59,6 +60,7 @@ import { changeWalletStates } from './account-files'
 import { AccountState } from './account-reducer'
 import { makeDataStoreApi } from './data-store-api'
 import { makeLobbyApi } from './lobby-api'
+import { makeMemoryWalletInner } from './memory-wallet'
 import { CurrencyConfig, SwapConfig } from './plugin-api'
 
 /**
@@ -496,6 +498,18 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, opts)
       await applyKit(ai, loginTree, makeKeysKit(ai, login, [walletInfo]))
       return await finishWalletCreation(ai, accountId, walletInfo.id, opts)
+    },
+
+    async makeMemoryWallet(
+      walletType: string,
+      opts: EdgeCreateCurrencyWalletOptions = {}
+    ): Promise<EdgeMemoryWallet> {
+      const config = Object.values(currencyConfigs).find(
+        plugin => plugin.currencyInfo.walletType === walletType
+      )
+      if (config == null) throw new Error('Invalid walletType')
+
+      return await makeMemoryWalletInner(ai, config, walletType, opts)
     },
 
     async createCurrencyWallets(

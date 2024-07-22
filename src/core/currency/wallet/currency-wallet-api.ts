@@ -1,4 +1,4 @@
-import { add, div, eq, lte, mul, sub } from 'biggystring'
+import { div, eq, mul } from 'biggystring'
 import { Disklet } from 'disklet'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
@@ -55,6 +55,7 @@ import {
 } from './currency-wallet-files'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { MergedTransaction } from './currency-wallet-reducer'
+import { getMaxSpendableInner } from './max-spend'
 import { mergeMetadata } from './metadata'
 import { upgradeMemos } from './upgrade-memos'
 
@@ -388,62 +389,13 @@ export function makeCurrencyWalletApi(
       return await engine.broadcastTx(tx, { privateKeys })
     },
     async getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string> {
-      spendInfo = upgradeMemos(spendInfo, plugin.currencyInfo)
-      // Figure out which asset this is:
-      const upgradedCurrency = upgradeCurrencyCode({
-        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
-        currencyInfo: plugin.currencyInfo,
-        tokenId: spendInfo.tokenId
-      })
-
-      if (typeof engine.getMaxSpendable === 'function') {
-        // Only provide wallet info if currency requires it:
-        const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
-
-        return await engine.getMaxSpendable(
-          { ...spendInfo, ...upgradedCurrency },
-          { privateKeys }
-        )
-      }
-
-      const { networkFeeOption, customNetworkFee } = spendInfo
-      const balance = engine.getBalance(upgradedCurrency)
-
-      // Copy all the spend targets, setting the amounts to 0
-      // but keeping all other information so we can get accurate fees:
-      const spendTargets = spendInfo.spendTargets.map(spendTarget => {
-        return { ...spendTarget, nativeAmount: '0' }
-      })
-
-      // The range of possible values includes `min`, but not `max`.
-      function getMax(min: string, max: string): Promise<string> {
-        const diff = sub(max, min)
-        if (lte(diff, '1')) {
-          return Promise.resolve(min)
-        }
-        const mid = add(min, div(diff, '2'))
-
-        // Try the average:
-        spendTargets[0].nativeAmount = mid
-
-        // Only provide wallet info if currency requires it:
-        const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
-
-        return engine
-          .makeSpend(
-            {
-              ...upgradedCurrency,
-              spendTargets,
-              networkFeeOption,
-              customNetworkFee
-            },
-            { privateKeys }
-          )
-          .then(() => getMax(mid, max))
-          .catch(() => getMax(min, mid))
-      }
-
-      return await getMax('0', add(balance, '1'))
+      return await getMaxSpendableInner(
+        spendInfo,
+        plugin,
+        engine,
+        input.props.state.accounts[accountId].allTokens[pluginId],
+        walletInfo
+      )
     },
     async getPaymentProtocolInfo(
       paymentProtocolUrl: string

@@ -894,6 +894,9 @@ export interface EdgeCurrencyEngineCallbacks {
 export interface EdgeCurrencyEngineOptions {
   callbacks: EdgeCurrencyEngineCallbacks
 
+  /** True if we only need a balance and the ability to spend it. */
+  lightMode?: boolean
+
   // Wallet-scoped IO objects:
   log: EdgeLog
   walletLocalDisklet: Disklet
@@ -1237,6 +1240,21 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
+}
+
+export interface EdgeMemoryWallet {
+  readonly watch: Subscriber<EdgeMemoryWallet>
+  readonly balanceMap: EdgeBalanceMap
+  readonly detectedTokenIds: string[]
+  readonly syncRatio: number
+  readonly changeEnabledTokenIds: (tokenIds: string[]) => Promise<void>
+  readonly startEngine: () => Promise<void>
+  readonly getMaxSpendable: (spendInfo: EdgeSpendInfo) => Promise<string>
+  readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
+  readonly signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
+  readonly broadcastTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
+  readonly saveTx: (tx: EdgeTransaction) => Promise<void>
+  readonly close: () => Promise<void>
 }
 
 // ---------------------------------------------------------------------
@@ -1636,6 +1654,10 @@ export interface EdgeAccount {
     walletId: string
   ) => Promise<EdgeCurrencyWallet>
   readonly waitForAllWallets: () => Promise<void>
+  readonly makeMemoryWallet: (
+    walletType: string,
+    opts?: EdgeCreateCurrencyWalletOptions
+  ) => Promise<EdgeMemoryWallet>
 
   // Token & wallet activation:
   readonly getActivationAssets: (
