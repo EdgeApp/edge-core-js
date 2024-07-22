@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Correctly handle `null` fetch bodies on Android.
+
 ## 2.8.1 (2024-07-11)
 
 - fixed: Filter transactions with empty (zero) nativeAmount and networkFee

@@ -115,7 +115,7 @@ class EdgeNative {
     String uri = args.getString(0);
     String method = args.getString(1);
     JSONObject headers = args.getJSONObject(2);
-    String body = args.optString(3);
+    @Nullable Object body = args.opt(3);
     boolean bodyIsBase64 = args.optBoolean(4);
 
     HttpURLConnection connection = null;
@@ -141,11 +141,12 @@ class EdgeNative {
       }
 
       // Add the body:
-      if (body.length() > 0) {
+      if (body instanceof String) {
+        String bodyText = (String) body;
         byte[] bodyData =
             bodyIsBase64
-                ? Base64.decode(body, Base64.DEFAULT)
-                : body.getBytes(StandardCharsets.UTF_8);
+                ? Base64.decode(bodyText, Base64.DEFAULT)
+                : bodyText.getBytes(StandardCharsets.UTF_8);
         connection.setRequestProperty("Content-Length", Integer.toString(bodyData.length));
         connection.setDoOutput(true);
         OutputStream outStream = connection.getOutputStream();

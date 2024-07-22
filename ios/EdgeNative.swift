@@ -66,13 +66,13 @@ class EdgeNative {
       let method = args[1] as? String,
       let headers = args[2] as? NSDictionary
     {
-      let body = args[3] as? String
+      let body = args[3]
       let bodyIsBase64 = args[4] as? Bool
       return handleFetch(
         uri: uri,
         method: method,
         headers: headers,
-        body: body ?? "",
+        body: body,
         bodyIsBase64: bodyIsBase64 ?? false,
         promise: promise)
     }
@@ -115,7 +115,7 @@ class EdgeNative {
     uri: String,
     method: String,
     headers: NSDictionary,
-    body: String,
+    body: Any,
     bodyIsBase64: Bool,
     promise: PendingCall
   ) {
@@ -136,8 +136,11 @@ class EdgeNative {
     }
 
     // Add the body:
-    if body.count > 0 {
-      request.httpBody = bodyIsBase64 ? Data.init(base64Encoded: body) : body.data(using: .utf8)
+    if let bodyText = body as? String {
+      request.httpBody =
+        bodyIsBase64
+        ? Data.init(base64Encoded: bodyText)
+        : bodyText.data(using: .utf8)
     }
 
     // Set up the response callback:
@@ -152,7 +155,7 @@ class EdgeNative {
       let out = NSMutableDictionary()
       out["status"] = httpResponse.statusCode
 
-      // Read the headers:
+      // Read the response headers:
       let headers = NSMutableDictionary()
       for (key, value) in httpResponse.allHeaderFields {
         if let keyString = key as? String,
@@ -163,7 +166,7 @@ class EdgeNative {
       }
       out["headers"] = headers
 
-      // Read the body:
+      // Read the response body:
       if let bodyData = data {
         if let body = String(bytes: bodyData, encoding: .utf8) {
           out["body"] = body
