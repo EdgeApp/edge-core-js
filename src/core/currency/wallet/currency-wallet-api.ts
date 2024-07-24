@@ -299,10 +299,12 @@ export function makeCurrencyWalletApi(
             const tx = txs[txid]
 
             // Filter transactions with zero amounts (nativeAmount/networkFee)
+            const nativeAmount = tx?.nativeAmount.get(tokenId)
+            const networkFee = tx?.networkFee.get(tokenId)
             if (
               tx == null ||
-              (eq(tx.nativeAmount.get(tokenId) ?? '0', '0') &&
-                eq(tx.networkFee.get(tokenId) ?? '0', '0'))
+              nativeAmount == null ||
+              (eq(nativeAmount, '0') && eq(networkFee ?? '0', '0'))
             ) {
               continue
             }
