@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Work with React Native bridgeless mode on Android.
+
 ## 2.9.1 (2024-07-24)
 
 - fixed: Edge case for filtering transactions with empty txs (zero amount & fee)
