@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.9.1 (2024-07-24)
+
 - fixed: Edge case for filtering transactions with empty txs (zero amount & fee)
 
 ## 2.9.0 (2024-07-22)
