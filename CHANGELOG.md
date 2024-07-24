@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Edge case for filtering transactions with empty txs (zero amount & fee)
+
 ## 2.9.0 (2024-07-22)
 
 - added: Add `makeMemoryWallet` method to ephemeral wallet objects that can query balances and spend funds
