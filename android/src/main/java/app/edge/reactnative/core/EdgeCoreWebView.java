@@ -70,7 +70,8 @@ class EdgeCoreWebView extends WebView {
 
     @JavascriptInterface
     public void postMessage(String message) {
-      RCTEventEmitter emitter = mContext.getJSModule(RCTEventEmitter.class);
+      RCTEventEmitter emitter =
+          mContext.getReactApplicationContext().getJSModule(RCTEventEmitter.class);
       WritableMap event = Arguments.createMap();
       event.putString("message", message);
       emitter.receiveEvent(getId(), "onMessage", event);
@@ -78,7 +79,8 @@ class EdgeCoreWebView extends WebView {
 
     @JavascriptInterface
     public void scriptError(String source) {
-      RCTEventEmitter emitter = mContext.getJSModule(RCTEventEmitter.class);
+      RCTEventEmitter emitter =
+          mContext.getReactApplicationContext().getJSModule(RCTEventEmitter.class);
       WritableMap event = Arguments.createMap();
       event.putString("source", source);
       emitter.receiveEvent(getId(), "onScriptError", event);
