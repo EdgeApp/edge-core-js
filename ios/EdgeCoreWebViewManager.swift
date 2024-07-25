@@ -4,7 +4,8 @@
 
   @objc func runJs(_ reactTag: NSNumber, js: String) {
     bridge.uiManager.addUIBlock({ (uiManager, viewRegistry) in
-      if let webView = viewRegistry?[reactTag] as? EdgeCoreWebView {
+      let view = uiManager?.view(forReactTag: reactTag)
+      if let webView = view as? EdgeCoreWebView {
         webView.runJs(js: js)
       }
     })
