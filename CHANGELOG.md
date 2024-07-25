@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- fixed: Work with React Native bridgeless mode on Android.
+- fixed: Work with React Native bridgeless mode on iOS and Android.
 
 ## 2.9.1 (2024-07-24)
 
