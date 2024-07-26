@@ -11,6 +11,8 @@ import {
 } from './repo'
 import { StorageWalletStatus } from './storage-reducer'
 
+export const SYNC_INTERVAL = 30 * 1000
+
 export async function addStorageWallet(
   ai: ApiInput,
   walletInfo: EdgeWalletInfo

@@ -20,7 +20,11 @@ import { snooze } from '../../util/snooze'
 import { syncLogin } from '../login/login'
 import { waitForPlugins } from '../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../root-pixie'
-import { addStorageWallet, syncStorageWallet } from '../storage/storage-actions'
+import {
+  addStorageWallet,
+  SYNC_INTERVAL,
+  syncStorageWallet
+} from '../storage/storage-actions'
 import { makeAccountApi } from './account-api'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files'
 import { AccountState, initialCustomTokens } from './account-reducer'
@@ -143,8 +147,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       }
 
       // We don't report sync failures, since that could be annoying:
-      const dataTask = makePeriodicTask(doDataSync, 30 * 1000)
-      const loginTask = makePeriodicTask(doLoginSync, 30 * 1000, {
+      const dataTask = makePeriodicTask(doDataSync, SYNC_INTERVAL)
+      const loginTask = makePeriodicTask(doLoginSync, SYNC_INTERVAL, {
         onError(error) {
           // Only send OTP errors to the GUI:
           const otpError = asMaybeOtpError(error)
@@ -157,8 +161,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           if (input.props.accountOutput?.accountApi == null) return
 
           // Start once the EdgeAccount API exists:
-          dataTask.start({ wait: true })
-          loginTask.start({ wait: true })
+          dataTask.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
+          loginTask.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
         },
 
         destroy() {
