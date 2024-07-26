@@ -25,6 +25,7 @@ import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
 import {
   addStorageWallet,
+  SYNC_INTERVAL,
   syncStorageWallet
 } from '../../storage/storage-actions'
 import {
@@ -295,7 +296,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       }
 
       // We don't report sync failures, since that could be annoying:
-      const task = makePeriodicTask(doSync, 30 * 1000)
+      const task = makePeriodicTask(doSync, SYNC_INTERVAL)
 
       return {
         update() {
@@ -307,7 +308,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             state.storageWallets[walletId] != null &&
             state.storageWallets[walletId].status.lastSync > 0
           ) {
-            task.start({ wait: true })
+            task.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
           }
         },
 
