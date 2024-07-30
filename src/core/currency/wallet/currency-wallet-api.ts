@@ -1,5 +1,6 @@
 import { div, eq, mul } from 'biggystring'
 import { Disklet } from 'disklet'
+import { base64 } from 'rfc4648'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import {
@@ -530,6 +531,31 @@ export function makeCurrencyWalletApi(
         fakeCallbacks,
         metadata
       )
+    },
+
+    async signBytes(
+      bytes: Uint8Array,
+      opts: EdgeSignMessageOptions = {}
+    ): Promise<string> {
+      const privateKeys = walletInfo.keys
+
+      if (engine.signBytes != null) {
+        return await engine.signBytes(bytes, privateKeys, opts)
+      }
+
+      // Various plugins expect specific encodings for signing messages
+      // (base16, base64, etc).
+      // Do the conversion here temporarily if `signMessage` is implemented
+      // while we migrate to `signBytes`.
+      else if (pluginId === 'bitcoin' && engine.signMessage != null) {
+        return await engine.signMessage(
+          base64.stringify(bytes),
+          privateKeys,
+          opts
+        )
+      }
+
+      throw new Error(`${pluginId} doesn't support signBytes`)
     },
 
     async signMessage(

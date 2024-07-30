@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyWallet.signBytes` to sign raw bytes with a private key.
 - changed: Randomize data-sync start times.
 
 ## 2.9.2 (2024-07-25)

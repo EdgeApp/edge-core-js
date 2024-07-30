@@ -972,8 +972,8 @@ export interface EdgeCurrencyEngine {
   ) => Promise<EdgePaymentProtocolInfo>
 
   // Signing:
-  readonly signMessage?: (
-    message: string,
+  readonly signBytes?: (
+    bytes: Uint8Array,
     privateKeys: JsonObject,
     opts: EdgeSignMessageOptions
   ) => Promise<string>
@@ -1001,6 +1001,16 @@ export interface EdgeCurrencyEngine {
 
   /** @deprecated Provide EdgeCurrencyTools.getDisplayPublicKey: */
   readonly getDisplayPublicSeed?: () => string | null
+
+  /**
+   * @deprecated Replaced by `signBytes`.
+   * Various plugins implement this function with inconsistent encodings.
+   */
+  readonly signMessage?: (
+    message: string,
+    privateKeys: JsonObject,
+    opts: EdgeSignMessageOptions
+  ) => Promise<string>
 }
 
 // currency plugin -----------------------------------------------------
@@ -1216,8 +1226,8 @@ export interface EdgeCurrencyWallet {
   ) => Promise<EdgeTransaction>
 
   // Signing:
-  readonly signMessage: (
-    message: string,
+  readonly signBytes: (
+    buf: Uint8Array,
     opts?: EdgeSignMessageOptions
   ) => Promise<string>
 
@@ -1240,6 +1250,12 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
+
+  /** @deprecated Use `signBytes` instead. */
+  readonly signMessage: (
+    message: string,
+    opts?: EdgeSignMessageOptions
+  ) => Promise<string>
 }
 
 export interface EdgeMemoryWallet {
