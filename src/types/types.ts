@@ -1031,6 +1031,9 @@ export interface EdgeCurrencyTools {
   readonly getDisplayPublicKey?: (
     publicWalletInfo: EdgeWalletInfo
   ) => Promise<string>
+  readonly getDisplayPublicKeys?: (publicWalletInfo: EdgeWalletInfo) => {
+    [key: string]: string
+  }
   readonly getSplittableTypes?: (
     publicWalletInfo: EdgeWalletInfo
   ) => string[] | Promise<string[]>

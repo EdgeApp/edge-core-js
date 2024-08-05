@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyTools.getMasterPublicKeys` to get the master public keys for a wallet.
+
 ## 2.10.0 (2024-07-30)
 
 - added: `EdgeCurrencyWallet.signBytes` to sign raw bytes with a private key.
