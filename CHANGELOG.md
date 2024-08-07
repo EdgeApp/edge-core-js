@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: `EdgeCurrencyTools.getDisplayPublicKeys` to get the master public keys for a wallet.
+- added: `EdgeCurrencyConfig.getTokenId` to create a tokenId from an EdgeToken
 
 ## 2.10.0 (2024-07-30)
 

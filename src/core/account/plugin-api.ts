@@ -68,6 +68,11 @@ export class CurrencyConfig
     return state.accounts[accountId].customTokens[pluginId] ?? emptyTokens
   }
 
+  async getTokenId(token: EdgeToken): Promise<string> {
+    const { _ai: ai, _pluginId: pluginId } = this
+    return await getTokenId(ai, pluginId, token)
+  }
+
   async addCustomToken(token: EdgeToken): Promise<string> {
     const { _accountId: accountId, _ai: ai, _pluginId: pluginId } = this
     const tokenId = await getTokenId(ai, pluginId, token)

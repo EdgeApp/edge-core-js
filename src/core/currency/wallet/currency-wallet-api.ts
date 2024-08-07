@@ -56,6 +56,7 @@ import {
 } from './currency-wallet-files'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { MergedTransaction } from './currency-wallet-reducer'
+import { uniqueStrings } from './enabled-tokens'
 import { getMaxSpendableInner } from './max-spend'
 import { mergeMetadata } from './metadata'
 import { upgradeMemos } from './upgrade-memos'
@@ -201,7 +202,7 @@ export function makeCurrencyWalletApi(
       const accountState = input.props.state.accounts[accountId]
       const allTokens = accountState.allTokens[pluginId] ?? {}
 
-      const enabledTokenIds = tokenIds.filter(
+      const enabledTokenIds = uniqueStrings(tokenIds).filter(
         tokenId => allTokens[tokenId] != null
       )
 
