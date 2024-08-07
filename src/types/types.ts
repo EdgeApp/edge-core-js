@@ -1443,6 +1443,7 @@ export interface EdgeCurrencyConfig {
   readonly allTokens: EdgeTokenMap
   readonly builtinTokens: EdgeTokenMap
   readonly customTokens: EdgeTokenMap
+  readonly getTokenId: (token: EdgeToken) => Promise<string>
   readonly addCustomToken: (token: EdgeToken) => Promise<string>
   readonly changeCustomToken: (
     tokenId: string,

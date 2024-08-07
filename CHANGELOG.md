@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyConfig.getTokenId` to create a tokenId from an EdgeToken
+
 ## 2.9.1 (2024-07-24)
 
 - fixed: Edge case for filtering transactions with empty txs (zero amount & fee)
