@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.9.1-1 (2024-08-07)
+
 - added: `EdgeCurrencyConfig.getTokenId` to create a tokenId from an EdgeToken
 
 ## 2.9.1 (2024-07-24)
