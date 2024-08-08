@@ -986,6 +986,7 @@ export interface EdgeCurrencyEngine {
 
   // Escape hatch:
   readonly otherMethods?: EdgeOtherMethods
+  readonly otherMethodsWithKeys?: EdgeOtherMethods
 
   /** @deprecated Replaced by changeEnabledTokenIds */
   readonly enableTokens?: (tokens: string[]) => Promise<void>

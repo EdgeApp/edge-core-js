@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyEngine.otherMethodsWithKeys`. These methods will be added to `EdgeCurrencyEngine.otherMethods`, but the core will insert private keys as the first parameter.
+
 ## 2.11.0 (2024-08-07)
 
 - added: `EdgeCurrencyTools.getDisplayPublicKeys` to get the master public keys for a wallet.
