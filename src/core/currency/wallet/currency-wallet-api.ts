@@ -91,11 +91,22 @@ export function makeCurrencyWalletApi(
 
   const fakeCallbacks = makeCurrencyWalletCallbacks(input)
 
-  let otherMethods = {}
+  const otherMethods: { [name: string]: (...args: any[]) => any } = {}
   if (engine.otherMethods != null) {
-    otherMethods = engine.otherMethods
-    bridgifyObject(otherMethods)
+    for (const name of Object.keys(engine.otherMethods)) {
+      const method = engine.otherMethods[name]
+      if (typeof method !== 'function') continue
+      otherMethods[name] = method
+    }
   }
+  if (engine.otherMethodsWithKeys != null) {
+    for (const name of Object.keys(engine.otherMethodsWithKeys)) {
+      const method = engine.otherMethodsWithKeys[name]
+      if (typeof method !== 'function') continue
+      otherMethods[name] = (...args) => method(walletInfo.keys, ...args)
+    }
+  }
+  bridgifyObject(otherMethods)
 
   const out: EdgeCurrencyWallet & InternalWalletMethods = {
     on: onMethod,
@@ -636,9 +647,8 @@ export function makeCurrencyWalletApi(
     // Generic:
     otherMethods
   }
-  bridgifyObject(out)
 
-  return out
+  return bridgifyObject(out)
 }
 
 export function combineTxWithFile(
