@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.13.0 (2024-08-12)
+
 - added: `EdgeStreamTransactionOptions.spamThreshold`.
 
 ## 2.12.0 (2024-08-12)
