@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.12.0 (2024-08-12)
+
 - added: `EdgeCurrencyEngine.otherMethodsWithKeys`. These methods will be added to `EdgeCurrencyEngine.otherMethods`, but the core will insert private keys as the first parameter.
 
 ## 2.11.0 (2024-08-07)
