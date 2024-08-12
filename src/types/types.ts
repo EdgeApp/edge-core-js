@@ -791,6 +791,7 @@ export interface EdgeGetTransactionsOptions {
   startDate?: Date
   endDate?: Date
   searchString?: string
+  spamThreshold?: string
   tokenId: EdgeTokenId
 }
 
@@ -815,6 +816,9 @@ export interface EdgeStreamTransactionOptions {
 
   /** Only return transactions matching this string */
   searchString?: string
+
+  /** Filter incoming transactions with a `nativeAmount` below this */
+  spamThreshold?: string
 
   /** The token to query, or undefined for the main currency */
   tokenId: EdgeTokenId
