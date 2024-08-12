@@ -1,4 +1,4 @@
-import { div, eq, mul } from 'biggystring'
+import { abs, div, eq, lt, mul } from 'biggystring'
 import { Disklet } from 'disklet'
 import { base64 } from 'rfc4648'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
@@ -251,6 +251,7 @@ export function makeCurrencyWalletApi(
         beforeDate,
         firstBatchSize = batchSize,
         searchString,
+        spamThreshold = '0',
         tokenId = null
       } = opts
       const { currencyCode } =
@@ -326,6 +327,7 @@ export function makeCurrencyWalletApi(
             const edgeTx = combineTxWithFile(input, tx, file, tokenId)
             if (!searchStringFilter(ai, edgeTx, searchString)) continue
             if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
+            if (!tx.isSend && lt(abs(nativeAmount), spamThreshold)) continue
 
             out.push(edgeTx)
           }
@@ -339,7 +341,12 @@ export function makeCurrencyWalletApi(
     async getTransactions(
       opts: EdgeGetTransactionsOptions
     ): Promise<EdgeTransaction[]> {
-      const { endDate: beforeDate, startDate: afterDate, searchString } = opts
+      const {
+        endDate: beforeDate,
+        startDate: afterDate,
+        searchString,
+        spamThreshold
+      } = opts
       const upgradedCurrency = upgradeCurrencyCode({
         allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
         currencyInfo: plugin.currencyInfo,
@@ -350,7 +357,8 @@ export function makeCurrencyWalletApi(
         ...upgradedCurrency,
         afterDate,
         beforeDate,
-        searchString
+        searchString,
+        spamThreshold
       })
 
       // We have no length, so iterate to get everything:
