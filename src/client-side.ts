@@ -4,7 +4,6 @@ import {
   EdgePasswordRules,
   EdgeStreamTransactionOptions,
   EdgeTransaction,
-  EdgeWalletInfo,
   EdgeWalletInfoFull
 } from './types/types'
 
@@ -27,18 +26,12 @@ export interface InternalWalletMethods {
 export class AccountSync {
   readonly allKeys!: EdgeWalletInfoFull[]
 
-  getFirstWalletInfo(type: string): EdgeWalletInfo | undefined {
-    const out: EdgeWalletInfoFull | undefined = this.allKeys.find(
-      info => info.type === type
-    )
-    return out
+  getFirstWalletInfo(type: string): EdgeWalletInfoFull | undefined {
+    return this.allKeys.find(info => info.type === type)
   }
 
-  getWalletInfo(id: string): EdgeWalletInfo | undefined {
-    const out: EdgeWalletInfoFull | undefined = this.allKeys.find(
-      info => info.id === id
-    )
-    return out
+  getWalletInfo(id: string): EdgeWalletInfoFull | undefined {
+    return this.allKeys.find(info => info.id === id)
   }
 
   listWalletIds(): string[] {

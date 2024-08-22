@@ -1647,8 +1647,8 @@ export interface EdgeAccount {
   readonly allKeys: EdgeWalletInfoFull[]
   readonly changeWalletStates: (walletStates: EdgeWalletStates) => Promise<void>
   readonly createWallet: (type: string, keys?: JsonObject) => Promise<string>
-  readonly getFirstWalletInfo: (type: string) => EdgeWalletInfo | undefined
-  readonly getWalletInfo: (id: string) => EdgeWalletInfo | undefined
+  readonly getFirstWalletInfo: (type: string) => EdgeWalletInfoFull | undefined
+  readonly getWalletInfo: (id: string) => EdgeWalletInfoFull | undefined
   readonly listWalletIds: () => string[]
   readonly listSplittableWalletTypes: (walletId: string) => Promise<string[]>
   readonly splitWalletInfo: (
