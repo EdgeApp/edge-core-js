@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.13.1 (2024-08-23)
+
 - fixed: Use full URI to determine whether a request has previously succeeded CORS
 
 ## 2.13.0 (2024-08-12)
