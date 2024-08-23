@@ -22,8 +22,8 @@ import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
 import { WorkerApi, YAOB_THROTTLE_MS } from './react-native-types'
 
-// Tracks the status of different domains for the CORS bouncer:
-const hostnameCorsState = new Map<
+// Tracks the status of different URI endpoints for the CORS bouncer:
+const endpointCorsState = new Map<
   string,
   {
     // The window.fetch worked:
@@ -179,13 +179,14 @@ async function makeIo(): Promise<EdgeIo> {
       uri: string,
       opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
-      const { hostname } = new URL(uri)
-      const state = hostnameCorsState.get(hostname) ?? {
+      const { protocol, host, pathname } = new URL(uri)
+      const endpoint = `${protocol}//${host}${pathname}`
+      const state = endpointCorsState.get(endpoint) ?? {
         windowSuccess: false,
         nativeSuccess: false
       }
-      if (!hostnameCorsState.has(hostname)) {
-        hostnameCorsState.set(hostname, state)
+      if (!endpointCorsState.has(endpoint)) {
+        endpointCorsState.set(endpoint, state)
       }
 
       // If the native fetch worked,
