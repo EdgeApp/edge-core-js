@@ -51,7 +51,7 @@ describe('edge login', function () {
     const account = await out
     expect(account.appId).equals('test-child')
 
-    return await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
   it('cancel', async function () {

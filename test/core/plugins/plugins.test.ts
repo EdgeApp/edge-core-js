@@ -35,7 +35,7 @@ describe('plugins system', function () {
         fakeswap: false
       }
     })
-    return await expectRejection(
+    await expectRejection(
       context.loginWithPIN(fakeUser.username, fakeUser.pin),
       'Error: The following plugins are missing or failed to load: broken-plugin, missing-plugin'
     )
