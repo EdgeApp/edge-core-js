@@ -1,61 +1,51 @@
 import { base64 } from 'rfc4648'
 
 import { EdgeAccount, EdgeAccountOptions } from '../../types/types'
-import { LoginCreateOpts, makeCreateKit } from '../login/create'
+import { decryptText } from '../../util/crypto/crypto'
+import { makeCreateKit } from '../login/create'
 import {
+  decryptKeyInfos,
   findFirstKey,
   makeAccountType,
   makeKeyInfo,
   makeKeysKit
 } from '../login/keys'
-import { applyKit, searchTree } from '../login/login'
+import { applyKit, decryptChildKey, searchTree } from '../login/login'
+import { getStashById } from '../login/login-selectors'
 import { LoginStash } from '../login/login-stash'
-import { LoginKit, LoginTree, LoginType } from '../login/login-types'
+import { LoginKit, LoginType, SessionKey } from '../login/login-types'
 import { createStorageKeys, wasEdgeStorageKeys } from '../login/storage-keys'
 import { ApiInput, RootProps } from '../root-pixie'
-
-function checkLogin(login: LoginTree): void {
-  if (login == null || login.loginKey == null) {
-    throw new Error('Incomplete login')
-  }
-}
-
-export function findAppLogin(loginTree: LoginTree, appId: string): LoginTree {
-  const out = searchTree(loginTree, login => login.appId === appId)
-  if (out == null) {
-    throw new Error(`Internal error: cannot find login for ${appId}`)
-  }
-  return out
-}
 
 /**
  * Creates a child login under the provided login, with the given appId.
  */
 async function createChildLogin(
   ai: ApiInput,
-  loginTree: LoginTree,
-  login: LoginTree,
+  stashTree: LoginStash,
+  sessionKey: SessionKey,
   appId: string
-): Promise<LoginTree> {
-  checkLogin(login)
-
-  const opts: LoginCreateOpts = {
-    pin: loginTree.pin,
-    username: loginTree.username
+): Promise<LoginStash> {
+  let pin: string | undefined
+  if (stashTree.pin2TextBox != null) {
+    pin = decryptText(stashTree.pin2TextBox, sessionKey.loginKey)
   }
-  opts.keyInfo = makeKeyInfo(
-    makeAccountType(appId),
-    wasEdgeStorageKeys(createStorageKeys(ai))
-  )
-  const kit = await makeCreateKit(ai, login, appId, opts)
+
+  const { kit } = await makeCreateKit(ai, sessionKey, appId, {
+    keyInfo: makeKeyInfo(
+      makeAccountType(appId),
+      wasEdgeStorageKeys(createStorageKeys(ai))
+    ),
+    pin,
+    username: stashTree.username
+  })
   const parentKit: LoginKit = {
-    login: { children: [kit.login as LoginTree] },
-    loginId: login.loginId,
+    loginId: sessionKey.loginId,
     server: kit.server,
     serverPath: kit.serverPath,
     stash: { children: [kit.stash as LoginStash] }
   }
-  return await applyKit(ai, loginTree, parentKit)
+  return await applyKit(ai, sessionKey, parentKit)
 }
 
 /**
@@ -65,37 +55,45 @@ async function createChildLogin(
  */
 export async function ensureAccountExists(
   ai: ApiInput,
-  loginTree: LoginTree,
+  stashTree: LoginStash,
+  sessionKey: SessionKey,
   appId: string
-): Promise<LoginTree> {
-  // For crash errors:
-  ai.props.log.breadcrumb('ensureAccountExists', {})
-
-  const accountType = makeAccountType(appId)
+): Promise<LoginStash> {
+  const { log } = ai.props
 
   // If there is no app login, make that:
-  const login = searchTree(loginTree, login => login.appId === appId)
-  if (login == null) {
+  const appStash = searchTree(stashTree, stash => stash.appId === appId)
+  if (appStash == null) {
     // For crash errors:
     ai.props.log.breadcrumb('createChildLogin', {})
-    return await createChildLogin(ai, loginTree, loginTree, appId)
+
+    return await createChildLogin(ai, stashTree, sessionKey, appId)
   }
 
-  // Otherwise, make the repo:
-  if (findFirstKey(login.keyInfos, accountType) == null) {
+  // Decrypt the wallet keys:
+  // TODO: Once we cache public keys, use those instead:
+  const appKey = decryptChildKey(stashTree, sessionKey, appStash.loginId)
+  const keyInfos = decryptKeyInfos(appStash, appKey.loginKey)
+  log.warn(
+    `Login: decrypted keys for user ${base64.stringify(stashTree.loginId)}`
+  )
+
+  // If the account has no repo, make one:
+  const accountType = makeAccountType(appId)
+  if (findFirstKey(keyInfos, accountType) == null) {
     // For crash errors:
     ai.props.log.breadcrumb('createAccountRepo', {})
-    checkLogin(login)
+
     const keyInfo = makeKeyInfo(
       accountType,
       wasEdgeStorageKeys(createStorageKeys(ai))
     )
-    const keysKit = makeKeysKit(ai, login, [keyInfo])
-    return await applyKit(ai, loginTree, keysKit)
+    const keysKit = makeKeysKit(ai, appKey, [keyInfo])
+    return await applyKit(ai, sessionKey, keysKit)
   }
 
   // Everything is fine, so do nothing:
-  return loginTree
+  return stashTree
 }
 
 /**
@@ -103,36 +101,30 @@ export async function ensureAccountExists(
  */
 export async function makeAccount(
   ai: ApiInput,
-  appId: string,
-  loginTree: LoginTree,
+  sessionKey: SessionKey,
   loginType: LoginType,
   opts: EdgeAccountOptions
 ): Promise<EdgeAccount> {
+  const { pauseWallets = false } = opts
+  const { appId } = ai.props.state.login
+  const { log } = ai.props
+
   // For crash errors:
   ai.props.log.breadcrumb('makeAccount', {})
 
-  const { pauseWallets = false } = opts
-  const { log } = ai.props
-  log.warn(
-    `Login: decrypted keys for user ${base64.stringify(loginTree.loginId)}`
-  )
-
-  loginTree = await ensureAccountExists(ai, loginTree, appId)
+  // Create the loginTree:
+  const { stashTree } = getStashById(ai, sessionKey.loginId)
+  await ensureAccountExists(ai, stashTree, sessionKey, appId)
   log.warn('Login: account exists for appId')
 
   // Add the login to redux:
-  const hasRootKey = loginTree.loginKey != null
   ai.props.dispatch({
     type: 'LOGIN',
     payload: {
-      appId,
-      hasRootKey,
-      loginKey: hasRootKey
-        ? loginTree.loginKey
-        : findAppLogin(loginTree, appId).loginKey,
       loginType,
       pauseWallets,
-      rootLoginId: loginTree.loginId
+      rootLoginId: stashTree.loginId,
+      sessionKey
     }
   })
 
@@ -142,10 +134,7 @@ export async function makeAccount(
 /**
  * Waits for the account API to appear and returns it.
  */
-export function waitForAccount(
-  ai: ApiInput,
-  accountId: string
-): Promise<EdgeAccount> {
+function waitForAccount(ai: ApiInput, accountId: string): Promise<EdgeAccount> {
   const out: Promise<EdgeAccount> = ai.waitFor(
     (props: RootProps): EdgeAccount | undefined => {
       const accountState = props.state.accounts[accountId]

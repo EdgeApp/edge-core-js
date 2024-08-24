@@ -14,9 +14,6 @@ export function makeSecretKit(
   const loginAuthBox = encrypt(io, loginAuth, loginKey)
 
   return {
-    login: {
-      loginAuth
-    },
     loginId,
     server: wasChangeSecretPayload({
       loginAuth,

@@ -106,7 +106,7 @@ export async function splitWalletInfo(
   newWalletType: string
 ): Promise<string> {
   const accountState = ai.props.state.accounts[accountId]
-  const { allWalletInfosFull, login, loginTree } = accountState
+  const { allWalletInfosFull, sessionKey } = accountState
 
   // Find the wallet we are going to split:
   const walletInfo = allWalletInfosFull.find(
@@ -157,8 +157,8 @@ export async function splitWalletInfo(
   }
 
   // Add the keys to the login:
-  const kit = makeKeysKit(ai, login, [newWalletInfo])
-  await applyKit(ai, loginTree, kit)
+  const kit = makeKeysKit(ai, sessionKey, [newWalletInfo])
+  await applyKit(ai, sessionKey, kit)
 
   // Try to copy metadata on a best-effort basis.
   // In the future we should clone the repo instead:

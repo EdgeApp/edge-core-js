@@ -9,16 +9,17 @@ import { asLoginPayload } from '../../types/server-cleaners'
 import { LoginPayload, LoginRequestBody } from '../../types/server-types'
 import { asMaybeOtpError, EdgeAccountOptions } from '../../types/types'
 import { decrypt, decryptText } from '../../util/crypto/crypto'
+import { totp } from '../../util/crypto/hotp'
 import { verifyData } from '../../util/crypto/verify'
 import { softCat } from '../../util/util'
 import { ApiInput } from '../root-pixie'
-import { decryptKeyInfos, mergeKeyInfos } from './keys'
+import { decryptKeyInfos } from './keys'
 import { loginFetch } from './login-fetch'
 import { makeSecretKit } from './login-secret'
-import { getStashById } from './login-selectors'
+import { getChildStash, getStashById } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
-import { LoginKit, LoginTree } from './login-types'
-import { getLoginOtp, getStashOtp } from './otp'
+import { LoginKit, LoginTree, SessionKey } from './login-types'
+import { getStashOtp } from './otp'
 
 /**
  * Returns the login that satisfies the given predicate,
@@ -262,13 +263,12 @@ function makeLoginTreeInner(
  */
 export function makeLoginTree(
   stashTree: LoginStash,
-  loginKey: Uint8Array,
-  appId: string = ''
+  sessionKey: SessionKey
 ): LoginTree {
   return updateTree(
     stashTree,
-    stash => stash.appId === appId,
-    stash => makeLoginTreeInner(stash, loginKey),
+    stash => verifyData(stash.loginId, sessionKey.loginId),
+    stash => makeLoginTreeInner(stash, sessionKey.loginKey),
     (stash, children): LoginTree => {
       const {
         appId,
@@ -339,7 +339,7 @@ export async function serverLogin(
   opts: EdgeAccountOptions,
   serverAuth: LoginRequestBody,
   decrypt: (reply: LoginPayload) => Promise<Uint8Array>
-): Promise<LoginTree> {
+): Promise<SessionKey> {
   const { now = new Date() } = opts
   const { deviceDescription } = ai.props.state.login
 
@@ -380,6 +380,7 @@ export async function serverLogin(
   )
 
   // Try decrypting the reply:
+  const { loginId } = loginReply
   const loginKey = await decrypt(loginReply)
 
   // Save the latest data:
@@ -389,7 +390,6 @@ export async function serverLogin(
 
   // Ensure the account has secret-key login enabled:
   if (loginReply.loginAuthBox == null) {
-    const { loginId } = loginReply
     const { stash, stashTree } = getStashById(ai, loginId)
     const secretKit = makeSecretKit(ai, { loginId, loginKey })
     const request: LoginRequestBody = {
@@ -403,7 +403,7 @@ export async function serverLogin(
     await saveStash(ai, applyLoginPayload(stashTree, loginKey, loginReply))
   }
 
-  return makeLoginTree(stashTree, loginKey, stash.appId)
+  return { loginId, loginKey }
 }
 
 /**
@@ -413,35 +413,21 @@ export async function serverLogin(
  */
 export async function applyKit(
   ai: ApiInput,
-  loginTree: LoginTree,
+  sessionKey: SessionKey,
   kit: LoginKit
-): Promise<LoginTree> {
-  const { loginId, serverMethod = 'POST', serverPath } = kit
-  const login = searchTree(loginTree, login =>
-    verifyData(login.loginId, loginId)
-  )
-  if (login == null) throw new Error('Cannot apply kit: missing login')
+): Promise<LoginStash> {
+  const { serverMethod = 'POST', serverPath } = kit
 
-  const { stashTree } = getStashById(ai, loginId)
-  const request = makeAuthJson(stashTree, login)
+  const { stashTree } = getStashById(ai, kit.loginId)
+  const childKey = decryptChildKey(stashTree, sessionKey, kit.loginId)
+  const request = makeAuthJson(stashTree, childKey)
   request.data = kit.server
   await loginFetch(ai, serverMethod, serverPath, request)
-  const newLoginTree = updateTree(
-    loginTree,
-    login => verifyData(login.loginId, loginId),
-    login => ({
-      ...login,
-      ...kit.login,
-      children: softCat(login.children, kit.login.children),
-      keyInfos: mergeKeyInfos(softCat(login.keyInfos, kit.login.keyInfos))
-    }),
-    (login, children) => ({ ...login, children })
-  )
 
-  const newStashTree = updateTree(
+  const newStashTree = updateTree<LoginStash, LoginStash>(
     stashTree,
-    stash => verifyData(stash.loginId, loginId),
-    (stash): LoginStash => ({
+    stash => verifyData(stash.loginId, kit.loginId),
+    stash => ({
       ...stash,
       ...kit.stash,
       children: softCat(stash.children, kit.stash.children),
@@ -451,7 +437,7 @@ export async function applyKit(
   )
   await saveStash(ai, newStashTree)
 
-  return newLoginTree
+  return newStashTree
 }
 
 /**
@@ -462,12 +448,12 @@ export async function applyKit(
  */
 export async function applyKits(
   ai: ApiInput,
-  loginTree: LoginTree,
+  sessionKey: SessionKey,
   kits: Array<LoginKit | undefined>
 ): Promise<void> {
   for (const kit of kits) {
     if (kit == null) continue
-    await applyKit(ai, loginTree, kit)
+    await applyKit(ai, sessionKey, kit)
   }
 }
 
@@ -476,10 +462,9 @@ export async function applyKits(
  */
 export async function syncLogin(
   ai: ApiInput,
-  loginTree: LoginTree,
-  login: LoginTree
-): Promise<LoginTree> {
-  const { stashTree, stash } = getStashById(ai, login.loginId)
+  sessionKey: SessionKey
+): Promise<void> {
+  const { stashTree, stash } = getStashById(ai, sessionKey.loginId)
 
   // First, hit the fast endpoint to see if we even need to sync:
   const { syncToken } = stash
@@ -489,22 +474,72 @@ export async function syncLogin(
         loginId: stash.loginId,
         syncToken
       })
-      if (asBoolean(reply)) return loginTree
+      if (asBoolean(reply)) return
     } catch (error) {
       // We can fall back on a full sync if we fail here.
     }
   }
 
   // If we do need to sync, prepare for a full login:
-  const request = makeAuthJson(stashTree, login)
+  const request = makeAuthJson(stashTree, sessionKey)
   const opts: EdgeAccountOptions = {
     // Avoid updating the lastLogin date:
     now: stashTree.lastLogin
   }
 
-  return await serverLogin(ai, stashTree, stash, opts, request, async () => {
-    return login.loginKey
+  await serverLogin(ai, stashTree, stash, opts, request, async () => {
+    return sessionKey.loginKey
   })
+}
+
+/**
+ * Finds the session key for a child login.
+ */
+export function decryptChildKey(
+  stashTree: LoginStash,
+  sessionKey: SessionKey,
+  loginId: Uint8Array
+): SessionKey {
+  function searchChildren(
+    children: LoginStash[],
+    loginKey: Uint8Array
+  ): SessionKey | undefined {
+    for (const child of children) {
+      // This will never happen, but TypeScript doesn't know that:
+      if (child.parentBox == null) continue
+
+      // If this is the right one, return it:
+      if (verifyData(child.loginId, loginId)) {
+        return {
+          loginId: child.loginId,
+          loginKey: decrypt(child.parentBox, loginKey)
+        }
+      }
+
+      // We can skip the next decryption if there are no children:
+      const { children = [] } = child
+      if (children.length === 0) continue
+
+      // Otherwise, we need to decrypt the child's key, and recurse in:
+      const out = searchChildren(children, decrypt(child.parentBox, loginKey))
+      if (out != null) return out
+    }
+  }
+
+  // If this is already the right session key, do nothing:
+  if (verifyData(loginId, sessionKey.loginId)) return sessionKey
+
+  // Find the stash this key goes with:
+  const stash = getChildStash(stashTree, sessionKey.loginId)
+
+  // Recurse into its children:
+  const out = searchChildren(stash?.children ?? [], sessionKey.loginKey)
+  if (out == null) {
+    throw new Error(
+      `Cannot decrypt child login '${base64.stringify(sessionKey.loginId)}'`
+    )
+  }
+  return out
 }
 
 /**
@@ -512,31 +547,36 @@ export async function syncLogin(
  */
 export function makeAuthJson(
   stashTree: LoginStash,
-  login: LoginTree
+  sessionKey: SessionKey
 ): LoginRequestBody {
-  const stash = searchTree(stashTree, stash => stash.appId === login.appId)
-  const { syncToken, voucherAuth, voucherId } = stash ?? {
-    syncToken: undefined,
-    voucherAuth: undefined,
-    voucherId: undefined
-  }
+  const stash = getChildStash(stashTree, sessionKey.loginId)
 
-  const { loginId, userId, loginAuth, passwordAuth } = login
-  if (loginAuth != null) {
+  const {
+    loginAuthBox,
+    otpKey,
+    passwordAuthBox,
+    syncToken,
+    userId,
+    voucherAuth,
+    voucherId
+  } = stash
+  const otp = otpKey != null ? totp(otpKey) : undefined
+
+  if (loginAuthBox != null) {
     return {
-      loginId,
-      loginAuth,
-      otp: getLoginOtp(login),
+      loginAuth: decrypt(loginAuthBox, sessionKey.loginKey),
+      loginId: sessionKey.loginId,
+      otp,
       syncToken,
       voucherAuth,
       voucherId
     }
   }
-  if (passwordAuth != null && userId != null) {
+  if (passwordAuthBox != null && userId != null) {
     return {
+      passwordAuth: decrypt(passwordAuthBox, sessionKey.loginKey),
       userId,
-      passwordAuth,
-      otp: getLoginOtp(login),
+      otp,
       syncToken,
       voucherAuth,
       voucherId

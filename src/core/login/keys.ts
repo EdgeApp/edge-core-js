@@ -23,6 +23,7 @@ import {
   asEdgeWalletInfo,
   LoginKit,
   LoginTree,
+  SessionKey,
   wasEdgeWalletInfo
 } from './login-types'
 import {
@@ -68,7 +69,7 @@ export function makeKeyInfo(
  */
 export function makeKeysKit(
   ai: ApiInput,
-  login: LoginTree,
+  sessionKey: SessionKey,
   keyInfos: EdgeWalletInfo[]
 ): LoginKit {
   // For crash errors:
@@ -79,7 +80,7 @@ export function makeKeysKit(
     encrypt(
       io,
       utf8.parse(JSON.stringify(wasEdgeWalletInfo(info))),
-      login.loginKey
+      sessionKey.loginKey
     )
   )
 
@@ -91,8 +92,7 @@ export function makeKeysKit(
   }
 
   return {
-    login: { keyInfos },
-    loginId: login.loginId,
+    loginId: sessionKey.loginId,
     server: wasCreateKeysPayload({ keyBoxes, newSyncKeys }),
     serverPath: '/v2/login/keys',
     stash: { keyBoxes }

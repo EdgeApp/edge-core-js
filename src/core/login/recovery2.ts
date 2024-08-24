@@ -13,7 +13,7 @@ import { ApiInput } from '../root-pixie'
 import { applyKit, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
 import { LoginStash } from './login-stash'
-import { LoginKit, LoginTree } from './login-types'
+import { LoginKit, LoginTree, SessionKey } from './login-types'
 
 function makeRecovery2Id(
   recovery2Key: Uint8Array,
@@ -41,7 +41,7 @@ export async function loginRecovery2(
   recovery2Key: Uint8Array,
   answers: string[],
   opts: EdgeAccountOptions
-): Promise<LoginTree> {
+): Promise<SessionKey> {
   const { username } = stashTree
   if (username == null) throw new Error('Recovery login requires a username')
 
@@ -97,19 +97,19 @@ export async function changeRecovery(
   answers: string[]
 ): Promise<void> {
   const accountState = ai.props.state.accounts[accountId]
-  const { loginTree } = accountState
+  const { loginTree, sessionKey } = accountState
   const { username } = accountState.stashTree
   if (username == null) throw new Error('Recovery login requires a username')
 
   const kit = makeRecovery2Kit(ai, loginTree, username, questions, answers)
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 export async function deleteRecovery(
   ai: ApiInput,
   accountId: string
 ): Promise<void> {
-  const { loginTree } = ai.props.state.accounts[accountId]
+  const { loginTree, sessionKey } = ai.props.state.accounts[accountId]
 
   const kit = {
     login: {
@@ -123,7 +123,7 @@ export async function deleteRecovery(
       recovery2Key: undefined
     }
   }
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 /**
@@ -138,7 +138,6 @@ export function makeChangeRecovery2IdKit(
   if (recovery2Key == null) return
 
   return {
-    login: {},
     loginId,
     server: wasChangeRecovery2IdPayload({
       recovery2Id: makeRecovery2Id(recovery2Key, newUsername)
@@ -176,9 +175,6 @@ export function makeRecovery2Kit(
   const recovery2KeyBox = encrypt(io, recovery2Key, loginKey)
 
   return {
-    login: {
-      recovery2Key
-    },
     loginId,
     server: wasChangeRecovery2Payload({
       recovery2Id: makeRecovery2Id(recovery2Key, username),

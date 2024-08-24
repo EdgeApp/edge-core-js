@@ -38,15 +38,10 @@ export async function enableOtp(
   accountId: string,
   otpTimeout: number
 ): Promise<void> {
-  const { loginTree } = ai.props.state.accounts[accountId]
+  const { loginTree, sessionKey } = ai.props.state.accounts[accountId]
   const { otpKey = ai.props.io.random(10) } = loginTree
 
   const kit: LoginKit = {
-    login: {
-      otpKey,
-      otpResetDate: undefined,
-      otpTimeout
-    },
     loginId: loginTree.loginId,
     server: wasChangeOtpPayload({
       otpKey,
@@ -59,21 +54,16 @@ export async function enableOtp(
       otpTimeout
     }
   }
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 export async function disableOtp(
   ai: ApiInput,
   accountId: string
 ): Promise<void> {
-  const { loginTree } = ai.props.state.accounts[accountId]
+  const { loginTree, sessionKey } = ai.props.state.accounts[accountId]
 
   const kit: LoginKit = {
-    login: {
-      otpKey: undefined,
-      otpResetDate: undefined,
-      otpTimeout: undefined
-    },
     loginId: loginTree.loginId,
     server: undefined,
     serverMethod: 'DELETE',
@@ -84,23 +74,20 @@ export async function disableOtp(
       otpTimeout: undefined
     }
   }
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 export async function cancelOtpReset(
   ai: ApiInput,
   accountId: string
 ): Promise<void> {
-  const { loginTree } = ai.props.state.accounts[accountId]
+  const { loginTree, sessionKey } = ai.props.state.accounts[accountId]
   const { otpTimeout, otpKey } = loginTree
   if (otpTimeout == null || otpKey == null) {
     throw new Error('Cannot cancel 2FA reset: 2FA is not enabled.')
   }
 
   const kit: LoginKit = {
-    login: {
-      otpResetDate: undefined
-    },
     loginId: loginTree.loginId,
     server: wasChangeOtpPayload({
       otpTimeout,
@@ -111,7 +98,7 @@ export async function cancelOtpReset(
       otpResetDate: undefined
     }
   }
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 /**

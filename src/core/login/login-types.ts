@@ -8,6 +8,17 @@ import {
 import { asJsonObject } from '../../util/file-helpers'
 import { LoginStash } from './login-stash'
 
+/**
+ * A key that decrypts a login stash.
+ */
+export interface SessionKey {
+  /** The login that this key belongs to. This may be a child login. */
+  loginId: Uint8Array
+
+  /** The decryption key. */
+  loginKey: Uint8Array
+}
+
 // Login data decrypted into memory.
 export interface LoginTree {
   isRoot: boolean
@@ -54,12 +65,6 @@ export interface AppIdMap {
 }
 
 export interface LoginKit {
-  /**
-   * A diff to apply to the login tree, starting at the `loginId` node.
-   * We want to eliminate this, and simply decrypt the stash.
-   */
-  login: Partial<LoginTree>
-
   /** The change will affect the node with this ID. */
   loginId: Uint8Array
 

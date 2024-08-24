@@ -12,7 +12,7 @@ import { applyKits, searchTree, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
 import { getStashById } from './login-selectors'
 import { LoginStash } from './login-stash'
-import { LoginKit, LoginTree } from './login-types'
+import { LoginKit, LoginTree, SessionKey } from './login-types'
 import { getLoginOtp } from './otp'
 
 function makePin2Id(
@@ -49,7 +49,7 @@ export async function loginPin2(
   stashTree: LoginStash,
   pin: string,
   opts: EdgeAccountOptions
-): Promise<LoginTree> {
+): Promise<SessionKey> {
   const stash = findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
     throw new Error('PIN login is not enabled for this account on this device')
@@ -176,7 +176,6 @@ export function makeChangePin2IdKit(
   if (pin2Key == null) return
 
   return {
-    login: {},
     loginId,
     server: wasChangePin2IdPayload({
       pin2Id: makePin2Id(pin2Key, newUsername)
@@ -205,10 +204,6 @@ export function makeChangePin2Kit(
     const pin2KeyBox = encrypt(io, pin2Key, loginKey)
 
     return {
-      login: {
-        pin2Key,
-        pin
-      },
       loginId,
       server: wasChangePin2Payload({
         pin2Id: makePin2Id(pin2Key, username),
@@ -225,10 +220,6 @@ export function makeChangePin2Kit(
     }
   } else {
     return {
-      login: {
-        pin2Key: undefined,
-        pin
-      },
       loginId: login.loginId,
       server: wasChangePin2Payload({
         pin2Id: undefined,
@@ -264,9 +255,6 @@ export function makeDeletePin2Kits(loginTree: LoginTree): LoginKit[] {
  */
 export function makeDeletePin2Kit(login: LoginTree): LoginKit {
   return {
-    login: {
-      pin2Key: undefined
-    },
     loginId: login.loginId,
     server: undefined,
     serverMethod: 'DELETE',

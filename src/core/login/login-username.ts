@@ -69,12 +69,6 @@ export async function makeChangeUsernameKit(
   }
 
   return {
-    login: {
-      ...passwordKit?.login,
-      ...pin2Kit?.login,
-      ...recovery2Kit?.login,
-      ...usernameKit?.login
-    },
     loginId,
     server: {
       ...passwordKit?.server,
@@ -107,7 +101,6 @@ export async function makeUsernameKit(
   const userId = await hashUsername(ai, username)
 
   return {
-    login: { userId, username },
     loginId,
     server: wasChangeUsernamePayload({
       userId,

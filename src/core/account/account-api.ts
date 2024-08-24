@@ -383,13 +383,13 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     async createWallet(walletType: string, keys?: object): Promise<string> {
+      const { sessionKey } = accountState()
+
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.createWallet', {})
 
-      const { login, loginTree } = accountState()
-
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, { keys })
-      await applyKit(ai, loginTree, makeKeysKit(ai, login, [walletInfo]))
+      await applyKit(ai, sessionKey, makeKeysKit(ai, sessionKey, [walletInfo]))
       return walletInfo.id
     },
 
@@ -499,13 +499,13 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       walletType: string,
       opts: EdgeCreateCurrencyWalletOptions = {}
     ): Promise<EdgeCurrencyWallet> {
+      const { sessionKey } = accountState()
+
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.createCurrencyWallet', {})
 
-      const { login, loginTree } = accountState()
-
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, opts)
-      await applyKit(ai, loginTree, makeKeysKit(ai, login, [walletInfo]))
+      await applyKit(ai, sessionKey, makeKeysKit(ai, sessionKey, [walletInfo]))
       return await finishWalletCreation(ai, accountId, walletInfo.id, opts)
     },
 
@@ -524,10 +524,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async createCurrencyWallets(
       createWallets: EdgeCreateCurrencyWallet[]
     ): Promise<Array<EdgeResult<EdgeCurrencyWallet>>> {
+      const { sessionKey } = accountState()
+
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.makeMemoryWallet', {})
-
-      const { login, loginTree } = accountState()
 
       // Create the keys:
       const walletInfos = await Promise.all(
@@ -537,7 +537,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       )
 
       // Store the keys on the server:
-      await applyKit(ai, loginTree, makeKeysKit(ai, login, walletInfos))
+      await applyKit(ai, sessionKey, makeKeysKit(ai, sessionKey, walletInfos))
 
       // Set up options:
       return await Promise.all(

@@ -11,12 +11,16 @@ import { compare } from '../../util/compare'
 import { verifyData } from '../../util/crypto/verify'
 import { RootAction } from '../actions'
 import { findFirstKey, getAllWalletInfos, makeAccountType } from '../login/keys'
-import { makeLoginTree } from '../login/login'
+import { makeLoginTree, searchTree } from '../login/login'
 import { LoginStash } from '../login/login-stash'
-import { LoginTree, LoginType, WalletInfoFullMap } from '../login/login-types'
+import {
+  LoginTree,
+  LoginType,
+  SessionKey,
+  WalletInfoFullMap
+} from '../login/login-types'
 import { maybeFindCurrencyPluginId } from '../plugins/plugins-selectors'
 import { RootState } from '../root-reducer'
-import { findAppLogin } from './account-init'
 import { SwapSettings } from './account-types'
 
 export interface AccountState {
@@ -37,14 +41,12 @@ export interface AccountState {
   readonly pauseWallets: boolean
 
   // Login stuff:
-  readonly appId: string // Copy of the context appId
-  readonly hasRootKey: boolean // True if the loginKey is for the root
   readonly loadFailure: Error | null // Failed to create API object.
   readonly login: LoginTree
-  readonly loginKey: Uint8Array
   readonly loginTree: LoginTree
   readonly loginType: LoginType
   readonly rootLoginId: Uint8Array
+  readonly sessionKey: SessionKey
   readonly stashTree: LoginStash
 
   // Plugin stuff:
@@ -63,10 +65,14 @@ export interface AccountNext {
 }
 
 export const initialCustomTokens: EdgePluginMap<EdgeTokenMap> = {}
+const blankSessionKey = {
+  loginId: new Uint8Array(),
+  loginKey: new Uint8Array()
+}
 
 const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   accountWalletInfo: memoizeReducer(
-    (next: AccountNext) => next.self.appId,
+    (next: AccountNext) => next.root.login.appId,
     (next: AccountNext) => next.self.login,
     (appId: string, login: LoginTree): EdgeWalletInfo => {
       const type = makeAccountType(appId)
@@ -79,7 +85,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   ),
 
   accountWalletInfos: memoizeReducer(
-    (next: AccountNext) => next.self.appId,
+    (next: AccountNext) => next.root.login.appId,
     (next: AccountNext) => next.self.login,
     (appId: string, login: LoginTree): EdgeWalletInfo[] => {
       // Wallets created in Edge that then log into Airbitz or BitcoinPay
@@ -209,14 +215,6 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return action.type === 'LOGIN' ? action.payload.pauseWallets : state
   },
 
-  appId(state = '', action): string {
-    return action.type === 'LOGIN' ? action.payload.appId : state
-  },
-
-  hasRootKey(state = true, action): boolean {
-    return action.type === 'LOGIN' ? action.payload.hasRootKey : state
-  },
-
   loadFailure(state = null, action): Error | null {
     if (action.type === 'ACCOUNT_LOAD_FAILED') {
       const { error } = action.payload
@@ -227,22 +225,21 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   },
 
   login: memoizeReducer(
-    (next: AccountNext) => next.self.appId,
+    (next: AccountNext) => next.root.login.appId,
     (next: AccountNext) => next.self.loginTree,
-    (appId, loginTree): LoginTree => findAppLogin(loginTree, appId)
+    (appId, loginTree): LoginTree => {
+      const out = searchTree(loginTree, login => login.appId === appId)
+      if (out == null) {
+        throw new Error(`Internal error: cannot find login for ${appId}`)
+      }
+      return out
+    }
   ),
 
-  loginKey(state = new Uint8Array(0), action): Uint8Array {
-    return action.type === 'LOGIN' ? action.payload.loginKey : state
-  },
-
   loginTree: memoizeReducer(
-    (next: AccountNext) => next.self.appId,
-    (next: AccountNext) => next.self.loginKey,
-    (next: AccountNext) => next.self.hasRootKey,
     (next: AccountNext) => next.self.stashTree,
-    (appId, loginKey, hasRootKey, stashTree): LoginTree =>
-      makeLoginTree(stashTree, loginKey, hasRootKey ? '' : appId)
+    (next: AccountNext) => next.self.sessionKey,
+    (stashTree, sessionKey): LoginTree => makeLoginTree(stashTree, sessionKey)
   ),
 
   loginType(state = 'newAccount', action): LoginType {
@@ -251,6 +248,10 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
 
   rootLoginId(state = new Uint8Array(0), action): Uint8Array {
     return action.type === 'LOGIN' ? action.payload.rootLoginId : state
+  },
+
+  sessionKey(state = blankSessionKey, action): SessionKey {
+    return action.type === 'LOGIN' ? action.payload.sessionKey : state
   },
 
   stashTree: memoizeReducer(
