@@ -68,16 +68,23 @@ export async function ensureAccountExists(
   loginTree: LoginTree,
   appId: string
 ): Promise<LoginTree> {
+  // For crash errors:
+  ai.props.log.breadcrumb('ensureAccountExists', {})
+
   const accountType = makeAccountType(appId)
 
   // If there is no app login, make that:
   const login = searchTree(loginTree, login => login.appId === appId)
   if (login == null) {
+    // For crash errors:
+    ai.props.log.breadcrumb('createChildLogin', {})
     return await createChildLogin(ai, loginTree, loginTree, appId)
   }
 
   // Otherwise, make the repo:
   if (findFirstKey(login.keyInfos, accountType) == null) {
+    // For crash errors:
+    ai.props.log.breadcrumb('createAccountRepo', {})
     checkLogin(login)
     const keyInfo = makeKeyInfo(
       accountType,
@@ -101,6 +108,9 @@ export async function makeAccount(
   loginType: LoginType,
   opts: EdgeAccountOptions
 ): Promise<EdgeAccount> {
+  // For crash errors:
+  ai.props.log.breadcrumb('makeAccount', {})
+
   const { pauseWallets = false } = opts
   const { log } = ai.props
   log.warn(
