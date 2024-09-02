@@ -1840,6 +1840,12 @@ export interface EdgeContext {
   readonly forgetAccount: (rootLoginId: string) => Promise<void>
 
   // Account creation:
+  /** Preemptively requests a CAPTCHA for account creation. */
+  readonly fetchChallenge: () => Promise<{
+    challengeId: string
+    /** If this is missing, the challenge is already solved. */
+    challengeUri?: string
+  }>
   readonly fixUsername: (username: string) => string
   readonly usernameAvailable: (username: string) => Promise<boolean>
   readonly createAccount: (
