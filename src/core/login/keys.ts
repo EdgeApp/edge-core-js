@@ -64,6 +64,9 @@ export function makeKeysKit(
   login: LoginTree,
   keyInfos: EdgeWalletInfo[]
 ): LoginKit {
+  // For crash errors:
+  ai.props.log.breadcrumb('makeKeysKit', {})
+
   const { io } = ai.props
   const keyBoxes = keyInfos.map(info =>
     encrypt(

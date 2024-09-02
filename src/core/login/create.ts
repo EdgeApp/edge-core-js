@@ -52,6 +52,9 @@ export async function makeCreateKit(
   appId: string,
   opts: LoginCreateOpts
 ): Promise<LoginKit> {
+  // For crash errors:
+  ai.props.log.breadcrumb('makeCreateKit', {})
+
   const { keyInfo, password, pin, username } = opts
   const { io } = ai.props
 
@@ -144,6 +147,9 @@ export async function createLogin(
   accountOpts: EdgeAccountOptions,
   opts: LoginCreateOpts
 ): Promise<LoginTree> {
+  // For crash errors:
+  ai.props.log.breadcrumb('createLogin', {})
+
   const { now = new Date() } = accountOpts
 
   const kit = await makeCreateKit(ai, undefined, '', opts)

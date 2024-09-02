@@ -350,6 +350,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     // ----------------------------------------------------------------
 
     async fetchLobby(lobbyId: string): Promise<EdgeLobby> {
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeAccount.fetchLobby', {})
+
       lockdown()
       return await makeLobbyApi(ai, accountId, lobbyId)
     },
@@ -380,6 +383,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     async createWallet(walletType: string, keys?: object): Promise<string> {
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeAccount.createWallet', {})
+
       const { login, loginTree } = accountState()
 
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, { keys })
@@ -493,6 +499,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       walletType: string,
       opts: EdgeCreateCurrencyWalletOptions = {}
     ): Promise<EdgeCurrencyWallet> {
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeAccount.createCurrencyWallet', {})
+
       const { login, loginTree } = accountState()
 
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, opts)
@@ -515,6 +524,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async createCurrencyWallets(
       createWallets: EdgeCreateCurrencyWallet[]
     ): Promise<Array<EdgeResult<EdgeCurrencyWallet>>> {
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeAccount.makeMemoryWallet', {})
+
       const { login, loginTree } = accountState()
 
       // Create the keys:

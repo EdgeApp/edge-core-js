@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Log HTTP 409 errors from login server with breadcrumbs.
+
 ## 2.13.1 (2024-08-23)
 
 - fixed: Use full URI to determine whether a request has previously succeeded CORS

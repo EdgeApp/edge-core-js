@@ -78,6 +78,9 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async createAccount(
       opts: EdgeCreateAccountOptions & EdgeAccountOptions
     ): Promise<EdgeAccount> {
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeContext.createAccount', {})
+
       if (opts.username != null) {
         opts.username = fixUsername(opts.username)
       }
@@ -116,6 +119,9 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       password: string,
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeContext.loginWithPassword', {})
+
       username = fixUsername(username)
       const stashTree = getStashByUsername(ai, username)
       const loginTree = await loginPassword(
@@ -134,6 +140,9 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       pin: string,
       opts = {}
     ): Promise<EdgeAccount> {
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeContext.loginWithPIN', {})
+
       const { useLoginId = false } = opts
 
       const stashTree = useLoginId
@@ -153,6 +162,9 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       answers: string[],
       opts: EdgeAccountOptions = {}
     ): Promise<EdgeAccount> {
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeContext.loginWithRecovery2', {})
+
       username = fixUsername(username)
       const stashTree = getStashByUsername(ai, username)
       const loginTree = await loginRecovery2(
@@ -176,6 +188,9 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async requestEdgeLogin(
       opts?: EdgeAccountOptions
     ): Promise<EdgePendingEdgeLogin> {
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeContext.requestEdgeLogin', {})
+
       return await requestEdgeLogin(ai, appId, opts)
     },
 

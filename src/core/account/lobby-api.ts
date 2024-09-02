@@ -70,6 +70,9 @@ async function approveLoginRequest(
   lobbyId: string,
   lobbyJson: EdgeLobbyRequest
 ): Promise<void> {
+  // For crash errors:
+  ai.props.log.breadcrumb('approveLoginRequest', {})
+
   const { login, loginTree } = ai.props.state.accounts[accountId]
 
   // Ensure that the login object & account repo exist:
@@ -153,6 +156,9 @@ async function unpackLoginRequest(
   lobbyJson: EdgeLobbyRequest,
   appId: string
 ): Promise<EdgeLoginRequest> {
+  // For crash errors:
+  ai.props.log.breadcrumb('unpackLoginRequest', {})
+
   const info = await fetchAppIdInfo(ai, appId)
 
   // Make the API:

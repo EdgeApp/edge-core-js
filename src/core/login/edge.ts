@@ -39,6 +39,9 @@ async function unpackAccount(
   appId: string,
   opts: EdgeAccountOptions
 ): Promise<EdgeAccount> {
+  // For crash errors:
+  ai.props.log.breadcrumb('unpackAccount', {})
+
   const { now = new Date() } = opts
   const { loginKey, loginStash: stashTree } = payload
 

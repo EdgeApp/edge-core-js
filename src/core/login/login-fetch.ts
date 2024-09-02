@@ -88,6 +88,13 @@ export function loginFetch(
     response => {
       const time = Date.now() - start
       log(`${method} ${fullUri} returned ${response.status} in ${time}ms`)
+
+      if (response.status === 409) {
+        log.crash(`Login API conflict error`, {
+          path
+        })
+      }
+
       return response.json().then(parseReply, () => {
         throw new Error(`Invalid reply JSON, HTTP status ${response.status}`)
       })
