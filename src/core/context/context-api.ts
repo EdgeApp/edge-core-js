@@ -78,9 +78,10 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       return { challengeId, challengeUri }
     },
 
-    async usernameAvailable(username: string): Promise<boolean> {
+    async usernameAvailable(username: string, opts = {}): Promise<boolean> {
+      const { challengeId } = opts
       username = fixUsername(username)
-      return await usernameAvailable(ai, username)
+      return await usernameAvailable(ai, username, challengeId)
     },
 
     async createAccount(

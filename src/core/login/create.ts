@@ -29,10 +29,12 @@ export interface LoginCreateOpts {
  */
 export async function usernameAvailable(
   ai: ApiInput,
-  username: string
+  username: string,
+  challengeId?: string
 ): Promise<boolean> {
   const userId = await hashUsername(ai, username)
   const request = {
+    challengeId,
     userId
   }
   return await loginFetch(ai, 'POST', '/v2/login', request)

@@ -1847,7 +1847,10 @@ export interface EdgeContext {
     challengeUri?: string
   }>
   readonly fixUsername: (username: string) => string
-  readonly usernameAvailable: (username: string) => Promise<boolean>
+  readonly usernameAvailable: (
+    username: string,
+    opts?: { challengeId?: string }
+  ) => Promise<boolean>
   readonly createAccount: (
     opts: EdgeCreateAccountOptions & EdgeAccountOptions
   ) => Promise<EdgeAccount>
