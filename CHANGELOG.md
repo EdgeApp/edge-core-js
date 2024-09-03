@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.14.0 (2024-09-03)
+
 - added: Log HTTP 409 errors from login server with breadcrumbs.
 
 ## 2.13.1 (2024-08-23)
