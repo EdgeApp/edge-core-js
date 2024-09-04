@@ -148,17 +148,18 @@ export async function deletePassword(
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const kit: LoginKit = {
+    login: {
+      passwordAuth: undefined
+    },
+    loginId: loginTree.loginId,
+    server: undefined,
     serverMethod: 'DELETE',
     serverPath: '/v2/login/password',
     stash: {
       passwordAuthSnrp: undefined,
       passwordBox: undefined,
       passwordKeySnrp: undefined
-    },
-    login: {
-      passwordAuth: undefined
-    },
-    loginId: loginTree.loginId
+    }
   }
   // Only remove `passwordAuth` if we have another way to get in:
   if (loginTree.loginAuth != null) {
@@ -197,7 +198,10 @@ export async function makePasswordKit(
     ])
 
   return {
-    serverPath: '/v2/login/password',
+    login: {
+      passwordAuth
+    },
+    loginId: login.loginId,
     server: wasChangePasswordPayload({
       passwordAuth,
       passwordAuthSnrp, // TODO: Use this on the other side
@@ -205,14 +209,11 @@ export async function makePasswordKit(
       passwordBox,
       passwordAuthBox
     }),
+    serverPath: '/v2/login/password',
     stash: {
       passwordKeySnrp,
       passwordBox,
       passwordAuthBox
-    },
-    login: {
-      passwordAuth
-    },
-    loginId: login.loginId
+    }
   }
 }

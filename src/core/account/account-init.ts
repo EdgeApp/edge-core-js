@@ -49,11 +49,11 @@ async function createChildLogin(
   )
   const kit = await makeCreateKit(ai, login, appId, opts)
   const parentKit: LoginKit = {
-    serverPath: kit.serverPath,
-    server: kit.server,
     login: { children: [kit.login as LoginTree] },
-    stash: { children: [kit.stash as LoginStash] },
-    loginId: login.loginId
+    loginId: login.loginId,
+    server: kit.server,
+    serverPath: kit.serverPath,
+    stash: { children: [kit.stash as LoginStash] }
   }
   return await applyKit(ai, loginTree, parentKit)
 }

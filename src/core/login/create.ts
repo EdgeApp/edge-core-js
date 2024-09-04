@@ -103,8 +103,18 @@ export async function makeCreateKit(
 
   // Bundle everything:
   return {
+    login: {
+      appId,
+      loginId,
+      loginKey,
+      keyInfos: [],
+      ...keysKit?.login,
+      ...passwordKit?.login,
+      ...pin2Kit?.login,
+      ...secretKit.login,
+      ...usernameKit?.login
+    },
     loginId,
-    serverPath: '/v2/login/create',
     server: {
       ...wasCreateLoginPayload({
         appId,
@@ -117,6 +127,7 @@ export async function makeCreateKit(
       ...secretKit.server,
       ...usernameKit?.server
     },
+    serverPath: '/v2/login/create',
     stash: {
       appId,
       loginId,
@@ -126,17 +137,6 @@ export async function makeCreateKit(
       ...pin2Kit?.stash,
       ...secretKit.stash,
       ...usernameKit?.stash
-    },
-    login: {
-      appId,
-      loginId,
-      loginKey,
-      keyInfos: [],
-      ...keysKit?.login,
-      ...passwordKit?.login,
-      ...pin2Kit?.login,
-      ...secretKit.login,
-      ...usernameKit?.login
     }
   }
 }

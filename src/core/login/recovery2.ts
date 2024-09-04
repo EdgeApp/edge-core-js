@@ -112,15 +112,16 @@ export async function deleteRecovery(
   const { loginTree } = ai.props.state.accounts[accountId]
 
   const kit = {
+    login: {
+      recovery2Key: undefined
+    },
+    loginId: loginTree.loginId,
+    server: undefined,
     serverMethod: 'DELETE',
     serverPath: '/v2/login/recovery2',
     stash: {
       recovery2Key: undefined
-    },
-    login: {
-      recovery2Key: undefined
-    },
-    loginId: loginTree.loginId
+    }
   }
   await applyKit(ai, loginTree, kit)
 }
@@ -175,7 +176,10 @@ export function makeRecovery2Kit(
   const recovery2KeyBox = encrypt(io, recovery2Key, loginKey)
 
   return {
-    serverPath: '/v2/login/recovery2',
+    login: {
+      recovery2Key
+    },
+    loginId,
     server: wasChangeRecovery2Payload({
       recovery2Id: makeRecovery2Id(recovery2Key, username),
       recovery2Auth: makeRecovery2Auth(recovery2Key, answers),
@@ -183,13 +187,10 @@ export function makeRecovery2Kit(
       recovery2KeyBox,
       question2Box
     }),
+    serverPath: '/v2/login/recovery2',
     stash: {
       recovery2Key
-    },
-    login: {
-      recovery2Key
-    },
-    loginId
+    }
   }
 }
 

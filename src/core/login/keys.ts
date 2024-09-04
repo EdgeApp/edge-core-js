@@ -84,11 +84,11 @@ export function makeKeysKit(
   }
 
   return {
-    serverPath: '/v2/login/keys',
-    server: wasCreateKeysPayload({ keyBoxes, newSyncKeys }),
-    stash: { keyBoxes },
     login: { keyInfos },
-    loginId: login.loginId
+    loginId: login.loginId,
+    server: wasCreateKeysPayload({ keyBoxes, newSyncKeys }),
+    serverPath: '/v2/login/keys',
+    stash: { keyBoxes }
   }
 }
 

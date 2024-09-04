@@ -54,11 +54,33 @@ export interface AppIdMap {
 }
 
 export interface LoginKit {
-  loginId: Uint8Array
+  /**
+   * A diff to apply to the login tree, starting at the `loginId` node.
+   * We want to eliminate this, and simply decrypt the stash.
+   */
   login: Partial<LoginTree>
-  server?: object
+
+  /** The change will affect the node with this ID. */
+  loginId: Uint8Array
+
+  /**
+   * The login-server payload that achieves the change.
+   * Not all routes take a payload, such as the DELETE routes.
+   */
+  server: object | undefined
+
+  /**
+   * The login-server HTTP method that makes the change.
+   * Defaults to "POST" if not present.
+   */
   serverMethod?: string
   serverPath: string
+
+  /**
+   * A diff to apply to the stash tree, starting at the `loginId` node.
+   * TODO: Update the login server to return a diff on every endpoint,
+   * so we can get rid of this.
+   */
   stash: Partial<LoginStash>
 }
 
