@@ -171,7 +171,7 @@ export async function deletePassword(
 /**
  * Creates the data needed to attach a password to a login.
  */
-export function makePasswordKit(
+export async function makePasswordKit(
   ai: ApiInput,
   login: LoginTree,
   username: string,
@@ -180,44 +180,39 @@ export function makePasswordKit(
   const up = makeHashInput(username, password)
   const { io } = ai.props
 
-  // loginKey chain:
-  const boxPromise = makeSnrp(ai).then(passwordKeySnrp => {
-    return scrypt(ai, up, passwordKeySnrp).then(passwordKey => {
-      const passwordBox = encrypt(io, login.loginKey, passwordKey)
-      return { passwordKeySnrp, passwordBox }
-    })
-  })
-
-  // authKey chain:
-  const authPromise = scrypt(ai, up, passwordAuthSnrp).then(passwordAuth => {
-    const passwordAuthBox = encrypt(io, passwordAuth, login.loginKey)
-    return { passwordAuth, passwordAuthBox }
-  })
-
-  return Promise.all([boxPromise, authPromise]).then(values => {
-    const [
-      { passwordKeySnrp, passwordBox },
-      { passwordAuth, passwordAuthBox }
-    ] = values
-
-    return {
-      serverPath: '/v2/login/password',
-      server: wasChangePasswordPayload({
-        passwordAuth,
-        passwordAuthSnrp, // TODO: Use this on the other side
-        passwordKeySnrp,
-        passwordBox,
-        passwordAuthBox
+  const [{ passwordKeySnrp, passwordBox }, { passwordAuth, passwordAuthBox }] =
+    await Promise.all([
+      // The loginKey, encrypted by the passwordKey:
+      makeSnrp(ai).then(async passwordKeySnrp => {
+        const passwordKey = await scrypt(ai, up, passwordKeySnrp)
+        const passwordBox = encrypt(io, login.loginKey, passwordKey)
+        return { passwordKeySnrp, passwordBox }
       }),
-      stash: {
-        passwordKeySnrp,
-        passwordBox,
-        passwordAuthBox
-      },
-      login: {
-        passwordAuth
-      },
-      loginId: login.loginId
-    }
-  })
+
+      // The passwordAuth, encrypted by the loginKey:
+      scrypt(ai, up, passwordAuthSnrp).then(passwordAuth => {
+        const passwordAuthBox = encrypt(io, passwordAuth, login.loginKey)
+        return { passwordAuth, passwordAuthBox }
+      })
+    ])
+
+  return {
+    serverPath: '/v2/login/password',
+    server: wasChangePasswordPayload({
+      passwordAuth,
+      passwordAuthSnrp, // TODO: Use this on the other side
+      passwordKeySnrp,
+      passwordBox,
+      passwordAuthBox
+    }),
+    stash: {
+      passwordKeySnrp,
+      passwordBox,
+      passwordAuthBox
+    },
+    login: {
+      passwordAuth
+    },
+    loginId: login.loginId
+  }
 }
