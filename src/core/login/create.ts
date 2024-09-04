@@ -149,13 +149,13 @@ export async function createLogin(
   accountOpts: EdgeAccountOptions,
   opts: LoginCreateOpts
 ): Promise<LoginTree> {
+  const { challengeId, now = new Date() } = accountOpts
+
   // For crash errors:
   ai.props.log.breadcrumb('createLogin', {})
 
-  const { now = new Date() } = accountOpts
-
   const kit = await makeCreateKit(ai, undefined, '', opts)
-  const request = { data: kit.server }
+  const request = { challengeId, data: kit.server }
   await loginFetch(ai, 'POST', kit.serverPath, request)
 
   kit.stash.lastLogin = now
