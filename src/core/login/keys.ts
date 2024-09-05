@@ -104,17 +104,18 @@ export function makeKeysKit(
  */
 export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
   const out: EdgeWalletInfo[] = []
-  const ids: { [id: string]: number } = {} // Maps ID's to output array indexes
+  const ids = new Map<string, number>() // Maps ID's to output array indexes
 
   for (const keyInfo of keyInfos) {
-    const { id, type, keys } = keyInfo
+    const { id, keys, type } = keyInfo
     if (id == null || base64.parse(id).length !== 32) {
       throw new Error(`Key integrity violation: invalid id ${id}`)
     }
 
-    if (ids[id] != null) {
+    const index = ids.get(id)
+    if (index != null) {
       // We have already seen this id, so check for conflicts:
-      const old = out[ids[id]]
+      const old = out[index]
       if (old.type !== type) {
         throw new Error(
           `Key integrity violation for ${id}: type ${type} does not match ${old.type}`
@@ -129,10 +130,10 @@ export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
       }
 
       // Do the update:
-      out[ids[id]] = { id, type, keys: { ...old.keys, ...keys } }
+      out[index] = { id, keys: { ...old.keys, ...keys }, type }
     } else {
       // We haven't seen this id, so insert it:
-      ids[id] = out.length
+      ids.set(id, out.length)
       out.push(keyInfo)
     }
   }
