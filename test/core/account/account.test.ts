@@ -160,6 +160,9 @@ describe('account', function () {
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
     const walletId = 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54='
+    expect(account.getWalletInfo(walletId)?.created).deep.equals(
+      new Date('2024-01-01')
+    )
     expect(await account.getRawPrivateKey(walletId)).deep.equals({
       dataKey: 'RlY1l6wQ5ntQgUHE70vG/2M/qiLdvWMnIAM7KJIcsDs=',
       fakecoinKey: 'zARFBBkgUe6pYB6l',

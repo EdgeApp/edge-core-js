@@ -189,6 +189,7 @@ export interface EdgeWalletInfo {
 export type EdgeWalletInfoFull = EdgeWalletInfo & {
   appIds: string[]
   archived: boolean
+  created?: Date
   deleted: boolean
   hidden: boolean
   migratedFromWalletId?: string

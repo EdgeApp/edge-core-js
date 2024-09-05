@@ -148,7 +148,8 @@ export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
  */
 export function decryptKeyInfos(
   stash: LoginStash,
-  loginKey: Uint8Array
+  loginKey: Uint8Array,
+  keyDates = new Map<string, Date>()
 ): EdgeWalletInfo[] {
   const { appId, keyBoxes = [] } = stash
 
@@ -175,9 +176,12 @@ export function decryptKeyInfos(
   }
 
   // Keys:
-  const keyInfos = keyBoxes.map(box =>
-    asEdgeWalletInfo(JSON.parse(decryptText(box, loginKey)))
-  )
+  const keyInfos = keyBoxes.map(box => {
+    const keys = asEdgeWalletInfo(JSON.parse(decryptText(box, loginKey)))
+    const created = mergeKeyDate(box.created, keyDates.get(keys.id))
+    if (created != null) keyDates.set(keys.id, created)
+    return keys
+  })
   return mergeKeyInfos([...legacyKeys, ...keyInfos]).map(walletInfo =>
     fixWalletInfo(walletInfo)
   )
@@ -193,6 +197,7 @@ export function decryptAllWalletInfos(
   walletStates: EdgeWalletStates
 ): EdgeWalletInfoFull[] {
   // Maps from walletId's to appId's:
+  const dates = new Map<string, Date>()
   const appIdMap = new Map<string, string[]>()
   const walletInfos: EdgeWalletInfo[] = [...legacyWalletInfos]
 
@@ -213,7 +218,7 @@ export function decryptAllWalletInfos(
     loginKey: Uint8Array
   ): void {
     // Add our own walletInfos:
-    const keyInfos = decryptKeyInfos(stash, loginKey)
+    const keyInfos = decryptKeyInfos(stash, loginKey, dates)
     for (const info of keyInfos) {
       walletInfos.push(info)
 
@@ -236,6 +241,7 @@ export function decryptAllWalletInfos(
 
     // Defaults to be overwritten:
     archived: false,
+    created: dates.get(info.id),
     deleted: false,
     hidden: false,
     sortIndex: walletInfos.length,
@@ -388,4 +394,16 @@ export async function finishWalletCreation(
 
 function getLast<T>(array: T[]): T {
   return array[array.length - 1]
+}
+
+/**
+ * Returns the earliest date, or undefined if neither date exists.
+ */
+function mergeKeyDate(
+  a: Date | undefined,
+  b: Date | undefined
+): Date | undefined {
+  if (a == null) return b
+  if (b == null) return a
+  return new Date(Math.min(a.valueOf(), b.valueOf()))
 }
