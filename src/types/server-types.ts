@@ -14,6 +14,13 @@ export interface EdgeBox {
 }
 
 /**
+ * Encrypted wallet private keys along with a creation date.
+ */
+export interface EdgeKeyBox extends EdgeBox {
+  created: Date
+}
+
+/**
  * Edge-format scrypt parameters.
  */
 export interface EdgeSnrp {
@@ -256,7 +263,7 @@ export interface LoginPayload {
   pendingVouchers: EdgePendingVoucher[]
 
   // Resources:
-  keyBoxes?: EdgeBox[]
+  keyBoxes?: EdgeKeyBox[]
   mnemonicBox?: EdgeBox
   rootKeyBox?: EdgeBox
   syncKeyBox?: EdgeBox

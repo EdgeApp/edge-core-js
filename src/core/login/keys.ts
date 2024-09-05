@@ -77,13 +77,14 @@ export function makeKeysKit(
   ai.props.log.breadcrumb('makeKeysKit', {})
 
   const { io } = ai.props
-  const keyBoxes = keyInfos.map(info =>
-    encrypt(
+  const keyBoxes = keyInfos.map(info => ({
+    created: new Date(),
+    ...encrypt(
       io,
       utf8.parse(JSON.stringify(wasEdgeWalletInfo(info))),
       sessionKey.loginKey
     )
-  )
+  }))
 
   const newSyncKeys: string[] = []
   for (const info of keyInfos) {

@@ -30,6 +30,7 @@ import type {
   CreateKeysPayload,
   CreateLoginPayload,
   EdgeBox,
+  EdgeKeyBox,
   EdgeLobbyReply,
   EdgeLobbyRequest,
   EdgeSnrp,
@@ -90,6 +91,13 @@ export const asEdgePendingVoucher: Cleaner<EdgePendingVoucher> = asObject({
 export const asEdgeBox: Cleaner<EdgeBox> = asObject({
   encryptionType: asNumber,
   data_base64: asBase64,
+  iv_hex: asBase16
+})
+
+export const asEdgeKeyBox: Cleaner<EdgeKeyBox> = asObject({
+  created: asDate,
+  data_base64: asBase64,
+  encryptionType: asNumber,
   iv_hex: asBase16
 })
 
@@ -314,7 +322,7 @@ export const asLoginPayload: Cleaner<LoginPayload> = asObject({
   pendingVouchers: asOptional(asArray(asEdgePendingVoucher), () => []),
 
   // Resources:
-  keyBoxes: asOptional(asArray(asEdgeBox)),
+  keyBoxes: asOptional(asArray(asEdgeKeyBox)),
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
   syncKeyBox: asOptional(asEdgeBox)

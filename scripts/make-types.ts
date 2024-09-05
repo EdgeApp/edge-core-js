@@ -17,7 +17,10 @@ async function tsToFlow(code: string): Promise<string> {
     .replace(/\bexport declare\b/g, 'declare export')
     .replace(/\binterface (\w+) {/g, 'type $1 = {')
     .replace(/\binterface (\w+)<([^>]+)> {/g, 'type $1<$2> = {')
-    .replace(/\binterface (\w+) extends (\w+) {/g, 'type $1 = {\n  ...$2;')
+    .replace(
+      /\binterface (\w+) extends (\w+) {/g,
+      'type $1 = {\n  ...$Exact<$2>;'
+    )
     .replace(/\bunknown\b/g, 'mixed')
     .replace(/\| undefined\b/g, '| void')
     .replace(/: undefined\b/g, ': void')
