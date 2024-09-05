@@ -7,30 +7,18 @@ import { base64 } from 'rfc4648'
 
 import { asLoginPayload } from '../../types/server-cleaners'
 import { LoginPayload, LoginRequestBody } from '../../types/server-types'
-import {
-  asMaybeOtpError,
-  EdgeAccountOptions,
-  EdgeWalletInfo
-} from '../../types/types'
+import { asMaybeOtpError, EdgeAccountOptions } from '../../types/types'
 import { decrypt, decryptText } from '../../util/crypto/crypto'
-import { hmacSha256 } from '../../util/crypto/hashes'
 import { verifyData } from '../../util/crypto/verify'
-import { utf8 } from '../../util/encoding'
 import { softCat } from '../../util/util'
 import { ApiInput } from '../root-pixie'
-import {
-  fixWalletInfo,
-  makeAccountType,
-  makeKeyInfo,
-  mergeKeyInfos
-} from './keys'
+import { decryptKeyInfos, mergeKeyInfos } from './keys'
 import { loginFetch } from './login-fetch'
 import { makeSecretKit } from './login-secret'
 import { getStashById } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
-import { asEdgeWalletInfo, LoginKit, LoginTree } from './login-types'
+import { LoginKit, LoginTree } from './login-types'
 import { getLoginOtp, getStashOtp } from './otp'
-import { wasEdgeStorageKeys } from './storage-keys'
 
 /**
  * Returns the login that satisfies the given predicate,
@@ -213,8 +201,7 @@ function makeLoginTreeInner(
     pendingVouchers,
     userId,
     username,
-    children: stashChildren = [],
-    keyBoxes = []
+    children: stashChildren = []
   } = stash
 
   const login: LoginTree = {
@@ -255,35 +242,8 @@ function makeLoginTreeInner(
   // Recovery v2:
   login.recovery2Key = stash.recovery2Key
 
-  const legacyKeys: EdgeWalletInfo[] = []
-
-  // BitID wallet:
-  const { mnemonicBox, rootKeyBox } = stash
-  if (mnemonicBox != null && rootKeyBox != null) {
-    const rootKey = decrypt(rootKeyBox, loginKey)
-    const infoKey = hmacSha256(rootKey, utf8.parse('infoKey'))
-    const keys = {
-      mnemonic: decryptText(mnemonicBox, infoKey),
-      rootKey: base64.stringify(rootKey)
-    }
-    legacyKeys.push(makeKeyInfo('wallet:bitid', keys, rootKey))
-  }
-
-  // Account settings:
-  if (stash.syncKeyBox != null) {
-    const syncKey = decrypt(stash.syncKeyBox, loginKey)
-    const type = makeAccountType(login.appId)
-    const keys = wasEdgeStorageKeys({ dataKey: loginKey, syncKey })
-    legacyKeys.push(makeKeyInfo(type, keys, loginKey))
-  }
-
   // Keys:
-  const keyInfos = keyBoxes.map(box =>
-    asEdgeWalletInfo(JSON.parse(decryptText(box, loginKey)))
-  )
-  login.keyInfos = mergeKeyInfos([...legacyKeys, ...keyInfos]).map(walletInfo =>
-    fixWalletInfo(walletInfo)
-  )
+  login.keyInfos = decryptKeyInfos(stash, loginKey)
 
   // Recurse into children:
   login.children = stashChildren.map(child => {
