@@ -126,6 +126,7 @@ function wrapQuote(
     request: quote.request ?? request,
     swapInfo: quote.swapInfo ?? swapPlugins[quote.pluginId].swapInfo,
     toNativeAmount: quote.toNativeAmount,
+    minReceiveAmount: quote.minReceiveAmount,
 
     async approve(opts) {
       return await quote.approve(opts)
