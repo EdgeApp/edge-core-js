@@ -142,8 +142,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         const ai = toApiInput(input)
         const { accountId } = input.props
         if (input.props.state.accounts[accountId] == null) return
-        const { login, loginTree } = input.props.state.accounts[accountId]
-        await syncLogin(ai, loginTree, login)
+        const { sessionKey } = input.props.state.accounts[accountId]
+        await syncLogin(ai, sessionKey)
       }
 
       // We don't report sync failures, since that could be annoying:

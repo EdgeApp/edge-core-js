@@ -21,7 +21,7 @@ import {
   TxidHashes
 } from './currency/wallet/currency-wallet-reducer'
 import { LoginStash } from './login/login-stash'
-import { LoginType } from './login/login-types'
+import { LoginType, SessionKey } from './login/login-types'
 import {
   StorageWalletState,
   StorageWalletStatus
@@ -354,12 +354,10 @@ export type RootAction =
       // Fires when a user logs in.
       type: 'LOGIN'
       payload: {
-        appId: string
-        hasRootKey: boolean
-        loginKey: Uint8Array
         loginType: LoginType
         pauseWallets: boolean
         rootLoginId: Uint8Array
+        sessionKey: SessionKey
       }
     }
   | {

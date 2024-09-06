@@ -38,79 +38,67 @@ export async function enableOtp(
   accountId: string,
   otpTimeout: number
 ): Promise<void> {
-  const { loginTree } = ai.props.state.accounts[accountId]
+  const { loginTree, sessionKey } = ai.props.state.accounts[accountId]
   const { otpKey = ai.props.io.random(10) } = loginTree
 
   const kit: LoginKit = {
-    serverPath: '/v2/login/otp',
+    loginId: loginTree.loginId,
     server: wasChangeOtpPayload({
       otpKey,
       otpTimeout
     }),
+    serverPath: '/v2/login/otp',
     stash: {
       otpKey,
       otpResetDate: undefined,
       otpTimeout
-    },
-    login: {
-      otpKey,
-      otpResetDate: undefined,
-      otpTimeout
-    },
-    loginId: loginTree.loginId
+    }
   }
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 export async function disableOtp(
   ai: ApiInput,
   accountId: string
 ): Promise<void> {
-  const { loginTree } = ai.props.state.accounts[accountId]
+  const { loginTree, sessionKey } = ai.props.state.accounts[accountId]
 
   const kit: LoginKit = {
+    loginId: loginTree.loginId,
+    server: undefined,
     serverMethod: 'DELETE',
     serverPath: '/v2/login/otp',
     stash: {
       otpKey: undefined,
       otpResetDate: undefined,
       otpTimeout: undefined
-    },
-    login: {
-      otpKey: undefined,
-      otpResetDate: undefined,
-      otpTimeout: undefined
-    },
-    loginId: loginTree.loginId
+    }
   }
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 export async function cancelOtpReset(
   ai: ApiInput,
   accountId: string
 ): Promise<void> {
-  const { loginTree } = ai.props.state.accounts[accountId]
+  const { loginTree, sessionKey } = ai.props.state.accounts[accountId]
   const { otpTimeout, otpKey } = loginTree
   if (otpTimeout == null || otpKey == null) {
     throw new Error('Cannot cancel 2FA reset: 2FA is not enabled.')
   }
 
   const kit: LoginKit = {
-    serverPath: '/v2/login/otp',
+    loginId: loginTree.loginId,
     server: wasChangeOtpPayload({
       otpTimeout,
       otpKey
     }),
+    serverPath: '/v2/login/otp',
     stash: {
       otpResetDate: undefined
-    },
-    login: {
-      otpResetDate: undefined
-    },
-    loginId: loginTree.loginId
+    }
   }
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 /**

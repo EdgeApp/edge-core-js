@@ -3,10 +3,10 @@ import { EdgeAccountOptions } from '../../types/types'
 import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { ApiInput } from '../root-pixie'
 import { makeSnrp, scrypt, userIdSnrp } from '../scrypt/scrypt-selectors'
-import { applyKit, makeLoginTree, serverLogin, syncLogin } from './login'
+import { applyKit, serverLogin, syncLogin } from './login'
 import { hashUsername } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
-import { LoginKit, LoginTree } from './login-types'
+import { LoginKit, LoginTree, SessionKey } from './login-types'
 
 const passwordAuthSnrp = userIdSnrp
 
@@ -22,7 +22,7 @@ async function loginPasswordOffline(
   stashTree: LoginStash,
   password: string,
   opts: EdgeAccountOptions
-): Promise<LoginTree> {
+): Promise<SessionKey> {
   const { now = new Date() } = opts
 
   const { passwordBox, passwordKeySnrp, username } = stashTree
@@ -31,17 +31,21 @@ async function loginPasswordOffline(
   }
   const up = makeHashInput(username, password)
   const passwordKey = await scrypt(ai, up, passwordKeySnrp)
-  const loginKey = decrypt(passwordBox, passwordKey)
-  const loginTree = makeLoginTree(stashTree, loginKey)
+  const sessionKey = {
+    loginId: stashTree.loginId,
+    loginKey: decrypt(passwordBox, passwordKey)
+  }
+
+  // Save the date:
   stashTree.lastLogin = now
   saveStash(ai, stashTree).catch(() => {})
 
   // Since we logged in offline, update the stash in the background:
   // TODO: If the user provides an OTP token, add that to the stash.
   const { log } = ai.props
-  syncLogin(ai, loginTree, loginTree).catch(error => log.error(error))
+  syncLogin(ai, sessionKey).catch(error => log.error(error))
 
-  return loginTree
+  return sessionKey
 }
 
 /**
@@ -52,7 +56,7 @@ async function loginPasswordOnline(
   stashTree: LoginStash,
   password: string,
   opts: EdgeAccountOptions
-): Promise<LoginTree> {
+): Promise<SessionKey> {
   const { username } = stashTree
   if (username == null) throw new Error('Password login requires a username')
 
@@ -98,7 +102,7 @@ export async function loginPassword(
   stashTree: LoginStash,
   password: string,
   opts: EdgeAccountOptions
-): Promise<LoginTree> {
+): Promise<SessionKey> {
   return await loginPasswordOffline(ai, stashTree, password, opts).catch(() =>
     loginPasswordOnline(ai, stashTree, password, opts)
   )
@@ -110,12 +114,12 @@ export async function changePassword(
   password: string
 ): Promise<void> {
   const accountState = ai.props.state.accounts[accountId]
-  const { loginTree } = accountState
+  const { loginTree, sessionKey } = accountState
   const { username } = accountState.stashTree
   if (username == null) throw new Error('Password login requires a username')
 
   const kit = await makePasswordKit(ai, loginTree, username, password)
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 /**
@@ -145,33 +149,30 @@ export async function deletePassword(
   ai: ApiInput,
   accountId: string
 ): Promise<void> {
-  const { loginTree } = ai.props.state.accounts[accountId]
+  const { loginTree, sessionKey } = ai.props.state.accounts[accountId]
 
   const kit: LoginKit = {
+    loginId: loginTree.loginId,
+    server: undefined,
     serverMethod: 'DELETE',
     serverPath: '/v2/login/password',
     stash: {
       passwordAuthSnrp: undefined,
       passwordBox: undefined,
       passwordKeySnrp: undefined
-    },
-    login: {
-      passwordAuth: undefined
-    },
-    loginId: loginTree.loginId
+    }
   }
   // Only remove `passwordAuth` if we have another way to get in:
   if (loginTree.loginAuth != null) {
     kit.stash.passwordAuthBox = undefined
-    kit.login.passwordAuth = undefined
   }
-  await applyKit(ai, loginTree, kit)
+  await applyKit(ai, sessionKey, kit)
 }
 
 /**
  * Creates the data needed to attach a password to a login.
  */
-export function makePasswordKit(
+export async function makePasswordKit(
   ai: ApiInput,
   login: LoginTree,
   username: string,
@@ -180,44 +181,36 @@ export function makePasswordKit(
   const up = makeHashInput(username, password)
   const { io } = ai.props
 
-  // loginKey chain:
-  const boxPromise = makeSnrp(ai).then(passwordKeySnrp => {
-    return scrypt(ai, up, passwordKeySnrp).then(passwordKey => {
-      const passwordBox = encrypt(io, login.loginKey, passwordKey)
-      return { passwordKeySnrp, passwordBox }
-    })
-  })
-
-  // authKey chain:
-  const authPromise = scrypt(ai, up, passwordAuthSnrp).then(passwordAuth => {
-    const passwordAuthBox = encrypt(io, passwordAuth, login.loginKey)
-    return { passwordAuth, passwordAuthBox }
-  })
-
-  return Promise.all([boxPromise, authPromise]).then(values => {
-    const [
-      { passwordKeySnrp, passwordBox },
-      { passwordAuth, passwordAuthBox }
-    ] = values
-
-    return {
-      serverPath: '/v2/login/password',
-      server: wasChangePasswordPayload({
-        passwordAuth,
-        passwordAuthSnrp, // TODO: Use this on the other side
-        passwordKeySnrp,
-        passwordBox,
-        passwordAuthBox
+  const [{ passwordKeySnrp, passwordBox }, { passwordAuth, passwordAuthBox }] =
+    await Promise.all([
+      // The loginKey, encrypted by the passwordKey:
+      makeSnrp(ai).then(async passwordKeySnrp => {
+        const passwordKey = await scrypt(ai, up, passwordKeySnrp)
+        const passwordBox = encrypt(io, login.loginKey, passwordKey)
+        return { passwordKeySnrp, passwordBox }
       }),
-      stash: {
-        passwordKeySnrp,
-        passwordBox,
-        passwordAuthBox
-      },
-      login: {
-        passwordAuth
-      },
-      loginId: login.loginId
+
+      // The passwordAuth, encrypted by the loginKey:
+      scrypt(ai, up, passwordAuthSnrp).then(passwordAuth => {
+        const passwordAuthBox = encrypt(io, passwordAuth, login.loginKey)
+        return { passwordAuth, passwordAuthBox }
+      })
+    ])
+
+  return {
+    loginId: login.loginId,
+    server: wasChangePasswordPayload({
+      passwordAuth,
+      passwordAuthSnrp, // TODO: Use this on the other side
+      passwordKeySnrp,
+      passwordBox,
+      passwordAuthBox
+    }),
+    serverPath: '/v2/login/password',
+    stash: {
+      passwordKeySnrp,
+      passwordBox,
+      passwordAuthBox
     }
-  })
+  }
 }

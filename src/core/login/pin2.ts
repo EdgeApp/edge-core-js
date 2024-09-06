@@ -12,7 +12,7 @@ import { applyKits, searchTree, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
 import { getStashById } from './login-selectors'
 import { LoginStash } from './login-stash'
-import { LoginKit, LoginTree } from './login-types'
+import { LoginKit, LoginTree, SessionKey } from './login-types'
 import { getLoginOtp } from './otp'
 
 function makePin2Id(
@@ -49,7 +49,7 @@ export async function loginPin2(
   stashTree: LoginStash,
   pin: string,
   opts: EdgeAccountOptions
-): Promise<LoginTree> {
+): Promise<SessionKey> {
   const stash = findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
     throw new Error('PIN login is not enabled for this account on this device')
@@ -176,7 +176,6 @@ export function makeChangePin2IdKit(
   if (pin2Key == null) return
 
   return {
-    login: {},
     loginId,
     server: wasChangePin2IdPayload({
       pin2Id: makePin2Id(pin2Key, newUsername)
@@ -205,7 +204,7 @@ export function makeChangePin2Kit(
     const pin2KeyBox = encrypt(io, pin2Key, loginKey)
 
     return {
-      serverPath: '/v2/login/pin2',
+      loginId,
       server: wasChangePin2Payload({
         pin2Id: makePin2Id(pin2Key, username),
         pin2Auth: makePin2Auth(pin2Key, pin),
@@ -213,19 +212,15 @@ export function makeChangePin2Kit(
         pin2KeyBox,
         pin2TextBox
       }),
+      serverPath: '/v2/login/pin2',
       stash: {
         pin2Key,
         pin2TextBox
-      },
-      login: {
-        pin2Key,
-        pin
-      },
-      loginId
+      }
     }
   } else {
     return {
-      serverPath: '/v2/login/pin2',
+      loginId: login.loginId,
       server: wasChangePin2Payload({
         pin2Id: undefined,
         pin2Auth: undefined,
@@ -233,15 +228,11 @@ export function makeChangePin2Kit(
         pin2KeyBox: undefined,
         pin2TextBox
       }),
+      serverPath: '/v2/login/pin2',
       stash: {
         pin2Key: undefined,
         pin2TextBox
-      },
-      login: {
-        pin2Key: undefined,
-        pin
-      },
-      loginId: login.loginId
+      }
     }
   }
 }
@@ -264,15 +255,12 @@ export function makeDeletePin2Kits(loginTree: LoginTree): LoginKit[] {
  */
 export function makeDeletePin2Kit(login: LoginTree): LoginKit {
   return {
+    loginId: login.loginId,
+    server: undefined,
     serverMethod: 'DELETE',
     serverPath: '/v2/login/pin2',
-    server: undefined,
     stash: {
       pin2Key: undefined
-    },
-    login: {
-      pin2Key: undefined
-    },
-    loginId: login.loginId
+    }
   }
 }

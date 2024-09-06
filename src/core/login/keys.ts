@@ -7,7 +7,7 @@ import {
   EdgeCurrencyWallet,
   EdgeWalletInfo
 } from '../../types/types'
-import { encrypt } from '../../util/crypto/crypto'
+import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
 import { changeWalletStates } from '../account/account-files'
@@ -17,7 +17,15 @@ import {
   getCurrencyTools
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
-import { AppIdMap, LoginKit, LoginTree, wasEdgeWalletInfo } from './login-types'
+import { LoginStash } from './login-stash'
+import {
+  AppIdMap,
+  asEdgeWalletInfo,
+  LoginKit,
+  LoginTree,
+  SessionKey,
+  wasEdgeWalletInfo
+} from './login-types'
 import {
   asEdgeStorageKeys,
   createStorageKeys,
@@ -61,7 +69,7 @@ export function makeKeyInfo(
  */
 export function makeKeysKit(
   ai: ApiInput,
-  login: LoginTree,
+  sessionKey: SessionKey,
   keyInfos: EdgeWalletInfo[]
 ): LoginKit {
   // For crash errors:
@@ -72,7 +80,7 @@ export function makeKeysKit(
     encrypt(
       io,
       utf8.parse(JSON.stringify(wasEdgeWalletInfo(info))),
-      login.loginKey
+      sessionKey.loginKey
     )
   )
 
@@ -84,11 +92,10 @@ export function makeKeysKit(
   }
 
   return {
-    serverPath: '/v2/login/keys',
+    loginId: sessionKey.loginId,
     server: wasCreateKeysPayload({ keyBoxes, newSyncKeys }),
-    stash: { keyBoxes },
-    login: { keyInfos },
-    loginId: login.loginId
+    serverPath: '/v2/login/keys',
+    stash: { keyBoxes }
   }
 }
 
@@ -131,6 +138,46 @@ export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
   }
 
   return out
+}
+
+/**
+ * Decrypts the private keys contained in a login.
+ */
+export function decryptKeyInfos(
+  stash: LoginStash,
+  loginKey: Uint8Array
+): EdgeWalletInfo[] {
+  const { appId, keyBoxes = [] } = stash
+
+  const legacyKeys: EdgeWalletInfo[] = []
+
+  // BitID wallet:
+  const { mnemonicBox, rootKeyBox } = stash
+  if (mnemonicBox != null && rootKeyBox != null) {
+    const rootKey = decrypt(rootKeyBox, loginKey)
+    const infoKey = hmacSha256(rootKey, utf8.parse('infoKey'))
+    const keys = {
+      mnemonic: decryptText(mnemonicBox, infoKey),
+      rootKey: base64.stringify(rootKey)
+    }
+    legacyKeys.push(makeKeyInfo('wallet:bitid', keys, rootKey))
+  }
+
+  // Account settings:
+  if (stash.syncKeyBox != null) {
+    const syncKey = decrypt(stash.syncKeyBox, loginKey)
+    const type = makeAccountType(appId)
+    const keys = wasEdgeStorageKeys({ dataKey: loginKey, syncKey })
+    legacyKeys.push(makeKeyInfo(type, keys, loginKey))
+  }
+
+  // Keys:
+  const keyInfos = keyBoxes.map(box =>
+    asEdgeWalletInfo(JSON.parse(decryptText(box, loginKey)))
+  )
+  return mergeKeyInfos([...legacyKeys, ...keyInfos]).map(walletInfo =>
+    fixWalletInfo(walletInfo)
+  )
 }
 
 /**

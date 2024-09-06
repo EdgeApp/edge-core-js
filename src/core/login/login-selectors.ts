@@ -37,7 +37,18 @@ export function getStashById(ai: ApiInput, loginId: Uint8Array): StashLeaf {
     )
     if (stash != null) return { stashTree, stash }
   }
-  throw new Error(`Cannot find stash ${base64.stringify(loginId)}`)
+  throw new Error(`Cannot find stash '${base64.stringify(loginId)}'`)
+}
+
+export function getChildStash(
+  stashTree: LoginStash,
+  loginId: Uint8Array
+): LoginStash {
+  const stash = searchTree(stashTree, stash =>
+    verifyData(stash.loginId, loginId)
+  )
+  if (stash != null) return stash
+  throw new Error(`Cannot find child stash '${base64.stringify(loginId)}'`)
 }
 
 // Hashed username cache:

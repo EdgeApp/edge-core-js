@@ -6,10 +6,15 @@ import { EdgeLobby, EdgeLoginRequest } from '../../types/types'
 import { shuffle } from '../../util/shuffle'
 import { asLobbyLoginPayload } from '../login/edge'
 import { fetchLobbyRequest, sendLobbyReply } from '../login/lobby'
-import { sanitizeLoginStash, syncLogin } from '../login/login'
+import {
+  decryptChildKey,
+  sanitizeLoginStash,
+  searchTree,
+  syncLogin
+} from '../login/login'
 import { getStashById } from '../login/login-selectors'
 import { ApiInput } from '../root-pixie'
-import { ensureAccountExists, findAppLogin } from './account-init'
+import { ensureAccountExists } from './account-init'
 
 const wasLobbyLoginPayload = uncleaner(asLobbyLoginPayload)
 
@@ -70,29 +75,32 @@ async function approveLoginRequest(
   lobbyId: string,
   lobbyJson: EdgeLobbyRequest
 ): Promise<void> {
+  const { sessionKey } = ai.props.state.accounts[accountId]
+
   // For crash errors:
   ai.props.log.breadcrumb('approveLoginRequest', {})
 
-  const { login, loginTree } = ai.props.state.accounts[accountId]
-
   // Ensure that the login object & account repo exist:
-  await syncLogin(ai, loginTree, login)
+  await syncLogin(ai, sessionKey)
+  const { stashTree } = getStashById(ai, sessionKey.loginId)
 
-  const newLoginTree = await ensureAccountExists(ai, loginTree, appId)
-  const requestedLogin = findAppLogin(newLoginTree, appId)
-  if (requestedLogin == null) {
+  const newStashTree = await ensureAccountExists(
+    ai,
+    stashTree,
+    sessionKey,
+    appId
+  )
+  const appStash = searchTree(newStashTree, stash => stash.appId === appId)
+  if (appStash == null) {
     throw new Error('Failed to create the requested login object')
   }
-
-  // Create a sanitized login stash object:
-  const { stashTree } = getStashById(ai, loginTree.loginId)
-  const loginStash = sanitizeLoginStash(stashTree, appId)
+  const appKey = decryptChildKey(newStashTree, sessionKey, appStash.loginId)
 
   // Send the reply:
   const replyData = wasLobbyLoginPayload({
     appId,
-    loginKey: requestedLogin.loginKey,
-    loginStash
+    loginKey: appKey.loginKey,
+    loginStash: sanitizeLoginStash(newStashTree, appId)
   })
   await sendLobbyReply(ai, lobbyId, lobbyJson, replyData)
   let timeout: ReturnType<typeof setTimeout> | undefined
@@ -105,13 +113,11 @@ async function approveLoginRequest(
 
   timeout = setTimeout(() => {
     timeout = undefined
-    syncLogin(ai, newLoginTree, requestedLogin)
+    syncLogin(ai, sessionKey)
       .then(() => {
         timeout = setTimeout(() => {
           timeout = undefined
-          syncLogin(ai, newLoginTree, requestedLogin).catch(error =>
-            ai.props.onError(error)
-          )
+          syncLogin(ai, sessionKey).catch(error => ai.props.onError(error))
         }, 20000)
       })
       .catch(error => ai.props.onError(error))

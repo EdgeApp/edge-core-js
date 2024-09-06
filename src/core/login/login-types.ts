@@ -8,6 +8,17 @@ import {
 import { asJsonObject } from '../../util/file-helpers'
 import { LoginStash } from './login-stash'
 
+/**
+ * A key that decrypts a login stash.
+ */
+export interface SessionKey {
+  /** The login that this key belongs to. This may be a child login. */
+  loginId: Uint8Array
+
+  /** The decryption key. */
+  loginKey: Uint8Array
+}
+
 // Login data decrypted into memory.
 export interface LoginTree {
   isRoot: boolean
@@ -54,11 +65,27 @@ export interface AppIdMap {
 }
 
 export interface LoginKit {
+  /** The change will affect the node with this ID. */
   loginId: Uint8Array
-  login: Partial<LoginTree>
-  server?: object
+
+  /**
+   * The login-server payload that achieves the change.
+   * Not all routes take a payload, such as the DELETE routes.
+   */
+  server: object | undefined
+
+  /**
+   * The login-server HTTP method that makes the change.
+   * Defaults to "POST" if not present.
+   */
   serverMethod?: string
   serverPath: string
+
+  /**
+   * A diff to apply to the stash tree, starting at the `loginId` node.
+   * TODO: Update the login server to return a diff on every endpoint,
+   * so we can get rid of this.
+   */
   stash: Partial<LoginStash>
 }
 

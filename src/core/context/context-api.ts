@@ -14,10 +14,10 @@ import {
 } from '../../types/types'
 import { verifyData } from '../../util/crypto/verify'
 import { base58 } from '../../util/encoding'
-import { findAppLogin, makeAccount } from '../account/account-init'
+import { makeAccount } from '../account/account-init'
 import { createLogin, usernameAvailable } from '../login/create'
 import { requestEdgeLogin } from '../login/edge'
-import { makeLoginTree, syncLogin } from '../login/login'
+import { makeAuthJson, searchTree, syncLogin } from '../login/login'
 import { loginFetch } from '../login/login-fetch'
 import { fetchLoginMessages } from '../login/login-messages'
 import {
@@ -26,6 +26,7 @@ import {
   getStashByUsername
 } from '../login/login-selectors'
 import { removeStash, saveStash } from '../login/login-stash'
+import { SessionKey } from '../login/login-types'
 import { resetOtp } from '../login/otp'
 import { loginPassword } from '../login/password'
 import { loginPin2 } from '../login/pin2'
@@ -93,8 +94,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       if (opts.username != null) {
         opts.username = fixUsername(opts.username)
       }
-      const loginTree = await createLogin(ai, opts, opts)
-      return await makeAccount(ai, appId, loginTree, 'newAccount', opts)
+      const sessionKey = await createLogin(ai, opts, opts)
+      return await makeAccount(ai, sessionKey, 'newAccount', opts)
     },
 
     async loginWithKey(
@@ -111,16 +112,26 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         throw new Error('User does not exist on this device')
       }
 
-      const loginTree = makeLoginTree(stashTree, base58.parse(loginKey), appId)
+      const appStash = searchTree(stashTree, stash => stash.appId === appId)
+      if (appStash == null) {
+        throw new Error(`Cannot find requested appId: "${appId}"`)
+      }
+      const sessionKey: SessionKey = {
+        loginId: appStash.loginId,
+        loginKey: base58.parse(loginKey)
+      }
+
+      // Verify that the provided key works for decryption:
+      makeAuthJson(stashTree, sessionKey)
+
+      // Save the date:
       stashTree.lastLogin = now
       saveStash(ai, stashTree).catch(() => {})
 
       // Since we logged in offline, update the stash in the background:
-      syncLogin(ai, loginTree, findAppLogin(loginTree, appId)).catch(error =>
-        ai.props.onError(error)
-      )
+      syncLogin(ai, sessionKey).catch(error => ai.props.onError(error))
 
-      return await makeAccount(ai, appId, loginTree, 'keyLogin', opts)
+      return await makeAccount(ai, sessionKey, 'keyLogin', opts)
     },
 
     async loginWithPassword(
@@ -133,13 +144,13 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
       username = fixUsername(username)
       const stashTree = getStashByUsername(ai, username)
-      const loginTree = await loginPassword(
+      const sessionKey = await loginPassword(
         ai,
         stashTree ?? getEmptyStash(username),
         password,
         opts
       )
-      return await makeAccount(ai, appId, loginTree, 'passwordLogin', opts)
+      return await makeAccount(ai, sessionKey, 'passwordLogin', opts)
     },
 
     checkPasswordRules,
@@ -161,8 +172,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         throw new Error('User does not exist on this device')
       }
 
-      const loginTree = await loginPin2(ai, appId, stashTree, pin, opts)
-      return await makeAccount(ai, appId, loginTree, 'pinLogin', opts)
+      const sessionKey = await loginPin2(ai, appId, stashTree, pin, opts)
+      return await makeAccount(ai, sessionKey, 'pinLogin', opts)
     },
 
     async loginWithRecovery2(
@@ -176,14 +187,14 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
       username = fixUsername(username)
       const stashTree = getStashByUsername(ai, username)
-      const loginTree = await loginRecovery2(
+      const sessionKey = await loginRecovery2(
         ai,
         stashTree ?? getEmptyStash(username),
         base58.parse(recovery2Key),
         answers,
         opts
       )
-      return await makeAccount(ai, appId, loginTree, 'recoveryLogin', opts)
+      return await makeAccount(ai, sessionKey, 'recoveryLogin', opts)
     },
 
     async fetchRecovery2Questions(

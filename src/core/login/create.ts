@@ -12,7 +12,7 @@ import { loginFetch } from './login-fetch'
 import { makeSecretKit } from './login-secret'
 import { hashUsername } from './login-selectors'
 import { LoginStash, saveStash } from './login-stash'
-import { LoginKit, LoginTree } from './login-types'
+import { LoginKit, LoginTree, SessionKey } from './login-types'
 import { makeUsernameKit } from './login-username'
 import { makePasswordKit } from './password'
 import { makeChangePin2Kit } from './pin2'
@@ -50,20 +50,21 @@ export async function usernameAvailable(
  */
 export async function makeCreateKit(
   ai: ApiInput,
-  parentLogin: LoginTree | undefined,
+  parentSessionKey: SessionKey | undefined,
   appId: string,
   opts: LoginCreateOpts
-): Promise<LoginKit> {
-  // For crash errors:
-  ai.props.log.breadcrumb('makeCreateKit', {})
-
+): Promise<{ kit: LoginKit; sessionKey: SessionKey }> {
   const { keyInfo, password, pin, username } = opts
   const { io } = ai.props
 
+  // For crash errors:
+  ai.props.log.breadcrumb('makeCreateKit', {})
+
   // Figure out login identity:
-  const isRoot = parentLogin == null
+  const isRoot = parentSessionKey == null
   const loginId = io.random(32)
   const loginKey = io.random(32)
+  const sessionKey = { loginId, loginKey }
 
   // Create the basic login object, but without any authentication methods:
   const login: LoginTree = {
@@ -86,10 +87,10 @@ export async function makeCreateKit(
 
   // Set up optional login methods:
   if (keyInfo != null) {
-    keysKit = makeKeysKit(ai, login, [keyInfo])
+    keysKit = makeKeysKit(ai, sessionKey, [keyInfo])
   }
-  if (parentLogin != null) {
-    parentBox = encrypt(io, loginKey, parentLogin.loginKey)
+  if (parentSessionKey != null) {
+    parentBox = encrypt(io, loginKey, parentSessionKey.loginKey)
   }
   if (password != null && username != null) {
     passwordKit = await makePasswordKit(ai, login, username, password)
@@ -102,9 +103,8 @@ export async function makeCreateKit(
   }
 
   // Bundle everything:
-  return {
+  const kit: LoginKit = {
     loginId,
-    serverPath: '/v2/login/create',
     server: {
       ...wasCreateLoginPayload({
         appId,
@@ -117,6 +117,7 @@ export async function makeCreateKit(
       ...secretKit.server,
       ...usernameKit?.server
     },
+    serverPath: '/v2/login/create',
     stash: {
       appId,
       loginId,
@@ -126,19 +127,9 @@ export async function makeCreateKit(
       ...pin2Kit?.stash,
       ...secretKit.stash,
       ...usernameKit?.stash
-    },
-    login: {
-      appId,
-      loginId,
-      loginKey,
-      keyInfos: [],
-      ...keysKit?.login,
-      ...passwordKit?.login,
-      ...pin2Kit?.login,
-      ...secretKit.login,
-      ...usernameKit?.login
     }
   }
+  return { kit, sessionKey }
 }
 
 /**
@@ -148,17 +139,17 @@ export async function createLogin(
   ai: ApiInput,
   accountOpts: EdgeAccountOptions,
   opts: LoginCreateOpts
-): Promise<LoginTree> {
+): Promise<SessionKey> {
   const { challengeId, now = new Date() } = accountOpts
 
   // For crash errors:
   ai.props.log.breadcrumb('createLogin', {})
 
-  const kit = await makeCreateKit(ai, undefined, '', opts)
+  const { kit, sessionKey } = await makeCreateKit(ai, undefined, '', opts)
   const request = { challengeId, data: kit.server }
   await loginFetch(ai, 'POST', kit.serverPath, request)
 
   kit.stash.lastLogin = now
   await saveStash(ai, kit.stash as LoginStash)
-  return kit.login as LoginTree
+  return sessionKey
 }

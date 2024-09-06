@@ -10,7 +10,7 @@ import {
 import { makeAccount } from '../account/account-init'
 import { ApiInput } from '../root-pixie'
 import { makeLobby } from './lobby'
-import { makeLoginTree, searchTree, syncLogin } from './login'
+import { searchTree, syncLogin } from './login'
 import { getStashById } from './login-selectors'
 import { asLoginStash, LoginStash, saveStash } from './login-stash'
 
@@ -39,11 +39,11 @@ async function unpackAccount(
   appId: string,
   opts: EdgeAccountOptions
 ): Promise<EdgeAccount> {
-  // For crash errors:
-  ai.props.log.breadcrumb('unpackAccount', {})
-
   const { now = new Date() } = opts
   const { loginKey, loginStash: stashTree } = payload
+
+  // For crash errors:
+  ai.props.log.breadcrumb('unpackAccount', {})
 
   // Find the appropriate child:
   const child = searchTree(stashTree, stash => stash.appId === appId)
@@ -62,13 +62,12 @@ async function unpackAccount(
   await saveStash(ai, stashTree)
 
   // This is almost guaranteed to blow up spectacularly:
-  const loginTree = makeLoginTree(stashTree, loginKey, appId)
-  const login = searchTree(loginTree, login => login.appId === appId)
-  if (login == null) {
-    throw new Error(`Cannot find requested appId: "${appId}"`)
+  const sessionKey = {
+    loginId: child.loginId,
+    loginKey
   }
-  const newLoginTree = await syncLogin(ai, loginTree, login)
-  return await makeAccount(ai, appId, newLoginTree, 'edgeLogin', opts)
+  await syncLogin(ai, sessionKey)
+  return await makeAccount(ai, sessionKey, 'edgeLogin', opts)
 }
 
 /**
