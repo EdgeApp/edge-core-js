@@ -5,7 +5,9 @@ import { wasCreateKeysPayload } from '../../types/server-cleaners'
 import {
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyWallet,
-  EdgeWalletInfo
+  EdgeWalletInfo,
+  EdgeWalletInfoFull,
+  EdgeWalletStates
 } from '../../types/types'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
@@ -17,12 +19,11 @@ import {
   getCurrencyTools
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
+import { getChildStash } from './login-selectors'
 import { LoginStash } from './login-stash'
 import {
-  AppIdMap,
   asEdgeWalletInfo,
   LoginKit,
-  LoginTree,
   SessionKey,
   wasEdgeWalletInfo
 } from './login-types'
@@ -182,42 +183,66 @@ export function decryptKeyInfos(
 }
 
 /**
- * Returns all the wallet infos accessible from this login object,
- * as well as a map showing which wallets are in which applications.
+ * Returns all the wallet infos accessible from this login object.
  */
-export function getAllWalletInfos(
-  login: LoginTree,
-  legacyWalletInfos: EdgeWalletInfo[] = []
-): {
-  appIdMap: AppIdMap
-  walletInfos: EdgeWalletInfo[]
-} {
-  const appIdMap: AppIdMap = {}
-  const walletInfos: EdgeWalletInfo[] = []
+export function decryptAllWalletInfos(
+  stashTree: LoginStash,
+  sessionKey: SessionKey,
+  legacyWalletInfos: EdgeWalletInfo[],
+  walletStates: EdgeWalletStates
+): EdgeWalletInfoFull[] {
+  // Maps from walletId's to appId's:
+  const appIdMap = new Map<string, string[]>()
+  const walletInfos: EdgeWalletInfo[] = [...legacyWalletInfos]
+
+  // Navigate to the starting node:
+  const stash = getChildStash(stashTree, sessionKey.loginId)
 
   // Add the legacy wallets first:
   for (const info of legacyWalletInfos) {
     walletInfos.push(info)
-    if (appIdMap[info.id] == null) appIdMap[info.id] = [login.appId]
-    else appIdMap[info.id].push(login.appId)
+
+    const appIds = appIdMap.get(info.id)
+    if (appIds != null) appIds.push(stash.appId)
+    else appIdMap.set(info.id, [stash.appId])
   }
 
-  function getAllWalletInfosLoop(login: LoginTree): void {
+  function getAllWalletInfosLoop(
+    stash: LoginStash,
+    loginKey: Uint8Array
+  ): void {
     // Add our own walletInfos:
-    for (const info of login.keyInfos) {
+    const keyInfos = decryptKeyInfos(stash, loginKey)
+    for (const info of keyInfos) {
       walletInfos.push(info)
-      if (appIdMap[info.id] == null) appIdMap[info.id] = [login.appId]
-      else appIdMap[info.id].push(login.appId)
+
+      const appIds = appIdMap.get(info.id)
+      if (appIds != null) appIds.push(stash.appId)
+      else appIdMap.set(info.id, [stash.appId])
     }
 
     // Add our children's walletInfos:
-    for (const child of login.children) {
-      getAllWalletInfosLoop(child)
+    for (const child of stash.children ?? []) {
+      if (child.parentBox == null) continue
+      getAllWalletInfosLoop(child, decrypt(child.parentBox, loginKey))
     }
   }
-  getAllWalletInfosLoop(login)
+  getAllWalletInfosLoop(stash, sessionKey.loginKey)
 
-  return { appIdMap, walletInfos: mergeKeyInfos(walletInfos) }
+  return mergeKeyInfos(walletInfos).map(info => ({
+    appId: getLast(appIdMap.get(info.id) ?? []),
+    appIds: appIdMap.get(info.id) ?? [],
+
+    // Defaults to be overwritten:
+    archived: false,
+    deleted: false,
+    hidden: false,
+    sortIndex: walletInfos.length,
+
+    // Actual info:
+    ...walletStates[info.id],
+    ...info
+  }))
 }
 
 /**
@@ -358,4 +383,8 @@ export async function finishWalletCreation(
   }
 
   return wallet
+}
+
+function getLast<T>(array: T[]): T {
+  return array[array.length - 1]
 }

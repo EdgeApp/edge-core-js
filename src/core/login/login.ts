@@ -13,7 +13,6 @@ import { totp } from '../../util/crypto/hotp'
 import { verifyData } from '../../util/crypto/verify'
 import { softCat } from '../../util/util'
 import { ApiInput } from '../root-pixie'
-import { decryptKeyInfos } from './keys'
 import { loginFetch } from './login-fetch'
 import { makeSecretKit } from './login-secret'
 import { getChildStash, getStashById } from './login-selectors'
@@ -218,8 +217,7 @@ function makeLoginTreeInner(
     pendingVouchers,
     userId,
     username,
-    children: [],
-    keyInfos: []
+    children: []
   }
 
   // Server authentication:
@@ -242,9 +240,6 @@ function makeLoginTreeInner(
 
   // Recovery v2:
   login.recovery2Key = stash.recovery2Key
-
-  // Keys:
-  login.keyInfos = decryptKeyInfos(stash, loginKey)
 
   // Recurse into children:
   login.children = stashChildren.map(child => {
@@ -287,7 +282,6 @@ export function makeLoginTree(
         appId,
         children,
         isRoot: stash.parentBox == null,
-        keyInfos: [],
         lastLogin,
         loginId,
         loginKey,
