@@ -195,6 +195,14 @@ export interface ChallengeErrorPayload {
 }
 
 /**
+ * Data sent back when preemptively requesting a CAPTCHA.
+ */
+export interface CreateChallengePayload {
+  challengeId: string
+  challengeUri?: string
+}
+
+/**
  * Data sent back when looking up a login barcode.
  */
 export interface LobbyPayload {

@@ -26,6 +26,7 @@ import type {
   ChangeSecretPayload,
   ChangeUsernamePayload,
   ChangeVouchersPayload,
+  CreateChallengePayload,
   CreateKeysPayload,
   CreateLoginPayload,
   EdgeBox,
@@ -257,6 +258,12 @@ export const asChallengeErrorPayload: Cleaner<ChallengeErrorPayload> = asObject(
   }
 )
 
+export const asCreateChallengePayload: Cleaner<CreateChallengePayload> =
+  asObject({
+    challengeId: asString,
+    challengeUri: asOptional(asString)
+  })
+
 export const asLobbyPayload: Cleaner<LobbyPayload> = asObject({
   request: asEdgeLobbyRequest,
   replies: asArray(asEdgeLobbyReply)
@@ -406,6 +413,9 @@ export const wasCreateLoginPayload =
 // Response payloads:
 export const wasChallengeErrorPayload = uncleaner<ChallengeErrorPayload>(
   asChallengeErrorPayload
+)
+export const wasCreateChallengePayload = uncleaner<CreateChallengePayload>(
+  asCreateChallengePayload
 )
 export const wasLobbyPayload = uncleaner<LobbyPayload>(asLobbyPayload)
 export const wasLoginPayload = uncleaner<LoginPayload>(asLoginPayload)

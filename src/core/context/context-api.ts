@@ -2,6 +2,7 @@ import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
 import { checkPasswordRules, fixUsername } from '../../client-side'
 import {
+  asChallengeErrorPayload,
   EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
@@ -17,6 +18,7 @@ import { findAppLogin, makeAccount } from '../account/account-init'
 import { createLogin, usernameAvailable } from '../login/create'
 import { requestEdgeLogin } from '../login/edge'
 import { makeLoginTree, syncLogin } from '../login/login'
+import { loginFetch } from '../login/login-fetch'
 import { fetchLoginMessages } from '../login/login-messages'
 import {
   getEmptyStash,
@@ -70,9 +72,16 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       await removeStash(ai, loginId)
     },
 
-    async usernameAvailable(username: string): Promise<boolean> {
+    async fetchChallenge() {
+      const response = await loginFetch(ai, 'POST', '/v2/captcha/create', {})
+      const { challengeId, challengeUri } = asChallengeErrorPayload(response)
+      return { challengeId, challengeUri }
+    },
+
+    async usernameAvailable(username: string, opts = {}): Promise<boolean> {
+      const { challengeId } = opts
       username = fixUsername(username)
-      return await usernameAvailable(ai, username)
+      return await usernameAvailable(ai, username, challengeId)
     },
 
     async createAccount(
