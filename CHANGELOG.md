@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.15.0 (2024-09-06)
+
 - added: `EdgeContext.fetchChallenge`, to request an account-creation CAPTCHA.
 - added: Accept a challengeId in `EdgeContext.usernameAvailable`
 
