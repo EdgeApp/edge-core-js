@@ -72,7 +72,7 @@ describe('creation', function () {
     })
     const recovery2Key = await account.changeRecovery(questions, answers)
 
-    return await Promise.all([
+    await Promise.all([
       context.loginWithPIN(username, fakeUser.pin),
       remote.loginWithRecovery2(recovery2Key, username, answers)
     ])
@@ -138,7 +138,7 @@ describe('creation', function () {
     ])
 
     const loginKey = await account.getLoginKey()
-    return await Promise.all([
+    await Promise.all([
       context.loginWithPIN(username, pin),
       remote.loginWithPassword(username, password),
       context.loginWithKey(username, loginKey)
@@ -159,7 +159,7 @@ describe('password', function () {
   it('login online', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
-    return await context.loginWithPassword(fakeUser.username, fakeUser.password)
+    await context.loginWithPassword(fakeUser.username, fakeUser.password)
   })
 
   it('change', async function () {
@@ -172,7 +172,7 @@ describe('password', function () {
     await account.changePassword(longPassword)
 
     const remote = await world.makeEdgeContext(contextOptions)
-    return await remote.loginWithPassword(fakeUser.username, longPassword)
+    await remote.loginWithPassword(fakeUser.username, longPassword)
   })
 
   it('check good', async function () {
@@ -234,7 +234,7 @@ describe('pin', function () {
     await context.loginWithPIN(fakeUser.username, '4321')
 
     const remote = await world.makeEdgeContext(contextOptions)
-    return await remote.loginWithPIN(fakeUser.username, '4321')
+    await remote.loginWithPIN(fakeUser.username, '4321')
   })
 
   it('enable / disable', async function () {

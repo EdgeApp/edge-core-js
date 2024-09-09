@@ -5,7 +5,9 @@ import { wasCreateKeysPayload } from '../../types/server-cleaners'
 import {
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyWallet,
-  EdgeWalletInfo
+  EdgeWalletInfo,
+  EdgeWalletInfoFull,
+  EdgeWalletStates
 } from '../../types/types'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
@@ -17,12 +19,11 @@ import {
   getCurrencyTools
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
+import { getChildStash } from './login-selectors'
 import { LoginStash } from './login-stash'
 import {
-  AppIdMap,
   asEdgeWalletInfo,
   LoginKit,
-  LoginTree,
   SessionKey,
   wasEdgeWalletInfo
 } from './login-types'
@@ -76,13 +77,14 @@ export function makeKeysKit(
   ai.props.log.breadcrumb('makeKeysKit', {})
 
   const { io } = ai.props
-  const keyBoxes = keyInfos.map(info =>
-    encrypt(
+  const keyBoxes = keyInfos.map(info => ({
+    created: new Date(),
+    ...encrypt(
       io,
       utf8.parse(JSON.stringify(wasEdgeWalletInfo(info))),
       sessionKey.loginKey
     )
-  )
+  }))
 
   const newSyncKeys: string[] = []
   for (const info of keyInfos) {
@@ -104,17 +106,18 @@ export function makeKeysKit(
  */
 export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
   const out: EdgeWalletInfo[] = []
-  const ids: { [id: string]: number } = {} // Maps ID's to output array indexes
+  const ids = new Map<string, number>() // Maps ID's to output array indexes
 
   for (const keyInfo of keyInfos) {
-    const { id, type, keys } = keyInfo
+    const { id, keys, type } = keyInfo
     if (id == null || base64.parse(id).length !== 32) {
       throw new Error(`Key integrity violation: invalid id ${id}`)
     }
 
-    if (ids[id] != null) {
+    const index = ids.get(id)
+    if (index != null) {
       // We have already seen this id, so check for conflicts:
-      const old = out[ids[id]]
+      const old = out[index]
       if (old.type !== type) {
         throw new Error(
           `Key integrity violation for ${id}: type ${type} does not match ${old.type}`
@@ -129,10 +132,10 @@ export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
       }
 
       // Do the update:
-      out[ids[id]] = { id, type, keys: { ...old.keys, ...keys } }
+      out[index] = { id, keys: { ...old.keys, ...keys }, type }
     } else {
       // We haven't seen this id, so insert it:
-      ids[id] = out.length
+      ids.set(id, out.length)
       out.push(keyInfo)
     }
   }
@@ -145,7 +148,8 @@ export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
  */
 export function decryptKeyInfos(
   stash: LoginStash,
-  loginKey: Uint8Array
+  loginKey: Uint8Array,
+  keyDates = new Map<string, Date>()
 ): EdgeWalletInfo[] {
   const { appId, keyBoxes = [] } = stash
 
@@ -172,51 +176,80 @@ export function decryptKeyInfos(
   }
 
   // Keys:
-  const keyInfos = keyBoxes.map(box =>
-    asEdgeWalletInfo(JSON.parse(decryptText(box, loginKey)))
-  )
+  const keyInfos = keyBoxes.map(box => {
+    const keys = asEdgeWalletInfo(JSON.parse(decryptText(box, loginKey)))
+    const created = mergeKeyDate(box.created, keyDates.get(keys.id))
+    if (created != null) keyDates.set(keys.id, created)
+    return keys
+  })
   return mergeKeyInfos([...legacyKeys, ...keyInfos]).map(walletInfo =>
     fixWalletInfo(walletInfo)
   )
 }
 
 /**
- * Returns all the wallet infos accessible from this login object,
- * as well as a map showing which wallets are in which applications.
+ * Returns all the wallet infos accessible from this login object.
  */
-export function getAllWalletInfos(
-  login: LoginTree,
-  legacyWalletInfos: EdgeWalletInfo[] = []
-): {
-  appIdMap: AppIdMap
-  walletInfos: EdgeWalletInfo[]
-} {
-  const appIdMap: AppIdMap = {}
-  const walletInfos: EdgeWalletInfo[] = []
+export function decryptAllWalletInfos(
+  stashTree: LoginStash,
+  sessionKey: SessionKey,
+  legacyWalletInfos: EdgeWalletInfo[],
+  walletStates: EdgeWalletStates
+): EdgeWalletInfoFull[] {
+  // Maps from walletId's to appId's:
+  const dates = new Map<string, Date>()
+  const appIdMap = new Map<string, string[]>()
+  const walletInfos: EdgeWalletInfo[] = [...legacyWalletInfos]
+
+  // Navigate to the starting node:
+  const stash = getChildStash(stashTree, sessionKey.loginId)
 
   // Add the legacy wallets first:
   for (const info of legacyWalletInfos) {
     walletInfos.push(info)
-    if (appIdMap[info.id] == null) appIdMap[info.id] = [login.appId]
-    else appIdMap[info.id].push(login.appId)
+
+    const appIds = appIdMap.get(info.id)
+    if (appIds != null) appIds.push(stash.appId)
+    else appIdMap.set(info.id, [stash.appId])
   }
 
-  function getAllWalletInfosLoop(login: LoginTree): void {
+  function getAllWalletInfosLoop(
+    stash: LoginStash,
+    loginKey: Uint8Array
+  ): void {
     // Add our own walletInfos:
-    for (const info of login.keyInfos) {
+    const keyInfos = decryptKeyInfos(stash, loginKey, dates)
+    for (const info of keyInfos) {
       walletInfos.push(info)
-      if (appIdMap[info.id] == null) appIdMap[info.id] = [login.appId]
-      else appIdMap[info.id].push(login.appId)
+
+      const appIds = appIdMap.get(info.id)
+      if (appIds != null) appIds.push(stash.appId)
+      else appIdMap.set(info.id, [stash.appId])
     }
 
     // Add our children's walletInfos:
-    for (const child of login.children) {
-      getAllWalletInfosLoop(child)
+    for (const child of stash.children ?? []) {
+      if (child.parentBox == null) continue
+      getAllWalletInfosLoop(child, decrypt(child.parentBox, loginKey))
     }
   }
-  getAllWalletInfosLoop(login)
+  getAllWalletInfosLoop(stash, sessionKey.loginKey)
 
-  return { appIdMap, walletInfos: mergeKeyInfos(walletInfos) }
+  return mergeKeyInfos(walletInfos).map(info => ({
+    appId: getLast(appIdMap.get(info.id) ?? []),
+    appIds: appIdMap.get(info.id) ?? [],
+
+    // Defaults to be overwritten:
+    archived: false,
+    created: dates.get(info.id),
+    deleted: false,
+    hidden: false,
+    sortIndex: walletInfos.length,
+
+    // Actual info:
+    ...walletStates[info.id],
+    ...info
+  }))
 }
 
 /**
@@ -357,4 +390,20 @@ export async function finishWalletCreation(
   }
 
   return wallet
+}
+
+function getLast<T>(array: T[]): T {
+  return array[array.length - 1]
+}
+
+/**
+ * Returns the earliest date, or undefined if neither date exists.
+ */
+function mergeKeyDate(
+  a: Date | undefined,
+  b: Date | undefined
+): Date | undefined {
+  if (a == null) return b
+  if (b == null) return a
+  return new Date(Math.min(a.valueOf(), b.valueOf()))
 }

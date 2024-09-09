@@ -49,7 +49,6 @@ export interface LoginTree {
 
   // Resources:
   children: LoginTree[]
-  keyInfos: EdgeWalletInfo[]
 }
 
 export type LoginType =
@@ -59,10 +58,6 @@ export type LoginType =
   | 'passwordLogin'
   | 'pinLogin'
   | 'recoveryLogin'
-
-export interface AppIdMap {
-  [walletId: string]: string[]
-}
 
 export interface LoginKit {
   /** The change will affect the node with this ID. */

@@ -74,8 +74,7 @@ export async function makeCreateKit(
     loginKey,
     isRoot,
     pendingVouchers: [],
-    children: [],
-    keyInfos: []
+    children: []
   }
 
   const secretKit = makeSecretKit(ai, login)

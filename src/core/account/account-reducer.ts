@@ -10,7 +10,11 @@ import {
 import { compare } from '../../util/compare'
 import { verifyData } from '../../util/crypto/verify'
 import { RootAction } from '../actions'
-import { findFirstKey, getAllWalletInfos, makeAccountType } from '../login/keys'
+import {
+  decryptAllWalletInfos,
+  findFirstKey,
+  makeAccountType
+} from '../login/keys'
 import { makeLoginTree, searchTree } from '../login/login'
 import { LoginStash } from '../login/login-stash'
 import {
@@ -73,10 +77,10 @@ const blankSessionKey = {
 const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   accountWalletInfo: memoizeReducer(
     (next: AccountNext) => next.root.login.appId,
-    (next: AccountNext) => next.self.login,
-    (appId: string, login: LoginTree): EdgeWalletInfo => {
+    (next: AccountNext) => next.self.allWalletInfosFull,
+    (appId, walletInfos): EdgeWalletInfo => {
       const type = makeAccountType(appId)
-      const accountWalletInfo = findFirstKey(login.keyInfos, type)
+      const accountWalletInfo = findFirstKey(walletInfos, type)
       if (accountWalletInfo == null) {
         throw new Error(`Cannot find a "${type}" repo`)
       }
@@ -86,40 +90,34 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
 
   accountWalletInfos: memoizeReducer(
     (next: AccountNext) => next.root.login.appId,
-    (next: AccountNext) => next.self.login,
-    (appId: string, login: LoginTree): EdgeWalletInfo[] => {
+    (next: AccountNext) => next.self.allWalletInfosFull,
+    (appId, walletInfos): EdgeWalletInfo[] => {
       // Wallets created in Edge that then log into Airbitz or BitcoinPay
       // might end up with wallets stored in the wrong account repo.
       // This code attempts to locate those repos.
       const walletTypes = [makeAccountType(appId)]
       if (appId === '') walletTypes.push('account:repo:co.airbitz.wallet', '')
-      return login.keyInfos.filter(info => walletTypes.includes(info.type))
+      return walletInfos.filter(info => walletTypes.includes(info.type))
     }
   ),
 
   allWalletInfosFull: memoizeReducer(
+    (next: AccountNext) => next.self.stashTree,
     (next: AccountNext) => next.self.login,
     (next: AccountNext) => next.self.legacyWalletInfos,
     (next: AccountNext) => next.self.walletStates,
     (
-      login: LoginTree,
-      legacyWalletInfos: EdgeWalletInfo[],
-      walletStates: EdgeWalletStates
-    ): EdgeWalletInfoFull[] => {
-      const values = getAllWalletInfos(login, legacyWalletInfos)
-      const { walletInfos, appIdMap } = values
-
-      return walletInfos.map(info => ({
-        appId: getLast(appIdMap[info.id]),
-        appIds: appIdMap[info.id],
-        archived: false,
-        deleted: false,
-        hidden: false,
-        sortIndex: walletInfos.length,
-        ...walletStates[info.id],
-        ...info
-      }))
-    }
+      stashTree,
+      appSessionKey,
+      legacyWalletInfos,
+      walletStates
+    ): EdgeWalletInfoFull[] =>
+      decryptAllWalletInfos(
+        stashTree,
+        appSessionKey,
+        legacyWalletInfos,
+        walletStates
+      )
   ),
 
   allWalletInfosClean: memoizeReducer(
@@ -399,7 +397,3 @@ export const accountReducer = filterReducer<
 
   return { type: 'UPDATE_NEXT' }
 })
-
-function getLast<T>(array: T[]): T {
-  return array[array.length - 1]
-}

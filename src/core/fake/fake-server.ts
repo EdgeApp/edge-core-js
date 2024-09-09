@@ -288,7 +288,7 @@ function createLogin(request: ApiRequest, login?: DbLogin): HttpResponse {
     ...clean,
     ...secret,
     created: date,
-    keyBoxes: keys.keyBoxes,
+    keyBoxes: keys.keyBoxes.map(box => ({ ...box, created: date })),
     vouchers: [],
 
     // Optional fields:
@@ -321,6 +321,8 @@ const createLoginRoute = withLogin2(
 
 const addKeysRoute = withLogin2(request => {
   const { db, login, payload } = request
+  const date = new Date()
+
   const [clean, cleanError] = cleanRequest(asCreateKeysPayload, payload)
   if (clean == null) return cleanError
 
@@ -328,7 +330,10 @@ const addKeysRoute = withLogin2(request => {
   for (const syncKey of clean.newSyncKeys) {
     db.repos.set(syncKey, {})
   }
-  login.keyBoxes = softCat(login.keyBoxes, clean.keyBoxes)
+  login.keyBoxes = softCat(
+    login.keyBoxes,
+    clean.keyBoxes.map(box => ({ ...box, created: date }))
+  )
 
   return statusResponse()
 })

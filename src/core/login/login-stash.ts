@@ -17,10 +17,11 @@ import {
   asBase32,
   asBase64,
   asEdgeBox,
+  asEdgeKeyBox,
   asEdgePendingVoucher,
   asEdgeSnrp
 } from '../../types/server-cleaners'
-import { EdgeBox, EdgeSnrp } from '../../types/server-types'
+import { EdgeBox, EdgeKeyBox, EdgeSnrp } from '../../types/server-types'
 import { EdgeLog, EdgePendingVoucher } from '../../types/types'
 import { verifyData } from '../../util/crypto/verify'
 import { base58 } from '../../util/encoding'
@@ -66,7 +67,7 @@ export interface LoginStash {
 
   // Keys and assorted goodies:
   children?: LoginStash[]
-  keyBoxes?: EdgeBox[]
+  keyBoxes?: EdgeKeyBox[]
   mnemonicBox?: EdgeBox
   rootKeyBox?: EdgeBox
   syncKeyBox?: EdgeBox
@@ -187,7 +188,7 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
 
   // Keys and assorted goodies:
   children: asOptional(asArray(raw => asLoginStash(raw))),
-  keyBoxes: asOptional(asArray(asEdgeBox)),
+  keyBoxes: asOptional(asArray(asEdgeKeyBox)),
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
   syncKeyBox: asOptional(asEdgeBox)

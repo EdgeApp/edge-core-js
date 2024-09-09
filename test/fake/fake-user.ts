@@ -109,6 +109,7 @@ export const fakeUserDump: EdgeFakeUser = {
     },
     keyBoxes: [
       {
+        created: '2024-01-01T00:00:00.000Z',
         data_base64:
           'ABM8mwYTGuODvGXR6BMN0/2AXK6nO+AaZ0QZamdLsZGd1YnfdnERXyYHZJPXD3CtUPY7lpXuohawb8H9MMce6fDxI9Dx+xEb6FjZZYcQsRD0r6fCWHgGSbXhQyo5AQ8xMLQrs0Y34bOH5MWnIlKU8zci5P0RvryZNDa9QvaHWTK5Klxsd9dD7MlkGAjeCloyN+aLi11SdK0IaCz14FqEwQatcbSQeStY4xGh2fKIKQp41ycvEYg6y94UB9kmQ1ncYSnpElfNb7Eb8XjzH7xOje4Bxs29gYC3uE72u4RslcpjxGZJFApKxYhn5gNfTfA4z1PGBSl0ihe5ABq1F8AavkGzY65+IwVmYqDYVum9JoErXG3qM8eE4W2WU+SomAsU',
         encryptionType: 0,
@@ -176,6 +177,7 @@ export const fakeUserDump: EdgeFakeUser = {
         },
         keyBoxes: [
           {
+            created: '2023-01-01T00:00:00.000Z',
             encryptionType: 0,
             iv_hex: 'b691d83b2ad52cdf5ed94043529d1467',
             data_base64:

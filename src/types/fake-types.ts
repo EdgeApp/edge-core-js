@@ -14,10 +14,11 @@ import {
   asBase32,
   asBase64,
   asEdgeBox,
+  asEdgeKeyBox,
   asEdgeSnrp,
   asRecovery2Auth
 } from './server-cleaners'
-import type { EdgeBox, EdgeSnrp } from './server-types'
+import type { EdgeBox, EdgeKeyBox, EdgeSnrp } from './server-types'
 
 export interface EdgeRepoDump {
   [key: string]: EdgeBox
@@ -87,7 +88,7 @@ export interface EdgeLoginDump {
 
   // Resources:
   children: EdgeLoginDump[]
-  keyBoxes: EdgeBox[]
+  keyBoxes: EdgeKeyBox[]
   mnemonicBox?: EdgeBox
   rootKeyBox?: EdgeBox
   syncKeyBox?: EdgeBox
@@ -168,7 +169,7 @@ export const asEdgeLoginDump: Cleaner<EdgeLoginDump> = asObject({
   userTextBox: asOptional(asEdgeBox),
 
   // Keys and assorted goodies:
-  keyBoxes: asOptional(asArray(asEdgeBox), () => []),
+  keyBoxes: asOptional(asArray(asEdgeKeyBox), () => []),
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
   syncKeyBox: asOptional(asEdgeBox),
