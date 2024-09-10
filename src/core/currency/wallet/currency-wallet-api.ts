@@ -326,7 +326,13 @@ export function makeCurrencyWalletApi(
             const edgeTx = combineTxWithFile(input, tx, file, tokenId)
             if (!searchStringFilter(ai, edgeTx, searchString)) continue
             if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
-            if (!tx.isSend && lt(abs(nativeAmount), spamThreshold)) continue
+            const isKnown =
+              tx.isSend ||
+              edgeTx.assetAction != null ||
+              edgeTx.chainAction != null ||
+              edgeTx.chainAssetAction != null ||
+              edgeTx.savedAction != null
+            if (!isKnown && lt(abs(nativeAmount), spamThreshold)) continue
 
             out.push(edgeTx)
           }

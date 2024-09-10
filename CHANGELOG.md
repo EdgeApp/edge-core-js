@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Allow transactions tagged with actions through spam filter
+
 ## 2.17.0 (2024-09-11)
 
 - added: `minReceiveAmount` to `EdgeSwapQuote` - the minimum amount that can be received from the swap
