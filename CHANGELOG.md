@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.16.0 (2024-09-11)
+
 - added: Report key wallet creation dates.
 
 ## 2.15.0 (2024-09-06)
