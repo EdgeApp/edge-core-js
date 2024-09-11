@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `minReceiveAmount` to `EdgeSwapQuote` - the minimum amount that can be received from the swap
+
 ## 2.16.0 (2024-09-11)
 
 - added: Report key wallet creation dates.

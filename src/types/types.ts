@@ -1350,6 +1350,10 @@ export interface EdgeSwapQuote {
    * Maximum amount of time this quote will take to be fulfilled (in seconds)
    */
   readonly maxFulfillmentSeconds?: number
+
+  /** Worst-case receive amount */
+  readonly minReceiveAmount?: string
+
   readonly fromNativeAmount: string
   readonly toNativeAmount: string
   readonly networkFee: EdgeNetworkFee
