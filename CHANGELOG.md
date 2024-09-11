@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Report key wallet creation dates.
+
 ## 2.15.0 (2024-09-06)
 
 - added: `EdgeContext.fetchChallenge`, to request an account-creation CAPTCHA.

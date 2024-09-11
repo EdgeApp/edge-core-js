@@ -17,7 +17,7 @@ export interface EdgeBox {
  * Encrypted wallet private keys along with a creation date.
  */
 export interface EdgeKeyBox extends EdgeBox {
-  created: Date
+  created: Date | undefined
 }
 
 /**

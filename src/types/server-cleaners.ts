@@ -95,7 +95,7 @@ export const asEdgeBox: Cleaner<EdgeBox> = asObject({
 })
 
 export const asEdgeKeyBox: Cleaner<EdgeKeyBox> = asObject({
-  created: asDate,
+  created: asOptional(asDate),
   data_base64: asBase64,
   encryptionType: asNumber,
   iv_hex: asBase16

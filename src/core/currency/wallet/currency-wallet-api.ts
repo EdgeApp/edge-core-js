@@ -113,6 +113,9 @@ export function makeCurrencyWalletApi(
     watch: watchMethod,
 
     // Data store:
+    get created(): Date | undefined {
+      return walletInfo.created
+    },
     get disklet(): Disklet {
       return storageWalletApi.disklet
     },

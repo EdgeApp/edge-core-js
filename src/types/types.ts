@@ -1152,6 +1152,7 @@ export interface EdgeCurrencyWallet {
   readonly watch: Subscriber<EdgeCurrencyWallet>
 
   // Data store:
+  readonly created: Date | undefined
   readonly disklet: Disklet
   readonly id: string
   readonly localDisklet: Disklet
