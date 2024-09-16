@@ -1,4 +1,4 @@
-import { abs, div, eq, lt, mul } from 'biggystring'
+import { abs, div, lt, mul } from 'biggystring'
 import { Disklet } from 'disklet'
 import { base64 } from 'rfc4648'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
@@ -315,14 +315,10 @@ export function makeCurrencyWalletApi(
             if (txid == null) continue
             const tx = txs[txid]
 
-            // Filter transactions with zero amounts (nativeAmount/networkFee)
+            // Filter transactions with missing amounts (nativeAmount/networkFee)
             const nativeAmount = tx?.nativeAmount.get(tokenId)
             const networkFee = tx?.networkFee.get(tokenId)
-            if (
-              tx == null ||
-              nativeAmount == null ||
-              (eq(nativeAmount, '0') && eq(networkFee ?? '0', '0'))
-            ) {
+            if (tx == null || nativeAmount == null || networkFee == null) {
               continue
             }
 
@@ -330,7 +326,13 @@ export function makeCurrencyWalletApi(
             const edgeTx = combineTxWithFile(input, tx, file, tokenId)
             if (!searchStringFilter(ai, edgeTx, searchString)) continue
             if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
-            if (!tx.isSend && lt(abs(nativeAmount), spamThreshold)) continue
+            const isKnown =
+              tx.isSend ||
+              edgeTx.assetAction != null ||
+              edgeTx.chainAction != null ||
+              edgeTx.chainAssetAction != null ||
+              edgeTx.savedAction != null
+            if (!isKnown && lt(abs(nativeAmount), spamThreshold)) continue
 
             out.push(edgeTx)
           }
