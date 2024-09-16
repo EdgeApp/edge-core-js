@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.18.0 (2024-09-16)
+
 - changed: Allow transactions tagged with actions through spam filter
 
 ## 2.17.0 (2024-09-11)
