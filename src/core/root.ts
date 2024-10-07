@@ -35,7 +35,7 @@ export async function makeContext(
   const { io } = ios
   const {
     airbitzSupport = false,
-    apiKey,
+    apiKey = '',
     appId = '',
     authServer = 'https://login.edge.app/api',
     deviceDescription = null,
@@ -66,9 +66,6 @@ export async function makeContext(
           'https://sync-eu.edge.app'
         ]
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
-  if (apiKey == null) {
-    throw new Error('No API key provided')
-  }
 
   validateServer(authServer)
   infoServers.map(server => validateServer(server))

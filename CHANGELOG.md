@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Support HMAC-based API keys.
+
 ## 2.18.0 (2024-09-16)
 
 - changed: Allow transactions tagged with actions through spam filter
