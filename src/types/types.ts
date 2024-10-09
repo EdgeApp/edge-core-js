@@ -693,8 +693,16 @@ export interface EdgeDataDump {
   }
 }
 
-export interface EdgeFreshAddress {
+export interface EdgeAddress {
+  addressType: string // 'segwitAddress' | 'legacyAddress' | 'shieldedAddress'
   publicAddress: string
+  nativeBalance?: string
+}
+export interface EdgeFreshAddress {
+  allAddresses?: EdgeAddress[]
+
+  /** Deprecated */
+  publicAddress?: string
   segwitAddress?: string
   legacyAddress?: string
   nativeBalance?: string
@@ -1086,6 +1094,8 @@ export interface EdgeBalances {
 
 export type EdgeBalanceMap = Map<EdgeTokenId, string>
 
+export type EdgeAddresses = EdgeAddress[]
+
 export type EdgeReceiveAddress = EdgeFreshAddress & {
   metadata: EdgeMetadata
   nativeAmount: string
@@ -1210,12 +1220,19 @@ export interface EdgeCurrencyWallet {
   ) => AsyncIterableIterator<EdgeTransaction[]>
 
   // Addresses:
+  readonly getAddresses: (
+    opts: EdgeGetReceiveAddressOptions
+  ) => Promise<EdgeAddresses>
+
+  /** deprecated */
   readonly getReceiveAddress: (
     opts: EdgeGetReceiveAddressOptions
   ) => Promise<EdgeReceiveAddress>
+  /** deprecated */
   readonly lockReceiveAddress: (
     receiveAddress: EdgeReceiveAddress
   ) => Promise<void>
+  /** deprecated */
   readonly saveReceiveAddress: (
     receiveAddress: EdgeReceiveAddress
   ) => Promise<void>
