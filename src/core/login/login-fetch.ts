@@ -69,24 +69,19 @@ export function loginFetch(
   body?: LoginRequestBody
 ): Promise<unknown> {
   const { state, io, log } = ai.props
-  const { apiKey, serverUri } = state.login
+  const { apiKey, apiSecret, serverUri } = state.login
 
   const bodyText =
     method !== 'GET' && body != null
       ? JSON.stringify(wasLoginRequestBody(body))
       : ''
 
-  // Default API key:
-  let authorization = 'Token 4248c1bf41e53b840a5fdb2c872dd3ade525e66d'
-  if (apiKey.startsWith('hmac:')) {
-    // Looks something like 'hmac:edge-2024-q4:4248c1bf41e53b84066d='
-    const [, name, secret] = apiKey.split(':')
-
+  // API key:
+  let authorization = `Token ${apiKey}`
+  if (apiSecret != null) {
     const requestText = `${method}\n/api${path}\n${bodyText}`
-    const hash = hmacSha256(utf8.parse(requestText), base64.parse(secret))
-    authorization = `HMAC ${name} ${base64.stringify(hash)}`
-  } else if (apiKey !== '') {
-    authorization = `Token ${apiKey}`
+    const hash = hmacSha256(utf8.parse(requestText), apiSecret)
+    authorization = `HMAC ${apiKey} ${base64.stringify(hash)}`
   }
 
   const opts: EdgeFetchOptions = {

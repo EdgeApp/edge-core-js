@@ -37,7 +37,8 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
 
     // Inner context options:
     airbitzSupport = false,
-    apiKey = '',
+    apiKey,
+    apiSecret,
     appId = '',
     authServer,
     deviceDescription,
@@ -65,6 +66,7 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
           {
             airbitzSupport,
             apiKey,
+            apiSecret,
             appId,
             authServer,
             deviceDescription,
