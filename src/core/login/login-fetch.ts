@@ -1,4 +1,5 @@
 import { asMaybe } from 'cleaners'
+import { base64 } from 'rfc4648'
 
 import {
   asChallengeErrorPayload,
@@ -15,6 +16,8 @@ import {
   PasswordError,
   UsernameError
 } from '../../types/types'
+import { hmacSha256 } from '../../util/crypto/hashes'
+import { utf8 } from '../../util/encoding'
 import { timeout } from '../../util/promise'
 import { ApiInput } from '../root-pixie'
 
@@ -66,20 +69,29 @@ export function loginFetch(
   body?: LoginRequestBody
 ): Promise<unknown> {
   const { state, io, log } = ai.props
-  const { apiKey, serverUri } = state.login
+  const { apiKey, apiSecret, serverUri } = state.login
+
+  const bodyText =
+    method !== 'GET' && body != null
+      ? JSON.stringify(wasLoginRequestBody(body))
+      : ''
+
+  // API key:
+  let authorization = `Token ${apiKey}`
+  if (apiSecret != null) {
+    const requestText = `${method}\n/api${path}\n${bodyText}`
+    const hash = hmacSha256(utf8.parse(requestText), apiSecret)
+    authorization = `HMAC ${apiKey} ${base64.stringify(hash)}`
+  }
 
   const opts: EdgeFetchOptions = {
-    method: method,
+    body: bodyText,
+    method,
     headers: {
       'content-type': 'application/json',
       accept: 'application/json',
-      authorization: `Token ${
-        apiKey === '' ? '4248c1bf41e53b840a5fdb2c872dd3ade525e66d' : apiKey
-      }`
+      authorization
     }
-  }
-  if (method !== 'GET' && body != null) {
-    opts.body = JSON.stringify(wasLoginRequestBody(body))
   }
 
   const start = Date.now()

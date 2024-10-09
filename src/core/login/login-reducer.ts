@@ -12,6 +12,7 @@ import { findPin2Stash } from './pin2'
 
 export interface LoginState {
   readonly apiKey: string
+  readonly apiSecret: Uint8Array | null
   readonly appId: string
   readonly clientId: Uint8Array
   readonly deviceDescription: string | null
@@ -26,6 +27,10 @@ const dummyClientId = new Uint8Array(0)
 export const login = buildReducer<LoginState, RootAction, RootState>({
   apiKey(state = '', action): string {
     return action.type === 'INIT' ? action.payload.apiKey : state
+  },
+
+  apiSecret(state = null, action): Uint8Array | null {
+    return action.type === 'INIT' ? action.payload.apiSecret ?? null : state
   },
 
   appId(state = '', action): string {

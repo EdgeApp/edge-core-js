@@ -15,6 +15,8 @@ import {
   EdgeNativeIo,
   NetworkError
 } from './types/types'
+import { hmacSha256 } from './util/crypto/hashes'
+import { utf8 } from './util/encoding'
 import { timeout } from './util/promise'
 
 export { makeFakeIo } from './core/fake/fake-io'
@@ -37,7 +39,8 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
 
     // Inner context options:
     airbitzSupport = false,
-    apiKey = '',
+    apiKey,
+    apiSecret,
     appId = '',
     authServer,
     deviceDescription,
@@ -65,6 +68,7 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
           {
             airbitzSupport,
             apiKey,
+            apiSecret,
             appId,
             authServer,
             deviceDescription,
@@ -139,7 +143,8 @@ const asUsernameStash = asObject({
  * Fetches any login-related messages for all the users on this device.
  */
 export async function fetchLoginMessages(
-  apiKey: string
+  apiKey: string,
+  apiSecret?: Uint8Array
 ): Promise<EdgeLoginMessage[]> {
   const disklet = makeReactNativeDisklet()
 
@@ -158,13 +163,23 @@ export async function fetchLoginMessages(
     } catch (error: unknown) {}
   }
 
+  const bodyText = JSON.stringify({ loginIds: Object.keys(loginMap) })
+
+  // API key:
+  let authorization = `Token ${apiKey}`
+  if (apiSecret != null) {
+    const requestText = `POST\n/api/v2/messages\n${bodyText}`
+    const hash = hmacSha256(utf8.parse(requestText), apiSecret)
+    authorization = `HMAC ${apiKey} ${base64.stringify(hash)}`
+  }
+
   const uri = 'https://login.edge.app/api/v2/messages'
   const opts: EdgeFetchOptions = {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       accept: 'application/json',
-      authorization: `Token ${apiKey}`
+      authorization
     },
     body: JSON.stringify({ loginIds: Object.keys(loginMap) })
   }
