@@ -336,6 +336,7 @@ export type RootAction =
       type: 'INIT'
       payload: {
         apiKey: string
+        apiSecret?: Uint8Array
         appId: string
         authServer: string
         infoCache: InfoCacheFile

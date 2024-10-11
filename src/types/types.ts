@@ -1726,7 +1726,8 @@ export type EdgeCorePlugins = EdgePluginMap<
 export type EdgeCorePluginsInit = EdgePluginMap<boolean | JsonObject>
 
 export interface EdgeContextOptions {
-  apiKey: string
+  apiKey?: string
+  apiSecret?: Uint8Array
   appId: string
   authServer?: string
   infoServer?: string | string[]
@@ -1933,7 +1934,8 @@ export interface EdgeFakeWorldOptions {
 export interface EdgeFakeContextOptions {
   // EdgeContextOptions:
   airbitzSupport?: boolean
-  apiKey: string
+  apiKey?: string
+  apiSecret?: Uint8Array
   appId: string
   deviceDescription?: string
   hideKeys?: boolean

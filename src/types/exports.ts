@@ -78,6 +78,7 @@ export interface EdgeContextProps extends CommonProps {
   // EdgeContextOptions:
   airbitzSupport?: boolean
   apiKey?: string
+  apiSecret?: Uint8Array
   appId?: string
   authServer?: string
   infoServer?: string | string[]
