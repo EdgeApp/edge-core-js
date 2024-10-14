@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.19.0 (2024-10-14)
+
 - added: Support HMAC-based API keys.
 
 ## 2.18.0 (2024-09-16)
