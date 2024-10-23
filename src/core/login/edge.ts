@@ -78,6 +78,11 @@ export async function requestEdgeLogin(
   appId: string,
   opts: EdgeAccountOptions = {}
 ): Promise<EdgePendingEdgeLogin> {
+  function handleSoftError(error: unknown): void {
+    out.error = error
+    update(out)
+  }
+
   function handleError(error: unknown): void {
     // Stop the long-polling:
     for (const cleanup of cleanups) cleanup()
@@ -121,7 +126,7 @@ export async function requestEdgeLogin(
   const lobby = await makeLobby(ai, { loginRequest: { appId } })
   const cleanups = [
     lobby.close,
-    lobby.on('error', handleError),
+    lobby.on('error', handleSoftError),
     lobby.on('reply', reply => {
       handleReply(reply).catch(handleError)
     })
