@@ -72,14 +72,14 @@ export function loginFetch(
   const { apiKey, apiSecret, serverUri } = state.login
 
   const bodyText =
-    method !== 'GET' && body != null
-      ? JSON.stringify(wasLoginRequestBody(body))
-      : ''
+    method === 'GET' || body == null
+      ? undefined
+      : JSON.stringify(wasLoginRequestBody(body))
 
   // API key:
   let authorization = `Token ${apiKey}`
   if (apiSecret != null) {
-    const requestText = `${method}\n/api${path}\n${bodyText}`
+    const requestText = `${method}\n/api${path}\n${bodyText ?? ''}`
     const hash = hmacSha256(utf8.parse(requestText), apiSecret)
     authorization = `HMAC ${apiKey} ${base64.stringify(hash)}`
   }
