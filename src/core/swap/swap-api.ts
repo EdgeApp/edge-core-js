@@ -76,6 +76,23 @@ export async function fetchSwapQuotes(
           error => {
             pendingIds.delete(pluginId)
             log.warn(`${pluginId} gave swap error: ${String(error)}`)
+            // Log unknown errors:
+            if (isUnknownSwapError(error)) {
+              log.crash(`Unknown swap error: ${String(error)}`, {
+                error,
+                swapPluginId: pluginId,
+                request: {
+                  // Stringify to include "null"
+                  fromToken: String(request.fromTokenId),
+                  fromWalletType: request.fromWallet.type,
+                  // Stringify to include "null"
+                  toToken: String(request.toTokenId),
+                  toWalletType: request.toWallet.type,
+                  // toWalletType: request.fromWallet.type,
+                  quoteFor: request.quoteFor
+                }
+              })
+            }
             throw error
           }
         )
@@ -231,4 +248,15 @@ function rankError(error: unknown): number {
   if (asMaybeSwapPermissionError(error) != null) return 3
   if (asMaybeSwapCurrencyError(error) != null) return 2
   return 1
+}
+
+function isUnknownSwapError(error: unknown): boolean {
+  return (
+    asMaybeInsufficientFundsError(error) == null &&
+    asMaybePendingFundsError(error) == null &&
+    asMaybeSwapAboveLimitError(error) == null &&
+    asMaybeSwapBelowLimitError(error) == null &&
+    asMaybeSwapPermissionError(error) == null &&
+    asMaybeSwapCurrencyError(error) == null
+  )
 }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Log unknown swap errors as a crash.
+
 ## 2.19.0 (2024-10-14)
 
 - added: Support HMAC-based API keys.
