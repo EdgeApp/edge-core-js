@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.19.1 (2024-10-24)
+
+- fixed: Barcode login works again.
+
 ## 2.19.0 (2024-10-14)
 
 - added: Support HMAC-based API keys.
