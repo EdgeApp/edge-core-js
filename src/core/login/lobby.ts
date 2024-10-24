@@ -125,7 +125,12 @@ export async function makeLobby(
   task.start({ wait: false })
 
   // Create the return object:
-  return { close: task.stop, lobbyId, on, replies }
+  return {
+    close: () => task.stop(),
+    lobbyId,
+    on,
+    replies
+  }
 }
 
 /**
