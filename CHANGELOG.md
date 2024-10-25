@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Log unknown swap errors as a crash.
+
 ## 2.19.1 (2024-10-24)
 
 - fixed: Barcode login works again.
