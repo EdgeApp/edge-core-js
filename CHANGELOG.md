@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.20.0 (2024-10-28)
+
 - changed: Log unknown swap errors as a crash.
 
 ## 2.19.1 (2024-10-24)
