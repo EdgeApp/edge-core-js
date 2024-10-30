@@ -75,11 +75,16 @@ export const context: TamePixie<RootProps> = combinePixies({
         await infoCacheFile.save(io.disklet, INFO_CACHE_FILE_NAME, infoCache)
       }
 
-      const infoTask = makePeriodicTask(doInfoSync, 10 * 60 * 1000)
-      infoTask.start()
+      const infoTask = makePeriodicTask(doInfoSync, 10 * 60 * 1000, {
+        onError(error) {
+          input.props.onError(error)
+        }
+      })
 
       return {
-        update() {},
+        update() {
+          if (!infoTask.started) infoTask.start()
+        },
         destroy() {
           infoTask.stop()
         }

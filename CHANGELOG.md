@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Correctly update info-server payload in the background.
+
 ## 2.20.0 (2024-10-28)
 
 - changed: Log unknown swap errors as a crash.
