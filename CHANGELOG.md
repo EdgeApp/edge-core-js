@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.20.1 (2024-10-30)
+
 - fixed: Correctly update info-server payload in the background.
 
 ## 2.20.0 (2024-10-28)
