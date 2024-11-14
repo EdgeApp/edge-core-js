@@ -13,6 +13,7 @@ import {
   upgradeTxNetworkFees
 } from '../../../types/type-helpers'
 import {
+  EdgeAddress,
   EdgeBalanceMap,
   EdgeBalances,
   EdgeCurrencyConfig,
@@ -382,24 +383,87 @@ export function makeCurrencyWalletApi(
     streamTransactions,
 
     // Addresses:
+    async getAddresses(
+      opts: EdgeGetReceiveAddressOptions
+    ): Promise<EdgeAddress[]> {
+      if (engine.getAddresses != null) {
+        return await engine.getAddresses(opts)
+      } else {
+        const upgradedCurrency = upgradeCurrencyCode({
+          allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+          currencyInfo: plugin.currencyInfo,
+          tokenId: opts.tokenId
+        })
+
+        const freshAddress = await engine.getFreshAddress({
+          ...upgradedCurrency,
+          forceIndex: opts.forceIndex
+        })
+
+        const {
+          publicAddress,
+          legacyAddress,
+          segwitAddress,
+          nativeBalance,
+          legacyNativeBalance,
+          segwitNativeBalance
+        } = freshAddress
+
+        const addresses: EdgeAddress[] = [
+          {
+            addressType: 'publicAddress',
+            publicAddress,
+            nativeBalance
+          }
+        ]
+
+        if (segwitAddress != null) {
+          addresses.unshift({
+            addressType: 'segwitAddress',
+            publicAddress: segwitAddress,
+            nativeBalance: segwitNativeBalance
+          })
+        }
+
+        if (legacyAddress != null) {
+          addresses.push({
+            addressType: 'legacyAddress',
+            publicAddress: legacyAddress,
+            nativeBalance: legacyNativeBalance
+          })
+        }
+
+        return addresses
+      }
+    },
+
     async getReceiveAddress(
       opts: EdgeGetReceiveAddressOptions
     ): Promise<EdgeReceiveAddress> {
-      const upgradedCurrency = upgradeCurrencyCode({
-        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
-        currencyInfo: plugin.currencyInfo,
-        tokenId: opts.tokenId
-      })
+      const addresses = await this.getAddresses(opts)
 
-      const freshAddress = await engine.getFreshAddress({
-        ...upgradedCurrency,
-        forceIndex: opts.forceIndex
-      })
       const receiveAddress: EdgeReceiveAddress = {
-        ...freshAddress,
-        nativeAmount: '0',
-        metadata: fakeMetadata
+        publicAddress: addresses[0].publicAddress,
+        nativeBalance: addresses[0].nativeBalance,
+        metadata: fakeMetadata,
+        nativeAmount: '0'
       }
+
+      const segwitAddress = addresses.find(address => {
+        return address.addressType === 'segwitAddress'
+      })
+      if (segwitAddress != null) {
+        receiveAddress.segwitAddress = segwitAddress.publicAddress
+        receiveAddress.segwitNativeBalance = segwitAddress.nativeBalance
+      }
+      const legacyAddress = addresses.find(address => {
+        return address.addressType === 'legacyAddress'
+      })
+      if (legacyAddress != null) {
+        receiveAddress.legacyAddress = legacyAddress.publicAddress
+        receiveAddress.legacyNativeBalance = legacyAddress.nativeBalance
+      }
+
       return receiveAddress
     },
     async lockReceiveAddress(
