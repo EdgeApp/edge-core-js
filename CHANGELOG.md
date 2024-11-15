@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Do not error when changing the PIN on accounts with children.
+
 ## 2.20.1 (2024-10-30)
 
 - fixed: Correctly update info-server payload in the background.
