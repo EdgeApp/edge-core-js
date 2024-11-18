@@ -495,10 +495,10 @@ export function decryptChildKey(
   loginId: Uint8Array
 ): SessionKey {
   function searchChildren(
-    children: LoginStash[],
+    childList: LoginStash[],
     loginKey: Uint8Array
   ): SessionKey | undefined {
-    for (const child of children) {
+    for (const child of childList) {
       // This will never happen, but TypeScript doesn't know that:
       if (child.parentBox == null) continue
 
