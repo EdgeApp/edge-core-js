@@ -24,8 +24,8 @@ import {
   loadFiatFile,
   loadNameFile,
   loadTokensFile,
-  loadTxFileNames,
-  setupNewTxMetadata
+  loadTxFileNames
+  // setupNewTxMetadata
 } from './currency-wallet-files'
 import {
   CurrencyWalletInput,
@@ -307,7 +307,7 @@ export function makeCurrencyWalletCallbacks(
 
       // Grab stuff from redux:
       const { state } = input.props
-      const { fileNames, txs: reduxTxs } = input.props.walletState
+      const { /* fileNames, */ txs: reduxTxs } = input.props.walletState
 
       const txidHashes: TxidHashes = {}
       const changed: EdgeTransaction[] = []
@@ -333,12 +333,12 @@ export function makeCurrencyWalletCallbacks(
 
         // Ensure the transaction has metadata:
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
-        const isNew = tx.isSend ? false : fileNames[txidHash] == null
-        if (isNew) {
-          setupNewTxMetadata(input, tx).catch(error =>
-            input.props.onError(error)
-          )
-        }
+        // const isNew = tx.isSend ? false : fileNames[txidHash] == null
+        // if (isNew) {
+        //   setupNewTxMetadata(input, tx).catch(error =>
+        //     input.props.onError(error)
+        //   )
+        // }
 
         // Build the final transaction to show the user:
         const { files } = input.props.walletState
@@ -348,8 +348,8 @@ export function makeCurrencyWalletCallbacks(
           files[txidHash],
           tx.tokenId
         )
-        if (isNew) created.push(combinedTx)
-        else if (files[txidHash] != null) changed.push(combinedTx)
+        // if (isNew) created.push(combinedTx)
+        // else if (files[txidHash] != null) changed.push(combinedTx)
         txidHashes[txidHash] = { date: combinedTx.date, txid }
       }
 

@@ -1,5 +1,5 @@
 import { number as currencyFromNumber } from 'currency-codes'
-import { Disklet, justFiles, navigateDisklet } from 'disklet'
+import { Disklet, justFiles /* navigateDisklet */ } from 'disklet'
 
 import {
   EdgeAssetAction,
@@ -301,6 +301,7 @@ export async function loadTxFiles(
  * If they in the legacy format, convert them to the new format
  * and cache them on disk
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getLegacyFileNames(
   state: RootState,
   walletId: string,
@@ -353,37 +354,37 @@ async function getLegacyFileNames(
 export async function loadTxFileNames(
   input: CurrencyWalletInput
 ): Promise<void> {
-  const { dispatch, state, walletId } = input.props
-  const disklet = getStorageWalletDisklet(state, walletId)
+  const { dispatch, /* state, */ walletId } = input.props
+  // const disklet = getStorageWalletDisklet(state, walletId)
 
   // Legacy transactions files:
-  const txFileNames: TxFileNames = await getLegacyFileNames(
-    state,
-    walletId,
-    navigateDisklet(disklet, 'Transactions')
-  )
+  // const txFileNames: TxFileNames = await getLegacyFileNames(
+  //   state,
+  //   walletId,
+  //   navigateDisklet(disklet, 'Transactions')
+  // )
 
   // New transactions files:
-  const listing = await navigateDisklet(disklet, 'transaction').list()
-  for (const fileName of justFiles(listing)) {
-    const prefix = fileName.split('.json')[0]
-    const split: string[] = prefix.split('-')
-    const [creationDatePart, txidHash] = split
-    const creationDate = parseInt(creationDatePart)
+  // const listing = await navigateDisklet(disklet, 'transaction').list()
+  // for (const fileName of justFiles(listing)) {
+  //   const prefix = fileName.split('.json')[0]
+  //   const split: string[] = prefix.split('-')
+  //   const [creationDatePart, txidHash] = split
+  //   const creationDate = parseInt(creationDatePart)
 
-    // Create entry in the txFileNames for the txidHash if it doesn't exist
-    // or the creation date is older than the existing one
-    if (
-      txFileNames[txidHash] == null ||
-      creationDate < txFileNames[txidHash].creationDate
-    ) {
-      txFileNames[txidHash] = { creationDate, fileName }
-    }
-  }
+  //   // Create entry in the txFileNames for the txidHash if it doesn't exist
+  //   // or the creation date is older than the existing one
+  //   if (
+  //     txFileNames[txidHash] == null ||
+  //     creationDate < txFileNames[txidHash].creationDate
+  //   ) {
+  //     txFileNames[txidHash] = { creationDate, fileName }
+  //   }
+  // }
 
   dispatch({
     type: 'CURRENCY_WALLET_FILE_NAMES_LOADED',
-    payload: { txFileNames, walletId }
+    payload: { txFileNames: {}, walletId }
   })
 }
 
