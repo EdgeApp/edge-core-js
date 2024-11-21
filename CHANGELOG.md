@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.20.2 (2024-11-21)
+
 - fixed: Do not error when changing the PIN on accounts with children.
 
 ## 2.20.1 (2024-10-30)
