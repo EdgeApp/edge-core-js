@@ -513,6 +513,8 @@ describe('currency wallets', function () {
       ...metadata
     })
     expect(txs[0].networkFeeOption).equals('high')
+    expect(txs[0].networkFee).equals('23')
+    expect(txs[0].parentNetworkFee).equals(undefined)
     expect(txs[0].feeRateUsed).deep.equals({ fakePrice: 0 })
     expect(txs[0].spendTargets).deep.equals([
       {

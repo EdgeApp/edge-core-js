@@ -9,6 +9,7 @@
 ## 2.20.2 (2024-11-21)
 
 - fixed: Do not error when changing the PIN on accounts with children.
+- fixed: Incorrectly including `parentNetworkFee` for native currency transactions from `getTransactions`.
 
 ## 2.20.1 (2024-10-30)
 

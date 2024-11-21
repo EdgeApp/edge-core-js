@@ -290,7 +290,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
       isSend: false,
       memos,
       nativeAmount: total,
-      networkFee: '0',
+      networkFee: '23',
       otherParams: {},
       ourReceiveAddresses: [],
       signedTx: '',

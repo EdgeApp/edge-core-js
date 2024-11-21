@@ -693,7 +693,10 @@ export function combineTxWithFile(
     networkFee: tx.networkFee.get(tokenId) ?? '0',
     otherParams: { ...tx.otherParams },
     ourReceiveAddresses: tx.ourReceiveAddresses,
-    parentNetworkFee: tx.networkFee.get(null) ?? '0',
+    parentNetworkFee:
+      walletCurrency === currencyCode
+        ? undefined
+        : tx.networkFee.get(null) ?? '0',
     signedTx: tx.signedTx,
     tokenId,
     txid: tx.txid,
