@@ -671,7 +671,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       })
 
       // Added for backward compatibility for plugins using core 1.x
-      // @ts-expect-error
       if (out.networkFee.tokenId === undefined) out.networkFee.tokenId = null
 
       return bridgifyObject(out)

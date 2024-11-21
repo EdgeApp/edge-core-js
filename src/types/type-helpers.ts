@@ -1,4 +1,9 @@
-import type { EdgeCurrencyInfo, EdgeTokenId, EdgeTokenMap } from './types'
+import type {
+  EdgeCurrencyInfo,
+  EdgeSwapQuote,
+  EdgeTokenId,
+  EdgeTokenMap
+} from './types'
 
 /**
  * Translates a currency code to a tokenId,
@@ -28,4 +33,11 @@ export function upgradeCurrencyCode(opts: {
   const { currencyCode } = tokenId == null ? currencyInfo : allTokens[tokenId]
 
   return { currencyCode, tokenId: tokenId ?? null }
+}
+
+export function upgradeSwapQuote(quote: EdgeSwapQuote): EdgeSwapQuote {
+  if (quote.networkFee != null && quote.networkFee.tokenId == null) {
+    quote.networkFee.tokenId = quote.request.fromTokenId
+  }
+  return quote
 }

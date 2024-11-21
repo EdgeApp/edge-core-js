@@ -322,6 +322,11 @@ export type EdgeTxAction =
   | EdgeTxActionFiat
   | EdgeTxActionTokenApproval
 
+export interface EdgeTxAmount {
+  tokenId: EdgeTokenId
+  nativeAmount: string
+}
+
 export type EdgeAssetActionType =
   | 'claim'
   | 'claimOrder'
@@ -518,13 +523,6 @@ export interface EdgeMetadataChange {
   exchangeAmount?: { [fiatCurrencyCode: string]: number | null }
   name?: string | null
   notes?: string | null
-}
-
-// Would prefer a better name than EdgeNetworkFee2 but can't think of one
-export interface EdgeNetworkFee2 {
-  readonly nativeAmount: string
-  readonly currencyPluginId: string
-  readonly tokenId: EdgeTokenId
 }
 
 export interface EdgeTxSwap {
@@ -1139,7 +1137,10 @@ export interface EdgeActivationQuote {
   readonly paymentTokenId: EdgeTokenId
 
   readonly fromNativeAmount: string
-  readonly networkFee: EdgeNetworkFee2
+  readonly networkFee: EdgeTxAmount & {
+    /** @deprecated use contextual APIs to get the currency's pluginId */
+    readonly currencyPluginId: string
+  }
 
   readonly approve: (
     opts?: EdgeActivationApproveOptions
@@ -1356,7 +1357,10 @@ export interface EdgeSwapQuote {
 
   readonly fromNativeAmount: string
   readonly toNativeAmount: string
-  readonly networkFee: EdgeNetworkFee
+  readonly networkFee: EdgeTxAmount & {
+    /** @deprecated use tokenId */
+    currencyCode: string
+  }
 
   readonly pluginId: string
   readonly expirationDate?: Date
@@ -1983,7 +1987,15 @@ export interface EdgeFakeWorld {
 // deprecated types
 // ---------------------------------------------------------------------
 
+/** @deprecated use EdgeTxAmount instead */
 export interface EdgeNetworkFee {
   readonly currencyCode: string
   readonly nativeAmount: string
+}
+
+/** @deprecated use EdgeTxAmount instead */
+export interface EdgeNetworkFee2 {
+  readonly nativeAmount: string
+  readonly currencyPluginId: string
+  readonly tokenId: EdgeTokenId
 }
