@@ -572,6 +572,7 @@ export interface EdgeTransaction {
   // Amounts:
   nativeAmount: string
   networkFee: string
+  networkFees: EdgeTxAmount[]
   parentNetworkFee?: string
 
   // Confirmation status:

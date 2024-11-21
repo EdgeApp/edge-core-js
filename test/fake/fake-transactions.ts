@@ -395,6 +395,7 @@ export const moreTxs: { [txid: string]: EdgeTransaction } = {
     txid: '83137fa6212eff80a819c58bd3d500e240603a2bec25dbb96dd29fe5f4b7f69b',
     nativeAmount: '10',
     networkFee: '0',
+    networkFees: [],
     currencyCode: 'FAKE',
     tokenId: null,
     chainAssetAction: {

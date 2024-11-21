@@ -3,7 +3,10 @@ import { asMaybe } from 'cleaners'
 import { isPixieShutdownError } from 'redux-pixies'
 import { emit } from 'yaob'
 
-import { upgradeCurrencyCode } from '../../../types/type-helpers'
+import {
+  upgradeCurrencyCode,
+  upgradeTxNetworkFees
+} from '../../../types/type-helpers'
 import {
   EdgeConfirmationState,
   EdgeCurrencyEngineCallbacks,
@@ -280,6 +283,8 @@ export function makeCurrencyWalletCallbacks(
       // Sanity-check incoming transactions:
       if (txs == null) return
       for (const tx of txs) {
+        // Backwards/Forwards compatibility:
+        upgradeTxNetworkFees(tx)
         if (
           typeof tx.txid !== 'string' ||
           typeof tx.date !== 'number' ||

@@ -8,7 +8,10 @@ import {
   InternalWalletStream,
   streamTransactions
 } from '../../../client-side'
-import { upgradeCurrencyCode } from '../../../types/type-helpers'
+import {
+  upgradeCurrencyCode,
+  upgradeTxNetworkFees
+} from '../../../types/type-helpers'
 import {
   EdgeBalanceMap,
   EdgeBalances,
@@ -324,6 +327,7 @@ export function makeCurrencyWalletApi(
 
             // Filter transactions based on search criteria:
             const edgeTx = combineTxWithFile(input, tx, file, tokenId)
+            upgradeTxNetworkFees(edgeTx)
             if (!searchStringFilter(ai, edgeTx, searchString)) continue
             if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
             const isKnown =
@@ -513,6 +517,7 @@ export function makeCurrencyWalletApi(
         },
         { privateKeys }
       )
+      upgradeTxNetworkFees(tx)
       tx.networkFeeOption = networkFeeOption
       tx.requestedCustomFee = customNetworkFee
       tx.spendTargets = savedTargets
@@ -691,6 +696,7 @@ export function combineTxWithFile(
     metadata: {},
     nativeAmount: tx.nativeAmount.get(tokenId) ?? '0',
     networkFee: tx.networkFee.get(tokenId) ?? '0',
+    networkFees: [],
     otherParams: { ...tx.otherParams },
     ourReceiveAddresses: tx.ourReceiveAddresses,
     parentNetworkFee:

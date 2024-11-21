@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Added `networkFees` to `EdgeTransaction`.
+
 ## 2.20.3 (2024-11-25)
 
 - fixed: Accept `''` to select the default API key.

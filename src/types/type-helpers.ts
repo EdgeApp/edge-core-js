@@ -2,7 +2,8 @@ import type {
   EdgeCurrencyInfo,
   EdgeSwapQuote,
   EdgeTokenId,
-  EdgeTokenMap
+  EdgeTokenMap,
+  EdgeTransaction
 } from './types'
 
 /**
@@ -40,4 +41,18 @@ export function upgradeSwapQuote(quote: EdgeSwapQuote): EdgeSwapQuote {
     quote.networkFee.tokenId = quote.request.fromTokenId
   }
   return quote
+}
+
+export const upgradeTxNetworkFees = (tx: EdgeTransaction): void => {
+  if (tx.networkFees == null || tx.networkFees.length === 0) {
+    tx.networkFees = [
+      {
+        tokenId: tx.tokenId,
+        nativeAmount: tx.networkFee
+      }
+    ]
+    if (tx.parentNetworkFee != null) {
+      tx.networkFees.push({ tokenId: null, nativeAmount: tx.parentNetworkFee })
+    }
+  }
 }

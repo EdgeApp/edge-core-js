@@ -423,6 +423,38 @@ describe('currency wallets', function () {
     expect(await wallet.nativeToDenomination('10', 'TOKEN')).equals('0.01')
   })
 
+  it('can make spend', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({ balance: 100 }) // Spending balance
+    const tx = await wallet.makeSpend({
+      tokenId: null,
+      spendTargets: [
+        {
+          uniqueIdentifier: 'hello',
+          nativeAmount: '50',
+          publicAddress: 'somewhere'
+        }
+      ],
+      networkFeeOption: 'high'
+    })
+    expect(tx.nativeAmount).equals('50')
+    expect(tx.metadata).deep.equals(undefined)
+    expect(tx.networkFeeOption).equals('high')
+    expect(tx.networkFee).equals('23')
+    expect(tx.networkFees).deep.equals([{ tokenId: null, nativeAmount: '23' }])
+    expect(tx.feeRateUsed).deep.equals({ fakePrice: 0 })
+    expect(tx.spendTargets).deep.equals([
+      {
+        currencyCode: 'FAKE',
+        memo: 'hello',
+        nativeAmount: '50',
+        publicAddress: 'somewhere',
+        uniqueIdentifier: 'hello'
+      }
+    ])
+    expect(tx.deviceDescription).equals('iphone12')
+  })
+
   it('can save metadata at spend time', async function () {
     const log = makeAssertLog()
     const { wallet, config } = await makeFakeCurrencyWallet()
@@ -515,6 +547,9 @@ describe('currency wallets', function () {
     expect(txs[0].networkFeeOption).equals('high')
     expect(txs[0].networkFee).equals('23')
     expect(txs[0].parentNetworkFee).equals(undefined)
+    expect(txs[0].networkFees).deep.equals([
+      { tokenId: null, nativeAmount: '23' }
+    ])
     expect(txs[0].feeRateUsed).deep.equals({ fakePrice: 0 })
     expect(txs[0].spendTargets).deep.equals([
       {
