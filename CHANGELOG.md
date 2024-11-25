@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.20.3 (2024-11-25)
+
 - fixed: Accept `''` to select the default API key.
 
 ## 2.20.2 (2024-11-21)
