@@ -35,7 +35,6 @@ export async function makeContext(
   const { io } = ios
   const {
     airbitzSupport = false,
-    apiKey = '4248c1bf41e53b840a5fdb2c872dd3ade525e66d',
     apiSecret,
     appId = '',
     authServer = 'https://login.edge.app/api',
@@ -46,6 +45,10 @@ export async function makeContext(
     skipBlockHeight = false,
     syncServer
   } = opts
+  let { apiKey } = opts
+  if (apiKey == null || apiKey === '') {
+    apiKey = '4248c1bf41e53b840a5fdb2c872dd3ade525e66d'
+  }
   const infoServers =
     typeof infoServer === 'string'
       ? [infoServer]
