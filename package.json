@@ -81,7 +81,7 @@
   "dependencies": {
     "aes-js": "^3.1.0",
     "base-x": "^4.0.0",
-    "biggystring": "^4.0.0",
+    "biggystring": "^4.2.3",
     "cleaners": "^0.3.17",
     "currency-codes": "^1.5.1",
     "disklet": "^0.5.2",
