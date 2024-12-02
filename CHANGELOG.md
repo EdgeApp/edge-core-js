@@ -3,6 +3,8 @@
 ## Unreleased
 
 - added: Added `networkFees` to `EdgeTransaction`.
+- added: Add `getAddresses` to `EdgeCurrencyWallet`
+- changed: Deprecated `getReceiveAddress` field on `EdgeCurrencyWallet`
 
 ## 2.20.3 (2024-11-25)
 
