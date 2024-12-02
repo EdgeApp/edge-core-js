@@ -1,6 +1,7 @@
 import { gt, lt } from 'biggystring'
 import { bridgifyObject, close } from 'yaob'
 
+import { upgradeSwapQuote } from '../../types/type-helpers'
 import {
   asMaybeInsufficientFundsError,
   asMaybePendingFundsError,
@@ -67,6 +68,7 @@ export async function fetchSwapQuotes(
         })
         .then(
           quote => {
+            upgradeSwapQuote(quote)
             const { fromWallet, toWallet, ...request } = quote.request ?? {}
             const cleaned = { ...quote, request }
             pendingIds.delete(pluginId)

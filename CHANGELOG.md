@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Added `networkFees` to `EdgeTransaction`.
+
 ## 2.20.3 (2024-11-25)
 
 - fixed: Accept `''` to select the default API key.
@@ -9,6 +11,7 @@
 ## 2.20.2 (2024-11-21)
 
 - fixed: Do not error when changing the PIN on accounts with children.
+- fixed: Incorrectly including `parentNetworkFee` for native currency transactions from `getTransactions`.
 
 ## 2.20.1 (2024-10-30)
 

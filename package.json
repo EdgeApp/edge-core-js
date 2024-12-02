@@ -71,7 +71,7 @@
     "prepare.dev": "EDGE_MODE=development npm-run-all clean -p build.*",
     "prepare": "husky install && npm-run-all clean -p build.*",
     "start": "webpack serve",
-    "test": "mocha -r sucrase/register 'test/**/*.test.ts'",
+    "test": "mocha",
     "types": "tsc",
     "verify": "npm-run-all lint types prepare test"
   },

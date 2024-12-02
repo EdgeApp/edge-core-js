@@ -1,0 +1,4 @@
+{
+  "require": "sucrase/register",
+  "spec": "test/**/*.test.ts"
+}

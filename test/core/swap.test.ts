@@ -22,7 +22,7 @@ const quotes: EdgeSwapQuote[] = [
     networkFee: {
       currencyCode: 'ETH',
       nativeAmount: '3492187272714000'
-    },
+    } as any,
     pluginId: 'changenow',
     expirationDate: new Date('2022-01-21T04:35:22.033Z'),
     isEstimate: false,
@@ -38,7 +38,7 @@ const quotes: EdgeSwapQuote[] = [
     networkFee: {
       currencyCode: 'ETH',
       nativeAmount: '3492187272714000'
-    },
+    } as any,
     expirationDate: new Date('2022-01-21T04:35:18.000Z'),
     pluginId: 'switchain',
     approve: async () => typeHack,
@@ -52,7 +52,7 @@ const quotes: EdgeSwapQuote[] = [
     networkFee: {
       currencyCode: 'ETH',
       nativeAmount: '3492187272714000'
-    },
+    } as any,
     pluginId: 'godex',
     expirationDate: new Date('2022-01-21T04:53:22.097Z'),
     isEstimate: false,
