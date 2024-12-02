@@ -571,9 +571,7 @@ export interface EdgeTransaction {
 
   // Amounts:
   nativeAmount: string
-  networkFee: string
   networkFees: EdgeTxAmount[]
-  parentNetworkFee?: string
 
   // Confirmation status:
   confirmations?: EdgeConfirmationState
@@ -634,6 +632,12 @@ export interface EdgeTransaction {
 
   /** @deprecated Use tokenId instead */
   currencyCode: string
+
+  /** @deprecated Use networkFees instead */
+  networkFee: string
+
+  /** @deprecated Use networkFees instead */
+  parentNetworkFee?: string
 }
 
 export interface EdgeSpendTarget {
