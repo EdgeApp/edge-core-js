@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Added `fetchCorsForced` for access to nativeFetch in React Native.
+
 ## 2.21.0 (2024-12-02)
 
 - added: Added `networkFees` to `EdgeTransaction`.

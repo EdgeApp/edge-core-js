@@ -23,6 +23,7 @@ export function makeNodeIo(path: string): EdgeIo {
 
     // Networking:
     fetch,
-    fetchCors: fetch
+    fetchCors: fetch,
+    fetchCorsForced: fetch
   }
 }

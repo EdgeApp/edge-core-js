@@ -45,7 +45,8 @@ export function makeFakeIo(): EdgeIo {
 
     // Networking:
     fetch: fakeFetch,
-    fetchCors: fakeFetch
+    fetchCors: fakeFetch,
+    fetchCorsForced: fakeFetch
   }
   return out
 }

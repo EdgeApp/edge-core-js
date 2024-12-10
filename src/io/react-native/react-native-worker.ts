@@ -208,6 +208,11 @@ async function makeIo(): Promise<EdgeIo> {
       const response = await nativeFetch(uri, opts)
       state.nativeSuccess = true
       return response
+    },
+
+    async fetchCorsForced(uri: string, opts: EdgeFetchOptions = {}) {
+      const response = await nativeFetch(uri, opts)
+      return response
     }
   }
 

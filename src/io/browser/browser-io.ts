@@ -90,6 +90,14 @@ export function makeBrowserIo(): EdgeIo {
       // Throw the error from the first fetch instead of the one from
       // proxy server.
       throw errorToThrow
+    },
+
+    async fetchCorsForced(
+      uri: string,
+      opts?: EdgeFetchOptions
+    ): Promise<EdgeFetchResponse> {
+      const response = await fetchCorsProxy(uri, opts)
+      return response
     }
   }
 }
