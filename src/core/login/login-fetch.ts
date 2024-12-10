@@ -91,7 +91,8 @@ export function loginFetch(
       'content-type': 'application/json',
       accept: 'application/json',
       authorization
-    }
+    },
+    corsBypass: 'never'
   }
 
   const start = Date.now()

@@ -172,13 +172,15 @@ async function makeIo(): Promise<EdgeIo> {
       uri: string,
       opts?: EdgeFetchOptions
     ): Promise<EdgeFetchResponse> {
-      return await window.fetch(uri, opts)
-    },
+      const { corsBypass = 'auto' } = opts ?? {}
 
-    async fetchCors(
-      uri: string,
-      opts: EdgeFetchOptions = {}
-    ): Promise<EdgeFetchResponse> {
+      if (corsBypass === 'always') {
+        return await nativeFetch(uri, opts)
+      }
+      if (corsBypass === 'never') {
+        return await window.fetch(uri, opts)
+      }
+
       const { protocol, host, pathname } = new URL(uri)
       const endpoint = `${protocol}//${host}${pathname}`
       const state = endpointCorsState.get(endpoint) ?? {
@@ -208,6 +210,13 @@ async function makeIo(): Promise<EdgeIo> {
       const response = await nativeFetch(uri, opts)
       state.nativeSuccess = true
       return response
+    },
+
+    async fetchCors(
+      uri: string,
+      opts: EdgeFetchOptions = {}
+    ): Promise<EdgeFetchResponse> {
+      return await this.fetch(uri, opts)
     }
   }
 
