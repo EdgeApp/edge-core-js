@@ -39,13 +39,19 @@ export function makeBrowserIo(): EdgeIo {
     }),
 
     // Networking:
-    fetch(uri: string, opts?: EdgeFetchOptions): Promise<EdgeFetchResponse> {
-      return window.fetch(uri, opts)
-    },
-    async fetchCors(
+    async fetch(
       uri: string,
       opts?: EdgeFetchOptions
     ): Promise<EdgeFetchResponse> {
+      const { corsBypass = 'auto' } = opts ?? {}
+
+      if (corsBypass === 'always') {
+        return await fetchCorsProxy(uri, opts)
+      }
+      if (corsBypass === 'never') {
+        return await window.fetch(uri, opts)
+      }
+
       const { hostname } = new URL(uri)
       const corsFailureCount = hostnameCorsProxyBlacklist.get(hostname) ?? 0
 
@@ -90,6 +96,13 @@ export function makeBrowserIo(): EdgeIo {
       // Throw the error from the first fetch instead of the one from
       // proxy server.
       throw errorToThrow
+    },
+
+    async fetchCors(
+      uri: string,
+      opts?: EdgeFetchOptions
+    ): Promise<EdgeFetchResponse> {
+      return await this.fetch(uri, opts)
     }
   }
 }

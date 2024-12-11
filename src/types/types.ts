@@ -1,10 +1,5 @@
 import type { Disklet } from 'disklet'
-import type {
-  FetchFunction,
-  FetchHeaders,
-  FetchOptions,
-  FetchResponse
-} from 'serverlet'
+import type { FetchHeaders, FetchOptions, FetchResponse } from 'serverlet'
 import type { Subscriber } from 'yaob'
 
 export * from './error'
@@ -54,10 +49,15 @@ export type EdgeScryptFunction = (
 ) => Promise<Uint8Array>
 
 // The subset of the fetch function Edge expects:
-export type EdgeFetchOptions = FetchOptions
+export type EdgeFetchOptions = FetchOptions & {
+  corsBypass?: 'auto' | 'always' | 'never'
+}
 export type EdgeFetchHeaders = FetchHeaders
 export type EdgeFetchResponse = FetchResponse
-export type EdgeFetchFunction = FetchFunction
+export type EdgeFetchFunction = (
+  uri: string,
+  opts?: EdgeFetchOptions
+) => Promise<EdgeFetchResponse>
 
 /**
  * Access to platform-specific resources.
@@ -76,6 +76,8 @@ export interface EdgeIo {
   /**
    * This is like `fetch`, but will try to avoid CORS limitations
    * on platforms where that may be a problem.
+   *
+   * @deprecated Use EdgeIo.fetch instead, which now includes CORS avoidance by default
    */
   readonly fetchCors: EdgeFetchFunction
 }

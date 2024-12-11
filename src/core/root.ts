@@ -146,7 +146,7 @@ export async function makeContext(
   // Create sync client:
   const syncClient = makeSyncClient({
     log,
-    fetch: io.fetch,
+    fetch: (uri, opts) => io.fetch(uri, { ...opts, corsBypass: 'never' }),
     edgeServers: { infoServers, syncServers }
   })
 
