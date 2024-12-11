@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.22.0 (2024-12-10)
+
 - added: Added `fetchCorsForced` for access to nativeFetch in React Native.
 
 ## 2.21.0 (2024-12-02)
