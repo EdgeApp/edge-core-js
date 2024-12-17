@@ -216,7 +216,7 @@ async function makeIo(): Promise<EdgeIo> {
       uri: string,
       opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
-      return await this.fetch(uri, opts)
+      return await io.fetch(uri, opts)
     }
   }
 

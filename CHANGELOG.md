@@ -2,9 +2,12 @@
 
 ## Unreleased
 
+- fixed: Fixed broken `fetchCors` implementation caused by referencing error to `EdgeIo.fetch`.
+
 ## 2.22.0 (2024-12-10)
 
-- added: Added `fetchCorsForced` for access to nativeFetch in React Native.
+- added: Add `avoidCors` API to `EdgeFetchFunction`
+- changed: Deprecated `fetchCors` API in favor of `fetch` with `avoidCors` option.
 
 ## 2.21.0 (2024-12-02)
 

@@ -24,7 +24,7 @@ export function makeBrowserIo(): EdgeIo {
     throw new Error('No secure random number generator in this browser')
   }
 
-  return {
+  const io: EdgeIo = {
     // Crypto:
     random: size => {
       const out = new Uint8Array(size)
@@ -102,7 +102,9 @@ export function makeBrowserIo(): EdgeIo {
       uri: string,
       opts?: EdgeFetchOptions
     ): Promise<EdgeFetchResponse> {
-      return await this.fetch(uri, opts)
+      return await io.fetch(uri, opts)
     }
   }
+
+  return io
 }
