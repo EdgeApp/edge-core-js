@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Fixed broken `fetchCors` implementation caused by referencing error to `EdgeIo.fetch`.
+
 ## 2.22.0 (2024-12-10)
 
 - added: Add `avoidCors` API to `EdgeFetchFunction`
