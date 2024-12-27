@@ -1191,14 +1191,6 @@ export interface EdgeCurrencyWallet {
   // Currency info:
   readonly currencyConfig: EdgeCurrencyConfig // eslint-disable-line no-use-before-define
   readonly currencyInfo: EdgeCurrencyInfo
-  readonly denominationToNative: (
-    denominatedAmount: string,
-    currencyCode: string
-  ) => Promise<string>
-  readonly nativeToDenomination: (
-    nativeAmount: string,
-    currencyCode: string
-  ) => Promise<string>
 
   // Chain state:
   readonly balanceMap: EdgeBalanceMap
@@ -1274,6 +1266,18 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
+
+  /** @deprecated Use the information in EdgeCurrencyInfo / EdgeToken. */
+  readonly denominationToNative: (
+    denominatedAmount: string,
+    currencyCode: string
+  ) => Promise<string>
+
+  /** @deprecated Use the information in EdgeCurrencyInfo / EdgeToken. */
+  readonly nativeToDenomination: (
+    nativeAmount: string,
+    currencyCode: string
+  ) => Promise<string>
 
   /** @deprecated Use `EdgeCurrencyWallet.getAddresses` instead */
   readonly getReceiveAddress: (

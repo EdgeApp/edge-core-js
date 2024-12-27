@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- deprecated: `EdgeCurrencyWallet.denominationToNative` and `EdgeCurrencyWallet.nativeToDenomination` utilities. Clients can perform these conversions on their own, using information that the core already provides.
+
 ## 2.22.1 (2024-12-17)
 
 - fixed: Fixed broken `fetchCors` implementation caused by referencing error to `EdgeIo.fetch`.
