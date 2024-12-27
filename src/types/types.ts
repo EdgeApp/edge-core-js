@@ -1234,19 +1234,6 @@ export interface EdgeCurrencyWallet {
     opts: EdgeGetReceiveAddressOptions
   ) => Promise<EdgeAddress[]>
 
-  /** @deprecated Use getAddresses instead */
-  readonly getReceiveAddress: (
-    opts: EdgeGetReceiveAddressOptions
-  ) => Promise<EdgeReceiveAddress>
-  /** @deprecated */
-  readonly lockReceiveAddress: (
-    receiveAddress: EdgeReceiveAddress
-  ) => Promise<void>
-  /** @deprecated */
-  readonly saveReceiveAddress: (
-    receiveAddress: EdgeReceiveAddress
-  ) => Promise<void>
-
   // Sending:
   readonly broadcastTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly getMaxSpendable: (spendInfo: EdgeSpendInfo) => Promise<string>
@@ -1287,6 +1274,21 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
+
+  /** @deprecated Use `EdgeCurrencyWallet.getAddresses` instead */
+  readonly getReceiveAddress: (
+    opts: EdgeGetReceiveAddressOptions
+  ) => Promise<EdgeReceiveAddress>
+
+  /** @deprecated This was never implemented. */
+  readonly lockReceiveAddress: (
+    receiveAddress: EdgeReceiveAddress
+  ) => Promise<void>
+
+  /** @deprecated This was never implemented. */
+  readonly saveReceiveAddress: (
+    receiveAddress: EdgeReceiveAddress
+  ) => Promise<void>
 
   /** @deprecated Use `signBytes` instead. */
   readonly signMessage: (
