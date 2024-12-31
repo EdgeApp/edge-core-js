@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: `onSeenTxCheckpoint` callback for new Seen Tx Checkpoint API.
+- added: `onTransactions` callback to support new Seen Tx Checkpoint API.
 
 ## 2.22.1 (2024-12-17)
 

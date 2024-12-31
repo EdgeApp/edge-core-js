@@ -19,11 +19,11 @@ import {
   EdgeTokenIdOptions,
   EdgeTokenMap,
   EdgeTransaction,
+  EdgeTransactionEvent,
   EdgeWalletInfo,
   InsufficientFundsError
 } from '../../src/index'
 import { upgradeCurrencyCode } from '../../src/types/type-helpers'
-import { compare } from '../../src/util/compare'
 
 const GENESIS_BLOCK = 1231006505
 
@@ -109,8 +109,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
       onAddressesChecked,
       onTokenBalanceChanged,
       onBlockHeightChanged,
-      onStakingStatusChanged,
-      onTransactionsChanged
+      onStakingStatusChanged
     } = this.callbacks
 
     // Address callback:
@@ -147,7 +146,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
     // Transactions callback:
     if (settings.txs != null) {
-      const changes: EdgeTransaction[] = []
+      const txEvents: EdgeTransactionEvent[] = []
       for (const txid of Object.keys(settings.txs)) {
         const incoming: Partial<EdgeTransaction> = settings.txs[txid]
         const { tokenId = null } = upgradeCurrencyCode({
@@ -173,13 +172,13 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
         }
         const oldTx = state.txs[txid]
 
-        if (oldTx == null || !compare(oldTx, newTx)) {
-          changes.push(newTx)
-          state.txs[txid] = newTx
-        }
+        txEvents.push({ isNew: oldTx == null, transaction: newTx })
+        state.txs[txid] = newTx
       }
 
-      if (changes.length > 0) onTransactionsChanged(changes)
+      if (txEvents.length > 0) {
+        this.callbacks.onTransactions(txEvents)
+      }
     }
   }
 
