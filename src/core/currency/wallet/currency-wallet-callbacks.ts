@@ -92,7 +92,7 @@ export function makeCurrencyWalletCallbacks(
     enableTestMode()
   }
 
-  const throtteldOnTxChanged = makeThrottledTxCallback(
+  const throttledOnTxChanged = makeThrottledTxCallback(
     input,
     (txArray: EdgeTransaction[]) => {
       if (input.props.walletOutput?.walletApi != null) {
@@ -250,7 +250,7 @@ export function makeCurrencyWalletCallbacks(
                 payload: { tx: reduxTx }
               })
               // Dispatch event to update the EdgeTransaction object
-              throtteldOnTxChanged([changedTx])
+              throttledOnTxChanged([changedTx])
             }
           }
 
@@ -363,7 +363,7 @@ export function makeCurrencyWalletCallbacks(
         type: 'CURRENCY_ENGINE_CHANGED_TXS',
         payload: { txs, walletId, txidHashes }
       })
-      if (changed.length > 0) throtteldOnTxChanged(changed)
+      if (changed.length > 0) throttledOnTxChanged(changed)
       if (created.length > 0) throttledOnNewTx(created)
     },
     onAddressChanged() {
