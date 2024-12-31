@@ -12,7 +12,8 @@ import {
   EdgeCurrencyEngineCallbacks,
   EdgeStakingStatus,
   EdgeTokenId,
-  EdgeTransaction
+  EdgeTransaction,
+  EdgeTransactionEvent
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
 import { enableTestMode, pushUpdate } from '../../../util/updateQueue'
@@ -282,14 +283,16 @@ export function makeCurrencyWalletCallbacks(
       })
     },
 
-    onTransactionsChanged(txs: EdgeTransaction[]) {
+    onTransactions(txEvents: EdgeTransactionEvent[]) {
       const { accountId, currencyInfo, pluginId } = input.props.walletState
       const allTokens =
         input.props.state.accounts[accountId].allTokens[pluginId]
 
       // Sanity-check incoming transactions:
-      if (txs == null) return
-      for (const tx of txs) {
+      if (txEvents == null || txEvents.length === 0) return
+      const allTxs: EdgeTransaction[] = []
+      for (const txEvent of txEvents) {
+        const tx = txEvent.transaction
         // Backwards/Forwards compatibility:
         upgradeTxNetworkFees(tx)
         if (
@@ -315,16 +318,19 @@ export function makeCurrencyWalletCallbacks(
           })
           tx.tokenId = tokenId ?? null
         }
+        // Accumulate the transactions for the dispatch:
+        allTxs.push(tx)
       }
 
       // Grab stuff from redux:
       const { state } = input.props
-      const { fileNames, txs: reduxTxs } = input.props.walletState
+      const { txs: reduxTxs } = input.props.walletState
 
       const txidHashes: TxidHashes = {}
       const changed: EdgeTransaction[] = []
       const created: EdgeTransaction[] = []
-      for (const tx of txs) {
+      for (const txEvent of txEvents) {
+        const { isNew, transaction: tx } = txEvent
         const { txid } = tx
 
         // DEPRECATE: After all currency plugins implement new Confirmations API
@@ -345,7 +351,6 @@ export function makeCurrencyWalletCallbacks(
 
         // Ensure the transaction has metadata:
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
-        const isNew = tx.isSend ? false : fileNames[txidHash] == null
         if (isNew) {
           setupNewTxMetadata(input, tx).catch(error =>
             input.props.onError(error)
@@ -360,18 +365,28 @@ export function makeCurrencyWalletCallbacks(
           files[txidHash],
           tx.tokenId
         )
-        if (isNew) created.push(combinedTx)
-        else if (files[txidHash] != null) changed.push(combinedTx)
+        if (isNew) {
+          created.push(combinedTx)
+        } else {
+          changed.push(combinedTx)
+        }
         txidHashes[txidHash] = { date: combinedTx.date, txid }
       }
 
       // Tell everyone who cares:
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_TXS',
-        payload: { txs, walletId, txidHashes }
+        payload: { txs: allTxs, walletId, txidHashes }
       })
       if (changed.length > 0) throttledOnTxChanged(changed)
       if (created.length > 0) throttledOnNewTx(created)
+    },
+    onTransactionsChanged(txs: EdgeTransaction[]) {
+      out.onTransactions(
+        txs.map(transaction => {
+          return { isNew: false, transaction }
+        })
+      )
     },
     onAddressChanged() {
       if (input.props.walletOutput.walletApi != null) {

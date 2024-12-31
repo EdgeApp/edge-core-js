@@ -94,6 +94,7 @@ export const makeMemoryWalletInner = async (
         balanceMap.set(tokenId, balance)
         needsUpdate = true
       },
+      onTransactions: () => {},
       onTransactionsChanged: () => {},
       onTxidsChanged: () => {},
       onUnactivatedTokenIdsChanged: () => {},

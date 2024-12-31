@@ -647,6 +647,11 @@ export interface EdgeTransaction {
   parentNetworkFee?: string
 }
 
+export interface EdgeTransactionEvent {
+  isNew: boolean
+  transaction: EdgeTransaction
+}
+
 export interface EdgeSpendTarget {
   nativeAmount?: string
   otherParams?: JsonObject
@@ -904,7 +909,7 @@ export interface EdgeCurrencyEngineCallbacks {
     tokenId: EdgeTokenId,
     balance: string
   ) => void
-  readonly onTransactionsChanged: (transactions: EdgeTransaction[]) => void
+  readonly onTransactions: (transactionEvents: EdgeTransactionEvent[]) => void
   readonly onTxidsChanged: (txids: EdgeTxidMap) => void
   readonly onUnactivatedTokenIdsChanged: (unactivatedTokenIds: string[]) => void
   readonly onWcNewContractCall: (payload: JsonObject) => void
@@ -917,6 +922,9 @@ export interface EdgeCurrencyEngineCallbacks {
     currencyCode: string,
     nativeBalance: string
   ) => void
+
+  /** @deprecated Use onTransactions */
+  readonly onTransactionsChanged: (transactions: EdgeTransaction[]) => void
 }
 
 export interface EdgeCurrencyEngineOptions {
