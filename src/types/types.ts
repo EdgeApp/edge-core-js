@@ -898,6 +898,7 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onAddressChanged: () => void
   readonly onAddressesChecked: (progressRatio: number) => void
   readonly onNewTokens: (tokenIds: string[]) => void
+  readonly onSeenTxCheckpoint: (checkpoint: string) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
   readonly onTokenBalanceChanged: (
     tokenId: EdgeTokenId,
@@ -920,6 +921,9 @@ export interface EdgeCurrencyEngineCallbacks {
 
 export interface EdgeCurrencyEngineOptions {
   callbacks: EdgeCurrencyEngineCallbacks
+
+  // Engine state kept by the core:
+  seenTxCheckpoint?: string
 
   /** True if we only need a balance and the ability to spend it. */
   lightMode?: boolean

@@ -24,6 +24,7 @@ import {
   asLegacyMapFile,
   asLegacyTokensFile,
   asLegacyTransactionFile,
+  asSeenCheckpointFile,
   asTokensFile,
   asTransactionFile,
   asWalletFiatFile,
@@ -40,6 +41,7 @@ import { mergeMetadata } from './metadata'
 const CURRENCY_FILE = 'Currency.json'
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
 const LEGACY_TOKENS_FILE = 'EnabledTokens.json'
+const SEEN_TX_CHECKPOINT_FILE = 'seenTxCheckpoint.json'
 const TOKENS_FILE = 'Tokens.json'
 const WALLET_NAME_FILE = 'WalletName.json'
 
@@ -47,6 +49,7 @@ const legacyAddressFile = makeJsonFile(asLegacyAddressFile)
 const legacyMapFile = makeJsonFile(asLegacyMapFile)
 const legacyTokensFile = makeJsonFile(asLegacyTokensFile)
 const legacyTransactionFile = makeJsonFile(asLegacyTransactionFile)
+const seenCheckpointFile = makeJsonFile(asSeenCheckpointFile)
 const tokensFile = makeJsonFile(asTokensFile)
 const transactionFile = makeJsonFile(asTransactionFile)
 const walletFiatFile = makeJsonFile(asWalletFiatFile)
@@ -569,4 +572,45 @@ export async function saveTxMetadataFile(
   const { state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
   await transactionFile.save(disklet, 'transaction/' + fileName, txFile)
+}
+
+/**
+ * Loads the seen transaction checkpoint file for a specific wallet.
+ */
+export async function loadSeenTxCheckpointFile(
+  input: CurrencyWalletInput
+): Promise<string | undefined> {
+  const { dispatch, state, walletId } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
+  const { checkpoint } =
+    (await seenCheckpointFile.load(disklet, SEEN_TX_CHECKPOINT_FILE)) ?? {}
+  if (checkpoint != null) {
+    dispatch({
+      type: 'CURRENCY_ENGINE_SEEN_TX_CHECKPOINT_CHANGED',
+      payload: { checkpoint, walletId }
+    })
+  }
+  return checkpoint
+}
+
+/**
+ * Save's the seen transaction checkpoint file for a specific wallet.
+ */
+export async function saveSeenTxCheckpointFile(
+  input: CurrencyWalletInput,
+  checkpoint: string
+): Promise<void> {
+  const { dispatch, state, walletId } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
+
+  const fileData = {
+    checkpoint
+  }
+
+  dispatch({
+    type: 'CURRENCY_ENGINE_SEEN_TX_CHECKPOINT_CHANGED',
+    payload: { checkpoint, walletId }
+  })
+
+  await seenCheckpointFile.save(disklet, SEEN_TX_CHECKPOINT_FILE, fileData)
 }

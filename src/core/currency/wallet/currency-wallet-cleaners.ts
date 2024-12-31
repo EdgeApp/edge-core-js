@@ -365,6 +365,15 @@ export const asPublicKeyFile = asObject({
   })
 })
 
+/**
+ * The wallet's local storage file for the last seen "checkpoint". The core
+ * does not know the contents of the checkpoint, so it just as an arbitrary
+ * string.
+ */
+export const asSeenCheckpointFile = asObject({
+  checkpoint: asString
+})
+
 export const asWalletFiatFile = asObject({
   fiat: asOptional(asString),
   num: asOptional(asNumber)

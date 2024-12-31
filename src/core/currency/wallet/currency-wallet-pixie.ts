@@ -42,6 +42,7 @@ import {
   loadAddressFiles,
   loadFiatFile,
   loadNameFile,
+  loadSeenTxCheckpointFile,
   loadTokensFile,
   loadTxFileNames,
   writeTokensFile
@@ -107,6 +108,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         payload: { walletInfo: publicWalletInfo, walletId }
       })
 
+      // Load the last seen transaction checkpoint into memory.
+      // This is passed to the engine's startEngine method.
+      const seenTxCheckpoint = await loadSeenTxCheckpointFile(input)
+
       // We need to know which tokens are enabled,
       // so the engine can start in the right state:
       await loadTokensFile(input)
@@ -115,6 +120,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const accountState = state.accounts[accountId]
       const engine = await plugin.makeCurrencyEngine(publicWalletInfo, {
         callbacks: makeCurrencyWalletCallbacks(input),
+
+        // Engine state kept by the core:
+        seenTxCheckpoint,
 
         // Wallet-scoped IO objects:
         log: makeLog(
