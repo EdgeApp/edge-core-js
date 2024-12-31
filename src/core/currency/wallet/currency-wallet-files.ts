@@ -494,15 +494,15 @@ export async function setCurrencyWalletTxMetadata(
 }
 
 /**
- * Sets up metadata for an incoming transaction.
+ * Sets up metadata for a transaction in-memory without persisting the
+ * metadata to disk.
  */
 export async function setupNewTxMetadata(
   input: CurrencyWalletInput,
   tx: EdgeTransaction
-): Promise<void> {
+): Promise<{ txFile: TransactionFile; fileName: string }> {
   const { dispatch, state, walletId } = input.props
   const { assetAction, savedAction, spendTargets, swapData, tokenId, txid } = tx
-  const disklet = getStorageWalletDisklet(state, walletId)
 
   const { creationDate, fileName, txidHash } = deriveFileNameFields(
     state,
@@ -554,5 +554,19 @@ export async function setupNewTxMetadata(
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { creationDate, fileName, json, txid, txidHash, walletId }
   })
-  await transactionFile.save(disklet, 'transaction/' + fileName, json)
+
+  return { fileName, txFile: json }
+}
+
+/**
+ * Persists metadata for a transaction to disk.
+ */
+export async function saveTxMetadataFile(
+  input: CurrencyWalletInput,
+  fileName: string,
+  txFile: TransactionFile
+): Promise<void> {
+  const { state, walletId } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
+  await transactionFile.save(disklet, 'transaction/' + fileName, txFile)
 }
