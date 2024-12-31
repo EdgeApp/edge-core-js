@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `onSeenTxCheckpoint` callback for new Seen Tx Checkpoint API.
+
 ## 2.22.1 (2024-12-17)
 
 - fixed: Fixed broken `fetchCors` implementation caused by referencing error to `EdgeIo.fetch`.

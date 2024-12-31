@@ -888,6 +888,7 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onAddressChanged: () => void
   readonly onAddressesChecked: (progressRatio: number) => void
   readonly onNewTokens: (tokenIds: string[]) => void
+  readonly onSeenTxCheckpoint: (checkpoint: string) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
   readonly onTokenBalanceChanged: (
     tokenId: EdgeTokenId,
@@ -925,11 +926,15 @@ export interface EdgeCurrencyEngineOptions {
   userSettings: JsonObject | undefined
 }
 
+export interface EdgeCurrencyEngineStartOptions {
+  seenTxCheckpoint?: string
+}
+
 export interface EdgeCurrencyEngine {
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
 
   // Engine status:
-  readonly startEngine: () => Promise<void>
+  readonly startEngine: (opts?: EdgeCurrencyEngineStartOptions) => Promise<void>
   readonly killEngine: () => Promise<void>
   readonly resyncBlockchain: () => Promise<void>
   readonly syncNetwork?: (opts: EdgeEnginePrivateKeyOptions) => Promise<number>

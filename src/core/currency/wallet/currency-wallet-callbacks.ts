@@ -28,6 +28,7 @@ import {
   loadNameFile,
   loadTokensFile,
   loadTxFileNames,
+  setSeenTxCheckpointFile,
   setupNewTxMetadata
 } from './currency-wallet-files'
 import {
@@ -260,6 +261,12 @@ export function makeCurrencyWalletCallbacks(
           })
         }
       })
+    },
+
+    onSeenTxCheckpoint(checkpoint: string) {
+      setSeenTxCheckpointFile(input, checkpoint).catch(error =>
+        input.props.onError(error)
+      )
     },
 
     onStakingStatusChanged(stakingStatus: EdgeStakingStatus) {

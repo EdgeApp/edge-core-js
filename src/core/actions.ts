@@ -217,6 +217,12 @@ export type RootAction =
       }
     }
   | {
+      type: 'CURRENCY_ENGINE_SEEN_TX_CHECKPOINT_CHANGED'
+      payload: {
+        checkpoint: string
+      }
+    }
+  | {
       // Called when a currency engine is wiped out.
       type: 'CURRENCY_ENGINE_CLEARED'
       payload: {

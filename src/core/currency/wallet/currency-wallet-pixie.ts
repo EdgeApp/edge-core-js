@@ -42,6 +42,7 @@ import {
   loadAddressFiles,
   loadFiatFile,
   loadNameFile,
+  loadSeenTxCheckpointFile,
   loadTokensFile,
   loadTxFileNames,
   writeTokensFile
@@ -186,6 +187,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     if (engine == null || publicWalletInfo == null || !nameLoaded) return
     const tools = await getCurrencyTools(toApiInput(input), pluginId)
 
+    // Load the last seen transaction checkpoint into memory.
+    // This is passed to the engine's startEngine method.
+    await loadSeenTxCheckpointFile(input)
+
     const currencyWalletApi = makeCurrencyWalletApi(
       input,
       engine,
@@ -226,7 +231,14 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
             // Turn synchronous errors into promise rejections:
             startupPromise = Promise.resolve()
-              .then(() => engine.startEngine())
+              .then(() =>
+                engine.startEngine({
+                  seenTxCheckpoint:
+                    walletState.seenTxCheckpoint == null
+                      ? undefined
+                      : walletState.seenTxCheckpoint
+                })
+              )
               .catch(error => input.props.onError(error))
 
             // Setup syncNetwork routine if defined by the currency engine:
