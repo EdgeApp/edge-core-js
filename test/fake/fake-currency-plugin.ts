@@ -25,7 +25,7 @@ import {
 import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 import { compare } from '../../src/util/compare'
 
-const GENESIS_BLOCK = 1231006505000
+const GENESIS_BLOCK = 1231006505
 
 const fakeTokens: EdgeTokenMap = {
   badf00d5: {
