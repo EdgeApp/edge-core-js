@@ -505,7 +505,6 @@ export async function setupNewTxMetadata(
   tx: EdgeTransaction
 ): Promise<{ txFile: TransactionFile; fileName: string }> {
   const { dispatch, state, walletId } = input.props
-  const { assetAction, savedAction, spendTargets, swapData, tokenId, txid } = tx
 
   const { creationDate, fileName, txidHash } = deriveFileNameFields(
     state,
@@ -514,32 +513,34 @@ export async function setupNewTxMetadata(
     tx.date
   )
 
-  const { metadata = {}, nativeAmount } = tx
-
   // Basic file template:
-  const json: TransactionFile = {
-    txid,
+  const txFile: TransactionFile = {
+    txid: tx.txid,
     internal: true,
     creationDate,
     currencies: new Map(),
+    feeRateUsed: tx.feeRateUsed,
     tokens: new Map(),
-    savedAction,
-    swap: swapData
+    savedAction: tx.savedAction,
+    swap: tx.swapData
   }
-  json.tokens.set(tokenId, { assetAction, metadata, nativeAmount })
+  txFile.tokens.set(tx.tokenId, {
+    assetAction: tx.assetAction,
+    metadata: tx.metadata ?? {},
+    nativeAmount: tx.nativeAmount
+  })
 
   // Set up the fee metadata:
   if (tx.networkFeeOption != null) {
-    json.feeRateRequested =
+    txFile.feeRateRequested =
       tx.networkFeeOption === 'custom'
         ? tx.requestedCustomFee
         : tx.networkFeeOption
   }
-  json.feeRateUsed = tx.feeRateUsed
 
   // Set up payees:
-  if (spendTargets != null) {
-    json.payees = spendTargets.map(target => ({
+  if (tx.spendTargets != null) {
+    txFile.payees = tx.spendTargets.map(target => ({
       currency: target.currencyCode,
       address: target.publicAddress,
       amount: target.nativeAmount,
@@ -548,17 +549,24 @@ export async function setupNewTxMetadata(
 
     // Only write device description if it's a spend
     if (tx.deviceDescription != null)
-      json.deviceDescription = tx.deviceDescription
+      txFile.deviceDescription = tx.deviceDescription
   }
-  if (typeof tx.txSecret === 'string') json.secret = tx.txSecret
+  if (typeof tx.txSecret === 'string') txFile.secret = tx.txSecret
 
   // Save the new file:
   dispatch({
     type: 'CURRENCY_WALLET_FILE_CHANGED',
-    payload: { creationDate, fileName, json, txid, txidHash, walletId }
+    payload: {
+      creationDate,
+      fileName,
+      json: txFile,
+      txid: tx.txid,
+      txidHash,
+      walletId
+    }
   })
 
-  return { fileName, txFile: json }
+  return { fileName, txFile }
 }
 
 /**
