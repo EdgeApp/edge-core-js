@@ -85,6 +85,7 @@ export const makeMemoryWalletInner = async (
           }
         }
       },
+      onSeenTxCheckpoint: () => {},
       onStakingStatusChanged: () => {},
       onTokenBalanceChanged: (tokenId: EdgeTokenId, balance: string) => {
         if (balanceMap.get(tokenId) === balance) return
@@ -93,6 +94,7 @@ export const makeMemoryWalletInner = async (
         balanceMap.set(tokenId, balance)
         needsUpdate = true
       },
+      onTransactions: () => {},
       onTransactionsChanged: () => {},
       onTxidsChanged: () => {},
       onUnactivatedTokenIdsChanged: () => {},

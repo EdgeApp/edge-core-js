@@ -82,6 +82,7 @@ export interface CurrencyWalletState {
   readonly name: string | null
   readonly nameLoaded: boolean
   readonly publicWalletInfo: EdgeWalletInfo | null
+  readonly seenTxCheckpoint: string | null
   readonly sortedTxidHashes: string[]
   readonly stakingStatus: EdgeStakingStatus
   readonly syncRatio: number
@@ -298,6 +299,12 @@ const currencyWalletInner = buildReducer<
 
   nameLoaded(state = false, action): boolean {
     return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ? true : state
+  },
+
+  seenTxCheckpoint(state = null, action) {
+    return action.type === 'CURRENCY_ENGINE_SEEN_TX_CHECKPOINT_CHANGED'
+      ? action.payload.checkpoint
+      : state
   },
 
   sortedTxidHashes: memoizeReducer(

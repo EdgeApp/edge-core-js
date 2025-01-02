@@ -642,6 +642,11 @@ export interface EdgeTransaction {
   parentNetworkFee?: string
 }
 
+export interface EdgeTransactionEvent {
+  isNew: boolean
+  transaction: EdgeTransaction
+}
+
 export interface EdgeSpendTarget {
   nativeAmount?: string
   otherParams?: JsonObject
@@ -888,11 +893,14 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onAddressChanged: () => void
   readonly onAddressesChecked: (progressRatio: number) => void
   readonly onNewTokens: (tokenIds: string[]) => void
+  readonly onSeenTxCheckpoint: (checkpoint: string) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
   readonly onTokenBalanceChanged: (
     tokenId: EdgeTokenId,
     balance: string
   ) => void
+  readonly onTransactions: (transactionEvents: EdgeTransactionEvent[]) => void
+  /** @deprecated Use onTransactions */
   readonly onTransactionsChanged: (transactions: EdgeTransaction[]) => void
   readonly onTxidsChanged: (txids: EdgeTxidMap) => void
   readonly onUnactivatedTokenIdsChanged: (unactivatedTokenIds: string[]) => void
@@ -925,11 +933,15 @@ export interface EdgeCurrencyEngineOptions {
   userSettings: JsonObject | undefined
 }
 
+export interface EdgeCurrencyEngineStartOptions {
+  seenTxCheckpoint?: string
+}
+
 export interface EdgeCurrencyEngine {
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
 
   // Engine status:
-  readonly startEngine: () => Promise<void>
+  readonly startEngine: (opts?: EdgeCurrencyEngineStartOptions) => Promise<void>
   readonly killEngine: () => Promise<void>
   readonly resyncBlockchain: () => Promise<void>
   readonly syncNetwork?: (opts: EdgeEnginePrivateKeyOptions) => Promise<number>
