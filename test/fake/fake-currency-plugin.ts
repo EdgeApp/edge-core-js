@@ -254,7 +254,12 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   async getFreshAddress(
     opts: EdgeGetReceiveAddressOptions
   ): Promise<EdgeFreshAddress> {
-    return { publicAddress: 'fakeaddress' }
+    return {
+      publicAddress: 'fakeaddress',
+      nativeBalance: this.state.balance.toString(),
+      segwitAddress: 'fakesegwit',
+      legacyAddress: 'fakelegacy'
+    }
   }
 
   async addGapLimitAddresses(addresses: string[]): Promise<void> {}
