@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.22.2 (2025-01-03)
+
 - deprecated: `EdgeCurrencyWallet.denominationToNative` and `EdgeCurrencyWallet.nativeToDenomination` utilities. Clients can perform these conversions on their own, using information that the core already provides.
 - fixed: Do not report the `segwitAddress` as the `publicAddress` for wallets that have one.
 
