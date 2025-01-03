@@ -83,6 +83,50 @@ describe('currency wallets', function () {
     expect(account.currencyConfig.fakecoin).equals(wallet.currencyConfig)
   })
 
+  it('has addresses', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({ balance: 30 })
+
+    expect(await wallet.getReceiveAddress({ tokenId: null })).deep.equals({
+      legacyAddress: 'fakelegacy',
+      legacyNativeBalance: undefined,
+      nativeBalance: '30',
+      publicAddress: 'fakeaddress',
+      segwitAddress: 'fakesegwit',
+      segwitNativeBalance: undefined,
+
+      nativeAmount: '0',
+      metadata: {
+        bizId: 0,
+        category: '',
+        exchangeAmount: {},
+        name: '',
+        notes: ''
+      }
+    })
+
+    const addresses = (await wallet.getAddresses({ tokenId: null })).sort(
+      (a, b) => a.addressType.localeCompare(b.addressType)
+    )
+    expect(addresses).deep.equals([
+      {
+        addressType: 'legacyAddress',
+        nativeBalance: undefined,
+        publicAddress: 'fakelegacy'
+      },
+      {
+        addressType: 'publicAddress',
+        nativeBalance: '30',
+        publicAddress: 'fakeaddress'
+      },
+      {
+        addressType: 'segwitAddress',
+        nativeBalance: undefined,
+        publicAddress: 'fakesegwit'
+      }
+    ])
+  })
+
   it('triggers callbacks', async function () {
     const log = makeAssertLog()
     const { wallet, config } = await makeFakeCurrencyWallet()
