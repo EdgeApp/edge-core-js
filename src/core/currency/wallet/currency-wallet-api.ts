@@ -441,10 +441,16 @@ export function makeCurrencyWalletApi(
       opts: EdgeGetReceiveAddressOptions
     ): Promise<EdgeReceiveAddress> {
       const addresses = await this.getAddresses(opts)
+      if (addresses.length < 1) throw new Error('No addresses available')
+
+      const primaryAddress =
+        addresses.find(address => {
+          return address.addressType === 'publicAddress'
+        }) ?? addresses[0]
 
       const receiveAddress: EdgeReceiveAddress = {
-        publicAddress: addresses[0].publicAddress,
-        nativeBalance: addresses[0].nativeBalance,
+        publicAddress: primaryAddress.publicAddress,
+        nativeBalance: primaryAddress.nativeBalance,
         metadata: fakeMetadata,
         nativeAmount: '0'
       }

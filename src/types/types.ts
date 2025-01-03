@@ -698,6 +698,11 @@ export interface EdgeDataDump {
   }
 }
 
+/**
+ * Addresses may appear in any order that the plugin chooses,
+ * based on how the user should see them. If you need a specific address type,
+ * use the `addressType` to find what you need.
+ */
 export interface EdgeAddress {
   addressType: string // 'publicAddress' | 'segwitAddress' | 'legacyAddress' | 'fooAddress'
   publicAddress: string
