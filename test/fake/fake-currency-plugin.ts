@@ -41,6 +41,8 @@ const fakeTokens: EdgeTokenMap = {
 const fakeCurrencyInfo: EdgeCurrencyInfo = {
   currencyCode: 'FAKE',
   displayName: 'Fake Coin',
+  chainDisplayName: 'Fake Chain',
+  assetDisplayName: 'Fake Coin',
   pluginId: 'fakecoin',
   walletType: 'wallet:fakecoin',
 

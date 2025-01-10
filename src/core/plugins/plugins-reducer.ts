@@ -46,7 +46,19 @@ export const plugins = (
           continue
         }
 
-        if ('currencyInfo' in plugin) out.currency[pluginId] = plugin
+        if ('currencyInfo' in plugin) {
+          // Update the currencyInfo display names, if necessary
+          if (plugin.currencyInfo.chainDisplayName == null) {
+            plugin.currencyInfo.chainDisplayName =
+              plugin.currencyInfo.displayName
+          }
+          if (plugin.currencyInfo.assetDisplayName == null) {
+            plugin.currencyInfo.assetDisplayName =
+              plugin.currencyInfo.displayName
+          }
+
+          out.currency[pluginId] = plugin
+        }
         if ('swapInfo' in plugin) out.swap[pluginId] = plugin
       }
       return out

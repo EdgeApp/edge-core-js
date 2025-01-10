@@ -454,7 +454,12 @@ export type EdgeObjectTemplate = Array<
 export interface EdgeCurrencyInfo {
   // Basic currency information:
   readonly pluginId: string
+
+  /** deprecated: refers to chain, use chainDisplayName instead */
   displayName: string
+
+  chainDisplayName: string
+  assetDisplayName: string
   walletType: string
 
   // Native token information:
