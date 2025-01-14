@@ -7,6 +7,8 @@ export const brokenEnginePlugin: EdgeCurrencyPlugin = {
     defaultSettings: {},
     denominations: [],
     displayName: 'Broken Engine',
+    chainDisplayName: 'Broken Chain',
+    assetDisplayName: 'Broke Coin',
     metaTokens: [],
     pluginId: 'broken-engine',
     transactionExplorer: '',
