@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.23.0 (2025-01-13)
+
 - added: `EdgeCurrencyInfo.chainDisplayName` and `EdgeCurrencyInfo.assetDisplayName`
 - deprecated: `EdgeCurrencyInfo.displayName`
 
