@@ -100,15 +100,22 @@ function fixLegacyFile(
   return out
 }
 
-function getTxFileName(
+function deriveFileNameFields(
   state: RootState,
-  keyId: string,
-  creationDate: number,
-  txid: string
-): { fileName: string; txidHash: string } {
-  const txidHash: string = hashStorageWalletFilename(state, keyId, txid)
+  walletId: string,
+  txid: string,
+  txDate: number
+): { creationDate: number; fileName: string; txidHash: string } {
+  const fileNames = state.currency.wallets[walletId].fileNames
+  const txidHash: string = hashStorageWalletFilename(state, walletId, txid)
+  // Set up the new file:
+  const { creationDate = Math.min(txDate, Date.now() / 1000) } =
+    fileNames[txidHash] ?? {}
+  // Should match `fileNames[txidHash].fileName` if `fileNames[txidHash] != null`:
+  const fileName = `${creationDate.toFixed(0)}-${txidHash}.json`
   return {
-    fileName: `${creationDate.toFixed(0)}-${txidHash}.json`,
+    creationDate,
+    fileName,
     txidHash
   }
 }
@@ -439,13 +446,18 @@ export async function setCurrencyWalletTxMetadata(
     throw new Error(`Setting metatdata for missing tx ${txid}`)
   }
 
-  // Find the old file:
-  const files = input.props.walletState.files
-  const oldTxidHash = Object.keys(files).find(hash => files[hash].txid === txid)
-  const oldFile = oldTxidHash != null ? files[oldTxidHash] : undefined
+  // Derive the file name:
+  const { creationDate, fileName, txidHash } = deriveFileNameFields(
+    state,
+    walletId,
+    tx.txid,
+    tx.date
+  )
 
-  // Set up the new file:
-  const { creationDate = Math.min(tx.date, Date.now() / 1000) } = oldFile ?? {}
+  // Get the old file data if it exists:
+  const oldFile = await transactionFile.load(disklet, `transaction/${fileName}`)
+
+  // Merge with old file
   const newFile: TransactionFile = {
     ...oldFile,
     creationDate,
@@ -472,12 +484,6 @@ export async function setCurrencyWalletTxMetadata(
   if (savedAction != null) newFile.savedAction = savedAction
 
   // Save the new file:
-  const { fileName, txidHash } = getTxFileName(
-    state,
-    walletId,
-    creationDate,
-    txid
-  )
   dispatch({
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { creationDate, fileName, json: newFile, txid, txidHash, walletId }
@@ -498,7 +504,13 @@ export async function setupNewTxMetadata(
   const { assetAction, savedAction, spendTargets, swapData, tokenId, txid } = tx
   const disklet = getStorageWalletDisklet(state, walletId)
 
-  const creationDate = Date.now() / 1000
+  const { creationDate, fileName, txidHash } = deriveFileNameFields(
+    state,
+    walletId,
+    tx.txid,
+    tx.date
+  )
+
   const { metadata = {}, nativeAmount } = tx
 
   // Basic file template:
@@ -538,12 +550,6 @@ export async function setupNewTxMetadata(
   if (typeof tx.txSecret === 'string') json.secret = tx.txSecret
 
   // Save the new file:
-  const { fileName, txidHash } = getTxFileName(
-    state,
-    walletId,
-    creationDate,
-    txid
-  )
   dispatch({
     type: 'CURRENCY_WALLET_FILE_CHANGED',
     payload: { creationDate, fileName, json, txid, txidHash, walletId }
