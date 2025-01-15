@@ -54,6 +54,7 @@ import { dateFilter, searchStringFilter } from './currency-wallet-export'
 import {
   loadTxFiles,
   renameCurrencyWallet,
+  saveTxMetadataFile,
   setCurrencyWalletFiat,
   setCurrencyWalletTxMetadata,
   setupNewTxMetadata
@@ -603,7 +604,8 @@ export function makeCurrencyWalletApi(
       return tx
     },
     async saveTx(tx: EdgeTransaction): Promise<void> {
-      await setupNewTxMetadata(input, tx)
+      const { fileName, txFile } = await setupNewTxMetadata(input, tx)
+      await saveTxMetadataFile(input, fileName, txFile)
       await engine.saveTx(tx)
       fakeCallbacks.onTransactionsChanged([tx])
     },

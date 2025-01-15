@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: `onSeenTxCheckpoint` callback for new Seen Tx Checkpoint API.
+- added: `onTransactions` callback to support new Seen Tx Checkpoint API.
+
 ## 2.23.0 (2025-01-13)
 
 - added: `EdgeCurrencyInfo.chainDisplayName` and `EdgeCurrencyInfo.assetDisplayName`

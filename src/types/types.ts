@@ -647,6 +647,11 @@ export interface EdgeTransaction {
   parentNetworkFee?: string
 }
 
+export interface EdgeTransactionEvent {
+  isNew: boolean
+  transaction: EdgeTransaction
+}
+
 export interface EdgeSpendTarget {
   nativeAmount?: string
   otherParams?: JsonObject
@@ -898,12 +903,13 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onAddressChanged: () => void
   readonly onAddressesChecked: (progressRatio: number) => void
   readonly onNewTokens: (tokenIds: string[]) => void
+  readonly onSeenTxCheckpoint: (checkpoint: string) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
   readonly onTokenBalanceChanged: (
     tokenId: EdgeTokenId,
     balance: string
   ) => void
-  readonly onTransactionsChanged: (transactions: EdgeTransaction[]) => void
+  readonly onTransactions: (transactionEvents: EdgeTransactionEvent[]) => void
   readonly onTxidsChanged: (txids: EdgeTxidMap) => void
   readonly onUnactivatedTokenIdsChanged: (unactivatedTokenIds: string[]) => void
   readonly onWcNewContractCall: (payload: JsonObject) => void
@@ -916,10 +922,16 @@ export interface EdgeCurrencyEngineCallbacks {
     currencyCode: string,
     nativeBalance: string
   ) => void
+
+  /** @deprecated Use onTransactions */
+  readonly onTransactionsChanged: (transactions: EdgeTransaction[]) => void
 }
 
 export interface EdgeCurrencyEngineOptions {
   callbacks: EdgeCurrencyEngineCallbacks
+
+  // Engine state kept by the core:
+  seenTxCheckpoint?: string
 
   /** True if we only need a balance and the ability to spend it. */
   lightMode?: boolean
