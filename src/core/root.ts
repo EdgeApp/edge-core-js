@@ -37,10 +37,11 @@ export async function makeContext(
     airbitzSupport = false,
     apiSecret,
     appId = '',
-    authServer = 'https://login.edge.app/api',
+    authServer,
     deviceDescription = null,
     hideKeys = false,
     infoServer,
+    loginServer,
     plugins: pluginsInit = {},
     skipBlockHeight = false,
     syncServer
@@ -49,30 +50,31 @@ export async function makeContext(
   if (apiKey == null || apiKey === '') {
     apiKey = '4248c1bf41e53b840a5fdb2c872dd3ade525e66d'
   }
-  const infoServers =
-    typeof infoServer === 'string'
-      ? [infoServer]
-      : infoServer != null && infoServer.length > 0
-      ? infoServer
-      : ['https://info-eu1.edge.app', 'https://info-us1.edge.app']
-  const syncServers =
-    typeof syncServer === 'string'
-      ? [syncServer]
-      : syncServer != null && syncServer.length > 0
-      ? syncServer
-      : [
-          'https://sync-us1.edge.app',
-          'https://sync-us2.edge.app',
-          'https://sync-us3.edge.app',
-          'https://sync-us4.edge.app',
-          'https://sync-us5.edge.app',
-          'https://sync-us6.edge.app',
-          'https://sync-eu.edge.app'
-        ]
+  const authServers = toServerArray(authServer, [
+    'https://login1.edge.app',
+    'https://login2.edge.app'
+  ])
+  const infoServers = toServerArray(infoServer, [
+    'https://info-eu1.edge.app',
+    'https://info-us1.edge.app'
+  ])
+  const loginServers = toServerArray(
+    loginServer,
+    authServers.map(server => server.replace(/\/api$/, ''))
+  )
+  const syncServers = toServerArray(syncServer, [
+    'https://sync-us1.edge.app',
+    'https://sync-us2.edge.app',
+    'https://sync-us3.edge.app',
+    'https://sync-us4.edge.app',
+    'https://sync-us5.edge.app',
+    'https://sync-us6.edge.app',
+    'https://sync-eu.edge.app'
+  ])
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
 
-  validateServer(authServer)
   infoServers.map(server => validateServer(server))
+  loginServers.map(server => validateServer(server))
   syncServers.map(server => validateServer(server))
 
   // Create a redux store:
@@ -120,7 +122,7 @@ export async function makeContext(
       apiKey,
       apiSecret,
       appId,
-      authServer,
+      loginServers,
       infoCache,
       infoServers,
       syncServers,
@@ -181,6 +183,17 @@ export async function makeContext(
   const out = mirror.output.context.api
   allContexts.push(out)
   return out
+}
+
+function toServerArray(
+  server: string | string[] | undefined,
+  fallback: string[]
+): string[] {
+  return typeof server === 'string'
+    ? [server]
+    : server != null && server.length > 0
+    ? server
+    : fallback
 }
 
 /**

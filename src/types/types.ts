@@ -1787,7 +1787,13 @@ export interface EdgeContextOptions {
   apiKey?: string
   apiSecret?: Uint8Array
   appId: string
-  authServer?: string
+
+  /**
+   * Switches to a different login server, such as for testing.
+   * Do not include `/api` in the path.
+   */
+  loginServer?: string | string[]
+
   infoServer?: string | string[]
   syncServer?: string | string[]
   hideKeys?: boolean
@@ -1816,6 +1822,9 @@ export interface EdgeContextOptions {
    * as their confirmation status changes.
    */
   skipBlockHeight?: boolean
+
+  /** @deprecated Use `loginServer` instead. */
+  authServer?: string | string[]
 }
 
 // parameters ----------------------------------------------------------

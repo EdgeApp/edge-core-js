@@ -345,9 +345,9 @@ export type RootAction =
         apiKey: string
         apiSecret?: Uint8Array
         appId: string
-        authServer: string
         infoCache: InfoCacheFile
         infoServers: string[]
+        loginServers: string[]
         syncServers: string[]
         clientId: Uint8Array
         deviceDescription: string | null

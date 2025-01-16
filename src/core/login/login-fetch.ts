@@ -10,6 +10,7 @@ import { LoginRequestBody } from '../../types/server-types'
 import {
   ChallengeError,
   EdgeFetchOptions,
+  EdgeFetchResponse,
   NetworkError,
   ObsoleteApiError,
   OtpError,
@@ -62,14 +63,61 @@ export function parseReply(json: unknown): unknown {
   }
 }
 
-export function loginFetch(
+/**
+ * Picks a random login server and makes a request.
+ *
+ * We don't use the normal async waterfall,
+ * since we never want these requests to happen in parallel.
+ * The first server needs to fully fail before we can try again,
+ * or we risk having document update conflicts, duplicated keys,
+ * redundant login notifications, or other corruption.
+ */
+export async function loginFetch(
   ai: ApiInput,
   method: string,
   path: string,
   body?: LoginRequestBody
 ): Promise<unknown> {
+  const { loginServers } = ai.props.state.login
+
+  // This will be out of range, but the modulo brings it back:
+  const startIndex = Math.floor(Math.random() * 255)
+
+  let response: EdgeFetchResponse | undefined
+  let lastError: unknown = new Error('No login servers available')
+  for (let i = 0; i < loginServers.length; ++i) {
+    try {
+      const index = (startIndex + i) % loginServers.length
+      response = await loginFetchInner(
+        ai,
+        loginServers[index],
+        method,
+        path,
+        body
+      )
+      break
+    } catch (error) {
+      lastError = error
+    }
+  }
+  if (response == null) throw lastError
+
+  const { status } = response
+  const json = await response.json().catch(() => {
+    throw new Error(`Invalid reply JSON, HTTP status ${status}`)
+  })
+  return parseReply(json)
+}
+
+export function loginFetchInner(
+  ai: ApiInput,
+  serverUri: string,
+  method: string,
+  path: string,
+  body?: LoginRequestBody
+): Promise<EdgeFetchResponse> {
   const { state, io, log } = ai.props
-  const { apiKey, apiSecret, serverUri } = state.login
+  const { apiKey, apiSecret } = state.login
 
   const bodyText =
     method === 'GET' || body == null
@@ -96,9 +144,10 @@ export function loginFetch(
   }
 
   const start = Date.now()
-  const fullUri = `${serverUri}${path}`
+  const fullUri = `${serverUri}/api${path}`
   return timeout(io.fetch(fullUri, opts), 30000).then(
     response => {
+      // Log the results:
       const time = Date.now() - start
       log(`${method} ${fullUri} returned ${response.status} in ${time}ms`)
 
@@ -108,9 +157,7 @@ export function loginFetch(
         })
       }
 
-      return response.json().then(parseReply, () => {
-        throw new Error(`Invalid reply JSON, HTTP status ${response.status}`)
-      })
+      return response
     },
     networkError => {
       const time = Date.now() - start
