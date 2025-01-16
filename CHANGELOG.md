@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.25.1 (2025-01-16)
+
 - fixed: Broken `EdgeContextProps.loginServer` type definition.
 
 ## 2.25.0 (2025-01-16)
