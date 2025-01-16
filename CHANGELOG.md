@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.25.0 (2025-01-16)
+
 - added: `EdgeContextOptions.loginServer`. This replaces `EdgeContextOptions.authServer`, but without the `/api` path component in the server URL.
 - changed: Auto-rotate between multiple login servers.
 - deprecated: `EdgeContextOptions.authServer`. Use `EdgeContextOptions.loginServer` instead.
