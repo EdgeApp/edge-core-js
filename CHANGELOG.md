@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: `EdgeContextOptions.loginServer`. This replaces `EdgeContextOptions.authServer`, but without the `/api` path component in the server URL.
+- changed: Auto-rotate between multiple login servers.
+- deprecated: `EdgeContextOptions.authServer`. Use `EdgeContextOptions.loginServer` instead.
+
 ## 2.24.0 (2025-01-15)
 
 - added: `onSeenTxCheckpoint` callback for new Seen Tx Checkpoint API.

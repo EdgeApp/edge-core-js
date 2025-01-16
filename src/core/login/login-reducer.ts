@@ -16,7 +16,7 @@ export interface LoginState {
   readonly appId: string
   readonly clientId: Uint8Array
   readonly deviceDescription: string | null
-  readonly serverUri: string
+  readonly loginServers: string[]
   readonly stashes: LoginStash[]
   readonly localUsers: EdgeUserInfo[]
   readonly walletInfos: WalletInfoFullMap
@@ -74,8 +74,8 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
     }
   ),
 
-  serverUri(state = '', action): string {
-    return action.type === 'INIT' ? action.payload.authServer : state
+  loginServers(state = [], action): string[] {
+    return action.type === 'INIT' ? action.payload.loginServers : state
   },
 
   stashes(state = [], action): LoginStash[] {
