@@ -55,8 +55,8 @@ export async function makeContext(
     'https://login2.edge.app'
   ])
   const infoServers = toServerArray(infoServer, [
-    'https://info-eu1.edge.app',
-    'https://info-us1.edge.app'
+    'https://info1.edge.app',
+    'https://info2.edge.app'
   ])
   const loginServers = toServerArray(
     loginServer,
