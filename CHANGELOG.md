@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Broken `EdgeContextProps.loginServer` type definition.
+
 ## 2.25.0 (2025-01-16)
 
 - added: `EdgeContextOptions.loginServer`. This replaces `EdgeContextOptions.authServer`, but without the `/api` path component in the server URL.

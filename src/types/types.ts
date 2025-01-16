@@ -1824,7 +1824,7 @@ export interface EdgeContextOptions {
   skipBlockHeight?: boolean
 
   /** @deprecated Use `loginServer` instead. */
-  authServer?: string | string[]
+  authServer?: string
 }
 
 // parameters ----------------------------------------------------------
