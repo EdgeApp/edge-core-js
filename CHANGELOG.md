@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Support the `loginServer` prop on the `MakeEdgeContext` component.
+
 ## 2.25.1 (2025-01-16)
 
 - fixed: Broken `EdgeContextProps.loginServer` type definition.
