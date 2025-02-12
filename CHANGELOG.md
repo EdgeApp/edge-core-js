@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.25.2 (2025-02-12)
+
 - fixed: Metadata stomping bug in memory caused by new EdgeTransaction objects from the engine.
 - fixed: Support the `loginServer` prop on the `MakeEdgeContext` component.
 
