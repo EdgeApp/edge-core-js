@@ -351,7 +351,15 @@ export function makeCurrencyWalletCallbacks(
 
         // Ensure the transaction has metadata:
         const txidHash = hashStorageWalletFilename(state, walletId, txid)
-        if (isNew) {
+
+        // Setup the metadata in memory only if we don't have if for the
+        // transaction. Transaction metadata share a single file with the core,
+        // so we only need to do this once (regardless of whether the
+        // transaction is new).
+        // TODO: Remove this once the core is refactored to no longer depend on
+        // this state being in memory to get its job done for transaction
+        // related routines.
+        if (input.props.walletState.fileNames[txidHash] == null) {
           setupNewTxMetadata(input, tx).catch(error =>
             input.props.onError(error)
           )
