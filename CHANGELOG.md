@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Only write the enabled tokens file when actually necessary.
+
 ## 2.25.2 (2025-02-12)
 
 - fixed: Metadata stomping bug in memory caused by new EdgeTransaction objects from the engine.
