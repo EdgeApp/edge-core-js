@@ -225,6 +225,8 @@ export function makeCurrencyWalletApi(
         tokenId => allTokens[tokenId] != null
       )
 
+      const shortId = walletId.slice(0, 2)
+      input.props.log.warn(`enabledTokenIds: ${shortId} changeEnabledTokenIds`)
       dispatch({
         type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
         payload: { walletId, enabledTokenIds }
@@ -710,6 +712,8 @@ export function makeCurrencyWalletApi(
       return await engine.dumpData()
     },
     async resyncBlockchain(): Promise<void> {
+      const shortId = input.props.walletId.slice(0, 2)
+      input.props.log.warn(`enabledTokenIds: ${shortId} resyncBlockchain`)
       ai.props.dispatch({
         type: 'CURRENCY_ENGINE_CLEARED',
         payload: { walletId: input.props.walletId }
