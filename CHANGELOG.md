@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.25.3 (2025-02-17)
+
 - fixed: Only write the enabled tokens file when actually necessary.
 
 ## 2.25.2 (2025-02-12)
