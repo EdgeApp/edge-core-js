@@ -337,23 +337,20 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
    * we will consolidate those down to a single write to disk.
    */
   tokenSaver(input: CurrencyWalletInput) {
-    let lastDetectedTokenIds: string[] = initialTokenIds
-    let lastEnabledTokenIds: string[] = initialTokenIds
-
     return async function update() {
-      const { detectedTokenIds, enabledTokenIds } = input.props.walletState
-      const isChanged =
-        detectedTokenIds !== lastDetectedTokenIds ||
-        enabledTokenIds !== lastEnabledTokenIds
+      const { detectedTokenIds, enabledTokenIds, tokenFileDirty } =
+        input.props.walletState
       const isReady = detectedTokenIds != null && enabledTokenIds != null
-      if (isChanged && isReady) {
+      if (tokenFileDirty && isReady) {
         await writeTokensFile(input, detectedTokenIds, enabledTokenIds).catch(
           error => input.props.onError(error)
         )
+        input.props.dispatch({
+          type: 'CURRENCY_WALLET_SAVED_TOKEN_FILE',
+          payload: { walletId: input.props.walletId }
+        })
         await snooze(100) // Rate limiting
       }
-      lastDetectedTokenIds = detectedTokenIds
-      lastEnabledTokenIds = enabledTokenIds
     }
   },
 

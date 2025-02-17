@@ -71,6 +71,7 @@ export interface CurrencyWalletState {
   readonly currencyInfo: EdgeCurrencyInfo
   readonly detectedTokenIds: string[]
   readonly enabledTokenIds: string[]
+  readonly tokenFileDirty: boolean
   readonly engineFailure: Error | null
   readonly engineStarted: boolean
   readonly fiat: string
@@ -176,6 +177,27 @@ const currencyWalletInner = buildReducer<
       return state
     }
   ),
+
+  tokenFileDirty(state = false, action, next, prev): boolean {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_LOADED_TOKEN_FILE':
+      case 'CURRENCY_WALLET_SAVED_TOKEN_FILE':
+        // The file has been synced to disk, so it's not dirty:
+        return false
+
+      case 'CURRENCY_ENGINE_CLEARED':
+      case 'CURRENCY_ENGINE_DETECTED_TOKENS':
+      case 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED':
+        // These actions might update the file, so check for diffs:
+        return (
+          next.self.detectedTokenIds !== prev.self.detectedTokenIds ||
+          next.self.enabledTokenIds !== prev.self.enabledTokenIds
+        )
+
+      default:
+        return state
+    }
+  },
 
   engineFailure(state = null, action): Error | null {
     if (action.type === 'CURRENCY_ENGINE_FAILED') {

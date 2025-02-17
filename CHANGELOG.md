@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fixed: Only write the enabled tokens file when actually necessary.
 - fixed: Support the `loginServer` prop on the `MakeEdgeContext` component.
 
 ## 2.25.1 (2025-01-16)
