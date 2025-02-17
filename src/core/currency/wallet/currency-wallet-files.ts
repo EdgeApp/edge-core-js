@@ -234,6 +234,8 @@ export async function loadTokensFile(
 
   const clean = await tokensFile.load(disklet, TOKENS_FILE)
   if (clean != null) {
+    const shortId = walletId.slice(0, 2)
+    input.props.log.warn(`enabledTokenIds: ${shortId} loaded modern file`)
     dispatch({
       type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
       payload: { walletId: input.props.walletId, ...clean }
@@ -255,6 +257,8 @@ export async function loadTokensFile(
       legacyCurrencyCodes
     )
 
+    const shortId = walletId.slice(0, 2)
+    input.props.log.warn(`enabledTokenIds: ${shortId} loaded legacy file`)
     dispatch({
       type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
       payload: {

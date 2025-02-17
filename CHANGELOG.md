@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fixed: Log changes to the `enabledTokenId` array.
 - fixed: Only write the enabled tokens file when actually necessary.
 - fixed: Support the `loginServer` prop on the `MakeEdgeContext` component.
 

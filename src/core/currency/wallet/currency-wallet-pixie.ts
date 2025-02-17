@@ -337,11 +337,20 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
    * we will consolidate those down to a single write to disk.
    */
   tokenSaver(input: CurrencyWalletInput) {
+    let lastEnabledTokenIds: string[] = initialTokenIds
+
     return async function update() {
       const { detectedTokenIds, enabledTokenIds, tokenFileDirty } =
         input.props.walletState
       const isReady = detectedTokenIds != null && enabledTokenIds != null
       if (tokenFileDirty && isReady) {
+        const added = whatsNew(enabledTokenIds, lastEnabledTokenIds)
+        const removed = whatsNew(lastEnabledTokenIds, enabledTokenIds)
+        const shortId = input.props.walletId.slice(0, 2)
+        input.props.log.warn(
+          `enabledTokenIds: ${shortId} write to disk, add [${added}], remove [${removed}]`
+        )
+
         await writeTokensFile(input, detectedTokenIds, enabledTokenIds).catch(
           error => input.props.onError(error)
         )
@@ -351,6 +360,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         })
         await snooze(100) // Rate limiting
       }
+      lastEnabledTokenIds = enabledTokenIds
     }
   },
 
@@ -474,4 +484,12 @@ export async function getPublicWalletInfo(
   }
 
   return publicWalletInfo
+}
+
+/**
+ * Returns items that only exist in `after`, for debugging token diffs.
+ */
+function whatsNew(after: string[], before: string[]): string {
+  const beforeSet = new Set(before)
+  return after.filter(s => !beforeSet.has(s)).join(', ')
 }
