@@ -335,6 +335,13 @@ export type RootAction =
       }
     }
   | {
+      // Called once we write the enabled token file to disk:
+      type: 'CURRENCY_WALLET_SAVED_TOKEN_FILE'
+      payload: {
+        walletId: string
+      }
+    }
+  | {
       type: 'INFO_CACHE_FETCHED'
       payload: InfoCacheFile
     }
