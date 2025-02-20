@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.26.0 (2025-02-20)
+
 changed: `saveTx` emits `newTransaction` event for unseen transaction.
 
 ## 2.25.3 (2025-02-17)
