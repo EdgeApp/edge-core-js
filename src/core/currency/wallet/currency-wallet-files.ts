@@ -493,7 +493,9 @@ export async function setCurrencyWalletTxMetadata(
   })
   await transactionFile.save(disklet, 'transaction/' + fileName, newFile)
   const callbackTx = combineTxWithFile(input, tx, newFile, tokenId)
-  fakeCallbacks.onTransactionsChanged([callbackTx])
+  fakeCallbacks.onTransactions([
+    { isNew: oldFile == null, transaction: callbackTx }
+  ])
 }
 
 /**

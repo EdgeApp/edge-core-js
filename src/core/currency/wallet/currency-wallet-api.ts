@@ -603,11 +603,23 @@ export function makeCurrencyWalletApi(
 
       return tx
     },
-    async saveTx(tx: EdgeTransaction): Promise<void> {
-      const { fileName, txFile } = await setupNewTxMetadata(input, tx)
-      await saveTxMetadataFile(input, fileName, txFile)
-      await engine.saveTx(tx)
-      fakeCallbacks.onTransactionsChanged([tx])
+    async saveTx(transaction: EdgeTransaction): Promise<void> {
+      if (input.props.walletState.txs[transaction.txid] == null) {
+        const { fileName, txFile } = await setupNewTxMetadata(
+          input,
+          transaction
+        )
+        await saveTxMetadataFile(input, fileName, txFile)
+        fakeCallbacks.onTransactions([{ isNew: true, transaction }])
+      } else {
+        await setCurrencyWalletTxMetadata(
+          input,
+          transaction.txid,
+          transaction.tokenId,
+          fakeCallbacks
+        )
+      }
+      await engine.saveTx(transaction)
     },
 
     async saveTxAction(opts): Promise<void> {

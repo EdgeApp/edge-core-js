@@ -505,11 +505,15 @@ describe('currency wallets', function () {
     await config.changeUserSettings({ balance: 100 }) // Spending balance
 
     // Subscribe to new transactions:
-    wallet.on('newTransactions', () => log('bad'))
-    wallet.on('transactionsChanged', txs => {
+    wallet.on('newTransactions', txs => {
       const { txid, metadata = {} } = tx
       const { name = '' } = metadata
       log('new', txs.map(tx => `${txid} ${name}`).join(' '))
+    })
+    wallet.on('transactionsChanged', txs => {
+      const { txid, metadata = {} } = tx
+      const { name = '' } = metadata
+      log('changed', txs.map(tx => `${txid} ${name}`).join(' '))
     })
 
     // Perform the spend:
@@ -613,6 +617,10 @@ describe('currency wallets', function () {
     })
     expect(txs[0].txSecret).equals('open sesame')
     expect(txs[0].deviceDescription).equals('iphone12')
+
+    // Calling save again will not emit a newTransactions event:
+    await wallet.saveTx(tx)
+    await log.waitFor(1).assert('changed spend me')
   })
 
   it('can update metadata', async function () {
