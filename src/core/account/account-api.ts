@@ -35,7 +35,7 @@ import {
   makeCurrencyWalletKeys,
   makeKeysKit
 } from '../login/keys'
-import { applyKit } from '../login/login'
+import { applyKit, decryptChildKey } from '../login/login'
 import { deleteLogin } from '../login/login-delete'
 import { changeUsername } from '../login/login-username'
 import { cancelOtpReset, disableOtp, enableOtp, repairOtp } from '../login/otp'
@@ -383,13 +383,14 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     async createWallet(walletType: string, keys?: object): Promise<string> {
-      const { sessionKey } = accountState()
+      const { login, sessionKey, stashTree } = accountState()
 
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.createWallet', {})
 
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, { keys })
-      await applyKit(ai, sessionKey, makeKeysKit(ai, sessionKey, [walletInfo]))
+      const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
+      await applyKit(ai, sessionKey, makeKeysKit(ai, childKey, [walletInfo]))
       return walletInfo.id
     },
 
@@ -499,13 +500,14 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       walletType: string,
       opts: EdgeCreateCurrencyWalletOptions = {}
     ): Promise<EdgeCurrencyWallet> {
-      const { sessionKey } = accountState()
+      const { login, sessionKey, stashTree } = accountState()
 
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.createCurrencyWallet', {})
 
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, opts)
-      await applyKit(ai, sessionKey, makeKeysKit(ai, sessionKey, [walletInfo]))
+      const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
+      await applyKit(ai, sessionKey, makeKeysKit(ai, childKey, [walletInfo]))
       return await finishWalletCreation(ai, accountId, walletInfo.id, opts)
     },
 
@@ -524,7 +526,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async createCurrencyWallets(
       createWallets: EdgeCreateCurrencyWallet[]
     ): Promise<Array<EdgeResult<EdgeCurrencyWallet>>> {
-      const { sessionKey } = accountState()
+      const { login, sessionKey, stashTree } = accountState()
 
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.makeMemoryWallet', {})
@@ -537,7 +539,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       )
 
       // Store the keys on the server:
-      await applyKit(ai, sessionKey, makeKeysKit(ai, sessionKey, walletInfos))
+      const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
+      await applyKit(ai, sessionKey, makeKeysKit(ai, childKey, walletInfos))
 
       // Set up options:
       return await Promise.all(

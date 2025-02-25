@@ -111,7 +111,11 @@ describe('creation', function () {
     this.timeout(15000)
     const now = new Date()
     const world = await makeFakeEdgeWorld([], quiet)
-    const contextOptions = { apiKey: '', appId: 'test' }
+    const contextOptions = {
+      apiKey: '',
+      appId: 'test',
+      plugins: { fakecoin: true }
+    }
     const context = await world.makeEdgeContext(contextOptions)
     const remote = await world.makeEdgeContext(contextOptions)
     const username = 'some fancy user'
@@ -139,6 +143,10 @@ describe('creation', function () {
 
     const loginKey = await account.getLoginKey()
     await Promise.all([
+      account.createCurrencyWallet('wallet:fakecoin', {
+        fiatCurrencyCode: 'iso:USD',
+        name: 'Wallet creation works'
+      }),
       context.loginWithPIN(username, pin),
       remote.loginWithPassword(username, password),
       context.loginWithKey(username, loginKey)
