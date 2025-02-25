@@ -112,6 +112,10 @@ export class CurrencyConfig
 
         // We rely on redux to check for actual differences,
         // and to trigger the matching disk & engine updates if needed:
+        const shortId = walletId.slice(0, 2)
+        ai.props.log.warn(
+          `enabledTokenIds: ${shortId} changeCustomToken edited id`
+        )
         ai.props.dispatch({
           type: 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED',
           payload: {

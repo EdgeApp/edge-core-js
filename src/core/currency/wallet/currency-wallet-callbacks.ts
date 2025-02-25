@@ -139,6 +139,10 @@ export function makeCurrencyWalletCallbacks(
           ])
 
           // Update redux:
+          const shortId = walletId.slice(0, 2)
+          input.props.log.warn(
+            `enabledTokenIds: ${shortId} engine detected tokens`
+          )
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_DETECTED_TOKENS',
             payload: {
