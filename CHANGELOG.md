@@ -2,8 +2,10 @@
 
 ## Unreleased
 
+## 2.26.1 (2025-02-26)
+
+- added: Log changes to the `enabledTokenId` array.
 - fixed: Create wallets in the correct location when using non-default appId's.
-- fixed: Log changes to the `enabledTokenId` array.
 
 ## 2.26.0 (2025-02-20)
 
