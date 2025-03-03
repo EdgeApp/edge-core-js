@@ -53,6 +53,7 @@ import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
 export interface CurrencyWalletOutput {
   readonly walletApi: EdgeCurrencyWallet | undefined
   readonly engine: EdgeCurrencyEngine | undefined
+  readonly engineStarted: boolean
 }
 
 export type CurrencyWalletProps = RootProps & {
@@ -233,6 +234,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             // Turn synchronous errors into promise rejections:
             startupPromise = Promise.resolve()
               .then(() => engine.startEngine())
+              .then(() => {
+                // Signal that engine startup is complete:
+                input.onOutput(true)
+              })
               .catch(error => input.props.onError(error))
           }
         },
@@ -249,12 +254,13 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             startupPromise
               .then(() => engine.killEngine())
               .catch(error => input.props.onError(error))
-              .then(() =>
+              .then(() => {
+                input.onOutput(false)
                 input.props.dispatch({
                   type: 'CURRENCY_ENGINE_STOPPED',
                   payload: { walletId }
                 })
-              )
+              })
               .catch(() => {})
           }
         }
@@ -264,41 +270,94 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       props.state.paused || props.walletState.paused ? undefined : props
   ),
 
-  syncNetwork: filterPixie(
+  syncNetworkUpdate: filterPixie(
+    (_input: CurrencyWalletInput) => {
+      return {
+        async update(props) {
+          if (props.walletOutput == null) return
+          const { engine, engineStarted } = props.walletOutput
+          if (engine?.syncNetwork == null || !engineStarted) {
+            return
+          }
+          const { walletState } = props
+          const { currencyInfo, walletInfo, publicWalletInfo } = walletState
+          // Get the private keys if required by the engine:
+          const requiresPrivateKeys =
+            currencyInfo.unsafeSyncNetwork === true && publicWalletInfo != null
+          const privateKeys = requiresPrivateKeys ? walletInfo.keys : undefined
+          // Sync the network for each subscription:
+          for (const subscription of walletState.changeServiceSubscriptions) {
+            await engine.syncNetwork({
+              privateKeys,
+              subscribeParam: {
+                address: subscription.address,
+                checkpoint: subscription.checkpoint
+              }
+            })
+          }
+          // Update subscription status if managed by the change service:
+          props.dispatch({
+            type: 'CURRENCY_ENGINE_UPDATE_CHANGE_SERVICE_SUBSCRIPTIONS',
+            payload: {
+              subscriptions: walletState.changeServiceSubscriptions.map(
+                subscription => ({ ...subscription, status: 'listening' })
+              ),
+              walletId: props.walletId
+            }
+          })
+        },
+        destroy() {}
+      }
+    },
+    props =>
+      !props.state.paused &&
+      !props.walletState.paused &&
+      props.walletState.changeServiceSubscriptions.some(
+        subscription => subscription.status === 'syncing'
+      )
+        ? props
+        : undefined
+  ),
+  syncNetworkTask: filterPixie(
     (input: CurrencyWalletInput) => {
-      let syncNetworkTask: PeriodicTask
+      const syncNetworkTask: PeriodicTask = makePeriodicTask(
+        async (): Promise<void> => {
+          if (input.props.walletOutput == null) return
+          const { engine, engineStarted } = input.props.walletOutput
+          if (engine?.syncNetwork == null || !engineStarted) {
+            syncNetworkTask.stop()
+            return
+          }
+          const { walletState } = input.props
+          const { currencyInfo, walletInfo, publicWalletInfo } = walletState
+          // Get the private keys if required by the engine:
+          const requiresPrivateKeys =
+            currencyInfo.unsafeSyncNetwork === true && publicWalletInfo != null
+          const privateKeys = requiresPrivateKeys ? walletInfo.keys : undefined
+          const delay = await engine.syncNetwork({
+            privateKeys
+          })
+          syncNetworkTask.setDelay(delay)
+        },
+        10000,
+        {
+          onError: error => {
+            input.props.log.error(error)
+          }
+        }
+      )
 
       return {
-        update() {
-          const { currencyInfo, walletInfo, publicWalletInfo } =
-            input.props.walletState
-          if (input.props.walletOutput == null) return
-          const { engine } = input.props.walletOutput
-          if (engine != null) {
+        update(props) {
+          if (props.walletOutput == null) return
+          const { engine, engineStarted } = props.walletOutput
+          if (
+            engine?.syncNetwork != null &&
+            engineStarted &&
+            !syncNetworkTask?.started
+          ) {
             // Setup syncNetwork routine if defined by the currency engine:
-            if (engine.syncNetwork != null) {
-              // Get the private keys if required by the engine:
-              const requiresPrivateKeys =
-                currencyInfo.unsafeSyncNetwork === true &&
-                publicWalletInfo != null
-              const privateKeys = requiresPrivateKeys
-                ? walletInfo.keys
-                : undefined
-              const doNetworkSync = async (): Promise<void> => {
-                if (engine.syncNetwork != null) {
-                  const delay = await engine.syncNetwork({ privateKeys })
-                  syncNetworkTask.setDelay(delay)
-                } else {
-                  syncNetworkTask.stop()
-                }
-              }
-              syncNetworkTask = makePeriodicTask(doNetworkSync, 10000, {
-                onError: error => {
-                  input.props.log.error(error)
-                }
-              })
-              syncNetworkTask.start({ wait: false })
-            }
+            syncNetworkTask.start({ wait: false })
           }
         },
         destroy() {
@@ -310,7 +369,16 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       }
     },
     props =>
-      props.state.paused || props.walletState.paused ? undefined : props
+      !props.state.paused &&
+      !props.walletState.paused &&
+      (props.walletState.changeServiceSubscriptions.length === 0 ||
+        props.walletState.changeServiceSubscriptions.some(
+          subscription =>
+            subscription.status === 'avoiding' ||
+            subscription.status === 'subscribing'
+        ))
+        ? props
+        : undefined
   ),
 
   syncTimer: filterPixie(

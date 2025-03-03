@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Integration with change-server.
+
 ## 2.26.2 (2025-03-24)
 
 - fixed: New transaction event should not be emitted when updating transaction metadata.

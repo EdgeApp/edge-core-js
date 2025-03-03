@@ -880,6 +880,18 @@ export interface EdgeEnginePrivateKeyOptions {
   privateKeys?: JsonObject
 }
 
+export interface EdgeEngineSyncNetworkOptions {
+  subscribeParam?: {
+    address: string
+    /**
+     * The checkpoint from the change-server. Mempool transactions are an
+     * example of updates without checkpoints.
+     * */
+    checkpoint?: string
+  }
+  privateKeys?: JsonObject
+}
+
 export interface EdgeSaveTxActionOptions {
   txid: string
   tokenId: EdgeTokenId
@@ -905,6 +917,7 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onNewTokens: (tokenIds: string[]) => void
   readonly onSeenTxCheckpoint: (checkpoint: string) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
+  readonly onSubscribeAddresses: (addresses: string[]) => void
   readonly onTokenBalanceChanged: (
     tokenId: EdgeTokenId,
     balance: string
@@ -972,7 +985,7 @@ export interface EdgeCurrencyEngine {
    * Engines with `EdgeCurrencyInfo.unsafeSyncNetwork`
    * will receive their private keys in the arguments.
    */
-  readonly syncNetwork?: (opts: EdgeEnginePrivateKeyOptions) => Promise<number>
+  readonly syncNetwork?: (opts: EdgeEngineSyncNetworkOptions) => Promise<number>
 
   // Engine status:
   readonly resyncBlockchain: () => Promise<void>
@@ -1815,6 +1828,7 @@ export interface EdgeContextOptions {
    */
   loginServer?: string | string[]
 
+  changeServer?: string | string[]
   infoServer?: string | string[]
   syncServer?: string | string[]
   hideKeys?: boolean

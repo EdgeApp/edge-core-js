@@ -15,6 +15,7 @@ import {
 import { SwapSettings } from './account/account-types'
 import { InfoCacheFile } from './context/info-cache-file'
 import {
+  ChangeServiceSubscription,
   MergedTransaction,
   TxFileJsons,
   TxFileNames,
@@ -201,6 +202,13 @@ export type RootAction =
       }
     }
   | {
+      type: 'CURRENCY_ENGINE_UPDATE_CHANGE_SERVICE_SUBSCRIPTIONS'
+      payload: {
+        subscriptions: ChangeServiceSubscription[]
+        walletId: string
+      }
+    }
+  | {
       // Called when a currency engine fires the onNewTokens callback.
       type: 'CURRENCY_ENGINE_DETECTED_TOKENS'
       payload: {
@@ -352,6 +360,7 @@ export type RootAction =
         apiKey: string
         apiSecret?: Uint8Array
         appId: string
+        changeServers: string[]
         infoCache: InfoCacheFile
         infoServers: string[]
         loginServers: string[]
