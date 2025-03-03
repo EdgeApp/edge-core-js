@@ -4,10 +4,15 @@ import { matchJson } from '../../util/match-json'
 import { InfoCacheFile } from '../context/info-cache-file'
 import { ApiInput, RootProps } from '../root-pixie'
 import {
+  ChangeServerConnection,
+  connectChangeServer
+} from './change-server-connection'
+import {
   CurrencyWalletOutput,
   CurrencyWalletProps,
   walletPixie
 } from './wallet/currency-wallet-pixie'
+import { CurrencyWalletState } from './wallet/currency-wallet-reducer'
 
 export interface CurrencyOutput {
   readonly wallets: { [walletId: string]: CurrencyWalletOutput }
@@ -50,6 +55,50 @@ export const currency: TamePixie<RootProps> = combinePixies({
         }
       }
       lastInfo = infoCache
+    }
+  },
+
+  changeSocket(input: ApiInput) {
+    let lastWallets: { [walletId: string]: CurrencyWalletState } | undefined
+    let socket: ChangeServerConnection | undefined
+
+    return async () => {
+      // Grab the wallet state, and bail out if there are no changes:
+      const { wallets } = input.props.state.currency
+      if (wallets === lastWallets) return
+      lastWallets = wallets
+
+      const subs = new Set()
+
+      // Diff the wallet state with the current subscriptions:
+      // todo
+
+      // Connect the socket if we have 1 or more subscriptions:
+      if (socket == null && subs.size > 1) {
+        socket = connectChangeServer('wss://change1.edge.app', {
+          handleChange() {
+            // Send to wallets!
+          },
+          handleClose() {
+            // TODO: Reconnect logic
+          },
+          handleConnect() {
+            // Do we even care?
+          }
+        })
+      }
+
+      // Disconnect the socket if we have 0 subscriptions:
+      if (socket != null && subs.size === 0) {
+        socket.close()
+        socket = undefined
+      }
+
+      // Subscribe what's new:
+      if (socket?.connected === true) await socket.subscribe([])
+
+      // Unsubscribe what's gone:
+      if (socket?.connected === true) await socket.unsubscribe([])
     }
   }
 })
