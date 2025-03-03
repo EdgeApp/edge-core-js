@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Integration with change-server.
+
 ## 2.26.1 (2025-02-26)
 
 - added: Log changes to the `enabledTokenId` array.

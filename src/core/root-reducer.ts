@@ -13,6 +13,7 @@ export interface RootState {
   readonly accountCount: number
   readonly accountIds: string[]
   readonly accounts: { [accountId: string]: AccountState }
+  readonly changeServers: string[]
   readonly hideKeys: boolean
   readonly infoCache: InfoCacheFile
   readonly infoServers: string[]
@@ -61,6 +62,10 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
   },
 
   accounts: mapReducer(accountReducer, next => next.accountIds),
+
+  changeServers(state = [], action): string[] {
+    return action.type === 'INIT' ? action.payload.changeServers : state
+  },
 
   hideKeys(state = true, action): boolean {
     return action.type === 'INIT' ? action.payload.hideKeys : state
