@@ -8,5 +8,7 @@ export const CLIENT_FILE_NAME = 'client.json'
 export const clientFile = makeJsonFile(
   asObject({
     clientId: asBase64
+    duressLoginId: asOptional(asSting)
+    diuressTriggered: asOptional(asBoolean, false)
   })
 )

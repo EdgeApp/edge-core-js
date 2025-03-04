@@ -900,6 +900,8 @@ export interface EdgeSignMessageOptions {
 // engine --------------------------------------------------------------
 
 export interface EdgeCurrencyEngineCallbacks {
+  readonly onSubscribeAddress: (addresses: string[], checkpoint: string) => void
+
   readonly onAddressChanged: () => void
   readonly onAddressesChecked: (progressRatio: number) => void
   readonly onNewTokens: (tokenIds: string[]) => void
@@ -972,7 +974,12 @@ export interface EdgeCurrencyEngine {
    * Engines with `EdgeCurrencyInfo.unsafeSyncNetwork`
    * will receive their private keys in the arguments.
    */
-  readonly syncNetwork?: (opts: EdgeEnginePrivateKeyOptions) => Promise<number>
+  readonly syncNetwork?: (
+    opts: EdgeEnginePrivateKeyOptions & {
+      hasChanges?: boolean // Only true if the change server detected something
+      checkpoint?: string // Sent by the change server
+    }
+  ) => Promise<number>
 
   // Engine status:
   readonly resyncBlockchain: () => Promise<void>
@@ -1929,6 +1936,9 @@ export interface EdgeContext {
 
   readonly appId: string
   readonly clientId: string // Unique base58 ID for each app installation
+
+  duressLoginId: string | undefined
+  readonly setDuressAccount: (loginId) => Promise<void>
 
   // Local user management:
   localUsers: EdgeUserInfo[]

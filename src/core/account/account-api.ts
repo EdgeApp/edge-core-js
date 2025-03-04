@@ -171,6 +171,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     get username(): string | undefined {
       const { loginTree } = accountState()
+      if (state.lieAboutUername)
+        return state.fakeUsername
+
       return loginTree.username
     },
 

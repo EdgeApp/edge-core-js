@@ -3,6 +3,7 @@ import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 import { checkPasswordRules, fixUsername } from '../../client-side'
 import {
   asChallengeErrorPayload,
+  asMaybePasswordError,
   EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
@@ -56,6 +57,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     fixUsername,
 
     get localUsers(): EdgeUserInfo[] {
+      if (duressTriggered) return [duressAccount]
       return ai.props.state.login.localUsers
     },
 
@@ -172,8 +174,23 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         throw new Error('User does not exist on this device')
       }
 
-      const sessionKey = await loginPin2(ai, appId, stashTree, pin, opts)
-      return await makeAccount(ai, sessionKey, 'pinLogin', opts)
+      try {
+        const sessionKey = await loginPin2(ai, appId, stashTree, pin, opts)
+
+        return await makeAccount(ai, sessionKey, 'pinLogin', opts)
+      } catch (error) {
+        if (asMaybePasswordError(error) != null) {
+          const stashTree = getStashById(ai, base58.parse(duress)).stashTree
+          const sessionKey = await loginPin2(ai, appId, stashTree, pin, opts)
+
+          dispatch({
+            type: 'LIE_ABOUT_USERNAME',
+            data: { fakeUsername: stashTree.username }
+          })
+
+          return await makeAccount(ai, sessionKey, 'pinLogin', opts)
+        }
+      }
     },
 
     async loginWithRecovery2(

@@ -71,6 +71,7 @@ export interface LoginStash {
   mnemonicBox?: EdgeBox
   rootKeyBox?: EdgeBox
   syncKeyBox?: EdgeBox
+
 }
 
 /**
