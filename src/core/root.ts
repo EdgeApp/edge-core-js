@@ -39,6 +39,7 @@ export async function makeContext(
     appId = '',
     authServer,
     deviceDescription = null,
+    changeServer,
     hideKeys = false,
     infoServer,
     loginServer,
@@ -53,6 +54,9 @@ export async function makeContext(
   const authServers = toServerArray(authServer, [
     'https://login1.edge.app',
     'https://login2.edge.app'
+  ])
+  const changeServers = toServerArray(changeServer, [
+    'https://change1.edge.app'
   ])
   const infoServers = toServerArray(infoServer, [
     'https://info1.edge.app',
@@ -73,6 +77,7 @@ export async function makeContext(
   ])
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
 
+  changeServers.map(server => validateServer(server))
   infoServers.map(server => validateServer(server))
   loginServers.map(server => validateServer(server))
   syncServers.map(server => validateServer(server))
@@ -122,6 +127,7 @@ export async function makeContext(
       apiKey,
       apiSecret,
       appId,
+      changeServers,
       loginServers,
       infoCache,
       infoServers,

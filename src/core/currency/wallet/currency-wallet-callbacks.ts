@@ -287,6 +287,25 @@ export function makeCurrencyWalletCallbacks(
       })
     },
 
+    onSubscribeAddresses(addresses: string[]) {
+      const changeServiceSubscriptions =
+        input.props.state.currency.wallets[walletId].changeServiceSubscriptions
+      const subscriptions = [
+        ...changeServiceSubscriptions,
+        ...addresses.map(address => ({
+          address,
+          status: 'subscribing' as const
+        }))
+      ]
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_UPDATE_CHANGE_SERVICE_SUBSCRIPTIONS',
+        payload: {
+          subscriptions,
+          walletId
+        }
+      })
+    },
+
     onTransactions(txEvents: EdgeTransactionEvent[]) {
       const { accountId, currencyInfo, pluginId } = input.props.walletState
       const allTokens =

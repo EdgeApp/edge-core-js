@@ -880,6 +880,18 @@ export interface EdgeEnginePrivateKeyOptions {
   privateKeys?: JsonObject
 }
 
+export interface EdgeEngineSyncNetworkOptions {
+  subscribeParam?: {
+    address: string
+    /**
+     * The checkpoint from the change-server. Mempool transactions are an
+     * example of updates without checkpoints.
+     * */
+    checkpoint?: string
+  }
+  privateKeys?: JsonObject
+}
+
 export interface EdgeSaveTxActionOptions {
   txid: string
   tokenId: EdgeTokenId
@@ -905,6 +917,7 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onNewTokens: (tokenIds: string[]) => void
   readonly onSeenTxCheckpoint: (checkpoint: string) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
+  readonly onSubscribeAddresses: (addresses: string[]) => void
   readonly onTokenBalanceChanged: (
     tokenId: EdgeTokenId,
     balance: string
@@ -950,11 +963,32 @@ export interface EdgeCurrencyEngineOptions {
 export interface EdgeCurrencyEngine {
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
 
-  // Engine status:
+  /**
+   * Starts any persistent resources the engine needs, such as WebSockets.
+   * Engines should use `syncNetwork` for periodic tasks (polling),
+   * rather than trying to manage those by itself.
+   */
   readonly startEngine: () => Promise<void>
+
+  /**
+   * Shut down the engine, including open sockets, timers,
+   * and any in-progress tasks that support cancellation.
+   */
   readonly killEngine: () => Promise<void>
+
+  /**
+   * Polls the blockchain for updates.
+   * The return value is the delay (in ms) that the engine wants to wait
+   * before its next poll. For engines with active address subscriptions,
+   * the core will ignore this number and simply wait for the next
+   * on-chain update.
+   * Engines with `EdgeCurrencyInfo.unsafeSyncNetwork`
+   * will receive their private keys in the arguments.
+   */
+  readonly syncNetwork?: (opts: EdgeEngineSyncNetworkOptions) => Promise<number>
+
+  // Engine status:
   readonly resyncBlockchain: () => Promise<void>
-  readonly syncNetwork?: (opts: EdgeEnginePrivateKeyOptions) => Promise<number>
   readonly dumpData: () => Promise<EdgeDataDump>
 
   // Chain state:
@@ -1794,6 +1828,7 @@ export interface EdgeContextOptions {
    */
   loginServer?: string | string[]
 
+  changeServer?: string | string[]
   infoServer?: string | string[]
   syncServer?: string | string[]
   hideKeys?: boolean
