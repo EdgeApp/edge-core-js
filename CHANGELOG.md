@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: New transaction event should not be emitted when updating transaction metadata.
+
 ## 2.26.1 (2025-02-26)
 
 - added: Log changes to the `enabledTokenId` array.
