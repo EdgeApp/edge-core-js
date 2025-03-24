@@ -430,7 +430,7 @@ export async function loadAddressFiles(
 /**
  * Changes a wallet's metadata.
  */
-export async function setCurrencyWalletTxMetadata(
+export async function updateCurrencyWalletTxMetadata(
   input: CurrencyWalletInput,
   txid: string,
   tokenId: EdgeTokenId,
@@ -498,7 +498,9 @@ export async function setCurrencyWalletTxMetadata(
   await transactionFile.save(disklet, 'transaction/' + fileName, newFile)
   const callbackTx = combineTxWithFile(input, tx, newFile, tokenId)
   fakeCallbacks.onTransactions([
-    { isNew: oldFile == null, transaction: callbackTx }
+    // This method is used to update metadata for existing/seen transactions,
+    // so we should always mark the transaction as not new.
+    { isNew: false, transaction: callbackTx }
   ])
 }
 

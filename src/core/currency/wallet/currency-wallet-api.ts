@@ -56,8 +56,8 @@ import {
   renameCurrencyWallet,
   saveTxMetadataFile,
   setCurrencyWalletFiat,
-  setCurrencyWalletTxMetadata,
-  setupNewTxMetadata
+  setupNewTxMetadata,
+  updateCurrencyWalletTxMetadata
 } from './currency-wallet-files'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { MergedTransaction } from './currency-wallet-reducer'
@@ -614,7 +614,7 @@ export function makeCurrencyWalletApi(
         await saveTxMetadataFile(input, fileName, txFile)
         fakeCallbacks.onTransactions([{ isNew: true, transaction }])
       } else {
-        await setCurrencyWalletTxMetadata(
+        await updateCurrencyWalletTxMetadata(
           input,
           transaction.txid,
           transaction.tokenId,
@@ -626,7 +626,7 @@ export function makeCurrencyWalletApi(
 
     async saveTxAction(opts): Promise<void> {
       const { txid, tokenId, assetAction, savedAction } = opts
-      await setCurrencyWalletTxMetadata(
+      await updateCurrencyWalletTxMetadata(
         input,
         txid,
         tokenId,
@@ -640,7 +640,7 @@ export function makeCurrencyWalletApi(
     async saveTxMetadata(opts: EdgeSaveTxMetadataOptions): Promise<void> {
       const { txid, tokenId, metadata } = opts
 
-      await setCurrencyWalletTxMetadata(
+      await updateCurrencyWalletTxMetadata(
         input,
         txid,
         tokenId,
