@@ -950,11 +950,32 @@ export interface EdgeCurrencyEngineOptions {
 export interface EdgeCurrencyEngine {
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
 
-  // Engine status:
+  /**
+   * Starts any persistent resources the engine needs, such as WebSockets.
+   * Engines should use `syncNetwork` for periodic tasks (polling),
+   * rather than trying to manage those by itself.
+   */
   readonly startEngine: () => Promise<void>
+
+  /**
+   * Shut down the engine, including open sockets, timers,
+   * and any in-progress tasks that support cancellation.
+   */
   readonly killEngine: () => Promise<void>
-  readonly resyncBlockchain: () => Promise<void>
+
+  /**
+   * Polls the blockchain for updates.
+   * The return value is the delay (in ms) the engine wants to wait
+   * before its next poll. For engines with active address subscriptions,
+   * the core will ignore this number and simply wait for the next
+   * on-chain update.
+   * Engines with `EdgeCurrencyInfo.unsafeSyncNetwork`
+   * will receive their private keys in the arguments.
+   */
   readonly syncNetwork?: (opts: EdgeEnginePrivateKeyOptions) => Promise<number>
+
+  // Engine status:
+  readonly resyncBlockchain: () => Promise<void>
   readonly dumpData: () => Promise<EdgeDataDump>
 
   // Chain state:
