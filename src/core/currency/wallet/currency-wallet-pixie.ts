@@ -209,12 +209,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   engineStarted: filterPixie(
     (input: CurrencyWalletInput) => {
       let startupPromise: Promise<unknown> | undefined
-      let syncNetworkTask: PeriodicTask
 
       return {
         update() {
           const { log, walletId, walletOutput, walletState } = input.props
-          const { currencyInfo, walletInfo, publicWalletInfo } = walletState
           if (walletOutput == null) return
           const { engine, walletApi } = walletOutput
           if (
@@ -236,31 +234,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             startupPromise = Promise.resolve()
               .then(() => engine.startEngine())
               .catch(error => input.props.onError(error))
-
-            // Setup syncNetwork routine if defined by the currency engine:
-            if (engine.syncNetwork != null) {
-              // Get the private keys if required by the engine:
-              const requiresPrivateKeys =
-                currencyInfo.unsafeSyncNetwork === true &&
-                publicWalletInfo != null
-              const privateKeys = requiresPrivateKeys
-                ? walletInfo.keys
-                : undefined
-              const doNetworkSync = async (): Promise<void> => {
-                if (engine.syncNetwork != null) {
-                  const delay = await engine.syncNetwork({ privateKeys })
-                  syncNetworkTask.setDelay(delay)
-                } else {
-                  syncNetworkTask.stop()
-                }
-              }
-              syncNetworkTask = makePeriodicTask(doNetworkSync, 10000, {
-                onError: error => {
-                  log.error(error)
-                }
-              })
-              syncNetworkTask.start({ wait: false })
-            }
           }
         },
 
@@ -284,7 +257,51 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
               )
               .catch(() => {})
           }
+        }
+      }
+    },
+    props =>
+      props.state.paused || props.walletState.paused ? undefined : props
+  ),
 
+  syncNetwork: filterPixie(
+    (input: CurrencyWalletInput) => {
+      let syncNetworkTask: PeriodicTask
+
+      return {
+        update() {
+          const { currencyInfo, walletInfo, publicWalletInfo } =
+            input.props.walletState
+          if (input.props.walletOutput == null) return
+          const { engine } = input.props.walletOutput
+          if (engine != null) {
+            // Setup syncNetwork routine if defined by the currency engine:
+            if (engine.syncNetwork != null) {
+              // Get the private keys if required by the engine:
+              const requiresPrivateKeys =
+                currencyInfo.unsafeSyncNetwork === true &&
+                publicWalletInfo != null
+              const privateKeys = requiresPrivateKeys
+                ? walletInfo.keys
+                : undefined
+              const doNetworkSync = async (): Promise<void> => {
+                if (engine.syncNetwork != null) {
+                  const delay = await engine.syncNetwork({ privateKeys })
+                  syncNetworkTask.setDelay(delay)
+                } else {
+                  syncNetworkTask.stop()
+                }
+              }
+              syncNetworkTask = makePeriodicTask(doNetworkSync, 10000, {
+                onError: error => {
+                  input.props.log.error(error)
+                }
+              })
+              syncNetworkTask.start({ wait: false })
+            }
+          }
+        },
+        destroy() {
           // Stop the syncNetwork routine if it was setup:
           if (syncNetworkTask != null) {
             syncNetworkTask.stop()
