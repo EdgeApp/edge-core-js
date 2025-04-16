@@ -68,6 +68,7 @@ export interface CurrencyWalletState {
   readonly allEnabledTokenIds: string[]
   readonly balanceMap: EdgeBalanceMap
   readonly balances: EdgeBalances
+  readonly changeServiceSubscriptions: ChangeServiceSubscription[]
   readonly currencyInfo: EdgeCurrencyInfo
   readonly detectedTokenIds: string[]
   readonly enabledTokenIds: string[]
@@ -92,6 +93,18 @@ export interface CurrencyWalletState {
   readonly unactivatedTokenIds: string[]
   readonly walletInfo: EdgeWalletInfoFull
 }
+
+export interface ChangeServiceSubscription {
+  address: string
+  status: ChangeServiceSubscriptionStatus
+  checkpoint?: string
+}
+
+export type ChangeServiceSubscriptionStatus =
+  | 'avoiding' // The wallet is avoiding the change service (unsupported)
+  | 'listening' // The wallet is connected and listening for changes
+  | 'subscribing' // The wallet is in the process of subscribing (supported)
+  | 'syncing' // The wallet is syncing historical data
 
 export interface CurrencyWalletNext {
   readonly id: string
@@ -177,6 +190,18 @@ const currencyWalletInner = buildReducer<
       return state
     }
   ),
+
+  changeServiceSubscriptions(state = [], action) {
+    if (action.type === 'CURRENCY_ENGINE_UPDATE_CHANGE_SERVICE_SUBSCRIPTIONS') {
+      const filteredState = state.filter(subscription => {
+        return !action.payload.subscriptions.some(
+          sub => sub.address === subscription.address
+        )
+      })
+      return [...filteredState, ...action.payload.subscriptions]
+    }
+    return state
+  },
 
   tokenFileDirty(state = false, action, next, prev): boolean {
     switch (action.type) {

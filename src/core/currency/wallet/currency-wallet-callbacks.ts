@@ -36,7 +36,11 @@ import {
   CurrencyWalletInput,
   CurrencyWalletProps
 } from './currency-wallet-pixie'
-import { mergeTx, TxidHashes } from './currency-wallet-reducer'
+import {
+  ChangeServiceSubscription,
+  mergeTx,
+  TxidHashes
+} from './currency-wallet-reducer'
 import { uniqueStrings } from './enabled-tokens'
 
 let throttleRateLimitMs = 5000
@@ -283,6 +287,29 @@ export function makeCurrencyWalletCallbacks(
             type: 'CURRENCY_ENGINE_CHANGED_STAKING',
             payload: { stakingStatus, walletId }
           })
+        }
+      })
+    },
+
+    onSubscribeAddresses(addresses: string[]) {
+      const changeServiceSubscriptions =
+        input.props.state.currency.wallets[walletId].changeServiceSubscriptions
+      const subscriptions: ChangeServiceSubscription[] = [
+        ...changeServiceSubscriptions,
+        ...addresses.map(address => ({
+          address,
+          status: 'subscribing' as const
+        }))
+      ]
+      // TODO: We currently have no way to remove addresses from this list.
+      // This could be an issue for chains like Hedera where activating the wallet
+      // causes its address to permanently change. For now we'll accept the extra
+      // noise since it doesn't affect most chains.
+      input.props.dispatch({
+        type: 'CURRENCY_ENGINE_UPDATE_CHANGE_SERVICE_SUBSCRIPTIONS',
+        payload: {
+          subscriptions,
+          walletId
         }
       })
     },
