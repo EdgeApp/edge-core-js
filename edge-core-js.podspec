@@ -24,6 +24,7 @@ Pod::Spec.new do |s|
     "android/src/main/cpp/scrypt/sysendian.h",
     "ios/Disklet.swift",
     "ios/edge-core-js-Bridging-Header.h",
+    "ios/BundleHTTPServer.swift",
     "ios/EdgeCoreWebView.swift",
     "ios/EdgeCoreWebViewManager.m",
     "ios/EdgeCoreWebViewManager.swift",
@@ -31,7 +32,7 @@ Pod::Spec.new do |s|
     "ios/PendingCall.swift"
 
   s.resource_bundles = {
-    "edge-core-js" => "android/src/main/assets/edge-core-js/edge-core.js"
+    "edge-core-js" => "android/src/main/assets/edge-core-js/*"
   }
 
   s.dependency "React-Core"

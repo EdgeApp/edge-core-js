@@ -36,7 +36,7 @@ export class EdgeCoreBridge extends React.Component<Props> {
       <NativeWebView
         ref={this.callbacks.setRef}
         allowDebugging={debug || allowDebugging}
-        source={debug ? 'http://localhost:8080/edge-core.js' : null}
+        source={debug ? 'http://localhost:8080/' : null}
         style={{ opacity: 0, position: 'absolute', height: 1, width: 1 }}
         onMessage={this.callbacks.handleMessage}
         onScriptError={event => {

@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import { makeNodeDisklet } from 'disklet'
 import fetch from 'node-fetch'
 
-import { EdgeIo } from '../../types/types'
+import { EdgeFetchOptions, EdgeIo } from '../../types/types'
 import { scrypt } from '../../util/crypto/scrypt'
 
 /**
@@ -22,7 +22,12 @@ export function makeNodeIo(path: string): EdgeIo {
     disklet: makeNodeDisklet(path),
 
     // Networking:
-    fetch,
+    fetch(uri: string, opts?: EdgeFetchOptions) {
+      if (opts?.privacy === 'nym') {
+        throw new Error('NYM mixFetch is not supported in Node.js')
+      }
+      return fetch(uri, opts)
+    },
     fetchCors: fetch
   }
 }

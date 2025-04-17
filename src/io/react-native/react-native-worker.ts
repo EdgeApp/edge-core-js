@@ -10,12 +10,14 @@ import {
   makeContext,
   makeFakeWorld
 } from '../../core/core'
+import { LogBackend, makeLog } from '../../core/log/log'
 import {
   EdgeFetchFunction,
   EdgeFetchOptions,
   EdgeFetchResponse,
   EdgeIo
 } from '../../types/types'
+import { initMixFetch, queueMixFetch } from '../../util/nym'
 import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
 import { WorkerApi, YAOB_THROTTLE_MS } from './react-native-types'
@@ -71,6 +73,35 @@ window.addEdgeCorePlugins = addEdgeCorePlugins
 window.nativeBridge = nativeBridge
 window.reactBridge = reactBridge
 
+/**
+ * Convert a file:// URI to a domain-relative path served by our local bundle server.
+ * This is needed because cross-origin isolation (COOP/COEP) blocks file:// loads.
+ * Using domain-relative paths ensures plugins load from the same origin as the page
+ * (localhost:3693 in production, localhost:8080 in debug mode).
+ */
+function convertPluginUri(uri: string): string {
+  // If already an HTTP URI, use as-is (e.g., custom bundles from metro bundler)
+  if (uri.startsWith('http://') || uri.startsWith('https://')) {
+    return uri
+  }
+
+  // Convert file:// URIs to domain-relative paths
+  // Extract the bundle path (e.g., "edge-currency-accountbased.bundle/edge-currency-accountbased.js")
+  const bundleMatch = uri.match(/([^/]+\.bundle\/[^/]+\.js)$/)
+  if (bundleMatch != null) {
+    return `/plugin/${bundleMatch[1]}`
+  }
+
+  // Fallback: try to extract just the filename
+  const fileMatch = uri.match(/([^/]+\.js)$/)
+  if (fileMatch != null) {
+    return `/plugin/${fileMatch[1]}`
+  }
+
+  // If we can't parse it, return as-is (will likely fail, but provides debugging info)
+  return uri
+}
+
 function loadPlugins(pluginUris: string[]): void {
   const { head } = window.document
   if (head == null || pluginUris.length === 0) {
@@ -89,12 +120,13 @@ function loadPlugins(pluginUris: string[]): void {
     script.addEventListener('load', handleLoad)
     script.charset = 'utf-8'
     script.defer = true
-    script.src = uri
+    script.src = convertPluginUri(uri)
     head.appendChild(script)
   }
 }
 
-async function makeIo(): Promise<EdgeIo> {
+async function makeIo(logBackend: LogBackend): Promise<EdgeIo> {
+  const log = makeLog(logBackend, 'react-native-io')
   const csprng = new HmacDRBG({
     hash: hashjs.sha256,
     entropy: base64.parse(await nativeBridge.call('randomBytes', 32))
@@ -170,8 +202,17 @@ async function makeIo(): Promise<EdgeIo> {
       uri: string,
       opts?: EdgeFetchOptions
     ): Promise<EdgeFetchResponse> {
-      const { corsBypass = 'auto' } = opts ?? {}
+      const { corsBypass = 'auto', privacy = 'none' } = opts ?? {}
 
+      if (privacy === 'nym') {
+        // Ensure mixFetch is initialized before use
+        await initMixFetch(log)
+        // Use queued fetch to handle mixFetch's one-request-per-host limitation
+        return await queueMixFetch(uri, {
+          ...opts,
+          mode: 'unsafe-ignore-cors' as RequestMode
+        })
+      }
       if (corsBypass === 'always') {
         return await nativeFetch(uri, opts)
       }
@@ -248,13 +289,13 @@ export function normalizePath(path: string): string {
 const workerApi: WorkerApi = bridgifyObject({
   async makeEdgeContext(nativeIo, logBackend, pluginUris, opts) {
     loadPlugins(pluginUris)
-    const io = await makeIo()
+    const io = await makeIo(logBackend)
     return await makeContext({ io, nativeIo }, logBackend, opts)
   },
 
   async makeFakeEdgeWorld(nativeIo, logBackend, pluginUris, users = []) {
     loadPlugins(pluginUris)
-    const io = await makeIo()
+    const io = await makeIo(logBackend)
     return makeFakeWorld({ io, nativeIo }, logBackend, users)
   }
 })

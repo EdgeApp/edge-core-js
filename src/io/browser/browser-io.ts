@@ -1,7 +1,9 @@
 import { makeLocalStorageDisklet } from 'disklet'
 
+import { LogBackend, makeLog } from '../../core/log/log'
 import { EdgeFetchOptions, EdgeFetchResponse, EdgeIo } from '../../types/types'
 import { scrypt } from '../../util/crypto/scrypt'
+import { initMixFetch, queueMixFetch } from '../../util/nym'
 import { fetchCorsProxy } from './fetch-cors-proxy'
 
 // Only try CORS proxy/bridge techniques up to 5 times
@@ -16,7 +18,8 @@ const hostnameCorsProxyBlacklist = new Map<string, number>()
 /**
  * Extracts the io functions we need from the browser.
  */
-export function makeBrowserIo(): EdgeIo {
+export function makeBrowserIo(logBackend: LogBackend): EdgeIo {
+  const log = makeLog(logBackend, 'browser-io')
   if (typeof window === 'undefined') {
     throw new Error('No `window` object')
   }
@@ -43,8 +46,17 @@ export function makeBrowserIo(): EdgeIo {
       uri: string,
       opts?: EdgeFetchOptions
     ): Promise<EdgeFetchResponse> {
-      const { corsBypass = 'auto' } = opts ?? {}
+      const { corsBypass = 'auto', privacy = 'none' } = opts ?? {}
 
+      if (privacy === 'nym') {
+        // Ensure mixFetch is initialized before use
+        await initMixFetch(log)
+        // Use queued fetch to handle mixFetch's one-request-per-host limitation
+        return await queueMixFetch(uri, {
+          ...opts,
+          mode: 'unsafe-ignore-cors' as RequestMode
+        })
+      }
       if (corsBypass === 'always') {
         return await fetchCorsProxy(uri, opts)
       }
