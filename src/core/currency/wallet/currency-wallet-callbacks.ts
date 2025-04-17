@@ -421,7 +421,7 @@ export function makeCurrencyWalletCallbacks(
 export function watchCurrencyWallet(input: CurrencyWalletInput): void {
   const { walletId } = input.props
 
-  let lastChanges: string[]
+  let lastChanges = getStorageWalletLastChanges(input.props.state, walletId)
   async function checkChanges(props: CurrencyWalletProps): Promise<void> {
     // Check for data changes:
     const changes = getStorageWalletLastChanges(props.state, walletId)

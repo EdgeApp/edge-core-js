@@ -22,6 +22,7 @@ export interface RootState {
   readonly ready: boolean
   readonly skipBlockHeight: boolean
   readonly syncServers: string[]
+   readonly inDuressModeFor: string
 
   // Children reducers:
   readonly currency: CurrencyState
@@ -75,6 +76,8 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
     }
     return state
   },
+
+inDuressMode()
 
   infoServers(state = [], action): string[] {
     return action.type === 'INIT' ? action.payload.infoServers : state

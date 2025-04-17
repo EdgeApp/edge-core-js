@@ -171,7 +171,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     get username(): string | undefined {
       const { loginTree } = accountState()
-      return loginTree.username
+      return rootState.durressModeFor ?? loginTree.username
     },
 
     // ----------------------------------------------------------------

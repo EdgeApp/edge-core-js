@@ -172,7 +172,17 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         throw new Error('User does not exist on this device')
       }
 
-      const sessionKey = await loginPin2(ai, appId, stashTree, pin, opts)
+      try {
+        const sessionKey = await loginPin2(ai, appId, stashTree, pin, opts)
+      } catch (error) {
+        if (asMaybeInvalidPasswordError(error)) {
+          duressAccount = loadStashes.find(stash => stash.loginId === clientFile.loginId)
+          if (duressAcount != null) {
+            const sessionKey = await loginPin2(ai, appId, duressAccount, pin, opts)
+            return await makeAccount(ai, sessionKey, 'pinLogin', opts)
+          }
+        }
+      }
       return await makeAccount(ai, sessionKey, 'pinLogin', opts)
     },
 

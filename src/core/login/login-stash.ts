@@ -39,6 +39,7 @@ export interface LoginStash {
   syncToken?: string
   userId?: Uint8Array
   username?: string
+  // duressFallback?: boolean
 
   // 2-factor:
   otpKey?: Uint8Array

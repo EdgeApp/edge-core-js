@@ -455,9 +455,6 @@ export interface EdgeCurrencyInfo {
   // Basic currency information:
   readonly pluginId: string
 
-  /** deprecated: refers to chain, use chainDisplayName instead */
-  displayName: string
-
   chainDisplayName: string
   assetDisplayName: string
   walletType: string
@@ -493,6 +490,9 @@ export interface EdgeCurrencyInfo {
   unsafeBroadcastTx?: boolean
   unsafeMakeSpend?: boolean
   unsafeSyncNetwork?: boolean
+
+  /** @deprecated refers to chain, use chainDisplayName instead */
+  displayName: string
 
   /** @deprecated The default user settings are always `{}` */
   defaultSettings?: JsonObject

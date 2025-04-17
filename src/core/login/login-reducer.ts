@@ -59,6 +59,8 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
           (stash.passwordAuthBox != null || stash.loginAuthBox != null)
         const pin2Stash = findPin2Stash(stashTree, appId)
 
+        if (duressModeFor !== stash.username) continue
+
         out.push({
           keyLoginEnabled,
           lastLogin,
