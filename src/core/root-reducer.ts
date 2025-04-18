@@ -3,6 +3,7 @@ import { buildReducer, mapReducer } from 'redux-keto'
 import { EdgeLogSettings } from './../types/types'
 import { accountReducer, AccountState } from './account/account-reducer'
 import { RootAction } from './actions'
+import { ClientInfo } from './context/client-file'
 import { InfoCacheFile } from './context/info-cache-file'
 import { currency, CurrencyState } from './currency/currency-reducer'
 import { login, LoginState } from './login/login-reducer'
@@ -14,6 +15,8 @@ export interface RootState {
   readonly accountIds: string[]
   readonly accounts: { [accountId: string]: AccountState }
   readonly changeServers: string[]
+  readonly contextAppId: string
+  readonly clientInfo: ClientInfo
   readonly hideKeys: boolean
   readonly infoCache: InfoCacheFile
   readonly infoServers: string[]
@@ -35,6 +38,8 @@ export const defaultLogSettings: EdgeLogSettings = {
   sources: {},
   defaultLogLevel: 'warn'
 }
+
+const dummyClientInfo: ClientInfo = { clientId: new Uint8Array(0) }
 
 export const reducer = buildReducer<RootState, RootAction, RootState>({
   accountCount(state = 0, action): number {
@@ -65,6 +70,30 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
 
   changeServers(state = [], action): string[] {
     return action.type === 'INIT' ? action.payload.changeServers : state
+  },
+
+  clientInfo(state = dummyClientInfo, action): ClientInfo {
+    switch (action.type) {
+      case 'INIT':
+        return action.payload.clientInfo
+      case 'LOGIN_DURESS_MODE_DISABLED': {
+        return {
+          ...state,
+          duressLoginId: undefined
+        }
+      }
+      case 'LOGIN_DURESS_MODE_ENABLED': {
+        return {
+          ...state,
+          duressLoginId: action.payload.duressLoginId
+        }
+      }
+    }
+    return state
+  },
+
+  contextAppId: (state = '', action): string => {
+    return action.type === 'LOGIN' ? action.payload.appId : state
   },
 
   hideKeys(state = true, action): boolean {

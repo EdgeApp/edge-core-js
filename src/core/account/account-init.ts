@@ -103,10 +103,14 @@ export async function makeAccount(
   ai: ApiInput,
   sessionKey: SessionKey,
   loginType: LoginType,
-  opts: EdgeAccountOptions
+  opts: EdgeAccountOptions & { duressMode?: boolean }
 ): Promise<EdgeAccount> {
   const { pauseWallets = false } = opts
-  const { appId } = ai.props.state.login
+  // Override the appId if duress mode is enabled:
+  const appId =
+    opts.duressMode === true
+      ? ai.props.state.login.contextAppId + '.duress'
+      : ai.props.state.login.contextAppId
   const { log } = ai.props
 
   // For crash errors:
@@ -121,6 +125,7 @@ export async function makeAccount(
   ai.props.dispatch({
     type: 'LOGIN',
     payload: {
+      appId,
       loginType,
       pauseWallets,
       rootLoginId: stashTree.loginId,

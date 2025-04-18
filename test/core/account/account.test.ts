@@ -35,6 +35,21 @@ describe('account', function () {
     expect(account.username).equals('js test 0')
   })
 
+  it('has basic information for duress accounts', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    expect(duressAccount.appId).equals('.duress')
+    expect(account.loggedIn).equals(true)
+    expect(account.rootLoginId).deep.equals(
+      'BTnpEn7pabDXbcv7VxnKBDsn4CVSwLRA25J8U84qmg4h'
+    )
+    expect(account.username).equals('js test 0')
+  })
+
   it('has basic information for child apps', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({

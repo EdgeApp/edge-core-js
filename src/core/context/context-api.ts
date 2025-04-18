@@ -3,6 +3,7 @@ import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 import { checkPasswordRules, fixUsername } from '../../client-side'
 import {
   asChallengeErrorPayload,
+  asMaybePasswordError,
   EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
@@ -29,16 +30,43 @@ import { removeStash, saveStash } from '../login/login-stash'
 import { SessionKey } from '../login/login-types'
 import { resetOtp } from '../login/otp'
 import { loginPassword } from '../login/password'
-import { loginPin2 } from '../login/pin2'
+import { findPin2Stash, loginPin2 } from '../login/pin2'
 import { getQuestions2, loginRecovery2 } from '../login/recovery2'
 import { ApiInput } from '../root-pixie'
+import { CLIENT_FILE_NAME, clientFile } from './client-file'
 import { EdgeInternalStuff } from './internal-api'
 
 export function makeContextApi(ai: ApiInput): EdgeContext {
-  const appId = ai.props.state.login.appId
-  const clientId = base58.stringify(ai.props.state.login.clientId)
+  const appId = ai.props.state.login.contextAppId
+  const clientId = base58.stringify(ai.props.state.clientInfo.clientId)
   const $internalStuff = new EdgeInternalStuff(ai)
   let pauseTimer: ReturnType<typeof setTimeout> | undefined
+
+  async function disableDuressMode(): Promise<void> {
+    // Persist disabled duress mode
+    await clientFile.save(ai.props.io.disklet, CLIENT_FILE_NAME, {
+      ...ai.props.state.clientInfo,
+      duressLoginId: undefined
+    })
+    // Disable duress mode
+    ai.props.dispatch({
+      type: 'LOGIN_DURESS_MODE_DISABLED'
+    })
+  }
+  async function enableDuressMode(duressLoginId: Uint8Array): Promise<void> {
+    // Persist enabled duress mode
+    await clientFile.save(ai.props.io.disklet, CLIENT_FILE_NAME, {
+      ...ai.props.state.clientInfo,
+      duressLoginId
+    })
+    // Enable duress mode
+    ai.props.dispatch({
+      type: 'LOGIN_DURESS_MODE_ENABLED',
+      payload: {
+        duressLoginId
+      }
+    })
+  }
 
   const out: EdgeContext & { $internalStuff: EdgeInternalStuff } = {
     on: onMethod,
@@ -150,6 +178,10 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         password,
         opts
       )
+      // Disable duress mode if it is setup and active
+      if (ai.props.state.clientInfo.duressLoginId != null) {
+        await disableDuressMode()
+      }
       return await makeAccount(ai, sessionKey, 'passwordLogin', opts)
     },
 
@@ -172,8 +204,44 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         throw new Error('User does not exist on this device')
       }
 
-      const sessionKey = await loginPin2(ai, appId, stashTree, pin, opts)
-      return await makeAccount(ai, sessionKey, 'pinLogin', opts)
+      let sessionKey: SessionKey
+      try {
+        const stash = findPin2Stash(stashTree, appId)
+        if (stash == null) {
+          throw new Error(
+            'PIN login is not enabled for this account on this device'
+          )
+        }
+        sessionKey = await loginPin2(ai, stashTree, stash, pin, opts)
+        // Disable duress mode if it is setup and active
+        if (ai.props.state.clientInfo.duressLoginId != null) {
+          await disableDuressMode()
+        }
+        return await makeAccount(ai, sessionKey, 'pinLogin', opts)
+      } catch (error) {
+        // No duress mode setup or error is not a failed login
+        if (asMaybePasswordError(error) == null) {
+          throw error
+        }
+        const duressAppId = appId + '.duress'
+        const duressStash = searchTree(
+          stashTree,
+          stash => stash.appId === duressAppId
+        )
+        // No duress account configured
+        if (duressStash == null) {
+          throw error
+        }
+        // Try login with duress account
+        sessionKey = await loginPin2(ai, stashTree, duressStash, pin, opts)
+        // The original account will be used for display
+        await enableDuressMode(stashTree.loginId)
+        // Make the account with duress mode enabled
+        return await makeAccount(ai, sessionKey, 'pinLogin', {
+          ...opts,
+          duressMode: true
+        })
+      }
     },
 
     async loginWithRecovery2(

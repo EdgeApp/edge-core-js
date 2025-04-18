@@ -35,7 +35,7 @@ import {
   makeCurrencyWalletKeys,
   makeKeysKit
 } from '../login/keys'
-import { applyKit, decryptChildKey } from '../login/login'
+import { applyKit, decryptChildKey, searchTree } from '../login/login'
 import { deleteLogin } from '../login/login-delete'
 import { changeUsername } from '../login/login-username'
 import { cancelOtpReset, disableOtp, enableOtp, repairOtp } from '../login/otp'
@@ -57,6 +57,7 @@ import { makeLocalDisklet } from '../storage/repo'
 import { makeStorageWalletApi } from '../storage/storage-api'
 import { fetchSwapQuotes } from '../swap/swap-api'
 import { changeWalletStates } from './account-files'
+import { ensureAccountExists } from './account-init'
 import { AccountState } from './account-reducer'
 import { makeDataStoreApi } from './data-store-api'
 import { makeLobbyApi } from './lobby-api'
@@ -175,6 +176,27 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     // ----------------------------------------------------------------
+    // Duress mode:
+    // ----------------------------------------------------------------
+
+    get canDuressLogin(): boolean {
+      const { activeAppId } = accountState()
+      const duressAppId = activeAppId.endsWith('.duress')
+        ? activeAppId
+        : activeAppId + '.duress'
+      const duressStash = searchTree(
+        accountState().loginTree,
+        stash => stash.appId === duressAppId
+      )
+      return duressStash?.pin2Key != null
+    },
+
+    get isDuressAccount(): boolean {
+      const { activeAppId } = accountState()
+      return activeAppId.endsWith('.duress')
+    },
+
+    // ----------------------------------------------------------------
     // Specialty API's:
     // ----------------------------------------------------------------
 
@@ -216,8 +238,34 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async changePin(opts: ChangePinOptions): Promise<string> {
       lockdown()
+      // For crash errors:
+      ai.props.log.breadcrumb('EdgeAccount.changePin', {})
+      const { forDuressAccount = false } = opts
+      const { activeAppId } = accountState()
+      const duressAppId = activeAppId.endsWith('.duress')
+        ? activeAppId
+        : activeAppId + '.duress'
+      // We only call ensureAccountExists if there is no duress account because
+      // ensureAccountExists will throw an error if the duress account already
+      // exists.
+      if (forDuressAccount) {
+        await ensureAccountExists(
+          ai,
+          accountState().stashTree,
+          accountState().sessionKey,
+          duressAppId
+        )
+      }
       await changePin(ai, accountId, opts)
-      const { login } = accountState()
+      const login = forDuressAccount
+        ? searchTree(accountState().login, stash => stash.appId === duressAppId)
+        : accountState().login
+      if (login == null) {
+        // This shouldn't ever happen because not finding the duress account
+        // when we have called `ensureAccountExists` is a bug in
+        // `ensureAccountExists`.
+        throw new Error('Failed to find account.')
+      }
       return login.pin2Key != null ? base58.stringify(login.pin2Key) : ''
     },
 

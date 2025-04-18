@@ -13,6 +13,7 @@ import {
   EdgeWalletStates
 } from '../types/types'
 import { SwapSettings } from './account/account-types'
+import { ClientInfo } from './context/client-file'
 import { InfoCacheFile } from './context/info-cache-file'
 import {
   ChangeServiceSubscription,
@@ -365,7 +366,7 @@ export type RootAction =
         infoServers: string[]
         loginServers: string[]
         syncServers: string[]
-        clientId: Uint8Array
+        clientInfo: ClientInfo
         deviceDescription: string | null
         hideKeys: boolean
         logSettings: EdgeLogSettings
@@ -378,6 +379,7 @@ export type RootAction =
       // Fires when a user logs in.
       type: 'LOGIN'
       payload: {
+        appId: string
         loginType: LoginType
         pauseWallets: boolean
         rootLoginId: Uint8Array
@@ -393,6 +395,19 @@ export type RootAction =
       // Fires when we write a login stash to disk.
       type: 'LOGIN_STASH_SAVED'
       payload: LoginStash
+    }
+  | {
+      type: 'LOGIN_DURESS_MODE_DISABLED'
+    }
+  | {
+      type: 'LOGIN_DURESS_MODE_ENABLED'
+      payload: {
+        /**
+         * Defining a duressLoginId is all that's needed to enable
+         * duress mode.
+         */
+        duressLoginId: Uint8Array
+      }
     }
   | {
       // Fires when a user logs out.

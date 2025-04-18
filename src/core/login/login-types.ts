@@ -19,7 +19,11 @@ export interface SessionKey {
   loginKey: Uint8Array
 }
 
-// Login data decrypted into memory.
+/**
+ * The login data decrypted into memory.
+ * @deprecated Use `LoginStash` instead and decrypt it at the point of use.
+ * This is an ongoing refactor to remove this type.
+ */
 export interface LoginTree {
   isRoot: boolean
 

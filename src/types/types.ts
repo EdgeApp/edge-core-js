@@ -1521,6 +1521,12 @@ export interface ChangePinOptions {
 
   /** Defaults to true if unspecified */
   enableLogin?: boolean
+
+  /**
+   * True to configure the pin for the duress account.
+   * Default is false.
+   */
+  forDuressAccount?: boolean
 }
 
 export interface ChangeUsernameOptions {
@@ -1686,6 +1692,10 @@ export interface EdgeAccount {
   readonly recoveryKey: string | undefined // base58, for email backup
   readonly rootLoginId: string // base58
   readonly username: string | undefined
+
+  // Duress mode:
+  readonly canDuressLogin: boolean
+  readonly isDuressAccount: boolean
 
   /** Gets the base58 decryption key for biometric login */
   readonly getLoginKey: () => Promise<string> // base58

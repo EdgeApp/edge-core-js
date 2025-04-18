@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: Added new Duress Mode feature.
 - added: `imported` flag from raw private keys into `EdgeWalletInfoFull`
 - added: Integration with change-server.
 
