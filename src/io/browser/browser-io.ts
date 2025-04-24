@@ -1,7 +1,9 @@
+import { mixFetch } from '@nymproject/mix-fetch'
 import { makeLocalStorageDisklet } from 'disklet'
 
 import { EdgeFetchOptions, EdgeFetchResponse, EdgeIo } from '../../types/types'
 import { scrypt } from '../../util/crypto/scrypt'
+import { mixFetchOptions } from '../react-native/nym'
 import { fetchCorsProxy } from './fetch-cors-proxy'
 
 // Only try CORS proxy/bridge techniques up to 5 times
@@ -43,8 +45,15 @@ export function makeBrowserIo(): EdgeIo {
       uri: string,
       opts?: EdgeFetchOptions
     ): Promise<EdgeFetchResponse> {
-      const { corsBypass = 'auto' } = opts ?? {}
+      const { corsBypass = 'auto', privacy = 'none' } = opts ?? {}
 
+      if (privacy === 'nym') {
+        return await mixFetch(
+          uri,
+          { ...opts, mode: 'unsafe-ignore-cors' },
+          mixFetchOptions
+        )
+      }
       if (corsBypass === 'always') {
         return await fetchCorsProxy(uri, opts)
       }

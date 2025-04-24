@@ -80,6 +80,7 @@
     "*.{js,jsx,ts,tsx}": "eslint"
   },
   "dependencies": {
+    "@nymproject/mix-fetch": "^1.4.1",
     "aes-js": "^3.1.0",
     "base-x": "^4.0.0",
     "biggystring": "^4.2.3",
