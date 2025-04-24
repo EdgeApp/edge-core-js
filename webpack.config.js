@@ -31,14 +31,17 @@ const babelOptions = {
 }
 
 module.exports = {
-  devtool: debug ? 'source-map' : undefined,
+  devtool: 'source-map',
   devServer: {
     allowedHosts: 'all',
     hot: false,
     static: bundlePath
   },
   entry: './src/io/react-native/react-native-worker.ts',
-  mode: debug ? 'development' : 'production',
+  experiments: {
+    asyncWebAssembly: true
+  },
+  mode: 'development',
   module: {
     rules: [
       {
@@ -60,6 +63,10 @@ module.exports = {
           loader: 'babel-loader',
           options: { presets: ['@babel/preset-env'] }
         }
+      },
+      {
+        test: /\.wasm$/,
+        type: 'webassembly/async'
       }
     ]
   },

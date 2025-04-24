@@ -50,6 +50,7 @@ export type EdgeScryptFunction = (
 
 // The subset of the fetch function Edge expects:
 export type EdgeFetchOptions = FetchOptions & {
+  privacy?: 'none' | 'nym'
   corsBypass?: 'auto' | 'always' | 'never'
 }
 export type EdgeFetchHeaders = FetchHeaders

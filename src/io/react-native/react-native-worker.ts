@@ -1,5 +1,6 @@
 import './polyfills'
 
+import { mixFetch } from '@nymproject/mix-fetch-full-fat'
 import hashjs from 'hash.js'
 import HmacDRBG from 'hmac-drbg'
 import { base64 } from 'rfc4648'
@@ -20,6 +21,7 @@ import {
 } from '../../types/types'
 import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
+import { mixFetchOptions } from './nym'
 import { WorkerApi, YAOB_THROTTLE_MS } from './react-native-types'
 
 // Tracks the status of different URI endpoints for the CORS bouncer:
@@ -172,8 +174,21 @@ async function makeIo(): Promise<EdgeIo> {
       uri: string,
       opts?: EdgeFetchOptions
     ): Promise<EdgeFetchResponse> {
-      const { corsBypass = 'auto' } = opts ?? {}
+      const { corsBypass = 'auto', privacy = 'none' } = opts ?? {}
 
+      if (privacy === 'none') {
+        try {
+          const response = await mixFetch(
+            uri,
+            { ...opts, mode: 'unsafe-ignore-cors' },
+            mixFetchOptions
+          )
+          return response
+        } catch (error) {
+          console.error('error', error)
+          throw error
+        }
+      }
       if (corsBypass === 'always') {
         return await nativeFetch(uri, opts)
       }
