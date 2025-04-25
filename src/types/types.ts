@@ -194,6 +194,7 @@ export type EdgeWalletInfoFull = EdgeWalletInfo & {
   created?: Date
   deleted: boolean
   hidden: boolean
+  imported?: boolean
   migratedFromWalletId?: string
   sortIndex: number
 }
