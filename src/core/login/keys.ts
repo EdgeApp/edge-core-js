@@ -235,21 +235,26 @@ export function decryptAllWalletInfos(
   }
   getAllWalletInfosLoop(stash, sessionKey.loginKey)
 
-  return mergeKeyInfos(walletInfos).map(info => ({
-    appId: getLast(appIdMap.get(info.id) ?? []),
-    appIds: appIdMap.get(info.id) ?? [],
+  return mergeKeyInfos(walletInfos).map(info => {
+    return {
+      appId: getLast(appIdMap.get(info.id) ?? []),
+      appIds: appIdMap.get(info.id) ?? [],
 
-    // Defaults to be overwritten:
-    archived: false,
-    created: dates.get(info.id),
-    deleted: false,
-    hidden: false,
-    sortIndex: walletInfos.length,
+      // Defaults to be overwritten:
+      archived: false,
+      created: dates.get(info.id),
+      deleted: false,
+      hidden: false,
+      sortIndex: walletInfos.length,
 
-    // Actual info:
-    ...walletStates[info.id],
-    ...info
-  }))
+      // Copy the `imported` field from the raw keys if it exists
+      imported: info.keys.imported,
+
+      // Actual info:
+      ...walletStates[info.id],
+      ...info
+    }
+  })
 }
 
 /**
