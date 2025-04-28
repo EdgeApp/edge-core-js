@@ -45,13 +45,12 @@ export function findPin2Stash(
  */
 export async function loginPin2(
   ai: ApiInput,
-  appId: string,
   stashTree: LoginStash,
+  stash: LoginStash,
   pin: string,
   opts: EdgeAccountOptions
 ): Promise<SessionKey> {
-  const stash = findPin2Stash(stashTree, appId)
-  if (stash == null || stash.pin2Key == null) {
+  if (stash.pin2Key == null) {
     throw new Error('PIN login is not enabled for this account on this device')
   }
 
@@ -79,7 +78,8 @@ export async function changePin(
   const { username } = accountState.stashTree
 
   // Figure out defaults:
-  let { pin, enableLogin } = opts
+  let { pin, enableLogin, forDuressAccount = false } = opts
+
   if (enableLogin == null) {
     enableLogin =
       loginTree.pin2Key != null || (pin != null && loginTree.pin == null)
@@ -98,7 +98,14 @@ export async function changePin(
     return
   }
 
-  const kits = makeChangePin2Kits(ai, loginTree, username, pin, enableLogin)
+  const kits = makeChangePin2Kits(
+    ai,
+    loginTree,
+    username,
+    pin,
+    enableLogin,
+    forDuressAccount
+  )
   await applyKits(ai, loginTree, kits)
 }
 
@@ -151,14 +158,27 @@ export function makeChangePin2Kits(
   loginTree: LoginTree,
   username: string | undefined,
   pin: string,
-  enableLogin: boolean
+  enableLogin: boolean,
+  forDuressAccount: boolean
 ): LoginKit[] {
-  const out: LoginKit[] = [
-    makeChangePin2Kit(ai, loginTree, username, pin, enableLogin)
-  ]
+  const out: LoginKit[] = []
+
+  // Only include pin change if the app id matches the duress account flag:
+  if (forDuressAccount === loginTree.appId.endsWith('.duress')) {
+    out.push(makeChangePin2Kit(ai, loginTree, username, pin, enableLogin))
+  }
 
   for (const child of loginTree.children) {
-    out.push(...makeChangePin2Kits(ai, child, username, pin, enableLogin))
+    out.push(
+      ...makeChangePin2Kits(
+        ai,
+        child,
+        username,
+        pin,
+        enableLogin,
+        forDuressAccount
+      )
+    )
   }
 
   return out

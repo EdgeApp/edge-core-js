@@ -13,16 +13,13 @@ import { findPin2Stash } from './pin2'
 export interface LoginState {
   readonly apiKey: string
   readonly apiSecret: Uint8Array | null
-  readonly appId: string
-  readonly clientId: Uint8Array
+  readonly contextAppId: string
   readonly deviceDescription: string | null
   readonly loginServers: string[]
   readonly stashes: LoginStash[]
   readonly localUsers: EdgeUserInfo[]
   readonly walletInfos: WalletInfoFullMap
 }
-
-const dummyClientId = new Uint8Array(0)
 
 export const login = buildReducer<LoginState, RootAction, RootState>({
   apiKey(state = '', action): string {
@@ -33,12 +30,8 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
     return action.type === 'INIT' ? action.payload.apiSecret ?? null : state
   },
 
-  appId(state = '', action): string {
+  contextAppId(state = '', action): string {
     return action.type === 'INIT' ? action.payload.appId : state
-  },
-
-  clientId(state = dummyClientId, action): Uint8Array {
-    return action.type === 'INIT' ? action.payload.clientId : state
   },
 
   deviceDescription(state = null, action): string | null {
@@ -46,11 +39,11 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
   },
 
   localUsers: memoizeReducer(
-    (next: RootState) => next.login.appId,
+    (next: RootState) => next.login.contextAppId,
     (next: RootState) => next.login.stashes,
-    (appId: string, stashes: LoginStash[]): EdgeUserInfo[] => {
-      const out: EdgeUserInfo[] = []
-      for (const stashTree of stashes) {
+    (next: RootState) => next.clientInfo,
+    (appId, stashes, clientInfo): EdgeUserInfo[] => {
+      function processStash(stashTree: LoginStash): EdgeUserInfo {
         const { lastLogin, loginId, recovery2Key, username } = stashTree
 
         const stash = searchTree(stashTree, stash => stash.appId === appId)
@@ -59,7 +52,7 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
           (stash.passwordAuthBox != null || stash.loginAuthBox != null)
         const pin2Stash = findPin2Stash(stashTree, appId)
 
-        out.push({
+        return {
           keyLoginEnabled,
           lastLogin,
           loginId: base58.stringify(loginId),
@@ -68,9 +61,18 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
             recovery2Key != null ? base58.stringify(recovery2Key) : undefined,
           username,
           voucherId: stash != null ? stash.voucherId : undefined
-        })
+        }
       }
-      return out
+
+      const duressStash =
+        clientInfo.duressLoginId != null
+          ? stashes.find(stash => stash.loginId === clientInfo.duressLoginId)
+          : undefined
+      if (duressStash != null) {
+        return [processStash(duressStash)]
+      } else {
+        return stashes.map(processStash)
+      }
     }
   ),
 

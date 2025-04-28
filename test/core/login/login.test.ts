@@ -285,6 +285,20 @@ describe('pin', function () {
     expect(await account.checkPin(fakeUser.pin + '!')).equals(false)
   })
 
+  it('check duress', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+    const correct = await duressAccount.checkPin('0000')
+    expect(correct).equals(true)
+    const incorrect = await duressAccount.checkPin('1111')
+    expect(incorrect).equals(false)
+    const parent = await duressAccount.checkPin(fakeUser.pin)
+    expect(parent).equals(false)
+  })
+
   it('delete', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)

@@ -114,7 +114,7 @@ export async function makeContext(
     stashes.push(...airbitzStashes)
   }
 
-  // Save the clientId if we don't have one:
+  // Save the initial client info if the client is new:
   if (clientInfo == null) {
     clientInfo = { clientId: io.random(16) }
     await clientFile.save(io.disklet, CLIENT_FILE_NAME, clientInfo)
@@ -132,7 +132,7 @@ export async function makeContext(
       infoCache,
       infoServers,
       syncServers,
-      clientId: clientInfo.clientId,
+      clientInfo,
       deviceDescription,
       hideKeys,
       logSettings,

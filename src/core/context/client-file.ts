@@ -1,12 +1,25 @@
-import { asObject } from 'cleaners'
+import { asObject, asOptional } from 'cleaners'
 
 import { asBase64 } from '../../types/server-cleaners'
 import { makeJsonFile } from '../../util/file-helpers'
 
 export const CLIENT_FILE_NAME = 'client.json'
 
-export const clientFile = makeJsonFile(
+export interface ClientInfo {
+  clientId: Uint8Array
+  /**
+   * LoginId of the account which is under duress and is being impersonated
+   * by the duress account. It should be the loginId which the duress account
+   * is nested under..
+   * This is only set if duress mode is activated via pin-login with the
+   * duress account's pin.
+   */
+  duressLoginId?: Uint8Array
+}
+
+export const clientFile = makeJsonFile<ClientInfo>(
   asObject({
-    clientId: asBase64
+    clientId: asBase64,
+    duressLoginId: asOptional(asBase64)
   })
 )

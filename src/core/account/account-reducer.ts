@@ -45,12 +45,16 @@ export interface AccountState {
   readonly pauseWallets: boolean
 
   // Login stuff:
+  readonly activeAppId: string
   readonly loadFailure: Error | null // Failed to create API object.
   readonly login: LoginTree
   readonly loginTree: LoginTree
   readonly loginType: LoginType
   readonly rootLoginId: Uint8Array
   readonly sessionKey: SessionKey
+  // TODO: add stash state for the account's decrypted stash data as an
+  // alternative to `login: LoginTree`, which is deprecated:
+  // stash: LoginStash
   readonly stashTree: LoginStash
 
   // Plugin stuff:
@@ -76,7 +80,7 @@ const blankSessionKey = {
 
 const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   accountWalletInfo: memoizeReducer(
-    (next: AccountNext) => next.root.login.appId,
+    (next: AccountNext) => next.self.activeAppId,
     (next: AccountNext) => next.self.allWalletInfosFull,
     (appId, walletInfos): EdgeWalletInfo => {
       const type = makeAccountType(appId)
@@ -89,7 +93,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   ),
 
   accountWalletInfos: memoizeReducer(
-    (next: AccountNext) => next.root.login.appId,
+    (next: AccountNext) => next.self.activeAppId,
     (next: AccountNext) => next.self.allWalletInfosFull,
     (appId, walletInfos): EdgeWalletInfo[] => {
       // Wallets created in Edge that then log into Airbitz or BitcoinPay
@@ -213,6 +217,10 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return action.type === 'LOGIN' ? action.payload.pauseWallets : state
   },
 
+  activeAppId: (state = '', action): string => {
+    return action.type === 'LOGIN' ? action.payload.appId : state
+  },
+
   loadFailure(state = null, action): Error | null {
     if (action.type === 'ACCOUNT_LOAD_FAILED') {
       const { error } = action.payload
@@ -223,7 +231,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   },
 
   login: memoizeReducer(
-    (next: AccountNext) => next.root.login.appId,
+    (next: AccountNext) => next.self.activeAppId,
     (next: AccountNext) => next.self.loginTree,
     (appId, loginTree): LoginTree => {
       const out = searchTree(loginTree, login => login.appId === appId)
