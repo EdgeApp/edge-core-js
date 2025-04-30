@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Incorrect protocol for default change server URL.
+
 ## 2.27.0 (2025-04-28)
 
 - added: Added new Duress Mode feature.
