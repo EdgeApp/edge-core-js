@@ -76,8 +76,11 @@ export const currency: TamePixie<RootProps> = combinePixies({
       const { wallets } = input.props.state.currency
 
       // Memoize this function using the wallet state:
-      if (wallets === lastWallets) return
-      else lastWallets = wallets
+      if (wallets === lastWallets) {
+        return
+      } else {
+        lastWallets = wallets
+      }
 
       let { changeService, changeServiceConnected = false } =
         input.props.output.currency.changeServiceManager ?? {}
@@ -200,50 +203,101 @@ export const currency: TamePixie<RootProps> = combinePixies({
             subscription => subscription.status === 'subscribing'
           )
         )
+        const indexToWalletId: Array<{
+          walletId: string
+          wallet: CurrencyWalletState
+        }> = []
+        const batches: SubscribeParams[][] = []
         for (const [walletId, wallet] of filteredWallets) {
+          if (wallet.paused) continue
+
           // Build the subscribe parameters:
-          const subscribeParams: SubscribeParams[] =
-            wallet.changeServiceSubscriptions.map(subscription => [
+          const params = wallet.changeServiceSubscriptions.map(
+            (subscription): SubscribeParams => [
               wallet.currencyInfo.pluginId,
               subscription.address,
               subscription.checkpoint
-            ])
-          if (subscribeParams.length === 0) continue
+            ]
+          )
+          if (params.length === 0) continue
+          let subscribeParams = batches[batches.length - 1]
+          if (
+            subscribeParams == null ||
+            subscribeParams.length + params.length > 100
+          ) {
+            batches.push([])
+            subscribeParams = batches[batches.length - 1]
+          }
+          subscribeParams.push(...params)
+          for (let i = 0; i < params.length; i++) {
+            indexToWalletId[indexToWalletId.length] = { walletId, wallet }
+          }
+        }
 
-          // Subscribe to the change service:
-          const results = await changeService
+        // Subscribe to the change service:
+        const results: SubscribeResult[] = []
+        for (const subscribeParams of batches) {
+          const r: SubscribeResult[] = await changeService
             .subscribe(subscribeParams)
             .catch(err => {
               input.props.log(`Failed to subscribe: ${String(err)}`)
               return [0] as SubscribeResult[]
             })
+          results.push(...r)
+        }
+
+        const subscriptionUpdates: Map<string, ChangeServiceSubscription[]> =
+          new Map()
+        for (let i = 0; i < results.length; i++) {
+          const result = results[i]
+          const { walletId, wallet } = indexToWalletId[i]
 
           // Determine the new status of the subscription to all addresses
           // for the wallet:
-          let status: ChangeServiceSubscriptionStatus = 'listening'
-          // If any of the subscriptions not supported:
-          if (results.some(result => result === -1)) {
-            // The engine wants ECS, but the server does not support it, so
-            // avoid the change service:
-            status = 'avoiding'
-          }
-          // If any of the subscriptions failed:
-          if (results.some(result => result === 0)) {
-            // The engine wants ECS, but the server failed, so try again later:
-            status = 'subscribing'
-          }
-          // If any of the subscriptions have changes present:
-          if (results.some(result => result === 2)) {
-            // Start syncing the wallet:
-            status = 'syncing'
+          let status: ChangeServiceSubscriptionStatus
+          switch (result) {
+            // Change server does not support this wallet plugin:
+            case -1:
+              // Avoid the change service:
+              status = 'avoiding'
+              break
+            // Change server does support this wallet plugin, but failed to
+            // subscribe to the address:
+            case 0:
+              // Try subscribing again later:
+              status = 'subscribing'
+              break
+            // Change server does support this wallet plugin, and there are no
+            // changes for the address:
+            case 1:
+              // Start syncing the wallet once for initial syncNetwork call:
+              status = 'syncing'
+              break
+            // Change server does support this wallet plugin, and there are
+            // changes for the address:
+            case 2:
+              // Start syncing the wallet:
+              status = 'syncing'
+              break
           }
 
+          // The status for the subscription is already set to subscribing, so
+          // we don't need to update it:
+          if (status === 'subscribing') {
+            continue
+          }
+
+          // Update the status for the subscription:
           const subscriptions = wallet.changeServiceSubscriptions
             .filter(subscription => subscription.status === 'subscribing')
             .map(subscription => ({
               ...subscription,
               status
             }))
+          subscriptionUpdates.set(walletId, subscriptions)
+        }
+
+        for (const [walletId, subscriptions] of subscriptionUpdates.entries()) {
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_UPDATE_CHANGE_SERVICE_SUBSCRIPTIONS',
             payload: {

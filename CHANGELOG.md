@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Batch change-server subscriptions for better reliability and efficiency.
+
 ## 2.30.1 (2025-05-29)
 
 - changed: Allow for duress mode setup while in duress mode but only for non-duress accounts.
