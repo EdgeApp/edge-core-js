@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- changed: Batch change-server subscriptions for better reliability and efficiency.
 - fixed: Allow pin change while device is in duress mode and user is logged into a non-duress account.
 
 ## 2.30.2 (2025-05-30)
