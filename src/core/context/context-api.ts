@@ -26,7 +26,7 @@ import {
   getStashById,
   getStashByUsername
 } from '../login/login-selectors'
-import { removeStash, saveStash } from '../login/login-stash'
+import { LoginStash, removeStash, saveStash } from '../login/login-stash'
 import { SessionKey } from '../login/login-types'
 import { resetOtp } from '../login/otp'
 import { loginPassword } from '../login/password'
@@ -204,36 +204,42 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         throw new Error('User does not exist on this device')
       }
 
-      let sessionKey: SessionKey
-      try {
-        const stash = findPin2Stash(stashTree, appId)
-        if (stash == null) {
-          throw new Error(
-            'PIN login is not enabled for this account on this device'
-          )
-        }
-        sessionKey = await loginPin2(ai, stashTree, stash, pin, opts)
-        // Disable duress mode if it is setup and active
-        if (ai.props.state.clientInfo.duressLoginId != null) {
-          await disableDuressMode()
-        }
-        return await makeAccount(ai, sessionKey, 'pinLogin', opts)
-      } catch (error) {
-        // No duress mode setup or error is not a failed login
-        if (asMaybePasswordError(error) == null) {
-          throw error
-        }
-        const duressAppId = appId + '.duress'
-        const duressStash = searchTree(
-          stashTree,
-          stash => stash.appId === duressAppId
+      const mainStash = findPin2Stash(stashTree, appId)
+      if (mainStash == null) {
+        throw new Error(
+          'PIN login is not enabled for this account on this device'
         )
-        // No duress account configured
-        if (duressStash == null) {
-          throw error
-        }
+      }
+
+      const duressAppId = appId + '.duress'
+      const duressStash = searchTree(
+        stashTree,
+        stash => stash.appId === duressAppId
+      )
+
+      async function loginMainAccount(
+        stashTree: LoginStash,
+        mainStash: LoginStash
+      ): Promise<EdgeAccount> {
+        const sessionKey = await loginPin2(ai, stashTree, mainStash, pin, opts)
+        // Disable duress mode if it is setup and active
+        await disableDuressMode()
+        // Make the account for the main account
+        return await makeAccount(ai, sessionKey, 'pinLogin', opts)
+      }
+
+      async function loginDuressAccount(
+        stashTree: LoginStash,
+        duressStash: LoginStash
+      ): Promise<EdgeAccount> {
         // Try login with duress account
-        sessionKey = await loginPin2(ai, stashTree, duressStash, pin, opts)
+        const sessionKey = await loginPin2(
+          ai,
+          stashTree,
+          duressStash,
+          pin,
+          opts
+        )
         // The original account will be used for display
         await enableDuressMode(stashTree.loginId)
         // Make the account with duress mode enabled
@@ -241,6 +247,33 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           ...opts,
           duressMode: true
         })
+      }
+
+      // No duress account configured, so just login to the main account:
+      if (duressStash == null) {
+        return await loginMainAccount(stashTree, mainStash)
+      }
+
+      // Check if we are in duress mode for this account:
+      const inDuressModeForAccount =
+        verifyData(
+          ai.props.state.clientInfo.duressLoginId ?? new Uint8Array(),
+          stashTree.loginId
+        ) ?? false
+
+      // Try pin-login on either the duress or main accounts, smartly:
+      try {
+        return inDuressModeForAccount
+          ? await loginDuressAccount(stashTree, duressStash)
+          : await loginMainAccount(stashTree, mainStash)
+      } catch (error) {
+        // If the error is not a failed login, rethrow it:
+        if (asMaybePasswordError(error) == null) {
+          throw error
+        }
+        return inDuressModeForAccount
+          ? await loginMainAccount(stashTree, mainStash)
+          : await loginDuressAccount(stashTree, duressStash)
       }
     },
 
