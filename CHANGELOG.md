@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Unintentional pin timeouts caused by duress mode pin-logins.
+
 ## 2.27.1 (2025-04-30)
 
 - fixed: Incorrect protocol for default change server URL.
