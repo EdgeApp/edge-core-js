@@ -245,7 +245,10 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   loginTree: memoizeReducer(
     (next: AccountNext) => next.self.stashTree,
     (next: AccountNext) => next.self.sessionKey,
-    (stashTree, sessionKey): LoginTree => makeLoginTree(stashTree, sessionKey)
+    (stashTree, sessionKey): LoginTree => {
+      const loginTree = makeLoginTree(stashTree, sessionKey)
+      return loginTree
+    }
   ),
 
   loginType(state = 'newAccount', action): LoginType {

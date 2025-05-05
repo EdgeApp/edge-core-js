@@ -4,6 +4,7 @@ import { checkPasswordRules, fixUsername } from '../../client-side'
 import {
   asChallengeErrorPayload,
   asMaybePasswordError,
+  asMaybePinDisabledError,
   EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
@@ -11,7 +12,8 @@ import {
   EdgeLoginMessage,
   EdgeLogSettings,
   EdgePendingEdgeLogin,
-  EdgeUserInfo
+  EdgeUserInfo,
+  PinDisabledError
 } from '../../types/types'
 import { verifyData } from '../../util/crypto/verify'
 import { base58 } from '../../util/encoding'
@@ -206,7 +208,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
       const mainStash = findPin2Stash(stashTree, appId)
       if (mainStash == null) {
-        throw new Error(
+        throw new PinDisabledError(
           'PIN login is not enabled for this account on this device'
         )
       }
@@ -268,7 +270,10 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           : await loginMainAccount(stashTree, mainStash)
       } catch (error) {
         // If the error is not a failed login, rethrow it:
-        if (asMaybePasswordError(error) == null) {
+        if (
+          asMaybePasswordError(error) == null &&
+          asMaybePinDisabledError(error) == null
+        ) {
           throw error
         }
         return inDuressModeForAccount

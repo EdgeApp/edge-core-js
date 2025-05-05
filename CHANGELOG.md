@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fixed: Broken `changePin({ enableLogin: false })` when in duress mode.
 - fixed: Unintentional pin timeouts caused by duress mode pin-logins.
 
 ## 2.27.1 (2025-04-30)
