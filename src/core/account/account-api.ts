@@ -233,6 +233,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async changePassword(password: string): Promise<void> {
       lockdown()
+      // Noop for duress accounts:
+      if (this.isDuressAccount) return
       await changePassword(ai, accountId, password)
     },
 

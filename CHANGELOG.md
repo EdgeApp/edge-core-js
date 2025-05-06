@@ -6,6 +6,7 @@
 - changed: Stay in duress mode when using `loginWithPassword`.
 - fixed: Broken `changePin({ enableLogin: false })` when in duress mode.
 - fixed: Made `checkPassword` work when in duress mode.
+- fixed: Made `changePassword` a no-op for duress accounts
 - fixed: Unintentional pin timeouts caused by duress mode pin-logins.
 
 ## 2.27.1 (2025-04-30)
