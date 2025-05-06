@@ -114,7 +114,7 @@ export async function makeContext(
 
   // Save the initial client info if the client is new:
   if (clientInfo == null) {
-    clientInfo = { clientId: io.random(16) }
+    clientInfo = { clientId: io.random(16), duressEnabled: false }
     await clientFile.save(io.disklet, CLIENT_FILE_NAME, clientInfo)
   }
 

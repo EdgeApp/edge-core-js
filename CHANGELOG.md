@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- changed: Show all local users even when in duress mode.
 - fixed: Broken `changePin({ enableLogin: false })` when in duress mode.
 - fixed: Unintentional pin timeouts caused by duress mode pin-logins.
 

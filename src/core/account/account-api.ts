@@ -241,7 +241,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.changePin', {})
       // Check if we are in duress mode:
-      const inDuressMode = ai.props.state.clientInfo.duressLoginId != null
+      const inDuressMode = ai.props.state.clientInfo.duressEnabled
       const { forDuressAccount = inDuressMode } = opts
       const { activeAppId } = accountState()
       const duressAppId = activeAppId.endsWith('.duress')
@@ -329,7 +329,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async deletePin(): Promise<void> {
       lockdown()
       // Check if we are in duress mode:
-      const inDuressMode = ai.props.state.clientInfo.duressLoginId != null
+      const inDuressMode = ai.props.state.clientInfo.duressEnabled
       await deletePin(ai, accountId, inDuressMode)
     },
 

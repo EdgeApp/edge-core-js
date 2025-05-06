@@ -152,6 +152,24 @@ describe('creation', function () {
       context.loginWithKey(username, loginKey)
     ])
   })
+
+  it('list new user created', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+
+    await context.createAccount({
+      username: 'new-user',
+      pin: '1111'
+    })
+
+    const usernames = (await context.localUsers).map(u => ({
+      username: u.username
+    }))
+    expect(usernames).deep.include.members([
+      { username: 'new-user' },
+      { username: 'js test 0' }
+    ])
+  })
 })
 
 describe('password', function () {
@@ -412,5 +430,42 @@ describe('recovery2', function () {
     expect(account.recoveryKey).equals(fakeUser.recovery2Key)
     await account.deleteRecovery()
     expect(account.recoveryKey).equals(undefined)
+  })
+})
+
+describe('duress', function () {
+  it('login', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    expect(duressAccount.appId).equals('.duress')
+    expect(duressAccount.username).equals('js test 0')
+    expect(duressAccount.isDuressAccount).equals(true)
+  })
+
+  it('list new user even after login with duress mode', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+
+    const account = await context.createAccount({
+      username: 'new-user',
+      pin: '1111'
+    })
+
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    const duressAccount = await context.loginWithPIN('new-user', '0000')
+
+    expect(duressAccount.isDuressAccount).equal(true)
+
+    const usernames = (await context.localUsers).map(u => ({
+      username: u.username
+    }))
+    expect(usernames).deep.include.members([
+      { username: 'new-user' },
+      { username: 'js test 0' }
+    ])
   })
 })

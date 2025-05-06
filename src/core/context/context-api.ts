@@ -48,25 +48,22 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     // Persist disabled duress mode
     await clientFile.save(ai.props.io.disklet, CLIENT_FILE_NAME, {
       ...ai.props.state.clientInfo,
-      duressLoginId: undefined
+      duressEnabled: false
     })
     // Disable duress mode
     ai.props.dispatch({
       type: 'LOGIN_DURESS_MODE_DISABLED'
     })
   }
-  async function enableDuressMode(duressLoginId: Uint8Array): Promise<void> {
+  async function enableDuressMode(): Promise<void> {
     // Persist enabled duress mode
     await clientFile.save(ai.props.io.disklet, CLIENT_FILE_NAME, {
       ...ai.props.state.clientInfo,
-      duressLoginId
+      duressEnabled: true
     })
     // Enable duress mode
     ai.props.dispatch({
-      type: 'LOGIN_DURESS_MODE_ENABLED',
-      payload: {
-        duressLoginId
-      }
+      type: 'LOGIN_DURESS_MODE_ENABLED'
     })
   }
 
@@ -181,7 +178,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         opts
       )
       // Disable duress mode if it is setup and active
-      if (ai.props.state.clientInfo.duressLoginId != null) {
+      if (ai.props.state.clientInfo.duressEnabled) {
         await disableDuressMode()
       }
       return await makeAccount(ai, sessionKey, 'passwordLogin', opts)
@@ -243,7 +240,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           opts
         )
         // The original account will be used for display
-        await enableDuressMode(stashTree.loginId)
+        await enableDuressMode()
         // Make the account with duress mode enabled
         return await makeAccount(ai, sessionKey, 'pinLogin', {
           ...opts,
@@ -256,16 +253,12 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         return await loginMainAccount(stashTree, mainStash)
       }
 
-      // Check if we are in duress mode for this account:
-      const inDuressModeForAccount =
-        verifyData(
-          ai.props.state.clientInfo.duressLoginId ?? new Uint8Array(),
-          stashTree.loginId
-        ) ?? false
+      // Check if we are in duress mode:
+      const inDuressMode = ai.props.state.clientInfo.duressEnabled
 
       // Try pin-login on either the duress or main accounts, smartly:
       try {
-        return inDuressModeForAccount
+        return inDuressMode
           ? await loginDuressAccount(stashTree, duressStash)
           : await loginMainAccount(stashTree, mainStash)
       } catch (error) {
@@ -276,7 +269,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         ) {
           throw error
         }
-        return inDuressModeForAccount
+        return inDuressMode
           ? await loginMainAccount(stashTree, mainStash)
           : await loginDuressAccount(stashTree, duressStash)
       }

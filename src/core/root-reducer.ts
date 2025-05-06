@@ -39,7 +39,10 @@ export const defaultLogSettings: EdgeLogSettings = {
   defaultLogLevel: 'warn'
 }
 
-const dummyClientInfo: ClientInfo = { clientId: new Uint8Array(0) }
+const dummyClientInfo: ClientInfo = {
+  clientId: new Uint8Array(0),
+  duressEnabled: false
+}
 
 export const reducer = buildReducer<RootState, RootAction, RootState>({
   accountCount(state = 0, action): number {
@@ -79,13 +82,13 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
       case 'LOGIN_DURESS_MODE_DISABLED': {
         return {
           ...state,
-          duressLoginId: undefined
+          duressEnabled: false
         }
       }
       case 'LOGIN_DURESS_MODE_ENABLED': {
         return {
           ...state,
-          duressLoginId: action.payload.duressLoginId
+          duressEnabled: true
         }
       }
     }

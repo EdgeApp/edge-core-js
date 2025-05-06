@@ -64,15 +64,7 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
         }
       }
 
-      const duressStash =
-        clientInfo.duressLoginId != null
-          ? stashes.find(stash => stash.loginId === clientInfo.duressLoginId)
-          : undefined
-      if (duressStash != null) {
-        return [processStash(duressStash)]
-      } else {
-        return stashes.map(processStash)
-      }
+      return stashes.map(processStash)
     }
   ),
 
