@@ -247,9 +247,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       const duressAppId = activeAppId.endsWith('.duress')
         ? activeAppId
         : activeAppId + '.duress'
-      // We only call ensureAccountExists if there is no duress account because
-      // ensureAccountExists will throw an error if the duress account already
-      // exists.
+      // Ensure the duress account exists:
       if (forDuressAccount) {
         await ensureAccountExists(
           ai,
