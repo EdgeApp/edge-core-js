@@ -244,8 +244,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         mainStash: LoginStash
       ): Promise<EdgeAccount> {
         const sessionKey = await loginPin2(ai, stashTree, mainStash, pin, opts)
-        // Disable duress mode if it is setup and active
-        await disableDuressMode()
         // Make the account for the main account
         return await makeAccount(ai, sessionKey, 'pinLogin', opts)
       }
@@ -262,8 +260,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           pin,
           opts
         )
-        // The original account will be used for display
-        await enableDuressMode()
         // Make the account with duress mode enabled
         return await makeAccount(ai, sessionKey, 'pinLogin', {
           ...opts,
@@ -273,6 +269,9 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
       // No duress account configured, so just login to the main account:
       if (duressStash == null) {
+        // It's important that we don't disable duress mode here because
+        // we want to protect account that have duress mode enabled and only
+        // allow those accounts to suspend duress mode.
         return await loginMainAccount(stashTree, mainStash)
       }
 
@@ -292,9 +291,16 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         ) {
           throw error
         }
-        return inDuressMode
+        const account = inDuressMode
           ? await loginMainAccount(stashTree, mainStash)
           : await loginDuressAccount(stashTree, duressStash)
+        // Only Enable/Disable duress mode if account creation was success.
+        if (inDuressMode) {
+          await disableDuressMode()
+        } else {
+          await enableDuressMode()
+        }
+        return account
       }
     },
 
