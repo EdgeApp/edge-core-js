@@ -468,4 +468,26 @@ describe('duress', function () {
       { username: 'js test 0' }
     ])
   })
+
+  it('persist duress mode when using loginWithPassword', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    // Create duress account
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    expect(duressAccount.appId).equals('.duress')
+    expect(duressAccount.username).equals('js test 0')
+    expect(duressAccount.isDuressAccount).equals(true)
+
+    const topicAccount = await context.loginWithPassword(
+      fakeUser.username,
+      fakeUser.password
+    )
+
+    expect(topicAccount.appId).equals('.duress')
+    expect(topicAccount.username).equals('js test 0')
+    expect(topicAccount.isDuressAccount).equals(true)
+  })
 })

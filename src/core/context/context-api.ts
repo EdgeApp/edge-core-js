@@ -20,7 +20,12 @@ import { base58 } from '../../util/encoding'
 import { makeAccount } from '../account/account-init'
 import { createLogin, usernameAvailable } from '../login/create'
 import { requestEdgeLogin } from '../login/edge'
-import { makeAuthJson, searchTree, syncLogin } from '../login/login'
+import {
+  decryptChildKey,
+  makeAuthJson,
+  searchTree,
+  syncLogin
+} from '../login/login'
 import { loginFetch } from '../login/login-fetch'
 import { fetchLoginMessages } from '../login/login-messages'
 import {
@@ -170,17 +175,35 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       ai.props.log.breadcrumb('EdgeContext.loginWithPassword', {})
 
       username = fixUsername(username)
-      const stashTree = getStashByUsername(ai, username)
-      const sessionKey = await loginPassword(
-        ai,
-        stashTree ?? getEmptyStash(username),
-        password,
-        opts
-      )
-      // Disable duress mode if it is setup and active
+      // If we don't have a stash for this username,
+      // then this must be a first-time login on this device:
+      const stash = getStashByUsername(ai, username) ?? getEmptyStash(username)
+      const sessionKey = await loginPassword(ai, stash, password, opts)
+
+      // Attempt to log into duress account if duress mode is enabled:
       if (ai.props.state.clientInfo.duressEnabled) {
-        await disableDuressMode()
+        const duressAppId = appId + '.duress'
+        const duressStash = searchTree(
+          stash,
+          stash => stash.appId === duressAppId
+        )
+        // We may still be in duress mode but not log in into a duress account
+        // if it does not exist. It's important that we do not disable duress
+        // mode from this routine to make sure other accounts with duress mode
+        // still are protected.
+        if (duressStash != null) {
+          const duressSessionKey = decryptChildKey(
+            stash,
+            sessionKey,
+            duressStash.loginId
+          )
+          return await makeAccount(ai, duressSessionKey, 'passwordLogin', {
+            ...opts,
+            duressMode: true
+          })
+        }
       }
+
       return await makeAccount(ai, sessionKey, 'passwordLogin', opts)
     },
 
