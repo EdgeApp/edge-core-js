@@ -240,7 +240,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       lockdown()
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.changePin', {})
-      const { forDuressAccount = false } = opts
+      // Check if we are in duress mode:
+      const inDuressMode = ai.props.state.clientInfo.duressLoginId != null
+      const { forDuressAccount = inDuressMode } = opts
       const { activeAppId } = accountState()
       const duressAppId = activeAppId.endsWith('.duress')
         ? activeAppId
@@ -256,7 +258,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
           duressAppId
         )
       }
-      await changePin(ai, accountId, opts)
+      await changePin(ai, accountId, { ...opts, forDuressAccount })
       const login = forDuressAccount
         ? searchTree(accountState().login, stash => stash.appId === duressAppId)
         : accountState().login
@@ -303,9 +305,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       const { login, loginTree } = accountState()
 
       // Try to check the PIN locally, then fall back on the server:
-      return login.pin != null
-        ? pin === login.pin
-        : await checkPin2(ai, loginTree, pin)
+      if (login.pin != null) {
+        return pin === login.pin
+      } else {
+        return await checkPin2(ai, loginTree, pin)
+      }
     },
 
     async getPin(): Promise<string | undefined> {
@@ -324,7 +328,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async deletePin(): Promise<void> {
       lockdown()
-      await deletePin(ai, accountId)
+      // Check if we are in duress mode:
+      const inDuressMode = ai.props.state.clientInfo.duressLoginId != null
+      await deletePin(ai, accountId, inDuressMode)
     },
 
     async deleteRecovery(): Promise<void> {

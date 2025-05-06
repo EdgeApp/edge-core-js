@@ -192,6 +192,18 @@ export class PasswordError extends Error {
 }
 
 /**
+ * PIN login is not enabled for this account on this device.
+ */
+export class PinDisabledError extends Error {
+  name: string
+
+  constructor(message: string) {
+    super(message)
+    this.name = 'PinDisabledError'
+  }
+}
+
+/**
  * Trying to spend funds that are not yet confirmed.
  */
 export class PendingFundsError extends Error {
@@ -368,6 +380,8 @@ export const asMaybeObsoleteApiError =
   asMaybeError<ObsoleteApiError>('ObsoleteApiError')
 export const asMaybeOtpError = asMaybeError<OtpError>('OtpError')
 export const asMaybePasswordError = asMaybeError<PasswordError>('PasswordError')
+export const asMaybePinDisabledError =
+  asMaybeError<PinDisabledError>('PinDisabledError')
 export const asMaybePendingFundsError =
   asMaybeError<PendingFundsError>('PendingFundsError')
 export const asMaybeSameCurrencyError =

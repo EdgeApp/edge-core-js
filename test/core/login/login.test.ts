@@ -254,26 +254,60 @@ describe('pin', function () {
     await account.changePin({ enableLogin: false })
     await expectRejection(
       context.loginWithPIN(fakeUser.username, fakeUser.pin),
-      'Error: PIN login is not enabled for this account on this device'
+      'PinDisabledError: PIN login is not enabled for this account on this device'
     )
 
     // Since this was a legacy PIN setup, checking stops working:
     await expectRejection(
       account.checkPin(fakeUser.pin),
-      'Error: No PIN set locally for this account'
+      'PinDisabledError: No PIN set locally for this account'
     )
 
     // Change PIN, leaving it disabled:
     await account.changePin({ pin: '4321', enableLogin: false })
     await expectRejection(
       context.loginWithPIN(fakeUser.username, fakeUser.pin),
-      'Error: PIN login is not enabled for this account on this device'
+      'PinDisabledError: PIN login is not enabled for this account on this device'
     )
     expect(await account.checkPin('4321')).equals(true)
 
     // Enable PIN login:
     await account.changePin({ enableLogin: true })
-    await context.loginWithPIN(fakeUser.username, '4321')
+    const successAccount = await context.loginWithPIN(fakeUser.username, '4321')
+    expect(successAccount.id).equals(account.id)
+  })
+
+  it('enable / disable duress', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    // Disable PIN login:
+    await duressAccount.changePin({ enableLogin: false })
+    await expectRejection(
+      context.loginWithPIN(fakeUser.username, '0000'),
+      'PasswordError: Invalid password'
+    )
+
+    // Check the PIN should still work as expected:
+    expect(await duressAccount.checkPin('0000')).equals(true)
+    expect(await duressAccount.checkPin('1234')).equals(false)
+
+    // Change PIN, leaving it disabled:
+    await duressAccount.changePin({ pin: '9999', enableLogin: false })
+    await expectRejection(
+      context.loginWithPIN(fakeUser.username, '9999'),
+      'PasswordError: Invalid password'
+    )
+    expect(await duressAccount.checkPin('9999')).equals(true)
+    expect(await duressAccount.checkPin('0000')).equals(false)
+
+    // Enable PIN login:
+    await duressAccount.changePin({ enableLogin: true })
+    const successAccount = await context.loginWithPIN(fakeUser.username, '9999')
+    expect(successAccount.id).equals(duressAccount.id)
   })
 
   it('check', async function () {

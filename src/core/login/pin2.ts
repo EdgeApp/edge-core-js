@@ -3,7 +3,11 @@ import {
   wasChangePin2Payload
 } from '../../types/server-cleaners'
 import { LoginRequestBody } from '../../types/server-types'
-import { ChangePinOptions, EdgeAccountOptions } from '../../types/types'
+import {
+  ChangePinOptions,
+  EdgeAccountOptions,
+  PinDisabledError
+} from '../../types/types'
 import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
@@ -51,7 +55,9 @@ export async function loginPin2(
   opts: EdgeAccountOptions
 ): Promise<SessionKey> {
   if (stash.pin2Key == null) {
-    throw new Error('PIN login is not enabled for this account on this device')
+    throw new PinDisabledError(
+      'PIN login is not enabled for this account on this device'
+    )
   }
 
   // Request:
@@ -74,7 +80,7 @@ export async function changePin(
   opts: ChangePinOptions
 ): Promise<void> {
   const accountState = ai.props.state.accounts[accountId]
-  const { loginTree } = accountState
+  const { loginTree, login, sessionKey } = accountState
   const { username } = accountState.stashTree
 
   // Figure out defaults:
@@ -84,7 +90,7 @@ export async function changePin(
     enableLogin =
       loginTree.pin2Key != null || (pin != null && loginTree.pin == null)
   }
-  if (pin == null) pin = loginTree.pin
+  if (pin == null) pin = login.pin
 
   // We cannot enable PIN login if we don't know the PIN:
   if (pin == null) {
@@ -94,7 +100,11 @@ export async function changePin(
       )
     }
     // But we can disable PIN login by just deleting it entirely:
-    await applyKits(ai, loginTree, makeDeletePin2Kits(loginTree))
+    await applyKits(
+      ai,
+      sessionKey,
+      makeDeletePin2Kits(loginTree, forDuressAccount)
+    )
     return
   }
 
@@ -106,7 +116,7 @@ export async function changePin(
     enableLogin,
     forDuressAccount
   )
-  await applyKits(ai, loginTree, kits)
+  await applyKits(ai, sessionKey, kits)
 }
 
 /**
@@ -124,7 +134,7 @@ export async function checkPin2(
   const { stashTree } = getStashById(ai, loginId)
   const stash = findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
-    throw new Error('No PIN set locally for this account')
+    throw new PinDisabledError('No PIN set locally for this account')
   }
 
   // Try a login:
@@ -142,11 +152,12 @@ export async function checkPin2(
 
 export async function deletePin(
   ai: ApiInput,
-  accountId: string
+  accountId: string,
+  forDuressAccount: boolean
 ): Promise<void> {
   const { loginTree } = ai.props.state.accounts[accountId]
 
-  const kits = makeDeletePin2Kits(loginTree)
+  const kits = makeDeletePin2Kits(loginTree, forDuressAccount)
   await applyKits(ai, loginTree, kits)
 }
 
@@ -260,11 +271,19 @@ export function makeChangePin2Kit(
 /**
  * Creates the data needed to delete a PIN from a tree of logins.
  */
-export function makeDeletePin2Kits(loginTree: LoginTree): LoginKit[] {
-  const out: LoginKit[] = [makeDeletePin2Kit(loginTree)]
+export function makeDeletePin2Kits(
+  loginTree: LoginTree,
+  forDuressAccount: boolean
+): LoginKit[] {
+  const out: LoginKit[] = []
+
+  // Only include pin change if the app id matches the duress account flag:
+  if (forDuressAccount === loginTree.appId.endsWith('.duress')) {
+    out.push(makeDeletePin2Kit(loginTree))
+  }
 
   for (const child of loginTree.children) {
-    out.push(...makeDeletePin2Kits(child))
+    out.push(...makeDeletePin2Kits(child, forDuressAccount))
   }
 
   return out
