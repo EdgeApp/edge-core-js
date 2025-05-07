@@ -283,6 +283,16 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       answers: string[]
     ): Promise<string> {
       lockdown()
+      if (this.isDuressAccount) {
+        // Use something that looks like a valid recovery key,
+        // but is not the real one. So that way if support ever encounters it,
+        // they know the person had attempted to get access to an account that
+        // was in duress mode, or a user accidentally was in duress mode when
+        // setting up password recovery (unlikely, but possible).
+        // This is one of satoshi's non-spendable addresses on-chain:
+        // https://www.blockchain.com/explorer/addresses/btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+        return '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'
+      }
       await changeRecovery(ai, accountId, questions, answers)
       const { loginTree } = accountState()
       if (loginTree.recovery2Key == null) {

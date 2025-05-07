@@ -617,4 +617,19 @@ describe('duress', function () {
 
     expect(account.otpKey).equals(accountOtpKey)
   })
+
+  it('spoofs changeRecovery', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    const recovery2Key = await duressAccount.changeRecovery(
+      fakeUser.recovery2Questions,
+      fakeUser.recovery2Answers
+    )
+
+    expect(recovery2Key).equals('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')
+  })
 })
