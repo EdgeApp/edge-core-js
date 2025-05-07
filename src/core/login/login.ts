@@ -269,6 +269,7 @@ export function makeLoginTree(
         appId,
         lastLogin = new Date(),
         loginId,
+        otpKey,
         pendingVouchers,
         username
       } = stash
@@ -285,6 +286,7 @@ export function makeLoginTree(
         lastLogin,
         loginId,
         loginKey,
+        otpKey,
         pendingVouchers,
         username
       }

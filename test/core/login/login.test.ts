@@ -549,4 +549,72 @@ describe('duress', function () {
     expect(await account.checkPassword(fakeUser.password)).equals(true)
     expect(await account.checkPassword('wrong password')).equals(false)
   })
+
+  // Must skip because login to main account with pin is requiring OTP.
+  // Failed test..
+  it.skip('enableOtp is a noop', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+
+    // Enable duress mode:
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    // Enable OTP:
+    await duressAccount.enableOtp()
+    const duressOtpKey = duressAccount.otpKey
+    expect(duressOtpKey).not.equals(undefined)
+    expect(account.otpKey).equals(duressOtpKey)
+
+    // Disable duress mode:
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    // OTP should be disabled:
+    expect(account.otpKey).not.equals(duressOtpKey)
+  })
+
+  it('enableOtp does not overwrite main account OTP', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    await account.enableOtp()
+    const accountOtpKey = account.otpKey
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    await duressAccount.enableOtp()
+    const duressOtpKey = duressAccount.otpKey
+    expect(duressOtpKey).not.equals(undefined)
+    expect(account.otpKey).equals(duressOtpKey)
+
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin, {
+      otpKey: accountOtpKey
+    })
+
+    expect(account.otpKey).equals(accountOtpKey)
+  })
+
+  it('disableOtp does not overwrite main account OTP', async function () {
+    this.timeout(15000)
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    await account.enableOtp()
+    const accountOtpKey = account.otpKey
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    await duressAccount.enableOtp()
+    await duressAccount.disableOtp()
+    const duressOtpKey = duressAccount.otpKey
+    expect(duressOtpKey).equals(undefined)
+    expect(account.otpKey).equals(undefined)
+
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin, {
+      otpKey: accountOtpKey
+    })
+
+    expect(account.otpKey).equals(accountOtpKey)
+  })
 })

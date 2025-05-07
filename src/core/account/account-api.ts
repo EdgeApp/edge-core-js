@@ -38,7 +38,14 @@ import {
 import { applyKit, decryptChildKey, searchTree } from '../login/login'
 import { deleteLogin } from '../login/login-delete'
 import { changeUsername } from '../login/login-username'
-import { cancelOtpReset, disableOtp, enableOtp, repairOtp } from '../login/otp'
+import {
+  cancelOtpReset,
+  disableOtp,
+  disableTempOtp,
+  enableOtp,
+  enableTempOtp,
+  repairOtp
+} from '../login/otp'
 import {
   changePassword,
   checkPassword,
@@ -366,11 +373,17 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async enableOtp(timeout: number = 7 * 24 * 60 * 60): Promise<void> {
       lockdown()
+      if (this.isDuressAccount) {
+        return await enableTempOtp(ai, accountId)
+      }
       await enableOtp(ai, accountId, timeout)
     },
 
     async disableOtp(): Promise<void> {
       lockdown()
+      if (this.isDuressAccount) {
+        return await disableTempOtp(ai, accountId)
+      }
       await disableOtp(ai, accountId)
     },
 
