@@ -1,4 +1,4 @@
-import { asObject, asOptional } from 'cleaners'
+import { asBoolean, asMaybe, asObject } from 'cleaners'
 
 import { asBase64 } from '../../types/server-cleaners'
 import { makeJsonFile } from '../../util/file-helpers'
@@ -14,12 +14,12 @@ export interface ClientInfo {
    * This is only set if duress mode is activated via pin-login with the
    * duress account's pin.
    */
-  duressLoginId?: Uint8Array
+  duressEnabled: boolean
 }
 
 export const clientFile = makeJsonFile<ClientInfo>(
   asObject({
     clientId: asBase64,
-    duressLoginId: asOptional(asBase64)
+    duressEnabled: asMaybe(asBoolean, false)
   })
 )

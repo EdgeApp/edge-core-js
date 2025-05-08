@@ -401,13 +401,6 @@ export type RootAction =
     }
   | {
       type: 'LOGIN_DURESS_MODE_ENABLED'
-      payload: {
-        /**
-         * Defining a duressLoginId is all that's needed to enable
-         * duress mode.
-         */
-        duressLoginId: Uint8Array
-      }
     }
   | {
       // Fires when a user logs out.

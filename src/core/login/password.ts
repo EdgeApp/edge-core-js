@@ -124,25 +124,45 @@ export async function changePassword(
 
 /**
  * Returns true if the given password is correct.
+ *
+ * Accepts an optional loginKey to check using encryption over decryption as
+ * an optimization.
  */
 export async function checkPassword(
   ai: ApiInput,
-  login: LoginTree,
-  password: string
+  stash: LoginStash,
+  password: string,
+  loginKey?: Uint8Array
 ): Promise<boolean> {
-  const { username, passwordAuth } = login
-  if (username == null || passwordAuth == null) return false
+  if (loginKey != null) {
+    const { passwordAuthBox, username } = stash
+    if (passwordAuthBox == null || username == null) return false
+    const passwordAuth = decrypt(passwordAuthBox, loginKey)
 
-  // Derive passwordAuth:
-  const up = makeHashInput(username, password)
-  const newPasswordAuth = await scrypt(ai, up, passwordAuthSnrp)
+    // Derive passwordAuth:
+    const up = makeHashInput(username, password)
+    const newPasswordAuth = await scrypt(ai, up, passwordAuthSnrp)
 
-  // Compare what we derived with what we have:
-  for (let i = 0; i < passwordAuth.length; ++i) {
-    if (newPasswordAuth[i] !== passwordAuth[i]) return false
+    // Compare what we derived with what we have:
+    for (let i = 0; i < passwordAuth.length; ++i) {
+      if (newPasswordAuth[i] !== passwordAuth[i]) return false
+    }
+
+    return true
+  } else {
+    const { passwordBox, passwordKeySnrp, username } = stash
+    if (passwordBox == null || passwordKeySnrp == null || username == null) {
+      throw new Error('Missing data for offline password login')
+    }
+    const up = makeHashInput(username, password)
+    const passwordKey = await scrypt(ai, up, passwordKeySnrp)
+    try {
+      decrypt(passwordBox, passwordKey)
+      return true
+    } catch (_) {
+      return false
+    }
   }
-
-  return true
 }
 
 export async function deletePassword(

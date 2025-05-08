@@ -10,7 +10,7 @@ import { applyKit, serverLogin } from '../login/login'
 import { ApiInput } from '../root-pixie'
 import { loginFetch } from './login-fetch'
 import { getStashById, hashUsername } from './login-selectors'
-import { LoginStash } from './login-stash'
+import { LoginStash, saveStash } from './login-stash'
 import { LoginKit, LoginTree } from './login-types'
 
 /**
@@ -57,6 +57,22 @@ export async function enableOtp(
   await applyKit(ai, sessionKey, kit)
 }
 
+/**
+ * Enable a temporary OTP key.
+ * This is used when we're in duress mode.
+ * @param ai - The API input.
+ * @param accountId - The account ID.
+ */
+export async function enableTempOtp(
+  ai: ApiInput,
+  accountId: string
+): Promise<void> {
+  const { stashTree } = ai.props.state.accounts[accountId]
+  const otpKey = ai.props.io.random(10)
+
+  await saveStash(ai, { ...stashTree, otpKey })
+}
+
 export async function disableOtp(
   ai: ApiInput,
   accountId: string
@@ -75,6 +91,20 @@ export async function disableOtp(
     }
   }
   await applyKit(ai, sessionKey, kit)
+}
+
+/**
+ * Disable a temporary OTP key.
+ * This is used when we're in duress mode.
+ * @param ai - The API input.
+ * @param accountId - The account ID.
+ */
+export async function disableTempOtp(
+  ai: ApiInput,
+  accountId: string
+): Promise<void> {
+  const { stashTree } = ai.props.state.accounts[accountId]
+  await saveStash(ai, { ...stashTree, otpKey: undefined })
 }
 
 export async function cancelOtpReset(

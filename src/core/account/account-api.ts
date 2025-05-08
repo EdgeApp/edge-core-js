@@ -38,7 +38,14 @@ import {
 import { applyKit, decryptChildKey, searchTree } from '../login/login'
 import { deleteLogin } from '../login/login-delete'
 import { changeUsername } from '../login/login-username'
-import { cancelOtpReset, disableOtp, enableOtp, repairOtp } from '../login/otp'
+import {
+  cancelOtpReset,
+  disableOtp,
+  disableTempOtp,
+  enableOtp,
+  enableTempOtp,
+  repairOtp
+} from '../login/otp'
 import {
   changePassword,
   checkPassword,
@@ -233,6 +240,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async changePassword(password: string): Promise<void> {
       lockdown()
+      // Noop for duress accounts:
+      if (this.isDuressAccount) return
       await changePassword(ai, accountId, password)
     },
 
@@ -241,15 +250,13 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.changePin', {})
       // Check if we are in duress mode:
-      const inDuressMode = ai.props.state.clientInfo.duressLoginId != null
+      const inDuressMode = ai.props.state.clientInfo.duressEnabled
       const { forDuressAccount = inDuressMode } = opts
       const { activeAppId } = accountState()
       const duressAppId = activeAppId.endsWith('.duress')
         ? activeAppId
         : activeAppId + '.duress'
-      // We only call ensureAccountExists if there is no duress account because
-      // ensureAccountExists will throw an error if the duress account already
-      // exists.
+      // Ensure the duress account exists:
       if (forDuressAccount) {
         await ensureAccountExists(
           ai,
@@ -276,6 +283,16 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       answers: string[]
     ): Promise<string> {
       lockdown()
+      if (this.isDuressAccount) {
+        // Use something that looks like a valid recovery key,
+        // but is not the real one. So that way if support ever encounters it,
+        // they know the person had attempted to get access to an account that
+        // was in duress mode, or a user accidentally was in duress mode when
+        // setting up password recovery (unlikely, but possible).
+        // This is one of satoshi's non-spendable addresses on-chain:
+        // https://www.blockchain.com/explorer/addresses/btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+        return '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'
+      }
       await changeRecovery(ai, accountId, questions, answers)
       const { loginTree } = accountState()
       if (loginTree.recovery2Key == null) {
@@ -296,8 +313,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async checkPassword(password: string): Promise<boolean> {
       lockdown()
-      const { loginTree } = accountState()
-      return await checkPassword(ai, loginTree, password)
+      const { loginTree, stashTree } = accountState()
+      // The loginKey is a deprecated optimization because LoginTree is
+      // deprecated:
+      const { loginKey } = loginTree
+      return await checkPassword(ai, stashTree, password, loginKey)
     },
 
     async checkPin(pin: string): Promise<boolean> {
@@ -329,7 +349,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async deletePin(): Promise<void> {
       lockdown()
       // Check if we are in duress mode:
-      const inDuressMode = ai.props.state.clientInfo.duressLoginId != null
+      const inDuressMode = ai.props.state.clientInfo.duressEnabled
       await deletePin(ai, accountId, inDuressMode)
     },
 
@@ -363,11 +383,17 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async enableOtp(timeout: number = 7 * 24 * 60 * 60): Promise<void> {
       lockdown()
+      if (this.isDuressAccount) {
+        return await enableTempOtp(ai, accountId)
+      }
       await enableOtp(ai, accountId, timeout)
     },
 
     async disableOtp(): Promise<void> {
       lockdown()
+      if (this.isDuressAccount) {
+        return await disableTempOtp(ai, accountId)
+      }
       await disableOtp(ai, accountId)
     },
 
