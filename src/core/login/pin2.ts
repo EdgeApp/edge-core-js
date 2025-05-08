@@ -12,7 +12,12 @@ import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
-import { applyKits, searchTree, serverLogin } from './login'
+import {
+  applyKits,
+  applyKitsTemporarily,
+  searchTree,
+  serverLogin
+} from './login'
 import { loginFetch } from './login-fetch'
 import { getStashById } from './login-selectors'
 import { LoginStash } from './login-stash'
@@ -91,6 +96,29 @@ export async function changePin(
       loginTree.pin2Key != null || (pin != null && loginTree.pin == null)
   }
   if (pin == null) pin = login.pin
+
+  // Deleting PIN logins while in duress account should delete PIN locally for
+  // all nodes:
+  if (forDuressAccount && !enableLogin) {
+    if (pin == null) {
+      await applyKitsTemporarily(ai, makeDeletePin2Kits(loginTree))
+    } else {
+      await applyKitsTemporarily(ai, [
+        // Delete for other apps:
+        ...makeDeletePin2Kits(loginTree, false),
+        // Change PIN for duress app:
+        ...makeChangePin2Kits(
+          ai,
+          loginTree,
+          username,
+          pin,
+          enableLogin,
+          forDuressAccount
+        )
+      ])
+    }
+    return
+  }
 
   // We cannot enable PIN login if we don't know the PIN:
   if (pin == null) {
@@ -270,15 +298,22 @@ export function makeChangePin2Kit(
 
 /**
  * Creates the data needed to delete a PIN from a tree of logins.
+ * @param loginTree - The login tree to create the kits for.
+ * @param forDuressAccount - If true, only include the pin change if the app id
+ *   matches the duress account flag. If undefined, include the pin change for
+ *   all apps.
  */
 export function makeDeletePin2Kits(
   loginTree: LoginTree,
-  forDuressAccount: boolean
+  forDuressAccount?: boolean
 ): LoginKit[] {
   const out: LoginKit[] = []
 
   // Only include pin change if the app id matches the duress account flag:
-  if (forDuressAccount === loginTree.appId.endsWith('.duress')) {
+  if (
+    forDuressAccount == null ||
+    forDuressAccount === loginTree.appId.endsWith('.duress')
+  ) {
     out.push(makeDeletePin2Kit(loginTree))
   }
 

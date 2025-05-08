@@ -350,4 +350,52 @@ describe('account', function () {
     expect(account.loggedIn).equals(false)
     expect(account.username).equals('js test 0')
   })
+
+  it('disable pin while in duress account should disable for main account', async function () {
+    this.timeout(15000)
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+    await duressAccount.changePin({ enableLogin: false })
+    // Pin should be disabled for account:
+    expect(
+      context.localUsers.map(({ pinLoginEnabled, username }) => ({
+        pinLoginEnabled,
+        username
+      }))
+    ).deep.include.members([{ username: 'js test 0', pinLoginEnabled: false }])
+  })
+
+  it('disable pin while in duress account is temporary', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+
+    // Enable duress account:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    await account.disableOtp()
+    await account.logout()
+
+    // Disable pin in duress account:
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+    await duressAccount.changePin({ enableLogin: false })
+    await duressAccount.logout()
+    // Forget account:
+    await context.forgetAccount(account.rootLoginId)
+    // Login with password:
+    await context.loginWithPassword(fakeUser.username, fakeUser.password, {
+      otpKey: 'HELLO'
+    })
+    // Pin should be enabled for account:
+    expect(
+      context.localUsers.map(({ pinLoginEnabled, username }) => ({
+        pinLoginEnabled,
+        username
+      }))
+    ).deep.include.members([
+      { username: fakeUser.username.toLowerCase(), pinLoginEnabled: true }
+    ])
+  })
 })
