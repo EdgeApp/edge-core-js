@@ -296,8 +296,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async checkPassword(password: string): Promise<boolean> {
       lockdown()
-      const { loginTree } = accountState()
-      return await checkPassword(ai, loginTree, password)
+      const { loginTree, stashTree } = accountState()
+      // The loginKey is a deprecated optimization because LoginTree is
+      // deprecated:
+      const { loginKey } = loginTree
+      return await checkPassword(ai, stashTree, password, loginKey)
     },
 
     async checkPin(pin: string): Promise<boolean> {

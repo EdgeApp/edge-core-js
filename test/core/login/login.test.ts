@@ -522,4 +522,15 @@ describe('duress', function () {
     expect(topicAccount.username).equals('js test 0')
     expect(topicAccount.isDuressAccount).equals(true)
   })
+
+  it('check password', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    expect(await duressAccount.checkPassword(fakeUser.password)).equals(true)
+    expect(await duressAccount.checkPassword('wrong password')).equals(false)
+  })
 })

@@ -5,6 +5,7 @@
 - changed: Show all local users even when in duress mode.
 - changed: Stay in duress mode when using `loginWithPassword`.
 - fixed: Broken `changePin({ enableLogin: false })` when in duress mode.
+- fixed: Made `checkPassword` work when in duress mode.
 - fixed: Unintentional pin timeouts caused by duress mode pin-logins.
 
 ## 2.27.1 (2025-04-30)
