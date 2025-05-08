@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.27.2 (2025-05-08)
+
 - changed: Show all local users even when in duress mode.
 - changed: Stay in duress mode when using `loginWithPassword`.
 - fixed: Broken `changePin({ enableLogin: false })` when in duress mode.
