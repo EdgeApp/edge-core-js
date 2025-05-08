@@ -437,6 +437,34 @@ export async function applyKit(
 }
 
 /**
+ * Applies changes to a login, but only temporarily (locally).
+ * This is used for duress account changes which need to pretend to make real
+ * changes to a login, only for them to be reverted once the device synchronizes
+ * with the login server
+ */
+export async function applyKitTemporarily(
+  ai: ApiInput,
+  kit: LoginKit
+): Promise<LoginStash> {
+  const { stashTree } = getStashById(ai, kit.loginId)
+
+  const newStashTree = updateTree<LoginStash, LoginStash>(
+    stashTree,
+    stash => verifyData(stash.loginId, kit.loginId),
+    stash => ({
+      ...stash,
+      ...kit.stash,
+      children: softCat(stash.children, kit.stash.children),
+      keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
+    }),
+    (stash, children) => ({ ...stash, children })
+  )
+  await saveStash(ai, newStashTree)
+
+  return newStashTree
+}
+
+/**
  * Applies an array of kits to a login, one after another.
  * We can't use `Promise.all`, since `applyKit` doesn't handle
  * parallelism correctly. Also, we want to stop if there are errors
@@ -450,6 +478,19 @@ export async function applyKits(
   for (const kit of kits) {
     if (kit == null) continue
     await applyKit(ai, sessionKey, kit)
+  }
+}
+
+/**
+ * Applies an array of kits to a login, _temporarily_ (locally).
+ */
+export async function applyKitsTemporarily(
+  ai: ApiInput,
+  kits: Array<LoginKit | undefined>
+): Promise<void> {
+  for (const kit of kits) {
+    if (kit == null) continue
+    await applyKitTemporarily(ai, kit)
   }
 }
 

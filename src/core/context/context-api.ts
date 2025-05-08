@@ -253,11 +253,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       }
 
       const mainStash = findPin2Stash(stashTree, appId)
-      if (mainStash == null) {
-        throw new PinDisabledError(
-          'PIN login is not enabled for this account on this device'
-        )
-      }
 
       const duressAppId = appId + '.duress'
       const duressStash = searchTree(
@@ -291,6 +286,17 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           ...opts,
           duressMode: true
         })
+      }
+
+      if (mainStash == null) {
+        if (duressStash == null) {
+          throw new PinDisabledError(
+            'PIN login is not enabled for this account on this device'
+          )
+        }
+        // Just try PIN-login on duress account since PIN-login is not enabled
+        // on the main account:
+        return await loginDuressAccount(stashTree, duressStash)
       }
 
       // No duress account configured, so just login to the main account:

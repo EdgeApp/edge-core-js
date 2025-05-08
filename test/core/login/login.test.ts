@@ -306,7 +306,7 @@ describe('pin', function () {
     await duressAccount.changePin({ enableLogin: false })
     await expectRejection(
       context.loginWithPIN(fakeUser.username, '0000'),
-      'PasswordError: Invalid password'
+      'PinDisabledError: PIN login is not enabled for this account on this device'
     )
 
     // Check the PIN should still work as expected:
@@ -317,7 +317,7 @@ describe('pin', function () {
     await duressAccount.changePin({ pin: '9999', enableLogin: false })
     await expectRejection(
       context.loginWithPIN(fakeUser.username, '9999'),
-      'PasswordError: Invalid password'
+      'PinDisabledError: PIN login is not enabled for this account on this device'
     )
     expect(await duressAccount.checkPin('9999')).equals(true)
     expect(await duressAccount.checkPin('0000')).equals(false)
