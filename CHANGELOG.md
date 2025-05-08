@@ -11,6 +11,7 @@
 - fixed: Spoof `changeRecovery` for duress account.
 - fixed: Support duress mode when logging in with `loginWithKey` (biometric login).
 - fixed: Unintentional pin timeouts caused by duress mode pin-logins.
+- fixed: Deleting account while in duress account will forget account rather than throw error.
 
 ## 2.27.1 (2025-04-30)
 
