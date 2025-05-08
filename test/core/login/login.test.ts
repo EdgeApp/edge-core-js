@@ -523,6 +523,30 @@ describe('duress', function () {
     expect(topicAccount.isDuressAccount).equals(true)
   })
 
+  it('persist duress mode when using loginWithKey', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const loginKey = await account.getLoginKey()
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    // Login to the main account using the loginKey:
+    const topicAccount = await context.loginWithKey(fakeUser.username, loginKey)
+    expect(topicAccount.isDuressAccount).equals(true)
+
+    // Get the loginKey for the duress account:
+    const duressLoginKey = await duressAccount.getLoginKey()
+    expect(duressLoginKey).not.equals(loginKey)
+
+    // Login to the duress account using the duressLoginKey:
+    const topicAccount2 = await context.loginWithKey(
+      fakeUser.username,
+      duressLoginKey
+    )
+    expect(topicAccount2.isDuressAccount).equals(true)
+  })
+
   it('check password', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)

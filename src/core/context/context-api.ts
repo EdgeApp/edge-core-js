@@ -136,6 +136,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       opts: EdgeAccountOptions & { useLoginId?: boolean } = {}
     ): Promise<EdgeAccount> {
       const { now = new Date(), useLoginId = false } = opts
+      const inDuressMode = ai.props.state.clientInfo.duressEnabled
 
       const stashTree = useLoginId
         ? getStashById(ai, base58.parse(usernameOrLoginId)).stashTree
@@ -148,13 +149,35 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       if (appStash == null) {
         throw new Error(`Cannot find requested appId: "${appId}"`)
       }
-      const sessionKey: SessionKey = {
-        loginId: appStash.loginId,
-        loginKey: base58.parse(loginKey)
-      }
 
-      // Verify that the provided key works for decryption:
-      makeAuthJson(stashTree, sessionKey)
+      let sessionKey: SessionKey
+      try {
+        sessionKey = {
+          loginId: appStash.loginId,
+          loginKey: base58.parse(loginKey)
+        }
+
+        // Verify that the provided key works for decryption:
+        makeAuthJson(stashTree, sessionKey)
+      } catch (error) {
+        if (error instanceof Error && error.message === 'Invalid checksum') {
+          const duressStash = searchTree(stashTree, stash =>
+            stash.appId.endsWith('.duress')
+          )
+          if (duressStash == null) {
+            throw error
+          }
+          sessionKey = {
+            loginId: duressStash.loginId,
+            loginKey: base58.parse(loginKey)
+          }
+
+          // Verify that the provided key works for decryption:
+          makeAuthJson(stashTree, sessionKey)
+        } else {
+          throw error
+        }
+      }
 
       // Save the date:
       stashTree.lastLogin = now
@@ -163,7 +186,10 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       // Since we logged in offline, update the stash in the background:
       syncLogin(ai, sessionKey).catch(error => ai.props.onError(error))
 
-      return await makeAccount(ai, sessionKey, 'keyLogin', opts)
+      return await makeAccount(ai, sessionKey, 'keyLogin', {
+        ...opts,
+        duressMode: inDuressMode
+      })
     },
 
     async loginWithPassword(

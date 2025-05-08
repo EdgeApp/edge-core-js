@@ -9,6 +9,7 @@
 - fixed: Made `changePassword` a no-op for duress accounts
 - fixed: Made `enableOtp`/`disableOtp` a no-op for duress accounts.
 - fixed: Spoof `changeRecovery` for duress account.
+- fixed: Support duress mode when logging in with `loginWithKey` (biometric login).
 - fixed: Unintentional pin timeouts caused by duress mode pin-logins.
 
 ## 2.27.1 (2025-04-30)
