@@ -62,7 +62,7 @@
     "build.node": "rollup -c",
     "build.react-native": "webpack",
     "build.types": "node -r sucrase/register ./scripts/make-types.ts && flow",
-    "clean": "rimraf lib",
+    "clean": "rimraf lib android/src/main/assets",
     "fix.android": "(cd android; ./format-java.sh)",
     "fix.ios": "swift-format format -i ios/*.swift",
     "fix": "npm run lint -- --fix",

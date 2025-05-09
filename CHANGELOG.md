@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Clean the Android build folder, so leftover files don't get published.
+
 ## 2.27.2 (2025-05-08)
 
 - changed: Show all local users even when in duress mode.
