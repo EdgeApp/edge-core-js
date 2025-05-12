@@ -150,6 +150,13 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         throw new Error(`Cannot find requested appId: "${appId}"`)
       }
 
+      // Get the duress stash for existence check:
+      const duressAppId = appId + '.duress'
+      const duressStash = searchTree(
+        stashTree,
+        stash => stash.appId === duressAppId
+      )
+
       let sessionKey: SessionKey
       try {
         sessionKey = {
@@ -161,9 +168,6 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         makeAuthJson(stashTree, sessionKey)
       } catch (error) {
         if (error instanceof Error && error.message === 'Invalid checksum') {
-          const duressStash = searchTree(stashTree, stash =>
-            stash.appId.endsWith('.duress')
-          )
           if (duressStash == null) {
             throw error
           }
@@ -188,7 +192,8 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
       return await makeAccount(ai, sessionKey, 'keyLogin', {
         ...opts,
-        duressMode: inDuressMode
+        // We must require that the duress account exists:
+        duressMode: inDuressMode && duressStash != null
       })
     },
 
