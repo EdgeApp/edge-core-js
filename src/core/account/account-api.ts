@@ -443,14 +443,6 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     async deleteRemoteAccount(): Promise<void> {
       const { loginTree } = accountState()
       if (this.isDuressAccount) {
-        await this.logout()
-        setTimeout(() => {
-          ai.props.output.context.api
-            .forgetAccount(this.rootLoginId)
-            .catch(err =>
-              ai.props.log.error('EdgeAccount.deleteRemoteAccount', err)
-            )
-        }, 100)
         return
       }
       await deleteLogin(ai, loginTree)
