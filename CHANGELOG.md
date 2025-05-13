@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.27.3 (2025-05-12)
+
 - fixed: Bug causing duress account creation from `loginWithKey` while in duress mode.
 - fixed: Clean the Android build folder, so leftover files don't get published.
 
