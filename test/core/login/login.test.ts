@@ -328,6 +328,20 @@ describe('pin', function () {
     expect(successAccount.id).equals(duressAccount.id)
   })
 
+  it('disable duress does not disable pin-login', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    expect(context.localUsers[0].pinLoginEnabled).equals(true)
+    // Setup duress mode:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    // Disable duress mode:
+    await account.changePin({
+      enableLogin: false,
+      forDuressAccount: true
+    })
+    expect(context.localUsers[0].pinLoginEnabled).equals(true)
+  })
   it('check', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
