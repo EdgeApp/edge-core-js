@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.27.4 (2025-05-13)
+
 - fixed: Disable duress pin mistakenly disables pin-login for entire account.
 - fixed: Make `deleteRemoteAccount` a no-op while in duress mode.
 
