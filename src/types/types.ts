@@ -918,7 +918,12 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onNewTokens: (tokenIds: string[]) => void
   readonly onSeenTxCheckpoint: (checkpoint: string) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
-  readonly onSubscribeAddresses: (addresses: string[]) => void
+  readonly onSubscribeAddresses: (
+    paramsOrAddresses:
+      | Array<{ address: string; checkpoint?: string }>
+      /** @deprecated Use the array of param objects instead. */
+      | string[]
+  ) => void
   readonly onTokenBalanceChanged: (
     tokenId: EdgeTokenId,
     balance: string

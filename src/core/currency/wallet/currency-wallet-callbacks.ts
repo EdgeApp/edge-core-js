@@ -291,14 +291,27 @@ export function makeCurrencyWalletCallbacks(
       })
     },
 
-    onSubscribeAddresses(addresses: string[]) {
+    onSubscribeAddresses(
+      paramsOrAddresses:
+        | Array<{ address: string; checkpoint?: string }>
+        | string[]
+    ) {
+      const params = paramsOrAddresses.map(param =>
+        typeof param === 'string'
+          ? {
+              address: param,
+              checkpoint: undefined
+            }
+          : param
+      )
       const changeServiceSubscriptions =
         input.props.state.currency.wallets[walletId].changeServiceSubscriptions
       const subscriptions: ChangeServiceSubscription[] = [
         ...changeServiceSubscriptions,
-        ...addresses.map(address => ({
+        ...params.map(({ address, checkpoint }) => ({
           address,
-          status: 'subscribing' as const
+          status: 'subscribing' as const,
+          checkpoint
         }))
       ]
       // TODO: We currently have no way to remove addresses from this list.
