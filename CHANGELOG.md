@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Add `getTokenDetails` to currency tools
+
 ## 2.28.0 (2025-05-22)
 
 - added: Added `forDuressAccount` option to `checkPin`.

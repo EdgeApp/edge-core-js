@@ -3,6 +3,7 @@ import { Bridgeable, bridgifyObject } from 'yaob'
 import {
   EdgeCurrencyConfig,
   EdgeCurrencyInfo,
+  EdgeGetTokenDetailsFilter,
   EdgeOtherMethods,
   EdgeSwapConfig,
   EdgeSwapInfo,
@@ -66,6 +67,15 @@ export class CurrencyConfig
     const { state } = this._ai.props
     const { _accountId: accountId, _pluginId: pluginId } = this
     return state.accounts[accountId].customTokens[pluginId] ?? emptyTokens
+  }
+
+  async getTokenDetails(
+    filter: EdgeGetTokenDetailsFilter
+  ): Promise<EdgeToken[]> {
+    const { _ai: ai, _pluginId: pluginId } = this
+    const tools = await getCurrencyTools(ai, pluginId)
+    if (tools.getTokenDetails == null) return []
+    return await tools.getTokenDetails(filter)
   }
 
   async getTokenId(token: EdgeToken): Promise<string> {
