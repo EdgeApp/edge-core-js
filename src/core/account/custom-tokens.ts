@@ -2,6 +2,7 @@ import { asMaybe, asObject, asString } from 'cleaners'
 
 import {
   EdgeCurrencyEngine,
+  EdgeGetTokenDetails,
   EdgeMetaToken,
   EdgePluginMap,
   EdgeToken,
@@ -31,6 +32,21 @@ const asMaybeContractLocation = asMaybe(
     contractAddress: asString
   })
 )
+
+/**
+ * Query the network for a token's details
+ */
+export async function getTokenDetails(
+  ai: ApiInput,
+  pluginId: string,
+  filter: EdgeGetTokenDetails
+): Promise<EdgeToken[]> {
+  // The normal code path:
+  const tools = await getCurrencyTools(ai, pluginId)
+  if (tools.getTokenDetails == null) return []
+
+  return await tools.getTokenDetails(filter)
+}
 
 /**
  * We need to validate the token before we can add it.
