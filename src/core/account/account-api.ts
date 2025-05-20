@@ -108,6 +108,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     }
   }
 
+  // This is used to fake duress mode settings while in duress mode:
+  let fakeDuressModeSetup = false
+
   const out: EdgeAccount = {
     on: onMethod,
     watch: watchMethod,
@@ -188,6 +191,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     get canDuressLogin(): boolean {
       const { activeAppId } = accountState()
+      if (ai.props.state.clientInfo.duressEnabled) {
+        return fakeDuressModeSetup
+      }
       const duressAppId = activeAppId.endsWith('.duress')
         ? activeAppId
         : activeAppId + '.duress'
@@ -257,6 +263,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         : activeAppId + '.duress'
       // Ensure the duress account exists:
       if (forDuressAccount) {
+        if (ai.props.state.clientInfo.duressEnabled) {
+          fakeDuressModeSetup = opts.enableLogin ?? opts.pin != null
+          ai.props.dispatch({ type: 'UPDATE_NEXT' })
+          return ''
+        }
         await ensureAccountExists(
           ai,
           accountState().stashTree,

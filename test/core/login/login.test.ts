@@ -752,6 +752,27 @@ describe('duress', function () {
     expect(topicAccount.appId).equals('.duress')
   })
 
+  it('fake duress mode settings while in duress mode', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    let account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    await account.logout()
+
+    let duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+    expect(duressAccount.canDuressLogin).equals(false)
+    await duressAccount.changePin({ forDuressAccount: true, enableLogin: true })
+    expect(duressAccount.canDuressLogin).equals(true)
+    await duressAccount.logout()
+
+    duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+    expect(duressAccount.canDuressLogin).equals(false)
+
+    // Doesn't impact main account:
+    account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    expect(account.canDuressLogin).equals(true)
+  })
+
   it('Avoid creating duress account when using loginWithPassword', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
