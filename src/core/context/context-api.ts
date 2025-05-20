@@ -4,7 +4,6 @@ import { checkPasswordRules, fixUsername } from '../../client-side'
 import {
   asChallengeErrorPayload,
   asMaybePasswordError,
-  asMaybePinDisabledError,
   EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
@@ -327,10 +326,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           : await loginMainAccount(stashTree, mainStash)
       } catch (error) {
         // If the error is not a failed login, rethrow it:
-        if (
-          asMaybePasswordError(error) == null &&
-          asMaybePinDisabledError(error) == null
-        ) {
+        if (asMaybePasswordError(error) == null) {
           throw error
         }
         const account = inDuressMode

@@ -8,7 +8,7 @@ import { RootState } from '../root-reducer'
 import { searchTree } from './login'
 import { LoginStash } from './login-stash'
 import { WalletInfoFullMap } from './login-types'
-import { findPin2Stash } from './pin2'
+import { findPin2Stash, findPin2StashDuress } from './pin2'
 
 export interface LoginState {
   readonly apiKey: string
@@ -50,7 +50,12 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
         const keyLoginEnabled =
           stash != null &&
           (stash.passwordAuthBox != null || stash.loginAuthBox != null)
-        const pin2Stash = findPin2Stash(stashTree, appId)
+
+        // This allows us to lie about PIN being enabled or disabled while in
+        // duress mode!
+        const pin2Stash = clientInfo.duressEnabled
+          ? findPin2StashDuress(stashTree, appId)
+          : findPin2Stash(stashTree, appId)
 
         return {
           keyLoginEnabled,
