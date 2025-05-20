@@ -330,15 +330,18 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return await checkPassword(ai, stashTree, password, loginKey)
     },
 
-    async checkPin(pin: string): Promise<boolean> {
+    async checkPin(
+      pin: string,
+      opts: { forDuressAccount?: boolean } = {}
+    ): Promise<boolean> {
       lockdown()
       const { login, loginTree } = accountState()
 
       // Try to check the PIN locally, then fall back on the server:
-      if (login.pin != null) {
+      if (login.pin != null && opts.forDuressAccount == null) {
         return pin === login.pin
       } else {
-        return await checkPin2(ai, loginTree, pin)
+        return await checkPin2(ai, loginTree, pin, opts.forDuressAccount)
       }
     },
 

@@ -522,6 +522,39 @@ describe('pin', function () {
     expect(await account.checkPin(fakeUser.pin + '!')).equals(false)
   })
 
+  it('check for duress', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+
+    expect(await account.checkPin(fakeUser.pin)).equals(true)
+    expect(await account.checkPin('0000', { forDuressAccount: true })).equals(
+      true
+    )
+    expect(await account.checkPin('1111', { forDuressAccount: true })).equals(
+      false
+    )
+  })
+
+  it('check for duress while in duress', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    await account.logout()
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+
+    expect(await duressAccount.checkPin('0000')).equals(true)
+    expect(await duressAccount.checkPin(fakeUser.pin)).equals(false)
+    expect(
+      await duressAccount.checkPin('0000', { forDuressAccount: true })
+    ).equals(false)
+    expect(
+      await duressAccount.checkPin('1111', { forDuressAccount: true })
+    ).equals(false)
+  })
+
   it('check duress', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
