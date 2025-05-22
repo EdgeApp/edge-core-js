@@ -161,18 +161,37 @@ export async function changePin(
 
 /**
  * Returns true if the given pin is correct.
+ *
+ * @param loginTree - The root login tree to check the pin for.
+ * @param pin - The pin to check.
+ * @param forDuressAccount - If true, check the pin for the duress account.
+ * @return A `Promise` for the result of the pin check.
  */
 export async function checkPin2(
   ai: ApiInput,
-  login: LoginTree,
-  pin: string
+  loginTree: LoginTree,
+  pin: string,
+  forDuressAccount?: boolean
 ): Promise<boolean> {
-  const { appId, loginId, username } = login
+  const { loginId, username } = loginTree
   if (username == null) return false
+
+  // This will never be `.duress.duress` because `loginTree` is the root.
+  const appId =
+    forDuressAccount === true ? loginTree.appId + '.duress' : loginTree.appId
+
+  // Special case: checking pin against theoretical, non-existent
+  // '.duress.duress' account should always be faked as `false`.
+  if (ai.props.state.clientInfo.duressEnabled) {
+    return false
+  }
 
   // Find the stash to use:
   const { stashTree } = getStashById(ai, loginId)
-  const stash = findPin2Stash(stashTree, appId)
+  const stash =
+    forDuressAccount === true
+      ? findPin2StashDuress(stashTree, appId)
+      : findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
     throw new PinDisabledError('No PIN set locally for this account')
   }
@@ -182,7 +201,7 @@ export async function checkPin2(
   const request: LoginRequestBody = {
     pin2Id: makePin2Id(pin2Key, username),
     pin2Auth: makePin2Auth(pin2Key, pin),
-    otp: getLoginOtp(login)
+    otp: getLoginOtp(loginTree)
   }
   return await loginFetch(ai, 'POST', '/v2/login', request).then(
     good => true,

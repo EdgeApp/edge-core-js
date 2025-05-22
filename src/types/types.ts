@@ -1729,7 +1729,10 @@ export interface EdgeAccount {
 
   // Verify existing credentials:
   readonly checkPassword: (password: string) => Promise<boolean>
-  readonly checkPin: (pin: string) => Promise<boolean>
+  readonly checkPin: (
+    pin: string,
+    opts?: { forDuressAccount?: boolean }
+  ) => Promise<boolean>
   readonly getPin: () => Promise<string | undefined>
 
   // Remove credentials:
