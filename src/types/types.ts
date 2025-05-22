@@ -427,9 +427,9 @@ export interface EdgeTokenInfo {
 }
 
 /**
- * Search the blockchain for a token.
+ * The search parameter for {@link EdgeCurrencyConfig.getTokenDetails}.
  */
-export interface EdgeGetTokenDetails {
+export interface EdgeGetTokenDetailsFilter {
   contractAddress?: string // contract address or other unique id
   currencyCode?: string // ticker
 }
@@ -1135,7 +1135,7 @@ export interface EdgeCurrencyTools {
     opts?: JsonObject
   ) => Promise<JsonObject>
   readonly getTokenDetails?: (
-    filter: EdgeGetTokenDetails
+    filter: EdgeGetTokenDetailsFilter
   ) => Promise<EdgeToken[]>
 
   // Derives a tokenId string from a token's network information:
@@ -1589,7 +1589,7 @@ export interface EdgeCurrencyConfig {
   readonly builtinTokens: EdgeTokenMap
   readonly customTokens: EdgeTokenMap
   readonly getTokenDetails: (
-    filter: EdgeGetTokenDetails
+    filter: EdgeGetTokenDetailsFilter
   ) => Promise<EdgeToken[]>
   readonly getTokenId: (token: EdgeToken) => Promise<string>
   readonly addCustomToken: (token: EdgeToken) => Promise<string>
