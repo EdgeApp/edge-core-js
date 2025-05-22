@@ -427,11 +427,14 @@ export interface EdgeTokenInfo {
 }
 
 /**
- * The search parameter for {@link EdgeCurrencyConfig.getTokenDetails}.
+ * The search parameter for {@link EdgeCurrencyConfig.getTokenDetails} and
+ * {@link EdgeCurrencyTools.getTokenDetails}.
  */
 export interface EdgeGetTokenDetailsFilter {
-  contractAddress?: string // contract address or other unique id
-  currencyCode?: string // ticker
+  /** Contract address or other unique onchain identifier. */
+  contractAddress?: string
+  /** Ticker symbol for the currency. */
+  currencyCode?: string
 }
 
 // currency info -------------------------------------------------------
