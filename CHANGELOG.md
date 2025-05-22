@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: A `transactionsRemoved` event on `EdgeCurrencyWallet`.
+
 ## 2.27.4 (2025-05-13)
 
 - fixed: Disable duress pin mistakenly disables pin-login for entire account.
