@@ -4,7 +4,6 @@ import { checkPasswordRules, fixUsername } from '../../client-side'
 import {
   asChallengeErrorPayload,
   asMaybePasswordError,
-  asMaybePinDisabledError,
   EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
@@ -214,6 +213,11 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       // Attempt to log into duress account if duress mode is enabled:
       if (ai.props.state.clientInfo.duressEnabled) {
         const duressAppId = appId + '.duress'
+        const stash = getStashByUsername(ai, username)
+        if (stash == null) {
+          // This should never happen.
+          throw new Error('Missing stash after login with password')
+        }
         const duressStash = searchTree(
           stash,
           stash => stash.appId === duressAppId
@@ -322,10 +326,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           : await loginMainAccount(stashTree, mainStash)
       } catch (error) {
         // If the error is not a failed login, rethrow it:
-        if (
-          asMaybePasswordError(error) == null &&
-          asMaybePinDisabledError(error) == null
-        ) {
+        if (asMaybePasswordError(error) == null) {
           throw error
         }
         const account = inDuressMode

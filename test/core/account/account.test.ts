@@ -368,7 +368,7 @@ describe('account', function () {
     ).deep.include.members([{ username: 'js test 0', pinLoginEnabled: false }])
   })
 
-  it('disable pin while in duress account is temporary', async function () {
+  it('disable pin while in duress account is not temporary', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -384,10 +384,31 @@ describe('account', function () {
     await duressAccount.logout()
     // Forget account:
     await context.forgetAccount(account.rootLoginId)
+
     // Login with password:
-    await context.loginWithPassword(fakeUser.username, fakeUser.password, {
-      otpKey: 'HELLO'
-    })
+    const topicAccount = await context.loginWithPassword(
+      fakeUser.username,
+      fakeUser.password,
+      {
+        otpKey: 'HELLO'
+      }
+    )
+    // Pin should be disabled for account because it is still in duress mode:
+    expect(
+      context.localUsers.map(({ pinLoginEnabled, username }) => ({
+        pinLoginEnabled,
+        username
+      }))
+    ).deep.include.members([
+      { username: fakeUser.username.toLowerCase(), pinLoginEnabled: false }
+    ])
+
+    await topicAccount.changePin({ enableLogin: true })
+    await topicAccount.logout()
+
+    // Login with non-duress PIN:
+    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
     // Pin should be enabled for account:
     expect(
       context.localUsers.map(({ pinLoginEnabled, username }) => ({

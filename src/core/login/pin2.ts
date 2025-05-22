@@ -12,12 +12,7 @@ import { decrypt, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
-import {
-  applyKits,
-  applyKitsTemporarily,
-  searchTree,
-  serverLogin
-} from './login'
+import { applyKits, searchTree, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
 import { getStashById } from './login-selectors'
 import { LoginStash } from './login-stash'
@@ -45,6 +40,21 @@ export function findPin2Stash(
 ): LoginStash | undefined {
   if (stashTree.pin2Key != null) return stashTree
   const stash = searchTree(stashTree, stash => stash.appId === appId)
+  if (stash?.pin2Key != null) return stash
+}
+
+/**
+ * Returns a copy of the PIN login key if one exists on the local device and
+ * the app id matches the duress appId.
+ */
+export function findPin2StashDuress(
+  stashTree: LoginStash,
+  appId: string
+): LoginStash | undefined {
+  const duressAppId = appId.endsWith('.duress') ? appId : appId + '.duress'
+  if (stashTree.pin2Key != null && duressAppId === stashTree.appId)
+    return stashTree
+  const stash = searchTree(stashTree, stash => stash.appId === duressAppId)
   if (stash?.pin2Key != null) return stash
 }
 
@@ -100,16 +110,24 @@ export async function changePin(
 
   // Deleting PIN logins while in duress account should delete PIN locally for
   // all nodes:
-  if (inDuressMode && !forDuressAccount && !enableLogin) {
-    if (pin == null) {
-      await applyKitsTemporarily(ai, makeDeletePin2Kits(loginTree))
+  if (inDuressMode && !forDuressAccount) {
+    if (enableLogin) {
+      if (pin != null) {
+        await applyKits(
+          ai,
+          sessionKey,
+          makeChangePin2Kits(ai, loginTree, username, pin, enableLogin, true)
+        )
+      }
     } else {
-      await applyKitsTemporarily(ai, [
-        // Delete for other apps:
-        ...makeDeletePin2Kits(loginTree, false),
-        // Change PIN for duress app:
-        ...makeChangePin2Kits(ai, loginTree, username, pin, enableLogin, true)
-      ])
+      if (pin != null) {
+        // Change and disable PIN for duress app for real:
+        await applyKits(
+          ai,
+          sessionKey,
+          makeChangePin2Kits(ai, loginTree, username, pin, enableLogin, true)
+        )
+      }
     }
     return
   }
