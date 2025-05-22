@@ -1176,6 +1176,16 @@ export interface EdgeCurrencyWalletEvents {
   enabledDetectedTokens: string[]
   newTransactions: EdgeTransaction[]
   transactionsChanged: EdgeTransaction[]
+
+  /**
+   * Something has removed transactions,
+   * so the GUI should refresh the transaction list.
+   *
+   * We may pass dropped txid's as `string[]` in the future.
+   * A missing array means "check everything", such with resync.
+   */
+  transactionsRemoved: void
+
   wcNewContractCall: JsonObject
 }
 
