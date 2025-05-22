@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- changed: Extended `onSubscribeAddresses` callback to optionally include checkpoints.
 - fixed: Disabling pin-login while in duress mode disables pin-login for the main login.
 - fixed: `loginWithPassword` bug disabled duress mode when doing an online login.
 - fixed: Properly fake duress mode settings while in duress mode.
