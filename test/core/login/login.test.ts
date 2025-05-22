@@ -537,6 +537,50 @@ describe('duress', function () {
     expect(topicAccount.isDuressAccount).equals(true)
   })
 
+  it('persist duress mode when using loginWithPassword on a forgotten account', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    // Setup first account's duress mode:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0001', forDuressAccount: true })
+    await account.logout()
+
+    // Setup other account with duress mode:
+    const otherAccount = await context.createAccount({
+      username: 'other-account',
+      pin: '1111'
+    })
+    await otherAccount.changePin({ pin: '0002', forDuressAccount: true })
+    const loginKey = await otherAccount.getLoginKey()
+    await otherAccount.logout()
+
+    // Enable duress mode:
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0001')
+    await duressAccount.logout()
+
+    // Forget the first account:
+    await context.forgetAccount(account.rootLoginId)
+
+    // Password login with the forgotten account:
+    let topicAccount = await context.loginWithPassword(
+      fakeUser.username,
+      fakeUser.password,
+      { otpKey: 'HELLO' }
+    )
+
+    expect(topicAccount.username).equals('js test 0')
+    expect(topicAccount.isDuressAccount).equals(true)
+    expect(topicAccount.appId).equals('.duress')
+
+    await topicAccount.logout()
+
+    // Make sure second account is not in duress mode:
+    topicAccount = await context.loginWithKey('other-account', loginKey)
+    expect(topicAccount.username).equals('other-account')
+    expect(topicAccount.isDuressAccount).equals(true)
+    expect(topicAccount.appId).equals('.duress')
+  })
+
   it('Avoid creating duress account when using loginWithPassword', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)

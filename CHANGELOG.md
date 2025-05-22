@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: `loginWithPassword` bug disabled duress mode when doing an online login.
+
 ## 2.27.4 (2025-05-13)
 
 - fixed: Disable duress pin mistakenly disables pin-login for entire account.

@@ -214,6 +214,11 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       // Attempt to log into duress account if duress mode is enabled:
       if (ai.props.state.clientInfo.duressEnabled) {
         const duressAppId = appId + '.duress'
+        const stash = getStashByUsername(ai, username)
+        if (stash == null) {
+          // This should never happen.
+          throw new Error('Missing stash after login with password')
+        }
         const duressStash = searchTree(
           stash,
           stash => stash.appId === duressAppId
