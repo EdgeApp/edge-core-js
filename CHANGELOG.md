@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.28.0 (2025-05-22)
+
 - added: Added `forDuressAccount` option to `checkPin`.
 - changed: Extended `onSubscribeAddresses` callback to optionally include checkpoints.
 - fixed: Disabling pin-login while in duress mode disables pin-login for the main login.
