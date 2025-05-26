@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.30.0 (2025-05-26)
+
 - added: A `transactionsRemoved` event on `EdgeCurrencyWallet`.
 
 ## 2.29.0 (2025-05-26)
