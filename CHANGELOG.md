@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.29.0 (2025-05-26)
+
 - added: Add `getTokenDetails` to currency tools
 
 ## 2.28.0 (2025-05-22)
