@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: A `transactionsRemoved` event on `EdgeCurrencyWallet`.
+
 ## 2.29.0 (2025-05-26)
 
 - added: Add `getTokenDetails` to currency tools

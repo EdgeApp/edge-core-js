@@ -1,7 +1,7 @@
 import { abs, div, lt, mul } from 'biggystring'
 import { Disklet } from 'disklet'
 import { base64 } from 'rfc4648'
-import { bridgifyObject, onMethod, watchMethod } from 'yaob'
+import { bridgifyObject, emit, onMethod, watchMethod } from 'yaob'
 
 import {
   InternalWalletMethods,
@@ -719,6 +719,7 @@ export function makeCurrencyWalletApi(
         payload: { walletId: input.props.walletId }
       })
       await engine.resyncBlockchain()
+      emit(out, 'transactionsRemoved', undefined)
     },
 
     // URI handling:
