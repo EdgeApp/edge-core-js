@@ -6,9 +6,9 @@ import { base58 } from '../../util/encoding'
 import { RootAction } from '../actions'
 import { RootState } from '../root-reducer'
 import { searchTree } from './login'
-import { LoginStash } from './login-stash'
+import { findDuressStash, LoginStash } from './login-stash'
 import { WalletInfoFullMap } from './login-types'
-import { findPin2Stash, findPin2StashDuress } from './pin2'
+import { findPin2Stash } from './pin2'
 
 export interface LoginState {
   readonly apiKey: string
@@ -54,14 +54,20 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
         // This allows us to lie about PIN being enabled or disabled while in
         // duress mode!
         const pin2Stash = clientInfo.duressEnabled
-          ? findPin2StashDuress(stashTree, appId)
-          : findPin2Stash(stashTree, appId)
+          ? // Use the duress stash's PIN settings, but fallback for accounts
+            // that don't have duress mode setup
+            findDuressStash(stashTree, appId) ?? findPin2Stash(stashTree, appId)
+          : // If we're not in duress mode, then do a normal search
+            findPin2Stash(stashTree, appId)
+        // If we have found a pin2Stash, or the duress stash we found has
+        // a pin2Key defined:
+        const pinLoginEnabled = pin2Stash?.pin2Key != null
 
         return {
           keyLoginEnabled,
           lastLogin,
           loginId: base58.stringify(loginId),
-          pinLoginEnabled: pin2Stash != null,
+          pinLoginEnabled,
           recovery2Key:
             recovery2Key != null ? base58.stringify(recovery2Key) : undefined,
           username,
