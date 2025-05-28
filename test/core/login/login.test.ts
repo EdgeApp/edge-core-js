@@ -847,6 +847,71 @@ describe('duress', function () {
     expect(duressAccount.isDuressAccount).equals(true)
   })
 
+  describe('setup duress mode should be faked', function () {
+    it('while in duress account', async function () {
+      const world = await makeFakeEdgeWorld([fakeUser], quiet)
+      const context = await world.makeEdgeContext(contextOptions)
+
+      // Setup duress mode:
+      const account = await context.loginWithPIN(
+        fakeUser.username,
+        fakeUser.pin
+      )
+      await account.changePin({ pin: '0000', forDuressAccount: true })
+
+      // Login to duress account:
+      const duressAccount = await context.loginWithPIN(
+        fakeUser.username,
+        '0000'
+      )
+
+      // Setup duress account:
+      await duressAccount.changePin({ pin: '3333', forDuressAccount: true })
+
+      await duressAccount.logout()
+
+      await expectRejection(
+        context.loginWithPIN(fakeUser.username, '3333'),
+        'PasswordError: Invalid password'
+      )
+    })
+  })
+
+  describe('setup duress mode should work', function () {
+    it('while in duress mode but logged into a main account', async function () {
+      const world = await makeFakeEdgeWorld([fakeUser], quiet)
+      const context = await world.makeEdgeContext(contextOptions)
+
+      // Setup other account:
+      await (
+        await context.createAccount({ username: 'other-account', pin: '1111' })
+      ).logout()
+
+      // Setup duress mode:
+      const account = await context.loginWithPIN(
+        fakeUser.username,
+        fakeUser.pin
+      )
+      await account.changePin({ pin: '0000', forDuressAccount: true })
+
+      // Login to duress account to enable duress mode:
+      const duressAccount = await context.loginWithPIN(
+        fakeUser.username,
+        '0000'
+      )
+      await duressAccount.logout()
+
+      // Setup duress account on other account:
+      const otherAccount = await context.loginWithPIN('other-account', '1111')
+      await otherAccount.changePin({ pin: '3333', forDuressAccount: true })
+      await otherAccount.logout()
+
+      const topicAccount = await context.loginWithPIN('other-account', '3333')
+      expect(topicAccount.isDuressAccount).to.equal(true)
+      expect(topicAccount.id).to.not.equal(otherAccount.id)
+    })
+  })
+
   it('list new user even after login with duress mode', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
