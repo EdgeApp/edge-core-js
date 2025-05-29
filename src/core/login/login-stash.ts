@@ -26,6 +26,7 @@ import { EdgeLog, EdgePendingVoucher } from '../../types/types'
 import { verifyData } from '../../util/crypto/verify'
 import { base58 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'
+import { searchTree } from './login'
 
 /**
  * The login data we store on disk.
@@ -195,3 +196,17 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
 })
 
 export const wasLoginStash = uncleaner(asLoginStash)
+
+/**
+ * Returns the duress stash nested within a given LoginStash tree.
+ * This will return the duress stash even if the stashTree is the duress stash
+ * itself.
+ */
+export function findDuressStash(
+  stashTree: LoginStash,
+  appId: string
+): LoginStash | undefined {
+  const duressAppId = appId.endsWith('.duress') ? appId : appId + '.duress'
+  if (stashTree.appId === duressAppId) return stashTree
+  return searchTree(stashTree, stash => stash.appId === duressAppId)
+}

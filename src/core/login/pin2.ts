@@ -15,7 +15,7 @@ import { ApiInput } from '../root-pixie'
 import { applyKits, searchTree, serverLogin } from './login'
 import { loginFetch } from './login-fetch'
 import { getStashById } from './login-selectors'
-import { LoginStash } from './login-stash'
+import { findDuressStash, LoginStash } from './login-stash'
 import { LoginKit, LoginTree, SessionKey } from './login-types'
 import { getLoginOtp } from './otp'
 
@@ -40,21 +40,6 @@ export function findPin2Stash(
 ): LoginStash | undefined {
   if (stashTree.pin2Key != null) return stashTree
   const stash = searchTree(stashTree, stash => stash.appId === appId)
-  if (stash?.pin2Key != null) return stash
-}
-
-/**
- * Returns a copy of the PIN login key if one exists on the local device and
- * the app id matches the duress appId.
- */
-export function findPin2StashDuress(
-  stashTree: LoginStash,
-  appId: string
-): LoginStash | undefined {
-  const duressAppId = appId.endsWith('.duress') ? appId : appId + '.duress'
-  if (stashTree.pin2Key != null && duressAppId === stashTree.appId)
-    return stashTree
-  const stash = searchTree(stashTree, stash => stash.appId === duressAppId)
   if (stash?.pin2Key != null) return stash
 }
 
@@ -190,7 +175,7 @@ export async function checkPin2(
   const { stashTree } = getStashById(ai, loginId)
   const stash =
     forDuressAccount === true
-      ? findPin2StashDuress(stashTree, appId)
+      ? findDuressStash(stashTree, appId)
       : findPin2Stash(stashTree, appId)
   if (stash == null || stash.pin2Key == null) {
     throw new PinDisabledError('No PIN set locally for this account')

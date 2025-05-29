@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- changed: Allow for duress mode setup while in duress mode but only for non-duress accounts.
+- fixed: Fixed regression causing pin disabled for other accounts when disabling PIN login within a duress account
+
 ## 2.30.0 (2025-05-26)
 
 - added: A `transactionsRemoved` event on `EdgeCurrencyWallet`.

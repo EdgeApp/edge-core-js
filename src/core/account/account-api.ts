@@ -263,7 +263,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         : activeAppId + '.duress'
       // Ensure the duress account exists:
       if (forDuressAccount) {
-        if (ai.props.state.clientInfo.duressEnabled) {
+        // Fake duress mode setup if this is a duress account:
+        if (this.isDuressAccount) {
           fakeDuressModeSetup = opts.enableLogin ?? opts.pin != null
           ai.props.dispatch({ type: 'UPDATE_NEXT' })
           return ''
