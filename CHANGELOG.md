@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.30.1 (2025-05-29)
+
 - changed: Allow for duress mode setup while in duress mode but only for non-duress accounts.
 - fixed: Fixed regression causing pin disabled for other accounts when disabling PIN login within a duress account
 
