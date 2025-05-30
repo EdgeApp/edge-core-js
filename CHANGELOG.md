@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.30.2 (2025-05-30)
+
+- fixed: Create a package.json React Native export.
+
 ## 2.30.1 (2025-05-29)
 
 - changed: Allow for duress mode setup while in duress mode but only for non-duress accounts.
