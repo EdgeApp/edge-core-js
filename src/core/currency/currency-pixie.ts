@@ -128,18 +128,35 @@ export const currency: TamePixie<RootProps> = combinePixies({
             }
           },
           handleConnect() {
+            const wallets = Object.entries(input.props.state.currency.wallets)
+            // Reset to subscribing status for all reconnecting wallets:
+            for (const [walletId, wallet] of wallets) {
+              const subscriptions = wallet.changeServiceSubscriptions
+                .filter(subscription => subscription.status === 'reconnecting')
+                .map(subscription => ({
+                  ...subscription,
+                  status: 'subscribing' as const
+                }))
+              input.props.dispatch({
+                type: 'CURRENCY_ENGINE_UPDATE_CHANGE_SERVICE_SUBSCRIPTIONS',
+                payload: {
+                  walletId,
+                  subscriptions
+                }
+              })
+            }
             // Start subscribing for all supported wallets:
             input.onOutput({ changeService, changeServiceConnected: true })
           },
           handleDisconnect() {
             const wallets = Object.entries(input.props.state.currency.wallets)
-            // Reset to subscribing status for all supported wallets:
+            // Reset to reconnecting status for all supported wallets:
             for (const [walletId, wallet] of wallets) {
               const subscriptions = wallet.changeServiceSubscriptions
                 .filter(subscription => subscription.status !== 'avoiding')
                 .map(subscription => ({
                   ...subscription,
-                  status: 'subscribing' as const
+                  status: 'reconnecting' as const
                 }))
               input.props.dispatch({
                 type: 'CURRENCY_ENGINE_UPDATE_CHANGE_SERVICE_SUBSCRIPTIONS',

@@ -2,7 +2,9 @@
 
 ## Unreleased
 
+- added: Support for zero-sync (aka silent-sync) enabled by the change-server protocol.
 - changed: Batch change-server subscriptions for better reliability and efficiency.
+- fixed: Change conditions for syncNetwork pixies to avoid unnecessary sync and support for zero-sync (aka silent-sync) enabled by the change-server protocol.
 
 ## 2.30.1 (2025-05-29)
 
