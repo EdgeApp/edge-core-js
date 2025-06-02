@@ -80,7 +80,7 @@ export async function changePin(
   opts: ChangePinOptions
 ): Promise<void> {
   const accountState = ai.props.state.accounts[accountId]
-  const inDuressMode = ai.props.state.clientInfo.duressEnabled
+  const isDuressAccount = accountState.activeAppId.endsWith('.duress')
   const { loginTree, login, sessionKey } = accountState
   const { username } = accountState.stashTree
 
@@ -95,7 +95,7 @@ export async function changePin(
 
   // Deleting PIN logins while in duress account should delete PIN locally for
   // all nodes:
-  if (inDuressMode && !forDuressAccount) {
+  if (isDuressAccount && !forDuressAccount) {
     if (enableLogin) {
       if (pin != null) {
         await applyKits(
@@ -128,7 +128,7 @@ export async function changePin(
     await applyKits(
       ai,
       sessionKey,
-      makeDeletePin2Kits(loginTree, forDuressAccount || inDuressMode)
+      makeDeletePin2Kits(loginTree, forDuressAccount || isDuressAccount)
     )
     return
   }
@@ -139,7 +139,7 @@ export async function changePin(
     username,
     pin,
     enableLogin,
-    forDuressAccount || inDuressMode
+    forDuressAccount || isDuressAccount
   )
   await applyKits(ai, sessionKey, kits)
 }
