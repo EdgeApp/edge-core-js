@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Allow pin change while device is in duress mode and user is logged into a non-duress account.
+
 ## 2.30.2 (2025-05-30)
 
 - fixed: Create a package.json React Native export.

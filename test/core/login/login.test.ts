@@ -491,6 +491,31 @@ describe('pin', function () {
     })
   })
 
+  it('can change pin while device is in duress-mode', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    await (
+      await context.createAccount({
+        username: 'other-account',
+        pin: '1111'
+      })
+    ).logout()
+
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.changePin({ pin: '0000', forDuressAccount: true })
+    await account.logout()
+
+    // Enable duress mode:
+    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
+    await duressAccount.logout()
+
+    const otherAccount = await context.loginWithPIN('other-account', '1111')
+    await otherAccount.changePin({ pin: '1234' })
+    await otherAccount.logout()
+
+    await context.loginWithPIN('other-account', '1234')
+  })
+
   it('pin-login remains enabled for accounts without duress mode setup after duress mode login', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
