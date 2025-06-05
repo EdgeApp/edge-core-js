@@ -103,6 +103,7 @@ export interface ChangeServiceSubscription {
 export type ChangeServiceSubscriptionStatus =
   | 'avoiding' // The wallet is avoiding the change service (unsupported)
   | 'listening' // The wallet is connected and listening for changes
+  | 'reconnecting' // The wallet is reconnecting to the change service while its not available
   | 'subscribing' // The wallet is in the process of subscribing (supported)
   | 'syncing' // The wallet is syncing historical data
 
