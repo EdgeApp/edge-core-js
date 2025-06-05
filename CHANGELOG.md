@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.31.0 (2025-06-05)
+
 - added: Support for zero-sync (aka silent-sync) enabled by the change-server protocol.
 - changed: Batch change-server subscriptions for better reliability and efficiency.
 - fixed: Allow pin change while device is in duress mode and user is logged into a non-duress account.
