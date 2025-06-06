@@ -562,51 +562,59 @@ describe('pin', function () {
     ])
   })
 
-  it('exiting duress mode with a disable pin-login in duress account re-enables pin-login for local user but not for the duress account', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-    // Create a second account with duress setup:
-    const otherAccount = await context.createAccount({
-      username: 'other-account',
-      pin: '1111'
+  describe('when exiting duress mode from a duress account that has disabled pin-login', function () {
+    it('will re-enable pin-login for local user but not for the duress account', async function () {
+      const world = await makeFakeEdgeWorld([fakeUser], quiet)
+      const context = await world.makeEdgeContext(contextOptions)
+      // Create a second account with duress setup:
+      const otherAccount = await context.createAccount({
+        username: 'other-account',
+        pin: '1111'
+      })
+      await otherAccount.changePin({ pin: '0000', forDuressAccount: true })
+      await otherAccount.logout()
+
+      // Setup duress on main account:
+      const account = await context.loginWithPIN(
+        fakeUser.username,
+        fakeUser.pin
+      )
+      await account.changePin({ pin: '0000', forDuressAccount: true })
+      await account.logout()
+
+      // Disable PIN login for duress account on the main account:
+      const duressAccount = await context.loginWithPIN(
+        fakeUser.username,
+        '0000'
+      )
+      await duressAccount.changePin({ enableLogin: false })
+      await duressAccount.logout()
+
+      // Login/logout to other account in non-duress mode to disable duress mode:
+      await (await context.loginWithPIN('other-account', '1111')).logout()
+
+      // Check the PIN login is enabled for local user:
+      expect(
+        context.localUsers.map(user => ({
+          username: user.username,
+          pinLoginEnabled: user.pinLoginEnabled
+        }))
+      ).deep.include.members([
+        {
+          username: 'js test 0',
+          pinLoginEnabled: true
+        }
+      ])
+
+      // Pin is disabled for duress account:
+      await expectRejection(
+        context.loginWithPIN(fakeUser.username, '0000'),
+        'PasswordError: Invalid password'
+      )
+
+      // Pin is enabled for main account:
+      await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     })
-    await otherAccount.changePin({ pin: '0000', forDuressAccount: true })
-    await otherAccount.logout()
-
-    // Setup duress on main account:
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    await account.changePin({ pin: '0000', forDuressAccount: true })
-    await account.logout()
-
-    // Disable PIN login for duress account on the main account:
-    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
-    await duressAccount.changePin({ enableLogin: false })
-    await duressAccount.logout()
-
-    // Login/logout to other account in non-duress mode to disable duress mode:
-    await (await context.loginWithPIN('other-account', '1111')).logout()
-
-    // Check the PIN login is enabled for local user:
-    expect(
-      context.localUsers.map(user => ({
-        username: user.username,
-        pinLoginEnabled: user.pinLoginEnabled
-      }))
-    ).deep.include.members([
-      {
-        username: 'js test 0',
-        pinLoginEnabled: true
-      }
-    ])
-
-    // Pin is disabled for duress account:
-    await expectRejection(
-      context.loginWithPIN(fakeUser.username, '0000'),
-      'PinDisabledError: PIN login is not enabled for this account on this device'
-    )
-
-    // Pin is enabled for main account:
-    await context.loginWithPIN(fakeUser.username, fakeUser.pin)
   })
 
   it('checkPin still works after disabling pin-login while in duress mode', async function () {
@@ -720,19 +728,47 @@ describe('pin', function () {
     expect(successAccount.id).equals(account.id)
   })
 
-  it('disable duress does not disable pin-login', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-    expect(context.localUsers[0].pinLoginEnabled).equals(true)
-    // Setup duress mode:
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    await account.changePin({ pin: '0000', forDuressAccount: true })
-    // Disable duress mode:
-    await account.changePin({
-      enableLogin: false,
-      forDuressAccount: true
+  describe('disable duress mode', function () {
+    it('will not disable pin-login for main account', async function () {
+      const world = await makeFakeEdgeWorld([fakeUser], quiet)
+      const context = await world.makeEdgeContext(contextOptions)
+      expect(context.localUsers[0].pinLoginEnabled).equals(true)
+      // Setup duress mode:
+      const account = await context.loginWithPIN(
+        fakeUser.username,
+        fakeUser.pin
+      )
+      await account.changePin({ pin: '0000', forDuressAccount: true })
+      // Disable duress mode:
+      await account.changePin({
+        enableLogin: false,
+        forDuressAccount: true
+      })
+      expect(context.localUsers[0].pinLoginEnabled).equals(true)
     })
-    expect(context.localUsers[0].pinLoginEnabled).equals(true)
+
+    it('will not show duress-account pin errors', async function () {
+      const world = await makeFakeEdgeWorld([fakeUser], quiet)
+      const context = await world.makeEdgeContext(contextOptions)
+      expect(context.localUsers[0].pinLoginEnabled).equals(true)
+      // Setup duress mode:
+      const account = await context.loginWithPIN(
+        fakeUser.username,
+        fakeUser.pin
+      )
+      await account.changePin({ pin: '0000', forDuressAccount: true })
+      // Disable duress mode:
+      await account.changePin({
+        enableLogin: false,
+        forDuressAccount: true
+      })
+      await account.logout()
+
+      await expectRejection(
+        context.loginWithPIN(fakeUser.username, '4444'),
+        'PasswordError: Invalid password'
+      )
+    })
   })
 
   it('check', async function () {
