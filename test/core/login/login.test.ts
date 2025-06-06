@@ -295,52 +295,66 @@ describe('pin', function () {
     expect(successAccount.id).equals(account.id)
   })
 
-  it('disable pin in duress mode disables pin-login for duress mode', async function () {
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    await account.changePin({ pin: '0000', forDuressAccount: true })
-    await account.logout()
+  describe('disable pin in duress mode', function () {
+    it('will disable pin-login for duress account', async function () {
+      const world = await makeFakeEdgeWorld([fakeUser], quiet)
+      const context = await world.makeEdgeContext(contextOptions)
+      const account = await context.loginWithPIN(
+        fakeUser.username,
+        fakeUser.pin
+      )
+      await account.changePin({ pin: '0000', forDuressAccount: true })
+      await account.logout()
 
-    // Disable PIN login:
-    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
-    await duressAccount.changePin({ enableLogin: false })
-    await expectRejection(
-      context.loginWithPIN(fakeUser.username, '0000'),
-      'PinDisabledError: PIN login is not enabled for this account on this device'
-    )
-  })
+      // Disable PIN login:
+      const duressAccount = await context.loginWithPIN(
+        fakeUser.username,
+        '0000'
+      )
+      await duressAccount.changePin({ enableLogin: false })
+      await expectRejection(
+        context.loginWithPIN(fakeUser.username, '0000'),
+        'PinDisabledError: PIN login is not enabled for this account on this device'
+      )
+    })
 
-  it('disable pin in duress mode disables pin-login for local user and disables pin-login for main account', async function () {
-    this.timeout(30000)
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext(contextOptions)
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    await account.changePin({ pin: '0000', forDuressAccount: true })
-    await account.logout()
+    it('will disable pin-login for local user and main account', async function () {
+      this.timeout(30000)
+      const world = await makeFakeEdgeWorld([fakeUser], quiet)
+      const context = await world.makeEdgeContext(contextOptions)
+      const account = await context.loginWithPIN(
+        fakeUser.username,
+        fakeUser.pin
+      )
+      await account.changePin({ pin: '0000', forDuressAccount: true })
+      await account.logout()
 
-    // Disable PIN login:
-    const duressAccount = await context.loginWithPIN(fakeUser.username, '0000')
-    await duressAccount.changePin({ enableLogin: false })
+      // Disable PIN login:
+      const duressAccount = await context.loginWithPIN(
+        fakeUser.username,
+        '0000'
+      )
+      await duressAccount.changePin({ enableLogin: false })
 
-    // Check the PIN login is disabled:
-    expect(
-      context.localUsers.map(user => ({
-        username: user.username,
-        pinLoginEnabled: user.pinLoginEnabled
-      }))
-    ).deep.include.members([
-      {
-        username: 'js test 0',
-        pinLoginEnabled: false
-      }
-    ])
+      // Check the PIN login is disabled:
+      expect(
+        context.localUsers.map(user => ({
+          username: user.username,
+          pinLoginEnabled: user.pinLoginEnabled
+        }))
+      ).deep.include.members([
+        {
+          username: 'js test 0',
+          pinLoginEnabled: false
+        }
+      ])
 
-    // Pin is disabled for main account:
-    await expectRejection(
-      context.loginWithPIN(fakeUser.username, fakeUser.pin),
-      'PinDisabledError: PIN login is not enabled for this account on this device'
-    )
+      // Pin is disabled for main account:
+      await expectRejection(
+        context.loginWithPIN(fakeUser.username, fakeUser.pin),
+        'PinDisabledError: PIN login is not enabled for this account on this device'
+      )
+    })
   })
 
   describe('disable pin in duress mode disables pin-login for _only_ its local user', function () {
