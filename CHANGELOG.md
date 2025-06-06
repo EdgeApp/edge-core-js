@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Fix change-server reliability issues by fallback to pull-based syncing as a trade-off.
+
 ## 2.31.0 (2025-06-05)
 
 - added: Support for zero-sync (aka silent-sync) enabled by the change-server protocol.
