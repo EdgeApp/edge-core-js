@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Show the correct login errors when duress account is disabled.
+
 ## 2.31.0 (2025-06-05)
 
 - added: Support for zero-sync (aka silent-sync) enabled by the change-server protocol.
