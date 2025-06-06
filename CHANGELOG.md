@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fixed: Fix change-server reliability issues by fallback to pull-based syncing as a trade-off.
+- fixed: Show the correct login errors when duress account is disabled.
 
 ## 2.31.0 (2025-06-05)
 

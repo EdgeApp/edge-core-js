@@ -4,6 +4,7 @@ import { checkPasswordRules, fixUsername } from '../../client-side'
 import {
   asChallengeErrorPayload,
   asMaybePasswordError,
+  asMaybePinDisabledError,
   EdgeAccount,
   EdgeAccountOptions,
   EdgeContext,
@@ -324,21 +325,29 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         return inDuressMode
           ? await loginDuressAccount(stashTree, duressStash)
           : await loginMainAccount(stashTree, mainStash)
-      } catch (error) {
+      } catch (originalError) {
         // If the error is not a failed login, rethrow it:
-        if (asMaybePasswordError(error) == null) {
+        if (asMaybePasswordError(originalError) == null) {
+          throw originalError
+        }
+        try {
+          const account = inDuressMode
+            ? await loginMainAccount(stashTree, mainStash)
+            : await loginDuressAccount(stashTree, duressStash)
+          // Only Enable/Disable duress mode if account creation was success.
+          if (inDuressMode) {
+            await disableDuressMode()
+          } else {
+            await enableDuressMode()
+          }
+          return account
+        } catch (error) {
+          // Throw the original error if pin-login is disabled:
+          if (asMaybePinDisabledError(error) != null) {
+            throw originalError
+          }
           throw error
         }
-        const account = inDuressMode
-          ? await loginMainAccount(stashTree, mainStash)
-          : await loginDuressAccount(stashTree, duressStash)
-        // Only Enable/Disable duress mode if account creation was success.
-        if (inDuressMode) {
-          await disableDuressMode()
-        } else {
-          await enableDuressMode()
-        }
-        return account
       }
     },
 
