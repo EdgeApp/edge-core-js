@@ -261,14 +261,17 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       const duressAppId = activeAppId.endsWith('.duress')
         ? activeAppId
         : activeAppId + '.duress'
-      // Ensure the duress account exists:
-      if (forDuressAccount) {
+      // Fakes for duress mode:
+      if (this.isDuressAccount) {
         // Fake duress mode setup if this is a duress account:
-        if (this.isDuressAccount) {
+        if (forDuressAccount) {
           fakeDuressModeSetup = opts.enableLogin ?? opts.pin != null
           ai.props.dispatch({ type: 'UPDATE_NEXT' })
           return ''
         }
+      }
+      // Ensure the duress account exists:
+      if (forDuressAccount) {
         await ensureAccountExists(
           ai,
           accountState().stashTree,
@@ -276,7 +279,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
           duressAppId
         )
       }
-      await changePin(ai, accountId, { ...opts, forDuressAccount })
+      await changePin(ai, accountId, opts)
       const login = forDuressAccount
         ? searchTree(accountState().login, stash => stash.appId === duressAppId)
         : accountState().login

@@ -415,10 +415,14 @@ export async function applyKit(
   const { serverMethod = 'POST', serverPath } = kit
 
   const { stashTree } = getStashById(ai, kit.loginId)
-  const childKey = decryptChildKey(stashTree, sessionKey, kit.loginId)
-  const request = makeAuthJson(stashTree, childKey)
-  request.data = kit.server
-  await loginFetch(ai, serverMethod, serverPath, request)
+
+  // Don't make server-side changes if the server path is faked:
+  if (serverPath !== '') {
+    const childKey = decryptChildKey(stashTree, sessionKey, kit.loginId)
+    const request = makeAuthJson(stashTree, childKey)
+    request.data = kit.server
+    await loginFetch(ai, serverMethod, serverPath, request)
+  }
 
   const newStashTree = updateTree<LoginStash, LoginStash>(
     stashTree,

@@ -51,17 +51,18 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
           stash != null &&
           (stash.passwordAuthBox != null || stash.loginAuthBox != null)
 
-        // This allows us to lie about PIN being enabled or disabled while in
-        // duress mode!
-        const pin2Stash = clientInfo.duressEnabled
-          ? // Use the duress stash's PIN settings, but fallback for accounts
-            // that don't have duress mode setup
-            findDuressStash(stashTree, appId) ?? findPin2Stash(stashTree, appId)
-          : // If we're not in duress mode, then do a normal search
-            findPin2Stash(stashTree, appId)
-        // If we have found a pin2Stash, or the duress stash we found has
-        // a pin2Key defined:
-        const pinLoginEnabled = pin2Stash?.pin2Key != null
+        // Only look at the duress stash if we're in duress mode:
+        const duressStash = clientInfo.duressEnabled
+          ? findDuressStash(stashTree, appId)
+          : undefined
+        // Only fake pin disabled if the duress stash is present and has a
+        // pin2Key:
+        const fakePinDisabled =
+          duressStash?.pin2Key != null && duressStash?.fakePinDisabled === true
+        const pin2Stash = findPin2Stash(stashTree, appId)
+        // Disable PIN login if we're faking it from the duress stash, or we
+        // don't have a pin2Key on the account's pin2Stash:
+        const pinLoginEnabled = !fakePinDisabled && pin2Stash?.pin2Key != null
 
         return {
           keyLoginEnabled,

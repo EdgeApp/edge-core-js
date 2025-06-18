@@ -96,23 +96,17 @@ export async function changePin(
   // Deleting PIN logins while in duress account should delete PIN locally for
   // all nodes:
   if (isDuressAccount && !forDuressAccount) {
-    if (enableLogin) {
-      if (pin != null) {
-        await applyKits(
-          ai,
-          sessionKey,
-          makeChangePin2Kits(ai, loginTree, username, pin, enableLogin, true)
-        )
-      }
-    } else {
-      if (pin != null) {
-        // Change and disable PIN for duress app for real:
-        await applyKits(
-          ai,
-          sessionKey,
-          makeChangePin2Kits(ai, loginTree, username, pin, enableLogin, true)
-        )
-      }
+    await applyKits(
+      ai,
+      sessionKey,
+      makeFakeDisablePinKits(ai, loginTree, username, enableLogin, true)
+    )
+    if (pin != null) {
+      await applyKits(
+        ai,
+        sessionKey,
+        makeChangePin2Kits(ai, loginTree, username, pin, true, true)
+      )
     }
     return
   }
@@ -239,6 +233,35 @@ export function makeChangePin2Kits(
   return out
 }
 
+export function makeFakeDisablePinKits(
+  ai: ApiInput,
+  loginTree: LoginTree,
+  username: string | undefined,
+  enableLogin: boolean,
+  forDuressAccount: boolean
+): LoginKit[] {
+  const out: LoginKit[] = []
+
+  // Only include pin change if the app id matches the duress account flag:
+  if (forDuressAccount === loginTree.appId.endsWith('.duress')) {
+    out.push(makeFakeDisablePinKit(loginTree, enableLogin))
+  }
+
+  for (const child of loginTree.children) {
+    out.push(
+      ...makeFakeDisablePinKits(
+        ai,
+        child,
+        username,
+        enableLogin,
+        forDuressAccount
+      )
+    )
+  }
+
+  return out
+}
+
 /**
  * Used when changing the username.
  * This won't return anything if the PIN is missing.
@@ -308,6 +331,25 @@ export function makeChangePin2Kit(
         pin2Key: undefined,
         pin2TextBox
       }
+    }
+  }
+}
+
+/**
+ * Creates the data needed to attach a PIN to a login.
+ */
+export function makeFakeDisablePinKit(
+  login: LoginTree,
+  enableLogin: boolean
+): LoginKit {
+  const { loginId } = login
+
+  return {
+    loginId,
+    server: undefined,
+    serverPath: '',
+    stash: {
+      fakePinDisabled: !enableLogin
     }
   }
 }
