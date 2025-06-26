@@ -246,19 +246,25 @@ export class SpendToSelfError extends Error {
  */
 export class SwapAboveLimitError extends Error {
   name: string
+
+  /** @deprecated use swapPluginId */
   readonly pluginId: string
+  readonly swapPluginId: string
+
+  /** This will be '' if the limit is not known */
   readonly nativeMax: string
   readonly direction: 'from' | 'to'
 
   constructor(
     swapInfo: EdgeSwapInfo,
-    nativeMax: string,
+    nativeMax: string | undefined,
     direction: 'from' | 'to' = 'from'
   ) {
     super('Amount is too high')
     this.name = 'SwapAboveLimitError'
     this.pluginId = swapInfo.pluginId
-    this.nativeMax = nativeMax
+    this.swapPluginId = swapInfo.pluginId
+    this.nativeMax = nativeMax ?? ''
     this.direction = direction
   }
 }
@@ -270,19 +276,25 @@ export class SwapAboveLimitError extends Error {
  */
 export class SwapBelowLimitError extends Error {
   name: string
+
+  /** @deprecated use swapPluginId */
   readonly pluginId: string
+  readonly swapPluginId: string
+
+  /** This will be '' if the limit is not known */
   readonly nativeMin: string
   readonly direction: 'from' | 'to'
 
   constructor(
     swapInfo: EdgeSwapInfo,
-    nativeMin: string,
+    nativeMin: string | undefined,
     direction: 'from' | 'to' = 'from'
   ) {
     super('Amount is too low')
     this.name = 'SwapBelowLimitError'
     this.pluginId = swapInfo.pluginId
-    this.nativeMin = nativeMin
+    this.swapPluginId = swapInfo.pluginId
+    this.nativeMin = nativeMin ?? ''
     this.direction = direction
   }
 }
