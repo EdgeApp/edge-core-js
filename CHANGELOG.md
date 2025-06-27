@@ -2,11 +2,11 @@
 
 ## Unreleased
 
+## 2.32.0 (2025-06-27)
+
 - changed: Fake PIN disable while in duress mode.
-- changed: `SwapBelowLimitError` & `SwapAboveLimitError` `nativeMin`/`nativeMax`
-  now optional
-- changed: `SwapBelowLimitError` & `SwapAboveLimitError` `pluginId`
-  deprecated in favor of `swapPluginId`
+- changed: `SwapBelowLimitError` & `SwapAboveLimitError` `nativeMin`/`nativeMax` now optional
+- changed: `SwapBelowLimitError` & `SwapAboveLimitError` `pluginId` deprecated in favor of `swapPluginId`
 
 ## 2.31.1 (2025-06-09)
 
