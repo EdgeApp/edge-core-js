@@ -192,8 +192,9 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
 
       return await makeAccount(ai, sessionKey, 'keyLogin', {
         ...opts,
-        // We must require that the duress account exists:
-        duressMode: inDuressMode && duressStash != null
+        // We must require that the duress account is active.
+        // Duress account is active if it exists and has a PIN key:
+        duressMode: inDuressMode && duressStash?.pin2Key != null
       })
     },
 
@@ -223,11 +224,12 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           stash,
           stash => stash.appId === duressAppId
         )
-        // We may still be in duress mode but not log in into a duress account
+        // We may still be in duress mode but do not log-in to a duress account
         // if it does not exist. It's important that we do not disable duress
         // mode from this routine to make sure other accounts with duress mode
         // still are protected.
-        if (duressStash != null) {
+        // Duress account is active if it exists and has a PIN key:
+        if (duressStash?.pin2Key != null) {
           const duressSessionKey = decryptChildKey(
             stash,
             sessionKey,
@@ -283,6 +285,12 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         stashTree: LoginStash,
         duressStash: LoginStash
       ): Promise<EdgeAccount> {
+        if (duressStash.fakePinDisabled === true) {
+          throw new PinDisabledError(
+            'PIN login is not enabled for this account on this device'
+          )
+        }
+
         // Try login with duress account
         const sessionKey = await loginPin2(
           ai,
@@ -310,7 +318,7 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       }
 
       // No duress account configured, so just login to the main account:
-      if (duressStash == null) {
+      if (duressStash?.pin2Key == null) {
         // It's important that we don't disable duress mode here because
         // we want to protect account that have duress mode enabled and only
         // allow those accounts to suspend duress mode.

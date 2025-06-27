@@ -62,6 +62,7 @@ export interface LoginStash {
   // PIN v2 login:
   pin2Key?: Uint8Array
   pin2TextBox?: EdgeBox
+  fakePinDisabled?: boolean
 
   // Recovery v2 login:
   recovery2Key?: Uint8Array

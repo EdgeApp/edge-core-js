@@ -368,7 +368,7 @@ describe('account', function () {
     ).deep.include.members([{ username: 'js test 0', pinLoginEnabled: false }])
   })
 
-  it('disable pin while in duress account is not temporary', async function () {
+  it('disable pin while in duress account is temporary', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
 
@@ -400,7 +400,7 @@ describe('account', function () {
         username
       }))
     ).deep.include.members([
-      { username: fakeUser.username.toLowerCase(), pinLoginEnabled: false }
+      { username: fakeUser.username.toLowerCase(), pinLoginEnabled: true }
     ])
 
     await topicAccount.changePin({ enableLogin: true })

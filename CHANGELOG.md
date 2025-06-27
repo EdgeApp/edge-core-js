@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Fake PIN disable while in duress mode.
+
 ## 2.31.1 (2025-06-09)
 
 - fixed: Fix change-server reliability issues by fallback to pull-based syncing as a trade-off.
