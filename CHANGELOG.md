@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: Added `usesChangeServer` flag to `EdgeCurrencyInfo` to optimize syncing for engines which subscribe to the change-server.
+- fixed: Race condition between engine change-server subscription and periodic sync.
+
 ## 2.32.1 (2025-07-18)
 
 - fixed: Don't write the enabled tokens file until after we've read it from disk.
