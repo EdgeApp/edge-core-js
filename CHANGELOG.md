@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: Added `usesChangeServer` flag to `EdgeCurrencyInfo` to optimize syncing for engines which subscribe to the change-server.
+- fixed: Race condition between engine change-server subscription and periodic sync.
+
 ## 2.32.0 (2025-06-27)
 
 - changed: Fake PIN disable while in duress mode.
