@@ -30,7 +30,8 @@ import {
 } from './currency-wallet-files'
 import {
   CurrencyWalletInput,
-  CurrencyWalletProps
+  CurrencyWalletProps,
+  whatsNew
 } from './currency-wallet-pixie'
 import {
   ChangeServiceSubscription,
@@ -138,11 +139,15 @@ export function makeCurrencyWalletCallbacks(
             ...enabledTokenIds
           ])
 
-          // Update redux:
+          // Logging:
+          const added = whatsNew(tokenIds, detectedTokenIds)
+          const removed = whatsNew(detectedTokenIds, tokenIds)
           const shortId = walletId.slice(0, 2)
           input.props.log.warn(
-            `enabledTokenIds: ${shortId} engine detected tokens`
+            `enabledTokenIds: ${shortId} engine detected tokens, add [${added}], remove [${removed}]`
           )
+
+          // Update redux:
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_DETECTED_TOKENS',
             payload: {

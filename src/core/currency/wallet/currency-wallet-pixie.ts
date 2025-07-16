@@ -580,7 +580,7 @@ export async function getPublicWalletInfo(
 /**
  * Returns items that only exist in `after`, for debugging token diffs.
  */
-function whatsNew(after: string[], before: string[]): string {
+export function whatsNew(after: string[], before: string[]): string {
   const beforeSet = new Set(before)
   return after.filter(s => !beforeSet.has(s)).join(', ')
 }
