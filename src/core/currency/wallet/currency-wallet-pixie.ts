@@ -428,10 +428,13 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     let lastEnabledTokenIds: string[] = initialTokenIds
 
     return async function update() {
-      const { detectedTokenIds, enabledTokenIds, tokenFileDirty } =
-        input.props.walletState
-      const isReady = detectedTokenIds != null && enabledTokenIds != null
-      if (tokenFileDirty && isReady) {
+      const {
+        detectedTokenIds,
+        enabledTokenIds,
+        tokenFileDirty,
+        tokenFileLoaded
+      } = input.props.walletState
+      if (tokenFileDirty && tokenFileLoaded) {
         const added = whatsNew(enabledTokenIds, lastEnabledTokenIds)
         const removed = whatsNew(lastEnabledTokenIds, enabledTokenIds)
         const shortId = input.props.walletId.slice(0, 2)

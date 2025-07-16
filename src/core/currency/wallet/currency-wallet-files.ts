@@ -267,7 +267,20 @@ export async function loadTokensFile(
         enabledTokenIds: tokenIds
       }
     })
+    return
   }
+
+  // Both the new and old files are missing:
+  const shortId = walletId.slice(0, 2)
+  input.props.log.warn(`enabledTokenIds: ${shortId} loaded neither file`)
+  dispatch({
+    type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
+    payload: {
+      walletId: input.props.walletId,
+      detectedTokenIds: [],
+      enabledTokenIds: []
+    }
+  })
 }
 
 /**
@@ -629,4 +642,21 @@ export async function saveSeenTxCheckpointFile(
   })
 
   await seenCheckpointFile.save(disklet, SEEN_TX_CHECKPOINT_FILE, fileData)
+}
+
+export async function reloadWalletFiles(
+  input: CurrencyWalletInput,
+  changes: string[]
+): Promise<void> {
+  if (changes.includes(TOKENS_FILE) || changes.includes(LEGACY_TOKENS_FILE)) {
+    await loadTokensFile(input)
+  }
+  if (changes.includes(CURRENCY_FILE)) {
+    await loadFiatFile(input)
+  }
+  if (changes.includes(WALLET_NAME_FILE)) {
+    await loadNameFile(input)
+  }
+  await loadTxFileNames(input)
+  await loadAddressFiles(input)
 }

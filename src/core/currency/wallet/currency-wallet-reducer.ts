@@ -73,6 +73,7 @@ export interface CurrencyWalletState {
   readonly detectedTokenIds: string[]
   readonly enabledTokenIds: string[]
   readonly tokenFileDirty: boolean
+  readonly tokenFileLoaded: boolean
   readonly engineFailure: Error | null
   readonly engineStarted: boolean
   readonly fiat: string
@@ -220,6 +221,18 @@ const currencyWalletInner = buildReducer<
           next.self.enabledTokenIds !== prev.self.enabledTokenIds
         )
 
+      default:
+        return state
+    }
+  },
+
+  tokenFileLoaded(state = false, action): boolean {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_LOADED_TOKEN_FILE':
+        return true
+
+      case 'CURRENCY_ENGINE_CLEARED':
+        return false
       default:
         return state
     }
