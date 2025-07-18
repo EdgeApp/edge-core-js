@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.32.1 (2025-07-18)
+
 - fixed: Don't write the enabled tokens file until after we've read it from disk.
 
 ## 2.32.0 (2025-06-27)
