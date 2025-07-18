@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Don't write the enabled tokens file until after we've read it from disk.
+
 ## 2.32.0 (2025-06-27)
 
 - changed: Fake PIN disable while in duress mode.

@@ -24,17 +24,14 @@ import {
 import { combineTxWithFile } from './currency-wallet-api'
 import { asIntegerString } from './currency-wallet-cleaners'
 import {
-  loadAddressFiles,
-  loadFiatFile,
-  loadNameFile,
-  loadTokensFile,
-  loadTxFileNames,
+  reloadWalletFiles,
   saveSeenTxCheckpointFile,
   setupNewTxMetadata
 } from './currency-wallet-files'
 import {
   CurrencyWalletInput,
-  CurrencyWalletProps
+  CurrencyWalletProps,
+  whatsNew
 } from './currency-wallet-pixie'
 import {
   ChangeServiceSubscription,
@@ -142,11 +139,15 @@ export function makeCurrencyWalletCallbacks(
             ...enabledTokenIds
           ])
 
-          // Update redux:
+          // Logging:
+          const added = whatsNew(tokenIds, detectedTokenIds)
+          const removed = whatsNew(detectedTokenIds, tokenIds)
           const shortId = walletId.slice(0, 2)
           input.props.log.warn(
-            `enabledTokenIds: ${shortId} engine detected tokens`
+            `enabledTokenIds: ${shortId} engine detected tokens, add [${added}], remove [${removed}]`
           )
+
+          // Update redux:
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_DETECTED_TOKENS',
             payload: {
@@ -467,11 +468,7 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
     const changes = getStorageWalletLastChanges(props.state, walletId)
     if (changes !== lastChanges) {
       lastChanges = changes
-      await loadTokensFile(input)
-      await loadFiatFile(input)
-      await loadNameFile(input)
-      await loadTxFileNames(input)
-      await loadAddressFiles(input)
+      await reloadWalletFiles(input, changes)
     }
   }
   function checkChangesLoop(): void {

@@ -428,10 +428,13 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     let lastEnabledTokenIds: string[] = initialTokenIds
 
     return async function update() {
-      const { detectedTokenIds, enabledTokenIds, tokenFileDirty } =
-        input.props.walletState
-      const isReady = detectedTokenIds != null && enabledTokenIds != null
-      if (tokenFileDirty && isReady) {
+      const {
+        detectedTokenIds,
+        enabledTokenIds,
+        tokenFileDirty,
+        tokenFileLoaded
+      } = input.props.walletState
+      if (tokenFileDirty && tokenFileLoaded) {
         const added = whatsNew(enabledTokenIds, lastEnabledTokenIds)
         const removed = whatsNew(lastEnabledTokenIds, enabledTokenIds)
         const shortId = input.props.walletId.slice(0, 2)
@@ -577,7 +580,7 @@ export async function getPublicWalletInfo(
 /**
  * Returns items that only exist in `after`, for debugging token diffs.
  */
-function whatsNew(after: string[], before: string[]): string {
+export function whatsNew(after: string[], before: string[]): string {
   const beforeSet = new Set(before)
   return after.filter(s => !beforeSet.has(s)).join(', ')
 }
