@@ -217,7 +217,9 @@ export const currency: TamePixie<RootProps> = combinePixies({
       if (changeService?.connected === true && changeServiceConnected) {
         const filteredWallets = supportedWallets.filter(([, wallet]) =>
           wallet.changeServiceSubscriptions.some(
-            subscription => subscription.status === 'subscribing'
+            subscription =>
+              subscription.status === 'subscribing' ||
+              subscription.status === 'resubscribing'
           )
         )
         const indexToWalletId: Array<{
@@ -282,7 +284,7 @@ export const currency: TamePixie<RootProps> = combinePixies({
             // subscribe to the address:
             case 0:
               // Try subscribing again later:
-              status = 'subscribing'
+              status = 'resubscribing'
               break
             // Change server does support this wallet plugin, and there are no
             // changes for the address:
@@ -298,15 +300,13 @@ export const currency: TamePixie<RootProps> = combinePixies({
               break
           }
 
-          // The status for the subscription is already set to subscribing, so
-          // we don't need to update it:
-          if (status === 'subscribing') {
-            continue
-          }
-
           // Update the status for the subscription:
           const subscriptions = wallet.changeServiceSubscriptions
-            .filter(subscription => subscription.status === 'subscribing')
+            .filter(
+              subscription =>
+                subscription.status === 'subscribing' ||
+                subscription.status === 'resubscribing'
+            )
             .map(subscription => ({
               ...subscription,
               status

@@ -505,6 +505,7 @@ export interface EdgeCurrencyInfo {
   unsafeBroadcastTx?: boolean
   unsafeMakeSpend?: boolean
   unsafeSyncNetwork?: boolean
+  usesChangeServer?: boolean
 
   /** @deprecated The default user settings are always `{}` */
   defaultSettings?: JsonObject
