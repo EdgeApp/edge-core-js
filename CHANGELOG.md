@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.33.0 (2025-07-21)
+
 - added: Added `usesChangeServer` flag to `EdgeCurrencyInfo` to optimize syncing for engines which subscribe to the change-server.
 - fixed: Race condition between engine change-server subscription and periodic sync.
 
