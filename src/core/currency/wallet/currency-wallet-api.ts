@@ -528,7 +528,8 @@ export function makeCurrencyWalletApi(
         savedAction,
         skipChecks,
         spendTargets = [],
-        swapData
+        swapData,
+        allowChainedPending = false
       } = spendInfo
 
       // Figure out which asset this is:
@@ -586,7 +587,8 @@ export function makeCurrencyWalletApi(
           pendingTxs,
           rbfTxid,
           skipChecks,
-          spendTargets: cleanTargets
+          spendTargets: cleanTargets,
+          allowChainedPending
         },
         { privateKeys }
       )

@@ -702,6 +702,8 @@ export interface EdgeSpendInfo {
   /** @deprecated Use EdgeCurrencyWallet.accelerate instead */
   rbfTxid?: string
   skipChecks?: boolean
+  /** Allow creating transactions with chained nonces even if pending transactions exist */
+  allowChainedPending?: boolean
 
   // Core:
   assetAction?: EdgeAssetAction

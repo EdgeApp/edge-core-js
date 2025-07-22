@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `allowChainedPending` flag in `EdgeSpendInfo` to bypass the single pending tx restriction
+
 ## 2.33.0 (2025-07-21)
 
 - added: Added `usesChangeServer` flag to `EdgeCurrencyInfo` to optimize syncing for engines which subscribe to the change-server.
@@ -1962,3 +1964,9 @@ Fixes:
 - Removed `asmcrypto.js`
 - Made the CLI executable & installable
 - Pruned the list of files we publish to NPM
+
+## 2.17.0 (2024-12-18)
+
+### Fixed
+
+- Pass `allowChainedPending` from EdgeSpendInfo to currency engine's makeSpend method
