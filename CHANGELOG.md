@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: By-pass pin-wait period special case caused by duress mode feature.
+
 ## 2.33.0 (2025-07-21)
 
 - added: Added `usesChangeServer` flag to `EdgeCurrencyInfo` to optimize syncing for engines which subscribe to the change-server.

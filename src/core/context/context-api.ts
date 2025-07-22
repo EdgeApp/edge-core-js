@@ -13,6 +13,7 @@ import {
   EdgeLogSettings,
   EdgePendingEdgeLogin,
   EdgeUserInfo,
+  PasswordError,
   PinDisabledError
 } from '../../types/types'
 import { verifyData } from '../../util/crypto/verify'
@@ -69,6 +70,25 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     // Enable duress mode
     ai.props.dispatch({
       type: 'LOGIN_DURESS_MODE_ENABLED'
+    })
+  }
+  async function updateLoginWaitTimestamp(
+    loginId: string,
+    timestamp: number
+  ): Promise<void> {
+    await clientFile.save(ai.props.io.disklet, CLIENT_FILE_NAME, {
+      ...ai.props.state.clientInfo,
+      loginWaitTimestamps: {
+        ...ai.props.state.clientInfo.loginWaitTimestamps,
+        [loginId]: timestamp
+      }
+    })
+    ai.props.dispatch({
+      type: 'LOGIN_WAIT_TIMESTAMP_UPDATED',
+      payload: {
+        loginId,
+        timestamp
+      }
     })
   }
 
@@ -328,6 +348,16 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
       // Check if we are in duress mode:
       const inDuressMode = ai.props.state.clientInfo.duressEnabled
 
+      // Check if we are in a wait period for account as a whole:
+      const mainLoginId = base58.stringify(mainStash.loginId)
+      const loginWaitTimestamp =
+        ai.props.state.clientInfo.loginWaitTimestamps[mainLoginId]
+      if (loginWaitTimestamp != null && loginWaitTimestamp > Date.now()) {
+        throw new PasswordError({
+          wait_seconds: Math.ceil((loginWaitTimestamp - Date.now()) / 1000)
+        })
+      }
+
       // Try pin-login on either the duress or main accounts, smartly:
       try {
         return inDuressMode
@@ -350,6 +380,29 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
           }
           return account
         } catch (error) {
+          /**
+           * We need to store the max wait time for the account as a whole (or
+           * both main and duress accounts) because we don't know which account
+           * the user will try to login. We will block the login on this stored
+           * timestamp.
+           */
+          const maxWaitError = [
+            asMaybePasswordError(error),
+            asMaybePasswordError(originalError)
+          ].reduce((a, b) => {
+            const aWait = a?.wait ?? 0
+            const bWait = b?.wait ?? 0
+            if (aWait > bWait) return a
+            return b
+          })
+          // Convert wait time to milliseconds:
+          const maxWaitMilliseconds = (maxWaitError?.wait ?? 0) * 1000
+          if (maxWaitError != null && maxWaitMilliseconds > 0) {
+            const timestamp = Date.now() + maxWaitMilliseconds
+            await updateLoginWaitTimestamp(mainLoginId, timestamp)
+            throw maxWaitError
+          }
+
           // Throw the original error if pin-login is disabled:
           if (asMaybePinDisabledError(error) != null) {
             throw originalError

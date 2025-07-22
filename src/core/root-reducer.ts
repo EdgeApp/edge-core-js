@@ -41,7 +41,8 @@ export const defaultLogSettings: EdgeLogSettings = {
 
 const dummyClientInfo: ClientInfo = {
   clientId: new Uint8Array(0),
-  duressEnabled: false
+  duressEnabled: false,
+  loginWaitTimestamps: {}
 }
 
 export const reducer = buildReducer<RootState, RootAction, RootState>({
@@ -89,6 +90,15 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
         return {
           ...state,
           duressEnabled: true
+        }
+      }
+      case 'LOGIN_WAIT_TIMESTAMP_UPDATED': {
+        return {
+          ...state,
+          loginWaitTimestamps: {
+            ...state.loginWaitTimestamps,
+            [action.payload.loginId]: action.payload.timestamp
+          }
         }
       }
     }
