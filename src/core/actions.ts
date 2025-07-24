@@ -403,6 +403,13 @@ export type RootAction =
       type: 'LOGIN_DURESS_MODE_ENABLED'
     }
   | {
+      type: 'LOGIN_WAIT_TIMESTAMP_UPDATED'
+      payload: {
+        loginId: string
+        timestamp: number
+      }
+    }
+  | {
       // Fires when a user logs out.
       type: 'LOGOUT'
       payload: { accountId: string }
