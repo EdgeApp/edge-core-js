@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.33.1 (2025-07-24)
+
 - fixed: By-pass pin-wait period special case caused by duress mode feature.
 
 ## 2.33.0 (2025-07-21)
