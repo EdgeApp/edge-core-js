@@ -19,10 +19,15 @@ export async function changeVoucherStatus(
   vouchers: ChangeVouchersPayload
 ): Promise<void> {
   const { stashTree } = getStashById(ai, login.loginId)
-  const reply = await loginFetch(ai, 'POST', '/v2/login/vouchers', {
-    ...makeAuthJson(stashTree, login),
-    data: wasChangeVouchersPayload(vouchers)
-  })
+  const { deviceDescription } = ai.props.state.login
+
+  const request = makeAuthJson(stashTree, login)
+  if (deviceDescription != null) request.deviceDescription = deviceDescription
+  request.data = wasChangeVouchersPayload(vouchers)
+
+  // We would normally use `applyKit` instead of a direct fetch,
+  // but we need the server to tell us what changed, not the diff:
+  const reply = await loginFetch(ai, 'POST', '/v2/login/vouchers', request)
   const newStashTree = applyLoginPayload(
     stashTree,
     login.loginKey,

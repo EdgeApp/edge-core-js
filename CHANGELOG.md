@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Log the device description on more requests, such as credential changes.
+
 ## 2.33.2 (2025-08-01)
 
 - fixed: Fixed syncing bug caused by ES5 transpilation.

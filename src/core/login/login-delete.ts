@@ -12,10 +12,10 @@ export async function deleteLogin(
   login: LoginTree
 ): Promise<void> {
   const { stashTree } = getStashById(ai, login.loginId)
-  await loginFetch(
-    ai,
-    'POST',
-    '/v2/login/delete',
-    makeAuthJson(stashTree, login)
-  )
+  const { deviceDescription } = ai.props.state.login
+
+  const request = makeAuthJson(stashTree, login)
+  if (deviceDescription != null) request.deviceDescription = deviceDescription
+
+  await loginFetch(ai, 'POST', '/v2/login/delete', request)
 }
