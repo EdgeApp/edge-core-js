@@ -1484,6 +1484,12 @@ export interface EdgeSwapQuote {
   readonly pluginId: string
   readonly expirationDate?: Date
 
+  /**
+   * Plugin-specific data that can be used to store information between
+   * quote creation and approval. Useful for two-phase swap implementations.
+   */
+  readonly pluginData?: JsonObject
+
   readonly approve: (opts?: EdgeSwapApproveOptions) => Promise<EdgeSwapResult>
   readonly close: () => Promise<void>
 }
@@ -1501,6 +1507,24 @@ export interface EdgeSwapPlugin {
     userSettings: JsonObject | undefined,
     opts: { infoPayload: JsonObject; promoCode?: string }
   ) => Promise<EdgeSwapQuote>
+
+  /**
+   * Optional method for two-phase swap implementations.
+   * If provided, this method will be called during quote approval to create
+   * the actual swap transaction. This allows plugins to defer transaction
+   * creation until the user approves the quote, improving performance and
+   * reducing unnecessary server load.
+   *
+   * @param quote The quote that was previously created
+   * @param request The original swap request
+   * @param opts Optional approval options
+   * @returns A new EdgeTransaction with the actual swap details
+   */
+  readonly createSwapTransaction?: (
+    quote: EdgeSwapQuote,
+    request: EdgeSwapRequest,
+    opts?: EdgeSwapApproveOptions
+  ) => Promise<EdgeTransaction>
 }
 
 // ---------------------------------------------------------------------

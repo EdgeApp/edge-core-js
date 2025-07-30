@@ -141,6 +141,7 @@ function wrapQuote(
     maxFulfillmentSeconds: quote.maxFulfillmentSeconds,
     networkFee: quote.networkFee,
     pluginId: quote.pluginId,
+    pluginData: quote.pluginData,
     request: quote.request ?? request,
     swapInfo: quote.swapInfo ?? swapPlugins[quote.pluginId].swapInfo,
     toNativeAmount: quote.toNativeAmount,
