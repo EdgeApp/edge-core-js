@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Fixed syncing bug caused by ES5 transpilation.
+
 ## 2.33.1 (2025-07-24)
 
 - fixed: By-pass pin-wait period special case caused by duress mode feature.

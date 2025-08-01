@@ -314,7 +314,12 @@ export const currency: TamePixie<RootProps> = combinePixies({
           subscriptionUpdates.set(walletId, subscriptions)
         }
 
-        for (const [walletId, subscriptions] of subscriptionUpdates.entries()) {
+        // TODO: Remove the Array.from() once we drop ES5 targeting. This is
+        // need to avoid iterables because looping over iterables are broken
+        // for ES5 targets.
+        const entries = Array.from(subscriptionUpdates.entries())
+
+        for (const [walletId, subscriptions] of entries) {
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_UPDATE_CHANGE_SERVICE_SUBSCRIPTIONS',
             payload: {
