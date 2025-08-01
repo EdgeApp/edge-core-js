@@ -470,8 +470,22 @@ export interface EdgeCurrencyInfo {
   /** deprecated: refers to chain, use chainDisplayName instead */
   displayName: string
 
-  chainDisplayName: string
+  /**
+   * This is the display name of the network or chain.
+   *
+   * If it does not equal {@link chainDisplayName}, then the asset may be
+   * considered a abstract-native asset (e.g. layer-2 chains).
+   **/
   assetDisplayName: string
+  /**
+   * This is the display name of the network or chain.
+   *
+   * If it does not equal {@link assetDisplayName}, then the chain may be
+   * considered an "abstract" chain (e.g. layer-2 chains).
+   **/
+  chainDisplayName: string
+
+  /** Unique wallet type identifier (e.g. "wallet:bitcoin"). */
   walletType: string
 
   // Native token information:
