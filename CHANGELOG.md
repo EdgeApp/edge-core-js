@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.33.2 (2025-08-01)
+
 - fixed: Fixed syncing bug caused by ES5 transpilation.
 
 ## 2.33.1 (2025-07-24)
