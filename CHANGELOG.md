@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Require the React Native environment to include es2015 & `async` support.
+
 ## 2.33.3 (2025-08-01)
 
 - added: Log the device description on more requests, such as credential changes.

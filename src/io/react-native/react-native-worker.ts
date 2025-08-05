@@ -1,5 +1,3 @@
-import './polyfills'
-
 import hashjs from 'hash.js'
 import HmacDRBG from 'hmac-drbg'
 import { base64 } from 'rfc4648'

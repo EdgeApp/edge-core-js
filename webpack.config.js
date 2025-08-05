@@ -19,11 +19,12 @@ const bundlePath = path.resolve(
 )
 
 const babelOptions = {
-  presets: debug
-    ? ['@babel/preset-typescript', '@babel/preset-react']
-    : ['@babel/preset-env', '@babel/preset-typescript', '@babel/preset-react'],
+  presets: [
+    ['@babel/preset-env', { targets: { chrome: '55' } }],
+    '@babel/preset-typescript',
+    '@babel/preset-react'
+  ],
   plugins: [
-    ['@babel/plugin-transform-for-of', { assumeArray: true }],
     '@babel/plugin-transform-runtime',
     'babel-plugin-transform-fake-error-class'
   ],
