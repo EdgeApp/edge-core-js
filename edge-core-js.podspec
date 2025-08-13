@@ -27,6 +27,9 @@ Pod::Spec.new do |s|
     "ios/EdgeCoreWebView.swift",
     "ios/EdgeCoreWebViewManager.m",
     "ios/EdgeCoreWebViewManager.swift",
+    "ios/EdgeCoreWebViewComponentView.swift",
+    "ios/EdgeCoreTurboModule.swift",
+    "ios/EdgeCoreTurboModule.mm",
     "ios/EdgeNative.swift",
     "ios/PendingCall.swift"
 
@@ -35,4 +38,11 @@ Pod::Spec.new do |s|
   }
 
   s.dependency "React-Core"
+  s.dependency "React-RCTFabric", :conditions => :fabric_enabled
+  s.dependency "ReactCommon/turbomodule/core", :conditions => :fabric_enabled
+
+  # Support for the new architecture
+  if ENV['RCT_NEW_ARCH_ENABLED'] == '1'
+    s.compiler_flags = "-DRCT_NEW_ARCH_ENABLED=1"
+  end
 end

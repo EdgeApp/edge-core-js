@@ -152,5 +152,13 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1"
   },
-  "react-native": "lib/react-native.js"
+  "react-native": "lib/react-native.js",
+  "codegenConfig": {
+    "name": "EdgeCoreSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "app.edge.reactnative.core"
+    }
+  }
 }
