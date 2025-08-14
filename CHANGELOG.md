@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: `SwapNeedsSplitError` type
 - changed: Require the React Native environment to include es2015 & `async` support.
 
 ## 2.33.3 (2025-08-01)

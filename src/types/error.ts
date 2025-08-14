@@ -354,6 +354,21 @@ export class SwapPermissionError extends Error {
 }
 
 /**
+ * Some swap flows require the same on-chain address on both sides.
+ * Example: Fantom -> Sonic upgrade credits to the sender's address.
+ */
+export class SwapNeedsSplitError extends Error {
+  name: string
+
+  constructor(
+    message: string = 'This swap requires from and to wallets to have the same address'
+  ) {
+    super(message)
+    this.name = 'SwapNeedsSplitError'
+  }
+}
+
+/**
  * Cannot find a login with that id.
  *
  * Reasons could include:
@@ -410,5 +425,11 @@ export const asMaybeSwapCurrencyError =
   asMaybeError<SwapCurrencyError>('SwapCurrencyError')
 export const asMaybeSwapPermissionError = asMaybeError<SwapPermissionError>(
   'SwapPermissionError'
+)
+export const asMaybeSwapNeedsSplitError = asMaybeError<SwapNeedsSplitError>(
+  'SwapNeedsSplitError'
+)
+export const asMaybeSwapNeedsSameAddrError = asMaybeError<SwapNeedsSplitError>(
+  'SwapNeedsSplitError'
 )
 export const asMaybeUsernameError = asMaybeError<UsernameError>('UsernameError')

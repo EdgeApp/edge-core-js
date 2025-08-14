@@ -8,6 +8,7 @@ import {
   asMaybeSwapAboveLimitError,
   asMaybeSwapBelowLimitError,
   asMaybeSwapCurrencyError,
+  asMaybeSwapNeedsSplitError,
   asMaybeSwapPermissionError,
   EdgePluginMap,
   EdgeSwapPlugin,
@@ -248,6 +249,7 @@ function rankError(error: unknown): number {
   if (asMaybeSwapAboveLimitError(error) != null) return 4
   if (asMaybeSwapPermissionError(error) != null) return 3
   if (asMaybeSwapCurrencyError(error) != null) return 2
+  if (asMaybeSwapNeedsSplitError(error) != null) return 2
   return 1
 }
 
