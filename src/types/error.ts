@@ -353,6 +353,32 @@ export class SwapPermissionError extends Error {
   }
 }
 
+// Address requirements for certain swap flows (extend as needed):
+export type SwapAddressReason = 'mustMatch' | 'mustBeActivated'
+
+export class SwapAddressError extends Error {
+  name: string
+  readonly swapPluginId: string
+  readonly reason: SwapAddressReason
+
+  constructor(swapInfo: EdgeSwapInfo, opts: { reason: SwapAddressReason }) {
+    const { reason } = opts
+    switch (reason) {
+      case 'mustMatch':
+        super('This swap requires from and to wallets to have the same address')
+        break
+      case 'mustBeActivated':
+        super('The destination wallet must be activated to receive this swap.')
+        break
+      default:
+        super('Invalid swap address')
+    }
+    this.name = 'SwapAddressError'
+    this.swapPluginId = swapInfo.pluginId
+    this.reason = reason
+  }
+}
+
 /**
  * Cannot find a login with that id.
  *
@@ -411,4 +437,6 @@ export const asMaybeSwapCurrencyError =
 export const asMaybeSwapPermissionError = asMaybeError<SwapPermissionError>(
   'SwapPermissionError'
 )
+export const asMaybeSwapAddressError =
+  asMaybeError<SwapAddressError>('SwapAddressError')
 export const asMaybeUsernameError = asMaybeError<UsernameError>('UsernameError')
