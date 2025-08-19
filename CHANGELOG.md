@@ -3,6 +3,7 @@
 ## Unreleased
 
 - changed: Require the React Native environment to include es2015 & `async` support.
+- fixed: `splitWalletInfo` return value when an archived split wallet exists
 
 ## 2.33.3 (2025-08-01)
 

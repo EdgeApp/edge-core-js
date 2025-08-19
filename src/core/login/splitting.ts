@@ -150,7 +150,7 @@ export async function splitWalletInfo(
         migratedFromWalletId: undefined
       }
       await changeWalletStates(ai, accountId, walletInfos)
-      return walletInfo.id
+      return newWalletInfo.id
     }
     if (needsProtection) return newWalletInfo.id
     throw new Error('This wallet has already been split')
