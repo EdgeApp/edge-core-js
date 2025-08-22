@@ -6,6 +6,7 @@ import {
   asMaybeInsufficientFundsError,
   asMaybePendingFundsError,
   asMaybeSwapAboveLimitError,
+  asMaybeSwapAddressError,
   asMaybeSwapBelowLimitError,
   asMaybeSwapCurrencyError,
   asMaybeSwapPermissionError,
@@ -246,6 +247,7 @@ function rankError(error: unknown): number {
   if (asMaybePendingFundsError(error) != null) return 6
   if (asMaybeSwapBelowLimitError(error) != null) return 5
   if (asMaybeSwapAboveLimitError(error) != null) return 4
+  if (asMaybeSwapAddressError(error) != null) return 3.5
   if (asMaybeSwapPermissionError(error) != null) return 3
   if (asMaybeSwapCurrencyError(error) != null) return 2
   return 1
