@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.34.0 (2025-08-25)
+
 - added: `SwapAddressError` type with `reason` flags
 - changed: Require the React Native environment to include es2015 & `async` support.
 - fixed: `splitWalletInfo` return value when an archived split wallet exists
