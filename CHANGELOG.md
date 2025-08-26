@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Avoid deprecated Gradle syntax.
+
 ## 2.34.0 (2025-08-25)
 
 - added: `SwapAddressError` type with `reason` flags

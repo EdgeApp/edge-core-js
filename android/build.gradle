@@ -22,18 +22,18 @@ def DEFAULT_TARGET_SDK_VERSION = 27
 def DEFAULT_WEBKIT_VERSION = '1.4.0'
 
 android {
-  namespace "app.edge.reactnative.core"
-  compileSdkVersion safeExtGet('compileSdkVersion', DEFAULT_COMPILE_SDK_VERSION)
-  buildToolsVersion safeExtGet('buildToolsVersion', DEFAULT_BUILD_TOOLS_VERSION)
+  namespace = "app.edge.reactnative.core"
+  compileSdkVersion = safeExtGet('compileSdkVersion', DEFAULT_COMPILE_SDK_VERSION)
+  buildToolsVersion = safeExtGet('buildToolsVersion', DEFAULT_BUILD_TOOLS_VERSION)
 
   defaultConfig {
-    minSdkVersion safeExtGet('minSdkVersion', DEFAULT_MIN_SDK_VERSION)
-    targetSdkVersion safeExtGet('targetSdkVersion', DEFAULT_TARGET_SDK_VERSION)
-    versionCode 1
-    versionName '1.0'
+    minSdkVersion = safeExtGet('minSdkVersion', DEFAULT_MIN_SDK_VERSION)
+    targetSdkVersion = safeExtGet('targetSdkVersion', DEFAULT_TARGET_SDK_VERSION)
+    versionCode = 1
+    versionName = '1.0'
   }
   lintOptions {
-    abortOnError false
+    abortOnError = false
   }
   externalNativeBuild {
     cmake {
