@@ -12,7 +12,7 @@ import {
   EdgeFreshAddress,
   EdgeGetReceiveAddressOptions,
   EdgeGetTransactionsOptions,
-  EdgeParsedUri,
+  EdgeParsedLink,
   EdgeSpendInfo,
   EdgeStakingStatus,
   EdgeToken,
@@ -367,11 +367,11 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
   }
 
   // URI parsing:
-  parseUri(uri: string): Promise<EdgeParsedUri> {
+  parseLink(uri: string): Promise<EdgeParsedLink> {
     return Promise.resolve({})
   }
 
-  encodeUri(): Promise<string> {
+  encodePayLink(): Promise<string> {
     return Promise.resolve('')
   }
 }

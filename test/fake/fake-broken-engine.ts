@@ -30,10 +30,10 @@ export const brokenEnginePlugin: EdgeCurrencyPlugin = {
       getSplittableTypes() {
         return Promise.resolve([])
       },
-      parseUri() {
+      parseLink() {
         return Promise.resolve({})
       },
-      encodeUri() {
+      encodePayLink() {
         return Promise.resolve('')
       }
     }
