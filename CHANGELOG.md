@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyConfig.encodePayLink`
+- added: `EdgeCurrencyConfig.parseLink`
+- deprecated: `EdgeCurrencyWallet.encodeUri`. Use `EdgeCurrencyConfig.encodePayLink`
+- deprecated: `EdgeCurrencyWallet.parseUri`. Use `EdgeCurrencyConfig.parseLink`
 - fixed: Avoid deprecated Gradle syntax.
 
 ## 2.34.0 (2025-08-25)
