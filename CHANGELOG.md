@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyConfig.encodePayLink`
+- added: `EdgeCurrencyConfig.parseLink`
+- deprecated: `EdgeCurrencyWallet.encodeUri`. Use `EdgeCurrencyConfig.encodePayLink`
+- deprecated: `EdgeCurrencyWallet.parseUri`. Use `EdgeCurrencyConfig.parseLink`
+
 ## 2.42.0 (2026-02-10)
 
 - added: `EdgeCurrencyEngineCallbacks.onSyncStatusChanged` callback.

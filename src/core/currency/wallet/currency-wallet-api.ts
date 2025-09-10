@@ -47,6 +47,7 @@ import { splitWalletInfo } from '../../login/splitting'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
+import { linkToParsedUri } from '../uri-tools'
 import {
   determineConfirmations,
   makeCurrencyWalletCallbacks,
@@ -748,31 +749,68 @@ export function makeCurrencyWalletApi(
 
     // URI handling:
     async encodeUri(options: EdgeEncodeUri): Promise<string> {
-      return await tools.encodeUri(
-        options,
-        makeMetaTokens(
-          input.props.state.accounts[accountId].customTokens[pluginId]
-        )
-      )
-    },
-    async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
-      const parsedUri = await tools.parseUri(
-        uri,
-        currencyCode,
-        makeMetaTokens(
-          input.props.state.accounts[accountId].customTokens[pluginId]
-        )
-      )
+      const allTokens =
+        input.props.state.accounts[accountId].allTokens[pluginId]
 
-      if (parsedUri.tokenId === undefined) {
+      if (tools.encodePayLink != null) {
         const { tokenId = null } = upgradeCurrencyCode({
-          allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+          allTokens,
           currencyInfo: plugin.currencyInfo,
-          currencyCode: parsedUri.currencyCode ?? currencyCode
+          currencyCode: options.currencyCode
         })
-        parsedUri.tokenId = tokenId
+        return await tools.encodePayLink(
+          { ...options, addressType: 'publicAddress', tokenId },
+          { allTokens }
+        )
       }
-      return parsedUri
+
+      if (tools.encodeUri != null) {
+        return await tools.encodeUri(
+          options,
+          makeMetaTokens(
+            input.props.state.accounts[accountId].customTokens[pluginId]
+          )
+        )
+      }
+
+      return ''
+    },
+
+    async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
+      const allTokens =
+        input.props.state.accounts[accountId].allTokens[pluginId]
+
+      if (tools.parseLink != null) {
+        const { tokenId = null } = upgradeCurrencyCode({
+          allTokens,
+          currencyInfo: plugin.currencyInfo,
+          currencyCode
+        })
+        const out = await tools.parseLink(uri, { allTokens, tokenId })
+        return linkToParsedUri(out)
+      }
+
+      if (tools.parseUri != null) {
+        const parsedUri = await tools.parseUri(
+          uri,
+          currencyCode,
+          makeMetaTokens(
+            input.props.state.accounts[accountId].customTokens[pluginId]
+          )
+        )
+
+        if (parsedUri.tokenId === undefined) {
+          const { tokenId = null } = upgradeCurrencyCode({
+            allTokens,
+            currencyInfo: plugin.currencyInfo,
+            currencyCode: parsedUri.currencyCode ?? currencyCode
+          })
+          parsedUri.tokenId = tokenId
+        }
+        return parsedUri
+      }
+
+      return {}
     },
 
     // Generic:
