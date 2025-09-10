@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyConfig.encodePayLink`
+- added: `EdgeCurrencyConfig.parseLink`
+- deprecated: `EdgeCurrencyWallet.encodeUri`. Use `EdgeCurrencyConfig.encodePayLink`
+- deprecated: `EdgeCurrencyWallet.parseUri`. Use `EdgeCurrencyConfig.parseLink`
+
 ## 2.41.0 (2026-01-27)
 
 - added: New `privacy` option argument to EdgeIo fetch function for NYM support.
