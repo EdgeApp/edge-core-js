@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## 2.34.1 (2025-09-19)
+
 - fixed: Avoid deprecated Gradle syntax.
+- changed: Support 16KiB alignment on Android.
 
 ## 2.34.0 (2025-08-25)
 
