@@ -12,3 +12,6 @@ add_library(
   scrypt/crypto_scrypt.c
   scrypt/sha256.c
 )
+
+# 16KiB page alignment:
+target_link_options(edge-core-jni PRIVATE "-Wl,-z,max-page-size=16384")

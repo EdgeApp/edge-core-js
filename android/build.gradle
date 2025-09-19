@@ -5,7 +5,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.6.0'
+    classpath 'com.android.tools.build:gradle:7.3.1'
   }
 }
 
@@ -15,20 +15,14 @@ def safeExtGet(prop, fallback) {
   rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
-def DEFAULT_COMPILE_SDK_VERSION = 28
-def DEFAULT_BUILD_TOOLS_VERSION = '28.0.2'
-def DEFAULT_MIN_SDK_VERSION = 19
-def DEFAULT_TARGET_SDK_VERSION = 27
-def DEFAULT_WEBKIT_VERSION = '1.4.0'
-
 android {
   namespace = "app.edge.reactnative.core"
-  compileSdkVersion = safeExtGet('compileSdkVersion', DEFAULT_COMPILE_SDK_VERSION)
-  buildToolsVersion = safeExtGet('buildToolsVersion', DEFAULT_BUILD_TOOLS_VERSION)
+  compileSdk = safeExtGet('compileSdkVersion', 31)
+  ndkVersion = safeExtGet('ndkVersion', '28.0.2')
 
   defaultConfig {
-    minSdkVersion = safeExtGet('minSdkVersion', DEFAULT_MIN_SDK_VERSION)
-    targetSdkVersion = safeExtGet('targetSdkVersion', DEFAULT_TARGET_SDK_VERSION)
+    minSdk = safeExtGet('minSdkVersion', 19)
+    targetSdk = safeExtGet('targetSdkVersion', 34)
     versionCode = 1
     versionName = '1.0'
   }
@@ -45,7 +39,7 @@ android {
 repositories {
 }
 
-def webkit_version = safeExtGet('webkitVersion', DEFAULT_WEBKIT_VERSION)
+def webkit_version = safeExtGet('webkitVersion', '1.4.0')
 
 dependencies {
   implementation "androidx.webkit:webkit:$webkit_version"
