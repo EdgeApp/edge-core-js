@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Do not "upgrade" swap quotes to the wrong tokenId.
+
 ## 2.34.1 (2025-09-19)
 
 - fixed: Avoid deprecated Gradle syntax.

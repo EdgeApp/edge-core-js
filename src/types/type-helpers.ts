@@ -37,8 +37,8 @@ export function upgradeCurrencyCode(opts: {
 }
 
 export function upgradeSwapQuote(quote: EdgeSwapQuote): EdgeSwapQuote {
-  if (quote.networkFee != null && quote.networkFee.tokenId == null) {
-    quote.networkFee.tokenId = quote.request.fromTokenId
+  if (quote.networkFee != null && quote.networkFee.tokenId === undefined) {
+    quote.networkFee.tokenId = null
   }
   return quote
 }
