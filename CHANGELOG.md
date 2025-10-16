@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Account for other potentially fee-impacting props (e.g. OP_RETURN) in `getMaxSpendableInner`
+
 ## 2.34.2 (2025-10-02)
 
 - fixed: Do not "upgrade" swap quotes to the wrong tokenId.

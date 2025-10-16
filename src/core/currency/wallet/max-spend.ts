@@ -66,7 +66,11 @@ export const getMaxSpendableInner = async (
           ...upgradedCurrency,
           spendTargets,
           networkFeeOption,
-          customNetworkFee
+          customNetworkFee,
+          // Include memos & otherParams to accurately price other factors that
+          // may impact the fee (e.g. OP_RETURN).
+          memos: spendInfo.memos,
+          otherParams: spendInfo.otherParams
         },
         { privateKeys }
       )
