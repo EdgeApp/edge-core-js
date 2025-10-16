@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyInfo.evmChainId`
+
 ## 2.34.2 (2025-10-02)
 
 - fixed: Do not "upgrade" swap quotes to the wrong tokenId.
