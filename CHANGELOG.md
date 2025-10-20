@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyInfo.evmChainId`
+
 ## 2.34.3 (2025-10-16)
 
-- fixed: Account for other potentially fee-impacting props (e.g. OP_RETURN) in `getMaxSpendableInner`
+- fixed: Account for other potentially fee-impacting props (e.g. OP_RETURN) in
 
 ## 2.34.2 (2025-10-02)
 

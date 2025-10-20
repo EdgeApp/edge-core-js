@@ -486,6 +486,9 @@ export interface EdgeCurrencyInfo {
   customTokenTemplate?: EdgeObjectTemplate // Indicates custom token support
   requiredConfirmations?: number // Block confirmations required for a tx
 
+  /** EVM chain id */
+  evmChainId?: number
+
   /**
    * Lists the types of memos this chain supports.
    * A missing or empty list means no memo support.
