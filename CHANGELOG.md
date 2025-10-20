@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.35.0 (2025-10-20)
+
 - added: `EdgeCurrencyInfo.evmChainId`
 
 ## 2.34.3 (2025-10-16)
