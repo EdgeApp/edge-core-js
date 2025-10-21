@@ -19,6 +19,9 @@ describe('data store API', function () {
     // Empty to start:
     expect(await account.dataStore.listStoreIds()).deep.equals([])
 
+    // Safe to delete missing items:
+    await account.dataStore.deleteItem(storeId, 'nop')
+
     // Set some items:
     await account.dataStore.setItem(storeId, 'username', 'shibe')
     await account.dataStore.setItem(storeId, 'password', 'm00n')
