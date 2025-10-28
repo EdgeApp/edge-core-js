@@ -291,7 +291,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
               privateKeys,
               subscribeParam: {
                 address: subscription.address,
-                checkpoint: subscription.checkpoint
+                checkpoint: subscription.checkpoint,
+                needsSync: subscription.status === 'syncing'
               }
             })
           }
@@ -314,7 +315,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       !props.walletState.paused &&
       props.walletState.engineStarted &&
       props.walletState.changeServiceSubscriptions.some(
-        subscription => subscription.status === 'syncing'
+        subscription =>
+          subscription.status === 'syncing' || subscription.status === 'synced'
       )
         ? props
         : undefined
