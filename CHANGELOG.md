@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: Add `needsSync` to `EdgeEngineSyncNetworkOptions` to fix sync reliability.
+- fixed: Fixed crash caused by `syncNetwork` throwing an unexpected error.
 
 ## 2.35.0 (2025-10-20)
 

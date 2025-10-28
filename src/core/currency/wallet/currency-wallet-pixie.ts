@@ -287,14 +287,22 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           const privateKeys = requiresPrivateKeys ? walletInfo.keys : undefined
           // Sync the network for each subscription:
           for (const subscription of walletState.changeServiceSubscriptions) {
-            await engine.syncNetwork({
-              privateKeys,
-              subscribeParam: {
-                address: subscription.address,
-                checkpoint: subscription.checkpoint,
-                needsSync: subscription.status === 'syncing'
-              }
-            })
+            await engine
+              .syncNetwork({
+                privateKeys,
+                subscribeParam: {
+                  address: subscription.address,
+                  checkpoint: subscription.checkpoint,
+                  needsSync: subscription.status === 'syncing'
+                }
+              })
+              .catch(error => {
+                const scopedLog = makeLog(
+                  props.logBackend,
+                  `${props.walletState.pluginId}-${walletInfo.id.slice(0, 2)}`
+                )
+                scopedLog.error(error)
+              })
           }
           // Update subscription status if managed by the change service:
           props.dispatch({
@@ -331,15 +339,26 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             syncNetworkTask.stop()
             return
           }
-          const { walletState } = input.props
-          const { currencyInfo, walletInfo, publicWalletInfo } = walletState
+          const { walletState, logBackend } = input.props
+          const { currencyInfo, walletInfo, pluginId, publicWalletInfo } =
+            walletState
           // Get the private keys if required by the engine:
           const requiresPrivateKeys =
             currencyInfo.unsafeSyncNetwork === true && publicWalletInfo != null
           const privateKeys = requiresPrivateKeys ? walletInfo.keys : undefined
-          const delay = await engine.syncNetwork({
-            privateKeys
-          })
+          const delay = await engine
+            .syncNetwork({
+              privateKeys
+            })
+            .catch(error => {
+              const scopedLog = makeLog(
+                logBackend,
+                `${pluginId}-${walletInfo.id.slice(0, 2)}`
+              )
+              scopedLog.error(error)
+              return 10000
+            })
+
           syncNetworkTask.setDelay(delay)
         },
         10000,
