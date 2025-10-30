@@ -5,6 +5,7 @@ import {
   EdgeAssetAction,
   EdgeCurrencyEngineCallbacks,
   EdgeMetadataChange,
+  EdgeSubscribedAddress,
   EdgeTokenId,
   EdgeTransaction,
   EdgeTxAction
@@ -608,18 +609,49 @@ export async function saveTxMetadataFile(
  */
 export async function loadSeenTxCheckpointFile(
   input: CurrencyWalletInput
-): Promise<string | undefined> {
+): Promise<{
+  checkpoint: string | undefined
+  subscribedAddresses: EdgeSubscribedAddress[]
+}> {
   const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
-  const { checkpoint } =
-    (await seenCheckpointFile.load(disklet, SEEN_TX_CHECKPOINT_FILE)) ?? {}
+  const rawFileData = await seenCheckpointFile.load(
+    disklet,
+    SEEN_TX_CHECKPOINT_FILE
+  )
+  const fileData = rawFileData ?? {
+    checkpoint: undefined,
+    subscribedAddresses: []
+  }
+  const checkpoint = fileData.checkpoint
+  const subscribedAddresses = fileData.subscribedAddresses ?? []
+
   if (checkpoint != null) {
     dispatch({
       type: 'CURRENCY_ENGINE_SEEN_TX_CHECKPOINT_CHANGED',
       payload: { checkpoint, walletId }
     })
   }
-  return checkpoint
+
+  if (subscribedAddresses.length > 0) {
+    // Convert EdgeSubscribedAddress[] to ChangeServiceSubscription[]
+    const subscriptions = subscribedAddresses.map(
+      ({ address, checkpoint }) => ({
+        address,
+        checkpoint,
+        status: 'subscribing' as const
+      })
+    )
+    dispatch({
+      type: 'CURRENCY_WALLET_LOADED_SUBSCRIBED_ADDRESSES',
+      payload: {
+        subscribedAddresses: subscriptions,
+        walletId
+      }
+    })
+  }
+
+  return { checkpoint, subscribedAddresses }
 }
 
 /**
@@ -627,19 +659,33 @@ export async function loadSeenTxCheckpointFile(
  */
 export async function saveSeenTxCheckpointFile(
   input: CurrencyWalletInput,
-  checkpoint: string
+  checkpoint?: string,
+  subscribedAddresses?: EdgeSubscribedAddress[]
 ): Promise<void> {
   const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
+  // Load existing file to preserve subscribed addresses if not provided
+  const rawExistingFile = await seenCheckpointFile.load(
+    disklet,
+    SEEN_TX_CHECKPOINT_FILE
+  )
+  const existingFile = rawExistingFile ?? {
+    checkpoint: undefined,
+    subscribedAddresses: []
+  }
   const fileData = {
-    checkpoint
+    checkpoint,
+    subscribedAddresses:
+      subscribedAddresses ?? existingFile.subscribedAddresses ?? []
   }
 
-  dispatch({
-    type: 'CURRENCY_ENGINE_SEEN_TX_CHECKPOINT_CHANGED',
-    payload: { checkpoint, walletId }
-  })
+  if (checkpoint != null) {
+    dispatch({
+      type: 'CURRENCY_ENGINE_SEEN_TX_CHECKPOINT_CHANGED',
+      payload: { checkpoint, walletId }
+    })
+  }
 
   await seenCheckpointFile.save(disklet, SEEN_TX_CHECKPOINT_FILE, fileData)
 }

@@ -204,6 +204,10 @@ const currencyWalletInner = buildReducer<
       })
       return [...filteredState, ...action.payload.subscriptions]
     }
+    if (action.type === 'CURRENCY_WALLET_LOADED_SUBSCRIBED_ADDRESSES') {
+      // When loading from disk, replace the state with loaded subscriptions
+      return action.payload.subscribedAddresses
+    }
     return state
   },
 

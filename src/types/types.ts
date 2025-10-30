@@ -426,6 +426,11 @@ export interface EdgeTokenInfo {
   multiplier: string
 }
 
+export interface EdgeSubscribedAddress {
+  address: string
+  checkpoint?: string
+}
+
 /**
  * The search parameter for {@link EdgeCurrencyConfig.getTokenDetails} and
  * {@link EdgeCurrencyTools.getTokenDetails}.
@@ -940,8 +945,8 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
   readonly onSubscribeAddresses: (
     paramsOrAddresses:
-      | Array<{ address: string; checkpoint?: string }>
-      /** @deprecated Use the array of param objects instead. */
+      | EdgeSubscribedAddress[]
+      /** @deprecated Use the array of EdgeSubscribedAddress objects instead. */
       | string[]
   ) => void
   readonly onTokenBalanceChanged: (
@@ -971,6 +976,7 @@ export interface EdgeCurrencyEngineOptions {
 
   // Engine state kept by the core:
   seenTxCheckpoint?: string
+  subscribedAddresses?: EdgeSubscribedAddress[]
 
   /** True if we only need a balance and the ability to spend it. */
   lightMode?: boolean

@@ -11,6 +11,7 @@ import {
   EdgeConfirmationState,
   EdgeCurrencyEngineCallbacks,
   EdgeStakingStatus,
+  EdgeSubscribedAddress,
   EdgeTokenId,
   EdgeTransaction,
   EdgeTransactionEvent
@@ -293,28 +294,29 @@ export function makeCurrencyWalletCallbacks(
     },
 
     onSubscribeAddresses(
-      paramsOrAddresses:
-        | Array<{ address: string; checkpoint?: string }>
-        | string[]
+      paramsOrAddresses: EdgeSubscribedAddress[] | string[]
     ) {
-      const params = paramsOrAddresses.map(param =>
-        typeof param === 'string'
-          ? {
-              address: param,
-              checkpoint: undefined
-            }
-          : param
-      )
-      const changeServiceSubscriptions =
-        input.props.state.currency.wallets[walletId].changeServiceSubscriptions
-      const subscriptions: ChangeServiceSubscription[] = [
-        ...changeServiceSubscriptions,
-        ...params.map(({ address, checkpoint }) => ({
+      const subscribedAddresses: EdgeSubscribedAddress[] =
+        paramsOrAddresses.map(param =>
+          typeof param === 'string'
+            ? {
+                address: param,
+                checkpoint: undefined
+              }
+            : param
+        )
+      // Save subscribed addresses to disk (along with current checkpoint)
+      saveSeenTxCheckpointFile(
+        input,
+        input.props.walletState.seenTxCheckpoint ?? undefined,
+        subscribedAddresses
+      ).catch(error => input.props.onError(error))
+      const subscriptions: ChangeServiceSubscription[] =
+        subscribedAddresses.map(({ address, checkpoint }) => ({
           address,
           status: 'subscribing' as const,
           checkpoint
         }))
-      ]
       // TODO: We currently have no way to remove addresses from this list.
       // This could be an issue for chains like Hedera where activating the wallet
       // causes its address to permanently change. For now we'll accept the extra

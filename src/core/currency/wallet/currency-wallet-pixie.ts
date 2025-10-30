@@ -110,8 +110,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       })
 
       // Load the last seen transaction checkpoint into memory.
-      // This is passed to the engine's startEngine method.
-      const seenTxCheckpoint = await loadSeenTxCheckpointFile(input)
+      // This also loads subscribed addresses from the same file.
+      const { checkpoint: seenTxCheckpoint, subscribedAddresses } =
+        await loadSeenTxCheckpointFile(input)
 
       // We need to know which tokens are enabled,
       // so the engine can start in the right state:
@@ -124,6 +125,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
         // Engine state kept by the core:
         seenTxCheckpoint,
+        subscribedAddresses,
 
         // Wallet-scoped IO objects:
         log: makeLog(
