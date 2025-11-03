@@ -290,7 +290,7 @@ export const currency: TamePixie<RootProps> = combinePixies({
             // changes for the address:
             case 1:
               // Start syncing the wallet once for initial syncNetwork call:
-              status = 'syncing'
+              status = 'synced'
               break
             // Change server does support this wallet plugin, and there are
             // changes for the address:

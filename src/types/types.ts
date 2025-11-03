@@ -904,6 +904,11 @@ export interface EdgeEngineSyncNetworkOptions {
      * example of updates without checkpoints.
      * */
     checkpoint?: string
+    /**
+     * This explicitly denotes that the wallet needs to sync the network.
+     * If undefined, assumed to be `true` (default is `true`).
+     */
+    needsSync?: boolean
   }
   privateKeys?: JsonObject
 }
