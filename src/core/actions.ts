@@ -328,6 +328,14 @@ export type RootAction =
       }
     }
   | {
+      // Called when subscribed addresses have been loaded from disk.
+      type: 'CURRENCY_WALLET_LOADED_SUBSCRIBED_ADDRESSES'
+      payload: {
+        subscribedAddresses: ChangeServiceSubscription[]
+        walletId: string
+      }
+    }
+  | {
       // Called when a currency wallet receives a new name.
       type: 'CURRENCY_WALLET_NAME_CHANGED'
       payload: {

@@ -17,6 +17,7 @@ import {
   EdgeAssetAmount,
   EdgeFiatAmount,
   EdgeMetadata,
+  EdgeSubscribedAddress,
   EdgeSwapInfo,
   EdgeTokenId,
   EdgeTxAction,
@@ -371,7 +372,16 @@ export const asPublicKeyFile = asObject({
  * string.
  */
 export const asSeenCheckpointFile = asObject({
-  checkpoint: asString
+  checkpoint: asOptional(asString),
+  subscribedAddresses: asOptional(
+    asArray<EdgeSubscribedAddress>(
+      asObject({
+        address: asString,
+        checkpoint: asOptional(asString)
+      })
+    ),
+    () => []
+  )
 })
 
 export const asWalletFiatFile = asObject({

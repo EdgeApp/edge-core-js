@@ -2,7 +2,9 @@
 
 ## Unreleased
 
+- added: Added `EdgeSubscribedAddress` type for `onSubscribeAddresses` and `startEngine`.
 - added: Add `needsSync` to `EdgeEngineSyncNetworkOptions` to fix sync reliability.
+- added: Persist `EdgeSubscribedAddress` objects to synced storage for each engine/wallet.
 
 ## 2.35.0 (2025-10-20)
 
