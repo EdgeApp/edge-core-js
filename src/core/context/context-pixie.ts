@@ -9,6 +9,7 @@ import { close, update } from 'yaob'
 import { EdgeContext, EdgeLogSettings, EdgeUserInfo } from '../../types/types'
 import { makePeriodicTask } from '../../util/periodic-task'
 import { shuffle } from '../../util/shuffle'
+import { healLogins } from '../login/login'
 import { ApiInput, RootProps } from '../root-pixie'
 import { makeContextApi } from './context-api'
 import {
@@ -52,6 +53,19 @@ export const context: TamePixie<RootProps> = combinePixies({
           update(ai.props.output.context.api)
         }
       }
+    }
+  },
+
+  loginHealer(ai: ApiInput) {
+    let done = false
+    return {
+      update() {
+        if (done) return stopUpdates
+        done = true
+        healLogins(ai).catch(error => ai.props.onError(error))
+        return stopUpdates
+      },
+      destroy() {}
     }
   },
 

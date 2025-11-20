@@ -24,14 +24,16 @@ export function getStashByUsername(
   username: string
 ): LoginStash | undefined {
   const { stashes } = ai.props.state.login
-  for (const stash of stashes) {
+  for (const rootStash of stashes) {
+    const stash = rootStash.wipChange ?? rootStash
     if (stash.username === username) return stash
   }
 }
 
 export function getStashById(ai: ApiInput, loginId: Uint8Array): StashLeaf {
   const { stashes } = ai.props.state.login
-  for (const stashTree of stashes) {
+  for (const rootStash of stashes) {
+    const stashTree = rootStash.wipChange ?? rootStash
     const stash = searchTree(stashTree, stash =>
       verifyData(stash.loginId, loginId)
     )
