@@ -34,6 +34,8 @@ import {
   saveCustomTokens
 } from './custom-tokens'
 
+export const EXPEDITED_SYNC_INTERVAL = 5000
+
 export interface AccountOutput {
   readonly accountApi: EdgeAccount
   readonly currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
@@ -160,9 +162,21 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         update() {
           if (input.props.accountOutput?.accountApi == null) return
 
+          const { accountId } = input.props
+          const { stashTree } = input.props.state.accounts[accountId]
+
+          // Speed up the login-stash sync interval while there is a WIP change:
+          const loginInterval =
+            stashTree.wipChange != null
+              ? EXPEDITED_SYNC_INTERVAL
+              : SYNC_INTERVAL
+
+          dataTask.setDelay(SYNC_INTERVAL)
+          loginTask.setDelay(loginInterval)
+
           // Start once the EdgeAccount API exists:
           dataTask.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
-          loginTask.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
+          loginTask.start({ wait: loginInterval * (1 + Math.random()) })
         },
 
         destroy() {

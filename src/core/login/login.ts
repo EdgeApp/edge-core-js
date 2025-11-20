@@ -11,6 +11,7 @@ import { asMaybeOtpError, EdgeAccountOptions } from '../../types/types'
 import { decrypt, decryptText } from '../../util/crypto/crypto'
 import { totp } from '../../util/crypto/hotp'
 import { verifyData } from '../../util/crypto/verify'
+import { utf8 } from '../../util/encoding'
 import { softCat } from '../../util/util'
 import { ApiInput } from '../root-pixie'
 import { loginFetch } from './login-fetch'
@@ -130,6 +131,11 @@ function applyLoginPayloadInner(
     out.recovery2Key = decrypt(loginReply.recovery2KeyBox, loginKey)
   }
 
+  // Store the username unencrypted:
+  if (loginReply.userTextBox != null) {
+    out.username = utf8.stringify(decrypt(loginReply.userTextBox, loginKey))
+  }
+
   // Sort children oldest to newest:
   children.sort((a, b) => a.created.valueOf() - b.created.valueOf())
 
@@ -182,7 +188,13 @@ export function applyLoginPayload(
     stashTree,
     stash => stash.appId === loginReply.appId,
     stash => applyLoginPayloadInner(stash, loginKey, loginReply),
-    (stash, children) => ({ ...stash, children })
+    (stash, children) => ({
+      ...stash,
+      children,
+      // If we hear back from the server, it is authoritative,
+      // so we can discard our local work-in-progress change:
+      wipChange: undefined
+    })
   )
 }
 
@@ -417,15 +429,6 @@ export async function applyKit(
   const { stashTree } = getStashById(ai, kit.loginId)
   const { deviceDescription } = ai.props.state.login
 
-  // Don't make server-side changes if the server path is faked:
-  if (serverPath !== '') {
-    const childKey = decryptChildKey(stashTree, sessionKey, kit.loginId)
-    const request = makeAuthJson(stashTree, childKey)
-    if (deviceDescription != null) request.deviceDescription = deviceDescription
-    request.data = kit.server
-    await loginFetch(ai, serverMethod, serverPath, request)
-  }
-
   const newStashTree = updateTree<LoginStash, LoginStash>(
     stashTree,
     stash => verifyData(stash.loginId, kit.loginId),
@@ -433,10 +436,34 @@ export async function applyKit(
       ...stash,
       ...kit.stash,
       children: softCat(stash.children, kit.stash.children),
-      keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
+      keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes),
+      wipChange: undefined
     }),
-    (stash, children) => ({ ...stash, children })
+    (stash, children) => ({ ...stash, children, wipChange: undefined })
   )
+
+  // Save the WIP change to disk:
+  if (serverPath !== '') {
+    stashTree.wipChange = newStashTree
+    await saveStash(ai, stashTree)
+  }
+
+  // Don't make server-side changes if the server path is faked:
+  if (serverPath !== '') {
+    const childKey = decryptChildKey(stashTree, sessionKey, kit.loginId)
+    const request = makeAuthJson(stashTree, childKey)
+    if (deviceDescription != null) request.deviceDescription = deviceDescription
+    request.data = kit.server
+    try {
+      await loginFetch(ai, serverMethod, serverPath, request)
+    } catch (error) {
+      // On network failure, immediately trigger a sync to check if our
+      // change made it to the server. This runs in the background:
+      syncLogin(ai, sessionKey).catch(() => {})
+      throw error
+    }
+  }
+
   await saveStash(ai, newStashTree)
 
   return newStashTree
