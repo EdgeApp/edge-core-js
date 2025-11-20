@@ -18,10 +18,12 @@ import {
 import { makePeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
 import { syncLogin } from '../login/login'
+import { getStashById } from '../login/login-selectors'
 import { waitForPlugins } from '../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../root-pixie'
 import {
   addStorageWallet,
+  EXPEDITED_SYNC_INTERVAL,
   SYNC_INTERVAL,
   syncStorageWallet
 } from '../storage/storage-actions'
@@ -160,9 +162,25 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         update() {
           if (input.props.accountOutput?.accountApi == null) return
 
+          const { accountId } = input.props
+          const { sessionKey } = input.props.state.accounts[accountId]
+          const { stashTree } = getStashById(
+            toApiInput(input),
+            sessionKey.loginId
+          )
+
+          // Speed up the login-stash sync interval while there is a WIP change:
+          const loginInterval =
+            stashTree.wipChange != null
+              ? EXPEDITED_SYNC_INTERVAL
+              : SYNC_INTERVAL
+
+          dataTask.setDelay(SYNC_INTERVAL)
+          loginTask.setDelay(loginInterval)
+
           // Start once the EdgeAccount API exists:
           dataTask.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
-          loginTask.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
+          loginTask.start({ wait: loginInterval * (1 + Math.random()) })
         },
 
         destroy() {

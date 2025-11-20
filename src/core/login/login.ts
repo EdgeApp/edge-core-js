@@ -182,7 +182,13 @@ export function applyLoginPayload(
     stashTree,
     stash => stash.appId === loginReply.appId,
     stash => applyLoginPayloadInner(stash, loginKey, loginReply),
-    (stash, children) => ({ ...stash, children })
+    (stash, children) => ({
+      ...stash,
+      children,
+      // If we hear back from the server, that is authoritative,
+      // so we can discard our local work-in-progress change:
+      wipChange: undefined
+    })
   )
 }
 
@@ -417,15 +423,6 @@ export async function applyKit(
   const { stashTree } = getStashById(ai, kit.loginId)
   const { deviceDescription } = ai.props.state.login
 
-  // Don't make server-side changes if the server path is faked:
-  if (serverPath !== '') {
-    const childKey = decryptChildKey(stashTree, sessionKey, kit.loginId)
-    const request = makeAuthJson(stashTree, childKey)
-    if (deviceDescription != null) request.deviceDescription = deviceDescription
-    request.data = kit.server
-    await loginFetch(ai, serverMethod, serverPath, request)
-  }
-
   const newStashTree = updateTree<LoginStash, LoginStash>(
     stashTree,
     stash => verifyData(stash.loginId, kit.loginId),
@@ -433,10 +430,33 @@ export async function applyKit(
       ...stash,
       ...kit.stash,
       children: softCat(stash.children, kit.stash.children),
-      keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes)
+      keyBoxes: softCat(stash.keyBoxes, kit.stash.keyBoxes),
+      wipChange: undefined
     }),
-    (stash, children) => ({ ...stash, children })
+    (stash, children) => ({ ...stash, children, wipChange: undefined })
   )
+
+  // Save the WIP change to disk:
+  if (serverPath !== '') {
+    stashTree.wipChange = newStashTree
+    await saveStash(ai, stashTree)
+  }
+
+  // Don't make server-side changes if the server path is faked:
+  if (serverPath !== '') {
+    const childKey = decryptChildKey(stashTree, sessionKey, kit.loginId)
+    const request = makeAuthJson(stashTree, childKey)
+    if (deviceDescription != null) request.deviceDescription = deviceDescription
+    request.data = kit.server
+    try {
+      await loginFetch(ai, serverMethod, serverPath, request)
+    } catch (error) {
+      // If we fail, try to sync to see if the server got it:
+      await syncLogin(ai, sessionKey).catch(() => {})
+      throw error
+    }
+  }
+
   await saveStash(ai, newStashTree)
 
   return newStashTree
@@ -585,4 +605,45 @@ export function makeAuthJson(
     }
   }
   throw new Error('No server authentication methods available')
+}
+
+export async function healLogins(ai: ApiInput): Promise<void> {
+  const { stashes } = ai.props.state.login
+  for (const stashTree of stashes) {
+    if (stashTree.wipChange == null) continue
+
+    const { syncToken } = stashTree
+    let isSyncedWithServer = false
+    if (syncToken != null) {
+      try {
+        const reply = await loginFetch(ai, 'POST', '/v2/sync', {
+          loginId: stashTree.loginId,
+          syncToken
+        })
+        // true means we are current (our syncToken matches the server)
+        // false means we are stale (server has changes we don't have)
+        isSyncedWithServer = asBoolean(reply)
+      } catch (error) {
+        continue
+      }
+    }
+
+    if (isSyncedWithServer) {
+      // Server never got our change, so apply wipChange locally:
+      const newStash = { ...stashTree.wipChange, wipChange: undefined }
+      await saveStash(ai, newStash)
+    } else {
+      // Server has changes (possibly our wipChange), discard local wipChange
+      // but preserve client-only data that the server doesn't return:
+      const { username, lastLogin } = stashTree.wipChange ?? {}
+      const newStash = {
+        ...stashTree,
+        // Preserve client-only data from wipChange if not already in stashTree:
+        username: stashTree.username ?? username,
+        lastLogin: stashTree.lastLogin ?? lastLogin,
+        wipChange: undefined
+      }
+      await saveStash(ai, newStash)
+    }
+  }
 }

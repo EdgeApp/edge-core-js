@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Recover WIP login stashes if login-server network requests fails.
+
 ## 2.36.0 (2025-11-04)
 
 - added: Added `EdgeSubscribedAddress` type for `onSubscribeAddresses` and `startEngine`.

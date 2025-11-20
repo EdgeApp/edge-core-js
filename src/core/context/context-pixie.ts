@@ -9,6 +9,7 @@ import { close, update } from 'yaob'
 import { EdgeContext, EdgeLogSettings, EdgeUserInfo } from '../../types/types'
 import { makePeriodicTask } from '../../util/periodic-task'
 import { shuffle } from '../../util/shuffle'
+import { healLogins } from '../login/login'
 import { ApiInput, RootProps } from '../root-pixie'
 import { makeContextApi } from './context-api'
 import {
@@ -52,6 +53,31 @@ export const context: TamePixie<RootProps> = combinePixies({
           update(ai.props.output.context.api)
         }
       }
+    }
+  },
+
+  loginHealer(ai: ApiInput) {
+    let healing = false
+
+    return {
+      update() {
+        // Don't start a new heal while one is in progress
+        if (healing) return
+
+        // Heal whenever we detect stashes with wipChange
+        const hasWipChanges = ai.props.state.login.stashes.some(
+          s => s.wipChange != null
+        )
+        if (hasWipChanges) {
+          healing = true
+          healLogins(ai)
+            .catch(error => ai.props.onError(error))
+            .finally(() => {
+              healing = false
+            })
+        }
+      },
+      destroy() {}
     }
   },
 

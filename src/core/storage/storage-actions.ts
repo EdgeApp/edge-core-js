@@ -12,6 +12,7 @@ import {
 import { StorageWalletStatus } from './storage-reducer'
 
 export const SYNC_INTERVAL = 30 * 1000
+export const EXPEDITED_SYNC_INTERVAL = 5000
 
 export async function addStorageWallet(
   ai: ApiInput,
