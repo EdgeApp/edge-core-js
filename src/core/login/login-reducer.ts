@@ -43,7 +43,8 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
     (next: RootState) => next.login.stashes,
     (next: RootState) => next.clientInfo,
     (appId, stashes, clientInfo): EdgeUserInfo[] => {
-      function processStash(stashTree: LoginStash): EdgeUserInfo {
+      function processStash(rootStash: LoginStash): EdgeUserInfo {
+        const stashTree = rootStash.wipChange ?? rootStash
         const { lastLogin, loginId, recovery2Key, username } = stashTree
 
         const stash = searchTree(stashTree, stash => stash.appId === appId)

@@ -73,6 +73,7 @@ export interface LoginStash {
   mnemonicBox?: EdgeBox
   rootKeyBox?: EdgeBox
   syncKeyBox?: EdgeBox
+  wipChange?: LoginStash
 }
 
 /**
@@ -193,7 +194,8 @@ export const asLoginStash: Cleaner<LoginStash> = asObject({
   keyBoxes: asOptional(asArray(asEdgeKeyBox)),
   mnemonicBox: asOptional(asEdgeBox),
   rootKeyBox: asOptional(asEdgeBox),
-  syncKeyBox: asOptional(asEdgeBox)
+  syncKeyBox: asOptional(asEdgeBox),
+  wipChange: asOptional(raw => asLoginStash(raw))
 })
 
 export const wasLoginStash = uncleaner(asLoginStash)
