@@ -43,7 +43,10 @@ import {
 import { makeMetaTokens } from '../../account/custom-tokens'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
-import { getCurrencyMultiplier } from '../currency-selectors'
+import {
+  getCurrencyMultiplier,
+  getTokenMultiplier
+} from '../currency-selectors'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
 import {
   asEdgeAssetAction,
@@ -162,6 +165,28 @@ export function makeCurrencyWalletApi(
     },
     get currencyInfo(): EdgeCurrencyInfo {
       return plugin.currencyInfo
+    },
+    async convertDenominatedToNative(
+      denominatedAmount: string,
+      tokenId: EdgeTokenId
+    ): Promise<string> {
+      const multiplier = getTokenMultiplier(
+        plugin.currencyInfo,
+        input.props.state.accounts[accountId].allTokens[pluginId],
+        tokenId
+      )
+      return mul(denominatedAmount, multiplier)
+    },
+    async convertNativeToDenominated(
+      nativeAmount: string,
+      tokenId: EdgeTokenId
+    ): Promise<string> {
+      const multiplier = getTokenMultiplier(
+        plugin.currencyInfo,
+        input.props.state.accounts[accountId].allTokens[pluginId],
+        tokenId
+      )
+      return div(nativeAmount, multiplier, multiplier.length)
     },
     async denominationToNative(
       denominatedAmount: string,

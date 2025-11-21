@@ -1,10 +1,13 @@
 import {
   EdgeCurrencyInfo,
   EdgeCurrencyWallet,
+  EdgeToken,
+  EdgeTokenId,
   EdgeTokenMap
 } from '../../types/types'
 import { ApiInput, RootProps } from '../root-pixie'
 
+/** @deprecated Use `getTokenMultiplier` instead. */
 export function getCurrencyMultiplier(
   currencyInfo: EdgeCurrencyInfo,
   allTokens: EdgeTokenMap,
@@ -21,6 +24,31 @@ export function getCurrencyMultiplier(
     for (const denomination of token.denominations) {
       if (denomination.name === currencyCode) {
         return denomination.multiplier
+      }
+    }
+  }
+
+  return '1'
+}
+
+export function getTokenMultiplier(
+  currencyInfo: EdgeCurrencyInfo,
+  allTokens: EdgeTokenMap,
+  tokenId: EdgeTokenId
+): string {
+  if (tokenId == null) {
+    for (const denomination of currencyInfo.denominations) {
+      if (denomination.name === currencyInfo.currencyCode) {
+        return denomination.multiplier
+      }
+    }
+  } else {
+    const token: EdgeToken | undefined = allTokens[tokenId]
+    if (token != null) {
+      for (const denomination of token.denominations) {
+        if (denomination.name === token.currencyCode) {
+          return denomination.multiplier
+        }
       }
     }
   }

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: Add tokenId-based denomination conversion utils to wallets
 - added: Add `payoutTokenId` to `EdgeTxSwap`
 
 ## 2.36.0 (2025-11-04)
