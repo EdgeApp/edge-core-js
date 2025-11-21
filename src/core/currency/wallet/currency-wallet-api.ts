@@ -10,6 +10,7 @@ import {
 } from '../../../client-side'
 import {
   upgradeCurrencyCode,
+  upgradeSwapData,
   upgradeTxNetworkFees
 } from '../../../types/type-helpers'
 import {
@@ -597,9 +598,12 @@ export function makeCurrencyWalletApi(
       tx.currencyCode = upgradedCurrency.currencyCode
       tx.tokenId = upgradedCurrency.tokenId
       if (metadata != null) tx.metadata = metadata
-      if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
       if (savedAction != null) tx.savedAction = asEdgeTxAction(savedAction)
       if (assetAction != null) tx.assetAction = asEdgeAssetAction(assetAction)
+      if (swapData != null) {
+        tx.swapData = asEdgeTxSwap(swapData)
+        upgradeSwapData(tx)
+      }
       if (input.props.state.login.deviceDescription != null)
         tx.deviceDescription = input.props.state.login.deviceDescription
 

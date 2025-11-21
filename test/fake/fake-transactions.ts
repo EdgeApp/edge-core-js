@@ -278,6 +278,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
       },
       payoutAddress: '0x1d21f26739b20caf898aa1d2c37007577309e466',
       payoutCurrencyCode: 'eth',
+      payoutTokenId: null,
       payoutNativeAmount: '85486000000000000',
       payoutWalletId: '2D6BLbfk/Ex8jIt8wvy/uuD2rRjGklj00gW0gUfxrnc=',
       refundAddress: '33zRiHEfmpt9Hirga6GQb8Xp71veiq3NhJ'
@@ -328,6 +329,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
       },
       payoutAddress: '0x1d21f26739b20caf898aa1d2c37007577309e466',
       payoutCurrencyCode: 'eth',
+      payoutTokenId: null,
       payoutNativeAmount: '45188000000000000',
       payoutWalletId: '2D6BLbfk/Ex8jIt8wvy/uuD2rRjGklj00gW0gUfxrnc=',
       refundAddress: '33eFPT8vFvgCHMijNR7LpqNZBMR2utcq1P'
@@ -378,6 +380,7 @@ export const walletTxs: { [txid: string]: Partial<EdgeTransaction> } = {
       },
       payoutAddress: 'MKC9DxwFjXCSprj6HNXBvvqDGviMrTmV9q',
       payoutCurrencyCode: 'ltc',
+      payoutTokenId: null,
       payoutNativeAmount: '12518100',
       payoutWalletId: 'aumm1+iQsXDXxiSYzuX8qToQpwQXX03CTVKomKPTLaQ=',
       refundAddress: '33eFPT8vFvgCHMijNR7LpqNZBMR2utcq1P'
