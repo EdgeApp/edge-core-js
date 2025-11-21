@@ -120,6 +120,8 @@ interface LegacyMapFile {
 // building-block cleaners
 // ---------------------------------------------------------------------
 
+export const asEdgeTokenId = asEither(asString, asNull)
+
 const asFeeRate: Cleaner<'high' | 'standard' | 'low'> = asValue(
   'high',
   'standard',
@@ -141,6 +143,7 @@ export const asEdgeTxSwap = asObject<EdgeTxSwap>({
   // Address information:
   payoutAddress: asString,
   payoutCurrencyCode: asString,
+  payoutTokenId: asOptional(asEdgeTokenId),
   payoutNativeAmount: asString,
   payoutWalletId: asString,
   refundAddress: asOptional(asString)
@@ -157,8 +160,6 @@ export function asIntegerString(raw: unknown): string {
 // ---------------------------------------------------------------------
 // file cleaners
 // ---------------------------------------------------------------------
-
-export const asEdgeTokenId = asEither(asString, asNull)
 
 export const asEdgeAssetAmount = asObject<EdgeAssetAmount>({
   pluginId: asString,

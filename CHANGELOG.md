@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Add `payoutTokenId` to `EdgeTxSwap`
+
 ## 2.36.0 (2025-11-04)
 
 - added: Added `EdgeSubscribedAddress` type for `onSubscribeAddresses` and `startEngine`.
