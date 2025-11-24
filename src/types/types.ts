@@ -569,6 +569,7 @@ export interface EdgeTxSwap {
   payoutAddress: string
   payoutCurrencyCode: string
   payoutNativeAmount: string
+  payoutTokenId: EdgeTokenId
   payoutWalletId: string
   refundAddress?: string
 }
@@ -1367,6 +1368,16 @@ export interface EdgeCurrencyWallet {
 
   // Generic:
   readonly otherMethods: EdgeOtherMethods
+
+  readonly convertDenominatedToNative: (
+    denominatedAmount: string,
+    tokenId: EdgeTokenId
+  ) => Promise<string>
+
+  readonly convertNativeToDenominated: (
+    nativeAmount: string,
+    tokenId: EdgeTokenId
+  ) => Promise<string>
 
   /** @deprecated Use the information in EdgeCurrencyInfo / EdgeToken. */
   readonly denominationToNative: (

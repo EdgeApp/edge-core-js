@@ -10,6 +10,7 @@ import {
 } from '../../../client-side'
 import {
   upgradeCurrencyCode,
+  upgradeSwapData,
   upgradeTxNetworkFees
 } from '../../../types/type-helpers'
 import {
@@ -42,7 +43,10 @@ import {
 import { makeMetaTokens } from '../../account/custom-tokens'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
-import { getCurrencyMultiplier } from '../currency-selectors'
+import {
+  getCurrencyMultiplier,
+  getTokenMultiplier
+} from '../currency-selectors'
 import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
 import {
   asEdgeAssetAction,
@@ -161,6 +165,28 @@ export function makeCurrencyWalletApi(
     },
     get currencyInfo(): EdgeCurrencyInfo {
       return plugin.currencyInfo
+    },
+    async convertDenominatedToNative(
+      denominatedAmount: string,
+      tokenId: EdgeTokenId
+    ): Promise<string> {
+      const multiplier = getTokenMultiplier(
+        plugin.currencyInfo,
+        input.props.state.accounts[accountId].allTokens[pluginId],
+        tokenId
+      )
+      return mul(denominatedAmount, multiplier)
+    },
+    async convertNativeToDenominated(
+      nativeAmount: string,
+      tokenId: EdgeTokenId
+    ): Promise<string> {
+      const multiplier = getTokenMultiplier(
+        plugin.currencyInfo,
+        input.props.state.accounts[accountId].allTokens[pluginId],
+        tokenId
+      )
+      return div(nativeAmount, multiplier, multiplier.length)
     },
     async denominationToNative(
       denominatedAmount: string,
@@ -597,9 +623,12 @@ export function makeCurrencyWalletApi(
       tx.currencyCode = upgradedCurrency.currencyCode
       tx.tokenId = upgradedCurrency.tokenId
       if (metadata != null) tx.metadata = metadata
-      if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
       if (savedAction != null) tx.savedAction = asEdgeTxAction(savedAction)
       if (assetAction != null) tx.assetAction = asEdgeAssetAction(assetAction)
+      if (swapData != null) {
+        tx.swapData = asEdgeTxSwap(swapData)
+        upgradeSwapData(tx)
+      }
       if (input.props.state.login.deviceDescription != null)
         tx.deviceDescription = input.props.state.login.deviceDescription
 

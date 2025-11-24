@@ -56,3 +56,12 @@ export const upgradeTxNetworkFees = (tx: EdgeTransaction): void => {
     }
   }
 }
+
+// Swap data could be present without the payoutTokenId. We can add it if there's a swap savedAction present.
+export const upgradeSwapData = (tx: EdgeTransaction): void => {
+  if (tx.swapData != null && tx.swapData?.payoutTokenId === undefined) {
+    if (tx.savedAction != null && tx.savedAction.actionType === 'swap') {
+      tx.swapData.payoutTokenId = tx.savedAction.toAsset.tokenId
+    }
+  }
+}
