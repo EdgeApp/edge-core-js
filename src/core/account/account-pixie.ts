@@ -167,14 +167,15 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             toApiInput(input),
             sessionKey.loginId
           )
-          const interval = stashTree.wipChange != null ? 5000 : SYNC_INTERVAL
+          const loginInterval =
+            stashTree.wipChange != null ? 5000 : SYNC_INTERVAL
 
-          dataTask.setDelay(interval)
-          loginTask.setDelay(interval)
+          dataTask.setDelay(SYNC_INTERVAL)
+          loginTask.setDelay(loginInterval)
 
           // Start once the EdgeAccount API exists:
-          dataTask.start({ wait: interval * (1 + Math.random()) })
-          loginTask.start({ wait: interval * (1 + Math.random()) })
+          dataTask.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
+          loginTask.start({ wait: loginInterval * (1 + Math.random()) })
         },
 
         destroy() {
