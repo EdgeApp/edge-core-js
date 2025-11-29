@@ -613,25 +613,27 @@ export async function healLogins(ai: ApiInput): Promise<void> {
     if (stashTree.wipChange == null) continue
 
     const { syncToken } = stashTree
-    let serverHasIt = false
+    let isSyncedWithServer = false
     if (syncToken != null) {
       try {
         const reply = await loginFetch(ai, 'POST', '/v2/sync', {
           loginId: stashTree.loginId,
           syncToken
         })
-        // false means we are stale (server has changes),
-        // true means we are current
-        serverHasIt = !asBoolean(reply)
+        // true means we are current (our syncToken matches the server)
+        // false means we are stale (server has changes we don't have)
+        isSyncedWithServer = asBoolean(reply)
       } catch (error) {
         continue
       }
     }
 
-    if (serverHasIt) {
+    if (isSyncedWithServer) {
+      // Server never got our change, so apply wipChange locally:
       const newStash = { ...stashTree.wipChange, wipChange: undefined }
       await saveStash(ai, newStash)
     } else {
+      // Server has changes (possibly our wipChange), discard local wipChange:
       const newStash = { ...stashTree, wipChange: undefined }
       await saveStash(ai, newStash)
     }
