@@ -569,6 +569,7 @@ export interface EdgeTxSwap {
   payoutAddress: string
   payoutCurrencyCode: string
   payoutNativeAmount: string
+  payoutTokenId?: EdgeTokenId
   payoutWalletId: string
   refundAddress?: string
 }
