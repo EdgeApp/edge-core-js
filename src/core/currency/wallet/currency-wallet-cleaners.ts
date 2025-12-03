@@ -143,7 +143,7 @@ export const asEdgeTxSwap = asObject<EdgeTxSwap>({
   // Address information:
   payoutAddress: asString,
   payoutCurrencyCode: asString,
-  payoutTokenId: asEdgeTokenId,
+  payoutTokenId: asOptional(asEdgeTokenId),
   payoutNativeAmount: asString,
   payoutWalletId: asString,
   refundAddress: asOptional(asString)
