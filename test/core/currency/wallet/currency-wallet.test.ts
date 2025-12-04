@@ -733,6 +733,106 @@ describe('currency wallets', function () {
     })
   })
 
+  it('removes empty transaction files', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+
+    // Create two transactions - one will have metadata cleared, one will keep it
+    await config.changeUserSettings({
+      txs: {
+        a: { nativeAmount: '25' },
+        b: { nativeAmount: '50' }
+      }
+    })
+
+    // Save metadata for both transactions
+    await wallet.saveTxMetadata({
+      txid: 'a',
+      tokenId: null,
+      metadata: { name: 'Will Be Cleared' }
+    })
+    await wallet.saveTxMetadata({
+      txid: 'b',
+      tokenId: null,
+      metadata: { name: 'Should Stay' }
+    })
+
+    // Verify both transactions exist with metadata
+    let txs = await wallet.getTransactions({ tokenId: null })
+    expect(txs.length).equals(2)
+    const txA = txs.find(tx => tx.txid === 'a')
+    const txB = txs.find(tx => tx.txid === 'b')
+    expect(txA?.metadata?.name).equals('Will Be Cleared')
+    expect(txB?.metadata?.name).equals('Should Stay')
+
+    // Find the transaction files on disk and map them to their txids
+    const txFiles = await wallet.disklet.list('transaction')
+    const fileNames = Object.keys(txFiles)
+    expect(fileNames.length).equals(2)
+
+    // Identify which file belongs to which transaction
+    let fileNameA = ''
+    let fileNameB = ''
+    for (const fileName of fileNames) {
+      const fileContent = await wallet.disklet.getText(fileName)
+      const parsed = JSON.parse(fileContent)
+      if (parsed.txid === 'a') fileNameA = fileName
+      if (parsed.txid === 'b') fileNameB = fileName
+    }
+    expect(fileNameA).to.not.equal('')
+    expect(fileNameB).to.not.equal('')
+
+    // Clear all metadata on transaction 'a' to make its file "empty"
+    await wallet.saveTxMetadata({
+      txid: 'a',
+      tokenId: null,
+      metadata: {
+        bizId: null,
+        name: null,
+        notes: null,
+        category: null
+      }
+    })
+
+    // Get transactions again
+    txs = await wallet.getTransactions({ tokenId: null })
+
+    // Both transactions should still exist
+    expect(txs.length).equals(2)
+
+    // Transaction 'a' should have empty/default metadata
+    const txAAfter = txs.find(tx => tx.txid === 'a')
+    expect(txAAfter?.metadata).deep.equals({
+      bizId: undefined,
+      category: undefined,
+      exchangeAmount: {},
+      name: undefined,
+      notes: undefined
+    })
+
+    // Transaction 'b' should still have its metadata
+    const txBAfter = txs.find(tx => tx.txid === 'b')
+    expect(txBAfter?.metadata?.name).equals('Should Stay')
+
+    // Both files should still exist on disk (empty file deletion only happens
+    // when files are loaded from disk, e.g., after syncing from another device)
+    const txFilesAfter = await wallet.disklet.list('transaction')
+    expect(Object.keys(txFilesAfter).length).equals(2)
+
+    // Verify file 'a' has empty metadata
+    const fileAContent = await wallet.disklet.getText(fileNameA)
+    const parsedA = JSON.parse(fileAContent)
+    expect(parsedA.txid).equals('a')
+    expect(parsedA.tokens).deep.equals({
+      '': { metadata: { exchangeAmount: {} } }
+    })
+
+    // Verify file 'b' still has its non-empty metadata
+    const fileBContent = await wallet.disklet.getText(fileNameB)
+    const parsedB = JSON.parse(fileBContent)
+    expect(parsedB.txid).equals('b')
+    expect(parsedB.tokens[''].metadata.name).equals('Should Stay')
+  })
+
   it('can be paused and un-paused', async function () {
     const { wallet, context } = await makeFakeCurrencyWallet(true)
     const isEngineRunning = async (): Promise<boolean> => {

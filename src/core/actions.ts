@@ -320,6 +320,14 @@ export type RootAction =
       }
     }
   | {
+      // Called when empty transaction metadata files have been deleted.
+      type: 'CURRENCY_WALLET_FILE_DELETED'
+      payload: {
+        txidHashes: string[]
+        walletId: string
+      }
+    }
+  | {
       type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE'
       payload: {
         detectedTokenIds: string[]

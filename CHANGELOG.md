@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: Added change-server subscription timeout fallback.
+- added: Remove empty transaction metadata files when loading transaction data.
 - changed: Use syncRepo from upgraded edge-sync-client for syncing repo algorithm.
 
 ## 2.39.0 (2026-01-16)

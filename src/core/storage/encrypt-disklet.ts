@@ -6,14 +6,30 @@ import { EdgeIo } from '../../types/types'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto'
 import { utf8 } from '../../util/encoding'
 
+/**
+ * Creates an encrypted disklet that wraps another disklet.
+ * Optionally accepts a deletedDisklet for sync-aware deletions.
+ * When deletedDisklet is provided, delete operations will mark files
+ * for deletion by writing an empty file to the deleted/ directory,
+ * which will be processed during the next sync.
+ */
 export function encryptDisklet(
   io: EdgeIo,
   dataKey: Uint8Array,
-  disklet: Disklet
+  disklet: Disklet,
+  /** Provide when this disklet is synchronized with edge-sync-client's syncRepo */
+  deletedDisklet?: Disklet
 ): Disklet {
   const out = {
-    delete(path: string): Promise<unknown> {
-      return disklet.delete(path)
+    async delete(path: string): Promise<unknown> {
+      // If we have a deletedDisklet, mark the file for deletion
+      // by writing an empty file to the deleted/ directory.
+      // The sync process will handle the actual deletion.
+      if (deletedDisklet != null) {
+        await deletedDisklet.setText(path, '')
+      }
+      // Also delete locally for immediate effect:
+      return await disklet.delete(path)
     },
 
     async getData(path: string): Promise<Uint8Array> {

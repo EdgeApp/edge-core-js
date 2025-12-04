@@ -37,10 +37,12 @@ export function makeRepoPaths(
   )
   const changesDisklet = navigateDisklet(baseDisklet, 'changes')
   const dataDisklet = navigateDisklet(baseDisklet, 'data')
+  const deletedDisklet = navigateDisklet(baseDisklet, 'deleted')
   const disklet = encryptDisklet(
     io,
     dataKey,
-    mergeDisklets(changesDisklet, dataDisklet)
+    mergeDisklets(changesDisklet, dataDisklet),
+    deletedDisklet
   )
 
   return {
@@ -50,6 +52,7 @@ export function makeRepoPaths(
     baseDisklet,
     changesDisklet,
     dataDisklet,
+    deletedDisklet,
     disklet
   }
 }

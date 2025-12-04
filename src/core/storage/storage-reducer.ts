@@ -10,6 +10,7 @@ export interface StorageWalletPaths {
   baseDisklet: Disklet
   changesDisklet: Disklet
   dataDisklet: Disklet
+  deletedDisklet: Disklet
   disklet: Disklet
 }
 
