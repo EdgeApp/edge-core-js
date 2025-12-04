@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: Added change-server subscription timeout fallback.
+- changed: Use syncRepo from upgraded edge-sync-client for syncing repo algorithm.
 
 ## 2.39.0 (2026-01-16)
 
