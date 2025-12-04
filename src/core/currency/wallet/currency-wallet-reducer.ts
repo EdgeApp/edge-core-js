@@ -286,6 +286,15 @@ const currencyWalletInner = buildReducer<
           ...files
         }
       }
+      case 'CURRENCY_WALLET_FILE_DELETED': {
+        const { txidHashes } = action.payload
+        const out = { ...state }
+        for (const txidHash of txidHashes) {
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete out[txidHash]
+        }
+        return out
+      }
     }
     return state
   },
@@ -308,6 +317,15 @@ const currencyWalletInner = buildReducer<
           state[txidHash] = { creationDate, fileName }
         }
         return state
+      }
+      case 'CURRENCY_WALLET_FILE_DELETED': {
+        const { txidHashes } = action.payload
+        const out = { ...state }
+        for (const txidHash of txidHashes) {
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete out[txidHash]
+        }
+        return out
       }
     }
     return state
