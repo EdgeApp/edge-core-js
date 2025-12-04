@@ -54,20 +54,26 @@ export async function addStorageWallet(
   } else await syncPromise
 }
 
-export function syncStorageWallet(
+export async function syncStorageWallet(
   ai: ApiInput,
   walletId: string
 ): Promise<string[]> {
   const { dispatch, syncClient, state } = ai.props
   const { paths, status } = state.storageWallets[walletId]
 
-  return syncRepo(syncClient, paths, { ...status }).then(
-    ({ changes, status }) => {
-      dispatch({
-        type: 'STORAGE_WALLET_SYNCED',
-        payload: { id: walletId, changes: Object.keys(changes), status }
-      })
-      return Object.keys(changes)
+  const result = await syncRepo(syncClient, paths, status)
+
+  // Save the updated status to disk:
+  await paths.baseDisklet.setText('status.json', JSON.stringify(result.status))
+
+  dispatch({
+    type: 'STORAGE_WALLET_SYNCED',
+    payload: {
+      id: walletId,
+      changes: Object.keys(result.changes),
+      status: result.status
     }
-  )
+  })
+
+  return Object.keys(result.changes)
 }

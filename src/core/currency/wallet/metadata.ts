@@ -44,6 +44,23 @@ export function mergeMetadata(
   return out
 }
 
+/**
+ * Checks if metadata is empty (contains no user-added data).
+ */
+export function isEmptyMetadata(metadata: EdgeMetadata): boolean {
+  if (metadata.bizId != null) return false
+  if (metadata.category != null && metadata.category !== '') return false
+  if (metadata.name != null && metadata.name !== '') return false
+  if (metadata.notes != null && metadata.notes !== '') return false
+  if (
+    metadata.exchangeAmount != null &&
+    Object.keys(metadata.exchangeAmount).length > 0
+  ) {
+    return false
+  }
+  return true
+}
+
 const asDiskMetadata = asObject({
   bizId: asOptional(asNumber),
   category: asOptional(asString),
