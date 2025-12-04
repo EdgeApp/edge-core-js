@@ -1,4 +1,5 @@
 import { Disklet } from 'disklet'
+import { SyncResult } from 'edge-sync-client'
 import { Bridgeable, bridgifyObject, close, emit, update } from 'yaob'
 import { Unsubscribe } from 'yavent'
 
@@ -13,7 +14,7 @@ import {
 import { loginFetch } from '../login/login-fetch'
 import { hashUsername } from '../login/login-selectors'
 import { ApiInput } from '../root-pixie'
-import { makeRepoPaths, syncRepo, SyncResult } from '../storage/repo'
+import { makeRepoPaths, syncRepo } from '../storage/repo'
 
 /**
  * The requesting side of an Edge login lobby.
@@ -98,13 +99,10 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
     await sendLobbyReply(this._ai, lobbyId, lobbyRequest, replyData)
   }
 
-  async syncRepo(syncKey: Uint8Array): Promise<SyncResult> {
+  syncRepo(syncKey: Uint8Array): Promise<SyncResult> {
     const { io, syncClient } = this._ai.props
     const paths = makeRepoPaths(io, { dataKey: new Uint8Array(0), syncKey })
-    return await syncRepo(syncClient, paths, {
-      lastSync: 0,
-      lastHash: undefined
-    })
+    return syncRepo(syncClient, paths, { lastSync: 0, lastHash: undefined })
   }
 
   async getRepoDisklet(
