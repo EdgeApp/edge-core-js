@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.37.0 (2025-12-09)
+
 - added: Add `payoutTokenId` to `EdgeTxSwap`
 
 ## 2.36.0 (2025-11-04)
