@@ -558,6 +558,7 @@ describe('currency wallets', function () {
       },
       payoutAddress: 'get it here',
       payoutCurrencyCode: 'TOKEN',
+      payoutTokenId: 'TOKEN',
       payoutNativeAmount: '1',
       payoutWalletId: wallet.id
     }
