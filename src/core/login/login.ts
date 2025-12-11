@@ -451,8 +451,9 @@ export async function applyKit(
     try {
       await loginFetch(ai, serverMethod, serverPath, request)
     } catch (error) {
-      // If we fail, try to sync to see if the server got it:
-      await syncLogin(ai, sessionKey).catch(() => {})
+      // On network failure, immediately trigger a sync to check if our
+      // change made it to the server. This runs in the background:
+      syncLogin(ai, sessionKey).catch(() => {})
       throw error
     }
   }
@@ -629,20 +630,16 @@ export async function healLogins(ai: ApiInput): Promise<void> {
     }
 
     if (isSyncedWithServer) {
-      // Server never got our change, so apply wipChange locally:
-      const newStash = { ...stashTree.wipChange, wipChange: undefined }
+      // Our syncToken matches the server, meaning the server never changed.
+      // This means our network request failed before reaching the server,
+      // so discard wipChange (it was never applied):
+      const newStash = { ...stashTree, wipChange: undefined }
       await saveStash(ai, newStash)
     } else {
-      // Server has changes (possibly our wipChange), discard local wipChange
-      // but preserve client-only data that the server doesn't return:
-      const { username, lastLogin } = stashTree.wipChange ?? {}
-      const newStash = {
-        ...stashTree,
-        // Preserve client-only data from wipChange if not already in stashTree:
-        username: stashTree.username ?? username,
-        lastLogin: stashTree.lastLogin ?? lastLogin,
-        wipChange: undefined
-      }
+      // Server has changes we don't have. Since we have a wipChange pending,
+      // odds are higher that our change made it through. Apply wipChange
+      // as if the network request worked, preserving client-only data:
+      const newStash = { ...stashTree.wipChange, wipChange: undefined }
       await saveStash(ai, newStash)
     }
   }
