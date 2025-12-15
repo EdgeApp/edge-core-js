@@ -496,6 +496,7 @@ const shouldCoreDetermineConfirmations = (
   confirmations: EdgeConfirmationState | undefined
 ): boolean => {
   return (
+    typeof confirmations !== 'number' &&
     confirmations !== 'confirmed' &&
     confirmations !== 'dropped' &&
     confirmations !== 'failed'
