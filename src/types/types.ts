@@ -319,11 +319,36 @@ export interface EdgeTxActionTokenApproval {
   contractAddress: string
 }
 
+export interface EdgeTxActionGiftCard {
+  actionType: 'giftCard'
+  orderId: string
+  orderUri?: string
+
+  provider: {
+    providerId: string
+    displayName: string
+    supportEmail?: string
+  }
+
+  card: {
+    name: string
+    imageUrl?: string
+    fiatAmount: string
+    fiatCurrencyCode: string
+  }
+
+  redemption?: {
+    code?: string
+    url?: string
+  }
+}
+
 export type EdgeTxAction =
   | EdgeTxActionSwap
   | EdgeTxActionStake
   | EdgeTxActionFiat
   | EdgeTxActionTokenApproval
+  | EdgeTxActionGiftCard
 
 export interface EdgeTxAmount {
   tokenId: EdgeTokenId
@@ -350,6 +375,7 @@ export type EdgeAssetActionType =
   | 'tokenApproval'
   | 'transfer'
   | 'transferNetworkFee'
+  | 'giftCard'
 
 export interface EdgeAssetAction {
   assetActionType: EdgeAssetActionType

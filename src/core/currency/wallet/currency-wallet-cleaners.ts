@@ -22,6 +22,7 @@ import {
   EdgeTokenId,
   EdgeTxAction,
   EdgeTxActionFiat,
+  EdgeTxActionGiftCard,
   EdgeTxActionStake,
   EdgeTxActionSwap,
   EdgeTxActionTokenApproval,
@@ -226,11 +227,38 @@ export const asEdgeTxActionTokenApproval = asObject<EdgeTxActionTokenApproval>({
   contractAddress: asString
 })
 
+export const asEdgeTxActionGiftCard = asObject<EdgeTxActionGiftCard>({
+  actionType: asValue('giftCard'),
+  orderId: asString,
+  orderUri: asOptional(asString),
+
+  provider: asObject({
+    providerId: asString,
+    displayName: asString,
+    supportEmail: asOptional(asString)
+  }),
+
+  card: asObject({
+    name: asString,
+    imageUrl: asOptional(asString),
+    fiatAmount: asString,
+    fiatCurrencyCode: asString
+  }),
+
+  redemption: asOptional(
+    asObject({
+      code: asOptional(asString),
+      url: asOptional(asString)
+    })
+  )
+})
+
 export const asEdgeTxAction: Cleaner<EdgeTxAction> = asEither(
   asEdgeTxActionSwap,
   asEdgeTxActionStake,
   asEdgeTxActionFiat,
-  asEdgeTxActionTokenApproval
+  asEdgeTxActionTokenApproval,
+  asEdgeTxActionGiftCard
 )
 
 export const asEdgeAssetActionType: Cleaner<EdgeAssetActionType> = asValue(
@@ -252,7 +280,8 @@ export const asEdgeAssetActionType: Cleaner<EdgeAssetActionType> = asValue(
   'sellNetworkFee',
   'tokenApproval',
   'transfer',
-  'transferNetworkFee'
+  'transferNetworkFee',
+  'giftCard'
 )
 
 export const asEdgeAssetAction = asObject({
