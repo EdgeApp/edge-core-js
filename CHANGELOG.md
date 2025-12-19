@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Add `EdgeTxActionGiftCard` type to `EdgeTxAction`
+
 ## 2.37.0 (2025-12-09)
 
 - added: Add `payoutTokenId` to `EdgeTxSwap`
