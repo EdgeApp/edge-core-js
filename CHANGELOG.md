@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Don't recalculate numeric `EdgeTransaction.confirmations` value
+
 ## 2.38.0 (2025-12-19)
 
 - added: Add `EdgeTxActionGiftCard` type to `EdgeTxAction`
