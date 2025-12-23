@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.38.2 (2025-12-22)
+
 - fixed: Recover WIP login stashes if login-server network requests fails.
 
 ## 2.38.1 (2025-12-19)
