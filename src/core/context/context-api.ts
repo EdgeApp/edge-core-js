@@ -296,7 +296,20 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
         stashTree: LoginStash,
         mainStash: LoginStash
       ): Promise<EdgeAccount> {
-        const sessionKey = await loginPin2(ai, stashTree, mainStash, pin, opts)
+        // Try login with the WIP change, in the case where it's the valid
+        // login stash. Fail gracefully with the original stash tree if it fails:
+        const sessionKey: SessionKey =
+          stashTree.wipChange != null
+            ? await loginPin2(
+                ai,
+                stashTree.wipChange,
+                mainStash,
+                pin,
+                opts
+              ).catch(
+                async () => await loginPin2(ai, stashTree, mainStash, pin, opts)
+              )
+            : await loginPin2(ai, stashTree, mainStash, pin, opts)
         // Make the account for the main account
         return await makeAccount(ai, sessionKey, 'pinLogin', opts)
       }
