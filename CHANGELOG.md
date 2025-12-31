@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Added `change2.edge.app` server to default change server list.
+
 ## 2.38.2 (2025-12-22)
 
 - fixed: Recover WIP login stashes if login-server network requests fails.
