@@ -26,6 +26,7 @@ export function connectChangeServer(
   callbacks: ChangeServerCallbacks
 ): ChangeServerConnection {
   let ws: WebSocket
+  let closing = false
   function makeWs(): void {
     ws = new WebSocket(url)
     ws.binaryType = 'arraybuffer'
@@ -38,15 +39,17 @@ export function connectChangeServer(
       out.connected = false
       codec.handleClose()
       callbacks.handleDisconnect()
+      // Reconnect after 5 seconds, unless intentionally closed:
+      if (!closing) {
+        setTimeout(() => {
+          makeWs()
+        }, 5000)
+      }
     })
 
     ws.addEventListener('error', errEvent => {
       console.error('changeServer websocket error:', errEvent)
       ws.close()
-      // Reconnect after 5 seconds:
-      setTimeout(() => {
-        makeWs()
-      }, 5000)
     })
 
     ws.addEventListener('open', () => {
@@ -87,6 +90,7 @@ export function connectChangeServer(
     },
 
     close() {
+      closing = true
       ws.close()
     },
 
