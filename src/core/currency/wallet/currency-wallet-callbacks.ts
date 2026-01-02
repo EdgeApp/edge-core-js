@@ -296,15 +296,24 @@ export function makeCurrencyWalletCallbacks(
     onSubscribeAddresses(
       paramsOrAddresses: EdgeSubscribedAddress[] | string[]
     ) {
+      // Get existing subscriptions to preserve checkpoints
+      const existingSubscriptions =
+        input.props.walletState.changeServiceSubscriptions
+
       const subscribedAddresses: EdgeSubscribedAddress[] =
-        paramsOrAddresses.map(param =>
-          typeof param === 'string'
-            ? {
-                address: param,
-                checkpoint: undefined
-              }
-            : param
-        )
+        paramsOrAddresses.map(param => {
+          if (typeof param === 'string') {
+            // Preserve existing checkpoint if we have one for this address
+            const existing = existingSubscriptions.find(
+              sub => sub.address === param
+            )
+            return {
+              address: param,
+              checkpoint: existing?.checkpoint
+            }
+          }
+          return param
+        })
       // Save subscribed addresses to disk (along with current checkpoint)
       saveSeenTxCheckpointFile(
         input,

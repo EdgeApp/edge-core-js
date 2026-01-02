@@ -45,6 +45,7 @@ import {
   loadSeenTxCheckpointFile,
   loadTokensFile,
   loadTxFileNames,
+  saveSeenTxCheckpointFile,
   writeTokensFile
 } from './currency-wallet-files'
 import { CurrencyWalletState, initialTokenIds } from './currency-wallet-reducer'
@@ -273,7 +274,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   ),
 
   syncNetworkUpdate: filterPixie(
-    (_input: CurrencyWalletInput) => {
+    (input: CurrencyWalletInput) => {
       return {
         async update(props) {
           if (props.walletOutput == null) return
@@ -308,6 +309,17 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
               walletId: props.walletId
             }
           })
+          // Persist the updated checkpoints to disk:
+          const subscribedAddresses =
+            walletState.changeServiceSubscriptions.map(subscription => ({
+              address: subscription.address,
+              checkpoint: subscription.checkpoint
+            }))
+          await saveSeenTxCheckpointFile(
+            input,
+            walletState.seenTxCheckpoint ?? undefined,
+            subscribedAddresses
+          )
         },
         destroy() {}
       }
