@@ -292,7 +292,8 @@ export const currency: TamePixie<RootProps> = combinePixies({
                 .subscribe(subscribeParams)
                 .catch(err => {
                   input.props.log(`Failed to subscribe: ${String(err)}`)
-                  return [0] as SubscribeResult[]
+                  // Return failure result for each subscription in the batch:
+                  return subscribeParams.map(() => 0 as SubscribeResult)
                 })
               results.push(...r)
             }
