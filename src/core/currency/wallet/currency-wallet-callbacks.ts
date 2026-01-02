@@ -302,17 +302,19 @@ export function makeCurrencyWalletCallbacks(
 
       const subscribedAddresses: EdgeSubscribedAddress[] =
         paramsOrAddresses.map(param => {
-          if (typeof param === 'string') {
-            // Preserve existing checkpoint if we have one for this address
-            const existing = existingSubscriptions.find(
-              sub => sub.address === param
-            )
-            return {
-              address: param,
-              checkpoint: existing?.checkpoint
-            }
+          const address = typeof param === 'string' ? param : param.address
+          // Preserve existing checkpoint if we have one for this address.
+          // Use case-insensitive comparison for blockchain addresses.
+          const existing = existingSubscriptions.find(
+            sub => sub.address.toLowerCase() === address.toLowerCase()
+          )
+          // Prefer explicit checkpoint from param, fall back to existing
+          const explicitCheckpoint =
+            typeof param === 'object' ? param.checkpoint : undefined
+          return {
+            address,
+            checkpoint: explicitCheckpoint ?? existing?.checkpoint
           }
-          return param
         })
       // Save subscribed addresses to disk (along with current checkpoint)
       saveSeenTxCheckpointFile(
