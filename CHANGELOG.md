@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.38.3 (2026-01-06)
+
 - added: Added `change2.edge.app` server to default change server list.
 
 ## 2.38.2 (2025-12-22)
