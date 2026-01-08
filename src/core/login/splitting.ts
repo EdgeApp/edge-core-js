@@ -147,7 +147,7 @@ export async function splitWalletInfo(
       walletInfos[newWalletInfo.id] = {
         archived: false,
         deleted: false,
-        migratedFromWalletId: undefined
+        migratedFromWalletId: existingWalletInfo.migratedFromWalletId
       }
       await changeWalletStates(ai, accountId, walletInfos)
       return newWalletInfo.id
