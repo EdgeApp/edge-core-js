@@ -168,6 +168,7 @@ export interface ChangeVouchersPayload {
 }
 
 export interface CreateKeysPayload {
+  allowExisting: boolean
   keyBoxes: EdgeBox[]
   newSyncKeys: string[]
 }

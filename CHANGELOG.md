@@ -5,6 +5,7 @@
 ## 2.38.3 (2026-01-06)
 
 - added: Added `change2.edge.app` server to default change server list.
+- fixed: Allow duplicate sync keys when performing a wallet split, in case a previous failed attempt left a repo behind.
 
 ## 2.38.2 (2025-12-22)
 

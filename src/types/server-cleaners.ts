@@ -245,6 +245,7 @@ export const asChangeVouchersPayload: Cleaner<ChangeVouchersPayload> = asObject(
 )
 
 export const asCreateKeysPayload: Cleaner<CreateKeysPayload> = asObject({
+  allowExisting: asOptional(asBoolean, false),
   keyBoxes: asArray(asEdgeBox),
   newSyncKeys: asOptional(asArray(asString), () => [])
 })
