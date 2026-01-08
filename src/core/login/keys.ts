@@ -67,11 +67,15 @@ export function makeKeyInfo(
 
 /**
  * Assembles all the resources needed to attach new keys to the account.
+ * @param allowExisting True if the sync keys were derived deterministically,
+ * which implies that duplicate sync keys on the server are not errors,
+ * but leftovers from an earlier failed splitting attempt.
  */
 export function makeKeysKit(
   ai: ApiInput,
   sessionKey: SessionKey,
-  keyInfos: EdgeWalletInfo[]
+  keyInfos: EdgeWalletInfo[],
+  allowExisting: boolean = false
 ): LoginKit {
   // For crash errors:
   ai.props.log.breadcrumb('makeKeysKit', {})
@@ -95,7 +99,7 @@ export function makeKeysKit(
 
   return {
     loginId: sessionKey.loginId,
-    server: wasCreateKeysPayload({ keyBoxes, newSyncKeys }),
+    server: wasCreateKeysPayload({ allowExisting, keyBoxes, newSyncKeys }),
     serverPath: '/v2/login/keys',
     stash: { keyBoxes }
   }
