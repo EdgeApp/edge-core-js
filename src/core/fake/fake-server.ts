@@ -275,6 +275,7 @@ function createLogin(request: ApiRequest, login?: DbLogin): HttpResponse {
 
   // Set up repos:
   const keys = asMaybe(asCreateKeysPayload, () => ({
+    allowExisting: false,
     newSyncKeys: [],
     keyBoxes: []
   }))(body.data)
