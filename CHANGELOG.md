@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: Add `appVersion`, `osType`, and `osVersion` to `EdgeContextOptions` for v2 coreRollup endpoint support.
+- changed: Use `/v2/coreRollup` endpoint when device info is available, with `/v1/coreRollup` as fallback.
 
 ## 2.38.4 (2026-01-12)
 
