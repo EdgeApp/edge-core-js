@@ -517,7 +517,7 @@ export interface EdgeCurrencyInfo {
   canImportKeys?: boolean // Defaults to false
   canReplaceByFee?: boolean // Defaults to false
   customFeeTemplate?: EdgeObjectTemplate // Indicates custom fee support
-  customTokenTemplate?: EdgeObjectTemplate // Indicates custom token support
+  customTokenTemplate?: EdgeObjectTemplate // An empty array indicates token support. A filled array indicates custom token support.
   requiredConfirmations?: number // Block confirmations required for a tx
 
   /** EVM chain id */
