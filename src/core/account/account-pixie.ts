@@ -31,6 +31,7 @@ import { AccountState, initialCustomTokens } from './account-reducer'
 import {
   loadBuiltinTokens,
   loadCustomTokens,
+  migrateEnabledTokensToCustomTokens,
   saveCustomTokens
 } from './custom-tokens'
 
@@ -102,6 +103,14 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
           await loadAllFiles()
           log.warn('Login: loaded files')
+
+          // Migrate enabled tokens from builtinTokens to customTokens
+          await migrateEnabledTokensToCustomTokens(ai, accountId).catch(
+            error => {
+              log.warn('Migration failed:', error)
+            }
+          )
+          log.warn('Login: migrated enabled tokens')
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))

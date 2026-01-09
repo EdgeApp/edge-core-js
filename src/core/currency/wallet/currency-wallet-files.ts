@@ -43,7 +43,7 @@ const CURRENCY_FILE = 'Currency.json'
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
 const LEGACY_TOKENS_FILE = 'EnabledTokens.json'
 const SEEN_TX_CHECKPOINT_FILE = 'seenTxCheckpoint.json'
-const TOKENS_FILE = 'Tokens.json'
+export const TOKENS_FILE = 'Tokens.json'
 const WALLET_NAME_FILE = 'WalletName.json'
 
 const legacyAddressFile = makeJsonFile(asLegacyAddressFile)
