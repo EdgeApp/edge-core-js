@@ -11,6 +11,7 @@ import {
   EdgeTxAction
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
+import { loadBuiltinTokensJson } from '../../account/custom-tokens'
 import { fetchAppIdInfo } from '../../account/lobby-api'
 import { toApiInput } from '../../root-pixie'
 import { RootState } from '../../root-reducer'
@@ -251,8 +252,9 @@ export async function loadTokensFile(
   if (legacyCurrencyCodes != null) {
     const { accountId, currencyInfo, pluginId } = input.props.walletState
     const accountState = input.props.state.accounts[accountId]
+    const builtinTokens = loadBuiltinTokensJson()
     const tokenIds = currencyCodesToTokenIds(
-      accountState.builtinTokens[pluginId],
+      builtinTokens[pluginId],
       accountState.customTokens[pluginId],
       currencyInfo,
       legacyCurrencyCodes

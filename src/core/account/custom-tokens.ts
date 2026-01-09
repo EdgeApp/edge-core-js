@@ -249,7 +249,7 @@ export async function saveCustomTokens(
 // Lazy loader for builtinTokens.json
 let builtinTokensCache: EdgePluginMap<EdgeTokenMap> | null = null
 
-function loadBuiltinTokensJson(): EdgePluginMap<EdgeTokenMap> {
+export function loadBuiltinTokensJson(): EdgePluginMap<EdgeTokenMap> {
   if (builtinTokensCache != null) return builtinTokensCache
 
   // Use require for lazy loading (only loads when function is called)

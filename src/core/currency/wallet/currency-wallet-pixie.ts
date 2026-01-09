@@ -19,7 +19,10 @@ import {
 import { makeJsonFile } from '../../../util/file-helpers'
 import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
 import { snooze } from '../../../util/snooze'
-import { makeTokenInfo } from '../../account/custom-tokens'
+import {
+  loadBuiltinTokensJson,
+  makeTokenInfo
+} from '../../account/custom-tokens'
 import { makeLog } from '../../log/log'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
@@ -516,14 +519,15 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           engine.disableTokens != null &&
           engine.enableTokens != null
         ) {
+          const builtinTokens = loadBuiltinTokensJson()
           const removed = tokenIdsToCurrencyCodes(
-            accountState.builtinTokens[pluginId],
+            builtinTokens[pluginId],
             accountState.customTokens[pluginId],
             walletState.currencyInfo,
             uniqueStrings(lastEnabledTokenIds, allEnabledTokenIds)
           )
           const added = tokenIdsToCurrencyCodes(
-            accountState.builtinTokens[pluginId],
+            builtinTokens[pluginId],
             accountState.customTokens[pluginId],
             walletState.currencyInfo,
             uniqueStrings(allEnabledTokenIds, lastEnabledTokenIds)
