@@ -42,6 +42,7 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
     apiKey,
     apiSecret,
     appId = '',
+    appVersion,
     authServer,
     changeServer,
     deviceDescription,
@@ -49,6 +50,8 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
     infoServer,
     loginServer,
     logSettings,
+    osType,
+    osVersion,
     plugins,
     skipBlockHeight,
     syncServer
@@ -72,6 +75,7 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
             apiKey,
             apiSecret,
             appId,
+            appVersion,
             authServer,
             changeServer,
             deviceDescription,
@@ -79,6 +83,8 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
             infoServer,
             loginServer,
             logSettings,
+            osType,
+            osVersion,
             plugins,
             skipBlockHeight,
             syncServer
