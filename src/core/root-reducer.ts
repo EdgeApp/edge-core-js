@@ -16,7 +16,6 @@ export interface RootState {
   readonly accounts: { [accountId: string]: AccountState }
   readonly changeServers: string[]
   readonly clientInfo: ClientInfo
-  readonly contextAppId: string
   readonly hideKeys: boolean
   readonly infoCache: InfoCacheFile
   readonly infoServers: string[]
@@ -103,10 +102,6 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
       }
     }
     return state
-  },
-
-  contextAppId: (state = '', action): string => {
-    return action.type === 'LOGIN' ? action.payload.appId : state
   },
 
   hideKeys(state = true, action): boolean {
