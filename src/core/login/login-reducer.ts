@@ -10,11 +10,18 @@ import { findDuressStash, LoginStash } from './login-stash'
 import { WalletInfoFullMap } from './login-types'
 import { findPin2Stash } from './pin2'
 
+export interface DeviceInfo {
+  readonly deviceDescription?: string
+  readonly osType?: string
+  readonly osVersion?: string
+  readonly appVersion?: string
+}
+
 export interface LoginState {
   readonly apiKey: string
   readonly apiSecret: Uint8Array | null
   readonly contextAppId: string
-  readonly deviceDescription: string | null
+  readonly deviceInfo: DeviceInfo
   readonly loginServers: string[]
   readonly stashes: LoginStash[]
   readonly localUsers: EdgeUserInfo[]
@@ -34,8 +41,18 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
     return action.type === 'INIT' ? action.payload.appId : state
   },
 
-  deviceDescription(state = null, action): string | null {
-    return action.type === 'INIT' ? action.payload.deviceDescription : state
+  deviceInfo(state: DeviceInfo = {}, action): DeviceInfo {
+    if (action.type === 'INIT') {
+      const { appVersion, deviceDescription, osType, osVersion } =
+        action.payload
+      return {
+        deviceDescription: deviceDescription ?? undefined,
+        osType,
+        osVersion,
+        appVersion
+      }
+    }
+    return state
   },
 
   localUsers: memoizeReducer(

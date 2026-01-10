@@ -1910,6 +1910,15 @@ export interface EdgeContextOptions {
   apiSecret?: Uint8Array
   appId: string
 
+  /** The application version (e.g., "1.0.0") */
+  appVersion?: string
+
+  /** The operating system type (e.g., "ios", "android") */
+  osType?: string
+
+  /** The OS version (e.g., "17.0", "14") */
+  osVersion?: string
+
   /**
    * Switches to a different login server, such as for testing.
    * Do not include `/api` in the path.

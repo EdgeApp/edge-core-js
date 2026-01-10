@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Add `appVersion`, `osType`, and `osVersion` to `EdgeContextOptions` for v2 coreRollup endpoint support.
+
 ## 2.38.4 (2026-01-12)
 
 - fixed: Allow duplicate sync keys when performing a wallet split, in case a previous failed attempt left a repo behind.

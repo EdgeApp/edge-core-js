@@ -15,8 +15,8 @@ export interface RootState {
   readonly accountIds: string[]
   readonly accounts: { [accountId: string]: AccountState }
   readonly changeServers: string[]
-  readonly contextAppId: string
   readonly clientInfo: ClientInfo
+  readonly contextAppId: string
   readonly hideKeys: boolean
   readonly infoCache: InfoCacheFile
   readonly infoServers: string[]

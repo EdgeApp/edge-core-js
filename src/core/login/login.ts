@@ -349,7 +349,7 @@ export async function serverLogin(
   decrypt: (reply: LoginPayload) => Promise<Uint8Array>
 ): Promise<SessionKey> {
   const { now = new Date() } = opts
-  const { deviceDescription } = ai.props.state.login
+  const { deviceDescription } = ai.props.state.login.deviceInfo
 
   const request: LoginRequestBody = {
     challengeId: opts.challengeId,
@@ -427,7 +427,7 @@ export async function applyKit(
   const { serverMethod = 'POST', serverPath } = kit
 
   const { stashTree } = getStashById(ai, kit.loginId)
-  const { deviceDescription } = ai.props.state.login
+  const { deviceDescription } = ai.props.state.login.deviceInfo
 
   const newStashTree = updateTree<LoginStash, LoginStash>(
     stashTree,
