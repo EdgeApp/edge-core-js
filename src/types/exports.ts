@@ -80,6 +80,9 @@ export interface EdgeContextProps extends CommonProps {
   apiKey?: string
   apiSecret?: Uint8Array
   appId?: string
+  appVersion?: string
+  osType?: string
+  osVersion?: string
   changeServer?: string | string[]
   infoServer?: string | string[]
   loginServer?: string | string[] // Do not include `/api` in the path

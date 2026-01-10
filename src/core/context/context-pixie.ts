@@ -59,9 +59,25 @@ export const context: TamePixie<RootProps> = combinePixies({
     (input: ApiInput) => {
       async function doInfoSync(): Promise<void> {
         const { dispatch, io } = input.props
+        const { contextAppId, deviceInfo } = input.props.state.login
+        const { appVersion, osType, osVersion } = deviceInfo
 
         const [infoServerUri] = shuffle(input.props.state.infoServers)
-        const response = await fetch(`${infoServerUri}/v1/coreRollup`, {
+
+        // Use v2 endpoint if we have the required device info, otherwise fall back to v1
+        let url: string
+        if (osType != null && osVersion != null && appVersion != null) {
+          const params = new URLSearchParams()
+          params.set('appId', contextAppId !== '' ? contextAppId : 'edge')
+          params.set('os', osType)
+          params.set('osVersion', osVersion)
+          params.set('appVersion', appVersion)
+          url = `${infoServerUri}/v2/coreRollup?${params.toString()}`
+        } else {
+          url = `${infoServerUri}/v1/coreRollup`
+        }
+
+        const response = await fetch(url, {
           headers: { accept: 'application/json' }
         })
         if (!response.ok) return

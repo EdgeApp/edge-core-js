@@ -19,7 +19,7 @@ export async function changeVoucherStatus(
   vouchers: ChangeVouchersPayload
 ): Promise<void> {
   const { stashTree } = getStashById(ai, login.loginId)
-  const { deviceDescription } = ai.props.state.login
+  const { deviceDescription } = ai.props.state.login.deviceInfo
 
   const request = makeAuthJson(stashTree, login)
   if (deviceDescription != null) request.deviceDescription = deviceDescription

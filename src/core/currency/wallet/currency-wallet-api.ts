@@ -600,8 +600,9 @@ export function makeCurrencyWalletApi(
       if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
       if (savedAction != null) tx.savedAction = asEdgeTxAction(savedAction)
       if (assetAction != null) tx.assetAction = asEdgeAssetAction(assetAction)
-      if (input.props.state.login.deviceDescription != null)
-        tx.deviceDescription = input.props.state.login.deviceDescription
+      if (input.props.state.login.deviceInfo.deviceDescription != null)
+        tx.deviceDescription =
+          input.props.state.login.deviceInfo.deviceDescription
 
       return tx
     },
