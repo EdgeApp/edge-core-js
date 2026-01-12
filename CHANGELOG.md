@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fixed: Allow duplicate sync keys when performing a wallet split, in case a previous failed attempt left a repo behind.
+- fixed: Do not lose wallet import history when doing a split-archive-split.
+
 ## 2.38.3 (2026-01-06)
 
 - added: Added `change2.edge.app` server to default change server list.
