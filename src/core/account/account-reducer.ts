@@ -59,7 +59,6 @@ export interface AccountState {
 
   // Plugin stuff:
   readonly allTokens: EdgePluginMap<EdgeTokenMap>
-  readonly builtinTokens: EdgePluginMap<EdgeTokenMap>
   readonly customTokens: EdgePluginMap<EdgeTokenMap>
   readonly alwaysEnabledTokenIds: EdgePluginMap<string[]>
   readonly swapSettings: EdgePluginMap<SwapSettings>
@@ -275,39 +274,21 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   ),
 
   allTokens(state = {}, action, next, prev): EdgePluginMap<EdgeTokenMap> {
-    const { builtinTokens, customTokens } = next.self
+    const { customTokens } = next.self
 
     // Roll our own `memoizeReducer` implementation,
     // so we can minimize our diff as much as possible:
-    if (
-      prev.self == null ||
-      builtinTokens !== prev.self.builtinTokens ||
-      customTokens !== prev.self.customTokens
-    ) {
+    if (prev.self == null || customTokens !== prev.self.customTokens) {
       const out = { ...state }
       for (const pluginId of Object.keys(next.root.plugins.currency)) {
         if (
           prev.self == null ||
-          builtinTokens[pluginId] !== prev.self.builtinTokens[pluginId] ||
           customTokens[pluginId] !== prev.self.customTokens[pluginId]
         ) {
-          out[pluginId] = {
-            ...customTokens[pluginId],
-            ...builtinTokens[pluginId]
-          }
+          out[pluginId] = customTokens[pluginId] ?? {}
         }
       }
       return out
-    }
-    return state
-  },
-
-  builtinTokens(state = {}, action): EdgePluginMap<EdgeTokenMap> {
-    switch (action.type) {
-      case 'ACCOUNT_BUILTIN_TOKENS_LOADED': {
-        const { pluginId, tokens } = action.payload
-        return { ...state, [pluginId]: tokens }
-      }
     }
     return state
   },

@@ -17,6 +17,7 @@ import {
   makeFakeEdgeWorld
 } from '../../../../src/index'
 import { expectRejection } from '../../../expect-rejection'
+import { fakeTokens } from '../../../fake/fake-currency-plugin'
 import { moreTxs, walletTxs } from '../../../fake/fake-transactions'
 import { fakeUser } from '../../../fake/fake-user'
 
@@ -130,6 +131,8 @@ describe('currency wallets', function () {
   it('triggers callbacks', async function () {
     const log = makeAssertLog()
     const { wallet, config } = await makeFakeCurrencyWallet()
+    // Seed allTokens with the fake plugin token so balances/watch callbacks work
+    await config.addCustomToken(fakeTokens.badf00d5)
 
     // Subscribe to the wallet:
     wallet.on('newTransactions', txs => {
@@ -230,6 +233,7 @@ describe('currency wallets', function () {
   it('handles token balances', async function () {
     const fixture: Fixture = await makeFakeCurrencyWallet()
     const { wallet, config } = fixture
+    await config.addCustomToken(fakeTokens.badf00d5)
     await config.changeUserSettings({
       txs: {
         a: { tokenId: null, nativeAmount: '2' },
@@ -247,21 +251,6 @@ describe('currency wallets', function () {
       expect(txs.length).equals(1)
       expect(txs[0].txid).equals('b')
       expect(txs[0].nativeAmount).equals('200')
-    })
-  })
-
-  it('exposes builtin tokens', async function () {
-    const { config } = await makeFakeCurrencyWallet()
-
-    expect(config.builtinTokens).deep.equals({
-      badf00d5: {
-        currencyCode: 'TOKEN',
-        displayName: 'Fake Token',
-        denominations: [{ multiplier: '1000', name: 'TOKEN' }],
-        networkLocation: {
-          contractAddress: '0xBADF00D5'
-        }
-      }
     })
   })
 
@@ -290,14 +279,14 @@ describe('currency wallets', function () {
     })
 
     expect(config.allTokens).deep.equals({
-      ...config.customTokens,
-      ...config.builtinTokens
+      ...config.customTokens
     })
   })
 
   it('enables tokens', async function () {
     const log = makeAssertLog()
-    const { wallet } = await makeFakeCurrencyWallet()
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.addCustomToken(fakeTokens.badf00d5)
     const tokenId = 'badf00d5'
 
     wallet.watch('enabledTokenIds', ids => log(ids.join(', ')))
@@ -458,7 +447,8 @@ describe('currency wallets', function () {
   })
 
   it('converts number formats', async function () {
-    const { wallet } = await makeFakeCurrencyWallet()
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.addCustomToken(fakeTokens.badf00d5)
     expect(await wallet.denominationToNative('0.1', 'SMALL')).equals('1')
     expect(await wallet.denominationToNative('0.1', 'FAKE')).equals('10')
     expect(await wallet.denominationToNative('0.1', 'TOKEN')).equals('100')

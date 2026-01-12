@@ -229,11 +229,10 @@ export function makeCurrencyWalletApi(
     async changeEnabledTokenIds(tokenIds: string[]): Promise<void> {
       const { dispatch, walletId, walletState } = input.props
       const { accountId, pluginId } = walletState
-      const accountState = input.props.state.accounts[accountId]
-      const allTokens = accountState.allTokens[pluginId] ?? {}
-
+      const allTokens =
+        input.props.state.accounts[accountId].allTokens[pluginId] ?? {}
       const enabledTokenIds = uniqueStrings(tokenIds).filter(
-        tokenId => allTokens[tokenId] != null
+        tokenId => tokenId in allTokens
       )
 
       const shortId = walletId.slice(0, 2)

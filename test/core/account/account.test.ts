@@ -8,6 +8,7 @@ import {
   makeFakeEdgeWorld
 } from '../../../src/index'
 import { expectRejection } from '../../expect-rejection'
+import { fakeTokens } from '../../fake/fake-currency-plugin'
 import { fakeUser } from '../../fake/fake-user'
 
 const plugins = { fakecoin: true, tulipcoin: true }
@@ -126,6 +127,7 @@ describe('account', function () {
       fakeUser.username,
       fakeUser.pin
     )
+    await account.currencyConfig.fakecoin.addCustomToken(fakeTokens.badf00d5)
 
     const wallet = await account.createCurrencyWallet('wallet:fakecoin', {
       fiatCurrencyCode: 'iso:JPY',

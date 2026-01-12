@@ -1227,7 +1227,6 @@ export interface EdgeCurrencyTools {
 export interface EdgeCurrencyPlugin {
   readonly currencyInfo: EdgeCurrencyInfo
 
-  readonly getBuiltinTokens?: () => Promise<EdgeTokenMap>
   readonly makeCurrencyTools: () => Promise<EdgeCurrencyTools>
   readonly makeCurrencyEngine: (
     walletInfo: EdgeWalletInfo,
@@ -1682,7 +1681,6 @@ export interface EdgeCurrencyConfig {
 
   // Tokens:
   readonly allTokens: EdgeTokenMap
-  readonly builtinTokens: EdgeTokenMap
   readonly customTokens: EdgeTokenMap
   readonly getTokenDetails: (
     filter: EdgeGetTokenDetailsFilter
