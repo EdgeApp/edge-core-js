@@ -417,6 +417,10 @@ export interface EdgeToken {
   // This may be `undefined` for special built-in tokens
   // such as staking balances.
   networkLocation: JsonObject | undefined
+
+  // True if this token was manually created by the user (via EditTokenScene).
+  // False or undefined for tokens fetched from the server
+  isUserCreated?: boolean
 }
 
 /**
