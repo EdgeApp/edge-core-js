@@ -382,7 +382,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           subscription =>
             subscription.status === 'avoiding' ||
             subscription.status === 'reconnecting' ||
-            subscription.status === 'resubscribing'
+            subscription.status === 'resubscribing' ||
+            subscription.status === 'subscribingSlowly'
         ))
         ? props
         : undefined
