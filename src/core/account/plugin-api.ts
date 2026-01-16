@@ -5,16 +5,20 @@ import {
   EdgeCurrencyInfo,
   EdgeGetTokenDetailsFilter,
   EdgeOtherMethods,
+  EdgeParsedLink,
+  EdgePayLink,
   EdgeSwapConfig,
   EdgeSwapInfo,
   EdgeToken,
+  EdgeTokenId,
   EdgeTokenMap
 } from '../../types/types'
+import { parsedUriToLink } from '../currency/uri-tools'
 import { uniqueStrings } from '../currency/wallet/enabled-tokens'
 import { getCurrencyTools } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
 import { changePluginUserSettings, changeSwapSettings } from './account-files'
-import { getTokenId } from './custom-tokens'
+import { getTokenId, makeMetaTokens } from './custom-tokens'
 
 const emptyTokens: EdgeTokenMap = {}
 const emptyTokenIds: string[] = []
@@ -186,6 +190,54 @@ export class CurrencyConfig
     )
   }
 
+  async parseLink(
+    link: string,
+    opts: { tokenId?: EdgeTokenId } = {}
+  ): Promise<EdgeParsedLink> {
+    const { tokenId } = opts
+    const { allTokens } = this
+    const tools = await getCurrencyTools(this._ai, this._pluginId)
+
+    if (tools.parseLink != null) {
+      return await tools.parseLink(link, { tokenId, allTokens })
+    }
+
+    // Fallback version:
+    if (tools.parseUri != null) {
+      const out = await tools.parseUri(
+        link,
+        this.downgradeTokenId(tokenId),
+        makeMetaTokens(this.customTokens)
+      )
+      return parsedUriToLink(out, this.currencyInfo, allTokens)
+    }
+
+    return {}
+  }
+
+  async encodePayLink(link: EdgePayLink): Promise<string> {
+    const { tokenId } = link
+    const { allTokens } = this
+    const tools = await getCurrencyTools(this._ai, this._pluginId)
+
+    if (tools.encodePayLink != null) {
+      return await tools.encodePayLink(link, { allTokens })
+    }
+
+    // Fallback version:
+    if (tools.encodeUri != null) {
+      return await tools.encodeUri(
+        {
+          ...link,
+          currencyCode: this.downgradeTokenId(tokenId)
+        },
+        makeMetaTokens(this.customTokens)
+      )
+    }
+
+    return ''
+  }
+
   async importKey(
     userInput: string,
     opts: { keyOptions?: object } = {}
@@ -197,6 +249,13 @@ export class CurrencyConfig
     }
     const keys = await tools.importPrivateKey(userInput, opts.keyOptions)
     return { ...keys, imported: true }
+  }
+
+  private downgradeTokenId(tokenId?: EdgeTokenId): string | undefined {
+    if (tokenId === undefined) return
+    return tokenId == null
+      ? this.currencyInfo.currencyCode
+      : this.allTokens[tokenId]?.currencyCode
   }
 }
 
