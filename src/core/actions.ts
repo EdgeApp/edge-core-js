@@ -369,6 +369,9 @@ export type RootAction =
         apiKey: string
         apiSecret?: Uint8Array
         appId: string
+        appVersion?: string
+        osType?: string
+        osVersion?: string
         changeServers: string[]
         infoCache: InfoCacheFile
         infoServers: string[]
