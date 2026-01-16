@@ -27,7 +27,7 @@ import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 
 const GENESIS_BLOCK = 1231006505
 
-const fakeTokens: EdgeTokenMap = {
+export const fakeTokens: EdgeTokenMap = {
   badf00d5: {
     currencyCode: 'TOKEN',
     denominations: [{ multiplier: '1000', name: 'TOKEN' }],
@@ -38,7 +38,7 @@ const fakeTokens: EdgeTokenMap = {
   }
 }
 
-const fakeCurrencyInfo: EdgeCurrencyInfo = {
+export const fakeCurrencyInfo: EdgeCurrencyInfo = {
   currencyCode: 'FAKE',
   displayName: 'Fake Coin',
   chainDisplayName: 'Fake Chain',

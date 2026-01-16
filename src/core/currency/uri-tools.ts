@@ -51,9 +51,10 @@ export function parsedUriToLink(
   const out: EdgeParsedLink = {}
 
   // Payment addresses:
-  if (publicAddress != null) {
+  const payAddress = legacyAddress ?? publicAddress ?? segwitAddress
+  if (payAddress != null) {
     out.pay = {
-      publicAddress: legacyAddress ?? publicAddress ?? segwitAddress,
+      publicAddress: payAddress,
       addressType:
         legacyAddress != null
           ? 'legacyAddress'
@@ -68,7 +69,9 @@ export function parsedUriToLink(
       minNativeAmount: minNativeAmount,
       tokenId: tokenId,
       expires: expireDate,
-      isGateway: (metadata as any)?.gateway // Undocumented feature
+      // Plugins marked RenBridge Gateway addresses using this
+      // undocumented field:
+      isGateway: (metadata as any)?.gateway
     }
   }
 
@@ -90,7 +93,11 @@ export function parsedUriToLink(
       displayName: currencyName,
       networkLocation: {
         contractAddress,
-        type: (token as any).type // Undocumented EVM token type
+        // The edge-currency-accountbased custom token parser would
+        // insert this undocumented field into `EdgeMetaToken`.
+        // We can preserve this information in `networkLocation`,
+        // which is a free-form field designed to hold info like this:
+        type: (token as any).type
       }
     }
   }
