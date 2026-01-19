@@ -264,13 +264,12 @@ export const currency: TamePixie<RootProps> = combinePixies({
           // response:
           subscriptionTimeoutId = setTimeout(() => {
             subscriptionTimeoutId = undefined
-            // Refresh the state to avoid using stale data:
-            const { wallets } = input.props.state.currency
             const walletIds = new Set(
               indexToWalletId.map(item => item.walletId)
             )
             for (const walletId of walletIds) {
-              const wallet = wallets[walletId]
+              // Using input.props.state.currency directly because it's mutable:
+              const wallet = input.props.state.currency.wallets[walletId]
               // Skip if wallet was removed during timeout:
               if (wallet == null) continue
               const subscriptions = wallet.changeServiceSubscriptions
@@ -302,15 +301,13 @@ export const currency: TamePixie<RootProps> = combinePixies({
             subscriptionTimeoutId = undefined
           }
 
-          // Refresh state to avoid using stale wallet data after the await:
-          const { wallets: freshWallets } = input.props.state.currency
-
           const subscriptionUpdates: Map<string, ChangeServiceSubscription[]> =
             new Map()
           for (let i = 0; i < results.length; i++) {
             const result = results[i]
             const { walletId } = indexToWalletId[i]
-            const wallet = freshWallets[walletId]
+            // Using input.props.state.currency directly because it's mutable:
+            const wallet = input.props.state.currency.wallets[walletId]
 
             // Skip if wallet was removed during await:
             if (wallet == null) continue
