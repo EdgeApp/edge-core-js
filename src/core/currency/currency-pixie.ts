@@ -302,11 +302,18 @@ export const currency: TamePixie<RootProps> = combinePixies({
             subscriptionTimeoutId = undefined
           }
 
+          // Refresh state to avoid using stale wallet data after the await:
+          const { wallets: freshWallets } = input.props.state.currency
+
           const subscriptionUpdates: Map<string, ChangeServiceSubscription[]> =
             new Map()
           for (let i = 0; i < results.length; i++) {
             const result = results[i]
-            const { walletId, wallet } = indexToWalletId[i]
+            const { walletId } = indexToWalletId[i]
+            const wallet = freshWallets[walletId]
+
+            // Skip if wallet was removed during await:
+            if (wallet == null) continue
 
             // Determine the new status of the subscription to all addresses
             // for the wallet:
