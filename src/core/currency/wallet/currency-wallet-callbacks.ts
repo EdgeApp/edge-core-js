@@ -227,45 +227,32 @@ export function makeCurrencyWalletCallbacks(
         id: walletId,
         action: 'onBlockHeightChanged',
         updateFunc: () => {
-          // Update transaction confirmation status
-          const { txs } = input.props.walletState
+          // Notify GUI of transactions whose confirmations may have changed.
+          const { txs, files } = input.props.walletState
+          const changedTxs: EdgeTransaction[] = []
           for (const txid of Object.keys(txs)) {
             const reduxTx = txs[txid]
             if (shouldCoreDetermineConfirmations(reduxTx.confirmations)) {
-              const { requiredConfirmations } =
-                input.props.walletState.currencyInfo
-              const { height } = input.props.walletState
-
-              reduxTx.confirmations = determineConfirmations(
-                reduxTx,
-                height,
-                requiredConfirmations
-              )
-
-              // Recreate the EdgeTransaction object
               const txidHash = hashStorageWalletFilename(
                 input.props.state,
                 walletId,
                 reduxTx.txid
               )
-              const { files } = input.props.walletState
               const changedTx = combineTxWithFile(
                 input,
                 reduxTx,
                 files[txidHash],
-                null
+                null,
+                height
               )
-
-              // Dispatch event to update the redux transaction object
-              input.props.dispatch({
-                type: 'CHANGE_MERGE_TX',
-                payload: { tx: reduxTx }
-              })
-              // Dispatch event to update the EdgeTransaction object
-              throttledOnTxChanged([changedTx])
+              changedTxs.push(changedTx)
             }
           }
+          if (changedTxs.length > 0) {
+            throttledOnTxChanged(changedTxs)
+          }
 
+          // Update redux state for other consumers:
           input.props.dispatch({
             type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
             payload: { height, walletId }
@@ -380,18 +367,6 @@ export function makeCurrencyWalletCallbacks(
         const { isNew, transaction: tx } = txEvent
         const { txid } = tx
 
-        // DEPRECATE: After all currency plugins implement new Confirmations API
-        if (shouldCoreDetermineConfirmations(tx.confirmations)) {
-          const { requiredConfirmations } = input.props.walletState.currencyInfo
-          const { height } = input.props.walletState
-
-          tx.confirmations = determineConfirmations(
-            tx,
-            height,
-            requiredConfirmations
-          )
-        }
-
         // Verify that something has changed:
         const reduxTx = mergeTx(tx, reduxTxs[txid])
         if (compare(reduxTx, reduxTxs[txid]) && tx.metadata == null) continue
@@ -492,7 +467,7 @@ export function watchCurrencyWallet(input: CurrencyWalletInput): void {
  *
  * @deprecated Remove once all currency plugins support the new confirmations API.
  */
-const shouldCoreDetermineConfirmations = (
+export const shouldCoreDetermineConfirmations = (
   confirmations: EdgeConfirmationState | undefined
 ): boolean => {
   return (
