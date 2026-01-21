@@ -106,6 +106,7 @@ export type ChangeServiceSubscriptionStatus =
   | 'listening' // The wallet is connected and listening for changes
   | 'reconnecting' // The wallet is reconnecting to the change service while its not available
   | 'subscribing' // The wallet is in the process of subscribing (supported)
+  | 'subscribingSlowly' // The wallet is subscribing but response is slow, polling enabled
   | 'resubscribing' // The wallet is in the process of resubscribing due to a change-server issue (supported)
   | 'synced' // The wallet is synced to the latest network state
   | 'syncing' // The wallet is syncing historical data

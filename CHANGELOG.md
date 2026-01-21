@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Added change-server subscription timeout fallback.
+
 ## 2.39.0 (2026-01-16)
 
 - added: Add `appVersion`, `osType`, and `osVersion` to `EdgeContextOptions` for v2 coreRollup endpoint support.
