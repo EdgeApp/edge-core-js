@@ -60,13 +60,17 @@ export function isEmptyTxFile(file: TransactionFile): boolean {
   if (file.feeRateRequested != null) return false
 
   // Check currencies map for non-empty metadata:
-  for (const asset of file.currencies.values()) {
+  for (const currencyCode of file.currencies.keys()) {
+    const asset = file.currencies.get(currencyCode)
+    if (asset == null) continue
     if (!isEmptyMetadata(asset.metadata)) return false
     if (asset.assetAction != null) return false
   }
 
   // Check tokens map for non-empty metadata:
-  for (const asset of file.tokens.values()) {
+  for (const tokenId of file.tokens.keys()) {
+    const asset = file.tokens.get(tokenId)
+    if (asset == null) continue
     if (!isEmptyMetadata(asset.metadata)) return false
     if (asset.assetAction != null) return false
   }
