@@ -10,7 +10,7 @@ import {
 import { expectRejection } from '../../expect-rejection'
 import { fakeUser } from '../../fake/fake-user'
 
-const plugins = { fakecoin: true }
+const plugins = { fakecoin: true, tulipcoin: true }
 const contextOptions = { apiKey: '', appId: '', plugins }
 const quiet = { onLog() {} }
 
@@ -311,7 +311,7 @@ describe('account', function () {
     // Splitting back should not work:
     await expectRejection(
       account.splitWalletInfo(tulipWallet.id, 'wallet:fakecoin'),
-      'Error: This wallet has already been split'
+      'Error: This wallet has already been split (wallet:fakecoin)'
     )
   })
 

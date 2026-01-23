@@ -4,7 +4,9 @@
 
 - added: `EdgeCurrencyEngineCallbacks.onSyncStatusChanged` callback.
 - added: `EdgeCurrencyInfo.syncDisplayPrecision` option.
+- added: `EdgeCurrencyWallet.split` method.
 - added: `EdgeCurrencyWallet.syncStatus` property and matching `EdgeSyncStatus` type.
+- deprecated: `EdgeAccount.splitWalletInfo` method.
 - deprecated: `EdgeCurrencyEngineCallbacks.onAddressesChecked`. Use `onSyncStatusChanged` instead.
 - deprecated: `EdgeCurrencyWallet.syncRatio`. Use `syncStatus` instead.
 

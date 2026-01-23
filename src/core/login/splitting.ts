@@ -3,11 +3,15 @@ import { base64 } from 'rfc4648'
 
 import {
   EdgeCurrencyWallet,
+  EdgeResult,
   EdgeSpendInfo,
+  EdgeSplitCurrencyWallet,
   EdgeWalletInfo,
+  EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../types/types'
 import { hmacSha256 } from '../../util/crypto/hashes'
+import { makeEdgeResult } from '../../util/edgeResult'
 import { utf8 } from '../../util/encoding'
 import { changeWalletStates } from '../account/account-files'
 import { waitForCurrencyWallet } from '../currency/currency-selectors'
@@ -102,80 +106,135 @@ export function makeSplitWalletInfo(
 export async function splitWalletInfo(
   ai: ApiInput,
   accountId: string,
-  walletId: string,
-  newWalletType: string
-): Promise<string> {
+  walletInfo: EdgeWalletInfoFull,
+  splitWallets: EdgeSplitCurrencyWallet[],
+  rejectDupes: boolean
+): Promise<Array<EdgeResult<EdgeCurrencyWallet>>> {
   const accountState = ai.props.state.accounts[accountId]
   const { allWalletInfosFull, sessionKey } = accountState
 
-  // Find the wallet we are going to split:
-  const walletInfo = allWalletInfosFull.find(
-    walletInfo => walletInfo.id === walletId
-  )
-  if (walletInfo == null) throw new Error(`Invalid wallet id ${walletId}`)
-
-  // Handle BCH / BTC+segwit special case:
-  if (
-    newWalletType === 'wallet:bitcoincash' &&
-    walletInfo.type === 'wallet:bitcoin' &&
-    walletInfo.keys.format === 'bip49'
-  ) {
-    throw new Error(
-      'Cannot split segwit-format Bitcoin wallets to Bitcoin Cash'
-    )
-  }
-
-  // Handle BitcoinABC/SV replay protection:
-  const needsProtection =
-    newWalletType === 'wallet:bitcoinsv' &&
-    walletInfo.type === 'wallet:bitcoincash'
-  if (needsProtection) {
-    const oldWallet = ai.props.output.currency.wallets[walletId].walletApi
-    if (oldWallet == null) throw new Error('Missing Wallet')
-    await protectBchWallet(oldWallet)
-  }
-
-  // See if the wallet has already been split:
-  const newWalletInfo = makeSplitWalletInfo(walletInfo, newWalletType)
-  const existingWalletInfo = allWalletInfosFull.find(
-    walletInfo => walletInfo.id === newWalletInfo.id
-  )
-  if (existingWalletInfo != null) {
-    if (existingWalletInfo.archived || existingWalletInfo.deleted) {
-      // Simply undelete the existing wallet:
-      const walletInfos: EdgeWalletStates = {}
-      walletInfos[newWalletInfo.id] = {
-        archived: false,
-        deleted: false,
-        migratedFromWalletId: existingWalletInfo.migratedFromWalletId
-      }
-      await changeWalletStates(ai, accountId, walletInfos)
-      return newWalletInfo.id
+  // Validate the wallet types:
+  const plugins = ai.props.state.plugins.currency
+  const splitInfos = new Map<string, EdgeWalletInfo>()
+  for (const item of splitWallets) {
+    const { walletType } = item
+    const pluginId = maybeFindCurrencyPluginId(plugins, item.walletType)
+    if (pluginId == null) {
+      throw new Error(`Cannot find plugin for wallet type "${walletType}"`)
     }
-    if (needsProtection) return newWalletInfo.id
-    throw new Error('This wallet has already been split')
+    if (splitInfos.has(walletType)) {
+      throw new Error(`Duplicate wallet type "${walletType}"`)
+    }
+    splitInfos.set(walletType, makeSplitWalletInfo(walletInfo, walletType))
+  }
+
+  // Do we need BitcoinABC/SV replay protection?
+  const needsProtection =
+    walletInfo.type === 'wallet:bitcoincash' &&
+    // We can re-protect a wallet by doing a repeated split,
+    // so don't check if the wallet already exists:
+    splitInfos.has('wallet:bitcoinsv')
+  if (needsProtection) {
+    const existingWallet =
+      ai.props.output?.currency?.wallets[walletInfo.id]?.walletApi
+    if (existingWallet == null) {
+      throw new Error(`Cannot find wallet ${walletInfo.id}`)
+    }
+    await protectBchWallet(existingWallet)
+  }
+
+  // Sort the wallet infos into two categories:
+  const toRestore: EdgeWalletInfoFull[] = []
+  const toCreate: EdgeWalletInfo[] = []
+  for (const newWalletInfo of splitInfos.values()) {
+    const existingWalletInfo = allWalletInfosFull.find(
+      info => info.id === newWalletInfo.id
+    )
+    if (existingWalletInfo == null) {
+      toCreate.push(newWalletInfo)
+    } else {
+      if (existingWalletInfo.archived || existingWalletInfo.deleted) {
+        toRestore.push(existingWalletInfo)
+      } else if (rejectDupes) {
+        if (
+          // It's OK to re-split if we are adding protection:
+          walletInfo.type !== 'wallet:bitcoincash' ||
+          newWalletInfo.type !== 'wallet:bitcoinsv'
+        ) {
+          throw new Error(
+            `This wallet has already been split (${newWalletInfo.type})`
+          )
+        }
+      }
+    }
+  }
+
+  // Restore anything that has simply been deleted:
+  if (toRestore.length > 0) {
+    const newStates: EdgeWalletStates = {}
+    let hasChanges = false
+    for (const existingWalletInfo of toRestore) {
+      if (existingWalletInfo.archived || existingWalletInfo.deleted) {
+        hasChanges = true
+        newStates[existingWalletInfo.id] = {
+          archived: false,
+          deleted: false,
+          migratedFromWalletId: existingWalletInfo.migratedFromWalletId
+        }
+      }
+    }
+    if (hasChanges) await changeWalletStates(ai, accountId, newStates)
   }
 
   // Add the keys to the login:
-  const kit = makeKeysKit(ai, sessionKey, [newWalletInfo], true)
-  await applyKit(ai, sessionKey, kit)
+  if (toCreate.length > 0) {
+    const kit = makeKeysKit(ai, sessionKey, toCreate, true)
+    await applyKit(ai, sessionKey, kit)
+  }
+
+  // Wait for the new wallets to load:
+  const out = await Promise.all(
+    splitWallets.map(async splitInfo => {
+      const walletInfo = splitInfos.get(splitInfo.walletType)
+      if (walletInfo == null) {
+        throw new Error(`Missing wallet info for ${splitInfo.walletType}`)
+      }
+      return await makeEdgeResult(
+        finishWalletSplitting(
+          ai,
+          walletInfo.id,
+          toCreate.find(info => info.type === splitInfo.walletType) != null
+            ? splitInfo
+            : undefined
+        )
+      )
+    })
+  )
+
+  return out
+}
+
+async function finishWalletSplitting(
+  ai: ApiInput,
+  walletId: string,
+  item?: EdgeSplitCurrencyWallet
+): Promise<EdgeCurrencyWallet> {
+  const wallet = await waitForCurrencyWallet(ai, walletId)
 
   // Try to copy metadata on a best-effort basis.
   // In the future we should clone the repo instead:
-  try {
-    const wallet = await waitForCurrencyWallet(ai, newWalletInfo.id)
-    const oldWallet = ai.props.output.currency.wallets[walletId].walletApi
-    if (oldWallet != null) {
-      if (oldWallet.name != null) await wallet.renameWallet(oldWallet.name)
-      if (oldWallet.fiatCurrencyCode != null) {
-        await wallet.setFiatCurrencyCode(oldWallet.fiatCurrencyCode)
-      }
-    }
-  } catch (error: unknown) {
-    ai.props.onError(error)
+  if (item?.name != null) {
+    await wallet
+      .renameWallet(item.name)
+      .catch((error: unknown) => ai.props.onError(error))
+  }
+  if (item?.fiatCurrencyCode != null) {
+    await wallet
+      .setFiatCurrencyCode(item.fiatCurrencyCode)
+      .catch((error: unknown) => ai.props.onError(error))
   }
 
-  return newWalletInfo.id
+  return wallet
 }
 
 async function protectBchWallet(wallet: EdgeCurrencyWallet): Promise<void> {
