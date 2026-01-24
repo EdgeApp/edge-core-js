@@ -340,6 +340,9 @@ export async function loadTxFiles(
       const clean = await legacyTransactionFile.load(disklet, path)
       if (clean == null) return
       out[txidHash] = fixLegacyFile(clean, walletCurrency, walletFiat)
+      if (isEmptyTxFile(out[txidHash])) {
+        emptyFileInfos.push({ txidHash, path })
+      }
     })
   )
 
@@ -351,26 +354,23 @@ export async function loadTxFiles(
       const clean = await transactionFile.load(disklet, path)
       if (clean == null) return
       out[txidHash] = clean
+      if (isEmptyTxFile(out[txidHash])) {
+        emptyFileInfos.push({ txidHash, path })
+      }
     })
   )
 
-  // Detect empty files and queue them for deletion:
-  for (const txidHash of Object.keys(out)) {
-    const file = out[txidHash]
-    if (isEmptyTxFile(file)) {
-      const path = `transaction/${fileNames[txidHash].fileName}`
-      emptyFileInfos.push({ txidHash, path })
-      // Remove from output so it's not loaded into state:
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-      delete out[txidHash]
-    }
-  }
-
   // Delete empty files in a non-blocking way (fire-and-forget):
   if (emptyFileInfos.length > 0) {
-    const txidHashes: string[] = []
+    const txidHashesWithNoWalletFiles: string[] = []
     for (const info of emptyFileInfos) {
-      txidHashes.push(info.txidHash)
+      // If the out file is still empty, add it to the list of files to delete
+      // and remove it from the out object.
+      if (isEmptyTxFile(out[info.txidHash])) {
+        txidHashesWithNoWalletFiles.push(info.txidHash)
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete out[info.txidHash]
+      }
       // Delete files without awaiting:
       disklet.delete(info.path).catch(error => {
         input.props.log.warn(
@@ -382,7 +382,7 @@ export async function loadTxFiles(
     // won't attempt to load these empty files again:
     dispatch({
       type: 'CURRENCY_WALLET_FILE_DELETED',
-      payload: { txidHashes, walletId }
+      payload: { txidHashes: txidHashesWithNoWalletFiles, walletId }
     })
   }
 
