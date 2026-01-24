@@ -43,7 +43,11 @@ import { makeMetaTokens } from '../../account/custom-tokens'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
-import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
+import {
+  determineConfirmations,
+  makeCurrencyWalletCallbacks,
+  shouldCoreDetermineConfirmations
+} from './currency-wallet-callbacks'
 import {
   asEdgeAssetAction,
   asEdgeTxAction,
@@ -763,7 +767,8 @@ export function combineTxWithFile(
   input: CurrencyWalletInput,
   tx: MergedTransaction,
   file: TransactionFile | undefined,
-  tokenId: EdgeTokenId
+  tokenId: EdgeTokenId,
+  blockHeight?: number
 ): EdgeTransaction {
   const walletId = input.props.walletId
   const { accountId, currencyInfo, pluginId } = input.props.walletState
@@ -772,12 +777,20 @@ export function combineTxWithFile(
   const { currencyCode } = tokenId == null ? currencyInfo : allTokens[tokenId]
   const walletCurrency = currencyInfo.currencyCode
 
+  // Use provided blockHeight or fall back to state (for callers outside onBlockHeightChanged):
+  const height = blockHeight ?? input.props.walletState.height
+
+  // Calculate confirmations on-the-fly if engine didn't provide valid value:
+  const confirmations = shouldCoreDetermineConfirmations(tx.confirmations)
+    ? determineConfirmations(tx, height, currencyInfo.requiredConfirmations)
+    : tx.confirmations
+
   // Copy the tx properties to the output:
   const out: EdgeTransaction = {
     chainAction: tx.chainAction,
     chainAssetAction: tx.chainAssetAction.get(tokenId),
     blockHeight: tx.blockHeight,
-    confirmations: tx.confirmations,
+    confirmations,
     currencyCode,
     feeRateUsed: tx.feeRateUsed,
     date: tx.date,
