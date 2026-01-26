@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.40.0 (2026-01-26)
+
 - added: Added change-server subscription timeout fallback.
 
 ## 2.39.0 (2026-01-16)
