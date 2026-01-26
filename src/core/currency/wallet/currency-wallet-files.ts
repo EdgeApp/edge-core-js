@@ -37,7 +37,7 @@ import {
 import { CurrencyWalletInput } from './currency-wallet-pixie'
 import { TxFileNames } from './currency-wallet-reducer'
 import { currencyCodesToTokenIds } from './enabled-tokens'
-import { mergeMetadata } from './metadata'
+import { isEmptyMetadata, mergeMetadata } from './metadata'
 
 const CURRENCY_FILE = 'Currency.json'
 const LEGACY_MAP_FILE = 'fixedLegacyFileNames.json'
@@ -45,6 +45,38 @@ const LEGACY_TOKENS_FILE = 'EnabledTokens.json'
 const SEEN_TX_CHECKPOINT_FILE = 'seenTxCheckpoint.json'
 const TOKENS_FILE = 'Tokens.json'
 const WALLET_NAME_FILE = 'WalletName.json'
+
+/**
+ * Checks if a transaction file is "empty" (contains no user metadata).
+ * An empty file is one that matches the default template with no user-added data.
+ */
+export function isEmptyTxFile(file: TransactionFile): boolean {
+  // Check top-level user data fields:
+  if (file.savedAction != null) return false
+  if (file.swap != null) return false
+  if (file.payees != null && file.payees.length > 0) return false
+  if (file.deviceDescription != null) return false
+  if (file.secret != null) return false
+  if (file.feeRateRequested != null) return false
+
+  // Check currencies map for non-empty metadata:
+  for (const currencyCode of file.currencies.keys()) {
+    const asset = file.currencies.get(currencyCode)
+    if (asset == null) continue
+    if (!isEmptyMetadata(asset.metadata)) return false
+    if (asset.assetAction != null) return false
+  }
+
+  // Check tokens map for non-empty metadata:
+  for (const tokenId of file.tokens.keys()) {
+    const asset = file.tokens.get(tokenId)
+    if (asset == null) continue
+    if (!isEmptyMetadata(asset.metadata)) return false
+    if (asset.assetAction != null) return false
+  }
+
+  return true
+}
 
 const legacyAddressFile = makeJsonFile(asLegacyAddressFile)
 const legacyMapFile = makeJsonFile(asLegacyMapFile)
@@ -297,7 +329,10 @@ export async function loadTxFiles(
   const fileNames = input.props.walletState.fileNames
   const walletFiat = input.props.walletState.fiat
 
-  const out: { [filename: string]: TransactionFile } = {}
+  const out: { [txidHash: string]: TransactionFile } = {}
+  const emptyFileInfos: Array<{ txidHash: string; path: string }> = []
+
+  // Load legacy transaction files:
   await Promise.all(
     txIdHashes.map(async txidHash => {
       if (fileNames[txidHash] == null) return
@@ -305,8 +340,13 @@ export async function loadTxFiles(
       const clean = await legacyTransactionFile.load(disklet, path)
       if (clean == null) return
       out[txidHash] = fixLegacyFile(clean, walletCurrency, walletFiat)
+      if (isEmptyTxFile(out[txidHash])) {
+        emptyFileInfos.push({ txidHash, path })
+      }
     })
   )
+
+  // Load new transaction files:
   await Promise.all(
     txIdHashes.map(async txidHash => {
       if (fileNames[txidHash] == null) return
@@ -314,8 +354,37 @@ export async function loadTxFiles(
       const clean = await transactionFile.load(disklet, path)
       if (clean == null) return
       out[txidHash] = clean
+      if (isEmptyTxFile(out[txidHash])) {
+        emptyFileInfos.push({ txidHash, path })
+      }
     })
   )
+
+  // Delete empty files in a non-blocking way (fire-and-forget):
+  if (emptyFileInfos.length > 0) {
+    const txidHashesWithNoWalletFiles: string[] = []
+    for (const info of emptyFileInfos) {
+      // If the out file is still empty, add it to the list of files to delete
+      // and remove it from the out object.
+      if (isEmptyTxFile(out[info.txidHash])) {
+        txidHashesWithNoWalletFiles.push(info.txidHash)
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete out[info.txidHash]
+      }
+      // Delete files without awaiting:
+      disklet.delete(info.path).catch(error => {
+        input.props.log.warn(
+          `Failed to delete empty tx file ${info.path}: ${String(error)}`
+        )
+      })
+    }
+    // Dispatch action to remove from fileNames state so that loadTxFiles
+    // won't attempt to load these empty files again:
+    dispatch({
+      type: 'CURRENCY_WALLET_FILE_DELETED',
+      payload: { txidHashes: txidHashesWithNoWalletFiles, walletId }
+    })
+  }
 
   dispatch({
     type: 'CURRENCY_WALLET_FILES_LOADED',
