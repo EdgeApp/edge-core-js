@@ -2,13 +2,15 @@
 
 ## Unreleased
 
+## 2.40.0 (2026-01-26)
+
 - added: Added change-server subscription timeout fallback.
+- fixed: Transaction confirmation count calculation for utxo-based currencies
 
 ## 2.39.0 (2026-01-16)
 
 - added: Add `appVersion`, `osType`, and `osVersion` to `EdgeContextOptions` for v2 coreRollup endpoint support.
 - changed: Use `/v2/coreRollup` endpoint when device info is available, with `/v1/coreRollup` as fallback.
-- fixed: Fixed confirmations bug in `shouldCoreDetermineConfirmations`
 
 ## 2.38.4 (2026-01-12)
 
