@@ -12,7 +12,7 @@ public class EdgeCorePackage implements ReactPackage {
   @NonNull
   @Override
   public List<NativeModule> createNativeModules(@NonNull ReactApplicationContext reactContext) {
-    return Collections.emptyList();
+    return Collections.<NativeModule>singletonList(new EdgeCoreModule(reactContext));
   }
 
   @NonNull

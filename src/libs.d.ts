@@ -24,6 +24,18 @@ declare module 'react-native' {
     ) => void
   }
   const UIManager: UIManager
+
+  interface EdgeCoreModule {
+    getConstants: () => {
+      bundleBaseUri: string
+      rootBaseUri: string
+    }
+  }
+
+  interface NativeModulesStatic {
+    EdgeCoreModule: EdgeCoreModule
+  }
+  const NativeModules: NativeModulesStatic
 }
 
 declare module 'scrypt-js' {

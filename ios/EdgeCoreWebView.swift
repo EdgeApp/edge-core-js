@@ -1,15 +1,25 @@
-import WebKit
 import Foundation
-import Network
+import WebKit
 
+/// Default URL for the WebView
+let DEFAULT_SOURCE = "\(BUNDLE_BASE_URI)/edge-core-js.bundle/index.html"
+
+/// A WebView that loads edge-core-js content using a custom URL scheme handler.
+///
+/// Uses WKURLSchemeHandler to serve local assets via custom URLs (edgebundle://edge.bundle/...),
+/// which provides a proper non-null origin for same-origin policy compliance
+/// without requiring a local HTTP server.
+///
+/// Includes Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers
+/// required for SharedArrayBuffer support (needed by mixFetch web workers).
+///
+/// Note: WKURLSchemeHandler only handles requests within this specific WKWebView instance.
+/// It does not register a system-wide URL scheme - other apps cannot access this handler.
 class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
   var native = EdgeNative()
   var webView: WKWebView?
-  private var httpServer: BundleHTTPServer?
-  private var serverPort: UInt16 = 0
-  private var serverReady = false
-  
-  // react api--------------------------------------------------------------
+
+  // MARK: - React API
 
   @objc var onMessage: RCTDirectEventBlock?
   @objc var onScriptError: RCTDirectEventBlock?
@@ -32,7 +42,7 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
       completionHandler: { result, error in return })
   }
 
-  // view api --------------------------------------------------------------
+  // MARK: - View API
 
   required init?(coder: NSCoder) {
     return nil
@@ -41,10 +51,14 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
   override init(frame: CGRect) {
     super.init(frame: frame)
 
-    // Set up our native bridge:
+    // Set up our native bridge and custom URL scheme handler:
     let configuration = WKWebViewConfiguration()
     configuration.userContentController = WKUserContentController()
     configuration.userContentController.add(self, name: "edgeCore")
+
+    // Register custom URL scheme handler BEFORE creating WKWebView
+    let schemeHandler = EdgeAssetsSchemeHandler()
+    configuration.setURLSchemeHandler(schemeHandler, forURLScheme: EDGE_SCHEME)
 
     // Set up the WKWebView child:
     let webView = WKWebView(frame: bounds, configuration: configuration)
@@ -52,23 +66,8 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
     addSubview(webView)
     self.webView = webView
 
-    // Start the HTTP server on an ephemeral port bound to loopback only
-    let server = BundleHTTPServer()
-    self.httpServer = server
-    server.start { [weak self] result in
-      DispatchQueue.main.async {
-        switch result {
-        case .success(let port):
-          self?.serverPort = port
-          self?.serverReady = true
-          // Now that the server is ready with its assigned port, load the page
-          self?.visitPage()
-        case .failure(let error):
-          print("Failed to start HTTP server: \(error)")
-          // Server failed to start - the WebView won't be able to load local content
-        }
-      }
-    }
+    // Scheme handler is ready immediately - no async startup needed
+    visitPage()
   }
 
   override func layoutSubviews() {
@@ -84,13 +83,9 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
       webView.removeFromSuperview()
       self.webView = nil
     }
-    
-    // Stop the HTTP server when view is removed
-    httpServer?.stop()
-    httpServer = nil
   }
 
-  // callbacks -------------------------------------------------------------
+  // MARK: - Navigation Delegate
 
   func webView(
     _: WKWebView,
@@ -105,6 +100,8 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
     // Reload if we run out of memory:
     visitPage()
   }
+
+  // MARK: - Script Message Handler
 
   func userContentController(
     _: WKUserContentController,
@@ -135,7 +132,7 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
     }
   }
 
-  // utilities -------------------------------------------------------------
+  // MARK: - Utilities
 
   func handleMessage(
     _ name: String, args: NSArray
@@ -148,12 +145,6 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
       onScriptError?(["source": source])
       return
     }
-  }
-
-  /// Returns the base URL for the local bundle HTTP server, or nil if the server isn't ready.
-  func defaultSource() -> String? {
-    guard serverReady else { return nil }
-    return "http://127.0.0.1:\(serverPort)/index.html"
   }
 
   func stringify(_ raw: Any?) -> String {
@@ -172,18 +163,14 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
 
   func visitPage() {
     // If source is set, use it directly (e.g., webpack dev server for debugging)
-    // Otherwise, use the local bundle HTTP server with ephemeral port
+    // Otherwise, use the custom URL scheme handler
     let baseUrl: String
     if let src = source, !src.isEmpty {
       baseUrl = src
     } else {
-      guard let defaultUrl = defaultSource() else {
-        print("EdgeCoreWebView: visitPage called before server is ready")
-        return
-      }
-      baseUrl = defaultUrl
+      baseUrl = DEFAULT_SOURCE
     }
-    
+
     guard let url = URL(string: baseUrl) else {
       print("EdgeCoreWebView: Invalid URL string: \(baseUrl)")
       return

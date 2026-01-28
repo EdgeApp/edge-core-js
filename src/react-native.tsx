@@ -1,6 +1,7 @@
 import { asObject, asString } from 'cleaners'
 import { makeReactNativeDisklet } from 'disklet'
 import * as React from 'react'
+import { NativeModules } from 'react-native'
 import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
@@ -21,6 +22,15 @@ import { timeout } from './util/promise'
 
 export { makeFakeIo } from './core/fake/fake-io'
 export * from './types/types'
+
+const { EdgeCoreModule } = NativeModules
+
+/**
+ * Constants exported from native:
+ * - bundleBaseUri: iOS "edgebundle://edge.bundle", Android "https://edge.bundle"
+ * - rootBaseUri: iOS "file:///path/to/Edge.app/", Android "file:///android_asset/"
+ */
+const { bundleBaseUri, rootBaseUri } = EdgeCoreModule.getConstants()
 
 function defaultOnError(error: unknown): void {
   console.error(error)
@@ -69,7 +79,7 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
         const context = await root.makeEdgeContext(
           bridgifyNativeIo(nativeIo),
           bridgifyLogBackend({ crashReporter, onLog }),
-          pluginUris,
+          pluginUris.map(normalizePluginUri),
           {
             airbitzSupport,
             apiKey,
@@ -121,7 +131,7 @@ export function MakeFakeEdgeWorld(props: EdgeFakeWorldProps): JSX.Element {
         const fakeWorld = await root.makeFakeEdgeWorld(
           bridgifyNativeIo(nativeIo),
           bridgifyLogBackend({ crashReporter, onLog }),
-          pluginUris,
+          pluginUris.map(normalizePluginUri),
           props.users
         )
         await onLoad(fakeWorld)
@@ -216,4 +226,31 @@ export async function fetchLoginMessages(
       return out
     })
   })
+}
+
+/**
+ * Convert a legacy plugin URI to an absolute URL that can be loaded by the WebView.
+ *
+ * Handles `file://` URIs by replacing the rootBaseUri prefix with bundleBaseUri:
+ * - `file:///android_asset/folder/file.js` → `{bundleBaseUri}/folder/file.js`
+ * - `file:///path/to/Edge.app/name.bundle/file.js` → `{bundleBaseUri}/name.bundle/file.js`
+ * - `edge-core/plugin-bundle.js` → `{bundleBaseUri}/edge-core/plugin-bundle.js`
+ *
+ * Full URLs are returned unchanged (http, https, edgebundle).
+ */
+function normalizePluginUri(uri: string): string {
+  // Handle file:// URIs that start with our root base URI
+  if (uri.startsWith(rootBaseUri)) {
+    const relativePath = uri.slice(rootBaseUri.length)
+    return `${bundleBaseUri}/${relativePath}`
+  }
+
+  // Handle relative paths (no schema) like "edge-core/plugin-bundle.js"
+  if (!uri.includes('://') && uri.match(/^[^/]+\/[^/]+\.(js)$/) != null) {
+    // Relative paths are return as absolute paths
+    return `${bundleBaseUri}/${uri}`
+  }
+
+  // Full URLs and anything else pass through unchanged
+  return uri
 }
