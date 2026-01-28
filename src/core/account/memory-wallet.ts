@@ -10,7 +10,7 @@ import {
   EdgeTokenId,
   EdgeTransaction,
   EdgeWalletInfo
-} from '../../browser'
+} from '../../types/types'
 import { makePeriodicTask, PeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
 import { getMaxSpendableInner } from '../currency/wallet/max-spend'

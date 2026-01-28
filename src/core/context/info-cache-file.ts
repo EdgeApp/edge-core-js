@@ -1,6 +1,6 @@
 import { asArray, asObject, asString } from 'cleaners'
 
-import { EdgePluginMap, JsonObject } from '../../browser'
+import { EdgePluginMap, JsonObject } from '../../types/types'
 import { asJsonObject, makeJsonFile } from '../../util/file-helpers'
 
 export interface InfoCacheFile {

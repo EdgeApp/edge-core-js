@@ -2,10 +2,10 @@ import { Disklet } from 'disklet'
 import { base32 } from 'rfc4648'
 import { bridgifyObject, onMethod, watchMethod } from 'yaob'
 
-import { ChangeUsernameOptions } from '../../browser'
 import { AccountSync, fixUsername } from '../../client-side'
 import {
   ChangePinOptions,
+  ChangeUsernameOptions,
   EdgeAccount,
   EdgeActivationOptions,
   EdgeActivationQuote,
