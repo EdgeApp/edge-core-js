@@ -1,5 +1,5 @@
 import { makeContext, makeFakeWorld } from './core/core'
-import { defaultOnLog } from './core/log/log'
+import { defaultOnLog, LogBackend } from './core/log/log'
 import { makeBrowserIo } from './io/browser/browser-io'
 import {
   EdgeContext,
@@ -22,9 +22,10 @@ export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
   const { crashReporter, onLog = defaultOnLog } = opts
+  const logBackend: LogBackend = { crashReporter, onLog }
   return makeContext(
-    { io: makeBrowserIo(), nativeIo: {} },
-    { crashReporter, onLog },
+    { io: makeBrowserIo(logBackend), nativeIo: {} },
+    logBackend,
     opts
   )
 }
@@ -34,10 +35,11 @@ export function makeFakeEdgeWorld(
   opts: EdgeFakeWorldOptions = {}
 ): Promise<EdgeFakeWorld> {
   const { crashReporter, onLog = defaultOnLog } = opts
+  const logBackend: LogBackend = { crashReporter, onLog }
   return Promise.resolve(
     makeFakeWorld(
-      { io: makeBrowserIo(), nativeIo: {} },
-      { crashReporter, onLog },
+      { io: makeBrowserIo(logBackend), nativeIo: {} },
+      logBackend,
       users
     )
   )

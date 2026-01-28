@@ -80,6 +80,7 @@
     "*.{js,jsx,ts,tsx}": "eslint"
   },
   "dependencies": {
+    "@nymproject/mix-fetch": "^1.4.1",
     "aes-js": "^3.1.0",
     "base-x": "^4.0.0",
     "biggystring": "^4.2.3",
@@ -125,6 +126,7 @@
     "babel-plugin-transform-fake-error-class": "^1.0.0",
     "buffer": "^6.0.3",
     "chai": "^4.2.0",
+    "copy-webpack-plugin": "^13.0.1",
     "eslint": "^7.32.0",
     "eslint-config-standard-kit": "0.15.1",
     "eslint-plugin-flowtype": "^5.2.0",

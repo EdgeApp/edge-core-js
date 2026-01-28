@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: New `privacy` option argument to EdgeIo fetch function for NYM support.
 - fixed: Change-server websocket reconnects reliably after disconnection
 
 ## 2.40.0 (2026-01-26)

@@ -8,6 +8,8 @@
     "moduleResolution": "node",
     "target": "es2015",
 
+    "skipLibCheck": true,
+
     "strict": true
   },
   "exclude": ["lib"]

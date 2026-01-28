@@ -1,9 +1,14 @@
 import WebKit
+import Foundation
+import Network
 
 class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
   var native = EdgeNative()
   var webView: WKWebView?
-
+  private var httpServer: BundleHTTPServer?
+  private var serverPort: UInt16 = 0
+  private var serverReady = false
+  
   // react api--------------------------------------------------------------
 
   @objc var onMessage: RCTDirectEventBlock?
@@ -47,8 +52,23 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
     addSubview(webView)
     self.webView = webView
 
-    // Launch the core:
-    visitPage()
+    // Start the HTTP server on an ephemeral port bound to loopback only
+    let server = BundleHTTPServer()
+    self.httpServer = server
+    server.start { [weak self] result in
+      DispatchQueue.main.async {
+        switch result {
+        case .success(let port):
+          self?.serverPort = port
+          self?.serverReady = true
+          // Now that the server is ready with its assigned port, load the page
+          self?.visitPage()
+        case .failure(let error):
+          print("Failed to start HTTP server: \(error)")
+          // Server failed to start - the WebView won't be able to load local content
+        }
+      }
+    }
   }
 
   override func layoutSubviews() {
@@ -64,6 +84,10 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
       webView.removeFromSuperview()
       self.webView = nil
     }
+    
+    // Stop the HTTP server when view is removed
+    httpServer?.stop()
+    httpServer = nil
   }
 
   // callbacks -------------------------------------------------------------
@@ -126,17 +150,10 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
     }
   }
 
+  /// Returns the base URL for the local bundle HTTP server, or nil if the server isn't ready.
   func defaultSource() -> String? {
-    if let bundleUrl = Bundle.main.url(
-      forResource: "edge-core-js",
-      withExtension: "bundle"
-    ),
-      let bundle = Bundle(url: bundleUrl),
-      let script = bundle.url(forResource: "edge-core", withExtension: "js")
-    {
-      return script.absoluteString
-    }
-    return nil
+    guard serverReady else { return nil }
+    return "http://127.0.0.1:\(serverPort)/index.html"
   }
 
   func stringify(_ raw: Any?) -> String {
@@ -154,22 +171,24 @@ class EdgeCoreWebView: RCTView, WKNavigationDelegate, WKScriptMessageHandler {
   }
 
   func visitPage() {
-    if let src = source ?? defaultSource() {
-      webView?.loadHTMLString(
-        """
-        <!doctype html><html><head>
-        <meta charset="utf-8">
-        <title>edge-core-js</title>
-        <script
-          charset="utf-8"
-          defer
-          src="\(src)"
-          onerror="window.webkit.messageHandlers.edgeCore.postMessage([0, 'scriptError', ['\(src)']])"
-        ></script>
-        </head><body></body></html>
-        """,
-        baseURL: Bundle.main.bundleURL
-      )
+    // If source is set, use it directly (e.g., webpack dev server for debugging)
+    // Otherwise, use the local bundle HTTP server with ephemeral port
+    let baseUrl: String
+    if let src = source, !src.isEmpty {
+      baseUrl = src
+    } else {
+      guard let defaultUrl = defaultSource() else {
+        print("EdgeCoreWebView: visitPage called before server is ready")
+        return
+      }
+      baseUrl = defaultUrl
     }
+    
+    guard let url = URL(string: baseUrl) else {
+      print("EdgeCoreWebView: Invalid URL string: \(baseUrl)")
+      return
+    }
+    let request = URLRequest(url: url)
+    webView?.load(request)
   }
 }
