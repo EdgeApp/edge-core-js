@@ -1,13 +1,13 @@
 import { add, div, lte, sub } from 'biggystring'
 
+import { upgradeCurrencyCode } from '../../../types/type-helpers'
 import {
   EdgeCurrencyEngine,
   EdgeCurrencyPlugin,
   EdgeSpendInfo,
   EdgeTokenMap,
   EdgeWalletInfo
-} from '../../../browser'
-import { upgradeCurrencyCode } from '../../../types/type-helpers'
+} from '../../../types/types'
 import { upgradeMemos } from './upgrade-memos'
 
 export const getMaxSpendableInner = async (

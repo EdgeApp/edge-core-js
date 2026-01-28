@@ -1,5 +1,5 @@
-import { ChangeUsernameOptions } from '../../browser'
 import { wasChangeUsernamePayload } from '../../types/server-cleaners'
+import { ChangeUsernameOptions } from '../../types/types'
 import { encrypt } from '../../util/crypto/crypto'
 import { utf8 } from '../../util/encoding'
 import { ApiInput } from '../root-pixie'

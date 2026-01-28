@@ -1,6 +1,6 @@
 import { asCodec, asObject, Cleaner } from 'cleaners'
 
-import { EdgeTokenId } from '../browser'
+import { EdgeTokenId } from '../types/types'
 
 /**
  * Reads a JSON-style object into a JavaScript `Map` object with string keys.

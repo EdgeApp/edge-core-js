@@ -1,6 +1,6 @@
 import { asObject, uncleaner } from 'cleaners'
 
-import { asBase64 } from '../../browser'
+import { asBase64 } from '../../types/types'
 import { ApiInput } from '../root-pixie'
 
 export const asEdgeStorageKeys = asObject({
