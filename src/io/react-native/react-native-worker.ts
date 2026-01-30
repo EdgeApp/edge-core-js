@@ -208,10 +208,11 @@ async function makeIo(logBackend: LogBackend): Promise<EdgeIo> {
         // Ensure mixFetch is initialized before use
         await initMixFetch(log)
         // Use queued fetch to handle mixFetch's one-request-per-host limitation
-        return await queueMixFetch(uri, {
+        const response = await queueMixFetch(uri, {
           ...opts,
           mode: 'unsafe-ignore-cors' as RequestMode
         })
+        return response
       }
       if (corsBypass === 'always') {
         return await nativeFetch(uri, opts)
