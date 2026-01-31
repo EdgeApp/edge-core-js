@@ -5,6 +5,7 @@ import {
   EdgeLogSettings,
   EdgePluginMap,
   EdgeStakingStatus,
+  EdgeSyncStatus,
   EdgeToken,
   EdgeTokenId,
   EdgeTokenMap,
@@ -179,9 +180,9 @@ export type RootAction =
     }
   | {
       // Called when a currency engine fires the onAddressChecked callback.
-      type: 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO'
+      type: 'CURRENCY_ENGINE_CHANGED_SYNC_STATUS'
       payload: {
-        ratio: number
+        status: EdgeSyncStatus
         walletId: string
       }
     }

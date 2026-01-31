@@ -5,8 +5,10 @@ import {
   EdgeBalanceMap,
   EdgeCreateCurrencyWalletOptions,
   EdgeCurrencyConfig,
+  EdgeCurrencyEngineCallbacks,
   EdgeMemoryWallet,
   EdgeSpendInfo,
+  EdgeSyncStatus,
   EdgeTokenId,
   EdgeTransaction,
   EdgeWalletInfo
@@ -43,7 +45,7 @@ export const makeMemoryWalletInner = async (
   const log = makeLog(ai.props.logBackend, `${walletId}-${walletType}`)
   let balanceMap: EdgeBalanceMap = new Map()
   let detectedTokenIds: string[] = []
-  let syncRatio: number = 0
+  let syncStatus: EdgeSyncStatus = { totalRatio: 0 }
 
   let needsUpdate = false
   const updateWallet = (): void => {
@@ -58,51 +60,54 @@ export const makeMemoryWalletInner = async (
   }, 0)
 
   const plugin = ai.props.state.plugins.currency[config.currencyInfo.pluginId]
-  const engine = await plugin.makeCurrencyEngine(walletInfo, {
-    callbacks: {
-      onAddressChanged: () => {},
-      onAddressesChecked: (progressRatio: number) => {
-        if (out.syncRatio === 1) return
+  const callbacks: EdgeCurrencyEngineCallbacks = {
+    onAddressChanged: () => {},
+    onAddressesChecked(totalRatio: number) {
+      callbacks.onSyncStatusChanged({ totalRatio })
+    },
+    onNewTokens: (tokenIds: string[]) => {
+      const sortedTokenIds = tokenIds.sort((a, b) => a.localeCompare(b))
 
-        if (progressRatio === 1) {
-          syncRatio = progressRatio
-          needsUpdate = true
-        }
-      },
-      onNewTokens: (tokenIds: string[]) => {
-        const sortedTokenIds = tokenIds.sort((a, b) => a.localeCompare(b))
-
-        if (detectedTokenIds.length !== sortedTokenIds.length) {
+      if (detectedTokenIds.length !== sortedTokenIds.length) {
+        detectedTokenIds = sortedTokenIds
+        needsUpdate = true
+        return
+      }
+      for (let i = 0; i < sortedTokenIds.length; i++) {
+        if (detectedTokenIds[i] !== sortedTokenIds[i]) {
           detectedTokenIds = sortedTokenIds
           needsUpdate = true
           return
         }
-        for (let i = 0; i < sortedTokenIds.length; i++) {
-          if (detectedTokenIds[i] !== sortedTokenIds[i]) {
-            detectedTokenIds = sortedTokenIds
-            needsUpdate = true
-            return
-          }
-        }
-      },
-      onSeenTxCheckpoint: () => {},
-      onStakingStatusChanged: () => {},
-      onSubscribeAddresses: () => {},
-      onTokenBalanceChanged: (tokenId: EdgeTokenId, balance: string) => {
-        if (balanceMap.get(tokenId) === balance) return
-
-        balanceMap = new Map(balanceMap)
-        balanceMap.set(tokenId, balance)
-        needsUpdate = true
-      },
-      onTransactions: () => {},
-      onTransactionsChanged: () => {},
-      onTxidsChanged: () => {},
-      onUnactivatedTokenIdsChanged: () => {},
-      onWcNewContractCall: () => {},
-      onBlockHeightChanged: () => {},
-      onBalanceChanged: () => {}
+      }
     },
+    onSeenTxCheckpoint: () => {},
+    onStakingStatusChanged: () => {},
+    onSubscribeAddresses: () => {},
+    onSyncStatusChanged(status) {
+      if (syncStatus.totalRatio === 1) return
+      if (status.totalRatio === 1) {
+        syncStatus = status
+        needsUpdate = true
+      }
+    },
+    onTokenBalanceChanged: (tokenId: EdgeTokenId, balance: string) => {
+      if (balanceMap.get(tokenId) === balance) return
+
+      balanceMap = new Map(balanceMap)
+      balanceMap.set(tokenId, balance)
+      needsUpdate = true
+    },
+    onTransactions: () => {},
+    onTransactionsChanged: () => {},
+    onTxidsChanged: () => {},
+    onUnactivatedTokenIdsChanged: () => {},
+    onWcNewContractCall: () => {},
+    onBlockHeightChanged: () => {},
+    onBalanceChanged: () => {}
+  }
+  const engine = await plugin.makeCurrencyEngine(walletInfo, {
+    callbacks,
     customTokens: { ...config.customTokens },
     enabledTokenIds: [...Object.keys(config.allTokens)],
     lightMode: true,
@@ -151,7 +156,10 @@ export const makeMemoryWalletInner = async (
       return detectedTokenIds
     },
     get syncRatio() {
-      return syncRatio
+      return syncStatus.totalRatio
+    },
+    get syncStatus() {
+      return syncStatus
     },
     async changeEnabledTokenIds(tokenIds: string[]) {
       if (engine.changeEnabledTokenIds != null) {

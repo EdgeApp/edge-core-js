@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyEngineCallbacks.onSyncStatusChanged` callback.
+- added: `EdgeCurrencyInfo.syncDisplayPrecision` option.
+- added: `EdgeCurrencyWallet.syncStatus` property and matching `EdgeSyncStatus` type.
+- deprecated: `EdgeCurrencyEngineCallbacks.onAddressesChecked`. Use `onSyncStatusChanged` instead.
+- deprecated: `EdgeCurrencyWallet.syncRatio`. Use `syncStatus` instead.
+
 ## 2.41.3 (2026-02-09)
 
 - fixed: Fixed bundle issue caused by iOS symlink from /private/var/ and /var/ paths.

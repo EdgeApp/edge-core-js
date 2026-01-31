@@ -12,6 +12,7 @@ import {
   EdgeCurrencyEngineCallbacks,
   EdgeStakingStatus,
   EdgeSubscribedAddress,
+  EdgeSyncStatus,
   EdgeTokenId,
   EdgeTransaction,
   EdgeTransactionEvent
@@ -118,11 +119,11 @@ export function makeCurrencyWalletCallbacks(
     onAddressesChecked(ratio: number) {
       pushUpdate({
         id: walletId,
-        action: 'onAddressesChecked',
+        action: 'onSyncStatusChanged',
         updateFunc: () => {
           input.props.dispatch({
-            type: 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO',
-            payload: { ratio, walletId }
+            type: 'CURRENCY_ENGINE_CHANGED_SYNC_STATUS',
+            payload: { status: { totalRatio: ratio }, walletId }
           })
         }
       })
@@ -313,6 +314,19 @@ export function makeCurrencyWalletCallbacks(
         payload: {
           subscriptions,
           walletId
+        }
+      })
+    },
+
+    onSyncStatusChanged(syncStatus: EdgeSyncStatus) {
+      pushUpdate({
+        id: walletId,
+        action: 'onSyncStatusChanged',
+        updateFunc: () => {
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_CHANGED_SYNC_STATUS',
+            payload: { status: syncStatus, walletId }
+          })
         }
       })
     },

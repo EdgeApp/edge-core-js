@@ -542,6 +542,9 @@ export interface EdgeCurrencyInfo {
   unsafeSyncNetwork?: boolean
   usesChangeServer?: boolean
 
+  /** Show the total sync percentage with this many decimal digits */
+  syncDisplayPrecision?: number
+
   /** @deprecated The default user settings are always `{}` */
   defaultSettings?: JsonObject
 
@@ -809,6 +812,23 @@ export interface EdgeStakingStatus {
   }>
 }
 
+/**
+ * Reports a currency wallet's blockchain syncing progress.
+ */
+export interface EdgeSyncStatus {
+  /** A single "overview" value of the sync state from 0 to 1. */
+  totalRatio: number
+
+  /** How far along the chain we are, for chains that scan by blocks. */
+  blockRatio?: [number, number] // [ourHeight: number, chainHeight: number]
+
+  /**
+   * Free-form values to show the user, for engines with unusual info.
+   * For example: `{ "donwload speed": "1 KB/s" }`
+   */
+  otherParams?: { [name: string]: string } // Record<string, string>
+}
+
 export interface EdgeTxidMap {
   [txid: string]: number
 }
@@ -967,7 +987,6 @@ export interface EdgeSignMessageOptions {
 
 export interface EdgeCurrencyEngineCallbacks {
   readonly onAddressChanged: () => void
-  readonly onAddressesChecked: (progressRatio: number) => void
   readonly onNewTokens: (tokenIds: string[]) => void
   readonly onSeenTxCheckpoint: (checkpoint: string) => void
   readonly onStakingStatusChanged: (status: EdgeStakingStatus) => void
@@ -977,6 +996,7 @@ export interface EdgeCurrencyEngineCallbacks {
       /** @deprecated Use the array of EdgeSubscribedAddress objects instead. */
       | string[]
   ) => void
+  readonly onSyncStatusChanged: (syncStatus: EdgeSyncStatus) => void
   readonly onTokenBalanceChanged: (
     tokenId: EdgeTokenId,
     balance: string
@@ -985,6 +1005,9 @@ export interface EdgeCurrencyEngineCallbacks {
   readonly onTxidsChanged: (txids: EdgeTxidMap) => void
   readonly onUnactivatedTokenIdsChanged: (unactivatedTokenIds: string[]) => void
   readonly onWcNewContractCall: (payload: JsonObject) => void
+
+  /** @deprecated Use onSyncStatusChanged */
+  readonly onAddressesChecked: (progressRatio: number) => void
 
   /** @deprecated onTransactionsChanged handles confirmation changes */
   readonly onBlockHeightChanged: (blockHeight: number) => void
@@ -1325,7 +1348,7 @@ export interface EdgeCurrencyWallet {
   readonly balanceMap: EdgeBalanceMap
   readonly balances: EdgeBalances
   readonly blockHeight: number
-  readonly syncRatio: number
+  readonly syncStatus: EdgeSyncStatus
   readonly unactivatedTokenIds: string[]
 
   // Running state:
@@ -1428,13 +1451,16 @@ export interface EdgeCurrencyWallet {
     message: string,
     opts?: EdgeSignMessageOptions
   ) => Promise<string>
+
+  /** @deprecated Use `syncStatus` instead */
+  readonly syncRatio: number
 }
 
 export interface EdgeMemoryWallet {
   readonly watch: Subscriber<EdgeMemoryWallet>
   readonly balanceMap: EdgeBalanceMap
   readonly detectedTokenIds: string[]
-  readonly syncRatio: number
+  readonly syncStatus: EdgeSyncStatus
   readonly changeEnabledTokenIds: (tokenIds: string[]) => Promise<void>
   readonly startEngine: () => Promise<void>
   readonly getMaxSpendable: (spendInfo: EdgeSpendInfo) => Promise<string>
@@ -1443,6 +1469,9 @@ export interface EdgeMemoryWallet {
   readonly broadcastTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly saveTx: (tx: EdgeTransaction) => Promise<void>
   readonly close: () => Promise<void>
+
+  /** @deprecated Use syncStatus */
+  readonly syncRatio: number
 }
 
 // ---------------------------------------------------------------------

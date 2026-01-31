@@ -34,6 +34,7 @@ import {
   EdgeSpendTarget,
   EdgeStakingStatus,
   EdgeStreamTransactionOptions,
+  EdgeSyncStatus,
   EdgeTokenId,
   EdgeTokenIdOptions,
   EdgeTransaction,
@@ -201,7 +202,10 @@ export function makeCurrencyWalletApi(
       return skipBlockHeight ? 0 : input.props.walletState.height
     },
     get syncRatio(): number {
-      return input.props.walletState.syncRatio
+      return input.props.walletState.syncStatus.totalRatio
+    },
+    get syncStatus(): EdgeSyncStatus {
+      return input.props.walletState.syncStatus
     },
     get unactivatedTokenIds(): string[] {
       return input.props.walletState.unactivatedTokenIds
