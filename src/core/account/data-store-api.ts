@@ -34,7 +34,10 @@ export function makeDataStoreApi(
   accountId: string
 ): EdgeDataStore {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
-  const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
+
+  // Lazy disklet access - only evaluated when data store methods are called:
+  const getDisklet = (): ReturnType<typeof getStorageWalletDisklet> =>
+    getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
   // Path manipulation:
   const hashName = (data: string): string =>
@@ -46,15 +49,16 @@ export function makeDataStoreApi(
 
   const out: EdgeDataStore = {
     async deleteItem(storeId: string, itemId: string): Promise<void> {
-      await disklet.delete(getItemPath(storeId, itemId))
+      await getDisklet().delete(getItemPath(storeId, itemId))
     },
 
     async deleteStore(storeId: string): Promise<void> {
-      await disklet.delete(getStorePath(storeId))
+      await getDisklet().delete(getStorePath(storeId))
     },
 
     async listItemIds(storeId: string): Promise<string[]> {
       const itemIds: string[] = []
+      const disklet = getDisklet()
       const paths = justFiles(await disklet.list(getStorePath(storeId)))
       await Promise.all(
         paths.map(async path => {
@@ -67,6 +71,7 @@ export function makeDataStoreApi(
 
     async listStoreIds(): Promise<string[]> {
       const storeIds: string[] = []
+      const disklet = getDisklet()
       const paths = justFolders(await disklet.list('Plugins'))
       await Promise.all(
         paths.map(async path => {
@@ -79,7 +84,7 @@ export function makeDataStoreApi(
 
     async getItem(storeId: string, itemId: string): Promise<string> {
       const clean = await storeItemFile.load(
-        disklet,
+        getDisklet(),
         getItemPath(storeId, itemId)
       )
       if (clean == null) throw new Error(`No item named "${itemId}"`)
@@ -91,6 +96,7 @@ export function makeDataStoreApi(
       itemId: string,
       value: string
     ): Promise<void> {
+      const disklet = getDisklet()
       // Set up the plugin folder, if needed:
       const namePath = `${getStorePath(storeId)}/Name.json`
       const clean = await storeIdFile.load(disklet, namePath)

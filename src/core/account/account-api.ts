@@ -25,10 +25,17 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapRequestOptions,
+  EdgeToken,
   EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../types/types'
 import { base58 } from '../../util/encoding'
+import {
+  CachedToken,
+  CachedWallet,
+  WalletCacheFile
+} from '../cache/cache-wallet-cleaners'
+import { WalletCacheSetup } from '../cache/cache-wallet-loader'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import {
   finishWalletCreation,
@@ -70,6 +77,22 @@ import { makeDataStoreApi } from './data-store-api'
 import { makeLobbyApi } from './lobby-api'
 import { makeMemoryWalletInner } from './memory-wallet'
 import { CurrencyConfig, SwapConfig } from './plugin-api'
+
+/**
+ * Converts an EdgeToken to the CachedToken format for caching.
+ */
+function edgeTokenToCachedToken(token: EdgeToken): CachedToken {
+  return {
+    currencyCode: token.currencyCode,
+    displayName: token.displayName,
+    denominations: token.denominations.map(d => ({
+      multiplier: d.multiplier,
+      name: d.name,
+      symbol: d.symbol
+    })),
+    networkLocation: token.networkLocation
+  }
+}
 
 /**
  * Creates an unwrapped account API object around an account state object.
@@ -705,6 +728,80 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       })
     },
 
+    async saveWalletCache(): Promise<string> {
+      // Build token map from all currency configs:
+      const tokens: WalletCacheFile['tokens'] = {}
+      for (const [pluginId, config] of Object.entries(currencyConfigs)) {
+        const pluginTokens: { [tokenId: string]: CachedToken } = {}
+        for (const [tokenId, token] of Object.entries(config.allTokens)) {
+          pluginTokens[tokenId] = edgeTokenToCachedToken(token)
+        }
+        if (Object.keys(pluginTokens).length > 0) {
+          tokens[pluginId] = pluginTokens
+        }
+      }
+
+      // Build wallet array from active wallets:
+      const wallets: CachedWallet[] = []
+      for (const walletId of this.activeWalletIds) {
+        const wallet = this.currencyWallets[walletId]
+        if (wallet == null) continue
+
+        // Convert balanceMap to balances object:
+        const balances: { [tokenId: string]: string } = {}
+        for (const [tokenId, balance] of wallet.balanceMap) {
+          // Use "null" string for parent currency (null tokenId)
+          const key = tokenId ?? 'null'
+          balances[key] = balance
+        }
+
+        // Get custom tokens:
+        const customTokens: { [tokenId: string]: CachedToken } = {}
+        const config = wallet.currencyConfig
+        for (const [tokenId, token] of Object.entries(config.customTokens)) {
+          customTokens[tokenId] = edgeTokenToCachedToken(token)
+        }
+
+        // Get change service subscriptions from Redux state:
+        const walletState = ai.props.state.currency.wallets[walletId]
+        const subscribedAddresses =
+          walletState?.changeServiceSubscriptions
+            ?.filter(sub => sub.status !== 'avoiding')
+            .map(sub => ({
+              address: sub.address,
+              checkpoint: sub.checkpoint
+            })) ?? []
+
+        wallets.push({
+          id: wallet.id,
+          type: wallet.type,
+          name: wallet.name ?? undefined,
+          pluginId: wallet.currencyInfo.pluginId,
+          fiatCurrencyCode: wallet.fiatCurrencyCode,
+          balances,
+          enabledTokenIds: wallet.enabledTokenIds,
+          customTokens,
+          subscribedAddresses:
+            subscribedAddresses.length > 0 ? subscribedAddresses : undefined,
+          seenTxCheckpoint: walletState?.seenTxCheckpoint ?? undefined
+        })
+      }
+
+      // Build the cache file:
+      const cacheFile: WalletCacheFile = {
+        version: 1,
+        tokens,
+        wallets
+      }
+
+      // Save to accountCache/[accountId]/walletCache.json:
+      const cachePath = `accountCache/${storageWalletApi.id}/walletCache.json`
+      const cacheJson = JSON.stringify(cacheFile, null, 2)
+      await ai.props.io.disklet.setText(cachePath, cacheJson)
+
+      return cachePath
+    },
+
     // ----------------------------------------------------------------
     // Token & wallet activation:
     // ----------------------------------------------------------------
@@ -835,4 +932,192 @@ async function makeEdgeResult<T>(promise: Promise<T>): Promise<EdgeResult<T>> {
   } catch (error) {
     return { ok: false, error }
   }
+}
+
+/**
+ * Creates an EdgeAccount with cached wallets for testing performance.
+ * All wallet operations are stubbed and logged.
+ */
+export function makeAccountApiWithCachedWallets(
+  ai: ApiInput,
+  accountId: string,
+  cacheSetup: WalletCacheSetup
+): EdgeAccount {
+  // Create the base account API first:
+  const baseApi = makeAccountApi(ai, accountId)
+
+  // Copy the base API using Object.defineProperties to avoid evaluating getters.
+  // Direct spreading {...baseApi} would evaluate getters like disklet/localDisklet
+  // which access state.storageWallets that isn't initialized during cache loading.
+  const baseDescriptors = Object.getOwnPropertyDescriptors(baseApi)
+
+  // Override properties for cache mode
+  // Note: disklet and localDisklet are NOT overridden - they use the real
+  // storage wallet disklets since we initialize the storage wallet before
+  // creating this cached API (storage wallets don't need engines)
+  const overrideDescriptors: PropertyDescriptorMap = {
+
+    // Override currency config to use cached configs:
+    currencyConfig: {
+      get() {
+        return cacheSetup.currencyConfigs
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    // Override currency wallets to use cached wallets:
+    currencyWallets: {
+      get() {
+        return cacheSetup.currencyWallets
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    // Override active wallet IDs:
+    activeWalletIds: {
+      get() {
+        return cacheSetup.activeWalletIds
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    // Cached wallets have no archived wallets:
+    archivedWalletIds: {
+      get() {
+        return []
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    // Cached wallets have no hidden wallets:
+    hiddenWalletIds: {
+      get() {
+        return []
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    // Cached wallets have no errors:
+    currencyWalletErrors: {
+      get() {
+        return {}
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    // Stub wallet creation methods:
+    createCurrencyWallet: {
+      value: async (): Promise<EdgeCurrencyWallet> => {
+        console.log(
+          '[WalletCache] createCurrencyWallet() - not supported in cache mode'
+        )
+        throw new Error('Cannot create wallets in cache mode')
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    createCurrencyWallets: {
+      value: async (): Promise<Array<EdgeResult<EdgeCurrencyWallet>>> => {
+        console.log(
+          '[WalletCache] createCurrencyWallets() - not supported in cache mode'
+        )
+        throw new Error('Cannot create wallets in cache mode')
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    makeMemoryWallet: {
+      value: async (): Promise<EdgeMemoryWallet> => {
+        console.log(
+          '[WalletCache] makeMemoryWallet() - not supported in cache mode'
+        )
+        throw new Error('Cannot create memory wallets in cache mode')
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    getActivationAssets: {
+      value: async (): Promise<EdgeGetActivationAssetsResults> => {
+        console.log(
+          '[WalletCache] getActivationAssets() - not supported in cache mode'
+        )
+        throw new Error('Cannot get activation assets in cache mode')
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    activateWallet: {
+      value: async (): Promise<EdgeActivationQuote> => {
+        console.log(
+          '[WalletCache] activateWallet() - not supported in cache mode'
+        )
+        throw new Error('Cannot activate wallets in cache mode')
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    // Stub wallet state changes:
+    changeWalletStates: {
+      value: async (): Promise<void> => {
+        console.log(
+          '[WalletCache] changeWalletStates() - ignored in cache mode'
+        )
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    // Stub wallet cache (already in cache mode):
+    saveWalletCache: {
+      value: async (): Promise<string> => {
+        console.log('[WalletCache] saveWalletCache() - no-op in cache mode')
+        return ''
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    // Swap operations are stubbed:
+    fetchSwapQuote: {
+      value: async (): Promise<EdgeSwapQuote> => {
+        console.log(
+          '[WalletCache] fetchSwapQuote() - not supported in cache mode'
+        )
+        throw new Error('Cannot fetch swap quotes in cache mode')
+      },
+      configurable: true,
+      enumerable: true
+    },
+
+    fetchSwapQuotes: {
+      value: async (): Promise<EdgeSwapQuote[]> => {
+        console.log(
+          '[WalletCache] fetchSwapQuotes() - not supported in cache mode'
+        )
+        throw new Error('Cannot fetch swap quotes in cache mode')
+      },
+      configurable: true,
+      enumerable: true
+    }
+  }
+
+  // Combine base descriptors with overrides (overrides take precedence)
+  const out = Object.defineProperties(
+    {},
+    { ...baseDescriptors, ...overrideDescriptors }
+  ) as EdgeAccount
+
+  bridgifyObject(out)
+  return out
 }

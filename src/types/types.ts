@@ -1865,6 +1865,15 @@ export interface EdgeAccount {
     walletId: string
   ) => Promise<EdgeCurrencyWallet>
   readonly waitForAllWallets: () => Promise<void>
+
+  /**
+   * Saves current wallet state to a cache file for faster login.
+   * The cache includes wallet metadata, balances, and token configurations.
+   * Use with `mockWalletsPath` in EdgeContextOptions to reload cached wallets.
+   * @returns The path where the cache was saved.
+   */
+  readonly saveWalletCache: () => Promise<string>
+
   readonly makeMemoryWallet: (
     walletType: string,
     opts?: EdgeCreateCurrencyWalletOptions
