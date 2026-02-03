@@ -24,8 +24,17 @@ import {
   InsufficientFundsError
 } from '../../src/index'
 import { upgradeCurrencyCode } from '../../src/types/type-helpers'
+import { snooze } from '../../src/util/snooze'
 
 const GENESIS_BLOCK = 1231006505
+
+/**
+ * Test configuration for controlling fake plugin behavior.
+ * Set engineDelayMs before login to delay engine creation for cache testing.
+ */
+export const fakePluginTestConfig = {
+  engineDelayMs: 0
+}
 
 const fakeTokens: EdgeTokenMap = {
   badf00d5: {
@@ -217,7 +226,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   getBalance(opts: EdgeTokenIdOptions): string {
     const { tokenId = null } = opts
     if (tokenId == null) return this.state.balance.toString()
-    if (tokenId === 'badf00d5') this.state.tokenBalance.toString()
+    if (tokenId === 'badf00d5') return this.state.tokenBalance.toString()
     if (this.allTokens[tokenId] != null) return '0'
     throw new Error('Unknown currency')
   }
@@ -383,11 +392,15 @@ export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
     return Promise.resolve(fakeTokens)
   },
 
-  makeCurrencyEngine(
+  async makeCurrencyEngine(
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine> {
-    return Promise.resolve(new FakeCurrencyEngine(walletInfo, opts))
+    // Allow tests to delay engine creation to test wallet caching
+    if (fakePluginTestConfig.engineDelayMs > 0) {
+      await snooze(fakePluginTestConfig.engineDelayMs)
+    }
+    return new FakeCurrencyEngine(walletInfo, opts)
   },
 
   makeCurrencyTools(): Promise<EdgeCurrencyTools> {

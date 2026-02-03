@@ -15,8 +15,13 @@ import {
   EdgePluginMap,
   EdgeTokenMap
 } from '../../types/types'
-import { makePeriodicTask } from '../../util/periodic-task'
+import { makePeriodicTask, PeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
+import { loadWalletCache } from '../cache/cache-wallet-loader'
+import {
+  makeWalletCacheSaver,
+  WalletCacheSaver
+} from '../cache/cache-wallet-saver'
 import { syncLogin } from '../login/login'
 import { waitForPlugins } from '../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../root-pixie'
@@ -77,7 +82,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
       async update() {
         const ai = toApiInput(input)
-        const { accountId, accountState, log } = input.props
+        const { accountId, accountState, log, state } = input.props
         const { accountWalletInfos } = accountState
 
         async function loadAllFiles(): Promise<void> {
@@ -88,9 +93,121 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           ])
         }
 
+        // Try to load wallet cache for instant UI.
+        // Returns the cache setup if successful, undefined otherwise.
+        async function tryLoadCache(): Promise<
+          import('../cache/cache-wallet-loader').WalletCacheSetup | undefined
+        > {
+          try {
+            const storageWalletId = accountWalletInfos[0]?.id
+            if (storageWalletId == null) {
+              return undefined
+            }
+
+            const cachePath = `accountCache/${storageWalletId}/walletCache.json`
+            const cacheJson = await ai.props.io.disklet.getText(cachePath)
+
+            // Build currency info map from loaded plugins:
+            const currencyInfos: {
+              [pluginId: string]: import('../../types/types').EdgeCurrencyInfo
+            } = {}
+            for (const pluginId of Object.keys(state.plugins.currency)) {
+              currencyInfos[pluginId] =
+                state.plugins.currency[pluginId].currencyInfo
+            }
+
+            // Create cached wallets with real wallet lookup for delegation:
+            const cacheSetup = loadWalletCache(cacheJson, currencyInfos, {
+              // Provide a callback to look up real wallets when available
+              getRealWallet: (walletId: string) => {
+                const accountOutput = ai.props.output.accounts[accountId]
+                const pixieWallets = accountOutput?.currencyWallets
+                return pixieWallets?.[walletId]
+              }
+            })
+            log.warn(
+              `Login: loaded ${cacheSetup.activeWalletIds.length} wallets from cache`
+            )
+
+            // Initialize storage wallet FIRST to get real disklets working
+            // (storage wallets are just file system access, don't need engines)
+            const accountStorageWalletInfo = accountWalletInfos[0]
+            if (accountStorageWalletInfo != null) {
+              await addStorageWallet(ai, accountStorageWalletInfo)
+              log.warn(
+                'Login: initialized account storage wallet for cache mode'
+              )
+            }
+
+            return cacheSetup
+          } catch (error: unknown) {
+            // Cache doesn't exist or failed to load, continue with normal flow
+            // Differentiate between expected (no cache) and unexpected errors
+            const err = error as { code?: string; message?: string }
+            if (err.code !== 'ENOENT' && err.message !== 'Cannot read file') {
+              log.warn(
+                'Login: cache loading failed with unexpected error:',
+                error
+              )
+            }
+            log.warn('Login: cache not available, using normal flow')
+            return undefined
+          }
+        }
+
         try {
-          // Wait for the currency plugins (should already be loaded by now):
           await waitForPlugins(ai)
+          log.warn('Login: plugins loaded')
+
+          // Try cache-first login for instant UI:
+          const cacheSetup = await tryLoadCache()
+          if (cacheSetup != null) {
+            // Create the API object with cached wallets:
+            input.onOutput(makeAccountApi(ai, accountId, { cacheSetup }))
+            log.warn('Login: complete (from cache)')
+            log.warn(
+              `[WalletCache] Cached wallets: ${
+                Object.keys(cacheSetup.currencyWallets).length
+              }, IDs: ${cacheSetup.activeWalletIds
+                .slice(0, 3)
+                .map(id => id.slice(0, 8))
+                .join(', ')}...`
+            )
+
+            // Continue loading files in background to enable real engines.
+            // This dispatches ACCOUNT_KEYS_LOADED which sets keysLoaded=true,
+            // which populates activeWalletIds and triggers walletPixie to
+            // create real currency engines:
+            loadBuiltinTokens(ai, accountId)
+              .then(async () => {
+                // Check if account was logged out during async operation:
+                if (ai.props.state.accounts[accountId] == null) {
+                  log.warn('Login: background loading cancelled (logged out)')
+                  return
+                }
+                log.warn('Login: loading files in background...')
+                // Sync remaining storage wallets (index 1+):
+                await Promise.all(
+                  accountWalletInfos
+                    .slice(1)
+                    .map(info => addStorageWallet(ai, info))
+                )
+                // Check again after async operation:
+                if (ai.props.state.accounts[accountId] == null) {
+                  log.warn('Login: background loading cancelled (logged out)')
+                  return
+                }
+                await loadAllFiles()
+                log.warn('Login: background loading complete, engines starting')
+              })
+              .catch((error: unknown) => {
+                log.error('Login: background loading failed:', error)
+              })
+
+            return await stopUpdates
+          }
+
+          // Normal login flow (no cache available):
           await loadBuiltinTokens(ai, accountId)
           log.warn('Login: currency plugins exist')
 
@@ -212,6 +329,114 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     }
   },
 
+  /**
+   * Auto-saves the wallet cache with throttling (every 5 seconds at most).
+   * Watches for changes in wallet balances, names, tokens, and subscriptions.
+   */
+  cacheSaver: filterPixie(
+    (input: AccountInput) => {
+      const CACHE_SAVE_INTERVAL = 5000 // 5 seconds
+      let cacheSaver: WalletCacheSaver | undefined
+      let cacheTask: PeriodicTask | undefined
+      let cacheTaskStarted = false
+      const lastWalletStates: { [walletId: string]: unknown } = {}
+      let initialSaveDone = false
+
+      function checkForChanges(): void {
+        // Read fresh state inside callback to avoid stale closure values:
+        const { accountId, state, accountOutput } = input.props
+        const accountState = state.accounts[accountId]
+
+        // Guard against logged-out state immediately after reading state:
+        if (accountState == null) {
+          return
+        }
+
+        const accountApi = accountOutput?.accountApi
+        if (accountApi == null || cacheSaver == null) {
+          return
+        }
+
+        // Trigger initial save shortly after initialization to persist any
+        // cached wallet data that was loaded on login
+        if (!initialSaveDone) {
+          initialSaveDone = true
+          cacheSaver.markDirty()
+          input.props.log.warn('[WalletCache] Triggering initial cache save')
+          return
+        }
+
+        // Check if any wallet state has changed.
+        // Use Redux state directly to avoid stale cached values.
+        let hasChanges = false
+        for (const walletId of accountState.activeWalletIds) {
+          const walletState = state.currency.wallets[walletId]
+          if (
+            walletState != null &&
+            lastWalletStates[walletId] !== walletState
+          ) {
+            hasChanges = true
+            lastWalletStates[walletId] = walletState
+          }
+        }
+
+        if (hasChanges) {
+          cacheSaver.markDirty()
+        }
+      }
+
+      return {
+        update() {
+          const ai = toApiInput(input)
+          const { accountId, accountOutput, accountState, state } = input.props
+          const accountApi = accountOutput?.accountApi
+
+          // Guard: ensure account still exists
+          if (state.accounts[accountId] == null) return
+
+          // Initialize cache saver once account API exists
+          if (accountApi != null && cacheSaver == null) {
+            const storageWalletId = accountState.accountWalletInfos[0]?.id
+            if (storageWalletId != null) {
+              const cachePath = `accountCache/${storageWalletId}/walletCache.json`
+
+              cacheSaver = makeWalletCacheSaver(
+                accountApi,
+                ai.props.io.disklet,
+                cachePath,
+                input.props.log.warn.bind(input.props.log)
+              )
+              input.props.log.warn('[WalletCache] Cache saver initialized')
+            }
+          }
+
+          // Start periodic check for changes (only once)
+          if (!cacheTaskStarted) {
+            cacheTaskStarted = true
+            cacheTask = makePeriodicTask(async () => {
+              checkForChanges()
+            }, CACHE_SAVE_INTERVAL)
+            cacheTask.start({ wait: CACHE_SAVE_INTERVAL })
+          }
+        },
+
+        destroy() {
+          if (cacheTask != null) {
+            cacheTask.stop()
+            cacheTask = undefined
+          }
+          cacheTaskStarted = false
+          if (cacheSaver != null) {
+            cacheSaver.stop()
+            cacheSaver = undefined
+          }
+          // Note: lastWalletStates will be garbage collected with the pixie
+        }
+      }
+    },
+    props => (props.state.paused ? undefined : props)
+  ),
+
   watcher(input: AccountInput) {
     let lastState: AccountState | undefined
     // let lastWallets
@@ -249,12 +474,16 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     }
   },
 
+  // Outputs real wallets from the currency pixie.
+  // The account API's currencyWallets getter merges these with cached wallets.
   currencyWallets(input: AccountInput) {
     let lastActiveWalletIds: string[]
 
     return () => {
       const { accountOutput, accountState } = input.props
       const { activeWalletIds } = accountState
+      const { wallets: currencyWallets } = input.props.output.currency
+
       let dirty = lastActiveWalletIds !== activeWalletIds
       lastActiveWalletIds = activeWalletIds
 
@@ -264,9 +493,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       }
 
       const out: { [walletId: string]: EdgeCurrencyWallet } = {}
-      const { wallets } = input.props.output.currency
       for (const walletId of activeWalletIds) {
-        const api = wallets[walletId]?.walletApi
+        const api = currencyWallets[walletId]?.walletApi
         if (api !== lastOut[walletId]) dirty = true
         if (api != null) out[walletId] = api
       }
