@@ -27,6 +27,39 @@ import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 
 const GENESIS_BLOCK = 1231006505
 
+/**
+ * Test configuration for controlling fake plugin behavior.
+ */
+export interface FakePluginTestConfig {
+  /**
+   * If set, engine creation will wait for this promise to resolve.
+   * Use createEngineGate() to create a controllable gate for deterministic tests.
+   */
+  engineGate?: Promise<void>
+  /** If true, engines will not expose otherMethods */
+  noOtherMethods?: boolean
+}
+
+/**
+ * Creates a gate that can be used to halt engine loading.
+ * Call release() when ready to allow engines to load.
+ */
+export function createEngineGate(): {
+  gate: Promise<void>
+  release: () => void
+} {
+  let release: () => void = () => {}
+  const gate = new Promise<void>(resolve => {
+    release = resolve
+  })
+  return { gate, release }
+}
+
+export const fakePluginTestConfig: FakePluginTestConfig = {
+  engineGate: undefined,
+  noOtherMethods: false
+}
+
 const fakeTokens: EdgeTokenMap = {
   badf00d5: {
     currencyCode: 'TOKEN',
@@ -90,11 +123,24 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private allTokens: EdgeTokenMap = fakeTokens
   private readonly currencyInfo: EdgeCurrencyInfo
 
+  // otherMethods for testing cached wallet otherMethods delegation.
+  // When fakePluginTestConfig.noOtherMethods is true, this is set to empty.
+  otherMethods: { [method: string]: (...args: any[]) => any }
+
   constructor(
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions,
     currencyInfo: EdgeCurrencyInfo
   ) {
+    // Set otherMethods based on test config
+    this.otherMethods =
+      fakePluginTestConfig.noOtherMethods === true
+        ? {}
+        : {
+            testMethod: async (arg: string): Promise<string> => {
+              return `testMethod called with: ${arg}`
+            }
+          }
     this.walletId = walletInfo.id
     this.callbacks = opts.callbacks
     this.running = false
@@ -398,13 +444,14 @@ export function makeFakeCurrencyPlugin(
       return Promise.resolve(fakeTokens)
     },
 
-    makeCurrencyEngine(
+    async makeCurrencyEngine(
       walletInfo: EdgeWalletInfo,
       opts: EdgeCurrencyEngineOptions
     ): Promise<EdgeCurrencyEngine> {
-      return Promise.resolve(
-        new FakeCurrencyEngine(walletInfo, opts, currencyInfo)
-      )
+      if (fakePluginTestConfig.engineGate != null) {
+        await fakePluginTestConfig.engineGate
+      }
+      return new FakeCurrencyEngine(walletInfo, opts, currencyInfo)
     },
 
     makeCurrencyTools(): Promise<EdgeCurrencyTools> {
