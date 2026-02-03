@@ -30,6 +30,7 @@ import {
 } from '../../types/types'
 import { makeEdgeResult } from '../../util/edgeResult'
 import { base58 } from '../../util/encoding'
+import { WalletCacheSetup } from '../cache/cache-wallet-loader'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import {
   finishWalletCreation,
@@ -72,10 +73,21 @@ import { makeLobbyApi } from './lobby-api'
 import { makeMemoryWalletInner } from './memory-wallet'
 import { CurrencyConfig, SwapConfig } from './plugin-api'
 
+export interface AccountApiOptions {
+  /** Optional cached wallet data for instant UI on login */
+  cacheSetup?: WalletCacheSetup
+}
+
 /**
  * Creates an unwrapped account API object around an account state object.
+ * If cacheSetup is provided, cached wallets are used until real wallets load.
  */
-export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
+export function makeAccountApi(
+  ai: ApiInput,
+  accountId: string,
+  opts: AccountApiOptions = {}
+): EdgeAccount {
+  const { cacheSetup } = opts
   // We don't want accountState to be undefined when we log out,
   // so preserve a snapshot of our last state:
   let lastState = ai.props.state.accounts[accountId]
@@ -613,23 +625,81 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     // ----------------------------------------------------------------
 
     get activeWalletIds(): string[] {
-      return ai.props.state.accounts[accountId].activeWalletIds
+      const accountState = ai.props.state.accounts[accountId]
+      // Use cached IDs until keys are loaded:
+      if (
+        accountState != null &&
+        !accountState.keysLoaded &&
+        cacheSetup != null
+      ) {
+        return cacheSetup.activeWalletIds
+      }
+      return accountState?.activeWalletIds ?? []
     },
 
     get archivedWalletIds(): string[] {
-      return ai.props.state.accounts[accountId].archivedWalletIds
+      const accountState = ai.props.state.accounts[accountId]
+      // Return empty until keys are loaded (cache doesn't track archived):
+      if (
+        accountState != null &&
+        !accountState.keysLoaded &&
+        cacheSetup != null
+      ) {
+        return []
+      }
+      return accountState?.archivedWalletIds ?? []
     },
 
     get hiddenWalletIds(): string[] {
-      return ai.props.state.accounts[accountId].hiddenWalletIds
+      const accountState = ai.props.state.accounts[accountId]
+      // Return empty until keys are loaded (cache doesn't track hidden):
+      if (
+        accountState != null &&
+        !accountState.keysLoaded &&
+        cacheSetup != null
+      ) {
+        return []
+      }
+      return accountState?.hiddenWalletIds ?? []
     },
 
     get currencyWallets(): { [walletId: string]: EdgeCurrencyWallet } {
-      return ai.props.output.accounts[accountId].currencyWallets
+      // Get real wallets from pixie output
+      const pixieWallets =
+        ai.props.output.accounts[accountId]?.currencyWallets ?? {}
+
+      // If no cache, just return pixie wallets
+      if (cacheSetup == null) {
+        return pixieWallets
+      }
+
+      // Merge: real wallets take priority, cached fill gaps
+      const activeIds = this.activeWalletIds
+      const result: { [walletId: string]: EdgeCurrencyWallet } = {}
+      for (const walletId of activeIds) {
+        // Prefer real wallet, fall back to cached
+        const wallet =
+          pixieWallets[walletId] ?? cacheSetup.currencyWallets[walletId]
+        // Skip wallets that don't exist in either source
+        // (e.g., FIO wallets excluded from cache but in activeWalletIds)
+        if (wallet != null) {
+          result[walletId] = wallet
+        }
+      }
+      return result
     },
 
     get currencyWalletErrors(): { [walletId: string]: Error } {
-      return ai.props.state.accounts[accountId].currencyWalletErrors
+      const accountState = ai.props.state.accounts[accountId]
+      // Return empty until keys are loaded:
+      if (
+        accountState != null &&
+        !accountState.keysLoaded &&
+        cacheSetup != null
+      ) {
+        return {}
+      }
+      return accountState?.currencyWalletErrors ?? {}
     },
 
     async createCurrencyWallet(
