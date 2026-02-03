@@ -24,8 +24,42 @@ import {
   InsufficientFundsError
 } from '../../src/index'
 import { upgradeCurrencyCode } from '../../src/types/type-helpers'
+import { snooze } from '../../src/util/snooze'
 
 const GENESIS_BLOCK = 1231006505
+
+/**
+ * Test configuration for controlling fake plugin behavior.
+ */
+export interface FakePluginTestConfig {
+  /**
+   * If set, engine creation will wait for this promise to resolve.
+   * Use createEngineGate() to create a controllable gate for deterministic tests.
+   */
+  engineGate?: Promise<void>
+  /** If true, engines will not expose otherMethods */
+  noOtherMethods?: boolean
+}
+
+/**
+ * Creates a gate that can be used to halt engine loading.
+ * Call release() when ready to allow engines to load.
+ */
+export function createEngineGate(): {
+  gate: Promise<void>
+  release: () => void
+} {
+  let release: () => void = () => {}
+  const gate = new Promise<void>(resolve => {
+    release = resolve
+  })
+  return { gate, release }
+}
+
+export const fakePluginTestConfig: FakePluginTestConfig = {
+  engineGate: undefined,
+  noOtherMethods: false
+}
 
 const fakeTokens: EdgeTokenMap = {
   badf00d5: {
@@ -89,7 +123,24 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private readonly state: State
   private allTokens: EdgeTokenMap = fakeTokens
 
+  // otherMethods for testing cached wallet otherMethods delegation.
+  // When fakePluginTestConfig.noOtherMethods is true, this is set to empty.
+  otherMethods: { [method: string]: (...args: any[]) => any }
+
   constructor(walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
+    // Set otherMethods based on test config
+    this.otherMethods =
+      fakePluginTestConfig.noOtherMethods === true
+        ? {}
+        : {
+            testMethod: async (arg: string): Promise<string> => {
+              return `testMethod called with: ${arg}`
+            },
+            testMethodWithDelay: async (arg: string): Promise<string> => {
+              await snooze(100)
+              return `delayed: ${arg}`
+            }
+          }
     this.walletId = walletInfo.id
     this.callbacks = opts.callbacks
     this.running = false
@@ -217,7 +268,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   getBalance(opts: EdgeTokenIdOptions): string {
     const { tokenId = null } = opts
     if (tokenId == null) return this.state.balance.toString()
-    if (tokenId === 'badf00d5') this.state.tokenBalance.toString()
+    if (tokenId === 'badf00d5') return this.state.tokenBalance.toString()
     if (this.allTokens[tokenId] != null) return '0'
     throw new Error('Unknown currency')
   }
@@ -383,11 +434,15 @@ export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
     return Promise.resolve(fakeTokens)
   },
 
-  makeCurrencyEngine(
+  async makeCurrencyEngine(
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine> {
-    return Promise.resolve(new FakeCurrencyEngine(walletInfo, opts))
+    // Allow tests to control engine creation timing for cache testing
+    if (fakePluginTestConfig.engineGate != null) {
+      await fakePluginTestConfig.engineGate
+    }
+    return new FakeCurrencyEngine(walletInfo, opts)
   },
 
   makeCurrencyTools(): Promise<EdgeCurrencyTools> {
