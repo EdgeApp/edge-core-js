@@ -23,7 +23,6 @@ const PLUGINS_WITH_ENGINE_METHODS = ['fio'] as const
 const WALLET_ID_DISPLAY_LENGTH = 8
 
 export interface WalletCacheSetup {
-  currencyConfigs: EdgePluginMap<EdgeCurrencyConfig>
   currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
   activeWalletIds: string[]
 }
@@ -48,7 +47,7 @@ export interface LoadWalletCacheOptions {
  * @param jsonData The raw JSON string containing wallet cache data
  * @param currencyInfos Map of pluginId to EdgeCurrencyInfo for available plugins
  * @param options Optional configuration for cached wallet creation
- * @returns Setup data for cached wallets including configs, wallets, and active IDs
+ * @returns Setup data for cached wallets including wallets and active IDs
  */
 export function loadWalletCache(
   jsonData: string,
@@ -144,7 +143,6 @@ export function loadWalletCache(
   )
 
   return {
-    currencyConfigs,
     currencyWallets,
     activeWalletIds
   }
