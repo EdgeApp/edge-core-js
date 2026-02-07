@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.41.1 (2026-02-07)
+
 - fixed: Race condition in `fuzzyTimeout` that could cause swap quote aggregation to reject prematurely, dropping successful quotes from slower providers.
 
 ## 2.41.0 (2026-01-27)
