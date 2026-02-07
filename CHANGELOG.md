@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Race condition in `fuzzyTimeout` that could cause swap quote aggregation to reject prematurely, dropping successful quotes from slower providers.
+
 ## 2.41.0 (2026-01-27)
 
 - added: New `privacy` option argument to EdgeIo fetch function for NYM support.

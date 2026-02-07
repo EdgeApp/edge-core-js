@@ -67,7 +67,7 @@ export function fuzzyTimeout<T>(
       if (allDone && timer != null) {
         clearTimeout(timer)
       }
-      if (allDone || timer == null) {
+      if (allDone || (timer == null && results.length > 0)) {
         done = true
         if (results.length > 0) resolve({ results, errors })
         else reject(errors)
