@@ -1,27 +1,44 @@
 package app.edge.reactnative.core;
 
-import android.graphics.Bitmap;
-import android.os.Handler;
-import android.os.Looper;
+import android.content.res.AssetManager;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import org.json.JSONArray;
 
+/**
+ * A WebView that loads edge-core-js content using WebViewAssetLoader.
+ *
+ * <p>Uses WebViewAssetLoader to serve local assets via HTTPS URLs, which: - Provides a proper
+ * non-null origin for same-origin policy compliance - Eliminates the need for a local HTTP server -
+ * Is more secure (content served directly from assets without network stack)
+ *
+ * <p>Includes Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers required for
+ * SharedArrayBuffer support (needed by mixFetch web workers).
+ *
+ * <p>Note: WebViewAssetLoader only handles requests within this specific WebView instance. It does
+ * not register a system-wide URL handler - other apps cannot access these URLs.
+ */
 class EdgeCoreWebView extends WebView {
   private static final String TAG = "EdgeCoreWebView";
+
+  /** Default URL for the WebView. Uses the WebViewAssetLoader URL format. */
+  private static final String DEFAULT_SOURCE =
+      LocalContentWebViewClient.BUNDLE_BASE_URI + "/edge-core-js/index.html";
+
   private final ThemedReactContext mContext;
   private final EdgeNative mNative;
-  private BundleHTTPServer mHttpServer;
-  private int mServerPort = 0;
-  private boolean mServerReady = false;
-  private boolean mIsDestroyed = false;
-  private final Handler mMainHandler = new Handler(Looper.getMainLooper());
 
   // react api--------------------------------------------------------------
 
@@ -49,60 +66,105 @@ class EdgeCoreWebView extends WebView {
     mContext = context;
     mNative = new EdgeNative(mContext.getFilesDir());
 
-    getSettings().setAllowFileAccess(true);
+    getSettings().setAllowFileAccess(false);
     getSettings().setJavaScriptEnabled(true);
-    setWebViewClient(new Client());
+    setWebViewClient(new LocalContentWebViewClient(this));
     addJavascriptInterface(new JsMethods(), "edgeCore");
 
-    // Start the HTTP server on an ephemeral port bound to loopback only
-    mHttpServer = new BundleHTTPServer(context);
-    mHttpServer.start(new BundleHTTPServer.OnServerStartedListener() {
-      @Override
-      public void onServerStarted(int port) {
-        mMainHandler.post(() -> {
-          // Check if WebView was destroyed before this callback executed
-          if (mIsDestroyed) return;
-          
-          mServerPort = port;
-          mServerReady = true;
-          // Now that the server is ready with its assigned port, load the page
-          visitPage();
-        });
-      }
-
-      @Override
-      public void onServerError(Exception error) {
-        Log.e(TAG, "Failed to start HTTP server: " + error.getMessage());
-        // Server failed to start - the WebView won't be able to load local content
-      }
-    });
+    // WebViewAssetLoader is ready immediately - no async startup needed
+    visitPage();
   }
 
   @Override
   protected void onDetachedFromWindow() {
     super.onDetachedFromWindow();
-    
-    // Mark as destroyed first to prevent callbacks from calling methods on destroyed WebView
-    mIsDestroyed = true;
-    
-    // Stop the HTTP server when view is detached
-    if (mHttpServer != null) {
-      mHttpServer.stop();
-      mHttpServer = null;
-    }
-    
     destroy();
   }
 
-  // callbacks -------------------------------------------------------------
+  // file serving ----------------------------------------------------------
 
-  class Client extends WebViewClient {
-    @Override
-    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-      // Reload on navigation errors (matches iOS didFailProvisionalNavigation behavior)
-      visitPage();
+  /**
+   * Serve a file from assets with COOP/COEP headers. Package-private for use by
+   * LocalContentWebViewClient.
+   */
+  WebResourceResponse serveFileWithHeaders(String resourcePath) {
+    AssetManager assetManager = mContext.getAssets();
+    byte[] data = null;
+
+    try (InputStream inputStream = assetManager.open(resourcePath)) {
+      data = readAllBytes(inputStream);
+      Log.d(TAG, "Serving file: " + resourcePath);
+    } catch (IOException e) {
+      // File not in assets
     }
+
+    if (data == null) {
+      Log.d(TAG, "File not found: " + resourcePath);
+      return createNotFoundResponse();
+    }
+
+    String mimeType = getMimeType(resourcePath);
+    return createResponseWithHeaders(mimeType, data);
   }
+
+  /** Create a WebResourceResponse with COOP/COEP headers for SharedArrayBuffer support. */
+  private WebResourceResponse createResponseWithHeaders(String mimeType, byte[] data) {
+    Map<String, String> headers = new HashMap<>();
+    // CORS headers to allow cross-origin requests (needed for debug mode with localhost)
+    headers.put("Access-Control-Allow-Origin", "*");
+    headers.put("Cross-Origin-Resource-Policy", "cross-origin");
+    // Cross-origin isolation headers required for SharedArrayBuffer (needed by mixFetch web
+    // workers)
+    headers.put("Cross-Origin-Opener-Policy", "same-origin");
+    headers.put("Cross-Origin-Embedder-Policy", "require-corp");
+
+    return new WebResourceResponse(
+        mimeType, "UTF-8", 200, "OK", headers, new ByteArrayInputStream(data));
+  }
+
+  /** Create a 404 Not Found response. Package-private for use by LocalContentWebViewClient. */
+  WebResourceResponse createNotFoundResponse() {
+    Map<String, String> headers = new HashMap<>();
+    // CORS headers
+    headers.put("Access-Control-Allow-Origin", "*");
+    headers.put("Cross-Origin-Resource-Policy", "cross-origin");
+    // Include COOP/COEP even on error responses
+    headers.put("Cross-Origin-Opener-Policy", "same-origin");
+    headers.put("Cross-Origin-Embedder-Policy", "require-corp");
+
+    return new WebResourceResponse(
+        "text/plain",
+        "UTF-8",
+        404,
+        "Not Found",
+        headers,
+        new ByteArrayInputStream("Not Found".getBytes()));
+  }
+
+  private byte[] readAllBytes(InputStream inputStream) throws IOException {
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    byte[] chunk = new byte[4096];
+    int bytesRead;
+    while ((bytesRead = inputStream.read(chunk)) != -1) {
+      buffer.write(chunk, 0, bytesRead);
+    }
+    return buffer.toByteArray();
+  }
+
+  // We only serve HTML, JS, and WASM files
+  private String getMimeType(String path) {
+    String lowerPath = path.toLowerCase();
+    if (lowerPath.endsWith(".html") || lowerPath.endsWith(".htm")) {
+      return "text/html";
+    } else if (lowerPath.endsWith(".js")) {
+      return "application/javascript";
+    } else if (lowerPath.endsWith(".wasm")) {
+      return "application/wasm";
+    }
+    return "application/octet-stream";
+  }
+
+  // JavaScript interface --------------------------------------------------
 
   class JsMethods {
     @JavascriptInterface
@@ -131,28 +193,18 @@ class EdgeCoreWebView extends WebView {
 
   // utilities -------------------------------------------------------------
 
-  private String defaultSource() {
-    if (!mServerReady) {
-      return null;
-    }
-    return "http://127.0.0.1:" + mServerPort + "/index.html";
-  }
-
-  private void visitPage() {
+  /** Reload the page. Package-private for use by LocalContentWebViewClient. */
+  void visitPage() {
     // If source is set, use it directly (e.g., webpack dev server for debugging)
-    // Otherwise, use the local bundle HTTP server with ephemeral port
+    // Otherwise, use the WebViewAssetLoader URL
     String baseUrl;
     if (mSource != null && !mSource.isEmpty()) {
       baseUrl = mSource;
     } else {
-      baseUrl = defaultSource();
-      if (baseUrl == null) {
-        Log.w(TAG, "visitPage called before server is ready");
-        return;
-      }
+      baseUrl = DEFAULT_SOURCE;
     }
-    
-    // Load the page from the HTTP server to get COOP/COEP headers
+
+    // Load the page - WebViewAssetLoader intercepts and serves with COOP/COEP headers
     // which are required for SharedArrayBuffer support (needed by mixFetch web workers)
     loadUrl(baseUrl);
   }

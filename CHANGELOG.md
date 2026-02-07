@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Refactor bundler to use platform-native asset loaders over local HTTP server.
+
 ## 2.41.1 (2026-02-07)
 
 - fixed: Race condition in `fuzzyTimeout` that could cause swap quote aggregation to reject prematurely, dropping successful quotes from slower providers.

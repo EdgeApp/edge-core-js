@@ -73,35 +73,6 @@ window.addEdgeCorePlugins = addEdgeCorePlugins
 window.nativeBridge = nativeBridge
 window.reactBridge = reactBridge
 
-/**
- * Convert a file:// URI to a domain-relative path served by our local bundle server.
- * This is needed because cross-origin isolation (COOP/COEP) blocks file:// loads.
- * Using domain-relative paths ensures plugins load from the same origin as the page
- * (localhost:3693 in production, localhost:8080 in debug mode).
- */
-function convertPluginUri(uri: string): string {
-  // If already an HTTP URI, use as-is (e.g., custom bundles from metro bundler)
-  if (uri.startsWith('http://') || uri.startsWith('https://')) {
-    return uri
-  }
-
-  // Convert file:// URIs to domain-relative paths
-  // Extract the bundle path (e.g., "edge-currency-accountbased.bundle/edge-currency-accountbased.js")
-  const bundleMatch = uri.match(/([^/]+\.bundle\/[^/]+\.js)$/)
-  if (bundleMatch != null) {
-    return `/plugin/${bundleMatch[1]}`
-  }
-
-  // Fallback: try to extract just the filename
-  const fileMatch = uri.match(/([^/]+\.js)$/)
-  if (fileMatch != null) {
-    return `/plugin/${fileMatch[1]}`
-  }
-
-  // If we can't parse it, return as-is (will likely fail, but provides debugging info)
-  return uri
-}
-
 function loadPlugins(pluginUris: string[]): void {
   const { head } = window.document
   if (head == null || pluginUris.length === 0) {
@@ -120,7 +91,7 @@ function loadPlugins(pluginUris: string[]): void {
     script.addEventListener('load', handleLoad)
     script.charset = 'utf-8'
     script.defer = true
-    script.src = convertPluginUri(uri)
+    script.src = uri
     head.appendChild(script)
   }
 }
@@ -208,10 +179,11 @@ async function makeIo(logBackend: LogBackend): Promise<EdgeIo> {
         // Ensure mixFetch is initialized before use
         await initMixFetch(log)
         // Use queued fetch to handle mixFetch's one-request-per-host limitation
-        return await queueMixFetch(uri, {
+        const response = await queueMixFetch(uri, {
           ...opts,
           mode: 'unsafe-ignore-cors' as RequestMode
         })
+        return response
       }
       if (corsBypass === 'always') {
         return await nativeFetch(uri, opts)

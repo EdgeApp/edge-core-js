@@ -47,15 +47,7 @@ module.exports = {
       'Cross-Origin-Embedder-Policy': 'require-corp'
     },
     hot: false,
-    static: bundlePath,
-    // Proxy /plugin/ requests to BundleHTTPServer since plugins are in the app bundle
-    proxy: [
-      {
-        context: ['/plugin'],
-        target: 'http://localhost:3693',
-        changeOrigin: true
-      }
-    ]
+    static: bundlePath
   },
   entry: './src/io/react-native/react-native-worker.ts',
   experiments: {
