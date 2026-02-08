@@ -82,7 +82,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
       async update() {
         const ai = toApiInput(input)
-        const { accountId, accountState, log, state } = input.props
+        const { accountId, accountState, log } = input.props
         const { accountWalletInfos } = accountState
 
         async function loadAllFiles(): Promise<void> {
@@ -114,12 +114,14 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             const cacheJson = await ai.props.io.disklet.getText(cachePath)
 
             // Build currency info map from loaded plugins:
+            // Use ai.props.state for live state (not the captured `state` snapshot)
+            // since plugins may have finished loading during earlier awaits.
+            const currencyPlugins = ai.props.state.plugins.currency
             const currencyInfos: {
               [pluginId: string]: import('../../types/types').EdgeCurrencyInfo
             } = {}
-            for (const pluginId of Object.keys(state.plugins.currency)) {
-              currencyInfos[pluginId] =
-                state.plugins.currency[pluginId].currencyInfo
+            for (const pluginId of Object.keys(currencyPlugins)) {
+              currencyInfos[pluginId] = currencyPlugins[pluginId].currencyInfo
             }
 
             // Create cached wallets with real wallet lookup for delegation:

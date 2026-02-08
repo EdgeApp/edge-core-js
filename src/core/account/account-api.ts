@@ -632,13 +632,21 @@ export function makeAccountApi(
       const pixieWallets =
         ai.props.output.accounts[accountId]?.currencyWallets ?? {}
 
-      // If no cache, just return pixie wallets
+      // If no cache, just return pixie wallets (stable reference)
       if (cacheSetup == null) {
         return pixieWallets
       }
 
-      // Merge: real wallets take priority, cached fill gaps
+      // Check if all active wallets are now in pixieWallets.
+      // If so, return the stable pixieWallets reference to avoid
+      // allocating a new object on every getter access.
       const activeIds = this.activeWalletIds
+      const allWalletsLoaded = activeIds.every(id => pixieWallets[id] != null)
+      if (allWalletsLoaded) {
+        return pixieWallets
+      }
+
+      // Merge: real wallets take priority, cached fill gaps
       const result: { [walletId: string]: EdgeCurrencyWallet } = {}
       for (const walletId of activeIds) {
         // Prefer real wallet, fall back to cached
