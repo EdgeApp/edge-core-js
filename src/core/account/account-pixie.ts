@@ -11,13 +11,14 @@ import { close, update } from 'yaob'
 import {
   asMaybeOtpError,
   EdgeAccount,
+  EdgeCurrencyInfo,
   EdgeCurrencyWallet,
   EdgePluginMap,
   EdgeTokenMap
 } from '../../types/types'
 import { makePeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
-import { loadWalletCache } from '../cache/cache-wallet-loader'
+import { loadWalletCache, WalletCacheSetup } from '../cache/cache-wallet-loader'
 import {
   makeWalletCacheSaver,
   WalletCacheSaver
@@ -40,6 +41,11 @@ import {
 } from './custom-tokens'
 
 export const EXPEDITED_SYNC_INTERVAL = 5000
+
+/** Returns the disklet path for the account's wallet cache file. */
+function getWalletCachePath(storageWalletId: string): string {
+  return `accountCache/${storageWalletId}/walletCache.json`
+}
 
 export interface AccountOutput {
   readonly accountApi: EdgeAccount
@@ -95,27 +101,20 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
         // Try to load wallet cache for instant UI.
         // Returns the cache setup if successful, undefined otherwise.
-        async function tryLoadCache(): Promise<
-          import('../cache/cache-wallet-loader').WalletCacheSetup | undefined
-        > {
+        // Assumes storage wallets are already initialized.
+        async function tryLoadCache(): Promise<WalletCacheSetup | undefined> {
           try {
             const storageWalletId = accountWalletInfos[0]?.id
             if (storageWalletId == null) {
               return undefined
             }
 
-            // Initialize ALL account storage wallets first.
-            // This is cheap (just file reads) and avoids race conditions.
-            await Promise.all(
-              accountWalletInfos.map(info => addStorageWallet(ai, info))
-            )
-
-            const cachePath = `accountCache/${storageWalletId}/walletCache.json`
+            const cachePath = getWalletCachePath(storageWalletId)
             const cacheJson = await ai.props.io.disklet.getText(cachePath)
 
             // Build currency info map from loaded plugins:
             const currencyInfos: {
-              [pluginId: string]: import('../../types/types').EdgeCurrencyInfo
+              [pluginId: string]: EdgeCurrencyInfo
             } = {}
             for (const pluginId of Object.keys(state.plugins.currency)) {
               currencyInfos[pluginId] =
@@ -148,8 +147,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             // Check for "file not found" errors which are expected on first login:
             let isExpectedError = false
             if (error instanceof Error) {
-              // Disklet throws Error with 'Cannot read file' message
-              if (error.message.includes('Cannot read')) {
+              // Disklet throws Error with 'Cannot read file ...' message
+              if (error.message.startsWith('Cannot read file')) {
                 isExpectedError = true
               }
               // Node.js-style errors have a 'code' property
@@ -171,6 +170,12 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         try {
           await waitForPlugins(ai)
 
+          // Initialize storage wallets (cheap file reads, needed for both paths):
+          await Promise.all(
+            accountWalletInfos.map(info => addStorageWallet(ai, info))
+          )
+          log.warn('Login: synced account repos')
+
           // Try cache-first login for instant UI:
           const cacheSetup = await tryLoadCache()
           if (cacheSetup != null) {
@@ -191,6 +196,10 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
               })
               .catch((error: unknown) => {
                 log.error('Login: background loading failed:', error)
+                input.props.dispatch({
+                  type: 'ACCOUNT_LOAD_FAILED',
+                  payload: { accountId, error }
+                })
               })
 
             return await stopUpdates
@@ -198,12 +207,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
           // Normal login flow (no cache available):
           await loadBuiltinTokens(ai, accountId)
-
-          // Start the repo:
-          await Promise.all(
-            accountWalletInfos.map(info => addStorageWallet(ai, info))
-          )
-          log.warn('Login: synced account repos')
 
           await loadAllFiles()
           log.warn('Login: loaded files')
@@ -342,7 +345,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           if (accountApi != null && cacheSaver == null) {
             const storageWalletId = accountState.accountWalletInfos[0]?.id
             if (storageWalletId != null) {
-              const cachePath = `accountCache/${storageWalletId}/walletCache.json`
+              const cachePath = getWalletCachePath(storageWalletId)
 
               cacheSaver = makeWalletCacheSaver(
                 accountApi,

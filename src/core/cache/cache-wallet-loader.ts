@@ -31,17 +31,13 @@ export interface WalletCacheSetup {
  * Callback to get a real wallet by ID for delegation.
  * Returns undefined if the real wallet is not yet available.
  */
-export type RealWalletLookup = (
-  walletId: string
-) => EdgeCurrencyWallet | undefined
+type RealWalletLookup = (walletId: string) => EdgeCurrencyWallet | undefined
 
 /**
  * Callback to get a real config by pluginId for delegation.
  * Returns undefined if the real config is not yet available.
  */
-export type RealConfigLookup = (
-  pluginId: string
-) => EdgeCurrencyConfig | undefined
+type RealConfigLookup = (pluginId: string) => EdgeCurrencyConfig | undefined
 
 /**
  * Options for loading wallet cache.

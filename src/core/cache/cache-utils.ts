@@ -20,11 +20,26 @@ export function makeRealObjectPoller<T>(
 ): {
   tryGet: () => T | undefined
   waitFor: () => Promise<T>
+  cancel: () => void
 } {
   let sharedPromise: Promise<T> | undefined
+  let activeTimeoutId: ReturnType<typeof setTimeout> | undefined
+  let activeReject: ((error: Error) => void) | undefined
 
   function tryGet(): T | undefined {
     return getter()
+  }
+
+  function cancel(): void {
+    if (activeTimeoutId != null) {
+      clearTimeout(activeTimeoutId)
+      activeTimeoutId = undefined
+    }
+    if (activeReject != null) {
+      activeReject(new Error(`Poller for ${label} was cancelled`))
+      activeReject = undefined
+    }
+    sharedPromise = undefined
   }
 
   function waitFor(): Promise<T> {
@@ -37,13 +52,14 @@ export function makeRealObjectPoller<T>(
 
     sharedPromise = new Promise((resolve, reject) => {
       const startTime = Date.now()
-      let timeoutId: ReturnType<typeof setTimeout> | undefined
+      activeReject = reject
 
       const cleanup = (): void => {
-        if (timeoutId != null) {
-          clearTimeout(timeoutId)
-          timeoutId = undefined
+        if (activeTimeoutId != null) {
+          clearTimeout(activeTimeoutId)
+          activeTimeoutId = undefined
         }
+        activeReject = undefined
       }
 
       const check = (): void => {
@@ -51,6 +67,7 @@ export function makeRealObjectPoller<T>(
           const real = tryGet()
           if (real != null) {
             cleanup()
+            sharedPromise = undefined
             resolve(real)
             return
           }
@@ -64,7 +81,7 @@ export function makeRealObjectPoller<T>(
             return
           }
 
-          timeoutId = setTimeout(check, POLL_INTERVAL_MS)
+          activeTimeoutId = setTimeout(check, POLL_INTERVAL_MS)
         } catch (error) {
           cleanup()
           sharedPromise = undefined
@@ -72,13 +89,13 @@ export function makeRealObjectPoller<T>(
         }
       }
 
-      timeoutId = setTimeout(check, POLL_INTERVAL_MS)
+      activeTimeoutId = setTimeout(check, POLL_INTERVAL_MS)
     })
 
     return sharedPromise
   }
 
-  return { tryGet, waitFor }
+  return { tryGet, waitFor, cancel }
 }
 
 /**

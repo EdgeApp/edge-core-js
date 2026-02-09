@@ -1,7 +1,11 @@
 import { Disklet } from 'disklet'
 
 import { EdgeAccount, EdgeLog } from '../../types/types'
-import { PARENT_CURRENCY_KEY, WalletCacheFile } from './cache-wallet-cleaners'
+import {
+  asWalletCacheFile,
+  PARENT_CURRENCY_KEY,
+  WalletCacheFile
+} from './cache-wallet-cleaners'
 
 /** Default minimum interval between saves: 5 seconds */
 const DEFAULT_THROTTLE_MS = 5000
@@ -149,12 +153,14 @@ export function makeWalletCacheSaver(
         })
       }
 
-      const cacheFile: WalletCacheFile = {
+      // Validate at write time so malformed data is caught immediately
+      // rather than producing an unusable cache on next login:
+      const cacheFile: WalletCacheFile = asWalletCacheFile({
         version: 1,
         tokens,
         wallets,
         configOtherMethodNames
-      }
+      })
 
       const cacheJson = JSON.stringify(cacheFile, null, 2)
       await disklet.setText(cachePath, cacheJson)

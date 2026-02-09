@@ -24,7 +24,6 @@ import {
   InsufficientFundsError
 } from '../../src/index'
 import { upgradeCurrencyCode } from '../../src/types/type-helpers'
-import { snooze } from '../../src/util/snooze'
 
 const GENESIS_BLOCK = 1231006505
 
@@ -135,10 +134,6 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
         : {
             testMethod: async (arg: string): Promise<string> => {
               return `testMethod called with: ${arg}`
-            },
-            testMethodWithDelay: async (arg: string): Promise<string> => {
-              await snooze(100)
-              return `delayed: ${arg}`
             }
           }
     this.walletId = walletInfo.id

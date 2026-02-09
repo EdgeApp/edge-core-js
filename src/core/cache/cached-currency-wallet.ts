@@ -217,7 +217,9 @@ export function makeCachedCurrencyWallet(
   // ($internalStreamTransactions is called by client-side streamTransactions)
   const wallet: EdgeCurrencyWallet & InternalWalletMethods = {
     // Note: watch/on callbacks registered on this cached wallet will not fire
-    // because `update(cachedWallet)` is never called by the pixie system.
+    // from the pixie system (which only calls update() on real wallets).
+    // Setters like renameWallet/setFiatCurrencyCode call update(wallet) to
+    // push local changes through yaob, but watch/on won't fire reactively.
     // This is acceptable because:
     // - All getters delegate to the real wallet, so reads return live data.
     // - The GUI re-grabs wallets from `account.currencyWallets` on re-render,
