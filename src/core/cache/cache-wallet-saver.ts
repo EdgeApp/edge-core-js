@@ -176,11 +176,11 @@ export function makeWalletCacheSaver(
       if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
         log(
           `${LOG_PREFIX} Failed to save cache ${consecutiveFailures} times, giving up:`,
-          String(error)
+          error
         )
       } else {
-        log(`${LOG_PREFIX} Failed to save cache:`, String(error))
-        // Re-mark dirty to retry on next markDirty call:
+        log(`${LOG_PREFIX} Failed to save cache:`, error)
+        // Re-mark dirty so the finally block schedules a retry:
         if (!isStopped) isDirty = true
       }
     } finally {
@@ -205,13 +205,15 @@ export function makeWalletCacheSaver(
 
     const elapsed = Date.now() - lastSaveTime
     if (elapsed >= throttleMs) {
-      // Enough time has passed, save immediately (async):
+      // Enough time has passed, save immediately (async).
+      // doSave() handles errors internally; catch prevents unhandled rejection:
       doSave().catch(() => {})
     } else {
       // Schedule save for when the throttle window expires:
       const delay = throttleMs - elapsed
       pendingTimeout = setTimeout(() => {
         pendingTimeout = undefined
+        // doSave() handles errors internally; catch prevents unhandled rejection:
         doSave().catch(() => {})
       }, delay)
     }

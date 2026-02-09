@@ -147,7 +147,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             // Check for "file not found" errors which are expected on first login:
             let isExpectedError = false
             if (error instanceof Error) {
-              // Disklet throws Error with 'Cannot read file ...' message
+              // Disklet throws Error with 'Cannot read file ...' message.
+              // This is coupled to disklet's error format:
               if (error.message.startsWith('Cannot read file')) {
                 isExpectedError = true
               }
@@ -195,6 +196,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
                 await loadAllFiles()
               })
               .catch((error: unknown) => {
+                // Check if account was logged out during async operation:
+                if (ai.props.state.accounts[accountId] == null) return
                 log.error('Login: background loading failed:', error)
                 input.props.dispatch({
                   type: 'ACCOUNT_LOAD_FAILED',

@@ -1,3 +1,5 @@
+import { asJSON } from 'cleaners'
+
 import {
   EdgeCurrencyConfig,
   EdgeCurrencyInfo,
@@ -72,8 +74,10 @@ export function loadWalletCache(
     pauseWallets
   } = options
 
-  // Parse and validate the wallet cache file
-  const cacheFile: WalletCacheFile = asWalletCacheFile(JSON.parse(jsonData))
+  // Parse and validate the wallet cache file.
+  // asJSON wraps SyntaxError with context and avoids untyped `any` from JSON.parse:
+  const asWalletCacheJson = asJSON(asWalletCacheFile)
+  const cacheFile: WalletCacheFile = asWalletCacheJson(jsonData)
 
   // Create currency configs for each plugin that has wallets
   const currencyConfigs: EdgePluginMap<EdgeCurrencyConfig> = {}

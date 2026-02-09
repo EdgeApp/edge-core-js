@@ -3,7 +3,7 @@ import { bridgifyObject } from 'yaob'
 import { EdgeOtherMethods } from '../../types/types'
 
 /** How often to poll for a real object (ms) */
-const POLL_INTERVAL_MS = 300
+const POLL_INTERVAL_MS = 500
 
 /** Maximum time to wait for a real object before timing out (ms) */
 const MAX_WAIT_MS = 60000
@@ -102,7 +102,6 @@ export function makeRealObjectPoller<T>(
  * Helper to create delegating otherMethods that wait for the real object.
  * Creates explicit functions for known method names only.
  * Methods not in the cache will be undefined until the real object loads.
- * GUI code should check if methods exist before calling them, or wait for real object.
  *
  * @param methodNames - Array of method names to create delegating stubs for
  * @param getRealOtherMethods - Callback to get real otherMethods if available
