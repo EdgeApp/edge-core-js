@@ -804,7 +804,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
             : undefined,
 
         // Added for backward compatibility for plugins using core 1.x
-        // @ts-expect-error
+        // @ts-expect-error - paymentTokenId/paymentWallet are deprecated but still used by old plugins
         paymentTokenId: paymentInfo?.tokenId,
         paymentWallet: wallet
       })
@@ -832,7 +832,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
       // Close unused quotes:
       for (const otherQuote of otherQuotes) {
-        otherQuote.close().catch(() => undefined)
+        otherQuote.close().catch((error: unknown) => {
+          ai.props.log.warn('Failed to close unused swap quote:', error)
+        })
       }
 
       // Return the front quote:
