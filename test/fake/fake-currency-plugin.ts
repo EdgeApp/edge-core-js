@@ -223,7 +223,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   getBalance(opts: EdgeTokenIdOptions): string {
     const { tokenId = null } = opts
     if (tokenId == null) return this.state.balance.toString()
-    if (tokenId === 'badf00d5') this.state.tokenBalance.toString()
+    if (tokenId === 'badf00d5') return this.state.tokenBalance.toString()
     if (this.allTokens[tokenId] != null) return '0'
     throw new Error('Unknown currency')
   }
