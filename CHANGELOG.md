@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.41.3 (2026-02-09)
+
 - fixed: Fixed bundle issue caused by iOS symlink from /private/var/ and /var/ paths.
 
 ## 2.41.2 (2026-02-09)
