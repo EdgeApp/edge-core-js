@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Fixed bundle issue caused by iOS symlink from /private/var/ and /var/ paths.
+
 ## 2.41.2 (2026-02-09)
 
 - changed: Refactor bundler to use platform-native asset loaders over local HTTP server.
