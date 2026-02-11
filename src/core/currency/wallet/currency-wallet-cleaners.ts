@@ -306,6 +306,10 @@ export const asTokensFile = asObject({
   detectedTokenIds: asArray(asString)
 })
 
+export const asWalletSettingsFile = asObject({
+  walletSettings: asOptional(asJsonObject, () => ({}))
+})
+
 const asTransactionAsset = asObject<TransactionAsset>({
   assetAction: asOptional(asEdgeAssetAction),
   metadata: asEdgeMetadata,
