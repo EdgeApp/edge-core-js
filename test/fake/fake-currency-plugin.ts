@@ -12,7 +12,7 @@ import {
   EdgeFreshAddress,
   EdgeGetReceiveAddressOptions,
   EdgeGetTransactionsOptions,
-  EdgeParsedUri,
+  EdgeParsedLink,
   EdgeSpendInfo,
   EdgeStakingStatus,
   EdgeToken,
@@ -27,7 +27,7 @@ import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 
 const GENESIS_BLOCK = 1231006505
 
-const fakeTokens: EdgeTokenMap = {
+export const fakeTokens: EdgeTokenMap = {
   badf00d5: {
     currencyCode: 'TOKEN',
     denominations: [{ multiplier: '1000', name: 'TOKEN' }],
@@ -38,7 +38,7 @@ const fakeTokens: EdgeTokenMap = {
   }
 }
 
-const fakeCurrencyInfo: EdgeCurrencyInfo = {
+export const fakeCurrencyInfo: EdgeCurrencyInfo = {
   currencyCode: 'FAKE',
   displayName: 'Fake Coin',
   chainDisplayName: 'Fake Chain',
@@ -377,11 +377,11 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
   }
 
   // URI parsing:
-  parseUri(uri: string): Promise<EdgeParsedUri> {
+  parseLink(uri: string): Promise<EdgeParsedLink> {
     return Promise.resolve({})
   }
 
-  encodeUri(): Promise<string> {
+  encodePayLink(): Promise<string> {
     return Promise.resolve('')
   }
 }

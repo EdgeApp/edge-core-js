@@ -877,6 +877,64 @@ export interface EdgeEncodeUri {
   currencyCode?: string
 }
 
+/**
+ * A payment address, with optional metadata.
+ */
+export interface EdgePayLink {
+  publicAddress: string
+
+  /** Same meaning as EdgeAddress.addressType */
+  addressType: string
+
+  /** Recipient name */
+  label?: string
+
+  /** Transaction note */
+  message?: string
+
+  /** On-chain memo */
+  memo?: string
+  memoType?: 'text' | 'number' | 'hex' // EdgeMemoOption['type']
+
+  /** Amount to send */
+  nativeAmount?: string
+  minNativeAmount?: string
+
+  /** What to send, specifically */
+  tokenId?: EdgeTokenId
+
+  /** If the address will go away */
+  expires?: Date
+
+  /** True if this is a Renproject Gateway URI */
+  isGateway?: boolean
+}
+
+export interface EdgePaymentProtocolLink {
+  paymentProtocolUrl: string
+}
+
+/**
+ * A private key, with the power of spending.
+ */
+export interface EdgePrivateKeyLink {
+  privateKey: string
+}
+
+/**
+ * A parsed link can have multiple meanings,
+ * so returns whatever interpretations make sense.
+ * For instance, an EVM address can be both a payment request
+ * and a view key.
+ */
+export interface EdgeParsedLink {
+  pay?: EdgePayLink
+  paymentProtocol?: EdgePaymentProtocolLink
+  privateKey?: EdgePrivateKeyLink
+  token?: EdgeToken
+  walletConnect?: WalletConnect
+}
+
 // options -------------------------------------------------------------
 
 export interface EdgeTokenIdOptions {
@@ -1211,12 +1269,25 @@ export interface EdgeCurrencyTools {
   readonly getTokenId?: (token: EdgeToken) => Promise<string>
 
   // URIs:
-  readonly parseUri: (
+  readonly parseLink: (
+    link: string,
+    opts: { allTokens: EdgeTokenMap; tokenId?: EdgeTokenId }
+  ) => Promise<EdgeParsedLink>
+
+  readonly encodePayLink: (
+    link: EdgePayLink,
+    opts: { allTokens: EdgeTokenMap }
+  ) => Promise<string>
+
+  /** @deprecated Provide encodeLink instead */
+  readonly parseUri?: (
     uri: string,
     currencyCode?: string,
     customTokens?: EdgeMetaToken[]
   ) => Promise<EdgeParsedUri>
-  readonly encodeUri: (
+
+  /** @deprecated Provide encodeLink instead */
+  readonly encodeUri?: (
     obj: EdgeEncodeUri,
     customTokens?: EdgeMetaToken[]
   ) => Promise<string>
@@ -1412,15 +1483,17 @@ export interface EdgeCurrencyWallet {
     splitWallets: EdgeSplitCurrencyWallet[]
   ) => Promise<Array<EdgeResult<EdgeCurrencyWallet>>>
 
-  // URI handling:
+  // Generic:
+  readonly otherMethods: EdgeOtherMethods
+
+  /** @deprecated Use EdgeCurrencyConfig.encodePayLink instead */
   readonly encodeUri: (obj: EdgeEncodeUri) => Promise<string>
+
+  /** @deprecated Use EdgeCurrencyConfig.parseLink instead */
   readonly parseUri: (
     uri: string,
     currencyCode?: string
   ) => Promise<EdgeParsedUri>
-
-  // Generic:
-  readonly otherMethods: EdgeOtherMethods
 
   /** @deprecated Use the information in EdgeCurrencyInfo / EdgeToken. */
   readonly denominationToNative: (
@@ -1700,6 +1773,13 @@ export interface EdgeCurrencyConfig {
   // User settings for this plugin:
   readonly userSettings: JsonObject | undefined
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
+
+  // URI handling:
+  readonly parseLink: (
+    link: string,
+    opts?: { tokenId?: EdgeTokenId }
+  ) => Promise<EdgeParsedLink>
+  readonly encodePayLink: (link: EdgePayLink) => Promise<string>
 
   // Utility methods:
   readonly importKey: (
