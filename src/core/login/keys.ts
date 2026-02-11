@@ -379,7 +379,13 @@ export async function finishWalletCreation(
   walletId: string,
   opts: EdgeCreateCurrencyWalletOptions
 ): Promise<EdgeCurrencyWallet> {
-  const { enabledTokenIds, fiatCurrencyCode, migratedFromWalletId, name } = opts
+  const {
+    enabledTokenIds,
+    fiatCurrencyCode,
+    migratedFromWalletId,
+    name,
+    walletSettings
+  } = opts
   const wallet = await waitForCurrencyWallet(ai, walletId)
 
   // Write ancillary files to disk:
@@ -396,6 +402,9 @@ export async function finishWalletCreation(
   }
   if (enabledTokenIds != null && enabledTokenIds.length > 0) {
     await wallet.changeEnabledTokenIds(enabledTokenIds)
+  }
+  if (walletSettings != null) {
+    await wallet.changeWalletSettings(walletSettings)
   }
 
   return wallet

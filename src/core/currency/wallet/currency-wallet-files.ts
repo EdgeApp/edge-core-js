@@ -8,7 +8,8 @@ import {
   EdgeSubscribedAddress,
   EdgeTokenId,
   EdgeTransaction,
-  EdgeTxAction
+  EdgeTxAction,
+  JsonObject
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
 import { fetchAppIdInfo } from '../../account/lobby-api'
@@ -30,6 +31,7 @@ import {
   asTransactionFile,
   asWalletFiatFile,
   asWalletNameFile,
+  asWalletSettingsFile,
   LegacyTransactionFile,
   TransactionAsset,
   TransactionFile
@@ -45,6 +47,7 @@ const LEGACY_TOKENS_FILE = 'EnabledTokens.json'
 const SEEN_TX_CHECKPOINT_FILE = 'seenTxCheckpoint.json'
 const TOKENS_FILE = 'Tokens.json'
 const WALLET_NAME_FILE = 'WalletName.json'
+const WALLET_SETTINGS_FILE = 'WalletSettings.json'
 
 const legacyAddressFile = makeJsonFile(asLegacyAddressFile)
 const legacyMapFile = makeJsonFile(asLegacyMapFile)
@@ -55,6 +58,7 @@ const tokensFile = makeJsonFile(asTokensFile)
 const transactionFile = makeJsonFile(asTransactionFile)
 const walletFiatFile = makeJsonFile(asWalletFiatFile)
 const walletNameFile = makeJsonFile(asWalletNameFile)
+const walletSettingsFile = makeJsonFile(asWalletSettingsFile)
 
 /**
  * Updates the enabled tokens on a wallet.
@@ -281,6 +285,45 @@ export async function loadTokensFile(
       detectedTokenIds: [],
       enabledTokenIds: []
     }
+  })
+}
+
+/**
+ * Loads wallet-specific settings.
+ */
+export async function loadWalletSettingsFile(
+  input: CurrencyWalletInput
+): Promise<void> {
+  const { dispatch, state, walletId } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
+
+  const clean = await walletSettingsFile.load(disklet, WALLET_SETTINGS_FILE)
+  dispatch({
+    type: 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE',
+    payload: {
+      walletId,
+      walletSettings: clean?.walletSettings ?? {}
+    }
+  })
+}
+
+/**
+ * Persists wallet settings to disk.
+ */
+export async function saveWalletSettingsFile(
+  input: CurrencyWalletInput,
+  walletSettings: JsonObject
+): Promise<void> {
+  const { dispatch, state, walletId } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
+
+  await walletSettingsFile.save(disklet, WALLET_SETTINGS_FILE, {
+    walletSettings
+  })
+
+  dispatch({
+    type: 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS',
+    payload: { walletId, walletSettings }
   })
 }
 
@@ -696,6 +739,10 @@ export async function reloadWalletFiles(
 ): Promise<void> {
   if (changes.includes(TOKENS_FILE) || changes.includes(LEGACY_TOKENS_FILE)) {
     await loadTokensFile(input)
+  }
+  const { hasWalletSettings = false } = input.props.walletState.currencyInfo
+  if (hasWalletSettings && changes.includes(WALLET_SETTINGS_FILE)) {
+    await loadWalletSettingsFile(input)
   }
   if (changes.includes(CURRENCY_FILE)) {
     await loadFiatFile(input)

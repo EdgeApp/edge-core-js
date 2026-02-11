@@ -28,7 +28,7 @@ export const makeMemoryWalletInner = async (
   walletType: string,
   opts: EdgeCreateCurrencyWalletOptions = {}
 ): Promise<EdgeMemoryWallet> => {
-  const { keys } = opts
+  const { keys, walletSettings = {} } = opts
   if (keys == null) throw new Error('No keys provided')
 
   const walletId = `memorywallet-${memoryWalletCount++}`
@@ -113,6 +113,7 @@ export const makeMemoryWalletInner = async (
     lightMode: true,
     log,
     userSettings: { ...(config.userSettings ?? {}) },
+    walletSettings,
     walletLocalDisklet: makeMemoryDisklet(),
     walletLocalEncryptedDisklet: makeMemoryDisklet()
   })
