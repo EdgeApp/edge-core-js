@@ -88,11 +88,17 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private running: boolean
   private readonly state: State
   private allTokens: EdgeTokenMap = fakeTokens
+  private readonly currencyInfo: EdgeCurrencyInfo
 
-  constructor(walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions) {
+  constructor(
+    walletInfo: EdgeWalletInfo,
+    opts: EdgeCurrencyEngineOptions,
+    currencyInfo: EdgeCurrencyInfo
+  ) {
     this.walletId = walletInfo.id
     this.callbacks = opts.callbacks
     this.running = false
+    this.currencyInfo = currencyInfo
     this.state = {
       balance: 0,
       stakedBalance: 0,
@@ -154,7 +160,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
         const { tokenId = null } = upgradeCurrencyCode({
           allTokens: this.allTokens,
           currencyCode: incoming.currencyCode,
-          currencyInfo: fakeCurrencyInfo
+          currencyInfo: this.currencyInfo
         })
         const newTx: EdgeTransaction = {
           blockHeight: 0,
@@ -204,7 +210,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   async dumpData(): Promise<EdgeDataDump> {
     return {
       walletId: 'xxx',
-      walletType: fakeCurrencyInfo.walletType,
+      walletType: this.currencyInfo.walletType,
       data: { fakeEngine: { running: this.running } }
     }
   }
@@ -273,7 +279,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
     const { memos = [], spendTargets, tokenId = null } = spendInfo
     const { currencyCode } =
-      tokenId == null ? fakeCurrencyInfo : this.allTokens[tokenId]
+      tokenId == null ? this.currencyInfo : this.allTokens[tokenId]
 
     // Check the spend targets:
     let total = '0'
@@ -333,9 +339,11 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
  * Currency plugin setup object.
  */
 class FakeCurrencyTools implements EdgeCurrencyTools {
+  constructor(private readonly currencyInfo: EdgeCurrencyInfo) {}
+
   // Keys:
   createPrivateKey(walletType: string, opts?: object): Promise<object> {
-    if (walletType !== fakeCurrencyInfo.walletType) {
+    if (walletType !== this.currencyInfo.walletType) {
       throw new Error('Unsupported key type')
     }
     return Promise.resolve({ fakeKey: 'FakePrivateKey' })
@@ -363,7 +371,9 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
   }
 
   getSplittableTypes(publicWalletInfo: EdgeWalletInfo): string[] {
-    return ['wallet:tulipcoin']
+    return this.currencyInfo.walletType === 'wallet:fakecoin'
+      ? ['wallet:tulipcoin']
+      : []
   }
 
   // URI parsing:
@@ -376,24 +386,34 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
   }
 }
 
-export const fakeCurrencyPlugin: EdgeCurrencyPlugin = {
-  currencyInfo: fakeCurrencyInfo,
+export function makeFakeCurrencyPlugin(
+  overrides: Partial<EdgeCurrencyInfo> = {}
+): EdgeCurrencyPlugin {
+  const currencyInfo: EdgeCurrencyInfo = { ...fakeCurrencyInfo, ...overrides }
 
-  getBuiltinTokens(): Promise<EdgeTokenMap> {
-    return Promise.resolve(fakeTokens)
-  },
+  return {
+    currencyInfo,
 
-  makeCurrencyEngine(
-    walletInfo: EdgeWalletInfo,
-    opts: EdgeCurrencyEngineOptions
-  ): Promise<EdgeCurrencyEngine> {
-    return Promise.resolve(new FakeCurrencyEngine(walletInfo, opts))
-  },
+    getBuiltinTokens(): Promise<EdgeTokenMap> {
+      return Promise.resolve(fakeTokens)
+    },
 
-  makeCurrencyTools(): Promise<EdgeCurrencyTools> {
-    return Promise.resolve(new FakeCurrencyTools())
+    makeCurrencyEngine(
+      walletInfo: EdgeWalletInfo,
+      opts: EdgeCurrencyEngineOptions
+    ): Promise<EdgeCurrencyEngine> {
+      return Promise.resolve(
+        new FakeCurrencyEngine(walletInfo, opts, currencyInfo)
+      )
+    },
+
+    makeCurrencyTools(): Promise<EdgeCurrencyTools> {
+      return Promise.resolve(new FakeCurrencyTools(currencyInfo))
+    }
   }
 }
+
+export const fakeCurrencyPlugin = makeFakeCurrencyPlugin()
 
 const asNetworkLocation = asObject({
   contractAddress: asString

@@ -28,6 +28,7 @@ import {
   EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../types/types'
+import { makeEdgeResult } from '../../util/edgeResult'
 import { base58 } from '../../util/encoding'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import {
@@ -502,7 +503,42 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       walletId: string,
       newWalletType: string
     ): Promise<string> {
-      return await splitWalletInfo(ai, accountId, walletId, newWalletType)
+      const { allWalletInfosFull } = accountState()
+      const walletInfo = allWalletInfosFull.find(
+        walletInfo => walletInfo.id === walletId
+      )
+      if (walletInfo == null) throw new Error(`Invalid wallet id ${walletId}`)
+      const existingWallet =
+        ai.props.output?.currency?.wallets[walletInfo.id]?.walletApi
+
+      // The following check has not been needed since about 2021,
+      // when the currency plugins became responsible for listing
+      // their own splittable types, but keep it for safety:
+      if (
+        walletInfo.type === 'wallet:bitcoin' &&
+        walletInfo.keys.format === 'bip49' &&
+        newWalletType === 'wallet:bitcoincash'
+      ) {
+        throw new Error(
+          'Cannot split segwit-format Bitcoin wallets to Bitcoin Cash'
+        )
+      }
+
+      const [result] = await splitWalletInfo(
+        ai,
+        accountId,
+        walletInfo,
+        [
+          {
+            walletType: newWalletType,
+            name: existingWallet?.name ?? undefined,
+            fiatCurrencyCode: existingWallet?.fiatCurrencyCode
+          }
+        ],
+        true
+      )
+      if (result.ok) return result.result.id
+      throw result.error
     },
 
     async listSplittableWalletTypes(walletId: string): Promise<string[]> {
@@ -827,12 +863,4 @@ function getRawPrivateKey(
     throw new Error(`Invalid wallet: ${walletId} not found`)
   }
   return info
-}
-
-async function makeEdgeResult<T>(promise: Promise<T>): Promise<EdgeResult<T>> {
-  try {
-    return { ok: true, result: await promise }
-  } catch (error) {
-    return { ok: false, error }
-  }
 }

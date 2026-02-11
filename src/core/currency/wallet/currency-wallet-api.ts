@@ -28,10 +28,12 @@ import {
   EdgeParsedUri,
   EdgePaymentProtocolInfo,
   EdgeReceiveAddress,
+  EdgeResult,
   EdgeSaveTxMetadataOptions,
   EdgeSignMessageOptions,
   EdgeSpendInfo,
   EdgeSpendTarget,
+  EdgeSplitCurrencyWallet,
   EdgeStakingStatus,
   EdgeStreamTransactionOptions,
   EdgeSyncStatus,
@@ -41,6 +43,7 @@ import {
   EdgeWalletInfo
 } from '../../../types/types'
 import { makeMetaTokens } from '../../account/custom-tokens'
+import { splitWalletInfo } from '../../login/splitting'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import { getCurrencyMultiplier } from '../currency-selectors'
@@ -729,6 +732,18 @@ export function makeCurrencyWalletApi(
       })
       await engine.resyncBlockchain()
       emit(out, 'transactionsRemoved', undefined)
+    },
+
+    async split(
+      splitWallets: EdgeSplitCurrencyWallet[]
+    ): Promise<Array<EdgeResult<EdgeCurrencyWallet>>> {
+      return await splitWalletInfo(
+        ai,
+        accountId,
+        walletInfo,
+        splitWallets,
+        false
+      )
     },
 
     // URI handling:

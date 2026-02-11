@@ -1408,6 +1408,9 @@ export interface EdgeCurrencyWallet {
   // Wallet management:
   readonly dumpData: () => Promise<EdgeDataDump>
   readonly resyncBlockchain: () => Promise<void>
+  readonly split: (
+    splitWallets: EdgeSplitCurrencyWallet[]
+  ) => Promise<Array<EdgeResult<EdgeCurrencyWallet>>>
 
   // URI handling:
   readonly encodeUri: (obj: EdgeEncodeUri) => Promise<string>
@@ -1664,6 +1667,12 @@ export type EdgeCreateCurrencyWallet = EdgeCreateCurrencyWalletOptions & {
   walletType: string
 }
 
+export interface EdgeSplitCurrencyWallet {
+  fiatCurrencyCode?: string
+  name?: string
+  walletType: string
+}
+
 export interface EdgeCurrencyConfig {
   readonly watch: Subscriber<EdgeCurrencyConfig>
 
@@ -1867,10 +1876,6 @@ export interface EdgeAccount {
   readonly getWalletInfo: (id: string) => EdgeWalletInfoFull | undefined
   readonly listWalletIds: () => string[]
   readonly listSplittableWalletTypes: (walletId: string) => Promise<string[]>
-  readonly splitWalletInfo: (
-    walletId: string,
-    newWalletType: string
-  ) => Promise<string>
 
   // Key access:
   readonly getDisplayPrivateKey: (walletId: string) => Promise<string>
@@ -1917,6 +1922,12 @@ export interface EdgeAccount {
     request: EdgeSwapRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote[]>
+
+  /** @deprecated Use `EdgeCurrencyWallet.split` instead */
+  readonly splitWalletInfo: (
+    walletId: string,
+    newWalletType: string
+  ) => Promise<string>
 }
 
 // ---------------------------------------------------------------------
