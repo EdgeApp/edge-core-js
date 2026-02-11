@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyWallet.walletSettings` and `EdgeCurrencyWallet.changeWalletSettings`, plus matching engine plumbing.
 - removed: All Flow tooling. TypeScript is the type system of record, and nothing in the Edge codebase consumes the generated Flow types. This drops the `flow-bin` devDependency, the root `.flowconfig`, the `build.types` script and its `make-types.ts` generator, the `rollup-plugin-flow-entry` plugin, the `eslint-plugin-flowtype` config, the `flow-typed` directory, and the published `types.js.flow` artifact. The `flow-bin` package shipped an x86_64-only binary that failed with EBADARCH on arm64 hosts. Note: dropping `types.js.flow` is a breaking change for any downstream consumer that imports this package via Flow.
 
 ## 2.45.0 (2026-06-12)

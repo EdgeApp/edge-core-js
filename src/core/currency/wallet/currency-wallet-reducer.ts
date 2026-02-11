@@ -13,7 +13,8 @@ import {
   EdgeTransaction,
   EdgeTxAction,
   EdgeWalletInfo,
-  EdgeWalletInfoFull
+  EdgeWalletInfoFull,
+  JsonObject
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
 import { RootAction } from '../../actions'
@@ -75,6 +76,7 @@ export interface CurrencyWalletState {
   readonly enabledTokenIds: string[]
   readonly tokenFileDirty: boolean
   readonly tokenFileLoaded: boolean
+  readonly walletSettings: JsonObject
   readonly engineFailure: Error | null
   readonly engineStarted: boolean
   readonly fiat: string
@@ -117,6 +119,8 @@ export interface CurrencyWalletNext {
   readonly root: RootState
   readonly self: CurrencyWalletState
 }
+
+export const initialWalletSettings: JsonObject = {}
 
 // Used for detectedTokenIds & enabledTokenIds:
 export const initialTokenIds: string[] = []
@@ -245,6 +249,16 @@ const currencyWalletInner = buildReducer<
 
       case 'CURRENCY_ENGINE_CLEARED':
         return false
+      default:
+        return state
+    }
+  },
+
+  walletSettings(state = initialWalletSettings, action): JsonObject {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE':
+      case 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS':
+        return action.payload.walletSettings
       default:
         return state
     }
