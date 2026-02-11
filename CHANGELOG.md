@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyWallet.walletSettings` and `EdgeCurrencyWallet.changeWalletSettings`, plus matching engine plumbing.
+
 ## 2.42.0 (2026-02-10)
 
 - added: `EdgeCurrencyEngineCallbacks.onSyncStatusChanged` callback.

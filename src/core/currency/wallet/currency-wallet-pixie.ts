@@ -14,7 +14,8 @@ import {
   EdgeCurrencyTools,
   EdgeCurrencyWallet,
   EdgeTokenMap,
-  EdgeWalletInfo
+  EdgeWalletInfo,
+  JsonObject
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
 import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
@@ -45,9 +46,14 @@ import {
   loadSeenTxCheckpointFile,
   loadTokensFile,
   loadTxFileNames,
+  loadWalletSettingsFile,
   writeTokensFile
 } from './currency-wallet-files'
-import { CurrencyWalletState, initialTokenIds } from './currency-wallet-reducer'
+import {
+  CurrencyWalletState,
+  initialTokenIds,
+  initialWalletSettings
+} from './currency-wallet-reducer'
 import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
 
 export interface CurrencyWalletOutput {
@@ -118,6 +124,11 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       // so the engine can start in the right state:
       await loadTokensFile(input)
 
+      const { hasWalletSettings = false } = walletState.currencyInfo
+      if (hasWalletSettings) {
+        await loadWalletSettingsFile(input)
+      }
+
       // Start the engine:
       const accountState = state.accounts[accountId]
       const engine = await plugin.makeCurrencyEngine(publicWalletInfo, {
@@ -138,7 +149,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         // User settings:
         customTokens: accountState.customTokens[pluginId] ?? {},
         enabledTokenIds: input.props.walletState.allEnabledTokenIds,
-        userSettings: accountState.userSettings[pluginId] ?? {}
+        userSettings: accountState.userSettings[pluginId] ?? {},
+        walletSettings: input.props.walletState.walletSettings
       })
       input.onOutput(engine)
 
@@ -462,7 +474,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
   watcher(input: CurrencyWalletInput) {
     let lastState: CurrencyWalletState | undefined
-    let lastSettings: object = {}
+    let lastUserSettings: object = {}
+    let lastWalletSettings: JsonObject = initialWalletSettings
     let lastTokens: EdgeTokenMap = {}
     let lastEnabledTokenIds: string[] = initialTokenIds
 
@@ -480,11 +493,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       lastState = walletState
 
       // Update engine settings:
-      const userSettings = accountState.userSettings[pluginId] ?? lastSettings
-      if (lastSettings !== userSettings && engine != null) {
+      const userSettings =
+        accountState.userSettings[pluginId] ?? lastUserSettings
+      if (lastUserSettings !== userSettings && engine != null) {
         await engine.changeUserSettings(userSettings)
       }
-      lastSettings = userSettings
+      lastUserSettings = userSettings
 
       // Update the custom tokens:
       const customTokens = accountState.customTokens[pluginId] ?? lastTokens
@@ -504,6 +518,36 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         } // else { no token support }
       }
       lastTokens = customTokens
+
+      // Update wallet-scoped settings:
+      const { hasWalletSettings = false } = walletState.currencyInfo
+      const { walletSettings } = walletState
+      const settingsChanged = lastWalletSettings !== walletSettings
+      input.props.log.warn(
+        `walletSettings check: changed=${String(
+          settingsChanged
+        )} hasWalletSettings=${String(hasWalletSettings)} hasEngine=${String(
+          engine != null
+        )} hasChangeMethod=${String(
+          engine?.changeWalletSettings != null
+        )} walletSettings=${JSON.stringify(
+          walletSettings
+        )} lastWalletSettings=${JSON.stringify(lastWalletSettings)}`
+      )
+      if (
+        settingsChanged &&
+        engine?.changeWalletSettings != null &&
+        hasWalletSettings
+      ) {
+        input.props.log.warn(
+          `walletSettings applying: ${JSON.stringify(walletSettings)}`
+        )
+        await engine.changeWalletSettings(walletSettings).catch(error => {
+          input.props.log.warn(`walletSettings error: ${String(error)}`)
+          input.props.onError(error)
+        })
+      }
+      lastWalletSettings = walletSettings
 
       // Update enabled tokens:
       const { allEnabledTokenIds } = walletState

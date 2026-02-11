@@ -40,7 +40,8 @@ import {
   EdgeTokenId,
   EdgeTokenIdOptions,
   EdgeTransaction,
-  EdgeWalletInfo
+  EdgeWalletInfo,
+  JsonObject
 } from '../../../types/types'
 import { makeMetaTokens } from '../../account/custom-tokens'
 import { splitWalletInfo } from '../../login/splitting'
@@ -63,6 +64,7 @@ import {
   loadTxFiles,
   renameCurrencyWallet,
   saveTxMetadataFile,
+  saveWalletSettingsFile,
   setCurrencyWalletFiat,
   setupNewTxMetadata,
   updateCurrencyWalletTxMetadata
@@ -191,6 +193,17 @@ export function makeCurrencyWalletApi(
         currencyCode
       )
       return div(nativeAmount, multiplier, multiplier.length)
+    },
+
+    // User settings for this wallet:
+    get walletSettings(): JsonObject {
+      return input.props.walletState.walletSettings
+    },
+    async changeWalletSettings(settings: JsonObject): Promise<void> {
+      if (input.props.walletState.currencyInfo.hasWalletSettings !== true) {
+        throw new Error('Wallet settings unsupported')
+      }
+      await saveWalletSettingsFile(input, settings)
     },
 
     // Chain state:
