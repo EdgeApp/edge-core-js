@@ -172,18 +172,14 @@ export async function splitWalletInfo(
   // Restore anything that has simply been deleted:
   if (toRestore.length > 0) {
     const newStates: EdgeWalletStates = {}
-    let hasChanges = false
     for (const existingWalletInfo of toRestore) {
-      if (existingWalletInfo.archived || existingWalletInfo.deleted) {
-        hasChanges = true
-        newStates[existingWalletInfo.id] = {
-          archived: false,
-          deleted: false,
-          migratedFromWalletId: existingWalletInfo.migratedFromWalletId
-        }
+      newStates[existingWalletInfo.id] = {
+        archived: false,
+        deleted: false,
+        migratedFromWalletId: existingWalletInfo.migratedFromWalletId
       }
     }
-    if (hasChanges) await changeWalletStates(ai, accountId, newStates)
+    await changeWalletStates(ai, accountId, newStates)
   }
 
   // Add the keys to the login:
