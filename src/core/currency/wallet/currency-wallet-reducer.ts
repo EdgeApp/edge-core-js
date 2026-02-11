@@ -8,6 +8,7 @@ import {
   EdgeCurrencyInfo,
   EdgeMemo,
   EdgeStakingStatus,
+  EdgeSyncStatus,
   EdgeTokenId,
   EdgeTransaction,
   EdgeTxAction,
@@ -88,7 +89,7 @@ export interface CurrencyWalletState {
   readonly seenTxCheckpoint: string | null
   readonly sortedTxidHashes: string[]
   readonly stakingStatus: EdgeStakingStatus
-  readonly syncRatio: number
+  readonly syncStatus: EdgeSyncStatus
   readonly txidHashes: TxidHashes
   readonly txs: { [txid: string]: MergedTransaction }
   readonly unactivatedTokenIds: string[]
@@ -119,6 +120,10 @@ export interface CurrencyWalletNext {
 
 // Used for detectedTokenIds & enabledTokenIds:
 export const initialTokenIds: string[] = []
+
+export const initialSyncStatus: EdgeSyncStatus = {
+  totalRatio: 0
+}
 
 const currencyWalletInner = buildReducer<
   CurrencyWalletState,
@@ -314,13 +319,13 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
-  syncRatio(state = 0, action): number {
+  syncStatus(state = initialSyncStatus, action): EdgeSyncStatus {
     switch (action.type) {
-      case 'CURRENCY_ENGINE_CHANGED_SYNC_RATIO': {
-        return action.payload.ratio
+      case 'CURRENCY_ENGINE_CHANGED_SYNC_STATUS': {
+        return action.payload.status
       }
       case 'CURRENCY_ENGINE_CLEARED': {
-        return 0
+        return initialSyncStatus
       }
     }
     return state
