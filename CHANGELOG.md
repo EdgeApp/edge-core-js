@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyWallet.walletSettings` and `EdgeCurrencyWallet.changeWalletSettings`, plus matching engine plumbing.
+
 ## 2.43.3 (2026-03-10)
 
 - fixed: Fixed IndexDB cache issue on Android causing failed mixFetch initialization.
