@@ -33,6 +33,7 @@ import {
   getStorageWalletLocalDisklet,
   makeStorageWalletLocalEncryptedDisklet
 } from '../../storage/storage-selectors'
+import { consumePendingWalletSettings } from '../currency-selectors'
 import { makeCurrencyWalletApi } from './currency-wallet-api'
 import {
   makeCurrencyWalletCallbacks,
@@ -47,6 +48,7 @@ import {
   loadTokensFile,
   loadTxFileNames,
   loadWalletSettingsFile,
+  saveWalletSettingsFile,
   writeTokensFile
 } from './currency-wallet-files'
 import {
@@ -127,6 +129,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const { hasWalletSettings = false } = walletState.currencyInfo
       if (hasWalletSettings) {
         await loadWalletSettingsFile(input)
+
+        // Apply pending wallet settings from wallet creation:
+        const pendingSettings = consumePendingWalletSettings(walletId)
+        if (pendingSettings != null) {
+          await saveWalletSettingsFile(input, pendingSettings)
+        }
       }
 
       // Start the engine:
