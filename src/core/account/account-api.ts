@@ -30,6 +30,7 @@ import {
 } from '../../types/types'
 import { makeEdgeResult } from '../../util/edgeResult'
 import { base58 } from '../../util/encoding'
+import { setPendingWalletSettings } from '../currency/currency-selectors'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import {
   finishWalletCreation,
@@ -642,6 +643,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       ai.props.log.breadcrumb('EdgeAccount.createCurrencyWallet', {})
 
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, opts)
+      if (opts.walletSettings != null) {
+        setPendingWalletSettings(walletInfo.id, opts.walletSettings)
+      }
       const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
       await applyKit(ai, sessionKey, makeKeysKit(ai, childKey, [walletInfo]))
       return await finishWalletCreation(ai, accountId, walletInfo.id, opts)
@@ -673,6 +677,14 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
           async opts => await makeCurrencyWalletKeys(ai, opts.walletType, opts)
         )
       )
+
+      // Store pending wallet settings before applyKit triggers the pixie:
+      for (let i = 0; i < walletInfos.length; i++) {
+        const { walletSettings } = createWallets[i]
+        if (walletSettings != null) {
+          setPendingWalletSettings(walletInfos[i].id, walletSettings)
+        }
+      }
 
       // Store the keys on the server:
       const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
