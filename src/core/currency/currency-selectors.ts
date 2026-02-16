@@ -1,9 +1,34 @@
 import {
   EdgeCurrencyInfo,
   EdgeCurrencyWallet,
-  EdgeTokenMap
+  EdgeTokenMap,
+  JsonObject
 } from '../../types/types'
 import { ApiInput, RootProps } from '../root-pixie'
+
+/**
+ * Pending wallet settings for newly created wallets.
+ * Set before applyKit so the pixie can consume them
+ * before creating the engine.
+ */
+const pendingWalletSettings = new Map<string, JsonObject>()
+
+export function setPendingWalletSettings(
+  walletId: string,
+  walletSettings: JsonObject
+): void {
+  pendingWalletSettings.set(walletId, walletSettings)
+}
+
+export function consumePendingWalletSettings(
+  walletId: string
+): JsonObject | undefined {
+  const settings = pendingWalletSettings.get(walletId)
+  if (settings != null) {
+    pendingWalletSettings.delete(walletId)
+  }
+  return settings
+}
 
 export function getCurrencyMultiplier(
   currencyInfo: EdgeCurrencyInfo,
