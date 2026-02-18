@@ -362,8 +362,10 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
           if (cacheSaver == null) return
 
-          // Trigger initial save to persist cached wallet data from login
-          if (!initialSaveDone) {
+          // Trigger initial save to persist cached wallet data from login.
+          // Wait until keysLoaded is true to ensure builtinTokens are populated,
+          // avoiding overwriting cached tokens with empty data during cache-first login.
+          if (!initialSaveDone && accountState.keysLoaded) {
             initialSaveDone = true
             cacheSaver.markDirty()
             return
