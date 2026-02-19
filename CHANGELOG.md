@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyConfig.addCustomTokens` batch method.
+- added: `EdgeToken.isUserCreated` field.
+- changed: `customTokenTemplate` on `EdgeCurrencyInfo` — an empty array now indicates token support; a filled array indicates custom token support.
+- removed: `EdgeCurrencyConfig.builtinTokens`. All tokens are now served through `allTokens` (backed by `customTokens`).
+- removed: `EdgeCurrencyPlugin.getBuiltinTokens`. Built-in token data is now bundled in `builtinTokens.json` and migrated into `customTokens` on login.
+
 ## 2.43.1 (2026-02-23)
 
 - changed: Upgrade `@nymproject/mix-fetch` to improve performance with new concurrency changes.

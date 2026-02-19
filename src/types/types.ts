@@ -1691,6 +1691,7 @@ export interface EdgeCurrencyConfig {
   ) => Promise<EdgeToken[]>
   readonly getTokenId: (token: EdgeToken) => Promise<string>
   readonly addCustomToken: (token: EdgeToken) => Promise<string>
+  readonly addCustomTokens: (tokens: EdgeToken[]) => Promise<string[]>
   readonly changeCustomToken: (
     tokenId: string,
     token: EdgeToken

@@ -59,6 +59,15 @@ export type RootAction =
       }
     }
   | {
+      // Somebody just added a batch of custom tokens.
+      type: 'ACCOUNT_CUSTOM_TOKENS_ADDED'
+      payload: {
+        accountId: string
+        pluginId: string
+        tokens: EdgeTokenMap
+      }
+    }
+  | {
       // Somebody just removed a custom token.
       type: 'ACCOUNT_CUSTOM_TOKEN_REMOVED'
       payload: {

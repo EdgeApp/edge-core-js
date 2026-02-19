@@ -312,6 +312,21 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
         const newList = { ...oldList, [tokenId]: token }
         return { ...state, [pluginId]: newList }
       }
+      case 'ACCOUNT_CUSTOM_TOKENS_ADDED': {
+        const { pluginId, tokens } = action.payload
+        const oldList = state[pluginId] ?? {}
+
+        let changed = false
+        const merged = { ...oldList }
+        for (const [tokenId, token] of Object.entries(tokens)) {
+          if (!compare(merged[tokenId], token)) {
+            merged[tokenId] = token
+            changed = true
+          }
+        }
+        if (!changed) return state
+        return { ...state, [pluginId]: merged }
+      }
       case 'ACCOUNT_CUSTOM_TOKEN_REMOVED': {
         const { pluginId, tokenId } = action.payload
         const oldList = state[pluginId] ?? {}

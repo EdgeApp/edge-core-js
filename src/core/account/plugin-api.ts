@@ -14,7 +14,7 @@ import { uniqueStrings } from '../currency/wallet/enabled-tokens'
 import { getCurrencyTools } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
 import { changePluginUserSettings, changeSwapSettings } from './account-files'
-import { getTokenId } from './custom-tokens'
+import { getTokenId, saveCustomTokens } from './custom-tokens'
 
 const emptyTokens: EdgeTokenMap = {}
 const emptyTokenIds: string[] = []
@@ -86,6 +86,26 @@ export class CurrencyConfig
       payload: { accountId, pluginId, tokenId, token }
     })
     return tokenId
+  }
+
+  async addCustomTokens(tokens: EdgeToken[]): Promise<string[]> {
+    const { _accountId: accountId, _ai: ai, _pluginId: pluginId } = this
+
+    const tokenIds = await Promise.all(
+      tokens.map(async token => await getTokenId(ai, pluginId, token))
+    )
+
+    const tokenMap: EdgeTokenMap = {}
+    for (let i = 0; i < tokens.length; i++) {
+      tokenMap[tokenIds[i]] = tokens[i]
+    }
+
+    ai.props.dispatch({
+      type: 'ACCOUNT_CUSTOM_TOKENS_ADDED',
+      payload: { accountId, pluginId, tokens: tokenMap }
+    })
+    await saveCustomTokens(ai, accountId)
+    return tokenIds
   }
 
   async changeCustomToken(tokenId: string, token: EdgeToken): Promise<void> {
