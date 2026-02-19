@@ -350,8 +350,16 @@ const currencyWalletInner = buildReducer<
       const out: EdgeBalances = {}
       for (const tokenId of balanceMap.keys()) {
         const balance = balanceMap.get(tokenId)
-        const { currencyCode } =
-          tokenId == null ? currencyInfo : allTokens[tokenId]
+        let currencyCode: string
+        if (tokenId == null) {
+          currencyCode = currencyInfo.currencyCode
+        } else {
+          if (allTokens[tokenId] == null) {
+            continue
+          }
+          currencyCode = allTokens[tokenId].currencyCode
+        }
+
         if (balance != null) out[currencyCode] = balance
       }
       return out
