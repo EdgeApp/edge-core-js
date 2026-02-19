@@ -148,7 +148,8 @@ export function makeCachedCurrencyConfig(
     otherMethods: createDelegatingOtherMethods(
       otherMethodNames,
       () => tryGetRealConfig()?.otherMethods,
-      waitForRealConfig
+      waitForRealConfig,
+      true // bridgify for config otherMethods
     )
   }
 

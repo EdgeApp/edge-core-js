@@ -344,6 +344,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     (input: AccountInput) => {
       let cacheSaver: WalletCacheSaver | undefined
       const lastWalletStates: { [walletId: string]: unknown } = {}
+      let lastActiveWalletIds: string[] | undefined
       let initialSaveDone = false
 
       return {
@@ -385,6 +386,13 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           if (accountReduxState == null) return
 
           let hasChanges = false
+
+          // Check if the active wallet list itself changed (e.g., wallet archived)
+          if (lastActiveWalletIds !== accountReduxState.activeWalletIds) {
+            hasChanges = true
+            lastActiveWalletIds = accountReduxState.activeWalletIds
+          }
+
           for (const walletId of accountReduxState.activeWalletIds) {
             const walletState = state.currency.wallets[walletId]
             if (
