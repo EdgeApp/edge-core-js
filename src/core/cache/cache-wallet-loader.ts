@@ -27,6 +27,8 @@ export interface WalletCacheSetup {
   currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
   /** List of active wallet IDs in display order */
   activeWalletIds: string[]
+  /** Cleanup function to stop all active pollers */
+  cleanup: () => void
 }
 
 /**
@@ -82,6 +84,7 @@ export function loadWalletCache(
   // Create currency configs for each plugin that has wallets
   const currencyConfigs: EdgePluginMap<EdgeCurrencyConfig> = {}
   const pluginIds = new Set(cacheFile.wallets.map(w => w.pluginId))
+  const cleanupFunctions: Array<() => void> = []
 
   for (const pluginId of pluginIds) {
     const currencyInfo = currencyInfos[pluginId]
@@ -94,12 +97,14 @@ export function loadWalletCache(
       getRealConfig:
         getRealConfig != null ? () => getRealConfig(pluginId) : undefined
     }
-    currencyConfigs[pluginId] = makeCachedCurrencyConfig(
+    const { config, cleanup } = makeCachedCurrencyConfig(
       pluginId,
       currencyInfo,
       cacheFile,
       cachedConfigOptions
     )
+    currencyConfigs[pluginId] = config
+    cleanupFunctions.push(cleanup)
   }
 
   // Create cached wallets
@@ -122,18 +127,25 @@ export function loadWalletCache(
         getRealWallet != null ? () => getRealWallet(walletId) : undefined,
       pauseWallets
     }
-    currencyWallets[walletId] = makeCachedCurrencyWallet(
+    const { wallet, cleanup } = makeCachedCurrencyWallet(
       cachedWallet,
       currencyInfo,
       currencyConfig,
       cachedWalletOptions
     )
+    currencyWallets[walletId] = wallet
+    cleanupFunctions.push(cleanup)
     activeWalletIds.push(walletId)
   }
 
   return {
     currencyConfigs,
     currencyWallets,
-    activeWalletIds
+    activeWalletIds,
+    cleanup: () => {
+      for (const cleanupFn of cleanupFunctions) {
+        cleanupFn()
+      }
+    }
   }
 }

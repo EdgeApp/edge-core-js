@@ -62,8 +62,16 @@ export type AccountInput = PixieInput<AccountProps>
 
 const accountPixie: TamePixie<AccountProps> = combinePixies({
   accountApi(input: AccountInput) {
+    let cacheCleanup: (() => void) | undefined
+
     return {
       destroy() {
+        // Cancel any active cache pollers to prevent unnecessary resource usage
+        if (cacheCleanup != null) {
+          cacheCleanup()
+          cacheCleanup = undefined
+        }
+
         // The Pixie library stops updating props after destruction,
         // so we are stuck seeing the logged-in state. Fix that:
         const hack: any = input.props
@@ -180,6 +188,9 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           // Try cache-first login for instant UI:
           const cacheSetup = await tryLoadCache()
           if (cacheSetup != null) {
+            // Store cleanup function for use in destroy()
+            cacheCleanup = cacheSetup.cleanup
+
             // Create the API object with cached wallets:
             input.onOutput(makeAccountApi(ai, accountId, { cacheSetup }))
 

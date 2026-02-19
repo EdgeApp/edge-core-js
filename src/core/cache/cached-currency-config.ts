@@ -22,6 +22,14 @@ export interface CachedCurrencyConfigOptions {
 }
 
 /**
+ * Result of creating a cached currency config.
+ */
+export interface CachedCurrencyConfigResult {
+  config: EdgeCurrencyConfig
+  cleanup: () => void
+}
+
+/**
  * Creates a cached EdgeCurrencyConfig for a plugin.
  * Used for cache-first login without real plugin instantiation.
  */
@@ -30,7 +38,7 @@ export function makeCachedCurrencyConfig(
   currencyInfo: EdgeCurrencyInfo,
   cacheFile: WalletCacheFile,
   options: CachedCurrencyConfigOptions = {}
-): EdgeCurrencyConfig {
+): CachedCurrencyConfigResult {
   const { getRealConfig } = options
 
   // Shared poller: single poll loop for all callers
@@ -44,7 +52,11 @@ export function makeCachedCurrencyConfig(
     return undefined
   }, `config ${pluginId}`)
 
-  const { tryGet: tryGetRealConfig, waitFor: waitForRealConfig } = poller
+  const {
+    tryGet: tryGetRealConfig,
+    waitFor: waitForRealConfig,
+    cancel: cancelPoller
+  } = poller
 
   /**
    * Delegates an async method call to the real config.
@@ -140,5 +152,5 @@ export function makeCachedCurrencyConfig(
     )
   }
 
-  return bridgifyObject(config)
+  return { config: bridgifyObject(config), cleanup: cancelPoller }
 }

@@ -59,6 +59,14 @@ export interface CachedWalletOptions {
 }
 
 /**
+ * Result of creating a cached wallet.
+ */
+export interface CachedWalletResult {
+  wallet: EdgeCurrencyWallet
+  cleanup: () => void
+}
+
+/**
  * Creates a delegating disklet that forwards all operations to the real
  * wallet's disklet when available. This ensures cached wallets don't use
  * memory disklets that would lose data.
@@ -133,7 +141,7 @@ export function makeCachedCurrencyWallet(
   currencyInfo: EdgeCurrencyInfo,
   currencyConfig: EdgeCurrencyConfig,
   options: CachedWalletOptions = {}
-): EdgeCurrencyWallet {
+): CachedWalletResult {
   const { getRealWallet, pauseWallets = false } = options
   const {
     id: walletId,
@@ -171,7 +179,11 @@ export function makeCachedCurrencyWallet(
     return undefined
   }, `wallet ${shortId}`)
 
-  const { tryGet: tryGetRealWallet, waitFor: waitForRealWallet } = poller
+  const {
+    tryGet: tryGetRealWallet,
+    waitFor: waitForRealWallet,
+    cancel: cancelPoller
+  } = poller
 
   /**
    * Delegates an async method call to the real wallet.
@@ -527,5 +539,5 @@ export function makeCachedCurrencyWallet(
     }
   }
 
-  return bridgifyObject(wallet)
+  return { wallet: bridgifyObject(wallet), cleanup: cancelPoller }
 }

@@ -120,7 +120,12 @@ export function createDelegatingOtherMethods<
   // If not, return empty object (GUI should check method existence)
   if (methodNames.length === 0) {
     const immediate = getRealOtherMethods()
-    if (immediate != null) return immediate
+    if (immediate != null) {
+      if (bridgify) {
+        bridgifyObject(immediate)
+      }
+      return immediate
+    }
     return {}
   }
 
