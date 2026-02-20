@@ -116,6 +116,15 @@ export function makeWalletCacheSaver(
         }
       }
 
+      // Save custom tokens per plugin:
+      const customTokens: WalletCacheFile['customTokens'] = {}
+      for (const [pluginId, config] of Object.entries(account.currencyConfig)) {
+        const pluginCustomTokens = config.customTokens
+        if (Object.keys(pluginCustomTokens).length > 0) {
+          customTokens[pluginId] = pluginCustomTokens
+        }
+      }
+
       // Save config otherMethods names per plugin:
       const configOtherMethodNames: WalletCacheFile['configOtherMethodNames'] =
         {}
@@ -159,6 +168,7 @@ export function makeWalletCacheSaver(
       const cacheFile: WalletCacheFile = asWalletCacheFile({
         version: 1,
         tokens,
+        customTokens,
         wallets,
         configOtherMethodNames
       })

@@ -15,6 +15,7 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { walletCacheSaverConfig } from '../../../src/core/cache/cache-wallet-saver'
+import { EdgeToken } from '../../../src/index'
 import { makeFakeEdgeWorld } from '../../../src/index'
 import { snooze } from '../../../src/util/snooze'
 import {
@@ -1344,6 +1345,125 @@ describe('wallet cache', function () {
 
     await wallet.changeEnabledTokenIds(['badf00d5'])
     log.assert('tokens badf00d5')
+
+    await account2.logout()
+  })
+
+  // ===========================================================================
+  // Config caching tests
+  // ===========================================================================
+
+  it('caches custom tokens on config', async function () {
+    this.timeout(10000)
+
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { fakecoin: true }
+    })
+
+    // First login - add a custom token
+    const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const walletInfo = account1.getFirstWalletInfo('wallet:fakecoin')
+    if (walletInfo == null) throw new Error('No wallet')
+
+    await account1.waitForCurrencyWallet(walletInfo.id)
+
+    const customToken: EdgeToken = {
+      currencyCode: 'CUSTOM',
+      displayName: 'Custom Token',
+      denominations: [{ multiplier: '1000', name: 'CUSTOM' }],
+      networkLocation: {
+        contractAddress:
+          '0X7CD5885327FD60E825D67D32F9D22B018227A208AA3C4819DA15B36B5D5869D3'
+      }
+    }
+    await account1.currencyConfig.fakecoin.addCustomToken(customToken)
+
+    const customTokenId =
+      '7cd5885327fd60e825d67d32f9d22b018227a208aa3c4819da15b36b5d5869d3'
+    expect(account1.currencyConfig.fakecoin.customTokens).to.have.property(
+      customTokenId
+    )
+
+    // Wait for cache saver to write (throttled to 50ms in tests):
+    await snooze(CACHE_SAVE_WAIT_MS)
+    await account1.logout()
+
+    // Second login - use gate to block engine, verify custom tokens from cache
+    const { gate } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const cachedConfig = account2.currencyConfig.fakecoin
+
+    expect(cachedConfig.customTokens).to.have.property(customTokenId)
+    expect(cachedConfig.customTokens[customTokenId].currencyCode).equals(
+      'CUSTOM'
+    )
+
+    // Custom tokens should also appear in allTokens
+    expect(cachedConfig.allTokens).to.have.property(customTokenId)
+
+    await account2.logout()
+  })
+
+  it('config getters delegate to real config after engine loads', async function () {
+    this.timeout(10000)
+
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { fakecoin: true }
+    })
+
+    // First login - add a custom token to populate the cache
+    const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const walletInfo = account1.getFirstWalletInfo('wallet:fakecoin')
+    if (walletInfo == null) throw new Error('No wallet')
+
+    await account1.waitForCurrencyWallet(walletInfo.id)
+
+    const customToken: EdgeToken = {
+      currencyCode: 'CUSTOM',
+      displayName: 'Custom Token',
+      denominations: [{ multiplier: '1000', name: 'CUSTOM' }],
+      networkLocation: {
+        contractAddress:
+          '0X7CD5885327FD60E825D67D32F9D22B018227A208AA3C4819DA15B36B5D5869D3'
+      }
+    }
+    await account1.currencyConfig.fakecoin.addCustomToken(customToken)
+
+    // Wait for cache saver to write (throttled to 50ms in tests):
+    await snooze(CACHE_SAVE_WAIT_MS)
+    await account1.logout()
+
+    // Second login - gate blocks engine
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const cachedConfig = account2.currencyConfig.fakecoin
+
+    // In cache mode: builtinTokens should have cached data
+    expect(cachedConfig.builtinTokens).to.have.property('badf00d5')
+
+    // In cache mode: customTokens should have cached data
+    const customTokenId =
+      '7cd5885327fd60e825d67d32f9d22b018227a208aa3c4819da15b36b5d5869d3'
+    expect(cachedConfig.customTokens).to.have.property(customTokenId)
+
+    // Release the gate to allow real config to load
+    release()
+
+    // Use a delegating write method to confirm the real config is loaded,
+    // then verify getters delegate to the real config:
+    await cachedConfig.changeAlwaysEnabledTokenIds(['badf00d5'])
+
+    expect(cachedConfig.alwaysEnabledTokenIds).deep.equals(['badf00d5'])
+    expect(cachedConfig.builtinTokens).to.have.property('badf00d5')
+    expect(cachedConfig.customTokens).to.have.property(customTokenId)
 
     await account2.logout()
   })

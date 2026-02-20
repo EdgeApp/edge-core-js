@@ -54,6 +54,8 @@ export const asWalletCacheFile = asObject({
   version: asValue(1),
   // pluginId -> tokenId -> token
   tokens: asObject(asObject(asEdgeToken)),
+  // pluginId -> tokenId -> token (user-added custom tokens)
+  customTokens: asOptional(asObject(asObject(asEdgeToken)), {}),
   wallets: asArray(asCachedWallet),
   // Config otherMethods names per plugin
   configOtherMethodNames: asObject(asArray(asString))
