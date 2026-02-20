@@ -69,8 +69,9 @@ export function makeCachedCurrencyConfig(
     return await fn(await waitForRealConfig())
   }
 
-  // Build token map from cached data (cached tokens are EdgeTokens)
+  // Build token maps from cached data (cached tokens are EdgeTokens)
   const allTokens: EdgeTokenMap = cacheFile.tokens[pluginId] ?? {}
+  const customTokens: EdgeTokenMap = cacheFile.customTokens[pluginId] ?? {}
 
   // Get otherMethods names for this plugin
   const otherMethodNames = cacheFile.configOtherMethodNames[pluginId] ?? []
@@ -80,15 +81,18 @@ export function makeCachedCurrencyConfig(
 
     currencyInfo,
 
-    // Tokens (read-only, can be cached):
+    // Tokens (delegate to real config when available, fall back to cache):
     get allTokens(): EdgeTokenMap {
-      return allTokens
+      const realConfig = tryGetRealConfig()
+      return realConfig != null ? realConfig.allTokens : allTokens
     },
     get builtinTokens(): EdgeTokenMap {
-      return allTokens
+      const realConfig = tryGetRealConfig()
+      return realConfig != null ? realConfig.builtinTokens : allTokens
     },
     get customTokens(): EdgeTokenMap {
-      return {}
+      const realConfig = tryGetRealConfig()
+      return realConfig != null ? realConfig.customTokens : customTokens
     },
 
     // Token methods (need real config, delegate):
@@ -116,9 +120,10 @@ export function makeCachedCurrencyConfig(
       return await delegate(async c => await c.removeCustomToken(tokenId))
     },
 
-    // Always-enabled tokens (read-only cached, write delegates):
+    // Always-enabled tokens (delegate when available, write delegates):
     get alwaysEnabledTokenIds(): string[] {
-      return []
+      const realConfig = tryGetRealConfig()
+      return realConfig != null ? realConfig.alwaysEnabledTokenIds : []
     },
 
     async changeAlwaysEnabledTokenIds(tokenIds: string[]): Promise<void> {
@@ -127,9 +132,10 @@ export function makeCachedCurrencyConfig(
       )
     },
 
-    // User settings (read-only cached, write delegates):
+    // User settings (delegate when available, write delegates):
     get userSettings(): object | undefined {
-      return {}
+      const realConfig = tryGetRealConfig()
+      return realConfig != null ? realConfig.userSettings : {}
     },
 
     async changeUserSettings(settings: object): Promise<void> {
