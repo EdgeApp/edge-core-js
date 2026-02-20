@@ -72,6 +72,12 @@ export function makeCachedCurrencyConfig(
   // Build token maps from cached data (cached tokens are EdgeTokens)
   const allTokens: EdgeTokenMap = cacheFile.tokens[pluginId] ?? {}
   const customTokens: EdgeTokenMap = cacheFile.customTokens[pluginId] ?? {}
+  // Compute builtinTokens by excluding custom tokens from allTokens
+  const builtinTokens: EdgeTokenMap = Object.fromEntries(
+    Object.entries(allTokens).filter(
+      ([tokenId]) => customTokens[tokenId] == null
+    )
+  )
 
   // Get otherMethods names for this plugin
   const otherMethodNames = cacheFile.configOtherMethodNames[pluginId] ?? []
@@ -88,7 +94,7 @@ export function makeCachedCurrencyConfig(
     },
     get builtinTokens(): EdgeTokenMap {
       const realConfig = tryGetRealConfig()
-      return realConfig != null ? realConfig.builtinTokens : allTokens
+      return realConfig != null ? realConfig.builtinTokens : builtinTokens
     },
     get customTokens(): EdgeTokenMap {
       const realConfig = tryGetRealConfig()
