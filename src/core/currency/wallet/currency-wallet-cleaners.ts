@@ -231,6 +231,8 @@ export const asEdgeTxActionGiftCard = asObject<EdgeTxActionGiftCard>({
   actionType: asValue('giftCard'),
   orderId: asString,
   orderUri: asOptional(asString),
+  productId: asOptional(asString),
+  quoteId: asOptional(asString),
 
   provider: asObject({
     providerId: asString,
