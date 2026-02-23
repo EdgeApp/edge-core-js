@@ -155,7 +155,8 @@ export function makeCachedCurrencyWallet(
   } = cacheData
 
   const shortId = walletId.slice(0, WALLET_ID_DISPLAY_LENGTH)
-  const createdDate = new Date(createdString)
+  const parsedDate = new Date(createdString)
+  const createdDate = isNaN(parsedDate.getTime()) ? undefined : parsedDate
 
   // Track mutable state locally. When the GUI calls a setter, we update
   // the local value immediately and call update(wallet) to push it

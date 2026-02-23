@@ -141,7 +141,7 @@ export function makeCachedCurrencyConfig(
     // User settings (delegate when available, write delegates):
     get userSettings(): object | undefined {
       const realConfig = tryGetRealConfig()
-      return realConfig != null ? realConfig.userSettings : {}
+      return realConfig != null ? realConfig.userSettings : undefined
     },
 
     async changeUserSettings(settings: object): Promise<void> {
