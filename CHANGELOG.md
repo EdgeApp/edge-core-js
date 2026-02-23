@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeTxActionGiftCard.productId` and `EdgeTxActionGiftCard.quoteId` properties.
+
 ## 2.42.0 (2026-02-10)
 
 - added: `EdgeCurrencyEngineCallbacks.onSyncStatusChanged` callback.

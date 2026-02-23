@@ -324,6 +324,8 @@ export interface EdgeTxActionGiftCard {
   actionType: 'giftCard'
   orderId: string
   orderUri?: string
+  productId?: string
+  quoteId?: string
 
   provider: {
     providerId: string
