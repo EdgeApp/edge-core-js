@@ -44,17 +44,20 @@ export const EXPEDITED_SYNC_INTERVAL = 5000
 
 /**
  * Checks whether an error represents a missing file.
- * Handles disklet ("Cannot load", "Cannot read file") and Node.js (ENOENT).
- * Note: Coupled to disklet's error message format — update if disklet changes.
+ * Handles disklet ("Cannot load", "Cannot read") and Node.js (ENOENT).
  */
 function isFileNotFoundError(error: unknown): boolean {
   if (!(error instanceof Error)) return false
-  const msg = error.message
-  if (msg.startsWith('Cannot load') || msg.startsWith('Cannot read file')) {
-    return true
-  }
+
+  // Check for ENOENT code (Node.js and React Native native modules)
   const errorWithCode = error as Error & { code?: string }
-  return errorWithCode.code === 'ENOENT'
+  if (errorWithCode.code === 'ENOENT') return true
+
+  // Check for disklet message patterns (memory and local-storage backends)
+  // Case-insensitive to handle potential wording/casing variations
+  if (/^cannot (load|read)\b/i.test(error.message)) return true
+
+  return false
 }
 
 /** Returns the disklet path for the account's wallet cache file. */
