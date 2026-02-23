@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.43.1 (2026-02-23)
+
 - changed: Upgrade `@nymproject/mix-fetch` to improve performance with new concurrency changes.
 
 ## 2.43.0 (2026-02-23)
