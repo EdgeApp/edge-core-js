@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.43.0 (2026-02-23)
+
 - added: `EdgeTxActionGiftCard.productId` and `EdgeTxActionGiftCard.quoteId` properties.
 
 ## 2.42.0 (2026-02-10)
