@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Upgrade `@nymproject/mix-fetch` to improve performance with new concurrency changes.
+
 ## 2.42.0 (2026-02-10)
 
 - added: `EdgeCurrencyEngineCallbacks.onSyncStatusChanged` callback.
