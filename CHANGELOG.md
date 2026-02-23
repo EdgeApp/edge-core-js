@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Upgrade `@nymproject/mix-fetch` to improve performance with new concurrency changes.
+
 ## 2.43.0 (2026-02-23)
 
 - added: `EdgeTxActionGiftCard.productId` and `EdgeTxActionGiftCard.quoteId` properties.
