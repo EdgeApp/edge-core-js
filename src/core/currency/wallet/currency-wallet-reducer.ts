@@ -348,6 +348,7 @@ const currencyWalletInner = buildReducer<
     }
     if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
       const { balance, tokenId } = action.payload
+      if (state.get(tokenId) === balance) return state
       const out = new Map(state)
       out.set(tokenId, balance)
       return out
