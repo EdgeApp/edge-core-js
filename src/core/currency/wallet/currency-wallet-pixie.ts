@@ -473,8 +473,11 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             updateTimer = undefined
             if (updatePending) {
               updatePending = false
-              if (hasYaobVisibleChange(walletState, lastUpdatedState)) {
-                lastUpdatedState = walletState
+              if (
+                lastState != null &&
+                hasYaobVisibleChange(lastState, lastUpdatedState)
+              ) {
+                lastUpdatedState = lastState
                 update(walletApi)
               }
             }
