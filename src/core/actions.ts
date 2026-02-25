@@ -85,6 +85,16 @@ export type RootAction =
       }
     }
   | {
+      // Cached wallet balances loaded from the wallet cache file.
+      // Dispatched before ACCOUNT_KEYS_LOADED so wallet reducers can
+      // initialize balanceMap from cache instead of an empty Map.
+      type: 'ACCOUNT_CACHED_BALANCES_LOADED'
+      payload: {
+        accountId: string
+        cachedBalances: { [walletId: string]: { [tokenId: string]: string } }
+      }
+    }
+  | {
       // The account fires this when it loads its keys from disk.
       type: 'ACCOUNT_KEYS_LOADED'
       payload: {

@@ -130,6 +130,7 @@ export function makeCurrencyWalletCallbacks(
     },
 
     onNewTokens(tokenIds: string[]) {
+      if (tokenIds.length === 0) return
       pushUpdate({
         id: walletId,
         action: 'onNewTokens',
@@ -208,6 +209,9 @@ export function makeCurrencyWalletCallbacks(
             `Plugin sent bogus balance for ${String(tokenId)}: "${balance}"`
           )
         )
+        return
+      }
+      if (input.props.walletState.balanceMap.get(tokenId) === clean) {
         return
       }
       pushUpdate({
@@ -417,11 +421,17 @@ export function makeCurrencyWalletCallbacks(
         txidHashes[txidHash] = { date: combinedTx.date, txid }
       }
 
-      // Tell everyone who cares:
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_TXS',
-        payload: { txs: allTxs, walletId, txidHashes }
-      })
+      // Only dispatch if there are actually changed/created transactions or txidHashes
+      if (
+        changed.length > 0 ||
+        created.length > 0 ||
+        Object.keys(txidHashes).length > 0
+      ) {
+        input.props.dispatch({
+          type: 'CURRENCY_ENGINE_CHANGED_TXS',
+          payload: { txs: allTxs, walletId, txidHashes }
+        })
+      }
       if (changed.length > 0) throttledOnTxChanged(changed)
       if (created.length > 0) throttledOnNewTx(created)
     },

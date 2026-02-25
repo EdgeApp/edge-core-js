@@ -1,5 +1,5 @@
 // How often to run jobs from the queue
-let QUEUE_RUN_DELAY = 500
+let QUEUE_RUN_DELAY = 1000
 
 // How many jobs to run from the queue on each cycle
 let QUEUE_JOBS_PER_RUN = 3
@@ -47,6 +47,7 @@ export function removeIdFromQueue(id: string): void {
     clearTimeout(timeout)
   }
 }
+
 
 function startQueue(): void {
   timeout = setTimeout(() => {

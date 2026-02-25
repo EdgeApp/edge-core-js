@@ -22,7 +22,7 @@ const asEdgeDenomination = asObject<EdgeDenomination>({
   symbol: asOptional(asString)
 })
 
-const asEdgeToken = asObject<EdgeToken>({
+export const asEdgeToken = asObject<EdgeToken>({
   currencyCode: asString,
   denominations: asArray(asEdgeDenomination),
   displayName: asString,
