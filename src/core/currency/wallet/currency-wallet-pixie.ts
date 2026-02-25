@@ -1,4 +1,3 @@
-import { asMaybe } from 'cleaners'
 import { Disklet } from 'disklet'
 import {
   combinePixies,
@@ -37,7 +36,7 @@ import {
   makeCurrencyWalletCallbacks,
   watchCurrencyWallet
 } from './currency-wallet-callbacks'
-import { asIntegerString, asPublicKeyFile } from './currency-wallet-cleaners'
+import { asPublicKeyFile } from './currency-wallet-cleaners'
 import {
   loadAddressFiles,
   loadFiatFile,
@@ -73,7 +72,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     const { state, walletId, walletState } = input.props
     const { accountId, pluginId, walletInfo } = walletState
     const plugin = state.plugins.currency[pluginId]
-    const { currencyCode } = plugin.currencyInfo
 
     try {
       // Start the data sync:
@@ -142,17 +140,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       })
       input.onOutput(engine)
 
-      // Grab initial state:
-      const parentCurrency = { currencyCode, tokenId: null }
-      const balance = asMaybe(asIntegerString)(
-        engine.getBalance(parentCurrency)
-      )
-      if (balance != null) {
-        input.props.dispatch({
-          type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-          payload: { balance, tokenId: null, walletId }
-        })
-      }
+      // Grab initial state (balanceMap is pre-populated from cache
+      // in the reducer, so we skip the parent balance dispatch here):
       const height = engine.getBlockHeight()
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',

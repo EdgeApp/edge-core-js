@@ -33,6 +33,9 @@ export interface AccountState {
   readonly accountWalletInfos: EdgeWalletInfo[]
   readonly allWalletInfosFull: EdgeWalletInfoFull[]
   readonly allWalletInfosClean: EdgeWalletInfoFull[]
+  readonly cachedBalances: {
+    [walletId: string]: { [tokenId: string]: string }
+  }
   readonly currencyWalletErrors: { [walletId: string]: Error }
   readonly currencyWalletIds: string[]
   readonly activeWalletIds: string[]
@@ -129,6 +132,16 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     (walletInfos: EdgeWalletInfoFull[]): EdgeWalletInfoFull[] =>
       walletInfos.map(info => ({ ...info, keys: {} }))
   ),
+
+  cachedBalances(
+    state: { [walletId: string]: { [tokenId: string]: string } } = {},
+    action
+  ): { [walletId: string]: { [tokenId: string]: string } } {
+    if (action.type === 'ACCOUNT_CACHED_BALANCES_LOADED') {
+      return action.payload.cachedBalances
+    }
+    return state
+  },
 
   currencyWalletErrors(state = {}, action, next, prev) {
     const { activeWalletIds } = next.self

@@ -25,6 +25,8 @@ export interface WalletCacheSetup {
   currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
   /** List of active wallet IDs in display order */
   activeWalletIds: string[]
+  /** Cached balances per wallet for reducer initialization (tokenId string → nativeAmount) */
+  cachedBalances: { [walletId: string]: { [tokenId: string]: string } }
   /** Cleanup function to stop all active pollers */
   cleanup: () => void
 }
@@ -105,6 +107,14 @@ export function loadWalletCache(
     cleanupFunctions.push(cleanup)
   }
 
+  // Extract cached balances for reducer initialization
+  const cachedBalances: {
+    [walletId: string]: { [tokenId: string]: string }
+  } = {}
+  for (const cachedWallet of cacheFile.wallets) {
+    cachedBalances[cachedWallet.id] = cachedWallet.balances
+  }
+
   // Create cached wallets
   const currencyWallets: { [walletId: string]: EdgeCurrencyWallet } = {}
   const activeWalletIds: string[] = []
@@ -139,6 +149,7 @@ export function loadWalletCache(
   return {
     currencyWallets,
     activeWalletIds,
+    cachedBalances,
     cleanup: () => {
       for (const cleanupFn of cleanupFunctions) {
         cleanupFn()

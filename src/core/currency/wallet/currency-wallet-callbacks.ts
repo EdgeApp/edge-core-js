@@ -210,6 +210,9 @@ export function makeCurrencyWalletCallbacks(
         )
         return
       }
+      if (input.props.walletState.balanceMap.get(tokenId) === clean) {
+        return
+      }
       pushUpdate({
         id: `${walletId}==${String(tokenId)}`,
         action: 'onTokenBalanceChanged',

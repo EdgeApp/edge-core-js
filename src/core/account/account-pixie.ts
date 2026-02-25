@@ -189,6 +189,17 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             // Store cleanup function for use in destroy()
             cacheCleanup = cacheSetup.cleanup
 
+            // Pre-populate account state with cached balances so wallet
+            // reducers can initialize balanceMap from cache (no dispatch
+            // per-balance needed). Must fire before ACCOUNT_KEYS_LOADED:
+            ai.props.dispatch({
+              type: 'ACCOUNT_CACHED_BALANCES_LOADED',
+              payload: {
+                accountId,
+                cachedBalances: cacheSetup.cachedBalances
+              }
+            })
+
             // Create the API object with cached wallets:
             input.onOutput(makeAccountApi(ai, accountId, { cacheSetup }))
 
