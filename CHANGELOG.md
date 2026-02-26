@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- removed: `EdgeCurrencyInfo.metaTokens`
 - removed: Flow type definitions. We only support TypeScript now.
 
 ## 2.43.3 (2026-03-10)
