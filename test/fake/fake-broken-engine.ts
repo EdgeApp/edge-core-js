@@ -9,7 +9,6 @@ export const brokenEnginePlugin: EdgeCurrencyPlugin = {
     displayName: 'Broken Engine',
     chainDisplayName: 'Broken Chain',
     assetDisplayName: 'Broke Coin',
-    metaTokens: [],
     pluginId: 'broken-engine',
     transactionExplorer: '',
     walletType: 'wallet:broken'

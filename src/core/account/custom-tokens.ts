@@ -78,21 +78,6 @@ function contractToTokenId(contractAddress: string): string {
   return contractAddress.toLowerCase().replace(/^0x/, '')
 }
 
-function upgradeMetaTokens(metaTokens: EdgeMetaToken[]): EdgeTokenMap {
-  const out: EdgeTokenMap = {}
-  for (const metaToken of metaTokens) {
-    const { contractAddress } = metaToken
-    if (contractAddress == null) continue
-    out[contractToTokenId(contractAddress)] = {
-      currencyCode: metaToken.currencyCode,
-      denominations: metaToken.denominations,
-      displayName: metaToken.currencyName,
-      networkLocation: { contractAddress: metaToken.contractAddress }
-    }
-  }
-  return out
-}
-
 export function makeMetaToken(token: EdgeToken): EdgeMetaToken {
   const { currencyCode, displayName, denominations, networkLocation } = token
   const cleanLocation = asMaybeContractLocation(networkLocation)
@@ -137,9 +122,7 @@ export async function loadBuiltinTokens(
     Object.keys(state.plugins.currency).map(async pluginId => {
       const plugin = state.plugins.currency[pluginId]
       const tokens: EdgeTokenMap =
-        plugin.getBuiltinTokens == null
-          ? upgradeMetaTokens(plugin.currencyInfo.metaTokens ?? [])
-          : await plugin.getBuiltinTokens()
+        plugin.getBuiltinTokens == null ? {} : await plugin.getBuiltinTokens()
       dispatch({
         type: 'ACCOUNT_BUILTIN_TOKENS_LOADED',
         payload: { accountId, pluginId, tokens }

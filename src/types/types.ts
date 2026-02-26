@@ -431,10 +431,7 @@ export interface EdgeTokenMap {
   [tokenId: string]: EdgeToken
 }
 
-/**
- * Available tokens stored in the `EdgeCurrencyInfo`,
- * or parsed out of URI's.
- */
+/** @deprecated Use EdgeToken instead */
 export interface EdgeMetaToken {
   currencyCode: string
   currencyName: string
@@ -549,9 +546,6 @@ export interface EdgeCurrencyInfo {
 
   /** @deprecated The default user settings are always `{}` */
   defaultSettings?: JsonObject
-
-  /** @deprecated Use EdgeCurrencyPlugin.getBuiltinTokens instead */
-  metaTokens?: EdgeMetaToken[]
 
   /** @deprecated Use memoOptions instead. */
   memoMaxLength?: number // Max number of text characters, if supported
