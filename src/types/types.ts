@@ -822,13 +822,13 @@ export interface EdgeSyncStatus {
   totalRatio: number
 
   /** How far along the chain we are, for chains that scan by blocks. */
-  blockRatio?: [number, number] // [ourHeight: number, chainHeight: number]
+  blockRatio?: [ourHeight: number, chainHeight: number]
 
   /**
    * Free-form values to show the user, for engines with unusual info.
    * For example: `{ "donwload speed": "1 KB/s" }`
    */
-  otherParams?: { [name: string]: string } // Record<string, string>
+  otherParams?: Record<string, string>
 }
 
 export interface EdgeTxidMap {
