@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- removed: Flow type definitions. We only support TypeScript now.
+
 ## 2.43.3 (2026-03-10)
 
 - fixed: Fixed IndexDB cache issue on Android causing failed mixFetch initialization.

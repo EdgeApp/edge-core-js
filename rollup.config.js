@@ -1,6 +1,5 @@
 import babel from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
-import flowEntry from 'rollup-plugin-flow-entry'
 import mjs from 'rollup-plugin-mjs-entry'
 
 import packageJson from './package.json'
@@ -25,22 +24,12 @@ export default [
     external,
     input: './src/index.ts',
     output: { file: packageJson.main, format: 'cjs' },
-    plugins: [
-      resolve(resolveOpts),
-      babel(babelOpts),
-      flowEntry({ types: './lib/flow/exports.js' }),
-      mjs()
-    ]
+    plugins: [resolve(resolveOpts), babel(babelOpts), mjs()]
   },
   {
     external,
     input: './src/types/types.ts',
     output: { file: './types.js', format: 'cjs' },
-    plugins: [
-      resolve(resolveOpts),
-      babel(babelOpts),
-      flowEntry({ types: './lib/flow/types.js' }),
-      mjs()
-    ]
+    plugins: [resolve(resolveOpts), babel(babelOpts), mjs()]
   }
 ]
