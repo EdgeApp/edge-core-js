@@ -19,10 +19,7 @@ import {
 import { makeJsonFile } from '../../../util/file-helpers'
 import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
 import { snooze } from '../../../util/snooze'
-import {
-  loadBuiltinTokensJson,
-  makeTokenInfo
-} from '../../account/custom-tokens'
+import { makeTokenInfo } from '../../account/custom-tokens'
 import { makeLog } from '../../log/log'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
@@ -51,7 +48,6 @@ import {
   writeTokensFile
 } from './currency-wallet-files'
 import { CurrencyWalletState, initialTokenIds } from './currency-wallet-reducer'
-import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
 
 export interface CurrencyWalletOutput {
   readonly walletApi: EdgeCurrencyWallet | undefined
@@ -514,29 +510,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         if (engine.changeEnabledTokenIds != null) {
           await engine
             .changeEnabledTokenIds(allEnabledTokenIds)
-            .catch(error => input.props.onError(error))
-        } else if (
-          engine.disableTokens != null &&
-          engine.enableTokens != null
-        ) {
-          const builtinTokens = loadBuiltinTokensJson()
-          const removed = tokenIdsToCurrencyCodes(
-            builtinTokens[pluginId],
-            accountState.customTokens[pluginId],
-            walletState.currencyInfo,
-            uniqueStrings(lastEnabledTokenIds, allEnabledTokenIds)
-          )
-          const added = tokenIdsToCurrencyCodes(
-            builtinTokens[pluginId],
-            accountState.customTokens[pluginId],
-            walletState.currencyInfo,
-            uniqueStrings(allEnabledTokenIds, lastEnabledTokenIds)
-          )
-          await engine
-            .disableTokens(removed)
-            .catch(error => input.props.onError(error))
-          await engine
-            .enableTokens(added)
             .catch(error => input.props.onError(error))
         } // else { no token support }
       }

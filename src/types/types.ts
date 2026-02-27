@@ -1156,12 +1156,6 @@ export interface EdgeCurrencyEngine {
   readonly otherMethods?: EdgeOtherMethods
   readonly otherMethodsWithKeys?: EdgeOtherMethods
 
-  /** @deprecated Replaced by changeEnabledTokenIds */
-  readonly enableTokens?: (tokens: string[]) => Promise<void>
-
-  /** @deprecated Replaced by changeEnabledTokenIds */
-  readonly disableTokens?: (tokens: string[]) => Promise<void>
-
   /** @deprecated Replaced by changeCustomTokens */
   readonly addCustomToken?: (token: EdgeTokenInfo & EdgeToken) => Promise<void>
 
