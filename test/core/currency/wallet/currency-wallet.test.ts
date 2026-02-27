@@ -275,9 +275,7 @@ describe('currency wallets', function () {
         customToken
     })
 
-    expect(config.allTokens).deep.equals({
-      ...config.customTokens
-    })
+    expect(config.allTokens).deep.equals(config.customTokens)
   })
 
   it('enables tokens', async function () {
