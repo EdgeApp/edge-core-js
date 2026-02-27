@@ -28,11 +28,7 @@ import {
 import { makeAccountApi } from './account-api'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files'
 import { AccountState, initialCustomTokens } from './account-reducer'
-import {
-  loadCustomTokens,
-  migrateEnabledTokensToCustomTokens,
-  saveCustomTokens
-} from './custom-tokens'
+import { loadCustomTokens, saveCustomTokens } from './custom-tokens'
 
 export const EXPEDITED_SYNC_INTERVAL = 5000
 
@@ -101,14 +97,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
           await loadAllFiles()
           log.warn('Login: loaded files')
-
-          // Migrate enabled tokens from builtinTokens to customTokens
-          await migrateEnabledTokensToCustomTokens(ai, accountId).catch(
-            error => {
-              log.warn('Migration failed:', error)
-            }
-          )
-          log.warn('Login: migrated enabled tokens')
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))

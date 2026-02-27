@@ -9,8 +9,6 @@ import {
   EdgeTokenMap
 } from '../../types/types'
 import { makeJsonFile } from '../../util/file-helpers'
-import { asTokensFile } from '../currency/wallet/currency-wallet-cleaners'
-import { TOKENS_FILE } from '../currency/wallet/currency-wallet-files'
 import {
   getCurrencyTools,
   maybeFindCurrencyPluginId
@@ -21,7 +19,6 @@ import { asCustomTokensFile, asGuiSettingsFile } from './account-cleaners'
 
 const customTokensFile = makeJsonFile(asCustomTokensFile)
 const guiSettingsFile = makeJsonFile(asGuiSettingsFile)
-const tokensFile = makeJsonFile(asTokensFile)
 const CUSTOM_TOKENS_FILE = 'CustomTokens.json'
 const GUI_SETTINGS_FILE = 'Settings.json'
 
@@ -220,102 +217,4 @@ export function loadBuiltinTokensJson(): EdgePluginMap<EdgeTokenMap> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
   builtinTokensCache = require('./builtinTokens.json')
   return builtinTokensCache as EdgePluginMap<EdgeTokenMap>
-}
-
-// Get enabled tokenIds from wallet files on disk
-async function getEnabledTokenIdsFromWalletFiles(
-  ai: ApiInput,
-  accountId: string
-): Promise<Map<string, Set<string>>> {
-  const { state } = ai.props
-  const accountState = state.accounts[accountId]
-  const enabledTokensByPlugin = new Map<string, Set<string>>()
-
-  // Get all wallet IDs for this account
-  const walletIds = accountState.currencyWalletIds
-
-  for (const walletId of walletIds) {
-    const walletState = state.currency.wallets[walletId]
-    if (walletState == null) continue
-
-    const { pluginId } = walletState
-    const disklet = getStorageWalletDisklet(state, walletId)
-
-    // Try to load the modern tokens file
-    const tokensData = await tokensFile.load(disklet, TOKENS_FILE)
-    if (tokensData != null) {
-      let tokenSet = enabledTokensByPlugin.get(pluginId)
-      if (tokenSet == null) {
-        tokenSet = new Set()
-        enabledTokensByPlugin.set(pluginId, tokenSet)
-      }
-      for (const tokenId of tokensData.enabledTokenIds) {
-        tokenSet.add(tokenId)
-      }
-    }
-  }
-
-  return enabledTokensByPlugin
-}
-
-export async function migrateEnabledTokensToCustomTokens(
-  ai: ApiInput,
-  accountId: string
-): Promise<void> {
-  const { dispatch, state } = ai.props
-  const accountState = state.accounts[accountId]
-  const { customTokens } = accountState
-
-  // Get all enabled tokenIds grouped by pluginId
-  const enabledTokensByPlugin = await getEnabledTokenIdsFromWalletFiles(
-    ai,
-    accountId
-  )
-
-  // Check if any migration is needed
-  let needsMigration = false
-  for (const [pluginId, enabledTokenIds] of enabledTokensByPlugin) {
-    const custom = customTokens[pluginId] ?? {}
-    for (const tokenId of enabledTokenIds) {
-      if (custom[tokenId] == null) {
-        needsMigration = true
-        break
-      }
-    }
-    if (needsMigration) break
-  }
-
-  // If no migration needed, return early (lazy loading optimization)
-  if (!needsMigration) return
-
-  // Lazy load builtinTokens.json only if migration is needed
-  const builtinTokens = loadBuiltinTokensJson()
-
-  // Migrate missing tokens, batched per plugin
-  let migratedCount = 0
-  for (const [pluginId, enabledTokenIds] of enabledTokensByPlugin) {
-    const builtin = builtinTokens[pluginId] ?? {}
-    const custom = customTokens[pluginId] ?? {}
-
-    const tokensToAdd: EdgeTokenMap = {}
-    for (const tokenId of enabledTokenIds) {
-      if (custom[tokenId] != null) continue
-      const token = builtin[tokenId]
-      if (token == null) continue
-      tokensToAdd[tokenId] = token
-    }
-
-    const count = Object.keys(tokensToAdd).length
-    if (count > 0) {
-      dispatch({
-        type: 'ACCOUNT_CUSTOM_TOKENS_ADDED',
-        payload: { accountId, pluginId, tokens: tokensToAdd }
-      })
-      migratedCount += count
-    }
-  }
-
-  if (migratedCount > 0) {
-    await saveCustomTokens(ai, accountId)
-  }
 }
