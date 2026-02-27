@@ -119,10 +119,10 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
 }
 
 /**
- * Our public Flow types don't include the internal stuff,
- * so this function hacks around Flow to retrieve it.
+ * Our public types don't include the internal stuff,
+ * so this function hacks around those to retrieve it.
  */
 export function getInternalStuff(context: EdgeContext): EdgeInternalStuff {
-  const flowHack: any = context
-  return flowHack.$internalStuff
+  const typeHack: any = context
+  return typeHack.$internalStuff
 }

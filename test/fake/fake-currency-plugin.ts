@@ -57,7 +57,6 @@ const fakeCurrencyInfo: EdgeCurrencyInfo = {
 
   // Deprecated:
   defaultSettings: {},
-  metaTokens: [],
   memoType: 'text'
 }
 

@@ -3,7 +3,6 @@
 /android/src/main/assets/
 /lib/
 /types.js
-/types.js.flow
 /types.mjs
 
 # Package managers:
