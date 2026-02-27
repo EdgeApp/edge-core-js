@@ -2214,20 +2214,3 @@ export interface EdgeFakeWorld {
   readonly goOffline: (offline?: boolean) => Promise<void>
   readonly dumpFakeUser: (account: EdgeAccount) => Promise<EdgeFakeUser>
 }
-
-// ---------------------------------------------------------------------
-// deprecated types
-// ---------------------------------------------------------------------
-
-/** @deprecated use EdgeTxAmount instead */
-export interface EdgeNetworkFee {
-  readonly currencyCode: string
-  readonly nativeAmount: string
-}
-
-/** @deprecated use EdgeTxAmount instead */
-export interface EdgeNetworkFee2 {
-  readonly nativeAmount: string
-  readonly currencyPluginId: string
-  readonly tokenId: EdgeTokenId
-}
