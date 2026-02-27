@@ -54,7 +54,7 @@ export class CurrencyConfig
   get allTokens(): EdgeTokenMap {
     const { state } = this._ai.props
     const { _accountId: accountId, _pluginId: pluginId } = this
-    return state.accounts[accountId].allTokens[pluginId] ?? emptyTokens
+    return state.accounts[accountId].allTokens[pluginId]
   }
 
   get customTokens(): EdgeTokenMap {

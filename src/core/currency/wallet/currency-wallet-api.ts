@@ -226,9 +226,9 @@ export function makeCurrencyWalletApi(
       const { dispatch, walletId, walletState } = input.props
       const { accountId, pluginId } = walletState
       const allTokens =
-        input.props.state.accounts[accountId].allTokens[pluginId] ?? {}
+        input.props.state.accounts[accountId].allTokens[pluginId]
       const enabledTokenIds = uniqueStrings(tokenIds).filter(
-        tokenId => tokenId in allTokens
+        tokenId => allTokens[tokenId] != null
       )
 
       const shortId = walletId.slice(0, 2)

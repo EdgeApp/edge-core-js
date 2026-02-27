@@ -274,23 +274,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   ),
 
   allTokens(state = {}, action, next, prev): EdgePluginMap<EdgeTokenMap> {
-    const { customTokens } = next.self
-
-    // Roll our own `memoizeReducer` implementation,
-    // so we can minimize our diff as much as possible:
-    if (prev.self == null || customTokens !== prev.self.customTokens) {
-      const out = { ...state }
-      for (const pluginId of Object.keys(next.root.plugins.currency)) {
-        if (
-          prev.self == null ||
-          customTokens[pluginId] !== prev.self.customTokens[pluginId]
-        ) {
-          out[pluginId] = customTokens[pluginId] ?? {}
-        }
-      }
-      return out
-    }
-    return state
+    return next.self.customTokens
   },
 
   customTokens(
