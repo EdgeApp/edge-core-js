@@ -1352,7 +1352,6 @@ export interface EdgeCurrencyWallet {
 
   // Chain state:
   readonly balanceMap: EdgeBalanceMap
-  readonly balances: EdgeBalances
   readonly blockHeight: number
   readonly syncStatus: EdgeSyncStatus
   readonly unactivatedTokenIds: string[]

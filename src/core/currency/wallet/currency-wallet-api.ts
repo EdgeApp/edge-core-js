@@ -15,7 +15,6 @@ import {
 import {
   EdgeAddress,
   EdgeBalanceMap,
-  EdgeBalances,
   EdgeCurrencyConfig,
   EdgeCurrencyEngine,
   EdgeCurrencyInfo,
@@ -194,9 +193,6 @@ export function makeCurrencyWalletApi(
     },
 
     // Chain state:
-    get balances(): EdgeBalances {
-      return input.props.walletState.balances
-    },
     get balanceMap(): EdgeBalanceMap {
       return input.props.walletState.balanceMap
     },

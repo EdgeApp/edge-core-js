@@ -160,7 +160,6 @@ describe('currency wallets', function () {
       [null, '0'],
       ['badf00d5', '0']
     ])
-    expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '0' })
     expect(wallet.stakingStatus).deep.equals({
       stakedAmounts: [{ nativeAmount: '0' }]
     })
@@ -171,7 +170,6 @@ describe('currency wallets', function () {
       [null, '0'],
       ['badf00d5', '30']
     ])
-    expect(wallet.balances).to.deep.equal({ FAKE: '0', TOKEN: '30' })
 
     await config.changeUserSettings({ blockHeight: 200 })
     await log.waitFor(1).assert('blockHeight 200')
@@ -189,7 +187,6 @@ describe('currency wallets', function () {
       [null, '1234567890'],
       ['badf00d5', '30']
     ])
-    expect(wallet.balances).to.deep.equal({ FAKE: '1234567890', TOKEN: '30' })
 
     await config.changeUserSettings({ stakedBalance: 543 })
     await log.waitFor(1).assert('stakingStatus 543')

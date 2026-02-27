@@ -4,7 +4,6 @@ import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 import {
   EdgeAssetAction,
   EdgeBalanceMap,
-  EdgeBalances,
   EdgeCurrencyInfo,
   EdgeMemo,
   EdgeStakingStatus,
@@ -68,7 +67,6 @@ export interface CurrencyWalletState {
 
   readonly allEnabledTokenIds: string[]
   readonly balanceMap: EdgeBalanceMap
-  readonly balances: EdgeBalances
   readonly changeServiceSubscriptions: ChangeServiceSubscription[]
   readonly currencyInfo: EdgeCurrencyInfo
   readonly detectedTokenIds: string[]
@@ -340,23 +338,6 @@ const currencyWalletInner = buildReducer<
     }
     return state
   },
-
-  balances: memoizeReducer(
-    next => next.self.balanceMap,
-    next => next.self.currencyInfo,
-    next =>
-      next.root.accounts[next.self.accountId].allTokens[next.self.pluginId],
-    (balanceMap, currencyInfo, allTokens) => {
-      const out: EdgeBalances = {}
-      for (const tokenId of balanceMap.keys()) {
-        const balance = balanceMap.get(tokenId)
-        const { currencyCode } =
-          tokenId == null ? currencyInfo : allTokens[tokenId]
-        if (balance != null) out[currencyCode] = balance
-      }
-      return out
-    }
-  ),
 
   height(state = 0, action): number {
     return action.type === 'CURRENCY_ENGINE_CHANGED_HEIGHT'
