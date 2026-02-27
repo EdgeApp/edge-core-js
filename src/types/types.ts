@@ -417,6 +417,10 @@ export interface EdgeToken {
   // This may be `undefined` for special built-in tokens
   // such as staking balances.
   networkLocation: JsonObject | undefined
+
+  // True if this token was manually created by the user (via EditTokenScene).
+  // False or undefined for tokens fetched from the server
+  isUserCreated?: boolean
 }
 
 /**
@@ -518,6 +522,7 @@ export interface EdgeCurrencyInfo {
   canReplaceByFee?: boolean // Defaults to false
   customFeeTemplate?: EdgeObjectTemplate // Indicates custom fee support
   customTokenTemplate?: EdgeObjectTemplate // Indicates custom token support
+  hasTokens?: boolean // Indicates token support
   requiredConfirmations?: number // Block confirmations required for a tx
 
   /** EVM chain id */
@@ -1151,12 +1156,6 @@ export interface EdgeCurrencyEngine {
   readonly otherMethods?: EdgeOtherMethods
   readonly otherMethodsWithKeys?: EdgeOtherMethods
 
-  /** @deprecated Replaced by changeEnabledTokenIds */
-  readonly enableTokens?: (tokens: string[]) => Promise<void>
-
-  /** @deprecated Replaced by changeEnabledTokenIds */
-  readonly disableTokens?: (tokens: string[]) => Promise<void>
-
   /** @deprecated Replaced by changeCustomTokens */
   readonly addCustomToken?: (token: EdgeTokenInfo & EdgeToken) => Promise<void>
 
@@ -1227,7 +1226,6 @@ export interface EdgeCurrencyTools {
 export interface EdgeCurrencyPlugin {
   readonly currencyInfo: EdgeCurrencyInfo
 
-  readonly getBuiltinTokens?: () => Promise<EdgeTokenMap>
   readonly makeCurrencyTools: () => Promise<EdgeCurrencyTools>
   readonly makeCurrencyEngine: (
     walletInfo: EdgeWalletInfo,
@@ -1348,7 +1346,6 @@ export interface EdgeCurrencyWallet {
 
   // Chain state:
   readonly balanceMap: EdgeBalanceMap
-  readonly balances: EdgeBalances
   readonly blockHeight: number
   readonly syncStatus: EdgeSyncStatus
   readonly unactivatedTokenIds: string[]
@@ -1682,13 +1679,13 @@ export interface EdgeCurrencyConfig {
 
   // Tokens:
   readonly allTokens: EdgeTokenMap
-  readonly builtinTokens: EdgeTokenMap
   readonly customTokens: EdgeTokenMap
   readonly getTokenDetails: (
     filter: EdgeGetTokenDetailsFilter
   ) => Promise<EdgeToken[]>
   readonly getTokenId: (token: EdgeToken) => Promise<string>
   readonly addCustomToken: (token: EdgeToken) => Promise<string>
+  readonly addCustomTokens: (tokens: EdgeToken[]) => Promise<string[]>
   readonly changeCustomToken: (
     tokenId: string,
     token: EdgeToken

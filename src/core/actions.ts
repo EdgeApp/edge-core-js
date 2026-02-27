@@ -41,15 +41,6 @@ export type RootAction =
       }
     }
   | {
-      // A currency plugin has returned its builtin tokens.
-      type: 'ACCOUNT_BUILTIN_TOKENS_LOADED'
-      payload: {
-        accountId: string
-        pluginId: string
-        tokens: EdgeTokenMap
-      }
-    }
-  | {
       // The account fires this when the user sorts or archives wallets.
       type: 'ACCOUNT_CHANGED_WALLET_STATES'
       payload: {
@@ -65,6 +56,15 @@ export type RootAction =
         pluginId: string
         tokenId: string
         token: EdgeToken
+      }
+    }
+  | {
+      // Somebody just added a batch of custom tokens.
+      type: 'ACCOUNT_CUSTOM_TOKENS_ADDED'
+      payload: {
+        accountId: string
+        pluginId: string
+        tokens: EdgeTokenMap
       }
     }
   | {

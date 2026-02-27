@@ -7,10 +7,12 @@ import {
   EdgeMetadataChange,
   EdgeSubscribedAddress,
   EdgeTokenId,
+  EdgeTokenMap,
   EdgeTransaction,
   EdgeTxAction
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
+import { loadBuiltinTokensJson } from '../../account/custom-tokens'
 import { fetchAppIdInfo } from '../../account/lobby-api'
 import { toApiInput } from '../../root-pixie'
 import { RootState } from '../../root-reducer'
@@ -232,6 +234,7 @@ export async function loadTokensFile(
 ): Promise<void> {
   const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
+  let enabledTokenIds: string[] = []
 
   const clean = await tokensFile.load(disklet, TOKENS_FILE)
   if (clean != null) {
@@ -241,46 +244,83 @@ export async function loadTokensFile(
       type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
       payload: { walletId: input.props.walletId, ...clean }
     })
-    return
-  }
-
-  const legacyCurrencyCodes = await legacyTokensFile.load(
-    disklet,
-    LEGACY_TOKENS_FILE
-  )
-  if (legacyCurrencyCodes != null) {
-    const { accountId, currencyInfo, pluginId } = input.props.walletState
-    const accountState = input.props.state.accounts[accountId]
-    const tokenIds = currencyCodesToTokenIds(
-      accountState.builtinTokens[pluginId],
-      accountState.customTokens[pluginId],
-      currencyInfo,
-      legacyCurrencyCodes
+    enabledTokenIds = clean.enabledTokenIds
+  } else {
+    const legacyCurrencyCodes = await legacyTokensFile.load(
+      disklet,
+      LEGACY_TOKENS_FILE
     )
+    if (legacyCurrencyCodes != null) {
+      const { accountId, currencyInfo, pluginId } = input.props.walletState
+      const accountState = input.props.state.accounts[accountId]
+      const builtinTokens = loadBuiltinTokensJson()
+      enabledTokenIds = currencyCodesToTokenIds(
+        builtinTokens[pluginId],
+        accountState.customTokens[pluginId],
+        currencyInfo,
+        legacyCurrencyCodes
+      )
 
-    const shortId = walletId.slice(0, 2)
-    input.props.log.warn(`enabledTokenIds: ${shortId} loaded legacy file`)
-    dispatch({
-      type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
-      payload: {
-        walletId: input.props.walletId,
-        detectedTokenIds: [],
-        enabledTokenIds: tokenIds
-      }
-    })
-    return
+      const shortId = walletId.slice(0, 2)
+      input.props.log.warn(`enabledTokenIds: ${shortId} loaded legacy file`)
+      dispatch({
+        type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
+        payload: {
+          walletId: input.props.walletId,
+          detectedTokenIds: [],
+          enabledTokenIds
+        }
+      })
+    } else {
+      const shortId = walletId.slice(0, 2)
+      input.props.log.warn(`enabledTokenIds: ${shortId} loaded neither file`)
+      dispatch({
+        type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
+        payload: {
+          walletId: input.props.walletId,
+          detectedTokenIds: [],
+          enabledTokenIds: []
+        }
+      })
+    }
   }
 
-  // Both the new and old files are missing:
-  const shortId = walletId.slice(0, 2)
-  input.props.log.warn(`enabledTokenIds: ${shortId} loaded neither file`)
-  dispatch({
-    type: 'CURRENCY_WALLET_LOADED_TOKEN_FILE',
-    payload: {
-      walletId: input.props.walletId,
-      detectedTokenIds: [],
-      enabledTokenIds: []
-    }
+  migrateEnabledTokens(input, enabledTokenIds)
+}
+
+/**
+ * Ensures that all enabled tokens exist in customTokens.
+ * Any enabled token found in builtinTokens.json but missing from
+ * customTokens is added via dispatch (the account tokenSaver
+ * auto-persists the change to disk).
+ */
+function migrateEnabledTokens(
+  input: CurrencyWalletInput,
+  enabledTokenIds: string[]
+): void {
+  const { accountId, pluginId } = input.props.walletState
+  const accountState = input.props.state.accounts[accountId]
+  const customTokens = accountState.customTokens[pluginId] ?? {}
+
+  const missingTokenIds = enabledTokenIds.filter(
+    tokenId => customTokens[tokenId] == null
+  )
+  if (missingTokenIds.length === 0) return
+
+  const builtinTokens = loadBuiltinTokensJson()
+  const builtinForPlugin = builtinTokens[pluginId] ?? {}
+
+  const tokensToAdd: EdgeTokenMap = {}
+  for (const tokenId of missingTokenIds) {
+    const token = builtinForPlugin[tokenId]
+    if (token != null) tokensToAdd[tokenId] = token
+  }
+
+  if (Object.keys(tokensToAdd).length === 0) return
+
+  input.props.dispatch({
+    type: 'ACCOUNT_CUSTOM_TOKENS_ADDED',
+    payload: { accountId, pluginId, tokens: tokensToAdd }
   })
 }
 

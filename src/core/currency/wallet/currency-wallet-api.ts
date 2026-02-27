@@ -15,7 +15,6 @@ import {
 import {
   EdgeAddress,
   EdgeBalanceMap,
-  EdgeBalances,
   EdgeCurrencyConfig,
   EdgeCurrencyEngine,
   EdgeCurrencyInfo,
@@ -194,9 +193,6 @@ export function makeCurrencyWalletApi(
     },
 
     // Chain state:
-    get balances(): EdgeBalances {
-      return input.props.walletState.balances
-    },
     get balanceMap(): EdgeBalanceMap {
       return input.props.walletState.balanceMap
     },
@@ -229,9 +225,8 @@ export function makeCurrencyWalletApi(
     async changeEnabledTokenIds(tokenIds: string[]): Promise<void> {
       const { dispatch, walletId, walletState } = input.props
       const { accountId, pluginId } = walletState
-      const accountState = input.props.state.accounts[accountId]
-      const allTokens = accountState.allTokens[pluginId] ?? {}
-
+      const allTokens =
+        input.props.state.accounts[accountId].allTokens[pluginId]
       const enabledTokenIds = uniqueStrings(tokenIds).filter(
         tokenId => allTokens[tokenId] != null
       )

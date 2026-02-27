@@ -28,11 +28,7 @@ import {
 import { makeAccountApi } from './account-api'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files'
 import { AccountState, initialCustomTokens } from './account-reducer'
-import {
-  loadBuiltinTokens,
-  loadCustomTokens,
-  saveCustomTokens
-} from './custom-tokens'
+import { loadCustomTokens, saveCustomTokens } from './custom-tokens'
 
 export const EXPEDITED_SYNC_INTERVAL = 5000
 
@@ -91,7 +87,6 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         try {
           // Wait for the currency plugins (should already be loaded by now):
           await waitForPlugins(ai)
-          await loadBuiltinTokens(ai, accountId)
           log.warn('Login: currency plugins exist')
 
           // Start the repo:

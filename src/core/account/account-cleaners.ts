@@ -26,7 +26,8 @@ const asEdgeToken = asObject<EdgeToken>({
   currencyCode: asString,
   denominations: asArray(asEdgeDenomination),
   displayName: asString,
-  networkLocation: asOptional(asJsonObject)
+  networkLocation: asOptional(asJsonObject),
+  isUserCreated: asOptional(asBoolean, false)
 })
 
 const asSwapSettings = asObject<SwapSettings>({

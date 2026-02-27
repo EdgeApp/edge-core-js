@@ -2,15 +2,12 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { getCurrencyMultiplier } from '../../../src/core/currency/currency-selectors'
-import { fakeCurrencyPlugin } from '../../fake/fake-currency-plugin'
+import { fakeCurrencyPlugin, fakeTokens } from '../../fake/fake-currency-plugin'
 
 describe('currency selectors', function () {
   it('find currency multiplier', async function () {
     const { currencyInfo } = fakeCurrencyPlugin
-    const tokens =
-      fakeCurrencyPlugin.getBuiltinTokens != null
-        ? await fakeCurrencyPlugin.getBuiltinTokens()
-        : {}
+    const tokens = fakeTokens
 
     expect(getCurrencyMultiplier(currencyInfo, tokens, 'SMALL')).equals('10')
     expect(getCurrencyMultiplier(currencyInfo, tokens, 'FAKE')).equals('100')

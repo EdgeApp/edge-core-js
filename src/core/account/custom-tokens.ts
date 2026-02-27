@@ -78,21 +78,6 @@ function contractToTokenId(contractAddress: string): string {
   return contractAddress.toLowerCase().replace(/^0x/, '')
 }
 
-function upgradeMetaTokens(metaTokens: EdgeMetaToken[]): EdgeTokenMap {
-  const out: EdgeTokenMap = {}
-  for (const metaToken of metaTokens) {
-    const { contractAddress } = metaToken
-    if (contractAddress == null) continue
-    out[contractToTokenId(contractAddress)] = {
-      currencyCode: metaToken.currencyCode,
-      denominations: metaToken.denominations,
-      displayName: metaToken.currencyName,
-      networkLocation: { contractAddress: metaToken.contractAddress }
-    }
-  }
-  return out
-}
-
 export function makeMetaToken(token: EdgeToken): EdgeMetaToken {
   const { currencyCode, displayName, denominations, networkLocation } = token
   const cleanLocation = asMaybeContractLocation(networkLocation)
@@ -124,28 +109,6 @@ export function makeTokenInfo(token: EdgeToken): EdgeTokenInfo | undefined {
     multiplier: denominations[0].multiplier,
     contractAddress: cleanLocation.contractAddress
   }
-}
-
-export async function loadBuiltinTokens(
-  ai: ApiInput,
-  accountId: string
-): Promise<void> {
-  const { dispatch, state } = ai.props
-
-  // Load builtin tokens:
-  await Promise.all(
-    Object.keys(state.plugins.currency).map(async pluginId => {
-      const plugin = state.plugins.currency[pluginId]
-      const tokens: EdgeTokenMap =
-        plugin.getBuiltinTokens == null
-          ? upgradeMetaTokens(plugin.currencyInfo.metaTokens ?? [])
-          : await plugin.getBuiltinTokens()
-      dispatch({
-        type: 'ACCOUNT_BUILTIN_TOKENS_LOADED',
-        payload: { accountId, pluginId, tokens }
-      })
-    })
-  )
 }
 
 export function findEngine(
@@ -241,4 +204,17 @@ export async function saveCustomTokens(
     ...file,
     customTokens
   })
+}
+
+// Lazy loader for builtinTokens.json
+let builtinTokensCache: EdgePluginMap<EdgeTokenMap> | null = null
+
+export function loadBuiltinTokensJson(): EdgePluginMap<EdgeTokenMap> {
+  if (builtinTokensCache != null) return builtinTokensCache
+
+  // Use require for lazy loading (only loads when function is called)
+  // Works well with CommonJS output from Rollup
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
+  builtinTokensCache = require('./builtinTokens.json')
+  return builtinTokensCache as EdgePluginMap<EdgeTokenMap>
 }

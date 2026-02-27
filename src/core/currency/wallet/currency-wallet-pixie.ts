@@ -48,7 +48,6 @@ import {
   writeTokensFile
 } from './currency-wallet-files'
 import { CurrencyWalletState, initialTokenIds } from './currency-wallet-reducer'
-import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
 
 export interface CurrencyWalletOutput {
   readonly walletApi: EdgeCurrencyWallet | undefined
@@ -511,28 +510,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         if (engine.changeEnabledTokenIds != null) {
           await engine
             .changeEnabledTokenIds(allEnabledTokenIds)
-            .catch(error => input.props.onError(error))
-        } else if (
-          engine.disableTokens != null &&
-          engine.enableTokens != null
-        ) {
-          const removed = tokenIdsToCurrencyCodes(
-            accountState.builtinTokens[pluginId],
-            accountState.customTokens[pluginId],
-            walletState.currencyInfo,
-            uniqueStrings(lastEnabledTokenIds, allEnabledTokenIds)
-          )
-          const added = tokenIdsToCurrencyCodes(
-            accountState.builtinTokens[pluginId],
-            accountState.customTokens[pluginId],
-            walletState.currencyInfo,
-            uniqueStrings(allEnabledTokenIds, lastEnabledTokenIds)
-          )
-          await engine
-            .disableTokens(removed)
-            .catch(error => input.props.onError(error))
-          await engine
-            .enableTokens(added)
             .catch(error => input.props.onError(error))
         } // else { no token support }
       }

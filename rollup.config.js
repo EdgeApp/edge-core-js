@@ -1,4 +1,5 @@
 import babel from '@rollup/plugin-babel'
+import json from '@rollup/plugin-json'
 import resolve from '@rollup/plugin-node-resolve'
 import flowEntry from 'rollup-plugin-flow-entry'
 import mjs from 'rollup-plugin-mjs-entry'
@@ -29,7 +30,8 @@ export default [
       resolve(resolveOpts),
       babel(babelOpts),
       flowEntry({ types: './lib/flow/exports.js' }),
-      mjs()
+      mjs(),
+      json()
     ]
   },
   {
@@ -40,7 +42,8 @@ export default [
       resolve(resolveOpts),
       babel(babelOpts),
       flowEntry({ types: './lib/flow/types.js' }),
-      mjs()
+      mjs(),
+      json()
     ]
   }
 ]
