@@ -10,7 +10,10 @@ import { EdgeLog } from '../types/types'
  * Configuration options for the NYM mixFetch client.
  */
 export const mixFetchOptions: SetupMixFetchOps = {
-  forceTls: true // force WSS
+  forceTls: true, // force WSS
+  mixFetchOverride: {
+    requestTimeoutMs: 120000
+  }
 }
 
 // MixFetch initialization state
