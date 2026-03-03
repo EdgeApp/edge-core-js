@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Remove NYM mixFetch per-host request queue now that `@nymproject/mix-fetch` handles concurrency natively.
+
 ## 2.43.1 (2026-02-23)
 
 - changed: Upgrade `@nymproject/mix-fetch` to improve performance with new concurrency changes.

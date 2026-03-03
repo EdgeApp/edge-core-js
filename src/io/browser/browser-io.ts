@@ -51,7 +51,6 @@ export function makeBrowserIo(logBackend: LogBackend): EdgeIo {
       if (privacy === 'nym') {
         // Ensure mixFetch is initialized before use
         await initMixFetch(log)
-        // Use queued fetch to handle mixFetch's one-request-per-host limitation
         return await queueMixFetch(uri, {
           ...opts,
           mode: 'unsafe-ignore-cors' as RequestMode
