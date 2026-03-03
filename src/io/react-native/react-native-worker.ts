@@ -1,3 +1,4 @@
+import { mixFetch } from '@nymproject/mix-fetch'
 import hashjs from 'hash.js'
 import HmacDRBG from 'hmac-drbg'
 import { base64 } from 'rfc4648'
@@ -17,7 +18,7 @@ import {
   EdgeFetchResponse,
   EdgeIo
 } from '../../types/types'
-import { initMixFetch, queueMixFetch } from '../../util/nym'
+import { initMixFetch, mixFetchOptions } from '../../util/nym'
 import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
 import { WorkerApi, YAOB_THROTTLE_MS } from './react-native-types'
@@ -178,10 +179,14 @@ async function makeIo(logBackend: LogBackend): Promise<EdgeIo> {
       if (privacy === 'nym') {
         // Ensure mixFetch is initialized before use
         await initMixFetch(log)
-        const response = await queueMixFetch(uri, {
-          ...opts,
-          mode: 'unsafe-ignore-cors' as RequestMode
-        })
+        const response = await mixFetch(
+          uri,
+          {
+            ...opts,
+            mode: 'unsafe-ignore-cors' as RequestMode
+          },
+          mixFetchOptions
+        )
         return response
       }
       if (corsBypass === 'always') {

@@ -1,7 +1,6 @@
 import {
   createMixFetch,
   IMixFetch,
-  mixFetch,
   SetupMixFetchOps
 } from '@nymproject/mix-fetch'
 
@@ -37,14 +36,4 @@ export async function initMixFetch(log: EdgeLog): Promise<IMixFetch> {
       })
   }
   return await mixFetchInitPromise
-}
-
-/**
- * Thin wrapper around mixFetch with pre-configured options.
- */
-export async function queueMixFetch(
-  uri: string,
-  opts: RequestInit & { mode?: string }
-): Promise<Response> {
-  return await mixFetch(uri, opts, mixFetchOptions)
 }
