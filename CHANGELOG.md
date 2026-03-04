@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.43.2 (2026-03-04)
+
 - changed: Reconfigure mixFetch options for network reliability.
 
 ## 2.43.1 (2026-02-23)
