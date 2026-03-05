@@ -257,6 +257,7 @@ export function normalizePath(path: string): string {
   return parts.slice(0, j).join('/')
 }
 
+
 // Send the root object:
 const workerApi: WorkerApi = bridgifyObject({
   async makeEdgeContext(nativeIo, logBackend, pluginUris, opts) {
