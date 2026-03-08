@@ -177,12 +177,16 @@ async function makeIo(logBackend: LogBackend): Promise<EdgeIo> {
 
       if (privacy === 'nym') {
         // Ensure mixFetch is initialized before use
-        await initMixFetch(log)
+        const nymMixFetch = await initMixFetch(log)
         // Use queued fetch to handle mixFetch's one-request-per-host limitation
-        const response = await queueMixFetch(uri, {
-          ...opts,
-          mode: 'unsafe-ignore-cors' as RequestMode
-        })
+        const response = await queueMixFetch(
+          uri,
+          {
+            ...opts,
+            mode: 'unsafe-ignore-cors' as RequestMode
+          },
+          nymMixFetch
+        )
         return response
       }
       if (corsBypass === 'always') {
