@@ -178,8 +178,8 @@ async function makeIo(logBackend: LogBackend): Promise<EdgeIo> {
 
       if (privacy === 'nym') {
         // Ensure mixFetch is initialized before use
-        await initMixFetch(log)
-        const response = await mixFetch(
+        const nymMixFetch = await initMixFetch(log)
+        const response = await nymMixFetch(
           uri,
           {
             ...opts,

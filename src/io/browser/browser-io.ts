@@ -51,8 +51,8 @@ export function makeBrowserIo(logBackend: LogBackend): EdgeIo {
 
       if (privacy === 'nym') {
         // Ensure mixFetch is initialized before use
-        await initMixFetch(log)
-        return await mixFetch(
+        const nymMixFetch = await initMixFetch(log)
+        return await nymMixFetch(
           uri,
           {
             ...opts,
