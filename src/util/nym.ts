@@ -70,7 +70,7 @@ export async function initMixFetch(log: EdgeLog): Promise<IMixFetch> {
 export async function queueMixFetch(
   uri: string,
   opts: RequestInit & { mode?: string },
-  instance?: IMixFetch
+  log: EdgeLog
 ): Promise<Response> {
   const hostKey = getHostKey(uri)
 
@@ -81,12 +81,9 @@ export async function queueMixFetch(
   const ourWork = previousChain
     .catch(() => {}) // Ignore errors from previous request
     .then(async () => {
-      // Use the provided instance if available (properly initialized context)
-      // Otherwise fall back to the module-level function
-      if (instance != null) {
-        return await instance(uri, opts, mixFetchOptions)
-      }
-      return await mixFetch(uri, opts, mixFetchOptions)
+      // Initialize mixFetch on first use (cached for subsequent calls)
+      const nymMixFetch = await initMixFetch(log)
+      return await nymMixFetch(uri, opts, mixFetchOptions)
     })
     .finally(() => {
       // Clean up if we're still the chain tail
