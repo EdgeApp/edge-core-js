@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.43.3 (2026-03-10)
+
 - fixed: Fixed IndexDB cache issue on Android causing failed mixFetch initialization.
 
 ## 2.43.2 (2026-03-04)
