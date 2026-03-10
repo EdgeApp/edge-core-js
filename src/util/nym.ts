@@ -1,7 +1,8 @@
 import {
   createMixFetch,
+  disconnectMixFetch,
   IMixFetch,
-  mixFetch,
+  IMixFetchFn,
   SetupMixFetchOps
 } from '@nymproject/mix-fetch'
 
@@ -11,6 +12,7 @@ import { EdgeLog } from '../types/types'
  * Configuration options for the NYM mixFetch client.
  */
 export const mixFetchOptions: SetupMixFetchOps = {
+  clientId: 'edge-core-js-2026-03-10',
   preferredGateway: '5rXcNe2a44vXisK3uqLHCzpzvEwcnsijDMU7hg4fcYk8', // with WSS
   preferredNetworkRequester:
     '5x6q9UfVHs5AohKMUqeivj7a556kVVy7QwoKige8xHxh.6CFoB3kJaDbYz6oafPJxNxNjzahpT2NtgtytcSyN9EvF@5rXcNe2a44vXisK3uqLHCzpzvEwcnsijDMU7hg4fcYk8',
@@ -45,22 +47,30 @@ function getHostKey(uri: string): string {
  * Initialize the NYM mixFetch client. Must be called before using mixFetch.
  * Safe to call multiple times - subsequent calls return the same promise.
  */
-export async function initMixFetch(log: EdgeLog): Promise<IMixFetch> {
-  // Return existing promise if already initializing or initialized
+export async function initMixFetch(log: EdgeLog): Promise<IMixFetchFn> {
   if (mixFetchInitPromise == null) {
     log('Initializing mixFetch...')
     mixFetchInitPromise = createMixFetch(mixFetchOptions)
-      .then(mixFetch => {
+      .then(mixFetchModule => {
         log('mixFetch initialized successfully')
-        return mixFetch
+        return mixFetchModule
       })
-      .catch(error => {
+      .catch(async error => {
+        // Clean up stale global state left by the failed init so the
+        // next createMixFetch call starts fresh instead of reusing a
+        // broken singleton.
+        try {
+          await disconnectMixFetch()
+        } catch {}
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete (window as any).__mixFetchGlobal
         mixFetchInitPromise = null
         log.error('mixFetch initialization failed:', error)
         throw error
       })
   }
-  return await mixFetchInitPromise
+  const mixFetchModule = await mixFetchInitPromise
+  return mixFetchModule.mixFetch
 }
 
 /**
@@ -69,7 +79,8 @@ export async function initMixFetch(log: EdgeLog): Promise<IMixFetch> {
  */
 export async function queueMixFetch(
   uri: string,
-  opts: RequestInit & { mode?: string }
+  opts: RequestInit & { mode?: string },
+  log: EdgeLog
 ): Promise<Response> {
   const hostKey = getHostKey(uri)
 
@@ -79,7 +90,14 @@ export async function queueMixFetch(
   // Chain our request after the previous one
   const ourWork = previousChain
     .catch(() => {}) // Ignore errors from previous request
-    .then(async () => await mixFetch(uri, opts, mixFetchOptions))
+    .then(async () => {
+      const nymMixFetch = await initMixFetch(log)
+      return await nymMixFetch(uri, opts, mixFetchOptions)
+    })
+    .catch(error => {
+      log.error(`Error in queueMixFetch for host ${hostKey}:`, error)
+      throw error
+    })
     .finally(() => {
       // Clean up if we're still the chain tail
       if (hostRequestChains.get(hostKey) === ourWork) {
