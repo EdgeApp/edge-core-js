@@ -3,7 +3,7 @@
 ## Unreleased
 
 - removed: `EdgeCurrencyInfo.metaTokens`
-- removed: `EdgeTxAmount` and `EdgeTxAmount2` type definitions.
+- removed: `EdgeNetworkFee` and `EdgeNetworkFee2` type definitions.
 - removed: Flow type definitions. We only support TypeScript now.
 
 ## 2.43.3 (2026-03-10)
