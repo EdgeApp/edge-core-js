@@ -12,6 +12,7 @@ import { EdgeLog } from '../types/types'
  * Configuration options for the NYM mixFetch client.
  */
 export const mixFetchOptions: SetupMixFetchOps = {
+  clientId: 'edge-core-js-2026-03-10',
   preferredGateway: '5rXcNe2a44vXisK3uqLHCzpzvEwcnsijDMU7hg4fcYk8', // with WSS
   preferredNetworkRequester:
     '5x6q9UfVHs5AohKMUqeivj7a556kVVy7QwoKige8xHxh.6CFoB3kJaDbYz6oafPJxNxNjzahpT2NtgtytcSyN9EvF@5rXcNe2a44vXisK3uqLHCzpzvEwcnsijDMU7hg4fcYk8',
