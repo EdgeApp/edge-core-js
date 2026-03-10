@@ -31,9 +31,9 @@ export function searchTree<T>(
 ): T | undefined {
   if (predicate(node)) return node
 
-  const flowHack: any = node
-  if (flowHack.children != null) {
-    for (const child of flowHack.children) {
+  const typeHack: any = node
+  if (typeHack.children != null) {
+    for (const child of typeHack.children) {
       const out = searchTree(child, predicate)
       if (out != null) return out
     }

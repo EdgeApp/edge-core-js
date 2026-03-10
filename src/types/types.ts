@@ -431,10 +431,7 @@ export interface EdgeTokenMap {
   [tokenId: string]: EdgeToken
 }
 
-/**
- * Available tokens stored in the `EdgeCurrencyInfo`,
- * or parsed out of URI's.
- */
+/** @deprecated Use EdgeToken instead */
 export interface EdgeMetaToken {
   currencyCode: string
   currencyName: string
@@ -549,9 +546,6 @@ export interface EdgeCurrencyInfo {
 
   /** @deprecated The default user settings are always `{}` */
   defaultSettings?: JsonObject
-
-  /** @deprecated Use EdgeCurrencyPlugin.getBuiltinTokens instead */
-  metaTokens?: EdgeMetaToken[]
 
   /** @deprecated Use memoOptions instead. */
   memoMaxLength?: number // Max number of text characters, if supported
@@ -822,13 +816,13 @@ export interface EdgeSyncStatus {
   totalRatio: number
 
   /** How far along the chain we are, for chains that scan by blocks. */
-  blockRatio?: [number, number] // [ourHeight: number, chainHeight: number]
+  blockRatio?: [ourHeight: number, chainHeight: number]
 
   /**
    * Free-form values to show the user, for engines with unusual info.
    * For example: `{ "donwload speed": "1 KB/s" }`
    */
-  otherParams?: { [name: string]: string } // Record<string, string>
+  otherParams?: Record<string, string>
 }
 
 export interface EdgeTxidMap {
@@ -2219,21 +2213,4 @@ export interface EdgeFakeWorld {
 
   readonly goOffline: (offline?: boolean) => Promise<void>
   readonly dumpFakeUser: (account: EdgeAccount) => Promise<EdgeFakeUser>
-}
-
-// ---------------------------------------------------------------------
-// deprecated types
-// ---------------------------------------------------------------------
-
-/** @deprecated use EdgeTxAmount instead */
-export interface EdgeNetworkFee {
-  readonly currencyCode: string
-  readonly nativeAmount: string
-}
-
-/** @deprecated use EdgeTxAmount instead */
-export interface EdgeNetworkFee2 {
-  readonly nativeAmount: string
-  readonly currencyPluginId: string
-  readonly tokenId: EdgeTokenId
 }
