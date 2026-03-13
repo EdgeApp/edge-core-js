@@ -137,6 +137,9 @@ export function makeCurrencyWalletApi(
     get id(): string {
       return storageWalletApi.id
     },
+    get imported(): boolean {
+      return walletInfo.imported === true
+    },
     get localDisklet(): Disklet {
       return storageWalletApi.localDisklet
     },
