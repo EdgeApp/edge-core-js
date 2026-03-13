@@ -1332,6 +1332,7 @@ export interface EdgeCurrencyWallet {
   readonly created: Date | undefined
   readonly disklet: Disklet
   readonly id: string
+  readonly imported: boolean
   readonly localDisklet: Disklet
   readonly publicWalletInfo: EdgeWalletInfo
   readonly sync: () => Promise<void>
