@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.43.4 (2026-03-17)
+
 - changed: Upgrade mixFetch library and remove per-host request queue from mixFetch for performance improvements.
 
 ## 2.43.3 (2026-03-10)
