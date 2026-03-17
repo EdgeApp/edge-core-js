@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Upgrade mixFetch library and remove per-host request queue from mixFetch for performance improvements.
+
 ## 2.43.3 (2026-03-10)
 
 - fixed: Fixed IndexDB cache issue on Android causing failed mixFetch initialization.

@@ -1133,10 +1133,10 @@
     "@nodelib/fs.scandir" "2.1.3"
     fastq "^1.6.0"
 
-"@nymproject/mix-fetch@^1.4.2":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@nymproject/mix-fetch/-/mix-fetch-1.4.2.tgz#29efcfe1c0d8f2b0ae3859be78e01749fc98d8af"
-  integrity sha512-mwleUfO0k04g3Pg5c+upXxKhuxUfnxyliewgFdnp5ox8qICvnxCtGsPBnLqmcVlTPOHLka0T7Z81WLtsFHHYqg==
+"@nymproject/mix-fetch@^1.4.3":
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/@nymproject/mix-fetch/-/mix-fetch-1.4.3.tgz#bee246da3f29db6be48fba4e48656f3b1da9cf8b"
+  integrity sha512-+Q8W2p5JP6T7gk/GSynPabbDHe0hJ+FADTT0VSDQG7rstNSpTvMRz2RjKFuv5+Ufb4ufoEHYhYd8r1l6rrZ/sQ==
 
 "@pkgr/utils@^2.3.1":
   version "2.4.2"
