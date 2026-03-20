@@ -132,7 +132,7 @@ export const makeMemoryWalletInner = async (
     const doNetworkSync = async (): Promise<void> => {
       if (engine.syncNetwork != null) {
         const delay = await engine.syncNetwork({
-          privateKeys: unsafeSyncNetwork ? { privateKeys: keys } : undefined
+          privateKeys: unsafeSyncNetwork ? keys : undefined
         })
         syncNetworkTask.setDelay(delay)
       } else {

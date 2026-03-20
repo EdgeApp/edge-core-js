@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Pass flat private keys to `syncNetwork` in memory wallets, fixing sweep for `unsafeSyncNetwork` currencies.
+
 ## 2.43.4 (2026-03-17)
 
 - changed: Upgrade mixFetch library and remove per-host request queue from mixFetch for performance improvements.
