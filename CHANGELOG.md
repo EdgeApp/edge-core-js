@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.43.5 (2026-03-20)
+
 - fixed: Pass flat private keys to `syncNetwork` in memory wallets, fixing sweep for `unsafeSyncNetwork` currencies.
 
 ## 2.43.4 (2026-03-17)
