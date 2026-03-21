@@ -1,4 +1,3 @@
-import { asMaybe } from 'cleaners'
 import { Disklet } from 'disklet'
 import {
   combinePixies,
@@ -37,7 +36,7 @@ import {
   makeCurrencyWalletCallbacks,
   watchCurrencyWallet
 } from './currency-wallet-callbacks'
-import { asIntegerString, asPublicKeyFile } from './currency-wallet-cleaners'
+import { asPublicKeyFile } from './currency-wallet-cleaners'
 import {
   loadAddressFiles,
   loadFiatFile,
@@ -73,7 +72,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     const { state, walletId, walletState } = input.props
     const { accountId, pluginId, walletInfo } = walletState
     const plugin = state.plugins.currency[pluginId]
-    const { currencyCode } = plugin.currencyInfo
 
     try {
       // Start the data sync:
@@ -142,17 +140,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       })
       input.onOutput(engine)
 
-      // Grab initial state:
-      const parentCurrency = { currencyCode, tokenId: null }
-      const balance = asMaybe(asIntegerString)(
-        engine.getBalance(parentCurrency)
-      )
-      if (balance != null) {
-        input.props.dispatch({
-          type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-          payload: { balance, tokenId: null, walletId }
-        })
-      }
+      // Grab initial state (balanceMap is pre-populated from cache
+      // in the reducer, so we skip the parent balance dispatch here):
       const height = engine.getBlockHeight()
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
@@ -462,9 +451,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
   watcher(input: CurrencyWalletInput) {
     let lastState: CurrencyWalletState | undefined
+    let lastUpdatedState: CurrencyWalletState | undefined
     let lastSettings: object = {}
     let lastTokens: EdgeTokenMap = {}
     let lastEnabledTokenIds: string[] = initialTokenIds
+    let updateTimer: ReturnType<typeof setTimeout> | undefined
+    let updatePending = false
 
     return async () => {
       const { state, walletState, walletOutput } = input.props
@@ -473,9 +465,21 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const { accountId, pluginId } = walletState
       const accountState = state.accounts[accountId]
 
-      // Update API object:
+      // Update API object (debounced to 300ms):
       if (lastState !== walletState && walletApi != null) {
-        update(walletApi)
+        updatePending = true
+        if (updateTimer == null) {
+          updateTimer = setTimeout(() => {
+            updateTimer = undefined
+            if (updatePending) {
+              updatePending = false
+              if (hasYaobVisibleChange(walletState, lastUpdatedState)) {
+                lastUpdatedState = walletState
+                update(walletApi)
+              }
+            }
+          }, 300)
+        }
       }
       lastState = walletState
 
@@ -588,4 +592,31 @@ export async function getPublicWalletInfo(
 export function whatsNew(after: string[], before: string[]): string {
   const beforeSet = new Set(before)
   return after.filter(s => !beforeSet.has(s)).join(', ')
+}
+
+/**
+ * Returns true if any YAOB-visible wallet fields have changed since the
+ * last time update(walletApi) was called. Skips no-op bridge messages
+ * caused by Redux reference changes to internal-only fields.
+ */
+function hasYaobVisibleChange(
+  current: CurrencyWalletState,
+  previous: CurrencyWalletState | undefined
+): boolean {
+  if (previous == null) return true
+  return (
+    current.name !== previous.name ||
+    current.fiat !== previous.fiat ||
+    current.balanceMap !== previous.balanceMap ||
+    current.balances !== previous.balances ||
+    current.height !== previous.height ||
+    current.syncStatus !== previous.syncStatus ||
+    current.unactivatedTokenIds !== previous.unactivatedTokenIds ||
+    current.paused !== previous.paused ||
+    current.detectedTokenIds !== previous.detectedTokenIds ||
+    current.enabledTokenIds !== previous.enabledTokenIds ||
+    current.txs !== previous.txs ||
+    current.stakingStatus !== previous.stakingStatus ||
+    current.sortedTxidHashes !== previous.sortedTxidHashes
+  )
 }
