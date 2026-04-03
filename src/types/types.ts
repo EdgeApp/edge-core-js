@@ -1473,6 +1473,7 @@ export interface EdgeMemoryWallet {
   readonly signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly broadcastTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly saveTx: (tx: EdgeTransaction) => Promise<void>
+  readonly otherMethods: EdgeOtherMethods
   readonly close: () => Promise<void>
 
   /** @deprecated Use syncStatus */

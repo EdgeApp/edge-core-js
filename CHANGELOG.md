@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Expose engine otherMethods on EdgeMemoryWallet so memory wallets support custom methods like makeMaxSpend.
+
 ## 2.43.6 (2026-04-02)
 
 - fixed: Upgraded @nymproject/mix-fetch with promised reliability improvements.
