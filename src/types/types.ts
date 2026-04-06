@@ -543,6 +543,7 @@ export interface EdgeCurrencyInfo {
   unsafeMakeSpend?: boolean
   unsafeSyncNetwork?: boolean
   usesChangeServer?: boolean
+  hasWalletSettings?: boolean
 
   /** Show the total sync percentage with this many decimal digits */
   syncDisplayPrecision?: number
@@ -1043,10 +1044,12 @@ export interface EdgeCurrencyEngineOptions {
   customTokens: EdgeTokenMap
   enabledTokenIds: string[]
   userSettings: JsonObject | undefined
+  walletSettings: JsonObject
 }
 
 export interface EdgeCurrencyEngine {
   readonly changeUserSettings: (settings: JsonObject) => Promise<void>
+  readonly changeWalletSettings?: (settings: JsonObject) => Promise<void>
 
   /**
    * Starts any persistent resources the engine needs, such as WebSockets.
@@ -1329,6 +1332,7 @@ export interface EdgeCurrencyWallet {
   readonly created: Date | undefined
   readonly disklet: Disklet
   readonly id: string
+  readonly imported: boolean
   readonly localDisklet: Disklet
   readonly publicWalletInfo: EdgeWalletInfo
   readonly sync: () => Promise<void>
@@ -1345,6 +1349,10 @@ export interface EdgeCurrencyWallet {
   // Currency info:
   readonly currencyConfig: EdgeCurrencyConfig // eslint-disable-line no-use-before-define
   readonly currencyInfo: EdgeCurrencyInfo
+
+  // User settings for this wallet:
+  readonly walletSettings: JsonObject
+  readonly changeWalletSettings: (settings: JsonObject) => Promise<void>
 
   // Chain state:
   readonly balanceMap: EdgeBalanceMap
@@ -1651,6 +1659,7 @@ export interface EdgeCreateCurrencyWalletOptions {
   enabledTokenIds?: string[]
   fiatCurrencyCode?: string
   name?: string
+  walletSettings?: JsonObject
 
   // Create a private key from some text:
   importText?: string

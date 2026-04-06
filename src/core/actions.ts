@@ -11,7 +11,8 @@ import {
   EdgeTokenMap,
   EdgeTransaction,
   EdgeWalletInfo,
-  EdgeWalletStates
+  EdgeWalletStates,
+  JsonObject
 } from '../types/types'
 import { SwapSettings } from './account/account-types'
 import { ClientInfo } from './context/client-file'
@@ -357,6 +358,20 @@ export type RootAction =
       type: 'CURRENCY_WALLET_SAVED_TOKEN_FILE'
       payload: {
         walletId: string
+      }
+    }
+  | {
+      type: 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS'
+      payload: {
+        walletId: string
+        walletSettings: JsonObject
+      }
+    }
+  | {
+      type: 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE'
+      payload: {
+        walletId: string
+        walletSettings: JsonObject
       }
     }
   | {

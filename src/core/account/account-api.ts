@@ -25,11 +25,13 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapRequestOptions,
+  EdgeWalletInfo,
   EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../types/types'
 import { makeEdgeResult } from '../../util/edgeResult'
 import { base58 } from '../../util/encoding'
+import { saveWalletSettings } from '../currency/wallet/currency-wallet-files'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import {
   finishWalletCreation,
@@ -55,13 +57,14 @@ import {
 import { changePin, checkPin2, deletePin } from '../login/pin2'
 import { changeRecovery, deleteRecovery } from '../login/recovery2'
 import { listSplittableWalletTypes, splitWalletInfo } from '../login/splitting'
+import { asEdgeStorageKeys } from '../login/storage-keys'
 import { changeVoucherStatus } from '../login/vouchers'
 import {
   findCurrencyPluginId,
   getCurrencyTools
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
-import { makeLocalDisklet } from '../storage/repo'
+import { makeLocalDisklet, makeRepoPaths } from '../storage/repo'
 import { makeStorageWalletApi } from '../storage/storage-api'
 import { fetchSwapQuotes } from '../swap/swap-api'
 import { changeWalletStates } from './account-files'
@@ -71,6 +74,18 @@ import { makeDataStoreApi } from './data-store-api'
 import { makeLobbyApi } from './lobby-api'
 import { makeMemoryWalletInner } from './memory-wallet'
 import { CurrencyConfig, SwapConfig } from './plugin-api'
+
+async function prewriteWalletSettings(
+  ai: ApiInput,
+  walletInfo: EdgeWalletInfo,
+  walletSettings: object
+): Promise<void> {
+  const { io } = ai.props
+  const storageKeys = asEdgeStorageKeys(walletInfo.keys)
+  const { disklet } = makeRepoPaths(io, storageKeys)
+
+  await saveWalletSettings(disklet, walletSettings)
+}
 
 /**
  * Creates an unwrapped account API object around an account state object.
@@ -642,6 +657,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       ai.props.log.breadcrumb('EdgeAccount.createCurrencyWallet', {})
 
       const walletInfo = await makeCurrencyWalletKeys(ai, walletType, opts)
+      if (opts.walletSettings != null) {
+        await prewriteWalletSettings(ai, walletInfo, opts.walletSettings)
+      }
       const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
       await applyKit(ai, sessionKey, makeKeysKit(ai, childKey, [walletInfo]))
       return await finishWalletCreation(ai, accountId, walletInfo.id, opts)
@@ -673,6 +691,14 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
           async opts => await makeCurrencyWalletKeys(ai, opts.walletType, opts)
         )
       )
+
+      // Prewrite wallet settings before applyKit triggers the pixie:
+      for (let i = 0; i < walletInfos.length; i++) {
+        const { walletSettings } = createWallets[i]
+        if (walletSettings != null) {
+          await prewriteWalletSettings(ai, walletInfos[i], walletSettings)
+        }
+      }
 
       // Store the keys on the server:
       const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
