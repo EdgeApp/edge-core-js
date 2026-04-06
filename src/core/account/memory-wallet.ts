@@ -147,6 +147,23 @@ export const makeMemoryWalletInner = async (
     syncNetworkTask.start({ wait: false })
   }
 
+  const otherMethods: { [name: string]: (...args: any[]) => any } = {}
+  if (engine.otherMethods != null) {
+    for (const name of Object.keys(engine.otherMethods)) {
+      const method = engine.otherMethods[name]
+      if (typeof method !== 'function') continue
+      otherMethods[name] = method
+    }
+  }
+  if (engine.otherMethodsWithKeys != null) {
+    for (const name of Object.keys(engine.otherMethodsWithKeys)) {
+      const method = engine.otherMethodsWithKeys[name]
+      if (typeof method !== 'function') continue
+      otherMethods[name] = (...args: any[]) => method(walletInfo.keys, ...args)
+    }
+  }
+  bridgifyObject(otherMethods)
+
   const out = bridgifyObject<EdgeMemoryWallet>({
     watch: watchMethod,
     get balanceMap() {
@@ -195,6 +212,8 @@ export const makeMemoryWalletInner = async (
       )
     },
     async saveTx() {},
+
+    otherMethods,
 
     async close() {
       log.warn('killing memory wallet')
