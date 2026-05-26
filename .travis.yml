@@ -3,4 +3,4 @@ dist: jammy
 node_js:
   - 20
 script:
-  - 'yarn verify'
+  - 'npm run verify'
