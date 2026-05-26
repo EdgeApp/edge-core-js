@@ -82,12 +82,12 @@ The core itself runs inside a hidden WebView, which this `MakeEdgeContext` compo
 
 The core creates a `<script>` tag for each source file in the `pluginUris` array. For this to work, you need to add these plugin files to your app's native asset bundle, which is located at `/android/app/src/main/assets/` on Android. For iOS, drag these files into the "Resources" section of your Xcode project.
 
-To debug the core, run `yarn start` inside the edge-core-js project, and then pass a `debug={true}` property to the `MakeEdgeContext` component. This tells the WebView to load the core from a local development server.
+To debug the core, run `npm run start` inside the edge-core-js project, and then pass a `debug={true}` property to the `MakeEdgeContext` component. This tells the WebView to load the core from a local development server.
 
 ## Contributing
 
-Run `yarn` to download dependencies, and then run `yarn prepare` to build the library.
+Run `npm install` to download dependencies, and then run `npm run prepare` to build the library.
 
-Use `yarn verify` to run all our code-quality tools. All sources are in the [JavaScript Standard Style](http://standardjs.com/) + [Prettier](https://prettier.io/). We check files prior to each commit, so if you have formatting issues, you can run `yarn fix` to fix them automatically.
+Use `npm run verify` to run all our code-quality tools. All sources are in the [JavaScript Standard Style](http://standardjs.com/) + [Prettier](https://prettier.io/). We check files prior to each commit, so if you have formatting issues, you can run `npm run fix` to fix them automatically.
 
 If you use Visual Studio Code, consider installing the [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) extension. This will give you nice error highlighting as you work, along with quick fixes for formatting issues.
