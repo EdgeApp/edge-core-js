@@ -1183,6 +1183,12 @@ export interface EdgeCurrencyEngine {
 // currency plugin -----------------------------------------------------
 
 export interface EdgeCurrencyTools {
+  // Settings:
+  // The core pushes the account's per-plugin user settings here whenever they
+  // change (and before key creation), so tools-level network calls can honor
+  // settings such as `networkPrivacy`. One tools instance is shared per plugin.
+  readonly changeUserSettings?: (userSettings: JsonObject) => void
+
   // Keys:
   readonly checkPublicKey?: (publicKey: JsonObject) => Promise<boolean>
   readonly createPrivateKey: (

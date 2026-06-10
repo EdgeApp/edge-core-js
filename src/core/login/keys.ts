@@ -329,6 +329,7 @@ export function fixWalletInfo(walletInfo: EdgeWalletInfo): EdgeWalletInfo {
 
 export async function makeCurrencyWalletKeys(
   ai: ApiInput,
+  accountId: string,
   walletType: string,
   opts: EdgeCreateCurrencyWalletOptions
 ): Promise<EdgeWalletInfo> {
@@ -354,6 +355,17 @@ export async function makeCurrencyWalletKeys(
     walletType
   )
   const tools = await getCurrencyTools(ai, pluginId)
+
+  // Sync the account's plugin settings into the shared currency tools before
+  // any key-creation network calls run (e.g. the Monero birthday-height
+  // lookup), so those requests honor the user's network-privacy choice. The
+  // reactive pixie covers running wallets, but it hasn't fired yet the first
+  // time a currency's tools are loaded during wallet creation:
+  if (tools.changeUserSettings != null) {
+    tools.changeUserSettings(
+      ai.props.state.accounts[accountId].userSettings[pluginId] ?? {}
+    )
+  }
 
   // If we have text to import, use that:
   if (importText != null) {

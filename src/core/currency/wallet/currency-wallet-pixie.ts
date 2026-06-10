@@ -498,6 +498,18 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       if (lastUserSettings !== userSettings && engine != null) {
         await engine.changeUserSettings(userSettings)
       }
+      // Mirror the settings into the shared currency tools (one instance per
+      // plugin) so tools-level network calls (e.g. token lookups, Monero
+      // birthday height) honor the user's network-privacy choice too:
+      if (lastUserSettings !== userSettings) {
+        const toolsPromise = state.plugins.currencyTools[pluginId]
+        if (toolsPromise != null) {
+          const tools = await toolsPromise
+          if (tools.changeUserSettings != null) {
+            tools.changeUserSettings(userSettings)
+          }
+        }
+      }
       lastUserSettings = userSettings
 
       // Update the custom tokens:
