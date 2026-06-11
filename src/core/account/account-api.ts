@@ -80,6 +80,14 @@ async function prewriteWalletSettings(
   walletInfo: EdgeWalletInfo,
   walletSettings: object
 ): Promise<void> {
+  // Only persist settings for currencies that actually support them. Otherwise
+  // the data would be written to disk but never loaded or exposed, since the
+  // wallet layer reads settings only when `currencyInfo.hasWalletSettings`:
+  const { currency } = ai.props.state.plugins
+  const pluginId = findCurrencyPluginId(currency, walletInfo.type)
+  const { hasWalletSettings = false } = currency[pluginId].currencyInfo
+  if (!hasWalletSettings) return
+
   const { io } = ai.props
   const storageKeys = asEdgeStorageKeys(walletInfo.keys)
   const { disklet } = makeRepoPaths(io, storageKeys)
