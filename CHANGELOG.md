@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: `EdgeCurrencyWallet.walletSettings` and `EdgeCurrencyWallet.changeWalletSettings`, plus matching engine plumbing.
+- added: `EdgeCurrencyWallet.imported` flag, indicating a wallet created by importing keys.
 
 ## 2.44.0 (2026-04-06)
 
