@@ -329,6 +329,7 @@ export function fixWalletInfo(walletInfo: EdgeWalletInfo): EdgeWalletInfo {
 
 export async function makeCurrencyWalletKeys(
   ai: ApiInput,
+  accountId: string,
   walletType: string,
   opts: EdgeCreateCurrencyWalletOptions
 ): Promise<EdgeWalletInfo> {
@@ -355,20 +356,30 @@ export async function makeCurrencyWalletKeys(
   )
   const tools = await getCurrencyTools(ai, pluginId)
 
+  // Currency tools are shared per-plugin, not per-account, so we can't store
+  // account settings on them. Instead we forward the account's network-privacy
+  // choice through the per-call key options, so key-creation network calls
+  // (e.g. the Monero birthday-height lookup) can honor it:
+  const userSettings = ai.props.state.accounts[accountId].userSettings[pluginId]
+  const networkPrivacy = (userSettings as { networkPrivacy?: string })
+    ?.networkPrivacy
+  const privateKeyOptions =
+    networkPrivacy != null ? { ...keyOptions, networkPrivacy } : keyOptions
+
   // If we have text to import, use that:
   if (importText != null) {
     if (tools.importPrivateKey == null) {
       throw new Error('This wallet does not support importing keys')
     }
     return finalizeKeys(
-      await tools.importPrivateKey(importText, keyOptions),
+      await tools.importPrivateKey(importText, privateKeyOptions),
       true
     )
   }
 
   // Derive fresh keys:
   return finalizeKeys(
-    await tools.createPrivateKey(walletType, keyOptions),
+    await tools.createPrivateKey(walletType, privateKeyOptions),
     false
   )
 }

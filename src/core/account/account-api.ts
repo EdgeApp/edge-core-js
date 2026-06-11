@@ -512,7 +512,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.createWallet', {})
 
-      const walletInfo = await makeCurrencyWalletKeys(ai, walletType, { keys })
+      const walletInfo = await makeCurrencyWalletKeys(
+        ai,
+        accountId,
+        walletType,
+        { keys }
+      )
       const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
       await applyKit(ai, sessionKey, makeKeysKit(ai, childKey, [walletInfo]))
       return walletInfo.id
@@ -664,7 +669,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       // For crash errors:
       ai.props.log.breadcrumb('EdgeAccount.createCurrencyWallet', {})
 
-      const walletInfo = await makeCurrencyWalletKeys(ai, walletType, opts)
+      const walletInfo = await makeCurrencyWalletKeys(
+        ai,
+        accountId,
+        walletType,
+        opts
+      )
       if (opts.walletSettings != null) {
         await prewriteWalletSettings(ai, walletInfo, opts.walletSettings)
       }
@@ -696,7 +706,8 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       // Create the keys:
       const walletInfos = await Promise.all(
         createWallets.map(
-          async opts => await makeCurrencyWalletKeys(ai, opts.walletType, opts)
+          async opts =>
+            await makeCurrencyWalletKeys(ai, accountId, opts.walletType, opts)
         )
       )
 
