@@ -284,7 +284,16 @@ export interface EdgeTxActionSwap {
   fromAsset: EdgeAssetAmount
   toAsset: EdgeAssetAmount
   payoutAddress: string
-  payoutWalletId: string
+
+  /**
+   * The wallet that received the payout, for a normal wallet-to-wallet swap.
+   * Optional because a swap-to-address (private send) destination has no payout
+   * wallet; `payoutAddress` carries the destination in that case. GUI
+   * `savedAction` consumers that assume this is always present need a sweep
+   * before relying on it.
+   */
+  payoutWalletId?: string
+
   refundAddress?: string
 }
 
@@ -1499,10 +1508,34 @@ export interface EdgeSwapInfo {
   readonly supportEmail: string
 }
 
+/**
+ * An address-only swap destination, used in place of a destination
+ * `toWallet` for "swap-to-address" (e.g. private send). The core builds a
+ * synthetic destination wallet from this descriptor, backed by the real
+ * `currencyConfig` for `toPluginId`, so swap plugins need no changes. The
+ * destination token is taken from the request's `toTokenId`, so it is not
+ * repeated here.
+ */
+export interface EdgeSwapToAddressInfo {
+  toPluginId: string
+  toAddress: string
+}
+
 export interface EdgeSwapRequest {
   // Where?
   fromWallet: EdgeCurrencyWallet
-  toWallet: EdgeCurrencyWallet
+
+  /**
+   * The destination wallet for a normal wallet-to-wallet swap.
+   * Provide exactly one of `toWallet` or `toAddressInfo`.
+   */
+  toWallet?: EdgeCurrencyWallet
+
+  /**
+   * An address-only destination, as an alternative to `toWallet`.
+   * Provide exactly one of `toWallet` or `toAddressInfo`.
+   */
+  toAddressInfo?: EdgeSwapToAddressInfo
 
   // What?
   fromTokenId: EdgeTokenId
