@@ -190,7 +190,7 @@ export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
   canBePartial: asOptional(asBoolean),
   fromAsset: asEdgeAssetAmount,
   toAsset: asEdgeAssetAmount,
-  payoutWalletId: asString,
+  payoutWalletId: asOptional(asString),
   payoutAddress: asString,
   refundAddress: asOptional(asString)
 })

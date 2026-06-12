@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: Accept an optional `toAddressInfo` descriptor on `EdgeSwapRequest` as an alternative to `toWallet`, so a swap can target a pasted destination address. The core builds a synthetic, bridgified destination wallet from the descriptor, backed by the real `currencyConfig`, leaving swap plugins unchanged. Exactly one of `toWallet` or `toAddressInfo` is required.
+- changed: Make `EdgeTxActionSwap.payoutWalletId` optional, since a swap-to-address destination has no payout wallet (`payoutAddress` carries the destination).
+
 ## 2.44.0 (2026-04-06)
 
 - added: Expose engine otherMethods on EdgeMemoryWallet so memory wallets support custom methods like makeMaxSpend.
