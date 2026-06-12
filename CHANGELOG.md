@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- changed: Convert the build tooling from Yarn to npm.
+- security: Upgrade dependencies per Socket security recommendations.
+
 ## 2.44.0 (2026-04-06)
 
 - added: Expose engine otherMethods on EdgeMemoryWallet so memory wallets support custom methods like makeMaxSpend.
