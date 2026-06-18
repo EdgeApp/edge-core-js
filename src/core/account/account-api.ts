@@ -30,6 +30,7 @@ import {
 } from '../../types/types'
 import { makeEdgeResult } from '../../util/edgeResult'
 import { base58 } from '../../util/encoding'
+import { WalletCacheSetup } from '../cache/cache-wallet-loader'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import {
   finishWalletCreation,
@@ -72,10 +73,21 @@ import { makeLobbyApi } from './lobby-api'
 import { makeMemoryWalletInner } from './memory-wallet'
 import { CurrencyConfig, SwapConfig } from './plugin-api'
 
+export interface AccountApiOptions {
+  /** Optional cached wallet data for instant UI on login */
+  cacheSetup?: WalletCacheSetup
+}
+
 /**
  * Creates an unwrapped account API object around an account state object.
+ * If cacheSetup is provided, cached wallets are used until real wallets load.
  */
-export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
+export function makeAccountApi(
+  ai: ApiInput,
+  accountId: string,
+  opts: AccountApiOptions = {}
+): EdgeAccount {
+  const { cacheSetup } = opts
   // We don't want accountState to be undefined when we log out,
   // so preserve a snapshot of our last state:
   let lastState = ai.props.state.accounts[accountId]
@@ -613,23 +625,57 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     // ----------------------------------------------------------------
 
     get activeWalletIds(): string[] {
-      return ai.props.state.accounts[accountId].activeWalletIds
+      const accountState = ai.props.state.accounts[accountId]
+      // Use cached IDs until keys are loaded:
+      if (
+        accountState != null &&
+        !accountState.keysLoaded &&
+        cacheSetup != null
+      ) {
+        return cacheSetup.activeWalletIds
+      }
+      return accountState?.activeWalletIds ?? []
     },
 
     get archivedWalletIds(): string[] {
-      return ai.props.state.accounts[accountId].archivedWalletIds
+      return ai.props.state.accounts[accountId]?.archivedWalletIds ?? []
     },
 
     get hiddenWalletIds(): string[] {
-      return ai.props.state.accounts[accountId].hiddenWalletIds
+      return ai.props.state.accounts[accountId]?.hiddenWalletIds ?? []
     },
 
     get currencyWallets(): { [walletId: string]: EdgeCurrencyWallet } {
-      return ai.props.output.accounts[accountId].currencyWallets
+      // Get real wallets from pixie output
+      const pixieWallets =
+        ai.props.output.accounts[accountId]?.currencyWallets ?? {}
+
+      // If no cache, just return pixie wallets (stable reference)
+      if (cacheSetup == null) {
+        return pixieWallets
+      }
+
+      // Once all active wallets have loaded, return the stable pixie
+      // reference to avoid allocating a new object on every access:
+      const activeIds = this.activeWalletIds
+      if (activeIds.every(id => pixieWallets[id] != null)) {
+        return pixieWallets
+      }
+
+      // Merge: real wallets take priority, cached fill gaps
+      const result: { [walletId: string]: EdgeCurrencyWallet } = {}
+      for (const walletId of activeIds) {
+        const wallet =
+          pixieWallets[walletId] ?? cacheSetup.currencyWallets[walletId]
+        if (wallet != null) {
+          result[walletId] = wallet
+        }
+      }
+      return result
     },
 
     get currencyWalletErrors(): { [walletId: string]: Error } {
-      return ai.props.state.accounts[accountId].currencyWalletErrors
+      return ai.props.state.accounts[accountId]?.currencyWalletErrors ?? {}
     },
 
     async createCurrencyWallet(
@@ -804,7 +850,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
             : undefined,
 
         // Added for backward compatibility for plugins using core 1.x
-        // @ts-expect-error
+        // @ts-expect-error - paymentTokenId/paymentWallet are deprecated but still used by old plugins
         paymentTokenId: paymentInfo?.tokenId,
         paymentWallet: wallet
       })
@@ -832,7 +878,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
       // Close unused quotes:
       for (const otherQuote of otherQuotes) {
-        otherQuote.close().catch(() => undefined)
+        otherQuote.close().catch((error: unknown) => {
+          ai.props.log.warn('Failed to close unused swap quote:', error)
+        })
       }
 
       // Return the front quote:
