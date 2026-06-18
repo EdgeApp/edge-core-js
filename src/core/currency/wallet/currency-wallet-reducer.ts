@@ -17,6 +17,7 @@ import {
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
 import { RootAction } from '../../actions'
+import { PARENT_CURRENCY_KEY } from '../../cache/cache-wallet-cleaners'
 import { findCurrencyPluginId } from '../../plugins/plugins-selectors'
 import { RootState } from '../../root-reducer'
 import { TransactionFile } from './currency-wallet-cleaners'
@@ -331,9 +332,23 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
-  balanceMap(state = new Map(), action): Map<EdgeTokenId, string> {
+  balanceMap(state, action, next): Map<EdgeTokenId, string> {
+    if (state == null) {
+      const { accountId } = next.self
+      const cached = next.root.accounts[accountId]?.cachedBalances?.[next.id]
+      if (cached != null) {
+        const map: EdgeBalanceMap = new Map()
+        for (const [key, amount] of Object.entries(cached)) {
+          const tokenId = key === PARENT_CURRENCY_KEY ? null : key
+          map.set(tokenId, amount)
+        }
+        return map
+      }
+      return new Map()
+    }
     if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
       const { balance, tokenId } = action.payload
+      if (state.get(tokenId) === balance) return state
       const out = new Map(state)
       out.set(tokenId, balance)
       return out
