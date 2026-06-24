@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: `EdgeCurrencyWallet.makeMaxSpend` and `EdgeMemoryWallet.makeMaxSpend`, which atomically build a transaction that spends the maximum amount. The core falls back to `getMaxSpendable` + `makeSpend` for engines that don't implement `EdgeCurrencyEngine.makeMaxSpend`.
+- deprecated: `EdgeCurrencyWallet.getMaxSpendable` and `EdgeMemoryWallet.getMaxSpendable`. Use `makeMaxSpend` to build a max-spend transaction.
+
 ## 2.46.0 (2026-06-18)
 
 - added: `EdgeCurrencyWallet.walletSettings` and `EdgeCurrencyWallet.changeWalletSettings`, plus matching engine plumbing.

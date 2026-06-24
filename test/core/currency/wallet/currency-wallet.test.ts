@@ -457,6 +457,52 @@ describe('currency wallets', function () {
     )
   })
 
+  it('can make max spend', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({ balance: 50 })
+
+    // The fake engine does not implement `makeMaxSpend`, so this exercises the
+    // core fallback shim (getMaxSpendable + makeSpend):
+    const tx = await wallet.makeMaxSpend({
+      tokenId: null,
+      spendTargets: [{ publicAddress: 'somewhere' }]
+    })
+    expect(tx.nativeAmount).equals('50')
+    expect(tx.spendTargets).deep.equals([
+      {
+        currencyCode: 'FAKE',
+        memo: undefined,
+        nativeAmount: '50',
+        publicAddress: 'somewhere',
+        uniqueIdentifier: undefined
+      }
+    ])
+  })
+
+  it('can make max spend with a native engine method', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { maxcoin: true }
+    })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.createCurrencyWallet('wallet:maxcoin', {
+      fiatCurrencyCode: 'iso:USD',
+      name: 'max wallet'
+    })
+    await account.currencyConfig.maxcoin.changeUserSettings({ balance: 50 })
+
+    // The maxcoin engine implements `makeMaxSpend`, so the core delegates to
+    // it instead of using the fallback shim. The engine implementation reads
+    // `this`, so an unbound call from the core would throw here:
+    const tx = await wallet.makeMaxSpend({
+      tokenId: null,
+      spendTargets: [{ publicAddress: 'somewhere' }]
+    })
+    expect(tx.otherParams?.engineMaxSpend).equals(true)
+    expect(tx.nativeAmount).equals('27') // Balance 50 minus the fee of 23
+  })
+
   it('converts number formats', async function () {
     const { wallet } = await makeFakeCurrencyWallet()
     expect(await wallet.denominationToNative('0.1', 'SMALL')).equals('1')

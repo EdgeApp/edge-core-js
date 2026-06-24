@@ -1,4 +1,4 @@
-import { add, lt } from 'biggystring'
+import { add, lt, sub } from 'biggystring'
 import { asNumber, asObject, asOptional, asString } from 'cleaners'
 
 import {
@@ -26,6 +26,7 @@ import {
 import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 
 const GENESIS_BLOCK = 1231006505
+const FAKE_NETWORK_FEE = '23'
 
 const fakeTokens: EdgeTokenMap = {
   badf00d5: {
@@ -303,7 +304,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
       isSend: false,
       memos,
       nativeAmount: total,
-      networkFee: '23',
+      networkFee: FAKE_NETWORK_FEE,
       networkFees: [],
       otherParams: {},
       ourReceiveAddresses: [],
@@ -332,6 +333,31 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
     transaction: EdgeTransaction
   ): Promise<EdgeTransaction | null> {
     return null
+  }
+}
+
+/**
+ * An engine that implements the optional `makeMaxSpend` engine method, so
+ * tests can exercise the core's engine-delegating branch. The plain
+ * `FakeCurrencyEngine` deliberately lacks the method, which is what makes it
+ * exercise the core's fallback shim.
+ *
+ * The implementation reads `this`, so the core must invoke this as a method on
+ * the engine. An unbound call throws.
+ */
+class FakeMaxSpendCurrencyEngine extends FakeCurrencyEngine {
+  async makeMaxSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+    const { spendTargets, tokenId = null } = spendInfo
+    const maxNativeAmount = sub(this.getBalance({ tokenId }), FAKE_NETWORK_FEE)
+    const tx = await this.makeSpend({
+      ...spendInfo,
+      spendTargets: spendTargets.map((spendTarget, index) =>
+        index === 0
+          ? { ...spendTarget, nativeAmount: maxNativeAmount }
+          : spendTarget
+      )
+    })
+    return { ...tx, otherParams: { engineMaxSpend: true } }
   }
 }
 
@@ -386,10 +412,20 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
   }
 }
 
+interface FakeCurrencyPluginOptions {
+  /** Implement the optional `makeMaxSpend` engine method. */
+  nativeMaxSpend?: boolean
+}
+
 export function makeFakeCurrencyPlugin(
-  overrides: Partial<EdgeCurrencyInfo> = {}
+  overrides: Partial<EdgeCurrencyInfo> = {},
+  pluginOptions: FakeCurrencyPluginOptions = {}
 ): EdgeCurrencyPlugin {
+  const { nativeMaxSpend = false } = pluginOptions
   const currencyInfo: EdgeCurrencyInfo = { ...fakeCurrencyInfo, ...overrides }
+  const Engine = nativeMaxSpend
+    ? FakeMaxSpendCurrencyEngine
+    : FakeCurrencyEngine
 
   return {
     currencyInfo,
@@ -402,9 +438,7 @@ export function makeFakeCurrencyPlugin(
       walletInfo: EdgeWalletInfo,
       opts: EdgeCurrencyEngineOptions
     ): Promise<EdgeCurrencyEngine> {
-      return Promise.resolve(
-        new FakeCurrencyEngine(walletInfo, opts, currencyInfo)
-      )
+      return Promise.resolve(new Engine(walletInfo, opts, currencyInfo))
     },
 
     makeCurrencyTools(): Promise<EdgeCurrencyTools> {

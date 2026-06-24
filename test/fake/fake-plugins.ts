@@ -11,6 +11,17 @@ export const allPlugins = {
   },
   'broken-engine': brokenEnginePlugin,
   fakecoin: fakeCurrencyPlugin,
+  maxcoin: makeFakeCurrencyPlugin(
+    {
+      assetDisplayName: 'Max Coin',
+      chainDisplayName: 'Max Chain',
+      currencyCode: 'MAX',
+      displayName: 'Max Coin',
+      pluginId: 'maxcoin',
+      walletType: 'wallet:maxcoin'
+    },
+    { nativeMaxSpend: true }
+  ),
   tulipcoin: makeFakeCurrencyPlugin({
     assetDisplayName: 'Tulip Coin',
     chainDisplayName: 'Tulip Chain',
