@@ -203,6 +203,34 @@ export const makeMemoryWalletInner = async (
         unsafeMakeSpend ? privateKeys : undefined
       )
     },
+    async makeMaxSpend(spendInfo: EdgeSpendInfo) {
+      if (engine.makeMaxSpend != null) {
+        return await engine.makeMaxSpend(
+          spendInfo,
+          unsafeMakeSpend ? privateKeys : undefined
+        )
+      }
+
+      // Fallback shim for engines without a native `makeMaxSpend`: compute the
+      // maximum spendable amount, then build a normal spend for that amount.
+      const maxNativeAmount = await getMaxSpendableInner(
+        spendInfo,
+        plugin,
+        engine,
+        config.allTokens,
+        walletInfo
+      )
+      const maxSpendInfo: EdgeSpendInfo = {
+        ...spendInfo,
+        spendTargets: spendInfo.spendTargets.map((target, index) =>
+          index === 0 ? { ...target, nativeAmount: maxNativeAmount } : target
+        )
+      }
+      return await engine.makeSpend(
+        maxSpendInfo,
+        unsafeMakeSpend ? privateKeys : undefined
+      )
+    },
     async signTx(tx: EdgeTransaction) {
       return await engine.signTx(tx, privateKeys)
     },
