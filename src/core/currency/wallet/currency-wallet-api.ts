@@ -1,4 +1,4 @@
-import { abs, div, lt, mul } from 'biggystring'
+import { abs, div, lt, mul, sub } from 'biggystring'
 import { Disklet } from 'disklet'
 import { base64 } from 'rfc4648'
 import { bridgifyObject, emit, onMethod, watchMethod } from 'yaob'
@@ -23,6 +23,7 @@ import {
   EdgeCurrencyWallet,
   EdgeDataDump,
   EdgeEncodeUri,
+  EdgeEnginePrivateKeyOptions,
   EdgeGetReceiveAddressOptions,
   EdgeGetTransactionsOptions,
   EdgeParsedUri,
@@ -122,6 +123,124 @@ export function makeCurrencyWalletApi(
     }
   }
   bridgifyObject(otherMethods)
+
+  /**
+   * Shared implementation for `makeSpend` and `makeMaxSpend`. Performs all the
+   * common spend-info preparation and transaction post-processing, delegating
+   * the actual transaction construction to `makeEngineTx`.
+   */
+  const makeSpendInner = async (
+    spendInfo: EdgeSpendInfo,
+    makeEngineTx: (
+      engineSpendInfo: EdgeSpendInfo,
+      opts: EdgeEnginePrivateKeyOptions
+    ) => Promise<EdgeTransaction>,
+    isMaxSpend: boolean = false
+  ): Promise<EdgeTransaction> => {
+    spendInfo = upgradeMemos(spendInfo, plugin.currencyInfo)
+    const {
+      assetAction,
+      customNetworkFee,
+      enableRbf,
+      memos,
+      metadata,
+      networkFeeOption = 'standard',
+      noUnconfirmed = false,
+      otherParams,
+      pendingTxs,
+      rbfTxid,
+      savedAction,
+      skipChecks,
+      spendTargets = [],
+      swapData
+    } = spendInfo
+
+    // Figure out which asset this is:
+    const upgradedCurrency = upgradeCurrencyCode({
+      allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
+      currencyInfo: plugin.currencyInfo,
+      tokenId: spendInfo.tokenId
+    })
+
+    // Check the spend targets:
+    const cleanTargets: EdgeSpendTarget[] = []
+    const savedTargets: SavedSpendTargets = []
+    for (const target of spendTargets) {
+      const {
+        memo,
+        publicAddress,
+        nativeAmount = '0',
+        otherParams = {}
+      } = target
+      if (publicAddress == null) continue
+
+      cleanTargets.push({
+        memo,
+        nativeAmount,
+        otherParams,
+        publicAddress,
+        uniqueIdentifier: memo
+      })
+      savedTargets.push({
+        currencyCode: upgradedCurrency.currencyCode,
+        memo,
+        nativeAmount,
+        publicAddress,
+        uniqueIdentifier: memo
+      })
+    }
+
+    if (spendInfo.privateKeys != null) {
+      throw new TypeError('Only sweepPrivateKeys takes private keys')
+    }
+
+    // Only provide wallet info if currency requires it:
+    const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
+
+    const tx: EdgeTransaction = await makeEngineTx(
+      {
+        ...upgradedCurrency,
+        customNetworkFee,
+        enableRbf,
+        memos,
+        metadata,
+        networkFeeOption,
+        noUnconfirmed,
+        otherParams,
+        pendingTxs,
+        rbfTxid,
+        skipChecks,
+        spendTargets: cleanTargets
+      },
+      { privateKeys }
+    )
+
+    // For a max spend the engine owns the final amount, so backfill the saved
+    // target from the resulting transaction (the caller passed `0`):
+    if (isMaxSpend && savedTargets.length === 1) {
+      const sentNativeAmount =
+        tx.tokenId == null
+          ? sub(abs(tx.nativeAmount), tx.networkFee)
+          : abs(tx.nativeAmount)
+      savedTargets[0] = { ...savedTargets[0], nativeAmount: sentNativeAmount }
+    }
+
+    upgradeTxNetworkFees(tx)
+    tx.networkFeeOption = networkFeeOption
+    tx.requestedCustomFee = customNetworkFee
+    tx.spendTargets = savedTargets
+    tx.currencyCode = upgradedCurrency.currencyCode
+    tx.tokenId = upgradedCurrency.tokenId
+    if (metadata != null) tx.metadata = metadata
+    if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
+    if (savedAction != null) tx.savedAction = asEdgeTxAction(savedAction)
+    if (assetAction != null) tx.assetAction = asEdgeAssetAction(assetAction)
+    if (input.props.state.login.deviceInfo.deviceDescription != null)
+      tx.deviceDescription =
+        input.props.state.login.deviceInfo.deviceDescription
+
+    return tx
+  }
 
   const out: EdgeCurrencyWallet & InternalWalletMethods = {
     on: onMethod,
@@ -540,98 +659,44 @@ export function makeCurrencyWalletApi(
       return await engine.getPaymentProtocolInfo(paymentProtocolUrl)
     },
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-      spendInfo = upgradeMemos(spendInfo, plugin.currencyInfo)
-      const {
-        assetAction,
-        customNetworkFee,
-        enableRbf,
-        memos,
-        metadata,
-        networkFeeOption = 'standard',
-        noUnconfirmed = false,
-        otherParams,
-        pendingTxs,
-        rbfTxid,
-        savedAction,
-        skipChecks,
-        spendTargets = [],
-        swapData
-      } = spendInfo
-
-      // Figure out which asset this is:
-      const upgradedCurrency = upgradeCurrencyCode({
-        allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
-        currencyInfo: plugin.currencyInfo,
-        tokenId: spendInfo.tokenId
-      })
-
-      // Check the spend targets:
-      const cleanTargets: EdgeSpendTarget[] = []
-      const savedTargets: SavedSpendTargets = []
-      for (const target of spendTargets) {
-        const {
-          memo,
-          publicAddress,
-          nativeAmount = '0',
-          otherParams = {}
-        } = target
-        if (publicAddress == null) continue
-
-        cleanTargets.push({
-          memo,
-          nativeAmount,
-          otherParams,
-          publicAddress,
-          uniqueIdentifier: memo
-        })
-        savedTargets.push({
-          currencyCode: upgradedCurrency.currencyCode,
-          memo,
-          nativeAmount,
-          publicAddress,
-          uniqueIdentifier: memo
-        })
-      }
-
-      if (spendInfo.privateKeys != null) {
-        throw new TypeError('Only sweepPrivateKeys takes private keys')
-      }
-
-      // Only provide wallet info if currency requires it:
-      const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
-
-      const tx: EdgeTransaction = await engine.makeSpend(
-        {
-          ...upgradedCurrency,
-          customNetworkFee,
-          enableRbf,
-          memos,
-          metadata,
-          networkFeeOption,
-          noUnconfirmed,
-          otherParams,
-          pendingTxs,
-          rbfTxid,
-          skipChecks,
-          spendTargets: cleanTargets
-        },
-        { privateKeys }
+      return await makeSpendInner(
+        spendInfo,
+        async (engineSpendInfo, opts) =>
+          await engine.makeSpend(engineSpendInfo, opts)
       )
-      upgradeTxNetworkFees(tx)
-      tx.networkFeeOption = networkFeeOption
-      tx.requestedCustomFee = customNetworkFee
-      tx.spendTargets = savedTargets
-      tx.currencyCode = upgradedCurrency.currencyCode
-      tx.tokenId = upgradedCurrency.tokenId
-      if (metadata != null) tx.metadata = metadata
-      if (swapData != null) tx.swapData = asEdgeTxSwap(swapData)
-      if (savedAction != null) tx.savedAction = asEdgeTxAction(savedAction)
-      if (assetAction != null) tx.assetAction = asEdgeAssetAction(assetAction)
-      if (input.props.state.login.deviceInfo.deviceDescription != null)
-        tx.deviceDescription =
-          input.props.state.login.deviceInfo.deviceDescription
+    },
+    async makeMaxSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+      const { makeMaxSpend } = engine
+      if (makeMaxSpend != null) {
+        // The engine builds the max-spend transaction atomically:
+        return await makeSpendInner(
+          spendInfo,
+          async (engineSpendInfo, opts) =>
+            await makeMaxSpend(engineSpendInfo, opts),
+          true
+        )
+      }
 
-      return tx
+      // Fallback shim for engines without a native `makeMaxSpend`: compute the
+      // maximum spendable amount, then build a normal spend for that amount.
+      const maxNativeAmount = await getMaxSpendableInner(
+        spendInfo,
+        plugin,
+        engine,
+        input.props.state.accounts[accountId].allTokens[pluginId],
+        walletInfo
+      )
+      const maxSpendInfo: EdgeSpendInfo = {
+        ...spendInfo,
+        spendTargets: spendInfo.spendTargets.map((target, index) =>
+          index === 0 ? { ...target, nativeAmount: maxNativeAmount } : target
+        )
+      }
+      return await makeSpendInner(
+        maxSpendInfo,
+        async (engineSpendInfo, opts) =>
+          await engine.makeSpend(engineSpendInfo, opts)
+      )
     },
     async saveTx(transaction: EdgeTransaction): Promise<void> {
       if (input.props.walletState.txs[transaction.txid] == null) {

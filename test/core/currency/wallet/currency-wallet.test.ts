@@ -457,6 +457,28 @@ describe('currency wallets', function () {
     )
   })
 
+  it('can make max spend', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({ balance: 50 })
+
+    // The fake engine does not implement `makeMaxSpend`, so this exercises the
+    // core fallback shim (getMaxSpendable + makeSpend):
+    const tx = await wallet.makeMaxSpend({
+      tokenId: null,
+      spendTargets: [{ publicAddress: 'somewhere' }]
+    })
+    expect(tx.nativeAmount).equals('50')
+    expect(tx.spendTargets).deep.equals([
+      {
+        currencyCode: 'FAKE',
+        memo: undefined,
+        nativeAmount: '50',
+        publicAddress: 'somewhere',
+        uniqueIdentifier: undefined
+      }
+    ])
+  })
+
   it('converts number formats', async function () {
     const { wallet } = await makeFakeCurrencyWallet()
     expect(await wallet.denominationToNative('0.1', 'SMALL')).equals('1')

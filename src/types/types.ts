@@ -1121,6 +1121,15 @@ export interface EdgeCurrencyEngine {
     spendInfo: EdgeSpendInfo,
     opts?: EdgeEnginePrivateKeyOptions
   ) => Promise<EdgeTransaction>
+  /**
+   * Atomically builds a transaction that spends the maximum amount.
+   * Engines that don't implement this get a core fallback that combines
+   * `getMaxSpendable` and `makeSpend`.
+   */
+  readonly makeMaxSpend?: (
+    spendInfo: EdgeSpendInfo,
+    opts?: EdgeEnginePrivateKeyOptions
+  ) => Promise<EdgeTransaction>
   readonly signTx: (
     transaction: EdgeTransaction,
     privateKeys: JsonObject
@@ -1390,11 +1399,18 @@ export interface EdgeCurrencyWallet {
 
   // Sending:
   readonly broadcastTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
+  /** @deprecated Use `makeMaxSpend` to build a max-spend transaction. */
   readonly getMaxSpendable: (spendInfo: EdgeSpendInfo) => Promise<string>
   readonly getPaymentProtocolInfo: (
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>
   readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
+  /**
+   * Atomically builds a transaction that spends the maximum amount.
+   * Same signature as `makeSpend`. Always available: the core provides a
+   * fallback for engines that don't implement it natively.
+   */
+  readonly makeMaxSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
   readonly saveTx: (tx: EdgeTransaction) => Promise<void>
   readonly saveTxAction: (opts: EdgeSaveTxActionOptions) => Promise<void>
   readonly saveTxMetadata: (opts: EdgeSaveTxMetadataOptions) => Promise<void>
@@ -1476,8 +1492,10 @@ export interface EdgeMemoryWallet {
   readonly syncStatus: EdgeSyncStatus
   readonly changeEnabledTokenIds: (tokenIds: string[]) => Promise<void>
   readonly startEngine: () => Promise<void>
+  /** @deprecated Use `makeMaxSpend` to build a max-spend transaction. */
   readonly getMaxSpendable: (spendInfo: EdgeSpendInfo) => Promise<string>
   readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
+  readonly makeMaxSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
   readonly signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly broadcastTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly saveTx: (tx: EdgeTransaction) => Promise<void>
