@@ -96,7 +96,7 @@
     "rfc4648": "^1.5.3",
     "scrypt-js": "^2.0.3",
     "serverlet": "^0.1.2",
-    "yaob": "^0.3.12",
+    "yaob": "^0.4.0",
     "yavent": "^0.1.5"
   },
   "devDependencies": {
