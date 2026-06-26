@@ -3,7 +3,7 @@ import { makeLocalStorageDisklet } from 'disklet'
 import { LogBackend, makeLog } from '../../core/log/log'
 import { EdgeFetchOptions, EdgeFetchResponse, EdgeIo } from '../../types/types'
 import { scrypt } from '../../util/crypto/scrypt'
-import { initMixFetch, mixFetchOptions } from '../../util/nym'
+import { initMixFetch } from '../../util/nym'
 import { fetchCorsProxy } from './fetch-cors-proxy'
 
 // Only try CORS proxy/bridge techniques up to 5 times
@@ -50,14 +50,7 @@ export function makeBrowserIo(logBackend: LogBackend): EdgeIo {
 
       if (privacy === 'nym') {
         const nymFetch = await initMixFetch(log)
-        return await nymFetch(
-          uri,
-          {
-            ...opts,
-            mode: 'unsafe-ignore-cors' as RequestMode
-          },
-          mixFetchOptions
-        )
+        return await nymFetch(uri, opts)
       }
       if (corsBypass === 'always') {
         return await fetchCorsProxy(uri, opts)
