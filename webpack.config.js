@@ -92,29 +92,14 @@ module.exports = {
   plugins: [
     new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),
     new webpack.ProvidePlugin({ process: ['process'] }),
-    // Copy static files and mix-fetch WASM/worker files
+    // Copy static files. mix-fetch v2 inlines its WASM + worker into the ESM
+    // bundle, so there are no sibling assets to copy.
     new CopyPlugin({
       patterns: [
         // HTML entry point
         {
           from: path.resolve(__dirname, 'src/index.html'),
           to: 'index.html'
-        },
-        // mix-fetch WASM files for NYM mixnet support
-        {
-          from: path.resolve(
-            __dirname,
-            'node_modules/@nymproject/mix-fetch/*.wasm'
-          ),
-          to: '[name][ext]'
-        },
-        // mix-fetch web worker files
-        {
-          from: path.resolve(
-            __dirname,
-            'node_modules/@nymproject/mix-fetch/web-worker-*.js'
-          ),
-          to: '[name][ext]'
         }
       ]
     })

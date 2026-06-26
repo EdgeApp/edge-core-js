@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Upgrade `@nymproject/mix-fetch` to v2, which routes NYM mixnet traffic through the new smolmix-wasm tunnel (`@nymproject/mix-tunnel`). The v2 wasm + worker are inlined into the bundle, so the build no longer copies sibling `.wasm`/`web-worker-*.js` assets.
+
 ## 2.46.0 (2026-06-18)
 
 - added: `EdgeCurrencyWallet.walletSettings` and `EdgeCurrencyWallet.changeWalletSettings`, plus matching engine plumbing.
