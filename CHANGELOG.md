@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Upgrade yaob to v0.4.0 to share a single bridge instance with currency plugins (mismatched yaob copies give the bridge separate object-id counters that cross-wire bridged nativeIo objects).
+
 ## 2.46.0 (2026-06-18)
 
 - added: `EdgeCurrencyWallet.walletSettings` and `EdgeCurrencyWallet.changeWalletSettings`, plus matching engine plumbing.
