@@ -14,10 +14,13 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeSwapRequestOptions
+  EdgeSwapRequestOptions,
+  EdgeSwapToAddressInfo
 } from '../../types/types'
 import { fuzzyTimeout, timeout } from '../../util/promise'
+import { CurrencyConfig } from '../account/plugin-api'
 import { ApiInput } from '../root-pixie'
+import { makeSyntheticDestinationWallet } from './synthetic-wallet'
 
 /**
  * Fetch quotes from all plugins, and sorts the best ones to the front.
@@ -41,12 +44,24 @@ export async function fetchSwapQuotes(
   const { swapSettings, userSettings } = account
   const swapPlugins = state.plugins.swap
 
+  // Resolve the destination. A normal swap provides `toWallet`; a
+  // swap-to-address (private send) request provides `toAddressInfo` instead, and
+  // the core builds a synthetic destination wallet from it so plugins receive an
+  // `EdgeCurrencyWallet` unchanged.
+  const swapRequest = resolveSwapRequest(ai, accountId, request)
+
   log.warn(
     'Requesting swap quotes for: ',
     {
-      ...request,
-      fromWallet: request.fromWallet.id,
-      toWallet: request.toWallet.id
+      ...swapRequest,
+      fromWallet: swapRequest.fromWallet.id,
+      toWallet: swapRequest.toWallet?.id,
+      // Never log the pasted destination address or its memos
+      // (private-send privacy):
+      toAddressInfo:
+        swapRequest.toAddressInfo == null
+          ? undefined
+          : redactToAddressInfo(swapRequest.toAddressInfo)
     },
     { preferPluginId, promoCodes }
   )
@@ -63,14 +78,24 @@ export async function fetchSwapQuotes(
     pendingIds.add(pluginId)
     promises.push(
       swapPlugins[pluginId]
-        .fetchSwapQuote(request, userSettings[pluginId], {
+        .fetchSwapQuote(swapRequest, userSettings[pluginId], {
           infoPayload: state.infoCache.corePlugins?.[pluginId] ?? {},
           promoCode: promoCodes[pluginId]
         })
         .then(
           quote => {
             upgradeSwapQuote(quote)
-            const { fromWallet, toWallet, ...request } = quote.request ?? {}
+            const { fromWallet, toWallet, toAddressInfo, ...rest } =
+              quote.request ?? {}
+            // Never log the pasted destination address or its memos
+            // (private-send privacy):
+            const request =
+              toAddressInfo == null
+                ? rest
+                : {
+                    ...rest,
+                    toAddressInfo: redactToAddressInfo(toAddressInfo)
+                  }
             const cleaned = { ...quote, request }
             pendingIds.delete(pluginId)
             log.warn(`${pluginId} gave swap quote:`, cleaned)
@@ -86,12 +111,12 @@ export async function fetchSwapQuotes(
                 swapPluginId: pluginId,
                 request: {
                   // Stringify to include "null"
-                  fromToken: String(request.fromTokenId),
-                  fromWalletType: request.fromWallet.type,
+                  fromToken: String(swapRequest.fromTokenId),
+                  fromWalletType: swapRequest.fromWallet.type,
                   // Stringify to include "null"
-                  toToken: String(request.toTokenId),
-                  toWalletType: request.toWallet.type,
-                  quoteFor: request.quoteFor
+                  toToken: String(swapRequest.toTokenId),
+                  toWalletType: swapRequest.toWallet?.type,
+                  quoteFor: swapRequest.quoteFor
                 }
               })
             }
@@ -117,7 +142,7 @@ export async function fetchSwapQuotes(
       )
 
       // Prepare quotes for the bridge:
-      return quotes.map(quote => wrapQuote(swapPlugins, request, quote))
+      return quotes.map(quote => wrapQuote(swapPlugins, swapRequest, quote))
     },
     (errors: unknown[]) => {
       log.warn(`All ${promises.length} swap quotes rejected.`)
@@ -127,6 +152,69 @@ export async function fetchSwapQuotes(
 
   if (noResponseMs == null) return await promise
   return await timeout(promise, noResponseMs)
+}
+
+/**
+ * Strips the private pieces (destination address and memos) out of a
+ * `toAddressInfo` descriptor so it can be logged.
+ */
+function redactToAddressInfo(
+  toAddressInfo: EdgeSwapToAddressInfo
+): EdgeSwapToAddressInfo {
+  const { toMemos } = toAddressInfo
+  return {
+    ...toAddressInfo,
+    toAddress: '[redacted]',
+    toMemos:
+      toMemos == null
+        ? undefined
+        : toMemos.map(memo => ({ ...memo, value: '[redacted]' }))
+  }
+}
+
+/**
+ * Validates the destination on a swap request and resolves it to a request that
+ * always carries a `toWallet`. Exactly one of `toWallet` or `toAddressInfo` must
+ * be present; when it is `toAddressInfo`, a synthetic destination wallet is built
+ * core-side from the descriptor.
+ */
+function resolveSwapRequest(
+  ai: ApiInput,
+  accountId: string,
+  request: EdgeSwapRequest
+): EdgeSwapRequest {
+  const { toWallet, toAddressInfo } = request
+
+  if ((toWallet == null) === (toAddressInfo == null)) {
+    throw new Error(
+      'Swap request must include exactly one of `toWallet` or `toAddressInfo`'
+    )
+  }
+  if (toAddressInfo == null) return request
+
+  const { toPluginId, toAddress, toMemos } = toAddressInfo
+  const { toTokenId } = request
+  if (ai.props.state.plugins.currency[toPluginId] == null) {
+    throw new Error(
+      `Cannot build swap destination: no currency plugin "${toPluginId}"`
+    )
+  }
+  const currencyConfig = new CurrencyConfig(ai, accountId, toPluginId)
+  if (toTokenId != null && currencyConfig.allTokens[toTokenId] == null) {
+    throw new Error(
+      `Cannot build swap destination: no token "${toTokenId}" on plugin "${toPluginId}"`
+    )
+  }
+
+  // Drop the descriptor from the resolved request so it keeps exactly one
+  // destination: a resolved request that rides back to the caller inside
+  // `quote.request` must be re-submittable without tripping the
+  // exactly-one-of rule above.
+  return {
+    ...request,
+    toAddressInfo: undefined,
+    toWallet: makeSyntheticDestinationWallet(currencyConfig, toAddress, toMemos)
+  }
 }
 
 function wrapQuote(

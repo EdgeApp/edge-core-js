@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: Accept an optional `toAddressInfo` descriptor on `EdgeSwapRequest` as an alternative to `toWallet`, so a swap can target a pasted destination address. The core builds a synthetic, bridgified destination wallet from the descriptor, backed by the real `currencyConfig`, leaving swap plugins unchanged. Exactly one of `toWallet` or `toAddressInfo` is required.
+- added: Optional `toMemos` on `EdgeSwapToAddressInfo` for memo-required payout chains (e.g. an XRP destination tag). Swap plugins read the memos off the synthetic destination wallet's `getMemos` method (`EdgeSyntheticDestinationWallet`), never off the descriptor.
+- changed: Make `EdgeTxActionSwap.payoutWalletId` and `EdgeTxSwap.payoutWalletId` optional, since a swap-to-address destination has no payout wallet (`payoutAddress` carries the destination).
+
 ## 2.46.1 (2026-06-29)
 
 - changed: Upgrade yaob to v0.4.0 to share a single bridge instance with currency plugins (mismatched yaob copies give the bridge separate object-id counters that cross-wire bridged nativeIo objects).

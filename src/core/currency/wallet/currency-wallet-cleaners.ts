@@ -146,7 +146,7 @@ export const asEdgeTxSwap = asObject<EdgeTxSwap>({
   payoutCurrencyCode: asString,
   payoutTokenId: asOptional(asEdgeTokenId),
   payoutNativeAmount: asString,
-  payoutWalletId: asString,
+  payoutWalletId: asOptional(asString),
   refundAddress: asOptional(asString)
 })
 
@@ -190,7 +190,7 @@ export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
   canBePartial: asOptional(asBoolean),
   fromAsset: asEdgeAssetAmount,
   toAsset: asEdgeAssetAmount,
-  payoutWalletId: asString,
+  payoutWalletId: asOptional(asString),
   payoutAddress: asString,
   refundAddress: asOptional(asString)
 })
