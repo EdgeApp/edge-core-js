@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Upgrade `@nymproject/mix-fetch` to v2, which routes NYM mixnet traffic through the new smolmix-wasm tunnel (`@nymproject/mix-tunnel`). The v2 wasm + worker are inlined into the bundle, so the build no longer copies sibling `.wasm`/`web-worker-*.js` assets.
+
 ## 2.46.1 (2026-06-29)
 
 - changed: Upgrade yaob to v0.4.0 to share a single bridge instance with currency plugins (mismatched yaob copies give the bridge separate object-id counters that cross-wire bridged nativeIo objects).
