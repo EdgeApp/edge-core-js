@@ -22,6 +22,16 @@ export const mixFetchOptions: SetupMixFetchOps = {
   }
 }
 
+/**
+ * Budget for `createMixFetch` itself (client start + gateway handshake).
+ *
+ * A healthy setup with the pinned gateway completes in under 10s measured.
+ * Without a bound here the whole app blocks on the first mixnet request for
+ * as long as a dead gateway keeps us waiting, which reads to the user as a
+ * freeze.
+ */
+const SETUP_TIMEOUT_MS = 60000
+
 // MixFetch initialization state
 let mixFetchInitPromise: Promise<IMixFetch> | null = null
 
@@ -32,7 +42,23 @@ let mixFetchInitPromise: Promise<IMixFetch> | null = null
 export async function initMixFetch(log: EdgeLog): Promise<IMixFetchFn> {
   if (mixFetchInitPromise == null) {
     log('Initializing mixFetch...')
-    mixFetchInitPromise = createMixFetch(mixFetchOptions)
+    const pending = createMixFetch(mixFetchOptions)
+    // The timeout below can abandon this setup while it is still in flight.
+    // Deliberately do NOT tear it down on late completion: `createMixFetch`
+    // resolves to a healthy global singleton, and disconnecting it (a
+    // process-wide operation) would race a newer init that has taken over.
+    // A late completion just repopulates `__mixFetchGlobal`, which the next
+    // init reuses. Swallow a late rejection so it is not unhandled.
+    pending.catch(() => {})
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<never>((resolve, reject) => {
+      timer = setTimeout(() => {
+        reject(
+          new Error(`mixFetch setup timed out after ${SETUP_TIMEOUT_MS}ms`)
+        )
+      }, SETUP_TIMEOUT_MS)
+    })
+    mixFetchInitPromise = Promise.race([pending, timeout])
       .then(mixFetchModule => {
         log('mixFetch initialized successfully')
         return mixFetchModule
@@ -49,6 +75,9 @@ export async function initMixFetch(log: EdgeLog): Promise<IMixFetchFn> {
         mixFetchInitPromise = null
         log.error('mixFetch initialization failed:', error)
         throw error
+      })
+      .finally(() => {
+        clearTimeout(timer)
       })
   }
   const mixFetchModule = await mixFetchInitPromise
