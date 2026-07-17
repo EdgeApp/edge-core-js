@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fixed: Revert `@nymproject/mix-fetch` to v1 (1.4.4), restoring the pinned gateway and network requester. The v2 stack shipped in 2.47.0 fails to complete small HTTPS JSON-RPC requests through most exit nodes and its exit-node auto-discovery rarely converges, which left wallets with NYM privacy enabled unable to sync or send.
+- fixed: Bound the NYM mixFetch setup at 60 seconds, so a dead gateway surfaces an error instead of blocking the first mixnet request indefinitely.
+
 ## 2.47.0 (2026-07-11)
 
 - changed: Upgrade `@nymproject/mix-fetch` to v2, which routes NYM mixnet traffic through the new smolmix-wasm tunnel (`@nymproject/mix-tunnel`). The v2 wasm + worker are inlined into the bundle, so the build no longer copies sibling `.wasm`/`web-worker-*.js` assets.
