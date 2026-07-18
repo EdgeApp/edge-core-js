@@ -25,6 +25,7 @@ import {
   EdgeEncodeUri,
   EdgeGetReceiveAddressOptions,
   EdgeGetTransactionsOptions,
+  EdgeOtherMethods,
   EdgeParsedUri,
   EdgePaymentProtocolInfo,
   EdgeReceiveAddress,
@@ -45,9 +46,15 @@ import {
 } from '../../../types/types'
 import { makeMetaTokens } from '../../account/custom-tokens'
 import { splitWalletInfo } from '../../login/splitting'
-import { toApiInput } from '../../root-pixie'
+import { asEdgeStorageKeys } from '../../login/storage-keys'
+import { getCurrencyTools } from '../../plugins/plugins-selectors'
+import { RootProps, toApiInput } from '../../root-pixie'
+import { makeLocalDisklet, makeRepoPaths } from '../../storage/repo'
 import { makeStorageWalletApi } from '../../storage/storage-api'
-import { getCurrencyMultiplier } from '../currency-selectors'
+import {
+  checkCurrencyWallet,
+  getCurrencyMultiplier
+} from '../currency-selectors'
 import {
   determineConfirmations,
   makeCurrencyWalletCallbacks,
@@ -92,36 +99,97 @@ type SavedSpendTargets = EdgeTransaction['spendTargets']
  */
 export function makeCurrencyWalletApi(
   input: CurrencyWalletInput,
-  engine: EdgeCurrencyEngine,
-  tools: EdgeCurrencyTools,
   publicWalletInfo: EdgeWalletInfo
 ): EdgeCurrencyWallet {
   const ai = toApiInput(input)
+  const { walletId } = input.props
   const { accountId, pluginId, walletInfo } = input.props.walletState
   const plugin = input.props.state.plugins.currency[pluginId]
   const { unsafeBroadcastTx = false, unsafeMakeSpend = false } =
     plugin.currencyInfo
 
+  /**
+   * The wallet API object exists before the engine does,
+   * so engine-backed methods wait for the engine internally.
+   * Bail out if the wallet is deleted mid-wait, and re-throw
+   * `engineFailure` so a broken plugin surfaces as a rejected
+   * method call instead of a hang.
+   */
+  function getEngine(): Promise<EdgeCurrencyEngine> {
+    return ai.waitFor((props: RootProps): EdgeCurrencyEngine | undefined => {
+      checkCurrencyWallet(props, walletId)
+      return props.output.currency.wallets[walletId]?.engine
+    })
+  }
+
+  async function getTools(): Promise<EdgeCurrencyTools> {
+    return await getCurrencyTools(ai, pluginId)
+  }
+
+  /**
+   * Methods that write synced-repo files need the storage wallet,
+   * not the engine. The repo loads well before the engine,
+   * so this wait is much shorter than `getEngine`.
+   * A ready repo always wins: an unrelated engine failure must not
+   * break storage-backed methods, so the failure check only matters
+   * while the repo is still missing (the engine pixie died before
+   * `addStorageWallet`, so the repo is never coming).
+   */
+  function getStorage(): Promise<true> {
+    return ai.waitFor((props: RootProps): true | undefined => {
+      if (props.state.storageWallets[walletId] != null) return true
+      checkCurrencyWallet(props, walletId)
+    })
+  }
+
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
+
+  // The storage-wallet state provides the disklets once the repo loads,
+  // but the wallet API can emit slightly earlier from the UI-state cache,
+  // so lazily build the identical disklets as a synchronous fallback:
+  let fallbackDisklets: { disklet: Disklet; localDisklet: Disklet } | undefined
+  function getFallbackDisklets(): { disklet: Disklet; localDisklet: Disklet } {
+    if (fallbackDisklets == null) {
+      const { io } = ai.props
+      const localDisklet = makeLocalDisklet(io, walletId)
+      bridgifyObject(localDisklet)
+      fallbackDisklets = {
+        disklet: makeRepoPaths(io, asEdgeStorageKeys(walletInfo.keys)).disklet,
+        localDisklet
+      }
+    }
+    return fallbackDisklets
+  }
 
   const fakeCallbacks = makeCurrencyWalletCallbacks(input)
 
-  const otherMethods: { [name: string]: (...args: any[]) => any } = {}
-  if (engine.otherMethods != null) {
-    for (const name of Object.keys(engine.otherMethods)) {
-      const method = engine.otherMethods[name]
-      if (typeof method !== 'function') continue
-      otherMethods[name] = method
+  // The core guarantees `otherMethods` is `{}` (never `undefined`) before
+  // the engine exists, so property probes stay safe on the GUI side.
+  // Once the engine lands, the pixie watcher's `update` propagates the
+  // engine's bridgified methods through the same getter:
+  const emptyOtherMethods = bridgifyObject({})
+  let engineOtherMethods: EdgeOtherMethods | undefined
+
+  function makeEngineOtherMethods(
+    engine: EdgeCurrencyEngine
+  ): EdgeOtherMethods {
+    const otherMethods: { [name: string]: (...args: any[]) => any } = {}
+    if (engine.otherMethods != null) {
+      for (const name of Object.keys(engine.otherMethods)) {
+        const method = engine.otherMethods[name]
+        if (typeof method !== 'function') continue
+        otherMethods[name] = method
+      }
     }
-  }
-  if (engine.otherMethodsWithKeys != null) {
-    for (const name of Object.keys(engine.otherMethodsWithKeys)) {
-      const method = engine.otherMethodsWithKeys[name]
-      if (typeof method !== 'function') continue
-      otherMethods[name] = (...args) => method(walletInfo.keys, ...args)
+    if (engine.otherMethodsWithKeys != null) {
+      for (const name of Object.keys(engine.otherMethodsWithKeys)) {
+        const method = engine.otherMethodsWithKeys[name]
+        if (typeof method !== 'function') continue
+        otherMethods[name] = (...args) => method(walletInfo.keys, ...args)
+      }
     }
+    return bridgifyObject(otherMethods)
   }
-  bridgifyObject(otherMethods)
 
   const out: EdgeCurrencyWallet & InternalWalletMethods = {
     on: onMethod,
@@ -132,6 +200,9 @@ export function makeCurrencyWalletApi(
       return walletInfo.created
     },
     get disklet(): Disklet {
+      if (input.props.state.storageWallets[walletId] == null) {
+        return getFallbackDisklets().disklet
+      }
       return storageWalletApi.disklet
     },
     get id(): string {
@@ -141,10 +212,18 @@ export function makeCurrencyWalletApi(
       return walletInfo.imported === true
     },
     get localDisklet(): Disklet {
+      if (input.props.state.storageWallets[walletId] == null) {
+        return getFallbackDisklets().localDisklet
+      }
       return storageWalletApi.localDisklet
     },
-    publicWalletInfo,
+    get publicWalletInfo(): EdgeWalletInfo {
+      // The cache-loaded value may be upgraded (re-derived) later,
+      // so always serve the latest one from Redux:
+      return input.props.walletState.publicWalletInfo ?? publicWalletInfo
+    },
     async sync(): Promise<void> {
+      await getStorage()
       await storageWalletApi.sync()
     },
     get type(): string {
@@ -156,6 +235,7 @@ export function makeCurrencyWalletApi(
       return input.props.walletState.name
     },
     async renameWallet(name: string): Promise<void> {
+      await getStorage()
       await renameCurrencyWallet(input, name)
     },
 
@@ -164,6 +244,7 @@ export function makeCurrencyWalletApi(
       return input.props.walletState.fiat
     },
     async setFiatCurrencyCode(fiatCurrencyCode: string): Promise<void> {
+      await getStorage()
       await setCurrencyWalletFiat(input, fiatCurrencyCode)
     },
 
@@ -206,6 +287,7 @@ export function makeCurrencyWalletApi(
       if (input.props.walletState.currencyInfo.hasWalletSettings !== true) {
         throw new Error('Wallet settings unsupported')
       }
+      await getStorage()
       await saveWalletSettingsFile(input, settings)
     },
 
@@ -270,6 +352,7 @@ export function makeCurrencyWalletApi(
 
     // Transactions history:
     async getNumTransactions(opts: EdgeTokenIdOptions): Promise<number> {
+      const engine = await getEngine()
       const upgradedCurrency = upgradeCurrencyCode({
         allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
         currencyInfo: plugin.currencyInfo,
@@ -282,6 +365,7 @@ export function makeCurrencyWalletApi(
     async $internalStreamTransactions(
       opts: EdgeStreamTransactionOptions
     ): Promise<InternalWalletStream> {
+      const engine = await getEngine()
       const {
         afterDate,
         batchSize = 10,
@@ -416,6 +500,7 @@ export function makeCurrencyWalletApi(
     async getAddresses(
       opts: EdgeGetReceiveAddressOptions
     ): Promise<EdgeAddress[]> {
+      const engine = await getEngine()
       if (engine.getAddresses != null) {
         return await engine.getAddresses(opts)
       } else {
@@ -515,12 +600,15 @@ export function makeCurrencyWalletApi(
 
     // Sending:
     async broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
+      const engine = await getEngine()
+
       // Only provide wallet info if currency requires it:
       const privateKeys = unsafeBroadcastTx ? walletInfo.keys : undefined
 
       return await engine.broadcastTx(tx, { privateKeys })
     },
     async getMaxSpendable(spendInfo: EdgeSpendInfo): Promise<string> {
+      const engine = await getEngine()
       return await getMaxSpendableInner(
         spendInfo,
         plugin,
@@ -532,6 +620,7 @@ export function makeCurrencyWalletApi(
     async getPaymentProtocolInfo(
       paymentProtocolUrl: string
     ): Promise<EdgePaymentProtocolInfo> {
+      const engine = await getEngine()
       if (engine.getPaymentProtocolInfo == null) {
         throw new Error(
           "'getPaymentProtocolInfo' is not implemented on wallets of this type"
@@ -540,6 +629,7 @@ export function makeCurrencyWalletApi(
       return await engine.getPaymentProtocolInfo(paymentProtocolUrl)
     },
     async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+      const engine = await getEngine()
       spendInfo = upgradeMemos(spendInfo, plugin.currencyInfo)
       const {
         assetAction,
@@ -634,6 +724,7 @@ export function makeCurrencyWalletApi(
       return tx
     },
     async saveTx(transaction: EdgeTransaction): Promise<void> {
+      const engine = await getEngine()
       if (input.props.walletState.txs[transaction.txid] == null) {
         const { fileName, txFile } = await setupNewTxMetadata(
           input,
@@ -653,6 +744,7 @@ export function makeCurrencyWalletApi(
     },
 
     async saveTxAction(opts): Promise<void> {
+      await getEngine()
       const { txid, tokenId, assetAction, savedAction } = opts
       await updateCurrencyWalletTxMetadata(
         input,
@@ -666,6 +758,7 @@ export function makeCurrencyWalletApi(
     },
 
     async saveTxMetadata(opts: EdgeSaveTxMetadataOptions): Promise<void> {
+      await getEngine()
       const { txid, tokenId, metadata } = opts
 
       await updateCurrencyWalletTxMetadata(
@@ -681,6 +774,7 @@ export function makeCurrencyWalletApi(
       bytes: Uint8Array,
       opts: EdgeSignMessageOptions = {}
     ): Promise<string> {
+      const engine = await getEngine()
       const privateKeys = walletInfo.keys
 
       if (engine.signBytes != null) {
@@ -706,6 +800,7 @@ export function makeCurrencyWalletApi(
       message: string,
       opts: EdgeSignMessageOptions = {}
     ): Promise<string> {
+      const engine = await getEngine()
       if (engine.signMessage == null) {
         throw new Error(`${pluginId} doesn't support signing messages`)
       }
@@ -713,11 +808,13 @@ export function makeCurrencyWalletApi(
       return await engine.signMessage(message, privateKeys, opts)
     },
     async signTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
+      const engine = await getEngine()
       const privateKeys = walletInfo.keys
 
       return await engine.signTx(tx, privateKeys)
     },
     async sweepPrivateKeys(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+      const engine = await getEngine()
       if (engine.sweepPrivateKeys == null) {
         throw new Error('Sweeping this currency is not supported.')
       }
@@ -726,6 +823,7 @@ export function makeCurrencyWalletApi(
 
     // Accelerating:
     async accelerate(tx: EdgeTransaction): Promise<EdgeTransaction | null> {
+      const engine = await getEngine()
       if (engine.accelerate == null) return null
       return await engine.accelerate(tx)
     },
@@ -737,9 +835,11 @@ export function makeCurrencyWalletApi(
 
     // Wallet management:
     async dumpData(): Promise<EdgeDataDump> {
+      const engine = await getEngine()
       return await engine.dumpData()
     },
     async resyncBlockchain(): Promise<void> {
+      const engine = await getEngine()
       const shortId = input.props.walletId.slice(0, 2)
       input.props.log.warn(`enabledTokenIds: ${shortId} resyncBlockchain`)
       ai.props.dispatch({
@@ -764,6 +864,7 @@ export function makeCurrencyWalletApi(
 
     // URI handling:
     async encodeUri(options: EdgeEncodeUri): Promise<string> {
+      const tools = await getTools()
       return await tools.encodeUri(
         options,
         makeMetaTokens(
@@ -772,6 +873,7 @@ export function makeCurrencyWalletApi(
       )
     },
     async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
+      const tools = await getTools()
       const parsedUri = await tools.parseUri(
         uri,
         currencyCode,
@@ -792,7 +894,14 @@ export function makeCurrencyWalletApi(
     },
 
     // Generic:
-    otherMethods
+    get otherMethods(): EdgeOtherMethods {
+      const engine = input.props.walletOutput?.engine
+      if (engine == null) return emptyOtherMethods
+      if (engineOtherMethods == null) {
+        engineOtherMethods = makeEngineOtherMethods(engine)
+      }
+      return engineOtherMethods
+    }
   }
 
   return bridgifyObject(out)

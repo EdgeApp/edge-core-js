@@ -10,6 +10,7 @@ import {
 import { update } from 'yaob'
 
 import {
+  EdgeBalanceMap,
   EdgeCurrencyEngine,
   EdgeCurrencyTools,
   EdgeCurrencyWallet,
@@ -24,6 +25,7 @@ import { makeTokenInfo } from '../../account/custom-tokens'
 import { makeLog } from '../../log/log'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
+import { makeLocalDisklet } from '../../storage/repo'
 import {
   addStorageWallet,
   SYNC_INTERVAL,
@@ -38,7 +40,11 @@ import {
   makeCurrencyWalletCallbacks,
   watchCurrencyWallet
 } from './currency-wallet-callbacks'
-import { asIntegerString, asPublicKeyFile } from './currency-wallet-cleaners'
+import {
+  asIntegerString,
+  asPublicKeyFile,
+  WalletCacheFile
+} from './currency-wallet-cleaners'
 import {
   loadAddressFiles,
   loadFiatFile,
@@ -55,6 +61,11 @@ import {
   initialWalletSettings
 } from './currency-wallet-reducer'
 import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
+import {
+  WALLET_CACHE_FILE,
+  walletCacheFile,
+  walletCacheSaverConfig
+} from './wallet-cache-file'
 
 export interface CurrencyWalletOutput {
   readonly walletApi: EdgeCurrencyWallet | undefined
@@ -82,8 +93,42 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     const { currencyCode } = plugin.currencyInfo
 
     try {
-      // Start the data sync:
       const ai = toApiInput(input)
+
+      // Load the UI-state cache before the storage-wallet sync,
+      // so a previously-seen wallet can emit its API object right away.
+      // If either file is missing or invalid (first login, schema bump,
+      // corruption), skip the dispatch and fall through to the cold path:
+      const cacheDisklet = makeLocalDisklet(input.props.io, walletInfo.id)
+      const [publicKeyCache, walletCache] = await Promise.all([
+        publicKeyFile.load(cacheDisklet, PUBLIC_KEY_CACHE),
+        walletCacheFile.load(cacheDisklet, WALLET_CACHE_FILE)
+      ])
+      if (publicKeyCache != null && walletCache != null) {
+        const balanceMap: EdgeBalanceMap = new Map()
+        for (const tokenId of Object.keys(walletCache.balances)) {
+          balanceMap.set(
+            tokenId === '' ? null : tokenId,
+            walletCache.balances[tokenId]
+          )
+        }
+        input.props.dispatch({
+          type: 'CURRENCY_WALLET_PUBLIC_INFO',
+          payload: { walletInfo: publicKeyCache.walletInfo, walletId }
+        })
+        input.props.dispatch({
+          type: 'CURRENCY_WALLET_CACHE_LOADED',
+          payload: {
+            balanceMap,
+            enabledTokenIds: walletCache.enabledTokenIds,
+            fiatCurrencyCode: walletCache.fiatCurrencyCode,
+            name: walletCache.name,
+            walletId
+          }
+        })
+      }
+
+      // Start the data sync:
       await addStorageWallet(ai, walletInfo)
 
       // Grab the freshly-synced repos:
@@ -202,19 +247,11 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
   // Creates the API object:
   walletApi: (input: CurrencyWalletInput) => async () => {
-    const { walletOutput, walletState } = input.props
-    if (walletOutput == null) return
-    const { engine } = walletOutput
-    const { nameLoaded, pluginId, publicWalletInfo } = walletState
-    if (engine == null || publicWalletInfo == null || !nameLoaded) return
-    const tools = await getCurrencyTools(toApiInput(input), pluginId)
+    const { walletState } = input.props
+    const { nameLoaded, publicWalletInfo } = walletState
+    if (publicWalletInfo == null || !nameLoaded) return
 
-    const currencyWalletApi = makeCurrencyWalletApi(
-      input,
-      engine,
-      tools,
-      publicWalletInfo
-    )
+    const currencyWalletApi = makeCurrencyWalletApi(input, publicWalletInfo)
     input.onOutput(currencyWalletApi)
 
     return await stopUpdates
@@ -469,6 +506,100 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         await snooze(100) // Rate limiting
       }
       lastEnabledTokenIds = enabledTokenIds
+    }
+  },
+
+  /**
+   * Watches the wallet's cache-relevant Redux state and persists it to
+   * `walletCache.json`, so the next login can render this wallet before
+   * its engine exists. Writes are throttled to at most one per wallet per
+   * `walletCacheSaverConfig.throttleMs` (trailing edge), never happen
+   * after logout, and stop after 3 consecutive failures to avoid log spam.
+   */
+  cacheSaver(input: CurrencyWalletInput) {
+    interface CacheSnapshot {
+      balanceMap: EdgeBalanceMap
+      enabledTokenIds: string[]
+      fiat: string
+      name: string | null
+    }
+
+    let failures = 0
+    let lastSaved: CacheSnapshot | undefined
+    let timer: ReturnType<typeof setTimeout> | undefined
+
+    async function doSave(): Promise<void> {
+      timer = undefined
+      const { state, walletId, walletState } = input.props
+
+      // Never write after logout:
+      if (state.accounts[walletState.accountId] == null) return
+
+      const snapshot: CacheSnapshot = {
+        balanceMap: walletState.balanceMap,
+        enabledTokenIds: walletState.enabledTokenIds,
+        fiat: walletState.fiat,
+        name: walletState.name
+      }
+      const balances: WalletCacheFile['balances'] = {}
+      for (const [tokenId, balance] of snapshot.balanceMap) {
+        balances[tokenId ?? ''] = balance
+      }
+
+      try {
+        await walletCacheFile.save(
+          makeLocalDisklet(input.props.io, walletId),
+          WALLET_CACHE_FILE,
+          {
+            version: 1,
+            name: snapshot.name,
+            fiatCurrencyCode: snapshot.fiat,
+            enabledTokenIds: snapshot.enabledTokenIds,
+            balances
+          }
+        )
+        failures = 0
+        lastSaved = snapshot
+      } catch (error: unknown) {
+        if (++failures >= 3) {
+          input.props.log.error(
+            `Wallet cache saver giving up after ${failures} failures: ${String(
+              error
+            )}`
+          )
+        }
+      }
+    }
+
+    return {
+      update() {
+        const { walletState } = input.props
+        if (walletState == null) return
+        if (failures >= 3 || timer != null) return
+
+        // Wait until the authoritative files have loaded,
+        // so a cold start never caches placeholder values:
+        const { fiatLoaded, nameLoaded, tokenFileLoaded } = walletState
+        if (!fiatLoaded || !nameLoaded || !tokenFileLoaded) return
+
+        if (
+          lastSaved != null &&
+          lastSaved.balanceMap === walletState.balanceMap &&
+          lastSaved.enabledTokenIds === walletState.enabledTokenIds &&
+          lastSaved.fiat === walletState.fiat &&
+          lastSaved.name === walletState.name
+        ) {
+          return
+        }
+
+        timer = setTimeout(() => {
+          doSave().catch(error => input.props.onError(error))
+        }, walletCacheSaverConfig.throttleMs)
+      },
+
+      destroy() {
+        if (timer != null) clearTimeout(timer)
+      }
     }
   },
 

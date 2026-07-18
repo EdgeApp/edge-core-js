@@ -192,8 +192,11 @@ const currencyWalletInner = buildReducer<
   ),
 
   enabledTokenIds: sortStringsReducer(
-    (state = initialTokenIds, action): string[] => {
+    (state = initialTokenIds, action, next, prev): string[] => {
       if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
+        // Unsaved user changes win over the file we just loaded,
+        // and stay dirty, so the tokenSaver writes them back out:
+        if (prev?.self.tokenFileDirty === true) return state
         return action.payload.enabledTokenIds
       } else if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
         return action.payload.enabledTokenIds
@@ -226,6 +229,10 @@ const currencyWalletInner = buildReducer<
   tokenFileDirty(state = false, action, next, prev): boolean {
     switch (action.type) {
       case 'CURRENCY_WALLET_LOADED_TOKEN_FILE':
+        // Stay dirty if the user changed tokens before the file loaded,
+        // so the tokenSaver writes those changes back out:
+        return state
+
       case 'CURRENCY_WALLET_SAVED_TOKEN_FILE':
         // The file has been synced to disk, so it's not dirty:
         return false
@@ -583,12 +590,14 @@ export function mergeTx(
 
 type StringsReducer = (
   state: string[] | undefined,
-  action: RootAction
+  action: RootAction,
+  next?: CurrencyWalletNext,
+  prev?: CurrencyWalletNext
 ) => string[]
 
 function sortStringsReducer(reducer: StringsReducer): StringsReducer {
-  return (state, action) => {
-    const out = reducer(state, action)
+  return (state, action, next, prev) => {
+    const out = reducer(state, action, next, prev)
     if (out === state) return state
 
     out.sort((a, b) => (a === b ? 0 : a > b ? 1 : -1))
