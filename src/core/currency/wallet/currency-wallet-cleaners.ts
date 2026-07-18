@@ -403,6 +403,30 @@ export const asPublicKeyFile = asObject({
 })
 
 /**
+ * Cached wallet UI state, stored in the wallet's local storage.
+ * This is everything the GUI needs to render a wallet in the wallet list
+ * before its engine exists. Balances are last-known values,
+ * and are explicitly allowed to be stale.
+ */
+export interface WalletCacheFile {
+  version: 1
+  name: string | null
+  fiatCurrencyCode: string
+  enabledTokenIds: string[]
+
+  /** Integer strings. The `null` tokenId is spelled '' here. */
+  balances: { [tokenId: string]: string }
+}
+
+export const asWalletCacheFile: Cleaner<WalletCacheFile> = asObject({
+  version: asValue(1),
+  name: asEither(asString, asNull),
+  fiatCurrencyCode: asString,
+  enabledTokenIds: asArray(asString),
+  balances: asObject(asIntegerString)
+})
+
+/**
  * The wallet's local storage file for the last seen "checkpoint". The core
  * does not know the contents of the checkpoint, so it just as an arbitrary
  * string.

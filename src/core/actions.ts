@@ -1,4 +1,5 @@
 import {
+  EdgeBalanceMap,
   EdgeCorePlugin,
   EdgeCorePluginsInit,
   EdgeCurrencyTools,
@@ -269,6 +270,18 @@ export type RootAction =
       payload: {
         pluginId: string
         tools: Promise<EdgeCurrencyTools>
+      }
+    }
+  | {
+      // Called when the wallet's UI-state cache file loads from disk,
+      // seeding Redux before the engine exists.
+      type: 'CURRENCY_WALLET_CACHE_LOADED'
+      payload: {
+        balanceMap: EdgeBalanceMap
+        enabledTokenIds: string[]
+        fiatCurrencyCode: string
+        name: string | null
+        walletId: string
       }
     }
   | {

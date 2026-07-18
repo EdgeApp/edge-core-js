@@ -197,6 +197,8 @@ const currencyWalletInner = buildReducer<
         return action.payload.enabledTokenIds
       } else if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
         return action.payload.enabledTokenIds
+      } else if (action.type === 'CURRENCY_WALLET_CACHE_LOADED') {
+        return action.payload.enabledTokenIds
       } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
         const { enablingTokenIds } = action.payload
         return uniqueStrings([...state, ...enablingTokenIds])
@@ -282,13 +284,17 @@ const currencyWalletInner = buildReducer<
   },
 
   fiat(state = '', action): string {
-    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED'
+    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' ||
+      action.type === 'CURRENCY_WALLET_CACHE_LOADED'
       ? action.payload.fiatCurrencyCode
       : state
   },
 
   fiatLoaded(state = false, action): boolean {
-    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' ? true : state
+    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' ||
+      action.type === 'CURRENCY_WALLET_CACHE_LOADED'
+      ? true
+      : state
   },
 
   files(state = {}, action): TxFileJsons {
@@ -352,6 +358,14 @@ const currencyWalletInner = buildReducer<
       out.set(tokenId, balance)
       return out
     }
+    if (action.type === 'CURRENCY_WALLET_CACHE_LOADED') {
+      // Seed cached balances, but never overwrite live engine data:
+      const out = new Map(state)
+      for (const [tokenId, balance] of action.payload.balanceMap) {
+        if (!out.has(tokenId)) out.set(tokenId, balance)
+      }
+      return out
+    }
     return state
   },
 
@@ -379,13 +393,17 @@ const currencyWalletInner = buildReducer<
   },
 
   name(state = null, action): string | null {
-    return action.type === 'CURRENCY_WALLET_NAME_CHANGED'
+    return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ||
+      action.type === 'CURRENCY_WALLET_CACHE_LOADED'
       ? action.payload.name
       : state
   },
 
   nameLoaded(state = false, action): boolean {
-    return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ? true : state
+    return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ||
+      action.type === 'CURRENCY_WALLET_CACHE_LOADED'
+      ? true
+      : state
   },
 
   seenTxCheckpoint(state = null, action) {
