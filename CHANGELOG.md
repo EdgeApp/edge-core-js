@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: Per-wallet `walletCache.json` with each wallet's name, fiat code, enabled token IDs, and last-known balances. Currency wallets now emit their API objects as soon as this cache loads, before their engines exist, so the GUI can render the wallet list immediately at login. Engine-backed methods wait for the engine internally and reject if it fails or the wallet is deleted. First login (no cache) behaves exactly as before.
+- changed: `waitForCurrencyWallet` and `waitForAllWallets` now resolve when the wallet object exists, which can be before its engine loads.
+- changed: `wallet.otherMethods` is `{}` until the wallet's engine loads, then switches to the engine's methods.
+
 ## 2.47.1 (2026-07-17)
 
 - fixed: Revert `@nymproject/mix-fetch` to v1 (1.4.4), restoring the pinned gateway and network requester. The v2 stack shipped in 2.47.0 fails to complete small HTTPS JSON-RPC requests through most exit nodes and its exit-node auto-discovery rarely converges, which left wallets with NYM privacy enabled unable to sync or send.

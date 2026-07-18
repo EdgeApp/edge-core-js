@@ -27,6 +27,41 @@ import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 
 const GENESIS_BLOCK = 1231006505
 
+/**
+ * Test configuration for controlling fake plugin behavior.
+ */
+export interface FakePluginTestConfig {
+  /**
+   * If set, engine creation will wait for this promise to resolve.
+   * Use `createEngineGate` to make a controllable gate,
+   * so "before the engine exists" is a deterministic state in tests.
+   */
+  engineGate?: Promise<void>
+}
+
+export const fakePluginTestConfig: FakePluginTestConfig = {
+  engineGate: undefined
+}
+
+/**
+ * Creates a gate that can halt engine creation.
+ * Call `release` to allow engines to load,
+ * or `fail` to make engine creation reject.
+ */
+export function createEngineGate(): {
+  gate: Promise<void>
+  release: () => void
+  fail: (error: Error) => void
+} {
+  let release: () => void = () => {}
+  let fail: (error: Error) => void = () => {}
+  const gate = new Promise<void>((resolve, reject) => {
+    release = resolve
+    fail = reject
+  })
+  return { gate, release, fail }
+}
+
 const fakeTokens: EdgeTokenMap = {
   badf00d5: {
     currencyCode: 'TOKEN',
@@ -89,6 +124,13 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private readonly state: State
   private allTokens: EdgeTokenMap = fakeTokens
   private readonly currencyInfo: EdgeCurrencyInfo
+
+  // Exercises the wallet's pre-engine `otherMethods` guarantee in tests:
+  readonly otherMethods = {
+    async testMethod(arg: string): Promise<string> {
+      return `testMethod called with: ${arg}`
+    }
+  }
 
   constructor(
     walletInfo: EdgeWalletInfo,
@@ -223,7 +265,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   getBalance(opts: EdgeTokenIdOptions): string {
     const { tokenId = null } = opts
     if (tokenId == null) return this.state.balance.toString()
-    if (tokenId === 'badf00d5') this.state.tokenBalance.toString()
+    if (tokenId === 'badf00d5') return this.state.tokenBalance.toString()
     if (this.allTokens[tokenId] != null) return '0'
     throw new Error('Unknown currency')
   }
@@ -398,13 +440,14 @@ export function makeFakeCurrencyPlugin(
       return Promise.resolve(fakeTokens)
     },
 
-    makeCurrencyEngine(
+    async makeCurrencyEngine(
       walletInfo: EdgeWalletInfo,
       opts: EdgeCurrencyEngineOptions
     ): Promise<EdgeCurrencyEngine> {
-      return Promise.resolve(
-        new FakeCurrencyEngine(walletInfo, opts, currencyInfo)
-      )
+      if (fakePluginTestConfig.engineGate != null) {
+        await fakePluginTestConfig.engineGate
+      }
+      return new FakeCurrencyEngine(walletInfo, opts, currencyInfo)
     },
 
     makeCurrencyTools(): Promise<EdgeCurrencyTools> {
