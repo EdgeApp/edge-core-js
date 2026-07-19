@@ -361,6 +361,10 @@ const currencyWalletInner = buildReducer<
   balanceMap(state = new Map(), action): Map<EdgeTokenId, string> {
     if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
       const { balance, tokenId } = action.payload
+      // Keep the existing Map when nothing changed, so downstream
+      // reference checks (memoized reducers, the cache saver, yaob
+      // diffing) see no phantom update:
+      if (state.get(tokenId) === balance) return state
       const out = new Map(state)
       out.set(tokenId, balance)
       return out
