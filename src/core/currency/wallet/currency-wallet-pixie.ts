@@ -61,6 +61,7 @@ import {
   initialWalletSettings
 } from './currency-wallet-reducer'
 import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
+import { getEngineScheduler } from './engine-scheduler'
 import {
   WALLET_CACHE_FILE,
   walletCacheFile,
@@ -86,163 +87,200 @@ const publicKeyFile = makeJsonFile(asPublicKeyFile)
 
 export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Creates the engine for this wallet:
-  engine: (input: CurrencyWalletInput) => async () => {
-    const { state, walletId, walletState } = input.props
-    const { accountId, pluginId, walletInfo } = walletState
-    const plugin = state.plugins.currency[pluginId]
-    const { currencyCode } = plugin.currencyInfo
+  engine(input: CurrencyWalletInput) {
+    // Set when the wallet is deleted or the user logs out, so startup
+    // work still waiting in the scheduler queue knows to give up
+    // (`input.props` goes stale at destroy, so it cannot tell us):
+    let destroyed = false
 
-    try {
-      const ai = toApiInput(input)
+    async function update(): Promise<unknown> {
+      const { state, walletId, walletState } = input.props
+      const { accountId, pluginId, walletInfo } = walletState
+      const plugin = state.plugins.currency[pluginId]
+      const { currencyCode } = plugin.currencyInfo
 
-      // Load the UI-state cache before the storage-wallet sync,
-      // so a previously-seen wallet can emit its API object right away.
-      // If either file is missing or invalid (first login, schema bump,
-      // corruption), skip the dispatch and fall through to the cold path:
-      const cacheDisklet = makeLocalDisklet(input.props.io, walletInfo.id)
-      const [publicKeyCache, walletCache] = await Promise.all([
-        publicKeyFile.load(cacheDisklet, PUBLIC_KEY_CACHE),
-        walletCacheFile.load(cacheDisklet, WALLET_CACHE_FILE)
-      ])
-      if (publicKeyCache != null && walletCache != null) {
-        const balanceMap: EdgeBalanceMap = new Map()
-        for (const tokenId of Object.keys(walletCache.balances)) {
-          balanceMap.set(
-            tokenId === '' ? null : tokenId,
-            walletCache.balances[tokenId]
+      let releaseSlot: (() => void) | undefined
+      try {
+        const ai = toApiInput(input)
+
+        // Load the UI-state cache before the storage-wallet sync,
+        // so a previously-seen wallet can emit its API object right away.
+        // If either file is missing or invalid (first login, schema bump,
+        // corruption), skip the dispatch and fall through to the cold path:
+        const cacheDisklet = makeLocalDisklet(input.props.io, walletInfo.id)
+        const [publicKeyCache, walletCache] = await Promise.all([
+          publicKeyFile.load(cacheDisklet, PUBLIC_KEY_CACHE),
+          walletCacheFile.load(cacheDisklet, WALLET_CACHE_FILE)
+        ])
+        if (publicKeyCache != null && walletCache != null) {
+          const balanceMap: EdgeBalanceMap = new Map()
+          for (const tokenId of Object.keys(walletCache.balances)) {
+            balanceMap.set(
+              tokenId === '' ? null : tokenId,
+              walletCache.balances[tokenId]
+            )
+          }
+          input.props.dispatch({
+            type: 'CURRENCY_WALLET_PUBLIC_INFO',
+            payload: { walletInfo: publicKeyCache.walletInfo, walletId }
+          })
+          input.props.dispatch({
+            type: 'CURRENCY_WALLET_CACHE_LOADED',
+            payload: {
+              balanceMap,
+              enabledTokenIds: walletCache.enabledTokenIds,
+              fiatCurrencyCode: walletCache.fiatCurrencyCode,
+              name: walletCache.name,
+              walletId
+            }
+          })
+
+          // This wallet is already usable from its cache, so its heavy
+          // startup work (repo sync, key derivation, engine creation)
+          // waits its turn in a limited-concurrency queue instead of
+          // racing every other wallet in the seconds after login.
+          // Wallets without a cache skip the queue: they cannot emit at
+          // all until this work runs, so they behave exactly as before.
+          releaseSlot = await getEngineScheduler(input.props.io).acquire(
+            walletId,
+            () => {
+              input.props.log.warn(
+                `${walletId} engine startup exceeded its slot time; freeing the slot for the next wallet`
+              )
+            }
           )
+
+          // The wallet may have been deleted (or the user logged out)
+          // while it waited in line; the finally releases the slot:
+          if (destroyed) return
+          input.props.log(`${walletId} engine startup slot acquired`)
         }
+
+        // Start the data sync:
+        await addStorageWallet(ai, walletInfo)
+
+        // Grab the freshly-synced repos:
+        const { state } = input.props
+        const walletLocalDisklet = getStorageWalletLocalDisklet(
+          state,
+          walletInfo.id
+        )
+        const walletLocalEncryptedDisklet =
+          makeStorageWalletLocalEncryptedDisklet(
+            state,
+            walletInfo.id,
+            input.props.io
+          )
+
+        // We need to know which transactions exist,
+        // since new transactions may come in from the network:
+        await loadTxFileNames(input)
+
+        // Derive the public keys:
+        const tools = await getCurrencyTools(ai, pluginId)
+        const publicWalletInfo = await getPublicWalletInfo(
+          walletInfo,
+          walletLocalDisklet,
+          tools
+        )
         input.props.dispatch({
           type: 'CURRENCY_WALLET_PUBLIC_INFO',
-          payload: { walletInfo: publicKeyCache.walletInfo, walletId }
+          payload: { walletInfo: publicWalletInfo, walletId }
         })
-        input.props.dispatch({
-          type: 'CURRENCY_WALLET_CACHE_LOADED',
-          payload: {
-            balanceMap,
-            enabledTokenIds: walletCache.enabledTokenIds,
-            fiatCurrencyCode: walletCache.fiatCurrencyCode,
-            name: walletCache.name,
-            walletId
-          }
+
+        // Load the last seen transaction checkpoint into memory.
+        // This also loads subscribed addresses from the same file.
+        const { checkpoint: seenTxCheckpoint, subscribedAddresses } =
+          await loadSeenTxCheckpointFile(input)
+
+        // We need to know which tokens are enabled,
+        // so the engine can start in the right state:
+        await loadTokensFile(input)
+
+        const { hasWalletSettings = false } = walletState.currencyInfo
+        if (hasWalletSettings) {
+          await loadWalletSettingsFile(input)
+        }
+
+        // Start the engine:
+        const accountState = state.accounts[accountId]
+        const engine = await plugin.makeCurrencyEngine(publicWalletInfo, {
+          callbacks: makeCurrencyWalletCallbacks(input),
+
+          // Engine state kept by the core:
+          seenTxCheckpoint,
+          subscribedAddresses,
+
+          // Wallet-scoped IO objects:
+          log: makeLog(
+            input.props.logBackend,
+            `${pluginId}-${walletInfo.id.slice(0, 2)}`
+          ),
+          walletLocalDisklet,
+          walletLocalEncryptedDisklet,
+
+          // User settings:
+          customTokens: accountState.customTokens[pluginId] ?? {},
+          enabledTokenIds: input.props.walletState.allEnabledTokenIds,
+          userSettings: accountState.userSettings[pluginId] ?? {},
+          walletSettings: input.props.walletState.walletSettings
         })
-      }
+        input.onOutput(engine)
 
-      // Start the data sync:
-      await addStorageWallet(ai, walletInfo)
-
-      // Grab the freshly-synced repos:
-      const { state } = input.props
-      const walletLocalDisklet = getStorageWalletLocalDisklet(
-        state,
-        walletInfo.id
-      )
-      const walletLocalEncryptedDisklet =
-        makeStorageWalletLocalEncryptedDisklet(
-          state,
-          walletInfo.id,
-          input.props.io
+        // Grab initial state:
+        const parentCurrency = { currencyCode, tokenId: null }
+        const balance = asMaybe(asIntegerString)(
+          engine.getBalance(parentCurrency)
         )
-
-      // We need to know which transactions exist,
-      // since new transactions may come in from the network:
-      await loadTxFileNames(input)
-
-      // Derive the public keys:
-      const tools = await getCurrencyTools(ai, pluginId)
-      const publicWalletInfo = await getPublicWalletInfo(
-        walletInfo,
-        walletLocalDisklet,
-        tools
-      )
-      input.props.dispatch({
-        type: 'CURRENCY_WALLET_PUBLIC_INFO',
-        payload: { walletInfo: publicWalletInfo, walletId }
-      })
-
-      // Load the last seen transaction checkpoint into memory.
-      // This also loads subscribed addresses from the same file.
-      const { checkpoint: seenTxCheckpoint, subscribedAddresses } =
-        await loadSeenTxCheckpointFile(input)
-
-      // We need to know which tokens are enabled,
-      // so the engine can start in the right state:
-      await loadTokensFile(input)
-
-      const { hasWalletSettings = false } = walletState.currencyInfo
-      if (hasWalletSettings) {
-        await loadWalletSettingsFile(input)
-      }
-
-      // Start the engine:
-      const accountState = state.accounts[accountId]
-      const engine = await plugin.makeCurrencyEngine(publicWalletInfo, {
-        callbacks: makeCurrencyWalletCallbacks(input),
-
-        // Engine state kept by the core:
-        seenTxCheckpoint,
-        subscribedAddresses,
-
-        // Wallet-scoped IO objects:
-        log: makeLog(
-          input.props.logBackend,
-          `${pluginId}-${walletInfo.id.slice(0, 2)}`
-        ),
-        walletLocalDisklet,
-        walletLocalEncryptedDisklet,
-
-        // User settings:
-        customTokens: accountState.customTokens[pluginId] ?? {},
-        enabledTokenIds: input.props.walletState.allEnabledTokenIds,
-        userSettings: accountState.userSettings[pluginId] ?? {},
-        walletSettings: input.props.walletState.walletSettings
-      })
-      input.onOutput(engine)
-
-      // Grab initial state:
-      const parentCurrency = { currencyCode, tokenId: null }
-      const balance = asMaybe(asIntegerString)(
-        engine.getBalance(parentCurrency)
-      )
-      if (balance != null) {
+        if (balance != null) {
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
+            payload: { balance, tokenId: null, walletId }
+          })
+        }
+        const height = engine.getBlockHeight()
         input.props.dispatch({
-          type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-          payload: { balance, tokenId: null, walletId }
+          type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
+          payload: { height, walletId }
         })
-      }
-      const height = engine.getBlockHeight()
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
-        payload: { height, walletId }
-      })
-      if (engine.getStakingStatus != null) {
-        await engine.getStakingStatus().then(
-          stakingStatus => {
-            input.props.dispatch({
-              type: 'CURRENCY_ENGINE_CHANGED_STAKING',
-              payload: { stakingStatus, walletId }
-            })
-          },
-          error => input.props.onError(error)
-        )
+        if (engine.getStakingStatus != null) {
+          await engine.getStakingStatus().then(
+            stakingStatus => {
+              input.props.dispatch({
+                type: 'CURRENCY_ENGINE_CHANGED_STAKING',
+                payload: { stakingStatus, walletId }
+              })
+            },
+            error => input.props.onError(error)
+          )
+        }
+
+        // Load remaining data from disk:
+        await loadFiatFile(input)
+        await loadNameFile(input)
+        await loadAddressFiles(input)
+      } catch (error: unknown) {
+        input.props.onError(error)
+        input.props.dispatch({
+          type: 'CURRENCY_ENGINE_FAILED',
+          payload: { error, walletId }
+        })
+      } finally {
+        if (releaseSlot != null) releaseSlot()
       }
 
-      // Load remaining data from disk:
-      await loadFiatFile(input)
-      await loadNameFile(input)
-      await loadAddressFiles(input)
-    } catch (error: unknown) {
-      input.props.onError(error)
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_FAILED',
-        payload: { error, walletId }
-      })
+      // Fire callbacks when our state changes:
+      watchCurrencyWallet(input)
+
+      return await stopUpdates
     }
 
-    // Fire callbacks when our state changes:
-    watchCurrencyWallet(input)
-
-    return await stopUpdates
+    return {
+      update,
+      destroy() {
+        destroyed = true
+      }
+    }
   },
 
   // Creates the API object:

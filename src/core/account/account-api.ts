@@ -31,6 +31,7 @@ import {
 } from '../../types/types'
 import { makeEdgeResult } from '../../util/edgeResult'
 import { base58 } from '../../util/encoding'
+import { bumpEngineQueue } from '../currency/currency-selectors'
 import { saveWalletSettings } from '../currency/wallet/currency-wallet-files'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import {
@@ -724,6 +725,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     async waitForCurrencyWallet(walletId: string): Promise<EdgeCurrencyWallet> {
+      // Asking for a wallet is the "the user wants this one" signal,
+      // so move its engine startup to the front of the queue:
+      bumpEngineQueue(ai, walletId)
+
       return await new Promise((resolve, reject) => {
         const check = (): void => {
           const wallet = this.currencyWallets[walletId]

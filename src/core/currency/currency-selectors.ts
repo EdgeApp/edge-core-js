@@ -4,6 +4,7 @@ import {
   EdgeTokenMap
 } from '../../types/types'
 import { ApiInput, RootProps } from '../root-pixie'
+import { getEngineScheduler } from './wallet/engine-scheduler'
 
 export function getCurrencyMultiplier(
   currencyInfo: EdgeCurrencyInfo,
@@ -47,6 +48,10 @@ export function waitForCurrencyWallet(
   ai: ApiInput,
   walletId: string
 ): Promise<EdgeCurrencyWallet> {
+  // Asking for a wallet is the "the user wants this one" signal,
+  // so move its engine startup to the front of the queue:
+  bumpEngineQueue(ai, walletId)
+
   const out: Promise<EdgeCurrencyWallet> = ai.waitFor(
     (props: RootProps): EdgeCurrencyWallet | undefined => {
       checkCurrencyWallet(props, walletId)
@@ -58,4 +63,14 @@ export function waitForCurrencyWallet(
     }
   )
   return out
+}
+
+/**
+ * Prioritizes a wallet's engine startup when its startup work is still
+ * waiting in the limited-concurrency queue. Harmless otherwise.
+ */
+export function bumpEngineQueue(ai: ApiInput, walletId: string): void {
+  if (getEngineScheduler(ai.props.io).bump(walletId)) {
+    ai.props.log(`${walletId} engine startup bumped to front of queue`)
+  }
 }

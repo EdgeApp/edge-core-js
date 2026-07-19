@@ -52,6 +52,7 @@ import { RootProps, toApiInput } from '../../root-pixie'
 import { makeLocalDisklet, makeRepoPaths } from '../../storage/repo'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import {
+  bumpEngineQueue,
   checkCurrencyWallet,
   getCurrencyMultiplier
 } from '../currency-selectors'
@@ -116,6 +117,9 @@ export function makeCurrencyWalletApi(
    * method call instead of a hang.
    */
   function getEngine(): Promise<EdgeCurrencyEngine> {
+    // The caller needs this engine now, so skip the startup queue:
+    bumpEngineQueue(ai, walletId)
+
     return ai.waitFor((props: RootProps): EdgeCurrencyEngine | undefined => {
       checkCurrencyWallet(props, walletId)
       return props.output.currency.wallets[walletId]?.engine
@@ -136,6 +140,10 @@ export function makeCurrencyWalletApi(
    * `addStorageWallet`, so the repo is never coming).
    */
   function getStorage(): Promise<true> {
+    // The repo loads inside the queued startup work, so a caller
+    // waiting on storage wants this wallet at the front too:
+    bumpEngineQueue(ai, walletId)
+
     return ai.waitFor((props: RootProps): true | undefined => {
       if (props.state.storageWallets[walletId] != null) return true
       checkCurrencyWallet(props, walletId)
@@ -314,6 +322,10 @@ export function makeCurrencyWalletApi(
 
     // Running state:
     async changePaused(paused: boolean): Promise<void> {
+      // Un-pausing means the app wants this wallet running,
+      // so align the startup queue with the caller's boot order:
+      if (!paused) bumpEngineQueue(ai, walletId)
+
       input.props.dispatch({
         type: 'CURRENCY_WALLET_CHANGED_PAUSED',
         payload: { walletId: input.props.walletId, paused }
