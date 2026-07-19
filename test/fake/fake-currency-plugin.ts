@@ -37,10 +37,17 @@ export interface FakePluginTestConfig {
    * so "before the engine exists" is a deterministic state in tests.
    */
   engineGate?: Promise<void>
+
+  /**
+   * If set, receives each wallet id as its `makeCurrencyEngine` call
+   * begins (before any gate), so tests can observe creation order.
+   */
+  onEngineCreate?: (walletId: string) => void
 }
 
 export const fakePluginTestConfig: FakePluginTestConfig = {
-  engineGate: undefined
+  engineGate: undefined,
+  onEngineCreate: undefined
 }
 
 /**
@@ -444,6 +451,9 @@ export function makeFakeCurrencyPlugin(
       walletInfo: EdgeWalletInfo,
       opts: EdgeCurrencyEngineOptions
     ): Promise<EdgeCurrencyEngine> {
+      if (fakePluginTestConfig.onEngineCreate != null) {
+        fakePluginTestConfig.onEngineCreate(walletInfo.id)
+      }
       if (fakePluginTestConfig.engineGate != null) {
         await fakePluginTestConfig.engineGate
       }
