@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: Log the lifecycle of every NYM mixnet request (method, host, path, duration, HTTP status or error, and in-flight count), plus mixFetch setup timing. A request that logs a start with no terminal line identifies the host whose request never returned, which the previous logging could not attribute. These log at `warn` so they survive the default `warn` log level and appear in a log export without the user first enabling verbose logging.
+- changed: Bound NYM mixnet requests to 6 concurrent overall and 2 per host. A single Avalanche wallet was measured opening 12 concurrent mixnet requests during one sync, and a full wallet list multiplies that; mix-fetch v1 has a history of serving one request per host at a time.
+- fixed: Reduce the NYM per-request timeout from 300 seconds to 60. At five minutes, a request the mixnet never answered held the send screen on "Calculating Fee" long enough to read as a permanent hang rather than an error.
+
 ## 2.47.1 (2026-07-17)
 
 - fixed: Revert `@nymproject/mix-fetch` to v1 (1.4.4), restoring the pinned gateway and network requester. The v2 stack shipped in 2.47.0 fails to complete small HTTPS JSON-RPC requests through most exit nodes and its exit-node auto-discovery rarely converges, which left wallets with NYM privacy enabled unable to sync or send.
