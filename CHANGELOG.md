@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Log the lifecycle of every NYM mixnet request (method, host, path, duration, HTTP status or error, and in-flight count), plus mixFetch setup timing. A request that logs a start with no terminal line identifies the host whose request never returned, which the previous logging could not attribute. These log at `warn` so they survive the default `warn` log level and appear in a log export without the user first enabling verbose logging.
+
 ## 2.47.1 (2026-07-17)
 
 - fixed: Revert `@nymproject/mix-fetch` to v1 (1.4.4), restoring the pinned gateway and network requester. The v2 stack shipped in 2.47.0 fails to complete small HTTPS JSON-RPC requests through most exit nodes and its exit-node auto-discovery rarely converges, which left wallets with NYM privacy enabled unable to sync or send.
