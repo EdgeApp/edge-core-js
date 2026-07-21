@@ -125,7 +125,15 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
   // Specialty API's:
   const dataStore = makeDataStoreApi(ai, accountId)
-  const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
+  const storageWalletApi = makeStorageWalletApi(
+    ai,
+    accountWalletInfo,
+    props => {
+      if (props.state.accounts[accountId] == null) {
+        throw new Error('The account was logged out')
+      }
+    }
+  )
 
   function lockdown(): void {
     if (ai.props.state.hideKeys) {

@@ -150,7 +150,11 @@ export function makeCurrencyWalletApi(
     })
   }
 
-  const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
+  const storageWalletApi = makeStorageWalletApi(ai, walletInfo, props => {
+    if (props.state.currency.wallets[walletId] == null) {
+      throw new Error(`Wallet id ${walletId} does not exist in this account`)
+    }
+  })
 
   // The storage-wallet state provides the disklets once the repo loads,
   // but the wallet API can emit slightly earlier from the UI-state cache,
