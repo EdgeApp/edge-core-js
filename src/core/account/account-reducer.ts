@@ -64,7 +64,7 @@ export interface AccountState {
   readonly allTokens: EdgePluginMap<EdgeTokenMap>
   readonly builtinTokens: EdgePluginMap<EdgeTokenMap>
   readonly customTokens: EdgePluginMap<EdgeTokenMap>
-  readonly customTokensDirty: boolean
+  readonly customTokensDirtyIds: EdgePluginMap<string[]>
   readonly customTokensLoaded: boolean
   readonly alwaysEnabledTokenIds: EdgePluginMap<string[]>
   readonly swapSettings: EdgePluginMap<SwapSettings>
@@ -366,11 +366,36 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
         return customTokens
       }
       case 'ACCOUNT_CUSTOM_TOKENS_LOADED': {
-        // Unsaved user changes win over the file we just loaded,
-        // and stay dirty, so the tokenSaver writes them back out:
-        if (prev.self?.customTokensDirty) return state
+        // Unsaved user edits win over the file we just loaded, but
+        // only for the token ids the user actually touched - the
+        // rest of the file may hold changes from another device.
+        // The edits stay dirty, so the tokenSaver writes them out:
         const { customTokens } = action.payload
-        return customTokens
+        const dirtyIds = prev.self?.customTokensDirtyIds ?? {}
+        const dirtyPluginIds = Object.keys(dirtyIds).filter(
+          pluginId => dirtyIds[pluginId].length > 0
+        )
+        if (dirtyPluginIds.length === 0) return customTokens
+
+        const out = { ...customTokens }
+        for (const pluginId of dirtyPluginIds) {
+          const dirty = dirtyIds[pluginId]
+          const loaded = out[pluginId] ?? {}
+          const list: EdgeTokenMap = {}
+          for (const tokenId of Object.keys(loaded)) {
+            // A dirty id missing from our state was removed here:
+            if (dirty.includes(tokenId) && state[pluginId]?.[tokenId] == null) {
+              continue
+            }
+            list[tokenId] = loaded[tokenId]
+          }
+          for (const tokenId of dirty) {
+            const token = state[pluginId]?.[tokenId]
+            if (token != null) list[tokenId] = token
+          }
+          out[pluginId] = list
+        }
+        return out
       }
       case 'ACCOUNT_CUSTOM_TOKEN_ADDED': {
         const { pluginId, tokenId, token } = action.payload
@@ -396,17 +421,26 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return state
   },
 
-  customTokensDirty(state = false, action, next, prev): boolean {
+  customTokensDirtyIds(
+    state = {},
+    action,
+    next,
+    prev
+  ): EdgePluginMap<string[]> {
     switch (action.type) {
       case 'ACCOUNT_CUSTOM_TOKEN_ADDED':
-      case 'ACCOUNT_CUSTOM_TOKEN_REMOVED':
+      case 'ACCOUNT_CUSTOM_TOKEN_REMOVED': {
         // These actions might change the token list, so check for diffs:
-        return state || next.self.customTokens !== prev.self?.customTokens
+        if (next.self.customTokens === prev.self?.customTokens) return state
+        const { pluginId, tokenId } = action.payload
+        const ids = state[pluginId] ?? []
+        if (ids.includes(tokenId)) return state
+        return { ...state, [pluginId]: [...ids, tokenId] }
+      }
 
-      case 'ACCOUNT_CUSTOM_TOKENS_LOADED':
-        // The load has landed; `customTokens` kept any dirty changes,
-        // and the tokenSaver will write those back out:
-        return false
+      case 'ACCOUNT_CUSTOM_TOKENS_SAVED':
+        // The edits are on disk, so a future load will include them:
+        return Object.keys(state).length === 0 ? state : {}
     }
     return state
   },

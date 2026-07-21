@@ -311,9 +311,17 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         // adopting, so the load's merge triggers the write:
         if (!accountState.customTokensLoaded) return
 
-        await saveCustomTokens(toApiInput(input), accountId).catch(error =>
+        try {
+          await saveCustomTokens(toApiInput(input), accountId)
+          // Any dirty edits are on disk now, so a racing load no
+          // longer needs to preserve them:
+          input.props.dispatch({
+            type: 'ACCOUNT_CUSTOM_TOKENS_SAVED',
+            payload: { accountId }
+          })
+        } catch (error: unknown) {
           input.props.onError(error)
-        )
+        }
         await snooze(100) // Rate limiting
       }
       lastTokens = customTokens

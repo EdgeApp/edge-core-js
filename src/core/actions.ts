@@ -100,6 +100,13 @@ export type RootAction =
       }
     }
   | {
+      // The token saver has written the custom tokens to disk.
+      type: 'ACCOUNT_CUSTOM_TOKENS_SAVED'
+      payload: {
+        accountId: string
+      }
+    }
+  | {
       // The account fires this when it loads its keys from disk.
       type: 'ACCOUNT_KEYS_LOADED'
       payload: {
