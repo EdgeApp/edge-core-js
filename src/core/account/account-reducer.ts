@@ -68,8 +68,9 @@ export interface AccountState {
   readonly customTokensLoaded: boolean
   readonly alwaysEnabledTokenIds: EdgePluginMap<string[]>
   readonly swapSettings: EdgePluginMap<SwapSettings>
+  readonly swapSettingsDirtyIds: string[]
   readonly userSettings: EdgePluginMap<object>
-  readonly pluginSettingsDirty: boolean
+  readonly userSettingsDirtyIds: string[]
   readonly pluginSettingsLoaded: boolean
 }
 
@@ -461,11 +462,19 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
 
   swapSettings(state = {}, action, next, prev): EdgePluginMap<SwapSettings> {
     switch (action.type) {
-      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
-        // Unsaved user changes win over the file we just loaded
-        // (the change already wrote the file before dispatching):
-        if (prev.self?.pluginSettingsDirty) return state
-        return action.payload.swapSettings
+      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED': {
+        // User changes win over the file we just loaded, but only
+        // for the plugin ids the user actually touched - the rest of
+        // the file may hold changes from another device. The changes
+        // wrote the file before dispatching, so nothing is unsaved:
+        const dirtyIds = prev.self?.swapSettingsDirtyIds ?? []
+        if (dirtyIds.length === 0) return action.payload.swapSettings
+        const out = { ...action.payload.swapSettings }
+        for (const pluginId of dirtyIds) {
+          if (state[pluginId] != null) out[pluginId] = state[pluginId]
+        }
+        return out
+      }
 
       case 'ACCOUNT_SWAP_SETTINGS_CHANGED': {
         const { pluginId, swapSettings } = action.payload
@@ -486,11 +495,19 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
         return out
       }
 
-      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
-        // Unsaved user changes win over the file we just loaded
-        // (the change already wrote the file before dispatching):
-        if (prev.self?.pluginSettingsDirty) return state
-        return action.payload.userSettings
+      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED': {
+        // User changes win over the file we just loaded, but only
+        // for the plugin ids the user actually touched - the rest of
+        // the file may hold changes from another device. The changes
+        // wrote the file before dispatching, so nothing is unsaved:
+        const dirtyIds = prev.self?.userSettingsDirtyIds ?? []
+        if (dirtyIds.length === 0) return action.payload.userSettings
+        const out = { ...action.payload.userSettings }
+        for (const pluginId of dirtyIds) {
+          if (state[pluginId] != null) out[pluginId] = state[pluginId]
+        }
+        return out
+      }
     }
     return state
   },
@@ -499,15 +516,30 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return action.type === 'ACCOUNT_PLUGIN_SETTINGS_LOADED' ? true : state
   },
 
-  pluginSettingsDirty(state = false, action): boolean {
+  swapSettingsDirtyIds(state = [], action): string[] {
     switch (action.type) {
-      case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED':
-      case 'ACCOUNT_SWAP_SETTINGS_CHANGED':
-        return true
+      case 'ACCOUNT_SWAP_SETTINGS_CHANGED': {
+        const { pluginId } = action.payload
+        return state.includes(pluginId) ? state : [...state, pluginId]
+      }
 
       case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
-        // The load has landed; the settings reducers kept dirty state:
-        return false
+        // The load has landed, and `swapSettings` merged these ids:
+        return state.length === 0 ? state : []
+    }
+    return state
+  },
+
+  userSettingsDirtyIds(state = [], action): string[] {
+    switch (action.type) {
+      case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED': {
+        const { pluginId } = action.payload
+        return state.includes(pluginId) ? state : [...state, pluginId]
+      }
+
+      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
+        // The load has landed, and `userSettings` merged these ids:
+        return state.length === 0 ? state : []
     }
     return state
   },
