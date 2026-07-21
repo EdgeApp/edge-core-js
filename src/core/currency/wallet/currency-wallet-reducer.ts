@@ -74,6 +74,7 @@ export interface CurrencyWalletState {
   readonly currencyInfo: EdgeCurrencyInfo
   readonly detectedTokenIds: string[]
   readonly enabledTokenIds: string[]
+  readonly enabledTokensDirtyIds: string[]
   readonly tokenFileDirty: boolean
   readonly tokenFileLoaded: boolean
   readonly walletSettings: JsonObject
@@ -197,10 +198,18 @@ const currencyWalletInner = buildReducer<
   enabledTokenIds: sortStringsReducer(
     (state = initialTokenIds, action, next, prev): string[] => {
       if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
-        // Unsaved user changes win over the file we just loaded,
-        // and stay dirty, so the tokenSaver writes them back out:
-        if (prev?.self.tokenFileDirty === true) return state
-        return action.payload.enabledTokenIds
+        // Unsaved user toggles win over the file we just loaded, but
+        // only for the token ids the user actually touched - the
+        // rest of the file may hold changes from another device.
+        // The toggles stay dirty, so the tokenSaver writes them out:
+        const dirtyIds = prev?.self.enabledTokensDirtyIds ?? []
+        if (dirtyIds.length === 0) return action.payload.enabledTokenIds
+        const enabled = dirtyIds.filter(id => state.includes(id))
+        const disabled = dirtyIds.filter(id => !state.includes(id))
+        return uniqueStrings(
+          [...action.payload.enabledTokenIds, ...enabled],
+          disabled
+        )
       } else if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
         return action.payload.enabledTokenIds
       } else if (action.type === 'CURRENCY_WALLET_CACHE_LOADED') {
@@ -225,6 +234,29 @@ const currencyWalletInner = buildReducer<
     if (action.type === 'CURRENCY_WALLET_LOADED_SUBSCRIBED_ADDRESSES') {
       // When loading from disk, replace the state with loaded subscriptions
       return action.payload.subscribedAddresses
+    }
+    return state
+  },
+
+  enabledTokensDirtyIds(state = initialTokenIds, action, next, prev): string[] {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED':
+      case 'CURRENCY_ENGINE_DETECTED_TOKENS': {
+        // Remember which ids these actions actually toggled, so a
+        // racing load can preserve exactly those:
+        const prevIds = prev?.self.enabledTokenIds ?? initialTokenIds
+        const nextIds = next.self.enabledTokenIds
+        if (nextIds === prevIds) return state
+        const toggled = [
+          ...nextIds.filter(id => !prevIds.includes(id)),
+          ...prevIds.filter(id => !nextIds.includes(id))
+        ].filter(id => !state.includes(id))
+        return toggled.length === 0 ? state : [...state, ...toggled]
+      }
+
+      case 'CURRENCY_WALLET_SAVED_TOKEN_FILE':
+        // The toggles are on disk, so a future load will include them:
+        return state.length === 0 ? state : []
     }
     return state
   },

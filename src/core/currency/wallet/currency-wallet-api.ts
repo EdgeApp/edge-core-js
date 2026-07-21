@@ -344,6 +344,15 @@ export function makeCurrencyWalletApi(
       const { walletId, walletState } = input.props
       const { accountId, pluginId } = walletState
 
+      // The caller built this list against the enabled list they
+      // could see, so capture that baseline now. If an authoritative
+      // load lands during the wait below, we re-apply the caller's
+      // toggles to the fresh list instead of erasing it with a list
+      // built from a stale one:
+      const baseline = walletState.enabledTokenIds
+      const added = uniqueStrings(tokenIds, baseline)
+      const removed = baseline.filter(id => !tokenIds.includes(id))
+
       // On a warm login the builtin token definitions load after the
       // wallet exists; wait for them, or the filter below would
       // silently drop enabled builtin tokens. This must keep working
@@ -364,9 +373,10 @@ export function makeCurrencyWalletApi(
       const { dispatch } = input.props
       const allTokens = accountState.allTokens[pluginId] ?? {}
 
-      const enabledTokenIds = uniqueStrings(tokenIds).filter(
-        tokenId => allTokens[tokenId] != null
-      )
+      const enabledTokenIds = uniqueStrings(
+        [...input.props.walletState.enabledTokenIds, ...added],
+        removed
+      ).filter(tokenId => allTokens[tokenId] != null)
 
       const shortId = walletId.slice(0, 2)
       input.props.log.warn(`enabledTokenIds: ${shortId} changeEnabledTokenIds`)
