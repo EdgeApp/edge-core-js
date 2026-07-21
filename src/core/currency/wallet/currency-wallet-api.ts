@@ -356,6 +356,9 @@ export function makeCurrencyWalletApi(
         }
         const accountState = props.state.accounts[accountId]
         if (accountState?.builtinTokens[pluginId] != null) return accountState
+
+        // A terminal boot failure means the definitions never arrive:
+        if (accountState?.loadFailure != null) throw accountState.loadFailure
       })
 
       const { dispatch } = input.props
