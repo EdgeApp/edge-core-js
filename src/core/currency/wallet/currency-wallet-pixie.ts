@@ -172,12 +172,14 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         // since new transactions may come in from the network:
         await loadTxFileNames(input)
 
-        // Derive the public keys:
+        // Derive the public keys. The cache seeding path already read
+        // publicKey.json, so reuse that instead of a second disk read:
         const tools = await getCurrencyTools(ai, pluginId)
         const publicWalletInfo = await getPublicWalletInfo(
           walletInfo,
           walletLocalDisklet,
-          tools
+          tools,
+          input.props.walletState.publicWalletInfo ?? undefined
         )
         input.props.dispatch({
           type: 'CURRENCY_WALLET_PUBLIC_INFO',
@@ -738,21 +740,26 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
 /**
  * Attempts to load/derive the wallet public keys.
+ * Pass `cachedWalletInfo` when `publicKey.json` was already read
+ * (the cache seeding path), so it is not read a second time.
  */
 export async function getPublicWalletInfo(
   walletInfo: EdgeWalletInfo,
   disklet: Disklet,
-  tools: EdgeCurrencyTools
+  tools: EdgeCurrencyTools,
+  cachedWalletInfo?: EdgeWalletInfo
 ): Promise<EdgeWalletInfo> {
   // Try to load the cache:
-  const publicKeyCache = await publicKeyFile.load(disklet, PUBLIC_KEY_CACHE)
-  if (publicKeyCache != null) {
+  const cached =
+    cachedWalletInfo ??
+    (await publicKeyFile.load(disklet, PUBLIC_KEY_CACHE))?.walletInfo
+  if (cached != null) {
     // Return it if it needs not to be upgraded (re-derived):
     if (
       tools.checkPublicKey == null ||
-      (await tools.checkPublicKey(publicKeyCache.walletInfo.keys))
+      (await tools.checkPublicKey(cached.keys))
     ) {
-      return publicKeyCache.walletInfo
+      return cached
     }
   }
 
