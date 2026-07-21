@@ -18,7 +18,6 @@ import {
   EdgeWalletInfo,
   JsonObject
 } from '../../../types/types'
-import { makeJsonFile } from '../../../util/file-helpers'
 import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
 import { snooze } from '../../../util/snooze'
 import { makeTokenInfo } from '../../account/custom-tokens'
@@ -40,11 +39,7 @@ import {
   makeCurrencyWalletCallbacks,
   watchCurrencyWallet
 } from './currency-wallet-callbacks'
-import {
-  asIntegerString,
-  asPublicKeyFile,
-  WalletCacheFile
-} from './currency-wallet-cleaners'
+import { asIntegerString, WalletCacheFile } from './currency-wallet-cleaners'
 import {
   loadAddressFiles,
   loadFiatFile,
@@ -67,6 +62,12 @@ import {
   walletCacheFile,
   walletCacheSaverConfig
 } from './wallet-cache-file'
+import {
+  loadWalletCacheSeed,
+  PUBLIC_KEY_CACHE,
+  publicKeyFile,
+  walletCacheLoaderHooks
+} from './wallet-cache-loader'
 
 export interface CurrencyWalletOutput {
   readonly walletApi: EdgeCurrencyWallet | undefined
@@ -82,9 +83,6 @@ export type CurrencyWalletProps = RootProps & {
 
 export type CurrencyWalletInput = PixieInput<CurrencyWalletProps>
 
-const PUBLIC_KEY_CACHE = 'publicKey.json'
-const publicKeyFile = makeJsonFile(asPublicKeyFile)
-
 export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Creates the engine for this wallet:
   engine(input: CurrencyWalletInput) {
@@ -99,42 +97,40 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const plugin = state.plugins.currency[pluginId]
       const { currencyCode } = plugin.currencyInfo
 
+      // On a warm account login, one bulk loader reads every wallet's
+      // cache files and seeds them in a single dispatch. Hold our own
+      // read until then (this update re-runs when the dispatch lands):
+      if (state.accounts[accountId]?.bulkWalletSeedPending) {
+        return
+      }
+
       let releaseSlot: (() => void) | undefined
       try {
         const ai = toApiInput(input)
 
         // Load the UI-state cache before the storage-wallet sync,
         // so a previously-seen wallet can emit its API object right away.
-        // If either file is missing or invalid (first login, schema bump,
-        // corruption), skip the dispatch and fall through to the cold path:
-        const cacheDisklet = makeLocalDisklet(input.props.io, walletInfo.id)
-        const [publicKeyCache, walletCache] = await Promise.all([
-          publicKeyFile.load(cacheDisklet, PUBLIC_KEY_CACHE),
-          walletCacheFile.load(cacheDisklet, WALLET_CACHE_FILE)
-        ])
-        if (publicKeyCache != null && walletCache != null) {
-          const balanceMap: EdgeBalanceMap = new Map()
-          for (const tokenId of Object.keys(walletCache.balances)) {
-            balanceMap.set(
-              tokenId === '' ? null : tokenId,
-              walletCache.balances[tokenId]
-            )
-          }
-          input.props.dispatch({
-            type: 'CURRENCY_WALLET_PUBLIC_INFO',
-            payload: { walletInfo: publicKeyCache.walletInfo, walletId }
-          })
-          input.props.dispatch({
-            type: 'CURRENCY_WALLET_CACHE_LOADED',
-            payload: {
-              balanceMap,
-              enabledTokenIds: walletCache.enabledTokenIds,
-              fiatCurrencyCode: walletCache.fiatCurrencyCode,
-              name: walletCache.name,
-              walletId
+        // The bulk loader may have already seeded us; otherwise read our
+        // own files (cold logins, wallets activated after login, bulk
+        // misses). If either file is missing or invalid (first login,
+        // schema bump, corruption), fall through to the cold path:
+        let cacheSeeded =
+          walletState.publicWalletInfo != null && walletState.nameLoaded
+        if (!cacheSeeded) {
+          const seed = await loadWalletCacheSeed(ai, walletId)
+          if (seed != null) {
+            input.props.dispatch({
+              type: 'CURRENCY_WALLET_CACHE_LOADED',
+              payload: { ...seed, walletId }
+            })
+            if (walletCacheLoaderHooks.onFallbackSeed != null) {
+              walletCacheLoaderHooks.onFallbackSeed(walletId)
             }
-          })
+            cacheSeeded = true
+          }
+        }
 
+        if (cacheSeeded) {
           // This wallet is already usable from its cache, so its heavy
           // startup work (repo sync, key derivation, engine creation)
           // waits its turn in a limited-concurrency queue instead of

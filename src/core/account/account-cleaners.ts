@@ -4,11 +4,20 @@ import {
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  asValue,
+  Cleaner
 } from 'cleaners'
 
 import { asBase16 } from '../../types/server-cleaners'
-import { EdgeDenomination, EdgeToken } from '../../types/types'
+import {
+  EdgeDenomination,
+  EdgePluginMap,
+  EdgeToken,
+  EdgeTokenMap,
+  EdgeWalletState,
+  EdgeWalletStates
+} from '../../types/types'
 import { asJsonObject } from '../../util/file-helpers'
 import { SwapSettings } from './account-types'
 
@@ -91,4 +100,43 @@ export const asGuiSettingsFile = asObject({
 
 export const asCustomTokensFile = asObject({
   customTokens: asObject(asObject(asEdgeToken))
+})
+
+/**
+ * Cached account boot state, stored on the account's local disklet.
+ * This is what the deferred account file loads would produce,
+ * so wallet pixies can start before the account repo syncs.
+ * Values are last-known and explicitly allowed to be stale;
+ * the authoritative loads overwrite them within seconds.
+ * Never contains private key material: wallet keys stay in the
+ * encrypted login stash, which is already in memory at login.
+ * Plugin settings are deliberately excluded: unlike wallet states
+ * and token definitions, they can hold credentials (custom node
+ * auth, API keys), which must never leave the encrypted repo.
+ */
+export interface AccountCacheFile {
+  version: 1
+  customTokens: EdgePluginMap<EdgeTokenMap>
+  /**
+   * True when the account has legacy Airbitz-repo wallets. Their
+   * wallet infos cannot be cached (they contain private keys), so
+   * such accounts boot cold rather than briefly hiding wallets.
+   */
+  legacyWallets: boolean
+  walletStates: EdgeWalletStates
+}
+
+const asEdgeWalletState = asObject<EdgeWalletState>({
+  archived: asOptional(asBoolean),
+  deleted: asOptional(asBoolean),
+  hidden: asOptional(asBoolean),
+  migratedFromWalletId: asOptional(asString),
+  sortIndex: asOptional(asNumber)
+})
+
+export const asAccountCacheFile: Cleaner<AccountCacheFile> = asObject({
+  version: asValue(1),
+  customTokens: asObject(asObject(asEdgeToken)),
+  legacyWallets: asOptional(asBoolean, false),
+  walletStates: asObject(asEdgeWalletState)
 })

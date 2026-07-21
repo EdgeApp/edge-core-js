@@ -25,6 +25,7 @@ import {
   TxFileNames,
   TxidHashes
 } from './currency/wallet/currency-wallet-reducer'
+import { WalletCacheSeed } from './currency/wallet/wallet-cache-file'
 import { LoginStash } from './login/login-stash'
 import { LoginType, SessionKey } from './login/login-types'
 import {
@@ -52,11 +53,23 @@ export type RootAction =
       }
     }
   | {
+      // We just read the account's local boot cache from disk,
+      // so wallets can start before the account repo loads.
+      type: 'ACCOUNT_CACHE_LOADED'
+      payload: {
+        accountId: string
+        customTokens: EdgePluginMap<EdgeTokenMap>
+        walletStates: EdgeWalletStates
+      }
+    }
+  | {
       // The account fires this when the user sorts or archives wallets.
       type: 'ACCOUNT_CHANGED_WALLET_STATES'
       payload: {
         accountId: string
         walletStates: EdgeWalletStates
+        /** The ids whose states this change actually touched. */
+        changedIds: string[]
       }
     }
   | {
@@ -281,7 +294,19 @@ export type RootAction =
         enabledTokenIds: string[]
         fiatCurrencyCode: string
         name: string | null
+        publicWalletInfo?: EdgeWalletInfo
         walletId: string
+      }
+    }
+  | {
+      // Called when the bulk loader finishes reading every active
+      // wallet's cache files, seeding all of them in one dispatch.
+      // The wallet reducer's filter hands each wallet its own seed,
+      // and the account reducer uses it to clear `bulkWalletSeedPending`.
+      type: 'CURRENCY_WALLETS_CACHE_LOADED'
+      payload: {
+        accountId: string
+        seeds: { [walletId: string]: WalletCacheSeed }
       }
     }
   | {

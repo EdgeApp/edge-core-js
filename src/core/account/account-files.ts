@@ -43,6 +43,26 @@ function different(a: any, b: any): boolean {
 }
 
 /**
+ * Waits until the account's storage wallet exists. A cache-seeded
+ * login emits the account API object before `addStorageWallet` runs,
+ * so methods that touch the synced repo pend briefly instead of
+ * throwing during that window. Rejects if the account logs out.
+ */
+export function waitForAccountRepo(
+  ai: ApiInput,
+  accountId: string
+): Promise<unknown> {
+  return ai.waitFor(props => {
+    const accountState = props.state.accounts[accountId]
+    if (accountState == null) {
+      throw new Error('The account was logged out')
+    }
+    const { accountWalletInfo } = accountState
+    if (props.state.storageWallets[accountWalletInfo.id] != null) return true
+  })
+}
+
+/**
  * Loads the legacy wallet list from the account folder.
  */
 async function loadWalletList(disklet: Disklet): Promise<LoadedWalletList> {
@@ -148,6 +168,7 @@ export async function changeWalletStates(
   accountId: string,
   newStates: EdgeWalletStates
 ): Promise<void> {
+  await waitForAccountRepo(ai, accountId)
   const { accountWalletInfo, walletStates } = ai.props.state.accounts[accountId]
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
@@ -189,7 +210,11 @@ export async function changeWalletStates(
 
   ai.props.dispatch({
     type: 'ACCOUNT_CHANGED_WALLET_STATES',
-    payload: { accountId, walletStates: { ...walletStates, ...toWrite } }
+    payload: {
+      accountId,
+      walletStates: { ...walletStates, ...toWrite },
+      changedIds: walletIds
+    }
   })
 }
 
@@ -202,6 +227,7 @@ export async function changePluginUserSettings(
   pluginId: string,
   userSettings: object
 ): Promise<void> {
+  await waitForAccountRepo(ai, accountId)
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
@@ -237,6 +263,7 @@ export async function changeSwapSettings(
   pluginId: string,
   swapSettings: SwapSettings
 ): Promise<void> {
+  await waitForAccountRepo(ai, accountId)
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 

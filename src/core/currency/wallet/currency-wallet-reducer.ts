@@ -385,12 +385,15 @@ const currencyWalletInner = buildReducer<
     next => next.self.currencyInfo,
     next =>
       next.root.accounts[next.self.accountId].allTokens[next.self.pluginId],
-    (balanceMap, currencyInfo, allTokens) => {
+    (balanceMap, currencyInfo, allTokens = {}) => {
       const out: EdgeBalances = {}
       for (const tokenId of balanceMap.keys()) {
         const balance = balanceMap.get(tokenId)
-        const { currencyCode } =
-          tokenId == null ? currencyInfo : allTokens[tokenId]
+        // A cached token balance can arrive before the deferred
+        // builtin-token load defines its token; skip it until then:
+        const tokenInfo = tokenId == null ? currencyInfo : allTokens[tokenId]
+        if (tokenInfo == null) continue
+        const { currencyCode } = tokenInfo
         if (balance != null) out[currencyCode] = balance
       }
       return out
@@ -512,9 +515,14 @@ const currencyWalletInner = buildReducer<
   },
 
   publicWalletInfo(state = null, action): EdgeWalletInfo | null {
-    return action.type === 'CURRENCY_WALLET_PUBLIC_INFO'
-      ? action.payload.walletInfo
-      : state
+    switch (action.type) {
+      case 'CURRENCY_WALLET_PUBLIC_INFO':
+        return action.payload.walletInfo
+
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        return action.payload.publicWalletInfo ?? state
+    }
+    return state
   }
 })
 
@@ -540,6 +548,17 @@ export const currencyWalletReducer = filterReducer<
   CurrencyWalletNext,
   RootAction
 >(currencyWalletInner, (action, next) => {
+  // The bulk loader seeds every wallet in one dispatch;
+  // hand each wallet its own seed as the per-wallet action:
+  if (action.type === 'CURRENCY_WALLETS_CACHE_LOADED') {
+    const seed = action.payload.seeds[next.id]
+    if (seed == null) return { type: 'UPDATE_NEXT' }
+    return {
+      type: 'CURRENCY_WALLET_CACHE_LOADED',
+      payload: { ...seed, walletId: next.id }
+    }
+  }
+
   return /^CURRENCY_/.test(action.type) &&
     'payload' in action &&
     typeof action.payload === 'object' &&

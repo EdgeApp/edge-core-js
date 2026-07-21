@@ -54,13 +54,15 @@ export class CurrencyConfig
   get allTokens(): EdgeTokenMap {
     const { state } = this._ai.props
     const { _accountId: accountId, _pluginId: pluginId } = this
-    return state.accounts[accountId].allTokens[pluginId]
+    // On a cache-seeded login these can be briefly absent,
+    // so honor the declared type instead of returning undefined:
+    return state.accounts[accountId].allTokens[pluginId] ?? emptyTokens
   }
 
   get builtinTokens(): EdgeTokenMap {
     const { state } = this._ai.props
     const { _accountId: accountId, _pluginId: pluginId } = this
-    return state.accounts[accountId].builtinTokens[pluginId]
+    return state.accounts[accountId].builtinTokens[pluginId] ?? emptyTokens
   }
 
   get customTokens(): EdgeTokenMap {
