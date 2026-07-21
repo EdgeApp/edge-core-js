@@ -324,10 +324,12 @@ export type RootAction =
       }
     }
   | {
-      // Called when a currency wallet receives a new name.
+      // Called when a currency wallet receives a new fiat code.
       type: 'CURRENCY_WALLET_FIAT_CHANGED'
       payload: {
         fiatCurrencyCode: string
+        /** True when the value was read from disk, not set by a user. */
+        fromFile?: boolean
         walletId: string
       }
     }
@@ -380,6 +382,8 @@ export type RootAction =
       type: 'CURRENCY_WALLET_NAME_CHANGED'
       payload: {
         name: string | null
+        /** True when the value was read from disk, not set by a user. */
+        fromFile?: boolean
         walletId: string
       }
     }

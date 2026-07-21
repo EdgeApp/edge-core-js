@@ -77,15 +77,18 @@ export interface CurrencyWalletState {
   readonly tokenFileDirty: boolean
   readonly tokenFileLoaded: boolean
   readonly walletSettings: JsonObject
+  readonly walletSettingsDirty: boolean
   readonly engineFailure: Error | null
   readonly engineStarted: boolean
   readonly fiat: string
+  readonly fiatDirty: boolean
   readonly fiatLoaded: boolean
   readonly fileNames: TxFileNames
   readonly files: TxFileJsons
   readonly gotTxs: Set<EdgeTokenId>
   readonly height: number
   readonly name: string | null
+  readonly nameDirty: boolean
   readonly nameLoaded: boolean
   readonly publicWalletInfo: EdgeWalletInfo | null
   readonly seenTxCheckpoint: string | null
@@ -263,14 +266,34 @@ const currencyWalletInner = buildReducer<
     }
   },
 
-  walletSettings(state = initialWalletSettings, action): JsonObject {
+  walletSettings(
+    state = initialWalletSettings,
+    action,
+    next,
+    prev
+  ): JsonObject {
     switch (action.type) {
       case 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE':
+        // A user change made while the file load was reading the disk
+        // wins over the value the load saw (the change already wrote
+        // the file before dispatching):
+        if (prev.self?.walletSettingsDirty) return state
+        return action.payload.walletSettings
       case 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS':
         return action.payload.walletSettings
       default:
         return state
     }
+  },
+
+  walletSettingsDirty(state = false, action): boolean {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS':
+        return true
+      case 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE':
+        return false
+    }
+    return state
   },
 
   engineFailure(state = null, action): Error | null {
@@ -290,11 +313,27 @@ const currencyWalletInner = buildReducer<
       : state
   },
 
-  fiat(state = '', action): string {
-    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' ||
-      action.type === 'CURRENCY_WALLET_CACHE_LOADED'
-      ? action.payload.fiatCurrencyCode
-      : state
+  fiat(state = '', action, next, prev): string {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        return action.payload.fiatCurrencyCode
+
+      case 'CURRENCY_WALLET_FIAT_CHANGED':
+        // A user change made while the file load was reading the disk
+        // wins over the value the load saw (the change already wrote
+        // the file before dispatching):
+        if (action.payload.fromFile === true && prev.self?.fiatDirty)
+          return state
+        return action.payload.fiatCurrencyCode
+    }
+    return state
+  },
+
+  fiatDirty(state = false, action): boolean {
+    if (action.type === 'CURRENCY_WALLET_FIAT_CHANGED') {
+      return action.payload.fromFile !== true
+    }
+    return state
   },
 
   fiatLoaded(state = false, action): boolean {
@@ -406,11 +445,27 @@ const currencyWalletInner = buildReducer<
       : state
   },
 
-  name(state = null, action): string | null {
-    return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ||
-      action.type === 'CURRENCY_WALLET_CACHE_LOADED'
-      ? action.payload.name
-      : state
+  name(state = null, action, next, prev): string | null {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        return action.payload.name
+
+      case 'CURRENCY_WALLET_NAME_CHANGED':
+        // A user rename made while the file load was reading the disk
+        // wins over the value the load saw (the rename already wrote
+        // the file before dispatching):
+        if (action.payload.fromFile === true && prev.self?.nameDirty)
+          return state
+        return action.payload.name
+    }
+    return state
+  },
+
+  nameDirty(state = false, action): boolean {
+    if (action.type === 'CURRENCY_WALLET_NAME_CHANGED') {
+      return action.payload.fromFile !== true
+    }
+    return state
   },
 
   nameLoaded(state = false, action): boolean {
