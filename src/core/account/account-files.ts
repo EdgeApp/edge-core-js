@@ -67,6 +67,26 @@ export function waitForAccountRepo(
 }
 
 /**
+ * Waits until the account's plugin settings have loaded from disk.
+ * The settings writers rebuild the whole on-disk map from Redux, so
+ * writing before the load would wipe other plugins' settings. Rejects
+ * if the account logs out or the boot loads fail terminally.
+ */
+export function waitForPluginSettings(
+  ai: ApiInput,
+  accountId: string
+): Promise<unknown> {
+  return ai.waitFor(props => {
+    const accountState = props.state.accounts[accountId]
+    if (accountState == null) {
+      throw new Error('The account was logged out')
+    }
+    if (accountState.pluginSettingsLoaded) return true
+    if (accountState.loadFailure != null) throw accountState.loadFailure
+  })
+}
+
+/**
  * Loads the legacy wallet list from the account folder.
  */
 async function loadWalletList(disklet: Disklet): Promise<LoadedWalletList> {
@@ -231,7 +251,7 @@ export async function changePluginUserSettings(
   pluginId: string,
   userSettings: object
 ): Promise<void> {
-  await waitForAccountRepo(ai, accountId)
+  await waitForPluginSettings(ai, accountId)
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
@@ -267,7 +287,7 @@ export async function changeSwapSettings(
   pluginId: string,
   swapSettings: SwapSettings
 ): Promise<void> {
-  await waitForAccountRepo(ai, accountId)
+  await waitForPluginSettings(ai, accountId)
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 

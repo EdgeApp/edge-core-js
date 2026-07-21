@@ -70,6 +70,7 @@ export interface AccountState {
   readonly swapSettings: EdgePluginMap<SwapSettings>
   readonly userSettings: EdgePluginMap<object>
   readonly pluginSettingsDirty: boolean
+  readonly pluginSettingsLoaded: boolean
 }
 
 export interface AccountNext {
@@ -458,6 +459,10 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
         return action.payload.userSettings
     }
     return state
+  },
+
+  pluginSettingsLoaded(state = false, action): boolean {
+    return action.type === 'ACCOUNT_PLUGIN_SETTINGS_LOADED' ? true : state
   },
 
   pluginSettingsDirty(state = false, action): boolean {
