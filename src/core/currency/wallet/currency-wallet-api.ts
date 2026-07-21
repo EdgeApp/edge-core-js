@@ -54,7 +54,8 @@ import { makeStorageWalletApi } from '../../storage/storage-api'
 import {
   bumpEngineQueue,
   checkCurrencyWallet,
-  getCurrencyMultiplier
+  getCurrencyMultiplier,
+  waitForCurrencyEngine
 } from '../currency-selectors'
 import {
   determineConfirmations,
@@ -117,13 +118,7 @@ export function makeCurrencyWalletApi(
    * method call instead of a hang.
    */
   function getEngine(): Promise<EdgeCurrencyEngine> {
-    // The caller needs this engine now, so skip the startup queue:
-    bumpEngineQueue(ai, walletId)
-
-    return ai.waitFor((props: RootProps): EdgeCurrencyEngine | undefined => {
-      checkCurrencyWallet(props, walletId)
-      return props.output.currency.wallets[walletId]?.engine
-    })
+    return waitForCurrencyEngine(ai, walletId)
   }
 
   async function getTools(): Promise<EdgeCurrencyTools> {

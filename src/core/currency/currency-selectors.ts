@@ -1,4 +1,5 @@
 import {
+  EdgeCurrencyEngine,
   EdgeCurrencyInfo,
   EdgeCurrencyWallet,
   EdgeTokenMap
@@ -63,6 +64,26 @@ export function waitForCurrencyWallet(
     }
   )
   return out
+}
+
+/**
+ * Waits for a wallet's engine to exist. The wallet API object can
+ * exist before its engine does (a cache-seeded login), so
+ * engine-backed methods wait here instead of throwing. Bails out if
+ * the wallet is deleted mid-wait, and re-throws `engineFailure` so a
+ * broken plugin surfaces as a rejection instead of a hang.
+ */
+export function waitForCurrencyEngine(
+  ai: ApiInput,
+  walletId: string
+): Promise<EdgeCurrencyEngine> {
+  // The caller needs this engine now, so skip the startup queue:
+  bumpEngineQueue(ai, walletId)
+
+  return ai.waitFor((props: RootProps): EdgeCurrencyEngine | undefined => {
+    checkCurrencyWallet(props, walletId)
+    return props.output.currency.wallets[walletId]?.engine
+  })
 }
 
 /**
