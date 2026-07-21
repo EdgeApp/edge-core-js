@@ -67,6 +67,11 @@ export function makeStorageWalletApi(
     },
 
     async sync(): Promise<void> {
+      // The storage wallet may not be attached yet on a cache-seeded
+      // login; wait for `addStorageWallet` instead of throwing:
+      await ai.waitFor(props =>
+        props.state.storageWallets[id] != null ? true : undefined
+      )
       await syncStorageWallet(ai, id)
     }
   }

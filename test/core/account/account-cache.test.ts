@@ -376,6 +376,15 @@ describe('account cache', function () {
     const wallet2 = await account2.waitForCurrencyWallet(walletIds[0])
     expect(wallet2.name).equals('Cached Name')
 
+    // Repo-backed calls made in the window pend instead of throwing
+    // (this store has never seen addStorageWallet run):
+    let syncSettled = false
+    const syncPromise = account2.sync().then(() => {
+      syncSettled = true
+    })
+    await snooze(RACE_WAIT_MS)
+    expect(syncSettled).equals(false)
+
     // A custom token added during the boot window must reach the
     // synced repo once the deferred loads land, not just Redux:
     const tokenId = await account2.currencyConfig.fakecoin.addCustomToken({
@@ -386,6 +395,7 @@ describe('account cache', function () {
     })
     release()
     releaseEngines()
+    await syncPromise
     await pollUntilAsync(async () => {
       try {
         const text = await account2.disklet.getText('CustomTokens.json')
