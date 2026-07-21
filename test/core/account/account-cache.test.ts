@@ -164,10 +164,23 @@ describe('account cache', function () {
     const wallet = await account.waitForCurrencyWallet(walletIds[0])
     expect(wallet.name).equals('Cached Name')
 
+    // Enabling a builtin token in the window pends until the builtin
+    // definitions load, instead of silently filtering the id away:
+    let tokensSettled = false
+    const tokensPromise = wallet
+      .changeEnabledTokenIds(['badf00d5'])
+      .then(() => {
+        tokensSettled = true
+      })
+    await snooze(RACE_WAIT_MS)
+    expect(tokensSettled).equals(false)
+
     // The deferred loads land and overwrite authoritatively, and the
     // cached token balance gains its currency code once the builtin
     // token definitions arrive:
     release()
+    await tokensPromise
+    expect([...wallet.enabledTokenIds]).deep.equals(['badf00d5'])
     await pollUntil(
       () =>
         account.currencyConfig.fakecoin.builtinTokens.badf00d5 != null &&

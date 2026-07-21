@@ -337,9 +337,24 @@ export function makeCurrencyWalletApi(
 
     // Tokens:
     async changeEnabledTokenIds(tokenIds: string[]): Promise<void> {
-      const { dispatch, walletId, walletState } = input.props
+      const { walletId, walletState } = input.props
       const { accountId, pluginId } = walletState
-      const accountState = input.props.state.accounts[accountId]
+
+      // On a warm login the builtin token definitions load after the
+      // wallet exists; wait for them, or the filter below would
+      // silently drop enabled builtin tokens. This must keep working
+      // when the engine has failed, so only bail on deletion:
+      const accountState = await ai.waitFor(props => {
+        if (props.state.currency.wallets[walletId] == null) {
+          throw new Error(
+            `Wallet id ${walletId} does not exist in this account`
+          )
+        }
+        const accountState = props.state.accounts[accountId]
+        if (accountState?.builtinTokens[pluginId] != null) return accountState
+      })
+
+      const { dispatch } = input.props
       const allTokens = accountState.allTokens[pluginId] ?? {}
 
       const enabledTokenIds = uniqueStrings(tokenIds).filter(
