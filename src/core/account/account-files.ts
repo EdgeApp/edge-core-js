@@ -67,6 +67,27 @@ export function waitForAccountRepo(
 }
 
 /**
+ * Waits until the account's wallet states have loaded from disk.
+ * A cache-seeded login holds possibly-stale wallet states, so a
+ * change based on those could no-op against a value the load is
+ * about to overwrite. Rejects if the account logs out or the boot
+ * loads fail terminally.
+ */
+export function waitForWalletStates(
+  ai: ApiInput,
+  accountId: string
+): Promise<unknown> {
+  return ai.waitFor(props => {
+    const accountState = props.state.accounts[accountId]
+    if (accountState == null) {
+      throw new Error('The account was logged out')
+    }
+    if (accountState.walletStatesLoaded) return true
+    if (accountState.loadFailure != null) throw accountState.loadFailure
+  })
+}
+
+/**
  * Waits until the account's plugin settings have loaded from disk.
  * The settings writers rebuild the whole on-disk map from Redux, so
  * writing before the load would wipe other plugins' settings. Rejects
@@ -192,7 +213,9 @@ export async function changeWalletStates(
   accountId: string,
   newStates: EdgeWalletStates
 ): Promise<void> {
-  await waitForAccountRepo(ai, accountId)
+  // The load implies the repo exists, and it makes the diff below
+  // compare against authoritative records instead of cached ones:
+  await waitForWalletStates(ai, accountId)
   const { accountWalletInfo, walletStates } = ai.props.state.accounts[accountId]
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
