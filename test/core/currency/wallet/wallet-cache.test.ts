@@ -338,6 +338,118 @@ describe('wallet cache', function () {
     await account2.logout()
   })
 
+  it('classifies every wallet property as cache-seeded or engine-gated', async function () {
+    this.timeout(15000)
+
+    // Everything the wallet-list scene renders pre-engine must come
+    // from the cache file. If this list changes, walletCache.json
+    // (and its saver and seed paths) must change with it:
+    const cacheSeeded = [
+      'balanceMap',
+      'balances',
+      'enabledTokenIds',
+      'fiatCurrencyCode',
+      'name'
+    ]
+
+    // The documented engine-gated set from the design's section 5.4:
+    // methods that internally await the engine, plus engine-sourced
+    // getters with safe pre-engine defaults:
+    const engineGated = [
+      '$internalStreamTransactions',
+      'accelerate',
+      'blockHeight',
+      'broadcastTx',
+      'detectedTokenIds',
+      'dumpData',
+      'getAddresses',
+      'getMaxSpendable',
+      'getNumTransactions',
+      'getPaymentProtocolInfo',
+      'getReceiveAddress',
+      'getTransactions',
+      'lockReceiveAddress',
+      'makeSpend',
+      'otherMethods',
+      'resyncBlockchain',
+      'saveReceiveAddress',
+      'saveTx',
+      'saveTxAction',
+      'saveTxMetadata',
+      'signBytes',
+      'signMessage',
+      'signTx',
+      'split',
+      'stakingStatus',
+      'streamTransactions',
+      'sweepPrivateKeys',
+      'syncRatio',
+      'syncStatus',
+      'unactivatedTokenIds'
+    ]
+
+    // Identity, storage-backed, config, and tools surfaces, which
+    // never needed an engine in the first place:
+    const engineFree = [
+      'changeEnabledTokenIds',
+      'changePaused',
+      'changeWalletSettings',
+      'created',
+      'currencyConfig',
+      'currencyInfo',
+      'denominationToNative',
+      'disklet',
+      'encodeUri',
+      'id',
+      'imported',
+      'localDisklet',
+      'nativeToDenomination',
+      'on',
+      'parseUri',
+      'paused',
+      'publicWalletInfo',
+      'renameWallet',
+      'setFiatCurrencyCode',
+      'sync',
+      'type',
+      'walletSettings',
+      'watch'
+    ]
+
+    const { context, walletId } = await makeCachedWorld()
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+
+    // Every property on the live wallet object must be classified.
+    // A newly added EdgeCurrencyWallet property fails here until
+    // someone decides whether the cache must seed it:
+    const classified = new Set([...cacheSeeded, ...engineGated, ...engineFree])
+    const unclassified = Object.getOwnPropertyNames(wallet).filter(
+      // The yaob bridge adds its own bookkeeping property:
+      key => key !== '_yaob' && !classified.has(key)
+    )
+    expect(unclassified).deep.equals([])
+
+    // And the classification must not name properties that no longer
+    // exist, so removals also force a decision:
+    const surface = new Set(Object.getOwnPropertyNames(wallet))
+    const stale = [...classified].filter(key => !surface.has(key))
+    expect(stale).deep.equals([])
+
+    // The cache-seeded properties actually carry cached values while
+    // the engine is still blocked:
+    expect(wallet.name).equals('Cached Name')
+    expect(wallet.fiatCurrencyCode).equals('iso:USD')
+    expect(wallet.enabledTokenIds).deep.equals(['badf00d5'])
+    expect(wallet.balanceMap.get(null)).equals('12345')
+    expect(wallet.balances.FAKE).equals('12345')
+
+    release()
+    await account.logout()
+  })
+
   it('otherMethods is {} pre-engine and carries engine methods post-engine', async function () {
     this.timeout(15000)
     const { context, walletId } = await makeCachedWorld()

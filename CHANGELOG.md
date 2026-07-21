@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: Account-level `accountCache.json` with the wallet states, custom tokens, and plugin settings the account boot needs. A warm login seeds Redux from it and emits the account right after the currency plugins load, before the account repo syncs, and every cached wallet then seeds from a single bulk dispatch. The deferred file loads overwrite the seeded state authoritatively, and user changes made during the window win over the values those loads read. First login (no cache) boots exactly as before.
 - added: Per-wallet `walletCache.json` with each wallet's name, fiat code, enabled token IDs, and last-known balances. Currency wallets now emit their API objects as soon as this cache loads, before their engines exist, so the GUI can render the wallet list immediately at login. Engine-backed methods wait for the engine internally and reject if it fails or the wallet is deleted. First login (no cache) behaves exactly as before.
 - added: Cached wallets' engine startup is staggered through a limited-concurrency queue (8 at a time) instead of all racing at login. Asking for a wallet via `waitForCurrencyWallet`, calling an engine- or storage-backed method, or un-pausing it moves it to the front of the queue. Wallets without a cache skip the queue, so first login is unaffected.
 - changed: `waitForCurrencyWallet` and `waitForAllWallets` now resolve when the wallet object exists, which can be before its engine loads.

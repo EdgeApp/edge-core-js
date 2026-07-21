@@ -32,6 +32,15 @@ const GENESIS_BLOCK = 1231006505
  */
 export interface FakePluginTestConfig {
   /**
+   * If set, `getBuiltinTokens` will wait for this promise to resolve.
+   * The account pixie awaits builtin tokens at the head of its file
+   * loads, so this gate makes "the deferred account loads have not
+   * landed yet" a deterministic state in tests (and blocks a cold
+   * login entirely, exactly as on master).
+   */
+  builtinTokensGate?: Promise<void>
+
+  /**
    * If set, engine creation will wait for this promise to resolve.
    * Use `createEngineGate` to make a controllable gate,
    * so "before the engine exists" is a deterministic state in tests.
@@ -46,6 +55,7 @@ export interface FakePluginTestConfig {
 }
 
 export const fakePluginTestConfig: FakePluginTestConfig = {
+  builtinTokensGate: undefined,
   engineGate: undefined,
   onEngineCreate: undefined
 }
@@ -443,8 +453,11 @@ export function makeFakeCurrencyPlugin(
   return {
     currencyInfo,
 
-    getBuiltinTokens(): Promise<EdgeTokenMap> {
-      return Promise.resolve(fakeTokens)
+    async getBuiltinTokens(): Promise<EdgeTokenMap> {
+      if (fakePluginTestConfig.builtinTokensGate != null) {
+        await fakePluginTestConfig.builtinTokensGate
+      }
+      return fakeTokens
     },
 
     async makeCurrencyEngine(
