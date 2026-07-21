@@ -154,6 +154,10 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             // failures instead of leaving the session half-loaded
             // (a stuck `*Loaded` flag would disable the cache saver):
             for (let attempt = 1; ; ++attempt) {
+              // The user may have logged out while we were seeding:
+              if (ai.props.state.accounts[accountId] == null) {
+                return await stopUpdates
+              }
               try {
                 await loadEverything()
                 break
