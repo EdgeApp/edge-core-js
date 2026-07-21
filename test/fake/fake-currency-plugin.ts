@@ -21,7 +21,8 @@ import {
   EdgeTransaction,
   EdgeTransactionEvent,
   EdgeWalletInfo,
-  InsufficientFundsError
+  InsufficientFundsError,
+  JsonObject
 } from '../../src/index'
 import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 
@@ -48,6 +49,15 @@ export interface FakePluginTestConfig {
   engineGate?: Promise<void>
 
   /**
+   * If set, `checkPublicKey` will wait for this promise to resolve.
+   * The wallet pixie validates its cached public key between the
+   * repo sync and the wallet file loads, so this gate makes "the
+   * wallet's file loads have not landed yet" a deterministic state
+   * on a warm login, while the cache-seeded wallet API stays usable.
+   */
+  publicKeyCheckGate?: Promise<void>
+
+  /**
    * If set, receives each wallet id as its `makeCurrencyEngine` call
    * begins (before any gate), so tests can observe creation order.
    */
@@ -57,6 +67,7 @@ export interface FakePluginTestConfig {
 export const fakePluginTestConfig: FakePluginTestConfig = {
   builtinTokensGate: undefined,
   engineGate: undefined,
+  publicKeyCheckGate: undefined,
   onEngineCreate: undefined
 }
 
@@ -406,6 +417,13 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
       throw new Error('Unsupported key type')
     }
     return Promise.resolve({ fakeKey: 'FakePrivateKey' })
+  }
+
+  async checkPublicKey(publicKey: JsonObject): Promise<boolean> {
+    if (fakePluginTestConfig.publicKeyCheckGate != null) {
+      await fakePluginTestConfig.publicKeyCheckGate
+    }
+    return true
   }
 
   async derivePublicKey(privateWalletInfo: EdgeWalletInfo): Promise<object> {

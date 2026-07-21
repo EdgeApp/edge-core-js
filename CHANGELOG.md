@@ -2,12 +2,18 @@
 
 ## Unreleased
 
-- added: Account-level `accountCache.json` with the wallet states, custom tokens, and plugin settings the account boot needs. A warm login seeds Redux from it and emits the account right after the currency plugins load, before the account repo syncs, and every cached wallet then seeds from a single bulk dispatch. The deferred file loads overwrite the seeded state authoritatively, and user changes made during the window win over the values those loads read. First login (no cache) boots exactly as before.
+- added: Account-level `accountCache.json` with the wallet states and custom tokens the account boot needs. A warm login seeds Redux from it and emits the account right after the currency plugins load, before the account repo syncs, and every cached wallet then seeds from a single bulk dispatch. The deferred file loads overwrite the seeded state authoritatively, and user changes made during the window win over the values those loads read. First login (no cache) boots exactly as before.
 - added: Per-wallet `walletCache.json` with each wallet's name, fiat code, enabled token IDs, and last-known balances. Currency wallets now emit their API objects as soon as this cache loads, before their engines exist, so the GUI can render the wallet list immediately at login. Engine-backed methods wait for the engine internally and reject if it fails or the wallet is deleted. First login (no cache) behaves exactly as before.
 - added: Cached wallets' engine startup is staggered through a limited-concurrency queue (8 at a time) instead of all racing at login. Asking for a wallet via `waitForCurrencyWallet`, calling an engine- or storage-backed method, or un-pausing it moves it to the front of the queue. Wallets without a cache skip the queue, so first login is unaffected.
 - changed: `waitForCurrencyWallet` and `waitForAllWallets` now resolve when the wallet object exists, which can be before its engine loads.
 - changed: `wallet.otherMethods` is `{}` until the wallet's engine loads, then switches to the engine's methods.
 - changed: `EdgeCurrencyWallet.balanceMap` keeps its object identity when an engine re-reports an unchanged balance.
+- changed: `getActivationAssets`, `activateWallet`, `getDisplayPrivateKey`, and `getDisplayPublicKey` wait for the wallet's engine instead of throwing when it has not loaded yet.
+- fixed: The account's custom-token file is never written before its first load, which could permanently delete a custom token another device had synced to the account.
+- fixed: File loads that race a user change during the boot window now merge per field (custom tokens per token id, enabled tokens per toggle, plugin settings per plugin id, wallet states per wallet id) instead of keeping or discarding whole maps, so changes synced from another device survive the window.
+- fixed: `changeEnabledTokenIds` applies the caller's toggles to the current list, so a call built against a stale list no longer erases enablement changes synced from another device.
+- fixed: The plugin-settings writers merge into the on-disk file instead of rebuilding it from memory, so settings another device synced to disk survive a local settings change.
+- fixed: The fake sync server accepts the hash-suffixed store routes it hands out, so a repo's second sync inside `makeFakeEdgeWorld` no longer fails with a 404.
 
 ## 2.47.1 (2026-07-17)
 

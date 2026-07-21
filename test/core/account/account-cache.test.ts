@@ -5,7 +5,12 @@ import { base64 } from 'rfc4648'
 import { accountCacheSaverConfig } from '../../../src/core/account/account-cache-file'
 import { walletCacheSaverConfig } from '../../../src/core/currency/wallet/wallet-cache-file'
 import { walletCacheLoaderHooks } from '../../../src/core/currency/wallet/wallet-cache-loader'
-import { EdgeContext, makeFakeEdgeWorld } from '../../../src/index'
+import {
+  EdgeAccount,
+  EdgeContext,
+  EdgeFakeWorld,
+  makeFakeEdgeWorld
+} from '../../../src/index'
 import { base58 } from '../../../src/util/encoding'
 import { snooze } from '../../../src/util/snooze'
 import {
@@ -25,6 +30,8 @@ const RACE_WAIT_MS = 150
 
 interface AccountCachedWorld {
   context: EdgeContext
+  /** The world, for making second-device contexts. */
+  world: EdgeFakeWorld
   /** Every fakecoin wallet id, in active order at creation time. */
   walletIds: string[]
   /** The custom token added during the first session. */
@@ -71,9 +78,13 @@ async function makeAccountCachedWorld(
     await account.changeWalletStates({ [walletIds[1]]: { archived: true } })
     await snooze(SAVE_WAIT_MS)
   }
+
+  // Push the session's writes to the sync server,
+  // so a second device can see them:
+  await account.sync()
   await account.logout()
 
-  return { context, walletIds, customTokenId }
+  return { context, world, walletIds, customTokenId }
 }
 
 describe('account cache', function () {
@@ -463,6 +474,271 @@ describe('account cache', function () {
     expect(account3.activeWalletIds.length).equals(2)
     release3()
     await account3.logout()
+  })
+})
+
+describe('write-path staleness', function () {
+  beforeEach(function () {
+    fakePluginTestConfig.builtinTokensGate = undefined
+    fakePluginTestConfig.engineGate = undefined
+    fakePluginTestConfig.publicKeyCheckGate = undefined
+    accountCacheSaverConfig.throttleMs = 50
+    walletCacheSaverConfig.throttleMs = 50
+  })
+
+  afterEach(function () {
+    fakePluginTestConfig.builtinTokensGate = undefined
+    fakePluginTestConfig.engineGate = undefined
+    fakePluginTestConfig.publicKeyCheckGate = undefined
+    accountCacheSaverConfig.throttleMs = 5000
+    walletCacheSaverConfig.throttleMs = 5000
+  })
+
+  /**
+   * Logs device A in and out once, so the background repo sync pulls
+   * device B's pushed changes into A's local repo copy. The account
+   * cache saver is stalled for the session, so A's account cache
+   * stays as it was: the repo is now ahead of the cache, exactly the
+   * state a warm boot walks into.
+   */
+  async function pullOnDeviceA(
+    context: EdgeContext,
+    pulled: (account: EdgeAccount) => Promise<boolean>
+  ): Promise<void> {
+    accountCacheSaverConfig.throttleMs = 5000
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.sync()
+    await pollUntilAsync(async () => await pulled(account))
+    await account.logout()
+    accountCacheSaverConfig.throttleMs = 50
+  }
+
+  it('keeps custom tokens from another device across a boot-window edit', async function () {
+    this.timeout(15000)
+    const { context, customTokenId } = await makeAccountCachedWorld()
+
+    // Put a second token in the synced repo but not in the account
+    // cache, by stalling the cache saver for a session. This is the
+    // divergence a second device's addCustomToken leaves behind once
+    // sync delivers it: the repo is ahead of this device's cache:
+    accountCacheSaverConfig.throttleMs = 5000
+    const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const remoteTokenId = await account1.currencyConfig.fakecoin.addCustomToken(
+      {
+        currencyCode: 'REMOTE',
+        displayName: 'Remote Token',
+        denominations: [{ multiplier: '100', name: 'REMOTE' }],
+        networkLocation: { contractAddress: '0xREM07E' }
+      }
+    )
+    await pollUntilAsync(async () => {
+      const text = await account1.disklet.getText('CustomTokens.json')
+      return text.includes(remoteTokenId)
+    })
+    // Push the write out of the repo's pending-changes folder, so the
+    // warm boot's background sync has nothing in flight:
+    await account1.sync()
+    await account1.logout()
+    accountCacheSaverConfig.throttleMs = 50
+
+    // Device A warm-boots on a cache that has never seen the remote
+    // token, and adds its own token in the boot window:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.builtinTokensGate = gate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const localTokenId = await account.currencyConfig.fakecoin.addCustomToken({
+      currencyCode: 'LOCAL',
+      displayName: 'Local Token',
+      denominations: [{ multiplier: '100', name: 'LOCAL' }],
+      networkLocation: { contractAddress: '0xL0CA1' }
+    })
+
+    // The saver must not write the cache-seeded map to disk
+    // (that write is what would delete the remote token):
+    await snooze(RACE_WAIT_MS)
+    const preLoad = await account.disklet.getText('CustomTokens.json')
+    expect(preLoad.includes(localTokenId)).equals(false)
+    expect(preLoad.includes(remoteTokenId)).equals(true)
+
+    // The load lands, merges, and the saver writes all three tokens:
+    release()
+    await pollUntilAsync(async () => {
+      const text = await account.disklet.getText('CustomTokens.json')
+      return (
+        text.includes(customTokenId) &&
+        text.includes(remoteTokenId) &&
+        text.includes(localTokenId)
+      )
+    })
+    const { customTokens } = account.currencyConfig.fakecoin
+    expect(customTokens[customTokenId]?.currencyCode).equals('CACHED')
+    expect(customTokens[remoteTokenId]?.currencyCode).equals('REMOTE')
+    expect(customTokens[localTokenId]?.currencyCode).equals('LOCAL')
+    await account.logout()
+
+    // Wait for the cache savers to settle before the world closes,
+    // so nothing writes into a destroyed context:
+    await snooze(SAVE_WAIT_MS)
+  })
+
+  it('keeps enabled tokens from another device across a boot-window toggle', async function () {
+    this.timeout(15000)
+    const { context, world, walletIds, customTokenId } =
+      await makeAccountCachedWorld()
+
+    // Device B enables the builtin token and syncs it to the server:
+    const contextB = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { fakecoin: true }
+    })
+    const accountB = await contextB.loginWithPIN(
+      fakeUser.username,
+      fakeUser.pin
+    )
+    const walletB = await accountB.waitForCurrencyWallet(walletIds[0])
+    await walletB.changeEnabledTokenIds(['badf00d5'])
+    await pollUntilAsync(async () => {
+      const text = await walletB.disklet.getText('Tokens.json')
+      return text.includes('badf00d5')
+    })
+    await walletB.sync()
+    await accountB.logout()
+
+    // Device A pulls the wallet repo. The wallet reloads its token
+    // file mid-session, so stall the wallet cache saver to keep the
+    // cache on the old empty list (the divergence under test):
+    walletCacheSaverConfig.throttleMs = 5000
+    await pullOnDeviceA(context, async account => {
+      const wallet = await account.waitForCurrencyWallet(walletIds[0])
+      const text = await wallet.disklet.getText('Tokens.json')
+      return text.includes('badf00d5')
+    })
+    walletCacheSaverConfig.throttleMs = 50
+
+    // Device A warm-boots on a cache with an empty enabled list. The
+    // public-key gate holds the wallet's file loads, so the list the
+    // user acts on is deterministically the stale cached one:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.builtinTokensGate = gate
+    const { gate: pkGate, release: releasePk } = createEngineGate()
+    fakePluginTestConfig.publicKeyCheckGate = pkGate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletIds[0])
+    expect([...wallet.enabledTokenIds]).deep.equals([])
+
+    // Toggling the custom token pends on the builtin definitions:
+    let toggleSettled = false
+    const togglePromise = wallet
+      .changeEnabledTokenIds([customTokenId])
+      .then(() => {
+        toggleSettled = true
+      })
+    await snooze(RACE_WAIT_MS)
+    expect(toggleSettled).equals(false)
+
+    // The toggle lands against the stale list...
+    release()
+    await togglePromise
+    expect([...wallet.enabledTokenIds]).deep.equals([customTokenId])
+
+    // ...and the racing load preserves it instead of erasing it,
+    // while the toggle preserves the other device's enablement:
+    releasePk()
+    await pollUntil(
+      () =>
+        wallet.enabledTokenIds.includes('badf00d5') &&
+        wallet.enabledTokenIds.includes(customTokenId)
+    )
+    await account.logout()
+    await snooze(SAVE_WAIT_MS)
+  })
+
+  it('keeps a wallet-state change made against a stale cache', async function () {
+    this.timeout(15000)
+    const { context, walletIds } = await makeAccountCachedWorld({
+      archiveSecond: true
+    })
+
+    // Put an "unarchived" record in the synced repo while the cache
+    // still says "archived", by stalling the cache saver for a
+    // session. This is the divergence a second device's unarchive
+    // leaves behind once sync delivers it:
+    accountCacheSaverConfig.throttleMs = 5000
+    const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account1.changeWalletStates({ [walletIds[1]]: { archived: false } })
+    // Push the write out of the repo's pending-changes folder, so the
+    // warm boot's background sync has nothing in flight:
+    await account1.sync()
+    await account1.logout()
+    accountCacheSaverConfig.throttleMs = 50
+
+    // Device A warm-boots on a cache that still says "archived", and
+    // the user re-affirms that. Against the stale cache this change
+    // looks like a no-op, so it must wait for the load instead:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.builtinTokensGate = gate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    expect(account.archivedWalletIds.includes(walletIds[1])).equals(true)
+    let changeSettled = false
+    const changePromise = account
+      .changeWalletStates({ [walletIds[1]]: { archived: true } })
+      .then(() => {
+        changeSettled = true
+      })
+    await snooze(RACE_WAIT_MS)
+    expect(changeSettled).equals(false)
+
+    // The load lands with device B's "unarchived" record, and the
+    // change applies on top of it instead of silently reverting:
+    release()
+    await changePromise
+    expect(account.archivedWalletIds.includes(walletIds[1])).equals(true)
+    expect(account.activeWalletIds.includes(walletIds[1])).equals(false)
+    await account.logout()
+    await snooze(SAVE_WAIT_MS)
+  })
+
+  it('keeps plugin settings from another device across a local change', async function () {
+    this.timeout(15000)
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const plugins = { fakecoin: true, fakeswap: true }
+    const context = await world.makeEdgeContext({ ...contextOptions, plugins })
+    const contextB = await world.makeEdgeContext({ ...contextOptions, plugins })
+
+    // Device A logs in first, so its Redux settings predate B's write:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    // Device B changes the currency plugin's settings and syncs:
+    const accountB = await contextB.loginWithPIN(
+      fakeUser.username,
+      fakeUser.pin
+    )
+    await accountB.currencyConfig.fakecoin.changeUserSettings({
+      remoteFlag: true
+    })
+    await accountB.sync()
+    await accountB.logout()
+
+    // Device A pulls the repo (no settings reload runs), then changes
+    // a different plugin's settings. The writer must merge into the
+    // freshly read file, not rebuild it from stale Redux:
+    await account.sync()
+    await account.swapConfig.fakeswap.changeUserSettings({ localFlag: true })
+    const text = await account.disklet.getText('PluginSettings.json')
+    expect(text.includes('remoteFlag')).equals(true)
+    expect(text.includes('localFlag')).equals(true)
+    await account.logout()
+
+    // A fresh login sees both settings:
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    expect(account2.currencyConfig.fakecoin.userSettings).deep.equals({
+      remoteFlag: true
+    })
+    expect(account2.swapConfig.fakeswap.userSettings).deep.equals({
+      localFlag: true
+    })
+    await account2.logout()
+    await snooze(SAVE_WAIT_MS)
   })
 })
 
