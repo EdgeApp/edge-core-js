@@ -151,9 +151,9 @@ export function makeCurrencyWalletApi(
   }
 
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo, props => {
-    if (props.state.currency.wallets[walletId] == null) {
-      throw new Error(`Wallet id ${walletId} does not exist in this account`)
-    }
+    // Bails on deletion, and re-throws `engineFailure`: while the
+    // repo is missing, a dead engine pixie means it is never coming.
+    checkCurrencyWallet(props, walletId)
   })
 
   // The storage-wallet state provides the disklets once the repo loads,

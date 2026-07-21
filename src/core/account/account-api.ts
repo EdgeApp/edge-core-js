@@ -129,9 +129,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     ai,
     accountWalletInfo,
     props => {
-      if (props.state.accounts[accountId] == null) {
+      const accountState = props.state.accounts[accountId]
+      if (accountState == null) {
         throw new Error('The account was logged out')
       }
+      // A terminal boot failure means the repo is never coming:
+      if (accountState.loadFailure != null) throw accountState.loadFailure
     }
   )
 

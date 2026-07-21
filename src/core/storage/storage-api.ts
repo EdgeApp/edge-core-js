@@ -73,10 +73,12 @@ export function makeStorageWalletApi(
 
     async sync(): Promise<void> {
       // The storage wallet may not be attached yet on a cache-seeded
-      // login; wait for `addStorageWallet` instead of throwing:
+      // login; wait for `addStorageWallet` instead of throwing.
+      // The liveness check only matters while the repo is missing,
+      // so an unrelated later failure cannot break a working sync:
       await ai.waitFor(props => {
-        if (checkAlive != null) checkAlive(props)
         if (props.state.storageWallets[id] != null) return true
+        if (checkAlive != null) checkAlive(props)
       })
       await syncStorageWallet(ai, id)
     }

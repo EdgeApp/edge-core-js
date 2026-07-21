@@ -59,6 +59,10 @@ export function waitForAccountRepo(
     }
     const { accountWalletInfo } = accountState
     if (props.state.storageWallets[accountWalletInfo.id] != null) return true
+
+    // The repo is still missing. If the boot loads failed terminally,
+    // it is never coming, so reject instead of pending forever:
+    if (accountState.loadFailure != null) throw accountState.loadFailure
   })
 }
 

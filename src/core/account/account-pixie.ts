@@ -171,8 +171,15 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
                   )}`
                 )
                 if (attempt >= 3) {
+                  // Record the terminal failure, so the repo waiters
+                  // (changeWalletStates, dataStore, sync, settings)
+                  // reject instead of pending forever:
                   input.props.onError(error)
-                  break
+                  input.props.dispatch({
+                    type: 'ACCOUNT_LOAD_FAILED',
+                    payload: { accountId, error }
+                  })
+                  return await stopUpdates
                 }
                 await snooze(5000)
               }
