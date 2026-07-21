@@ -339,6 +339,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
    */
   cacheSaver(input: AccountInput) {
     interface CacheSnapshot {
+      currencyWalletIds: string[]
       customTokens: EdgePluginMap<EdgeTokenMap>
       legacyWalletInfos: EdgeWalletInfo[]
       walletStates: EdgeWalletStates
@@ -356,6 +357,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       if (state.accounts[accountId] == null) return
 
       const snapshot: CacheSnapshot = {
+        currencyWalletIds: accountState.currencyWalletIds,
         customTokens: accountState.customTokens,
         legacyWalletInfos: accountState.legacyWalletInfos,
         walletStates: accountState.walletStates
@@ -364,9 +366,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       // Only legacy wallets that actually surface as currency wallets
       // force a cold boot; a legacy repo whose wallet type has no
       // loaded plugin was never visible in the first place:
-      const { currencyWalletIds } = accountState
       const legacyWallets = snapshot.legacyWalletInfos.some(info =>
-        currencyWalletIds.includes(info.id)
+        snapshot.currencyWalletIds.includes(info.id)
       )
 
       try {
@@ -406,6 +407,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
         if (
           lastSaved != null &&
+          lastSaved.currencyWalletIds === accountState.currencyWalletIds &&
           lastSaved.customTokens === accountState.customTokens &&
           lastSaved.legacyWalletInfos === accountState.legacyWalletInfos &&
           lastSaved.walletStates === accountState.walletStates
