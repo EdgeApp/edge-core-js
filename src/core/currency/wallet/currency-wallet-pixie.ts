@@ -200,8 +200,11 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           await loadWalletSettingsFile(input)
         }
 
-        // Start the engine:
-        const accountState = state.accounts[accountId]
+        // Start the engine, reading the account state fresh: the
+        // deferred account file loads run in parallel with this block
+        // on a warm login, so an earlier snapshot could hand the
+        // engine stale settings or tokens:
+        const accountState = input.props.state.accounts[accountId]
         const engine = await plugin.makeCurrencyEngine(publicWalletInfo, {
           callbacks: makeCurrencyWalletCallbacks(input),
 
@@ -659,17 +662,23 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       }
       lastState = walletState
 
+      // On a warm login the engine starts in parallel with the
+      // deferred account file loads, so account state can change
+      // while `engine` is still null. Never adopt a value we could
+      // not deliver, or the engine would miss it forever:
+      if (engine == null) return
+
       // Update engine settings:
       const userSettings =
         accountState.userSettings[pluginId] ?? lastUserSettings
-      if (lastUserSettings !== userSettings && engine != null) {
+      if (lastUserSettings !== userSettings) {
         await engine.changeUserSettings(userSettings)
       }
       lastUserSettings = userSettings
 
       // Update the custom tokens:
       const customTokens = accountState.customTokens[pluginId] ?? lastTokens
-      if (lastTokens !== customTokens && engine != null) {
+      if (lastTokens !== customTokens) {
         if (engine.changeCustomTokens != null) {
           await engine.changeCustomTokens(customTokens)
         } else if (engine.addCustomToken != null) {
@@ -693,7 +702,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       if (
         settingsChanged &&
-        engine?.changeWalletSettings != null &&
+        engine.changeWalletSettings != null &&
         hasWalletSettings
       ) {
         await engine.changeWalletSettings(walletSettings).catch(error => {
@@ -704,7 +713,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       // Update enabled tokens:
       const { allEnabledTokenIds } = walletState
-      if (lastEnabledTokenIds !== allEnabledTokenIds && engine != null) {
+      if (lastEnabledTokenIds !== allEnabledTokenIds) {
         if (engine.changeEnabledTokenIds != null) {
           await engine
             .changeEnabledTokenIds(allEnabledTokenIds)

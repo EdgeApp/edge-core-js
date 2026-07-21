@@ -267,6 +267,41 @@ describe('account cache', function () {
     await account.logout()
   })
 
+  it('plugin settings loaded after an engine starts still reach it', async function () {
+    this.timeout(15000)
+    const { context, walletIds } = await makeAccountCachedWorld()
+
+    // Persist plugin settings the next warm login must deliver:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.currencyConfig.fakecoin.changeUserSettings({ balance: 4321 })
+    await snooze(SAVE_WAIT_MS)
+    await account.logout()
+
+    // Warm login with both the deferred loads and the engines gated:
+    const { gate: builtinGate, release: releaseBuiltin } = createEngineGate()
+    fakePluginTestConfig.builtinTokensGate = builtinGate
+    const { gate: engineGate, release: releaseEngine } = createEngineGate()
+    fakePluginTestConfig.engineGate = engineGate
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet2 = await account2.waitForCurrencyWallet(walletIds[0])
+
+    // Let the deferred loads land while the engine is still gated, so
+    // the watcher sees the loaded settings with no engine to apply
+    // them to (plugin settings are deliberately not cached):
+    releaseBuiltin()
+    await pollUntil(
+      () => account2.currencyConfig.fakecoin.builtinTokens.badf00d5 != null
+    )
+    await snooze(RACE_WAIT_MS)
+
+    // The engine arrives late and must still receive those settings
+    // (the fake engine reports its configured balance only when
+    // changeUserSettings delivers it):
+    releaseEngine()
+    await pollUntil(() => wallet2.balanceMap.get(null) === '4321')
+    await account2.logout()
+  })
+
   it('logout during a pending account cache save cancels the write', async function () {
     this.timeout(15000)
     const { context, walletIds } = await makeAccountCachedWorld()
