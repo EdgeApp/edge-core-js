@@ -305,6 +305,12 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         // triggers the write once `addStorageWallet` finishes:
         if (state.storageWallets[accountWalletInfo.id] == null) return
 
+        // Never write before the authoritative load lands: the write
+        // rebuilds the whole file from Redux, so a cache-seeded map
+        // would wipe tokens another device added. Return without
+        // adopting, so the load's merge triggers the write:
+        if (!accountState.customTokensLoaded) return
+
         await saveCustomTokens(toApiInput(input), accountId).catch(error =>
           input.props.onError(error)
         )
