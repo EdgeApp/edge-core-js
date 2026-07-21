@@ -800,10 +800,11 @@ export function makeAccountApi(
     async waitForAllWallets(): Promise<void> {
       return await new Promise((resolve, reject) => {
         const check = (): void => {
+          const pixieWallets =
+            ai.props.output.accounts[accountId]?.currencyWallets ?? {}
           const busyWallet = this.activeWalletIds.find(
             id =>
-              this.currencyWallets[id] == null &&
-              this.currencyWalletErrors[id] == null
+              pixieWallets[id] == null && this.currencyWalletErrors[id] == null
           )
           if (busyWallet == null) {
             for (const cleanup of cleanups) cleanup()

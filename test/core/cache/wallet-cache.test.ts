@@ -134,6 +134,52 @@ describe('wallet cache', function () {
     await account2.logout()
   })
 
+  it('waitForAllWallets waits for real engines', async function () {
+    this.timeout(10000)
+
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { fakecoin: true }
+    })
+
+    // First login - populate cache
+    const account1 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const walletInfo = account1.getFirstWalletInfo('wallet:fakecoin')
+    if (walletInfo == null) throw new Error('No wallet')
+
+    await account1.waitForCurrencyWallet(walletInfo.id)
+    await account1.currencyConfig.fakecoin.changeUserSettings({ balance: 9999 })
+
+    // Wait for cache saver to write (throttled to 50ms in tests):
+    await snooze(CACHE_SAVE_WAIT_MS)
+    await account1.logout()
+
+    // Second login - use gate to block engine
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    expect(account2.currencyWallets[walletInfo.id]).not.equals(undefined)
+
+    let completed = false
+    const waitPromise = account2.waitForAllWallets().then(() => {
+      completed = true
+    })
+
+    await snooze(BRIDGE_SETTLE_MS)
+    const completedBeforeRelease = completed
+    release()
+    await waitPromise
+
+    expect(completedBeforeRelease).equals(
+      false,
+      'waitForAllWallets should wait for real engines'
+    )
+
+    await account2.logout()
+  })
+
   it('delegates to real wallet after engine loads', async function () {
     this.timeout(10000)
 
