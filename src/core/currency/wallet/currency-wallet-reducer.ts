@@ -93,6 +93,7 @@ export interface CurrencyWalletState {
   readonly name: string | null
   readonly nameDirty: boolean
   readonly nameLoaded: boolean
+  readonly otherMethodNames: string[]
   readonly publicWalletInfo: EdgeWalletInfo | null
   readonly seenTxCheckpoint: string | null
   readonly sortedTxidHashes: string[]
@@ -432,6 +433,23 @@ const currencyWalletInner = buildReducer<
     }
     return state
   },
+
+  otherMethodNames: sortStringsReducer(
+    (state = initialTokenIds, action): string[] => {
+      switch (action.type) {
+        case 'CURRENCY_WALLET_OTHER_METHOD_NAMES_CHANGED':
+          // The engine's method list is authoritative:
+          return action.payload.names
+
+        case 'CURRENCY_WALLET_CACHE_LOADED':
+          // Seed cached names, but never overwrite an engine answer
+          // (the seed only ever fires before the engine exists):
+          if (state.length > 0) return state
+          return action.payload.otherMethodNames
+      }
+      return state
+    }
+  ),
 
   addresses(state = initialAddresses, action): EdgeAddress[] {
     switch (action.type) {

@@ -304,6 +304,16 @@ export type RootAction =
       }
     }
   | {
+      // The engine exists, so remember its otherMethods names for
+      // the cache; the next login builds pre-engine delegating stubs
+      // from them.
+      type: 'CURRENCY_WALLET_OTHER_METHOD_NAMES_CHANGED'
+      payload: {
+        names: string[]
+        walletId: string
+      }
+    }
+  | {
       // Called when the wallet's UI-state cache file loads from disk,
       // seeding Redux before the engine exists.
       type: 'CURRENCY_WALLET_CACHE_LOADED'
@@ -313,6 +323,7 @@ export type RootAction =
         enabledTokenIds: string[]
         fiatCurrencyCode: string
         name: string | null
+        otherMethodNames: string[]
         publicWalletInfo?: EdgeWalletInfo
         walletId: string
       }

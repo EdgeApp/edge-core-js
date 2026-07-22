@@ -1,7 +1,7 @@
 import { abs, div, lt, mul } from 'biggystring'
 import { Disklet } from 'disklet'
 import { base64 } from 'rfc4648'
-import { bridgifyObject, emit, onMethod, watchMethod } from 'yaob'
+import { bridgifyObject, emit, onMethod, update, watchMethod } from 'yaob'
 
 import {
   InternalWalletMethods,
@@ -193,32 +193,59 @@ export function makeCurrencyWalletApi(
 
   const fakeCallbacks = makeCurrencyWalletCallbacks(input)
 
-  // The core guarantees `otherMethods` is `{}` (never `undefined`) before
-  // the engine exists, so property probes stay safe on the GUI side.
-  // Once the engine lands, the pixie watcher's `update` propagates the
-  // engine's bridgified methods through the same getter:
-  const emptyOtherMethods = bridgifyObject({})
-  let engineOtherMethods: EdgeOtherMethods | undefined
+  // The wallet exposes ONE permanent `otherMethods` object for its
+  // whole life; it is never swapped when the engine lands. Each
+  // property is a delegating stub that waits for the engine and then
+  // forwards, so a method can be called the moment its NAME is known:
+  // from the cache on a warm login (before the engine exists), or
+  // from the live engine otherwise. Stubs are added when a name first
+  // appears and never removed; a name the loaded engine turns out to
+  // lack rejects cleanly at call time. Pre-engine with no cache this
+  // is `{}`, exactly the old guarantee, so property probes stay safe.
+  const otherMethodStubs: { [name: string]: (...args: any[]) => any } = {}
+  bridgifyObject(otherMethodStubs)
 
-  function makeEngineOtherMethods(
-    engine: EdgeCurrencyEngine
-  ): EdgeOtherMethods {
-    const otherMethods: { [name: string]: (...args: any[]) => any } = {}
-    if (engine.otherMethods != null) {
-      for (const name of Object.keys(engine.otherMethods)) {
-        const method = engine.otherMethods[name]
-        if (typeof method !== 'function') continue
-        otherMethods[name] = method
+  function makeOtherMethodStub(name: string): (...args: any[]) => any {
+    // Resolve the engine's method once and remember it:
+    let resolved: ((...args: any[]) => any) | undefined
+    return async (...args: any[]): Promise<any> => {
+      const engine = await getEngine()
+      if (resolved == null) {
+        const withKeys = engine.otherMethodsWithKeys?.[name]
+        const method = engine.otherMethods?.[name]
+        if (typeof withKeys === 'function') {
+          resolved = (...inner: any[]) => withKeys(walletInfo.keys, ...inner)
+        } else if (typeof method === 'function') {
+          resolved = method
+        }
+      }
+      if (resolved == null) {
+        throw new Error(`The wallet engine does not implement "${name}"`)
+      }
+      return resolved(...args)
+    }
+  }
+
+  function syncOtherMethodStubs(): EdgeOtherMethods {
+    const names = [...input.props.walletState.otherMethodNames]
+    const engine = input.props.walletOutput?.engine
+    if (engine != null) {
+      for (const source of [engine.otherMethods, engine.otherMethodsWithKeys]) {
+        if (source == null) continue
+        for (const name of Object.keys(source)) {
+          if (typeof source[name] === 'function') names.push(name)
+        }
       }
     }
-    if (engine.otherMethodsWithKeys != null) {
-      for (const name of Object.keys(engine.otherMethodsWithKeys)) {
-        const method = engine.otherMethodsWithKeys[name]
-        if (typeof method !== 'function') continue
-        otherMethods[name] = (...args) => method(walletInfo.keys, ...args)
-      }
+    let added = false
+    for (const name of names) {
+      if (otherMethodStubs[name] != null) continue
+      otherMethodStubs[name] = makeOtherMethodStub(name)
+      added = true
     }
-    return bridgifyObject(otherMethods)
+    // New names must reach the far side of the bridge too:
+    if (added) update(otherMethodStubs)
+    return otherMethodStubs
   }
 
   const out: EdgeCurrencyWallet & InternalWalletMethods = {
@@ -979,12 +1006,7 @@ export function makeCurrencyWalletApi(
 
     // Generic:
     get otherMethods(): EdgeOtherMethods {
-      const engine = input.props.walletOutput?.engine
-      if (engine == null) return emptyOtherMethods
-      if (engineOtherMethods == null) {
-        engineOtherMethods = makeEngineOtherMethods(engine)
-      }
-      return engineOtherMethods
+      return syncOtherMethodStubs()
     }
   }
 

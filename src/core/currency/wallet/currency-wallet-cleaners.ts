@@ -422,6 +422,12 @@ export interface WalletCacheFile {
    * balances. Served pre-engine only on stable-address chains.
    */
   addresses: Array<{ addressType: string; publicAddress: string }>
+
+  /**
+   * The names of the engine's `otherMethods`, so the next login can
+   * expose a delegating stub per method before the engine exists.
+   */
+  otherMethodNames: string[]
 }
 
 const asCachedAddress = asObject({
@@ -435,7 +441,8 @@ export const asWalletCacheFile: Cleaner<WalletCacheFile> = asObject({
   fiatCurrencyCode: asString,
   enabledTokenIds: asArray(asString),
   balances: asObject(asIntegerString),
-  addresses: asArray(asCachedAddress)
+  addresses: asArray(asCachedAddress),
+  otherMethodNames: asOptional(asArray(asString), () => [])
 })
 
 const asWalletCacheFileV1 = asObject({
@@ -456,7 +463,7 @@ export const asStoredWalletCacheFile: Cleaner<WalletCacheFile> = raw => {
     return asWalletCacheFile(raw)
   } catch (error: unknown) {
     const clean = asWalletCacheFileV1(raw)
-    return { ...clean, version: 2, addresses: [] }
+    return { ...clean, version: 2, addresses: [], otherMethodNames: [] }
   }
 }
 

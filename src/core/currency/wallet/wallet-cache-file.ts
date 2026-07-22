@@ -32,6 +32,7 @@ export interface WalletCacheSeed {
   enabledTokenIds: string[]
   fiatCurrencyCode: string
   name: string | null
+  otherMethodNames: string[]
   publicWalletInfo: EdgeWalletInfo
 }
 

@@ -229,6 +229,24 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         })
         input.onOutput(engine)
 
+        // Remember the engine's otherMethods names, so the cache can
+        // expose pre-engine delegating stubs on the next login:
+        const otherMethodNames: string[] = []
+        for (const source of [
+          engine.otherMethods,
+          engine.otherMethodsWithKeys
+        ]) {
+          if (source == null) continue
+          for (const name of Object.keys(source)) {
+            if (typeof source[name] !== 'function') continue
+            if (!otherMethodNames.includes(name)) otherMethodNames.push(name)
+          }
+        }
+        input.props.dispatch({
+          type: 'CURRENCY_WALLET_OTHER_METHOD_NAMES_CHANGED',
+          payload: { names: otherMethodNames, walletId }
+        })
+
         // Grab initial state:
         const parentCurrency = { currencyCode, tokenId: null }
         const balance = asMaybe(asIntegerString)(
@@ -563,6 +581,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       enabledTokenIds: string[]
       fiat: string
       name: string | null
+      otherMethodNames: string[]
     }
 
     let failures = 0
@@ -581,7 +600,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         balanceMap: walletState.balanceMap,
         enabledTokenIds: walletState.enabledTokenIds,
         fiat: walletState.fiat,
-        name: walletState.name
+        name: walletState.name,
+        otherMethodNames: walletState.otherMethodNames
       }
       const balances: WalletCacheFile['balances'] = {}
       for (const [tokenId, balance] of snapshot.balanceMap) {
@@ -601,7 +621,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             addresses: snapshot.addresses.map(address => ({
               addressType: address.addressType,
               publicAddress: address.publicAddress
-            }))
+            })),
+            otherMethodNames: snapshot.otherMethodNames
           }
         )
         failures = 0
@@ -632,6 +653,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           lastSaved != null &&
           lastSaved.addresses === walletState.addresses &&
           lastSaved.balanceMap === walletState.balanceMap &&
+          lastSaved.otherMethodNames === walletState.otherMethodNames &&
           lastSaved.enabledTokenIds === walletState.enabledTokenIds &&
           lastSaved.fiat === walletState.fiat &&
           lastSaved.name === walletState.name
