@@ -59,6 +59,7 @@ export type RootAction =
       type: 'ACCOUNT_CACHE_LOADED'
       payload: {
         accountId: string
+        configOtherMethodNames: EdgePluginMap<string[]>
         customTokens: EdgePluginMap<EdgeTokenMap>
         walletStates: EdgeWalletStates
       }

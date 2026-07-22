@@ -63,6 +63,7 @@ export interface AccountState {
   // Plugin stuff:
   readonly allTokens: EdgePluginMap<EdgeTokenMap>
   readonly builtinTokens: EdgePluginMap<EdgeTokenMap>
+  readonly configOtherMethodNames: EdgePluginMap<string[]>
   readonly customTokens: EdgePluginMap<EdgeTokenMap>
   readonly customTokensDirtyIds: EdgePluginMap<string[]>
   readonly customTokensLoaded: boolean
@@ -420,6 +421,14 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
       }
     }
     return state
+  },
+
+  configOtherMethodNames(state = {}, action): EdgePluginMap<string[]> {
+    // Cached plugin method names; the live plugin list wins whenever
+    // the plugins are loaded, so this only fills gaps:
+    return action.type === 'ACCOUNT_CACHE_LOADED'
+      ? action.payload.configOtherMethodNames
+      : state
   },
 
   customTokensDirtyIds(

@@ -124,6 +124,11 @@ export interface AccountCacheFile {
    */
   legacyWallets: boolean
   walletStates: EdgeWalletStates
+  /**
+   * Each plugin's `otherMethods` names, so `CurrencyConfig` can
+   * expose delegating stubs even if the plugin has not loaded yet.
+   */
+  configOtherMethodNames: EdgePluginMap<string[]>
 }
 
 const asEdgeWalletState = asObject<EdgeWalletState>({
@@ -138,5 +143,6 @@ export const asAccountCacheFile: Cleaner<AccountCacheFile> = asObject({
   version: asValue(1),
   customTokens: asObject(asObject(asEdgeToken)),
   legacyWallets: asOptional(asBoolean, false),
-  walletStates: asObject(asEdgeWalletState)
+  walletStates: asObject(asEdgeWalletState),
+  configOtherMethodNames: asOptional(asObject(asArray(asString)), () => ({}))
 })

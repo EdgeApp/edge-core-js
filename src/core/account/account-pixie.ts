@@ -136,6 +136,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
               type: 'ACCOUNT_CACHE_LOADED',
               payload: {
                 accountId,
+                configOtherMethodNames: accountCache.configOtherMethodNames,
                 customTokens: accountCache.customTokens,
                 walletStates: accountCache.walletStates
               }
@@ -370,6 +371,19 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         snapshot.currencyWalletIds.includes(info.id)
       )
 
+      // Remember each plugin's otherMethods names. The plugin list is
+      // static for the whole session, so this needs no dirty tracking:
+      const configOtherMethodNames: EdgePluginMap<string[]> = {}
+      const { currency } = input.props.state.plugins
+      for (const pluginId of Object.keys(currency)) {
+        const { otherMethods } = currency[pluginId]
+        if (otherMethods == null) continue
+        const names = Object.keys(otherMethods).filter(
+          name => typeof (otherMethods as any)[name] === 'function'
+        )
+        if (names.length > 0) configOtherMethodNames[pluginId] = names
+      }
+
       try {
         await accountCacheFile.save(
           makeLocalDisklet(input.props.io, accountState.accountWalletInfo.id),
@@ -378,7 +392,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             version: 1,
             customTokens: snapshot.customTokens,
             legacyWallets,
-            walletStates: snapshot.walletStates
+            walletStates: snapshot.walletStates,
+            configOtherMethodNames
           }
         )
         failures = 0

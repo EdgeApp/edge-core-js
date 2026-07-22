@@ -38,13 +38,39 @@ export class CurrencyConfig
     this._accountId = accountId
     this._pluginId = pluginId
 
+    // One permanent object of delegating stubs, mirroring the wallet's
+    // otherMethods model. Names come from the live plugin (loaded
+    // before any account emits today) with the account cache as a
+    // fallback; a cached name the plugin turns out to lack rejects
+    // cleanly at call time:
+    const names: string[] = []
     const { otherMethods } = ai.props.state.plugins.currency[pluginId]
     if (otherMethods != null) {
-      bridgifyObject(otherMethods)
-      this.otherMethods = otherMethods
-    } else {
-      this.otherMethods = {}
+      for (const name of Object.keys(otherMethods)) {
+        if (typeof (otherMethods as any)[name] === 'function') {
+          names.push(name)
+        }
+      }
     }
+    const cachedNames =
+      ai.props.state.accounts[accountId].configOtherMethodNames[pluginId] ?? []
+    for (const name of cachedNames) {
+      if (!names.includes(name)) names.push(name)
+    }
+
+    const stubs: { [name: string]: (...args: any[]) => any } = {}
+    for (const name of names) {
+      stubs[name] = async (...args: any[]): Promise<any> => {
+        const plugin = ai.props.state.plugins.currency[pluginId]
+        const method = plugin?.otherMethods?.[name]
+        if (typeof method !== 'function') {
+          throw new Error(`The currency plugin does not implement "${name}"`)
+        }
+        return method(...args)
+      }
+    }
+    bridgifyObject(stubs)
+    this.otherMethods = stubs
   }
 
   get currencyInfo(): EdgeCurrencyInfo {
