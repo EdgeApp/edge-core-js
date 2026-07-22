@@ -100,13 +100,21 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           ])
         }
 
-        async function loadEverything(): Promise<void> {
+        async function loadEverything(isRetry: boolean): Promise<void> {
           await loadBuiltinTokens(ai, accountId)
           log.warn('Login: currency plugins exist')
 
-          // Start the repo:
+          // Start the repo. A retry must not re-attach repos a prior
+          // attempt already attached: STORAGE_WALLET_ADDED replaces
+          // the whole entry (wiping lastChanges) and starts another
+          // sync that can race the one still in flight:
+          const missingInfos = isRetry
+            ? accountWalletInfos.filter(
+                info => ai.props.state.storageWallets[info.id] == null
+              )
+            : accountWalletInfos
           await Promise.all(
-            accountWalletInfos.map(info => addStorageWallet(ai, info))
+            missingInfos.map(info => addStorageWallet(ai, info))
           )
           log.warn('Login: synced account repos')
 
@@ -160,7 +168,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
                 return await stopUpdates
               }
               try {
-                await loadEverything()
+                await loadEverything(attempt > 1)
                 break
               } catch (error: unknown) {
                 if (ai.props.state.accounts[accountId] == null) {
@@ -189,7 +197,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
             return await stopUpdates
           }
 
-          await loadEverything()
+          await loadEverything(false)
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))

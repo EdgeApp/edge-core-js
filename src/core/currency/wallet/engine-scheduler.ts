@@ -94,8 +94,13 @@ function makeEngineScheduler(): EngineScheduler {
       const takeSlot = (): (() => void) => {
         stickyBumps.delete(walletId)
         watchdog = setTimeout(() => {
-          if (onTimeout != null) onTimeout()
+          // Free the slot first: the callback is for logging only,
+          // and a throw from it (stale props after a pixie destroy)
+          // must never shrink the pool:
           release()
+          try {
+            if (onTimeout != null) onTimeout()
+          } catch (error: unknown) {}
         }, engineSchedulerConfig.slotTimeoutMs)
         // Do not hold the process open just for the watchdog (the
         // unref method exists on Node timers, not React Native's):
