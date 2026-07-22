@@ -10,6 +10,7 @@ import {
 import { update } from 'yaob'
 
 import {
+  EdgeAddress,
   EdgeBalanceMap,
   EdgeCurrencyEngine,
   EdgeCurrencyTools,
@@ -557,6 +558,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
    */
   cacheSaver(input: CurrencyWalletInput) {
     interface CacheSnapshot {
+      addresses: EdgeAddress[]
       balanceMap: EdgeBalanceMap
       enabledTokenIds: string[]
       fiat: string
@@ -575,6 +577,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       if (state.accounts[walletState.accountId] == null) return
 
       const snapshot: CacheSnapshot = {
+        addresses: walletState.addresses,
         balanceMap: walletState.balanceMap,
         enabledTokenIds: walletState.enabledTokenIds,
         fiat: walletState.fiat,
@@ -590,11 +593,15 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           makeLocalDisklet(input.props.io, walletId),
           WALLET_CACHE_FILE,
           {
-            version: 1,
+            version: 2,
             name: snapshot.name,
             fiatCurrencyCode: snapshot.fiat,
             enabledTokenIds: snapshot.enabledTokenIds,
-            balances
+            balances,
+            addresses: snapshot.addresses.map(address => ({
+              addressType: address.addressType,
+              publicAddress: address.publicAddress
+            }))
           }
         )
         failures = 0
@@ -623,6 +630,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
         if (
           lastSaved != null &&
+          lastSaved.addresses === walletState.addresses &&
           lastSaved.balanceMap === walletState.balanceMap &&
           lastSaved.enabledTokenIds === walletState.enabledTokenIds &&
           lastSaved.fiat === walletState.fiat &&

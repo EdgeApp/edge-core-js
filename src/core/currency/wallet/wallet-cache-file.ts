@@ -1,13 +1,25 @@
-import { EdgeBalanceMap, EdgeWalletInfo } from '../../../types/types'
+import {
+  EdgeAddress,
+  EdgeBalanceMap,
+  EdgeWalletInfo
+} from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
-import { asWalletCacheFile } from './currency-wallet-cleaners'
+import {
+  asStoredWalletCacheFile,
+  asWalletCacheFile
+} from './currency-wallet-cleaners'
 
 /**
  * Cached wallet UI state, stored on the wallet's local disklet
  * alongside `publicKey.json`. See `asWalletCacheFile` for the schema.
+ * Reads accept older schema versions by upgrading them in place,
+ * so a version bump never costs an existing device its warm boot.
  */
 export const WALLET_CACHE_FILE = 'walletCache.json'
-export const walletCacheFile = makeJsonFile(asWalletCacheFile)
+export const walletCacheFile = {
+  load: makeJsonFile(asStoredWalletCacheFile).load,
+  save: makeJsonFile(asWalletCacheFile).save
+}
 
 /**
  * One wallet's cache files, validated and ready to seed Redux:
@@ -15,6 +27,7 @@ export const walletCacheFile = makeJsonFile(asWalletCacheFile)
  * `walletCache.json`, with balances upgraded to an `EdgeBalanceMap`.
  */
 export interface WalletCacheSeed {
+  addresses: EdgeAddress[]
   balanceMap: EdgeBalanceMap
   enabledTokenIds: string[]
   fiatCurrencyCode: string

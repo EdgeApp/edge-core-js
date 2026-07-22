@@ -2,6 +2,7 @@ import { lt } from 'biggystring'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
+  EdgeAddress,
   EdgeAssetAction,
   EdgeBalanceMap,
   EdgeBalances,
@@ -67,6 +68,7 @@ export interface CurrencyWalletState {
 
   readonly paused: boolean
 
+  readonly addresses: EdgeAddress[]
   readonly allEnabledTokenIds: string[]
   readonly balanceMap: EdgeBalanceMap
   readonly balances: EdgeBalances
@@ -125,6 +127,8 @@ export interface CurrencyWalletNext {
 }
 
 export const initialWalletSettings: JsonObject = {}
+
+export const initialAddresses: EdgeAddress[] = []
 
 // Used for detectedTokenIds & enabledTokenIds:
 export const initialTokenIds: string[] = []
@@ -425,6 +429,21 @@ const currencyWalletInner = buildReducer<
       case 'CURRENCY_ENGINE_CLEARED': {
         return initialSyncStatus
       }
+    }
+    return state
+  },
+
+  addresses(state = initialAddresses, action): EdgeAddress[] {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_ADDRESSES_CHANGED':
+        // The engine's answer is authoritative:
+        return action.payload.addresses
+
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        // Seed cached addresses, but never overwrite an engine answer
+        // (the seed only ever fires before the engine exists):
+        if (state.length > 0) return state
+        return action.payload.addresses
     }
     return state
   },

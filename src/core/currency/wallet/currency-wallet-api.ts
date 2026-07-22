@@ -168,6 +168,29 @@ export function makeCurrencyWalletApi(
     return fallbackDisklets
   }
 
+  /**
+   * Remembers the engine's answer to the default address query, so
+   * the cache saver persists it and the next warm login can serve it
+   * pre-engine on stable-address chains. Balances are stripped:
+   * they are stale by definition and `balanceMap` already owns them.
+   */
+  function rememberAddresses(
+    opts: EdgeGetReceiveAddressOptions,
+    addresses: EdgeAddress[]
+  ): void {
+    if (opts.forceIndex != null) return
+    input.props.dispatch({
+      type: 'CURRENCY_WALLET_ADDRESSES_CHANGED',
+      payload: {
+        addresses: addresses.map(address => ({
+          addressType: address.addressType,
+          publicAddress: address.publicAddress
+        })),
+        walletId
+      }
+    })
+  }
+
   const fakeCallbacks = makeCurrencyWalletCallbacks(input)
 
   // The core guarantees `otherMethods` is `{}` (never `undefined`) before
@@ -539,9 +562,30 @@ export function makeCurrencyWalletApi(
     async getAddresses(
       opts: EdgeGetReceiveAddressOptions
     ): Promise<EdgeAddress[]> {
+      // On chains whose addresses never rotate, serve the cached
+      // answer while the engine is still loading, so the receive
+      // scene works right away on a warm login. Rotating chains
+      // (and chains without the hint) wait for the engine, exactly
+      // as before, to avoid address reuse:
+      const { hasStableAddresses = false } = plugin.currencyInfo
+      const cachedAddresses = input.props.walletState.addresses
+      if (
+        hasStableAddresses &&
+        opts.forceIndex == null &&
+        cachedAddresses.length > 0 &&
+        input.props.walletOutput?.engine == null
+      ) {
+        // The user is on an address screen, so they want this
+        // wallet's engine sooner rather than later:
+        bumpEngineQueue(ai, walletId)
+        return cachedAddresses.map(address => ({ ...address }))
+      }
+
       const engine = await getEngine()
       if (engine.getAddresses != null) {
-        return await engine.getAddresses(opts)
+        const addresses = await engine.getAddresses(opts)
+        rememberAddresses(opts, addresses)
+        return addresses
       } else {
         const upgradedCurrency = upgradeCurrencyCode({
           allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
@@ -587,6 +631,7 @@ export function makeCurrencyWalletApi(
           })
         }
 
+        rememberAddresses(opts, addresses)
         return addresses
       }
     },

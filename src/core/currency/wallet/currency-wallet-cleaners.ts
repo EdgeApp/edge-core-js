@@ -409,22 +409,56 @@ export const asPublicKeyFile = asObject({
  * and are explicitly allowed to be stale.
  */
 export interface WalletCacheFile {
-  version: 1
+  version: 2
   name: string | null
   fiatCurrencyCode: string
   enabledTokenIds: string[]
 
   /** Integer strings. The `null` tokenId is spelled '' here. */
   balances: { [tokenId: string]: string }
+
+  /**
+   * The engine's last answer to the default address query, without
+   * balances. Served pre-engine only on stable-address chains.
+   */
+  addresses: Array<{ addressType: string; publicAddress: string }>
 }
 
+const asCachedAddress = asObject({
+  addressType: asString,
+  publicAddress: asString
+})
+
 export const asWalletCacheFile: Cleaner<WalletCacheFile> = asObject({
+  version: asValue(2),
+  name: asEither(asString, asNull),
+  fiatCurrencyCode: asString,
+  enabledTokenIds: asArray(asString),
+  balances: asObject(asIntegerString),
+  addresses: asArray(asCachedAddress)
+})
+
+const asWalletCacheFileV1 = asObject({
   version: asValue(1),
   name: asEither(asString, asNull),
   fiatCurrencyCode: asString,
   enabledTokenIds: asArray(asString),
   balances: asObject(asIntegerString)
 })
+
+/**
+ * Read-side cleaner: upgrades an old file instead of falling through
+ * to a cold boot; the fields it lacks simply have nothing cached yet.
+ * Writes always use the current `asWalletCacheFile` schema.
+ */
+export const asStoredWalletCacheFile: Cleaner<WalletCacheFile> = raw => {
+  try {
+    return asWalletCacheFile(raw)
+  } catch (error: unknown) {
+    const clean = asWalletCacheFileV1(raw)
+    return { ...clean, version: 2, addresses: [] }
+  }
+}
 
 /**
  * The wallet's local storage file for the last seen "checkpoint". The core

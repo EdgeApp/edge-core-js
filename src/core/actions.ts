@@ -1,4 +1,5 @@
 import {
+  EdgeAddress,
   EdgeBalanceMap,
   EdgeCorePlugin,
   EdgeCorePluginsInit,
@@ -293,10 +294,21 @@ export type RootAction =
       }
     }
   | {
+      // The engine answered an address query, so remember the result
+      // for the cache (and, on stable-address chains, for pre-engine
+      // serving on the next login). Balances are stripped.
+      type: 'CURRENCY_WALLET_ADDRESSES_CHANGED'
+      payload: {
+        addresses: EdgeAddress[]
+        walletId: string
+      }
+    }
+  | {
       // Called when the wallet's UI-state cache file loads from disk,
       // seeding Redux before the engine exists.
       type: 'CURRENCY_WALLET_CACHE_LOADED'
       payload: {
+        addresses: EdgeAddress[]
         balanceMap: EdgeBalanceMap
         enabledTokenIds: string[]
         fiatCurrencyCode: string

@@ -56,6 +56,7 @@ export async function loadWalletCacheSeed(
   if (publicKeyCache == null || walletCache == null) return
 
   return {
+    addresses: walletCache.addresses,
     balanceMap: makeCachedBalanceMap(walletCache.balances),
     enabledTokenIds: walletCache.enabledTokenIds,
     fiatCurrencyCode: walletCache.fiatCurrencyCode,

@@ -516,6 +516,16 @@ export interface EdgeCurrencyInfo {
   canAdjustFees?: boolean // Defaults to true
   canImportKeys?: boolean // Defaults to false
   canReplaceByFee?: boolean // Defaults to false
+
+  /**
+   * True if the chain's receive addresses never rotate, so a
+   * previously returned address remains valid and reuse-safe.
+   * When set, a wallet can serve its cached addresses before the
+   * engine loads. Defaults to false: address queries wait for the
+   * engine, exactly the pre-cache behavior, which is what rotating
+   * (UTXO-style) chains need to avoid address reuse.
+   */
+  hasStableAddresses?: boolean
   customFeeTemplate?: EdgeObjectTemplate // Indicates custom fee support
   customTokenTemplate?: EdgeObjectTemplate // Indicates custom token support
   requiredConfirmations?: number // Block confirmations required for a tx
