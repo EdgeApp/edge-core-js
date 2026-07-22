@@ -38,39 +38,36 @@ export class CurrencyConfig
     this._accountId = accountId
     this._pluginId = pluginId
 
-    // One permanent object of delegating stubs, mirroring the wallet's
-    // otherMethods model. Names come from the live plugin (loaded
-    // before any account emits today) with the account cache as a
-    // fallback; a cached name the plugin turns out to lack rejects
-    // cleanly at call time:
-    const names: string[] = []
+    // When the plugin is loaded (always the case today: plugins load
+    // before any account emits), expose its otherMethods verbatim,
+    // exactly as before. The cached names below only matter if plugin
+    // loading ever defers past the account emit: then each name gets
+    // a delegating stub that reaches the plugin's method at call time
+    // (through the object, preserving `this`), rejecting cleanly if
+    // the loaded plugin turns out to lack it:
     const { otherMethods } = ai.props.state.plugins.currency[pluginId]
     if (otherMethods != null) {
-      for (const name of Object.keys(otherMethods)) {
-        if (typeof (otherMethods as any)[name] === 'function') {
-          names.push(name)
+      bridgifyObject(otherMethods)
+      this.otherMethods = otherMethods
+    } else {
+      const cachedNames =
+        ai.props.state.accounts[accountId].configOtherMethodNames[pluginId] ??
+        []
+      const stubs: { [name: string]: (...args: any[]) => any } = {}
+      for (const name of cachedNames) {
+        stubs[name] = async (...args: any[]): Promise<any> => {
+          const methods: any =
+            ai.props.state.plugins.currency[pluginId]?.otherMethods
+          if (methods == null || typeof methods[name] !== 'function') {
+            throw new Error(`The currency plugin does not implement "${name}"`)
+          }
+          // A member call, so the plugin method keeps its `this`:
+          return methods[name](...args)
         }
       }
+      bridgifyObject(stubs)
+      this.otherMethods = stubs
     }
-    const cachedNames =
-      ai.props.state.accounts[accountId].configOtherMethodNames[pluginId] ?? []
-    for (const name of cachedNames) {
-      if (!names.includes(name)) names.push(name)
-    }
-
-    const stubs: { [name: string]: (...args: any[]) => any } = {}
-    for (const name of names) {
-      stubs[name] = async (...args: any[]): Promise<any> => {
-        const plugin = ai.props.state.plugins.currency[pluginId]
-        const method = plugin?.otherMethods?.[name]
-        if (typeof method !== 'function') {
-          throw new Error(`The currency plugin does not implement "${name}"`)
-        }
-        return method(...args)
-      }
-    }
-    bridgifyObject(stubs)
-    this.otherMethods = stubs
   }
 
   get currencyInfo(): EdgeCurrencyInfo {
