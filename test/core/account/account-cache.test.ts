@@ -434,6 +434,26 @@ describe('account cache', function () {
     await account2.logout()
   })
 
+  it('caches config otherMethods names and delegates through stubs', async function () {
+    this.timeout(15000)
+    const { context } = await makeAccountCachedWorld()
+
+    // The plugin's method names reached the account cache file:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await snooze(SAVE_WAIT_MS)
+    const text = await account.localDisklet.getText('accountCache.json')
+    expect(text.includes('fakePluginMethod')).equals(true)
+
+    // The config surface is a delegating stub that reaches the live
+    // plugin method, even in the cache-seeded boot window:
+    const result =
+      await account.currencyConfig.fakecoin.otherMethods.fakePluginMethod(
+        'config'
+      )
+    expect(result).equals('fakePluginMethod called with: config')
+    await account.logout()
+  })
+
   it('rejects a corrupt account cache file and falls back cold', async function () {
     this.timeout(15000)
     const { context, walletIds } = await makeAccountCachedWorld()

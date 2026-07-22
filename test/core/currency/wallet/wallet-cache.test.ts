@@ -62,12 +62,16 @@ async function makeCachedWorld(): Promise<CachedWorld> {
 
 describe('wallet cache', function () {
   beforeEach(function () {
+    fakePluginTestConfig.currencyInfoPatch = undefined
     fakePluginTestConfig.engineGate = undefined
+    fakePluginTestConfig.omitEngineOtherMethods = undefined
     walletCacheSaverConfig.throttleMs = 50
   })
 
   afterEach(function () {
+    fakePluginTestConfig.currencyInfoPatch = undefined
     fakePluginTestConfig.engineGate = undefined
+    fakePluginTestConfig.omitEngineOtherMethods = undefined
     walletCacheSaverConfig.throttleMs = 5000
   })
 
@@ -362,15 +366,12 @@ describe('wallet cache', function () {
       'broadcastTx',
       'detectedTokenIds',
       'dumpData',
-      'getAddresses',
       'getMaxSpendable',
       'getNumTransactions',
       'getPaymentProtocolInfo',
-      'getReceiveAddress',
       'getTransactions',
       'lockReceiveAddress',
       'makeSpend',
-      'otherMethods',
       'resyncBlockchain',
       'saveReceiveAddress',
       'saveTx',
@@ -387,6 +388,11 @@ describe('wallet cache', function () {
       'syncStatus',
       'unactivatedTokenIds'
     ]
+
+    // Cache-assisted surfaces: engine-gated by default, but served
+    // from the cache pre-engine when it can answer (addresses only on
+    // stable-address chains; otherMethods stubs from cached names):
+    const cacheAssisted = ['getAddresses', 'getReceiveAddress', 'otherMethods']
 
     // Identity, storage-backed, config, and tools surfaces, which
     // never needed an engine in the first place:
@@ -425,7 +431,12 @@ describe('wallet cache', function () {
     // Every property on the live wallet object must be classified.
     // A newly added EdgeCurrencyWallet property fails here until
     // someone decides whether the cache must seed it:
-    const classified = new Set([...cacheSeeded, ...engineGated, ...engineFree])
+    const classified = new Set([
+      ...cacheSeeded,
+      ...cacheAssisted,
+      ...engineGated,
+      ...engineFree
+    ])
     const unclassified = Object.getOwnPropertyNames(wallet).filter(
       // The yaob bridge adds its own bookkeeping property:
       key => key !== '_yaob' && !classified.has(key)
@@ -447,6 +458,117 @@ describe('wallet cache', function () {
     expect(wallet.balances.FAKE).equals('12345')
 
     release()
+    await account.logout()
+  })
+
+  it('serves cached addresses pre-engine on a stable-address chain', async function () {
+    this.timeout(15000)
+    fakePluginTestConfig.currencyInfoPatch = { hasStableAddresses: true }
+    const { context, walletId } = await makeCachedWorld()
+
+    // Prime the address cache: query once with the engine running,
+    // then let the throttled saver persist the answer:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    const live = await wallet.getAddresses({ tokenId: null })
+    expect(live[0].publicAddress).equals('fakesegwit')
+    await snooze(SAVE_WAIT_MS)
+
+    // The engine's answer reached the cache file, balances stripped:
+    const text = await wallet.localDisklet.getText('walletCache.json')
+    expect(text.includes('fakeaddress')).equals(true)
+    expect(text.includes('nativeBalance')).equals(false)
+    await account.logout()
+
+    // A warm login serves the cached addresses while the engine is
+    // still blocked, and getReceiveAddress derives from them:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet2 = await account2.waitForCurrencyWallet(walletId)
+    const cached = await wallet2.getAddresses({ tokenId: null })
+    expect(cached.map(address => address.publicAddress)).deep.equals(
+      live.map(address => address.publicAddress)
+    )
+    const receive = await wallet2.getReceiveAddress({ tokenId: null })
+    expect(receive.publicAddress).equals('fakeaddress')
+    release()
+    await account2.logout()
+  })
+
+  it('keeps the engine gate for rotating-address chains', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // Prime the address cache, exactly as on the stable chain:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    await wallet.getAddresses({ tokenId: null })
+    await snooze(SAVE_WAIT_MS)
+    await account.logout()
+
+    // Without the stability hint, a warm-login address query still
+    // waits for the engine, exactly the pre-cache behavior:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet2 = await account2.waitForCurrencyWallet(walletId)
+    let settled = false
+    const addressPromise = wallet2
+      .getAddresses({ tokenId: null })
+      .then(addresses => {
+        settled = true
+        return addresses
+      })
+    await snooze(RACE_WAIT_MS)
+    expect(settled).equals(false)
+    release()
+    const addresses = await addressPromise
+    expect(addresses[0].publicAddress).equals('fakesegwit')
+    await account2.logout()
+  })
+
+  it('calls a cached otherMethods name before the engine exists', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // The engine's method names are in the cache, so a warm login
+    // exposes a delegating stub pre-engine. Calling it pends on the
+    // engine and then forwards:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    expect(wallet.otherMethods.testMethod).not.equals(undefined)
+    let settled = false
+    const callPromise = wallet.otherMethods
+      .testMethod('early')
+      .then((result: string) => {
+        settled = true
+        return result
+      })
+    await snooze(RACE_WAIT_MS)
+    expect(settled).equals(false)
+    release()
+    expect(await callPromise).equals('testMethod called with: early')
+    await account.logout()
+  })
+
+  it('rejects a stale cached method name the engine lacks', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // The next session's engines are built WITHOUT otherMethods, so
+    // the cached `testMethod` name is stale. The stub still exists,
+    // and rejects cleanly once the engine loads without the method:
+    fakePluginTestConfig.omitEngineOtherMethods = true
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    expect(wallet.otherMethods.testMethod).not.equals(undefined)
+    await expectRejection(
+      wallet.otherMethods.testMethod('stale'),
+      'Error: The wallet engine does not implement "testMethod"'
+    )
     await account.logout()
   })
 

@@ -49,6 +49,19 @@ export interface FakePluginTestConfig {
   engineGate?: Promise<void>
 
   /**
+   * If set, spread over the plugin's `currencyInfo` (identity-stable:
+   * the patched object is rebuilt only when this reference changes).
+   * Set it BEFORE creating the context, so every reader agrees.
+   */
+  currencyInfoPatch?: Partial<EdgeCurrencyInfo>
+
+  /**
+   * If set, engines are created WITHOUT their `otherMethods`, so
+   * tests can prove that a stale cached method name rejects cleanly.
+   */
+  omitEngineOtherMethods?: boolean
+
+  /**
    * If set, `checkPublicKey` will wait for this promise to resolve.
    * The wallet pixie validates its cached public key between the
    * repo sync and the wallet file loads, so this gate makes "the
@@ -66,7 +79,9 @@ export interface FakePluginTestConfig {
 
 export const fakePluginTestConfig: FakePluginTestConfig = {
   builtinTokensGate: undefined,
+  currencyInfoPatch: undefined,
   engineGate: undefined,
+  omitEngineOtherMethods: undefined,
   publicKeyCheckGate: undefined,
   onEngineCreate: undefined
 }
@@ -153,12 +168,17 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private allTokens: EdgeTokenMap = fakeTokens
   private readonly currencyInfo: EdgeCurrencyInfo
 
-  // Exercises the wallet's pre-engine `otherMethods` guarantee in tests:
-  readonly otherMethods = {
-    async testMethod(arg: string): Promise<string> {
-      return `testMethod called with: ${arg}`
-    }
-  }
+  // Exercises the wallet's pre-engine `otherMethods` guarantee in tests.
+  // `omitEngineOtherMethods` simulates an engine that dropped a method
+  // some cache still names:
+  readonly otherMethods =
+    fakePluginTestConfig.omitEngineOtherMethods === true
+      ? undefined
+      : {
+          async testMethod(arg: string): Promise<string> {
+            return `testMethod called with: ${arg}`
+          }
+        }
 
   constructor(
     walletInfo: EdgeWalletInfo,
@@ -468,8 +488,30 @@ export function makeFakeCurrencyPlugin(
 ): EdgeCurrencyPlugin {
   const currencyInfo: EdgeCurrencyInfo = { ...fakeCurrencyInfo, ...overrides }
 
+  // Identity-stable view of `currencyInfoPatch`, so memoized reducers
+  // never see a fresh object unless the patch itself changed:
+  let patchedInfo = currencyInfo
+  let lastPatch: Partial<EdgeCurrencyInfo> | undefined
+  function getCurrencyInfo(): EdgeCurrencyInfo {
+    const patch = fakePluginTestConfig.currencyInfoPatch
+    if (patch !== lastPatch) {
+      lastPatch = patch
+      patchedInfo = patch == null ? currencyInfo : { ...currencyInfo, ...patch }
+    }
+    return patchedInfo
+  }
+
   return {
-    currencyInfo,
+    get currencyInfo(): EdgeCurrencyInfo {
+      return getCurrencyInfo()
+    },
+
+    // Exercises the config-level otherMethods name cache in tests:
+    otherMethods: {
+      async fakePluginMethod(arg: string): Promise<string> {
+        return `fakePluginMethod called with: ${arg}`
+      }
+    },
 
     async getBuiltinTokens(): Promise<EdgeTokenMap> {
       if (fakePluginTestConfig.builtinTokensGate != null) {
