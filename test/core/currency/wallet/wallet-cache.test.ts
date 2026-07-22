@@ -572,6 +572,50 @@ describe('wallet cache', function () {
     await account.logout()
   })
 
+  it('upgrades a version-1 cache file and grows stubs post-engine', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // Rewrite the cache as a version-1 file (no addresses, no method
+    // names), the state every real device is in when this ships:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    const file = JSON.parse(
+      await wallet.localDisklet.getText('walletCache.json')
+    )
+    walletCacheSaverConfig.throttleMs = 5000
+    await wallet.localDisklet.setText(
+      'walletCache.json',
+      JSON.stringify({
+        version: 1,
+        name: file.name,
+        fiatCurrencyCode: file.fiatCurrencyCode,
+        enabledTokenIds: file.enabledTokenIds,
+        balances: file.balances
+      })
+    )
+    await account.logout()
+    walletCacheSaverConfig.throttleMs = 50
+
+    // The old file still warm-boots (upgraded on read, not cold),
+    // with no method names yet:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet2 = await account2.waitForCurrencyWallet(walletId)
+    expect(wallet2.name).equals('Cached Name')
+    expect(wallet2.otherMethods.testMethod).equals(undefined)
+
+    // Once the engine lands, its methods appear and work, even
+    // through a bridge that saw the empty object first:
+    release()
+    await waitForOtherMethods(wallet2)
+    expect(await wallet2.otherMethods.testMethod('grown')).equals(
+      'testMethod called with: grown'
+    )
+    await account2.logout()
+  })
+
   it('otherMethods is {} pre-engine and carries engine methods post-engine', async function () {
     this.timeout(15000)
     const { context, walletId } = await makeCachedWorld()

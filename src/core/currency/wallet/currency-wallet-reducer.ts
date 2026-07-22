@@ -68,7 +68,7 @@ export interface CurrencyWalletState {
 
   readonly paused: boolean
 
-  readonly addresses: EdgeAddress[]
+  readonly addresses: { [tokenIdKey: string]: EdgeAddress[] }
   readonly allEnabledTokenIds: string[]
   readonly balanceMap: EdgeBalanceMap
   readonly balances: EdgeBalances
@@ -129,7 +129,7 @@ export interface CurrencyWalletNext {
 
 export const initialWalletSettings: JsonObject = {}
 
-export const initialAddresses: EdgeAddress[] = []
+export const initialAddresses: { [tokenIdKey: string]: EdgeAddress[] } = {}
 
 // Used for detectedTokenIds & enabledTokenIds:
 export const initialTokenIds: string[] = []
@@ -451,16 +451,26 @@ const currencyWalletInner = buildReducer<
     }
   ),
 
-  addresses(state = initialAddresses, action): EdgeAddress[] {
+  addresses(
+    state = initialAddresses,
+    action
+  ): { [tokenIdKey: string]: EdgeAddress[] } {
     switch (action.type) {
-      case 'CURRENCY_WALLET_ADDRESSES_CHANGED':
-        // The engine's answer is authoritative:
-        return action.payload.addresses
+      case 'CURRENCY_WALLET_ADDRESSES_CHANGED': {
+        // The engine's answer is authoritative for its own tokenId.
+        // Keep the existing state when nothing changed, so downstream
+        // reference checks (the cache saver, yaob diffing) see no
+        // phantom update:
+        const { addresses, tokenId } = action.payload
+        const key = tokenId ?? ''
+        if (compare(state[key], addresses)) return state
+        return { ...state, [key]: addresses }
+      }
 
       case 'CURRENCY_WALLET_CACHE_LOADED':
         // Seed cached addresses, but never overwrite an engine answer
         // (the seed only ever fires before the engine exists):
-        if (state.length > 0) return state
+        if (Object.keys(state).length > 0) return state
         return action.payload.addresses
     }
     return state

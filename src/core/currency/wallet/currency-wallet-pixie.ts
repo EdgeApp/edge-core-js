@@ -576,7 +576,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
    */
   cacheSaver(input: CurrencyWalletInput) {
     interface CacheSnapshot {
-      addresses: EdgeAddress[]
+      addresses: { [tokenIdKey: string]: EdgeAddress[] }
       balanceMap: EdgeBalanceMap
       enabledTokenIds: string[]
       fiat: string
@@ -618,10 +618,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             fiatCurrencyCode: snapshot.fiat,
             enabledTokenIds: snapshot.enabledTokenIds,
             balances,
-            addresses: snapshot.addresses.map(address => ({
-              addressType: address.addressType,
-              publicAddress: address.publicAddress
-            })),
+            addresses: snapshot.addresses,
             otherMethodNames: snapshot.otherMethodNames
           }
         )

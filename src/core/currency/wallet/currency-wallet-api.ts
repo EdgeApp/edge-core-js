@@ -1,7 +1,7 @@
 import { abs, div, lt, mul } from 'biggystring'
 import { Disklet } from 'disklet'
 import { base64 } from 'rfc4648'
-import { bridgifyObject, emit, onMethod, update, watchMethod } from 'yaob'
+import { bridgifyObject, emit, onMethod, watchMethod } from 'yaob'
 
 import {
   InternalWalletMethods,
@@ -186,6 +186,7 @@ export function makeCurrencyWalletApi(
           addressType: address.addressType,
           publicAddress: address.publicAddress
         })),
+        tokenId: opts.tokenId,
         walletId
       }
     })
@@ -193,36 +194,39 @@ export function makeCurrencyWalletApi(
 
   const fakeCallbacks = makeCurrencyWalletCallbacks(input)
 
-  // The wallet exposes ONE permanent `otherMethods` object for its
-  // whole life; it is never swapped when the engine lands. Each
-  // property is a delegating stub that waits for the engine and then
-  // forwards, so a method can be called the moment its NAME is known:
-  // from the cache on a warm login (before the engine exists), or
-  // from the live engine otherwise. Stubs are added when a name first
-  // appears and never removed; a name the loaded engine turns out to
-  // lack rejects cleanly at call time. Pre-engine with no cache this
-  // is `{}`, exactly the old guarantee, so property probes stay safe.
-  const otherMethodStubs: { [name: string]: (...args: any[]) => any } = {}
+  // The wallet's `otherMethods` is an object of delegating stubs:
+  // each waits for the engine and then forwards, so a method can be
+  // called the moment its NAME is known - from the cache on a warm
+  // login (before the engine exists), or from the live engine
+  // otherwise. The object keeps its identity as long as the known
+  // name set is unchanged (the common warm-boot case, where the
+  // cache already names every engine method); when a name first
+  // appears it is REBUILT as a new bridgified object, because yaob
+  // only serializes the properties an object had when it first
+  // crossed the bridge - the pixie watcher's update() then delivers
+  // the new object, exactly how the old engine-swap propagated.
+  // Existing stubs carry over a rebuild, a name the loaded engine
+  // turns out to lack rejects cleanly at call time, and pre-engine
+  // with no cache this is `{}`, exactly the old guarantee, so
+  // property probes stay safe.
+  let otherMethodStubs: { [name: string]: (...args: any[]) => any } = {}
   bridgifyObject(otherMethodStubs)
 
   function makeOtherMethodStub(name: string): (...args: any[]) => any {
-    // Resolve the engine's method once and remember it:
-    let resolved: ((...args: any[]) => any) | undefined
     return async (...args: any[]): Promise<any> => {
+      // Resolve against the live engine on every call, so an engine
+      // rebuilt by a resync never leaves a stale capture behind.
+      // Calls go through the source object, preserving `this`:
       const engine = await getEngine()
-      if (resolved == null) {
-        const withKeys = engine.otherMethodsWithKeys?.[name]
-        const method = engine.otherMethods?.[name]
-        if (typeof withKeys === 'function') {
-          resolved = (...inner: any[]) => withKeys(walletInfo.keys, ...inner)
-        } else if (typeof method === 'function') {
-          resolved = method
-        }
+      const withKeys = engine.otherMethodsWithKeys
+      if (withKeys != null && typeof withKeys[name] === 'function') {
+        return withKeys[name](walletInfo.keys, ...args)
       }
-      if (resolved == null) {
-        throw new Error(`The wallet engine does not implement "${name}"`)
+      const methods = engine.otherMethods
+      if (methods != null && typeof methods[name] === 'function') {
+        return methods[name](...args)
       }
-      return resolved(...args)
+      throw new Error(`The wallet engine does not implement "${name}"`)
     }
   }
 
@@ -237,14 +241,17 @@ export function makeCurrencyWalletApi(
         }
       }
     }
-    let added = false
-    for (const name of names) {
-      if (otherMethodStubs[name] != null) continue
-      otherMethodStubs[name] = makeOtherMethodStub(name)
-      added = true
+    const missing = names.filter(name => otherMethodStubs[name] == null)
+    if (missing.length > 0) {
+      const next: { [name: string]: (...args: any[]) => any } = {
+        ...otherMethodStubs
+      }
+      for (const name of missing) {
+        if (next[name] == null) next[name] = makeOtherMethodStub(name)
+      }
+      bridgifyObject(next)
+      otherMethodStubs = next
     }
-    // New names must reach the far side of the bridge too:
-    if (added) update(otherMethodStubs)
     return otherMethodStubs
   }
 
@@ -595,7 +602,8 @@ export function makeCurrencyWalletApi(
       // (and chains without the hint) wait for the engine, exactly
       // as before, to avoid address reuse:
       const { hasStableAddresses = false } = plugin.currencyInfo
-      const cachedAddresses = input.props.walletState.addresses
+      const cachedAddresses =
+        input.props.walletState.addresses[opts.tokenId ?? ''] ?? []
       if (
         hasStableAddresses &&
         opts.forceIndex == null &&

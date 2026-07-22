@@ -301,6 +301,7 @@ export type RootAction =
       type: 'CURRENCY_WALLET_ADDRESSES_CHANGED'
       payload: {
         addresses: EdgeAddress[]
+        tokenId: EdgeTokenId
         walletId: string
       }
     }
@@ -319,7 +320,7 @@ export type RootAction =
       // seeding Redux before the engine exists.
       type: 'CURRENCY_WALLET_CACHE_LOADED'
       payload: {
-        addresses: EdgeAddress[]
+        addresses: { [tokenIdKey: string]: EdgeAddress[] }
         balanceMap: EdgeBalanceMap
         enabledTokenIds: string[]
         fiatCurrencyCode: string

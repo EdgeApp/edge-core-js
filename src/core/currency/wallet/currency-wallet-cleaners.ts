@@ -418,10 +418,13 @@ export interface WalletCacheFile {
   balances: { [tokenId: string]: string }
 
   /**
-   * The engine's last answer to the default address query, without
-   * balances. Served pre-engine only on stable-address chains.
+   * The engine's last answer per tokenId to the default address
+   * query, without balances (the `null` tokenId is spelled '' here).
+   * Served pre-engine only on stable-address chains.
    */
-  addresses: Array<{ addressType: string; publicAddress: string }>
+  addresses: {
+    [tokenIdKey: string]: Array<{ addressType: string; publicAddress: string }>
+  }
 
   /**
    * The names of the engine's `otherMethods`, so the next login can
@@ -441,7 +444,7 @@ export const asWalletCacheFile: Cleaner<WalletCacheFile> = asObject({
   fiatCurrencyCode: asString,
   enabledTokenIds: asArray(asString),
   balances: asObject(asIntegerString),
-  addresses: asArray(asCachedAddress),
+  addresses: asObject(asArray(asCachedAddress)),
   otherMethodNames: asOptional(asArray(asString), () => [])
 })
 
@@ -463,7 +466,7 @@ export const asStoredWalletCacheFile: Cleaner<WalletCacheFile> = raw => {
     return asWalletCacheFile(raw)
   } catch (error: unknown) {
     const clean = asWalletCacheFileV1(raw)
-    return { ...clean, version: 2, addresses: [], otherMethodNames: [] }
+    return { ...clean, version: 2, addresses: {}, otherMethodNames: [] }
   }
 }
 

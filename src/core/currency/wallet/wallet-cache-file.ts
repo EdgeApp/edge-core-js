@@ -27,7 +27,7 @@ export const walletCacheFile = {
  * `walletCache.json`, with balances upgraded to an `EdgeBalanceMap`.
  */
 export interface WalletCacheSeed {
-  addresses: EdgeAddress[]
+  addresses: { [tokenIdKey: string]: EdgeAddress[] }
   balanceMap: EdgeBalanceMap
   enabledTokenIds: string[]
   fiatCurrencyCode: string
