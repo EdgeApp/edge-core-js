@@ -598,14 +598,17 @@ export function makeCurrencyWalletApi(
     ): Promise<EdgeAddress[]> {
       // On chains whose addresses never rotate, serve the cached
       // answer while the engine is still loading, so the receive
-      // scene works right away on a warm login. Rotating chains
-      // (and chains without the hint) wait for the engine, exactly
-      // as before, to avoid address reuse:
+      // scene works right away on a warm login. A rotating chain
+      // waits for the engine by default, to avoid address reuse,
+      // unless the caller passes `allowCached`: the receive scene
+      // opts in to a provisional answer and reconciles once the
+      // engine returns the fresh address, while programmatic
+      // callers stay gated and never latch a reused address:
       const { hasStableAddresses = false } = plugin.currencyInfo
       const cachedAddresses =
         input.props.walletState.addresses[opts.tokenId ?? ''] ?? []
       if (
-        hasStableAddresses &&
+        (hasStableAddresses || opts.allowCached === true) &&
         opts.forceIndex == null &&
         cachedAddresses.length > 0 &&
         input.props.walletOutput?.engine == null
@@ -618,7 +621,11 @@ export function makeCurrencyWalletApi(
 
       const engine = await getEngine()
       if (engine.getAddresses != null) {
-        const addresses = await engine.getAddresses(opts)
+        // `allowCached` is a UI-layer hint consumed above, so keep it
+        // out of the engine call (the `getFreshAddress` branch already
+        // never forwards it):
+        const { allowCached, ...engineOpts } = opts
+        const addresses = await engine.getAddresses(engineOpts)
         rememberAddresses(opts, addresses)
         return addresses
       } else {

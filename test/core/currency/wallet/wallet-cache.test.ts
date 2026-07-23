@@ -528,6 +528,60 @@ describe('wallet cache', function () {
     await account2.logout()
   })
 
+  it('serves a rotating chain pre-engine only when allowCached is set', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // Prime the address cache with the engine running:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    await wallet.getAddresses({ tokenId: null })
+    await snooze(SAVE_WAIT_MS)
+    await account.logout()
+
+    // On a warm login with the engine still blocked, the receive
+    // scene's opt-in serves the cached answer immediately, while a
+    // plain (programmatic) query on the same rotating chain waits:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet2 = await account2.waitForCurrencyWallet(walletId)
+
+    const provisional = await wallet2.getAddresses({
+      tokenId: null,
+      allowCached: true
+    })
+    expect(provisional[0].publicAddress).equals('fakesegwit')
+
+    // A forced-index query never serves the cache, even with
+    // allowCached, since the caller wants a specific fresh address:
+    let forcedSettled = false
+    const forcedPromise = wallet2
+      .getAddresses({ tokenId: null, allowCached: true, forceIndex: 0 })
+      .then(addresses => {
+        forcedSettled = true
+        return addresses
+      })
+    await snooze(RACE_WAIT_MS)
+    expect(forcedSettled).equals(false)
+
+    let gatedSettled = false
+    const gatedPromise = wallet2
+      .getAddresses({ tokenId: null })
+      .then(addresses => {
+        gatedSettled = true
+        return addresses
+      })
+    await snooze(RACE_WAIT_MS)
+    expect(gatedSettled).equals(false)
+    release()
+    const gated = await gatedPromise
+    expect(gated[0].publicAddress).equals('fakesegwit')
+    const forced = await forcedPromise
+    expect(forced[0].publicAddress).equals('fakesegwit')
+    await account2.logout()
+  })
+
   it('calls a cached otherMethods name before the engine exists', async function () {
     this.timeout(15000)
     const { context, walletId } = await makeCachedWorld()

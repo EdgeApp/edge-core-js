@@ -936,6 +936,18 @@ export interface EdgeStreamTransactionOptions {
 
 export type EdgeGetReceiveAddressOptions = EdgeTokenIdOptions & {
   forceIndex?: number
+
+  /**
+   * Opt in to a provisional cached answer before the engine loads,
+   * even on a chain whose addresses rotate. The receive scene sets
+   * this so a warm login shows an address right away, marking it
+   * provisional and reconciling once the engine returns the fresh
+   * one. Programmatic callers (payments, action queue) leave it
+   * unset and stay engine-gated, so they never latch a reused
+   * address. Chains with `hasStableAddresses` serve cached
+   * regardless of this flag.
+   */
+  allowCached?: boolean
 }
 
 export interface EdgeEngineActivationOptions {
