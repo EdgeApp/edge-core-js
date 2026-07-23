@@ -9,6 +9,20 @@ import {
 import { EdgeLog } from '../types/types'
 
 /**
+ * Per-request budget for a NYM mixnet fetch.
+ *
+ * mix-fetch's own `requestTimeoutMs` (below) is meant to bound each request,
+ * but a request whose exit connection stalls (a blocked port, an unresponsive
+ * host, a half-open TCP stream) has been observed hanging past it: David Coen's
+ * 2026-07-20 staging report showed Coreum/Avalanche sends sitting on
+ * "Calculating Fee" indefinitely with NYM on, even after the v1 revert. So we
+ * also impose the same budget ourselves in `fetchWithTimeout`, which guarantees
+ * the promise rejects on our side and lets an engine fail over to its next
+ * server instead of awaiting the request forever.
+ */
+const REQUEST_TIMEOUT_MS = 300000
+
+/**
  * Configuration options for the NYM mixFetch client.
  */
 export const mixFetchOptions: SetupMixFetchOps = {
@@ -18,7 +32,43 @@ export const mixFetchOptions: SetupMixFetchOps = {
     '5x6q9UfVHs5AohKMUqeivj7a556kVVy7QwoKige8xHxh.6CFoB3kJaDbYz6oafPJxNxNjzahpT2NtgtytcSyN9EvF@5rXcNe2a44vXisK3uqLHCzpzvEwcnsijDMU7hg4fcYk8',
   forceTls: true, // force WSS
   mixFetchOverride: {
-    requestTimeoutMs: 300000
+    requestTimeoutMs: REQUEST_TIMEOUT_MS
+  }
+}
+
+/**
+ * Impose `REQUEST_TIMEOUT_MS` on a single mixFetch call.
+ *
+ * This bounds how long *we* wait; it cannot cancel the in-flight wasm request,
+ * which takes no abort signal. That is enough for the caller: a rejected fetch
+ * lets an engine mark the server bad and move to the next one, which is what a
+ * working `requestTimeoutMs` would have bought us. Keeps v1's 3-arg
+ * `IMixFetchFn` signature so callers are unchanged.
+ */
+async function fetchWithTimeout(
+  mixFetch: IMixFetchFn,
+  url: string,
+  args: any,
+  opts?: SetupMixFetchOps
+): Promise<Response> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((resolve, reject) => {
+    timer = setTimeout(() => {
+      reject(
+        new Error(`mixFetch request timed out after ${REQUEST_TIMEOUT_MS}ms`)
+      )
+    }, REQUEST_TIMEOUT_MS)
+  })
+  const request = mixFetch(url, args, opts)
+  // Once the timer wins the race nothing is awaiting `request` any more, so a
+  // late rejection would surface as an unhandled rejection in the worker. The
+  // caller already has its timeout error and the response is worthless by now,
+  // so swallowing it here is the whole handling this needs.
+  request.catch(() => {})
+  try {
+    return await Promise.race([request, timeout])
+  } finally {
+    clearTimeout(timer)
   }
 }
 
@@ -81,5 +131,7 @@ export async function initMixFetch(log: EdgeLog): Promise<IMixFetchFn> {
       })
   }
   const mixFetchModule = await mixFetchInitPromise
-  return mixFetchModule.mixFetch
+  const { mixFetch } = mixFetchModule
+  return async (url, args, opts) =>
+    await fetchWithTimeout(mixFetch, url, args, opts)
 }
