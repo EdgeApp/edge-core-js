@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Impose the NYM per-request timeout in our own wrapper as well as mix-fetch's, so a mixnet request whose exit connection stalls rejects and fails over to the next server instead of leaving a wallet stuck on "Calculating Fee" when mix-fetch's own `requestTimeoutMs` does not fire.
+
 ## 2.47.1 (2026-07-17)
 
 - fixed: Revert `@nymproject/mix-fetch` to v1 (1.4.4), restoring the pinned gateway and network requester. The v2 stack shipped in 2.47.0 fails to complete small HTTPS JSON-RPC requests through most exit nodes and its exit-node auto-discovery rarely converges, which left wallets with NYM privacy enabled unable to sync or send.
