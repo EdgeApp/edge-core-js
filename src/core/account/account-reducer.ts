@@ -569,6 +569,13 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
         // load unwedges the wallet pixies (they fall back to their own
         // reads):
         return false
+
+      case 'ACCOUNT_LOAD_FAILED':
+        // The deferred load gave up, so the bulk seed is never coming.
+        // Clear the hold so the wallet pixies fall back to their own
+        // cache reads instead of wedging (never starting an engine or
+        // emitting an API object) for the life of the session:
+        return false
     }
     return state
   }
