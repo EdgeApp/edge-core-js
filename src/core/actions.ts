@@ -1,4 +1,6 @@
 import {
+  EdgeAddress,
+  EdgeBalanceMap,
   EdgeCorePlugin,
   EdgeCorePluginsInit,
   EdgeCurrencyTools,
@@ -24,6 +26,7 @@ import {
   TxFileNames,
   TxidHashes
 } from './currency/wallet/currency-wallet-reducer'
+import { WalletCacheSeed } from './currency/wallet/wallet-cache-file'
 import { LoginStash } from './login/login-stash'
 import { LoginType, SessionKey } from './login/login-types'
 import {
@@ -51,11 +54,24 @@ export type RootAction =
       }
     }
   | {
+      // We just read the account's local boot cache from disk,
+      // so wallets can start before the account repo loads.
+      type: 'ACCOUNT_CACHE_LOADED'
+      payload: {
+        accountId: string
+        configOtherMethodNames: EdgePluginMap<string[]>
+        customTokens: EdgePluginMap<EdgeTokenMap>
+        walletStates: EdgeWalletStates
+      }
+    }
+  | {
       // The account fires this when the user sorts or archives wallets.
       type: 'ACCOUNT_CHANGED_WALLET_STATES'
       payload: {
         accountId: string
         walletStates: EdgeWalletStates
+        /** The ids whose states this change actually touched. */
+        changedIds: string[]
       }
     }
   | {
@@ -83,6 +99,13 @@ export type RootAction =
       payload: {
         accountId: string
         customTokens: EdgePluginMap<EdgeTokenMap>
+      }
+    }
+  | {
+      // The token saver has written the custom tokens to disk.
+      type: 'ACCOUNT_CUSTOM_TOKENS_SAVED'
+      payload: {
+        accountId: string
       }
     }
   | {
@@ -272,6 +295,53 @@ export type RootAction =
       }
     }
   | {
+      // The engine answered an address query, so remember the result
+      // for the cache (and, on stable-address chains, for pre-engine
+      // serving on the next login). Balances are stripped.
+      type: 'CURRENCY_WALLET_ADDRESSES_CHANGED'
+      payload: {
+        addresses: EdgeAddress[]
+        tokenId: EdgeTokenId
+        walletId: string
+      }
+    }
+  | {
+      // The engine exists, so remember its otherMethods names for
+      // the cache; the next login builds pre-engine delegating stubs
+      // from them.
+      type: 'CURRENCY_WALLET_OTHER_METHOD_NAMES_CHANGED'
+      payload: {
+        names: string[]
+        walletId: string
+      }
+    }
+  | {
+      // Called when the wallet's UI-state cache file loads from disk,
+      // seeding Redux before the engine exists.
+      type: 'CURRENCY_WALLET_CACHE_LOADED'
+      payload: {
+        addresses: { [tokenIdKey: string]: EdgeAddress[] }
+        balanceMap: EdgeBalanceMap
+        enabledTokenIds: string[]
+        fiatCurrencyCode: string
+        name: string | null
+        otherMethodNames: string[]
+        publicWalletInfo?: EdgeWalletInfo
+        walletId: string
+      }
+    }
+  | {
+      // Called when the bulk loader finishes reading every active
+      // wallet's cache files, seeding all of them in one dispatch.
+      // The wallet reducer's filter hands each wallet its own seed,
+      // and the account reducer uses it to clear `bulkWalletSeedPending`.
+      type: 'CURRENCY_WALLETS_CACHE_LOADED'
+      payload: {
+        accountId: string
+        seeds: { [walletId: string]: WalletCacheSeed }
+      }
+    }
+  | {
       type: 'CURRENCY_WALLET_CHANGED_PAUSED'
       payload: {
         paused: boolean
@@ -286,10 +356,12 @@ export type RootAction =
       }
     }
   | {
-      // Called when a currency wallet receives a new name.
+      // Called when a currency wallet receives a new fiat code.
       type: 'CURRENCY_WALLET_FIAT_CHANGED'
       payload: {
         fiatCurrencyCode: string
+        /** True when the value was read from disk, not set by a user. */
+        fromFile?: boolean
         walletId: string
       }
     }
@@ -342,6 +414,8 @@ export type RootAction =
       type: 'CURRENCY_WALLET_NAME_CHANGED'
       payload: {
         name: string | null
+        /** True when the value was read from disk, not set by a user. */
+        fromFile?: boolean
         walletId: string
       }
     }

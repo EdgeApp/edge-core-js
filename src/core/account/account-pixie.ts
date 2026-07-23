@@ -13,19 +13,31 @@ import {
   EdgeAccount,
   EdgeCurrencyWallet,
   EdgePluginMap,
-  EdgeTokenMap
+  EdgeTokenMap,
+  EdgeWalletInfo,
+  EdgeWalletStates
 } from '../../types/types'
 import { makePeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
+import {
+  bulkLoadWalletCaches,
+  walletCacheLoaderHooks
+} from '../currency/wallet/wallet-cache-loader'
 import { syncLogin } from '../login/login'
 import { waitForPlugins } from '../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../root-pixie'
+import { makeLocalDisklet } from '../storage/repo'
 import {
   addStorageWallet,
   SYNC_INTERVAL,
   syncStorageWallet
 } from '../storage/storage-actions'
 import { makeAccountApi } from './account-api'
+import {
+  ACCOUNT_CACHE_FILE,
+  accountCacheFile,
+  accountCacheSaverConfig
+} from './account-cache-file'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files'
 import { AccountState, initialCustomTokens } from './account-reducer'
 import {
@@ -78,7 +90,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       async update() {
         const ai = toApiInput(input)
         const { accountId, accountState, log } = input.props
-        const { accountWalletInfos } = accountState
+        const { accountWalletInfo, accountWalletInfos } = accountState
 
         async function loadAllFiles(): Promise<void> {
           await Promise.all([
@@ -88,25 +100,119 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           ])
         }
 
-        try {
-          // Wait for the currency plugins (should already be loaded by now):
-          await waitForPlugins(ai)
+        async function loadEverything(isRetry: boolean): Promise<void> {
           await loadBuiltinTokens(ai, accountId)
           log.warn('Login: currency plugins exist')
 
-          // Start the repo:
+          // Start the repo. A retry must not re-attach repos a prior
+          // attempt already attached: STORAGE_WALLET_ADDED replaces
+          // the whole entry (wiping lastChanges) and starts another
+          // sync that can race the one still in flight:
+          const missingInfos = isRetry
+            ? accountWalletInfos.filter(
+                info => ai.props.state.storageWallets[info.id] == null
+              )
+            : accountWalletInfos
           await Promise.all(
-            accountWalletInfos.map(info => addStorageWallet(ai, info))
+            missingInfos.map(info => addStorageWallet(ai, info))
           )
           log.warn('Login: synced account repos')
 
           await loadAllFiles()
           log.warn('Login: loaded files')
+        }
+
+        let emitted = false
+        try {
+          // Wait for the currency plugins (should already be loaded by now):
+          await waitForPlugins(ai)
+
+          // Try the account boot cache. On a hit, seed Redux and emit
+          // the API object right away, so wallets can start from their
+          // own caches without waiting for the repo sync or file loads.
+          // The loads below then overwrite the seeded state
+          // authoritatively. On a miss (first login, schema bump,
+          // corruption) or an account with legacy Airbitz wallets
+          // (their infos cannot be cached), this is today's boot,
+          // unchanged:
+          const accountCache = await accountCacheFile.load(
+            makeLocalDisklet(ai.props.io, accountWalletInfo.id),
+            ACCOUNT_CACHE_FILE
+          )
+          if (accountCache != null && !accountCache.legacyWallets) {
+            input.props.dispatch({
+              type: 'ACCOUNT_CACHE_LOADED',
+              payload: {
+                accountId,
+                configOtherMethodNames: accountCache.configOtherMethodNames,
+                customTokens: accountCache.customTokens,
+                walletStates: accountCache.walletStates
+              }
+            })
+            input.onOutput(makeAccountApi(ai, accountId))
+            emitted = true
+            log.warn('Login: emitted account from cache')
+            if (walletCacheLoaderHooks.onAccountSeed != null) {
+              walletCacheLoaderHooks.onAccountSeed(accountId)
+            }
+
+            // Seed every wallet's cache in one dispatch:
+            await bulkLoadWalletCaches(ai, accountId)
+
+            // The GUI already has the account, so retry transient
+            // failures instead of leaving the session half-loaded
+            // (a stuck `*Loaded` flag would disable the cache saver):
+            for (let attempt = 1; ; ++attempt) {
+              // The user may have logged out while we were seeding:
+              if (ai.props.state.accounts[accountId] == null) {
+                return await stopUpdates
+              }
+              try {
+                await loadEverything(attempt > 1)
+                break
+              } catch (error: unknown) {
+                if (ai.props.state.accounts[accountId] == null) {
+                  return await stopUpdates
+                }
+                log.error(
+                  `Login: deferred account load failed (attempt ${attempt}): ${String(
+                    error
+                  )}`
+                )
+                if (attempt >= 3) {
+                  // Record the terminal failure, so the repo waiters
+                  // (changeWalletStates, dataStore, sync, settings)
+                  // reject instead of pending forever:
+                  input.props.onError(error)
+                  input.props.dispatch({
+                    type: 'ACCOUNT_LOAD_FAILED',
+                    payload: { accountId, error }
+                  })
+                  return await stopUpdates
+                }
+                await snooze(5000)
+              }
+            }
+            log.warn('Login: complete')
+            return await stopUpdates
+          }
+
+          await loadEverything(false)
 
           // Create the API object:
           input.onOutput(makeAccountApi(ai, accountId))
           log.warn('Login: complete')
         } catch (error: unknown) {
+          // The account may have logged out while we were loading:
+          if (ai.props.state.accounts[accountId] == null) {
+            return await stopUpdates
+          }
+          if (emitted) {
+            // The GUI already has the account, so surface the failure
+            // instead of wedging the login:
+            log.error(`Login: cache-seeded boot failed: ${String(error)}`)
+            input.props.onError(error)
+          }
           input.props.dispatch({
             type: 'ACCOUNT_LOAD_FAILED',
             payload: { accountId, error }
@@ -199,16 +305,147 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     let lastTokens: EdgePluginMap<EdgeTokenMap> = initialCustomTokens
 
     return async function update() {
-      const { accountId, accountState } = input.props
+      const { accountId, accountState, state } = input.props
 
-      const { customTokens } = accountState
+      const { accountWalletInfo, customTokens } = accountState
       if (customTokens !== lastTokens && lastTokens !== initialCustomTokens) {
-        await saveCustomTokens(toApiInput(input), accountId).catch(error =>
+        // The synced repo may not exist yet (cache-seeded boot);
+        // return without adopting `customTokens`, so this same diff
+        // triggers the write once `addStorageWallet` finishes:
+        if (state.storageWallets[accountWalletInfo.id] == null) return
+
+        // Never write before the authoritative load lands: the write
+        // rebuilds the whole file from Redux, so a cache-seeded map
+        // would wipe tokens another device added. Return without
+        // adopting, so the load's merge triggers the write:
+        if (!accountState.customTokensLoaded) return
+
+        try {
+          await saveCustomTokens(toApiInput(input), accountId)
+          // Any dirty edits are on disk now, so a racing load no
+          // longer needs to preserve them:
+          input.props.dispatch({
+            type: 'ACCOUNT_CUSTOM_TOKENS_SAVED',
+            payload: { accountId }
+          })
+        } catch (error: unknown) {
           input.props.onError(error)
-        )
+        }
         await snooze(100) // Rate limiting
       }
       lastTokens = customTokens
+    }
+  },
+
+  /**
+   * Watches the account's cache-relevant Redux state and persists it
+   * to `accountCache.json`, so the next login can start its wallets
+   * before the account repo loads. Writes are throttled (trailing
+   * edge), never happen after logout, and stop after 3 consecutive
+   * failures to avoid log spam. The dirty set deliberately includes
+   * account-level `customTokens`: a saver that misses those wipes
+   * custom tokens on the next warm login.
+   */
+  cacheSaver(input: AccountInput) {
+    interface CacheSnapshot {
+      currencyWalletIds: string[]
+      customTokens: EdgePluginMap<EdgeTokenMap>
+      legacyWalletInfos: EdgeWalletInfo[]
+      walletStates: EdgeWalletStates
+    }
+
+    let failures = 0
+    let lastSaved: CacheSnapshot | undefined
+    let timer: ReturnType<typeof setTimeout> | undefined
+
+    async function doSave(): Promise<void> {
+      timer = undefined
+      const { accountId, accountState, state } = input.props
+
+      // Never write after logout:
+      if (state.accounts[accountId] == null) return
+
+      const snapshot: CacheSnapshot = {
+        currencyWalletIds: accountState.currencyWalletIds,
+        customTokens: accountState.customTokens,
+        legacyWalletInfos: accountState.legacyWalletInfos,
+        walletStates: accountState.walletStates
+      }
+
+      // Only legacy wallets that actually surface as currency wallets
+      // force a cold boot; a legacy repo whose wallet type has no
+      // loaded plugin was never visible in the first place:
+      const legacyWallets = snapshot.legacyWalletInfos.some(info =>
+        snapshot.currencyWalletIds.includes(info.id)
+      )
+
+      // Remember each plugin's otherMethods names. The plugin list is
+      // static for the whole session, so this needs no dirty tracking:
+      const configOtherMethodNames: EdgePluginMap<string[]> = {}
+      const { currency } = input.props.state.plugins
+      for (const pluginId of Object.keys(currency)) {
+        const { otherMethods } = currency[pluginId]
+        if (otherMethods == null) continue
+        const names = Object.keys(otherMethods).filter(
+          name => typeof (otherMethods as any)[name] === 'function'
+        )
+        if (names.length > 0) configOtherMethodNames[pluginId] = names
+      }
+
+      try {
+        await accountCacheFile.save(
+          makeLocalDisklet(input.props.io, accountState.accountWalletInfo.id),
+          ACCOUNT_CACHE_FILE,
+          {
+            version: 1,
+            customTokens: snapshot.customTokens,
+            legacyWallets,
+            walletStates: snapshot.walletStates,
+            configOtherMethodNames
+          }
+        )
+        failures = 0
+        lastSaved = snapshot
+      } catch (error: unknown) {
+        if (++failures >= 3) {
+          input.props.log.error(
+            `Account cache saver giving up after ${failures} failures: ${String(
+              error
+            )}`
+          )
+        }
+      }
+    }
+
+    return {
+      update() {
+        const { accountState } = input.props
+        if (accountState == null) return
+        if (failures >= 3 || timer != null) return
+
+        // Wait until the authoritative files have loaded,
+        // so a cold start never caches placeholder values:
+        const { customTokensLoaded, walletStatesLoaded } = accountState
+        if (!customTokensLoaded || !walletStatesLoaded) return
+
+        if (
+          lastSaved != null &&
+          lastSaved.currencyWalletIds === accountState.currencyWalletIds &&
+          lastSaved.customTokens === accountState.customTokens &&
+          lastSaved.legacyWalletInfos === accountState.legacyWalletInfos &&
+          lastSaved.walletStates === accountState.walletStates
+        ) {
+          return
+        }
+
+        timer = setTimeout(() => {
+          doSave().catch(error => input.props.onError(error))
+        }, accountCacheSaverConfig.throttleMs)
+      },
+
+      destroy() {
+        if (timer != null) clearTimeout(timer)
+      }
     }
   },
 

@@ -403,6 +403,74 @@ export const asPublicKeyFile = asObject({
 })
 
 /**
+ * Cached wallet UI state, stored in the wallet's local storage.
+ * This is everything the GUI needs to render a wallet in the wallet list
+ * before its engine exists. Balances are last-known values,
+ * and are explicitly allowed to be stale.
+ */
+export interface WalletCacheFile {
+  version: 2
+  name: string | null
+  fiatCurrencyCode: string
+  enabledTokenIds: string[]
+
+  /** Integer strings. The `null` tokenId is spelled '' here. */
+  balances: { [tokenId: string]: string }
+
+  /**
+   * The engine's last answer per tokenId to the default address
+   * query, without balances (the `null` tokenId is spelled '' here).
+   * Served pre-engine only on stable-address chains.
+   */
+  addresses: {
+    [tokenIdKey: string]: Array<{ addressType: string; publicAddress: string }>
+  }
+
+  /**
+   * The names of the engine's `otherMethods`, so the next login can
+   * expose a delegating stub per method before the engine exists.
+   */
+  otherMethodNames: string[]
+}
+
+const asCachedAddress = asObject({
+  addressType: asString,
+  publicAddress: asString
+})
+
+export const asWalletCacheFile: Cleaner<WalletCacheFile> = asObject({
+  version: asValue(2),
+  name: asEither(asString, asNull),
+  fiatCurrencyCode: asString,
+  enabledTokenIds: asArray(asString),
+  balances: asObject(asIntegerString),
+  addresses: asObject(asArray(asCachedAddress)),
+  otherMethodNames: asOptional(asArray(asString), () => [])
+})
+
+const asWalletCacheFileV1 = asObject({
+  version: asValue(1),
+  name: asEither(asString, asNull),
+  fiatCurrencyCode: asString,
+  enabledTokenIds: asArray(asString),
+  balances: asObject(asIntegerString)
+})
+
+/**
+ * Read-side cleaner: upgrades an old file instead of falling through
+ * to a cold boot; the fields it lacks simply have nothing cached yet.
+ * Writes always use the current `asWalletCacheFile` schema.
+ */
+export const asStoredWalletCacheFile: Cleaner<WalletCacheFile> = raw => {
+  try {
+    return asWalletCacheFile(raw)
+  } catch (error: unknown) {
+    const clean = asWalletCacheFileV1(raw)
+    return { ...clean, version: 2, addresses: {}, otherMethodNames: [] }
+  }
+}
+
+/**
  * The wallet's local storage file for the last seen "checkpoint". The core
  * does not know the contents of the checkpoint, so it just as an arbitrary
  * string.

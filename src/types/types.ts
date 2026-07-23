@@ -516,6 +516,16 @@ export interface EdgeCurrencyInfo {
   canAdjustFees?: boolean // Defaults to true
   canImportKeys?: boolean // Defaults to false
   canReplaceByFee?: boolean // Defaults to false
+
+  /**
+   * True if the chain's receive addresses never rotate, so a
+   * previously returned address remains valid and reuse-safe.
+   * When set, a wallet can serve its cached addresses before the
+   * engine loads. Defaults to false: address queries wait for the
+   * engine, exactly the pre-cache behavior, which is what rotating
+   * (UTXO-style) chains need to avoid address reuse.
+   */
+  hasStableAddresses?: boolean
   customFeeTemplate?: EdgeObjectTemplate // Indicates custom fee support
   customTokenTemplate?: EdgeObjectTemplate // Indicates custom token support
   requiredConfirmations?: number // Block confirmations required for a tx
@@ -926,6 +936,18 @@ export interface EdgeStreamTransactionOptions {
 
 export type EdgeGetReceiveAddressOptions = EdgeTokenIdOptions & {
   forceIndex?: number
+
+  /**
+   * Opt in to a provisional cached answer before the engine loads,
+   * even on a chain whose addresses rotate. The receive scene sets
+   * this so a warm login shows an address right away, marking it
+   * provisional and reconciling once the engine returns the fresh
+   * one. Programmatic callers (payments, action queue) leave it
+   * unset and stay engine-gated, so they never latch a reused
+   * address. Chains with `hasStableAddresses` serve cached
+   * regardless of this flag.
+   */
+  allowCached?: boolean
 }
 
 export interface EdgeEngineActivationOptions {
