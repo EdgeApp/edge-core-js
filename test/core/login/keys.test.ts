@@ -46,6 +46,33 @@ describe('mergeKeyInfos', function () {
       ])
     ).throws('Key integrity violation')
   })
+
+  it('merge equal nested publicKeys objects', function () {
+    const publicKeys = {
+      publicKeys: { bip49: 'ypub1', bip84: 'zpub1' }
+    }
+    const key1 = {
+      id: ID_1,
+      type: 'wallet:bitcoin',
+      keys: {
+        syncKey: 'sync',
+        dataKey: 'data',
+        publicKeys: { ...publicKeys }
+      }
+    }
+    const key2 = {
+      id: ID_1,
+      type: 'wallet:bitcoin',
+      keys: {
+        syncKey: 'sync',
+        dataKey: 'data',
+        publicKeys: { ...publicKeys }
+      }
+    }
+    const out = mergeKeyInfos([key1, key2])
+    expect(out.length).equals(1)
+    expect(out[0].keys.publicKeys).deep.equals(publicKeys)
+  })
 })
 
 describe('fixWalletInfo', function () {

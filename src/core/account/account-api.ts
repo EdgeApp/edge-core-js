@@ -19,6 +19,7 @@ import {
   EdgeLobby,
   EdgeMemoryWallet,
   EdgePendingVoucher,
+  EdgePendingWalletShare,
   EdgePluginMap,
   EdgeResult,
   EdgeSwapConfig,
@@ -27,6 +28,8 @@ import {
   EdgeSwapRequestOptions,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
+  EdgeWalletShareOptions,
+  EdgeWalletShareSpec,
   EdgeWalletStates
 } from '../../types/types'
 import { makeEdgeResult } from '../../util/edgeResult'
@@ -59,6 +62,12 @@ import { changeRecovery, deleteRecovery } from '../login/recovery2'
 import { listSplittableWalletTypes, splitWalletInfo } from '../login/splitting'
 import { asEdgeStorageKeys } from '../login/storage-keys'
 import { changeVoucherStatus } from '../login/vouchers'
+import {
+  acceptWalletShare,
+  approveWalletShare,
+  offerWalletShare,
+  requestWalletShare
+} from '../login/wallet-share'
 import {
   findCurrencyPluginId,
   getCurrencyTools
@@ -476,6 +485,45 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
       lockdown()
       return await makeLobbyApi(ai, accountId, lobbyId)
+    },
+
+    // ----------------------------------------------------------------
+    // Wallet sharing:
+    // ----------------------------------------------------------------
+
+    async requestWalletShare(
+      opts: EdgeWalletShareOptions = {}
+    ): Promise<EdgePendingWalletShare> {
+      ai.props.log.breadcrumb('EdgeAccount.requestWalletShare', {})
+      lockdown()
+      return await requestWalletShare(ai, accountId, opts)
+    },
+
+    async offerWalletShare(
+      wallets: EdgeWalletShareSpec[],
+      opts: EdgeWalletShareOptions = {}
+    ): Promise<EdgePendingWalletShare> {
+      ai.props.log.breadcrumb('EdgeAccount.offerWalletShare', {})
+      lockdown()
+      return await offerWalletShare(ai, accountId, wallets, opts)
+    },
+
+    async approveWalletShare(
+      lobbyId: string,
+      wallets: EdgeWalletShareSpec[]
+    ): Promise<void> {
+      ai.props.log.breadcrumb('EdgeAccount.approveWalletShare', {})
+      lockdown()
+      await approveWalletShare(ai, accountId, lobbyId, wallets)
+    },
+
+    async acceptWalletShare(
+      lobbyId: string,
+      opts: EdgeWalletShareOptions = {}
+    ): Promise<EdgePendingWalletShare> {
+      ai.props.log.breadcrumb('EdgeAccount.acceptWalletShare', {})
+      lockdown()
+      return await acceptWalletShare(ai, accountId, lobbyId, opts)
     },
 
     // ----------------------------------------------------------------

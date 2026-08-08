@@ -622,10 +622,17 @@ const createLobbyRoute = withLobby(
     const [clean, cleanError] = cleanRequest(asEdgeLobbyRequest, body.data)
     if (clean == null) return cleanError
 
-    const { timeout = 600 } = clean
+    // Match production login-server: only persist known lobby request fields.
+    const { loginRequest, publicKey, timeout = 600 } = clean
+    const lobbyRequest = {
+      publicKey,
+      timeout,
+      loginRequest:
+        loginRequest == null ? undefined : { appId: loginRequest.appId }
+    }
     const expires = new Date(Date.now() + 1000 * timeout).toISOString()
 
-    db.lobbies.set(lobbyId, { request: clean, replies: [], expires })
+    db.lobbies.set(lobbyId, { request: lobbyRequest, replies: [], expires })
     return statusResponse()
   }
 )

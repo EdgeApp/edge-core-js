@@ -11,6 +11,15 @@ export const allPlugins = {
   },
   'broken-engine': brokenEnginePlugin,
   fakecoin: fakeCurrencyPlugin,
+  unsafecoin: makeFakeCurrencyPlugin({
+    assetDisplayName: 'Unsafe Coin',
+    chainDisplayName: 'Unsafe Chain',
+    currencyCode: 'UNSAFE',
+    displayName: 'Unsafe Coin',
+    pluginId: 'unsafecoin',
+    walletType: 'wallet:unsafecoin',
+    unsafeSyncNetwork: true
+  }),
   tulipcoin: makeFakeCurrencyPlugin({
     assetDisplayName: 'Tulip Coin',
     chainDisplayName: 'Tulip Chain',
