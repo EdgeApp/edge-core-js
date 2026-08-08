@@ -117,7 +117,7 @@ export function loginFetchInner(
   body?: LoginRequestBody
 ): Promise<EdgeFetchResponse> {
   const { state, io, log } = ai.props
-  const { apiKey, apiSecret } = state.login
+  const { apiKey, apiSecret, attestationToken } = state.login
 
   const bodyText =
     method === 'GET' || body == null
@@ -138,7 +138,10 @@ export function loginFetchInner(
     headers: {
       'content-type': 'application/json',
       accept: 'application/json',
-      authorization
+      authorization,
+      ...(attestationToken != null
+        ? { 'x-attestation-token': attestationToken }
+        : {})
     },
     corsBypass: 'never'
   }

@@ -22,7 +22,6 @@ import {
   EdgeIo
 } from '../../types/types'
 import { base58 } from '../../util/encoding'
-import { validateServer } from '../../util/validateServer'
 import { LogBackend } from '../log/log'
 import { applyLoginPayload } from '../login/login'
 import { wasLoginStash } from '../login/login-stash'
@@ -31,6 +30,20 @@ import { makeContext } from '../root'
 import { makeRepoPaths, saveChanges } from '../storage/repo'
 import { FakeDb } from './fake-db'
 import { makeFakeServer } from './fake-server'
+
+/**
+ * Account infrastructure hosts that stay on the in-memory fake server when
+ * `allowNetworkAccess` is enabled. Change servers and everything else use
+ * real `io.fetch`.
+ */
+function isFakeAccountInfrastructure(uri: string): boolean {
+  try {
+    const { hostname } = new URL(uri)
+    return /^(login|info|sync)[a-z0-9-]*\.edge(test)?\.app$/i.test(hostname)
+  } catch {
+    return false
+  }
+}
 
 async function saveLogin(io: EdgeIo, user: EdgeFakeUser): Promise<void> {
   const { lastLogin, server } = user
@@ -114,12 +127,10 @@ export function makeFakeWorld(
       const fetch: EdgeFetchFunction = !allowNetworkAccess
         ? fakeFetch
         : (uri, opts) => {
-            try {
-              validateServer(uri) // Throws for non-Edge servers.
-            } catch (error: unknown) {
-              return io.fetch(uri, opts)
+            if (isFakeAccountInfrastructure(uri)) {
+              return fakeFetch(uri, opts)
             }
-            return fakeFetch(uri, opts)
+            return io.fetch(uri, opts)
           }
 
       const fakeIo = {

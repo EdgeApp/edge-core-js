@@ -2172,6 +2172,13 @@ export interface EdgeContext {
   readonly changeLogSettings: (
     settings: Partial<EdgeLogSettings>
   ) => Promise<void>
+
+  /**
+   * Supplies the latest device attestation token for login-server requests.
+   * Pass `undefined` or `''` to clear the header. Only subsequent login-server
+   * requests pick up the new value.
+   */
+  readonly setAttestationToken: (token: string | undefined) => Promise<void>
 }
 
 // ---------------------------------------------------------------------
@@ -2194,8 +2201,8 @@ export interface EdgeFakeContextOptions {
   logSettings?: Partial<EdgeLogSettings>
   plugins?: EdgeCorePluginsInit
 
-  // Allows core plugins to access the real network except for the
-  // login and sync servers, which remain emulated:
+  // Allows core plugins to access the real network except for login, info,
+  // and sync servers, which remain emulated:
   allowNetworkAccess?: boolean
 
   // Fake device options:
