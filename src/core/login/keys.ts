@@ -9,6 +9,7 @@ import {
   EdgeWalletInfoFull,
   EdgeWalletStates
 } from '../../types/types'
+import { compare } from '../../util/compare'
 import { decrypt, decryptText, encrypt } from '../../util/crypto/crypto'
 import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
@@ -106,6 +107,44 @@ export function makeKeysKit(
 }
 
 /**
+ * Attaches shared wallet keyBoxes without creating sync repos.
+ *
+ * Shared wallets reuse an existing syncKey owned by the sharer. Asking the
+ * login server to create those repos fails on servers that strip
+ * `allowExisting` (older edge-core-js cleaners), and is unnecessary even when
+ * `allowExisting` works — the repo is already there.
+ */
+export function makeWalletShareKeysKit(
+  ai: ApiInput,
+  sessionKey: SessionKey,
+  keyInfos: EdgeWalletInfo[]
+): LoginKit {
+  // For crash errors:
+  ai.props.log.breadcrumb('makeWalletShareKeysKit', {})
+
+  const { io } = ai.props
+  const keyBoxes = keyInfos.map(info => ({
+    created: new Date(),
+    ...encrypt(
+      io,
+      utf8.parse(JSON.stringify(wasEdgeWalletInfo(info))),
+      sessionKey.loginKey
+    )
+  }))
+
+  return {
+    loginId: sessionKey.loginId,
+    server: wasCreateKeysPayload({
+      allowExisting: true,
+      keyBoxes,
+      newSyncKeys: []
+    }),
+    serverPath: '/v2/login/keys',
+    stash: { keyBoxes }
+  }
+}
+
+/**
  * Flattens an array of key structures, removing duplicates.
  */
 export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
@@ -128,7 +167,7 @@ export function mergeKeyInfos(keyInfos: EdgeWalletInfo[]): EdgeWalletInfo[] {
         )
       }
       for (const key of Object.keys(keys)) {
-        if (old.keys[key] != null && old.keys[key] !== keys[key]) {
+        if (old.keys[key] != null && !compare(old.keys[key], keys[key])) {
           throw new Error(
             `Key integrity violation for ${id}: ${key} keys do not match`
           )

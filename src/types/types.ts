@@ -1352,6 +1352,8 @@ export interface EdgeCurrencyWallet {
   readonly imported: boolean
   readonly localDisklet: Disklet
   readonly publicWalletInfo: EdgeWalletInfo
+  /** False when this wallet has no spend/sign private key material (view-only). */
+  readonly canSign: boolean
   readonly sync: () => Promise<void>
   readonly type: string
 
@@ -1792,6 +1794,44 @@ export interface EdgeLobby {
   // walletRequest: EdgeWalletRequest | undefined
 }
 
+export type EdgeWalletShareMode = 'view-only' | 'spend'
+
+/** One wallet to share, with the mode chosen for that wallet alone. */
+export interface EdgeWalletShareSpec {
+  walletId: string
+  mode: EdgeWalletShareMode
+}
+
+export interface EdgeWalletShareOptions {
+  /** Lobby timeout in seconds. Defaults to the lobby helper default (10 min). */
+  timeout?: number
+}
+
+/**
+ * A pending wallet-share exchange over the login lobby.
+ *
+ * For `requestWalletShare` / `acceptWalletShare`, `receivedWalletIds` is set
+ * when the share completes. For `offerWalletShare`, it lists the wallets that
+ * were offered once the handshake reply has been sent.
+ */
+export interface EdgePendingWalletShare {
+  readonly watch: Subscriber<EdgePendingWalletShare>
+  readonly id: string
+  /**
+   * QR / paste URI, e.g. `https://deep.edge.app/request-wallets/<id>` or
+   * `https://deep.edge.app/share-wallets/<id>`.
+   */
+  readonly uri: string
+
+  readonly state: 'pending' | 'started' | 'done' | 'error' | 'closed'
+  readonly receivedWalletIds?: string[]
+  /** Each shared wallet with its own mode, once known. */
+  readonly sharedWallets?: EdgeWalletShareSpec[]
+  readonly error?: unknown
+
+  readonly cancelRequest: () => Promise<void>
+}
+
 // storage -------------------------------------------------------------
 
 export interface EdgeDataStore {
@@ -1892,6 +1932,23 @@ export interface EdgeAccount {
 
   // Edge login approval:
   readonly fetchLobby: (lobbyId: string) => Promise<EdgeLobby>
+
+  // Wallet sharing over the login lobby:
+  readonly requestWalletShare: (
+    opts?: EdgeWalletShareOptions
+  ) => Promise<EdgePendingWalletShare>
+  readonly offerWalletShare: (
+    wallets: EdgeWalletShareSpec[],
+    opts?: EdgeWalletShareOptions
+  ) => Promise<EdgePendingWalletShare>
+  readonly approveWalletShare: (
+    lobbyId: string,
+    wallets: EdgeWalletShareSpec[]
+  ) => Promise<void>
+  readonly acceptWalletShare: (
+    lobbyId: string,
+    opts?: EdgeWalletShareOptions
+  ) => Promise<EdgePendingWalletShare>
 
   // Login management:
   readonly deleteRemoteAccount: () => Promise<void>

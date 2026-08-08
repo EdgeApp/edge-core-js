@@ -84,6 +84,37 @@ const fakeMetadata = {
   notes: ''
 }
 
+/** Keys that are safe to share in a view-only wallet. */
+const VIEW_ONLY_KEY_FIELDS = new Set([
+  'syncKey',
+  'dataKey',
+  'imported',
+  'publicKeys',
+  // Injected by fixWalletInfo for legacy UTXO wallet types; not private material.
+  'format',
+  'coinType'
+])
+
+/**
+ * True when the wallet keys include spend/sign material beyond storage keys
+ * and shared public keys.
+ */
+export function walletCanSign(keys: JsonObject): boolean {
+  for (const key of Object.keys(keys)) {
+    if (!VIEW_ONLY_KEY_FIELDS.has(key)) return true
+  }
+  return false
+}
+
+export class ReadOnlyWalletError extends Error {
+  name = 'ReadOnlyWalletError'
+  constructor(
+    message: string = 'Cannot spend or sign with a view-only wallet'
+  ) {
+    super(message)
+  }
+}
+
 // The EdgeTransaction.spendTargets type, but non-null:
 type SavedSpendTargets = EdgeTransaction['spendTargets']
 
@@ -118,7 +149,8 @@ export function makeCurrencyWalletApi(
     for (const name of Object.keys(engine.otherMethodsWithKeys)) {
       const method = engine.otherMethodsWithKeys[name]
       if (typeof method !== 'function') continue
-      otherMethods[name] = (...args) => method(walletInfo.keys, ...args)
+      otherMethods[name] = (...args) =>
+        method(input.props.walletState.walletInfo.keys, ...args)
     }
   }
   bridgifyObject(otherMethods)
@@ -144,6 +176,9 @@ export function makeCurrencyWalletApi(
       return storageWalletApi.localDisklet
     },
     publicWalletInfo,
+    get canSign(): boolean {
+      return walletCanSign(input.props.walletState.walletInfo.keys)
+    },
     async sync(): Promise<void> {
       await storageWalletApi.sync()
     },
@@ -515,8 +550,12 @@ export function makeCurrencyWalletApi(
 
     // Sending:
     async broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
+      const liveKeys = input.props.walletState.walletInfo.keys
+      if (unsafeBroadcastTx && !walletCanSign(liveKeys)) {
+        throw new ReadOnlyWalletError()
+      }
       // Only provide wallet info if currency requires it:
-      const privateKeys = unsafeBroadcastTx ? walletInfo.keys : undefined
+      const privateKeys = unsafeBroadcastTx ? liveKeys : undefined
 
       return await engine.broadcastTx(tx, { privateKeys })
     },
@@ -526,7 +565,7 @@ export function makeCurrencyWalletApi(
         plugin,
         engine,
         input.props.state.accounts[accountId].allTokens[pluginId],
-        walletInfo
+        input.props.walletState.walletInfo
       )
     },
     async getPaymentProtocolInfo(
@@ -597,8 +636,12 @@ export function makeCurrencyWalletApi(
         throw new TypeError('Only sweepPrivateKeys takes private keys')
       }
 
+      const liveKeys = input.props.walletState.walletInfo.keys
+      if (unsafeMakeSpend && !walletCanSign(liveKeys)) {
+        throw new ReadOnlyWalletError()
+      }
       // Only provide wallet info if currency requires it:
-      const privateKeys = unsafeMakeSpend ? walletInfo.keys : undefined
+      const privateKeys = unsafeMakeSpend ? liveKeys : undefined
 
       const tx: EdgeTransaction = await engine.makeSpend(
         {
@@ -681,7 +724,10 @@ export function makeCurrencyWalletApi(
       bytes: Uint8Array,
       opts: EdgeSignMessageOptions = {}
     ): Promise<string> {
-      const privateKeys = walletInfo.keys
+      const privateKeys = input.props.walletState.walletInfo.keys
+      if (!walletCanSign(privateKeys)) {
+        throw new ReadOnlyWalletError()
+      }
 
       if (engine.signBytes != null) {
         return await engine.signBytes(bytes, privateKeys, opts)
@@ -709,11 +755,17 @@ export function makeCurrencyWalletApi(
       if (engine.signMessage == null) {
         throw new Error(`${pluginId} doesn't support signing messages`)
       }
-      const privateKeys = walletInfo.keys
+      const privateKeys = input.props.walletState.walletInfo.keys
+      if (!walletCanSign(privateKeys)) {
+        throw new ReadOnlyWalletError()
+      }
       return await engine.signMessage(message, privateKeys, opts)
     },
     async signTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
-      const privateKeys = walletInfo.keys
+      const privateKeys = input.props.walletState.walletInfo.keys
+      if (!walletCanSign(privateKeys)) {
+        throw new ReadOnlyWalletError()
+      }
 
       return await engine.signTx(tx, privateKeys)
     },

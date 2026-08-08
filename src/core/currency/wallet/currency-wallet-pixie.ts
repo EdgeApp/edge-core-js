@@ -579,6 +579,23 @@ export async function getPublicWalletInfo(
   disklet: Disklet,
   tools: EdgeCurrencyTools
 ): Promise<EdgeWalletInfo> {
+  // View-only shares store already-derived public keys under `publicKeys`.
+  // Use those directly — derivePublicKey typically requires private material
+  // and would otherwise leave us with an empty keys object.
+  const sharedPublicKeys = walletInfo.keys.publicKeys
+  if (
+    sharedPublicKeys != null &&
+    typeof sharedPublicKeys === 'object' &&
+    !Array.isArray(sharedPublicKeys) &&
+    Object.keys(sharedPublicKeys).length > 0
+  ) {
+    return {
+      id: walletInfo.id,
+      type: walletInfo.type,
+      keys: sharedPublicKeys as JsonObject
+    }
+  }
+
   // Try to load the cache:
   const publicKeyCache = await publicKeyFile.load(disklet, PUBLIC_KEY_CACHE)
   if (publicKeyCache != null) {
