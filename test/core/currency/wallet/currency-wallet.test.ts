@@ -733,6 +733,91 @@ describe('currency wallets', function () {
     })
   })
 
+  it('can save a transaction secret reported after the fact', async function () {
+    const log = makeAssertLog()
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    wallet.on('transactionsChanged', txs => {
+      log(
+        'changed',
+        txs.map(tx => `${tx.txid}:${String(tx.txSecret)}`).join(' ')
+      )
+    })
+
+    // The engine has no secret for this transaction yet:
+    await config.changeUserSettings({ txs: { a: { nativeAmount: '25' } } })
+    const txs = await wallet.getTransactions({ tokenId: null })
+    expect(txs.length).equals(1)
+    expect(txs[0].txSecret).equals(undefined)
+
+    // Reporting the secret saves it, even though nothing else changed, and
+    // reports the transaction so listeners do not keep the secret-less one:
+    await config.changeUserSettings({
+      txs: { a: { nativeAmount: '25', txSecret: 'open sesame' } }
+    })
+    await log.waitFor(1).assert('changed a:open sesame')
+    const txs2 = await wallet.getTransactions({ tokenId: null })
+    expect(txs2.length).equals(1)
+    expect(txs2[0].txSecret).equals('open sesame')
+
+    // A secret we already have is never replaced, and reports nothing:
+    await config.changeUserSettings({
+      txs: { a: { nativeAmount: '25', txSecret: 'abracadabra' } }
+    })
+    const txs3 = await wallet.getTransactions({ tokenId: null })
+    expect(txs3.length).equals(1)
+    expect(txs3[0].txSecret).equals('open sesame')
+    log.assert()
+  })
+
+  it('can save a transaction secret onto a file from an earlier session', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const plugins = { 'broken-engine': true, fakecoin: true }
+    const sentTx: EdgeTransaction = {
+      blockHeight: 0,
+      currencyCode: 'FAKE',
+      date: 1,
+      isSend: true,
+      memos: [],
+      nativeAmount: '-50',
+      networkFee: '0',
+      networkFees: [],
+      ourReceiveAddresses: [],
+      signedTx: '',
+      tokenId: null,
+      txid: 'sent',
+      walletId: ''
+    }
+
+    // Session one saves a send, which is what puts a transaction file on disk.
+    // This one has no secret, the way every Monero send did before the engine
+    // started reporting transaction keys:
+    const context = await world.makeEdgeContext({ ...contextOptions, plugins })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const walletInfo = account.getFirstWalletInfo('wallet:fakecoin')
+    if (walletInfo == null) throw new Error('Broken test account')
+    const wallet = await account.waitForCurrencyWallet(walletInfo.id)
+    await wallet.saveTx({ ...sentTx, walletId: wallet.id })
+    await account.logout()
+
+    // Session two knows the file's name but has not read the file, which is
+    // the state a late secret normally arrives in, since transaction files
+    // only load when somebody asks for the transactions:
+    const log = makeAssertLog()
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet2 = await account2.waitForCurrencyWallet(walletInfo.id)
+    wallet2.on('transactionsChanged', txs => {
+      log('changed', txs.map(tx => String(tx.txSecret)).join(' '))
+    })
+    await account2.currencyConfig.fakecoin.changeUserSettings({
+      txs: { sent: { nativeAmount: '-50', txSecret: 'open sesame' } }
+    })
+    await log.waitFor(1).assert('changed open sesame')
+
+    const txs = await wallet2.getTransactions({ tokenId: null })
+    expect(txs.length).equals(1)
+    expect(txs[0].txSecret).equals('open sesame')
+  })
+
   it('can be paused and un-paused', async function () {
     const { wallet, context } = await makeFakeCurrencyWallet(true)
     const isEngineRunning = async (): Promise<boolean> => {

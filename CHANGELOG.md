@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Save a transaction secret an engine reports after the transaction's metadata file already exists. The secret was only ever written when a transaction was first seen, so a key an engine learned later was dropped, and there was no way to restore one for a transaction already on file.
+
 ## 2.47.1 (2026-07-17)
 
 - fixed: Revert `@nymproject/mix-fetch` to v1 (1.4.4), restoring the pinned gateway and network requester. The v2 stack shipped in 2.47.0 fails to complete small HTTPS JSON-RPC requests through most exit nodes and its exit-node auto-discovery rarely converges, which left wallets with NYM privacy enabled unable to sync or send.

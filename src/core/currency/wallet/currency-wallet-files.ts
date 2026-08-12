@@ -492,6 +492,32 @@ export async function loadAddressFiles(
 }
 
 /**
+ * Serializes the read-modify-write cycles over one transaction file.
+ *
+ * Several writers load a transaction file, change one part of it, and save the
+ * whole thing back. Interleaved, the later save writes a copy that predates the
+ * earlier one and silently drops its change, which for a transaction secret
+ * means losing a key that cannot be recovered.
+ */
+const txFileQueues = new Map<string, Promise<unknown>>()
+
+async function withTxFile<T>(
+  walletId: string,
+  fileName: string,
+  task: () => Promise<T>
+): Promise<T> {
+  const key = `${walletId}:${fileName}`
+  const queued = (txFileQueues.get(key) ?? Promise.resolve()).then(task, task)
+  // Keep the queue itself alive when a task rejects, but let the caller see
+  // the rejection:
+  txFileQueues.set(
+    key,
+    queued.catch(() => {})
+  )
+  return await queued
+}
+
+/**
  * Changes a wallet's metadata.
  */
 export async function updateCurrencyWalletTxMetadata(
@@ -525,41 +551,58 @@ export async function updateCurrencyWalletTxMetadata(
     tx.date
   )
 
-  // Get the old file data if it exists:
-  const oldFile = await transactionFile.load(disklet, `transaction/${fileName}`)
+  const newFile = await withTxFile(walletId, fileName, async () => {
+    // Get the old file data if it exists:
+    const oldFile = await transactionFile.load(
+      disklet,
+      `transaction/${fileName}`
+    )
 
-  // Merge with old file
-  const newFile: TransactionFile = {
-    ...oldFile,
-    creationDate,
-    currencies: new Map(oldFile?.currencies ?? []),
-    internal: true,
-    tokens: new Map(oldFile?.tokens ?? []),
-    txid
-  }
+    // Merge with old file
+    const newFile: TransactionFile = {
+      ...oldFile,
+      creationDate,
+      currencies: new Map(oldFile?.currencies ?? []),
+      internal: true,
+      tokens: new Map(oldFile?.tokens ?? []),
+      txid
+    }
 
-  // Migrate the asset data from currencyCode to tokenId:
-  const assetData: TransactionAsset = {
-    metadata: {},
-    ...newFile.currencies.get(currencyCode),
-    ...newFile.tokens.get(tokenId)
-  }
-  newFile.tokens.set(tokenId, assetData)
-  newFile.currencies.delete(currencyCode)
+    // Migrate the asset data from currencyCode to tokenId:
+    const assetData: TransactionAsset = {
+      metadata: {},
+      ...newFile.currencies.get(currencyCode),
+      ...newFile.tokens.get(tokenId)
+    }
+    newFile.tokens.set(tokenId, assetData)
+    newFile.currencies.delete(currencyCode)
 
-  // Make the change:
-  if (metadataChange != null) {
-    assetData.metadata = mergeMetadata(assetData.metadata ?? {}, metadataChange)
-  }
-  if (assetAction != null) assetData.assetAction = assetAction
-  if (savedAction != null) newFile.savedAction = savedAction
+    // Make the change:
+    if (metadataChange != null) {
+      assetData.metadata = mergeMetadata(
+        assetData.metadata ?? {},
+        metadataChange
+      )
+    }
+    if (assetAction != null) assetData.assetAction = assetAction
+    if (savedAction != null) newFile.savedAction = savedAction
 
-  // Save the new file:
-  dispatch({
-    type: 'CURRENCY_WALLET_FILE_CHANGED',
-    payload: { creationDate, fileName, json: newFile, txid, txidHash, walletId }
+    // Save the new file:
+    dispatch({
+      type: 'CURRENCY_WALLET_FILE_CHANGED',
+      payload: {
+        creationDate,
+        fileName,
+        json: newFile,
+        txid,
+        txidHash,
+        walletId
+      }
+    })
+    await transactionFile.save(disklet, 'transaction/' + fileName, newFile)
+    return newFile
   })
-  await transactionFile.save(disklet, 'transaction/' + fileName, newFile)
+
   const callbackTx = combineTxWithFile(input, tx, newFile, tokenId)
   fakeCallbacks.onTransactions([
     // This method is used to update metadata for existing/seen transactions,
@@ -639,6 +682,66 @@ export async function setupNewTxMetadata(
   })
 
   return { fileName, txFile }
+}
+
+/**
+ * Fills in a transaction secret an engine reported after the transaction's
+ * metadata file already existed.
+ *
+ * That file is the only place the core keeps a secret, and it is written once,
+ * when the transaction is first seen. An engine can learn a secret later than
+ * that: a Monero wallet only knows a transaction key once it has built the
+ * transaction, and can report keys for transactions the core saved back when
+ * the engine reported none. Losing the key loses the sender's only proof of
+ * the payment, so save a late one instead of dropping it.
+ *
+ * An existing secret is never replaced. Only the wallet that built a
+ * transaction can produce its secret, so a disagreement means the stored one is
+ * no less trustworthy, and overwriting it would let a re-sync of bad data
+ * destroy a good key.
+ *
+ * Returns the saved file, or `undefined` when there was nothing to save, so the
+ * caller can report the change.
+ */
+export async function saveTxSecret(
+  input: CurrencyWalletInput,
+  txidHash: string,
+  secret: string
+): Promise<TransactionFile | undefined> {
+  const { dispatch, walletId } = input.props
+
+  const fileName = input.props.walletState.fileNames[txidHash]?.fileName
+  if (fileName == null) return
+
+  return await withTxFile(walletId, fileName, async () => {
+    // Transaction files load lazily, so a transaction that has been on disk
+    // since before this session usually has no file in memory. Read it rather
+    // than treating it as absent, which would drop the secret again, and the
+    // transactions this runs for are exactly the old ones nobody has opened.
+    const oldFile =
+      input.props.walletState.files[txidHash] ??
+      (await loadTxFiles(input, [txidHash]))[txidHash]
+    if (oldFile == null || oldFile.secret != null) return
+
+    // Write before reporting the file as changed. The never-replace rule above
+    // reads the in-memory copy, so a failed write that had already updated
+    // memory would make every later report skip this transaction:
+    const txFile: TransactionFile = { ...oldFile, secret }
+    const { creationDate, txid } = txFile
+    await saveTxMetadataFile(input, fileName, txFile)
+    dispatch({
+      type: 'CURRENCY_WALLET_FILE_CHANGED',
+      payload: {
+        creationDate,
+        fileName,
+        json: txFile,
+        txid,
+        txidHash,
+        walletId
+      }
+    })
+    return txFile
+  })
 }
 
 /**

@@ -28,6 +28,7 @@ import { asIntegerString } from './currency-wallet-cleaners'
 import {
   reloadWalletFiles,
   saveSeenTxCheckpointFile,
+  saveTxSecret,
   setupNewTxMetadata
 } from './currency-wallet-files'
 import {
@@ -377,16 +378,37 @@ export function makeCurrencyWalletCallbacks(
       const txidHashes: TxidHashes = {}
       const changed: EdgeTransaction[] = []
       const created: EdgeTransaction[] = []
+      const secretSaves: Array<Promise<EdgeTransaction | undefined>> = []
       for (const txEvent of txEvents) {
         const { isNew, transaction: tx } = txEvent
         const { txid } = tx
+        const txidHash = hashStorageWalletFilename(state, walletId, txid)
+        const reduxTx = mergeTx(tx, reduxTxs[txid])
+
+        // Save a secret the engine only learned after the transaction's file
+        // was written. This runs ahead of the change check below because the
+        // merged transaction carries no secret, so a transaction that gained
+        // one still compares as unchanged, and it reports the saved secret
+        // itself for the same reason: the change check would drop it. Each
+        // save catches its own failure, so one bad write cannot swallow the
+        // reports of the ones that worked:
+        if (tx.txSecret != null) {
+          secretSaves.push(
+            saveTxSecret(input, txidHash, tx.txSecret)
+              .then(txFile =>
+                txFile == null
+                  ? undefined
+                  : combineTxWithFile(input, reduxTx, txFile, tx.tokenId)
+              )
+              .catch(error => {
+                input.props.onError(error)
+                return undefined
+              })
+          )
+        }
 
         // Verify that something has changed:
-        const reduxTx = mergeTx(tx, reduxTxs[txid])
         if (compare(reduxTx, reduxTxs[txid]) && tx.metadata == null) continue
-
-        // Ensure the transaction has metadata:
-        const txidHash = hashStorageWalletFilename(state, walletId, txid)
 
         // Setup the metadata in memory only if we don't have if for the
         // transaction. Transaction metadata share a single file with the core,
@@ -424,6 +446,16 @@ export function makeCurrencyWalletCallbacks(
       })
       if (changed.length > 0) throttledOnTxChanged(changed)
       if (created.length > 0) throttledOnNewTx(created)
+
+      // Report the transactions that gained a secret. These are skipped above,
+      // so without this a listener would hold a transaction with no secret
+      // until something else about it changed:
+      if (secretSaves.length > 0) {
+        Promise.all(secretSaves).then(txs => {
+          const saved = txs.filter((tx): tx is EdgeTransaction => tx != null)
+          if (saved.length > 0) throttledOnTxChanged(saved)
+        }, input.props.onError)
+      }
     },
     onTransactionsChanged(txs: EdgeTransaction[]) {
       out.onTransactions(
