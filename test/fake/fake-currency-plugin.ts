@@ -21,11 +21,96 @@ import {
   EdgeTransaction,
   EdgeTransactionEvent,
   EdgeWalletInfo,
-  InsufficientFundsError
+  InsufficientFundsError,
+  JsonObject
 } from '../../src/index'
 import { upgradeCurrencyCode } from '../../src/types/type-helpers'
 
 const GENESIS_BLOCK = 1231006505
+
+/**
+ * Test configuration for controlling fake plugin behavior.
+ */
+export interface FakePluginTestConfig {
+  /**
+   * If set, `getBuiltinTokens` will wait for this promise to resolve.
+   * The account pixie awaits builtin tokens at the head of its file
+   * loads, so this gate makes "the deferred account loads have not
+   * landed yet" a deterministic state in tests (and blocks a cold
+   * login entirely, exactly as on master).
+   */
+  builtinTokensGate?: Promise<void>
+
+  /**
+   * If set, engine creation will wait for this promise to resolve.
+   * Use `createEngineGate` to make a controllable gate,
+   * so "before the engine exists" is a deterministic state in tests.
+   */
+  engineGate?: Promise<void>
+
+  /**
+   * If set, spread over the engine's `getFreshAddress` answer, so a
+   * test can make a freshly loaded engine disagree with the address
+   * its predecessor cached.
+   */
+  freshAddressPatch?: Partial<EdgeFreshAddress>
+
+  /**
+   * If set, engines are created WITHOUT their `otherMethods`, so
+   * tests can prove that a stale cached method name rejects cleanly.
+   */
+  omitEngineOtherMethods?: boolean
+
+  /**
+   * If set, `checkPublicKey` will wait for this promise to resolve.
+   * The wallet pixie validates its cached public key between the
+   * repo sync and the wallet file loads, so this gate makes "the
+   * wallet's file loads have not landed yet" a deterministic state
+   * on a warm login, while the cache-seeded wallet API stays usable.
+   */
+  publicKeyCheckGate?: Promise<void>
+
+  /**
+   * If set, receives each wallet id as its `makeCurrencyEngine` call
+   * begins (before any gate), so tests can observe creation order.
+   */
+  onEngineCreate?: (walletId: string) => void
+
+  /**
+   * If set, receives each wallet id as its engine is killed, so tests
+   * can prove an engine created after teardown is not left running.
+   */
+  onEngineKill?: (walletId: string) => void
+}
+
+export const fakePluginTestConfig: FakePluginTestConfig = {
+  builtinTokensGate: undefined,
+  engineGate: undefined,
+  freshAddressPatch: undefined,
+  omitEngineOtherMethods: undefined,
+  publicKeyCheckGate: undefined,
+  onEngineCreate: undefined,
+  onEngineKill: undefined
+}
+
+/**
+ * Creates a gate that can halt engine creation.
+ * Call `release` to allow engines to load,
+ * or `fail` to make engine creation reject.
+ */
+export function createEngineGate(): {
+  gate: Promise<void>
+  release: () => void
+  fail: (error: Error) => void
+} {
+  let release: () => void = () => {}
+  let fail: (error: Error) => void = () => {}
+  const gate = new Promise<void>((resolve, reject) => {
+    release = resolve
+    fail = reject
+  })
+  return { gate, release, fail }
+}
 
 const fakeTokens: EdgeTokenMap = {
   badf00d5: {
@@ -89,6 +174,18 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private readonly state: State
   private allTokens: EdgeTokenMap = fakeTokens
   private readonly currencyInfo: EdgeCurrencyInfo
+
+  // Exercises the wallet's pre-engine `otherMethods` guarantee in tests.
+  // `omitEngineOtherMethods` simulates an engine that dropped a method
+  // some cache still names:
+  readonly otherMethods =
+    fakePluginTestConfig.omitEngineOtherMethods === true
+      ? undefined
+      : {
+          async testMethod(arg: string): Promise<string> {
+            return `testMethod called with: ${arg}`
+          }
+        }
 
   constructor(
     walletInfo: EdgeWalletInfo,
@@ -201,6 +298,9 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
 
   async killEngine(): Promise<void> {
     this.running = false
+    if (fakePluginTestConfig.onEngineKill != null) {
+      fakePluginTestConfig.onEngineKill(this.walletId)
+    }
   }
 
   resyncBlockchain(): Promise<void> {
@@ -223,7 +323,7 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   getBalance(opts: EdgeTokenIdOptions): string {
     const { tokenId = null } = opts
     if (tokenId == null) return this.state.balance.toString()
-    if (tokenId === 'badf00d5') this.state.tokenBalance.toString()
+    if (tokenId === 'badf00d5') return this.state.tokenBalance.toString()
     if (this.allTokens[tokenId] != null) return '0'
     throw new Error('Unknown currency')
   }
@@ -265,7 +365,8 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
       publicAddress: 'fakeaddress',
       nativeBalance: this.state.balance.toString(),
       segwitAddress: 'fakesegwit',
-      legacyAddress: 'fakelegacy'
+      legacyAddress: 'fakelegacy',
+      ...fakePluginTestConfig.freshAddressPatch
     }
   }
 
@@ -349,6 +450,13 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
     return Promise.resolve({ fakeKey: 'FakePrivateKey' })
   }
 
+  async checkPublicKey(publicKey: JsonObject): Promise<boolean> {
+    if (fakePluginTestConfig.publicKeyCheckGate != null) {
+      await fakePluginTestConfig.publicKeyCheckGate
+    }
+    return true
+  }
+
   async derivePublicKey(privateWalletInfo: EdgeWalletInfo): Promise<object> {
     return { fakeAddress: 'FakePublicAddress' }
   }
@@ -392,19 +500,35 @@ export function makeFakeCurrencyPlugin(
   const currencyInfo: EdgeCurrencyInfo = { ...fakeCurrencyInfo, ...overrides }
 
   return {
-    currencyInfo,
-
-    getBuiltinTokens(): Promise<EdgeTokenMap> {
-      return Promise.resolve(fakeTokens)
+    get currencyInfo(): EdgeCurrencyInfo {
+      return currencyInfo
     },
 
-    makeCurrencyEngine(
+    // Exercises the config-level otherMethods name cache in tests:
+    otherMethods: {
+      async fakePluginMethod(arg: string): Promise<string> {
+        return `fakePluginMethod called with: ${arg}`
+      }
+    },
+
+    async getBuiltinTokens(): Promise<EdgeTokenMap> {
+      if (fakePluginTestConfig.builtinTokensGate != null) {
+        await fakePluginTestConfig.builtinTokensGate
+      }
+      return fakeTokens
+    },
+
+    async makeCurrencyEngine(
       walletInfo: EdgeWalletInfo,
       opts: EdgeCurrencyEngineOptions
     ): Promise<EdgeCurrencyEngine> {
-      return Promise.resolve(
-        new FakeCurrencyEngine(walletInfo, opts, currencyInfo)
-      )
+      if (fakePluginTestConfig.onEngineCreate != null) {
+        fakePluginTestConfig.onEngineCreate(walletInfo.id)
+      }
+      if (fakePluginTestConfig.engineGate != null) {
+        await fakePluginTestConfig.engineGate
+      }
+      return new FakeCurrencyEngine(walletInfo, opts, currencyInfo)
     },
 
     makeCurrencyTools(): Promise<EdgeCurrencyTools> {
