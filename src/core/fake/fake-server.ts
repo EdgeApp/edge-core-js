@@ -789,7 +789,10 @@ const urls: Serverlet<DbRequest> = pickPath(
     }),
 
     // Sync server endpoints:
-    '/api/v2/store/[^/]+/?': pickMethod({
+    // The trailing hash segment is "changes since this point", which
+    // we ignore: reads return the whole repo, which the client treats
+    // as a superset of the changes it asked for:
+    '/api/v2/store/[^/]+(/[^/]+)?/?': pickMethod({
       GET: storeReadRoute,
       POST: storeUpdateRoute
     }),
