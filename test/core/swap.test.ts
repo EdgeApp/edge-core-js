@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { sortQuotes } from '../../src/core/swap/swap-api'
+import { isSwapPluginQueryable, sortQuotes } from '../../src/core/swap/swap-api'
 import { EdgeSwapInfo, EdgeSwapQuote, EdgeSwapRequest } from '../../src/index'
 
 const typeHack: any = {}
@@ -108,4 +108,36 @@ describe('swap', function () {
     })
     expect(getIds(sorted)).equals('switchain, changenow, godex, thorchain')
   })
+})
+
+describe('swap plugin selection', function () {
+  // The whole truth table, because the interesting cases are the corners: a
+  // caller must be able to reach a provider the user switched off, and must
+  // never be able to reach one it disabled itself in the same call.
+  const cases: Array<{
+    enabled: boolean
+    forceEnabled: boolean
+    disabled: boolean
+    queryable: boolean
+  }> = [
+    { enabled: true, forceEnabled: false, disabled: false, queryable: true },
+    { enabled: true, forceEnabled: true, disabled: false, queryable: true },
+    { enabled: false, forceEnabled: false, disabled: false, queryable: false },
+    // The send scene's stealth path: Houdini powers the feature, so the swap
+    // setting does not get to switch the feature off.
+    { enabled: false, forceEnabled: true, disabled: false, queryable: true },
+    { enabled: true, forceEnabled: false, disabled: true, queryable: false },
+    // `disabled` beats `forceEnabled`. Stealth sends disable every other
+    // plugin and force-enable Houdini in the same call, so a bug here would
+    // let the aggregator answer a request that demanded one provider.
+    { enabled: true, forceEnabled: true, disabled: true, queryable: false },
+    { enabled: false, forceEnabled: false, disabled: true, queryable: false },
+    { enabled: false, forceEnabled: true, disabled: true, queryable: false }
+  ]
+
+  for (const { queryable, ...flags } of cases) {
+    it(`${JSON.stringify(flags)} -> ${String(queryable)}`, function () {
+      expect(isSwapPluginQueryable(flags)).equals(queryable)
+    })
+  }
 })

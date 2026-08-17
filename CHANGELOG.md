@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- added: `EdgeSwapRequest.toAddressInfo`, for swaps that pay out to an address instead of a wallet
+- added: `EdgeSwapToAddressInfo.toMemos` for memo-required payout chains
+- added: `EdgeTxActionSwap.swapType`, naming the send-shaped swap flows
+- added: `EdgeSwapRequest.privacy`, restricting quotes to routes that keep the sender unlinkable
+- added: `EdgeSwapRequestOptions.forceEnabled`, for querying plugins the user switched off
+- changed: `payoutWalletId` is optional on `EdgeTxActionSwap` and `EdgeTxSwap`
+
 ## 2.48.1 (2026-08-31)
 
 - fixed: Stop rebuilding the NYM mixFetch client on every request while its gateway is failing. Each attempt spawns a web worker holding megabytes of WASM that the library gives no way to terminate, so a poll loop retrying every few seconds exhausted the host's memory and killed the JS context, which on iOS reads to the user as being logged out. A failed setup now starts a cooldown that doubles up to five minutes.

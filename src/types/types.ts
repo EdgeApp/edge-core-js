@@ -1603,6 +1603,15 @@ export interface EdgeSwapRequest {
   // How much?
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
+
+  /**
+   * Route privacy requirement. `'required'` means the quote must come from a
+   * route that keeps the sender unlinkable to the recipient. A plugin that
+   * cannot offer one must decline the request rather than answer with a
+   * transparent route, since a caller asking for privacy would otherwise get
+   * a downgrade it has no way to detect. Omitted means any route will do.
+   */
+  privacy?: 'required'
 }
 
 /**
@@ -1827,6 +1836,15 @@ export interface EdgeSwapRequestOptions {
   preferType?: EdgeSwapPluginType
   disabled?: EdgePluginMap<true>
   promoCodes?: EdgePluginMap<string>
+
+  /**
+   * Plugins to query even when the user has switched them off in their swap
+   * settings. For a feature that is powered by one specific provider rather
+   * than by the swap aggregator, the provider toggle is not the user's answer
+   * about that feature, so the caller can opt out of it for a single request.
+   * `disabled` still wins: an explicitly disabled plugin stays disabled.
+   */
+  forceEnabled?: EdgePluginMap<true>
 
   /**
    * If we have some quotes already, how long should we wait
