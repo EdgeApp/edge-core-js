@@ -32,6 +32,7 @@ export async function fetchSwapQuotes(
 ): Promise<EdgeSwapQuote[]> {
   const {
     disabled = {},
+    forceEnabled = {},
     noResponseMs,
     preferPluginId,
     promoCodes = {},
@@ -89,7 +90,15 @@ export async function fetchSwapQuotes(
   for (const pluginId of Object.keys(swapPlugins)) {
     const { enabled = true } =
       swapSettings[pluginId] != null ? swapSettings[pluginId] : {}
-    if (!enabled || disabled[pluginId]) continue
+    if (
+      !isSwapPluginQueryable({
+        enabled,
+        forceEnabled: forceEnabled[pluginId],
+        disabled: disabled[pluginId]
+      })
+    ) {
+      continue
+    }
 
     // Start request:
     pendingIds.add(pluginId)
@@ -176,6 +185,30 @@ export async function fetchSwapQuotes(
 
   if (noResponseMs == null) return await promise
   return await timeout(promise, noResponseMs)
+}
+
+/**
+ * Whether one swap plugin should be queried for a request.
+ *
+ * `forceEnabled` reaches a plugin the user switched off in their swap settings,
+ * for a caller whose feature is powered by that one named provider: the setting
+ * answers which providers the aggregator may choose among, not whether a
+ * feature built on a specific provider may work at all. An explicit `disabled`
+ * entry from the same call always wins, since that is the caller narrowing its
+ * own request rather than the user stating a preference.
+ */
+export function isSwapPluginQueryable(opts: {
+  enabled: boolean
+  /**
+   * Optional because both flags are read out of an `EdgePluginMap`, where an
+   * absent plugin reads as `undefined` rather than `false`.
+   */
+  forceEnabled?: boolean
+  disabled?: boolean
+}): boolean {
+  const { enabled, forceEnabled = false, disabled = false } = opts
+  if (disabled) return false
+  return enabled || forceEnabled
 }
 
 /**

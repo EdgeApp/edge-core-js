@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- added: Accept an optional `toAddressInfo` descriptor on `EdgeSwapRequest` as an alternative to `toWallet`, so a swap can target a pasted destination address. The core builds a synthetic, bridgified destination wallet from the descriptor, backed by the real `currencyConfig`, leaving swap plugins unchanged. Exactly one of `toWallet` or `toAddressInfo` is required.
+- added: Optional `toMemos` on `EdgeSwapToAddressInfo` for memo-required payout chains (e.g. an XRP destination tag). Swap plugins read the memos off the synthetic destination wallet's `getMemos` method (`EdgeSyntheticDestinationWallet`), never off the descriptor.
+- added: Optional `swapType` on `EdgeTxActionSwap` (`EdgeTxActionSwapType`: `swapSend`, `stealthSend`, `stealthSwapSend`), naming the send-shaped swap flows so a UI can title a transaction by the flow the user ran instead of inferring it. Absent for a normal wallet-to-wallet swap.
+- added: Optional `privacy` on `EdgeSwapRequest`. `'required'` restricts the quote to routes that keep the sender unlinkable to the recipient; a plugin that cannot offer one must decline rather than answer with a transparent route.
+- added: Optional `forceEnabled` on `EdgeSwapRequestOptions`, letting a caller query named plugins that the user switched off in their swap settings. An explicit `disabled` entry still wins.
+- changed: Make `EdgeTxActionSwap.payoutWalletId` and `EdgeTxSwap.payoutWalletId` optional, since a swap-to-address destination has no payout wallet (`payoutAddress` carries the destination).
+
 ## 2.48.0 (2026-08-20)
 
 - added: `EdgeContext.setAttestationToken` to attach an `x-attestation-token` header on login-server requests.
