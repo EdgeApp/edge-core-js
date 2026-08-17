@@ -274,6 +274,22 @@ export interface EdgeFiatAmount {
   fiatAmount: string
 }
 
+/**
+ * How a swap was initiated, when it was not a plain swap between two of the
+ * user's own wallets. These flows all settle through a swap provider and keep
+ * every other field of `EdgeTxActionSwap`, so they stay swaps to existing
+ * consumers; what differs is how the user reached them and, for the private
+ * flavors, how much of the destination a UI may reveal.
+ *
+ * - `swapSend`: cross-asset send to an address the user entered.
+ * - `stealthSend`: same-asset send routed privately through the provider.
+ * - `stealthSwapSend`: cross-asset send routed privately.
+ */
+export type EdgeTxActionSwapType =
+  | 'swapSend'
+  | 'stealthSend'
+  | 'stealthSwapSend'
+
 export interface EdgeTxActionSwap {
   actionType: 'swap'
   swapInfo: EdgeSwapInfo
@@ -284,6 +300,13 @@ export interface EdgeTxActionSwap {
   fromAsset: EdgeAssetAmount
   toAsset: EdgeAssetAmount
   payoutAddress: string
+
+  /**
+   * Names a send-shaped swap flow. Absent for a normal wallet-to-wallet swap.
+   * A UI keyed on this can title the transaction for the flow the user
+   * actually ran, instead of inferring it from the presence of other fields.
+   */
+  swapType?: EdgeTxActionSwapType
 
   /**
    * The wallet that received the payout, for a normal wallet-to-wallet swap.
