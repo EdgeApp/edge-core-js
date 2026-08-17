@@ -284,9 +284,29 @@ export interface EdgeTxActionSwap {
   fromAsset: EdgeAssetAmount
   toAsset: EdgeAssetAmount
   payoutAddress: string
-
   payoutWalletId: string
   refundAddress?: string
+}
+
+/**
+ * A send that settled through a swap provider: the payout went to an address
+ * the user entered, not to one of their own wallets.
+ */
+export interface EdgeTxActionSwapSend {
+  actionType: 'swapSend'
+  swapInfo: EdgeSwapInfo
+  orderId?: string
+  orderUri?: string
+  isEstimate: boolean
+  fromAsset: EdgeAssetAmount
+  toAsset: EdgeAssetAmount
+
+  /** The recipient. */
+  payoutAddress: string
+  refundAddress?: string
+
+  /** Routed privately (a Stealth send). */
+  privacy: boolean
 }
 
 export interface EdgeTxActionStake {
@@ -349,6 +369,7 @@ export interface EdgeTxActionGiftCard {
 
 export type EdgeTxAction =
   | EdgeTxActionSwap
+  | EdgeTxActionSwapSend
   | EdgeTxActionStake
   | EdgeTxActionFiat
   | EdgeTxActionTokenApproval
