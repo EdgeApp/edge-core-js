@@ -192,7 +192,8 @@ export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
   toAsset: asEdgeAssetAmount,
   payoutWalletId: asOptional(asString),
   payoutAddress: asString,
-  refundAddress: asOptional(asString)
+  refundAddress: asOptional(asString),
+  swapType: asOptional(asValue('swapSend', 'stealthSend', 'stealthSwapSend'))
 })
 
 export const asEdgeTxActionStake = asObject<EdgeTxActionStake>({
