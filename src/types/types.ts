@@ -284,6 +284,7 @@ export interface EdgeTxActionSwap {
   fromAsset: EdgeAssetAmount
   toAsset: EdgeAssetAmount
   payoutAddress: string
+
   payoutWalletId: string
   refundAddress?: string
 }
@@ -1507,10 +1508,23 @@ export interface EdgeSwapInfo {
   readonly supportEmail: string
 }
 
-export interface EdgeSwapRequest {
+/**
+ * The extra surface a core-built synthetic destination wallet exposes on top
+ * of the `EdgeCurrencyWallet` members swap plugins normally read. Real
+ * wallets do not implement `getMemos`; plugins that support destination
+ * memos should detect it at runtime, such as:
+ * `const { getMemos } = toWallet as Partial<EdgeSyntheticDestinationWallet>`
+ */
+export interface EdgeSyntheticDestinationWallet extends EdgeCurrencyWallet {
+  readonly getMemos: () => Promise<EdgeMemo[]>
+}
+
+/**
+ * The fields every swap request shares, whatever its destination.
+ */
+export interface EdgeSwapRequestBase {
   // Where?
   fromWallet: EdgeCurrencyWallet
-  toWallet: EdgeCurrencyWallet
 
   // What?
   fromTokenId: EdgeTokenId
@@ -1519,6 +1533,32 @@ export interface EdgeSwapRequest {
   // How much?
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
+}
+
+/**
+ * A swap between two wallets. This is also the resolved shape swap plugins
+ * receive: for an `EdgeSwapSendRequest`, `toWallet` is a synthetic destination
+ * wallet the core builds from the destination address.
+ */
+export interface EdgeSwapRequest extends EdgeSwapRequestBase {
+  toWallet: EdgeCurrencyWallet
+}
+
+/**
+ * A swap that pays out to an address rather than one of the user's wallets.
+ */
+export interface EdgeSwapSendRequest extends EdgeSwapRequestBase {
+  toPluginId: string
+
+  /** The destination addresses. The first entry is the payout address. */
+  toAddresses: EdgeAddress[]
+
+  /**
+   * Destination memos (e.g. an XRP destination tag) for memo-required payout
+   * chains. Swap plugins read them off the synthetic destination wallet's
+   * `getMemos` (see `EdgeSyntheticDestinationWallet`).
+   */
+  toMemos?: EdgeMemo[]
 }
 
 /**
@@ -1927,11 +1967,11 @@ export interface EdgeAccount {
 
   // Swapping:
   readonly fetchSwapQuote: (
-    request: EdgeSwapRequest,
+    request: EdgeSwapRequest | EdgeSwapSendRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote>
   readonly fetchSwapQuotes: (
-    request: EdgeSwapRequest,
+    request: EdgeSwapRequest | EdgeSwapSendRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote[]>
 

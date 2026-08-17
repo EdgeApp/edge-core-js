@@ -25,6 +25,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapRequestOptions,
+  EdgeSwapSendRequest,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
   EdgeWalletStates
@@ -854,7 +855,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     // ----------------------------------------------------------------
 
     async fetchSwapQuote(
-      request: EdgeSwapRequest,
+      request: EdgeSwapRequest | EdgeSwapSendRequest,
       opts?: EdgeSwapRequestOptions
     ): Promise<EdgeSwapQuote> {
       const [bestQuote, ...otherQuotes] = await fetchSwapQuotes(
@@ -875,7 +876,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     async fetchSwapQuotes(
-      request: EdgeSwapRequest,
+      request: EdgeSwapRequest | EdgeSwapSendRequest,
       opts?: EdgeSwapRequestOptions
     ): Promise<EdgeSwapQuote[]> {
       return await fetchSwapQuotes(ai, accountId, request, opts)
