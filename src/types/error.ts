@@ -309,9 +309,13 @@ export class SwapCurrencyError extends Error {
   readonly toTokenId: EdgeTokenId
 
   constructor(swapInfo: EdgeSwapInfo, request: EdgeSwapRequest) {
-    const { fromWallet, toWallet, fromTokenId, toTokenId } = request
+    const { fromWallet, toWallet, toAddressInfo, fromTokenId, toTokenId } =
+      request
     const fromPluginId = fromWallet.currencyConfig.currencyInfo.pluginId
-    const toPluginId = toWallet.currencyConfig.currencyInfo.pluginId
+    const toPluginId =
+      toWallet?.currencyConfig.currencyInfo.pluginId ??
+      toAddressInfo?.toPluginId ??
+      ''
 
     const fromString = `${fromPluginId}:${String(fromTokenId)}`
     const toString = `${toPluginId}:${String(toTokenId)}`
