@@ -14,10 +14,12 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeSwapRequestOptions
+  EdgeSwapRequestOptions,
+  EdgeSwapSendRequest
 } from '../../types/types'
 import { fuzzyTimeout, timeout } from '../../util/promise'
 import { ApiInput } from '../root-pixie'
+import { makeSyntheticDestinationWallet } from './synthetic-wallet'
 
 /**
  * Fetch quotes from all plugins, and sorts the best ones to the front.
@@ -25,7 +27,7 @@ import { ApiInput } from '../root-pixie'
 export async function fetchSwapQuotes(
   ai: ApiInput,
   accountId: string,
-  request: EdgeSwapRequest,
+  request: EdgeSwapRequest | EdgeSwapSendRequest,
   opts: EdgeSwapRequestOptions = {}
 ): Promise<EdgeSwapQuote[]> {
   const {
@@ -41,12 +43,36 @@ export async function fetchSwapQuotes(
   const { swapSettings, userSettings } = account
   const swapPlugins = state.plugins.swap
 
+  // Resolve the destination. A normal swap provides `toWallet`; a send
+  // request provides a destination address instead, and the core builds a
+  // synthetic destination wallet from it so plugins receive an
+  // `EdgeCurrencyWallet` unchanged.
+  const swapRequest = resolveSwapRequest(ai, accountId, request)
+
+  // A send request builds ONE synthetic destination wallet, shared
+  // by every quote this call produces. It is bridgified, so yaob keeps it in
+  // the account's object table until something closes it, and the caller
+  // reaches it through `quote.request.toWallet`. Release it once the LAST
+  // quote carrying it has been closed, and right away when no quote survives
+  // to carry it: without that, every quote refresh on a send screen
+  // leaves another wallet in the table for the life of the account. (The same
+  // reasoning is why `resolveSwapRequest` reuses the account's long-lived
+  // `currencyConfig` rather than building one per request.)
+  const syntheticToWallet =
+    'toWallet' in request ? undefined : swapRequest.toWallet
+  let openQuoteCount = 0
+  const releaseSyntheticToWallet = (): void => {
+    if (syntheticToWallet == null) return
+    if (--openQuoteCount > 0) return
+    close(syntheticToWallet)
+  }
+
   log.warn(
     'Requesting swap quotes for: ',
     {
-      ...request,
-      fromWallet: request.fromWallet.id,
-      toWallet: request.toWallet.id
+      ...swapRequest,
+      fromWallet: swapRequest.fromWallet.id,
+      toWallet: swapRequest.toWallet.id
     },
     { preferPluginId, promoCodes }
   )
@@ -63,7 +89,7 @@ export async function fetchSwapQuotes(
     pendingIds.add(pluginId)
     promises.push(
       swapPlugins[pluginId]
-        .fetchSwapQuote(request, userSettings[pluginId], {
+        .fetchSwapQuote(swapRequest, userSettings[pluginId], {
           infoPayload: state.infoCache.corePlugins?.[pluginId] ?? {},
           promoCode: promoCodes[pluginId]
         })
@@ -86,12 +112,12 @@ export async function fetchSwapQuotes(
                 swapPluginId: pluginId,
                 request: {
                   // Stringify to include "null"
-                  fromToken: String(request.fromTokenId),
-                  fromWalletType: request.fromWallet.type,
+                  fromToken: String(swapRequest.fromTokenId),
+                  fromWalletType: swapRequest.fromWallet.type,
                   // Stringify to include "null"
-                  toToken: String(request.toTokenId),
-                  toWalletType: request.toWallet.type,
-                  quoteFor: request.quoteFor
+                  toToken: String(swapRequest.toTokenId),
+                  toWalletType: swapRequest.toWallet.type,
+                  quoteFor: swapRequest.quoteFor
                 }
               })
             }
@@ -117,10 +143,17 @@ export async function fetchSwapQuotes(
       )
 
       // Prepare quotes for the bridge:
-      return quotes.map(quote => wrapQuote(swapPlugins, request, quote))
+      openQuoteCount = quotes.length
+      if (syntheticToWallet != null && quotes.length === 0) {
+        close(syntheticToWallet)
+      }
+      return quotes.map(quote =>
+        wrapQuote(swapPlugins, swapRequest, quote, releaseSyntheticToWallet)
+      )
     },
     (errors: unknown[]) => {
       log.warn(`All ${promises.length} swap quotes rejected.`)
+      if (syntheticToWallet != null) close(syntheticToWallet)
       throw pickBestError(errors)
     }
   )
@@ -129,11 +162,72 @@ export async function fetchSwapQuotes(
   return await timeout(promise, noResponseMs)
 }
 
-function wrapQuote(
+/**
+ * Resolves a swap request to the shape swap plugins take, which always carries
+ * a `toWallet`. A send request's destination address becomes a synthetic
+ * destination wallet, built core-side.
+ */
+function resolveSwapRequest(
+  ai: ApiInput,
+  accountId: string,
+  request: EdgeSwapRequest | EdgeSwapSendRequest
+): EdgeSwapRequest {
+  if ('toWallet' in request) {
+    if ('toAddresses' in request) {
+      throw new Error('Swap request cannot have both toWallet and toAddresses')
+    }
+    return request
+  }
+
+  const { toPluginId, toAddresses, toMemos, ...base } = request
+  const { toTokenId } = base
+  if (ai.props.state.plugins.currency[toPluginId] == null) {
+    throw new Error(
+      `Cannot build swap destination: no currency plugin "${toPluginId}"`
+    )
+  }
+  if (toAddresses.length === 0) {
+    throw new Error('Cannot build swap destination: no address')
+  }
+  // The account's own long-lived config, not a fresh one. A per-request
+  // `new CurrencyConfig` would be bridgified into the synthetic wallet and ride
+  // back to the caller inside `quote.request.toWallet`, and nothing closes it,
+  // so every send quote would add a duplicate entry to yaob's object table
+  // for the lifetime of the account.
+  const { accountApi } = ai.props.output.accounts[accountId]
+  const currencyConfig = accountApi.currencyConfig[toPluginId]
+  if (toTokenId != null && currencyConfig.allTokens[toTokenId] == null) {
+    throw new Error(
+      `Cannot build swap destination: no token "${toTokenId}" on plugin "${toPluginId}"`
+    )
+  }
+
+  return {
+    ...base,
+    toWallet: makeSyntheticDestinationWallet(
+      currencyConfig,
+      toAddresses,
+      toMemos
+    )
+  }
+}
+
+/**
+ * Wraps a plugin's quote in a bridgeable object the caller can hold.
+ *
+ * `onClose` fires exactly once per wrapper, however many times the caller
+ * calls `close`, so a caller that double-closes cannot release a shared
+ * resource (the synthetic destination wallet) early. Exported for testing.
+ */
+export function wrapQuote(
   swapPlugins: EdgePluginMap<EdgeSwapPlugin>,
   request: EdgeSwapRequest,
-  quote: EdgeSwapQuote
+  quote: EdgeSwapQuote,
+  onClose: () => void = () => {}
 ): EdgeSwapQuote {
+  // A caller may close the same quote twice. `onClose` releases a shared
+  // resource by reference count, so it must fire exactly once per wrapper.
+  let closed = false
   const out = bridgifyObject<EdgeSwapQuote>({
     canBePartial: quote.canBePartial,
     expirationDate: quote.expirationDate,
@@ -152,7 +246,16 @@ function wrapQuote(
     },
 
     async close() {
-      await quote.close()
+      // The release runs even when the plugin's own close throws, so a failed
+      // close cannot hold the shared destination open.
+      try {
+        await quote.close()
+      } finally {
+        if (!closed) {
+          closed = true
+          onClose()
+        }
+      }
       close(out)
     }
   })
