@@ -177,9 +177,12 @@ export async function setCurrencyWalletFiat(
  * Loads the wallet fiat currency file.
  */
 export async function loadFiatFile(input: CurrencyWalletInput): Promise<void> {
-  const { dispatch, state, walletId } = input.props
+  const { dispatch, state, walletId, walletState } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
+  // Taken before the read, so the reducer can tell whether a user
+  // change wrote the file after this load had already read it:
+  const loadGen = walletState.fiatGen
   const clean = await walletFiatFile.load(disklet, CURRENCY_FILE)
   let fiatCurrencyCode = 'iso:USD'
   if (clean != null) {
@@ -193,7 +196,7 @@ export async function loadFiatFile(input: CurrencyWalletInput): Promise<void> {
 
   dispatch({
     type: 'CURRENCY_WALLET_FIAT_CHANGED',
-    payload: { fiatCurrencyCode, walletId }
+    payload: { fiatCurrencyCode, loadGen, walletId }
   })
 }
 
@@ -201,9 +204,12 @@ export async function loadFiatFile(input: CurrencyWalletInput): Promise<void> {
  * Loads the wallet name file.
  */
 export async function loadNameFile(input: CurrencyWalletInput): Promise<void> {
-  const { dispatch, state, walletId } = input.props
+  const { dispatch, state, walletId, walletState } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
+  // Taken before the read, so the reducer can tell whether a rename
+  // wrote the file after this load had already read it:
+  const loadGen = walletState.nameGen
   const clean = await walletNameFile.load(disklet, WALLET_NAME_FILE)
   let name: string | null = null
   if (clean == null || clean.walletName == null) {
@@ -223,6 +229,7 @@ export async function loadNameFile(input: CurrencyWalletInput): Promise<void> {
     type: 'CURRENCY_WALLET_NAME_CHANGED',
     payload: {
       name: typeof name === 'string' ? name : null,
+      loadGen,
       walletId
     }
   })
@@ -275,7 +282,9 @@ export async function loadTokensFile(
     return
   }
 
-  // Both the new and old files are missing:
+  // Both the new and old files are missing or unreadable, so the disk
+  // has no list to offer. Leave the enabled list as it is, since it may
+  // hold the cache-seeded tokens:
   const shortId = walletId.slice(0, 2)
   input.props.log.warn(`enabledTokenIds: ${shortId} loaded neither file`)
   dispatch({
@@ -283,7 +292,7 @@ export async function loadTokensFile(
     payload: {
       walletId: input.props.walletId,
       detectedTokenIds: [],
-      enabledTokenIds: []
+      enabledTokenIds: undefined
     }
   })
 }
@@ -294,13 +303,17 @@ export async function loadTokensFile(
 export async function loadWalletSettingsFile(
   input: CurrencyWalletInput
 ): Promise<void> {
-  const { dispatch, state, walletId } = input.props
+  const { dispatch, state, walletId, walletState } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
 
+  // Taken before the read, so the reducer can tell whether a user
+  // change wrote the file after this load had already read it:
+  const loadGen = walletState.walletSettingsGen
   const clean = await walletSettingsFile.load(disklet, WALLET_SETTINGS_FILE)
   dispatch({
     type: 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE',
     payload: {
+      loadGen,
       walletId,
       walletSettings: clean?.walletSettings ?? {}
     }
