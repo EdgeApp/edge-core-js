@@ -193,7 +193,7 @@ export async function loadFiatFile(input: CurrencyWalletInput): Promise<void> {
 
   dispatch({
     type: 'CURRENCY_WALLET_FIAT_CHANGED',
-    payload: { fiatCurrencyCode, walletId }
+    payload: { fiatCurrencyCode, fromFile: true, walletId }
   })
 }
 
@@ -223,6 +223,7 @@ export async function loadNameFile(input: CurrencyWalletInput): Promise<void> {
     type: 'CURRENCY_WALLET_NAME_CHANGED',
     payload: {
       name: typeof name === 'string' ? name : null,
+      fromFile: true,
       walletId
     }
   })
