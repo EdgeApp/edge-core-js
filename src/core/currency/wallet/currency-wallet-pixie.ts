@@ -17,7 +17,6 @@ import {
   EdgeWalletInfo,
   JsonObject
 } from '../../../types/types'
-import { makeJsonFile } from '../../../util/file-helpers'
 import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
 import { snooze } from '../../../util/snooze'
 import { makeTokenInfo } from '../../account/custom-tokens'
@@ -38,7 +37,7 @@ import {
   makeCurrencyWalletCallbacks,
   watchCurrencyWallet
 } from './currency-wallet-callbacks'
-import { asIntegerString, asPublicKeyFile } from './currency-wallet-cleaners'
+import { asIntegerString } from './currency-wallet-cleaners'
 import {
   loadAddressFiles,
   loadFiatFile,
@@ -55,6 +54,13 @@ import {
   initialWalletSettings
 } from './currency-wallet-reducer'
 import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
+import { getEngineScheduler } from './engine-scheduler'
+import {
+  loadWalletCacheSeed,
+  PUBLIC_KEY_CACHE,
+  publicKeyFile,
+  walletCacheLoaderHooks
+} from './wallet-cache-loader'
 
 export interface CurrencyWalletOutput {
   readonly walletApi: EdgeCurrencyWallet | undefined
@@ -70,151 +76,242 @@ export type CurrencyWalletProps = RootProps & {
 
 export type CurrencyWalletInput = PixieInput<CurrencyWalletProps>
 
-const PUBLIC_KEY_CACHE = 'publicKey.json'
-const publicKeyFile = makeJsonFile(asPublicKeyFile)
-
 export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
   // Creates the engine for this wallet:
-  engine: (input: CurrencyWalletInput) => async () => {
-    const { state, walletId, walletState } = input.props
-    const { accountId, pluginId, walletInfo } = walletState
-    const plugin = state.plugins.currency[pluginId]
-    const { currencyCode } = plugin.currencyInfo
+  engine(input: CurrencyWalletInput) {
+    // Set when the wallet is deleted or the user logs out, so startup
+    // work still waiting in the scheduler queue knows to give up
+    // (`input.props` goes stale at destroy, so it cannot tell us):
+    let destroyed = false
 
-    try {
-      // Start the data sync:
-      const ai = toApiInput(input)
-      await addStorageWallet(ai, walletInfo)
+    async function update(): Promise<unknown> {
+      const { state, walletId, walletState } = input.props
+      const { accountId, pluginId, walletInfo } = walletState
+      const plugin = state.plugins.currency[pluginId]
+      const { currencyCode } = plugin.currencyInfo
 
-      // Grab the freshly-synced repos:
-      const { state } = input.props
-      const walletLocalDisklet = getStorageWalletLocalDisklet(
-        state,
-        walletInfo.id
-      )
-      const walletLocalEncryptedDisklet =
-        makeStorageWalletLocalEncryptedDisklet(
-          state,
-          walletInfo.id,
-          input.props.io
-        )
-
-      // We need to know which transactions exist,
-      // since new transactions may come in from the network:
-      await loadTxFileNames(input)
-
-      // Derive the public keys:
-      const tools = await getCurrencyTools(ai, pluginId)
-      const publicWalletInfo = await getPublicWalletInfo(
-        walletInfo,
-        walletLocalDisklet,
-        tools
-      )
-      input.props.dispatch({
-        type: 'CURRENCY_WALLET_PUBLIC_INFO',
-        payload: { walletInfo: publicWalletInfo, walletId }
-      })
-
-      // Load the last seen transaction checkpoint into memory.
-      // This also loads subscribed addresses from the same file.
-      const { checkpoint: seenTxCheckpoint, subscribedAddresses } =
-        await loadSeenTxCheckpointFile(input)
-
-      // We need to know which tokens are enabled,
-      // so the engine can start in the right state:
-      await loadTokensFile(input)
-
-      const { hasWalletSettings = false } = walletState.currencyInfo
-      if (hasWalletSettings) {
-        await loadWalletSettingsFile(input)
+      // On a warm account login, one bulk loader reads every wallet's
+      // cache files and seeds them in a single dispatch. Hold our own
+      // read until then (this update re-runs when the dispatch lands):
+      if (state.accounts[accountId]?.bulkWalletSeedPending) {
+        return
       }
 
-      // Start the engine:
-      const accountState = state.accounts[accountId]
-      const engine = await plugin.makeCurrencyEngine(publicWalletInfo, {
-        callbacks: makeCurrencyWalletCallbacks(input),
+      let releaseSlot: (() => void) | undefined
+      try {
+        const ai = toApiInput(input)
 
-        // Engine state kept by the core:
-        seenTxCheckpoint,
-        subscribedAddresses,
-
-        // Wallet-scoped IO objects:
-        log: makeLog(
-          input.props.logBackend,
-          `${pluginId}-${walletInfo.id.slice(0, 2)}`
-        ),
-        walletLocalDisklet,
-        walletLocalEncryptedDisklet,
-
-        // User settings:
-        customTokens: accountState.customTokens[pluginId] ?? {},
-        enabledTokenIds: input.props.walletState.allEnabledTokenIds,
-        userSettings: accountState.userSettings[pluginId] ?? {},
-        walletSettings: input.props.walletState.walletSettings
-      })
-      input.onOutput(engine)
-
-      // Grab initial state:
-      const parentCurrency = { currencyCode, tokenId: null }
-      const balance = asMaybe(asIntegerString)(
-        engine.getBalance(parentCurrency)
-      )
-      if (balance != null) {
-        input.props.dispatch({
-          type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
-          payload: { balance, tokenId: null, walletId }
-        })
-      }
-      const height = engine.getBlockHeight()
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
-        payload: { height, walletId }
-      })
-      if (engine.getStakingStatus != null) {
-        await engine.getStakingStatus().then(
-          stakingStatus => {
+        // Load the UI-state cache before the storage-wallet sync,
+        // so a previously-seen wallet can emit its API object right away.
+        // The bulk loader may have already seeded us; otherwise read our
+        // own files (cold logins, wallets activated after login, bulk
+        // misses). If either file is missing or invalid (first login,
+        // schema bump, corruption), fall through to the cold path:
+        let cacheSeeded =
+          walletState.publicWalletInfo != null && walletState.nameLoaded
+        if (!cacheSeeded) {
+          const seed = await loadWalletCacheSeed(ai, walletId, accountId)
+          if (seed != null) {
             input.props.dispatch({
-              type: 'CURRENCY_ENGINE_CHANGED_STAKING',
-              payload: { stakingStatus, walletId }
+              type: 'CURRENCY_WALLET_CACHE_LOADED',
+              payload: { ...seed, walletId }
             })
-          },
-          error => input.props.onError(error)
+            if (walletCacheLoaderHooks.onFallbackSeed != null) {
+              walletCacheLoaderHooks.onFallbackSeed(walletId)
+            }
+            cacheSeeded = true
+          }
+        }
+
+        if (cacheSeeded) {
+          // This wallet is already usable from its cache, so its heavy
+          // startup work (repo sync, key derivation, engine creation)
+          // waits its turn in a limited-concurrency queue instead of
+          // racing every other wallet in the seconds after login.
+          // Wallets without a cache skip the queue: they cannot emit at
+          // all until this work runs, so they behave exactly as before.
+          releaseSlot = await getEngineScheduler(input.props.io).acquire(
+            walletId,
+            () => {
+              input.props.log.warn(
+                `${walletId} engine startup exceeded its slot time; freeing the slot for the next wallet`
+              )
+            }
+          )
+
+          // The wallet may have been deleted (or the user logged out)
+          // while it waited in line; the finally releases the slot:
+          if (destroyed) return
+          input.props.log(`${walletId} engine startup slot acquired`)
+        }
+
+        // Start the data sync:
+        await addStorageWallet(ai, walletInfo)
+
+        // Grab the freshly-synced repos:
+        const { state } = input.props
+        const walletLocalDisklet = getStorageWalletLocalDisklet(
+          state,
+          walletInfo.id
         )
+        const walletLocalEncryptedDisklet =
+          makeStorageWalletLocalEncryptedDisklet(
+            state,
+            walletInfo.id,
+            input.props.io
+          )
+
+        // We need to know which transactions exist,
+        // since new transactions may come in from the network:
+        await loadTxFileNames(input)
+
+        // Derive the public keys. The cache seeding path already read
+        // publicKey.json, so reuse that instead of a second disk read:
+        const tools = await getCurrencyTools(ai, pluginId)
+        const publicWalletInfo = await getPublicWalletInfo(
+          walletInfo,
+          walletLocalDisklet,
+          tools,
+          input.props.walletState.publicWalletInfo ?? undefined
+        )
+        input.props.dispatch({
+          type: 'CURRENCY_WALLET_PUBLIC_INFO',
+          payload: { walletInfo: publicWalletInfo, walletId }
+        })
+
+        // Load the last seen transaction checkpoint into memory.
+        // This also loads subscribed addresses from the same file.
+        const { checkpoint: seenTxCheckpoint, subscribedAddresses } =
+          await loadSeenTxCheckpointFile(input)
+
+        // We need to know which tokens are enabled,
+        // so the engine can start in the right state:
+        await loadTokensFile(input)
+
+        const { hasWalletSettings = false } = walletState.currencyInfo
+        if (hasWalletSettings) {
+          await loadWalletSettingsFile(input)
+        }
+
+        // Start the engine, reading the account state fresh: the
+        // deferred account file loads run in parallel with this block
+        // on a warm login, so an earlier snapshot could hand the
+        // engine stale settings or tokens:
+        const accountState = input.props.state.accounts[accountId]
+        const engine = await plugin.makeCurrencyEngine(publicWalletInfo, {
+          callbacks: makeCurrencyWalletCallbacks(input),
+
+          // Engine state kept by the core:
+          seenTxCheckpoint,
+          subscribedAddresses,
+
+          // Wallet-scoped IO objects:
+          log: makeLog(
+            input.props.logBackend,
+            `${pluginId}-${walletInfo.id.slice(0, 2)}`
+          ),
+          walletLocalDisklet,
+          walletLocalEncryptedDisklet,
+
+          // User settings:
+          customTokens: accountState.customTokens[pluginId] ?? {},
+          enabledTokenIds: input.props.walletState.allEnabledTokenIds,
+          userSettings: accountState.userSettings[pluginId] ?? {},
+          walletSettings: input.props.walletState.walletSettings
+        })
+
+        // The wallet can also be deleted (or the account logged out)
+        // during the awaits above, which the slot-acquisition check
+        // cannot see. By now `engineStarted`'s destroy has already run
+        // and found no engine to kill, so publishing this one would
+        // leave it alive with nothing left to tear it down:
+        if (destroyed) {
+          await engine.killEngine().catch(() => {})
+          return
+        }
+        input.onOutput(engine)
+
+        // Remember the engine's otherMethods names, so the cache can
+        // expose pre-engine delegating stubs on the next login:
+        const otherMethodNames: string[] = []
+        for (const source of [
+          engine.otherMethods,
+          engine.otherMethodsWithKeys
+        ]) {
+          if (source == null) continue
+          for (const name of Object.keys(source)) {
+            if (typeof source[name] !== 'function') continue
+            if (!otherMethodNames.includes(name)) otherMethodNames.push(name)
+          }
+        }
+        input.props.dispatch({
+          type: 'CURRENCY_WALLET_OTHER_METHOD_NAMES_CHANGED',
+          payload: { names: otherMethodNames, walletId }
+        })
+
+        // Grab initial state:
+        const parentCurrency = { currencyCode, tokenId: null }
+        const balance = asMaybe(asIntegerString)(
+          engine.getBalance(parentCurrency)
+        )
+        if (balance != null) {
+          input.props.dispatch({
+            type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
+            payload: { balance, tokenId: null, walletId }
+          })
+        }
+        const height = engine.getBlockHeight()
+        input.props.dispatch({
+          type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
+          payload: { height, walletId }
+        })
+        if (engine.getStakingStatus != null) {
+          await engine.getStakingStatus().then(
+            stakingStatus => {
+              input.props.dispatch({
+                type: 'CURRENCY_ENGINE_CHANGED_STAKING',
+                payload: { stakingStatus, walletId }
+              })
+            },
+            error => input.props.onError(error)
+          )
+        }
+
+        // Load remaining data from disk:
+        await loadFiatFile(input)
+        await loadNameFile(input)
+        await loadAddressFiles(input)
+      } catch (error: unknown) {
+        input.props.onError(error)
+        input.props.dispatch({
+          type: 'CURRENCY_ENGINE_FAILED',
+          payload: { error, walletId }
+        })
+      } finally {
+        if (releaseSlot != null) releaseSlot()
       }
 
-      // Load remaining data from disk:
-      await loadFiatFile(input)
-      await loadNameFile(input)
-      await loadAddressFiles(input)
-    } catch (error: unknown) {
-      input.props.onError(error)
-      input.props.dispatch({
-        type: 'CURRENCY_ENGINE_FAILED',
-        payload: { error, walletId }
-      })
+      // Fire callbacks when our state changes:
+      watchCurrencyWallet(input)
+
+      return await stopUpdates
     }
 
-    // Fire callbacks when our state changes:
-    watchCurrencyWallet(input)
-
-    return await stopUpdates
+    return {
+      update,
+      destroy() {
+        destroyed = true
+      }
+    }
   },
 
   // Creates the API object:
   walletApi: (input: CurrencyWalletInput) => async () => {
-    const { walletOutput, walletState } = input.props
-    if (walletOutput == null) return
-    const { engine } = walletOutput
-    const { nameLoaded, pluginId, publicWalletInfo } = walletState
-    if (engine == null || publicWalletInfo == null || !nameLoaded) return
-    const tools = await getCurrencyTools(toApiInput(input), pluginId)
+    const { walletState } = input.props
+    const { nameLoaded, publicWalletInfo } = walletState
+    if (publicWalletInfo == null || !nameLoaded) return
 
-    const currencyWalletApi = makeCurrencyWalletApi(
-      input,
-      engine,
-      tools,
-      publicWalletInfo
-    )
+    const currencyWalletApi = makeCurrencyWalletApi(input, publicWalletInfo)
     input.onOutput(currencyWalletApi)
 
     return await stopUpdates
@@ -492,17 +589,23 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       }
       lastState = walletState
 
+      // On a warm login the engine starts in parallel with the
+      // deferred account file loads, so account state can change
+      // while `engine` is still null. Never adopt a value we could
+      // not deliver, or the engine would miss it forever:
+      if (engine == null) return
+
       // Update engine settings:
       const userSettings =
         accountState.userSettings[pluginId] ?? lastUserSettings
-      if (lastUserSettings !== userSettings && engine != null) {
+      if (lastUserSettings !== userSettings) {
         await engine.changeUserSettings(userSettings)
       }
       lastUserSettings = userSettings
 
       // Update the custom tokens:
       const customTokens = accountState.customTokens[pluginId] ?? lastTokens
-      if (lastTokens !== customTokens && engine != null) {
+      if (lastTokens !== customTokens) {
         if (engine.changeCustomTokens != null) {
           await engine.changeCustomTokens(customTokens)
         } else if (engine.addCustomToken != null) {
@@ -526,7 +629,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       if (
         settingsChanged &&
-        engine?.changeWalletSettings != null &&
+        engine.changeWalletSettings != null &&
         hasWalletSettings
       ) {
         await engine.changeWalletSettings(walletSettings).catch(error => {
@@ -537,7 +640,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
       // Update enabled tokens:
       const { allEnabledTokenIds } = walletState
-      if (lastEnabledTokenIds !== allEnabledTokenIds && engine != null) {
+      if (lastEnabledTokenIds !== allEnabledTokenIds) {
         if (engine.changeEnabledTokenIds != null) {
           await engine
             .changeEnabledTokenIds(allEnabledTokenIds)
@@ -573,21 +676,26 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
 /**
  * Attempts to load/derive the wallet public keys.
+ * Pass `cachedWalletInfo` when `publicKey.json` was already read
+ * (the cache seeding path), so it is not read a second time.
  */
 export async function getPublicWalletInfo(
   walletInfo: EdgeWalletInfo,
   disklet: Disklet,
-  tools: EdgeCurrencyTools
+  tools: EdgeCurrencyTools,
+  cachedWalletInfo?: EdgeWalletInfo
 ): Promise<EdgeWalletInfo> {
   // Try to load the cache:
-  const publicKeyCache = await publicKeyFile.load(disklet, PUBLIC_KEY_CACHE)
-  if (publicKeyCache != null) {
+  const cached =
+    cachedWalletInfo ??
+    (await publicKeyFile.load(disklet, PUBLIC_KEY_CACHE))?.walletInfo
+  if (cached != null) {
     // Return it if it needs not to be upgraded (re-derived):
     if (
       tools.checkPublicKey == null ||
-      (await tools.checkPublicKey(publicKeyCache.walletInfo.keys))
+      (await tools.checkPublicKey(cached.keys))
     ) {
-      return publicKeyCache.walletInfo
+      return cached
     }
   }
 
@@ -602,13 +710,10 @@ export async function getPublicWalletInfo(
     keys: publicKeys
   }
 
-  // Save the cache if it's not empty:
-  if (Object.keys(publicKeys).length > 0) {
-    await publicKeyFile.save(disklet, PUBLIC_KEY_CACHE, {
-      walletInfo: publicWalletInfo
-    })
-  }
-
+  // The account cache saver persists these keys along with the rest
+  // of the wallet's boot state, so nothing is written per wallet
+  // here. Older `publicKey.json` files stay on disk as a recovery
+  // net for a boot that cannot read the account cache:
   return publicWalletInfo
 }
 
