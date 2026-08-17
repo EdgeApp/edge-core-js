@@ -25,6 +25,34 @@ const emptySettings = asPluginSettingsFile({})
 
 const PLUGIN_SETTINGS_FILE = 'PluginSettings.json'
 
+/**
+ * The settings writers read, modify, and re-write one shared file,
+ * so two concurrent writes would silently drop one plugin's change.
+ * Serialize them per account:
+ */
+const settingsWriteQueues = new Map<string, Promise<unknown>>()
+
+async function withSettingsFileQueue<T>(
+  accountId: string,
+  task: () => Promise<T>
+): Promise<T> {
+  const prev = settingsWriteQueues.get(accountId) ?? Promise.resolve()
+  const out = prev.then(task)
+  const tail = out.then(
+    () => undefined,
+    () => undefined
+  )
+  settingsWriteQueues.set(accountId, tail)
+  tail
+    .then(() => {
+      if (settingsWriteQueues.get(accountId) === tail) {
+        settingsWriteQueues.delete(accountId)
+      }
+    })
+    .catch(() => undefined)
+  return await out
+}
+
 interface LoadedWalletList {
   walletInfos: EdgeWalletInfo[]
   walletStates: EdgeWalletStates
@@ -40,6 +68,70 @@ function different(a: any, b: any): boolean {
     }
   }
   return false
+}
+
+/**
+ * Waits until the account's storage wallet exists. A cache-seeded
+ * login emits the account API object before `addStorageWallet` runs,
+ * so methods that touch the synced repo pend briefly instead of
+ * throwing during that window. Rejects if the account logs out.
+ */
+export function waitForAccountRepo(
+  ai: ApiInput,
+  accountId: string
+): Promise<unknown> {
+  return ai.waitFor(props => {
+    const accountState = props.state.accounts[accountId]
+    if (accountState == null) {
+      throw new Error('The account was logged out')
+    }
+    const { accountWalletInfo } = accountState
+    if (props.state.storageWallets[accountWalletInfo.id] != null) return true
+
+    // The repo is still missing. If the boot loads failed terminally,
+    // it is never coming, so reject instead of pending forever:
+    if (accountState.loadFailure != null) throw accountState.loadFailure
+  })
+}
+
+/**
+ * Waits until the account's wallet states have loaded from disk.
+ * A cache-seeded login holds possibly-stale wallet states, so a
+ * change based on those could no-op against a value the load is
+ * about to overwrite. Rejects if the account logs out or the boot
+ * loads fail terminally.
+ */
+export function waitForWalletStates(
+  ai: ApiInput,
+  accountId: string
+): Promise<unknown> {
+  return ai.waitFor(props => {
+    const accountState = props.state.accounts[accountId]
+    if (accountState == null) {
+      throw new Error('The account was logged out')
+    }
+    if (accountState.walletStatesLoaded) return true
+    if (accountState.loadFailure != null) throw accountState.loadFailure
+  })
+}
+
+/**
+ * Waits until the account's plugin settings have loaded from disk,
+ * so a settings change never runs against pre-load Redux state.
+ * Rejects if the account logs out or the boot loads fail terminally.
+ */
+export function waitForPluginSettings(
+  ai: ApiInput,
+  accountId: string
+): Promise<unknown> {
+  return ai.waitFor(props => {
+    const accountState = props.state.accounts[accountId]
+    if (accountState == null) {
+      throw new Error('The account was logged out')
+    }
+    if (accountState.pluginSettingsLoaded) return true
+    if (accountState.loadFailure != null) throw accountState.loadFailure
+  })
 }
 
 /**
@@ -148,6 +240,9 @@ export async function changeWalletStates(
   accountId: string,
   newStates: EdgeWalletStates
 ): Promise<void> {
+  // The load implies the repo exists, and it makes the diff below
+  // compare against authoritative records instead of cached ones:
+  await waitForWalletStates(ai, accountId)
   const { accountWalletInfo, walletStates } = ai.props.state.accounts[accountId]
   const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
@@ -189,7 +284,11 @@ export async function changeWalletStates(
 
   ai.props.dispatch({
     type: 'ACCOUNT_CHANGED_WALLET_STATES',
-    payload: { accountId, walletStates: { ...walletStates, ...toWrite } }
+    payload: {
+      accountId,
+      walletStates: { ...walletStates, ...toWrite },
+      changedIds: walletIds
+    }
   })
 }
 
@@ -202,29 +301,42 @@ export async function changePluginUserSettings(
   pluginId: string,
   userSettings: object
 ): Promise<void> {
-  const { accountWalletInfo } = ai.props.state.accounts[accountId]
-  const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
-
-  // Write the new state to disk:
-  const clean =
-    (await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)) ??
-    emptySettings
-  await pluginSettingsFile.save(disklet, PLUGIN_SETTINGS_FILE, {
-    ...clean,
-    userSettings: {
-      ...ai.props.state.accounts[accountId].userSettings,
-      [pluginId]: userSettings
+  await waitForPluginSettings(ai, accountId)
+  await withSettingsFileQueue(accountId, async () => {
+    // The account may have logged out while this write was queued:
+    const accountState = ai.props.state.accounts[accountId]
+    if (accountState == null) {
+      throw new Error('The account was logged out')
     }
-  })
+    const { accountWalletInfo } = accountState
+    const disklet = getStorageWalletDisklet(
+      ai.props.state,
+      accountWalletInfo.id
+    )
 
-  // Update Redux:
-  ai.props.dispatch({
-    type: 'ACCOUNT_PLUGIN_SETTINGS_CHANGED',
-    payload: {
-      accountId,
-      pluginId,
-      userSettings: { ...userSettings }
-    }
+    // Write the new state to disk. Merge into the freshly read file
+    // rather than rebuilding the map from Redux, so settings another
+    // device synced to disk survive even if Redux hasn't seen them yet:
+    const clean =
+      (await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)) ??
+      emptySettings
+    await pluginSettingsFile.save(disklet, PLUGIN_SETTINGS_FILE, {
+      ...clean,
+      userSettings: {
+        ...clean.userSettings,
+        [pluginId]: userSettings
+      }
+    })
+
+    // Update Redux:
+    ai.props.dispatch({
+      type: 'ACCOUNT_PLUGIN_SETTINGS_CHANGED',
+      payload: {
+        accountId,
+        pluginId,
+        userSettings: { ...userSettings }
+      }
+    })
   })
 }
 
@@ -237,25 +349,38 @@ export async function changeSwapSettings(
   pluginId: string,
   swapSettings: SwapSettings
 ): Promise<void> {
-  const { accountWalletInfo } = ai.props.state.accounts[accountId]
-  const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
-
-  // Write the new state to disk:
-  const clean =
-    (await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)) ??
-    emptySettings
-  await pluginSettingsFile.save(disklet, PLUGIN_SETTINGS_FILE, {
-    ...clean,
-    swapSettings: {
-      ...ai.props.state.accounts[accountId].swapSettings,
-      [pluginId]: swapSettings
+  await waitForPluginSettings(ai, accountId)
+  await withSettingsFileQueue(accountId, async () => {
+    // The account may have logged out while this write was queued:
+    const accountState = ai.props.state.accounts[accountId]
+    if (accountState == null) {
+      throw new Error('The account was logged out')
     }
-  })
+    const { accountWalletInfo } = accountState
+    const disklet = getStorageWalletDisklet(
+      ai.props.state,
+      accountWalletInfo.id
+    )
 
-  // Update Redux:
-  ai.props.dispatch({
-    type: 'ACCOUNT_SWAP_SETTINGS_CHANGED',
-    payload: { accountId, pluginId, swapSettings }
+    // Write the new state to disk. Merge into the freshly read file
+    // rather than rebuilding the map from Redux, so settings another
+    // device synced to disk survive even if Redux hasn't seen them yet:
+    const clean =
+      (await pluginSettingsFile.load(disklet, PLUGIN_SETTINGS_FILE)) ??
+      emptySettings
+    await pluginSettingsFile.save(disklet, PLUGIN_SETTINGS_FILE, {
+      ...clean,
+      swapSettings: {
+        ...clean.swapSettings,
+        [pluginId]: swapSettings
+      }
+    })
+
+    // Update Redux:
+    ai.props.dispatch({
+      type: 'ACCOUNT_SWAP_SETTINGS_CHANGED',
+      payload: { accountId, pluginId, swapSettings }
+    })
   })
 }
 
