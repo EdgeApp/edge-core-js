@@ -9,10 +9,37 @@ import {
 import { EdgeLog } from '../types/types'
 
 /**
- * Configuration options for the NYM mixFetch client.
+ * Mint the client id for one mixnet client.
+ *
+ * `clientId` names the client's persistent key storage, so every setup that
+ * passes the same id adopts whatever registration the previous one left
+ * behind. A registration that went bad therefore stays bad for every later
+ * connect, including across app launches, which surfaces as a wallet that
+ * never syncs and never recovers. Nym's guidance is to rerandomise on
+ * connect: a fresh id simply abandons the poisoned storage.
+ *
+ * The cost is a fresh gateway registration per setup, which the measured
+ * ~10s handshake already covers.
  */
-export const mixFetchOptions: SetupMixFetchOps = {
-  clientId: 'edge-core-js-2026-03-10',
+const makeClientId = (): string => {
+  const bytes = new Uint8Array(16)
+  const { crypto } = globalThis
+  if (crypto?.getRandomValues != null) {
+    crypto.getRandomValues(bytes)
+  } else {
+    for (let i = 0; i < bytes.length; ++i) {
+      bytes[i] = Math.floor(Math.random() * 256)
+    }
+  }
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0'))
+  return `edge-core-js-${hex.join('')}`
+}
+
+/**
+ * Configuration options for the NYM mixFetch client, minus the per-setup
+ * `clientId` that `initMixFetch` adds.
+ */
+const mixFetchOptions: Omit<SetupMixFetchOps, 'clientId'> = {
   preferredGateway: '5rXcNe2a44vXisK3uqLHCzpzvEwcnsijDMU7hg4fcYk8', // with WSS
   preferredNetworkRequester:
     '5x6q9UfVHs5AohKMUqeivj7a556kVVy7QwoKige8xHxh.6CFoB3kJaDbYz6oafPJxNxNjzahpT2NtgtytcSyN9EvF@5rXcNe2a44vXisK3uqLHCzpzvEwcnsijDMU7hg4fcYk8',
@@ -42,7 +69,10 @@ let mixFetchInitPromise: Promise<IMixFetch> | null = null
 export async function initMixFetch(log: EdgeLog): Promise<IMixFetchFn> {
   if (mixFetchInitPromise == null) {
     log('Initializing mixFetch...')
-    const pending = createMixFetch(mixFetchOptions)
+    const pending = createMixFetch({
+      ...mixFetchOptions,
+      clientId: makeClientId()
+    })
     // The timeout below can abandon this setup while it is still in flight.
     // Deliberately do NOT tear it down on late completion: `createMixFetch`
     // resolves to a healthy global singleton, and disconnecting it (a
