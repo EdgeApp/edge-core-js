@@ -255,7 +255,24 @@ export async function loadTokensFile(
   )
   if (legacyCurrencyCodes != null) {
     const { accountId, currencyInfo, pluginId } = input.props.walletState
-    const accountState = input.props.state.accounts[accountId]
+
+    // This file names currency codes, so converting it needs the token
+    // definitions. On a warm login the builtin definitions load in
+    // parallel with this block, and an empty map converts every code to
+    // nothing: the dispatch below would then replace the cache-seeded
+    // list with an empty one and the saver would persist the loss.
+    // Wait, exactly as `changeEnabledTokenIds` does:
+    const accountState = await toApiInput(input).waitFor(props => {
+      if (props.state.currency.wallets[walletId] == null) {
+        throw new Error(`Wallet id ${walletId} does not exist in this account`)
+      }
+      const accountState = props.state.accounts[accountId]
+      if (accountState?.builtinTokens[pluginId] != null) return accountState
+
+      // A terminal boot failure means the definitions never arrive:
+      if (accountState?.loadFailure != null) throw accountState.loadFailure
+    })
+
     const tokenIds = currencyCodesToTokenIds(
       accountState.builtinTokens[pluginId],
       accountState.customTokens[pluginId],
