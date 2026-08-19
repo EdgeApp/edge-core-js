@@ -1,6 +1,7 @@
-import { asMaybe } from 'cleaners'
+import { asMaybe, asObject, asString, Cleaner } from 'cleaners'
 import { base64 } from 'rfc4648'
 
+import { ApiSignerError, asMaybeApiSignerError } from '../../types/error'
 import {
   asChallengeErrorPayload,
   asLoginResponseBody,
@@ -9,6 +10,8 @@ import {
 import { LoginRequestBody } from '../../types/server-types'
 import {
   ChallengeError,
+  EdgeApiSignature,
+  EdgeApiSigner,
   EdgeFetchOptions,
   EdgeFetchResponse,
   NetworkError,
@@ -21,6 +24,48 @@ import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
 import { timeout } from '../../util/promise'
 import { ApiInput } from '../root-pixie'
+
+const asEdgeApiSignature: Cleaner<EdgeApiSignature> = asObject({
+  apiKey: asString,
+  signature: asString
+})
+
+function isUsableSignerKey(apiKey: string, signature: string): boolean {
+  return apiKey !== '' && !/\s/.test(apiKey) && signature !== ''
+}
+
+/**
+ * Build the login-server Authorization header from apiSigner, apiSecret, or
+ * the legacy Token fallback.
+ */
+export async function makeLoginAuthorization(opts: {
+  apiSigner?: EdgeApiSigner
+  apiKey?: string
+  apiSecret?: Uint8Array | null
+  requestText: string
+}): Promise<string> {
+  const { apiSigner, apiKey, apiSecret, requestText } = opts
+  if (apiSigner != null) {
+    try {
+      const signed = asEdgeApiSignature(
+        await timeout(apiSigner.signMessage(requestText), 30000)
+      )
+      if (!isUsableSignerKey(signed.apiKey, signed.signature)) {
+        throw new Error('apiSigner returned an unusable apiKey or signature')
+      }
+      return `HMAC ${signed.apiKey} ${signed.signature}`
+    } catch (error: unknown) {
+      throw new ApiSignerError(
+        error instanceof Error ? error.message : String(error)
+      )
+    }
+  }
+  if (apiSecret != null) {
+    const hash = hmacSha256(utf8.parse(requestText), apiSecret)
+    return `HMAC ${apiKey ?? ''} ${base64.stringify(hash)}`
+  }
+  return `Token ${apiKey ?? ''}`
+}
 
 export function parseReply(json: unknown): unknown {
   const clean = asLoginResponseBody(json)
@@ -97,6 +142,7 @@ export async function loginFetch(
       )
       break
     } catch (error) {
+      if (asMaybeApiSignerError(error) != null) throw error
       lastError = error
     }
   }
@@ -109,14 +155,14 @@ export async function loginFetch(
   return parseReply(json)
 }
 
-export function loginFetchInner(
+export async function loginFetchInner(
   ai: ApiInput,
   serverUri: string,
   method: string,
   path: string,
   body?: LoginRequestBody
 ): Promise<EdgeFetchResponse> {
-  const { state, io, log } = ai.props
+  const { state, io, log, apiSigner } = ai.props
   const { apiKey, apiSecret, attestationToken } = state.login
 
   const bodyText =
@@ -124,13 +170,14 @@ export function loginFetchInner(
       ? undefined
       : JSON.stringify(wasLoginRequestBody(body))
 
-  // API key:
-  let authorization = `Token ${apiKey}`
-  if (apiSecret != null) {
-    const requestText = `${method}\n/api${path}\n${bodyText ?? ''}`
-    const hash = hmacSha256(utf8.parse(requestText), apiSecret)
-    authorization = `HMAC ${apiKey} ${base64.stringify(hash)}`
-  }
+  // Authorization:
+  const requestText = `${method}\n/api${path}\n${bodyText ?? ''}`
+  const authorization = await makeLoginAuthorization({
+    apiSigner,
+    apiKey,
+    apiSecret,
+    requestText
+  })
 
   const opts: EdgeFetchOptions = {
     body: bodyText,
@@ -148,7 +195,7 @@ export function loginFetchInner(
 
   const start = Date.now()
   const fullUri = `${serverUri}/api${path}`
-  return timeout(io.fetch(fullUri, opts), 30000).then(
+  return await timeout(io.fetch(fullUri, opts), 30000).then(
     response => {
       // Log the results:
       const time = Date.now() - start

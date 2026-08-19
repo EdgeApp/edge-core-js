@@ -6,18 +6,17 @@ import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
 import { defaultOnLog, LogBackend } from './core/log/log'
-import { parseReply } from './core/login/login-fetch'
+import { makeLoginAuthorization, parseReply } from './core/login/login-fetch'
 import { EdgeCoreBridge } from './io/react-native/react-native-webview'
 import { EdgeContextProps, EdgeFakeWorldProps } from './types/exports'
 import { asMessagesPayload } from './types/server-cleaners'
 import {
+  EdgeApiSigner,
   EdgeFetchOptions,
   EdgeLoginMessage,
   EdgeNativeIo,
   NetworkError
 } from './types/types'
-import { hmacSha256 } from './util/crypto/hashes'
-import { utf8 } from './util/encoding'
 import { timeout } from './util/promise'
 
 export { makeFakeIo } from './core/fake/fake-io'
@@ -51,6 +50,7 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
     airbitzSupport = false,
     apiKey,
     apiSecret,
+    apiSigner,
     appId = '',
     appVersion,
     authServer,
@@ -98,7 +98,8 @@ export function MakeEdgeContext(props: EdgeContextProps): JSX.Element {
             plugins,
             skipBlockHeight,
             syncServer
-          }
+          },
+          apiSigner == null ? undefined : bridgifyObject(apiSigner)
         )
         await onLoad(context)
       }}
@@ -164,7 +165,8 @@ const asUsernameStash = asObject({
  */
 export async function fetchLoginMessages(
   apiKey: string,
-  apiSecret?: Uint8Array
+  apiSecret?: Uint8Array,
+  apiSigner?: EdgeApiSigner
 ): Promise<EdgeLoginMessage[]> {
   const disklet = makeReactNativeDisklet()
 
@@ -185,13 +187,14 @@ export async function fetchLoginMessages(
 
   const bodyText = JSON.stringify({ loginIds: Object.keys(loginMap) })
 
-  // API key:
-  let authorization = `Token ${apiKey}`
-  if (apiSecret != null) {
-    const requestText = `POST\n/api/v2/messages\n${bodyText}`
-    const hash = hmacSha256(utf8.parse(requestText), apiSecret)
-    authorization = `HMAC ${apiKey} ${base64.stringify(hash)}`
-  }
+  // Authorization:
+  const requestText = `POST\n/api/v2/messages\n${bodyText}`
+  const authorization = await makeLoginAuthorization({
+    apiSigner,
+    apiKey,
+    apiSecret,
+    requestText
+  })
 
   const uri = 'https://login.edge.app/api/v2/messages'
   const opts: EdgeFetchOptions = {
@@ -201,7 +204,7 @@ export async function fetchLoginMessages(
       accept: 'application/json',
       authorization
     },
-    body: JSON.stringify({ loginIds: Object.keys(loginMap) })
+    body: bodyText
   }
 
   return await timeout(

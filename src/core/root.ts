@@ -36,6 +36,7 @@ export async function makeContext(
   const {
     airbitzSupport = false,
     apiSecret,
+    apiSigner,
     appId = '',
     appVersion,
     authServer,
@@ -177,6 +178,7 @@ export async function makeContext(
       rootPixie,
       (props: ReduxProps<RootState, Dispatch>): RootProps => ({
         ...props,
+        apiSigner,
         close() {
           closePixie()
           closePlugins()

@@ -86,6 +86,20 @@ export class InsufficientFundsError extends Error {
 }
 
 /**
+ * Signing failed before the HTTP request could be made.
+ * `loginFetch` must not treat this as a per-server network error,
+ * so it does not retry the remaining login servers.
+ */
+export class ApiSignerError extends Error {
+  name: string
+
+  constructor(message: string = 'Cannot sign the API request') {
+    super(message)
+    this.name = 'ApiSignerError'
+  }
+}
+
+/**
  * Could not reach the server at all.
  */
 export class NetworkError extends Error {
@@ -411,6 +425,8 @@ export const asMaybeDustSpendError =
   asMaybeError<DustSpendError>('DustSpendError')
 export const asMaybeInsufficientFundsError =
   asMaybeError<InsufficientFundsError>('InsufficientFundsError')
+export const asMaybeApiSignerError =
+  asMaybeError<ApiSignerError>('ApiSignerError')
 export const asMaybeNetworkError = asMaybeError<NetworkError>('NetworkError')
 export const asMaybeNoAmountSpecifiedError =
   asMaybeError<NoAmountSpecifiedError>('NoAmountSpecifiedError')
