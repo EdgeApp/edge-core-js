@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
+
 ## 2.49.0 (2026-09-23)
 
 - added: Warm logins render the account and wallet list from an account-level cache before any engine starts
