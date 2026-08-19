@@ -1,7 +1,7 @@
 import { SyncClient } from 'edge-sync-client'
 import { combinePixies, PixieInput, ReduxProps, TamePixie } from 'redux-pixies'
 
-import { EdgeIo, EdgeLog } from '../types/types'
+import { EdgeApiSigner, EdgeIo, EdgeLog } from '../types/types'
 import { AccountOutput, accounts } from './account/account-pixie'
 import { Dispatch } from './actions'
 import { context, ContextOutput } from './context/context-pixie'
@@ -20,6 +20,7 @@ export interface RootOutput {
 
 // Props passed to the root pixie:
 export interface RootProps extends ReduxProps<RootState, Dispatch> {
+  readonly apiSigner?: EdgeApiSigner
   readonly close: () => void
   readonly io: EdgeIo
   readonly log: EdgeLog

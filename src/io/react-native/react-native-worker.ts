@@ -261,10 +261,15 @@ export function normalizePath(path: string): string {
 
 // Send the root object:
 const workerApi: WorkerApi = bridgifyObject({
-  async makeEdgeContext(nativeIo, logBackend, pluginUris, opts) {
+  async makeEdgeContext(nativeIo, logBackend, pluginUris, opts, apiSigner) {
     loadPlugins(pluginUris)
     const io = await makeIo(logBackend)
-    return await makeContext({ io, nativeIo }, logBackend, opts)
+    // The signer travels as its own bridged argument, but honor one that
+    // arrived inside `opts` rather than silently dropping it.
+    return await makeContext({ io, nativeIo }, logBackend, {
+      ...opts,
+      apiSigner: apiSigner ?? opts.apiSigner
+    })
   },
 
   async makeFakeEdgeWorld(nativeIo, logBackend, pluginUris, users = []) {

@@ -2,6 +2,7 @@ import * as React from 'react'
 
 import { LogBackend } from '../../core/log/log'
 import {
+  EdgeApiSigner,
   EdgeContext,
   EdgeContextOptions,
   EdgeFakeUser,
@@ -14,7 +15,8 @@ export interface WorkerApi {
     nativeIo: EdgeNativeIo,
     logBackend: LogBackend,
     pluginUris: string[],
-    opts: EdgeContextOptions
+    opts: EdgeContextOptions,
+    apiSigner?: EdgeApiSigner
   ) => Promise<EdgeContext>
 
   makeFakeEdgeWorld: (
