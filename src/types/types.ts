@@ -75,6 +75,12 @@ export interface EdgeIo {
   readonly fetch: EdgeFetchFunction
 
   /**
+   * Filesystem root for this context. Set by Node `makeNodeIo` to the same
+   * folder used for `disklet`. Absent on React Native and in the browser.
+   */
+  readonly path?: string
+
+  /**
    * This is like `fetch`, but will try to avoid CORS limitations
    * on platforms where that may be a problem.
    *
