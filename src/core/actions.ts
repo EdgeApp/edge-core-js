@@ -437,6 +437,11 @@ export type RootAction =
       }
     }
   | {
+      // Sets the device attestation token sent to the login server.
+      type: 'SET_ATTESTATION_TOKEN'
+      payload: string | undefined
+    }
+  | {
       // Fires when a user logs out.
       type: 'LOGOUT'
       payload: { accountId: string }

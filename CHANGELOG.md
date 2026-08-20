@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: `EdgeContext.setAttestationToken` to attach an `x-attestation-token` header on login-server requests.
+- changed: `validateServer` accepts private LAN IPv4 addresses (RFC1918 + 127/8) for `http`/`ws` server overrides only; `https`/`wss` still require localhost or `*.edge(test)?.app`.
+- changed: Fake-world `allowNetworkAccess` fakes only login/info/sync `*.edge.app` hosts; other traffic (including change servers and private LAN) uses real `io.fetch`.
+
 ## 2.47.1 (2026-07-17)
 
 - fixed: Revert `@nymproject/mix-fetch` to v1 (1.4.4), restoring the pinned gateway and network requester. The v2 stack shipped in 2.47.0 fails to complete small HTTPS JSON-RPC requests through most exit nodes and its exit-node auto-discovery rarely converges, which left wallets with NYM privacy enabled unable to sync or send.

@@ -512,6 +512,10 @@ export function makeContextApi(ai: ApiInput): EdgeContext {
     async changeLogSettings(settings: Partial<EdgeLogSettings>): Promise<void> {
       const newSettings = { ...ai.props.state.logSettings, ...settings }
       ai.props.dispatch({ type: 'CHANGE_LOG_SETTINGS', payload: newSettings })
+    },
+
+    async setAttestationToken(token: string | undefined): Promise<void> {
+      ai.props.dispatch({ type: 'SET_ATTESTATION_TOKEN', payload: token })
     }
   }
   bridgifyObject(out)

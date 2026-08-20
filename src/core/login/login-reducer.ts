@@ -20,6 +20,7 @@ export interface DeviceInfo {
 export interface LoginState {
   readonly apiKey: string
   readonly apiSecret: Uint8Array | null
+  readonly attestationToken: string | null
   readonly contextAppId: string
   readonly deviceInfo: DeviceInfo
   readonly loginServers: string[]
@@ -35,6 +36,13 @@ export const login = buildReducer<LoginState, RootAction, RootState>({
 
   apiSecret(state = null, action): Uint8Array | null {
     return action.type === 'INIT' ? action.payload.apiSecret ?? null : state
+  },
+
+  attestationToken(state = null, action): string | null {
+    if (action.type !== 'SET_ATTESTATION_TOKEN') return state
+    const token = action.payload
+    // Treat empty string like clear so we never send x-attestation-token: ''.
+    return token == null || token === '' ? null : token
   },
 
   contextAppId(state = '', action): string {
