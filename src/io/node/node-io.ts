@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { makeNodeDisklet } from 'disklet'
 import fetch from 'node-fetch'
+import { resolve } from 'path'
 
 import { EdgeFetchOptions, EdgeIo } from '../../types/types'
 import { scrypt } from '../../util/crypto/scrypt'
@@ -11,6 +12,7 @@ import { scrypt } from '../../util/crypto/scrypt'
  * @param {string} path Location where data should be written to disk.
  */
 export function makeNodeIo(path: string): EdgeIo {
+  const resolved = resolve(path)
   return {
     // Crypto:
     random(bytes: number) {
@@ -19,7 +21,8 @@ export function makeNodeIo(path: string): EdgeIo {
     scrypt,
 
     // Local io:
-    disklet: makeNodeDisklet(path),
+    disklet: makeNodeDisklet(resolved),
+    path: resolved,
 
     // Networking:
     fetch(uri: string, opts?: EdgeFetchOptions) {

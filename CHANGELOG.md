@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeIo.path` on Node, the same folder `makeNodeIo` already uses for the disklet.
+
 ## 2.50.0 (2026-09-29)
 
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
