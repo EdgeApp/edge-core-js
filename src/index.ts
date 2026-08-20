@@ -24,9 +24,14 @@ export * from './types/types'
 export function makeEdgeContext(
   opts: EdgeContextOptions
 ): Promise<EdgeContext> {
-  const { crashReporter, onLog = defaultOnLog, path = './edge' } = opts
+  const {
+    crashReporter,
+    onLog = defaultOnLog,
+    path = './edge',
+    nativeIo = {}
+  } = opts
   return makeContext(
-    { io: makeNodeIo(path), nativeIo: {} },
+    { io: makeNodeIo(path), nativeIo },
     { crashReporter, onLog },
     opts
   )
@@ -36,11 +41,11 @@ export function makeFakeEdgeWorld(
   users: EdgeFakeUser[] = [],
   opts: EdgeFakeWorldOptions = {}
 ): Promise<EdgeFakeWorld> {
-  const { crashReporter, onLog = defaultOnLog } = opts
+  const { crashReporter, onLog = defaultOnLog, nativeIo = {} } = opts
   return Promise.resolve(
     makeLocalBridge(
       makeFakeWorld(
-        { io: makeNodeIo('.'), nativeIo: {} },
+        { io: makeNodeIo('.'), nativeIo },
         { crashReporter, onLog },
         users
       ),
