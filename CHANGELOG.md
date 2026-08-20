@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.48.0 (2026-08-20)
+
 - added: `EdgeContext.setAttestationToken` to attach an `x-attestation-token` header on login-server requests.
 - changed: `validateServer` accepts private LAN IPv4 addresses (RFC1918 + 127/8) for `http`/`ws` server overrides only; `https`/`wss` still require localhost or `*.edge(test)?.app`.
 - changed: Fake-world `allowNetworkAccess` fakes only login/info/sync `*.edge.app` hosts; other traffic (including change servers and private LAN) uses real `io.fetch`.
