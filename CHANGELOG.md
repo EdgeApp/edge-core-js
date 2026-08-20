@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: `EdgeIo.path` on Node, the same folder `makeNodeIo` already uses for the disklet.
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
 - fixed: Logging in no longer fails when a plugin fails to load. Such a plugin is absent from `currencyConfig` and `swapConfig`, as already documented, instead of blocking every login in the app.
 
