@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeIo.path` on Node, the same folder `makeNodeIo` already uses for the disklet.
+
 ## 2.51.0 (2026-10-05)
 
 - added: `EdgeAccount.fetchSwapQuotes` accepts an `EdgeSwapSendRequest`, for swaps that pay out to an address.
