@@ -192,7 +192,7 @@ export interface EdgeCorePluginOptions {
   // Access to the world outside the plugin:
   io: EdgeIo
   log: EdgeLog // Plugin-scoped logging
-  nativeIo: EdgeNativeIo // Only filled in on React Native
+  nativeIo: EdgeNativeIo // Native modules (RN bridge or Node addons)
   pluginDisklet: Disklet // Plugin-scoped local storage
 }
 
@@ -2031,6 +2031,12 @@ export interface EdgeContextOptions {
    */
   skipBlockHeight?: boolean
 
+  /**
+   * Native modules for in-process plugins (Node addons).
+   * On React Native, nativeIo is passed into the WebView worker separately.
+   */
+  nativeIo?: EdgeNativeIo
+
   /** @deprecated Use `loginServer` instead. */
   authServer?: string
 }
@@ -2211,6 +2217,7 @@ export interface EdgeContext {
 export interface EdgeFakeWorldOptions {
   crashReporter?: EdgeCrashReporter
   onLog?: EdgeOnLog
+  nativeIo?: EdgeNativeIo
 }
 
 export interface EdgeFakeContextOptions {
