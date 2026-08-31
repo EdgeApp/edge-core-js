@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
+- fixed: Logging in no longer fails when a plugin fails to load. Such a plugin is absent from `currencyConfig` and `swapConfig`, as already documented, instead of blocking every login in the app.
 
 ## 2.48.1 (2026-08-31)
 
