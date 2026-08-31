@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
+- fixed: Logging in no longer fails when a plugin fails to load. Such a plugin is absent from `currencyConfig` and `swapConfig`, as already documented, instead of blocking every login in the app.
+
 ## 2.48.1 (2026-08-31)
 
 - fixed: Stop rebuilding the NYM mixFetch client on every request while its gateway is failing. Each attempt spawns a web worker holding megabytes of WASM that the library gives no way to terminate, so a poll loop retrying every few seconds exhausted the host's memory and killed the JS context, which on iOS reads to the user as being logged out. A failed setup now starts a cooldown that doubles up to five minutes.
