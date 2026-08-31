@@ -4,8 +4,8 @@
 requests so the HMAC secret never enters the JS bundle.
 
 This is a login-server contract only (existing HMAC in
-`edge-login-server/src/middleware/with-api-key.ts`). The GUI’s `GET /v1/infoRollup/:appId`
-call is signed in the app, not by this library. See
+`edge-login-server/src/middleware/with-api-key.ts`). The GUI’s
+`GET /v1/infoRollup/:appId` call is signed in the app, not by this library. See
 [edge-react-gui `docs/HMAC_SIGNING.md`](https://github.com/EdgeApp/edge-react-gui/blob/develop/docs/HMAC_SIGNING.md).
 
 ## `EdgeContextOptions.apiSigner`
