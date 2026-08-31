@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.48.1 (2026-08-31)
+
 - fixed: Stop rebuilding the NYM mixFetch client on every request while its gateway is failing. Each attempt spawns a web worker holding megabytes of WASM that the library gives no way to terminate, so a poll loop retrying every few seconds exhausted the host's memory and killed the JS context, which on iOS reads to the user as being logged out. A failed setup now starts a cooldown that doubles up to five minutes.
 
 ## 2.48.0 (2026-08-20)
