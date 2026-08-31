@@ -60,29 +60,16 @@ export function getCurrencyTools(
 }
 
 /**
- * Waits for the plugins to load,
- * then validates that all plugins are present.
+ * Waits for the plugins to finish loading.
+ *
+ * A plugin that fails to load is simply absent from `currencyConfig` and
+ * `swapConfig`, so this does not treat that as an error. Failing the login
+ * would take down every account in the app over one unusable plugin.
  */
 export async function waitForPlugins(ai: ApiInput): Promise<void> {
   await ai.waitFor((props: RootProps): true | undefined => {
-    const { init, locked } = props.state.plugins
+    const { locked } = props.state.plugins
     if (!locked) return
-
-    const { currency, swap } = props.state.plugins
-    const missingPlugins: string[] = []
-    for (const pluginId of Object.keys(init)) {
-      const shouldLoad = init[pluginId] !== false && init[pluginId] != null
-      if (shouldLoad && currency[pluginId] == null && swap[pluginId] == null) {
-        missingPlugins.push(pluginId)
-      }
-    }
-    if (missingPlugins.length > 0) {
-      throw new Error(
-        'The following plugins are missing or failed to load: ' +
-          missingPlugins.join(', ')
-      )
-    }
-
     return true
   })
 }
