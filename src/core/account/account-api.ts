@@ -510,11 +510,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     async approveWalletShare(
       lobbyId: string,
-      wallets: EdgeWalletShareSpec[]
+      wallets: EdgeWalletShareSpec[],
+      opts: EdgeWalletShareOptions = {}
     ): Promise<void> {
       ai.props.log.breadcrumb('EdgeAccount.approveWalletShare', {})
       lockdown()
-      await approveWalletShare(ai, accountId, lobbyId, wallets)
+      await approveWalletShare(ai, accountId, lobbyId, wallets, opts)
     },
 
     async acceptWalletShare(

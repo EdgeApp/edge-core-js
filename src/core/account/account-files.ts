@@ -32,10 +32,15 @@ interface LoadedWalletList {
 
 /**
  * Returns true if `Object.assign(a, b)` would alter `a`.
+ *
+ * `sharing` holds arrays of records, so it needs a value comparison. Without
+ * one, every caller passing a sharing state would rewrite the file.
  */
 function different(a: any, b: any): boolean {
   for (const key of Object.keys(b)) {
-    if (a[key] !== b[key]) {
+    if (key === 'sharing') {
+      if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) return true
+    } else if (a[key] !== b[key]) {
       return true
     }
   }
@@ -87,9 +92,23 @@ async function loadWalletStates(disklet: Disklet): Promise<EdgeWalletStates> {
     paths.map(async path => {
       const clean = await walletStateFile.load(disklet, path)
       if (clean == null) return
-      const { id, archived, deleted, hidden, migratedFromWalletId, sortIndex } =
-        clean
-      out[id] = { archived, deleted, hidden, sortIndex, migratedFromWalletId }
+      const {
+        id,
+        archived,
+        deleted,
+        hidden,
+        migratedFromWalletId,
+        sharing,
+        sortIndex
+      } = clean
+      out[id] = {
+        archived,
+        deleted,
+        hidden,
+        sortIndex,
+        migratedFromWalletId,
+        sharing
+      }
     })
   )
 
@@ -169,8 +188,14 @@ export async function changeWalletStates(
 
   await Promise.all(
     walletIds.map(async walletId => {
-      const { archived, deleted, hidden, migratedFromWalletId, sortIndex } =
-        toWrite[walletId]
+      const {
+        archived,
+        deleted,
+        hidden,
+        migratedFromWalletId,
+        sharing,
+        sortIndex
+      } = toWrite[walletId]
       const walletIdHash = hashStorageWalletFilename(
         ai.props.state,
         accountWalletInfo.id,
@@ -182,6 +207,7 @@ export async function changeWalletStates(
         hidden,
         id: walletId,
         migratedFromWalletId,
+        sharing,
         sortIndex
       })
     })

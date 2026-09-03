@@ -41,6 +41,7 @@ import {
   EdgeTokenIdOptions,
   EdgeTransaction,
   EdgeWalletInfo,
+  EdgeWalletSharingState,
   JsonObject
 } from '../../../types/types'
 import { makeMetaTokens } from '../../account/custom-tokens'
@@ -178,6 +179,15 @@ export function makeCurrencyWalletApi(
     publicWalletInfo,
     get canSign(): boolean {
       return walletCanSign(input.props.walletState.walletInfo.keys)
+    },
+    get viewOnly(): boolean {
+      // From the keys alone. The sharing records are history, not authority:
+      return !walletCanSign(input.props.walletState.walletInfo.keys)
+    },
+    get sharingState(): EdgeWalletSharingState | undefined {
+      const { accountId, walletInfo } = input.props.walletState
+      return input.props.state.accounts[accountId]?.walletStates[walletInfo.id]
+        ?.sharing
     },
     async sync(): Promise<void> {
       await storageWalletApi.sync()

@@ -215,6 +215,16 @@ export type EdgeWalletInfoFull = EdgeWalletInfo & {
   imported?: boolean
   migratedFromWalletId?: string
   sortIndex: number
+  /**
+   * True when this account holds only viewing keys for the wallet.
+   *
+   * Prefer this over `EdgeCurrencyWallet.viewOnly` when several accounts are
+   * logged in at once: a wallet id shared between two accounts has one wallet
+   * object but a different answer per account.
+   */
+  viewOnly?: boolean
+  /** This wallet's sharing history, as recorded by this account. */
+  sharing?: EdgeWalletSharingState
 }
 
 export interface EdgeWalletState {
@@ -223,6 +233,8 @@ export interface EdgeWalletState {
   hidden?: boolean
   migratedFromWalletId?: string
   sortIndex?: number
+  /** This wallet's sharing history, if it has ever been shared. */
+  sharing?: EdgeWalletSharingState
 }
 
 export interface EdgeWalletStates {
@@ -1354,6 +1366,26 @@ export interface EdgeCurrencyWallet {
   readonly publicWalletInfo: EdgeWalletInfo
   /** False when this wallet has no spend/sign private key material (view-only). */
   readonly canSign: boolean
+  /**
+   * True when the wallet holds only viewing keys - public keys, xpub/ypub/zpub
+   * or addresses - and no private key material.
+   *
+   * Read from the key structure itself, never from `sharingState`, which is
+   * user-visible history and may be absent or stale.
+   *
+   * A wallet object is shared by every account in the context that holds its
+   * id, so with several accounts logged in at once, read
+   * `EdgeWalletInfoFull.viewOnly` from `account.allKeys` instead.
+   */
+  readonly viewOnly?: boolean
+  /**
+   * Who this wallet has been shared with, and who shared it here.
+   * Undefined when the wallet has no sharing history.
+   *
+   * Account-scoped, with the same caveat as `viewOnly`: prefer
+   * `EdgeWalletInfoFull.sharing` when more than one account is logged in.
+   */
+  readonly sharingState?: EdgeWalletSharingState
   readonly sync: () => Promise<void>
   readonly type: string
 
@@ -1794,6 +1826,19 @@ export interface EdgeLobby {
   // walletRequest: EdgeWalletRequest | undefined
 }
 
+/** A wallet-share link, taken apart. */
+export interface EdgeParsedWalletShareUri {
+  /**
+   * Which side created the link, and therefore what the scanner must do:
+   * `request` wants wallets and is answered with `approveWalletShare`,
+   * `offer` is handing them out and is answered with `acceptWalletShare`.
+   */
+  direction: 'request' | 'offer'
+  lobbyId: string
+  /** The link creator's chosen identity, if they gave one. */
+  displayName?: string
+}
+
 export type EdgeWalletShareMode = 'viewOnly' | 'spend'
 
 /** One wallet to share, with the mode chosen for that wallet alone. */
@@ -1805,6 +1850,51 @@ export interface EdgeWalletShareSpec {
 export interface EdgeWalletShareOptions {
   /** Lobby timeout in seconds. Defaults to the lobby helper default (10 min). */
   timeout?: number
+
+  /**
+   * A human-readable identity shown to the other party. Arbitrary - it need
+   * not be a real name, or match the username.
+   *
+   * When this call publishes a link, the name rides in the link's `name`
+   * query parameter, so whoever scans the QR sees it before they commit.
+   * Otherwise it travels encrypted to the other party.
+   */
+  displayName?: string
+
+  /**
+   * The other party's name, as read from the link being answered. Recorded in
+   * the wallet's sharing history.
+   *
+   * Only used by `approveWalletShare` and `acceptWalletShare`. A name that
+   * arrives over the wire wins, since the link is only as trustworthy as
+   * whoever produced the QR.
+   */
+  counterpartyName?: string
+}
+
+/** One party's side of a single share, for the wallet's audit trail. */
+export interface EdgeWalletShareRecord {
+  /** The other party's chosen identity, or '' if they gave none. */
+  name: string
+  shareType: EdgeWalletShareMode
+  /** Full ISO 8601 date, e.g. '2026-09-03T21:44:05.123Z'. */
+  sharingDate: string
+}
+
+/**
+ * A wallet's sharing history, as recorded by this account.
+ *
+ * Both directions are arrays: several accounts can hand out the same wallet,
+ * and several can share it to this one at different capabilities.
+ *
+ * This is history, not authority. It grants nothing, cannot revoke, and each
+ * account keeps its own copy, so the two sides may disagree.
+ */
+export interface EdgeWalletSharingState {
+  /** Parties this account gave the wallet to. */
+  sharedWith: EdgeWalletShareRecord[]
+  /** Parties this account received the wallet from. */
+  sharedFrom: EdgeWalletShareRecord[]
 }
 
 /**
@@ -1827,6 +1917,11 @@ export interface EdgePendingWalletShare {
   readonly receivedWalletIds?: string[]
   /** Each shared wallet with its own mode, once known. */
   readonly sharedWallets?: EdgeWalletShareSpec[]
+  /**
+   * The other party's chosen identity, once they have identified themselves.
+   * Undefined until then, or if they gave no name.
+   */
+  readonly counterpartyName?: string
   readonly error?: unknown
 
   readonly cancelRequest: () => Promise<void>
@@ -1943,7 +2038,8 @@ export interface EdgeAccount {
   ) => Promise<EdgePendingWalletShare>
   readonly approveWalletShare: (
     lobbyId: string,
-    wallets: EdgeWalletShareSpec[]
+    wallets: EdgeWalletShareSpec[],
+    opts?: EdgeWalletShareOptions
   ) => Promise<void>
   readonly acceptWalletShare: (
     lobbyId: string,

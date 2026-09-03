@@ -9,13 +9,18 @@ import {
 import { bridgifyObject, close, update, watchMethod } from 'yaob'
 
 import {
+  EdgeParsedWalletShareUri,
   EdgePendingWalletShare,
   EdgeWalletInfo,
   EdgeWalletShareMode,
   EdgeWalletShareOptions,
+  EdgeWalletShareRecord,
   EdgeWalletShareSpec,
+  EdgeWalletSharingState,
+  EdgeWalletStates,
   JsonObject
 } from '../../types/types'
+import { changeWalletStates } from '../account/account-files'
 import { walletCanSign } from '../currency/wallet/currency-wallet-api'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import {
@@ -27,13 +32,63 @@ import { makeLocalDisklet } from '../storage/repo'
 import { makeWalletShareKeysKit } from './keys'
 import { fetchLobbyRequest, makeLobby, sendLobbyReply } from './lobby'
 import { applyKit, decryptChildKey } from './login'
-import { getStashById } from './login-selectors'
 import { asEdgeWalletInfo, wasEdgeWalletInfo } from './login-types'
 
 export const REQUEST_WALLETS_URI_PREFIX =
   'https://deep.edge.app/request-wallets/'
-export const SHARE_WALLETS_URI_PREFIX =
-  'https://deep.edge.app/share-wallets/'
+export const SHARE_WALLETS_URI_PREFIX = 'https://deep.edge.app/share-wallets/'
+
+/**
+ * Builds the link to show as a QR code.
+ *
+ * The identity rides in the link rather than the lobby request, because the
+ * login server keeps only `publicKey`, `timeout` and `loginRequest.appId` and
+ * discards everything else. Putting it here also keeps the name off the
+ * server entirely: it travels in the QR, to the one person looking at it.
+ */
+export function makeWalletShareUri(
+  direction: 'request' | 'offer',
+  lobbyId: string,
+  displayName?: string
+): string {
+  const prefix =
+    direction === 'request'
+      ? REQUEST_WALLETS_URI_PREFIX
+      : SHARE_WALLETS_URI_PREFIX
+  const suffix =
+    displayName == null || displayName === ''
+      ? ''
+      : `?name=${encodeURIComponent(displayName)}`
+  return `${prefix}${lobbyId}${suffix}`
+}
+
+/**
+ * Takes a wallet-share link apart. Accepts the `https://deep.edge.app` form
+ * and the `edge://` scheme, with or without a `name` parameter.
+ */
+export function parseWalletShareUri(uri: string): EdgeParsedWalletShareUri {
+  const match =
+    /^(?:https:\/\/deep\.edge\.app\/|edge:\/\/)(request-wallets|share-wallets)\/([^/?#]+)(\?[^#]*)?/.exec(
+      uri.trim()
+    )
+  if (match == null) {
+    throw new SyntaxError(`Not a wallet share link: ${uri}`)
+  }
+  const [, path, lobbyId, query = ''] = match
+
+  let displayName: string | undefined
+  const nameMatch = /[?&]name=([^&]*)/.exec(query)
+  if (nameMatch != null) {
+    displayName = decodeURIComponent(nameMatch[1].replace(/\+/g, ' '))
+    if (displayName === '') displayName = undefined
+  }
+
+  return {
+    direction: path === 'request-wallets' ? 'request' : 'offer',
+    lobbyId,
+    displayName
+  }
+}
 
 /** A shared wallet's key material plus the mode it was shared in. */
 export interface WalletShareEntry extends EdgeWalletInfo {
@@ -42,6 +97,7 @@ export interface WalletShareEntry extends EdgeWalletInfo {
 
 export interface WalletSharePayload {
   version: 1
+  /** The sharer's chosen identity, shown to the receiver. */
   senderName?: string
   wallets: WalletShareEntry[]
 }
@@ -49,6 +105,8 @@ export interface WalletSharePayload {
 export interface WalletShareHandshake {
   version: 1
   lobbyId: string
+  /** The receiver's chosen identity, shown to the sharer. */
+  displayName?: string
 }
 
 export const asWalletShareEntry = asObject<WalletShareEntry>({
@@ -64,7 +122,8 @@ export const asWalletSharePayload = asObject<WalletSharePayload>({
 
 export const asWalletShareHandshake = asObject<WalletShareHandshake>({
   version: asValue(1),
-  lobbyId: asString
+  lobbyId: asString,
+  displayName: asOptional(asString)
 })
 
 const wasWalletSharePayload = uncleaner(asWalletSharePayload)
@@ -87,7 +146,8 @@ type WritablePendingWalletShare = {
 function makePendingShare(
   lobbyId: string,
   uri: string,
-  cancelRequest: () => Promise<void>
+  cancelRequest: () => Promise<void>,
+  counterpartyName?: string
 ): WritablePendingWalletShare {
   return {
     id: lobbyId,
@@ -97,8 +157,56 @@ function makePendingShare(
     state: 'pending',
     receivedWalletIds: undefined,
     sharedWallets: undefined,
+    counterpartyName,
     error: undefined
   }
+}
+
+/**
+ * Appends share records to the wallets' sharing history in the account repo.
+ *
+ * A repeat of a share we already recorded - same party, same capability -
+ * adds nothing, so re-scanning a QR does not pad the audit trail.
+ */
+async function recordShares(
+  ai: ApiInput,
+  accountId: string,
+  side: 'sharedWith' | 'sharedFrom',
+  specs: EdgeWalletShareSpec[],
+  name: string
+): Promise<void> {
+  const { walletStates } = ai.props.state.accounts[accountId]
+  const sharingDate = new Date().toISOString()
+
+  const newStates: EdgeWalletStates = {}
+  for (const { walletId, mode } of specs) {
+    const old: EdgeWalletSharingState = walletStates[walletId]?.sharing ?? {
+      sharedWith: [],
+      sharedFrom: []
+    }
+    const records = old[side]
+    if (
+      records.some(record => record.name === name && record.shareType === mode)
+    ) {
+      continue
+    }
+    const record: EdgeWalletShareRecord = {
+      name,
+      shareType: mode,
+      sharingDate
+    }
+    newStates[walletId] = {
+      ...walletStates[walletId],
+      sharing: {
+        sharedWith: [...old.sharedWith],
+        sharedFrom: [...old.sharedFrom],
+        [side]: [...records, record]
+      }
+    }
+  }
+
+  if (Object.keys(newStates).length === 0) return
+  await changeWalletStates(ai, accountId, newStates)
 }
 
 /**
@@ -136,7 +244,7 @@ async function buildSharedWalletInfo(
     }
   }
 
-  // View-only: storage keys + already-derived public keys.
+  // viewOnly: storage keys + already-derived public keys.
   const { syncKey, dataKey, imported } = info.keys
   if (typeof syncKey !== 'string' || typeof dataKey !== 'string') {
     throw new Error(`Wallet ${walletId} is missing sync storage keys`)
@@ -147,7 +255,7 @@ async function buildSharedWalletInfo(
   const publicInfo = await getPublicWalletInfo(info, disklet, tools)
   if (Object.keys(publicInfo.keys).length === 0) {
     throw new Error(
-      `Wallet ${walletId} has no public keys available for view-only sharing`
+      `Wallet ${walletId} has no public keys available for viewOnly sharing`
     )
   }
 
@@ -167,7 +275,8 @@ async function buildSharedWalletInfo(
 async function buildSharePayload(
   ai: ApiInput,
   accountId: string,
-  specs: EdgeWalletShareSpec[]
+  specs: EdgeWalletShareSpec[],
+  displayName?: string
 ): Promise<WalletSharePayload> {
   if (specs.length === 0) {
     throw new Error('Must share at least one wallet')
@@ -176,11 +285,9 @@ async function buildSharePayload(
   for (const { walletId, mode } of specs) {
     wallets.push(await buildSharedWalletInfo(ai, accountId, walletId, mode))
   }
-  const { sessionKey } = ai.props.state.accounts[accountId]
-  const { stashTree } = getStashById(ai, sessionKey.loginId)
   return {
     version: 1,
-    senderName: stashTree.username,
+    senderName: displayName,
     wallets
   }
 }
@@ -209,7 +316,7 @@ async function attachSharedWallets(
     if (mode === 'viewOnly') {
       if (!isViewOnlyWalletKeys(info.keys)) {
         throw new Error(
-          `Wallet share mode is view-only but wallet ${info.id} includes spend keys`
+          `Wallet share mode is viewOnly but wallet ${info.id} includes spend keys`
         )
       }
     } else if (!walletCanSign(info.keys)) {
@@ -219,16 +326,30 @@ async function attachSharedWallets(
     }
   }
 
-  const walletInfos = shared.map(entry => entry.info)
+  // A repeat share must never cost us capability. Wallets we already hold are
+  // only re-applied when the incoming keys can spend and ours cannot.
+  const existing = ai.props.state.accounts[accountId].allWalletInfosFull
+  const walletInfos = shared
+    .filter(({ info, mode }) => {
+      const old = existing.find(key => key.id === info.id)
+      if (old == null) return true
+      return mode === 'spend' && !walletCanSign(old.keys)
+    })
+    .map(entry => entry.info)
 
-  const { login, sessionKey, stashTree } = ai.props.state.accounts[accountId]
-  const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
-  await applyKit(
-    ai,
-    sessionKey,
-    makeWalletShareKeysKit(ai, childKey, walletInfos)
-  )
-  return walletInfos.map(info => info.id)
+  if (walletInfos.length > 0) {
+    const { login, sessionKey, stashTree } = ai.props.state.accounts[accountId]
+    const childKey = decryptChildKey(stashTree, sessionKey, login.loginId)
+    await applyKit(
+      ai,
+      sessionKey,
+      makeWalletShareKeysKit(ai, childKey, walletInfos)
+    )
+  }
+
+  // Report every wallet the sharer sent, including ones we already had, so
+  // the caller can show what the exchange covered.
+  return shared.map(entry => entry.info.id)
 }
 
 /**
@@ -288,15 +409,24 @@ export async function requestWalletShare(
     }
 
     for (const cleanup of cleanups) cleanup()
-    out.sharedWallets = payload.wallets.map(entry => ({
+    const specs = payload.wallets.map(entry => ({
       walletId: entry.id,
       mode: entry.mode
     }))
+    out.sharedWallets = specs
+    out.counterpartyName = payload.senderName
     out.error = undefined
     update(out)
 
     if (cancelled) return
     const receivedWalletIds = await attachSharedWallets(ai, accountId, payload)
+    await recordShares(
+      ai,
+      accountId,
+      'sharedFrom',
+      specs,
+      payload.senderName ?? ''
+    )
     if (cancelled) return
     out.state = 'done'
     out.receivedWalletIds = receivedWalletIds
@@ -316,7 +446,7 @@ export async function requestWalletShare(
 
   const out = makePendingShare(
     lobby.lobbyId,
-    `${REQUEST_WALLETS_URI_PREFIX}${lobby.lobbyId}`,
+    makeWalletShareUri('request', lobby.lobbyId, opts.displayName),
     cancelRequest
   )
   return bridgifyObject(out)
@@ -335,8 +465,13 @@ export async function offerWalletShare(
   ai.props.log.breadcrumb('offerWalletShare', {})
   let cancelled = false
 
-  // Build payload early so view-only guards fail before showing a QR.
-  const payload = await buildSharePayload(ai, accountId, specs)
+  // Build payload early so viewOnly guards fail before showing a QR.
+  const payload = await buildSharePayload(
+    ai,
+    accountId,
+    specs,
+    opts.displayName
+  )
   const replyData = wasWalletSharePayload(payload)
 
   async function cancelRequest(): Promise<void> {
@@ -373,11 +508,19 @@ export async function offerWalletShare(
     }
 
     for (const cleanup of cleanups) cleanup()
+    out.counterpartyName = handshake.displayName
     out.error = undefined
     update(out)
 
     const receiverLobby = await fetchLobbyRequest(ai, handshake.lobbyId)
     await sendLobbyReply(ai, handshake.lobbyId, receiverLobby, replyData)
+    await recordShares(
+      ai,
+      accountId,
+      'sharedWith',
+      specs,
+      handshake.displayName ?? ''
+    )
 
     if (cancelled) return
     out.state = 'done'
@@ -399,7 +542,7 @@ export async function offerWalletShare(
 
   const out = makePendingShare(
     lobby.lobbyId,
-    `${SHARE_WALLETS_URI_PREFIX}${lobby.lobbyId}`,
+    makeWalletShareUri('offer', lobby.lobbyId, opts.displayName),
     cancelRequest
   )
   return bridgifyObject(out)
@@ -412,17 +555,30 @@ export async function approveWalletShare(
   ai: ApiInput,
   accountId: string,
   lobbyId: string,
-  specs: EdgeWalletShareSpec[]
+  specs: EdgeWalletShareSpec[],
+  opts: EdgeWalletShareOptions = {}
 ): Promise<void> {
   ai.props.log.breadcrumb('approveWalletShare', {})
 
   const lobbyRequest = await fetchLobbyRequest(ai, lobbyId)
-  const payload = await buildSharePayload(ai, accountId, specs)
+  const payload = await buildSharePayload(
+    ai,
+    accountId,
+    specs,
+    opts.displayName
+  )
   await sendLobbyReply(
     ai,
     lobbyId,
     lobbyRequest,
     wasWalletSharePayload(payload)
+  )
+  await recordShares(
+    ai,
+    accountId,
+    'sharedWith',
+    specs,
+    opts.counterpartyName ?? ''
   )
 }
 
@@ -476,15 +632,24 @@ export async function acceptWalletShare(
     }
 
     for (const cleanup of cleanups) cleanup()
-    out.sharedWallets = payload.wallets.map(entry => ({
+    const specs = payload.wallets.map(entry => ({
       walletId: entry.id,
       mode: entry.mode
     }))
+    out.sharedWallets = specs
+    if (payload.senderName != null) out.counterpartyName = payload.senderName
     out.error = undefined
     update(out)
 
     if (cancelled) return
     const receivedWalletIds = await attachSharedWallets(ai, accountId, payload)
+    await recordShares(
+      ai,
+      accountId,
+      'sharedFrom',
+      specs,
+      payload.senderName ?? ''
+    )
     if (cancelled) return
     out.state = 'done'
     out.receivedWalletIds = receivedWalletIds
@@ -503,8 +668,9 @@ export async function acceptWalletShare(
 
   const out = makePendingShare(
     receiverLobby.lobbyId,
-    `${REQUEST_WALLETS_URI_PREFIX}${receiverLobby.lobbyId}`,
-    cancelRequest
+    makeWalletShareUri('request', receiverLobby.lobbyId),
+    cancelRequest,
+    opts.counterpartyName
   )
 
   // Handshake: tell the offer lobby where to send the encrypted payload.
@@ -516,7 +682,8 @@ export async function acceptWalletShare(
       offerRequest,
       wasWalletShareHandshake({
         version: 1,
-        lobbyId: receiverLobby.lobbyId
+        lobbyId: receiverLobby.lobbyId,
+        displayName: opts.displayName
       })
     )
   } catch (error: unknown) {

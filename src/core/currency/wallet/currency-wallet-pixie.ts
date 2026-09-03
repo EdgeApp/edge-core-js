@@ -15,6 +15,7 @@ import {
   EdgeCurrencyWallet,
   EdgeTokenMap,
   EdgeWalletInfo,
+  EdgeWalletSharingState,
   JsonObject
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
@@ -478,6 +479,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     let lastWalletSettings: JsonObject = initialWalletSettings
     let lastTokens: EdgeTokenMap = {}
     let lastEnabledTokenIds: string[] = initialTokenIds
+    let lastSharing: EdgeWalletSharingState | undefined
 
     return async () => {
       const { state, walletState, walletOutput } = input.props
@@ -486,11 +488,20 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       const { accountId, pluginId } = walletState
       const accountState = state.accounts[accountId]
 
+      // `sharingState` lives on the account, not the wallet, so the wallet
+      // state reference does not change when a share is recorded:
+      const sharing =
+        accountState?.walletStates[walletState.walletInfo.id]?.sharing
+
       // Update API object:
-      if (lastState !== walletState && walletApi != null) {
+      if (
+        (lastState !== walletState || lastSharing !== sharing) &&
+        walletApi != null
+      ) {
         update(walletApi)
       }
       lastState = walletState
+      lastSharing = sharing
 
       // Update engine settings:
       const userSettings =

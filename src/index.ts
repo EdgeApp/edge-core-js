@@ -19,6 +19,10 @@ export {
   lockEdgeCorePlugins,
   makeFakeIo
 } from './core/core'
+export {
+  makeWalletShareUri,
+  parseWalletShareUri
+} from './core/login/wallet-share'
 export * from './types/types'
 
 export function makeEdgeContext(

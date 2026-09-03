@@ -15,6 +15,7 @@ import { hmacSha256 } from '../../util/crypto/hashes'
 import { utf8 } from '../../util/encoding'
 import { changeWalletStates } from '../account/account-files'
 import { waitForCurrencyWallet } from '../currency/currency-selectors'
+import { walletCanSign } from '../currency/wallet/currency-wallet-api'
 import {
   findCurrencyPluginId,
   getCurrencyTools
@@ -292,6 +293,11 @@ export function decryptAllWalletInfos(
 
       // Copy the `imported` field from the raw keys if it exists
       imported: info.keys.imported,
+
+      // Whether *this account* can spend from the wallet. Two accounts can
+      // hold the same wallet id at different capabilities, so this belongs
+      // here, next to the keys this account actually has:
+      viewOnly: !walletCanSign(info.keys),
 
       // Actual info:
       ...walletStates[info.id],

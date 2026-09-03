@@ -4,7 +4,8 @@ import {
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  asValue
 } from 'cleaners'
 
 import { asBase16 } from '../../types/server-cleaners'
@@ -51,13 +52,30 @@ export const asLegacyWalletFile = asObject({
 /**
  * An Edge wallet state file. The keys are stored in the login server.
  */
+/** One party's side of a single share. */
+export const asWalletShareRecord = asObject({
+  name: asString,
+  shareType: asValue('viewOnly', 'spend'),
+  sharingDate: asString
+})
+
+/**
+ * A wallet's sharing history. Rides in the wallet state file so it syncs to
+ * the user's other devices alongside the sort order.
+ */
+export const asWalletSharingState = asObject({
+  sharedWith: asOptional(asArray(asWalletShareRecord), () => []),
+  sharedFrom: asOptional(asArray(asWalletShareRecord), () => [])
+})
+
 export const asWalletStateFile = asObject({
   id: asString,
   archived: asOptional(asBoolean),
   deleted: asOptional(asBoolean),
   hidden: asOptional(asBoolean),
   migratedFromWalletId: asOptional(asString),
-  sortIndex: asOptional(asNumber)
+  sortIndex: asOptional(asNumber),
+  sharing: asOptional(asWalletSharingState)
 })
 
 /**
