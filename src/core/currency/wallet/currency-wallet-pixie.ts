@@ -20,6 +20,7 @@ import {
 import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
 import { snooze } from '../../../util/snooze'
 import { makeTokenInfo } from '../../account/custom-tokens'
+import { Dispatch } from '../../actions'
 import { makeLog } from '../../log/log'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
@@ -84,6 +85,26 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     // (`input.props` goes stale at destroy, so it cannot tell us):
     let destroyed = false
 
+    // The engine-startup slot this wallet holds, if any. Kept at the
+    // pixie level so `destroy` can free it: the scheduler outlives a
+    // login, and a slot held through the old session's remaining
+    // awaits would make the next login queue behind dead work:
+    let releaseSlot: (() => void) | undefined
+
+    // Startup work that outlives a logout must not touch the next
+    // session: its pixie under the same wallet id would take this
+    // one's stale reads as its own, and the cache saver would then
+    // persist them. Every dispatch of the startup block goes through
+    // this, so a load that lands after `destroy` is dropped:
+    const dispatch: Dispatch = action =>
+      destroyed ? action : input.props.dispatch(action)
+    const startupInput: CurrencyWalletInput = {
+      ...input,
+      get props() {
+        return { ...input.props, dispatch }
+      }
+    }
+
     async function update(): Promise<unknown> {
       const { state, walletId, walletState } = input.props
       const { accountId, pluginId, walletInfo } = walletState
@@ -96,10 +117,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       if (state.accounts[accountId]?.bulkWalletSeedPending) {
         return
       }
-
-      let releaseSlot: (() => void) | undefined
       try {
-        const ai = toApiInput(input)
+        const ai = toApiInput(startupInput)
 
         // Load the UI-state cache before the storage-wallet sync,
         // so a previously-seen wallet can emit its API object right away.
@@ -111,8 +130,15 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           walletState.publicWalletInfo != null && walletState.nameLoaded
         if (!cacheSeeded) {
           const seed = await loadWalletCacheSeed(ai, walletId, accountId)
+
+          // A logout during that read destroys this pixie, and the next
+          // login runs a fresh one under the same wallet id. Seeding
+          // now would overwrite that session's name, fiat and token
+          // list with this one's stale read, and the repo sync below
+          // would re-add the storage wallet under it:
+          if (destroyed) return
           if (seed != null) {
-            input.props.dispatch({
+            dispatch({
               type: 'CURRENCY_WALLET_CACHE_LOADED',
               payload: { ...seed, walletId }
             })
@@ -163,7 +189,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
         // We need to know which transactions exist,
         // since new transactions may come in from the network:
-        await loadTxFileNames(input)
+        await loadTxFileNames(startupInput)
 
         // Derive the public keys. The cache seeding path already read
         // publicKey.json, so reuse that instead of a second disk read:
@@ -174,7 +200,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           tools,
           input.props.walletState.publicWalletInfo ?? undefined
         )
-        input.props.dispatch({
+        dispatch({
           type: 'CURRENCY_WALLET_PUBLIC_INFO',
           payload: { walletInfo: publicWalletInfo, walletId }
         })
@@ -182,15 +208,15 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         // Load the last seen transaction checkpoint into memory.
         // This also loads subscribed addresses from the same file.
         const { checkpoint: seenTxCheckpoint, subscribedAddresses } =
-          await loadSeenTxCheckpointFile(input)
+          await loadSeenTxCheckpointFile(startupInput)
 
         // We need to know which tokens are enabled,
         // so the engine can start in the right state:
-        await loadTokensFile(input)
+        await loadTokensFile(startupInput)
 
         const { hasWalletSettings = false } = walletState.currencyInfo
         if (hasWalletSettings) {
-          await loadWalletSettingsFile(input)
+          await loadWalletSettingsFile(startupInput)
         }
 
         // Master never started an engine before the account files were
@@ -267,7 +293,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             if (!otherMethodNames.includes(name)) otherMethodNames.push(name)
           }
         }
-        input.props.dispatch({
+        dispatch({
           type: 'CURRENCY_WALLET_OTHER_METHOD_NAMES_CHANGED',
           payload: { names: otherMethodNames, walletId }
         })
@@ -278,20 +304,20 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           engine.getBalance(parentCurrency)
         )
         if (balance != null) {
-          input.props.dispatch({
+          dispatch({
             type: 'CURRENCY_ENGINE_CHANGED_BALANCE',
             payload: { balance, tokenId: null, walletId }
           })
         }
         const height = engine.getBlockHeight()
-        input.props.dispatch({
+        dispatch({
           type: 'CURRENCY_ENGINE_CHANGED_HEIGHT',
           payload: { height, walletId }
         })
         if (engine.getStakingStatus != null) {
           await engine.getStakingStatus().then(
             stakingStatus => {
-              input.props.dispatch({
+              dispatch({
                 type: 'CURRENCY_ENGINE_CHANGED_STAKING',
                 payload: { stakingStatus, walletId }
               })
@@ -301,12 +327,15 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         }
 
         // Load remaining data from disk:
-        await loadFiatFile(input)
-        await loadNameFile(input)
-        await loadAddressFiles(input)
+        await loadFiatFile(startupInput)
+        await loadNameFile(startupInput)
+        await loadAddressFiles(startupInput)
       } catch (error: unknown) {
+        // A logout mid-startup makes the remaining awaits fail for a
+        // wallet that no longer exists; that is teardown, not an error:
+        if (destroyed) return
         input.props.onError(error)
-        input.props.dispatch({
+        dispatch({
           type: 'CURRENCY_ENGINE_FAILED',
           payload: { error, walletId }
         })
@@ -324,6 +353,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       update,
       destroy() {
         destroyed = true
+        // Idempotent, so the startup block's own release stays the
+        // normal path and this only matters for a logout mid-startup:
+        if (releaseSlot != null) releaseSlot()
       }
     }
   },

@@ -28,18 +28,22 @@ export const walletCacheLoaderHooks: {
   onBulkSeed?: (walletIds: string[]) => void
   /** Receives each wallet id seeded by a pixie's fallback read. */
   onFallbackSeed?: (walletId: string) => void
+  /** Parks a pixie's fallback read on the seed it already found. */
+  fallbackSeedGate?: Promise<void>
 } = {}
 
 /**
- * The consolidated cache file each account booted from, kept for the
- * session. The account pixie reads that file once at boot, so a wallet
- * the bulk seed missed can be looked up here instead of re-reading both
- * slots (~2 x 105 KiB on a large account) per wallet. A wallet absent
- * from the booted file is absent from disk too: the saver only adds
- * entries for wallets that are already running, which never take the
- * fallback path. A miss is remembered as well (`undefined`), so a cold
- * login goes straight to the per-wallet files instead of re-reading
- * both missing slots per wallet.
+ * Each account's consolidated cache file, kept for the session. The
+ * account pixie reads that file once at boot, and the saver replaces
+ * the entry with each generation it writes, so a wallet the bulk seed
+ * missed looks its entry up here instead of re-reading both slots
+ * (~2 x 105 KiB on a large account) per wallet. Following the writes
+ * matters for a wallet created after boot and then archived: its entry
+ * exists only in the generations written since, and the per-wallet
+ * files the fallback reads next are no longer written at all. A miss
+ * is remembered as well (`undefined`), so a cold login goes straight to
+ * the per-wallet files instead of re-reading both missing slots per
+ * wallet, until the saver's first write fills the entry in.
  */
 const bootAccountCaches = new Map<string, AccountCacheFile | undefined>()
 
@@ -92,6 +96,18 @@ export function toWalletCacheSeed(cached: AccountCacheWallet): WalletCacheSeed {
  * per-wallet pair a pre-consolidation device still has on disk.
  */
 export async function loadWalletCacheSeed(
+  ai: ApiInput,
+  walletId: string,
+  accountId: string
+): Promise<WalletCacheSeed | undefined> {
+  const seed = await readWalletCacheSeed(ai, walletId, accountId)
+  if (walletCacheLoaderHooks.fallbackSeedGate != null) {
+    await walletCacheLoaderHooks.fallbackSeedGate
+  }
+  return seed
+}
+
+async function readWalletCacheSeed(
   ai: ApiInput,
   walletId: string,
   accountId: string

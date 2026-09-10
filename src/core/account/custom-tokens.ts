@@ -9,11 +9,12 @@ import {
   EdgeTokenMap
 } from '../../types/types'
 import { makeJsonFile } from '../../util/file-helpers'
+import { bumpEngineQueue } from '../currency/currency-selectors'
 import {
   getCurrencyTools,
   maybeFindCurrencyPluginId
 } from '../plugins/plugins-selectors'
-import { ApiInput } from '../root-pixie'
+import { ApiInput, RootProps } from '../root-pixie'
 import { getStorageWalletDisklet } from '../storage/storage-selectors'
 import { asCustomTokensFile, asGuiSettingsFile } from './account-cleaners'
 
@@ -51,8 +52,12 @@ export async function getTokenId(
     return await tools.getTokenId(token)
   }
 
-  // Find an engine (any engine) to validate our token:
-  const engine = findEngine(ai, pluginId)
+  // Find an engine (any engine) to validate our token. A wallet can
+  // exist before its engine does (a cache-seeded login), so wait for
+  // one of this plugin's wallets to start its engine rather than
+  // failing while the engines are still queued:
+  const engine =
+    findEngine(ai, pluginId) ?? (await waitForPluginEngine(ai, pluginId))
   if (engine == null) {
     throw new Error(
       'A wallet must exist before adding tokens to a legacy currency plugin'
@@ -161,6 +166,51 @@ export function findEngine(
       return walletOutput.engine
     }
   }
+}
+
+/**
+ * Waits for any of this plugin's wallets to have a running engine,
+ * moving one healthy wallet to the front of the startup queue.
+ * Returns undefined when the account has no wallet of this plugin, and
+ * rejects only once none of them can still start: a single failed
+ * engine must not fail the wait while another is still queued.
+ */
+async function waitForPluginEngine(
+  ai: ApiInput,
+  pluginId: string
+): Promise<EdgeCurrencyEngine | undefined> {
+  const pluginWalletIds = (props: RootProps): string[] => {
+    const { wallets } = props.state.currency
+    return Object.keys(wallets).filter(id => wallets[id].pluginId === pluginId)
+  }
+
+  const walletIds = pluginWalletIds(ai.props)
+  if (walletIds.length === 0) return
+  const healthyId = walletIds.find(
+    id => ai.props.state.currency.wallets[id].engineFailure == null
+  )
+  if (healthyId != null) bumpEngineQueue(ai, healthyId)
+
+  return await ai.waitFor(
+    (props: RootProps): EdgeCurrencyEngine | undefined => {
+      let failure: Error | undefined
+      let pending = 0
+      for (const walletId of pluginWalletIds(props)) {
+        const engine = props.output.currency.wallets[walletId]?.engine
+        if (engine != null) return engine
+        const { engineFailure } = props.state.currency.wallets[walletId]
+        if (engineFailure != null) failure = engineFailure
+        else ++pending
+      }
+      if (pending > 0) return
+      throw (
+        failure ??
+        new Error(
+          'A wallet must exist before adding tokens to a legacy currency plugin'
+        )
+      )
+    }
+  )
 }
 
 async function loadGuiTokens(
