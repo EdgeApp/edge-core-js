@@ -41,7 +41,7 @@ import {
   loadAccountCache,
   saveAccountCache
 } from './account-cache-file'
-import { AccountCacheWallet } from './account-cleaners'
+import { AccountCacheFile, AccountCacheWallet } from './account-cleaners'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files'
 import { AccountState, initialCustomTokens } from './account-reducer'
 import {
@@ -64,6 +64,15 @@ export type AccountProps = RootProps & {
 }
 
 export type AccountInput = PixieInput<AccountProps>
+
+/**
+ * The account cache saver's write chains, one per account (keyed by
+ * the account's local disklet id). Module-level so a write left in
+ * flight by a logout is still ahead of the next login's first save:
+ * that save reads the newest slot only after the old write has
+ * landed, and so never targets the slot the old write is filling.
+ */
+const cacheWriteChains = new Map<string, Promise<void>>()
 
 const accountPixie: TamePixie<AccountProps> = combinePixies({
   accountApi(input: AccountInput) {
@@ -398,12 +407,15 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     // disk on the first save. `undefined` means "not looked up yet":
     let nextSlot: number | undefined
 
-    // Every write goes through this one chain. `doSave` is async, so a
-    // throttle firing while a previous write is still in flight would
-    // otherwise let two saves read the same `nextSlot` and both write
-    // it, leaving the other slot two generations stale (and, on a
-    // platform whose writes are not atomic, interleaving in one file):
-    let writeChain: Promise<void> = Promise.resolve()
+    // Every write goes through one chain per account (keyed below by
+    // the account's local disklet id, in `cacheWriteChains`). `doSave`
+    // is async, so a throttle firing while a previous write is still
+    // in flight would otherwise let two saves read the same `nextSlot`
+    // and both write it, leaving the other slot two generations stale
+    // (and, on a platform whose writes are not atomic, interleaving in
+    // one file). The chain outlives this saver on purpose: a logout
+    // during a write cannot cancel the write, so the next login's
+    // saver waits behind it before resolving its own starting slot.
 
     // Monotonic across writes, so a reader can tell the two slots
     // apart. Seeded from whichever generation is on disk:
@@ -429,6 +441,17 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       for (const walletId of accountState.activeWalletIds) {
         const walletState = state.currency.wallets[walletId]
         if (walletState == null) continue
+
+        // A wallet still loading its files is not written (see
+        // `collectWallets`), so its fields must not enter the stamp
+        // yet: a toggle made in that window would otherwise be
+        // stamped without being written, and a load that merges to
+        // the same list would never trigger the write that carries it:
+        const { fiatLoaded, nameLoaded, tokenFileEverLoaded } = walletState
+        if (!fiatLoaded || !nameLoaded || !tokenFileEverLoaded) {
+          stamp.push(null)
+          continue
+        }
         stamp.push(
           walletState.addresses,
           walletState.balanceMap,
@@ -458,11 +481,13 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       // archived (or simply not running this session) keeps its cached
       // boot state, the way its own file used to just sit on disk.
       // Entries for wallets the account no longer has are dropped, so
-      // this cannot grow without bound:
+      // this cannot grow without bound. The wallet list is the test,
+      // not `walletStates`, which only lists wallets with an explicit
+      // state and would drop a plain wallet that is merely not loaded:
       const wallets: { [walletId: string]: AccountCacheWallet } = {}
       for (const walletId of Object.keys(lastWallets)) {
-        const walletState = accountState.walletStates[walletId]
-        if (walletState == null || walletState.deleted === true) continue
+        if (accountState.walletInfos[walletId] == null) continue
+        if (accountState.walletStates[walletId]?.deleted === true) continue
         wallets[walletId] = lastWallets[walletId]
       }
 
@@ -472,10 +497,17 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
         // Skip a wallet that has not finished loading its
         // authoritative files, so a cold start never caches
-        // placeholder values (the per-wallet saver's old guard):
-        const { fiatLoaded, nameLoaded, publicWalletInfo, tokenFileLoaded } =
-          walletState
-        if (!fiatLoaded || !nameLoaded || !tokenFileLoaded) continue
+        // placeholder values (the per-wallet saver's old guard). The
+        // token-file flag is the sticky one, so a resync, which clears
+        // `tokenFileLoaded` but keeps the enabled list, does not
+        // freeze this wallet's entry for the rest of the session:
+        const {
+          fiatLoaded,
+          nameLoaded,
+          publicWalletInfo,
+          tokenFileEverLoaded
+        } = walletState
+        if (!fiatLoaded || !nameLoaded || !tokenFileEverLoaded) continue
         if (publicWalletInfo == null) continue
 
         const balances: { [tokenId: string]: string } = {}
@@ -552,8 +584,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         }
 
         const wallets = collectWallets()
-        const startMs = Date.now()
-        nextSlot = await saveAccountCache(disklet, nextSlot, {
+        const file: AccountCacheFile = {
           version: 2,
           sequence: ++sequence,
           customTokens: snapshot.customTokens,
@@ -561,7 +592,14 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           walletStates: snapshot.walletStates,
           configOtherMethodNames,
           wallets
-        })
+        }
+        const startMs = Date.now()
+        nextSlot = await saveAccountCache(disklet, nextSlot, file)
+
+        // A wallet activated later this session seeds from the memo,
+        // so it has to follow the disk. A wallet created after boot
+        // has no entry anywhere else once it is archived:
+        rememberAccountCache(accountId, file)
 
         // The write is this design's whole cost, and it is invisible
         // from the outside. The saver's throttle bounds this to one
@@ -616,8 +654,13 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
         timer = setTimeout(() => {
           timer = undefined
-          writeChain = writeChain.then(doSave, doSave)
-          writeChain.catch(error => input.props.onError(error))
+          const key = accountState.accountWalletInfo.id
+          const chain = (cacheWriteChains.get(key) ?? Promise.resolve()).then(
+            doSave,
+            doSave
+          )
+          cacheWriteChains.set(key, chain)
+          chain.catch(error => input.props.onError(error))
         }, accountCacheSaverConfig.throttleMs)
       },
 
