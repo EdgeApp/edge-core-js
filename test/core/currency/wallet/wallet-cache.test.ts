@@ -90,6 +90,8 @@ describe('wallet cache', function () {
     fakePluginTestConfig.freshAddressPatch = undefined
     fakePluginTestConfig.omitEngineOtherMethods = undefined
     fakePluginTestConfig.onEngineKill = undefined
+    fakePluginTestConfig.onEngineCreate = undefined
+    fakePluginTestConfig.builtinTokensGate = undefined
     fakePluginTestConfig.publicKeyCheckGate = undefined
     accountCacheSaverConfig.throttleMs = 50
   })
@@ -99,6 +101,8 @@ describe('wallet cache', function () {
     fakePluginTestConfig.freshAddressPatch = undefined
     fakePluginTestConfig.omitEngineOtherMethods = undefined
     fakePluginTestConfig.onEngineKill = undefined
+    fakePluginTestConfig.onEngineCreate = undefined
+    fakePluginTestConfig.builtinTokensGate = undefined
     fakePluginTestConfig.publicKeyCheckGate = undefined
     accountCacheSaverConfig.throttleMs = 5000
   })
@@ -315,6 +319,33 @@ describe('wallet cache', function () {
 
     unsubscribe()
     expect(errors).deep.equals([])
+  })
+
+  it('holds engine startup until the deferred account load lands', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // Hold the deferred account load open. The wallet still emits from
+    // cache, but its engine must not be built against account state
+    // that has not loaded: an engine created with empty `userSettings`
+    // opens connections before a privacy setting can apply.
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.builtinTokensGate = gate
+    const created: string[] = []
+    fakePluginTestConfig.onEngineCreate = id => created.push(id)
+
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    expect(wallet.name).equals('Cached Name')
+
+    await snooze(RACE_WAIT_MS)
+    expect(created).deep.equals([])
+
+    release()
+    await snooze(SAVE_WAIT_MS)
+    expect(created).contains(walletId)
+
+    await account.logout()
   })
 
   it('renameWallet during the cache window updates Redux and the cache file', async function () {

@@ -590,6 +590,43 @@ describe('write-path staleness', function () {
     accountCacheSaverConfig.throttleMs = 50
   }
 
+  it('a rename from another device applies after a local rename', async function () {
+    this.timeout(15000)
+    const { context, world, walletIds } = await makeAccountCachedWorld()
+    const [walletId] = walletIds
+
+    // Device A renames and pushes. The rename starts a new write
+    // generation, so only a load that begins after it can apply:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    await wallet.renameWallet('Local Name')
+    await wallet.sync()
+
+    // Device B pulls that name, renames again, and pushes:
+    const contextB = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { fakecoin: true }
+    })
+    const accountB = await contextB.loginWithPIN(
+      fakeUser.username,
+      fakeUser.pin
+    )
+    const walletB = await accountB.waitForCurrencyWallet(walletId)
+    await walletB.sync()
+    await pollUntilAsync(async () => walletB.name === 'Local Name')
+    await walletB.renameWallet('Remote Name')
+    await walletB.sync()
+    await accountB.logout()
+
+    // Device A's sync pulls the remote name. That load began after
+    // A's own write, so it applies instead of being held back as a
+    // stale read of the local rename:
+    await wallet.sync()
+    await pollUntilAsync(async () => wallet.name === 'Remote Name')
+    await account.logout()
+    await snooze(SAVE_WAIT_MS)
+  })
+
   it('keeps custom tokens from another device across a boot-window edit', async function () {
     this.timeout(15000)
     const { context, customTokenId } = await makeAccountCachedWorld()
