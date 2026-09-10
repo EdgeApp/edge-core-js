@@ -79,6 +79,7 @@ export interface CurrencyWalletState {
   readonly enabledTokensDirtyIds: string[]
   readonly tokenFileDirty: boolean
   readonly tokenFileLoaded: boolean
+  readonly tokenFileEverLoaded: boolean
   readonly walletSettings: JsonObject
   readonly walletSettingsGen: number
   readonly engineFailure: Error | null
@@ -301,6 +302,13 @@ const currencyWalletInner = buildReducer<
       default:
         return state
     }
+  },
+
+  tokenFileEverLoaded(state = false, action): boolean {
+    // Unlike `tokenFileLoaded`, a resync does not clear this: the
+    // enabled-token list survives the engine clear, so the account
+    // cache saver can keep writing the wallet afterwards:
+    return action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE' ? true : state
   },
 
   walletSettings(
