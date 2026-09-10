@@ -274,6 +274,22 @@ export interface EdgeFiatAmount {
   fiatAmount: string
 }
 
+/**
+ * How a swap was initiated, when it was not a plain swap between two of the
+ * user's own wallets. These flows all settle through a swap provider and keep
+ * every other field of `EdgeTxActionSwap`, so they stay swaps to existing
+ * consumers; what differs is how the user reached them and, for the private
+ * flavors, how much of the destination a UI may reveal.
+ *
+ * - `swapSend`: cross-asset send to an address the user entered.
+ * - `stealthSend`: same-asset send routed privately through the provider.
+ * - `stealthSwapSend`: cross-asset send routed privately.
+ */
+export type EdgeTxActionSwapType =
+  | 'swapSend'
+  | 'stealthSend'
+  | 'stealthSwapSend'
+
 export interface EdgeTxActionSwap {
   actionType: 'swap'
   swapInfo: EdgeSwapInfo
@@ -284,7 +300,23 @@ export interface EdgeTxActionSwap {
   fromAsset: EdgeAssetAmount
   toAsset: EdgeAssetAmount
   payoutAddress: string
-  payoutWalletId: string
+
+  /**
+   * Names a send-shaped swap flow. Absent for a normal wallet-to-wallet swap.
+   * A UI keyed on this can title the transaction for the flow the user
+   * actually ran, instead of inferring it from the presence of other fields.
+   */
+  swapType?: EdgeTxActionSwapType
+
+  /**
+   * The wallet that received the payout, for a normal wallet-to-wallet swap.
+   * Optional because a swap-to-address (private send) destination has no payout
+   * wallet; `payoutAddress` carries the destination in that case. GUI
+   * `savedAction` consumers that assume this is always present need a sweep
+   * before relying on it.
+   */
+  payoutWalletId?: string
+
   refundAddress?: string
 }
 
@@ -603,7 +635,14 @@ export interface EdgeTxSwap {
   payoutCurrencyCode: string
   payoutNativeAmount: string
   payoutTokenId?: EdgeTokenId
-  payoutWalletId: string
+
+  /**
+   * The wallet that received the payout, for a normal wallet-to-wallet swap.
+   * Optional because a swap-to-address (private send) destination has no
+   * payout wallet; `payoutAddress` carries the destination in that case.
+   */
+  payoutWalletId?: string
+
   refundAddress?: string
 }
 
@@ -1507,10 +1546,55 @@ export interface EdgeSwapInfo {
   readonly supportEmail: string
 }
 
+/**
+ * An address-only swap destination, used in place of a destination
+ * `toWallet` for "swap-to-address" (e.g. private send). The core builds a
+ * synthetic destination wallet from this descriptor, backed by the real
+ * `currencyConfig` for `toPluginId`, so swap plugins need no changes. The
+ * destination token is taken from the request's `toTokenId`, so it is not
+ * repeated here.
+ */
+export interface EdgeSwapToAddressInfo {
+  toPluginId: string
+  toAddress: string
+
+  /**
+   * Destination memos (e.g. an XRP destination tag) for memo-required payout
+   * chains. This descriptor field is only the GUI-to-core transport: swap
+   * plugins never read it. The core copies it onto the synthetic destination
+   * wallet, which exposes it through `getMemos` (see
+   * `EdgeSyntheticDestinationWallet`), so plugins consume destination memos
+   * through the wallet surface alone.
+   */
+  toMemos?: EdgeMemo[]
+}
+
+/**
+ * The extra surface a core-built synthetic destination wallet exposes on top
+ * of the `EdgeCurrencyWallet` members swap plugins normally read. Real
+ * wallets do not implement `getMemos`; plugins that support destination
+ * memos should detect it at runtime, such as:
+ * `const { getMemos } = toWallet as Partial<EdgeSyntheticDestinationWallet>`
+ */
+export interface EdgeSyntheticDestinationWallet extends EdgeCurrencyWallet {
+  readonly getMemos: () => Promise<EdgeMemo[]>
+}
+
 export interface EdgeSwapRequest {
   // Where?
   fromWallet: EdgeCurrencyWallet
-  toWallet: EdgeCurrencyWallet
+
+  /**
+   * The destination wallet for a normal wallet-to-wallet swap.
+   * Provide exactly one of `toWallet` or `toAddressInfo`.
+   */
+  toWallet?: EdgeCurrencyWallet
+
+  /**
+   * An address-only destination, as an alternative to `toWallet`.
+   * Provide exactly one of `toWallet` or `toAddressInfo`.
+   */
+  toAddressInfo?: EdgeSwapToAddressInfo
 
   // What?
   fromTokenId: EdgeTokenId
@@ -1519,6 +1603,15 @@ export interface EdgeSwapRequest {
   // How much?
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
+
+  /**
+   * Route privacy requirement. `'required'` means the quote must come from a
+   * route that keeps the sender unlinkable to the recipient. A plugin that
+   * cannot offer one must decline the request rather than answer with a
+   * transparent route, since a caller asking for privacy would otherwise get
+   * a downgrade it has no way to detect. Omitted means any route will do.
+   */
+  privacy?: 'required'
 }
 
 /**
@@ -1743,6 +1836,15 @@ export interface EdgeSwapRequestOptions {
   preferType?: EdgeSwapPluginType
   disabled?: EdgePluginMap<true>
   promoCodes?: EdgePluginMap<string>
+
+  /**
+   * Plugins to query even when the user has switched them off in their swap
+   * settings. For a feature that is powered by one specific provider rather
+   * than by the swap aggregator, the provider toggle is not the user's answer
+   * about that feature, so the caller can opt out of it for a single request.
+   * `disabled` still wins: an explicitly disabled plugin stays disabled.
+   */
+  forceEnabled?: EdgePluginMap<true>
 
   /**
    * If we have some quotes already, how long should we wait

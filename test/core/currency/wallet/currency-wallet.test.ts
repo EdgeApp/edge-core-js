@@ -610,7 +610,10 @@ describe('currency wallets', function () {
       }
     ])
     expect(txs[0].assetAction).deep.equals(assetAction)
-    expect(txs[0].savedAction).deep.equals(savedAction)
+    expect(txs[0].savedAction).deep.equals({
+      swapType: undefined,
+      ...savedAction
+    })
     expect(txs[0].swapData).deep.equals({
       orderUri: undefined,
       refundAddress: undefined,
