@@ -1,6 +1,7 @@
 import {
   EdgeAddress,
   EdgeBalanceMap,
+  EdgeStakingStatus,
   EdgeWalletInfo
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
@@ -34,4 +35,5 @@ export interface WalletCacheSeed {
   name: string | null
   otherMethodNames: string[]
   publicWalletInfo: EdgeWalletInfo
+  stakingStatus?: EdgeStakingStatus
 }
