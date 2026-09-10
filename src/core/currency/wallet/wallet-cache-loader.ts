@@ -1,7 +1,10 @@
 import { EdgeBalanceMap } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
 import { loadAccountCache } from '../../account/account-cache-file'
-import { AccountCacheWallet } from '../../account/account-cleaners'
+import {
+  AccountCacheFile,
+  AccountCacheWallet
+} from '../../account/account-cleaners'
 import { ApiInput } from '../../root-pixie'
 import { makeLocalDisklet } from '../../storage/repo'
 import { asPublicKeyFile, WalletCacheFile } from './currency-wallet-cleaners'
@@ -28,6 +31,29 @@ export const walletCacheLoaderHooks: {
 } = {}
 
 /**
+ * The consolidated cache file each account booted from, kept for the
+ * session. The account pixie reads that file once at boot, so a wallet
+ * the bulk seed missed can be looked up here instead of re-reading both
+ * slots (~2 x 105 KiB on a large account) per wallet. A wallet absent
+ * from the booted file is absent from disk too: the saver only adds
+ * entries for wallets that are already running, which never take the
+ * fallback path.
+ */
+const bootAccountCaches = new Map<string, AccountCacheFile>()
+
+export function rememberAccountCache(
+  accountId: string,
+  cache: AccountCacheFile | undefined
+): void {
+  if (cache == null) bootAccountCaches.delete(accountId)
+  else bootAccountCaches.set(accountId, cache)
+}
+
+export function forgetAccountCache(accountId: string): void {
+  bootAccountCaches.delete(accountId)
+}
+
+/**
  * Upgrades a validated `walletCache.json` balance table
  * to the `EdgeBalanceMap` shape the Redux slice uses.
  */
@@ -52,7 +78,8 @@ export function toWalletCacheSeed(cached: AccountCacheWallet): WalletCacheSeed {
     fiatCurrencyCode: cached.fiatCurrencyCode,
     name: cached.name,
     otherMethodNames: cached.otherMethodNames,
-    publicWalletInfo: cached.walletInfo
+    publicWalletInfo: cached.walletInfo,
+    stakingStatus: cached.stakingStatus
   }
 }
 
@@ -68,6 +95,13 @@ export async function loadWalletCacheSeed(
   walletId: string,
   accountId: string
 ): Promise<WalletCacheSeed | undefined> {
+  const booted = bootAccountCaches.get(accountId)
+  if (booted != null) {
+    const cached = booted.wallets[walletId]
+    if (cached != null) return toWalletCacheSeed(cached)
+    return await loadWalletFilesSeed(ai, walletId)
+  }
+
   const accountState = ai.props.state.accounts[accountId]
   if (accountState != null) {
     const { cache } = await loadAccountCache(
