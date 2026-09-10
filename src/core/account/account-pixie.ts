@@ -21,6 +21,8 @@ import { makePeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
 import {
   bulkLoadWalletCaches,
+  forgetAccountCache,
+  rememberAccountCache,
   seedWalletCachesFromAccount,
   walletCacheLoaderHooks
 } from '../currency/wallet/wallet-cache-loader'
@@ -140,6 +142,12 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           const { cache: accountCache } = await loadAccountCache(
             makeLocalDisklet(ai.props.io, accountWalletInfo.id)
           )
+
+          // Keep the parsed file for the session, so a wallet the bulk
+          // seed misses looks its entry up here instead of re-reading
+          // both slots:
+          rememberAccountCache(accountId, accountCache)
+
           if (accountCache != null && !accountCache.legacyWallets) {
             input.props.dispatch({
               type: 'ACCOUNT_CACHE_LOADED',
@@ -428,7 +436,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           walletState.fiat,
           walletState.name,
           walletState.otherMethodNames,
-          walletState.publicWalletInfo
+          walletState.publicWalletInfo,
+          walletState.stakingStatus
         )
       }
       return stamp
@@ -481,7 +490,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           enabledTokenIds: walletState.enabledTokenIds,
           balances,
           addresses: walletState.addresses,
-          otherMethodNames: walletState.otherMethodNames
+          otherMethodNames: walletState.otherMethodNames,
+          stakingStatus: walletState.stakingStatus
         }
       }
       return wallets
@@ -555,13 +565,17 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
         // The write is this design's whole cost, and it is invisible
         // from the outside. The saver's throttle bounds this to one
-        // line per `throttleMs`, the same volume as the `Login:`
-        // breadcrumbs above:
-        input.props.log.warn(
-          `Wallet cache: wrote generation ${sequence} with ${
-            Object.keys(wallets).length
-          } wallets in ${Date.now() - startMs}ms`
-        )
+        // line per `throttleMs`, but that runs for the whole session,
+        // so it ships at `info` and only a slow write earns `warn`:
+        const elapsedMs = Date.now() - startMs
+        const line = `Wallet cache: wrote generation ${sequence} with ${
+          Object.keys(wallets).length
+        } wallets in ${elapsedMs}ms`
+        if (elapsedMs > accountCacheSaverConfig.slowWriteMs) {
+          input.props.log.warn(line)
+        } else {
+          input.props.log(line)
+        }
         lastWallets = wallets
         failures = 0
         lastSaved = snapshot
@@ -609,6 +623,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
 
       destroy() {
         destroyed = true
+        forgetAccountCache(input.props.accountId)
         if (timer != null) clearTimeout(timer)
       }
     }
