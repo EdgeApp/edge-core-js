@@ -84,6 +84,12 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
     // (`input.props` goes stale at destroy, so it cannot tell us):
     let destroyed = false
 
+    // The engine-startup slot this wallet holds, if any. Kept at the
+    // pixie level so `destroy` can free it: the scheduler outlives a
+    // login, and a slot held through the old session's remaining
+    // awaits would make the next login queue behind dead work:
+    let releaseSlot: (() => void) | undefined
+
     async function update(): Promise<unknown> {
       const { state, walletId, walletState } = input.props
       const { accountId, pluginId, walletInfo } = walletState
@@ -96,8 +102,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       if (state.accounts[accountId]?.bulkWalletSeedPending) {
         return
       }
-
-      let releaseSlot: (() => void) | undefined
       try {
         const ai = toApiInput(input)
 
@@ -193,11 +197,34 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           await loadWalletSettingsFile(input)
         }
 
-        // Start the engine, reading the account state fresh: the
-        // deferred account file loads run in parallel with this block
-        // on a warm login, so an earlier snapshot could hand the
-        // engine stale settings or tokens:
-        const accountState = input.props.state.accounts[accountId]
+        // Master never started an engine before the account files were
+        // read. The warm path runs that load in parallel with this
+        // block, so wait for it here rather than reading whatever has
+        // landed: an engine created with `userSettings: {}` connects to
+        // its default servers before a `networkPrivacy` setting can
+        // apply, which is the leak that setting exists to prevent.
+        // The wait is local reads for a returning login, since
+        // `addStorageWallet` returns after a status read and syncs in
+        // the background, and the wallet list is already on screen.
+        const accountState = await ai.waitFor(props => {
+          const accountState = props.state.accounts[accountId]
+          if (accountState == null) {
+            throw new Error('The account was logged out')
+          }
+          if (
+            accountState.customTokensLoaded &&
+            accountState.pluginSettingsLoaded &&
+            accountState.builtinTokens[pluginId] != null
+          ) {
+            return accountState
+          }
+
+          // A terminal boot failure means the files never arrive.
+          // Failing the engine beats starting it with unknown
+          // privacy settings:
+          if (accountState.loadFailure != null) throw accountState.loadFailure
+        })
+
         const engine = await plugin.makeCurrencyEngine(publicWalletInfo, {
           callbacks: makeCurrencyWalletCallbacks(input),
 
@@ -282,6 +309,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         await loadNameFile(input)
         await loadAddressFiles(input)
       } catch (error: unknown) {
+        // A logout mid-startup makes the remaining awaits fail for a
+        // wallet that no longer exists; that is teardown, not an error:
+        if (destroyed) return
         input.props.onError(error)
         input.props.dispatch({
           type: 'CURRENCY_ENGINE_FAILED',
@@ -301,6 +331,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
       update,
       destroy() {
         destroyed = true
+        // Idempotent, so the startup block's own release stays the
+        // normal path and this only matters for a logout mid-startup:
+        if (releaseSlot != null) releaseSlot()
       }
     }
   },

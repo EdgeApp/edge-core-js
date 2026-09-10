@@ -47,10 +47,8 @@ import {
 import { compare } from '../../../util/compare'
 import { makeMetaTokens } from '../../account/custom-tokens'
 import { splitWalletInfo } from '../../login/splitting'
-import { asEdgeStorageKeys } from '../../login/storage-keys'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
-import { makeLocalDisklet, makeRepoPaths } from '../../storage/repo'
 import { makeStorageWalletApi } from '../../storage/storage-api'
 import {
   bumpEngineQueue,
@@ -151,23 +149,6 @@ export function makeCurrencyWalletApi(
     // repo is missing, a dead engine pixie means it is never coming.
     checkCurrencyWallet(props, walletId)
   })
-
-  // The storage-wallet state provides the disklets once the repo loads,
-  // but the wallet API can emit slightly earlier from the UI-state cache,
-  // so lazily build the identical disklets as a synchronous fallback:
-  let fallbackDisklets: { disklet: Disklet; localDisklet: Disklet } | undefined
-  function getFallbackDisklets(): { disklet: Disklet; localDisklet: Disklet } {
-    if (fallbackDisklets == null) {
-      const { io } = ai.props
-      const localDisklet = makeLocalDisklet(io, walletId)
-      bridgifyObject(localDisklet)
-      fallbackDisklets = {
-        disklet: makeRepoPaths(io, asEdgeStorageKeys(walletInfo.keys)).disklet,
-        localDisklet
-      }
-    }
-    return fallbackDisklets
-  }
 
   // Address queries that were answered from the cache before the
   // engine existed. Each one owes the caller a correction if the
@@ -307,9 +288,6 @@ export function makeCurrencyWalletApi(
       return walletInfo.created
     },
     get disklet(): Disklet {
-      if (input.props.state.storageWallets[walletId] == null) {
-        return getFallbackDisklets().disklet
-      }
       return storageWalletApi.disklet
     },
     get id(): string {
@@ -319,9 +297,6 @@ export function makeCurrencyWalletApi(
       return walletInfo.imported === true
     },
     get localDisklet(): Disklet {
-      if (input.props.state.storageWallets[walletId] == null) {
-        return getFallbackDisklets().localDisklet
-      }
       return storageWalletApi.localDisklet
     },
     get publicWalletInfo(): EdgeWalletInfo {
