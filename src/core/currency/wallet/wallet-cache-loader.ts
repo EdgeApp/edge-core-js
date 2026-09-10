@@ -37,16 +37,17 @@ export const walletCacheLoaderHooks: {
  * slots (~2 x 105 KiB on a large account) per wallet. A wallet absent
  * from the booted file is absent from disk too: the saver only adds
  * entries for wallets that are already running, which never take the
- * fallback path.
+ * fallback path. A miss is remembered as well (`undefined`), so a cold
+ * login goes straight to the per-wallet files instead of re-reading
+ * both missing slots per wallet.
  */
-const bootAccountCaches = new Map<string, AccountCacheFile>()
+const bootAccountCaches = new Map<string, AccountCacheFile | undefined>()
 
 export function rememberAccountCache(
   accountId: string,
   cache: AccountCacheFile | undefined
 ): void {
-  if (cache == null) bootAccountCaches.delete(accountId)
-  else bootAccountCaches.set(accountId, cache)
+  bootAccountCaches.set(accountId, cache)
 }
 
 export function forgetAccountCache(accountId: string): void {
@@ -95,9 +96,8 @@ export async function loadWalletCacheSeed(
   walletId: string,
   accountId: string
 ): Promise<WalletCacheSeed | undefined> {
-  const booted = bootAccountCaches.get(accountId)
-  if (booted != null) {
-    const cached = booted.wallets[walletId]
+  if (bootAccountCaches.has(accountId)) {
+    const cached = bootAccountCaches.get(accountId)?.wallets[walletId]
     if (cached != null) return toWalletCacheSeed(cached)
     return await loadWalletFilesSeed(ai, walletId)
   }
