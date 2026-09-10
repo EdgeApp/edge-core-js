@@ -327,6 +327,7 @@ export type RootAction =
         name: string | null
         otherMethodNames: string[]
         publicWalletInfo?: EdgeWalletInfo
+        stakingStatus?: EdgeStakingStatus
         walletId: string
       }
     }
@@ -360,8 +361,12 @@ export type RootAction =
       type: 'CURRENCY_WALLET_FIAT_CHANGED'
       payload: {
         fiatCurrencyCode: string
-        /** True when the value was read from disk, not set by a user. */
-        fromFile?: boolean
+        /**
+         * Set when the value was read from disk: the wallet's fiat
+         * write generation when that read began. Absent for a user
+         * change, which starts a new generation.
+         */
+        loadGen?: number
         walletId: string
       }
     }
@@ -414,8 +419,12 @@ export type RootAction =
       type: 'CURRENCY_WALLET_NAME_CHANGED'
       payload: {
         name: string | null
-        /** True when the value was read from disk, not set by a user. */
-        fromFile?: boolean
+        /**
+         * Set when the value was read from disk: the wallet's name
+         * write generation when that read began. Absent for a user
+         * change, which starts a new generation.
+         */
+        loadGen?: number
         walletId: string
       }
     }
@@ -444,6 +453,8 @@ export type RootAction =
   | {
       type: 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE'
       payload: {
+        /** The wallet's settings write generation when the read began. */
+        loadGen: number
         walletId: string
         walletSettings: JsonObject
       }

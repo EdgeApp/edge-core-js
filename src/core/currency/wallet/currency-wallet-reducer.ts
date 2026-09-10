@@ -79,19 +79,20 @@ export interface CurrencyWalletState {
   readonly enabledTokensDirtyIds: string[]
   readonly tokenFileDirty: boolean
   readonly tokenFileLoaded: boolean
+  readonly tokenFileEverLoaded: boolean
   readonly walletSettings: JsonObject
-  readonly walletSettingsDirty: boolean
+  readonly walletSettingsGen: number
   readonly engineFailure: Error | null
   readonly engineStarted: boolean
   readonly fiat: string
-  readonly fiatDirty: boolean
+  readonly fiatGen: number
   readonly fiatLoaded: boolean
   readonly fileNames: TxFileNames
   readonly files: TxFileJsons
   readonly gotTxs: Set<EdgeTokenId>
   readonly height: number
   readonly name: string | null
-  readonly nameDirty: boolean
+  readonly nameGen: number
   readonly nameLoaded: boolean
   readonly otherMethodNames: string[]
   readonly publicWalletInfo: EdgeWalletInfo | null
@@ -303,6 +304,13 @@ const currencyWalletInner = buildReducer<
     }
   },
 
+  tokenFileEverLoaded(state = false, action): boolean {
+    // Unlike `tokenFileLoaded`, a resync does not clear this: the
+    // enabled-token list survives the engine clear, so the account
+    // cache saver can keep writing the wallet afterwards:
+    return action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE' ? true : state
+  },
+
   walletSettings(
     state = initialWalletSettings,
     action,
@@ -311,10 +319,12 @@ const currencyWalletInner = buildReducer<
   ): JsonObject {
     switch (action.type) {
       case 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE':
-        // A user change made while the file load was reading the disk
-        // wins over the value the load saw (the change already wrote
-        // the file before dispatching):
-        if (prev.self?.walletSettingsDirty) return state
+        // A load that began before a user change read the disk too
+        // early, so the change wins (it wrote the file before
+        // dispatching). A load that began after it saw the write:
+        if (action.payload.loadGen !== (prev.self?.walletSettingsGen ?? 0)) {
+          return state
+        }
         return action.payload.walletSettings
       case 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS':
         return action.payload.walletSettings
@@ -323,14 +333,12 @@ const currencyWalletInner = buildReducer<
     }
   },
 
-  walletSettingsDirty(state = false, action): boolean {
-    switch (action.type) {
-      case 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS':
-        return true
-      case 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE':
-        return false
-    }
-    return state
+  walletSettingsGen(state = 0, action): number {
+    // Each user change starts a new generation, which is what tells
+    // a file load whether it began before or after the change:
+    return action.type === 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS'
+      ? state + 1
+      : state
   },
 
   engineFailure(state = null, action): Error | null {
@@ -355,22 +363,27 @@ const currencyWalletInner = buildReducer<
       case 'CURRENCY_WALLET_CACHE_LOADED':
         return action.payload.fiatCurrencyCode
 
-      case 'CURRENCY_WALLET_FIAT_CHANGED':
-        // A user change made while the file load was reading the disk
-        // wins over the value the load saw (the change already wrote
-        // the file before dispatching):
-        if (action.payload.fromFile === true && prev.self?.fiatDirty)
+      case 'CURRENCY_WALLET_FIAT_CHANGED': {
+        // A load that began before a user change read the disk too
+        // early, so the change wins (it wrote the file before
+        // dispatching). A load that began after it saw the write:
+        const { loadGen } = action.payload
+        if (loadGen != null && loadGen !== (prev.self?.fiatGen ?? 0)) {
           return state
+        }
         return action.payload.fiatCurrencyCode
+      }
     }
     return state
   },
 
-  fiatDirty(state = false, action): boolean {
-    if (action.type === 'CURRENCY_WALLET_FIAT_CHANGED') {
-      return action.payload.fromFile !== true
-    }
-    return state
+  fiatGen(state = 0, action): number {
+    // Each user change starts a new generation, which is what tells
+    // a file load whether it began before or after the change:
+    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' &&
+      action.payload.loadGen == null
+      ? state + 1
+      : state
   },
 
   fiatLoaded(state = false, action): boolean {
@@ -529,22 +542,27 @@ const currencyWalletInner = buildReducer<
       case 'CURRENCY_WALLET_CACHE_LOADED':
         return action.payload.name
 
-      case 'CURRENCY_WALLET_NAME_CHANGED':
-        // A user rename made while the file load was reading the disk
-        // wins over the value the load saw (the rename already wrote
-        // the file before dispatching):
-        if (action.payload.fromFile === true && prev.self?.nameDirty)
+      case 'CURRENCY_WALLET_NAME_CHANGED': {
+        // A load that began before a user rename read the disk too
+        // early, so the rename wins (it wrote the file before
+        // dispatching). A load that began after it saw the write:
+        const { loadGen } = action.payload
+        if (loadGen != null && loadGen !== (prev.self?.nameGen ?? 0)) {
           return state
+        }
         return action.payload.name
+      }
     }
     return state
   },
 
-  nameDirty(state = false, action): boolean {
-    if (action.type === 'CURRENCY_WALLET_NAME_CHANGED') {
-      return action.payload.fromFile !== true
-    }
-    return state
+  nameGen(state = 0, action): number {
+    // Each user rename starts a new generation, which is what tells
+    // a file load whether it began before or after the rename:
+    return action.type === 'CURRENCY_WALLET_NAME_CHANGED' &&
+      action.payload.loadGen == null
+      ? state + 1
+      : state
   },
 
   nameLoaded(state = false, action): boolean {
@@ -571,9 +589,17 @@ const currencyWalletInner = buildReducer<
   ),
 
   stakingStatus(state = { stakedAmounts: [] }, action): EdgeStakingStatus {
-    return action.type === 'CURRENCY_ENGINE_CHANGED_STAKING'
-      ? action.payload.stakingStatus
-      : state
+    switch (action.type) {
+      case 'CURRENCY_ENGINE_CHANGED_STAKING':
+        return action.payload.stakingStatus
+
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        // Last-known locked rows. Without them a cache-seeded wallet
+        // reports its whole cached balance as spendable until the
+        // engine reports the real stake:
+        return action.payload.stakingStatus ?? state
+    }
+    return state
   },
 
   txidHashes(state = {}, action) {
