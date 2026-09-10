@@ -159,6 +159,32 @@ describe('engine scheduler', function () {
     await account.logout()
   })
 
+  it('logout releases in-flight startup slots for the next login', async function () {
+    this.timeout(15000)
+    const { context, walletIds } = await makeMultiWalletWorld(2)
+
+    // One slot, held open inside the first wallet's engine creation:
+    engineSchedulerConfig.concurrency = 1
+    const created: string[] = []
+    fakePluginTestConfig.onEngineCreate = walletId => created.push(walletId)
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await pollUntil(() => created.length === 1)
+    await account.logout()
+
+    // The old session's startup is still parked on the gate. The next
+    // login must not wait behind it, so its first wallet reaches
+    // engine creation while the gate is still held:
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await pollUntil(() => created.length >= 2)
+    expect(walletIds).contains(created[1])
+
+    release()
+    await account2.logout()
+  })
+
   it('cold wallets skip the queue entirely', async function () {
     this.timeout(15000)
     const { context, walletIds } = await makeMultiWalletWorld(3)

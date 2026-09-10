@@ -62,6 +62,13 @@ export interface FakePluginTestConfig {
   omitEngineOtherMethods?: boolean
 
   /**
+   * If set, the plugin behaves like a legacy token plugin: its tools
+   * lack `getTokenId` and its engines take `addCustomToken`, so token
+   * validation has to go through a running engine.
+   */
+  legacyTokenPlugin?: boolean
+
+  /**
    * If set, `checkPublicKey` will wait for this promise to resolve.
    * The wallet pixie validates its cached public key between the
    * repo sync and the wallet file loads, so this gate makes "the
@@ -77,6 +84,12 @@ export interface FakePluginTestConfig {
   onEngineCreate?: (walletId: string) => void
 
   /**
+   * If set, engine creation for this one wallet id fails before any
+   * gate, so tests can hold one wallet failed while another is queued.
+   */
+  failEngineFor?: string
+
+  /**
    * If set, receives each wallet id as its engine is killed, so tests
    * can prove an engine created after teardown is not left running.
    */
@@ -88,8 +101,10 @@ export const fakePluginTestConfig: FakePluginTestConfig = {
   engineGate: undefined,
   freshAddressPatch: undefined,
   omitEngineOtherMethods: undefined,
+  legacyTokenPlugin: undefined,
   publicKeyCheckGate: undefined,
   onEngineCreate: undefined,
+  failEngineFor: undefined,
   onEngineKill: undefined
 }
 
@@ -186,6 +201,12 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
             return `testMethod called with: ${arg}`
           }
         }
+
+  // Present only when a test models a legacy token plugin:
+  get addCustomToken(): ((token: unknown) => Promise<void>) | undefined {
+    if (fakePluginTestConfig.legacyTokenPlugin !== true) return
+    return async () => {}
+  }
 
   constructor(
     walletInfo: EdgeWalletInfo,
@@ -461,9 +482,13 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
     return { fakeAddress: 'FakePublicAddress' }
   }
 
-  async getTokenId(token: EdgeToken): Promise<string> {
-    const { contractAddress } = asNetworkLocation(token.networkLocation)
-    return contractAddress.toLowerCase().replace(/^0x/, '')
+  // Absent when a test models a legacy token plugin:
+  get getTokenId(): ((token: EdgeToken) => Promise<string>) | undefined {
+    if (fakePluginTestConfig.legacyTokenPlugin === true) return
+    return async (token: EdgeToken): Promise<string> => {
+      const { contractAddress } = asNetworkLocation(token.networkLocation)
+      return contractAddress.toLowerCase().replace(/^0x/, '')
+    }
   }
 
   async getDisplayPrivateKey(
@@ -524,6 +549,9 @@ export function makeFakeCurrencyPlugin(
     ): Promise<EdgeCurrencyEngine> {
       if (fakePluginTestConfig.onEngineCreate != null) {
         fakePluginTestConfig.onEngineCreate(walletInfo.id)
+      }
+      if (fakePluginTestConfig.failEngineFor === walletInfo.id) {
+        throw new Error('Engine exploded')
       }
       if (fakePluginTestConfig.engineGate != null) {
         await fakePluginTestConfig.engineGate

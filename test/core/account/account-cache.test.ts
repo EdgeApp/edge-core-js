@@ -7,6 +7,7 @@ import {
   accountCacheSaverConfig
 } from '../../../src/core/account/account-cache-file'
 import { walletCacheLoaderHooks } from '../../../src/core/currency/wallet/wallet-cache-loader'
+import { fakeWorldTestConfig } from '../../../src/core/fake/fake-world'
 import {
   EdgeAccount,
   EdgeContext,
@@ -89,6 +90,25 @@ async function makeAccountCachedWorld(
   return { context, world, walletIds, customTokenId }
 }
 
+/**
+ * Returns the newest readable account-cache slot as parsed JSON. The
+ * cache alternates between two slots, so a test that wants to inspect
+ * what was actually written has to pick the current generation.
+ */
+async function readAccountCache(account: EdgeAccount): Promise<any> {
+  let best: any
+  for (const path of ACCOUNT_CACHE_FILES) {
+    try {
+      const parsed = JSON.parse(await account.localDisklet.getText(path))
+      if (best == null || (parsed.sequence ?? 0) > (best.sequence ?? 0)) {
+        best = parsed
+      }
+    } catch (error: unknown) {}
+  }
+  if (best == null) throw new Error('No readable account cache')
+  return best
+}
+
 describe('account cache', function () {
   beforeEach(function () {
     fakePluginTestConfig.builtinTokensGate = undefined
@@ -96,6 +116,8 @@ describe('account cache', function () {
     walletCacheLoaderHooks.onAccountSeed = undefined
     walletCacheLoaderHooks.onBulkSeed = undefined
     walletCacheLoaderHooks.onFallbackSeed = undefined
+    fakeWorldTestConfig.readGate = undefined
+    fakeWorldTestConfig.writeGate = undefined
     accountCacheSaverConfig.throttleMs = 50
   })
 
@@ -105,6 +127,8 @@ describe('account cache', function () {
     walletCacheLoaderHooks.onAccountSeed = undefined
     walletCacheLoaderHooks.onBulkSeed = undefined
     walletCacheLoaderHooks.onFallbackSeed = undefined
+    fakeWorldTestConfig.readGate = undefined
+    fakeWorldTestConfig.writeGate = undefined
     accountCacheSaverConfig.throttleMs = 5000
   })
 
@@ -589,6 +613,135 @@ describe('write-path staleness', function () {
     await account.logout()
     accountCacheSaverConfig.throttleMs = 50
   }
+
+  it('a rename from another device applies after a local rename', async function () {
+    this.timeout(15000)
+    const { context, world, walletIds } = await makeAccountCachedWorld()
+    const [walletId] = walletIds
+
+    // Device A renames and pushes. The rename starts a new write
+    // generation, so only a load that begins after it can apply:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    await wallet.renameWallet('Local Name')
+    await wallet.sync()
+
+    // Device B pulls that name, renames again, and pushes:
+    const contextB = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { fakecoin: true }
+    })
+    const accountB = await contextB.loginWithPIN(
+      fakeUser.username,
+      fakeUser.pin
+    )
+    const walletB = await accountB.waitForCurrencyWallet(walletId)
+    await walletB.sync()
+    await pollUntilAsync(async () => walletB.name === 'Local Name')
+    await walletB.renameWallet('Remote Name')
+    await walletB.sync()
+    await accountB.logout()
+
+    // Device A's sync pulls the remote name. That load began after
+    // A's own write, so it applies instead of being held back as a
+    // stale read of the local rename:
+    await wallet.sync()
+    await pollUntilAsync(async () => wallet.name === 'Remote Name')
+    await account.logout()
+    await snooze(SAVE_WAIT_MS)
+  })
+
+  it('a name load that began before a local rename is dropped', async function () {
+    this.timeout(15000)
+    const { context, world, walletIds } = await makeAccountCachedWorld()
+    const [walletId] = walletIds
+
+    // Device B renames and pushes, so device A's next sync reloads
+    // the name file:
+    const contextB = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { fakecoin: true }
+    })
+    const accountB = await contextB.loginWithPIN(
+      fakeUser.username,
+      fakeUser.pin
+    )
+    const walletB = await accountB.waitForCurrencyWallet(walletId)
+    await walletB.renameWallet('Remote Name')
+    await walletB.sync()
+    await accountB.logout()
+
+    // Device A pulls the change, but its name load is parked on the
+    // value it already read. A rename lands in that window:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    const { gate, release } = createEngineGate()
+    fakeWorldTestConfig.readGate = gate
+    await wallet.sync()
+    await snooze(RACE_WAIT_MS)
+    fakeWorldTestConfig.readGate = undefined
+    await wallet.renameWallet('Local Name')
+    expect(wallet.name).equals('Local Name')
+
+    // The parked load resolves with the remote name it read before
+    // the rename, and its generation is stale, so it does not apply:
+    release()
+    await snooze(RACE_WAIT_MS)
+    expect(wallet.name).equals('Local Name')
+    await account.logout()
+    await snooze(SAVE_WAIT_MS)
+  })
+
+  it('a cache write left in flight by a logout lands before the next login writes', async function () {
+    this.timeout(15000)
+    const { context } = await makeAccountCachedWorld()
+
+    // Session A's write is parked after the disk took it. Session B
+    // logs in and makes its own change while it is parked:
+    const accountA = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const walletA = await accountA.waitForCurrencyWallet(
+      accountA.activeWalletIds[0]
+    )
+    await snooze(SAVE_WAIT_MS)
+    const before = await readAccountCache(accountA)
+    await walletA.renameWallet('Session A Name')
+
+    // Park the cache write the rename triggers, once the throttle
+    // fires and the disk has taken it:
+    const { gate, release } = createEngineGate()
+    fakeWorldTestConfig.writeGate = gate
+    await snooze(RACE_WAIT_MS)
+    fakeWorldTestConfig.writeGate = undefined
+    await accountA.logout()
+
+    const accountB = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const walletB = await accountB.waitForCurrencyWallet(
+      accountB.activeWalletIds[0]
+    )
+    await walletB.renameWallet('Session B Name')
+    await snooze(RACE_WAIT_MS)
+
+    // B's first write waited behind A's, so the two generations land
+    // in different slots with consecutive sequence numbers, both
+    // newer than what A had written before the parked write:
+    release()
+    await snooze(SAVE_WAIT_MS)
+    const sequences: number[] = []
+    for (const path of ACCOUNT_CACHE_FILES) {
+      try {
+        const cache = JSON.parse(await accountB.localDisklet.getText(path))
+        sequences.push(cache.sequence)
+      } catch (error: unknown) {}
+    }
+    sequences.sort((a, b) => a - b)
+    expect(sequences.length).equals(2)
+    expect(sequences[0]).greaterThan(before.sequence)
+    expect(sequences[1]).equals(sequences[0] + 1)
+    const latest = await readAccountCache(accountB)
+    expect(latest.wallets[walletB.id].name).equals('Session B Name')
+    await accountB.logout()
+    await snooze(SAVE_WAIT_MS)
+  })
 
   it('keeps custom tokens from another device across a boot-window edit', async function () {
     this.timeout(15000)
