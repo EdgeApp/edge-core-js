@@ -5,10 +5,13 @@ import {
   ACCOUNT_CACHE_FILES,
   accountCacheSaverConfig
 } from '../../../../src/core/account/account-cache-file'
+import { walletCacheLoaderHooks } from '../../../../src/core/currency/wallet/wallet-cache-loader'
+import { fakeWorldTestConfig } from '../../../../src/core/fake/fake-world'
 import {
   EdgeAccount,
   EdgeContext,
   EdgeCurrencyWallet,
+  EdgeFakeWorld,
   makeFakeEdgeWorld
 } from '../../../../src/index'
 import { snooze } from '../../../../src/util/snooze'
@@ -31,6 +34,7 @@ const RACE_WAIT_MS = 150
 interface CachedWorld {
   context: EdgeContext
   walletId: string
+  world: EdgeFakeWorld
 }
 
 /**
@@ -51,6 +55,7 @@ async function makeCachedWorld(): Promise<CachedWorld> {
   const wallet = await account.waitForCurrencyWallet(walletInfo.id)
 
   await wallet.renameWallet('Cached Name')
+  await wallet.setFiatCurrencyCode('iso:USD')
   await wallet.changeEnabledTokenIds(['badf00d5'])
   await account.currencyConfig.fakecoin.changeUserSettings({
     balance: 12345,
@@ -61,7 +66,7 @@ async function makeCachedWorld(): Promise<CachedWorld> {
   await snooze(SAVE_WAIT_MS)
   await account.logout()
 
-  return { context, walletId: walletInfo.id }
+  return { context, walletId: walletInfo.id, world }
 }
 
 /**
@@ -93,6 +98,11 @@ describe('wallet cache', function () {
     fakePluginTestConfig.onEngineCreate = undefined
     fakePluginTestConfig.builtinTokensGate = undefined
     fakePluginTestConfig.publicKeyCheckGate = undefined
+    fakePluginTestConfig.legacyTokenPlugin = undefined
+    fakePluginTestConfig.failEngineFor = undefined
+    fakeWorldTestConfig.readGate = undefined
+    walletCacheLoaderHooks.fallbackSeedGate = undefined
+    walletCacheLoaderHooks.onFallbackSeed = undefined
     accountCacheSaverConfig.throttleMs = 50
   })
 
@@ -104,6 +114,11 @@ describe('wallet cache', function () {
     fakePluginTestConfig.onEngineCreate = undefined
     fakePluginTestConfig.builtinTokensGate = undefined
     fakePluginTestConfig.publicKeyCheckGate = undefined
+    fakePluginTestConfig.legacyTokenPlugin = undefined
+    fakePluginTestConfig.failEngineFor = undefined
+    fakeWorldTestConfig.readGate = undefined
+    walletCacheLoaderHooks.fallbackSeedGate = undefined
+    walletCacheLoaderHooks.onFallbackSeed = undefined
     accountCacheSaverConfig.throttleMs = 5000
   })
 
@@ -321,6 +336,29 @@ describe('wallet cache', function () {
     expect(errors).deep.equals([])
   })
 
+  it('logout during engine startup swallows a late startup failure', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // Park the startup block inside engine creation, log out, and
+    // then fail the creation: the wallet is gone, so the failure is
+    // teardown and must not surface as an error:
+    const { gate, fail } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+
+    const errors: unknown[] = []
+    const unsubscribe = context.on('error', error => errors.push(error))
+
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.waitForCurrencyWallet(walletId)
+    await account.logout()
+    fail(new Error('Engine exploded after logout'))
+    await snooze(250)
+
+    unsubscribe()
+    expect(errors).deep.equals([])
+  })
+
   it('holds engine startup until the deferred account load lands', async function () {
     this.timeout(15000)
     const { context, walletId } = await makeCachedWorld()
@@ -396,6 +434,254 @@ describe('wallet cache', function () {
     expect(wallet2.name).equals('Cached Name')
     release()
     await account2.logout()
+  })
+
+  it('caches a token toggle made before the token file loads', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // Park the startup block before its file loads, toggle a token
+    // on the cache-seeded wallet, and let the saver write once:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.publicKeyCheckGate = gate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    await wallet.changeEnabledTokenIds([])
+    await snooze(SAVE_WAIT_MS)
+
+    // The load lands and merges to the same list. That is a new write
+    // for the cache, which carried the pre-toggle entry until now:
+    release()
+    await snooze(SAVE_WAIT_MS)
+    const cache = await readAccountCache(account)
+    expect(cache.wallets[walletId].enabledTokenIds).deep.equals([])
+    await account.logout()
+  })
+
+  it('keeps the cache entry of a wallet whose files have not loaded', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // Park this wallet's startup before its file loads, so the saver
+    // skips it on every write of this session; the other wallet's
+    // loads still land and trigger writes:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.publicKeyCheckGate = gate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    expect(wallet.name).equals('Cached Name')
+    await snooze(SAVE_WAIT_MS)
+
+    // A skipped wallet keeps the entry it already had, even though it
+    // has no explicit entry in `walletStates`:
+    const cache = await readAccountCache(account)
+    expect(cache.wallets[walletId]?.name).equals('Cached Name')
+    release()
+    await account.logout()
+  })
+
+  it('keeps writing a wallet to the cache after a resync', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(walletId)
+    await snooze(SAVE_WAIT_MS)
+
+    // A resync clears the engine state, including `tokenFileLoaded`,
+    // but the wallet's enabled list and files are still loaded. A
+    // change made afterwards must still reach the cache:
+    await wallet.resyncBlockchain()
+    await wallet.renameWallet('After Resync')
+    await snooze(SAVE_WAIT_MS)
+    const cache = await readAccountCache(account)
+    expect(cache.wallets[walletId].name).equals('After Resync')
+    await account.logout()
+  })
+
+  it('adds a legacy-plugin token while the engines are still queued', async function () {
+    this.timeout(15000)
+    const { context } = await makeCachedWorld()
+
+    // A legacy plugin validates tokens through a running engine. On a
+    // warm login the wallets exist before their engines, so the add
+    // must wait for one instead of failing:
+    fakePluginTestConfig.legacyTokenPlugin = true
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.waitForAllWallets()
+
+    let settled = false
+    const pending = account.currencyConfig.fakecoin.addCustomToken({
+      currencyCode: 'LEGACY',
+      displayName: 'Legacy Token',
+      denominations: [{ multiplier: '100', name: 'LEGACY' }],
+      networkLocation: { contractAddress: '0x1e6ac7' }
+    })
+    pending.then(
+      () => (settled = true),
+      () => (settled = true)
+    )
+    await snooze(RACE_WAIT_MS)
+    expect(settled).equals(false)
+
+    release()
+    expect(await pending).equals('1e6ac7')
+    await account.logout()
+  })
+
+  it('a legacy-plugin token add skips a failed wallet for a queued one', async function () {
+    this.timeout(15000)
+    const { context } = await makeCachedWorld()
+
+    // The wait used to pick the plugin's first wallet. Learn which one
+    // that is, then fail its engine while the other wallet stays
+    // queued behind the gate:
+    const probe = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const [firstId] = probe.activeWalletIds
+    await probe.logout()
+
+    fakePluginTestConfig.legacyTokenPlugin = true
+    fakePluginTestConfig.failEngineFor = firstId
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.waitForAllWallets()
+    await snooze(RACE_WAIT_MS)
+
+    let settled = false
+    const pending = account.currencyConfig.fakecoin.addCustomToken({
+      currencyCode: 'LEGACY',
+      displayName: 'Legacy Token',
+      denominations: [{ multiplier: '100', name: 'LEGACY' }],
+      networkLocation: { contractAddress: '0x1e6ac7' }
+    })
+    pending.then(
+      () => (settled = true),
+      () => (settled = true)
+    )
+    await snooze(RACE_WAIT_MS)
+    expect(settled).equals(false)
+
+    release()
+    expect(await pending).equals('1e6ac7')
+    await account.logout()
+  })
+
+  it('a fallback read that outlives its logout does not seed the next session', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // A wallet created after boot and archived seeds through the
+    // fallback read when it comes back. Park session A's pixie on the
+    // seed it read, and log out with it parked:
+    const accountA = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await accountA.waitForCurrencyWallet(walletId)
+    const created = await accountA.createCurrencyWallet('wallet:fakecoin', {
+      fiatCurrencyCode: 'iso:USD',
+      name: 'Session A Name'
+    })
+    await snooze(SAVE_WAIT_MS)
+    await accountA.changeWalletStates({ [created.id]: { archived: true } })
+    await snooze(RACE_WAIT_MS)
+    const seeded: string[] = []
+    walletCacheLoaderHooks.onFallbackSeed = id => seeded.push(id)
+    const { gate, release } = createEngineGate()
+    walletCacheLoaderHooks.fallbackSeedGate = gate
+    await accountA.changeWalletStates({ [created.id]: { archived: false } })
+    await snooze(RACE_WAIT_MS)
+    walletCacheLoaderHooks.fallbackSeedGate = undefined
+    expect(seeded).deep.equals([])
+    await accountA.logout()
+
+    // Session B boots the wallet from the bulk seed and renames it.
+    // Session A's read then resumes into a destroyed pixie:
+    const accountB = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const walletB = await accountB.waitForCurrencyWallet(created.id)
+    await walletB.renameWallet('Session B Name')
+    release()
+    await snooze(RACE_WAIT_MS)
+    expect(walletB.name).equals('Session B Name')
+    expect(seeded).deep.equals([])
+    await accountB.logout()
+  })
+
+  it('startup loads that outlive a logout do not touch the next session', async function () {
+    this.timeout(15000)
+    const { context, walletId, world } = await makeCachedWorld()
+
+    // Session A boots from cache with its engine held, then parks its
+    // fiat-file load on the value it already read, and logs out:
+    const engine = createEngineGate()
+    fakePluginTestConfig.engineGate = engine.gate
+    const accountA = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const walletA = await accountA.waitForCurrencyWallet(walletId)
+    expect(walletA.fiatCurrencyCode).equals('iso:USD')
+    const disk = createEngineGate()
+    fakeWorldTestConfig.readGate = disk.gate
+    engine.release()
+    await snooze(RACE_WAIT_MS)
+    fakeWorldTestConfig.readGate = undefined
+    fakePluginTestConfig.engineGate = undefined
+    await accountA.logout()
+
+    // Another device changes the fiat code and pushes it:
+    const contextB = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { fakecoin: true }
+    })
+    const accountB = await contextB.loginWithPIN(
+      fakeUser.username,
+      fakeUser.pin
+    )
+    const walletB = await accountB.waitForCurrencyWallet(walletId)
+    await walletB.setFiatCurrencyCode('iso:EUR')
+    await walletB.sync()
+    await accountB.logout()
+
+    // The next session on this device pulls that change. Session A's
+    // parked load then resumes with the code it read before, under the
+    // same wallet id, and must not apply to this session:
+    const accountC = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const walletC = await accountC.waitForCurrencyWallet(walletId)
+    await walletC.sync()
+    for (let i = 0; i < 20 && walletC.fiatCurrencyCode !== 'iso:EUR'; ++i) {
+      await snooze(RACE_WAIT_MS)
+    }
+    expect(walletC.fiatCurrencyCode).equals('iso:EUR')
+    disk.release()
+    await snooze(RACE_WAIT_MS)
+    expect(walletC.fiatCurrencyCode).equals('iso:EUR')
+    await accountC.logout()
+  })
+
+  it('a wallet created after boot seeds from the cache when unarchived', async function () {
+    this.timeout(15000)
+    const { context, walletId } = await makeCachedWorld()
+
+    // Boot warm, then create a wallet the booted file never carried
+    // and let the saver write it into the next generation:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.waitForCurrencyWallet(walletId)
+    const created = await account.createCurrencyWallet('wallet:fakecoin', {
+      fiatCurrencyCode: 'iso:USD',
+      name: 'Born After Boot'
+    })
+    await snooze(SAVE_WAIT_MS)
+    await account.changeWalletStates({ [created.id]: { archived: true } })
+    await snooze(RACE_WAIT_MS)
+
+    // Unarchiving it with the engine held back has to emit the wallet
+    // from its cache entry, the same as a wallet the boot seeded:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    await account.changeWalletStates({ [created.id]: { archived: false } })
+    await snooze(RACE_WAIT_MS)
+    expect(account.currencyWallets[created.id]?.name).equals('Born After Boot')
+
+    release()
+    await account.logout()
   })
 
   it('rejects a corrupt cache file, falls back cold, and re-saves', async function () {
