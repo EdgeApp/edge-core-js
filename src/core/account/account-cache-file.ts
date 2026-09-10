@@ -32,7 +32,9 @@ export const accountCacheFile = {
  * Tests override the throttle to run quickly.
  */
 export const accountCacheSaverConfig = {
-  throttleMs: 5000
+  throttleMs: 5000,
+  /** A write slower than this logs at `warn` instead of `info`. */
+  slowWriteMs: 5000
 }
 
 /**

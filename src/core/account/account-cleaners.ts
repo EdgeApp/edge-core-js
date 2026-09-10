@@ -1,6 +1,7 @@
 import {
   asArray,
   asBoolean,
+  asDate,
   asEither,
   asNull,
   asNumber,
@@ -15,6 +16,7 @@ import { asBase16 } from '../../types/server-cleaners'
 import {
   EdgeDenomination,
   EdgePluginMap,
+  EdgeStakingStatus,
   EdgeToken,
   EdgeTokenMap,
   EdgeWalletState,
@@ -169,6 +171,14 @@ export interface AccountCacheWallet {
   }
 
   otherMethodNames: string[]
+
+  /**
+   * Last-known locked-stake rows. Cached for the same reason balances
+   * are: the GUI subtracts locked stake from the balance to show what
+   * is spendable, so serving a cached balance with an empty stake
+   * reports more available than the wallet has until the engine loads.
+   */
+  stakingStatus?: EdgeStakingStatus
 }
 
 const asEdgeWalletState = asObject<EdgeWalletState>({
@@ -184,6 +194,16 @@ const asCachedAddress = asObject({
   publicAddress: asString
 })
 
+const asCachedStakingStatus = asObject<EdgeStakingStatus>({
+  stakedAmounts: asArray(
+    asObject({
+      nativeAmount: asString,
+      unlockDate: asOptional(asDate),
+      otherParams: asOptional(asJsonObject)
+    })
+  )
+})
+
 const asAccountCacheWallet = asObject<AccountCacheWallet>({
   walletInfo: asObject({
     id: asString,
@@ -195,7 +215,8 @@ const asAccountCacheWallet = asObject<AccountCacheWallet>({
   enabledTokenIds: asArray(asString),
   balances: asObject(asIntegerString),
   addresses: asObject(asArray(asCachedAddress)),
-  otherMethodNames: asArray(asString)
+  otherMethodNames: asArray(asString),
+  stakingStatus: asOptional(asCachedStakingStatus)
 })
 
 export const asAccountCacheFile: Cleaner<AccountCacheFile> = asObject({
