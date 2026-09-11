@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- added: Warm logins render the account and wallet list from an account-level cache before any engine starts
+- added: Cached wallets start their engines through a limited-concurrency queue, with an opened wallet moved to the front
+- added: Cached receive addresses are served before the engine loads, with `addressChanged` emitted on a later mismatch
+- changed: `waitForCurrencyWallet` and `waitForAllWallets` resolve once the wallet object exists, possibly before its engine
+- changed: `wallet.otherMethods` exposes delegating stubs for cached method names before the engine exists
+- changed: `EdgeCurrencyWallet.balanceMap` keeps its identity when an unchanged balance is re-reported
+- changed: Account-level engine methods wait for the wallet's engine instead of throwing before it loads
+- fixed: Boot-window edits to custom tokens, enabled tokens, plugin settings and wallet states merge per field
+- fixed: Plugin-settings writes merge into the on-disk file instead of rebuilding it from memory
+
 ## 2.48.1 (2026-08-31)
 
 - fixed: Stop rebuilding the NYM mixFetch client on every request while its gateway is failing. Each attempt spawns a web worker holding megabytes of WASM that the library gives no way to terminate, so a poll loop retrying every few seconds exhausted the host's memory and killed the JS context, which on iOS reads to the user as being logged out. A failed setup now starts a cooldown that doubles up to five minutes.

@@ -38,10 +38,13 @@ export interface AccountState {
   readonly activeWalletIds: string[]
   readonly archivedWalletIds: string[]
   readonly hiddenWalletIds: string[]
+  readonly bulkWalletSeedPending: boolean
   readonly keysLoaded: boolean
   readonly legacyWalletInfos: EdgeWalletInfo[]
   readonly walletInfos: WalletInfoFullMap
   readonly walletStates: EdgeWalletStates
+  readonly walletStatesDirtyIds: string[]
+  readonly walletStatesLoaded: boolean
   readonly pauseWallets: boolean
 
   // Login stuff:
@@ -60,10 +63,16 @@ export interface AccountState {
   // Plugin stuff:
   readonly allTokens: EdgePluginMap<EdgeTokenMap>
   readonly builtinTokens: EdgePluginMap<EdgeTokenMap>
+  readonly configOtherMethodNames: EdgePluginMap<string[]>
   readonly customTokens: EdgePluginMap<EdgeTokenMap>
+  readonly customTokensDirtyIds: EdgePluginMap<string[]>
+  readonly customTokensLoaded: boolean
   readonly alwaysEnabledTokenIds: EdgePluginMap<string[]>
   readonly swapSettings: EdgePluginMap<SwapSettings>
+  readonly swapSettingsDirtyIds: string[]
   readonly userSettings: EdgePluginMap<object>
+  readonly userSettingsDirtyIds: string[]
+  readonly pluginSettingsLoaded: boolean
 }
 
 export interface AccountNext {
@@ -186,7 +195,10 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
   ),
 
   keysLoaded(state = false, action): boolean {
-    return action.type === 'ACCOUNT_KEYS_LOADED' ? true : state
+    return action.type === 'ACCOUNT_KEYS_LOADED' ||
+      action.type === 'ACCOUNT_CACHE_LOADED'
+      ? true
+      : state
   },
 
   legacyWalletInfos(state = [], action): EdgeWalletInfo[] {
@@ -206,11 +218,43 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     }
   ),
 
-  walletStates(state = {}, action): EdgeWalletStates {
-    return action.type === 'ACCOUNT_CHANGED_WALLET_STATES' ||
-      action.type === 'ACCOUNT_KEYS_LOADED'
-      ? action.payload.walletStates
-      : state
+  walletStates(state = {}, action, next, prev): EdgeWalletStates {
+    switch (action.type) {
+      case 'ACCOUNT_CACHE_LOADED':
+      case 'ACCOUNT_CHANGED_WALLET_STATES':
+        return action.payload.walletStates
+
+      case 'ACCOUNT_KEYS_LOADED': {
+        // User changes made while this load was reading the disk win
+        // over the values the load saw (the disk already has them,
+        // since `changeWalletStates` writes before it dispatches):
+        const dirtyIds = prev.self?.walletStatesDirtyIds ?? []
+        if (dirtyIds.length === 0) return action.payload.walletStates
+
+        const out = { ...action.payload.walletStates }
+        for (const id of dirtyIds) {
+          if (state[id] != null) out[id] = state[id]
+        }
+        return out
+      }
+    }
+    return state
+  },
+
+  walletStatesDirtyIds(state = [], action): string[] {
+    switch (action.type) {
+      case 'ACCOUNT_CHANGED_WALLET_STATES':
+        return [...state, ...action.payload.changedIds]
+
+      case 'ACCOUNT_KEYS_LOADED':
+        // The load has landed, and `walletStates` merged these ids:
+        return state.length === 0 ? state : []
+    }
+    return state
+  },
+
+  walletStatesLoaded(state = false, action): boolean {
+    return action.type === 'ACCOUNT_KEYS_LOADED' ? true : state
   },
 
   pauseWallets(state = false, action): boolean {
@@ -314,12 +358,46 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
 
   customTokens(
     state = initialCustomTokens,
-    action
+    action,
+    next,
+    prev
   ): EdgePluginMap<EdgeTokenMap> {
     switch (action.type) {
-      case 'ACCOUNT_CUSTOM_TOKENS_LOADED': {
+      case 'ACCOUNT_CACHE_LOADED': {
         const { customTokens } = action.payload
         return customTokens
+      }
+      case 'ACCOUNT_CUSTOM_TOKENS_LOADED': {
+        // Unsaved user edits win over the file we just loaded, but
+        // only for the token ids the user actually touched - the
+        // rest of the file may hold changes from another device.
+        // The edits stay dirty, so the tokenSaver writes them out:
+        const { customTokens } = action.payload
+        const dirtyIds = prev.self?.customTokensDirtyIds ?? {}
+        const dirtyPluginIds = Object.keys(dirtyIds).filter(
+          pluginId => dirtyIds[pluginId].length > 0
+        )
+        if (dirtyPluginIds.length === 0) return customTokens
+
+        const out = { ...customTokens }
+        for (const pluginId of dirtyPluginIds) {
+          const dirty = dirtyIds[pluginId]
+          const loaded = out[pluginId] ?? {}
+          const list: EdgeTokenMap = {}
+          for (const tokenId of Object.keys(loaded)) {
+            // A dirty id missing from our state was removed here:
+            if (dirty.includes(tokenId) && state[pluginId]?.[tokenId] == null) {
+              continue
+            }
+            list[tokenId] = loaded[tokenId]
+          }
+          for (const tokenId of dirty) {
+            const token = state[pluginId]?.[tokenId]
+            if (token != null) list[tokenId] = token
+          }
+          out[pluginId] = list
+        }
+        return out
       }
       case 'ACCOUNT_CUSTOM_TOKEN_ADDED': {
         const { pluginId, tokenId, token } = action.payload
@@ -345,6 +423,42 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return state
   },
 
+  configOtherMethodNames(state = {}, action): EdgePluginMap<string[]> {
+    // Cached plugin method names; the live plugin list wins whenever
+    // the plugins are loaded, so this only fills gaps:
+    return action.type === 'ACCOUNT_CACHE_LOADED'
+      ? action.payload.configOtherMethodNames
+      : state
+  },
+
+  customTokensDirtyIds(
+    state = {},
+    action,
+    next,
+    prev
+  ): EdgePluginMap<string[]> {
+    switch (action.type) {
+      case 'ACCOUNT_CUSTOM_TOKEN_ADDED':
+      case 'ACCOUNT_CUSTOM_TOKEN_REMOVED': {
+        // These actions might change the token list, so check for diffs:
+        if (next.self.customTokens === prev.self?.customTokens) return state
+        const { pluginId, tokenId } = action.payload
+        const ids = state[pluginId] ?? []
+        if (ids.includes(tokenId)) return state
+        return { ...state, [pluginId]: [...ids, tokenId] }
+      }
+
+      case 'ACCOUNT_CUSTOM_TOKENS_SAVED':
+        // The edits are on disk, so a future load will include them:
+        return Object.keys(state).length === 0 ? state : {}
+    }
+    return state
+  },
+
+  customTokensLoaded(state = false, action): boolean {
+    return action.type === 'ACCOUNT_CUSTOM_TOKENS_LOADED' ? true : state
+  },
+
   alwaysEnabledTokenIds(state = {}, action): EdgePluginMap<string[]> {
     switch (action.type) {
       case 'ACCOUNT_ALWAYS_ENABLED_TOKENS_CHANGED': {
@@ -355,10 +469,21 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return state
   },
 
-  swapSettings(state = {}, action): EdgePluginMap<SwapSettings> {
+  swapSettings(state = {}, action, next, prev): EdgePluginMap<SwapSettings> {
     switch (action.type) {
-      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
-        return action.payload.swapSettings
+      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED': {
+        // User changes win over the file we just loaded, but only
+        // for the plugin ids the user actually touched - the rest of
+        // the file may hold changes from another device. The changes
+        // wrote the file before dispatching, so nothing is unsaved:
+        const dirtyIds = prev.self?.swapSettingsDirtyIds ?? []
+        if (dirtyIds.length === 0) return action.payload.swapSettings
+        const out = { ...action.payload.swapSettings }
+        for (const pluginId of dirtyIds) {
+          if (state[pluginId] != null) out[pluginId] = state[pluginId]
+        }
+        return out
+      }
 
       case 'ACCOUNT_SWAP_SETTINGS_CHANGED': {
         const { pluginId, swapSettings } = action.payload
@@ -370,7 +495,7 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
     return state
   },
 
-  userSettings(state = {}, action): EdgePluginMap<object> {
+  userSettings(state = {}, action, next, prev): EdgePluginMap<object> {
     switch (action.type) {
       case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED': {
         const { pluginId, userSettings } = action.payload
@@ -379,8 +504,78 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
         return out
       }
 
+      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED': {
+        // User changes win over the file we just loaded, but only
+        // for the plugin ids the user actually touched - the rest of
+        // the file may hold changes from another device. The changes
+        // wrote the file before dispatching, so nothing is unsaved:
+        const dirtyIds = prev.self?.userSettingsDirtyIds ?? []
+        if (dirtyIds.length === 0) return action.payload.userSettings
+        const out = { ...action.payload.userSettings }
+        for (const pluginId of dirtyIds) {
+          if (state[pluginId] != null) out[pluginId] = state[pluginId]
+        }
+        return out
+      }
+    }
+    return state
+  },
+
+  pluginSettingsLoaded(state = false, action): boolean {
+    return action.type === 'ACCOUNT_PLUGIN_SETTINGS_LOADED' ? true : state
+  },
+
+  swapSettingsDirtyIds(state = [], action): string[] {
+    switch (action.type) {
+      case 'ACCOUNT_SWAP_SETTINGS_CHANGED': {
+        const { pluginId } = action.payload
+        return state.includes(pluginId) ? state : [...state, pluginId]
+      }
+
       case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
-        return action.payload.userSettings
+        // The load has landed, and `swapSettings` merged these ids:
+        return state.length === 0 ? state : []
+    }
+    return state
+  },
+
+  userSettingsDirtyIds(state = [], action): string[] {
+    switch (action.type) {
+      case 'ACCOUNT_PLUGIN_SETTINGS_CHANGED': {
+        const { pluginId } = action.payload
+        return state.includes(pluginId) ? state : [...state, pluginId]
+      }
+
+      case 'ACCOUNT_PLUGIN_SETTINGS_LOADED':
+        // The load has landed, and `userSettings` merged these ids:
+        return state.length === 0 ? state : []
+    }
+    return state
+  },
+
+  bulkWalletSeedPending(state = false, action): boolean {
+    switch (action.type) {
+      case 'ACCOUNT_CACHE_LOADED':
+        // The account pixie's bulk loader is about to read every
+        // wallet's cache files and seed them in a single dispatch;
+        // wallet pixies hold their own fallback reads until then:
+        return true
+
+      case 'CURRENCY_WALLETS_CACHE_LOADED':
+        return false
+
+      case 'ACCOUNT_KEYS_LOADED':
+        // Backstop: if the bulk loader somehow died, the authoritative
+        // load unwedges the wallet pixies (they fall back to their own
+        // reads):
+        return false
+
+      case 'ACCOUNT_LOAD_FAILED':
+        // The deferred load gave up, so the bulk seed is never coming.
+        // Clear the hold so the wallet pixies fall back to their own
+        // cache reads instead of wedging (never starting an engine or
+        // emitting an API object) for the life of the session:
+        return false
     }
     return state
   }
@@ -393,7 +588,8 @@ export const accountReducer = filterReducer<
   RootAction
 >(accountInner, (action, next) => {
   if (
-    /^ACCOUNT_/.test(action.type) &&
+    (/^ACCOUNT_/.test(action.type) ||
+      action.type === 'CURRENCY_WALLETS_CACHE_LOADED') &&
     'payload' in action &&
     typeof action.payload === 'object' &&
     'accountId' in action.payload &&

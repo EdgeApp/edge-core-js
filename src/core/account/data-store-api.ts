@@ -1,5 +1,5 @@
 import { asObject, asString } from 'cleaners'
-import { justFiles, justFolders } from 'disklet'
+import { Disklet, justFiles, justFolders } from 'disklet'
 import { bridgifyObject } from 'yaob'
 
 import { EdgeDataStore } from '../../types/types'
@@ -9,6 +9,7 @@ import {
   getStorageWalletDisklet,
   hashStorageWalletFilename
 } from '../storage/storage-selectors'
+import { waitForAccountRepo } from './account-files'
 
 /**
  * Each data store folder has a "Name.json" file with this format.
@@ -34,9 +35,16 @@ export function makeDataStoreApi(
   accountId: string
 ): EdgeDataStore {
   const { accountWalletInfo } = ai.props.state.accounts[accountId]
-  const disklet = getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
 
-  // Path manipulation:
+  // A cache-seeded login emits the account API object before the
+  // account's storage wallet exists, so resolve the disklet on
+  // demand instead of at construction time:
+  async function getDisklet(): Promise<Disklet> {
+    await waitForAccountRepo(ai, accountId)
+    return getStorageWalletDisklet(ai.props.state, accountWalletInfo.id)
+  }
+
+  // Path manipulation (only call once the storage wallet exists):
   const hashName = (data: string): string =>
     hashStorageWalletFilename(ai.props.state, accountWalletInfo.id, data)
   const getStorePath = (storeId: string): string =>
@@ -46,14 +54,17 @@ export function makeDataStoreApi(
 
   const out: EdgeDataStore = {
     async deleteItem(storeId: string, itemId: string): Promise<void> {
+      const disklet = await getDisklet()
       await disklet.delete(getItemPath(storeId, itemId))
     },
 
     async deleteStore(storeId: string): Promise<void> {
+      const disklet = await getDisklet()
       await disklet.delete(getStorePath(storeId))
     },
 
     async listItemIds(storeId: string): Promise<string[]> {
+      const disklet = await getDisklet()
       const itemIds: string[] = []
       const paths = justFiles(await disklet.list(getStorePath(storeId)))
       await Promise.all(
@@ -66,6 +77,7 @@ export function makeDataStoreApi(
     },
 
     async listStoreIds(): Promise<string[]> {
+      const disklet = await getDisklet()
       const storeIds: string[] = []
       const paths = justFolders(await disklet.list('Plugins'))
       await Promise.all(
@@ -78,6 +90,7 @@ export function makeDataStoreApi(
     },
 
     async getItem(storeId: string, itemId: string): Promise<string> {
+      const disklet = await getDisklet()
       const clean = await storeItemFile.load(
         disklet,
         getItemPath(storeId, itemId)
@@ -91,6 +104,8 @@ export function makeDataStoreApi(
       itemId: string,
       value: string
     ): Promise<void> {
+      const disklet = await getDisklet()
+
       // Set up the plugin folder, if needed:
       const namePath = `${getStorePath(storeId)}/Name.json`
       const clean = await storeIdFile.load(disklet, namePath)
