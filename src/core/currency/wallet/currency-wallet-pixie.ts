@@ -23,6 +23,7 @@ import { snooze } from '../../../util/snooze'
 import { makeTokenInfo } from '../../account/custom-tokens'
 import { Dispatch } from '../../actions'
 import { ensureWalletPrefix } from '../../db/plugin-tables'
+import { makeScratchDatabase } from '../../db/scratch-database'
 import { makeTxDatabase } from '../../db/tx-database-api'
 import { makeLog } from '../../log/log'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
@@ -763,13 +764,14 @@ async function makeWalletDatabase(
   const database = input.props.output.accounts[accountId]?.database
   if (database == null) return undefined
 
-  const { walletId } = input.props
+  const { io, walletId } = input.props
   const prefix = await ensureWalletPrefix(database.driver, walletId, pluginId)
   return makeTxDatabase({
     driver: database.driver,
     walletId,
     pluginId,
-    prefix
+    prefix,
+    makeScratch: async () => await makeScratchDatabase(io, pluginId)
   })
 }
 
