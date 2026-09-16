@@ -161,6 +161,14 @@ function buildWhere(query: EdgeAccountTxQuery, alias = ''): WhereClause {
     parts.push(`${at('fiat_amount')} <= ?`)
     params.push(query.maxFiatAmount)
   }
+  if (query.minBlockHeight != null) {
+    parts.push(`${at('block_height')} >= ?`)
+    params.push(query.minBlockHeight)
+  }
+  if (query.maxBlockHeight != null) {
+    parts.push(`${at('block_height')} <= ?`)
+    params.push(query.maxBlockHeight)
+  }
   if (query.hasMetadata != null) {
     parts.push(`${at('has_metadata')} = ?`)
     params.push(query.hasMetadata ? 1 : 0)
@@ -300,9 +308,11 @@ function buildPageQuery(query: EdgeAccountTxQuery): BuiltPage {
            ON c.wallet_id = i.wallet_id AND c.txid = i.txid
     WHERE ${where.sql}${keyset}
     ORDER BY i.${sortColumn} ${order}, i.txid ${order}, i.token_id ${order}
-    LIMIT ?`
+    LIMIT ?${query.offset != null ? ' OFFSET ?' : ''}`
 
-  return { sql, params: [...params, limit], sortColumn, direction, limit }
+  const tail: EdgeSqlValue[] =
+    query.offset != null ? [limit, query.offset] : [limit]
+  return { sql, params: [...params, ...tail], sortColumn, direction, limit }
 }
 
 /**
