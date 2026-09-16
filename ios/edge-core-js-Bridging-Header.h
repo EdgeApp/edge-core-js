@@ -2,3 +2,4 @@
 #import <React/RCTView.h>
 
 #include "crypto_scrypt.h"
+#include "edge-sql.h"

@@ -29,6 +29,22 @@ interface NativeMethods {
     p: number,
     dklen: number
   ) => Promise<string> // base64
+
+  // See android/src/main/cpp/edge-sql.h. `name` is a bare database name; the
+  // native side resolves it beside the disklet's own storage. Statements,
+  // parameters and rows all cross as JSON text, which is what keeps this
+  // surface a handful of methods wide instead of a value-marshalling protocol
+  // that iOS and Android could implement differently.
+  sqlOpen: (name: string, key64: string) => Promise<number>
+  sqlExec: (handle: number, statementsJson: string) => Promise<string>
+  sqlBatch: (handle: number, statementsJson: string) => Promise<string>
+  sqlQuery: (
+    handle: number,
+    sql: string,
+    paramsJson: string | undefined
+  ) => Promise<string>
+  sqlClose: (handle: number) => Promise<void>
+  sqlDelete: (name: string) => Promise<void>
 }
 
 export interface NativeBridge {
