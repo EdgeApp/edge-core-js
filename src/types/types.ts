@@ -903,6 +903,15 @@ export interface EdgeAccountTxQuery {
   hasMetadata?: boolean
 
   /**
+   * Free text, matched against the name, notes and category the user wrote.
+   *
+   * Matches anywhere inside a word, not only at its start. Three characters
+   * or more use the search index; shorter ones fall back to a scan of the
+   * indexed text, which is small.
+   */
+  searchString?: string
+
+  /**
    * Metadata rows with no chain data yet -- a transaction the user annotated
    * on another device that this one has not seen. Hidden by default.
    */
