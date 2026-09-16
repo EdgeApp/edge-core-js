@@ -431,12 +431,12 @@ function mirrorTxMeta(input: CurrencyWalletInput, writes: TxMetaWrite[]): void {
   const database = input.props.output.accounts[accountId]?.database
   if (database == null) return
 
-  saveTxMetas(
-    database.driver,
-    input.props.walletId,
-    currencyInfo.currencyCode,
-    writes
-  ).catch(error => input.props.onError(error))
+  const walletId = input.props.walletId
+  saveTxMetas(database.driver, walletId, currencyInfo.currencyCode, writes)
+    .then(() =>
+      database.changed(writes.map(write => ({ walletId, txid: write.txid })))
+    )
+    .catch(error => input.props.onError(error))
 }
 
 /**

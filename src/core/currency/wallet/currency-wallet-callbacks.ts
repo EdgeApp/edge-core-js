@@ -112,7 +112,13 @@ function writeToDatabase(
   saveTxs(
     database.driver,
     txs.map(tx => toEdgeTx(tx, pluginId))
-  ).catch(error => input.props.onError(error))
+  )
+    .then(() =>
+      database.changed(
+        txs.map(tx => ({ walletId: tx.walletId, txid: tx.txid }))
+      )
+    )
+    .catch(error => input.props.onError(error))
 }
 
 export function makeCurrencyWalletCallbacks(
