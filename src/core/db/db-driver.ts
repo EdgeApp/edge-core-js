@@ -1,3 +1,5 @@
+import { EdgeIo } from '../../types/types'
+
 /**
  * The internal SQL seam.
  *
@@ -61,4 +63,19 @@ export function makeSerializer(): <T>(task: () => Promise<T>) => Promise<T> {
     )
     return await out
   }
+}
+
+/**
+ * `EdgeIo` widened with the SQL capability. Platforms that cannot open a
+ * database leave these undefined, and the core keeps using its file-based
+ * storage.
+ */
+export interface EdgeInternalIo extends EdgeIo {
+  /**
+   * `key` is the 32-byte database key. It is a construction parameter rather
+   * than a field on the driver, so nothing downstream of this call -- which
+   * is everything in `src/core/db/` -- ever holds it.
+   */
+  makeSqlDriver?: (name: string, key: Uint8Array) => Promise<EdgeSqlDriver>
+  deleteSqlDatabase?: (name: string) => Promise<void>
 }

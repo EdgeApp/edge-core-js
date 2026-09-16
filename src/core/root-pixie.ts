@@ -1,11 +1,12 @@
 import { SyncClient } from 'edge-sync-client'
 import { combinePixies, PixieInput, ReduxProps, TamePixie } from 'redux-pixies'
 
-import { EdgeApiSigner, EdgeIo, EdgeLog } from '../types/types'
+import { EdgeApiSigner, EdgeLog } from '../types/types'
 import { AccountOutput, accounts } from './account/account-pixie'
 import { Dispatch } from './actions'
 import { context, ContextOutput } from './context/context-pixie'
 import { currency, CurrencyOutput } from './currency/currency-pixie'
+import { EdgeInternalIo } from './db/db-driver'
 import { LogBackend } from './log/log'
 import { RootState } from './root-reducer'
 import { scrypt, ScryptOutput } from './scrypt/scrypt-pixie'
@@ -22,7 +23,7 @@ export interface RootOutput {
 export interface RootProps extends ReduxProps<RootState, Dispatch> {
   readonly apiSigner?: EdgeApiSigner
   readonly close: () => void
-  readonly io: EdgeIo
+  readonly io: EdgeInternalIo
   readonly log: EdgeLog
   readonly logBackend: LogBackend
   readonly onError: (error: unknown) => void

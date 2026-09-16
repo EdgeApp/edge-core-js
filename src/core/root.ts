@@ -49,6 +49,7 @@ export async function makeContext(
     osVersion,
     plugins: pluginsInit = {},
     skipBlockHeight = false,
+    transactionDatabase = false,
     syncServer
   } = opts
   let { apiKey } = opts
@@ -150,6 +151,7 @@ export async function makeContext(
       logSettings,
       pluginsInit,
       skipBlockHeight,
+      transactionDatabase,
       stashes
     }
   })

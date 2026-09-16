@@ -10,16 +10,17 @@ import {
   makeContext,
   makeFakeWorld
 } from '../../core/core'
+import { EdgeInternalIo } from '../../core/db/db-driver'
 import { LogBackend, makeLog } from '../../core/log/log'
 import {
   EdgeFetchFunction,
   EdgeFetchOptions,
-  EdgeFetchResponse,
-  EdgeIo
+  EdgeFetchResponse
 } from '../../types/types'
 import { initMixFetch, mixFetchOptions } from '../../util/nym'
 import { hideProperties } from '../hidden-properties'
 import { makeNativeBridge } from './native-bridge'
+import { makeReactNativeSqlDriverFactory } from './react-native-sql-driver'
 import { WorkerApi, YAOB_THROTTLE_MS } from './react-native-types'
 
 // Tracks the status of different URI endpoints for the CORS bouncer:
@@ -96,7 +97,7 @@ function loadPlugins(pluginUris: string[]): void {
   }
 }
 
-async function makeIo(logBackend: LogBackend): Promise<EdgeIo> {
+async function makeIo(logBackend: LogBackend): Promise<EdgeInternalIo> {
   const log = makeLog(logBackend, 'react-native-io')
   const csprng = new HmacDRBG({
     hash: hashjs.sha256,
@@ -123,7 +124,9 @@ async function makeIo(logBackend: LogBackend): Promise<EdgeIo> {
     })
   }
 
-  const io: EdgeIo = {
+  const sql = makeReactNativeSqlDriverFactory(nativeBridge)
+
+  const io: EdgeInternalIo = {
     disklet: {
       delete(path) {
         return nativeBridge.call('diskletDelete', normalizePath(path))
@@ -230,7 +233,11 @@ async function makeIo(logBackend: LogBackend): Promise<EdgeIo> {
       opts: EdgeFetchOptions = {}
     ): Promise<EdgeFetchResponse> {
       return await io.fetch(uri, opts)
-    }
+    },
+
+    // SQL, which is internal to the core and not part of `EdgeIo`:
+    makeSqlDriver: sql.makeSqlDriver,
+    deleteSqlDatabase: sql.deleteSqlDatabase
   }
 
   return io
