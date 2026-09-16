@@ -42,6 +42,19 @@ interface EdgeSqlAddon {
 let addon: EdgeSqlAddon | null | undefined
 
 /**
+ * Where the built addon sits, relative to this file.
+ *
+ * Two entries because this file is read from two depths: `src/io/node` when a
+ * test runs it through sucrase, and `lib/node` once rollup has bundled it.
+ * A single relative path works in one and silently resolves outside the
+ * package in the other -- which is how a consumer, not a test, found this.
+ */
+const ADDON_PATHS = [
+  '../../../build/Release/edge_sql.node',
+  '../../build/Release/edge_sql.node'
+]
+
+/**
  * Loads the addon, once.
  *
  * Lazy and forgiving on purpose: React Native consumers never execute this
@@ -50,11 +63,15 @@ let addon: EdgeSqlAddon | null | undefined
  */
 function loadAddon(): EdgeSqlAddon | undefined {
   if (addon === undefined) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      addon = require('../../../build/Release/edge_sql.node')
-    } catch (error) {
-      addon = null
+    addon = null
+    for (const path of ADDON_PATHS) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        addon = require(path)
+        break
+      } catch (error) {
+        // Try the next depth.
+      }
     }
   }
   return addon ?? undefined
