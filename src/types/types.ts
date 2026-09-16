@@ -970,8 +970,19 @@ export interface EdgeBatchWrite {
  * because it never spells any table.
  */
 export interface EdgeTxDatabase {
+  /**
+   * Declares the tables this engine wants, and the paths it wants indexed.
+   *
+   * The only way a plugin gets storage. The core creates the tables; the
+   * plugin never names one.
+   */
+  defineTables: (spec: EdgeTableSpec) => Promise<void>
+
   /** Complete transactions, merged over whatever is stored. */
   saveTxs: (txs: EdgeTx[]) => Promise<void>
+
+  /** This wallet's transactions. Scoped from the handle, not the query. */
+  getTxs: (query?: EdgeAccountTxQuery) => Promise<EdgeTx[]>
 
   /** Rows by primary key, across as many tables as one call needs. */
   getRows: (requests: EdgeTableKeys[]) => Promise<EdgeTableRows[]>
@@ -1414,6 +1425,15 @@ export interface EdgeCurrencyEngineOptions {
   log: EdgeLog
   walletLocalDisklet: Disklet
   walletLocalEncryptedDisklet: Disklet
+
+  /**
+   * This wallet's own storage and its own transactions.
+   *
+   * Undefined where the platform has no database, or while the feature is
+   * off -- so an engine feature-detects rather than catching. This is the
+   * replacement for `walletLocalDisklet`, not a supplement to it.
+   */
+  txDatabase?: EdgeTxDatabase
 
   // User settings:
   customTokens: EdgeTokenMap
