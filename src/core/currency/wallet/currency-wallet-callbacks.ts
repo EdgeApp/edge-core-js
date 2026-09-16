@@ -19,6 +19,8 @@ import {
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
 import { enableTestMode, pushUpdate } from '../../../util/updateQueue'
+import { toEdgeTx } from '../../db/tx-convert'
+import { saveTxs } from '../../db/tx-writer'
 import {
   getStorageWalletLastChanges,
   hashStorageWalletFilename
@@ -86,6 +88,33 @@ function makeThrottledTxCallback(
 /**
  * Returns a callback structure suitable for passing to a currency engine.
  */
+/**
+ * Mirrors what an engine reported into the transaction database.
+ *
+ * This is the transitional path, and it is what lets plugins move one at a
+ * time: an engine that knows nothing about the database still populates it,
+ * because the core translates what it already reports. A plugin that writes
+ * `EdgeTx` directly will stop going through here.
+ *
+ * Deliberately not awaited. The database is a cache with a file-based
+ * fallback behind every read, so a write that fails is a slower next login,
+ * not a lost transaction -- and blocking the engine's callback on a disk
+ * write would make it one.
+ */
+function writeToDatabase(
+  input: CurrencyWalletInput,
+  txs: EdgeTransaction[]
+): void {
+  const { accountId, pluginId } = input.props.walletState
+  const database = input.props.output.accounts[accountId]?.database
+  if (database == null) return
+
+  saveTxs(
+    database.driver,
+    txs.map(tx => toEdgeTx(tx, pluginId))
+  ).catch(error => input.props.onError(error))
+}
+
 export function makeCurrencyWalletCallbacks(
   input: CurrencyWalletInput
 ): EdgeCurrencyEngineCallbacks {
@@ -424,6 +453,8 @@ export function makeCurrencyWalletCallbacks(
       })
       if (changed.length > 0) throttledOnTxChanged(changed)
       if (created.length > 0) throttledOnNewTx(created)
+
+      writeToDatabase(input, allTxs)
     },
     onTransactionsChanged(txs: EdgeTransaction[]) {
       out.onTransactions(
