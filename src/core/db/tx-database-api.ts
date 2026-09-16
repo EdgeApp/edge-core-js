@@ -1,5 +1,6 @@
 import {
   EdgeBatchWrite,
+  EdgeScratchDatabase,
   EdgeTableKeys,
   EdgeTableQuery,
   EdgeTableRows,
@@ -45,6 +46,15 @@ export interface TxDatabaseOptions {
   prefix: string
   /** What the plugin declared last time, if the core still knows. */
   spec?: EdgeTableSpec
+  /**
+   * Opens an isolated throwaway database. Absent where the platform cannot.
+   *
+   * A plugin sometimes needs storage for a wallet that is not the user's --
+   * sweeping a private key builds one, syncs it and drops it. It cannot share
+   * this database, because the imported key's transactions would land in the
+   * user's own history.
+   */
+  makeScratch?: () => Promise<EdgeScratchDatabase>
 }
 
 export function makeTxDatabase(opts: TxDatabaseOptions): EdgeTxDatabase {
@@ -55,6 +65,8 @@ export function makeTxDatabase(opts: TxDatabaseOptions): EdgeTxDatabase {
   let spec: EdgeTableSpec = opts.spec ?? { version: 0, tables: {} }
 
   const out: EdgeTxDatabase = {
+    ...(opts.makeScratch == null ? {} : { makeScratch: opts.makeScratch }),
+
     // The scoped view, not the base table: this is the only door a plugin has
     // onto the core's transactions.
     tx_chain: new EdgeTableHandle('tx_chain_scoped'),
