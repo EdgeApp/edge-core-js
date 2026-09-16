@@ -43,6 +43,16 @@ interface NativeMethods {
     sql: string,
     paramsJson: string | undefined
   ) => Promise<string>
+  /**
+   * Fences later statements to one plugin and one wallet. A null `pluginId`
+   * restores core access.
+   */
+  sqlSetScope: (
+    handle: number,
+    pluginId: string | null,
+    walletPrefix: string | null,
+    walletId: string | null
+  ) => Promise<void>
   sqlClose: (handle: number) => Promise<void>
   sqlDelete: (name: string) => Promise<void>
 }

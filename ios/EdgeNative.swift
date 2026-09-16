@@ -153,6 +153,17 @@ class EdgeNative {
         edgeSqlQuery(Int32(handle), sql, params, &error), &error, promise)
     }
 
+    if name == "sqlSetScope", let handle = args[0] as? Int {
+      var error: UnsafeMutablePointer<CChar>?
+      if edgeSqlSetScope(
+        Int32(handle), args[1] as? String, args[2] as? String,
+        args[3] as? String, &error) != 0
+      {
+        return promise.reject(takeError(&error, "Cannot scope the database"))
+      }
+      return promise.resolve(nil)
+    }
+
     if name == "sqlClose", let handle = args[0] as? Int {
       edgeSqlClose(Int32(handle))
       return promise.resolve(nil)
