@@ -153,6 +153,18 @@ class EdgeNative {
         edgeSqlQuery(Int32(handle), sql, params, &error), &error, promise)
     }
 
+    if name == "sqlAttach",
+      let handle = args[0] as? Int,
+      let database = args[1] as? String,
+      let alias = args[2] as? String
+    {
+      var error: UnsafeMutablePointer<CChar>?
+      if edgeSqlAttach(Int32(handle), databasePath(database), alias, &error) != 0 {
+        return promise.reject(takeError(&error, "Cannot attach the database"))
+      }
+      return promise.resolve(nil)
+    }
+
     if name == "sqlSetScope", let handle = args[0] as? Int {
       var error: UnsafeMutablePointer<CChar>?
       if edgeSqlSetScope(

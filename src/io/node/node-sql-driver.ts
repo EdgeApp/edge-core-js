@@ -7,6 +7,7 @@ import {
   EdgeSqlValue,
   makeSerializer
 } from '../../core/db/db-driver'
+import { RATE_DATABASE_NAME } from '../../core/db/rate-cache'
 
 /**
  * The Node implementation of the SQL seam.
@@ -29,6 +30,7 @@ interface EdgeSqlAddon {
   exec: (handle: number, statementsJson: string) => string
   batch: (handle: number, statementsJson: string) => string
   query: (handle: number, sql: string, paramsJson: string | null) => string
+  attach: (handle: number, path: string, alias: string) => void
   setScope: (
     handle: number,
     pluginId: string | null,
@@ -91,9 +93,14 @@ function toJsonStatements(statements: EdgeSqlStatement[]): string {
 export function makeNodeSqlDriver(
   sql: EdgeSqlAddon,
   handle: number,
-  /** Runs instead of closing the handle, for databases that outlive a driver. */
-  onClose: () => void = () => sql.close(handle)
+  opts: {
+    /** Instead of closing the handle, for databases that outlive a driver. */
+    onClose?: () => void
+    /** Resolves a database name to a file. Absent for in-memory databases. */
+    filePath?: (name: string) => string
+  } = {}
 ): EdgeSqlDriver {
+  const { onClose = () => sql.close(handle), filePath } = opts
   const serialize = makeSerializer()
   let closed = false
 
@@ -120,6 +127,18 @@ export function makeNodeSqlDriver(
       return await serialize(async () => {
         assertOpen()
         return JSON.parse(sql.batch(handle, toJsonStatements(statements)))
+      })
+    },
+
+    async attach(name, alias) {
+      if (filePath == null) {
+        // An in-memory database has no siblings to attach: there is no file
+        // for a name to resolve to.
+        throw new Error('This database cannot attach another')
+      }
+      await serialize(async () => {
+        assertOpen()
+        sql.attach(handle, filePath(name), alias)
       })
     },
 
@@ -210,14 +229,23 @@ export function makeNodeSqlDriverFactory(path: string): SqlDriverFactory {
 
   return {
     async makeSqlDriver(name, key) {
-      // A file with no key would be a plaintext account database, which is the
-      // one mistake the codec cannot catch for us:
-      if (key.length === 0) {
+      /*
+       * A file with no key would be a plaintext account database, which is the
+       * one mistake the codec cannot catch for us.
+       *
+       * The rate cache is the single exception, and it is named here rather
+       * than left as a hole: it holds public market data, it is shared across
+       * accounts on purpose, and encrypting it would need a device-scoped key
+       * that two of the four platforms cannot keep.
+       */
+      if (key.length === 0 && name !== RATE_DATABASE_NAME) {
         throw new Error('Refusing to open a database file without a key')
       }
       const file = filePath(name)
       mkdirSync(dirname(file), { recursive: true })
-      return makeNodeSqlDriver(sql, sql.open(file, Buffer.from(key)))
+      return makeNodeSqlDriver(sql, sql.open(file, Buffer.from(key)), {
+        filePath
+      })
     },
 
     async deleteSqlDatabase(name) {
@@ -247,7 +275,7 @@ export function makeMemorySqlDriverFactory(): SqlDriverFactory {
         handles.set(name, handle)
       }
       // Closing the driver must not close the shared handle:
-      return makeNodeSqlDriver(sql, handle, () => {})
+      return makeNodeSqlDriver(sql, handle, { onClose: () => {} })
     },
 
     async deleteSqlDatabase(name) {

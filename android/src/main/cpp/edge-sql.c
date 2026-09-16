@@ -851,6 +851,64 @@ int edgeSqlOpen(
   return handle;
 }
 
+int edgeSqlAttach(
+    int handle,
+    const char *path,
+    const char *alias,
+    char **error
+) {
+  sqlite3 *db = lookup(handle);
+  if (db == NULL) {
+    fail(error, "this database is closed");
+    return -1;
+  }
+
+  /*
+   * The alias is built into the statement rather than bound, because SQLite
+   * will not take a schema name as a parameter. It comes from the core, never
+   * from a plugin -- the authorizer denies ATTACH outright under a scope --
+   * but it is still checked rather than trusted.
+   */
+  for (const char *p = alias; *p != 0; ++p) {
+    if (!((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
+          (*p >= '0' && *p <= '9') || *p == '_')) {
+      fail(error, "invalid schema alias");
+      return -1;
+    }
+  }
+
+  sqlite3_str *sql = sqlite3_str_new(db);
+  /*
+   * `KEY ''` says the attached file is plaintext. Without it the codec applies
+   * the main database's key to the attachment and the open fails as "file is
+   * not a database" -- which is the correct answer to the wrong question.
+   */
+  sqlite3_str_appendf(sql, "ATTACH DATABASE %Q AS \"%s\" KEY ''", path, alias);
+  char *text = sqlite3_str_finish(sql);
+
+  char *message = NULL;
+  int status = sqlite3_exec(db, text, NULL, NULL, &message);
+  sqlite3_free(text);
+  if (status != SQLITE_OK) {
+    fail(error, message);
+    sqlite3_free(message);
+    return -1;
+  }
+
+  /*
+   * Read-only by query_only rather than by opening the file that way: the
+   * core writes the rate cache through its own connection, and this one only
+   * joins against it. A write from here would race that writer.
+   */
+  sqlite3_str *guard = sqlite3_str_new(db);
+  sqlite3_str_appendf(guard, "PRAGMA \"%s\".query_only = 1", alias);
+  char *guardText = sqlite3_str_finish(guard);
+  sqlite3_exec(db, guardText, NULL, NULL, NULL);
+  sqlite3_free(guardText);
+
+  return 0;
+}
+
 static char *execInternal(
     int handle,
     const char *statementsJson,
