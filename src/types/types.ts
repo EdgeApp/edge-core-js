@@ -870,6 +870,37 @@ export interface EdgeSpendInfo {
   otherParams?: JsonObject
 }
 
+// plugin storage --------------------------------------------------------
+
+export interface EdgeTableIndexSpec {
+  /** Document paths, `$.`-rooted, in the order the index orders them. */
+  paths: string[]
+  unique?: boolean
+}
+
+export interface EdgeTableDefinition {
+  /**
+   * The document fields forming the row's identity.
+   *
+   * A table declares its key and the paths it wants indexed, and never a
+   * column schema -- so a record's shape can change without a migration.
+   */
+  key: string[]
+  indexes?: { [indexName: string]: EdgeTableIndexSpec }
+}
+
+export interface EdgeTableSpec {
+  /**
+   * Bumped when the declaration below changes.
+   *
+   * A change **drops the wallet's tables and recreates them empty**: the core
+   * cannot migrate a document shape it does not understand, and a plugin can
+   * refill its cache from the chain.
+   */
+  version: number
+  tables: { [tableName: string]: EdgeTableDefinition }
+}
+
 // transaction queries ---------------------------------------------------
 
 export interface EdgeAccountTxQuery {

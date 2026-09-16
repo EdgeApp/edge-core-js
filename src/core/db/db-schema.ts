@@ -35,6 +35,19 @@ CREATE TABLE tx_chain (
   PRIMARY KEY (wallet_id, txid)
 );
 
+-- One row per wallet the account has given storage to.
+--
+-- The prefix column is what names that wallet's plugin tables. The wallet is
+-- in the table name rather than in a column, so this is the only place a
+-- prefix can be mapped back to a wallet -- which someone reading the schema
+-- during support will want.
+CREATE TABLE wallet (
+  wallet_id     TEXT NOT NULL PRIMARY KEY,
+  prefix        TEXT NOT NULL UNIQUE,
+  plugin_id     TEXT NOT NULL,
+  table_version INTEGER
+);
+
 -- Which version of its rebuild SQL each derived table was last built with.
 -- Not derived itself: it is the record of what the derived tables are, so
 -- losing it would mean rebuilding all of them.
