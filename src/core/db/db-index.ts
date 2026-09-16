@@ -1,5 +1,5 @@
 import { EdgeSqlDriver } from './db-driver'
-import { reindexAssets } from './db-schema'
+import { reindexAssets, reindexSearch } from './db-schema'
 
 /**
  * Rebuilding the derived tables.
@@ -37,7 +37,10 @@ export interface EdgeDerivedTable {
  * stale. Adding one to the schema means adding it here.
  */
 export const derivedTables: EdgeDerivedTable[] = [
-  { name: 'tx_asset_idx', version: 1, rebuild: reindexAssets() }
+  { name: 'tx_asset_idx', version: 1, rebuild: reindexAssets() },
+  // Rebuilding the text table rebuilds the FTS index with it, through the
+  // same external-content triggers that maintain it in normal use.
+  { name: 'tx_search_idx', version: 1, rebuild: reindexSearch() }
 ]
 
 /**
