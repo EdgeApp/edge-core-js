@@ -901,6 +901,38 @@ export interface EdgeTableSpec {
   tables: { [tableName: string]: EdgeTableDefinition }
 }
 
+export interface EdgeTableRows {
+  table: string
+  rows: unknown[]
+}
+
+export interface EdgeTableKeys {
+  table: string
+  keys: string[]
+}
+
+/**
+ * An indexed query over one table.
+ *
+ * Single-table on purpose: a query names one table's indexes, and a
+ * cross-table question is what `runSql` is for. A query no declared index can
+ * answer is refused rather than scanning.
+ */
+export interface EdgeTableQuery {
+  /** Equality on document paths, `$.`-rooted. */
+  equals?: { [path: string]: string | number | boolean | null }
+
+  /** An inclusive range on one path, applied alongside `equals`. */
+  range?: {
+    path: string
+    min?: string | number | boolean | null
+    max?: string | number | boolean | null
+  }
+
+  orderBy?: Array<{ path: string; direction?: 'asc' | 'desc' }>
+  limit?: number
+}
+
 // transaction queries ---------------------------------------------------
 
 export interface EdgeAccountTxQuery {
