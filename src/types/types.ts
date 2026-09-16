@@ -724,6 +724,100 @@ export interface EdgeTransactionEvent {
   transaction: EdgeTransaction
 }
 
+// EdgeTx ----------------------------------------------------------------
+
+/** Native amounts per asset. Same shape as `EdgeBalanceMap`. */
+export type EdgeTxAmountMap = Map<EdgeTokenId, string>
+
+/** What the user and the plugins recorded about one asset in a transaction. */
+export interface EdgeTxTokenData {
+  metadata?: EdgeMetadata
+  /** App-provided. */
+  assetAction?: EdgeAssetAction
+  /** Plugin-provided. */
+  chainAssetAction?: EdgeAssetAction
+}
+
+/**
+ * What this device asked for when it created a transaction.
+ *
+ * Present only on transactions this device made, which is why it is optional
+ * and why nothing reads it to display a transaction. The `makeTx` project
+ * will widen this; it holds what `EdgeTransaction` carries today.
+ */
+export interface EdgeMakeTxParams {
+  spendTargets?: EdgeTransaction['spendTargets']
+  networkFeeOption?: 'high' | 'standard' | 'low' | 'custom'
+  requestedCustomFee?: JsonObject
+}
+
+/**
+ * One transaction, across every asset it touched.
+ *
+ * This is what the transaction database stores and returns. `EdgeTransaction`
+ * is scoped to a single `tokenId` and carries that asset's amounts and
+ * metadata flat, so a transaction moving two assets is two objects; `EdgeTx`
+ * is one object with the per-asset parts keyed by `EdgeTokenId`.
+ *
+ * `nativeAmounts`, `networkFees` and `tokenData` are real `Map`s because
+ * `EdgeTokenId` is `string | null` and only a `Map` can hold that key --
+ * JavaScript coerces object keys to strings, so `obj[null]` reads `'null'`.
+ * JSON is the one place the key is a string, where `null` is spelled `''`.
+ */
+export interface EdgeTx {
+  walletId: string
+  txid: string
+  pluginId: string
+
+  /** ISO 8601. */
+  date: string
+  blockHeight: number
+  isSend: boolean
+
+  /** Computed at read time from the wallet's height; never stored. */
+  confirmations?: EdgeConfirmationState
+
+  /**
+   * How this wallet's balance moved, one signed entry per asset the
+   * transaction touched, in the chain's smallest unit. Negative is out.
+   * Excludes network fees.
+   */
+  nativeAmounts: EdgeTxAmountMap
+
+  /** Always positive. Keyed the same way; the `null` key is the chain fee. */
+  networkFees: EdgeTxAmountMap
+
+  /** This wallet's own addresses that the transaction paid. */
+  ourReceiveAddresses: string[]
+  memos: EdgeMemo[]
+  signedTx?: string
+  txSecret?: string
+
+  /** Per-asset user metadata and actions. */
+  tokenData: Map<EdgeTokenId, EdgeTxTokenData>
+
+  /** Plugin-provided action data for all assets in the transaction. */
+  chainAction?: EdgeTxAction
+
+  /** App-provided action data for all assets in the transaction. */
+  savedAction?: EdgeTxAction
+
+  feeRateUsed?: JsonObject
+  deviceDescription?: string
+
+  /** Present only when this device created the transaction. */
+  makeTxParams?: EdgeMakeTxParams
+
+  /**
+   * @deprecated Use `savedAction` with an `EdgeTxActionSwap`.
+   *
+   * Carried through unchanged rather than converted. `EdgeTxActionSwap` needs
+   * a `fromAsset` and a `toAsset`, and `EdgeTxSwap` records only the payout
+   * side -- so converting an existing record would mean inventing the rest.
+   */
+  swapData?: EdgeTxSwap
+}
+
 export interface EdgeSpendTarget {
   nativeAmount?: string
   otherParams?: JsonObject
