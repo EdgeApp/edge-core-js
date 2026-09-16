@@ -1,3 +1,4 @@
+import { asMaybe } from 'cleaners'
 import { number as currencyFromNumber } from 'currency-codes'
 import { Disklet, justFiles, navigateDisklet } from 'disklet'
 
@@ -13,6 +14,12 @@ import {
 } from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
 import { fetchAppIdInfo } from '../../account/lobby-api'
+import {
+  clearTxMetaDirty,
+  readDirtyTxMeta,
+  saveTxMetas,
+  TxMetaWrite
+} from '../../db/meta-writer'
 import { toApiInput } from '../../root-pixie'
 import { RootState } from '../../root-reducer'
 import {
@@ -371,7 +378,35 @@ export async function loadTxFiles(
     type: 'CURRENCY_WALLET_FILES_LOADED',
     payload: { files: out, walletId }
   })
+  mirrorTxMeta(
+    input,
+    Object.keys(out).map(txidHash => ({
+      txid: out[txidHash].txid,
+      file: out[txidHash]
+    }))
+  )
   return out
+}
+
+/**
+ * Copies metadata files into the database, without waiting.
+ *
+ * The sync repo stays authoritative, so a mirror that fails costs a query
+ * some rows until the next load -- never a user's annotation. Blocking a file
+ * read on a database write would trade that for nothing.
+ */
+function mirrorTxMeta(input: CurrencyWalletInput, writes: TxMetaWrite[]): void {
+  if (writes.length === 0) return
+  const { accountId, currencyInfo } = input.props.walletState
+  const database = input.props.output.accounts[accountId]?.database
+  if (database == null) return
+
+  saveTxMetas(
+    database.driver,
+    input.props.walletId,
+    currencyInfo.currencyCode,
+    writes
+  ).catch(error => input.props.onError(error))
 }
 
 /**
@@ -650,8 +685,72 @@ export async function saveTxMetadataFile(
   txFile: TransactionFile
 ): Promise<void> {
   const { state, walletId } = input.props
+  const { accountId, currencyInfo } = input.props.walletState
   const disklet = getStorageWalletDisklet(state, walletId)
-  await transactionFile.save(disklet, 'transaction/' + fileName, txFile)
+  const database = input.props.output.accounts[accountId]?.database
+
+  try {
+    await transactionFile.save(disklet, 'transaction/' + fileName, txFile)
+  } catch (error) {
+    // The database keeps the edit and `flushDirtyTxMeta` retries the file.
+    // Losing a user's annotation because a disk write failed once is the
+    // outcome worth spending a row on.
+    if (database != null) {
+      await saveTxMetas(
+        database.driver,
+        walletId,
+        currencyInfo.currencyCode,
+        [{ txid: txFile.txid, file: txFile }],
+        { fileDirty: true }
+      ).catch(() => undefined)
+    }
+    throw error
+  }
+
+  if (database != null) {
+    await saveTxMetas(database.driver, walletId, currencyInfo.currencyCode, [
+      { txid: txFile.txid, file: txFile }
+    ]).catch(error => input.props.onError(error))
+  }
+}
+
+/**
+ * Retries metadata files whose write failed.
+ *
+ * Runs when a wallet's files reload, which is the natural retry point: it
+ * happens on every sync, and a sync is when the disk is most likely to be
+ * working again.
+ */
+export async function flushDirtyTxMeta(
+  input: CurrencyWalletInput
+): Promise<void> {
+  const { state, walletId } = input.props
+  const { accountId } = input.props.walletState
+  const database = input.props.output.accounts[accountId]?.database
+  if (database == null) return
+
+  const dirty = await readDirtyTxMeta(database.driver, walletId)
+  if (dirty.length === 0) return
+
+  const disklet = getStorageWalletDisklet(state, walletId)
+  const written: string[] = []
+  for (const { txid, doc } of dirty) {
+    const file = asMaybe(asTransactionFile)(doc)
+    if (file == null) continue
+    const { fileName } = deriveFileNameFields(
+      state,
+      walletId,
+      txid,
+      file.creationDate
+    )
+    try {
+      await transactionFile.save(disklet, 'transaction/' + fileName, file)
+      written.push(txid)
+    } catch (error) {
+      // Still broken. The row stays dirty and the next reload tries again.
+    }
+  }
+  await clearTxMetaDirty(database.driver, walletId, written)
 }
 
 /**
@@ -740,6 +839,26 @@ export async function saveSeenTxCheckpointFile(
   await seenCheckpointFile.save(disklet, SEEN_TX_CHECKPOINT_FILE, fileData)
 }
 
+/**
+ * The transactions whose metadata files a sync changed.
+ *
+ * This exists because `reloadWalletFiles` used to reload file *names* and
+ * never the contents, and `loadTxFiles` is only asked for files the core has
+ * no copy of -- so a metadata edit made on another device stayed invisible
+ * until the core restarted.
+ *
+ * Legacy `Transactions/` files are deliberately not matched: they are
+ * read-only history, rewritten into the modern path on first load.
+ */
+export function changedTxidHashes(changes: string[]): string[] {
+  const out: string[] = []
+  for (const path of changes) {
+    const match = /^transaction\/\d+-([^/.]+)\.json$/.exec(path)
+    if (match != null) out.push(match[1])
+  }
+  return out
+}
+
 export async function reloadWalletFiles(
   input: CurrencyWalletInput,
   changes: string[]
@@ -758,5 +877,12 @@ export async function reloadWalletFiles(
     await loadNameFile(input)
   }
   await loadTxFileNames(input)
+
+  // Re-read the *contents* of changed transaction files, not just their
+  // names:
+  const changed = changedTxidHashes(changes)
+  if (changed.length > 0) await loadTxFiles(input, changed)
+
   await loadAddressFiles(input)
+  await flushDirtyTxMeta(input).catch(error => input.props.onError(error))
 }
