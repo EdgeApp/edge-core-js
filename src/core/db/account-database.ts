@@ -5,6 +5,7 @@ import { hmacSha256 } from '../../util/crypto/hashes'
 import { base58, utf8 } from '../../util/encoding'
 import { asEdgeStorageKeys } from '../login/storage-keys'
 import { EdgeInternalIo, EdgeSqlDriver } from './db-driver'
+import { prepareDatabase } from './db-open'
 
 /**
  * One database file per account, opened on login and closed on logout.
@@ -74,9 +75,10 @@ export async function openAccountDatabase(
   const open = async (): Promise<EdgeAccountDatabase> => {
     const driver = await makeSqlDriver(name, key)
     try {
-      // The codec only reports a bad key when something reads a page, so an
-      // open that has not touched the database has not proven anything yet:
-      await driver.query('PRAGMA user_version')
+      // This is also what proves the key was right: the codec only reports a
+      // bad key when something reads a page, so an open on its own has not
+      // established anything yet.
+      await prepareDatabase(driver)
       return { driver, close: async () => await driver.close() }
     } catch (error) {
       // Do not leak the handle when the check is what failed:
