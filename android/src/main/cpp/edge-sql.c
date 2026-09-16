@@ -9,11 +9,52 @@
 #include "sqlite3mc_amalgamation.h"
 
 /*
- * Open databases, addressed by handle. An account has one database, opened on
- * login and closed on logout, so this table is small -- but it grows rather
- * than being fixed, because a test fixture can hold many at once.
+ * A handle's current fence.
+ *
+ * `pluginId == NULL` is core mode: the core owns the database and is not
+ * restricted. Anything else is a plugin, and every statement it compiles is
+ * checked against the policy in `authorize` below.
  */
-static sqlite3 **gDatabases;
+typedef struct {
+  char *pluginId;
+  char *walletId;
+  /* "p_<walletPrefix>_", precomputed so the authorizer is a prefix compare. */
+  char *ownPrefix;
+  /*
+   * Non-zero while this driver is compiling one of its *own* statements.
+   *
+   * `readStatements` and `bindParams` prepare SQL against `json_each`, and the
+   * authorizer cannot tell those apart from the caller's SQL -- it only sees
+   * the statement being compiled. Without this the fence would reject the
+   * driver's own plumbing.
+   */
+  int internal;
+  /*
+   * Non-zero while a statement that has already compiled is being stepped.
+   *
+   * Nothing prepared then is the caller's text: the statement and every
+   * trigger it fires were compiled -- and checked -- before the first step.
+   * What does get prepared is SQLite's and its extensions' own, above all the
+   * full-text index, which prepares the statements over its shadow tables the
+   * first time a write reaches it on a connection.
+   */
+  int stepping;
+} EdgeSqlScope;
+
+/*
+ * One open database, plus its fence.
+ *
+ * Slots are allocated individually and never moved. The authorizer and
+ * `edge_wallet()` are handed `&slot->scope` when the connection opens, so a
+ * growable array of structs would leave those pointers dangling the first time
+ * it reallocated. An array of pointers grows safely.
+ */
+typedef struct {
+  sqlite3 *db;
+  EdgeSqlScope scope;
+} EdgeSqlSlot;
+
+static EdgeSqlSlot **gSlots;
 static int gCapacity;
 static sqlite3_mutex *gMutex;
 
@@ -22,29 +63,41 @@ static void edgeSqlInit(void) {
 }
 
 static sqlite3 *lookup(int handle) {
-  if (handle < 0 || handle >= gCapacity) return NULL;
-  return gDatabases[handle];
+  if (handle < 0 || handle >= gCapacity || gSlots[handle] == NULL) return NULL;
+  return gSlots[handle]->db;
+}
+
+/** The scope belonging to an open connection, by identity. */
+static EdgeSqlScope *scopeFor(sqlite3 *db) {
+  for (int i = 0; i < gCapacity; ++i) {
+    if (gSlots[i] != NULL && gSlots[i]->db == db) return &gSlots[i]->scope;
+  }
+  return NULL;
 }
 
 /** Reserves a handle for `db`, growing the table if every slot is busy. */
 static int takeHandle(sqlite3 *db) {
   for (int i = 0; i < gCapacity; ++i) {
-    if (gDatabases[i] == NULL) {
-      gDatabases[i] = db;
+    if (gSlots[i] != NULL && gSlots[i]->db == NULL) {
+      gSlots[i]->db = db;
       return i;
     }
   }
 
   int capacity = gCapacity == 0 ? 8 : gCapacity * 2;
-  sqlite3 **grown =
-      sqlite3_realloc(gDatabases, capacity * (int)sizeof(*gDatabases));
+  EdgeSqlSlot **grown =
+      sqlite3_realloc(gSlots, capacity * (int)sizeof(*gSlots));
   if (grown == NULL) return -1;
-  gDatabases = grown;
-  for (int i = gCapacity; i < capacity; ++i) gDatabases[i] = NULL;
+  gSlots = grown;
+  for (int i = gCapacity; i < capacity; ++i) gSlots[i] = NULL;
 
   int handle = gCapacity;
   gCapacity = capacity;
-  gDatabases[handle] = db;
+
+  gSlots[handle] = sqlite3_malloc((int)sizeof(EdgeSqlSlot));
+  if (gSlots[handle] == NULL) return -1;
+  memset(gSlots[handle], 0, sizeof(EdgeSqlSlot));
+  gSlots[handle]->db = db;
   return handle;
 }
 
@@ -286,8 +339,11 @@ static int bindParams(
   if (paramsJson == NULL || paramsJson[0] == 0) return SQLITE_OK;
 
   sqlite3_stmt *iterator = NULL;
+  EdgeSqlScope *scope = scopeFor(db);
+  if (scope != NULL) ++scope->internal;
   int status = sqlite3_prepare_v2(
       db, "SELECT type, value FROM json_each(?1)", -1, &iterator, NULL);
+  if (scope != NULL) --scope->internal;
   if (status != SQLITE_OK) {
     failDb(error, db);
     return status;
@@ -342,11 +398,14 @@ static int readStatements(
   *count = 0;
 
   sqlite3_stmt *iterator = NULL;
+  EdgeSqlScope *scope = scopeFor(db);
+  if (scope != NULL) ++scope->internal;
   int status = sqlite3_prepare_v2(
       db,
       "SELECT json_extract(value, '$.sql'), json_extract(value, '$.params')"
       "  FROM json_each(?1)",
       -1, &iterator, NULL);
+  if (scope != NULL) --scope->internal;
   if (status != SQLITE_OK) {
     failDb(error, db);
     return status;
@@ -450,6 +509,248 @@ static int runStatements(
     sqlite3_str_appendf(out, "%d", sqlite3_changes(db));
   }
   return SQLITE_OK;
+}
+
+/* --- Scoping ------------------------------------------------------------ */
+
+/*
+ * `edge_wallet()` -- the wallet a plugin is currently scoped to.
+ *
+ * Registered on every connection so `tx_chain_scoped` always resolves; it
+ * returns NULL in core mode, which makes the view empty rather than broken.
+ *
+ * **Deliberately not SQLITE_DETERMINISTIC.** SQLite would be free to
+ * const-fold a deterministic function, and a statement cached under one wallet
+ * would then keep returning that wallet's rows forever.
+ */
+static void edgeWalletFunc(
+    sqlite3_context *context,
+    int argc,
+    sqlite3_value **argv
+) {
+  (void)argc;
+  (void)argv;
+  const EdgeSqlScope *scope = sqlite3_user_data(context);
+  if (scope == NULL || scope->walletId == NULL) {
+    sqlite3_result_null(context);
+  } else {
+    sqlite3_result_text(context, scope->walletId, -1, SQLITE_TRANSIENT);
+  }
+}
+
+static int isCoreTable(const char *name) {
+  return strcmp(name, "tx_chain") == 0 || strcmp(name, "tx_meta") == 0 ||
+         strcmp(name, "tx_asset_idx") == 0 ||
+         strcmp(name, "tx_search_idx") == 0 ||
+         strcmp(name, "tx_search_fts_idx") == 0 ||
+         strcmp(name, "wallet") == 0 || strcmp(name, "token") == 0 ||
+         strcmp(name, "setting") == 0 ||
+         strcmp(name, "index_version") == 0;
+}
+
+static int hasPrefix(const char *text, const char *prefix) {
+  return strncmp(text, prefix, strlen(prefix)) == 0;
+}
+
+/*
+ * The compile-time policy for plugin SQL.
+ *
+ * SQLite calls this once per operation a statement would perform, while
+ * preparing it -- never per row, and never across the bridge. It sees names,
+ * not values, which is exactly why row scoping is the view's job and not this
+ * function's.
+ */
+static int authorize(
+    void *userData,
+    int action,
+    const char *arg1,
+    const char *arg2,
+    const char *arg3,
+    const char *arg4
+) {
+  const EdgeSqlScope *scope = userData;
+  (void)arg3;
+
+  /* Core mode, or the driver compiling its own plumbing. */
+  if (scope == NULL || scope->pluginId == NULL || scope->internal) {
+    return SQLITE_OK;
+  }
+
+  /*
+   * The full-text index asks whether the file has changed since it last
+   * looked, as it starts work inside a statement that already passed the
+   * fence. A read-only counter, and only while such a statement runs.
+   */
+  if (action == SQLITE_PRAGMA && scope->stepping && arg1 != NULL &&
+      arg2 == NULL && sqlite3_stricmp(arg1, "data_version") == 0) {
+    return SQLITE_OK;
+  }
+
+  switch (action) {
+    /*
+     * Nothing structural, and nothing that could reach the codec. A plugin
+     * calling `PRAGMA key` or `PRAGMA rekey` is not a scoping violation, it is
+     * a total compromise of the account database.
+     */
+    case SQLITE_PRAGMA:
+    case SQLITE_ATTACH:
+    case SQLITE_DETACH:
+    case SQLITE_CREATE_TABLE:
+    case SQLITE_CREATE_TEMP_TABLE:
+    case SQLITE_CREATE_VIEW:
+    case SQLITE_CREATE_TEMP_VIEW:
+    case SQLITE_CREATE_TRIGGER:
+    case SQLITE_CREATE_TEMP_TRIGGER:
+    case SQLITE_CREATE_INDEX:
+    case SQLITE_CREATE_TEMP_INDEX:
+    case SQLITE_CREATE_VTABLE:
+    case SQLITE_DROP_TABLE:
+    case SQLITE_DROP_VIEW:
+    case SQLITE_DROP_TRIGGER:
+    case SQLITE_DROP_INDEX:
+    case SQLITE_DROP_VTABLE:
+    case SQLITE_ALTER_TABLE:
+    case SQLITE_REINDEX:
+    case SQLITE_ANALYZE:
+      return SQLITE_DENY;
+
+    /*
+     * Transactions belong to the core: a batch is already one transaction, and
+     * a plugin opening its own would span statements the core did not compose.
+     */
+    case SQLITE_TRANSACTION:
+    case SQLITE_SAVEPOINT:
+      return SQLITE_DENY;
+
+    case SQLITE_FUNCTION:
+      /*
+       * `edge_wallet` is ours. The scoped view and its triggers call it on the
+       * plugin's behalf, which `arg4` identifies; the plugin's own SQL may
+       * not, or it could read back the scope it is fenced by.
+       */
+      if (arg2 != NULL && strcmp(arg2, "edge_wallet") == 0) {
+        return arg4 != NULL && hasPrefix(arg4, "tx_chain_scoped")
+                   ? SQLITE_OK
+                   : SQLITE_DENY;
+      }
+      return SQLITE_OK;
+
+    case SQLITE_READ:
+    case SQLITE_INSERT:
+    case SQLITE_UPDATE:
+    case SQLITE_DELETE: {
+      if (arg1 == NULL) return SQLITE_DENY;
+      const int writing = action != SQLITE_READ;
+
+      /*
+       * Anything SQLite reaches on our behalf.
+       *
+       * `arg4` names the innermost trigger or view responsible, and is NULL
+       * when the statement named the object itself. Every trigger and view
+       * here is core-authored -- plugins cannot create either, see the DENY
+       * list above -- so a non-NULL `arg4` means SQLite is executing schema we
+       * wrote rather than SQL they wrote, and what it touches underneath is
+       * our business, not theirs. A write through `tx_chain_scoped` fires the
+       * index triggers, which expand `json_each` and update `tx_asset_idx`.
+       */
+      if (arg4 != NULL) return SQLITE_OK;
+
+      /*
+       * The full-text index's own storage, and only while a statement that
+       * passed the fence is running. A plugin deleting its wallet's
+       * transactions fires the search triggers, and the index prepares its
+       * shadow-table statements on the spot, with no trigger in `arg4`.
+       * Those are the one thing a stepping statement reaches this way.
+       */
+      if (scope->stepping && hasPrefix(arg1, "tx_search_fts_idx_")) {
+        return SQLITE_OK;
+      }
+
+      /* SQLite's own catalog stays invisible: it names every other table. */
+      if (hasPrefix(arg1, "sqlite_")) return SQLITE_DENY;
+
+      /* The scoped view is the only door onto the core's transactions. */
+      if (strcmp(arg1, "tx_chain_scoped") == 0) return SQLITE_OK;
+
+      /*
+       * Named directly. Reads of `token` are allowed because plugins need
+       * currency codes and denominations; everything else is refused.
+       */
+      if (isCoreTable(arg1)) {
+        return !writing && strcmp(arg1, "token") == 0 ? SQLITE_OK : SQLITE_DENY;
+      }
+
+      /* The plugin's own namespace, and no one else's. */
+      if (hasPrefix(arg1, "p_")) {
+        return hasPrefix(arg1, scope->ownPrefix) ? SQLITE_OK : SQLITE_DENY;
+      }
+
+      /*
+       * The JSON table-valued functions. These are not tables: they expand a
+       * value the caller already supplied, so they expose nothing the caller
+       * could not already see, and plugin queries over document columns need
+       * them.
+       */
+      if (!writing &&
+          (strcmp(arg1, "json_each") == 0 || strcmp(arg1, "json_tree") == 0)) {
+        return SQLITE_OK;
+      }
+
+      return SQLITE_DENY;
+    }
+
+    case SQLITE_SELECT:
+      return SQLITE_OK;
+
+    default:
+      return SQLITE_DENY;
+  }
+}
+
+static void clearScope(EdgeSqlScope *scope) {
+  sqlite3_free(scope->pluginId);
+  sqlite3_free(scope->walletId);
+  sqlite3_free(scope->ownPrefix);
+  scope->pluginId = NULL;
+  scope->walletId = NULL;
+  scope->ownPrefix = NULL;
+  scope->internal = 0;
+  scope->stepping = 0;
+}
+
+int edgeSqlSetScope(
+    int handle,
+    const char *pluginId,
+    const char *walletPrefix,
+    const char *walletId,
+    char **error
+) {
+  sqlite3 *db = lookup(handle);
+  if (db == NULL) {
+    fail(error, "this database is closed");
+    return -1;
+  }
+  EdgeSqlScope *scope = &gSlots[handle]->scope;
+  clearScope(scope);
+
+  if (pluginId == NULL) {
+    /*
+     * Core mode. The authorizer stays installed and returns OK for
+     * everything, so there is one code path rather than two.
+     */
+    return 0;
+  }
+
+  scope->pluginId = copyString(pluginId);
+  scope->walletId = walletId == NULL ? NULL : copyString(walletId);
+  scope->ownPrefix = copyString(walletPrefix == NULL ? "p_" : walletPrefix);
+
+  if (scope->pluginId == NULL || scope->ownPrefix == NULL) {
+    clearScope(scope);
+    fail(error, "out of memory");
+    return -1;
+  }
+  return 0;
 }
 
 /* --- Public interface -------------------------------------------------- */
@@ -565,6 +866,20 @@ int edgeSqlOpen(
     sqlite3_close(db);
     return -1;
   }
+
+  /*
+   * The scope is per handle and starts empty, which is core mode. Both hooks
+   * are installed once, here, rather than being swapped in and out per call --
+   * `sqlite3_set_authorizer` replaces any previous authorizer, and a statement
+   * already prepared is not re-checked, so toggling it under a statement cache
+   * would be a way to lose the fence silently.
+   */
+  EdgeSqlScope *scope = &gSlots[handle]->scope;
+  clearScope(scope);
+  sqlite3_create_function(db, "edge_wallet", 0, SQLITE_UTF8, scope,
+                          edgeWalletFunc, NULL, NULL);
+  sqlite3_set_authorizer(db, authorize, scope);
+
   return handle;
 }
 
@@ -649,6 +964,8 @@ char *edgeSqlQuery(
 
   int status;
   int row = 0;
+  EdgeSqlScope *scope = scopeFor(db);
+  if (scope != NULL) ++scope->stepping;
   while ((status = sqlite3_step(statement)) == SQLITE_ROW) {
     if (row++ > 0) sqlite3_str_appendchar(out, 1, ',');
     sqlite3_str_appendchar(out, 1, '{');
@@ -661,6 +978,7 @@ char *edgeSqlQuery(
     sqlite3_str_appendchar(out, 1, '}');
   }
   sqlite3_finalize(statement);
+  if (scope != NULL) --scope->stepping;
 
   if (status != SQLITE_DONE) {
     failDb(error, db);
@@ -676,7 +994,11 @@ void edgeSqlClose(int handle) {
   edgeSqlInit();
   sqlite3_mutex_enter(gMutex);
   sqlite3 *db = lookup(handle);
-  if (db != NULL) gDatabases[handle] = NULL;
+  if (db != NULL) {
+    /* The slot itself is kept and reused; only its contents are released. */
+    gSlots[handle]->db = NULL;
+    clearScope(&gSlots[handle]->scope);
+  }
   sqlite3_mutex_leave(gMutex);
   if (db != NULL) sqlite3_close(db);
 }

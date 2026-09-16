@@ -61,6 +61,29 @@ char *edgeSqlQuery(
     char **error
 );
 
+/*
+ * Fences every later statement on this handle to one plugin and one wallet.
+ *
+ * Passing NULL for `pluginId` restores unrestricted core access, which is the
+ * state a handle opens in.
+ *
+ * Two mechanisms, because neither can do the other's job. The authorizer sees
+ * table and column *names* but never values, so it fences which tables the SQL
+ * may name at all -- `walletPrefix` is what its own tables are called. Row
+ * scoping comes from `tx_chain_scoped`, a core-owned view filtered by
+ * `edge_wallet()` whose INSTEAD OF triggers substitute the wallet on write, so
+ * a plugin cannot reach another wallet's rows even by naming them.
+ *
+ * Returns 0, or -1 after setting `*error`.
+ */
+int edgeSqlSetScope(
+    int handle,
+    const char *pluginId,
+    const char *walletPrefix,
+    const char *walletId,
+    char **error
+);
+
 /* Closes a database. Unknown or already-closed handles are ignored. */
 void edgeSqlClose(int handle);
 

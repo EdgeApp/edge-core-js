@@ -20,6 +20,24 @@ export interface EdgeSqlStatement {
   params?: EdgeSqlValue[]
 }
 
+/** The fence one plugin's query runs under. */
+export interface EdgeSqlScope {
+  pluginId: string
+  /** The plugin's table prefix, `p_<id>_`. */
+  walletPrefix: string
+  /** The wallet whose transactions the scoped view shows, if any. */
+  walletId: string | null
+}
+
+/** Names every virtual table, for `connectStatement`. */
+export const VIRTUAL_TABLES_SQL = `SELECT name FROM sqlite_schema
+  WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'`
+
+/** A statement that connects one virtual table and reads nothing. */
+export function connectStatement(name: string): string {
+  return `SELECT 1 FROM "${name.replace(/"/g, '""')}" LIMIT 0`
+}
+
 export interface EdgeSqlDriver {
   /** Runs statements one at a time. Returns rows changed per statement. */
   exec: (statements: EdgeSqlStatement[]) => Promise<number[]>
@@ -34,6 +52,26 @@ export interface EdgeSqlDriver {
    * async JavaScript, and one thrown error would wedge the database.
    */
   batch: (statements: EdgeSqlStatement[]) => Promise<number[]>
+
+  /**
+   * Runs one query fenced to a plugin and a wallet.
+   *
+   * One unit on this driver: nothing else runs between the fence going on
+   * and coming off, so no other caller's statement is ever compiled under a
+   * plugin's scope. Enforcement is native, at statement-compile time, so it
+   * costs no bridge traffic per row.
+   *
+   * Every virtual table is connected first, in core mode. SQLite connects one
+   * the first time a statement reaches it, and FTS5 does that by reading its
+   * own shadow tables -- reads the fence cannot tell from the plugin's. A
+   * plugin statement that was the first on a connection to fire a
+   * search-index trigger would otherwise be refused.
+   */
+  queryScoped: <T>(
+    scope: EdgeSqlScope,
+    sql: string,
+    params?: EdgeSqlValue[]
+  ) => Promise<T[]>
 
   close: () => Promise<void>
 }

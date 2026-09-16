@@ -2,10 +2,13 @@ import { mkdirSync } from 'fs'
 import { dirname, join } from 'path'
 
 import {
+  connectStatement,
   EdgeSqlDriver,
+  EdgeSqlScope,
   EdgeSqlStatement,
   EdgeSqlValue,
-  makeSerializer
+  makeSerializer,
+  VIRTUAL_TABLES_SQL
 } from '../../core/db/db-driver'
 
 /**
@@ -29,6 +32,12 @@ interface EdgeSqlAddon {
   exec: (handle: number, statementsJson: string) => string
   batch: (handle: number, statementsJson: string) => string
   query: (handle: number, sql: string, paramsJson: string | null) => string
+  setScope: (
+    handle: number,
+    pluginId: string | null,
+    walletPrefix: string | null,
+    walletId: string | null
+  ) => void
   close: (handle: number) => void
   remove: (path: string) => void
 }
@@ -97,6 +106,28 @@ export function makeNodeSqlDriver(
       return await serialize(async () => {
         assertOpen()
         return JSON.parse(sql.batch(handle, toJsonStatements(statements)))
+      })
+    },
+
+    async queryScoped<T>(
+      scope: EdgeSqlScope,
+      sqlText: string,
+      params?: EdgeSqlValue[]
+    ): Promise<T[]> {
+      return await serialize(async () => {
+        assertOpen()
+        const run = (text: string, values?: EdgeSqlValue[]): any[] =>
+          JSON.parse(sql.query(handle, text, toJsonParams(values)))
+
+        for (const { name } of run(VIRTUAL_TABLES_SQL)) {
+          run(connectStatement(name))
+        }
+        sql.setScope(handle, scope.pluginId, scope.walletPrefix, scope.walletId)
+        try {
+          return run(sqlText, params)
+        } finally {
+          sql.setScope(handle, null, null, null)
+        }
       })
     },
 
