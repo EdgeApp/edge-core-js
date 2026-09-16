@@ -961,6 +961,45 @@ export interface EdgeBatchWrite {
   removeRows?: EdgeTableKeys[]
 }
 
+/**
+ * One wallet's storage, as its engine sees it.
+ *
+ * Every method is scoped to the wallet the handle was made for. A plugin
+ * never names a table -- it writes `${db.address}`, and the core resolves
+ * that against the handle's scope, so it cannot spell another wallet's table
+ * because it never spells any table.
+ */
+export interface EdgeTxDatabase {
+  /** Complete transactions, merged over whatever is stored. */
+  saveTxs: (txs: EdgeTx[]) => Promise<void>
+
+  /** Rows by primary key, across as many tables as one call needs. */
+  getRows: (requests: EdgeTableKeys[]) => Promise<EdgeTableRows[]>
+  putRows: (writes: EdgeTableRows[]) => Promise<void>
+  removeRows: (removals: EdgeTableKeys[]) => Promise<void>
+
+  /** An indexed query. One table, because a query names one table's indexes. */
+  findRows: (table: string, query: EdgeTableQuery) => Promise<unknown[]>
+
+  /** Writes that must land together or not at all. */
+  batchWrite: (ops: EdgeBatchWrite) => Promise<void>
+
+  /**
+   * SQL across this wallet's own tables and its own transactions.
+   *
+   * Table names come from the handles this object exposes; everything else
+   * interpolated is bound as a parameter. Statements are compiled under an
+   * authorizer that refuses anything outside the wallet's own scope.
+   */
+  runSql: <T>(
+    strings: TemplateStringsArray,
+    ...values: unknown[]
+  ) => Promise<T[]>
+
+  /** The tables this wallet owns, plus `tx_chain` for its own transactions. */
+  [table: string]: unknown
+}
+
 // transaction queries ---------------------------------------------------
 
 export interface EdgeAccountTxQuery {

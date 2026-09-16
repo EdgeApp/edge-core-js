@@ -1,0 +1,335 @@
+import { expect } from 'chai'
+import { describe, it } from 'mocha'
+
+import { EdgeSqlDriver } from '../../../src/core/db/db-driver'
+import { prepareDatabase } from '../../../src/core/db/db-open'
+import { defineTables } from '../../../src/core/db/plugin-tables'
+import {
+  EdgeTableHandle,
+  makeTxDatabase
+} from '../../../src/core/db/tx-database-api'
+import { saveTxs } from '../../../src/core/db/tx-writer'
+import { makeMemorySqlDriver } from '../../../src/io/node/node-sql-driver'
+import { EdgeTableSpec, EdgeTx, EdgeTxDatabase } from '../../../src/types/types'
+import { expectRejection } from '../../expect-rejection'
+
+/**
+ * The plugin fence.
+ *
+ * `runSql` is the one place a plugin's own text reaches SQLite, so it is the
+ * one place the authorizer has to hold. Everything here is the negative case:
+ * what a plugin cannot do, checked by trying it.
+ *
+ * The policy is compiled into the native shim, which is why these tests run
+ * against the real amalgamation rather than a simulation -- a fence that
+ * worked in a mock and not on device would be worse than none.
+ */
+
+const WALLET_A = Buffer.alloc(32, 0x11).toString('base64')
+const WALLET_B = Buffer.alloc(32, 0x22).toString('base64')
+
+const spec: EdgeTableSpec = {
+  version: 1,
+  tables: { utxo: { key: ['id'], indexes: { byTxid: { paths: ['$.txid'] } } } }
+}
+
+function makeTx(walletId: string, txid: string): EdgeTx {
+  return {
+    walletId,
+    txid,
+    pluginId: 'bitcoin',
+    date: '2024-06-01T12:00:00.000Z',
+    blockHeight: 800000,
+    isSend: true,
+    nativeAmounts: new Map([[null, '-100']]),
+    networkFees: new Map([[null, '10']]),
+    ourReceiveAddresses: [],
+    memos: [],
+    tokenData: new Map()
+  }
+}
+
+interface Fixture {
+  driver: EdgeSqlDriver
+  a: EdgeTxDatabase
+  b: EdgeTxDatabase
+  prefixB: string
+}
+
+async function setup(): Promise<Fixture> {
+  const driver = makeMemorySqlDriver()
+  await prepareDatabase(driver)
+
+  const make = async (walletId: string): Promise<[EdgeTxDatabase, string]> => {
+    const { prefix } = await defineTables(driver, {
+      walletId,
+      pluginId: 'bitcoin',
+      spec
+    })
+    return [
+      makeTxDatabase({
+        driver,
+        walletId,
+        pluginId: 'bitcoin',
+        prefix,
+        spec
+      }),
+      prefix
+    ]
+  }
+
+  const [a] = await make(WALLET_A)
+  const [b, prefixB] = await make(WALLET_B)
+
+  await saveTxs(driver, [makeTx(WALLET_A, 'mine'), makeTx(WALLET_B, 'theirs')])
+  await a.putRows([{ table: 'utxo', rows: [{ id: 'ua', txid: 'mine' }] }])
+  await b.putRows([{ table: 'utxo', rows: [{ id: 'ub', txid: 'theirs' }] }])
+
+  return { driver, a, b, prefixB }
+}
+
+describe('plugin SQL fence', function () {
+  it('reads its own tables', async function () {
+    const { driver, a } = await setup()
+    try {
+      const rows = await a.runSql<{ doc: string }>`
+        SELECT json(doc) AS doc FROM ${a.utxo}`
+      expect(rows.length).equals(1)
+      expect(JSON.parse(rows[0].doc).id).equals('ua')
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('joins its tables to its own transactions', async function () {
+    const { driver, a } = await setup()
+    try {
+      // The reason `runSql` exists: this is one round trip in place of the
+      // per-output lookup loop the UTXO engine runs today.
+      const rows = await a.runSql<{ txid: string }>`
+        SELECT t.txid FROM ${a.tx_chain} t
+          JOIN ${a.utxo} u ON u.doc ->> '$.txid' = t.txid
+         WHERE t.block_height > ${1}`
+      expect(rows.map(row => row.txid)).deep.equals(['mine'])
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('sees only its own wallet through the scoped view', async function () {
+    const { driver, a } = await setup()
+    try {
+      // Both transactions are in `tx_chain`; the view shows one. The wallet
+      // never comes from the plugin's SQL, so there is nothing to get wrong.
+      expect(
+        await driver.query('SELECT count(*) AS n FROM tx_chain')
+      ).deep.equals([{ n: 2 }])
+
+      const rows = await a.runSql<{ txid: string }>`
+        SELECT txid FROM ${a.tx_chain}`
+      expect(rows.map(row => row.txid)).deep.equals(['mine'])
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot name the base transaction table', async function () {
+    const { driver, a } = await setup()
+    try {
+      await expectRejection(a.runSql`SELECT * FROM tx_chain`)
+      await expectRejection(a.runSql`SELECT * FROM tx_meta`)
+      await expectRejection(a.runSql`SELECT * FROM tx_asset_idx`)
+      await expectRejection(a.runSql`SELECT * FROM wallet`)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot reach another wallet tables', async function () {
+    const { driver, a, b, prefixB } = await setup()
+    try {
+      // A real handle naming wallet B's table, which is the strongest form
+      // of the attack: the authorizer compares the prefix against the scope
+      // rather than trusting the handle it was given.
+      const forged = new EdgeTableHandle(`${prefixB}utxo`)
+      await expectRejection(a.runSql`SELECT * FROM ${forged}`)
+
+      // ...and the same table is readable by the wallet that owns it, so the
+      // denial above is about the scope and not about the name:
+      expect(
+        (await b.runSql<{ key: string }>`SELECT key FROM ${b.utxo}`).length
+      ).equals(1)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot discover what exists', async function () {
+    const { driver, a } = await setup()
+    try {
+      // The catalog names every other table, so reading it would defeat the
+      // point of not being able to name them.
+      await expectRejection(a.runSql`SELECT name FROM sqlite_schema`)
+      await expectRejection(a.runSql`SELECT name FROM sqlite_master`)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot reach the codec', async function () {
+    const { driver, a } = await setup()
+    try {
+      // Not a scoping slip -- a plugin that can rekey the file owns the
+      // account's entire local cache.
+      await expectRejection(a.runSql`PRAGMA key = "x'00'"`)
+      await expectRejection(a.runSql`PRAGMA cipher`)
+      await expectRejection(a.runSql`PRAGMA journal_mode`)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot attach another file', async function () {
+    const { driver, a } = await setup()
+    try {
+      await expectRejection(a.runSql`ATTACH DATABASE ':memory:' AS other`)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot create schema that would launder access', async function () {
+    const { driver, a } = await setup()
+    try {
+      // A view or trigger over a base table would read it on the plugin's
+      // behalf, and `arg4` handling means the core trusts its own schema.
+      await expectRejection(
+        a.runSql`CREATE VIEW sneaky AS SELECT * FROM tx_chain`
+      )
+      await expectRejection(a.runSql`CREATE TABLE mine (a TEXT)`)
+      await expectRejection(a.runSql`DROP TABLE tx_chain`)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot open its own transaction', async function () {
+    const { driver, a } = await setup()
+    try {
+      // A batch is already one transaction; an open one would span statements
+      // the core did not compose.
+      await expectRejection(a.runSql`BEGIN`)
+      await expectRejection(a.runSql`SAVEPOINT s`)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot read back the scope it is fenced by', async function () {
+    const { driver, a } = await setup()
+    try {
+      // The view and its triggers call this on the plugin's behalf; the
+      // plugin's own SQL may not.
+      await expectRejection(a.runSql`SELECT edge_wallet()`)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('writes its own transactions through the view', async function () {
+    const { driver, a } = await setup()
+    try {
+      await a.runSql`
+        INSERT INTO ${a.tx_chain} (txid, doc)
+        VALUES (${'fresh'}, jsonb(${JSON.stringify({
+          walletId: 'ignored',
+          txid: 'fresh',
+          pluginId: 'bitcoin',
+          date: '2024-06-02T00:00:00.000Z',
+          blockHeight: 1,
+          isSend: false,
+          nativeAmounts: { '': '5' },
+          networkFees: {},
+          ourReceiveAddresses: [],
+          memos: [],
+          tokenData: {}
+        })}))`
+
+      // The trigger substituted the handle's wallet, whatever the document
+      // said -- and the index followed inside the same statement.
+      expect(
+        await driver.query(
+          `SELECT wallet_id FROM tx_chain WHERE txid = 'fresh'`
+        )
+      ).deep.equals([{ wallet_id: WALLET_A }])
+      expect(
+        await driver.query(
+          `SELECT wallet_id FROM tx_asset_idx WHERE txid = 'fresh'`
+        )
+      ).deep.equals([{ wallet_id: WALLET_A }])
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot write another wallet transaction through the view', async function () {
+    const { driver, a } = await setup()
+    try {
+      await a.runSql`
+        UPDATE ${a.tx_chain} SET doc = jsonb('{"blockHeight":999}')
+         WHERE txid = ${'theirs'}`
+
+      // The view had no such row to update, so nothing happened -- rather
+      // than the update reaching wallet B:
+      const rows = await driver.query<{ block_height: number }>(
+        `SELECT block_height FROM tx_chain WHERE txid = 'theirs'`
+      )
+      expect(rows[0].block_height).equals(800000)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('binds interpolated values rather than splicing them', async function () {
+    const { driver, a } = await setup()
+    try {
+      // Everything that is not a table handle becomes a parameter, so a
+      // plugin cannot build SQL out of a value it controls.
+      const attack = "' OR 1=1 --"
+      const rows = await a.runSql<{ txid: string }>`
+        SELECT txid FROM ${a.tx_chain} WHERE txid = ${attack}`
+      expect(rows).deep.equals([])
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('leaves the core unfenced once the call is over', async function () {
+    const { driver, a } = await setup()
+    try {
+      await expectRejection(a.runSql`SELECT * FROM tx_chain`)
+
+      // The core has to be able to read its own tables afterwards, or one
+      // failed plugin query would wedge the account:
+      expect(
+        await driver.query('SELECT count(*) AS n FROM tx_chain')
+      ).deep.equals([{ n: 2 }])
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('keeps the driver own plumbing out of the fence', async function () {
+    const { driver, a } = await setup()
+    try {
+      // The driver prepares its parameter binding against `json_each`, and
+      // the authorizer cannot tell that apart from the caller's SQL. Passing
+      // parameters at all is the test.
+      const rows = await a.runSql<{ txid: string }>`
+        SELECT txid FROM ${a.tx_chain} WHERE block_height > ${1}`
+      expect(rows.map(row => row.txid)).deep.equals(['mine'])
+    } finally {
+      await driver.close()
+    }
+  })
+})

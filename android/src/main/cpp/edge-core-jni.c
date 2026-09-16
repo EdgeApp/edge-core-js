@@ -163,3 +163,33 @@ Java_app_edge_reactnative_core_EdgeNative_sqlDelete(
   (*env)->ReleaseStringUTFChars(env, path, pPath);
   if (status != 0) throwSqlError(env, error);
 }
+
+JNIEXPORT void JNICALL
+Java_app_edge_reactnative_core_EdgeNative_sqlSetScope(
+    JNIEnv *env,
+    jobject self,
+    jint handle,
+    jstring pluginId,
+    jstring walletPrefix,
+    jstring walletId
+) {
+  const char *pPlugin =
+      pluginId == NULL ? NULL : (*env)->GetStringUTFChars(env, pluginId, NULL);
+  const char *pPrefix =
+      walletPrefix == NULL
+          ? NULL
+          : (*env)->GetStringUTFChars(env, walletPrefix, NULL);
+  const char *pWallet =
+      walletId == NULL ? NULL : (*env)->GetStringUTFChars(env, walletId, NULL);
+
+  char *error = NULL;
+  int status = edgeSqlSetScope(handle, pPlugin, pPrefix, pWallet, &error);
+
+  if (pWallet != NULL) (*env)->ReleaseStringUTFChars(env, walletId, pWallet);
+  if (pPrefix != NULL) {
+    (*env)->ReleaseStringUTFChars(env, walletPrefix, pPrefix);
+  }
+  if (pPlugin != NULL) (*env)->ReleaseStringUTFChars(env, pluginId, pPlugin);
+
+  if (status != 0) throwSqlError(env, error);
+}
