@@ -1,4 +1,5 @@
 import { EdgeSqlDriver } from './db-driver'
+import { derivedTables } from './db-index'
 import { SCHEMA_VERSION, schemaStatements } from './db-schema'
 
 /**
@@ -26,6 +27,13 @@ export async function prepareDatabase(
 
   await driver.batch([
     ...schemaStatements.map(sql => ({ sql })),
+    // A schema built from scratch is already at every derived table's current
+    // version, so record that rather than making the next step rebuild empty
+    // tables and report it as a reindex.
+    ...derivedTables.map(table => ({
+      sql: 'INSERT INTO index_version (name, version) VALUES (?, ?)',
+      params: [table.name, table.version]
+    })),
     { sql: `PRAGMA user_version = ${SCHEMA_VERSION}` }
   ])
 

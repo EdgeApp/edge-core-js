@@ -753,6 +753,9 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           }
           opened = database
           openAccountDatabases.set(input.props.accountId, database)
+          if (database.reindexed.length > 0) {
+            log.warn(`Login: reindexed ${database.reindexed.join(', ')}`)
+          }
           input.onOutput(database)
         } catch (error) {
           log.error(error)
