@@ -1,0 +1,370 @@
+import {
+  EdgeAccountTxPage,
+  EdgeAccountTxQuery,
+  EdgeAccountTxSummary,
+  EdgeTx
+} from '../../types/types'
+import { EdgeSqlDriver, EdgeSqlValue } from './db-driver'
+import { asEdgeTx } from './tx-cleaners'
+
+/**
+ * The account-wide transaction query.
+ *
+ * Every query is answered from `tx_asset_idx`, whose grain is one row per
+ * (wallet, transaction, asset). Callers want transactions, so the rows are
+ * collapsed on the way out -- a transaction that moved two assets is one
+ * `EdgeTx`, not two.
+ *
+ * One consequence: **a page can return fewer transactions than `limit`**,
+ * because the limit applies to index rows. `cursor` is what signals
+ * exhaustion, never the count.
+ */
+
+const DEFAULT_LIMIT = 50
+const MAX_LIMIT = 500
+
+/** The columns a sort can name, and the index column each one reads. */
+const SORT_COLUMNS = {
+  date: 'effective_date',
+  nativeAmount: 'native_amount_key',
+  networkFee: 'network_fee_key',
+  fiatAmount: 'fiat_amount',
+  blockHeight: 'block_height'
+} as const
+
+interface PageRow {
+  wallet_id: string
+  txid: string
+  token_id: string
+  sort_key: EdgeSqlValue
+  effective_date: number
+  chain_doc: string | null
+}
+
+interface WhereClause {
+  sql: string
+  params: EdgeSqlValue[]
+}
+
+/**
+ * A position in a result set.
+ *
+ * Opaque to callers, and deliberately not an offset: an offset shifts under
+ * inserts, so a transaction arriving mid-scroll would make the reader skip a
+ * row or see one twice. This names the last row instead, so the next page
+ * starts exactly after it however much has changed.
+ *
+ * It carries the sort that produced it, and a query whose sort does not match
+ * is rejected rather than silently paged wrong.
+ */
+interface Cursor {
+  sort: string
+  direction: 'asc' | 'desc'
+  /** The last row's sort value, txid and token, in index order. */
+  key: [EdgeSqlValue, string, string]
+}
+
+function encodeCursor(cursor: Cursor): string {
+  return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64')
+}
+
+function decodeCursor(text: string): Cursor {
+  try {
+    return JSON.parse(Buffer.from(text, 'base64').toString('utf8'))
+  } catch (error) {
+    throw new TypeError('Invalid transaction query cursor')
+  }
+}
+
+/** `EdgeTokenId` is `null` for the chain's own asset; SQL spells that `''`. */
+function toTokenKey(tokenId: string | null): string {
+  return tokenId == null ? '' : tokenId
+}
+
+/**
+ * `alias` qualifies every column, because the page query joins the index
+ * against `tx_chain` and the two share most of their column names.
+ */
+function buildWhere(query: EdgeAccountTxQuery, alias = ''): WhereClause {
+  const parts: string[] = []
+  const params: EdgeSqlValue[] = []
+  const at = (column: string): string => `${alias}${column}`
+
+  const inList = (column: string, values: EdgeSqlValue[]): void => {
+    if (values.length === 0) {
+      // An empty scope matches nothing, which is not the same as no scope.
+      parts.push('0')
+      return
+    }
+    parts.push(`${column} IN (${values.map(() => '?').join(', ')})`)
+    params.push(...values)
+  }
+
+  if (query.walletIds != null) inList(at('wallet_id'), query.walletIds)
+  if (query.pluginIds != null) inList(at('plugin_id'), query.pluginIds)
+  if (query.txids != null) inList(at('txid'), query.txids)
+  if (query.tokenIds != null) {
+    inList(at('token_id'), query.tokenIds.map(toTokenKey))
+  }
+  if (query.assets != null) {
+    if (query.assets.length === 0) {
+      parts.push('0')
+    } else {
+      parts.push(
+        `(${query.assets
+          .map(() => `(${at('plugin_id')} = ? AND ${at('token_id')} = ?)`)
+          .join(' OR ')})`
+      )
+      for (const asset of query.assets) {
+        params.push(asset.pluginId, toTokenKey(asset.tokenId))
+      }
+    }
+  }
+
+  if (query.direction != null) {
+    parts.push(`${at('is_send')} = ?`)
+    params.push(query.direction === 'send' ? 1 : 0)
+  }
+  if (query.afterDate != null) {
+    parts.push(`${at('effective_date')} >= ?`)
+    params.push(Math.floor(query.afterDate.valueOf() / 1000))
+  }
+  if (query.beforeDate != null) {
+    parts.push(`${at('effective_date')} <= ?`)
+    params.push(Math.floor(query.beforeDate.valueOf() / 1000))
+  }
+
+  // Amounts compare through the sort key, using the same function that wrote
+  // the column -- so a bound and a stored value cannot be encoded differently.
+  if (query.minNativeAmount != null) {
+    parts.push(`${at('native_amount_key')} >= edge_native_amount_key(?)`)
+    params.push(query.minNativeAmount)
+  }
+  if (query.maxNativeAmount != null) {
+    parts.push(`${at('native_amount_key')} <= edge_native_amount_key(?)`)
+    params.push(query.maxNativeAmount)
+  }
+  if (query.minNetworkFee != null) {
+    parts.push(`${at('network_fee_key')} >= edge_native_amount_key(?)`)
+    params.push(query.minNetworkFee)
+  }
+  if (query.maxNetworkFee != null) {
+    parts.push(`${at('network_fee_key')} <= edge_native_amount_key(?)`)
+    params.push(query.maxNetworkFee)
+  }
+
+  if (query.minFiatAmount != null) {
+    parts.push(`${at('fiat_amount')} >= ?`)
+    params.push(query.minFiatAmount)
+  }
+  if (query.maxFiatAmount != null) {
+    parts.push(`${at('fiat_amount')} <= ?`)
+    params.push(query.maxFiatAmount)
+  }
+  if (query.hasMetadata != null) {
+    parts.push(`${at('has_metadata')} = ?`)
+    params.push(query.hasMetadata ? 1 : 0)
+  }
+
+  // A row with metadata but no chain data yet is an orphan: the user
+  // annotated a transaction this device has not seen. Hidden by default,
+  // because showing one looks like a transaction that lost its amounts.
+  if (query.includeOrphans !== true) parts.push(`${at('has_chain')} = 1`)
+
+  return {
+    sql: parts.length === 0 ? '1' : parts.join(' AND '),
+    params
+  }
+}
+
+/**
+ * Refuses a query no index can answer.
+ *
+ * A full table scan is a query that works in development and takes four
+ * seconds on a real account, so it fails here instead. The fix is never to
+ * loosen this: it is to add a column or a satellite table for the dimension,
+ * and reindex.
+ */
+async function assertIndexed(
+  driver: EdgeSqlDriver,
+  sql: string,
+  params: EdgeSqlValue[]
+): Promise<void> {
+  const plan = await driver.query<{ detail: string }>(
+    `EXPLAIN QUERY PLAN ${sql}`,
+    params
+  )
+  for (const { detail } of plan) {
+    // "SCAN t USING INDEX i" is an ordered walk of an index, which is what
+    // an unfiltered page looks like. A bare "SCAN t" is the table itself.
+    if (/^SCAN \w+$/.test(detail)) {
+      throw new Error(
+        `This transaction query cannot use an index: ${detail}. ` +
+          'Narrow it with a wallet, asset or date, or add an index for the ' +
+          'dimension it asks about.'
+      )
+    }
+  }
+}
+
+interface BuiltPage {
+  sql: string
+  params: EdgeSqlValue[]
+  sortColumn: string
+  direction: 'asc' | 'desc'
+  limit: number
+}
+
+function buildPageQuery(query: EdgeAccountTxQuery): BuiltPage {
+  const where = buildWhere(query, 'i.')
+  const sortField = query.sort?.field ?? 'date'
+  const direction = query.sort?.direction ?? 'desc'
+  const sortColumn = SORT_COLUMNS[sortField]
+  const limit = Math.min(query.limit ?? DEFAULT_LIMIT, MAX_LIMIT)
+
+  const params = [...where.params]
+  let keyset = ''
+  if (query.after != null) {
+    const cursor = decodeCursor(query.after)
+    if (cursor.sort !== sortField || cursor.direction !== direction) {
+      throw new Error(
+        'This cursor belongs to a different sort. Start the query again.'
+      )
+    }
+    // A row-value comparison, which SQLite turns into a seek on the same
+    // index the ORDER BY uses rather than a filter over the whole range.
+    const operator = direction === 'desc' ? '<' : '>'
+    keyset = ` AND (i.${sortColumn}, i.txid, i.token_id) ${operator} (?, ?, ?)`
+    params.push(...cursor.key)
+  }
+
+  const order = direction === 'desc' ? 'DESC' : 'ASC'
+  const sql = `
+    SELECT
+      i.wallet_id, i.txid, i.token_id, i.effective_date,
+      i.${sortColumn} AS sort_key,
+      json(c.doc) AS chain_doc
+    FROM tx_asset_idx i
+    LEFT JOIN tx_chain c
+           ON c.wallet_id = i.wallet_id AND c.txid = i.txid
+    WHERE ${where.sql}${keyset}
+    ORDER BY i.${sortColumn} ${order}, i.txid ${order}, i.token_id ${order}
+    LIMIT ?`
+
+  return { sql, params: [...params, limit], sortColumn, direction, limit }
+}
+
+/**
+ * Collapses index rows into transactions.
+ *
+ * Rows for one transaction arrive adjacently under a date sort, but not under
+ * an amount sort, so this keys a map rather than relying on adjacency --
+ * while still returning them in the order the index produced.
+ */
+function collapse(rows: PageRow[]): EdgeTx[] {
+  const out: EdgeTx[] = []
+  const seen = new Set<string>()
+  for (const row of rows) {
+    const key = `${row.wallet_id}|${row.txid}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    if (row.chain_doc == null) continue
+    out.push(asEdgeTx(JSON.parse(row.chain_doc)))
+  }
+  return out
+}
+
+async function readSummary(
+  driver: EdgeSqlDriver,
+  query: EdgeAccountTxQuery
+): Promise<EdgeAccountTxSummary> {
+  const where = buildWhere(query)
+  const sql = `
+    SELECT
+      count(DISTINCT wallet_id || '|' || txid) AS count,
+      min(effective_date) AS earliest,
+      max(effective_date) AS latest
+    FROM tx_asset_idx
+    WHERE ${where.sql}`
+
+  const rows = await driver.query<{
+    count: number
+    earliest: number | null
+    latest: number | null
+  }>(sql, where.params)
+
+  const row = rows[0]
+  const out: EdgeAccountTxSummary = { count: row?.count ?? 0 }
+  if (row?.earliest != null) out.earliestDate = new Date(row.earliest * 1000)
+  if (row?.latest != null) out.latestDate = new Date(row.latest * 1000)
+  return out
+}
+
+/** Runs one page of a query. */
+export async function queryTxPage(
+  driver: EdgeSqlDriver,
+  query: EdgeAccountTxQuery
+): Promise<EdgeAccountTxPage> {
+  const details = query.details ?? 'txs'
+
+  const out: EdgeAccountTxPage = { transactions: [] }
+  if (details !== 'summary') {
+    const built = buildPageQuery(query)
+    await assertIndexed(driver, built.sql, built.params)
+    const rows = await driver.query<PageRow>(built.sql, built.params)
+
+    out.transactions = collapse(rows)
+
+    // Exhaustion is "the index had no more rows", not "we returned fewer
+    // transactions than asked for" -- those differ whenever a transaction
+    // touched more than one asset.
+    if (rows.length === built.limit) {
+      const last = rows[rows.length - 1]
+      out.cursor = encodeCursor({
+        sort: query.sort?.field ?? 'date',
+        direction: built.direction,
+        key: [last.sort_key, last.txid, last.token_id]
+      })
+    }
+  }
+
+  if (details !== 'txs') out.summary = await readSummary(driver, query)
+  return out
+}
+
+/** Reads one transaction by identity. */
+export async function readTx(
+  driver: EdgeSqlDriver,
+  walletId: string,
+  txid: string
+): Promise<EdgeTx | undefined> {
+  const rows = await driver.query<{ doc: string }>(
+    `SELECT json(doc) AS doc FROM tx_chain WHERE wallet_id = ? AND txid = ?`,
+    [walletId, txid]
+  )
+  if (rows.length === 0) return undefined
+  return asEdgeTx(JSON.parse(rows[0].doc))
+}
+
+/**
+ * Every page of a query, one after another.
+ *
+ * Paging by cursor rather than by offset means a transaction arriving while
+ * the caller reads does not make it skip a row or see one twice.
+ */
+export async function* streamTxPages(
+  driver: EdgeSqlDriver,
+  query: EdgeAccountTxQuery
+): AsyncIterableIterator<EdgeTx[]> {
+  let after = query.after
+  while (true) {
+    const page = await queryTxPage(driver, {
+      ...query,
+      after,
+      details: 'txs'
+    })
+    if (page.transactions.length > 0) yield page.transactions
+    if (page.cursor == null) return
+    after = page.cursor
+  }
+}
