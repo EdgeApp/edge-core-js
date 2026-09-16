@@ -4,6 +4,7 @@ import { makeContext, makeFakeWorld } from './core/core'
 import { defaultOnLog } from './core/log/log'
 import { hideProperties } from './io/hidden-properties'
 import { makeNodeIo } from './io/node/node-io'
+import { makeMemorySqlDriverFactory } from './io/node/node-sql-driver'
 import {
   EdgeContext,
   EdgeContextOptions,
@@ -40,7 +41,16 @@ export function makeFakeEdgeWorld(
   return Promise.resolve(
     makeLocalBridge(
       makeFakeWorld(
-        { io: makeNodeIo('.'), nativeIo: {} },
+        {
+          io: {
+            ...makeNodeIo('.'),
+            // A fake world keeps its databases in memory, as it does its
+            // disklet. Otherwise a test run would leave real database files
+            // beside whatever directory it happened to start in.
+            ...makeMemorySqlDriverFactory()
+          },
+          nativeIo: {}
+        },
         { crashReporter, onLog },
         users
       ),
