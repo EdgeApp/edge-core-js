@@ -933,6 +933,34 @@ export interface EdgeTableQuery {
   limit?: number
 }
 
+/** `txid` identifies the row; every other field is optional and merges. */
+export type EdgeTxPatch = { txid: string } & Partial<
+  Omit<EdgeTx, 'txid' | 'walletId'>
+>
+
+/**
+ * Transaction and table writes that must land together or not at all.
+ *
+ * Applied in a fixed order -- `removeRows`, `putRows`, `saveTxs`, `patchTxs`
+ * -- so removing and re-adding the same key in one call has a defined result.
+ * Within each, the array order is preserved.
+ */
+export interface EdgeBatchWrite {
+  /** Complete transactions. Creates one, or merges over an existing one. */
+  saveTxs?: EdgeTx[]
+
+  /**
+   * Partial updates. The transaction must already exist, or the whole batch
+   * fails -- merge-patch cannot tell a partial update from a malformed
+   * create, and `{ txid, blockHeight }` against a missing row would happily
+   * insert a transaction with no date and no amounts.
+   */
+  patchTxs?: EdgeTxPatch[]
+
+  putRows?: EdgeTableRows[]
+  removeRows?: EdgeTableKeys[]
+}
+
 // transaction queries ---------------------------------------------------
 
 export interface EdgeAccountTxQuery {
