@@ -1,4 +1,4 @@
-import { Bridgeable } from 'yaob'
+import { Bridgeable, emit } from 'yaob'
 
 import {
   EdgeAccountTxPage,
@@ -25,11 +25,26 @@ export class EdgeTransactionStoreApi
 {
   _ai: ApiInput
   _accountId: string
+  _unsubscribe: (() => void) | undefined
 
   constructor(ai: ApiInput, accountId: string) {
     super()
     this._ai = ai
     this._accountId = accountId
+  }
+
+  /**
+   * Starts forwarding change reports.
+   *
+   * Separate from the constructor because the database is opened after the
+   * account API is built, and a listener attached to a database that is not
+   * there yet would quietly never fire.
+   */
+  _watch(database: EdgeAccountDatabase): void {
+    if (this._unsubscribe != null) return
+    this._unsubscribe = database.onChanged(refs => {
+      emit(this, 'transactionsChanged', refs)
+    })
   }
 
   get _database(): EdgeAccountDatabase {

@@ -19,11 +19,76 @@ import { prepareDatabase } from './db-open'
  * rest of its device-local state and is removed with it.
  */
 
+/** One transaction, named the only way a reader can look one up. */
+export interface EdgeTxRef {
+  walletId: string
+  txid: string
+}
+
 export interface EdgeAccountDatabase {
   driver: EdgeSqlDriver
   /** Derived tables rebuilt while opening, for the login log. */
   reindexed: string[]
+
+  /**
+   * Reports transactions whose stored form changed.
+   *
+   * Batched and throttled, and carrying identity only. A rate backfill can
+   * touch thousands of rows, and one event per row would swamp the bridge --
+   * so a reader is told *which* transactions to re-read, not what they now
+   * say.
+   */
+  changed: (refs: EdgeTxRef[]) => void
+  onChanged: (f: (refs: EdgeTxRef[]) => void) => () => void
+
   close: () => Promise<void>
+}
+
+/** How long changes accumulate before a reader hears about them. */
+const CHANGE_THROTTLE_MS = 250
+
+/**
+ * Collects change reports and delivers them in batches.
+ *
+ * Deduplicated by identity, because the commonest pattern by far is the same
+ * transaction being written twice in a row -- once per asset it touched.
+ */
+function makeChangeNotifier(): Pick<
+  EdgeAccountDatabase,
+  'changed' | 'onChanged'
+> & { stop: () => void } {
+  const listeners = new Set<(refs: EdgeTxRef[]) => void>()
+  const pending = new Map<string, EdgeTxRef>()
+  let timeout: ReturnType<typeof setTimeout> | undefined
+
+  const flush = (): void => {
+    timeout = undefined
+    if (pending.size === 0) return
+    const refs = [...pending.values()]
+    pending.clear()
+    for (const listener of listeners) listener(refs)
+  }
+
+  return {
+    changed(refs) {
+      for (const ref of refs) {
+        pending.set(`${ref.walletId}\u001f${ref.txid}`, ref)
+      }
+      if (timeout == null) timeout = setTimeout(flush, CHANGE_THROTTLE_MS)
+    },
+
+    onChanged(f) {
+      listeners.add(f)
+      return () => listeners.delete(f)
+    },
+
+    stop() {
+      if (timeout != null) clearTimeout(timeout)
+      timeout = undefined
+      listeners.clear()
+      pending.clear()
+    }
+  }
 }
 
 /**
@@ -83,7 +148,17 @@ export async function openAccountDatabase(
       // established anything yet.
       await prepareDatabase(driver)
       const reindexed = await reindexStale(driver)
-      return { driver, reindexed, close: async () => await driver.close() }
+      const notifier = makeChangeNotifier()
+      return {
+        driver,
+        reindexed,
+        changed: notifier.changed,
+        onChanged: notifier.onChanged,
+        close: async () => {
+          notifier.stop()
+          await driver.close()
+        }
+      }
     } catch (error) {
       // Do not leak the handle when the check is what failed:
       await driver.close().catch(() => undefined)
