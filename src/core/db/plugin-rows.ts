@@ -214,16 +214,22 @@ export async function findRows(
     (query.limit != null ? ' LIMIT ?' : '')
   if (query.limit != null) params.push(query.limit)
 
-  const plan = await driver.query<{ detail: string }>(
-    `EXPLAIN QUERY PLAN ${sql}`,
-    params
-  )
-  for (const { detail } of plan) {
-    if (/^SCAN \w+$/.test(detail)) {
-      throw new Error(
-        `This query cannot use an index on ${table}: ${detail}. ` +
-          'Declare an index for it in defineTables.'
-      )
+  // A query with no predicate is asking for the table. A scan is the only
+  // plan there is, so refusing it would be refusing the question rather than
+  // catching a mistake -- and reading one wallet's own UTXOs is exactly what
+  // computing a spendable balance does.
+  if (parts.length > 0) {
+    const plan = await driver.query<{ detail: string }>(
+      `EXPLAIN QUERY PLAN ${sql}`,
+      params
+    )
+    for (const { detail } of plan) {
+      if (/^SCAN \w+$/.test(detail)) {
+        throw new Error(
+          `This query cannot use an index on ${table}: ${detail}. ` +
+            'Declare an index for it in defineTables.'
+        )
+      }
     }
   }
 
