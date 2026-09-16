@@ -12,7 +12,8 @@ import type {
   EdgeLoginMessage,
   EdgeLogSettings,
   EdgeNativeIo,
-  EdgeOnLog
+  EdgeOnLog,
+  EdgeTxDatabase
 } from './types'
 
 export * from './types'
@@ -140,3 +141,15 @@ export declare function fetchLoginMessages(
   apiSecret?: Uint8Array,
   apiSigner?: EdgeApiSigner
 ): Promise<EdgeLoginMessage[]>
+
+/**
+ * A transaction database backed by memory, for testing a plugin.
+ *
+ * Node only. A plugin moving onto `EdgeTxDatabase` has to be able to test
+ * against the real schema, triggers and authorizer without standing up an
+ * account.
+ */
+export declare function makeMemoryTxDatabase(opts: {
+  walletId: string
+  pluginId: string
+}): Promise<EdgeTxDatabase>

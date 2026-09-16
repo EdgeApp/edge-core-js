@@ -1,7 +1,7 @@
 import { base64 } from 'rfc4648'
 
 import { EdgeTableSpec } from '../../types/types'
-import { base58 } from '../../util/encoding'
+import { base58, utf8 } from '../../util/encoding'
 import { EdgeSqlDriver, EdgeSqlStatement } from './db-driver'
 
 /**
@@ -44,7 +44,7 @@ export function walletTablePrefix(
   walletId: string,
   taken: Iterable<string> = []
 ): string {
-  const full = base58.stringify(base64.parse(walletId))
+  const full = encodeWalletId(walletId)
   const used = new Set(taken)
 
   for (let length = PREFIX_LENGTH; length <= full.length; ++length) {
@@ -52,6 +52,21 @@ export function walletTablePrefix(
     if (!used.has(prefix)) return prefix
   }
   throw new Error(`Cannot find a free table prefix for wallet ${walletId}`)
+}
+
+/**
+ * The wallet id as base58, the way the database file is named.
+ *
+ * Real wallet ids are base64 keys. A caller that passes something else -- a
+ * test fixture, usually -- still gets a stable, distinct prefix rather than a
+ * thrown error from the decoder.
+ */
+function encodeWalletId(walletId: string): string {
+  try {
+    return base58.stringify(base64.parse(walletId))
+  } catch (error) {
+    return base58.stringify(utf8.parse(walletId))
+  }
 }
 
 /** Reads a document path as SQL. Paths are `$.`-rooted, as JSON1 spells them. */
