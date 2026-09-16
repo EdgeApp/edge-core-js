@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto'
 import { makeLocalBridge } from 'yaob'
 
 import { makeContext, makeFakeWorld } from './core/core'
@@ -88,5 +89,19 @@ export async function makeMemoryTxDatabase(opts: {
   const driver = makeMemorySqlDriver()
   await prepareDatabase(driver)
   const prefix = await ensureWalletPrefix(driver, walletId, pluginId)
-  return makeTxDatabase({ driver, walletId, pluginId, prefix })
+  return makeTxDatabase({
+    driver,
+    walletId,
+    pluginId,
+    prefix,
+    // Another memory database, so a plugin can test the path that needs one
+    // without a file anywhere.
+    makeScratch: async () => {
+      const scratch = await makeMemoryTxDatabase({
+        walletId: Buffer.from(randomBytes(32)).toString('base64'),
+        pluginId
+      })
+      return { ...scratch, close: async () => {} }
+    }
+  })
 }
