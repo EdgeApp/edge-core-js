@@ -1,4 +1,5 @@
 {
   "require": "sucrase/register",
+  "node-option": ["no-experimental-strip-types"],
   "spec": "test/**/*.test.ts"
 }
