@@ -20,6 +20,7 @@ import {
   EdgeTokenMap,
   EdgeTransaction,
   EdgeTransactionEvent,
+  EdgeTxDatabase,
   EdgeWalletInfo,
   InsufficientFundsError,
   JsonObject
@@ -199,6 +200,14 @@ const asState = asObject({
 /**
  * Currency plugin transaction engine.
  */
+/**
+ * Every database handle the core has given a fake engine, by wallet.
+ *
+ * A test holding an `EdgeCurrencyWallet` has no path back to its engine, so
+ * this is how the wiring is checked.
+ */
+export const fakeTxDatabases = new Map<string, EdgeTxDatabase>()
+
 class FakeCurrencyEngine implements EdgeCurrencyEngine {
   private readonly walletId: string
   private readonly callbacks: EdgeCurrencyEngineCallbacks
@@ -232,6 +241,10 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   ) {
     this.walletId = walletInfo.id
     this.callbacks = opts.callbacks
+    // So a test can prove the core handed this engine its own storage:
+    if (opts.txDatabase != null) {
+      fakeTxDatabases.set(walletInfo.id, opts.txDatabase)
+    }
     this.running = false
     this.currencyInfo = currencyInfo
     this.state = {

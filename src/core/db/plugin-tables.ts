@@ -157,6 +157,39 @@ export interface DefineTablesResult {
  * cached statements transparently when the schema changes, so this is safe
  * while other wallets are reading.
  */
+/**
+ * Reserves a wallet's table prefix, without creating any tables.
+ *
+ * Separate from `defineTables` because a handle needs a prefix the moment it
+ * exists, while tables only appear when the plugin declares them -- and a
+ * plugin that declares none still writes transactions.
+ */
+export async function ensureWalletPrefix(
+  driver: EdgeSqlDriver,
+  walletId: string,
+  pluginId: string
+): Promise<string> {
+  const rows = await driver.query<{ wallet_id: string; prefix: string }>(
+    'SELECT wallet_id, prefix FROM wallet'
+  )
+  const mine = rows.find(row => row.wallet_id === walletId)
+  if (mine != null) return mine.prefix
+
+  const prefix = walletTablePrefix(
+    walletId,
+    rows.map(row => row.prefix)
+  )
+  await driver.exec([
+    {
+      sql: `INSERT INTO wallet (wallet_id, prefix, plugin_id)
+            VALUES (?, ?, ?)
+            ON CONFLICT (wallet_id) DO UPDATE SET plugin_id = excluded.plugin_id`,
+      params: [walletId, prefix, pluginId]
+    }
+  ])
+  return prefix
+}
+
 export async function defineTables(
   driver: EdgeSqlDriver,
   opts: {
@@ -181,7 +214,8 @@ export async function defineTables(
       rows.map(row => row.prefix)
     )
 
-  const rebuilt = mine != null && mine.table_version !== spec.version
+  const rebuilt =
+    mine?.table_version != null && mine.table_version !== spec.version
   const statements: EdgeSqlStatement[] = []
 
   if (rebuilt) {

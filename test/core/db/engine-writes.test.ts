@@ -4,6 +4,7 @@ import { describe, it } from 'mocha'
 import { openAccountDatabases } from '../../../src/core/db/account-database'
 import { EdgeSqlDriver } from '../../../src/core/db/db-driver'
 import { EdgeAccount, makeFakeEdgeWorld } from '../../../src/index'
+import { fakeTxDatabases } from '../../fake/fake-currency-plugin'
 import { fakeUser } from '../../fake/fake-user'
 
 /**
@@ -244,6 +245,53 @@ describe('account.transactions', function () {
       expect(tx?.txid).equals('a')
       expect(tx?.pluginId).equals('fakecoin')
       expect(await store.getTx(fixture.walletId, 'nope')).equals(undefined)
+    } finally {
+      await fixture.logout()
+    }
+  })
+})
+
+describe('engine storage', function () {
+  it('hands each engine its own database', async function () {
+    const fixture = await setup()
+    try {
+      const db = fakeTxDatabases.get(fixture.walletId)
+      if (db == null) throw new Error('The engine got no database handle')
+
+      await db.defineTables({
+        version: 1,
+        tables: { note: { key: ['id'] } }
+      })
+      await db.putRows([{ table: 'note', rows: [{ id: 'n1', text: 'hello' }] }])
+
+      const [result] = await db.getRows([{ table: 'note', keys: ['n1'] }])
+      expect((result.rows[0] as any).text).equals('hello')
+
+      // And it is genuinely this wallet's: the table is named for it.
+      const rows = await fixture.driver.query<{ name: string }>(
+        `SELECT name FROM sqlite_schema
+          WHERE type = 'table' AND name LIKE 'p_%note'`
+      )
+      expect(rows.length).equals(1)
+    } finally {
+      await fixture.logout()
+    }
+  })
+
+  it('scopes an engine to its own transactions', async function () {
+    const fixture = await setup()
+    try {
+      await fixture.changeTxs({ a: { nativeAmount: '1' } })
+      await waitForRows(fixture.driver, 'SELECT * FROM tx_chain', 2)
+
+      const db = fakeTxDatabases.get(fixture.walletId)
+      if (db == null) throw new Error('The engine got no database handle')
+
+      // Both fakecoin wallets reported the same txid, and this engine sees
+      // one of them -- scoped from the handle, not from the query.
+      const txs = await db.getTxs()
+      expect(txs.length).equals(1)
+      expect(txs[0].walletId).equals(fixture.walletId)
     } finally {
       await fixture.logout()
     }

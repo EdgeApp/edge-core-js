@@ -14,6 +14,7 @@ import {
   EdgeCurrencyTools,
   EdgeCurrencyWallet,
   EdgeTokenMap,
+  EdgeTxDatabase,
   EdgeWalletInfo,
   JsonObject
 } from '../../../types/types'
@@ -21,6 +22,8 @@ import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
 import { snooze } from '../../../util/snooze'
 import { makeTokenInfo } from '../../account/custom-tokens'
 import { Dispatch } from '../../actions'
+import { ensureWalletPrefix } from '../../db/plugin-tables'
+import { makeTxDatabase } from '../../db/tx-database-api'
 import { makeLog } from '../../log/log'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
@@ -254,6 +257,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
           // wallet under this same id, so these dispatches go through
           // the guarded input as well:
           callbacks: makeCurrencyWalletCallbacks(startupInput),
+          txDatabase: await makeWalletDatabase(startupInput),
 
           // Engine state kept by the core:
           seenTxCheckpoint,
@@ -745,6 +749,30 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
  * Pass `cachedWalletInfo` when `publicKey.json` was already read
  * (the cache seeding path), so it is not read a second time.
  */
+/**
+ * The handle an engine gets onto its own storage.
+ *
+ * Reserving the prefix is what has to happen before the engine starts:
+ * `defineTables` is a method the engine calls, so the handle has to exist
+ * before the tables do.
+ */
+async function makeWalletDatabase(
+  input: CurrencyWalletInput
+): Promise<EdgeTxDatabase | undefined> {
+  const { accountId, pluginId } = input.props.walletState
+  const database = input.props.output.accounts[accountId]?.database
+  if (database == null) return undefined
+
+  const { walletId } = input.props
+  const prefix = await ensureWalletPrefix(database.driver, walletId, pluginId)
+  return makeTxDatabase({
+    driver: database.driver,
+    walletId,
+    pluginId,
+    prefix
+  })
+}
+
 export async function getPublicWalletInfo(
   walletInfo: EdgeWalletInfo,
   disklet: Disklet,
