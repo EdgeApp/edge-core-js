@@ -279,6 +279,12 @@ export interface EdgeMemo {
   memoName?: string
 }
 
+/** One asset on one chain. */
+export interface EdgeAsset {
+  pluginId: string
+  tokenId: EdgeTokenId
+}
+
 export interface EdgeAssetAmount {
   pluginId: string
   tokenId: EdgeTokenId
@@ -862,6 +868,125 @@ export interface EdgeSpendInfo {
   metadata?: EdgeMetadata
   swapData?: EdgeTxSwap
   otherParams?: JsonObject
+}
+
+// transaction queries ---------------------------------------------------
+
+export interface EdgeAccountTxQuery {
+  // Scope:
+  walletIds?: string[]
+  pluginIds?: string[]
+  assets?: EdgeAsset[]
+  tokenIds?: EdgeTokenId[]
+  txids?: string[]
+
+  // Predicates:
+  direction?: 'send' | 'receive'
+  afterDate?: Date
+  beforeDate?: Date
+
+  /**
+   * The chain's smallest unit, as an integer string -- '150000000', not 1.5.
+   * Convert from a display amount with the asset's denomination first.
+   */
+  minNativeAmount?: string
+  maxNativeAmount?: string
+
+  /** Same units and encoding, against this asset's network fee. */
+  minNetworkFee?: string
+  maxNetworkFee?: string
+
+  /** In the account's `defaultIsoFiat`. There is no per-query fiat. */
+  minFiatAmount?: number
+  maxFiatAmount?: number
+
+  hasMetadata?: boolean
+
+  /**
+   * Metadata rows with no chain data yet -- a transaction the user annotated
+   * on another device that this one has not seen. Hidden by default.
+   */
+  includeOrphans?: boolean
+
+  // Ordering and paging:
+  sort?: {
+    field: 'date' | 'nativeAmount' | 'networkFee' | 'fiatAmount' | 'blockHeight'
+    direction: 'asc' | 'desc'
+  }
+
+  /** A cursor from the previous page. Opaque; pass it back unmodified. */
+  after?: string
+
+  /** Defaults to 50, capped at 500. */
+  limit?: number
+
+  /** What to return. Defaults to `'txs'`. */
+  details?: 'txs' | 'summary' | 'all'
+}
+
+export interface EdgeAccountTxSummary {
+  count: number
+  earliestDate?: Date
+  latestDate?: Date
+}
+
+export interface EdgeAccountTxPage {
+  /**
+   * The transactions on this page.
+   *
+   * May be shorter than `limit`: the limit counts index rows, and a
+   * transaction touching two assets has two of them. Use `cursor` to tell
+   * whether there is more, never the length of this array.
+   */
+  transactions: EdgeTx[]
+
+  /**
+   * Undefined once the result set is exhausted.
+   *
+   * Opaque: it encodes a position and the sort that produced it, and a query
+   * whose sort it does not match is rejected rather than paged wrongly.
+   */
+  cursor?: string
+
+  /** Present when `query.details` asked for it. */
+  summary?: EdgeAccountTxSummary
+}
+
+export interface EdgeTransactionStoreEvents {
+  /**
+   * Transactions whose stored form changed -- new chain data, edited
+   * metadata, or a fiat amount that was just looked up.
+   *
+   * Throttled and batched, and carries identity only: a rate backfill can
+   * touch thousands of rows, and one event per row would swamp the bridge.
+   * The reader re-queries whatever it is currently showing.
+   */
+  transactionsChanged: Array<{ walletId: string; txid: string }>
+}
+
+/**
+ * Transactions across every wallet in an account.
+ *
+ * Everything here returns `EdgeTx`. A transaction is one object, whatever it
+ * touched -- a query scoped to one asset returns the transactions that moved
+ * it, and the caller reads that asset out of `nativeAmounts`. Nothing returns
+ * a per-asset projection of a transaction.
+ */
+export interface EdgeTransactionStore {
+  readonly on: Subscriber<EdgeTransactionStoreEvents>
+
+  /** One page. `query.details` decides whether a summary comes with it. */
+  readonly queryTxs: (query: EdgeAccountTxQuery) => Promise<EdgeAccountTxPage>
+
+  /** Every page of a query, one after another. */
+  readonly streamTxs: (
+    query: EdgeAccountTxQuery
+  ) => Promise<AsyncIterableIterator<EdgeTx[]>>
+
+  readonly getTx: (
+    walletId: string,
+    txid: string
+  ) => Promise<EdgeTx | undefined>
 }
 
 // query data ----------------------------------------------------------
@@ -1940,6 +2065,14 @@ export interface EdgeAccount {
   readonly currencyConfig: EdgePluginMap<EdgeCurrencyConfig>
   readonly swapConfig: EdgePluginMap<EdgeSwapConfig>
   readonly dataStore: EdgeDataStore
+
+  /**
+   * Transactions across every wallet in this account.
+   *
+   * Undefined when the platform has no database, so callers feature-detect
+   * rather than catching. It appears once login finishes opening it.
+   */
+  readonly transactions: EdgeTransactionStore | undefined
 
   // What login method was used?
   readonly edgeLogin: boolean
