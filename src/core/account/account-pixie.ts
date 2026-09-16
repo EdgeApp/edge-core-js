@@ -17,6 +17,11 @@ import {
 } from '../../types/types'
 import { makePeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
+import {
+  EdgeAccountDatabase,
+  openAccountDatabase,
+  openAccountDatabases
+} from '../db/account-database'
 import { syncLogin } from '../login/login'
 import { waitForPlugins } from '../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../root-pixie'
@@ -39,6 +44,7 @@ export const EXPEDITED_SYNC_INTERVAL = 5000
 export interface AccountOutput {
   readonly accountApi: EdgeAccount
   readonly currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
+  readonly database?: EdgeAccountDatabase
 }
 
 export type AccountProps = RootProps & {
@@ -246,6 +252,58 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
       //   lastWallets = input.props.output.currency.wallets
       //   if (accountOutput.accountApi != null) update(accountOutput.accountApi)
       // }
+    }
+  },
+
+  /**
+   * Owns the account's database for the lifetime of the login.
+   *
+   * Opening happens on the login path, so a failure here must not fail the
+   * login. The database is a cache, and every read path still has its
+   * file-based fallback.
+   */
+  database(input: AccountInput) {
+    let opened: EdgeAccountDatabase | undefined
+    let destroyed = false
+    let started = false
+
+    return {
+      async update() {
+        if (started || destroyed) return
+        const { accountState, io, log, state } = input.props
+        if (!state.transactionDatabase) return
+        started = true
+
+        try {
+          const database = await openAccountDatabase(
+            io,
+            accountState.accountWalletInfo
+          )
+          if (database == null) {
+            log.warn('Login: no SQL driver, transaction database disabled')
+            return
+          }
+          // A logout that landed while we were opening owns the close:
+          if (destroyed) {
+            await database.close().catch(() => undefined)
+            return
+          }
+          opened = database
+          openAccountDatabases.set(input.props.accountId, database)
+          input.onOutput(database)
+        } catch (error) {
+          log.error(error)
+        }
+      },
+
+      destroy() {
+        destroyed = true
+        if (opened == null) return
+        const database = opened
+        opened = undefined
+        openAccountDatabases.delete(input.props.accountId)
+        database.close().catch(() => undefined)
+      }
     }
   },
 

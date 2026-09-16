@@ -399,6 +399,7 @@ export type RootAction =
         logSettings: EdgeLogSettings
         pluginsInit: EdgeCorePluginsInit
         skipBlockHeight: boolean
+        transactionDatabase: boolean
         stashes: LoginStash[]
       }
     }

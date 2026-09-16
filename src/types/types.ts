@@ -2031,6 +2031,15 @@ export interface EdgeContextOptions {
    */
   skipBlockHeight?: boolean
 
+  /**
+   * True to keep the account's transactions in an encrypted SQLite database.
+   *
+   * The database is a cache with nothing in it that cannot be rebuilt, so it
+   * can be turned on and off freely. It needs a platform with a native SQLite
+   * binding -- React Native or Node -- and is ignored where there is none.
+   */
+  transactionDatabase?: boolean
+
   /** @deprecated Use `loginServer` instead. */
   authServer?: string
 }
@@ -2224,6 +2233,7 @@ export interface EdgeFakeContextOptions {
   hideKeys?: boolean
   logSettings?: Partial<EdgeLogSettings>
   plugins?: EdgeCorePluginsInit
+  transactionDatabase?: boolean
 
   // Allows core plugins to access the real network except for login, info,
   // and sync servers, which remain emulated:

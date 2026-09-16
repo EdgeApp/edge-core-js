@@ -2,15 +2,17 @@ import crypto from 'crypto'
 import { makeNodeDisklet } from 'disklet'
 import fetch from 'node-fetch'
 
-import { EdgeFetchOptions, EdgeIo } from '../../types/types'
+import { EdgeInternalIo } from '../../core/db/db-driver'
+import { EdgeFetchOptions } from '../../types/types'
 import { scrypt } from '../../util/crypto/scrypt'
+import { makeNodeSqlDriverFactory } from './node-sql-driver'
 
 /**
  * Creates the io resources needed to run the Edge core on node.js.
  *
  * @param {string} path Location where data should be written to disk.
  */
-export function makeNodeIo(path: string): EdgeIo {
+export function makeNodeIo(path: string): EdgeInternalIo {
   return {
     // Crypto:
     random(bytes: number) {
@@ -28,6 +30,9 @@ export function makeNodeIo(path: string): EdgeIo {
       }
       return fetch(uri, opts)
     },
-    fetchCors: fetch
+    fetchCors: fetch,
+
+    // SQL, which is internal to the core and not part of `EdgeIo`:
+    ...makeNodeSqlDriverFactory(path)
   }
 }
