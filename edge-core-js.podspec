@@ -17,6 +17,8 @@ Pod::Spec.new do |s|
     :tag => "v#{s.version}"
   }
   s.source_files =
+    "android/src/main/cpp/sqlite3mc/sqlite3mc_amalgamation.c",
+    "android/src/main/cpp/sqlite3mc/sqlite3mc_amalgamation.h",
     "android/src/main/cpp/scrypt/crypto_scrypt.c",
     "android/src/main/cpp/scrypt/crypto_scrypt.h",
     "android/src/main/cpp/scrypt/sha256.c",
@@ -32,6 +34,22 @@ Pod::Spec.new do |s|
     "ios/EdgeCoreWebViewManager.swift",
     "ios/EdgeNative.swift",
     "ios/PendingCall.swift"
+
+  # SQLite3 Multiple Ciphers, compiled from the vendored amalgamation rather
+  # than linked against the system libsqlite3. iOS's own SQLite tracks the OS
+  # release, so its version and feature set vary by device and FTS5 cannot be
+  # assumed. Building it here also keeps iOS, Android and Node on one SQLite.
+  s.compiler_flags =
+    "-DSQLITE_ENABLE_FTS5=1",
+    "-DSQLITE_ENABLE_JSON1=1",
+    "-DSQLITE_DQS=0",
+    "-DSQLITE_THREADSAFE=1",
+    "-DSQLITE_TEMP_STORE=2",
+    "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1",
+    "-DSQLITE_OMIT_LOAD_EXTENSION=1",
+    "-DSQLITE_OMIT_DEPRECATED=1",
+    "-DSQLITE_DEFAULT_MEMSTATUS=0",
+    "-w"
 
   s.resource_bundles = {
     "edge-core-js" => "android/src/main/assets/edge-core-js/*"
