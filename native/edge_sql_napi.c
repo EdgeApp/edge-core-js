@@ -150,6 +150,28 @@ static napi_value jsQuery(napi_env env, napi_callback_info info) {
   return takeString(env, result);
 }
 
+static napi_value jsAttach(napi_env env, napi_callback_info info) {
+  size_t argc = 3;
+  napi_value argv[3];
+  CHECK(napi_get_cb_info(env, info, &argc, argv, NULL, NULL));
+
+  int handle = readHandle(env, argv[0]);
+  char *path = readString(env, argv[1]);
+  if (path == NULL) return NULL;
+  char *alias = readString(env, argv[2]);
+  if (alias == NULL) {
+    free(path);
+    return NULL;
+  }
+
+  char *error = NULL;
+  int status = edgeSqlAttach(handle, path, alias, &error);
+  free(path);
+  free(alias);
+  if (status != 0) return throwSqlError(env, error);
+  return NULL;
+}
+
 static napi_value jsSetScope(napi_env env, napi_callback_info info) {
   size_t argc = 4;
   napi_value argv[4];
@@ -198,6 +220,7 @@ static napi_value init(napi_env env, napi_value exports) {
     { "exec", NULL, jsExec, NULL, NULL, NULL, napi_default, NULL },
     { "batch", NULL, jsBatch, NULL, NULL, NULL, napi_default, NULL },
     { "query", NULL, jsQuery, NULL, NULL, NULL, napi_default, NULL },
+    { "attach", NULL, jsAttach, NULL, NULL, NULL, napi_default, NULL },
     { "setScope", NULL, jsSetScope, NULL, NULL, NULL, napi_default, NULL },
     { "close", NULL, jsClose, NULL, NULL, NULL, napi_default, NULL },
     { "remove", NULL, jsDelete, NULL, NULL, NULL, napi_default, NULL }

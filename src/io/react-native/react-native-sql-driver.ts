@@ -80,6 +80,13 @@ export function makeReactNativeSqlDriver(
       )
     },
 
+    async attach(name, alias) {
+      assertOpen()
+      await serialize(
+        async () => await nativeBridge.call('sqlAttach', handle, name, alias)
+      )
+    },
+
     async queryScoped<T>(
       scope: EdgeSqlScope,
       sql: string,

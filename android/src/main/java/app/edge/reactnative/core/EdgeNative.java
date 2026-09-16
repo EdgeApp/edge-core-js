@@ -130,6 +130,11 @@ class EdgeNative {
                 args.isNull(2) ? null : args.getString(2)));
         break;
 
+      case "sqlAttach":
+        sqlAttach(args.getInt(0), databasePath(args.getString(1)), args.getString(2));
+        promise.resolve(null);
+        break;
+
       case "sqlSetScope":
         sqlSetScope(
             args.getInt(0),
@@ -259,6 +264,8 @@ class EdgeNative {
   private native String sqlBatch(int handle, String statements);
 
   private native String sqlQuery(int handle, String sql, String params);
+
+  private native void sqlAttach(int handle, String path, String alias);
 
   private native void sqlSetScope(
       int handle, String pluginId, String walletPrefix, String walletId);

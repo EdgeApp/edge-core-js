@@ -84,6 +84,23 @@ int edgeSqlSetScope(
     char **error
 );
 
+/*
+ * Attaches another database file to this connection, read-only.
+ *
+ * `name` is a bare database name, resolved the same way `edgeSqlOpen` does,
+ * so a caller never handles a path. The attached file carries no key: this
+ * exists for the device-wide rate cache, which is public market data and
+ * deliberately unencrypted.
+ *
+ * Returns 0, or -1 after setting `*error`.
+ */
+int edgeSqlAttach(
+    int handle,
+    const char *path,
+    const char *alias,
+    char **error
+);
+
 /* Closes a database. Unknown or already-closed handles are ignored. */
 void edgeSqlClose(int handle);
 
