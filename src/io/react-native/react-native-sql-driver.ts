@@ -77,6 +77,20 @@ export function makeReactNativeSqlDriver(
       )
     },
 
+    async setScope(pluginId, walletPrefix, walletId) {
+      assertOpen()
+      await serialize(
+        async () =>
+          await nativeBridge.call(
+            'sqlSetScope',
+            handle,
+            pluginId,
+            walletPrefix,
+            walletId
+          )
+      )
+    },
+
     async close() {
       if (closed) return
       closed = true

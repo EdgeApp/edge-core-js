@@ -29,6 +29,12 @@ interface EdgeSqlAddon {
   exec: (handle: number, statementsJson: string) => string
   batch: (handle: number, statementsJson: string) => string
   query: (handle: number, sql: string, paramsJson: string | null) => string
+  setScope: (
+    handle: number,
+    pluginId: string | null,
+    walletPrefix: string | null,
+    walletId: string | null
+  ) => void
   close: (handle: number) => void
   remove: (path: string) => void
 }
@@ -97,6 +103,13 @@ export function makeNodeSqlDriver(
       return await serialize(async () => {
         assertOpen()
         return JSON.parse(sql.batch(handle, toJsonStatements(statements)))
+      })
+    },
+
+    async setScope(pluginId, walletPrefix, walletId) {
+      await serialize(async () => {
+        assertOpen()
+        sql.setScope(handle, pluginId, walletPrefix, walletId)
       })
     },
 

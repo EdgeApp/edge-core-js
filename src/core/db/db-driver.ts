@@ -35,6 +35,19 @@ export interface EdgeSqlDriver {
    */
   batch: (statements: EdgeSqlStatement[]) => Promise<number[]>
 
+  /**
+   * Fences every later statement to one plugin and one wallet.
+   *
+   * `setScope(null, null, null)` restores core access, which is the state a
+   * driver opens in. Enforcement is native either way, so it costs no bridge
+   * traffic per row and happens at statement-compile time.
+   */
+  setScope: (
+    pluginId: string | null,
+    walletPrefix: string | null,
+    walletId: string | null
+  ) => Promise<void>
+
   close: () => Promise<void>
 }
 
