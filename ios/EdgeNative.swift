@@ -108,7 +108,104 @@ class EdgeNative {
       return promise.resolve(out.base64EncodedString())
     }
 
+    if name == "sqlOpen",
+      let database = args[0] as? String,
+      let key64 = args[1] as? String,
+      let key = NSData.init(base64Encoded: key64)
+    {
+      var error: UnsafeMutablePointer<CChar>?
+      let handle = edgeSqlOpen(
+        databasePath(database),
+        key.bytes.bindMemory(to: UInt8.self, capacity: key.length),
+        Int32(key.length),
+        &error)
+      if handle < 0 {
+        return promise.reject(takeError(&error, "Cannot open the database"))
+      }
+      return promise.resolve(Int(handle))
+    }
+
+    if name == "sqlExec",
+      let handle = args[0] as? Int,
+      let statements = args[1] as? String
+    {
+      var error: UnsafeMutablePointer<CChar>?
+      return resolveJson(
+        edgeSqlExec(Int32(handle), statements, &error), &error, promise)
+    }
+
+    if name == "sqlBatch",
+      let handle = args[0] as? Int,
+      let statements = args[1] as? String
+    {
+      var error: UnsafeMutablePointer<CChar>?
+      return resolveJson(
+        edgeSqlBatch(Int32(handle), statements, &error), &error, promise)
+    }
+
+    if name == "sqlQuery",
+      let handle = args[0] as? Int,
+      let sql = args[1] as? String
+    {
+      let params = args[2] as? String
+      var error: UnsafeMutablePointer<CChar>?
+      return resolveJson(
+        edgeSqlQuery(Int32(handle), sql, params, &error), &error, promise)
+    }
+
+    if name == "sqlClose", let handle = args[0] as? Int {
+      edgeSqlClose(Int32(handle))
+      return promise.resolve(nil)
+    }
+
+    if name == "sqlDelete", let database = args[0] as? String {
+      var error: UnsafeMutablePointer<CChar>?
+      if edgeSqlDelete(databasePath(database), &error) != 0 {
+        return promise.reject(takeError(&error, "Cannot delete the database"))
+      }
+      return promise.resolve(nil)
+    }
+
     return promise.reject("No method \(name)")
+  }
+
+  /**
+   * Where an account's database lives.
+   *
+   * Beside the disklet's own storage, so an account's database sits with the
+   * rest of its device-local state and is removed with it.
+   */
+  func databasePath(_ name: String) -> String {
+    let paths = NSSearchPathForDirectoriesInDomains(
+      .documentDirectory, .userDomainMask, true)
+    let base = URL(fileURLWithPath: paths[0]).appendingPathComponent("databases")
+    try? FileManager.default.createDirectory(
+      at: base, withIntermediateDirectories: true)
+    return base.appendingPathComponent("\(name).db").path
+  }
+
+  /** Takes ownership of a native error string, falling back to `fallback`. */
+  func takeError(
+    _ error: inout UnsafeMutablePointer<CChar>?, _ fallback: String
+  ) -> String {
+    guard let error = error else { return fallback }
+    let message = String(cString: error)
+    edgeSqlFree(error)
+    return message.isEmpty ? fallback : message
+  }
+
+  /** Resolves with a native JSON string, or rejects with its error. */
+  func resolveJson(
+    _ result: UnsafeMutablePointer<CChar>?,
+    _ error: inout UnsafeMutablePointer<CChar>?,
+    _ promise: PendingCall
+  ) {
+    guard let result = result else {
+      return promise.reject(takeError(&error, "SQL failed"))
+    }
+    let json = String(cString: result)
+    edgeSqlFree(result)
+    return promise.resolve(json)
   }
 
   func handleFetch(

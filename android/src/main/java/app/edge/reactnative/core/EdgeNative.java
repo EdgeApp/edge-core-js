@@ -21,10 +21,12 @@ import org.json.JSONObject;
 
 class EdgeNative {
   private final Disklet mDisklet;
+  private final File mBase;
   private final ExecutorService mPool = Executors.newCachedThreadPool();
 
   public EdgeNative(File base) {
     mDisklet = new Disklet(base);
+    mBase = base;
   }
 
   /**
@@ -103,6 +105,39 @@ class EdgeNative {
           if (out == null) promise.reject("Failed scrypt");
           else promise.resolve(Base64.encodeToString(out, Base64.NO_WRAP));
         }
+        break;
+
+      case "sqlOpen":
+        {
+          byte[] key = Base64.decode(args.getString(1), Base64.DEFAULT);
+          promise.resolve(sqlOpen(databasePath(args.getString(0)), key));
+        }
+        break;
+
+      case "sqlExec":
+        promise.resolve(sqlExec(args.getInt(0), args.getString(1)));
+        break;
+
+      case "sqlBatch":
+        promise.resolve(sqlBatch(args.getInt(0), args.getString(1)));
+        break;
+
+      case "sqlQuery":
+        promise.resolve(
+            sqlQuery(
+                args.getInt(0),
+                args.getString(1),
+                args.isNull(2) ? null : args.getString(2)));
+        break;
+
+      case "sqlClose":
+        sqlClose(args.getInt(0));
+        promise.resolve(null);
+        break;
+
+      case "sqlDelete":
+        sqlDelete(databasePath(args.getString(0)));
+        promise.resolve(null);
         break;
 
       default:
@@ -193,6 +228,32 @@ class EdgeNative {
   }
 
   private native byte[] scrypt(byte[] data, byte[] salt, int n, int r, int p, int dklen);
+
+  /**
+   * Where an account's database lives.
+   *
+   * <p>Beside the disklet's own storage, so an account's database sits with the rest of its
+   * device-local state and is removed with it.
+   */
+  private String databasePath(String name) {
+    File folder = new File(mBase, "databases");
+    folder.mkdirs();
+    return new File(folder, name + ".db").getAbsolutePath();
+  }
+
+  // See android/src/main/cpp/edge-sql.h. These throw on failure, which `call`
+  // turns into a rejected promise like any other error.
+  private native int sqlOpen(String path, byte[] key);
+
+  private native String sqlExec(int handle, String statements);
+
+  private native String sqlBatch(int handle, String statements);
+
+  private native String sqlQuery(int handle, String sql, String params);
+
+  private native void sqlClose(int handle);
+
+  private native void sqlDelete(String path);
 
   static {
     System.loadLibrary("edge-core-jni");
