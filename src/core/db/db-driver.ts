@@ -36,6 +36,15 @@ export interface EdgeSqlDriver {
   batch: (statements: EdgeSqlStatement[]) => Promise<number[]>
 
   /**
+   * Attaches another database by name, read-only, under a schema alias.
+   *
+   * By name rather than by path, because only the native side knows where
+   * databases live -- which is also what keeps a caller from attaching an
+   * arbitrary file.
+   */
+  attach: (name: string, alias: string) => Promise<void>
+
+  /**
    * Fences every later statement to one plugin and one wallet.
    *
    * `setScope(null, null, null)` restores core access, which is the state a
