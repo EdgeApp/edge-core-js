@@ -25,6 +25,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapRequestOptions,
+  EdgeTransactionStore,
   EdgeWalletInfo,
   EdgeWalletInfoFull,
   EdgeWalletStates
@@ -37,6 +38,7 @@ import {
 } from '../currency/currency-selectors'
 import { saveWalletSettings } from '../currency/wallet/currency-wallet-files'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
+import { EdgeTransactionStoreApi } from '../db/tx-store-api'
 import {
   finishWalletCreation,
   makeCurrencyWalletKeys,
@@ -128,6 +130,7 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
   // Specialty API's:
   const dataStore = makeDataStoreApi(ai, accountId)
+  const transactionsApi = new EdgeTransactionStoreApi(ai, accountId)
   const storageWalletApi = makeStorageWalletApi(
     ai,
     accountWalletInfo,
@@ -262,6 +265,15 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
     get dataStore(): EdgeDataStore {
       return dataStore
+    },
+
+    /**
+     * Undefined until the database is open, so callers can feature-detect
+     * rather than catching. It appears once login finishes opening it.
+     */
+    get transactions(): EdgeTransactionStore | undefined {
+      const database = ai.props.output.accounts[accountId]?.database
+      return database == null ? undefined : transactionsApi
     },
 
     // ----------------------------------------------------------------
