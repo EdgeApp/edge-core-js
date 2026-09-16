@@ -204,16 +204,104 @@ export function reindexAssets(scope?: ReindexScope): string[] {
   ]
 }
 
+/**
+ * Search over the user's own words.
+ *
+ * Two objects, not one. `tx_search_idx` holds the text, keyed by transaction,
+ * so a metadata edit deletes its old row by primary key. `tx_search_fts_idx`
+ * is the FTS5 index over it, maintained by the external-content triggers FTS5
+ * documents -- because FTS5's own columns cannot be deleted by anything but a
+ * rowid, and finding the rowid for a transaction would mean scanning the whole
+ * index on every write.
+ *
+ * The tokenizer is `trigram`, which matches anywhere inside a word rather than
+ * only at its start. That is what users expect of a search box, and it is why
+ * a query shorter than three characters cannot use the index at all -- those
+ * fall back to `LIKE` over the text table.
+ */
+const searchIndex = `
+CREATE TABLE tx_search_idx (
+  wallet_id TEXT NOT NULL,
+  txid      TEXT NOT NULL,
+  name      TEXT,
+  notes     TEXT,
+  category  TEXT,
+  PRIMARY KEY (wallet_id, txid)
+);
+
+CREATE VIRTUAL TABLE tx_search_fts_idx USING fts5(
+  name, notes, category,
+  content = 'tx_search_idx',
+  content_rowid = 'rowid',
+  tokenize = 'trigram'
+);
+
+CREATE TRIGGER tx_search_ins_fts AFTER INSERT ON tx_search_idx BEGIN
+  INSERT INTO tx_search_fts_idx (rowid, name, notes, category)
+  VALUES (new.rowid, new.name, new.notes, new.category);
+END;
+
+CREATE TRIGGER tx_search_del_fts AFTER DELETE ON tx_search_idx BEGIN
+  INSERT INTO tx_search_fts_idx (tx_search_fts_idx, rowid, name, notes, category)
+  VALUES ('delete', old.rowid, old.name, old.notes, old.category);
+END;
+
+CREATE TRIGGER tx_search_upd_fts AFTER UPDATE ON tx_search_idx BEGIN
+  INSERT INTO tx_search_fts_idx (tx_search_fts_idx, rowid, name, notes, category)
+  VALUES ('delete', old.rowid, old.name, old.notes, old.category);
+  INSERT INTO tx_search_fts_idx (rowid, name, notes, category)
+  VALUES (new.rowid, new.name, new.notes, new.category);
+END;
+`
+
+/**
+ * Rebuilds the searchable text for a transaction.
+ *
+ * One row per transaction rather than per asset: a search returns
+ * transactions, and a user who labelled one asset of a swap expects to find
+ * the swap. `group_concat` skips NULLs, so an asset with no note contributes
+ * nothing rather than a gap.
+ */
+export function reindexSearch(scope?: ReindexScope): string[] {
+  const where =
+    scope == null
+      ? ''
+      : `WHERE m.wallet_id = ${scope.wallet} AND m.txid = ${scope.txid}`
+  const clear =
+    scope == null
+      ? 'DELETE FROM tx_search_idx;'
+      : `DELETE FROM tx_search_idx
+          WHERE wallet_id = ${scope.wallet} AND txid = ${scope.txid};`
+
+  return [
+    clear,
+    `INSERT INTO tx_search_idx (wallet_id, txid, name, notes, category)
+     SELECT
+       m.wallet_id, m.txid,
+       group_concat(j.value ->> '$.metadata.name', ' '),
+       group_concat(j.value ->> '$.metadata.notes', ' '),
+       group_concat(j.value ->> '$.metadata.category', ' ')
+     FROM tx_meta m, json_each(m.doc, '$.tokens') j
+     ${where}
+     GROUP BY m.wallet_id, m.txid
+     HAVING group_concat(j.value ->> '$.metadata.name', ' ') IS NOT NULL
+         OR group_concat(j.value ->> '$.metadata.notes', ' ') IS NOT NULL
+         OR group_concat(j.value ->> '$.metadata.category', ' ') IS NOT NULL;`
+  ]
+}
+
 function makeTrigger(
   name: string,
   event: 'INSERT' | 'UPDATE' | 'DELETE',
   table: 'tx_chain' | 'tx_meta'
 ): string {
   const row = event === 'DELETE' ? 'OLD' : 'NEW'
-  const body = reindexAssets({
-    wallet: `${row}.wallet_id`,
-    txid: `${row}.txid`
-  })
+  const scope = { wallet: `${row}.wallet_id`, txid: `${row}.txid` }
+  const body = [
+    ...reindexAssets(scope),
+    // Only metadata carries words; chain data has none.
+    ...(table === 'tx_meta' ? reindexSearch(scope) : [])
+  ]
   return `
 CREATE TRIGGER ${name} AFTER ${event} ON ${table} BEGIN
   ${body.join('\n  ')}
@@ -230,4 +318,9 @@ const triggers = [
 ].join('\n')
 
 /** The statements that build a fresh database, in order. */
-export const schemaStatements: string[] = [documentTables, assetIndex, triggers]
+export const schemaStatements: string[] = [
+  documentTables,
+  assetIndex,
+  searchIndex,
+  triggers
+]
