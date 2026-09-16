@@ -35,6 +35,14 @@ CREATE TABLE tx_chain (
   PRIMARY KEY (wallet_id, txid)
 );
 
+-- Which version of its rebuild SQL each derived table was last built with.
+-- Not derived itself: it is the record of what the derived tables are, so
+-- losing it would mean rebuilding all of them.
+CREATE TABLE index_version (
+  name    TEXT NOT NULL PRIMARY KEY,
+  version INTEGER NOT NULL
+);
+
 CREATE TABLE tx_meta (
   wallet_id     TEXT NOT NULL,
   txid          TEXT NOT NULL,
@@ -102,50 +110,74 @@ CREATE INDEX tx_asset_token_date_idx
  *
  * `max()` picks the one non-NULL contribution per column, since each source
  * row fills exactly one of them.
+ *
+ * `scope` narrows this to one transaction, which is what the triggers want.
+ * Without it the same SQL covers every transaction in the database, which is
+ * what a reindex wants -- and the two cannot drift, because there is only one
+ * of them.
  */
-export function assetUnion(wallet: string, txid: string): string {
+function assetRows(scope?: ReindexScope): string {
+  const chainWhere =
+    scope == null
+      ? ''
+      : `WHERE c.wallet_id = ${scope.wallet} AND c.txid = ${scope.txid}`
+  const metaWhere =
+    scope == null
+      ? ''
+      : `WHERE m.wallet_id = ${scope.wallet} AND m.txid = ${scope.txid}`
+
   return `
     SELECT
-      token_id,
+      wallet_id, txid, token_id,
       max(native_amount) AS native_amount,
       max(network_fee)   AS network_fee,
       max(has_metadata)  AS has_metadata
     FROM (
-      SELECT key AS token_id, value AS native_amount,
+      SELECT c.wallet_id, c.txid, key AS token_id, value AS native_amount,
              NULL AS network_fee, 0 AS has_metadata
         FROM tx_chain c, json_each(c.doc, '$.nativeAmounts')
-       WHERE c.wallet_id = ${wallet} AND c.txid = ${txid}
+       ${chainWhere}
       UNION ALL
-      SELECT key, NULL, value, 0
+      SELECT c.wallet_id, c.txid, key, NULL, value, 0
         FROM tx_chain c, json_each(c.doc, '$.networkFees')
-       WHERE c.wallet_id = ${wallet} AND c.txid = ${txid}
+       ${chainWhere}
       UNION ALL
-      SELECT key, NULL, NULL,
+      SELECT m.wallet_id, m.txid, key, NULL, NULL,
              CASE WHEN value ->> '$.metadata.name'     IS NOT NULL
                     OR value ->> '$.metadata.notes'    IS NOT NULL
                     OR value ->> '$.metadata.category' IS NOT NULL
                     OR value ->> '$.metadata.bizId'    IS NOT NULL
                   THEN 1 ELSE 0 END
         FROM tx_meta m, json_each(m.doc, '$.tokens')
-       WHERE m.wallet_id = ${wallet} AND m.txid = ${txid}
+       ${metaWhere}
     )
-    GROUP BY token_id`
+    GROUP BY wallet_id, txid, token_id`
+}
+
+/** One transaction, named by whatever expressions the caller has to hand. */
+interface ReindexScope {
+  wallet: string
+  txid: string
 }
 
 /**
- * Rebuilds every satellite row for one transaction, from whichever documents
- * currently exist.
+ * Rebuilds satellite rows from whichever documents currently exist.
  *
  * Recomputing the whole set rather than patching it is what makes the six
  * triggers below correct without six different bodies. An update that drops an
  * asset, a delete that leaves metadata behind as an orphan, and a first insert
- * are all the same operation from here.
+ * are all the same operation from here -- and so is rebuilding the entire
+ * table, which is the same SQL with the scope left off.
  */
-export function reindexTransaction(wallet: string, txid: string): string[] {
-  return [
-    `DELETE FROM tx_asset_idx
-      WHERE wallet_id = ${wallet} AND txid = ${txid};`,
+export function reindexAssets(scope?: ReindexScope): string[] {
+  const clear =
+    scope == null
+      ? 'DELETE FROM tx_asset_idx;'
+      : `DELETE FROM tx_asset_idx
+          WHERE wallet_id = ${scope.wallet} AND txid = ${scope.txid};`
 
+  return [
+    clear,
     `INSERT INTO tx_asset_idx (
        wallet_id, txid, token_id,
        has_chain, has_meta, effective_date,
@@ -153,7 +185,7 @@ export function reindexTransaction(wallet: string, txid: string): string[] {
        native_amount_key, network_fee_key, has_metadata
      )
      SELECT
-       ${wallet}, ${txid}, asset.token_id,
+       asset.wallet_id, asset.txid, asset.token_id,
        chain.txid IS NOT NULL,
        meta.txid IS NOT NULL,
        min(
@@ -164,11 +196,11 @@ export function reindexTransaction(wallet: string, txid: string): string[] {
        edge_native_amount_key(asset.native_amount),
        edge_native_amount_key(asset.network_fee),
        asset.has_metadata
-     FROM (${assetUnion(wallet, txid)}) asset
+     FROM (${assetRows(scope)}) asset
      LEFT JOIN tx_chain chain
-            ON chain.wallet_id = ${wallet} AND chain.txid = ${txid}
+            ON chain.wallet_id = asset.wallet_id AND chain.txid = asset.txid
      LEFT JOIN tx_meta meta
-            ON meta.wallet_id = ${wallet} AND meta.txid = ${txid};`
+            ON meta.wallet_id = asset.wallet_id AND meta.txid = asset.txid;`
   ]
 }
 
@@ -178,7 +210,10 @@ function makeTrigger(
   table: 'tx_chain' | 'tx_meta'
 ): string {
   const row = event === 'DELETE' ? 'OLD' : 'NEW'
-  const body = reindexTransaction(`${row}.wallet_id`, `${row}.txid`)
+  const body = reindexAssets({
+    wallet: `${row}.wallet_id`,
+    txid: `${row}.txid`
+  })
   return `
 CREATE TRIGGER ${name} AFTER ${event} ON ${table} BEGIN
   ${body.join('\n  ')}
