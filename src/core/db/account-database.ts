@@ -5,6 +5,7 @@ import { hmacSha256 } from '../../util/crypto/hashes'
 import { base58, utf8 } from '../../util/encoding'
 import { asEdgeStorageKeys } from '../login/storage-keys'
 import { EdgeInternalIo, EdgeSqlDriver } from './db-driver'
+import { reindexStale } from './db-index'
 import { prepareDatabase } from './db-open'
 
 /**
@@ -20,6 +21,8 @@ import { prepareDatabase } from './db-open'
 
 export interface EdgeAccountDatabase {
   driver: EdgeSqlDriver
+  /** Derived tables rebuilt while opening, for the login log. */
+  reindexed: string[]
   close: () => Promise<void>
 }
 
@@ -79,7 +82,8 @@ export async function openAccountDatabase(
       // bad key when something reads a page, so an open on its own has not
       // established anything yet.
       await prepareDatabase(driver)
-      return { driver, close: async () => await driver.close() }
+      const reindexed = await reindexStale(driver)
+      return { driver, reindexed, close: async () => await driver.close() }
     } catch (error) {
       // Do not leak the handle when the check is what failed:
       await driver.close().catch(() => undefined)
