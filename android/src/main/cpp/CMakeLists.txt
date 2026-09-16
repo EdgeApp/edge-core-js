@@ -9,6 +9,7 @@ add_library(
   edge-core-jni
   SHARED
   edge-core-jni.c
+  edge-sql.c
   scrypt/crypto_scrypt.c
   scrypt/sha256.c
   sqlite3mc/sqlite3mc_amalgamation.c

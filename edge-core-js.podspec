@@ -17,6 +17,8 @@ Pod::Spec.new do |s|
     :tag => "v#{s.version}"
   }
   s.source_files =
+    "android/src/main/cpp/edge-sql.c",
+    "android/src/main/cpp/edge-sql.h",
     "android/src/main/cpp/sqlite3mc/sqlite3mc_amalgamation.c",
     "android/src/main/cpp/sqlite3mc/sqlite3mc_amalgamation.h",
     "android/src/main/cpp/scrypt/crypto_scrypt.c",
