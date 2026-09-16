@@ -1,0 +1,5 @@
+# The vendored SQLite amalgamation is 13MB of generated C. Keep it out of
+# GitHub's language stats, and out of diffs that no one can read anyway.
+android/src/main/cpp/sqlite3mc/** linguist-vendored
+android/src/main/cpp/sqlite3mc/sqlite3mc_amalgamation.c -diff
+android/src/main/cpp/sqlite3mc/sqlite3mc_amalgamation.h -diff
