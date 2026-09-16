@@ -193,3 +193,23 @@ Java_app_edge_reactnative_core_EdgeNative_sqlSetScope(
 
   if (status != 0) throwSqlError(env, error);
 }
+
+JNIEXPORT void JNICALL
+Java_app_edge_reactnative_core_EdgeNative_sqlAttach(
+    JNIEnv *env,
+    jobject self,
+    jint handle,
+    jstring path,
+    jstring alias
+) {
+  const char *pPath = (*env)->GetStringUTFChars(env, path, NULL);
+  const char *pAlias = (*env)->GetStringUTFChars(env, alias, NULL);
+
+  char *error = NULL;
+  int status = edgeSqlAttach(handle, pPath, pAlias, &error);
+
+  (*env)->ReleaseStringUTFChars(env, alias, pAlias);
+  (*env)->ReleaseStringUTFChars(env, path, pPath);
+
+  if (status != 0) throwSqlError(env, error);
+}
