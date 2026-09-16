@@ -3,7 +3,7 @@ import { describe, it } from 'mocha'
 
 import { EdgeSqlDriver } from '../../../src/core/db/db-driver'
 import { prepareDatabase } from '../../../src/core/db/db-open'
-import { defineTables } from '../../../src/core/db/plugin-tables'
+import { ensureWalletPrefix } from '../../../src/core/db/plugin-tables'
 import {
   EdgeTableHandle,
   makeTxDatabase
@@ -61,21 +61,16 @@ async function setup(): Promise<Fixture> {
   await prepareDatabase(driver)
 
   const make = async (walletId: string): Promise<[EdgeTxDatabase, string]> => {
-    const { prefix } = await defineTables(driver, {
+    const prefix = await ensureWalletPrefix(driver, walletId, 'bitcoin')
+    const db = makeTxDatabase({
+      driver,
       walletId,
       pluginId: 'bitcoin',
-      spec
-    })
-    return [
-      makeTxDatabase({
-        driver,
-        walletId,
-        pluginId: 'bitcoin',
-        prefix,
-        spec
-      }),
       prefix
-    ]
+    })
+    // The real flow: an engine gets its handle, then declares its tables.
+    await db.defineTables(spec)
+    return [db, prefix]
   }
 
   const [a] = await make(WALLET_A)
@@ -353,17 +348,12 @@ describe('plugin SQL fence', function () {
     const driver = makeMemorySqlDriver()
     try {
       await prepareDatabase(driver)
-      const { prefix } = await defineTables(driver, {
-        walletId: WALLET_A,
-        pluginId: 'bitcoin',
-        spec
-      })
+      const prefix = await ensureWalletPrefix(driver, WALLET_A, 'bitcoin')
       const a = makeTxDatabase({
         driver,
         walletId: WALLET_A,
         pluginId: 'bitcoin',
-        prefix,
-        spec
+        prefix
       })
       await a.runSql`DELETE FROM ${a.tx_chain}`
     } finally {
