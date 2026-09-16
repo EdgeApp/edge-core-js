@@ -445,6 +445,41 @@ describe('account transaction query', function () {
     }
   })
 
+  it('filters by block height', async function () {
+    const driver = await makeDb([
+      makeTx({ txid: 'pending', blockHeight: 0 }),
+      makeTx({ txid: 'shallow', blockHeight: 10 }),
+      makeTx({ txid: 'deep', blockHeight: 900000 })
+    ])
+    try {
+      // What re-heighting an unconfirmed transaction needs: everything the
+      // chain has not buried yet.
+      expect(
+        new Set(await txids(driver, { walletIds: ['W1'], maxBlockHeight: 10 }))
+      ).deep.equals(new Set(['pending', 'shallow']))
+      expect(
+        await txids(driver, { walletIds: ['W1'], minBlockHeight: 900000 })
+      ).deep.equals(['deep'])
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('pages by offset for callers that index', async function () {
+    const driver = await makeDb(makeSeries(5))
+    try {
+      // The cursor is the right way to page; this exists for callers that
+      // genuinely index into a result set, and it can miss or repeat a row
+      // when one arrives mid-scroll.
+      expect(await txids(driver, { limit: 2, offset: 2 })).deep.equals([
+        'tx002',
+        'tx001'
+      ])
+    } finally {
+      await driver.close()
+    }
+  })
+
   it('caps the page size', async function () {
     const driver = await makeDb(makeSeries(3))
     try {
