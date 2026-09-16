@@ -150,6 +150,25 @@ static napi_value jsQuery(napi_env env, napi_callback_info info) {
   return takeString(env, result);
 }
 
+static napi_value jsSetScope(napi_env env, napi_callback_info info) {
+  size_t argc = 4;
+  napi_value argv[4];
+  CHECK(napi_get_cb_info(env, info, &argc, argv, NULL, NULL));
+
+  int handle = readHandle(env, argv[0]);
+  char *pluginId = argc > 1 ? readOptionalString(env, argv[1]) : NULL;
+  char *prefix = argc > 2 ? readOptionalString(env, argv[2]) : NULL;
+  char *walletId = argc > 3 ? readOptionalString(env, argv[3]) : NULL;
+
+  char *error = NULL;
+  int status = edgeSqlSetScope(handle, pluginId, prefix, walletId, &error);
+  free(pluginId);
+  free(prefix);
+  free(walletId);
+  if (status != 0) return throwSqlError(env, error);
+  return NULL;
+}
+
 static napi_value jsClose(napi_env env, napi_callback_info info) {
   size_t argc = 1;
   napi_value argv[1];
@@ -179,6 +198,7 @@ static napi_value init(napi_env env, napi_value exports) {
     { "exec", NULL, jsExec, NULL, NULL, NULL, napi_default, NULL },
     { "batch", NULL, jsBatch, NULL, NULL, NULL, napi_default, NULL },
     { "query", NULL, jsQuery, NULL, NULL, NULL, napi_default, NULL },
+    { "setScope", NULL, jsSetScope, NULL, NULL, NULL, napi_default, NULL },
     { "close", NULL, jsClose, NULL, NULL, NULL, napi_default, NULL },
     { "remove", NULL, jsDelete, NULL, NULL, NULL, napi_default, NULL }
   };

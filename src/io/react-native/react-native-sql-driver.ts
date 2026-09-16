@@ -1,10 +1,13 @@
 import { base64 } from 'rfc4648'
 
 import {
+  connectStatement,
   EdgeSqlDriver,
+  EdgeSqlScope,
   EdgeSqlStatement,
   EdgeSqlValue,
-  makeSerializer
+  makeSerializer,
+  VIRTUAL_TABLES_SQL
 } from '../../core/db/db-driver'
 import { NativeBridge } from './native-bridge'
 
@@ -75,6 +78,44 @@ export function makeReactNativeSqlDriver(
           )
         )
       )
+    },
+
+    async queryScoped<T>(
+      scope: EdgeSqlScope,
+      sql: string,
+      params?: EdgeSqlValue[]
+    ): Promise<T[]> {
+      assertOpen()
+      return await serialize(async () => {
+        const run = async (
+          text: string,
+          values?: EdgeSqlValue[]
+        ): Promise<any[]> =>
+          JSON.parse(
+            await nativeBridge.call(
+              'sqlQuery',
+              handle,
+              text,
+              toJsonParams(values)
+            )
+          )
+
+        for (const { name } of await run(VIRTUAL_TABLES_SQL)) {
+          await run(connectStatement(name))
+        }
+        await nativeBridge.call(
+          'sqlSetScope',
+          handle,
+          scope.pluginId,
+          scope.walletPrefix,
+          scope.walletId
+        )
+        try {
+          return await run(sql, params)
+        } finally {
+          await nativeBridge.call('sqlSetScope', handle, null, null, null)
+        }
+      })
     },
 
     async close() {

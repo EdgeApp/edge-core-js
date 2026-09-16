@@ -218,6 +218,44 @@ export function reindexAssets(scope?: ReindexScope): string[] {
 }
 
 /**
+ * The only door a plugin has onto the core's transactions.
+ *
+ * `edge_wallet()` is a native function returning the wallet the current call
+ * is scoped to, so the wallet id never comes from the plugin's SQL. The view
+ * filters reads; the INSTEAD OF triggers substitute the wallet on write. A
+ * plugin cannot reach another wallet's rows even by naming them, because it
+ * has no way to name them.
+ *
+ * The trigger names matter: the authorizer allows `edge_wallet()` only inside
+ * an object whose name starts `tx_chain_scoped`, so renaming one would get it
+ * denied by the fence it exists to satisfy.
+ */
+const scopedView = `
+CREATE VIEW tx_chain_scoped AS
+  SELECT * FROM tx_chain WHERE wallet_id = edge_wallet();
+
+CREATE TRIGGER tx_chain_scoped_ins INSTEAD OF INSERT ON tx_chain_scoped
+BEGIN
+  INSERT INTO tx_chain (wallet_id, txid, doc)
+  VALUES (edge_wallet(), NEW.txid, NEW.doc)
+  ON CONFLICT (wallet_id, txid)
+  DO UPDATE SET doc = jsonb_patch(doc, excluded.doc);
+END;
+
+CREATE TRIGGER tx_chain_scoped_upd INSTEAD OF UPDATE ON tx_chain_scoped
+BEGIN
+  UPDATE tx_chain SET doc = NEW.doc
+   WHERE wallet_id = edge_wallet() AND txid = OLD.txid;
+END;
+
+CREATE TRIGGER tx_chain_scoped_del INSTEAD OF DELETE ON tx_chain_scoped
+BEGIN
+  DELETE FROM tx_chain
+   WHERE wallet_id = edge_wallet() AND txid = OLD.txid;
+END;
+`
+
+/**
  * Search over the user's own words.
  *
  * Two objects, not one. `tx_search_idx` holds the text, keyed by transaction,
@@ -335,5 +373,6 @@ export const schemaStatements: string[] = [
   documentTables,
   assetIndex,
   searchIndex,
-  triggers
+  triggers,
+  scopedView
 ]
