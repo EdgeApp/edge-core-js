@@ -10,7 +10,8 @@ import {
 import { batchWrite } from './batch-write'
 import { EdgeSqlDriver, EdgeSqlValue } from './db-driver'
 import { findRows, getRows, putRows, removeRows } from './plugin-rows'
-import { tableName } from './plugin-tables'
+import { defineTables, tableName } from './plugin-tables'
+import { queryTxPage } from './tx-query'
 import { saveTxs } from './tx-writer'
 
 /**
@@ -42,24 +43,38 @@ export interface TxDatabaseOptions {
   walletId: string
   pluginId: string
   prefix: string
-  spec: EdgeTableSpec
+  /** What the plugin declared last time, if the core still knows. */
+  spec?: EdgeTableSpec
 }
 
 export function makeTxDatabase(opts: TxDatabaseOptions): EdgeTxDatabase {
-  const { driver, walletId, pluginId, prefix, spec } = opts
-  const context = { driver, walletId, prefix, spec }
+  const { driver, walletId, pluginId, prefix } = opts
 
-  const handles: { [table: string]: EdgeTableHandle } = {
-    // The scoped view, not the base table: this is the only door a plugin has
-    // onto the core's transactions.
-    tx_chain: new EdgeTableHandle('tx_chain_scoped')
-  }
-  for (const table of Object.keys(spec.tables)) {
-    handles[table] = new EdgeTableHandle(tableName(prefix, table))
-  }
+  // The declaration is mutable because `defineTables` is a method on this
+  // object: an engine gets its handle first and declares its tables second.
+  let spec: EdgeTableSpec = opts.spec ?? { version: 0, tables: {} }
 
   const out: EdgeTxDatabase = {
-    ...handles,
+    // The scoped view, not the base table: this is the only door a plugin has
+    // onto the core's transactions.
+    tx_chain: new EdgeTableHandle('tx_chain_scoped'),
+
+    async defineTables(next: EdgeTableSpec): Promise<void> {
+      await defineTables(driver, { walletId, pluginId, spec: next })
+      spec = next
+      for (const table of Object.keys(next.tables)) {
+        out[table] = new EdgeTableHandle(tableName(prefix, table))
+      }
+    },
+
+    async getTxs(query = {}): Promise<EdgeTx[]> {
+      // Scoped to this wallet from the handle, never from the query:
+      const page = await queryTxPage(driver, {
+        ...query,
+        walletIds: [walletId]
+      })
+      return page.transactions
+    },
 
     async saveTxs(txs: EdgeTx[]): Promise<void> {
       // Identity comes from the handle, never from the object:
@@ -86,7 +101,7 @@ export function makeTxDatabase(opts: TxDatabaseOptions): EdgeTxDatabase {
     },
 
     async batchWrite(ops: EdgeBatchWrite): Promise<void> {
-      await batchWrite(context, ops)
+      await batchWrite({ driver, walletId, prefix, spec }, ops)
     },
 
     async runSql<T>(
