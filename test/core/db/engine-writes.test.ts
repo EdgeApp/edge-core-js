@@ -3,7 +3,7 @@ import { describe, it } from 'mocha'
 
 import { openAccountDatabases } from '../../../src/core/db/account-database'
 import { EdgeSqlDriver } from '../../../src/core/db/db-driver'
-import { makeFakeEdgeWorld } from '../../../src/index'
+import { EdgeAccount, makeFakeEdgeWorld } from '../../../src/index'
 import { fakeUser } from '../../fake/fake-user'
 
 /**
@@ -23,6 +23,7 @@ const contextOptions = {
 }
 
 interface Fixture {
+  account: EdgeAccount
   driver: EdgeSqlDriver
   /** The account has more than one fakecoin wallet, and both engines report
    * whatever the shared plugin config says -- so every query here is scoped. */
@@ -44,6 +45,7 @@ async function setup(): Promise<Fixture> {
   if (database == null) throw new Error('No database was opened')
 
   return {
+    account,
     driver: database.driver,
     walletId: walletInfo.id,
     changeTxs: async txs =>
@@ -176,6 +178,72 @@ describe('engine transactions', function () {
       // generated column has to read the second one back as the first.
       expect(rows[0].iso).equals('2024-06-01T12:00:00.000Z')
       expect(rows[0].date).equals(1717243200)
+    } finally {
+      await fixture.logout()
+    }
+  })
+})
+
+describe('account.transactions', function () {
+  it('is absent until the database is open', async function () {
+    // Feature detection rather than a thrown error, because a platform
+    // without a database is a supported platform.
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      transactionDatabase: false
+    })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    try {
+      expect(account.transactions).equals(undefined)
+    } finally {
+      await account.logout()
+    }
+  })
+
+  it('queries across every wallet in the account', async function () {
+    const fixture = await setup()
+    try {
+      await fixture.changeTxs({ a: { nativeAmount: '1' } })
+      await waitForRows(fixture.driver, 'SELECT * FROM tx_chain', 1)
+
+      const store = fixture.account.transactions
+      if (store == null) throw new Error('No transaction store')
+
+      // The account has more than one fakecoin wallet, and both engines
+      // reported -- so this is genuinely account-wide rather than one
+      // wallet's stream in disguise.
+      const page = await store.queryTxs({ details: 'all' })
+      expect(page.summary?.count).greaterThan(1)
+      expect(
+        new Set(page.transactions.map(tx => tx.walletId)).size
+      ).greaterThan(1)
+      expect(page.transactions.every(tx => tx.txid === 'a')).equals(true)
+
+      // And one wallet's view is a scope on the same query:
+      const scoped = await store.queryTxs({
+        walletIds: [fixture.walletId],
+        details: 'all'
+      })
+      expect(scoped.summary?.count).equals(1)
+    } finally {
+      await fixture.logout()
+    }
+  })
+
+  it('reads one transaction by identity', async function () {
+    const fixture = await setup()
+    try {
+      await fixture.changeTxs({ a: { nativeAmount: '1' } })
+      await waitForRows(fixture.driver, 'SELECT * FROM tx_chain', 1)
+
+      const store = fixture.account.transactions
+      if (store == null) throw new Error('No transaction store')
+
+      const tx = await store.getTx(fixture.walletId, 'a')
+      expect(tx?.txid).equals('a')
+      expect(tx?.pluginId).equals('fakecoin')
+      expect(await store.getTx(fixture.walletId, 'nope')).equals(undefined)
     } finally {
       await fixture.logout()
     }
