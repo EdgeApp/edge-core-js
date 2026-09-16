@@ -969,7 +969,23 @@ export interface EdgeBatchWrite {
  * that against the handle's scope, so it cannot spell another wallet's table
  * because it never spells any table.
  */
+/** A throwaway database, which its holder is responsible for closing. */
+export interface EdgeScratchDatabase extends EdgeTxDatabase {
+  /** Closes it and deletes it. Nothing in it survives. */
+  close: () => Promise<void>
+}
+
 export interface EdgeTxDatabase {
+  /**
+   * Opens an isolated throwaway database, if the platform has one.
+   *
+   * For storage belonging to a wallet that is not the user's: sweeping a
+   * private key builds one, syncs it, and drops it. It cannot share this
+   * database, because the imported key's transactions would land in the
+   * user's own history.
+   */
+  makeScratch?: () => Promise<EdgeScratchDatabase>
+
   /**
    * Declares the tables this engine wants, and the paths it wants indexed.
    *
