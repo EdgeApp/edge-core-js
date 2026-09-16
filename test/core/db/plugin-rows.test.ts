@@ -283,6 +283,23 @@ describe('plugin rows', function () {
     }
   })
 
+  it('reads the whole table when asked for no predicate', async function () {
+    const { driver, prefix } = await setup()
+    try {
+      // A scan is the only plan there is for "everything", so refusing it
+      // would be refusing the question. Computing a spendable balance from
+      // one wallet's UTXOs is exactly this query.
+      await putRows(driver, prefix, spec, [
+        { table: 'utxo', rows: [{ id: 'u1' }, { id: 'u2' }] }
+      ])
+      expect((await findRows(driver, prefix, spec, 'utxo', {})).length).equals(
+        2
+      )
+    } finally {
+      await driver.close()
+    }
+  })
+
   it('refuses a query no declared index can answer', async function () {
     const { driver, prefix } = await setup()
     try {
