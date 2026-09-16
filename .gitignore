@@ -1,5 +1,6 @@
 # Build output:
 /android/*.jar
+/build/
 /android/src/main/assets/
 /lib/
 /types.js
