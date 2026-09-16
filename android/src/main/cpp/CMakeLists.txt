@@ -3,22 +3,22 @@ project("edge-core-js")
 
 add_compile_options(-fvisibility=hidden -w)
 
-include_directories("scrypt/" "sqlite3mc/")
+include_directories("scrypt/")
 
 add_library(
   edge-core-jni
   SHARED
   edge-core-jni.c
+  edge-sql.c
   scrypt/crypto_scrypt.c
   scrypt/sha256.c
-  sqlite3mc/sqlite3mc_amalgamation.c
 )
 
-# SQLite3 Multiple Ciphers, compiled from the vendored amalgamation rather than
-# linked against the system libsqlite3. Android's bundled SQLite varies by API
-# level and by OEM, and frequently lacks FTS5. Building it here also means iOS,
-# Android and Node all run one SQLite, so a query-planner difference cannot
-# appear on device alone.
+# SQLite3 Multiple Ciphers, compiled into edge-sql.c from the vendored
+# amalgamation rather than linked against the system libsqlite3. Android's
+# bundled SQLite varies by API level and by OEM, and frequently lacks FTS5.
+# Building it here also means iOS, Android and Node all run one SQLite, so a
+# query-planner difference cannot appear on device alone.
 target_compile_definitions(
   edge-core-jni
   PRIVATE

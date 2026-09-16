@@ -17,8 +17,8 @@ Pod::Spec.new do |s|
     :tag => "v#{s.version}"
   }
   s.source_files =
-    "android/src/main/cpp/sqlite3mc/sqlite3mc_amalgamation.c",
-    "android/src/main/cpp/sqlite3mc/sqlite3mc_amalgamation.h",
+    "android/src/main/cpp/edge-sql.c",
+    "android/src/main/cpp/edge-sql.h",
     "android/src/main/cpp/scrypt/crypto_scrypt.c",
     "android/src/main/cpp/scrypt/crypto_scrypt.h",
     "android/src/main/cpp/scrypt/sha256.c",
@@ -35,10 +35,15 @@ Pod::Spec.new do |s|
     "ios/EdgeNative.swift",
     "ios/PendingCall.swift"
 
-  # SQLite3 Multiple Ciphers, compiled from the vendored amalgamation rather
-  # than linked against the system libsqlite3. iOS's own SQLite tracks the OS
-  # release, so its version and feature set vary by device and FTS5 cannot be
-  # assumed. Building it here also keeps iOS, Android and Node on one SQLite.
+  # `edge-sql.c` includes the amalgamation itself, so it ships as a file
+  # rather than a source CocoaPods would compile on its own:
+  s.preserve_paths = "android/src/main/cpp/sqlite3mc/*"
+
+  # SQLite3 Multiple Ciphers, compiled into edge-sql.c from the vendored
+  # amalgamation rather than linked against the system libsqlite3. iOS's own
+  # SQLite tracks the OS release, so its version and feature set vary by
+  # device and FTS5 cannot be assumed. Building it here also keeps iOS,
+  # Android and Node on one SQLite.
   s.compiler_flags =
     "-DSQLITE_ENABLE_FTS5=1",
     "-DSQLITE_ENABLE_JSON1=1",

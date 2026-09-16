@@ -66,4 +66,23 @@ describe('vendored SQLite', function () {
     expect(cmake).includes('SQLITE_ENABLE_FTS5=1')
     expect(cmake).includes('SQLITE_DQS=0')
   })
+
+  it('compiles into edge-sql.c, with every name private', function () {
+    // Another SQLite in the same app -- a `sqlite3` pod, the system library --
+    // defines the same `sqlite3_*` names, and a static link binds whichever
+    // copy it reaches first. So no build compiles the amalgamation on its
+    // own, and edge-sql.c includes it with every API function static:
+    for (const path of [
+      'android/src/main/cpp/CMakeLists.txt',
+      'edge-core-js.podspec'
+    ]) {
+      expect(
+        read(path).includes('sqlite3mc_amalgamation.c'),
+        `${path} should not compile the amalgamation on its own`
+      ).equals(false)
+    }
+    expect(read('android/src/main/cpp/edge-sql.c')).matches(
+      /#define SQLITE_API static\n#include "sqlite3mc\/sqlite3mc_amalgamation\.c"/
+    )
+  })
 })
