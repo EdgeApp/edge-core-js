@@ -74,6 +74,7 @@ describe('vendored SQLite', function () {
     // own, and edge-sql.c includes it with every API function static:
     for (const path of [
       'android/src/main/cpp/CMakeLists.txt',
+      'binding.gyp',
       'edge-core-js.podspec'
     ]) {
       expect(
