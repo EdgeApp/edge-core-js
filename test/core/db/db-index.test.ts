@@ -197,7 +197,10 @@ describe('reindex driver', function () {
         { sql: `UPDATE index_version SET version = 0` },
         { sql: `DELETE FROM tx_asset_idx` }
       ])
-      expect(await reindexStale(driver)).deep.equals(['tx_asset_idx'])
+      expect(await reindexStale(driver)).deep.equals([
+        'tx_asset_idx',
+        'tx_search_idx'
+      ])
       expect((await snapshot(driver)).length).greaterThan(6)
     } finally {
       await driver.close()
@@ -210,7 +213,10 @@ describe('reindex driver', function () {
       // A database from before this table existed. There is no version to
       // compare against, so the only safe reading is "out of date".
       await driver.exec([{ sql: 'DELETE FROM index_version' }])
-      expect(await reindexStale(driver)).deep.equals(['tx_asset_idx'])
+      expect(await reindexStale(driver)).deep.equals([
+        'tx_asset_idx',
+        'tx_search_idx'
+      ])
     } finally {
       await driver.close()
     }
@@ -221,7 +227,7 @@ describe('reindex driver', function () {
     try {
       // The failure mode this catches is a derived table added to the schema
       // but not to `derivedTables`, which would never be rebuilt at all.
-      await expectRejection(reindexTable(driver, 'tx_search_idx'))
+      await expectRejection(reindexTable(driver, 'tx_nonexistent_idx'))
     } finally {
       await driver.close()
     }
@@ -229,6 +235,9 @@ describe('reindex driver', function () {
 
   it('lists every derived table in the schema', function () {
     // A table named `_idx` that is not here cannot be rebuilt.
-    expect(derivedTables.map(table => table.name)).deep.equals(['tx_asset_idx'])
+    expect(derivedTables.map(table => table.name)).deep.equals([
+      'tx_asset_idx',
+      'tx_search_idx'
+    ])
   })
 })

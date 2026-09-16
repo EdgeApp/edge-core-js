@@ -166,6 +166,15 @@ function buildWhere(query: EdgeAccountTxQuery, alias = ''): WhereClause {
     params.push(query.hasMetadata ? 1 : 0)
   }
 
+  if (query.searchString != null && query.searchString !== '') {
+    parts.push(
+      `(${at('wallet_id')}, ${at('txid')}) IN (${searchSubquery(
+        query.searchString
+      )})`
+    )
+    params.push(...searchParams(query.searchString))
+  }
+
   // A row with metadata but no chain data yet is an orphan: the user
   // annotated a transaction this device has not seen. Hidden by default,
   // because showing one looks like a transaction that lost its amounts.
@@ -176,6 +185,47 @@ function buildWhere(query: EdgeAccountTxQuery, alias = ''): WhereClause {
     params
   }
 }
+
+/**
+ * The transactions matching a search string.
+ *
+ * The trigram tokenizer indexes three characters at a time, so it cannot
+ * answer a query shorter than that at all. Those fall back to `LIKE` over the
+ * text table, which is a scan -- but of one small table holding only what the
+ * user typed, not of every transaction document.
+ */
+function searchSubquery(search: string): string {
+  if (search.length >= 3) {
+    return `SELECT wallet_id, txid FROM tx_search_idx
+             WHERE rowid IN (
+               SELECT rowid FROM tx_search_fts_idx
+                WHERE tx_search_fts_idx MATCH ?
+             )`
+  }
+  return `SELECT wallet_id, txid FROM tx_search_idx
+           WHERE name LIKE ?1 OR notes LIKE ?1 OR category LIKE ?1`
+}
+
+function searchParams(search: string): EdgeSqlValue[] {
+  if (search.length >= 3) {
+    // Quoted as an FTS5 string literal, so punctuation in a note cannot be
+    // read as query syntax -- a search for "a-b" is a search, not an
+    // expression with a NOT in it.
+    return [`"${search.replace(/"/g, '""')}"`]
+  }
+  return [`%${search.replace(/[\\%_]/g, '\\$&')}%`]
+}
+
+/**
+ * The one table a scan is allowed over.
+ *
+ * `tx_search_idx` holds one row per *annotated* transaction, carrying only
+ * the words the user typed -- so it is a fraction of the size of the index it
+ * sits beside, and scanning it is what lets a one- or two-character search
+ * work at all. The trigram index cannot answer those, and refusing them
+ * outright would be worse than a small scan.
+ */
+const SCANNABLE = new Set(['tx_search_idx'])
 
 /**
  * Refuses a query no index can answer.
@@ -197,7 +247,8 @@ async function assertIndexed(
   for (const { detail } of plan) {
     // "SCAN t USING INDEX i" is an ordered walk of an index, which is what
     // an unfiltered page looks like. A bare "SCAN t" is the table itself.
-    if (/^SCAN \w+$/.test(detail)) {
+    const scan = /^SCAN (\w+)$/.exec(detail)
+    if (scan != null && !SCANNABLE.has(scan[1])) {
       throw new Error(
         `This transaction query cannot use an index: ${detail}. ` +
           'Narrow it with a wallet, asset or date, or add an index for the ' +
