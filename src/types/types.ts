@@ -1051,6 +1051,10 @@ export interface EdgeAccountTxQuery {
   minFiatAmount?: number
   maxFiatAmount?: number
 
+  /** Inclusive. Useful for re-heighting transactions that were unconfirmed. */
+  minBlockHeight?: number
+  maxBlockHeight?: number
+
   hasMetadata?: boolean
 
   /**
@@ -1082,6 +1086,13 @@ export interface EdgeAccountTxQuery {
 
   /** A cursor from the previous page. Opaque; pass it back unmodified. */
   after?: string
+
+  /**
+   * Rows to skip. Prefer `after`: an offset shifts under an insert, so a
+   * reader paging with one can miss a transaction or see it twice. This
+   * exists for callers that genuinely index into a result set.
+   */
+  offset?: number
 
   /** Defaults to 50, capped at 500. */
   limit?: number
