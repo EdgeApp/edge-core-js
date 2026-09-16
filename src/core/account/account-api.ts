@@ -258,7 +258,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
      */
     get transactions(): EdgeTransactionStore | undefined {
       const database = ai.props.output.accounts[accountId]?.database
-      return database == null ? undefined : transactionsApi
+      if (database == null) return undefined
+      transactionsApi._watch(database)
+      return transactionsApi
     },
 
     // ----------------------------------------------------------------
