@@ -43,6 +43,9 @@ interface NativeMethods {
     sql: string,
     paramsJson: string | undefined
   ) => Promise<string>
+  /** Attaches another database by name, read-only, under a schema alias. */
+  sqlAttach: (handle: number, name: string, alias: string) => Promise<void>
+
   /**
    * Fences later statements to one plugin and one wallet. A null `pluginId`
    * restores core access.

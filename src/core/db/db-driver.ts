@@ -54,6 +54,15 @@ export interface EdgeSqlDriver {
   batch: (statements: EdgeSqlStatement[]) => Promise<number[]>
 
   /**
+   * Attaches another database by name, read-only, under a schema alias.
+   *
+   * By name rather than by path, because only the native side knows where
+   * databases live -- which is also what keeps a caller from attaching an
+   * arbitrary file.
+   */
+  attach: (name: string, alias: string) => Promise<void>
+
+  /**
    * Runs one query fenced to a plugin and a wallet.
    *
    * One unit on this driver: nothing else runs between the fence going on
