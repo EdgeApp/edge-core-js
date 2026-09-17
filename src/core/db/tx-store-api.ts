@@ -1,14 +1,16 @@
-import { Bridgeable, emit } from 'yaob'
+import { Bridgeable, emit, update } from 'yaob'
 
 import {
   EdgeAccountTxPage,
   EdgeAccountTxQuery,
+  EdgeLocalSettings,
   EdgeTransactionStore,
   EdgeTransactionStoreEvents,
   EdgeTx
 } from '../../types/types'
 import { ApiInput } from '../root-pixie'
 import { EdgeAccountDatabase } from './account-database'
+import { readDefaultIsoFiat, writeDefaultIsoFiat } from './fiat-materialize'
 import { queryTxPage, readTx, streamTxPages } from './tx-query'
 
 /**
@@ -45,6 +47,13 @@ export class EdgeTransactionStoreApi
     this._unsubscribe = database.onChanged(refs => {
       emit(this, 'transactionsChanged', refs)
     })
+    readDefaultIsoFiat(database.driver).then(
+      fiatCode => {
+        this._defaultIsoFiat = fiatCode
+        update(this)
+      },
+      () => undefined
+    )
   }
 
   get _database(): EdgeAccountDatabase {
@@ -53,6 +62,44 @@ export class EdgeTransactionStoreApi
     // logout racing a query rather than a missing capability:
     if (database == null) throw new Error('This account is logged out')
     return database
+  }
+
+  get localSettings(): EdgeLocalSettings {
+    return { defaultIsoFiat: this._defaultIsoFiat }
+  }
+
+  /**
+   * Cached because the getter is synchronous across the bridge.
+   *
+   * Read once when the database opens and updated by the setter, which is the
+   * only thing that can change it.
+   */
+  _defaultIsoFiat: string | undefined
+
+  async changeLocalSettings(
+    settings: Partial<EdgeLocalSettings>
+  ): Promise<void> {
+    const { defaultIsoFiat } = settings
+    if (defaultIsoFiat == null) return
+
+    const changed = await writeDefaultIsoFiat(
+      this._database.driver,
+      defaultIsoFiat
+    )
+    if (!changed) return
+
+    this._defaultIsoFiat = defaultIsoFiat
+    update(this)
+
+    // Everything is blank now, so say so: a reader showing amounts needs to
+    // stop showing the old currency's.
+    const rows = await this._database.driver.query<{
+      wallet_id: string
+      txid: string
+    }>('SELECT DISTINCT wallet_id, txid FROM tx_asset_idx')
+    this._database.changed(
+      rows.map(row => ({ walletId: row.wallet_id, txid: row.txid }))
+    )
   }
 
   async queryTxs(query: EdgeAccountTxQuery): Promise<EdgeAccountTxPage> {
