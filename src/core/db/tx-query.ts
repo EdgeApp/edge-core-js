@@ -6,6 +6,7 @@ import {
 } from '../../types/types'
 import { EdgeSqlDriver, EdgeSqlValue } from './db-driver'
 import { asEdgeTx } from './tx-cleaners'
+import { mergeTxMeta } from './tx-meta-merge'
 
 /**
  * The account-wide transaction query.
@@ -58,6 +59,7 @@ interface PageRow {
   effective_date: number
   fiat_amount: number | null
   chain_doc: string | null
+  meta_doc: string | null
 }
 
 interface WhereClause {
@@ -325,10 +327,13 @@ function buildPageQuery(query: EdgeAccountTxQuery): BuiltPage {
       i.wallet_id, i.txid, i.token_id, i.effective_date,
       i.${sortColumn} AS sort_key,
       i.fiat_amount,
-      json(c.doc) AS chain_doc
+      json(c.doc) AS chain_doc,
+      json(m.doc) AS meta_doc
     FROM tx_asset_idx i
     LEFT JOIN tx_chain c
            ON c.wallet_id = i.wallet_id AND c.txid = i.txid
+    LEFT JOIN tx_meta m
+           ON m.wallet_id = i.wallet_id AND m.txid = i.txid
     WHERE ${where.sql}${sortable}${keyset}
     ORDER BY i.${sortColumn} ${order}, i.txid ${order}, i.token_id ${order}
     LIMIT ?${query.offset != null ? ' OFFSET ?' : ''}`
@@ -355,6 +360,9 @@ function collapse(rows: PageRow[]): EdgeTx[] {
     if (tx == null) {
       if (row.chain_doc == null) continue
       tx = asEdgeTx(JSON.parse(row.chain_doc))
+      // What the user wrote, which is stored apart and belongs on the way
+      // out -- a reader wants one transaction, not two halves of one.
+      if (row.meta_doc != null) mergeTxMeta(tx, row.meta_doc)
       byKey.set(key, tx)
       out.push(tx)
     }
@@ -441,12 +449,18 @@ export async function readTx(
   walletId: string,
   txid: string
 ): Promise<EdgeTx | undefined> {
-  const rows = await driver.query<{ doc: string }>(
-    `SELECT json(doc) AS doc FROM tx_chain WHERE wallet_id = ? AND txid = ?`,
+  const rows = await driver.query<{ doc: string; meta_doc: string | null }>(
+    `SELECT json(c.doc) AS doc, json(m.doc) AS meta_doc
+       FROM tx_chain c
+       LEFT JOIN tx_meta m
+              ON m.wallet_id = c.wallet_id AND m.txid = c.txid
+      WHERE c.wallet_id = ? AND c.txid = ?`,
     [walletId, txid]
   )
   if (rows.length === 0) return undefined
-  return asEdgeTx(JSON.parse(rows[0].doc))
+  const out = asEdgeTx(JSON.parse(rows[0].doc))
+  if (rows[0].meta_doc != null) mergeTxMeta(out, rows[0].meta_doc)
+  return out
 }
 
 /**

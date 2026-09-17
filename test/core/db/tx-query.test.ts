@@ -1,8 +1,10 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
+import { asTransactionFile } from '../../../src/core/currency/wallet/currency-wallet-cleaners'
 import { EdgeSqlDriver } from '../../../src/core/db/db-driver'
 import { prepareDatabase } from '../../../src/core/db/db-open'
+import { saveTxMetas } from '../../../src/core/db/meta-writer'
 import {
   queryTxPage,
   readTx,
@@ -536,6 +538,130 @@ describe('account transaction query', function () {
       // A caller asking for everything gets a page, not the account.
       const page = await queryTxPage(driver, { limit: 100000 })
       expect(page.transactions.length).equals(3)
+    } finally {
+      await driver.close()
+    }
+  })
+})
+
+describe('query metadata', function () {
+  const file = (raw: object = {}): ReturnType<typeof asTransactionFile> =>
+    asTransactionFile({
+      txid: 'tx1',
+      internal: false,
+      creationDate: 1717243200,
+      currencies: {},
+      tokens: {},
+      ...raw
+    })
+
+  it('returns what the user wrote, not only what the chain said', async function () {
+    const driver = await makeDb([makeTx()])
+    try {
+      await saveTxMetas(driver, 'W1', 'BTC', [
+        {
+          txid: 'tx1',
+          file: file({
+            tokens: {
+              '': {
+                metadata: { name: 'Alice', notes: 'rent', category: 'Expense' }
+              }
+            }
+          })
+        }
+      ])
+
+      // The halves are stored apart because either can arrive without the
+      // other. A reader wants one transaction, so the query joins them.
+      const [tx] = (await queryTxPage(driver, {})).transactions
+      expect(tx.tokenData.get(null)?.metadata).deep.includes({
+        name: 'Alice',
+        notes: 'rent',
+        category: 'Expense'
+      })
+
+      // And the same through the single-transaction read:
+      const one = await readTx(driver, 'W1', 'tx1')
+      expect(one?.tokenData.get(null)?.metadata?.name).equals('Alice')
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('lets the user override what the plugin suggested', async function () {
+    const driver = await makeDb([
+      makeTx({
+        tokenData: new Map([[null, { metadata: { name: 'From the chain' } }]])
+      })
+    ])
+    try {
+      await saveTxMetas(driver, 'W1', 'BTC', [
+        {
+          txid: 'tx1',
+          file: file({ tokens: { '': { metadata: { name: 'What I typed' } } } })
+        }
+      ])
+
+      const [tx] = (await queryTxPage(driver, {})).transactions
+      expect(tx.tokenData.get(null)?.metadata?.name).equals('What I typed')
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('reports the date it sorted on', async function () {
+    const driver = await makeDb([makeTx({ date: '2024-06-01T12:00:00.000Z' })])
+    try {
+      // The index takes the earlier of the two dates, and every sort and
+      // date predicate runs against that -- so returning the chain's date
+      // would order a list by one number and label it with another.
+      await saveTxMetas(driver, 'W1', 'BTC', [
+        { txid: 'tx1', file: file({ creationDate: 1717000000 }) }
+      ])
+
+      const [tx] = (await queryTxPage(driver, {})).transactions
+      expect(tx.date).equals(new Date(1717000000 * 1000).toISOString())
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('keeps the chain date when the metadata is later', async function () {
+    const driver = await makeDb([makeTx({ date: '2024-06-01T12:00:00.000Z' })])
+    try {
+      await saveTxMetas(driver, 'W1', 'BTC', [
+        { txid: 'tx1', file: file({ creationDate: 1799999999 }) }
+      ])
+
+      const [tx] = (await queryTxPage(driver, {})).transactions
+      expect(tx.date).equals('2024-06-01T12:00:00.000Z')
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('carries the swap record and what the sender asked for', async function () {
+    const driver = await makeDb([makeTx()])
+    try {
+      await saveTxMetas(driver, 'W1', 'BTC', [
+        {
+          txid: 'tx1',
+          file: file({
+            feeRateRequested: 'high',
+            payees: [
+              { address: 'bc1qexample', amount: '100', currency: 'BTC' }
+            ],
+            secret: 'monero-key'
+          })
+        }
+      ])
+
+      const [tx] = (await queryTxPage(driver, {})).transactions
+      expect(tx.makeTxParams?.networkFeeOption).equals('high')
+      expect(tx.makeTxParams?.spendTargets?.[0].publicAddress).equals(
+        'bc1qexample'
+      )
+      expect(tx.txSecret).equals('monero-key')
     } finally {
       await driver.close()
     }
