@@ -1089,6 +1089,12 @@ export interface EdgeAccountTxQuery {
   /**
    * Metadata rows with no chain data yet -- a transaction the user annotated
    * on another device that this one has not seen. Hidden by default.
+   *
+   * **This widens the summary, not the page.** An `EdgeTx` *is* the chain
+   * data, so there is nothing to return for a transaction that has none: the
+   * amounts, the date and even the plugin are unknown. Turning this on tells
+   * you how many such annotations exist and when they were made; it cannot
+   * hand you transactions that have not arrived.
    */
   includeOrphans?: boolean
 
