@@ -129,9 +129,10 @@ export const asEdgeTx = asObject<EdgeTx>({
 export const wasEdgeTx = uncleaner(asEdgeTx)
 
 /**
- * `confirmations` is deliberately absent above.
+ * `confirmations` and `fiatAmounts` are deliberately absent above.
  *
- * It is derived from the wallet's current block height, so storing it would
- * mean every transaction in a wallet going stale each time a block arrives.
- * It is computed on read instead.
+ * Both are derived from something outside this document -- the wallet's
+ * current height, and a rate plus a setting -- so storing either would mean
+ * every transaction in a wallet going stale when that moved. They are
+ * attached on read instead.
  */
