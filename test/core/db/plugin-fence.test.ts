@@ -159,6 +159,48 @@ describe('plugin SQL fence', function () {
     }
   })
 
+  it('reads the token table but cannot write it', async function () {
+    const { driver, a } = await setup()
+    try {
+      await driver.exec([
+        {
+          sql: `INSERT INTO token (plugin_id, token_id, currency_code, multiplier)
+                VALUES ('bitcoin', '', 'BTC', '100000000')`
+        }
+      ])
+
+      // Plugins need currency codes and denominations, so this one table is
+      // readable -- and only readable. A plugin that could rewrite a
+      // multiplier could change what every amount in the account appears to
+      // be worth.
+      expect(
+        await a.runSql<{ currency_code: string }>`
+          SELECT currency_code FROM token`
+      ).deep.equals([{ currency_code: 'BTC' }])
+
+      await expectRejection(a.runSql`UPDATE token SET multiplier = '1'`)
+      await expectRejection(a.runSql`DELETE FROM token`)
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('cannot see the account settings', async function () {
+    const { driver, a } = await setup()
+    try {
+      // Which currency the user picked is the account's business, not a
+      // plugin's -- and the deny here comes from the policy's default rather
+      // than from a rule about this table, which is the property worth
+      // holding onto as the schema grows.
+      await expectRejection(a.runSql`SELECT value FROM setting`)
+      await expectRejection(
+        a.runSql`INSERT INTO setting (key, value) VALUES ('x', 'y')`
+      )
+    } finally {
+      await driver.close()
+    }
+  })
+
   it('cannot discover what exists', async function () {
     const { driver, a } = await setup()
     try {
