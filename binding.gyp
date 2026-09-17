@@ -20,7 +20,8 @@
         "SQLITE_DEFAULT_WAL_SYNCHRONOUS=1",
         "SQLITE_OMIT_LOAD_EXTENSION=1",
         "SQLITE_OMIT_DEPRECATED=1",
-        "SQLITE_DEFAULT_MEMSTATUS=0"
+        "SQLITE_DEFAULT_MEMSTATUS=0",
+        "SQLITE_USE_URI=1"
       ],
       "cflags": ["-w"],
       "xcode_settings": {

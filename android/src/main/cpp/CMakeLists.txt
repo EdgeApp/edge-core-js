@@ -32,6 +32,10 @@ target_compile_definitions(
   SQLITE_OMIT_LOAD_EXTENSION=1
   SQLITE_OMIT_DEPRECATED=1
   SQLITE_DEFAULT_MEMSTATUS=0
+  # URI filenames, so a read-only ATTACH can say so in the name. SQLite has
+  # no other way to attach one database read-only: `query_only` is a property
+  # of the connection, not of a schema.
+  SQLITE_USE_URI=1
 )
 
 # 16KiB page alignment:

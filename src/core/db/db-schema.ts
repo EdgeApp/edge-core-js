@@ -35,6 +35,32 @@ CREATE TABLE tx_chain (
   PRIMARY KEY (wallet_id, txid)
 );
 
+-- The account's own settings, as the database needs to see them.
+--
+-- Only the default fiat code so far, and it is here rather than only in the
+-- core's memory, because the fiat materialization has to know which currency
+-- a stored amount is in.
+CREATE TABLE setting (
+  key   TEXT NOT NULL PRIMARY KEY,
+  value TEXT
+);
+
+-- Currency codes and denominations, per asset.
+--
+-- The multiplier is what turns a native amount into a display one, and is the
+-- missing term in every fiat calculation: a rate is quoted per whole coin, and
+-- a native amount is in the chain's smallest unit.
+--
+-- This is also the one core table a plugin may read, since plugins need
+-- currency codes and denominations of their own.
+CREATE TABLE token (
+  plugin_id     TEXT NOT NULL,
+  token_id      TEXT NOT NULL,      -- '' is the chain's own asset
+  currency_code TEXT NOT NULL,
+  multiplier    TEXT NOT NULL,      -- '100000000' for BTC
+  PRIMARY KEY (plugin_id, token_id)
+);
+
 -- One row per wallet the account has given storage to.
 --
 -- The prefix column is what names that wallet's plugin tables. The wallet is

@@ -51,6 +51,7 @@ Pod::Spec.new do |s|
     "-DSQLITE_OMIT_LOAD_EXTENSION=1",
     "-DSQLITE_OMIT_DEPRECATED=1",
     "-DSQLITE_DEFAULT_MEMSTATUS=0",
+    "-DSQLITE_USE_URI=1",
     "-w"
 
   s.resource_bundles = {
