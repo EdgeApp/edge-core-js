@@ -131,6 +131,16 @@ describe('EdgeTx cleaner', function () {
     const json = wasEdgeTx(makeTx({ confirmations: 'confirmed' })) as object
     expect('confirmations' in json).equals(false)
   })
+
+  it('stores the verdict a height cannot imply', function () {
+    // A reverted transaction is mined and has a height, so every rule that
+    // derives a state from heights calls it confirmed.
+    const json: any = wasEdgeTx(makeTx({ chainStatus: 'failed' }))
+    expect(json.chainStatus).equals('failed')
+    expect(asEdgeTx(JSON.parse(JSON.stringify(json))).chainStatus).equals(
+      'failed'
+    )
+  })
 })
 
 describe('EdgeTx converters', function () {
@@ -201,6 +211,18 @@ describe('EdgeTx converters', function () {
       ['abc', '0'],
       [null, '2100']
     ])
+  })
+
+  it('carries a failed transaction as failed', function () {
+    const tx = toEdgeTx({ ...legacy, confirmations: 'failed' }, 'ethereum')
+    expect(tx.chainStatus).equals('failed')
+    expect(fromEdgeTx(tx, null, 'ETH').confirmations).equals('failed')
+
+    // And a state that *is* derivable is not stored, so it cannot go stale:
+    expect(
+      toEdgeTx({ ...legacy, confirmations: 'confirmed' }, 'ethereum')
+        .chainStatus
+    ).equals(undefined)
   })
 
   it('drops otherParams', function () {
