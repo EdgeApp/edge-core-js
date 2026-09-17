@@ -6,6 +6,7 @@ export * from './error'
 export * from './fake-types'
 export * from './server-cleaners'
 export * from './server-types'
+export * from './tx-convert'
 
 // ---------------------------------------------------------------------
 // helper types
