@@ -1159,8 +1159,44 @@ export interface EdgeTransactionStoreEvents {
  * it, and the caller reads that asset out of `nativeAmounts`. Nothing returns
  * a per-asset projection of a transaction.
  */
+/**
+ * Settings that live on this device, for this account.
+ *
+ * Distinct from the account's synced settings: these describe how the local
+ * cache is built rather than what the user owns, and nothing here reaches
+ * another device.
+ */
+export interface EdgeLocalSettings {
+  /**
+   * The currency every stored fiat amount is in.
+   *
+   * The core has to know it, because it maintains the column -- which is the
+   * whole reason this setting moves out of the GUI. The GUI keeps the picker;
+   * it stops keeping the state.
+   */
+  readonly defaultIsoFiat: string | undefined
+}
+
 export interface EdgeTransactionStore {
   readonly on: Subscriber<EdgeTransactionStoreEvents>
+
+  /** What this device has been told about how to show amounts. */
+  readonly localSettings: EdgeLocalSettings
+
+  /**
+   * Changes the account's fiat currency.
+   *
+   * A real change empties every stored fiat amount at once -- instant and
+   * local -- and the backfill refills them in the background. Queries carry on
+   * immediately, returning blanks, which a reader should treat as "not yet
+   * known" rather than as zero.
+   *
+   * Setting it to its current value does nothing at all, deliberately: a
+   * setter that is not a no-op would re-rate the whole account on every boot.
+   */
+  readonly changeLocalSettings: (
+    settings: Partial<EdgeLocalSettings>
+  ) => Promise<void>
 
   /** One page. `query.details` decides whether a summary comes with it. */
   readonly queryTxs: (query: EdgeAccountTxQuery) => Promise<EdgeAccountTxPage>
