@@ -478,6 +478,7 @@ export type RootAction =
         changeServers: string[]
         infoCache: InfoCacheFile
         infoServers: string[]
+        ratesServer: string
         loginServers: string[]
         syncServers: string[]
         clientInfo: ClientInfo
