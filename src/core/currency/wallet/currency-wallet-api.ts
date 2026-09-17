@@ -44,6 +44,7 @@ import {
   JsonObject
 } from '../../../types/types'
 import { makeMetaTokens } from '../../account/custom-tokens'
+import { EdgeSqlDriver } from '../../db/db-driver'
 import { splitWalletInfo } from '../../login/splitting'
 import { toApiInput } from '../../root-pixie'
 import { makeStorageWalletApi } from '../../storage/storage-api'
@@ -59,6 +60,10 @@ import {
   asEdgeTxSwap,
   TransactionFile
 } from './currency-wallet-cleaners'
+import {
+  countTxsInDatabase,
+  streamTxsFromDatabase
+} from './currency-wallet-db-read'
 import { dateFilter, searchStringFilter } from './currency-wallet-export'
 import {
   loadTxFiles,
@@ -105,6 +110,16 @@ export function makeCurrencyWalletApi(
   const storageWalletApi = makeStorageWalletApi(ai, walletInfo)
 
   const fakeCallbacks = makeCurrencyWalletCallbacks(input)
+
+  /**
+   * The account's database, while it is open.
+   *
+   * Looked up per call rather than captured: the account opens its database
+   * after this object exists, and closes it on logout, so a reference held
+   * here would be either empty or stale.
+   */
+  const walletDatabase = (): EdgeSqlDriver | undefined =>
+    input.props.output.accounts[accountId]?.database?.driver
 
   const otherMethods: { [name: string]: (...args: any[]) => any } = {}
   if (engine.otherMethods != null) {
@@ -276,6 +291,11 @@ export function makeCurrencyWalletApi(
         tokenId: opts.tokenId
       })
 
+      const driver = walletDatabase()
+      if (driver != null) {
+        return await countTxsInDatabase(input, driver, upgradedCurrency.tokenId)
+      }
+
       return engine.getNumTransactions(upgradedCurrency)
     },
 
@@ -296,6 +316,19 @@ export function makeCurrencyWalletApi(
           ? this.currencyInfo
           : this.currencyConfig.allTokens[tokenId]
       const upgradedCurrency = { currencyCode, tokenId }
+
+      /*
+       * The database, where the account has one.
+       *
+       * The path below walks every txid the engine ever reported and opens a
+       * metadata file per transaction, so its first page costs the size of
+       * the wallet rather than the size of the page. It stays for as long as
+       * the flag can be off.
+       */
+      const driver = walletDatabase()
+      if (driver != null) {
+        return streamTxsFromDatabase(input, driver, { ...opts, currencyCode })
+      }
 
       // Load transactions from the engine if necessary:
       let state = input.props.walletState
