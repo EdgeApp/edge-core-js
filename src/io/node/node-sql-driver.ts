@@ -44,14 +44,24 @@ interface EdgeSqlAddon {
 let addon: EdgeSqlAddon | null | undefined
 
 /**
- * Where the built addon sits, relative to this file.
+ * Where the addon sits, relative to this file, best first.
  *
- * Two entries because this file is read from two depths: `src/io/node` when a
- * test runs it through sucrase, and `lib/node` once rollup has bundled it.
+ * `prebuilds/<platform>-<arch>/` is what a published tarball carries, and it
+ * is named that way so one tarball can hold several and each consumer loads
+ * only its own -- a foreign binary would `require` and throw, which the catch
+ * below turns into a silently missing capability rather than an error anyone
+ * sees. `build/Release/` is where `node-gyp` leaves a local build, which
+ * wins nothing but must still work for a consumer that built it itself.
+ *
+ * Two depths for each because this file is read from two: `src/io/node` when
+ * a test runs it through sucrase, and `lib/node` once rollup has bundled it.
  * A single relative path works in one and silently resolves outside the
  * package in the other -- which is how a consumer, not a test, found this.
  */
+const PLATFORM = `${process.platform}-${process.arch}`
 const ADDON_PATHS = [
+  `../../../prebuilds/${PLATFORM}/edge_sql.node`,
+  `../../prebuilds/${PLATFORM}/edge_sql.node`,
   '../../../build/Release/edge_sql.node',
   '../../build/Release/edge_sql.node'
 ]
