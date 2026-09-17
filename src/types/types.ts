@@ -785,6 +785,18 @@ export interface EdgeTx {
   confirmations?: EdgeConfirmationState
 
   /**
+   * The chain's own verdict, where it has one that a height cannot imply.
+   *
+   * Everything else `confirmations` reports -- a count, 'confirmed',
+   * 'syncing', 'unconfirmed' -- follows from this transaction's height and
+   * the wallet's, so storing it would stale every transaction in a wallet
+   * each time a block arrived. These two do not: a reverted transaction is
+   * mined, has a height, and still failed. Without somewhere to keep that, a
+   * failed transaction reads back as confirmed.
+   */
+  chainStatus?: 'failed' | 'dropped'
+
+  /**
    * What each asset was worth, in the account's `defaultIsoFiat`.
    *
    * Attached at read time and never stored, for the same reason
