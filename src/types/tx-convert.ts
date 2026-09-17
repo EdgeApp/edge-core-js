@@ -1,10 +1,10 @@
-import {
+import type {
   EdgeTokenId,
   EdgeTransaction,
   EdgeTx,
   EdgeTxAmountMap,
   EdgeTxTokenData
-} from '../../types/types'
+} from './types'
 
 /**
  * Converting between `EdgeTransaction` and `EdgeTx`.
@@ -45,6 +45,20 @@ export function toEdgeTx(tx: EdgeTransaction, pluginId: string): EdgeTx {
   const networkFees: EdgeTxAmountMap = new Map()
   for (const fee of tx.networkFees) {
     networkFees.set(fee.tokenId, fee.nativeAmount)
+  }
+  if (networkFees.size === 0) {
+    /*
+     * Most engines still report the flat `networkFee` and leave the array
+     * empty, so reading only the array drops the fee outright -- silently,
+     * because a transaction with no fee is a perfectly valid document.
+     *
+     * A token's own `networkFee` is usually zero and its real cost is
+     * `parentNetworkFee`, which is why both are read.
+     */
+    networkFees.set(tx.tokenId, tx.networkFee)
+    if (tx.tokenId != null && tx.parentNetworkFee != null) {
+      networkFees.set(null, tx.parentNetworkFee)
+    }
   }
 
   const tokenData = new Map<EdgeTokenId, EdgeTxTokenData>()
