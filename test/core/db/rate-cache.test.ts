@@ -270,6 +270,44 @@ describe('rate cache', function () {
     }
   })
 
+  it('attaches through a path that needs escaping', async function () {
+    // The path is spliced into a SQL string literal *and* read as a URI, so
+    // it has to survive both. A quote would end the literal early; a question
+    // mark would be read as the start of a query string.
+    const path = `${makeTempPath()}-it's #odd?`
+    try {
+      const io = makeNodeIo(path)
+      if (io.makeSqlDriver == null) throw new Error('No SQL driver')
+
+      const cache = await openRateCache(io)
+      if (cache == null) throw new Error('No rate cache')
+      await saveRates(cache.driver, [
+        {
+          pluginId: 'bitcoin',
+          tokenId: null,
+          fiatCode: 'iso:USD',
+          bucket: 1717243200,
+          rate: 68000
+        }
+      ])
+      await cache.close()
+
+      const account = await io.makeSqlDriver(
+        'account',
+        new Uint8Array(32).fill(0x2b)
+      )
+      await account.attach(RATE_DATABASE_NAME, RATE_SCHEMA)
+      expect(
+        await account.query(
+          `SELECT rate FROM ${RATE_SCHEMA}.fiat_rate WHERE plugin_id = 'bitcoin'`
+        )
+      ).deep.equals([{ rate: 68000 }])
+      await account.close()
+    } finally {
+      rmSync(path, { force: true, recursive: true })
+    }
+  })
+
   it('attaches to an account database read-only', async function () {
     const path = makeTempPath()
     try {
