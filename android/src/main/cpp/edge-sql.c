@@ -885,18 +885,29 @@ int edgeSqlAttach(
     }
   }
 
-  sqlite3_str *sql = sqlite3_str_new(db);
   /*
    * A URI filename, because `mode=ro` is the only way to attach one database
    * read-only: `query_only` is a property of the connection, not of a schema,
    * so setting it would stop the account database writing to itself.
    *
-   * `KEY ''` says the attached file is plaintext. Without it the codec applies
-   * the main database's key to the attachment and the open fails as "file is
-   * not a database" -- the correct answer to the wrong question.
+   * That means the path is spliced into a SQL string literal *and* read as a
+   * URI, so it needs escaping for both. A `'` would end the literal early and
+   * a `?` or `#` would be read as a query string or fragment -- neither is
+   * likely in a path the native side built, but "unlikely" is not a reason to
+   * leave a hole where a filename meets SQL.
    */
-  sqlite3_str_appendf(
-      sql, "ATTACH DATABASE 'file:%s?mode=ro' AS \"%s\" KEY ''", path, alias);
+  sqlite3_str *sql = sqlite3_str_new(db);
+  sqlite3_str_append(sql, "ATTACH DATABASE 'file:", 22);
+  for (const char *p = path; *p != 0; ++p) {
+    if (*p == '\'') {
+      sqlite3_str_append(sql, "''", 2);
+    } else if (*p == '?' || *p == '#' || *p == '%') {
+      sqlite3_str_appendf(sql, "%%%02X", (unsigned char)*p);
+    } else {
+      sqlite3_str_appendchar(sql, 1, *p);
+    }
+  }
+  sqlite3_str_appendf(sql, "?mode=ro' AS \"%s\" KEY ''", alias);
   char *text = sqlite3_str_finish(sql);
 
   char *message = NULL;
