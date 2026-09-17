@@ -3,7 +3,8 @@ import { EdgeSqlDriver } from './db-driver'
 import {
   materializeFiat,
   readDefaultIsoFiat,
-  toleranceForAge
+  toleranceForAge,
+  toleranceSql
 } from './fiat-materialize'
 import { RATE_SCHEMA, saveRates } from './rate-cache'
 import { EdgeRateRequest, fetchRates } from './rate-client'
@@ -63,6 +64,38 @@ export async function findRateGaps(
     [limit]
   )
 
+  /*
+   * Which asset-and-time pairs the cache already covers, in one query rather
+   * than one per row. On React Native every one of those is a bridge round
+   * trip, so asking five hundred times to avoid five hundred fetches would
+   * have traded one cost for another.
+   *
+   * The tolerance varies per row by age, which is why the join carries the
+   * same nested CASE the materialization uses.
+   */
+  const tolerance = toleranceSql(String(now), 'i.effective_date')
+  const coveredRows = await driver.query<{
+    plugin_id: string
+    token_id: string
+    effective_date: number
+  }>(
+    `SELECT DISTINCT i.plugin_id, i.token_id, i.effective_date
+       FROM tx_asset_idx i
+       JOIN ${RATE_SCHEMA}.fiat_rate r
+         ON r.plugin_id = i.plugin_id
+        AND r.token_id = i.token_id
+        AND r.fiat_code = ?1
+        AND r.bucket BETWEEN i.effective_date - (${tolerance})
+                         AND i.effective_date + (${tolerance})
+      WHERE i.fiat_amount IS NULL AND i.fiat_is_user = 0`,
+    [fiatCode]
+  )
+  const covered = new Set(
+    coveredRows.map(
+      row => `${row.plugin_id}\u001f${row.token_id}\u001f${row.effective_date}`
+    )
+  )
+
   const out: RateGap[] = []
   /*
    * What has already been decided *this pass*, per asset.
@@ -76,23 +109,20 @@ export async function findRateGaps(
   const planned = new Map<string, number[]>()
 
   for (const row of rows) {
-    const tolerance = toleranceForAge(now - row.effective_date)
-    const key = `${row.plugin_id}\u001f${row.token_id}`
-
-    const already = planned.get(key) ?? []
     if (
-      already.some(date => Math.abs(date - row.effective_date) <= tolerance)
+      covered.has(
+        `${row.plugin_id}\u001f${row.token_id}\u001f${row.effective_date}`
+      )
     ) {
       continue
     }
 
-    const covered = await driver.query<{ n: number }>(
-      `SELECT count(*) AS n FROM ${RATE_SCHEMA}.fiat_rate
-        WHERE plugin_id = ?1 AND token_id = ?2 AND fiat_code = ?3
-          AND bucket BETWEEN ?4 - ?5 AND ?4 + ?5`,
-      [row.plugin_id, row.token_id, fiatCode, row.effective_date, tolerance]
-    )
-    if ((covered[0]?.n ?? 0) > 0) continue
+    const key = `${row.plugin_id}\u001f${row.token_id}`
+    const already = planned.get(key) ?? []
+    const window = toleranceForAge(now - row.effective_date)
+    if (already.some(date => Math.abs(date - row.effective_date) <= window)) {
+      continue
+    }
 
     already.push(row.effective_date)
     planned.set(key, already)
