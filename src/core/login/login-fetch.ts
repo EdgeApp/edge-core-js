@@ -31,7 +31,12 @@ const asEdgeApiSignature: Cleaner<EdgeApiSignature> = asObject({
 })
 
 function isUsableSignerKey(apiKey: string, signature: string): boolean {
-  return apiKey !== '' && !/\s/.test(apiKey) && signature !== ''
+  return (
+    apiKey !== '' &&
+    !/\s/.test(apiKey) &&
+    signature !== '' &&
+    !/\s/.test(signature)
+  )
 }
 
 /**
