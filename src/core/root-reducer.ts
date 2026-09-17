@@ -19,6 +19,7 @@ export interface RootState {
   readonly hideKeys: boolean
   readonly infoCache: InfoCacheFile
   readonly infoServers: string[]
+  readonly ratesServer: string
   readonly lastAccountId: string
   readonly logSettings: EdgeLogSettings
   readonly paused: boolean
@@ -117,6 +118,10 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
         return action.payload
     }
     return state
+  },
+
+  ratesServer(state = '', action): string {
+    return action.type === 'INIT' ? action.payload.ratesServer : state
   },
 
   infoServers(state = [], action): string[] {

@@ -7,6 +7,12 @@ import { asEdgeStorageKeys } from '../login/storage-keys'
 import { EdgeInternalIo, EdgeSqlDriver } from './db-driver'
 import { reindexStale } from './db-index'
 import { prepareDatabase } from './db-open'
+import {
+  EdgeRateCache,
+  openRateCache,
+  RATE_DATABASE_NAME,
+  RATE_SCHEMA
+} from './rate-cache'
 
 /**
  * One database file per account, opened on login and closed on logout.
@@ -27,6 +33,15 @@ export interface EdgeTxRef {
 
 export interface EdgeAccountDatabase {
   driver: EdgeSqlDriver
+  /**
+   * The device's rate cache, on its own connection.
+   *
+   * Two handles onto it: this one writes, and the account's own connection
+   * has it attached read-only for the materialization join. They are separate
+   * because the cache is a separate file, and nothing spans the two
+   * transactionally.
+   */
+  rateDriver?: EdgeSqlDriver
   /** Derived tables rebuilt while opening, for the login log. */
   reindexed: string[]
 
@@ -149,14 +164,31 @@ export async function openAccountDatabase(
       await prepareDatabase(driver)
       const reindexed = await reindexStale(driver)
       const notifier = makeChangeNotifier()
+
+      /*
+       * The rate cache is shared and optional. An account that cannot open it
+       * works exactly as before, minus fiat amounts -- so a failure here is
+       * logged by the caller rather than failing a login.
+       */
+      let rates: EdgeRateCache | undefined
+      try {
+        rates = await openRateCache(io)
+        if (rates != null) await driver.attach(RATE_DATABASE_NAME, RATE_SCHEMA)
+      } catch (error) {
+        await rates?.close().catch(() => undefined)
+        rates = undefined
+      }
+
       return {
         driver,
+        rateDriver: rates?.driver,
         reindexed,
         changed: notifier.changed,
         onChanged: notifier.onChanged,
         close: async () => {
           notifier.stop()
           await driver.close()
+          await rates?.close().catch(() => undefined)
         }
       }
     } catch (error) {

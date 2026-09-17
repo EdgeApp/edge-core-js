@@ -44,6 +44,7 @@ export async function makeContext(
     changeServer,
     hideKeys = false,
     infoServer,
+    ratesServer,
     loginServer,
     osType,
     osVersion,
@@ -68,6 +69,7 @@ export async function makeContext(
     'https://info1.edge.app',
     'https://info2.edge.app'
   ])
+  const ratesServerUrl = ratesServer ?? 'https://rates2.edge.app'
   const loginServers = toServerArray(
     loginServer,
     authServers.map(server => server.replace(/\/api$/, ''))
@@ -144,6 +146,7 @@ export async function makeContext(
       loginServers,
       infoCache,
       infoServers,
+      ratesServer: ratesServerUrl,
       syncServers,
       clientInfo,
       deviceDescription,
