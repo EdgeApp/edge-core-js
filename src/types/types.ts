@@ -1095,6 +1095,16 @@ export interface EdgeAccountTxQuery {
   includeOrphans?: boolean
 
   // Ordering and paging:
+  /**
+   * How to order the page.
+   *
+   * Every field but `date` can be unknown for a given row -- a fee-only asset
+   * has no amount, and a fiat amount stays blank until a rate is found. **A
+   * sort on one of those drops the rows where it is unknown**, because
+   * ranking by a value you do not have is not answering the question, and
+   * because SQLite would otherwise order them differently depending on the
+   * direction.
+   */
   sort?: {
     field: 'date' | 'nativeAmount' | 'networkFee' | 'fiatAmount' | 'blockHeight'
     direction: 'asc' | 'desc'

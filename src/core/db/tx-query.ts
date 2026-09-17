@@ -32,6 +32,24 @@ const SORT_COLUMNS = {
   blockHeight: 'block_height'
 } as const
 
+/**
+ * Every sort column but the date can be NULL, and SQLite puts NULL first
+ * ascending and last descending -- so the same query would order unknowns
+ * differently depending on the direction, silently.
+ *
+ * Rather than pick a side, a sort on one of these drops the unknowns. An
+ * amount sort that lists transactions whose amount is not known is not
+ * answering the question, and a fee-only asset row genuinely has no amount to
+ * be ranked by. It also keeps the keyset cursor sound: a row-value comparison
+ * against NULL yields NULL, so paging would stop dead at the boundary.
+ */
+const NULLABLE_SORTS = new Set([
+  'native_amount_key',
+  'network_fee_key',
+  'fiat_amount',
+  'block_height'
+])
+
 interface PageRow {
   wallet_id: string
   txid: string
@@ -282,6 +300,9 @@ function buildPageQuery(query: EdgeAccountTxQuery): BuiltPage {
   const limit = Math.min(query.limit ?? DEFAULT_LIMIT, MAX_LIMIT)
 
   const params = [...where.params]
+  const sortable = NULLABLE_SORTS.has(sortColumn)
+    ? ` AND i.${sortColumn} IS NOT NULL`
+    : ''
   let keyset = ''
   if (query.after != null) {
     const cursor = decodeCursor(query.after)
@@ -306,7 +327,7 @@ function buildPageQuery(query: EdgeAccountTxQuery): BuiltPage {
     FROM tx_asset_idx i
     LEFT JOIN tx_chain c
            ON c.wallet_id = i.wallet_id AND c.txid = i.txid
-    WHERE ${where.sql}${keyset}
+    WHERE ${where.sql}${sortable}${keyset}
     ORDER BY i.${sortColumn} ${order}, i.txid ${order}, i.token_id ${order}
     LIMIT ?${query.offset != null ? ' OFFSET ?' : ''}`
 
