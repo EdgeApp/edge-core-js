@@ -48,7 +48,7 @@ export function toleranceForAge(ageSeconds: number): number {
  * user-defined function in an UPDATE would make this statement unreadable by
  * anything but this build.
  */
-function toleranceSql(nowColumn: string, dateColumn: string): string {
+export function toleranceSql(nowColumn: string, dateColumn: string): string {
   // Wrapped in ascending order, so the widest tier ends up outermost and is
   // tested first. The other way round, every old transaction matches the
   // one-day tier and never reaches the thirty-day one.
@@ -144,6 +144,10 @@ export async function materializeFiat(
    * `EdgeMetadata.exchangeAmount` is keyed by fiat code, so a user who
    * switched currencies keeps nothing unless they had also recorded a figure
    * in the new one.
+   *
+   * The key is quoted inside the JSON path. Unquoted, SQLite reads a dot in
+   * the code as another level of nesting and returns NULL -- silently, which
+   * is how a currency would lose every figure the user had typed for it.
    */
   const [fromUser] = await driver.exec([
     {
@@ -152,7 +156,7 @@ export async function materializeFiat(
            SET fiat_amount = (
                  SELECT json_extract(
                           j.value,
-                          '$.metadata.exchangeAmount.' || ?1
+                          '$.metadata.exchangeAmount."' || ?1 || '"'
                         )
                    FROM tx_meta m, json_each(m.doc, '$.tokens') j
                   WHERE m.wallet_id = i.wallet_id AND m.txid = i.txid
@@ -164,7 +168,7 @@ export async function materializeFiat(
                   WHERE m.wallet_id = i.wallet_id AND m.txid = i.txid
                     AND j.key = i.token_id
                     AND json_extract(
-                          j.value, '$.metadata.exchangeAmount.' || ?1
+                          j.value, '$.metadata.exchangeAmount."' || ?1 || '"'
                         ) IS NOT NULL
                )
                ${scope}`,
