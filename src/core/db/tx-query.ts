@@ -56,6 +56,7 @@ interface PageRow {
   token_id: string
   sort_key: EdgeSqlValue
   effective_date: number
+  fiat_amount: number | null
   chain_doc: string | null
 }
 
@@ -323,6 +324,7 @@ function buildPageQuery(query: EdgeAccountTxQuery): BuiltPage {
     SELECT
       i.wallet_id, i.txid, i.token_id, i.effective_date,
       i.${sortColumn} AS sort_key,
+      i.fiat_amount,
       json(c.doc) AS chain_doc
     FROM tx_asset_idx i
     LEFT JOIN tx_chain c
@@ -345,13 +347,32 @@ function buildPageQuery(query: EdgeAccountTxQuery): BuiltPage {
  */
 function collapse(rows: PageRow[]): EdgeTx[] {
   const out: EdgeTx[] = []
-  const seen = new Set<string>()
+  const byKey = new Map<string, EdgeTx>()
   for (const row of rows) {
     const key = `${row.wallet_id}|${row.txid}`
-    if (seen.has(key)) continue
-    seen.add(key)
-    if (row.chain_doc == null) continue
-    out.push(asEdgeTx(JSON.parse(row.chain_doc)))
+
+    let tx = byKey.get(key)
+    if (tx == null) {
+      if (row.chain_doc == null) continue
+      tx = asEdgeTx(JSON.parse(row.chain_doc))
+      byKey.set(key, tx)
+      out.push(tx)
+    }
+
+    /*
+     * The fiat amount is per asset and lives on the index row, not in the
+     * document -- so it is gathered as the rows collapse rather than read
+     * back out of the transaction. An asset with no rate yet is left out
+     * entirely, which is what makes "not yet known" distinguishable from
+     * zero.
+     */
+    if (row.fiat_amount != null) {
+      if (tx.fiatAmounts == null) tx.fiatAmounts = new Map()
+      tx.fiatAmounts.set(
+        row.token_id === '' ? null : row.token_id,
+        row.fiat_amount
+      )
+    }
   }
   return out
 }
