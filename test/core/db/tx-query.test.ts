@@ -480,6 +480,56 @@ describe('account transaction query', function () {
     }
   })
 
+  it('drops unknown values from a sort that could not rank them', async function () {
+    const driver = await makeDb([
+      makeTx({ txid: 'moved', nativeAmounts: new Map([[null, '10']]) }),
+      // A fee-only asset row: the transaction touched this asset by paying
+      // its fee, so there is no amount to rank it by.
+      makeTx({
+        txid: 'feeOnly',
+        nativeAmounts: new Map([['abc', '5']]),
+        networkFees: new Map([[null, '21']])
+      })
+    ])
+    try {
+      // Both are in the index, and the fee-only row has no amount key:
+      expect(
+        await driver.query('SELECT count(*) AS n FROM tx_asset_idx')
+      ).deep.equals([{ n: 3 }])
+
+      // Ordering by amount would otherwise put the unknown first ascending
+      // and last descending -- the same query, two answers.
+      const ascending = await txids(driver, {
+        walletIds: ['W1'],
+        sort: { field: 'nativeAmount', direction: 'asc' }
+      })
+      const descending = await txids(driver, {
+        walletIds: ['W1'],
+        sort: { field: 'nativeAmount', direction: 'desc' }
+      })
+      expect(new Set(ascending)).deep.equals(new Set(descending))
+      expect(new Set(ascending)).deep.equals(new Set(['moved', 'feeOnly']))
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('keeps every row when sorting by date', async function () {
+    const driver = await makeDb(makeSeries(3))
+    try {
+      // `effective_date` is NOT NULL, so the default sort drops nothing.
+      expect(
+        (
+          await txids(driver, {
+            sort: { field: 'date', direction: 'asc' }
+          })
+        ).length
+      ).equals(3)
+    } finally {
+      await driver.close()
+    }
+  })
+
   it('caps the page size', async function () {
     const driver = await makeDb(makeSeries(3))
     try {
