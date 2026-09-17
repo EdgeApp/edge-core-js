@@ -31,6 +31,10 @@ import {
 } from '../../types/types'
 import { makeEdgeResult } from '../../util/edgeResult'
 import { base58 } from '../../util/encoding'
+import {
+  bumpEngineQueue,
+  waitForCurrencyEngine
+} from '../currency/currency-selectors'
 import { saveWalletSettings } from '../currency/wallet/currency-wallet-files'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
 import {
@@ -124,7 +128,18 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
 
   // Specialty API's:
   const dataStore = makeDataStoreApi(ai, accountId)
-  const storageWalletApi = makeStorageWalletApi(ai, accountWalletInfo)
+  const storageWalletApi = makeStorageWalletApi(
+    ai,
+    accountWalletInfo,
+    props => {
+      const accountState = props.state.accounts[accountId]
+      if (accountState == null) {
+        throw new Error('The account was logged out')
+      }
+      // A terminal boot failure means the repo is never coming:
+      if (accountState.loadFailure != null) throw accountState.loadFailure
+    }
+  )
 
   function lockdown(): void {
     if (ai.props.state.hideKeys) {
@@ -583,9 +598,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         return await tools.getDisplayPrivateKey(info)
       }
 
-      const { engine } = ai.props.output.currency.wallets[walletId]
-      if (engine == null || engine.getDisplayPrivateSeed == null) {
-        throw new Error('Wallet has not yet loaded')
+      const engine = await waitForCurrencyEngine(ai, walletId)
+      if (engine.getDisplayPrivateSeed == null) {
+        throw new Error(`getDisplayPrivateKey unsupported by ${info.type}`)
       }
       const out = await engine.getDisplayPrivateSeed(info.keys)
       if (out == null) throw new Error('The engine failed to return a key')
@@ -605,9 +620,9 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         return await tools.getDisplayPublicKey(publicInfo)
       }
 
-      const { engine } = ai.props.output.currency.wallets[walletId]
-      if (engine == null || engine.getDisplayPublicSeed == null) {
-        throw new Error('Wallet has not yet loaded')
+      const engine = await waitForCurrencyEngine(ai, walletId)
+      if (engine.getDisplayPublicSeed == null) {
+        throw new Error(`getDisplayPublicKey unsupported by ${info.type}`)
       }
       const out = await engine.getDisplayPublicSeed()
       if (out == null) throw new Error('The engine failed to return a key')
@@ -724,6 +739,10 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     async waitForCurrencyWallet(walletId: string): Promise<EdgeCurrencyWallet> {
+      // Asking for a wallet is the "the user wants this one" signal,
+      // so move its engine startup to the front of the queue:
+      bumpEngineQueue(ai, walletId)
+
       return await new Promise((resolve, reject) => {
         const check = (): void => {
           const wallet = this.currencyWallets[walletId]
@@ -783,12 +802,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       activateWalletId,
       activateTokenIds
     }: EdgeGetActivationAssetsOptions): Promise<EdgeGetActivationAssetsResults> {
-      const { currencyWallets } = ai.props.output.accounts[accountId]
-      const walletOutput = ai.props.output.currency.wallets[activateWalletId]
-      const { engine } = walletOutput
+      const engine = await waitForCurrencyEngine(ai, activateWalletId)
 
-      if (engine == null)
-        throw new Error(`Invalid wallet: ${activateWalletId} not found`)
+      // Read the wallet list after the wait, so wallets that
+      // finished loading while the engine started are included:
+      const { currencyWallets } = ai.props.output.accounts[accountId]
 
       if (engine.engineGetActivationAssets == null)
         throw new Error(
@@ -809,12 +827,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       opts: EdgeActivationOptions
     ): Promise<EdgeActivationQuote> {
       const { activateWalletId, activateTokenIds, paymentInfo } = opts
-      const { currencyWallets } = ai.props.output.accounts[accountId]
-      const walletOutput = ai.props.output.currency.wallets[activateWalletId]
-      const { engine } = walletOutput
+      const engine = await waitForCurrencyEngine(ai, activateWalletId)
 
-      if (engine == null)
-        throw new Error(`Invalid wallet: ${activateWalletId} not found`)
+      // Read the wallet list after the wait, so wallets that
+      // finished loading while the engine started are included:
+      const { currencyWallets } = ai.props.output.accounts[accountId]
 
       if (engine.engineActivateWallet == null)
         throw new Error(

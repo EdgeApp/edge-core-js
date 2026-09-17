@@ -1,4 +1,4 @@
-import { makeMemoryDisklet } from 'disklet'
+import { Disklet, makeMemoryDisklet } from 'disklet'
 import { base16, base64 } from 'rfc4648'
 import { makeFetchFunction } from 'serverlet'
 import { bridgifyObject, close } from 'yaob'
@@ -91,6 +91,39 @@ async function saveRepo(
 /**
  * Creates a fake Edge server for unit testing.
  */
+/**
+ * Test hooks for the fake world's disk, following the same
+ * mutable-config pattern as `accountCacheSaverConfig`. Each gate holds
+ * the matching disklet call AFTER it has done its work and before it
+ * returns, so a test can park a loader on the value it already read,
+ * or a writer on the file it already wrote, and interleave something
+ * else in that window.
+ */
+export const fakeWorldTestConfig: {
+  readGate?: Promise<void>
+  writeGate?: Promise<void>
+} = {}
+
+function makeGatedDisklet(disklet: Disklet): Disklet {
+  return {
+    ...disklet,
+    async getText(path: string): Promise<string> {
+      const out = await disklet.getText(path)
+      if (fakeWorldTestConfig.readGate != null) {
+        await fakeWorldTestConfig.readGate
+      }
+      return out
+    },
+    async setText(path: string, text: string): Promise<unknown> {
+      const out = await disklet.setText(path, text)
+      if (fakeWorldTestConfig.writeGate != null) {
+        await fakeWorldTestConfig.writeGate
+      }
+      return out
+    }
+  }
+}
+
 export function makeFakeWorld(
   ios: PluginIos,
   logBackend: LogBackend,
@@ -135,7 +168,7 @@ export function makeFakeWorld(
 
       const fakeIo = {
         ...io,
-        disklet: makeMemoryDisklet(),
+        disklet: makeGatedDisklet(makeMemoryDisklet()),
         fetch
       }
 

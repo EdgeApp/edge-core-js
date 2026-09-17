@@ -2,6 +2,7 @@ import { lt } from 'biggystring'
 import { buildReducer, filterReducer, memoizeReducer } from 'redux-keto'
 
 import {
+  EdgeAddress,
   EdgeAssetAction,
   EdgeBalanceMap,
   EdgeBalances,
@@ -67,6 +68,7 @@ export interface CurrencyWalletState {
 
   readonly paused: boolean
 
+  readonly addresses: { [tokenIdKey: string]: EdgeAddress[] }
   readonly allEnabledTokenIds: string[]
   readonly balanceMap: EdgeBalanceMap
   readonly balances: EdgeBalances
@@ -74,19 +76,25 @@ export interface CurrencyWalletState {
   readonly currencyInfo: EdgeCurrencyInfo
   readonly detectedTokenIds: string[]
   readonly enabledTokenIds: string[]
+  readonly enabledTokensDirtyIds: string[]
   readonly tokenFileDirty: boolean
   readonly tokenFileLoaded: boolean
+  readonly tokenFileEverLoaded: boolean
   readonly walletSettings: JsonObject
+  readonly walletSettingsGen: number
   readonly engineFailure: Error | null
   readonly engineStarted: boolean
   readonly fiat: string
+  readonly fiatGen: number
   readonly fiatLoaded: boolean
   readonly fileNames: TxFileNames
   readonly files: TxFileJsons
   readonly gotTxs: Set<EdgeTokenId>
   readonly height: number
   readonly name: string | null
+  readonly nameGen: number
   readonly nameLoaded: boolean
+  readonly otherMethodNames: string[]
   readonly publicWalletInfo: EdgeWalletInfo | null
   readonly seenTxCheckpoint: string | null
   readonly sortedTxidHashes: string[]
@@ -121,6 +129,8 @@ export interface CurrencyWalletNext {
 }
 
 export const initialWalletSettings: JsonObject = {}
+
+export const initialAddresses: { [tokenIdKey: string]: EdgeAddress[] } = {}
 
 // Used for detectedTokenIds & enabledTokenIds:
 export const initialTokenIds: string[] = []
@@ -192,10 +202,23 @@ const currencyWalletInner = buildReducer<
   ),
 
   enabledTokenIds: sortStringsReducer(
-    (state = initialTokenIds, action): string[] => {
+    (state = initialTokenIds, action, next, prev): string[] => {
       if (action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE') {
-        return action.payload.enabledTokenIds
+        // Unsaved user toggles win over the file we just loaded, but
+        // only for the token ids the user actually touched - the
+        // rest of the file may hold changes from another device.
+        // The toggles stay dirty, so the tokenSaver writes them out:
+        const dirtyIds = prev?.self.enabledTokensDirtyIds ?? []
+        if (dirtyIds.length === 0) return action.payload.enabledTokenIds
+        const enabled = dirtyIds.filter(id => state.includes(id))
+        const disabled = dirtyIds.filter(id => !state.includes(id))
+        return uniqueStrings(
+          [...action.payload.enabledTokenIds, ...enabled],
+          disabled
+        )
       } else if (action.type === 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED') {
+        return action.payload.enabledTokenIds
+      } else if (action.type === 'CURRENCY_WALLET_CACHE_LOADED') {
         return action.payload.enabledTokenIds
       } else if (action.type === 'CURRENCY_ENGINE_DETECTED_TOKENS') {
         const { enablingTokenIds } = action.payload
@@ -221,9 +244,36 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
+  enabledTokensDirtyIds(state = initialTokenIds, action, next, prev): string[] {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_ENABLED_TOKENS_CHANGED':
+      case 'CURRENCY_ENGINE_DETECTED_TOKENS': {
+        // Remember which ids these actions actually toggled, so a
+        // racing load can preserve exactly those:
+        const prevIds = prev?.self.enabledTokenIds ?? initialTokenIds
+        const nextIds = next.self.enabledTokenIds
+        if (nextIds === prevIds) return state
+        const toggled = [
+          ...nextIds.filter(id => !prevIds.includes(id)),
+          ...prevIds.filter(id => !nextIds.includes(id))
+        ].filter(id => !state.includes(id))
+        return toggled.length === 0 ? state : [...state, ...toggled]
+      }
+
+      case 'CURRENCY_WALLET_SAVED_TOKEN_FILE':
+        // The toggles are on disk, so a future load will include them:
+        return state.length === 0 ? state : []
+    }
+    return state
+  },
+
   tokenFileDirty(state = false, action, next, prev): boolean {
     switch (action.type) {
       case 'CURRENCY_WALLET_LOADED_TOKEN_FILE':
+        // Stay dirty if the user changed tokens before the file loaded,
+        // so the tokenSaver writes those changes back out:
+        return state
+
       case 'CURRENCY_WALLET_SAVED_TOKEN_FILE':
         // The file has been synced to disk, so it's not dirty:
         return false
@@ -254,14 +304,41 @@ const currencyWalletInner = buildReducer<
     }
   },
 
-  walletSettings(state = initialWalletSettings, action): JsonObject {
+  tokenFileEverLoaded(state = false, action): boolean {
+    // Unlike `tokenFileLoaded`, a resync does not clear this: the
+    // enabled-token list survives the engine clear, so the account
+    // cache saver can keep writing the wallet afterwards:
+    return action.type === 'CURRENCY_WALLET_LOADED_TOKEN_FILE' ? true : state
+  },
+
+  walletSettings(
+    state = initialWalletSettings,
+    action,
+    next,
+    prev
+  ): JsonObject {
     switch (action.type) {
       case 'CURRENCY_WALLET_LOADED_WALLET_SETTINGS_FILE':
+        // A load that began before a user change read the disk too
+        // early, so the change wins (it wrote the file before
+        // dispatching). A load that began after it saw the write:
+        if (action.payload.loadGen !== (prev.self?.walletSettingsGen ?? 0)) {
+          return state
+        }
+        return action.payload.walletSettings
       case 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS':
         return action.payload.walletSettings
       default:
         return state
     }
+  },
+
+  walletSettingsGen(state = 0, action): number {
+    // Each user change starts a new generation, which is what tells
+    // a file load whether it began before or after the change:
+    return action.type === 'CURRENCY_WALLET_CHANGED_WALLET_SETTINGS'
+      ? state + 1
+      : state
   },
 
   engineFailure(state = null, action): Error | null {
@@ -281,14 +358,39 @@ const currencyWalletInner = buildReducer<
       : state
   },
 
-  fiat(state = '', action): string {
-    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED'
-      ? action.payload.fiatCurrencyCode
+  fiat(state = '', action, next, prev): string {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        return action.payload.fiatCurrencyCode
+
+      case 'CURRENCY_WALLET_FIAT_CHANGED': {
+        // A load that began before a user change read the disk too
+        // early, so the change wins (it wrote the file before
+        // dispatching). A load that began after it saw the write:
+        const { loadGen } = action.payload
+        if (loadGen != null && loadGen !== (prev.self?.fiatGen ?? 0)) {
+          return state
+        }
+        return action.payload.fiatCurrencyCode
+      }
+    }
+    return state
+  },
+
+  fiatGen(state = 0, action): number {
+    // Each user change starts a new generation, which is what tells
+    // a file load whether it began before or after the change:
+    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' &&
+      action.payload.loadGen == null
+      ? state + 1
       : state
   },
 
   fiatLoaded(state = false, action): boolean {
-    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' ? true : state
+    return action.type === 'CURRENCY_WALLET_FIAT_CHANGED' ||
+      action.type === 'CURRENCY_WALLET_CACHE_LOADED'
+      ? true
+      : state
   },
 
   files(state = {}, action): TxFileJsons {
@@ -345,11 +447,65 @@ const currencyWalletInner = buildReducer<
     return state
   },
 
+  otherMethodNames: sortStringsReducer(
+    (state = initialTokenIds, action): string[] => {
+      switch (action.type) {
+        case 'CURRENCY_WALLET_OTHER_METHOD_NAMES_CHANGED':
+          // The engine's method list is authoritative:
+          return action.payload.names
+
+        case 'CURRENCY_WALLET_CACHE_LOADED':
+          // Seed cached names, but never overwrite an engine answer
+          // (the seed only ever fires before the engine exists):
+          if (state.length > 0) return state
+          return action.payload.otherMethodNames
+      }
+      return state
+    }
+  ),
+
+  addresses(
+    state = initialAddresses,
+    action
+  ): { [tokenIdKey: string]: EdgeAddress[] } {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_ADDRESSES_CHANGED': {
+        // The engine's answer is authoritative for its own tokenId.
+        // Keep the existing state when nothing changed, so downstream
+        // reference checks (the cache saver, yaob diffing) see no
+        // phantom update:
+        const { addresses, tokenId } = action.payload
+        const key = tokenId ?? ''
+        if (compare(state[key], addresses)) return state
+        return { ...state, [key]: addresses }
+      }
+
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        // Seed cached addresses, but never overwrite an engine answer
+        // (the seed only ever fires before the engine exists):
+        if (Object.keys(state).length > 0) return state
+        return action.payload.addresses
+    }
+    return state
+  },
+
   balanceMap(state = new Map(), action): Map<EdgeTokenId, string> {
     if (action.type === 'CURRENCY_ENGINE_CHANGED_BALANCE') {
       const { balance, tokenId } = action.payload
+      // Keep the existing Map when nothing changed, so downstream
+      // reference checks (memoized reducers, the cache saver, yaob
+      // diffing) see no phantom update:
+      if (state.get(tokenId) === balance) return state
       const out = new Map(state)
       out.set(tokenId, balance)
+      return out
+    }
+    if (action.type === 'CURRENCY_WALLET_CACHE_LOADED') {
+      // Seed cached balances, but never overwrite live engine data:
+      const out = new Map(state)
+      for (const [tokenId, balance] of action.payload.balanceMap) {
+        if (!out.has(tokenId)) out.set(tokenId, balance)
+      }
       return out
     }
     return state
@@ -360,12 +516,15 @@ const currencyWalletInner = buildReducer<
     next => next.self.currencyInfo,
     next =>
       next.root.accounts[next.self.accountId].allTokens[next.self.pluginId],
-    (balanceMap, currencyInfo, allTokens) => {
+    (balanceMap, currencyInfo, allTokens = {}) => {
       const out: EdgeBalances = {}
       for (const tokenId of balanceMap.keys()) {
         const balance = balanceMap.get(tokenId)
-        const { currencyCode } =
-          tokenId == null ? currencyInfo : allTokens[tokenId]
+        // A cached token balance can arrive before the deferred
+        // builtin-token load defines its token; skip it until then:
+        const tokenInfo = tokenId == null ? currencyInfo : allTokens[tokenId]
+        if (tokenInfo == null) continue
+        const { currencyCode } = tokenInfo
         if (balance != null) out[currencyCode] = balance
       }
       return out
@@ -378,14 +537,39 @@ const currencyWalletInner = buildReducer<
       : state
   },
 
-  name(state = null, action): string | null {
-    return action.type === 'CURRENCY_WALLET_NAME_CHANGED'
-      ? action.payload.name
+  name(state = null, action, next, prev): string | null {
+    switch (action.type) {
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        return action.payload.name
+
+      case 'CURRENCY_WALLET_NAME_CHANGED': {
+        // A load that began before a user rename read the disk too
+        // early, so the rename wins (it wrote the file before
+        // dispatching). A load that began after it saw the write:
+        const { loadGen } = action.payload
+        if (loadGen != null && loadGen !== (prev.self?.nameGen ?? 0)) {
+          return state
+        }
+        return action.payload.name
+      }
+    }
+    return state
+  },
+
+  nameGen(state = 0, action): number {
+    // Each user rename starts a new generation, which is what tells
+    // a file load whether it began before or after the rename:
+    return action.type === 'CURRENCY_WALLET_NAME_CHANGED' &&
+      action.payload.loadGen == null
+      ? state + 1
       : state
   },
 
   nameLoaded(state = false, action): boolean {
-    return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ? true : state
+    return action.type === 'CURRENCY_WALLET_NAME_CHANGED' ||
+      action.type === 'CURRENCY_WALLET_CACHE_LOADED'
+      ? true
+      : state
   },
 
   seenTxCheckpoint(state = null, action) {
@@ -405,9 +589,17 @@ const currencyWalletInner = buildReducer<
   ),
 
   stakingStatus(state = { stakedAmounts: [] }, action): EdgeStakingStatus {
-    return action.type === 'CURRENCY_ENGINE_CHANGED_STAKING'
-      ? action.payload.stakingStatus
-      : state
+    switch (action.type) {
+      case 'CURRENCY_ENGINE_CHANGED_STAKING':
+        return action.payload.stakingStatus
+
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        // Last-known locked rows. Without them a cache-seeded wallet
+        // reports its whole cached balance as spendable until the
+        // engine reports the real stake:
+        return action.payload.stakingStatus ?? state
+    }
+    return state
   },
 
   txidHashes(state = {}, action) {
@@ -483,9 +675,14 @@ const currencyWalletInner = buildReducer<
   },
 
   publicWalletInfo(state = null, action): EdgeWalletInfo | null {
-    return action.type === 'CURRENCY_WALLET_PUBLIC_INFO'
-      ? action.payload.walletInfo
-      : state
+    switch (action.type) {
+      case 'CURRENCY_WALLET_PUBLIC_INFO':
+        return action.payload.walletInfo
+
+      case 'CURRENCY_WALLET_CACHE_LOADED':
+        return action.payload.publicWalletInfo ?? state
+    }
+    return state
   }
 })
 
@@ -511,6 +708,17 @@ export const currencyWalletReducer = filterReducer<
   CurrencyWalletNext,
   RootAction
 >(currencyWalletInner, (action, next) => {
+  // The bulk loader seeds every wallet in one dispatch;
+  // hand each wallet its own seed as the per-wallet action:
+  if (action.type === 'CURRENCY_WALLETS_CACHE_LOADED') {
+    const seed = action.payload.seeds[next.id]
+    if (seed == null) return { type: 'UPDATE_NEXT' }
+    return {
+      type: 'CURRENCY_WALLET_CACHE_LOADED',
+      payload: { ...seed, walletId: next.id }
+    }
+  }
+
   return /^CURRENCY_/.test(action.type) &&
     'payload' in action &&
     typeof action.payload === 'object' &&
@@ -565,12 +773,14 @@ export function mergeTx(
 
 type StringsReducer = (
   state: string[] | undefined,
-  action: RootAction
+  action: RootAction,
+  next?: CurrencyWalletNext,
+  prev?: CurrencyWalletNext
 ) => string[]
 
 function sortStringsReducer(reducer: StringsReducer): StringsReducer {
-  return (state, action) => {
-    const out = reducer(state, action)
+  return (state, action, next, prev) => {
+    const out = reducer(state, action, next, prev)
     if (out === state) return state
 
     out.sort((a, b) => (a === b ? 0 : a > b ? 1 : -1))
