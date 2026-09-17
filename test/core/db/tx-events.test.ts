@@ -105,3 +105,75 @@ describe('transactionsChanged', function () {
     expect(openAccountDatabases.size).equals(0)
   })
 })
+
+describe('localSettings.defaultIsoFiat', function () {
+  it('is undefined until something sets it', async function () {
+    const account = await setup()
+    try {
+      const store = account.transactions
+      if (store == null) throw new Error('No transaction store')
+      // A real state: an account with no currency chosen has no correct
+      // amount to show.
+      expect(store.localSettings.defaultIsoFiat).equals(undefined)
+    } finally {
+      await account.logout()
+    }
+  })
+
+  it('remembers what it was set to', async function () {
+    const account = await setup()
+    try {
+      const store = account.transactions
+      if (store == null) throw new Error('No transaction store')
+
+      await store.changeLocalSettings({ defaultIsoFiat: 'iso:EUR' })
+      expect(store.localSettings.defaultIsoFiat).equals('iso:EUR')
+    } finally {
+      await account.logout()
+    }
+  })
+
+  it('tells readers to repaint when it really changes', async function () {
+    const account = await setup()
+    try {
+      const store = account.transactions
+      if (store == null) throw new Error('No transaction store')
+      await account.currencyConfig.fakecoin.changeUserSettings({
+        txs: { a: { nativeAmount: '1' } }
+      })
+
+      let events = 0
+      store.on('transactionsChanged', () => ++events)
+      await store.changeLocalSettings({ defaultIsoFiat: 'iso:USD' })
+
+      for (let i = 0; i < 200; ++i) {
+        if (events > 0) break
+        await new Promise(resolve => setTimeout(resolve, 10))
+      }
+      // Everything is blank now, and a reader showing the old currency's
+      // amounts has to stop.
+      expect(events).is.above(0)
+    } finally {
+      await account.logout()
+    }
+  })
+
+  it('does nothing when set to what it already is', async function () {
+    const account = await setup()
+    try {
+      const store = account.transactions
+      if (store == null) throw new Error('No transaction store')
+      await store.changeLocalSettings({ defaultIsoFiat: 'iso:USD' })
+
+      let events = 0
+      store.on('transactionsChanged', () => ++events)
+      await store.changeLocalSettings({ defaultIsoFiat: 'iso:USD' })
+      await new Promise(resolve => setTimeout(resolve, 400))
+
+      // A setter that is not a no-op re-rates the whole account on each boot.
+      expect(events).equals(0)
+    } finally {
+      await account.logout()
+    }
+  })
+})
