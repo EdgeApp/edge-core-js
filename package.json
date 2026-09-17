@@ -46,7 +46,7 @@
     "/android/build.gradle",
     "/android/src/",
     "/binding.gyp",
-    "/build/Release/edge_sql.node",
+    "/prebuilds/",
     "/CHANGELOG.md",
     "/edge-core-js.podspec",
     "/ios/",
@@ -63,7 +63,7 @@
   "scripts": {
     "build.lib": "sucrase ./src -q -d ./lib -t typescript,jsx",
     "build.node": "rollup -c",
-    "build.node-sql": "node-gyp configure build",
+    "build.node-sql": "node-gyp configure build && node scripts/copy-prebuild.js",
     "build.react-native": "webpack",
     "clean": "rimraf lib android/src/main/assets",
     "fix.android": "(cd android; ./format-java.sh)",
