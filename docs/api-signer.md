@@ -4,7 +4,7 @@
 requests so the HMAC secret never enters the JS bundle.
 
 This is a login-server contract only (existing HMAC in
-`edge-login-server/src/middleware/with-api-key.ts`). The GUI’s `GET /v1/getKeys`
+`edge-login-server/src/middleware/with-api-key.ts`). The GUI’s `GET /v1/infoRollup/:appId`
 call is signed in the app, not by this library. See
 [edge-react-gui `docs/HMAC_SIGNING.md`](https://github.com/EdgeApp/edge-react-gui/blob/develop/docs/HMAC_SIGNING.md).
 
@@ -66,8 +66,8 @@ When `apiSigner` is set, its `apiKey` and `signature` are used even if
 present, the core sends the legacy `Token {apiKey}` header.
 
 There is **no** timestamp line and **no** `X-Timestamp` header. That extra line
-is info-server `getKeys` only; do not feed a four-line getKeys string into this
-signer for login, or a three-line login string into getKeys.
+is info-server `infoRollup` only; do not feed a four-line infoRollup string
+into this signer for login, or a three-line login string into infoRollup.
 
 ## Attestation (separate from HMAC)
 
@@ -75,7 +75,7 @@ signer for login, or a three-line login string into getKeys.
 info-server attestation JWT onto subsequent login-server requests as
 `x-attestation-token`. It does not participate in HMAC. A missing or invalid
 token does not change how this library signs; the login server may treat it as
-unattested and continue. getKeys (GUI → info-server) 401s on a bad token
+unattested and continue. infoRollup (GUI → info-server) 401s on a bad token
 instead.
 
 ## Tests
