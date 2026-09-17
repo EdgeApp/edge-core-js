@@ -543,6 +543,7 @@ static int isCoreTable(const char *name) {
          strcmp(name, "tx_search_idx") == 0 ||
          strcmp(name, "tx_search_fts_idx") == 0 ||
          strcmp(name, "wallet") == 0 || strcmp(name, "token") == 0 ||
+         strcmp(name, "setting") == 0 ||
          strcmp(name, "index_version") == 0;
 }
 
