@@ -21,6 +21,7 @@ import {
   RATE_SCHEMA,
   saveRates
 } from '../../../src/core/db/rate-cache'
+import { queryTxPage } from '../../../src/core/db/tx-query'
 import { saveTxs } from '../../../src/core/db/tx-writer'
 import { makeNodeIo } from '../../../src/index'
 import { EdgeTx } from '../../../src/types/types'
@@ -320,5 +321,59 @@ describe('fiat materialization', function () {
     expect(toleranceForAge(2 * HOUR)).equals(5 * 60)
     expect(toleranceForAge(2 * 24 * HOUR)).equals(HOUR)
     expect(toleranceForAge(60 * 24 * HOUR)).equals(12 * HOUR)
+  })
+
+  it('reaches a reader through the query, per asset', async function () {
+    const { driver, path } = await setup()
+    try {
+      await writeDefaultIsoFiat(driver, 'iso:USD')
+      await saveTxs(driver, [makeTx()])
+      await materializeFiat(driver, { now: NOON })
+
+      const page = await queryTxPage(driver, {})
+      expect(page.transactions[0].fiatAmounts?.get(null)).equals(102000)
+    } finally {
+      await driver.close()
+      rmSync(path, { force: true, recursive: true })
+    }
+  })
+
+  it('leaves an unknown asset out rather than saying zero', async function () {
+    const { driver, path } = await setup()
+    try {
+      await writeDefaultIsoFiat(driver, 'iso:USD')
+      // A token with no rate and no denomination on file:
+      await saveTxs(driver, [
+        makeTx({ nativeAmounts: new Map([['abc', '5']]) })
+      ])
+      await materializeFiat(driver, { now: NOON })
+
+      const page = await queryTxPage(driver, {})
+      // Absent, not zero. A reader showing zero would be showing something
+      // false about what a transaction was worth.
+      expect(page.transactions[0].fiatAmounts).equals(undefined)
+    } finally {
+      await driver.close()
+      rmSync(path, { force: true, recursive: true })
+    }
+  })
+
+  it('is never stored in the document', async function () {
+    const { driver, path } = await setup()
+    try {
+      await writeDefaultIsoFiat(driver, 'iso:USD')
+      await saveTxs(driver, [makeTx()])
+      await materializeFiat(driver, { now: NOON })
+
+      // Storing it would mean every transaction in a wallet going stale the
+      // moment a rate or the currency moved.
+      const rows = await driver.query<{ doc: string }>(
+        'SELECT json(doc) AS doc FROM tx_chain'
+      )
+      expect(rows[0].doc).does.not.include('fiatAmounts')
+    } finally {
+      await driver.close()
+      rmSync(path, { force: true, recursive: true })
+    }
   })
 })
