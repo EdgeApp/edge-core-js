@@ -2426,6 +2426,9 @@ export interface EdgeContextOptions {
 
   changeServer?: string | string[]
   infoServer?: string | string[]
+
+  /** Where fiat rates come from. Defaults to Edge's own. */
+  ratesServer?: string
   syncServer?: string | string[]
   hideKeys?: boolean
 
