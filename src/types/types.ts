@@ -801,7 +801,17 @@ export interface EdgeTx {
   /**
    * How this wallet's balance moved, one signed entry per asset the
    * transaction touched, in the chain's smallest unit. Negative is out.
-   * Excludes network fees.
+   *
+   * **The chain asset's entry includes the network fee**, because the fee is
+   * part of how the balance moved: sending 0.5 with a 0.001 fee leaves the
+   * wallet 0.501 lighter, and that is the number that reconciles against a
+   * balance. Every engine already reports it that way -- an account-based
+   * send subtracts the fee outright, and a UTXO transaction's
+   * `ourOuts - ourIns` has it subtracted by construction.
+   *
+   * A token's entry does not, since its fee is paid in the chain's asset.
+   * `networkFees` carries the fee separately either way, so a reader wanting
+   * the amount without it can subtract.
    */
   nativeAmounts: EdgeTxAmountMap
 
