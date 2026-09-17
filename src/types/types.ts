@@ -784,6 +784,20 @@ export interface EdgeTx {
   confirmations?: EdgeConfirmationState
 
   /**
+   * What each asset was worth, in the account's `defaultIsoFiat`.
+   *
+   * Attached at read time and never stored, for the same reason
+   * `confirmations` is not: it depends on a setting and on data that lives
+   * outside this document, so storing it would mean every transaction going
+   * stale when either moved.
+   *
+   * An asset is absent when no rate close enough has been found yet. That is
+   * "not yet known", never zero -- a reader showing it as zero is showing
+   * something false.
+   */
+  fiatAmounts?: Map<EdgeTokenId, number>
+
+  /**
    * How this wallet's balance moved, one signed entry per asset the
    * transaction touched, in the chain's smallest unit. Negative is out.
    *
