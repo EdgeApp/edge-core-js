@@ -1024,6 +1024,15 @@ export interface EdgeTxDatabase {
   /** This wallet's transactions. Scoped from the handle, not the query. */
   getTxs: (query?: EdgeAccountTxQuery) => Promise<EdgeTx[]>
 
+  /**
+   * The same query, with the cursor that pages it.
+   *
+   * `getTxs` answers "give me some transactions" and is the common case. An
+   * engine reading its whole history needs the other thing: a page is capped
+   * at 500, so without the cursor there is no way to ask for the 501st.
+   */
+  getTxPage: (query?: EdgeAccountTxQuery) => Promise<EdgeAccountTxPage>
+
   /** Rows by primary key, across as many tables as one call needs. */
   getRows: (requests: EdgeTableKeys[]) => Promise<EdgeTableRows[]>
   putRows: (writes: EdgeTableRows[]) => Promise<void>
