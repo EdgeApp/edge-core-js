@@ -85,6 +85,14 @@ export function toEdgeTx(tx: EdgeTransaction, pluginId: string): EdgeTx {
     tokenData
   }
 
+  /*
+   * The two verdicts a height cannot imply. Everything else `confirmations`
+   * reports follows from the heights, and is worked out on read.
+   */
+  if (tx.confirmations === 'failed' || tx.confirmations === 'dropped') {
+    out.chainStatus = tx.confirmations
+  }
+
   if (tx.signedTx !== '') out.signedTx = tx.signedTx
   if (tx.txSecret != null) out.txSecret = tx.txSecret
   if (tx.chainAction != null) out.chainAction = tx.chainAction
@@ -158,7 +166,9 @@ export function fromEdgeTx(
     if (parentFee != null) out.parentNetworkFee = parentFee
   }
 
-  if (tx.confirmations != null) out.confirmations = tx.confirmations
+  // A stored verdict outranks a computed one, since the chain said so:
+  if (tx.chainStatus != null) out.confirmations = tx.chainStatus
+  else if (tx.confirmations != null) out.confirmations = tx.confirmations
   if (asset?.metadata != null) out.metadata = asset.metadata
   if (asset?.assetAction != null) out.assetAction = asset.assetAction
   if (asset?.chainAssetAction != null) {

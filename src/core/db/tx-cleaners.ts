@@ -106,6 +106,7 @@ export const asEdgeTx = asObject<EdgeTx>({
   date: asIsoDate,
   blockHeight: asNumber,
   isSend: asBoolean,
+  chainStatus: asOptional(asValue('failed', 'dropped')),
 
   nativeAmounts: asTokenIdMap(asNativeAmount),
   networkFees: asTokenIdMap(asNativeAmount),
@@ -135,4 +136,7 @@ export const wasEdgeTx = uncleaner(asEdgeTx)
  * current height, and a rate plus a setting -- so storing either would mean
  * every transaction in a wallet going stale when that moved. They are
  * attached on read instead.
+ *
+ * `chainStatus` is the part of `confirmations` that no height implies, which
+ * is why it *is* stored.
  */
