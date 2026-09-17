@@ -40,6 +40,20 @@ function isUsableSignerKey(apiKey: string, signature: string): boolean {
 }
 
 /**
+ * The canonical text that apiSigner, the apiSecret HMAC, and the login server
+ * all sign. It lives in one place because the server rebuilds the same string
+ * to check the signature, so a stray newline or a dropped `/api` prefix shows
+ * up as a signature mismatch rather than as a formatting bug.
+ */
+export function makeLoginRequestText(
+  method: string,
+  path: string,
+  bodyText?: string
+): string {
+  return `${method}\n/api${path}\n${bodyText ?? ''}`
+}
+
+/**
  * Build the login-server Authorization header from apiSigner, apiSecret, or
  * the legacy Token fallback.
  */
@@ -176,7 +190,7 @@ export async function loginFetchInner(
       : JSON.stringify(wasLoginRequestBody(body))
 
   // Authorization:
-  const requestText = `${method}\n/api${path}\n${bodyText ?? ''}`
+  const requestText = makeLoginRequestText(method, path, bodyText)
   const authorization = await makeLoginAuthorization({
     apiSigner,
     apiKey,

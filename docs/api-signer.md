@@ -48,6 +48,12 @@ whitespace) and a non-empty signature.
 - `BODY` is `JSON.stringify(wasLoginRequestBody(body))`, or empty for GET /
   omitted bodies.
 
+Both callers build this string with `makeLoginRequestText` in
+`src/core/login/login-fetch.ts`: `loginFetchInner` for the ordinary login
+routes, and `fetchLoginMessages` in `src/react-native.tsx` for the message
+poll. Add new signed routes through that helper so the shape stays in one
+place.
+
 The Authorization header is:
 
 ```

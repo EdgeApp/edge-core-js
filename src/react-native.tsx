@@ -6,7 +6,11 @@ import { base64 } from 'rfc4648'
 import { bridgifyObject } from 'yaob'
 
 import { defaultOnLog, LogBackend } from './core/log/log'
-import { makeLoginAuthorization, parseReply } from './core/login/login-fetch'
+import {
+  makeLoginAuthorization,
+  makeLoginRequestText,
+  parseReply
+} from './core/login/login-fetch'
 import { EdgeCoreBridge } from './io/react-native/react-native-webview'
 import { EdgeContextProps, EdgeFakeWorldProps } from './types/exports'
 import { asMessagesPayload } from './types/server-cleaners'
@@ -188,7 +192,7 @@ export async function fetchLoginMessages(
   const bodyText = JSON.stringify({ loginIds: Object.keys(loginMap) })
 
   // Authorization:
-  const requestText = `POST\n/api/v2/messages\n${bodyText}`
+  const requestText = makeLoginRequestText('POST', '/v2/messages', bodyText)
   const authorization = await makeLoginAuthorization({
     apiSigner,
     apiKey,
