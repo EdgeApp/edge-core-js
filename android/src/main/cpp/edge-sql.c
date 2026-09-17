@@ -911,11 +911,16 @@ int edgeSqlAttach(
 
   sqlite3_str *sql = sqlite3_str_new(db);
   /*
+   * A URI filename, because `mode=ro` is the only way to attach one database
+   * read-only: `query_only` is a property of the connection, not of a schema,
+   * so setting it would stop the account database writing to itself.
+   *
    * `KEY ''` says the attached file is plaintext. Without it the codec applies
    * the main database's key to the attachment and the open fails as "file is
-   * not a database" -- which is the correct answer to the wrong question.
+   * not a database" -- the correct answer to the wrong question.
    */
-  sqlite3_str_appendf(sql, "ATTACH DATABASE %Q AS \"%s\" KEY ''", path, alias);
+  sqlite3_str_appendf(
+      sql, "ATTACH DATABASE 'file:%s?mode=ro' AS \"%s\" KEY ''", path, alias);
   char *text = sqlite3_str_finish(sql);
 
   char *message = NULL;
@@ -926,17 +931,6 @@ int edgeSqlAttach(
     sqlite3_free(message);
     return -1;
   }
-
-  /*
-   * Read-only by query_only rather than by opening the file that way: the
-   * core writes the rate cache through its own connection, and this one only
-   * joins against it. A write from here would race that writer.
-   */
-  sqlite3_str *guard = sqlite3_str_new(db);
-  sqlite3_str_appendf(guard, "PRAGMA \"%s\".query_only = 1", alias);
-  char *guardText = sqlite3_str_finish(guard);
-  sqlite3_exec(db, guardText, NULL, NULL, NULL);
-  sqlite3_free(guardText);
 
   return 0;
 }
