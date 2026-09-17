@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { makeMemoryTxDatabase } from '../../../src/index'
+import { EdgeTx } from '../../../src/types/types'
 
 /**
  * The handle a plugin's own tests get.
@@ -57,6 +58,44 @@ describe('memory transaction database', function () {
     const txs = await db.getTxs()
     expect(txs.length).equals(1)
     expect(txs[0].nativeAmounts.get(null)).equals('-100')
+  })
+
+  it('pages past the limit', async function () {
+    const walletId = Buffer.alloc(32, 0x11).toString('base64')
+    const db = await makeMemoryTxDatabase({ walletId, pluginId: 'bitcoin' })
+
+    // An engine loading its own history is the case `getTxs` cannot serve: a
+    // page is capped, so without the cursor the rows past the cap are
+    // unreachable and the engine silently forgets the older half of a wallet.
+    const txs: EdgeTx[] = []
+    for (let i = 0; i < 120; ++i) {
+      txs.push({
+        walletId,
+        txid: `tx${i}`,
+        pluginId: 'bitcoin',
+        date: new Date(1717243200000 + i * 60000).toISOString(),
+        blockHeight: 800000 + i,
+        isSend: true,
+        nativeAmounts: new Map([[null, '-100']]),
+        networkFees: new Map([[null, '10']]),
+        ourReceiveAddresses: [],
+        memos: [],
+        tokenData: new Map()
+      })
+    }
+    await db.saveTxs(txs)
+
+    const seen = new Set<string>()
+    let after: string | undefined
+    for (let guard = 0; guard < 10; ++guard) {
+      const page = await db.getTxPage({ limit: 50, after })
+      for (const tx of page.transactions) seen.add(tx.txid)
+      after = page.cursor
+      if (after == null) break
+    }
+
+    expect(after).equals(undefined)
+    expect(seen.size).equals(120)
   })
 
   it('is fenced like the real thing', async function () {

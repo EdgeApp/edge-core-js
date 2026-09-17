@@ -1,4 +1,5 @@
 import {
+  EdgeAccountTxPage,
   EdgeBatchWrite,
   EdgeScratchDatabase,
   EdgeTableKeys,
@@ -80,12 +81,15 @@ export function makeTxDatabase(opts: TxDatabaseOptions): EdgeTxDatabase {
     },
 
     async getTxs(query = {}): Promise<EdgeTx[]> {
+      return (await out.getTxPage(query)).transactions
+    },
+
+    async getTxPage(query = {}): Promise<EdgeAccountTxPage> {
       // Scoped to this wallet from the handle, never from the query:
-      const page = await queryTxPage(driver, {
+      return await queryTxPage(driver, {
         ...query,
         walletIds: [walletId]
       })
-      return page.transactions
     },
 
     async saveTxs(txs: EdgeTx[]): Promise<void> {
