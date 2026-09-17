@@ -112,6 +112,35 @@ describe('apiSigner', function () {
     await world.close()
   })
 
+  it('surfaces a signer failure from checkPin instead of a wrong PIN', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    let broken = false
+    const apiSigner: EdgeApiSigner = bridgifyObject({
+      async signMessage(message: string) {
+        if (broken) throw new Error('native signer unavailable')
+        return { apiKey: 'from-signer', signature: 'sig-from-signer' }
+      }
+    })
+
+    const context = await world.makeEdgeContext({ apiSigner, appId: '' })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    expect(await account.checkPin(fakeUser.pin)).equals(true)
+
+    // The server-side PIN check reports a wrong PIN by rejecting, so a signer
+    // that stops working looks exactly like a wrong PIN unless checkPin2
+    // rethrows. The GUI renders `false` as "incorrect PIN":
+    broken = true
+    try {
+      await account.checkPin(fakeUser.pin)
+      expect.fail('expected ApiSignerError')
+    } catch (error: unknown) {
+      expect(asMaybeApiSignerError(error)).not.equals(undefined)
+    }
+
+    await context.close()
+    await world.close()
+  })
+
   it('falls back to apiSecret when apiSigner is absent', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
