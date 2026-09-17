@@ -46,6 +46,7 @@
     "/android/build.gradle",
     "/android/src/",
     "/binding.gyp",
+    "/build/Release/edge_sql.node",
     "/CHANGELOG.md",
     "/edge-core-js.podspec",
     "/ios/",
