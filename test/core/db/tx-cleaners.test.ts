@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { asEdgeTx, wasEdgeTx } from '../../../src/core/db/tx-cleaners'
-import { fromEdgeTx, toEdgeTx, txAssets } from '../../../src/core/db/tx-convert'
+import { fromEdgeTx, toEdgeTx, txAssets } from '../../../src/types/tx-convert'
 import { EdgeTransaction, EdgeTx } from '../../../src/types/types'
 
 /**
@@ -177,6 +177,30 @@ describe('EdgeTx converters', function () {
     // Absent entirely for a transaction we only observed, so a reader can
     // tell "we made this" from "we saw this":
     expect(toEdgeTx(legacy, 'bitcoin').makeTxParams).equals(undefined)
+  })
+
+  it('falls back to the deprecated fee fields', function () {
+    // Most engines still report `networkFee` and leave `networkFees` empty.
+    // Reading only the array loses the fee outright, and a transaction with
+    // no fee is a valid document, so nothing downstream would notice.
+    const chain = toEdgeTx({ ...legacy, networkFees: [] }, 'ethereum')
+    expect([...chain.networkFees]).deep.equals([[null, '10']])
+
+    const token = toEdgeTx(
+      {
+        ...legacy,
+        tokenId: 'abc',
+        currencyCode: 'USDC',
+        networkFees: [],
+        networkFee: '0',
+        parentNetworkFee: '2100'
+      },
+      'ethereum'
+    )
+    expect([...token.networkFees]).deep.equals([
+      ['abc', '0'],
+      [null, '2100']
+    ])
   })
 
   it('drops otherParams', function () {

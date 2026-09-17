@@ -3,6 +3,7 @@ import { asMaybe } from 'cleaners'
 import { isPixieShutdownError } from 'redux-pixies'
 import { emit } from 'yaob'
 
+import { toEdgeTx } from '../../../types/tx-convert'
 import {
   upgradeCurrencyCode,
   upgradeTxNetworkFees
@@ -19,7 +20,6 @@ import {
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
 import { enableTestMode, pushUpdate } from '../../../util/updateQueue'
-import { toEdgeTx } from '../../db/tx-convert'
 import { saveTxs } from '../../db/tx-writer'
 import {
   getStorageWalletLastChanges,
