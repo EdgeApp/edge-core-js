@@ -66,12 +66,26 @@ static EdgeSqlScope *scopeFor(sqlite3 *db) {
 }
 
 /** Reserves a handle for `db`, growing the table if every slot is busy. */
+/** Fills an empty slot, allocating it if this is its first use. */
+static int fillSlot(int i, sqlite3 *db) {
+  if (gSlots[i] == NULL) {
+    gSlots[i] = sqlite3_malloc((int)sizeof(EdgeSqlSlot));
+    if (gSlots[i] == NULL) return -1;
+    memset(gSlots[i], 0, sizeof(EdgeSqlSlot));
+  }
+  gSlots[i]->db = db;
+  return i;
+}
+
 static int takeHandle(sqlite3 *db) {
+  /*
+   * Any slot that is free, allocated or not. Skipping the never-allocated
+   * ones would mean the table only ever gained one usable slot per growth,
+   * so capacity would double on every open past the eighth and the process
+   * would abort trying to reallocate gigabytes.
+   */
   for (int i = 0; i < gCapacity; ++i) {
-    if (gSlots[i] != NULL && gSlots[i]->db == NULL) {
-      gSlots[i]->db = db;
-      return i;
-    }
+    if (gSlots[i] == NULL || gSlots[i]->db == NULL) return fillSlot(i, db);
   }
 
   int capacity = gCapacity == 0 ? 8 : gCapacity * 2;
@@ -83,12 +97,7 @@ static int takeHandle(sqlite3 *db) {
 
   int handle = gCapacity;
   gCapacity = capacity;
-
-  gSlots[handle] = sqlite3_malloc((int)sizeof(EdgeSqlSlot));
-  if (gSlots[handle] == NULL) return -1;
-  memset(gSlots[handle], 0, sizeof(EdgeSqlSlot));
-  gSlots[handle]->db = db;
-  return handle;
+  return fillSlot(handle, db);
 }
 
 static char *copyString(const char *text) {

@@ -31,6 +31,7 @@ import {
   openAccountDatabase,
   openAccountDatabases
 } from '../db/account-database'
+import { fillFiatAmounts } from '../db/rate-fill'
 import { syncLogin } from '../login/login'
 import { waitForPlugins } from '../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../root-pixie'
@@ -56,6 +57,15 @@ import {
 } from './custom-tokens'
 
 export const EXPEDITED_SYNC_INTERVAL = 5000
+
+/**
+ * How often to look for fiat amounts to fill.
+ *
+ * Not on every write: a hundred transactions arriving together want one pass,
+ * and the whole design is that a pass costs a query when there is nothing to
+ * do.
+ */
+export const FIAT_FILL_INTERVAL = 30000
 
 export interface AccountOutput {
   readonly accountApi: EdgeAccount
@@ -769,6 +779,46 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         opened = undefined
         openAccountDatabases.delete(input.props.accountId)
         database.close().catch(() => undefined)
+      }
+    }
+  },
+
+  /**
+   * Keeps the fiat column filling.
+   *
+   * Runs on a timer rather than on every write, because coverage is the point:
+   * a hundred transactions arriving together want one pass, not a hundred.
+   * Every pass is a no-op once the cache covers what is stored, so the steady
+   * state costs one cheap query.
+   */
+  fiatFill(input: AccountInput) {
+    const task = makePeriodicTask(
+      async () => {
+        const { accountId, io, state } = input.props
+        const database = input.props.output.accounts[accountId]?.database
+        if (database?.rateDriver == null) return
+
+        const result = await fillFiatAmounts({
+          driver: database.driver,
+          rateDriver: database.rateDriver,
+          fetch: io.fetch,
+          server: state.ratesServer,
+          onError: error => input.props.onError(error)
+        })
+        if (result.changed.length > 0) database.changed(result.changed)
+      },
+      FIAT_FILL_INTERVAL,
+      { onError: error => input.props.onError(error) }
+    )
+
+    return {
+      update() {
+        if (!input.props.state.transactionDatabase) return
+        task.start()
+        return stopUpdates
+      },
+      destroy() {
+        task.stop()
       }
     }
   },

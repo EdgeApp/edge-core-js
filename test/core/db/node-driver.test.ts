@@ -172,6 +172,23 @@ describe('node SQL driver', function () {
     await db.close()
   })
 
+  it('reuses handles instead of growing without bound', async function () {
+    // The handle table grows by doubling, and a version of it only ever
+    // gained one *usable* slot per growth -- so capacity doubled on every
+    // open past the eighth, and the process aborted trying to reallocate
+    // gigabytes. Sixty opens is far past where that started.
+    for (let i = 0; i < 60; ++i) {
+      const db = makeMemorySqlDriver()
+      await db.exec([{ sql: 'CREATE TABLE t (id TEXT)' }])
+      await db.close()
+    }
+
+    // Still working afterwards, which a corrupted slot table would not be:
+    const db = makeMemorySqlDriver()
+    expect(await db.query('SELECT 1 AS n')).deep.equals([{ n: 1 }])
+    await db.close()
+  })
+
   it('exposes a synchronous handle for SQL-level tests', function () {
     const db = makeMemorySqlSync()
     db.exec('CREATE TABLE t (id TEXT)')
