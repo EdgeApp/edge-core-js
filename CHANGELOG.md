@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.49.0 (2026-09-23)
+
 - added: Warm logins render the account and wallet list from an account-level cache before any engine starts
 - added: Cached wallets start their engines through a limited-concurrency queue, with an opened wallet moved to the front
 - added: Cached receive addresses are served before the engine loads, with `addressChanged` emitted on a later mismatch
