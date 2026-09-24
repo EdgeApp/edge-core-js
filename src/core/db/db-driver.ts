@@ -101,3 +101,12 @@ export interface EdgeInternalIo extends EdgeIo {
   makeSqlDriver?: (name: string, key: Uint8Array) => Promise<EdgeSqlDriver>
   deleteSqlDatabase?: (name: string) => Promise<void>
 }
+
+/**
+ * The two SQL members of an io, as a platform supplies them. Empty on a
+ * platform with no binding, which is how the capability reads as absent.
+ */
+export type SqlDriverFactory = Pick<
+  EdgeInternalIo,
+  'makeSqlDriver' | 'deleteSqlDatabase'
+>

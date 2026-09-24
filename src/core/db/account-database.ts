@@ -107,13 +107,138 @@ function makeChangeNotifier(): Pick<
 }
 
 /**
- * Every database currently open, keyed by account id.
+ * Every database currently open, under a key unique to its open.
  *
- * The core reaches an account's database through the pixie output; this map
- * exists so tests can reach it too, since the `EdgeAccount` they hold is a
- * yaob bridge with no path back to core internals.
+ * The core reaches an account's database through `getAccountDatabase`; this
+ * map exists so tests can reach it too, since the `EdgeAccount` they hold is
+ * a yaob bridge with no path back to core internals. Not keyed by account id,
+ * because every context numbers its logins from zero.
  */
 export const openAccountDatabases = new Map<string, EdgeAccountDatabase>()
+let openCount = 0
+
+/** One account's open, from the moment it starts until logout. */
+interface OpenEntry {
+  promise: Promise<EdgeAccountDatabase | null>
+
+  /**
+   * Set before `promise` resolves, so every continuation of that promise
+   * finds it here -- which is what lets a synchronous getter answer without
+   * caring which awaiter ran first.
+   */
+  handle: EdgeAccountDatabase | null
+
+  /** Where `openAccountDatabases` lists it. */
+  key: string
+}
+
+/**
+ * The opens in flight or done, per context and then per account.
+ *
+ * Per context first, because account ids are only unique within one: every
+ * context counts its logins from zero, and a test process runs several.
+ */
+const openEntries = new WeakMap<EdgeInternalIo, Map<string, OpenEntry>>()
+
+/** Anything that carries the context's `io`: an API input, a pixie input. */
+interface IoInput {
+  readonly props: { readonly io: EdgeInternalIo }
+}
+
+function entriesFor(io: EdgeInternalIo): Map<string, OpenEntry> {
+  let entries = openEntries.get(io)
+  if (entries == null) {
+    entries = new Map()
+    openEntries.set(io, entries)
+  }
+  return entries
+}
+
+/**
+ * Opens an account's database, once per login.
+ *
+ * Both the login task and the pixie that owns the close await this, and get
+ * the same open. It rejects when the database cannot be opened at all --
+ * there is no boot without it -- and resolves `null` only when the account
+ * logged out while it was opening, in which case the handle it opened has
+ * already been closed again, since nothing is left to own it.
+ */
+export function openAccountDatabaseOnce(
+  ai: IoInput,
+  accountWalletInfo: EdgeWalletInfo,
+  accountId: string
+): Promise<EdgeAccountDatabase | null> {
+  const { io } = ai.props
+  const entries = entriesFor(io)
+  const existing = entries.get(accountId)
+  if (existing != null) return existing.promise
+
+  const entry: OpenEntry = {
+    promise: Promise.resolve(null),
+    handle: null,
+    key: `${accountId}#${++openCount}`
+  }
+  entry.promise = openAccountDatabase(io, accountWalletInfo).then(
+    async database => {
+      if (entries.get(accountId) !== entry) {
+        await database.close().catch(() => undefined)
+        return null
+      }
+      entry.handle = database
+      openAccountDatabases.set(entry.key, database)
+      return database
+    }
+  )
+  entries.set(accountId, entry)
+  return entry.promise
+}
+
+/**
+ * An account's open database.
+ *
+ * The account is emitted only after its database opens, so nothing that
+ * reaches here from an account API can find it missing. Throwing rather than
+ * returning `undefined` is what makes a read that somehow gets here early a
+ * visible bug instead of a silently empty answer.
+ */
+export function getAccountDatabase(
+  ai: IoInput,
+  accountId: string
+): EdgeAccountDatabase {
+  const handle = entriesFor(ai.props.io).get(accountId)?.handle
+  if (handle == null) throw new Error('Account database is not open')
+  return handle
+}
+
+/**
+ * An account's open database, or `undefined` once it has closed.
+ *
+ * For the one reader that runs during logout itself; everything else uses
+ * `getAccountDatabase`, where a missing database is a bug worth throwing on.
+ */
+export function findAccountDatabase(
+  ai: IoInput,
+  accountId: string
+): EdgeAccountDatabase | undefined {
+  return entriesFor(ai.props.io).get(accountId)?.handle ?? undefined
+}
+
+/**
+ * Ends an account's database, for logout.
+ *
+ * An open still in flight is not waited for: removing its entry is what tells
+ * it, when it finishes, that nothing owns it any more.
+ */
+export function closeAccountDatabase(ai: IoInput, accountId: string): void {
+  const entries = entriesFor(ai.props.io)
+  const entry = entries.get(accountId)
+  if (entry == null) return
+  entries.delete(accountId)
+  const { handle } = entry
+  if (handle == null) return
+  openAccountDatabases.delete(entry.key)
+  handle.close().catch(() => undefined)
+}
 
 /** The database name for an account, from its storage wallet id. */
 export function accountDatabaseName(accountWalletId: string): string {
@@ -143,14 +268,18 @@ export function accountDatabaseKey(
  * one case that has no other remedy, a file left behind by a previous
  * installation whose key is gone.
  *
- * A caller that gets `undefined` has a platform with no SQL driver.
+ * It rejects on a platform with no SQL driver, and when the file will not
+ * open even after being deleted. Either way the error names the account
+ * database, because that is what a failed login has to say.
  */
 export async function openAccountDatabase(
   io: EdgeInternalIo,
   accountWalletInfo: EdgeWalletInfo
-): Promise<EdgeAccountDatabase | undefined> {
+): Promise<EdgeAccountDatabase> {
   const { makeSqlDriver, deleteSqlDatabase } = io
-  if (makeSqlDriver == null) return undefined
+  if (makeSqlDriver == null) {
+    throw new Error('Cannot open the account database: no SQL driver')
+  }
 
   const name = accountDatabaseName(accountWalletInfo.id)
   const key = accountDatabaseKey(accountWalletInfo)
@@ -200,10 +329,14 @@ export async function openAccountDatabase(
 
   try {
     return await open()
-  } catch (error) {
-    if (deleteSqlDatabase == null) throw error
-    await deleteSqlDatabase(name)
-    return await open()
+  } catch (firstError) {
+    try {
+      if (deleteSqlDatabase == null) throw firstError
+      await deleteSqlDatabase(name)
+      return await open()
+    } catch (error) {
+      throw new Error(`Cannot open the account database: ${String(error)}`)
+    }
   }
 }
 

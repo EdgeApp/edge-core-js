@@ -399,12 +399,22 @@ END;
  * transactions, and a user who labelled one asset of a swap expects to find
  * the swap. `group_concat` skips NULLs, so an asset with no note contributes
  * nothing rather than a gap.
+ *
+ * Each asset's words are the ones a reader is shown for it: the user's
+ * metadata where the sync-repo document has that asset, and the plugin's
+ * otherwise -- the same rule `mergeTxMeta` applies when it joins the two. A
+ * transaction the user never touched is still found by the name its plugin
+ * gave it.
  */
 export function reindexSearch(scope?: ReindexScope): string[] {
-  const where =
+  const metaWhere =
     scope == null
       ? ''
-      : `WHERE m.wallet_id = ${scope.wallet} AND m.txid = ${scope.txid}`
+      : `AND m.wallet_id = ${scope.wallet} AND m.txid = ${scope.txid}`
+  const chainWhere =
+    scope == null
+      ? ''
+      : `AND c.wallet_id = ${scope.wallet} AND c.txid = ${scope.txid}`
   const clear =
     scope == null
       ? 'DELETE FROM tx_search_idx;'
@@ -415,16 +425,30 @@ export function reindexSearch(scope?: ReindexScope): string[] {
     clear,
     `INSERT INTO tx_search_idx (wallet_id, txid, name, notes, category)
      SELECT
-       m.wallet_id, m.txid,
-       group_concat(j.value ->> '$.metadata.name', ' '),
-       group_concat(j.value ->> '$.metadata.notes', ' '),
-       group_concat(j.value ->> '$.metadata.category', ' ')
-     FROM tx_meta m, json_each(m.doc, '$.tokens') j
-     ${where}
-     GROUP BY m.wallet_id, m.txid
-     HAVING group_concat(j.value ->> '$.metadata.name', ' ') IS NOT NULL
-         OR group_concat(j.value ->> '$.metadata.notes', ' ') IS NOT NULL
-         OR group_concat(j.value ->> '$.metadata.category', ' ') IS NOT NULL;`
+       wallet_id, txid,
+       group_concat(metadata ->> '$.name', ' '),
+       group_concat(metadata ->> '$.notes', ' '),
+       group_concat(metadata ->> '$.category', ' ')
+     FROM (
+       SELECT m.wallet_id, m.txid, j.key AS token_id,
+              j.value -> '$.metadata' AS metadata
+         FROM tx_meta m, json_each(m.doc, '$.tokens') j
+        WHERE j.value -> '$.metadata' IS NOT NULL ${metaWhere}
+       UNION ALL
+       SELECT c.wallet_id, c.txid, j.key AS token_id,
+              j.value -> '$.metadata' AS metadata
+         FROM tx_chain c, json_each(c.doc, '$.tokenData') j
+        WHERE j.value -> '$.metadata' IS NOT NULL ${chainWhere}
+          AND NOT EXISTS (
+            SELECT 1 FROM tx_meta m2, json_each(m2.doc, '$.tokens') j2
+             WHERE m2.wallet_id = c.wallet_id AND m2.txid = c.txid
+               AND j2.key = j.key AND j2.value -> '$.metadata' IS NOT NULL
+          )
+     )
+     GROUP BY wallet_id, txid
+     HAVING group_concat(metadata ->> '$.name', ' ') IS NOT NULL
+         OR group_concat(metadata ->> '$.notes', ' ') IS NOT NULL
+         OR group_concat(metadata ->> '$.category', ' ') IS NOT NULL;`
   ]
 }
 
@@ -435,11 +459,9 @@ function makeTrigger(
 ): string {
   const row = event === 'DELETE' ? 'OLD' : 'NEW'
   const scope = { wallet: `${row}.wallet_id`, txid: `${row}.txid` }
-  const body = [
-    ...reindexAssets(scope),
-    // Only metadata carries words; chain data has none.
-    ...(table === 'tx_meta' ? reindexSearch(scope) : [])
-  ]
+  // Both documents carry words -- the user's, and the plugin's own -- so
+  // either one changing rebuilds the transaction's text:
+  const body = [...reindexAssets(scope), ...reindexSearch(scope)]
   return `
 CREATE TRIGGER ${name} AFTER ${event} ON ${table} BEGIN
   ${body.join('\n  ')}

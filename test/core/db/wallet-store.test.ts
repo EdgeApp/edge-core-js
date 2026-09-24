@@ -219,6 +219,17 @@ describe('wallet store', function () {
     })
   })
 
+  it('seeds a wallet with no balance rows with an empty balance map', async function () {
+    await withDb(async driver => {
+      const id = walletId(1)
+      await saveWalletRows(driver, [makeRow(id)])
+      const seed = (await readWalletSeeds(driver))[id]
+      expect(seed.balanceMap).instanceOf(Map)
+      expect(seed.balanceMap.size).equals(0)
+      expect(seed.addresses).deep.equals({})
+    })
+  })
+
   it('keeps two wallets of one plugin apart', async function () {
     await withDb(async driver => {
       const a = walletId(1)

@@ -17,8 +17,7 @@ const quiet = { onLog() {} }
 const contextOptions = {
   apiKey: '',
   appId: '',
-  plugins: { fakecoin: true },
-  transactionDatabase: true
+  plugins: { fakecoin: true }
 }
 
 async function setup(): Promise<EdgeAccount> {
