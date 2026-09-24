@@ -37,7 +37,7 @@ import {
   waitForCurrencyEngine
 } from '../currency/currency-selectors'
 import { saveWalletSettings } from '../currency/wallet/currency-wallet-files'
-import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
+import { getPublicWalletInfo } from '../currency/wallet/wallet-cache-keys'
 import { findAccountDatabase } from '../db/account-database'
 import { EdgeTransactionStoreApi } from '../db/tx-store-api'
 import {
@@ -71,7 +71,7 @@ import {
   getCurrencyTools
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
-import { makeLocalDisklet, makeRepoPaths } from '../storage/repo'
+import { makeRepoPaths } from '../storage/repo'
 import { makeStorageWalletApi } from '../storage/storage-api'
 import { fetchSwapQuotes } from '../swap/swap-api'
 import { changeWalletStates } from './account-files'
@@ -631,8 +631,12 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       )
       const tools = await getCurrencyTools(ai, pluginId)
       if (tools.getDisplayPublicKey != null) {
-        const disklet = makeLocalDisklet(ai.props.io, walletId)
-        const publicInfo = await getPublicWalletInfo(info, disklet, tools)
+        const publicInfo = await getPublicWalletInfo(
+          info,
+          tools,
+          ai.props.state.currency.wallets[walletId]?.publicWalletInfo ??
+            undefined
+        )
         return await tools.getDisplayPublicKey(publicInfo)
       }
 
@@ -656,8 +660,11 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
         info.type
       )
       const tools = await getCurrencyTools(ai, pluginId)
-      const disklet = makeLocalDisklet(ai.props.io, walletId)
-      const publicInfo = await getPublicWalletInfo(info, disklet, tools)
+      const publicInfo = await getPublicWalletInfo(
+        info,
+        tools,
+        ai.props.state.currency.wallets[walletId]?.publicWalletInfo ?? undefined
+      )
 
       return publicInfo.keys
     },

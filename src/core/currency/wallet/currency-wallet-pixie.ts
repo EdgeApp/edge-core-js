@@ -1,5 +1,4 @@
 import { asMaybe } from 'cleaners'
-import { Disklet } from 'disklet'
 import {
   combinePixies,
   filterPixie,
@@ -11,11 +10,9 @@ import { update } from 'yaob'
 
 import {
   EdgeCurrencyEngine,
-  EdgeCurrencyTools,
   EdgeCurrencyWallet,
   EdgeTokenMap,
   EdgeTxDatabase,
-  EdgeWalletInfo,
   JsonObject
 } from '../../../types/types'
 import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
@@ -63,10 +60,9 @@ import {
 } from './currency-wallet-reducer'
 import { tokenIdsToCurrencyCodes, uniqueStrings } from './enabled-tokens'
 import { getEngineScheduler } from './engine-scheduler'
+import { getPublicWalletInfo } from './wallet-cache-keys'
 import {
   loadWalletCacheSeed,
-  PUBLIC_KEY_CACHE,
-  publicKeyFile,
   walletCacheLoaderHooks
 } from './wallet-cache-loader'
 
@@ -199,12 +195,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         // since new transactions may come in from the network:
         await loadTxFileNames(startupInput)
 
-        // Derive the public keys. The cache seeding path already read
-        // publicKey.json, so reuse that instead of a second disk read:
+        // The public keys, from the seed when there was one:
         const tools = await getCurrencyTools(ai, pluginId)
         const publicWalletInfo = await getPublicWalletInfo(
           walletInfo,
-          walletLocalDisklet,
           tools,
           input.props.walletState.publicWalletInfo ?? undefined
         )
@@ -757,11 +751,6 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 })
 
 /**
- * Attempts to load/derive the wallet public keys.
- * Pass `cachedWalletInfo` when `publicKey.json` was already read
- * (the cache seeding path), so it is not read a second time.
- */
-/**
  * The handle an engine gets onto its own storage.
  *
  * Reserving the prefix is what has to happen before the engine starts:
@@ -783,44 +772,6 @@ async function makeWalletDatabase(
     prefix,
     makeScratch: async () => await makeScratchDatabase(io, pluginId)
   })
-}
-
-export async function getPublicWalletInfo(
-  walletInfo: EdgeWalletInfo,
-  disklet: Disklet,
-  tools: EdgeCurrencyTools,
-  cachedWalletInfo?: EdgeWalletInfo
-): Promise<EdgeWalletInfo> {
-  // Try to load the cache:
-  const cached =
-    cachedWalletInfo ??
-    (await publicKeyFile.load(disklet, PUBLIC_KEY_CACHE))?.walletInfo
-  if (cached != null) {
-    // Return it if it needs not to be upgraded (re-derived):
-    if (
-      tools.checkPublicKey == null ||
-      (await tools.checkPublicKey(cached.keys))
-    ) {
-      return cached
-    }
-  }
-
-  // Derive the public keys:
-  let publicKeys = {}
-  try {
-    publicKeys = await tools.derivePublicKey(walletInfo)
-  } catch (error: unknown) {}
-  const publicWalletInfo = {
-    id: walletInfo.id,
-    type: walletInfo.type,
-    keys: publicKeys
-  }
-
-  // The account cache saver persists these keys along with the rest
-  // of the wallet's boot state, so nothing is written per wallet
-  // here. Older `publicKey.json` files stay on disk as a recovery
-  // net for a boot that cannot read the account cache:
-  return publicWalletInfo
 }
 
 /**
