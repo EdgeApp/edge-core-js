@@ -3,7 +3,7 @@ import { makeLocalBridge } from 'yaob'
 
 import { makeContext, makeFakeWorld } from './core/core'
 import { prepareDatabase } from './core/db/db-open'
-import { ensureWalletPrefix } from './core/db/plugin-tables'
+import { ensureOwnerPrefix } from './core/db/plugin-tables'
 import { makeTxDatabase } from './core/db/tx-database-api'
 import { defaultOnLog } from './core/log/log'
 import { hideProperties } from './io/hidden-properties'
@@ -83,7 +83,7 @@ export async function makeMemoryTxDatabase(opts: {
   const { walletId, pluginId } = opts
   const driver = makeMemorySqlDriver()
   await prepareDatabase(driver)
-  const prefix = await ensureWalletPrefix(driver, walletId, pluginId)
+  const prefix = await ensureOwnerPrefix(driver, 'wallet', walletId, pluginId)
   return makeTxDatabase({
     driver,
     walletId,

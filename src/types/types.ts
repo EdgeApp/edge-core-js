@@ -195,6 +195,15 @@ export interface EdgeCorePluginOptions {
   log: EdgeLog // Plugin-scoped logging
   nativeIo: EdgeNativeIo // Only filled in on React Native
   pluginDisklet: Disklet // Plugin-scoped local storage
+
+  /**
+   * Plugin-scoped storage in a database, for what belongs to the plugin
+   * rather than to any wallet or account: fee estimates, server lists. It is
+   * shared by every account on the device and outlives logout.
+   *
+   * Not encrypted, like `pluginDisklet`, so nothing secret belongs here.
+   */
+  pluginDatabase: EdgePluginStore
 }
 
 // ---------------------------------------------------------------------
@@ -982,7 +991,20 @@ export type EdgeTxPatch = { txid: string } & Partial<
  * -- so removing and re-adding the same key in one call has a defined result.
  * Within each, the array order is preserved.
  */
-export interface EdgeBatchWrite {
+/** Row writes that must land together or not at all. */
+export interface EdgeBatchWriteRows {
+  putRows?: EdgeTableRows[]
+
+  /**
+   * Rows written only where the key has none yet. For copying older data in
+   * without overwriting anything written since.
+   */
+  putRowsIfAbsent?: EdgeTableRows[]
+
+  removeRows?: EdgeTableKeys[]
+}
+
+export interface EdgeBatchWrite extends EdgeBatchWriteRows {
   /** Complete transactions. Creates one, or merges over an existing one. */
   saveTxs?: EdgeTx[]
 
@@ -993,9 +1015,53 @@ export interface EdgeBatchWrite {
    * insert a transaction with no date and no amounts.
    */
   patchTxs?: EdgeTxPatch[]
+}
 
-  putRows?: EdgeTableRows[]
-  removeRows?: EdgeTableKeys[]
+/**
+ * Tables of a plugin's own.
+ *
+ * A plugin never names a table -- it writes `${db.address}`, and the core
+ * resolves that against the handle's scope, so it cannot spell another
+ * owner's table because it never spells any table.
+ */
+export interface EdgePluginStore {
+  /**
+   * Declares the tables this owner wants, and the paths it wants indexed.
+   *
+   * The only way a plugin gets storage. The core creates the tables; the
+   * plugin never names one.
+   */
+  defineTables: (spec: EdgeTableSpec) => Promise<void>
+
+  /** Rows by primary key, across as many tables as one call needs. */
+  getRows: (requests: EdgeTableKeys[]) => Promise<EdgeTableRows[]>
+  putRows: (writes: EdgeTableRows[]) => Promise<void>
+
+  /** Rows written only where the key has none yet. */
+  putRowsIfAbsent: (writes: EdgeTableRows[]) => Promise<void>
+
+  removeRows: (removals: EdgeTableKeys[]) => Promise<void>
+
+  /** An indexed query. One table, because a query names one table's indexes. */
+  findRows: (table: string, query: EdgeTableQuery) => Promise<unknown[]>
+
+  /** Row writes that must land together or not at all. */
+  batchWrite: (ops: EdgeBatchWriteRows) => Promise<void>
+
+  /**
+   * SQL across this owner's own tables.
+   *
+   * Table names come from the handles this object exposes; everything else
+   * interpolated is bound as a parameter. Statements are compiled under an
+   * authorizer that refuses anything outside the owner's own scope.
+   */
+  runSql: <T>(
+    strings: TemplateStringsArray,
+    ...values: unknown[]
+  ) => Promise<T[]>
+
+  /** The tables this owner declared, as handles for `runSql`. */
+  [table: string]: unknown
 }
 
 /**
@@ -1012,7 +1078,7 @@ export interface EdgeScratchDatabase extends EdgeTxDatabase {
   close: () => Promise<void>
 }
 
-export interface EdgeTxDatabase {
+export interface EdgeTxDatabase extends EdgePluginStore {
   /**
    * Opens an isolated throwaway database, if the platform has one.
    *
@@ -1022,14 +1088,6 @@ export interface EdgeTxDatabase {
    * user's own history.
    */
   makeScratch?: () => Promise<EdgeScratchDatabase>
-
-  /**
-   * Declares the tables this engine wants, and the paths it wants indexed.
-   *
-   * The only way a plugin gets storage. The core creates the tables; the
-   * plugin never names one.
-   */
-  defineTables: (spec: EdgeTableSpec) => Promise<void>
 
   /** Complete transactions, merged over whatever is stored. */
   saveTxs: (txs: EdgeTx[]) => Promise<void>
@@ -1046,15 +1104,7 @@ export interface EdgeTxDatabase {
    */
   getTxPage: (query?: EdgeAccountTxQuery) => Promise<EdgeAccountTxPage>
 
-  /** Rows by primary key, across as many tables as one call needs. */
-  getRows: (requests: EdgeTableKeys[]) => Promise<EdgeTableRows[]>
-  putRows: (writes: EdgeTableRows[]) => Promise<void>
-  removeRows: (removals: EdgeTableKeys[]) => Promise<void>
-
-  /** An indexed query. One table, because a query names one table's indexes. */
-  findRows: (table: string, query: EdgeTableQuery) => Promise<unknown[]>
-
-  /** Writes that must land together or not at all. */
+  /** Writes that must land together or not at all, transactions included. */
   batchWrite: (ops: EdgeBatchWrite) => Promise<void>
 
   /**
@@ -1548,6 +1598,7 @@ export interface EdgeCurrencyEngineOptions {
 
   // Wallet-scoped IO objects:
   log: EdgeLog
+
   walletLocalDisklet: Disklet
   walletLocalEncryptedDisklet: Disklet
 
