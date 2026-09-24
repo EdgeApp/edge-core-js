@@ -76,11 +76,11 @@ The call's size target was "a few hundred core lines plus two small GUI patches,
 
 The login path caches what the GUI renders and moves everything else behind it:
 
-- **One cache file.** `accountCache.json` on the account's local [disklet](#disklet) holds the account boot state and, per wallet, its name, fiat code, enabled tokens, last-known balances, receive addresses, `otherMethods` names, and public keys ([section 4.1.1](#411-cache-file)).
-- **One read, one dispatch pair.** A bulk loader reads that file right after the plugins load and seeds Redux with two actions, one for the account and one carrying every wallet ([section 4.1.2](#412-load-path)). The account repo sync and the authoritative file loads run deferred behind the emit.
+- **Rows in the account database.** The account's encrypted transaction database holds the account boot state and, per wallet, its name, fiat code, enabled tokens, last-known balances, receive addresses, `otherMethods` names, and public keys ([section 4.1.1](#411-cache-file)).
+- **Two queries, one dispatch pair.** Right after the plugins load and the database opens, the login reads the account's rows and then every wallet's, and seeds Redux with two actions, one for the account and one carrying every wallet ([section 4.1.2](#412-load-path)). The account repo sync and the authoritative file loads run deferred behind the emit.
 - **A gate that no longer waits for engines.** The `walletApi` gate drops its `engine != null` condition. A wallet object emits as soon as its state is in Redux ([section 4.1.3](#413-gate-change)).
 - **The engine as an awaitable dependency.** `makeCurrencyWalletApi` loses its `engine` and `tools` constructor parameters; methods that need them await internal waiters, and methods that read Redux are unchanged because the cache seeded that Redux ([section 4.1.4](#414-makecurrencywalletapi-changes)).
-- **One writer.** A single throttled account-level saver owns the file. One sync window costs one write, however many wallets changed ([section 4.1.5](#415-save-path)).
+- **One writer.** A single throttled account-level saver owns the rows, and writes only the rows that changed, in one transaction ([section 4.1.5](#415-save-path)).
 - **A queue in front of engine startup.** Engine creation drains 8 wallets at a time, with the wallet the user opened moved to the front ([section 6](#6-phase-history-and-709-disposition)).
 
 The wallet object is created once and never replaced. When the engine lands, the same object starts answering engine-backed calls. [yaob](#yaob) reference stability is preserved by construction: the [pixie](#pixie) output map and the `walletApi` object are the same ones master already uses.
@@ -124,82 +124,33 @@ A first login with no cache on disk must run exactly the code it ran before this
 
 #### 4.1.1 Cache file
 
-One file, `accountCache.json` on the account's local [disklet](#disklet), holds the account boot state and every wallet's cached UI state, public keys included. Storing per-wallet data in one account-level file rather than a file per wallet is [decision 7.6](#76-one-account-cache-file-not-per-wallet-files).
+The boot state is rows in the account database, beside the account's transactions. `src/core/db/wallet-store.ts` owns them:
 
-The file is written to two alternating slots (`accountCache.json`, `accountCache.2.json`), each carrying a monotonic `sequence`; the reader takes the newest slot that parses, which is the torn-write defense ([decision 7.10](#710-two-slot-alternation-because-the-disklet-has-no-rename)).
+- **`wallet`**, one row per wallet the account knows anything about. Besides the plugin-table columns (`prefix`, `plugin_id`, `table_version`) it carries the wallet's boot state: `wallet_info` (the public keys), `name`, `fiat_code`, `enabled_token_ids`, `other_method_names`, `staking_status`, and `wallet_state`, the account's `EdgeWalletState` for it, `NULL` when the account has none. `cached` marks a row that can seed a wallet, and is set only in the statement that writes every column a seed reads.
+- **`wallet_balance`**, one row per wallet per asset. A balance arriving for one token is one update of one row.
+- **`wallet_address`**, one row per wallet, asset and position; the order is the contract, since the GUI takes the first address as the receive address.
+- **`token`**, which already recorded every asset for fiat amounts, also holds the account's custom tokens, flagged `is_custom`.
+- **`setting`** holds `legacyWallets` and `configOtherMethodNames`.
 
-Schema:
+The database is SQLCipher, so the public keys are encrypted at rest. A SQLite transaction either lands or does not, so there is no second slot and no sequence number.
 
-[`src/core/account/account-cleaners.ts`](https://github.com/EdgeApp/edge-core-js/blob/9f28c9ffcbd7f647e0832ca482d480dc5203274c/src/core/account/account-cleaners.ts)
-```ts
-export interface AccountCacheFile {
-  version: 2
-  customTokens: EdgePluginMap<EdgeTokenMap>
-  /**
-   * True when the account has legacy Airbitz-repo wallets. Their
-   * wallet infos cannot be cached (they contain private keys), so
-   * such accounts boot cold rather than briefly hiding wallets.
-   */
-  legacyWallets: boolean
-  walletStates: EdgeWalletStates
-  /**
-   * Each plugin's `otherMethods` names, so `CurrencyConfig` can
-   * expose delegating stubs even if the plugin has not loaded yet.
-   */
-  configOtherMethodNames: EdgePluginMap<string[]>
-
-  /**
-   * Every active wallet's cached boot state, keyed by wallet id.
-   * This absorbs what used to live in each wallet's own
-   * `publicKey.json` + `walletCache.json` pair, so a warm boot reads
-   * one file for the whole account instead of two per wallet.
-   */
-  wallets: { [walletId: string]: AccountCacheWallet }
-
-  /**
-   * Increases on every write. Two slots hold alternating generations,
-   * so the reader can take the newest one that still parses; see
-   * `loadAccountCache`.
-   */
-  sequence: number
-}
-
-export interface AccountCacheWallet {
-  walletInfo: { id: string; keys: object; type: string }
-  name: string | null
-  fiatCurrencyCode: string
-  enabledTokenIds: string[]
-
-  /** Integer strings. The `null` tokenId is spelled '' here. */
-  balances: { [tokenId: string]: string }
-
-  /** Per tokenId, without balances (`null` tokenId spelled ''). */
-  addresses: {
-    [tokenIdKey: string]: Array<{ addressType: string; publicAddress: string }>
-  }
-
-  otherMethodNames: string[]
-}
-```
-
-A version-1 file (no `wallets`) is upgraded on read rather than rejected, which is what sends an existing device through the migration in [section 4.1.2](#412-load-path). Balances are last-known values and are explicitly allowed to be stale.
+A device upgrading from a build that kept this state as JSON files imports them once, in one transaction, when its database holds no cached wallet, and then deletes them (`src/core/currency/wallet/wallet-cache-import.ts`, the only module that still knows the file shapes).
 
 #### 4.1.2 Load path
 
-The read happens once, at the account level, in the account [pixie](#pixie)'s boot block. Right after `waitForPlugins`, the boot reads `accountCache.json`; on a hit it seeds the account slice, emits the account API, and seeds every wallet from the same file it just read. The account repo sync and the authoritative file loads then run deferred behind that emit, with bounded retries because the GUI already holds the account.
+The read happens once, at the account level, in the account [pixie](#pixie)'s boot block. Right after `waitForPlugins` and the database open, the boot asks one question -- is any wallet row cached? -- and, when one is and the account has no legacy Airbitz wallets, reads the account-level rows, seeds the account slice, emits the account API, and then reads every active wallet's rows in one query and seeds them in one dispatch. The account repo sync and the authoritative file loads then run deferred behind that emit, with bounded retries because the GUI already holds the account.
 
 ```mermaid
 flowchart TD
     A[account pixie boot] --> B[waitForPlugins]
-    B --> C[read accountCache.json<br/>newest parsing slot]
-    C -->|hit, no legacy wallets| D[dispatch ACCOUNT_CACHE_LOADED<br/>emit the account API]
-    C -->|miss, corrupt, or legacy wallets| E[cold path: repo sync, then loadAllFiles]
-    D --> F{file carries wallets?}
-    F -->|version 2| G[seedWalletCachesFromAccount<br/>one CURRENCY_WALLETS_CACHE_LOADED]
-    F -->|version 1| H[bulkLoadWalletCaches<br/>read each publicKey.json + walletCache.json once]
+    B --> O[open the account database]
+    O --> M[import old cache files, once]
+    M --> C{a cached wallet row,<br/>no legacy wallets?}
+    C -->|yes| D[readAccountSeed<br/>dispatch ACCOUNT_CACHE_LOADED<br/>emit the account API]
+    C -->|no, or the read fails| E[cold path: repo sync, then loadAllFiles]
+    D --> G[readWalletSeeds<br/>one CURRENCY_WALLETS_CACHE_LOADED]
     G --> I{walletApi gate<br/>publicWalletInfo + nameLoaded}
-    H --> I
-    I -->|opens| J[every EdgeCurrencyWallet emitted<br/>GUI renders from cache]
+    I -->|opens| J[every EdgeCurrencyWallet emitted<br/>GUI renders from rows]
     D -. deferred, overwrites the seeded state .-> K[repo sync, loadAllFiles, builtin tokens]
     K --> L[engine startup drains through engine-scheduler]
     E --> I
@@ -215,9 +166,9 @@ Each wallet's seed populates its Redux slice:
 
 The later `loadNameFile` / `loadFiatFile` / `loadTokensFile` dispatches overwrite the cached values with the authoritative synced-repo values, exactly as they overwrite initial state on master. One of those loads needs a gate of its own: `loadTokensFile`'s legacy branch names currency codes rather than [tokenIds](#tokenid), and converting them against the builtin definitions that are still loading in parallel would map every code to nothing, so it waits for those definitions before converting. If the user renamed the wallet on another device, the cache shows the old name for a second or two, then corrects. Same class of staleness the GUI already tolerates for balances.
 
-Two paths keep the per-wallet read alive. A wallet activated after login misses the bulk seed, so its own pixie reads its seed from the account cache, falling back to `publicKey.json` plus `walletCache.json`; and a device still on the version-1 layout takes that same per-wallet read once, after which the saver folds those wallets into the consolidated file. The old per-wallet files are left on disk as a recovery net and are never written again.
+A wallet activated after login misses the bulk seed, so its own pixie reads its own rows. A read that fails at any step is a cold boot, never a failed login: the cache is only ever a head start.
 
-If the file is missing, fails its [cleaner](#cleaner), or the account holds legacy Airbitz wallets whose infos cannot be cached, the boot skips the seed entirely and runs the cold path: repo sync, then `loadAllFiles`, then the gate opens on the conditions master uses. Cold-start behavior is unchanged, guarded by [test case 1](#5-testing).
+If no wallet row is cached, or the account holds legacy Airbitz wallets whose infos cannot be cached, the boot skips the seed entirely and runs the cold path: repo sync, then `loadAllFiles`, then the gate opens on the conditions master uses. Cold-start behavior is unchanged, guarded by [test case 1](#5-testing).
 
 #### 4.1.3 Gate change
 
@@ -325,14 +276,15 @@ The method bodies were mechanical as predicted; the getter surface was not (~160
 
 #### 4.1.5 Save path
 
-One `cacheSaver` sub-pixie at the ACCOUNT level is the only writer of the cache ([decision 7.6](#76-one-account-cache-file-not-per-wallet-files)):
+One `cacheSaver` sub-pixie at the ACCOUNT level is the only writer of the boot state (`src/core/account/account-cache-saver.ts`):
 
 - On each pixie update, compare the account slices against the last-saved snapshot, plus a stamp of every active wallet's cache-relevant Redux references (`addresses`, `balanceMap`, `enabledTokenIds`, `fiat`, `name`, `otherMethodNames`, `publicWalletInfo`). The slices are immutable, so an unchanged reference means unchanged content and this stays a reference scan.
-- On change, write the next slot, throttled to at most one write per 5 s for the whole account, trailing edge. A sync window where 194 engines all report balances costs one write, not 194.
+- On change, and at most once per 5 s for the whole account, trailing edge, diff what was last written against Redux and write only the rows that moved, in one transaction. A balance change is one row.
 - A cold start never caches placeholder values: a wallet that has not finished loading its authoritative files is skipped.
-- Wallets that are not running this session keep the entry they already had, so an archived wallet stays warm when it is turned back on. Entries for wallets the account no longer has are dropped, which is what bounds the file's size.
+- Wallets that are not running this session keep their rows, so an archived wallet stays warm when it is turned back on. A wallet the account no longer has, or has deleted, stops being cached; its state row stays.
+- A session whose import of the old files failed writes nothing, so the next login imports again with nothing lost.
 - Guard writes against post-logout, and stop after 3 consecutive failures. The logout guard is a destroy flag on the saver, not the account's presence in Redux: redux-pixies serves a destroyed pixie its last props, so a state read still reports the account as present and would let a write already on the chain through.
-- Each completed write logs its generation, the wallet count it carried, and how long it took, at `info`; a write slower than 5 s (`accountCacheSaverConfig.slowWriteMs`, above every measured value except the one 11.4 s outlier in [section 6.5](#65-followup-write-cost-visibility-landed)) logs at `warn` so it reaches the log server. The write is the design's whole cost and nothing else reports it, but unlike the one-shot `Login:` breadcrumbs the throttle bounds this line per window for the whole session, so the default level cannot carry every write.
+- Each completed write logs how many rows it carried and how long it took, at `info`; a write slower than 5 s (`accountCacheSaverConfig.slowWriteMs`, above every measured value except the one 11.4 s outlier in [section 6.5](#65-followup-write-cost-visibility-landed)) logs at `warn` so it reaches the log server. The write is the design's whole cost and nothing else reports it, but unlike the one-shot `Login:` breadcrumbs the throttle bounds this line per window for the whole session, so the default level cannot carry every write.
 
 Staleness containment is structural: the cache is only ever read for wallet IDs that exist in the account's encrypted key state. A stale entry is dead data, never a resurrected wallet in the UI.
 
@@ -342,7 +294,7 @@ Write-path staleness ([audit trail in section 6.2](#62-followup-write-path-stale
 
 Nothing new crosses the bridge. The GUI sees the same `EdgeCurrencyWallet` object with the same property surface; the pixie watcher's existing `update()` calls (`currency-wallet-pixie.ts:490-492`) propagate cached-then-live value changes the same way live-only changes propagate on master. The account's `currencyWallets` map remains the pixie output object (`src/core/account/account-api.ts:650`), so William's `===` stability requirement holds without any merge getter.
 
-One visible seam: `wallet.otherMethods` ([decision 7.8](#78-othermethods-names-are-cached-and-served-as-delegating-stubs)). It is an object of delegating stubs, one per known method name: each stub awaits the engine and forwards through the source object (preserving the plugin's `this`), resolving against the live engine on every call so a resync never leaves a stale capture, and rejecting cleanly when the loaded engine lacks the method. Names come from the cache on a warm login (before the engine exists) and from the live engine otherwise, and they persist in `accountCache.json` on every save. The object keeps its identity as long as the known name set is unchanged, which is the common warm-boot case; when a name first appears (a cold login's engine landing, an upgraded cache with no names yet, a plugin adding methods) the getter rebuilds it as a new bridgified object, because yaob only serializes the properties an object had when it first crossed the bridge (verified empirically during review: `update()` cannot add properties to an existing facade). The pixie watcher's `update()` then delivers the swapped value, exactly how the old engine-swap propagated. Pre-engine with no cached names this is `{}`, the original guarantee, so property probes like `wallet.otherMethods.foo == null` stay safe. `currencyConfig.otherMethods` keeps the plugin's own object verbatim whenever the plugin is loaded (always the case in the shipped app); the account cache's per-plugin name list only builds fallback stubs if plugin loading ever defers past the account emit. The GUI call sites patched in [section 4.2.3](#423-othermethods-one-patch-required) keep working, and on warm logins the FioActions TypeError class retires because the stub exists before the engine does.
+One visible seam: `wallet.otherMethods` ([decision 7.8](#78-othermethods-names-are-cached-and-served-as-delegating-stubs)). It is an object of delegating stubs, one per known method name: each stub awaits the engine and forwards through the source object (preserving the plugin's `this`), resolving against the live engine on every call so a resync never leaves a stale capture, and rejecting cleanly when the loaded engine lacks the method. Names come from the cache on a warm login (before the engine exists) and from the live engine otherwise, and the saver keeps them in the wallet's row. The object keeps its identity as long as the known name set is unchanged, which is the common warm-boot case; when a name first appears (a cold login's engine landing, an upgraded cache with no names yet, a plugin adding methods) the getter rebuilds it as a new bridgified object, because yaob only serializes the properties an object had when it first crossed the bridge (verified empirically during review: `update()` cannot add properties to an existing facade). The pixie watcher's `update()` then delivers the swapped value, exactly how the old engine-swap propagated. Pre-engine with no cached names this is `{}`, the original guarantee, so property probes like `wallet.otherMethods.foo == null` stay safe. `currencyConfig.otherMethods` keeps the plugin's own object verbatim whenever the plugin is loaded (always the case in the shipped app); the account cache's per-plugin name list only builds fallback stubs if plugin loading ever defers past the account emit. The GUI call sites patched in [section 4.2.3](#423-othermethods-one-patch-required) keep working, and on warm logins the FioActions TypeError class retires because the stub exists before the engine does.
 
 #### 4.1.7 waitForCurrencyWallet semantics
 
@@ -350,19 +302,17 @@ One visible seam: `wallet.otherMethods` ([decision 7.8](#78-othermethods-names-a
 
 #### 4.1.8 Boot outcomes
 
-What a login does is the product of what is on disk and what the account holds, and the individual rules are in [4.1.1](#411-cache-file), [4.1.2](#412-load-path), and [4.1.5](#415-save-path). Those sections are the source of truth; this table is an index into them and loses on any disagreement. Rows are the configurations a real device can reach.
+What a login does is the product of what the database and the disk hold, and the individual rules are in [4.1.1](#411-cache-file), [4.1.2](#412-load-path), and [4.1.5](#415-save-path). Those sections are the source of truth; this table is an index into them and loses on any disagreement.
 
-| On disk | Account emits | Wallet state comes from | Boot disk reads | Next write |
+| Holds | Account emits | Wallet state comes from | Storage reads before the seed | Next write |
 |---|---|---|---|---|
-| No `accountCache.json` (first login) | after repo sync and `loadAllFiles`, as on master | the authoritative files | today's reads | a version-2 file, once the loads land |
-| Version-2 file, no legacy wallets | right after `waitForPlugins` | the same file, one dispatch for every wallet | one | version 2, next slot |
-| Version-1 file (no `wallets`), no legacy wallets | right after `waitForPlugins` | each wallet's own `publicKey.json` and `walletCache.json`, read once concurrently | one plus two per wallet | version 2, folding every wallet in |
-| Any file, but the account has legacy Airbitz wallets | after repo sync and `loadAllFiles` | the authoritative files | today's reads | a version-2 file with `legacyWallets: true`, which keeps the next boot cold |
-| Newest slot torn, older slot parses | right after `waitForPlugins`, from the older generation | the older generation | one, plus the failed parse | the damaged slot, which repairs it |
-| Neither slot parses | after repo sync and `loadAllFiles` | the authoritative files | two failed parses | a fresh version-2 file |
-| A wallet activated after the seed | already emitted | that wallet's own pixie read, account cache first and its per-wallet files as fallback | two for that wallet | the whole account, next throttle window |
-
-The archived case cuts across every row: a wallet that is not running keeps whatever entry it already had, so turning it back on is warm, and entries for wallets the account no longer has are dropped so the file cannot grow without bound ([section 4.1.5](#415-save-path)).
+| No cached row, no old files (first login) | after repo sync and `loadAllFiles`, as on master | the authoritative files | the marker query, plus the two old account files it finds absent | the changed rows, once the loads land |
+| Cached rows, no legacy wallets | right after the database opens | the rows, one query for every wallet | the marker query and two reads | the changed rows |
+| No cached row, old cache files | right after the import commits | the imported rows | the marker query and the old files, once | the changed rows; the files are deleted |
+| Import fails to commit | after repo sync and `loadAllFiles` | the authoritative files | as above | nothing this session; the next login imports again |
+| Cached rows, but the account has legacy Airbitz wallets | after repo sync and `loadAllFiles` | the authoritative files | the marker query and the account read | the changed rows, with `legacyWallets` set |
+| A read fails | after repo sync and `loadAllFiles` | the authoritative files | whatever failed | the changed rows |
+| A wallet activated after the seed | already emitted | that wallet's own rows | one query for that wallet | the changed rows, next throttle window |
 
 ### 4.2 GUI integration: edge-react-gui
 
@@ -441,7 +391,7 @@ Same files, for the address and `otherMethods` caches:
 21. A cached otherMethods name is callable before the engine exists; the call pends and then forwards.
 22. A stale cached name rejects cleanly when the loaded engine lacks the method.
 23. A version-1 cache file upgrades on read (warm boot preserved) and the stub set grows once the engine lands, through the bridge.
-24. Config-level names persist in `accountCache.json` while the live plugin surface stays verbatim.
+24. Config-level names persist in the account's `setting` rows while the live plugin surface stays verbatim.
 25. The cache-coverage classification gains a cache-assisted set (`getAddresses`, `getReceiveAddress`, `otherMethods`), so the exhaustiveness guard still forces a decision for new properties.
 
 Same file, for the address reconcile ([section 6.3](#63-phase-6-provisional-receive-address-for-rotating-chains-landed)):
@@ -639,6 +589,10 @@ The three follow-ups the post-review runs recorded, each shipped or dispositione
 | `saveTxAction` and `saveTxMetadata` wait for the engine although they write repo files | Left engine-gated on purpose: the write also needs the transaction in Redux (`walletState.txs[txid]`), and every reducer case that fills that map is an engine action, so a file-scan gate would turn a pending call into a "missing tx" error rather than let the write through |
 | The per-write log line shipped at `warn` for the whole session | `info`, with `warn` only above 5 s. A product call, made here rather than deferred again: the line exists to make the write cost visible, and a warm login's normal writes are the baseline, not the signal |
 | Reviewer-bot findings on the pushed heads | A wallet pixie's `destroy` releases its engine-startup slot, so a logout mid-startup no longer makes the next login queue behind the old session's awaits (scheduler test `logout releases in-flight startup slots for the next login`); the startup catch returns when the pixie is destroyed, so a failure that lands after logout is teardown rather than a wallet error; the per-session boot-file memo remembers a miss too, so a cold login goes straight to the per-wallet files instead of re-reading both empty slots per wallet; and the saver's change stamp leaves out wallets still loading their files, so a token toggle made in that window reaches the cache once the load lands (test case 34). Accepted risk, with its trigger: a toggle made on a cache-seeded wallet and followed by a logout before that wallet's queue slot is lost, because the repo write must wait for the authoritative load; reopen if support reports token toggles vanishing right after login. And the saver's write chain is keyed per account at module level, so a write a logout leaves in flight is awaited by the next login's saver before it resolves its starting slot, rather than the two racing for one slot (test case 36). The fake world's disk gained read and write gates for these cases (test cases 35 and 36). Found by this segment's own tests and fixed: the saver kept a not-yet-loaded wallet's entry only when `walletStates` listed the wallet, and that map only lists wallets with an explicit state, so a plain wallet that was merely not loaded lost its entry; retention is now keyed on the account's wallet list (test case 37). A later bot finding: a resync clears `tokenFileLoaded` for the rest of the session, which froze the wallet's cache entry; the saver now gates on a sticky `tokenFileEverLoaded` and the token saver keeps master's flag (test case 38). Another: a legacy token plugin validates tokens through a running engine, and with wallets emitted before their engines `getTokenId` threw during the queue window; it now waits until any of that plugin's wallets has an engine, bumping a healthy one to the front, and rejects only once none of them can still start (test cases 39 and 40). A later Bugbot round on the pushed head: a pixie destroyed by a logout during its fallback cache read still dispatched its seed, and the next login's pixie under the same wallet id took that as its name, fiat and token list; the read now returns on a destroyed pixie before seeding or re-adding the [storage wallet](#storage-wallet) (test case 41). And the per-session memo of the account cache file held only the boot snapshot, so a wallet created after boot and later unarchived missed its entry and fell to per-wallet files this version no longer writes; the saver now replaces the memo with each generation it writes (test case 42). A Bugbot round on the re-split head: the claim that a warm login now starts the engine before `loadAddressFiles` feeds it the legacy `Addresses/` rows was answered without a change, because master already queued `startEngine` from the name-file dispatch before those files were read, and the [UTXO](#utxo) engine's `addGapLimitAddresses` saves the rows as used and re-runs its processor whenever they arrive. Accepted risk, with its trigger: a wallet created after boot and archived before the throttled saver's next write is in neither the file nor the active set, so its first unarchive boots on the cold path and its entry lands with the next write; reopen if support reports a just-created wallet showing no cached balances after an archive and restore. A second round on that head: file loads in the wallet startup block kept dispatching after a logout, and the next login's pixie under the same wallet id took those reads as its own, so a fiat code or name synced from another device in between was reverted and the saver would have cached it; every dispatch of the startup block now goes through a wrapper that goes quiet at destroy (test case 43). The account-level bulk loader needs no change: the account pixie's destroy blanks its stale props' account map, so its presence check already fails after a logout. A later round on the same head: the background address reconcile forwarded its own teardown rejection to the app, so a logout during the pre-engine window emitted a shutdown error from a correction nobody was waiting for; it now returns on a destroyed pixie or a missing wallet (test case 44). A further round on that head covered the rest of the teardown surface: the engine's callbacks were built from the raw pixie input rather than the guarded one, so a balance, token or sync report that arrived between `destroy` and the end of `killEngine` wrote into the next login's wallet under the same id (test case 45), and the engine startup's staking query forwarded its own rejection to the app after a logout the same way the reconcile did (test case 46). The same round's claim that the account cache saver's memo can overwrite the next login's was answered without that consequence, because account ids never repeat (`login${n}`), so no later session can read a memo an earlier one left; the saver skips the memo write when it is destroyed anyway, which keeps a logged-out session's file from sitting in the map for an id that can never log in again. A round on the autosquashed head read the two `waitForCurrencyWallet` implementations as disagreeing, since the internal one in `currency-selectors.ts` throws `engineFailure` even once `walletApi` exists while the account-level one resolves the object first. Answered without a change: both orderings are master's, `checkCurrencyWallet` is a pure extraction of the guards master already ran in that order, and the two waiters have different callers by design. The internal one is reached only from `splitting.ts` and `keys.ts`, which have just created or split a wallet and need one whose engine came up, while the public waiter is how the GUI gets the wallet API object for a row it may have to render an engine error on. What this work changes is how wide the window is in which the difference shows, since a cache-emitted wallet has a `walletApi` long before its engine, and neither internal caller runs inside that window. A round on the land-ready head: when neither token file could be read, the startup load replaced the cache-seeded enabled list with an empty one and the saver cached the loss, the same hazard the legacy-file branch already waits out; that load now leaves the list as it is, still marking the file loaded (test case 47) |
+
+### 6.8 The boot state moves into the account database (2026-09)
+
+The account cache file and its two slots were replaced by rows in the account's transaction database: a balance became one row per asset, the saver writes only what changed, and a torn write stopped being possible because a transaction lands whole. A device still holding the files imports them once, in one transaction, and deletes them. Decisions [7.6](#76-one-account-cache-file-not-per-wallet-files) and [7.10](#710-two-slot-alternation-because-the-disklet-has-no-rename) below record why the file had the shape it had.
 
 ## 7. Decisions
 
