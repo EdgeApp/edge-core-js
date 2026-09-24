@@ -6,7 +6,7 @@
 - changed: Every login opens the account's transaction database, and a login that cannot open it fails. `EdgeContextOptions.transactionDatabase` is removed.
 - changed: `EdgeAccount.transactions` is always present.
 - changed: Wallet transactions are read only from the database, and `transactionsChanged` and `newTransactions` carry each transaction as a query returns it, with its metadata.
-- changed: Warm logins seed the account and wallets from the account database, and changes to that state are written there a row at a time.
+- changed: Warm logins seed the account and wallets from the account database, and changes to that state are written there a row at a time. The wallet cache files are imported into the database once, in one transaction, and deleted; nothing reads or writes them after that.
 
 ## 2.50.0 (2026-09-29)
 

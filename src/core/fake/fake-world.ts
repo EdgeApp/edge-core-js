@@ -107,12 +107,16 @@ export const fakeWorldTestConfig: {
   onDeleteSqlDatabase?: (name: string) => void
   /** Makes the fake disk refuse a write to any path it matches. */
   failWrite?: (path: string) => boolean
+  /** Told the path of every read and every write the fake disk serves. */
+  onRead?: (path: string) => void
+  onWrite?: (path: string) => void
 } = {}
 
 function makeGatedDisklet(disklet: Disklet): Disklet {
   return {
     ...disklet,
     async getText(path: string): Promise<string> {
+      fakeWorldTestConfig.onRead?.(path)
       const out = await disklet.getText(path)
       if (fakeWorldTestConfig.readGate != null) {
         await fakeWorldTestConfig.readGate
@@ -123,6 +127,7 @@ function makeGatedDisklet(disklet: Disklet): Disklet {
       if (fakeWorldTestConfig.failWrite?.(path) === true) {
         throw new Error(`The fake disk refuses to write ${path}`)
       }
+      fakeWorldTestConfig.onWrite?.(path)
       const out = await disklet.setText(path, text)
       if (fakeWorldTestConfig.writeGate != null) {
         await fakeWorldTestConfig.writeGate

@@ -335,9 +335,16 @@ export function makeAccountCacheSaver(
       if (failures >= 3 || timer != null) return
 
       // Wait until the authoritative files have loaded, so a cold start
-      // never caches placeholder values:
-      const { customTokensLoaded, walletStatesLoaded } = accountState
+      // never caches placeholder values. A database that could not take
+      // the import is not one to write to either -- the next login imports
+      // again, with nothing lost:
+      const {
+        customTokensLoaded,
+        walletCacheImportFailed,
+        walletStatesLoaded
+      } = accountState
       if (!customTokensLoaded || !walletStatesLoaded) return
+      if (walletCacheImportFailed) return
 
       const seen = snapshot()
       if (lastSeen != null && sameList(lastSeen, seen)) return

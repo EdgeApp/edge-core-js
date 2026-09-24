@@ -81,6 +81,9 @@ export interface FakePluginTestConfig {
   /** If set, `checkPublicKey` rejects every key this matches. */
   rejectPublicKey?: (publicKey: JsonObject) => boolean
 
+  /** If set, told each time the plugin derives a public key. */
+  onDerivePublicKey?: () => void
+
   /**
    * If set, receives each wallet id as its `makeCurrencyEngine` call
    * begins (before any gate), so tests can observe creation order.
@@ -123,6 +126,7 @@ export const fakePluginTestConfig: FakePluginTestConfig = {
   legacyTokenPlugin: undefined,
   publicKeyCheckGate: undefined,
   rejectPublicKey: undefined,
+  onDerivePublicKey: undefined,
   onEngineCreate: undefined,
   failEngineFor: undefined,
   onEngineKill: undefined,
@@ -516,6 +520,7 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
   }
 
   async derivePublicKey(privateWalletInfo: EdgeWalletInfo): Promise<object> {
+    fakePluginTestConfig.onDerivePublicKey?.()
     return { fakeAddress: 'FakePublicAddress' }
   }
 

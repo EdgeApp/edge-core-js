@@ -64,6 +64,12 @@ export type RootAction =
       }
     }
   | {
+      // The account's wallet cache files could not be copied into its
+      // database, so this session must not write the cache either.
+      type: 'ACCOUNT_WALLET_CACHE_IMPORT_FAILED'
+      payload: { accountId: string }
+    }
+  | {
       // The account fires this when the user sorts or archives wallets.
       type: 'ACCOUNT_CHANGED_WALLET_STATES'
       payload: {

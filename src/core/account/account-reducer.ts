@@ -45,6 +45,7 @@ export interface AccountState {
   readonly walletStates: EdgeWalletStates
   readonly walletStatesDirtyIds: string[]
   readonly walletStatesLoaded: boolean
+  readonly walletCacheImportFailed: boolean
   readonly pauseWallets: boolean
 
   // Login stuff:
@@ -255,6 +256,10 @@ const accountInner = buildReducer<AccountState, RootAction, AccountNext>({
 
   walletStatesLoaded(state = false, action): boolean {
     return action.type === 'ACCOUNT_KEYS_LOADED' ? true : state
+  },
+
+  walletCacheImportFailed(state = false, action): boolean {
+    return action.type === 'ACCOUNT_WALLET_CACHE_IMPORT_FAILED' ? true : state
   },
 
   pauseWallets(state = false, action): boolean {

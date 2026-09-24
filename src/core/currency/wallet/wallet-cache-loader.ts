@@ -1,4 +1,3 @@
-import { makeJsonFile } from '../../../util/file-helpers'
 import { getAccountDatabase } from '../../db/account-database'
 import { EdgeSqlDriver } from '../../db/db-driver'
 import {
@@ -9,10 +8,6 @@ import {
   WalletCacheSeed
 } from '../../db/wallet-store'
 import { ApiInput } from '../../root-pixie'
-import { asPublicKeyFile } from './currency-wallet-cleaners'
-
-export const PUBLIC_KEY_CACHE = 'publicKey.json'
-export const publicKeyFile = makeJsonFile(asPublicKeyFile)
 
 /**
  * Test hooks for observing cache seeding, following the same
