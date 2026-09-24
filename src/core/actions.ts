@@ -26,7 +26,7 @@ import {
   TxFileNames,
   TxidHashes
 } from './currency/wallet/currency-wallet-reducer'
-import { WalletCacheSeed } from './currency/wallet/wallet-cache-file'
+import { WalletCacheSeed } from './db/wallet-store'
 import { LoginStash } from './login/login-stash'
 import { LoginType, SessionKey } from './login/login-types'
 import {

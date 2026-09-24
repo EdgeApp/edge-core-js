@@ -36,7 +36,7 @@ const asEdgeDenomination = asObject<EdgeDenomination>({
   symbol: asOptional(asString)
 })
 
-const asEdgeToken = asObject<EdgeToken>({
+export const asEdgeToken = asObject<EdgeToken>({
   currencyCode: asString,
   denominations: asArray(asEdgeDenomination),
   displayName: asString,
@@ -181,7 +181,7 @@ export interface AccountCacheWallet {
   stakingStatus?: EdgeStakingStatus
 }
 
-const asEdgeWalletState = asObject<EdgeWalletState>({
+export const asEdgeWalletState = asObject<EdgeWalletState>({
   archived: asOptional(asBoolean),
   deleted: asOptional(asBoolean),
   hidden: asOptional(asBoolean),
@@ -194,7 +194,7 @@ const asCachedAddress = asObject({
   publicAddress: asString
 })
 
-const asCachedStakingStatus = asObject<EdgeStakingStatus>({
+export const asCachedStakingStatus = asObject<EdgeStakingStatus>({
   stakedAmounts: asArray(
     asObject({
       nativeAmount: asString,
