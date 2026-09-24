@@ -21,7 +21,7 @@
  * here is rebuildable, so a version mismatch drops the schema and recreates
  * it rather than trying to move data that can be reconstructed.
  */
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 const documentTables = `
 CREATE TABLE tx_chain (
@@ -45,33 +45,94 @@ CREATE TABLE setting (
   value TEXT
 );
 
--- Currency codes and denominations, per asset.
+-- Currency codes and denominations, per asset, and the account's custom tokens.
 --
 -- The multiplier is what turns a native amount into a display one, and is the
 -- missing term in every fiat calculation: a rate is quoted per whole coin, and
 -- a native amount is in the chain's smallest unit.
 --
+-- A custom token is a row with is_custom set and its three custom columns
+-- filled, so this is the one answer to "what assets exist". A row can be both
+-- at once -- the running plugins record every token they know, custom ones
+-- included -- which is why removing a custom token clears the flag and those
+-- columns rather than deleting the row.
+--
 -- This is also the one core table a plugin may read, since plugins need
 -- currency codes and denominations of their own.
 CREATE TABLE token (
-  plugin_id     TEXT NOT NULL,
-  token_id      TEXT NOT NULL,      -- '' is the chain's own asset
-  currency_code TEXT NOT NULL,
-  multiplier    TEXT NOT NULL,      -- '100000000' for BTC
+  plugin_id        TEXT NOT NULL,
+  token_id         TEXT NOT NULL,      -- '' is the chain's own asset
+  currency_code    TEXT NOT NULL,
+  multiplier       TEXT NOT NULL,      -- '100000000' for BTC
+  display_name     TEXT,
+  denominations    TEXT CONSTRAINT token_denominations_json
+                   CHECK (denominations IS NULL OR json_valid(denominations)),
+  network_location TEXT CONSTRAINT token_network_location_json
+                   CHECK (network_location IS NULL OR json_valid(network_location)),
+  is_custom        INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (plugin_id, token_id)
 );
 
--- One row per wallet the account has given storage to.
+-- One row per wallet the account knows anything about.
 --
 -- The prefix column is what names that wallet's plugin tables. The wallet is
 -- in the table name rather than in a column, so this is the only place a
 -- prefix can be mapped back to a wallet -- which someone reading the schema
 -- during support will want.
+--
+-- The rest is the wallet's boot state: what the account shows for it before
+-- its engine exists. cached is the one word for "this row can seed a
+-- wallet", and is set only in the transaction that writes every column a seed
+-- needs -- a row that plugin tables or a wallet state created has it clear.
+--
+-- wallet_state is the account's EdgeWalletState for this wallet, and NULL
+-- means the account has none, which is most wallets. plugin_id is NULL when
+-- no loaded plugin claims the wallet's type, which is how a removed coin's
+-- archived wallet still keeps its state.
 CREATE TABLE wallet (
-  wallet_id     TEXT NOT NULL PRIMARY KEY,
-  prefix        TEXT NOT NULL UNIQUE,
-  plugin_id     TEXT NOT NULL,
-  table_version INTEGER
+  wallet_id          TEXT NOT NULL PRIMARY KEY,
+  prefix             TEXT NOT NULL UNIQUE,
+  plugin_id          TEXT,
+  table_version      INTEGER,
+  cached             INTEGER NOT NULL DEFAULT 0,
+  wallet_info        TEXT CONSTRAINT wallet_info_json
+                     CHECK (wallet_info IS NULL OR json_valid(wallet_info)),
+  name               TEXT,
+  fiat_code          TEXT,
+  enabled_token_ids  TEXT CONSTRAINT enabled_token_ids_json
+                     CHECK (enabled_token_ids IS NULL OR json_valid(enabled_token_ids)),
+  other_method_names TEXT CONSTRAINT other_method_names_json
+                     CHECK (other_method_names IS NULL OR json_valid(other_method_names)),
+  staking_status     TEXT CONSTRAINT staking_status_json
+                     CHECK (staking_status IS NULL OR json_valid(staking_status)),
+  wallet_state       TEXT CONSTRAINT wallet_state_json
+                     CHECK (wallet_state IS NULL OR json_valid(wallet_state)),
+  meta_mirrored      INTEGER NOT NULL DEFAULT 0
+);
+
+-- A wallet's balances, one row per asset.
+--
+-- One row per asset is the point: a balance arriving for one token is one
+-- update of one row, not a rewrite of every balance the account holds.
+CREATE TABLE wallet_balance (
+  wallet_id     TEXT NOT NULL,
+  token_id      TEXT NOT NULL,      -- '' is the chain's own asset
+  native_amount TEXT NOT NULL,
+  PRIMARY KEY (wallet_id, token_id)
+);
+
+-- A wallet's receive addresses, per asset, in the order the engine gave them.
+--
+-- The order is the contract -- the GUI takes the first address as the receive
+-- address -- so it is kept in ordinal and is also the key, which leaves an
+-- engine free to report two addresses of the same type.
+CREATE TABLE wallet_address (
+  wallet_id      TEXT NOT NULL,
+  token_id       TEXT NOT NULL,     -- '' is the chain's own asset
+  ordinal        INTEGER NOT NULL,
+  address_type   TEXT NOT NULL,
+  public_address TEXT NOT NULL,
+  PRIMARY KEY (wallet_id, token_id, ordinal)
 );
 
 -- Which version of its rebuild SQL each derived table was last built with.
