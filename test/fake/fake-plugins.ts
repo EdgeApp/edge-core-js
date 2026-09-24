@@ -3,6 +3,7 @@ import {
   fakeCurrencyPlugin,
   makeFakeCurrencyPlugin
 } from './fake-currency-plugin'
+import { fakeStorePlugins } from './fake-store-plugin'
 import { fakeSwapPlugin } from './fake-swap-plugin'
 
 export const allPlugins = {
@@ -19,5 +20,6 @@ export const allPlugins = {
     pluginId: 'tulipcoin',
     walletType: 'wallet:tulipcoin'
   }),
-  fakeswap: fakeSwapPlugin
+  fakeswap: fakeSwapPlugin,
+  ...fakeStorePlugins
 }

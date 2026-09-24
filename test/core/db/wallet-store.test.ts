@@ -6,7 +6,7 @@ import { prepareDatabase } from '../../../src/core/db/db-open'
 import { saveTokens } from '../../../src/core/db/fiat-materialize'
 import {
   defineTables,
-  ensureWalletPrefix
+  ensureOwnerPrefix
 } from '../../../src/core/db/plugin-tables'
 import {
   hasWalletCache,
@@ -360,7 +360,7 @@ describe('wallet store', function () {
   it('seeds nothing from a row plugin tables made, until it is cached', async function () {
     await withDb(async driver => {
       const id = walletId(1)
-      await ensureWalletPrefix(driver, id, 'bitcoin')
+      await ensureOwnerPrefix(driver, 'wallet', id, 'bitcoin')
 
       const rows = await driver.query<{ cached: number }>(
         'SELECT cached FROM wallet'
@@ -400,7 +400,12 @@ describe('wallet store', function () {
   it('gives a new row a prefix unique against the ones there', async function () {
     await withDb(async driver => {
       const existing = walletId(1)
-      const prefix = await ensureWalletPrefix(driver, existing, 'bitcoin')
+      const prefix = await ensureOwnerPrefix(
+        driver,
+        'wallet',
+        existing,
+        'bitcoin'
+      )
 
       // A different wallet whose id shares the first bytes, so the default
       // eight characters would clash:
@@ -493,7 +498,7 @@ describe('wallet store', function () {
     await withDb(async driver => {
       expect(await hasWalletCache(driver)).equals(false)
 
-      await ensureWalletPrefix(driver, walletId(1), 'bitcoin')
+      await ensureOwnerPrefix(driver, 'wallet', walletId(1), 'bitcoin')
       await upsertWalletRow(driver, walletId(2), {
         walletState: { hidden: true }
       })

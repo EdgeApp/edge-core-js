@@ -1,7 +1,7 @@
 import { EdgeScratchDatabase } from '../../types/types'
 import { EdgeInternalIo } from './db-driver'
 import { prepareDatabase } from './db-open'
-import { ensureWalletPrefix } from './plugin-tables'
+import { ensureOwnerPrefix } from './plugin-tables'
 import { makeTxDatabase } from './tx-database-api'
 
 /**
@@ -36,7 +36,7 @@ export async function makeScratchDatabase(
   const driver = await makeSqlDriver(name, io.random(32))
   try {
     await prepareDatabase(driver)
-    const prefix = await ensureWalletPrefix(driver, walletId, pluginId)
+    const prefix = await ensureOwnerPrefix(driver, 'wallet', walletId, pluginId)
     const database = makeTxDatabase({ driver, walletId, pluginId, prefix })
 
     return {

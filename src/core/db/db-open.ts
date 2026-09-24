@@ -1,6 +1,20 @@
 import { EdgeSqlDriver } from './db-driver'
 import { derivedTables } from './db-index'
 import { SCHEMA_VERSION, schemaStatements } from './db-schema'
+import { RATE_DATABASE_NAME } from './rate-cache'
+
+/** The device's plugin-scoped database, shared by every account. */
+export const PLUGIN_DATABASE_NAME = 'plugins'
+
+/**
+ * The databases a driver may open without a key.
+ *
+ * Unkeyed is a refusal by default, because a file with no key would be a
+ * plaintext account database -- the one mistake the codec cannot catch. These
+ * two are named exceptions: both are device-wide and hold nothing private,
+ * and a device-scoped key has no home on half the platforms.
+ */
+export const UNKEYED_DATABASE_NAMES = [RATE_DATABASE_NAME, PLUGIN_DATABASE_NAME]
 
 /**
  * What `prepareDatabase` had to do to bring a connection up to the current
