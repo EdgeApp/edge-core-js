@@ -3,6 +3,8 @@
 ## Unreleased
 
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
+- added: `EdgeCorePluginOptions.pluginDatabase`, an `EdgePluginStore` of tables each plugin owns on the device, independent of any account or wallet.
+- added: `putRowsIfAbsent` on wallet and plugin stores, and as a `batchWrite` operation.
 - added: `EdgeFakeContextOptions.device`, so fake contexts can share a device's disk and databases, and `EdgeFakeContextOptions.sqlDriver`, to model a device without a working SQL binding.
 - changed: Every login opens the account's transaction database, and a login that cannot open it fails. `EdgeContextOptions.transactionDatabase` is removed.
 - changed: `EdgeAccount.transactions` is always present.

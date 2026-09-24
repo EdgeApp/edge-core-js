@@ -12,6 +12,8 @@ import {
 } from '../../types/types'
 import { RootAction } from '../actions'
 import { InfoCacheFile } from '../context/info-cache-file'
+import { EdgeInternalIo } from '../db/db-driver'
+import { makePluginDatabase, makePluginStore } from '../db/plugin-database'
 import { LogBackend, makeLog } from '../log/log'
 
 export interface PluginIos {
@@ -65,6 +67,10 @@ export function watchPlugins(
   const { io, nativeIo } = ios
   const legacyIo = { ...io, console }
 
+  // One plugin database for the whole context, which a plugin added later
+  // shares with the ones that were here first:
+  const pluginDatabase = makePluginDatabase(io as EdgeInternalIo)
+
   function pluginsAdded(plugins: EdgeCorePlugins): void {
     const out: EdgePluginMap<EdgeCorePlugin> = {}
 
@@ -83,6 +89,7 @@ export function watchPlugins(
             io: legacyIo,
             log,
             nativeIo,
+            pluginDatabase: makePluginStore(pluginDatabase, pluginId),
             pluginDisklet: navigateDisklet(io.disklet, 'plugins/' + pluginId)
           }
           out[pluginId] = plugin(opts)
@@ -117,5 +124,6 @@ export function watchPlugins(
   return () => {
     onPluginsAdded.filter(f => f !== pluginsAdded)
     onPluginsLocked.filter(f => f !== pluginsLocked)
+    pluginDatabase.close().catch(() => undefined)
   }
 }

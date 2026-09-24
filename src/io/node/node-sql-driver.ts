@@ -8,7 +8,7 @@ import {
   makeSerializer,
   SqlDriverFactory
 } from '../../core/db/db-driver'
-import { RATE_DATABASE_NAME } from '../../core/db/rate-cache'
+import { UNKEYED_DATABASE_NAMES } from '../../core/db/db-open'
 
 /**
  * The Node implementation of the SQL seam.
@@ -230,16 +230,9 @@ export function makeNodeSqlDriverFactory(path: string): SqlDriverFactory {
 
   return {
     async makeSqlDriver(name, key) {
-      /*
-       * A file with no key would be a plaintext account database, which is the
-       * one mistake the codec cannot catch for us.
-       *
-       * The rate cache is the single exception, and it is named here rather
-       * than left as a hole: it holds public market data, it is shared across
-       * accounts on purpose, and encrypting it would need a device-scoped key
-       * that two of the four platforms cannot keep.
-       */
-      if (key.length === 0 && name !== RATE_DATABASE_NAME) {
+      // A file with no key would be a plaintext account database, so only
+      // the named device-wide databases may open without one:
+      if (key.length === 0 && !UNKEYED_DATABASE_NAMES.includes(name)) {
         throw new Error('Refusing to open a database file without a key')
       }
       const file = filePath(name)
