@@ -88,8 +88,6 @@ export interface CurrencyWalletState {
   readonly fiatGen: number
   readonly fiatLoaded: boolean
   readonly fileNames: TxFileNames
-  readonly files: TxFileJsons
-  readonly gotTxs: Set<EdgeTokenId>
   readonly height: number
   readonly name: string | null
   readonly nameGen: number
@@ -97,7 +95,6 @@ export interface CurrencyWalletState {
   readonly otherMethodNames: string[]
   readonly publicWalletInfo: EdgeWalletInfo | null
   readonly seenTxCheckpoint: string | null
-  readonly sortedTxidHashes: string[]
   readonly stakingStatus: EdgeStakingStatus
   readonly syncStatus: EdgeSyncStatus
   readonly txidHashes: TxidHashes
@@ -395,25 +392,6 @@ const currencyWalletInner = buildReducer<
       : state
   },
 
-  files(state = {}, action): TxFileJsons {
-    switch (action.type) {
-      case 'CURRENCY_WALLET_FILE_CHANGED': {
-        const { json, txidHash } = action.payload
-        const out = { ...state }
-        out[txidHash] = json
-        return out
-      }
-      case 'CURRENCY_WALLET_FILES_LOADED': {
-        const { files } = action.payload
-        return {
-          ...state,
-          ...files
-        }
-      }
-    }
-    return state
-  },
-
   fileNames(state = {}, action): TxFileNames {
     switch (action.type) {
       case 'CURRENCY_WALLET_FILE_NAMES_LOADED': {
@@ -580,16 +558,6 @@ const currencyWalletInner = buildReducer<
       : state
   },
 
-  sortedTxidHashes: memoizeReducer(
-    next => next.self.txidHashes,
-    txidHashes =>
-      Object.keys(txidHashes).sort((txidHash1, txidHash2) => {
-        if (txidHashes[txidHash1].date > txidHashes[txidHash2].date) return -1
-        if (txidHashes[txidHash1].date < txidHashes[txidHash2].date) return 1
-        return 0
-      })
-  ),
-
   stakingStatus(state = { stakedAmounts: [] }, action): EdgeStakingStatus {
     switch (action.type) {
       case 'CURRENCY_ENGINE_CHANGED_STAKING':
@@ -655,21 +623,6 @@ const currencyWalletInner = buildReducer<
       }
     }
     return state
-  },
-
-  gotTxs(state = new Set(), action): Set<EdgeTokenId> {
-    switch (action.type) {
-      case 'CURRENCY_ENGINE_GOT_TXS': {
-        const { tokenId } = action.payload
-        const out = new Set(state)
-        out.add(tokenId)
-        return out
-      }
-      case 'CURRENCY_ENGINE_CLEARED':
-        return new Set()
-      default:
-        return state
-    }
   },
 
   walletInfo(state, action, next) {

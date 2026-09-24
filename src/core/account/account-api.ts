@@ -38,6 +38,7 @@ import {
 } from '../currency/currency-selectors'
 import { saveWalletSettings } from '../currency/wallet/currency-wallet-files'
 import { getPublicWalletInfo } from '../currency/wallet/currency-wallet-pixie'
+import { findAccountDatabase } from '../db/account-database'
 import { EdgeTransactionStoreApi } from '../db/tx-store-api'
 import {
   finishWalletCreation,
@@ -268,13 +269,14 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
     },
 
     /**
-     * Undefined until the database is open, so callers can feature-detect
-     * rather than catching. It appears once login finishes opening it.
+     * Always there: the account is emitted only after its database opens.
      */
-    get transactions(): EdgeTransactionStore | undefined {
-      const database = ai.props.output.accounts[accountId]?.database
-      if (database == null) return undefined
-      transactionsApi._watch(database)
+    get transactions(): EdgeTransactionStore {
+      // The logout teardown serializes this object one last time after the
+      // database has closed, and the store it returns rejects on its own
+      // from then on, so there is nothing left to watch:
+      const database = findAccountDatabase(ai, accountId)
+      if (database != null) transactionsApi._watch(database)
       return transactionsApi
     },
 

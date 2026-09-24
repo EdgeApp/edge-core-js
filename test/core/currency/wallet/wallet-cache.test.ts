@@ -1,14 +1,10 @@
 import { expect } from 'chai'
 import { afterEach, beforeEach, describe, it } from 'mocha'
 
-import {
-  ACCOUNT_CACHE_FILES,
-  accountCacheSaverConfig
-} from '../../../../src/core/account/account-cache-file'
+import { accountCacheSaverConfig } from '../../../../src/core/account/account-cache-saver'
 import { walletCacheLoaderHooks } from '../../../../src/core/currency/wallet/wallet-cache-loader'
 import { fakeWorldTestConfig } from '../../../../src/core/fake/fake-world'
 import {
-  EdgeAccount,
   EdgeContext,
   EdgeCurrencyEngineCallbacks,
   EdgeCurrencyWallet,
@@ -23,6 +19,10 @@ import {
   fakePluginTestConfig
 } from '../../../fake/fake-currency-plugin'
 import { fakeUser } from '../../../fake/fake-user'
+import {
+  findTestDatabase,
+  readAccountCache
+} from '../../../fake/wallet-cache-rows'
 
 const contextOptions = { apiKey: '', appId: '', deviceDescription: 'iphone12' }
 const quiet = { onLog() {} }
@@ -69,26 +69,6 @@ async function makeCachedWorld(): Promise<CachedWorld> {
   await account.logout()
 
   return { context, walletId: walletInfo.id, world }
-}
-
-/**
- * Returns the newest readable account-cache slot as raw text. The
- * cache alternates between two slots, so a test that wants to inspect
- * what was actually written has to pick the current generation.
- */
-async function readAccountCache(account: EdgeAccount): Promise<any> {
-  let best: any
-  for (const path of ACCOUNT_CACHE_FILES) {
-    try {
-      const parsed = JSON.parse(await account.localDisklet.getText(path))
-      // A version-1 file predates `sequence` and is always older:
-      if (best == null || (parsed.sequence ?? 0) > (best.sequence ?? 0)) {
-        best = parsed
-      }
-    } catch (error: unknown) {}
-  }
-  if (best == null) throw new Error('No readable account cache')
-  return best
 }
 
 describe('wallet cache', function () {
@@ -715,34 +695,42 @@ describe('wallet cache', function () {
     await account.logout()
   })
 
-  it('rejects a corrupt cache file, falls back cold, and re-saves', async function () {
+  it('boots a wallet whose row no longer reads cold, and re-saves it', async function () {
     this.timeout(15000)
     const { context, walletId } = await makeCachedWorld()
 
-    // Corrupt the cache file after the saver has settled:
+    // Break the wallet's row after the saver has settled. Well-formed
+    // JSON of the wrong shape, which only the read-side cleaner can
+    // refuse:
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     await account.waitForCurrencyWallet(walletId)
     await snooze(SAVE_WAIT_MS)
-    for (const path of ACCOUNT_CACHE_FILES) {
-      await account.localDisklet.setText(path, '{ "version": 99 }')
-    }
+    accountCacheSaverConfig.throttleMs = 5000
+    const { driver } = await findTestDatabase(account)
+    await driver.exec([
+      {
+        sql: 'UPDATE wallet SET wallet_info = ? WHERE wallet_id = ?',
+        params: ['{"not":"a wallet info"}', walletId]
+      }
+    ])
     await account.logout()
+    accountCacheSaverConfig.throttleMs = 50
 
-    // A corrupt file means the cold path runs:
+    // A row that does not read means this wallet's cold path runs:
     const { gate, release } = createEngineGate()
     fakePluginTestConfig.engineGate = gate
     const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     await snooze(RACE_WAIT_MS)
     expect(account2.currencyWallets[walletId]).equals(undefined)
 
-    // Releasing the engine loads the wallet, and the saver rewrites the file:
+    // Releasing the engine loads the wallet, and the saver rewrites the row:
     release()
     const wallet2 = await account2.waitForCurrencyWallet(walletId)
     expect(wallet2.name).equals('Cached Name')
     await snooze(SAVE_WAIT_MS)
     await account2.logout()
 
-    // The rewritten file feeds the next gated login:
+    // The rewritten row feeds the next gated login:
     const { gate: gate3, release: release3 } = createEngineGate()
     fakePluginTestConfig.engineGate = gate3
     const account3 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -1171,10 +1159,15 @@ describe('wallet cache', function () {
     // The next session's engines are built WITHOUT otherMethods, so
     // the cached `testMethod` name is stale. The stub still exists,
     // and rejects cleanly once the engine loads without the method:
+    // Hold the engine, so the stub is observed from the cache rather than
+    // raced against an engine that reports no methods at all:
     fakePluginTestConfig.omitEngineOtherMethods = true
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     const wallet = await account.waitForCurrencyWallet(walletId)
     expect(wallet.otherMethods.testMethod).not.equals(undefined)
+    release()
     await expectRejection(
       wallet.otherMethods.testMethod('stale'),
       'Error: The wallet engine does not implement "testMethod"'
@@ -1182,54 +1175,26 @@ describe('wallet cache', function () {
     await account.logout()
   })
 
-  it('upgrades a pre-consolidation device and grows stubs post-engine', async function () {
+  it('a cached wallet with no method names grows its stubs post-engine', async function () {
     this.timeout(15000)
     const { context, walletId } = await makeCachedWorld()
 
-    // Rebuild the on-disk state an existing device is in when this
-    // ships: a version-1 account file that knows nothing about
-    // wallets, plus the per-wallet pair this version no longer
-    // writes. The version-1 wallet file predates addresses and method
-    // names, so the boot below also proves those upgrade cleanly:
+    // A row cached before the engine ever reported its methods:
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const wallet = await account.waitForCurrencyWallet(walletId)
+    await account.waitForCurrencyWallet(walletId)
     await snooze(SAVE_WAIT_MS)
-    const cache = await readAccountCache(account)
-    const cached = cache.wallets[walletId]
     accountCacheSaverConfig.throttleMs = 5000
-
-    await wallet.localDisklet.setText(
-      'publicKey.json',
-      JSON.stringify({ walletInfo: cached.walletInfo })
-    )
-    await wallet.localDisklet.setText(
-      'walletCache.json',
-      JSON.stringify({
-        version: 1,
-        name: cached.name,
-        fiatCurrencyCode: cached.fiatCurrencyCode,
-        enabledTokenIds: cached.enabledTokenIds,
-        balances: cached.balances
-      })
-    )
-    for (const path of ACCOUNT_CACHE_FILES) {
-      await account.localDisklet.delete(path)
-    }
-    await account.localDisklet.setText(
-      'accountCache.json',
-      JSON.stringify({
-        version: 1,
-        customTokens: cache.customTokens,
-        legacyWallets: false,
-        walletStates: cache.walletStates,
-        configOtherMethodNames: cache.configOtherMethodNames
-      })
-    )
+    const { driver } = await findTestDatabase(account)
+    await driver.exec([
+      {
+        sql: `UPDATE wallet SET other_method_names = '[]' WHERE wallet_id = ?`,
+        params: [walletId]
+      }
+    ])
     await account.logout()
     accountCacheSaverConfig.throttleMs = 50
 
-    // The old layout still warm-boots (migrated on read, not cold),
-    // with no method names yet:
+    // It still warm-boots, with no method names yet:
     const { gate, release } = createEngineGate()
     fakePluginTestConfig.engineGate = gate
     const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -1245,12 +1210,10 @@ describe('wallet cache', function () {
       'testMethod called with: grown'
     )
 
-    // ...and the migration folded this wallet into the consolidated
-    // file, so the NEXT boot needs no per-wallet reads at all:
+    // ...and the saver records them, so the next boot has them:
     await snooze(SAVE_WAIT_MS)
-    const migrated = await readAccountCache(account2)
-    expect(migrated.version).equals(2)
-    expect(migrated.wallets[walletId].name).equals('Cached Name')
+    const saved = await readAccountCache(account2)
+    expect(saved.wallets[walletId].otherMethodNames).includes('testMethod')
     await account2.logout()
   })
 

@@ -5,7 +5,8 @@ import {
   EdgeSqlDriver,
   EdgeSqlStatement,
   EdgeSqlValue,
-  makeSerializer
+  makeSerializer,
+  SqlDriverFactory
 } from '../../core/db/db-driver'
 import { RATE_DATABASE_NAME } from '../../core/db/rate-cache'
 
@@ -214,16 +215,6 @@ export function makeMemorySqlDriver(): EdgeSqlDriver {
   const sql = loadAddon()
   if (sql == null) throw new Error('The edge_sql addon is not built')
   return makeNodeSqlDriver(sql, sql.open(':memory:', Buffer.alloc(0)))
-}
-
-/**
- * Mirrors the optional shape the widened io uses, so a factory can simply be
- * spread into an io: when the addon is missing both members are absent and the
- * capability reads as unavailable.
- */
-interface SqlDriverFactory {
-  makeSqlDriver?: (name: string, key: Uint8Array) => Promise<EdgeSqlDriver>
-  deleteSqlDatabase?: (name: string) => Promise<void>
 }
 
 /**
