@@ -17,6 +17,7 @@ import {
 } from '../../types/types'
 import { makePeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
+import { importWalletCacheFiles } from '../currency/wallet/wallet-cache-import'
 import {
   bulkLoadWalletCaches,
   loadAccountSeed,
@@ -149,6 +150,10 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           if (database.reindexed.length > 0) {
             log.warn(`Login: reindexed ${database.reindexed.join(', ')}`)
           }
+
+          // A device that still has the wallet cache files moves them into
+          // the database, once. The database itself is the marker:
+          await importWalletCacheFiles(ai, accountId, database.driver)
 
           // Try the account boot cache. On a hit, seed Redux and emit
           // the API object right away, so wallets can start from their
