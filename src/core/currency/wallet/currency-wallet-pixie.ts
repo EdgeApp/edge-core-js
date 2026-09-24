@@ -20,7 +20,7 @@ import { snooze } from '../../../util/snooze'
 import { makeTokenInfo } from '../../account/custom-tokens'
 import { Dispatch } from '../../actions'
 import { getAccountDatabase } from '../../db/account-database'
-import { ensureWalletPrefix } from '../../db/plugin-tables'
+import { ensureOwnerPrefix } from '../../db/plugin-tables'
 import { makeScratchDatabase } from '../../db/scratch-database'
 import { makeTxDatabase } from '../../db/tx-database-api'
 import { mirrorAllTxMeta } from '../../db/tx-meta-mirror'
@@ -764,7 +764,12 @@ async function makeWalletDatabase(
   const database = getAccountDatabase(input, accountId)
 
   const { io, walletId } = input.props
-  const prefix = await ensureWalletPrefix(database.driver, walletId, pluginId)
+  const prefix = await ensureOwnerPrefix(
+    database.driver,
+    'wallet',
+    walletId,
+    pluginId
+  )
   return makeTxDatabase({
     driver: database.driver,
     walletId,

@@ -34,8 +34,19 @@ import { saveTxStatements } from './tx-writer'
  * Fixed so that removing and re-adding the same key in one call has a defined
  * result. Within each group, the caller's array order is preserved.
  */
-type Stage = 'removeRows' | 'putRows' | 'saveTxs' | 'patchTxs'
-const STAGES: Stage[] = ['removeRows', 'putRows', 'saveTxs', 'patchTxs']
+type Stage =
+  | 'removeRows'
+  | 'putRows'
+  | 'putRowsIfAbsent'
+  | 'saveTxs'
+  | 'patchTxs'
+const STAGES: Stage[] = [
+  'removeRows',
+  'putRows',
+  'putRowsIfAbsent',
+  'saveTxs',
+  'patchTxs'
+]
 
 /** The token-keyed fields, which JSON spells with `''` for the chain asset. */
 function fromTokenMap(map: Map<EdgeTokenId, unknown>): {
@@ -161,6 +172,11 @@ export async function batchWrite(
         break
       case 'putRows':
         statements.push(...putRowStatements(prefix, spec, ops.putRows ?? []))
+        break
+      case 'putRowsIfAbsent':
+        statements.push(
+          ...putRowStatements(prefix, spec, ops.putRowsIfAbsent ?? [], true)
+        )
         break
       case 'saveTxs':
         for (const tx of ops.saveTxs ?? []) {

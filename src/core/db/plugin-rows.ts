@@ -87,12 +87,19 @@ export async function getRows(
   return out
 }
 
-/** The statements `putRows` runs, for callers composing an atomic batch. */
+/**
+ * The statements `putRows` runs, for callers composing an atomic batch.
+ *
+ * `ifAbsent` leaves a key that already has a row alone, which is what a copy
+ * of older data wants: whatever was written since is newer than it.
+ */
 export function putRowStatements(
   prefix: string,
   spec: EdgeTableSpec,
-  writes: EdgeTableRows[]
+  writes: EdgeTableRows[],
+  ifAbsent: boolean = false
 ): EdgeSqlStatement[] {
+  const conflict = ifAbsent ? 'DO NOTHING' : 'DO UPDATE SET doc = excluded.doc'
   const out: EdgeSqlStatement[] = []
   for (const write of writes) {
     const definition = tableDefinition(spec, write.table)
@@ -100,7 +107,7 @@ export function putRowStatements(
     for (const row of write.rows) {
       out.push({
         sql: `INSERT INTO "${name}" (key, doc) VALUES (?, jsonb(?))
-              ON CONFLICT (key) DO UPDATE SET doc = excluded.doc`,
+              ON CONFLICT (key) ${conflict}`,
         params: [rowKey(definition, row), JSON.stringify(row)]
       })
     }
@@ -122,6 +129,17 @@ export async function putRows(
   writes: EdgeTableRows[]
 ): Promise<void> {
   const statements = putRowStatements(prefix, spec, writes)
+  if (statements.length > 0) await driver.batch(statements)
+}
+
+/** Writes rows only under keys that have none. */
+export async function putRowsIfAbsent(
+  driver: EdgeSqlDriver,
+  prefix: string,
+  spec: EdgeTableSpec,
+  writes: EdgeTableRows[]
+): Promise<void> {
+  const statements = putRowStatements(prefix, spec, writes, true)
   if (statements.length > 0) await driver.batch(statements)
 }
 

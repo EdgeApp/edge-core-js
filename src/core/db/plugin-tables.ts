@@ -48,7 +48,11 @@ export function walletTablePrefix(
   const full = encodeWalletId(walletId)
   const used = new Set(taken)
 
-  for (let length = PREFIX_LENGTH; length <= full.length; ++length) {
+  for (
+    let length = Math.min(PREFIX_LENGTH, full.length);
+    length <= full.length;
+    ++length
+  ) {
     const prefix = `p_${full.slice(0, length)}_`
     if (!used.has(prefix)) return prefix
   }
@@ -174,41 +178,113 @@ export interface DefineTablesResult {
  * while other wallets are reading.
  */
 /**
- * Reserves a wallet's table prefix, without creating any tables.
+ * Whose tables these are.
+ *
+ * A wallet's live in its account's database and are registered in `wallet`;
+ * a plugin's own live in the device's plugins database and are registered in
+ * `plugin`. Everything else about them -- the prefix, the fence, the rebuild
+ * on a new version -- is the same, so it is one implementation with the
+ * registry as a parameter.
+ */
+export type TableOwner = 'wallet' | 'plugin'
+
+interface OwnerRow {
+  id: string
+  prefix: string
+  table_version: number | null
+}
+
+async function ownerRows(
+  driver: EdgeSqlDriver,
+  owner: TableOwner
+): Promise<OwnerRow[]> {
+  return await driver.query<OwnerRow>(
+    owner === 'wallet'
+      ? 'SELECT wallet_id AS id, prefix, table_version FROM wallet'
+      : 'SELECT plugin_id AS id, prefix, table_version FROM plugin'
+  )
+}
+
+/**
+ * Registers an owner's prefix, and the table version when one is given.
+ *
+ * A wallet row carries more than its tables, so it goes through the upsert
+ * that writes only the columns it is handed.
+ */
+function ownerRowStatement(
+  owner: TableOwner,
+  id: string,
+  prefix: string,
+  pluginId: string,
+  tableVersion?: number | null
+): EdgeSqlStatement {
+  if (owner === 'wallet') {
+    return walletRowStatement(id, prefix, {
+      pluginId,
+      ...(tableVersion !== undefined ? { tableVersion } : {})
+    })
+  }
+  return tableVersion === undefined
+    ? {
+        sql: `INSERT INTO plugin (plugin_id, prefix) VALUES (?, ?)
+              ON CONFLICT (plugin_id) DO NOTHING`,
+        params: [id, prefix]
+      }
+    : {
+        sql: `INSERT INTO plugin (plugin_id, prefix, table_version)
+              VALUES (?, ?, ?)
+              ON CONFLICT (plugin_id) DO UPDATE SET
+                table_version = excluded.table_version`,
+        params: [id, prefix, tableVersion]
+      }
+}
+
+/**
+ * Reserves an owner's table prefix, without creating any tables.
  *
  * Separate from `defineTables` because a handle needs a prefix the moment it
  * exists, while tables only appear when the plugin declares them -- and a
- * plugin that declares none still writes transactions.
+ * wallet whose plugin declares none still writes transactions.
  */
-export async function ensureWalletPrefix(
+export async function ensureOwnerPrefix(
   driver: EdgeSqlDriver,
-  walletId: string,
+  owner: TableOwner,
+  id: string,
   pluginId: string
 ): Promise<string> {
-  return await upsertWalletRow(driver, walletId, { pluginId })
+  if (owner === 'wallet') {
+    return await upsertWalletRow(driver, id, { pluginId })
+  }
+  const rows = await ownerRows(driver, owner)
+  const mine = rows.find(row => row.id === id)
+  if (mine != null) return mine.prefix
+  const prefix = walletTablePrefix(
+    id,
+    rows.map(row => row.prefix)
+  )
+  await driver.exec([ownerRowStatement(owner, id, prefix, pluginId)])
+  return prefix
 }
 
 export async function defineTables(
   driver: EdgeSqlDriver,
   opts: {
+    /** Whose tables; a wallet's unless said otherwise. */
+    owner?: TableOwner
+    /** The wallet id, or for a plugin's own tables the plugin id. */
     walletId: string
     pluginId: string
     spec: EdgeTableSpec
   }
 ): Promise<DefineTablesResult> {
-  const { walletId, pluginId, spec } = opts
+  const { owner = 'wallet', walletId: id, pluginId, spec } = opts
 
-  const rows = await driver.query<{
-    wallet_id: string
-    prefix: string
-    table_version: number | null
-  }>('SELECT wallet_id, prefix, table_version FROM wallet')
-
-  const mine = rows.find(row => row.wallet_id === walletId)
+  const rows = await ownerRows(driver, owner)
+  const mine = rows.find(row => row.id === id)
   const prefix =
     mine?.prefix ??
     walletTablePrefix(
-      walletId,
+      id,
       rows.map(row => row.prefix)
     )
 
@@ -224,10 +300,7 @@ export async function defineTables(
 
   statements.push(
     ...defineTableStatements(prefix, spec),
-    walletRowStatement(walletId, prefix, {
-      pluginId,
-      tableVersion: spec.version
-    })
+    ownerRowStatement(owner, id, prefix, pluginId, spec.version)
   )
 
   await driver.batch(statements)
@@ -235,27 +308,31 @@ export async function defineTables(
 }
 
 /**
- * Removes every table a wallet owns.
+ * Removes every table an owner has.
  *
- * The wallet's row stays, because the tables are not all it holds: the row
- * also carries the wallet's boot state and the account's state for it, which
- * outlive whatever the plugin kept. Only `table_version` goes, so the next
- * `defineTables` creates the tables fresh rather than calling it a rebuild.
+ * The registry row stays. A wallet's row also carries the wallet's boot
+ * state and the account's state for it, which outlive whatever the plugin
+ * kept; only `table_version` goes, so the next `defineTables` creates the
+ * tables fresh rather than calling it a rebuild.
  */
 export async function dropWalletTables(
   driver: EdgeSqlDriver,
-  walletId: string
+  walletId: string,
+  owner: TableOwner = 'wallet'
 ): Promise<void> {
-  const rows = await driver.query<{ prefix: string }>(
-    'SELECT prefix FROM wallet WHERE wallet_id = ?',
-    [walletId]
-  )
-  if (rows.length === 0) return
+  const rows = await ownerRows(driver, owner)
+  const mine = rows.find(row => row.id === walletId)
+  if (mine == null) return
 
-  const { prefix } = rows[0]
+  const { prefix } = mine
   const names = await existingTables(driver, prefix)
   await driver.batch([
     ...names.map(name => ({ sql: `DROP TABLE IF EXISTS "${name}"` })),
-    walletRowStatement(walletId, prefix, { tableVersion: null })
+    owner === 'wallet'
+      ? walletRowStatement(walletId, prefix, { tableVersion: null })
+      : {
+          sql: 'UPDATE plugin SET table_version = NULL WHERE plugin_id = ?',
+          params: [walletId]
+        }
   ])
 }
