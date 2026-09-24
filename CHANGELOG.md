@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- breaking: `EdgeCurrencyEngineOptions.walletLocalDisklet` is renamed `legacyDisklet`, and is read-only: an engine can read and delete the files it wrote before, and a write throws. Plugins keep their state in `txDatabase` and `pluginDatabase`.
+- changed: Memory wallets hand their engine a scratch `txDatabase`, deleted when the wallet closes.
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
 - added: `EdgeCorePluginOptions.pluginDatabase`, an `EdgePluginStore` of tables each plugin owns on the device, independent of any account or wallet.
 - added: `putRowsIfAbsent` on wallet and plugin stores, and as a `batchWrite` operation.

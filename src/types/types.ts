@@ -1599,15 +1599,21 @@ export interface EdgeCurrencyEngineOptions {
   // Wallet-scoped IO objects:
   log: EdgeLog
 
-  walletLocalDisklet: Disklet
+  /**
+   * The wallet's local storage, read-only.
+   *
+   * What a plugin wrote here before it kept its state in `txDatabase`. It
+   * can be read, to import those files once, and a file can be deleted; a
+   * write throws.
+   */
+  legacyDisklet: Disklet
   walletLocalEncryptedDisklet: Disklet
 
   /**
    * This wallet's own storage and its own transactions.
    *
-   * Undefined where the platform has no database, or while the feature is
-   * off -- so an engine feature-detects rather than catching. This is the
-   * replacement for `walletLocalDisklet`, not a supplement to it.
+   * Every wallet this core builds has one, memory wallets included. It is
+   * optional only so the type still describes older cores.
    */
   txDatabase?: EdgeTxDatabase
 
