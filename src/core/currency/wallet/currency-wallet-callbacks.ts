@@ -20,13 +20,21 @@ import {
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
 import { enableTestMode, pushUpdate } from '../../../util/updateQueue'
-import { saveTxs } from '../../db/tx-writer'
+import {
+  findAccountDatabase,
+  getAccountDatabase
+} from '../../db/account-database'
+import {
+  makeTxWriteQueue,
+  TxWriteQueue,
+  walletTxWriteQueue
+} from '../../db/tx-write-queue'
 import {
   getStorageWalletLastChanges,
   hashStorageWalletFilename
 } from '../../storage/storage-selectors'
-import { combineTxWithFile } from './currency-wallet-api'
 import { asIntegerString } from './currency-wallet-cleaners'
+import { readTxEvents, TxEventKey } from './currency-wallet-db-read'
 import {
   reloadWalletFiles,
   saveSeenTxCheckpointFile,
@@ -89,36 +97,36 @@ function makeThrottledTxCallback(
  * Returns a callback structure suitable for passing to a currency engine.
  */
 /**
- * Mirrors what an engine reported into the transaction database.
+ * Writes what an engine reported into the transaction database.
  *
- * This is the transitional path, and it is what lets plugins move one at a
- * time: an engine that knows nothing about the database still populates it,
- * because the core translates what it already reports. A plugin that writes
- * `EdgeTx` directly will stop going through here.
- *
- * Deliberately not awaited. The database is a cache with a file-based
- * fallback behind every read, so a write that fails is a slower next login,
- * not a lost transaction -- and blocking the engine's callback on a disk
- * write would make it one.
+ * An engine that knows nothing about the database still populates it,
+ * because the core translates what it already reports. The write goes
+ * through the wallet's queue, which retries until it lands: the engine will
+ * not report an unchanged transaction again, so a dropped write would be a
+ * transaction the database never has. The promise resolves once the batch
+ * has committed, and is never awaited by the engine's own callback.
  */
 function writeToDatabase(
   input: CurrencyWalletInput,
   txs: EdgeTransaction[]
-): void {
-  const { accountId, pluginId } = input.props.walletState
-  const database = input.props.output.accounts[accountId]?.database
-  if (database == null) return
+): Promise<void> {
+  const { pluginId } = input.props.walletState
+  return walletQueue(input).push(txs.map(tx => toEdgeTx(tx, pluginId)))
+}
 
-  saveTxs(
-    database.driver,
-    txs.map(tx => toEdgeTx(tx, pluginId))
-  )
-    .then(() =>
-      database.changed(
-        txs.map(tx => ({ walletId: tx.walletId, txid: tx.txid }))
-      )
-    )
-    .catch(error => input.props.onError(error))
+function walletQueue(input: CurrencyWalletInput): TxWriteQueue {
+  const { io, walletId } = input.props
+  const { accountId } = input.props.walletState
+  return walletTxWriteQueue(io, walletId, () => {
+    const database = getAccountDatabase(input, accountId)
+    return makeTxWriteQueue({
+      driver: database.driver,
+      changed: database.changed,
+      onError: error => input.props.onError(error),
+      warn: message => input.props.log.warn(message),
+      walletId
+    })
+  })
 }
 
 export function makeCurrencyWalletCallbacks(
@@ -263,29 +271,28 @@ export function makeCurrencyWalletCallbacks(
         id: walletId,
         action: 'onBlockHeightChanged',
         updateFunc: () => {
-          // Notify GUI of transactions whose confirmations may have changed.
-          const { txs, files } = input.props.walletState
-          const changedTxs: EdgeTransaction[] = []
+          // Notify GUI of transactions whose confirmations may have changed,
+          // read back so they carry their metadata:
+          const { accountId, currencyInfo, txs } = input.props.walletState
+          const keys: TxEventKey[] = []
           for (const txid of Object.keys(txs)) {
             const reduxTx = txs[txid]
             if (shouldCoreDetermineConfirmations(reduxTx.confirmations)) {
-              const txidHash = hashStorageWalletFilename(
-                input.props.state,
-                walletId,
-                reduxTx.txid
-              )
-              const changedTx = combineTxWithFile(
-                input,
-                reduxTx,
-                files[txidHash],
-                null,
-                height
-              )
-              changedTxs.push(changedTx)
+              keys.push({
+                txid: reduxTx.txid,
+                tokenId: null,
+                currencyCode: currencyInfo.currencyCode,
+                isNew: false
+              })
             }
           }
-          if (changedTxs.length > 0) {
-            throttledOnTxChanged(changedTxs)
+          const database = findAccountDatabase(input, accountId)
+          if (keys.length > 0 && database != null) {
+            readTxEvents(input, database.driver, keys, height)
+              .then(({ changed }) => {
+                if (changed.length > 0) throttledOnTxChanged(changed)
+              })
+              .catch(error => input.props.onError(error))
           }
 
           // Update redux state for other consumers:
@@ -410,8 +417,7 @@ export function makeCurrencyWalletCallbacks(
       const { txs: reduxTxs } = input.props.walletState
 
       const txidHashes: TxidHashes = {}
-      const changed: EdgeTransaction[] = []
-      const created: EdgeTransaction[] = []
+      const keys: TxEventKey[] = []
       for (const txEvent of txEvents) {
         const { isNew, transaction: tx } = txEvent
         const { txid } = tx
@@ -436,31 +442,42 @@ export function makeCurrencyWalletCallbacks(
           )
         }
 
-        // Build the final transaction to show the user:
-        const { files } = input.props.walletState
-        const combinedTx = combineTxWithFile(
-          input,
-          reduxTx,
-          files[txidHash],
-          tx.tokenId
-        )
-        if (isNew) {
-          created.push(combinedTx)
-        } else {
-          changed.push(combinedTx)
-        }
-        txidHashes[txidHash] = { date: combinedTx.date, txid }
+        keys.push({
+          txid,
+          tokenId: tx.tokenId,
+          currencyCode:
+            tx.tokenId == null
+              ? currencyInfo.currencyCode
+              : allTokens[tx.tokenId]?.currencyCode ?? tx.currencyCode,
+          isNew
+        })
+        txidHashes[txidHash] = { date: reduxTx.date, txid }
       }
 
-      // Tell everyone who cares:
+      // Redux first, since `setupNewTxMetadata` and `saveTx` look the
+      // transaction up there:
       input.props.dispatch({
         type: 'CURRENCY_ENGINE_CHANGED_TXS',
         payload: { txs: allTxs, walletId, txidHashes }
       })
-      if (changed.length > 0) throttledOnTxChanged(changed)
-      if (created.length > 0) throttledOnNewTx(created)
 
+      // Then the database, and only then the events, which carry what was
+      // written read back with its metadata. A batch still retrying emits
+      // when it lands:
       writeToDatabase(input, allTxs)
+        .then(async () => {
+          if (keys.length === 0) return
+          const database = findAccountDatabase(input, accountId)
+          if (database == null) return
+          const { created, changed } = await readTxEvents(
+            input,
+            database.driver,
+            keys
+          )
+          if (changed.length > 0) throttledOnTxChanged(changed)
+          if (created.length > 0) throttledOnNewTx(created)
+        })
+        .catch(error => input.props.onError(error))
     },
     onTransactionsChanged(txs: EdgeTransaction[]) {
       out.onTransactions(

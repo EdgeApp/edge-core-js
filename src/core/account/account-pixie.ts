@@ -13,41 +13,31 @@ import {
   EdgeAccount,
   EdgeCurrencyWallet,
   EdgePluginMap,
-  EdgeTokenMap,
-  EdgeWalletInfo,
-  EdgeWalletStates
+  EdgeTokenMap
 } from '../../types/types'
 import { makePeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
 import {
   bulkLoadWalletCaches,
-  forgetAccountCache,
-  rememberAccountCache,
-  seedWalletCachesFromAccount,
+  loadAccountSeed,
   walletCacheLoaderHooks
 } from '../currency/wallet/wallet-cache-loader'
 import {
-  EdgeAccountDatabase,
-  openAccountDatabase,
-  openAccountDatabases
+  closeAccountDatabase,
+  getAccountDatabase,
+  openAccountDatabaseOnce
 } from '../db/account-database'
 import { fillFiatAmounts } from '../db/rate-fill'
 import { syncLogin } from '../login/login'
 import { waitForPlugins } from '../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../root-pixie'
-import { makeLocalDisklet } from '../storage/repo'
 import {
   addStorageWallet,
   SYNC_INTERVAL,
   syncStorageWallet
 } from '../storage/storage-actions'
 import { makeAccountApi } from './account-api'
-import {
-  accountCacheSaverConfig,
-  loadAccountCache,
-  saveAccountCache
-} from './account-cache-file'
-import { AccountCacheFile, AccountCacheWallet } from './account-cleaners'
+import { AccountCacheSaver, makeAccountCacheSaver } from './account-cache-saver'
 import { loadAllWalletStates, reloadPluginSettings } from './account-files'
 import { AccountState, initialCustomTokens } from './account-reducer'
 import {
@@ -70,7 +60,6 @@ export const FIAT_FILL_INTERVAL = 30000
 export interface AccountOutput {
   readonly accountApi: EdgeAccount
   readonly currencyWallets: { [walletId: string]: EdgeCurrencyWallet }
-  readonly database?: EdgeAccountDatabase
 }
 
 export type AccountProps = RootProps & {
@@ -80,15 +69,6 @@ export type AccountProps = RootProps & {
 }
 
 export type AccountInput = PixieInput<AccountProps>
-
-/**
- * The account cache saver's write chains, one per account (keyed by
- * the account's local disklet id). Module-level so a write left in
- * flight by a logout is still ahead of the next login's first save:
- * that save reads the newest slot only after the old write has
- * landed, and so never targets the slot the old write is filling.
- */
-const cacheWriteChains = new Map<string, Promise<void>>()
 
 const accountPixie: TamePixie<AccountProps> = combinePixies({
   accountApi(input: AccountInput) {
@@ -156,31 +136,36 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
           // Wait for the currency plugins (should already be loaded by now):
           await waitForPlugins(ai)
 
+          // Open the account database. There is no boot without it, since
+          // it is the only place transactions go. A rejection lands in the
+          // catch below as a failed login, and `null` means the account
+          // logged out while it was opening:
+          const database = await openAccountDatabaseOnce(
+            ai,
+            accountWalletInfo,
+            accountId
+          )
+          if (database == null) return await stopUpdates
+          if (database.reindexed.length > 0) {
+            log.warn(`Login: reindexed ${database.reindexed.join(', ')}`)
+          }
+
           // Try the account boot cache. On a hit, seed Redux and emit
           // the API object right away, so wallets can start from their
-          // own caches without waiting for the repo sync or file loads.
+          // own rows without waiting for the repo sync or file loads.
           // The loads below then overwrite the seeded state
-          // authoritatively. On a miss (first login, schema bump,
-          // corruption) or an account with legacy Airbitz wallets
-          // (their infos cannot be cached), this is today's boot,
-          // unchanged:
-          const { cache: accountCache } = await loadAccountCache(
-            makeLocalDisklet(ai.props.io, accountWalletInfo.id)
-          )
-
-          // Keep the parsed file for the session, so a wallet the bulk
-          // seed misses looks its entry up here instead of re-reading
-          // both slots:
-          rememberAccountCache(accountId, accountCache)
-
-          if (accountCache != null && !accountCache.legacyWallets) {
+          // authoritatively. On a miss (first login, corruption) or an
+          // account with legacy Airbitz wallets (their infos cannot be
+          // cached), this is today's boot, unchanged:
+          const accountSeed = await loadAccountSeed(ai, database.driver)
+          if (accountSeed != null) {
             input.props.dispatch({
               type: 'ACCOUNT_CACHE_LOADED',
               payload: {
                 accountId,
-                configOtherMethodNames: accountCache.configOtherMethodNames,
-                customTokens: accountCache.customTokens,
-                walletStates: accountCache.walletStates
+                configOtherMethodNames: accountSeed.configOtherMethodNames,
+                customTokens: accountSeed.customTokens,
+                walletStates: accountSeed.walletStates
               }
             })
             input.onOutput(makeAccountApi(ai, accountId))
@@ -190,18 +175,8 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
               walletCacheLoaderHooks.onAccountSeed(accountId)
             }
 
-            // Seed every wallet's cache in one dispatch. The current
-            // schema carries them all in the file just read, so the
-            // warm path touches no further disk. A file written by an
-            // older version has none, so those wallets come from
-            // their own files this once, and the saver then folds
-            // them into the consolidated file:
-            const cachedWallets = Object.keys(accountCache.wallets)
-            if (cachedWallets.length > 0) {
-              seedWalletCachesFromAccount(ai, accountId, accountCache.wallets)
-            } else {
-              await bulkLoadWalletCaches(ai, accountId)
-            }
+            // Seed every wallet in one dispatch:
+            await bulkLoadWalletCaches(ai, accountId, database.driver)
 
             // The GUI already has the account, so retry transient
             // failures instead of leaving the session half-loaded
@@ -382,311 +357,31 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
   },
 
   /**
-   * Watches the account's cache-relevant Redux state and persists it
-   * to `accountCache.json`, so the next login can start its wallets
-   * before the account repo loads. Writes are throttled (trailing
-   * edge), never happen after logout, and stop after 3 consecutive
-   * failures to avoid log spam. The dirty set deliberately includes
-   * account-level `customTokens`: a saver that misses those wipes
-   * custom tokens on the next warm login.
+   * Keeps the account's boot state in the database, so the next login can
+   * start its wallets before the account repo loads. See
+   * `account-cache-saver.ts`; this is only the wiring.
    */
   cacheSaver(input: AccountInput) {
-    interface CacheSnapshot {
-      currencyWalletIds: string[]
-      customTokens: EdgePluginMap<EdgeTokenMap>
-      legacyWalletInfos: EdgeWalletInfo[]
-      walletStates: EdgeWalletStates
-
-      /**
-       * Reference identities of every active wallet's cache-relevant
-       * state. The Redux slices are immutable, so an unchanged
-       * reference means unchanged content, and this stays a cheap
-       * reference scan rather than a deep compare of the whole table.
-       */
-      walletStamp: unknown[]
-    }
-
-    function sameStamp(a: unknown[], b: unknown[]): boolean {
-      if (a.length !== b.length) return false
-      for (let i = 0; i < a.length; ++i) {
-        if (a[i] !== b[i]) return false
-      }
-      return true
-    }
-
-    let destroyed = false
-    let failures = 0
-    let lastSaved: CacheSnapshot | undefined
-    let timer: ReturnType<typeof setTimeout> | undefined
-
-    // Which of the two slots the next write lands in, resolved from
-    // disk on the first save. `undefined` means "not looked up yet":
-    let nextSlot: number | undefined
-
-    // Every write goes through one chain per account (keyed below by
-    // the account's local disklet id, in `cacheWriteChains`). `doSave`
-    // is async, so a throttle firing while a previous write is still
-    // in flight would otherwise let two saves read the same `nextSlot`
-    // and both write it, leaving the other slot two generations stale
-    // (and, on a platform whose writes are not atomic, interleaving in
-    // one file). The chain outlives this saver on purpose: a logout
-    // during a write cannot cancel the write, so the next login's
-    // saver waits behind it before resolving its own starting slot.
-
-    // Monotonic across writes, so a reader can tell the two slots
-    // apart. Seeded from whichever generation is on disk:
-    let sequence = 0
-
-    // The wallet table as last written, so wallets that are not
-    // running this session keep their cached state instead of being
-    // dropped by a save that only sees the active ones:
-    let lastWallets: { [walletId: string]: AccountCacheWallet } = {}
-
-    // The stamp computed by the `update` that armed the pending
-    // timer, so `doSave` records exactly what it wrote:
-    let pendingStamp: unknown[] = []
-
-    /**
-     * Reference identities of the state `collectWallets` reads, in a
-     * flat array, so `update` can tell whether anything the cache
-     * file actually stores has changed.
-     */
-    function collectWalletStamp(): unknown[] {
-      const { accountState, state } = input.props
-      const stamp: unknown[] = []
-      for (const walletId of accountState.activeWalletIds) {
-        const walletState = state.currency.wallets[walletId]
-        if (walletState == null) continue
-
-        // A wallet still loading its files is not written (see
-        // `collectWallets`), so its fields must not enter the stamp
-        // yet: a toggle made in that window would otherwise be
-        // stamped without being written, and a load that merges to
-        // the same list would never trigger the write that carries it:
-        const { fiatLoaded, nameLoaded, tokenFileEverLoaded } = walletState
-        if (!fiatLoaded || !nameLoaded || !tokenFileEverLoaded) {
-          stamp.push(null)
-          continue
-        }
-        stamp.push(
-          walletState.addresses,
-          walletState.balanceMap,
-          walletState.enabledTokenIds,
-          walletState.fiat,
-          walletState.name,
-          walletState.otherMethodNames,
-          walletState.publicWalletInfo,
-          walletState.stakingStatus
-        )
-      }
-      return stamp
-    }
-
-    /**
-     * Collects every active wallet's cache-relevant Redux state.
-     * This is the whole point of the consolidated file: one writer
-     * for the entire account, instead of one throttled writer per
-     * wallet all racing for the same bridge.
-     */
-    function collectWallets(): {
-      [walletId: string]: AccountCacheWallet
-    } {
-      const { accountState, state } = input.props
-
-      // Start from what the file already holds, so a wallet that is
-      // archived (or simply not running this session) keeps its cached
-      // boot state, the way its own file used to just sit on disk.
-      // Entries for wallets the account no longer has are dropped, so
-      // this cannot grow without bound. The wallet list is the test,
-      // not `walletStates`, which only lists wallets with an explicit
-      // state and would drop a plain wallet that is merely not loaded:
-      const wallets: { [walletId: string]: AccountCacheWallet } = {}
-      for (const walletId of Object.keys(lastWallets)) {
-        if (accountState.walletInfos[walletId] == null) continue
-        if (accountState.walletStates[walletId]?.deleted === true) continue
-        wallets[walletId] = lastWallets[walletId]
-      }
-
-      for (const walletId of accountState.activeWalletIds) {
-        const walletState = state.currency.wallets[walletId]
-        if (walletState == null) continue
-
-        // Skip a wallet that has not finished loading its
-        // authoritative files, so a cold start never caches
-        // placeholder values (the per-wallet saver's old guard). The
-        // token-file flag is the sticky one, so a resync, which clears
-        // `tokenFileLoaded` but keeps the enabled list, does not
-        // freeze this wallet's entry for the rest of the session:
-        const {
-          fiatLoaded,
-          nameLoaded,
-          publicWalletInfo,
-          tokenFileEverLoaded
-        } = walletState
-        if (!fiatLoaded || !nameLoaded || !tokenFileEverLoaded) continue
-        if (publicWalletInfo == null) continue
-
-        const balances: { [tokenId: string]: string } = {}
-        for (const [tokenId, balance] of walletState.balanceMap) {
-          balances[tokenId ?? ''] = balance
-        }
-
-        wallets[walletId] = {
-          walletInfo: publicWalletInfo,
-          name: walletState.name,
-          fiatCurrencyCode: walletState.fiat,
-          enabledTokenIds: walletState.enabledTokenIds,
-          balances,
-          addresses: walletState.addresses,
-          otherMethodNames: walletState.otherMethodNames,
-          stakingStatus: walletState.stakingStatus
-        }
-      }
-      return wallets
-    }
-
-    async function doSave(): Promise<void> {
-      const { accountId, accountState, state } = input.props
-
-      // Never write after logout. The destroy flag is what makes this
-      // reliable: redux-pixies serves a destroyed pixie its last props,
-      // so the state read below still reports the account as present
-      // and would let a write already on the chain through:
-      if (destroyed) return
-      if (state.accounts[accountId] == null) return
-
-      const snapshot: CacheSnapshot = {
-        currencyWalletIds: accountState.currencyWalletIds,
-        customTokens: accountState.customTokens,
-        legacyWalletInfos: accountState.legacyWalletInfos,
-        walletStates: accountState.walletStates,
-        walletStamp: pendingStamp
-      }
-
-      // Only legacy wallets that actually surface as currency wallets
-      // force a cold boot; a legacy repo whose wallet type has no
-      // loaded plugin was never visible in the first place:
-      const legacyWallets = snapshot.legacyWalletInfos.some(info =>
-        snapshot.currencyWalletIds.includes(info.id)
-      )
-
-      // Remember each plugin's otherMethods names. The plugin list is
-      // static for the whole session, so this needs no dirty tracking:
-      const configOtherMethodNames: EdgePluginMap<string[]> = {}
-      const { currency } = input.props.state.plugins
-      for (const pluginId of Object.keys(currency)) {
-        const { otherMethods } = currency[pluginId]
-        if (otherMethods == null) continue
-        const names = Object.keys(otherMethods).filter(
-          name => typeof (otherMethods as any)[name] === 'function'
-        )
-        if (names.length > 0) configOtherMethodNames[pluginId] = names
-      }
-
-      try {
-        const disklet = makeLocalDisklet(
-          input.props.io,
-          accountState.accountWalletInfo.id
-        )
-
-        // Resolve the starting slot once. A fresh session must not
-        // overwrite the generation it booted from, or a kill during
-        // this very first write would leave nothing intact:
-        if (nextSlot == null) {
-          const existing = await loadAccountCache(disklet)
-          nextSlot = existing.nextSlot
-          sequence = existing.cache?.sequence ?? 0
-          lastWallets = existing.cache?.wallets ?? {}
-        }
-
-        const wallets = collectWallets()
-        const file: AccountCacheFile = {
-          version: 2,
-          sequence: ++sequence,
-          customTokens: snapshot.customTokens,
-          legacyWallets,
-          walletStates: snapshot.walletStates,
-          configOtherMethodNames,
-          wallets
-        }
-        const startMs = Date.now()
-        nextSlot = await saveAccountCache(disklet, nextSlot, file)
-
-        // A wallet activated later this session seeds from the memo,
-        // so it has to follow the disk. A wallet created after boot
-        // has no entry anywhere else once it is archived. A logout
-        // during the write above already ran `forgetAccountCache`,
-        // and account ids never repeat, so re-memoing here would
-        // strand this file under an id that can never log in again:
-        if (!destroyed) rememberAccountCache(accountId, file)
-
-        // The write is this design's whole cost, and it is invisible
-        // from the outside. The saver's throttle bounds this to one
-        // line per `throttleMs`, but that runs for the whole session,
-        // so it ships at `info` and only a slow write earns `warn`:
-        const elapsedMs = Date.now() - startMs
-        const line = `Wallet cache: wrote generation ${sequence} with ${
-          Object.keys(wallets).length
-        } wallets in ${elapsedMs}ms`
-        if (elapsedMs > accountCacheSaverConfig.slowWriteMs) {
-          input.props.log.warn(line)
-        } else {
-          input.props.log(line)
-        }
-        lastWallets = wallets
-        failures = 0
-        lastSaved = snapshot
-      } catch (error: unknown) {
-        if (++failures >= 3) {
-          input.props.log.error(
-            `Account cache saver giving up after ${failures} failures: ${String(
-              error
-            )}`
-          )
-        }
-      }
-    }
+    let saver: AccountCacheSaver | undefined
 
     return {
       update() {
-        const { accountState } = input.props
-        if (accountState == null) return
-        if (failures >= 3 || timer != null) return
-
-        // Wait until the authoritative files have loaded,
-        // so a cold start never caches placeholder values:
-        const { customTokensLoaded, walletStatesLoaded } = accountState
-        if (!customTokensLoaded || !walletStatesLoaded) return
-
-        const walletStamp = collectWalletStamp()
-        if (
-          lastSaved != null &&
-          lastSaved.currencyWalletIds === accountState.currencyWalletIds &&
-          lastSaved.customTokens === accountState.customTokens &&
-          lastSaved.legacyWalletInfos === accountState.legacyWalletInfos &&
-          lastSaved.walletStates === accountState.walletStates &&
-          sameStamp(lastSaved.walletStamp, walletStamp)
-        ) {
-          return
-        }
-        pendingStamp = walletStamp
-
-        timer = setTimeout(() => {
-          timer = undefined
-          const key = accountState.accountWalletInfo.id
-          const chain = (cacheWriteChains.get(key) ?? Promise.resolve()).then(
-            doSave,
-            doSave
+        // The account exists only once its database is open, so the saver
+        // starts with it:
+        if (input.props.accountOutput?.accountApi == null) return
+        if (saver == null) {
+          const ai = toApiInput(input)
+          const { accountId } = input.props
+          saver = makeAccountCacheSaver(
+            input,
+            () => getAccountDatabase(ai, accountId).driver
           )
-          cacheWriteChains.set(key, chain)
-          chain.catch(error => input.props.onError(error))
-        }, accountCacheSaverConfig.throttleMs)
+        }
+        saver.update()
       },
 
       destroy() {
-        destroyed = true
-        forgetAccountCache(input.props.accountId)
-        if (timer != null) clearTimeout(timer)
+        saver?.destroy()
       }
     }
   },
@@ -731,54 +426,30 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
   /**
    * Owns the account's database for the lifetime of the login.
    *
-   * Opening happens on the login path, so a failure here must not fail the
-   * login. The database is a cache, and every read path still has its
-   * file-based fallback.
+   * The login task opens it and reports a failure; this only makes sure the
+   * close happens on logout, whenever the open finishes. A rejected update
+   * would tear down the whole pixie tree, so the rejection is logged here
+   * and left to the login task to turn into a failed login.
    */
   database(input: AccountInput) {
-    let opened: EdgeAccountDatabase | undefined
-    let destroyed = false
-    let started = false
-
     return {
       async update() {
-        if (started || destroyed) return
-        const { accountState, io, log, state } = input.props
-        if (!state.transactionDatabase) return
-        started = true
-
+        const ai = toApiInput(input)
+        const { accountId, accountState, log } = input.props
         try {
-          const database = await openAccountDatabase(
-            io,
-            accountState.accountWalletInfo
+          await openAccountDatabaseOnce(
+            ai,
+            accountState.accountWalletInfo,
+            accountId
           )
-          if (database == null) {
-            log.warn('Login: no SQL driver, transaction database disabled')
-            return
-          }
-          // A logout that landed while we were opening owns the close:
-          if (destroyed) {
-            await database.close().catch(() => undefined)
-            return
-          }
-          opened = database
-          openAccountDatabases.set(input.props.accountId, database)
-          if (database.reindexed.length > 0) {
-            log.warn(`Login: reindexed ${database.reindexed.join(', ')}`)
-          }
-          input.onOutput(database)
-        } catch (error) {
+        } catch (error: unknown) {
           log.error(error)
         }
+        return await stopUpdates
       },
 
       destroy() {
-        destroyed = true
-        if (opened == null) return
-        const database = opened
-        opened = undefined
-        openAccountDatabases.delete(input.props.accountId)
-        database.close().catch(() => undefined)
+        closeAccountDatabase(toApiInput(input), input.props.accountId)
       }
     }
   },
@@ -790,13 +461,19 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
    * a hundred transactions arriving together want one pass, not a hundred.
    * Every pass is a no-op once the cache covers what is stored, so the steady
    * state costs one cheap query.
+   *
+   * A periodic task runs its first pass the moment it starts, so it starts
+   * only once the database is open. An open that fails is the login task's
+   * to report, not this one's.
    */
   fiatFill(input: AccountInput) {
+    let destroyed = false
     const task = makePeriodicTask(
       async () => {
+        if (destroyed) return
         const { accountId, io, state } = input.props
-        const database = input.props.output.accounts[accountId]?.database
-        if (database?.rateDriver == null) return
+        const database = getAccountDatabase(toApiInput(input), accountId)
+        if (database.rateDriver == null) return
 
         const result = await fillFiatAmounts({
           driver: database.driver,
@@ -812,12 +489,18 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
     )
 
     return {
-      update() {
-        if (!input.props.state.transactionDatabase) return
-        task.start()
-        return stopUpdates
+      async update() {
+        const { accountId, accountState } = input.props
+        const database = await openAccountDatabaseOnce(
+          toApiInput(input),
+          accountState.accountWalletInfo,
+          accountId
+        ).catch(() => null)
+        if (database != null && !destroyed) task.start()
+        return await stopUpdates
       },
       destroy() {
+        destroyed = true
         task.stop()
       }
     }

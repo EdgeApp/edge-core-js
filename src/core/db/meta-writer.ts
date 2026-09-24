@@ -4,7 +4,7 @@ import {
   asTransactionFile,
   TransactionFile
 } from '../currency/wallet/currency-wallet-cleaners'
-import { EdgeSqlDriver } from '../db/db-driver'
+import { EdgeSqlDriver, EdgeSqlStatement } from '../db/db-driver'
 
 /**
  * Mirroring the sync-repo metadata into `tx_meta`.
@@ -62,12 +62,44 @@ export interface TxMetaWrite {
 }
 
 /**
- * Writes metadata rows, replacing whatever was there.
+ * What a write does to a row that is already there.
  *
- * Replace rather than merge, unlike `tx_chain`: a metadata file is written
- * whole by whoever last edited it, so it is a complete statement rather than
- * one asset's contribution. Merging would make a deleted note un-deletable.
+ * - `replace` is the ordinary write: a metadata file is written whole by
+ *   whoever last edited it, so it is a complete statement rather than one
+ *   asset's contribution, and merging would make a deleted note
+ *   un-deletable.
+ * - `replaceClean` is a file arriving by sync. It is newer than the row --
+ *   unless the row is dirty, because a dirty row is a local edit that never
+ *   reached any file, so no file can be newer than it.
+ * - `insert` leaves any existing row alone, which is what a bulk copy from
+ *   older files wants: a row already there is at least as new as the file.
  */
+export type TxMetaConflict = 'replace' | 'replaceClean' | 'insert'
+
+const conflictClauses: { [mode in TxMetaConflict]: string } = {
+  replace: 'DO UPDATE SET doc = excluded.doc',
+  replaceClean: 'DO UPDATE SET doc = excluded.doc WHERE tx_meta.file_dirty = 0',
+  insert: 'DO NOTHING'
+}
+
+/** The statements that write metadata rows. */
+export function txMetaStatements(
+  walletId: string,
+  walletCurrency: string,
+  writes: TxMetaWrite[],
+  opts: { conflict: TxMetaConflict; extras?: TxMetaExtras }
+): EdgeSqlStatement[] {
+  const { extras = { fileDirty: false } } = opts
+  const conflict = conflictClauses[opts.conflict]
+  return writes.map(({ txid, file }) => ({
+    sql: `INSERT INTO tx_meta (wallet_id, txid, doc)
+          VALUES (?, ?, jsonb(?))
+          ON CONFLICT (wallet_id, txid) ${conflict}`,
+    params: [walletId, txid, toTxMetaDoc(file, walletCurrency, extras)]
+  }))
+}
+
+/** Writes metadata rows, replacing whatever was there. */
 export async function saveTxMetas(
   driver: EdgeSqlDriver,
   walletId: string,
@@ -77,13 +109,48 @@ export async function saveTxMetas(
 ): Promise<void> {
   if (writes.length === 0) return
   await driver.batch(
-    writes.map(({ txid, file }) => ({
-      sql: `INSERT INTO tx_meta (wallet_id, txid, doc)
-            VALUES (?, ?, jsonb(?))
-            ON CONFLICT (wallet_id, txid)
-            DO UPDATE SET doc = excluded.doc`,
-      params: [walletId, txid, toTxMetaDoc(file, walletCurrency, extras)]
-    }))
+    txMetaStatements(walletId, walletCurrency, writes, {
+      conflict: 'replace',
+      extras
+    })
+  )
+}
+
+/**
+ * Writes the rows for files a sync brought in, leaving any row whose own
+ * edit has not reached a file yet.
+ */
+export async function saveSyncedTxMetas(
+  driver: EdgeSqlDriver,
+  walletId: string,
+  walletCurrency: string,
+  writes: TxMetaWrite[]
+): Promise<void> {
+  if (writes.length === 0) return
+  await driver.batch(
+    txMetaStatements(walletId, walletCurrency, writes, {
+      conflict: 'replaceClean'
+    })
+  )
+}
+
+/**
+ * Writes metadata rows only where there are none.
+ *
+ * For copying files the database has never seen while the wallet is in use:
+ * an edit or a sync that lands between reading a file and writing its row is
+ * newer than that file, and a row whose file write failed must keep the flag
+ * that gets it retried.
+ */
+export async function saveTxMetasIfAbsent(
+  driver: EdgeSqlDriver,
+  walletId: string,
+  walletCurrency: string,
+  writes: TxMetaWrite[]
+): Promise<void> {
+  if (writes.length === 0) return
+  await driver.batch(
+    txMetaStatements(walletId, walletCurrency, writes, { conflict: 'insert' })
   )
 }
 

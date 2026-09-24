@@ -22,9 +22,12 @@ import { makePeriodicTask, PeriodicTask } from '../../../util/periodic-task'
 import { snooze } from '../../../util/snooze'
 import { makeTokenInfo } from '../../account/custom-tokens'
 import { Dispatch } from '../../actions'
+import { getAccountDatabase } from '../../db/account-database'
 import { ensureWalletPrefix } from '../../db/plugin-tables'
 import { makeScratchDatabase } from '../../db/scratch-database'
 import { makeTxDatabase } from '../../db/tx-database-api'
+import { mirrorAllTxMeta } from '../../db/tx-meta-mirror'
+import { stopWalletTxWriteQueue } from '../../db/tx-write-queue'
 import { makeLog } from '../../log/log'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
@@ -346,6 +349,13 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         await loadFiatFile(startupInput)
         await loadNameFile(startupInput)
         await loadAddressFiles(startupInput)
+
+        // Copy the wallet's existing metadata files into the database, the
+        // one time it has not seen them. Not awaited, so the wallet's boot
+        // is not behind it:
+        mirrorAllTxMeta(startupInput).catch(error => {
+          if (!destroyed) input.props.onError(error)
+        })
       } catch (error: unknown) {
         // A logout mid-startup makes the remaining awaits fail for a
         // wallet that no longer exists; that is teardown, not an error:
@@ -372,6 +382,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         // Idempotent, so the startup block's own release stays the
         // normal path and this only matters for a logout mid-startup:
         if (releaseSlot != null) releaseSlot()
+        stopWalletTxWriteQueue(input.props.io, input.props.walletId)
       }
     }
   },
@@ -759,10 +770,9 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
  */
 async function makeWalletDatabase(
   input: CurrencyWalletInput
-): Promise<EdgeTxDatabase | undefined> {
+): Promise<EdgeTxDatabase> {
   const { accountId, pluginId } = input.props.walletState
-  const database = input.props.output.accounts[accountId]?.database
-  if (database == null) return undefined
+  const database = getAccountDatabase(input, accountId)
 
   const { io, walletId } = input.props
   const prefix = await ensureWalletPrefix(database.driver, walletId, pluginId)

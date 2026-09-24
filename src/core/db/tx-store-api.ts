@@ -9,7 +9,7 @@ import {
   EdgeTx
 } from '../../types/types'
 import { ApiInput } from '../root-pixie'
-import { EdgeAccountDatabase } from './account-database'
+import { EdgeAccountDatabase, getAccountDatabase } from './account-database'
 import { readDefaultIsoFiat, writeDefaultIsoFiat } from './fiat-materialize'
 import { queryTxPage, readTx, streamTxPages } from './tx-query'
 
@@ -57,11 +57,9 @@ export class EdgeTransactionStoreApi
   }
 
   get _database(): EdgeAccountDatabase {
-    const database = this._ai.props.output.accounts[this._accountId]?.database
-    // The API is only exposed once the database is open, so this is a
-    // logout racing a query rather than a missing capability:
-    if (database == null) throw new Error('This account is logged out')
-    return database
+    // The API is only exposed once the database is open, so a throw here is
+    // a logout racing a query rather than a missing capability:
+    return getAccountDatabase(this._ai, this._accountId)
   }
 
   get localSettings(): EdgeLocalSettings {

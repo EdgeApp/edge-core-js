@@ -1,12 +1,9 @@
 import { expect } from 'chai'
 import { afterEach, beforeEach, describe, it } from 'mocha'
-import { base64 } from 'rfc4648'
 
-import {
-  ACCOUNT_CACHE_FILES,
-  accountCacheSaverConfig
-} from '../../../src/core/account/account-cache-file'
+import { accountCacheSaverConfig } from '../../../src/core/account/account-cache-saver'
 import { walletCacheLoaderHooks } from '../../../src/core/currency/wallet/wallet-cache-loader'
+import { openAccountDatabases } from '../../../src/core/db/account-database'
 import { fakeWorldTestConfig } from '../../../src/core/fake/fake-world'
 import {
   EdgeAccount,
@@ -14,13 +11,16 @@ import {
   EdgeFakeWorld,
   makeFakeEdgeWorld
 } from '../../../src/index'
-import { base58 } from '../../../src/util/encoding'
 import { snooze } from '../../../src/util/snooze'
 import {
   createEngineGate,
   fakePluginTestConfig
 } from '../../fake/fake-currency-plugin'
 import { fakeUser } from '../../fake/fake-user'
+import {
+  findTestDatabase,
+  readAccountCache
+} from '../../fake/wallet-cache-rows'
 
 const contextOptions = { apiKey: '', appId: '', deviceDescription: 'iphone12' }
 const quiet = { onLog() {} }
@@ -88,25 +88,6 @@ async function makeAccountCachedWorld(
   await account.logout()
 
   return { context, world, walletIds, customTokenId }
-}
-
-/**
- * Returns the newest readable account-cache slot as parsed JSON. The
- * cache alternates between two slots, so a test that wants to inspect
- * what was actually written has to pick the current generation.
- */
-async function readAccountCache(account: EdgeAccount): Promise<any> {
-  let best: any
-  for (const path of ACCOUNT_CACHE_FILES) {
-    try {
-      const parsed = JSON.parse(await account.localDisklet.getText(path))
-      if (best == null || (parsed.sequence ?? 0) > (best.sequence ?? 0)) {
-        best = parsed
-      }
-    } catch (error: unknown) {}
-  }
-  if (best == null) throw new Error('No readable account cache')
-  return best
 }
 
 describe('account cache', function () {
@@ -376,41 +357,29 @@ describe('account cache', function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext({
       ...contextOptions,
+      device: 'phone',
       plugins: { fakecoin: true }
     })
 
-    // First session: decorate, then capture the local cache files a
-    // real device would still have on disk after the app closes:
+    // First session: decorate, and let the saver write the rows a real
+    // device still has after the app closes:
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     const walletIds = [...account.activeWalletIds]
     const wallet = await account.waitForCurrencyWallet(walletIds[0])
     await account.waitForCurrencyWallet(walletIds[1])
     await wallet.renameWallet('Cached Name')
     await snooze(SAVE_WAIT_MS)
-
-    const accountRepoInfo = account.getFirstWalletInfo(
-      'account-repo:co.airbitz.wallet'
-    )
-    if (accountRepoInfo == null) throw new Error('Broken test account')
-    // One file carries the whole account, wallets included, so this
-    // fixture is the entire warm-boot state:
-    const extraFiles: { [path: string]: string } = {}
-    for (const path of ACCOUNT_CACHE_FILES) {
-      try {
-        extraFiles[localPath(accountRepoInfo.id, path)] =
-          await account.localDisklet.getText(path)
-      } catch (error: unknown) {}
-    }
     await account.logout()
 
-    // A brand-new context is a fresh app process: a fresh Redux store
-    // with no storage wallets, plus the files captured above. The
-    // gated login must still resolve from the cache (regression guard:
-    // an eager storage-wallet read here crashes the whole login):
+    // A brand-new context on the same device is a fresh app process: a
+    // fresh Redux store with no storage wallets, and the device's
+    // database. The gated login must still resolve from the rows
+    // (regression guard: an eager storage-wallet read here crashes the
+    // whole login):
     const context2 = await world.makeEdgeContext({
       ...contextOptions,
-      plugins: { fakecoin: true },
-      extraFiles
+      device: 'phone',
+      plugins: { fakecoin: true }
     })
     const { gate, release } = createEngineGate()
     fakePluginTestConfig.builtinTokensGate = gate
@@ -466,14 +435,8 @@ describe('account cache', function () {
     // the account emit; today the live plugin always wins):
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     await snooze(SAVE_WAIT_MS)
-    let sawMethodName = false
-    for (const path of ACCOUNT_CACHE_FILES) {
-      try {
-        const text = await account.localDisklet.getText(path)
-        if (text.includes('fakePluginMethod')) sawMethodName = true
-      } catch (error: unknown) {}
-    }
-    expect(sawMethodName).equals(true)
+    const cache = await readAccountCache(account)
+    expect(cache.configOtherMethodNames.fakecoin).includes('fakePluginMethod')
 
     // The live surface stays verbatim, including in the cache-seeded
     // boot window:
@@ -485,72 +448,15 @@ describe('account cache', function () {
     await account.logout()
   })
 
-  it('survives a torn write by booting from the other slot', async function () {
+  it('boots cold when the wallet cache cannot be read', async function () {
     this.timeout(15000)
     const { context, walletIds } = await makeAccountCachedWorld()
 
-    // Put a generation in each slot: the world's own save filled one,
-    // and this rename dirties the cache so the next save fills the
-    // other:
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const wallet = await account.waitForCurrencyWallet(walletIds[0])
-    await wallet.renameWallet('Second Generation')
-    await snooze(SAVE_WAIT_MS)
-
-    // Truncate the NEWEST slot, which is what a kill part-way through
-    // a non-atomic write leaves behind on Android:
-    accountCacheSaverConfig.throttleMs = 5000
-    let newestPath = ACCOUNT_CACHE_FILES[0]
-    let newestSequence = -1
-    let newestText = ''
-    for (const path of ACCOUNT_CACHE_FILES) {
-      try {
-        const text = await account.localDisklet.getText(path)
-        const { sequence = 0 } = JSON.parse(text)
-        if (sequence > newestSequence) {
-          newestSequence = sequence
-          newestPath = path
-          newestText = text
-        }
-      } catch (error: unknown) {}
+    // A read that fails is logged and the login goes on cold. A gated
+    // login blocks, exactly as with no cache at all:
+    walletCacheLoaderHooks.beforeAccountSeed = () => {
+      throw new Error('Unreadable wallet cache')
     }
-    expect(newestSequence).greaterThan(0)
-    await account.localDisklet.setText(
-      newestPath,
-      newestText.slice(0, Math.floor(newestText.length / 2))
-    )
-    await account.logout()
-    accountCacheSaverConfig.throttleMs = 50
-
-    // The older slot is intact, so the login still boots warm while
-    // the engines are held. Its wallet name is the pre-rename one,
-    // which is the whole trade: one generation of staleness instead
-    // of a cold boot:
-    const { gate, release } = createEngineGate()
-    fakePluginTestConfig.engineGate = gate
-    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const wallet2 = await account2.waitForCurrencyWallet(walletIds[0])
-    expect(wallet2.name).not.equals(null)
-    release()
-    await account2.logout()
-  })
-
-  it('rejects a corrupt account cache file and falls back cold', async function () {
-    this.timeout(15000)
-    const { context, walletIds } = await makeAccountCachedWorld()
-
-    // Corrupt the account cache after the saver has settled:
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    await snooze(SAVE_WAIT_MS)
-    accountCacheSaverConfig.throttleMs = 5000
-    for (const path of ACCOUNT_CACHE_FILES) {
-      await account.localDisklet.setText(path, '{ "version": 99 }')
-    }
-    await account.logout()
-    accountCacheSaverConfig.throttleMs = 50
-
-    // A corrupt file means the cold path runs: a gated login blocks,
-    // exactly as with no cache at all:
     const { gate, release } = createEngineGate()
     fakePluginTestConfig.builtinTokensGate = gate
     let settled = false
@@ -563,14 +469,15 @@ describe('account cache', function () {
     await snooze(RACE_WAIT_MS)
     expect(settled).equals(false)
 
-    // Releasing the gate completes the boot and re-saves the cache:
+    // Releasing the gate completes the boot:
     release()
+    walletCacheLoaderHooks.beforeAccountSeed = undefined
     const account2 = await loginPromise
     expect(sorted([...account2.activeWalletIds])).deep.equals(sorted(walletIds))
     await snooze(SAVE_WAIT_MS)
     await account2.logout()
 
-    // The rewritten file feeds the next gated login:
+    // The rows feed the next gated login:
     const { gate: gate3, release: release3 } = createEngineGate()
     fakePluginTestConfig.builtinTokensGate = gate3
     const account3 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
@@ -692,55 +599,33 @@ describe('write-path staleness', function () {
     await snooze(SAVE_WAIT_MS)
   })
 
-  it('a cache write left in flight by a logout lands before the next login writes', async function () {
+  it('a failed cache write leaves every row as it was', async function () {
     this.timeout(15000)
     const { context } = await makeAccountCachedWorld()
 
-    // Session A's write is parked after the disk took it. Session B
-    // logs in and makes its own change while it is parked:
-    const accountA = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const walletA = await accountA.waitForCurrencyWallet(
-      accountA.activeWalletIds[0]
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet = await account.waitForCurrencyWallet(
+      account.activeWalletIds[0]
     )
     await snooze(SAVE_WAIT_MS)
-    const before = await readAccountCache(accountA)
-    await walletA.renameWallet('Session A Name')
+    const before = await readAccountCache(account)
 
-    // Park the cache write the rename triggers, once the throttle
-    // fires and the disk has taken it:
-    const { gate, release } = createEngineGate()
-    fakeWorldTestConfig.writeGate = gate
-    await snooze(RACE_WAIT_MS)
-    fakeWorldTestConfig.writeGate = undefined
-    await accountA.logout()
+    // Take away a table the next pass writes to, so its transaction
+    // fails part-way through -- after the wallet row's own statement:
+    const { driver } = await findTestDatabase(account)
+    await driver.exec([{ sql: 'ALTER TABLE wallet_balance RENAME TO held' }])
+    await wallet.renameWallet('Never Written')
+    await account.currencyConfig.fakecoin.changeUserSettings({ balance: 777 })
+    await snooze(SAVE_WAIT_MS)
 
-    const accountB = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    const walletB = await accountB.waitForCurrencyWallet(
-      accountB.activeWalletIds[0]
+    // Nothing of that pass landed, the rename included:
+    await driver.exec([{ sql: 'ALTER TABLE held RENAME TO wallet_balance' }])
+    const after = await readAccountCache(account)
+    expect(after.wallets[wallet.id].name).equals(before.wallets[wallet.id].name)
+    expect(after.wallets[wallet.id].balances).deep.equals(
+      before.wallets[wallet.id].balances
     )
-    await walletB.renameWallet('Session B Name')
-    await snooze(RACE_WAIT_MS)
-
-    // B's first write waited behind A's, so the two generations land
-    // in different slots with consecutive sequence numbers, both
-    // newer than what A had written before the parked write:
-    release()
-    await snooze(SAVE_WAIT_MS)
-    const sequences: number[] = []
-    for (const path of ACCOUNT_CACHE_FILES) {
-      try {
-        const cache = JSON.parse(await accountB.localDisklet.getText(path))
-        sequences.push(cache.sequence)
-      } catch (error: unknown) {}
-    }
-    sequences.sort((a, b) => a - b)
-    expect(sequences.length).equals(2)
-    expect(sequences[0]).greaterThan(before.sequence)
-    expect(sequences[1]).equals(sequences[0] + 1)
-    const latest = await readAccountCache(accountB)
-    expect(latest.wallets[walletB.id].name).equals('Session B Name')
-    await accountB.logout()
-    await snooze(SAVE_WAIT_MS)
+    await account.logout()
   })
 
   it('keeps custom tokens from another device across a boot-window edit', async function () {
@@ -970,10 +855,214 @@ describe('write-path staleness', function () {
   })
 })
 
-/** The disklet path of a file on a wallet's or account's local storage. */
-function localPath(id: string, file: string): string {
-  return `local/${base58.stringify(base64.parse(id))}/${file}`
-}
+describe('account boot from rows', function () {
+  beforeEach(function () {
+    accountCacheSaverConfig.throttleMs = 50
+  })
+
+  afterEach(function () {
+    fakePluginTestConfig.builtinTokensGate = undefined
+    fakePluginTestConfig.engineGate = undefined
+    fakePluginTestConfig.rejectPublicKey = undefined
+    walletCacheLoaderHooks.onAccountSeed = undefined
+    walletCacheLoaderHooks.onBulkSeed = undefined
+    walletCacheLoaderHooks.onFallbackSeed = undefined
+    walletCacheLoaderHooks.beforeWalletSeeds = undefined
+    accountCacheSaverConfig.throttleMs = 5000
+    accountCacheSaverConfig.onSave = undefined
+  })
+
+  it('opens the database before it seeds', async function () {
+    this.timeout(15000)
+    const { context } = await makeAccountCachedWorld()
+    let openAtSeed = -1
+    walletCacheLoaderHooks.onAccountSeed = () => {
+      openAtSeed = openAccountDatabases.size
+    }
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    expect(openAtSeed).equals(1)
+    // And the store is there from the first moment the account is:
+    expect(account.transactions).not.equals(undefined)
+    await account.logout()
+  })
+
+  it('boots cold from rows plugin tables alone made', async function () {
+    this.timeout(15000)
+    const { context } = await makeAccountCachedWorld()
+
+    // An account killed before its saver's first transaction: the engines
+    // made their rows, and nothing marked any of them cached:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await snooze(SAVE_WAIT_MS)
+    accountCacheSaverConfig.throttleMs = 5000
+    const { driver } = await findTestDatabase(account)
+    await driver.exec([{ sql: 'UPDATE wallet SET cached = 0' }])
+    await account.logout()
+    accountCacheSaverConfig.throttleMs = 50
+
+    let accountSeeded = false
+    walletCacheLoaderHooks.onAccountSeed = () => (accountSeeded = true)
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.builtinTokensGate = gate
+    let settled = false
+    const loginPromise = context
+      .loginWithPIN(fakeUser.username, fakeUser.pin)
+      .then(account => {
+        settled = true
+        return account
+      })
+    await snooze(RACE_WAIT_MS)
+    expect(settled).equals(false)
+    expect(accountSeeded).equals(false)
+    release()
+    await (await loginPromise).logout()
+  })
+
+  it('keeps the default sort order for a wallet with no state', async function () {
+    this.timeout(15000)
+    const { context } = await makeAccountCachedWorld()
+
+    // The authoritative order, once every file has loaded:
+    const cold = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await cold.waitForAllWallets()
+    const order = [...cold.activeWalletIds]
+    const sortIndexes = cold.allKeys.map(info => info.sortIndex)
+    await cold.logout()
+
+    // The warm boot, before the key files land, has the same order and
+    // no invented sort index:
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.builtinTokensGate = gate
+    const warm = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    expect([...warm.activeWalletIds]).deep.equals(order)
+    for (const info of warm.allKeys) {
+      expect(info.sortIndex).is.a('number')
+    }
+    release()
+    await warm.waitForAllWallets()
+    expect(warm.allKeys.map(info => info.sortIndex)).deep.equals(sortIndexes)
+    await warm.logout()
+  })
+
+  it('writes one row for one balance change, once per throttle window', async function () {
+    this.timeout(15000)
+    const { context, walletIds } = await makeAccountCachedWorld()
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.waitForCurrencyWallet(walletIds[0])
+    await account.waitForCurrencyWallet(walletIds[1])
+    await snooze(SAVE_WAIT_MS)
+
+    const passes: number[] = []
+    accountCacheSaverConfig.onSave = count => passes.push(count)
+    const { driver } = await findTestDatabase(account)
+    const rowBefore = await driver.query(
+      'SELECT rowid, name, fiat_code FROM wallet WHERE wallet_id = ?',
+      [walletIds[0]]
+    )
+
+    // One balance, one row -- per wallet reporting it:
+    await account.currencyConfig.fakecoin.changeUserSettings({ balance: 4242 })
+    await snooze(SAVE_WAIT_MS)
+    expect(passes).deep.equals([2])
+    expect(
+      await driver.query(
+        'SELECT rowid, name, fiat_code FROM wallet WHERE wallet_id = ?',
+        [walletIds[0]]
+      )
+    ).deep.equals(rowBefore)
+
+    // Many changes inside one window land in one pass:
+    passes.length = 0
+    accountCacheSaverConfig.throttleMs = 200
+    const wallet = await account.waitForCurrencyWallet(walletIds[0])
+    await wallet.renameWallet('One')
+    await wallet.renameWallet('Two')
+    await account.currencyConfig.fakecoin.changeUserSettings({ balance: 7 })
+    await snooze(600)
+    expect(passes.length).equals(1)
+    await account.logout()
+  })
+
+  it('emits no error on a cold or a warm login', async function () {
+    this.timeout(15000)
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { fakecoin: true }
+    })
+    const errors: unknown[] = []
+    context.on('error', error => errors.push(error))
+
+    const cold = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await cold.waitForAllWallets()
+    await snooze(SAVE_WAIT_MS)
+    await cold.logout()
+    const warm = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await warm.waitForAllWallets()
+    await snooze(SAVE_WAIT_MS)
+    await warm.logout()
+    expect(errors).deep.equals([])
+  })
+
+  it('still dispatches the bulk seed when the bulk read fails', async function () {
+    this.timeout(15000)
+    const { context, walletIds } = await makeAccountCachedWorld()
+
+    const bulkSeeds: string[][] = []
+    const fallbackSeeds: string[] = []
+    walletCacheLoaderHooks.onBulkSeed = ids => bulkSeeds.push(ids)
+    walletCacheLoaderHooks.onFallbackSeed = id => fallbackSeeds.push(id)
+    walletCacheLoaderHooks.beforeWalletSeeds = () => {
+      throw new Error('Unreadable rows')
+    }
+    const { gate, release } = createEngineGate()
+    fakePluginTestConfig.engineGate = gate
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    // An empty bulk seed, and every wallet reads its own rows instead:
+    await pollUntil(() =>
+      walletIds.every(id => account.currencyWallets[id] != null)
+    )
+    expect(bulkSeeds).deep.equals([[]])
+    expect(sorted(fallbackSeeds)).deep.equals(sorted(walletIds))
+    release()
+    await account.logout()
+  })
+
+  it('re-derives a key the plugin rejects, and caches the new one', async function () {
+    this.timeout(15000)
+    const { context, walletIds } = await makeAccountCachedWorld()
+    const [walletId] = walletIds
+
+    // A cached key the plugin no longer accepts:
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.waitForCurrencyWallet(walletId)
+    await snooze(SAVE_WAIT_MS)
+    accountCacheSaverConfig.throttleMs = 5000
+    const { driver } = await findTestDatabase(account)
+    const stale = { fakeAddress: 'Stale' }
+    await driver.exec([
+      {
+        sql: `UPDATE wallet
+                 SET wallet_info = json_set(wallet_info, '$.keys', json(?))
+               WHERE wallet_id = ?`,
+        params: [JSON.stringify(stale), walletId]
+      }
+    ])
+    await account.logout()
+    accountCacheSaverConfig.throttleMs = 50
+
+    fakePluginTestConfig.rejectPublicKey = keys => keys.fakeAddress === 'Stale'
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account2.waitForAllWallets()
+    await snooze(SAVE_WAIT_MS)
+    const cache = await readAccountCache(account2)
+    expect(cache.wallets[walletId].walletInfo.keys).deep.equals({
+      fakeAddress: 'FakePublicAddress'
+    })
+    await account2.logout()
+  })
+})
 
 /** Returns a sorted copy, so order-insensitive comparisons read cleanly. */
 function sorted(list: string[]): string[] {
