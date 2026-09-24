@@ -15,8 +15,13 @@ import {
 import { makeJsonFile } from '../../../util/file-helpers'
 import { fetchAppIdInfo } from '../../account/lobby-api'
 import {
+  findAccountDatabase,
+  getAccountDatabase
+} from '../../db/account-database'
+import {
   clearTxMetaDirty,
   readDirtyTxMeta,
+  saveSyncedTxMetas,
   saveTxMetas,
   TxMetaWrite
 } from '../../db/meta-writer'
@@ -27,7 +32,6 @@ import {
   getStorageWalletLocalDisklet,
   hashStorageWalletFilename
 } from '../../storage/storage-selectors'
-import { combineTxWithFile } from './currency-wallet-api'
 import {
   asLegacyAddressFile,
   asLegacyMapFile,
@@ -44,7 +48,7 @@ import {
   TransactionFile
 } from './currency-wallet-cleaners'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
-import { TxFileNames } from './currency-wallet-reducer'
+import { MergedTransaction, TxFileNames } from './currency-wallet-reducer'
 import { currencyCodesToTokenIds } from './enabled-tokens'
 import { mergeMetadata } from './metadata'
 
@@ -378,7 +382,7 @@ export async function loadTxFiles(
   input: CurrencyWalletInput,
   txIdHashes: string[]
 ): Promise<{ [txidHash: string]: TransactionFile }> {
-  const { dispatch, walletId } = input.props
+  const { walletId } = input.props
   const disklet = getStorageWalletDisklet(input.props.state, walletId)
   const walletCurrency = input.props.walletState.currencyInfo.currencyCode
   const fileNames = input.props.walletState.fileNames
@@ -404,17 +408,6 @@ export async function loadTxFiles(
     })
   )
 
-  dispatch({
-    type: 'CURRENCY_WALLET_FILES_LOADED',
-    payload: { files: out, walletId }
-  })
-  mirrorTxMeta(
-    input,
-    Object.keys(out).map(txidHash => ({
-      txid: out[txidHash].txid,
-      file: out[txidHash]
-    }))
-  )
   return out
 }
 
@@ -428,11 +421,18 @@ export async function loadTxFiles(
 function mirrorTxMeta(input: CurrencyWalletInput, writes: TxMetaWrite[]): void {
   if (writes.length === 0) return
   const { accountId, currencyInfo } = input.props.walletState
-  const database = input.props.output.accounts[accountId]?.database
+
+  // A sync can finish after logout, with nothing left to write to:
+  const database = findAccountDatabase(input, accountId)
   if (database == null) return
 
   const walletId = input.props.walletId
-  saveTxMetas(database.driver, walletId, currencyInfo.currencyCode, writes)
+  saveSyncedTxMetas(
+    database.driver,
+    walletId,
+    currencyInfo.currencyCode,
+    writes
+  )
     .then(() =>
       database.changed(writes.map(write => ({ walletId, txid: write.txid })))
     )
@@ -619,18 +619,62 @@ export async function updateCurrencyWalletTxMetadata(
   if (assetAction != null) assetData.assetAction = assetAction
   if (savedAction != null) newFile.savedAction = savedAction
 
-  // Save the new file:
+  // Save the new file, and its row before any event:
   dispatch({
     type: 'CURRENCY_WALLET_FILE_CHANGED',
-    payload: { creationDate, fileName, json: newFile, txid, txidHash, walletId }
+    payload: { creationDate, fileName, txid, txidHash, walletId }
   })
-  await transactionFile.save(disklet, 'transaction/' + fileName, newFile)
-  const callbackTx = combineTxWithFile(input, tx, newFile, tokenId)
+  await saveTxMetadataFile(input, fileName, newFile)
+
+  // The event's content is read back from the database, where the row just
+  // written wins; what goes in here only has to be the transaction, with the
+  // edit on it so the change check lets it through:
+  const callbackTx = toCallbackTransaction(input, tx, tokenId, currencyCode)
+  callbackTx.metadata = assetData.metadata ?? {}
+  if (assetData.assetAction != null) {
+    callbackTx.assetAction = assetData.assetAction
+  }
+  if (newFile.savedAction != null) callbackTx.savedAction = newFile.savedAction
   fakeCallbacks.onTransactions([
     // This method is used to update metadata for existing/seen transactions,
     // so we should always mark the transaction as not new.
     { isNew: false, transaction: callbackTx }
   ])
+}
+
+/** One asset's view of a transaction as Redux holds it. */
+function toCallbackTransaction(
+  input: CurrencyWalletInput,
+  tx: MergedTransaction,
+  tokenId: EdgeTokenId,
+  currencyCode: string
+): EdgeTransaction {
+  const { currencyInfo } = input.props.walletState
+  return {
+    blockHeight: tx.blockHeight,
+    chainAction: tx.chainAction,
+    chainAssetAction: tx.chainAssetAction.get(tokenId),
+    confirmations: tx.confirmations,
+    currencyCode,
+    date: tx.date,
+    feeRateUsed: tx.feeRateUsed,
+    isSend: tx.isSend,
+    memos: tx.memos,
+    metadata: {},
+    nativeAmount: tx.nativeAmount.get(tokenId) ?? '0',
+    networkFee: tx.networkFee.get(tokenId) ?? '0',
+    networkFees: [],
+    otherParams: { ...tx.otherParams },
+    ourReceiveAddresses: tx.ourReceiveAddresses,
+    parentNetworkFee:
+      currencyInfo.currencyCode === currencyCode
+        ? undefined
+        : tx.networkFee.get(null) ?? '0',
+    signedTx: tx.signedTx,
+    tokenId,
+    txid: tx.txid,
+    walletId: input.props.walletId
+  }
 }
 
 /**
@@ -696,7 +740,6 @@ export async function setupNewTxMetadata(
     payload: {
       creationDate,
       fileName,
-      json: txFile,
       txid: tx.txid,
       txidHash,
       walletId
@@ -717,7 +760,7 @@ export async function saveTxMetadataFile(
   const { state, walletId } = input.props
   const { accountId, currencyInfo } = input.props.walletState
   const disklet = getStorageWalletDisklet(state, walletId)
-  const database = input.props.output.accounts[accountId]?.database
+  const database = getAccountDatabase(input, accountId)
 
   try {
     await transactionFile.save(disklet, 'transaction/' + fileName, txFile)
@@ -725,23 +768,19 @@ export async function saveTxMetadataFile(
     // The database keeps the edit and `flushDirtyTxMeta` retries the file.
     // Losing a user's annotation because a disk write failed once is the
     // outcome worth spending a row on.
-    if (database != null) {
-      await saveTxMetas(
-        database.driver,
-        walletId,
-        currencyInfo.currencyCode,
-        [{ txid: txFile.txid, file: txFile }],
-        { fileDirty: true }
-      ).catch(() => undefined)
-    }
+    await saveTxMetas(
+      database.driver,
+      walletId,
+      currencyInfo.currencyCode,
+      [{ txid: txFile.txid, file: txFile }],
+      { fileDirty: true }
+    ).catch(() => undefined)
     throw error
   }
 
-  if (database != null) {
-    await saveTxMetas(database.driver, walletId, currencyInfo.currencyCode, [
-      { txid: txFile.txid, file: txFile }
-    ]).catch(error => input.props.onError(error))
-  }
+  await saveTxMetas(database.driver, walletId, currencyInfo.currencyCode, [
+    { txid: txFile.txid, file: txFile }
+  ]).catch(error => input.props.onError(error))
 }
 
 /**
@@ -756,7 +795,9 @@ export async function flushDirtyTxMeta(
 ): Promise<void> {
   const { state, walletId } = input.props
   const { accountId } = input.props.walletState
-  const database = input.props.output.accounts[accountId]?.database
+
+  // A sync can finish after logout, with nothing left to flush from:
+  const database = findAccountDatabase(input, accountId)
   if (database == null) return
 
   const dirty = await readDirtyTxMeta(database.driver, walletId)
@@ -909,9 +950,21 @@ export async function reloadWalletFiles(
   await loadTxFileNames(input)
 
   // Re-read the *contents* of changed transaction files, not just their
-  // names:
+  // names, and mirror them. A file a sync changed is newer than its row --
+  // except where the row is a local edit that never reached a file, which
+  // no file can be newer than, and which `flushDirtyTxMeta` below writes
+  // out instead:
   const changed = changedTxidHashes(changes)
-  if (changed.length > 0) await loadTxFiles(input, changed)
+  if (changed.length > 0) {
+    const files = await loadTxFiles(input, changed)
+    mirrorTxMeta(
+      input,
+      Object.keys(files).map(txidHash => ({
+        txid: files[txidHash].txid,
+        file: files[txidHash]
+      }))
+    )
+  }
 
   await loadAddressFiles(input)
   await flushDirtyTxMeta(input).catch(error => input.props.onError(error))

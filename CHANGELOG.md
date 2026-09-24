@@ -3,6 +3,11 @@
 ## Unreleased
 
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
+- added: `EdgeFakeContextOptions.device`, so fake contexts can share a device's disk and databases, and `EdgeFakeContextOptions.sqlDriver`, to model a device without a working SQL binding.
+- changed: Every login opens the account's transaction database, and a login that cannot open it fails. `EdgeContextOptions.transactionDatabase` is removed.
+- changed: `EdgeAccount.transactions` is always present.
+- changed: Wallet transactions are read only from the database, and `transactionsChanged` and `newTransactions` carry each transaction as a query returns it, with its metadata.
+- changed: Warm logins seed the account and wallets from the account database, and changes to that state are written there a row at a time.
 - fixed: Logging in no longer fails when a plugin fails to load. Such a plugin is absent from `currencyConfig` and `swapConfig`, as already documented, instead of blocking every login in the app.
 
 ## 2.49.0 (2026-09-23)

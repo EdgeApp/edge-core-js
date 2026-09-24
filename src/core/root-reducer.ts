@@ -25,7 +25,6 @@ export interface RootState {
   readonly paused: boolean
   readonly ready: boolean
   readonly skipBlockHeight: boolean
-  readonly transactionDatabase: boolean
   readonly syncServers: string[]
 
   // Children reducers:
@@ -152,10 +151,6 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
 
   skipBlockHeight(state = false, action): boolean {
     return action.type === 'INIT' ? action.payload.skipBlockHeight : state
-  },
-
-  transactionDatabase(state = false, action): boolean {
-    return action.type === 'INIT' ? action.payload.transactionDatabase : state
   },
 
   syncServers(state = [], action): string[] {

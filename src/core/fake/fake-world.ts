@@ -22,6 +22,7 @@ import {
   EdgeIo
 } from '../../types/types'
 import { base58 } from '../../util/encoding'
+import { SqlDriverFactory } from '../db/db-driver'
 import { LogBackend } from '../log/log'
 import { applyLoginPayload } from '../login/login'
 import { wasLoginStash } from '../login/login-stash'
@@ -102,6 +103,10 @@ async function saveRepo(
 export const fakeWorldTestConfig: {
   readGate?: Promise<void>
   writeGate?: Promise<void>
+  /** Told each database name a fake device is asked to delete. */
+  onDeleteSqlDatabase?: (name: string) => void
+  /** Makes the fake disk refuse a write to any path it matches. */
+  failWrite?: (path: string) => boolean
 } = {}
 
 function makeGatedDisklet(disklet: Disklet): Disklet {
@@ -115,6 +120,9 @@ function makeGatedDisklet(disklet: Disklet): Disklet {
       return out
     },
     async setText(path: string, text: string): Promise<unknown> {
+      if (fakeWorldTestConfig.failWrite?.(path) === true) {
+        throw new Error(`The fake disk refuses to write ${path}`)
+      }
       const out = await disklet.setText(path, text)
       if (fakeWorldTestConfig.writeGate != null) {
         await fakeWorldTestConfig.writeGate
@@ -127,11 +135,58 @@ function makeGatedDisklet(disklet: Disklet): Disklet {
 export function makeFakeWorld(
   ios: PluginIos,
   logBackend: LogBackend,
-  users: EdgeFakeUser[]
+  users: EdgeFakeUser[],
+  makeSqlDriverFactory?: () => SqlDriverFactory
 ): EdgeFakeWorld {
   const { io, nativeIo } = ios
   const fakeDb = new FakeDb()
   const fakeServer = makeFakeServer(fakeDb)
+
+  // Each named fake device keeps its disk and its databases for the life of
+  // the world, the way a phone keeps both between runs of the app:
+  const devices = new Map<string, SqlDriverFactory>()
+  const deviceDisklets = new Map<string, Disklet>()
+
+  /**
+   * A context's SQL binding. Only a world given a constructor has any say:
+   * elsewhere the context keeps whatever binding its io already has.
+   */
+  function makeSqlIo(
+    device: string | undefined,
+    mode: 'memory' | 'none' | 'failing'
+  ): SqlDriverFactory {
+    if (makeSqlDriverFactory == null) return {}
+    if (mode === 'none') {
+      return { makeSqlDriver: undefined, deleteSqlDatabase: undefined }
+    }
+
+    let factory: SqlDriverFactory
+    if (mode === 'failing') {
+      factory = {
+        async makeSqlDriver() {
+          throw new Error('The fake SQL driver refuses to open anything')
+        },
+        async deleteSqlDatabase() {}
+      }
+    } else if (device == null) {
+      factory = makeSqlDriverFactory()
+    } else {
+      factory = devices.get(device) ?? makeSqlDriverFactory()
+      devices.set(device, factory)
+    }
+
+    const { deleteSqlDatabase } = factory
+    return {
+      makeSqlDriver: factory.makeSqlDriver,
+      deleteSqlDatabase:
+        deleteSqlDatabase == null
+          ? undefined
+          : async name => {
+              fakeWorldTestConfig.onDeleteSqlDatabase?.(name)
+              await deleteSqlDatabase(name)
+            }
+    }
+  }
 
   // Populate the fake database:
   for (const user of users) {
@@ -153,7 +208,9 @@ export function makeFakeWorld(
       const {
         allowNetworkAccess = false,
         cleanDevice = false,
-        extraFiles = {}
+        device,
+        extraFiles = {},
+        sqlDriver = 'memory'
       } = opts
 
       const fakeFetch = makeFetchFunction(fakeServer)
@@ -166,14 +223,20 @@ export function makeFakeWorld(
             return io.fetch(uri, opts)
           }
 
+      const knownDisklet =
+        device == null ? undefined : deviceDisklets.get(device)
+      const disklet = knownDisklet ?? makeGatedDisklet(makeMemoryDisklet())
+      if (device != null) deviceDisklets.set(device, disklet)
+
       const fakeIo = {
         ...io,
-        disklet: makeGatedDisklet(makeMemoryDisklet()),
+        ...makeSqlIo(device, sqlDriver),
+        disklet,
         fetch
       }
 
-      // Populate the fake disk:
-      if (!cleanDevice) {
+      // Populate the fake disk, unless this device already has one:
+      if (!cleanDevice && knownDisklet == null) {
         for (const user of users) {
           await saveLogin(fakeIo, user)
           for (const syncKey of Object.keys(user.repos)) {

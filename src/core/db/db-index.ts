@@ -40,7 +40,7 @@ export const derivedTables: EdgeDerivedTable[] = [
   { name: 'tx_asset_idx', version: 1, rebuild: reindexAssets() },
   // Rebuilding the text table rebuilds the FTS index with it, through the
   // same external-content triggers that maintain it in normal use.
-  { name: 'tx_search_idx', version: 1, rebuild: reindexSearch() }
+  { name: 'tx_search_idx', version: 2, rebuild: reindexSearch() }
 ]
 
 /**

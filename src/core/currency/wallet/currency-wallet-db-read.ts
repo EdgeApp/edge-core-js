@@ -10,12 +10,13 @@ import {
   EdgeTx
 } from '../../../types/types'
 import { EdgeSqlDriver } from '../../db/db-driver'
-import { queryTxPage } from '../../db/tx-query'
+import { MAX_LIMIT, queryTxPage, streamTxPages } from '../../db/tx-query'
 import {
   determineConfirmations,
   shouldCoreDetermineConfirmations
 } from './currency-wallet-callbacks'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
+import { mergeMetadata } from './metadata'
 
 /**
  * Reading a wallet's transactions out of the database.
@@ -112,7 +113,8 @@ export function toEdgeTransaction(
   input: CurrencyWalletInput,
   tx: EdgeTx,
   tokenId: EdgeTokenId,
-  currencyCode: string
+  currencyCode: string,
+  height: number = input.props.walletState.height
 ): EdgeTransaction {
   const { currencyInfo } = input.props.walletState
 
@@ -120,16 +122,76 @@ export function toEdgeTransaction(
   if (shouldCoreDetermineConfirmations(out.confirmations)) {
     out.confirmations = determineConfirmations(
       out,
-      input.props.walletState.height,
+      height,
       currencyInfo.requiredConfirmations
     )
   }
 
-  // Readers have always been handed an object here rather than nothing, and
-  // a transaction with no metadata is the ordinary case:
-  if (out.metadata == null) out.metadata = {}
+  // Readers have always been handed metadata in one shape -- every fiat
+  // amount in a map, a token's own fields over its chain asset's -- and a
+  // transaction with no metadata at all is the ordinary case:
+  const parent = tokenId == null ? {} : tx.tokenData.get(null)?.metadata ?? {}
+  out.metadata = mergeMetadata(parent, out.metadata ?? {})
 
   return out
+}
+
+/** One asset of one transaction an event is about. */
+export interface TxEventKey {
+  txid: string
+  tokenId: EdgeTokenId
+  currencyCode: string
+  isNew: boolean
+}
+
+/**
+ * The transactions an event is about, as a query would return them.
+ *
+ * Read back rather than built from what the engine handed over, so an event
+ * carries the user's metadata the same way a page of the transaction list
+ * does -- a reader that overlays a changed transaction on its list would
+ * otherwise blank the name it already showed.
+ *
+ * Every page is followed to its end, in chunks of txids that fit one page's
+ * bound parameters: a batch is whatever the engine accumulated, and an
+ * initial sync or a height change reports thousands.
+ */
+export async function readTxEvents(
+  input: CurrencyWalletInput,
+  driver: EdgeSqlDriver,
+  keys: TxEventKey[],
+  height?: number
+): Promise<{ created: EdgeTransaction[]; changed: EdgeTransaction[] }> {
+  const { walletId } = input.props
+  const stored = new Map<string, EdgeTx>()
+  const txids = [...new Set(keys.map(key => key.txid))]
+  for (let start = 0; start < txids.length; start += MAX_LIMIT) {
+    const pages = streamTxPages(driver, {
+      walletIds: [walletId],
+      txids: txids.slice(start, start + MAX_LIMIT),
+      limit: MAX_LIMIT
+    })
+    for await (const page of pages) {
+      for (const tx of page) stored.set(tx.txid, tx)
+    }
+  }
+
+  const created: EdgeTransaction[] = []
+  const changed: EdgeTransaction[] = []
+  for (const key of keys) {
+    const tx = stored.get(key.txid)
+    if (tx == null) continue
+    const edgeTx = toEdgeTransaction(
+      input,
+      tx,
+      key.tokenId,
+      key.currencyCode,
+      height
+    )
+    if (key.isNew) created.push(edgeTx)
+    else changed.push(edgeTx)
+  }
+  return { created, changed }
 }
 
 /**

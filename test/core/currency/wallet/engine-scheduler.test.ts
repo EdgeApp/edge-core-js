@@ -1,10 +1,7 @@
 import { expect } from 'chai'
 import { afterEach, beforeEach, describe, it } from 'mocha'
 
-import {
-  ACCOUNT_CACHE_FILES,
-  accountCacheSaverConfig
-} from '../../../../src/core/account/account-cache-file'
+import { accountCacheSaverConfig } from '../../../../src/core/account/account-cache-saver'
 import {
   engineSchedulerConfig,
   getEngineScheduler
@@ -16,6 +13,7 @@ import {
   fakePluginTestConfig
 } from '../../../fake/fake-currency-plugin'
 import { fakeUser } from '../../../fake/fake-user'
+import { findTestDatabase } from '../../../fake/wallet-cache-rows'
 
 const contextOptions = { apiKey: '', appId: '', deviceDescription: 'iphone12' }
 const quiet = { onLog() {} }
@@ -189,23 +187,28 @@ describe('engine scheduler', function () {
     this.timeout(15000)
     const { context, walletIds } = await makeMultiWalletWorld(3)
 
-    // Strip every wallet out of the account cache, so the account
-    // still boots warm but no wallet has anything cached. Let the
-    // login's own cache save settle first, so nothing rewrites the
-    // file afterwards:
+    // Leave every wallet with nothing to seed from but one, so the
+    // account still boots warm. Let the login's own save settle first,
+    // so nothing rewrites the rows afterwards:
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     await account.waitForAllWallets()
     await snooze(SAVE_WAIT_MS)
     accountCacheSaverConfig.throttleMs = 5000
-    for (const path of ACCOUNT_CACHE_FILES) {
-      try {
-        const cache = JSON.parse(await account.localDisklet.getText(path))
-        await account.localDisklet.setText(
-          path,
-          JSON.stringify({ ...cache, wallets: {} })
-        )
-      } catch (error: unknown) {}
-    }
+    const { driver } = await findTestDatabase(account)
+    await driver.exec([
+      {
+        sql: `UPDATE wallet SET cached = 0
+               WHERE wallet_id IN (${walletIds.map(() => '?').join(', ')})`,
+        params: walletIds
+      },
+      // A stand-in keeps the boot warm without seeding any real wallet:
+      {
+        sql: `INSERT INTO wallet (wallet_id, prefix, cached, wallet_info,
+                fiat_code, enabled_token_ids, other_method_names)
+              VALUES ('placeholder', 'p_placeholder_', 1, '{}', 'iso:USD',
+                '[]', '[]')`
+      }
+    ])
     await account.logout()
     accountCacheSaverConfig.throttleMs = 50
 
