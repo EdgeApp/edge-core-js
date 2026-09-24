@@ -28,6 +28,7 @@ import { stopWalletTxWriteQueue } from '../../db/tx-write-queue'
 import { makeLog } from '../../log/log'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
+import { readOnlyDisklet } from '../../storage/read-only-disklet'
 import {
   addStorageWallet,
   SYNC_INTERVAL,
@@ -180,9 +181,8 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
         // Grab the freshly-synced repos:
         const { state } = input.props
-        const walletLocalDisklet = getStorageWalletLocalDisklet(
-          state,
-          walletInfo.id
+        const legacyDisklet = readOnlyDisklet(
+          getStorageWalletLocalDisklet(state, walletInfo.id)
         )
         const walletLocalEncryptedDisklet =
           makeStorageWalletLocalEncryptedDisklet(
@@ -266,7 +266,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             input.props.logBackend,
             `${pluginId}-${walletInfo.id.slice(0, 2)}`
           ),
-          walletLocalDisklet,
+          legacyDisklet,
           walletLocalEncryptedDisklet,
 
           // User settings:

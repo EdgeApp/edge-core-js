@@ -90,6 +90,15 @@ export interface FakePluginTestConfig {
    */
   onEngineCreate?: (walletId: string) => void
 
+  /** If set, receives the options handed to each engine. */
+  onEngineOptions?: (walletId: string, opts: EdgeCurrencyEngineOptions) => void
+
+  /**
+   * If set, engine creation fails with no `txDatabase`, the way an engine
+   * that keeps all its state in the database does.
+   */
+  requireTxDatabase?: boolean
+
   /**
    * If set, engine creation for this one wallet id fails before any
    * gate, so tests can hold one wallet failed while another is queued.
@@ -128,6 +137,8 @@ export const fakePluginTestConfig: FakePluginTestConfig = {
   rejectPublicKey: undefined,
   onDerivePublicKey: undefined,
   onEngineCreate: undefined,
+  onEngineOptions: undefined,
+  requireTxDatabase: undefined,
   failEngineFor: undefined,
   onEngineKill: undefined,
   onEngineCallbacks: undefined,
@@ -595,8 +606,15 @@ export function makeFakeCurrencyPlugin(
       if (fakePluginTestConfig.onEngineCallbacks != null) {
         fakePluginTestConfig.onEngineCallbacks(walletInfo.id, opts.callbacks)
       }
+      fakePluginTestConfig.onEngineOptions?.(walletInfo.id, opts)
       if (fakePluginTestConfig.failEngineFor === walletInfo.id) {
         throw new Error('Engine exploded')
+      }
+      if (
+        fakePluginTestConfig.requireTxDatabase === true &&
+        opts.txDatabase == null
+      ) {
+        throw new Error('This engine needs a txDatabase')
       }
       if (fakePluginTestConfig.engineGate != null) {
         await fakePluginTestConfig.engineGate
