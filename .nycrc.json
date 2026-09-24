@@ -4,7 +4,8 @@
     "src/core/db/**/*.ts",
     "src/core/account/account-cache-saver.ts",
     "src/core/currency/wallet/wallet-cache-*.ts",
-    "src/core/currency/wallet/currency-wallet-db-read.ts"
+    "src/core/currency/wallet/currency-wallet-db-read.ts",
+    "src/core/storage/read-only-disklet.ts"
   ],
   "require": ["sucrase/register"],
   "all": true,

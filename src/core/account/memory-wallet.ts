@@ -16,9 +16,11 @@ import {
 import { makePeriodicTask, PeriodicTask } from '../../util/periodic-task'
 import { snooze } from '../../util/snooze'
 import { getMaxSpendableInner } from '../currency/wallet/max-spend'
+import { makeScratchDatabase } from '../db/scratch-database'
 import { makeLog } from '../log/log'
 import { getCurrencyTools } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
+import { readOnlyDisklet } from '../storage/read-only-disklet'
 
 let memoryWalletCount = 0
 
@@ -59,7 +61,8 @@ export const makeMemoryWalletInner = async (
     updateWallet()
   }, 0)
 
-  const plugin = ai.props.state.plugins.currency[config.currencyInfo.pluginId]
+  const { pluginId } = config.currencyInfo
+  const plugin = ai.props.state.plugins.currency[pluginId]
   const callbacks: EdgeCurrencyEngineCallbacks = {
     onAddressChanged: () => {},
     onAddressesChecked(totalRatio: number) {
@@ -106,17 +109,26 @@ export const makeMemoryWalletInner = async (
     onBlockHeightChanged: () => {},
     onBalanceChanged: () => {}
   }
-  const engine = await plugin.makeCurrencyEngine(walletInfo, {
-    callbacks,
-    customTokens: { ...config.customTokens },
-    enabledTokenIds: [...Object.keys(config.allTokens)],
-    lightMode: true,
-    log,
-    userSettings: { ...(config.userSettings ?? {}) },
-    walletSettings,
-    walletLocalDisklet: makeMemoryDisklet(),
-    walletLocalEncryptedDisklet: makeMemoryDisklet()
-  })
+  // Its own throwaway database: an imported key's transactions must never
+  // reach the user's history, and nothing about the key outlives the wallet.
+  const txDatabase = await makeScratchDatabase(ai.props.io, pluginId)
+  const engine = await plugin
+    .makeCurrencyEngine(walletInfo, {
+      callbacks,
+      customTokens: { ...config.customTokens },
+      enabledTokenIds: [...Object.keys(config.allTokens)],
+      lightMode: true,
+      log,
+      userSettings: { ...(config.userSettings ?? {}) },
+      walletSettings,
+      legacyDisklet: readOnlyDisklet(makeMemoryDisklet()),
+      txDatabase,
+      walletLocalEncryptedDisklet: makeMemoryDisklet()
+    })
+    .catch(async (error: unknown) => {
+      await txDatabase.close().catch(() => undefined)
+      throw error
+    })
 
   const {
     unsafeBroadcastTx = false,
@@ -219,8 +231,13 @@ export const makeMemoryWalletInner = async (
     async close() {
       log.warn('killing memory wallet')
       syncNetworkTask?.stop()
+      updater.stop()
       close(out)
-      await engine.killEngine()
+      try {
+        await engine.killEngine()
+      } finally {
+        await txDatabase.close()
+      }
     }
   })
 

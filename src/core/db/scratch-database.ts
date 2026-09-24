@@ -4,6 +4,11 @@ import { prepareDatabase } from './db-open'
 import { ensureOwnerPrefix } from './plugin-tables'
 import { makeTxDatabase } from './tx-database-api'
 
+export const scratchDatabaseHooks = {
+  /** Test hook: runs once the file is open; throwing fails the open. */
+  afterOpen: undefined as (() => void) | undefined
+}
+
 /**
  * Throwaway storage, for a wallet that is not the user's.
  *
@@ -35,6 +40,7 @@ export async function makeScratchDatabase(
 
   const driver = await makeSqlDriver(name, io.random(32))
   try {
+    scratchDatabaseHooks.afterOpen?.()
     await prepareDatabase(driver)
     const prefix = await ensureOwnerPrefix(driver, 'wallet', walletId, pluginId)
     const database = makeTxDatabase({ driver, walletId, pluginId, prefix })
@@ -51,6 +57,6 @@ export async function makeScratchDatabase(
     if (deleteSqlDatabase != null) {
       await deleteSqlDatabase(name).catch(() => undefined)
     }
-    throw error
+    throw new Error(`Cannot open a scratch database: ${String(error)}`)
   }
 }
