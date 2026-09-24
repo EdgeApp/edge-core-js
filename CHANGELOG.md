@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- breaking: `EdgeCurrencyEngineOptions.walletLocalDisklet` is renamed `legacyDisklet`, and is read-only: an engine can read and delete the files it wrote before, and a write throws. Plugins keep their state in `txDatabase` and `pluginDatabase`.
+- changed: Memory wallets hand their engine a scratch `txDatabase`, deleted when the wallet closes.
 - added: `EdgeCorePluginOptions.pluginDatabase`, an `EdgePluginStore` of tables each plugin owns on the device, independent of any account or wallet.
 - added: `putRowsIfAbsent` on wallet and plugin stores, and as a `batchWrite` operation.
 - added: `EdgeFakeContextOptions.device`, so fake contexts can share a device's disk and databases, and `EdgeFakeContextOptions.sqlDriver`, to model a device without a working SQL binding.
