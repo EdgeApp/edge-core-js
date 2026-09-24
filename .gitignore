@@ -7,6 +7,10 @@
 /types.js
 /types.mjs
 
+# Coverage:
+/.nyc_output/
+/coverage/
+
 # Package managers:
 node_modules/
 npm-debug.log
