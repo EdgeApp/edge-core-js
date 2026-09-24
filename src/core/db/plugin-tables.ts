@@ -3,6 +3,7 @@ import { base64 } from 'rfc4648'
 import { EdgeTableSpec } from '../../types/types'
 import { base58, utf8 } from '../../util/encoding'
 import { EdgeSqlDriver, EdgeSqlStatement } from './db-driver'
+import { upsertWalletRow, walletRowStatement } from './wallet-store'
 
 /**
  * Plugin-owned tables.
@@ -184,25 +185,7 @@ export async function ensureWalletPrefix(
   walletId: string,
   pluginId: string
 ): Promise<string> {
-  const rows = await driver.query<{ wallet_id: string; prefix: string }>(
-    'SELECT wallet_id, prefix FROM wallet'
-  )
-  const mine = rows.find(row => row.wallet_id === walletId)
-  if (mine != null) return mine.prefix
-
-  const prefix = walletTablePrefix(
-    walletId,
-    rows.map(row => row.prefix)
-  )
-  await driver.exec([
-    {
-      sql: `INSERT INTO wallet (wallet_id, prefix, plugin_id)
-            VALUES (?, ?, ?)
-            ON CONFLICT (wallet_id) DO UPDATE SET plugin_id = excluded.plugin_id`,
-      params: [walletId, prefix, pluginId]
-    }
-  ])
-  return prefix
+  return await upsertWalletRow(driver, walletId, { pluginId })
 }
 
 export async function defineTables(
@@ -239,20 +222,26 @@ export async function defineTables(
     }
   }
 
-  statements.push(...defineTableStatements(prefix, spec), {
-    sql: `INSERT INTO wallet (wallet_id, prefix, plugin_id, table_version)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT (wallet_id) DO UPDATE SET
-              plugin_id = excluded.plugin_id,
-              table_version = excluded.table_version`,
-    params: [walletId, prefix, pluginId, spec.version]
-  })
+  statements.push(
+    ...defineTableStatements(prefix, spec),
+    walletRowStatement(walletId, prefix, {
+      pluginId,
+      tableVersion: spec.version
+    })
+  )
 
   await driver.batch(statements)
   return { prefix, rebuilt }
 }
 
-/** Removes every table a wallet owns, for wallet deletion. */
+/**
+ * Removes every table a wallet owns.
+ *
+ * The wallet's row stays, because the tables are not all it holds: the row
+ * also carries the wallet's boot state and the account's state for it, which
+ * outlive whatever the plugin kept. Only `table_version` goes, so the next
+ * `defineTables` creates the tables fresh rather than calling it a rebuild.
+ */
 export async function dropWalletTables(
   driver: EdgeSqlDriver,
   walletId: string
@@ -263,9 +252,10 @@ export async function dropWalletTables(
   )
   if (rows.length === 0) return
 
-  const names = await existingTables(driver, rows[0].prefix)
+  const { prefix } = rows[0]
+  const names = await existingTables(driver, prefix)
   await driver.batch([
     ...names.map(name => ({ sql: `DROP TABLE IF EXISTS "${name}"` })),
-    { sql: 'DELETE FROM wallet WHERE wallet_id = ?', params: [walletId] }
+    walletRowStatement(walletId, prefix, { tableVersion: null })
   ])
 }

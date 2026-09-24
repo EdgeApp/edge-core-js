@@ -1,9 +1,3 @@
-import {
-  EdgeAddress,
-  EdgeBalanceMap,
-  EdgeStakingStatus,
-  EdgeWalletInfo
-} from '../../../types/types'
 import { makeJsonFile } from '../../../util/file-helpers'
 import {
   asStoredWalletCacheFile,
@@ -20,20 +14,4 @@ export const WALLET_CACHE_FILE = 'walletCache.json'
 export const walletCacheFile = {
   load: makeJsonFile(asStoredWalletCacheFile).load,
   save: makeJsonFile(asWalletCacheFile).save
-}
-
-/**
- * One wallet's cache files, validated and ready to seed Redux:
- * the public keys from `publicKey.json` plus the UI state from
- * `walletCache.json`, with balances upgraded to an `EdgeBalanceMap`.
- */
-export interface WalletCacheSeed {
-  addresses: { [tokenIdKey: string]: EdgeAddress[] }
-  balanceMap: EdgeBalanceMap
-  enabledTokenIds: string[]
-  fiatCurrencyCode: string
-  name: string | null
-  otherMethodNames: string[]
-  publicWalletInfo: EdgeWalletInfo
-  stakingStatus?: EdgeStakingStatus
 }

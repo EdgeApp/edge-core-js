@@ -326,9 +326,18 @@ describe('defineTables', function () {
         `${other.prefix}address`,
         `${other.prefix}utxo`
       ])
-      expect(await driver.query('SELECT wallet_id FROM wallet')).deep.equals([
-        { wallet_id: walletId(0x12) }
-      ])
+      // The row stays, because it also carries the wallet's boot state and
+      // the account's state for it. Only its table version goes:
+      expect(
+        await driver.query(
+          'SELECT wallet_id, table_version FROM wallet ORDER BY wallet_id'
+        )
+      ).deep.equals(
+        [
+          { wallet_id: walletId(0x11), table_version: null },
+          { wallet_id: walletId(0x12), table_version: utxoSpec.version }
+        ].sort((a, b) => (a.wallet_id < b.wallet_id ? -1 : 1))
+      )
     } finally {
       await driver.close()
     }

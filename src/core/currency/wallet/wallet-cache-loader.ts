@@ -5,14 +5,11 @@ import {
   AccountCacheFile,
   AccountCacheWallet
 } from '../../account/account-cleaners'
+import { WalletCacheSeed } from '../../db/wallet-store'
 import { ApiInput } from '../../root-pixie'
 import { makeLocalDisklet } from '../../storage/repo'
 import { asPublicKeyFile, WalletCacheFile } from './currency-wallet-cleaners'
-import {
-  WALLET_CACHE_FILE,
-  walletCacheFile,
-  WalletCacheSeed
-} from './wallet-cache-file'
+import { WALLET_CACHE_FILE, walletCacheFile } from './wallet-cache-file'
 
 export const PUBLIC_KEY_CACHE = 'publicKey.json'
 export const publicKeyFile = makeJsonFile(asPublicKeyFile)
