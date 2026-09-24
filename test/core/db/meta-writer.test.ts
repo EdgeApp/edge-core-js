@@ -8,7 +8,9 @@ import { prepareDatabase } from '../../../src/core/db/db-open'
 import {
   clearTxMetaDirty,
   readDirtyTxMeta,
+  saveSyncedTxMetas,
   saveTxMetas,
+  saveTxMetasIfAbsent,
   toTxMetaDoc
 } from '../../../src/core/db/meta-writer'
 import { makeMemorySqlDriver } from '../../../src/io/node/node-sql-driver'
@@ -102,6 +104,71 @@ describe('metadata mirror', function () {
           effective_date: 1717200000
         }
       ])
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('lets a synced file replace a clean row but not a dirty one', async function () {
+    const driver = await makeDb()
+    try {
+      const file = (name: string): ReturnType<typeof makeFile> =>
+        makeFile({ tokens: { '': { metadata: { name } } } })
+      await saveTxMetas(driver, 'W1', 'BTC', [
+        { txid: 'clean', file: file('Old') }
+      ])
+      // A local edit whose file write failed -- newer than any file:
+      await saveTxMetas(
+        driver,
+        'W1',
+        'BTC',
+        [{ txid: 'dirty', file: file('Local') }],
+        { fileDirty: true }
+      )
+
+      await saveSyncedTxMetas(driver, 'W1', 'BTC', [
+        { txid: 'clean', file: file('Synced') },
+        { txid: 'dirty', file: file('Synced') },
+        { txid: 'new', file: file('Synced') }
+      ])
+      await saveSyncedTxMetas(driver, 'W1', 'BTC', [])
+
+      const rows = await driver.query<{ txid: string; doc: string }>(
+        'SELECT txid, json(doc) AS doc FROM tx_meta ORDER BY txid'
+      )
+      const names = rows.map(row => [
+        row.txid,
+        JSON.parse(row.doc).tokens[''].metadata.name,
+        JSON.parse(row.doc).fileDirty
+      ])
+      expect(names).deep.equals([
+        ['clean', 'Synced', 0],
+        ['dirty', 'Local', 1],
+        ['new', 'Synced', 0]
+      ])
+    } finally {
+      await driver.close()
+    }
+  })
+
+  it('leaves any existing row when only filling gaps', async function () {
+    const driver = await makeDb()
+    try {
+      const file = (name: string): ReturnType<typeof makeFile> =>
+        makeFile({ tokens: { '': { metadata: { name } } } })
+      await saveTxMetas(driver, 'W1', 'BTC', [{ txid: 'a', file: file('Row') }])
+      await saveTxMetasIfAbsent(driver, 'W1', 'BTC', [
+        { txid: 'a', file: file('File') },
+        { txid: 'b', file: file('File') }
+      ])
+      await saveTxMetasIfAbsent(driver, 'W1', 'BTC', [])
+
+      const rows = await driver.query<{ txid: string; doc: string }>(
+        'SELECT txid, json(doc) AS doc FROM tx_meta ORDER BY txid'
+      )
+      expect(
+        rows.map(row => JSON.parse(row.doc).tokens[''].metadata.name)
+      ).deep.equals(['Row', 'File'])
     } finally {
       await driver.close()
     }

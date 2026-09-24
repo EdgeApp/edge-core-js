@@ -78,6 +78,9 @@ export interface FakePluginTestConfig {
    */
   publicKeyCheckGate?: Promise<void>
 
+  /** If set, `checkPublicKey` rejects every key this matches. */
+  rejectPublicKey?: (publicKey: JsonObject) => boolean
+
   /**
    * If set, receives each wallet id as its `makeCurrencyEngine` call
    * begins (before any gate), so tests can observe creation order.
@@ -119,6 +122,7 @@ export const fakePluginTestConfig: FakePluginTestConfig = {
   omitEngineOtherMethods: undefined,
   legacyTokenPlugin: undefined,
   publicKeyCheckGate: undefined,
+  rejectPublicKey: undefined,
   onEngineCreate: undefined,
   failEngineFor: undefined,
   onEngineKill: undefined,
@@ -508,7 +512,7 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
     if (fakePluginTestConfig.publicKeyCheckGate != null) {
       await fakePluginTestConfig.publicKeyCheckGate
     }
-    return true
+    return fakePluginTestConfig.rejectPublicKey?.(publicKey) !== true
   }
 
   async derivePublicKey(privateWalletInfo: EdgeWalletInfo): Promise<object> {

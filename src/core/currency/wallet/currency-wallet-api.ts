@@ -1,4 +1,4 @@
-import { abs, div, lt, mul } from 'biggystring'
+import { div, mul } from 'biggystring'
 import { Disklet } from 'disklet'
 import { isPixieShutdownError } from 'redux-pixies'
 import { base64 } from 'rfc4648'
@@ -39,7 +39,6 @@ import {
   EdgeStakingStatus,
   EdgeStreamTransactionOptions,
   EdgeSyncStatus,
-  EdgeTokenId,
   EdgeTokenIdOptions,
   EdgeTransaction,
   EdgeWalletInfo,
@@ -47,6 +46,7 @@ import {
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
 import { makeMetaTokens } from '../../account/custom-tokens'
+import { getAccountDatabase } from '../../db/account-database'
 import { EdgeSqlDriver } from '../../db/db-driver'
 import { splitWalletInfo } from '../../login/splitting'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
@@ -58,24 +58,17 @@ import {
   getCurrencyMultiplier,
   waitForCurrencyEngine
 } from '../currency-selectors'
-import {
-  determineConfirmations,
-  makeCurrencyWalletCallbacks,
-  shouldCoreDetermineConfirmations
-} from './currency-wallet-callbacks'
+import { makeCurrencyWalletCallbacks } from './currency-wallet-callbacks'
 import {
   asEdgeAssetAction,
   asEdgeTxAction,
-  asEdgeTxSwap,
-  TransactionFile
+  asEdgeTxSwap
 } from './currency-wallet-cleaners'
 import {
   countTxsInDatabase,
   streamTxsFromDatabase
 } from './currency-wallet-db-read'
-import { dateFilter, searchStringFilter } from './currency-wallet-export'
 import {
-  loadTxFiles,
   renameCurrencyWallet,
   saveTxMetadataFile,
   saveWalletSettingsFile,
@@ -84,10 +77,8 @@ import {
   updateCurrencyWalletTxMetadata
 } from './currency-wallet-files'
 import { CurrencyWalletInput } from './currency-wallet-pixie'
-import { MergedTransaction } from './currency-wallet-reducer'
 import { uniqueStrings } from './enabled-tokens'
 import { getMaxSpendableInner } from './max-spend'
-import { mergeMetadata } from './metadata'
 import { upgradeMemos } from './upgrade-memos'
 
 const fakeMetadata = {
@@ -234,14 +225,13 @@ export function makeCurrencyWalletApi(
   const fakeCallbacks = makeCurrencyWalletCallbacks(input)
 
   /**
-   * The account's database, while it is open.
+   * The account's database.
    *
-   * Looked up per call rather than captured: the account opens its database
-   * after this object exists, and closes it on logout, so a reference held
-   * here would be either empty or stale.
+   * Looked up per call rather than captured, because it closes on logout and
+   * a reference held here would outlive it.
    */
-  const walletDatabase = (): EdgeSqlDriver | undefined =>
-    input.props.output.accounts[accountId]?.database?.driver
+  const walletDatabase = (): EdgeSqlDriver =>
+    getAccountDatabase(input, accountId).driver
 
   // The wallet's `otherMethods` is an object of delegating stubs:
   // each waits for the engine and then forwards, so a method can be
@@ -497,131 +487,29 @@ export function makeCurrencyWalletApi(
 
     // Transactions history:
     async getNumTransactions(opts: EdgeTokenIdOptions): Promise<number> {
-      const engine = await getEngine()
       const upgradedCurrency = upgradeCurrencyCode({
         allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
         currencyInfo: plugin.currencyInfo,
         tokenId: opts.tokenId
       })
-
-      const driver = walletDatabase()
-      if (driver != null) {
-        return await countTxsInDatabase(input, driver, upgradedCurrency.tokenId)
-      }
-
-      return engine.getNumTransactions(upgradedCurrency)
+      return await countTxsInDatabase(
+        input,
+        walletDatabase(),
+        upgradedCurrency.tokenId
+      )
     },
 
     async $internalStreamTransactions(
       opts: EdgeStreamTransactionOptions
     ): Promise<InternalWalletStream> {
-      const engine = await getEngine()
-      const {
-        afterDate,
-        batchSize = 10,
-        beforeDate,
-        firstBatchSize = batchSize,
-        searchString,
-        spamThreshold = '0',
-        tokenId = null
-      } = opts
+      const { tokenId = null } = opts
       const { currencyCode } =
         tokenId == null
           ? this.currencyInfo
           : this.currencyConfig.allTokens[tokenId]
-      const upgradedCurrency = { currencyCode, tokenId }
-
-      /*
-       * The database, where the account has one.
-       *
-       * The path below walks every txid the engine ever reported and opens a
-       * metadata file per transaction, so its first page costs the size of
-       * the wallet rather than the size of the page. It stays for as long as
-       * the flag can be off.
-       */
-      const driver = walletDatabase()
-      if (driver != null) {
-        return streamTxsFromDatabase(input, driver, { ...opts, currencyCode })
-      }
-
-      // Load transactions from the engine if necessary:
-      let state = input.props.walletState
-      if (!state.gotTxs.has(tokenId)) {
-        const txs = await engine.getTransactions(upgradedCurrency)
-        fakeCallbacks.onTransactionsChanged(txs)
-        input.props.dispatch({
-          type: 'CURRENCY_ENGINE_GOT_TXS',
-          payload: {
-            walletId: input.props.walletId,
-            tokenId
-          }
-        })
-        state = input.props.walletState
-      }
-
-      const {
-        // All the files we have loaded from disk:
-        files,
-        // All the txid hashes we know about from either the engine or disk,
-        // sorted using the lowest available date.
-        // Some may not exist on disk, and some may not exist on chain:
-        sortedTxidHashes,
-        // Maps from txid hashes to original txids:
-        txidHashes,
-        // All the transactions we have from the engine:
-        txs
-      } = state
-
-      let i = 0
-      let isFirst = true
-      let lastFile = 0
-      return bridgifyObject({
-        async next() {
-          const thisBatchSize = isFirst ? firstBatchSize : batchSize
-          const out: EdgeTransaction[] = []
-          while (i < sortedTxidHashes.length && out.length < thisBatchSize) {
-            // Load a batch of files if we need that:
-            if (i >= lastFile) {
-              const missingTxIdHashes = sortedTxidHashes
-                .slice(lastFile, lastFile + thisBatchSize)
-                .filter(txidHash => files[txidHash] == null)
-              const missingFiles = await loadTxFiles(input, missingTxIdHashes)
-              Object.assign(files, missingFiles)
-              lastFile = lastFile + thisBatchSize
-            }
-
-            const txidHash = sortedTxidHashes[i++]
-            const file = files[txidHash]
-            const txid = file?.txid ?? txidHashes[txidHash]?.txid
-            if (txid == null) continue
-            const tx = txs[txid]
-
-            // Filter transactions with missing amounts (nativeAmount/networkFee)
-            const nativeAmount = tx?.nativeAmount.get(tokenId)
-            const networkFee = tx?.networkFee.get(tokenId)
-            if (tx == null || nativeAmount == null || networkFee == null) {
-              continue
-            }
-
-            // Filter transactions based on search criteria:
-            const edgeTx = combineTxWithFile(input, tx, file, tokenId)
-            upgradeTxNetworkFees(edgeTx)
-            if (!searchStringFilter(ai, edgeTx, searchString)) continue
-            if (!dateFilter(edgeTx, afterDate, beforeDate)) continue
-            const isKnown =
-              tx.isSend ||
-              edgeTx.assetAction != null ||
-              edgeTx.chainAction != null ||
-              edgeTx.chainAssetAction != null ||
-              edgeTx.savedAction != null
-            if (!isKnown && lt(abs(nativeAmount), spamThreshold)) continue
-
-            out.push(edgeTx)
-          }
-
-          isFirst = false
-          return { done: out.length === 0, value: out }
-        }
+      return streamTxsFromDatabase(input, walletDatabase(), {
+        ...opts,
+        currencyCode
       })
     },
 
@@ -1093,100 +981,4 @@ export function makeCurrencyWalletApi(
   }
 
   return bridgifyObject(out)
-}
-
-export function combineTxWithFile(
-  input: CurrencyWalletInput,
-  tx: MergedTransaction,
-  file: TransactionFile | undefined,
-  tokenId: EdgeTokenId,
-  blockHeight?: number
-): EdgeTransaction {
-  const walletId = input.props.walletId
-  const { accountId, currencyInfo, pluginId } = input.props.walletState
-  const allTokens = input.props.state.accounts[accountId].allTokens[pluginId]
-
-  const { currencyCode } = tokenId == null ? currencyInfo : allTokens[tokenId]
-  const walletCurrency = currencyInfo.currencyCode
-
-  // Use provided blockHeight or fall back to state (for callers outside onBlockHeightChanged):
-  const height = blockHeight ?? input.props.walletState.height
-
-  // Calculate confirmations on-the-fly if engine didn't provide valid value:
-  const confirmations = shouldCoreDetermineConfirmations(tx.confirmations)
-    ? determineConfirmations(tx, height, currencyInfo.requiredConfirmations)
-    : tx.confirmations
-
-  // Copy the tx properties to the output:
-  const out: EdgeTransaction = {
-    chainAction: tx.chainAction,
-    chainAssetAction: tx.chainAssetAction.get(tokenId),
-    blockHeight: tx.blockHeight,
-    confirmations,
-    currencyCode,
-    feeRateUsed: tx.feeRateUsed,
-    date: tx.date,
-    isSend: tx.isSend,
-    memos: tx.memos,
-    metadata: {},
-    nativeAmount: tx.nativeAmount.get(tokenId) ?? '0',
-    networkFee: tx.networkFee.get(tokenId) ?? '0',
-    networkFees: [],
-    otherParams: { ...tx.otherParams },
-    ourReceiveAddresses: tx.ourReceiveAddresses,
-    parentNetworkFee:
-      walletCurrency === currencyCode
-        ? undefined
-        : tx.networkFee.get(null) ?? '0',
-    signedTx: tx.signedTx,
-    tokenId,
-    txid: tx.txid,
-    walletId
-  }
-
-  // If we have a file, use it to override the defaults:
-  if (file != null) {
-    if (file.creationDate < out.date) out.date = file.creationDate
-
-    out.metadata = mergeMetadata(
-      file.tokens.get(null)?.metadata ??
-        file.currencies.get(walletCurrency)?.metadata ??
-        {},
-      file.tokens.get(tokenId)?.metadata ??
-        file.currencies.get(currencyCode)?.metadata ??
-        {}
-    )
-
-    if (file.feeRateRequested != null) {
-      if (typeof file.feeRateRequested === 'string') {
-        out.networkFeeOption = file.feeRateRequested
-      } else {
-        out.networkFeeOption = 'custom'
-        out.requestedCustomFee = file.feeRateRequested
-      }
-    }
-    if (out.feeRateUsed == null) {
-      out.feeRateUsed = file.feeRateUsed
-    }
-
-    if (file.payees != null) {
-      out.spendTargets = file.payees.map(payee => ({
-        currencyCode: payee.currency,
-        memo: payee.tag,
-        nativeAmount: payee.amount,
-        publicAddress: payee.address,
-        uniqueIdentifier: payee.tag
-      }))
-    }
-
-    const assetAction = file.tokens.get(tokenId)?.assetAction
-    if (assetAction != null) out.assetAction = assetAction
-    if (file.savedAction != null) out.savedAction = file.savedAction
-    if (file.swap != null) out.swapData = file.swap
-    if (file.secret != null) out.txSecret = file.secret
-    if (file.deviceDescription != null)
-      out.deviceDescription = file.deviceDescription
-  }
-
-  return out
 }

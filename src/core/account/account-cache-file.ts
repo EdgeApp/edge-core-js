@@ -28,16 +28,6 @@ export const accountCacheFile = {
 }
 
 /**
- * Tuning for the account boot-state cache saver.
- * Tests override the throttle to run quickly.
- */
-export const accountCacheSaverConfig = {
-  throttleMs: 5000,
-  /** A write slower than this logs at `warn` instead of `info`. */
-  slowWriteMs: 5000
-}
-
-/**
  * Reads both slots and returns the newest one that parses, plus the
  * slot the next write should use. Returns `undefined` cache data when
  * neither slot is readable (first login, schema bump, both torn),

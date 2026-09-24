@@ -22,7 +22,6 @@ import { InfoCacheFile } from './context/info-cache-file'
 import {
   ChangeServiceSubscription,
   MergedTransaction,
-  TxFileJsons,
   TxFileNames,
   TxidHashes
 } from './currency/wallet/currency-wallet-reducer'
@@ -245,13 +244,6 @@ export type RootAction =
       }
     }
   | {
-      type: 'CURRENCY_ENGINE_GOT_TXS'
-      payload: {
-        walletId: string
-        tokenId: EdgeTokenId
-      }
-    }
-  | {
       type: 'CURRENCY_ENGINE_SEEN_TX_CHECKPOINT_CHANGED'
       payload: {
         walletId: string
@@ -377,17 +369,8 @@ export type RootAction =
       payload: {
         creationDate: number
         fileName: string
-        json: any
         txid: string
         txidHash: string
-        walletId: string
-      }
-    }
-  | {
-      // Called when a currency wallet's files have been loaded from disk.
-      type: 'CURRENCY_WALLET_FILES_LOADED'
-      payload: {
-        files: TxFileJsons
         walletId: string
       }
     }
@@ -487,7 +470,6 @@ export type RootAction =
         logSettings: EdgeLogSettings
         pluginsInit: EdgeCorePluginsInit
         skipBlockHeight: boolean
-        transactionDatabase: boolean
         stashes: LoginStash[]
       }
     }

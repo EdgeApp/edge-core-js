@@ -19,8 +19,7 @@ const quiet = { onLog() {} }
 const contextOptions = {
   apiKey: '',
   appId: '',
-  plugins: { fakecoin: true },
-  transactionDatabase: true
+  plugins: { fakecoin: true }
 }
 
 interface Fixture {
@@ -186,22 +185,6 @@ describe('engine transactions', function () {
 })
 
 describe('account.transactions', function () {
-  it('is absent until the database is open', async function () {
-    // Feature detection rather than a thrown error, because a platform
-    // without a database is a supported platform.
-    const world = await makeFakeEdgeWorld([fakeUser], quiet)
-    const context = await world.makeEdgeContext({
-      ...contextOptions,
-      transactionDatabase: false
-    })
-    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
-    try {
-      expect(account.transactions).equals(undefined)
-    } finally {
-      await account.logout()
-    }
-  })
-
   it('queries across every wallet in the account', async function () {
     const fixture = await setup()
     try {

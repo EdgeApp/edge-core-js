@@ -79,6 +79,38 @@ async function utxoIds(fixture: Fixture): Promise<string[]> {
 }
 
 describe('batchWrite', function () {
+  it('keeps the nulls a second report of a transaction carries', async function () {
+    const { driver, context } = await setup()
+    try {
+      // `tokenId: null` is the chain's own asset. A merge that read a null
+      // as "delete this key" would drop it, and the stored transaction would
+      // then fail its own cleaner:
+      const savedAction = {
+        actionType: 'swap' as const,
+        swapInfo: {
+          pluginId: 'swapper',
+          displayName: 'Swapper',
+          isDex: false,
+          supportEmail: ''
+        },
+        fromAsset: { pluginId: 'bitcoin', tokenId: null, nativeAmount: '1' },
+        toAsset: { pluginId: 'ethereum', tokenId: 'usdc', nativeAmount: '2' },
+        payoutAddress: 'there',
+        payoutWalletId: 'wallet'
+      }
+      await batchWrite(context, { saveTxs: [makeTx()] })
+      await batchWrite(context, { saveTxs: [makeTx({ savedAction })] })
+      await batchWrite(context, { saveTxs: [makeTx({ savedAction })] })
+
+      const tx = await readTx(driver, WALLET_ID, 'tx1')
+      const action: any = tx?.savedAction
+      expect(action.fromAsset).deep.equals(savedAction.fromAsset)
+      expect(action.toAsset).deep.equals(savedAction.toAsset)
+    } finally {
+      await driver.close()
+    }
+  })
+
   it('lands a send and its coins together', async function () {
     const fixture = await setup()
     try {

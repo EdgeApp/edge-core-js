@@ -2350,13 +2350,8 @@ export interface EdgeAccount {
   readonly swapConfig: EdgePluginMap<EdgeSwapConfig>
   readonly dataStore: EdgeDataStore
 
-  /**
-   * Transactions across every wallet in this account.
-   *
-   * Undefined when the platform has no database, so callers feature-detect
-   * rather than catching. It appears once login finishes opening it.
-   */
-  readonly transactions: EdgeTransactionStore | undefined
+  /** Transactions across every wallet in this account. */
+  readonly transactions: EdgeTransactionStore
 
   // What login method was used?
   readonly edgeLogin: boolean
@@ -2544,15 +2539,6 @@ export interface EdgeContextOptions {
    * as their confirmation status changes.
    */
   skipBlockHeight?: boolean
-
-  /**
-   * True to keep the account's transactions in an encrypted SQLite database.
-   *
-   * The database is a cache with nothing in it that cannot be rebuilt, so it
-   * can be turned on and off freely. It needs a platform with a native SQLite
-   * binding -- React Native or Node -- and is ignored where there is none.
-   */
-  transactionDatabase?: boolean
 
   /** @deprecated Use `loginServer` instead. */
   authServer?: string
@@ -2747,7 +2733,22 @@ export interface EdgeFakeContextOptions {
   hideKeys?: boolean
   logSettings?: Partial<EdgeLogSettings>
   plugins?: EdgeCorePluginsInit
-  transactionDatabase?: boolean
+
+  /**
+   * Which fake device this context runs on.
+   *
+   * Contexts naming the same device share its disk and its databases, the
+   * way two runs of the app on one phone do. A context with no device name
+   * is a device of its own.
+   */
+  device?: string
+
+  /**
+   * What the fake device's SQL binding does: the default `'memory'` stores
+   * in memory, `'none'` has no binding at all, and `'failing'` refuses every
+   * open. Acts only where the world was made with a SQL driver constructor.
+   */
+  sqlDriver?: 'memory' | 'none' | 'failing'
 
   // Allows core plugins to access the real network except for login, info,
   // and sync servers, which remain emulated:

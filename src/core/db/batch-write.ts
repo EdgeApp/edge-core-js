@@ -7,7 +7,7 @@ import {
 } from '../../types/types'
 import { EdgeSqlDriver, EdgeSqlStatement } from './db-driver'
 import { putRowStatements, removeRowStatements } from './plugin-rows'
-import { wasEdgeTx } from './tx-cleaners'
+import { saveTxStatements } from './tx-writer'
 
 /**
  * Transaction and table writes that land together or not at all.
@@ -103,13 +103,9 @@ function patchStatements(
  * naming one.
  */
 function saveStatement(walletId: string, tx: EdgeTx): EdgeSqlStatement {
-  return {
-    sql: `INSERT INTO tx_chain (wallet_id, txid, doc)
-          VALUES (?, ?, jsonb(?))
-          ON CONFLICT (wallet_id, txid)
-          DO UPDATE SET doc = jsonb_patch(doc, excluded.doc)`,
-    params: [walletId, tx.txid, JSON.stringify(wasEdgeTx({ ...tx, walletId }))]
-  }
+  // The same merge as `saveTxs`, and for the same reason: nulls a report
+  // carries are values, not deletions:
+  return saveTxStatements([{ ...tx, walletId }])[0]
 }
 
 export interface BatchWriteContext {
