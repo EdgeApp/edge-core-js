@@ -32,7 +32,7 @@ interface EdgeContextOptions {
 On React Native, pass the same `apiSigner` prop to `MakeEdgeContext`. The
 bridge `bridgifyObject`s it and the WebView worker forwards it into
 `makeContext`. Implementors must return a usable `apiKey` (non-empty, no
-whitespace) and a non-empty signature.
+whitespace) and a non-empty signature with no whitespace.
 
 ## Canonical string
 
