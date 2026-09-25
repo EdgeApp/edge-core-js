@@ -4,6 +4,7 @@
 
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
 - fixed: Logging in no longer fails when a plugin fails to load. Such a plugin is absent from `currencyConfig` and `swapConfig`, as already documented, instead of blocking every login in the app.
+- fixed: iOS crash on password checks when another native library links OpenSSL
 
 ## 2.49.0 (2026-09-23)
 
