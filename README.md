@@ -10,6 +10,8 @@ This library implements the Edge login system. It runs inside a client applicati
 
 We have documentation at https://developer.airbitz.co/javascript/, but our [TypeScript types](./src/types/types.ts) are the best, most up-to-date reference for what this library contains.
 
+HMAC delegation for login-server requests (`EdgeContextOptions.apiSigner`) is documented in [docs/api-signer.md](./docs/api-signer.md). Wallet key formats (not API HMAC) are in [docs/key-formats.md](./docs/key-formats.md).
+
 ## Account Management UI
 
 To quickly get up and running with the UI for account creation, login, and management, use [edge-login-ui-web](https://github.com/EdgeApp/edge-login-ui/tree/develop/packages/edge-login-ui-web) for the web or [edge-login-ui-rn](https://github.com/EdgeApp/edge-login-ui/tree/develop/packages/edge-login-ui-rn) for React Native.
@@ -25,6 +27,10 @@ To create an `EdgeContext` object, which provides various methods for logging in
 ```javascript
 const context = await makeEdgeContext({
   apiKey: '...', // Get this from our support team
+  // Optional: HMAC secret in JS. Prefer `apiSigner` so the secret can live
+  // outside the bundle (see docs/api-signer.md).
+  // apiSecret: uint8ArraySecret,
+  // apiSigner: { signMessage: async (message) => ({ apiKey, signature }) },
   appId: 'com.your-app',
   plugins: {
     // Configure currencies, exchange rates, and swap providers you want to use:
@@ -61,6 +67,8 @@ To create an `EdgeContext` object, you need to mount a component:
 <MakeEdgeContext
   // Get this from our support team:
   apiKey="..."
+  // Optional native HMAC delegate (takes precedence over apiKey/apiSecret):
+  // apiSigner={nativeApiSigner}
   appId="com.your-app"
 
   // Configure currencies and swap providers you want to use:

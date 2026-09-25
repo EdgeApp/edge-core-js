@@ -1,4 +1,5 @@
 import type {
+  EdgeApiSigner,
   EdgeContext,
   EdgeContextOptions,
   EdgeCorePlugins,
@@ -79,6 +80,7 @@ export interface EdgeContextProps extends CommonProps {
   airbitzSupport?: boolean
   apiKey?: string
   apiSecret?: Uint8Array
+  apiSigner?: EdgeApiSigner
   appId?: string
   appVersion?: string
   osType?: string
@@ -133,4 +135,8 @@ export declare const MakeFakeEdgeWorld: ComponentType<EdgeFakeWorldProps>
 /**
  * React Native function for getting login alerts without a context:
  */
-export declare function fetchLoginMessages(apiKey: string): EdgeLoginMessage[]
+export declare function fetchLoginMessages(
+  apiKey: string,
+  apiSecret?: Uint8Array,
+  apiSigner?: EdgeApiSigner
+): Promise<EdgeLoginMessage[]>
