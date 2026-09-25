@@ -33,6 +33,20 @@
 
 #include <stdint.h>
 
+/*
+ * Use #defines in order to avoid namespace collisions with anyone else's
+ * SHA256 code (e.g., the code in OpenSSL). iOS links every native library
+ * into one image, so an OpenSSL SHA256_Update would otherwise replace ours
+ * and corrupt our smaller SHA256_CTX.
+ */
+#define SHA256_Init edge_scrypt_SHA256_Init
+#define SHA256_Update edge_scrypt_SHA256_Update
+#define SHA256_Final edge_scrypt_SHA256_Final
+#define HMAC_SHA256_Init edge_scrypt_HMAC_SHA256_Init
+#define HMAC_SHA256_Update edge_scrypt_HMAC_SHA256_Update
+#define HMAC_SHA256_Final edge_scrypt_HMAC_SHA256_Final
+#define PBKDF2_SHA256 edge_scrypt_PBKDF2_SHA256
+
 typedef struct SHA256Context {
 	uint32_t state[8];
 	uint32_t count[2];
