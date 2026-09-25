@@ -264,11 +264,9 @@ const workerApi: WorkerApi = bridgifyObject({
   async makeEdgeContext(nativeIo, logBackend, pluginUris, opts, apiSigner) {
     loadPlugins(pluginUris)
     const io = await makeIo(logBackend)
-    // The signer travels as its own bridged argument, but honor one that
-    // arrived inside `opts` rather than silently dropping it.
     return await makeContext({ io, nativeIo }, logBackend, {
       ...opts,
-      apiSigner: apiSigner ?? opts.apiSigner
+      apiSigner
     })
   },
 
