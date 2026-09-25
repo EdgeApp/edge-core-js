@@ -66,7 +66,7 @@ export function watchPlugins(
   const legacyIo = { ...io, console }
 
   function pluginsAdded(plugins: EdgeCorePlugins): void {
-    const out: EdgePluginMap<EdgeCorePlugin> = {}
+    const out: EdgePluginMap<EdgeCorePlugin | null> = {}
 
     for (const pluginId of Object.keys(plugins)) {
       const plugin = plugins[pluginId]
@@ -96,6 +96,7 @@ export function watchPlugins(
       } catch (error: unknown) {
         // Show the error but keep going:
         log.error(error)
+        out[pluginId] = null
       }
     }
 
