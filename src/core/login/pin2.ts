@@ -1,3 +1,4 @@
+import { asMaybeApiSignerError } from '../../types/error'
 import {
   wasChangePin2IdPayload,
   wasChangePin2Payload
@@ -184,7 +185,12 @@ export async function checkPin2(
   }
   return await loginFetch(ai, 'POST', '/v2/login', request).then(
     good => true,
-    bad => false
+    bad => {
+      // A signer failure is not a wrong PIN. Collapsing it into `false` makes
+      // the GUI show "incorrect PIN" for what is really a broken apiSigner:
+      if (asMaybeApiSignerError(bad) != null) throw bad
+      return false
+    }
   )
 }
 

@@ -169,9 +169,10 @@ export type RootAction =
       type: 'CLOSE'
     }
   | {
-      // Called when new plugins become available.
+      // Called when new plugins become available. An `undefined` entry is a
+      // plugin whose factory threw, which the reducer switches off.
       type: 'CORE_PLUGINS_ADDED'
-      payload: EdgePluginMap<EdgeCorePlugin>
+      payload: EdgePluginMap<EdgeCorePlugin | undefined>
     }
   | {
       // Called when the plugin list becomes final.
