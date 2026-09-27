@@ -147,6 +147,23 @@ export interface EdgeCrashReporter {
 }
 
 /**
+ * Result of signing a login-server request with an HMAC API key.
+ */
+export interface EdgeApiSignature {
+  /** The public API key identifier to place in the header. */
+  apiKey: string
+  /** Base64 HMAC-SHA256 of the message. */
+  signature: string
+}
+
+/**
+ * Delegates API request signing so the HMAC secret can live outside JS.
+ */
+export interface EdgeApiSigner {
+  signMessage: (message: string) => Promise<EdgeApiSignature>
+}
+
+/**
  * Receives log messages.
  * The app should implement this function and pass it to the context.
  */
@@ -1963,6 +1980,12 @@ export interface EdgeContextOptions {
   apiSecret?: Uint8Array
   appId: string
 
+  /**
+   * Delegates API request signing, so the HMAC secret can live outside JS.
+   * Takes precedence over `apiKey` / `apiSecret` when present.
+   */
+  apiSigner?: EdgeApiSigner
+
   /** The application version (e.g., "1.0.0") */
   appVersion?: string
 
@@ -2195,6 +2218,7 @@ export interface EdgeFakeContextOptions {
   airbitzSupport?: boolean
   apiKey?: string
   apiSecret?: Uint8Array
+  apiSigner?: EdgeApiSigner
   appId: string
   deviceDescription?: string
   hideKeys?: boolean

@@ -60,29 +60,34 @@ export function getCurrencyTools(
 }
 
 /**
- * Waits for the plugins to load,
- * then validates that all plugins are present.
+ * Waits for the plugins to finish loading.
+ *
+ * A plugin that fails to load is simply absent from `currencyConfig` and
+ * `swapConfig`, so this does not treat that as an error. Failing the login
+ * would take down every account in the app over one unusable plugin.
  */
 export async function waitForPlugins(ai: ApiInput): Promise<void> {
   await ai.waitFor((props: RootProps): true | undefined => {
-    const { init, locked } = props.state.plugins
+    const { locked } = props.state.plugins
     if (!locked) return
-
-    const { currency, swap } = props.state.plugins
-    const missingPlugins: string[] = []
-    for (const pluginId of Object.keys(init)) {
-      const shouldLoad = init[pluginId] !== false && init[pluginId] != null
-      if (shouldLoad && currency[pluginId] == null && swap[pluginId] == null) {
-        missingPlugins.push(pluginId)
-      }
-    }
-    if (missingPlugins.length > 0) {
-      throw new Error(
-        'The following plugins are missing or failed to load: ' +
-          missingPlugins.join(', ')
-      )
-    }
-
     return true
   })
+
+  // A plugin whose factory threw is logged where it failed, and the reducer
+  // switches its `init` entry off. Anything still switched on but missing from
+  // both maps was never handed to us at all, which means a misspelled pluginId
+  // or a plugin that is not in this bundle. That used to throw; warn instead,
+  // so one bad id cannot take down the login:
+  const { init, currency, swap } = ai.props.state.plugins
+  const missing = Object.keys(init).filter(
+    pluginId =>
+      init[pluginId] !== false &&
+      currency[pluginId] == null &&
+      swap[pluginId] == null
+  )
+  if (missing.length > 0) {
+    ai.props.log.warn(
+      `Requested plugins are not installed: ${missing.join(', ')}`
+    )
+  }
 }
