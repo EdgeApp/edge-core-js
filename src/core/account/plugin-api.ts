@@ -4,7 +4,9 @@ import {
   EdgeCurrencyConfig,
   EdgeCurrencyInfo,
   EdgeGetTokenDetailsFilter,
+  EdgeMetaToken,
   EdgeOtherMethods,
+  EdgeParsedUri,
   EdgeSwapConfig,
   EdgeSwapInfo,
   EdgeToken,
@@ -197,6 +199,15 @@ export class CurrencyConfig
     }
     const keys = await tools.importPrivateKey(userInput, opts.keyOptions)
     return { ...keys, imported: true }
+  }
+
+  async parseUri(
+    uri: string,
+    currencyCode?: string,
+    customTokens?: EdgeMetaToken[]
+  ): Promise<EdgeParsedUri> {
+    const tools = await getCurrencyTools(this._ai, this._pluginId)
+    return await tools.parseUri(uri, currencyCode, customTokens)
   }
 }
 

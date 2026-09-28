@@ -869,6 +869,12 @@ export interface WalletConnect {
 }
 
 export interface EdgeParsedUri {
+  /**
+   * Every `getAddresses` label that applies to `publicAddress`, for chains
+   * with more than one address format. Absent means `publicAddress` only.
+   */
+  addressTypes?: string[]
+
   bitIDCallbackUri?: string
   bitIDDomain?: string
   bitidKycProvider?: string // Experimental
@@ -1788,6 +1794,11 @@ export interface EdgeCurrencyConfig {
     userInput: string,
     opts?: { keyOptions?: JsonObject }
   ) => Promise<JsonObject>
+  readonly parseUri: (
+    uri: string,
+    currencyCode?: string,
+    customTokens?: EdgeMetaToken[]
+  ) => Promise<EdgeParsedUri>
   readonly otherMethods: EdgeOtherMethods
 }
 

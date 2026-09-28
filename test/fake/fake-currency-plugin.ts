@@ -378,7 +378,7 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
 
   // URI parsing:
   parseUri(uri: string): Promise<EdgeParsedUri> {
-    return Promise.resolve({})
+    return Promise.resolve({ publicAddress: uri.replace(/^fakecoin:/, '') })
   }
 
   encodeUri(): Promise<string> {

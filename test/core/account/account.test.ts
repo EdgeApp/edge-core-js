@@ -191,6 +191,15 @@ describe('account', function () {
     expect(await account.getDisplayPublicKey(walletId)).deep.equals('xpub')
   })
 
+  it('parses a URI without a wallet', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    const parsed = await account.currencyConfig.fakecoin.parseUri('fakecoin:x')
+    expect(parsed).deep.equals({ publicAddress: 'x' })
+  })
+
   it('change currency plugin settings', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)

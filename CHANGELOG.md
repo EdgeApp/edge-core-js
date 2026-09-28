@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- added: `EdgeAccount.fetchSwapQuotes` accepts an `EdgeSwapSendRequest`, for swaps that pay out to an address.
+- added: `EdgeTxActionSwapSend`, for sends that settle through a swap provider.
+- added: `EdgeSwapRequest.privacy`, restricting quotes to sender-unlinkable routes.
+- added: `EdgeSwapRequestOptions.forceEnabled`, for querying plugins the user switched off.
+- added: `EdgeCurrencyConfig.parseUri`, for parsing a URI without a wallet.
+- added: `EdgeParsedUri.addressTypes`, listing the address formats a parsed address matches.
+
 ## 2.48.1 (2026-08-31)
 
 - fixed: Stop rebuilding the NYM mixFetch client on every request while its gateway is failing. Each attempt spawns a web worker holding megabytes of WASM that the library gives no way to terminate, so a poll loop retrying every few seconds exhausted the host's memory and killed the JS context, which on iOS reads to the user as being logged out. A failed setup now starts a cooldown that doubles up to five minutes.
