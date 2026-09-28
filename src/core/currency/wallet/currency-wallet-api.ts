@@ -46,7 +46,7 @@ import {
   JsonObject
 } from '../../../types/types'
 import { compare } from '../../../util/compare'
-import { makeMetaTokens } from '../../account/custom-tokens'
+import { makeMetaTokens, parseCurrencyUri } from '../../account/custom-tokens'
 import { splitWalletInfo } from '../../login/splitting'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
@@ -1033,24 +1033,7 @@ export function makeCurrencyWalletApi(
       )
     },
     async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
-      const tools = await getTools()
-      const parsedUri = await tools.parseUri(
-        uri,
-        currencyCode,
-        makeMetaTokens(
-          input.props.state.accounts[accountId].customTokens[pluginId]
-        )
-      )
-
-      if (parsedUri.tokenId === undefined) {
-        const { tokenId = null } = upgradeCurrencyCode({
-          allTokens: input.props.state.accounts[accountId].allTokens[pluginId],
-          currencyInfo: plugin.currencyInfo,
-          currencyCode: parsedUri.currencyCode ?? currencyCode
-        })
-        parsedUri.tokenId = tokenId
-      }
-      return parsedUri
+      return await parseCurrencyUri(ai, accountId, pluginId, uri, currencyCode)
     },
 
     // Generic:
