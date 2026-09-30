@@ -26,6 +26,12 @@ export const syncServerConfig = {
   /** Deadline for the ping sent when the app returns to the foreground. */
   resumeProbeMs: 10 * 1000,
 
+  /**
+   * A socket that has not opened by this deadline is abandoned,
+   * since a stalled upgrade never delivers `close` or `error`.
+   */
+  connectTimeoutMs: 15 * 1000,
+
   /** The reconnect delay doubles from this, with full jitter. */
   reconnectBaseMs: 5 * 1000,
 
@@ -99,7 +105,13 @@ export interface SyncServerConnection {
    */
   readonly epoch: number
 
-  /** Pings now, or reconnects now if the socket is down. */
+  /** True while a connect attempt waits for the socket to open. */
+  readonly connecting: boolean
+
+  /**
+   * Pings now, or reconnects now if the socket is down.
+   * A connect attempt still waiting to open gets a short deadline.
+   */
   checkLiveness: () => void
 
   /** Closes the socket for good, with no further callbacks. */
@@ -142,6 +154,24 @@ export function connectSyncServer(
   let heartbeat: SyncServerHeartbeat | undefined
   let codec: SyncCodec | undefined
   let currentSocket: SyncSocket | undefined
+  let connecting = false
+  let connectTimer: ReturnType<typeof setTimeout> | undefined
+  let dropCurrent: (() => void) | undefined
+
+  function armConnectDeadline(ms: number): void {
+    if (connectTimer != null) clearTimeout(connectTimer)
+    connectTimer = setTimeout(() => {
+      connectTimer = undefined
+      if (!connecting) return
+      log.warn(`syncServer ${hosts.current()} did not open in time`)
+      dropCurrent?.()
+    }, ms)
+  }
+
+  function clearConnectDeadline(): void {
+    if (connectTimer != null) clearTimeout(connectTimer)
+    connectTimer = undefined
+  }
 
   function connect(): void {
     reconnectTimer = undefined
@@ -181,6 +211,9 @@ export function connectSyncServer(
     })
     codec = socketCodec
     currentSocket = socket
+    connecting = true
+    dropCurrent = drop
+    armConnectDeadline(syncServerConfig.connectTimeoutMs)
 
     /**
      * Retires this socket. Stale events from it are ignored afterwards,
@@ -189,6 +222,9 @@ export function connectSyncServer(
     function drop(): void {
       if (gen !== generation) return
       ++generation
+      connecting = false
+      dropCurrent = undefined
+      clearConnectDeadline()
       heartbeat?.stop()
       heartbeat = undefined
       codec = undefined
@@ -211,6 +247,8 @@ export function connectSyncServer(
     socket.addEventListener('open', () => {
       if (gen !== generation) return
       opened = true
+      connecting = false
+      clearConnectDeadline()
       connected = true
       ++epoch
       heartbeat = startSyncServerHeartbeat({
@@ -279,10 +317,16 @@ export function connectSyncServer(
       return epoch
     },
 
+    get connecting() {
+      return connecting
+    },
+
     checkLiveness() {
       if (closing) return
       if (connected) {
         heartbeat?.probe(syncServerConfig.resumeProbeMs)
+      } else if (connecting) {
+        armConnectDeadline(syncServerConfig.resumeProbeMs)
       } else if (reconnectTimer != null) {
         clearTimeout(reconnectTimer)
         connect()
@@ -292,6 +336,9 @@ export function connectSyncServer(
     close() {
       closing = true
       ++generation
+      connecting = false
+      dropCurrent = undefined
+      clearConnectDeadline()
       if (reconnectTimer != null) clearTimeout(reconnectTimer)
       reconnectTimer = undefined
       heartbeat?.stop()

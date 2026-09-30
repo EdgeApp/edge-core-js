@@ -282,6 +282,55 @@ describe('sync-server connection', function () {
     connection.close()
   })
 
+  it('abandons a socket that never opens, and retries', async function () {
+    syncServerConfig.connectTimeoutMs = 30
+    syncServerConfig.reconnectBaseMs = 1
+    syncServerConfig.reconnectMaxMs = 1
+    const urls: string[] = []
+    const closed: string[] = []
+    const connection = connectSyncServer({
+      callbacks: makeCallbacks(),
+      hosts: makeSyncHostPicker(['ws://a']),
+      log,
+      makeSocket(url) {
+        // Accepts TCP, but the upgrade never answers:
+        urls.push(url)
+        return {
+          addEventListener() {},
+          close: () => closed.push(url),
+          send() {}
+        }
+      }
+    })
+    expect(connection.connecting).equals(true)
+    await waitUntil(() => urls.length >= 3, 1000, 'retries')
+    expect(closed.length).at.least(2)
+    connection.close()
+    expect(connection.connecting).equals(false)
+  })
+
+  it('a liveness check cuts short a stalled connect attempt', async function () {
+    syncServerConfig.connectTimeoutMs = 60000
+    syncServerConfig.resumeProbeMs = 20
+    syncServerConfig.reconnectBaseMs = 1
+    syncServerConfig.reconnectMaxMs = 1
+    let attempts = 0
+    const connection = connectSyncServer({
+      callbacks: makeCallbacks(),
+      hosts: makeSyncHostPicker(['ws://a']),
+      log,
+      makeSocket() {
+        ++attempts
+        return { addEventListener() {}, close() {}, send() {} }
+      }
+    })
+    await snooze(50)
+    expect(attempts).equals(1)
+    connection.checkLiveness()
+    await waitUntil(() => attempts === 2, 500, 'a new attempt')
+    connection.close()
+  })
+
   it('drops the socket when a send fails', async function () {
     const callbacks = makeCallbacks()
     const connection = connectSyncServer({
