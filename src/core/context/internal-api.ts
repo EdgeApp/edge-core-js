@@ -14,6 +14,7 @@ import { loginFetch } from '../login/login-fetch'
 import { hashUsername } from '../login/login-selectors'
 import { ApiInput } from '../root-pixie'
 import { makeRepoPaths, syncRepo, SyncResult } from '../storage/repo'
+import { SyncWebSocketStatus } from '../storage/repo-change-manager'
 
 /**
  * The requesting side of an Edge login lobby.
@@ -105,6 +106,30 @@ export class EdgeInternalStuff extends Bridgeable<{}> {
       lastSync: 0,
       lastHash: undefined
     })
+  }
+
+  /**
+   * The sync-server WebSocket hosts the core follows now: the
+   * `syncWebSocketServer` option, or the hosts derived from the sync
+   * servers REST uses, which the info server can change at runtime.
+   */
+  get syncWebSocketServers(): string[] {
+    return this._ai.props.state.syncWebSocketServers
+  }
+
+  /**
+   * The same host list, plus each open sync-server socket and the
+   * host it is on. A method, so it reads live across a bridge.
+   */
+  async getSyncWebSocketStatus(): Promise<{
+    servers: string[]
+    sockets: SyncWebSocketStatus[]
+  }> {
+    const { output, state } = this._ai.props
+    return {
+      servers: state.syncWebSocketServers,
+      sockets: output.repoChangeManager?.sockets ?? []
+    }
   }
 
   async getRepoDisklet(

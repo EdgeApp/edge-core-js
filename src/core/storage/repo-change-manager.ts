@@ -19,7 +19,23 @@ import {
 /** Most repos one `subscribeRepos` call may carry. */
 export const SUBSCRIBE_BATCH_SIZE = 100
 
-export type RepoChangeManagerOutput = undefined
+/** A sync-server socket, as diagnostics see it. */
+export interface SyncWebSocketStatus {
+  /** The host the socket is on, or will try next. */
+  url: string
+  connected: boolean
+  connecting: boolean
+
+  /** How many repos the socket carries. */
+  repoCount: number
+}
+
+export type RepoChangeManagerOutput =
+  | {
+      /** A live view of the manager's sockets, read on each access. */
+      readonly sockets: SyncWebSocketStatus[]
+    }
+  | undefined
 
 interface SocketEntry {
   connection: SyncServerConnection
@@ -660,9 +676,26 @@ export function repoChangeManager(input: ApiInput): {
     }
   }
 
+  // Published once; the getter reads the sockets live:
+  let outputSent = false
+  const output: RepoChangeManagerOutput = {
+    get sockets() {
+      return sockets.map(entry => ({
+        url: entry.connection.url,
+        connected: entry.connection.connected,
+        connecting: entry.connection.connecting,
+        repoCount: entry.ids.size
+      }))
+    }
+  }
+
   return {
     update() {
       const { state } = input.props
+      if (!outputSent) {
+        outputSent = true
+        input.onOutput(output)
+      }
 
       // Returning to the foreground: the socket may have died while
       // the JS engine was frozen, so check it now rather than waiting

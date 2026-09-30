@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { makeMemoryDisklet } from 'disklet'
 import { afterEach, beforeEach, describe, it } from 'mocha'
 
+import { getInternalStuff } from '../../../src/core/context/internal-api'
 import { makeRepoPaths } from '../../../src/core/storage/repo'
 import { newestCheckpoint } from '../../../src/core/storage/repo-change-manager'
 import { storageSyncConfig } from '../../../src/core/storage/storage-actions'
@@ -212,6 +213,18 @@ describe('sync-server subscriptions', function () {
       3000,
       'the socket on the new host'
     )
+
+    // Diagnostics see the hosts the core follows, and each socket:
+    const internal = getInternalStuff(context)
+    expect(internal.syncWebSocketServers).deep.equals(
+      getState(context).syncWebSocketServers
+    )
+    const status = await internal.getSyncWebSocketStatus()
+    expect(status.servers).deep.equals(internal.syncWebSocketServers)
+    expect(status.sockets.length).equals(1)
+    expect(status.sockets[0].url).equals(lastConnection(harness.server).url)
+    expect(status.sockets[0].connected).equals(true)
+    expect(status.sockets[0].repoCount).at.least(1)
     await context.close()
   })
 
@@ -232,6 +245,11 @@ describe('sync-server subscriptions', function () {
     for (const connection of harness.server.connections) {
       expect(connection.url).equals('wss://sync-mine.edge.app/api/v2/ws')
     }
+    const status = await getInternalStuff(context).getSyncWebSocketStatus()
+    expect(status.servers).deep.equals(['wss://sync-mine.edge.app/api/v2/ws'])
+    expect(status.sockets.map(socket => socket.url)).deep.equals([
+      'wss://sync-mine.edge.app/api/v2/ws'
+    ])
     await context.close()
   })
 

@@ -164,6 +164,7 @@ function makeManagerHarness(
   }
 
   const input: ApiInput = {
+    onOutput() {},
     get props() {
       return {
         dispatch,
