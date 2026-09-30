@@ -501,15 +501,61 @@ describe('repo change manager', function () {
     expect(isRepoListening(h.state as any, [h.ids[0]])).equals(false)
   })
 
-  it('an owed first sync runs if no socket answers in time', async function () {
-    syncServerConfig.subscribeTimeoutMs = 50
+  it('an owed first sync runs at once if the socket is refused', async function () {
     syncServerConfig.reconnectBaseMs = 10000
-    const h = (harness = makeManagerHarness([
-      { files: 1, lastHash: 'current', syncOwed: true }
-    ]))
-    h.server.offline = true
-    await waitUntil(() => h.gets(0) === 1)
+    const h = (harness = makeManagerHarness(
+      [{ files: 1, lastHash: 'current', syncOwed: true }],
+      {
+        makeSocket: server => {
+          server.offline = true
+          return server.makeSocket
+        }
+      }
+    ))
+    const start = Date.now()
+    await waitUntil(() => h.gets(0) === 1, 1000)
+    expect(Date.now() - start).lessThan(500)
     expect(h.status(0)).equals('unsubscribed')
+  })
+
+  it('an owed first sync runs once a stalled connect attempt times out', async function () {
+    syncServerConfig.connectTimeoutMs = 50
+    syncServerConfig.reconnectBaseMs = 10000
+    const h = (harness = makeManagerHarness(
+      [{ files: 1, lastHash: 'current', syncOwed: true }],
+      {
+        makeSocket: () => () => ({
+          addEventListener() {},
+          close() {},
+          send() {}
+        })
+      }
+    ))
+    await snooze(20)
+    expect(h.gets(0)).equals(0)
+    await waitUntil(() => h.gets(0) === 1, 1000)
+  })
+
+  it('an owed first sync runs if no subscription answers in time', async function () {
+    syncServerConfig.subscribeTimeoutMs = 50
+    const h = (harness = makeManagerHarness(
+      [{ files: 1, lastHash: 'current', syncOwed: true }],
+      {
+        // Opens, but never answers:
+        makeSocket: () => () => {
+          const opens: Array<(event: unknown) => void> = []
+          setTimeout(() => opens.forEach(open => open({})), 0)
+          return {
+            addEventListener(type, listener) {
+              if (type === 'open') opens.push(listener)
+            },
+            close() {},
+            send() {}
+          }
+        }
+      }
+    ))
+    await waitUntil(() => h.gets(0) === 1, 1000)
   })
 
   it('a failed pull puts the repo back on polling', async function () {

@@ -108,6 +108,10 @@ export function makeSyncHostPicker(
 
 export interface SyncServerCallbacks {
   handleConnect: () => void
+
+  /** A connect attempt ended without the socket ever opening. */
+  handleConnectFailed?: () => void
+
   handleDisconnect: () => void
   handleSubLost: (params: Array<[repoId: string]>) => void
   handleUpdate: (params: SyncUpdateParams[]) => void
@@ -305,6 +309,7 @@ export function connectSyncServer(
       hosts.rotate(url)
     }
     scheduleReconnect()
+    callbacks.handleConnectFailed?.()
   }
 
   function scheduleReconnect(): void {

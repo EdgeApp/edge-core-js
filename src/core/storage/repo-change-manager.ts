@@ -129,6 +129,7 @@ export function repoChangeManager(input: ApiInput): {
   const repoIds = new Map<string, string>() // repoId -> storage wallet id
   const pulls = new Map<string, PullRun>()
   const pausedPulls = new Set<string>()
+  const owedPullsStarted = new Set<string>()
   let hosts: SyncHostPicker | undefined
   let owedTimer: ReturnType<typeof setTimeout> | undefined
   let destroyed = false
@@ -237,6 +238,7 @@ export function repoChangeManager(input: ApiInput): {
       return status != null && status !== 'unsubscribed'
     })
     setStatuses(ids, 'unsubscribed')
+    reconcile()
   }
 
   /** The socket's repos waiting for a subscription, in watch order. */
@@ -442,6 +444,8 @@ export function repoChangeManager(input: ApiInput): {
       makeSocket: makeSyncSocket,
       callbacks: {
         handleConnect: () => reconcile(),
+        // This can fire while the socket is still being built:
+        handleConnectFailed: () => setTimeout(reconcile, 0),
         handleDisconnect: () => handleDisconnect(entry),
         handleSubLost: params => handleSubLost(entry, params),
         handleUpdate: params => handleUpdate(entry, params)
@@ -453,6 +457,8 @@ export function repoChangeManager(input: ApiInput): {
   /**
    * Repos loaded from disk skip their first sync, leaving it to the
    * subscription result. If no result arrives in time, sync anyway.
+   * This only matters while a connect attempt is still in flight,
+   * since a socket that is down releases owed syncs at once.
    */
   function armOwedTimer(watched: string[]): void {
     if (owedTimer != null) return
@@ -523,6 +529,19 @@ export function repoChangeManager(input: ApiInput): {
     // Subscribe anything not yet subscribed on a live socket:
     for (const entry of sockets) {
       if (entry.connection.connected) requestFlush(entry)
+    }
+
+    // Owed first syncs only wait on a connect attempt in flight.
+    // With the socket down between attempts, they run now:
+    for (const entry of sockets) {
+      const { connection } = entry
+      if (connection.connected || connection.connecting) continue
+      for (const id of watched) {
+        if (!entry.ids.has(id) || owedPullsStarted.has(id)) continue
+        if (!state.storageWallets[id].subscription.syncOwed) continue
+        owedPullsStarted.add(id)
+        pull(id)
+      }
     }
 
     armOwedTimer(watched)
