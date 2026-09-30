@@ -8,6 +8,7 @@ import { storageSyncConfig } from '../../../src/core/storage/storage-actions'
 import { syncServerConfig } from '../../../src/core/storage/sync-server-connection'
 import { makeFakeIo } from '../../../src/index'
 import { asEdgeBox } from '../../../src/types/server-cleaners'
+import { EdgeAccount } from '../../../src/types/types'
 import { snooze } from '../../../src/util/snooze'
 import { fakeUser } from '../../fake/fake-user'
 import { waitUntil } from '../../wait-until'
@@ -177,5 +178,153 @@ describe('sync-server subscriptions', function () {
       'polling to resume'
     )
     await context.close()
+  })
+
+  describe('local writes', function () {
+    async function loginListening(
+      gate: ReturnType<typeof makeStoreGate>
+    ): Promise<{
+      harness: ReturnType<typeof makeSyncWsHarness>
+      context: Parameters<typeof getState>[0]
+      account: EdgeAccount
+    }> {
+      const harness = makeSyncWsHarness()
+      const context = await harness.makeContext({ gate })
+      const account = await context.loginWithPassword(
+        fakeUser.username,
+        fakeUser.password,
+        { otpKey: 'HELLO' }
+      )
+      await waitUntil(() => accountStatus(context) === 'listening')
+      return { harness, context, account }
+    }
+
+    function posts(gate: ReturnType<typeof makeStoreGate>): number {
+      return gate.postCounts.get(accountSyncKeyHex) ?? 0
+    }
+
+    it('uploads a write to a subscribed repo within the debounce window', async function () {
+      this.timeout(15000)
+      storageSyncConfig.uploadDebounceMs = 50
+      const gate = makeStoreGate()
+      const { harness, context, account } = await loginListening(gate)
+      const before = posts(gate)
+      const serverFiles = Object.keys(
+        harness.db.repos.get(accountSyncKeyHex) ?? {}
+      ).length
+
+      await account.dataStore.setItem('test', 'key', 'value')
+      await waitUntil(() => posts(gate) === before + 1, 1000, 'the upload')
+      await waitUntil(
+        () =>
+          Object.keys(harness.db.repos.get(accountSyncKeyHex) ?? {}).length >
+          serverFiles,
+        1000,
+        'the file on the server'
+      )
+      expect(accountStatus(context)).equals('listening')
+      await context.close()
+    })
+
+    it('uploads a burst of writes once', async function () {
+      this.timeout(15000)
+      storageSyncConfig.uploadDebounceMs = 50
+      const gate = makeStoreGate()
+      const { context, account } = await loginListening(gate)
+      const before = posts(gate)
+
+      for (let i = 0; i < 5; ++i) {
+        await account.dataStore.setItem('test', `key${i}`, 'value')
+      }
+      await waitUntil(() => posts(gate) > before, 1000, 'the upload')
+      await snooze(200)
+      expect(posts(gate)).equals(before + 1)
+      await context.close()
+    })
+
+    it('uploads a write that lands during an in-flight sync', async function () {
+      this.timeout(15000)
+      storageSyncConfig.uploadDebounceMs = 20
+      const gate = makeStoreGate()
+      const { harness, context, account } = await loginListening(gate)
+      const before = posts(gate)
+
+      // A notified pull is stuck in flight:
+      let release: () => void = () => {}
+      gate.reads = new Promise(resolve => {
+        release = resolve
+      })
+      foreignWrite(harness, 'Remote/file.json')
+      await waitUntil(() => gate.parked > 0, 1000, 'the pull')
+
+      // Write while it waits, then let it finish:
+      await account.dataStore.setItem('test', 'key', 'value')
+      await snooze(100)
+      expect(posts(gate)).equals(before)
+      gate.reads = undefined
+      release()
+      await waitUntil(() => posts(gate) === before + 1, 1000, 'the upload')
+      await context.close()
+    })
+
+    it('retries a failed upload', async function () {
+      this.timeout(15000)
+      storageSyncConfig.uploadDebounceMs = 20
+      storageSyncConfig.uploadRetryBaseMs = 20
+      const gate = makeStoreGate()
+      const { harness, context, account } = await loginListening(gate)
+      const before = posts(gate)
+      const serverFiles = Object.keys(
+        harness.db.repos.get(accountSyncKeyHex) ?? {}
+      ).length
+
+      gate.failPosts = 2
+      await account.dataStore.setItem('test', 'key', 'value')
+      await waitUntil(() => posts(gate) === before + 3, 2000, 'the retries')
+      await waitUntil(
+        () =>
+          Object.keys(harness.db.repos.get(accountSyncKeyHex) ?? {}).length >
+          serverFiles,
+        1000,
+        'the file on the server'
+      )
+      await snooze(100)
+      expect(posts(gate)).equals(before + 3)
+      await context.close()
+    })
+
+    it('uploads edits left over from an earlier session on relaunch', async function () {
+      this.timeout(15000)
+      storageSyncConfig.uploadDebounceMs = 20
+      storageSyncConfig.uploadRetryBaseMs = 20
+      const harness = makeSyncWsHarness()
+      const disklet = makeMemoryDisklet()
+      const gateA = makeStoreGate()
+      const contextA = await harness.makeContext({ disklet, gate: gateA })
+      const accountA = await contextA.loginWithPassword(
+        fakeUser.username,
+        fakeUser.password,
+        { otpKey: 'HELLO' }
+      )
+      await waitUntil(() => accountStatus(contextA) === 'listening')
+
+      // Every upload fails until the app dies:
+      gateA.failPosts = 1000
+      await accountA.dataStore.setItem('test', 'key', 'value')
+      await waitUntil(() => posts(gateA) > 0, 1000, 'an upload attempt')
+      await contextA.close()
+      const attempts = posts(gateA)
+      await snooze(100)
+      expect(posts(gateA)).equals(attempts)
+
+      // The next launch uploads the edit, although nothing changed remotely:
+      const gateB = makeStoreGate()
+      const contextB = await harness.makeContext({ disklet, gate: gateB })
+      await contextB.loginWithPassword(fakeUser.username, fakeUser.password, {
+        otpKey: 'HELLO'
+      })
+      await waitUntil(() => posts(gateB) === 1, 2000, 'the upload')
+      await contextB.close()
+    })
   })
 })

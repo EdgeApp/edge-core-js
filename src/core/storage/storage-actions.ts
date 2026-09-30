@@ -2,14 +2,20 @@ import { bridgifyObject } from 'yaob'
 
 import { EdgeWalletInfo } from '../../types/types'
 import { makePeriodicTask } from '../../util/periodic-task'
+import {
+  loadAllWalletStates,
+  reloadPluginSettings
+} from '../account/account-files'
 import { asEdgeStorageKeys } from '../login/storage-keys'
 import { ApiInput } from '../root-pixie'
 import { RootState } from '../root-reducer'
 import {
+  hasLocalChanges,
   loadRepoStatus,
   makeLocalDisklet,
   makeRepoPaths,
-  syncRepo
+  syncRepo,
+  watchRepoWrites
 } from './repo'
 import { StorageWalletStatus } from './storage-reducer'
 
@@ -21,8 +27,20 @@ export const SYNC_INTERVAL = 30 * 1000
  */
 export const storageSyncConfig: {
   syncInterval: number
+
+  /** Quiet time after a local write before uploading it. */
+  uploadDebounceMs: number
+
+  /** A failed upload retries after this, doubling each time. */
+  uploadRetryBaseMs: number
+
+  /** Upper bound on the upload retry delay. */
+  uploadRetryMaxMs: number
 } = {
-  syncInterval: SYNC_INTERVAL
+  syncInterval: SYNC_INTERVAL,
+  uploadDebounceMs: 250,
+  uploadRetryBaseMs: 1000,
+  uploadRetryMaxMs: 60 * 1000
 }
 
 /**
@@ -82,6 +100,11 @@ export async function addStorageWallet(
 
   const status: StorageWalletStatus = await loadRepoStatus(paths)
 
+  // Upload local writes as they happen, since a subscribed repo
+  // does not poll:
+  const upload = makeRepoUploader(ai, walletInfo.id)
+  watchRepoWrites(io, storageKeys.syncKey, upload)
+
   // A repo that has synced before can leave its first sync to the
   // sync-server subscription, which reports whether it has changed:
   const syncOwed =
@@ -99,7 +122,12 @@ export async function addStorageWallet(
       }
     }
   })
-  if (syncOwed) return
+  if (syncOwed) {
+    // Edits from before a logout or a crash still need uploading,
+    // even if the subscription reports no remote changes:
+    if (await hasLocalChanges(paths)) upload()
+    return
+  }
 
   // If we have already done a sync, let this one run in the background:
   const syncPromise = syncStorageWallet(ai, walletInfo.id)
@@ -115,6 +143,124 @@ export async function addStorageWallet(
       onError(error)
     })
   } else await syncPromise
+}
+
+/**
+ * True while a logged-in account uses the repo.
+ */
+function isRepoInUse(state: RootState, walletId: string): boolean {
+  if (state.currency?.currencyWalletIds?.includes(walletId)) {
+    return true
+  }
+  return (state.accountIds ?? []).some(
+    accountId =>
+      state.accounts[accountId]?.accountWalletInfos.some(
+        info => info.id === walletId
+      )
+  )
+}
+
+/**
+ * Makes the upload trigger for one repo. Each call restarts a short
+ * debounce, so a burst of writes becomes one upload. The upload goes
+ * through the per-repo sync queue, so a write that lands during a sync
+ * is uploaded by the next one, and a sync that leaves changes behind
+ * (they upload 100 files at a time) is followed by another.
+ * Failures retry with jittered exponential backoff while an account
+ * still uses the repo. A write made just before logout gets one
+ * upload attempt; anything left then waits for the next login,
+ * which uploads pending changes when it attaches the repo.
+ */
+function makeRepoUploader(ai: ApiInput, walletId: string): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let failures = 0
+  let running = false
+  let again = false
+
+  function schedule(delayMs: number): void {
+    if (timer != null) clearTimeout(timer)
+    timer = setTimeout(run, delayMs)
+  }
+
+  function run(): void {
+    timer = undefined
+    if (running) {
+      again = true
+      return
+    }
+    running = true
+    syncRepoAndReload(ai, walletId)
+      .then(async () => {
+        failures = 0
+        const storageWallet = ai.props.state.storageWallets?.[walletId]
+        if (
+          storageWallet != null &&
+          (await hasLocalChanges(storageWallet.paths))
+        ) {
+          again = true
+        }
+      })
+      .catch((error: unknown) => {
+        ++failures
+        ai.props.log.warn(
+          `Upload of repo ${walletId} failed (attempt ${failures}): ${String(
+            error
+          )}`
+        )
+        let inUse = false
+        try {
+          inUse = isRepoInUse(ai.props.state, walletId)
+        } catch (error: unknown) {}
+        if (!inUse) return
+        const { uploadRetryBaseMs, uploadRetryMaxMs } = storageSyncConfig
+        const ceiling = Math.min(
+          uploadRetryMaxMs,
+          uploadRetryBaseMs * 2 ** (failures - 1)
+        )
+        schedule(ceiling * (0.5 + Math.random() / 2))
+      })
+      .then(() => {
+        running = false
+        if (again) {
+          again = false
+          schedule(storageSyncConfig.uploadDebounceMs)
+        }
+      })
+      .catch(() => {})
+  }
+
+  return () => schedule(storageSyncConfig.uploadDebounceMs)
+}
+
+/**
+ * Syncs a repo, then reloads the account files that live in it
+ * if it belongs to an account.
+ */
+export async function syncRepoAndReload(
+  ai: ApiInput,
+  walletId: string
+): Promise<void> {
+  const changes = await syncStorageWallet(ai, walletId)
+  if (changes.length === 0) return
+
+  const { state } = ai.props
+  for (const accountId of state.accountIds) {
+    const account = state.accounts[accountId]
+    if (account == null) continue
+    if (!account.accountWalletInfos.some(info => info.id === walletId)) {
+      continue
+    }
+    // An account still booting reads these files from disk once its
+    // own load lands, so a sync must not race that load:
+    await Promise.all([
+      account.pluginSettingsLoaded
+        ? reloadPluginSettings(ai, accountId)
+        : undefined,
+      account.walletStatesLoaded
+        ? loadAllWalletStates(ai, accountId)
+        : undefined
+    ])
+  }
 }
 
 /**

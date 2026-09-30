@@ -40,6 +40,53 @@ export function syncKeyToRepoId(syncKey: Uint8Array): string {
 }
 
 /**
+ * Upload triggers for local repo writes, keyed by the device disklet
+ * and then by repo ID, so every `makeRepoPaths` instance for a repo
+ * reaches the same listener, including ones made before the repo
+ * was attached.
+ */
+const repoWriteWatchers = new WeakMap<Disklet, Map<string, () => void>>()
+
+/**
+ * Calls `onWrite` after every local write or delete through the
+ * repo's synced disklet. Returns an unsubscribe function.
+ */
+export function watchRepoWrites(
+  io: EdgeIo,
+  syncKey: Uint8Array,
+  onWrite: () => void
+): () => void {
+  const repoId = syncKeyToRepoId(syncKey)
+  let watchers = repoWriteWatchers.get(io.disklet)
+  if (watchers == null) {
+    watchers = new Map()
+    repoWriteWatchers.set(io.disklet, watchers)
+  }
+  watchers.set(repoId, onWrite)
+  return () => {
+    if (watchers?.get(repoId) === onWrite) watchers.delete(repoId)
+  }
+}
+
+/**
+ * Wraps the changes folder so writes and deletes that succeed
+ * notify the repo's upload trigger.
+ */
+function watchWrites(disklet: Disklet, notify: () => void): Disklet {
+  async function after<T>(promise: Promise<T>): Promise<T> {
+    const out = await promise
+    notify()
+    return out
+  }
+  return {
+    ...disklet,
+    delete: async path => await after(disklet.delete(path)),
+    setData: async (path, data) => await after(disklet.setData(path, data)),
+    setText: async (path, text) => await after(disklet.setText(path, text))
+  }
+}
+
+/**
  * Sets up the back-end folders needed to emulate Git on disk.
  * You probably don't want this.
  */
@@ -48,16 +95,22 @@ export function makeRepoPaths(
   storageKeys: EdgeStorageKeys
 ): StorageWalletPaths {
   const { dataKey, syncKey } = storageKeys
-  const baseDisklet = navigateDisklet(
-    io.disklet,
-    'repos/' + syncKeyToRepoId(syncKey)
-  )
+  const repoId = syncKeyToRepoId(syncKey)
+  const baseDisklet = navigateDisklet(io.disklet, 'repos/' + repoId)
   const changesDisklet = navigateDisklet(baseDisklet, 'changes')
   const dataDisklet = navigateDisklet(baseDisklet, 'data')
+
+  // Local edits land in the changes folder, which only a sync uploads,
+  // so every edit asks for one. `syncRepo` clears the folder through
+  // the unwatched `changesDisklet`, so it does not ask for another:
+  const watchedChanges = watchWrites(
+    changesDisklet,
+    () => repoWriteWatchers.get(io.disklet)?.get(repoId)?.()
+  )
   const disklet = encryptDisklet(
     io,
     dataKey,
-    mergeDisklets(changesDisklet, dataDisklet)
+    mergeDisklets(watchedChanges, dataDisklet)
   )
 
   return {
@@ -161,6 +214,16 @@ export async function syncRepo(
   if (hash != null) status.lastHash = hash
   await paths.baseDisklet.setText('status.json', JSON.stringify(status))
   return { status, changes }
+}
+
+/**
+ * True if the repo holds local changes that have not been uploaded.
+ */
+export async function hasLocalChanges(
+  paths: StorageWalletPaths
+): Promise<boolean> {
+  const list = await deepListWithLimit(paths.changesDisklet, '', 1)
+  return list.length > 0
 }
 
 /**

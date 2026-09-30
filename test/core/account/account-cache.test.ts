@@ -8,6 +8,7 @@ import {
 } from '../../../src/core/account/account-cache-file'
 import { walletCacheLoaderHooks } from '../../../src/core/currency/wallet/wallet-cache-loader'
 import { fakeWorldTestConfig } from '../../../src/core/fake/fake-world'
+import { storageSyncConfig } from '../../../src/core/storage/storage-actions'
 import {
   EdgeAccount,
   EdgeContext,
@@ -95,6 +96,8 @@ async function makeAccountCachedWorld(
  * cache alternates between two slots, so a test that wants to inspect
  * what was actually written has to pick the current generation.
  */
+const defaultUploadDebounceMs = storageSyncConfig.uploadDebounceMs
+
 async function readAccountCache(account: EdgeAccount): Promise<any> {
   let best: any
   for (const path of ACCOUNT_CACHE_FILES) {
@@ -130,6 +133,7 @@ describe('account cache', function () {
     fakeWorldTestConfig.readGate = undefined
     fakeWorldTestConfig.writeGate = undefined
     accountCacheSaverConfig.throttleMs = 5000
+    storageSyncConfig.uploadDebounceMs = defaultUploadDebounceMs
   })
 
   it('cold login without an account cache boots as on master', async function () {
@@ -231,6 +235,9 @@ describe('account cache', function () {
     // Make the cache disagree with the authoritative files: archive the
     // second wallet, then unarchive it with the account saver slowed
     // down, so the cache still says "archived" while the disk says not:
+    // Upload each edit at once, so the reload that follows the upload
+    // settles within the save window instead of racing the slowdown:
+    storageSyncConfig.uploadDebounceMs = 0
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
     await account.changeWalletStates({ [walletIds[1]]: { archived: true } })
     await snooze(SAVE_WAIT_MS)

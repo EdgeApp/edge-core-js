@@ -31,6 +31,12 @@ export interface StoreGate {
 
   /** Counts reads parked on the gate. */
   parked: number
+
+  /** Counts `POST /api/v2/store` uploads, by lowercase sync key. */
+  readonly postCounts: Map<string, number>
+
+  /** Fails this many upcoming uploads with a network error. */
+  failPosts: number
 }
 
 export interface SyncWsHarness {
@@ -48,7 +54,12 @@ export interface SyncWsHarness {
 }
 
 export function makeStoreGate(): StoreGate {
-  return { getCounts: new Map(), parked: 0 }
+  return {
+    getCounts: new Map(),
+    parked: 0,
+    postCounts: new Map(),
+    failPosts: 0
+  }
 }
 
 export function makeSyncWsHarness(): SyncWsHarness {
@@ -74,6 +85,14 @@ export function makeSyncWsHarness(): SyncWsHarness {
           if (gate.reads != null) {
             ++gate.parked
             await gate.reads
+          }
+        }
+        if (match != null && method === 'POST') {
+          const syncKey = match[1]
+          gate.postCounts.set(syncKey, (gate.postCounts.get(syncKey) ?? 0) + 1)
+          if (gate.failPosts > 0) {
+            --gate.failPosts
+            throw new Error('Network down')
           }
         }
         return await fakeFetch(uri, init)

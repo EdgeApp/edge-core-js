@@ -1,11 +1,7 @@
-import {
-  loadAllWalletStates,
-  reloadPluginSettings
-} from '../account/account-files'
 import { ApiInput } from '../root-pixie'
 import { RootState } from '../root-reducer'
 import { syncKeyToRepoId } from './repo'
-import { syncStorageWallet } from './storage-actions'
+import { syncRepoAndReload } from './storage-actions'
 import { StorageWalletSubscriptionStatus } from './storage-reducer'
 import {
   connectSyncServer,
@@ -76,26 +72,6 @@ export function listWatchedRepos(state: RootState): string[] {
   }
   for (const walletId of state.currency.currencyWalletIds) add(walletId)
   return out
-}
-
-/**
- * Syncs a repo, then reloads the account files that live in it
- * if it belongs to an account.
- */
-async function pullRepo(ai: ApiInput, id: string): Promise<void> {
-  const changes = await syncStorageWallet(ai, id)
-  if (changes.length === 0) return
-
-  const { state } = ai.props
-  for (const accountId of state.accountIds) {
-    const account = state.accounts[accountId]
-    if (account == null) continue
-    if (!account.accountWalletInfos.some(info => info.id === id)) continue
-    await Promise.all([
-      reloadPluginSettings(ai, accountId),
-      loadAllWalletStates(ai, accountId)
-    ])
-  }
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -187,7 +163,7 @@ export function repoChangeManager(input: ApiInput): {
       while (true) {
         run.again = false
         try {
-          await pullRepo(input, id)
+          await syncRepoAndReload(input, id)
         } catch (error: unknown) {
           ok = false
           input.props.log.warn(`syncServer pull ${id} failed: ${String(error)}`)
