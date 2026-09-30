@@ -505,6 +505,48 @@ describe('repo change manager', function () {
     expect(h.server.connections[0].subscribeCalls.length).equals(3)
   })
 
+  it('backs off each repo the server cannot check, and pulls it once', async function () {
+    this.timeout(5000)
+    syncServerConfig.subscribeRetryBaseMs = 20
+    syncServerConfig.subscribeRetryMaxMs = 160
+    syncServerConfig.subscribeCallsPerMinute = 1000
+    const h = (harness = makeManagerHarness(
+      Array.from({ length: 4 }, () => ({
+        files: 1,
+        lastHash: '1:0',
+        syncOwed: true
+      }))
+    ))
+
+    // The server cannot read checkpoints, and pulls fail too:
+    h.server.subscribeCallsPerMinute = 1000
+    h.server.overrideResult = () => 0
+    const repos = new Map(h.db.repos)
+    h.db.repos.clear()
+
+    await snooze(300)
+    const early = h.ids.map((_, i) => h.gets(i))
+    await snooze(700)
+
+    // Each repo's owed first sync ran once, and was not repeated:
+    expect(h.ids.map((_, i) => h.gets(i))).deep.equals(early)
+    for (let i = 0; i < h.ids.length; ++i) expect(h.gets(i)).greaterThan(0)
+
+    // The retries slowed down, from ~20 ms toward the 160 ms cap:
+    const [connection] = h.server.connections
+    const times = connection.subscribeCallTimes
+    const gaps = times.slice(1).map((time, i) => time - times[i])
+    expect(times.length).at.most(12)
+    expect(gaps[gaps.length - 1]).greaterThan(2 * gaps[0])
+    expect(gaps[gaps.length - 1]).at.least(70)
+    expect(h.ids.every((_, i) => h.status(i) !== 'listening')).equals(true)
+
+    // The server recovers, and every repo listens:
+    repos.forEach((repo, syncKey) => h.db.repos.set(syncKey, repo))
+    h.server.overrideResult = undefined
+    await waitUntil(() => allListening(h), 2000)
+  })
+
   it('refused subscriptions poll, and pull an owed first sync', async function () {
     const h = (harness = makeManagerHarness([
       { files: 1, lastHash: 'current', syncOwed: true },

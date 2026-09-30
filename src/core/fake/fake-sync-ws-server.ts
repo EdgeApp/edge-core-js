@@ -26,6 +26,9 @@ export interface FakeSyncWsConnection {
   /** Every accepted `subscribeRepos` call, in arrival order. */
   readonly subscribeCalls: SyncSubscribeParams[][]
 
+  /** When each accepted `subscribeRepos` call arrived. */
+  readonly subscribeCallTimes: number[]
+
   /** Every `subscribeRepos` call refused by the rate limit. */
   readonly rejectedCalls: SyncSubscribeParams[][]
 
@@ -119,6 +122,7 @@ export function makeFakeSyncWsServer(db: FakeDb): FakeSyncWsServer {
     const subscriptions = new Map<string, string>()
     const subscribeCalls: SyncSubscribeParams[][] = []
     const rejectedCalls: SyncSubscribeParams[][] = []
+    const subscribeCallTimes: number[] = []
     let callTimes: number[] = []
     const updates: SyncUpdateParams[][] = []
     let pendingUpdates = new Map<string, string>()
@@ -147,6 +151,7 @@ export function makeFakeSyncWsServer(db: FakeDb): FakeSyncWsServer {
           }
           callTimes.push(now)
           subscribeCalls.push(params)
+          subscribeCallTimes.push(now)
           return params.map(([repoId, checkpoint]): SyncSubscribeResult => {
             if (
               !subscriptions.has(repoId) &&
@@ -210,6 +215,7 @@ export function makeFakeSyncWsServer(db: FakeDb): FakeSyncWsServer {
       id: nextId++,
       url,
       subscribeCalls,
+      subscribeCallTimes,
       rejectedCalls,
       updates,
       subscriptions,

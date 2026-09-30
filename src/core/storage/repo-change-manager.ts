@@ -130,6 +130,12 @@ export function repoChangeManager(input: ApiInput): {
   const pulls = new Map<string, PullRun>()
   const pausedPulls = new Set<string>()
   const owedPullsStarted = new Set<string>()
+
+  // Per-repo backoff for repos the server answered with 0:
+  const repoBackoffs = new Map<
+    string,
+    { failures: number; notBefore: number }
+  >()
   let hosts: SyncHostPicker | undefined
   let owedTimer: ReturnType<typeof setTimeout> | undefined
   let destroyed = false
@@ -247,11 +253,66 @@ export function repoChangeManager(input: ApiInput): {
   /** The socket's repos waiting for a subscription, in watch order. */
   function listUnsubscribed(entry: SocketEntry): string[] {
     const { state } = input.props
+    const now = Date.now()
     return listWatchedRepos(state).filter(
       id =>
         entry.ids.has(id) &&
-        state.storageWallets[id].subscription.status === 'unsubscribed'
+        state.storageWallets[id].subscription.status === 'unsubscribed' &&
+        (repoBackoffs.get(id)?.notBefore ?? 0) <= now
     )
+  }
+
+  /**
+   * Runs a repo's owed first sync, once. If that pull fails, the repo
+   * is polling by then, and the poll takes it from there.
+   */
+  function pullOwed(id: string): void {
+    if (owedPullsStarted.has(id)) return
+    if (!input.props.state.storageWallets[id]?.subscription.syncOwed) {
+      return
+    }
+    owedPullsStarted.add(id)
+    pull(id)
+  }
+
+  /**
+   * Holds back repos the server could not check (result 0), each on
+   * its own backoff that grows until the repo is listening again.
+   * They poll meanwhile.
+   */
+  function backOffRepos(entry: SocketEntry, ids: string[]): void {
+    const { subscribeRetryBaseMs, subscribeRetryMaxMs } = syncServerConfig
+
+    // Repos refused together retry together, on the slowest schedule:
+    let failures = 0
+    for (const id of ids) {
+      failures = Math.max(failures, repoBackoffs.get(id)?.failures ?? 0)
+    }
+    const delay = Math.min(
+      subscribeRetryMaxMs,
+      subscribeRetryBaseMs * 2 ** failures
+    )
+    const notBefore = Date.now() + delay * (0.5 + Math.random() / 2)
+    for (const id of ids) {
+      repoBackoffs.set(id, { failures: failures + 1, notBefore })
+    }
+    setStatuses(ids, 'unsubscribed')
+    ids.forEach(pullOwed)
+    wakeForBackoffs(entry)
+  }
+
+  /** Schedules a flush for when the socket's next held-back repo is due. */
+  function wakeForBackoffs(entry: SocketEntry): void {
+    if (entry.flushTimer != null) return
+    const { storageWallets } = input.props.state
+    let next: number | undefined
+    entry.ids.forEach(id => {
+      const backoff = repoBackoffs.get(id)
+      if (backoff == null) return
+      if (storageWallets[id]?.subscription.status !== 'unsubscribed') return
+      if (next == null || backoff.notBefore < next) next = backoff.notBefore
+    })
+    if (next != null) scheduleFlush(entry, next)
   }
 
   function scheduleFlush(entry: SocketEntry, at: number): void {
@@ -311,7 +372,7 @@ export function repoChangeManager(input: ApiInput): {
     const ids = listUnsubscribed(entry)
     entry.pendingSince = undefined
     entry.pendingCount = 0
-    if (ids.length === 0) return
+    if (ids.length === 0) return wakeForBackoffs(entry)
 
     const { subscribeCallsPerMinute } = syncServerConfig
     let slots = subscribeCallsPerMinute - entry.callTimes.length
@@ -325,6 +386,8 @@ export function repoChangeManager(input: ApiInput): {
     if (i < ids.length) {
       entry.pendingSince = now
       scheduleFlush(entry, entry.callTimes[0] + 60 * 1000)
+    } else {
+      wakeForBackoffs(entry)
     }
   }
 
@@ -385,9 +448,7 @@ export function repoChangeManager(input: ApiInput): {
       Date.now() + delay * (0.5 + Math.random() / 2)
     )
     setStatuses(ids, 'unsubscribed')
-    for (const id of ids) {
-      if (storageWallets[id].subscription.syncOwed) pull(id)
-    }
+    ids.forEach(pullOwed)
     requestFlush(entry)
   }
 
@@ -418,14 +479,15 @@ export function repoChangeManager(input: ApiInput): {
         retry.push(id)
       } else {
         avoiding.push(id)
-        if (storageWallet.subscription.syncOwed) toPull.push(id)
       }
     }
     // Result 1 settles the owed first sync, since nothing changed:
+    for (const id of listening) repoBackoffs.delete(id)
     setStatuses(listening, 'listening', false)
     setStatuses(avoiding, 'avoiding')
     for (const id of toPull) pull(id)
-    if (retry.length > 0) retryLater(entry, retry)
+    avoiding.forEach(pullOwed)
+    if (retry.length > 0) backOffRepos(entry, retry)
   }
 
   function makeSocket(): SocketEntry {
@@ -474,7 +536,7 @@ export function repoChangeManager(input: ApiInput): {
       if (destroyed) return
       const { storageWallets } = input.props.state
       for (const id of listWatchedRepos(input.props.state)) {
-        if (storageWallets[id].subscription.syncOwed) pull(id)
+        if (storageWallets[id].subscription.syncOwed) pullOwed(id)
       }
     }, syncServerConfig.subscribeTimeoutMs)
   }
@@ -547,7 +609,9 @@ export function repoChangeManager(input: ApiInput): {
 
     // Subscribe anything not yet subscribed on a live socket:
     for (const entry of sockets) {
-      if (entry.connection.connected) requestFlush(entry)
+      if (!entry.connection.connected) continue
+      requestFlush(entry)
+      wakeForBackoffs(entry)
     }
 
     // Owed first syncs only wait on a connect attempt in flight.
@@ -556,10 +620,7 @@ export function repoChangeManager(input: ApiInput): {
       const { connection } = entry
       if (connection.connected || connection.connecting) continue
       for (const id of watched) {
-        if (!entry.ids.has(id) || owedPullsStarted.has(id)) continue
-        if (!state.storageWallets[id].subscription.syncOwed) continue
-        owedPullsStarted.add(id)
-        pull(id)
+        if (entry.ids.has(id)) pullOwed(id)
       }
     }
 
