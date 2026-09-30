@@ -82,10 +82,17 @@ export function makeRepoPollingTask(task: () => Promise<void>): {
   return {
     update(listening) {
       if (listening === lastListening) return
+      // Losing the subscription may mean missed changes, so the first
+      // poll comes within one interval, spread out so a server restart
+      // does not bring every client back at once. A first start (the
+      // repo has just synced) waits a full interval or more:
+      const restoring = lastListening === true && !listening
       lastListening = listening
       periodic.stop()
       if (listening) return
-      periodic.start({ wait: syncInterval * (1 + Math.random()) })
+      periodic.start({
+        wait: syncInterval * (restoring ? Math.random() : 1 + Math.random())
+      })
     },
 
     stop() {

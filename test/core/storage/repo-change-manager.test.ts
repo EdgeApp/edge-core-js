@@ -699,6 +699,33 @@ describe('repo change helpers', function () {
     expect(isRepoListening(state, ['a', 'missing'])).equals(false)
   })
 
+  it('the polling task resumes within one interval after a subscription drops', async function () {
+    storageSyncConfig.syncInterval = 100
+    const runs: number[] = []
+    const task = makeRepoPollingTask(async () => {
+      runs.push(Date.now())
+    })
+
+    // A first start waits a full interval or more:
+    let start = Date.now()
+    task.update(false)
+    await waitUntil(() => runs.length === 1, 1000)
+    expect(runs[0] - start).at.least(95)
+
+    // Losing the subscription polls within one interval:
+    task.update(true)
+    for (let i = 0; i < 5; ++i) {
+      runs.length = 0
+      task.update(true)
+      start = Date.now()
+      task.update(false)
+      await waitUntil(() => runs.length === 1, 1000)
+      expect(runs[0] - start).at.most(120)
+      task.update(true)
+    }
+    task.stop()
+  })
+
   it('the polling task stops while listening', async function () {
     storageSyncConfig.syncInterval = 10
     let runs = 0
