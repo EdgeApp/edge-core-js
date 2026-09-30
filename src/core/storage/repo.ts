@@ -31,6 +31,15 @@ export function makeLocalDisklet(io: EdgeIo, walletId: string): Disklet {
 }
 
 /**
+ * The sync server's public name for a repo, `base58(sha256(sha256(syncKey)))`.
+ * It names the repo's folder on disk and its WebSocket subscription,
+ * without revealing the sync key, which grants read/write access.
+ */
+export function syncKeyToRepoId(syncKey: Uint8Array): string {
+  return base58.stringify(sha256(sha256(syncKey)))
+}
+
+/**
  * Sets up the back-end folders needed to emulate Git on disk.
  * You probably don't want this.
  */
@@ -41,7 +50,7 @@ export function makeRepoPaths(
   const { dataKey, syncKey } = storageKeys
   const baseDisklet = navigateDisklet(
     io.disklet,
-    'repos/' + base58.stringify(sha256(sha256(syncKey)))
+    'repos/' + syncKeyToRepoId(syncKey)
   )
   const changesDisklet = navigateDisklet(baseDisklet, 'changes')
   const dataDisklet = navigateDisklet(baseDisklet, 'data')
