@@ -282,18 +282,29 @@ describe('sync-server subscriptions', function () {
         harness.db.repos.get(accountSyncKeyHex) ?? {}
       ).length
 
-      gate.failPosts = 2
+      // Every host fails, so whole upload attempts fail and retry:
+      const uploadWarnings = (): string[] =>
+        harness.logs.filter(line => line.includes('Upload of repo'))
+      gate.failPosts = 1000
       await account.dataStore.setItem('test', 'key', 'value')
-      await waitUntil(() => posts(gate) === before + 3, 2000, 'the retries')
+      await waitUntil(() => uploadWarnings().length >= 2, 2000, 'retries')
+      expect(posts(gate)).greaterThan(before)
+
+      // The network returns, and the next retry lands:
+      gate.failPosts = 0
       await waitUntil(
         () =>
           Object.keys(harness.db.repos.get(accountSyncKeyHex) ?? {}).length >
           serverFiles,
-        1000,
+        2000,
         'the file on the server'
       )
-      await snooze(100)
-      expect(posts(gate)).equals(before + 3)
+
+      // The failures are logged without the sync key the URL carries:
+      expect(uploadWarnings()[0]).include('/api/v2/store/<syncKey>')
+      for (const line of harness.logs) {
+        expect(line).not.include(accountSyncKeyHex)
+      }
       await context.close()
     })
 

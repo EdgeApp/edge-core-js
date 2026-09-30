@@ -13,7 +13,11 @@ import {
 } from '../../../src/core/fake/fake-sync-ws-server'
 import { makeLog } from '../../../src/core/log/log'
 import { ApiInput } from '../../../src/core/root-pixie'
-import { makeLocalDisklet, makeRepoPaths } from '../../../src/core/storage/repo'
+import {
+  makeLocalDisklet,
+  makeRepoPaths,
+  redactSyncKeys
+} from '../../../src/core/storage/repo'
 import {
   listWatchedRepos,
   newestCheckpoint,
@@ -73,6 +77,7 @@ interface RepoSpec {
 
 interface ManagerHarness {
   db: FakeDb
+  logs: string[]
   getCounts: Map<string, number>
   hexes: string[]
   ids: string[]
@@ -112,7 +117,15 @@ function makeManagerHarness(
       return await fakeFetch(uri, init)
     }
   }
-  const log = makeLog({ onLog() {} }, 'test')
+  const logs: string[] = []
+  const log = makeLog(
+    {
+      onLog(event) {
+        logs.push(event.message)
+      }
+    },
+    'test'
+  )
   const syncClient = makeSyncClient({
     log,
     fetch: io.fetch as any,
@@ -203,6 +216,7 @@ function makeManagerHarness(
 
   return {
     db,
+    logs,
     getCounts,
     hexes,
     ids,
@@ -570,6 +584,11 @@ describe('repo change manager', function () {
     h.db.repos.delete(h.hexes[0])
     await waitUntil(() => h.status(0) === 'avoiding')
     if (repo != null) h.db.repos.set(h.hexes[0], repo)
+
+    // The warning names the repo, never its sync key:
+    const warning = h.logs.find(line => line.includes('syncServer pull'))
+    expect(warning).not.equals(undefined)
+    for (const line of h.logs) expect(line).not.include(h.hexes[0])
   })
 
   it('holds pulls while paused, and checks the socket on resume', async function () {
@@ -627,6 +646,20 @@ describe('repo change manager', function () {
 describe('repo change helpers', function () {
   afterEach(function () {
     Object.assign(storageSyncConfig, savedStorageConfig)
+  })
+
+  it('redactSyncKeys masks sync keys', function () {
+    const key = 'e254eb85285f96574a33bfe97b13f533fe245b42'
+    expect(
+      redactSyncKeys(
+        `TypeError: fetch failed GET https://sync-us1.edge.app/api/v2/store/${key}/1:1`
+      )
+    ).equals(
+      'TypeError: fetch failed GET https://sync-us1.edge.app/api/v2/store/<syncKey>/1:1'
+    )
+    expect(redactSyncKeys(key.toUpperCase())).equals('<syncKey>')
+    // Longer hex runs, like hashes, are left alone:
+    expect(redactSyncKeys(key + '00')).equals(key + '00')
   })
 
   it('newestCheckpoint reads the head of the ladder', function () {

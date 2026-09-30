@@ -40,6 +40,22 @@ export function syncKeyToRepoId(syncKey: Uint8Array): string {
 }
 
 /**
+ * Masks sync keys in text bound for the log. A sync key grants
+ * read/write access to its repo, and network errors quote the store
+ * URL, which carries the key as 40 hex digits.
+ */
+export function redactSyncKeys(text: string): string {
+  return text.replace(/\b[0-9a-fA-F]{40}\b/g, '<syncKey>')
+}
+
+/**
+ * Describes an error for the log, with any sync keys masked.
+ */
+export function describeSyncError(error: unknown): string {
+  return redactSyncKeys(String(error))
+}
+
+/**
  * Upload triggers for local repo writes, keyed by the device disklet
  * and then by repo ID, so every `makeRepoPaths` instance for a repo
  * reaches the same listener, including ones made before the repo

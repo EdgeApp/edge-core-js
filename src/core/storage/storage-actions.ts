@@ -10,6 +10,7 @@ import { asEdgeStorageKeys } from '../login/storage-keys'
 import { ApiInput } from '../root-pixie'
 import { RootState } from '../root-reducer'
 import {
+  describeSyncError,
   hasLocalChanges,
   loadRepoStatus,
   makeLocalDisklet,
@@ -210,7 +211,7 @@ function makeRepoUploader(ai: ApiInput, walletId: string): () => void {
       .catch((error: unknown) => {
         ++failures
         ai.props.log.warn(
-          `Upload of repo ${walletId} failed (attempt ${failures}): ${String(
+          `Upload of repo ${walletId} failed (attempt ${failures}): ${describeSyncError(
             error
           )}`
         )

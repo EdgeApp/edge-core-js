@@ -41,6 +41,9 @@ export interface StoreGate {
 
 export interface SyncWsHarness {
   db: FakeDb
+
+  /** Every log message from every context. */
+  logs: string[]
   server: FakeSyncWsServer
 
   /**
@@ -71,8 +74,10 @@ export function makeSyncWsHarness(): SyncWsHarness {
   const fakeFetch = makeFetchFunction(makeFakeServer(db))
   const server = makeFakeSyncWsServer(db)
 
+  const logs: string[] = []
   return {
     db,
+    logs,
     server,
     async makeContext(opts = {}) {
       const { disklet = makeMemoryDisklet(), gate = makeStoreGate() } = opts
@@ -92,7 +97,8 @@ export function makeSyncWsHarness(): SyncWsHarness {
           gate.postCounts.set(syncKey, (gate.postCounts.get(syncKey) ?? 0) + 1)
           if (gate.failPosts > 0) {
             --gate.failPosts
-            throw new Error('Network down')
+            // Like Node's fetch, quote the URL, sync key and all:
+            throw new TypeError(`fetch failed: ${uri}`)
           }
         }
         return await fakeFetch(uri, init)
@@ -100,7 +106,11 @@ export function makeSyncWsHarness(): SyncWsHarness {
       const io = { ...makeFakeIo(), disklet, fetch }
       return await makeContext(
         { io, nativeIo: {} },
-        { onLog() {} },
+        {
+          onLog(event) {
+            logs.push(event.message)
+          }
+        },
         { apiKey: '', appId: '' },
         { makeSyncSocket: server.makeSocket }
       )

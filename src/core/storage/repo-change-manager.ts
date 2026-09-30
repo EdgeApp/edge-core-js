@@ -1,6 +1,6 @@
 import { ApiInput } from '../root-pixie'
 import { RootState } from '../root-reducer'
-import { syncKeyToRepoId } from './repo'
+import { describeSyncError, syncKeyToRepoId } from './repo'
 import { storageSyncConfig, syncRepoAndReload } from './storage-actions'
 import { StorageWalletSubscriptionStatus } from './storage-reducer'
 import {
@@ -185,7 +185,9 @@ export function repoChangeManager(input: ApiInput): {
           await syncRepoAndReload(input, id)
         } catch (error: unknown) {
           ok = false
-          input.props.log.warn(`syncServer pull ${id} failed: ${String(error)}`)
+          input.props.log.warn(
+            `syncServer pull ${id} failed: ${describeSyncError(error)}`
+          )
         }
         if (!run.again || !ok || destroyed) break
       }
@@ -347,7 +349,9 @@ export function repoChangeManager(input: ApiInput): {
       connection.subscribe(params),
       syncServerConfig.subscribeTimeoutMs
     ).catch((error: unknown): undefined => {
-      input.props.log.warn(`syncServer subscribe failed: ${String(error)}`)
+      input.props.log.warn(
+        `syncServer subscribe failed: ${describeSyncError(error)}`
+      )
       return undefined
     })
     if (destroyed || connection.epoch !== epoch || !connection.connected) {
