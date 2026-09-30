@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.48.2 (2026-09-29)
+
 - fixed: iOS crash on password checks when another native library links OpenSSL
 
 ## 2.48.1 (2026-08-31)
