@@ -1,8 +1,10 @@
 import { bridgifyObject } from 'yaob'
 
 import { EdgeWalletInfo } from '../../types/types'
+import { makePeriodicTask } from '../../util/periodic-task'
 import { asEdgeStorageKeys } from '../login/storage-keys'
 import { ApiInput } from '../root-pixie'
+import { RootState } from '../root-reducer'
 import {
   loadRepoStatus,
   makeLocalDisklet,
@@ -12,6 +14,60 @@ import {
 import { StorageWalletStatus } from './storage-reducer'
 
 export const SYNC_INTERVAL = 30 * 1000
+
+/**
+ * Repo polling intervals. Mutable so tests can shrink them,
+ * following the `accountCacheSaverConfig` pattern.
+ */
+export const storageSyncConfig: {
+  syncInterval: number
+} = {
+  syncInterval: SYNC_INTERVAL
+}
+
+/**
+ * True if the sync server will report changes to every listed repo,
+ * so periodic polling of those repos can stop. A repo only reaches
+ * `listening` on an open socket, and drops out of it the moment the
+ * socket fails or the server loses the subscription.
+ */
+export function isRepoListening(state: RootState, ids: string[]): boolean {
+  if (ids.length === 0) return false
+  for (const id of ids) {
+    const status = state.storageWallets[id]?.subscription.status
+    if (status !== 'listening' && status !== 'syncing') return false
+  }
+  return true
+}
+
+/**
+ * Keeps a repo-polling task in step with the repo's subscription.
+ * Polling stops while the sync server is listening, and resumes the
+ * moment it is not.
+ */
+export function makeRepoPollingTask(task: () => Promise<void>): {
+  update: (listening: boolean) => void
+  stop: () => void
+} {
+  const { syncInterval } = storageSyncConfig
+  const periodic = makePeriodicTask(task, syncInterval)
+  let lastListening: boolean | undefined
+
+  return {
+    update(listening) {
+      if (listening === lastListening) return
+      lastListening = listening
+      periodic.stop()
+      if (listening) return
+      periodic.start({ wait: syncInterval * (1 + Math.random()) })
+    },
+
+    stop() {
+      lastListening = undefined
+      periodic.stop()
+    }
+  }
+}
 
 export async function addStorageWallet(
   ai: ApiInput,
@@ -25,6 +81,11 @@ export async function addStorageWallet(
   bridgifyObject(localDisklet)
 
   const status: StorageWalletStatus = await loadRepoStatus(paths)
+
+  // A repo that has synced before can leave its first sync to the
+  // sync-server subscription, which reports whether it has changed:
+  const syncOwed =
+    status.lastSync > 0 && ai.props.state.syncWebSocketServers.length > 0
   dispatch({
     type: 'STORAGE_WALLET_ADDED',
     payload: {
@@ -33,10 +94,12 @@ export async function addStorageWallet(
         localDisklet,
         paths,
         status,
-        lastChanges: []
+        lastChanges: [],
+        subscription: { status: 'unsubscribed', syncOwed }
       }
     }
   })
+  if (syncOwed) return
 
   // If we have already done a sync, let this one run in the background:
   const syncPromise = syncStorageWallet(ai, walletInfo.id)

@@ -18,11 +18,37 @@ export interface StorageWalletStatus {
   lastSync: number
 }
 
+/**
+ * - unsubscribed: no subscription on a live socket; polling runs.
+ * - subscribing: a `subscribeRepos` call is in flight; polling runs.
+ * - listening: the socket reports changes; polling stops.
+ * - syncing: listening, with a notified pull in flight; polling stops.
+ * - avoiding: the server refused or a pull failed; polling runs
+ *   until the socket reconnects.
+ */
+export type StorageWalletSubscriptionStatus =
+  | 'unsubscribed'
+  | 'subscribing'
+  | 'listening'
+  | 'syncing'
+  | 'avoiding'
+
+export interface StorageWalletSubscription {
+  status: StorageWalletSubscriptionStatus
+
+  /**
+   * The repo was loaded from disk, and its first sync this session
+   * is left to the subscription result. Cleared by any sync.
+   */
+  syncOwed: boolean
+}
+
 export interface StorageWalletState {
   lastChanges: string[]
   localDisklet: Disklet
   paths: StorageWalletPaths
   status: StorageWalletStatus
+  subscription: StorageWalletSubscription
 }
 
 export interface StorageWalletsState {
@@ -56,6 +82,22 @@ const storageWalletReducer = combineReducers<StorageWalletState, RootAction>({
     return action.type === 'STORAGE_WALLET_SYNCED'
       ? action.payload.status
       : state
+  },
+
+  /**
+   * Subscription bookkeeping. This never holds a checkpoint:
+   * a resubscribe must carry `status.lastHash`, which only a
+   * completed sync writes, so a notification that arrives before
+   * a crash is still reported as a change on the next launch.
+   */
+  subscription(
+    state = { status: 'unsubscribed', syncOwed: false },
+    action
+  ): StorageWalletSubscription {
+    if (action.type === 'STORAGE_WALLET_SYNCED') {
+      return state.syncOwed ? { ...state, syncOwed: false } : state
+    }
+    return state
   }
 })
 
@@ -82,6 +124,26 @@ export const storageWallets = function storageWalletsReducer(
         return out
       }
       return state
+    }
+
+    case 'STORAGE_WALLETS_SUBSCRIPTIONS_CHANGED': {
+      const { subscriptions } = action.payload
+      let out: StorageWalletsState | undefined
+      for (const id of Object.keys(subscriptions)) {
+        const old = state[id]
+        if (old == null) continue
+        const { status, syncOwed = old.subscription.syncOwed } =
+          subscriptions[id]
+        if (
+          status === old.subscription.status &&
+          syncOwed === old.subscription.syncOwed
+        ) {
+          continue
+        }
+        if (out == null) out = { ...state }
+        out[id] = { ...old, subscription: { status, syncOwed } }
+      }
+      return out ?? state
     }
   }
   return state

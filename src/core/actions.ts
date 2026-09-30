@@ -31,7 +31,8 @@ import { LoginStash } from './login/login-stash'
 import { LoginType, SessionKey } from './login/login-types'
 import {
   StorageWalletState,
-  StorageWalletStatus
+  StorageWalletStatus,
+  StorageWalletSubscriptionStatus
 } from './storage/storage-reducer'
 
 export type RootAction =
@@ -480,6 +481,7 @@ export type RootAction =
         infoServers: string[]
         loginServers: string[]
         syncServers: string[]
+        syncWebSocketServers: string[]
         clientInfo: ClientInfo
         deviceDescription: string | null
         hideKeys: boolean
@@ -553,6 +555,18 @@ export type RootAction =
         id: string
         changes: string[]
         status: StorageWalletStatus
+      }
+    }
+  | {
+      // Fires when repo subscriptions on the sync server change state.
+      type: 'STORAGE_WALLETS_SUBSCRIPTIONS_CHANGED'
+      payload: {
+        subscriptions: {
+          [id: string]: {
+            status: StorageWalletSubscriptionStatus
+            syncOwed?: boolean
+          }
+        }
       }
     }
   | {

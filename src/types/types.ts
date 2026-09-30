@@ -2004,6 +2004,16 @@ export interface EdgeContextOptions {
   changeServer?: string | string[]
   infoServer?: string | string[]
   syncServer?: string | string[]
+
+  /**
+   * WebSocket endpoints for sync-server change notifications,
+   * such as `wss://sync-us1.edge.app/api/v2/ws`. A bare host gains
+   * the `/api/v2/ws` path. Defaults to the `syncServer` hosts with
+   * `http` swapped for `ws` and `https` for `wss`, leaving out
+   * `sync-eu`. One host is used at a time, moving to the next
+   * on repeated connection failures.
+   */
+  syncWebSocketServer?: string | string[]
   hideKeys?: boolean
 
   // Intercepts crash reports:

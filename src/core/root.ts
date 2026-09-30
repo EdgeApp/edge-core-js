@@ -14,6 +14,22 @@ import { loadStashes } from './login/login-stash'
 import { PluginIos, watchPlugins } from './plugins/plugins-actions'
 import { RootOutput, rootPixie, RootProps } from './root-pixie'
 import { defaultLogSettings, reducer, RootState } from './root-reducer'
+import {
+  deriveSyncWebSocketServers,
+  SyncSocketFactory,
+  toSyncWebSocketUrl
+} from './storage/sync-server-connection'
+
+/**
+ * Context options that are not part of the public API.
+ */
+export interface InternalContextOptions {
+  /**
+   * Replaces the global `WebSocket` for the sync-server socket,
+   * or turns the socket off if null.
+   */
+  makeSyncSocket?: SyncSocketFactory | null
+}
 
 let allContexts: EdgeContext[] = []
 
@@ -30,7 +46,8 @@ const enhancer =
 export async function makeContext(
   ios: PluginIos,
   logBackend: LogBackend,
-  opts: EdgeContextOptions
+  opts: EdgeContextOptions,
+  internalOpts: InternalContextOptions = {}
 ): Promise<EdgeContext> {
   const { io } = ios
   const {
@@ -49,7 +66,8 @@ export async function makeContext(
     osVersion,
     plugins: pluginsInit = {},
     skipBlockHeight = false,
-    syncServer
+    syncServer,
+    syncWebSocketServer
   } = opts
   let { apiKey } = opts
   if (apiKey == null || apiKey === '') {
@@ -80,12 +98,27 @@ export async function makeContext(
     'https://sync-us6.edge.app',
     'https://sync-eu.edge.app'
   ])
+  const makeSyncSocket: SyncSocketFactory | undefined =
+    internalOpts.makeSyncSocket === null
+      ? undefined
+      : internalOpts.makeSyncSocket ??
+        (typeof WebSocket === 'function'
+          ? (url: string) => new WebSocket(url)
+          : undefined)
+  const syncWebSocketServers =
+    makeSyncSocket == null
+      ? []
+      : toServerArray(
+          syncWebSocketServer,
+          deriveSyncWebSocketServers(syncServers)
+        ).map(toSyncWebSocketUrl)
   const logSettings = { ...defaultLogSettings, ...opts.logSettings }
 
   changeServers.map(server => validateServer(server))
   infoServers.map(server => validateServer(server))
   loginServers.map(server => validateServer(server))
   syncServers.map(server => validateServer(server))
+  syncWebSocketServers.map(server => validateServer(server))
 
   // Create a redux store:
   const redux = createStore(reducer, enhancer)
@@ -144,6 +177,7 @@ export async function makeContext(
       infoCache,
       infoServers,
       syncServers,
+      syncWebSocketServers,
       clientInfo,
       deviceDescription,
       hideKeys,
@@ -187,6 +221,7 @@ export async function makeContext(
         io,
         log,
         logBackend,
+        makeSyncSocket,
         onError: error => {
           if (mirror.output.context?.api != null) {
             emit(mirror.output.context.api, 'error', error)

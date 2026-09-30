@@ -192,9 +192,14 @@ export function makeFakeWorld(
         }
       }
 
-      const out = await makeContext({ io: fakeIo, nativeIo }, logBackend, {
-        ...opts
-      })
+      const out = await makeContext(
+        { io: fakeIo, nativeIo },
+        logBackend,
+        { ...opts },
+        // Fake worlds poll, as they always have. The sync-server socket
+        // has its own harness around `makeFakeSyncWsServer`:
+        { makeSyncSocket: null }
+      )
       contexts.push(out)
       return out
     },

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: `EdgeContextOptions.syncWebSocketServer`, for choosing the sync-server WebSocket endpoints. Defaults to the `syncServer` hosts with `http` swapped for `ws` and `https` for `wss`, leaving out `sync-eu`.
+- changed: Storage repos subscribe to sync-server change notifications over one WebSocket (a second past 200 repos), pinned to one US sync host, and only pull when the server reports a change. Periodic repo polling stops while subscribed and resumes as soon as the socket drops, misses its heartbeat, or loses a subscription.
+- changed: A repo that has synced before leaves its first sync after login to the subscription, which reports whether it changed.
+
 ## 2.50.0 (2026-09-29)
 
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.

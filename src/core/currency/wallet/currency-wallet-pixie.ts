@@ -26,7 +26,8 @@ import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
 import {
   addStorageWallet,
-  SYNC_INTERVAL,
+  isRepoListening,
+  makeRepoPollingTask,
   syncStorageWallet
 } from '../../storage/storage-actions'
 import {
@@ -571,8 +572,10 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
         await syncStorageWallet(toApiInput(input), walletId)
       }
 
-      // We don't report sync failures, since that could be annoying:
-      const task = makePeriodicTask(doSync, SYNC_INTERVAL)
+      // We don't report sync failures, since that could be annoying.
+      // The sync server reports changes to this repo while subscribed,
+      // so the task only polls while the subscription is down:
+      const task = makeRepoPollingTask(doSync)
 
       return {
         update() {
@@ -584,7 +587,7 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
             state.storageWallets[walletId] != null &&
             state.storageWallets[walletId].status.lastSync > 0
           ) {
-            task.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
+            task.update(isRepoListening(state, [walletId]))
           }
         },
 

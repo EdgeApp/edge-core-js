@@ -32,6 +32,8 @@ import { RootProps, toApiInput } from '../root-pixie'
 import { makeLocalDisklet } from '../storage/repo'
 import {
   addStorageWallet,
+  isRepoListening,
+  makeRepoPollingTask,
   SYNC_INTERVAL,
   syncStorageWallet
 } from '../storage/storage-actions'
@@ -282,8 +284,10 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         await syncLogin(ai, sessionKey)
       }
 
-      // We don't report sync failures, since that could be annoying:
-      const dataTask = makePeriodicTask(doDataSync, SYNC_INTERVAL)
+      // We don't report sync failures, since that could be annoying.
+      // The sync server reports changes to these repos while subscribed,
+      // so the data task only polls while the subscription is down:
+      const dataTask = makeRepoPollingTask(doDataSync)
       const loginTask = makePeriodicTask(doLoginSync, SYNC_INTERVAL, {
         onError(error) {
           // Only send OTP errors to the GUI:
@@ -296,7 +300,7 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
         update() {
           if (input.props.accountOutput?.accountApi == null) return
 
-          const { accountId } = input.props
+          const { accountId, accountState } = input.props
           const { stashTree } = input.props.state.accounts[accountId]
 
           // Speed up the login-stash sync interval while there is a WIP change:
@@ -305,11 +309,15 @@ const accountPixie: TamePixie<AccountProps> = combinePixies({
               ? EXPEDITED_SYNC_INTERVAL
               : SYNC_INTERVAL
 
-          dataTask.setDelay(SYNC_INTERVAL)
           loginTask.setDelay(loginInterval)
 
           // Start once the EdgeAccount API exists:
-          dataTask.start({ wait: SYNC_INTERVAL * (1 + Math.random()) })
+          dataTask.update(
+            isRepoListening(
+              input.props.state,
+              accountState.accountWalletInfos.map(info => info.id)
+            )
+          )
           loginTask.start({ wait: loginInterval * (1 + Math.random()) })
         },
 

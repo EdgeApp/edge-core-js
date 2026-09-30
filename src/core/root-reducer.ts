@@ -25,6 +25,7 @@ export interface RootState {
   readonly ready: boolean
   readonly skipBlockHeight: boolean
   readonly syncServers: string[]
+  readonly syncWebSocketServers: string[]
 
   // Children reducers:
   readonly currency: CurrencyState
@@ -150,6 +151,10 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
 
   syncServers(state = [], action): string[] {
     return action.type === 'INIT' ? action.payload.syncServers : state
+  },
+
+  syncWebSocketServers(state = [], action): string[] {
+    return action.type === 'INIT' ? action.payload.syncWebSocketServers : state
   },
 
   currency,

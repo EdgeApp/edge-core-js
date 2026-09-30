@@ -4,6 +4,7 @@ import { afterEach, describe, it } from 'mocha'
 import { FakeDb } from '../../../src/core/fake/fake-db'
 import { makeFakeSyncWsServer } from '../../../src/core/fake/fake-sync-ws-server'
 import { makeLog } from '../../../src/core/log/log'
+import { makeContext } from '../../../src/core/root'
 import {
   connectSyncServer,
   deriveSyncWebSocketServers,
@@ -15,9 +16,11 @@ import {
 } from '../../../src/core/storage/sync-server-connection'
 import { startSyncServerHeartbeat } from '../../../src/core/storage/sync-server-heartbeat'
 import { syncProtocol } from '../../../src/core/storage/sync-server-protocol'
+import { makeFakeIo } from '../../../src/index'
 import { snooze } from '../../../src/util/snooze'
 import { expectRejection } from '../../expect-rejection'
 import { waitUntil } from '../../wait-until'
+import { getState } from './sync-ws-harness'
 
 const savedServerConfig = { ...syncServerConfig }
 const log = makeLog({ onLog() {} }, 'test')
@@ -82,6 +85,40 @@ describe('sync-server urls', function () {
     expect(
       deriveSyncWebSocketServers(['https://sync-eu.edge.app'])
     ).deep.equals(['wss://sync-eu.edge.app/api/v2/ws'])
+  })
+
+  it('derives the socket from the context options', async function () {
+    const makeSyncSocket = makeFakeSyncWsServer(new FakeDb()).makeSocket
+    const make = async (opts: object): Promise<string[]> => {
+      const context = await makeContext(
+        { io: makeFakeIo(), nativeIo: {} },
+        { onLog() {} },
+        { apiKey: '', appId: '', ...opts },
+        { makeSyncSocket }
+      )
+      const out = getState(context).syncWebSocketServers
+      await context.close()
+      return out
+    }
+
+    expect(await make({ syncServer: 'http://127.0.0.1:8010' })).deep.equals([
+      'ws://127.0.0.1:8010/api/v2/ws'
+    ])
+    expect(
+      await make({ syncWebSocketServer: 'ws://127.0.0.1:8010/api/v2/ws' })
+    ).deep.equals(['ws://127.0.0.1:8010/api/v2/ws'])
+    expect(await make({})).deep.equals([
+      'wss://sync-us1.edge.app/api/v2/ws',
+      'wss://sync-us2.edge.app/api/v2/ws',
+      'wss://sync-us3.edge.app/api/v2/ws',
+      'wss://sync-us4.edge.app/api/v2/ws',
+      'wss://sync-us5.edge.app/api/v2/ws',
+      'wss://sync-us6.edge.app/api/v2/ws'
+    ])
+    await expectRejection(
+      make({ syncWebSocketServer: 'wss://evil.example.com' }),
+      'Error: Only *.edge.app, localhost, or private LAN addresses (http/ws) are valid login domain names, not evil.example.com'
+    )
   })
 })
 

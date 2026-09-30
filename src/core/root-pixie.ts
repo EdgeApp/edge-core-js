@@ -9,12 +9,18 @@ import { currency, CurrencyOutput } from './currency/currency-pixie'
 import { LogBackend } from './log/log'
 import { RootState } from './root-reducer'
 import { scrypt, ScryptOutput } from './scrypt/scrypt-pixie'
+import {
+  repoChangeManager,
+  RepoChangeManagerOutput
+} from './storage/repo-change-manager'
+import { SyncSocketFactory } from './storage/sync-server-connection'
 
 // The top-level pixie output structure:
 export interface RootOutput {
   readonly accounts: { [accountId: string]: AccountOutput }
   readonly context: ContextOutput
   readonly currency: CurrencyOutput
+  readonly repoChangeManager: RepoChangeManagerOutput
   readonly scrypt: ScryptOutput
 }
 
@@ -25,6 +31,7 @@ export interface RootProps extends ReduxProps<RootState, Dispatch> {
   readonly io: EdgeIo
   readonly log: EdgeLog
   readonly logBackend: LogBackend
+  readonly makeSyncSocket: SyncSocketFactory | undefined
   readonly onError: (error: unknown) => void
   readonly output: RootOutput
   readonly syncClient: SyncClient
@@ -42,5 +49,6 @@ export const rootPixie: TamePixie<RootProps> = combinePixies({
   accounts,
   context,
   currency,
+  repoChangeManager,
   scrypt
 })
