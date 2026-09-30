@@ -29,10 +29,36 @@ export class FakeDb {
   logins: DbLogin[]
   repos: Map<string, EdgeRepoDump>
 
+  /** Per-repo file-version counters, keyed like `repos`. */
+  repoVersions: Map<string, number>
+
+  /** Called with the sync key of every repo that gains changes. */
+  repoListeners: Set<(syncKey: string) => void>
+
   constructor() {
     this.lobbies = new Map()
     this.logins = []
     this.repos = new Map()
+    this.repoVersions = new Map()
+    this.repoListeners = new Set()
+  }
+
+  /**
+   * The repo's checkpoint, in the sync server's `<version>:<sum>` form.
+   * The fake counts one version per file written, so the checkpoint
+   * moves whenever the repo changes.
+   */
+  getRepoCheckpoint(syncKey: string): string {
+    const version = this.repoVersions.get(syncKey) ?? 0
+    return `${version}:${version}`
+  }
+
+  /** Records a write to a repo and tells the listeners. */
+  touchRepo(syncKey: string, fileCount: number): void {
+    if (fileCount <= 0) return
+    const version = this.repoVersions.get(syncKey) ?? 0
+    this.repoVersions.set(syncKey, version + fileCount)
+    this.repoListeners.forEach(listener => listener(syncKey))
   }
 
   getLoginById(loginId: Uint8Array): DbLogin | undefined {
@@ -81,6 +107,7 @@ export class FakeDb {
 
   setupRepo(syncKey: string, repo: EdgeRepoDump): void {
     this.repos.set(syncKey, repo)
+    this.repoVersions.set(syncKey, Object.keys(repo).length)
   }
 
   dumpLogin(login: DbLogin): EdgeLoginDump {

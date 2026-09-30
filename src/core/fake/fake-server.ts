@@ -75,6 +75,7 @@ type LobbyIdRequest = ApiRequest & {
 }
 type RepoRequest = DbRequest & {
   readonly repo: EdgeRepoDump
+  readonly syncKey: string
 }
 
 // Authentication middleware: ----------------------------------------------
@@ -694,23 +695,27 @@ const withRepo =
       return jsonResponse({ msg: 'Hash not found' }, { status: 404 })
     }
 
-    return server({ ...request, repo })
+    return server({ ...request, repo, syncKey })
   }
 
 const storeReadRoute = withRepo(request => {
-  const { repo } = request
-  return jsonResponse({ changes: wasEdgeRepoDump(repo) })
+  const { db, repo, syncKey } = request
+  return jsonResponse({
+    changes: wasEdgeRepoDump(repo),
+    hash: db.getRepoCheckpoint(syncKey)
+  })
 })
 
 const storeUpdateRoute = withRepo(request => {
-  const { json, repo } = request
+  const { db, json, repo, syncKey } = request
   const { changes } = asStoreBody(json)
   for (const change of Object.keys(changes)) {
     repo[change] = changes[change]
   }
+  db.touchRepo(syncKey, Object.keys(changes).length)
   return jsonResponse({
     changes: wasEdgeRepoDump(repo),
-    hash: '1111111111111111111111111111111111111111'
+    hash: db.getRepoCheckpoint(syncKey)
   })
 })
 
