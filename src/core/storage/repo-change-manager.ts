@@ -29,6 +29,27 @@ interface SocketEntry {
 
   /** Storage wallet ids assigned to this socket. */
   ids: Set<string>
+
+  /** Pending `flush`, which sends the socket's unsubscribed repos. */
+  flushTimer: ReturnType<typeof setTimeout> | undefined
+
+  /** When the oldest repo still waiting for `flush` started waiting. */
+  pendingSince: number | undefined
+
+  /** How many repos were waiting when `flush` was last scheduled. */
+  pendingCount: number
+
+  /** Connection epoch the call history below belongs to. */
+  epoch: number
+
+  /** When each recent `subscribeRepos` call went out. */
+  callTimes: number[]
+
+  /** Failed calls in a row, for the retry backoff. */
+  failures: number
+
+  /** No calls before this time, while backing off. */
+  notBefore: number
 }
 
 interface PullRun {
@@ -221,38 +242,149 @@ export function repoChangeManager(input: ApiInput): {
     setStatuses(ids, 'unsubscribed')
   }
 
+  /** The socket's repos waiting for a subscription, in watch order. */
+  function listUnsubscribed(entry: SocketEntry): string[] {
+    const { state } = input.props
+    return listWatchedRepos(state).filter(
+      id =>
+        entry.ids.has(id) &&
+        state.storageWallets[id].subscription.status === 'unsubscribed'
+    )
+  }
+
+  function scheduleFlush(entry: SocketEntry, at: number): void {
+    if (entry.flushTimer != null) clearTimeout(entry.flushTimer)
+    entry.flushTimer = setTimeout(
+      () => flush(entry),
+      Math.max(0, at - Date.now())
+    )
+  }
+
   /**
-   * Subscribes repos in batches, in order, so the account repo
-   * answers first. Results from a socket that has since dropped
-   * are discarded, since the drop already put those repos back
-   * on polling.
+   * Repos become subscribable one at a time as their first syncs
+   * finish, so subscriptions wait for a short quiet spell (bounded by
+   * a maximum wait) and go out together, rather than one call each.
    */
-  async function subscribe(entry: SocketEntry, ids: string[]): Promise<void> {
+  function requestFlush(entry: SocketEntry): void {
+    const count = listUnsubscribed(entry).length
+    if (count === 0) return
+    if (entry.flushTimer != null && count === entry.pendingCount) return
+    entry.pendingCount = count
+
+    const now = Date.now()
+    if (entry.pendingSince == null) entry.pendingSince = now
+    const { subscribeDebounceMs, subscribeMaxWaitMs } = syncServerConfig
+    const at = Math.min(
+      now + subscribeDebounceMs,
+      entry.pendingSince + subscribeMaxWaitMs
+    )
+    scheduleFlush(entry, Math.max(at, entry.notBefore))
+  }
+
+  /**
+   * Sends the socket's unsubscribed repos, 100 per call, account repos
+   * first. Calls stay under the server's per-connection rate limit;
+   * repos that do not fit wait for the next free slot.
+   */
+  function flush(entry: SocketEntry): void {
+    entry.flushTimer = undefined
+    const { connection } = entry
+    if (destroyed || !connection.connected) {
+      entry.pendingSince = undefined
+      return
+    }
+
+    // The server counts calls per connection:
+    if (entry.epoch !== connection.epoch) {
+      entry.epoch = connection.epoch
+      entry.callTimes = []
+      entry.failures = 0
+      entry.notBefore = 0
+    }
+
+    const now = Date.now()
+    if (now < entry.notBefore) return scheduleFlush(entry, entry.notBefore)
+    entry.callTimes = entry.callTimes.filter(time => now - time < 60 * 1000)
+
+    const ids = listUnsubscribed(entry)
+    entry.pendingSince = undefined
+    entry.pendingCount = 0
+    if (ids.length === 0) return
+
+    const { subscribeCallsPerMinute } = syncServerConfig
+    let slots = subscribeCallsPerMinute - entry.callTimes.length
+    let i = 0
+    for (; i < ids.length && slots > 0; i += SUBSCRIBE_BATCH_SIZE, --slots) {
+      const batch = ids.slice(i, i + SUBSCRIBE_BATCH_SIZE)
+      entry.callTimes.push(now)
+      setStatuses(batch, 'subscribing')
+      subscribe(entry, batch).catch(() => {})
+    }
+    if (i < ids.length) {
+      entry.pendingSince = now
+      scheduleFlush(entry, entry.callTimes[0] + 60 * 1000)
+    }
+  }
+
+  /**
+   * Subscribes one batch. A call that fails outright (rate limit,
+   * error, timeout) puts its repos back in line after a backoff,
+   * polling meanwhile, rather than giving up for the session.
+   * Results from a socket that has since dropped are discarded,
+   * since the drop already put those repos back on polling.
+   */
+  async function subscribe(entry: SocketEntry, batch: string[]): Promise<void> {
     const { connection } = entry
     const { epoch } = connection
+    const { storageWallets } = input.props.state
+    const params = batch.map((id): SyncSubscribeParams => {
+      const storageWallet = storageWallets[id]
+      const repoId = syncKeyToRepoId(storageWallet.paths.syncKey)
+      const checkpoint = newestCheckpoint(storageWallet.status.lastHash)
+      return checkpoint == null ? [repoId] : [repoId, checkpoint]
+    })
 
-    for (let i = 0; i < ids.length; i += SUBSCRIBE_BATCH_SIZE) {
-      const batch = ids.slice(i, i + SUBSCRIBE_BATCH_SIZE)
-      const { storageWallets } = input.props.state
-      const params = batch.map((id): SyncSubscribeParams => {
-        const storageWallet = storageWallets[id]
-        const repoId = syncKeyToRepoId(storageWallet.paths.syncKey)
-        const checkpoint = newestCheckpoint(storageWallet.status.lastHash)
-        return checkpoint == null ? [repoId] : [repoId, checkpoint]
-      })
-
-      const results = await withTimeout(
-        connection.subscribe(params),
-        syncServerConfig.subscribeTimeoutMs
-      ).catch((error: unknown): SyncSubscribeResult[] => {
-        input.props.log.warn(`syncServer subscribe failed: ${String(error)}`)
-        return batch.map(() => 0)
-      })
-      if (destroyed || connection.epoch !== epoch || !connection.connected) {
-        return
-      }
-      applyResults(entry, batch, results)
+    const results = await withTimeout(
+      connection.subscribe(params),
+      syncServerConfig.subscribeTimeoutMs
+    ).catch((error: unknown): undefined => {
+      input.props.log.warn(`syncServer subscribe failed: ${String(error)}`)
+      return undefined
+    })
+    if (destroyed || connection.epoch !== epoch || !connection.connected) {
+      return
     }
+    if (results == null) {
+      retryLater(entry, batch)
+      return
+    }
+    entry.failures = 0
+    applyResults(entry, batch, results)
+  }
+
+  /**
+   * Puts repos back in line after a backoff. They poll meanwhile,
+   * and any owed first sync runs now.
+   */
+  function retryLater(entry: SocketEntry, batch: string[]): void {
+    const { storageWallets } = input.props.state
+    const ids = batch.filter(
+      id => storageWallets[id]?.subscription.status === 'subscribing'
+    )
+    const { subscribeRetryBaseMs, subscribeRetryMaxMs } = syncServerConfig
+    const delay = Math.min(
+      subscribeRetryMaxMs,
+      subscribeRetryBaseMs * 2 ** entry.failures++
+    )
+    entry.notBefore = Math.max(
+      entry.notBefore,
+      Date.now() + delay * (0.5 + Math.random() / 2)
+    )
+    setStatuses(ids, 'unsubscribed')
+    for (const id of ids) {
+      if (storageWallets[id].subscription.syncOwed) pull(id)
+    }
+    requestFlush(entry)
   }
 
   function applyResults(
@@ -263,6 +395,7 @@ export function repoChangeManager(input: ApiInput): {
     const { storageWallets } = input.props.state
     const listening: string[] = []
     const avoiding: string[] = []
+    const retry: string[] = []
     const toPull: string[] = []
     for (let i = 0; i < batch.length; ++i) {
       const id = batch[i]
@@ -276,6 +409,9 @@ export function repoChangeManager(input: ApiInput): {
       } else if (result === 2) {
         listening.push(id)
         toPull.push(id)
+      } else if (result === 0) {
+        // The server could not check or had no room; try again later:
+        retry.push(id)
       } else {
         avoiding.push(id)
         if (storageWallet.subscription.syncOwed) toPull.push(id)
@@ -285,6 +421,7 @@ export function repoChangeManager(input: ApiInput): {
     setStatuses(listening, 'listening', false)
     setStatuses(avoiding, 'avoiding')
     for (const id of toPull) pull(id)
+    if (retry.length > 0) retryLater(entry, retry)
   }
 
   function makeSocket(): SocketEntry {
@@ -293,7 +430,14 @@ export function repoChangeManager(input: ApiInput): {
     if (makeSyncSocket == null) throw new Error('No WebSocket support')
     const entry: SocketEntry = {
       connection: undefined as any,
-      ids: new Set()
+      ids: new Set(),
+      flushTimer: undefined,
+      pendingSince: undefined,
+      pendingCount: 0,
+      epoch: 0,
+      callTimes: [],
+      failures: 0,
+      notBefore: 0
     }
     entry.connection = connectSyncServer({
       hosts,
@@ -375,24 +519,22 @@ export function repoChangeManager(input: ApiInput): {
     // Close empty sockets:
     for (let i = sockets.length - 1; i >= 0; --i) {
       if (sockets[i].ids.size > 0) continue
-      sockets[i].connection.close()
+      closeSocket(sockets[i])
       sockets.splice(i, 1)
     }
 
     // Subscribe anything not yet subscribed on a live socket:
     for (const entry of sockets) {
-      if (!entry.connection.connected) continue
-      const ids = watched.filter(
-        id =>
-          entry.ids.has(id) &&
-          state.storageWallets[id].subscription.status === 'unsubscribed'
-      )
-      if (ids.length === 0) continue
-      setStatuses(ids, 'subscribing')
-      subscribe(entry, ids).catch(() => {})
+      if (entry.connection.connected) requestFlush(entry)
     }
 
     armOwedTimer(watched)
+  }
+
+  function closeSocket(entry: SocketEntry): void {
+    if (entry.flushTimer != null) clearTimeout(entry.flushTimer)
+    entry.flushTimer = undefined
+    entry.connection.close()
   }
 
   function findRepoId(id: string): string | undefined {
@@ -431,7 +573,7 @@ export function repoChangeManager(input: ApiInput): {
     destroy() {
       destroyed = true
       if (owedTimer != null) clearTimeout(owedTimer)
-      for (const entry of sockets) entry.connection.close()
+      for (const entry of sockets) closeSocket(entry)
       sockets.splice(0, sockets.length)
     }
   }

@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { makeSyncClient } from 'edge-sync-client'
-import { afterEach, describe, it } from 'mocha'
+import { afterEach, beforeEach, describe, it } from 'mocha'
 import { base16, base64 } from 'rfc4648'
 import { makeFetchFunction } from 'serverlet'
 
@@ -66,6 +66,9 @@ interface RepoSpec {
   lastHash?: string | 'current'
 
   syncOwed?: boolean
+
+  /** Not synced yet, so not subscribable until `markSynced`. */
+  unsynced?: boolean
 }
 
 interface ManagerHarness {
@@ -80,6 +83,7 @@ interface ManagerHarness {
   setPaused: (paused: boolean) => void
   setWatched: (watched: string[]) => void
   write: (i: number) => void
+  markSynced: (i: number) => void
   destroy: () => void
 }
 
@@ -182,7 +186,7 @@ function makeManagerHarness(
           lastChanges: [],
           localDisklet: makeLocalDisklet(io, id),
           paths: makeRepoPaths(io, { dataKey: new Uint8Array(32), syncKey }),
-          status: { lastSync: 1, lastHash },
+          status: { lastSync: spec.unsynced === true ? 0 : 1, lastHash },
           subscription: {
             status: 'unsubscribed',
             syncOwed: spec.syncOwed ?? false
@@ -220,6 +224,16 @@ function makeManagerHarness(
       state = { ...state, currency: { currencyWalletIds: watched } }
       manager.update()
     },
+    markSynced(i: number) {
+      dispatch({
+        type: 'STORAGE_WALLET_SYNCED',
+        payload: {
+          id: ids[i],
+          changes: [],
+          status: { lastSync: 1, lastHash: db.getRepoCheckpoint(hexes[i]) }
+        }
+      })
+    },
     write(i: number) {
       const repo = db.repos.get(hexes[i])
       if (repo == null) throw new Error('No repo')
@@ -241,6 +255,10 @@ function allListening(h: Harness): boolean {
 
 describe('repo change manager', function () {
   let harness: Harness | undefined
+  beforeEach(function () {
+    syncServerConfig.subscribeDebounceMs = 5
+    syncServerConfig.subscribeMaxWaitMs = 50
+  })
   afterEach(function () {
     harness?.destroy()
     harness = undefined
@@ -386,6 +404,75 @@ describe('repo change manager', function () {
       expect(a).equals('listening')
       expect(c).equals('listening')
     }
+  })
+
+  it('gathers repos that become subscribable one at a time', async function () {
+    syncServerConfig.subscribeDebounceMs = 30
+    syncServerConfig.subscribeMaxWaitMs = 300
+    const h = (harness = makeManagerHarness(
+      Array.from({ length: 16 }, () => ({ files: 1, unsynced: true }))
+    ))
+    for (let i = 0; i < h.ids.length; ++i) {
+      h.markSynced(i)
+      await snooze(10)
+    }
+    await waitUntil(() => allListening(h))
+    const [connection] = h.server.connections
+    expect(connection.subscribeCalls.length).at.most(2)
+    expect(connection.rejectedCalls.length).equals(0)
+  })
+
+  it('stays under the rate limit when repos trickle in', async function () {
+    syncServerConfig.subscribeDebounceMs = 1
+    syncServerConfig.subscribeMaxWaitMs = 1
+    const h = (harness = makeManagerHarness(
+      Array.from({ length: 12 }, () => ({ files: 1, unsynced: true }))
+    ))
+    for (let i = 0; i < h.ids.length; ++i) {
+      h.markSynced(i)
+      await snooze(15)
+    }
+    await snooze(50)
+    const [connection] = h.server.connections
+    expect(connection.subscribeCalls.length).equals(
+      syncServerConfig.subscribeCallsPerMinute
+    )
+    expect(connection.rejectedCalls.length).equals(0)
+
+    // The rest wait their turn, polling meanwhile:
+    const waiting = h.ids.filter((_, i) => h.status(i) === 'unsubscribed')
+    expect(waiting.length).greaterThan(0)
+  })
+
+  it('retries a rate-limited subscribe until the repos listen', async function () {
+    syncServerConfig.subscribeRetryBaseMs = 20
+    const h = (harness = makeManagerHarness([
+      { files: 1, lastHash: 'current', syncOwed: true },
+      { files: 1, lastHash: 'current' }
+    ]))
+    h.server.subscribeCallsPerMinute = 0
+    await waitUntil(() => h.server.connections[0]?.rejectedCalls.length >= 2)
+
+    // The owed first sync did not wait for the subscription:
+    await waitUntil(() => h.gets(0) === 1)
+    expect(h.status(0)).not.equals('avoiding')
+
+    h.server.subscribeCallsPerMinute = 10
+    await waitUntil(() => allListening(h), 2000)
+  })
+
+  it('retries a result of 0 until the repo listens', async function () {
+    syncServerConfig.subscribeRetryBaseMs = 20
+    const h = (harness = makeManagerHarness([
+      { files: 1, lastHash: 'current' },
+      { files: 1, lastHash: 'current' }
+    ]))
+    let refusals = 2
+    h.server.overrideResult = repoId =>
+      repoId === h.server.repoIdOf(h.hexes[1]) && refusals-- > 0 ? 0 : undefined
+    await waitUntil(() => allListening(h), 2000)
+    expect(refusals).equals(-1)
+    expect(h.server.connections[0].subscribeCalls.length).equals(3)
   })
 
   it('refused subscriptions poll, and pull an owed first sync', async function () {

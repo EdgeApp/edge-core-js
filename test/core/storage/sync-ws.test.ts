@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { makeMemoryDisklet } from 'disklet'
-import { afterEach, describe, it } from 'mocha'
+import { afterEach, beforeEach, describe, it } from 'mocha'
 
 import { makeRepoPaths } from '../../../src/core/storage/repo'
 import { newestCheckpoint } from '../../../src/core/storage/repo-change-manager'
@@ -62,6 +62,10 @@ function accountStatus(
 }
 
 describe('sync-server subscriptions', function () {
+  beforeEach(function () {
+    syncServerConfig.subscribeDebounceMs = 5
+    syncServerConfig.subscribeMaxWaitMs = 50
+  })
   afterEach(function () {
     Object.assign(syncServerConfig, savedServerConfig)
     Object.assign(storageSyncConfig, savedStorageConfig)

@@ -45,7 +45,25 @@ export const syncServerConfig = {
    * How long a `subscribeRepos` call, or a repo waiting on its first
    * subscription, may take before the repo falls back to polling.
    */
-  subscribeTimeoutMs: 15 * 1000
+  subscribeTimeoutMs: 15 * 1000,
+
+  /** Newly subscribable repos gather for this long before a call. */
+  subscribeDebounceMs: 500,
+
+  /** No repo waits longer than this for its subscribe call. */
+  subscribeMaxWaitMs: 2 * 1000,
+
+  /**
+   * Most `subscribeRepos` calls per connection per minute,
+   * under the server's limit of 10.
+   */
+  subscribeCallsPerMinute: 8,
+
+  /** A failed subscribe call retries after this, doubling each time. */
+  subscribeRetryBaseMs: 5 * 1000,
+
+  /** Upper bound on the subscribe retry delay. */
+  subscribeRetryMaxMs: 60 * 1000
 }
 
 /**

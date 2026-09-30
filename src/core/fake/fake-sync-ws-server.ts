@@ -23,8 +23,11 @@ export interface FakeSyncWsConnection {
   readonly id: number
   readonly url: string
 
-  /** Every `subscribeRepos` call, in arrival order. */
+  /** Every accepted `subscribeRepos` call, in arrival order. */
   readonly subscribeCalls: SyncSubscribeParams[][]
+
+  /** Every `subscribeRepos` call refused by the rate limit. */
+  readonly rejectedCalls: SyncSubscribeParams[][]
 
   /** Every `update` sent, in order. */
   readonly updates: SyncUpdateParams[][]
@@ -57,6 +60,12 @@ export interface FakeSyncWsServer {
 
   /** Set true to refuse new sockets and close the open ones. */
   offline: boolean
+
+  /**
+   * Most `subscribeRepos` calls per connection per minute,
+   * like the real server. Calls past it fail with an error.
+   */
+  subscribeCallsPerMinute: number
 
   /**
    * Overrides the result for one subscription.
@@ -109,6 +118,8 @@ export function makeFakeSyncWsServer(db: FakeDb): FakeSyncWsServer {
     let closed = false
     const subscriptions = new Map<string, string>()
     const subscribeCalls: SyncSubscribeParams[][] = []
+    const rejectedCalls: SyncSubscribeParams[][] = []
+    let callTimes: number[] = []
     const updates: SyncUpdateParams[][] = []
     let pendingUpdates = new Map<string, string>()
     let flushTimer: ReturnType<typeof setTimeout> | undefined
@@ -128,6 +139,13 @@ export function makeFakeSyncWsServer(db: FakeDb): FakeSyncWsServer {
           if (params.length > MAX_SUBSCRIBE_PARAMS) {
             throw new Error(`Too many repos: ${params.length}`)
           }
+          const now = Date.now()
+          callTimes = callTimes.filter(time => now - time < 60 * 1000)
+          if (callTimes.length >= out.subscribeCallsPerMinute) {
+            rejectedCalls.push(params)
+            throw new Error('Too many subscribe calls')
+          }
+          callTimes.push(now)
           subscribeCalls.push(params)
           return params.map(([repoId, checkpoint]): SyncSubscribeResult => {
             if (
@@ -192,6 +210,7 @@ export function makeFakeSyncWsServer(db: FakeDb): FakeSyncWsServer {
       id: nextId++,
       url,
       subscribeCalls,
+      rejectedCalls,
       updates,
       subscriptions,
       get closed() {
@@ -235,6 +254,7 @@ export function makeFakeSyncWsServer(db: FakeDb): FakeSyncWsServer {
     makeSocket,
     connections: [],
     answerPings: true,
+    subscribeCallsPerMinute: 10,
     get offline() {
       return offline
     },
