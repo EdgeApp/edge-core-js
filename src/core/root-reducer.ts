@@ -154,7 +154,13 @@ export const reducer = buildReducer<RootState, RootAction, RootState>({
   },
 
   syncWebSocketServers(state = [], action): string[] {
-    return action.type === 'INIT' ? action.payload.syncWebSocketServers : state
+    switch (action.type) {
+      case 'INIT':
+        return action.payload.syncWebSocketServers
+      case 'SYNC_WEBSOCKET_SERVERS_CHANGED':
+        return action.payload
+    }
+    return state
   },
 
   currency,

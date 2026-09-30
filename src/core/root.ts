@@ -17,7 +17,8 @@ import { defaultLogSettings, reducer, RootState } from './root-reducer'
 import {
   deriveSyncWebSocketServers,
   SyncSocketFactory,
-  toSyncWebSocketUrl
+  toSyncWebSocketUrl,
+  watchEdgeServers
 } from './storage/sync-server-connection'
 
 /**
@@ -197,10 +198,40 @@ export async function makeContext(
     redux.dispatch
   )
 
+  // The info server can replace the sync hosts REST uses. Unless the
+  // caller chose WebSocket hosts, the socket follows that list:
+  const followRestHosts =
+    makeSyncSocket != null &&
+    toServerArray(syncWebSocketServer, []).length === 0
+  function handleSyncServers(servers: string[]): void {
+    if (!followRestHosts) return
+    const urls = deriveSyncWebSocketServers(servers).filter(url => {
+      try {
+        validateServer(url)
+        return true
+      } catch (error: unknown) {
+        log.warn(`Ignoring sync WebSocket host ${url}: ${String(error)}`)
+        return false
+      }
+    })
+    const current = redux.getState().syncWebSocketServers
+    if (urls.length === 0) return
+    if (
+      urls.length === current.length &&
+      urls.every((url, i) => url === current[i])
+    ) {
+      return
+    }
+    redux.dispatch({ type: 'SYNC_WEBSOCKET_SERVERS_CHANGED', payload: urls })
+  }
+
   // Create sync client:
   const syncClient = makeSyncClient({
     log,
-    fetch: (uri, opts) => io.fetch(uri, { ...opts, corsBypass: 'never' }),
+    fetch: watchEdgeServers(
+      (uri, opts) => io.fetch(uri, { ...opts, corsBypass: 'never' }),
+      handleSyncServers
+    ),
     edgeServers: { infoServers, syncServers }
   })
 

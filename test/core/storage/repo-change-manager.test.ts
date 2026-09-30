@@ -89,6 +89,7 @@ interface ManagerHarness {
   setWatched: (watched: string[]) => void
   write: (i: number) => void
   markSynced: (i: number) => void
+  setUrls: (urls: string[]) => void
   destroy: () => void
 }
 
@@ -236,6 +237,10 @@ function makeManagerHarness(
     },
     setWatched(watched: string[]) {
       state = { ...state, currency: { currencyWalletIds: watched } }
+      manager.update()
+    },
+    setUrls(urls: string[]) {
+      state = { ...state, syncWebSocketServers: urls }
       manager.update()
     },
     markSynced(i: number) {
@@ -628,6 +633,32 @@ describe('repo change manager', function () {
 
     h.setWatched([])
     await waitUntil(() => connection.closed)
+  })
+
+  it('moves sockets off a host that leaves the list', async function () {
+    const h = (harness = makeManagerHarness(
+      [{ files: 1, lastHash: 'current' }],
+      { urls: ['wss://sync-old.edge.app/api/v2/ws'] }
+    ))
+    await waitUntil(() => allListening(h))
+
+    // A list that still holds the host changes nothing:
+    h.setUrls([
+      'wss://sync-old.edge.app/api/v2/ws',
+      'wss://sync-new.edge.app/api/v2/ws'
+    ])
+    await snooze(20)
+    expect(h.server.connections.length).equals(1)
+
+    h.setUrls(['wss://sync-new.edge.app/api/v2/ws'])
+    await waitUntil(
+      () => h.server.connections.length === 2 && allListening(h),
+      1000
+    )
+    expect(h.server.connections[1].url).equals(
+      'wss://sync-new.edge.app/api/v2/ws'
+    )
+    expect(h.server.connections[0].closed).equals(true)
   })
 
   it('does nothing without WebSocket servers', async function () {

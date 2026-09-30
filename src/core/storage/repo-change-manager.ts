@@ -134,6 +134,7 @@ export function repoChangeManager(input: ApiInput): {
   let owedTimer: ReturnType<typeof setTimeout> | undefined
   let destroyed = false
   let lastInputs: unknown[] = []
+  let lastUrls: string[] | undefined
   let lastPaused = false
 
   function setStatuses(
@@ -487,6 +488,20 @@ export function repoChangeManager(input: ApiInput): {
     if (makeSyncSocket == null || state.syncWebSocketServers.length === 0) {
       return
     }
+    // Follow the host list when REST's hosts change, moving any
+    // socket whose host is no longer listed:
+    if (lastUrls !== state.syncWebSocketServers) {
+      lastUrls = state.syncWebSocketServers
+      if (hosts != null) {
+        hosts.update(lastUrls)
+        for (const entry of sockets) {
+          if (!lastUrls.includes(entry.connection.url)) {
+            entry.connection.reconnect()
+          }
+        }
+      }
+    }
+
     const watched = listWatchedRepos(state)
     const watchedSet = new Set(watched)
 
@@ -583,7 +598,8 @@ export function repoChangeManager(input: ApiInput): {
         state.storageWallets,
         state.accountIds,
         state.accounts,
-        state.currency.currencyWalletIds
+        state.currency.currencyWalletIds,
+        state.syncWebSocketServers
       ]
       if (inputs.every((value, i) => value === lastInputs[i])) return
       lastInputs = inputs

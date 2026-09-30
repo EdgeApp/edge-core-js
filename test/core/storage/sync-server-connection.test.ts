@@ -12,7 +12,8 @@ import {
   SyncServerCallbacks,
   syncServerConfig,
   SyncSocket,
-  toSyncWebSocketUrl
+  toSyncWebSocketUrl,
+  watchEdgeServers
 } from '../../../src/core/storage/sync-server-connection'
 import { startSyncServerHeartbeat } from '../../../src/core/storage/sync-server-heartbeat'
 import { syncProtocol } from '../../../src/core/storage/sync-server-protocol'
@@ -125,6 +126,68 @@ describe('sync-server urls', function () {
 describe('sync-server connection', function () {
   afterEach(function () {
     Object.assign(syncServerConfig, savedServerConfig)
+  })
+
+  it('replaces the host list, keeping a host that is still listed', function () {
+    const picker = makeSyncHostPicker(['ws://a', 'ws://b'], () => 0.6)
+    expect(picker.current()).equals('ws://b')
+    picker.update(['ws://b', 'ws://c'])
+    expect(picker.current()).equals('ws://b')
+    picker.update(['ws://x', 'ws://y'])
+    expect(picker.current()).equals('ws://y')
+    picker.update([])
+    expect(picker.current()).equals('ws://y')
+  })
+
+  it('reconnects at once to the current host', async function () {
+    const db = new FakeDb()
+    const server = makeFakeSyncWsServer(db)
+    const hosts = makeSyncHostPicker(['ws://a'])
+    const callbacks = makeCallbacks()
+    const connection = connectSyncServer({
+      callbacks,
+      hosts,
+      log,
+      makeSocket: server.makeSocket
+    })
+    await waitUntil(() => connection.connected)
+    expect(connection.url).equals('ws://a')
+
+    hosts.update(['ws://b'])
+    connection.reconnect()
+    await waitUntil(() => connection.connected && connection.epoch === 2, 500)
+    expect(connection.url).equals('ws://b')
+    expect(server.connections.map(c => c.url)).deep.equals(['ws://a', 'ws://b'])
+    expect(callbacks.events).deep.equals(['connect', 'disconnect', 'connect'])
+    connection.close()
+    connection.reconnect()
+    expect(connection.connecting).equals(false)
+  })
+
+  it('reads the sync hosts from the info server reply', async function () {
+    const seen: string[][] = []
+    const reply = JSON.stringify({ syncServers: ['https://sync-x.edge.app'] })
+    const fetch = watchEdgeServers(
+      async uri => ({
+        headers: {} as any,
+        ok: !uri.includes('bad'),
+        status: 200,
+        arrayBuffer: async () => new ArrayBuffer(0),
+        json: async () => JSON.parse(reply),
+        text: async () => (uri.includes('garbage') ? '{' : reply)
+      }),
+      servers => seen.push(servers)
+    )
+    const response = await fetch('https://info1.edge.app/v1/edgeServers')
+    expect(await response.text()).equals(reply)
+    expect(await response.json()).deep.equals(JSON.parse(reply))
+    expect(new Uint8Array(await response.arrayBuffer()).length).equals(
+      reply.length
+    )
+    await fetch('https://info1.edge.app/v1/other')
+    await fetch('https://bad.edge.app/v1/edgeServers')
+    await fetch('https://garbage.edge.app/v1/edgeServers')
+    expect(seen).deep.equals([['https://sync-x.edge.app']])
   })
 
   it('pins one host, and rotates after repeated failures', async function () {

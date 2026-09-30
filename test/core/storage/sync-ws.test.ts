@@ -184,6 +184,57 @@ describe('sync-server subscriptions', function () {
     await context.close()
   })
 
+  it('follows the sync hosts the info server gives REST', async function () {
+    this.timeout(15000)
+    const harness = makeSyncWsHarness()
+    const context = await harness.makeContext()
+    await context.loginWithPassword(fakeUser.username, fakeUser.password, {
+      otpKey: 'HELLO'
+    })
+
+    // The fake info server lists sync-fake1..3, and the socket moves:
+    await waitUntil(
+      () =>
+        (getState(context).syncWebSocketServers[0] ?? '').includes('sync-fake'),
+      3000,
+      'the new host list'
+    )
+    expect(getState(context).syncWebSocketServers).deep.equals([
+      'wss://sync-fake1.edge.app/api/v2/ws',
+      'wss://sync-fake2.edge.app/api/v2/ws',
+      'wss://sync-fake3.edge.app/api/v2/ws'
+    ])
+    await waitUntil(
+      () =>
+        harness.server.connections.length > 0 &&
+        lastConnection(harness.server).url.includes('sync-fake') &&
+        accountStatus(context) === 'listening',
+      3000,
+      'the socket on the new host'
+    )
+    await context.close()
+  })
+
+  it('keeps explicit WebSocket hosts when REST hosts change', async function () {
+    this.timeout(15000)
+    const harness = makeSyncWsHarness()
+    const context = await harness.makeContext({
+      contextOptions: { syncWebSocketServer: 'wss://sync-mine.edge.app' }
+    })
+    await context.loginWithPassword(fakeUser.username, fakeUser.password, {
+      otpKey: 'HELLO'
+    })
+    await waitUntil(() => accountStatus(context) === 'listening')
+    await snooze(100)
+    expect(getState(context).syncWebSocketServers).deep.equals([
+      'wss://sync-mine.edge.app/api/v2/ws'
+    ])
+    for (const connection of harness.server.connections) {
+      expect(connection.url).equals('wss://sync-mine.edge.app/api/v2/ws')
+    }
+    await context.close()
+  })
+
   describe('local writes', function () {
     async function loginListening(
       gate: ReturnType<typeof makeStoreGate>

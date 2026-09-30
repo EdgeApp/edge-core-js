@@ -15,7 +15,11 @@ import { RootState } from '../../../src/core/root-reducer'
 import { syncKeyToRepoId } from '../../../src/core/storage/repo'
 import { makeFakeIo } from '../../../src/index'
 import { asEdgeLoginDump, asEdgeRepoDump } from '../../../src/types/fake-types'
-import { EdgeContext, EdgeFetchFunction } from '../../../src/types/types'
+import {
+  EdgeContext,
+  EdgeContextOptions,
+  EdgeFetchFunction
+} from '../../../src/types/types'
 import { fakeUser } from '../../fake/fake-user'
 
 export const accountSyncKey = base64.parse(fakeUser.syncKey)
@@ -53,6 +57,7 @@ export interface SyncWsHarness {
   makeContext: (opts?: {
     disklet?: Disklet
     gate?: StoreGate
+    contextOptions?: Partial<EdgeContextOptions>
   }) => Promise<EdgeContext>
 }
 
@@ -80,7 +85,11 @@ export function makeSyncWsHarness(): SyncWsHarness {
     logs,
     server,
     async makeContext(opts = {}) {
-      const { disklet = makeMemoryDisklet(), gate = makeStoreGate() } = opts
+      const {
+        contextOptions = {},
+        disklet = makeMemoryDisklet(),
+        gate = makeStoreGate()
+      } = opts
       const fetch: EdgeFetchFunction = async (uri, init) => {
         const match = /\/api\/v2\/store\/([0-9a-f]+)/.exec(uri)
         const method = init?.method ?? 'GET'
@@ -111,7 +120,7 @@ export function makeSyncWsHarness(): SyncWsHarness {
             logs.push(event.message)
           }
         },
-        { apiKey: '', appId: '' },
+        { apiKey: '', appId: '', ...contextOptions },
         { makeSyncSocket: server.makeSocket }
       )
     }

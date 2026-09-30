@@ -1,4 +1,6 @@
-import { EdgeLog } from '../../types/types'
+import { asArray, asObject, asOptional, asString } from 'cleaners'
+
+import { EdgeFetchFunction, EdgeLog } from '../../types/types'
 import { utf8 } from '../../util/encoding'
 import { RpcCodec } from '../../util/json-rpc'
 import {
@@ -88,6 +90,12 @@ export type SyncSocketFactory = (url: string) => SyncSocket
 export interface SyncHostPicker {
   current: () => string
   rotate: (failedUrl: string) => void
+
+  /**
+   * Replaces the host list, keeping the current host if it is still
+   * listed, and otherwise picking a new one at random.
+   */
+  update: (urls: string[]) => void
 }
 
 export function makeSyncHostPicker(
@@ -102,6 +110,13 @@ export function makeSyncHostPicker(
       // Several sockets may fail against the same host at once,
       // but only the first report should move us along:
       if (urls[index] === failedUrl) index = (index + 1) % urls.length
+    },
+    update(newUrls) {
+      if (newUrls.length === 0) return
+      const current = urls[index]
+      urls = newUrls
+      index = urls.indexOf(current)
+      if (index < 0) index = Math.floor(random() * urls.length) % urls.length
     }
   }
 }
@@ -130,11 +145,17 @@ export interface SyncServerConnection {
   /** True while a connect attempt waits for the socket to open. */
   readonly connecting: boolean
 
+  /** The host of the live or pending socket, or the next attempt. */
+  readonly url: string
+
   /**
    * Pings now, or reconnects now if the socket is down.
    * A connect attempt still waiting to open gets a short deadline.
    */
   checkLiveness: () => void
+
+  /** Drops the current socket, if any, and connects again at once. */
+  reconnect: () => void
 
   /** Closes the socket for good, with no further callbacks. */
   close: () => void
@@ -179,6 +200,7 @@ export function connectSyncServer(
   let connecting = false
   let connectTimer: ReturnType<typeof setTimeout> | undefined
   let dropCurrent: (() => void) | undefined
+  let socketUrl: string | undefined
 
   function armConnectDeadline(ms: number): void {
     if (connectTimer != null) clearTimeout(connectTimer)
@@ -200,6 +222,7 @@ export function connectSyncServer(
     if (closing) return
     const gen = ++generation
     const url = hosts.current()
+    socketUrl = url
     let opened = false
 
     let socket: SyncSocket
@@ -344,6 +367,12 @@ export function connectSyncServer(
       return connecting
     },
 
+    get url() {
+      return connected || connecting
+        ? socketUrl ?? hosts.current()
+        : hosts.current()
+    },
+
     checkLiveness() {
       if (closing) return
       if (connected) {
@@ -354,6 +383,16 @@ export function connectSyncServer(
         clearTimeout(reconnectTimer)
         connect()
       }
+    },
+
+    reconnect() {
+      if (closing) return
+      if (dropCurrent != null) dropCurrent()
+      // Replace any backoff the drop scheduled with an attempt now:
+      if (reconnectTimer != null) clearTimeout(reconnectTimer)
+      reconnectTimer = undefined
+      failures = 0
+      connect()
     },
 
     close() {
@@ -416,3 +455,48 @@ export function deriveSyncWebSocketServers(syncServers: string[]): string[] {
   const primary = urls.filter(url => !/^wss?:\/\/sync-eu\b/i.test(url))
   return primary.length > 0 ? primary : urls
 }
+
+/**
+ * Wraps the sync client's fetch to spot the info server's
+ * `/v1/edgeServers` answer, which replaces the sync hosts REST uses,
+ * so the socket can follow the same list. The body is read once and
+ * replayed to the caller.
+ */
+export function watchEdgeServers(
+  fetch: EdgeFetchFunction,
+  onSyncServers: (syncServers: string[]) => void
+): EdgeFetchFunction {
+  return async (uri, opts) => {
+    const response = await fetch(uri, opts)
+    if (!response.ok || !/\/v1\/edgeServers\/?$/.test(uri.split('?')[0])) {
+      return response
+    }
+
+    const text = await response.text()
+    try {
+      const { syncServers } = asEdgeServersReply(JSON.parse(text))
+      if (syncServers != null && syncServers.length > 0) {
+        onSyncServers(syncServers)
+      }
+    } catch (error: unknown) {}
+
+    return {
+      headers: response.headers,
+      ok: response.ok,
+      status: response.status,
+      arrayBuffer: async () => {
+        const bytes = utf8.parse(text)
+        return bytes.buffer.slice(
+          bytes.byteOffset,
+          bytes.byteOffset + bytes.byteLength
+        )
+      },
+      json: async () => JSON.parse(text),
+      text: async () => text
+    }
+  }
+}
+
+const asEdgeServersReply = asObject({
+  syncServers: asOptional(asArray(asString))
+})

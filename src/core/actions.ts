@@ -558,6 +558,12 @@ export type RootAction =
       }
     }
   | {
+      // Fires when the sync hosts REST uses change, giving the
+      // WebSocket hosts derived from them.
+      type: 'SYNC_WEBSOCKET_SERVERS_CHANGED'
+      payload: string[]
+    }
+  | {
       // Fires when repo subscriptions on the sync server change state.
       type: 'STORAGE_WALLETS_SUBSCRIPTIONS_CHANGED'
       payload: {
