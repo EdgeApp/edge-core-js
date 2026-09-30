@@ -43,12 +43,19 @@ export const storageSyncConfig: {
    * Matches the server's per-connection cap; lowered only in tests.
    */
   subscriptionsPerSocket: number
+
+  /**
+   * How long a repo's owed first sync waits on a sync-server connect
+   * attempt that has not opened yet, before running anyway.
+   */
+  owedSyncConnectGraceMs: number
 } = {
   syncInterval: SYNC_INTERVAL,
   uploadDebounceMs: 250,
   uploadRetryBaseMs: 1000,
   uploadRetryMaxMs: 60 * 1000,
-  subscriptionsPerSocket: 200
+  subscriptionsPerSocket: 200,
+  owedSyncConnectGraceMs: 2 * 1000
 }
 
 /**

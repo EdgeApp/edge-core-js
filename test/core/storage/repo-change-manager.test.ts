@@ -579,8 +579,8 @@ describe('repo change manager', function () {
     expect(h.status(0)).equals('unsubscribed')
   })
 
-  it('an owed first sync runs once a stalled connect attempt times out', async function () {
-    syncServerConfig.connectTimeoutMs = 50
+  it('an owed first sync waits on a stalled connect only for the grace', async function () {
+    storageSyncConfig.owedSyncConnectGraceMs = 60
     syncServerConfig.reconnectBaseMs = 10000
     const h = (harness = makeManagerHarness(
       [{ files: 1, lastHash: 'current', syncOwed: true }],
@@ -592,9 +592,13 @@ describe('repo change manager', function () {
         })
       }
     ))
+    // The attempt never opens, and the connect timeout is 15 s,
+    // but the owed sync runs once the grace is over:
+    const start = Date.now()
     await snooze(20)
     expect(h.gets(0)).equals(0)
     await waitUntil(() => h.gets(0) === 1, 1000)
+    expect(Date.now() - start).lessThan(500)
   })
 
   it('an owed first sync runs if no subscription answers in time', async function () {

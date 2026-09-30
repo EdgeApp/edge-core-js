@@ -138,6 +138,16 @@ export function repoChangeManager(input: ApiInput): {
   >()
   let hosts: SyncHostPicker | undefined
   let owedTimer: ReturnType<typeof setTimeout> | undefined
+  let graceTimer: ReturnType<typeof setTimeout> | undefined
+
+  /** Re-checks owed first syncs once a connect attempt's grace ends. */
+  function armGraceTimer(ms: number): void {
+    if (graceTimer != null) return
+    graceTimer = setTimeout(() => {
+      graceTimer = undefined
+      reconcile()
+    }, ms)
+  }
   let destroyed = false
   let lastInputs: unknown[] = []
   let lastUrls: string[] | undefined
@@ -614,11 +624,22 @@ export function repoChangeManager(input: ApiInput): {
       wakeForBackoffs(entry)
     }
 
-    // Owed first syncs only wait on a connect attempt in flight.
-    // With the socket down between attempts, they run now:
+    // Owed first syncs only wait on a young connect attempt. With the
+    // socket down between attempts, or an attempt that has not opened
+    // within the grace period, they run now:
+    const { owedSyncConnectGraceMs } = storageSyncConfig
+    const now = Date.now()
     for (const entry of sockets) {
       const { connection } = entry
-      if (connection.connected || connection.connecting) continue
+      if (connection.connected) continue
+      const { connectingSince } = connection
+      if (connectingSince != null) {
+        const remaining = connectingSince + owedSyncConnectGraceMs - now
+        if (remaining > 0) {
+          armGraceTimer(remaining)
+          continue
+        }
+      }
       for (const id of watched) {
         if (entry.ids.has(id)) pullOwed(id)
       }
@@ -670,6 +691,7 @@ export function repoChangeManager(input: ApiInput): {
     destroy() {
       destroyed = true
       if (owedTimer != null) clearTimeout(owedTimer)
+      if (graceTimer != null) clearTimeout(graceTimer)
       for (const entry of sockets) closeSocket(entry)
       sockets.splice(0, sockets.length)
     }

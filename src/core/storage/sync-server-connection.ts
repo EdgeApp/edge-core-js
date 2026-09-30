@@ -145,6 +145,9 @@ export interface SyncServerConnection {
   /** True while a connect attempt waits for the socket to open. */
   readonly connecting: boolean
 
+  /** When the pending connect attempt started, if there is one. */
+  readonly connectingSince: number | undefined
+
   /** The host of the live or pending socket, or the next attempt. */
   readonly url: string
 
@@ -198,6 +201,7 @@ export function connectSyncServer(
   let codec: SyncCodec | undefined
   let currentSocket: SyncSocket | undefined
   let connecting = false
+  let connectingSince: number | undefined
   let connectTimer: ReturnType<typeof setTimeout> | undefined
   let dropCurrent: (() => void) | undefined
   let socketUrl: string | undefined
@@ -257,6 +261,7 @@ export function connectSyncServer(
     codec = socketCodec
     currentSocket = socket
     connecting = true
+    connectingSince = Date.now()
     dropCurrent = drop
     armConnectDeadline(syncServerConfig.connectTimeoutMs)
 
@@ -365,6 +370,10 @@ export function connectSyncServer(
 
     get connecting() {
       return connecting
+    },
+
+    get connectingSince() {
+      return connecting ? connectingSince : undefined
     },
 
     get url() {
