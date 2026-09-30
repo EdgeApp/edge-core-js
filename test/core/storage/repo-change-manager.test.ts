@@ -286,6 +286,17 @@ describe('repo change manager', function () {
     expect(second.url).equals(first.url)
   })
 
+  it('honors a lowered per-socket cap', async function () {
+    storageSyncConfig.subscriptionsPerSocket = 3
+    const h = (harness = makeManagerHarness(
+      Array.from({ length: 7 }, () => ({ lastHash: 'current' }))
+    ))
+    await waitUntil(() => allListening(h))
+    expect(
+      h.server.connections.map(connection => connection.subscriptions.size)
+    ).deep.equals([3, 3, 1])
+  })
+
   it('result 1 skips the pull, and result 2 forces it', async function () {
     const h = (harness = makeManagerHarness([
       { files: 2, lastHash: 'current', syncOwed: true },

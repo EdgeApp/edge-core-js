@@ -36,11 +36,18 @@ export const storageSyncConfig: {
 
   /** Upper bound on the upload retry delay. */
   uploadRetryMaxMs: number
+
+  /**
+   * Most repos one sync-server socket holds before another opens.
+   * Matches the server's per-connection cap; lowered only in tests.
+   */
+  subscriptionsPerSocket: number
 } = {
   syncInterval: SYNC_INTERVAL,
   uploadDebounceMs: 250,
   uploadRetryBaseMs: 1000,
-  uploadRetryMaxMs: 60 * 1000
+  uploadRetryMaxMs: 60 * 1000,
+  subscriptionsPerSocket: 200
 }
 
 /**

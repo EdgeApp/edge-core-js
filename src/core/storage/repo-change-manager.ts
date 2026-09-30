@@ -1,7 +1,7 @@
 import { ApiInput } from '../root-pixie'
 import { RootState } from '../root-reducer'
 import { syncKeyToRepoId } from './repo'
-import { syncRepoAndReload } from './storage-actions'
+import { storageSyncConfig, syncRepoAndReload } from './storage-actions'
 import { StorageWalletSubscriptionStatus } from './storage-reducer'
 import {
   connectSyncServer,
@@ -18,9 +18,6 @@ import {
 
 /** Most repos one `subscribeRepos` call may carry. */
 export const SUBSCRIBE_BATCH_SIZE = 100
-
-/** Most repos one socket may hold. More repos open another socket. */
-export const SUBSCRIPTIONS_PER_SOCKET = 200
 
 export type RepoChangeManagerOutput = undefined
 
@@ -506,7 +503,7 @@ export function repoChangeManager(input: ApiInput): {
     for (const id of watched) {
       if (assigned.has(id)) continue
       let entry = sockets.find(
-        entry => entry.ids.size < SUBSCRIPTIONS_PER_SOCKET
+        entry => entry.ids.size < storageSyncConfig.subscriptionsPerSocket
       )
       if (entry == null) {
         entry = makeSocket()
