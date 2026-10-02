@@ -188,6 +188,10 @@ describe('account', function () {
     })
     expect(await account.getDisplayPrivateKey(walletId)).deep.equals('xpriv')
     expect(await account.getDisplayPublicKey(walletId)).deep.equals('xpub')
+    expect(await account.getDisplayPublicKeys(walletId)).deep.equals({
+      bip44: 'xpub',
+      bip84: 'zpub'
+    })
   })
 
   it('change currency plugin settings', async function () {

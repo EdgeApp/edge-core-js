@@ -523,6 +523,12 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
     return 'xpub'
   }
 
+  getDisplayPublicKeys(_publicWalletInfo: EdgeWalletInfo): {
+    [key: string]: string
+  } {
+    return { bip44: 'xpub', bip84: 'zpub' }
+  }
+
   getSplittableTypes(publicWalletInfo: EdgeWalletInfo): string[] {
     return this.currencyInfo.walletType === 'wallet:fakecoin'
       ? ['wallet:tulipcoin']

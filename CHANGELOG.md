@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeAccount.getDisplayPublicKeys` to get labeled public keys for a wallet.
+
 ## 2.50.0 (2026-09-29)
 
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.
