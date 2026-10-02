@@ -12,6 +12,7 @@ import {
   EdgeFreshAddress,
   EdgeGetReceiveAddressOptions,
   EdgeGetTransactionsOptions,
+  EdgeMetaToken,
   EdgeParsedUri,
   EdgeSpendInfo,
   EdgeStakingStatus,
@@ -377,8 +378,19 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
   }
 
   // URI parsing:
-  parseUri(uri: string): Promise<EdgeParsedUri> {
-    return Promise.resolve({ publicAddress: uri.replace(/^fakecoin:/, '') })
+  parseUri(
+    uri: string,
+    currencyCode?: string,
+    customTokens: EdgeMetaToken[] = []
+  ): Promise<EdgeParsedUri> {
+    // A `fakecoin:<address>?token=<code>` URI names a custom token:
+    const [, publicAddress, tokenCode] =
+      /^fakecoin:([^?]*)(?:\?token=(.*))?$/.exec(uri) ?? []
+    const token = customTokens.find(token => token.currencyCode === tokenCode)
+    return Promise.resolve({
+      publicAddress,
+      ...(token == null ? {} : { currencyCode: token.currencyCode })
+    })
   }
 
   encodeUri(): Promise<string> {

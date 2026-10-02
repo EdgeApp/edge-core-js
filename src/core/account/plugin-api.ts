@@ -4,7 +4,6 @@ import {
   EdgeCurrencyConfig,
   EdgeCurrencyInfo,
   EdgeGetTokenDetailsFilter,
-  EdgeMetaToken,
   EdgeOtherMethods,
   EdgeParsedUri,
   EdgeSwapConfig,
@@ -16,7 +15,7 @@ import { uniqueStrings } from '../currency/wallet/enabled-tokens'
 import { getCurrencyTools } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
 import { changePluginUserSettings, changeSwapSettings } from './account-files'
-import { getTokenId } from './custom-tokens'
+import { getTokenId, parseCurrencyUri } from './custom-tokens'
 
 const emptyTokens: EdgeTokenMap = {}
 const emptyTokenIds: string[] = []
@@ -201,13 +200,9 @@ export class CurrencyConfig
     return { ...keys, imported: true }
   }
 
-  async parseUri(
-    uri: string,
-    currencyCode?: string,
-    customTokens?: EdgeMetaToken[]
-  ): Promise<EdgeParsedUri> {
-    const tools = await getCurrencyTools(this._ai, this._pluginId)
-    return await tools.parseUri(uri, currencyCode, customTokens)
+  async parseUri(uri: string, currencyCode?: string): Promise<EdgeParsedUri> {
+    const { _accountId: accountId, _ai: ai, _pluginId: pluginId } = this
+    return await parseCurrencyUri(ai, accountId, pluginId, uri, currencyCode)
   }
 }
 

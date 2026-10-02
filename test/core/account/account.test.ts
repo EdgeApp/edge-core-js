@@ -196,8 +196,30 @@ describe('account', function () {
     const context = await world.makeEdgeContext(contextOptions)
     const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
 
-    const parsed = await account.currencyConfig.fakecoin.parseUri('fakecoin:x')
-    expect(parsed).deep.equals({ publicAddress: 'x' })
+    const config = account.currencyConfig.fakecoin
+
+    // The chain's own coin and a builtin token named by currency code:
+    expect(await config.parseUri('fakecoin:x')).deep.equals({
+      publicAddress: 'x',
+      tokenId: null
+    })
+    expect(await config.parseUri('fakecoin:x', 'TOKEN')).deep.equals({
+      publicAddress: 'x',
+      tokenId: 'badf00d5'
+    })
+
+    // The parser sees the account's custom tokens:
+    const tokenId = await config.addCustomToken({
+      currencyCode: 'CUSTOM',
+      displayName: 'Custom Token',
+      denominations: [{ multiplier: '1000', name: 'CUSTOM' }],
+      networkLocation: { contractAddress: '0xC0FFEE' }
+    })
+    expect(await config.parseUri('fakecoin:x?token=CUSTOM')).deep.equals({
+      publicAddress: 'x',
+      currencyCode: 'CUSTOM',
+      tokenId
+    })
   })
 
   it('change currency plugin settings', async function () {

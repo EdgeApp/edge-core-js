@@ -1796,8 +1796,7 @@ export interface EdgeCurrencyConfig {
   ) => Promise<JsonObject>
   readonly parseUri: (
     uri: string,
-    currencyCode?: string,
-    customTokens?: EdgeMetaToken[]
+    currencyCode?: string
   ) => Promise<EdgeParsedUri>
   readonly otherMethods: EdgeOtherMethods
 }

@@ -1,8 +1,10 @@
 import { asMaybe, asObject, asString } from 'cleaners'
 
+import { upgradeCurrencyCode } from '../../types/type-helpers'
 import {
   EdgeCurrencyEngine,
   EdgeMetaToken,
+  EdgeParsedUri,
   EdgePluginMap,
   EdgeToken,
   EdgeTokenInfo,
@@ -111,6 +113,39 @@ export function makeMetaTokens(tokens: EdgeTokenMap = {}): EdgeMetaToken[] {
     out.push(makeMetaToken(tokens[tokenId]))
   }
   return out
+}
+
+/**
+ * Parses a URI with a plugin's currency tools on behalf of an account.
+ * The parser receives the account's custom tokens, and a result that
+ * names its asset only by the deprecated `currencyCode` gains a `tokenId`.
+ */
+export async function parseCurrencyUri(
+  ai: ApiInput,
+  accountId: string,
+  pluginId: string,
+  uri: string,
+  currencyCode?: string
+): Promise<EdgeParsedUri> {
+  const tools = await getCurrencyTools(ai, pluginId)
+  const { state } = ai.props
+  const { allTokens, customTokens } = state.accounts[accountId]
+
+  const parsedUri = await tools.parseUri(
+    uri,
+    currencyCode,
+    makeMetaTokens(customTokens[pluginId])
+  )
+
+  if (parsedUri.tokenId === undefined) {
+    const { tokenId = null } = upgradeCurrencyCode({
+      allTokens: allTokens[pluginId],
+      currencyInfo: state.plugins.currency[pluginId].currencyInfo,
+      currencyCode: parsedUri.currencyCode ?? currencyCode
+    })
+    parsedUri.tokenId = tokenId
+  }
+  return parsedUri
 }
 
 export function makeTokenInfo(token: EdgeToken): EdgeTokenInfo | undefined {
