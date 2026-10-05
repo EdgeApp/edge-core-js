@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.51.0 (2026-10-05)
+
 - added: `EdgeAccount.fetchSwapQuotes` accepts an `EdgeSwapSendRequest`, for swaps that pay out to an address.
 - added: `EdgeTxActionSwapSend`, for sends that settle through a swap provider.
 - added: `EdgeSwapRequest.privacy`, restricting quotes to sender-unlinkable routes.
