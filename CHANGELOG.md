@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- added: `EdgeAccount.fetchSwapQuotes` accepts an `EdgeSwapSendRequest`, for swaps that pay out to an address.
+- added: `EdgeTxActionSwapSend`, for sends that settle through a swap provider.
+- added: `EdgeSwapRequest.privacy`, restricting quotes to sender-unlinkable routes.
+- added: `EdgeSwapRequestOptions.forceEnabled`, for querying plugins the user switched off.
+- added: `EdgeCurrencyConfig.parseUri`, for parsing a URI without a wallet.
+- added: `EdgeParsedUri.addressTypes`, listing the address formats a parsed address matches.
+
 ## 2.50.0 (2026-09-29)
 
 - added: `EdgeContextOptions.apiSigner`, for delegating API request signing to native code.

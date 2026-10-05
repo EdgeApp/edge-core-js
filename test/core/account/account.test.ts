@@ -4,6 +4,7 @@ import { describe, it } from 'mocha'
 
 import {
   EdgeAccount,
+  EdgeSwapSendRequest,
   EdgeWalletInfoFull,
   makeFakeEdgeWorld
 } from '../../../src/index'
@@ -190,6 +191,37 @@ describe('account', function () {
     expect(await account.getDisplayPublicKey(walletId)).deep.equals('xpub')
   })
 
+  it('parses a URI without a wallet', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext(contextOptions)
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+
+    const config = account.currencyConfig.fakecoin
+
+    // The chain's own coin and a builtin token named by currency code:
+    expect(await config.parseUri('fakecoin:x')).deep.equals({
+      publicAddress: 'x',
+      tokenId: null
+    })
+    expect(await config.parseUri('fakecoin:x', 'TOKEN')).deep.equals({
+      publicAddress: 'x',
+      tokenId: 'badf00d5'
+    })
+
+    // The parser sees the account's custom tokens:
+    const tokenId = await config.addCustomToken({
+      currencyCode: 'CUSTOM',
+      displayName: 'Custom Token',
+      denominations: [{ multiplier: '1000', name: 'CUSTOM' }],
+      networkLocation: { contractAddress: '0xC0FFEE' }
+    })
+    expect(await config.parseUri('fakecoin:x?token=CUSTOM')).deep.equals({
+      publicAddress: 'x',
+      currencyCode: 'CUSTOM',
+      tokenId
+    })
+  })
+
   it('change currency plugin settings', async function () {
     const world = await makeFakeEdgeWorld([fakeUser], quiet)
     const context = await world.makeEdgeContext(contextOptions)
@@ -257,6 +289,39 @@ describe('account', function () {
     expect(config2.enabled).equals(false)
     await config2.changeEnabled(true)
     expect(config2.enabled).equals(true)
+  })
+
+  it('quotes a send request to an address', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { ...plugins, fakeswap: true }
+    })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    await account.swapConfig.fakeswap.changeUserSettings({ kycToken: 'x' })
+    const fromWallet = await account.createCurrencyWallet('wallet:fakecoin')
+
+    const request: EdgeSwapSendRequest = {
+      fromWallet,
+      fromTokenId: null,
+      toTokenId: null,
+      nativeAmount: '1',
+      quoteFor: 'from',
+      toPluginId: 'tulipcoin',
+      toAddresses: [{ addressType: 'publicAddress', publicAddress: 'there' }]
+    }
+
+    // The fake plugin names the destination plugin it read off `toWallet`,
+    // so reaching it proves the core resolved the address to a wallet:
+    await expectRejection(
+      account.fetchSwapQuote(request),
+      'SwapCurrencyError: Fake Swapper does not support fakecoin:null to tulipcoin:null'
+    )
+
+    await expectRejection(
+      account.fetchSwapQuote({ ...request, toWallet: fromWallet }),
+      'Error: Swap request cannot have both toWallet and toAddresses'
+    )
   })
 
   it('change key state', async function () {

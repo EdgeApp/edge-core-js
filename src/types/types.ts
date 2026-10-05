@@ -305,6 +305,27 @@ export interface EdgeTxActionSwap {
   refundAddress?: string
 }
 
+/**
+ * A send that settled through a swap provider: the payout went to an address
+ * the user entered, not to one of their own wallets.
+ */
+export interface EdgeTxActionSwapSend {
+  actionType: 'swapSend'
+  swapInfo: EdgeSwapInfo
+  orderId?: string
+  orderUri?: string
+  isEstimate: boolean
+  fromAsset: EdgeAssetAmount
+  toAsset: EdgeAssetAmount
+
+  /** The recipient. */
+  payoutAddress: string
+  refundAddress?: string
+
+  /** Routed privately (a Stealth send). */
+  privacy: boolean
+}
+
 export interface EdgeTxActionStake {
   actionType: 'stake'
   pluginId: string
@@ -365,6 +386,7 @@ export interface EdgeTxActionGiftCard {
 
 export type EdgeTxAction =
   | EdgeTxActionSwap
+  | EdgeTxActionSwapSend
   | EdgeTxActionStake
   | EdgeTxActionFiat
   | EdgeTxActionTokenApproval
@@ -864,6 +886,12 @@ export interface WalletConnect {
 }
 
 export interface EdgeParsedUri {
+  /**
+   * Every `getAddresses` label that applies to `publicAddress`, for chains
+   * with more than one address format. Absent means `publicAddress` only.
+   */
+  addressTypes?: string[]
+
   bitIDCallbackUri?: string
   bitIDDomain?: string
   bitidKycProvider?: string // Experimental
@@ -1524,10 +1552,23 @@ export interface EdgeSwapInfo {
   readonly supportEmail: string
 }
 
-export interface EdgeSwapRequest {
+/**
+ * The extra surface a core-built synthetic destination wallet exposes on top
+ * of the `EdgeCurrencyWallet` members swap plugins normally read. Real
+ * wallets do not implement `getMemos`; plugins that support destination
+ * memos should detect it at runtime, such as:
+ * `const { getMemos } = toWallet as Partial<EdgeSyntheticDestinationWallet>`
+ */
+export interface EdgeSyntheticDestinationWallet extends EdgeCurrencyWallet {
+  readonly getMemos: () => Promise<EdgeMemo[]>
+}
+
+/**
+ * The fields every swap request shares, whatever its destination.
+ */
+export interface EdgeSwapRequestBase {
   // Where?
   fromWallet: EdgeCurrencyWallet
-  toWallet: EdgeCurrencyWallet
 
   // What?
   fromTokenId: EdgeTokenId
@@ -1536,6 +1577,41 @@ export interface EdgeSwapRequest {
   // How much?
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
+
+  /**
+   * Route privacy requirement. `'required'` means the quote must come from a
+   * route that keeps the sender unlinkable to the recipient. A plugin that
+   * cannot offer one must decline the request rather than answer with a
+   * transparent route, since a caller asking for privacy would otherwise get
+   * a downgrade it has no way to detect. Omitted means any route will do.
+   */
+  privacy?: 'required'
+}
+
+/**
+ * A swap between two wallets. This is also the resolved shape swap plugins
+ * receive: for an `EdgeSwapSendRequest`, `toWallet` is a synthetic destination
+ * wallet the core builds from the destination address.
+ */
+export interface EdgeSwapRequest extends EdgeSwapRequestBase {
+  toWallet: EdgeCurrencyWallet
+}
+
+/**
+ * A swap that pays out to an address rather than one of the user's wallets.
+ */
+export interface EdgeSwapSendRequest extends EdgeSwapRequestBase {
+  toPluginId: string
+
+  /** The destination addresses. The first entry is the payout address. */
+  toAddresses: EdgeAddress[]
+
+  /**
+   * Destination memos (e.g. an XRP destination tag) for memo-required payout
+   * chains. Swap plugins read them off the synthetic destination wallet's
+   * `getMemos` (see `EdgeSyntheticDestinationWallet`).
+   */
+  toMemos?: EdgeMemo[]
 }
 
 /**
@@ -1735,6 +1811,10 @@ export interface EdgeCurrencyConfig {
     userInput: string,
     opts?: { keyOptions?: JsonObject }
   ) => Promise<JsonObject>
+  readonly parseUri: (
+    uri: string,
+    currencyCode?: string
+  ) => Promise<EdgeParsedUri>
   readonly otherMethods: EdgeOtherMethods
 }
 
@@ -1760,6 +1840,15 @@ export interface EdgeSwapRequestOptions {
   preferType?: EdgeSwapPluginType
   disabled?: EdgePluginMap<true>
   promoCodes?: EdgePluginMap<string>
+
+  /**
+   * Plugins to query even when the user has switched them off in their swap
+   * settings. For a feature that is powered by one specific provider rather
+   * than by the swap aggregator, the provider toggle is not the user's answer
+   * about that feature, so the caller can opt out of it for a single request.
+   * `disabled` still wins: an explicitly disabled plugin stays disabled.
+   */
+  forceEnabled?: EdgePluginMap<true>
 
   /**
    * If we have some quotes already, how long should we wait
@@ -1944,11 +2033,11 @@ export interface EdgeAccount {
 
   // Swapping:
   readonly fetchSwapQuote: (
-    request: EdgeSwapRequest,
+    request: EdgeSwapRequest | EdgeSwapSendRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote>
   readonly fetchSwapQuotes: (
-    request: EdgeSwapRequest,
+    request: EdgeSwapRequest | EdgeSwapSendRequest,
     opts?: EdgeSwapRequestOptions
   ) => Promise<EdgeSwapQuote[]>
 

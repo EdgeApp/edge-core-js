@@ -25,6 +25,7 @@ import {
   EdgeTxActionGiftCard,
   EdgeTxActionStake,
   EdgeTxActionSwap,
+  EdgeTxActionSwapSend,
   EdgeTxActionTokenApproval,
   EdgeTxSwap
 } from '../../../types/types'
@@ -195,6 +196,19 @@ export const asEdgeTxActionSwap = asObject<EdgeTxActionSwap>({
   refundAddress: asOptional(asString)
 })
 
+export const asEdgeTxActionSwapSend = asObject<EdgeTxActionSwapSend>({
+  actionType: asValue('swapSend'),
+  swapInfo: asEdgeSwapInfo,
+  orderId: asOptional(asString),
+  orderUri: asOptional(asString),
+  isEstimate: asBoolean,
+  fromAsset: asEdgeAssetAmount,
+  toAsset: asEdgeAssetAmount,
+  payoutAddress: asString,
+  refundAddress: asOptional(asString),
+  privacy: asBoolean
+})
+
 export const asEdgeTxActionStake = asObject<EdgeTxActionStake>({
   actionType: asValue('stake'),
   pluginId: asString,
@@ -257,6 +271,7 @@ export const asEdgeTxActionGiftCard = asObject<EdgeTxActionGiftCard>({
 
 export const asEdgeTxAction: Cleaner<EdgeTxAction> = asEither(
   asEdgeTxActionSwap,
+  asEdgeTxActionSwapSend,
   asEdgeTxActionStake,
   asEdgeTxActionFiat,
   asEdgeTxActionTokenApproval,
