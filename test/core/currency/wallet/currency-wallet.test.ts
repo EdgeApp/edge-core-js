@@ -534,6 +534,7 @@ describe('currency wallets', function () {
       payoutAddress: '0xpayoutaddress',
       payoutWalletId: '0xwalletid',
       refundAddress: undefined,
+      privacy: undefined,
       orderId: 'myorderid',
       orderUri: 'https://myplugin.com',
       canBePartial: false,
