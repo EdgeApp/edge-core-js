@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.52.0 (2026-10-15)
+
 - added: `EdgeTxActionSwap.privacy`, for swaps routed privately.
 
 ## 2.51.0 (2026-10-05)
