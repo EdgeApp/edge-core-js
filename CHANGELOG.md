@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeTxActionSwap.privacy`, for swaps routed privately.
+
 ## 2.51.0 (2026-10-05)
 
 - added: `EdgeAccount.fetchSwapQuotes` accepts an `EdgeSwapSendRequest`, for swaps that pay out to an address.

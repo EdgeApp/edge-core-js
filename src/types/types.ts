@@ -303,6 +303,9 @@ export interface EdgeTxActionSwap {
   payoutAddress: string
   payoutWalletId: string
   refundAddress?: string
+
+  /** Routed privately (a Stealth swap). */
+  privacy?: boolean
 }
 
 /**
